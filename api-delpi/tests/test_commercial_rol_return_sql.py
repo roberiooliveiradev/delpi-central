@@ -12,11 +12,54 @@ def test_sales_return_predicate_requires_duplic_for_tipo_d() -> None:
     predicate = CommercialRolReturnSql.sales_return_predicate(
         d1_alias="D1",
         f4_alias="F4D",
+        sb1_alias="B1",
     )
     assert "D1.D1_CF IN ('1201', '2201')" in predicate
     assert "D1.D1_TIPO = 'D'" in predicate
     assert "F4D.F4_DUPLIC" in predicate
     assert "OR D1.D1_TIPO = 'D')" not in predicate.replace(" ", "")
+
+
+def test_sales_return_predicate_excludes_third_party_materials() -> None:
+    predicate = CommercialRolReturnSql.sales_return_predicate(
+        d1_alias="D1",
+        f4_alias="F4D",
+        sb1_alias="B1",
+    )
+    assert "B1.B1_TPMAT" in predicate
+    assert "ISNULL(B1.B1_TPMAT, '') <> '2'" in predicate
+
+
+def test_return_cfop_tes_predicate_omits_product_filter() -> None:
+    predicate = CommercialRolReturnSql.return_cfop_tes_predicate(
+        d1_alias="D1X",
+        f4_alias="F4X",
+    )
+    assert "D1X.D1_CF IN ('1201', '2201')" in predicate
+    assert "D1X.D1_TIPO = 'D'" in predicate
+    assert "F4X.F4_DUPLIC" in predicate
+    assert "B1_TPMAT" not in predicate
+
+
+def test_return_product_eligibility_predicate_excludes_third_party() -> None:
+    predicate = CommercialRolReturnSql.return_product_eligibility_predicate(
+        sb1_alias="B1",
+    )
+    assert predicate == "ISNULL(B1.B1_TPMAT, '') <> '2'"
+
+
+def test_product_type_join_filters_by_branch() -> None:
+    join = CommercialRolReturnSql.product_type_join(
+        d1_alias="D1",
+        sb1_alias="B1",
+        with_nolock=True,
+    )
+    assert "LEFT JOIN SB1010 B1" in join
+    assert "B1.B1_COD = D1.D1_COD" in join
+    assert "B1.B1_FILIAL = D1.D1_FILIAL" in join
+    assert "B1.B1_FILIAL = ''" in join
+    assert "B1.B1_FILIAL IS NULL" in join
+    assert "WITH (NOLOCK)" in join
 
 
 def test_sale_eligibility_predicate_includes_tes_and_cf_rules() -> None:
@@ -77,3 +120,8 @@ def test_get_rol_sql_excludes_tipo_d_without_duplicata() -> None:
     # predicado antigo amplo (tipo D sem DUPLIC) não pode permanecer
     assert "OR D1.D1_TIPO = 'D'\n                )" not in sql
     assert "OR D1X.D1_TIPO = 'D'\n                                )" not in sql
+    # nova regra: excluir materiais de terceiros das devoluções
+    assert "B1.B1_TPMAT" in sql
+    assert "ISNULL(B1.B1_TPMAT, '') <> '2'" in sql
+    # EXISTS D1X não referencia SB1 (não há join SB1 nesse escopo)
+    assert "B1X" not in sql

@@ -46,6 +46,10 @@ def test_list_rol_invoices_sql_reuses_sale_and_return_eligibility() -> None:
     assert "ISNULL(F4D.F4_DUPLIC, '') = 'S'" in sql
     assert "F4.F4_DUPLIC" in sql
     assert "5911" in sql
+    # nova regra: join SB1 e filtro B1_TPMAT
+    assert "LEFT JOIN SB1010 B1" in sql
+    assert "B1.B1_TPMAT" in sql
+    assert "ISNULL(B1.B1_TPMAT, '') <> '2'" in sql
 
 
 def test_get_rol_invoices_use_case_maps_and_truncates() -> None:

@@ -90,20 +90,20 @@ class CommercialRolByCustomerRepository(
         # Returns use inbound CFOP; do not apply market filter on SD1.
         dev_where, dev_params = dev_qb.build()
 
-        needs_sb1 = bool(request.product_groups)
-        sb1_join = ""
-        if needs_sb1:
-            sb1_join = """
+        sb1_join = """
                 LEFT JOIN SB1010 SB1 WITH (NOLOCK)
                     ON  SB1.D_E_L_E_T_ = ''
                     AND SB1.B1_COD = D2.D2_COD
             """
-        sb1d_join = ""
-        if needs_sb1:
-            sb1d_join = """
+        sb1d_join = """
                 LEFT JOIN SB1010 SB1D WITH (NOLOCK)
                     ON  SB1D.D_E_L_E_T_ = ''
                     AND SB1D.B1_COD = D1.D1_COD
+                    AND (
+                            SB1D.B1_FILIAL = D1.D1_FILIAL
+                         OR SB1D.B1_FILIAL = ''
+                         OR SB1D.B1_FILIAL IS NULL
+                    )
             """
         centers = request.customer_centers
         sale_center_join = customer_center_join_sql(
@@ -209,7 +209,7 @@ class CommercialRolByCustomerRepository(
                                     AND D1X.D1_FORNECE = D2.D2_CLIENTE
                                     AND D1X.D1_LOJA    = D2.D2_LOJA
                                     AND {exists_where}
-                                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1X", f4_alias="F4X")}
+                                    AND {CommercialRolReturnSql.return_cfop_tes_predicate(d1_alias="D1X", f4_alias="F4X")}
                             )
                         )
                         OR (
@@ -239,7 +239,7 @@ class CommercialRolByCustomerRepository(
                 {sb1d_join}
                 {return_center_join}
                 WHERE {dev_where}
-                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
+                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D", sb1_alias="SB1D")}
                 GROUP BY D1.D1_FILIAL, D1.D1_FORNECE, D1.D1_LOJA
             ),
             ROL_POR_CLIENTE AS (

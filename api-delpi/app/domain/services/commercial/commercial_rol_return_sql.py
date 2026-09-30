@@ -175,7 +175,7 @@ class CommercialRolReturnSql:
                                     AND D1X.D1_FORNECE = {d2_alias}.D2_CLIENTE
                                     AND D1X.D1_LOJA    = {d2_alias}.D2_LOJA
                                     AND {exists_where}
-                                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1X", f4_alias="F4X")}
+                                    AND {CommercialRolReturnSql.return_cfop_tes_predicate(d1_alias="D1X", f4_alias="F4X")}
                             )
                         )
                         OR (
@@ -210,12 +210,45 @@ class CommercialRolReturnSql:
         """
 
     @staticmethod
-    def sales_return_predicate(
+    def product_type_join(
+        *,
+        d1_alias: str = "D1",
+        sb1_alias: str = "B1",
+        with_nolock: bool = True,
+    ) -> str:
+        """LEFT JOIN SB1 pelo código do produto da linha SD1 (tipo de material)."""
+        lock = " WITH (NOLOCK)" if with_nolock else ""
+        return f"""
+                LEFT JOIN SB1010 {sb1_alias}{lock}
+                    ON  {sb1_alias}.D_E_L_E_T_ = ''
+                    AND {sb1_alias}.B1_COD = {d1_alias}.D1_COD
+                    AND (
+                            {sb1_alias}.B1_FILIAL = {d1_alias}.D1_FILIAL
+                         OR {sb1_alias}.B1_FILIAL = ''
+                         OR {sb1_alias}.B1_FILIAL IS NULL
+                    )
+        """
+
+    @staticmethod
+    def return_product_eligibility_predicate(
+        *,
+        sb1_alias: str = "B1",
+    ) -> str:
+        """Predicado para excluir materiais de terceiros das devoluções (B1_TPMAT = '2')."""
+        return f"ISNULL({sb1_alias}.B1_TPMAT, '') <> '2'"
+
+    @staticmethod
+    def return_cfop_tes_predicate(
         *,
         d1_alias: str = "D1",
         f4_alias: str = "F4D",
     ) -> str:
-        """Predicado WHERE/AND para linha SD1 contar como devolução de venda no ROL."""
+        """Elegibilidade CFOP/TES de uma linha SD1 como devolução de venda.
+
+        Usado também em EXISTS de correlação (ex.: CFOP 5927 MI), onde apenas a
+        existência da devolução importa — o filtro de tipo de material (SB1)
+        só se aplica ao valor da devolução.
+        """
         cfops = ", ".join(f"'{code}'" for code in CommercialRolReturnSql.SALES_RETURN_CFOPS)
         return f"""(
                         {d1_alias}.D1_CF IN ({cfops})
@@ -224,3 +257,14 @@ class CommercialRolReturnSql:
                             AND ISNULL({f4_alias}.F4_DUPLIC, '') = 'S'
                         )
                     )"""
+
+    @staticmethod
+    def sales_return_predicate(
+        *,
+        d1_alias: str = "D1",
+        f4_alias: str = "F4D",
+        sb1_alias: str = "B1",
+    ) -> str:
+        """Predicado WHERE/AND para linha SD1 contar como devolução de venda no ROL."""
+        return f"""{CommercialRolReturnSql.return_cfop_tes_predicate(d1_alias=d1_alias, f4_alias=f4_alias)}
+                    AND {CommercialRolReturnSql.return_product_eligibility_predicate(sb1_alias=sb1_alias)}"""

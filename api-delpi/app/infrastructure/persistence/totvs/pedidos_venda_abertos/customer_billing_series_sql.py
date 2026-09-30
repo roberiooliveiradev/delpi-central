@@ -52,6 +52,11 @@ _SB1_RETURN_JOIN = """
                 LEFT JOIN SB1010 SB1D WITH (NOLOCK)
                     ON  SB1D.D_E_L_E_T_ = ''
                     AND SB1D.B1_COD = D1.D1_COD
+                    AND (
+                            SB1D.B1_FILIAL = D1.D1_FILIAL
+                         OR SB1D.B1_FILIAL = ''
+                         OR SB1D.B1_FILIAL IS NULL
+                    )
 """
 
 
@@ -152,7 +157,8 @@ def _recorte_sale_fragments(
 def _recorte_return_fragments(
     recorte: BillingSeriesRecorte,
 ) -> tuple[str, str, list[str]]:
-    joins = _SB1_RETURN_JOIN if recorte.product_groups else ""
+    # SB1D é obrigatório: o predicado canônico de devolução filtra B1_TPMAT.
+    joins = _SB1_RETURN_JOIN
     clauses: list[str] = []
     params: list[str] = []
     if recorte.product_codes:
@@ -423,7 +429,7 @@ def _build_net_series_sql(
                    AND ({d1_pairs})
                    AND D1.D1_DTDIGIT >= ?
                    AND D1.D1_DTDIGIT <= ?
-                   AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
+                   AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D", sb1_alias="SB1D")}
                    {ret_where}
                  GROUP BY {ret_period}
             )
@@ -550,11 +556,12 @@ def _build_net_12m_sql(*, where_pairs: str) -> str:
                         WHEN D1.D1_DTDIGIT < ? THEN {ret_line} ELSE 0 END)) AS billed_prior_6m
                   FROM SD1010 D1 WITH (NOLOCK)
                   {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
+                  {_SB1_RETURN_JOIN}
                  WHERE D1.D_E_L_E_T_ = ''
                    AND ({d1_pairs})
                    AND D1.D1_DTDIGIT >= ?
                    AND D1.D1_DTDIGIT <= ?
-                   AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
+                   AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D", sb1_alias="SB1D")}
                  GROUP BY D1.D1_FORNECE, D1.D1_LOJA
             )
             SELECT

@@ -226,7 +226,7 @@ class CommercialRolByProductRepository(
                                     AND D1X.D1_FORNECE = D2.D2_CLIENTE
                                     AND D1X.D1_LOJA    = D2.D2_LOJA
                                     AND {exists_where}
-                                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1X", f4_alias="F4X")}
+                                    AND {CommercialRolReturnSql.return_cfop_tes_predicate(d1_alias="D1X", f4_alias="F4X")}
                             )
                         )
                         OR (
@@ -253,10 +253,15 @@ class CommercialRolByProductRepository(
                 LEFT JOIN SB1010 SB1D WITH (NOLOCK)
                     ON  SB1D.D_E_L_E_T_ = ''
                     AND SB1D.B1_COD = D1.D1_COD
+                    AND (
+                            SB1D.B1_FILIAL = D1.D1_FILIAL
+                         OR SB1D.B1_FILIAL = ''
+                         OR SB1D.B1_FILIAL IS NULL
+                    )
                 {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
                 {return_center_join}
                 WHERE {dev_where}
-                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
+                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D", sb1_alias="SB1D")}
                 GROUP BY {ret_group}
             ),
             ROL_ITEM AS (

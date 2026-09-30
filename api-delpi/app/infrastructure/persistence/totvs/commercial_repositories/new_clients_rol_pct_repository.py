@@ -132,7 +132,7 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
                                     AND D1X.D1_FORNECE = D2.D2_CLIENTE
                                     AND D1X.D1_LOJA    = D2.D2_LOJA
                                     AND {exists_where}
-                                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1X", f4_alias="F4X")}
+                                    AND {CommercialRolReturnSql.return_cfop_tes_predicate(d1_alias="D1X", f4_alias="F4X")}
                             )
                         )
 
@@ -163,9 +163,10 @@ class NewClientsRolPctRepository(BaseRepository, NewClientsRolPctRepositoryPort)
 
                 FROM SD1010 D1
                 {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D")}
+                {CommercialRolReturnSql.product_type_join(d1_alias="D1", sb1_alias="B1", with_nolock=False)}
 
                 WHERE {dev_where}
-                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
+                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D", sb1_alias="B1")}
 
                 GROUP BY D1.D1_FILIAL, D1.D1_FORNECE, D1.D1_LOJA
             ),
