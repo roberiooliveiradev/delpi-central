@@ -111,6 +111,48 @@ def test_revision_append_and_lookup(repo):
     assert loaded.revisions[0].artifact.content == XML_A
 
 
+def test_revision_rows_survive_working_copy_mutations(repo):
+    """DB-ISO-12: appended revision bytes are never rewritten by later mutations."""
+    from bpmn_modeler.infrastructure.persistence.connection import db_connection
+
+    model = _model()
+    repo.create_aggregate(model)
+
+    def add_revision(model_: Model) -> None:
+        model_.append_revision(
+            Revision(
+                revision_id=str(uuid.uuid4()),
+                revision_number=1,
+                artifact=model_.working_copy.artifact,
+                checksum="a" * 64,
+                created_at=datetime.now(timezone.utc),
+                created_by="it-test",
+                origin=RevisionOrigin.EXPLICIT,
+            )
+        )
+        model_.version += 1
+
+    repo.mutate(model.id, 1, add_revision)
+
+    def mutate_wc(model_: Model) -> None:
+        model_.working_copy.replace_artifact(CanonicalBpmnArtifact(XML_B))
+        model_.version += 1
+        model_.updated_at = datetime.now(timezone.utc)
+
+    repo.mutate(model.id, 2, mutate_wc)
+
+    with db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT artifact_xml, revision_number FROM bpmn_modeler.revisions "
+                "WHERE model_id = %(id)s ORDER BY revision_number",
+                {"id": model.id},
+            )
+            rows = cur.fetchall()
+    assert len(rows) == 1
+    assert rows[0]["artifact_xml"] == XML_A  # snapshot intacto — WC virou XML_B
+
+
 def test_list_summaries_filters(repo):
     active = _model()
     repo.create_aggregate(active)

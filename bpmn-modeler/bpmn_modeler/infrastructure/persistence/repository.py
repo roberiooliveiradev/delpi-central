@@ -195,7 +195,7 @@ class PostgresModelRepository(ModelRepositoryPort):
             cur.execute(
                 """
                 SELECT id, revision_number, artifact_xml, artifact_sha256,
-                       origin, created_at, created_by
+                       origin, created_at, created_by, restored_from_revision_id
                 FROM bpmn_modeler.revisions WHERE model_id = %(id)s
                 ORDER BY revision_number ASC
                 """,
@@ -211,6 +211,11 @@ class PostgresModelRepository(ModelRepositoryPort):
                 created_at=row["created_at"],
                 created_by=row["created_by"],
                 origin=RevisionOrigin(row["origin"]),
+                restored_from_revision_id=(
+                    str(row["restored_from_revision_id"])
+                    if row["restored_from_revision_id"]
+                    else None
+                ),
             )
             for row in rows
         ]
@@ -250,9 +255,11 @@ class PostgresModelRepository(ModelRepositoryPort):
                     """
                     INSERT INTO bpmn_modeler.revisions
                         (id, model_id, revision_number, artifact_xml,
-                         artifact_sha256, origin, created_at, created_by)
+                         artifact_sha256, origin, created_at, created_by,
+                         restored_from_revision_id)
                     VALUES (%(id)s, %(model_id)s, %(num)s, %(xml)s,
-                            %(sha)s, %(origin)s, %(created_at)s, %(created_by)s)
+                            %(sha)s, %(origin)s, %(created_at)s, %(created_by)s,
+                            %(restored_from)s)
                     ON CONFLICT (model_id, revision_number) DO NOTHING
                     """,
                     {
@@ -264,6 +271,7 @@ class PostgresModelRepository(ModelRepositoryPort):
                         "origin": revision.origin.value,
                         "created_at": revision.created_at,
                         "created_by": revision.created_by,
+                        "restored_from": revision.restored_from_revision_id,
                     },
                 )
 
@@ -306,9 +314,11 @@ class PostgresModelRepository(ModelRepositoryPort):
                 """
                 INSERT INTO bpmn_modeler.revisions
                     (id, model_id, revision_number, artifact_xml,
-                     artifact_sha256, origin, created_at, created_by)
+                     artifact_sha256, origin, created_at, created_by,
+                     restored_from_revision_id)
                 VALUES (%(id)s, %(model_id)s, %(num)s, %(xml)s,
-                        %(sha)s, %(origin)s, %(created_at)s, %(created_by)s)
+                        %(sha)s, %(origin)s, %(created_at)s, %(created_by)s,
+                        %(restored_from)s)
                 """,
                 {
                     "id": revision.revision_id,
@@ -319,5 +329,6 @@ class PostgresModelRepository(ModelRepositoryPort):
                     "origin": revision.origin.value,
                     "created_at": revision.created_at,
                     "created_by": revision.created_by,
+                    "restored_from": revision.restored_from_revision_id,
                 },
             )

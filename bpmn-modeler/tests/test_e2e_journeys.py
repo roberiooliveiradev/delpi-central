@@ -11,6 +11,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from bpmn_modeler.application.use_cases import BpmnModelerService
+from bpmn_modeler.domain.value_objects.canonical_bpmn_artifact import (
+    CanonicalBpmnArtifact,
+)
 from bpmn_modeler.infrastructure.runtime import SystemClock, UuidGenerator
 from bpmn_modeler.infrastructure.validation.blank import (
     TemplateBlankArtifactFactory,
@@ -26,10 +29,15 @@ H = {"Authorization": "Bearer fake"}
 
 
 @pytest.fixture()
-def client():
+def app_repo():
+    return InMemoryRepository()
+
+
+@pytest.fixture()
+def client(app_repo):
     validator = LxmlBpmnValidator()
     service = BpmnModelerService(
-        repository=InMemoryRepository(),
+        repository=app_repo,
         validator=validator,
         input_safety=validator,
         blank_artifacts=TemplateBlankArtifactFactory(UuidGenerator()),
@@ -37,6 +45,7 @@ def client():
         ids=UuidGenerator(),
     )
     app = create_app(service)
+    app.state.repository = app_repo  # permite testes tamperarem o read-back
     return TestClient(app, raise_server_exceptions=False)
 
 
@@ -312,8 +321,149 @@ def test_e2e_16_conflict_stale_writer(client, auth):
         assert client.get(f"/models/{model_id}/working-copy", headers=H).text == a
 
 
+def test_e2e_04_import_no_di_preserved_byte_exact(client, auth):
+    """E2E-04 (backend part): import sem DI → artefato persistido SEM DI injetado.
+
+    O backend nunca gera DI; o render transitório é responsabilidade do canvas.
+    Persistência e export devem ser byte-exatas ao XML importado.
+    """
+    vt, rbac = auth
+    with vt, rbac:
+        insp = client.post(
+            "/imports/inspect",
+            files={"file": ("nod.bpmn", fx.FX_NODI_001.encode(), "text/xml")},
+            headers=H,
+        )
+        assert insp.json()["data"]["eligible_to_import"] is True
+
+        resp = client.post(
+            "/models/import",
+            files={"file": ("nod.bpmn", fx.FX_NODI_001.encode(), "text/xml")},
+            data={"display_name": "NoDI"},
+            headers=H,
+        )
+        assert resp.status_code == 201
+        model_id = resp.json()["data"]["model_id"]
+
+        exported = client.get(f"/models/{model_id}/working-copy/export", headers=H)
+        assert exported.content == fx.FX_NODI_001.encode()
+        assert b"BPMNDiagram" not in exported.content
+
+
+def test_e2e_07_validation_issue_repair_revalidate(client, auth):
+    """E2E-07 (backend part): dangling ref → issues → repair → revalidate clean."""
+    vt, rbac = auth
+    with vt, rbac:
+        insp = client.post(
+            "/imports/inspect",
+            files={"file": ("b.bpmn", fx.FX_REF_001.encode(), "text/xml")},
+            headers=H,
+        )
+        data = insp.json()["data"]
+        assert data["recognition_state"] == "BPMN_RECOGNIZED_WITH_ISSUES"
+        assert any(
+            i["rule_id"] == "BPMN-STRUCT-010"
+            for i in data["validation_report"]["issues"]
+        )
+
+        resp = client.post(
+            "/models/import",
+            files={"file": ("b.bpmn", fx.FX_REF_001.encode(), "text/xml")},
+            data={"display_name": "Broken"},
+            headers=H,
+        )
+        assert resp.status_code == 201
+        model_id = resp.json()["data"]["model_id"]
+
+        repaired = fx.FX_REF_001.replace('sourceRef="GHOST"', 'sourceRef="T1"')
+        resp = client.put(
+            f"/models/{model_id}/working-copy",
+            content=repaired.encode(),
+            headers={**H, "Content-Type": "application/xml", "If-Match": '"v1"'},
+        )
+        assert resp.status_code == 200
+
+        insp2 = client.post(
+            "/imports/inspect",
+            files={"file": ("b.bpmn", repaired.encode(), "text/xml")},
+            headers=H,
+        )
+        assert not any(
+            i["rule_id"] == "BPMN-STRUCT-010"
+            for i in insp2.json()["data"]["validation_report"]["issues"]
+        )
+
+
+def test_e2e_10_unknown_extension_mustunderstand_false_preserved(client, auth):
+    """E2E-10: extensões mustUnderstand=false importam e exportam byte-exatas."""
+    vt, rbac = auth
+    with vt, rbac:
+        for content in (fx.FX_EXT_001, fx.FX_EXT_002, fx.FX_EXT_004):
+            resp = client.post(
+                "/models/import",
+                files={"file": ("e.bpmn", content.encode(), "text/xml")},
+                data={"display_name": "Ext"},
+                headers=H,
+            )
+            assert resp.status_code == 201, content[:60]
+            model_id = resp.json()["data"]["model_id"]
+            exported = client.get(
+                f"/models/{model_id}/working-copy/export", headers=H
+            )
+            assert exported.content == content.encode()
+            assert b"vend" in exported.content
+
+
+def test_e2e_17_divergent_readback_outcome_verification_failed(client, auth, app_repo):
+    """E2E-17: read-back divergente → 500 OUTCOME_VERIFICATION_FAILED."""
+    vt, rbac = auth
+    with vt, rbac:
+        model_id = _create(client)
+        xml = client.get(f"/models/{model_id}/working-copy", headers=H).text
+
+        original_get = app_repo.get_aggregate
+
+        def divergent_get(mid: str):
+            model = original_get(mid)
+            if model is not None:
+                model.working_copy.replace_artifact(
+                    CanonicalBpmnArtifact(xml + "<!--tampered-->")
+                )
+            return model
+
+        try:
+            app_repo.get_aggregate = divergent_get  # type: ignore[method-assign]
+            resp = client.put(
+                f"/models/{model_id}/working-copy",
+                content=xml.replace(
+                    "<bpmn:process", '<bpmn:process name="X"'
+                ).encode(),
+                headers={**H, "Content-Type": "application/xml", "If-Match": '"v1"'},
+            )
+            assert resp.status_code == 500
+            assert resp.json()["error"]["code"] == "OUTCOME_VERIFICATION_FAILED"
+        finally:
+            app_repo.get_aggregate = original_get  # type: ignore[method-assign]
+
+
+def test_e2e_18_multiple_bpmn_diagrams_roundtrip(client, auth):
+    """E2E-18: arquivo com múltiplos BPMNDiagrams importa e exporta intacto."""
+    vt, rbac = auth
+    with vt, rbac:
+        resp = client.post(
+            "/models/import",
+            files={"file": ("multi.bpmn", fx.FX_DI_004.encode(), "text/xml")},
+            data={"display_name": "MultiDI"},
+            headers=H,
+        )
+        assert resp.status_code == 201
+        model_id = resp.json()["data"]["model_id"]
+        exported = client.get(f"/models/{model_id}/working-copy/export", headers=H)
+        assert exported.content == fx.FX_DI_004.encode()
+        assert exported.content.count(b"<bpmndi:BPMNDiagram") == 2
+
+
 def test_e2e_20_auth_matrix(client):
-    """E2E-20: no token → 401; viewer sem edit → 403 em writes."""
     assert client.get("/models").status_code == 401
 
     viewer_rbac = {
