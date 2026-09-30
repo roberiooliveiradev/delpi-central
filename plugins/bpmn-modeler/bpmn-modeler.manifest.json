@@ -37,24 +37,6 @@
       "entry": null,
       "order": 10,
       "showInMenu": true
-    },
-    {
-      "path": "/apps/bpmn-modeler/models/:modelId",
-      "label": "Editor de modelo",
-      "permission": "bpmn-modeler.view",
-      "icon": "workflow",
-      "entry": null,
-      "order": 11,
-      "showInMenu": false
-    },
-    {
-      "path": "/apps/bpmn-modeler/models/:modelId/revisions/:revisionNumber",
-      "label": "Revisão de modelo",
-      "permission": "bpmn-modeler.view",
-      "icon": "history",
-      "entry": null,
-      "order": 12,
-      "showInMenu": false
     }
   ],
   "backend": {
