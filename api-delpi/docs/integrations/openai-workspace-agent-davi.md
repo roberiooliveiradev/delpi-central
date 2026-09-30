@@ -294,7 +294,7 @@ Persona masculina só para consistência de comunicação — não repetir isso 
 CANONICAL_AGENT_INSTRUCTIONS_SOURCE = PASS (this document)
 AGENT_STUDIO_SYNC = PENDING_MANUAL_SYNC
 AGENT_STUDIO_PREVIEW_AFTER_SYNC = TEST_NOT_RUN
-AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.09.24.2 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.09.24.3 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
 DISCOVER_OUTPUT_SCHEMA = includes capability_surface (DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001)
 PROVIDER_REDISCOVERY = RECOMMENDED_AFTER_DEPLOY
 ```

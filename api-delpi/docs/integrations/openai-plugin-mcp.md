@@ -45,13 +45,13 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Strategic target (platform) | OpenAI Plugin/App → remote MCP → semantic capability → existing use case |
 | Workspace Agent consumer | DAVI Agent Studio draft/preview uses the same DAVI app/MCP with end-user authentication |
 | Legacy | `/gpt-actions/v1` = `LEGACY_TRANSITIONAL`; do not expand by default; GPT Actions `operationId` catalog is **not** the DAVI semantic capability authority |
-| V1 business tool | `search_products` (read-only Product Master) |
+| V1 business capability | `search_products` (read-only Product Master operationId, via discover→execute) |
 | MCP auth model | Transport requires OAuth |
 | Resource audience | JWT `aud` must include exact MCP resource **and** `delpi-central` |
 | Keycloak client | `mcp-api-delpi` — predefined/user-defined OAuth client |
 | ChatGPT connection | **PROVEN** |
-| Tool discovery | **PROVEN** for `search_products`; dynamic broker tools **implemented** — ChatGPT UI re-discovery **PENDING** post-deploy |
-| Live business invocation | **PROVEN** for `search_products`; dynamic execute **PROVEN in tests** — live smoke **PENDING** post-deploy |
+| Tool discovery | **PROVEN** for `search_products` (HISTORICAL — dedicated tool removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`); current surface = exactly 2 broker tools — ChatGPT UI re-discovery **PENDING** post-deploy |
+| Live business invocation | **PROVEN** for `search_products` (HISTORICAL — via former dedicated tool); dynamic execute **PROVEN in tests** — live smoke **PENDING** post-deploy |
 | MCP hardened contract | **PROVEN in runtime/provider** — bounded input schema + safe validation; typed output proven in runtime |
 | Agent private preview | **PROVEN** for current operator |
 | Negative business AuthZ | **PENDING** — second user without access still required |
@@ -120,7 +120,7 @@ is_complete / truncated = dataset completeness for model-visible response
   — see evidence davi-pagination-completeness-hardening-001.*
 ```
 
-> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). DAVI-CAPABILITY-EXPANSION-WAVE-002 promoted allowlist v7 (`DAVI_ELIGIBLE_READ = 13`). DAVI-CAPABILITY-EXPANSION-WAVE-003A promoted allowlist v8 (`DAVI_ELIGIBLE_READ = 15`). DAVI-PRODUCT-DRAWING-CAPABILITY-001 promoted allowlist v9 (`DAVI_ELIGIBLE_READ = 17`). **Current source authority is allowlist v10** (`DAVI_ELIGIBLE_READ = 35`) after `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`. Live deploy of v10 = `TEST_NOT_RUN` until redeploy.
+> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). DAVI-CAPABILITY-EXPANSION-WAVE-002 promoted allowlist v7 (`DAVI_ELIGIBLE_READ = 13`). DAVI-CAPABILITY-EXPANSION-WAVE-003A promoted allowlist v8 (`DAVI_ELIGIBLE_READ = 15`). DAVI-PRODUCT-DRAWING-CAPABILITY-001 promoted allowlist v9 (`DAVI_ELIGIBLE_READ = 17`). **Current source authority is allowlist v15** (`DAVI_ELIGIBLE_READ` = 63) after Wave 006 Production Operational Intelligence — `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001` (allowlist v14 / 53 READs at the time) reduced the productive MCP surface to exactly 2 tools without changing eligibility. Allowlist v10 (`DAVI_ELIGIBLE_READ` = 35) was the source authority at `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`. Live deploy of the current allowlist = `TEST_NOT_RUN` until redeploy.
 
 ### Live runtime residuals (DAVI-DYNAMIC-READ-004)
 
@@ -179,7 +179,7 @@ NEWLY ELIGIBLE  =
   get_product_structure
   get_product_production_status
 
-MCP tools = still exactly 3
+MCP tools = still exactly 3 (HISTORICAL — pre-simplification; current surface = exactly 2)
 NESTED_PROJECTION_ABSTRACTION_GATE = PASS (structure + production_status)
 NESTED PROJECTION = implemented (generic path allowlist)
 PAGINATION = budgets.max_page_size (not Product Search constants)
@@ -205,7 +205,7 @@ Historical GOV packs (`davi-read-governance-ratification-001.*`) marked `SUPERSE
 ```text
 No AuthZ policy change
 Eligible set unchanged = 7
-MCP tools unchanged = 3
+MCP tools unchanged = 3 (HISTORICAL — pre-simplification; current surface = exactly 2)
 Removed operationId semantic registries from eligibility.py
 Nested requirement = structural shape metadata
 SEMANTICALLY_REDUNDANT = coverageDisposition governance metadata
@@ -451,7 +451,7 @@ The exact connector id is operational/provider configuration and is intentionall
 7. Copy the provider-generated return URL into Keycloak and save the client.
 8. Create/reconnect the Plugin.
 9. After deployment or auth/metadata changes, use **Reconnect** when needed and refresh Plugin actions.
-10. Acceptance evidence: ChatGPT shows the connection as connected and lists exactly the expected tool `search_products`.
+10. Acceptance evidence: ChatGPT shows the connection as connected and lists exactly the 2 MCP tools — `discover_delpi_information`, `execute_delpi_information`. (HISTORICAL: earlier acceptance listed a dedicated `search_products` tool — removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`; Product Master remains reachable via discover→execute.)
 
 ## Why remote MCP needs `mcp:tools` (and dedicated audience)
 
@@ -482,6 +482,8 @@ group_category
 No stock, pricing, supplier, customer, sales, invoices, finance, SQL, generic proxy, writes, service account, or GPT-local RBAC are part of DAVI V1.
 
 ## MCP tool contract — PLUGIN-006 / 006A
+
+> **HISTORICAL (pre-simplification):** this section documents the dedicated `search_products` MCP tool contract removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`. `search_products` remains a governed capability via discover→execute; the current productive surface is exactly `discover_delpi_information` + `execute_delpi_information`.
 
 Canonical MCP schema owner:
 
@@ -609,7 +611,9 @@ MCP_RATE_POLICY = PENDING_OWNER_DECISION
 WIDER_PUBLICATION = BLOCKED_BY_PENDING_GATES
 ```
 
-**CURRENT (SOURCE PROVEN — `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`):** allowlist v10 / `DAVI_ELIGIBLE_READ` = 35; MCP tools = 3; GPT Actions legacy = 2 (`LEGACY_TRANSITIONAL`); commercial analytics family promoted behind discover/execute; live production MCP acceptance = `TEST_NOT_RUN` until deploy. Prior live intelligence contract (`DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001`) remains valid for `capability_surface.agent_directives`. Agent Studio sync remains `PENDING_MANUAL_SYNC` unless newer evidence proves otherwise. New LIVE PASS requires fresh authenticated provider evidence — not inferred from this doc.
+**HISTORICAL (SOURCE PROVEN at the time — `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`):** allowlist v10 / `DAVI_ELIGIBLE_READ` = 35; MCP tools = 3; GPT Actions legacy = 2 (`LEGACY_TRANSITIONAL`); commercial analytics family promoted behind discover/execute; live production MCP acceptance = `TEST_NOT_RUN` until deploy. Prior live intelligence contract (`DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001`) remains valid for `capability_surface.agent_directives`. Agent Studio sync remains `PENDING_MANUAL_SYNC` unless newer evidence proves otherwise. New LIVE PASS requires fresh authenticated provider evidence — not inferred from this doc.
+
+**CURRENT (SOURCE PROVEN at this HEAD):** allowlist v15 / `DAVI_ELIGIBLE_READ` = 63 (Wave 006 Production Operational Intelligence); productive MCP tools = **exactly 2** — `discover_delpi_information`, `execute_delpi_information` (`DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`); `search_products` remains a governed capability reachable via discover→execute; agent intelligence = `2026.09.24.3`; GPT Actions legacy unchanged (`LEGACY_TRANSITIONAL`); live production MCP acceptance for current HEAD = `TEST_NOT_RUN` until deploy + provider rediscovery.
 
 ## Rate limit
 
