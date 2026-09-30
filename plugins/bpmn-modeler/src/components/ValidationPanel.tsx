@@ -23,11 +23,11 @@ export function ValidationPanel({ report, onSelectIssue }: Props) {
           <button
             type="button"
             className="bpmnm-issue__link"
-            disabled={!issue.reference || !onSelectIssue}
-            onClick={() => issue.reference && onSelectIssue?.(issue.reference)}
+            disabled={!issue.element_id || !onSelectIssue}
+            onClick={() => issue.element_id && onSelectIssue?.(issue.element_id)}
           >
             <code>{issue.rule_id}</code> — {issue.message}
-            {issue.reference ? <em> ({issue.reference})</em> : null}
+            {issue.element_id ? <em> ({issue.element_id})</em> : null}
           </button>
         </li>
       ))}

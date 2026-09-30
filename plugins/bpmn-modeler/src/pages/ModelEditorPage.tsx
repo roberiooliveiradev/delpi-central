@@ -19,7 +19,7 @@ import { BpmnEditorAdapter, type DiagramRef, type ElementSummary } from "../edit
 import { ElementInspector } from "../editor/inspector/ElementInspector";
 import { buildElkGraph } from "../layout/elkGraph";
 import { runLayout, type LayoutJob } from "../layout/layoutEngine";
-import { buildDiXml, hasBpmnDi, injectDiIntoXml, planeElementFor, snapshotFromXml } from "../layout/diProposal";
+import { buildDiOps, buildDiXml, hasBpmnDi, injectDiIntoXml, planeElementFor, snapshotFromXml, stripBpmnDi, type DiLayoutOp } from "../layout/diProposal";
 import { capabilitiesFromPermissions, editableMode, type Capabilities, type ReadOnlyReason } from "../state/capabilities";
 import { SaveMachine, type SaveState } from "../state/saveMachine";
 import { ConflictDialog } from "../components/ConflictDialog";
@@ -80,6 +80,9 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
   const [selection, setSelection] = useState<ElementSummary | null>(null);
   const [unsavedOpen, setUnsavedOpen] = useState<(() => void) | null>(null);
   const [layoutBusy, setLayoutBusy] = useState(false);
+  const [preview, setPreview] = useState<{ ops: DiLayoutOp[]; xml: string } | null>(null);
+  const previewAdapterRef = useRef<BpmnEditorAdapter | null>(null);
+  const previewCanvasRef = useRef<HTMLDivElement>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [adapterInstance, setAdapterInstance] = useState<BpmnEditorAdapter | null>(null);
 
@@ -106,6 +109,9 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       else if (!capabilities.edit) reason = "NO_EDIT_PERMISSION";
       setReadOnlyReason(reason);
 
+      // lifecycle: destroy do adapter anterior antes de recriar
+      // (CANVAS-REG — nunca duas instâncias de editor no mesmo canvas)
+      adapterRef.current?.destroy();
       const adapter = new BpmnEditorAdapter();
       adapterRef.current = adapter;
       setAdapterInstance(adapter);
@@ -168,6 +174,8 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     void Promise.resolve().then(loadModel);
     return () => {
       layoutJobRef.current?.cancel();
+      previewAdapterRef.current?.destroy();
+      previewAdapterRef.current = null;
       adapterRef.current?.destroy();
       adapterRef.current = null;
     };
@@ -283,6 +291,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       await restoreRevision(modelId, revisionNumber, version, { getAccessToken });
       // replace model = destroy + mount + importXml (P4 §10)
       await loadModel();
+      void loadRevisions();
     } catch (err) {
       setPageError(err instanceof BpmnModelerApiError ? err.message : "Falha ao restaurar.");
     }
@@ -316,10 +325,16 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     }
   };
 
-  // ---------- auto-layout (preview → accept/cancel) ----------
+  // ---------- auto-layout (preview → accept/cancel, P5 §18) ----------
+  const closePreview = useCallback(() => {
+    previewAdapterRef.current?.destroy();
+    previewAdapterRef.current = null;
+    setPreview(null);
+  }, []);
+
   const onOrganize = async () => {
     const adapter = adapterRef.current;
-    if (!adapter) return;
+    if (!adapter || preview) return;
     setLayoutBusy(true);
     try {
       const xml = await adapter.exportXml();
@@ -328,39 +343,58 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       const job = runLayout(graph);
       layoutJobRef.current = job;
       const outcome = await job.promise;
-      if (outcome.ok) {
-        const planeElement = planeElementFor(xml);
-        if (planeElement) {
-          const withDi = injectDiIntoXml(xml, buildDiXml(outcome.graph, snapshot, planeElement));
-          // accept: reimport do artefato layoutado (commands → dirty via reload)
-          await adapter.destroy();
-          adapter.mount(canvasRef.current!, "edit");
-          adapter.subscribe({
-            onChanged: (trigger) => {
-              const m = machineRef.current;
-              m.dispatch({ type: "COMMAND", trigger });
-              setState(m.state);
-            },
-            onSelectionChanged: (ids) => {
-              setSelection(ids[0] ? adapter.getElementSummary(ids[0]) : null);
-            },
-          });
-          const res = await adapter.importXml(withDi);
-          if (res.ok) {
-            const m = machineRef.current;
-            m.dispatch({ type: "COMMAND", trigger: "execute" });
-            setState(m.state);
-          }
-        }
-      }
+      if (!outcome.ok) return;
+
+      const planeElement = planeElementFor(xml);
+      if (!planeElement) return;
+      const ops = buildDiOps(outcome.graph);
+      // artefato transient de preview: DI existente removido para que o
+      // viewer mostre a proposta (o artefato canônico nunca é reescrito aqui).
+      const previewXml = injectDiIntoXml(
+        stripBpmnDi(xml),
+        buildDiXml(outcome.graph, snapshot, planeElement),
+      );
+      setPreview({ ops, xml: previewXml });
     } finally {
       layoutJobRef.current = null;
       setLayoutBusy(false);
     }
   };
 
+  // preview viewer transitório (NavigatedViewer) — ciclo de vida isolado
+  // do main editor, que permanece intacto até o Accept (P5 §18).
+  useEffect(() => {
+    if (!preview || !previewCanvasRef.current) return;
+    const previewAdapter = new BpmnEditorAdapter();
+    previewAdapter.mount(previewCanvasRef.current, "viewer");
+    previewAdapterRef.current = previewAdapter;
+    void previewAdapter.importXml(preview.xml).then((result) => {
+      if (result.ok) previewAdapter.fitViewport();
+      else setPageError(result.error.message);
+    });
+    return () => {
+      previewAdapter.destroy();
+      if (previewAdapterRef.current === previewAdapter)
+        previewAdapterRef.current = null;
+    };
+  }, [preview]);
+
+  // Accept → UM comando lógico no editor principal → DIRTY (undo reverte).
+  const onAcceptPreview = () => {
+    if (!preview) return;
+    adapterRef.current?.applyDiLayout(preview.ops);
+    closePreview();
+  };
+
+  // Cancel → preview destruído; main editor bit-a-bit intacto.
+  const onCancelPreview = () => {
+    closePreview();
+  };
+
   // ---------- navigation guard ----------
   const guardedNavigate = (path: string) => {
+    // saída forçada durante preview ⇒ Cancel automático (P5 §18)
+    if (preview) closePreview();
     const m = machineRef.current;
     if (m.dirty() || m.state === "SAVE_FAILED") {
       setUnsavedOpen(() => () => {
@@ -401,12 +435,14 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
         </h1>
         <SaveStatus state={machineState} />
         <div className="bpmnm-editor__actions">
-          <DiagramSelector
-            diagrams={diagrams}
-            activeId={diagrams[0]?.id ?? null}
-            onSelect={(id) => adapterRef.current?.openDiagram(id)}
-          />
-          {isEditable && (
+          {!preview && (
+            <DiagramSelector
+              diagrams={diagrams}
+              activeId={diagrams[0]?.id ?? null}
+              onSelect={(id) => adapterRef.current?.openDiagram(id)}
+            />
+          )}
+          {isEditable && !preview && (
             <>
               <button type="button" className="bpmnm-btn" disabled={machineState !== "DIRTY" && machineState !== "CLEAN"} onClick={() => adapterRef.current?.undo()}>
                 Desfazer
@@ -417,7 +453,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
               <button
                 type="button"
                 className="bpmnm-btn"
-                disabled={layoutBusy}
+                disabled={layoutBusy || !adapterInstance}
                 onClick={() => void onOrganize()}
               >
                 {layoutBusy ? "Calculando layout…" : "Organizar layout"}
@@ -430,6 +466,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
               <button
                 type="button"
                 className="bpmnm-btn"
+                disabled={!adapterInstance}
                 onClick={() => void onValidate()}
               >
                 Validar
@@ -444,17 +481,21 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
               </button>
             </>
           )}
-          <button type="button" className="bpmnm-btn" onClick={() => adapterRef.current?.zoomIn()} aria-label="Ampliar">+</button>
-          <button type="button" className="bpmnm-btn" onClick={() => adapterRef.current?.zoomOut()} aria-label="Reduzir">−</button>
-          <button type="button" className="bpmnm-btn" onClick={() => adapterRef.current?.fitViewport()}>
-            Ajustar
-          </button>
-          {capabilities.manage && model && (
-            <button type="button" className="bpmnm-btn" onClick={() => void onArchiveToggle()}>
-              {model.archived_at ? "Desarquivar" : "Arquivar"}
-            </button>
+          {!preview && (
+            <>
+              <button type="button" className="bpmnm-btn" disabled={!adapterInstance} onClick={() => adapterRef.current?.zoomIn()} aria-label="Ampliar">+</button>
+              <button type="button" className="bpmnm-btn" disabled={!adapterInstance} onClick={() => adapterRef.current?.zoomOut()} aria-label="Reduzir">−</button>
+              <button type="button" className="bpmnm-btn" disabled={!adapterInstance} onClick={() => adapterRef.current?.fitViewport()}>
+                Ajustar
+              </button>
+              {capabilities.manage && model && (
+                <button type="button" className="bpmnm-btn" onClick={() => void onArchiveToggle()}>
+                  {model.archived_at ? "Desarquivar" : "Arquivar"}
+                </button>
+              )}
+              <ExportMenu modelId={modelId} adapter={adapterInstance} getAccessToken={getAccessToken} />
+            </>
           )}
-          <ExportMenu modelId={modelId} adapter={adapterInstance} getAccessToken={getAccessToken} />
         </div>
       </header>
 
@@ -467,11 +508,39 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       {pageError ? <div className="bpmnm-error" role="alert">{pageError}</div> : null}
 
       <div className="bpmnm-editor__body">
-        <div
-          ref={canvasRef}
-          className="bpmnm-canvas"
-          aria-label="Canvas do diagrama BPMN"
-        />
+        <div className="bpmnm-canvas-wrap">
+          <div
+            ref={canvasRef}
+            className="bpmnm-canvas"
+            aria-label="Canvas do diagrama BPMN"
+          />
+          {preview && (
+            <div className="bpmnm-preview" data-testid="layout-preview">
+              <div className="bpmnm-preview__banner" role="status">
+                Pré-visualização do layout
+                <button
+                  type="button"
+                  className="bpmnm-btn bpmnm-btn--primary"
+                  onClick={onAcceptPreview}
+                >
+                  Aceitar
+                </button>
+                <button
+                  type="button"
+                  className="bpmnm-btn"
+                  onClick={onCancelPreview}
+                >
+                  Cancelar
+                </button>
+              </div>
+              <div
+                ref={previewCanvasRef}
+                className="bpmnm-canvas bpmnm-preview__canvas"
+                aria-label="Pré-visualização do layout proposto"
+              />
+            </div>
+          )}
+        </div>
         <aside className="bpmnm-side">
           <div className="bpmnm-side__tabs" role="tablist">
             <button role="tab" aria-selected={sideTab === "properties"} className={sideTab === "properties" ? "active" : ""} onClick={() => setSideTab("properties")}>
@@ -485,12 +554,15 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
             </button>
           </div>
           <div className="bpmnm-side__content">
-            {sideTab === "properties" ? (
-              isEditable ? (
-                <div id="bpmn-properties-panel" className="bpmnm-properties" />
-              ) : (
-                <ElementInspector element={selection} />
-              )
+            {/* o Modeler exige o parent no mount — sempre presente no DOM,
+                visível só na aba Propriedades em modo editável */}
+            <div
+              id="bpmn-properties-panel"
+              className="bpmnm-properties"
+              hidden={sideTab !== "properties" || !isEditable}
+            />
+            {sideTab === "properties" && !isEditable ? (
+              <ElementInspector element={selection} />
             ) : null}
             {sideTab === "validation" ? (
               <ValidationPanel

@@ -38,7 +38,7 @@ export const LAYOUT_PROFILE_V1 = {
     "elk.randomSeed": "1",
   } as Record<string, string>,
 
-  /** Timeout do cálculo de layout (worker ou fallback main thread). */
+  /** Timeout do cálculo de layout no worker. */
   timeoutMs: 15_000,
 } as const;
 

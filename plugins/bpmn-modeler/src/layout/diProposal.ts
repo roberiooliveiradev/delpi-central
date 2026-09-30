@@ -61,7 +61,7 @@ export function snapshotFromXml(xml: string): LayoutSnapshot {
         if (source && target)
           edges.push({ id, sourceId: source, targetId: target });
       } else if (CONTAINERS.has(name) || name === "collaboration" || name === "definitions") {
-        walk(child, name === "definitions" || name === "collaboration" ? undefined : parentId ?? id);
+        walk(child, parentId);
       }
     }
   };
@@ -74,13 +74,23 @@ export function hasBpmnDi(xml: string): boolean {
   return doc.getElementsByTagNameNS(BPMNDI_NS, "BPMNDiagram").length > 0;
 }
 
-/** Aplica a geometria calculada ao snapshot: gera o fragmento BPMN-DI. */
-export function buildDiXml(
-  laidOut: ElkNode,
-  snapshot: LayoutSnapshot,
-  planeElementId: string,
-): string {
-  const bounds = new Map<string, { x: number; y: number; width: number; height: number }>();
+export type DiBounds = { x: number; y: number; width: number; height: number };
+
+/** Operação geométrica por elemento — consumida pelo editor como
+ *  UM comando (single logical batch) no Accept do preview (P5 §18). */
+export type DiLayoutOp = {
+  elementId: string;
+  bounds?: DiBounds;
+  waypoints?: Array<{ x: number; y: number }>;
+};
+
+type LayoutGeometry = {
+  bounds: Map<string, DiBounds>;
+  edgePoints: Map<string, Array<{ x: number; y: number }>>;
+};
+
+function computeGeometry(laidOut: ElkNode): LayoutGeometry {
+  const bounds = new Map<string, DiBounds>();
   const edgePoints = new Map<string, Array<{ x: number; y: number }>>();
 
   const collect = (node: ElkNode, ox = 0, oy = 0) => {
@@ -108,6 +118,38 @@ export function buildDiXml(
     for (const child of node.children ?? []) collect(child, x, y);
   };
   collect(laidOut);
+  return { bounds, edgePoints };
+}
+
+/** Ops geométricas por elemento (ordem estável: nodes depois edges). */
+export function buildDiOps(laidOut: ElkNode): DiLayoutOp[] {
+  const { bounds, edgePoints } = computeGeometry(laidOut);
+  const ops: DiLayoutOp[] = [];
+  for (const [elementId, b] of bounds) ops.push({ elementId, bounds: b });
+  for (const [elementId, pts] of edgePoints)
+    ops.push({ elementId, waypoints: pts });
+  return ops;
+}
+
+/** Remove todos os BPMNDiagram do XML — usado para montar o artefato
+ *  transient de preview (nunca o artefato canônico persistido). */
+export function stripBpmnDi(xml: string): string {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  for (const d of Array.from(
+    doc.getElementsByTagNameNS(BPMNDI_NS, "BPMNDiagram"),
+  )) {
+    d.parentNode?.removeChild(d);
+  }
+  return new XMLSerializer().serializeToString(doc);
+}
+
+/** Aplica a geometria calculada ao snapshot: gera o fragmento BPMN-DI. */
+export function buildDiXml(
+  laidOut: ElkNode,
+  snapshot: LayoutSnapshot,
+  planeElementId: string,
+): string {
+  const { bounds, edgePoints } = computeGeometry(laidOut);
 
   const diagramId = `bpmndi_${Math.random().toString(36).slice(2, 10)}`;
   const planeId = `${diagramId}_plane`;

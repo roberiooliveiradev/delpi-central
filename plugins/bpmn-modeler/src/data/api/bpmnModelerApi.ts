@@ -10,19 +10,18 @@ type GetToken = (() => string | undefined) | undefined;
 
 export type ApiIssue = {
   rule_id: string;
+  rule_source: string;
   stage: string;
-  source: string;
   severity: "ERROR" | "WARNING" | "INFO";
   message: string;
-  reference: string | null;
+  element_id: string | null;
+  path: string | null;
 };
 
-export type StageStatus = "EVALUATED" | "NOT_EVALUATED";
-
 export type ValidationReport = {
+  evaluated_stages: string[];
+  not_evaluated_stages: string[];
   issues: ApiIssue[];
-  stage_status: Record<string, StageStatus>;
-  input_safety?: Record<string, unknown> | null;
 };
 
 export type ModelSummary = {

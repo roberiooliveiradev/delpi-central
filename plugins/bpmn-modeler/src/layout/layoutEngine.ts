@@ -1,21 +1,22 @@
 /**
- * Layout engine adapter — worker primeiro; fallback para main thread
- * apenas quando o worker está indisponível no ambiente (P5 §9), nunca
- * silencioso: `usedFallback` sinaliza o diagnóstico.
+ * Layout engine adapter — Web Worker only (P5 §9 / P6).
+ *
+ * ELK executa exclusivamente em worker dedicado (elk-worker.min.js via
+ * `workerFactory`). Se o Worker estiver indisponível ou falhar, o job
+ * rejeita com LAYOUT_FAILED e o canvas principal permanece intacto —
+ * não existe fallback main thread.
  *
  * Contrato: input ELK graph → output geometria | LAYOUT_FAILED;
  * cancellation via abort do job corrente; timeout do profile.
  */
 
+import ELK from "elkjs/lib/elk-api.js";
+
 import { LAYOUT_PROFILE_V1 } from "./layoutProfile";
 import type { ElkNode } from "./elkGraph";
-import type {
-  LayoutWorkerRequest,
-  LayoutWorkerResponse,
-} from "./layout.worker";
 
 export type LayoutResult =
-  | { ok: true; graph: ElkNode; usedFallback: boolean }
+  | { ok: true; graph: ElkNode }
   | { ok: false; error: { code: "LAYOUT_FAILED" | "LAYOUT_TIMEOUT" | "LAYOUT_CANCELLED"; message: string } };
 
 export type LayoutJob = {
@@ -23,112 +24,98 @@ export type LayoutJob = {
   cancel: () => void;
 };
 
-let workerInstance: Worker | null | undefined;
-let jobCounter = 0;
-const pending = new Map<
-  string,
-  { resolve: (r: LayoutWorkerResponse) => void; reject: (e: Error) => void }
->();
+let elkInstance: ELK | null | undefined;
+const workerErrorSubs = new Set<(err: Error) => void>();
 
-function getWorker(): Worker | null {
-  if (workerInstance !== undefined) return workerInstance;
+function getElk(): ELK | null {
+  if (elkInstance !== undefined) return elkInstance;
   try {
-    workerInstance = new Worker(
-      new URL("./layout.worker.ts", import.meta.url),
-      { type: "module" },
-    );
-    workerInstance.onmessage = (event: MessageEvent<LayoutWorkerResponse>) => {
-      const entry = pending.get(event.data.jobId);
-      if (entry) {
-        pending.delete(event.data.jobId);
-        entry.resolve(event.data);
-      }
-    };
-    workerInstance.onerror = (event) => {
-      const err = new Error(event.message || "worker failure");
-      for (const [, entry] of pending) entry.reject(err);
-      pending.clear();
-    };
-    return workerInstance;
+    elkInstance = new ELK({
+      workerFactory: () => {
+        const worker = new Worker(
+          new URL("./layout.worker.ts", import.meta.url),
+          { type: "module" },
+        );
+        worker.onerror = (event) => {
+          const err = new Error(event.message || "layout worker failure");
+          elkInstance = undefined;
+          for (const sub of workerErrorSubs) sub(err);
+        };
+        return worker;
+      },
+    });
+    return elkInstance;
   } catch {
-    workerInstance = null;
+    elkInstance = null;
     return null;
   }
 }
 
-async function layoutOnMainThread(graph: ElkNode): Promise<ElkNode> {
-  const { default: ELK } = await import("elkjs/lib/elk.bundled.js");
-  const elk = new ELK();
-  return (await elk.layout(graph as never)) as unknown as ElkNode;
-}
-
 export function runLayout(graph: ElkNode): LayoutJob {
-  const jobId = `layout-${++jobCounter}`;
   let cancelled = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   const promise = new Promise<LayoutResult>((resolve) => {
     const finish = (result: LayoutResult) => {
       if (timer) clearTimeout(timer);
+      workerErrorSubs.delete(onWorkerError);
       resolve(result);
     };
-
-    timer = setTimeout(() => {
-      pending.delete(jobId);
+    const onWorkerError = (err: Error) => {
+      if (cancelled) return;
       finish({
         ok: false,
-        error: { code: "LAYOUT_TIMEOUT", message: "Layout excedeu o tempo limite." },
+        error: { code: "LAYOUT_FAILED", message: err.message },
+      });
+    };
+    workerErrorSubs.add(onWorkerError);
+
+    timer = setTimeout(() => {
+      finish({
+        ok: false,
+        error: {
+          code: "LAYOUT_TIMEOUT",
+          message: "Layout excedeu o tempo limite.",
+        },
       });
     }, LAYOUT_PROFILE_V1.timeoutMs);
 
-    const worker = getWorker();
-    if (worker) {
-      pending.set(jobId, {
-        resolve: (response) => {
-          if (cancelled) return;
-          if (response.ok) {
-            finish({ ok: true, graph: response.graph, usedFallback: false });
-          } else {
-            finish({
-              ok: false,
-              error: { code: "LAYOUT_FAILED", message: response.error.message },
-            });
-          }
-        },
-        reject: (err) => {
-          if (cancelled) return;
-          finish({
-            ok: false,
-            error: { code: "LAYOUT_FAILED", message: err.message },
-          });
+    const elk = getElk();
+    if (!elk) {
+      // Worker indisponível — layout unavailable (P5 §9); canvas intacto.
+      finish({
+        ok: false,
+        error: {
+          code: "LAYOUT_FAILED",
+          message: "Layout indisponível: Web Worker não suportado neste ambiente.",
         },
       });
-      worker.postMessage({ jobId, graph } satisfies LayoutWorkerRequest);
-    } else {
-      // Worker indisponível — fallback main thread com diagnóstico (P5 §9).
-      layoutOnMainThread(graph)
-        .then((laidOut) => {
-          if (!cancelled)
-            finish({ ok: true, graph: laidOut, usedFallback: true });
-        })
-        .catch((err) => {
-          if (!cancelled)
-            finish({
-              ok: false,
-              error: {
-                code: "LAYOUT_FAILED",
-                message: err instanceof Error ? err.message : String(err),
-              },
-            });
-        });
+      return;
     }
+
+    (elk.layout(graph as never) as Promise<ElkNode>).then(
+      (laidOut) => {
+        if (cancelled) return;
+        finish({ ok: true, graph: laidOut });
+      },
+      (err) => {
+        if (cancelled) return;
+        finish({
+          ok: false,
+          error: {
+            code: "LAYOUT_FAILED",
+            message: err instanceof Error ? err.message : String(err),
+          },
+        });
+      },
+    );
   });
 
   return {
     promise,
     cancel: () => {
       cancelled = true;
-      pending.delete(jobId);
+      workerErrorSubs.delete(onWorkerError);
     },
   };
 }

@@ -13,6 +13,9 @@ import {
   BpmnPropertiesProviderModule,
 } from "bpmn-js-properties-panel";
 
+import { ApplyDiLayoutHandler } from "./layoutApply";
+import type { DiLayoutOp } from "../layout/diProposal";
+
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn.css";
@@ -66,6 +69,7 @@ export class BpmnEditorAdapter {
   private modeler: EditorInstance | null = null;
   private mode: EditorMode = "edit";
   private subs: EditorSubscriptions = {};
+  private layoutHandlerRegistered = false;
 
   // Branch-aware dirty tracking (P4 §13) — nunca stack depth.
   private stateTokens: string[] = [];
@@ -87,12 +91,14 @@ export class BpmnEditorAdapter {
     } else {
       this.modeler = new NavigatedViewer({ container });
     }
+    this.layoutHandlerRegistered = false;
     this.wireEvents();
   }
 
   destroy(): void {
     this.modeler?.destroy();
     this.modeler = null;
+    this.layoutHandlerRegistered = false;
     this.stateTokens = [];
     this.cursor = -1;
     this.savedToken = null;
@@ -184,6 +190,25 @@ export class BpmnEditorAdapter {
 
   redo(): void {
     this.commandStack()?.redo();
+  }
+
+  /**
+   * Accept do layout preview — aplica ops de geometria DI como UM
+   * comando lógico no editor vivo (P5 §18). commandStack.changed("execute")
+   * → DIRTY; undo() reverte o batch inteiro. Somente modo "edit".
+   */
+  applyDiLayout(ops: DiLayoutOp[]): boolean {
+    const cs = this.commandStack() as unknown as {
+      registerHandler?: (command: string, handlerCls: unknown) => void;
+      execute?: (command: string, context: unknown) => void;
+    } | null;
+    if (!cs?.execute) return false;
+    if (!this.layoutHandlerRegistered) {
+      cs.registerHandler?.("layout.applyDi", ApplyDiLayoutHandler);
+      this.layoutHandlerRegistered = true;
+    }
+    cs.execute("layout.applyDi", { ops });
+    return true;
   }
 
   canUndo(): boolean {
