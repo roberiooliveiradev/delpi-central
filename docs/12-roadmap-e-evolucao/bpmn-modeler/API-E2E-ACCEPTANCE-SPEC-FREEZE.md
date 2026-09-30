@@ -535,8 +535,8 @@ listRevisions, createRevision, getRevision, restoreRevision, exportRevision
 | Deployment smoke | `curl` `/health`+`/ready` via compose | convenção monorepo |
 
 - Playwright é **introdução nova e única** — proibido segundo framework E2E.
-- Stack E2E mínima: gateway + portal/MFE + `bpmn-modeler-api` + database `bpmn_modeler` efêmero + Keycloak/test identity + Core RBAC test permissions. **Não** mockar justamente os boundaries que o E2E prova.
-- Data isolation: cada suite cria seus próprios models; sem IDs hardcoded; cleanup por database/container efêmero destruído pós-suite (hard delete não existe na API — nunca adicionar endpoint de delete para testes).
+- Stack E2E mínima: gateway + portal/MFE + `bpmn-modeler-api` + `plugins_hub` efêmera com schema `bpmn_modeler` + Keycloak/test identity + Core RBAC test permissions. **Não** mockar justamente os boundaries que o E2E prova.
+- Data isolation: cada suite cria seus próprios models; sem IDs hardcoded; cleanup por schema/container efêmero destruído pós-suite (hard delete não existe na API — nunca adicionar endpoint de delete para testes).
 
 ## 24. E2E actor matrix
 
@@ -603,13 +603,32 @@ Schema gerado e verificado por invariantes (não diff byte-a-byte): 20 operation
 
 Os exemplos mínimos de §20.2 presentes no schema.
 
-### 26.3 DB least-privilege (integration)
+### 26.3 Database isolation contract (integration)
 
-PASS: `SELECT/INSERT/UPDATE models`, `SELECT/INSERT revisions`. FAIL: `UPDATE revisions`, `DELETE` (ambas), `SELECT schema_migrations`, `CREATE TABLE`, `ALTER TABLE`, acesso a outro database.
+Arquitetura autorizada: `plugins_hub` compartilhado + schema `bpmn_modeler` dedicado, credencial `PLUGINS_DB_*` (`plugins_user`). Como `plugins_user` é a credencial transversal da plataforma, **não existe** negação física por-role a outros schemas — o contrato de isolamento é por aplicação/repository + testes, não por grants.
+
+`FROZEN` — acceptance `DB-ISO-*`:
+
+| ID | Acceptance |
+|---|---|
+| DB-ISO-01 | `plugins_hub` contém schema `bpmn_modeler` |
+| DB-ISO-02 | `models`, `revisions`, `schema_migrations` existem somente em `bpmn_modeler` |
+| DB-ISO-03 | Toda query do repository qualifica `bpmn_modeler.*` |
+| DB-ISO-04 | Zero query de negócio do repository para outro schema |
+| DB-ISO-05 | Zero FK de `bpmn_modeler.*` para outro schema |
+| DB-ISO-06 | Migration V001 cria somente objetos do bounded context |
+| DB-ISO-07 | Startup migration é idempotente (2ª execução = no-op) |
+| DB-ISO-08 | Checksum divergence continua fail-closed |
+| DB-ISO-09 | `BPMN_RUN_MIGRATIONS_ON_STARTUP=false` não executa migration |
+| DB-ISO-10 | `BPMN_RUN_MIGRATIONS_ON_STARTUP=true` aplica pendentes |
+| DB-ISO-11 | `/ready` reporta `database=true`, `xsd_bundle=true`, `schema=true` |
+| DB-ISO-12 | `revisions` permanece append-only por contrato application/repository (sem `UPDATE`/`DELETE` emitido; `ModelRepositoryPort` não expõe mutação de revision; static + integration tests provam) |
+
+Não exigir prova de negação física que o modelo `plugins_user` compartilhado não fornece.
 
 ### 26.4 Migration flow (integration)
 
-Ephemeral DB: bootstrap→migration job(admin)→verify schema/grants/checksum→start API app-only→`/ready` 200. Sem admin creds no processo API.
+`plugins_hub` efêmera → API sobe com `BPMN_RUN_MIGRATIONS_ON_STARTUP=true` → `run_migrations()` cria schema `bpmn_modeler` + tabelas + `bpmn_modeler.schema_migrations` com checksum → `/ready` 200. Idempotente: reexecução não reaplica. `BPMN_RUN_MIGRATIONS_ON_STARTUP=false` → schema ausente → `/ready` 503 (`schema=false`), API nunca corrige no probe. Mesma credencial `PLUGINS_DB_*` para runtime e migration — não existe role de migration separada (padrão `TM_RUN_MIGRATIONS_ON_STARTUP`).
 
 ### 26.5 XSD offline (integration)
 
@@ -657,11 +676,11 @@ Bytes exatos = canônico; filename sanitizado; `Content-Disposition`; `applicati
 
 ## 31. Security acceptance
 
-`FROZEN`: T01–T18 100% mapeados → nível apropriado (unit/integration/E2E/CI gate conforme P6 §12) — `TEST_NOT_RUN`. Auth matrix = E2E-20; grants = §26.3; input safety = E2E-09; worker/CSP = E2E-19 + contract tests.
+`FROZEN`: T01–T18 100% mapeados → nível apropriado (unit/integration/E2E/CI gate conforme P6 §12) — `TEST_NOT_RUN`. Auth matrix = E2E-20; schema isolation/DB contract = §26.3 (DB-ISO-*); input safety = E2E-09; worker/CSP = E2E-19 + contract tests.
 
-## 32. Migration / grant acceptance
+## 32. Migration / schema-isolation acceptance
 
-`FROZEN`: §26.3 + §26.4 = prova de least privilege e de fluxo separado de migration (admin fora do processo API) — `TEST_NOT_RUN`.
+`FROZEN`: §26.3 (DB-ISO-01..12) + §26.4 = prova de isolamento por schema no `plugins_hub` compartilhado, append-only de revisions como invariante de aplicação, e startup migration idempotente — `TEST_NOT_RUN`.
 
 ## 33. Accessibility / device acceptance
 
@@ -679,7 +698,7 @@ Bytes exatos = canônico; filename sanitizado; `Content-Disposition`; `applicati
 | R-LAYOUT-01..16 | P5 | L01–L16 | layout adapter/worker | unit+E2E-19 | hard gates | TEST_NOT_RUN |
 | R-SEC-01..18 | P6 | T01–T18 | full stack | unit/int/E2E/CI | threat controls | TEST_NOT_RUN |
 | R-TRANSPORT | P7 | route map/ETag/envelope/media/pagination | HTTP layer | contract tests §26 | matrix | TEST_NOT_RUN |
-| R-DB | P6 | schema/grants/migrations | persistence | §26.3/§26.4 | grants+migration | TEST_NOT_RUN |
+| R-DB | P6 | schema/migrations/isolation | persistence | §26.3/§26.4 (DB-ISO-*) | schema isolation+startup migration | TEST_NOT_RUN |
 | R-A11Y/DEV | P1/P4 | a11y+tablet | MFE | E2E-21/22 | smoke | TEST_NOT_RUN |
 
 ## 35. Final feature matrix
@@ -704,10 +723,10 @@ Bytes exatos = canônico; filename sanitizado; `Content-Disposition`; `applicati
 | read-only reasons | P4 | P7 (archived/mustUnderstand/tablet) | ✅ | — |
 | multiple diagrams | P4 | P7 (E2E-18) | ✅ | — |
 | layout preview | P5 | P7 (E2E-05/06) | ✅ | — |
-| database ownership | P6 | P7 | ✅ | dedicated db+roles |
+| database ownership | P6 | P7 | ✅ | `plugins_hub` shared + schema `bpmn_modeler` (emendado — dedicated db revogado) |
 | permissions | P6 | P7 (x-required-permission) | ✅ | — |
 | dependencies | P6 | P7 (peer graph) | ✅ | PASS |
-| migration flow | P6 | P7 (§26.4) | ✅ | separate step |
+| migration flow | P6 | P7 (§26.4) | ✅ | API startup (`BPMN_RUN_MIGRATIONS_ON_STARTUP`) — emendado |
 | API routes | P7 | P2 (17 UCs) | ✅ | 17/17 |
 | ValidateWorkingCopy input | P2↔P4 | P7 §3.1 | ✅ | clarificação aplicada em P2 |
 
@@ -728,7 +747,7 @@ Bytes exatos = canônico; filename sanitizado; `Content-Disposition`; `applicati
 `FROZEN` — ordem lógica recomendada para o Master Prompt (não reabre design):
 
 ```text
-1. migrations/bootstrap contract (db, roles, grants, V001)
+1. migrations/schema contract (plugins_hub + schema bpmn_modeler, V001)
 2. backend Domain/Application completion
 3. repository + validation adapters (lxml, XSD bundle, intake evidence)
 4. HTTP/OpenAPI layer (routes, envelope, ETag, pagination)
@@ -738,7 +757,7 @@ Bytes exatos = canônico; filename sanitizado; `Content-Disposition`; `applicati
 8. revisions/library UI
 9. layout adapter + ELK worker
 10. integration/security wiring (auth, headers, rate zone, compose)
-11. fixtures/tests (P3 catalog + contract + grants)
+11. fixtures/tests (P3 catalog + contract + schema isolation)
 12. E2E (Playwright journeys §25)
 13. runtime/deploy verification (health/ready, smoke)
 ```
@@ -749,8 +768,8 @@ Bytes exatos = canônico; filename sanitizado; `Content-Disposition`; `applicati
 
 ```text
 Domain unit | Application unit | Validation fixture suite | Repository integration |
-HTTP contract | Frontend unit/component | Editor integration | Layout adapter |
-Security/grants integration | Browser E2E (§25) | Deployment smoke
+HTTP contract | Frontend unit/component | Editor/canvas integration | Layout adapter |
+Security/schema-isolation integration | Browser E2E (§25) | Deployment smoke
 ```
 
 ## 40. Definition of Done — V1 implementation
@@ -766,8 +785,8 @@ Security/grants integration | Browser E2E (§25) | Deployment smoke
 - revision tests passam (P2);
 - layout hard gates L01–L16 passam (P5);
 - security/AuthZ tests passam (P6/P7);
-- grant tests passam (§26.3);
-- migrations + checksum + grants passam (§26.4);
+- database isolation contract DB-ISO-01..12 passa (§26.3);
+- migrations startup + checksum + idempotência passam (§26.4);
 - OpenAPI contract invariants passam (§26.1);
 - E2E journeys E2E-01..22 passam;
 - read-back verification comprovada em todo write;

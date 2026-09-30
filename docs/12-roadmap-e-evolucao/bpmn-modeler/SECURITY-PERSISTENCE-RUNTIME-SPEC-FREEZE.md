@@ -89,7 +89,7 @@ Regras de fronteira:
 | React | `19.2.7` | mesma versão do Portal/plugins |
 | React DOM | `19.2.7` | paridade com React |
 | Vite | `7.3.1` | convenção plugins |
-| `@module-federation/vite` | `1.4.1` | packaging MFE canônico |
+| `@originjs/vite-plugin-federation` | `1.4.1` | packaging MFE canônico da plataforma (EXECUTION_DRIFT registrado: freeze nomeou `@module-federation/vite`, mas a convenção real de ~50 MFEs é `@originjs` via `plugins/vite/federation.shared.ts` — troca invalidaria o proxy-fix React 19 e o contrato com o host) |
 | TypeScript | `5.9.3` | convenção plugins |
 | Testing | `vitest` + `@testing-library/react` (versões do kit plugins) | convenção |
 
@@ -233,7 +233,7 @@ CREATE INDEX idx_revisions_model
 ```
 
 - `UNIQUE(model_id, revision_number)` = ordenação monotônica física por model.
-- Append-only: `UPDATE`/`DELETE` proibidos por contrato (runtime role sequer recebe esses grants — ver §4.2).
+- Append-only: `UPDATE`/`DELETE` proibidos por contrato de aplicação — a camada repository nunca emite essas operações em `revisions` (§4.2; provado por static + integration tests).
 - `origin` ∈ `{explicit, restore}` (UC-REV-003 / UC-REV-004).
 - `ON DELETE RESTRICT` é redundância de segurança — nunca dispara na V1 (não há delete).
 
@@ -455,11 +455,11 @@ Total: 8 VIEW + 3 EDIT + 5 MANAGE + 1 MANAGE+VIEW = **17/17**. Transversal: toke
 | T11 | stored script-like BPMN text | BPMN names/documentation = texto não confiável; escape as text; `dangerouslySetInnerHTML` proibido; vendor renderiza labels como SVG text | frontend | teste com `<script>`/`on*` em nome; evidence de render como texto |
 | T12 | log leakage | somente metadata segura; nunca XML/token/body; redaction | backend | scan de logs em teste |
 | T13 | token leakage | Bearer não persistido/logado; `sub` opaco em audit | full stack | redaction gate |
-| T14 | cross-context DB access | database dedicado + role sem grants externos + nenhuma FK cross-context | DB | teste de conexão negando outra base; revisão de grants |
+| T14 | cross-context DB coupling | isolamento por schema: todas as queries/migrations usam somente `bpmn_modeler.*`; zero FK cross-schema; zero SQL de negócio em schemas externos; `plugins_user` compartilhado **não** nega fisicamente outros schemas — controle é de aplicação | application | residual scan estático + integration test de schema isolation + boundary test de repository |
 | T15 | worker/CSP abuse | `worker-src 'self'`, sem `unsafe-eval`, worker timeout, sem fallback main-thread | frontend+gateway | CSP header test + timeout test |
 | T16 | dependency compromise | pins exatos + lockfiles + license allowlist + provenance (npm/PyPI) | supply chain | `npm ci` + pip pin check + scan |
 | T17 | artifact corruption | `sha256` por artefato + read-back checksum em todo write | backend | read-back divergence → `OUTCOME_VERIFICATION_FAILED` |
-| T18 | revision tampering | append-only + `UNIQUE(model_id, revision_number)` + runtime role sem UPDATE/DELETE em `revisions` | DB | grant test + constraint test |
+| T18 | revision tampering | append-only por contrato application/repository + `UNIQUE(model_id, revision_number)` + FK `ON DELETE RESTRICT` + sha256 por artefato. Credencial compartilhada **não** nega UPDATE/DELETE por-role — invariante garantido por ausência de use case/port e por testes | application+DB | static scan (sem UPDATE/DELETE em `revisions`) + constraint test + integration append-only |
 
 ---
 
@@ -708,7 +708,7 @@ postgres-plugins healthy
 | Schema isolation test | integração — objetos existem em `bpmn_modeler.*` (`models`, `revisions`, `schema_migrations`) e nada do contexto vaza para `public` | sim |
 | Secret scan | gate canônico | sim |
 | License scan | allowlist §3.3 | sim |
-| Workflow dedicado | `.github/workflows/bpmn-modeler-api.yml` | sim |
+| Workflow dedicado | `.github/workflows/bpmn-modeler.yml` | sim |
 
 Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraquecido.
 
@@ -735,7 +735,7 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 - ❌ concatenação de input em SQL; `ORDER BY` de string crua.
 - ❌ log de XML completo, tokens, secrets ou body bruto.
 - ❌ force overwrite / ignorar `expected_version`.
-- ❌ hard delete (nem grant de DELETE no runtime role).
+- ❌ hard delete (não existe endpoint/use case/port de delete — contrato de aplicação).
 - ❌ runtime schema download / resolver de rede no parser.
 - ❌ fallback main-thread do ELK worker.
 - ❌ `'unsafe-eval'`; `unsafe-inline` fora de `style-src-attr`.
@@ -744,10 +744,10 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 - ❌ reimplementar jwt/JWKS/permissions fora de `shared/delpi_auth`.
 - ❌ dependência de produção com range flutuante.
 - ❌ alterar migrations aplicadas.
-- ❌ DDL no runtime role para "facilitar" migration.
+- ❌ DDL fora das migrations versionadas (startup runner é o único executor de schema).
 - ❌ roles/credenciais de banco dedicadas ao contexto (`BPMN_MODELER_DB_*` ausente — usa `PLUGINS_DB_*` compartilhado).
-- ❌ migration executada pelo startup da API em produção — sempre step de deploy separado.
-- ❌ `ALTER DEFAULT PRIVILEGES` amplo — grants são opt-in por objeto via migration.
+- ❌ migration job/serviço separado ou step manual fora do startup runner da API (padrão `*_RUN_MIGRATIONS_ON_STARTUP` da plataforma).
+- ❌ `ALTER DEFAULT PRIVILEGES` amplo.
 - ❌ `pgcrypto`/`pg_trgm` ou qualquer extensão sem requirement.
 
 ---
