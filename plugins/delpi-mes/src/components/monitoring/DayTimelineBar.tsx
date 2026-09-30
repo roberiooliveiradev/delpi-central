@@ -1,3 +1,4 @@
+import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { DaySegment } from "../../utils/dayTimeline";
@@ -36,6 +37,8 @@ function segmentAriaLabel(segment: DaySegment, nowMs: number): string {
 export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegment[]; fromIso: string; nowMs: number }) {
   const [visibleHours, setVisibleHours] = useState(DEFAULT_VISIBLE_HOURS);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const tooltipAnchorRef = useRef<HTMLElement | null>(null);
+  const tooltipPanelRef = useRef<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const initialized = useRef(false);
@@ -88,10 +91,6 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
   const step = tickStep(visibleHours);
   const hovered = hoveredIndex !== null ? segments[hoveredIndex] : null;
   const hoveredPresentation = hovered?.item ? presentDayEvent(hovered.item) : null;
-  const TOOLTIP_HALF = 110;
-  const tooltipLeft = hovered
-    ? Math.max(TOOLTIP_HALF, Math.min(trackWidth - TOOLTIP_HALF, toPx(hovered.startMs + (hovered.endMs - hovered.startMs) / 2)))
-    : 0;
 
   return (
     <div className="delpi-mes-daybar">
@@ -137,9 +136,15 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
                 className={`delpi-mes-daybar__segment delpi-mes-daybar__segment--${segmentClass(segment.state)}`}
                 style={{ left: `${toPx(segment.startMs)}px`, width: `${Math.max(2, toPx(segment.endMs) - toPx(segment.startMs))}px` }}
                 aria-label={segmentAriaLabel(segment, nowMs)}
-                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseEnter={(event) => {
+                  tooltipAnchorRef.current = event.currentTarget;
+                  setHoveredIndex(index);
+                }}
                 onMouseLeave={() => setHoveredIndex(null)}
-                onFocus={() => setHoveredIndex(index)}
+                onFocus={(event) => {
+                  tooltipAnchorRef.current = event.currentTarget;
+                  setHoveredIndex(index);
+                }}
                 onBlur={() => setHoveredIndex(null)}
                 tabIndex={0}
               />
@@ -150,24 +155,6 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
               </span>
             ) : null}
           </div>
-            {hovered ? (
-              <div className="delpi-mes-daybar__tooltip" role="tooltip" style={{ left: `${tooltipLeft}px` }}>
-                <strong>{hoveredPresentation?.label ?? "Sem atividade"}</strong>
-                <span>
-                  {formatDayClock(hovered.startMs)} → {hovered.item?.endedAt === null && hovered.endMs >= nowMs ? "agora" : formatDayClock(hovered.endMs)}
-                </span>
-                <span>{formatHoursMinutes((hovered.endMs - hovered.startMs) / 1000)}</span>
-                {hovered.item ? (
-                  <>
-                    {hoveredPresentation ? (() => {
-                      const reason = dayEventReason(hovered.item!, hoveredPresentation);
-                      return reason ? <span className="delpi-mes-daybar__tooltip-reason">{reason}</span> : null;
-                    })() : null}
-                    {dayEventContext(hovered.item) ? <span className="delpi-mes-daybar__tooltip-meta">{dayEventContext(hovered.item)}</span> : null}
-                  </>
-                ) : null}
-              </div>
-            ) : null}
           <div className="delpi-mes-daybar__marks" aria-hidden="true">
             {stops.map((segment, index) => {
               const mid = segment.startMs + (segment.endMs - segment.startMs) / 2;
@@ -186,6 +173,37 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
           </div>
         </div>
       </div>
+      <AnchoredPanelPortal
+        key={hoveredIndex ?? "closed"}
+        open={hovered !== null}
+        anchorRef={tooltipAnchorRef}
+        panelRef={tooltipPanelRef}
+        variant="bare"
+        role="tooltip"
+        preferredPlacement="top"
+        gap={8}
+        exclusive={false}
+        className="delpi-mes-daybar__tooltip"
+      >
+        {hovered ? (
+          <>
+            <strong>{hoveredPresentation?.label ?? "Sem atividade"}</strong>
+            <span>
+              {formatDayClock(hovered.startMs)} → {hovered.item?.endedAt === null && hovered.endMs >= nowMs ? "agora" : formatDayClock(hovered.endMs)}
+            </span>
+            <span>{formatHoursMinutes((hovered.endMs - hovered.startMs) / 1000)}</span>
+            {hovered.item ? (
+              <>
+                {hoveredPresentation ? (() => {
+                  const reason = dayEventReason(hovered.item!, hoveredPresentation);
+                  return reason ? <span className="delpi-mes-daybar__tooltip-reason">{reason}</span> : null;
+                })() : null}
+                {dayEventContext(hovered.item) ? <span className="delpi-mes-daybar__tooltip-meta">{dayEventContext(hovered.item)}</span> : null}
+              </>
+            ) : null}
+          </>
+        ) : null}
+      </AnchoredPanelPortal>
     </div>
   );
 }

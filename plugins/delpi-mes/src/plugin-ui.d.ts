@@ -15,4 +15,22 @@ declare module "@delpi/plugin-ui/index" {
   export function drawerShellBemClasses(prefix: string): unknown;
   export function Timeline(props: { items: Array<{ id: string; title: ReactNode; occurredAt?: string | null; timeLabel?: ReactNode; detail?: ReactNode; meta?: ReactNode; tone?: "default" | "danger" | "warning" | "success" | "info" }>; loading?: boolean; emptyMessage?: string; classNames: unknown; prefix: string; "aria-label"?: string }): ReactNode;
   export function timelineBemClasses(prefix: string): unknown;
+  export function AnchoredPanelPortal(props: {
+    open: boolean;
+    anchorRef: { current: HTMLElement | null };
+    panelRef: { current: HTMLDivElement | null };
+    className?: string;
+    variant?: "shape" | "bare";
+    role?: string;
+    "aria-label"?: string;
+    matchAnchorWidth?: boolean;
+    preferredPlacement?: "bottom" | "top" | "right" | "left";
+    allowFlip?: boolean;
+    horizontalAlign?: "start" | "end";
+    gap?: number;
+    portalScopeClassName?: string;
+    onDismiss?: () => void;
+    exclusive?: boolean;
+    children?: ReactNode;
+  }): ReactNode;
 }
