@@ -21,6 +21,7 @@ from app.domain.evidence.model import (
     SimulationResult,
     SourceRef,
     TypedResultKind,
+    UserRef,
 )
 from app.domain.evidence.rules import (
     absorb_external_content_into_authority,
@@ -56,6 +57,7 @@ __all__ = [
     "SimulationResult",
     "SourceRef",
     "TypedResultKind",
+    "UserRef",
     "absorb_external_content_into_authority",
     "assert_no_chain_of_thought",
     "build_conflict_set",

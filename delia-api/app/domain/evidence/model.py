@@ -89,6 +89,24 @@ class EntityRef:
 
 
 @dataclass(frozen=True, slots=True)
+class UserRef:
+    """Identity reference only. Points to Keycloak/Core identity.
+
+    UserRef != permission snapshot, != authenticated session, != grant.
+    """
+
+    user_id: str
+    issuer: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.user_id.strip():
+            raise ValueError("UserRef.user_id is required")
+
+    def grants_authorization(self) -> bool:
+        return False
+
+
+@dataclass(frozen=True, slots=True)
 class ModelRef:
     model_id: str
     version: str
