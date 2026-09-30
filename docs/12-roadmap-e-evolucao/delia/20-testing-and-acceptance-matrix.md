@@ -2109,9 +2109,9 @@ Required deterministic cases (C3-T7) — implemented, pending Architecture Revie
 ## C3-T8 — Conversation / Session Interaction Foundation (candidate)
 
 ```text
-STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-REVIEW = ARCHITECTURE_REVIEW_C3_T8 = REWORK; C3-T8R1 reworked and
-         re-bound (ARCHITECTURE_REVIEW_C3_T8R1 pending)
+STATUS = APPROVED
+REVIEW = ARCHITECTURE_REVIEW_C3_T8 = REWORK (historical; blocker closed
+         by C3-T8R1); ARCHITECTURE_REVIEW_C3_T8R1 = ACCEPT_WITH_RESIDUAL
 BASE_HEAD = 3bee773a3210991562ae327bb1f72f861bf97fb1
 PRIOR_IMPLEMENTATION_HEAD = 0e39953e83170a45eac495a208fb189c395c5c98 (historical)
 IMPLEMENTATION_HEAD = 22b4aef60626cbf4f0f822a0972053f113f2ab71 (C3-T8R1)
@@ -2157,12 +2157,12 @@ PERSISTENCE = NONE | MIGRATION = NONE
 SESSION_STORAGE_DECISION = DEFERRED | SESSION_RETENTION_POLICY = TO_INVENTORY
 REAL_CONVERSATION_QUALITY_EVIDENCE = NONE / TEST_NOT_RUN
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T8R1
+NEXT = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
 ```
 
 
 
-Required deterministic cases (C3-T8) — implemented, pending Architecture Review:
+Accepted deterministic cases (C3-T8 / C3-T8R1) — `ACCEPT_WITH_RESIDUAL`:
 
 - bounded session create/record/close with minimal lifecycle;
 - typed user input + DÉLIA result turns with epistemic classification;

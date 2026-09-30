@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T8R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T7=APPROVED`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.82; `NEXT_TASK_AUTHORIZED=NO`; do not claim C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED` (`ARCHITECTURE_REVIEW_C3_T8R1=ACCEPT_WITH_RESIDUAL` §6.83); `NEXT_TASK_AUTHORIZED=NO`; do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -420,7 +420,7 @@ C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHI
 → C3-T5 OpenAPI Action Catalog + Capability Projection = APPROVED (ARCHITECTURE_REVIEW_C3_T5 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=84c249bee0)
 → C3-T6 Expertise / Knowledge Governance + Retrieval Contracts = APPROVED (ARCHITECTURE_REVIEW_C3_T6R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=1a49e501fb)
 → C3-T7R1 rework: duplicate capability_id fail-closed + evidence rebind = APPROVED (ARCHITECTURE_REVIEW_C3_T7R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=d49f77c966cd03387dd3e8e268cb9be5e2098ab6)
-→ C3-T8 Conversation / Session Interaction Foundation (CANDIDATE_FOR_ARCHITECTURE_REVIEW; ARCHITECTURE_REVIEW_C3_T8=REWORK; C3-T8R1 IMPLEMENTATION_HEAD=22b4aef60626cbf4f0f822a0972053f113f2ab71)
+→ C3-T8 Conversation / Session Interaction Foundation (APPROVED; ARCHITECTURE_REVIEW_C3_T8=REWORK closed by C3-T8R1; ARCHITECTURE_REVIEW_C3_T8R1=ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=22b4aef60626cbf4f0f822a0972053f113f2ab71)
 → C3-T8 Conversation / Session Interaction Foundation
 EVIDENCE_BEFORE_MODEL = YES
 EVIDENCE_BEFORE_PLANNER = YES
@@ -720,9 +720,12 @@ ARCHITECTURE_REVIEW_C3_T7 = REWORK (verdict on REVIEW_TARGET_SHA da5e57db4c)
 ARCHITECTURE_REVIEW_C3_T7R1 = ACCEPT_WITH_RESIDUAL (REVIEWED_IMPLEMENTATION_HEAD d49f77c966; §6.80)
 C3_T8_AUTHORIZED = YES
 C3_T8_EXECUTED = NO
-C3_T8 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T8 = APPROVED
+ARCHITECTURE_REVIEW_C3_T8 = REWORK (verdict on REVIEW_TARGET impl 0e39953e83)
+ARCHITECTURE_REVIEW_C3_T8R1 = ACCEPT_WITH_RESIDUAL (REVIEWED_IMPLEMENTATION_HEAD 22b4aef606; §6.83)
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
-C2-FINAL accepted with residual; C3-T1..T7 APPROVED (`ARCHITECTURE_REVIEW_C3_T7R1` ACCEPT_WITH_RESIDUAL; §6.80); authorization != execution
+C2-FINAL accepted with residual; C3-T1..T8 APPROVED (`ARCHITECTURE_REVIEW_C3_T8R1` ACCEPT_WITH_RESIDUAL; §6.83); authorization != execution
+NEXT_TASK_AUTHORIZED = NO; NEXT = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
 Workspace binding remains unscheduled
 ```
 
@@ -1109,9 +1112,12 @@ NEXT = C3-T8 — CONVERSATION_SESSION_INTERACTION_FOUNDATION
 
 ```text
 TASK = C3-T8 — CONVERSATION_SESSION_INTERACTION_FOUNDATION
-STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATE = APPROVED
 ARCHITECTURE_REVIEW_C3_T8 = REWORK (blocker: direct FACT classification on
-        InteractionTurn without qualified-Fact contract)
+        InteractionTurn without qualified-Fact contract) — historical
+ARCHITECTURE_REVIEW_C3_T8R1 = ACCEPT_WITH_RESIDUAL (prior blocker RESOLVED;
+        6 non-blocking residuals; REVIEWED_IMPLEMENTATION_HEAD 22b4aef606;
+        ledger §6.83)
 BASE_HEAD = 3bee773a3210991562ae327bb1f72f861bf97fb1
 IMPLEMENTATION_HEAD = 22b4aef60626cbf4f0f822a0972053f113f2ab71 (C3-T8R1)
 EPISTEMIC_ADMISSIBILITY = InteractionTurn fails closed on FACT in this
@@ -1133,7 +1139,7 @@ INVARIANTS = session != authorization/Memory/Knowledge/SoT; turn result
 NONE = conversation/chat engines, repositories, retrieval port, RAG,
         Personal Memory runtime, model call, tool/PREPARE/ACT execution,
         persistence, migration, conversation UI, provider roles in Domain
-EVIDENCE = ledger §6.82; 20 C3-T8 section; TARGETED_C3_T8R1 PASS 42/42;
+EVIDENCE = ledger §6.82/§6.83; 20 C3-T8 section; TARGETED_C3_T8R1 PASS 42/42;
            FULL_DELIA_API PASS 252/252 at IMPLEMENTATION_HEAD
-NEXT = ARCHITECTURE_REVIEW_C3_T8R1
+NEXT = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
 ```
