@@ -258,3 +258,14 @@ describe("Revision Diagnostic — acessibilidade/estados", () => {
     expect(section).toMatch(/successRef\.current\.focus\(\)/);
   });
 });
+
+describe("Revision Diagnostic — resync keep-alive", () => {
+  it("resync colaborativo não desmonta as seções (só carga inicial bloqueia)", () => {
+    // Regressão REALTIME LOCAL CONFLICT: `setLoading(true)` em todo load fazia
+    // `if (loading) return <LoadingActivityCard/>` desmontar o subtree —
+    // remoteConflict/activeAction/proposal do Diagnóstico eram destruídos pelo
+    // resync do useCollaborativeSectionEdit antes do banner renderizar.
+    expect(page).toMatch(/initialLoadDoneRef/);
+    expect(page).toMatch(/if \(blocking\) setLoading\(true\)/);
+  });
+});

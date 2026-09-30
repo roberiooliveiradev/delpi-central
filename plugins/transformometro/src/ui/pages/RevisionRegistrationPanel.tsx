@@ -163,10 +163,15 @@ export function RevisionRegistrationPanel({
 
   const scheduleLoad = useRef(createCoalescedAsyncRunner()).current;
   const resyncTimerRef = useRef<number | null>(null);
+  // Apenas a carga inicial bloqueia o painel: resyncs em background (WS,
+  // invalidações) não podem desmontar as seções — elas preservam estado local
+  // e reagem via resyncVersion/invalidações próprias.
+  const initialLoadDoneRef = useRef(false);
 
   const load = useCallback(async () => {
     await scheduleLoad(async () => {
-      setLoading(true);
+      const blocking = !initialLoadDoneRef.current;
+      if (blocking) setLoading(true);
       try {
         const refId = revisao.revisao_referencia_id || undefined;
         const [med, inv, vin, rec, ev, diag, medRef] = await Promise.all([
@@ -198,6 +203,7 @@ export function RevisionRegistrationPanel({
       } catch (err) {
         onError(err instanceof Error ? err.message : "Erro ao carregar cadastro da revisão");
       } finally {
+        initialLoadDoneRef.current = true;
         setLoading(false);
       }
     });
