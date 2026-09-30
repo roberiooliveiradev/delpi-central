@@ -1,6 +1,460 @@
 {
   "routes": [
     {
+      "operationId": "get_billing_portfolio_by_branch",
+      "httpMethod": "GET",
+      "label": "Carteira — por filial (previsto × realizado)",
+      "category": "commercial",
+      "path": "/commercial/billing-portfolio/by-branch",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Previsto versus realizado por filial (01/02), com variação.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "customer_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Centros do cliente",
+          "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
+        "nature": {
+          "type": "string",
+          "optional": true,
+          "label": "Natureza",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ],
+          "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida)."
+        },
+        "quantity_basis": {
+          "type": "string",
+          "optional": true,
+          "label": "Base de quantidade",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ],
+          "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "get_billing_portfolio_by_customer",
+      "httpMethod": "GET",
+      "label": "Carteira — por cliente (previsto × realizado)",
+      "category": "commercial",
+      "path": "/commercial/billing-portfolio/by-customer",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Previsto versus realizado por cliente, com variação e paginação.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "customer_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Centros do cliente",
+          "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
+        "nature": {
+          "type": "string",
+          "optional": true,
+          "label": "Natureza",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ],
+          "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida)."
+        },
+        "quantity_basis": {
+          "type": "string",
+          "optional": true,
+          "label": "Base de quantidade",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ],
+          "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "get_billing_portfolio_series",
+      "httpMethod": "GET",
+      "label": "Carteira — série previsto × realizado",
+      "category": "commercial",
+      "path": "/commercial/billing-portfolio/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Série temporal de receita prevista versus realizada por dia, semana, mês ou ano.",
+      "paramSchema": {
+        "granularity": {
+          "type": "string",
+          "optional": false,
+          "label": "Granularidade",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "customer_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Centros do cliente",
+          "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
+        "nature": {
+          "type": "string",
+          "optional": true,
+          "label": "Natureza",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ],
+          "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida)."
+        },
+        "quantity_basis": {
+          "type": "string",
+          "optional": true,
+          "label": "Base de quantidade",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ],
+          "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "get_billing_portfolio_summary",
+      "httpMethod": "GET",
+      "label": "Carteira — resumo previsto × realizado",
+      "category": "commercial",
+      "path": "/commercial/billing-portfolio/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Receita prevista (entrega prometida C6_ENTREG) versus realizada (emissão NF D2_EMISSAO) no período, com variação.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "customer_segment": {
+          "type": "string",
+          "optional": true,
+          "label": "Segmento",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        },
+        "customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira)."
+        },
+        "customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Nomes de clientes (incluir)",
+          "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE)."
+        },
+        "customer_centers": {
+          "type": "string",
+          "optional": true,
+          "label": "Centros do cliente",
+          "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505."
+        },
+        "exclude_customer_codes": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir códigos de clientes",
+          "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado."
+        },
+        "exclude_customer_names": {
+          "type": "string",
+          "optional": true,
+          "label": "Excluir nomes de clientes",
+          "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE)."
+        },
+        "nature": {
+          "type": "string",
+          "optional": true,
+          "label": "Natureza",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ],
+          "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida)."
+        },
+        "quantity_basis": {
+          "type": "string",
+          "optional": true,
+          "label": "Base de quantidade",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ],
+          "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
       "operationId": "get_sales_conversion_rate",
       "httpMethod": "GET",
       "label": "Comercial — taxa de fechamento",
@@ -163,14 +617,6 @@
         "qtd_won_01",
         "qtd_won_02"
       ],
-      "valueFieldTypes": {
-        "conversion_filial_01": "number",
-        "conversion_filial_02": "number",
-        "qtd_proposals_01": "number",
-        "qtd_proposals_02": "number",
-        "qtd_won_01": "number",
-        "qtd_won_02": "number"
-      },
       "projectableFields": [
         {
           "name": "conversion_filial_01",
@@ -220,7 +666,15 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "conversion_filial_01": "number",
+        "conversion_filial_02": "number",
+        "qtd_proposals_01": "number",
+        "qtd_proposals_02": "number",
+        "qtd_won_01": "number",
+        "qtd_won_02": "number"
+      }
     },
     {
       "operationId": "list_commercial_customer_center_assignments",
@@ -392,23 +846,35 @@
         "end_date"
       ],
       "valueFields": [
-        "new_business_rol_target_pct",
-        "value"
+        "rol_target_pct",
+        "rol"
       ],
+      "valueFieldLabels": {
+        "rol_target_pct": "Atingimento da meta ROL (%)",
+        "rol": "ROL realizado"
+      },
+      "valueFieldTypes": {
+        "rol_target_pct": "number",
+        "rol": "number"
+      },
       "projectableFields": [
         {
-          "name": "new_business_rol_target_pct",
-          "type": "string",
+          "name": "rol_target_pct",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Atingimento da meta ROL (%)"
         },
         {
-          "name": "value",
-          "type": "string",
+          "name": "rol",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "ROL realizado"
         }
       ]
     },
@@ -584,6 +1050,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "value_pct"
       ],
@@ -594,7 +1061,6 @@
         "metric_label": "Indicador",
         "value_pct": "Valor (%)"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "value_pct",
@@ -967,6 +1433,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "rol",
         "gross_revenue",
@@ -980,7 +1447,6 @@
         "returns": "Devoluções",
         "discounts": "Descontos"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "rol",
@@ -1132,6 +1598,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "rol",
         "share_pct",
@@ -1146,7 +1613,6 @@
         "share_pct": "% participação",
         "rank": "Ranking"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "rol",
@@ -1300,6 +1766,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "rol",
         "gross_revenue",
@@ -1322,7 +1789,6 @@
         "share_pct": "% participação",
         "rank": "Ranking"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "rol",
@@ -1562,11 +2028,12 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "points",
       "valueFields": [
         "rol_matrix",
         "rol_branch"
       ],
-      "seriesField": "points",
+      "whenToUse": "Use em gráfico de linha ou tabela temporal de ROL.",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -1582,15 +2049,7 @@
           "direction": "asc"
         }
       ],
-      "valueFieldTypes": {
-        "periodo": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "rol_matrix": "number",
-        "rol_branch": "number"
-      },
-      "whenToUse": "Use em gráfico de linha ou tabela temporal de ROL.",
+      "seriesField": "points",
       "valueFieldLabels": {
         "periodo": "Período",
         "sort_key": "Chave de ordenação",
@@ -1599,7 +2058,6 @@
         "rol_matrix": "ROL filial 01",
         "rol_branch": "ROL filial 02"
       },
-      "tableFields": "points",
       "projectableFields": [
         {
           "name": "rol_matrix",
@@ -1619,7 +2077,15 @@
           "semanticType": "number",
           "label": "ROL filial 02"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "rol_matrix": "number",
+        "rol_branch": "number"
+      }
     },
     {
       "operationId": "get_commercial_rol_summary",
@@ -1710,18 +2176,10 @@
         "comparable_goal",
         "rol_target_pct"
       ],
-      "valueFieldTypes": {
-        "rol": "number",
-        "gross_revenue": "number",
-        "returns": "number",
-        "discounts": "number",
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number",
-        "target": "number",
-        "rol_target_pct": "number"
-      },
       "whenToUse": "Use em card KPI/gauge quando precisar de ROL realizado e meta na mesma fonte.",
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldLabels": {
         "rol": "ROL",
         "gross_revenue": "Receita bruta",
@@ -1732,9 +2190,6 @@
         "reference_goal": "Meta mês (referência)",
         "target": "Meta",
         "rol_target_pct": "Atingimento da meta ROL (%)"
-      },
-      "tvConstraints": {
-        "maxRows": 1
       },
       "projectableFields": [
         {
@@ -1764,7 +2219,18 @@
           "semanticType": "number",
           "label": "Atingimento da meta ROL (%)"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "rol": "number",
+        "gross_revenue": "number",
+        "returns": "number",
+        "discounts": "number",
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number",
+        "target": "number",
+        "rol_target_pct": "number"
+      }
     },
     {
       "operationId": "get_sales_order_otd",
@@ -1860,14 +2326,14 @@
         "sales_order_otd_pct"
       ],
       "whenToUse": "Use em card KPI de OTD.",
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldLabels": {
         "sales_order_otd_pct": "OTD pedidos (%)",
         "total_lines": "Total de linhas",
         "on_time_lines": "Linhas no prazo",
         "late_lines": "Linhas atrasadas"
-      },
-      "tvConstraints": {
-        "maxRows": 1
       },
       "projectableFields": [
         {
@@ -1959,16 +2425,13 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "otd_pct",
         "fulfillment_pct",
         "total_qty",
         "fulfilled_qty"
       ],
-      "valueFieldTypes": {
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
       "whenToUse": "Use em tabela comparativa de OTD por filial.",
       "valueFieldLabels": {
         "branch": "Filial",
@@ -1982,7 +2445,6 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -2016,7 +2478,11 @@
           "origin": "result",
           "label": "Quantidade atendida"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "unit": "string",
+        "mixed_units": "boolean"
+      }
     },
     {
       "operationId": "get_sales_order_otd_by_customer",
@@ -2122,16 +2588,13 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "otd_pct",
         "fulfillment_pct",
         "total_qty",
         "fulfilled_qty"
       ],
-      "valueFieldTypes": {
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
       "whenToUse": "Use em tabela de OTD por cliente.",
       "valueFieldLabels": {
         "customer_code": "Código cliente",
@@ -2148,7 +2611,6 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -2182,7 +2644,11 @@
           "origin": "result",
           "label": "Quantidade atendida"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "unit": "string",
+        "mixed_units": "boolean"
+      }
     },
     {
       "operationId": "get_sales_order_otd_line_detail",
@@ -2409,6 +2875,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "lines",
       "valueFields": [
         "sales_order_otd_pct",
         "late_percentage",
@@ -2416,19 +2883,10 @@
         "total_lines"
       ],
       "openEndedDateRange": true,
-      "valueFieldTypes": {
-        "sales_order_otd_pct": "number",
-        "late_percentage": "number",
-        "late_lines": "number",
-        "total_lines": "number",
-        "promised_date": "date",
-        "invoice_date": "date",
-        "unit": "string",
-        "qty_sold": "number",
-        "qty_delivered": "number",
-        "days_diff": "number"
-      },
       "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
+      "tvConstraints": {
+        "maxRows": 200
+      },
       "valueFieldLabels": {
         "unit": "Unidade",
         "qty_sold": "Qtd. vendida",
@@ -2447,10 +2905,6 @@
         "late_percentage": "% atrasadas",
         "late_lines": "Linhas atrasadas",
         "total_lines": "Total de itens"
-      },
-      "tableFields": "lines",
-      "tvConstraints": {
-        "maxRows": 200
       },
       "projectableFields": [
         {
@@ -2489,7 +2943,19 @@
           "semanticType": "number",
           "label": "Total de itens"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "late_percentage": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "promised_date": "date",
+        "invoice_date": "date",
+        "unit": "string",
+        "qty_sold": "number",
+        "qty_delivered": "number",
+        "days_diff": "number"
+      }
     },
     {
       "operationId": "get_sales_order_otd_series",
@@ -2595,6 +3061,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "points",
       "valueFields": [
         "otd_pct",
         "total_qty",
@@ -2604,7 +3071,7 @@
         "otd_filial_01",
         "otd_filial_02"
       ],
-      "seriesField": "points",
+      "whenToUse": "Use em gráfico/tabela temporal de OTD; filtre por customer_names para um cliente.",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -2621,22 +3088,7 @@
           "direction": "asc"
         }
       ],
-      "valueFieldTypes": {
-        "periodo": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "otd_filial_01": "number",
-        "otd_filial_02": "number",
-        "otd_pct": "number",
-        "total_qty": "number",
-        "fulfilled_qty": "number",
-        "fulfillment_pct": "number",
-        "total_lines": "number",
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
-      "whenToUse": "Use em gráfico/tabela temporal de OTD; filtre por customer_names para um cliente.",
+      "seriesField": "points",
       "valueFieldLabels": {
         "periodo": "Período",
         "sort_key": "Chave de ordenação",
@@ -2652,7 +3104,6 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "tableFields": "points",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -2717,7 +3168,22 @@
           "semanticType": "number",
           "label": "OTD filial 02"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_filial_01": "number",
+        "otd_filial_02": "number",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number",
+        "unit": "string",
+        "mixed_units": "boolean"
+      }
     },
     {
       "operationId": "get_sales_order_otd_series_by_customer",
@@ -2843,6 +3309,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "otd_pct",
         "fulfillment_pct",
@@ -2850,19 +3317,6 @@
         "fulfilled_qty",
         "total_lines"
       ],
-      "valueFieldTypes": {
-        "periodo": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "otd_pct": "number",
-        "total_qty": "number",
-        "fulfilled_qty": "number",
-        "fulfillment_pct": "number",
-        "total_lines": "number",
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
       "whenToUse": "Use em tabela cliente×semana (ou outra granularidade); filtre por customer_names ou use top_customers.",
       "valueFieldLabels": {
         "customer_code": "Código cliente",
@@ -2883,7 +3337,6 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -2930,7 +3383,20 @@
           "semanticType": "number",
           "label": "Total de linhas"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number",
+        "unit": "string",
+        "mixed_units": "boolean"
+      }
     },
     {
       "operationId": "get_sales_order_otd_summary",
@@ -3026,16 +3492,10 @@
         "sales_order_otd_pct",
         "comparable_goal"
       ],
-      "valueFieldTypes": {
-        "sales_order_otd_pct": "number",
-        "total_lines": "number",
-        "on_time_lines": "number",
-        "late_lines": "number",
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "whenToUse": "Use em card KPI/gauge quando precisar de OTD realizado e meta na mesma fonte.",
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldLabels": {
         "sales_order_otd_pct": "OTD pedidos (%)",
         "total_lines": "Total de linhas",
@@ -3044,9 +3504,6 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      },
-      "tvConstraints": {
-        "maxRows": 1
       },
       "projectableFields": [
         {
@@ -3067,7 +3524,16 @@
           "semanticType": "number",
           "label": "Meta do período"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "total_lines": "number",
+        "on_time_lines": "number",
+        "late_lines": "number",
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      }
     },
     {
       "operationId": "get_weg_rol_target_pct",
@@ -3114,23 +3580,35 @@
         "end_date"
       ],
       "valueFields": [
-        "weg_rol_target_pct",
-        "value"
+        "rol_target_pct",
+        "rol"
       ],
+      "valueFieldLabels": {
+        "rol_target_pct": "Atingimento da meta ROL (%)",
+        "rol": "ROL realizado"
+      },
+      "valueFieldTypes": {
+        "rol_target_pct": "number",
+        "rol": "number"
+      },
       "projectableFields": [
         {
-          "name": "weg_rol_target_pct",
-          "type": "string",
+          "name": "rol_target_pct",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Atingimento da meta ROL (%)"
         },
         {
-          "name": "value",
-          "type": "string",
+          "name": "rol",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "ROL realizado"
         }
       ]
     },
@@ -3262,34 +3740,26 @@
         "end_date"
       ],
       "valueFields": [
-        "score",
-        "value",
-        "idd"
+        "score"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "score": "Nota IDD"
+      },
+      "valueFieldTypes": {
+        "score": "number"
+      },
       "projectableFields": [
         {
           "name": "score",
-          "type": "string",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result"
-        },
-        {
-          "name": "idd",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Nota IDD"
         }
       ]
     },
@@ -3360,11 +3830,11 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
       ],
-      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
       },
@@ -3452,11 +3922,11 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
       ],
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
       },
@@ -3531,9 +4001,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -3546,7 +4013,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
@@ -3602,9 +4072,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -3617,7 +4084,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_meta",
@@ -3673,9 +4143,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -3688,7 +4155,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
@@ -3744,9 +4214,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -3759,7 +4226,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_rol_meta",
@@ -3815,9 +4285,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -3830,7 +4297,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_rol_realized",
@@ -3886,9 +4356,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -3901,7 +4368,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
@@ -3957,9 +4427,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -3972,7 +4439,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
@@ -4028,9 +4498,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4043,7 +4510,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_meta",
@@ -4099,9 +4569,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4114,7 +4581,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
@@ -4170,9 +4640,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4185,7 +4652,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
@@ -4241,9 +4711,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4256,7 +4723,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
@@ -4312,9 +4782,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4327,7 +4794,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_meta",
@@ -4383,9 +4853,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4398,7 +4865,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_realized",
@@ -4454,9 +4924,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4469,7 +4936,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_meta",
@@ -4525,9 +4995,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4540,7 +5007,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
@@ -4596,9 +5066,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4611,7 +5078,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_pmr_meta",
@@ -4667,9 +5137,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4682,7 +5149,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_financial_pmr_realized",
@@ -4738,9 +5208,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4753,7 +5220,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_meta",
@@ -4809,9 +5279,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4824,7 +5291,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_realized",
@@ -4880,9 +5350,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4895,7 +5362,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_pdi_meta",
@@ -4951,9 +5421,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -4966,7 +5433,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_pdi_realized",
@@ -5022,9 +5492,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5037,7 +5504,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_meta",
@@ -5093,9 +5563,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5108,7 +5575,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
@@ -5164,9 +5634,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5179,7 +5646,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_meta",
@@ -5235,9 +5705,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5250,7 +5717,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_realized",
@@ -5306,9 +5776,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5321,7 +5788,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_meta",
@@ -5377,9 +5847,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5392,7 +5859,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_realized",
@@ -5448,9 +5918,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5463,7 +5930,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_turnover_meta",
@@ -5519,9 +5989,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5534,7 +6001,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_hr_turnover_realized",
@@ -5590,9 +6060,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5605,7 +6072,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_costs_meta",
@@ -5661,9 +6131,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5676,7 +6143,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_costs_realized",
@@ -5732,9 +6202,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5747,7 +6214,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_depreciation_meta",
@@ -5803,9 +6273,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5818,7 +6285,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_depreciation_realized",
@@ -5874,9 +6344,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5889,7 +6356,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_meta",
@@ -5945,9 +6415,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -5960,7 +6427,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_realized",
@@ -6016,9 +6486,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6031,7 +6498,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_oee_meta",
@@ -6087,9 +6557,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6102,7 +6569,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_oee_realized",
@@ -6158,9 +6628,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6173,7 +6640,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_otd_meta",
@@ -6229,9 +6699,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6244,7 +6711,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_production_otd_realized",
@@ -6300,9 +6770,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6315,7 +6782,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_meta",
@@ -6371,9 +6841,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6386,7 +6853,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_realized",
@@ -6442,9 +6912,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6457,7 +6924,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_meta",
@@ -6513,9 +6983,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6528,7 +6995,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
@@ -6584,9 +7054,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6599,7 +7066,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
@@ -6655,9 +7125,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6670,7 +7137,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
@@ -6726,9 +7196,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6741,7 +7208,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_components_meta",
@@ -6797,16 +7267,13 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Externo Componentes — meta",
         "PPM chicotes 9026 — meta"
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "projectableFields": [
         {
           "name": "value",
@@ -6816,7 +7283,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_components_realized",
@@ -6872,16 +7342,13 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Externo Componentes — realizado",
         "PPM chicotes 9026 — realizado"
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "projectableFields": [
         {
           "name": "value",
@@ -6891,7 +7358,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
@@ -6947,9 +7417,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -6962,7 +7429,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
@@ -7018,9 +7488,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7033,7 +7500,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_meta",
@@ -7089,9 +7559,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7104,7 +7571,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_realized",
@@ -7160,9 +7630,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7175,7 +7642,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
@@ -7231,16 +7701,13 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Interno Componentes — meta",
         "PPM chicotes 9026 — meta"
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "projectableFields": [
         {
           "name": "value",
@@ -7250,7 +7717,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
@@ -7306,16 +7776,13 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "labelAliases": [
         "PPM Interno Componentes — realizado",
         "PPM chicotes 9026 — realizado"
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "projectableFields": [
         {
           "name": "value",
@@ -7325,7 +7792,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
@@ -7381,9 +7851,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7396,7 +7863,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
@@ -7452,9 +7922,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7467,7 +7934,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_meta",
@@ -7523,9 +7993,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7538,7 +8005,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
@@ -7594,9 +8064,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7609,7 +8076,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
@@ -7665,9 +8135,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7680,7 +8147,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
@@ -7736,9 +8206,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7751,7 +8218,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
@@ -7807,9 +8277,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7822,7 +8289,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
@@ -7878,9 +8348,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7893,7 +8360,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_meta",
@@ -7949,9 +8419,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -7964,7 +8431,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_realized",
@@ -8020,9 +8490,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8035,7 +8502,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
@@ -8091,9 +8561,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8106,7 +8573,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
@@ -8162,9 +8632,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8177,7 +8644,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_otd_meta",
@@ -8233,9 +8703,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8248,7 +8715,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_otd_realized",
@@ -8304,9 +8774,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8319,7 +8786,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_meta",
@@ -8375,9 +8845,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8390,7 +8857,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
@@ -8446,9 +8916,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8461,7 +8928,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_meta",
@@ -8517,9 +8987,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8532,7 +8999,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_realized",
@@ -8588,9 +9058,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8603,7 +9070,10 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      }
     },
     {
       "operationId": "list_lmps",
@@ -9859,21 +10329,6 @@
         "implemented_solutions_count",
         "solutions_started_in_period_count"
       ],
-      "valueFieldTypes": {
-        "total_investment_in_period": "number",
-        "total_gross_savings_in_period": "number",
-        "total_hours_saved_until_now": "number",
-        "implemented_solutions_count": "number",
-        "solutions_started_in_period_count": "number",
-        "month": "string",
-        "gross_savings_month": "number",
-        "gross_costs_month": "number",
-        "gross_investment_month": "number",
-        "gross_recurring_investment_month": "number",
-        "shared_resource_cost_month": "number",
-        "investment_total_month": "number",
-        "net_savings_month": "number"
-      },
       "valueFieldLabels": {
         "total_investment_in_period": "Investimento total",
         "total_gross_costs_until_now": "Investimento total",
@@ -9941,7 +10396,22 @@
           "semanticType": "number",
           "label": "Soluções iniciadas no período"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "total_investment_in_period": "number",
+        "total_gross_savings_in_period": "number",
+        "total_hours_saved_until_now": "number",
+        "implemented_solutions_count": "number",
+        "solutions_started_in_period_count": "number",
+        "month": "string",
+        "gross_savings_month": "number",
+        "gross_costs_month": "number",
+        "gross_investment_month": "number",
+        "gross_recurring_investment_month": "number",
+        "shared_resource_cost_month": "number",
+        "investment_total_month": "number",
+        "net_savings_month": "number"
+      }
     },
     {
       "operationId": "get_transformometro_savings_investment_series",
@@ -10017,6 +10487,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "points",
       "valueFields": [
         "economia_bruta",
         "investimento"
@@ -10037,19 +10508,11 @@
           "direction": "asc"
         }
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
-      },
       "valueFieldLabels": {
         "periodo": "Período",
         "economia_bruta": "Economia",
         "investimento": "Investimento"
       },
-      "tableFields": "points",
       "projectableFields": [
         {
           "name": "economia_bruta",
@@ -10069,7 +10532,14 @@
           "semanticType": "number",
           "label": "Investimento"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      }
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -10871,23 +11341,23 @@
         "end_date"
       ],
       "valueFields": [
-        "financial_ebitda_pct",
-        "value"
+        "ebitda_over_rol_pct"
       ],
+      "valueFieldLabels": {
+        "ebitda_over_rol_pct": "EBITDA / ROL (%)"
+      },
+      "valueFieldTypes": {
+        "ebitda_over_rol_pct": "number"
+      },
       "projectableFields": [
         {
-          "name": "financial_ebitda_pct",
-          "type": "string",
+          "name": "ebitda_over_rol_pct",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "EBITDA / ROL (%)"
         }
       ]
     },
@@ -10936,23 +11406,23 @@
         "end_date"
       ],
       "valueFields": [
-        "financial_fixed_cost_pct",
-        "value"
+        "fixed_cost_over_rol_pct"
       ],
+      "valueFieldLabels": {
+        "fixed_cost_over_rol_pct": "Custos fixos / ROL (%)"
+      },
+      "valueFieldTypes": {
+        "fixed_cost_over_rol_pct": "number"
+      },
       "projectableFields": [
         {
-          "name": "financial_fixed_cost_pct",
-          "type": "string",
+          "name": "fixed_cost_over_rol_pct",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Custos fixos / ROL (%)"
         }
       ]
     },
@@ -15149,10 +15619,10 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "list_production_appointments",
@@ -16200,12 +16670,6 @@
         "tempo_real_horas",
         "tempo_previsto_horas"
       ],
-      "valueFieldTypes": {
-        "eficiencia_percentual": "number",
-        "resultado_mod": "number",
-        "tempo_real_horas": "number",
-        "tempo_previsto_horas": "number"
-      },
       "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
       "tvConstraints": {
         "maxRows": 10000,
@@ -16244,7 +16708,13 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "eficiencia_percentual": "number",
+        "resultado_mod": "number",
+        "tempo_real_horas": "number",
+        "tempo_previsto_horas": "number"
+      }
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -16407,18 +16877,14 @@
         "efficiency_pct",
         "appointment_count"
       ],
-      "valueFieldTypes": {
-        "efficiency_pct": "number",
-        "appointment_count": "number"
-      },
       "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
+      "tvConstraints": {
+        "maxRows": 200
+      },
       "valueFieldLabels": {
         "efficiency_pct": "Eficiência %",
         "appointment_count": "Apontamentos",
         "work_center": "Centro de trabalho"
-      },
-      "tvConstraints": {
-        "maxRows": 200
       },
       "projectableFields": [
         {
@@ -16439,7 +16905,11 @@
           "semanticType": "number",
           "label": "Apontamentos"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "efficiency_pct": "number",
+        "appointment_count": "number"
+      }
     },
     {
       "operationId": "get_eficiencia_fabril_efficiency_series",
@@ -17158,7 +17628,6 @@
         "oee_filial_01",
         "oee_filial_02"
       ],
-      "seriesField": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -17174,14 +17643,7 @@
           "direction": "asc"
         }
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
+      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
@@ -17202,7 +17664,15 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -17260,11 +17730,6 @@
         "value",
         "otdPct"
       ],
-      "valueFieldTypes": {
-        "on_time_delivery_pct": "number",
-        "value": "number",
-        "otdPct": "number"
-      },
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -17294,7 +17759,12 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "on_time_delivery_pct": "number",
+        "value": "number",
+        "otdPct": "number"
+      }
     },
     {
       "operationId": "get_production_order_by_op",
@@ -17496,6 +17966,42 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "get_production_operation_standard_time",
+      "httpMethod": "GET",
+      "label": "Indicador — Tempo padrão da operação de op (ciclo ideal e setup em segundos por peça)",
+      "category": "production",
+      "path": "/production/orders/{production_order}/operations/{operation_code}/standard-time",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Retorna tempo padrão da operação de OP (ciclo ideal e setup em segundos por peça) via API DELPI. Indicador agregado ou KPI pontual. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "paramSchema": {
+        "production_order": {
+          "type": "string",
+          "optional": false,
+          "label": "Ordem de produção",
+          "in": "path",
+          "description": "Ordem(ns) de produção (CSV)."
+        },
+        "operation_code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código da operação (HY_OPERAC / G2_OPERAC).",
+          "in": "path",
+          "description": "Código da operação (HY_OPERAC / G2_OPERAC)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": false,
+          "label": "Filial",
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "list_production_order_operation_materials",
       "httpMethod": "GET",
       "label": "Materiais da operação (SD4)",
@@ -17685,6 +18191,9 @@
         "end_date"
       ],
       "seriesField": "points",
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -17692,9 +18201,6 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
       }
     },
     {
@@ -17753,11 +18259,6 @@
         "value",
         "oeePct"
       ],
-      "valueFieldTypes": {
-        "overall_equipment_effectiveness_pct": "number",
-        "value": "number",
-        "oeePct": "number"
-      },
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -17787,7 +18288,12 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "overall_equipment_effectiveness_pct": "number",
+        "value": "number",
+        "oeePct": "number"
+      }
     },
     {
       "operationId": "get_production_pcp_orders_items",
@@ -19231,11 +19737,11 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
       },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
@@ -22456,6 +22962,9 @@
         "value",
         "average_score"
       ],
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
@@ -22463,9 +22972,6 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "labelAliases": [
-        "Auditoria 5S — resumo"
-      ],
       "projectableFields": [
         {
           "name": "value",
@@ -23088,6 +23594,10 @@
         "total_savings",
         "total_kaizens"
       ],
+      "labelAliases": [
+        "Kaizens — resumo e listagem (PostgreSQL)",
+        "Kaizens — resumo e listagem (Google Sheets)"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
@@ -23097,10 +23607,6 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "labelAliases": [
-        "Kaizens — resumo e listagem (PostgreSQL)",
-        "Kaizens — resumo e listagem (Google Sheets)"
-      ],
       "projectableFields": [
         {
           "name": "value",
@@ -23733,18 +24239,20 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "type": "customer"
-      },
       "valueFields": [
         "value",
         "current_days_without_nc"
       ],
-      "valueFieldTypes": {
-        "value": "number",
-        "current_days_without_nc": "number",
-        "record_days_without_nc": "number",
-        "nc_count": "number"
+      "labelAliases": [
+        "Qualidade — dias sem NC no cliente",
+        "Dias sem defeitos no cliente"
+      ],
+      "defaultParams": {
+        "type": "customer"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       },
       "valueFieldLabels": {
         "value": "Dias sem NC",
@@ -23752,14 +24260,6 @@
         "record_days_without_nc": "Recorde de dias sem NC",
         "last_nc_date": "Data da última NC"
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "labelAliases": [
-        "Qualidade — dias sem NC no cliente",
-        "Dias sem defeitos no cliente"
-      ],
       "projectableFields": [
         {
           "name": "value",
@@ -23779,7 +24279,13 @@
           "semanticType": "number",
           "label": "Dias atuais sem NC"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number",
+        "current_days_without_nc": "number",
+        "record_days_without_nc": "number",
+        "nc_count": "number"
+      }
     },
     {
       "operationId": "list_ppm_external",
@@ -23964,15 +24470,12 @@
         "ppm",
         "ppmValue"
       ],
-      "valueFieldTypes": {
-        "value": "number",
-        "ppm": "number",
-        "ppmValue": "number",
-        "total_produzido_un": "number",
-        "total_devolvido_un": "number",
-        "target": "number",
-        "comparable_goal": "number",
-        "goal_value": "number"
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       },
       "valueFieldLabels": {
         "value": "Valor",
@@ -23986,13 +24489,6 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ],
       "projectableFields": [
         {
           "name": "value",
@@ -24021,7 +24517,17 @@
           "semanticType": "number",
           "label": "PPM"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number",
+        "ppm": "number",
+        "ppmValue": "number",
+        "total_produzido_un": "number",
+        "total_devolvido_un": "number",
+        "target": "number",
+        "comparable_goal": "number",
+        "goal_value": "number"
+      }
     },
     {
       "operationId": "list_ppm_internal",
@@ -24206,13 +24712,13 @@
         "ppm",
         "ppmValue"
       ],
-      "valueFieldTypes": {
-        "value": "number",
-        "ppm": "number",
-        "ppmValue": "number",
-        "target": "number",
-        "comparable_goal": "number",
-        "goal_value": "number"
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       },
       "valueFieldLabels": {
         "value": "Valor",
@@ -24226,14 +24732,6 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ],
       "projectableFields": [
         {
           "name": "value",
@@ -24262,7 +24760,15 @@
           "semanticType": "number",
           "label": "PPM"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "value": "number",
+        "ppm": "number",
+        "ppmValue": "number",
+        "target": "number",
+        "comparable_goal": "number",
+        "goal_value": "number"
+      }
     },
     {
       "operationId": "get_produced_quantity",
@@ -24517,23 +25023,28 @@
         "end_date"
       ],
       "valueFields": [
-        "quality_rework_cost_pct_series",
-        "value"
+        "metrics.rework_cost_pct"
       ],
+      "seriesField": "points",
+      "valueFieldLabels": {
+        "metrics.rework_cost_pct": "Custo de retrabalho / ROL (%)"
+      },
+      "valueFieldTypes": {
+        "metrics.rework_cost_pct": "number",
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date"
+      },
       "projectableFields": [
         {
-          "name": "quality_rework_cost_pct_series",
-          "type": "string",
+          "name": "metrics.rework_cost_pct",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Custo de retrabalho / ROL (%)"
         }
       ]
     },
@@ -24676,23 +25187,28 @@
         "end_date"
       ],
       "valueFields": [
-        "quality_scrap_cost_pct_series",
-        "value"
+        "metrics.scrap_cost_pct"
       ],
+      "seriesField": "points",
+      "valueFieldLabels": {
+        "metrics.scrap_cost_pct": "Custo de refugo / ROL (%)"
+      },
+      "valueFieldTypes": {
+        "metrics.scrap_cost_pct": "number",
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date"
+      },
       "projectableFields": [
         {
-          "name": "quality_scrap_cost_pct_series",
-          "type": "string",
+          "name": "metrics.scrap_cost_pct",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Custo de refugo / ROL (%)"
         }
       ]
     },
@@ -24901,6 +25417,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFields": [
         "value",
         "sharePct",
@@ -24917,7 +25434,6 @@
         "code": "Código",
         "label": "Descrição"
       },
-      "tableFields": "items",
       "projectableFields": [
         {
           "name": "value",
@@ -26744,7 +27260,7 @@
       ]
     },
     {
-      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "operationId": "get_supplies_protheus_user_by_email",
       "httpMethod": "GET",
       "label": "Get Protheus User By Email Route",
       "category": "supplies",
@@ -26895,23 +27411,14 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "lines",
       "valueFields": [
         "purchase_order_otd_pct",
         "late_lines",
         "total_lines"
       ],
       "openEndedDateRange": true,
-      "valueFieldTypes": {
-        "purchase_order_otd_pct": "number",
-        "late_lines": "number",
-        "total_lines": "number",
-        "expected_delivery_date": "date",
-        "receipt_entry_date": "date",
-        "invoice_issue_date": "date",
-        "purchase_order_issue_date": "date"
-      },
       "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
-      "tableFields": "lines",
       "tvConstraints": {
         "maxRows": 200
       },
@@ -26940,7 +27447,16 @@
           "origin": "result",
           "semanticType": "number"
         }
-      ]
+      ],
+      "valueFieldTypes": {
+        "purchase_order_otd_pct": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "expected_delivery_date": "date",
+        "receipt_entry_date": "date",
+        "invoice_issue_date": "date",
+        "purchase_order_issue_date": "date"
+      }
     },
     {
       "operationId": "get_supplies_purchase_order_otd_series",
@@ -27573,7 +28089,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "operationId": "list_supplies_purchase_request_requesters",
       "httpMethod": "GET",
       "label": "List Supplies Purchase Request Requesters Route",
       "category": "supplies",
@@ -27588,11 +28104,7 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
-          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
-          "enum": [
-            "01",
-            "02"
-          ]
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
         },
         "date_from": {
           "type": "string",
@@ -28235,24 +28747,24 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
+      "valueFields": [
+        "stock_value",
+        "quantity"
+      ],
       "defaultParams": {
         "page": 1,
         "page_size": 50,
         "only_positive": true,
         "sort": "stock_value_desc"
       },
-      "valueFields": [
-        "stock_value",
-        "quantity"
-      ],
-      "valueFieldLabels": {
-        "stock_value": "Valor (R$)",
-        "quantity": "Quantidade"
-      },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 50,
         "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "stock_value": "Valor (R$)",
+        "quantity": "Quantidade"
       },
       "projectableFields": [
         {
@@ -28314,20 +28826,20 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "by_warehouse",
       "valueFields": [
         "product_count",
         "total_stock_value",
         "total_quantity"
       ],
+      "tvConstraints": {
+        "maxRows": 12,
+        "requiresBranchPermission": true
+      },
       "valueFieldLabels": {
         "product_count": "Qtd. de produtos",
         "total_stock_value": "Valor do estoque (R$)",
         "total_quantity": "Quantidade total"
-      },
-      "tableFields": "by_warehouse",
-      "tvConstraints": {
-        "maxRows": 12,
-        "requiresBranchPermission": true
       },
       "projectableFields": [
         {
@@ -28435,37 +28947,53 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value",
-        "stockValue",
-        "total"
-      ],
       "tableFields": "top_products",
+      "valueFields": [
+        "total_stock_value",
+        "total_stock_quantity",
+        "total_locations"
+      ],
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
       },
+      "valueFieldLabels": {
+        "total_stock_value": "Valor total de estoque",
+        "total_stock_quantity": "Quantidade em estoque",
+        "total_locations": "Localizações"
+      },
+      "valueFieldTypes": {
+        "total_stock_value": "number",
+        "total_stock_quantity": "number",
+        "total_locations": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
-          "type": "string",
+          "name": "total_stock_value",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Valor total de estoque"
         },
         {
-          "name": "stockValue",
-          "type": "string",
+          "name": "total_stock_quantity",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Quantidade em estoque"
         },
         {
-          "name": "total",
-          "type": "string",
+          "name": "total_locations",
+          "type": "number",
           "nullable": true,
           "projectable": true,
-          "origin": "result"
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Localizações"
         }
       ]
     },
