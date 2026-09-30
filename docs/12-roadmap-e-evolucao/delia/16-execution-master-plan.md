@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T6=APPROVED`; `C3_T7_AUTHORIZED=YES`; `C3_T7_EXECUTED=NO`; do not claim C3 complete; do not start C3-T7 in this persistence step; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T7` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T6=APPROVED`; `C3_T7=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T8_AUTHORIZED=NO`; do not claim C3 complete; do not start C3-T8; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -406,7 +406,7 @@ BROWSER_STATE_RESIDENCY_POLICY = APPROVED (C2-T1D1)
 BROWSER_RETAINED_STATE_CURRENTLY_REQUIRED = NO
 CENTRALIZED_BROWSER_STATE_BOUNDARY = REQUIRED_ON_FIRST_RETAINED_STATE
 SHARED_DEVICE_ISOLATION_INVARIANT = FROZEN_ACCEPTED
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 ```
 
 C3 initial bounded DAG (Coordination-approved dependency order; not the numbered foundation inventory):
@@ -419,7 +419,7 @@ C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHI
 → C3-T4 Structured Understanding Vertical Slice = APPROVED (ARCHITECTURE_REVIEW_C3_T4R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=89bb5ad352)
 → C3-T5 OpenAPI Action Catalog + Capability Projection = APPROVED (ARCHITECTURE_REVIEW_C3_T5 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=84c249bee0)
 → C3-T6 Expertise / Knowledge Governance + Retrieval Contracts = APPROVED (ARCHITECTURE_REVIEW_C3_T6R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=1a49e501fb)
-→ C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation (AUTHORIZED; NOT_STARTED)
+→ C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation (CANDIDATE_FOR_ARCHITECTURE_REVIEW; IMPLEMENTATION_HEAD=0fc2cba747ccae27e6980c7335b055529081c9e7)
 → C3-T8 Conversation / Session Interaction Foundation
 EVIDENCE_BEFORE_MODEL = YES
 EVIDENCE_BEFORE_PLANNER = YES
@@ -443,6 +443,7 @@ C3_T6_AUTHORIZED = YES
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 ```
 
 ## C0.S2 — Authorities / bounded contexts
@@ -701,7 +702,7 @@ C3_T2_AUTHORIZED = YES
 C3_T3_AUTHORIZED = YES
 C3_T3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 C3_T3 = APPROVED
 C3_T4 = APPROVED
 C3_T4_AUTHORIZED = YES
@@ -713,8 +714,9 @@ C3_T6_AUTHORIZED = YES
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
-C2-FINAL accepted with residual; C3-T1..T6 APPROVED (`ARCHITECTURE_REVIEW_C3_T6R1` ACCEPT_WITH_RESIDUAL); C3-T7 authorized, not started
+C2-FINAL accepted with residual; C3-T1..T6 APPROVED (`ARCHITECTURE_REVIEW_C3_T6R1` ACCEPT_WITH_RESIDUAL); C3-T7 executed as foundation candidate (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`; §6.78), review pending
 Workspace binding remains unscheduled
 ```
 
@@ -956,9 +958,10 @@ C3_T6_AUTHORIZED = YES
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T5 candidate markers live in ledger candidate block / §6.73 review
 ```
 
@@ -1018,10 +1021,40 @@ PERSISTENCE = NONE
 MIGRATION = NONE
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_EXECUTED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T6 / C3-T6R1 candidate markers live in ledger §6.74–§6.75; review persistence §6.76
 ```
 
-C3-T6R1 is accepted with residual. Expertise `evidence_refs` are canonical `EvidenceRef`. Retrieval has no caller-selectable scope/include flags; normal retrieval is published organizational Knowledge only. RetrievalPort/store/RAG remain deferred. Expertise/Playbook status strings remain descriptive non-authoritative metadata. Publication completion flags are lifecycle-state assertions, not proof of executed review/eval operations. C3-T7 is authorized but not executed.
+C3-T6R1 is accepted with residual. Expertise `evidence_refs` are canonical `EvidenceRef`. Retrieval has no caller-selectable scope/include flags; normal retrieval is published organizational Knowledge only. RetrievalPort/store/RAG remain deferred. Expertise/Playbook status strings remain descriptive non-authoritative metadata. Publication completion flags are lifecycle-state assertions, not proof of executed review/eval operations.
+
+### C3-T7 — Decision Path + Structured Planner Foundation (candidate)
+
+```text
+TASK = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+IMPLEMENTATION_HEAD = 0fc2cba747ccae27e6980c7335b055529081c9e7
+BASE_HEAD = 86f54483e7bacde1c9c5fa8510affe70ddc2e2db
+OWNER = delia-api/app/domain/decision_path/ + app/domain/planning/
+MODEL = DecisionPath{FAST,OPERATIONAL,REASONING} + DecisionPathInput +
+        DecisionPathResult{SELECTED|INCONCLUSIVE|BLOCKED} +
+        PlanCandidate + ordered PlanStep + PlanValidationResult
+RULES = select_decision_path (fail-closed; authoritative-rule priority;
+        smallest sufficient path) + validate_plan_candidate (fail-closed
+        unknown_capability / operation_character_mismatch /
+        missing_required_evidence / duplicate_step_id)
+REUSE = CapabilityProjection + OperationCharacter (C3-T5);
+        EvidenceRef + SourceRef (C3-T2R1)
+INVARIANTS = routing != authorization; plan != execution; not every event
+        calls LLM; OPERATIONAL requires no model; REASONING is routing
+        classification only; planned PREPARE/ACT/VERIFY are descriptive
+        future requirements
+NONE = model router, planner engine/runtime, ports, use cases, retrieval
+       port, RAG/vector/embedding, conversation, tool execution, PREPARE,
+       ACT, Automation Hub, persistence, migration
+EVIDENCE = ledger §6.78; 20 C3-T7 section; TARGETED_C3_T7 PASS 41/41;
+           FULL_DELIA_API PASS 205/205 at IMPLEMENTATION_HEAD
+NEXT = ARCHITECTURE_REVIEW_C3_T7
+```

@@ -1201,7 +1201,7 @@ C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 ```
 
 Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1277,9 +1277,10 @@ C3_T6_AUTHORIZED = YES
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 TEST_MODULES = tests/test_structured_understanding_foundation.py + tests/test_structured_understanding_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 ```
 
 Required deterministic cases (C3-T4R1) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1913,7 +1914,8 @@ C3_T6_AUTHORIZED = YES
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 ```
 
 Implementation SHA: `84c249bee0182ebf514142a24cb8bbea4090ca26`.
@@ -1967,9 +1969,10 @@ RAG = NONE
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 PRODUCTION_READINESS = NOT_PROVEN
 CURRENT_TASK_RUNTIME_TEST = TEST_NOT_RUN
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 ```
 
 Referenced accepted evidence (not re-executed by Architecture Review persistence):
@@ -1990,3 +1993,66 @@ Coverage notes (accepted):
 - Expertise/Playbook grant no RBAC/ACT;
 - KnowledgeCandidate cannot be PUBLISHED; publication eligibility fail-closed;
 - no KnowledgeRepository/Registry/VectorStore/RAG/RetrievalPort/planner/ACT.
+
+## C3-T7 — Decision Path + Structured Planner Foundation (candidate)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+REVIEW = PENDING (ARCHITECTURE_REVIEW_C3_T7)
+IMPLEMENTATION_HEAD = 0fc2cba747ccae27e6980c7335b055529081c9e7
+EVALUATED_SHA = 0fc2cba747ccae27e6980c7335b055529081c9e7
+BASE_HEAD = 86f54483e7bacde1c9c5fa8510affe70ddc2e2db
+OWNER = delia-api/app/domain/decision_path/ + app/domain/planning/
+TEST_MODULES = tests/test_decision_path_foundation.py +
+               tests/test_planning_foundation.py +
+               tests/test_decision_path_planner_architecture.py
+
+TARGETED_C3_T7 = PASS 41/41 at 0fc2cba747ccae27e6980c7335b055529081c9e7
+FULL_DELIA_API = PASS 205/205 at 0fc2cba747ccae27e6980c7335b055529081c9e7
+DETERMINISTIC_DECISION_PATH_CONFORMANCE = PASS
+DETERMINISTIC_PLAN_CONFORMANCE = PASS
+
+DECISION_PATH = FAST | OPERATIONAL | REASONING (exact)
+SMALLEST_SUFFICIENT_PATH = ENFORCED
+AUTHORITATIVE_RULE_PRIORITY = ENFORCED
+NOT_EVERY_EVENT_CALLS_LLM = ENFORCED
+ROUTING_FAIL_CLOSED = INCONCLUSIVE | BLOCKED
+ROUTING_AUTHORIZATION_BOUNDARY = PASS (no permission fields)
+OPERATIONAL = routing semantic; NO MODEL REQUIRED
+REASONING = routing classification only; REAL_REASONING_RUNTIME = NONE
+PLAN_AUTHORIZATION = NONE
+PLAN_EXECUTION = NONE
+CAPABILITY_REFERENCE = SEMANTIC_ONLY (canonical CapabilityProjection ids)
+OPERATION_CHARACTER_ESCALATION = FAIL_CLOSED
+CYCLE_VALIDATION = NOT_APPLICABLE (ordered steps; no dependency graph)
+REAL_MODEL_CALL = NONE
+REAL_REASONING_QUALITY_EVIDENCE = NONE
+RAG = NONE
+VECTOR_STORE = NONE
+CONVERSATION_RUNTIME = NONE
+TOOL_EXECUTION = NONE
+PREPARE = NONE
+ACT = NONE
+AUTOMATION_HUB_EXECUTION = NONE
+PERSISTENCE = NONE
+MIGRATION = NONE
+C3_T8_AUTHORIZED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T7
+```
+
+Required deterministic cases (C3-T7) — implemented, pending Architecture Review:
+
+- FAST selected when authoritative deterministic rule + sufficient context;
+- OPERATIONAL selected for bounded structured case without model;
+- REASONING selected only for complex investigation (no reasoning runtime);
+- simple deterministic case never selects REASONING;
+- authoritative rule takes priority over complex-investigation flag;
+- missing routing facts → INCONCLUSIVE; missing required evidence → BLOCKED;
+- conflicting evidence → REASONING without fabricated reconciliation;
+- path selection grants no authorization; permission-like input text does not change semantics;
+- PlanCandidate/PlanStep typed; unknown capability fail-closed;
+- operation-character mismatch fail-closed (untrusted READ→ACT rejected);
+- planned PREPARE/ACT/VERIFY produce no execution/permission/outcome;
+- EvidenceRef/SourceRef canonical reuse; missing evidence explicit;
+- no planner engine/router/ports/RAG/conversation/persistence abstractions.

@@ -196,8 +196,8 @@ OUT_OF_SCOPE_WITH_DECISION
 | CP-201 | Connector runtime é provider-neutral; planner não contém branches Gmail/Outlook/WhatsApp | DÉLIA Connectors/Planner | provider generalization | LOCKED |
 | CP-205 | Connector capabilities são semânticas/contract-driven e separadas de endpoints específicos | DÉLIA Capability/Connectors | capability contract gate | LOCKED / CONTRIBUTION ONLY — C3-T5 APPROVED projection keeps semantic identity distinct from method/path and requires governed semantic declaration; connector runtime not implemented; not CP PASS |
 | CP-215 | Teams é capability family do Microsoft 365 connector; planner não depende de Graph paths nem cria runtime Teams separado | DÉLIA Teams/Connectors/Planner | Teams provider-neutral architecture | LOCKED |
-| CP-232 | DÉLIA suporta decision-path routing `FAST | OPERATIONAL | REASONING`; nem todo evento chama LLM | DÉLIA Intelligence/Policy | decision-path routing eval | LOCKED |
-| CP-233 | Business readiness/anomaly material usa deterministic Policy/Specification sobre fatos autoritativos; LLM não é única autoridade da decisão | DÉLIA Policy/Domain owners | deterministic-decision gate | LOCKED |
+| CP-232 | DÉLIA suporta decision-path routing `FAST | OPERATIONAL | REASONING`; nem todo evento chama LLM | DÉLIA Intelligence/Policy | decision-path routing eval | LOCKED / FOUNDATION CONTRIBUTION — C3-T7 candidate: canonical `DecisionPath` + deterministic fail-closed routing + `NOT_EVERY_EVENT_CALLS_LLM` enforced without model; decision-path routing eval gate not complete; not CP PASS |
+| CP-233 | Business readiness/anomaly material usa deterministic Policy/Specification sobre fatos autoritativos; LLM não é única autoridade da decisão | DÉLIA Policy/Domain owners | deterministic-decision gate | LOCKED / FOUNDATION CONTRIBUTION — C3-T7 candidate: authoritative deterministic rule + sufficient context selects FAST and cannot be overridden by free-form model judgment; deterministic-decision gate not complete; not CP PASS |
 | CP-250 | Process Intelligence usa EventLog/ProcessTrace contracts com case/activity/time/source/provenance e não inventa eventos ausentes | DÉLIA Process Intelligence | process-contract/conformance gate | LOCKED |
 | CP-257 | AI Control Tower possui AI Asset Registry/projection com owner/version/risk/data scope/eval/status/dependencies/kill-switch refs sem duplicar owner truth | DÉLIA Control Tower | asset-registry contract gate | LOCKED |
 | CP-263 | MCP/A2A entram por adapters/allowlists provider-neutral; discovery de server/agent nunca equivale a aprovação/permission | DÉLIA Interoperability/Security | tool-agent trust gate | LOCKED |
@@ -1130,6 +1130,7 @@ Review: `ARCHITECTURE_REVIEW_C3_T6R1`; `REVIEWED_IMPLEMENTATION_HEAD=1a49e501fb8
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_EXECUTED = NO
 C3_STARTED = YES
 PRODUCTION_READINESS = NOT_PROVEN
@@ -1161,5 +1162,36 @@ RUNTIME_CP_PROMOTED_TO_PASS = NO
 NEW_CP_CREATED = NO
 CP_RENAMED = NO
 UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
-NEXT = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
+NEXT = ARCHITECTURE_REVIEW_C3_T7
+```
+
+## 32. C3-T7 Decision Path + Structured Planner Foundation — candidate linkage
+
+Evidence anchors: `16` C3-T7 candidate section; `20` C3-T7 acceptance section; `17` C3-T7 note; `21` §4A.13 semantics; ledger §6.78.
+Review: `ARCHITECTURE_REVIEW_C3_T7` PENDING; `IMPLEMENTATION_HEAD=0fc2cba747ccae27e6980c7335b055529081c9e7`; `BASE_HEAD=86f54483e7bacde1c9c5fa8510affe70ddc2e2db`.
+
+| CP | C3-T7 contribution note | Status |
+|---|---|---|
+| CP-232 | deterministic DecisionPath routing (FAST/OPERATIONAL/REASONING) + fail-closed selection + NOT_EVERY_EVENT_CALLS_LLM | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-233 | authoritative deterministic rule priority over free-form model judgment | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-014 | structured PlanCandidate references semantic capability ids (multi-capability ordering; no provider branches) | LOCKED / CONTRIBUTION ONLY |
+| CP-074 | PlanStep contract is a semantic step model usable by future multi-expertise composition | LOCKED / CONTRIBUTION ONLY |
+| CP-076 | PlanStep carries capability_id only — no endpoint hardcode | LOCKED / CONTRIBUTION ONLY |
+| CP-086 | unknown capability id fails closed (UNKNOWN_CAPABILITY) | LOCKED / CONTRIBUTION ONLY |
+| CP-201 | planner contracts contain no provider branches (provider-neutral) | LOCKED / CONTRIBUTION ONLY |
+| CP-205 | plan steps reference canonical semantic CapabilityProjection identity | LOCKED / CONTRIBUTION ONLY |
+| CP-235 | PlanStep has no UI mechanics (no selector/HTTP/tool syntax) | LOCKED / CONTRIBUTION ONLY |
+
+```text
+MASS_PROMOTION = NONE
+RUNTIME_CP_PROMOTED_TO_PASS = NO
+NEW_CP_CREATED = NO
+CP_RENAMED = NO
+UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
+DISCOVERED_REQUIREMENT = NONE
+TRACEABILITY_GAP = NONE material
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+C3_T8_AUTHORIZED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T7
 ```

@@ -278,6 +278,7 @@ C3_T6_AUTHORIZED = YES
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 REVIEW = ARCHITECTURE_REVIEW_C3_T3R1
 VERDICT_C3_T3 = ACCEPT_WITH_RESIDUAL
 REVIEW_C3_T4 = ARCHITECTURE_REVIEW_C3_T4R1
@@ -297,7 +298,7 @@ NORMAL_RETRIEVAL_SCOPE = PUBLISHED_ORGANIZATIONAL_KNOWLEDGE_ONLY
 RETRIEVAL_PORT = DEFERRED
 ```
 
-C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 Structured Understanding aceito por `ARCHITECTURE_REVIEW_C3_T4R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); C3-T5 OpenAPI/CapabilityProjection aceito por `ARCHITECTURE_REVIEW_C3_T5` (`ACCEPT_WITH_RESIDUAL`; `C3_T5=APPROVED`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`); C3-T6 Expertise/Knowledge governance + retrieval contracts aceito por `ARCHITECTURE_REVIEW_C3_T6R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T6=APPROVED`; published-only retrieval; no physical store / RAG / RetrievalPort); store/RAG/planner/conversation/real provider remain out of scope; C3_T7_AUTHORIZED=YES.
+C3-T1 congela o **uso semântico** de Evidence/Source/epistemic para a inteligência futura. Não cria Evidence store, repository, schema, LLM, RAG, planner ou conversation runtime. C3-T2R1 domain model/tests foram aceitos por `ARCHITECTURE_REVIEW_C3_T2R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`). C3-T3 foundation aceita por `ARCHITECTURE_REVIEW_C3_T3R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T3=APPROVED`). C3-T4 Structured Understanding aceito por `ARCHITECTURE_REVIEW_C3_T4R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `BOUNDED_SOURCE_OBSERVATION_EXTRACTION`); C3-T5 OpenAPI/CapabilityProjection aceito por `ARCHITECTURE_REVIEW_C3_T5` (`ACCEPT_WITH_RESIDUAL`; `C3_T5=APPROVED`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`); C3-T6 Expertise/Knowledge governance + retrieval contracts aceito por `ARCHITECTURE_REVIEW_C3_T6R1` (`ACCEPT_WITH_RESIDUAL`; `C3_T6=APPROVED`; published-only retrieval; no physical store / RAG / RetrievalPort); C3-T7 executado como foundation candidate (`C3_T7=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `IMPLEMENTATION_HEAD=0fc2cba747ccae27e6980c7335b055529081c9e7`): `DecisionPathInput`/`DecisionPathResult`/`PlanCandidate`/`PlanStep` são value objects de domínio — sem persistence, sem runtime de planner, sem execution; store/RAG/planner runtime/conversation/real provider remain out of scope; `C3_T8_AUTHORIZED=NO`.
 
 ### 4C. C3-T3 — Model invocation / eval lineage
 
@@ -375,6 +376,7 @@ C3_T6_AUTHORIZED = YES
 C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 NOTE_SUPERSEDED_CANDIDATE: historical candidate/rework markers live in ledger §6.70–§6.71 / §6.74–§6.75
 ```
 
@@ -2032,6 +2034,7 @@ PLANNER = NONE
 ACT = NONE
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
+C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 ```
 
 C3-T6 does not persist knowledge assets, does not index vectors, does not implement Personal Memory runtime, Marketplace, planner, conversation, PREPARE or ACT. Accepted with residual via `ARCHITECTURE_REVIEW_C3_T6R1`.
