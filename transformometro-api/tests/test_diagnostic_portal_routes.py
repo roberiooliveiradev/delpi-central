@@ -375,6 +375,15 @@ def test_prepare_create_requires_authentication(wired):
     assert resp.status_code == 401
 
 
+def test_prepare_create_denies_missing_access_permission(wired):
+    resp = routes.prepare_create_diagnostic(
+        _request(_user(permissions=[])),
+        REV_A,
+        routes.DiagnosticCreatePrepareBody(problem_statement="x"),
+    )
+    assert resp.status_code == 403
+
+
 # ---------------------------------------------------------------------------
 # PREPARE — MANAGE (closed action list + server ids + provenance)
 # ---------------------------------------------------------------------------
@@ -484,6 +493,30 @@ def test_prepare_manage_reference_ids_stay_caller_provided(wired):
     assert payload["link_id"]  # new link id server-generated
 
 
+def test_prepare_manage_requires_authentication(wired):
+    request = _request()
+    request.state.user = None
+    resp = routes.prepare_manage_diagnostic(
+        request,
+        str(uuid4()),
+        routes.DiagnosticManagePrepareBody(
+            action="add_finding", payload={"statement": "x"}
+        ),
+    )
+    assert resp.status_code == 401
+
+
+def test_prepare_manage_denies_service_principal(wired):
+    resp = routes.prepare_manage_diagnostic(
+        _request(_user(principal_type="service")),
+        str(uuid4()),
+        routes.DiagnosticManagePrepareBody(
+            action="add_finding", payload={"statement": "x"}
+        ),
+    )
+    assert resp.status_code == 403
+
+
 def test_prepare_manage_all_13_actions_are_recognized(wired):
     diag = _seeded(wired)
     assert len(MANAGE_ACTIONS) == 13
@@ -518,6 +551,28 @@ def _prepare_create(request, revision_id=REV_A, statement="raiz"):
     )
     assert resp.status_code == 200
     return _body(resp)["data"]
+
+
+def test_commit_requires_authentication(wired):
+    request = _request()
+    request.state.user = None
+    resp = routes.commit_governed_proposal(
+        request,
+        routes.GovernedProposalCommitBody(
+            proposal_handle="any", confirmation=True
+        ),
+    )
+    assert resp.status_code == 401
+
+
+def test_commit_denies_missing_access_permission(wired):
+    resp = routes.commit_governed_proposal(
+        _request(_user(permissions=[])),
+        routes.GovernedProposalCommitBody(
+            proposal_handle="any", confirmation=True
+        ),
+    )
+    assert resp.status_code == 403
 
 
 def test_commit_requires_confirmation_true(wired):
@@ -694,13 +749,25 @@ def test_verified_act_emits_minimal_diagnostic_event(wired, rbac, notified):
     assert call["entity_id"] == proposal["exact_change"]["diagnostic_id"]
     assert call["action"] == "create"
     assert call["actor_client_id"] == "tab-42"
-    # Data minimization: scope id only — no content over WS.
-    assert call["payload"] == {"revisao_id": REV_A}
+    # Data minimization: authorized contract is exactly {"revision_id"} —
+    # no content, no legacy revisao_id key over WS.
+    assert call["payload"] == {"revision_id": REV_A}
+    for forbidden in (
+        "revisao_id",
+        "problem_statement",
+        "finding",
+        "hypothesis",
+        "conclusion",
+        "evidence",
+        "rationale",
+        "provenance",
+    ):
+        assert forbidden not in call["payload"]
 
 
 def test_diagnostic_section_key_and_revision_room():
     assert infer_section_key("diagnostic", "create") == "diagnostico"
     assert infer_section_key("diagnostic", "update") == "diagnostico"
-    rooms = _related_rooms("diagnostic", "d1", {"revisao_id": "r9"})
+    rooms = _related_rooms("diagnostic", "d1", {"revision_id": "r9"})
     assert "revisao:r9" in rooms
     assert "diagnostic:d1" in rooms

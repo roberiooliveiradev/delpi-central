@@ -20,7 +20,7 @@ Boundary-owned concerns enforced here (and only here):
     - ``confirmation=true`` is required to commit a proposal.
 
 Realtime: exactly one ``entity.updated`` (entityType=diagnostic,
-sectionKey=diagnostico, payload={revisao_id}) is emitted AFTER the ACT is
+sectionKey=diagnostico, payload={revision_id}) is emitted AFTER the ACT is
 verified — never on PREPARE, never on failed/unverified ACT.
 """
 
@@ -170,16 +170,17 @@ def _portal_provenance(provided) -> dict:
 def _notify_diagnostic_commit(request: Request, result: dict) -> None:
     """Invalidation signal only — emitted AFTER verified ACT, never before.
 
-    Payload is data-minimized by contract: only ``revisao_id`` (canonical
-    realtime scope key). No claim/finding/conclusion/evidence content.
+    Payload is data-minimized by contract: only ``revision_id`` (the scope
+    key authorized for the Diagnostic realtime contract). No
+    claim/finding/conclusion/evidence content.
     """
     capability = result.get("capability")
     if capability not in DIAGNOSTIC_CAPABILITIES:
         return
     diagnostic = (result.get("data") or {}).get("diagnostic") or {}
     diagnostic_id = str(diagnostic.get("diagnostic_id") or "").strip()
-    revisao_id = str(diagnostic.get("revision_id") or "").strip()
-    if not diagnostic_id or not revisao_id:
+    revision_id = str(diagnostic.get("revision_id") or "").strip()
+    if not diagnostic_id or not revision_id:
         return
     user_id, _, _ = actor_from_request(request)
     notify_entity_updated(
@@ -188,7 +189,7 @@ def _notify_diagnostic_commit(request: Request, result: dict) -> None:
         action=("create" if capability == CREATE_CAPABILITY else "update"),
         actor_user_id=user_id,
         actor_client_id=client_id_from_request(request),
-        payload={"revisao_id": revisao_id},
+        payload={"revision_id": revision_id},
     )
 
 
@@ -247,6 +248,9 @@ def prepare_create_diagnostic(
     body: DiagnosticCreatePrepareBody,
 ):
     try:
+        # Explicit boundary guard: authenticated end-user + transformometro.access.
+        # The orchestrator re-checks at PREPARE and ACT runs fresh Core AuthZ.
+        require_prepare_authz(request)
         public = _orchestrator.prepare(
             request,
             capability=CREATE_CAPABILITY,
@@ -276,6 +280,7 @@ def prepare_manage_diagnostic(
     body: DiagnosticManagePrepareBody,
 ):
     try:
+        require_prepare_authz(request)
         action = str(body.action or "").strip()
         if action not in MANAGE_ACTIONS:
             return fail(
@@ -326,6 +331,9 @@ def commit_governed_proposal(
     body: GovernedProposalCommitBody,
 ):
     try:
+        # Explicit boundary guard — confirmation below is NOT authorization;
+        # the canonical ACT path still runs fresh Core AuthZ (force_refresh).
+        require_prepare_authz(request)
         if body.confirmation is not True:
             return fail(
                 "confirmation=true é obrigatório para commitar uma proposta. "

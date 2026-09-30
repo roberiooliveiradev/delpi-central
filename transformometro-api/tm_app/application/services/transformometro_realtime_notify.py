@@ -245,10 +245,14 @@ def _related_rooms(entity_type: str, entity_id: str, payload: dict[str, Any]) ->
         rooms.append(room_key(entity_type, entity_id))
 
     revisao_id = payload.get("revisao_id")
-    if revisao_id and entity_type == "diagnostic":
-        # Diagnostic invalidation contract: revisao:{revision_id} fan-out only —
-        # payload stays minimal (no claim/evidence content over WS).
-        rooms.append(room_key("revisao", str(revisao_id)))
+    if entity_type == "diagnostic":
+        # Diagnostic invalidation contract: payload carries ``revision_id``
+        # (EN contract key) — revisao:{revision_id} fan-out only, payload stays
+        # minimal (no claim/evidence content over WS). Other entities keep the
+        # established ``revisao_id`` schema below.
+        revision_id = payload.get("revision_id")
+        if revision_id:
+            rooms.append(room_key("revisao", str(revision_id)))
     if revisao_id and entity_type in {"medicao", "investimento", "vinculo"}:
         rooms.append(room_key("revisao", str(revisao_id)))
         # Matriz/comparativo da melhoria e árvore do processo precisam invalidar.

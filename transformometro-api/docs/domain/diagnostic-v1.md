@@ -1,6 +1,11 @@
 # Diagnostic V1 — domain capability & governance record
 
-**Status:** PROVEN IN PRODUCTION (deployed SHA `230fbb9b6a`)
+**Status (per surface — runtime facts only):**
+- Domain + Persistence + Application + TÉO MCP: PROVEN IN PRODUCTION
+  (deployed SHA `230fbb9b6a`).
+- Portal HTTP backend (`/transformometro/...`): IMPLEMENTED — covered by
+  route-level tests only; deployment NOT PERFORMED for this slice;
+  authenticated gateway/JWT runtime smoke TEST_NOT_RUN.
 **Date:** 2026-09-29
 **Owner:** Transformômetro (domain + persistence + use cases)
 **Surfaces:** TÉO MCP (`/apps/transformometro-api/mcp`) and Portal HTTP
@@ -26,25 +31,26 @@ Manage actions (closed enum): `add_finding`, `add_hypothesis`, `add_causal_link`
 
 | Route | Kind | Canonical path |
 |---|---|---|
-|  | READ |  →  |
-|  | READ |  →  |
-|  | PREPARE |  capability; server-generated ; provenance forced  |
-|  | PREPARE |  capability; closed ; server-generated entity ids (); provenance forced  |
-|  | ACT (shared, single) |  — same proposal store, fingerprint, actor binding, stale detection, read-back verification as GPT/MCP |
+| `GET /transformometro/revisions/{revision_id}/diagnostics` | READ | `ListDiagnosticsByRevision` use case → canonical ordering + revision context |
+| `GET /transformometro/diagnostics/{diagnostic_id}` | READ | `GetDiagnostic` use case → aggregate read projection + resolved evidence links + data-quality signals |
+| `POST /transformometro/revisions/{revision_id}/diagnostics/prepare` | PREPARE | `create_diagnostic` capability; server-generated `diagnostic_id`; provenance forced `USER` |
+| `POST /transformometro/diagnostics/{diagnostic_id}/prepare` | PREPARE | `manage_diagnostic` capability; closed 13-action enum; server-generated entity ids (`finding_id`, `hypothesis_id`, `link_id`, `conclusion_id`); provenance forced `USER` |
+| `POST /transformometro/governed-proposals/commit` | ACT (shared, single) | `GovernedActionsFacade.commit_proposal` — same proposal store, fingerprint, actor binding, stale detection, read-back verification as GPT/MCP |
 
-- All routes require authenticated end-user () +
-  ; service principals are denied at PREPARE and again
-  at fresh ACT AuthZ. Confirmation ≠ AuthZ.
-- Realtime: exactly one  (,
-  , payload  only) emitted after
-  WRITE + read-back + postcondition verification; fan-out  +
-  . Never on PREPARE or failed/unverified ACT.
+- All routes require authenticated end-user (`principal_type == "user"`) +
+  `transformometro.access` — `require_prepare_authz` runs at the route
+  boundary; service principals are denied at PREPARE and again at fresh ACT
+  AuthZ. Confirmation ≠ AuthZ.
+- Realtime: exactly one `entity.updated` (`entityType=diagnostic`,
+  `sectionKey=diagnostico`, payload `{"revision_id"}` only) emitted after
+  WRITE + read-back + postcondition verification; fan-out `diagnostic:{id}` +
+  `revisao:{revision_id}`. Never on PREPARE or failed/unverified ACT.
 - Error contract: 401 unauthenticated · 403 denied/actor-mismatch/service
   principal · 404 not found · 409 stale/concurrency/outcome-verification ·
   422 validation/unsupported action/server-owned field/confirmation missing ·
   503 Core AuthZ unavailable.
 - Shared transport projections live in
-  (single source for HTTP and MCP).
+  `tm_app/interface/diagnostic_projection.py` (single source for HTTP and MCP).
 
 ## Authority model
 
@@ -102,9 +108,14 @@ authoritative read-back in production.
 **IMPLEMENTED (this pass)** — Portal HTTP Diagnostic surface (2 reads, 2
 governed prepares, shared commit route), Portal-forced `USER` provenance,
 server-generated ids, post-verify realtime invalidation
-(`entityType=diagnostic`, `sectionKey=diagnostico`, `revisao:{id}` fan-out).
-Proven by `tests/test_diagnostic_portal_routes.py` (29 tests). No GPT Actions
-operations added; MCP unchanged.
+(`entityType=diagnostic`, `sectionKey=diagnostico`, payload
+`{"revision_id"}`, `revisao:{revision_id}` fan-out).
+Proven by `tests/test_diagnostic_portal_routes.py` (route-level tests over
+the canonical governed stack with fake ports and the real fresh-AuthZ
+adapter). No GPT Actions operations added; MCP unchanged.
+
+**NOT PERFORMED** — Portal HTTP deployment: no container rebuild/deploy for
+this slice; deployed SHA `230fbb9b6a` predates the Portal routes.
 
 **TEST_NOT_RUN** — authenticated HTTP runtime smoke of the Portal routes
 (end-to-end through gateway + real JWT); frontend does not consume these
