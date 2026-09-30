@@ -17,7 +17,8 @@ production-pulse-api
 production-control-api
     → owner atual dos fatos MES
 /integrations/mes/*
-    → contrato interno S2S somente leitura
+    → contrato interno S2S (leitura gerencial + administração governada
+      do catálogo de motivos de parada)
 plugins/delpi-mes
     → futura interface gerencial
     ↓ JWT
@@ -42,8 +43,16 @@ As rotas exigem `API_DELPI_INTERNAL_SERVICE_TOKEN`, aceito em `X-Delpi-Service-T
 | GET | `/integrations/mes/runs/{runId}/timeline` | Timeline do run com a mesma regra de duração do cockpit, sem sessão de bancada |
 | GET | `/integrations/mes/downtimes?branch=01&workCenter=&from=&to=&page=1&pageSize=50` | Histórico paginado de paradas MES |
 | GET | `/integrations/mes/work-centers/{workCenter}/timeline?branch=01&from=&to=` | Timeline do CT no período, unindo múltiplos runs/OPs com sobreposição temporal |
+| GET | `/integrations/mes/downtime-reasons` | Administração: lista motivos de parada **ativos e inativos** |
+| POST | `/integrations/mes/downtime-reasons` | Administração: cria motivo (`code` técnico imutável; 201; duplicado → 409) |
+| PUT | `/integrations/mes/downtime-reasons/{code}` | Administração: edita `label`/`category`/`requiresNote`/`sortOrder` (não renomeia `code`; 404 se inexistente) |
+| PATCH | `/integrations/mes/downtime-reasons/{code}/active` | Administração: ativa/desativa motivo (`setup` é protegido — `active=false` → 409) |
 
 Todas as respostas usam o envelope `{ success, message, data }`. `pageSize` é limitado a 100. Timestamps são timezone-aware.
+
+### Administração do catálogo de motivos (Cadastros — Etapa 1)
+
+O catálogo único continua sendo `production_control.downtime_reason_catalog` — sem tabela, schema ou cópia paralela. Regras: `code` imutável após a criação, **não existe DELETE físico** (desativação preserva `downtime_events.reason_code` e o histórico), `setup` não pode ser desativado enquanto a classificação automática depender dele, e os campos OEE (`default_planned`, `default_counts_as_availability_loss`) ficam fora do contrato administrativo. O catálogo é global (sem `branch`). O cockpit público continua recebendo somente motivos ativos — desativar esconde do operador, não do histórico nem da visão administrativa. Detalhes: [MES-STATE-DOWNTIME.md](../production-control/MES-STATE-DOWNTIME.md) § 12.
 
 O filtro temporal de paradas usa sobreposição de intervalos:
 

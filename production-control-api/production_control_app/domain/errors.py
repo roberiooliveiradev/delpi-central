@@ -99,3 +99,15 @@ class DowntimeNotFound(ProductionControlError):
 
 class DowntimeClassificationRequired(ProductionRunConflict):
     """Resume/Stop bloqueado: parada MES aberta ainda sem motivo classificado."""
+
+
+class DowntimeReasonNotFound(ProductionControlError):
+    """Motivo de parada inexistente no catálogo."""
+
+
+class DowntimeReasonConflict(ProductionControlError):
+    """Code duplicado ou operação proibida sobre motivo protegido."""
+
+
+class InvalidDowntimeReason(ProductionControlError):
+    """Dados administrativos do motivo fora do contrato do catálogo."""

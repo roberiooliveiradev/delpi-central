@@ -22,6 +22,7 @@ from psycopg.errors import ForeignKeyViolation, UniqueViolation
 from production_control_app.domain.errors import (
     DowntimeConflict,
     DowntimeNotFound,
+    DowntimeReasonConflict,
     InvalidMesEvent,
     MesStateConflict,
 )
@@ -541,6 +542,93 @@ class PostgresDowntimeReasonRepository:
                     """
                 )
                 return [dict(row) for row in cur.fetchall()]
+
+    def list_all(self) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT code, label, category, default_planned,
+                           default_counts_as_availability_loss, requires_note,
+                           active, sort_order, created_at, updated_at
+                    FROM {_REASONS}
+                    ORDER BY sort_order, code
+                    """
+                )
+                return [dict(row) for row in cur.fetchall()]
+
+    def create(
+        self,
+        *,
+        code: str,
+        label: str,
+        category: str,
+        requires_note: bool,
+        sort_order: int,
+    ) -> dict[str, Any]:
+        try:
+            with get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        f"""
+                        INSERT INTO {_REASONS} (
+                            code, label, category, requires_note, active, sort_order
+                        ) VALUES (%s, %s, %s, %s, TRUE, %s)
+                        RETURNING code, label, category, default_planned,
+                                  default_counts_as_availability_loss, requires_note,
+                                  active, sort_order, created_at, updated_at
+                        """,
+                        (
+                            str(code).strip().lower(),
+                            str(label).strip(),
+                            str(category).strip().lower(),
+                            bool(requires_note),
+                            int(sort_order),
+                        ),
+                    )
+                    row = cur.fetchone()
+                conn.commit()
+        except UniqueViolation:
+            raise DowntimeReasonConflict(
+                f"Já existe motivo de parada com o código '{str(code).strip().lower()}'."
+            ) from None
+        return dict(row)
+
+    def update(
+        self,
+        code: str,
+        *,
+        label: str,
+        category: str,
+        requires_note: bool,
+        sort_order: int,
+    ) -> dict[str, Any] | None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE {_REASONS}
+                       SET label = %s,
+                           category = %s,
+                           requires_note = %s,
+                           sort_order = %s,
+                           updated_at = NOW()
+                     WHERE code = %s
+                    RETURNING code, label, category, default_planned,
+                              default_counts_as_availability_loss, requires_note,
+                              active, sort_order, created_at, updated_at
+                    """,
+                    (
+                        str(label).strip(),
+                        str(category).strip().lower(),
+                        bool(requires_note),
+                        int(sort_order),
+                        str(code).strip().lower(),
+                    ),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return dict(row) if row else None
 
     def set_active(self, code: str, *, active: bool) -> dict[str, Any] | None:
         with get_connection() as conn:

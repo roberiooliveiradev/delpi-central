@@ -515,3 +515,14 @@ def build_mes_downtime_classification_service(
         reasons=PostgresDowntimeReasonRepository(),
         audit=PostgresMesAuditRepository(),
     )
+
+
+def build_mes_downtime_reason_admin_service() -> Any:
+    from production_control_app.application.services.mes_downtime_reason_admin_service import (  # noqa: E501
+        MesDowntimeReasonAdminService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_repository import (  # noqa: E501
+        PostgresDowntimeReasonRepository,
+    )
+
+    return MesDowntimeReasonAdminService(reasons=PostgresDowntimeReasonRepository())

@@ -49,6 +49,10 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | GET | `/integrations/mes/runs/{runId}/timeline` | S2S interno — timeline MES sem sessão de bancada |
 | GET | `/integrations/mes/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | S2S interno — paradas MES paginadas por sobreposição temporal |
 | GET | `/integrations/mes/work-centers/{workCenter}/timeline?branch=&from=&to=` | S2S interno — timeline do CT no período, cobrindo múltiplos runs |
+| GET | `/integrations/mes/downtime-reasons` | S2S interno — administração: motivos de parada ativos e inativos |
+| POST | `/integrations/mes/downtime-reasons` | S2S interno — administração: cria motivo (201; duplicado → 409) |
+| PUT | `/integrations/mes/downtime-reasons/{code}` | S2S interno — administração: edita label/category/requiresNote/sortOrder (`code` imutável; 404 se inexistente) |
+| PATCH | `/integrations/mes/downtime-reasons/{code}/active` | S2S interno — administração: ativa/desativa motivo (`setup` protegido → 409) |
 
 ### Integração Production Pulse (MES shadow)
 
@@ -67,7 +71,9 @@ Doc canônico: [MES-PULSE-COUNTING.md](../docs/12-roadmap-e-evolucao/production-
 
 ### Integração Delpi MES
 
-O `production-control-api` permanece temporariamente owner dos fatos MES e expõe `/integrations/mes/*` como contrato interno exclusivamente de leitura para o futuro `delpi-mes-api`. Essas rotas exigem o service token interno; JWT humano, sessão de bancada e token público do cockpit não concedem acesso. O consumidor previsto envia `X-Delpi-Caller-App: delpi-mes-api`, sem tratar esse header como credencial.
+O `production-control-api` permanece temporariamente owner dos fatos MES e expõe `/integrations/mes/*` como contrato interno para o futuro `delpi-mes-api`: leitura gerencial (live, timelines, histórico de paradas) e, desde a Etapa 1 de Cadastros, **administração governada do catálogo de motivos** (`/integrations/mes/downtime-reasons*`). Essas rotas exigem o service token interno; JWT humano, sessão de bancada e token público do cockpit não concedem acesso. O consumidor previsto envia `X-Delpi-Caller-App: delpi-mes-api`, sem tratar esse header como credencial.
+
+A administração atua sobre `downtime_reason_catalog` — fonte única, sem tabela paralela: `code` é imutável, não existe DELETE físico (desativação preserva `downtime_events.reason_code`), `setup` é protegido contra desativação (a parada automática por ausência de peças depende dele) e os campos OEE (`default_planned`, `default_counts_as_availability_loss`) não são administráveis nesta etapa. O catálogo é global (sem `branch`). O cockpit público continua recebendo somente motivos ativos. Detalhes: [MES-STATE-DOWNTIME.md](../docs/12-roadmap-e-evolucao/production-control/MES-STATE-DOWNTIME.md) § 12.
 
 A leitura live usa uma consulta Postgres consolidada sobre `production_runs`, `work_center_state_events`, `downtime_events` e `downtime_reason_catalog`; não chama o Pulse, não consulta timeline e não faz fan-out por centro. A timeline por centro de trabalho aplica a mesma consolidação com sobreposição temporal (`started_at < to AND (ended_at IS NULL OR ended_at >= from)`), retorna os timestamps reais dos fatos junto à janela (`from`/`to`/`referenceAt`) e preserva a troca de run/OP dentro do período — sem consulta por run. O histórico de paradas é paginado e usa sobreposição temporal. Contrato e fases: [Delpi MES](../docs/12-roadmap-e-evolucao/delpi-mes/README.md).
 | GET | `/product-3d-models` | JWT + `product-3d-models.manage` |

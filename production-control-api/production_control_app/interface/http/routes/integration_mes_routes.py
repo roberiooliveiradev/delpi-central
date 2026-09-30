@@ -4,11 +4,21 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Query, Request
+from pydantic import BaseModel, Field
 
 from delpi_auth.service_token import request_has_valid_internal_service_token
-from production_control_app.composition.pc_composer import build_mes_integration_read_service
+from production_control_app.composition.pc_composer import (
+    build_mes_downtime_reason_admin_service,
+    build_mes_integration_read_service,
+)
 from production_control_app.core.responses import fail, ok
-from production_control_app.domain.errors import InvalidBranch, ProductionRunNotFound
+from production_control_app.domain.errors import (
+    DowntimeReasonConflict,
+    DowntimeReasonNotFound,
+    InvalidBranch,
+    InvalidDowntimeReason,
+    ProductionRunNotFound,
+)
 
 router = APIRouter(prefix="/integrations/mes", tags=["MES integrations"])
 logger = logging.getLogger(__name__)
@@ -26,10 +36,39 @@ def _aware(value: datetime | None, name: str) -> datetime | None:
     return value
 
 
+class DowntimeReasonCreateBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    code: str = Field(..., min_length=1, max_length=40)
+    label: str = Field(..., min_length=1, max_length=120)
+    category: str = Field(..., min_length=1, max_length=40)
+    requires_note: bool = Field(..., alias="requiresNote")
+    sort_order: int = Field(default=0, alias="sortOrder", ge=0)
+
+
+class DowntimeReasonUpdateBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    label: str = Field(..., min_length=1, max_length=120)
+    category: str = Field(..., min_length=1, max_length=40)
+    requires_note: bool = Field(..., alias="requiresNote")
+    sort_order: int = Field(default=0, alias="sortOrder", ge=0)
+
+
+class DowntimeReasonActiveBody(BaseModel):
+    model_config = {"populate_by_name": True, "extra": "forbid"}
+
+    active: bool
+
+
 def _error(exc: Exception):
     if isinstance(exc, ProductionRunNotFound):
         return fail(str(exc), 404)
-    if isinstance(exc, (InvalidBranch, ValueError)):
+    if isinstance(exc, DowntimeReasonNotFound):
+        return fail(str(exc), 404)
+    if isinstance(exc, DowntimeReasonConflict):
+        return fail(str(exc), 409)
+    if isinstance(exc, (InvalidDowntimeReason, InvalidBranch, ValueError)):
         return fail(str(exc), 422)
     raise exc
 
@@ -126,4 +165,73 @@ def list_downtimes(
         page_size,
         len(data["items"]),
     )
+    return ok(data)
+
+
+@router.get("/downtime-reasons", operation_id="list_mes_downtime_reasons")
+def list_downtime_reasons(request: Request):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_reason_admin_service().list_reasons()
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info("mes_downtime_reasons_admin_list item_count=%s", len(data["items"]))
+    return ok(data)
+
+
+@router.post("/downtime-reasons", operation_id="create_mes_downtime_reason")
+def create_downtime_reason(request: Request, body: DowntimeReasonCreateBody):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_reason_admin_service().create_reason(
+            code=body.code,
+            label=body.label,
+            category=body.category,
+            requires_note=body.requires_note,
+            sort_order=body.sort_order,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info("mes_downtime_reason_admin_create code=%s", data["code"])
+    return ok(data, status_code=201)
+
+
+@router.put("/downtime-reasons/{code}", operation_id="update_mes_downtime_reason")
+def update_downtime_reason(request: Request, code: str, body: DowntimeReasonUpdateBody):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_reason_admin_service().update_reason(
+            code,
+            label=body.label,
+            category=body.category,
+            requires_note=body.requires_note,
+            sort_order=body.sort_order,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info("mes_downtime_reason_admin_update code=%s", data["code"])
+    return ok(data)
+
+
+@router.patch(
+    "/downtime-reasons/{code}/active",
+    operation_id="set_mes_downtime_reason_active",
+)
+def set_downtime_reason_active(request: Request, code: str, body: DowntimeReasonActiveBody):
+    denied = _deny_unless_internal(request)
+    if denied is not None:
+        return denied
+    try:
+        data = build_mes_downtime_reason_admin_service().set_reason_active(
+            code, active=body.active
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _error(exc)
+    logger.info("mes_downtime_reason_admin_active code=%s active=%s", data["code"], data["active"])
     return ok(data)
