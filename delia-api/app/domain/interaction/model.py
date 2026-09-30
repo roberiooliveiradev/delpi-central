@@ -144,6 +144,20 @@ class InteractionTurn:
             raise ValueError(
                 "InteractionTurn.epistemic_class must be EpistemicClass"
             )
+        if self.epistemic_class is EpistemicClass.FACT:
+            raise ValueError(
+                "InteractionTurn.epistemic_class=FACT requires a qualified-Fact "
+                "contract that C3-T8 does not provide; fail closed"
+            )
+        if (
+            self.kind is TurnKind.USER_INPUT
+            and self.epistemic_class is not None
+            and self.epistemic_class is not EpistemicClass.OBSERVATION
+        ):
+            raise ValueError(
+                "USER_INPUT epistemic_class must be None or OBSERVATION; "
+                "untrusted input cannot self-classify above observation"
+            )
 
     def grants_authorization(self) -> bool:
         return False

@@ -242,3 +242,71 @@ def test_session_status_minimal_lifecycle():
         "ACTIVE",
         "CLOSED",
     }
+
+
+def test_user_input_fact_rejected():
+    with pytest.raises(ValueError):
+        _turn(kind=TurnKind.USER_INPUT, epistemic_class=EpistemicClass.FACT)
+
+
+def test_delia_result_fact_rejected():
+    with pytest.raises(ValueError):
+        _turn(
+            kind=TurnKind.DELIA_RESULT,
+            epistemic_class=EpistemicClass.FACT,
+        )
+
+
+def test_user_input_observation_accepted():
+    turn = _turn(
+        kind=TurnKind.USER_INPUT,
+        epistemic_class=EpistemicClass.OBSERVATION,
+    )
+    assert turn.epistemic_class is EpistemicClass.OBSERVATION
+
+
+def test_user_input_none_accepted():
+    assert _turn(kind=TurnKind.USER_INPUT).epistemic_class is None
+
+
+@pytest.mark.parametrize(
+    "epistemic_class",
+    [
+        EpistemicClass.CALCULATION,
+        EpistemicClass.HYPOTHESIS,
+        EpistemicClass.CONCLUSION,
+        EpistemicClass.RECOMMENDATION,
+    ],
+)
+def test_user_input_higher_classes_rejected(epistemic_class):
+    with pytest.raises(ValueError):
+        _turn(kind=TurnKind.USER_INPUT, epistemic_class=epistemic_class)
+
+
+def test_delia_result_none_accepted():
+    assert _turn(kind=TurnKind.DELIA_RESULT).epistemic_class is None
+
+
+@pytest.mark.parametrize(
+    "epistemic_class",
+    [
+        EpistemicClass.OBSERVATION,
+        EpistemicClass.CALCULATION,
+        EpistemicClass.HYPOTHESIS,
+        EpistemicClass.CONCLUSION,
+        EpistemicClass.RECOMMENDATION,
+    ],
+)
+def test_delia_result_allowed_classes_accepted(epistemic_class):
+    turn = _turn(
+        kind=TurnKind.DELIA_RESULT,
+        epistemic_class=epistemic_class,
+        content="bounded result",
+    )
+    assert turn.epistemic_class is epistemic_class
+
+
+def test_user_input_cannot_self_promote_to_conclusion_or_recommendation():
+    for cls in (EpistemicClass.CONCLUSION, EpistemicClass.RECOMMENDATION):
+        with pytest.raises(ValueError):
+            _turn(kind=TurnKind.USER_INPUT, epistemic_class=cls)
