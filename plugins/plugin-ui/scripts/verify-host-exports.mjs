@@ -67,6 +67,13 @@ const REQUIRED_HOST_EXPORTS = [
   "PORTAL_USER_PROFILE_LABELS_PT",
   "reactionLabelForCode",
   "aggregateReactionBarItems",
+  "ModalShell",
+  "modalShellBemClasses",
+  "ConfirmModalPanel",
+  "confirmModalBemClasses",
+  "FloatingNoticeStack",
+  "floatingNoticeStackBemClasses",
+  "useFloatingNotices",
 ];
 
 function findIndexExpose(dir) {

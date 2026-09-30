@@ -813,3 +813,206 @@
   .delpi-mes-wc__photo { width: 100%; }
   .delpi-mes-wc__aside { flex-direction: column; align-items: stretch; }
 }
+
+/* ---------- Registrations (catálogos globais) ---------- */
+.delpi-mes-global-scope {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1.4rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid #c9dcf2;
+  border-radius: 999px;
+  background: #eaf2fb;
+  color: #1e4f96;
+  font-size: 0.8rem;
+}
+.delpi-mes-global-scope strong { font-weight: 700; }
+.delpi-mes-registration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.delpi-mes-registration-card {
+  display: grid;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.9rem;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+}
+.delpi-mes-registration-card strong { font-size: 1rem; color: #22344e; }
+.delpi-mes-registration-card > span { color: #5c6b80; font-size: 0.85rem; line-height: 1.55; }
+.delpi-mes-registration-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #1e63c4 !important;
+  font-weight: 700;
+}
+.delpi-mes-registration-card__action svg { width: 0.95rem; height: 0.95rem; }
+.delpi-mes-registration-card:hover { border-color: #bcd2ee; box-shadow: 0 10px 26px rgb(15 23 42 / 8%); }
+.delpi-mes-registration-card:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; }
+
+.delpi-mes-breadcrumb { margin-bottom: 0.9rem; }
+.delpi-mes-breadcrumb__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.4rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: none;
+  color: #1e63c4;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.delpi-mes-breadcrumb__back svg { width: 1rem; height: 1rem; }
+.delpi-mes-breadcrumb__back:hover { background: #eef4fb; }
+.delpi-mes-breadcrumb__back:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; }
+
+.delpi-mes-reasons-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.delpi-mes-search { position: relative; flex: 1 1 15rem; min-width: 12rem; }
+.delpi-mes-search svg {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  width: 0.95rem;
+  height: 0.95rem;
+  transform: translateY(-50%);
+  color: #7c8ba0;
+  pointer-events: none;
+}
+.delpi-mes-search input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 0.8rem 0 2.15rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: inherit;
+}
+.delpi-mes-status-filter select {
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: inherit;
+}
+.delpi-mes-search input:focus-visible, .delpi-mes-status-filter select:focus-visible {
+  outline: 3px solid rgb(30 99 196 / 40%);
+  outline-offset: 1px;
+}
+.delpi-mes-counts { margin: 0; color: #5c6b80; font-size: 0.8rem; }
+
+.delpi-mes-primary-btn, .delpi-mes-ghost-btn, .delpi-mes-danger-btn, .delpi-mes-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0 0.95rem;
+  border-radius: 0.65rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.delpi-mes-primary-btn svg, .delpi-mes-ghost-btn svg, .delpi-mes-icon-btn svg { width: 0.9rem; height: 0.9rem; }
+.delpi-mes-primary-btn { border: 1px solid #1e63c4; color: #fff; background: #1e63c4; }
+.delpi-mes-primary-btn:hover:not(:disabled) { background: #1a56ad; }
+.delpi-mes-ghost-btn, .delpi-mes-icon-btn { border: 1px solid #dde5ef; color: inherit; background: #fff; }
+.delpi-mes-ghost-btn:hover:not(:disabled), .delpi-mes-icon-btn:hover:not(:disabled) { background: #eef4fb; }
+.delpi-mes-danger-btn { border: 1px solid #dc2626; color: #fff; background: #dc2626; }
+.delpi-mes-danger-btn:hover:not(:disabled) { background: #b91c1c; }
+.delpi-mes-icon-btn { min-height: 2.1rem; padding: 0 0.7rem; font-weight: 600; font-size: 0.78rem; }
+.delpi-mes-icon-btn--danger { color: #b91c1c; }
+.delpi-mes-icon-btn--danger:hover:not(:disabled) { background: #fbe0e0; }
+.delpi-mes-primary-btn:disabled, .delpi-mes-ghost-btn:disabled,
+.delpi-mes-danger-btn:disabled, .delpi-mes-icon-btn:disabled { opacity: 0.55; cursor: default; }
+.delpi-mes-primary-btn:focus-visible, .delpi-mes-ghost-btn:focus-visible,
+.delpi-mes-danger-btn:focus-visible, .delpi-mes-icon-btn:focus-visible {
+  outline: 3px solid rgb(30 99 196 / 40%);
+  outline-offset: 2px;
+}
+
+.delpi-mes-table-scroll { overflow-x: auto; }
+.delpi-mes-reasons-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.delpi-mes-reasons-table th {
+  padding: 0.4rem 0.7rem;
+  color: #66788f;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.delpi-mes-reasons-table td { padding: 0.6rem 0.7rem; border-bottom: 1px solid #f0f4f9; color: #31435c; }
+.delpi-mes-reasons-table tr:last-child td { border-bottom: 0; }
+.delpi-mes-reasons-table th:last-child, .delpi-mes-reasons-table td:last-child { text-align: right; }
+.delpi-mes-code { font-weight: 700; color: #22344e; }
+.delpi-mes-system-tag {
+  display: inline-block;
+  margin-left: 0.45rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.delpi-mes-row-actions { display: flex; justify-content: flex-end; gap: 0.45rem; }
+
+.delpi-mes-form { display: grid; gap: 0.95rem; }
+.delpi-mes-field { display: grid; gap: 0.3rem; }
+.delpi-mes-field > label { font-weight: 700; font-size: 0.82rem; color: #31435c; }
+.delpi-mes-field input {
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  border: 1px solid #dde5ef;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+.delpi-mes-field input:read-only { background: #f4f7fb; color: #5c6b80; }
+.delpi-mes-field input:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 1px; }
+.delpi-mes-field__help { display: block; margin: 0; color: #66788f; font-size: 0.75rem; line-height: 1.5; }
+.delpi-mes-checkbox { display: flex; gap: 0.55rem; align-items: flex-start; cursor: pointer; }
+.delpi-mes-checkbox input { min-height: auto; margin-top: 0.2rem; width: 1rem; height: 1rem; }
+.delpi-mes-checkbox > span { display: grid; gap: 0.15rem; }
+.delpi-mes-form__error { display: block; margin: 0; color: #b91c1c; font-size: 0.82rem; font-weight: 600; }
+.delpi-mes-form__actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.35rem; }
+
+.delpi-mes-registrations-error {
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: clamp(1.2rem, 3vw, 2.2rem);
+  border: 1px solid color-mix(in srgb, #d97706 35%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, #d97706 8%, transparent);
+}
+.delpi-mes-registrations-error h2 { margin: 0 0 0.4rem; font-size: 1.25rem; }
+.delpi-mes-registrations-error p { color: #5c6b80; }
+.delpi-mes-registrations-error .delpi-mes-ghost-btn { margin-top: 0.6rem; }
+
+@media (max-width: 720px) {
+  .delpi-mes-reasons-toolbar > .delpi-mes-primary-btn { width: 100%; }
+  .delpi-mes-reasons-table { min-width: 46rem; }
+}

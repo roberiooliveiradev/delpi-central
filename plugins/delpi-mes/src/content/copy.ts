@@ -16,6 +16,17 @@ export const DELPI_MES_COPY = {
     description: "Base de navegação preparada para análise da linha do tempo dos runs de produção.",
     guidance: "O detalhamento preservará os tempos calculados pelo owner dos fatos MES.",
   },
+  registrations: {
+    title: "Cadastros",
+    description: "Configurações globais utilizadas pelo Delpi MES.",
+    globalScope: "Cadastro global",
+    globalScopeHint: "As alterações são válidas para todas as filiais.",
+    downtimeReasons: {
+      title: "Motivos de parada",
+      description: "Gerencie os motivos utilizados na classificação das paradas MES.",
+      action: "Gerenciar",
+    },
+  },
   help: {
     branch: "A filial faz parte da URL para manter navegação, recarga e compartilhamento no mesmo contexto.",
     permissions: "As áreas visíveis refletem suas permissões; o backend valida novamente cada consulta.",

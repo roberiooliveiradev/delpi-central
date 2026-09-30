@@ -1,4 +1,4 @@
-type RequestOptions = { signal?: AbortSignal };
+type RequestOptions = { signal?: AbortSignal; body?: unknown };
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -24,17 +24,19 @@ export function configureHttpClient(getAccessToken: () => string | undefined) {
   accessTokenGetter = getAccessToken;
 }
 
-export async function httpGet<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function httpRequest<T>(method: string, path: string, options: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "X-Delpi-Caller-App": CALLER_APP,
   };
+  if (options.body !== undefined) headers["Content-Type"] = "application/json";
   const token = accessTokenGetter?.();
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const response = await fetch(`${DELPI_MES_API_BASE}${path}`, {
-    method: "GET",
+    method,
     headers,
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
     signal: options.signal,
   });
   const body = await parseEnvelope<T>(response);
@@ -45,6 +47,22 @@ export async function httpGet<T>(path: string, options: RequestOptions = {}): Pr
     );
   }
   return body.data;
+}
+
+export function httpGet<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  return httpRequest<T>("GET", path, options);
+}
+
+export function httpPost<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
+  return httpRequest<T>("POST", path, { ...options, body });
+}
+
+export function httpPut<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
+  return httpRequest<T>("PUT", path, { ...options, body });
+}
+
+export function httpPatch<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
+  return httpRequest<T>("PATCH", path, { ...options, body });
 }
 
 async function parseEnvelope<T>(response: Response): Promise<ApiEnvelope<T>> {

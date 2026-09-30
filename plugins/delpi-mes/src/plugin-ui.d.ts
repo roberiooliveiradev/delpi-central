@@ -15,6 +15,59 @@ declare module "@delpi/plugin-ui/index" {
   export function drawerShellBemClasses(prefix: string): unknown;
   export function Timeline(props: { items: Array<{ id: string; title: ReactNode; occurredAt?: string | null; timeLabel?: ReactNode; detail?: ReactNode; meta?: ReactNode; tone?: "default" | "danger" | "warning" | "success" | "info" }>; loading?: boolean; emptyMessage?: string; classNames: unknown; prefix: string; "aria-label"?: string }): ReactNode;
   export function timelineBemClasses(prefix: string): unknown;
+  export type ModalShellClassNames = {
+    overlay: string; dialog: string; header: string; title: string;
+    closeButton: string; body: string; headerText?: string;
+    description?: string; footer?: string; headerActions?: string;
+  };
+  export function modalShellBemClasses(prefix: string): ModalShellClassNames;
+  export function ModalShell(props: {
+    open: boolean; title: string; description?: string; footer?: ReactNode;
+    headerActions?: ReactNode; onClose: () => void; children: ReactNode;
+    classNames: ModalShellClassNames; className?: string;
+    overlayClassName?: string; closeAriaLabel?: string;
+    closeOnOverlayClick?: boolean; initialFocusSelector?: string;
+    portalScopeClassName?: string;
+  }): ReactNode;
+  export type ConfirmModalClassNames = {
+    root: string; rootDanger: string; iconWrap: string; iconWrapDanger: string;
+    message: string; actions: string; cancelButton: string;
+    confirmButton: string; confirmButtonDanger: string; secondaryButton?: string;
+  };
+  export function confirmModalBemClasses(prefix: string, options?: { actionsBlock?: string; actionsAlign?: "start" | "end" }): ConfirmModalClassNames;
+  export function ConfirmModalPanel(props: {
+    message: ReactNode; confirmLabel?: string; cancelLabel?: string;
+    secondaryLabel?: string; confirmBusy?: boolean; confirmBusyLabel?: string;
+    variant?: "default" | "danger"; showCancel?: boolean;
+    onConfirm: () => void; onCancel: () => void; onSecondary?: () => void;
+    classNames: ConfirmModalClassNames;
+  }): ReactNode;
+  export type FloatingNoticeItem = {
+    id: string; message: ReactNode; title?: string;
+    variant?: "error" | "warning" | "success" | "info";
+    autoDismissMs?: number | null;
+    action?: { label: string; onClick: () => void };
+    onClose?: () => void;
+  };
+  export type FloatingNoticeInput = Omit<FloatingNoticeItem, "id"> & { id?: string };
+  export type FloatingNoticeStackClassNames = {
+    stack: string; notice: string; icon: string; content: string;
+    title: string; message: string; action: string; closeButton: string; progress: string;
+  };
+  export function floatingNoticeStackBemClasses(prefix: string): FloatingNoticeStackClassNames;
+  export function useFloatingNotices(): {
+    items: FloatingNoticeItem[];
+    push: (notice: FloatingNoticeInput | string) => string;
+    dismiss: (id: string) => void;
+    clear: () => void;
+  };
+  export function FloatingNoticeStack(props: {
+    items: FloatingNoticeItem[]; onDismiss: (id: string) => void;
+    classNames: FloatingNoticeStackClassNames;
+    labels?: { dismissAriaLabel?: string; stackAriaLabel?: string };
+    defaultAutoDismissMs?: Partial<Record<"error" | "warning" | "success" | "info", number | null>>;
+    portalScopeClassName?: string;
+  }): ReactNode;
   export function AnchoredPanelPortal(props: {
     open: boolean;
     anchorRef: { current: HTMLElement | null };

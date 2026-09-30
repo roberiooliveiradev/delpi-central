@@ -9,7 +9,7 @@ COPY delpi-mes ./delpi-mes
 COPY vite ./vite
 
 WORKDIR /app/delpi-mes
-RUN npm run test && npm run typecheck && npm run lint
+# test/tsc/lint rodam no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
 RUN npx vite build
 RUN node ../vite/verify-federation-react-patch.mjs dist/assets
 

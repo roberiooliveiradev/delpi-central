@@ -153,6 +153,31 @@ export {
 } from "./utils/periodPreset";
 export * from "./displayFormat";
 export * from "./components/displayFormat";
+/**
+ * Modais/notices consumidos por hosts administrativos (ex.: Cadastros do
+ * Delpi MES) sem uso interno garantido no remote — `export *` sozinho pode
+ * sumir no tree-shake do MF e o host recebe `undefined`.
+ */
+export {
+  ModalShell,
+  modalShellBemClasses,
+} from "./components/feedback/ModalShell";
+export type { ModalShellClassNames } from "./components/feedback/ModalShell";
+export {
+  ConfirmModalPanel,
+  confirmModalBemClasses,
+} from "./components/feedback/ConfirmModalPanel";
+export type { ConfirmModalClassNames } from "./components/feedback/ConfirmModalPanel";
+export {
+  FloatingNoticeStack,
+  floatingNoticeStackBemClasses,
+  useFloatingNotices,
+} from "./components/feedback/FloatingNoticeStack";
+export type {
+  FloatingNoticeInput,
+  FloatingNoticeItem,
+  FloatingNoticeStackClassNames,
+} from "./components/feedback/FloatingNoticeStack";
 export * from "./hooks";
 export * from "./types/chartGranularity";
 export * from "./export";

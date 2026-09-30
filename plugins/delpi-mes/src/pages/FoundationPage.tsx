@@ -9,7 +9,7 @@ const COPY_BY_AREA = {
   history: DELPI_MES_COPY.history,
 } as const;
 
-export function FoundationPage({ area }: { area: DelpiMesArea }) {
+export function FoundationPage({ area }: { area: Exclude<DelpiMesArea, "registrations"> }) {
   const content = COPY_BY_AREA[area];
   return (
     <section className="delpi-mes-page" aria-labelledby="delpi-mes-page-title">

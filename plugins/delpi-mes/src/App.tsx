@@ -1,13 +1,29 @@
-import { Activity, Clock3, History } from "lucide-react";
+import { Activity, ClipboardList, Clock3, History } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
-import { canUseDelpiMes, hasDelpiMesProductAccess } from "./constants/permissions";
-import { AREAS, BRANCH_PERMISSIONS, type BranchCode, type DelpiMesArea } from "./constants/routes";
+import {
+  DELPI_MES_DOWNTIME_REASONS_MANAGE,
+  canUseDelpiMes,
+  hasDelpiMesProductAccess,
+} from "./constants/permissions";
+import {
+  AREAS,
+  BRANCH_PERMISSIONS,
+  isGlobalArea,
+  type BranchCode,
+  type DelpiMesArea,
+} from "./constants/routes";
 import { DELPI_MES_COPY } from "./content/copy";
-import { buildDelpiMesHref, useDelpiMesRoute } from "./hooks/useDelpiMesRoute";
+import {
+  buildDelpiMesHref,
+  buildRegistrationHref,
+  useDelpiMesRoute,
+} from "./hooks/useDelpiMesRoute";
+import { DowntimeReasonsPage } from "./pages/DowntimeReasonsPage";
 import { FoundationPage } from "./pages/FoundationPage";
 import { MonitoringPage } from "./pages/MonitoringPage";
+import { RegistrationsPage } from "./pages/RegistrationsPage";
 import { WorkCenterDetailPage } from "./pages/WorkCenterDetailPage";
 import { heroImageUrl, sidebarArtUrl, sidebarLogoUrl } from "./utils/assets";
 
@@ -18,7 +34,12 @@ export type AppProps = {
   isSuperadmin?: boolean;
 };
 
-const AREA_ICONS = { monitoring: Activity, downtimes: Clock3, history: History };
+const AREA_ICONS = {
+  monitoring: Activity,
+  downtimes: Clock3,
+  history: History,
+  registrations: ClipboardList,
+};
 
 export default function App({
   getAccessToken,
@@ -39,14 +60,25 @@ export default function App({
   const activeArea = visibleAreas.some((area) => area.id === route.area)
     ? route.area
     : visibleAreas[0]?.id;
+  const areaIsGlobal = isGlobalArea(activeArea);
+  const registrationsDenied =
+    hasProductAccess && route.area === "registrations" && !can(DELPI_MES_DOWNTIME_REASONS_MANAGE);
   const heroUrl = heroImageUrl();
   const logoUrl = sidebarLogoUrl();
 
   useEffect(() => {
-    if (!activeArea || !activeBranch) return;
-    const canonical = buildDelpiMesHref(activeArea, activeBranch);
-    if (`${window.location.pathname}${window.location.search}` !== canonical) navigate(canonical);
-  }, [activeArea, activeBranch, navigate]);
+    if (!activeArea || registrationsDenied) return;
+    const canonical = areaIsGlobal
+      ? route.registrationPage
+        ? buildRegistrationHref(route.registrationPage)
+        : buildDelpiMesHref("registrations", "01")
+      : activeBranch
+        ? buildDelpiMesHref(activeArea, activeBranch)
+        : undefined;
+    if (canonical && `${window.location.pathname}${window.location.search}` !== canonical) {
+      navigate(canonical);
+    }
+  }, [activeArea, activeBranch, areaIsGlobal, registrationsDenied, route.registrationPage, navigate]);
 
   const navigateTo = (area: DelpiMesArea, branch: BranchCode, workCenter?: string) => {
     navigate(buildDelpiMesHref(area, branch, workCenter));
@@ -64,7 +96,11 @@ export default function App({
           aria-current={active ? "page" : undefined}
           onClick={(event) => {
             event.preventDefault();
-            if (branch) navigateTo(area.id, branch);
+            if (isGlobalArea(area.id)) {
+              navigate(buildDelpiMesHref(area.id, "01"));
+            } else if (branch) {
+              navigateTo(area.id, branch);
+            }
           }}
         >
           <Icon aria-hidden="true" />
@@ -106,7 +142,7 @@ export default function App({
               <div className="delpi-mes-hero__placeholder" />
             )}
           </div>
-          {activeBranch ? (
+          {activeBranch && !areaIsGlobal ? (
             <label className="delpi-mes-branch">
               <span>Filial</span>
               <select
@@ -123,12 +159,17 @@ export default function App({
           ) : null}
         </header>
 
-        {activeArea && activeBranch ? (
+        {registrationsDenied ? (
+          <section className="delpi-mes-forbidden" role="alert">
+            <h2>Acesso não disponível</h2>
+            <p>Seu perfil não possui permissão para administrar os cadastros do Delpi MES.</p>
+          </section>
+        ) : activeArea && (activeBranch || areaIsGlobal) ? (
           <>
             <nav className="delpi-mes-nav" aria-label="Seções">
               {navLinks(activeArea, activeBranch, "delpi-mes-nav")}
             </nav>
-            {activeArea === "monitoring" ? (
+            {activeArea === "monitoring" && activeBranch ? (
               route.workCenter ? (
                 <WorkCenterDetailPage
                   branch={activeBranch}
@@ -140,6 +181,14 @@ export default function App({
                 <MonitoringPage
                   branch={activeBranch}
                   onOpenWorkCenter={(workCenter) => navigateTo("monitoring", activeBranch, workCenter)}
+                />
+              )
+            ) : activeArea === "registrations" ? (
+              route.registrationPage === "downtime-reasons" ? (
+                <DowntimeReasonsPage onBack={() => navigate(buildDelpiMesHref("registrations", "01"))} />
+              ) : (
+                <RegistrationsPage
+                  onOpenDowntimeReasons={() => navigate(buildRegistrationHref("downtime-reasons"))}
                 />
               )
             ) : (
