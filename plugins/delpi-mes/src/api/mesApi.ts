@@ -1,9 +1,13 @@
 import { httpGet } from "./httpClient";
 import type { BranchCode } from "../constants/routes";
-import type { MonitoringResponse, WorkCenterTimelineResponse } from "../types/mes";
+import type { MonitoringResponse, RunPerformanceResponse, WorkCenterTimelineResponse } from "../types/mes";
 
 export function getMonitoring(branch: "01" | "02", signal?: AbortSignal) {
   return httpGet<MonitoringResponse>(`/monitoring?branch=${branch}`, { signal });
+}
+
+export function getRunPerformance(runId: string, signal?: AbortSignal) {
+  return httpGet<RunPerformanceResponse>('/runs/' + encodeURIComponent(runId) + '/performance', { signal });
 }
 
 export function getWorkCenterTimeline(branch: BranchCode, workCenter: string, range: { from: string; to?: string }, signal?: AbortSignal) {

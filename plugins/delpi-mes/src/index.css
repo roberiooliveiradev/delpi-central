@@ -423,6 +423,51 @@
 .delpi-mes-work-center-card__tiles svg { width: 0.85rem; height: 0.85rem; margin-bottom: 0.15rem; color: #94a3b8; }
 .delpi-mes-work-center-card__tiles strong { font-size: 0.88rem; font-weight: 800; color: #1b2a41; text-transform: none; letter-spacing: 0; }
 
+/* performance (card + detail) — ritmo neutro, cor nunca e o unico sinal */
+.delpi-mes-perf {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.7rem;
+  background: #f8fafc;
+}
+.delpi-mes-perf__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; }
+.delpi-mes-perf__label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #7d8a9c; }
+.delpi-mes-perf__value { font-size: 1.25rem; font-weight: 800; color: #1b2a41; line-height: 1.1; }
+.delpi-mes-perf__pace { font-size: 0.72rem; font-weight: 700; color: #43536b; }
+.delpi-mes-perf__hint { font-size: 0.74rem; font-weight: 600; color: #b45309; }
+.delpi-mes-perf__line { font-size: 0.76rem; color: #5c6b80; }
+
+.delpi-mes-perf-panel__body { display: grid; gap: 1rem; }
+.delpi-mes-perf-panel__hero { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.6rem; }
+.delpi-mes-perf-panel__percent { font-size: 2rem; font-weight: 800; color: #1b2a41; line-height: 1; }
+.delpi-mes-perf-panel__quality {
+  margin: 0; padding: 0.6rem 0.8rem; border-radius: 0.6rem;
+  background: #fffbeb; border: 1px solid #fde68a;
+  color: #92400e; font-size: 0.8rem; font-weight: 600;
+}
+.delpi-mes-perf-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.6rem;
+}
+.delpi-mes-perf-panel__row {
+  display: grid; gap: 0.2rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.7rem;
+  background: #f4f7fb;
+}
+.delpi-mes-perf-panel__row span { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #7d8a9c; }
+.delpi-mes-perf-panel__row strong { font-size: 0.95rem; font-weight: 800; color: #1b2a41; }
+
+@media (max-width: 680px) {
+  .delpi-mes-perf-panel__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .delpi-mes-perf-panel__percent { font-size: 1.6rem; }
+}
+
+
 .delpi-mes-work-center-card__media { position: relative; align-self: start; }
 .delpi-mes-work-center-card__media img {
   display: block;

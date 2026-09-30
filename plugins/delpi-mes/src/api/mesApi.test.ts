@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getMonitoring, getWorkCenterTimeline } from "./mesApi";
+import { getMonitoring, getRunPerformance, getWorkCenterTimeline } from "./mesApi";
 
 afterEach(() => vi.unstubAllGlobals());
 const response = (data: unknown) => new Response(JSON.stringify({ success: true, message: "OK", data }), { status: 200 });
@@ -11,6 +11,13 @@ describe("MES API", () => {
     await getMonitoring(branch);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toContain(`/monitoring?branch=${branch}`);
+  });
+  it("loads performance once for a given run id", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response({ runId: "run-1", performance: {} }));
+    vi.stubGlobal("fetch", fetchMock);
+    await getRunPerformance("run-1");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain("/runs/run-1/performance");
   });
   it("loads the daily timeline only for the selected work center", async () => {
     const fetchMock = vi.fn().mockResolvedValue(response({ workCenter: "CT 35", items: [] }));

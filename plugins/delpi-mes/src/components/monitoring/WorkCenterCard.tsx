@@ -3,11 +3,18 @@ import type { MonitoringItem } from "../../types/mes";
 import { workCenterImageUrl } from "../../utils/assets";
 import { elapsedSeconds, formatDuration } from "../../utils/duration";
 import { downtimeReasonDisplay, isPendingReason, presentMonitoringState, progressPercent } from "../../utils/monitoringPresentation";
+import { PerformanceStrip } from "./Performance";
+import { formatPerformancePercent, performanceQualityHint } from "../../utils/performance";
 
 export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; nowMs: number; onOpen: () => void }) {
   const state = presentMonitoringState(item);
   const progress = progressPercent(item);
   const imageUrl = workCenterImageUrl(item.workCenter);
+  const perf = item.performance ?? null;
+  const perfHint = performanceQualityHint(perf?.dataQuality);
+  const perfValue = perf?.performancePercent != null
+    ? formatPerformancePercent(perf.performancePercent)
+    : (perfHint?.short ?? "—");
   const durationLabel = `${state.actionLabel} há ${formatDuration(elapsedSeconds(item.stateStartedAt, nowMs))}`;
 
   return (
@@ -57,8 +64,9 @@ export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; 
         <div className="delpi-mes-work-center-card__tiles">
           <span><Target aria-hidden="true" />Meta<strong>{item.targetPieces ? `${item.targetPieces} peças` : "—"}</strong></span>
           <span><Package aria-hidden="true" />Produzidas<strong>{item.piecesTotal} peças</strong></span>
-          <span><Gauge aria-hidden="true" />Performance<strong>{progress !== null ? `${progress}%` : "—"}</strong></span>
+          <span><Gauge aria-hidden="true" />Performance<strong>{perfValue}</strong></span>
         </div>
+        <PerformanceStrip performance={perf} />
       </div>
 
       <div className="delpi-mes-work-center-card__media">

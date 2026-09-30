@@ -8,6 +8,7 @@ import type { BranchCode } from "../constants/routes";
 import { useMonitoringData } from "../hooks/useMonitoringData";
 import { useServerClock } from "../hooks/useServerClock";
 import { useWorkCenterTimeline } from "../hooks/useWorkCenterTimeline";
+import { useRunPerformance } from "../hooks/useRunPerformance";
 import { workCenterImageUrl } from "../utils/assets";
 import {
   buildDaySegments, downtimeReasonTotals, formatDayClock, formatHoursMinutes,
@@ -16,6 +17,7 @@ import {
 import { downtimeReasonDisplay, presentMonitoringState, runStateSignature } from "../utils/monitoringPresentation";
 import { DayTimelineBar } from "../components/monitoring/DayTimelineBar";
 import { MonitoringStatCards } from "../components/monitoring/MonitoringStatCards";
+import { RunPerformancePanel } from "../components/monitoring/Performance";
 import type { StatCardItem } from "../utils/statItems";
 
 const loadingClasses = loadingStatePanelBemClasses("delpi-mes");
@@ -32,6 +34,9 @@ export function WorkCenterDetailPage({
   const monitoring = useMonitoringData(branch);
   const nowMs = useServerClock(monitoring.data?.referenceAt);
   const item = monitoring.data?.items.find((entry) => entry.workCenter === workCenter) ?? null;
+  // Performance detalhada do run atual: 1 fetch por runId (o snapshot ideal e
+  // metadados nao mudam); numeros vivos vem do bloco performance do monitoring.
+  const runPerf = useRunPerformance(item?.runId ?? null);
   const signature = item ? runStateSignature(item) : null;
   const todayKey = localDayKey();
   const [dayKey, setDayKey] = useState(todayKey);
@@ -123,6 +128,16 @@ export function WorkCenterDetailPage({
           </div>
         </div>
       </header>
+
+      {item?.runId ? (
+        <RunPerformancePanel
+          performance={item.performance ?? runPerf.data?.performance ?? null}
+          idealProductionSeconds={runPerf.data?.performance?.idealProductionSeconds}
+          loading={runPerf.loading}
+          error={runPerf.error}
+          onRetry={runPerf.retry}
+        />
+      ) : null}
 
       {!canViewHistory ? (
         <p className="delpi-mes-detail__history-disabled" role="status">Histórico diário não disponível para o seu perfil.</p>
