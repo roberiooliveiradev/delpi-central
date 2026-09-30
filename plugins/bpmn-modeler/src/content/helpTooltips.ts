@@ -6,12 +6,16 @@
 export const HELP_TOOLTIPS = {
   library: {
     search: "Busque modelos pelo nome ou identificador.",
-    archivedToggle: "Mostra também os modelos arquivados (somente leitura).",
+    archivedToggle: "Alterna entre modelos ativos, arquivados (somente leitura) ou todos.",
+    sort: "Ordena a lista por atualização, criação ou nome.",
     create: "Cria um novo modelo de processo vazio.",
     import: "Importa um arquivo .bpmn existente (BPMN 2.0).",
+    actions: "Ações do modelo: abrir, exportar, duplicar, arquivar.",
   },
   editor: {
     save: "Salva o modelo (Ctrl+S). A gravação só é confirmada após leitura do servidor.",
+    undo: "Desfaz a última edição do diagrama.",
+    redo: "Refaz a edição desfeita.",
     validate: "Valida o diagrama sem salvar e lista problemas na aba Validação.",
     organize: "Organiza o layout automaticamente. Você pode revisar antes de aplicar.",
     export: "Exporta o modelo canônico (.bpmn) ou imagens (SVG/PNG).",

@@ -432,10 +432,13 @@ test.describe("E2E-12 — revisions/restore append-only", () => {
     await page.getByRole("button", { name: "Criar revisão" }).click();
     await expect(page.getByText("Revisão 2")).toBeVisible({ timeout: 15_000 });
 
-    // restore rev1 → rev3 origin=restore (confirm() é aceito)
-    page.on("dialog", (dialog) => void dialog.accept());
+    // restore rev1 → rev3 origin=restore (confirmação via modal)
     await page
       .locator(".bpmnm-revision-item", { hasText: "Revisão 1" })
+      .getByRole("button", { name: "Restaurar" })
+      .click();
+    await page
+      .getByRole("dialog")
       .getByRole("button", { name: "Restaurar" })
       .click();
     await expect(page.getByText("Revisão 3")).toBeVisible({ timeout: 15_000 });

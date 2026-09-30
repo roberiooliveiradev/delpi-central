@@ -1,4 +1,5 @@
 import type { ReadOnlyReason } from "../state/capabilities";
+import { BpmnmStateBanner } from "../ui/kit";
 
 const MESSAGES: Record<Exclude<ReadOnlyReason, null>, string> = {
   ARCHIVED: "Este modelo está arquivado. Desarquive para editar.",
@@ -13,8 +14,8 @@ const MESSAGES: Record<Exclude<ReadOnlyReason, null>, string> = {
 export function ReadOnlyBanner({ reason }: { reason: ReadOnlyReason }) {
   if (!reason) return null;
   return (
-    <div className="bpmnm-banner bpmnm-banner--readonly" role="note">
+    <BpmnmStateBanner className="bpmnm-banner bpmnm-banner--readonly">
       {MESSAGES[reason]}
-    </div>
+    </BpmnmStateBanner>
   );
 }

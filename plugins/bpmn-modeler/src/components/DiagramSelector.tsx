@@ -1,3 +1,5 @@
+import { NativeSelectControl } from "@delpi/plugin-ui/index";
+
 import type { DiagramRef } from "../editor/BpmnEditorAdapter";
 
 type Props = {
@@ -10,19 +12,15 @@ type Props = {
 export function DiagramSelector({ diagrams, activeId, onSelect }: Props) {
   if (diagrams.length <= 1) return null;
   return (
-    <label className="bpmnm-diagram-selector">
-      Diagrama
-      <select
+    <span className="bpmnm-diagram-selector">
+      <span>Diagrama</span>
+      <NativeSelectControl
         value={activeId ?? diagrams[0]?.id ?? ""}
-        onChange={(e) => onSelect(e.target.value)}
-      >
-        {diagrams.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.name ?? d.id}
-          </option>
-        ))}
-      </select>
+        onChange={onSelect}
+        options={diagrams.map((d) => ({ value: d.id, label: d.name ?? d.id }))}
+        aria-label="Selecionar diagrama"
+      />
       <span className="bpmnm-hint">{diagrams.length} diagramas neste arquivo</span>
-    </label>
+    </span>
   );
 }

@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+import { ActionButton } from "@delpi/plugin-ui/index";
+import { BpmnmModal, BpmnmTextField } from "../ui/kit";
+
 type Props = {
   open: boolean;
   busy: boolean;
@@ -9,39 +12,48 @@ type Props = {
 
 export function CreateModelDialog({ open, busy, onCancel, onConfirm }: Props) {
   const [name, setName] = useState("");
-  if (!open) return null;
   const valid = name.trim().length > 0 && name.trim().length <= 120;
+
+  // reset na abertura — adjust-state-during-render (React docs), evita
+  // setState em effect (react-hooks/set-state-in-effect)
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) setName("");
+  }
+
   return (
-    <div className="bpmnm-overlay" role="presentation">
-      <div className="bpmnm-dialog" role="dialog" aria-modal="true" aria-labelledby="bpmnm-create-title">
-        <h2 id="bpmnm-create-title">Novo modelo</h2>
-        <label className="bpmnm-field">
-          Nome do modelo
-          <input
-            type="text"
-            value={name}
-            autoFocus
-            maxLength={120}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && valid && !busy) onConfirm(name.trim());
-            }}
-          />
-        </label>
+    <BpmnmModal
+      open={open}
+      title="Novo modelo"
+      onClose={onCancel}
+      initialFocusSelector="input"
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (valid && !busy) onConfirm(name.trim());
+        }}
+      >
+        <BpmnmTextField
+          label="Nome do modelo"
+          value={name}
+          onChange={setName}
+          required
+        />
         <div className="bpmnm-dialog__actions">
-          <button type="button" onClick={onCancel} className="bpmnm-btn" disabled={busy}>
+          <ActionButton type="button" onClick={onCancel} disabled={busy}>
             Cancelar
-          </button>
-          <button
-            type="button"
-            className="bpmnm-btn bpmnm-btn--primary"
+          </ActionButton>
+          <ActionButton
+            variant="primary"
+            type="submit"
             disabled={!valid || busy}
-            onClick={() => onConfirm(name.trim())}
           >
             {busy ? "Criando…" : "Criar"}
-          </button>
+          </ActionButton>
         </div>
-      </div>
-    </div>
+      </form>
+    </BpmnmModal>
   );
 }

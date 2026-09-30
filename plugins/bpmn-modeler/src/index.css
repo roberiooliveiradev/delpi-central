@@ -1,5 +1,72 @@
-/* BPMN Modeler MFE — BEM isolado ao subtree (.bpmnm-*); nenhum CSS global novo
-   vaza para o portal. CSS vendor (bpmn-js) importado apenas no adapter. */
+/* BPMN Modeler MFE — shell de página + mapeamento de tokens.
+   Controles de produto vêm do `@delpi/plugin-ui` (dual-class `.delpi-ui-*`,
+   CSS visual injetado pelo remote no bootstrap). Este arquivo mantém apenas
+   layout/domínio e hooks `.bpmnm-*` preservados para compatibilidade E2E.
+   Nenhum seletor global, nenhum `@media (prefers-color-scheme)` —
+   dark/light seguem `:root[data-theme]` do portal. */
+
+.dashboard-bpmn-modeler {
+  --delpi-ui-bpmn-canvas-bg: var(--delpi-ui-surface);
+  --delpi-ui-bpmn-dot-color: var(--delpi-ui-border-strong);
+  --delpi-ui-bpmn-edge-color: var(--delpi-ui-text-muted);
+  --delpi-ui-bpmn-minimap-bg: var(--delpi-ui-surface-muted);
+  --delpi-ui-bpmn-minimap-node: var(--delpi-ui-accent);
+  --delpi-ui-bpmn-controls-bg: var(--delpi-ui-surface-elevated);
+  --delpi-ui-bpmn-controls-border: var(--delpi-ui-border);
+}
+
+:root[data-theme="dark"] .dashboard-bpmn-modeler {
+  --delpi-ui-bpmn-canvas-bg: var(--delpi-ui-surface-muted);
+  --delpi-ui-bpmn-controls-bg: var(--delpi-ui-surface-elevated);
+  --delpi-ui-bpmn-controls-border: var(--delpi-ui-border);
+
+}
+
+/* superfícies vendor (@bpmn-io/properties-panel): os tokens --bio-* são
+   definidos pelo vendor no próprio elemento — o mapeamento precisa do
+   mesmo escopo para vencer a especificidade. */
+:root[data-theme="dark"] .dashboard-bpmn-modeler .bio-properties-panel {
+  --bio-surface: var(--delpi-ui-surface);
+  --bio-surface-strong: var(--delpi-ui-surface-elevated);
+  --bio-surface-medium: var(--delpi-ui-surface-muted);
+  --bio-surface-subtle: var(--delpi-ui-surface-soft, var(--delpi-ui-surface));
+  --bio-surface-overlay: var(--delpi-ui-surface-elevated);
+  --bio-text: var(--delpi-ui-text);
+  --bio-text-subtle: var(--delpi-ui-text-muted);
+  --bio-text-subtlest: var(--delpi-ui-text-muted);
+  --bio-border: var(--delpi-ui-border);
+  --bio-border-subtle: var(--delpi-ui-border);
+  --bio-border-input: var(--delpi-ui-border);
+  --bio-primary: var(--delpi-ui-accent);
+  --bio-focus: var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
+}
+
+/* chrome do vendor dentro da shell do editor (palette, popups, context pad) */
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-palette,
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-popup,
+.dashboard-bpmn-modeler .bpmnm-preview__canvas .djs-palette {
+  background: var(--delpi-ui-bpmn-controls-bg);
+  border-color: var(--delpi-ui-bpmn-controls-border);
+}
+
+:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry,
+:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-popup .entry,
+:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-context-pad .entry {
+  color: var(--delpi-ui-text);
+}
+
+:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry:hover,
+:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-popup .entry:hover {
+  background: var(--delpi-ui-surface-soft, var(--delpi-ui-surface-muted));
+}
+
+/* ícones SVG do vendor herdam currentColor no dark */
+:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry img,
+:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry svg {
+  filter: invert(0.85);
+}
+
+/* --- page shell --- */
 
 .bpmnm-page {
   display: flex;
@@ -10,128 +77,6 @@
   box-sizing: border-box;
 }
 
-.bpmnm-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.bpmnm-page__actions,
-.bpmnm-editor__actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.bpmnm-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--delpi-border, #d0d5dd);
-  border-radius: 6px;
-  background: var(--delpi-surface, #fff);
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.bpmnm-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.bpmnm-btn--primary {
-  background: var(--delpi-primary, #155eef);
-  border-color: var(--delpi-primary, #155eef);
-  color: #fff;
-}
-
-.bpmnm-btn--danger {
-  color: var(--delpi-danger, #d92d20);
-  border-color: var(--delpi-danger, #d92d20);
-}
-
-.bpmnm-btn--ghost {
-  border-color: transparent;
-  background: transparent;
-}
-
-.bpmnm-toolbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.bpmnm-toolbar input[type="search"] {
-  flex: 1;
-  max-width: 420px;
-  padding: 6px 10px;
-  border: 1px solid var(--delpi-border, #d0d5dd);
-  border-radius: 6px;
-}
-
-.bpmnm-check {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 13px;
-}
-
-.bpmnm-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.bpmnm-table th,
-.bpmnm-table td {
-  text-align: left;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--delpi-border, #eaecf0);
-}
-
-.bpmnm-table th button {
-  background: none;
-  border: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-}
-
-.bpmnm-row-actions {
-  white-space: nowrap;
-  display: flex;
-  gap: 4px;
-}
-
-.bpmnm-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--delpi-muted, #f2f4f7);
-  font-size: 11px;
-  margin-left: 8px;
-}
-
-.bpmnm-error {
-  color: var(--delpi-danger, #d92d20);
-  padding: 8px 12px;
-  border: 1px solid var(--delpi-danger, #d92d20);
-  border-radius: 6px;
-  background: rgba(217, 45, 32, 0.06);
-}
-
-.bpmnm-hint {
-  color: var(--delpi-text-secondary, #667085);
-  font-size: 13px;
-}
-
-.bpmnm-empty {
-  padding: 48px;
-  text-align: center;
-  color: var(--delpi-text-secondary, #667085);
-}
-
 .bpmnm-pagination {
   display: flex;
   gap: 12px;
@@ -139,7 +84,25 @@
   justify-content: center;
 }
 
-/* --- Editor shell --- */
+.bpmnm-hint {
+  color: var(--delpi-ui-text-muted);
+  font-size: 13px;
+}
+
+.bpmnm-dialog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.bpmnm-dialog__text {
+  margin: 0;
+  color: var(--delpi-ui-text);
+}
+
+/* --- editor shell --- */
 
 .bpmnm-editor {
   height: 100%;
@@ -157,6 +120,20 @@
   margin: 0;
   display: flex;
   align-items: center;
+  gap: 8px;
+  color: var(--delpi-ui-text);
+}
+
+.bpmnm-editor__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-left: auto;
+}
+
+.bpmnm-zoom {
+  display: inline-flex;
 }
 
 .bpmnm-editor__body {
@@ -169,10 +146,10 @@
 .bpmnm-canvas {
   flex: 1;
   min-height: 420px;
-  border: 1px solid var(--delpi-border, #eaecf0);
-  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: var(--delpi-ui-radius, 8px);
   overflow: hidden;
-  background: #fff;
+  background: var(--delpi-ui-bpmn-canvas-bg);
   position: relative;
 }
 
@@ -183,14 +160,15 @@
   position: relative;
 }
 
+/* layout preview — overlay transitório sobre o canvas (P5 §18) */
 .bpmnm-preview {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid var(--delpi-border, #eaecf0);
-  border-radius: 8px;
+  background: var(--delpi-ui-bpmn-canvas-bg);
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: var(--delpi-ui-radius, 8px);
   overflow: hidden;
   z-index: 5;
 }
@@ -201,8 +179,9 @@
   gap: 8px;
   padding: 8px 12px;
   font-size: 13px;
-  border-bottom: 1px solid var(--delpi-border, #eaecf0);
-  background: var(--delpi-surface-alt, #f9fafb);
+  color: var(--delpi-ui-text);
+  border-bottom: 1px solid var(--delpi-ui-border);
+  background: var(--delpi-ui-surface-muted);
 }
 
 .bpmnm-preview__canvas {
@@ -211,18 +190,22 @@
   min-height: 0;
 }
 
+/* --- side panel (tabs retidos — kit não expõe Tabs genérico) --- */
+
 .bpmnm-side {
   width: 300px;
+  min-width: 240px;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--delpi-border, #eaecf0);
-  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: var(--delpi-ui-radius, 8px);
+  background: var(--delpi-ui-surface);
   overflow: hidden;
 }
 
 .bpmnm-side__tabs {
   display: flex;
-  border-bottom: 1px solid var(--delpi-border, #eaecf0);
+  border-bottom: 1px solid var(--delpi-ui-border);
 }
 
 .bpmnm-side__tabs button {
@@ -232,11 +215,19 @@
   background: none;
   cursor: pointer;
   font-size: 13px;
+  color: var(--delpi-ui-text-muted);
+  min-height: 40px;
+}
+
+.bpmnm-side__tabs button:focus-visible {
+  outline: 2px solid var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
+  outline-offset: -2px;
 }
 
 .bpmnm-side__tabs button.active {
   font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--delpi-primary, #155eef);
+  color: var(--delpi-ui-text);
+  box-shadow: inset 0 -2px 0 var(--delpi-ui-accent);
 }
 
 .bpmnm-side__content {
@@ -249,82 +240,7 @@
   min-height: 200px;
 }
 
-/* --- dialogs --- */
-
-.bpmnm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.bpmnm-dialog {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  width: min(480px, 92vw);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.bpmnm-dialog__actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.bpmnm-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-
-.bpmnm-field input {
-  padding: 6px 10px;
-  border: 1px solid var(--delpi-border, #d0d5dd);
-  border-radius: 6px;
-}
-
-/* --- save status / banners --- */
-
-.bpmnm-save-status {
-  font-size: 12px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--delpi-muted, #f2f4f7);
-}
-
-.bpmnm-save-status--dirty,
-.bpmnm-save-status--save_failed {
-  background: #fef0c7;
-}
-
-.bpmnm-save-status--conflict {
-  background: #fee4e2;
-}
-
-.bpmnm-save-status--saving {
-  background: #dbeafe;
-}
-
-.bpmnm-banner {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-}
-
-.bpmnm-banner--readonly {
-  background: #eff8ff;
-  border: 1px solid #b2ddff;
-}
-
-/* --- issues / revisions --- */
+/* --- validation issues --- */
 
 .bpmnm-issue-list {
   list-style: none;
@@ -338,21 +254,49 @@
 .bpmnm-issue__link {
   width: 100%;
   text-align: left;
-  background: none;
-  border: 1px solid var(--delpi-border, #eaecf0);
-  border-radius: 6px;
+  background: var(--delpi-ui-surface);
+  color: var(--delpi-ui-text);
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: var(--delpi-ui-radius-sm, 6px);
   padding: 6px 8px;
   font-size: 12px;
   cursor: pointer;
 }
 
+.bpmnm-issue__link:hover:not(:disabled) {
+  background: var(--delpi-ui-surface-muted);
+}
+
+.bpmnm-issue__link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.bpmnm-issue__link:focus-visible {
+  outline: 2px solid var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
+  outline-offset: 1px;
+}
+
+.bpmnm-issue__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
 .bpmnm-issue--error .bpmnm-issue__link {
-  border-left: 3px solid var(--delpi-danger, #d92d20);
+  border-left: 3px solid var(--delpi-ui-danger);
 }
 
 .bpmnm-issue--warning .bpmnm-issue__link {
-  border-left: 3px solid #f79009;
+  border-left: 3px solid var(--delpi-ui-warning);
 }
+
+.bpmnm-issue--info .bpmnm-issue__link {
+  border-left: 3px solid var(--delpi-ui-info);
+}
+
+/* --- revisions --- */
 
 .bpmnm-revisions__header {
   display: flex;
@@ -363,6 +307,7 @@
 .bpmnm-revision-list {
   list-style: none;
   padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -373,14 +318,16 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  border: 1px solid var(--delpi-border, #eaecf0);
-  border-radius: 6px;
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: var(--delpi-ui-radius-sm, 6px);
   padding: 8px;
+  background: var(--delpi-ui-surface);
+  color: var(--delpi-ui-text);
 }
 
 .bpmnm-revision-item small {
   display: block;
-  color: var(--delpi-text-secondary, #667085);
+  color: var(--delpi-ui-text-muted);
 }
 
 .bpmnm-revision-item__actions {
@@ -388,37 +335,10 @@
   gap: 4px;
 }
 
-/* --- export menu --- */
+/* --- export menu / diagram selector --- */
 
 .bpmnm-export-menu {
   position: relative;
-}
-
-.bpmnm-menu {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  background: #fff;
-  border: 1px solid var(--delpi-border, #eaecf0);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  display: flex;
-  flex-direction: column;
-  min-width: 160px;
-  z-index: 50;
-}
-
-.bpmnm-menu button {
-  text-align: left;
-  padding: 8px 12px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.bpmnm-menu button:hover {
-  background: var(--delpi-muted, #f2f4f7);
 }
 
 .bpmnm-diagram-selector {
@@ -426,22 +346,70 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
+  color: var(--delpi-ui-text);
 }
 
-/* --- inspector --- */
+.bpmnm-diagram-selector select {
+  min-height: var(--delpi-ui-control-height, 34px);
+  padding: 0 8px;
+  border: 1px solid var(--delpi-ui-control-border, var(--delpi-ui-border));
+  border-radius: var(--delpi-ui-control-radius, 6px);
+  background: var(--delpi-ui-control-bg, var(--delpi-ui-surface));
+  color: var(--delpi-ui-control-text, var(--delpi-ui-text));
+  font-size: var(--delpi-ui-control-font-size, 13px);
+}
+
+.bpmnm-diagram-selector select:focus-visible {
+  outline: 2px solid var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
+  outline-offset: 1px;
+}
+
+/* --- library cards --- */
+
+.bpmnm-card-menu-anchor {
+  display: inline-flex;
+}
+
+/* --- inspector (domínio: leitura read-only do elemento) --- */
 
 .bpmnm-inspector dt {
   font-weight: 600;
   font-size: 12px;
   margin-top: 8px;
+  color: var(--delpi-ui-text-muted);
 }
 
 .bpmnm-inspector dd {
   margin: 2px 0 0;
   font-size: 13px;
+  color: var(--delpi-ui-text);
 }
 
 .bpmnm-inspector ul {
   margin: 0;
   padding-left: 16px;
+}
+
+/* --- responsive: sidebar e toolbar colapsam; canvas segue viewport --- */
+
+@media (max-width: 1024px) {
+  .bpmnm-side {
+    width: 260px;
+    min-width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .bpmnm-editor__body {
+    flex-direction: column;
+  }
+
+  .bpmnm-side {
+    width: 100%;
+    min-height: 220px;
+  }
+
+  .bpmnm-editor__actions {
+    margin-left: 0;
+  }
 }

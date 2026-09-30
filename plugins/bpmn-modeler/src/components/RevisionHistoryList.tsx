@@ -1,4 +1,7 @@
+import { ActionButton } from "@delpi/plugin-ui/index";
+
 import type { RevisionSummary } from "../data/api/bpmnModelerApi";
+import { BpmnmEmptyState } from "../ui/kit";
 
 type Props = {
   revisions: RevisionSummary[];
@@ -22,14 +25,17 @@ export function RevisionHistoryList({
       <div className="bpmnm-revisions__header">
         <h3>Revisões</h3>
         {canManage && (
-          <button type="button" className="bpmnm-btn" onClick={onCreateRevision}>
+          <ActionButton type="button" onClick={onCreateRevision}>
             Criar revisão
-          </button>
+          </ActionButton>
         )}
       </div>
-      {loading ? <p className="bpmnm-hint">Carregando…</p> : null}
+      {loading ? <p className="bpmnm-hint" role="status">Carregando…</p> : null}
       {!loading && revisions.length === 0 ? (
-        <p className="bpmnm-hint">Nenhuma revisão ainda.</p>
+        <BpmnmEmptyState
+          title="Nenhuma revisão"
+          message="Nenhuma revisão ainda. Crie um marco para preservar este estado."
+        />
       ) : null}
       <ul className="bpmnm-revision-list">
         {revisions.map((rev) => (
@@ -42,13 +48,21 @@ export function RevisionHistoryList({
               </small>
             </div>
             <div className="bpmnm-revision-item__actions">
-              <button type="button" className="bpmnm-btn bpmnm-btn--ghost" onClick={() => onView(rev.revision_number)}>
+              <ActionButton
+                type="button"
+                variant="ghost"
+                onClick={() => onView(rev.revision_number)}
+              >
                 Ver
-              </button>
+              </ActionButton>
               {canManage && (
-                <button type="button" className="bpmnm-btn bpmnm-btn--ghost" onClick={() => onRestore(rev.revision_number)}>
+                <ActionButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onRestore(rev.revision_number)}
+                >
                   Restaurar
-                </button>
+                </ActionButton>
               )}
             </div>
           </li>

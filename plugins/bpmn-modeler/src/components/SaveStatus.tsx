@@ -1,4 +1,5 @@
 import type { SaveState } from "../state/saveMachine";
+import { BpmnmStatusBadge } from "../ui/kit";
 
 const LABELS: Record<SaveState, string> = {
   LOADING: "Carregando…",
@@ -10,6 +11,16 @@ const LABELS: Record<SaveState, string> = {
   READ_ONLY: "Somente leitura",
 };
 
+const VARIANTS: Record<SaveState, "neutral" | "success" | "warning" | "danger" | "info"> = {
+  LOADING: "neutral",
+  CLEAN: "success",
+  DIRTY: "warning",
+  SAVING: "info",
+  SAVE_FAILED: "danger",
+  CONFLICT: "danger",
+  READ_ONLY: "neutral",
+};
+
 export function SaveStatus({ state }: { state: SaveState }) {
   return (
     <span
@@ -17,7 +28,7 @@ export function SaveStatus({ state }: { state: SaveState }) {
       role="status"
       aria-live="polite"
     >
-      {LABELS[state]}
+      <BpmnmStatusBadge label={LABELS[state]} variant={VARIANTS[state]} />
     </span>
   );
 }

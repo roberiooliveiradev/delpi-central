@@ -24,10 +24,10 @@ export type LayoutJob = {
   cancel: () => void;
 };
 
-let elkInstance: ELK | null | undefined;
+let elkInstance: InstanceType<typeof ELK> | null | undefined;
 const workerErrorSubs = new Set<(err: Error) => void>();
 
-function getElk(): ELK | null {
+function getElk(): InstanceType<typeof ELK> | null {
   if (elkInstance !== undefined) return elkInstance;
   try {
     elkInstance = new ELK({
@@ -54,20 +54,22 @@ function getElk(): ELK | null {
 export function runLayout(graph: ElkNode): LayoutJob {
   let cancelled = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  const onWorkerError = (err: Error) => {
+    if (cancelled) return;
+    finish({
+      ok: false,
+      error: { code: "LAYOUT_FAILED", message: err.message },
+    });
+  };
+  const finish = (result: LayoutResult) => {
+    if (timer) clearTimeout(timer);
+    workerErrorSubs.delete(onWorkerError);
+    resolveRef(result);
+  };
+  let resolveRef: (result: LayoutResult) => void = () => undefined;
 
   const promise = new Promise<LayoutResult>((resolve) => {
-    const finish = (result: LayoutResult) => {
-      if (timer) clearTimeout(timer);
-      workerErrorSubs.delete(onWorkerError);
-      resolve(result);
-    };
-    const onWorkerError = (err: Error) => {
-      if (cancelled) return;
-      finish({
-        ok: false,
-        error: { code: "LAYOUT_FAILED", message: err.message },
-      });
-    };
+    resolveRef = resolve;
     workerErrorSubs.add(onWorkerError);
 
     timer = setTimeout(() => {
@@ -93,7 +95,7 @@ export function runLayout(graph: ElkNode): LayoutJob {
       return;
     }
 
-    (elk.layout(graph as never) as Promise<ElkNode>).then(
+    (elk.layout(graph as never) as unknown as Promise<ElkNode>).then(
       (laidOut) => {
         if (cancelled) return;
         finish({ ok: true, graph: laidOut });

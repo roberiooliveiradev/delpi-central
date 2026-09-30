@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
+import { ActionButton } from "@delpi/plugin-ui/index";
+import { ArrowLeft } from "lucide-react";
+
 import {
   BpmnModelerApiError,
   getRevision,
@@ -9,6 +12,11 @@ import {
 import { BpmnEditorAdapter, type ElementSummary } from "../editor/BpmnEditorAdapter";
 import { ElementInspector } from "../editor/inspector/ElementInspector";
 import { ReadOnlyBanner } from "../components/ReadOnlyBanner";
+import {
+  BPMNM_ROOT_CLASS,
+  BpmnmStateBanner,
+  BpmnmStatusBadge,
+} from "../ui/kit";
 
 type Props = {
   modelId: string;
@@ -61,18 +69,22 @@ export function RevisionViewPage({ modelId, revisionNumber, getAccessToken, navi
   }, [modelId, revisionNumber, getAccessToken]);
 
   return (
-    <div className="bpmnm-page bpmnm-editor">
+    <div className={`${BPMNM_ROOT_CLASS} dashboard-page bpmnm-page bpmnm-editor`}>
       <header className="bpmnm-editor__header">
-        <button
+        <ActionButton
           type="button"
-          className="bpmnm-btn bpmnm-btn--ghost"
+          variant="ghost"
           onClick={() => navigate(`/apps/bpmn-modeler/models/${modelId}`)}
         >
-          ← Voltar ao modelo
-        </button>
+          <ArrowLeft size={16} aria-hidden="true" /> Voltar ao modelo
+        </ActionButton>
         <h1 className="bpmnm-editor__title">
           Revisão {revisionNumber}
-          <span className="bpmnm-badge">Somente leitura</span>
+          <BpmnmStatusBadge
+            label="Somente leitura"
+            variant="neutral"
+            className="bpmnm-badge"
+          />
         </h1>
         {revision ? (
           <span className="bpmnm-hint">
@@ -83,7 +95,11 @@ export function RevisionViewPage({ modelId, revisionNumber, getAccessToken, navi
       </header>
 
       <ReadOnlyBanner reason="REVISION_VIEW" />
-      {error ? <div className="bpmnm-error" role="alert">{error}</div> : null}
+      {error ? (
+        <BpmnmStateBanner variant="error" className="bpmnm-error">
+          {error}
+        </BpmnmStateBanner>
+      ) : null}
 
       <div className="bpmnm-editor__body">
         <div ref={canvasRef} className="bpmnm-canvas" aria-label="Diagrama da revisão" />

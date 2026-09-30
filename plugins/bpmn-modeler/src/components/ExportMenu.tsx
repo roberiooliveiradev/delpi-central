@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+import {
+  ActionButton,
+  AnchoredPanelPortal,
+  ContextMenuItem,
+} from "@delpi/plugin-ui/index";
 
 import type { BpmnEditorAdapter } from "../editor/BpmnEditorAdapter";
 import { exportWorkingCopy } from "../data/api/bpmnModelerApi";
+import { BPMNM_ROOT_CLASS } from "../ui/kit";
 
 type Props = {
   modelId: string;
@@ -24,6 +31,8 @@ function download(filename: string, content: string, mime: string) {
  * o XML do editor); SVG via renderer; PNG rasterizado client-side.
  */
 export function ExportMenu({ modelId, adapter, getAccessToken }: Props) {
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -83,30 +92,34 @@ export function ExportMenu({ modelId, adapter, getAccessToken }: Props) {
   };
 
   return (
-    <div className="bpmnm-export-menu">
-      <button
+    <div ref={anchorRef} className="bpmnm-export-menu">
+      <ActionButton
         type="button"
-        className="bpmnm-btn"
         disabled={busy}
-        aria-haspopup="menu"
         aria-expanded={open}
+        title="Exportar modelo"
         onClick={() => setOpen((v) => !v)}
       >
         Exportar
-      </button>
-      {open ? (
-        <div className="bpmnm-menu" role="menu">
-          <button type="button" role="menuitem" onClick={() => void exportBpmn()}>
-            .bpmn (canônico)
-          </button>
-          <button type="button" role="menuitem" onClick={() => void exportSvg()}>
-            SVG
-          </button>
-          <button type="button" role="menuitem" onClick={() => void exportPng()}>
-            PNG
-          </button>
-        </div>
-      ) : null}
+      </ActionButton>
+      <AnchoredPanelPortal
+        open={open}
+        anchorRef={anchorRef}
+        panelRef={panelRef}
+        className="delpi-ui-context-menu"
+        variant="bare"
+        role="menu"
+        aria-label="Exportar modelo"
+        preferredPlacement="bottom"
+        horizontalAlign="end"
+        gap={6}
+        onDismiss={() => setOpen(false)}
+        portalScopeClassName={BPMNM_ROOT_CLASS}
+      >
+        <ContextMenuItem label=".bpmn (canônico)" onSelect={() => void exportBpmn()} />
+        <ContextMenuItem label="SVG" disabled={!adapter} onSelect={() => void exportSvg()} />
+        <ContextMenuItem label="PNG" disabled={!adapter} onSelect={() => void exportPng()} />
+      </AnchoredPanelPortal>
     </div>
   );
 }

@@ -62,11 +62,19 @@ type ModdleLike = {
 export class ApplyDiLayoutHandler {
   static $inject = ["elementRegistry", "graphicsFactory", "moddle"];
 
+  private readonly elementRegistry: ElementRegistryLike;
+  private readonly graphicsFactory: GraphicsFactoryLike;
+  private readonly moddle: ModdleLike;
+
   constructor(
-    private elementRegistry: ElementRegistryLike,
-    private graphicsFactory: GraphicsFactoryLike,
-    private moddle: ModdleLike,
-  ) {}
+    elementRegistry: ElementRegistryLike,
+    graphicsFactory: GraphicsFactoryLike,
+    moddle: ModdleLike,
+  ) {
+    this.elementRegistry = elementRegistry;
+    this.graphicsFactory = graphicsFactory;
+    this.moddle = moddle;
+  }
 
   execute(context: Context): unknown[] {
     const old: OldEntry[] = [];

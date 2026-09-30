@@ -1,6 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  ActionButton,
+  ConfirmModalPanel,
+  IconButton,
+} from "@delpi/plugin-ui/index";
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowLeft,
+  Maximize,
+  Redo2,
+  Undo2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+
+import {
   archiveModel,
   BpmnModelerApiError,
   createRevision,
@@ -30,6 +46,14 @@ import { SaveStatus } from "../components/SaveStatus";
 import { UnsavedChangesDialog } from "../components/UnsavedChangesDialog";
 import { ValidationPanel } from "../components/ValidationPanel";
 import { RevisionHistoryList } from "../components/RevisionHistoryList";
+import { HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  BPMNM_ROOT_CLASS,
+  BpmnmModal,
+  BpmnmStateBanner,
+  BpmnmStatusBadge,
+  bpmnmConfirmModalClasses,
+} from "../ui/kit";
 
 type Props = {
   modelId: string;
@@ -85,6 +109,8 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
   const previewCanvasRef = useRef<HTMLDivElement>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [adapterInstance, setAdapterInstance] = useState<BpmnEditorAdapter | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<number | null>(null);
+  const [restoreBusy, setRestoreBusy] = useState(false);
 
   const setState = useCallback((s: SaveState) => setMachineState(s), []);
 
@@ -285,15 +311,20 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     }
   };
 
-  const onRestore = async (revisionNumber: number) => {
-    if (!window.confirm(`Restaurar a revisão ${revisionNumber}? O working copy atual será substituído.`)) return;
+  // restore: confirmação via ConfirmModalPanel (sem window.confirm)
+  const onConfirmRestore = async (revisionNumber: number) => {
+    setRestoreBusy(true);
     try {
       await restoreRevision(modelId, revisionNumber, version, { getAccessToken });
+      setRestoreTarget(null);
       // replace model = destroy + mount + importXml (P4 §10)
       await loadModel();
       void loadRevisions();
     } catch (err) {
+      setRestoreTarget(null);
       setPageError(err instanceof BpmnModelerApiError ? err.message : "Falha ao restaurar.");
+    } finally {
+      setRestoreBusy(false);
     }
   };
 
@@ -408,30 +439,36 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
 
   if (pageError && machineState === "LOADING") {
     return (
-      <div className="bpmnm-page">
-        <div className="bpmnm-error" role="alert">
+      <div className={`${BPMNM_ROOT_CLASS} dashboard-page bpmnm-page`}>
+        <BpmnmStateBanner variant="error" className="bpmnm-error">
           {pageError}{" "}
-          <button type="button" className="bpmnm-btn" onClick={() => void loadModel()}>
+          <ActionButton variant="link" onClick={() => void loadModel()}>
             Tentar novamente
-          </button>
-        </div>
+          </ActionButton>
+        </BpmnmStateBanner>
       </div>
     );
   }
 
   return (
-    <div className="bpmnm-page bpmnm-editor">
+    <div className={`${BPMNM_ROOT_CLASS} dashboard-page bpmnm-page bpmnm-editor`}>
       <header className="bpmnm-editor__header">
-        <button
+        <ActionButton
           type="button"
-          className="bpmnm-btn bpmnm-btn--ghost"
+          variant="ghost"
           onClick={() => guardedNavigate("/apps/bpmn-modeler")}
         >
-          ← Biblioteca
-        </button>
+          <ArrowLeft size={16} aria-hidden="true" /> Biblioteca
+        </ActionButton>
         <h1 className="bpmnm-editor__title">
           {model?.display_name ?? "…"}
-          {model?.archived_at ? <span className="bpmnm-badge">Arquivado</span> : null}
+          {model?.archived_at ? (
+            <BpmnmStatusBadge
+              label="Arquivado"
+              variant="warning"
+              className="bpmnm-badge"
+            />
+          ) : null}
         </h1>
         <SaveStatus state={machineState} />
         <div className="bpmnm-editor__actions">
@@ -444,54 +481,101 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           )}
           {isEditable && !preview && (
             <>
-              <button type="button" className="bpmnm-btn" disabled={machineState !== "DIRTY" && machineState !== "CLEAN"} onClick={() => adapterRef.current?.undo()}>
-                Desfazer
-              </button>
-              <button type="button" className="bpmnm-btn" disabled={machineState !== "DIRTY" && machineState !== "CLEAN"} onClick={() => adapterRef.current?.redo()}>
-                Refazer
-              </button>
-              <button
+              <ActionButton
                 type="button"
-                className="bpmnm-btn"
+                title={HELP_TOOLTIPS.editor.undo}
+                disabled={machineState !== "DIRTY" && machineState !== "CLEAN"}
+                onClick={() => adapterRef.current?.undo()}
+              >
+                <Undo2 size={15} aria-hidden="true" /> Desfazer
+              </ActionButton>
+              <ActionButton
+                type="button"
+                title={HELP_TOOLTIPS.editor.redo}
+                disabled={machineState !== "DIRTY" && machineState !== "CLEAN"}
+                onClick={() => adapterRef.current?.redo()}
+              >
+                <Redo2 size={15} aria-hidden="true" /> Refazer
+              </ActionButton>
+              <ActionButton
+                type="button"
+                title={HELP_TOOLTIPS.editor.organize}
                 disabled={layoutBusy || !adapterInstance}
                 onClick={() => void onOrganize()}
               >
                 {layoutBusy ? "Calculando layout…" : "Organizar layout"}
-              </button>
+              </ActionButton>
               {layoutBusy && (
-                <button type="button" className="bpmnm-btn" onClick={() => layoutJobRef.current?.cancel()}>
+                <ActionButton
+                  type="button"
+                  onClick={() => layoutJobRef.current?.cancel()}
+                >
                   Cancelar
-                </button>
+                </ActionButton>
               )}
-              <button
+              <ActionButton
                 type="button"
-                className="bpmnm-btn"
+                title={HELP_TOOLTIPS.editor.validate}
                 disabled={!adapterInstance}
                 onClick={() => void onValidate()}
               >
                 Validar
-              </button>
-              <button
+              </ActionButton>
+              <ActionButton
                 type="button"
-                className="bpmnm-btn bpmnm-btn--primary"
+                variant="primary"
+                title={HELP_TOOLTIPS.editor.save}
                 disabled={machineState !== "DIRTY" && machineState !== "SAVE_FAILED"}
                 onClick={() => void save()}
               >
                 Salvar
-              </button>
+              </ActionButton>
             </>
           )}
           {!preview && (
             <>
-              <button type="button" className="bpmnm-btn" disabled={!adapterInstance} onClick={() => adapterRef.current?.zoomIn()} aria-label="Ampliar">+</button>
-              <button type="button" className="bpmnm-btn" disabled={!adapterInstance} onClick={() => adapterRef.current?.zoomOut()} aria-label="Reduzir">−</button>
-              <button type="button" className="bpmnm-btn" disabled={!adapterInstance} onClick={() => adapterRef.current?.fitViewport()}>
-                Ajustar
-              </button>
+              <span title="Ampliar" className="bpmnm-zoom">
+                <IconButton
+                  aria-label="Ampliar"
+                  disabled={!adapterInstance}
+                  onClick={() => adapterRef.current?.zoomIn()}
+                >
+                  <ZoomIn size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
+              <span title="Reduzir" className="bpmnm-zoom">
+                <IconButton
+                  aria-label="Reduzir"
+                  disabled={!adapterInstance}
+                  onClick={() => adapterRef.current?.zoomOut()}
+                >
+                  <ZoomOut size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
+              <span title="Ajustar à janela" className="bpmnm-zoom">
+                <IconButton
+                  aria-label="Ajustar"
+                  disabled={!adapterInstance}
+                  onClick={() => adapterRef.current?.fitViewport()}
+                >
+                  <Maximize size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
               {capabilities.manage && model && (
-                <button type="button" className="bpmnm-btn" onClick={() => void onArchiveToggle()}>
-                  {model.archived_at ? "Desarquivar" : "Arquivar"}
-                </button>
+                <ActionButton
+                  type="button"
+                  onClick={() => void onArchiveToggle()}
+                >
+                  {model.archived_at ? (
+                    <>
+                      <ArchiveRestore size={15} aria-hidden="true" /> Desarquivar
+                    </>
+                  ) : (
+                    <>
+                      <Archive size={15} aria-hidden="true" /> Arquivar
+                    </>
+                  )}
+                </ActionButton>
               )}
               <ExportMenu modelId={modelId} adapter={adapterInstance} getAccessToken={getAccessToken} />
             </>
@@ -501,11 +585,15 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
 
       <ReadOnlyBanner reason={isTablet && isEditable === false && capabilities.edit ? null : readOnlyReason} />
       {isTablet && capabilities.edit && !readOnlyReason ? (
-        <div className="bpmnm-banner bpmnm-banner--readonly" role="note">
+        <BpmnmStateBanner className="bpmnm-banner bpmnm-banner--readonly">
           Em tablets o editor opera em modo somente leitura.
-        </div>
+        </BpmnmStateBanner>
       ) : null}
-      {pageError ? <div className="bpmnm-error" role="alert">{pageError}</div> : null}
+      {pageError ? (
+        <BpmnmStateBanner variant="error" className="bpmnm-error">
+          {pageError}
+        </BpmnmStateBanner>
+      ) : null}
 
       <div className="bpmnm-editor__body">
         <div className="bpmnm-canvas-wrap">
@@ -518,20 +606,16 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
             <div className="bpmnm-preview" data-testid="layout-preview">
               <div className="bpmnm-preview__banner" role="status">
                 Pré-visualização do layout
-                <button
+                <ActionButton
                   type="button"
-                  className="bpmnm-btn bpmnm-btn--primary"
+                  variant="primary"
                   onClick={onAcceptPreview}
                 >
                   Aceitar
-                </button>
-                <button
-                  type="button"
-                  className="bpmnm-btn"
-                  onClick={onCancelPreview}
-                >
+                </ActionButton>
+                <ActionButton type="button" onClick={onCancelPreview}>
                   Cancelar
-                </button>
+                </ActionButton>
               </div>
               <div
                 ref={previewCanvasRef}
@@ -576,7 +660,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                 loading={revisionsLoading}
                 canManage={capabilities.manage && !model?.archived_at}
                 onView={(n) => guardedNavigate(`/apps/bpmn-modeler/models/${modelId}/revisions/${n}`)}
-                onRestore={(n) => void onRestore(n)}
+                onRestore={(n) => setRestoreTarget(n)}
                 onCreateRevision={() => void onCreateRevision()}
               />
             ) : null}
@@ -614,6 +698,25 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           }}
         />
       ) : null}
+
+      <BpmnmModal
+        open={restoreTarget !== null}
+        title="Restaurar revisão"
+        onClose={() => setRestoreTarget(null)}
+      >
+        <ConfirmModalPanel
+          message={`Restaurar a revisão ${restoreTarget}? O working copy atual será substituído.`}
+          confirmLabel="Restaurar"
+          confirmBusy={restoreBusy}
+          confirmBusyLabel="Restaurando…"
+          variant="danger"
+          onConfirm={() => {
+            if (restoreTarget !== null) void onConfirmRestore(restoreTarget);
+          }}
+          onCancel={() => setRestoreTarget(null)}
+          classNames={bpmnmConfirmModalClasses}
+        />
+      </BpmnmModal>
     </div>
   );
 }
