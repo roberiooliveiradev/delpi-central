@@ -1199,8 +1199,8 @@ NEXT = ARCHITECTURE_REVIEW_C3_T8
 
 ## 33. C3-T8 Conversation / Session Interaction Foundation — candidate linkage
 
-Evidence anchors: `16` C3-T8 candidate section; `20` C3-T8 acceptance section; `17` C3-T8 note; `21` §8 conversation state; ledger §6.81.
-Review: `ARCHITECTURE_REVIEW_C3_T8` PENDING; `IMPLEMENTATION_HEAD=0e39953e83170a45eac495a208fb189c395c5c98`; `BASE_HEAD=3bee773a3210991562ae327bb1f72f861bf97fb1`.
+Evidence anchors: `16` C3-T8 candidate section; `20` C3-T8 acceptance section; `17` C3-T8 note; `21` §8 conversation state; ledger §6.81/§6.82.
+Review: `ARCHITECTURE_REVIEW_C3_T8` = REWORK (blocker: `InteractionTurn.epistemic_class=FACT` admissible without qualified-Fact contract); `C3-T8R1` enforced epistemic admissibility fail-closed; `IMPLEMENTATION_HEAD=22b4aef60626cbf4f0f822a0972053f113f2ab71`; `BASE_HEAD=3bee773a3210991562ae327bb1f72f861bf97fb1`; next `ARCHITECTURE_REVIEW_C3_T8R1` PENDING.
 
 | CP | C3-T8 contribution note | Status |
 |---|---|---|
@@ -1212,10 +1212,13 @@ Review: `ARCHITECTURE_REVIEW_C3_T8` PENDING; `IMPLEMENTATION_HEAD=0e39953e83170a
 
 ```text
 C3_T8 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+EPISTEMIC_ADMISSIBILITY = USER_INPUT -> None|OBSERVATION;
+DELIA_RESULT -> None|OBSERVATION|CALCULATION|HYPOTHESIS|CONCLUSION|
+RECOMMENDATION; FACT rejected on both (qualified-Fact contract deferred)
 NEW_CP_CREATED = NO
 UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
 DISCOVERED_REQUIREMENT = NONE
 TRACEABILITY_GAP = NONE material
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8R1
 ```

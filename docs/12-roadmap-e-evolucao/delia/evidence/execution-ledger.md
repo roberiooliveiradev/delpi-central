@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `ARCHITECTURE_REVIEW_C3_T8` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T7=APPROVED`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.81; `NEXT_TASK_AUTHORIZED=NO`). Não executar próxima task; não marcar C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`.
+**Next:** `ARCHITECTURE_REVIEW_C3_T8R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T7=APPROVED`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.82; `NEXT_TASK_AUTHORIZED=NO`). Não executar próxima task; não marcar C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`.
 
 ## 1. Ledger rule
 
@@ -26,7 +26,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T8 | C3-T1..T7 APPROVED §6.80; C3-T8 candidate §6.81; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T8R1 | C3-T1..T7 APPROVED §6.80; C3-T8 candidate §6.82; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -4558,4 +4558,64 @@ C3_T8_AUTHORIZED: NO
 PRODUCTION_READINESS: NOT_PROVEN
 NEXT_TASK_AUTHORIZED: NO
 NEXT: ARCHITECTURE_REVIEW_C3_T7R1
+```
+
+## 6.82 C3-T8R1 — Interaction Epistemic Admissibility rework candidate
+
+```
+STEP: C3-T8R1
+TASK: C3-T8R1 — INTERACTION_EPISTEMIC_ADMISSIBILITY (bounded rework; contract-first; epistemic fail-closed; no redesign)
+TRIGGER: ARCHITECTURE_REVIEW_C3_T8 = REWORK; single blocker
+  BLOCKER = INTERACTION_TURN_FACT_CLASSIFICATION — InteractionTurn allowed
+  direct EpistemicClass.FACT without a qualified-Fact contract.
+REVIEW_TARGET_PRIOR: impl 0e39953e83 / bind c883373963 (remote-visible)
+
+CHANGE (minimal domain diff; no new types):
+  - app/domain/interaction/model.py: InteractionTurn.__post_init__
+    rejects epistemic_class=FACT for any turn kind (fail closed; no
+    normalization); rejects USER_INPUT carrying any class above
+    OBSERVATION (None|OBSERVATION only; untrusted input cannot
+    self-promote to CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION/FACT).
+  - tests/test_interaction_foundation.py: deterministic admissibility
+    matrix (14 cases): FACT rejected both kinds; USER_INPUT None/OBSERVATION
+    accepted, higher classes rejected; DELIA_RESULT None + all non-FACT
+    classes accepted.
+NOT_IMPLEMENTED (by design): FactResolver / FactRegistry /
+  FactQualificationService / EpistemicEngine / ConversationEpistemicPolicy /
+  TurnFactValidator; no source-authority resolver, freshness engine,
+  Domain API read, Evidence store, Knowledge retrieval. FACT requires a
+  separate explicit qualification contract; C3-T8 slice does not supply it.
+
+BOUNDARIES (all preserved): session != authorization/Memory/Knowledge/SoT;
+  UserRef = identity ref only; DecisionPath/PlanCandidate reuse unchanged;
+  epistemic_class != permission; FACT != permission.
+NONE: conversation engine, repositories, retrieval port, RAG, VectorStore,
+  Personal Memory runtime, model call, tool/PREPARE/ACT execution,
+  persistence, migration, provider roles.
+COUNTS unchanged: NEW_DOMAIN_VALUE_TYPES=8; NEW_DOMAIN_ENUMS=3;
+  NEW_DOMAIN_DATACLASSES=5; NEW_APPLICATION_USE_CASES=NONE;
+  NEW_INFRASTRUCTURE_OR_RUNTIME_ABSTRACTIONS=NONE.
+
+TESTS (all at EVALUATED_SHA 22b4aef60626cbf4f0f822a0972053f113f2ab71):
+  TARGETED_C3_T8R1 = PASS 42/42 (foundation+architecture; 0 fail; 0 skip)
+  FULL_DELIA_API = PASS 252/252 (C3-T1..T8R1 regression; 0 fail; 0 skip)
+  git diff --check = clean
+TEST_SHA_BINDING = 22b4aef60626cbf4f0f822a0972053f113f2ab71
+PRIOR_EVIDENCE (27/27 and 237/237 @ 0e39953e83): HISTORICAL / superseeded
+  by R1 runtime SHA.
+REMOTE_VISIBLE_IMPLEMENTATION_SHA = 22b4aef60626cbf4f0f822a0972053f113f2ab71
+POST_IMPLEMENTATION_RUNTIME_DIFF = NONE (docs-only bind after tested SHA)
+
+CP-269: LOCKED / FOUNDATION CONTRIBUTION
+CP-158: LOCKED / FOUNDATION CONTRIBUTION
+CP-212: LOCKED / CONTRIBUTION ONLY
+CP-099 / CP-127: TO_INVENTORY (room concerns; out of scope)
+MASS_PROMOTION: NONE | NEW_CP_CREATED: NO | CP_RENAMED: NO
+
+C3_STARTED: YES
+C3_EXECUTED: NO
+C3_T8_STATE: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+PRODUCTION_READINESS: NOT_PROVEN
+NEXT_TASK_AUTHORIZED: NO
+NEXT: ARCHITECTURE_REVIEW_C3_T8R1
 ```

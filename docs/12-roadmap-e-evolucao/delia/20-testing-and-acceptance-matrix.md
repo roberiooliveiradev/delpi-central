@@ -2110,16 +2110,29 @@ Required deterministic cases (C3-T7) — implemented, pending Architecture Revie
 
 ```text
 STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-REVIEW = PENDING (ARCHITECTURE_REVIEW_C3_T8)
+REVIEW = ARCHITECTURE_REVIEW_C3_T8 = REWORK; C3-T8R1 reworked and
+         re-bound (ARCHITECTURE_REVIEW_C3_T8R1 pending)
 BASE_HEAD = 3bee773a3210991562ae327bb1f72f861bf97fb1
-IMPLEMENTATION_HEAD = 0e39953e83170a45eac495a208fb189c395c5c98
-EVALUATED_SHA = 0e39953e83170a45eac495a208fb189c395c5c98
+PRIOR_IMPLEMENTATION_HEAD = 0e39953e83170a45eac495a208fb189c395c5c98 (historical)
+IMPLEMENTATION_HEAD = 22b4aef60626cbf4f0f822a0972053f113f2ab71 (C3-T8R1)
+EVALUATED_SHA = 22b4aef60626cbf4f0f822a0972053f113f2ab71
 OWNER = delia-api/app/domain/interaction/
 TEST_MODULES = tests/test_interaction_foundation.py +
                tests/test_interaction_architecture.py
 
-TARGETED_C3_T8 = PASS 27/27 at 0e39953e83170a45eac495a208fb189c395c5c98
-FULL_DELIA_API = PASS 237/237 at 0e39953e83170a45eac495a208fb189c395c5c98 (C3-T1..T8 regression)
+TARGETED_C3_T8 = PASS 27/27 at 0e39953e83170a45eac495a208fb189c395c5c98 (historical)
+TARGETED_C3_T8R1 = PASS 42/42 at 22b4aef60626cbf4f0f822a0972053f113f2ab71
+FULL_DELIA_API = PASS 252/252 at 22b4aef60626cbf4f0f822a0972053f113f2ab71 (C3-T1..T8R1 regression)
+
+EPISTEMIC_ADMISSIBILITY (C3-T8R1):
+  FACT_DIRECT_LABEL = REJECTED_IN_INTERACTION_TURN (no qualified-Fact
+                 contract in this slice; fail closed, no normalization)
+  USER_INPUT_EPISTEMIC_ADMISSIBILITY = NONE | OBSERVATION
+  DELIA_RESULT_EPISTEMIC_ADMISSIBILITY = NONE | OBSERVATION | CALCULATION
+                 | HYPOTHESIS | CONCLUSION | RECOMMENDATION
+  USER_INPUT_SELF_CLASSIFICATION = FAIL_CLOSED (raw input cannot carry
+                 CALCULATION/HYPOTHESIS/CONCLUSION/RECOMMENDATION/FACT)
+  FACT_QUALIFICATION_CONTRACT = NOT_IMPLEMENTED / DEFERRED BY DESIGN
 
 SESSION_AUTHORITY_BOUNDARY = PASS (session != authorization; actor_ref !=
                  permission; no permission cache)
@@ -2144,7 +2157,7 @@ PERSISTENCE = NONE | MIGRATION = NONE
 SESSION_STORAGE_DECISION = DEFERRED | SESSION_RETENTION_POLICY = TO_INVENTORY
 REAL_CONVERSATION_QUALITY_EVIDENCE = NONE / TEST_NOT_RUN
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8R1
 ```
 
 
@@ -2160,5 +2173,8 @@ Required deterministic cases (C3-T8) — implemented, pending Architecture Revie
 - tool_call-like content produces no execution;
 - cross-session references and closed-session turns fail closed;
 - session/turn content is not Personal Memory or Organizational Knowledge;
+- direct FACT classification rejected on USER_INPUT and DELIA_RESULT turns;
+- USER_INPUT admits only None | OBSERVATION (no self-promotion);
+- DELIA_RESULT admits all non-FACT canonical classes;
 - no CoT/secret/auth/mechanics fields; no chat runtime dependency;
 - no conversation engine/repository/RAG/persistence abstractions.
