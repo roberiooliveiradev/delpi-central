@@ -5,7 +5,10 @@ import pytest
 from bpmn_modeler.application.policy import RecognitionState, classify_recognition
 from bpmn_modeler.application.validation import ValidationSeverity, ValidationStage
 from bpmn_modeler.infrastructure.validation.engine import LxmlBpmnValidator
+import dataclasses
+
 from bpmn_modeler.infrastructure.validation.intake import (
+    MAX_CANONICAL_UTF8_BYTES,
     MAX_INPUT_BYTES,
     intake_bytes,
 )
@@ -59,6 +62,9 @@ CASES = [
     ("FX-REF-004", fx.FX_REF_004, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-STRUCT-014"}),
     ("FX-REF-005", fx.FX_REF_005, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-STRUCT-013"}),
     ("FX-REF-006", fx.FX_REF_006, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-STRUCT-015"}),
+    ("FX-REF-007", fx.FX_REF_007, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-STRUCT-016"}),
+    ("FX-REF-008", fx.FX_REF_008, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-STRUCT-017"}),
+    ("FX-REF-009", fx.FX_REF_009, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-STRUCT-018"}),
     ("FX-FLOW-001", fx.FX_FLOW_001, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-SEM-001"}),
     ("FX-FLOW-002", fx.FX_FLOW_002, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-SEM-002"}),
     ("FX-GW-001", fx.FX_GW_001, RecognitionState.BPMN_RECOGNIZED_WITH_ISSUES, {"BPMN-SEM-004"}),
@@ -121,10 +127,21 @@ def test_undecodable_input_is_non_xml(validator):
     raw = b"\x89PNG\r\n\x1a\n" + bytes(range(256))
     intake = intake_bytes(raw)
     report = validator.evaluate(intake.evidence)
+    assert "SEC-ENC-001" in _rule_ids(report)
     state = classify_recognition(
         report, decode_succeeded=intake.evidence.decode_succeeded
     )
     assert state in (RecognitionState.NON_XML, RecognitionState.INPUT_REJECTED_SECURITY)
+
+
+def test_canonical_utf8_oversize_rejected(validator):
+    intake = intake_bytes(fx.FX_VALID_001.encode())
+    evidence = dataclasses.replace(
+        intake.evidence,
+        canonical_utf8_byte_length=MAX_CANONICAL_UTF8_BYTES + 1,
+    )
+    report = validator.evaluate(evidence)
+    assert "SEC-SIZE-002" in _rule_ids(report)
 
 
 def test_entity_expansion_rejected(validator):

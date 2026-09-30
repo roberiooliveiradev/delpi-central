@@ -129,6 +129,17 @@ FX_REF_006 = HEADER + """
   <bpmn:process id="P"><bpmn:laneSet><bpmn:lane id="L1"><bpmn:flowNodeRef>NOPE</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:task id="T1"/></bpmn:process>
 """ + FOOTER
 
+FX_REF_007 = HEADER + """
+  <bpmn:collaboration id="C"><bpmn:participant id="P1" processRef="P"/>
+  <bpmn:messageFlow id="M1" sourceRef="GHOST" targetRef="P1"/></bpmn:collaboration>
+  <bpmn:process id="P"><bpmn:task id="T1"/></bpmn:process>
+""" + FOOTER
+FX_REF_008 = HEADER + """
+  <bpmn:process id="P"><bpmn:task id="T1"/><bpmn:association id="A1" sourceRef="GHOST" targetRef="T1"/></bpmn:process>
+""" + FOOTER
+FX_REF_009 = HEADER + """
+  <bpmn:process id="P"><bpmn:task id="T1"><bpmn:dataInputAssociation id="A1" sourceRef="GHOST"/></bpmn:task></bpmn:process>
+""" + FOOTER
 FX_FLOW_001 = HEADER + """
   <bpmn:collaboration id="C">
     <bpmn:participant id="PA" processRef="ProcessA"/><bpmn:participant id="PB" processRef="ProcessB"/>
