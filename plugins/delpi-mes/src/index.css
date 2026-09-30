@@ -58,20 +58,10 @@
   box-shadow: 0 8px 20px rgb(30 99 196 / 35%);
 }
 .delpi-mes-sidebar-nav__link:focus-visible { outline: 3px solid rgb(96 165 250 / 55%); outline-offset: 2px; }
-.delpi-mes-sidebar__tagline {
-  margin: auto 0 0;
-  padding-top: 2rem;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  line-height: 1.9;
-  text-transform: uppercase;
-  color: #7e9cbd;
-}
 .delpi-mes-sidebar__art {
   display: block;
   width: calc(100% + 2.5rem);
-  margin: 1.4rem -1.25rem -1.75rem;
+  margin: auto -1.25rem -1.75rem;
   pointer-events: none;
 }
 
@@ -502,7 +492,7 @@
   .delpi-mes-sidebar__brand { padding: 0; }
   .delpi-mes-sidebar__brand strong { font-size: 1.25rem; }
   .delpi-mes-sidebar__nav { display: flex; gap: 0.35rem; overflow-x: auto; }
-  .delpi-mes-sidebar__tagline, .delpi-mes-sidebar__art { display: none; }
+  .delpi-mes-sidebar__art { display: none; }
   .delpi-mes-monitoring__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 680px) {

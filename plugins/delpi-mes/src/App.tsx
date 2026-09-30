@@ -89,11 +89,6 @@ export default function App({
         <nav className="delpi-mes-sidebar__nav" aria-label="Áreas do Delpi MES">
           {navLinks(activeArea, activeBranch, "delpi-mes-sidebar-nav")}
         </nav>
-        <p className="delpi-mes-sidebar__tagline">
-          Indústria conectada
-          <br />
-          Resultados reais
-        </p>
         {sidebarArtUrl() ? <img src={sidebarArtUrl()!} alt="" className="delpi-mes-sidebar__art" aria-hidden="true" /> : null}
       </aside>
 

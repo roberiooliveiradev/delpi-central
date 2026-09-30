@@ -16,7 +16,7 @@ export function heroImageUrl(): string | null {
 }
 
 export function sidebarLogoUrl(): string | null {
-  return assetUrl("logo-delpi-white.png") ?? assetUrl("logo-delpi-white.svg");
+  return assetUrl("logo-delpi-white.png") ?? assetUrl("logo-delpi-white.svg") ?? assetUrl("logo-delpi.png") ?? assetUrl("logo-delpi.webp");
 }
 
 export function sidebarArtUrl(): string | null {
