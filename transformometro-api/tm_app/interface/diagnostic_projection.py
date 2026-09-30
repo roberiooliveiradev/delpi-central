@@ -100,7 +100,11 @@ def project_conclusion(conclusion: Any) -> dict:
         "rationale": conclusion.rationale,
         "hypothesis_ids": list(conclusion.hypothesis_ids),
         "finding_ids": list(conclusion.finding_ids),
-        "root_cause_hypothesis_id": conclusion.root_cause_hypothesis_id,
+        "root_cause_hypothesis_id": (
+            conclusion.root_cause.hypothesis_id
+            if conclusion.root_cause is not None
+            else None
+        ),
         **project_claim_fields(conclusion),
     }
 

@@ -50,8 +50,13 @@ from tm_app.application.services.transformometro_realtime_notify import (
 )
 from tm_app.application.use_cases.diagnostic_write import DiagnosticWriteUseCase
 from tm_app.domain.diagnostic.diagnostic import (
+    ClaimLifecycle,
     Diagnostic,
+    DiagnosticConclusion,
+    EffectiveValidation,
+    Hypothesis,
     ProblemStatement,
+    RootCauseDesignation,
 )
 from tm_app.infrastructure.security.diagnostic_authorization import (
     FreshAuthorizationAdapter,
@@ -771,3 +776,179 @@ def test_diagnostic_section_key_and_revision_room():
     rooms = _related_rooms("diagnostic", "d1", {"revision_id": "r9"})
     assert "revisao:r9" in rooms
     assert "diagnostic:d1" in rooms
+
+
+# ---------------------------------------------------------------------------
+# CONCLUSION READ-BACK — projection/domain alignment regression
+# (EXECUTION_DRIFT fix: project_conclusion reads domain ``root_cause``)
+# ---------------------------------------------------------------------------
+
+
+def _validated_current_hypothesis() -> Hypothesis:
+    return Hypothesis(
+        hypothesis_id=str(uuid4()),
+        statement="h",
+        lifecycle=ClaimLifecycle.VALIDATED,
+        effective_validation=EffectiveValidation.CURRENT,
+    )
+
+
+def test_get_route_with_conclusion_without_root_cause(wired):
+    conclusion = DiagnosticConclusion(
+        conclusion_id=str(uuid4()), statement="c"
+    )
+    diag = _diagnostic(diagnostic_conclusions=[conclusion])
+    wired.seed(diag)
+    resp = routes.get_diagnostic(_request(), diag.diagnostic_id)
+    assert resp.status_code == 200
+    projected = _body(resp)["data"]["diagnostic"]["conclusions"][0]
+    assert projected["conclusion_id"] == conclusion.conclusion_id
+    assert projected["root_cause_hypothesis_id"] is None
+    assert projected["epistemic_state"] == "INFERRED"
+
+
+def test_get_route_with_conclusion_and_designated_root_cause(wired):
+    h = _validated_current_hypothesis()
+    conclusion = DiagnosticConclusion(
+        conclusion_id=str(uuid4()),
+        statement="c",
+        lifecycle=ClaimLifecycle.VALIDATED,
+        effective_validation=EffectiveValidation.CURRENT,
+        hypothesis_ids=(h.hypothesis_id,),
+        root_cause=RootCauseDesignation(h.hypothesis_id),
+    )
+    diag = _diagnostic(hypotheses=[h], diagnostic_conclusions=[conclusion])
+    wired.seed(diag)
+    resp = routes.get_diagnostic(_request(), diag.diagnostic_id)
+    assert resp.status_code == 200
+    projected = _body(resp)["data"]["diagnostic"]["conclusions"][0]
+    assert projected["root_cause_hypothesis_id"] == h.hypothesis_id
+    assert projected["lifecycle"] == "VALIDATED"
+    assert projected["epistemic_state"] == "INFERRED"
+
+
+def test_get_route_with_validated_degraded_conclusion(wired):
+    """VALIDATED + STALE_EVIDENCE rehydrates and projects verbatim."""
+    h = Hypothesis(
+        hypothesis_id=str(uuid4()),
+        statement="h",
+        lifecycle=ClaimLifecycle.VALIDATED,
+        effective_validation=EffectiveValidation.STALE_EVIDENCE,
+    )
+    conclusion = DiagnosticConclusion(
+        conclusion_id=str(uuid4()),
+        statement="c",
+        lifecycle=ClaimLifecycle.VALIDATED,
+        effective_validation=EffectiveValidation.STALE_EVIDENCE,
+        hypothesis_ids=(h.hypothesis_id,),
+        root_cause=RootCauseDesignation(h.hypothesis_id),
+    )
+    diag = _diagnostic(hypotheses=[h], diagnostic_conclusions=[conclusion])
+    wired.seed(diag)
+    resp = routes.get_diagnostic(_request(), diag.diagnostic_id)
+    assert resp.status_code == 200
+    projected = _body(resp)["data"]["diagnostic"]["conclusions"][0]
+    assert projected["lifecycle"] == "VALIDATED"
+    assert projected["effective_validation"] == "STALE_EVIDENCE"
+    assert projected["root_cause_hypothesis_id"] == h.hypothesis_id
+
+
+def test_list_route_counts_conclusions(wired):
+    h = _validated_current_hypothesis()
+    conclusion = DiagnosticConclusion(
+        conclusion_id=str(uuid4()),
+        statement="c",
+        lifecycle=ClaimLifecycle.VALIDATED,
+        effective_validation=EffectiveValidation.CURRENT,
+        hypothesis_ids=(h.hypothesis_id,),
+        root_cause=RootCauseDesignation(h.hypothesis_id),
+    )
+    diag = _diagnostic(
+        hypotheses=[h],
+        diagnostic_conclusions=[
+            conclusion,
+            DiagnosticConclusion(
+                conclusion_id=str(uuid4()), statement="c2"
+            ),
+        ],
+    )
+    wired.seed(diag)
+    resp = routes.list_diagnostics(_request(), REV_A)
+    assert resp.status_code == 200
+    item = _body(resp)["data"]["items"][0]
+    assert item["conclusions_count"] == 2
+    assert item["has_validated_conclusion"] is True
+    assert item["revalidation_attention_required"] is False
+    assert "conclusions" not in item
+
+
+def test_add_conclusion_commit_then_get(wired, rbac, notified):
+    diag = _seeded(wired)
+    prep = routes.prepare_manage_diagnostic(
+        _request(),
+        diag.diagnostic_id,
+        routes.DiagnosticManagePrepareBody(
+            action="add_conclusion",
+            payload={
+                "statement": "conclusão governada",
+                "rationale": "porque",
+            },
+        ),
+    )
+    assert prep.status_code == 200
+    handle = _body(prep)["data"]["proposal_handle"]
+    _prime_act_ctx()
+    resp = routes.commit_governed_proposal(
+        _request(),
+        routes.GovernedProposalCommitBody(
+            proposal_handle=handle, confirmation=True
+        ),
+    )
+    assert resp.status_code == 200
+    assert _body(resp)["data"]["postcondition"]["verified"] is True
+    # Authoritative read-back through the canonical GET — no 500.
+    back = routes.get_diagnostic(_request(), diag.diagnostic_id)
+    assert back.status_code == 200
+    conclusions = _body(back)["data"]["diagnostic"]["conclusions"]
+    assert len(conclusions) == 1
+    assert conclusions[0]["statement"] == "conclusão governada"
+    assert conclusions[0]["root_cause_hypothesis_id"] is None
+    assert conclusions[0]["lifecycle"] == "DRAFT"
+
+
+def test_validate_conclusion_commit_then_get(wired, rbac, notified):
+    h = _validated_current_hypothesis()
+    conclusion = DiagnosticConclusion(
+        conclusion_id=str(uuid4()),
+        statement="c",
+        hypothesis_ids=(h.hypothesis_id,),
+        root_cause=RootCauseDesignation(h.hypothesis_id),
+    )
+    diag = _diagnostic(hypotheses=[h], diagnostic_conclusions=[conclusion])
+    wired.seed(diag)
+    prep = routes.prepare_manage_diagnostic(
+        _request(),
+        diag.diagnostic_id,
+        routes.DiagnosticManagePrepareBody(
+            action="validate_conclusion",
+            payload={"conclusion_id": conclusion.conclusion_id},
+        ),
+    )
+    assert prep.status_code == 200
+    handle = _body(prep)["data"]["proposal_handle"]
+    _prime_act_ctx()
+    resp = routes.commit_governed_proposal(
+        _request(),
+        routes.GovernedProposalCommitBody(
+            proposal_handle=handle, confirmation=True
+        ),
+    )
+    assert resp.status_code == 200
+    assert _body(resp)["data"]["postcondition"]["verified"] is True
+    back = routes.get_diagnostic(_request(), diag.diagnostic_id)
+    assert back.status_code == 200
+    projected = _body(back)["data"]["diagnostic"]["conclusions"][0]
+    assert projected["lifecycle"] == "VALIDATED"
+    assert projected["epistemic_state"] == "INFERRED"
+    assert projected["effective_validation"] == "CURRENT"
+    assert projected["root_cause_hypothesis_id"] == h.hypothesis_id
