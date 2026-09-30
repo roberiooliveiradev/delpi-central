@@ -1,0 +1,10 @@
+fastapi
+pydantic
+uvicorn[standard]
+PyJWT
+psycopg[binary]
+python-jose[cryptography]
+httpx
+lxml
+python-multipart
+pytest

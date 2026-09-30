@@ -1,0 +1,159 @@
+/**
+ * DI proposal — aplica geometria ELK ao artefato BPMN produzindo
+ * BPMNShape/BPMNEdge/BPMNPlane (P5 §15). Proposta é transient: o usuário
+ * aceita (vira commands do editor → dirty) ou cancela (descartada).
+ *
+ * Snapshot/DI usam DOMParser puro — nunca APIs vendor fora de src/editor.
+ */
+
+import type { ElkNode } from "./elkGraph";
+import type { LayoutSnapshot } from "./elkGraph";
+
+const BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+const BPMNDI_NS = "http://www.omg.org/spec/BPMN/20100524/DI";
+
+const FLOW_NODES = new Set([
+  "task", "userTask", "serviceTask", "scriptTask", "manualTask",
+  "businessRuleTask", "sendTask", "receiveTask", "callActivity",
+  "subProcess", "transaction", "adHocSubProcess", "eventSubProcess",
+  "startEvent", "endEvent", "intermediateCatchEvent",
+  "intermediateThrowEvent", "boundaryEvent",
+  "exclusiveGateway", "parallelGateway", "inclusiveGateway",
+  "eventBasedGateway", "complexGateway",
+  "participant", "lane", "dataObject", "dataObjectReference",
+  "dataStoreReference", "textAnnotation", "group",
+]);
+
+const EDGES = new Set([
+  "sequenceFlow", "messageFlow", "association", "dataInputAssociation",
+  "dataOutputAssociation", "conversation",
+]);
+
+const CONTAINERS = new Set(["process", "subProcess", "transaction", "adHocSubProcess", "laneSet"]);
+
+/** Extrai o snapshot de layout de um BPMN XML (sem DI necessário). */
+export function snapshotFromXml(xml: string): LayoutSnapshot {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const nodes: LayoutSnapshot["nodes"] = [];
+  const edges: LayoutSnapshot["edges"] = [];
+
+  const localName = (el: Element) => el.localName || el.tagName.split(":").pop() || "";
+
+  const walk = (el: Element, parentId?: string) => {
+    for (const child of Array.from(el.children)) {
+      const name = localName(child);
+      const id = child.getAttribute("id");
+      if (!id) continue;
+      if (FLOW_NODES.has(name)) {
+        nodes.push({
+          id,
+          type: `bpmn:${name}`,
+          parentId,
+          isBoundary: name === "boundaryEvent",
+          attachedToId: child.getAttribute("attachedToRef") ?? undefined,
+          isLane: name === "lane",
+          isParticipant: name === "participant",
+        });
+        walk(child, id);
+      } else if (EDGES.has(name)) {
+        const source = child.getAttribute("sourceRef");
+        const target = child.getAttribute("targetRef");
+        if (source && target)
+          edges.push({ id, sourceId: source, targetId: target });
+      } else if (CONTAINERS.has(name) || name === "collaboration" || name === "definitions") {
+        walk(child, name === "definitions" || name === "collaboration" ? undefined : parentId ?? id);
+      }
+    }
+  };
+  walk(doc.documentElement);
+  return { nodes, edges };
+}
+
+export function hasBpmnDi(xml: string): boolean {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  return doc.getElementsByTagNameNS(BPMNDI_NS, "BPMNDiagram").length > 0;
+}
+
+/** Aplica a geometria calculada ao snapshot: gera o fragmento BPMN-DI. */
+export function buildDiXml(
+  laidOut: ElkNode,
+  snapshot: LayoutSnapshot,
+  planeElementId: string,
+): string {
+  const bounds = new Map<string, { x: number; y: number; width: number; height: number }>();
+  const edgePoints = new Map<string, Array<{ x: number; y: number }>>();
+
+  const collect = (node: ElkNode, ox = 0, oy = 0) => {
+    const x = ox + ((node as unknown as { x?: number }).x ?? 0);
+    const y = oy + ((node as unknown as { y?: number }).y ?? 0);
+    if (node.id !== "__root__") {
+      bounds.set(node.id, {
+        x,
+        y,
+        width: node.width ?? 100,
+        height: node.height ?? 80,
+      });
+    }
+    for (const edge of (node as unknown as { edges?: Array<{ id: string; sections?: Array<{ startPoint: { x: number; y: number }; endPoint: { x: number; y: number }; bendPoints?: Array<{ x: number; y: number }> }> }> }).edges ?? []) {
+      const section = edge.sections?.[0];
+      if (section) {
+        const pts = [
+          { x: x + section.startPoint.x, y: y + section.startPoint.y },
+          ...(section.bendPoints ?? []).map((p) => ({ x: x + p.x, y: y + p.y })),
+          { x: x + section.endPoint.x, y: y + section.endPoint.y },
+        ];
+        edgePoints.set(edge.id, pts);
+      }
+    }
+    for (const child of node.children ?? []) collect(child, x, y);
+  };
+  collect(laidOut);
+
+  const diagramId = `bpmndi_${Math.random().toString(36).slice(2, 10)}`;
+  const planeId = `${diagramId}_plane`;
+
+  const shapes = snapshot.nodes
+    .filter((n) => bounds.has(n.id))
+    .map((n) => {
+      const b = bounds.get(n.id)!;
+      return `      <bpmndi:BPMNShape id="shape_${n.id}" bpmnElement="${n.id}">\n        <dc:Bounds x="${round(b.x)}" y="${round(b.y)}" width="${round(b.width)}" height="${round(b.height)}"/>\n      </bpmndi:BPMNShape>`;
+    });
+
+  const diEdges = snapshot.edges
+    .filter((e) => edgePoints.has(e.id))
+    .map((e) => {
+      const pts = edgePoints.get(e.id)!
+        .map((p) => `        <di:waypoint x="${round(p.x)}" y="${round(p.y)}"/>`)
+        .join("\n");
+      return `      <bpmndi:BPMNEdge id="edge_${e.id}" bpmnElement="${e.id}">\n${pts}\n      </bpmndi:BPMNEdge>`;
+    });
+
+  return [
+    `    <bpmndi:BPMNDiagram id="${diagramId}">`,
+    `      <bpmndi:BPMNPlane id="${planeId}" bpmnElement="${planeElementId}">`,
+    ...shapes,
+    ...diEdges,
+    `      </bpmndi:BPMNPlane>`,
+    `    </bpmndi:BPMNDiagram>`,
+  ].join("\n");
+}
+
+/** Insere o fragmento BPMN-DI antes de </definitions>. */
+export function injectDiIntoXml(xml: string, diXml: string): string {
+  const closing = /<\/(bpmn:|bpmn2:|)?definitions>\s*$/;
+  if (!closing.test(xml)) return xml;
+  return xml.replace(closing, `${diXml}\n</$1definitions>`);
+}
+
+/** Process/colaboração raiz para ligar o BPMNPlane. */
+export function planeElementFor(xml: string): string | null {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const collab = doc.getElementsByTagNameNS(BPMN_NS, "collaboration")[0];
+  if (collab?.getAttribute("id")) return collab.getAttribute("id");
+  const process = doc.getElementsByTagNameNS(BPMN_NS, "process")[0];
+  return process?.getAttribute("id") ?? null;
+}
+
+function round(n: number): number {
+  return Math.round(n * 100) / 100;
+}

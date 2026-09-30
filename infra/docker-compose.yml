@@ -457,6 +457,26 @@ services:
     networks:
       - delpi-network
 
+  bpmn-modeler:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: bpmn-modeler/Dockerfile
+
+    container_name: delpi-bpmn-modeler
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/bpmn-modeler:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   transformometro:
     depends_on:
       - plugin-ui
@@ -1634,6 +1654,91 @@ services:
     depends_on:
       - keycloak
       - postgres-plugins
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  bpmn-modeler-api:
+    build:
+      context: ..
+      dockerfile: bpmn-modeler/Dockerfile
+
+    container_name: delpi-bpmn-modeler-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      BPMN_MODELER_API_ROOT_PATH: /apps/bpmn-modeler-api
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      BPMN_MODELER_DB_HOST: ${BPMN_MODELER_DB_HOST:-postgres-plugins}
+      BPMN_MODELER_DB_PORT: ${BPMN_MODELER_DB_PORT:-5432}
+      BPMN_MODELER_DB_NAME: ${BPMN_MODELER_DB_NAME:-bpmn_modeler}
+      BPMN_MODELER_DB_USER: ${BPMN_MODELER_DB_USER:-bpmn_modeler_app}
+      BPMN_MODELER_DB_PASSWORD: ${BPMN_MODELER_DB_PASSWORD}
+      BPMN_MODELER_DB_POOL_MAX_SIZE: ${BPMN_MODELER_DB_POOL_MAX_SIZE:-10}
+      BPMN_MODELER_DB_POOL_ACQUIRE_TIMEOUT: ${BPMN_MODELER_DB_POOL_ACQUIRE_TIMEOUT:-5}
+      BPMN_MODELER_DB_CONNECT_TIMEOUT: ${BPMN_MODELER_DB_CONNECT_TIMEOUT:-5}
+      BPMN_MODELER_DB_SSLMODE: ${BPMN_MODELER_DB_SSLMODE:-prefer}
+
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - bpmn-modeler-migrate
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  bpmn-modeler-migrate:
+    build:
+      context: ..
+      dockerfile: bpmn-modeler/Dockerfile.migrate
+
+    container_name: delpi-bpmn-modeler-migrate
+    restart: "no"
+
+    env_file:
+      - .env
+
+    environment:
+      BPMN_MODELER_DB_HOST: ${BPMN_MODELER_DB_HOST:-postgres-plugins}
+      BPMN_MODELER_DB_PORT: ${BPMN_MODELER_DB_PORT:-5432}
+      BPMN_MODELER_DB_NAME: ${BPMN_MODELER_DB_NAME:-bpmn_modeler}
+      BPMN_MODELER_DB_ADMIN_USER: ${BPMN_MODELER_DB_ADMIN_USER:-bpmn_modeler_admin}
+      BPMN_MODELER_DB_ADMIN_PASSWORD: ${BPMN_MODELER_DB_ADMIN_PASSWORD}
+      BPMN_MODELER_DB_CONNECT_TIMEOUT: ${BPMN_MODELER_DB_CONNECT_TIMEOUT:-5}
+      BPMN_MODELER_DB_SSLMODE: ${BPMN_MODELER_DB_SSLMODE:-prefer}
+      TZ: ${TZ}
+
+    depends_on:
+      postgres-plugins:
+        condition: service_healthy
 
     logging:
       driver: "json-file"

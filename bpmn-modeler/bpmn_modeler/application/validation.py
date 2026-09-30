@@ -62,7 +62,48 @@ class ValidationReport:
             raise ValueError("validation issues require an evaluated stage")
 
 
+@dataclass(frozen=True, slots=True)
+class InputSafetyEvidence:
+    """Immutable evidence about the original input, produced at intake.
+
+    `CanonicalBpmnArtifact.content` is an already-decoded string and cannot
+    prove anything about the original bytes; this evidence is the only source
+    for INPUT_SAFETY checks. Absence of evidence means the stage is
+    NOT_EVALUATED — neither a pass nor a failure.
+    """
+
+    original_byte_length: int
+    canonical_utf8_byte_length: int
+    declared_encoding: str | None
+    detected_encoding: str | None
+    bom_present: bool
+    decode_succeeded: bool
+    dtd_detected: bool
+    external_entity_declarations_detected: bool
+    entity_expansion_beyond_builtins_detected: bool
+    depth_within_limit: bool
+
+    def has_security_violation(self) -> bool:
+        return (
+            not self.decode_succeeded
+            or self.dtd_detected
+            or self.external_entity_declarations_detected
+            or self.entity_expansion_beyond_builtins_detected
+            or not self.depth_within_limit
+        )
+
+
 class BpmnArtifactValidationPort(Protocol):
-    def validate(self, artifact: CanonicalBpmnArtifact) -> ValidationReport:
+    def validate(
+        self,
+        artifact: CanonicalBpmnArtifact,
+        evidence: InputSafetyEvidence | None = None,
+    ) -> ValidationReport:
         """Assess an opaque canonical artifact and return validation evidence."""
+        ...
+
+
+class InputSafetyEvaluationPort(Protocol):
+    def evaluate(self, evidence: InputSafetyEvidence) -> ValidationReport:
+        """Evaluate the INPUT_SAFETY stage alone (intake path, no artifact)."""
         ...

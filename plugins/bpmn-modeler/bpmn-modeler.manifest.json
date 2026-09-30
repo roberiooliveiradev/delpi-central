@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "bpmn-modeler",
+  "name": "Meu Modelador de Processos",
+  "description": "Modelagem de processos em BPMN 2.0 com validação, revisões e exportação.",
+  "icon": "workflow",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/bpmn-modeler",
+  "entry": "/apps/bpmn-modeler/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "bpmn-modeler.view",
+      "name": "Visualizar modelos BPMN",
+      "description": "Permite listar, abrir e exportar modelos de processo.",
+      "module": "bpmn-modeler"
+    },
+    {
+      "code": "bpmn-modeler.edit",
+      "name": "Editar modelos BPMN",
+      "description": "Permite criar, importar e editar modelos de processo.",
+      "module": "bpmn-modeler"
+    },
+    {
+      "code": "bpmn-modeler.manage",
+      "name": "Gerenciar modelos BPMN",
+      "description": "Permite renomear, arquivar, duplicar e gerenciar revisões.",
+      "module": "bpmn-modeler"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/bpmn-modeler",
+      "label": "Modelador de Processos",
+      "permission": "bpmn-modeler.view",
+      "icon": "workflow",
+      "entry": null,
+      "order": 10,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/bpmn-modeler/models/:modelId",
+      "label": "Editor de modelo",
+      "permission": "bpmn-modeler.view",
+      "icon": "workflow",
+      "entry": null,
+      "order": 11,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/bpmn-modeler/models/:modelId/revisions/:revisionNumber",
+      "label": "Revisão de modelo",
+      "permission": "bpmn-modeler.view",
+      "icon": "history",
+      "entry": null,
+      "order": 12,
+      "showInMenu": false
+    }
+  ],
+  "backend": {
+    "audience": "delpi-central",
+    "baseUrl": "/apps/bpmn-modeler-api",
+    "issuer": "https://www.minhadelpi.com.br/auth",
+    "required": true,
+    "serviceName": "bpmn-modeler-api",
+    "validateJwt": true
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}

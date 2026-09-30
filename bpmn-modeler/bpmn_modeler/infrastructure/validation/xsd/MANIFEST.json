@@ -1,0 +1,48 @@
+{
+  "bundle": "OMG BPMN 2.0 XSD (file id dtc/10-05-04) + W3C xml.xsd",
+  "note": "source paths use spec/BPMN/20100501/; served targetNamespaces are the 20100524 URIs frozen in the interoperability spec",
+  "files": [
+    {
+      "name": "BPMN20.xsd",
+      "source_url": "https://www.omg.org/spec/BPMN/20100501/BPMN20.xsd",
+      "file_id": "dtc/10-05-04",
+      "target_namespace": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+      "sha256": "a07c159cb0594573dd7c97b1370dd116112378f377e43c89a8bf512ac5030705"
+    },
+    {
+      "name": "Semantic.xsd",
+      "source_url": "https://www.omg.org/spec/BPMN/20100501/Semantic.xsd",
+      "file_id": "dtc/10-05-04",
+      "target_namespace": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+      "sha256": "c4318842f7d2bbc262d7954c9452c501db16f0868eac0b8732ec5d7fb384d9a7"
+    },
+    {
+      "name": "BPMNDI.xsd",
+      "source_url": "https://www.omg.org/spec/BPMN/20100501/BPMNDI.xsd",
+      "file_id": "dtc/10-05-04",
+      "target_namespace": "http://www.omg.org/spec/BPMN/20100524/DI",
+      "sha256": "f0dff1cd559d1514d8ebfc8c646f58402bcaced27ec22e2aa6456c2dcc80b038"
+    },
+    {
+      "name": "DI.xsd",
+      "source_url": "https://www.omg.org/spec/BPMN/20100501/DI.xsd",
+      "file_id": "dtc/10-05-04",
+      "target_namespace": "http://www.omg.org/spec/DD/20100524/DI",
+      "sha256": "8220b179c175572df74e08a51bffabe957867962035cee7b5fee0b6acb4c4498"
+    },
+    {
+      "name": "DC.xsd",
+      "source_url": "https://www.omg.org/spec/BPMN/20100501/DC.xsd",
+      "file_id": "dtc/10-05-04",
+      "target_namespace": "http://www.omg.org/spec/DD/20100524/DC",
+      "sha256": "a2f90e5ad9bb48c6915e4e034b4e27ac838264a1d4f27bfc70dbdfc69351312d"
+    },
+    {
+      "name": "xml.xsd",
+      "source_url": "https://www.w3.org/2001/xml.xsd",
+      "file_id": "w3c-xml-1998",
+      "target_namespace": "http://www.w3.org/XML/1998/namespace",
+      "sha256": "61960fb3131e38022caad5360e2f33a3382578ab3c80cd58bd74320ede61b20c"
+    }
+  ]
+}

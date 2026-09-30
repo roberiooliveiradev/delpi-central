@@ -1,0 +1,12 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY bpmn-modeler/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY bpmn-modeler /app
+
+ENV PYTHONPATH=/app
+
+CMD ["python", "-m", "bpmn_modeler.infrastructure.persistence.migrations_runner", "up"]

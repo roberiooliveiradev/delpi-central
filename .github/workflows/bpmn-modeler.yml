@@ -1,0 +1,117 @@
+name: bpmn-modeler
+
+on:
+  push:
+    paths:
+      - "bpmn-modeler/**"
+      - "plugins/bpmn-modeler/**"
+      - "shared/delpi_auth/**"
+      - ".github/workflows/bpmn-modeler.yml"
+  pull_request:
+    paths:
+      - "bpmn-modeler/**"
+      - "plugins/bpmn-modeler/**"
+      - "shared/delpi_auth/**"
+      - ".github/workflows/bpmn-modeler.yml"
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bpmn-modeler
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: bpmn-modeler/requirements.txt
+
+      - name: Instalar dependências
+        run: |
+          pip install -e ../shared
+          pip install -r requirements.txt
+
+      - name: Testes (unit + contrato + jornadas API-level)
+        run: PYTHONPATH=.:../shared python -m pytest tests/ -q
+
+      - name: OpenAPI — 20 operações congeladas
+        run: |
+          PYTHONPATH=.:../shared python - <<'PY'
+          import json
+          from fastapi.testclient import TestClient
+          from bpmn_modeler.interface.http.app import create_app
+          spec = TestClient(create_app()).get("/openapi.json").json()
+          ops = {
+              op["operationId"]
+              for p in spec["paths"].values()
+              for op in p.values()
+              if isinstance(op, dict) and "operationId" in op
+          }
+          expected = {
+              "health", "ready", "listModels", "createModel", "importModel",
+              "inspectImport", "getModel", "renameModel", "duplicateModel",
+              "archiveModel", "unarchiveModel", "getWorkingCopy",
+              "saveWorkingCopy", "validateWorkingCopy", "exportWorkingCopy",
+              "listRevisions", "createRevision", "getRevision",
+              "restoreRevision", "exportRevision",
+          }
+          assert ops == expected, f"drift: {ops ^ expected}"
+          assert spec["info"]["title"] == "BPMN Modeler API"
+          assert spec["info"]["version"] == "1.0.0"
+          print("openapi OK —", len(ops), "operations")
+          PY
+
+      - name: Arquitetura — camadas limpas (domain/application sem infra imports)
+        run: |
+          ! grep -rn -E "^import |^from " bpmn_modeler/domain bpmn_modeler/application \
+            | grep -E "lxml|fastapi|psycopg|starlette" \
+            && echo "layers OK"
+
+      - name: XSD bundle — integridade offline
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          xsd_dir = Path("bpmn_modeler/infrastructure/validation/xsd")
+          manifest = json.loads((xsd_dir / "MANIFEST.json").read_text())
+          for name, sha in manifest["files"].items():
+              actual = hashlib.sha256((xsd_dir / name).read_bytes()).hexdigest()
+              assert actual == sha, f"{name}: checksum drift"
+          print("xsd bundle OK —", len(manifest["files"]), "schemas")
+          PY
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/bpmn-modeler
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: plugins/bpmn-modeler/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      - name: Testes unitários
+        run: npx vitest run
+
+      - name: Build (remoteEntry)
+        run: npx vite build
+
+      - name: Vendor leakage — vendor só em src/editor/
+        run: |
+          ! grep -rln -E "from \"(bpmn-js|diagram-js|bpmn-moddle)|modeler\.get\(|eventBus|commandStack\._|elementRegistry" \
+            src --include='*.ts' --include='*.tsx' \
+            | grep -v "src/editor/" \
+            && echo "vendor boundary OK"
