@@ -19,6 +19,10 @@ export function sidebarLogoUrl(): string | null {
   return assetUrl("logo-delpi-white.png") ?? assetUrl("logo-delpi-white.svg");
 }
 
+export function sidebarArtUrl(): string | null {
+  return assetUrl("sidebar-icon.webp") ?? assetUrl("sidebar-icon.png") ?? assetUrl("sidebar-icon.svg");
+}
+
 function normalizeWorkCenterAssetName(workCenter: string): string {
   return workCenter.trim().toUpperCase().replace(/[^A-Z0-9-]+/g, "-");
 }

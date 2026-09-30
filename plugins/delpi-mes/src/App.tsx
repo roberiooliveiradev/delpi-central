@@ -9,7 +9,7 @@ import { buildDelpiMesHref, useDelpiMesRoute } from "./hooks/useDelpiMesRoute";
 import { FoundationPage } from "./pages/FoundationPage";
 import { MonitoringPage } from "./pages/MonitoringPage";
 import { WorkCenterDetailPage } from "./pages/WorkCenterDetailPage";
-import { heroImageUrl, sidebarLogoUrl } from "./utils/assets";
+import { heroImageUrl, sidebarArtUrl, sidebarLogoUrl } from "./utils/assets";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -94,6 +94,7 @@ export default function App({
           <br />
           Resultados reais
         </p>
+        {sidebarArtUrl() ? <img src={sidebarArtUrl()!} alt="" className="delpi-mes-sidebar__art" aria-hidden="true" /> : null}
       </aside>
 
       <div className="delpi-mes-content">

@@ -68,6 +68,12 @@
   text-transform: uppercase;
   color: #7e9cbd;
 }
+.delpi-mes-sidebar__art {
+  display: block;
+  width: calc(100% + 2.5rem);
+  margin: 1.4rem -1.25rem -1.75rem;
+  pointer-events: none;
+}
 
 /* ---------- Content ---------- */
 .delpi-mes-content {
@@ -496,7 +502,7 @@
   .delpi-mes-sidebar__brand { padding: 0; }
   .delpi-mes-sidebar__brand strong { font-size: 1.25rem; }
   .delpi-mes-sidebar__nav { display: flex; gap: 0.35rem; overflow-x: auto; }
-  .delpi-mes-sidebar__tagline { display: none; }
+  .delpi-mes-sidebar__tagline, .delpi-mes-sidebar__art { display: none; }
   .delpi-mes-monitoring__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 680px) {
