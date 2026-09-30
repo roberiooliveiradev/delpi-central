@@ -56,6 +56,7 @@ from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
 from tm_app.interface.http.routes.decomposition_routes import router as decomposition_router
 from tm_app.interface.http.routes.diagram_routes import router as diagram_router
+from tm_app.interface.http.routes.diagnostic_routes import router as diagnostic_router
 from tm_app.interface.http.routes.gpt_actions_routes import router as gpt_actions_router
 from tm_app.interface.http.routes.integrations_routes import router as integrations_router
 from tm_app.interface.http.routes.json_backup_routes import router as json_backup_router
@@ -109,6 +110,7 @@ def create_test_app() -> FastAPI:
     app.include_router(revisao_evidence_router)
     app.include_router(processo_arquivo_router)
     app.include_router(process_document_router)
+    app.include_router(diagnostic_router)
     app.include_router(diagram_router)
     app.include_router(decomposition_router)
     app.include_router(collaboration_router)

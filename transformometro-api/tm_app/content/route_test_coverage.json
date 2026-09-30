@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-21",
-  "baselineOperationCount": 201,
-  "operationCount": 201,
-  "coveredCount": 201,
+  "generatedAt": "2026-09-30",
+  "baselineOperationCount": 206,
+  "operationCount": 206,
+  "coveredCount": 206,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "crud": {
-      "total": 101,
-      "covered": 101,
+      "total": 106,
+      "covered": 106,
       "gap": 0,
       "exempt": 0
     },
@@ -111,6 +111,20 @@
       "status": "covered"
     },
     {
+      "operationId": "get_diagnostic",
+      "method": "GET",
+      "path": "/transformometro/diagnostics/{diagnostic_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "prepare_manage_diagnostic",
+      "method": "POST",
+      "path": "/transformometro/diagnostics/{diagnostic_id}/prepare",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
       "operationId": "get_diagrama_catalogo",
       "method": "GET",
       "path": "/transformometro/diagrama/catalogo",
@@ -149,6 +163,13 @@
       "operationId": "update_filial",
       "method": "PUT",
       "path": "/transformometro/filiais/{filial_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "commit_governed_proposal",
+      "method": "POST",
+      "path": "/transformometro/governed-proposals/commit",
       "module": "crud",
       "status": "covered"
     },
@@ -618,6 +639,20 @@
       "operationId": "update_vinculo",
       "method": "PUT",
       "path": "/transformometro/revisao-recursos-compartilhados/{vinculo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_diagnostics_by_revision",
+      "method": "GET",
+      "path": "/transformometro/revisions/{revision_id}/diagnostics",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "prepare_create_diagnostic",
+      "method": "POST",
+      "path": "/transformometro/revisions/{revision_id}/diagnostics/prepare",
       "module": "crud",
       "status": "covered"
     },

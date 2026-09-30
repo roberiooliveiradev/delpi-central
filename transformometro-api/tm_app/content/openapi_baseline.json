@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-21",
-  "operation_count": 201,
+  "generatedAt": "2026-09-30",
+  "operation_count": 206,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -32,6 +32,18 @@
       "method": "POST",
       "path": "/transformometro/colaboracao/travar",
       "module": "colaboracao"
+    },
+    {
+      "operationId": "get_diagnostic",
+      "method": "GET",
+      "path": "/transformometro/diagnostics/{diagnostic_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "prepare_manage_diagnostic",
+      "method": "POST",
+      "path": "/transformometro/diagnostics/{diagnostic_id}/prepare",
+      "module": "crud"
     },
     {
       "operationId": "get_diagrama_catalogo",
@@ -67,6 +79,12 @@
       "operationId": "update_filial",
       "method": "PUT",
       "path": "/transformometro/filiais/{filial_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "commit_governed_proposal",
+      "method": "POST",
+      "path": "/transformometro/governed-proposals/commit",
       "module": "crud"
     },
     {
@@ -469,6 +487,18 @@
       "operationId": "update_vinculo",
       "method": "PUT",
       "path": "/transformometro/revisao-recursos-compartilhados/{vinculo_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_diagnostics_by_revision",
+      "method": "GET",
+      "path": "/transformometro/revisions/{revision_id}/diagnostics",
+      "module": "crud"
+    },
+    {
+      "operationId": "prepare_create_diagnostic",
+      "method": "POST",
+      "path": "/transformometro/revisions/{revision_id}/diagnostics/prepare",
       "module": "crud"
     },
     {
