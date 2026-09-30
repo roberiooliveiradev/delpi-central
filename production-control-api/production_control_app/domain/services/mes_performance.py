@@ -49,6 +49,11 @@ def _round2(value: Decimal) -> Decimal:
     return value.quantize(Decimal("0.01"))
 
 
+def _num(value: Decimal | None) -> float | None:
+    """Boundary: Decimal → float já arredondado (JSON-safe)."""
+    return float(value) if value is not None else None
+
+
 class MesPerformanceCalculator:
     """Calcula métricas derivadas de Performance para um run.
 
@@ -95,23 +100,25 @@ class MesPerformanceCalculator:
             performance = _round2(ideal_production / producing * 100)
 
         return {
-            "idealCycleSeconds": _round6(cycle) if cycle_valid else None,
+            "idealCycleSeconds": _num(_round6(cycle)) if cycle_valid else None,
             "producedPieces": pieces,
-            "producingSeconds": _round6(producing),
+            "producingSeconds": float(_round6(producing)),
             "idealProductionSeconds": (
-                _round6(ideal_production) if ideal_production is not None else None
+                _num(_round6(ideal_production))
+                if ideal_production is not None else None
             ),
-            "performancePercent": performance,
+            "performancePercent": _num(performance),
             # Ciclo médio AGREGADO do run (producing/peças) — não é ciclo
             # observado por peça nem mediana de intervalos entre eventos.
             "actualAverageCycleSeconds": (
-                _round6(producing / pieces) if measurable else None
+                _num(_round6(producing / pieces)) if measurable else None
             ),
             "actualThroughputPerHour": (
-                _round6(Decimal(pieces) * 3600 / producing) if measurable else None
+                _num(_round6(Decimal(pieces) * 3600 / producing))
+                if measurable else None
             ),
             "expectedThroughputPerHour": (
-                _round6(Decimal(3600) / cycle) if cycle_valid else None
+                _num(_round6(Decimal(3600) / cycle)) if cycle_valid else None
             ),
             "dataQuality": quality,
         }

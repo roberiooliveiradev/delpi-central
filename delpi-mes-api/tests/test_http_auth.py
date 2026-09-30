@@ -22,6 +22,15 @@ class Service:
                 from delpi_mes_app.domain.errors import BranchAccessDenied
                 raise BranchAccessDenied("Sem permissão para esta filial.")
         return {"branch": "01", "referenceAt": "ref", "summary": {}, "items": []}
+    def get_run_performance(self, user, run_id, **kwargs):
+        if getattr(user, "principal_type", None) != "user":
+            from delpi_mes_app.domain.errors import HumanPrincipalRequired
+            raise HumanPrincipalRequired("Acesso gerencial exige um usuário autenticado.")
+        permissions = set(getattr(user, "permissions", []))
+        if not getattr(user, "is_superadmin", False):
+            if "delpi-mes.access" not in permissions or "delpi-mes.monitoring.view" not in permissions:
+                raise PermissionError("Sem permissão.")
+        return {"runId": run_id, "branch": "01", "workCenter": "CT", "status": "running", "referenceAt": "ref", "performance": {"performancePercent": 85.71}}
     def get_timeline(self, user, run_id, **kwargs):
         return {"runId": run_id, "branch": "01", "workCenter": "CT", "status": "running", "referenceAt": "ref", "summary": {}, "items": []}
     def get_work_center_timeline(self, user, **kwargs):
@@ -104,3 +113,21 @@ def test_upstream_unavailable_is_controlled(monkeypatch):
     response = TestClient(app).get("/monitoring?branch=01")
     assert response.status_code == 503
     assert response.json()["success"] is False
+
+
+def test_run_performance_requires_human_auth_and_monitoring_permission(monkeypatch):
+    api = route_client(monkeypatch, None)
+    assert api.get("/runs/run-1/performance").status_code == 401 or api.get("/runs/run-1/performance").status_code == 403
+
+    api = route_client(monkeypatch, user("delpi-mes.access"))
+    assert api.get("/runs/run-1/performance").status_code == 403
+
+    api = route_client(monkeypatch, user("delpi-mes.access", "delpi-mes.monitoring.view"))
+    response = api.get("/runs/run-1/performance")
+    assert response.status_code == 200
+    assert response.json()["data"]["performance"]["performancePercent"] == 85.71
+
+
+def test_run_performance_rejects_service_principal(monkeypatch):
+    api = route_client(monkeypatch, user(superadmin=True, principal_type="service"))
+    assert api.get("/runs/run-1/performance").status_code in (401, 403)

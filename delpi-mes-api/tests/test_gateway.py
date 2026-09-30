@@ -206,3 +206,34 @@ def test_owned_client_is_reused_and_closed(monkeypatch):
     assert len(created) == 1
     subject.close()
     assert created[0].closed is True
+
+
+def test_run_performance_targets_s2s_route(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
+    seen = {}
+    def handler(request):
+        seen["request"] = request
+        return httpx.Response(200, json={"success": True, "message": "OK", "data": {"performance": {}}})
+    subject, _ = gateway(handler)
+    subject.get_run_performance("run abc")
+    request = seen["request"]
+    assert request.headers["X-Delpi-Service-Token"] == "secret"
+    assert request.url.path == "/integrations/mes/runs/run%20abc/performance" or request.url.raw_path.endswith(b"/run%20abc/performance")
+
+
+def test_run_performance_404_maps_to_not_found(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
+    def handler(request):
+        return httpx.Response(404, json={"success": False, "message": "Produção não encontrada."})
+    subject, _ = gateway(handler)
+    with pytest.raises(MesSourceNotFound):
+        subject.get_run_performance("missing")
+
+
+def test_run_performance_upstream_down_maps_to_unavailable(monkeypatch):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
+    def handler(request):
+        return httpx.Response(503, json={"success": False, "message": "down"})
+    subject, _ = gateway(handler)
+    with pytest.raises(MesSourceUnavailable):
+        subject.get_run_performance("run-1")

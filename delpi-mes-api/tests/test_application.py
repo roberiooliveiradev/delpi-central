@@ -20,6 +20,20 @@ class Gateway:
         self.monitoring = {"branch": "01", "referenceAt": "ref", "summary": {}, "items": []}
         self.timeline = {"runId": "run-1", "branch": "01", "workCenter": "CT", "status": "running", "referenceAt": "ref", "summary": {"producingSeconds": 10}, "items": [{"durationSeconds": 10}]}
         self.downtimes = {"branch": "01", "referenceAt": "ref", "page": 1, "pageSize": 50, "total": 0, "items": []}
+        self.performance = {
+            "runId": "run-1", "branch": "01", "workCenter": "CT-01",
+            "status": "running", "referenceAt": "ref",
+            "performance": {
+                "idealCycleSeconds": 1.8, "producedPieces": 1000,
+                "producingSeconds": 2100, "idealProductionSeconds": 1800,
+                "performancePercent": 85.71, "actualAverageCycleSeconds": 2.1,
+                "actualThroughputPerHour": 1714.285714,
+                "expectedThroughputPerHour": 2000, "dataQuality": "complete",
+                "standardTimeSource": "shy_tempad",
+                "standardTimeDataQuality": "complete",
+            },
+            "internalDebug": "drop-me",
+        }
         self.wc_timeline = {
             "branch": "01", "workCenter": "CT-35", "from": "f", "to": "t", "referenceAt": "r",
             "items": [{
@@ -34,6 +48,7 @@ class Gateway:
         self.args = None
     def get_monitoring(self, **kwargs): self.args = kwargs; return self.monitoring
     def get_timeline(self, run_id): return self.timeline
+    def get_run_performance(self, run_id): return self.performance
     def get_work_center_timeline(self, **kwargs):
         self.args = kwargs
         return self.wc_timeline
@@ -199,3 +214,114 @@ def test_service_principal_is_rejected_even_if_superadmin():
         MesReadService(Gateway()).get_monitoring(
             user(superadmin=True, principal_type="service"), branch="01", permission=MES_MONITORING_VIEW
         )
+
+
+PERF = (
+    "delpi-mes.access", "delpi-mes.monitoring.view", "delpi-mes.view.filial-01",
+)
+
+
+def test_performance_forwarded_with_explicit_dto_and_no_recalculation():
+    gateway = Gateway()
+    data = MesReadService(gateway).get_run_performance(
+        user(*PERF), "run-1", permission=MES_MONITORING_VIEW
+    )
+    assert set(data) == {"runId", "branch", "workCenter", "status", "referenceAt", "performance"}
+    perf = data["performance"]
+    assert perf["performancePercent"] == 85.71
+    assert perf["producingSeconds"] == 2100
+    assert perf["dataQuality"] == "complete"
+    assert perf["standardTimeSource"] == "shy_tempad"
+    assert "internalDebug" not in data
+
+
+def test_performance_preserves_nulls_and_degraded_quality():
+    gateway = Gateway()
+    gateway.performance["performance"] = {
+        "idealCycleSeconds": None, "producedPieces": 0,
+        "producingSeconds": 60, "idealProductionSeconds": None,
+        "performancePercent": None, "actualAverageCycleSeconds": None,
+        "actualThroughputPerHour": None,
+        "expectedThroughputPerHour": 2000, "dataQuality": "insufficient_count_data",
+        "standardTimeSource": "shy_tempad",
+        "standardTimeDataQuality": "complete",
+    }
+    perf = MesReadService(gateway).get_run_performance(
+        user(*PERF), "run-1", permission=MES_MONITORING_VIEW
+    )["performance"]
+    assert perf["performancePercent"] is None
+    assert perf["dataQuality"] == "insufficient_count_data"
+    assert perf["expectedThroughputPerHour"] == 2000
+
+
+def test_performance_above_100_is_preserved():
+    gateway = Gateway()
+    gateway.performance["performance"]["performancePercent"] = 111.11
+    perf = MesReadService(gateway).get_run_performance(
+        user(*PERF), "run-1", permission=MES_MONITORING_VIEW
+    )["performance"]
+    assert perf["performancePercent"] == 111.11
+
+
+def test_performance_requires_branch_permission_of_run():
+    gateway = Gateway()
+    gateway.performance["branch"] = "02"
+    with pytest.raises(Exception) as exc:
+        MesReadService(gateway).get_run_performance(
+            user(*PERF), "run-1", permission=MES_MONITORING_VIEW
+        )
+    assert "filial" in str(exc.value).lower() or "branch" in str(exc.value).lower()
+
+
+def test_performance_rejects_missing_permissions_and_service_principal():
+    gateway = Gateway()
+    with pytest.raises(PermissionError):
+        MesReadService(gateway).get_run_performance(
+            user("delpi-mes.access"), "run-1", permission=MES_MONITORING_VIEW
+        )
+    with pytest.raises(HumanPrincipalRequired):
+        MesReadService(gateway).get_run_performance(
+            user(*PERF, principal_type="service"), "run-1",
+            permission=MES_MONITORING_VIEW,
+        )
+
+
+def test_performance_not_found_propagates():
+    gateway = Gateway()
+    gateway.get_run_performance = lambda run_id: (_ for _ in ()).throw(MesSourceNotFound())
+    with pytest.raises(MesSourceNotFound):
+        MesReadService(gateway).get_run_performance(
+            user(*PERF), "missing", permission=MES_MONITORING_VIEW
+        )
+
+
+def test_monitoring_transports_performance_and_drops_extra_fields():
+    gateway = Gateway()
+    gateway.monitoring["items"] = [{
+        "workCenter": "CT-01", "runId": "run-1", "runStatus": "running",
+        "operationalState": "producing",
+        "performance": {
+            "performancePercent": 85.71, "idealCycleSeconds": 1.8,
+            "actualAverageCycleSeconds": 2.1, "actualThroughputPerHour": 1714.285714,
+            "expectedThroughputPerHour": 2000, "producingSeconds": 2100,
+            "producedPieces": 1000, "dataQuality": "complete",
+            "internalHint": "drop-me",
+        },
+        "secretField": "drop-me",
+    }]
+    item = MesReadService(gateway).get_monitoring(
+        user(*FULL), branch="01", permission=MES_MONITORING_VIEW
+    )["items"][0]
+    assert item["performance"]["performancePercent"] == 85.71
+    assert item["performance"]["dataQuality"] == "complete"
+    assert "internalHint" not in item["performance"]
+    assert "secretField" not in item
+
+
+def test_monitoring_without_performance_block_stays_valid():
+    gateway = Gateway()
+    gateway.monitoring["items"] = [{"workCenter": "CT-01", "runStatus": "running"}]
+    item = MesReadService(gateway).get_monitoring(
+        user(*FULL), branch="01", permission=MES_MONITORING_VIEW
+    )["items"][0]
+    assert item["performance"] is None

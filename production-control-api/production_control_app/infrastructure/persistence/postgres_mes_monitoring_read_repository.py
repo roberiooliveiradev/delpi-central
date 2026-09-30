@@ -23,6 +23,9 @@ class PostgresMesMonitoringReadRepository:
                        r.production_order, r.operation_code, r.operator_code, r.operator_name,
                        r.pieces_total, r.target_pieces_snapshot AS target_pieces,
                        r.last_count_activity_at,
+                       r.started_at AS run_started_at, r.ended_at AS run_ended_at,
+                       r.ideal_cycle_seconds_snapshot,
+                       r.standard_time_source, r.standard_time_data_quality_snapshot,
                        s.id::text AS state_id, s.state AS operational_state,
                        s.started_at AS state_started_at, s.source AS state_source,
                        d.id::text AS downtime_id, d.started_at AS downtime_started_at,
@@ -74,6 +77,30 @@ class PostgresMesMonitoringReadRepository:
               ORDER BY s.started_at
                 """,
                 (run_id,),
+            )
+            return [dict(row) for row in cur.fetchall()]
+
+    def list_timeline_facts_for_runs(
+        self, run_ids: list[str]
+    ) -> list[dict[str, Any]]:
+        if not run_ids:
+            return []
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT s.id::text AS id, s.run_id::text AS run_id,
+                       s.state, s.started_at, s.ended_at, s.source,
+                       d.id::text AS downtime_id, d.reason_code,
+                       reason.label AS reason_label,
+                       reason.category, d.confirmed, d.note,
+                       d.source AS downtime_source
+                  FROM {_STATES} s
+             LEFT JOIN {_DOWNTIMES} d ON d.state_event_id = s.id
+             LEFT JOIN {_REASONS} reason ON reason.code = d.reason_code
+                 WHERE s.run_id = ANY(%s::uuid[])
+              ORDER BY s.run_id, s.started_at, s.id
+                """,
+                (list(run_ids),),
             )
             return [dict(row) for row in cur.fetchall()]
 

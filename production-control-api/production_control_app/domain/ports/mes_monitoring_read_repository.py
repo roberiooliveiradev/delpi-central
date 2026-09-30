@@ -11,6 +11,10 @@ class MesMonitoringReadRepositoryPort(Protocol):
 
     def list_timeline_facts(self, run_id: str) -> list[dict[str, Any]]: ...
 
+    def list_timeline_facts_for_runs(
+        self, run_ids: list[str]
+    ) -> list[dict[str, Any]]: ...
+
     def list_work_center_timeline_facts(
         self,
         *,

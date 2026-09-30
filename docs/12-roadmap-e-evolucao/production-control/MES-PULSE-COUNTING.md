@@ -178,8 +178,23 @@ Somente `producing` entra no denominador — `stopped`, `setup`, `planned_stop` 
 - Performance pode ultrapassar 100% e nunca é truncada — produzir acima do padrão é um fato a mostrar.
 - Qualidade: `complete` com ciclo/peças/producing válidos calcula tudo; `standard_time_unavailable`, `piece_conversion_unavailable` e `upstream_unavailable` preservam-se e zeram só as métricas dependentes do ciclo (`performance_percent`, `ideal_production_seconds`, `expected_throughput_per_hour`); `pieces_total = 0` → `insufficient_count_data`; `producing_seconds <= 0` → `insufficient_producing_time`; snapshot inconsistente → `invalid_standard_time_snapshot`. Nunca se devolve 0% enganoso.
 - Métricas derivadas (`performance_percent`, `actual_average_cycle_seconds` agregado, `actual_throughput_per_hour`, `expected_throughput_per_hour`) **não são persistidas** — mudam enquanto o run está ativo.
-- Implementação: `MesPerformanceCalculator` (domínio puro, sem I/O) + `MesRunPerformanceService` (aplicação, leitura via `PostgresMesMonitoringReadRepository`) + `build_mes_run_performance_service()` no composer. Sem endpoint nesta etapa — a exposição é da Parte 2.5.
+- Implementação: `MesPerformanceCalculator` (domínio puro, sem I/O) + `MesRunPerformanceService` (aplicação, leitura via `PostgresMesMonitoringReadRepository`) + `build_mes_run_performance_service()` no composer.
 - Fora do escopo: OEE, microparadas por ciclo e threshold dinâmico de auto-downtime (`PC_MES_AUTO_DOWNTIME_SECONDS` permanece fixo — Parte 2.7).
+
+---
+
+### Exposição S2S (Fase 2.5)
+
+| Método | Path | Uso |
+|--------|------|-----|
+| GET | `/integrations/mes/runs/{runId}/performance` | Performance completa do run (delega ao `MesRunPerformanceService`; 404 se run inexistente) |
+| GET | `/integrations/mes/work-centers/live?branch=01` | Cada item ganha o bloco `performance` (mudança aditiva) |
+
+O live calcula Performance para todos os runs ativos **sem N+1**: 1 query de runs (`list_live_work_centers`, agora com os snapshots V013) + 1 query batch (`list_timeline_facts_for_runs(run_ids)`) agrupada por `run_id`; cada run passa pelo mesmo `MesTimelineBuilder` + `MesPerformanceCalculator` com **um único** `referenceAt` por chamada. Lista vazia não executa a query batch.
+
+O bloco `performance` do live é enxuto (`idealProductionSeconds` permanece só no detalhe); nulos e `dataQuality` são preservados verbatim, Performance >100% nunca é truncada, e nada é persistido.
+
+No `delpi-mes-api`: `GET /runs/{runId}/performance` (JWT + `delpi-mes.monitoring.view` + permissão da filial do run) e `item.performance` no `GET /monitoring` apenas transportam o contrato via gateway S2S com DTO explícito — o BFF nunca recalcula.
 
 ---
 

@@ -41,6 +41,7 @@ As rotas exigem `API_DELPI_INTERNAL_SERVICE_TOKEN`, aceito em `X-Delpi-Service-T
 |---|---|---|
 | GET | `/integrations/mes/work-centers/live?branch=01` | Snapshot consolidado dos runs ativos e estados operacionais atuais da filial |
 | GET | `/integrations/mes/runs/{runId}/timeline` | Timeline do run com a mesma regra de duração do cockpit, sem sessão de bancada |
+| GET | `/integrations/mes/runs/{runId}/performance` | Performance derivada do run (motor interno Fase 2.4; nulos/dataQuality preservados, >100% permitido) |
 | GET | `/integrations/mes/downtimes?branch=01&workCenter=&from=&to=&page=1&pageSize=50` | Histórico paginado de paradas MES |
 | GET | `/integrations/mes/work-centers/{workCenter}/timeline?branch=01&from=&to=` | Timeline do CT no período, unindo múltiplos runs/OPs com sobreposição temporal |
 | GET | `/integrations/mes/downtime-reasons` | Administração: lista motivos de parada **ativos e inativos** |

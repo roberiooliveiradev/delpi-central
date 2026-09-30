@@ -9,6 +9,17 @@ from production_control_app.domain.ports.mes_monitoring_read_repository import (
     MesMonitoringReadRepositoryPort,
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from production_control_app.domain.services.mes_performance import (
+    MesPerformanceCalculator,
+)
+
+# Bloco de Performance no monitoramento live — sem idealProductionSeconds
+# (reservado ao detalhamento do run) para manter o payload enxuto.
+_LIVE_PERFORMANCE_FIELDS = (
+    "idealCycleSeconds", "producedPieces", "producingSeconds",
+    "performancePercent", "actualAverageCycleSeconds",
+    "actualThroughputPerHour", "expectedThroughputPerHour", "dataQuality",
+)
 
 
 def _iso(value: Any) -> Any:
@@ -22,17 +33,30 @@ class MesIntegrationReadService:
         repository: MesMonitoringReadRepositoryPort,
         branch_access: BranchAccessService,
         timeline_builder: MesTimelineBuilder | None = None,
+        calculator: MesPerformanceCalculator | None = None,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._repository = repository
         self._branch_access = branch_access
         self._timeline_builder = timeline_builder or MesTimelineBuilder()
+        self._calculator = calculator or MesPerformanceCalculator()
         self._clock = clock or (lambda: datetime.now(timezone.utc))
 
     def get_live_work_centers(self, *, branch: str) -> dict[str, Any]:
         code = self._branch_access.assert_valid_branch(branch)
         reference_at = self._clock()
-        items = [self._live_item(row) for row in self._repository.list_live_work_centers(branch=code)]
+        rows = self._repository.list_live_work_centers(branch=code)
+        # Anti-N+1: uma query batch traz os state events de todos os runs;
+        # o mesmo reference_at serve a timeline e Performance de todos.
+        facts_by_run: dict[str, list[dict[str, Any]]] = {}
+        run_ids = [row["run_id"] for row in rows]
+        if run_ids:
+            for fact in self._repository.list_timeline_facts_for_runs(run_ids):
+                facts_by_run.setdefault(str(fact["run_id"]), []).append(fact)
+        items = [
+            self._live_item(row, self._live_performance(row, facts_by_run, reference_at))
+            for row in rows
+        ]
         return {
             "branch": code,
             "referenceAt": reference_at.isoformat(),
@@ -131,8 +155,45 @@ class MesIntegrationReadService:
             "items": [self._downtime_item(row) for row in rows],
         }
 
+    def _live_performance(
+        self,
+        row: dict[str, Any],
+        facts_by_run: dict[str, list[dict[str, Any]]],
+        reference_at: datetime,
+    ) -> dict[str, Any]:
+        """Performance derivada do run — mesma semântica do motor da 2.4."""
+        run = {
+            "id": row["run_id"],
+            "branch": row["branch"],
+            "work_center": row["work_center"],
+            "status": row.get("run_status"),
+            "started_at": row.get("run_started_at"),
+            "ended_at": row.get("run_ended_at"),
+        }
+        timeline = self._timeline_builder.build(
+            run=run,
+            events=facts_by_run.get(str(row["run_id"]), []),
+            reference_at=reference_at,
+        )
+        metrics = self._calculator.calculate(
+            ideal_cycle_seconds=row.get("ideal_cycle_seconds_snapshot"),
+            produced_pieces=row.get("pieces_total"),
+            producing_seconds=timeline["summary"]["producingSeconds"],
+            standard_time_data_quality=row.get(
+                "standard_time_data_quality_snapshot"
+            ),
+        )
+        performance = {
+            field: metrics.get(field) for field in _LIVE_PERFORMANCE_FIELDS
+        }
+        performance["standardTimeSource"] = row.get("standard_time_source")
+        performance["standardTimeDataQuality"] = row.get(
+            "standard_time_data_quality_snapshot"
+        )
+        return performance
+
     @staticmethod
-    def _live_item(row: dict[str, Any]) -> dict[str, Any]:
+    def _live_item(row: dict[str, Any], performance: dict[str, Any]) -> dict[str, Any]:
         downtime = None
         if row.get("downtime_id"):
             downtime = {
@@ -162,6 +223,7 @@ class MesIntegrationReadService:
             "targetPieces": row.get("target_pieces"),
             "lastCountActivityAt": _iso(row.get("last_count_activity_at")),
             "downtime": downtime,
+            "performance": performance,
         }
 
     @staticmethod

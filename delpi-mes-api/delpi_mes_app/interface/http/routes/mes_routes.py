@@ -71,6 +71,18 @@ def get_timeline(request: Request, run_id: str):
     return ok(data)
 
 
+@router.get("/runs/{run_id}/performance", operation_id="get_delpi_mes_run_performance")
+def get_run_performance(request: Request, run_id: str):
+    try:
+        data = build_mes_read_service().get_run_performance(
+            request.state.user, run_id, permission=MES_MONITORING_VIEW
+        )
+    except Exception as exc:
+        return fail_from_exception(exc)
+    logger.info("delpi_mes_performance_read run_id=%s", run_id)
+    return ok(data)
+
+
 @router.get(
     "/work-centers/{work_center}/timeline",
     operation_id="get_delpi_mes_work_center_timeline",

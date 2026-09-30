@@ -46,6 +46,10 @@ class ProductionControlMesGateway:
         encoded = quote(str(run_id), safe="")
         return self._get(f"/integrations/mes/runs/{encoded}/timeline")
 
+    def get_run_performance(self, run_id: str) -> dict[str, Any]:
+        encoded = quote(str(run_id), safe="")
+        return self._get(f"/integrations/mes/runs/{encoded}/performance")
+
     def get_work_center_timeline(
         self,
         *,

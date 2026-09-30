@@ -35,6 +35,11 @@ class FakeRepository:
     def list_timeline_facts(self, run_id):
         return self.timeline_rows
 
+    def list_timeline_facts_for_runs(self, run_ids):
+        self.batch_calls = getattr(self, "batch_calls", 0) + 1
+        self.last_batch_run_ids = list(run_ids)
+        return [r for r in self.timeline_rows if r.get("run_id") in set(run_ids)]
+
     def list_work_center_timeline_facts(self, **kwargs):
         self.last_wc_timeline_args = kwargs
         return self.wc_timeline_rows

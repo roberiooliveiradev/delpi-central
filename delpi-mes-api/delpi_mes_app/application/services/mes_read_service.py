@@ -19,9 +19,17 @@ _MONITORING_ITEM_FIELDS = (
     "branch", "workCenter", "runId", "runStatus", "operationalState",
     "stateStartedAt", "stateSource", "integrityStatus", "productionOrder",
     "operationCode", "operatorCode", "operatorName", "piecesTotal", "targetPieces",
-    "lastCountActivityAt", "downtime",
+    "lastCountActivityAt", "downtime", "performance",
 )
 _TIMELINE_FIELDS = ("runId", "branch", "workCenter", "status", "referenceAt", "summary")
+_PERFORMANCE_FIELDS = (
+    "idealCycleSeconds", "producedPieces", "producingSeconds",
+    "idealProductionSeconds", "performancePercent",
+    "actualAverageCycleSeconds", "actualThroughputPerHour",
+    "expectedThroughputPerHour", "dataQuality",
+    "standardTimeSource", "standardTimeDataQuality",
+)
+_RUN_PERFORMANCE_FIELDS = ("runId", "branch", "workCenter", "status", "referenceAt")
 _TIMELINE_ITEM_FIELDS = (
     "id", "state", "startedAt", "endedAt", "durationSeconds", "source", "downtime",
 )
@@ -61,6 +69,24 @@ class MesReadService:
         result = self._pick(data, _TIMELINE_FIELDS)
         result["summary"] = self._pick(data.get("summary") or {}, _TIMELINE_SUMMARY_FIELDS)
         result["items"] = [self._timeline_item(item) for item in data.get("items", [])]
+        return result
+
+    def get_run_performance(
+        self, user: Any, run_id: str, *, permission: str
+    ) -> dict[str, Any]:
+        """Transporta a Performance calculada no Production Control.
+
+        O BFF não recalcula nada: autoriza o principal, consulta o upstream,
+        valida a filial do run retornado e devolve apenas o DTO explícito.
+        """
+        self._authorize_product(user, permission)
+        data = self._gateway.get_run_performance(run_id)
+        branch = self._valid_branch(str(data.get("branch") or ""))
+        self._authorize_branch(user, branch)
+        result = self._pick(data, _RUN_PERFORMANCE_FIELDS)
+        result["performance"] = self._pick(
+            data.get("performance") or {}, _PERFORMANCE_FIELDS
+        )
         return result
 
     def get_work_center_timeline(
@@ -165,6 +191,8 @@ class MesReadService:
         item = cls._pick(data, _MONITORING_ITEM_FIELDS)
         if isinstance(data.get("downtime"), dict):
             item["downtime"] = cls._pick(data["downtime"], _DOWNTIME_FIELDS)
+        if isinstance(data.get("performance"), dict):
+            item["performance"] = cls._pick(data["performance"], _PERFORMANCE_FIELDS)
         return item
 
     @classmethod

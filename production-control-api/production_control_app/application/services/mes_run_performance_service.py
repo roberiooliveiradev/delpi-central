@@ -65,6 +65,8 @@ class MesRunPerformanceService:
         )
         return {
             "runId": run["id"],
+            "branch": run.get("branch"),
+            "workCenter": run.get("work_center"),
             "referenceAt": reference_at.isoformat(),
             "status": run.get("status"),
             "standardTimeSource": run.get("standard_time_source"),

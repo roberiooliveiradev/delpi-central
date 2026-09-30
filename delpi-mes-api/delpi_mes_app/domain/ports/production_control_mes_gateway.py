@@ -9,6 +9,8 @@ class ProductionControlMesGatewayPort(Protocol):
 
     def get_timeline(self, run_id: str) -> dict[str, Any]: ...
 
+    def get_run_performance(self, run_id: str) -> dict[str, Any]: ...
+
     def get_work_center_timeline(
         self,
         *,

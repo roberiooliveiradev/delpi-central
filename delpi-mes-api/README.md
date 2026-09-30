@@ -23,6 +23,7 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | GET | `/health` | público |
 | GET | `/monitoring?branch=01` | `delpi-mes.monitoring.view` |
 | GET | `/runs/{runId}/timeline` | `delpi-mes.history.view` |
+| GET | `/runs/{runId}/performance` | `delpi-mes.monitoring.view` |
 | GET | `/work-centers/{workCenter}/timeline?branch=&from=&to=` | `delpi-mes.history.view` |
 | GET | `/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | `delpi-mes.downtimes.view` |
 | GET | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
@@ -31,6 +32,10 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | PATCH | `/registrations/downtime-reasons/{code}/active` | `delpi-mes.downtime-reasons.manage` |
 
 Toda rota gerencial também exige `delpi-mes.access` e principal humano; as rotas de leitura exigem ainda `delpi-mes.view.filial-01|02` para a filial consultada. As rotas `/registrations/downtime-reasons*` administram um **catálogo global** — não recebem nem exigem `branch`/permissão de filial. O provisionamento dessas permissões e o manifesto pertencem à Fase 2.
+
+### Performance do run (Fase 2.5)
+
+`GET /runs/{runId}/performance` e o bloco `item.performance` de `GET /monitoring` transportam as métricas calculadas no owner dos fatos MES (`MesRunPerformanceService` via `/integrations/mes/runs/{runId}/performance` e `/work-centers/live`). O BFF não recalcula nada: autoriza (.access + .monitoring.view + permissão da filial do run retornado pelo upstream), aplica DTO explícito (`_PERFORMANCE_FIELDS`) e preserva `null`, `dataQuality` degradada e Performance acima de 100%.
 
 ### Administração do catálogo (Cadastros — Etapa 2)
 
