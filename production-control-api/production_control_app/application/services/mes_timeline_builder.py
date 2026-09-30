@@ -16,6 +16,14 @@ def _seconds(start: Any, end: Any) -> int:
     return max(0, int(delta))
 
 
+def _aware(value: Any, fallback_tz: Any) -> Any:
+    if value is None:
+        return None
+    if getattr(value, "tzinfo", None) is None:
+        return value.replace(tzinfo=fallback_tz)
+    return value
+
+
 class MesTimelineBuilder:
     def build(
         self,
@@ -29,11 +37,19 @@ class MesTimelineBuilder:
         stopped_seconds = 0
         stop_count = 0
 
+        # Run encerrado: o tempo não pode continuar crescendo — evento aberto
+        # por inconsistência histórica é congelado em run.ended_at.
+        run_ended = _aware(run.get("ended_at"), reference_at.tzinfo)
+        effective_reference = reference_at
+        if run_ended is not None and run_ended < effective_reference:
+            effective_reference = run_ended
+
         ordered_events = sorted(events, key=lambda event: event["started_at"])
         for event in ordered_events:
             started = event["started_at"]
-            ended = event.get("ended_at")
-            duration = _seconds(started, ended or reference_at)
+            ended = _aware(event.get("ended_at"), reference_at.tzinfo)
+            event_end = effective_reference if ended is None else min(ended, effective_reference)
+            duration = _seconds(started, event_end)
             downtime = event.get("downtime")
 
             if event["state"] == "producing":
@@ -55,7 +71,6 @@ class MesTimelineBuilder:
             )
 
         first_started = ordered_events[0]["started_at"] if ordered_events else run.get("started_at")
-        run_ended = run.get("ended_at")
         elapsed_seconds = (
             _seconds(first_started, run_ended or reference_at)
             if first_started is not None

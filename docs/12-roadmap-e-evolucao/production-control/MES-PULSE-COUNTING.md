@@ -160,6 +160,29 @@ Regras:
 
 ---
 
+### Motor de Performance do run (Fase 2.4 — interno)
+
+Performance mede se o posto produziu no ritmo esperado **durante o tempo em
+que realmente esteve produzindo**:
+
+```text
+performance_percent = (ideal_cycle_seconds_snapshot x pieces_total)
+                      / producing_seconds x 100
+```
+
+Somente `producing` entra no denominador — `stopped`, `setup`, `planned_stop` e pausas são dimensões de disponibilidade, não de velocidade. `producing_seconds` reutiliza a semântica do `MesTimelineBuilder` (um único `reference_at` por cálculo; run encerrado fica congelado em `run.ended_at`).
+
+- Quantidade canônica: `production_runs.pieces_total` — corrections já estão líquidas nele; **não** se soma `delta_pieces` de count events.
+- Count event `+N` não traz timestamps individuais das N peças — não há ciclo peça a peça/mediana/p95 nesta etapa.
+- `setup_seconds_snapshot` não entra na fórmula: setup já é um estado separado da timeline.
+- Performance pode ultrapassar 100% e nunca é truncada — produzir acima do padrão é um fato a mostrar.
+- Qualidade: `complete` com ciclo/peças/producing válidos calcula tudo; `standard_time_unavailable`, `piece_conversion_unavailable` e `upstream_unavailable` preservam-se e zeram só as métricas dependentes do ciclo (`performance_percent`, `ideal_production_seconds`, `expected_throughput_per_hour`); `pieces_total = 0` → `insufficient_count_data`; `producing_seconds <= 0` → `insufficient_producing_time`; snapshot inconsistente → `invalid_standard_time_snapshot`. Nunca se devolve 0% enganoso.
+- Métricas derivadas (`performance_percent`, `actual_average_cycle_seconds` agregado, `actual_throughput_per_hour`, `expected_throughput_per_hour`) **não são persistidas** — mudam enquanto o run está ativo.
+- Implementação: `MesPerformanceCalculator` (domínio puro, sem I/O) + `MesRunPerformanceService` (aplicação, leitura via `PostgresMesMonitoringReadRepository`) + `build_mes_run_performance_service()` no composer. Sem endpoint nesta etapa — a exposição é da Parte 2.5.
+- Fora do escopo: OEE, microparadas por ciclo e threshold dinâmico de auto-downtime (`PC_MES_AUTO_DOWNTIME_SECONDS` permanece fixo — Parte 2.7).
+
+---
+
 ## Contratos HTTP
 
 ### Pulse — S2S (somente BFF)

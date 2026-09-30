@@ -469,6 +469,19 @@ def build_mes_integration_read_service() -> Any:
     )
 
 
+def build_mes_run_performance_service() -> Any:
+    from production_control_app.application.services.mes_run_performance_service import (  # noqa: E501
+        MesRunPerformanceService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_monitoring_read_repository import (  # noqa: E501
+        PostgresMesMonitoringReadRepository,
+    )
+
+    return MesRunPerformanceService(
+        repository=PostgresMesMonitoringReadRepository(),
+    )
+
+
 def build_mes_run_timeline_service(
     gateway: DelpiProductionGateway | None = None,
     *,

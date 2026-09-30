@@ -45,7 +45,12 @@ class PostgresMesMonitoringReadRepository:
         with get_connection() as conn, conn.cursor() as cur:
             cur.execute(
                 f"""
-                SELECT id::text AS id, branch, work_center, status, started_at, ended_at
+                SELECT id::text AS id, branch, work_center, status, started_at, ended_at,
+                       pieces_total, planned_qty_snapshot, target_pieces_snapshot,
+                       ideal_cycle_seconds_snapshot, setup_seconds_snapshot,
+                       standard_time_source, standard_time_data_quality_snapshot,
+                       workstation_type_snapshot, pieces_per_pulse_snapshot,
+                       last_count_activity_at
                   FROM {_RUNS}
                  WHERE id = %s::uuid
                  LIMIT 1

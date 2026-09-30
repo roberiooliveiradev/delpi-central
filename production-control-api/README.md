@@ -71,6 +71,8 @@ No Play, o run também congela os **snapshots de Performance** (V013): `ideal_cy
 
 Cada mudança real de `pieces_total` após o Play gera um fato append-only em `production_control.production_run_count_events` (V014), na mesma transação do update — `production` (delta > 0) ou `correction` (delta < 0); polling sem mudança e deltas zero não gravam nada, saltos são agregados em um único evento e observações stale pós-lock são descartadas. Detalhes em `docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md`.
 
+O motor interno de Performance (Fase 2.4) deriva, sem persistir, `performance_percent = ideal_cycle_seconds_snapshot x pieces_total / producing_seconds x 100` — denominador somente com estado `producing` (semântica do MesTimelineBuilder), quantidade canônica `pieces_total` líquida de corrections, >100% permitido e run encerrado congelado em `ended_at`. Classes: `MesPerformanceCalculator` (domínio puro) e `MesRunPerformanceService` (aplicação, `build_mes_run_performance_service()`). Sem endpoint nesta etapa.
+
 Doc canônico: [MES-PULSE-COUNTING.md](../docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md).
 
 ### Integração Delpi MES
