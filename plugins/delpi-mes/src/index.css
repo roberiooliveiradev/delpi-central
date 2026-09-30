@@ -645,6 +645,43 @@
 .delpi-mes-daybar__dot--producing { background: #22c55e; }
 .delpi-mes-daybar__dot--stopped { background: #ef4444; }
 .delpi-mes-daybar__dot--inactive { background: #cbd5e1; }
+.delpi-mes-daybar__controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7d8a9c;
+}
+.delpi-mes-daybar__controls button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid #d7dfea;
+  border-radius: 0.5rem;
+  color: #1e63c4;
+  background: #fff;
+  cursor: pointer;
+}
+.delpi-mes-daybar__controls button:hover:not(:disabled) { background: #eef4fb; }
+.delpi-mes-daybar__controls button:disabled { color: #b6c2d1; cursor: default; }
+.delpi-mes-daybar__controls button:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; }
+.delpi-mes-daybar__controls svg { width: 0.9rem; height: 0.9rem; }
+.delpi-mes-daybar__viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  border-radius: 0.6rem;
+  scrollbar-width: thin;
+}
+.delpi-mes-daybar__viewport:active { cursor: grabbing; }
+.delpi-mes-daybar__viewport:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; }
+.delpi-mes-daybar__canvas { position: relative; }
 .delpi-mes-daybar__ticks { position: relative; height: 1rem; margin-bottom: 0.3rem; }
 .delpi-mes-daybar__ticks span {
   position: absolute;
@@ -652,6 +689,7 @@
   font-size: 0.66rem;
   color: #94a3b8;
   font-weight: 600;
+  white-space: nowrap;
 }
 .delpi-mes-daybar__ticks span:first-child { transform: none; }
 .delpi-mes-daybar__ticks span:last-child { transform: translateX(-100%); }
@@ -719,11 +757,15 @@
 .delpi-mes-reasons__fill--danger { background: linear-gradient(90deg, #f87171, #ef4444); }
 .delpi-mes-reasons strong { font-size: 0.8rem; white-space: nowrap; }
 
-.delpi-mes-events { overflow-x: auto; }
+.delpi-mes-events { max-height: 21rem; overflow: auto; border-radius: 0.6rem; }
 .delpi-mes-events table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .delpi-mes-events th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 0.55rem 0.7rem;
   border-bottom: 1px solid #e6ebf2;
+  background: #fff;
   color: #94a3b8;
   font-size: 0.68rem;
   font-weight: 800;
