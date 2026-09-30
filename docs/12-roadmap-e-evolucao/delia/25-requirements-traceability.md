@@ -1162,13 +1162,14 @@ RUNTIME_CP_PROMOTED_TO_PASS = NO
 NEW_CP_CREATED = NO
 CP_RENAMED = NO
 UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_T7
+NEXT = ARCHITECTURE_REVIEW_C3_T7R1
 ```
 
 ## 32. C3-T7 Decision Path + Structured Planner Foundation — candidate linkage
 
-Evidence anchors: `16` C3-T7 candidate section; `20` C3-T7 acceptance section; `17` C3-T7 note; `21` §4A.13 semantics; ledger §6.78.
-Review: `ARCHITECTURE_REVIEW_C3_T7` PENDING; `IMPLEMENTATION_HEAD=0fc2cba747ccae27e6980c7335b055529081c9e7`; `BASE_HEAD=86f54483e7bacde1c9c5fa8510affe70ddc2e2db`.
+Evidence anchors: `16` C3-T7/C3-T7R1 candidate sections; `20` C3-T7/C3-T7R1 acceptance sections; `17` C3-T7 note; `21` §4A.13 semantics; ledger §6.78 (HISTORICAL) / §6.79.
+Review: `ARCHITECTURE_REVIEW_C3_T7` verdict `REWORK` on `REVIEW_TARGET_SHA=da5e57db4c`; `ARCHITECTURE_REVIEW_C3_T7R1` PENDING; `IMPLEMENTATION_HEAD=d49f77c966cd03387dd3e8e268cb9be5e2098ab6`; `BASE_HEAD=c50fd2e5b0d963c2b9730a1bb8b0166ded71150b`; prior local head `0fc2cba747` rebased `da5e57db4c`.
+C3-T7R1: `DUPLICATE_CAPABILITY_ID` fail-closed (order-independent, before lossy lookup); test evidence re-bound to exact runtime SHA; `NEW_DOMAIN_VALUE_TYPES=9` (ENUMS=4, DATACLASSES=5); `NEW_INFRASTRUCTURE_OR_RUNTIME_ABSTRACTIONS=NONE`.
 
 | CP | C3-T7 contribution note | Status |
 |---|---|---|
@@ -1193,5 +1194,5 @@ TRACEABILITY_GAP = NONE material
 C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 C3_T8_AUTHORIZED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_T7
+NEXT = ARCHITECTURE_REVIEW_C3_T7R1
 ```

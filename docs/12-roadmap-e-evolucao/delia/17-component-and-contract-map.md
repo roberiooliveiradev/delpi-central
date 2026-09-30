@@ -480,7 +480,7 @@ C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
 C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-NEXT = ARCHITECTURE_REVIEW_C3_T7
+NEXT = ARCHITECTURE_REVIEW_C3_T7R1
 REVIEW = ARCHITECTURE_REVIEW_C3_T6R1
 VERDICT = ACCEPT_WITH_RESIDUAL
 BLOCKER_1_TOTAL_EPISTEMIC_ORDERING = RESOLVED
@@ -500,7 +500,7 @@ EPISTEMIC_CLASS_GLOBAL_ORDERING = NONE
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 ```
 
-Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 APPROVED (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`); provider-neutral `ModelInvocationPort` + lineage/EvalIdentity; ModelInvocationResult ≠ EvalResult; C3-T4 APPROVED (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`); `UnderstandStructuredInput` (BOUNDED_SOURCE_OBSERVATION_EXTRACTION; source OBSERVATION ≠ world FACT); C3-T5 APPROVED (`ARCHITECTURE_REVIEW_C3_T5` `ACCEPT_WITH_RESIDUAL`); OpenAPI→CapabilityProjection TEST_FIXTURE foundation; C3-T6 APPROVED (`ARCHITECTURE_REVIEW_C3_T6R1` `ACCEPT_WITH_RESIDUAL`); Expertise/Playbook/Knowledge governance + published-only retrieval contracts (no store/RAG/RetrievalPort); C3-T7 `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (`IMPLEMENTATION_HEAD=0fc2cba747ccae27e6980c7335b055529081c9e7`): `DecisionPath` FAST|OPERATIONAL|REASONING deterministic routing (fail-closed; authoritative-rule priority; path != authorization) + `PlanCandidate`/`PlanStep` semantic contracts over `CapabilityProjection`/`OperationCharacter` (plan != execution; planned ACT != authorization); Evidence store / RAG / planner runtime / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`; C3_EXECUTED=NO.
+Evidence coordination is owned by DÉLIA; original source/domain/provider remains authority for the underlying fact. EvidenceRef ≠ permission; SourceRef ≠ access grant / ≠ source authority itself; Prediction ≠ FACT; Recommendation ≠ authorization; OBSERVATION ≠ FACT; FACT_STATUS ≠ ACCESS_PERMISSION. C3-T2 APPROVED (`ARCHITECTURE_REVIEW_C3_T2R1` `ACCEPT_WITH_RESIDUAL`). C3-T3 APPROVED (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`); provider-neutral `ModelInvocationPort` + lineage/EvalIdentity; ModelInvocationResult ≠ EvalResult; C3-T4 APPROVED (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`); `UnderstandStructuredInput` (BOUNDED_SOURCE_OBSERVATION_EXTRACTION; source OBSERVATION ≠ world FACT); C3-T5 APPROVED (`ARCHITECTURE_REVIEW_C3_T5` `ACCEPT_WITH_RESIDUAL`); OpenAPI→CapabilityProjection TEST_FIXTURE foundation; C3-T6 APPROVED (`ARCHITECTURE_REVIEW_C3_T6R1` `ACCEPT_WITH_RESIDUAL`); Expertise/Playbook/Knowledge governance + published-only retrieval contracts (no store/RAG/RetrievalPort); C3-T7 `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (reworked; `ARCHITECTURE_REVIEW_C3_T7=REWORK` on `REVIEW_TARGET_SHA=da5e57db4c`; `C3-T7R1 IMPLEMENTATION_HEAD=d49f77c966cd03387dd3e8e268cb9be5e2098ab6`): `DecisionPath` FAST|OPERATIONAL|REASONING deterministic routing (fail-closed; authoritative-rule priority; path != authorization) + `PlanCandidate`/`PlanStep` semantic contracts over `CapabilityProjection`/`OperationCharacter` (plan != execution; planned ACT != authorization); C3-T7R1 adds order-independent `DUPLICATE_CAPABILITY_ID` fail-closed validation before lossy capability lookup; Evidence store / RAG / planner runtime / conversation remain NOT_IMPLEMENTED; real provider adapter = NONE; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`; C3_EXECUTED=NO.
 
 #### C3-T3 Model invocation / eval lineage (APPROVED)
 
@@ -568,7 +568,7 @@ C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
 C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-NEXT = ARCHITECTURE_REVIEW_C3_T7
+NEXT = ARCHITECTURE_REVIEW_C3_T7R1
 NOTE_SUPERSEDED_CANDIDATE: historical C3-T4 / C3-T4R1 candidate markers live in ledger §6.70–§6.71
 ```
 
@@ -600,7 +600,7 @@ C3_T6R1 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
 C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-NEXT = ARCHITECTURE_REVIEW_C3_T7
+NEXT = ARCHITECTURE_REVIEW_C3_T7R1
 ```
 
 #### C3-T6 Expertise / Knowledge Governance + Retrieval Contracts (historical; superseded by C3-T6R1/R2)
@@ -643,7 +643,7 @@ PERSISTENCE = NONE
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
 C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-NEXT = ARCHITECTURE_REVIEW_C3_T7
+NEXT = ARCHITECTURE_REVIEW_C3_T7R1
 ```
 
 ## 3A. Architecture / persistence / privacy / safety — C0.S4 freeze accepted

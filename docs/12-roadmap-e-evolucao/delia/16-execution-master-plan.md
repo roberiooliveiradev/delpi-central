@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T7` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T6=APPROVED`; `C3_T7=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_T8_AUTHORIZED=NO`; do not claim C3 complete; do not start C3-T8; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T7R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T6=APPROVED`; `ARCHITECTURE_REVIEW_C3_T7=REWORK`; `C3_T7=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.79; `C3_T8_AUTHORIZED=NO`; do not claim C3 complete; do not start C3-T8; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -419,7 +419,7 @@ C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHI
 → C3-T4 Structured Understanding Vertical Slice = APPROVED (ARCHITECTURE_REVIEW_C3_T4R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=89bb5ad352)
 → C3-T5 OpenAPI Action Catalog + Capability Projection = APPROVED (ARCHITECTURE_REVIEW_C3_T5 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=84c249bee0)
 → C3-T6 Expertise / Knowledge Governance + Retrieval Contracts = APPROVED (ARCHITECTURE_REVIEW_C3_T6R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=1a49e501fb)
-→ C3-T7 FAST|OPERATIONAL|REASONING + Structured Planner Foundation (CANDIDATE_FOR_ARCHITECTURE_REVIEW; IMPLEMENTATION_HEAD=0fc2cba747ccae27e6980c7335b055529081c9e7)
+→ C3-T7R1 rework: duplicate capability_id fail-closed + evidence rebind (CANDIDATE_FOR_ARCHITECTURE_REVIEW; IMPLEMENTATION_HEAD=d49f77c966cd03387dd3e8e268cb9be5e2098ab6; C3-T7 prior evidence superseded)
 → C3-T8 Conversation / Session Interaction Foundation
 EVIDENCE_BEFORE_MODEL = YES
 EVIDENCE_BEFORE_PLANNER = YES
@@ -715,8 +715,10 @@ C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
 C3_T7 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+ARCHITECTURE_REVIEW_C3_T7 = REWORK (verdict on REVIEW_TARGET_SHA da5e57db4c)
+C3_T7R1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
-C2-FINAL accepted with residual; C3-T1..T6 APPROVED (`ARCHITECTURE_REVIEW_C3_T6R1` ACCEPT_WITH_RESIDUAL); C3-T7 executed as foundation candidate (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`; §6.78), review pending
+C2-FINAL accepted with residual; C3-T1..T6 APPROVED (`ARCHITECTURE_REVIEW_C3_T6R1` ACCEPT_WITH_RESIDUAL); C3-T7 reworked once (§6.78 superseded → §6.79 C3-T7R1: duplicate capability_id fail-closed + evidence rebind; `CANDIDATE_FOR_ARCHITECTURE_REVIEW`), review pending
 Workspace binding remains unscheduled
 ```
 
@@ -1030,12 +1032,17 @@ NOTE_SUPERSEDED_CANDIDATE: historical C3-T6 / C3-T6R1 candidate markers live in 
 
 C3-T6R1 is accepted with residual. Expertise `evidence_refs` are canonical `EvidenceRef`. Retrieval has no caller-selectable scope/include flags; normal retrieval is published organizational Knowledge only. RetrievalPort/store/RAG remain deferred. Expertise/Playbook status strings remain descriptive non-authoritative metadata. Publication completion flags are lifecycle-state assertions, not proof of executed review/eval operations.
 
-### C3-T7 — Decision Path + Structured Planner Foundation (candidate)
+### C3-T7 — Decision Path + Structured Planner Foundation (candidate — superseded)
+
+NOTE_SUPERSEDED_BY = C3-T7R1 section below; `ARCHITECTURE_REVIEW_C3_T7=REWORK`
+(REVIEW_TARGET_SHA=da5e57db4c; blockers: duplicate `capability_id` ambiguity
+via lossy dict collapse + evidence bound to local-only SHAs;
+abstraction-count wording corrected in C3-T7R1).
 
 ```text
 TASK = C3-T7 — FAST | OPERATIONAL | REASONING + STRUCTURED_PLANNER_FOUNDATION
 STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-IMPLEMENTATION_HEAD = 0fc2cba747ccae27e6980c7335b055529081c9e7
+IMPLEMENTATION_HEAD = 0fc2cba747ccae27e6980c7335b055529081c9e7 (rebased da5e57db4c1f07040b7a703272df39a1f2550349)
 BASE_HEAD = 86f54483e7bacde1c9c5fa8510affe70ddc2e2db
 OWNER = delia-api/app/domain/decision_path/ + app/domain/planning/
 MODEL = DecisionPath{FAST,OPERATIONAL,REASONING} + DecisionPathInput +
@@ -1054,7 +1061,37 @@ INVARIANTS = routing != authorization; plan != execution; not every event
 NONE = model router, planner engine/runtime, ports, use cases, retrieval
        port, RAG/vector/embedding, conversation, tool execution, PREPARE,
        ACT, Automation Hub, persistence, migration
-EVIDENCE = ledger §6.78; 20 C3-T7 section; TARGETED_C3_T7 PASS 41/41;
-           FULL_DELIA_API PASS 205/205 at IMPLEMENTATION_HEAD
-NEXT = ARCHITECTURE_REVIEW_C3_T7
+EVIDENCE = ledger §6.78 (HISTORICAL); 20 C3-T7 section (HISTORICAL);
+           TARGETED_C3_T7 PASS 41/41; FULL_DELIA_API PASS 205/205 at
+           PRIOR_IMPLEMENTATION_HEAD — PRIOR_LOCAL_EVIDENCE
+NEXT = ARCHITECTURE_REVIEW_C3_T7 (verdict recorded: REWORK)
+```
+
+### C3-T7R1 — Duplicate Capability Fail-Closed + Evidence Rebind (candidate)
+
+```text
+TASK = C3-T7R1 — DUPLICATE_CAPABILITY_FAIL_CLOSED_AND_EVIDENCE_REBIND
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+BASE_HEAD = c50fd2e5b0d963c2b9730a1bb8b0166ded71150b
+IMPLEMENTATION_HEAD = d49f77c966cd03387dd3e8e268cb9be5e2098ab6
+OWNER = delia-api/app/domain/planning/ (bounded rework; decision_path unchanged)
+RULES = validate_plan_candidate — duplicate capability_id in
+        available_capabilities detected BEFORE lossy lookup; any duplicate
+        (identical or divergent, any order) -> PlanValidationResult.valid=False
+        with PlanValidationCode.DUPLICATE_CAPABILITY_ID
+INVARIANTS = no FIRST/LAST/SORT-order/operation-character/owner/
+        source-contract wins; unknown capability and operation-character
+        mismatch behavior unchanged; routing model/policy unchanged
+ABSTRACTION_REPORT = NEW_DOMAIN_VALUE_TYPES=9 (ENUMS=4: DecisionPath,
+        DecisionPathStatus, RoutingReasonCode, PlanValidationCode;
+        DATACLASSES=5: DecisionPathInput, DecisionPathResult, PlanStep,
+        PlanCandidate, PlanValidationResult);
+        NEW_INFRASTRUCTURE_OR_RUNTIME_ABSTRACTIONS=NONE
+NONE = registry/resolver/conflict-engine/dedup-service; planner/routing/
+       model engines; ports; RAG/vector/embedding; conversation; tool
+       execution; PREPARE; ACT; persistence; migration
+EVIDENCE = ledger §6.79; 20 C3-T7R1 section; TARGETED_C3_T7 PASS 46/46;
+           FULL_DELIA_API PASS 210/210 at IMPLEMENTATION_HEAD
+TEST_SHA_BINDING = d49f77c966cd03387dd3e8e268cb9be5e2098ab6
+NEXT = ARCHITECTURE_REVIEW_C3_T7R1
 ```
