@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 721,
+  "operation_count": 726,
   "operations": [
     {
       "method": "POST",
@@ -40,6 +40,1573 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Create Anonymous Denuncia."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/by-branch",
+      "operationId": "get_billing_portfolio_by_branch",
+      "summary": "Billing portfolio by branch (forecast × realized)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_centers",
+          "in": "query",
+          "required": false,
+          "description": "CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "nature",
+          "in": "query",
+          "required": false,
+          "description": "Realized value nature: order_gross (NF gross / D2_TOTAL) or rol (net operating revenue).",
+          "type": "string",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ]
+        },
+        {
+          "name": "quantity_basis",
+          "in": "query",
+          "required": false,
+          "description": "Forecast quantity basis: planned (C6_QTDVEN) or open (C6_QTDVEN - C6_QTDENT).",
+          "type": "string",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ]
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "billing_portfolio_by_branch",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Billing portfolio by branch (forecast × realized)",
+            "description": "Per-branch delivery forecast versus billing realized with variance for branches 01 and 02.",
+            "label": "Billing portfolio by branch"
+          },
+          "pt-BR": {
+            "summary": "Carteira — por filial (previsto × realizado)",
+            "description": "Previsto versus realizado por filial (01/02), com variação.",
+            "label": "Carteira — por filial (previsto × realizado)"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_centers": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+                "label": "Customer centers"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505.",
+                "label": "Centros do cliente"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "nature": {
+            "locale": {
+              "en": {
+                "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+                "label": "Nature"
+              },
+              "pt-BR": {
+                "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida).",
+                "label": "Natureza"
+              }
+            },
+            "enumLabels": {
+              "order_gross": {
+                "en": {
+                  "label": "Order / NF gross"
+                },
+                "pt-BR": {
+                  "label": "Bruto de pedido / NF"
+                }
+              },
+              "rol": {
+                "en": {
+                  "label": "Net operating revenue (ROL)"
+                },
+                "pt-BR": {
+                  "label": "Receita operacional líquida (ROL)"
+                }
+              }
+            }
+          },
+          "quantity_basis": {
+            "locale": {
+              "en": {
+                "description": "Forecast quantity: planned (ordered qty) or open (ordered minus delivered).",
+                "label": "Quantity basis"
+              },
+              "pt-BR": {
+                "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue).",
+                "label": "Base de quantidade"
+              }
+            },
+            "enumLabels": {
+              "planned": {
+                "en": {
+                  "label": "Planned (ordered qty)"
+                },
+                "pt-BR": {
+                  "label": "Planejado (qtd pedida)"
+                }
+              },
+              "open": {
+                "en": {
+                  "label": "Open balance"
+                },
+                "pt-BR": {
+                  "label": "Saldo em aberto"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Previsto versus realizado por filial (01/02), com variação.",
+          "label": "Carteira — por filial (previsto × realizado)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Per-branch delivery forecast versus billing realized with variance for branches 01 and 02."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/by-customer",
+      "operationId": "get_billing_portfolio_by_customer",
+      "summary": "Billing portfolio by customer (forecast × realized)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_centers",
+          "in": "query",
+          "required": false,
+          "description": "CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "nature",
+          "in": "query",
+          "required": false,
+          "description": "Realized value nature: order_gross (NF gross / D2_TOTAL) or rol (net operating revenue).",
+          "type": "string",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ]
+        },
+        {
+          "name": "quantity_basis",
+          "in": "query",
+          "required": false,
+          "description": "Forecast quantity basis: planned (C6_QTDVEN) or open (C6_QTDVEN - C6_QTDENT).",
+          "type": "string",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ]
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=500",
+          "type": "integer",
+          "default": 50
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "billing_portfolio_by_customer",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Billing portfolio by customer (forecast × realized)",
+            "description": "Per-customer delivery forecast versus billing realized with variance and pagination.",
+            "label": "Billing portfolio by customer"
+          },
+          "pt-BR": {
+            "summary": "Carteira — por cliente (previsto × realizado)",
+            "description": "Previsto versus realizado por cliente, com variação e paginação.",
+            "label": "Carteira — por cliente (previsto × realizado)"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_centers": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+                "label": "Customer centers"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505.",
+                "label": "Centros do cliente"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "nature": {
+            "locale": {
+              "en": {
+                "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+                "label": "Nature"
+              },
+              "pt-BR": {
+                "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida).",
+                "label": "Natureza"
+              }
+            },
+            "enumLabels": {
+              "order_gross": {
+                "en": {
+                  "label": "Order / NF gross"
+                },
+                "pt-BR": {
+                  "label": "Bruto de pedido / NF"
+                }
+              },
+              "rol": {
+                "en": {
+                  "label": "Net operating revenue (ROL)"
+                },
+                "pt-BR": {
+                  "label": "Receita operacional líquida (ROL)"
+                }
+              }
+            }
+          },
+          "quantity_basis": {
+            "locale": {
+              "en": {
+                "description": "Forecast quantity: planned (ordered qty) or open (ordered minus delivered).",
+                "label": "Quantity basis"
+              },
+              "pt-BR": {
+                "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue).",
+                "label": "Base de quantidade"
+              }
+            },
+            "enumLabels": {
+              "planned": {
+                "en": {
+                  "label": "Planned (ordered qty)"
+                },
+                "pt-BR": {
+                  "label": "Planejado (qtd pedida)"
+                }
+              },
+              "open": {
+                "en": {
+                  "label": "Open balance"
+                },
+                "pt-BR": {
+                  "label": "Saldo em aberto"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Previsto versus realizado por cliente, com variação e paginação.",
+          "label": "Carteira — por cliente (previsto × realizado)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Per-customer delivery forecast versus billing realized with variance and pagination."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/series",
+      "operationId": "get_billing_portfolio_series",
+      "summary": "Billing portfolio series (forecast × realized)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": true,
+          "description": "Series bucket size.",
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_centers",
+          "in": "query",
+          "required": false,
+          "description": "CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "nature",
+          "in": "query",
+          "required": false,
+          "description": "Realized value nature: order_gross (NF gross / D2_TOTAL) or rol (net operating revenue).",
+          "type": "string",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ]
+        },
+        {
+          "name": "quantity_basis",
+          "in": "query",
+          "required": false,
+          "description": "Forecast quantity basis: planned (C6_QTDVEN) or open (C6_QTDVEN - C6_QTDENT).",
+          "type": "string",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ]
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "billing_portfolio_series",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Billing portfolio series (forecast × realized)",
+            "description": "Time series of delivery forecast versus billing realized by day, week, month or year.",
+            "label": "Billing portfolio series"
+          },
+          "pt-BR": {
+            "summary": "Carteira — série previsto × realizado",
+            "description": "Série temporal de receita prevista versus realizada por dia, semana, mês ou ano.",
+            "label": "Carteira — série previsto × realizado"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_centers": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+                "label": "Customer centers"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505.",
+                "label": "Centros do cliente"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "nature": {
+            "locale": {
+              "en": {
+                "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+                "label": "Nature"
+              },
+              "pt-BR": {
+                "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida).",
+                "label": "Natureza"
+              }
+            },
+            "enumLabels": {
+              "order_gross": {
+                "en": {
+                  "label": "Order / NF gross"
+                },
+                "pt-BR": {
+                  "label": "Bruto de pedido / NF"
+                }
+              },
+              "rol": {
+                "en": {
+                  "label": "Net operating revenue (ROL)"
+                },
+                "pt-BR": {
+                  "label": "Receita operacional líquida (ROL)"
+                }
+              }
+            }
+          },
+          "quantity_basis": {
+            "locale": {
+              "en": {
+                "description": "Forecast quantity: planned (ordered qty) or open (ordered minus delivered).",
+                "label": "Quantity basis"
+              },
+              "pt-BR": {
+                "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue).",
+                "label": "Base de quantidade"
+              }
+            },
+            "enumLabels": {
+              "planned": {
+                "en": {
+                  "label": "Planned (ordered qty)"
+                },
+                "pt-BR": {
+                  "label": "Planejado (qtd pedida)"
+                }
+              },
+              "open": {
+                "en": {
+                  "label": "Open balance"
+                },
+                "pt-BR": {
+                  "label": "Saldo em aberto"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Série temporal de receita prevista versus realizada por dia, semana, mês ou ano.",
+          "label": "Carteira — série previsto × realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Time series of delivery forecast versus billing realized by day, week, month or year."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/summary",
+      "operationId": "get_billing_portfolio_summary",
+      "summary": "Billing portfolio summary (forecast × realized)",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_centers",
+          "in": "query",
+          "required": false,
+          "description": "CSV of customer center codes from the product-customer link (SA7.A7_XCENT).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "nature",
+          "in": "query",
+          "required": false,
+          "description": "Realized value nature: order_gross (NF gross / D2_TOTAL) or rol (net operating revenue).",
+          "type": "string",
+          "default": "order_gross",
+          "enum": [
+            "order_gross",
+            "rol"
+          ]
+        },
+        {
+          "name": "quantity_basis",
+          "in": "query",
+          "required": false,
+          "description": "Forecast quantity basis: planned (C6_QTDVEN) or open (C6_QTDVEN - C6_QTDENT).",
+          "type": "string",
+          "default": "planned",
+          "enum": [
+            "planned",
+            "open"
+          ]
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "billing_portfolio_summary",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Billing portfolio summary (forecast × realized)",
+            "description": "Order delivery forecast (C6_ENTREG) versus billing realized (D2_EMISSAO) for a period, with variance.",
+            "label": "Billing portfolio summary"
+          },
+          "pt-BR": {
+            "summary": "Carteira — resumo previsto × realizado",
+            "description": "Receita prevista (entrega prometida C6_ENTREG) versus realizada (emissão NF D2_EMISSAO) no período, com variação.",
+            "label": "Carteira — resumo previsto × realizado"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_centers": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer center codes from the product-customer link (SA7.A7_XCENT), e.g. 1320,1505.",
+                "label": "Customer centers"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de centros do cliente na amarração produto–cliente (SA7.A7_XCENT), ex.: 1320,1505.",
+                "label": "Centros do cliente"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "nature": {
+            "locale": {
+              "en": {
+                "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+                "label": "Nature"
+              },
+              "pt-BR": {
+                "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida).",
+                "label": "Natureza"
+              }
+            },
+            "enumLabels": {
+              "order_gross": {
+                "en": {
+                  "label": "Order / NF gross"
+                },
+                "pt-BR": {
+                  "label": "Bruto de pedido / NF"
+                }
+              },
+              "rol": {
+                "en": {
+                  "label": "Net operating revenue (ROL)"
+                },
+                "pt-BR": {
+                  "label": "Receita operacional líquida (ROL)"
+                }
+              }
+            }
+          },
+          "quantity_basis": {
+            "locale": {
+              "en": {
+                "description": "Forecast quantity: planned (ordered qty) or open (ordered minus delivered).",
+                "label": "Quantity basis"
+              },
+              "pt-BR": {
+                "description": "Quantidade do previsto: planned (qtd pedida) ou open (pedida menos entregue).",
+                "label": "Base de quantidade"
+              }
+            },
+            "enumLabels": {
+              "planned": {
+                "en": {
+                  "label": "Planned (ordered qty)"
+                },
+                "pt-BR": {
+                  "label": "Planejado (qtd pedida)"
+                }
+              },
+              "open": {
+                "en": {
+                  "label": "Open balance"
+                },
+                "pt-BR": {
+                  "label": "Saldo em aberto"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Receita prevista (entrega prometida C6_ENTREG) versus realizada (emissão NF D2_EMISSAO) no período, com variação.",
+          "label": "Carteira — resumo previsto × realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Order delivery forecast (C6_ENTREG) versus billing realized (D2_EMISSAO) for a period, with variance."
     },
     {
       "method": "GET",
@@ -63640,6 +65207,22 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Exclusive raw materials catalog."
+    },
+    {
+      "method": "POST",
+      "path": "/products/inventory-blocks",
+      "operationId": "list_product_inventory_blocks",
+      "summary": "Lista — Bloqueio de inventário sb2 (b2_dtinv/b2_dinvfim) de vários produtos no armazém",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "product_inventory_blocks",
+        "shape": "list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna bloqueio de inventário SB2 (B2_DTINV/B2_DINVFIM) de vários produtos no armazém via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Produto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
     },
     {
       "method": "POST",

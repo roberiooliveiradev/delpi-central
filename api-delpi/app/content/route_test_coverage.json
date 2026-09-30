@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-09-30",
-  "baselineOperationCount": 721,
-  "operationCount": 721,
-  "coveredCount": 648,
+  "baselineOperationCount": 726,
+  "operationCount": 726,
+  "coveredCount": 653,
   "gapCount": 72,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 28,
-      "covered": 28,
+      "total": 32,
+      "covered": 32,
       "gap": 0,
       "exempt": 0
     },
@@ -140,8 +140,8 @@
       "exempt": 0
     },
     "products": {
-      "total": 37,
-      "covered": 37,
+      "total": 38,
+      "covered": 38,
       "gap": 0,
       "exempt": 0
     },
@@ -225,6 +225,42 @@
       "path": "/canal-denuncia/denuncias",
       "module": "canal-denuncia",
       "entity": "canal_denuncia",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_billing_portfolio_by_branch",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/by-branch",
+      "module": "commercial",
+      "entity": "billing_portfolio_by_branch",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_billing_portfolio_by_customer",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/by-customer",
+      "module": "commercial",
+      "entity": "billing_portfolio_by_customer",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_billing_portfolio_series",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/series",
+      "module": "commercial",
+      "entity": "billing_portfolio_series",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_billing_portfolio_summary",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/summary",
+      "module": "commercial",
+      "entity": "billing_portfolio_summary",
       "shape": "scalar",
       "status": "covered"
     },
@@ -3989,6 +4025,15 @@
       "module": "products",
       "entity": "exclusive_raw_materials_catalog",
       "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_product_inventory_blocks",
+      "method": "POST",
+      "path": "/products/inventory-blocks",
+      "module": "products",
+      "entity": "product_inventory_blocks",
+      "shape": "list",
       "status": "covered"
     },
     {
