@@ -7,6 +7,16 @@ export function isPendingReason(item: MonitoringItem): boolean {
   return Boolean(item.downtime && (!item.downtime.confirmed || !item.downtime.reasonCode));
 }
 
+export function downtimeReasonDisplay(
+  downtime: { reasonCode?: string | null; reasonLabel: string | null; note: string | null } | null | undefined,
+): string | null {
+  const label = downtime?.reasonLabel?.trim() || null;
+  if (!label) return null;
+  const note = downtime?.note?.trim() || null;
+  const isOther = label.toLowerCase() === "outro" || downtime?.reasonCode?.trim().toLowerCase() === "outro";
+  return note && isOther ? `${label} (${note})` : label;
+}
+
 export function presentMonitoringState(item: MonitoringItem): MonitoringPresentation {
   if (item.integrityStatus !== "complete") return { label: "Dados incompletos", actionLabel: "Estado indisponível", tone: "warning", attentionRank: 0 };
   if (item.runStatus === "paused") return { label: "Pausa manual", actionLabel: "Pausado", tone: "warning", attentionRank: 3 };

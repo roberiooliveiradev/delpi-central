@@ -2,7 +2,7 @@ import { ClipboardList, Gauge, MonitorCog, Package, Target, User } from "lucide-
 import type { MonitoringItem } from "../../types/mes";
 import { workCenterImageUrl } from "../../utils/assets";
 import { elapsedSeconds, formatDuration } from "../../utils/duration";
-import { isPendingReason, presentMonitoringState, progressPercent } from "../../utils/monitoringPresentation";
+import { downtimeReasonDisplay, isPendingReason, presentMonitoringState, progressPercent } from "../../utils/monitoringPresentation";
 
 export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; nowMs: number; onOpen: () => void }) {
   const state = presentMonitoringState(item);
@@ -36,7 +36,7 @@ export function WorkCenterCard({ item, nowMs, onOpen }: { item: MonitoringItem; 
           </span>
           {item.downtime ? (
             <span className="delpi-mes-work-center-card__downtime">
-              {isPendingReason(item) ? "Motivo pendente" : item.downtime.reasonLabel || "Parada sem motivo informado"}
+              {isPendingReason(item) ? "Motivo pendente" : downtimeReasonDisplay(item.downtime) || "Parada sem motivo informado"}
             </span>
           ) : item.operationalState === "stopped" ? (
             <span className="delpi-mes-work-center-card__secondary">Parada sem evento associado</span>

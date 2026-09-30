@@ -6,6 +6,7 @@ import {
   dayEventContext, dayEventReason, endOfLocalDayMs, formatDayClock,
   formatHoursMinutes, presentDayEvent,
 } from "../../utils/dayTimeline";
+import { downtimeReasonDisplay } from "../../utils/monitoringPresentation";
 
 const ZOOM_HOURS = [2, 4, 8, 12, 24];
 const DEFAULT_VISIBLE_HOURS = 4;
@@ -158,7 +159,7 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
           <div className="delpi-mes-daybar__marks" aria-hidden="true">
             {stops.map((segment, index) => {
               const mid = segment.startMs + (segment.endMs - segment.startMs) / 2;
-              const reason = segment.item?.downtime?.reasonLabel ?? "Sem motivo informado";
+              const reason = downtimeReasonDisplay(segment.item?.downtime) ?? "Sem motivo informado";
               return (
                 <span
                   key={segment.item?.stateEventId ?? index}

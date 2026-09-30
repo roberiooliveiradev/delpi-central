@@ -571,7 +571,6 @@
   box-shadow: 0 8px 22px rgb(15 23 42 / 7%);
   cursor: pointer;
 }
-.delpi-mes-date-pill > svg { width: 1rem; height: 1rem; color: #1e63c4; }
 .delpi-mes-date-pill__text { display: grid; line-height: 1.2; }
 .delpi-mes-date-pill__text strong { font-size: 0.78rem; }
 .delpi-mes-date-pill__text em { font-size: 0.7rem; font-style: normal; color: #7d8a9c; }
@@ -583,7 +582,7 @@
   background: transparent;
   cursor: pointer;
 }
-.delpi-mes-date-pill input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.55; }
+.delpi-mes-date-pill input::-webkit-calendar-picker-indicator { cursor: pointer; }
 .delpi-mes-date-pill input:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; }
 
 .delpi-mes-wc__photo {

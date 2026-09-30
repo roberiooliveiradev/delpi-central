@@ -35,6 +35,15 @@ describe("work center day timeline", () => {
     expect(dayEventReason(item(), presentDayEvent(item()))).toBeNull();
   });
 
+  it("shows the operator note when the downtime reason is Outro", () => {
+    const other = item({ state: "stopped", downtime: { id: "d", source: "operator", reasonCode: "other", reasonLabel: "Outro", category: null, confirmed: true, note: "Troca de ferramental emergencial" } });
+    expect(dayEventReason(other, presentDayEvent(other))).toBe("Outro (Troca de ferramental emergencial)");
+    const otherCode = item({ state: "stopped", downtime: { id: "d", source: "operator", reasonCode: "outro", reasonLabel: "Outro", category: null, confirmed: true, note: "Vazamento hidráulico" } });
+    expect(dayEventReason(otherCode, presentDayEvent(otherCode))).toBe("Outro (Vazamento hidráulico)");
+    const withoutNote = item({ state: "stopped", downtime: { id: "d", source: "operator", reasonCode: "outro", reasonLabel: "Outro", category: null, confirmed: true, note: null } });
+    expect(dayEventReason(withoutNote, presentDayEvent(withoutNote))).toBe("Outro");
+  });
+
   it("clips durations to the requested window", () => {
     const crossing = item({ startedAt: "2025-12-31T23:58:00.000Z", endedAt: "2026-01-01T00:10:00.000Z" });
     expect(dayEventDurationSeconds(crossing, FROM, TO, NOW)).toBe(600);

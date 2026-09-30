@@ -1,6 +1,6 @@
 import { LoadingState, loadingStatePanelBemClasses } from "@delpi/plugin-ui/index";
 import {
-  ArrowLeft, CalendarDays, ClipboardList, Cog, Gauge, OctagonPause,
+  ArrowLeft, ClipboardList, Cog, Gauge, OctagonPause,
   PauseCircle, PlayCircle, User, Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -13,7 +13,7 @@ import {
   buildDaySegments, downtimeReasonTotals, formatDayClock, formatHoursMinutes,
   localDayKey, presentDayEvent, presentDayState, summarizeDay,
 } from "../utils/dayTimeline";
-import { presentMonitoringState, runStateSignature } from "../utils/monitoringPresentation";
+import { downtimeReasonDisplay, presentMonitoringState, runStateSignature } from "../utils/monitoringPresentation";
 import { DayTimelineBar } from "../components/monitoring/DayTimelineBar";
 import { MonitoringStatCards } from "../components/monitoring/MonitoringStatCards";
 import type { StatCardItem } from "../utils/statItems";
@@ -102,7 +102,6 @@ export function WorkCenterDetailPage({
         </div>
         <div className="delpi-mes-wc__aside">
           <label className="delpi-mes-date-pill">
-            <CalendarDays aria-hidden="true" />
             <span className="delpi-mes-date-pill__text">
               <strong>{dayKey === todayKey ? "Hoje" : "Dia"}</strong>
               <em>{DATE_FORMAT.format(new Date(`${dayKey}T12:00:00`))}</em>
@@ -208,7 +207,7 @@ export function WorkCenterDetailPage({
                       const presentation = segment.item ? presentDayEvent(segment.item) : null;
                       const label = presentation?.label ?? "Sem atividade";
                       const reason = segment.item
-                        ? (presentation?.pendingReason ? "Motivo pendente" : segment.item.downtime?.reasonLabel ?? (segment.state === "stopped" ? "Sem motivo informado" : "—"))
+                        ? (presentation?.pendingReason ? "Motivo pendente" : downtimeReasonDisplay(segment.item.downtime) ?? (segment.state === "stopped" ? "Sem motivo informado" : "—"))
                         : "—";
                       return (
                         <tr key={segment.item?.stateEventId ?? `gap-${index}`}>

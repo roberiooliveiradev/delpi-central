@@ -1,4 +1,5 @@
 import type { WorkCenterTimelineItem } from "../types/mes";
+import { downtimeReasonDisplay } from "./monitoringPresentation";
 
 export type DayEventTone = "default" | "success" | "warning" | "danger" | "info";
 export type DayEventPresentation = { label: string; tone: DayEventTone; pendingReason: boolean };
@@ -93,7 +94,7 @@ export function dayEventContext(item: WorkCenterTimelineItem): string {
 export function dayEventReason(item: WorkCenterTimelineItem, presentation: DayEventPresentation): string | null {
   if (item.state !== "stopped") return null;
   if (presentation.pendingReason) return "Motivo pendente";
-  return item.downtime?.reasonLabel ?? "Motivo não informado";
+  return downtimeReasonDisplay(item.downtime) ?? "Motivo não informado";
 }
 
 export type DaySegment = {
@@ -161,7 +162,7 @@ export function downtimeReasonTotals(segments: DaySegment[]): DowntimeReasonTota
     const presentation = presentDayEvent(segment.item);
     const label = presentation.pendingReason
       ? "Sem motivo informado"
-      : segment.item.downtime?.reasonLabel ?? "Sem motivo informado";
+      : downtimeReasonDisplay(segment.item.downtime) ?? "Sem motivo informado";
     totals.set(label, (totals.get(label) ?? 0) + Math.max(0, segment.endMs - segment.startMs) / 1000);
   }
   return Array.from(totals.entries())
