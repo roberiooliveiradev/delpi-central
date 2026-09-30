@@ -2,19 +2,19 @@
  "task": "DAVI-WAVE-007-READ-COVERAGE-INVENTORY-CORRECTION-001",
  "supersedes": "davi-wave-007-read-coverage-inventory-001 (global classification unchanged; family-level aggregation reconciliation defects corrected)",
  "correction_note": "Previous global classification totals were valid, but family-level aggregation contained reconciliation defects: structured_business_read was computed by an independent heuristic that could disagree with the final classification, and the READ column used a different basis (GET-only) than the global read count (which included read-semantics POSTs). This artifact derives every aggregate exclusively from the row-level matrix: structured_business_read := classification in {COVERED, ELIGIBLE_GAP, REDUNDANT, DEFERRED, TO_INVENTORY}; READ := GET or proven read-semantics POST.",
- "reviewed_head": "2d1574b1590e11d36844517d1e1a007191a6face",
+ "reviewed_head": "8b6042b1a3bcbe1d51b428edf7c66af9429fb5b8",
  "generated_from": "source OpenAPI (app.main.openapi(), pyodbc stub) + openapi_baseline.json + davi_external_read_allowlist.json v15 + route_test_coverage.json + AST extraction of route handlers and AuthZ decorators under app/interface/http",
  "totals": {
   "api_routes": 726,
   "paths": 651,
   "read": 531,
   "read_semantics_post": 6,
-  "structured_business_read": 463,
-  "EXCLUDED": 263,
+  "structured_business_read": 459,
+  "EXCLUDED": 267,
   "ELIGIBLE_GAP": 374,
   "COVERED": 63,
   "DEFERRED": 20,
-  "TO_INVENTORY": 4,
+  "TO_INVENTORY": 0,
   "REDUNDANT": 2
  },
  "allowlist": {
@@ -2004,7 +2004,7 @@
   {
    "method": "GET",
    "path": "/supplies/purchase-requests/requesters",
-   "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+   "operationId": "list_supplies_purchase_request_requesters",
    "domain": "supplies",
    "family": "Supplies & Purchasing",
    "business_purpose": "List Supplies Purchase Request Requesters Route",
@@ -2138,7 +2138,7 @@
   {
    "method": "GET",
    "path": "/supplies/protheus-users/by-email",
-   "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+   "operationId": "get_supplies_protheus_user_by_email",
    "domain": "supplies",
    "family": "Supplies & Purchasing",
    "business_purpose": "Get Protheus User By Email Route",
@@ -4119,7 +4119,7 @@
    "family": "Production",
    "business_purpose": "Indicador — Tempo padrão da operação de op (ciclo ideal e setup em segundos por peça)",
    "http_shape": "READ",
-   "structured_business_read": true,
+   "structured_business_read": false,
    "eligibility_status": "NEEDS_MODEL_SAFE_PROJECTION",
    "davi_status_now": "NOT_COVERED",
    "allowlist_entry": null,
@@ -4136,8 +4136,8 @@
    ],
    "output_shape": null,
    "output_fields_observed": [],
-   "candidate_classification": "TO_INVENTORY",
-   "rationale": "no AuthZ decorator evidence",
+   "candidate_classification": "EXCLUDED",
+   "rationale": "EXCLUDED_CURRENT_ROUTE — internal S2S service-token authorization (MES-oriented machine/service identity) is not end-user business authorization; DAVI must not use the internal service credential. If needed, a canonical end-user READ route with backend AuthZ must be separately ratified.",
    "recommended_wave": null,
    "notes": ""
   },
@@ -10985,7 +10985,7 @@
    "family": "Public/Token Surface",
    "business_purpose": "Get Public Inspection",
    "http_shape": "READ",
-   "structured_business_read": true,
+   "structured_business_read": false,
    "eligibility_status": "NEEDS_MODEL_SAFE_PROJECTION",
    "davi_status_now": "NOT_COVERED",
    "allowlist_entry": null,
@@ -11000,8 +11000,8 @@
    ],
    "output_shape": null,
    "output_fields_observed": [],
-   "candidate_classification": "TO_INVENTORY",
-   "rationale": "public/token surface — no canonical per-user AuthZ; needs product/security decision",
+   "candidate_classification": "EXCLUDED",
+   "rationale": "EXCLUDED_CURRENT_ROUTE — public/token route does not prove end-user authorization parity (DAVI invariant: END_USER_ACCOUNT → own DELPI identity → canonical backend business AuthZ). Current contract is not an eligible DAVI execution path; if needed, the information must be exposed via a canonical authenticated end-user READ contract.",
    "recommended_wave": null,
    "notes": ""
   },
@@ -11139,7 +11139,7 @@
    "family": "Public/Token Surface",
    "business_purpose": "Get Public Scheduling Resource",
    "http_shape": "READ",
-   "structured_business_read": true,
+   "structured_business_read": false,
    "eligibility_status": "NEEDS_MODEL_SAFE_PROJECTION",
    "davi_status_now": "NOT_COVERED",
    "allowlist_entry": null,
@@ -11154,8 +11154,8 @@
    ],
    "output_shape": null,
    "output_fields_observed": [],
-   "candidate_classification": "TO_INVENTORY",
-   "rationale": "public/token surface — no canonical per-user AuthZ; needs product/security decision",
+   "candidate_classification": "EXCLUDED",
+   "rationale": "EXCLUDED_CURRENT_ROUTE — public/token route does not prove end-user authorization parity (DAVI invariant: END_USER_ACCOUNT → own DELPI identity → canonical backend business AuthZ). Current contract is not an eligible DAVI execution path; if needed, the information must be exposed via a canonical authenticated end-user READ contract.",
    "recommended_wave": null,
    "notes": ""
   },
@@ -11167,7 +11167,7 @@
    "family": "Public/Token Surface",
    "business_purpose": "Get Public Scheduling Availability",
    "http_shape": "READ",
-   "structured_business_read": true,
+   "structured_business_read": false,
    "eligibility_status": "NEEDS_MODEL_SAFE_PROJECTION",
    "davi_status_now": "NOT_COVERED",
    "allowlist_entry": null,
@@ -11184,8 +11184,8 @@
    ],
    "output_shape": null,
    "output_fields_observed": [],
-   "candidate_classification": "TO_INVENTORY",
-   "rationale": "public/token surface — no canonical per-user AuthZ; needs product/security decision",
+   "candidate_classification": "EXCLUDED",
+   "rationale": "EXCLUDED_CURRENT_ROUTE — public/token route does not prove end-user authorization parity (DAVI invariant: END_USER_ACCOUNT → own DELPI identity → canonical backend business AuthZ). Current contract is not an eligible DAVI execution path; if needed, the information must be exposed via a canonical authenticated end-user READ contract.",
    "recommended_wave": null,
    "notes": ""
   },
@@ -23006,5 +23006,6 @@
    "recommended_wave": "WAVE_CANDIDATE_E",
    "notes": ""
   }
- ]
+ ],
+ "disposition_note": "Architecture disposition closure (DAVI-OPENAPI-GOVERNANCE-HYGIENE-001): the 4 unresolved TO_INVENTORY routes were classified EXCLUDED with rationale EXCLUDED_CURRENT_ROUTE — 3 public/token-surface routes lack proven end-user AuthZ parity; 1 MES internal S2S route uses service-token, not end-user, authorization. No capability allowed; future exposure requires canonical authenticated end-user READ contracts."
 }

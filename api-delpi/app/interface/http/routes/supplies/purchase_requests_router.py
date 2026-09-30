@@ -286,7 +286,7 @@ def export_supplies_purchase_request_lines_route(
         )
 
 
-@router.get("/requesters")
+@router.get("/requesters", operation_id="list_supplies_purchase_request_requesters")
 @require_any_permission_or_trusted_caller(
     PURCHASE_REQUESTS_READ_PERMISSIONS,
     caller=PURCHASE_REQUESTS_API_CALLER,

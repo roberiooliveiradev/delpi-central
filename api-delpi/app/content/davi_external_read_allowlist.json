@@ -3107,13 +3107,13 @@
       "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
     },
     {
-      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "operationId": "list_supplies_purchase_request_requesters",
       "coverageDisposition": "DEFER",
       "primaryBlocker": "PII_LOOKUP_HELPER",
       "reason": "Requester lookup for UI filters; PII/identity helper without clear standalone information need."
     },
     {
-      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "operationId": "get_supplies_protheus_user_by_email",
       "coverageDisposition": "DEFER",
       "primaryBlocker": "PII_IDENTITY_LOOKUP",
       "reason": "Email→Protheus user identity lookup; not a Supplies information capability for DAVI."

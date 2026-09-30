@@ -95674,7 +95674,7 @@
     {
       "method": "GET",
       "path": "/supplies/protheus-users/by-email",
-      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "operationId": "get_supplies_protheus_user_by_email",
       "summary": "Get Protheus User By Email Route",
       "tags": [
         "Suprimentos — Usuários Protheus"
@@ -95689,7 +95689,7 @@
         }
       ],
       "xDelpi": {
-        "entity": "protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+        "entity": "supplies_protheus_user_by_email",
         "shape": "scalar",
         "presentationStrategy": "as_delivered"
       }
@@ -98770,7 +98770,7 @@
     {
       "method": "GET",
       "path": "/supplies/purchase-requests/requesters",
-      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "operationId": "list_supplies_purchase_request_requesters",
       "summary": "List Supplies Purchase Request Requesters Route",
       "tags": [
         "Suprimentos — Solicitações de compra"
@@ -98841,7 +98841,7 @@
         }
       ],
       "xDelpi": {
-        "entity": "supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+        "entity": "supplies_purchase_request_requesters",
         "shape": "scalar",
         "params": {
           "branch": {

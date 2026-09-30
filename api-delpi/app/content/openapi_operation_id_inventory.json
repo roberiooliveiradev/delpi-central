@@ -1,20 +1,45 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 720,
-  "stableCount": 718,
-  "autoCount": 2,
+  "operationCount": 726,
+  "stableCount": 726,
+  "autoCount": 0,
   "recommendationCollisions": [],
-  "autoByTag": {
-    "Suprimentos — Usuários Protheus": 1,
-    "Suprimentos — Solicitações de compra": 1
-  },
+  "autoByTag": {},
   "operations": [
     {
       "operationId": "create_canal_denuncia",
       "method": "POST",
       "path": "/canal-denuncia/denuncias",
       "tag": "Canal de Denúncia",
+      "stable": true
+    },
+    {
+      "operationId": "get_billing_portfolio_by_branch",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/by-branch",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_billing_portfolio_by_customer",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/by-customer",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_billing_portfolio_series",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/series",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_billing_portfolio_summary",
+      "method": "GET",
+      "path": "/commercial/billing-portfolio/summary",
+      "tag": "Comercial",
       "stable": true
     },
     {
@@ -2776,6 +2801,13 @@
       "stable": true
     },
     {
+      "operationId": "get_production_operation_standard_time",
+      "method": "GET",
+      "path": "/production/orders/{production_order}/operations/{operation_code}/standard-time",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
       "operationId": "list_production_order_operation_materials",
       "method": "GET",
       "path": "/production/orders/{production_order}/operations/{operation}/materials",
@@ -2937,16 +2969,16 @@
       "stable": true
     },
     {
-      "operationId": "list_product_physical_locations",
+      "operationId": "list_product_inventory_blocks",
       "method": "POST",
-      "path": "/products/physical-locations",
+      "path": "/products/inventory-blocks",
       "tag": "products",
       "stable": true
     },
     {
-      "operationId": "list_product_inventory_blocks",
+      "operationId": "list_product_physical_locations",
       "method": "POST",
-      "path": "/products/inventory-blocks",
+      "path": "/products/physical-locations",
       "tag": "products",
       "stable": true
     },
@@ -4708,13 +4740,11 @@
       "stable": true
     },
     {
-      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "operationId": "get_supplies_protheus_user_by_email",
       "method": "GET",
       "path": "/supplies/protheus-users/by-email",
       "tag": "Suprimentos — Usuários Protheus",
-      "stable": false,
-      "functionName": "get_protheus_user_by_email_route",
-      "recommendedCanonical": "get_protheus_user_by_email_route"
+      "stable": true
     },
     {
       "operationId": "get_supplies_purchase_order_otd",
@@ -4801,13 +4831,11 @@
       "stable": true
     },
     {
-      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "operationId": "list_supplies_purchase_request_requesters",
       "method": "GET",
       "path": "/supplies/purchase-requests/requesters",
       "tag": "Suprimentos — Solicitações de compra",
-      "stable": false,
-      "functionName": "list_supplies_purchase_request_requesters_route",
-      "recommendedCanonical": "list_supplies_purchase_request_requesters_route"
+      "stable": true
     },
     {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",

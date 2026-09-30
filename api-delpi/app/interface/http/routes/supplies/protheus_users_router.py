@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 
-@router.get("/by-email")
+@router.get("/by-email", operation_id="get_supplies_protheus_user_by_email")
 @require_auth()
 def get_protheus_user_by_email_route(email: str = Query(..., min_length=3)):
     try:

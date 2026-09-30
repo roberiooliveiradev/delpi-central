@@ -3,8 +3,8 @@
 > Evidence artifact. **Not** runtime authority. **Not** the operational allowlist.
 
 - Task: `DAVI-WAVE-007-READ-COVERAGE-INVENTORY-CORRECTION-001`
-- Reviewed HEAD: `2d1574b1590e11d36844517d1e1a007191a6face`
-- origin/main at generation: `2d1574b1590e11d36844517d1e1a007191a6face`
+- Reviewed HEAD: `8b6042b1a3bcbe1d51b428edf7c66af9429fb5b8`
+- origin/main at generation: `8b6042b1a3bcbe1d51b428edf7c66af9429fb5b8`
 - Inventory source: source-generated OpenAPI (`app.main.openapi()` → 726 operations / 651 paths), `openapi_baseline.json` (726 ops after canonical sync), `davi_external_read_allowlist.json` v15 (63 ops), `route_test_coverage.json`, AST extraction of route handlers + AuthZ decorators under `app/interface/http/` (726/726 operations resolved).
 
 ## Correction note
@@ -19,17 +19,19 @@ Correction applied: `structured_business_read` is now derived from the final row
 
 This pass also revalidated against a newer `origin/main` that added the MES S2S contract `get_production_operation_standard_time` (source now 726 operations).
 
+Disposition closure (`DAVI-OPENAPI-GOVERNANCE-HYGIENE-001`): Architecture resolved the four remaining TO_INVENTORY rows as `EXCLUDED` with rationale `EXCLUDED_CURRENT_ROUTE` — the three public/token-surface routes do not prove end-user authorization parity, and the MES `standard-time` route uses an internal S2S service credential, not end-user business authorization. These current route contracts are not eligible DAVI execution paths; future exposure requires canonical authenticated end-user READ contracts. No capability was added.
+
 ## Executive summary
 
 - Total API DELPI operations: **726**
 - READ-shaped operations (GET + read-semantics POST batch queries): **531**
-- Structured business READ: **463**
+- Structured business READ: **459**
 - COVERED (allowlist v15): **63**
 - ELIGIBLE_GAP: **374**
 - REDUNDANT: **2**
 - DEFERRED (existing governance dispositions): **20**
-- TO_INVENTORY: **4**
-- EXCLUDED (writes/destructive/binary/admin/SQL/legacy/prohibition): **263**
+- TO_INVENTORY: **0**
+- EXCLUDED (writes/destructive/binary/admin/SQL/legacy/prohibition + 4 current-route dispositions): **267**
 - Allowlist orphans: **0** (all 63 operationIds resolve to current routes)
 - Baseline resync: 721 → **726** operations (+ `get_billing_portfolio_*` ×4, `list_product_inventory_blocks`; all five already had route tests — `route_test_coverage.json` regenerated, statuses `covered`).
 
@@ -46,8 +48,8 @@ This pass also revalidated against a newer `origin/main` that added the MES S2S 
 | HR | 4 | 4 | 4 | 0 | 4 | 0 | 0 | 0 | 0 |
 | Procedures & Guides | 29 | 13 | 4 | 0 | 4 | 0 | 25 | 0 | 0 |
 | Product Master | 38 | 38 | 35 | 17 | 13 | 2 | 3 | 3 | 0 |
-| Production | 55 | 55 | 55 | 10 | 44 | 0 | 0 | 0 | 1 |
-| Public/Token Surface | 9 | 6 | 3 | 0 | 0 | 0 | 6 | 0 | 3 |
+| Production | 55 | 55 | 54 | 10 | 44 | 0 | 1 | 0 | 0 |
+| Public/Token Surface | 9 | 6 | 0 | 0 | 0 | 0 | 9 | 0 | 0 |
 | Quality & Inspection | 185 | 119 | 105 | 0 | 105 | 0 | 80 | 0 | 0 |
 | Reports & Scheduling | 21 | 11 | 10 | 0 | 10 | 0 | 11 | 0 | 0 |
 | Scheduling | 10 | 4 | 4 | 0 | 4 | 0 | 6 | 0 | 0 |
@@ -56,9 +58,9 @@ This pass also revalidated against a newer `origin/main` that added the MES S2S 
 | System | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
 | Technical | 20 | 18 | 0 | 0 | 0 | 0 | 20 | 0 | 0 |
 | UI/Reference | 16 | 6 | 6 | 0 | 6 | 0 | 10 | 0 | 0 |
-| **TOTAL** | **726** | **531** | **463** | **63** | **374** | **2** | **263** | **20** | **4** |
+| **TOTAL** | **726** | **531** | **459** | **63** | **374** | **2** | **267** | **20** | **0** |
 
-Identity check: SBR = COVERED + ELIGIBLE_GAP + REDUNDANT + DEFERRED + TO_INVENTORY = 463 = 463.
+Identity check: SBR = COVERED + ELIGIBLE_GAP + REDUNDANT + DEFERRED + TO_INVENTORY = 459 = 459.
 
 ## ELIGIBLE_GAP by wave candidate
 
@@ -475,11 +477,11 @@ Identity check: SBR = COVERED + ELIGIBLE_GAP + REDUNDANT + DEFERRED + TO_INVENTO
 - `get_supplies_safety_stock_item_details` — [DEFER] composite_analysis detail needs separate nested contract review.
 - `get_supplies_safety_stock_consumption_analysis_item_details` — [DEFER] Includes calculation_memory and monthly series — defer nested detail wave.
 - `get_supplies_purchase_requests_open_coverage` — [DEFER] Returns all open SC coverage items/products without page/page_size; needs owner-side bound or pagination.
-- `list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get` — [DEFER] Requester lookup for UI filters; PII/identity helper without clear standalone information need.
+- `list_supplies_purchase_request_requesters` — [DEFER] Requester lookup for UI filters; PII/identity helper without clear standalone information need.
 - `get_supplies_purchase_request_lines` — [DEFER] Single SC detail by branch/request_number; promote list_supplies_purchase_request_lines first.
 - `list_supplies_purchase_request_recent_linked_orders` — [DEFER] after_recno polling helper for BFF sync, not primary DAVI Q&A capability.
 - `list_supplies_purchase_request_recent_linked_receipts` — [DEFER] after_recno polling helper for BFF sync, not primary DAVI Q&A capability.
-- `get_protheus_user_by_email_route_supplies_protheus_users_by_email_get` — [DEFER] Email→Protheus user identity lookup; not a Supplies information capability for DAVI.
+- `get_supplies_protheus_user_by_email` — [DEFER] Email→Protheus user identity lookup; not a Supplies information capability for DAVI.
 - `get_supplies_third_party_materials_shipment` — [DEFER] Single shipment detail with returns nested — defer after list shipments proves stable.
 - `list_commercial_proposals` — [NEXT_WAVE_CANDIDATE] Proposal workflow family — out of Wave 004 analytics READ scope.
 - `summarize_commercial_proposals_by_collaborator` — [NEXT_WAVE_CANDIDATE] Proposal collaborator summary — out of Wave 004 analytics READ scope.
@@ -493,10 +495,12 @@ Identity check: SBR = COVERED + ELIGIBLE_GAP + REDUNDANT + DEFERRED + TO_INVENTO
 
 ## TO_INVENTORY
 
-- `GET` `/production/orders/{production_order}/operations/{operation_code}/standard-time` — no AuthZ decorator evidence
-- `GET` `/public/quality-labels/inspection/{token}` — public/token surface — no canonical per-user AuthZ; needs product/security decision
-- `GET` `/public/scheduling/resources/{public_token}` — public/token surface — no canonical per-user AuthZ; needs product/security decision
-- `GET` `/public/scheduling/resources/{public_token}/availability` — public/token surface — no canonical per-user AuthZ; needs product/security decision
+None — all four previously unresolved routes were resolved by Architecture disposition as `EXCLUDED` / `EXCLUDED_CURRENT_ROUTE`:
+
+- `GET` `/public/quality-labels/inspection/{token}` `get_public_quality_label_inspection` — public/token surface; no canonical per-user AuthZ parity proven.
+- `GET` `/public/scheduling/resources/{public_token}` `get_public_scheduling_resource` — public/token surface; no canonical per-user AuthZ parity proven.
+- `GET` `/public/scheduling/resources/{public_token}/availability` `get_public_scheduling_availability` — public/token surface; no canonical per-user AuthZ parity proven.
+- `GET` `/production/orders/{production_order}/operations/{operation_code}/standard-time` `get_production_operation_standard_time` — internal MES S2S service-token authorization is not end-user business authorization.
 
 ## EXCLUDED (by reason)
 
@@ -510,6 +514,8 @@ Identity check: SBR = COVERED + ELIGIBLE_GAP + REDUNDANT + DEFERRED + TO_INVENTO
 - **public UI navigation/media surface** (3): `get_public_mural_acessos_link_image`, `list_public_mural_acessos_menu`, `list_public_mural_acessos_menu_by_token`
 - **technical health probe** (1): `get_health`
 - **write/mutation** (127): `acknowledge_planejamento_orcamentario_guidance`, `add_lancamento_notas_fiscais_comment`, `add_seller_customer`, `approve_planejamento_orcamentario_capex_investment`, `approve_planejamento_orcamentario_capex_plan`, `approve_planejamento_orcamentario_personnel_plan`, `approve_quality_action_plan_effectiveness_review`, `approve_scheduling_booking`, `archive_planejamento_orcamentario_capex_investment`, `archive_planejamento_orcamentario_personnel_plan_line`, `assess_quality_action_plan_recurrence_on_opening`, `attach_kaizen_evidence`, `attach_quality_action_plan_evidence`, `block_lancamento_notas_fiscais_request`, `cancel_invoice_issuance_request`, `cancel_lancamento_notas_fiscais_request`, `cancel_scheduling_booking`, `close_audit_5s_audit`, `close_audit_5s_audit_without_nc_treatment`, `complete_audit_5s_evaluation`, `complete_audit_5s_nc_action`, `create_audit_5s_area`, `create_audit_5s_audit`, `create_audit_5s_nc_action`, `create_audit_5s_nonconformity`, `create_canal_denuncia`, `create_invoice_issuance_request`, `create_kaizen_record`, `create_kaizen_version`, `create_lancamento_notas_fiscais_request`, `create_lmp_nonconformity`, `create_mural_acessos_hub`, `create_mural_acessos_link`, `create_planejamento_orcamentario_capex_investment`, `create_planejamento_orcamentario_personnel_plan_line`, `create_public_canal_denuncia`, `create_public_kaizen_suggestion`, `create_public_scheduling_booking`, `create_quality_action_plan`, `create_quality_action_plan_actions`, `create_quality_label`, `create_report_definition`, `create_scheduling_booking`, `create_scheduling_resource`, `create_seller_portfolio`, `delete_audit_5s_audit`, `dispatch_quality_action_plan_notifications`, `enrich_portfolio_customers`, `force_close_audit_5s_nc_without_treatment`, `force_delete_audit_5s_audit`, `implement_kaizen_version`, `import_kaizen_records`, `import_lmp_nonconformities`, `issue_invoice_issuance_request`, `join_audit_5s_audit`, `link_lancamento_notas_fiscais_request_purchase_order`, `post_manual_lancamento_notas_fiscais_request`, `post_mini_applicators_golpes_batch`, `process_pending_report_schedules`, `promote_quality_action_plan_solution_pattern`, `publish_audit_5s_catalog`, `record_quality_action_plan_effectiveness`, `refresh_lancamento_notas_fiscais_reconciliation`, `reject_planejamento_orcamentario_capex_investment`, `reject_planejamento_orcamentario_capex_plan`, `reject_planejamento_orcamentario_personnel_plan`, `reject_quality_action_plan_effectiveness_review`, `reject_scheduling_booking`, `reopen_audit_5s_evaluation`, `reopen_audit_5s_nc_action`, `reopen_quality_action_plan`, `reorder_mural_acessos_links`, `replace_report_recipients`, `replace_seller_customers`, `request_changes_planejamento_orcamentario_capex_plan`, `request_changes_planejamento_orcamentario_personnel_plan`, `resolve_planejamento_orcamentario_capex_plan`, `resolve_planejamento_orcamentario_personnel_plan`, `restore_quality_action_plan_revision`, `resubmit_invoice_issuance_request`, `resume_lancamento_notas_fiscais_request`, `return_invoice_issuance_request`, `run_lancamento_notas_fiscais_reconciliation`, `run_report_definition`, `save_quality_label_certificate`, `save_quality_label_inspector`, `set_audit_5s_area_children`, `set_quality_label_active`, `start_invoice_issuance_request`, `start_lancamento_notas_fiscais_request`, `submit_planejamento_orcamentario_capex_plan`, `submit_planejamento_orcamentario_personnel_plan`, `submit_quality_action_plan_effectiveness_review`, `suggest_quality_action_plan_evidence_tags`, `suggest_quality_action_plan_evidence_tags_from_image`, `transfer_seller_customers`, `update_audit_5s_area`, `update_audit_5s_audit`, `update_audit_5s_nonconformity`, `update_cultura_delpi_content`, `update_invoice_issuance_request`, `update_kaizen_evidence`, `update_kaizen_record`, `update_kaizen_version`, `update_lancamento_notas_fiscais_request`, `update_lmp_nonconformity`, `update_mural_acessos_hub`, `update_mural_acessos_link`, `update_planejamento_orcamentario_capex_investment`, `update_planejamento_orcamentario_personnel_plan_line`, `update_quality_action_plan`, `update_quality_action_plan_action`, `update_quality_action_plan_evidence`, `update_quality_action_plan_status`, `update_report_definition`, `update_scheduling_resource`, `update_seller_portfolio`, `upload_mural_acessos_link_image`, `upload_quality_label_inspector_signature`, `upsert_audit_5s_response`, `upsert_customer_avatar`, `upsert_personal_report_subscription`, `upsert_quality_action_plan_five_whys`, `upsert_quality_action_plan_ishikawa`, `upsert_quality_action_plan_rnc_8d`, `upsert_report_schedule`, `upsert_report_shortage_item_note`
+- **public/token surface — no end-user AuthZ parity (EXCLUDED_CURRENT_ROUTE)** (3): `get_public_quality_label_inspection`, `get_public_scheduling_availability`, `get_public_scheduling_resource`
+- **internal S2S service-token authorization, not end-user AuthZ (EXCLUDED_CURRENT_ROUTE)** (1): `get_production_operation_standard_time`
 
 ## Known classification rules
 

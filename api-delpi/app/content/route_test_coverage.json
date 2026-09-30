@@ -6305,11 +6305,11 @@
       "status": "covered"
     },
     {
-      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "operationId": "get_supplies_protheus_user_by_email",
       "method": "GET",
       "path": "/supplies/protheus-users/by-email",
       "module": "supplies",
-      "entity": "protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "entity": "supplies_protheus_user_by_email",
       "shape": "scalar",
       "status": "covered"
     },
@@ -6422,11 +6422,11 @@
       "status": "covered"
     },
     {
-      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "operationId": "list_supplies_purchase_request_requesters",
       "method": "GET",
       "path": "/supplies/purchase-requests/requesters",
       "module": "supplies",
-      "entity": "supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "entity": "supplies_purchase_request_requesters",
       "shape": "scalar",
       "status": "covered"
     },

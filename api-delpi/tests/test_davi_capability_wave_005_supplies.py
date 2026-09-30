@@ -75,8 +75,8 @@ _DEFERRED = (
     "get_supplies_third_party_materials_shipment",
     "list_supplies_purchase_request_recent_linked_orders",
     "list_supplies_purchase_request_recent_linked_receipts",
-    "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
-    "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+    "list_supplies_purchase_request_requesters",
+    "get_supplies_protheus_user_by_email",
 )
 _REJECTED = ("export_supplies_third_party_materials_returns",)
 _PRIOR_THIRTY_FIVE = (
