@@ -1702,9 +1702,12 @@ services:
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
 
     depends_on:
-      - keycloak
-      - postgres-plugins
-      - bpmn-modeler-migrate
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      bpmn-modeler-migrate:
+        condition: service_completed_successfully
 
     logging:
       driver: "json-file"

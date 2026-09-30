@@ -161,6 +161,7 @@ FASE_MFE=(
   comite-etica-conduta
   quality-labels
   api-delpi-console
+  bpmn-modeler
 )
 
 FASE_API=(
@@ -181,6 +182,8 @@ FASE_API=(
   financial-api
   travel-expenses-api
   production-pulse-api
+  bpmn-modeler-migrate
+  bpmn-modeler-api
 )
 
 FASE_CHAT=(
