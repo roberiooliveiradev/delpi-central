@@ -11,7 +11,7 @@ import { useWorkCenterTimeline } from "../hooks/useWorkCenterTimeline";
 import { workCenterImageUrl } from "../utils/assets";
 import {
   buildDaySegments, downtimeReasonTotals, formatDayClock, formatHoursMinutes,
-  localDayKey, presentDayEvent, summarizeDay,
+  localDayKey, presentDayEvent, presentDayState, summarizeDay,
 } from "../utils/dayTimeline";
 import { presentMonitoringState, runStateSignature } from "../utils/monitoringPresentation";
 import { DayTimelineBar } from "../components/monitoring/DayTimelineBar";
@@ -35,6 +35,7 @@ export function WorkCenterDetailPage({
   const signature = item ? runStateSignature(item) : null;
   const todayKey = localDayKey();
   const [dayKey, setDayKey] = useState(todayKey);
+  const [eventStatus, setEventStatus] = useState("all");
   const history = useWorkCenterTimeline(branch, workCenter, signature, canViewHistory, dayKey);
 
   const timeline = history.data;
@@ -45,6 +46,15 @@ export function WorkCenterDetailPage({
   const summary = useMemo(() => summarizeDay(segments, timeline?.from ?? "", nowMs), [segments, timeline, nowMs]);
   const reasons = useMemo(() => downtimeReasonTotals(segments), [segments]);
   const maxReasonSec = reasons[0]?.seconds ?? 0;
+  const eventStates = useMemo(() => {
+    const order = ["producing", "stopped", "setup", "planned_stop", "idle", "inactive"];
+    const present = new Set(segments.map((segment) => segment.state));
+    return order.filter((state) => present.has(state));
+  }, [segments]);
+  const visibleSegments = useMemo(
+    () => (eventStatus === "all" ? segments : segments.filter((segment) => segment.state === eventStatus)),
+    [segments, eventStatus],
+  );
 
   const lastEvent = useMemo(() => {
     const events = segments.filter((segment) => segment.item);
@@ -176,6 +186,17 @@ export function WorkCenterDetailPage({
                   <h3 id="delpi-mes-wc-events-title">Eventos do dia</h3>
                   <p>Todos os períodos de produção, parada e sem atividade.</p>
                 </div>
+                <label className="delpi-mes-events-filter">
+                  Status
+                  <select value={eventStatus} onChange={(event) => setEventStatus(event.target.value)} aria-label="Filtrar eventos por status">
+                    <option value="all">Todos</option>
+                    {eventStates.map((state) => (
+                      <option key={state} value={state}>
+                        {state === "inactive" ? "Sem atividade" : presentDayState(state).label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </header>
               <div className="delpi-mes-events">
                 <table>
@@ -183,7 +204,7 @@ export function WorkCenterDetailPage({
                     <tr><th>Início</th><th>Fim</th><th>Duração</th><th>Status</th><th>Motivo</th></tr>
                   </thead>
                   <tbody>
-                    {segments.map((segment, index) => {
+                    {visibleSegments.map((segment, index) => {
                       const presentation = segment.item ? presentDayEvent(segment.item) : null;
                       const label = presentation?.label ?? "Sem atividade";
                       const reason = segment.item

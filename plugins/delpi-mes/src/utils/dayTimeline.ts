@@ -39,22 +39,26 @@ export function dayRangeIso(dayKey?: string | null, now = new Date()): { from: s
   return { from: start.toISOString(), to: new Date(endOfLocalDayMs(start.getTime())).toISOString() };
 }
 
+export function presentDayState(state: string): { label: string; tone: DayEventTone } {
+  switch (state) {
+    case "producing":
+      return { label: "Produzindo", tone: "success" };
+    case "stopped":
+      return { label: "Parada", tone: "danger" };
+    case "setup":
+      return { label: "Setup", tone: "warning" };
+    case "planned_stop":
+      return { label: "Parada planejada", tone: "info" };
+    case "idle":
+      return { label: "Livre", tone: "default" };
+    default:
+      return { label: "Estado indisponível", tone: "default" };
+  }
+}
+
 export function presentDayEvent(item: WorkCenterTimelineItem): DayEventPresentation {
   const pendingReason = Boolean(item.downtime && (!item.downtime.confirmed || !item.downtime.reasonCode));
-  switch (item.state) {
-    case "producing":
-      return { label: "Produzindo", tone: "success", pendingReason };
-    case "stopped":
-      return { label: "Parada", tone: "danger", pendingReason };
-    case "setup":
-      return { label: "Setup", tone: "warning", pendingReason };
-    case "planned_stop":
-      return { label: "Parada planejada", tone: "info", pendingReason };
-    case "idle":
-      return { label: "Livre", tone: "default", pendingReason };
-    default:
-      return { label: "Estado indisponível", tone: "default", pendingReason };
-  }
+  return { ...presentDayState(item.state), pendingReason };
 }
 
 export function dayEventDurationSeconds(item: WorkCenterTimelineItem, fromIso: string, toIso: string, nowMs: number): number {

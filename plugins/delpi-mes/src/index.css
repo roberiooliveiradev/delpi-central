@@ -682,7 +682,7 @@
 .delpi-mes-daybar__viewport:active { cursor: grabbing; }
 .delpi-mes-daybar__viewport:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 2px; }
 .delpi-mes-daybar__canvas { position: relative; }
-.delpi-mes-daybar__ticks { position: relative; height: 1rem; margin-bottom: 0.3rem; }
+.delpi-mes-daybar__ticks { position: relative; height: 1.55rem; margin-bottom: 0.35rem; }
 .delpi-mes-daybar__ticks span {
   position: absolute;
   transform: translateX(-50%);
@@ -707,8 +707,8 @@
 .delpi-mes-daybar__segment--other { background: #f59e0b; }
 .delpi-mes-daybar__now {
   position: absolute;
-  top: -0.45rem;
-  bottom: -0.45rem;
+  top: -0.35rem;
+  bottom: -0.35rem;
   border-left: 2px dashed #1e63c4;
 }
 .delpi-mes-daybar__now-label {
@@ -724,7 +724,7 @@
   background: #1e63c4;
   white-space: nowrap;
 }
-.delpi-mes-daybar__marks { position: relative; height: 2.4rem; margin-top: 0.4rem; }
+.delpi-mes-daybar__marks { position: relative; height: 3.6rem; margin-top: 0.4rem; }
 .delpi-mes-daybar__mark {
   position: absolute;
   transform: translateX(-50%);
@@ -758,6 +758,24 @@
 .delpi-mes-reasons strong { font-size: 0.8rem; white-space: nowrap; }
 
 .delpi-mes-events { max-height: 21rem; overflow: auto; border-radius: 0.6rem; }
+.delpi-mes-events-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #5c6b80;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.delpi-mes-events-filter select {
+  min-height: 2.15rem;
+  padding: 0 0.6rem;
+  border: 1px solid #d7dfea;
+  border-radius: 0.6rem;
+  color: #1b2a41;
+  background: #f8fafc;
+  cursor: pointer;
+}
+.delpi-mes-events-filter select:focus-visible { outline: 3px solid rgb(30 99 196 / 40%); outline-offset: 1px; }
 .delpi-mes-events table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .delpi-mes-events th {
   position: sticky;
