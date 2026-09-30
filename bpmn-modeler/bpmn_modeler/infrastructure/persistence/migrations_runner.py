@@ -10,6 +10,7 @@ from typing import Any
 import psycopg
 from psycopg.rows import dict_row
 
+SCHEMA_NAME = "bpmn_modeler"
 MIGRATIONS_DIR = Path(__file__).resolve().parents[3] / "migrations"
 
 
@@ -44,15 +45,15 @@ def _env(name: str) -> str:
 
 
 def get_settings() -> DbSettings:
-    """Migration role — bpmn_modeler_admin (database owner)."""
+    """Shared plugins_hub credentials — platform convention (PLUGINS_DB_*)."""
     return DbSettings(
-        host=_env("BPMN_MODELER_DB_HOST"),
-        port=int(_env("BPMN_MODELER_DB_PORT")),
-        database=_env("BPMN_MODELER_DB_NAME"),
-        user=_env("BPMN_MODELER_DB_ADMIN_USER"),
-        password=_env("BPMN_MODELER_DB_ADMIN_PASSWORD"),
-        connect_timeout=int(os.getenv("BPMN_MODELER_DB_CONNECT_TIMEOUT", "5")),
-        sslmode=os.getenv("BPMN_MODELER_DB_SSLMODE", "prefer").strip() or "prefer",
+        host=_env("PLUGINS_DB_HOST"),
+        port=int(_env("PLUGINS_DB_PORT")),
+        database=_env("PLUGINS_DB_NAME"),
+        user=_env("PLUGINS_DB_USER"),
+        password=_env("PLUGINS_DB_PASSWORD"),
+        connect_timeout=int(os.getenv("PLUGINS_DB_CONNECT_TIMEOUT", "5")),
+        sslmode=os.getenv("PLUGINS_DB_SSLMODE", "prefer").strip() or "prefer",
     )
 
 
@@ -64,9 +65,10 @@ def get_connection():
 
 def ensure_migrations_table(conn: Any) -> None:
     with conn.cursor() as cur:
+        cur.execute(f'CREATE SCHEMA IF NOT EXISTS "{SCHEMA_NAME}";')
         cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS public.schema_migrations (
+            f"""
+            CREATE TABLE IF NOT EXISTS "{SCHEMA_NAME}".schema_migrations (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 version VARCHAR(50) NOT NULL UNIQUE,
                 name VARCHAR(255) NOT NULL,
@@ -104,7 +106,7 @@ def applied_migrations(conn: Any) -> dict[str, dict[str, Any]]:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT version, name, checksum, executed_at "
-            "FROM public.schema_migrations ORDER BY version ASC"
+            f'FROM "{SCHEMA_NAME}".schema_migrations ORDER BY version ASC'
         )
         return {row["version"]: row for row in cur.fetchall()}
 
@@ -125,7 +127,7 @@ def apply_migration(conn: Any, path: Path) -> None:
         with conn.cursor() as cur:
             cur.execute(path.read_text(encoding="utf-8"))
             cur.execute(
-                "INSERT INTO public.schema_migrations (version, name, checksum) "
+                f'INSERT INTO "{SCHEMA_NAME}".schema_migrations (version, name, checksum) '
                 "VALUES (%s, %s, %s)",
                 (version, name, checksum_of(path)),
             )

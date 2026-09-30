@@ -1,6 +1,7 @@
 # BPMN Modeler — Security / Persistence / Runtime Spec Freeze (Prompt 6/7)
 
 > **Status:** `FROZEN` (corrigido pelo Corrective Gate de Prompt 6 — database isolation, least privilege, dependency lock e contratos de runtime ausentes)
+> **Emenda pós-implementação:** a decisão de database dedicado (`bpmn_modeler` DB + roles próprios) foi **revogada pelo owner da plataforma** em favor do padrão canônico dos plugins: database compartilhado `plugins_hub` + schema dedicado `bpmn_modeler` + credenciais `PLUGINS_DB_*` (`plugins_user`) + migrations no startup da API (`BPMN_RUN_MIGRATIONS_ON_STARTUP`). Seções §4, §17, §20, §22–§24 atualizadas nesta emenda.
 > **Escopo:** segurança, autenticação, autorização, persistência física, banco de dados, dependências exatas, runtime, deploy, observabilidade, migrações e CI da V1.
 > **Natureza:** freeze de especificação. **Nenhuma linha de código de produção é autorizada por este documento.**
 
@@ -30,7 +31,7 @@ Em conflito, o documento anterior vence para o seu domínio; este documento venc
 | `bpmn-modeler` | Backend API (bounded context dono) | `bpmn-modeler/` (raiz do repo; skeleton `bpmn_modeler/` já existente) | Python 3.11, FastAPI, uvicorn |
 | `plugins/bpmn-modeler` | Frontend MFE | `plugins/bpmn-modeler/` | Node 20, React, Vite, Module Federation |
 | `postgres-plugins` | PostgreSQL **server** compartilhado | serviço Docker `postgres-plugins` | PostgreSQL 15 |
-| `bpmn_modeler` (database) | **Logical database dedicado** dentro de `postgres-plugins` | provisionado pelo bootstrap de infra | ver §4 |
+| `bpmn_modeler` (schema) | **Schema dedicado** dentro do database compartilhado `plugins_hub` (`postgres-plugins`) | criado pela migration V001 | ver §4 |
 | gateway | nginx | `gateway/` | rotas `/apps/bpmn-modeler-api/*` |
 
 Regras de fronteira:
@@ -137,89 +138,50 @@ Regras:
 
 ## 4. Database — isolation, ownership e roles
 
-`FROZEN` — direção arquitetural: **shared server ≠ shared database**.
+`FROZEN` (emendado) — direção arquitetural da plataforma: **shared server + shared database, schema-per-context**.
 
 | Propriedade | Valor |
 |---|---|
-| PostgreSQL server | `postgres-plugins` (mesmo servidor físico da plataforma — aceitável) |
-| **Logical database** | **`bpmn_modeler`** — dedicado, autoridade exclusiva do BPMN Modeler |
-| Schema | `public` (database dedicado não precisa de schema-per-context; hierarquia duplicada de isolamento é proibida) |
-| `search_path` | `public` (setado explicitamente na sessão — ver §15) |
+| PostgreSQL server | `postgres-plugins` (mesmo servidor físico da plataforma) |
+| **Logical database** | **`plugins_hub`** — database compartilhado de todos os plugins (`PLUGINS_DB_NAME`) |
+| Schema | **`bpmn_modeler`** — schema dedicado do contexto (padrão `transformometro`, `cipa`, `helpdesk`…) |
+| Qualificação | tabelas sempre referenciadas como `bpmn_modeler.<table>` no SQL |
 | Extensões | **nenhuma** — `pgcrypto` **NOT_REQUIRED** (§8) |
-| Runtime role | `bpmn_modeler_app` — least privilege (§4.2) |
-| Migration role | `bpmn_modeler_admin` — owner do database, executa migrations (§4.2) |
-| Bootstrap | superuser da plataforma (`POSTGRES_USER`) via init script de infra cria database + roles + grants — contrato de provisionamento; **não** é runtime nem migration role |
+| Runtime role | `plugins_user` — credencial compartilhada da plataforma (`PLUGINS_DB_USER`) |
+| Migration role | `plugins_user` — migrations rodam no startup da API via `BPMN_RUN_MIGRATIONS_ON_STARTUP` (padrão `TM_RUN_MIGRATIONS_ON_STARTUP`) |
+| Bootstrap | **nenhum** — schema e tabelas criados pela migration V001; zero provisionamento manual |
 
-Justificativa: `${PLUGINS_DB_NAME}` como database compartilhado violaria "nunca compartilhar banco". O padrão de naming dedicado `<CTX>_DB_*` já existe no monorepo (`PORTAL_RH_DB_*`).
+Justificativa da emenda: o padrão operante da plataforma é database único `plugins_hub` com isolamento por schema — todos os ~25 plugins seguem esse modelo (verify: `\dn` em plugins_hub). Database dedicado por contexto criaria exceção operacional (backup, grants, provisionamento) sem benefício proporcional na V1.
 
 ### 4.1 Cross-context DB coupling
 
 `FROZEN`:
 
-- O database `bpmn_modeler` **não tem FK** para Transformômetro nem para qualquer outro contexto.
-- `bpmn_modeler_app` **não possui** grants em `plugins`, `core`, Transformômetro ou qualquer outro database/schema.
-- `transformometro` runtime role **não possui** grants no database `bpmn_modeler`.
-- Integração futura entre contextos: **somente** via API/contrato explícito — nunca SQL cross-database.
-- `BPMN Modeler DB ≠ Transformômetro DB ≠ plugins DB`, mesmo coexistindo no mesmo PostgreSQL server.
+- O schema `bpmn_modeler` **não tem FK** para Transformômetro nem para qualquer outro contexto/schema.
+- Nenhum objeto do BPMN Modeler é criado no schema `public` ou em schema de outro contexto.
+- Integração futura entre contextos: **somente** via API/contrato explícito — nunca SQL cross-schema.
+- Isolamento lógico por schema é a fronteira do contexto; a credencial `plugins_user` é compartilhada por decisão de plataforma (mesmo modelo dos demais plugins).
 
 ### 4.2 Grants — capability matrix
 
-`FROZEN`:
+`FROZEN` (emendado): com credencial compartilhada `plugins_user`, não há grants por objeto nem roles dedicadas — o modelo least-privilege por contexto é substituído pelo isolamento por schema, como em todos os demais plugins.
 
-| Capability | Runtime `bpmn_modeler_app` | Migration `bpmn_modeler_admin` |
-|---|---|---|
-| CONNECT (`bpmn_modeler`) | ✅ | ✅ |
-| SELECT `models`, `revisions` | ✅ | ✅ |
-| INSERT `models`, `revisions` | ✅ | ✅ (migrations/seed se necessário) |
-| UPDATE `models` | ✅ | ✅ |
-| UPDATE `revisions` | ❌ (append-only) | ✅ (owner técnico, não usado em runtime) |
-| DELETE (qualquer tabela) | ❌ | ❌ em runtime; ✅ técnico do owner, **não usado** — V1 não tem delete |
-| SELECT/INSERT/UPDATE/DELETE `schema_migrations` | ❌ | ✅ |
-| CREATE TABLE / CREATE INDEX / ALTER / DROP | ❌ | ✅ (database owner) |
-| CREATE EXTENSION | ❌ | ❌ (nenhuma extensão exigida) |
-| CREATE SCHEMA | ❌ | ❌ (usa `public`) |
-| SUPERUSER / CREATEDB / CREATEROLE | ❌ | ❌ (CREATEDB não é necessário — database já provisionado pelo bootstrap) |
-| Grants em outros databases/schemas | ❌ | ❌ |
-
-Bootstrap (superuser) executa, em init script de infra:
-
-```sql
-CREATE ROLE bpmn_modeler_app LOGIN PASSWORD '<secret>';
-CREATE ROLE bpmn_modeler_admin LOGIN PASSWORD '<secret>';
-CREATE DATABASE bpmn_modeler OWNER bpmn_modeler_admin;
--- no database bpmn_modeler:
-GRANT CONNECT ON DATABASE bpmn_modeler TO bpmn_modeler_app;
-GRANT USAGE ON SCHEMA public TO bpmn_modeler_app;
-```
-
-Grants por objeto são aplicados **pela migration que cria o objeto** (executada por `bpmn_modeler_admin` — §22), nunca por `ALTER DEFAULT PRIVILEGES` amplo. `FROZEN` — concessões exatas da V1:
-
-```sql
--- aplicadas pela migration que cria as tabelas (role: bpmn_modeler_admin)
-GRANT SELECT, INSERT, UPDATE ON TABLE public.models    TO bpmn_modeler_app;
-GRANT SELECT, INSERT         ON TABLE public.revisions TO bpmn_modeler_app;
-```
-
-Denials explícitos do runtime role:
+Contratos que **permanecem** válidos (agora garantidos por código, não por grants):
 
 ```text
-NO UPDATE  ON revisions
-NO DELETE  ON models
-NO DELETE  ON revisions
-NO grants  ON schema_migrations
-NO DDL     (CREATE/ALTER/DROP em qualquer objeto)
+revisions: append-only — a camada de repositório nunca emite UPDATE/DELETE
+models:    sem DELETE na V1 (hard delete não existe)
+schema_migrations: escrita somente pelo runner de migrations
 ```
 
-**`ALTER DEFAULT PRIVILEGES ... GRANT SELECT, INSERT, UPDATE ON TABLES` é proibido na V1** — `future table ≠ automatically authorized runtime resource`; cada migration que criar objeto concede explicitamente apenas os privileges necessários daquele objeto (least privilege opt-in por objeto).
-
-O DDL acima é **contrato normativo** — o script init real deve ser semanticamente equivalente. `REVOKE CREATE ON SCHEMA public FROM PUBLIC` é default em PG15 e permanece.
+> Nota: revogar `UPDATE`/`DELETE` por grant no contexto `bpmn_modeler` exigiria role dedicada — decisão revogada. Append-only de revisions é invariante de aplicação testada, não de RBAC de banco.
 
 ### 4.3 Schema físico — `models`
 
-`FROZEN` (DDL de referência normativa, objetos em `public`):
+`FROZEN` (DDL de referência normativa, objetos no schema `bpmn_modeler`):
 
 ```sql
-CREATE TABLE public.models (
+CREATE TABLE bpmn_modeler.models (
     id                  uuid PRIMARY KEY,
     display_name        varchar(120) NOT NULL,
     working_copy_xml    text NOT NULL,
@@ -237,9 +199,9 @@ CREATE TABLE public.models (
 );
 
 CREATE INDEX idx_models_list
-    ON public.models (archived_at, updated_at DESC);
+    ON bpmn_modeler.models (archived_at, updated_at DESC);
 CREATE INDEX idx_models_name_lower
-    ON public.models (lower(display_name));
+    ON bpmn_modeler.models (lower(display_name));
 ```
 
 - `version` começa em `1` na criação — valor enviado explicitamente pela Application (postcondition Prompt 2).
@@ -252,9 +214,9 @@ CREATE INDEX idx_models_name_lower
 `FROZEN`:
 
 ```sql
-CREATE TABLE public.revisions (
+CREATE TABLE bpmn_modeler.revisions (
     id               uuid PRIMARY KEY,
-    model_id         uuid NOT NULL REFERENCES public.models(id) ON DELETE RESTRICT,
+    model_id         uuid NOT NULL REFERENCES bpmn_modeler.models(id) ON DELETE RESTRICT,
     revision_number  integer NOT NULL CHECK (revision_number >= 1),
     artifact_xml     text NOT NULL,
     artifact_sha256  char(64) NOT NULL CHECK (artifact_sha256 ~ '^[0-9a-f]{64}$'),
@@ -267,7 +229,7 @@ CREATE TABLE public.revisions (
 );
 
 CREATE INDEX idx_revisions_model
-    ON public.revisions (model_id, revision_number DESC);
+    ON bpmn_modeler.revisions (model_id, revision_number DESC);
 ```
 
 - `UNIQUE(model_id, revision_number)` = ordenação monotônica física por model.
@@ -465,12 +427,12 @@ Total: 8 VIEW + 3 EDIT + 5 MANAGE + 1 MANAGE+VIEW = **17/17**. Transversal: toke
 | identity | Keycloak | authentication |
 | RBAC / permissões efetivas | Core API | permissions |
 | canonical BPMN artifact | BPMN Modeler | XML + DI (único modelo persistido) |
-| BPMN Modeler DB | BPMN Modeler | persistence — database `bpmn_modeler` dedicado |
+| BPMN Modeler DB | BPMN Modeler | persistence — schema `bpmn_modeler` no database compartilhado `plugins_hub` |
 | revisions | BPMN Modeler | immutable history |
 | validation | BPMN Modeler | evidence (rules/catalog do Prompt 3) |
 | layout proposal | BPMN Modeler frontend | derived only — nunca autoridade semântica |
 | Transformômetro process/data | Transformômetro | external context — acesso só via contrato API |
-| plugins DB / outros contextos | respectivos owners | fora de alcance do `bpmn_modeler_app` |
+| outros schemas do `plugins_hub` | respectivos owners | isolamento por schema; o Modelador só qualifica `bpmn_modeler.*` |
 
 ---
 
@@ -535,17 +497,17 @@ Sem event sourcing; sem audit table separada na V1 (revision trail + `updated_*`
 `FROZEN`:
 
 - **Pool:** implementação in-process de pool limitado sobre psycopg3 puro, seguindo o padrão comprovado `plugins_postgres_connection.py` (bounded pool, contextmanager de lease, thread-safe). `psycopg-pool` **não** é adicionado — a convenção real do monorepo não o usa.
-- Parâmetros: `BPMN_MODELER_DB_POOL_MAX_SIZE` default `5`; `BPMN_MODELER_DB_POOL_ACQUIRE_TIMEOUT` default `30`s; `application_name = 'bpmn-modeler-api'`.
+- Parâmetros: `PLUGINS_DB_POOL_MAX_SIZE` default `5`; `PLUGINS_DB_POOL_ACQUIRE_TIMEOUT` default `30`s; `application_name = 'bpmn-modeler-api'`.
 - Uma instância de pool por processo (lazy singleton com lock); `Connection` obtida por operação/transação via context manager — **proibido** criar conexão ad hoc por request.
 - **Session safety** aplicada na DSN/`options` da conexão do pool:
 
 ```text
-options = -c statement_timeout=30000 -c TimeZone=UTC -c search_path=public
+options = -c statement_timeout=30000 -c TimeZone=UTC
 connect_timeout = 5
 application_name = bpmn-modeler-api
 ```
 
-- `statement_timeout=30000` chega à sessão via `options` (não é apenas constante); `TimeZone=UTC` garante `timestamptz` coerente; `search_path=public` explícito por defesa em profundidade.
+- `statement_timeout=30000` chega à sessão via `options` (não é apenas constante); `TimeZone=UTC` garante `timestamptz` coerente. Tabelas são sempre qualificadas `bpmn_modeler.<table>` no SQL — `search_path` explícito não é necessário (defesa em profundidade substituída por qualificação, padrão dos demais plugins).
 
 ---
 
@@ -563,13 +525,13 @@ Rotas públicas intencionais, explicitamente liberadas pelo `auth_middleware`.
 **Readiness (`/ready`) — `FROZEN`:**
 
 - **Nunca** executa migrations.
-- Verifica somente, conectando como `bpmn_modeler_app`:
+- Verifica somente:
   - runtime DB connectivity (`SELECT 1` via pool);
   - XSD bundle carregado (checksum ok);
-  - runtime config obrigatória presente (Keycloak + `BPMN_MODELER_DB_*` de runtime);
-  - **migration version compatible** — verificada pela existência dos objetos exigidos pela última migration esperada (`to_regclass('public.models')`, `to_regclass('public.revisions')`; metadata de `pg_catalog` não depende de grant em `schema_migrations`). Objeto ausente → `READINESS = FAIL` (`503`); a API **não** tenta corrigir — correção é o migration job de §22.
+  - runtime config obrigatória presente (Keycloak + `PLUGINS_DB_*`);
+  - **migration version compatible** — verificada pela existência dos objetos exigidos pela última migration esperada (`to_regclass('bpmn_modeler.models')`, `to_regclass('bpmn_modeler.revisions')`). Objeto ausente → `READINESS = FAIL` (`503`); a API **não** tenta corrigir no probe — correção é a execução de migrations (§22).
 
-**Startup validation (fail-closed):** presença de `KEYCLOAK_JWKS_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_AUDIENCE`, `BPMN_MODELER_DB_HOST/PORT/NAME/USER/PASSWORD`; XSD bundle carrega e passa checksum. **Não existe flag de run-migrations-on-startup**: o processo `bpmn-modeler-api` nunca recebe credencial DDL nem executa migration (§22).
+**Startup validation (fail-closed):** presença de `KEYCLOAK_JWKS_URL`, `KEYCLOAK_ISSUER`, `KEYCLOAK_AUDIENCE`, `PLUGINS_DB_HOST/PORT/NAME/USER/PASSWORD`; XSD bundle carrega e passa checksum. `BPMN_RUN_MIGRATIONS_ON_STARTUP` (default `true`) executa `run_migrations()` antes de servir tráfego — padrão da plataforma (`TM_RUN_MIGRATIONS_ON_STARTUP`).
 
 ---
 
@@ -593,30 +555,22 @@ Rotas públicas intencionais, explicitamente liberadas pelo `auth_middleware`.
 | `KEYCLOAK_JWKS_URL` | sim | não | `.../protocol/openid-connect/certs` |
 | `KEYCLOAK_ISSUER` | sim | não | `.../realms/delpi` |
 | `KEYCLOAK_AUDIENCE` | sim | não | audience do client da API |
-| `BPMN_MODELER_DB_HOST` | sim | não | `postgres-plugins` |
-| `BPMN_MODELER_DB_PORT` | sim | não | `5432` |
-| `BPMN_MODELER_DB_NAME` | sim | não | `bpmn_modeler` |
-| `BPMN_MODELER_DB_USER` | sim | **secret** | `bpmn_modeler_app` |
-| `BPMN_MODELER_DB_PASSWORD` | sim | **secret** | via env/secret store |
-| `BPMN_MODELER_DB_POOL_MAX_SIZE` | não | não | `5` |
-| `BPMN_MODELER_DB_POOL_ACQUIRE_TIMEOUT` | não | não | `30` |
+| `PLUGINS_DB_HOST` | sim | não | `postgres-plugins` |
+| `PLUGINS_DB_PORT` | sim | não | `5432` |
+| `PLUGINS_DB_NAME` | sim | não | `plugins_hub` |
+| `PLUGINS_DB_USER` | sim | **secret** | `plugins_user` |
+| `PLUGINS_DB_PASSWORD` | sim | **secret** | via env/secret store |
+| `PLUGINS_DB_POOL_MAX_SIZE` | não | não | `5` |
+| `PLUGINS_DB_POOL_ACQUIRE_TIMEOUT` | não | não | `30` |
+| `PLUGINS_DB_APPLICATION_NAME` | não | não | `bpmn-modeler-api` |
+| `BPMN_RUN_MIGRATIONS_ON_STARTUP` | não | não | `true` |
 | `BPMN_MODELER_ROOT_PATH` | sim | não | `/apps/bpmn-modeler-api` |
 | `LOG_LEVEL` | não | não | `INFO` |
 
-**Migration job env** (step de deploy separado — §22; **nunca** injetado no processo da API):
+`FROZEN` (emendado) — env simplificado:
 
-| Variável | Obrigatória | Secret | Padrão / exemplo |
-|---|---|---|---|
-| `BPMN_MODELER_DB_HOST` | sim | não | `postgres-plugins` |
-| `BPMN_MODELER_DB_PORT` | sim | não | `5432` |
-| `BPMN_MODELER_DB_NAME` | sim | não | `bpmn_modeler` |
-| `BPMN_MODELER_DB_ADMIN_USER` | sim | **secret** | `bpmn_modeler_admin` |
-| `BPMN_MODELER_DB_ADMIN_PASSWORD` | sim | **secret** | via env/secret store |
-
-`FROZEN` — admin credential isolation:
-
-- `BPMN_MODELER_DB_ADMIN_*` **não existe** no ambiente do processo `bpmn-modeler-api` em produção — o runtime não conhece credencial DDL.
-- `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` **removido do contrato** — não há migration pelo startup da API. Conveniência local/dev futura usa processo/container de migration separado, nunca eleva o processo API.
+- Credencial de banco é a **`PLUGINS_DB_*` compartilhada da plataforma** — o BPMN Modeler não introduz `BPMN_MODELER_DB_*` nem roles próprios.
+- `BPMN_RUN_MIGRATIONS_ON_STARTUP` (padrão `true`) executa `run_migrations()` no lifespan — mesmo modelo `TM_RUN_MIGRATIONS_ON_STARTUP` do Transformômetro.
 - Nenhuma variável controla limites de segurança, namespaces BPMN ou permission codes.
 - `env.*.example` documenta placeholders apenas.
 
@@ -674,14 +628,14 @@ style-src-attr 'unsafe-inline';
 ```text
 bpmn-modeler-api:
   build: bpmn-modeler/Dockerfile (python:3.11-slim)
-  env:   BPMN_MODELER_DB_HOST/PORT/NAME/USER/PASSWORD (app role only), KEYCLOAK_*, BPMN_MODELER_ROOT_PATH, LOG_LEVEL
+  env:   PLUGINS_DB_* (credencial compartilhada), KEYCLOAK_*,
+         BPMN_RUN_MIGRATIONS_ON_STARTUP, BPMN_MODELER_ROOT_PATH, LOG_LEVEL
   port:  8000 (interno)
   deps:  postgres-plugins (healthy)
   healthcheck: curl -f http://localhost:8000/health
 ```
 
-- O env do serviço contém **somente** credenciais `bpmn_modeler_app` — `BPMN_MODELER_DB_ADMIN_*` nunca é injetado no container da API (§17).
-- Migration roda como step/job separado com `bpmn_modeler_admin` antes do rollout (§22).
+- Sem job de migration separado nem credenciais extras — migrations no startup da API (padrão da plataforma).
 
 - Receita dos demais `*-api` (`uvicorn` + `--root-path`).
 - Gateway: location `/apps/bpmn-modeler-api/` → `bpmn-modeler-api:8000`, com `limit_req` zone dedicada e headers de §19.
@@ -709,21 +663,20 @@ bpmn-modeler-api:
 |---|---|
 | Diretório | `bpmn-modeler/migrations/` |
 | Naming | `VNNN__descricao.sql` |
-| Executor | runner do contexto sob role **`bpmn_modeler_admin`** (migration role — §4.2); runtime role nunca executa migration |
-| Tracking | `public.schema_migrations` (`version`, `name`, `checksum` SHA-256, `executed_at`) — runtime role sem grants nela |
+| Executor | runner do contexto (`migrations_runner.py`) com credencial `PLUGINS_DB_*` (`plugins_user`), no lifespan da API via `BPMN_RUN_MIGRATIONS_ON_STARTUP` |
+| Tracking | `bpmn_modeler.schema_migrations` (`version`, `name`, `checksum` SHA-256, `executed_at`) |
 | Imutabilidade | arquivo aplicado nunca editado; checksum divergente = falha |
-| Execução | **dedicated deploy/migration step** (job/CLI separado) executado **antes** do backend rollout; nunca pelo startup da API em produção — `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` removido do contrato |
+| Execução | **startup da API** (idempotente; falha aborta o boot — padrão `TM_RUN_MIGRATIONS_ON_STARTUP`); runner também invocável via `python -m bpmn_modeler.infrastructure.persistence.migrations_runner up` |
 | Produção | apenas `up`; nunca reset destrutivo |
-| Grants | a migration que cria objeto aplica os GRANTs exatos de §4.2 (opt-in por objeto; sem `ALTER DEFAULT PRIVILEGES` amplo) |
-| Migrations V1 | `V001` (tabelas + constraints + índices em `public` + GRANTs §4.2). Database/roles **não** são migration — são bootstrap de infra (§4.2) |
+| Grants | não aplicável — credencial compartilhada; isolamento por schema (§4.2) |
+| Migrations V1 | `V001` (`CREATE SCHEMA bpmn_modeler` + tabelas + constraints + índices). Nenhum bootstrap de infra — schema/database já provisionados pela plataforma |
 
-**Sequência de deploy `FROZEN`:**
+**Sequência de deploy `FROZEN` (emendada):**
 
 ```text
-bootstrap database/roles (init script infra, quando requerido)
-→ migration job/CLI com bpmn_modeler_admin
-→ verify migration history (checksums, objetos criados, grants aplicados)
-→ backend rollout com bpmn_modeler_app apenas
+postgres-plugins healthy
+→ backend rollout (lifespan: env check → migrations → XSD bundle → service)
+→ verify /ready (database + xsd_bundle + schema)
 → frontend rollout
 ```
 
@@ -733,10 +686,10 @@ bootstrap database/roles (init script infra, quando requerido)
 
 `FROZEN`:
 
-- Persistência no server `postgres-plugins` → coberto pelo backup do serviço compartilhado (volume `postgres_plugins_data`); database dedicado `bpmn_modeler` é incluído nesse backup por estando no mesmo server — **não** há backup separado por plugin na V1.
+- Persistência no database `plugins_hub` do server `postgres-plugins` → coberto pelo backup compartilhado (volume `postgres_plugins_data`); o schema `bpmn_modeler` é incluído por estar no mesmo database — **não** há backup separado por plugin na V1.
 - Revisions append-only + `sha256` permitem verificação de integridade em restore.
 - RPO/RTO herdados da infra compartilhada.
-- Recuperação: migrations forward-only + init script de bootstrap (database/roles) — reconstrução reproduzível.
+- Recuperação: migrations forward-only recriam o schema — reconstrução reproduzível sem bootstrap manual.
 
 ---
 
@@ -752,7 +705,7 @@ bootstrap database/roles (init script infra, quando requerido)
 | Offline XSD validation | teste `no_network` | sim |
 | Frontend build | `npm ci` + `vite build` (worker asset presente) | sim |
 | Lock integrity | `package-lock.json` + `npm ci` (sem `--force`/`--legacy-peer-deps`) | sim |
-| Grants/role test | acceptance explícito como `bpmn_modeler_app` — PASS: `SELECT`/`INSERT`/`UPDATE` em `models`; `SELECT`/`INSERT` em `revisions`. FAIL: `UPDATE revisions`, `DELETE models`, `DELETE revisions`, `SELECT schema_migrations`, `CREATE TABLE`, `ALTER TABLE`, acesso a outro database de contexto | sim |
+| Schema isolation test | integração — objetos existem em `bpmn_modeler.*` (`models`, `revisions`, `schema_migrations`) e nada do contexto vaza para `public` | sim |
 | Secret scan | gate canônico | sim |
 | License scan | allowlist §3.3 | sim |
 | Workflow dedicado | `.github/workflows/bpmn-modeler-api.yml` | sim |
@@ -776,7 +729,7 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 `FROZEN` — sem exceção na V1:
 
 - ❌ persistir `flowchart_v1`/visual JSON/moddle JSON como modelo — XML BPMN é o único artefato canônico.
-- ❌ database/schema do Transformômetro ou `plugins` DB compartilhado como autoridade do Modelador.
+- ❌ database/schema do Transformômetro ou objetos no schema `public`/`plugins_hub` fora do schema `bpmn_modeler` como autoridade do Modelador.
 - ❌ SQL cross-database / FK cross-context.
 - ❌ endpoint genérico de SQL/proxy (`/query`, `/exec`) ou ORM genérico.
 - ❌ concatenação de input em SQL; `ORDER BY` de string crua.
@@ -792,7 +745,7 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 - ❌ dependência de produção com range flutuante.
 - ❌ alterar migrations aplicadas.
 - ❌ DDL no runtime role para "facilitar" migration.
-- ❌ credencial admin/migration injetada no processo da API (`BPMN_MODELER_DB_ADMIN_*` ausente do env runtime).
+- ❌ roles/credenciais de banco dedicadas ao contexto (`BPMN_MODELER_DB_*` ausente — usa `PLUGINS_DB_*` compartilhado).
 - ❌ migration executada pelo startup da API em produção — sempre step de deploy separado.
 - ❌ `ALTER DEFAULT PRIVILEGES` amplo — grants são opt-in por objeto via migration.
 - ❌ `pgcrypto`/`pg_trgm` ou qualquer extensão sem requirement.
@@ -807,19 +760,19 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 |---|---|---|
 | `TODO`/`TBD`/`a decidir`/`talvez`/`maybe` | nenhum remanescente em decisão crítica | ok |
 | `latest`/`*.x`/`version TBD`/`permission TBD`/`schema TBD`/`limit TBD`/`worker fallback TBD` | nenhum | ok |
-| `PLUGINS_DB_NAME`/`PLUGINS_DB_USER` como DB do Modelador | **removido** — substituído por `BPMN_MODELER_DB_*` dedicado | corrigido |
+| `PLUGINS_DB_NAME`/`PLUGINS_DB_USER` como DB do Modelador | **adotado** — emenda pós-implementação: database dedicado revogado em favor do padrão `plugins_hub` + schema `bpmn_modeler` (§4) | revogado/corrigido |
 | `gen_random_uuid`/`UUID4` | estratégia única `uuid.uuid4()` via `IdGeneratorPort`; `pgcrypto` NOT_REQUIRED | corrigido |
 | `3.40.6` | **removido** — `@bpmn-io/properties-panel` congelado em `3.55.0` (peer `>=3.42.0` satisfeito) | corrigido |
 | `bpmn-js` como `MIT` | **corrigido** — bpmn.io License + watermark | corrigido |
-| `least privilege`/`GRANT`/`REVOKE` | grants matrix §4.2 explícita | fechado |
+| `least privilege`/`GRANT`/`REVOKE` | modelo de roles dedicadas revogado — isolamento por schema + credencial compartilhada (§4.2); append-only de revisions é invariante de aplicação | fechado (emendado) |
 | `pagination`/`SQL injection`/`parameterized`/`threat`/`resource ownership`/`unsafe-inline`/`CORS`/`CSRF`/`rate limit`/`connection pool` | contratos explícitos §5, §6, §12, §15, §18.1, §19 | fechado |
 | `Transformômetro DB`/`visual JSON`/`moddle JSON`/`generic SQL`/`generic proxy`/`full XML log`/`force overwrite`/`hard delete`/`runtime schema download` | apenas como proibição | ok |
-| `GRANT SELECT, INSERT, UPDATE ON TABLE public.models, public.revisions` (conjunto único) | **removido** — grants separados por tabela (§4.2); `UPDATE revisions` negado ao runtime | corrigido |
+| `GRANT ... ON TABLE public.models, public.revisions` | **removido** — modelo de grants dedicados revogado; objetos vivem em `bpmn_modeler.*` e acesso é via `plugins_user` (§4.2) | corrigido (emendado) |
 | `ALTER DEFAULT PRIVILEGES` | **removido** — sem grants default amplos; opt-in por objeto via migration | corrigido |
-| `BPMN_MODELER_DB_ADMIN_*` / `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` no runtime | **removido** do env da API; migration = step separado (§17, §22) | corrigido |
+| `BPMN_MODELER_DB_ADMIN_*` / `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` no runtime | não existem — credencial `PLUGINS_DB_*` única; `BPMN_RUN_MIGRATIONS_ON_STARTUP=true` executa migrations no startup (§17, §22) | corrigido (emendado) |
 | `horizontal`/`per-model` | T03 corrigido — autorização context-wide; per-model ACL = `OUT_OF_V1` | corrigido |
 | `NON_XML` em malformed XML | T10 corrigido — `MALFORMED_XML` ≠ `NON_XML` (Prompt 3) | corrigido |
-| `schema_migrations` | acesso negado ao runtime; readiness verifica compatibilidade via `to_regclass` (§16) | consistente |
+| `schema_migrations` | `bpmn_modeler.schema_migrations` — escrita só pelo runner; readiness verifica compatibilidade via `to_regclass` (§16) | consistente |
 
 ---
 
@@ -842,14 +795,11 @@ SECURITY / PERSISTENCE / RUNTIME SPEC STATUS:
 FROZEN
 ```
 
-- DATABASE AUTHORITY: **BPMN MODELER DEDICATED DATABASE** (`bpmn_modeler` em `postgres-plugins`).
-- RUNTIME DB ROLE: **`bpmn_modeler_app` — BPMN MODELER ONLY** (least privilege; sem DDL, sem DELETE, sem outros databases).
-- RUNTIME REVISION UPDATE PRIVILEGE: **DENIED**
-- RUNTIME DELETE PRIVILEGE: **DENIED**
-- RUNTIME DDL: **DENIED**
-- RUNTIME SCHEMA_MIGRATIONS ACCESS: **DENIED**
-- API RUNTIME ADMIN CREDENTIAL: **ABSENT**
-- PRODUCTION MIGRATION EXECUTION: **SEPARATE DEPLOY STEP**
+- DATABASE AUTHORITY: **SHARED `plugins_hub` DATABASE, SCHEMA `bpmn_modeler`** (`postgres-plugins`) — padrão canônico dos plugins (emenda pós-implementação: decisão de database dedicado revogada pelo owner da plataforma).
+- RUNTIME DB CREDENTIAL: **`PLUGINS_DB_*` (`plugins_user`)** — credencial compartilhada da plataforma.
+- REVISION UPDATE: **DENIED POR CONTRATO DE APLICAÇÃO** (append-only; nenhuma camada emite UPDATE/DELETE).
+- HARD DELETE: **NOT IN V1**.
+- PRODUCTION MIGRATION EXECUTION: **API STARTUP** (`BPMN_RUN_MIGRATIONS_ON_STARTUP`, padrão `TM_RUN_MIGRATIONS_ON_STARTUP`).
 - PER-MODEL ACL: **NOT IN V1** (context-wide Core RBAC)
 - MALFORMED XML CLASSIFICATION: **MALFORMED_XML** (≠ `NON_XML`)
 - CROSS-CONTEXT BUSINESS DB ACCESS: **NONE**.

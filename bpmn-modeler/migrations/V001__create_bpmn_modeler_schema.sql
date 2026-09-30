@@ -1,7 +1,18 @@
--- V001 — BPMN Modeler schema (frozen in SECURITY-PERSISTENCE-RUNTIME-SPEC-FREEZE §4.3/4.4)
--- Executed by the migration role bpmn_modeler_admin (database owner).
+-- V001 — BPMN Modeler schema
+-- Padrão da plataforma: database compartilhado plugins_hub, schema dedicado
+-- por contexto, owned por plugins_user (mesmo padrão de transformometro,
+-- helpdesk, cipa etc.). Executado no startup da API via migrations_runner
+-- com credenciais PLUGINS_DB_*.
 
-CREATE TABLE public.models (
+BEGIN;
+
+CREATE SCHEMA IF NOT EXISTS bpmn_modeler;
+
+COMMENT ON SCHEMA bpmn_modeler IS
+'Schema do plugin BPMN Modeler (Meu Modelador de Processos): modelos BPMN,
+working copies, revisões imutáveis e controle de migrations.';
+
+CREATE TABLE bpmn_modeler.models (
     id                  uuid PRIMARY KEY,
     display_name        varchar(120) NOT NULL,
     working_copy_xml    text NOT NULL,
@@ -19,13 +30,13 @@ CREATE TABLE public.models (
 );
 
 CREATE INDEX idx_models_list
-    ON public.models (archived_at, updated_at DESC);
+    ON bpmn_modeler.models (archived_at, updated_at DESC);
 CREATE INDEX idx_models_name_lower
-    ON public.models (lower(display_name));
+    ON bpmn_modeler.models (lower(display_name));
 
-CREATE TABLE public.revisions (
+CREATE TABLE bpmn_modeler.revisions (
     id               uuid PRIMARY KEY,
-    model_id         uuid NOT NULL REFERENCES public.models(id) ON DELETE RESTRICT,
+    model_id         uuid NOT NULL REFERENCES bpmn_modeler.models(id) ON DELETE RESTRICT,
     revision_number  integer NOT NULL CHECK (revision_number >= 1),
     artifact_xml     text NOT NULL,
     artifact_sha256  char(64) NOT NULL CHECK (artifact_sha256 ~ '^[0-9a-f]{64}$'),
@@ -38,9 +49,6 @@ CREATE TABLE public.revisions (
 );
 
 CREATE INDEX idx_revisions_model
-    ON public.revisions (model_id, revision_number DESC);
+    ON bpmn_modeler.revisions (model_id, revision_number DESC);
 
--- Least-privilege grants for the runtime role (opt-in per object; no
--- ALTER DEFAULT PRIVILEGES). schema_migrations receives no grants.
-GRANT SELECT, INSERT, UPDATE ON TABLE public.models    TO bpmn_modeler_app;
-GRANT SELECT, INSERT         ON TABLE public.revisions TO bpmn_modeler_app;
+COMMIT;

@@ -175,7 +175,6 @@ FASE_API=(
   travel-expenses-api
   production-pulse-api
   tv-dashboard-api
-  bpmn-modeler-migrate
   bpmn-modeler-api
 )
 

@@ -15,15 +15,15 @@ from psycopg.rows import dict_row
 
 logger = logging.getLogger(__name__)
 
-POOL_MAX_SIZE = int(os.getenv("BPMN_MODELER_DB_POOL_MAX_SIZE", "5") or "5")
+POOL_MAX_SIZE = int(os.getenv("PLUGINS_DB_POOL_MAX_SIZE", "5") or "5")
 POOL_ACQUIRE_TIMEOUT = float(
-    os.getenv("BPMN_MODELER_DB_POOL_ACQUIRE_TIMEOUT", "30") or "30"
+    os.getenv("PLUGINS_DB_POOL_ACQUIRE_TIMEOUT", "30") or "30"
 )
 APPLICATION_NAME = (
-    os.getenv("BPMN_MODELER_DB_APPLICATION_NAME", "bpmn-modeler-api").strip()
+    os.getenv("PLUGINS_DB_APPLICATION_NAME", "bpmn-modeler-api").strip()
     or "bpmn-modeler-api"
 )
-STATEMENT_TIMEOUT_MS = int(os.getenv("BPMN_MODELER_DB_STATEMENT_TIMEOUT_MS", "30000") or "30000")
+STATEMENT_TIMEOUT_MS = int(os.getenv("PLUGINS_DB_STATEMENT_TIMEOUT_MS", "30000") or "30000")
 
 _pool: BpmnModelerConnectionPool | None = None
 _pool_lock = threading.Lock()
@@ -72,18 +72,19 @@ def _read_required_env(name: str) -> str:
 
 
 def get_db_settings() -> DbSettings:
+    """Shared plugins_hub database — platform convention (PLUGINS_DB_*)."""
     try:
-        port = int(_read_required_env("BPMN_MODELER_DB_PORT"))
+        port = int(_read_required_env("PLUGINS_DB_PORT"))
     except ValueError as exc:
-        raise DatabaseConfigError("BPMN_MODELER_DB_PORT must be an integer.") from exc
+        raise DatabaseConfigError("PLUGINS_DB_PORT must be an integer.") from exc
     return DbSettings(
-        host=_read_required_env("BPMN_MODELER_DB_HOST"),
+        host=_read_required_env("PLUGINS_DB_HOST"),
         port=port,
-        database=_read_required_env("BPMN_MODELER_DB_NAME"),
-        user=_read_required_env("BPMN_MODELER_DB_USER"),
-        password=_read_required_env("BPMN_MODELER_DB_PASSWORD"),
-        connect_timeout=int(os.getenv("BPMN_MODELER_DB_CONNECT_TIMEOUT", "5")),
-        sslmode=os.getenv("BPMN_MODELER_DB_SSLMODE", "prefer").strip() or "prefer",
+        database=_read_required_env("PLUGINS_DB_NAME"),
+        user=_read_required_env("PLUGINS_DB_USER"),
+        password=_read_required_env("PLUGINS_DB_PASSWORD"),
+        connect_timeout=int(os.getenv("PLUGINS_DB_CONNECT_TIMEOUT", "5")),
+        sslmode=os.getenv("PLUGINS_DB_SSLMODE", "prefer").strip() or "prefer",
         application_name=APPLICATION_NAME,
     )
 
@@ -95,9 +96,9 @@ def _open_connection() -> Connection[dict[str, Any]]:
             conninfo=settings.dsn, row_factory=dict_row, autocommit=False
         )
     except Exception as exc:
-        logger.exception("Failed to connect to bpmn_modeler database.")
+        logger.exception("Failed to connect to plugins_hub database.")
         raise DatabaseConnectionError(
-            "Could not connect to the bpmn_modeler database."
+            "Could not connect to the plugins_hub database."
         ) from exc
 
 

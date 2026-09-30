@@ -25,6 +25,7 @@ from bpmn_modeler.application.errors import (
 )
 from bpmn_modeler.application.use_cases import BpmnModelerService
 from bpmn_modeler.infrastructure.persistence.connection import check_connection
+from bpmn_modeler.infrastructure.persistence.migrations_runner import SCHEMA_NAME
 from bpmn_modeler.infrastructure.persistence.repository import PostgresModelRepository
 from bpmn_modeler.infrastructure.runtime import SystemClock, UuidGenerator
 from bpmn_modeler.infrastructure.validation.blank import (
@@ -82,6 +83,13 @@ def create_app(service: BpmnModelerService | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         if app.state.service is None:
+            from bpmn_modeler.main import startup_env_check
+            from bpmn_modeler.infrastructure.persistence.run_migrations_on_startup import (
+                run_migrations_on_startup,
+            )
+
+            startup_env_check()
+            run_migrations_on_startup()
             validator = LxmlBpmnValidator()  # fail-closed on bundle failure
             app.state.service = BpmnModelerService(
                 repository=PostgresModelRepository(),
@@ -214,8 +222,8 @@ def _readiness() -> dict[str, bool]:
             with db_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(
-                        "SELECT to_regclass('public.models') AS m, "
-                        "to_regclass('public.revisions') AS r"
+                        f"SELECT to_regclass('{SCHEMA_NAME}.models') AS m, "
+                        f"to_regclass('{SCHEMA_NAME}.revisions') AS r"
                     )
                     row = cur.fetchone()
                 conn.rollback()

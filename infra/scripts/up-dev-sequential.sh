@@ -182,7 +182,6 @@ FASE_API=(
   financial-api
   travel-expenses-api
   production-pulse-api
-  bpmn-modeler-migrate
   bpmn-modeler-api
 )
 

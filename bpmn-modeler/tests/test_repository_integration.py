@@ -1,7 +1,7 @@
 """Integration test — real PostgreSQL.
 
-Runs only when BPMN_MODELER_DB_* env vars point at a reachable, migrated
-bpmn_modeler database (runtime role bpmn_modeler_app). Verifies the
+Runs only when PLUGINS_DB_* env vars point at a reachable, migrated
+plugins_hub database with the bpmn_modeler schema. Verifies the
 PostgresModelRepository CAS/list/append contract end-to-end.
 """
 from __future__ import annotations
@@ -13,8 +13,8 @@ from datetime import datetime, timezone
 import pytest
 
 pytestmark = pytest.mark.skipif(
-    not os.getenv("BPMN_MODELER_DB_HOST"),
-    reason="BPMN_MODELER_DB_* not set — requires migrated bpmn_modeler DB",
+    not os.getenv("PLUGINS_DB_HOST"),
+    reason="PLUGINS_DB_* not set — requires migrated plugins_hub DB",
 )
 
 from bpmn_modeler.application.ports import (
@@ -143,10 +143,8 @@ def test_list_summaries_filters(repo):
     assert [m.id for m in by_name] == [active.id]
 
 
-def test_runtime_role_restrictions(repo):
-    """Runtime role cannot delete models, mutate revisions, or see migrations."""
-    import psycopg
-
+def test_schema_isolation(repo):
+    """Contexto isolado no schema bpmn_modeler do plugins_hub compartilhado."""
     from bpmn_modeler.infrastructure.persistence.connection import db_connection
 
     model = _model()
@@ -154,12 +152,24 @@ def test_runtime_role_restrictions(repo):
 
     with db_connection() as conn:
         with conn.cursor() as cur:
-            with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                cur.execute("DELETE FROM public.models WHERE id = %(id)s", {"id": model.id})
-            conn.rollback()
-            with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                cur.execute("SELECT 1 FROM public.schema_migrations LIMIT 1")
-            conn.rollback()
-            with pytest.raises(psycopg.errors.InsufficientPrivilege):
-                cur.execute("CREATE TABLE public.privilege_probe (id int)")
-            conn.rollback()
+            cur.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'bpmn_modeler' ORDER BY table_name"
+            )
+            tables = {row["table_name"] for row in cur.fetchall()}
+            assert {"models", "revisions", "schema_migrations"} <= tables
+
+            # nada do contexto pode vazar para o schema public
+            cur.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'public' "
+                "AND table_name IN ('models', 'revisions', 'schema_migrations')"
+            )
+            assert cur.fetchall() == []
+
+            # dado persiste no schema correto
+            cur.execute(
+                "SELECT display_name FROM bpmn_modeler.models WHERE id = %(id)s",
+                {"id": model.id},
+            )
+            assert cur.fetchone()["display_name"] == model.display_name

@@ -108,9 +108,9 @@ class PostgresModelRepository(ModelRepositoryPort):
 
         sql = f"""
             SELECT id, display_name, archived_at, version, created_at, updated_at,
-                   (SELECT MAX(r.revision_number) FROM public.revisions r
+                   (SELECT MAX(r.revision_number) FROM bpmn_modeler.revisions r
                     WHERE r.model_id = m.id) AS latest_revision_number
-            FROM public.models m
+            FROM bpmn_modeler.models m
             WHERE {where}{query_clause}
             ORDER BY {order_by}
             OFFSET %(offset)s LIMIT %(limit)s
@@ -170,7 +170,7 @@ class PostgresModelRepository(ModelRepositoryPort):
                 f"""
                 SELECT id, display_name, working_copy_xml, version,
                        archived_at, created_at, updated_at, created_by, updated_by
-                FROM public.models WHERE id = %(id)s{lock}
+                FROM bpmn_modeler.models WHERE id = %(id)s{lock}
                 """,
                 {"id": model_id},
             )
@@ -196,7 +196,7 @@ class PostgresModelRepository(ModelRepositoryPort):
                 """
                 SELECT id, revision_number, artifact_xml, artifact_sha256,
                        origin, created_at, created_by
-                FROM public.revisions WHERE model_id = %(id)s
+                FROM bpmn_modeler.revisions WHERE model_id = %(id)s
                 ORDER BY revision_number ASC
                 """,
                 {"id": model_id},
@@ -224,7 +224,7 @@ class PostgresModelRepository(ModelRepositoryPort):
         with conn.cursor() as cur:
             cur.execute(
                 """
-                UPDATE public.models
+                UPDATE bpmn_modeler.models
                 SET display_name = %(name)s,
                     working_copy_xml = %(xml)s,
                     working_copy_sha256 = %(sha)s,
@@ -248,7 +248,7 @@ class PostgresModelRepository(ModelRepositoryPort):
             for revision in model.revisions:
                 cur.execute(
                     """
-                    INSERT INTO public.revisions
+                    INSERT INTO bpmn_modeler.revisions
                         (id, model_id, revision_number, artifact_xml,
                          artifact_sha256, origin, created_at, created_by)
                     VALUES (%(id)s, %(model_id)s, %(num)s, %(xml)s,
@@ -277,7 +277,7 @@ class PostgresModelRepository(ModelRepositoryPort):
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO public.models
+                INSERT INTO bpmn_modeler.models
                     (id, display_name, working_copy_xml, working_copy_sha256,
                      version, created_at, created_by, updated_at, updated_by,
                      archived_at)
@@ -304,7 +304,7 @@ class PostgresModelRepository(ModelRepositoryPort):
         with conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO public.revisions
+                INSERT INTO bpmn_modeler.revisions
                     (id, model_id, revision_number, artifact_xml,
                      artifact_sha256, origin, created_at, created_by)
                 VALUES (%(id)s, %(model_id)s, %(num)s, %(xml)s,
