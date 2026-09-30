@@ -2180,3 +2180,70 @@ Accepted deterministic cases (C3-T8 / C3-T8R1) — `ACCEPT_WITH_RESIDUAL`:
 - DELIA_RESULT admits all non-FACT canonical classes;
 - no CoT/secret/auth/mechanics fields; no chat runtime dependency;
 - no conversation engine/repository/RAG/persistence abstractions.
+
+## C3-MEDIA-FOUNDATION-01 — Multimodal / Media Evidence Foundation (candidate)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+REVIEW = PENDING (ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01)
+AUTHORIZED_BY = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION (§6.84)
+BASE_HEAD = 5033d41b4945ec1d7cc40cf5fb9f0e5267a830b0 (synced origin/main)
+IMPLEMENTATION_HEAD = 3821dc1562f4dce68abc6103857ae65d6630e543
+EVALUATED_SHA = 3821dc1562f4dce68abc6103857ae65d6630e543
+OWNER = delia-api/app/domain/media/
+TEST_MODULES = tests/test_media_foundation.py +
+               tests/test_media_architecture.py
+
+TARGETED_C3_MEDIA_01 = PASS 47/47 at 3821dc1562f4dce68abc6103857ae65d6630e543
+FULL_DELIA_API = PASS 299/299 at 3821dc1562f4dce68abc6103857ae65d6630e543 (C3-T1..T8 + media regression)
+
+MEDIA_CONTENT_TRUST_BOUNDARY = PASS (OCR/QR/caption/transcript text inert;
+                 never mutates Policy/RBAC/gates/CapabilityProjection/ACT)
+MULTIMODAL_EXTRACTION_EPISTEMIC_DEFAULT = OBSERVATION (only admissible class)
+FACT_AUTO_PROMOTION_BOUNDARY = BLOCKED (MediaObservation rejects FACT and
+                 every other non-OBSERVATION class; fail closed)
+VISUAL_QUALITY_AUTHORITY_BOUNDARY = PASS (finding != official quality
+                 decision; no inspection approval/disposition)
+CONFIDENCE_AUTHORITY_BOUNDARY = PASS (normalized [0,1] fail-closed;
+                 confidence == 1 still not FACT, not authorization)
+REGION_BOUNDARY = PASS (normalized [0,1] fail-closed; no silent clamp)
+TIME_RANGE_BOUNDARY = PASS (start >= 0, end >= start; fail closed)
+EVIDENCE_REF_REUSE = PASS | SOURCE_REF_REUSE = PASS | ENTITY_REF_REUSE = PASS
+ENTITY_LINKAGE_BOUNDARY = PASS (EntityRef only when already canonical;
+                 visibility never fabricates identity)
+PROVENANCE_BOUNDARY = PASS (SourceRef linkage; path/URL/provider id not
+                 authority and absent from domain fields)
+BIOMETRIC_BOUNDARY = OUTSIDE_C3_MEDIA_FOUNDATION_01 (no face/speaker/
+                 liveness/person identification types or fields)
+HUMAN_OBSERVATION_BOUNDARY = PASS (no emotion/personality/employment
+                 inference fields)
+MEDIA_PERSISTENCE = NONE | PERSISTENCE = NONE | MIGRATION = NONE
+REAL_CAMERA_RUNTIME = NONE | REAL_MICROPHONE_RUNTIME = NONE
+REAL_VIDEO_RUNTIME = NONE | REAL_STT_RUNTIME = NONE
+REAL_TTS_RUNTIME = NONE | REAL_VISION_RUNTIME = NONE
+REAL_PROVIDER_ADAPTER = NONE | REAL_MODEL_CALL = NONE | MODEL_ROUTER = NONE
+KNOWLEDGE_RETRIEVAL_PORT = DEFERRED | RAG = NONE | VECTOR_STORE = NONE
+TOOL_EXECUTION = NONE | PREPARE = NONE | ACT = NONE
+AUTOMATION_HUB_EXECUTION = NONE | OT_ACTUATION = NONE
+REAL_MULTIMODAL_QUALITY_EVIDENCE = NONE / TEST_NOT_RUN
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
+```
+
+Deterministic cases (C3-MEDIA-FOUNDATION-01) — implemented, pending Architecture Review:
+
+- valid provider-neutral `MediaRef` (id + `MediaKind` + optional `SourceRef`);
+- `MediaKind` bounded to IMAGE|AUDIO|VIDEO|SCREEN|DOCUMENT_IMAGE;
+- `MediaObservation` defaults to and only admits `OBSERVATION`;
+- FACT and every non-OBSERVATION epistemic class rejected fail-closed;
+- EvidenceRef/SourceRef/EntityRef tuple reuse with element-type enforcement;
+- unknown subject never fabricates `EntityRef`;
+- normalized `MediaRegion` bounds fail closed (negative, zero-size,
+  out-of-frame, non-finite);
+- `MediaTimeRange` bounds fail closed (negative start, end < start);
+- `confidence` normalized [0,1] fail closed; `confidence == 1` != FACT;
+- limitations preserved verbatim;
+- embedded OCR/QR/tool-call-like content produces no execution or
+  authorization;
+- media observation grants no quality decision authority;
+- no biometric/person-identity semantics; no provider or runtime fields.

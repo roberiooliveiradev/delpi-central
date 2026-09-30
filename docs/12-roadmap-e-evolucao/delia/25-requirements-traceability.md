@@ -1223,3 +1223,29 @@ PRODUCTION_READINESS = NOT_PROVEN
 NEXT = C3-MEDIA-FOUNDATION-01 (authorized; decision §6.84;
        brief pending PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF)
 ```
+
+## 34. C3-MEDIA-FOUNDATION-01 Multimodal / Media Evidence Foundation — candidate linkage
+
+Evidence anchors: `16` C3-MEDIA-FOUNDATION-01 section; `20` C3-MEDIA-FOUNDATION-01 acceptance section; ledger §6.84 (authorization decision) + §6.85 (implementation evidence).
+Review: `ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01` PENDING; `IMPLEMENTATION_HEAD=3821dc1562f4dce68abc6103857ae65d6630e543`; authorized by `ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION` (`ANOTHER_BOUNDED_C3_SLICE_REQUIRED`).
+
+| CP | C3-MEDIA-FOUNDATION-01 contribution note | Status |
+|---|---|---|
+| CP-078 | provider-neutral media ref/observation domain without agent/provider dependency | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-079 | typed `MediaObservation` with provenance (`SourceRef`/`EvidenceRef`), confidence, limitations; drawing-analysis semantics via `DOCUMENT_IMAGE` kind | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-160 | `MediaKind.AUDIO` ref semantics only; STT/TTS ports explicitly not created (no consumer) | LOCKED / CONTRIBUTION ONLY |
+| CP-162 | normalized `MediaRegion` + confidence + limitations on image observation; no camera/capture/persistence | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-163 | `MediaTimeRange` provenance bounds; no video ingestion/decoding/streaming/storage | LOCKED / CONTRIBUTION ONLY |
+| CP-164 | `MediaKind.SCREEN` taxonomy slot only; no screen-share/DOM/remote runtime | LOCKED / CONTRIBUTION ONLY |
+| CP-177 | `is_official_quality_decision()=False` + negative test: visual finding grants no quality authority | LOCKED / FOUNDATION CONTRIBUTION |
+
+```text
+C3_MEDIA_FOUNDATION_01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+BIOMETRIC_SCOPE = CP-184/185/186/187 outside slice (separate decision)
+NEW_CP_CREATED = NO
+UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
+DISCOVERED_REQUIREMENT = NONE
+TRACEABILITY_GAP = NONE material
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
+```

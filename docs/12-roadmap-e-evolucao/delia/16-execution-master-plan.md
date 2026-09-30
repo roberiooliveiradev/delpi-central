@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED` (`ARCHITECTURE_REVIEW_C3_T8R1=ACCEPT_WITH_RESIDUAL` §6.83); `ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION=PERSISTED` (`ANOTHER_BOUNDED_C3_SLICE_REQUIRED` §6.84); `NEXT_TASK_AUTHORIZED=YES`; `NEXT_TASK_ID=C3-MEDIA-FOUNDATION-01` (MULTIMODAL_MEDIA_EVIDENCE_FOUNDATION); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED` (`ARCHITECTURE_REVIEW_C3_T8R1=ACCEPT_WITH_RESIDUAL` §6.83); `C3-MEDIA-FOUNDATION-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.85 (`IMPLEMENTATION_HEAD=3821dc1562f4dce68abc6103857ae65d6630e543`); `NEXT_TASK_AUTHORIZED=NO`; do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -726,8 +726,9 @@ ARCHITECTURE_REVIEW_C3_T8R1 = ACCEPT_WITH_RESIDUAL (REVIEWED_IMPLEMENTATION_HEAD
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 C2-FINAL accepted with residual; C3-T1..T8 APPROVED (`ARCHITECTURE_REVIEW_C3_T8R1` ACCEPT_WITH_RESIDUAL; §6.83); authorization != execution
 ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION = ANOTHER_BOUNDED_C3_SLICE_REQUIRED (§6.84)
-NEXT_TASK_AUTHORIZED = YES; NEXT_TASK = C3-MEDIA-FOUNDATION-01 (MULTIMODAL_MEDIA_EVIDENCE_FOUNDATION)
-NEXT = PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF
+C3_MEDIA_FOUNDATION_01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.85)
+NEXT_TASK_AUTHORIZED = NO
+NEXT = ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
 Workspace binding remains unscheduled
 ```
 
@@ -1151,9 +1152,13 @@ NEXT = C3-MEDIA-FOUNDATION-01 (brief pending:
 
 ```text
 TASK = C3-MEDIA-FOUNDATION-01 — MULTIMODAL_MEDIA_EVIDENCE_FOUNDATION
-STATE = AUTHORIZED (implementation brief pending)
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 AUTHORIZED_BY = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
                 (ANOTHER_BOUNDED_C3_SLICE_REQUIRED; ledger §6.84)
+IMPLEMENTATION_HEAD = 3821dc1562f4dce68abc6103857ae65d6630e543
+MODEL = MediaKind{IMAGE|AUDIO|VIDEO|SCREEN|DOCUMENT_IMAGE} +
+        MediaRef + MediaRegion + MediaTimeRange + MediaObservation
+        (delia-api/app/domain/media/)
 OWNER = DÉLIA Intelligence / Multimodal (source/domain owner remains
         authoritative fact owner; DÉLIA = evidence/epistemic coordination)
 
@@ -1176,5 +1181,7 @@ ABSTRACTION_GATE = no speculative MediaEngine/MultimodalEngine/
 CP_TRACEABILITY = inspect CP-078/079/160/162/163/164/177 (conservative;
         authorization != PASS); biometric CP-184..187 stay outside this
         slice (separate bounded decision required)
-NEXT = PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF
+EVIDENCE = ledger §6.85; TARGETED_C3_MEDIA_01 PASS 47/47;
+           FULL_DELIA_API PASS 299/299 at IMPLEMENTATION_HEAD
+NEXT = ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
 ```
