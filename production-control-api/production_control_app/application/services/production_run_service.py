@@ -11,6 +11,7 @@ from production_control_app.application.services.machine_load_realtime_hub impor
 from production_control_app.config import settings
 from production_control_app.domain.errors import (
     BenchSessionRequired,
+    DelpiGatewayError,
     ProductionRunConflict,
     ProductionRunNotFound,
     PulseDeviceUnavailable,
@@ -23,6 +24,10 @@ from production_control_app.domain.services.production_run_counting import (
     pieces_from_anchor,
     sum_segment_pieces,
     target_pieces_from_quantity,
+)
+from production_control_app.domain.services.production_run_standard_time import (
+    normalize_standard_time_snapshot,
+    resolve_workstation_type_snapshot,
 )
 from production_control_app.infrastructure.gateways.production_pulse_gateway import (
     ProductionPulseGateway,
@@ -99,6 +104,7 @@ class ProductionRunService:
         repository: PostgresProductionRunRepository | None = None,
         pulse_gateway: ProductionPulseGateway | None = None,
         queue_lookup: Callable[..., dict[str, Any] | None] | None = None,
+        standard_time_lookup: Callable[..., dict[str, Any] | None] | None = None,
         mes_lifecycle: Any | None = None,
         audit: Any | None = None,
         clock: Callable[[], datetime] | None = None,
@@ -114,6 +120,7 @@ class ProductionRunService:
         )
         self._pulse = pulse_gateway or ProductionPulseGateway()
         self._queue_lookup = queue_lookup
+        self._standard_time_lookup = standard_time_lookup
         if mes_lifecycle is None:
             from production_control_app.application.services.mes_run_lifecycle_service import (  # noqa: E501
                 MesRunLifecycleService,
@@ -268,6 +275,17 @@ class ProductionRunService:
                 op.get("pieces_conversion_factor"),
             )
 
+        # Best-effort: tempo padrão/setup congelados no Play. Falha da
+        # api-delpi não bloqueia produção — persiste degradação explícita.
+        # Nenhuma chamada HTTP dentro da transação abaixo.
+        standard = self._resolve_standard_time(
+            branch=branch,
+            work_center=work_center,
+            production_order=str(production_order).strip(),
+            operation_code=str(operation_code).strip(),
+        )
+        workstation_type = resolve_workstation_type_snapshot(op)
+
         with self._repo.transaction() as conn:
             run = self._repo.create_run_with_segment(
                 branch=branch,
@@ -282,6 +300,14 @@ class ProductionRunService:
                 target_pieces_snapshot=target_pieces,
                 anchor_counter=int(device.get("counter") or 0),
                 anchor_epoch=int(device.get("counterEpoch") or 0),
+                ideal_cycle_seconds_snapshot=standard["ideal_cycle_seconds_snapshot"],
+                setup_seconds_snapshot=standard["setup_seconds_snapshot"],
+                standard_time_source=standard["standard_time_source"],
+                standard_time_data_quality_snapshot=standard[
+                    "standard_time_data_quality_snapshot"
+                ],
+                workstation_type_snapshot=workstation_type,
+                pieces_per_pulse_snapshot=1,
                 conn=conn,
             )
             at = self._clock()
@@ -292,6 +318,61 @@ class ProductionRunService:
         self._notify(branch, work_center, reason="run_started")
         logger.info("mes_run_started run_id=%s", run["id"])
         return _run_to_api(run, device=device)
+
+    def _resolve_standard_time(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any]:
+        """Consulta o tempo padrão canônico na api-delpi (best-effort).
+
+        Nunca levanta exceção: falha do upstream congela ``unavailable`` +
+        ``upstream_unavailable`` e o Play segue — o chão de fábrica não para
+        por causa de métrica futura.
+        """
+        payload: dict[str, Any] | None = None
+        if self._standard_time_lookup is not None:
+            try:
+                payload = self._standard_time_lookup(
+                    branch=branch,
+                    production_order=production_order,
+                    operation_code=operation_code,
+                )
+            except DelpiGatewayError as exc:
+                logger.warning(
+                    "mes_run_standard_time_unavailable branch=%s work_center=%s "
+                    "production_order=%s operation_code=%s status=%s",
+                    branch,
+                    work_center,
+                    production_order,
+                    operation_code,
+                    exc.status_code,
+                )
+            except Exception:  # noqa: BLE001 — falha inesperada não bloqueia o Play
+                logger.exception(
+                    "mes_run_standard_time_failed branch=%s work_center=%s "
+                    "production_order=%s operation_code=%s",
+                    branch,
+                    work_center,
+                    production_order,
+                    operation_code,
+                )
+        snapshot = normalize_standard_time_snapshot(payload)
+        if snapshot["standard_time_data_quality_snapshot"] != "complete":
+            logger.info(
+                "mes_run_standard_time_degraded branch=%s work_center=%s "
+                "production_order=%s operation_code=%s source=%s quality=%s",
+                branch,
+                work_center,
+                production_order,
+                operation_code,
+                snapshot["standard_time_source"],
+                snapshot["standard_time_data_quality_snapshot"],
+            )
+        return snapshot
 
     def _require_active_run(self, run_id: str, *, session: dict[str, Any]) -> dict[str, Any]:
         run = self._repo.get_run(run_id)

@@ -456,6 +456,26 @@ class DelpiProductionGateway:
             params={"branch": branch},
         )
 
+    def fetch_operation_standard_time(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any]:
+        """Tempo padrão canônico da OP+operação (S2S) — segundos por peça física."""
+        order = str(production_order or "").strip()
+        oper = str(operation_code or "").strip()
+        payload = self._request(
+            "GET",
+            f"/production/orders/{quote(order, safe='')}/operations/{quote(oper, safe='')}/standard-time",
+            params={"branch": branch},
+        )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise DelpiGatewayError("Resposta inválida da api-delpi.")
+        return data
+
     def fetch_operation_materials_batch(
         self,
         *,

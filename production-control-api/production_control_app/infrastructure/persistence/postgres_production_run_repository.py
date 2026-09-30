@@ -19,6 +19,13 @@ _SESSIONS = f"{PC_SCHEMA_NAME}.operator_bench_sessions"
 _RUNS = f"{PC_SCHEMA_NAME}.production_runs"
 _SEGMENTS = f"{PC_SCHEMA_NAME}.production_run_segments"
 
+# Snapshots de Performance congelados no Play (V013) — imutáveis após criados.
+_RUN_SNAPSHOT_COLUMNS = (
+    "ideal_cycle_seconds_snapshot, setup_seconds_snapshot, "
+    "standard_time_source, standard_time_data_quality_snapshot, "
+    "workstation_type_snapshot, pieces_per_pulse_snapshot"
+)
+
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -61,6 +68,7 @@ class PostgresProductionRunRepository:
                        bench_session_id::text AS bench_session_id,
                        status, started_at, ended_at, pieces_total,
                        planned_qty_snapshot, target_pieces_snapshot,
+                       {_RUN_SNAPSHOT_COLUMNS},
                        created_at, updated_at
                 FROM {_RUNS}
                 WHERE id = %s::uuid
@@ -150,6 +158,7 @@ class PostgresProductionRunRepository:
                            bench_session_id::text AS bench_session_id,
                            status, started_at, ended_at, pieces_total,
                            planned_qty_snapshot, target_pieces_snapshot,
+                           {_RUN_SNAPSHOT_COLUMNS},
                            last_count_activity_at, created_at, updated_at
                     FROM {_RUNS}
                     WHERE branch = %s
@@ -173,6 +182,7 @@ class PostgresProductionRunRepository:
                            bench_session_id::text AS bench_session_id,
                            status, started_at, ended_at, pieces_total,
                            planned_qty_snapshot, target_pieces_snapshot,
+                           {_RUN_SNAPSHOT_COLUMNS},
                            last_count_activity_at, created_at, updated_at
                     FROM {_RUNS}
                     WHERE id = %s::uuid
@@ -192,6 +202,7 @@ class PostgresProductionRunRepository:
                            operation_code, device_id::text AS device_id,
                            operator_code, operator_name, status, started_at,
                            pieces_total, planned_qty_snapshot, target_pieces_snapshot,
+                           {_RUN_SNAPSHOT_COLUMNS},
                            last_count_activity_at
                     FROM {_RUNS}
                     WHERE status = 'running'
@@ -215,6 +226,12 @@ class PostgresProductionRunRepository:
         target_pieces_snapshot: int | None,
         anchor_counter: int,
         anchor_epoch: int,
+        ideal_cycle_seconds_snapshot: float | None = None,
+        setup_seconds_snapshot: float | None = None,
+        standard_time_source: str | None = None,
+        standard_time_data_quality_snapshot: str | None = None,
+        workstation_type_snapshot: str | None = None,
+        pieces_per_pulse_snapshot: float | None = None,
         conn: Any | None = None,
     ) -> dict[str, Any]:
         if conn is not None:
@@ -232,6 +249,12 @@ class PostgresProductionRunRepository:
                 target_pieces_snapshot=target_pieces_snapshot,
                 anchor_counter=anchor_counter,
                 anchor_epoch=anchor_epoch,
+                ideal_cycle_seconds_snapshot=ideal_cycle_seconds_snapshot,
+                setup_seconds_snapshot=setup_seconds_snapshot,
+                standard_time_source=standard_time_source,
+                standard_time_data_quality_snapshot=standard_time_data_quality_snapshot,
+                workstation_type_snapshot=workstation_type_snapshot,
+                pieces_per_pulse_snapshot=pieces_per_pulse_snapshot,
             )
         with get_connection() as own:
             row = self._create_run_with_segment(
@@ -248,6 +271,12 @@ class PostgresProductionRunRepository:
                 target_pieces_snapshot=target_pieces_snapshot,
                 anchor_counter=anchor_counter,
                 anchor_epoch=anchor_epoch,
+                ideal_cycle_seconds_snapshot=ideal_cycle_seconds_snapshot,
+                setup_seconds_snapshot=setup_seconds_snapshot,
+                standard_time_source=standard_time_source,
+                standard_time_data_quality_snapshot=standard_time_data_quality_snapshot,
+                workstation_type_snapshot=workstation_type_snapshot,
+                pieces_per_pulse_snapshot=pieces_per_pulse_snapshot,
             )
             own.commit()
             return row
@@ -261,11 +290,16 @@ class PostgresProductionRunRepository:
                         branch, work_center, production_order, operation_code,
                         device_id, operator_code, operator_name, bench_session_id,
                         status, planned_qty_snapshot, target_pieces_snapshot,
+                        ideal_cycle_seconds_snapshot, setup_seconds_snapshot,
+                        standard_time_source, standard_time_data_quality_snapshot,
+                        workstation_type_snapshot, pieces_per_pulse_snapshot,
                         last_count_activity_at
                     )
                     VALUES (
                         %s, %s, %s, %s, %s::uuid, %s, %s, %s::uuid,
-                        'running', %s, %s, NOW()
+                        'running', %s, %s,
+                        %s, %s, %s, %s, %s, %s,
+                        NOW()
                     )
                     RETURNING id::text AS id, branch, work_center, production_order,
                               operation_code, device_id::text AS device_id,
@@ -273,6 +307,7 @@ class PostgresProductionRunRepository:
                               bench_session_id::text AS bench_session_id,
                               status, started_at, ended_at, pieces_total,
                               planned_qty_snapshot, target_pieces_snapshot,
+                              {_RUN_SNAPSHOT_COLUMNS},
                               last_count_activity_at, created_at, updated_at
                     """,
                     (
@@ -286,6 +321,12 @@ class PostgresProductionRunRepository:
                         kwargs["bench_session_id"],
                         kwargs["planned_qty_snapshot"],
                         kwargs["target_pieces_snapshot"],
+                        kwargs["ideal_cycle_seconds_snapshot"],
+                        kwargs["setup_seconds_snapshot"],
+                        kwargs["standard_time_source"],
+                        kwargs["standard_time_data_quality_snapshot"],
+                        kwargs["workstation_type_snapshot"],
+                        kwargs["pieces_per_pulse_snapshot"],
                     ),
                 )
                 run = dict(cur.fetchone())
@@ -561,7 +602,8 @@ class PostgresProductionRunRepository:
                           operation_code, device_id::text AS device_id,
                           operator_code, operator_name, status, started_at,
                           ended_at, pieces_total, planned_qty_snapshot,
-                          target_pieces_snapshot, last_count_activity_at
+                          target_pieces_snapshot, {_RUN_SNAPSHOT_COLUMNS},
+                          last_count_activity_at
                 """,
                 params,
             )

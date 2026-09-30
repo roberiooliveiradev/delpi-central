@@ -422,7 +422,8 @@ def build_production_run_service(
         PostgresProductionRunRepository,
     )
 
-    machine_load = build_machine_load_service(gateway, snapshots=snapshots)
+    resolved_gateway = gateway or DelpiProductionGateway()
+    machine_load = build_machine_load_service(resolved_gateway, snapshots=snapshots)
 
     def _queue_lookup(
         *,
@@ -432,7 +433,7 @@ def build_production_run_service(
         operation_code: str,
     ):
         try:
-            return machine_load.public_operation_run_quantity(
+            return machine_load.public_operation_run_context(
                 branch=branch,
                 production_order=production_order,
                 operation_code=operation_code,
@@ -443,6 +444,7 @@ def build_production_run_service(
     return ProductionRunService(
         pulse_gateway=pulse_gateway or build_production_pulse_gateway(),
         queue_lookup=_queue_lookup,
+        standard_time_lookup=resolved_gateway.fetch_operation_standard_time,
         mes_lifecycle=MesRunLifecycleService(
             states=PostgresWorkCenterStateRepository(),
             downtimes=PostgresDowntimeEventRepository(),

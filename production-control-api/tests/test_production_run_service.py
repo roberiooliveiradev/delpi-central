@@ -100,6 +100,14 @@ class FakeRepo:
             "pieces_total": 0,
             "planned_qty_snapshot": kwargs.get("planned_qty_snapshot"),
             "target_pieces_snapshot": kwargs.get("target_pieces_snapshot"),
+            "ideal_cycle_seconds_snapshot": kwargs.get("ideal_cycle_seconds_snapshot"),
+            "setup_seconds_snapshot": kwargs.get("setup_seconds_snapshot"),
+            "standard_time_source": kwargs.get("standard_time_source"),
+            "standard_time_data_quality_snapshot": kwargs.get(
+                "standard_time_data_quality_snapshot"
+            ),
+            "workstation_type_snapshot": kwargs.get("workstation_type_snapshot"),
+            "pieces_per_pulse_snapshot": kwargs.get("pieces_per_pulse_snapshot"),
             "last_count_activity_at": datetime.now(timezone.utc),
         }
         seg = {

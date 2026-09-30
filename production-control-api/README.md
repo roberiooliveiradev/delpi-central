@@ -67,6 +67,8 @@ Contagem em tempo real no cockpit: este BFF **puxa** snapshot S2S do Pulse
 Auth outbound: `API_DELPI_INTERNAL_SERVICE_TOKEN` + `X-Delpi-Caller-App: production-control-api`.
 O Pulse **não** conhece OP/run; a fórmula de peças é âncora absoluta + `counterEpoch` (tabelas `production_runs` / `production_run_segments`).
 
+No Play, o run também congela os **snapshots de Performance** (V013): `ideal_cycle_seconds_snapshot` (segundos por peça física), `setup_seconds_snapshot`, `standard_time_source`, `standard_time_data_quality_snapshot`, `workstation_type_snapshot` (`manual_workstation` só quando `H8_FERRAM=MOD`) e `pieces_per_pulse_snapshot` (hoje `1`). A fonte é o contrato S2S `GET /production/orders/{op}/operations/{op.}/standard-time?branch=` da api-delpi — consulta best-effort **antes** da transação; falha persiste `upstream_unavailable` sem bloquear o chão de fábrica. Snapshots são imutáveis após o Play.
+
 Doc canônico: [MES-PULSE-COUNTING.md](../docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md).
 
 ### Integração Delpi MES

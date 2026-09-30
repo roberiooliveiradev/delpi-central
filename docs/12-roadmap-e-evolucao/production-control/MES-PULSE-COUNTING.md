@@ -104,6 +104,34 @@ sem atividade abre `stopped` + `downtime` `source='system'` com
 parada e reabre `producing` — run sempre `running`. Snapshot não `usable`
 nunca inicia nem encerra parada automática.
 
+### Snapshots de Performance congelados no Play (V013)
+
+Migration: [`V013__production_run_performance_snapshots.sql`](../../../production-control-api/migrations/V013__production_run_performance_snapshots.sql).
+
+No Play, o `production-control-api` consulta o contrato canônico da api-delpi
+(`GET /production/orders/{op}/operations/{op.}/standard-time?branch=`, S2S via
+service token) **antes** de abrir a transação — nenhuma chamada HTTP ocorre
+dentro de `transaction()`. O ciclo já chega em **segundos por peça física**
+(normalizado pelo `piecesFactor` da unidade operacional na api-delpi, ex.:
+`MI` ÷ 1000); este BFF não recalcula SHY/SG2.
+
+| Campo | Significado |
+|-------|-------------|
+| `ideal_cycle_seconds_snapshot` | Ciclo padrão por peça física, congelado; NULL se indisponível |
+| `setup_seconds_snapshot` | Setup congelado em segundos; separado do ciclo |
+| `standard_time_source` | `shy_tempad` \| `shy_tempom_quant` \| `sg2_tempad` \| `unavailable` |
+| `standard_time_data_quality_snapshot` | `complete` \| `standard_time_unavailable` \| `piece_conversion_unavailable` \| `upstream_unavailable` |
+| `workstation_type_snapshot` | `manual_workstation` apenas quando `H8_FERRAM=MOD` (`is_manual_operation` da fila); demais postos ficam NULL — a Delpi não possui fonte canônica para automático/semiautomático |
+| `pieces_per_pulse_snapshot` | Peças por incremento do counter; **1** hoje (pulso 1:1). Não confundir com `pieces_conversion_factor` (unidade ERP → peça) |
+
+Falha ou indisponibilidade da api-delpi **não bloqueia o Play**: persiste-se
+`upstream_unavailable` (classificação local, distinta de
+`standard_time_unavailable` = resposta correta sem padrão). O Pulse continua
+obrigatório. Os snapshots são **imutáveis**: pause/resume/tick/stop nunca os
+atualizam e runs legados permanecem NULL (sem backfill). Métricas de
+Performance (ciclo real, throughput, microparadas) são etapa posterior —
+o auto-downtime segue usando `PC_MES_AUTO_DOWNTIME_SECONDS` fixo.
+
 ---
 
 ## Contratos HTTP

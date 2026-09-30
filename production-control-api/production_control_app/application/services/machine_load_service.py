@@ -454,6 +454,28 @@ class MachineLoadService:
 
         A mesma fonte do cockpit: snapshot publicado enriquecido com o saldo vivo.
         """
+        context = self.public_operation_run_context(
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+        )
+        if context is None:
+            return None
+        context.pop("is_manual_operation", None)
+        return context
+
+    def public_operation_run_context(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any] | None:
+        """Contexto completo para congelar no Play: saldo, fator de peças e flag manual.
+
+        Estende ``public_operation_run_quantity`` com ``is_manual_operation``
+        (H8_FERRAM=MOD) — única classificação de posto confiável hoje.
+        """
         item = self._public_operation_item(
             branch=branch,
             production_order=production_order,
@@ -472,6 +494,7 @@ class MachineLoadService:
             "pieces_conversion_factor": _optional_float(
                 item.get("pieces_conversion_factor")
             ),
+            "is_manual_operation": bool(item.get("is_manual_operation")),
         }
 
     def _public_operation_item(

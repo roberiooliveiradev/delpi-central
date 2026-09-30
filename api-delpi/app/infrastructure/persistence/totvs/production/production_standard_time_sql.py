@@ -14,14 +14,14 @@ direita em campos CHAR, o que preserva o seek pelos índices de OP/produto.
 from __future__ import annotations
 
 _SHY_NUMERIC = {
-    "HY_TEMPAD": "SHY.HY_TEMPAD",
-    "HY_TEMPOM": "SHY.HY_TEMPOM",
-    "HY_QUANT": "SHY.HY_QUANT",
-    "HY_SETUP": "SHY.HY_SETUP",
+    "hy_tempad": "SHY.HY_TEMPAD",
+    "hy_tempom": "SHY.HY_TEMPOM",
+    "hy_quant": "SHY.HY_QUANT",
+    "hy_setup": "SHY.HY_SETUP",
 }
 _SG2_NUMERIC = {
-    "G2_TEMPAD": "SG2.G2_TEMPAD",
-    "G2_SETUP": "SG2.G2_SETUP",
+    "g2_tempad": "SG2.G2_TEMPAD",
+    "g2_setup": "SG2.G2_SETUP",
 }
 
 
@@ -47,12 +47,12 @@ SELECT
     RTRIM(LTRIM(OP.C2_OP))                AS production_order,
     RTRIM(LTRIM(OP.C2_PRODUTO))           AS product_code,
     RTRIM(LTRIM(ISNULL(OP.C2_UM, '')))    AS unit,
-    SHY.HY_TEMPAD,
-    SHY.HY_TEMPOM,
-    SHY.HY_QUANT,
-    SHY.HY_SETUP,
-    SG2.G2_TEMPAD,
-    SG2.G2_SETUP,
+    SHY.hy_tempad,
+    SHY.hy_tempom,
+    SHY.hy_quant,
+    SHY.hy_setup,
+    SG2.g2_tempad,
+    SG2.g2_setup,
     CASE
         WHEN SHY.has_row = 1 OR SG2.has_row = 1 THEN 1
         ELSE 0
