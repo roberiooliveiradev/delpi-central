@@ -131,6 +131,7 @@ export class BpmnEditorAdapter {
     }
     try {
       await this.modeler.importXML(xml);
+      this.fitViewport();
       this.stateTokens = [newToken()];
       this.cursor = 0;
       this.savedToken = this.stateTokens[0];
@@ -188,7 +189,9 @@ export class BpmnEditorAdapter {
     const diagram = definitions?.diagrams?.find(
       (d: { id: string }) => d.id === diagramId,
     );
-    if (diagram) this.modeler.open(diagram);
+    if (diagram) {
+      void this.modeler.open(diagram).then(() => this.fitViewport());
+    }
   }
 
   isDirty(): boolean {
