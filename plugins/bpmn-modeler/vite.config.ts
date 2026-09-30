@@ -36,6 +36,20 @@ export default defineConfig({
   base: "/apps/bpmn-modeler/",
   test: {
     exclude: ["e2e/**", "node_modules/**"],
+    deps: {
+      optimizer: {
+        web: {
+          enabled: true,
+          include: [
+            "bpmn-js",
+            "bpmn-js-properties-panel",
+            "diagram-js",
+            "bpmn-moddle",
+            "@bpmn-io/properties-panel",
+          ],
+        },
+      },
+    },
   },
   build: {
     target: "esnext",

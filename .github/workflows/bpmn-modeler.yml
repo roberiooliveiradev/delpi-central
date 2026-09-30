@@ -20,12 +20,32 @@ jobs:
     defaults:
       run:
         working-directory: bpmn-modeler
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: plugins_user
+          POSTGRES_PASSWORD: ci_plugins_password
+          POSTGRES_DB: plugins_hub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U plugins_user -d plugins_hub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PLUGINS_DB_HOST: localhost
+      PLUGINS_DB_PORT: 5432
+      PLUGINS_DB_NAME: plugins_hub
+      PLUGINS_DB_USER: plugins_user
+      PLUGINS_DB_PASSWORD: ci_plugins_password
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
           cache: pip
           cache-dependency-path: bpmn-modeler/requirements.txt
 
@@ -36,6 +56,29 @@ jobs:
 
       - name: Testes (unit + contrato + jornadas API-level)
         run: PYTHONPATH=.:../shared python -m pytest tests/ -q
+
+      - name: Migrations — startup runner no plugins_hub (schema bpmn_modeler)
+        run: |
+          PYTHONPATH=.:../shared python -m bpmn_modeler.infrastructure.persistence.migrations_runner up
+          PYTHONPATH=.:../shared python -m bpmn_modeler.infrastructure.persistence.migrations_runner up
+        # segunda execução prova idempotência (DB-ISO-07)
+
+      - name: Integração — repository sobre plugins_hub real
+        run: PYTHONPATH=.:../shared python -m pytest tests/test_repository_integration.py -q
+
+      - name: Schema isolation — SQL qualificado bpmn_modeler.* (DB-ISO-03/04)
+        run: |
+          ! grep -rn -E "public\.(models|revisions|schema_migrations)" \
+            bpmn_modeler/ \
+            && echo "schema qualification OK"
+          ! grep -rn "BPMN_MODELER_DB_" bpmn_modeler/ \
+            && echo "shared PLUGINS_DB_* contract OK"
+
+      - name: Revisions append-only — sem UPDATE/DELETE em revisions (DB-ISO-12)
+        run: |
+          ! grep -rn -E "(UPDATE|DELETE FROM)\s+[^ ]*revisions" \
+            bpmn_modeler/infrastructure/persistence/repository.py \
+            && echo "append-only OK"
 
       - name: OpenAPI — 20 operações congeladas
         run: |
@@ -100,14 +143,55 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Dependency freeze — pins exatos congelados
+        run: |
+          node - <<'JS'
+          const pkg = require("./package.json");
+          const frozen = {
+            "bpmn-js": "18.30.1",
+            "bpmn-moddle": "10.3.1",
+            "bpmn-js-properties-panel": "5.65.1",
+            "@bpmn-io/properties-panel": "3.55.0",
+            "elkjs": "0.12.0",
+            "@playwright/test": "1.62.1",
+          };
+          const all = { ...pkg.dependencies, ...pkg.devDependencies };
+          for (const [name, version] of Object.entries(frozen)) {
+            if (all[name] !== version)
+              throw new Error(`${name}: expected ${version}, got ${all[name]}`);
+          }
+          console.log("dependency freeze OK");
+          JS
+
       - name: Typecheck
         run: npx tsc -b
 
-      - name: Testes unitários
+      - name: Lint
+        run: npx eslint .
+
+      - name: Testes unitários + CANVAS-REG-01..10 (canvas regression gate)
         run: npx vitest run
+
+      - name: ELK — sem fallback main thread (worker-only)
+        run: |
+          ! grep -n "new ELK(" src/layout/layoutEngine.ts \
+            && echo "worker-only OK"
 
       - name: Build (remoteEntry)
         run: npx vite build
+
+      - name: Worker asset — layout.worker emitido no bundle
+        run: |
+          ls dist/assets/*worker* >/dev/null 2>&1 \
+            && echo "worker chunk OK"
+
+      - name: Third-party notices + watermark bpmn.io
+        run: |
+          test -f THIRD_PARTY_NOTICES.md \
+            && grep -qi "bpmn.io" THIRD_PARTY_NOTICES.md \
+            && echo "notices OK"
+          ! grep -rn -i "removeLogo\|hide.*watermark\|watermark.*none" src/ \
+            && echo "watermark preserved"
 
       - name: Vendor leakage — vendor só em src/editor/
         run: |

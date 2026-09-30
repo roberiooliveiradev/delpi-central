@@ -52,3 +52,7 @@ infra/searxng/limiter.toml
 # Notas pessoais locais (não commitar)
 .local/
 api-delpi/data/
+
+# Playwright E2E artifacts (gerados a cada run)
+plugins/bpmn-modeler/test-results/
+plugins/bpmn-modeler/playwright-report/
