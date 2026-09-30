@@ -200,3 +200,17 @@ def build_get_eficiencia_fabril_efficiency_series_use_case():
         appointments_use_case=build_get_eficiencia_fabril_appointments_use_case(),
     )
 
+
+
+def build_get_production_operation_standard_time_use_case():
+    """Tempo padrão da operação de OP — leitura interna S2S (MES)."""
+    from app.application.use_cases.production.get_production_operation_standard_time_use_case import (
+        GetProductionOperationStandardTimeUseCase,
+    )
+    from app.infrastructure.persistence.totvs.production.production_standard_time_repository import (
+        ProductionStandardTimeRepository,
+    )
+
+    return GetProductionOperationStandardTimeUseCase(
+        repository=ProductionStandardTimeRepository(),
+    )

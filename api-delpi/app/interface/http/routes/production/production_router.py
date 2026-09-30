@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, Query
+from fastapi import APIRouter, Path, Query, Request
 from app.interface.http.pagination_query import (
     PAGE_SIZE_QUERY,
 )
@@ -16,12 +16,14 @@ from app.interface.http.query_param_enums import (
 )
 
 from delpi_auth.authorization import require_any_permission
+from delpi_auth.service_token import request_has_valid_internal_service_token
 
 from app.application.security.api_delpi_permissions import (
     EFICIENCIA_FABRIL_ACCESS,
     KPI_PRODUCTION_ACCESS,
 )
-from app.core.responses import error_response
+from app.core.exceptions import DatabaseConnectionError
+from app.core.responses import error_response, not_found_response
 from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_EFICIENCIA_FABRIL_APPOINTMENTS,
     PRODUCTION_EFICIENCIA_FABRIL_DASHBOARD,
@@ -75,6 +77,7 @@ from app.composition.production_composer import (
     build_get_production_otd_use_case,
     build_get_eficiencia_fabril_dashboard_use_case,
     build_get_eficiencia_fabril_appointments_use_case,
+    build_get_production_operation_standard_time_use_case,
     build_get_eficiencia_fabril_efficiency_by_work_center_use_case,
     build_get_eficiencia_fabril_efficiency_series_use_case,
 )
@@ -838,3 +841,70 @@ def get_production_factory_shifts():
             status_code=500,
         )
 
+
+
+@router.get(
+    "/orders/{production_order}/operations/{operation_code}/standard-time",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_operation_standard_time",
+        path="/production/orders/{production_order}/operations/{operation_code}/standard-time",
+    ),
+)
+def get_production_operation_standard_time(
+    request: Request,
+    production_order: str = Path(
+        ...,
+        min_length=1,
+        max_length=30,
+        description="Chave da OP (C2_OP = C2_NUM + C2_ITEM + C2_SEQUEN).",
+    ),
+    operation_code: str = Path(
+        ...,
+        min_length=1,
+        max_length=10,
+        description="Código da operação (HY_OPERAC / G2_OPERAC).",
+    ),
+    branch: str = Query(
+        ...,
+        pattern=r"^(01|02)$",
+        description="Filial TOTVS (C2_FILIAL).",
+    ),
+):
+    """S2S — ciclo padrão por peça da operação para o MES congelar no Production Run.
+
+    Snapshot da OP em SHY010 (HY_TEMPAD → HY_TEMPOM/HY_QUANT) com fallback do
+    roteiro SG2010 (G2_TEMPAD). ideal_cycle_seconds é segundos por peça
+    física (unit_hours × 3600 ÷ piecesFactor da unidade operacional); setup
+    fica separado em setup_seconds. Somente leitura.
+    """
+    if not request_has_valid_internal_service_token(request):
+        return error_response(
+            "Token de serviço interno inválido.", status_code=403
+        )
+    try:
+        result = build_get_production_operation_standard_time_use_case().execute(
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_production_operation_standard_time",
+            message="Tempo padrão da operação consultado com sucesso.",
+        )
+    except LookupError as exc:
+        return not_found_response(str(exc))
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except DatabaseConnectionError as exc:
+        log_error(f"Erro de banco ao consultar tempo padrão da operação: {exc}")
+        return error_response(
+            "Erro de conexão com o banco ao consultar tempo padrão da operação.",
+            status_code=503,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao consultar tempo padrão da operação: {exc}")
+        return error_response(
+            "Erro interno ao consultar tempo padrão da operação.",
+            status_code=500,
+        )

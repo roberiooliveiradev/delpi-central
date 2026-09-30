@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 720,
+  "operation_count": 721,
   "operations": [
     {
       "method": "POST",
@@ -56771,6 +56771,113 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Active SD4 commitments for a list of production orders, aggregated by order, operation and component. No SG1 fallback."
+    },
+    {
+      "method": "GET",
+      "path": "/production/orders/{production_order}/operations/{operation_code}/standard-time",
+      "operationId": "get_production_operation_standard_time",
+      "summary": "Indicador — Tempo padrão da operação de op (ciclo ideal e setup em segundos por peça)",
+      "tags": [
+        "Produção"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "production_order",
+          "in": "path",
+          "required": true,
+          "description": "Chave da OP (C2_OP = C2_NUM + C2_ITEM + C2_SEQUEN).",
+          "type": "string"
+        },
+        {
+          "name": "operation_code",
+          "in": "path",
+          "required": true,
+          "description": "Código da operação (HY_OPERAC / G2_OPERAC).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_operation_standard_time",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "production_order": {
+            "locale": {
+              "en": {
+                "description": "Production order query parameter.",
+                "label": "Production order"
+              },
+              "pt-BR": {
+                "description": "Ordem(ns) de produção (CSV).",
+                "label": "Ordem de produção"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna tempo padrão da operação de OP (ciclo ideal e setup em segundos por peça) via API DELPI. Indicador agregado ou KPI pontual. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
     },
     {
       "method": "GET",

@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-24",
-  "baselineOperationCount": 720,
-  "operationCount": 720,
-  "coveredCount": 645,
-  "gapCount": 74,
+  "generatedAt": "2026-09-30",
+  "baselineOperationCount": 721,
+  "operationCount": 721,
+  "coveredCount": 648,
+  "gapCount": 72,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -134,8 +134,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 54,
-      "covered": 54,
+      "total": 55,
+      "covered": 55,
       "gap": 0,
       "exempt": 0
     },
@@ -207,8 +207,8 @@
     },
     "supplies": {
       "total": 34,
-      "covered": 32,
-      "gap": 2,
+      "covered": 34,
+      "gap": 0,
       "exempt": 0
     },
     "system": {
@@ -3776,6 +3776,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_production_operation_standard_time",
+      "method": "GET",
+      "path": "/production/orders/{production_order}/operations/{operation_code}/standard-time",
+      "module": "production",
+      "entity": "production_operation_standard_time",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_production_order_operation_materials",
       "method": "GET",
       "path": "/production/orders/{production_order}/operations/{operation}/materials",
@@ -3988,15 +3997,6 @@
       "path": "/products/physical-locations",
       "module": "products",
       "entity": "product_physical_locations",
-      "shape": "list",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_product_inventory_blocks",
-      "method": "POST",
-      "path": "/products/inventory-blocks",
-      "module": "products",
-      "entity": "product_inventory_blocks",
       "shape": "list",
       "status": "covered"
     },
@@ -6266,7 +6266,7 @@
       "module": "supplies",
       "entity": "protheus_user_by_email_route_supplies_protheus_users_by_email_get",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_supplies_purchase_order_otd",
@@ -6383,7 +6383,7 @@
       "module": "supplies",
       "entity": "supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_supplies_safety_stock_consumption_analysis_items",

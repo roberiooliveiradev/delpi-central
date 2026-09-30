@@ -23,6 +23,10 @@ Meta/hora (unidades/h), sem setup:
 
 from __future__ import annotations
 
+from app.domain.production.production_standard_time import (
+    resolve_standard_time_unit_hours,
+)
+
 
 def compute_meta_por_hora(
     *,
@@ -39,28 +43,12 @@ def compute_meta_por_hora(
     """
     del qtd_total_op  # não usar — varia / não acompanha HY_TEMPOM parcial
 
-    tempad = _positive_float(hy_tempad)
-    if tempad is not None:
-        return round(1.0 / tempad, 6)
-
-    tempom = _positive_float(hy_tempom)
-    quant = _positive_float(hy_quant)
-    if tempom is not None and quant is not None:
-        return round(quant / tempom, 6)
-
-    g2 = _positive_float(g2_tempad)
-    if g2 is not None:
-        return round(1.0 / g2, 6)
-    return None
-
-
-def _positive_float(value: float | int | None) -> float | None:
-    if value is None:
+    unit_hours, _source = resolve_standard_time_unit_hours(
+        hy_tempad=hy_tempad,
+        hy_tempom=hy_tempom,
+        hy_quant=hy_quant,
+        g2_tempad=g2_tempad,
+    )
+    if unit_hours is None:
         return None
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return None
-    if number <= 0:
-        return None
-    return number
+    return round(1.0 / unit_hours, 6)
