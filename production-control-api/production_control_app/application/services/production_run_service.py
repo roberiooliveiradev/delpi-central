@@ -27,6 +27,10 @@ from production_control_app.domain.services.production_run_counting import (
     sum_segment_pieces,
     target_pieces_from_quantity,
 )
+from production_control_app.domain.services.mes_auto_downtime_threshold import (
+    AutoDowntimeThreshold,
+    resolve_auto_downtime_threshold,
+)
 from production_control_app.domain.services.production_run_standard_time import (
     normalize_standard_time_snapshot,
     resolve_workstation_type_snapshot,
@@ -111,6 +115,9 @@ class ProductionRunService:
         audit: Any | None = None,
         clock: Callable[[], datetime] | None = None,
         auto_downtime_seconds: int | None = None,
+        dynamic_auto_downtime_enabled: bool | None = None,
+        auto_downtime_min_seconds: int | None = None,
+        auto_downtime_manual_cycle_multiplier: float | None = None,
     ) -> None:
         self._repo = repository or PostgresProductionRunRepository()
         self._audit_repo = audit
@@ -120,6 +127,31 @@ class ProductionRunService:
             if auto_downtime_seconds is None
             else int(auto_downtime_seconds)
         )
+        self._dynamic_auto_downtime_enabled = (
+            bool(settings.PC_MES_DYNAMIC_AUTO_DOWNTIME_ENABLED)
+            if dynamic_auto_downtime_enabled is None
+            else bool(dynamic_auto_downtime_enabled)
+        )
+        self._auto_downtime_min_seconds = (
+            int(settings.PC_MES_AUTO_DOWNTIME_MIN_SECONDS or 0)
+            if auto_downtime_min_seconds is None
+            else int(auto_downtime_min_seconds)
+        )
+        self._auto_downtime_cycle_multiplier = (
+            float(settings.PC_MES_AUTO_DOWNTIME_MANUAL_CYCLE_MULTIPLIER or 0)
+            if auto_downtime_manual_cycle_multiplier is None
+            else float(auto_downtime_manual_cycle_multiplier)
+        )
+        if self._dynamic_auto_downtime_enabled and (
+            self._auto_downtime_cycle_multiplier <= 0
+            or self._auto_downtime_min_seconds < 0
+        ):
+            logger.warning(
+                "mes_auto_downtime_invalid_config min_seconds=%s multiplier=%s — "
+                "fallback para o threshold legado",
+                self._auto_downtime_min_seconds,
+                self._auto_downtime_cycle_multiplier,
+            )
         self._pulse = pulse_gateway or ProductionPulseGateway()
         self._queue_lookup = queue_lookup
         self._standard_time_lookup = standard_time_lookup
@@ -795,9 +827,29 @@ class ProductionRunService:
             conn=conn,
         )
 
+    def _auto_downtime_threshold(self, run: dict[str, Any]) -> AutoDowntimeThreshold:
+        """Resolve o threshold efetivo do run (2.7) — puro, auditável.
+
+        Dinâmico só quando: flag on + workstation manual + qualidade complete
+        + ciclo válido. Todo o resto é fallback do legado; seconds <= 0
+        é o kill switch soberano.
+        """
+        return resolve_auto_downtime_threshold(
+            legacy_seconds=self._auto_downtime_seconds,
+            dynamic_enabled=self._dynamic_auto_downtime_enabled,
+            ideal_cycle_seconds=run.get("ideal_cycle_seconds_snapshot"),
+            standard_time_data_quality=run.get(
+                "standard_time_data_quality_snapshot"
+            ),
+            workstation_type=run.get("workstation_type_snapshot"),
+            minimum_seconds=self._auto_downtime_min_seconds,
+            manual_cycle_multiplier=self._auto_downtime_cycle_multiplier,
+        )
+
     def _tick_idle(self, run: dict[str, Any], *, at: datetime) -> None:
         """Sem incremento: baseline legado ou parada automática no threshold."""
-        threshold = self._auto_downtime_seconds
+        resolution = self._auto_downtime_threshold(run)
+        threshold = resolution.seconds
         if threshold <= 0:
             return
         last = run.get("last_count_activity_at")
@@ -818,13 +870,19 @@ class ProductionRunService:
             locked = self._repo.lock_run(str(run["id"]), conn=conn)
             if locked is None or locked.get("status") != "running":
                 return
+            # Re-resolve sobre o run bloqueado: a decisão final usa o estado
+            # transacional, não a leitura pré-lock.
+            locked_resolution = self._auto_downtime_threshold(locked)
+            locked_threshold = locked_resolution.seconds
+            if locked_threshold <= 0:
+                return
             last2 = locked.get("last_count_activity_at")
             if last2 is None:
                 self._repo.init_count_activity(str(locked["id"]), at=at, conn=conn)
                 return
             if getattr(last2, "tzinfo", None) is None:
                 last2 = last2.replace(tzinfo=timezone.utc)
-            if (at - last2).total_seconds() < threshold:
+            if (at - last2).total_seconds() < locked_threshold:
                 return
             # started_at retroage à última atividade — os minutos de inatividade
             # contam como parada, não como produção.
@@ -846,7 +904,13 @@ class ProductionRunService:
                 conn=conn,
                 occurred_at=detected_at,
                 details={
-                    "thresholdSeconds": threshold,
+                    "thresholdSeconds": locked_threshold,
+                    "thresholdSource": locked_resolution.source,
+                    "dynamicThresholdEnabled": locked_resolution.dynamic,
+                    "idealCycleSeconds": locked_resolution.ideal_cycle_seconds,
+                    "workstationType": locked_resolution.workstation_type,
+                    "cycleMultiplier": locked_resolution.cycle_multiplier,
+                    "minimumThresholdSeconds": locked_resolution.minimum_seconds,
                     "lastCountActivityAt": last2.isoformat(),
                     "detectedAt": detected_at.isoformat(),
                     "idleSecondsAtDetection": int((detected_at - last2).total_seconds()),

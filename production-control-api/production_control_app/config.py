@@ -59,9 +59,31 @@ class Settings:
         _get_env("PC_BENCH_SESSION_TTL_HOURS", default="12") or "12"
     )
     # Segundos sem incremento de peças para o MES abrir parada automática.
-    # 0 = detecção desabilitada.
+    # 0 = detecção desabilitada (kill switch soberano — reina mesmo com o
+    # threshold dinâmico habilitado).
     PC_MES_AUTO_DOWNTIME_SECONDS: int = int(
         _get_env("PC_MES_AUTO_DOWNTIME_SECONDS", default="120") or "120"
+    )
+    # Fase 2.7 — threshold dinâmico por ciclo congelado do run. Default off:
+    # o deploy não altera comportamento; só manual_workstation com tempo
+    # padrão complete usa o ciclo — todo o resto cai no legado.
+    PC_MES_DYNAMIC_AUTO_DOWNTIME_ENABLED: bool = (
+        str(
+            _get_env("PC_MES_DYNAMIC_AUTO_DOWNTIME_ENABLED", default="false")
+            or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    # Piso do threshold dinâmico; default = legado (nunca reduz por default).
+    PC_MES_AUTO_DOWNTIME_MIN_SECONDS: int = int(
+        _get_env("PC_MES_AUTO_DOWNTIME_MIN_SECONDS")
+        or _get_env("PC_MES_AUTO_DOWNTIME_SECONDS", default="120")
+        or "120"
+    )
+    # Multiplicador do ciclo padrão para postos manuais (ceil no resultado).
+    PC_MES_AUTO_DOWNTIME_MANUAL_CYCLE_MULTIPLIER: float = float(
+        _get_env("PC_MES_AUTO_DOWNTIME_MANUAL_CYCLE_MULTIPLIER", default="3")
+        or "3"
     )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")

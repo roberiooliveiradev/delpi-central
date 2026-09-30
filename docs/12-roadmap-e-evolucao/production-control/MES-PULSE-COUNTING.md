@@ -130,7 +130,8 @@ Falha ou indisponibilidade da api-delpi **não bloqueia o Play**: persiste-se
 obrigatório. Os snapshots são **imutáveis**: pause/resume/tick/stop nunca os
 atualizam e runs legados permanecem NULL (sem backfill). Métricas de
 Performance (ciclo real, throughput, microparadas) são etapa posterior —
-o auto-downtime segue usando `PC_MES_AUTO_DOWNTIME_SECONDS` fixo.
+o auto-downtime ganhou threshold dinâmico opcional na Parte 2.7
+(seção seguinte); por default continua `PC_MES_AUTO_DOWNTIME_SECONDS` fixo.
 
 ### Trilha de count events (V014)
 
@@ -180,6 +181,51 @@ Somente `producing` entra no denominador — `stopped`, `setup`, `planned_stop` 
 - Métricas derivadas (`performance_percent`, `actual_average_cycle_seconds` agregado, `actual_throughput_per_hour`, `expected_throughput_per_hour`) **não são persistidas** — mudam enquanto o run está ativo.
 - Implementação: `MesPerformanceCalculator` (domínio puro, sem I/O) + `MesRunPerformanceService` (aplicação, leitura via `PostgresMesMonitoringReadRepository`) + `build_mes_run_performance_service()` no composer.
 - Fora do escopo: OEE, microparadas por ciclo e threshold dinâmico de auto-downtime (`PC_MES_AUTO_DOWNTIME_SECONDS` permanece fixo — Parte 2.7).
+
+### Threshold dinâmico de auto-downtime (Fase 2.7)
+
+Regra pura em `domain/services/mes_auto_downtime_threshold.py`
+(`resolve_auto_downtime_threshold`), avaliada por tick dentro do service —
+sem migration: o threshold é derivado em runtime e a decisão efetiva fica
+gravada no `details` do audit `automatic_downtime_started`.
+
+Ordem de decisão (cada saída tem `source` rastreável):
+
+1. `PC_MES_AUTO_DOWNTIME_SECONDS = 0` → `disabled` — kill switch soberano,
+   reina mesmo com a flag dinâmica ligada;
+2. `PC_MES_DYNAMIC_AUTO_DOWNTIME_ENABLED = false` (default) →
+   `legacy_dynamic_disabled`, threshold = legado;
+3. multiplicador <= 0 ou mínimo negativo → `legacy_invalid_config`,
+   threshold = legado (warning único no boot);
+4. `workstation_type_snapshot != manual_workstation` →
+   `legacy_unknown_workstation` — posto sem classificação confiável nunca
+   usa ciclo dinâmico;
+5. `standard_time_data_quality_snapshot != complete` →
+   `legacy_standard_time_unavailable`;
+6. `ideal_cycle_seconds_snapshot` ausente/<= 0/NaN →
+   `legacy_invalid_standard_time`;
+7. senão → `dynamic_manual_cycle`.
+
+Fórmula dinâmica (somente `manual_workstation` + `complete`):
+
+~~~text
+candidate = ceil(ideal_cycle_seconds_snapshot × manual_cycle_multiplier)
+effective = max(minimum_seconds, candidate)
+~~~
+
+| Config | Default | Papel |
+|--------|---------|-------|
+| `PC_MES_DYNAMIC_AUTO_DOWNTIME_ENABLED` | `false` | feature flag — deploy não muda comportamento |
+| `PC_MES_AUTO_DOWNTIME_MIN_SECONDS` | `PC_MES_AUTO_DOWNTIME_SECONDS` | piso do dinâmico — nunca reduz o legado por default |
+| `PC_MES_AUTO_DOWNTIME_MANUAL_CYCLE_MULTIPLIER` | `3` | multiplicador do ciclo padrão (ceil) |
+
+O objetivo da primeira versão é **reduzir falso positivo** (ciclo longo
+manual não para aos 120 s), nunca acelerar a detecção. A decisão é
+re-resolvida sobre o run bloqueado (`lock_run`) antes de abrir a parada;
+`downtime.started_at` continua retroativo ao último incremento. Incremento
+positivo continua auto-resumindo; correction e Pulse não-usable seguem
+inalterados. Sem microparadas, sem consulta extra ao TOTVS/api-delpi —
+o threshold usa apenas o snapshot congelado no Play.
 
 ---
 
