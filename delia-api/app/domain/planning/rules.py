@@ -21,9 +21,18 @@ def validate_plan_candidate(
 ) -> PlanValidationResult:
     """Validate a PlanCandidate against a bounded capability set.
 
-    Unknown capability ids and semantic escalation fail closed. Steps are
-    ordered; no dependency graph or cycle semantics exist in this slice.
+    Duplicate capability ids make the bounded set ambiguous and fail closed
+    before any order-dependent lookup is built — no first/last-wins
+    reconciliation. Unknown capability ids and semantic escalation also fail
+    closed. Steps are ordered; no dependency graph or cycle semantics exist.
     """
+    capability_ids = [cap.capability_id for cap in available_capabilities]
+    if len(set(capability_ids)) != len(capability_ids):
+        return PlanValidationResult(
+            valid=False,
+            error_codes=(PlanValidationCode.DUPLICATE_CAPABILITY_ID,),
+            limitations=plan.limitations,
+        )
     by_id = {cap.capability_id: cap for cap in available_capabilities}
     errors: list[PlanValidationCode] = []
     seen_step_ids: set[str] = set()

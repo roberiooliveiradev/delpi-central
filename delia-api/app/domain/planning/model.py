@@ -23,6 +23,7 @@ class PlanValidationCode(str, Enum):
     OPERATION_CHARACTER_MISMATCH = "operation_character_mismatch"
     MISSING_REQUIRED_EVIDENCE = "missing_required_evidence"
     DUPLICATE_STEP_ID = "duplicate_step_id"
+    DUPLICATE_CAPABILITY_ID = "duplicate_capability_id"
 
 
 @dataclass(frozen=True, slots=True)

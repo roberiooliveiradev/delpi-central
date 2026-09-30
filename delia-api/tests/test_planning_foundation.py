@@ -212,6 +212,71 @@ def test_canonical_refs_reused_for_lineage():
     assert plan.source_refs == (src,)
 
 
+def test_duplicate_capability_id_identical_fails_closed():
+    plan = _plan(steps=(_step("s1"),))
+    duplicated = (
+        _capability("inventory.product.search", OperationCharacter.READ),
+        _capability("inventory.product.search", OperationCharacter.READ),
+    )
+    result = validate_plan_candidate(plan, duplicated)
+    assert result.valid is False
+    assert result.error_codes == (PlanValidationCode.DUPLICATE_CAPABILITY_ID,)
+
+
+def test_duplicate_capability_id_read_act_escalation_blocked():
+    plan = _plan(
+        steps=(
+            _step(
+                "s1",
+                capability_id="inventory.product.search",
+                character=OperationCharacter.ACT,
+            ),
+        )
+    )
+    duplicated = (
+        _capability("inventory.product.search", OperationCharacter.READ),
+        _capability("inventory.product.search", OperationCharacter.ACT),
+    )
+    result = validate_plan_candidate(plan, duplicated)
+    assert result.valid is False
+    assert PlanValidationCode.DUPLICATE_CAPABILITY_ID in result.error_codes
+
+
+def test_duplicate_capability_id_order_independent():
+    read_cap = _capability("inventory.product.search", OperationCharacter.READ)
+    act_cap = _capability("inventory.product.search", OperationCharacter.ACT)
+    plan = _plan(steps=(_step("s1"),))
+    forward = validate_plan_candidate(plan, (read_cap, act_cap))
+    reversed_ = validate_plan_candidate(plan, (act_cap, read_cap))
+    assert forward.valid is False
+    assert reversed_.valid is False
+    assert forward.error_codes == reversed_.error_codes
+
+
+def test_duplicate_ids_not_silently_deduplicated():
+    plan = _plan(steps=(_step("s1"),))
+    duplicated = (
+        _capability("inventory.product.search", OperationCharacter.READ),
+        _capability("inventory.product.search", OperationCharacter.ACT),
+        _capability("purchasing.request.prepare", OperationCharacter.PREPARE),
+    )
+    result = validate_plan_candidate(plan, duplicated)
+    assert result.valid is False
+    assert PlanValidationCode.UNKNOWN_CAPABILITY not in result.error_codes
+    assert result.error_codes == (PlanValidationCode.DUPLICATE_CAPABILITY_ID,)
+
+
+def test_duplicate_capability_set_rejected_before_step_validation():
+    plan = _plan(steps=(_step("s1", capability_id="never.declared.cap"),))
+    duplicated = (
+        _capability("inventory.product.search", OperationCharacter.READ),
+        _capability("inventory.product.search", OperationCharacter.ACT),
+    )
+    result = validate_plan_candidate(plan, duplicated)
+    assert result.valid is False
+    assert result.error_codes == (PlanValidationCode.DUPLICATE_CAPABILITY_ID,)
+
+
 def test_duplicate_step_id_fails_closed():
     plan = _plan(steps=(_step("s1"), _step("s1")))
     result = validate_plan_candidate(plan, _capabilities())
