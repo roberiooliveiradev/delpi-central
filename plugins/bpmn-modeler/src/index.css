@@ -5,7 +5,34 @@
    Nenhum seletor global, nenhum `@media (prefers-color-scheme)` —
    dark/light seguem `:root[data-theme]` do portal. */
 
+/* Mapeamento de tokens do kit: `--delpi-ui-*` são extension points —
+   o consumidor (este MFE) os define no próprio escopo, apontando para os
+   tokens reais do portal (`--surface`, `--text`, `--primary`...), que já
+   alternam com `:root[data-theme]`. Convenção: ver production-appointments. */
 .dashboard-bpmn-modeler {
+  --delpi-ui-accent: var(--primary, #089bdb);
+  --delpi-ui-surface: var(--surface, #ffffff);
+  --delpi-ui-surface-elevated: var(--surface-2, #f7f7f7);
+  --delpi-ui-surface-muted: var(--surface-3, #fafafa);
+  --delpi-ui-surface-soft: var(--surface-2, #f7f7f7);
+  --delpi-ui-text: var(--text, #111111);
+  --delpi-ui-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --delpi-ui-border: var(--border, #e6e6e6);
+  --delpi-ui-border-strong: var(--border-2, #d9d9d9);
+  --delpi-ui-danger: var(--danger, #b42318);
+  --delpi-ui-warning: var(--warning, #f59e0b);
+  --delpi-ui-info: var(--primary, #089bdb);
+  --delpi-ui-focus-ring: var(--primary, #089bdb);
+  --delpi-ui-radius: 8px;
+  --delpi-ui-radius-sm: 6px;
+
+  --delpi-ui-control-bg: var(--control-bg, var(--surface, #ffffff));
+  --delpi-ui-control-border: var(--control-border, var(--border-2, #d9d9d9));
+  --delpi-ui-control-text: var(--text, #111111);
+  --delpi-ui-control-height: 34px;
+  --delpi-ui-control-radius: 6px;
+  --delpi-ui-control-font-size: 13px;
+
   --delpi-ui-bpmn-canvas-bg: var(--delpi-ui-surface);
   --delpi-ui-bpmn-dot-color: var(--delpi-ui-border-strong);
   --delpi-ui-bpmn-edge-color: var(--delpi-ui-text-muted);
@@ -13,13 +40,21 @@
   --delpi-ui-bpmn-minimap-node: var(--delpi-ui-accent);
   --delpi-ui-bpmn-controls-bg: var(--delpi-ui-surface-elevated);
   --delpi-ui-bpmn-controls-border: var(--delpi-ui-border);
+
+  /* Elementos do diagrama — consumidos via bpmnRenderer config oficial
+     (defaultFillColor/defaultStrokeColor/defaultLabelColor do bpmn-js).
+     DI colors declarados no documento sempre vencem. */
+  --delpi-ui-bpmn-element-fill: var(--delpi-ui-surface);
+  --delpi-ui-bpmn-element-stroke: var(--delpi-ui-text);
+  --delpi-ui-bpmn-label-color: var(--delpi-ui-text);
 }
 
 :root[data-theme="dark"] .dashboard-bpmn-modeler {
   --delpi-ui-bpmn-canvas-bg: var(--delpi-ui-surface-muted);
-  --delpi-ui-bpmn-controls-bg: var(--delpi-ui-surface-elevated);
-  --delpi-ui-bpmn-controls-border: var(--delpi-ui-border);
 
+  /* No dark a superfície é quase preta: elementos do diagrama ganham um
+     degrau acima do canvas para manter a figura legível. */
+  --delpi-ui-bpmn-element-fill: var(--delpi-ui-surface-elevated);
 }
 
 /* superfícies vendor (@bpmn-io/properties-panel): os tokens --bio-* são
@@ -41,7 +76,8 @@
   --bio-focus: var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
 }
 
-/* chrome do vendor dentro da shell do editor (palette, popups, context pad) */
+/* chrome do vendor dentro da shell do editor (palette, popups, context pad) —
+   somente superfície/cor; geometria e hit-areas são do vendor. */
 .dashboard-bpmn-modeler .bpmnm-canvas .djs-palette,
 .dashboard-bpmn-modeler .bpmnm-canvas .djs-popup,
 .dashboard-bpmn-modeler .bpmnm-preview__canvas .djs-palette {
@@ -49,21 +85,62 @@
   border-color: var(--delpi-ui-bpmn-controls-border);
 }
 
-:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry,
-:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-popup .entry,
-:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-context-pad .entry {
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-popup .entry,
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-context-pad .entry,
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-palette .entry {
   color: var(--delpi-ui-text);
 }
 
-:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry:hover,
-:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-popup .entry:hover {
+:root[data-theme="dark"] .dashboard-bpmn-modeler .bpmnm-canvas .djs-context-pad .entry,
+:root[data-theme="dark"] .dashboard-bpmn-modeler .bpmnm-canvas .djs-palette .entry:hover,
+:root[data-theme="dark"] .dashboard-bpmn-modeler .bpmnm-canvas .djs-popup .entry:hover {
   background: var(--delpi-ui-surface-soft, var(--delpi-ui-surface-muted));
 }
 
-/* ícones SVG do vendor herdam currentColor no dark */
+/* ícones raster/svg da palette herdam contraste no dark (context pad usa
+   font glyphs → `color`, coberto acima). */
 :root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry img,
 :root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry svg {
   filter: invert(0.85);
+}
+
+/* popup do vendor (replace/append menu): busca e separadores */
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-popup input[type="text"],
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-popup input:not([type]) {
+  background: var(--delpi-ui-surface);
+  color: var(--delpi-ui-text);
+  border-color: var(--delpi-ui-border);
+}
+
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-popup .djs-popup-header,
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-popup .header {
+  color: var(--delpi-ui-text);
+  border-color: var(--delpi-ui-border);
+}
+
+/* direct editing (rename inline) — superfície segue o tema */
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-direct-editing-parent,
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-direct-editing-content,
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-direct-editing-parent textarea {
+  background: var(--delpi-ui-surface-elevated);
+  color: var(--delpi-ui-text);
+  border-color: var(--delpi-ui-border-strong);
+}
+
+/* anel de foco do canvas: default do browser virava caixa preta ao clicar —
+   remapeado para o focus-ring do design system. */
+.dashboard-bpmn-modeler .bpmnm-canvas:focus-visible,
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-container:focus-visible,
+.dashboard-bpmn-modeler .bpmnm-canvas .bjs-container:focus-visible,
+.dashboard-bpmn-modeler .bpmnm-canvas svg:focus-visible {
+  outline: 2px solid var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
+  outline-offset: -2px;
+}
+
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-container:focus:not(:focus-visible),
+.dashboard-bpmn-modeler .bpmnm-canvas .bjs-container:focus:not(:focus-visible),
+.dashboard-bpmn-modeler .bpmnm-canvas svg:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* --- page shell --- */
@@ -73,8 +150,19 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  height: 100%;
+  min-height: 100%;
   box-sizing: border-box;
+}
+
+/* Editor/revisão: página "fill" do contrato do portal (`dashboard-page--fill`
+   é o hook canônico do host — ver portal/src/index.css). O mount ganha altura
+   real e a página nunca scrolla o .content; scrolls ficam na sidebar. */
+.bpmnm-page.bpmnm-editor {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .bpmnm-pagination {
@@ -104,15 +192,48 @@
 
 /* --- editor shell --- */
 
-.bpmnm-editor {
-  height: 100%;
-}
-
 .bpmnm-editor__header {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.bpmnm-editor__group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bpmnm-editor__group--nav {
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
+.bpmnm-editor__group--nav .bpmnm-editor__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bpmnm-editor__group--edit {
+  flex: 0 0 auto;
+}
+
+.bpmnm-editor__group--right {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.bpmnm-editor__divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 2px;
+  background: var(--delpi-ui-border);
+  flex: 0 0 auto;
 }
 
 .bpmnm-editor__title {
@@ -122,14 +243,7 @@
   align-items: center;
   gap: 8px;
   color: var(--delpi-ui-text);
-}
-
-.bpmnm-editor__actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-left: auto;
+  min-width: 0;
 }
 
 .bpmnm-zoom {
@@ -138,14 +252,16 @@
 
 .bpmnm-editor__body {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   gap: 8px;
 }
 
 .bpmnm-canvas {
-  flex: 1;
-  min-height: 420px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
   border: 1px solid var(--delpi-ui-border);
   border-radius: var(--delpi-ui-radius, 8px);
   overflow: hidden;
@@ -154,7 +270,8 @@
 }
 
 .bpmnm-canvas-wrap {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
   display: flex;
   position: relative;
@@ -167,7 +284,7 @@
   display: flex;
   flex-direction: column;
   background: var(--delpi-ui-bpmn-canvas-bg);
-  border: 1px solid var(--delpi-ui-border);
+  border: 2px solid var(--delpi-ui-accent);
   border-radius: var(--delpi-ui-radius, 8px);
   overflow: hidden;
   z-index: 5;
@@ -179,6 +296,7 @@
   gap: 8px;
   padding: 8px 12px;
   font-size: 13px;
+  font-weight: 600;
   color: var(--delpi-ui-text);
   border-bottom: 1px solid var(--delpi-ui-border);
   background: var(--delpi-ui-surface-muted);
@@ -193,18 +311,20 @@
 /* --- side panel (tabs retidos — kit não expõe Tabs genérico) --- */
 
 .bpmnm-side {
-  width: 300px;
-  min-width: 240px;
+  width: clamp(260px, 22vw, 340px);
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--delpi-ui-border);
   border-radius: var(--delpi-ui-radius, 8px);
   background: var(--delpi-ui-surface);
   overflow: hidden;
+  min-height: 0;
 }
 
 .bpmnm-side__tabs {
   display: flex;
+  flex: 0 0 auto;
   border-bottom: 1px solid var(--delpi-ui-border);
 }
 
@@ -231,9 +351,10 @@
 }
 
 .bpmnm-side__content {
-  flex: 1;
+  flex: 1 1 auto;
   overflow: auto;
   padding: 10px;
+  min-height: 0;
 }
 
 .bpmnm-properties {
@@ -335,11 +456,7 @@
   gap: 4px;
 }
 
-/* --- export menu / diagram selector --- */
-
-.bpmnm-export-menu {
-  position: relative;
-}
+/* --- diagram selector --- */
 
 .bpmnm-diagram-selector {
   display: flex;
@@ -366,8 +483,18 @@
 
 /* --- library cards --- */
 
-.bpmnm-card-menu-anchor {
-  display: inline-flex;
+/* hierarquia de cards: ~4 colunas em desktop largo, 2–3 em menores */
+.dashboard-bpmn-modeler .bpmnm-data-cards-grid {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+/* ⋮ no canto inferior direito do card, junto à ação primária */
+.bpmnm-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 /* --- inspector (domínio: leitura read-only do elemento) --- */
@@ -394,8 +521,7 @@
 
 @media (max-width: 1024px) {
   .bpmnm-side {
-    width: 260px;
-    min-width: 220px;
+    width: clamp(220px, 26vw, 280px);
   }
 }
 
@@ -409,7 +535,7 @@
     min-height: 220px;
   }
 
-  .bpmnm-editor__actions {
+  .bpmnm-editor__group--right {
     margin-left: 0;
   }
 }

@@ -269,48 +269,70 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
       ) : (
         <BpmnmDataCardsGrid ariaLabel="Modelos de processo">
           {(page?.items ?? []).map((model) => (
-            <BpmnmDataRecordCard
+            <div
               key={model.id}
-              href={openModelPath(model.id)}
-              onNavigate={(event) => {
+              style={{ display: "contents" }}
+              onContextMenu={(event) => {
                 event.preventDefault();
-                navigate(openModelPath(model.id));
+                setMenu({
+                  model,
+                  position: { x: event.clientX, y: event.clientY },
+                });
               }}
-              title={model.display_name}
-              subtitle={`Atualizado em ${new Date(model.updated_at).toLocaleString("pt-BR")}`}
-              status={
-                <BpmnmStatusBadge
-                  label={model.archived_at ? "Arquivado" : "Ativo"}
-                  variant={model.archived_at ? "neutral" : "success"}
-                />
-              }
-              fields={[
-                { id: "revisions", label: "Revisões", value: model.revision_count },
-                { id: "created", label: "Criado em", value: new Date(model.created_at).toLocaleDateString("pt-BR") },
-              ]}
-              context={
-                <div
-                  className="bpmnm-card-menu-anchor"
-                  title={HELP_TOOLTIPS.library.actions}
-                  onClick={(event) => {
-                    const rect =
-                      event.currentTarget.getBoundingClientRect();
-                    setMenu((m) =>
-                      m?.model.id === model.id
-                        ? null
-                        : {
-                            model,
-                            position: { x: rect.right, y: rect.bottom },
-                          },
-                    );
-                  }}
-                >
-                  <IconButton aria-label={`Ações de ${model.display_name}`}>
-                    <MoreVertical size={16} aria-hidden="true" />
-                  </IconButton>
-                </div>
-              }
-            />
+            >
+              <BpmnmDataRecordCard
+                href={openModelPath(model.id)}
+                onNavigate={(event) => {
+                  event.preventDefault();
+                  navigate(openModelPath(model.id));
+                }}
+                title={model.display_name}
+                subtitle={`Atualizado em ${new Date(model.updated_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`}
+                status={
+                  <BpmnmStatusBadge
+                    label={model.archived_at ? "Arquivado" : "Ativo"}
+                    variant={model.archived_at ? "neutral" : "success"}
+                  />
+                }
+                fields={[
+                  {
+                    id: "revisions",
+                    label: "Revisões",
+                    value: String(model.latest_revision_number ?? 0),
+                  },
+                  {
+                    id: "created",
+                    label: "Criado em",
+                    value: new Date(model.created_at).toLocaleDateString("pt-BR"),
+                  },
+                ]}
+                context={
+                  <span
+                    className="bpmnm-card-actions"
+                    title={HELP_TOOLTIPS.library.actions}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      const rect =
+                        event.currentTarget.getBoundingClientRect();
+                      setMenu((m) =>
+                        m?.model.id === model.id
+                          ? null
+                          : {
+                              model,
+                              position: { x: rect.right, y: rect.bottom },
+                            },
+                      );
+                    }}
+                  >
+                    <IconButton
+                      aria-label={`Ações de ${model.display_name}`}
+                    >
+                      <MoreVertical size={16} aria-hidden="true" />
+                    </IconButton>
+                  </span>
+                }
+              />
+            </div>
           ))}
         </BpmnmDataCardsGrid>
       )}

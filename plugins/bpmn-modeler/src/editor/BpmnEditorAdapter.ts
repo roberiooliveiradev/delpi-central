@@ -44,11 +44,19 @@ export type ElementSummary = {
 
 export type CommandTrigger = "execute" | "undo" | "redo" | "clear";
 
+export type CanvasContextMenuEvent = {
+  /** id do elemento BPMN sob o cursor; null = espaço vazio do canvas. */
+  elementId: string | null;
+  x: number;
+  y: number;
+};
+
 export type EditorSubscriptions = {
   onChanged?: (trigger: CommandTrigger) => void;
   onSelectionChanged?: (elementIds: string[]) => void;
   onImportDone?: (result: ImportResult) => void;
   onError?: (error: EditorImportFailure) => void;
+  onCanvasContextMenu?: (event: CanvasContextMenuEvent) => void;
 };
 
 export type Unsubscribe = () => void;
@@ -79,9 +87,17 @@ export class BpmnEditorAdapter {
   mount(container: HTMLElement, mode: EditorMode): void {
     this.destroy();
     this.mode = mode;
+    // Theming canônico do renderer: CSS vars mapeadas no shell (light/dark via
+    // :root[data-theme]). DI colors do documento continuam vencendo (P5).
+    const bpmnRenderer = {
+      defaultFillColor: "var(--delpi-ui-bpmn-element-fill, #ffffff)",
+      defaultStrokeColor: "var(--delpi-ui-bpmn-element-stroke, #22242a)",
+      defaultLabelColor: "var(--delpi-ui-bpmn-label-color, #22242a)",
+    };
     if (mode === "edit") {
       this.modeler = new Modeler({
         container,
+        bpmnRenderer,
         propertiesPanel: { parent: "#bpmn-properties-panel" },
         additionalModules: [
           BpmnPropertiesPanelModule,
@@ -89,7 +105,7 @@ export class BpmnEditorAdapter {
         ],
       });
     } else {
-      this.modeler = new NavigatedViewer({ container });
+      this.modeler = new NavigatedViewer({ container, bpmnRenderer });
     }
     this.layoutHandlerRegistered = false;
     this.wireEvents();
@@ -234,6 +250,61 @@ export class BpmnEditorAdapter {
     );
   }
 
+  /** Re-medir o viewport do renderer quando o container muda de tamanho
+   *  (resize da janela, sidebar, toolbar wrap). Preserva zoom/pan do usuário. */
+  resized(): void {
+    this.svc<{ resized(): void }>("canvas")?.resized();
+  }
+
+  selectAll(): void {
+    const registry = this.svc<{
+      getAll(): Array<{ id: string; type: string; parent?: unknown }>;
+    }>("elementRegistry");
+    const selection = this.svc<{
+      select(elements: unknown[]): void;
+    }>("selection");
+    if (!registry || !selection) return;
+    const elements = registry
+      .getAll()
+      .filter((el) => el.type !== "label" && el.parent != null);
+    selection.select(elements);
+  }
+
+  /** Direct editing vendor (rename inline) — modo edit apenas. */
+  directEdit(elementId: string): void {
+    if (this.mode !== "edit") return;
+    const element = this.svc<{ get(id: string): unknown }>("elementRegistry")?.get(
+      elementId,
+    );
+    if (!element) return;
+    try {
+      this.svc<{ activate(el: unknown): void }>("directEditing")?.activate(element);
+    } catch {
+      // elemento sem suporte a direct editing (ex.: label implícita) — no-op
+    }
+  }
+
+  /** Exclusão via commandStack (undo/redo preservados) — modo edit apenas. */
+  removeElement(elementId: string): void {
+    if (this.mode !== "edit") return;
+    const registry = this.svc<{
+      get(id: string): { type?: string } | undefined;
+    }>("elementRegistry");
+    const element = registry?.get(elementId);
+    if (!element) return;
+    const modeling = this.svc<{
+      removeShape(el: unknown): void;
+      removeConnection(el: unknown): void;
+    }>("modeling");
+    if (!modeling) return;
+    const type = element.type ?? "";
+    if (type.endsWith("Flow") || type === "bpmn:Association" || type === "bpmn:DataInputAssociation" || type === "bpmn:DataOutputAssociation") {
+      modeling.removeConnection(element);
+    } else {
+      modeling.removeShape(element);
+    }
+  }
+
   findElements(query: { name?: string; id?: string }): ElementRef[] {
     const registry = this.svc<{
       getAll(): Array<{ id: string; type: string; businessObject?: { name?: string } }>;
@@ -336,6 +407,25 @@ export class BpmnEditorAdapter {
         this.subs.onSelectionChanged?.(
           (event.newSelection ?? []).map((el) => el.id),
         );
+      },
+    );
+    eventBus.on(
+      "element.contextmenu",
+      (event: {
+        element?: { id?: string; type?: string };
+        originalEvent?: MouseEvent;
+      }) => {
+        const cb = this.subs.onCanvasContextMenu;
+        if (!cb) return;
+        const mouse = event.originalEvent;
+        if (mouse) mouse.preventDefault();
+        const el = event.element;
+        const isRoot = !el || el.type === "bpmn:Process" || el.type === "bpmn:Collaboration";
+        cb({
+          elementId: isRoot ? null : (el?.id ?? null),
+          x: mouse?.clientX ?? 0,
+          y: mouse?.clientY ?? 0,
+        });
       },
     );
   }

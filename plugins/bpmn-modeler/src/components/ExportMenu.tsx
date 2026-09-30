@@ -1,20 +1,9 @@
-import { useRef, useState } from "react";
-
-import {
-  ActionButton,
-  AnchoredPanelPortal,
-  ContextMenuItem,
-} from "@delpi/plugin-ui/index";
+import { useState } from "react";
 
 import type { BpmnEditorAdapter } from "../editor/BpmnEditorAdapter";
 import { exportWorkingCopy } from "../data/api/bpmnModelerApi";
-import { BPMNM_ROOT_CLASS } from "../ui/kit";
 
-type Props = {
-  modelId: string;
-  adapter: BpmnEditorAdapter | null;
-  getAccessToken?: () => string | undefined;
-};
+type TokenGetter = () => string | undefined;
 
 function download(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
@@ -26,14 +15,31 @@ function download(filename: string, content: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
+function downloadUrl(filename: string, url: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+}
+
+export type ExportActions = {
+  busy: boolean;
+  exportBpmn: () => Promise<void>;
+  exportSvg: () => Promise<void>;
+  exportPng: () => Promise<void>;
+};
+
 /**
- * Export menu (P4 §26): `.bpmn` = artefato canônico do backend (nunca
+ * Export actions (P4 §26): `.bpmn` = artefato canônico do backend (nunca
  * o XML do editor); SVG via renderer; PNG rasterizado client-side.
+ * Consumido pelo menu "Mais ações" do editor e pelo menu contextual da
+ * biblioteca — nunca reimplementar download paralelo.
  */
-export function ExportMenu({ modelId, adapter, getAccessToken }: Props) {
-  const anchorRef = useRef<HTMLDivElement | null>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
+export function useExportActions(
+  modelId: string,
+  adapter: BpmnEditorAdapter | null,
+  getAccessToken?: TokenGetter,
+): ExportActions {
   const [busy, setBusy] = useState(false);
 
   const exportBpmn = async () => {
@@ -43,7 +49,6 @@ export function ExportMenu({ modelId, adapter, getAccessToken }: Props) {
       download("modelo.bpmn", xml, "application/xml");
     } finally {
       setBusy(false);
-      setOpen(false);
     }
   };
 
@@ -55,7 +60,6 @@ export function ExportMenu({ modelId, adapter, getAccessToken }: Props) {
       download("modelo.svg", svg, "image/svg+xml");
     } finally {
       setBusy(false);
-      setOpen(false);
     }
   };
 
@@ -79,47 +83,13 @@ export function ExportMenu({ modelId, adapter, getAccessToken }: Props) {
       canvas.toBlob((blob) => {
         if (!blob) return;
         const pngUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = pngUrl;
-        a.download = "modelo.png";
-        a.click();
+        downloadUrl("modelo.png", pngUrl);
         URL.revokeObjectURL(pngUrl);
       }, "image/png");
     } finally {
       setBusy(false);
-      setOpen(false);
     }
   };
 
-  return (
-    <div ref={anchorRef} className="bpmnm-export-menu">
-      <ActionButton
-        type="button"
-        disabled={busy}
-        aria-expanded={open}
-        title="Exportar modelo"
-        onClick={() => setOpen((v) => !v)}
-      >
-        Exportar
-      </ActionButton>
-      <AnchoredPanelPortal
-        open={open}
-        anchorRef={anchorRef}
-        panelRef={panelRef}
-        className="delpi-ui-context-menu"
-        variant="bare"
-        role="menu"
-        aria-label="Exportar modelo"
-        preferredPlacement="bottom"
-        horizontalAlign="end"
-        gap={6}
-        onDismiss={() => setOpen(false)}
-        portalScopeClassName={BPMNM_ROOT_CLASS}
-      >
-        <ContextMenuItem label=".bpmn (canônico)" onSelect={() => void exportBpmn()} />
-        <ContextMenuItem label="SVG" disabled={!adapter} onSelect={() => void exportSvg()} />
-        <ContextMenuItem label="PNG" disabled={!adapter} onSelect={() => void exportPng()} />
-      </AnchoredPanelPortal>
-    </div>
-  );
+  return { busy, exportBpmn, exportSvg, exportPng };
 }

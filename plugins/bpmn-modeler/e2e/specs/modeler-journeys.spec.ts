@@ -167,8 +167,8 @@ test.describe("E2E-01/03 — create→edit→save→reload→export", () => {
 
     // export .bpmn
     const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: "Exportar" }).click();
-    await page.getByRole("menuitem", { name: ".bpmn" }).click();
+    await page.getByRole("button", { name: "Mais ações" }).click();
+    await page.getByRole("menuitem", { name: "Exportar BPMN" }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/\.bpmn$/);
   });
@@ -220,7 +220,7 @@ test.describe("E2E-05 — Organizar → Preview → Cancel", () => {
       timeout: 20_000,
     });
 
-    await page.getByRole("button", { name: "Organizar layout" }).click();
+    await page.getByRole("button", { name: "Organizar" }).click();
     const previewEl = page.getByTestId("layout-preview");
     await expect(previewEl).toBeVisible({ timeout: 30_000 });
     await expect(previewEl.getByRole("status")).toContainText(
@@ -250,7 +250,7 @@ test.describe("E2E-06 — Organizar → Accept → DIRTY → undo/redo → save"
       timeout: 20_000,
     });
 
-    await page.getByRole("button", { name: "Organizar layout" }).click();
+    await page.getByRole("button", { name: "Organizar" }).click();
     const previewEl = page.getByTestId("layout-preview");
     await expect(previewEl.getByRole("status")).toContainText(
       "Pré-visualização",
@@ -405,7 +405,7 @@ test.describe("E2E-11 — mustUnderstand=true → read-only capability gate", ()
       page.getByRole("button", { name: "Salvar" }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("button", { name: "Organizar layout" }),
+      page.getByRole("button", { name: "Organizar" }),
     ).toHaveCount(0);
   });
 });
@@ -473,13 +473,15 @@ test.describe("E2E-14 — archive/unarchive lifecycle", () => {
       timeout: 20_000,
     });
 
-    await page.getByRole("button", { name: "Arquivar", exact: true }).click();
+    await page.getByRole("button", { name: "Mais ações" }).click();
+    await page.getByRole("menuitem", { name: "Arquivar" }).click();
     await expect(page.locator(".bpmnm-badge", { hasText: "Arquivado" })).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByRole("button", { name: "Salvar" }),
     ).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Desarquivar" }).click();
+    await page.getByRole("button", { name: "Mais ações" }).click();
+    await page.getByRole("menuitem", { name: "Desarquivar" }).click();
     await expect(page.getByRole("button", { name: "Salvar" })).toBeVisible({
       timeout: 15_000,
     });
@@ -516,7 +518,7 @@ test.describe("E2E-19 — layout representativo (fixtures)", () => {
     await expect(page.locator(".bpmnm-canvas .djs-element")).toHaveCount(3, {
       timeout: 20_000,
     });
-    await page.getByRole("button", { name: "Organizar layout" }).click();
+    await page.getByRole("button", { name: "Organizar" }).click();
     await expect(page.getByTestId("layout-preview")).toBeVisible({
       timeout: 30_000,
     });
@@ -585,7 +587,7 @@ test.describe("E2E-22 — tablet read-only", () => {
     ).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("button", { name: "Salvar" })).toHaveCount(0);
     await expect(
-      page.getByRole("button", { name: "Organizar layout" }),
+      page.getByRole("button", { name: "Organizar" }),
     ).toHaveCount(0);
   });
 });

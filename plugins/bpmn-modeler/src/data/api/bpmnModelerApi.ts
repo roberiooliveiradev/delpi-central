@@ -33,7 +33,8 @@ export type ModelSummary = {
   updated_at: string;
   updated_by: string;
   archived_at: string | null;
-  revision_count: number;
+  /** Revisão mais recente (null = nenhuma revisão criada). */
+  latest_revision_number?: number | null;
 };
 
 export type ModelListPage = {

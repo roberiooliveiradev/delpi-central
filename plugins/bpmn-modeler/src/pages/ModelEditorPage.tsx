@@ -3,14 +3,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
   ConfirmModalPanel,
+  ContextMenu,
+  ContextMenuDivider,
+  ContextMenuItem,
   IconButton,
+  type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
 import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  Download,
+  FileText,
   Maximize,
+  MoreVertical,
+  MousePointerSquareDashed,
   Redo2,
+  Trash2,
   Undo2,
   ZoomIn,
   ZoomOut,
@@ -40,7 +49,7 @@ import { capabilitiesFromPermissions, editableMode, type Capabilities, type Read
 import { SaveMachine, type SaveState } from "../state/saveMachine";
 import { ConflictDialog } from "../components/ConflictDialog";
 import { DiagramSelector } from "../components/DiagramSelector";
-import { ExportMenu } from "../components/ExportMenu";
+import { useExportActions } from "../components/ExportMenu";
 import { ReadOnlyBanner } from "../components/ReadOnlyBanner";
 import { SaveStatus } from "../components/SaveStatus";
 import { UnsavedChangesDialog } from "../components/UnsavedChangesDialog";
@@ -111,6 +120,11 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
   const [adapterInstance, setAdapterInstance] = useState<BpmnEditorAdapter | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<number | null>(null);
   const [restoreBusy, setRestoreBusy] = useState(false);
+  const [overflowMenu, setOverflowMenu] = useState<FixedPanelPoint | null>(null);
+  const [canvasMenu, setCanvasMenu] = useState<{ elementId: string | null; point: FixedPanelPoint } | null>(null);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const overflowAnchorRef = useRef<HTMLSpanElement>(null);
+  const exportActions = useExportActions(modelId, adapterInstance, getAccessToken);
 
   const setState = useCallback((s: SaveState) => setMachineState(s), []);
 
@@ -154,6 +168,12 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           if (!result.ok) {
             setReadOnlyReason("EDITOR_CAPABILITY_FAILURE");
           }
+        },
+        onCanvasContextMenu: (event) => {
+          setCanvasMenu({
+            elementId: event.elementId,
+            point: { x: event.x, y: event.y },
+          });
         },
       });
 
@@ -215,6 +235,24 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     coarse.addEventListener("change", apply);
     return () => coarse.removeEventListener("change", apply);
   }, []);
+
+  // canvas resize lifecycle: ResizeObserver no wrap — sidebar, toolbar wrap,
+  // janela e mount afetam o viewport do renderer (P4 §7 via adapter).
+  useEffect(() => {
+    const wrap = canvasWrapRef.current;
+    const adapter = adapterInstance;
+    if (!wrap || !adapter || typeof ResizeObserver === "undefined") return;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => adapter.resized());
+    });
+    observer.observe(wrap);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [adapterInstance]);
 
   // beforeunload enquanto DIRTY (P4 §16)
   useEffect(() => {
@@ -451,98 +489,91 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
   }
 
   return (
-    <div className={`${BPMNM_ROOT_CLASS} dashboard-page bpmnm-page bpmnm-editor`}>
+    <div className={`${BPMNM_ROOT_CLASS} dashboard-page dashboard-page--fill bpmnm-page bpmnm-editor`}>
       <header className="bpmnm-editor__header">
-        <ActionButton
-          type="button"
-          variant="ghost"
-          onClick={() => guardedNavigate("/apps/bpmn-modeler")}
-        >
-          <ArrowLeft size={16} aria-hidden="true" /> Biblioteca
-        </ActionButton>
-        <h1 className="bpmnm-editor__title">
-          {model?.display_name ?? "…"}
-          {model?.archived_at ? (
-            <BpmnmStatusBadge
-              label="Arquivado"
-              variant="warning"
-              className="bpmnm-badge"
-            />
-          ) : null}
-        </h1>
-        <SaveStatus state={machineState} />
-        <div className="bpmnm-editor__actions">
-          {!preview && (
-            <DiagramSelector
-              diagrams={diagrams}
-              activeId={diagrams[0]?.id ?? null}
-              onSelect={(id) => adapterRef.current?.openDiagram(id)}
-            />
-          )}
-          {isEditable && !preview && (
-            <>
-              <ActionButton
-                type="button"
-                title={HELP_TOOLTIPS.editor.undo}
+        <div className="bpmnm-editor__group bpmnm-editor__group--nav">
+          <ActionButton
+            type="button"
+            variant="ghost"
+            onClick={() => guardedNavigate("/apps/bpmn-modeler")}
+          >
+            <ArrowLeft size={16} aria-hidden="true" /> Biblioteca
+          </ActionButton>
+          <h1 className="bpmnm-editor__title">
+            {model?.display_name ?? "…"}
+            {model?.archived_at ? (
+              <BpmnmStatusBadge
+                label="Arquivado"
+                variant="warning"
+                className="bpmnm-badge"
+              />
+            ) : null}
+          </h1>
+          <SaveStatus state={machineState} />
+        </div>
+
+        {isEditable && !preview && (
+          <div className="bpmnm-editor__group bpmnm-editor__group--edit">
+            <span title={HELP_TOOLTIPS.editor.undo} className="bpmnm-zoom">
+              <IconButton
+                aria-label="Desfazer"
                 disabled={machineState !== "DIRTY" && machineState !== "CLEAN"}
                 onClick={() => adapterRef.current?.undo()}
               >
-                <Undo2 size={15} aria-hidden="true" /> Desfazer
-              </ActionButton>
-              <ActionButton
-                type="button"
-                title={HELP_TOOLTIPS.editor.redo}
+                <Undo2 size={15} aria-hidden="true" />
+              </IconButton>
+            </span>
+            <span title={HELP_TOOLTIPS.editor.redo} className="bpmnm-zoom">
+              <IconButton
+                aria-label="Refazer"
                 disabled={machineState !== "DIRTY" && machineState !== "CLEAN"}
                 onClick={() => adapterRef.current?.redo()}
               >
-                <Redo2 size={15} aria-hidden="true" /> Refazer
-              </ActionButton>
+                <Redo2 size={15} aria-hidden="true" />
+              </IconButton>
+            </span>
+            <span className="bpmnm-editor__divider" aria-hidden="true" />
+            <ActionButton
+              type="button"
+              title={HELP_TOOLTIPS.editor.organize}
+              disabled={layoutBusy || !adapterInstance}
+              onClick={() => void onOrganize()}
+            >
+              {layoutBusy ? "Calculando layout…" : "Organizar"}
+            </ActionButton>
+            {layoutBusy && (
               <ActionButton
                 type="button"
-                title={HELP_TOOLTIPS.editor.organize}
-                disabled={layoutBusy || !adapterInstance}
-                onClick={() => void onOrganize()}
+                onClick={() => layoutJobRef.current?.cancel()}
               >
-                {layoutBusy ? "Calculando layout…" : "Organizar layout"}
+                Cancelar
               </ActionButton>
-              {layoutBusy && (
-                <ActionButton
-                  type="button"
-                  onClick={() => layoutJobRef.current?.cancel()}
-                >
-                  Cancelar
-                </ActionButton>
-              )}
-              <ActionButton
-                type="button"
-                title={HELP_TOOLTIPS.editor.validate}
-                disabled={!adapterInstance}
-                onClick={() => void onValidate()}
-              >
-                Validar
-              </ActionButton>
-              <ActionButton
-                type="button"
-                variant="primary"
-                title={HELP_TOOLTIPS.editor.save}
-                disabled={machineState !== "DIRTY" && machineState !== "SAVE_FAILED"}
-                onClick={() => void save()}
-              >
-                Salvar
-              </ActionButton>
-            </>
+            )}
+            <ActionButton
+              type="button"
+              title={HELP_TOOLTIPS.editor.validate}
+              disabled={!adapterInstance}
+              onClick={() => void onValidate()}
+            >
+              Validar
+            </ActionButton>
+          </div>
+        )}
+
+        <div className="bpmnm-editor__group bpmnm-editor__group--right">
+          {isEditable && !preview && (
+            <ActionButton
+              type="button"
+              variant="primary"
+              title={HELP_TOOLTIPS.editor.save}
+              disabled={machineState !== "DIRTY" && machineState !== "SAVE_FAILED"}
+              onClick={() => void save()}
+            >
+              Salvar
+            </ActionButton>
           )}
           {!preview && (
             <>
-              <span title="Ampliar" className="bpmnm-zoom">
-                <IconButton
-                  aria-label="Ampliar"
-                  disabled={!adapterInstance}
-                  onClick={() => adapterRef.current?.zoomIn()}
-                >
-                  <ZoomIn size={15} aria-hidden="true" />
-                </IconButton>
-              </span>
               <span title="Reduzir" className="bpmnm-zoom">
                 <IconButton
                   aria-label="Reduzir"
@@ -550,6 +581,15 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                   onClick={() => adapterRef.current?.zoomOut()}
                 >
                   <ZoomOut size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
+              <span title="Ampliar" className="bpmnm-zoom">
+                <IconButton
+                  aria-label="Ampliar"
+                  disabled={!adapterInstance}
+                  onClick={() => adapterRef.current?.zoomIn()}
+                >
+                  <ZoomIn size={15} aria-hidden="true" />
                 </IconButton>
               </span>
               <span title="Ajustar à janela" className="bpmnm-zoom">
@@ -561,23 +601,26 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                   <Maximize size={15} aria-hidden="true" />
                 </IconButton>
               </span>
-              {capabilities.manage && model && (
-                <ActionButton
-                  type="button"
-                  onClick={() => void onArchiveToggle()}
+              <DiagramSelector
+                diagrams={diagrams}
+                activeId={diagrams[0]?.id ?? null}
+                onSelect={(id) => adapterRef.current?.openDiagram(id)}
+              />
+              <span title="Mais ações" className="bpmnm-zoom" ref={overflowAnchorRef}>
+                <IconButton
+                  aria-label="Mais ações"
+                  aria-expanded={overflowMenu !== null}
+                  onClick={() => {
+                    const rect =
+                      overflowAnchorRef.current?.getBoundingClientRect();
+                    setOverflowMenu((m) =>
+                      m ? null : rect ? { x: rect.right, y: rect.bottom } : null,
+                    );
+                  }}
                 >
-                  {model.archived_at ? (
-                    <>
-                      <ArchiveRestore size={15} aria-hidden="true" /> Desarquivar
-                    </>
-                  ) : (
-                    <>
-                      <Archive size={15} aria-hidden="true" /> Arquivar
-                    </>
-                  )}
-                </ActionButton>
-              )}
-              <ExportMenu modelId={modelId} adapter={adapterInstance} getAccessToken={getAccessToken} />
+                  <MoreVertical size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
             </>
           )}
         </div>
@@ -596,7 +639,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       ) : null}
 
       <div className="bpmnm-editor__body">
-        <div className="bpmnm-canvas-wrap">
+        <div className="bpmnm-canvas-wrap" ref={canvasWrapRef}>
           <div
             ref={canvasRef}
             className="bpmnm-canvas"
@@ -605,17 +648,21 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           {preview && (
             <div className="bpmnm-preview" data-testid="layout-preview">
               <div className="bpmnm-preview__banner" role="status">
-                Pré-visualização do layout
-                <ActionButton
-                  type="button"
-                  variant="primary"
-                  onClick={onAcceptPreview}
-                >
-                  Aceitar
-                </ActionButton>
-                <ActionButton type="button" onClick={onCancelPreview}>
-                  Cancelar
-                </ActionButton>
+                <BpmnmStatusBadge label="Pré-visualização" variant="info" />
+                Pré-visualização do layout — nada foi alterado. Aceitar
+                aplica o layout ao diagrama; Cancelar descarta.
+                <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
+                  <ActionButton
+                    type="button"
+                    variant="primary"
+                    onClick={onAcceptPreview}
+                  >
+                    Aceitar
+                  </ActionButton>
+                  <ActionButton type="button" onClick={onCancelPreview}>
+                    Cancelar
+                  </ActionButton>
+                </span>
               </div>
               <div
                 ref={previewCanvasRef}
@@ -667,6 +714,108 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           </div>
         </aside>
       </div>
+
+      {/* overflow ⋮ — ações de baixa frequência (exportar/arquivar) */}
+      <ContextMenu
+        open={overflowMenu !== null}
+        position={overflowMenu}
+        onClose={() => setOverflowMenu(null)}
+        aria-label="Mais ações do editor"
+        portalScopeClassName={BPMNM_ROOT_CLASS}
+      >
+        <ContextMenuItem
+          label="Exportar BPMN"
+          icon={Download}
+          disabled={exportActions.busy}
+          onSelect={() => {
+            setOverflowMenu(null);
+            void exportActions.exportBpmn();
+          }}
+        />
+        <ContextMenuItem
+          label="Exportar SVG"
+          icon={FileText}
+          disabled={!adapterInstance || exportActions.busy}
+          onSelect={() => {
+            setOverflowMenu(null);
+            void exportActions.exportSvg();
+          }}
+        />
+        <ContextMenuItem
+          label="Exportar PNG"
+          icon={FileText}
+          disabled={!adapterInstance || exportActions.busy}
+          onSelect={() => {
+            setOverflowMenu(null);
+            void exportActions.exportPng();
+          }}
+        />
+        {capabilities.manage && model ? (
+          <>
+            <ContextMenuDivider />
+            <ContextMenuItem
+              label={model.archived_at ? "Desarquivar" : "Arquivar"}
+              icon={model.archived_at ? ArchiveRestore : Archive}
+              onSelect={() => {
+                setOverflowMenu(null);
+                void onArchiveToggle();
+              }}
+            />
+          </>
+        ) : null}
+      </ContextMenu>
+
+      {/* contexto do canvas — comandos oficiais do vendor via adapter */}
+      <ContextMenu
+        open={canvasMenu !== null}
+        position={canvasMenu?.point ?? null}
+        onClose={() => setCanvasMenu(null)}
+        aria-label="Menu do diagrama"
+        portalScopeClassName={BPMNM_ROOT_CLASS}
+      >
+        {canvasMenu?.elementId ? (
+          <>
+            <ContextMenuItem
+              label="Renomear"
+              icon={FileText}
+              disabled={!isEditable}
+              onSelect={() => {
+                adapterRef.current?.directEdit(canvasMenu.elementId!);
+                setCanvasMenu(null);
+              }}
+            />
+            <ContextMenuItem
+              label="Excluir"
+              icon={Trash2}
+              disabled={!isEditable}
+              onSelect={() => {
+                adapterRef.current?.removeElement(canvasMenu.elementId!);
+                setCanvasMenu(null);
+              }}
+            />
+            <ContextMenuDivider />
+          </>
+        ) : (
+          <ContextMenuItem
+            label="Selecionar tudo"
+            icon={MousePointerSquareDashed}
+            disabled={!adapterInstance}
+            onSelect={() => {
+              adapterRef.current?.selectAll();
+              setCanvasMenu(null);
+            }}
+          />
+        )}
+        <ContextMenuItem
+          label="Ajustar à janela"
+          icon={Maximize}
+          disabled={!adapterInstance}
+          onSelect={() => {
+            adapterRef.current?.fitViewport();
+            setCanvasMenu(null);
+          }}
+        />
+      </ContextMenu>
 
       <ConflictDialog
         open={machineState === "CONFLICT"}

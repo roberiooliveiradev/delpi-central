@@ -69,7 +69,7 @@ export function RevisionViewPage({ modelId, revisionNumber, getAccessToken, navi
   }, [modelId, revisionNumber, getAccessToken]);
 
   return (
-    <div className={`${BPMNM_ROOT_CLASS} dashboard-page bpmnm-page bpmnm-editor`}>
+    <div className={`${BPMNM_ROOT_CLASS} dashboard-page dashboard-page--fill bpmnm-page bpmnm-editor`}>
       <header className="bpmnm-editor__header">
         <ActionButton
           type="button"
