@@ -69,6 +69,8 @@ O Pulse **não** conhece OP/run; a fórmula de peças é âncora absoluta + `cou
 
 No Play, o run também congela os **snapshots de Performance** (V013): `ideal_cycle_seconds_snapshot` (segundos por peça física), `setup_seconds_snapshot`, `standard_time_source`, `standard_time_data_quality_snapshot`, `workstation_type_snapshot` (`manual_workstation` só quando `H8_FERRAM=MOD`) e `pieces_per_pulse_snapshot` (hoje `1`). A fonte é o contrato S2S `GET /production/orders/{op}/operations/{op.}/standard-time?branch=` da api-delpi — consulta best-effort **antes** da transação; falha persiste `upstream_unavailable` sem bloquear o chão de fábrica. Snapshots são imutáveis após o Play.
 
+Cada mudança real de `pieces_total` após o Play gera um fato append-only em `production_control.production_run_count_events` (V014), na mesma transação do update — `production` (delta > 0) ou `correction` (delta < 0); polling sem mudança e deltas zero não gravam nada, saltos são agregados em um único evento e observações stale pós-lock são descartadas. Detalhes em `docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md`.
+
 Doc canônico: [MES-PULSE-COUNTING.md](../docs/12-roadmap-e-evolucao/production-control/MES-PULSE-COUNTING.md).
 
 ### Integração Delpi MES

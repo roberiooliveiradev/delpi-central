@@ -21,6 +21,8 @@ from production_control_app.domain.services.pulse_snapshot import (
     classify_pulse_snapshot,
 )
 from production_control_app.domain.services.production_run_counting import (
+    CountChange,
+    build_count_change,
     pieces_from_anchor,
     sum_segment_pieces,
     target_pieces_from_quantity,
@@ -403,10 +405,18 @@ class ProductionRunService:
             if locked.get("status") != "running":
                 raise ProductionRunConflict("A produção não está em execução.")
             at = self._clock()
+            effective, change = self._resolve_count_observation(
+                run=locked,
+                baseline_total=int(run.get("pieces_total") or 0),
+                locked_total=int(locked.get("pieces_total") or 0),
+                observed_total=pieces_total,
+            )
+            if change is not None:
+                self._append_count_event(locked, change=change, at=at, conn=conn)
             updated = self._repo.set_run_status(
                 run_id,
                 status="paused",
-                pieces_total=pieces_total,
+                pieces_total=effective,
                 close_open_segment=True,
                 open_segment_pieces=open_pieces,
                 end_reason="pause",
@@ -483,10 +493,18 @@ class ProductionRunService:
             # Fecha fatos MES antes de mutar o status — se a parada aberta
             # estiver sem classificação, a transição inteira falha aqui.
             self._mes.record_run_finished(locked, conn=conn, at=at)
+            effective, change = self._resolve_count_observation(
+                run=locked,
+                baseline_total=int(run.get("pieces_total") or 0),
+                locked_total=int(locked.get("pieces_total") or 0),
+                observed_total=pieces_total,
+            )
+            if change is not None:
+                self._append_count_event(locked, change=change, at=at, conn=conn)
             updated = self._repo.set_run_status(
                 run_id,
                 status="completed",
-                pieces_total=pieces_total,
+                pieces_total=effective,
                 close_open_segment=locked.get("status") == "running",
                 open_segment_pieces=open_pieces,
                 end_reason="stop",
@@ -524,12 +542,40 @@ class ProductionRunService:
                 pieces_total, open_pieces, device = self._refresh_pieces(
                     run, allow_epoch_roll=True
                 )
+                # Trilha de count events (V014): GET que observa mudança
+                # persiste update + evento na mesma transação; sem mudança,
+                # nenhuma escrita (e nenhum lock — fast path de leitura).
+                persisted = int(run.get("pieces_total") or 0)
+                if pieces_total != persisted:
+                    with self._repo.transaction() as conn:
+                        locked = self._repo.lock_run(str(run["id"]), conn=conn)
+                        if locked is None or locked.get("status") != "running":
+                            # Transição concorrente: responde com o persistido.
+                            pieces_total = int(
+                                (locked or run).get("pieces_total") or 0
+                            )
+                        else:
+                            effective, change = self._resolve_count_observation(
+                                run=locked,
+                                baseline_total=int(run.get("pieces_total") or 0),
+                                locked_total=int(locked.get("pieces_total") or 0),
+                                observed_total=pieces_total,
+                            )
+                            if change is not None:
+                                self._repo.update_run_pieces(
+                                    str(run["id"]),
+                                    pieces_total=effective,
+                                    open_segment_pieces=open_pieces,
+                                    conn=conn,
+                                )
+                                self._append_count_event(
+                                    locked,
+                                    change=change,
+                                    at=self._clock(),
+                                    conn=conn,
+                                )
+                            pieces_total = effective
                 run = {**run, "pieces_total": pieces_total}
-                self._repo.update_run_pieces(
-                    run["id"],
-                    pieces_total=pieces_total,
-                    open_segment_pieces=open_pieces,
-                )
             except (PulseGatewayError, PulseDeviceUnavailable):
                 device = {
                     "deviceId": run.get("device_id"),
@@ -586,20 +632,11 @@ class ProductionRunService:
         if pieces_total != prev_total:
             # Correção/decaimento do contador não é golpe: atualiza e notifica,
             # mas sem tocar `last_count_activity_at` nem auto-resumir.
-            self._repo.update_run_pieces(
-                run["id"],
-                pieces_total=pieces_total,
-                open_segment_pieces=open_pieces,
-            )
-            self._notify(
-                run["branch"],
-                run["work_center"],
-                reason="pieces_updated",
-                run_id=str(run["id"]),
-                pieces_total=pieces_total,
+            applied = self._tick_correction(
+                run, pieces_total=pieces_total, open_pieces=open_pieces, at=at
             )
             self._tick_idle(run, at=at)
-            return 1
+            return applied
         self._tick_idle(run, at=at)
         return 0
 
@@ -609,17 +646,28 @@ class ProductionRunService:
         """Incremento real: atualiza contagem + atividade; auto-resume se
         estiver em ``stopped`` automático (run continua ``running``)."""
         closed_dt = None
+        applied_total = pieces_total
         with self._repo.transaction() as conn:
             locked = self._repo.lock_run(str(run["id"]), conn=conn)
             if locked is None or locked.get("status") != "running":
                 return
+            effective, change = self._resolve_count_observation(
+                run=locked,
+                baseline_total=int(run.get("pieces_total") or 0),
+                locked_total=int(locked.get("pieces_total") or 0),
+                observed_total=pieces_total,
+            )
+            if change is None:
+                return
+            applied_total = effective
             self._repo.update_run_pieces(
                 str(run["id"]),
-                pieces_total=pieces_total,
+                pieces_total=effective,
                 open_segment_pieces=open_pieces,
                 activity_at=at,
                 conn=conn,
             )
+            self._append_count_event(locked, change=change, at=at, conn=conn)
             closed_dt = self._mes.record_automatic_resumed(locked, conn=conn, at=at)
             if closed_dt is not None:
                 self._audit(
@@ -638,7 +686,7 @@ class ProductionRunService:
             run["work_center"],
             reason="pieces_updated",
             run_id=str(run["id"]),
-            pieces_total=pieces_total,
+            pieces_total=applied_total,
         )
         if closed_dt is not None:
             ended = closed_dt.get("ended_at")
@@ -659,6 +707,93 @@ class ProductionRunService:
                 },
             )
             logger.info("mes_auto_downtime_ended run_id=%s", run["id"])
+
+    def _tick_correction(
+        self, run: dict[str, Any], *, pieces_total: int, open_pieces: int, at: datetime
+    ) -> int:
+        """Decaimento de contagem: persiste correction atômica, sem atividade."""
+        applied_total = int(run.get("pieces_total") or 0)
+        applied = False
+        with self._repo.transaction() as conn:
+            locked = self._repo.lock_run(str(run["id"]), conn=conn)
+            if locked is None or locked.get("status") != "running":
+                return 0
+            effective, change = self._resolve_count_observation(
+                run=locked,
+                baseline_total=int(run.get("pieces_total") or 0),
+                locked_total=int(locked.get("pieces_total") or 0),
+                observed_total=pieces_total,
+            )
+            if change is None:
+                return 0
+            applied_total = effective
+            # Correction NÃO atualiza last_count_activity_at: não é produção.
+            self._repo.update_run_pieces(
+                str(run["id"]),
+                pieces_total=effective,
+                open_segment_pieces=open_pieces,
+                conn=conn,
+            )
+            self._append_count_event(locked, change=change, at=at, conn=conn)
+            applied = True
+        if applied:
+            self._notify(
+                run["branch"],
+                run["work_center"],
+                reason="pieces_updated",
+                run_id=str(run["id"]),
+                pieces_total=applied_total,
+            )
+        return int(applied)
+
+    def _resolve_count_observation(
+        self,
+        *,
+        run: dict[str, Any],
+        baseline_total: int,
+        locked_total: int,
+        observed_total: int,
+    ) -> tuple[int, CountChange | None]:
+        """Regra central de mudança de contagem, já com o run locado.
+
+        baseline_total é o total persistido quando a observação foi
+        produzida (pré-lock). Se outro writer mudou o run desde então, a
+        observação é stale: retorna o total locado sem evento — o próximo
+        ciclo reconcilia. Nunca transforma observação antiga em correction
+        falsa.
+        """
+        if baseline_total != locked_total:
+            logger.info(
+                "mes_count_observation_stale run_id=%s baseline=%s locked=%s observed=%s",
+                run.get("id"),
+                baseline_total,
+                locked_total,
+                observed_total,
+            )
+            return locked_total, None
+        change = build_count_change(
+            previous_total=locked_total, observed_total=observed_total
+        )
+        if change is None:
+            return locked_total, None
+        return change.pieces_total, change
+
+    def _append_count_event(
+        self,
+        run: dict[str, Any],
+        *,
+        change: CountChange,
+        at: datetime,
+        conn: Any,
+    ) -> None:
+        self._repo.append_count_event(
+            run_id=str(run["id"]),
+            pieces_total=change.pieces_total,
+            delta_pieces=change.delta_pieces,
+            event_type=change.event_type,
+            occurred_at=at,
+            conn=conn,
+        )
 
     def _tick_idle(self, run: dict[str, Any], *, at: datetime) -> None:
         """Sem incremento: baseline legado ou parada automática no threshold."""
@@ -838,26 +973,42 @@ class ProductionRunService:
             # inventa — preserva pieces do segmento aberto.
             open_known = int(segment.get("pieces") or 0)
             pieces_total = sum_segment_pieces(closed_pieces, open_known)
-            rolled = self._repo.close_segment_open_new(
-                run_id=str(run["id"]),
-                segment_id=str(segment["id"]),
-                pieces=open_known,
-                end_reason="epoch_change",
-                device_id=str(run["device_id"]),
-                anchor_counter=current_counter,
-                anchor_epoch=current_epoch,
-                pieces_total=pieces_total,
-            )
-            self._audit(
-                "counter_epoch_changed",
-                run=run,
-                session=None,
-                details={
-                    "previousEpoch": int(segment["anchor_epoch"]),
-                    "newEpoch": current_epoch,
-                },
-            )
-            return int(rolled.get("pieces_total") or pieces_total), 0, device
+            with self._repo.transaction() as conn:
+                locked = self._repo.lock_run(str(run["id"]), conn=conn)
+                if locked is None:
+                    return int(run.get("pieces_total") or 0), 0, device
+                effective, change = self._resolve_count_observation(
+                    run=locked,
+                    baseline_total=int(run.get("pieces_total") or 0),
+                    locked_total=int(locked.get("pieces_total") or 0),
+                    observed_total=pieces_total,
+                )
+                rolled = self._repo.close_segment_open_new(
+                    run_id=str(run["id"]),
+                    segment_id=str(segment["id"]),
+                    pieces=open_known,
+                    end_reason="epoch_change",
+                    device_id=str(run["device_id"]),
+                    anchor_counter=current_counter,
+                    anchor_epoch=current_epoch,
+                    pieces_total=effective,
+                    conn=conn,
+                )
+                if change is not None:
+                    self._append_count_event(
+                        locked, change=change, at=self._clock(), conn=conn
+                    )
+                self._audit(
+                    "counter_epoch_changed",
+                    run=locked,
+                    session=None,
+                    conn=conn,
+                    details={
+                        "previousEpoch": int(segment["anchor_epoch"]),
+                        "newEpoch": current_epoch,
+                    },
+                )
+            return int(rolled.get("pieces_total") or effective), 0, device
 
         closed_pieces = [
             int(s.get("pieces") or 0)

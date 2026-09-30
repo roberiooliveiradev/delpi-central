@@ -132,6 +132,32 @@ atualizam e runs legados permanecem NULL (sem backfill). Métricas de
 Performance (ciclo real, throughput, microparadas) são etapa posterior —
 o auto-downtime segue usando `PC_MES_AUTO_DOWNTIME_SECONDS` fixo.
 
+### Trilha de count events (V014)
+
+Migration: [`V014__production_run_count_events.sql`](../../../production-control-api/migrations/V014__production_run_count_events.sql).
+
+`production_runs.pieces_total` é o estado atual; `production_control.production_run_count_events` é a trilha append-only dos fatos de mudança, a partir da implantação (sem backfill histórico).
+
+| Campo | Significado |
+|-------|-------------|
+| `pieces_total` | Total físico do run logo após a mudança |
+| `delta_pieces` | Variação em peças físicas (nunca 0); > 0 `production`, < 0 `correction` |
+| `event_type` | `production` / `correction` |
+| `occurred_at` | Instante em que o Production Control observou e confirmou a mudança (clock injetável) — não é o instante da borda do sensor |
+
+Regras:
+
+- **Invariante**: toda alteração de `pieces_total` após a criação do run gera exatamente um count event, **na mesma transação** (`append_count_event` exige `conn`; rollback derruba ambos). A criação inicial (`pieces_total = 0`) não gera evento.
+- Polling sem mudança não persiste nada (idle tick nem toca a tabela); salto observado (+N entre duas observações) vira **um** evento agregado — não inventamos timestamps por peça.
+- Eventos são em **peças físicas** do domínio MES, não pulsos crus: `delta_pieces` nunca usa `pieces_conversion_factor` (unidade ERP). Com `pieces_per_pulse_snapshot = 1`, um incremento do counter = uma peça.
+- `correction` não conta como produção: não atualiza `last_count_activity_at`, não auto-resume parada e não gera golpe.
+- Proteção de concorrência: se o total persistido divergir do baseline da observação após `SELECT ... FOR UPDATE`, a observação stale é descartada (`mes_count_observation_stale`) — nunca vira correction falsa; o próximo ciclo reconcilia.
+- Rollover de `counterEpoch` sem delta líquido não gera evento (a evidência técnica segue no audit `counter_epoch_changed`); mudança líquida passa pela mesma regra central.
+- Cobertura de caminhos: `_tick_counted`, `_tick_correction`, `get_active`, `pause_run`, `stop_run` e rollover de epoch passam por `_resolve_count_observation` (regra única em `build_count_change`). `resume_run` não gera evento — a nova âncora não é produção.
+- Leitura interna `list_count_events(run_id)` ordena `occurred_at ASC, id ASC`. Sem endpoint HTTP nesta etapa.
+
+Índice `(run_id, occurred_at, id)`; sem `details` JSONB e sem duplicar branch/CT/OP (contexto via `run_id` → `production_runs`).
+
 ---
 
 ## Contratos HTTP

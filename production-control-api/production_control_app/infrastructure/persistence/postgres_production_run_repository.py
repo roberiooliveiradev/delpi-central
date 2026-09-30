@@ -18,6 +18,7 @@ from production_control_app.infrastructure.persistence.plugins_postgres_connecti
 _SESSIONS = f"{PC_SCHEMA_NAME}.operator_bench_sessions"
 _RUNS = f"{PC_SCHEMA_NAME}.production_runs"
 _SEGMENTS = f"{PC_SCHEMA_NAME}.production_run_segments"
+_COUNT_EVENTS = f"{PC_SCHEMA_NAME}.production_run_count_events"
 
 # Snapshots de Performance congelados no Play (V013) — imutáveis após criados.
 _RUN_SNAPSHOT_COLUMNS = (
@@ -672,3 +673,63 @@ class PostgresProductionRunRepository:
             segment = dict(cur.fetchone())
         run["open_segment"] = segment
         return run
+
+    # ------------------------------------------------------------------
+    # Count events (V014) — trilha append-only de mudanças de pieces_total.
+    # ------------------------------------------------------------------
+
+    def append_count_event(
+        self,
+        *,
+        run_id: str,
+        pieces_total: int,
+        delta_pieces: int,
+        event_type: str,
+        occurred_at: datetime,
+        conn: Any,
+    ) -> dict[str, Any]:
+        """Append de um fato de contagem na MESMA transação do run.
+
+        conn é obrigatório por design: o evento nunca pode fazer commit
+        independente da alteração de production_runs.pieces_total — ou
+        ambos persistem, ou nenhum persiste.
+        """
+        if conn is None:
+            raise ValueError(
+                "append_count_event exige conn da transação que altera o run."
+            )
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                INSERT INTO {_COUNT_EVENTS} (
+                    run_id, pieces_total, delta_pieces, event_type, occurred_at
+                )
+                VALUES (%s::uuid, %s, %s, %s, %s)
+                RETURNING id, run_id::text AS run_id, pieces_total,
+                          delta_pieces, event_type, occurred_at, created_at
+                """,
+                (
+                    run_id,
+                    int(pieces_total),
+                    int(delta_pieces),
+                    event_type,
+                    occurred_at,
+                ),
+            )
+            return dict(cur.fetchone())
+
+    def list_count_events(self, run_id: str) -> list[dict[str, Any]]:
+        """Trilha cronológica do run: occurred_at ASC, id ASC (interna)."""
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT id, run_id::text AS run_id, pieces_total,
+                           delta_pieces, event_type, occurred_at, created_at
+                      FROM {_COUNT_EVENTS}
+                     WHERE run_id = %s::uuid
+                     ORDER BY occurred_at ASC, id ASC
+                    """,
+                    (run_id,),
+                )
+                return [dict(row) for row in cur.fetchall()]

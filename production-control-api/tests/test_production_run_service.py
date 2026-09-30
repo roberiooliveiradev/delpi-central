@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
@@ -37,6 +39,8 @@ class FakeRepo:
         self.sessions: dict[str, dict] = {}
         self.runs: dict[str, dict] = {}
         self.segments: dict[str, list[dict]] = {}
+        self.count_events: dict[str, list[dict]] = {}
+        self.fail_next_count_event = False
         self._seq = 0
 
     def _id(self) -> str:
@@ -207,7 +211,40 @@ class FakeRepo:
 
     @contextmanager
     def transaction(self):
-        yield None
+        runs_backup = copy.deepcopy(self.runs)
+        segments_backup = copy.deepcopy(self.segments)
+        events_backup = copy.deepcopy(self.count_events)
+        try:
+            yield None
+        except Exception:
+            self.runs = runs_backup
+            self.segments = segments_backup
+            self.count_events = events_backup
+            raise
+
+    def append_count_event(self, *, run_id, pieces_total, delta_pieces,
+                           event_type, occurred_at, conn=None):
+        if self.fail_next_count_event:
+            self.fail_next_count_event = False
+            raise RuntimeError("count_event_insert_failed")
+        self._seq += 1
+        event = {
+            "id": self._seq,
+            "run_id": run_id,
+            "pieces_total": pieces_total,
+            "delta_pieces": delta_pieces,
+            "event_type": event_type,
+            "occurred_at": occurred_at,
+            "created_at": datetime.now(timezone.utc),
+        }
+        self.count_events.setdefault(run_id, []).append(event)
+        return dict(event)
+
+    def list_count_events(self, run_id: str):
+        return sorted(
+            self.count_events.get(run_id, []),
+            key=lambda e: (e["occurred_at"], e["id"]),
+        )
 
     def lock_run(self, run_id: str, *, conn=None):
         return self.get_run(run_id)
