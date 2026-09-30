@@ -356,9 +356,9 @@
         "requiresBranchPermission": true
       },
       "valueFields": [
-        "value",
-        "stockValue",
-        "total"
+        "total_stock_value",
+        "total_stock_quantity",
+        "total_locations"
       ],
       "label": "Suprimentos — valor de estoque",
       "description": "Valor total em estoque e ranking dos principais itens.",
@@ -370,7 +370,18 @@
           "label": "TOP N itens",
           "optional": true
         }
-      }
+      },
+      "valueFieldTypes": {
+        "total_stock_value": "number",
+        "total_stock_quantity": "number",
+        "total_locations": "number"
+      },
+      "valueFieldLabels": {
+        "total_stock_value": "Valor total de estoque",
+        "total_stock_quantity": "Quantidade em estoque",
+        "total_locations": "Localizações"
+      },
+      "projectableFields": null
     },
     "get_supplies_stock_balances_summary": {
       "tableFields": "by_warehouse",
@@ -576,9 +587,7 @@
     },
     "get_dashboard_department_idd": {
       "valueFields": [
-        "score",
-        "value",
-        "idd"
+        "score"
       ],
       "paramSchema": {
         "department_id": {
@@ -587,7 +596,14 @@
       },
       "tvConstraints": {
         "maxRows": 1
-      }
+      },
+      "valueFieldTypes": {
+        "score": "number"
+      },
+      "valueFieldLabels": {
+        "score": "Nota IDD"
+      },
+      "projectableFields": null
     },
     "get_dashboard_department_indicators": {
       "valueFields": [
@@ -722,6 +738,40 @@
         "kpi",
         "auto"
       ]
+    },
+    "get_quality_scrap_cost_pct_series": {
+      "seriesField": "points",
+      "valueFields": [
+        "metrics.scrap_cost_pct"
+      ],
+      "valueFieldTypes": {
+        "metrics.scrap_cost_pct": "number",
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date"
+      },
+      "valueFieldLabels": {
+        "metrics.scrap_cost_pct": "Custo de refugo / ROL (%)"
+      },
+      "projectableFields": null
+    },
+    "get_quality_rework_cost_pct_series": {
+      "seriesField": "points",
+      "valueFields": [
+        "metrics.rework_cost_pct"
+      ],
+      "valueFieldTypes": {
+        "metrics.rework_cost_pct": "number",
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date"
+      },
+      "valueFieldLabels": {
+        "metrics.rework_cost_pct": "Custo de retrabalho / ROL (%)"
+      },
+      "projectableFields": null
     },
     "get_nonconformity_streak": {
       "tvConstraints": {
@@ -1216,6 +1266,36 @@
       "description": "ROL do período com meta SI no mesmo payload (hub TV).",
       "whenToUse": "Use em card KPI/gauge quando precisar de ROL realizado e meta na mesma fonte."
     },
+    "get_new_business_rol_target_pct": {
+      "valueFields": [
+        "rol_target_pct",
+        "rol"
+      ],
+      "valueFieldTypes": {
+        "rol_target_pct": "number",
+        "rol": "number"
+      },
+      "valueFieldLabels": {
+        "rol_target_pct": "Atingimento da meta ROL (%)",
+        "rol": "ROL realizado"
+      },
+      "projectableFields": null
+    },
+    "get_weg_rol_target_pct": {
+      "valueFields": [
+        "rol_target_pct",
+        "rol"
+      ],
+      "valueFieldTypes": {
+        "rol_target_pct": "number",
+        "rol": "number"
+      },
+      "valueFieldLabels": {
+        "rol_target_pct": "Atingimento da meta ROL (%)",
+        "rol": "ROL realizado"
+      },
+      "projectableFields": null
+    },
     "get_sales_order_otd": {
       "allowedDisplayModes": [
         "kpi",
@@ -1454,6 +1534,30 @@
       "label": "OTD de pedidos por filial",
       "description": "OTD das filiais 01 e 02 em lista tabular. unit só se UM homogênea na filial.",
       "whenToUse": "Use em tabela comparativa de OTD por filial."
+    },
+    "get_financial_ebitda_pct": {
+      "valueFields": [
+        "ebitda_over_rol_pct"
+      ],
+      "valueFieldTypes": {
+        "ebitda_over_rol_pct": "number"
+      },
+      "valueFieldLabels": {
+        "ebitda_over_rol_pct": "EBITDA / ROL (%)"
+      },
+      "projectableFields": null
+    },
+    "get_financial_fixed_cost_pct": {
+      "valueFields": [
+        "fixed_cost_over_rol_pct"
+      ],
+      "valueFieldTypes": {
+        "fixed_cost_over_rol_pct": "number"
+      },
+      "valueFieldLabels": {
+        "fixed_cost_over_rol_pct": "Custos fixos / ROL (%)"
+      },
+      "projectableFields": null
     }
   }
 }

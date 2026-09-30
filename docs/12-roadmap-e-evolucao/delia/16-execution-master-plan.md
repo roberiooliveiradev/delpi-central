@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED` (`ARCHITECTURE_REVIEW_C3_T8R1=ACCEPT_WITH_RESIDUAL` §6.83); `NEXT_TASK_AUTHORIZED=NO`; do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED` (`ARCHITECTURE_REVIEW_C3_T8R1=ACCEPT_WITH_RESIDUAL` §6.83); `ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION=PERSISTED` (`ANOTHER_BOUNDED_C3_SLICE_REQUIRED` §6.84); `NEXT_TASK_AUTHORIZED=YES`; `NEXT_TASK_ID=C3-MEDIA-FOUNDATION-01` (MULTIMODAL_MEDIA_EVIDENCE_FOUNDATION); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -725,7 +725,9 @@ ARCHITECTURE_REVIEW_C3_T8 = REWORK (verdict on REVIEW_TARGET impl 0e39953e83)
 ARCHITECTURE_REVIEW_C3_T8R1 = ACCEPT_WITH_RESIDUAL (REVIEWED_IMPLEMENTATION_HEAD 22b4aef606; §6.83)
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 C2-FINAL accepted with residual; C3-T1..T8 APPROVED (`ARCHITECTURE_REVIEW_C3_T8R1` ACCEPT_WITH_RESIDUAL; §6.83); authorization != execution
-NEXT_TASK_AUTHORIZED = NO; NEXT = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
+ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION = ANOTHER_BOUNDED_C3_SLICE_REQUIRED (§6.84)
+NEXT_TASK_AUTHORIZED = YES; NEXT_TASK = C3-MEDIA-FOUNDATION-01 (MULTIMODAL_MEDIA_EVIDENCE_FOUNDATION)
+NEXT = PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF
 Workspace binding remains unscheduled
 ```
 
@@ -1141,5 +1143,38 @@ NONE = conversation/chat engines, repositories, retrieval port, RAG,
         persistence, migration, conversation UI, provider roles in Domain
 EVIDENCE = ledger §6.82/§6.83; 20 C3-T8 section; TARGETED_C3_T8R1 PASS 42/42;
            FULL_DELIA_API PASS 252/252 at IMPLEMENTATION_HEAD
-NEXT = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
+NEXT = C3-MEDIA-FOUNDATION-01 (brief pending:
+       PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF)
+```
+
+### C3-MEDIA-FOUNDATION-01 — Multimodal / Media Evidence Foundation (authorized)
+
+```text
+TASK = C3-MEDIA-FOUNDATION-01 — MULTIMODAL_MEDIA_EVIDENCE_FOUNDATION
+STATE = AUTHORIZED (implementation brief pending)
+AUTHORIZED_BY = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
+                (ANOTHER_BOUNDED_C3_SLICE_REQUIRED; ledger §6.84)
+OWNER = DÉLIA Intelligence / Multimodal (source/domain owner remains
+        authoritative fact owner; DÉLIA = evidence/epistemic coordination)
+
+ALLOWED_SCOPE = provider-neutral media/source references; typed multimodal
+        observations; provenance; limitations; region/time-range semantics
+        where justified; EpistemicClass/EvidenceRef/SourceRef/EntityRef
+        reuse; deterministic conformance tests
+FORBIDDEN = biometric identification/face/speaker/liveness/emotion/
+        personality/employment inference; real camera/microphone/STT/TTS/
+        vision providers; media persistence; RAG; tool execution;
+        PREPARE/ACT; OT actuation; generic MediaEngine/MultimodalRouter
+INVARIANTS = media content untrusted; multimodal extraction = OBSERVATION
+        by default; observation != FACT; EvidenceRef/SourceRef !=
+        authorization; confidence != authority; media metadata !=
+        permission; visual finding != official quality decision;
+        no free-form AI -> PLC/CNC/robot/machine path
+ABSTRACTION_GATE = no speculative MediaEngine/MultimodalEngine/
+        VisionRouter/MediaRegistry/ProviderRouter/GenericObservationEngine
+        without a real current consumer
+CP_TRACEABILITY = inspect CP-078/079/160/162/163/164/177 (conservative;
+        authorization != PASS); biometric CP-184..187 stay outside this
+        slice (separate bounded decision required)
+NEXT = PREPARE_C3_MEDIA_FOUNDATION_01_IMPLEMENTATION_BRIEF
 ```
