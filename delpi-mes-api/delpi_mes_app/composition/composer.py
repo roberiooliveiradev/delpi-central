@@ -1,5 +1,8 @@
 from functools import lru_cache
 
+from delpi_mes_app.application.services.mes_downtime_reason_admin_service import (
+    MesDowntimeReasonAdminService,
+)
 from delpi_mes_app.application.services.mes_read_service import MesReadService
 from delpi_mes_app.config import settings
 from delpi_mes_app.infrastructure.gateways.production_control_mes_gateway import (
@@ -23,3 +26,7 @@ def close_gateway() -> None:
 
 def build_mes_read_service() -> MesReadService:
     return MesReadService(build_gateway())
+
+
+def build_mes_downtime_reason_admin_service() -> MesDowntimeReasonAdminService:
+    return MesDowntimeReasonAdminService(build_gateway())

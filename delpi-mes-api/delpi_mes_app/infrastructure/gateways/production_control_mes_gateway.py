@@ -10,6 +10,7 @@ import httpx
 from delpi_auth.service_token import apply_internal_service_headers
 
 from delpi_mes_app.domain.errors import (
+    MesSourceConflict,
     MesSourceInvalidResponse,
     MesSourceNotFound,
     MesSourceUnauthorized,
@@ -80,16 +81,54 @@ class ProductionControlMesGateway:
             params["to"] = period_to.isoformat()
         return self._get("/integrations/mes/downtimes", params=params)
 
+    def list_downtime_reasons(self) -> dict[str, Any]:
+        return self._request("GET", "/integrations/mes/downtime-reasons")
+
+    def create_downtime_reason(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._request(
+            "POST", "/integrations/mes/downtime-reasons", json=payload
+        )
+
+    def update_downtime_reason(
+        self, code: str, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        return self._request(
+            "PUT",
+            f"/integrations/mes/downtime-reasons/{quote(str(code), safe='')}",
+            json=payload,
+        )
+
+    def set_downtime_reason_active(self, code: str, *, active: bool) -> dict[str, Any]:
+        return self._request(
+            "PATCH",
+            f"/integrations/mes/downtime-reasons/{quote(str(code), safe='')}/active",
+            json={"active": bool(active)},
+        )
+
     def _headers(self) -> dict[str, str]:
         headers = {"Accept": "application/json", "X-Delpi-Caller-App": "delpi-mes-api"}
         apply_internal_service_headers(headers)
         return headers
 
     def _get(self, path: str, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        return self._request("GET", path, params=params)
+
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         started = monotonic()
         try:
-            response = self._client.get(
-                f"{self._base_url}{path}", headers=self._headers(), params=params
+            response = self._client.request(
+                method,
+                f"{self._base_url}{path}",
+                headers=self._headers(),
+                params=params,
+                json=json,
             )
         except (httpx.TimeoutException, httpx.NetworkError) as exc:
             self._log_error(type(exc).__name__, None, started)
@@ -99,7 +138,13 @@ class ProductionControlMesGateway:
             self._log_error("upstream_authorization", response.status_code, started)
             raise MesSourceUnauthorized("Integração MES não autorizada no serviço de origem.")
         if response.status_code == 404:
-            raise MesSourceNotFound("Recurso MES não encontrado.")
+            raise MesSourceNotFound(
+                self._safe_message(response, "Recurso MES não encontrado.")
+            )
+        if response.status_code == 409:
+            raise MesSourceConflict(
+                self._safe_message(response, "Operação em conflito no catálogo MES.")
+            )
         if response.status_code == 422:
             raise MesSourceValidationError(self._safe_message(response, "Consulta MES inválida."))
         if response.status_code >= 500:

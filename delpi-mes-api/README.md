@@ -1,6 +1,6 @@
 # delpi-mes-api
 
-BFF gerencial, stateless e somente leitura do **Delpi MES**.
+BFF gerencial e stateless do **Delpi MES**: leitura operacional (monitoramento, timelines, paradas) e, desde a Etapa 2 de Cadastros, **administração do catálogo de motivos de parada** para usuários autorizados.
 
 ## Arquitetura e ownership
 
@@ -25,8 +25,16 @@ O `delpi-mes-api` não é o owner dos fatos MES. Runs, estados, paradas, contage
 | GET | `/runs/{runId}/timeline` | `delpi-mes.history.view` |
 | GET | `/work-centers/{workCenter}/timeline?branch=&from=&to=` | `delpi-mes.history.view` |
 | GET | `/downtimes?branch=&workCenter=&from=&to=&page=&pageSize=` | `delpi-mes.downtimes.view` |
+| GET | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
+| POST | `/registrations/downtime-reasons` | `delpi-mes.downtime-reasons.manage` |
+| PUT | `/registrations/downtime-reasons/{code}` | `delpi-mes.downtime-reasons.manage` |
+| PATCH | `/registrations/downtime-reasons/{code}/active` | `delpi-mes.downtime-reasons.manage` |
 
-Toda rota gerencial também exige `delpi-mes.access`, principal humano e `delpi-mes.view.filial-01|02` para a filial consultada. O provisionamento dessas permissões e o manifesto pertencem à Fase 2.
+Toda rota gerencial também exige `delpi-mes.access` e principal humano; as rotas de leitura exigem ainda `delpi-mes.view.filial-01|02` para a filial consultada. As rotas `/registrations/downtime-reasons*` administram um **catálogo global** — não recebem nem exigem `branch`/permissão de filial. O provisionamento dessas permissões e o manifesto pertencem à Fase 2.
+
+### Administração do catálogo (Cadastros — Etapa 2)
+
+As quatro rotas `/registrations/downtime-reasons*` encaminham para `/integrations/mes/downtime-reasons*` do `production-control-api` — a escrita, a unicidade de `code`, a proteção do motivo `setup`, o soft-delete e a validação industrial permanecem autoridade do owner. O BFF apenas autoriza o usuário (`.access` + `.downtime-reasons.manage`, principal humano — principal S2S é rejeitado mesmo como superadmin), aplica allowlist de DTO (os campos OEE `defaultPlanned`/`defaultCountsAsAvailabilityLoss` nunca atravessam o BFF) e preserva status funcionais: 404, 409 (incl. `setup` protegido e duplicidade) e 422 do upstream. Não existe DELETE.
 
 ## S2S outbound
 

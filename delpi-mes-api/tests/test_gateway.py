@@ -4,8 +4,8 @@ import httpx
 import pytest
 
 from delpi_mes_app.domain.errors import (
-    MesSourceInvalidResponse, MesSourceNotFound, MesSourceUnauthorized,
-    MesSourceUnavailable, MesSourceValidationError,
+    MesSourceConflict, MesSourceInvalidResponse, MesSourceNotFound,
+    MesSourceUnauthorized, MesSourceUnavailable, MesSourceValidationError,
 )
 from delpi_mes_app.infrastructure.gateways.production_control_mes_gateway import (
     ProductionControlMesGateway,
@@ -81,6 +81,116 @@ def test_rejects_invalid_json_and_envelope():
     subject, _ = gateway(lambda request: httpx.Response(200, json={"success": True, "data": []}))
     with pytest.raises(MesSourceInvalidResponse):
         subject.get_monitoring(branch="01")
+
+
+# ---------------------------------------------------------------------------
+# Administração do catálogo de motivos (S2S write)
+# ---------------------------------------------------------------------------
+
+import json as _json  # noqa: E402
+
+_ADMIN_CASES = [
+    ("list_downtime_reasons", {}, "GET", "/integrations/mes/downtime-reasons", None),
+    (
+        "create_downtime_reason",
+        {"payload": {"code": "x", "label": "l", "category": "c",
+                     "requiresNote": False, "sortOrder": 1}},
+        "POST", "/integrations/mes/downtime-reasons",
+        {"code": "x", "label": "l", "category": "c",
+         "requiresNote": False, "sortOrder": 1},
+    ),
+    (
+        "update_downtime_reason",
+        {"code": "raw material", "payload": {"label": "l"}},
+        "PUT", "/integrations/mes/downtime-reasons/raw material",
+        {"label": "l"},
+    ),
+    (
+        "set_downtime_reason_active",
+        {"code": "raw_material", "active": False},
+        "PATCH", "/integrations/mes/downtime-reasons/raw_material/active",
+        {"active": False},
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ("method_name", "kwargs", "http_method", "path", "expected_json"),
+    _ADMIN_CASES,
+    ids=[case[0] for case in _ADMIN_CASES],
+)
+def test_admin_methods_hit_correct_endpoint_with_s2s_headers(
+    monkeypatch, method_name, kwargs, http_method, path, expected_json
+):
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "secret")
+    seen = {}
+
+    def handler(request):
+        seen["request"] = request
+        return httpx.Response(
+            200, json={"success": True, "message": "OK", "data": {"items": []}}
+        )
+
+    subject, _ = gateway(handler)
+    getattr(subject, method_name)(**kwargs)
+    request = seen["request"]
+    assert request.method == http_method
+    assert request.url.path == path
+    assert request.headers["X-Delpi-Service-Token"] == "secret"
+    assert request.headers["X-Delpi-Caller-App"] == "delpi-mes-api"
+    if expected_json is None:
+        assert not request.content
+    else:
+        assert _json.loads(request.content) == expected_json
+
+
+@pytest.mark.parametrize(
+    ("status", "error"),
+    [
+        (401, MesSourceUnauthorized),
+        (403, MesSourceUnauthorized),
+        (404, MesSourceNotFound),
+        (409, MesSourceConflict),
+        (422, MesSourceValidationError),
+        (500, MesSourceUnavailable),
+    ],
+)
+def test_admin_write_maps_upstream_status(status, error):
+    subject, _ = gateway(
+        lambda request: httpx.Response(
+            status, json={"message": "motivo protegido"}
+        )
+    )
+    with pytest.raises(error) as excinfo:
+        subject.set_downtime_reason_active("setup", active=False)
+    if error is MesSourceConflict:
+        assert "protegido" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda subject: subject.list_downtime_reasons(),
+        lambda subject: subject.create_downtime_reason({"code": "x"}),
+    ],
+)
+def test_admin_read_and_write_map_network_and_bad_body(call):
+    for exception in (httpx.ReadTimeout("slow"), httpx.ConnectError("down")):
+        subject, _ = gateway(
+            lambda request, exc=exception: (_ for _ in ()).throw(exc)
+        )
+        with pytest.raises(MesSourceUnavailable):
+            call(subject)
+    subject, _ = gateway(lambda request: httpx.Response(200, content=b"bad"))
+    with pytest.raises(MesSourceInvalidResponse):
+        call(subject)
+    subject, _ = gateway(
+        lambda request: httpx.Response(
+            200, json={"success": True, "data": []}
+        )
+    )
+    with pytest.raises(MesSourceInvalidResponse):
+        call(subject)
 
 
 def test_owned_client_is_reused_and_closed(monkeypatch):

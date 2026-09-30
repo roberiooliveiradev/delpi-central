@@ -26,6 +26,10 @@ class MesSourceNotFound(MesError):
     pass
 
 
+class MesSourceConflict(MesError):
+    pass
+
+
 class MesSourceValidationError(MesError):
     pass
 

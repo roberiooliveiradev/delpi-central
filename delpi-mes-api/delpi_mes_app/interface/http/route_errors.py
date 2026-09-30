@@ -3,6 +3,7 @@ from delpi_mes_app.domain.errors import (
     BranchAccessDenied,
     HumanPrincipalRequired,
     InvalidBranch,
+    MesSourceConflict,
     MesSourceInvalidResponse,
     MesSourceNotFound,
     MesSourceUnauthorized,
@@ -14,6 +15,8 @@ from delpi_mes_app.domain.errors import (
 def fail_from_exception(exc: Exception):
     if isinstance(exc, MesSourceNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, MesSourceConflict):
+        return fail(str(exc), 409)
     if isinstance(exc, (InvalidBranch, MesSourceValidationError, ValueError)):
         return fail(str(exc), 422)
     if isinstance(exc, (BranchAccessDenied, HumanPrincipalRequired, PermissionError)):

@@ -8,6 +8,7 @@ MES_ACCESS = "delpi-mes.access"
 MES_MONITORING_VIEW = "delpi-mes.monitoring.view"
 MES_DOWNTIMES_VIEW = "delpi-mes.downtimes.view"
 MES_HISTORY_VIEW = "delpi-mes.history.view"
+MES_DOWNTIME_REASONS_MANAGE = "delpi-mes.downtime-reasons.manage"
 BRANCH_VIEW_PERMISSIONS = {
     "01": "delpi-mes.view.filial-01",
     "02": "delpi-mes.view.filial-02",
