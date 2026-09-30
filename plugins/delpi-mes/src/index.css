@@ -73,7 +73,7 @@
 .delpi-mes-content {
   flex: 1;
   min-width: 0;
-  padding: clamp(1.25rem, 2.5vw, 2.5rem);
+  padding: clamp(0.9rem, 1.6vw, 1.5rem) clamp(1.25rem, 2.5vw, 2.5rem) clamp(1.25rem, 2.5vw, 2.5rem);
 }
 
 .delpi-mes-header {
@@ -83,21 +83,6 @@
   min-height: 10.5rem;
   max-width: 82rem;
   margin: 0 auto 1.25rem;
-}
-.delpi-mes-header::before {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  top: -1.8rem;
-  left: 55%;
-  width: 9rem;
-  height: 9rem;
-  border: 1.4rem solid rgb(56 189 248 / 18%);
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-  border-radius: 50%;
-  transform: rotate(-30deg);
-  pointer-events: none;
 }
 .delpi-mes-brand { position: relative; z-index: 2; max-width: 30rem; }
 .delpi-mes-brand h1 { margin: 0; font-size: clamp(1.9rem, 3vw, 2.6rem); font-weight: 800; letter-spacing: -0.02em; }
@@ -310,15 +295,6 @@
 .delpi-mes-stat__icon svg { width: 1.25rem; height: 1.25rem; }
 .delpi-mes-stat__label { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #5c6b80; }
 .delpi-mes-stat__value { display: block; margin-top: 0.15rem; font-size: 1.65rem; font-weight: 800; line-height: 1.1; }
-.delpi-mes-stat__spark {
-  position: absolute;
-  right: 0.7rem;
-  bottom: 0.55rem;
-  width: 4.5rem;
-  height: 1.75rem;
-  stroke: var(--stat-fg);
-  opacity: 0.35;
-}
 .delpi-mes-stat__desc { font-size: 0.72rem; color: #7d8a9c; }
 
 /* ---------- Filters ---------- */

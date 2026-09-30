@@ -6,7 +6,6 @@ import { useMonitoringData } from "../hooks/useMonitoringData";
 import { useServerClock } from "../hooks/useServerClock";
 import type { MonitoringFilters, SortMode, StatusFilter } from "../utils/monitoringFilters";
 import { filterMonitoringItems } from "../utils/monitoringFilters";
-import { elapsedSeconds } from "../utils/duration";
 import { WorkCenterCard } from "../components/monitoring/WorkCenterCard";
 import { MonitoringStatCards } from "../components/monitoring/MonitoringStatCards";
 import { monitoringStatItems } from "../utils/statItems";
@@ -23,7 +22,6 @@ export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCod
   const items = useMemo(() => filterMonitoringItems(monitoring.data?.items ?? [], filters, nowMs), [monitoring.data, filters, nowMs]);
   const hasFilters = filters.search !== "" || filters.status !== "all" || filters.reason !== "";
   const summary = monitoring.data?.summary;
-  const updatedAgo = monitoring.data ? elapsedSeconds(monitoring.data.referenceAt, nowMs) : 0;
 
   if (monitoring.loading && !monitoring.data) return <LoadingState classNames={loadingClasses} defaultMessage="Carregando monitoramento industrial…" />;
   if (!monitoring.data && monitoring.error) return <section className="delpi-mes-monitoring-error" role="alert"><h2>Não foi possível carregar o monitoramento</h2><p>{monitoring.error}</p><button type="button" onClick={() => void monitoring.refresh()}>Tentar novamente</button></section>;
@@ -37,9 +35,9 @@ export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCod
         <p>Runs MES ativos na filial {branch === "01" ? "SC" : "ES"}.</p>
       </div>
       <div className="delpi-mes-monitoring__refresh" aria-live="polite">
-        <span className="delpi-mes-monitoring__updated">
+        <span className="delpi-mes-monitoring__updated" title={monitoring.refreshing ? "Atualizando…" : "Monitoramento ao vivo"}>
           <span className="delpi-mes-live-dot" aria-hidden="true" />
-          {monitoring.refreshing ? "Atualizando…" : `Atualizado há ${updatedAgo} s`}
+          <span className="delpi-mes-sr-only">{monitoring.refreshing ? "Atualizando dados" : "Monitoramento ao vivo"}</span>
         </span>
         <button type="button" className="delpi-mes-refresh-btn" onClick={() => void monitoring.refresh()} disabled={monitoring.refreshing}>
           <RefreshCw aria-hidden="true" />
