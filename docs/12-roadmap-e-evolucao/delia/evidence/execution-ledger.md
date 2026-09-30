@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `C3-T8 — Conversation / Session Interaction Foundation` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T7=APPROVED` §6.80 `ACCEPT_WITH_RESIDUAL`; `C3_T8_AUTHORIZED=YES`; `C3_T8_EXECUTED=NO`). Autorização não é execução; não marcar C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`.
+**Next:** `ARCHITECTURE_REVIEW_C3_T8` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T7=APPROVED`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.81; `NEXT_TASK_AUTHORIZED=NO`). Não executar próxima task; não marcar C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`.
 
 ## 1. Ledger rule
 
@@ -26,7 +26,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | C3-T8 — Conversation / Session Interaction Foundation | C3-T1..T7 APPROVED §6.80 (`ARCHITECTURE_REVIEW_C3_T7R1` `ACCEPT_WITH_RESIDUAL`); `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T8_AUTHORIZED=YES`; `C3_T8_EXECUTED=NO` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_T8 | C3-T1..T7 APPROVED §6.80; C3-T8 candidate §6.81; `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -3899,7 +3899,7 @@ SAFETY_INTERLOCK_BYPASS
 
 ## 14. First execution
 
-Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. Product Master then confirmed the live dock render on `/apps/my-requests` (non-modal, no backdrop, special launcher removed, normal app entry preserved). **C2-T5R3R1** (`§6.56`) reclamps the transient dock width when the workspace narrows. **C2-T5R3R1L1** (`§6.57`) records Product Master acceptance of the requested live smoke, including dynamic reclamp. **C2-T6** (`§6.58`) froze iframe applicability: DÉLIA stays federated; the existing Portal embedded host is not a DÉLIA bridge. `C2_EXECUTED=NO`. Next bounded task: **C2-FINAL — C2 acceptance review** (do not start C3; do not implement an iframe bridge). **C2-T6R1** (`§6.59`) restored canonical CP statuses for CP-061–CP-070 and recorded Portal/Transformômetro security follow-up as owner work, not a C2 blocker. **C2-PREFINAL-R1** (`§6.60`) restored CP-001/CP-149/CP-156 to `LOCKED` and corrected the stale CP-149 live note. **C2-FINAL** (`§6.61`) accepted C2 with residual: `C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; next = C3 FIRST-BOUNDED-TASK DEFINITION. **C3-T1** (`§6.62`) persisted Evidence/epistemic contract candidate (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); historical only. **C3-T1R1** (`§6.63`) persists `ARCHITECTURE_REVIEW_C3_T1` = `ACCEPT_WITH_RESIDUAL`; `C3-T1=APPROVED`; `EVIDENCE_EPISTEMIC_SEMANTICS=FROZEN_ACCEPTED`; `SOURCE_LINKAGE_SEMANTICS=FROZEN_ACCEPTED`; `OBSERVATION=FIRST_CLASS_EPISTEMIC_CLASS`; `FACT_STATUS≠ACCESS_PERMISSION`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T2_AUTHORIZED=YES`. **C3-T2** (`§6.64`) candidate was **REWORK** by Architecture Review. **C3-T2R1** (`§6.65`) rework implementation at `d444e75f7`. **C3-T2R2** (`§6.66`) persists `ARCHITECTURE_REVIEW_C3_T2R1` = `ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`; `C3_T3_AUTHORIZED=YES`; `C3_T3_EXECUTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T3. **C3-T3** (`§6.67`) implements provider-neutral model invocation + eval lineage foundation (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); `REAL_PROVIDER_ADAPTER=NONE`; `C3_T4_AUTHORIZED=NO`; next = ARCHITECTURE_REVIEW_C3_T3. **C3-T4R1** (`§6.71`) rework candidate historical. **C3-T4R2** (`§6.72`) persists `ARCHITECTURE_REVIEW_C3_T4R1` = `ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `C3_T5_AUTHORIZED=YES`; `C3_T5_EXECUTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T5. **C3-T5** candidate historical (ledger candidate block). **C3-T5R1** (`§6.73`) persists `ARCHITECTURE_REVIEW_C3_T5` = `ACCEPT_WITH_RESIDUAL`; `C3_T5=APPROVED`; `C3_T6_AUTHORIZED=YES`; `C3_T6=NOT_STARTED`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`; next = C3-T6. **C3-T6** (`§6.74`) implements Expertise/Playbook/Knowledge governance + retrieval contracts foundation (historical candidate `537cf47664`). **C3-T6R1** (`§6.75`) reworks Knowledge/Expertise contracts (historical candidate `1a49e501fb`). **C3-T6R2** (`§6.76`) persists `ARCHITECTURE_REVIEW_C3_T6R1` = `ACCEPT_WITH_RESIDUAL`; `C3_T6=APPROVED`; `C3_T7_AUTHORIZED=YES`; `C3_T7_EXECUTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T7. **C3-T7** (`§6.78`) implements DecisionPath FAST|OPERATIONAL|REASONING deterministic routing + PlanCandidate/PlanStep semantic contracts over CapabilityProjection (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`, `0fc2cba747`); routing != authorization; plan != execution; no planner runtime/ports/RAG/conversation/persistence; `C3_T8_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = ARCHITECTURE_REVIEW_C3_T7. **ARCHITECTURE_REVIEW_C3_T7** verdict `REWORK` (`REVIEW_TARGET_SHA=da5e57db4c`; blockers: duplicate `capability_id` dict-collapse + evidence bound to local-only SHAs; abstraction-count wording). **C3-T7R1** (`§6.79`) reworks plan validation to fail closed on duplicate `capability_id` before lossy lookup (order-independent; identical or divergent duplicates) and rebinds final test evidence to runtime SHA `d49f77c966` (46/46 targeted, 210/210 full). **C3-T7R2** (`§6.80`) persists `ARCHITECTURE_REVIEW_C3_T7R1` verdict `ACCEPT_WITH_RESIDUAL` (duplicate-ID + SHA-bind blockers closed; 6 non-blocking residuals accepted; abstraction counts corrected to 9 value types = 4 enums + 5 dataclasses); `C3_T7=APPROVED`; `C3_T8_AUTHORIZED=YES`; `C3_T8_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T8 Conversation / Session Interaction Foundation.
+Historical C0.S0..C0.S7 remain **APPROVED** / `FOUNDATION_FREEZE=APPROVED`. C1-T1..T6D1 completed standalone bootstrap. **C1-FINAL** (`§6.45`) accepted bootstrap with non-blocking residuals (`TYPESCRIPT_ISOLATED`, `CORE_CONTEXT_LIVE_NETWORK`). `C1_EXECUTED=YES`. `C1_BOOTSTRAP_ACCEPTANCE=ACCEPT_WITH_RESIDUAL`. `C1_BOOTSTRAP_RUNTIME_READINESS=PROVEN` (bootstrap scope). `PRODUCTION_READINESS=NOT_PROVEN`. `C2_AUTHORIZED=YES`. `C0=NOT_STARTED`. **C2-T1** (`§6.46`) froze the current Portal host/route contract. Operational WorkspaceContext remains `TO_INVENTORY`. `C2_STARTED=NO`. `C2_IMPLEMENTATION_STARTED=NO`. **C2-T1D1** (`§6.47`) approved `BROWSER_STATE_RESIDENCY_POLICY`. No retained browser state is required now. **C2-T2** (`§6.48`) verified the existing host lifecycle. No new logout stack or storage boundary. `C2_STARTED=YES`. `C2_IMPLEMENTATION_STARTED=NO`. `C2_EXECUTED=NO`. **C2-T3** (`§6.49`) froze the remaining C2 order. **C2-T4** (`§6.50`) inventoried operational authorities: OP/PRODUCT/OPERATION proven via api-delpi; MACHINE/POSTO `TO_INVENTORY`; Workspace remains `DEFER`. **C2-T4R1** (`§6.51`) removed illegal formal status `OPERATIONAL_CONTEXT=MIXED` and restored `OPERATIONAL_CONTEXT=TO_INVENTORY` while preserving the proven OP/product/operation sub-facts. **C2-T5** (`§6.52`) implemented the approved Portal global DÉLIA surface using the same federated remote `delia` / `./App`. **C2-T5R1** (`§6.53`) hardened stale async mount and dialog focus, and corrected the stale T4R1 SHA in §6.52. **C2-T5R2** (`§6.54`) recorded Product Master `LIVE_GLOBAL_SURFACE=FAIL` and proved the public Portal bundle published `2026-09-21T13:42:11Z` already contains the T5R1 launcher. Product Master later confirmed that V1 launcher and panel were live and rejected the modal UX. **C2-T5R3** (`§6.55`) replaced that surface with a non-modal companion dock. Product Master then confirmed the live dock render on `/apps/my-requests` (non-modal, no backdrop, special launcher removed, normal app entry preserved). **C2-T5R3R1** (`§6.56`) reclamps the transient dock width when the workspace narrows. **C2-T5R3R1L1** (`§6.57`) records Product Master acceptance of the requested live smoke, including dynamic reclamp. **C2-T6** (`§6.58`) froze iframe applicability: DÉLIA stays federated; the existing Portal embedded host is not a DÉLIA bridge. `C2_EXECUTED=NO`. Next bounded task: **C2-FINAL — C2 acceptance review** (do not start C3; do not implement an iframe bridge). **C2-T6R1** (`§6.59`) restored canonical CP statuses for CP-061–CP-070 and recorded Portal/Transformômetro security follow-up as owner work, not a C2 blocker. **C2-PREFINAL-R1** (`§6.60`) restored CP-001/CP-149/CP-156 to `LOCKED` and corrected the stale CP-149 live note. **C2-FINAL** (`§6.61`) accepted C2 with residual: `C2_EXECUTED=YES`; `C3_AUTHORIZED=YES`; `C3_STARTED=NO`; next = C3 FIRST-BOUNDED-TASK DEFINITION. **C3-T1** (`§6.62`) persisted Evidence/epistemic contract candidate (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); historical only. **C3-T1R1** (`§6.63`) persists `ARCHITECTURE_REVIEW_C3_T1` = `ACCEPT_WITH_RESIDUAL`; `C3-T1=APPROVED`; `EVIDENCE_EPISTEMIC_SEMANTICS=FROZEN_ACCEPTED`; `SOURCE_LINKAGE_SEMANTICS=FROZEN_ACCEPTED`; `OBSERVATION=FIRST_CLASS_EPISTEMIC_CLASS`; `FACT_STATUS≠ACCESS_PERMISSION`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T2_AUTHORIZED=YES`. **C3-T2** (`§6.64`) candidate was **REWORK** by Architecture Review. **C3-T2R1** (`§6.65`) rework implementation at `d444e75f7`. **C3-T2R2** (`§6.66`) persists `ARCHITECTURE_REVIEW_C3_T2R1` = `ACCEPT_WITH_RESIDUAL`; `C3_T2=APPROVED`; `C3_T3_AUTHORIZED=YES`; `C3_T3_EXECUTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T3. **C3-T3** (`§6.67`) implements provider-neutral model invocation + eval lineage foundation (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`); `REAL_PROVIDER_ADAPTER=NONE`; `C3_T4_AUTHORIZED=NO`; next = ARCHITECTURE_REVIEW_C3_T3. **C3-T4R1** (`§6.71`) rework candidate historical. **C3-T4R2** (`§6.72`) persists `ARCHITECTURE_REVIEW_C3_T4R1` = `ACCEPT_WITH_RESIDUAL`; `C3_T4=APPROVED`; `C3_T5_AUTHORIZED=YES`; `C3_T5_EXECUTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T5. **C3-T5** candidate historical (ledger candidate block). **C3-T5R1** (`§6.73`) persists `ARCHITECTURE_REVIEW_C3_T5` = `ACCEPT_WITH_RESIDUAL`; `C3_T5=APPROVED`; `C3_T6_AUTHORIZED=YES`; `C3_T6=NOT_STARTED`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`; next = C3-T6. **C3-T6** (`§6.74`) implements Expertise/Playbook/Knowledge governance + retrieval contracts foundation (historical candidate `537cf47664`). **C3-T6R1** (`§6.75`) reworks Knowledge/Expertise contracts (historical candidate `1a49e501fb`). **C3-T6R2** (`§6.76`) persists `ARCHITECTURE_REVIEW_C3_T6R1` = `ACCEPT_WITH_RESIDUAL`; `C3_T6=APPROVED`; `C3_T7_AUTHORIZED=YES`; `C3_T7_EXECUTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T7. **C3-T7** (`§6.78`) implements DecisionPath FAST|OPERATIONAL|REASONING deterministic routing + PlanCandidate/PlanStep semantic contracts over CapabilityProjection (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`, `0fc2cba747`); routing != authorization; plan != execution; no planner runtime/ports/RAG/conversation/persistence; `C3_T8_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = ARCHITECTURE_REVIEW_C3_T7. **ARCHITECTURE_REVIEW_C3_T7** verdict `REWORK` (`REVIEW_TARGET_SHA=da5e57db4c`; blockers: duplicate `capability_id` dict-collapse + evidence bound to local-only SHAs; abstraction-count wording). **C3-T7R1** (`§6.79`) reworks plan validation to fail closed on duplicate `capability_id` before lossy lookup (order-independent; identical or divergent duplicates) and rebinds final test evidence to runtime SHA `d49f77c966` (46/46 targeted, 210/210 full). **C3-T7R2** (`§6.80`) persists `ARCHITECTURE_REVIEW_C3_T7R1` verdict `ACCEPT_WITH_RESIDUAL` (duplicate-ID + SHA-bind blockers closed; 6 non-blocking residuals accepted; abstraction counts corrected to 9 value types = 4 enums + 5 dataclasses); `C3_T7=APPROVED`; `C3_T8_AUTHORIZED=YES`; `C3_T8_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; next = C3-T8 Conversation / Session Interaction Foundation. **C3-T8** (`§6.81`) implements bounded `InteractionSession`/`SessionContext`/`InteractionTurn` foundation (session != authorization/Memory/Knowledge/SoT; fail-closed cross-session/closed-session/empty-content; canonical `UserRef` + EvidenceRef/SourceRef/EntityRef/DecisionPath/PlanCandidate reuse; no engine/repository/RAG/model call/persistence) at `IMPLEMENTATION_HEAD=0e39953e83` (27/27 targeted, 237/237 full); `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; next = ARCHITECTURE_REVIEW_C3_T8.
 
 ## C3-T5 — OPENAPI_ACTION_CATALOG_CAPABILITY_PROJECTION candidate (historical)
 
@@ -4334,6 +4334,75 @@ C3_T8_AUTHORIZED: NO
 PRODUCTION_READINESS: NOT_PROVEN
 NEXT_TASK_AUTHORIZED: NO
 NEXT: ARCHITECTURE_REVIEW_C3_T7
+```
+
+## 6.81 C3-T8 — Conversation / Session Interaction Foundation candidate
+
+```text
+DATE: 2026-09-30
+STEP: C3-T8
+NAME: CONVERSATION_SESSION_INTERACTION_FOUNDATION
+MODE: FOUNDATION IMPLEMENTATION / SESSION-BOUNDED / FAIL-CLOSED / NO EXECUTION
+TASK: C3-T8 — CONVERSATION_SESSION_INTERACTION_FOUNDATION
+STATE: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+
+BASE_HEAD: 3bee773a3210991562ae327bb1f72f861bf97fb1
+IMPLEMENTATION_HEAD: 0e39953e83170a45eac495a208fb189c395c5c98
+POST_BASE_COMMITS: NONE (local HEAD == base at task start)
+
+MODEL: InteractionSession{ACTIVE|CLOSED} + SessionContext (bounded typed
+  fields) + InteractionTurn{USER_INPUT|DELIA_RESULT} +
+  InteractionValidationResult + InteractionValidationCode
+  {SESSION_CLOSED|CROSS_SESSION_REFERENCE|EMPTY_CONTENT}
+RULES: validate_interaction_turn / record_interaction_turn /
+  close_interaction_session — deterministic, fail-closed; no partial write;
+  close != revoked AuthZ / deleted Knowledge / cancelled execution
+REUSE: UserRef (new canonical identity ref, evidence domain), EntityRef,
+  EpistemicClass, EvidenceRef, SourceRef (C3-T2R1); DecisionPath +
+  DecisionPathResult (C3-T7); PlanCandidate (C3-T7)
+INVARIANTS: session != authorization; session != Personal Memory;
+  conversation history != source of truth; interaction result != FACT;
+  user text != authorization; prior approval text != live permission;
+  PlanCandidate in session != execution; CapabilityProjection != permission;
+  cross-session references fail closed; untrusted content cannot mutate
+  policy/capability/character semantics
+NONE: ConversationEngine/ChatEngine/runtimes/buses, repositories, retrieval
+  port, RAG/vector/embedding, Personal Memory runtime, model call/router,
+  tool execution, PREPARE, ACT, Automation Hub, persistence, migration,
+  conversation UI, provider message roles in Domain
+SESSION_CONTEXT_LIMITS: TO_INVENTORY (no canonical numeric bound; typed
+  fields structurally bound the context)
+SESSION_RETENTION_POLICY: TO_INVENTORY / DEFERRED
+SESSION_STORAGE_DECISION: DEFERRED
+
+ABSTRACTION_REPORT: NEW_DOMAIN_VALUE_TYPES=7
+  NEW_DOMAIN_ENUMS=3: SessionStatus, TurnKind, InteractionValidationCode
+  NEW_DOMAIN_DATACLASSES=4: InteractionSession, SessionContext,
+    InteractionTurn, InteractionValidationResult (+ UserRef in evidence
+    domain = shared canonical ref, counted separately: 1 dataclass)
+  NEW_APPLICATION_USE_CASES: NONE
+  NEW_INFRASTRUCTURE_OR_RUNTIME_ABSTRACTIONS: NONE
+
+TESTS (EVALUATED_SHA 0e39953e83170a45eac495a208fb189c395c5c98):
+  TARGETED_C3_T8 = PASS 27/27
+  FULL_DELIA_API (C3-T1..T8 regression) = PASS 237/237
+REAL_CONVERSATION_QUALITY_EVIDENCE: NONE / TEST_NOT_RUN
+REAL_MODEL_CALL: NONE | REAL_PROVIDER_ADAPTER: NONE
+
+CP-269: LOCKED / FOUNDATION CONTRIBUTION (conversation creates no material
+  memory; MemoryItemRef untouched)
+CP-158: LOCKED / FOUNDATION CONTRIBUTION (user-scoped actor ref + session
+  isolation; browser enforcement out of backend scope; not CP PASS)
+CP-212: LOCKED / CONTRIBUTION (session content cannot auto-promote to
+  Organizational Knowledge)
+CP-099 / CP-127: TO_INVENTORY (Interaction Room concerns; out of C3-T8 scope)
+NEW_CP_CREATED: NO | MASS_PROMOTION: NONE
+
+C3_STARTED: YES | C3_EXECUTED: NO
+C3_T8_STATE: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+PRODUCTION_READINESS: NOT_PROVEN
+NEXT_TASK_AUTHORIZED: NO
+NEXT: ARCHITECTURE_REVIEW_C3_T8
 ```
 
 ## 6.80 C3-T7R2 — Persist Architecture Review Decision

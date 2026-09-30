@@ -1201,7 +1201,7 @@ C3_T4_AUTHORIZED = YES
 C3_T4_EXECUTED = NO
 TEST_MODULES = tests/test_model_invocation_foundation.py + tests/test_model_invocation_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```
 
 Required deterministic cases (C3-T3) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T3R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1280,7 +1280,7 @@ C3_T7_EXECUTED = NO
 C3_T7 = APPROVED
 TEST_MODULES = tests/test_structured_understanding_foundation.py + tests/test_structured_understanding_architecture.py
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```
 
 Required deterministic cases (C3-T4R1) — implemented; Architecture Review accepted (`ARCHITECTURE_REVIEW_C3_T4R1` `ACCEPT_WITH_RESIDUAL`):
@@ -1915,7 +1915,7 @@ C3_T6 = APPROVED
 C3_T7_AUTHORIZED = YES
 C3_T7_EXECUTED = NO
 C3_T7 = APPROVED
-NEXT = C3-T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```
 
 Implementation SHA: `84c249bee0182ebf514142a24cb8bbea4090ca26`.
@@ -1972,7 +1972,7 @@ C3_T7_EXECUTED = NO
 C3_T7 = APPROVED
 PRODUCTION_READINESS = NOT_PROVEN
 CURRENT_TASK_RUNTIME_TEST = TEST_NOT_RUN
-NEXT = C3-T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```
 
 Referenced accepted evidence (not re-executed by Architecture Review persistence):
@@ -2087,7 +2087,7 @@ PREPARE = NONE
 ACT = NONE
 C3_T8_AUTHORIZED = YES
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```
 
 Required deterministic cases (C3-T7) — implemented, pending Architecture Review:
@@ -2105,3 +2105,60 @@ Required deterministic cases (C3-T7) — implemented, pending Architecture Revie
 - planned PREPARE/ACT/VERIFY produce no execution/permission/outcome;
 - EvidenceRef/SourceRef canonical reuse; missing evidence explicit;
 - no planner engine/router/ports/RAG/conversation/persistence abstractions.
+
+## C3-T8 — Conversation / Session Interaction Foundation (candidate)
+
+```text
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+REVIEW = PENDING (ARCHITECTURE_REVIEW_C3_T8)
+BASE_HEAD = 3bee773a3210991562ae327bb1f72f861bf97fb1
+IMPLEMENTATION_HEAD = 0e39953e83170a45eac495a208fb189c395c5c98
+EVALUATED_SHA = 0e39953e83170a45eac495a208fb189c395c5c98
+OWNER = delia-api/app/domain/interaction/
+TEST_MODULES = tests/test_interaction_foundation.py +
+               tests/test_interaction_architecture.py
+
+TARGETED_C3_T8 = PASS 27/27 at 0e39953e83170a45eac495a208fb189c395c5c98
+FULL_DELIA_API = PASS 237/237 at 0e39953e83170a45eac495a208fb189c395c5c98 (C3-T1..T8 regression)
+
+SESSION_AUTHORITY_BOUNDARY = PASS (session != authorization; actor_ref !=
+                 permission; no permission cache)
+SESSION_MEMORY_SEPARATION = PASS (session != Personal Memory)
+CONVERSATION_TRUTH_BOUNDARY = PASS (history != SoT; result != FACT)
+CROSS_SESSION_REFERENCE = FAIL_CLOSED
+CLOSED_SESSION = FAIL_CLOSED
+EMPTY_CONTENT = FAIL_CLOSED
+USER_EXECUTE_TEXT = NO EXECUTION
+TOOL_CALL_LIKE_CONTENT = INERT DATA
+UNTRUSTED_INPUT_MUTATION = NONE (policy/RBAC/capability/character unchanged)
+EVIDENCE_REF_REUSE = PASS | SOURCE_REF_REUSE = PASS | ENTITY_REF_REUSE = PASS
+USER_REF = canonical minimal (evidence domain); != permission snapshot
+EPISTEMIC_BOUNDARY = PASS (EpistemicClass preserved; no flattening)
+DECISION_PATH_REUSE = PASS | STRUCTURED_PLAN_REUSE = PASS
+PERSONAL_MEMORY_RUNTIME = NONE | KNOWLEDGE_RETRIEVAL_PORT = DEFERRED
+RAG = NONE | VECTOR_STORE = NONE | EMBEDDING_RUNTIME = NONE
+MODEL_ROUTER = NONE | REAL_PROVIDER_ADAPTER = NONE | REAL_MODEL_CALL = NONE
+TOOL_EXECUTION = NONE | PREPARE = NONE | ACT = NONE
+AUTOMATION_HUB_EXECUTION = NONE | CONVERSATION_RUNTIME_UI = NONE
+PERSISTENCE = NONE | MIGRATION = NONE
+SESSION_STORAGE_DECISION = DEFERRED | SESSION_RETENTION_POLICY = TO_INVENTORY
+REAL_CONVERSATION_QUALITY_EVIDENCE = NONE / TEST_NOT_RUN
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T8
+```
+
+
+
+Required deterministic cases (C3-T8) — implemented, pending Architecture Review:
+
+- bounded session create/record/close with minimal lifecycle;
+- typed user input + DÉLIA result turns with epistemic classification;
+- EvidenceRef/SourceRef/EntityRef reuse; no duplicate ref primitives;
+- DecisionPath + PlanCandidate referenced without redefinition;
+- session grants no authorization; actor ref is not permission;
+- user execute / prior-approval / assistant-authorized text is inert;
+- tool_call-like content produces no execution;
+- cross-session references and closed-session turns fail closed;
+- session/turn content is not Personal Memory or Organizational Knowledge;
+- no CoT/secret/auth/mechanics fields; no chat runtime dependency;
+- no conversation engine/repository/RAG/persistence abstractions.

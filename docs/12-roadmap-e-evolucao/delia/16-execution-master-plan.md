@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C3-T8 — Conversation / Session Interaction Foundation` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T7=APPROVED` §6.80 `ARCHITECTURE_REVIEW_C3_T7R1=ACCEPT_WITH_RESIDUAL`; `C3_T8_AUTHORIZED=YES`; `C3_T8_EXECUTED=NO`; do not claim C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_T8` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T7=APPROVED`; `C3_T8=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.81; `NEXT_TASK_AUTHORIZED=NO`; do not claim C3 complete; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -420,7 +420,7 @@ C3-T1 Evidence / epistemic semantics + source linkage = APPROVED (21 §4B; ARCHI
 → C3-T5 OpenAPI Action Catalog + Capability Projection = APPROVED (ARCHITECTURE_REVIEW_C3_T5 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=84c249bee0)
 → C3-T6 Expertise / Knowledge Governance + Retrieval Contracts = APPROVED (ARCHITECTURE_REVIEW_C3_T6R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=1a49e501fb)
 → C3-T7R1 rework: duplicate capability_id fail-closed + evidence rebind = APPROVED (ARCHITECTURE_REVIEW_C3_T7R1 ACCEPT_WITH_RESIDUAL; IMPLEMENTATION_HEAD=d49f77c966cd03387dd3e8e268cb9be5e2098ab6)
-→ C3-T8 Conversation / Session Interaction Foundation (AUTHORIZED; EXECUTED=NO)
+→ C3-T8 Conversation / Session Interaction Foundation (CANDIDATE_FOR_ARCHITECTURE_REVIEW; IMPLEMENTATION_HEAD=0e39953e83170a45eac495a208fb189c395c5c98)
 → C3-T8 Conversation / Session Interaction Foundation
 EVIDENCE_BEFORE_MODEL = YES
 EVIDENCE_BEFORE_PLANNER = YES
@@ -720,6 +720,7 @@ ARCHITECTURE_REVIEW_C3_T7 = REWORK (verdict on REVIEW_TARGET_SHA da5e57db4c)
 ARCHITECTURE_REVIEW_C3_T7R1 = ACCEPT_WITH_RESIDUAL (REVIEWED_IMPLEMENTATION_HEAD d49f77c966; §6.80)
 C3_T8_AUTHORIZED = YES
 C3_T8_EXECUTED = NO
+C3_T8 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 C2-FINAL accepted with residual; C3-T1..T7 APPROVED (`ARCHITECTURE_REVIEW_C3_T7R1` ACCEPT_WITH_RESIDUAL; §6.80); authorization != execution
 Workspace binding remains unscheduled
@@ -1102,4 +1103,32 @@ RESIDUALS = 6 non-blocking (§6.80; SourceRef result-level, asserted routing
             facts, descriptive postcondition, no model evidence, OpenAPI
             coverage, RetrievalPort deferral)
 NEXT = C3-T8 — CONVERSATION_SESSION_INTERACTION_FOUNDATION
+```
+
+### C3-T8 — Conversation / Session Interaction Foundation (candidate)
+
+```text
+TASK = C3-T8 — CONVERSATION_SESSION_INTERACTION_FOUNDATION
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+BASE_HEAD = 3bee773a3210991562ae327bb1f72f861bf97fb1
+IMPLEMENTATION_HEAD = 0e39953e83170a45eac495a208fb189c395c5c98
+OWNER = delia-api/app/domain/interaction/
+MODEL = InteractionSession{ACTIVE|CLOSED} + bounded SessionContext +
+        InteractionTurn{USER_INPUT|DELIA_RESULT} +
+        InteractionValidationResult/Code
+RULES = validate/record_interaction_turn + close_interaction_session —
+        deterministic, fail-closed (session_closed, cross_session_reference,
+        empty_content)
+REUSE = UserRef(new canonical ref in evidence domain) + EntityRef +
+        EpistemicClass + EvidenceRef + SourceRef + DecisionPath +
+        PlanCandidate
+INVARIANTS = session != authorization/Memory/Knowledge/SoT; turn result
+        != FACT; user text != authorization; plan in session != execution;
+        cross-session refs fail closed
+NONE = conversation/chat engines, repositories, retrieval port, RAG,
+        Personal Memory runtime, model call, tool/PREPARE/ACT execution,
+        persistence, migration, conversation UI, provider roles in Domain
+EVIDENCE = ledger §6.81; 20 C3-T8 section; TARGETED_C3_T8 PASS 27/27;
+           FULL_DELIA_API PASS 237/237 at IMPLEMENTATION_HEAD
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```

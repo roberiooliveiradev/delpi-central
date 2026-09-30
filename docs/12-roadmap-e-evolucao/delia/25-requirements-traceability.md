@@ -1162,7 +1162,7 @@ RUNTIME_CP_PROMOTED_TO_PASS = NO
 NEW_CP_CREATED = NO
 CP_RENAMED = NO
 UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
-NEXT = C3-T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```
 
 ## 32. C3-T7 Decision Path + Structured Planner Foundation — approved linkage
@@ -1194,5 +1194,28 @@ TRACEABILITY_GAP = NONE material
 C3_T7 = APPROVED
 C3_T8_AUTHORIZED = YES
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = C3-T8
+NEXT = ARCHITECTURE_REVIEW_C3_T8
+```
+
+## 33. C3-T8 Conversation / Session Interaction Foundation — candidate linkage
+
+Evidence anchors: `16` C3-T8 candidate section; `20` C3-T8 acceptance section; `17` C3-T8 note; `21` §8 conversation state; ledger §6.81.
+Review: `ARCHITECTURE_REVIEW_C3_T8` PENDING; `IMPLEMENTATION_HEAD=0e39953e83170a45eac495a208fb189c395c5c98`; `BASE_HEAD=3bee773a3210991562ae327bb1f72f861bf97fb1`.
+
+| CP | C3-T8 contribution note | Status |
+|---|---|---|
+| CP-269 | conversation creates no material Personal Memory; session != MemoryItem; memory write policy untouched | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-158 | session actor identity ref + cross-session isolation in domain foundation; browser/device enforcement out of backend scope | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-212 | session/turn content cannot auto-promote to Organizational Knowledge | LOCKED / CONTRIBUTION ONLY |
+| CP-099 | Interaction Room linked to Case — future room concern, not in C3-T8 scope | TO_INVENTORY |
+| CP-127 | Room summary grounded in Case — future room concern | TO_INVENTORY |
+
+```text
+C3_T8 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEW_CP_CREATED = NO
+UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
+DISCOVERED_REQUIREMENT = NONE
+TRACEABILITY_GAP = NONE material
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_T8
 ```
