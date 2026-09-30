@@ -1,7 +1,10 @@
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { DaySegment } from "../../utils/dayTimeline";
-import { endOfLocalDayMs, presentDayEvent } from "../../utils/dayTimeline";
+import {
+  dayEventContext, dayEventReason, endOfLocalDayMs, formatDayClock,
+  formatHoursMinutes, presentDayEvent,
+} from "../../utils/dayTimeline";
 
 const ZOOM_HOURS = [2, 4, 8, 12, 24];
 const DEFAULT_VISIBLE_HOURS = 4;
@@ -23,8 +26,16 @@ function tickStep(visibleHours: number): number {
   return 4;
 }
 
+function segmentAriaLabel(segment: DaySegment, nowMs: number): string {
+  const label = segment.item ? presentDayEvent(segment.item).label : "Sem atividade";
+  const end = segment.item?.endedAt === null && segment.endMs >= nowMs ? "agora" : formatDayClock(segment.endMs);
+  const duration = formatHoursMinutes((segment.endMs - segment.startMs) / 1000);
+  return `${label}: ${formatDayClock(segment.startMs)} a ${end}, ${duration}`;
+}
+
 export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegment[]; fromIso: string; nowMs: number }) {
   const [visibleHours, setVisibleHours] = useState(DEFAULT_VISIBLE_HOURS);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const initialized = useRef(false);
@@ -75,6 +86,12 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
   const stops = segments.filter((segment) => segment.state === "stopped" && segment.item);
   const showNow = nowMs >= dayStart && nowMs <= dayEnd;
   const step = tickStep(visibleHours);
+  const hovered = hoveredIndex !== null ? segments[hoveredIndex] : null;
+  const hoveredPresentation = hovered?.item ? presentDayEvent(hovered.item) : null;
+  const TOOLTIP_HALF = 110;
+  const tooltipLeft = hovered
+    ? Math.max(TOOLTIP_HALF, Math.min(trackWidth - TOOLTIP_HALF, toPx(hovered.startMs + (hovered.endMs - hovered.startMs) / 2)))
+    : 0;
 
   return (
     <div className="delpi-mes-daybar">
@@ -113,13 +130,18 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
               <span key={hour} style={{ left: `${(hour / 24) * trackWidth}px` }}>{String(hour).padStart(2, "0")}h</span>
             ))}
           </div>
-          <div className="delpi-mes-daybar__track" aria-hidden="true">
+          <div className="delpi-mes-daybar__track">
             {segments.map((segment, index) => (
               <span
                 key={segment.item?.stateEventId ?? `gap-${index}`}
                 className={`delpi-mes-daybar__segment delpi-mes-daybar__segment--${segmentClass(segment.state)}`}
                 style={{ left: `${toPx(segment.startMs)}px`, width: `${Math.max(2, toPx(segment.endMs) - toPx(segment.startMs))}px` }}
-                title={segment.item ? presentDayEvent(segment.item).label : "Sem atividade"}
+                aria-label={segmentAriaLabel(segment, nowMs)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                onFocus={() => setHoveredIndex(index)}
+                onBlur={() => setHoveredIndex(null)}
+                tabIndex={0}
               />
             ))}
             {showNow ? (
@@ -128,6 +150,24 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
               </span>
             ) : null}
           </div>
+            {hovered ? (
+              <div className="delpi-mes-daybar__tooltip" role="tooltip" style={{ left: `${tooltipLeft}px` }}>
+                <strong>{hoveredPresentation?.label ?? "Sem atividade"}</strong>
+                <span>
+                  {formatDayClock(hovered.startMs)} → {hovered.item?.endedAt === null && hovered.endMs >= nowMs ? "agora" : formatDayClock(hovered.endMs)}
+                </span>
+                <span>{formatHoursMinutes((hovered.endMs - hovered.startMs) / 1000)}</span>
+                {hovered.item ? (
+                  <>
+                    {hoveredPresentation ? (() => {
+                      const reason = dayEventReason(hovered.item!, hoveredPresentation);
+                      return reason ? <span className="delpi-mes-daybar__tooltip-reason">{reason}</span> : null;
+                    })() : null}
+                    {dayEventContext(hovered.item) ? <span className="delpi-mes-daybar__tooltip-meta">{dayEventContext(hovered.item)}</span> : null}
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           <div className="delpi-mes-daybar__marks" aria-hidden="true">
             {stops.map((segment, index) => {
               const mid = segment.startMs + (segment.endMs - segment.startMs) / 2;

@@ -746,6 +746,30 @@
 }
 .delpi-mes-daybar__mark[data-lane="1"] { padding-top: 1.35rem; }
 .delpi-mes-daybar__mark[data-lane="1"]::before { height: 1.2rem; }
+.delpi-mes-daybar__segment { cursor: default; }
+.delpi-mes-daybar__segment:hover, .delpi-mes-daybar__segment:focus-visible { filter: brightness(0.92); }
+.delpi-mes-daybar__segment:focus-visible { outline: 2px solid #1e63c4; outline-offset: 1px; }
+.delpi-mes-daybar__tooltip {
+  position: absolute;
+  top: 0.1rem;
+  z-index: 5;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 10rem;
+  max-width: 14rem;
+  padding: 0.7rem 0.85rem;
+  transform: translateX(-50%);
+  border: 1px solid #dde5ef;
+  border-radius: 0.75rem;
+  color: #31435c;
+  background: #fff;
+  box-shadow: 0 14px 34px rgb(15 23 42 / 16%);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+.delpi-mes-daybar__tooltip strong { font-size: 0.84rem; color: #1b2a41; }
+.delpi-mes-daybar__tooltip-reason { color: #b45309; font-weight: 700; }
+.delpi-mes-daybar__tooltip-meta { color: #7d8a9c; font-size: 0.72rem; }
 
 /* reasons + events */
 .delpi-mes-wc__columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 1.25rem; align-items: start; }
