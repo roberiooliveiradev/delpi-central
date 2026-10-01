@@ -21,6 +21,7 @@ from app.application.external_capabilities.dynamic_information.constants import 
     STATUS_EXPLICIT_PROCESSING_PROHIBITION,
     STATUS_GENERIC_SQL_FORBIDDEN,
     STATUS_LEGACY_UNSAFE,
+    STATUS_NEEDS_BOUNDED_EXECUTION,
     STATUS_NEEDS_MODEL_SAFE_PROJECTION,
     STATUS_NEEDS_NESTED_PROJECTION_SUPPORT,
     STATUS_NOT_RELEVANT,
@@ -141,6 +142,7 @@ def classify_operation(
     tags: list[str] | None = None,
     shape: str | None = None,
     allowlist: dict[str, Any] | None = None,
+    request_body_supported: bool | None = None,
 ) -> str:
     """Return exactly one classification status (fail-closed).
 
@@ -187,6 +189,11 @@ def classify_operation(
             and entry is not None
         ):
             return STATUS_WRITE_OUT_OF_SCOPE
+        # Fail-closed end to end: a governed semantic POST also requires a
+        # normalized, supported requestBody contract before it may be
+        # classified (and therefore retrieved/discovered/executed) as READ.
+        if request_body_supported is not True:
+            return STATUS_NEEDS_BOUNDED_EXECUTION
     elif method_u != "GET":
         return STATUS_NOT_RELEVANT
 

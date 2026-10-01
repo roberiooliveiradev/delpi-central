@@ -33,17 +33,25 @@ from app.application.external_capabilities.dynamic_information.candidate_token i
 )
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
     TechnicalAction,
+    build_technical_actions_from_baseline,
     build_technical_actions_from_openapi,
 )
 from app.application.external_capabilities.dynamic_information.constants import (
     SEMANTIC_TRANSPORT_READ_POST,
     STATUS_DAVI_ELIGIBLE_READ,
     STATUS_DESTRUCTIVE_OUT_OF_SCOPE,
+    STATUS_NEEDS_BOUNDED_EXECUTION,
     STATUS_WRITE_OUT_OF_SCOPE,
+)
+from app.application.external_capabilities.dynamic_information.discover_service import (
+    discover_delpi_information,
 )
 from app.application.external_capabilities.dynamic_information.eligibility import (
     classify_operation,
     load_allowlist_operation_ids,
+)
+from app.application.external_capabilities.dynamic_information.retrieval import (
+    retrieve_eligible_actions,
 )
 from app.application.external_capabilities.dynamic_information.errors import (
     GovernedExecutionError,
@@ -516,6 +524,7 @@ def _classify(
     path: str,
     operation_id: str | None,
     allowlist: dict[str, Any],
+    request_body_supported: bool | None = None,
 ) -> str:
     return classify_operation(
         method=method,
@@ -523,16 +532,18 @@ def _classify(
         operation_id=operation_id,
         allowlisted_operation_ids=load_allowlist_operation_ids(allowlist),
         allowlist=allowlist,
+        request_body_supported=request_body_supported,
     )
 
 
 def test_sec02_marked_allowlisted_post_is_eligible() -> None:
-    """POST-01: explicit governance + allowlist + projections → ELIGIBLE_READ."""
+    """POST-01: explicit governance + allowlist + projections + supported body."""
     status = _classify(
         method="POST",
         path="/products/physical-locations",
         operation_id="list_product_physical_locations",
         allowlist=_GOV_FIXTURE_ALLOWLIST,
+        request_body_supported=True,
     )
     assert status == STATUS_DAVI_ELIGIBLE_READ
 
@@ -971,3 +982,159 @@ def test_sec02_execute_rejects_unknown_body_field_before_executor() -> None:
                 catalog_action_executor=_Exec(),
             )
     assert _Exec.called is False
+
+
+# ---------------------------------------------------------------------------
+# SEC-02 corrective — body-contract support must gate eligibility end to end
+# ---------------------------------------------------------------------------
+
+_POST_NO_BODY_OPENAPI: dict[str, Any] = {
+    "openapi": "3.1.0",
+    "paths": {
+        "/products/physical-locations": {
+            "post": {
+                "operationId": "list_product_physical_locations",
+                "summary": "Physical pickup locations in batch",
+                "tags": ["products"],
+            }
+        }
+    },
+}
+
+_POST_UNSUPPORTED_BODY_OPENAPI: dict[str, Any] = {
+    "openapi": "3.1.0",
+    "paths": {
+        "/products/physical-locations": {
+            "post": {
+                "operationId": "list_product_physical_locations",
+                "summary": "Physical pickup locations in batch",
+                "tags": ["products"],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "branch": {"type": "string"},
+                                    # unsupported shape: nested object property
+                                    "filter": {"type": "object"},
+                                },
+                                "required": ["branch"],
+                            }
+                        }
+                    },
+                },
+            }
+        }
+    },
+}
+
+
+def _build_fixture_action(openapi: dict[str, Any]) -> TechnicalAction:
+    actions = build_technical_actions_from_openapi(
+        openapi, allowlist=_GOV_FIXTURE_ALLOWLIST
+    )
+    assert len(actions) == 1
+    return actions[0]
+
+
+def test_semantic_post_supported_body_remains_executable() -> None:
+    """POST + marker + allowlist + supported requestBody → executable."""
+    action = _build_fixture_action(_PHYSICAL_LOCATIONS_OPENAPI)
+    assert action.davi_status == STATUS_DAVI_ELIGIBLE_READ
+    assert action.executable is True
+
+
+def test_semantic_post_missing_request_body_not_executable() -> None:
+    """POST + marker + allowlist + NO requestBody → not eligible."""
+    action = _build_fixture_action(_POST_NO_BODY_OPENAPI)
+    assert action.davi_status == STATUS_NEEDS_BOUNDED_EXECUTION
+    assert action.executable is False
+
+
+def test_semantic_post_unsupported_request_body_not_executable() -> None:
+    """POST + marker + allowlist + unsupported body shape → not eligible."""
+    action = _build_fixture_action(_POST_UNSUPPORTED_BODY_OPENAPI)
+    assert action.request_body is not None
+    assert action.request_body.get("supported") is False
+    assert action.davi_status == STATUS_NEEDS_BOUNDED_EXECUTION
+    assert action.executable is False
+
+
+def test_semantic_post_missing_body_not_retrieved() -> None:
+    """retrieve_eligible_actions filters non-executable semantic POSTs."""
+    blocked = _build_fixture_action(_POST_NO_BODY_OPENAPI)
+    allowed = _build_fixture_action(_PHYSICAL_LOCATIONS_OPENAPI)
+    ranked = retrieve_eligible_actions(
+        "physical locations products", [blocked, allowed], top_k=5
+    )
+    ids = {a.action_id for a, _score in ranked}
+    assert "list_product_physical_locations" in ids  # sibling stays retrievable
+    assert len(ranked) == 1
+
+
+def test_semantic_post_unsupported_body_not_retrieved() -> None:
+    blocked = _build_fixture_action(_POST_UNSUPPORTED_BODY_OPENAPI)
+    allowed = _build_fixture_action(_PHYSICAL_LOCATIONS_OPENAPI)
+    ranked = retrieve_eligible_actions(
+        "physical locations products", [blocked], top_k=5
+    )
+    assert ranked == []
+    ranked2 = retrieve_eligible_actions(
+        "physical locations products", [allowed], top_k=5
+    )
+    assert [a.action_id for a, _ in ranked2] == ["list_product_physical_locations"]
+
+
+def test_semantic_post_missing_body_not_discovered(monkeypatch) -> None:
+    """discover must not emit a candidate_token for a body-missing POST."""
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    blocked = _build_fixture_action(_POST_NO_BODY_OPENAPI)
+    set_actions_for_tests([blocked])
+    result = discover_delpi_information(
+        query="physical locations products", top_k=5, actor_id=_ACTOR
+    )
+    assert result["eligible_action_count"] == 0
+    assert result["candidate_count"] == 0
+    assert result["candidates"] == []
+
+
+def test_semantic_post_unsupported_body_not_discovered(monkeypatch) -> None:
+    monkeypatch.setenv("DAVI_CANDIDATE_HMAC_SECRET", _SECRET)
+    blocked = _build_fixture_action(_POST_UNSUPPORTED_BODY_OPENAPI)
+    set_actions_for_tests([blocked])
+    result = discover_delpi_information(
+        query="physical locations products", top_k=5, actor_id=_ACTOR
+    )
+    assert result["eligible_action_count"] == 0
+    assert result["candidate_count"] == 0
+    assert result["candidates"] == []
+
+
+def test_baseline_semantic_post_without_body_is_not_executable() -> None:
+    """Baseline fallback carries no requestBody: governed POST must stay closed."""
+    baseline = {
+        "operations": [
+            {
+                "method": "post",
+                "path": "/products/physical-locations",
+                "operationId": "list_product_physical_locations",
+                "summary": "Physical pickup locations in batch",
+                "tags": ["products"],
+            }
+        ]
+    }
+    actions = build_technical_actions_from_baseline(
+        baseline, allowlist=_GOV_FIXTURE_ALLOWLIST
+    )
+    assert len(actions) == 1
+    action = actions[0]
+    assert action.semantic_transport == SEMANTIC_TRANSPORT_READ_POST
+    assert action.request_body is None
+    assert action.davi_status == STATUS_NEEDS_BOUNDED_EXECUTION
+    assert action.executable is False
+    ranked = retrieve_eligible_actions(
+        "physical locations products", actions, top_k=5
+    )
+    assert ranked == []

@@ -222,6 +222,7 @@ def build_technical_actions_from_openapi(
             x_delpi = op.get("x-delpi") or {}
             if not isinstance(x_delpi, dict):
                 x_delpi = {}
+            request_body = _extract_request_body(op, openapi)
             status = classify_operation(
                 method=method,
                 path=path,
@@ -231,6 +232,9 @@ def build_technical_actions_from_openapi(
                 tags=list(tags),
                 shape=str(x_delpi.get("shape") or "") or None,
                 allowlist=allowlist,
+                request_body_supported=bool(
+                    request_body and request_body.get("supported") is True
+                ),
             )
             params = tuple(p for p in (op.get("parameters") or []) if isinstance(p, dict))
             (
@@ -241,7 +245,6 @@ def build_technical_actions_from_openapi(
                 constraints,
                 transport,
             ) = _enrich_from_allowlist(allowlist, str(oid))
-            request_body = _extract_request_body(op, openapi)
             actions.append(
                 TechnicalAction(
                     action_id=str(oid),
@@ -298,6 +301,9 @@ def build_technical_actions_from_baseline(
         x_delpi = row.get("xDelpi") or row.get("x-delpi") or {}
         if not isinstance(x_delpi, dict):
             x_delpi = {}
+        # Baseline rows carry no requestBody contract: a governed semantic
+        # POST therefore cannot prove body support in this fallback and must
+        # never become eligible from it.
         status = classify_operation(
             method=method,
             path=path,
@@ -307,6 +313,7 @@ def build_technical_actions_from_baseline(
             tags=list(tags),
             shape=str(x_delpi.get("shape") or "") or None,
             allowlist=allowlist,
+            request_body_supported=False,
         )
         oid_s = str(oid or f"{method}:{path}")
         params = tuple(p for p in (row.get("parameters") or []) if isinstance(p, dict))
