@@ -522,7 +522,7 @@ test.describe("E2E-37 — model library (home redesign)", () => {
     );
   });
 
-  test("filter bar sem overflow horizontal e em faixa única", async ({
+  test("filter bar: rail compacto, busca ampla, sort estável, sem overflow", async ({
     page,
   }) => {
     await openLibrary(page);
@@ -531,6 +531,30 @@ test.describe("E2E-37 — model library (home redesign)", () => {
     expect(box).not.toBeNull();
     // faixa única compacta (pills + campos no mesmo bloco)
     expect(box!.height).toBeLessThanOrEqual(140);
+
+    const sizes = await page.evaluate(() => {
+      const barEl = document.querySelector(".bpmnm-library-toolbar")!;
+      const rail = barEl.querySelector('[class*="-segment-toggle"]');
+      const searchBox = barEl.querySelector(
+        '[class*="-filter-box"]:has(input[type="search"])',
+      );
+      const sortBox = barEl.querySelector(
+        '[class*="-filter-box"]:has(.delpi-ui-select)',
+      );
+      return {
+        railW: rail?.getBoundingClientRect().width ?? 0,
+        searchW: searchBox?.getBoundingClientRect().width ?? 0,
+        sortW: sortBox?.getBoundingClientRect().width ?? 0,
+        scrollW: barEl.scrollWidth,
+        clientW: barEl.clientWidth,
+      };
+    });
+    // rail compacto (largura do conteúdo), busca > sort, sort estável
+    expect(sizes.railW).toBeGreaterThan(0);
+    expect(sizes.railW).toBeLessThan(box!.width * 0.5);
+    expect(sizes.searchW).toBeGreaterThan(sizes.sortW);
+    expect(sizes.sortW).toBeGreaterThanOrEqual(170);
+    expect(sizes.scrollW).toBeLessThanOrEqual(sizes.clientW + 1);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(1440 + 1);

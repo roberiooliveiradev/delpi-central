@@ -512,21 +512,26 @@
   padding: 10px 12px;
 }
 
-/* rail de status ocupa a região flexível (padrão TV Dashboard) */
+/* rail de status: largura do conteúdo — não cresce (busca é o flex principal) */
 .dashboard-bpmn-modeler .bpmnm-library-toolbar .bpmnm-segment-toggle,
 .dashboard-bpmn-modeler .bpmnm-library-toolbar [class*="-segment-toggle"] {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   justify-content: flex-start;
 }
 
-.dashboard-bpmn-modeler .bpmnm-library-toolbar .bpmnm-filter-box,
-.dashboard-bpmn-modeler .bpmnm-library-toolbar [class*="-filter-box"] {
+/* busca: principal consumidora do espaço livre da barra */
+.dashboard-bpmn-modeler .bpmnm-library-toolbar .bpmnm-filter-box:has(input[type="search"]),
+.dashboard-bpmn-modeler .bpmnm-library-toolbar [class*="-filter-box"]:has(input[type="search"]) {
+  flex: 1 1 auto;
+  min-width: min(240px, 100%);
   margin-inline-start: auto;
-  min-width: min(180px, 100%);
 }
 
-.dashboard-bpmn-modeler .bpmnm-library-toolbar .bpmnm-filter-box + .bpmnm-filter-box,
-.dashboard-bpmn-modeler .bpmnm-library-toolbar [class*="-filter-box"] + [class*="-filter-box"] {
+/* ordenação (SelectControl do kit): largura estável e legível */
+.dashboard-bpmn-modeler .bpmnm-library-toolbar .bpmnm-filter-box:has(.delpi-ui-select),
+.dashboard-bpmn-modeler .bpmnm-library-toolbar [class*="-filter-box"]:has(.delpi-ui-select) {
+  flex: 0 0 auto;
+  width: clamp(190px, 20%, 230px);
   margin-inline-start: 0;
 }
 
