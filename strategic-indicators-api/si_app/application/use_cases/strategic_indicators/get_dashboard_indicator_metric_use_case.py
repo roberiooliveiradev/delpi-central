@@ -47,22 +47,22 @@ class GetDashboardIndicatorMetricUseCase:
             return None
 
         view_branch = normalize_goal_scope_branch(branch)
-        snapshot = self._snapshot_service.get_current_and_previous_snapshot(
+        catalog, current = self._snapshot_service.get_indicator_metric_snapshot(
+            indicator_id=normalized_id,
             competence=competence,
             start_date=start_date,
             end_date=end_date,
-            department_id=None,
             branch=branch,
         )
         catalog_by_id = {
             item.indicator_id: item
-            for item in snapshot.catalog.indicators_catalog
+            for item in catalog.indicators_catalog
         }
         catalog_item = catalog_by_id.get(normalized_id)
-        period = snapshot.current.period
+        period = current.period
 
         calculated = None
-        for department in snapshot.current.calculated_departments:
+        for department in current.calculated_departments:
             for indicator in department.indicators:
                 if indicator.indicator_id == normalized_id:
                     calculated = indicator
@@ -102,7 +102,7 @@ class GetDashboardIndicatorMetricUseCase:
             "value_decimals": int(
                 getattr(formatting_source, "value_decimals", 2) or 2
             ),
-            "partial_success": len(snapshot.current.measurement_errors) > 0,
+            "partial_success": len(current.measurement_errors) > 0,
         }
 
         if kind == "realized":

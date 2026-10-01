@@ -375,6 +375,130 @@ class StrategicIndicatorsSnapshotService:
         )
         return match, list(snapshot.measurement_errors)
 
+    def get_indicator_metric_snapshot(
+        self,
+        *,
+        indicator_id: str,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+    ) -> tuple[
+        StrategicIndicatorsCatalogSnapshot,
+        StrategicIndicatorsPeriodSnapshot,
+    ]:
+        """Snapshot do período atual para leitura escalar (meta/realizado).
+
+        1. Resolve o escopo autoritativo do indicador via catálogo global
+           (``department_indicators`` → ``catalog_item.department_id``).
+        2. Hit na base materializada global (``scope_department_id=""``):
+           mesmo contrato da "base única" — zero collectors.
+        3. Miss: computa somente o departamento dono do indicador e NÃO
+           materializa linha por departamento em ``period_scores`` — evita a
+           divergência que a base única existe para prevenir.
+        4. Indicador sem departamento autoritativo → fallback global
+           (``get_period_snapshot``), sem inventar escopo.
+        """
+        period = resolve_period(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        catalog = self.get_catalog_snapshot(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            department_id=None,
+            branch=branch,
+        )
+        catalog_item = next(
+            (
+                item
+                for item in catalog.indicators_catalog
+                if item.indicator_id == indicator_id
+            ),
+            None,
+        )
+        department_scope = (
+            (catalog_item.department_id or "").strip() if catalog_item else ""
+        )
+        if not department_scope:
+            snapshot = self.get_period_snapshot(
+                competence=period.competence,
+                start_date=period.start_date,
+                end_date=period.end_date,
+                department_id=None,
+                branch=branch,
+            )
+            return catalog, snapshot
+
+        stored = self._load_stored_period_snapshot(
+            period=period,
+            department_id=None,
+            branch=branch,
+        )
+        if stored is not None and not has_stale_period_snapshot_errors(
+            stored.measurement_errors
+        ):
+            logger.info(
+                (
+                    "si_indicator_metric_stored_hit competence=%s "
+                    "indicator_id=%s department_id=%s branch=%s"
+                ),
+                period.competence,
+                indicator_id,
+                department_scope,
+                branch,
+            )
+            return catalog, stored
+
+        measurement_period, _entirely_future = clamp_resolved_period_to_elapsed(
+            period
+        )
+        scoped_catalog = self.get_catalog_snapshot(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            department_id=department_scope,
+            branch=branch,
+        )
+        measurements, measurement_errors = self._get_measurements(
+            start_date=measurement_period.start_date,
+            end_date=measurement_period.end_date,
+            competence=period.competence,
+            department_id=department_scope,
+            branch=branch,
+        )
+        snapshot = self._build_period_snapshot(
+            period=period,
+            scoring_period=measurement_period,
+            catalog=scoped_catalog,
+            measurements=measurements,
+            measurement_errors=measurement_errors,
+            department_id=department_scope,
+            branch=branch,
+        )
+        self._persist_calculation_snapshot(
+            period=period,
+            catalog=scoped_catalog,
+            measurements=measurements,
+            measurement_errors=measurement_errors,
+            department_id=department_scope,
+            branch=branch,
+            on_read_path=True,
+        )
+        logger.info(
+            (
+                "si_indicator_metric_scoped_compute competence=%s "
+                "indicator_id=%s department_id=%s branch=%s"
+            ),
+            period.competence,
+            indicator_id,
+            department_scope,
+            branch,
+        )
+        return catalog, snapshot
+
     def get_current_and_previous_snapshot(
         self,
         *,

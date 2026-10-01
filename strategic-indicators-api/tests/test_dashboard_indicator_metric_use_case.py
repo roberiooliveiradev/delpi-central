@@ -81,11 +81,17 @@ def _snapshot(*, departments: list) -> SimpleNamespace:
     )
 
 
+def _bind_snapshot(snapshot_service, snap: SimpleNamespace) -> SimpleNamespace:
+    snapshot_service.get_indicator_metric_snapshot.return_value = (
+        snap.catalog,
+        snap.current,
+    )
+    return snap
+
+
 def test_get_dashboard_indicator_realized_returns_value() -> None:
     snapshot_service = MagicMock()
-    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
-        departments=[_department()]
-    )
+    _bind_snapshot(snapshot_service, _snapshot(departments=[_department()]))
     calculator = MagicMock()
     calculator.indicator_has_value.return_value = True
     calculator.build_realized_payload.return_value = {"01": 90.0, "02": 90.0}
@@ -109,9 +115,7 @@ def test_get_dashboard_indicator_realized_returns_value() -> None:
 
 def test_get_dashboard_indicator_meta_returns_comparable_goal() -> None:
     snapshot_service = MagicMock()
-    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
-        departments=[_department()]
-    )
+    _bind_snapshot(snapshot_service, _snapshot(departments=[_department()]))
     calculator = MagicMock()
     calculator.resolve_goals_payload_for_calculated.return_value = {
         "01": 100.0,
@@ -138,9 +142,7 @@ def test_get_dashboard_indicator_meta_returns_comparable_goal() -> None:
 
 def test_get_dashboard_indicator_metric_returns_none_when_missing() -> None:
     snapshot_service = MagicMock()
-    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
-        departments=[]
-    )
+    _bind_snapshot(snapshot_service, _snapshot(departments=[]))
     use_case = GetDashboardIndicatorMetricUseCase(
         snapshot_service=snapshot_service,
         calculator=MagicMock(),
@@ -154,25 +156,27 @@ def test_get_dashboard_indicator_meta_partial_keeps_registered_goal_value() -> N
     """Mês parcial: goal_value cadastrado; value/comparable = prorata (Kaizen/TV)."""
     case = CASE_B_PARTIAL
     snapshot_service = MagicMock()
-    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
-        departments=[
-            _department(
-                indicators=[
-                    _indicator(
-                        indicator_id="kaizen-ideas-per-month",
-                        department_id="hr",
-                        indicator_name="Ideias/mês",
-                        goal_value=case["registered_goal_value"],
-                        value_unit=case["value_unit"],
-                        value=4.0,
-                        unit_values={"01": 4.0},
-                    )
-                ]
-            )
-        ]
+    snap = _bind_snapshot(
+        snapshot_service,
+        _snapshot(
+            departments=[
+                _department(
+                    indicators=[
+                        _indicator(
+                            indicator_id="kaizen-ideas-per-month",
+                            department_id="hr",
+                            indicator_name="Ideias/mês",
+                            goal_value=case["registered_goal_value"],
+                            value_unit=case["value_unit"],
+                            value=4.0,
+                            unit_values={"01": 4.0},
+                        )
+                    ]
+                )
+            ]
+        ),
     )
     # Override period to partial August
-    snap = snapshot_service.get_current_and_previous_snapshot.return_value
     snap.current.period = SimpleNamespace(
         start_date=case["start_date"],
         end_date=case["end_date"],
@@ -202,21 +206,23 @@ def test_get_dashboard_indicator_meta_partial_keeps_registered_goal_value() -> N
 def test_get_dashboard_indicator_meta_partial_ppm_registered_not_prorata() -> None:
     case = CASE_B_PARTIAL_PPM
     snapshot_service = MagicMock()
-    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
-        departments=[
-            _department(
-                indicators=[
-                    _indicator(
-                        goal_value=case["registered_goal_value"],
-                        value_unit=case["value_unit"],
-                        value=835.19,
-                        unit_values={"01": 835.19},
-                    )
-                ]
-            )
-        ]
+    snap = _bind_snapshot(
+        snapshot_service,
+        _snapshot(
+            departments=[
+                _department(
+                    indicators=[
+                        _indicator(
+                            goal_value=case["registered_goal_value"],
+                            value_unit=case["value_unit"],
+                            value=835.19,
+                            unit_values={"01": 835.19},
+                        )
+                    ]
+                )
+            ]
+        ),
     )
-    snap = snapshot_service.get_current_and_previous_snapshot.return_value
     snap.current.period = SimpleNamespace(
         start_date=case["start_date"],
         end_date=case["end_date"],
@@ -244,19 +250,21 @@ def test_get_dashboard_indicator_meta_partial_ppm_registered_not_prorata() -> No
 def test_get_dashboard_indicator_meta_exact_triad_equal() -> None:
     case = CASE_A_EXACT
     snapshot_service = MagicMock()
-    snapshot_service.get_current_and_previous_snapshot.return_value = _snapshot(
-        departments=[
-            _department(
-                indicators=[
-                    _indicator(
-                        goal_value=case["registered_goal_value"],
-                        value_unit=case["value_unit"],
-                    )
-                ]
-            )
-        ]
+    snap = _bind_snapshot(
+        snapshot_service,
+        _snapshot(
+            departments=[
+                _department(
+                    indicators=[
+                        _indicator(
+                            goal_value=case["registered_goal_value"],
+                            value_unit=case["value_unit"],
+                        )
+                    ]
+                )
+            ]
+        ),
     )
-    snap = snapshot_service.get_current_and_previous_snapshot.return_value
     snap.current.period = SimpleNamespace(
         start_date=case["start_date"],
         end_date=case["end_date"],
@@ -335,7 +343,7 @@ def test_get_dashboard_indicator_meta_consolidated_monthly_curve_uses_rollup() -
         end_date="04-09-2026",
         competence="2026-09",
     )
-    snapshot_service.get_current_and_previous_snapshot.return_value = snap
+    _bind_snapshot(snapshot_service, snap)
 
     use_case = GetDashboardIndicatorMetricUseCase(
         snapshot_service=snapshot_service,
