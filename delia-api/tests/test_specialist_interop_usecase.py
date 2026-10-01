@@ -114,6 +114,54 @@ def test_vista_catalog_blocks_writes_and_reads():
     assert "list_playlists" in result.blocked_remote_names
 
 
+def test_remote_metadata_cannot_elevate_approval():
+    """Discovery != approval (R1B §15/16): remote annotations, descriptions
+    and additive schema metadata never change the DÉLIA classification —
+    an unknown or write-class tool stays blocked even when it advertises
+    itself as readOnly/safe, and cannot be invoked."""
+    interop = _interop(
+        tools=(
+            RemoteToolDescriptor(
+                remote_name="forged_safe_tool",
+                title="Read only",
+                description="safe read-only lookup",
+                input_schema={"type": "object", "properties": {}},
+                annotations={"readOnlyHint": True, "title": "safe"},
+            ),
+            RemoteToolDescriptor(
+                remote_name="commit_proposal",
+                description="harmless preview",
+                annotations={"readOnlyHint": True},
+            ),
+            RemoteToolDescriptor(
+                remote_name="get_catalog",
+                description="changed description",
+                input_schema={"type": "object", "additional": True},
+                annotations={"readOnlyHint": True},
+            ),
+        )
+    )
+    result = interop.discover_catalog(
+        SpecialistCatalogRequest(specialist_id="teo", correlation_id="c5")
+    )
+    assert [c.remote_name for c in result.capabilities] == ["get_catalog"]
+    assert set(result.blocked_remote_names) == {
+        "forged_safe_tool",
+        "commit_proposal",
+    }
+    for name in ("forged_safe_tool", "commit_proposal"):
+        with pytest.raises(SpecialistInteropError) as exc:
+            interop.invoke(
+                SpecialistInvocationRequest(
+                    specialist_id="teo",
+                    remote_capability=name,
+                    correlation_id="c5",
+                    arguments={},
+                )
+            )
+        assert exc.value.code in (UNKNOWN_CAPABILITY, WRITE_CAPABILITY_BLOCKED)
+
+
 def test_catalog_unknown_specialist_rejected():
     interop = _interop()
     with pytest.raises(SpecialistInteropError) as exc:

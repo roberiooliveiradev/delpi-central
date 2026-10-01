@@ -80,6 +80,18 @@ class Settings:
         self.exchange_timeout_seconds = float(
             os.getenv("DELIA_EXCHANGE_TIMEOUT_SECONDS") or "10.0"
         )
+        # Issuer Host header: the token endpoint may be reached through
+        # an internal URL while Keycloak derives `iss` from the request
+        # Host. Must match the public issuer so subject-token validation
+        # and exchanged-token `iss` are consistent.
+        from urllib.parse import urlsplit
+
+        issuer = (os.getenv("KEYCLOAK_ISSUER") or "").strip()
+        self.exchange_host_header = (
+            os.getenv("DELIA_EXCHANGE_HOST_HEADER")
+            or urlsplit(issuer).netloc
+            or ""
+        ).strip()
         # Delegated-token reuse bound: default 120s, hard cap 300s.
         self.delegated_token_ttl_seconds = min(
             float(

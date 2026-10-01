@@ -213,17 +213,42 @@ def ensure_default_scope(client_uuid_, scope_id):
             tolerate=(404,))
 
 
-def ensure_confidential_client(client_id):
+def ensure_resource_client(client_id):
+    """Canonical mcp-* resource contract — idempotent create-or-repair.
+
+    Shared contract also used by the external ChatGPT onboarding model:
+    confidential + client auth ON, Standard Flow ON with PKCE S256,
+    Direct Access Grants OFF, Service Accounts OFF. DÉLIA itself never
+    uses Standard Flow — it exchanges tokens. Redirect URIs stay
+    unconfigured (never invented for a foreign connector).
+    """
     uuid_ = client_uuid(client_id)
+    desired_flags = {
+        "publicClient": False,
+        "standardFlowEnabled": True,
+        "implicitFlowEnabled": False,
+        "directAccessGrantsEnabled": False,
+        "serviceAccountsEnabled": False,
+    }
     if not uuid_:
         api("POST", f"/realms/{REALM}/clients", {
             "clientId": client_id, "enabled": True,
-            "protocol": "openid-connect", "publicClient": False,
-            "standardFlowEnabled": False, "implicitFlowEnabled": False,
-            "directAccessGrantsEnabled": False,
-            "serviceAccountsEnabled": False,
+            "protocol": "openid-connect",
+            "attributes": {"pkce.code.challenge.method": "S256"},
+            **desired_flags,
         }, tolerate=(409,))
         uuid_ = client_uuid(client_id)
+        return uuid_
+    st, full = api("GET", f"/realms/{REALM}/clients/{uuid_}")
+    dirty = any(full.get(k) != v for k, v in desired_flags.items())
+    attrs = full.get("attributes", {})
+    if attrs.get("pkce.code.challenge.method") != "S256":
+        dirty = True
+    if dirty:
+        full.update(desired_flags)
+        attrs["pkce.code.challenge.method"] = "S256"
+        full["attributes"] = attrs
+        api("PUT", f"/realms/{REALM}/clients/{uuid_}", full)
     return uuid_
 
 
@@ -231,10 +256,22 @@ mcp_tools_id = ensure_client_scope("mcp:tools")
 delpi_aud_scope = ensure_client_scope("audience-delpi")
 # ^ reuses the canonical scope that keeps `delpi-central` in aud
 
+# Built-in OIDC scopes the specialist MCP transport requires on Bearer
+# (`openid profile email mcp:tools` per the RFC 9728 challenge). They are
+# realm built-ins — lookup only, never created here.
+builtin_scope_ids = {
+    s["name"]: s["id"]
+    for s in api("GET", f"/realms/{REALM}/client-scopes")[1]
+    if s["name"] in ("openid", "profile", "email")
+}
+
 for client_id, scope_name, resource_url in SPECIALISTS:
     scope_id = ensure_client_scope(scope_name)
     ensure_audience_mapper(scope_id, resource_url)
-    cuuid = ensure_confidential_client(client_id)
+    cuuid = ensure_resource_client(client_id)
+    for builtin in ("openid", "profile", "email"):
+        if builtin in builtin_scope_ids:
+            ensure_default_scope(cuuid, builtin_scope_ids[builtin])
     ensure_default_scope(cuuid, mcp_tools_id)
     ensure_default_scope(cuuid, delpi_aud_scope)
     ensure_default_scope(cuuid, scope_id)

@@ -69,6 +69,7 @@ class McpSpecialistAdapter:
                 profile.endpoint,
                 timeout_seconds=profile.timeout_seconds,
                 bearer_token=bearer_token,
+                host_header=profile.host_header,
             )
         )
 
@@ -79,8 +80,12 @@ class McpSpecialistAdapter:
     def list_remote_tools(
         self, specialist: SpecialistRef, *, timeout_seconds: float
     ) -> tuple[RemoteToolDescriptor, ...]:
-        transport = self._connect(specialist)
-        tools = transport.list_tools()
+        profile, transport = self._connect(specialist)
+        try:
+            tools = transport.list_tools()
+        except SpecialistInteropError as exc:
+            self._invalidate_on_auth_failure(profile, exc)
+            raise
         descriptors: list[RemoteToolDescriptor] = []
         for tool in tools:
             name = tool.get("name")
@@ -123,11 +128,17 @@ class McpSpecialistAdapter:
         timeout_seconds: float,
     ) -> RemoteToolOutcome:
         self._require_invocable(specialist, remote_name)
-        transport = self._connect(specialist)
-        result = transport.call_tool(remote_name, arguments)
+        profile, transport = self._connect(specialist)
+        try:
+            result = transport.call_tool(remote_name, arguments)
+        except SpecialistInteropError as exc:
+            self._invalidate_on_auth_failure(profile, exc)
+            raise
         return self._map_outcome(result)
 
-    def _connect(self, specialist: SpecialistRef) -> Any:
+    def _connect(
+        self, specialist: SpecialistRef
+    ) -> tuple[SpecialistConnectionProfile, Any]:
         profile = self._profile(specialist.specialist_id)
         if self._credential_provider is None:
             # No user-delegated credential mechanism configured —
@@ -143,12 +154,20 @@ class McpSpecialistAdapter:
         try:
             transport.initialize()
         except SpecialistInteropError as exc:
-            if exc.code == MCP_AUTHENTICATION_FAILED:
-                # Refused credential — drop it so the next call
-                # re-exchanges instead of reusing a rejected token.
-                self._credential_provider.invalidate(profile)
+            self._invalidate_on_auth_failure(profile, exc)
             raise
-        return transport
+        return profile, transport
+
+    def _invalidate_on_auth_failure(
+        self, profile: SpecialistConnectionProfile, exc: SpecialistInteropError
+    ) -> None:
+        """R1B-R2: any wire-level auth refusal drops the cached credential.
+
+        The next call re-exchanges instead of reusing a rejected token.
+        No automatic retry — the failed call still propagates.
+        """
+        if exc.code == MCP_AUTHENTICATION_FAILED:
+            self._credential_provider.invalidate(profile)
 
     def _profile(self, specialist_id: str) -> SpecialistConnectionProfile:
         if specialist_id not in APPROVED_SPECIALIST_IDS:

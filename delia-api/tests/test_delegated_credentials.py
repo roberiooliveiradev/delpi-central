@@ -105,7 +105,7 @@ def _provider(
 ):
     recorded = posts if posts is not None else []
 
-    def http_post(url, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None):
         recorded.append(data)
         return FakeResponse(
             exchange_status,
@@ -362,13 +362,46 @@ def test_validator_rejection_fails_closed():
     assert exc.value.code == MCP_AUTHENTICATION_FAILED
 
 
+def test_requester_azp_binding_enforced():
+    # positive: azp == configured requester client passes (default case)
+    provider, _ = _provider()
+    token = provider.credential_for(_profile())
+    claims = json.loads(base64.urlsafe_b64decode(token.split(".")[1] + "=="))
+    assert claims["azp"] == "delia-api"
+
+    # negative: foreign requester azp fails closed
+    foreign = dict(
+        json.loads(
+            base64.urlsafe_b64decode(_exchanged().split(".")[1] + "==")
+        )
+    )
+    foreign["azp"] = "other-client"
+    provider, _ = _provider(
+        exchange_body={"access_token": _jwt(foreign)}
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        provider.credential_for(_profile())
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+
+    # negative: missing azp fails closed
+    no_azp = dict(foreign)
+    no_azp["azp"] = None
+    no_azp.pop("azp")
+    provider, _ = _provider(
+        exchange_body={"access_token": _jwt(no_azp)}
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        provider.credential_for(_profile())
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+
+
 # --- cache isolation ------------------------------------------------------
 
 
 def test_cross_user_cache_isolation():
     subjects = [_subject(sub="user-a"), _subject(sub="user-b")]
 
-    def http_post(url, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None):
         posts.append(data)
         return FakeResponse(200, {"access_token": _exchanged(sub="user-a" if len(posts) == 1 else "user-b")})
 
@@ -396,7 +429,7 @@ def test_cross_user_cache_isolation():
 def test_cross_resource_cache_isolation():
     posts: list = []
 
-    def http_post(url, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None):
         posts.append(data)
         # bind each exchange to its requested audience
         resource = {

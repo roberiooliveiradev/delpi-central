@@ -50,6 +50,7 @@ class SpecialistConnectionProfile:
     timeout_seconds: float
     exchange_audience: str
     resource_audience: str
+    host_header: str = ""
 
 
 def specialist_connections_from_settings(
@@ -69,6 +70,9 @@ def specialist_connections_from_settings(
             resource_audience=(
                 os.getenv(f"DELIA_MCP_{key}_RESOURCE_AUDIENCE")
                 or CANONICAL_MCP_RESOURCE_AUDIENCES[specialist_id]
+            ).strip(),
+            host_header=(
+                os.getenv(f"DELIA_MCP_{key}_HOST_HEADER") or ""
             ).strip(),
         )
     return profiles

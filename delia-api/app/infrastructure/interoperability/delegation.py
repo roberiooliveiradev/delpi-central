@@ -177,8 +177,10 @@ class KeycloakDelegatedCredentialProvider:
         token_validator: Callable[[str], Mapping[str, Any]],
         cache: InMemoryDelegatedTokenCache,
         known_resource_audiences: frozenset[str],
+        host_header: str = "",
     ) -> None:
         self._known_resource_audiences = frozenset(known_resource_audiences)
+        self._host_header = host_header
         self._token_url = token_url
         self._client_id = client_id
         self._client_secret = client_secret
@@ -248,9 +250,11 @@ class KeycloakDelegatedCredentialProvider:
         )
 
     def _exchange(self, subject_token: str, audience: str) -> Mapping[str, Any]:
+        headers = {"Host": self._host_header} if self._host_header else None
         try:
             response = self._http_post(
                 self._token_url,
+                headers=headers,
                 data={
                     "grant_type": EXCHANGE_GRANT_TYPE,
                     "client_id": self._client_id,
@@ -323,6 +327,14 @@ class KeycloakDelegatedCredentialProvider:
             raise SpecialistInteropError(
                 MCP_AUTHENTICATION_FAILED,
                 "service principal is not a delegated user credential",
+            )
+        # R1B-R3: requester binding — the exchanged credential must be
+        # issued for the configured DÉLIA requester client. `azp` is a
+        # transport binding only — never business authorization.
+        if claims.get("azp") != self._client_id:
+            raise SpecialistInteropError(
+                MCP_AUTHENTICATION_FAILED,
+                "delegated credential requester binding mismatch",
             )
 
         aud = claims.get("aud")

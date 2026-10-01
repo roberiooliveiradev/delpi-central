@@ -148,6 +148,7 @@ def _wire_delegated_credential_provider(settings: Settings, connections):
         known_resource_audiences=frozenset(
             profile.resource_audience for profile in connections.values()
         ),
+        host_header=settings.exchange_host_header,
     )
 
 

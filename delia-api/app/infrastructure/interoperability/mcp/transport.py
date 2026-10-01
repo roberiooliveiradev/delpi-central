@@ -35,8 +35,11 @@ from app.application.specialist_interop.errors import (
 )
 
 
-# DELPI shared MCP minimum protocol version (shared/delpi_mcp/protocol.py).
-MCP_PROTOCOL_VERSION = "2026-07-28"
+# Classic initialize/tools/* flow this transport implements. The
+# 2026-07-28 revision replaces the handshake with a per-request
+# ``params._meta`` envelope (no ``initialize`` method on that path);
+# specialists negotiate the classic revision — proven live in R1B.
+MCP_PROTOCOL_VERSION = "2024-11-05"
 MAX_MCP_RESPONSE_BYTES = 1024 * 1024
 
 _ACCEPT = "application/json, text/event-stream"
@@ -57,6 +60,7 @@ class DelpiMcpTransport:
         max_response_bytes: int = MAX_MCP_RESPONSE_BYTES,
         client_name: str = "delia-api",
         client_version: str = "0.0.1",
+        host_header: str = "",
     ) -> None:
         if not str(endpoint or "").strip():
             raise ValueError("mcp endpoint is required")
@@ -69,6 +73,7 @@ class DelpiMcpTransport:
         self._max_response_bytes = max_response_bytes
         self._client_name = client_name
         self._client_version = client_version
+        self._host_header = str(host_header or "").strip()
         self._session_id: str | None = None
         self._ids = itertools.count(1)
 
@@ -163,6 +168,11 @@ class DelpiMcpTransport:
             "Content-Type": "application/json",
             "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
         }
+        if self._host_header:
+            # Endpoint may be reached over an internal address while the
+            # specialist validates the public host (DNS-rebinding
+            # protection). The expected Host is trusted config only.
+            headers["Host"] = self._host_header
         if self._bearer_token:
             headers["Authorization"] = f"Bearer {self._bearer_token}"
         if self._session_id:

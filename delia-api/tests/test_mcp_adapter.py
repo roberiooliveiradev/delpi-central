@@ -193,6 +193,72 @@ def test_auth_failure_invalidates_cached_credential():
     assert provider.invalidated == [DAVI_RESOURCE]
 
 
+def _adapter_with_failing_op(op: str):
+    """Transport that raises MCP_AUTHENTICATION_FAILED on `op`."""
+
+    class Failing(FakeTransport):
+        def list_tools(self):
+            if op == "list_tools":
+                raise SpecialistInteropError(
+                    MCP_AUTHENTICATION_FAILED, "401"
+                )
+            return super().list_tools()
+
+        def call_tool(self, name, arguments):
+            if op == "call_tool":
+                raise SpecialistInteropError(
+                    MCP_AUTHENTICATION_FAILED, "401"
+                )
+            return super().call_tool(name, arguments)
+
+    provider = FakeCredentialProvider()
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=provider,
+        transport_factory=lambda p, t: Failing(p),
+    )
+    return adapter, provider
+
+
+def test_tools_list_401_invalidates_credential():
+    adapter, provider = _adapter_with_failing_op("list_tools")
+    with pytest.raises(SpecialistInteropError) as exc:
+        adapter.list_remote_tools(DAVI, timeout_seconds=5.0)
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+    assert provider.invalidated == [DAVI_RESOURCE]
+
+
+def test_tools_call_401_invalidates_credential():
+    adapter, provider = _adapter_with_failing_op("call_tool")
+    with pytest.raises(SpecialistInteropError) as exc:
+        adapter.call_remote_tool(
+            DAVI,
+            "discover_delpi_information",
+            {"query": "q"},
+            correlation_id="c",
+            timeout_seconds=5.0,
+        )
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+    assert provider.invalidated == [DAVI_RESOURCE]
+
+
+def test_non_auth_wire_error_does_not_invalidate():
+    class TimeoutTransport(FakeTransport):
+        def list_tools(self):
+            raise SpecialistInteropError(MCP_TIMEOUT, "slow")
+
+    provider = FakeCredentialProvider()
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=provider,
+        transport_factory=lambda p, t: TimeoutTransport(p),
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        adapter.list_remote_tools(DAVI, timeout_seconds=5.0)
+    assert exc.value.code == MCP_TIMEOUT
+    assert provider.invalidated == []
+
+
 def test_call_rechecks_allowlist_before_wire():
     FakeTransport.instances.clear()
     adapter = _adapter()
