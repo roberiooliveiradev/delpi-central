@@ -142,7 +142,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Oportunidades (OV)",
           where: "Início → Oportunidades",
-          how: "Visão: Por colaborador (resumo; clique filtra a lista) ou Por oportunidade (Busca e Status no hero). Colunas/fonte/export na toolbar. Status não altera o resumo.",
+          how: "Visão: Por colaborador (resumo; clique filtra a lista) ou Por oportunidade (Busca — OV, cliente ou produto — e Status no hero). Colunas/fonte/export na toolbar. Status não altera o resumo.",
         },
         {
           want: "PDF / documento de proposta",

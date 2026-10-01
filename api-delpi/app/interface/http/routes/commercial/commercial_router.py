@@ -1089,7 +1089,8 @@ def list_commercial_proposals(
         max_length=80,
         description=(
             "Busca textual em filial, número da proposta, revisão, descrição, "
-            "status, cliente, loja e estágio."
+            "status, cliente, loja, estágio e produtos da oportunidade "
+            "(código ou descrição do item)."
         ),
     ),
     product_code: Optional[str] = Query(
