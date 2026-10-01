@@ -323,6 +323,144 @@ test.describe("E2E-35 — canvas resize / zoom-fit", () => {
   });
 });
 
+test.describe("E2E-38 — document bar & viewport controls", () => {
+  test.use({ actor: "editor", viewport: { width: 1440, height: 900 } });
+
+  test("topbar sem controles de zoom/fit; controles flutuantes dentro do canvas", async ({
+    page,
+  }) => {
+    await openEditor(page);
+    const header = page.locator(".bpmnm-editor__header");
+    // document bar não carrega viewport controls
+    await expect(
+      header.getByRole("button", { name: "Ampliar" }),
+    ).toHaveCount(0);
+    await expect(
+      header.getByRole("button", { name: "Reduzir" }),
+    ).toHaveCount(0);
+    await expect(
+      header.getByRole("button", { name: "Ajustar à janela" }),
+    ).toHaveCount(0);
+
+    // grupo flutuante visível e dentro do canvas
+    const group = page.locator(".bpmnm-viewport-controls");
+    await expect(group).toBeVisible();
+    await expect(
+      group.getByRole("button", { name: "Ampliar" }),
+    ).toBeVisible();
+    await expect(
+      group.getByRole("button", { name: "Reduzir" }),
+    ).toBeVisible();
+    await expect(
+      group.getByRole("button", { name: "Ajustar à janela" }),
+    ).toBeVisible();
+
+    const geo = await page.evaluate(() => {
+      const rect = (sel: string) =>
+        document.querySelector(sel)?.getBoundingClientRect();
+      const canvas = rect(".bpmnm-canvas")!;
+      const ctl = rect(".bpmnm-viewport-controls")!;
+      const side = rect(".bpmnm-side");
+      const logo = rect(".bjs-powered-by");
+      const overlap = (a: DOMRect, b: DOMRect) =>
+        a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      return {
+        insideCanvas:
+          ctl.left >= canvas.left &&
+          ctl.right <= canvas.right &&
+          ctl.top >= canvas.top &&
+          ctl.bottom <= canvas.bottom,
+        overlapsSide: side ? overlap(ctl, side) : false,
+        overlapsLogo: logo ? overlap(ctl, logo) : false,
+      };
+    });
+    expect(geo.insideCanvas).toBe(true);
+    expect(geo.overlapsSide).toBe(false);
+    expect(geo.overlapsLogo).toBe(false);
+  });
+
+  test("zoom in/out/fit alteram o viewport via adapter", async ({ page }) => {
+    await openEditor(page);
+    const transform = () =>
+      page.evaluate(
+        () =>
+          document
+            .querySelector(".bpmnm-canvas .viewport")
+            ?.getAttribute("transform") ?? "",
+      );
+    const scale = (t: string) => Number(t.match(/matrix\(([\d.-]+)/)?.[1] ?? 0);
+
+    const t0 = await transform();
+    await page.getByRole("button", { name: "Ampliar" }).click();
+    await page.waitForTimeout(200);
+    const tIn = await transform();
+    expect(scale(tIn)).toBeGreaterThan(scale(t0));
+
+    await page.getByRole("button", { name: "Reduzir" }).click();
+    await page.waitForTimeout(200);
+    const tOut = await transform();
+    expect(scale(tOut)).toBeLessThan(scale(tIn));
+
+    await page.getByRole("button", { name: "Ajustar à janela" }).click();
+    await page.waitForTimeout(400);
+    // fit recoloca elementos visíveis dentro do canvas
+    const canvasBox = await page.locator(".bpmnm-canvas").boundingBox();
+    const elBox = await page
+      .locator('.djs-element[data-element-id="T1"]')
+      .boundingBox();
+    expect(elBox!.x).toBeGreaterThanOrEqual(canvasBox!.x - 1);
+    expect(elBox!.x + elBox!.width).toBeLessThanOrEqual(
+      canvasBox!.x + canvasBox!.width + 1,
+    );
+  });
+
+  test("icon buttons têm aria-label e tooltip (wrapper title)", async ({
+    page,
+  }) => {
+    await openEditor(page);
+    const group = page.locator(".bpmnm-viewport-controls");
+    expect(await group.getAttribute("role")).toBe("group");
+    for (const name of ["Ampliar", "Reduzir", "Ajustar à janela"]) {
+      await expect(group.getByRole("button", { name })).toBeVisible();
+    }
+    // tooltips nos wrappers (title sobrevive a disabled)
+    expect(
+      await group.locator("[title]").count(),
+    ).toBeGreaterThanOrEqual(3);
+    // undo disabled expõe help de estado
+    const undoTip = page.locator(
+      '.bpmnm-editor__header span[title="Nenhuma alteração para desfazer."]',
+    );
+    // recém-importado: sem edições → undo disabled com help de estado
+    await expect(undoTip.or(page.locator('.bpmnm-editor__header span[title="Desfaz a última edição do diagrama."]'))).toHaveCount(1);
+  });
+
+});
+
+test.describe("E2E-38b — viewport controls em read-only", () => {
+  test.use({ actor: "viewer", viewport: { width: 1440, height: 900 } });
+  test("controles de viewport presentes e Salvar ausente para viewer", async ({
+    page,
+  }) => {
+    const modelId = await importModelViaApi("editor", "E2E-Visual-RO", XML_RICH);
+    await page.goto(modelUrl(modelId));
+    await page.waitForSelector(".bpmnm-canvas .djs-element", {
+      timeout: 20_000,
+    });
+    const group = page.locator(".bpmnm-viewport-controls");
+    await expect(group.getByRole("button", { name: "Ampliar" })).toBeVisible();
+    await expect(group.getByRole("button", { name: "Reduzir" })).toBeVisible();
+    await expect(
+      group.getByRole("button", { name: "Ajustar à janela" }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".bpmnm-editor__header").getByRole("button", {
+        name: "Salvar",
+      }),
+    ).toHaveCount(0);
+  });
+});
+
 test.describe("E2E-36 — light/dark interactive states", () => {
   test.use({ actor: "editor", viewport: { width: 1440, height: 900 } });
   for (const theme of ["light", "dark"] as const) {

@@ -257,6 +257,37 @@
   display: inline-flex;
 }
 
+/* controles de viewport flutuantes — pertencem ao canvas, não à document
+   bar. Ficam acima do selo bpmn.io (bottom-right) e abaixo do overlay de
+   preview (z-index 5). */
+.bpmnm-viewport-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 48px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  background: var(--delpi-ui-bpmn-controls-bg);
+  border: 1px solid var(--delpi-ui-bpmn-controls-border);
+  border-radius: var(--delpi-ui-radius-sm, 8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.bpmnm-viewport-controls .bpmnm-zoom {
+  display: flex;
+}
+
+.bpmnm-viewport-controls .bpmnm-zoom + .bpmnm-zoom {
+  border-top: 1px solid var(--delpi-ui-bpmn-controls-border);
+}
+
+.bpmnm-viewport-controls .delpi-ui-icon-btn {
+  border-radius: 0;
+  border: none;
+  background: transparent;
+}
+
 .bpmnm-editor__body {
   display: flex;
   flex: 1 1 auto;

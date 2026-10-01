@@ -20,6 +20,13 @@ export const HELP_TOOLTIPS = {
     organize: "Organiza o layout automaticamente. Você pode revisar antes de aplicar.",
     export: "Exporta o modelo canônico (.bpmn) ou imagens (SVG/PNG).",
     history: "Revisões imutáveis do modelo. Crie marcos ou restaure versões.",
+    moreActions: "Ações secundárias: exportar, arquivar e outras opções do modelo.",
+    zoomIn: "Aumenta o zoom do diagrama.",
+    zoomOut: "Diminui o zoom do diagrama.",
+    fitViewport: "Ajusta o diagrama inteiro à área visível.",
+    noUndo: "Nenhuma alteração para desfazer.",
+    noRedo: "Nenhuma alteração para refazer.",
+    editorLoading: "O editor ainda está carregando.",
   },
   readOnly: {
     archived: "Modelos arquivados são somente leitura. Desarquive para editar.",

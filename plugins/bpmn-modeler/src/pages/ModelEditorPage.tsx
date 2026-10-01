@@ -514,7 +514,14 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
 
         {isEditable && !preview && (
           <div className="bpmnm-editor__group bpmnm-editor__group--edit">
-            <span title={HELP_TOOLTIPS.editor.undo} className="bpmnm-zoom">
+            <span
+              title={
+                machineState !== "DIRTY" && machineState !== "CLEAN"
+                  ? HELP_TOOLTIPS.editor.noUndo
+                  : HELP_TOOLTIPS.editor.undo
+              }
+              className="bpmnm-zoom"
+            >
               <IconButton
                 aria-label="Desfazer"
                 disabled={machineState !== "DIRTY" && machineState !== "CLEAN"}
@@ -523,7 +530,14 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                 <Undo2 size={15} aria-hidden="true" />
               </IconButton>
             </span>
-            <span title={HELP_TOOLTIPS.editor.redo} className="bpmnm-zoom">
+            <span
+              title={
+                machineState !== "DIRTY" && machineState !== "CLEAN"
+                  ? HELP_TOOLTIPS.editor.noRedo
+                  : HELP_TOOLTIPS.editor.redo
+              }
+              className="bpmnm-zoom"
+            >
               <IconButton
                 aria-label="Refazer"
                 disabled={machineState !== "DIRTY" && machineState !== "CLEAN"}
@@ -574,39 +588,16 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           )}
           {!preview && (
             <>
-              <span title="Reduzir" className="bpmnm-zoom">
-                <IconButton
-                  aria-label="Reduzir"
-                  disabled={!adapterInstance}
-                  onClick={() => adapterRef.current?.zoomOut()}
-                >
-                  <ZoomOut size={15} aria-hidden="true" />
-                </IconButton>
-              </span>
-              <span title="Ampliar" className="bpmnm-zoom">
-                <IconButton
-                  aria-label="Ampliar"
-                  disabled={!adapterInstance}
-                  onClick={() => adapterRef.current?.zoomIn()}
-                >
-                  <ZoomIn size={15} aria-hidden="true" />
-                </IconButton>
-              </span>
-              <span title="Ajustar à janela" className="bpmnm-zoom">
-                <IconButton
-                  aria-label="Ajustar"
-                  disabled={!adapterInstance}
-                  onClick={() => adapterRef.current?.fitViewport()}
-                >
-                  <Maximize size={15} aria-hidden="true" />
-                </IconButton>
-              </span>
               <DiagramSelector
                 diagrams={diagrams}
                 activeId={diagrams[0]?.id ?? null}
                 onSelect={(id) => adapterRef.current?.openDiagram(id)}
               />
-              <span title="Mais ações" className="bpmnm-zoom" ref={overflowAnchorRef}>
+              <span
+                title={HELP_TOOLTIPS.editor.moreActions}
+                className="bpmnm-zoom"
+                ref={overflowAnchorRef}
+              >
                 <IconButton
                   aria-label="Mais ações"
                   aria-expanded={overflowMenu !== null}
@@ -645,6 +636,62 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
             className="bpmnm-canvas"
             aria-label="Canvas do diagrama BPMN"
           />
+          {!preview && (
+            <div
+              className="bpmnm-viewport-controls"
+              role="group"
+              aria-label="Controles de visualização do canvas"
+            >
+              <span
+                title={
+                  adapterInstance
+                    ? HELP_TOOLTIPS.editor.zoomIn
+                    : HELP_TOOLTIPS.editor.editorLoading
+                }
+                className="bpmnm-zoom"
+              >
+                <IconButton
+                  aria-label="Ampliar"
+                  disabled={!adapterInstance}
+                  onClick={() => adapterRef.current?.zoomIn()}
+                >
+                  <ZoomIn size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
+              <span
+                title={
+                  adapterInstance
+                    ? HELP_TOOLTIPS.editor.zoomOut
+                    : HELP_TOOLTIPS.editor.editorLoading
+                }
+                className="bpmnm-zoom"
+              >
+                <IconButton
+                  aria-label="Reduzir"
+                  disabled={!adapterInstance}
+                  onClick={() => adapterRef.current?.zoomOut()}
+                >
+                  <ZoomOut size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
+              <span
+                title={
+                  adapterInstance
+                    ? HELP_TOOLTIPS.editor.fitViewport
+                    : HELP_TOOLTIPS.editor.editorLoading
+                }
+                className="bpmnm-zoom"
+              >
+                <IconButton
+                  aria-label="Ajustar à janela"
+                  disabled={!adapterInstance}
+                  onClick={() => adapterRef.current?.fitViewport()}
+                >
+                  <Maximize size={15} aria-hidden="true" />
+                </IconButton>
+              </span>
+            </div>
+          )}
           {preview && (
             <div className="bpmnm-preview" data-testid="layout-preview">
               <div className="bpmnm-preview__banner" role="status">
