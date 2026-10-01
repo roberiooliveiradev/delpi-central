@@ -6235,3 +6235,202 @@ POSTCONDITION = C3 MCP federation security evidence complete and bound
 C3-MCP-INTEROP-01R1C = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1C
 ```
+
+
+## 6.99 C3-MCP-INTEROP-01R1C architecture review verdict (pre-readiness freeze)
+
+```
+STEP: C3-MCP-INTEROP-01R1C review persistence
+MODE: REVIEW RECORD (before any readiness/completeness transition)
+
+ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1C = ACCEPT_WITH_RESIDUAL
+REVIEWED_IMPLEMENTATION_HEAD = 78c87e12b079817de623adc7d4108ad3329a5364
+REVIEWED_BIND_HEAD = eb8afdfaad4b5bdf33da1511b5e2d42673749194
+
+ACCEPTED:
+  IDENTITY_NEGATIVE_MATRIX = PASS
+  CACHE_SECURITY_MATRIX = PASS
+  DISCOVERY_ADVERSARIAL_MATRIX = PASS
+  SECRET_REDACTION = PASS
+  TEST_DETERMINISM = PASS
+  DAVI_LIVE_DISCOVERY = PASS
+  TEO_LIVE_DISCOVERY = PASS
+  VISTA_LIVE_DISCOVERY = PASS
+  READ_PHASE_GATE = PASS
+  PREPARE_GATE = PASS
+  ACT_GATE = PASS
+
+C3_MCP_FEDERATION = APPROVED_CURRENT_SCOPE
+BLOCKERS = NONE
+
+RESIDUALS (must not become false production readiness):
+  1. production Keycloak token-exchange enablement/config = NOT_PROVEN
+  2. native MCP 2026-07-28 client/envelope path = DEFERRED /
+     NON_BLOCKING_CURRENT_SCOPE
+  3. requester audience requirement on subject token = documented
+     Keycloak 26 behavior / accepted
+
+C3_EXECUTED: NO
+C4_AUTHORIZED: NO
+EXECUTION_DRIFT: NONE
+NEXT: C3-FINAL-READINESS-01 — C3 completeness + C4 governed-read
+      readiness gate (acceptance/readiness only)
+```
+
+
+## 6.100 C3-FINAL-READINESS-01 — C3 completeness assessment + C4 governed-read readiness gate
+
+```
+STEP: C3-FINAL-READINESS-01
+MODE: ARCHITECTURE ACCEPTANCE + REQUIREMENTS COMPLETENESS +
+      EVIDENCE RECONCILIATION + DOCS-FIRST (no runtime diff)
+BASE_HEAD = ac97211ca3af2a1256ffd7588696f5dd8441f818
+POST_R1C_INTERIM_COMMITS = ac97211ca3 (bpmn-modeler chrome) = OUTSIDE_TASK
+
+R1C_REVIEW_PERSISTED = §6.99
+  ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1C = ACCEPT_WITH_RESIDUAL
+  C3_MCP_FEDERATION = APPROVED_CURRENT_SCOPE
+
+=== A. FULL_C3_COMPLETION ===
+
+C3 canonical inventory (16 §C3, 19 foundation families) vs executed state:
+
+  PROVEN/APPROVED foundations:
+    evidence/epistemic semantics        = C3-T1 + C3-T2R1 APPROVED
+    model invocation + eval/lineage     = C3-T3R1 APPROVED (+ real
+        OpenAICompatible adapter, R2)
+    structured understanding            = C3-T4R1 APPROVED
+    OpenAPI catalog/capability project. = C3-T5 APPROVED
+    expertise/knowledge governance      = C3-T6R1 APPROVED (contracts)
+    decision path FAST|OPERATIONAL|
+        REASONING + planner contracts   = C3-T7R1 APPROVED
+    conversation/session foundation     = C3-T8R1 APPROVED
+    multimodal/media evidence           = C3-MEDIA-FOUNDATION-01 APPROVED
+    interaction runtime vertical slice  = C3-INTERACTION-RUNTIME-01 APPROVED
+    multi-turn continuity               = C3-INTERACTION-CONTINUITY-01 APPROVED
+    MCP interoperability federation     = C3-MCP-INTEROP-01 R1A/R1B/R1C
+        all ACCEPT_WITH_RESIDUAL; APPROVED_CURRENT_SCOPE
+    adversarial/security gates          = PROVEN (injection, unknown,
+        metamorphic, poisoning, phase gates — tested matrices)
+
+  NOT IMPLEMENTED (C3 inventory families still open):
+    internet research / external connection / Teams foundation
+    Process Intelligence event-log contracts
+    AI Asset Registry projection / Control Tower foundation
+    A2A runtime (MCP proven; A2A NOT_IMPLEMENTED)
+    Personal Memory lifecycle/policy foundation
+    Semantic Metric/Glossary registry foundation
+    Analysis Sandbox foundation
+    Prediction/Prescription/Twin contracts beyond EvidenceRefs
+    Edge device/package/model/cache contracts
+    Model Registry lifecycle foundation (lineage exists; registry not)
+
+FULL_C3_STATUS = C3_NOT_COMPLETE
+C3_EXECUTED = NO (unchanged — many canonical families remain
+    PLANNED/TO_INVENTORY; do not declare C3 complete)
+
+=== B. BOUNDED_C4_ENTRY ===
+
+C4_ENTRY_RULE_FROM_16: doc 16 does not require C3_EXECUTED=YES before a
+  bounded C4 authorization; phase progression is governed by explicit
+  task-level authorization records (§6.84 precedent: NEXT=
+  ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ was recorded
+  with C3_EXECUTED=NO). C4_AUTHORIZED remains the governing flag for
+  business READ and is NOT globally set by this record.
+
+DEPENDENCY GRAPH for first governed MCP READ:
+  Portal auth user -> DELIA HTTP boundary      = PROVEN
+  -> Core /me context resolution               = PROVEN
+  -> DELIA access permission (delia.access)    = PROVEN
+  -> interaction turn handling                 = PROVEN
+  -> deterministic capability selection ->
+     approved READ capability                  = MISSING (no runtime link;
+     planner/DecisionPath are contracts only)
+  -> SpecialistInterop.invoke (READ class)     = PLANNED (mechanism exists;
+     phase-gated CAPABILITY_NOT_ALLOWED_IN_PHASE until scoped C4 auth)
+  -> per-user token exchange -> specialist MCP = PROVEN (R1A/R1B/R1C)
+  -> specialist delpi_auth -> Core /me ->
+     domain AuthZ                              = PROVEN at boundary;
+     per-capability domain rule verified inside the slice eval
+  -> normalized SpecialistOutcome (OBSERVATION)= PROVEN
+  -> Evidence/provenance carry                 = PROVEN (contracts)
+  -> DELIA synthesis -> user response          = PARTIAL (model invocation
+     proven; grounding/provenance surfacing = contract gap below)
+
+MISSING_RUNTIME_LINKS (all inside C4 slice scope, none architectural):
+  L1 = interaction -> capability selection -> SpecialistInterop wiring
+  L2 = scoped READ gate lift for exactly one authorized capability
+  L3 = grounding marker on turn result (GROUNDED vs NON_GROUNDED)
+  L4 = provenance/source surfacing on InteractiveTurnResult
+
+FIRST_C4_READ_CANDIDACY (mandatory gates: existing READ capability,
+specialist-owned domain, Core permission path, domain AuthZ path,
+low side-effect risk, deterministic test path, dev evidence):
+  DAVI  = ELIGIBLE (execute_delpi_information; simplest input = query
+      text; api-delpi authoritative; live auth proven)
+  TEO   = ELIGIBLE (12 READ-class tools e.g. get_my_context/
+      get_process_context/get_catalog family; transformometro-api
+      authoritative; input complexity varies per tool)
+  VISTA = ELIGIBLE (5 READ-class tools e.g. list_playlists/
+      get_playlist_context; tv-dashboard-api authoritative)
+  SELECTION = deferred to the C4 slice's own coordination gate —
+      exactly ONE capability may be authorized
+
+GAP CLASSIFICATIONS:
+  INTERACTION_INTEGRATION = EXISTING_EQUIVALENT confirmed:
+      CapabilityProjection (T5), DecisionPath/PlanStep (T7),
+      SpecialistInterop (R1B), SpecialistOutcome->Evidence, model
+      invocation (T3/runtime) — REUSE_DECISION=REUSE for all; only
+      wiring + scoped gate lift missing (no new engine)
+  EVIDENCE_GAP = REUSE contracts (EvidenceItem, SourceRef.observed_at,
+      FactQualificationCriteria, SpecialistResultProvenance) +
+      EXTEND runtime qualification input (authoritative-for-proposition
+      is a deterministic per-capability input, not model output)
+  FALLBACK_CONTRACT_GAP = EXTEND — InteractiveTurnResult already has
+      epistemic_class + limitations; needs one canonical grounding
+      marker (GROUNDED_DELPI vs NON_GROUNDED_GENERAL) + canonical
+      limitation code for unconfirmed DELPI data; no new authority
+  USER_FACING_EVIDENCE_GAP = EXTEND — domain InteractionTurn carries
+      evidence_refs/source_refs; application InteractiveTurnResult does
+      not surface them yet; SpecialistResultProvenance fields suffice
+      (specialist+remote_name+protocol+observed_at)
+
+PRODUCTION_IDENTITY_REQUIREMENT:
+  FOR_C3_CLOSE            = NOT_REQUIRED (dev-evidenced foundations)
+  FOR_C4_DEV_IMPLEMENTATION = NOT_REQUIRED (dev proof suffices)
+  FOR_C4_ACCEPTANCE       = NOT_REQUIRED (slice accepted at dev boundary)
+  FOR_PRODUCTION_RELEASE  = REQUIRED (prod Keycloak token-exchange
+      enablement + config proof at release gate)
+
+REQUIREMENTS (CP/RQ) SNAPSHOT:
+  CP-263 discovery != approval     = LOCKED/FOUNDATION CONTRIBUTION
+      (implemented+tested; lifecycle CP stays locked)
+  CP-264 read-only delegation      = LOCKED/PARTIAL CONTRIBUTION
+      (delegation path now live-proven; business READ still gated)
+  CP-265 write gate                = LOCKED/INVARIANT PRESERVED
+  CP-266 server lifecycle          = LOCKED/OUT_OF_SCOPE_CURRENT
+  CP-269/CP-158/CP-212             = LOCKED/FOUNDATION CONTRIBUTION
+  CP-099/CP-127                    = TO_INVENTORY (room/case — unrelated)
+  No CP promoted to PASS without evidence; no traceability gap opened.
+
+DECISION:
+  FULL_C3 = C3_NOT_COMPLETE
+  BOUNDED_C4 = C4_BOUNDED_MCP_READ_CAN_BE_AUTHORIZED — dependencies for
+      a single governed MCP READ are proven; missing links are task-
+      scoped wiring/contract extensions, not architectural gaps
+
+AUTHORIZED_NEXT_SLICE = C4-MCP-GOVERNED-READS-01
+  bounds: exactly ONE READ capability on ONE specialist selected under
+  the slice's own gates; dev environment only; no PREPARE/ACT; no A2A;
+  no generic MCP proxy; no new engine/registry; no production
+  readiness claim; C4_AUTHORIZED stays NO at phase level until the
+  slice's acceptance; selection between DAVI/TEO/VISTA candidates is
+  architecture coordination's decision inside the slice brief.
+
+C3_EXECUTED = NO
+C4_AUTHORIZED = NO (phase-level; slice authorization is task-scoped)
+PRODUCTION_READINESS = NOT_PROVEN
+EXECUTION_DRIFT = NONE
+BLOCKERS = NONE
+NEXT = C4-MCP-GOVERNED-READS-01
+```

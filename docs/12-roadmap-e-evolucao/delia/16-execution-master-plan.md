@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01` — architecture review of the existing-specialist MCP federation foundation (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED`; `C3-INTERACTION-RUNTIME-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2_FINAL=ACCEPT_WITH_RESIDUAL` §6.91; `C3-INTERACTION-CONTINUITY-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01=ACCEPT_WITH_RESIDUAL` §6.91; `C3-MCP-INTEROP-01` → `ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01=REWORK` §6.93 — identity rework implemented as `C3-MCP-INTEROP-01R1A` (`IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d`; §6.93 authz, §6.94 evidence; evidence ready for review, verdict pending); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `C4-MCP-GOVERNED-READS-01` — bounded governed MCP READ slice authorized by the C3-FINAL-READINESS-01 gate (§6.100): exactly ONE READ capability on ONE specialist (DAVI/TÉO/VISTA all ELIGIBLE — selection inside the slice brief), dev-only, no PREPARE/ACT. `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1A/R1B/R1C all `ACCEPT_WITH_RESIDUAL`; §6.95/§6.97/§6.99); `C4_AUTHORIZED=NO` at phase level — slice authorization is task-scoped; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -763,11 +763,19 @@ C3-MCP-INTEROP-01R1B = ACCEPT_WITH_RESIDUAL (§6.97;
    IMPLEMENTATION_HEAD=cc65cc6388371224d955f266257d6aa3ca4967ce;
    authenticated initialize+tools/list PASS for DAVI/TEO/VISTA;
    residuals R1C-A..F close inside R1C)
-C3-MCP-INTEROP-01R1C = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.98;
+C3-MCP-INTEROP-01R1C = ACCEPT_WITH_RESIDUAL (§6.99;
+   ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1C on
    IMPLEMENTATION_HEAD=78c87e12b079817de623adc7d4108ad3329a5364;
-   security matrix + live 3/3 DEV eval PASS; no business READ,
-   no PREPARE/ACT; C4 not authorized)
-NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1C
+   security matrix + live 3/3 DEV eval PASS §6.98;
+   C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE)
+C3-FINAL-READINESS-01 = EXECUTED (§6.100):
+   FULL_C3 = C3_NOT_COMPLETE (open foundation families inventoried);
+   C4_BOUNDED_MCP_READ_CAN_BE_AUTHORIZED — dependencies proven,
+   missing links task-scoped; C4_AUTHORIZED stays NO at phase level
+NEXT = C4-MCP-GOVERNED-READS-01
+   (bounded: ONE READ capability on ONE specialist among ELIGIBLE
+    DAVI/TEO/VISTA; dev-only; no PREPARE/ACT; no A2A;
+    production readiness NOT_PROVEN)
 Workspace binding remains unscheduled
 ```
 
