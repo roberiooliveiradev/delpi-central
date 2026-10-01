@@ -699,8 +699,8 @@ export async function createBenchSession(
   body: {
     branch: string;
     workCenter: string;
-    operatorCode: string;
-    operatorName?: string | null;
+    /** Matrícula oficial do colaborador — o nome vem do Portal RH (C4). */
+    registration: string;
   },
 ): Promise<BenchSessionSnapshot> {
   const response = await fetch(
@@ -711,13 +711,32 @@ export async function createBenchSession(
       body: JSON.stringify({
         branch: body.branch,
         workCenter: body.workCenter,
-        operatorCode: body.operatorCode,
-        operatorName: body.operatorName || null,
+        registration: body.registration,
         website: "",
       }),
     },
   );
   return readEnvelope<BenchSessionSnapshot>(response, "Não foi possível identificar o operador.");
+}
+
+/**
+ * Restore do cockpit: devolve a bench-session persistida — sem lookup no
+ * Portal RH. 401 (ApiError) = sessão inválida/expirada/encerrada.
+ */
+export async function fetchCurrentBenchSession(
+  token: string,
+  sessionToken: string,
+): Promise<BenchSessionSnapshot> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/bench-sessions/current`,
+    {
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  return readEnvelope<BenchSessionSnapshot>(response, "Sessão inválida.");
 }
 
 export async function endBenchSession(token: string, sessionToken: string): Promise<void> {

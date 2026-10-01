@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { ArrowLeft, ClipboardCheck, ClipboardList, Package } from "lucide-react";
-import type { MachineLoadOperation } from "./api";
-import { buildPublicProductModelGlbUrl } from "./api";
+import type { MachineLoadOperation } from "./api.ts";
+import { buildPublicProductModelGlbUrl } from "./api.ts";
 import {
   BrandBar,
   CopyValueButton,
@@ -18,20 +18,21 @@ import {
   type VisualMode,
 } from "./cockpitShared";
 import { ProductModelViewer } from "./ProductModelViewer";
+import { OperatorSessionChip } from "./OperatorSessionProvider";
 import { ProductionRunControls } from "./ProductionRunControls";
-import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
+import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime.ts";
 import {
   usePublicOperationAppointments,
   type PublicOperationAppointmentsState,
-} from "./usePublicOperationAppointments";
+} from "./usePublicOperationAppointments.ts";
 import {
   usePublicOperationMaterials,
   type PublicOperationMaterialsState,
-} from "./usePublicOperationMaterials";
+} from "./usePublicOperationMaterials.ts";
 import {
   usePublicOperationProcessInspections,
   type PublicOperationProcessInspectionsState,
-} from "./usePublicOperationProcessInspections";
+} from "./usePublicOperationProcessInspections.ts";
 
 type Props = {
   token: string;
@@ -51,6 +52,7 @@ type Props = {
   realtimeConnected: boolean;
   onOpenPerformance: () => void;
   onOpenDowntime: () => void;
+  hasActiveRun: boolean;
   onBack: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -78,6 +80,7 @@ export function OperationDetailPage({
   realtimeConnected,
   onOpenPerformance,
   onOpenDowntime,
+  hasActiveRun,
   onBack,
   onPrevious,
   onNext,
@@ -177,7 +180,9 @@ export function OperationDetailPage({
           </button>
         }
         actions={
-          <nav className="pcp-pub__queue-nav" aria-label="Navegação na fila">
+          <>
+            <OperatorSessionChip hasActiveRun={hasActiveRun} />
+            <nav className="pcp-pub__queue-nav" aria-label="Navegação na fila">
             <button
               type="button"
               className="pcp-pub__queue-nav-btn"
@@ -199,7 +204,8 @@ export function OperationDetailPage({
             >
               Próxima <span aria-hidden="true">›</span>
             </button>
-          </nav>
+            </nav>
+          </>
         }
       />
 

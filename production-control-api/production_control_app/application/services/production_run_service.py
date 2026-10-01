@@ -247,6 +247,18 @@ class ProductionRunService:
             "operatorName": row.get("operator_name"),
         }
 
+    def get_current_bench_session(self, raw_token: str | None) -> dict[str, Any]:
+        """Snapshot da sessão atual (restore do cockpit) — sem lookup no RH."""
+        session = self.resolve_bench_session(raw_token)
+        return {
+            "sessionToken": str(raw_token or "").strip(),
+            "expiresAt": _iso(session.get("expires_at")),
+            "branch": session.get("branch"),
+            "workCenter": session.get("work_center"),
+            "operatorCode": session.get("operator_code"),
+            "operatorName": session.get("operator_name"),
+        }
+
     def resolve_bench_session(self, raw_token: str | None) -> dict[str, Any]:
         token = str(raw_token or "").strip()
         if not token:

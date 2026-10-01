@@ -44,10 +44,6 @@ export function ProductionRunTimeline({ timeline, serverNow, onSelectDowntime }:
 
   const durations = timeline.items.map((item) => liveDurationSeconds(item, now));
   const summary = liveSummary(timeline.items, now);
-  const total = Math.max(
-    1,
-    durations.reduce((acc, v) => acc + v, 0),
-  );
 
   return (
     <div className="pcp-pub-timeline">

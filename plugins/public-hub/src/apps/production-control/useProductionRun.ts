@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   classifyRunDowntime,
-  createBenchSession,
-  endBenchSession,
   fetchActiveProductionRun,
   fetchMesDowntimeReasons,
   isAuthError,
@@ -14,45 +12,26 @@ import {
   type MachineLoadOperation,
   type MesDowntimeReason,
   type ProductionRunSnapshot,
-} from "./api";
+} from "./api.ts";
 import {
   applyProductionRunDowntimeEvent,
   applyProductionRunPiecesSnapshot,
-} from "./productionRunRealtime";
-import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
+} from "./productionRunRealtime.ts";
+import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime.ts";
 
-const SESSION_STORAGE_PREFIX = "delpi.pcp.cockpit.bench-session";
 const RUN_POLL_MS = 1_000;
-
-function sessionStorageKey(branch: string, workCenter: string): string {
-  return `${SESSION_STORAGE_PREFIX}.${branch}.${workCenter}`;
-}
-
-function readStoredSession(branch: string, workCenter: string): BenchSessionSnapshot | null {
-  try {
-    const raw = window.sessionStorage.getItem(sessionStorageKey(branch, workCenter));
-    if (!raw) return null;
-    return JSON.parse(raw) as BenchSessionSnapshot;
-  } catch {
-    return null;
-  }
-}
-
-function storeSession(branch: string, workCenter: string, session: BenchSessionSnapshot | null): void {
-  try {
-    const key = sessionStorageKey(branch, workCenter);
-    if (session) window.sessionStorage.setItem(key, JSON.stringify(session));
-    else window.sessionStorage.removeItem(key);
-  } catch {
-    /* private mode */
-  }
-}
 
 type Options = {
   token: string;
   branch: string;
   workCenter: string | null;
   operation: MachineLoadOperation | null;
+  /**
+   * C4: a sessão do operador vem do OperatorSessionProvider — este hook só
+   * consome sessionToken. onAuthError deve descartar a sessão local (401).
+   */
+  session: BenchSessionSnapshot | null;
+  onAuthError?: () => void;
   runUpdatedSignal?: number;
   runRealtimeEvent?: MachineLoadRealtimeEvent | null;
   realtimeConnected?: boolean;
@@ -63,16 +42,15 @@ export function useProductionRun({
   branch,
   workCenter,
   operation,
+  session,
+  onAuthError,
   runUpdatedSignal = 0,
   runRealtimeEvent = null,
   realtimeConnected = false,
 }: Options) {
-  const [session, setSession] = useState<BenchSessionSnapshot | null>(null);
   const [run, setRun] = useState<ProductionRunSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [operatorCode, setOperatorCode] = useState("");
-  const [operatorName, setOperatorName] = useState("");
   const [downtimeReasons, setDowntimeReasons] = useState<MesDowntimeReason[] | null>(null);
   const downtimeReasonsInFlightRef = useRef(false);
   const pollRef = useRef(0);
@@ -85,27 +63,19 @@ export function useProductionRun({
   }, [token, branch, workCenter]);
 
   useEffect(() => {
-    let active = true;
-    const nextSession = workCenter ? readStoredSession(branch, workCenter) : null;
     queueMicrotask(() => {
-      if (!active) return;
-      setSession(nextSession);
       if (!workCenter) setRun(null);
     });
-    return () => {
-      active = false;
-    };
-  }, [branch, workCenter]);
+  }, [workCenter]);
 
   const dropStaleSession = useCallback(
     (err: unknown) => {
-      // 401 = sessão expirada/inválida no backend: descarta a sessão local
-      // para o formulário de identificação reaparecer.
+      // 401 = sessão expirada/inválida no backend: a camada de sessão limpa
+      // o estado e o formulário de identificação reaparece.
       if (!isAuthError(err)) return;
-      if (workCenter) storeSession(branch, workCenter, null);
-      setSession(null);
+      onAuthError?.();
     },
-    [branch, workCenter],
+    [onAuthError],
   );
 
   const refreshRun = useCallback(async () => {
@@ -167,40 +137,6 @@ export function useProductionRun({
     }, RUN_POLL_MS);
     return () => window.clearInterval(pollRef.current);
   }, [workCenter, realtimeConnected, run, refreshRun]);
-
-  const identify = useCallback(async () => {
-    if (!workCenter) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const created = await createBenchSession(token, {
-        branch,
-        workCenter,
-        operatorCode: operatorCode.trim(),
-        operatorName: operatorName.trim() || null,
-      });
-      storeSession(branch, workCenter, created);
-      setSession(created);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao identificar operador.");
-    } finally {
-      setBusy(false);
-    }
-  }, [token, branch, workCenter, operatorCode, operatorName]);
-
-  const clearSession = useCallback(async () => {
-    if (!workCenter || !session) return;
-    setBusy(true);
-    try {
-      await endBenchSession(token, session.sessionToken);
-    } catch {
-      /* still clear local */
-    } finally {
-      storeSession(branch, workCenter, null);
-      setSession(null);
-      setBusy(false);
-    }
-  }, [token, branch, workCenter, session]);
 
   const play = useCallback(async () => {
     if (!workCenter || !operation || !session) return;
@@ -366,12 +302,6 @@ export function useProductionRun({
     runMatchesOperation,
     busy,
     error,
-    operatorCode,
-    operatorName,
-    setOperatorCode,
-    setOperatorName,
-    identify,
-    clearSession,
     play,
     pause,
     resume,

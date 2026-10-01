@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { MouseEvent } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { BarChart3, Eye, ListFilter, MoreVertical, RefreshCw, Search, User } from "lucide-react";
 import {
   fetchActiveProductionRun,
@@ -8,7 +8,7 @@ import {
   type MachineLoadWorkCenter,
   type ProductionRunSnapshot,
   type PublicMachineLoadPayload,
-} from "./api";
+} from "./api.ts";
 import {
   BrandBar,
   CopyValueButton,
@@ -27,16 +27,20 @@ import {
   type StatusView,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
+import {
+  OperatorSessionChip,
+  OperatorSessionProvider,
+} from "./OperatorSessionProvider";
 import { ProductionRunControls } from "./ProductionRunControls";
 import {
   usePublicMachineLoadRealtime,
   type MachineLoadRealtimeEvent,
-} from "./usePublicMachineLoadRealtime";
-import { useCockpitView } from "./useCockpitView";
-import { useWorkCenterPerformance } from "./useWorkCenterPerformance";
-import { usePublicWorkCenterDowntimeItems } from "./usePublicWorkCenterDowntimeItems";
+} from "./usePublicMachineLoadRealtime.ts";
+import { useCockpitView } from "./useCockpitView.ts";
+import { useWorkCenterPerformance } from "./useWorkCenterPerformance.ts";
+import { usePublicWorkCenterDowntimeItems } from "./usePublicWorkCenterDowntimeItems.ts";
 import { WorkCenterPerformancePage } from "./WorkCenterPerformancePage";
-import type { PublicWorkCenterDowntimeItemsState } from "./usePublicWorkCenterDowntimeItems";
+import type { PublicWorkCenterDowntimeItemsState } from "./usePublicWorkCenterDowntimeItems.ts";
 import "./cockpit.css";
 
 function matchesQueueSearch(operation: MachineLoadOperation, term: string): boolean {
@@ -375,8 +379,10 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     />
   ) : null;
 
+  let content: ReactNode;
+
   if (view.kind === "performance") {
-    return (
+    content = (
       <WorkCenterPerformancePage
         branch={branch}
         workCenter={workCenter}
@@ -387,9 +393,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         onBack={openQueue}
       />
     );
-  }
-
-  if (view.kind === "operation" && selectedOperation) {
+  } else if (view.kind === "operation" && selectedOperation) {
     const index = selectedOperation.position - 1;
     const previous = findAdjacentOpenOperation(items, index, -1);
     const next = findAdjacentOpenOperation(items, index, 1);
@@ -400,7 +404,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     const navPosition = openIndex >= 0 ? openIndex + 1 : selectedOperation.position;
     const navQueueSize = openItems.length > 0 ? openItems.length : items.length;
 
-    return (
+    content = (
       <>
         <OperationDetailPage
           key={operationKey(selectedOperation.operation)}
@@ -419,6 +423,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           runUpdatedSignal={runUpdatedSignal}
           runRealtimeEvent={runRealtimeEvent}
           realtimeConnected={connected}
+          hasActiveRun={Boolean(counterRun)}
           onOpenPerformance={openPerformance}
           onOpenDowntime={() => setDowntimeOpen(true)}
           onBack={openQueue}
@@ -434,10 +439,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         {downtimeModal}
       </>
     );
-  }
-
-  return (
-    <section className="pcp-pub pcp-pub--queue">
+  } else {
+    content = (
+      <section className="pcp-pub pcp-pub--queue">
       <header className="pcp-pub__masthead">
         <div className="pcp-pub__topbar">
           <div className="pcp-pub__topbar-inner">
@@ -479,6 +483,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             </div>
             {shiftMetrics}
             <div className="pcp-pub__hero-aside">
+              <OperatorSessionChip hasActiveRun={Boolean(counterRun)} />
               <span
                 className={`pcp-pub__live ${connected ? "pcp-pub__live--on" : "pcp-pub__live--off"}`}
                 title={
@@ -621,7 +626,14 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
       ) : null}
 
       {downtimeModal}
-    </section>
+      </section>
+    );
+  }
+
+  return (
+    <OperatorSessionProvider token={token} branch={branch} workCenter={workCenter}>
+      {content}
+    </OperatorSessionProvider>
   );
 }
 

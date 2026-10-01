@@ -391,6 +391,22 @@ def create_bench_session(token: str, body: BenchSessionBody):
     return ok(data)
 
 
+@router.get("/{token}/bench-sessions/current")
+def get_current_bench_session(
+    token: str,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Restore do cockpit: devolve a sessão persistida (sem consultar o RH)."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_production_run_service().get_current_bench_session(session_token)
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
 @router.delete("/{token}/bench-sessions/current")
 def end_bench_session(
     token: str,

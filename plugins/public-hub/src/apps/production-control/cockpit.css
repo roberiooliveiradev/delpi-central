@@ -3029,3 +3029,123 @@ button.pcp-pub-timeline__body--action:focus-visible {
   font-size: 0.78rem;
   opacity: 0.7;
 }
+
+/* ---------- Operador identificado (C4) ---------- */
+
+.pcp-pub__operator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pcp-pub__operator-switch--identify {
+  width: auto;
+  height: auto;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.pcp-pub__brandbar .pcp-pub__operator-switch--identify {
+  border-color: var(--pcp-brand);
+  color: var(--pcp-brand);
+}
+
+.pcp-pub__operator--loading {
+  min-width: 24px;
+  justify-content: center;
+}
+
+.pcp-pub__operator-text {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.pcp-pub__operator-reg {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.pcp-pub__operator-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.75);
+  background: transparent;
+  cursor: pointer;
+}
+
+.pcp-pub__operator-switch:hover,
+.pcp-pub__operator-switch:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.pcp-pub__operator-blocked {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 5;
+  width: 260px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--pcp-text);
+  background: var(--pcp-surface);
+  border: 1px solid var(--pcp-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* No detalhe (fundo claro do brandbar), o chip usa tokens padrão. */
+.pcp-pub__brandbar .pcp-pub__operator {
+  border: 1px solid var(--pcp-border);
+  color: var(--pcp-text);
+  background: var(--pcp-surface);
+}
+
+.pcp-pub__brandbar .pcp-pub__operator-reg {
+  color: var(--pcp-muted, rgba(0, 0, 0, 0.55));
+}
+
+.pcp-pub__brandbar .pcp-pub__operator-switch {
+  color: var(--pcp-muted, rgba(0, 0, 0, 0.55));
+}
+
+.pcp-pub__brandbar .pcp-pub__operator-switch:hover,
+.pcp-pub__brandbar .pcp-pub__operator-switch:focus-visible {
+  color: var(--pcp-text);
+  background: color-mix(in srgb, var(--pcp-brand) 10%, transparent);
+}
+
+.pcp-pub-modal__panel--identify {
+  max-width: 380px;
+}
+
+.pcp-pub-modal__panel--identify input {
+  min-height: 52px;
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+}

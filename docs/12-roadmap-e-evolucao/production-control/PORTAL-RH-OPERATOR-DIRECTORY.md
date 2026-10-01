@@ -98,3 +98,42 @@ Filial do colaborador ≠ filial do cockpit **não bloqueia** nesta etapa.
 Resiliência: o Portal RH é necessário **somente para criar** sessão.
 Sessões já válidas operam Play/Pause/Resume/Stop/classificação sem novo
 lookup — não há dependência do RH por transição.
+
+## C4 — sessão do operador centralizada no cockpit
+
+A identidade sai de `ProductionRunControls` e passa a pertencer ao cockpit
+(branch + workCenter), não à OP. O frontend novo envia **`registration`** —
+o alias `operatorCode` permanece no backend só como compatibilidade
+temporária e pode ser removido após a estabilização.
+
+Arquitetura no `public-hub` (`apps/production-control`):
+
+- `OperatorSessionContext.ts` — contrato `useOperatorSession()`:
+  `session`, `status` (`restoring | anonymous | identified`), `identify`,
+  `logout`, `invalidate`, `openIdentify`.
+- `OperatorSessionProvider.tsx` — provider único no `OperatorCockpit`,
+  acima de fila/detalhe/performance; modal de identificação (somente
+  matrícula) e `OperatorSessionChip` (nome oficial + matrícula + ação de
+  troca).
+- `operatorSession.ts` — storage/validação pura: chave
+  `delpi.pcp.cockpit.bench-session.{branch}.{workCenter}` em
+  **sessionStorage** (mesma chave de antes — compat); matrícula é texto
+  (`trim`, max 30, "001" preservado); mensagens 404/403/503.
+- `useProductionRun` — só produção: recebe `session` + `onAuthError`;
+  não gerencia mais identidade nem storage.
+
+Restore: ao montar/trocar de CT, lê a sessão do escopo e valida em
+`GET /public/machine-load/{token}/bench-sessions/current`
+(`X-Delpi-Bench-Session`) — **sem consultar o Portal RH**; 401 descarta o
+storage e pede nova matrícula; falha transitória mantém o snapshot local.
+Logout: `DELETE /bench-sessions/current` + limpeza local mesmo se já
+expirada.
+
+Regras de troca: run ativo no posto bloqueia "Trocar operador" (handover
+não pertence à C4); sessão não migra entre CTs — cada posto restaura a
+sua própria.
+
+Backend: `GET`/`DELETE bench-sessions/current` resolvem o token
+persistido (hash + expiração + não encerrada) e devolvem
+`sessionToken/expiresAt/branch/workCenter/operatorCode/operatorName`.
+Sem mudança de TTL, hashing ou contrato C3.

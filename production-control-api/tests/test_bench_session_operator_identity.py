@@ -339,3 +339,67 @@ class TestBenchSessionEndpoint:
         assert resp.json()["data"]["sessionToken"] is None
         assert directory.calls == []
         assert not repo.sessions
+
+
+class TestCurrentBenchSession:
+    """C4 — GET /bench-sessions/current: restore sem consultar o RH."""
+
+    def _service_with_session(self, repo: FakeRepo):
+        service = make_service(repo, FakePulse())
+        created = service.create_bench_session(
+            branch="01", work_center="CT01", registration="20057"
+        )
+        return service, created["sessionToken"]
+
+    def test_valid_session_returns_snapshot(self) -> None:
+        repo = FakeRepo()
+        service, token = self._service_with_session(repo)
+        data = service.get_current_bench_session(token)
+        assert data["sessionToken"] == token
+        assert data["operatorCode"] == "20057"
+        assert data["operatorName"] == "Operador"
+        assert data["branch"] == "01"
+        assert data["workCenter"] == "CT01"
+        assert data["expiresAt"] is not None
+
+    @pytest.mark.parametrize("bad", [None, "", "   ", "token-inexistente"])
+    def test_invalid_tokens_raise_auth(self, bad) -> None:
+        from production_control_app.domain.errors import BenchSessionRequired
+
+        repo = FakeRepo()
+        service, _ = self._service_with_session(repo)
+        with pytest.raises(BenchSessionRequired):
+            service.get_current_bench_session(bad)
+
+    def test_ended_session_raises_auth(self) -> None:
+        from production_control_app.domain.errors import BenchSessionRequired
+
+        repo = FakeRepo()
+        service, token = self._service_with_session(repo)
+        service.end_bench_session(token)
+        with pytest.raises(BenchSessionRequired):
+            service.get_current_bench_session(token)
+
+    def test_expired_session_raises_auth(self) -> None:
+        from production_control_app.domain.errors import BenchSessionRequired
+
+        repo = FakeRepo()
+        service, token = self._service_with_session(repo)
+        row = next(iter(repo.sessions.values()))
+        from datetime import datetime, timedelta, timezone
+        row["expires_at"] = datetime.now(timezone.utc) - timedelta(hours=1)
+        with pytest.raises(BenchSessionRequired):
+            service.get_current_bench_session(token)
+
+    def test_current_session_does_not_call_directory(self) -> None:
+        repo = FakeRepo()
+        directory = DirectoryStub()
+        service = make_service(repo, FakePulse(), operator_directory=directory)
+        token = service.create_bench_session(
+            branch="01", work_center="CT01", registration="20057"
+        )["sessionToken"]
+        directory.error = OperatorDirectoryUnavailable("offline")
+        directory.calls.clear()
+        data = service.get_current_bench_session(token)
+        assert data["operatorName"] == "ALESSANDRA GAVA ROCHA"
+        assert directory.calls == []
