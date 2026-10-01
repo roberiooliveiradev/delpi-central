@@ -521,6 +521,10 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "sales_conversion_rate_pct",
@@ -536,10 +540,6 @@
           "projectable": true,
           "origin": "result"
         }
-      ],
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
       ],
       "tvConstraints": {
         "maxRows": 1,
@@ -609,14 +609,14 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "conversion_filial_01": "number",
-        "conversion_filial_02": "number",
-        "qtd_proposals_01": "number",
-        "qtd_proposals_02": "number",
-        "qtd_won_01": "number",
-        "qtd_won_02": "number"
-      },
+      "valueFields": [
+        "conversion_filial_01",
+        "conversion_filial_02",
+        "qtd_proposals_01",
+        "qtd_proposals_02",
+        "qtd_won_01",
+        "qtd_won_02"
+      ],
       "projectableFields": [
         {
           "name": "conversion_filial_01",
@@ -667,14 +667,14 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "conversion_filial_01",
-        "conversion_filial_02",
-        "qtd_proposals_01",
-        "qtd_proposals_02",
-        "qtd_won_01",
-        "qtd_won_02"
-      ]
+      "valueFieldTypes": {
+        "conversion_filial_01": "number",
+        "conversion_filial_02": "number",
+        "qtd_proposals_01": "number",
+        "qtd_proposals_02": "number",
+        "qtd_won_01": "number",
+        "qtd_won_02": "number"
+      }
     },
     {
       "operationId": "list_commercial_customer_center_assignments",
@@ -849,13 +849,13 @@
         "rol_target_pct",
         "rol"
       ],
-      "valueFieldTypes": {
-        "rol_target_pct": "number",
-        "rol": "number"
-      },
       "valueFieldLabels": {
         "rol_target_pct": "Atingimento da meta ROL (%)",
         "rol": "ROL realizado"
+      },
+      "valueFieldTypes": {
+        "rol_target_pct": "number",
+        "rol": "number"
       },
       "projectableFields": [
         {
@@ -1050,6 +1050,9 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "value_pct"
+      ],
       "tableFields": "items",
       "projectableFields": [
         {
@@ -1067,10 +1070,7 @@
         "metric": "Métrica",
         "metric_label": "Indicador",
         "value_pct": "Valor (%)"
-      },
-      "valueFields": [
-        "value_pct"
-      ]
+      }
     },
     {
       "operationId": "list_commercial_proposals",
@@ -1433,6 +1433,12 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "returns",
+        "discounts"
+      ],
       "tableFields": "items",
       "projectableFields": [
         {
@@ -1474,13 +1480,7 @@
         "gross_revenue": "Receita bruta",
         "returns": "Devoluções",
         "discounts": "Descontos"
-      },
-      "valueFields": [
-        "rol",
-        "gross_revenue",
-        "returns",
-        "discounts"
-      ]
+      }
     },
     {
       "operationId": "get_commercial_rol_by_customer",
@@ -1598,6 +1598,11 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "rol",
+        "share_pct",
+        "rank"
+      ],
       "whenToUse": "Use em tabela de ranking por cliente.",
       "tableFields": "items",
       "projectableFields": [
@@ -1633,12 +1638,7 @@
         "rol": "ROL",
         "share_pct": "% participação",
         "rank": "Ranking"
-      },
-      "valueFields": [
-        "rol",
-        "share_pct",
-        "rank"
-      ]
+      }
     },
     {
       "operationId": "get_commercial_rol_by_customer_center",
@@ -1766,6 +1766,12 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "rol",
+        "gross_revenue",
+        "qty",
+        "share_pct"
+      ],
       "whenToUse": "Use em tabela de ROL por centro do cliente. Itens sem cadastro aparecem como SEM CENTRO.",
       "tableFields": "items",
       "projectableFields": [
@@ -1816,13 +1822,7 @@
         "qty": "Quantidade",
         "share_pct": "% participação",
         "rank": "Ranking"
-      },
-      "valueFields": [
-        "rol",
-        "gross_revenue",
-        "qty",
-        "share_pct"
-      ]
+      }
     },
     {
       "operationId": "get_commercial_rol_by_product",
@@ -2028,14 +2028,10 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "periodo": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "rol_matrix": "number",
-        "rol_branch": "number"
-      },
+      "valueFields": [
+        "rol_matrix",
+        "rol_branch"
+      ],
       "whenToUse": "Use em gráfico de linha ou tabela temporal de ROL.",
       "tableFields": "points",
       "projectableFields": [
@@ -2058,6 +2054,7 @@
           "label": "ROL filial 02"
         }
       ],
+      "seriesField": "points",
       "valueFieldLabels": {
         "periodo": "Período",
         "sort_key": "Chave de ordenação",
@@ -2066,10 +2063,14 @@
         "rol_matrix": "ROL filial 01",
         "rol_branch": "ROL filial 02"
       },
-      "valueFields": [
-        "rol_matrix",
-        "rol_branch"
-      ],
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "rol_matrix": "number",
+        "rol_branch": "number"
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -2084,8 +2085,7 @@
           "column": "sort_key",
           "direction": "asc"
         }
-      ],
-      "seriesField": "points"
+      ]
     },
     {
       "operationId": "get_commercial_rol_summary",
@@ -2171,17 +2171,11 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "rol": "number",
-        "gross_revenue": "number",
-        "returns": "number",
-        "discounts": "number",
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number",
-        "target": "number",
-        "rol_target_pct": "number"
-      },
+      "valueFields": [
+        "rol",
+        "comparable_goal",
+        "rol_target_pct"
+      ],
       "whenToUse": "Use em card KPI/gauge quando precisar de ROL realizado e meta na mesma fonte.",
       "projectableFields": [
         {
@@ -2212,6 +2206,9 @@
           "label": "Atingimento da meta ROL (%)"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldLabels": {
         "rol": "ROL",
         "gross_revenue": "Receita bruta",
@@ -2223,13 +2220,16 @@
         "target": "Meta",
         "rol_target_pct": "Atingimento da meta ROL (%)"
       },
-      "valueFields": [
-        "rol",
-        "comparable_goal",
-        "rol_target_pct"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "rol": "number",
+        "gross_revenue": "number",
+        "returns": "number",
+        "discounts": "number",
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number",
+        "target": "number",
+        "rol_target_pct": "number"
       }
     },
     {
@@ -2322,6 +2322,9 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "sales_order_otd_pct"
+      ],
       "whenToUse": "Use em card KPI de OTD.",
       "projectableFields": [
         {
@@ -2333,17 +2336,14 @@
           "label": "OTD pedidos (%)"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldLabels": {
         "sales_order_otd_pct": "OTD pedidos (%)",
         "total_lines": "Total de linhas",
         "on_time_lines": "Linhas no prazo",
         "late_lines": "Linhas atrasadas"
-      },
-      "valueFields": [
-        "sales_order_otd_pct"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
       }
     },
     {
@@ -2425,10 +2425,12 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty"
+      ],
       "whenToUse": "Use em tabela comparativa de OTD por filial.",
       "tableFields": "items",
       "projectableFields": [
@@ -2477,12 +2479,10 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "valueFields": [
-        "otd_pct",
-        "fulfillment_pct",
-        "total_qty",
-        "fulfilled_qty"
-      ]
+      "valueFieldTypes": {
+        "unit": "string",
+        "mixed_units": "boolean"
+      }
     },
     {
       "operationId": "get_sales_order_otd_by_customer",
@@ -2588,10 +2588,12 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty"
+      ],
       "whenToUse": "Use em tabela de OTD por cliente.",
       "tableFields": "items",
       "projectableFields": [
@@ -2643,12 +2645,10 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "valueFields": [
-        "otd_pct",
-        "fulfillment_pct",
-        "total_qty",
-        "fulfilled_qty"
-      ]
+      "valueFieldTypes": {
+        "unit": "string",
+        "mixed_units": "boolean"
+      }
     },
     {
       "operationId": "get_sales_order_otd_line_detail",
@@ -2875,18 +2875,13 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "sales_order_otd_pct": "number",
-        "late_percentage": "number",
-        "late_lines": "number",
-        "total_lines": "number",
-        "promised_date": "date",
-        "invoice_date": "date",
-        "unit": "string",
-        "qty_sold": "number",
-        "qty_delivered": "number",
-        "days_diff": "number"
-      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "late_percentage",
+        "late_lines",
+        "total_lines"
+      ],
+      "openEndedDateRange": true,
       "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
       "tableFields": "lines",
       "projectableFields": [
@@ -2927,7 +2922,9 @@
           "label": "Total de itens"
         }
       ],
-      "openEndedDateRange": true,
+      "tvConstraints": {
+        "maxRows": 200
+      },
       "valueFieldLabels": {
         "unit": "Unidade",
         "qty_sold": "Qtd. vendida",
@@ -2947,14 +2944,17 @@
         "late_lines": "Linhas atrasadas",
         "total_lines": "Total de itens"
       },
-      "valueFields": [
-        "sales_order_otd_pct",
-        "late_percentage",
-        "late_lines",
-        "total_lines"
-      ],
-      "tvConstraints": {
-        "maxRows": 200
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "late_percentage": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "promised_date": "date",
+        "invoice_date": "date",
+        "unit": "string",
+        "qty_sold": "number",
+        "qty_delivered": "number",
+        "days_diff": "number"
       }
     },
     {
@@ -3061,21 +3061,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "periodo": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "otd_filial_01": "number",
-        "otd_filial_02": "number",
-        "otd_pct": "number",
-        "total_qty": "number",
-        "fulfilled_qty": "number",
-        "fulfillment_pct": "number",
-        "total_lines": "number",
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
+      "valueFields": [
+        "otd_pct",
+        "total_qty",
+        "fulfilled_qty",
+        "fulfillment_pct",
+        "total_lines",
+        "otd_filial_01",
+        "otd_filial_02"
+      ],
       "whenToUse": "Use em gráfico/tabela temporal de OTD; filtre por customer_names para um cliente.",
       "tableFields": "points",
       "projectableFields": [
@@ -3143,6 +3137,7 @@
           "label": "OTD filial 02"
         }
       ],
+      "seriesField": "points",
       "valueFieldLabels": {
         "periodo": "Período",
         "sort_key": "Chave de ordenação",
@@ -3158,15 +3153,21 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "valueFields": [
-        "otd_pct",
-        "total_qty",
-        "fulfilled_qty",
-        "fulfillment_pct",
-        "total_lines",
-        "otd_filial_01",
-        "otd_filial_02"
-      ],
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_filial_01": "number",
+        "otd_filial_02": "number",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number",
+        "unit": "string",
+        "mixed_units": "boolean"
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -3182,8 +3183,7 @@
           "column": "sort_key",
           "direction": "asc"
         }
-      ],
-      "seriesField": "points"
+      ]
     },
     {
       "operationId": "get_sales_order_otd_series_by_customer",
@@ -3309,19 +3309,13 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "periodo": "string",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "otd_pct": "number",
-        "total_qty": "number",
-        "fulfilled_qty": "number",
-        "fulfillment_pct": "number",
-        "total_lines": "number",
-        "unit": "string",
-        "mixed_units": "boolean"
-      },
+      "valueFields": [
+        "otd_pct",
+        "fulfillment_pct",
+        "total_qty",
+        "fulfilled_qty",
+        "total_lines"
+      ],
       "whenToUse": "Use em tabela cliente×semana (ou outra granularidade); filtre por customer_names ou use top_customers.",
       "tableFields": "items",
       "projectableFields": [
@@ -3390,13 +3384,19 @@
         "unit": "Unidade",
         "mixed_units": "UMs mistas"
       },
-      "valueFields": [
-        "otd_pct",
-        "fulfillment_pct",
-        "total_qty",
-        "fulfilled_qty",
-        "total_lines"
-      ]
+      "valueFieldTypes": {
+        "periodo": "string",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "otd_pct": "number",
+        "total_qty": "number",
+        "fulfilled_qty": "number",
+        "fulfillment_pct": "number",
+        "total_lines": "number",
+        "unit": "string",
+        "mixed_units": "boolean"
+      }
     },
     {
       "operationId": "get_sales_order_otd_summary",
@@ -3488,15 +3488,10 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "sales_order_otd_pct": "number",
-        "total_lines": "number",
-        "on_time_lines": "number",
-        "late_lines": "number",
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
+      "valueFields": [
+        "sales_order_otd_pct",
+        "comparable_goal"
+      ],
       "whenToUse": "Use em card KPI/gauge quando precisar de OTD realizado e meta na mesma fonte.",
       "projectableFields": [
         {
@@ -3518,6 +3513,9 @@
           "label": "Meta do período"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldLabels": {
         "sales_order_otd_pct": "OTD pedidos (%)",
         "total_lines": "Total de linhas",
@@ -3527,12 +3525,14 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "valueFields": [
-        "sales_order_otd_pct",
-        "comparable_goal"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
+      "valueFieldTypes": {
+        "sales_order_otd_pct": "number",
+        "total_lines": "number",
+        "on_time_lines": "number",
+        "late_lines": "number",
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       }
     },
     {
@@ -3583,13 +3583,13 @@
         "rol_target_pct",
         "rol"
       ],
-      "valueFieldTypes": {
-        "rol_target_pct": "number",
-        "rol": "number"
-      },
       "valueFieldLabels": {
         "rol_target_pct": "Atingimento da meta ROL (%)",
         "rol": "ROL realizado"
+      },
+      "valueFieldTypes": {
+        "rol_target_pct": "number",
+        "rol": "number"
       },
       "projectableFields": [
         {
@@ -3739,17 +3739,17 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "score": "number"
-      },
-      "valueFieldLabels": {
-        "score": "Nota IDD"
-      },
       "valueFields": [
         "score"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldLabels": {
+        "score": "Nota IDD"
+      },
+      "valueFieldTypes": {
+        "score": "number"
       },
       "projectableFields": [
         {
@@ -3830,6 +3830,10 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "idd",
+        "score"
+      ],
       "tableFields": "indicators",
       "projectableFields": [
         {
@@ -3846,10 +3850,6 @@
           "projectable": true,
           "origin": "result"
         }
-      ],
-      "valueFields": [
-        "idd",
-        "score"
       ],
       "tvConstraints": {
         "maxRows": 20
@@ -3922,6 +3922,10 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "idd",
+        "score"
+      ],
       "tableFields": "items",
       "projectableFields": [
         {
@@ -3938,10 +3942,6 @@
           "projectable": true,
           "origin": "result"
         }
-      ],
-      "valueFields": [
-        "idd",
-        "score"
       ],
       "tvConstraints": {
         "maxRows": 20
@@ -3998,11 +3998,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -4015,6 +4010,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -4097,9 +4097,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -4110,11 +4110,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4168,11 +4168,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -4185,6 +4180,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -4267,9 +4267,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -4280,11 +4280,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4338,11 +4338,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -4355,6 +4350,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -4437,9 +4437,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -4450,11 +4450,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4508,11 +4508,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -4525,6 +4520,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -4607,9 +4607,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -4620,11 +4620,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4678,11 +4678,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -4695,6 +4690,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -4777,9 +4777,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -4790,11 +4790,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4848,11 +4848,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -4865,6 +4860,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -4947,9 +4947,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -4960,11 +4960,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5018,11 +5018,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -5035,6 +5030,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -5117,9 +5117,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -5130,11 +5130,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5188,11 +5188,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -5205,6 +5200,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -5287,9 +5287,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -5300,11 +5300,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5358,11 +5358,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -5375,6 +5370,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -5457,9 +5457,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -5470,11 +5470,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5528,11 +5528,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -5545,6 +5540,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -5627,9 +5627,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -5640,11 +5640,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5698,11 +5698,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -5715,6 +5710,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -5797,9 +5797,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -5810,11 +5810,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5868,11 +5868,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -5885,6 +5880,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -5967,9 +5967,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -5980,11 +5980,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -6038,11 +6038,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -6055,6 +6050,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -6137,9 +6137,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -6150,11 +6150,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -6208,11 +6208,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -6225,6 +6220,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -6307,9 +6307,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -6320,11 +6320,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -6378,11 +6378,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -6395,6 +6390,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -6477,9 +6477,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -6490,11 +6490,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -6548,11 +6548,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -6565,6 +6560,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -6647,9 +6647,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -6660,11 +6660,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -6718,11 +6718,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -6735,6 +6730,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -6817,9 +6817,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -6830,11 +6830,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -6888,11 +6888,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -6905,6 +6900,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -6987,9 +6987,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -7000,11 +7000,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -7058,11 +7058,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -7075,6 +7070,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -7157,9 +7157,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -7170,11 +7170,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -7228,11 +7228,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -7245,6 +7240,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -7327,9 +7327,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -7340,11 +7340,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -7398,11 +7398,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -7415,6 +7410,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -7497,9 +7497,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -7510,11 +7510,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -7568,11 +7568,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -7585,6 +7580,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -7667,9 +7667,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -7680,11 +7680,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -7738,11 +7738,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -7755,6 +7750,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -7837,9 +7837,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -7850,11 +7850,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -7908,19 +7908,10 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
         "reference_goal"
-      ],
-      "labelAliases": [
-        "PPM Externo Componentes — meta",
-        "PPM chicotes 9026 — meta"
       ],
       "tvConstraints": {
         "maxRows": 1
@@ -7930,6 +7921,15 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
+      "labelAliases": [
+        "PPM Externo Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ],
       "projectableFields": [
         {
           "name": "comparable_goal",
@@ -8011,9 +8011,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -8024,16 +8024,16 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "labelAliases": [
         "PPM Externo Componentes — realizado",
         "PPM chicotes 9026 — realizado"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
@@ -8086,11 +8086,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -8103,6 +8098,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -8185,9 +8185,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -8198,11 +8198,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -8256,11 +8256,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -8273,6 +8268,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -8355,9 +8355,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -8368,11 +8368,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -8426,19 +8426,10 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
         "reference_goal"
-      ],
-      "labelAliases": [
-        "PPM Interno Componentes — meta",
-        "PPM chicotes 9026 — meta"
       ],
       "tvConstraints": {
         "maxRows": 1
@@ -8448,6 +8439,15 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
+      "labelAliases": [
+        "PPM Interno Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ],
       "projectableFields": [
         {
           "name": "comparable_goal",
@@ -8529,9 +8529,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -8542,16 +8542,16 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "labelAliases": [
         "PPM Interno Componentes — realizado",
         "PPM chicotes 9026 — realizado"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
@@ -8604,11 +8604,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -8621,6 +8616,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -8703,9 +8703,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -8716,11 +8716,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -8774,11 +8774,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -8791,6 +8786,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -8873,9 +8873,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -8886,11 +8886,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -8949,11 +8949,6 @@
         "goal_value",
         "reference_goal"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -8961,6 +8956,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -9046,9 +9046,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -9061,6 +9058,9 @@
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -9119,11 +9119,6 @@
         "goal_value",
         "reference_goal"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
       },
@@ -9131,6 +9126,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -9216,9 +9216,6 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -9231,6 +9228,9 @@
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -9284,11 +9284,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -9301,6 +9296,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -9383,9 +9383,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -9396,11 +9396,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -9454,11 +9454,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -9471,6 +9466,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -9553,9 +9553,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -9566,11 +9566,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -9624,11 +9624,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -9641,6 +9636,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -9723,9 +9723,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -9736,11 +9736,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -9794,11 +9794,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -9811,6 +9806,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -9893,9 +9893,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -9906,11 +9906,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -9964,11 +9964,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "comparable_goal": "number",
-        "goal_value": "number",
-        "reference_goal": "number"
-      },
       "valueFields": [
         "comparable_goal",
         "goal_value",
@@ -9981,6 +9976,11 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
       },
       "projectableFields": [
         {
@@ -10063,9 +10063,9 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
+      "valueFields": [
+        "value"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -10076,11 +10076,11 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -10484,6 +10484,13 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items",
+        "comparable_goal"
+      ],
       "projectableFields": [
         {
           "name": "total_lmps",
@@ -10534,14 +10541,7 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      },
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items",
-        "comparable_goal"
-      ]
+      }
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -10662,8 +10662,8 @@
         "start_date",
         "end_date"
       ],
-      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
       "openEndedDateRange": true,
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
         "sale_number": "Número da OV",
@@ -11330,21 +11330,13 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "total_investment_in_period": "number",
-        "total_gross_savings_in_period": "number",
-        "total_hours_saved_until_now": "number",
-        "implemented_solutions_count": "number",
-        "solutions_started_in_period_count": "number",
-        "month": "string",
-        "gross_savings_month": "number",
-        "gross_costs_month": "number",
-        "gross_investment_month": "number",
-        "gross_recurring_investment_month": "number",
-        "shared_resource_cost_month": "number",
-        "investment_total_month": "number",
-        "net_savings_month": "number"
-      },
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count",
+        "solutions_started_in_period_count"
+      ],
       "projectableFields": [
         {
           "name": "total_investment_in_period",
@@ -11413,13 +11405,21 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "valueFields": [
-        "total_investment_in_period",
-        "total_gross_savings_in_period",
-        "total_hours_saved_until_now",
-        "implemented_solutions_count",
-        "solutions_started_in_period_count"
-      ]
+      "valueFieldTypes": {
+        "total_investment_in_period": "number",
+        "total_gross_savings_in_period": "number",
+        "total_hours_saved_until_now": "number",
+        "implemented_solutions_count": "number",
+        "solutions_started_in_period_count": "number",
+        "month": "string",
+        "gross_savings_month": "number",
+        "gross_costs_month": "number",
+        "gross_investment_month": "number",
+        "gross_recurring_investment_month": "number",
+        "shared_resource_cost_month": "number",
+        "investment_total_month": "number",
+        "net_savings_month": "number"
+      }
     },
     {
       "operationId": "get_transformometro_savings_investment_series",
@@ -11495,13 +11495,11 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
-      },
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
+      "openEndedDateRange": true,
       "tableFields": "points",
       "projectableFields": [
         {
@@ -11523,16 +11521,18 @@
           "label": "Investimento"
         }
       ],
-      "openEndedDateRange": true,
       "valueFieldLabels": {
         "periodo": "Período",
         "economia_bruta": "Economia",
         "investimento": "Investimento"
       },
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -12351,11 +12351,11 @@
       "valueFields": [
         "ebitda_over_rol_pct"
       ],
-      "valueFieldTypes": {
-        "ebitda_over_rol_pct": "number"
-      },
       "valueFieldLabels": {
         "ebitda_over_rol_pct": "EBITDA / ROL (%)"
+      },
+      "valueFieldTypes": {
+        "ebitda_over_rol_pct": "number"
       },
       "projectableFields": [
         {
@@ -12416,11 +12416,11 @@
       "valueFields": [
         "fixed_cost_over_rol_pct"
       ],
-      "valueFieldTypes": {
-        "fixed_cost_over_rol_pct": "number"
-      },
       "valueFieldLabels": {
         "fixed_cost_over_rol_pct": "Custos fixos / ROL (%)"
+      },
+      "valueFieldTypes": {
+        "fixed_cost_over_rol_pct": "number"
       },
       "projectableFields": [
         {
@@ -17672,12 +17672,12 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "eficiencia_percentual": "number",
-        "resultado_mod": "number",
-        "tempo_real_horas": "number",
-        "tempo_previsto_horas": "number"
-      },
+      "valueFields": [
+        "eficiencia_percentual",
+        "resultado_mod",
+        "tempo_real_horas",
+        "tempo_previsto_horas"
+      ],
       "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
       "projectableFields": [
         {
@@ -17713,15 +17713,15 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "eficiencia_percentual",
-        "resultado_mod",
-        "tempo_real_horas",
-        "tempo_previsto_horas"
-      ],
       "tvConstraints": {
         "maxRows": 10000,
         "bulkList": true
+      },
+      "valueFieldTypes": {
+        "eficiencia_percentual": "number",
+        "resultado_mod": "number",
+        "tempo_real_horas": "number",
+        "tempo_previsto_horas": "number"
       }
     },
     {
@@ -17881,10 +17881,10 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "efficiency_pct": "number",
-        "appointment_count": "number"
-      },
+      "valueFields": [
+        "efficiency_pct",
+        "appointment_count"
+      ],
       "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
       "projectableFields": [
         {
@@ -17906,17 +17906,17 @@
           "label": "Apontamentos"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
       "valueFieldLabels": {
         "efficiency_pct": "Eficiência %",
         "appointment_count": "Apontamentos",
         "work_center": "Centro de trabalho"
       },
-      "valueFields": [
-        "efficiency_pct",
-        "appointment_count"
-      ],
-      "tvConstraints": {
-        "maxRows": 200
+      "valueFieldTypes": {
+        "efficiency_pct": "number",
+        "appointment_count": "number"
       }
     },
     {
@@ -18632,14 +18632,10 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "projectableFields": [
         {
           "name": "oee_filial_01",
@@ -18658,12 +18654,17 @@
           "semanticType": "number"
         }
       ],
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
       "tvConstraints": {
         "requiresBranchPermission": true
+      },
+      "seriesField": "points",
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
       },
       "suggestedTransformSteps": [
         {
@@ -18679,8 +18680,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "seriesField": "points"
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -18738,11 +18738,6 @@
         "value",
         "otdPct"
       ],
-      "valueFieldTypes": {
-        "on_time_delivery_pct": "number",
-        "value": "number",
-        "otdPct": "number"
-      },
       "projectableFields": [
         {
           "name": "on_time_delivery_pct",
@@ -18772,6 +18767,11 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
+      },
+      "valueFieldTypes": {
+        "on_time_delivery_pct": "number",
+        "value": "number",
+        "otdPct": "number"
       }
     },
     {
@@ -19198,6 +19198,10 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -19205,11 +19209,7 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -19267,11 +19267,6 @@
         "value",
         "oeePct"
       ],
-      "valueFieldTypes": {
-        "overall_equipment_effectiveness_pct": "number",
-        "value": "number",
-        "oeePct": "number"
-      },
       "projectableFields": [
         {
           "name": "overall_equipment_effectiveness_pct",
@@ -19301,6 +19296,11 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
+      },
+      "valueFieldTypes": {
+        "overall_equipment_effectiveness_pct": "number",
+        "value": "number",
+        "oeePct": "number"
       }
     },
     {
@@ -20745,11 +20745,11 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
       },
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
@@ -23966,23 +23966,8 @@
         "start_date",
         "end_date"
       ],
-      "projectableFields": [
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Valor"
-        },
-        {
-          "name": "average_score",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Nota média 5S"
-        }
+      "valueFields": [
+        "average_score"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -23991,12 +23976,18 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "valueFields": [
-        "value",
-        "average_score"
-      ],
       "labelAliases": [
         "Auditoria 5S — resumo"
+      ],
+      "projectableFields": [
+        {
+          "name": "average_score",
+          "type": "string",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "label": "Nota média 5S"
+        }
       ]
     },
     {
@@ -24597,6 +24588,11 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -24632,11 +24628,6 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ],
       "labelAliases": [
         "Kaizens — resumo e listagem (PostgreSQL)",
         "Kaizens — resumo e listagem (Google Sheets)"
@@ -25247,25 +25238,33 @@
         }
       },
       "paramStrategy": "direct",
+      "defaultParams": {
+        "type": "customer"
+      },
+      "valueFields": [
+        "current_days_without_nc"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "value": "Dias sem NC",
+        "current_days_without_nc": "Dias atuais sem NC",
+        "record_days_without_nc": "Recorde de dias sem NC",
+        "last_nc_date": "Data da última NC"
+      },
       "valueFieldTypes": {
         "value": "number",
         "current_days_without_nc": "number",
         "record_days_without_nc": "number",
         "nc_count": "number"
       },
-      "defaultParams": {
-        "type": "customer"
-      },
+      "labelAliases": [
+        "Qualidade — dias sem NC no cliente",
+        "Dias sem defeitos no cliente"
+      ],
       "projectableFields": [
-        {
-          "name": "value",
-          "type": "number",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "semanticType": "number",
-          "label": "Dias sem NC"
-        },
         {
           "name": "current_days_without_nc",
           "type": "number",
@@ -25275,25 +25274,7 @@
           "semanticType": "number",
           "label": "Dias atuais sem NC"
         }
-      ],
-      "valueFieldLabels": {
-        "value": "Dias sem NC",
-        "current_days_without_nc": "Dias atuais sem NC",
-        "record_days_without_nc": "Recorde de dias sem NC",
-        "last_nc_date": "Data da última NC"
-      },
-      "valueFields": [
-        "value",
-        "current_days_without_nc"
-      ],
-      "labelAliases": [
-        "Qualidade — dias sem NC no cliente",
-        "Dias sem defeitos no cliente"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "list_ppm_external",
@@ -25473,16 +25454,11 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number",
-        "ppm": "number",
-        "ppmValue": "number",
-        "total_produzido_un": "number",
-        "total_devolvido_un": "number",
-        "target": "number",
-        "comparable_goal": "number",
-        "goal_value": "number"
-      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -25512,6 +25488,10 @@
           "label": "PPM"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -25524,18 +25504,19 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
+      "valueFieldTypes": {
+        "value": "number",
+        "ppm": "number",
+        "ppmValue": "number",
+        "total_produzido_un": "number",
+        "total_devolvido_un": "number",
+        "target": "number",
+        "comparable_goal": "number",
+        "goal_value": "number"
+      },
       "labelAliases": [
         "Qualidade — PPM externo"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -25715,14 +25696,11 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "value": "number",
-        "ppm": "number",
-        "ppmValue": "number",
-        "target": "number",
-        "comparable_goal": "number",
-        "goal_value": "number"
-      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "projectableFields": [
         {
           "name": "value",
@@ -25752,6 +25730,10 @@
           "label": "PPM"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -25764,19 +25746,18 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
+      "valueFieldTypes": {
+        "value": "number",
+        "ppm": "number",
+        "ppmValue": "number",
+        "target": "number",
+        "comparable_goal": "number",
+        "goal_value": "number"
+      },
       "labelAliases": [
         "Qualidade — PPM interno",
         "PPM Interno — realizado"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -25937,30 +25918,10 @@
         "end_date"
       ],
       "valueFields": [
-        "rework_cost_pct",
-        "value"
-      ],
-      "projectableFields": [
-        {
-          "name": "rework_cost_pct",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Custo de retrabalho / ROL (%)"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Valor"
-        }
+        "rework_cost_pct"
       ],
       "valueFieldLabels": {
         "rework_cost_pct": "Custo de retrabalho / ROL (%)",
-        "value": "Valor",
         "rework_cost": "Custo de retrabalho (R$)",
         "rol": "ROL (R$)",
         "total_hours": "Horas de retrabalho",
@@ -25970,7 +25931,17 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "projectableFields": [
+        {
+          "name": "rework_cost_pct",
+          "type": "string",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "label": "Custo de retrabalho / ROL (%)"
+        }
+      ]
     },
     {
       "operationId": "get_quality_rework_cost_pct_series",
@@ -26033,6 +26004,10 @@
       "valueFields": [
         "metrics.rework_cost_pct"
       ],
+      "seriesField": "points",
+      "valueFieldLabels": {
+        "metrics.rework_cost_pct": "Custo de retrabalho / ROL (%)"
+      },
       "valueFieldTypes": {
         "metrics.rework_cost_pct": "number",
         "periodo": "string",
@@ -26040,10 +26015,6 @@
         "start_date": "date",
         "end_date": "date"
       },
-      "valueFieldLabels": {
-        "metrics.rework_cost_pct": "Custo de retrabalho / ROL (%)"
-      },
-      "seriesField": "points",
       "projectableFields": [
         {
           "name": "metrics.rework_cost_pct",
@@ -26102,30 +26073,10 @@
         "end_date"
       ],
       "valueFields": [
-        "scrap_cost_pct",
-        "value"
-      ],
-      "projectableFields": [
-        {
-          "name": "scrap_cost_pct",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Custo de refugo / ROL (%)"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Valor"
-        }
+        "scrap_cost_pct"
       ],
       "valueFieldLabels": {
         "scrap_cost_pct": "Custo de refugo / ROL (%)",
-        "value": "Valor",
         "scrap_cost": "Custo de refugo (R$)",
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
@@ -26134,7 +26085,17 @@
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
-      }
+      },
+      "projectableFields": [
+        {
+          "name": "scrap_cost_pct",
+          "type": "string",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "label": "Custo de refugo / ROL (%)"
+        }
+      ]
     },
     {
       "operationId": "get_quality_scrap_cost_pct_series",
@@ -26197,6 +26158,10 @@
       "valueFields": [
         "metrics.scrap_cost_pct"
       ],
+      "seriesField": "points",
+      "valueFieldLabels": {
+        "metrics.scrap_cost_pct": "Custo de refugo / ROL (%)"
+      },
       "valueFieldTypes": {
         "metrics.scrap_cost_pct": "number",
         "periodo": "string",
@@ -26204,10 +26169,6 @@
         "start_date": "date",
         "end_date": "date"
       },
-      "valueFieldLabels": {
-        "metrics.scrap_cost_pct": "Custo de refugo / ROL (%)"
-      },
-      "seriesField": "points",
       "projectableFields": [
         {
           "name": "metrics.scrap_cost_pct",
@@ -26425,6 +26386,13 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "value",
+        "sharePct",
+        "percentual",
+        "quantity",
+        "occurrenceCount"
+      ],
       "tableFields": "items",
       "projectableFields": [
         {
@@ -26476,14 +26444,7 @@
         "occurrenceCount": "Ocorrências",
         "code": "Código",
         "label": "Descrição"
-      },
-      "valueFields": [
-        "value",
-        "sharePct",
-        "percentual",
-        "quantity",
-        "occurrenceCount"
-      ]
+      }
     },
     {
       "operationId": "get_refugos_registros",
@@ -28419,15 +28380,12 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "purchase_order_otd_pct": "number",
-        "late_lines": "number",
-        "total_lines": "number",
-        "expected_delivery_date": "date",
-        "receipt_entry_date": "date",
-        "invoice_issue_date": "date",
-        "purchase_order_issue_date": "date"
-      },
+      "valueFields": [
+        "purchase_order_otd_pct",
+        "late_lines",
+        "total_lines"
+      ],
+      "openEndedDateRange": true,
       "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
       "tableFields": "lines",
       "projectableFields": [
@@ -28456,14 +28414,17 @@
           "semanticType": "number"
         }
       ],
-      "openEndedDateRange": true,
-      "valueFields": [
-        "purchase_order_otd_pct",
-        "late_lines",
-        "total_lines"
-      ],
       "tvConstraints": {
         "maxRows": 200
+      },
+      "valueFieldTypes": {
+        "purchase_order_otd_pct": "number",
+        "late_lines": "number",
+        "total_lines": "number",
+        "expected_delivery_date": "date",
+        "receipt_entry_date": "date",
+        "invoice_issue_date": "date",
+        "purchase_order_issue_date": "date"
       }
     },
     {
@@ -29755,13 +29716,17 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 50,
         "only_positive": true,
         "sort": "stock_value_desc"
       },
+      "valueFields": [
+        "stock_value",
+        "quantity"
+      ],
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "stock_value",
@@ -29780,17 +29745,13 @@
           "label": "Quantidade"
         }
       ],
-      "valueFieldLabels": {
-        "stock_value": "Valor (R$)",
-        "quantity": "Quantidade"
-      },
-      "valueFields": [
-        "stock_value",
-        "quantity"
-      ],
       "tvConstraints": {
         "maxRows": 50,
         "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "stock_value": "Valor (R$)",
+        "quantity": "Quantidade"
       }
     },
     {
@@ -29834,6 +29795,11 @@
         }
       },
       "paramStrategy": "direct",
+      "valueFields": [
+        "product_count",
+        "total_stock_value",
+        "total_quantity"
+      ],
       "tableFields": "by_warehouse",
       "projectableFields": [
         {
@@ -29861,19 +29827,14 @@
           "label": "Quantidade total"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 12,
+        "requiresBranchPermission": true
+      },
       "valueFieldLabels": {
         "product_count": "Qtd. de produtos",
         "total_stock_value": "Valor do estoque (R$)",
         "total_quantity": "Quantidade total"
-      },
-      "valueFields": [
-        "product_count",
-        "total_stock_value",
-        "total_quantity"
-      ],
-      "tvConstraints": {
-        "maxRows": 12,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -29955,25 +29916,25 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "total_stock_value": "number",
-        "total_stock_quantity": "number",
-        "total_locations": "number"
-      },
-      "tableFields": "top_products",
-      "valueFieldLabels": {
-        "total_stock_value": "Valor total de estoque",
-        "total_stock_quantity": "Quantidade em estoque",
-        "total_locations": "Localizações"
-      },
       "valueFields": [
         "total_stock_value",
         "total_stock_quantity",
         "total_locations"
       ],
+      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "total_stock_value": "Valor total de estoque",
+        "total_stock_quantity": "Quantidade em estoque",
+        "total_locations": "Localizações"
+      },
+      "valueFieldTypes": {
+        "total_stock_value": "number",
+        "total_stock_quantity": "number",
+        "total_locations": "number"
       },
       "projectableFields": [
         {

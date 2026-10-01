@@ -2227,7 +2227,7 @@ TOOL_EXECUTION = NONE | PREPARE = NONE | ACT = NONE
 AUTOMATION_HUB_EXECUTION = NONE | OT_ACTUATION = NONE
 REAL_MULTIMODAL_QUALITY_EVIDENCE = NONE / TEST_NOT_RUN
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_COORDINATION_INTERACTIVE_VERTICAL_SLICE
+NEXT = C3-INTERACTION-RUNTIME-01 (coordination authorized)
 ```
 
 Deterministic cases (C3-MEDIA-FOUNDATION-01) — implemented, `ACCEPT_WITH_RESIDUAL`:
@@ -2247,3 +2247,58 @@ Deterministic cases (C3-MEDIA-FOUNDATION-01) — implemented, `ACCEPT_WITH_RESID
   authorization;
 - media observation grants no quality decision authority;
 - no biometric/person-identity semantics; no provider or runtime fields.
+
+
+## C3-INTERACTION-RUNTIME-01 — Interactive Conversation Vertical Slice (candidate)
+
+```text
+TASK = C3-INTERACTION-RUNTIME-01 — INTERACTIVE_CONVERSATION_VERTICAL_SLICE
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW (AUTHORIZED=YES; EXECUTED=NO)
+IMPLEMENTATION_HEAD = 9f470b8c0a553b0b2acf7430d2ba64608679c5a8
+SCOPE = POST /interaction/turns -> Core-authorized bounded interaction
+        -> InvokeModel/ModelInvocationPort -> validated DELIA_RESULT ->
+        DÉLIA MFE render; TEXT_ONLY; READ/GENERATE only
+AUTHN/AUTHZ = 401 no/invalid bearer; 503 Core authority unavailable;
+        403 without delia.access; superadmin allowed; frontend
+        permissions[] never authoritative
+REQUEST_VALIDATION = only body key 'input' accepted; blank/oversized/
+        non-JSON rejected; authority/provider/model/system_prompt/
+        tools/act/prepare fields rejected 400
+OUTPUT_GUARDS = tool_call/function_call/secret/CoT output rejected;
+        provider-claimed FACT never promoted; DELIA_RESULT non-FACT
+        classes only
+SESSION_SEMANTICS = REQUEST_SCOPED; SESSION_PERSISTENCE = NONE
+REAL_PROVIDER_GATE = BLOCKED / TO_INVENTORY (DeterministicTestAdapter
+        only; adapter_kind TEST_ONLY enforced by InvokeModel)
+REAL_MODEL_INTERACTION = NOT_PROVEN | REAL_MODEL_EVAL = BLOCKED/TEST_NOT_RUN
+EVIDENCE = ledger §6.87
+TARGETED_C3_INTERACTION_RUNTIME = PASS 63/63 at IMPLEMENTATION_HEAD
+FULL_DELIA_API = PASS 351/351 at IMPLEMENTATION_HEAD
+MFE_TESTS = PASS 29/29 | MFE_TYPECHECK = PASS | MFE_BUILD = PASS
+TEST_SHA_BINDING = VALID | CURRENT_TASK_RUNTIME_TEST = PASS (executed)
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01
+```
+
+Deterministic cases (C3-INTERACTION-RUNTIME-01) — implemented, candidate:
+
+- missing/invalid bearer -> 401; Core unavailable -> 503; no
+  `delia.access` -> 403; `delia.access`/superadmin -> allowed;
+- request body restricted to `{"input": "..."}`; authority/provider/
+  model/system-prompt/tool fields rejected;
+- request-scoped `InteractionSession`; canonical `USER_INPUT` turn
+  (epistemic `None`) recorded before invocation; `DELIA_RESULT` turn
+  validated and recorded after bounded model output;
+- `ModelInvocationPort` reused via `InvokeModel` — no parallel port;
+- tool-call/secret/CoT structured output rejected fail-closed;
+  provider-claimed `FACT` downgraded (never `FACT`); `HYPOTHESIS` default;
+- bounded response exposes IDs/content/epistemic_class/limitations/
+  generated_at/model_invocation_id only — no provider payload, prompt,
+  credentials, or authority snapshot;
+- timeout/unavailable/invalid-output mapped to bounded semantic codes;
+- MFE: bearer from `getAccessToken()` only; submit disabled while in
+  flight; bounded error rendering; no pickers/tools; transient React
+  state only (no storage);
+- no business reads, RAG, Knowledge, tool execution, PREPARE/ACT,
+  Automation Hub, Personal Memory, Model Router, agent selection, Chat
+  reuse, media input, persistence, or migration.

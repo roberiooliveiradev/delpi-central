@@ -300,3 +300,58 @@ Escopo: catalogo SI `*_meta` + 7 bindings persistidos em producao.
 
 Nota residual: 10 refs `value` nao resolvidas via dataSourceId no slide
 870c19ed (fontes `rx_*` — dataModels); fora do escopo (nao sao `*_meta`).
+
+## Wave 3 — Migracao de parity aliases non-SI (executada 2026-10-01)
+
+Escopo: 9 bindings persistidos `DEPRECATE_PARITY_ALIAS` + catalogo das
+4 operacoes alvo. Motor extraido para
+`tv_app/application/services/data/value_field_binding_migration.py`
+(spec operacao -> campo canonico); `si_meta_value_field_migration.py`
+virou shim de compatibilidade sobre o mesmo engine.
+
+### Catalogo
+
+- `get_nonconformity_streak`: `valueFields` -> `["current_days_without_nc"]`;
+- `get_audit_5s_summary`: -> `["average_score"]`;
+- `get_quality_scrap_cost_pct`: -> `["scrap_cost_pct"]` (+ label stale removido);
+- `get_quality_rework_cost_pct`: -> `["rework_cost_pct"]` (+ idem).
+- `projectableFields: null` em todas para purgar `value` inferido via
+  `meta.fields` do producer.
+- `value` continua emitido onde o producer o produz (nonconformity, 5s)
+  como DEPRECATED COMPATIBILITY ALIAS; scrap/rework nunca emitiram `value`
+  (alias era catalog-only + fallback runtime).
+- `get_refugos_scrap_cost_pct` (irmao, sem bindings persistidos) permanece
+  declarando `value` — residual catalog-only para wave futura.
+- Gerador: CHECK=0 (525 rotas); diff semantico = exatamente 4 ops.
+
+### Migracao persistida (producao srv-api)
+
+- Pre-scan live: exatamente 9 refs `field:"value"` nos 4 ops alvo,
+  6 slides / 4 playlists (streak x4, 5s x1, scrap x2, rework x2).
+- Backup: 6 slides -> `/home/operador/wave3_parity_alias_backup_20261001.json`
+  (srv-api) + copia local + snapshot in-container.
+- Escrita via `PlaylistRepository.update_slide` (transacao + snapshot em
+  `playlist_history`); actor `wave3-parity-alias-field-migration`,
+  reason `parity_alias_value_field_migration`.
+- Pos-condicao (read-back in-container): parity_alias value=0,
+  si_meta=0 (comparable_goal=7 preservado), si_realized=15,
+  other=55, unresolved=10 — nada fora do escopo alterado.
+
+### Preview runtime (prod, in-container)
+
+- 9/9 blocos resolvem pelo `SlideDataResolutionService` com
+  `serverTextProjectionApplied` e `error: null`; `content` renderiza o
+  valor semantico (ex.: `Realizado 0,74` via `scrap_cost_pct` formato
+  percent). streak: `current_days_without_nc` == alias `value` (14/34/26/14);
+  5s: `average_score` == `value` (0.0); scrap/rework: campo presente,
+  alias `value` ausente no payload — binding agora deterministico.
+- Irmao `get_refugos_scrap_cost_pct` (sem binding persistido) resolve
+  `scrap_cost_pct=0.188` normalmente.
+
+### Testes
+
+- test_parity_alias_value_field_migration.py: 11 casos (positive por
+  familia, siblings non-target, same-op non-value, meta/realized
+  intocados, presentation/domain intocados, exact-match, idempotente).
+- Suite completa tv-dashboard-api: 1428 pass, 2 falhas pre-existentes
+  (date-boundary — identicas no baseline).
