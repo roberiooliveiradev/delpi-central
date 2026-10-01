@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowLeft, ClipboardCheck, ClipboardList, Package } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, ClipboardList, Maximize2, Package } from "lucide-react";
 import type { MachineLoadOperation } from "./api.ts";
 import { buildPublicProductModelGlbUrl } from "./api.ts";
 import {
@@ -11,7 +11,6 @@ import {
   formatDateTime,
   formatQty,
   formatUnit,
-  resolveStatus,
   useDrawingObjectUrl,
   VisualModeTabs,
   WorkCenterShiftMetrics,
@@ -116,7 +115,6 @@ export function OperationDetailPage({
       : inspectionCount > 0
         ? "ok"
         : "empty";
-  const status = resolveStatus(operation);
   const paCode = operation.pa_product_code?.trim() || "";
   const productCode = operation.product_code?.trim() || "";
   const has3dModel = Boolean(operation.has_3d_model && productCode);
@@ -148,14 +146,6 @@ export function OperationDetailPage({
         code={workCenter}
         titleExtra={
           <CopyValueButton value={operation.production_order} label="Copiar OP" />
-        }
-        stats={
-          <span className={`pcp-pub__badge pcp-pub__badge--${status.tone}`}>
-            {status.tone === "running" ? (
-              <span className="pcp-pub__badge-dot" aria-hidden="true" />
-            ) : null}
-            {status.label}
-          </span>
         }
         metrics={
           <WorkCenterShiftMetrics
@@ -367,10 +357,12 @@ export function OperationDetailPage({
               {canFullscreen ? (
                 <button
                   type="button"
-                  className="pcp-pub__ghost pcp-pub__ghost--plain"
+                  className="pcp-pub__icon-btn"
                   onClick={() => setFullscreen(true)}
+                  aria-label="Abrir desenho em tela cheia"
+                  title="Tela cheia"
                 >
-                  Tela cheia
+                  <Maximize2 size={18} strokeWidth={2.2} aria-hidden="true" />
                 </button>
               ) : null}
             </div>
@@ -413,16 +405,6 @@ export function OperationDetailPage({
         </div>
       </div>
 
-      {fullscreen && (canDraw || has3dModel) ? (
-        <DrawingViewer
-          token={token}
-          branch={branch}
-          paCode={paCode || null}
-          productCode={productCode || null}
-          has3dModel={has3dModel}
-          onClose={() => setFullscreen(false)}
-        />
-      ) : null}
 
       {appointmentsOpen ? (
         <AppointmentsModal
@@ -443,6 +425,17 @@ export function OperationDetailPage({
         <ProcessInspectionsModal
           inspections={inspections}
           onClose={() => setInspectionsOpen(false)}
+        />
+      ) : null}
+
+      {fullscreen && (canDraw || has3dModel) ? (
+        <DrawingViewer
+          token={token}
+          branch={branch}
+          paCode={paCode || null}
+          productCode={productCode || null}
+          has3dModel={has3dModel}
+          onClose={() => setFullscreen(false)}
         />
       ) : null}
     </section>
