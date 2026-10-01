@@ -23,8 +23,9 @@
   --delpi-ui-warning: var(--warning, #f59e0b);
   --delpi-ui-info: var(--primary, #089bdb);
   --delpi-ui-focus-ring: var(--primary, #089bdb);
-  --delpi-ui-radius: 8px;
-  --delpi-ui-radius-sm: 6px;
+  /* radius igual ao design system/TV Dashboard (kit default 18px/8px) */
+  --delpi-ui-radius: 18px;
+  --delpi-ui-radius-sm: 8px;
 
   --delpi-ui-control-bg: var(--control-bg, var(--surface, #ffffff));
   --delpi-ui-control-border: var(--control-border, var(--border-2, #d9d9d9));
@@ -493,18 +494,12 @@
   gap: 14px;
 }
 
-/* ações primárias em cards horizontais, largura contida e altura baixa */
+/* ações primárias — NavigationCard vertical do kit (mesmo padrão do
+   td-action-grid do TV Dashboard), largura confortável sem esticar */
 .dashboard-bpmn-modeler .bpmnm-action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 300px));
-  gap: 12px;
-}
-
-.dashboard-bpmn-modeler .bpmnm-action-grid .bpmnm-nav-card--horizontal,
-.dashboard-bpmn-modeler .bpmnm-action-grid .delpi-ui-nav-card--horizontal {
-  min-height: 0;
-  padding: 12px 14px;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 420px));
+  gap: 14px;
 }
 
 /* toolbar compacta em uma linha — pills à esquerda, busca/ordenação seguem */
@@ -514,7 +509,7 @@
   align-items: flex-end;
   gap: 8px 12px;
   margin-bottom: 0;
-  padding: 8px 12px;
+  padding: 10px 12px;
 }
 
 /* rail de status ocupa a região flexível (padrão TV Dashboard) */
@@ -535,13 +530,13 @@
   margin-inline-start: 0;
 }
 
-/* grid de modelos: ~4 colunas em desktop largo, 3 em normal, 2 em menor */
+/* grid de modelos: mesma densidade do td-library-grid (minmax 260px) */
 .dashboard-bpmn-modeler .bpmnm-library-grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 14px;
   align-items: stretch;
 }

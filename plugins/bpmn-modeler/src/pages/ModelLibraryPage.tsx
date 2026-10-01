@@ -277,7 +277,6 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
       {capabilities.edit ? (
         <div className="bpmnm-action-grid">
           <BpmnmNavigationCard
-            orientation="horizontal"
             icon={<FilePlus2 size={22} strokeWidth={2} aria-hidden="true" />}
             title="Novo modelo"
             description="Crie um processo BPMN do zero."
@@ -285,7 +284,6 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
             aria-label={HELP_TOOLTIPS.library.create}
           />
           <BpmnmNavigationCard
-            orientation="horizontal"
             icon={<Upload size={22} strokeWidth={2} aria-hidden="true" />}
             title="Importar BPMN"
             description="Abra um arquivo .bpmn existente."
