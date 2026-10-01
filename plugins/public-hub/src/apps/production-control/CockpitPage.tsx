@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
-import { BarChart3, Eye, ListFilter, MoreVertical, RefreshCw, Search, User } from "lucide-react";
+import { BarChart3, Eye, MoreVertical, RefreshCw, Search, User } from "lucide-react";
 import {
   fetchActiveProductionRun,
   fetchPublicMachineLoad,
@@ -19,8 +19,6 @@ import {
   formatHours,
   formatQty,
   formatUnit,
-  findAdjacentOpenOperation,
-  isFinishedOperation,
   operationKey,
   operationPendingQty,
   resolveStatus,
@@ -78,10 +76,6 @@ function storageKey(branch: string): string {
   return `${STORAGE_PREFIX}.${branch}`;
 }
 
-function hideFinishedStorageKey(branch: string, workCenter: string): string {
-  return `${HIDE_FINISHED_PREFIX}.${branch}.${workCenter}`;
-}
-
 function readStoredWorkCenter(branch: string): string | null {
   try {
     return window.localStorage.getItem(storageKey(branch));
@@ -96,24 +90,6 @@ function storeWorkCenter(branch: string, workCenter: string | null): void {
     else window.localStorage.removeItem(storageKey(branch));
   } catch {
     /* modo privado sem storage: a escolha vale só para esta sessão */
-  }
-}
-
-function readHideFinished(branch: string, workCenter: string): boolean {
-  try {
-    return window.localStorage.getItem(hideFinishedStorageKey(branch, workCenter)) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function storeHideFinished(branch: string, workCenter: string, hide: boolean): void {
-  try {
-    const key = hideFinishedStorageKey(branch, workCenter);
-    if (hide) window.localStorage.setItem(key, "1");
-    else window.localStorage.removeItem(key);
-  } catch {
-    /* modo privado: só vale na sessão */
   }
 }
 
@@ -141,7 +117,6 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [visualTarget, setVisualTarget] = useState<VisualTarget | null>(null);
   const [downtimeOpen, setDowntimeOpen] = useState(false);
   const [queueQuery, setQueueQuery] = useState("");
-  const [hideFinished, setHideFinished] = useState(false);
   const [runUpdatedSignal, setRunUpdatedSignal] = useState(0);
   // Run ativo no contador Pulse deste posto — decide o card "Agora nesta bancada".
   const [counterRun, setCounterRun] = useState<ProductionRunSnapshot | null>(null);
@@ -155,13 +130,16 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     setDowntimeOpen(false);
   }, [workCenter]);
 
+  // Apaga preferência legada dos aparelhos: a fila já chega pronta do backend.
   useEffect(() => {
-    if (!workCenter) {
-      setHideFinished(false);
-      return;
+    try {
+      for (const key of Object.keys(window.localStorage)) {
+        if (key.startsWith(HIDE_FINISHED_PREFIX)) window.localStorage.removeItem(key);
+      }
+    } catch {
+      /* storage indisponível: nada a limpar */
     }
-    setHideFinished(readHideFinished(branch, workCenter));
-  }, [branch, workCenter]);
+  }, []);
 
   const reload = useCallback(
     async (center: string | null, options?: { quiet?: boolean }) => {
@@ -263,15 +241,6 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     openQueue();
   };
 
-  const toggleHideFinished = () => {
-    if (!workCenter) return;
-    setHideFinished((current) => {
-      const next = !current;
-      storeHideFinished(branch, workCenter, next);
-      return next;
-    });
-  };
-
   const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
   const items = useMemo(
     () =>
@@ -281,23 +250,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     [workCenter, payload.selected.work_center, payload.selected.items],
   );
 
-  const finishedCount = useMemo(
-    () => items.filter(isFinishedOperation).length,
-    [items],
-  );
-
-  const openItems = useMemo(
-    () => items.filter((operation) => !isFinishedOperation(operation)),
-    [items],
-  );
-
-  const visibleItems = useMemo(
-    () => (hideFinished ? openItems : items),
-    [items, openItems, hideFinished],
-  );
-
   const activeEntry = useMemo<QueueEntry | null>(() => {
-    if (visibleItems.length === 0) return null;
+    if (items.length === 0) return null;
     // Regra: "Agora nesta bancada" é sempre a operação do run ativo no
     // contador (Pulse/MES). Sem run ativo na fila, cai no topo da fila —
     // cronômetro aberto no TOTVS não disputa o destaque do cockpit.
@@ -308,10 +262,10 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             item.operation_code === counterRun.operationCode,
         )
       : null;
-    const operation = counterOperation ?? visibleItems[0]!;
+    const operation = counterOperation ?? items[0]!;
     const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
     return { operation, position: Math.max(1, position) };
-  }, [visibleItems, items, counterRun]);
+  }, [items, counterRun]);
 
   const orphanRun = useMemo(() => {
     if (!counterRun) return null;
@@ -326,14 +280,14 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const upcomingEntries = useMemo(() => {
     const term = queueQuery.trim().toLowerCase();
     const activeKey = activeEntry ? operationKey(activeEntry.operation) : null;
-    return visibleItems
+    return items
       .map((operation) => {
         const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
         return { operation, position: Math.max(1, position) };
       })
       .filter(({ operation }) => operationKey(operation) !== activeKey)
       .filter(({ operation }) => matchesQueueSearch(operation, term));
-  }, [visibleItems, items, queueQuery, activeEntry]);
+  }, [items, queueQuery, activeEntry]);
 
   const selectedOperation = useMemo(() => {
     if (view.kind !== "operation") return null;
@@ -406,14 +360,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     );
   } else if (view.kind === "operation" && selectedOperation) {
     const index = selectedOperation.position - 1;
-    const previous = findAdjacentOpenOperation(items, index, -1);
-    const next = findAdjacentOpenOperation(items, index, 1);
-    const openIndex = openItems.findIndex(
-      (item) => operationKey(item) === operationKey(selectedOperation.operation),
-    );
-    // Contador do detalhe: só operações com saldo (o caminho do operador).
-    const navPosition = openIndex >= 0 ? openIndex + 1 : selectedOperation.position;
-    const navQueueSize = openItems.length > 0 ? openItems.length : items.length;
+    // selected.items é open-only: o vizinho é simplesmente o adjacente.
+    const previous = items[index - 1];
+    const next = items[index + 1];
 
     content = (
       <>
@@ -422,8 +371,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           token={token}
           branch={branch}
           operation={selectedOperation.operation}
-          position={navPosition}
-          queueSize={navQueueSize}
+          position={selectedOperation.position}
+          queueSize={items.length}
           workCenter={workCenter}
           workCenterName={centerName}
           shiftLabel={shiftLabel}
@@ -466,17 +415,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
               </div>
             </div>
             <div className="pcp-pub__topbar-actions">
-              {hideFinished ? (
-                <span className="pcp-pub__topbar-chip" title="Ordens já apontadas ocultas neste posto">
-                  Fila limpa
-                </span>
-              ) : null}
               <CockpitActionsMenu
-                hideFinished={hideFinished}
-                finishedCount={finishedCount}
                 onOpenPerformance={openPerformance}
                 onClearWorkCenter={clearWorkCenter}
-                onToggleHideFinished={toggleHideFinished}
               />
             </div>
           </div>
@@ -524,12 +465,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
         {items.length === 0 ? (
           <p className="pcp-pub__empty">
-            {loading ? "Carregando fila…" : "Nenhuma operação programada para este posto."}
-          </p>
-        ) : visibleItems.length === 0 ? (
-          <p className="pcp-pub__empty">
-            Todas as operações deste posto já foram apontadas. Use Ações → Mostrar apontadas para
-            vê-las de novo.
+            {loading
+              ? "Carregando fila…"
+              : "Nenhuma ordem pendente para este posto."}
           </p>
         ) : (
           <>
@@ -663,17 +601,11 @@ type PickerProps = {
 };
 
 function CockpitActionsMenu({
-  hideFinished,
-  finishedCount,
   onOpenPerformance,
   onClearWorkCenter,
-  onToggleHideFinished,
 }: {
-  hideFinished: boolean;
-  finishedCount: number;
   onOpenPerformance: () => void;
   onClearWorkCenter: () => void;
-  onToggleHideFinished: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -731,26 +663,6 @@ function CockpitActionsMenu({
           >
             <RefreshCw size={18} strokeWidth={2} aria-hidden="true" />
             Trocar posto
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className={`pcp-pub__actions-item ${hideFinished ? "is-active" : ""}`}
-            onClick={() => run(onToggleHideFinished)}
-            title={
-              hideFinished
-                ? "Volta a exibir as operações já apontadas nesta fila."
-                : "Esconde as operações já apontadas. A preferência fica salva neste aparelho."
-            }
-          >
-            <ListFilter size={18} strokeWidth={2} aria-hidden="true" />
-            {hideFinished
-              ? finishedCount > 0
-                ? `Mostrar apontadas (${finishedCount})`
-                : "Mostrar apontadas"
-              : finishedCount > 0
-                ? `Limpar fila (${finishedCount})`
-                : "Limpar fila"}
           </button>
         </div>
       ) : null}
@@ -995,7 +907,6 @@ function UpcomingRow({
   onOpenDetail: () => void;
 }) {
   const { operation } = entry;
-  const status = resolveStatus(operation);
   const pendingQty = operationPendingQty(operation);
   const { paCode, displayProductCode } = resolveVisualMeta(operation);
 
@@ -1004,7 +915,6 @@ function UpcomingRow({
       className={[
         "pcp-pub__queue-row",
         isNext ? "pcp-pub__queue-row--next" : "",
-        status.tone === "done" ? "pcp-pub__queue-row--done" : "",
       ]
         .filter(Boolean)
         .join(" ")}

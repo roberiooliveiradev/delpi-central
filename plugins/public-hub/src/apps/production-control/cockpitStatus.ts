@@ -1,19 +1,15 @@
 import type { MachineLoadOperation } from "./api";
 
 export type StatusView = {
-  tone: "running" | "done" | "queued";
+  tone: "running" | "queued";
   label: string;
   operatorNote: string | null;
 };
 
 export function resolveStatus(operation: MachineLoadOperation): StatusView {
   const operator = operation.active_operator_name?.trim() || null;
-  const balanceExhausted = hasExhaustedOperationBalance(operation);
-  // Saldo zerado manda sobre cronômetro aberto no coletor (mesmo espírito do BFF/api-delpi).
-  if (
-    !balanceExhausted &&
-    (operation.is_in_production || operation.production_status === "in_progress")
-  ) {
+  // A fila é open-only (backend): aqui só restam «em produção» (run MES) ou «na fila».
+  if (operation.is_in_production || operation.production_status === "in_progress") {
     return {
       tone: "running",
       label: "Em produção",
@@ -22,15 +18,6 @@ export function resolveStatus(operation: MachineLoadOperation): StatusView {
             operation.production_started_time ? ` · desde ${operation.production_started_time}` : ""
           }`
         : null,
-    };
-  }
-  // «Já apontada» / risco = só saldo da operação esgotado.
-  // production_status "started" só diz que houve apontamento (pode ser parcial).
-  if (balanceExhausted) {
-    return {
-      tone: "done",
-      label: "Já apontada",
-      operatorNote: operator ? `Último apontamento: ${operator}` : null,
     };
   }
   return {
@@ -51,36 +38,6 @@ export function operationPendingQty(operation: MachineLoadOperation): number {
   const own = operation.operation_pending_qty;
   if (typeof own === "number" && Number.isFinite(own)) return own;
   return operation.pending_qty;
-}
-
-/** Saldo da operação esgotado — candidato a «Já apontada» / Limpar fila. */
-export function hasExhaustedOperationBalance(operation: MachineLoadOperation): boolean {
-  const pending = operationPendingQty(operation);
-  return Number.isFinite(pending) && pending <= 1e-9;
-}
-
-/** Já apontada / sem saldo — candidata a sumir no «Limpar fila» do cockpit. */
-export function isFinishedOperation(operation: MachineLoadOperation): boolean {
-  return hasExhaustedOperationBalance(operation);
-}
-
-/**
- * Vizinha na fila com saldo ainda a produzir.
- * Usada no avançar/voltar do detalhe — operações sem saldo não entram no caminho do operador.
- */
-export function findAdjacentOpenOperation(
-  items: readonly MachineLoadOperation[],
-  fromIndex: number,
-  direction: -1 | 1,
-): MachineLoadOperation | null {
-  if (fromIndex < 0 || fromIndex >= items.length) return null;
-  let i = fromIndex + direction;
-  while (i >= 0 && i < items.length) {
-    const candidate = items[i]!;
-    if (!isFinishedOperation(candidate)) return candidate;
-    i += direction;
-  }
-  return null;
 }
 
 /** Chave estável de uma operação na fila — usada como id de navegação e como key do React. */

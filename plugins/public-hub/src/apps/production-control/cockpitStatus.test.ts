@@ -1,13 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { MachineLoadOperation } from "./api.ts";
-import {
-  findAdjacentOpenOperation,
-  hasExhaustedOperationBalance,
-  isFinishedOperation,
-  operationPendingQty,
-  resolveStatus,
-} from "./cockpitStatus.ts";
+import { operationPendingQty, resolveStatus } from "./cockpitStatus.ts";
 
 function operation(overrides: Partial<MachineLoadOperation> = {}): MachineLoadOperation {
   return {
@@ -44,58 +38,35 @@ function operation(overrides: Partial<MachineLoadOperation> = {}): MachineLoadOp
   };
 }
 
-describe("cockpit operation balance", () => {
-  it("P0: apontamento parcial (0,980 de 1,100) permanece Na fila, sem risco", () => {
+describe("cockpit operation status (fila open-only)", () => {
+  it("P0: operação sem run MES permanece Na fila", () => {
     const row = operation({
-      planned_qty: 1.1,
-      operation_produced_qty: 0.98,
-      operation_pending_qty: 0.12,
-      pending_qty: 0.12,
       is_in_production: false,
       production_status: "started",
       appointment_count: 1,
       active_operator_name: "JOAO",
     });
-    assert.equal(hasExhaustedOperationBalance(row), false);
-    assert.equal(isFinishedOperation(row), false);
     assert.equal(resolveStatus(row).tone, "queued");
     assert.equal(resolveStatus(row).label, "Na fila");
     assert.match(resolveStatus(row).operatorNote ?? "", /JOAO/);
   });
 
-  it("irmão: operação apontada por inteiro vira Já apontada mesmo com saldo no cabeçalho", () => {
-    const row = operation({
-      operation_produced_qty: 7.8,
-      operation_pending_qty: 0,
-      pending_qty: 6.3,
-      is_in_production: false,
-      production_status: "started",
-    });
-    assert.equal(operationPendingQty(row), 0);
-    assert.equal(hasExhaustedOperationBalance(row), true);
-    assert.equal(isFinishedOperation(row), true);
-    assert.equal(resolveStatus(row).label, "Já apontada");
-    assert.equal(resolveStatus(row).tone, "done");
-  });
-
-  it("irmão: operação sem apontamento usa o saldo da bancada, não o do cabeçalho", () => {
+  it("irmão: operação sem apontamento exibe Na fila", () => {
     const row = operation({
       operation_code: "03",
-      operation_produced_qty: 0,
-      operation_pending_qty: 7.8,
       is_in_production: false,
       production_status: "not_started",
       active_operator_name: null,
     });
-    assert.equal(operationPendingQty(row), 7.8);
-    assert.equal(hasExhaustedOperationBalance(row), false);
     assert.equal(resolveStatus(row).label, "Na fila");
+    assert.equal(resolveStatus(row).tone, "queued");
   });
 
-  it("parcial em coletor aberto e saldo > 0 permanece Em produção", () => {
+  it("parcial em coletor aberto permanece Em produção", () => {
     const row = operation({ operation_produced_qty: 3, operation_pending_qty: 4.8 });
     assert.equal(operationPendingQty(row), 4.8);
     assert.equal(resolveStatus(row).label, "Em produção");
+    assert.equal(resolveStatus(row).tone, "running");
   });
 
   it("snapshot antigo sem campo da operação cai no saldo do cabeçalho", () => {
@@ -103,92 +74,5 @@ describe("cockpit operation balance", () => {
     assert.equal(row.operation_pending_qty, undefined);
     assert.equal(operationPendingQty(row), 6.3);
     assert.equal(resolveStatus(row).label, "Em produção");
-  });
-
-  it("negativo: operação sem apontamento e OP aberta não vira Já apontada", () => {
-    const row = operation({
-      is_in_production: false,
-      production_status: "not_started",
-      operation_produced_qty: 0,
-      operation_pending_qty: 7.8,
-      active_operator_name: null,
-    });
-    assert.equal(resolveStatus(row).label, "Na fila");
-    assert.equal(isFinishedOperation(row), false);
-  });
-});
-
-describe("findAdjacentOpenOperation", () => {
-  it("P0: avançar pula operação sem saldo e cai na próxima com pendência", () => {
-    const queue = [
-      operation({
-        production_order: "A",
-        operation_code: "01",
-        operation_pending_qty: 0.06,
-      }),
-      operation({
-        production_order: "B",
-        operation_code: "01",
-        operation_pending_qty: 0,
-        pending_qty: 0,
-        is_in_production: false,
-        production_status: "started",
-      }),
-      operation({
-        production_order: "C",
-        operation_code: "01",
-        operation_pending_qty: 1.2,
-        is_in_production: false,
-        production_status: "not_started",
-      }),
-    ];
-    const next = findAdjacentOpenOperation(queue, 0, 1);
-    assert.equal(next?.production_order, "C");
-  });
-
-  it("irmão: voltar também pula operações já apontadas", () => {
-    const queue = [
-      operation({
-        production_order: "A",
-        operation_code: "01",
-        operation_pending_qty: 2,
-        is_in_production: false,
-        production_status: "not_started",
-      }),
-      operation({
-        production_order: "B",
-        operation_code: "01",
-        operation_pending_qty: 0,
-        pending_qty: 0,
-        is_in_production: false,
-        production_status: "started",
-      }),
-      operation({
-        production_order: "C",
-        operation_code: "01",
-        operation_pending_qty: 0.5,
-      }),
-    ];
-    const previous = findAdjacentOpenOperation(queue, 2, -1);
-    assert.equal(previous?.production_order, "A");
-  });
-
-  it("negativo: no fim da fila aberta não inventa próxima", () => {
-    const queue = [
-      operation({
-        production_order: "A",
-        operation_code: "01",
-        operation_pending_qty: 1,
-      }),
-      operation({
-        production_order: "B",
-        operation_code: "01",
-        operation_pending_qty: 0,
-        pending_qty: 0,
-        is_in_production: false,
-        production_status: "started",
-      }),
-    ];
-    assert.equal(findAdjacentOpenOperation(queue, 0, 1), null);
   });
 });
