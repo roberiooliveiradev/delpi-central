@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   ActionButton,
@@ -33,17 +33,19 @@ import {
   type ModelSummary,
 } from "../data/api/bpmnModelerApi";
 import type { Capabilities } from "../state/capabilities";
+import { BpmnModelThumb } from "../components/BpmnModelThumb";
 import { CreateModelDialog } from "../components/CreateModelDialog";
 import { ImportDialog } from "../components/ImportDialog";
 import { HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   BPMNM_ROOT_CLASS,
-  BpmnmDataCardsGrid,
-  BpmnmDataRecordCard,
   BpmnmEmptyState,
+  BpmnmFilterBarShell,
   BpmnmFilters,
   BpmnmModal,
-  BpmnmPageHero,
+  BpmnmNavigationCard,
+  BpmnmPageHeader,
+  BpmnmPreviewDetailCard,
   BpmnmStateBanner,
   BpmnmStatusBadge,
   BpmnmTextField,
@@ -82,7 +84,26 @@ function downloadBpmn(filename: string, xml: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Model Library (P4 §18) — cards, busca, filtro de arquivados, paginação. */
+function formatUpdatedAt(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const time = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return `hoje, ${time}`;
+  if (date.toDateString() === yesterday.toDateString()) return `ontem, ${time}`;
+  return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+function revisionLabel(count: number | null | undefined): string {
+  const n = count ?? 0;
+  return n === 1 ? "1 revisão" : `${n} revisões`;
+}
+
+/** Model Library (P4 §18) — padrão visual do TV Dashboard (header leve,
+ *  action cards, toolbar compacta, grid com preview BPMN derivado). */
 export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Props) {
   const [page, setPage] = useState<ModelListPage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,9 +115,11 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ model: ModelSummary; position: FixedPanelPoint } | null>(null);
   const [duplicateTarget, setDuplicateTarget] = useState<ModelSummary | null>(null);
   const [duplicateName, setDuplicateName] = useState("");
+  const clickTimer = useRef<number | null>(null);
 
   const [sort, direction] = sortValue.split(":") as ["updated_at" | "created_at" | "display_name", "asc" | "desc"];
 
@@ -128,6 +151,13 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
   useEffect(() => {
     void Promise.resolve().then(load);
   }, [load]);
+
+  useEffect(
+    () => () => {
+      if (clickTimer.current !== null) window.clearTimeout(clickTimer.current);
+    },
+    [],
+  );
 
   const onCreate = async (name: string) => {
     setBusy(true);
@@ -179,36 +209,78 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
 
   const openModelPath = (id: string) => `/apps/bpmn-modeler/models/${id}`;
 
+  const openModelMenu = (model: ModelSummary, position: FixedPanelPoint) => {
+    setSelectedId(model.id);
+    setMenu({ model, position });
+  };
+
+  const scheduleMenu = (model: ModelSummary, position: FixedPanelPoint) => {
+    setSelectedId(model.id);
+    if (clickTimer.current !== null) window.clearTimeout(clickTimer.current);
+    clickTimer.current = window.setTimeout(() => {
+      clickTimer.current = null;
+      setMenu({ model, position });
+    }, 220);
+  };
+
+  const cancelScheduledMenu = () => {
+    if (clickTimer.current !== null) {
+      window.clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+    }
+  };
+
+  const cardMenuButton = (model: ModelSummary) => (
+    <span
+      className="bpmnm-model-card__menu"
+      title={HELP_TOOLTIPS.library.actions}
+      onClick={(event) => {
+        event.stopPropagation();
+        const rect = event.currentTarget.getBoundingClientRect();
+        setMenu((m) =>
+          m?.model.id === model.id
+            ? null
+            : { model, position: { x: rect.right, y: rect.bottom } },
+        );
+        setSelectedId(model.id);
+      }}
+    >
+      <IconButton aria-label={`Ações de ${model.display_name}`}>
+        <MoreVertical size={16} aria-hidden="true" />
+      </IconButton>
+    </span>
+  );
+
   return (
     <div className={`${BPMNM_ROOT_CLASS} dashboard-page bpmnm-page bpmnm-library`}>
-      <BpmnmPageHero
-        eyebrow="Processos"
+      <BpmnmPageHeader
+        eyebrow="Processos · BPMN"
         title="Meu Modelador de Processos"
-        description="Crie, organize e mantenha os processos da DELPI em BPMN."
-        actions={
-          capabilities.edit ? (
-            <>
-              <ActionButton
-                type="button"
-                variant="primary"
-                title={HELP_TOOLTIPS.library.create}
-                onClick={() => setCreateOpen(true)}
-              >
-                <FilePlus2 size={16} aria-hidden="true" /> Novo modelo
-              </ActionButton>
-              <ActionButton
-                type="button"
-                title={HELP_TOOLTIPS.library.import}
-                onClick={() => setImportOpen(true)}
-              >
-                <Upload size={16} aria-hidden="true" /> Importar BPMN
-              </ActionButton>
-            </>
-          ) : undefined
-        }
+        subtitle="Crie, organize e mantenha os processos da DELPI em BPMN."
       />
 
-      <BpmnmFilters.FiltersRow>
+      {capabilities.edit ? (
+        <div className="bpmnm-action-grid">
+          <BpmnmNavigationCard
+            orientation="horizontal"
+            icon={<FilePlus2 size={22} strokeWidth={2} aria-hidden="true" />}
+            title="Novo modelo"
+            description="Crie um processo BPMN do zero."
+            onClick={() => setCreateOpen(true)}
+            aria-label={HELP_TOOLTIPS.library.create}
+          />
+          <BpmnmNavigationCard
+            orientation="horizontal"
+            icon={<Upload size={22} strokeWidth={2} aria-hidden="true" />}
+            title="Importar BPMN"
+            description="Abra um arquivo .bpmn existente."
+            onClick={() => setImportOpen(true)}
+            aria-label={HELP_TOOLTIPS.library.import}
+          />
+        </div>
+      ) : null}
+
+      <BpmnmFilterBarShell className="bpmnm-library-toolbar" ariaLabel="Filtrar modelos">
         <SegmentToggle
           options={STATUS_OPTIONS}
           value={archived}
@@ -238,7 +310,7 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
             setPageNumber(1);
           }}
         />
-      </BpmnmFilters.FiltersRow>
+      </BpmnmFilterBarShell>
 
       {error ? (
         <BpmnmStateBanner variant="error" className="bpmnm-error">
@@ -253,11 +325,11 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
         <ScreenLoading variant="embedded" label="Carregando modelos…" />
       ) : page && page.items.length === 0 ? (
         <BpmnmEmptyState
-          title={query ? "Sem resultados" : "Nenhum modelo"}
+          title={query ? "Sem resultados" : "Nenhum modelo ativo"}
           message={
             query
               ? "Nenhum resultado para a busca."
-              : "Nenhum modelo ainda — crie ou importe um arquivo .bpmn."
+              : "Crie seu primeiro modelo BPMN ou importe um arquivo existente."
           }
         >
           {capabilities.edit && !query ? (
@@ -267,74 +339,63 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
           ) : null}
         </BpmnmEmptyState>
       ) : (
-        <BpmnmDataCardsGrid ariaLabel="Modelos de processo">
+        <ul className="bpmnm-library-grid" aria-label="Modelos de processo">
           {(page?.items ?? []).map((model) => (
-            <div
+            <li
               key={model.id}
-              style={{ display: "contents" }}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                setMenu({
-                  model,
-                  position: { x: event.clientX, y: event.clientY },
-                });
+              className={`bpmnm-model-card${selectedId === model.id ? " is-selected" : ""}`}
+              onDoubleClick={() => {
+                cancelScheduledMenu();
+                navigate(openModelPath(model.id));
+              }}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "ContextMenu" ||
+                  (event.shiftKey && event.key === "F10")
+                ) {
+                  event.preventDefault();
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  openModelMenu(model, { x: rect.right - 16, y: rect.bottom - 16 });
+                }
               }}
             >
-              <BpmnmDataRecordCard
-                href={openModelPath(model.id)}
-                onNavigate={(event) => {
-                  event.preventDefault();
-                  navigate(openModelPath(model.id));
-                }}
-                title={model.display_name}
-                subtitle={`Atualizado em ${new Date(model.updated_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`}
-                status={
-                  <BpmnmStatusBadge
-                    label={model.archived_at ? "Arquivado" : "Ativo"}
-                    variant={model.archived_at ? "neutral" : "success"}
+              <BpmnmPreviewDetailCard
+                aria-label={model.display_name}
+                media={
+                  <BpmnModelThumb
+                    modelId={model.id}
+                    version={model.version}
+                    getAccessToken={getAccessToken}
                   />
                 }
-                fields={[
-                  {
-                    id: "revisions",
-                    label: "Revisões",
-                    value: String(model.latest_revision_number ?? 0),
-                  },
-                  {
-                    id: "created",
-                    label: "Criado em",
-                    value: new Date(model.created_at).toLocaleDateString("pt-BR"),
-                  },
-                ]}
-                context={
-                  <span
-                    className="bpmnm-card-actions"
-                    title={HELP_TOOLTIPS.library.actions}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      const rect =
-                        event.currentTarget.getBoundingClientRect();
-                      setMenu((m) =>
-                        m?.model.id === model.id
-                          ? null
-                          : {
-                              model,
-                              position: { x: rect.right, y: rect.bottom },
-                            },
-                      );
-                    }}
-                  >
-                    <IconButton
-                      aria-label={`Ações de ${model.display_name}`}
-                    >
-                      <MoreVertical size={16} aria-hidden="true" />
-                    </IconButton>
-                  </span>
+                title={model.display_name}
+                meta={
+                  <>
+                    <BpmnmStatusBadge
+                      label={model.archived_at ? "Arquivado" : "Ativo"}
+                      variant={model.archived_at ? "neutral" : "success"}
+                    />
+                    <span className="bpmnm-card-meta-line">
+                      {revisionLabel(model.latest_revision_number)}
+                    </span>
+                    <span className="bpmnm-card-meta-line">
+                      Atualizado {formatUpdatedAt(model.updated_at)}
+                    </span>
+                  </>
                 }
+                onClick={(event) =>
+                  scheduleMenu(model, { x: event.clientX, y: event.clientY })
+                }
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  cancelScheduledMenu();
+                  openModelMenu(model, { x: event.clientX, y: event.clientY });
+                }}
               />
-            </div>
+              {cardMenuButton(model)}
+            </li>
           ))}
-        </BpmnmDataCardsGrid>
+        </ul>
       )}
 
       {page && (page.page > 1 || page.has_more) ? (
@@ -374,6 +435,17 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
                 navigate(openModelPath(menu.model.id));
               }}
             />
+            {capabilities.manage ? (
+              <ContextMenuItem
+                label="Duplicar"
+                icon={Copy}
+                onSelect={() => {
+                  setDuplicateName(`${menu.model.display_name} (cópia)`);
+                  setDuplicateTarget(menu.model);
+                  setMenu(null);
+                }}
+              />
+            ) : null}
             <ContextMenuItem
               label="Exportar BPMN"
               icon={Download}
@@ -384,15 +456,6 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
             />
             {capabilities.manage ? (
               <>
-                <ContextMenuItem
-                  label="Duplicar"
-                  icon={Copy}
-                  onSelect={() => {
-                    setDuplicateName(`${menu.model.display_name} (cópia)`);
-                    setDuplicateTarget(menu.model);
-                    setMenu(null);
-                  }}
-                />
                 <ContextMenuDivider />
                 <ContextMenuItem
                   label={menu.model.archived_at ? "Desarquivar" : "Arquivar"}

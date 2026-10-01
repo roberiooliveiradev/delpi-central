@@ -3,6 +3,7 @@ import {
   expect,
   importModelViaApi,
   modelUrl,
+  LIBRARY_URL,
 } from "../helpers";
 import type { Page } from "@playwright/test";
 
@@ -344,4 +345,151 @@ test.describe("E2E-36 — light/dark interactive states", () => {
       }
     });
   }
+});
+
+test.describe("E2E-37 — model library (home redesign)", () => {
+  test.use({ actor: "editor", viewport: { width: 1440, height: 900 } });
+
+  async function openLibrary(page: Page) {
+    const modelId = await importModelViaApi("editor", "E2E-Lib", XML_RICH);
+    await page.goto(LIBRARY_URL);
+    await expect(page.locator(".bpmnm-library")).toBeVisible({
+      timeout: 20_000,
+    });
+    return modelId;
+  }
+
+  const card = (page: Page) =>
+    page.locator(".bpmnm-model-card", { hasText: "E2E-Lib" }).first();
+  const menu = (page: Page) =>
+    page.locator('[aria-label="Ações do modelo"]');
+
+  test("header leve + action cards + toolbar em linha única", async ({
+    page,
+  }) => {
+    await openLibrary(page);
+    await expect(
+      page.getByRole("heading", { name: "Meu Modelador de Processos" }),
+    ).toBeVisible();
+    // action cards: capacidades reais, gated por capabilities.edit
+    // (accessible name = aria-label do help tooltip)
+    await expect(
+      page.getByRole("button", { name: /novo modelo/i }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /importa.*bpmn/i }).first(),
+    ).toBeVisible();
+    // toolbar compacta: uma faixa, não um bloco alto
+    const bar = page.locator(".bpmnm-library-toolbar");
+    const box = await bar.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeLessThanOrEqual(130);
+  });
+
+  test("card com preview BPMN derivado renderiza dentro do viewport", async ({
+    page,
+  }) => {
+    await openLibrary(page);
+    const c = card(page);
+    await expect(c).toBeVisible();
+    // preview derivada (svg) ou fallback neutro — nunca quebra o card
+    const media = c.locator(".bpmnm-thumb__img, .bpmnm-thumb--fallback");
+    await expect(media.first()).toBeVisible({ timeout: 20_000 });
+    const img = c.locator(".bpmnm-thumb__img");
+    if (await img.count()) {
+      const natural = await img.first().evaluate(
+        (el) => (el as HTMLImageElement).naturalWidth,
+      );
+      expect(natural).toBeGreaterThan(0);
+    }
+    const box = await c.boundingBox();
+    expect(box).not.toBeNull();
+    expectInViewport(box!, 1440, 900);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(1440 + 1);
+  });
+
+  test("click seleciona + abre menu; right-click e ⋮ abrem o mesmo; dblclick abre", async ({
+    page,
+  }) => {
+    const modelId = await openLibrary(page);
+    const c = card(page);
+
+    // left click → seleciona + menu contextual
+    await c.locator(".delpi-ui-preview-detail-card").click();
+    await expect(c).toHaveClass(/is-selected/);
+    await expect(menu(page)).toBeVisible({ timeout: 5_000 });
+    const menuBox = await menu(page).boundingBox();
+    expectInViewport(menuBox!, 1440, 900);
+    await page.keyboard.press("Escape");
+    await expect(menu(page)).toBeHidden();
+
+    // right-click → mesmo menu
+    await c
+      .locator(".delpi-ui-preview-detail-card")
+      .click({ button: "right" });
+    await expect(menu(page)).toBeVisible();
+    await expect(
+      menu(page).getByRole("menuitem", { name: "Abrir" }),
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    // ⋮ → mesmo menu
+    await c.locator(".bpmnm-model-card__menu button").click();
+    await expect(menu(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    // double click → abre o modelo
+    await c.locator(".delpi-ui-preview-detail-card").dblclick();
+    await page.waitForURL(new RegExp(`/models/${modelId}`), {
+      timeout: 15_000,
+    });
+  });
+
+  test("grid responsivo: ~4 colunas em 1920, 2+ em 1366, sem overflow", async ({
+    page,
+  }) => {
+    await openLibrary(page);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await expect(page.locator(".bpmnm-library-grid")).toBeVisible();
+    const m = await page.evaluate(() => {
+      const grid = document.querySelector(".bpmnm-library-grid");
+      const c = grid?.querySelector(".bpmnm-model-card");
+      const gr = grid?.getBoundingClientRect();
+      const cr = c?.getBoundingClientRect();
+      return {
+        cols: gr && cr ? Math.round(gr.width / cr.width) : 0,
+        scrollW: document.documentElement.scrollWidth,
+      };
+    });
+    expect(m.cols).toBeGreaterThanOrEqual(3);
+    expect(m.cols).toBeLessThanOrEqual(5);
+    expect(m.scrollW).toBeLessThanOrEqual(1920 + 1);
+  });
+
+  test("menu do card lista apenas ações autorizadas (editor sem manage)", async ({
+    page,
+  }) => {
+    await openLibrary(page);
+    const c = card(page);
+    await c
+      .locator(".delpi-ui-preview-detail-card")
+      .click({ button: "right" });
+    const menuEl = menu(page);
+    await expect(menuEl).toBeVisible();
+    await expect(
+      menuEl.getByRole("menuitem", { name: "Abrir" }),
+    ).toBeVisible();
+    await expect(
+      menuEl.getByRole("menuitem", { name: "Exportar BPMN" }),
+    ).toBeVisible();
+    // editor sem capability manage → sem Duplicar/Arquivar
+    await expect(
+      menuEl.getByRole("menuitem", { name: "Duplicar" }),
+    ).toHaveCount(0);
+    await expect(
+      menuEl.getByRole("menuitem", { name: "Arquivar" }),
+    ).toHaveCount(0);
+  });
 });

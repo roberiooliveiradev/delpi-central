@@ -70,6 +70,18 @@ function newToken(): string {
 type EditorInstance = Modeler | InstanceType<typeof NavigatedViewer>;
 
 /**
+ * Theming canônico do renderer: CSS vars mapeadas no shell (light/dark via
+ * `:root[data-theme]`). Fallbacks fixos rendem documento claro quando as vars
+ * não existem (ex.: SVG exportado em `<img>` — contexto isolado sem vars).
+ * DI colors do documento continuam vencendo (P5).
+ */
+export const BPMN_RENDERER_THEME = {
+  defaultFillColor: "var(--delpi-ui-bpmn-element-fill, #ffffff)",
+  defaultStrokeColor: "var(--delpi-ui-bpmn-element-stroke, #22242a)",
+  defaultLabelColor: "var(--delpi-ui-bpmn-label-color, #22242a)",
+} as const;
+
+/**
  * Instância única por workspace. Recriação (troca de modo/modelo) =
  * destroy() + mount() + importXml() — nunca import por cima de edição viva.
  */
@@ -87,13 +99,7 @@ export class BpmnEditorAdapter {
   mount(container: HTMLElement, mode: EditorMode): void {
     this.destroy();
     this.mode = mode;
-    // Theming canônico do renderer: CSS vars mapeadas no shell (light/dark via
-    // :root[data-theme]). DI colors do documento continuam vencendo (P5).
-    const bpmnRenderer = {
-      defaultFillColor: "var(--delpi-ui-bpmn-element-fill, #ffffff)",
-      defaultStrokeColor: "var(--delpi-ui-bpmn-element-stroke, #22242a)",
-      defaultLabelColor: "var(--delpi-ui-bpmn-label-color, #22242a)",
-    };
+    const bpmnRenderer = { ...BPMN_RENDERER_THEME };
     if (mode === "edit") {
       this.modeler = new Modeler({
         container,

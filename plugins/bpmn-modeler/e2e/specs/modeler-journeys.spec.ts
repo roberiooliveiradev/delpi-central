@@ -132,7 +132,7 @@ test.describe("E2E-01/03 — create→edit→save→reload→export", () => {
   test.use({ actor: "editor" });
   test("canvas editável salva e exporta .bpmn", async ({ page }) => {
     await page.goto(LIBRARY_URL);
-    await page.getByRole("button", { name: "Novo modelo" }).click();
+    await page.getByRole("button", { name: /novo modelo/i }).click();
     await page.getByLabel("Nome do modelo").fill("E2E Modelo A");
     await page.getByRole("button", { name: "Criar", exact: true }).click();
 
@@ -178,7 +178,7 @@ test.describe("E2E-02 — import valid+DI → open → export", () => {
   test.use({ actor: "editor" });
   test("import via dialog abre no editor", async ({ page }) => {
     await page.goto(LIBRARY_URL);
-    await page.getByRole("button", { name: "Importar BPMN" }).click();
+    await page.getByRole("button", { name: /importa.*bpmn/i }).click();
     await page.locator('input[type="file"]').setInputFiles({
       name: "valid.bpmn",
       mimeType: "text/xml",
@@ -341,7 +341,7 @@ test.describe("E2E-08/09 — blocked imports surface recognition state", () => {
   test.use({ actor: "editor" });
   test("malformed → MALFORMED_XML, sem Importar", async ({ page }) => {
     await page.goto(LIBRARY_URL);
-    await page.getByRole("button", { name: "Importar BPMN" }).click();
+    await page.getByRole("button", { name: /importa.*bpmn/i }).click();
     await page.locator('input[type="file"]').setInputFiles({
       name: "bad.bpmn",
       mimeType: "text/xml",
@@ -361,7 +361,7 @@ test.describe("E2E-08/09 — blocked imports surface recognition state", () => {
 
   test("DOCTYPE → INPUT_REJECTED_SECURITY", async ({ page }) => {
     await page.goto(LIBRARY_URL);
-    await page.getByRole("button", { name: "Importar BPMN" }).click();
+    await page.getByRole("button", { name: /importa.*bpmn/i }).click();
     await page.locator('input[type="file"]').setInputFiles({
       name: "xxe.bpmn",
       mimeType: "text/xml",
@@ -542,7 +542,7 @@ test.describe("E2E-20 — auth matrix: viewer", () => {
     await page.goto(LIBRARY_URL);
     await expect(page.locator(".bpmnm-page")).toBeVisible({ timeout: 20_000 });
     await expect(
-      page.getByRole("button", { name: "Novo modelo" }),
+      page.getByRole("button", { name: /novo modelo/i }),
     ).toHaveCount(0);
   });
 });
