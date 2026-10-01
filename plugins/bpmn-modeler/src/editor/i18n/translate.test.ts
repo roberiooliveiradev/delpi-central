@@ -91,6 +91,40 @@ describe("translate — PT-BR", () => {
   it("I18N-09: módulo didi expõe translate como value", () => {
     expect(ptBrTranslateModule.translate).toEqual(["value", translate]);
   });
+
+  it("I18N-12: labels do popup de replace (lowercase/hifenizado)", () => {
+    expect(translate("User task")).toBe("Tarefa de usuário");
+    expect(translate("Business rule task")).toBe("Tarefa de regra de negócio");
+    expect(translate("Call activity")).toBe("Atividade de chamada");
+    expect(translate("Sub-process (collapsed)")).toBe("Subprocesso (recolhido)");
+    expect(translate("Sub-process (expanded)")).toBe("Subprocesso (expandido)");
+    expect(translate("Ad-hoc sub-process (expanded)")).toBe(
+      "Subprocesso ad hoc (expandido)",
+    );
+    expect(translate("Event-based gateway")).toBe("Gateway baseado em eventos");
+    expect(translate("Data store reference")).toBe(
+      "Referência a armazenamento de dados",
+    );
+    expect(translate("Expanded pool/participant")).toBe(
+      "Pool/participante expandido",
+    );
+    expect(translate("Empty pool/participant (removes content)")).toBe(
+      "Pool/participante vazio (remove o conteúdo)",
+    );
+  });
+
+  it("I18N-13: labels compostos de evento no popup", () => {
+    expect(translate("Message start event")).toBe("Evento inicial de mensagem");
+    expect(translate("Timer start event (non-interrupting)")).toBe(
+      "Evento inicial temporizado (não interruptivo)",
+    );
+    expect(translate("Error boundary event")).toBe("Evento de borda de erro");
+    expect(translate("Cancel end event")).toBe("Evento final de cancelamento");
+    expect(translate("Compensation intermediate throw event")).toBe(
+      "Evento intermediário de lançamento de compensação",
+    );
+    expect(translate("Terminate end event")).toBe("Evento final de terminação");
+  });
 });
 
 describe("bpmnTypeLabel — tipos moddle brutos", () => {

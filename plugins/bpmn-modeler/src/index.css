@@ -175,6 +175,13 @@
   border-color: var(--delpi-ui-border);
 }
 
+/* contador "N results found" do popup: string hardcoded no vendor sem
+   extension point de tradução (diagram-js 15.x) — ocultado; a lista
+   filtrada já comunica o resultado da busca. */
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-popup .djs-popup-search-count {
+  display: none;
+}
+
 /* direct editing (rename inline) — superfície segue o tema */
 .dashboard-bpmn-modeler .bpmnm-canvas .djs-direct-editing-parent,
 .dashboard-bpmn-modeler .bpmnm-canvas .djs-direct-editing-content,

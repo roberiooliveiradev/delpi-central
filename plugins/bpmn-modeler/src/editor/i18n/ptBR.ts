@@ -22,6 +22,8 @@ const EVENT_DEFINITION_PREFIX: Record<string, string> = {
   Conditional: "condicional",
   Link: "de ligação",
   Compensate: "de compensação",
+  Compensation: "de compensação",
+  Cancel: "de cancelamento",
   Terminate: "de terminação",
 };
 
@@ -74,6 +76,9 @@ const BASE_TYPE_NAMES: Record<string, string> = {
   "Data Object Reference": "Referência a objeto de dados",
   "Data Store": "Armazenamento de dados",
   "Data Store Reference": "Referência a armazenamento de dados",
+
+  "Expanded Pool/Participant": "Pool/participante expandido",
+  "Empty Pool/Participant": "Pool/participante vazio",
 };
 
 /** Strings literais usadas pelo vendor (palette, context pad, popup,
@@ -226,15 +231,45 @@ const PT_BR: Record<string, string> = {
   "Open {element}": "Abrir {element}",
 };
 
+/** Sufixos/qualificadores dos labels do popup de replace
+ *  (ex.: "Sub-process (collapsed)", "(non-interrupting)",
+ *  "(removes content)"). */
+const ENTRY_QUALIFIERS: [RegExp, string][] = [
+  [/\(non[- ]interrupting\)$/i, " (não interruptivo)"],
+  [/\(collapsed\)$/i, " (recolhido)"],
+  [/\(expanded\)$/i, " (expandido)"],
+  [/\(removes content\)$/i, " (remove o conteúdo)"],
+];
+
+/** O popup de replace usa variações lowercase/hifenizadas do nome
+ *  ("Sub-process (expanded)", "Message start event (non-interrupting)").
+ *  Normaliza para a forma PascalCase espaçada usada pelo properties panel. */
+function normalizeEntryLabel(label: string): string {
+  return label
+    .replace(/sub-process/gi, "sub process")
+    .replace(/event-based/gi, "event based")
+    .replace(/ad-hoc/gi, "ad hoc")
+    .replace(/pool\/participant/gi, "pool/participant")
+    .replace(/(^|[\s/])([a-z])/g, (_, sep: string, c: string) => sep + c.toUpperCase());
+}
+
 /**
  * Nome amigável PT-BR para o tipo concreto do elemento — mesmas strings
  * que o properties panel produz via getConcreteType + espaçamento
- * (ex.: "Timer Boundary Event", "(Non Interrupting) Start Event").
+ * (ex.: "Timer Boundary Event", "(Non Interrupting) Start Event"),
+ * incluindo os labels do popup de replace ("User task",
+ * "Sub-process (collapsed)", "Message start event (non-interrupting)").
  */
 export function translateBpmnTypeName(spacedType: string): string {
-  const nonInterrupting = /\(Non Interrupting\)$/;
-  const suffix = nonInterrupting.test(spacedType) ? " (não interruptivo)" : "";
-  const clean = spacedType.replace(nonInterrupting, "").trim();
+  let clean = spacedType.trim();
+  let suffix = "";
+  for (const [pattern, ptSuffix] of ENTRY_QUALIFIERS) {
+    if (pattern.test(clean)) {
+      suffix = ptSuffix + suffix;
+      clean = clean.replace(pattern, "").trim();
+    }
+  }
+  clean = normalizeEntryLabel(clean);
 
   const exact = BASE_TYPE_NAMES[clean];
   if (exact) return exact + suffix;
