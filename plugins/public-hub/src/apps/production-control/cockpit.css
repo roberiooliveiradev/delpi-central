@@ -1728,6 +1728,43 @@
   top: 72px;
 }
 
+/* Detalhe: sem scroll de pagina — a coluna de dados rola internamente e o
+   desenho fica fixo ocupando toda a altura util. */
+.pcp-pub--detail {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.pcp-pub--detail .pcp-pub__wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pcp-pub--detail .pcp-pub__split {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.pcp-pub--detail .pcp-pub__split-main {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pcp-pub--detail .pcp-pub__split-aside {
+  position: static;
+  min-height: 0;
+}
+
+.pcp-pub--detail .pcp-pub__preview-frame,
+.pcp-pub--detail .pcp-pub__preview-model {
+  min-height: 0;
+}
+
 .pcp-pub__detail-product {
   display: flex;
   flex-direction: column;
@@ -2315,6 +2352,15 @@
 }
 
 @media (max-width: 1000px) {
+  .pcp-pub--detail {
+    height: auto;
+    overflow: visible;
+  }
+
+  .pcp-pub--detail .pcp-pub__split-main {
+    overflow: visible;
+  }
+
   .pcp-pub__split {
     grid-template-columns: minmax(0, 1fr);
   }

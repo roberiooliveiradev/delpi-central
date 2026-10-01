@@ -394,7 +394,7 @@ export function OperationDetailPage({
                   <iframe
                     className="pcp-pub__preview-frame"
                     title={`Desenho ${paCode}`}
-                    src={drawing.objectUrl}
+                    src={drawing.objectUrl + "#toolbar=0&navpanes=0"}
                   />
                 ) : null}
               </>

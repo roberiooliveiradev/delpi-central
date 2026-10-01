@@ -59,7 +59,7 @@ export function DeliveryMapPublicDrawingViewer({ token, branch, paCode, onClose 
       {status === "loading" ? <p className="pcp-pub-viewer__state">Carregando desenho…</p> : null}
       {status === "error" ? <p className="pcp-pub-viewer__state pcp-pub-viewer__state--error">{message}</p> : null}
       {status === "ready" && objectUrl ? (
-        <iframe className="pcp-pub-viewer__frame" title={`Desenho ${paCode}`} src={objectUrl} />
+        <iframe className="pcp-pub-viewer__frame" title={`Desenho ${paCode}`} src={objectUrl + "#toolbar=0&navpanes=0"} />
       ) : null}
     </div>
   );
