@@ -2587,3 +2587,167 @@ def test_public_scoped_enrich_keeps_open_only_and_order() -> None:
 
     assert _public_orders(payload) == ["KEEP-1", "KEEP-2"]
     assert payload["selected"]["pagination"]["total"] == 2
+
+
+def _seed_granular_cache(
+    branch: str, pairs: list[tuple[str, str]], status: dict[str, Any] | None = None
+) -> None:
+    from production_control_app.application.services.machine_load_live_status_cache import (
+        put_live_status_many,
+    )
+
+    put_live_status_many(
+        branch, {pair: dict(status or {"production_status": "started"}) for pair in pairs}
+    )
+
+
+def test_public_enrich_partial_hit_fetches_only_misses() -> None:
+    """F3: 7 quentes no cache → gateway recebe só as 3 frias, em lote."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service, snapshots, [_scoped_op(f"K{i}", "CT-02") for i in range(10)]
+    )
+    _seed_granular_cache("01", [(f"K{i}", "010") for i in range(7)])
+
+    service.build_public(branch="01", work_center="CT-02")
+
+    assert _appointment_calls(gateway) == [3]
+
+
+def test_public_enrich_cross_center_reuses_operation_hits() -> None:
+    """F3: OP compartilhada entre CTs não é reconsultada — cache não depende de CT."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _scoped_op("OP1", "CT-01A"),
+            _scoped_op("OP2", "CT-01A"),
+            _scoped_op("SHARED", "CT-01A"),
+            _scoped_op("SHARED", "CT-02"),
+            _scoped_op("OP4", "CT-02"),
+        ],
+    )
+
+    service.build_public(branch="01", work_center="CT-01A")
+    service.build_public(branch="01", work_center="CT-02")
+
+    assert _appointment_calls(gateway) == [3, 1]
+
+
+def test_public_enrich_second_read_within_ttl_is_pure_cache() -> None:
+    """F3: releitura dentro do TTL não toca a api-delpi."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service, snapshots, [_scoped_op(f"K{i}", "CT-02") for i in range(10)]
+    )
+
+    service.build_public(branch="01", work_center="CT-02")
+    service.build_public(branch="01", work_center="CT-02")
+    service.build_public(branch="01", work_center="CT-02")
+
+    assert _appointment_calls(gateway) == [10]
+
+
+def test_public_enrich_invalidate_operation_fetches_only_it() -> None:
+    """F3: invalidação cirúrgica — só a OP alvo volta para o remote."""
+    from production_control_app.application.services.machine_load_live_status_cache import (
+        invalidate_live_status_operation,
+    )
+
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service, snapshots, [_scoped_op(f"K{i}", "CT-02") for i in range(10)]
+    )
+
+    service.build_public(branch="01", work_center="CT-02")
+    invalidate_live_status_operation("01", "K4", "010")
+    service.build_public(branch="01", work_center="CT-02")
+
+    assert _appointment_calls(gateway) == [10, 1]
+
+
+def test_public_enrich_partial_remote_response_never_invents_status() -> None:
+    """F3: resposta parcial cacheia só o que voltou — ausente segue desconhecido."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_scoped_op("MISSING", "CT-02"), _scoped_op("ANSWERED", "CT-02")],
+    )
+    original = gateway.fetch_machine_load_appointment_status
+    requested: list[int] = []
+
+    def partial_fetch(*, branch, items):
+        requested.append(len(items))
+        kept = [
+            item for item in items if item["production_order"] != "MISSING"
+        ]
+        return original(branch=branch, items=kept)
+
+    gateway.fetch_machine_load_appointment_status = partial_fetch  # type: ignore[method-assign]
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+    # Segunda leitura: ANSWERED sai do cache, MISSING é reconsultada de novo.
+    service.build_public(branch="01", work_center="CT-02")
+
+    assert len(payload["selected"]["items"]) == 2  # desconhecida permanece (F1)
+    assert requested == [2, 1]
+
+
+def test_public_enrich_remote_failure_keeps_cache_hits() -> None:
+    """F3: gateway falhando não apaga hits nem derruba o cockpit."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service, snapshots, [_scoped_op(f"K{i}", "CT-02") for i in range(10)]
+    )
+    _seed_granular_cache(
+        "01",
+        [(f"K{i}", "010") for i in range(7)],
+        {"production_status": "in_progress", "operation_pending_qty": 3.0},
+    )
+
+    def boom(*, branch, items):
+        raise RuntimeError("api-delpi fora do ar")
+
+    gateway.fetch_machine_load_appointment_status = boom  # type: ignore[method-assign]
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    enriched = [
+        i for i in payload["selected"]["items"] if i["production_order"] == "K0"
+    ]
+    # Saldo vivo do hit aplicado mesmo com remote fora; «em produção» é domínio
+    # do run MES, não do cache HZA — por isso prova-se pelo saldo.
+    assert enriched[0]["operation_pending_qty"] == 3.0
+    assert _appointment_calls(gateway) == []
+
+
+def test_refresh_clears_only_that_branch_live_status_cache() -> None:
+    """F3: novo snapshot invalida a filial inteira; a vizinha permanece quente."""
+    from production_control_app.application.services.machine_load_live_status_cache import (
+        get_live_status_many,
+    )
+
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_granular_cache("01", [("A", "010")])
+    _seed_granular_cache("02", [("B", "010")])
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert get_live_status_many("01", [("A", "010")])[1] == {("A", "010")}
+    assert ("B", "010") in get_live_status_many("02", [("B", "010")])[0]

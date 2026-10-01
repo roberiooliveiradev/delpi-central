@@ -64,8 +64,8 @@ from production_control_app.domain.services.branch_access_service import BranchA
 from production_control_app.domain.services.current_month_period import today_in_timezone
 from production_control_app.application.services.machine_load_live_status_cache import (
     clear_live_status_cache,
-    get_live_status_cache,
-    put_live_status_cache,
+    get_live_status_many,
+    put_live_status_many,
 )
 
 logger = logging.getLogger(__name__)
@@ -1817,7 +1817,6 @@ class MachineLoadService:
                     branch=branch,
                     operations=scoped,
                     allow_remote=allow_remote_status,
-                    scope=scope_center,
                 )
                 enriched_iter = iter(enriched)
                 operations = [
@@ -1992,47 +1991,57 @@ class MachineLoadService:
         branch: str,
         operations: list[dict[str, Any]],
         allow_remote: bool = True,
-        scope: str | None = None,
     ) -> dict[tuple[str, str], dict[str, Any]]:
         """Mapa OP+operação → status HZA, do cache ou do TOTVS.
 
         Com ``allow_remote=False`` nunca consulta o ERP: serve para a leitura da
         fila não ficar presa ao chão de fábrica quando o cache está frio.
         """
-        cached = get_live_status_cache(branch, scope=scope)
-        if cached is not None:
-            return cached
-        if not allow_remote or not operations:
-            return {}
-
-        keys = [
+        keys = sorted(
             {
-                "production_order": order,
-                "operation_code": operation,
+                _operation_key(item)
+                for item in operations
+                if all(_operation_key(item))
             }
-            for order, operation in {_operation_key(item) for item in operations}
-            if order and operation
-        ]
+        )
         if not keys:
             return {}
+
+        # F3: cache por operação — hits saem de graça, só misses vão à api-delpi.
+        status_by_key, misses = get_live_status_many(branch, keys)
+        logger.debug(
+            "machine_load_live_cache branch=%s requested=%d hits=%d misses=%d remote=%s",
+            branch,
+            len(keys),
+            len(status_by_key),
+            len(misses),
+            len(misses) if allow_remote else 0,
+        )
+        if not misses or not allow_remote:
+            return status_by_key
 
         try:
             status_payload = _unwrap_data(
                 self._gateway.fetch_machine_load_appointment_status(
                     branch=branch,
-                    items=keys,
+                    items=[
+                        {"production_order": order, "operation_code": operation}
+                        for order, operation in misses
+                    ],
                 )
             )
         except DelpiGatewayError:
-            # Snapshot continua útil mesmo se o enrich HZA falhar.
-            return {}
+            # Falha remota não vira cache: hits continuam aplicados e misses
+            # ficam sem status novo (saldo desconhecido não esconde OP — F1).
+            return status_by_key
         except Exception:
-            return {}
+            return status_by_key
 
-        status_by_key = {
+        fetched = {
             _operation_key(item): item for item in dict_items(status_payload)
         }
-        put_live_status_cache(branch, status_by_key, scope=scope)
+        put_live_status_many(branch, fetched)
+        status_by_key.update(fetched)
         return status_by_key
 
     def _enrich_live_status(
@@ -2041,7 +2050,6 @@ class MachineLoadService:
         branch: str,
         operations: list[dict[str, Any]],
         allow_remote: bool = True,
-        scope: str | None = None,
     ) -> list[dict[str, Any]]:
         if not operations:
             return operations
@@ -2049,7 +2057,6 @@ class MachineLoadService:
             branch=branch,
             operations=operations,
             allow_remote=allow_remote,
-            scope=scope,
         )
         if not status_by_key:
             return operations
