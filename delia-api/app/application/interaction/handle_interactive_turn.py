@@ -30,6 +30,7 @@ from app.application.interaction.errors import (
     InteractionError,
 )
 from app.application.interaction.instruction import (
+    DELIA_INTERACTION_INSTRUCTION,
     interaction_instruction_lineage,
 )
 from app.application.model_invocation.contracts import (
@@ -107,12 +108,18 @@ class HandleInteractiveConversationTurn:
         *,
         model_ref: ModelRef = DEFAULT_MODEL_REF,
         instruction_lineage: InstructionLineage | None = None,
+        instruction_content: str | None = None,
         timeout_seconds: float = INTERACTION_TIMEOUT_SECONDS,
     ) -> None:
         self._invoke_model = invoke_model
         self._model_ref = model_ref
         self._instruction_lineage = (
             instruction_lineage or interaction_instruction_lineage()
+        )
+        self._instruction_content = instruction_content or (
+            DELIA_INTERACTION_INSTRUCTION
+            if instruction_lineage is None
+            else None
         )
         self._timeout_seconds = timeout_seconds
 
@@ -202,6 +209,7 @@ class HandleInteractiveConversationTurn:
             output_schema_version=OUTPUT_SCHEMA_VERSION,
             expected_fields=EXPECTED_FIELDS,
             instruction_lineage=self._instruction_lineage,
+            instruction_content=self._instruction_content,
             timeout_seconds=self._timeout_seconds,
             declared_epistemic_class=EpistemicClass.HYPOTHESIS,
             # Request-local correlation metadata only; no authority fields

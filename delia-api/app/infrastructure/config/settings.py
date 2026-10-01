@@ -32,6 +32,15 @@ class Settings:
             or os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS")
             or "5.0"
         )
+        # Real-provider gate (C3-IR-01R2). Incomplete config fails closed —
+        # never log or repr llm_api_key.
+        self.llm_provider = (os.getenv("DELIA_LLM_PROVIDER") or "").strip()
+        self.llm_base_url = (os.getenv("DELIA_LLM_BASE_URL") or "").strip()
+        self.llm_model = (os.getenv("DELIA_LLM_MODEL") or "").strip()
+        self.llm_api_key = (os.getenv("DELIA_LLM_API_KEY") or "").strip()
+        self.llm_timeout_seconds = float(
+            os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30.0"
+        )
 
     @classmethod
     def for_testing(cls) -> "Settings":

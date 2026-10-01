@@ -7,11 +7,15 @@ from app.application.interaction.handle_interactive_turn import (
     HandleInteractiveConversationTurn,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
+from app.domain.evidence.model import ModelRef
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.logging import configure_logging
 from app.infrastructure.model_invocation.deterministic_test_adapter import (
     DeterministicTestAdapter,
+)
+from app.infrastructure.model_invocation.openai_compatible_adapter import (
+    OpenAICompatibleModelInvocationAdapter,
 )
 from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
@@ -52,12 +56,13 @@ def create_application(
 
     app.config["PLATFORM_ACCESS_PROVIDER"] = provider
 
-    # C3-INTERACTION-RUNTIME-01R1: TEST_ONLY deterministic adapter is
+    # C3-INTERACTION-RUNTIME-01R2: TEST_ONLY deterministic adapter is
     # wired only for testing or explicit injection — never an implicit
-    # runtime fallback. Normal runtime without an approved provider
-    # leaves the handler absent; the route then fails closed with
-    # model_unavailable. InvokeModel still enforces
-    # ProviderExposureClass.TEST_ONLY at the use-case boundary.
+    # runtime fallback. Normal runtime wires the approved real provider
+    # only when the DELIA_LLM_* configuration is complete; otherwise the
+    # handler stays absent and the route fails closed with
+    # model_unavailable. InvokeModel still enforces the provider
+    # exposure policy at the use-case boundary.
     if interaction_turn_handler is not None:
         handler = interaction_turn_handler
     elif model_invocation_port is not None:
@@ -69,7 +74,7 @@ def create_application(
             InvokeModel(DeterministicTestAdapter())
         )
     else:
-        handler = None
+        handler = _wire_real_provider_handler(settings)
     app.config["INTERACTION_TURN_HANDLER"] = handler
 
     register_error_handlers(app)
@@ -85,3 +90,34 @@ def create_application(
         settings.environment,
     )
     return app
+
+
+def _wire_real_provider_handler(settings: Settings):
+    """Wire the real OpenAI-compatible provider only from complete config.
+
+    provider=openai_compatible + base URL + model + key all present is the
+    only path that activates a real adapter. Anything else stays absent
+    and the route fails closed — no implicit TEST_ONLY fallback.
+    """
+    if not (
+        settings.llm_provider == "openai_compatible"
+        and settings.llm_base_url
+        and settings.llm_model
+        and settings.llm_api_key
+    ):
+        return None
+    adapter = OpenAICompatibleModelInvocationAdapter(
+        base_url=settings.llm_base_url,
+        api_key=settings.llm_api_key,
+        model=settings.llm_model,
+        timeout_seconds=settings.llm_timeout_seconds,
+    )
+    return HandleInteractiveConversationTurn(
+        InvokeModel(adapter),
+        model_ref=ModelRef(
+            model_id=settings.llm_model,
+            version="configured",
+            owner_ref="DELPI",
+            provider_ref="openai_compatible",
+        ),
+    )

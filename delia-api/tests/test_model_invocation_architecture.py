@@ -89,21 +89,38 @@ def test_forbidden_speculative_abstractions_absent():
                 assert node.name not in FORBIDDEN_TYPE_NAMES
 
 
-def test_composition_root_wires_only_test_only_invocation():
-    """C3-INTERACTION-RUNTIME-01 wires the bounded interaction use case.
+def test_composition_root_wires_bounded_invocation_only():
+    """C3-INTERACTION-RUNTIME-01R2 composition boundary.
 
-    Composition may wire InvokeModel + DeterministicTestAdapter for the
-    interaction slice, but must never wire a real provider or expose the
-    port as application configuration.
+    Composition may wire InvokeModel + DeterministicTestAdapter
+    (testing/injection) or OpenAICompatibleModelInvocationAdapter (complete
+    DELIA_LLM_* config). It must not import provider SDKs, hardcode
+    provider endpoints, or expose the port as application configuration.
     """
     from app.composition import root_composer
 
-    source = inspect.getsource(root_composer)
-    assert "DeterministicTestAdapter" in source
-    assert "openai" not in source.lower()
-    assert "anthropic" not in source.lower()
-    for forbidden in ("api_key", "apikey", "secret", "credential"):
-        assert forbidden not in source.lower()
+    tree = ast.parse(inspect.getsource(root_composer))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            names = [node.module or ""]
+        else:
+            continue
+        for name in names:
+            top = name.split(".")[0].lower()
+            assert top not in (
+                "openai",
+                "anthropic",
+                "google",
+                "azure",
+                "openrouter",
+                "ollama",
+                "kimi",
+            ), f"composition imports provider SDK {name}"
+    source = inspect.getsource(root_composer).lower()
+    assert "openrouter.ai" not in source
+    assert "sk-" not in source
     app = create_app(testing=True)
     assert "MODEL_INVOCATION" not in app.config
     handler = app.config.get("INTERACTION_TURN_HANDLER")

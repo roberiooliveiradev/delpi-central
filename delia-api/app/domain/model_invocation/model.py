@@ -21,6 +21,7 @@ class ProviderExposureClass(str, Enum):
 
     TEST_ONLY = "TEST_ONLY"
     EXTERNAL_BLOCKED = "EXTERNAL_BLOCKED"
+    EXTERNAL_APPROVED = "EXTERNAL_APPROVED"
 
 
 class InvocationFinishStatus(str, Enum):

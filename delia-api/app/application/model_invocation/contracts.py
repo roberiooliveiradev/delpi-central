@@ -50,6 +50,9 @@ class ModelInvocationRequest:
     expected_fields: tuple[str, ...]
     instruction_lineage: InstructionLineage
     timeout_seconds: float
+    # DÉLIA-owned instruction text bound by instruction_lineage; sent to the
+    # provider as system instruction. Never logs or returns this value.
+    instruction_content: str | None = None
     evidence_refs: tuple[EvidenceRef, ...] = ()
     source_refs: tuple[SourceRef, ...] = ()
     generation_config: GenerationConfig = field(default_factory=GenerationConfig)

@@ -130,15 +130,19 @@ class InvokeModel:
             raise ModelInvocationError(INVALID_REQUEST, str(exc)) from exc
 
     def _enforce_exposure_policy(self) -> None:
-        if self._port.exposure_class is not ProviderExposureClass.TEST_ONLY:
-            raise ModelInvocationError(
-                POLICY_EXPOSURE_DENIED,
-                "real model call blocked: DÉLIA provider exposure policy is not proven",
+        exposure = self._port.exposure_class
+        adapter_kind = self._port.adapter_kind
+        allowed = (
+            (exposure is ProviderExposureClass.TEST_ONLY and adapter_kind == "TEST_ONLY")
+            or (
+                exposure is ProviderExposureClass.EXTERNAL_APPROVED
+                and adapter_kind == "OPENAI_COMPATIBLE"
             )
-        if self._port.adapter_kind != "TEST_ONLY":
+        )
+        if not allowed:
             raise ModelInvocationError(
                 POLICY_EXPOSURE_DENIED,
-                "real provider adapter is blocked by external configuration",
+                "model invocation blocked by provider exposure policy",
             )
 
     def _validate_structured_output(

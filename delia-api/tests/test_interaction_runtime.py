@@ -431,22 +431,30 @@ def test_explicit_handler_injection_works_outside_testing():
     assert response.status_code == 504
 
 
-def test_no_real_provider_imports_in_composition():
+def test_no_real_provider_sdk_imports_in_composition():
+    import ast
     import inspect
 
     from app.composition import root_composer
 
-    source = inspect.getsource(root_composer).lower()
-    for provider in (
-        "openai",
-        "anthropic",
-        "gemini",
-        "azure",
-        "openrouter",
-        "ollama",
-        "kimi",
-    ):
-        assert provider not in source
+    tree = ast.parse(inspect.getsource(root_composer))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            names = [node.module or ""]
+        else:
+            continue
+        for name in names:
+            assert name.split(".")[0].lower() not in (
+                "openai",
+                "anthropic",
+                "gemini",
+                "azure",
+                "openrouter",
+                "ollama",
+                "kimi",
+            ), f"composition imports provider SDK {name}"
 
 
 def test_turn_kind_separation_user_input_vs_result():
