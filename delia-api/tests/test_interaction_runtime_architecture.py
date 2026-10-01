@@ -109,13 +109,13 @@ def test_contracts_carry_no_provider_or_authority_leak():
 def test_instruction_lineage_bound_and_not_user_overridable():
     lineage = instruction.interaction_instruction_lineage()
     assert lineage.instruction_id == "delia.interaction.base"
-    assert lineage.version == "1"
+    assert lineage.version == "2"
     assert len(lineage.content_hash) == 64
     # The request contract exposes no prompt/instruction override fields.
     request_fields = {
         f.name for f in contracts.InteractiveTurnRequest.__dataclass_fields__.values()
     }
-    assert request_fields == {"access_context", "input_text"}
+    assert request_fields == {"access_context", "input_text", "prior_turns"}
 
 
 def test_single_http_route_shape():

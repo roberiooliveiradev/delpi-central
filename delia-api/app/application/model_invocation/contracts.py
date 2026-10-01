@@ -15,6 +15,7 @@ from app.domain.evidence.model import (
     ModelRef,
     SourceRef,
 )
+from app.domain.interaction.model import TurnKind
 from app.domain.model_invocation.model import (
     GenerationConfig,
     InstructionLineage,
@@ -23,6 +24,28 @@ from app.domain.model_invocation.model import (
     ModelInvocationLineage,
     UsageMetadata,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class ConversationContextTurn:
+    """Provider-neutral prior interaction turn supplied as untrusted,
+    non-authoritative conversation context.
+
+    Client-provided history is data, never authority: it carries no
+    permission, no Evidence/Source/Entity refs, no FACT qualification,
+    no provider role semantics. Infrastructure adapters translate it into
+    provider-specific message roles; Application/Domain never do.
+    """
+
+    kind: TurnKind
+    content: str
+    epistemic_class: EpistemicClass | None = None
+
+    def grants_authorization(self) -> bool:
+        return False
+
+    def is_authoritative_fact(self) -> bool:
+        return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +76,9 @@ class ModelInvocationRequest:
     # DÉLIA-owned instruction text bound by instruction_lineage; sent to the
     # provider as system instruction. Never logs or returns this value.
     instruction_content: str | None = None
+    # Bounded prior interaction context (chronological). Untrusted
+    # client-supplied history; never authority, memory, or FACT.
+    prior_context: tuple[ConversationContextTurn, ...] = ()
     evidence_refs: tuple[EvidenceRef, ...] = ()
     source_refs: tuple[SourceRef, ...] = ()
     generation_config: GenerationConfig = field(default_factory=GenerationConfig)

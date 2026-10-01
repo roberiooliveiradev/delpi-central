@@ -17,6 +17,7 @@ from app.application.interaction.contracts import (
     InteractiveTurnResult,
 )
 from app.application.interaction.errors import (
+    CONTEXT_TOO_LARGE,
     FORBIDDEN,
     INTERNAL_ERROR,
     INVALID_MODEL_OUTPUT,
@@ -28,14 +29,25 @@ from app.application.interaction.errors import (
 from app.application.interaction.handle_interactive_turn import (
     serialize_result,
 )
+from app.application.model_invocation.contracts import (
+    ConversationContextTurn,
+)
+from app.domain.evidence.model import EpistemicClass
+from app.domain.interaction.model import TurnKind
 
 
-ALLOWED_BODY_KEYS = frozenset({"input"})
+ALLOWED_BODY_KEYS = frozenset({"input", "context"})
+CONTEXT_TURN_KEYS = frozenset({"kind", "content", "epistemic_class"})
+_CONTEXT_KINDS = {
+    "USER_INPUT": TurnKind.USER_INPUT,
+    "DELIA_RESULT": TurnKind.DELIA_RESULT,
+}
 
 _ERROR_STATUS = {
     "unauthenticated": 401,
     FORBIDDEN: 403,
     INVALID_REQUEST: 400,
+    CONTEXT_TOO_LARGE: 400,
     MODEL_UNAVAILABLE: 503,
     MODEL_TIMEOUT: 504,
     INVALID_MODEL_OUTPUT: 502,
@@ -72,6 +84,10 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
         if not isinstance(input_text, str):
             return _error(INVALID_REQUEST, "'input' must be a string")
 
+        prior_turns, parse_error = _parse_context(body.get("context"))
+        if parse_error is not None:
+            return _error(INVALID_REQUEST, parse_error)
+
         handler = current_app.config.get("INTERACTION_TURN_HANDLER")
         if handler is None:
             logger.warning("interaction_rejected reason=handler_not_configured")
@@ -80,6 +96,7 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
         command = InteractiveTurnRequest(
             access_context=getattr(g, "platform_access", None),
             input_text=input_text,
+            prior_turns=prior_turns,
         )
         try:
             result = handler.execute(command)
@@ -98,6 +115,56 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
         return jsonify(serialize_result(result)), 200
 
     app.register_blueprint(bp)
+
+
+def _parse_context(
+    raw: object,
+) -> tuple[tuple[ConversationContextTurn, ...], str | None]:
+    """Syntactic validation of untrusted client-supplied context.
+
+    Semantic admissibility (epistemic class per kind, alternation,
+    aggregate bound) belongs to the use case. Here we only guarantee a
+    strict shape: a list of objects with kind/content/epistemic_class
+    and no other fields — no authority, provider, or system keys can
+    enter the application contract.
+    """
+    if raw is None:
+        return (), None
+    if not isinstance(raw, list):
+        return (), "'context' must be a list"
+    turns: list[ConversationContextTurn] = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict):
+            return (), f"context[{index}] must be an object"
+        extra = set(item) - CONTEXT_TURN_KEYS
+        if extra:
+            return (), (
+                f"context[{index}] unsupported fields: {sorted(extra)}"
+            )
+        kind = _CONTEXT_KINDS.get(item.get("kind"))
+        if kind is None:
+            return (), (
+                f"context[{index}].kind must be USER_INPUT or DELIA_RESULT"
+            )
+        content = item.get("content")
+        if not isinstance(content, str):
+            return (), f"context[{index}].content must be a string"
+        epistemic_raw = item.get("epistemic_class")
+        epistemic: EpistemicClass | None = None
+        if epistemic_raw is not None:
+            try:
+                epistemic = EpistemicClass(epistemic_raw)
+            except ValueError:
+                return (), (
+                    f"context[{index}].epistemic_class is not a "
+                    "canonical class"
+                )
+        turns.append(
+            ConversationContextTurn(
+                kind=kind, content=content, epistemic_class=epistemic
+            )
+        )
+    return tuple(turns), None
 
 
 def _log_result(logger: logging.Logger, result: InteractiveTurnResult) -> None:

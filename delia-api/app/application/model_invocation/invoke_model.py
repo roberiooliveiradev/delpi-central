@@ -11,6 +11,7 @@ import hashlib
 from typing import Any, Mapping
 
 from app.application.model_invocation.contracts import (
+    ConversationContextTurn,
     ModelInvocationRequest,
     ModelInvocationResult,
 )
@@ -23,6 +24,7 @@ from app.application.model_invocation.errors import (
 )
 from app.application.ports.model_invocation_port import ModelInvocationPort
 from app.domain.evidence.model import ModelRef
+from app.domain.interaction.model import TurnKind
 from app.domain.model_invocation.model import (
     ConfigurationLineage,
     EvalIdentity,
@@ -120,8 +122,31 @@ class InvokeModel:
             )
         if len(request.input_text) > MAX_INPUT_CHARS:
             raise ModelInvocationError(INVALID_REQUEST, "input_text exceeds bound")
+        context_chars = 0
+        for turn in request.prior_context:
+            if not isinstance(turn, ConversationContextTurn) or not isinstance(
+                turn.kind, TurnKind
+            ):
+                raise ModelInvocationError(
+                    INVALID_REQUEST,
+                    "prior_context entries must be ConversationContextTurn",
+                )
+            if not isinstance(turn.content, str) or not turn.content.strip():
+                raise ModelInvocationError(
+                    INVALID_REQUEST, "prior_context content must be non-empty"
+                )
+            context_chars += len(turn.content)
+        if context_chars > MAX_INPUT_CHARS:
+            raise ModelInvocationError(
+                INVALID_REQUEST,
+                "prior_context exceeds aggregate input bound",
+            )
         payload: dict[str, Any] = {
             "input_text": request.input_text,
+            "prior_context": [
+                {"kind": turn.kind.value, "content": turn.content}
+                for turn in request.prior_context
+            ],
             **dict(request.untrusted_external_metadata),
         }
         try:

@@ -214,3 +214,214 @@ describe("DÉLIA interaction surface", () => {
     expect(headers["X-Permissions"]).toBeUndefined();
   });
 });
+
+// --- C3-INTERACTION-CONTINUITY-01 -----------------------------------
+
+function successPayload(n: number) {
+  return {
+    session_id: `s-${n}`,
+    user_turn_id: `ut-${n}`,
+    result_turn_id: `rt-${n}`,
+    content: `Resposta ${n} da DÉLIA.`,
+    epistemic_class: "HYPOTHESIS",
+    limitations: [],
+    generated_at: "2026-01-01T00:00:00+00:00",
+    model_invocation_id: `inv-${n}`,
+  };
+}
+
+function mockFetchSequence(payloads: object[]) {
+  let call = 0;
+  return vi.fn().mockImplementation(() => {
+    const body = payloads[Math.min(call, payloads.length - 1)];
+    call += 1;
+    return Promise.resolve(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  });
+}
+
+describe("DÉLIA transient multi-turn continuity", () => {
+  it("second prompt keeps the first turn visible", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSequence([successPayload(1), successPayload(2)]),
+    );
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("primeira");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy(),
+    );
+    submitTurn("segunda");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 2 da DÉLIA.")).toBeTruthy(),
+    );
+    // First turn is still rendered — the list is transient UI memory.
+    expect(screen.getByText("primeira")).toBeTruthy();
+    expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy();
+  });
+
+  it("second request includes bounded USER_INPUT/DELIA_RESULT context", async () => {
+    const fetchMock = mockFetchSequence([
+      successPayload(1),
+      successPayload(2),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("primeira pergunta");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(
+      JSON.parse(fetchMock.mock.calls[0][1].body as string),
+    ).toEqual({ input: "primeira pergunta" });
+
+    submitTurn("segunda pergunta");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(body.input).toBe("segunda pergunta");
+    expect(body.context).toEqual([
+      { kind: "USER_INPUT", content: "primeira pergunta" },
+      {
+        kind: "DELIA_RESULT",
+        content: "Resposta 1 da DÉLIA.",
+        epistemic_class: "HYPOTHESIS",
+      },
+    ]);
+  });
+
+  it("third turn preserves chronological context ordering", async () => {
+    const fetchMock = mockFetchSequence([
+      successPayload(1),
+      successPayload(2),
+      successPayload(3),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("p1");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    submitTurn("p2");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    submitTurn("p3");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+
+    const body = JSON.parse(fetchMock.mock.calls[2][1].body as string);
+    expect(
+      body.context.map((t: { kind: string }) => t.kind),
+    ).toEqual([
+      "USER_INPUT",
+      "DELIA_RESULT",
+      "USER_INPUT",
+      "DELIA_RESULT",
+    ]);
+    expect(body.context[0].content).toBe("p1");
+    expect(body.context[2].content).toBe("p2");
+  });
+
+  it("context never carries authority, provider, or token fields", async () => {
+    const fetchMock = mockFetchSequence([
+      successPayload(1),
+      successPayload(2),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <App
+        getAccessToken={() => "secret-token"}
+        permissions={["x"]}
+        isSuperadmin={true}
+      />,
+    );
+
+    submitTurn("p1");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    submitTurn("p2");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    const serialized = JSON.stringify(
+      JSON.parse(fetchMock.mock.calls[1][1].body as string),
+    ).toLowerCase();
+    for (const forbidden of [
+      "permission",
+      "superadmin",
+      "token",
+      "secret",
+      "provider",
+      "model",
+      "system",
+      "tool",
+    ]) {
+      expect(serialized).not.toContain(forbidden);
+    }
+  });
+
+  it("remount starts with an empty conversation", async () => {
+    vi.stubGlobal("fetch", mockFetchSequence([successPayload(1)]));
+    const first = render(<App getAccessToken={() => "t"} />);
+    submitTurn("p1");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy(),
+    );
+    first.unmount();
+
+    render(<App getAccessToken={() => "t"} />);
+    expect(screen.queryByText("Resposta 1 da DÉLIA.")).toBeNull();
+    expect(screen.queryByText("p1")).toBeNull();
+  });
+
+  it("error does not erase prior successful turns", async () => {
+    let call = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(() => {
+        call += 1;
+        if (call === 1) {
+          return Promise.resolve(
+            new Response(JSON.stringify(successPayload(1)), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ code: "model_unavailable" }),
+            { status: 503, headers: { "Content-Type": "application/json" } },
+          ),
+        );
+      }),
+    );
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("p1");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy(),
+    );
+    submitTurn("p2");
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    // Prior turns survive the failed request.
+    expect(screen.getByText("p1")).toBeTruthy();
+    expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy();
+  });
+
+  it("never touches localStorage/sessionStorage/IndexedDB", async () => {
+    const localSet = vi.spyOn(Storage.prototype, "setItem");
+    const indexedSpy = vi.fn();
+    vi.stubGlobal("indexedDB", { open: indexedSpy });
+    vi.stubGlobal("fetch", mockFetchSequence([successPayload(1)]));
+
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("p1");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy(),
+    );
+
+    expect(localSet).not.toHaveBeenCalled();
+    expect(indexedSpy).not.toHaveBeenCalled();
+    expect(localStorage.length).toBe(0);
+    expect(sessionStorage.length).toBe(0);
+  });
+});

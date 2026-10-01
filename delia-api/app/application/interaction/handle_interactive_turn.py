@@ -6,6 +6,12 @@ InteractionSession -> USER_INPUT turn -> InvokeModel (existing port)
 
 Request-scoped only: no session persistence, no history, no business
 reads, no RAG, no tool execution, no PREPARE/ACT.
+
+C3-INTERACTION-CONTINUITY-01: bounded prior interaction context may be
+carried through the request as untrusted transient data. It is validated
+(kinds, epistemic admissibility, alternation, aggregate bound) and
+forwarded to the model invocation port — it is never authority, memory,
+or evidence.
 """
 
 from __future__ import annotations
@@ -19,6 +25,7 @@ from app.application.interaction.contracts import (
     InteractiveTurnResult,
 )
 from app.application.interaction.errors import (
+    CONTEXT_TOO_LARGE,
     FORBIDDEN,
     FORBIDDEN_MODEL_OUTPUT,
     INTERNAL_ERROR,
@@ -34,6 +41,7 @@ from app.application.interaction.instruction import (
     interaction_instruction_lineage,
 )
 from app.application.model_invocation.contracts import (
+    ConversationContextTurn,
     ModelInvocationRequest,
     ModelInvocationResult,
 )
@@ -46,13 +54,17 @@ from app.application.model_invocation.invoke_model import (
     MAX_INPUT_CHARS,
     InvokeModel,
 )
+from app.application.platform_access import PlatformAccessContext
 from app.domain.evidence.model import EpistemicClass, ModelRef, UserRef
 from app.domain.interaction.model import (
     InteractionSession,
     InteractionTurn,
     TurnKind,
 )
-from app.domain.interaction.rules import record_interaction_turn
+from app.domain.interaction.rules import (
+    prior_context_turn_admissible,
+    record_interaction_turn,
+)
 from app.domain.model_invocation.model import (
     InstructionLineage,
     ModelInvocationId,
@@ -118,14 +130,13 @@ class HandleInteractiveConversationTurn:
         )
         self._instruction_content = instruction_content or (
             DELIA_INTERACTION_INSTRUCTION
-            if instruction_lineage is None
-            else None
         )
         self._timeout_seconds = timeout_seconds
 
     def execute(self, request: InteractiveTurnRequest) -> InteractiveTurnResult:
         self._require_access(request.access_context)
         input_text = self._validate_input(request.input_text)
+        prior_turns = self._validate_prior_context(request.prior_turns)
 
         session = InteractionSession(
             session_id=str(uuid.uuid4()),
@@ -147,7 +158,7 @@ class HandleInteractiveConversationTurn:
                 ",".join(code.value for code in user_validation.error_codes),
             )
 
-        model_result = self._invoke(input_text)
+        model_result = self._invoke(input_text, prior_turns)
         content, limitations = self._validate_result(model_result)
 
         result_turn = InteractionTurn(
@@ -196,14 +207,74 @@ class HandleInteractiveConversationTurn:
             )
         return input_text
 
+    def _validate_prior_context(
+        self,
+        prior_turns: tuple[ConversationContextTurn, ...],
+    ) -> tuple[ConversationContextTurn, ...]:
+        """Validate client-supplied transient context, fail closed.
+
+        Prior turns are untrusted data: only USER_INPUT/DELIA_RESULT
+        kinds, canonical epistemic admissibility (FACT never accepted),
+        chronological USER_INPUT/DELIA_RESULT alternation, and an
+        aggregate character budget reusing the model-input bound. No
+        truncation — an oversized context is rejected wholesale.
+        """
+        if not isinstance(prior_turns, (tuple, list)):
+            raise InteractionError(
+                INVALID_REQUEST, "context must be a list of prior turns"
+            )
+        total_chars = 0
+        expected_kind = TurnKind.USER_INPUT
+        for index, turn in enumerate(prior_turns):
+            if not isinstance(turn, ConversationContextTurn) or not isinstance(
+                turn.kind, TurnKind
+            ):
+                raise InteractionError(
+                    INVALID_REQUEST,
+                    f"context[{index}] is not a valid prior turn",
+                )
+            if not isinstance(turn.content, str) or not turn.content.strip():
+                raise InteractionError(
+                    INVALID_REQUEST,
+                    f"context[{index}] content must be a non-empty string",
+                )
+            if not prior_context_turn_admissible(
+                turn.kind, turn.epistemic_class
+            ):
+                raise InteractionError(
+                    INVALID_REQUEST,
+                    f"context[{index}] epistemic_class is not admissible "
+                    "for its kind",
+                )
+            if turn.kind is not expected_kind:
+                raise InteractionError(
+                    INVALID_REQUEST,
+                    "context must alternate USER_INPUT/DELIA_RESULT "
+                    "starting with USER_INPUT",
+                )
+            expected_kind = (
+                TurnKind.DELIA_RESULT
+                if expected_kind is TurnKind.USER_INPUT
+                else TurnKind.USER_INPUT
+            )
+            total_chars += len(turn.content)
+        if total_chars > MAX_INPUT_CHARS:
+            raise InteractionError(
+                CONTEXT_TOO_LARGE,
+                f"context exceeds aggregate bound ({MAX_INPUT_CHARS})",
+            )
+        return tuple(prior_turns)
+
     def _invoke(
         self,
         input_text: str,
+        prior_turns: tuple[ConversationContextTurn, ...],
     ) -> ModelInvocationResult:
         invocation_request = ModelInvocationRequest(
             invocation_id=ModelInvocationId(str(uuid.uuid4())),
             model_ref=self._model_ref,
             input_text=input_text,
+            prior_context=prior_turns,
             task_purpose_id=TASK_PURPOSE_ID,
             output_schema_id=OUTPUT_SCHEMA_ID,
             output_schema_version=OUTPUT_SCHEMA_VERSION,
@@ -217,6 +288,7 @@ class HandleInteractiveConversationTurn:
             untrusted_external_metadata={
                 "interaction_surface": "delia-mfe",
                 "input_kind": "text",
+                "context_turn_count": len(prior_turns),
             },
         )
         try:

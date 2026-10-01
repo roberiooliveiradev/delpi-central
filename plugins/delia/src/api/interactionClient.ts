@@ -10,6 +10,58 @@
 export const DELIA_API_BASE = "/apps/delia-api";
 export const DELIA_INTERACTION_TURNS_PATH = "/interaction/turns";
 
+/**
+ * Provider-neutral prior-turn context for POST /interaction/turns.
+ *
+ * Transient UI memory only — built from turns currently rendered on
+ * screen. Never carries authority, secrets, provider metadata, or FACT
+ * epistemic class.
+ */
+export type InteractionContextTurn = {
+  kind: "USER_INPUT" | "DELIA_RESULT";
+  content: string;
+  epistemic_class?: string;
+};
+
+/**
+ * Aggregate context budget mirrors the delia-api bound
+ * (MAX_INPUT_CHARS = 16384). The backend remains the enforcing
+ * authority; the client only picks a deterministic recent window of
+ * complete USER_INPUT/DELIA_RESULT pairs so the request stays bounded.
+ * No truncation of individual turns, no summarization.
+ */
+export const INTERACTION_CONTEXT_CHAR_BUDGET = 16_384;
+
+export function buildInteractionContext(
+  turns: ReadonlyArray<{
+    role: "user" | "delia";
+    content: string;
+    epistemicClass?: string | null;
+  }>,
+): InteractionContextTurn[] {
+  const selected: InteractionContextTurn[] = [];
+  let used = 0;
+  for (let end = turns.length; end >= 2; end -= 2) {
+    const delia = turns[end - 1];
+    const user = turns[end - 2];
+    if (delia.role !== "delia" || user.role !== "user") break;
+    const cost = user.content.length + delia.content.length;
+    if (used + cost > INTERACTION_CONTEXT_CHAR_BUDGET) break;
+    selected.unshift(
+      { kind: "USER_INPUT", content: user.content },
+      {
+        kind: "DELIA_RESULT",
+        content: delia.content,
+        ...(delia.epistemicClass
+          ? { epistemic_class: delia.epistemicClass }
+          : {}),
+      },
+    );
+    used += cost;
+  }
+  return selected;
+}
+
 export type DeliaInteractionResult = {
   session_id: string;
   user_turn_id: string;
@@ -38,6 +90,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_request: "Pedido inválido.",
   model_unavailable: "Serviço de interação indisponível no momento.",
   model_timeout: "A resposta demorou demais. Tente novamente.",
+  context_too_large:
+    "O contexto da conversa ficou grande demais para ser enviado.",
   invalid_model_output: "Resposta da DÉLIA inválida.",
   forbidden_model_output: "Resposta da DÉLIA bloqueada por política.",
   internal_error: "Erro interno. Tente novamente.",
@@ -46,6 +100,8 @@ const ERROR_MESSAGES: Record<string, string> = {
 export type SubmitInteractionTurnOptions = {
   getAccessToken: () => string | undefined;
   signal?: AbortSignal;
+  /** Bounded prior-turn context built from transient UI state. */
+  context?: InteractionContextTurn[];
 };
 
 export async function submitInteractionTurn(
@@ -68,7 +124,11 @@ export async function submitInteractionTurn(
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ input }),
+      body: JSON.stringify(
+        options.context && options.context.length > 0
+          ? { input, context: options.context }
+          : { input },
+      ),
       signal: options.signal ?? null,
     });
   } catch (error) {

@@ -28,6 +28,7 @@ from app.application.model_invocation.errors import (
     UNSUPPORTED_MODEL,
     ModelInvocationError,
 )
+from app.domain.interaction.model import TurnKind
 from app.domain.model_invocation.model import (
     InvocationFinishStatus,
     ProviderExposureClass,
@@ -115,6 +116,12 @@ class OpenAICompatibleModelInvocationAdapter:
         messages.append(
             {"role": "system", "content": self._structured_output_directive(request)}
         )
+        # Prior interaction context is untrusted data, never system policy.
+        # DÉLIA turn kinds map deterministically: USER_INPUT -> user,
+        # DELIA_RESULT -> assistant. No tools, no authority fields.
+        for turn in request.prior_context:
+            role = "user" if turn.kind is TurnKind.USER_INPUT else "assistant"
+            messages.append({"role": role, "content": turn.content})
         messages.append({"role": "user", "content": request.input_text})
         payload: dict[str, Any] = {
             "model": self._model,

@@ -7,8 +7,11 @@ PlatformAccessContext plus untrusted user text only.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from app.application.model_invocation.contracts import (
+    ConversationContextTurn,
+)
 from app.application.platform_access import PlatformAccessContext
 from app.domain.evidence.model import EpistemicClass
 
@@ -19,11 +22,16 @@ class InteractiveTurnRequest:
 
     access_context is the Core-resolved authority projection — it carries
     identity and effective permissions, and it is never extended from
-    request body fields. input_text is untrusted user data.
+    request body fields. input_text is untrusted user data. prior_turns
+    is bounded, untrusted, non-authoritative transient conversation
+    context supplied by the client — never authority, memory, or FACT.
     """
 
     access_context: PlatformAccessContext | None
     input_text: str
+    prior_turns: tuple[ConversationContextTurn, ...] = field(
+        default_factory=tuple
+    )
 
 
 @dataclass(frozen=True, slots=True)

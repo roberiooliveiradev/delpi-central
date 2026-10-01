@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { DELIA_ROOT_CLASS, DeliaPageHeader } from "./ui/deliaUi";
 import {
   DeliaInteractionError,
+  buildInteractionContext,
   submitInteractionTurn,
 } from "./api/interactionClient";
 
@@ -34,10 +35,12 @@ const TOKEN_UNAVAILABLE_MESSAGE =
   "Token de acesso indisponível. Recarregue pelo Portal.";
 
 /**
- * C3-INTERACTION-RUNTIME-01: minimal usable DÉLIA interaction surface.
+ * C3-INTERACTION-RUNTIME-01 + C3-INTERACTION-CONTINUITY-01.
  *
- * One text request → authenticated delia-api POST /interaction/turns →
- * rendered DELIA_RESULT. permissions / isSuperadmin remain host
+ * Bounded transient multi-turn interaction: rendered turns are kept in
+ * React memory only and resent as untrusted prior context on each new
+ * turn. No browser storage and no backend persistence — a reload
+ * resets the conversation. permissions / isSuperadmin remain host
  * presentation hints and are never sent as backend authority.
  */
 export default function App({
@@ -58,6 +61,14 @@ export default function App({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const turnsEndRef = useRef<HTMLLIElement | null>(null);
+
+  useEffect(() => {
+    const end = turnsEndRef.current;
+    if (end && typeof end.scrollIntoView === "function") {
+      end.scrollIntoView({ block: "end" });
+    }
+  }, [turns.length, loading]);
 
   useEffect(
     () => () => {
@@ -83,6 +94,7 @@ export default function App({
       const result = await submitInteractionTurn(value, {
         getAccessToken,
         signal: controller.signal,
+        context: buildInteractionContext(turns),
       });
       setTurns((previous) => [
         ...previous,
@@ -118,7 +130,7 @@ export default function App({
       <main className="delia-page-stack" aria-label="DÉLIA">
         <DeliaPageHeader
           title="DÉLIA"
-          subtitle="Converse com a inteligência operacional da DELPI — uma pergunta por vez, sem ações automatizadas nesta fase."
+          subtitle="Converse com a inteligência operacional da DELPI. A conversa é mantida apenas nesta tela e não é salva."
         />
 
         <section
@@ -127,9 +139,12 @@ export default function App({
         >
           {turns.length > 0 ? (
             <ul className="delia-turns" aria-label="Respostas">
-              {turns.map((turn) => (
+              {turns.map((turn, index) => (
                 <li
                   key={turn.id}
+                  ref={
+                    index === turns.length - 1 ? turnsEndRef : undefined
+                  }
                   className={`delia-turn delia-turn--${turn.role}`}
                 >
                   <span className="delia-turn__label">

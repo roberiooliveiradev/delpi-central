@@ -19,6 +19,7 @@ class InteractionError(Exception):
 UNAUTHENTICATED = "unauthenticated"
 FORBIDDEN = "forbidden"
 INVALID_REQUEST = "invalid_request"
+CONTEXT_TOO_LARGE = "context_too_large"
 MODEL_UNAVAILABLE = "model_unavailable"
 MODEL_TIMEOUT = "model_timeout"
 INVALID_MODEL_OUTPUT = "invalid_model_output"
