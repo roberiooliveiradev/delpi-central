@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C4-MCP-GOVERNED-READS-01` — bounded governed MCP READ slice authorized by the C3-FINAL-READINESS-01 gate (§6.100): exactly ONE READ capability on ONE specialist (DAVI/TÉO/VISTA all ELIGIBLE — selection inside the slice brief), dev-only, no PREPARE/ACT. `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1A/R1B/R1C all `ACCEPT_WITH_RESIDUAL`; §6.95/§6.97/§6.99); `C4_AUTHORIZED=NO` at phase level — slice authorization is task-scoped; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01` — the bounded governed MCP READ slice (DAVI `execute_delpi_information` → `search_products`, Product Master) is implemented and dev-evidenced at `58a2d018d1` (§6.101); it is a **candidate for independent architecture review**, not accepted. `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1A/R1B/R1C all `ACCEPT_WITH_RESIDUAL`; §6.95/§6.97/§6.99); `C4_AUTHORIZED=NO` at phase level — the task-scoped read proof does not broaden C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -772,10 +772,13 @@ C3-FINAL-READINESS-01 = EXECUTED (§6.100):
    FULL_C3 = C3_NOT_COMPLETE (open foundation families inventoried);
    C4_BOUNDED_MCP_READ_CAN_BE_AUTHORIZED — dependencies proven,
    missing links task-scoped; C4_AUTHORIZED stays NO at phase level
-NEXT = C4-MCP-GOVERNED-READS-01
-   (bounded: ONE READ capability on ONE specialist among ELIGIBLE
-    DAVI/TEO/VISTA; dev-only; no PREPARE/ACT; no A2A;
-    production readiness NOT_PROVEN)
+C4-MCP-GOVERNED-READS-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.101;
+   IMPLEMENTATION_HEAD=58a2d018d1ef28081e82e18148caa192d9d0b735;
+   DAVI execute_delpi_information -> search_products only;
+   live dev read PASS grounded+provenance; TEO/VISTA READ, other DAVI
+   actions, PREPARE/ACT all still blocked; C3_EXECUTED=NO,
+   C4_AUTHORIZED=NO at phase level)
+NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
 Workspace binding remains unscheduled
 ```
 
@@ -1445,4 +1448,37 @@ UNCHANGED = no business READ (C4-gated), PREPARE/ACT forbidden,
         C4_AUTHORIZED=NO, C3_EXECUTED=NO
 NEXT_ON_REVIEW_ACCEPT = C3-MCP-INTEROP-01R1C —
         SECURITY_ACCEPTANCE_AND_BIND
+```
+
+### C4-MCP-GOVERNED-READS-01 — First Governed MCP Read, DAVI / Product Master (candidate for architecture review — evidence §6.101)
+
+```text
+TASK = C4-MCP-GOVERNED-READS-01 — FIRST_GOVERNED_MCP_READ_DAVI_PRODUCT_MASTER
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW (execution evidence §6.101)
+IMPLEMENTATION_HEAD = 58a2d018d1ef28081e82e18148caa192d9d0b735
+SCOPE_FREEZE = DAVI execute_delpi_information -> underlying action
+        search_products only; supporting discovery
+        discover_delpi_information; dev-only; no PREPARE/ACT; no A2A;
+        no generic MCP proxy; no direct Product adapter
+PATH = Portal user -> POST /interaction/turns -> Core /me -> DAVI
+        discover -> exactly-one search_products candidate ->
+        schema-bounded arguments -> DAVI execute -> API DELPI Product
+        Master use case -> existing domain AuthZ -> bounded
+        SpecialistOutcome (OBSERVATION) -> grounding/provenance
+        projection -> user response
+LIVE_PROOF = real dev read PASS (10 items for "anel" description
+        search; grounding_status=GROUNDED; provenance source=
+        product-master/api-delpi, specialist=davi, protocol=MCP,
+        action_id=search_products; limitation result_truncated;
+        unauthenticated 401; control query NON_GROUNDED)
+BLOCKED = every other DAVI action; TEO READ; VISTA READ; PREPARE; ACT;
+        unknown specialist/capability; caller-supplied candidate token;
+        forbidden/unknown arguments
+TESTS = full delia-api 532/532 PASS; MFE 36/36 + typecheck + build;
+        security negative matrix incl. injection/forgery/fallback
+LIVE_NEGATIVE_DOMAIN_AUTHZ = TEST_NOT_RUN (no safe second identity;
+        RBAC not mutated to manufacture evidence)
+UNCHANGED = C3_EXECUTED=NO, C4_AUTHORIZED=NO (phase level),
+        PRODUCTION_READINESS=NOT_PROVEN
+NEXT_ON_REVIEW = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
 ```

@@ -6434,3 +6434,142 @@ EXECUTION_DRIFT = NONE
 BLOCKERS = NONE
 NEXT = C4-MCP-GOVERNED-READS-01
 ```
+
+## 6.101 C4-MCP-GOVERNED-READS-01 — first governed MCP read execution record (DAVI / search_products)
+
+```
+STEP: C4-MCP-GOVERNED-READS-01
+MODE: BOUNDED C4 SLICE + ONE GOVERNED READ + CONVERSATIONAL INTEGRATION
+      + EVIDENCE/PROVENANCE + DEV ONLY + FAIL CLOSED
+BASE_HEAD = a1781c0f7ae05c25ad8334d1aba2ab1dcd0aa27c
+  (interim commit a1781c0f7a bpmn-modeler runtime messages = OUTSIDE_TASK,
+   user-committed, preserved)
+IMPLEMENTATION_HEAD = 58a2d018d1ef28081e82e18148caa192d9d0b735
+EVALUATED_SHA = 58a2d018d1ef28081e82e18148caa192d9d0b735
+BIND_HEAD = RECORDED_BY_FINAL_BIND_COMMIT
+BRANCH = main
+
+FIRST_READ_SELECTION (architecture coordination freeze):
+  SPECIALIST = DAVI
+  MCP_TOOL = execute_delpi_information
+  SUPPORTING_DISCOVERY_TOOL = discover_delpi_information
+  UNDERLYING_ACTION = search_products
+  BUSINESS_OWNER = API DELPI / Product Master
+  BUSINESS_SOURCE = Product Master (Cadastro de Produtos DELPI)
+
+READ_GATE_IMPLEMENTATION:
+  rules.py GOVERNED_READ_ACTIONS = {("davi","execute_delpi_information"):
+      frozenset({"search_products"})} + governed_read_action_allowed();
+      invoked only when settings.c4_davi_product_read_enabled is true
+      (env DELIA_C4_DAVI_PRODUCT_READ_ENABLED, default off — fresh runtime
+      without the flag keeps every READ CAPABILITY_NOT_ALLOWED_IN_PHASE).
+  Enforcement at TWO boundaries: SpecialistInterop.invoke (application)
+  and McpSpecialistAdapter._require_invocable (infrastructure, second
+  check per port contract); governed_action_id threaded through
+  SpecialistInvocationRequest -> call_remote_tool(governed_action_id=).
+OTHER_DAVI_READS = BLOCKED (action_id != search_products -> rejected
+    even though DAVI itself would allow it)
+TEO_READ = BLOCKED  VISTA_READ = BLOCKED
+PREPARE = BLOCKED   ACT = BLOCKED   UNKNOWN_CAPABILITY = BLOCKED
+
+INTERACTION_WIRING:
+  POST /interaction/turns (existing boundary) -> GovernedProductRead.attempt
+  -> grounded result on SUCCESS else model path unchanged; handler free
+  of specialist literals (architecture tests pass).
+ARGUMENT_EXTRACTION = model proposal only (expected_fields contract
+    reused; canonical "limitations" envelope key dropped); deterministic
+    validation: fields ⊆ {code,description,group_code,page,page_size} ∩
+    candidate argument_schema; unknown/forbidden key (e.g.
+    customer_reference) invalidates proposal; page_size clamped to
+    DAVI bound (<=50); candidate token never accepted from user/model.
+ARGUMENT_SCHEMA_VALIDATION = candidate-issued schema; no duplicated
+    Product schema in DELIA.
+
+CORE_CONTEXT = PASS (POST /interaction/turns -> Core /me, delia.access)
+USER_IDENTITY_PRESERVATION = PASS (subject bearer -> RFC8693 exchange ->
+    resource-bound DAVI token; same sub; actor-bound candidate token)
+DOMAIN_AUTHZ_PATH = PROVEN (DAVI -> delpi_auth -> Core -> Product
+    Master ENGINEERING_LMP_ACCESS contract; executed end-to-end)
+LIVE_NEGATIVE_DOMAIN_AUTHZ = TEST_NOT_RUN (no safe second dev identity
+    lacking the permission; RBAC not mutated to fabricate evidence;
+    fail-closed negatives covered in unit tests)
+
+DAVI_DISCOVERY = PASS (live; discover_delpi_information returns
+    search_products + other actions; DÉLIA selects exactly the one
+    action_id==search_products candidate — others ignored)
+DAVI_EXECUTE = PASS (live; execute_delpi_information with opaque
+    actor-bound candidate_token + schema-validated arguments)
+REAL_PRODUCT_READ = PASS (query "liste produtos com anel na descricao"
+    -> 10 product items returned from Product Master, e.g. 30191902
+    ANEL, 30190838 ANEL 11A 4050-4 N180 — real dev catalog data)
+
+SPECIALIST_OUTCOME_CLASS = OBSERVATION (unchanged invariant)
+GROUNDING_STATUS = PASS (GROUNDED on read success; NON_GROUNDED with
+    canonical delpi_source_unverified limitation on failure;
+    NON_GROUNDED on generic control query; no ambiguous default)
+SOURCE_PROVENANCE = PASS (bounded projection: source product-master/
+    api-delpi, specialist_id=davi, protocol=MCP, remote_capability=
+    execute_delpi_information, action_id=search_products, observed_at,
+    correlation_id, is_complete; no tokens/URLs/wire internals)
+TRUNCATION_BEHAVIOR = PASS (DAVI page bound -> limitation
+    result_truncated surfaced)
+EMPTY_RESULT_BEHAVIOR = GROUNDED empty != failure (unit-tested)
+
+MODEL_SYNTHESIS = deterministic rendering preferred (bounded item list);
+    model stays proposal-only for arguments.
+NON_GROUNDED_FALLBACK = TRUTHFUL (DAVI unavailable/denied -> model may
+    answer generally + explicit "dados DELPI não verificados" disclosure
+    + delpi_source_unverified limitation; never GROUNDED on failure)
+DIRECT_PRODUCT_ADAPTER = NONE (no ProductSearchReadPort/ProductMasterAdapter/
+    product HTTP client; reuse of DAVI capability + API DELPI use case)
+GENERIC_MCP_PROXY = NONE (registry stays DÉLIA-owned; single bounded tuple)
+
+SECURITY_NEGATIVE_MATRIX (targeted tests at EVALUATED_SHA):
+  unauthenticated request -> 401 (live + unit)
+  missing delia.access / failed exchange / DAVI auth failure -> no READ
+  unknown specialist / unknown MCP tool -> blocked
+  action_id != search_products (incl. get_product_stock/suppliers/
+      customers/pricing/drawings) -> blocked at gate
+  caller-supplied candidate_token -> never forwarded (wire arg is the
+      opaque discovery token; provenance test)
+  candidate_token never logged/serialized/projected
+  unknown search argument / customer_reference / model-proposed
+      forbidden field -> proposal invalidated, no wire call
+  forged remote annotation (readOnlyHint etc.) -> no authority elevation
+  TEO READ / VISTA READ / PREPARE / ACT -> blocked
+  MCP injection text -> untrusted data only
+  DAVI unavailable -> NON_GROUNDED + delpi_source_unverified
+  authoritative empty result -> GROUNDED empty
+
+LIVE_DEV_EVAL = PASS (scripts/real_governed_read_eval.py inside
+    delpi-delia-api; sanitized output; no token/secret/candidate printed)
+TARGETED_TESTS = PASS (governed read + interop + interaction +
+    security/architecture matrices)
+FULL_DELIA_TESTS = PASS (532/532 at EVALUATED_SHA)
+MFE_TESTS = PASS (36/36)  MFE_TYPECHECK = PASS  MFE_BUILD = PASS
+GIT_DIFF_CHECK = clean
+
+DEV_ENV_NOTE: DELIA_MCP_{DAVI,TEO,VISTA}_HOST_HEADER corrected to
+  localhost:8000 (gitignored infra/.env): api-delpi FastMCP DNS-rebinding
+  protection derives allowed Hosts from PUBLIC_BASE_URL=http://localhost;
+  the previous public-host header was rejected 421 before auth. Exchange/
+  KC Host headers unchanged (minhadelpi.com.br issuer host still used
+  for token endpoint calls).
+
+CONTRACT_IMPACT = InteractiveTurnResult + grounding_status/provenance
+    (backward-compatible additions); SpecialistInteropPort +
+    governed_action_id kwarg; MFE client type extension
+SECURITY_IMPACT = READ surface opened for exactly one bounded tuple,
+    two enforcement boundaries, actor-bound candidate, fail closed
+EXECUTION_DRIFT = NONE (a1781c0f7a = OUTSIDE_TASK user commit)
+BLOCKERS = NONE
+RESIDUALS = LIVE_NEGATIVE_DOMAIN_AUTHZ TEST_NOT_RUN; prod Keycloak
+    exchange still NOT_PROVEN (R1C residual); dev env host-header is
+    local config; C3 open foundation families unchanged
+
+C3_EXECUTED = NO (unchanged)
+C4_AUTHORIZED = NO (phase level; authorization stayed task-scoped)
+PRODUCTION_READINESS = NOT_PROVEN
+C4_MCP_GOVERNED_READS_01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
+```

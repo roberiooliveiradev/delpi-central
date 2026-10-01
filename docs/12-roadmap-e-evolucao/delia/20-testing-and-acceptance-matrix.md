@@ -2439,3 +2439,21 @@ Implementation: `783cc13578fe281425ae7793ccf5e3b97e3be362` (evidence §6.92).
 | Live authenticated discovery/catalog | TEST_NOT_RUN — `mcp_authentication_failed`; no user-delegated token mechanism exists (dev realm has no `mcp-*` clients); invalid-token wire probe confirms real 401 → semantic error |
 | Business READ eval | TEST_NOT_RUN_PHASE_GATED (`C4_AUTHORIZED=NO`) |
 | `git diff --check` | clean |
+
+### C4-MCP-GOVERNED-READS-01 — first governed MCP read (DAVI / search_products) — candidate for architecture review
+
+Implementation: `58a2d018d1ef28081e82e18148caa192d9d0b735` (evidence §6.101).
+
+| Check | Result |
+|---|---|
+| Targeted governed-read tests (`test_governed_product_read`) | PASS — gate, discovery→candidate→args→execute, provenance, truncation, empty-authoritative, fallback, handler integration, serialization |
+| SpecialistInterop + adapter phase gates | PASS — READ blocked unless scoped tuple; PREPARE/ACT/unknown fail closed at two boundaries |
+| Security negative matrix | PASS — unauthenticated 401; unknown specialist/tool; other DAVI action_ids (stock/suppliers/customers/pricing…) blocked; TÉO/VISTA READ blocked; caller-supplied candidate_token never forwarded; forbidden/unknown argument rejected; forged annotations no elevation; injection text untrusted |
+| Delegated identity | PASS — subject bearer → token exchange → same-subject resource-bound DAVI credential; actor-bound candidate token |
+| Full delia-api suite | 532/532 PASS at EVALUATED_SHA |
+| MFE tests / typecheck / build | PASS 36/36 · PASS · PASS |
+| Live dev governed read | PASS — "anel" query → DAVI discover → execute → 10 Product Master items; GROUNDED; provenance product-master/api-delpi + davi + MCP + search_products; `result_truncated`; unauthenticated 401; control NON_GROUNDED |
+| Live negative domain AuthZ | TEST_NOT_RUN — no safe second dev identity lacking `ENGINEERING_LMP_ACCESS`; RBAC not mutated |
+| `git diff --check` | clean |
+
+Status: `C4_MCP_GOVERNED_READS_01=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO` (phase level); `PRODUCTION_READINESS=NOT_PROVEN`.
