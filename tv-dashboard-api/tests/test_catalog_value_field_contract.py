@@ -165,6 +165,29 @@ RESPONSE_SCHEMAS: dict[str, dict] = {
     },
     # Parity real: `value` é emitido espelhando o campo primário
     # (attach_quality_kpi_parity / literal no use case).
+    "get_kaizen_summary": {
+        "total_savings": True,
+        "total_kaizens": True,
+        "value": True,
+        "ideas_goal": {"total_kaizens": True, "value": True},
+        **{k: True for k in _SI_GOAL_FIELDS},
+    },
+    "get_ppm_external_summary": {
+        "ppm": True,
+        "value": True,
+        "total_produzido_un": True,
+        "total_produzido_milheiro": True,
+        "total_devolvido_un": True,
+        **{k: True for k in _SI_GOAL_FIELDS},
+    },
+    "get_ppm_internal_summary": {
+        "ppm": True,
+        "value": True,
+        "total_produzido_un": True,
+        "total_produzido_milheiro": True,
+        "total_devolvido_un": True,
+        **{k: True for k in _SI_GOAL_FIELDS},
+    },
     "get_nonconformity_streak": {
         "current_days_without_nc": True,
         "record_days_without_nc": True,
@@ -221,12 +244,11 @@ WAVE4_CATALOG_ONLY_CLEANED: dict[str, str] = {
     "get_retrabalhos_rework_cost_pct": "rework_cost_pct",
 }
 
-# `value` segue declarável onde realmente emitido (parity) ou domínio legítimo.
+# `value` segue declarável APENAS onde é campo de domínio legítimo (rankings).
+# Wave 6A: parity ops emitiam `value` como alias — agora documentado em
+# deprecatedFields, fora de valueFields/projectableFields.
 WAVE4_VALUE_STILL_DECLARED = frozenset(
     {
-        "get_kaizen_summary",
-        "get_ppm_external_summary",
-        "get_ppm_internal_summary",
         "get_refugos_rankings",
     }
 )
@@ -256,6 +278,9 @@ _SI_META_RESPONSE_SCHEMA = {
     "reference_goal": True,
     "goal_label": True,
     "goals": {},
+    # Wave 6A: `value` é DEPRECATED_COMPATIBILITY_ALIAS — ainda emitido
+    # ("value": comparable_goal), fora do catalogo projetavel.
+    "value": True,
 }
 _SI_REALIZED_RESPONSE_SCHEMA = {
     **_SI_SCALAR_BASE,
@@ -583,3 +608,181 @@ def test_wave5_unrelated_camelcase_fields_unaffected() -> None:
     # contrato series-only: nenhum scalar declarado; `otdPct` vive em points[]
     # (campo de dominio legitimo do producer) e nunca foi alias top-level
     assert _declared_fields(series) == []
+
+
+# Wave 6A — DEPRECATED_COMPATIBILITY_ALIAS: `value` ainda emitido pelos
+# producers, documentado em deprecatedFields, fora de valueFields/
+# projectableFields. Sem remocao fisica nesta wave.
+WAVE6A_PARITY_DEPRECATION: dict[str, str] = {
+    "get_kaizen_summary": "total_savings",
+    "get_ppm_external_summary": "ppm",
+    "get_ppm_internal_summary": "ppm",
+    "get_audit_5s_summary": "average_score",
+    "get_nonconformity_streak": "current_days_without_nc",
+}
+
+
+def _deprecated_names(route: dict) -> dict[str, dict]:
+    return {
+        str(item.get("name")): item
+        for item in route.get("deprecatedFields") or []
+        if isinstance(item, dict) and item.get("name")
+    }
+
+
+def _si_meta_ops(routes: dict) -> list[str]:
+    return sorted(
+        op
+        for op in routes
+        if op.startswith("get_si_indicator_") and op.endswith("_meta")
+    )
+
+
+def test_wave6a_deprecated_alias_target_set_is_exactly_42() -> None:
+    """41 ops × `value` (36 SI meta + 5 parity) + 1 nested ideas_goal.value = 42
+    sites DEPRECATED_COMPATIBILITY_ALIAS documentados no catálogo."""
+    routes = _load_routes()
+    meta_ops = _si_meta_ops(routes)
+    assert len(meta_ops) == 36
+    sites = 0
+    for op in [*meta_ops, *WAVE6A_PARITY_DEPRECATION]:
+        dep = _deprecated_names(routes[op])
+        assert "value" in dep, f"{op} missing deprecated `value` entry"
+        assert dep["value"]["status"] == "DEPRECATED_COMPATIBILITY_ALIAS"
+        sites += 1
+    nested = _deprecated_names(routes["get_kaizen_summary"])
+    assert nested["ideas_goal.value"]["replacement"] == "ideas_goal.total_kaizens"
+    sites += 1
+    assert sites == 42
+
+
+def test_wave6a_canonical_replacement_declared_for_every_alias() -> None:
+    """Toda entrada deprecatedFields tem `replacement` semântico que permanece
+    declarado/projetável na rota."""
+    routes = _load_routes()
+    for op in [*_si_meta_ops(routes), *WAVE6A_PARITY_DEPRECATION]:
+        dep = _deprecated_names(routes[op])
+        for name, entry in dep.items():
+            replacement = entry.get("replacement")
+            assert replacement, f"{op}:{name} missing replacement"
+            if "." in replacement:
+                # nested path (ideas_goal.value): bloco raiz deve existir no
+                # payload emitido — nao e campo top-level projetavel.
+                root = replacement.split(".", 1)[0]
+                assert field_resolves_in_response(
+                    root, RESPONSE_SCHEMAS[op], routes[op].get("seriesField")
+                ), f"{op}: nested replacement root {root!r} not emitted"
+            else:
+                assert replacement in _declared_fields(routes[op]), (
+                    f"{op}: replacement {replacement!r} not declared"
+                )
+
+
+def test_wave6a_deprecated_alias_not_projectable() -> None:
+    """Alias deprecated não é preferido: fora de valueFields e projectableFields."""
+    routes = _load_routes()
+    for op in [*_si_meta_ops(routes), *WAVE6A_PARITY_DEPRECATION]:
+        dep_names = set(_deprecated_names(routes[op]))
+        declared = set(_declared_fields(routes[op]))
+        projectable = {f["name"] for f in routes[op].get("projectableFields") or []}
+        assert not (dep_names & declared), f"{op}: deprecated name still declared"
+        assert not (dep_names & projectable), f"{op}: deprecated name still projectable"
+        assert "value" not in (routes[op].get("valueFields") or [])
+
+
+def test_wave6a_deprecated_alias_still_emitted_by_producer() -> None:
+    """Wave 6A não remove emissão: `value` segue presente no schema de resposta
+    emitido (meta triad + parity ops)."""
+    routes = _load_routes()
+    for op in _si_meta_ops(routes):
+        assert field_resolves_in_response(
+            "value", _SI_META_RESPONSE_SCHEMA, routes[op].get("seriesField")
+        ), f"{op}: emitted `value` alias absent from producer schema"
+    for op in WAVE6A_PARITY_DEPRECATION:
+        assert field_resolves_in_response(
+            "value", RESPONSE_SCHEMAS[op], routes[op].get("seriesField")
+        ), f"{op}: emitted `value` alias absent from producer schema"
+
+
+def test_wave6a_canonical_value_contracts_untouched() -> None:
+    """Negative: SI realized `value` (canonico), rankings items[].value
+    (dominio) e shapes de apresentacao nao sao marcados deprecated."""
+    routes = _load_routes()
+    realized = [
+        op
+        for op in routes
+        if op.startswith("get_si_indicator_") and op.endswith("_realized")
+    ]
+    assert len(realized) == 36
+    for op in realized:
+        assert "value" in _declared_fields(routes[op])
+        assert "value" not in _deprecated_names(routes[op])
+    assert "value" in _declared_fields(routes["get_refugos_rankings"])
+    assert "value" not in _deprecated_names(routes["get_refugos_rankings"])
+
+
+def test_wave6a_generator_strips_deprecated_from_projectables() -> None:
+    """Guard do gerador: campo em deprecatedFields nunca ressurge como
+    projectable/valueField, mesmo herdado do catalogo antigo."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "gen_tv_routes", REPO_ROOT / "scripts" / "generate_tv_data_routes_from_openapi.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    route = mod.normalize_projectable_fields_on_route(
+        {
+            "valueFields": ["canonical_pct", "value"],
+            "projectableFields": [
+                {"name": "canonical_pct", "type": "number"},
+                {"name": "value", "type": "number"},
+            ],
+            "deprecatedFields": [
+                {
+                    "name": "value",
+                    "replacement": "canonical_pct",
+                    "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+                }
+            ],
+        }
+    )
+    assert [f["name"] for f in route["projectableFields"]] == ["canonical_pct"]
+    assert route["valueFields"] == ["canonical_pct"]
+
+
+def test_wave6a_deprecation_ledger_matches_catalog() -> None:
+    """Ledger governado (docs/.../value_alias_deprecation_ledger.json) cobre
+    exatamente os 42 sites deprecated do catalogo, com replacement coerente."""
+    ledger_path = (
+        REPO_ROOT
+        / "docs"
+        / "07-api-delpi"
+        / "inventory-value-field"
+        / "value_alias_deprecation_ledger.json"
+    )
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    routes = _load_routes()
+
+    # total de sites: operationCount (familias agrupadas) ou 1 por entrada
+    total_sites = sum(int(e.get("operationCount", 1)) for e in ledger["entries"])
+    assert total_sites == 42
+
+    # entradas por-operationId batem com deprecatedFields do catalogo
+    for entry in ledger["entries"]:
+        op = entry.get("operationId")
+        if not op:
+            continue  # familia SI meta validada abaixo
+        dep = _deprecated_names(routes[op])
+        assert entry["alias"] in dep, f"{op}: ledger alias not in catalog"
+        assert dep[entry["alias"]]["replacement"] == entry["canonicalReplacement"]
+
+    # familia meta: 36 ops x value -> comparable_goal
+    meta_entry = next(
+        e for e in ledger["entries"] if e.get("operationFamily") == "get_si_indicator_*_meta"
+    )
+    assert meta_entry["operationCount"] == 36
+    assert meta_entry["canonicalReplacement"] == "comparable_goal"
+    for op in _si_meta_ops(routes):
+        dep = _deprecated_names(routes[op])
+        assert dep["value"]["replacement"] == "comparable_goal"

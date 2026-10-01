@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "wave": "6A",
+  "created_at": "2026-10-01",
+  "status_legend": {
+    "DEPRECATED_COMPATIBILITY_ALIAS": "Emitido pelo producer; zero consumers ativos comprovados; nao removido por acoplamento interno/risco externo.",
+    "TV_DEDUP_CANONICALIZATION": "PLANNED — comunicado_data_enrichment_service._KPI_VALUE_ALIAS_FIELDS/_prefer_primary_value_metric usa presenca de `value` para dedup de aliases; migrar chave primaria antes de remover.",
+    "CHAT_SEMANTIC_PRIMARY_FIELDS": "PLANNED — humanized_data_response.json scalarFieldProfile.primaryFieldKeys prioriza `value`; adicionar campos semanticos antes de remover.",
+    "TV_FIELD_FALLBACK_READS": "PLANNED — leituras field-level com fallback: delpi_production_gateway.fetch_ppm_summary prefere summary['value']; visual_projection_service.primary_value_field prefere 'value' quando declarado em valueFields (catalog-level, ja despreferido em Wave 6A). Migrar ordem de preferencia para campo semantico antes de remover."
+  },
+  "note": "DEPRECATED != SCHEDULED_FOR_REMOVAL. Sem data de remocao. EXTERNAL_FIELD_USAGE = UNKNOWN (gateway proxy impede prova por access log).",
+  "entries": [
+    {
+      "alias": "value",
+      "operationFamily": "get_si_indicator_*_meta",
+      "operationCount": 36,
+      "producer": "strategic-indicators-api/si_app/application/use_cases/strategic_indicators/get_dashboard_indicator_metric_use_case.py",
+      "canonicalReplacement": "comparable_goal",
+      "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+      "internalBlockers": [
+        "TV_DEDUP_CANONICALIZATION"
+      ],
+      "externalRisk": "UNKNOWN — gateway-proxied traffic observed; field-level reads unprovable from access logs",
+      "earliestRemovalGate": "TV dedup canonicalized + external consumer sweep/versioned migration window"
+    },
+    {
+      "alias": "value",
+      "operationId": "get_kaizen_summary",
+      "producer": "api-delpi/app/interface/http/routes/quality/quality_router.py (attach_quality_kpi_parity primary_field=total_savings)",
+      "canonicalReplacement": "total_savings",
+      "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+      "internalBlockers": [
+        "CHAT_SEMANTIC_PRIMARY_FIELDS",
+        "TV_FIELD_FALLBACK_READS"
+      ],
+      "externalRisk": "UNKNOWN",
+      "earliestRemovalGate": "chat primaryFieldKeys semantic-first + external sweep"
+    },
+    {
+      "alias": "ideas_goal.value",
+      "operationId": "get_kaizen_summary",
+      "producer": "api-delpi attach_quality_kpi_parity nested_blocks={ideas_goal: total_kaizens}",
+      "canonicalReplacement": "ideas_goal.total_kaizens",
+      "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+      "internalBlockers": [
+        "CHAT_SEMANTIC_PRIMARY_FIELDS",
+        "TV_FIELD_FALLBACK_READS"
+      ],
+      "externalRisk": "UNKNOWN",
+      "earliestRemovalGate": "chat primaryFieldKeys semantic-first + external sweep"
+    },
+    {
+      "alias": "value",
+      "operationId": "get_audit_5s_summary",
+      "producer": "api-delpi quality_router attach_quality_kpi_parity primary_field=average_score",
+      "canonicalReplacement": "average_score",
+      "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+      "internalBlockers": [
+        "CHAT_SEMANTIC_PRIMARY_FIELDS",
+        "TV_FIELD_FALLBACK_READS"
+      ],
+      "externalRisk": "UNKNOWN",
+      "earliestRemovalGate": "chat primaryFieldKeys semantic-first + external sweep"
+    },
+    {
+      "alias": "value",
+      "operationId": "get_ppm_external_summary",
+      "producer": "api-delpi ppm_routes attach_quality_kpi_parity primary_field=ppm",
+      "canonicalReplacement": "ppm",
+      "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+      "internalBlockers": [
+        "CHAT_SEMANTIC_PRIMARY_FIELDS",
+        "TV_FIELD_FALLBACK_READS"
+      ],
+      "externalRisk": "UNKNOWN",
+      "earliestRemovalGate": "chat primaryFieldKeys semantic-first + external sweep"
+    },
+    {
+      "alias": "value",
+      "operationId": "get_ppm_internal_summary",
+      "producer": "api-delpi ppm_routes attach_quality_kpi_parity primary_field=ppm",
+      "canonicalReplacement": "ppm",
+      "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+      "internalBlockers": [
+        "CHAT_SEMANTIC_PRIMARY_FIELDS",
+        "TV_FIELD_FALLBACK_READS"
+      ],
+      "externalRisk": "UNKNOWN",
+      "earliestRemovalGate": "chat primaryFieldKeys semantic-first + external sweep"
+    },
+    {
+      "alias": "value",
+      "operationId": "get_nonconformity_streak",
+      "producer": "api-delpi get_nonconformity_streak_use_case.py — value=current_days_without_nc",
+      "canonicalReplacement": "current_days_without_nc",
+      "status": "DEPRECATED_COMPATIBILITY_ALIAS",
+      "internalBlockers": [
+        "CHAT_SEMANTIC_PRIMARY_FIELDS",
+        "TV_FIELD_FALLBACK_READS"
+      ],
+      "externalRisk": "UNKNOWN",
+      "earliestRemovalGate": "chat primaryFieldKeys semantic-first + external sweep"
+    }
+  ],
+  "explicitlyNotDeprecated": {
+    "get_si_indicator_*_realized.value": "KEEP_CANONICAL — escalar canonico do contrato SI realized (36 ops)",
+    "get_refugos_rankings.items[].value": "KEEP_CANONICAL — campo de dominio legitimo em linhas de ranking",
+    "presentation {label,value}": "PRESENTATION_VALUE — shape normalizado consumer-owned",
+    "DataModel output value": "PRESENTATION_VALUE — contrato escalar canonico dos dataModels consumer-owned (rx_*)"
+  }
+}

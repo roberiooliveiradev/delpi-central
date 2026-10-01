@@ -60,6 +60,9 @@ OVERLAY_KEYS = frozenset(
         "suggestedTransformSteps",
         # Sem datas na query → API devolve o histórico completo (não injeta periodDays).
         "openEndedDateRange",
+        # Campos ainda emitidos pelo producer como alias de compatibilidade, mas
+        # não projetáveis/preferíveis — ver docs/07-api-delpi/inventory-value-field.
+        "deprecatedFields",
     }
 )
 
@@ -558,12 +561,27 @@ def normalize_projectable_fields_on_route(route: dict[str, Any]) -> dict[str, An
             entry["label"] = str(label).strip()
         by_name[key] = entry
 
+    # deprecatedFields vence: campo declarado deprecated nunca fica projetável,
+    # mesmo se herdado do catálogo antigo via merge_with_existing.
+    deprecated_names = {
+        str(item.get("name") or "").strip()
+        for item in (merged.get("deprecatedFields") or [])
+        if isinstance(item, dict)
+    }
+    for name in deprecated_names:
+        by_name.pop(name, None)
+
     fields = list(by_name.values())
-    if fields:
+    if fields or deprecated_names:
+        fields = [item for item in fields if item.get("name") not in deprecated_names]
         merged["projectableFields"] = fields
         # Alias de transição: valueFields = nomes projetáveis (preserva extras já listados).
         names = [item["name"] for item in fields]
-        existing_vf = [str(x).strip() for x in (merged.get("valueFields") or []) if str(x).strip()]
+        existing_vf = [
+            str(x).strip()
+            for x in (merged.get("valueFields") or [])
+            if str(x).strip() and str(x).strip() not in deprecated_names
+        ]
         ordered: list[str] = []
         seen: set[str] = set()
         for name in names + existing_vf:

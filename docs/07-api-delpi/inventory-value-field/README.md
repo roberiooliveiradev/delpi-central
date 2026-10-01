@@ -443,3 +443,69 @@ intocados; sem mutacao em banco.
 - Aliases HTTP emitidos com zero consumers comprovados (meta value x36,
   parity value x6): DEPRECATE_READY — remocao fisica pendente de sweep
   de consumers externos.
+
+## Wave 6A — Formal deprecation without removal (executada 2026-10-01)
+
+Wave 6 pre-gate (read-only) reclassificou os 42 aliases emitidos de
+DEPRECATE_READY para KEEP_COMPATIBILITY: todo alias tem ao menos um
+acoplamento interno comprovado ou risco externo nao resolvido. Wave 6A
+formaliza o status como DEPRECATED_COMPATIBILITY_ALIAS via metadata
+governada — sem remover nenhum campo dos payloads.
+
+Target set = 42 sites de emissao:
+
+- 36x get_si_indicator_*_meta.value -> comparable_goal
+  (producer: get_dashboard_indicator_metric_use_case.py "value":
+  comparable_goal)
+- get_kaizen_summary.value -> total_savings
+- get_kaizen_summary.ideas_goal.value -> ideas_goal.total_kaizens
+  (nested_blocks={ideas_goal: total_kaizens} em attach_quality_kpi_parity)
+- get_audit_5s_summary.value -> average_score
+- get_ppm_external_summary.value -> ppm
+- get_ppm_internal_summary.value -> ppm
+- get_nonconformity_streak.value -> current_days_without_nc
+
+Mecanismo governado (novo, minimo):
+
+- Owner: catalogo TV (tv_data_route_overlays.json) + gerador canonico
+  scripts/generate_tv_data_routes_from_openapi.py.
+- Consumer: tv-dashboard-api catalog (tv_data_routes.json) —
+  deprecatedFields documenta o alias emitido; o gerador garante que
+  nomes deprecated nunca aparecam em valueFields/projectableFields
+  (strip em normalize_projectable_fields_on_route).
+- Schema: {name, replacement, status=DEPRECATED_COMPATIBILITY_ALIAS}.
+- Teste: test_wave6a_* em test_catalog_value_field_contract.py
+  (target=42 sites, replacement existe/declarado, alias ainda emitido,
+  nao projetavel, keepers intocados, guard do gerador, ledger coerente).
+- Ledger: value_alias_deprecation_ledger.json (neste diretorio).
+
+DEPRECATED != SCHEDULED_FOR_REMOVAL. Sem data de remocao.
+
+Blockers internos documentados (removal prerequisites):
+
+- TV_DEDUP_CANONICALIZATION = PLANNED —
+  comunicado_data_enrichment_service._KPI_VALUE_ALIAS_FIELDS /
+  _prefer_primary_value_metric usa presenca de value para dedup.
+- CHAT_SEMANTIC_PRIMARY_FIELDS = PLANNED —
+  humanized_data_response.json scalarFieldProfile.primaryFieldKeys
+  prioriza value (futuros: comparable_goal, total_savings,
+  average_score, ppm, current_days_without_nc).
+- TV_FIELD_FALLBACK_READS = PLANNED —
+  delpi_production_gateway.fetch_ppm_summary prefere summary['value'];
+  visual_projection_service.primary_value_field preferia 'value' quando
+  declarado (catalog-level, ja resolvido pela despreferencia).
+
+EXTERNAL_FIELD_USAGE = UNKNOWN — trafego via gateway existe; access
+logs nao provam field-level reads. Remocao fisica exige declaracao/
+migracao explicita de consumers ou janela de compatibilidade com
+rollout versionado monitorado.
+
+Invariates reforcados: alias deprecated nao pode voltar a ser
+preferido/projetavel; SI realized value (36 ops) e rankings
+items[].value permanecem canonicos; presentation {label,value} e
+DataModel output value nao sao marcados. Producer payload change = 0;
+DB mutations = 0; TV/Chat runtime behavior = sem mudanca de payload.
+
+Escopo adjacente na mesma passada de catalogo: ppmValue (stale
+catalog-only, nunca emitido, zero refs — mesma classe de otdPct/oeePct
+da Wave 5) removido das declaracoes de get_ppm_external/internal.

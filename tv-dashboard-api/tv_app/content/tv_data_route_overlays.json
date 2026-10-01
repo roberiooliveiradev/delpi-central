@@ -40,6 +40,13 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
+      "deprecatedFields": [
+        {
+          "name": "value",
+          "replacement": "comparable_goal",
+          "status": "DEPRECATED_COMPATIBILITY_ALIAS"
+        }
+      ],
       "projectableFields": null
     }
   },
@@ -97,14 +104,10 @@
         "requiresBranchPermission": true
       },
       "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
+        "ppm"
       ],
       "valueFieldTypes": {
-        "value": "number",
         "ppm": "number",
-        "ppmValue": "number",
         "total_produzido_un": "number",
         "total_devolvido_un": "number",
         "target": "number",
@@ -112,9 +115,7 @@
         "goal_value": "number"
       },
       "valueFieldLabels": {
-        "value": "Valor",
         "ppm": "PPM",
-        "ppmValue": "PPM",
         "total_produzido_un": "Total produzido (un.)",
         "total_produzido_milheiro": "Total produzido (milheiro)",
         "total_devolvido_un": "Total devolvido (un.)",
@@ -123,6 +124,14 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
+      "deprecatedFields": [
+        {
+          "name": "value",
+          "replacement": "ppm",
+          "status": "DEPRECATED_COMPATIBILITY_ALIAS"
+        }
+      ],
+      "projectableFields": null,
       "label": "PPM Externo",
       "labelAliases": [
         "Qualidade — PPM externo"
@@ -137,22 +146,16 @@
         "requiresBranchPermission": true
       },
       "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
+        "ppm"
       ],
       "valueFieldTypes": {
-        "value": "number",
         "ppm": "number",
-        "ppmValue": "number",
         "target": "number",
         "comparable_goal": "number",
         "goal_value": "number"
       },
       "valueFieldLabels": {
-        "value": "Valor",
         "ppm": "PPM",
-        "ppmValue": "PPM",
         "total_produzido_un": "Total produzido (un.)",
         "total_produzido_milheiro": "Total produzido (milheiro)",
         "total_devolvido_un": "Total devolvido (un.)",
@@ -161,6 +164,14 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
+      "deprecatedFields": [
+        {
+          "name": "value",
+          "replacement": "ppm",
+          "status": "DEPRECATED_COMPATIBILITY_ALIAS"
+        }
+      ],
+      "projectableFields": null,
       "label": "PPM Interno",
       "labelAliases": [
         "Qualidade — PPM interno",
@@ -657,12 +668,23 @@
     "get_kaizen_summary": {
       "exposesSiGoal": true,
       "valueFields": [
-        "value",
         "total_savings",
         "total_kaizens"
       ],
+      "deprecatedFields": [
+        {
+          "name": "value",
+          "replacement": "total_savings",
+          "status": "DEPRECATED_COMPATIBILITY_ALIAS"
+        },
+        {
+          "name": "ideas_goal.value",
+          "replacement": "ideas_goal.total_kaizens",
+          "status": "DEPRECATED_COMPATIBILITY_ALIAS"
+        }
+      ],
+      "projectableFields": null,
       "valueFieldLabels": {
-        "value": "Valor",
         "total_savings": "Economia total",
         "total_kaizens": "Total kaizens",
         "comparable_goal": "Meta do período",
@@ -687,8 +709,14 @@
       "valueFields": [
         "average_score"
       ],
+      "deprecatedFields": [
+        {
+          "name": "value",
+          "replacement": "average_score",
+          "status": "DEPRECATED_COMPATIBILITY_ALIAS"
+        }
+      ],
       "valueFieldLabels": {
-        "value": "Valor",
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta do período",
         "goal_value": "Meta cadastrada",
@@ -794,14 +822,19 @@
       "valueFields": [
         "current_days_without_nc"
       ],
+      "deprecatedFields": [
+        {
+          "name": "value",
+          "replacement": "current_days_without_nc",
+          "status": "DEPRECATED_COMPATIBILITY_ALIAS"
+        }
+      ],
       "valueFieldTypes": {
-        "value": "number",
         "current_days_without_nc": "number",
         "record_days_without_nc": "number",
         "nc_count": "number"
       },
       "valueFieldLabels": {
-        "value": "Dias sem NC",
         "current_days_without_nc": "Dias atuais sem NC",
         "record_days_without_nc": "Recorde de dias sem NC",
         "last_nc_date": "Data da última NC"
