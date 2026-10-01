@@ -2401,3 +2401,19 @@ Implementation: `fdca215029a09dee862633460e7bc17bf1fa5639` (evidence §6.90).
 | `git diff --check` | clean |
 
 Epistemic gates: prior `USER_INPUT` = `None|OBSERVATION`; prior `DELIA_RESULT` = all canonical non-FACT + `None`; `FACT` in client context → fail-closed `invalid_request`; oversize context → `context_too_large` (bounded, no silent truncation).
+
+### C3-MCP-INTEROP-01 — existing specialist MCP federation (candidate for architecture review)
+
+Implementation: `783cc13578fe281425ae7793ccf5e3b97e3be362` (evidence §6.92).
+
+| Check | Result |
+|---|---|
+| Targeted interop tests (`test_specialist_interop_*`, `test_mcp_adapter`) | 48/48 PASS — allowlist, DISCOVERY-only gate, PREPARE/ACT/unknown blocked at two boundaries, OBSERVATION pin, context-minimization contract shape, error normalization, transport timeout/size/protocol/session/SSE, disabled/not-configured/no-token fail closed |
+| Security negative tests | PASS — poisoned tool descriptions/schemas/results stay data; forged `readOnlyHint` cannot elevate; metadata != permission |
+| Architecture/dependency tests | PASS — Domain/Application free of MCP/HTTP/vendor imports; no routers/registries/proxies; no direct specialist business adapters; specialist ids confined to canonical registry/config |
+| Full delia-api suite | 461/461 PASS |
+| MFE tests / typecheck / build | TEST_NOT_RUN — no MFE changes in this slice |
+| Live MCP transport probe (DAVI/TÉO/VISTA from delpi-delia-api) | PROVEN — 3/3 reachable, OAuth 401 challenge, fail closed |
+| Live authenticated discovery/catalog | TEST_NOT_RUN — `mcp_authentication_failed`; no user-delegated token mechanism exists (dev realm has no `mcp-*` clients); invalid-token wire probe confirms real 401 → semantic error |
+| Business READ eval | TEST_NOT_RUN_PHASE_GATED (`C4_AUTHORIZED=NO`) |
+| `git diff --check` | clean |

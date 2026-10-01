@@ -5624,3 +5624,97 @@ NEXT: ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ
       DIRECT_DATABASE_ACCESS=FORBIDDEN; CHAT_RUNTIME_REUSE=FORBIDDEN;
       TOOL_EXECUTION=NONE; PREPARE=NONE; ACT=NONE; domain NOT selected)
 ```
+
+## 6.92 C3-MCP-INTEROP-01 — Existing specialist MCP federation foundation evidence
+
+```
+STEP: C3-MCP-INTEROP-01
+TASK: EXISTING_SPECIALIST_MCP_FEDERATION (DAVI + TÉO + VISTA)
+MODE: FOUNDATION IMPLEMENTATION (existing MCP reuse; provider-neutral
+      boundary; read/discovery safe; fail-closed; no specialist
+      reimplementation)
+BASE_HEAD: 5b1e22f6a11fbb517bde2e98e81795990a776836
+POST_BASE_UPSTREAM: 6 commits — 89d4c2b643 (DAVI semantic-read-POST
+      fail-closed hardening) MATERIAL_TO_TASK_CONTEXT (no MCP surface
+      change; reinforces fail-closed); others OUTSIDE_TASK
+IMPLEMENTATION_HEAD: 783cc13578fe281425ae7793ccf5e3b97e3be362
+BIND_HEAD: self (docs-only commit)
+
+ARCHITECTURE:
+  APPLICATION_BOUNDARY = SpecialistInteropPort (Protocol) +
+      SpecialistInterop use case — provider-neutral; zero MCP/HTTP/
+      vendor imports in Domain/Application (architecture test PASS)
+  DOMAIN = specialist_interop: SpecialistRef / SpecialistCapability-
+      Descriptor (projection grants nothing) / SpecialistOutcome
+      (epistemic OBSERVATION pinned) / SpecialistResultProvenance
+  REGISTRY = DÉLIA-owned SPECIALIST_CAPABILITY_CLASSES
+      (davi/teo/vista; DISCOVERY/READ/PREPARE/ACT) — remote metadata
+      never elevates a class; unknown name fails closed
+  INFRASTRUCTURE = infrastructure/interoperability/mcp:
+      DelpiMcpTransport (bounded JSON-RPC over DELPI streamable-HTTP
+      profile — json_response + stateless_http; initialize/tools list/
+      call; session-id echo; 1MiB bound; timeout) + McpSpecialistAdapter
+      (second fail-closed boundary: re-checks registry + phase gate +
+      configured/enabled/delegated-credential before any wire byte)
+  CONFIG = DELIA_MCP_{DAVI,TEO,VISTA}_{BASE_URL,ENABLED,USER_TOKEN} +
+      DELIA_MCP_TIMEOUT_SECONDS; compose exposes endpoints only —
+      tokens are optional user-delegated bearers, absent = fail closed
+  A2A_RUNTIME = NOT_IMPLEMENTED (current specialists are MCP; port
+      protocol-neutral enough for a future adapter)
+
+FAIL-CLOSED PROPERTIES (tested):
+  unknown specialist -> UNKNOWN_SPECIALIST
+  unconfigured endpoint -> SPECIALIST_NOT_CONFIGURED
+  disabled profile -> SPECIALIST_DISABLED
+  no delegated credential -> MCP_AUTHENTICATION_FAILED (pre-wire)
+  invalid credential -> server 401 -> MCP_AUTHENTICATION_FAILED
+  unknown remote name -> UNKNOWN_CAPABILITY
+  PREPARE/ACT -> WRITE_CAPABILITY_BLOCKED
+  READ -> CAPABILITY_NOT_ALLOWED_IN_PHASE (C4 gate)
+  oversized args/response, timeout, protocol error, invalid JSON,
+  id mismatch, SSE -> bounded semantic codes
+  poisoned descriptions/schemas/results stay untrusted data
+  outcome epistemic_class = OBSERVATION (structurally pinned)
+
+CONNECTIVITY (evaluated at IMPLEMENTATION_HEAD via
+  scripts/real_mcp_interop_eval.py inside delpi-delia-api):
+  DAVI transport = PROVEN (reachable, 401 OAuth challenge)
+  TÉO transport = PROVEN (reachable, 401 OAuth challenge)
+  VISTA transport = PROVEN (reachable, 401 OAuth challenge)
+  Authenticated discovery/catalog = BLOCKED / TEST_NOT_RUN —
+      specialists accept user-delegated OAuth only (internal service
+      tokens forbidden by shared delpi_mcp design); DÉLIA has no
+      delegation mechanism and dev realm has no mcp-* clients
+  IDENTITY_DELEGATION = TO_INVENTORY/BLOCKED (owner: platform
+      security + specialist owners; prerequisite for real catalog calls)
+  BUSINESS_READ_EXECUTION = PHASE_GATED (C4_AUTHORIZED=NO)
+  REAL_BUSINESS_READ_EVAL = TEST_NOT_RUN_PHASE_GATED
+
+TESTS (at IMPLEMENTATION_HEAD):
+  TARGETED_MCP_TESTS = 48/48 PASS
+  FULL_DELIA_API_TESTS = 461/461 PASS
+  MFE = TEST_NOT_RUN (no MFE changes)
+  LIVE_EVAL = transport PROVEN 3/3; authenticated catalog BLOCKED
+  git diff --check = clean
+
+CP CONTRIBUTION (statuses unchanged):
+  CP-263 = FOUNDATION CONTRIBUTION (adapter+allowlist; discovery!=approval)
+  CP-264 = PARTIAL (provenance/minimization/timeout built; real read
+      delegation unproven)
+  CP-265 = INVARIANT PRESERVED (no write path)
+  CP-266 = OUT OF SCOPE (no lifecycle engine)
+
+POSTCONDITION:
+  provider-neutral boundary IMPLEMENTED; allowlist + two-boundary
+  write filter PROVEN; transport PROVEN; authenticated specialist
+  connectivity NOT_PROVEN (blocked, not faked); no duplicated
+  specialist logic; no generic proxies; C3_EXECUTED=NO.
+
+C3_STARTED: YES
+C3_EXECUTED: NO
+C4_AUTHORIZED: NO
+PRODUCTION_READINESS: NOT_PROVEN
+BLOCKERS: IDENTITY_DELEGATION (no user-delegated MCP token path)
+EXECUTION_DRIFT: NONE
+NEXT: ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+```

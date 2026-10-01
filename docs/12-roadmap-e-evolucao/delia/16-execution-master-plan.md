@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ` — coordination intent only; selects/inventories the first legitimate authoritative DELPI READ source/capability (no implementation authorized) (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED`; `C3-INTERACTION-RUNTIME-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2_FINAL=ACCEPT_WITH_RESIDUAL` §6.91; `C3-INTERACTION-CONTINUITY-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01=ACCEPT_WITH_RESIDUAL` §6.91); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01` — architecture review of the existing-specialist MCP federation foundation (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED`; `C3-INTERACTION-RUNTIME-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2_FINAL=ACCEPT_WITH_RESIDUAL` §6.91; `C3-INTERACTION-CONTINUITY-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01=ACCEPT_WITH_RESIDUAL` §6.91; `C3-MCP-INTEROP-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.92); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -742,13 +742,15 @@ C3-INTERACTION-CONTINUITY-01 = APPROVED
     IMPLEMENTATION_HEAD fdca215029a09dee862633460e7bc17bf1fa5639;
     real eval PASS §6.90; CONTEXT_STORAGE=MFE_MEMORY_ONLY;
     SESSION_PERSISTENCE=NONE; CONVERSATION_HISTORY_AUTHORITY=NONE)
-NEXT = ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ
-   (coordination only — inventory/select first authoritative DELPI
-    READ source/capability; READ_ONLY, AUTHENTICATED, CORE_AUTHZ,
-    DOMAIN_FINAL_AUTHORITY, EVIDENCE, AUTHORITATIVE_POST_READ_SOURCE
-    required; RAG=NOT_IMPLIED; GENERIC_SQL/DIRECT_DATABASE_ACCESS/
-    CHAT_RUNTIME_REUSE FORBIDDEN; TOOL_EXECUTION/PREPARE/ACT=NONE;
-    domain NOT selected here)
+C3-MCP-INTEROP-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+   (§6.92; EXISTING_SPECIALIST_MCP_FEDERATION over DAVI/TÉO/VISTA;
+    IMPLEMENTATION_HEAD=783cc13578fe281425ae7793ccf5e3b97e3be362;
+    provider-neutral SpecialistInteropPort + MCP adapter; registry
+    allowlist DISCOVERY-only in C3; PREPARE/ACT never exposed;
+    transport PROVEN 3/3 fail-closed 401; authenticated connectivity
+    BLOCKED — no user-delegated token mechanism/owner clients yet;
+    BUSINESS_READ_EXECUTION=PHASE_GATED while C4_AUTHORIZED=NO)
+NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
 Workspace binding remains unscheduled
 ```
 
@@ -1314,5 +1316,50 @@ ACCEPTED_RESIDUALS = SESSION_PERSISTENCE=NONE/intentional;
         REAL_BUSINESS_DATA_ACCESS=NONE/next governed capability family
 EVIDENCE = ledger §6.90-§6.91; continuity tests 30/30; full suite
            415/415; MFE 36/36 + typecheck + build; real eval PASS
-NEXT = ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ
+NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+```
+
+### C3-MCP-INTEROP-01 — Existing Specialist MCP Federation (candidate for review)
+
+```text
+TASK = C3-MCP-INTEROP-01 — EXISTING_SPECIALIST_MCP_FEDERATION
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+EXECUTED = NO
+IMPLEMENTATION_HEAD = 783cc13578fe281425ae7793ccf5e3b97e3be362
+SCOPE = provider-neutral interoperability boundary to the three
+        existing approved specialist MCPs — DAVI (api-delpi),
+        TÉO (transformometro-api), VISTA (tv-dashboard-api);
+        no specialist business logic/AuthZ/catalog reimplemented;
+        no direct Product/Transformômetro/TV adapters; no generic
+        HTTP/MCP proxy; no A2A runtime
+APPROVED_SPECIALISTS = DAVI | TÉO | VISTA (allowlist registry;
+        unknown specialist/server/tool fails closed)
+APPLICATION_BOUNDARY = SpecialistInteropPort + SpecialistInterop
+        use case (provider-neutral; no MCP/HTTP/vendor types in
+        Domain/Application)
+INFRASTRUCTURE = infrastructure/interoperability/mcp — bounded
+        JSON-RPC transport (DELPI profile: json_response +
+        stateless_http) + McpSpecialistAdapter; two fail-closed
+        boundaries (catalog projection + pre-wire invocation re-check)
+OPERATION_CLASS = DÉLIA-owned registry (DISCOVERY/READ/PREPARE/ACT);
+        remote metadata never elevates a class; C3 invocable =
+        DISCOVERY only (davi.discover_delpi_information,
+        teo.get_catalog, vista.get_catalog)
+WRITE_TOOL_FILTER = PASS | PREPARE_EXPOSURE = NONE | ACT_EXPOSURE = NONE
+MCP_RESULT = untrusted OBSERVATION (never auto-FACT; never authority)
+CONNECTIVITY = transport PROVEN 3/3 (reachable + OAuth 401
+        fail-closed challenge from delpi-delia-api); authenticated
+        DÉLIA connectivity BLOCKED — specialist MCPs accept
+        user-delegated OAuth only (service tokens forbidden by
+        design) and no delegation mechanism / dev realm mcp-*
+        clients exist yet (IDENTITY_DELEGATION=TO_INVENTORY)
+DAVI_DISCOVERY / TEO_CATALOG / VISTA_CATALOG = TEST_NOT_RUN
+        (authenticated path blocked; invalid-token probe proves
+        real-wire 401 -> mcp_authentication_failed mapping)
+BUSINESS_READ_EXECUTION = PHASE_GATED (C4_AUTHORIZED=NO)
+TARGETED_TESTS = PASS 48/48 | FULL_DELIA_API = PASS 461/461
+STATIC_VALIDATION = git diff --check clean
+EVIDENCE = ledger §6.92; scripts/real_mcp_interop_eval.py output
+           at IMPLEMENTATION_HEAD
+NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
 ```

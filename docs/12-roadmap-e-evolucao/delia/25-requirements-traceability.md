@@ -1307,5 +1307,35 @@ TRACEABILITY_GAP = RESOLVED (C3_INTERACTION_RUNTIME_01 and
         C3_INTERACTION_CONTINUITY_01 review verdicts persisted §6.91)
 UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ
+NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+```
+
+## 37. C3-MCP-INTEROP-01 Existing Specialist MCP Federation — candidate linkage
+
+Evidence anchors: `16` C3-MCP-INTEROP-01 section + current-state; `17` boundary clause; `20` C3-MCP-INTEROP-01 acceptance section; spec `60` CP-263..266; ledger §6.92.
+
+`C3_MCP_INTEROP_01=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `IMPLEMENTATION_HEAD=783cc13578fe281425ae7793ccf5e3b97e3be362`. Approved-specialist allowlist `DAVI|TÉO|VISTA` through provider-neutral `SpecialistInteropPort`; discovery != approval != permission; DÉLIA-owned operation class registry (remote metadata never elevates); C3 invocation gate = DISCOVERY only; PREPARE/ACT blocked at two boundaries; outcome pinned OBSERVATION (never auto-FACT); context minimization by contract shape; bounded timeout/size/error normalization; transport PROVEN 3/3 fail-closed 401; authenticated connectivity BLOCKED (user-delegated token mechanism absent — no service-token bypass); `BUSINESS_READ_EXECUTION=PHASE_GATED` while `C4_AUTHORIZED=NO`; `A2A_RUNTIME=NOT_IMPLEMENTED`.
+
+| CP | C3-MCP-INTEROP-01 contribution note | Status |
+|---|---|---|
+| CP-263 | Provider-neutral adapter + explicit approved allowlist implemented; unknown server/tool fails closed; discovery != approval enforced and tested | LOCKED / FOUNDATION CONTRIBUTION |
+| CP-264 | Provenance, context minimization (contract shape), timeout and result-size bound implemented; real read-only delegation unproven (identity delegation blocked) | LOCKED / PARTIAL CONTRIBUTION |
+| CP-265 | Write capabilities never exposed/invocable — invariant preserved at two boundaries; no write path implemented | LOCKED / INVARIANT PRESERVED |
+| CP-266 | No lifecycle engine; only minimal configured/enabled/disabled fail-closed state for this slice | LOCKED / OUT OF SCOPE |
+
+```text
+MCP_INTEROP_FOUNDATION = IMPLEMENTED (candidate)
+APPROVED_SPECIALISTS = DAVI | TÉO | VISTA
+IDENTITY_DELEGATION = TO_INVENTORY/BLOCKED (no user-delegated
+        token mechanism or dev-realm mcp-* clients)
+BUSINESS_READ_EXECUTION = PHASE_GATED
+NEW_CP_CREATED = NO
+UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
+DISCOVERED_REQUIREMENT = user-delegated MCP token propagation /
+        provisioning of mcp-* clients + token-exchange path for
+        DÉLIA -> specialists (owner: platform security + specialist
+        MCP owners; prerequisite for authenticated connectivity)
+TRACEABILITY_GAP = NONE material
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
 ```
