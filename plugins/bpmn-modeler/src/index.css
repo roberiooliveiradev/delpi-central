@@ -437,8 +437,11 @@
   min-height: 0;
 }
 
-/* tabs da sidebar = delpi-ui-underline-nav (kit) — só o flex sizing é local */
-.bpmnm-side__tabs {
+/* tabs da sidebar = delpi-ui-underline-nav (kit). O default do kit tem
+   `flex: 1 1 auto` (nav cresce em trilhos de página); dentro da coluna
+   flex da sidebar isso empurrava o tabpanel ~300px abaixo — override com
+   especificidade maior vence independente da ordem de carregamento. */
+.bpmnm-side > .bpmnm-side__tabs {
   flex: 0 0 auto;
 }
 

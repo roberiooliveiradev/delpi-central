@@ -496,8 +496,28 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
         title="Duplicar modelo"
         onClose={() => setDuplicateTarget(null)}
         initialFocusSelector="input"
+        footer={
+          <>
+            <ActionButton
+              type="button"
+              onClick={() => setDuplicateTarget(null)}
+              disabled={busy}
+            >
+              Cancelar
+            </ActionButton>
+            <ActionButton
+              variant="primary"
+              type="submit"
+              form="bpmnm-duplicate-model-form"
+              disabled={duplicateName.trim().length === 0 || busy}
+            >
+              {busy ? "Duplicando…" : "Duplicar"}
+            </ActionButton>
+          </>
+        }
       >
         <form
+          id="bpmnm-duplicate-model-form"
           onSubmit={(event) => {
             event.preventDefault();
             const name = duplicateName.trim();
@@ -510,22 +530,6 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
             onChange={setDuplicateName}
             required
           />
-          <div className="bpmnm-dialog__actions">
-            <ActionButton
-              type="button"
-              onClick={() => setDuplicateTarget(null)}
-              disabled={busy}
-            >
-              Cancelar
-            </ActionButton>
-            <ActionButton
-              variant="primary"
-              type="submit"
-              disabled={duplicateName.trim().length === 0 || busy}
-            >
-              {busy ? "Duplicando…" : "Duplicar"}
-            </ActionButton>
-          </div>
         </form>
       </BpmnmModal>
     </div>
