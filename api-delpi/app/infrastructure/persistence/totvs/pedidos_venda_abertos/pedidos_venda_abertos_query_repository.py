@@ -205,10 +205,12 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
         Loja numérica `1`/`01` casa por valor inteiro. Nome preferencial: `A1_NREDUZ`.
 
         A semântica é de CLIENTE: itens `tipo_entidade='FORNECEDOR'` da view
-        (ex.: pedidos de beneficiamento `C5_TIPO='B'` cujo `C5_CLIENTE` carrega
-        o código do fornecedor SA2) não entram — código/loja pode colidir com
-        um cliente SA1 distinto. Clientes bloqueados (`A1_MSBLQL='1'`) também
-        são excluídos: carteiras operam apenas com clientes ativos.
+        não entram — código/loja pode colidir com um cliente SA1 distinto
+        (caso observado: `000006/01` existe na SA1 como AGC e na SA2 como
+        TRAMAR). A regra interna que a view usa para classificar a entidade
+        permanece TO_INVENTORY — este método apenas respeita o discriminante
+        já exposto. Clientes bloqueados (`A1_MSBLQL='1'`) também são
+        excluídos: carteiras operam apenas com clientes ativos.
 
         Overdue = data_entrega < hoje e saldo > 0 (mesma regra do MFE commercial).
         """

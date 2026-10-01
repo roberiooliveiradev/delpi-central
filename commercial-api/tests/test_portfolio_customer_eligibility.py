@@ -197,12 +197,12 @@ def test_transfer_customers_bulk_marks_blocked_item_failed() -> None:
     assert [c.customer_code for c in moved] == ["000001"]
 
 
-# -- READ path: vínculo histórico preservado, status sinalizado -------------
+# -- READ path: vínculo histórico preservado, população operacional filtrada -
 
 
-def test_serialize_portfolio_flags_inactive_linked_customer() -> None:
-    """Cliente que inativou após o vínculo: permanece na resposta (histórico
-    gerenciável) mas marcado customer_active=false — não aparece como ativo."""
+def test_serialize_portfolio_excludes_inactive_linked_customer() -> None:
+    """Cliente que inativou após o vínculo não aparece na lista operacional
+    nem entra no customer_count — mas o vínculo permanece persistido."""
     eligibility = FakeEligibility(
         {
             ("000006", "01"): CustomerEligibility(exists=True, active=False),
@@ -213,23 +213,26 @@ def test_serialize_portfolio_flags_inactive_linked_customer() -> None:
 
     payload = use_case.serialize_portfolio(_portfolio())
 
-    by_code = {c["customer_code"]: c for c in payload["customers"]}
-    assert by_code["000006"]["customer_active"] is False
-    assert by_code["000001"]["customer_active"] is True
-    # Vínculo histórico continua na lista — nada é apagado nem escondido.
-    assert len(payload["customers"]) == 2
+    codes = {c["customer_code"] for c in payload["customers"]}
+    assert codes == {"000001"}
+    assert payload["customer_count"] == 1
 
 
 def test_serialize_portfolio_without_port_keeps_legacy_payload() -> None:
+    """Porta ausente (legado/testes): serializa todos os vínculos."""
     use_case, _ = _use_case(None)
     payload = use_case.serialize_portfolio(_portfolio())
-    assert "customer_active" not in payload["customers"][0]
+    assert len(payload["customers"]) == 2
+    assert payload["customer_count"] == 2
 
 
 def test_inactive_link_is_not_deleted_and_still_stored() -> None:
     """CASO 10: inativar o cliente não apaga o vínculo persistido."""
     eligibility = FakeEligibility(
-        {("000006", "01"): CustomerEligibility(exists=True, active=False)}
+        {
+            ("000006", "01"): CustomerEligibility(exists=True, active=False),
+            ("000001", "01"): CustomerEligibility(exists=True, active=True),
+        }
     )
     repo = MagicMock()
     linked = _portfolio()
@@ -240,6 +243,9 @@ def test_inactive_link_is_not_deleted_and_still_stored() -> None:
 
     # Entidade continua carregando o vínculo (dado histórico intacto).
     assert any(c.customer_code == "000006" for c in portfolio.customers)
+    # ... mas a serialização operacional já o omite.
+    payload = use_case.serialize_portfolio(linked)
+    assert {c["customer_code"] for c in payload["customers"]} == {"000001"}
     # Nenhuma operação de remoção foi disparada como efeito colateral.
     repo.remove_customer.assert_not_called()
     repo.replace_customers.assert_not_called()

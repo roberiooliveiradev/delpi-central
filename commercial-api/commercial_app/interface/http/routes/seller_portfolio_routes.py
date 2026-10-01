@@ -520,7 +520,7 @@ def add_seller_customer(
             else "Cliente adicionado à carteira."
         )
         return ok(
-            add_customer_result_to_dict(result),
+            _use_case().serialize_add_customer_result(result),
             message=message,
             operation_id="add_seller_customer",
         )
@@ -770,7 +770,7 @@ def transfer_seller_customers_bulk(
             else "Transferência em massa concluída com falhas parciais."
         )
         return ok(
-            bulk_transfer_result_to_dict(result),
+            _use_case().serialize_bulk_transfer_result(result),
             message=message,
             operation_id="transfer_seller_customers_bulk",
         )

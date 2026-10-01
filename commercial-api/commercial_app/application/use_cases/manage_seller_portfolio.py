@@ -90,29 +90,42 @@ def portfolio_to_dict(
             item["has_portal_access"] = True
         members.append(item)
     summary = portfolio_membership_summary(portfolio)
-    customers = []
-    for item in portfolio.customers:
-        customer = {
-            "customer_code": item.customer_code,
-            "customer_store": item.customer_store,
-            "customer_center": item.customer_center,
-            "customer_name": item.customer_name,
-        }
-        if customer_eligibility is not None:
-            info = customer_eligibility.get(
+    # População operacional: com a porta de elegibilidade ligada, vínculos de
+    # clientes inativos/inexistentes na SA1 não aparecem como clientes atuais
+    # da carteira — o vínculo histórico permanece persistido na entidade.
+    operational = [
+        item
+        for item in portfolio.customers
+        if customer_eligibility is None
+        or (
+            (info := customer_eligibility.get(
                 customer_key(item.customer_code, item.customer_store)
-            )
-            customer["customer_active"] = bool(info and info.exists and info.active)
-        customers.append(customer)
+            )) is not None
+            and info.exists
+            and info.active
+        )
+    ]
     return {
         "id": portfolio.id,
         "user_id": portfolio.user_id,
         "owner_user_id": portfolio.owner_user_id,
         "display_name": portfolio.display_name,
         "active": portfolio.active,
-        "customer_count": summary["customer_count"],
+        "customer_count": (
+            len(operational)
+            if customer_eligibility is not None
+            else summary["customer_count"]
+        ),
         "member_count": summary["member_count"],
-        "customers": customers,
+        "customers": [
+            {
+                "customer_code": item.customer_code,
+                "customer_store": item.customer_store,
+                "customer_center": item.customer_center,
+                "customer_name": item.customer_name,
+            }
+            for item in operational
+        ],
         "members": members,
     }
 
@@ -291,10 +304,12 @@ def add_customer_result_to_dict(
     result: AddCustomerResult,
     *,
     portal_access_by_user: dict[str, bool] | None = None,
+    customer_eligibility: Mapping[tuple[str, str], CustomerEligibility] | None = None,
 ) -> dict[str, Any]:
     payload = portfolio_to_dict(
         result.portfolio,
         portal_access_by_user=portal_access_by_user,
+        customer_eligibility=customer_eligibility,
     )
     warning = customer_overlap_warning_to_dict(result.warning)
     if warning is not None:
@@ -310,15 +325,18 @@ def bulk_transfer_result_to_dict(
     result: BulkTransferResult,
     *,
     portal_access_by_user: dict[str, bool] | None = None,
+    customer_eligibility: Mapping[tuple[str, str], CustomerEligibility] | None = None,
 ) -> dict[str, Any]:
     return {
         "source": portfolio_to_dict(
             result.source,
             portal_access_by_user=portal_access_by_user,
+            customer_eligibility=customer_eligibility,
         ),
         "target": portfolio_to_dict(
             result.target,
             portal_access_by_user=portal_access_by_user,
+            customer_eligibility=customer_eligibility,
         ),
         "transferred_count": result.transferred_count,
         "failed_count": result.failed_count,
@@ -476,6 +494,28 @@ class ManageSellerPortfolioUseCase:
             )
             for item in portfolios
         ]
+
+    def serialize_add_customer_result(
+        self,
+        result: AddCustomerResult,
+    ) -> dict[str, Any]:
+        return add_customer_result_to_dict(
+            result,
+            customer_eligibility=self._customer_eligibility_map(
+                result.portfolio.customers
+            ),
+        )
+
+    def serialize_bulk_transfer_result(
+        self,
+        result: BulkTransferResult,
+    ) -> dict[str, Any]:
+        return bulk_transfer_result_to_dict(
+            result,
+            customer_eligibility=self._customer_eligibility_map(
+                [*result.source.customers, *result.target.customers]
+            ),
+        )
 
     def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
         if self._portal_access is None:
