@@ -320,14 +320,14 @@ def _allowlist_entry(oid: str) -> dict[str, Any]:
 
 def test_wave006_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 15
+    assert allow.get("version") == 16
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ"
+        "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert len(_PRIOR_FIFTY_THREE) == 53
     assert len(_PROMOTED) == 10
-    assert len(eligible) == 63
+    assert len(eligible) == 70
     assert set(_PRIOR_FIFTY_THREE) <= eligible
     assert set(_PROMOTED) <= eligible
 
@@ -372,7 +372,7 @@ def test_wave006_agent_intelligence_unchanged_and_no_hardcoded_ops():
             encoding="utf-8"
         )
     )
-    assert intel.get("version") == "2026.09.24.3"
+    assert intel.get("version") == "2026.10.01.1"
     blob = json.dumps(intel)
     for oid in _PROMOTED:
         assert oid not in blob
@@ -777,7 +777,7 @@ def _discover(query: str, monkeypatch) -> dict[str, Any]:
 )
 def test_wave006_retrieval_positive(query: str, expected: str, monkeypatch):
     discovered = _discover(query, monkeypatch)
-    assert discovered["eligible_action_count"] == 63, query
+    assert discovered["eligible_action_count"] == 70, query
     assert discovered["candidate_count"] >= 1, query
     top = discovered["candidates"][0]["action_id"]
     assert top == expected, (query, top, [c["action_id"] for c in discovered["candidates"][:3]])
@@ -874,10 +874,17 @@ def test_wave006_bruto_quarantine_no_false_disable_of_prior_reads(monkeypatch):
 
 def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
     allow = load_external_read_allowlist()
-    reason = str(allow.get("coverageDecision", {}).get("reason") or "")
-    assert "machine-load" in reason.lower() or "machine load" in reason.lower()
-    assert "operator" in reason.lower() or "person" in reason.lower()
-    # Must not claim all OP line detail is excluded while machine-load exposes OP fields.
+    coverage = allow.get("coverageDecision") or {}
+    # Wave 006 was superseded by PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001;
+    # its decision record must remain chained, not silently dropped.
+    previous = coverage.get("previousDecision") or {}
+    assert previous.get("taskId") == (
+        "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ"
+    )
+    assert previous.get("decision") == (
+        "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+    )
+    reason = str(coverage.get("reason") or "")
     assert "exclude appointment/OP/operator line detail" not in reason
 
 def test_wave006_execute_projection_end_to_end(monkeypatch):

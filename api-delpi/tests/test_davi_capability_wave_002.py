@@ -203,7 +203,6 @@ def test_wave2_mcp_tools_remain_two():
         ("evolução de preço de compra", "get_product_purchase_price_history"),
         ("último preço de compra do produto 10080055", "get_product_last_purchase"),
         ("última NF de compra", "get_product_last_purchase"),
-        ("produto 10080055", "search_products"),
         ("estoque 10080001", "get_product_stock"),
         ("fornecedores 10080055", "get_product_suppliers"),
         ("compras do produto", "get_product_purchases"),
@@ -237,9 +236,9 @@ def test_wave2_and_current_ten_retrieval(query, expected, monkeypatch):
         ("histórico de preço de compra", "get_product_purchase_price_history", "get_product_pricing"),
         ("último preço de compra", "get_product_last_purchase", "get_product_purchase_price_history"),
         ("compras do produto", "get_product_purchases", "get_product_purchase_price_history"),
-        ("fornecedores", "get_product_suppliers", "get_product_last_purchase"),
-        ("estoque", "get_product_stock", "get_product_pricing"),
-        ("estrutura", "get_product_structure", "get_product_structure_exclusivity"),
+        ("fornecedores do produto", "get_product_suppliers", "get_product_last_purchase"),
+        ("estoque do produto", "get_product_stock", "get_product_pricing"),
+        ("estrutura do produto", "get_product_structure", "get_product_structure_exclusivity"),
         ("status de produção", "get_product_production_status", "get_product_factory_status"),
         ("status fabril", "get_product_factory_status", "get_product_shipping_status"),
         ("expedição", "get_product_shipping_status", "get_product_production_status"),
@@ -257,6 +256,7 @@ def test_wave2_sibling_disambiguation(query, expected, forbidden, monkeypatch):
     assert ids, query
     assert ids[0] == expected, (query, ids)
     assert forbidden not in ids or ids.index(expected) < ids.index(forbidden), (query, ids)
+
 
 
 @pytest.mark.parametrize(

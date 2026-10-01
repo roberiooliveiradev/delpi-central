@@ -1,32 +1,50 @@
 {
   "source": "openapi_baseline.json",
   "baseline_version": "3",
-  "baseline_operation_count": 720,
-  "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
-  "TOTAL_OPERATIONS": 720,
-  "TOTAL_GET": 520,
-  "TOTAL_WRITE_VERBS": 200,
-  "DAVI_ELIGIBLE_READ": 53,
+  "baseline_operation_count": 726,
+  "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+  "TOTAL_OPERATIONS": 726,
+  "TOTAL_GET": 525,
+  "TOTAL_WRITE_VERBS": 201,
+  "DAVI_ELIGIBLE_READ": 70,
   "ELIGIBLE_BEFORE": 53,
-  "ELIGIBLE_AFTER": 53,
-  "NEWLY_ELIGIBLE": [],
+  "ELIGIBLE_AFTER": 70,
+  "NEWLY_ELIGIBLE": [
+    "get_on_time_delivery_pct",
+    "get_overall_equipment_effectiveness_pct",
+    "get_product_inbound_invoice_items",
+    "get_product_internal_movements",
+    "get_product_outbound_invoice_items",
+    "get_product_sales_open_orders",
+    "get_product_sales_summary",
+    "get_production_appointments_produced_totals",
+    "get_production_appointments_summary",
+    "get_production_machine_load_operations",
+    "get_production_machine_load_work_centers",
+    "get_production_oee",
+    "get_production_oee_series",
+    "get_production_otd",
+    "get_production_otd_series",
+    "list_exclusive_raw_materials_catalog",
+    "search_products_by_supplier_part_number"
+  ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 720,
-    "current_total_operations": 720,
+    "current_total_operations": 726,
     "previous_total_get": 520,
-    "current_total_get": 520,
-    "added_operations": 0,
+    "current_total_get": 525,
+    "added_operations": 6,
     "removed_operations": 0,
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
-    "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES",
-    "reason": "Refine Commercial+Supplies real-user retrieval via durable semanticAliases plus generic filler-tolerant phrase matching and single-token phrase cap. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic change.",
+    "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+    "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+    "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
     "previousDecision": {
-      "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
-      "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+      "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
     }
   },
   "HIGH_VALUE_BLOCKED": [
@@ -141,12 +159,12 @@
       "reason": "after_recno polling helper for BFF sync, not primary DAVI Q&A capability."
     },
     {
-      "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
+      "operationId": "list_supplies_purchase_request_requesters",
       "primaryBlocker": "PII_LOOKUP_HELPER",
       "reason": "Requester lookup for UI filters; PII/identity helper without clear standalone information need."
     },
     {
-      "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
+      "operationId": "get_supplies_protheus_user_by_email",
       "primaryBlocker": "PII_IDENTITY_LOOKUP",
       "reason": "Email→Protheus user identity lookup; not a Supplies information capability for DAVI."
     },
@@ -154,19 +172,40 @@
       "operationId": "export_supplies_third_party_materials_returns",
       "primaryBlocker": "STREAM_BINARY_OUT_OF_SCOPE",
       "reason": "Binary/document export must not flow through execute_delpi_information JSON (no base64)."
+    },
+    {
+      "operationId": "get_product_sales_billing",
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Billing-broken-down sales slice overlaps product.invoice history and sales summary semantics; no distinct governed fields authorized for this promotion"
+    },
+    {
+      "operationId": "get_product_directives",
+      "primaryBlocker": "DEFER",
+      "reason": "Deferred by Architecture; no governed fields or bounded contract approved in this promotion"
+    },
+    {
+      "operationId": "get_product_raw_material_set_shortages",
+      "primaryBlocker": "DEFER",
+      "reason": "Deferred by Architecture; shortage-set semantics not approved in this promotion"
+    },
+    {
+      "operationId": "get_product_purchase_budget_history",
+      "primaryBlocker": "DEFER",
+      "reason": "Deferred by Architecture; purchase budget history semantics not approved in this promotion"
     }
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 53,
+    "DAVI_ELIGIBLE_READ": 70,
     "DESTRUCTIVE_OUT_OF_SCOPE": 17,
     "GENERIC_SQL_FORBIDDEN": 2,
     "LEGACY_UNSAFE": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 338,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 66,
-    "SEMANTICALLY_REDUNDANT": 1,
+    "NEEDS_BOUNDED_EXECUTION": 2,
+    "NEEDS_MODEL_SAFE_PROJECTION": 329,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 62,
+    "SEMANTICALLY_REDUNDANT": 2,
     "STREAM_BINARY_OUT_OF_SCOPE": 33,
-    "WRITE_OUT_OF_SCOPE": 132
+    "WRITE_OUT_OF_SCOPE": 131
   },
   "ELIGIBLE_OPERATION_IDS": [
     "get_commercial_rol_by_branch",
@@ -178,21 +217,36 @@
     "get_new_business_rol_target_pct",
     "get_new_clients_average",
     "get_new_clients_rol_pct",
+    "get_on_time_delivery_pct",
+    "get_overall_equipment_effectiveness_pct",
     "get_product_customers",
     "get_product_drawing",
     "get_product_factory_status",
     "get_product_guide",
+    "get_product_inbound_invoice_items",
+    "get_product_internal_movements",
     "get_product_last_purchase",
+    "get_product_outbound_invoice_items",
     "get_product_parents",
     "get_product_pricing",
     "get_product_production_status",
     "get_product_purchase_price_history",
     "get_product_purchases",
+    "get_product_sales_open_orders",
+    "get_product_sales_summary",
     "get_product_shipping_status",
     "get_product_stock",
     "get_product_structure",
     "get_product_structure_exclusivity",
     "get_product_suppliers",
+    "get_production_appointments_produced_totals",
+    "get_production_appointments_summary",
+    "get_production_machine_load_operations",
+    "get_production_machine_load_work_centers",
+    "get_production_oee",
+    "get_production_oee_series",
+    "get_production_otd",
+    "get_production_otd_series",
     "get_sales_conversion_rate",
     "get_sales_conversion_rate_series",
     "get_sales_order_otd",
@@ -219,8 +273,10 @@
     "get_supplies_third_party_materials_shipments",
     "get_supplies_third_party_materials_summary",
     "get_weg_rol_target_pct",
+    "list_exclusive_raw_materials_catalog",
     "list_product_drawings",
     "list_supplies_purchase_request_lines",
-    "search_products"
+    "search_products",
+    "search_products_by_supplier_part_number"
   ]
 }

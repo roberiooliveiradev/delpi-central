@@ -93,7 +93,23 @@ _ELIGIBLE = {
     "get_production_machine_load_operations",
     "get_production_appointments_summary",
     "get_production_appointments_produced_totals",
+    "search_products_by_supplier_part_number",
+    "list_exclusive_raw_materials_catalog",
+    "get_product_internal_movements",
+    "get_product_inbound_invoice_items",
+    "get_product_outbound_invoice_items",
+    "get_product_sales_summary",
+    "get_product_sales_open_orders",
 }
+
+# Allowlisted governed SEMANTIC_READ_POST entries: the baseline fallback carries
+# no requestBody contract, so they are never executable from it (fail-closed).
+# Live OpenAPI proves them eligible (see Product Master promotion suite).
+_ALLOWLIST_ONLY_IDS = {
+    "list_product_physical_locations",
+    "list_product_inventory_blocks",
+}
+_ALLOWLIST_IDS = _ELIGIBLE | _ALLOWLIST_ONLY_IDS
 
 
 _HISTORICAL = (
@@ -120,7 +136,7 @@ def test_current_eligible_set_matches_allowlist() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 63
+    assert len(eligible) == 70
 
 
 def test_mcp_tools_remain_two() -> None:
@@ -138,7 +154,7 @@ def test_mcp_tools_remain_two() -> None:
     ]
     # Capability operationId remains allowlisted independently of MCP tools.
     assert "search_products" in load_allowlist_operation_ids(load_external_read_allowlist())
-    assert load_allowlist_operation_ids(load_external_read_allowlist()) == _ELIGIBLE
+    assert load_allowlist_operation_ids(load_external_read_allowlist()) == _ALLOWLIST_IDS
 
 
 def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
@@ -168,9 +184,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 63
+    assert doc["wave_1_freeze"]["current_eligible"] == 70
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 66
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 73
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

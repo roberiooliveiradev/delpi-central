@@ -602,7 +602,7 @@ def test_wave005_agent_intelligence_unchanged():
     intel = json.loads(
         (_API_ROOT / "app/content/davi_agent_intelligence.json").read_text(encoding="utf-8")
     )
-    assert intel.get("version") == "2026.09.24.3"
+    assert intel.get("version") == "2026.10.01.1"
     blob = json.dumps(intel)
     for oid in _PROMOTED:
         assert oid not in blob

@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.24.3",
+  "version": "2026.10.01.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -96,6 +96,23 @@
       "gpt_operations": ["gpt_get_catalog"],
       "pipeline": ["discover", "execute_candidate", "empty_means_report_not_invent"],
       "confirmation_policy": "read_only"
+    },
+    "product_master_extensions": {
+      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
+      "gpt_operations": ["gpt_get_catalog"],
+      "capabilities": [
+        "product.physical_location",
+        "product.inventory.block_status",
+        "product.lookup.by_supplier_part_number",
+        "product.exclusive_raw_material.catalog",
+        "product.internal_movements",
+        "product.invoice.history",
+        "product.sales.summary",
+        "product.sales.open_orders"
+      ],
+      "pipeline": ["discover", "execute_candidate", "report_or_gap"],
+      "confirmation_policy": "read_only",
+      "note": "Product Master extended READs via discover→execute only; semantic capabilities are catalog metadata, not endpoints/operationIds/tools. product.invoice.history resolves direction semanticamente: entrada → inbound, saída → outbound — nunca aceite selector arbitrário do caller. Local físico != saldo em estoque; bloqueio de inventário != disponibilidade; pedidos de venda em aberto != pedidos de compra / ordens de produção; NF de entrada/saída != relatório financeiro; movimentação interna != faturamento; part number do fornecedor != histórico de preço. Zero linhas / agregado zero = resposta canônica, nunca prova de inexistência do produto."
     },
     "write_request": {
       "mcp_tools": ["discover_delpi_information"],

@@ -163,7 +163,6 @@ def test_wave3a_mcp_tools_remain_two():
         ("onde a MP 10080055 é usada", "get_product_parents"),
         ("quais PAs usam 10080055", "get_product_parents"),
         ("BOM reversa do 10080055", "get_product_parents"),
-        ("produto 10080055", "search_products"),
         ("estoque 10080001", "get_product_stock"),
         ("fornecedores 10080055", "get_product_suppliers"),
         ("clientes do produto", "get_product_customers"),

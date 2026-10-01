@@ -48,6 +48,7 @@ class ArgumentValidationError(ValueError):
 
 def _param_schema(param: dict[str, Any]) -> dict[str, Any]:
     nested = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+    nested = _unwrap_nullable_schema(dict(nested))
     schema: dict[str, Any] = {}
     ptype = param.get("type") or nested.get("type") or "string"
     schema["type"] = ptype
@@ -146,6 +147,14 @@ def _apply_argument_limits_to_schema(
                 prop[bound_key] = max(existing_i, governed) if existing_i is not None else governed
         if "default" in spec:
             prop["default"] = spec["default"]
+        governed_enum = spec.get("enum")
+        if isinstance(governed_enum, list) and governed_enum:
+            existing_enum = prop.get("enum")
+            if isinstance(existing_enum, list) and existing_enum:
+                # Fail-closed intersection: DAVI may only narrow the owner enum.
+                prop["enum"] = [v for v in existing_enum if v in governed_enum]
+            else:
+                prop["enum"] = list(governed_enum)
 
 
 def _apply_require_arguments_to_schema(
@@ -382,7 +391,34 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
     }
 
 
+def _unwrap_nullable_schema(prop: dict[str, Any]) -> dict[str, Any]:
+    """Collapse Optional-style wrappers (anyOf/oneOf/type lists) into the
+    concrete subtype schema so type, bounds, and enum checks still apply."""
+    type_ = prop.get("type")
+    if isinstance(type_, list):
+        non_null = [t for t in type_ if t != "null"]
+        prop = dict(prop, type=non_null[0]) if len(non_null) == 1 else prop
+    for comb in ("anyOf", "oneOf"):
+        subs = prop.get(comb)
+        if not isinstance(subs, list):
+            continue
+        non_null = [
+            s
+            for s in subs
+            if isinstance(s, Mapping) and (s.get("type") or "") != "null"
+        ]
+        if len(non_null) != 1:
+            continue
+        merged = dict(non_null[0])
+        for key, val in prop.items():
+            if key != comb:
+                merged[key] = val
+        prop = merged
+    return prop
+
+
 def _coerce_value(name: str, value: Any, prop: dict[str, Any]) -> Any:
+    prop = _unwrap_nullable_schema(prop)
     expected = prop.get("type") or "string"
     if expected == "integer":
         if isinstance(value, bool):

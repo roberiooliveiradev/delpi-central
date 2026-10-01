@@ -32,14 +32,26 @@ def test_committed_inventory_eligible_matches_allowlist():
     runtime_eligible = {
         a.operation_id for a in actions if is_dynamically_executable(a.davi_status)
     }
-    assert runtime_eligible == allow_ids
-    assert len(runtime_eligible) == len(allow.get("operations") or [])
+    # SEC-02 fail-closed: governed SEMANTIC_READ_POST ops are allowlisted but
+    # stay non-executable under the baseline snapshot, which carries no
+    # requestBody contract. They become executable only via live OpenAPI.
+    live_only = {
+        a.operation_id
+        for a in actions
+        if a.operation_id in allow_ids and not is_dynamically_executable(a.davi_status)
+    }
+    assert live_only == {
+        "list_product_physical_locations",
+        "list_product_inventory_blocks",
+    }
+    assert runtime_eligible == allow_ids - live_only
+    assert len(runtime_eligible) + len(live_only) == len(allow.get("operations") or [])
 
     inventory = json.loads(_INVENTORY.read_text(encoding="utf-8"))
     inv_count = int(inventory["DAVI_ELIGIBLE_READ"])
     inv_ids = set(inventory.get("ELIGIBLE_OPERATION_IDS") or [])
-    assert inv_count == len(allow_ids)
-    assert inv_ids == allow_ids
+    assert inv_count == len(runtime_eligible)
+    assert inv_ids == runtime_eligible
     # Stale historical failure mode: inventory stuck at 17 after allowlist grew.
     assert inv_count != 17 or len(allow_ids) == 17
     assert inv_count >= 35

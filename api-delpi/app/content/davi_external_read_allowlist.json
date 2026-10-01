@@ -1,16 +1,16 @@
 {
-  "version": 15,
+  "version": 16,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-    "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ",
-    "reason": "Promote 10 Production Operational Intelligence READs (OEE, Production OTD, Machine Load, Appointments summary, Produced totals). Eligible READ 53→63. Model-safe projections exclude OEE raw appointments, Production OTD raw OP lists, operator/person fields, and produced per-product detail; machine-load bounded operational queue (including production_order/operation fields) remains intentionally exposed. Ambiguous bare OTD is quarantine-governed so only qualified multiword aliases own Production/Commercial/Supplies OTD. MCP tools remain 2. Agent intelligence unchanged. GPT Actions deferred.",
+    "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+    "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+    "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
     "previousDecision": {
-      "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
-      "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES"
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+      "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
     }
   },
   "retrievalQuarantineTokens": [
@@ -2971,6 +2971,510 @@
           "maxDays": 366
         }
       }
+    },
+    {
+      "operationId": "list_product_physical_locations",
+      "reason": "Physical pickup location (BZ_MPLOCAL) batch READ; SEMANTIC_READ_POST with trusted requestBody contract; API_DELPI_ACCESS; product_codes bounded 1-50; empty items is a valid zero-row result",
+      "executionMode": "catalog_action",
+      "semanticTransport": "SEMANTIC_READ_POST",
+      "approvedInputFields": [
+        "branch",
+        "product_codes"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "items[].product_code",
+        "items[].physical_location",
+        "summary.requested_count",
+        "summary.returned_count"
+      ],
+      "semanticAliases": [
+        "local físico do produto",
+        "local fisico do produto",
+        "local físico",
+        "posição física do produto",
+        "posicao fisica do produto",
+        "local de armazenagem do produto",
+        "endereçamento físico do produto",
+        "physical location",
+        "physical locations",
+        "product physical location",
+        "pickup location"
+      ],
+      "argumentConstraints": {
+        "requireArguments": [
+          "branch",
+          "product_codes"
+        ],
+        "argumentLimits": {
+          "product_codes": {
+            "minItems": 1,
+            "maxItems": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "list_product_inventory_blocks",
+      "reason": "Inventory block status (SB2 B2_DTINV/B2_DINVFIM) batch READ; SEMANTIC_READ_POST; warehouse default 01; as_of is server-owned date; product_codes bounded 1-50; raw owner dates excluded",
+      "executionMode": "catalog_action",
+      "semanticTransport": "SEMANTIC_READ_POST",
+      "approvedInputFields": [
+        "branch",
+        "product_codes",
+        "warehouse"
+      ],
+      "approvedResponseFields": [
+        "branch",
+        "warehouse",
+        "as_of",
+        "items[].product_code",
+        "items[].branch",
+        "items[].warehouse",
+        "items[].inventory_blocked",
+        "items[].inventory_block_start_iso",
+        "items[].inventory_block_end_iso",
+        "summary.requested_count",
+        "summary.returned_count",
+        "summary.blocked_count"
+      ],
+      "semanticAliases": [
+        "bloqueio de inventário",
+        "bloqueio de inventario",
+        "bloqueio de inventário do produto",
+        "inventário bloqueado",
+        "inventario bloqueado",
+        "produto bloqueado para inventário",
+        "inventory block",
+        "inventory block status",
+        "blocked for inventory"
+      ],
+      "argumentConstraints": {
+        "requireArguments": [
+          "branch",
+          "product_codes"
+        ],
+        "argumentLimits": {
+          "product_codes": {
+            "minItems": 1,
+            "maxItems": 50
+          },
+          "warehouse": {
+            "default": "01",
+            "minLength": 1,
+            "maxLength": 10
+          }
+        }
+      }
+    },
+    {
+      "operationId": "search_products_by_supplier_part_number",
+      "reason": "Product lookup by supplier part number (SA5.A5_CODPRF); API_DELPI_ACCESS; price/lead-time/catalog_code/barcode fields excluded from projection",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "supplier_part_number",
+        "supplier_code",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "items[].product_code",
+        "items[].product_description",
+        "items[].unit",
+        "items[].supplier_code",
+        "items[].supplier_store",
+        "items[].supplier_name",
+        "items[].supplier_part_number",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "part number do fornecedor",
+        "código do fornecedor",
+        "codigo do fornecedor",
+        "pn do fornecedor",
+        "referência do fornecedor",
+        "referencia do fornecedor",
+        "código do produto no fornecedor",
+        "supplier part number",
+        "vendor part number",
+        "manufacturer part number",
+        "supplier product code"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "supplier_part_number": {
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "supplier_code": {
+            "maxLength": 30
+          },
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "list_exclusive_raw_materials_catalog",
+      "reason": "Exclusive raw materials catalog (by_material/by_finished_product views); recursion and test-product controls (max_depth, include_test_products, legacy) stay backend-owned and are not exposed",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "view",
+        "limit",
+        "offset",
+        "finished_product_code",
+        "raw_material_code",
+        "group_code"
+      ],
+      "approvedResponseFields": [
+        "view",
+        "items[].raw_material_code",
+        "items[].raw_material_description",
+        "items[].raw_material_unit",
+        "items[].raw_material_group",
+        "items[].finished_product_code",
+        "items[].finished_product_description",
+        "items[].finished_product_unit",
+        "items[].exclusive_raw_material",
+        "items[].exclusive_raw_material_count",
+        "items[].exclusive_raw_materials[].raw_material_code",
+        "items[].exclusive_raw_materials[].raw_material_description",
+        "items[].exclusive_raw_materials[].raw_material_unit",
+        "items[].exclusive_raw_materials[].raw_material_group",
+        "summary.returned_exclusive_links",
+        "summary.totals_available",
+        "summary.total_exclusive_materials",
+        "summary.total_finished_products_with_exclusive",
+        "summary.total_finished_products",
+        "summary.total_exclusive_links",
+        "pagination.limit",
+        "pagination.offset",
+        "pagination.returned",
+        "pagination.is_complete"
+      ],
+      "semanticAliases": [
+        "matéria-prima exclusiva",
+        "materia-prima exclusiva",
+        "matéria prima exclusiva",
+        "materia prima exclusiva",
+        "matérias-primas exclusivas",
+        "catálogo de matérias-primas exclusivas",
+        "catalogo de materias primas exclusivas",
+        "exclusive raw material",
+        "exclusive raw materials",
+        "exclusive raw materials catalog"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "view": {
+            "enum": [
+              "by_material",
+              "by_finished_product"
+            ],
+            "default": "by_material"
+          },
+          "limit": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          },
+          "offset": {
+            "minimum": 0,
+            "default": 0
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_internal_movements",
+      "reason": "Internal stock/production movements (SD3); tm not exposed; kind governed to warehouse_transfer or absent; date window is atomic pair bounded to 366 days; person fields (user_name, cf) excluded",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "page",
+        "page_size",
+        "start_date",
+        "end_date",
+        "branch",
+        "location",
+        "op",
+        "kind"
+      ],
+      "approvedResponseFields": [
+        "items[].branch",
+        "items[].location",
+        "items[].document",
+        "items[].issue_date",
+        "items[].product_code",
+        "items[].product_description",
+        "items[].unit",
+        "items[].movement_type",
+        "items[].quantity",
+        "items[].production_order",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "movimentação interna",
+        "movimentacao interna",
+        "movimentações internas do produto",
+        "movimentacao interna do produto",
+        "transferência de armazém",
+        "transferencia de armazem",
+        "transferência entre armazéns",
+        "internal movements",
+        "warehouse transfer",
+        "internal stock movements"
+      ],
+      "argumentConstraints": {
+        "dateRanges": [
+          {
+            "startField": "start_date",
+            "endField": "end_date",
+            "maxDays": 366,
+            "requireBothOrNeither": true
+          }
+        ],
+        "argumentLimits": {
+          "kind": {
+            "enum": [
+              "warehouse_transfer"
+            ]
+          },
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_inbound_invoice_items",
+      "reason": "Inbound invoice items (SD1) for product.invoice.history direction=inbound; price/value item fields excluded; date window is atomic pair bounded to 366 days",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "page",
+        "page_size",
+        "issue_date_start",
+        "issue_date_end",
+        "supplier",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "items[].branch",
+        "items[].invoice_number",
+        "items[].invoice_series",
+        "items[].item",
+        "items[].issue_date",
+        "items[].product_code",
+        "items[].product_description",
+        "items[].unit",
+        "items[].quantity",
+        "items[].supplier_code",
+        "items[].supplier_name",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "nf de entrada",
+        "nfe de entrada",
+        "nota fiscal de entrada",
+        "notas fiscais de entrada",
+        "documento de entrada",
+        "documentos de entrada",
+        "fatura de entrada do produto",
+        "inbound invoice",
+        "inbound invoice items",
+        "inbound invoices"
+      ],
+      "argumentConstraints": {
+        "dateRanges": [
+          {
+            "startField": "issue_date_start",
+            "endField": "issue_date_end",
+            "maxDays": 366,
+            "requireBothOrNeither": true
+          }
+        ],
+        "argumentLimits": {
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_outbound_invoice_items",
+      "reason": "Outbound invoice items (SD2) for product.invoice.history direction=outbound; price/value item fields excluded; date window is atomic pair bounded to 366 days",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "page",
+        "page_size",
+        "issue_date_start",
+        "issue_date_end",
+        "customer",
+        "branch"
+      ],
+      "approvedResponseFields": [
+        "items[].branch",
+        "items[].invoice_number",
+        "items[].invoice_series",
+        "items[].item",
+        "items[].issue_date",
+        "items[].product_code",
+        "items[].product_description",
+        "items[].unit",
+        "items[].quantity",
+        "items[].customer_code",
+        "items[].customer_name",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "nf de saída",
+        "nfe de saída",
+        "nota fiscal de saída",
+        "notas fiscais de saída",
+        "documento de saída",
+        "documentos de saída",
+        "fatura de saída do produto",
+        "outbound invoice",
+        "outbound invoice items",
+        "outbound invoices"
+      ],
+      "argumentConstraints": {
+        "dateRanges": [
+          {
+            "startField": "issue_date_start",
+            "endField": "issue_date_end",
+            "maxDays": 366,
+            "requireBothOrNeither": true
+          }
+        ],
+        "argumentLimits": {
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_product_sales_summary",
+      "reason": "Aggregate sales summary (SD2 totals) over complete visible history; no invoice lines or customer list; zero aggregate is canonical zero, not product absence",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code"
+      ],
+      "approvedResponseFields": [
+        "product_code",
+        "product_description",
+        "unit",
+        "total_quantity",
+        "total_value",
+        "average_price",
+        "documents",
+        "first_sale_date",
+        "last_sale_date"
+      ],
+      "semanticAliases": [
+        "quanto este produto vendeu",
+        "quanto o produto vendeu",
+        "histórico agregado de venda",
+        "historico agregado de venda",
+        "resumo de vendas do produto",
+        "total vendido do produto",
+        "total de vendas do produto",
+        "sales summary",
+        "product sales summary",
+        "aggregate sales history"
+      ]
+    },
+    {
+      "operationId": "get_product_sales_open_orders",
+      "reason": "Open sales orders per product; final business AuthZ PEDIDOS_VENDA_ABERTOS_PERMISSIONS with PortfolioScope; branch narrows only; monetary exposure limited to aggregate summary.value (item unit_price/open_value excluded)",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "page",
+        "page_size"
+      ],
+      "approvedResponseFields": [
+        "summary.quantity",
+        "summary.value",
+        "summary.orders",
+        "items[].branch",
+        "items[].order_number",
+        "items[].order_item",
+        "items[].customer_code",
+        "items[].customer_store",
+        "items[].customer_name",
+        "items[].open_quantity",
+        "items[].delivery_date",
+        "items[].issue_date",
+        "page",
+        "page_size",
+        "total",
+        "total_pages"
+      ],
+      "semanticAliases": [
+        "carteira aberta do produto",
+        "pedidos de venda em aberto do produto",
+        "pedidos em aberto do produto",
+        "carteira de pedidos de venda do produto",
+        "open sales orders",
+        "product open orders",
+        "open orders for product",
+        "sales open orders"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "page": {
+            "minimum": 1,
+            "default": 1
+          },
+          "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
     }
   ],
   "explicitlyNotApproved": [
@@ -3123,6 +3627,30 @@
       "coverageDisposition": "REJECT_FROM_JSON_READ_WAVE",
       "primaryBlocker": "STREAM_BINARY_OUT_OF_SCOPE",
       "reason": "Binary/document export must not flow through execute_delpi_information JSON (no base64)."
+    },
+    {
+      "operationId": "get_product_sales_billing",
+      "coverageDisposition": "SEMANTICALLY_REDUNDANT",
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Billing-broken-down sales slice overlaps product.invoice history and sales summary semantics; no distinct governed fields authorized for this promotion"
+    },
+    {
+      "operationId": "get_product_directives",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "DEFER",
+      "reason": "Deferred by Architecture; no governed fields or bounded contract approved in this promotion"
+    },
+    {
+      "operationId": "get_product_raw_material_set_shortages",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "DEFER",
+      "reason": "Deferred by Architecture; shortage-set semantics not approved in this promotion"
+    },
+    {
+      "operationId": "get_product_purchase_budget_history",
+      "coverageDisposition": "DEFER",
+      "primaryBlocker": "DEFER",
+      "reason": "Deferred by Architecture; purchase budget history semantics not approved in this promotion"
     }
   ],
   "hardening": {

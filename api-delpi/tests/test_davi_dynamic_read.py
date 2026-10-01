@@ -183,6 +183,26 @@ _WAVE6_PRODUCTION_OPERATION_IDS = frozenset(
         "get_production_appointments_produced_totals",
     }
 )
+_PRODUCT_MASTER_OPERATION_IDS = frozenset(
+    {
+        "search_products_by_supplier_part_number",
+        "list_exclusive_raw_materials_catalog",
+        "get_product_internal_movements",
+        "get_product_inbound_invoice_items",
+        "get_product_outbound_invoice_items",
+        "get_product_sales_summary",
+        "get_product_sales_open_orders",
+    }
+)
+# Governed SEMANTIC_READ_POST entries: allowlisted, but the baseline fallback
+# carries no requestBody contract so they can never be executable from it
+# (fail-closed, NEEDS_BOUNDED_EXECUTION). Live OpenAPI path proves them.
+_PRODUCT_MASTER_SEMANTIC_POST_IDS = frozenset(
+    {
+        "list_product_physical_locations",
+        "list_product_inventory_blocks",
+    }
+)
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
@@ -192,7 +212,9 @@ _ELIGIBLE_OPERATION_IDS = (
     | _WAVE4_COMMERCIAL_OPERATION_IDS
     | _WAVE5_SUPPLIES_OPERATION_IDS
     | _WAVE6_PRODUCTION_OPERATION_IDS
+    | _PRODUCT_MASTER_OPERATION_IDS
 )
+_ALLOWLIST_OPERATION_IDS = _ELIGIBLE_OPERATION_IDS | _PRODUCT_MASTER_SEMANTIC_POST_IDS
 
 
 @pytest.fixture(autouse=True)
@@ -311,10 +333,10 @@ def _allowlist_entry_with_projection(operation_id: str, **fields: Any) -> dict[s
 def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
-    assert ids == set(_ELIGIBLE_OPERATION_IDS)
-    assert allow.get("version") == 15
+    assert ids == set(_ALLOWLIST_OPERATION_IDS)
+    assert allow.get("version") == 16
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+        "PROMOTE_PRODUCT_MASTER_GOVERNED_READS"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
@@ -487,7 +509,7 @@ def test_inventory_eligible_count_is_thirteen():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 63
+    assert len(eligible) == 70
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -507,7 +529,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 63, query
+        assert discovered["eligible_action_count"] == 70, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -524,7 +546,7 @@ def test_three_tool_invariant_with_v5_allowlist():
     ]
     # Still exactly three MCP tools; allowlist is no longer search-only.
     assert load_allowlist_operation_ids(load_external_read_allowlist()) == set(
-        _ELIGIBLE_OPERATION_IDS
+        _ALLOWLIST_OPERATION_IDS
     )
 
 
@@ -1218,7 +1240,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 63
+    assert discovered["eligible_action_count"] == 70
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -2026,4 +2048,4 @@ def test_eligible_count_is_thirteen():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 63
+    assert len(eligible) == 70

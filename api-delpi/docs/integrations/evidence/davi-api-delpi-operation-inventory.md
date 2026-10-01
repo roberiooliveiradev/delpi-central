@@ -2,24 +2,24 @@
 
 > Evidence artifact. Not runtime authority. Not semantic capability catalog.
 
-- Task: `DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001`
+- Task: `PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **720**
-- TOTAL GET: **520**
-- WRITE VERBS (POST/PUT/PATCH/DELETE): **200**
-- DAVI_ELIGIBLE_READ (before→after): **53 → 53**
-- NEWLY ELIGIBLE: **0**
+- TOTAL OPERATIONS: **726**
+- TOTAL GET: **525**
+- WRITE VERBS (POST/PUT/PATCH/DELETE): **201**
+- DAVI_ELIGIBLE_READ (before→after): **53 → 70**
+- NEWLY ELIGIBLE: **17**
 
 ## Coverage decision
 
 ```json
 {
-  "taskId": "DAVI-REAL-USER-RETRIEVAL-REFINEMENT-COMMERCIAL-SUPPLIES-001",
-  "decision": "REFINE_REAL_USER_RETRIEVAL_COMMERCIAL_SUPPLIES",
-  "reason": "Refine Commercial+Supplies real-user retrieval via durable semanticAliases plus generic filler-tolerant phrase matching and single-token phrase cap. Eligible READ remains 53; MCP tools remain 3. No AuthZ/business-logic change.",
+  "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+  "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+  "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
   "previousDecision": {
-    "taskId": "DAVI-WAVE005-STOCK-BALANCES-RETRIEVAL-CORRECTION-001",
-    "decision": "CORRECT_STOCK_BALANCES_SUMMARY_ITEMS_RETRIEVAL"
+    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+    "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
   }
 }
 ```
@@ -29,10 +29,10 @@
 ```json
 {
   "previous_total_operations": 720,
-  "current_total_operations": 720,
+  "current_total_operations": 726,
   "previous_total_get": 520,
-  "current_total_get": 520,
-  "added_operations": 0,
+  "current_total_get": 525,
+  "added_operations": 6,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -43,15 +43,16 @@
 | Status | Count |
 |---|---:|
 | `ADMIN_OUT_OF_SCOPE` | 76 |
-| `DAVI_ELIGIBLE_READ` | 53 |
+| `DAVI_ELIGIBLE_READ` | 70 |
 | `DESTRUCTIVE_OUT_OF_SCOPE` | 17 |
 | `GENERIC_SQL_FORBIDDEN` | 2 |
 | `LEGACY_UNSAFE` | 2 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 338 |
-| `NEEDS_NESTED_PROJECTION_SUPPORT` | 66 |
-| `SEMANTICALLY_REDUNDANT` | 1 |
+| `NEEDS_BOUNDED_EXECUTION` | 2 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 329 |
+| `NEEDS_NESTED_PROJECTION_SUPPORT` | 62 |
+| `SEMANTICALLY_REDUNDANT` | 2 |
 | `STREAM_BINARY_OUT_OF_SCOPE` | 33 |
-| `WRITE_OUT_OF_SCOPE` | 132 |
+| `WRITE_OUT_OF_SCOPE` | 131 |
 
 ## Eligible operationIds
 
@@ -64,21 +65,36 @@
 - `get_new_business_rol_target_pct`
 - `get_new_clients_average`
 - `get_new_clients_rol_pct`
+- `get_on_time_delivery_pct`
+- `get_overall_equipment_effectiveness_pct`
 - `get_product_customers`
 - `get_product_drawing`
 - `get_product_factory_status`
 - `get_product_guide`
+- `get_product_inbound_invoice_items`
+- `get_product_internal_movements`
 - `get_product_last_purchase`
+- `get_product_outbound_invoice_items`
 - `get_product_parents`
 - `get_product_pricing`
 - `get_product_production_status`
 - `get_product_purchase_price_history`
 - `get_product_purchases`
+- `get_product_sales_open_orders`
+- `get_product_sales_summary`
 - `get_product_shipping_status`
 - `get_product_stock`
 - `get_product_structure`
 - `get_product_structure_exclusivity`
 - `get_product_suppliers`
+- `get_production_appointments_produced_totals`
+- `get_production_appointments_summary`
+- `get_production_machine_load_operations`
+- `get_production_machine_load_work_centers`
+- `get_production_oee`
+- `get_production_oee_series`
+- `get_production_otd`
+- `get_production_otd_series`
 - `get_sales_conversion_rate`
 - `get_sales_conversion_rate_series`
 - `get_sales_order_otd`
@@ -105,9 +121,11 @@
 - `get_supplies_third_party_materials_shipments`
 - `get_supplies_third_party_materials_summary`
 - `get_weg_rol_target_pct`
+- `list_exclusive_raw_materials_catalog`
 - `list_product_drawings`
 - `list_supplies_purchase_request_lines`
 - `search_products`
+- `search_products_by_supplier_part_number`
 
 ## High-value blocked (primary blocker)
 
@@ -133,6 +151,10 @@
 - `get_supplies_third_party_materials_shipment` → `SHIPMENT_DETAIL` — Single shipment detail with returns nested — defer after list shipments proves stable.
 - `list_supplies_purchase_request_recent_linked_orders` → `POLLING_CURSOR_HELPER` — after_recno polling helper for BFF sync, not primary DAVI Q&A capability.
 - `list_supplies_purchase_request_recent_linked_receipts` → `POLLING_CURSOR_HELPER` — after_recno polling helper for BFF sync, not primary DAVI Q&A capability.
-- `list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get` → `PII_LOOKUP_HELPER` — Requester lookup for UI filters; PII/identity helper without clear standalone information need.
-- `get_protheus_user_by_email_route_supplies_protheus_users_by_email_get` → `PII_IDENTITY_LOOKUP` — Email→Protheus user identity lookup; not a Supplies information capability for DAVI.
+- `list_supplies_purchase_request_requesters` → `PII_LOOKUP_HELPER` — Requester lookup for UI filters; PII/identity helper without clear standalone information need.
+- `get_supplies_protheus_user_by_email` → `PII_IDENTITY_LOOKUP` — Email→Protheus user identity lookup; not a Supplies information capability for DAVI.
 - `export_supplies_third_party_materials_returns` → `STREAM_BINARY_OUT_OF_SCOPE` — Binary/document export must not flow through execute_delpi_information JSON (no base64).
+- `get_product_sales_billing` → `SEMANTICALLY_REDUNDANT` — Billing-broken-down sales slice overlaps product.invoice history and sales summary semantics; no distinct governed fields authorized for this promotion
+- `get_product_directives` → `DEFER` — Deferred by Architecture; no governed fields or bounded contract approved in this promotion
+- `get_product_raw_material_set_shortages` → `DEFER` — Deferred by Architecture; shortage-set semantics not approved in this promotion
+- `get_product_purchase_budget_history` → `DEFER` — Deferred by Architecture; purchase budget history semantics not approved in this promotion
