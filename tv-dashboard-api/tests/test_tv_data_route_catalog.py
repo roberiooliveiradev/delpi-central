@@ -153,6 +153,8 @@ def test_catalog_all_exposes_si_goal_hubs_have_triad_labels():
 
 
 def test_catalog_si_meta_routes_list_value_field():
+    """Wave 2: meta projeta a tríade canônica; `value` segue emitido no HTTP
+    como alias de compatibilidade, mas não é mais anunciado no catálogo."""
     from tests.fixtures.si_goal_contract_cases import SI_META_OPERATION_IDS_SAMPLE
 
     catalog = TvDataRouteCatalogService()
@@ -160,7 +162,11 @@ def test_catalog_si_meta_routes_list_value_field():
         route = catalog.get_route(operation_id)
         assert route is not None, operation_id
         fields = route.get("valueFields") or []
-        assert "value" in fields, operation_id
+        assert fields[:3] == ["comparable_goal", "goal_value", "reference_goal"], (
+            operation_id,
+            fields,
+        )
+        assert "value" not in fields, operation_id
 
 
 def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():

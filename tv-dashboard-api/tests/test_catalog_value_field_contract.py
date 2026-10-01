@@ -164,6 +164,47 @@ RESPONSE_SCHEMAS: dict[str, dict] = {
     },
 }
 
+# Wave 2 — SI scalar contract (strategic-indicators-api
+# get_dashboard_indicator_metric_use_case): shape compartilhado das 72 rotas
+# get_si_indicator_*_{meta,realized}. Meta emite `comparable_goal`/`goal_value`/
+# `reference_goal` + alias de compatibilidade `value`; realized emite `value`
+# como escalar canônico.
+_SI_SCALAR_BASE = {
+    "indicator_id": True,
+    "source_key": True,
+    "name": True,
+    "department_id": True,
+    "value": True,
+    "has_value": True,
+    "value_unit": True,
+    "value_prefix": True,
+    "value_suffix": True,
+    "value_decimals": True,
+    "partial_success": True,
+}
+_SI_META_RESPONSE_SCHEMA = {
+    **_SI_SCALAR_BASE,
+    "comparable_goal": True,
+    "goal_value": True,
+    "reference_goal": True,
+    "goal_label": True,
+    "goals": {},
+}
+_SI_REALIZED_RESPONSE_SCHEMA = {
+    **_SI_SCALAR_BASE,
+    "realized": {},
+    "score": True,
+}
+_SI_META_GOAL_TRIAD = ["comparable_goal", "goal_value", "reference_goal"]
+
+
+def _si_routes(routes: dict[str, dict], kind: str) -> dict[str, dict]:
+    return {
+        op: r
+        for op, r in routes.items()
+        if op.startswith("get_si_indicator_") and op.endswith(f"_{kind}")
+    }
+
 # Campos de apresentação pertencentes ao consumidor, classificados
 # explicitamente no freeze (ex.: `value` legítimo emitido como alias canônico
 # SI realizado — fora do escopo Wave 1). Vazio: nesta wave todo campo declarado
@@ -360,3 +401,35 @@ def test_resolver_negative_cases() -> None:
         RESPONSE_SCHEMAS["get_quality_scrap_cost_pct_series"],
         "points",
     )
+
+
+def test_si_meta_routes_project_comparable_goal_not_value() -> None:
+    """Wave 2: toda rota get_si_indicator_*_meta prefere a tríade de metas;
+    `value` permanece emitido pelo producer como alias, mas não é anunciado."""
+    routes = _load_routes()
+    metas = _si_routes(routes, "meta")
+    assert len(metas) == 36
+    for op, route in metas.items():
+        declared = _declared_fields(route)
+        for field in declared:
+            assert field_resolves_in_response(
+                field, _SI_META_RESPONSE_SCHEMA, route.get("seriesField")
+            ), f"{op}: catalog field {field!r} absent from SI meta response schema"
+        assert declared[:3] == _SI_META_GOAL_TRIAD, (
+            f"{op}: meta must prefer comparable_goal triad, got {declared[:3]}"
+        )
+        assert "value" not in declared, f"{op} still advertises value"
+
+
+def test_si_realized_routes_keep_value_as_canonical() -> None:
+    """Sibling guard: realized mantém `value` (escalar canônico do producer)."""
+    routes = _load_routes()
+    realized = _si_routes(routes, "realized")
+    assert len(realized) == 36
+    for op, route in realized.items():
+        declared = _declared_fields(route)
+        assert "value" in declared, f"{op}: realized must keep `value`"
+        for field in declared:
+            assert field_resolves_in_response(
+                field, _SI_REALIZED_RESPONSE_SCHEMA, route.get("seriesField")
+            ), f"{op}: catalog field {field!r} absent from SI realized schema"

@@ -12,13 +12,20 @@ import {
   createDashboardDataRecordCard,
   createDashboardEmptyState,
   createDashboardFiltersKit,
+  createDashboardNavigationCard,
+  createDashboardPageHeader,
   createDashboardPageHero,
+  createDashboardPreviewDetailCard,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextField,
+  createFilterBarShell,
   createHostContainedModalShell,
   emptyStatePanelBemClasses,
   fileDropzoneBemClasses,
+  navigationCardBemClasses,
+  pageHeaderBrandBemClasses,
+  previewDetailCardBemClasses,
   stateBannerBemClasses,
   textFieldBemClasses,
   type FileDropzoneLabels,
@@ -29,6 +36,26 @@ export const BPMNM_ROOT_CLASS = "dashboard-bpmn-modeler";
 const PREFIX = "bpmnm";
 
 export const BpmnmPageHero = createDashboardPageHero({ prefix: PREFIX });
+
+export const BpmnmPageHeader = createDashboardPageHeader({
+  layout: "brand",
+  classNames: pageHeaderBrandBemClasses(PREFIX),
+  labels: { refresh: "Atualizar", refreshing: "Atualizando…" },
+});
+
+export const BpmnmNavigationCard = createDashboardNavigationCard({
+  classNames: navigationCardBemClasses(PREFIX),
+});
+
+export const BpmnmFilterBarShell = createFilterBarShell({
+  prefix: PREFIX,
+  embeddedByDefault: true,
+  defaultAriaLabel: "Filtrar modelos",
+});
+
+export const BpmnmPreviewDetailCard = createDashboardPreviewDetailCard({
+  classNames: previewDetailCardBemClasses(PREFIX),
+});
 
 export const BpmnmModal = createHostContainedModalShell({
   prefix: PREFIX,

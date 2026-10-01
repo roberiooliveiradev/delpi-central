@@ -52,3 +52,109 @@
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
+
+.dashboard-delia .delia-interaction {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--delia-surface);
+  border: 1px solid var(--delia-border);
+  border-radius: 12px;
+  padding: var(--delia-card-padding);
+  max-width: 720px;
+}
+
+.dashboard-delia .delia-turns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-delia .delia-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--delia-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.dashboard-delia .delia-turn--user {
+  border-left: 3px solid var(--delia-text-muted);
+}
+
+.dashboard-delia .delia-turn--delia {
+  border-left: 3px solid var(--delia-accent);
+}
+
+.dashboard-delia .delia-turn__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--delia-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-delia .delia-turn__content {
+  margin: 0;
+  color: var(--delia-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-delia .delia-turn__meta {
+  font-size: 0.75rem;
+  color: var(--delia-text-muted);
+}
+
+.dashboard-delia .delia-interaction__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-delia .delia-interaction__form label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--delia-text);
+}
+
+.dashboard-delia .delia-interaction__form textarea {
+  font: inherit;
+  color: var(--delia-text);
+  background: transparent;
+  border: 1px solid var(--delia-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 72px;
+}
+
+.dashboard-delia .delia-interaction__form button {
+  align-self: flex-start;
+  font: inherit;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--delia-accent);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  cursor: pointer;
+}
+
+.dashboard-delia .delia-interaction__form button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.dashboard-delia .delia-interaction__error {
+  margin: 0;
+  color: var(--delia-text);
+  background: color-mix(in srgb, #dc2626 12%, transparent);
+  border: 1px solid color-mix(in srgb, #dc2626 45%, transparent);
+  border-radius: 8px;
+  padding: 8px 12px;
+}

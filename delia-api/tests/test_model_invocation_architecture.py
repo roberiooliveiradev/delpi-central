@@ -89,15 +89,25 @@ def test_forbidden_speculative_abstractions_absent():
                 assert node.name not in FORBIDDEN_TYPE_NAMES
 
 
-def test_composition_root_does_not_wire_model_invocation():
+def test_composition_root_wires_only_test_only_invocation():
+    """C3-INTERACTION-RUNTIME-01 wires the bounded interaction use case.
+
+    Composition may wire InvokeModel + DeterministicTestAdapter for the
+    interaction slice, but must never wire a real provider or expose the
+    port as application configuration.
+    """
     from app.composition import root_composer
 
     source = inspect.getsource(root_composer)
-    assert "InvokeModel" not in source
-    assert "DeterministicTestAdapter" not in source
+    assert "DeterministicTestAdapter" in source
     assert "openai" not in source.lower()
+    assert "anthropic" not in source.lower()
+    for forbidden in ("api_key", "apikey", "secret", "credential"):
+        assert forbidden not in source.lower()
     app = create_app(testing=True)
     assert "MODEL_INVOCATION" not in app.config
+    handler = app.config.get("INTERACTION_TURN_HANDLER")
+    assert handler is not None
 
 
 def test_test_adapter_is_explicitly_test_only():

@@ -3,12 +3,20 @@ from __future__ import annotations
 import requests
 from flask import Flask
 
+from app.application.interaction.handle_interactive_turn import (
+    HandleInteractiveConversationTurn,
+)
+from app.application.model_invocation.invoke_model import InvokeModel
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.logging import configure_logging
+from app.infrastructure.model_invocation.deterministic_test_adapter import (
+    DeterministicTestAdapter,
+)
 from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.health_routes import health_bp
+from app.interfaces.http.interaction_routes import register_interaction_routes
 from app.interfaces.http.request_logging import register_request_logging
 
 
@@ -16,6 +24,8 @@ def create_application(
     *,
     testing: bool = False,
     platform_access_provider=None,
+    model_invocation_port=None,
+    interaction_turn_handler=None,
 ) -> Flask:
     settings = Settings.for_testing() if testing else Settings()
     logger = configure_logging(settings.service_name, settings.log_level)
@@ -42,10 +52,22 @@ def create_application(
 
     app.config["PLATFORM_ACCESS_PROVIDER"] = provider
 
+    # C3-INTERACTION-RUNTIME-01: TEST_ONLY deterministic adapter only.
+    # The real-provider gate is BLOCKED (no proven DÉLIA provider
+    # ownership or exposure policy); InvokeModel still enforces
+    # ProviderExposureClass.TEST_ONLY at the use-case boundary.
+    if interaction_turn_handler is not None:
+        handler = interaction_turn_handler
+    else:
+        port = model_invocation_port or DeterministicTestAdapter()
+        handler = HandleInteractiveConversationTurn(InvokeModel(port))
+    app.config["INTERACTION_TURN_HANDLER"] = handler
+
     register_error_handlers(app)
     register_request_logging(app, logger)
     register_auth_middleware(app, logger=logger)
     app.register_blueprint(health_bp)
+    register_interaction_routes(app, logger)
 
     logger.info(
         "delia_api_started service=%s version=%s env=%s",

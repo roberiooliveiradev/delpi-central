@@ -100,6 +100,22 @@ class DeterministicTestAdapter:
 
         if request.output_schema_id.startswith("c3t4."):
             return self._structured_understanding_payload(request, generated_at)
+        if request.output_schema_id.startswith("delia.interaction"):
+            return ProviderInvocationPayload(
+                structured_output={
+                    "answer": (
+                        "DÉLIA deterministic interaction response "
+                        f"({request.task_purpose_id}). This TEST_ONLY adapter "
+                        "produces bounded placeholder content; no real model, "
+                        "business data, or action was invoked."
+                    ),
+                    "limitations": ["deterministic_test_adapter"],
+                },
+                generated_at=generated_at,
+                finish_status=InvocationFinishStatus.COMPLETED,
+                usage=UsageMetadata(input_units=4, output_units=6, unit_kind="tokens"),
+                duration_ms=7,
+            )
 
         output = {field: f"deterministic:{request.task_purpose_id}" for field in request.expected_fields}
         return ProviderInvocationPayload(

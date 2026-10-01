@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED` (`ARCHITECTURE_REVIEW_C3_T8R1=ACCEPT_WITH_RESIDUAL` §6.83); `C3-MEDIA-FOUNDATION-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.85 (`IMPLEMENTATION_HEAD=3821dc1562f4dce68abc6103857ae65d6630e543`); `NEXT_TASK_AUTHORIZED=NO`; do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` (authorized YES; deterministic TEST_ONLY vertical implemented at `9f470b8c0a`; `REAL_PROVIDER_GATE=BLOCKED/TO_INVENTORY`); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -726,9 +726,13 @@ ARCHITECTURE_REVIEW_C3_T8R1 = ACCEPT_WITH_RESIDUAL (REVIEWED_IMPLEMENTATION_HEAD
 REAL_DELPI_OPENAPI_COVERAGE = NOT_PROVEN
 C2-FINAL accepted with residual; C3-T1..T8 APPROVED (`ARCHITECTURE_REVIEW_C3_T8R1` ACCEPT_WITH_RESIDUAL; §6.83); authorization != execution
 ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION = ANOTHER_BOUNDED_C3_SLICE_REQUIRED (§6.84)
-C3_MEDIA_FOUNDATION_01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.85)
+C3_MEDIA_FOUNDATION_01 = APPROVED (ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
+ = ACCEPT_WITH_RESIDUAL; §6.86)
+C3-INTERACTION-RUNTIME-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+   (AUTHORIZED=YES; EXECUTED=NO; deterministic TEST_ONLY path implemented;
+    REAL_PROVIDER_GATE=BLOCKED/TO_INVENTORY)
 NEXT_TASK_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
+NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01
 Workspace binding remains unscheduled
 ```
 
@@ -1152,7 +1156,12 @@ NEXT = C3-MEDIA-FOUNDATION-01 (brief pending:
 
 ```text
 TASK = C3-MEDIA-FOUNDATION-01 — MULTIMODAL_MEDIA_EVIDENCE_FOUNDATION
-STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+STATE = APPROVED
+ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01 = ACCEPT_WITH_RESIDUAL
+        (ledger §6.86; REVIEWED_IMPLEMENTATION_HEAD 3821dc1562;
+         residuals: REAL_MULTIMODAL_QUALITY_EVIDENCE TEST_NOT_RUN,
+         BIOMETRIC_FOUNDATION DEFERRED, STT/TTS_PORTS DEFERRED,
+         LIMITATIONS_CONTENT_BOUNDS non-blocking)
 AUTHORIZED_BY = ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION
                 (ANOTHER_BOUNDED_C3_SLICE_REQUIRED; ledger §6.84)
 IMPLEMENTATION_HEAD = 3821dc1562f4dce68abc6103857ae65d6630e543
@@ -1181,7 +1190,51 @@ ABSTRACTION_GATE = no speculative MediaEngine/MultimodalEngine/
 CP_TRACEABILITY = inspect CP-078/079/160/162/163/164/177 (conservative;
         authorization != PASS); biometric CP-184..187 stay outside this
         slice (separate bounded decision required)
-EVIDENCE = ledger §6.85; TARGETED_C3_MEDIA_01 PASS 47/47;
+EVIDENCE = ledger §6.85/§6.86; TARGETED_C3_MEDIA_01 PASS 47/47;
            FULL_DELIA_API PASS 299/299 at IMPLEMENTATION_HEAD
-NEXT = ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
+NEXT = C3-INTERACTION-RUNTIME-01 (coordination authorized; see below)
+```
+
+### C3-INTERACTION-RUNTIME-01 — Interactive Conversation Vertical Slice (authorized)
+
+```text
+TASK = C3-INTERACTION-RUNTIME-01 — INTERACTIVE_CONVERSATION_VERTICAL_SLICE
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+AUTHORIZED = YES (ARCHITECTURE_COORDINATION_INTERACTIVE_VERTICAL_SLICE)
+EXECUTED = NO
+IMPLEMENTATION_HEAD = 9f470b8c0a553b0b2acf7430d2ba64608679c5a8
+MODE = TEXT_ONLY + READ/GENERATE_ONLY
+MODEL = HandleInteractiveConversationTurn (app/application/interaction/)
+        over InteractionSession/InteractionTurn + InvokeModel/
+        ModelInvocationPort; POST /interaction/turns; DÉLIA MFE input/
+        submit/result surface (plugins/delia)
+OWNER = delia-api + plugins/delia
+AUTHN = JWT validate + Core GET /me (existing middleware/provider)
+AUTHZ = Core effective permission delia.access or is_superadmin;
+        frontend permissions never authoritative; fail closed
+SESSION_SEMANTICS = REQUEST_SCOPED (one InteractionSession per request;
+        no repository/table/migration/history)
+TURNS = USER_INPUT (epistemic None; untrusted input) -> DELIA_RESULT
+        (non-FACT classes only; default HYPOTHESIS; FACT rejected)
+MODEL_INVOCATION = reuses InvokeModel/ModelInvocationPort; bounded config
+        (task_purpose_id delia.interaction.turn; schema
+        delia.interaction.turn v1; instruction delia.interaction.base v1
+        sha256-bound; expected field answer; timeout<=30s;
+        input<=16384 chars)
+REAL_PROVIDER_GATE = BLOCKED / TO_INVENTORY (no DÉLIA-owned provider
+        owner/credential source/approved model/exposure policy proven;
+        DeterministicTestAdapter only; adapter_kind TEST_ONLY enforced)
+REAL_MODEL_INTERACTION = NOT_PROVEN | REAL_MODEL_EVAL = BLOCKED/TEST_NOT_RUN
+FORBIDDEN = business reads; RAG/Knowledge retrieval; vector/embedding
+        runtime; tool execution; PREPARE/ACT; Automation Hub; Personal
+        Memory; Model Router; agent selection; Chat runtime reuse;
+        media input; session persistence; migration; OT actuation
+OUTPUT_GUARDS = tool_call/function_call fields, secret-bearing and
+        CoT/scratchpad payloads rejected fail-closed; provider-claimed
+        FACT never promoted; HTTP response exposes bounded IDs/content/
+        epistemic_class/limitations/generated_at/model_invocation_id only
+EVIDENCE = ledger §6.87; TARGETED_C3_INTERACTION_RUNTIME PASS 63/63;
+           FULL_DELIA_API PASS 351/351; MFE PASS 29/29 + typecheck +
+           build at IMPLEMENTATION_HEAD
+NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01
 ```

@@ -525,10 +525,6 @@
         "sales_conversion_rate_pct",
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "projectableFields": [
         {
           "name": "sales_conversion_rate_pct",
@@ -544,7 +540,11 @@
           "projectable": true,
           "origin": "result"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_sales_conversion_rate_series",
@@ -1050,17 +1050,10 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "value_pct"
       ],
-      "valueFieldLabels": {
-        "branch": "Filial",
-        "branch_label": "Unidade",
-        "metric": "Métrica",
-        "metric_label": "Indicador",
-        "value_pct": "Valor (%)"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "value_pct",
@@ -1070,7 +1063,14 @@
           "origin": "result",
           "label": "Valor (%)"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "branch_label": "Unidade",
+        "metric": "Métrica",
+        "metric_label": "Indicador",
+        "value_pct": "Valor (%)"
+      }
     },
     {
       "operationId": "list_commercial_proposals",
@@ -1433,20 +1433,13 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "rol",
         "gross_revenue",
         "returns",
         "discounts"
       ],
-      "valueFieldLabels": {
-        "branch": "Filial",
-        "rol": "ROL",
-        "gross_revenue": "Receita bruta",
-        "returns": "Devoluções",
-        "discounts": "Descontos"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "rol",
@@ -1480,7 +1473,14 @@
           "origin": "result",
           "label": "Descontos"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "returns": "Devoluções",
+        "discounts": "Descontos"
+      }
     },
     {
       "operationId": "get_commercial_rol_by_customer",
@@ -1598,21 +1598,13 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "rol",
         "share_pct",
         "rank"
       ],
       "whenToUse": "Use em tabela de ranking por cliente.",
-      "valueFieldLabels": {
-        "customer_code": "Código cliente",
-        "customer_store": "Loja cliente",
-        "customer_name": "Cliente",
-        "rol": "ROL",
-        "share_pct": "% participação",
-        "rank": "Ranking"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "rol",
@@ -1638,7 +1630,15 @@
           "origin": "result",
           "label": "Ranking"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "rol": "ROL",
+        "share_pct": "% participação",
+        "rank": "Ranking"
+      }
     },
     {
       "operationId": "get_commercial_rol_by_customer_center",
@@ -1766,7 +1766,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "rol",
         "gross_revenue",
@@ -1774,21 +1773,7 @@
         "share_pct"
       ],
       "whenToUse": "Use em tabela de ROL por centro do cliente. Itens sem cadastro aparecem como SEM CENTRO.",
-      "valueFieldLabels": {
-        "customer_code": "Código cliente",
-        "customer_store": "Loja cliente",
-        "customer_name": "Cliente",
-        "customer_center": "Centro do cliente",
-        "customer_center_name": "Nome do centro",
-        "center_active": "Centro ativo",
-        "product_code": "Código produto",
-        "product_name": "Produto",
-        "rol": "ROL",
-        "gross_revenue": "Receita bruta",
-        "qty": "Quantidade",
-        "share_pct": "% participação",
-        "rank": "Ranking"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "rol",
@@ -1822,7 +1807,22 @@
           "origin": "result",
           "label": "% participação"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "customer_center": "Centro do cliente",
+        "customer_center_name": "Nome do centro",
+        "center_active": "Centro ativo",
+        "product_code": "Código produto",
+        "product_name": "Produto",
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "qty": "Quantidade",
+        "share_pct": "% participação",
+        "rank": "Ranking"
+      }
     },
     {
       "operationId": "get_commercial_rol_by_product",
@@ -2028,36 +2028,12 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "points",
       "valueFields": [
         "rol_matrix",
         "rol_branch"
       ],
       "whenToUse": "Use em gráfico de linha ou tabela temporal de ROL.",
-      "suggestedTransformSteps": [
-        {
-          "op": "select",
-          "columns": [
-            "periodo",
-            "rol_matrix",
-            "rol_branch"
-          ]
-        },
-        {
-          "op": "sort",
-          "column": "sort_key",
-          "direction": "asc"
-        }
-      ],
-      "seriesField": "points",
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "sort_key": "Chave de ordenação",
-        "start_date": "Data início",
-        "end_date": "Data fim",
-        "rol_matrix": "ROL filial 01",
-        "rol_branch": "ROL filial 02"
-      },
+      "tableFields": "points",
       "projectableFields": [
         {
           "name": "rol_matrix",
@@ -2078,6 +2054,15 @@
           "label": "ROL filial 02"
         }
       ],
+      "seriesField": "points",
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "rol_matrix": "ROL filial 01",
+        "rol_branch": "ROL filial 02"
+      },
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -2085,7 +2070,22 @@
         "end_date": "date",
         "rol_matrix": "number",
         "rol_branch": "number"
-      }
+      },
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "rol_matrix",
+            "rol_branch"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
+      ]
     },
     {
       "operationId": "get_commercial_rol_summary",
@@ -2177,20 +2177,6 @@
         "rol_target_pct"
       ],
       "whenToUse": "Use em card KPI/gauge quando precisar de ROL realizado e meta na mesma fonte.",
-      "tvConstraints": {
-        "maxRows": 1
-      },
-      "valueFieldLabels": {
-        "rol": "ROL",
-        "gross_revenue": "Receita bruta",
-        "returns": "Devoluções",
-        "discounts": "Descontos",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)",
-        "target": "Meta",
-        "rol_target_pct": "Atingimento da meta ROL (%)"
-      },
       "projectableFields": [
         {
           "name": "rol",
@@ -2220,6 +2206,20 @@
           "label": "Atingimento da meta ROL (%)"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldLabels": {
+        "rol": "ROL",
+        "gross_revenue": "Receita bruta",
+        "returns": "Devoluções",
+        "discounts": "Descontos",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)",
+        "target": "Meta",
+        "rol_target_pct": "Atingimento da meta ROL (%)"
+      },
       "valueFieldTypes": {
         "rol": "number",
         "gross_revenue": "number",
@@ -2326,15 +2326,6 @@
         "sales_order_otd_pct"
       ],
       "whenToUse": "Use em card KPI de OTD.",
-      "tvConstraints": {
-        "maxRows": 1
-      },
-      "valueFieldLabels": {
-        "sales_order_otd_pct": "OTD pedidos (%)",
-        "total_lines": "Total de linhas",
-        "on_time_lines": "Linhas no prazo",
-        "late_lines": "Linhas atrasadas"
-      },
       "projectableFields": [
         {
           "name": "sales_order_otd_pct",
@@ -2344,7 +2335,16 @@
           "origin": "result",
           "label": "OTD pedidos (%)"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldLabels": {
+        "sales_order_otd_pct": "OTD pedidos (%)",
+        "total_lines": "Total de linhas",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas"
+      }
     },
     {
       "operationId": "get_sales_order_otd_by_branch",
@@ -2425,7 +2425,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "otd_pct",
         "fulfillment_pct",
@@ -2433,18 +2432,7 @@
         "fulfilled_qty"
       ],
       "whenToUse": "Use em tabela comparativa de OTD por filial.",
-      "valueFieldLabels": {
-        "branch": "Filial",
-        "total_lines": "Total de linhas",
-        "total_qty": "Quantidade total",
-        "fulfilled_qty": "Quantidade atendida",
-        "on_time_lines": "Linhas no prazo",
-        "late_lines": "Linhas atrasadas",
-        "fulfillment_pct": "% atendimento",
-        "otd_pct": "OTD (%)",
-        "unit": "Unidade",
-        "mixed_units": "UMs mistas"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -2479,6 +2467,18 @@
           "label": "Quantidade atendida"
         }
       ],
+      "valueFieldLabels": {
+        "branch": "Filial",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
+      },
       "valueFieldTypes": {
         "unit": "string",
         "mixed_units": "boolean"
@@ -2588,7 +2588,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "otd_pct",
         "fulfillment_pct",
@@ -2596,21 +2595,7 @@
         "fulfilled_qty"
       ],
       "whenToUse": "Use em tabela de OTD por cliente.",
-      "valueFieldLabels": {
-        "customer_code": "Código cliente",
-        "customer_store": "Loja cliente",
-        "customer_name": "Cliente",
-        "branch": "Filial",
-        "total_lines": "Total de linhas",
-        "total_qty": "Quantidade total",
-        "fulfilled_qty": "Quantidade atendida",
-        "on_time_lines": "Linhas no prazo",
-        "late_lines": "Linhas atrasadas",
-        "fulfillment_pct": "% atendimento",
-        "otd_pct": "OTD (%)",
-        "unit": "Unidade",
-        "mixed_units": "UMs mistas"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -2645,6 +2630,21 @@
           "label": "Quantidade atendida"
         }
       ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "branch": "Filial",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
+      },
       "valueFieldTypes": {
         "unit": "string",
         "mixed_units": "boolean"
@@ -2875,7 +2875,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "lines",
       "valueFields": [
         "sales_order_otd_pct",
         "late_percentage",
@@ -2884,28 +2883,7 @@
       ],
       "openEndedDateRange": true,
       "whenToUse": "Tabela de pedidos atrasados ou no prazo: filtre branch e status=late (Atrasado). Deixe o período vazio para não cortar por data prometida.",
-      "tvConstraints": {
-        "maxRows": 200
-      },
-      "valueFieldLabels": {
-        "unit": "Unidade",
-        "qty_sold": "Qtd. vendida",
-        "qty_delivered": "Qtd. entregue",
-        "product_code": "Produto",
-        "product_description": "Descrição",
-        "order_number": "Pedido",
-        "line_item": "Item",
-        "customer_name": "Cliente",
-        "customer_short_name": "Nome reduzido",
-        "promised_date": "Data prometida",
-        "invoice_date": "Data faturamento",
-        "status": "Status",
-        "days_diff": "Dias (atraso/adianto)",
-        "sales_order_otd_pct": "OTD pedidos (%)",
-        "late_percentage": "% atrasadas",
-        "late_lines": "Linhas atrasadas",
-        "total_lines": "Total de itens"
-      },
+      "tableFields": "lines",
       "projectableFields": [
         {
           "name": "sales_order_otd_pct",
@@ -2944,6 +2922,28 @@
           "label": "Total de itens"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFieldLabels": {
+        "unit": "Unidade",
+        "qty_sold": "Qtd. vendida",
+        "qty_delivered": "Qtd. entregue",
+        "product_code": "Produto",
+        "product_description": "Descrição",
+        "order_number": "Pedido",
+        "line_item": "Item",
+        "customer_name": "Cliente",
+        "customer_short_name": "Nome reduzido",
+        "promised_date": "Data prometida",
+        "invoice_date": "Data faturamento",
+        "status": "Status",
+        "days_diff": "Dias (atraso/adianto)",
+        "sales_order_otd_pct": "OTD pedidos (%)",
+        "late_percentage": "% atrasadas",
+        "late_lines": "Linhas atrasadas",
+        "total_lines": "Total de itens"
+      },
       "valueFieldTypes": {
         "sales_order_otd_pct": "number",
         "late_percentage": "number",
@@ -3061,7 +3061,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "points",
       "valueFields": [
         "otd_pct",
         "total_qty",
@@ -3072,38 +3071,7 @@
         "otd_filial_02"
       ],
       "whenToUse": "Use em gráfico/tabela temporal de OTD; filtre por customer_names para um cliente.",
-      "suggestedTransformSteps": [
-        {
-          "op": "select",
-          "columns": [
-            "periodo",
-            "total_qty",
-            "fulfilled_qty",
-            "otd_pct"
-          ]
-        },
-        {
-          "op": "sort",
-          "column": "sort_key",
-          "direction": "asc"
-        }
-      ],
-      "seriesField": "points",
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "sort_key": "Chave de ordenação",
-        "start_date": "Data início",
-        "end_date": "Data fim",
-        "otd_filial_01": "OTD filial 01",
-        "otd_filial_02": "OTD filial 02",
-        "otd_pct": "OTD (%)",
-        "total_qty": "Quantidade total",
-        "fulfilled_qty": "Quantidade atendida",
-        "fulfillment_pct": "% atendimento",
-        "total_lines": "Total de itens",
-        "unit": "Unidade",
-        "mixed_units": "UMs mistas"
-      },
+      "tableFields": "points",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -3169,6 +3137,22 @@
           "label": "OTD filial 02"
         }
       ],
+      "seriesField": "points",
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "otd_filial_01": "OTD filial 01",
+        "otd_filial_02": "OTD filial 02",
+        "otd_pct": "OTD (%)",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "fulfillment_pct": "% atendimento",
+        "total_lines": "Total de itens",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
+      },
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -3183,7 +3167,23 @@
         "total_lines": "number",
         "unit": "string",
         "mixed_units": "boolean"
-      }
+      },
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "total_qty",
+            "fulfilled_qty",
+            "otd_pct"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "sort_key",
+          "direction": "asc"
+        }
+      ]
     },
     {
       "operationId": "get_sales_order_otd_series_by_customer",
@@ -3309,7 +3309,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "otd_pct",
         "fulfillment_pct",
@@ -3318,25 +3317,7 @@
         "total_lines"
       ],
       "whenToUse": "Use em tabela cliente×semana (ou outra granularidade); filtre por customer_names ou use top_customers.",
-      "valueFieldLabels": {
-        "customer_code": "Código cliente",
-        "customer_store": "Loja cliente",
-        "customer_name": "Cliente",
-        "branch": "Filial",
-        "periodo": "Período",
-        "sort_key": "Chave de ordenação",
-        "start_date": "Data início",
-        "end_date": "Data fim",
-        "total_lines": "Total de linhas",
-        "total_qty": "Quantidade total",
-        "fulfilled_qty": "Quantidade atendida",
-        "on_time_lines": "Linhas no prazo",
-        "late_lines": "Linhas atrasadas",
-        "fulfillment_pct": "% atendimento",
-        "otd_pct": "OTD (%)",
-        "unit": "Unidade",
-        "mixed_units": "UMs mistas"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "otd_pct",
@@ -3384,6 +3365,25 @@
           "label": "Total de linhas"
         }
       ],
+      "valueFieldLabels": {
+        "customer_code": "Código cliente",
+        "customer_store": "Loja cliente",
+        "customer_name": "Cliente",
+        "branch": "Filial",
+        "periodo": "Período",
+        "sort_key": "Chave de ordenação",
+        "start_date": "Data início",
+        "end_date": "Data fim",
+        "total_lines": "Total de linhas",
+        "total_qty": "Quantidade total",
+        "fulfilled_qty": "Quantidade atendida",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "fulfillment_pct": "% atendimento",
+        "otd_pct": "OTD (%)",
+        "unit": "Unidade",
+        "mixed_units": "UMs mistas"
+      },
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -3493,18 +3493,6 @@
         "comparable_goal"
       ],
       "whenToUse": "Use em card KPI/gauge quando precisar de OTD realizado e meta na mesma fonte.",
-      "tvConstraints": {
-        "maxRows": 1
-      },
-      "valueFieldLabels": {
-        "sales_order_otd_pct": "OTD pedidos (%)",
-        "total_lines": "Total de linhas",
-        "on_time_lines": "Linhas no prazo",
-        "late_lines": "Linhas atrasadas",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "sales_order_otd_pct",
@@ -3525,6 +3513,18 @@
           "label": "Meta do período"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldLabels": {
+        "sales_order_otd_pct": "OTD pedidos (%)",
+        "total_lines": "Total de linhas",
+        "on_time_lines": "Linhas no prazo",
+        "late_lines": "Linhas atrasadas",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
       "valueFieldTypes": {
         "sales_order_otd_pct": "number",
         "total_lines": "number",
@@ -3830,14 +3830,11 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
+      "tableFields": "indicators",
       "projectableFields": [
         {
           "name": "idd",
@@ -3853,7 +3850,10 @@
           "projectable": true,
           "origin": "result"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 20
+      }
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -3922,14 +3922,11 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "idd",
@@ -3945,7 +3942,10 @@
           "projectable": true,
           "origin": "result"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 20
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -3999,24 +3999,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
@@ -4072,9 +4100,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -4085,6 +4110,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -4141,24 +4169,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
@@ -4214,9 +4270,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -4227,6 +4280,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -4283,24 +4339,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_rol_realized",
@@ -4356,9 +4440,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -4369,6 +4450,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -4425,24 +4509,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
@@ -4498,9 +4610,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -4511,6 +4620,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -4567,24 +4679,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
@@ -4640,9 +4780,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -4653,6 +4790,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -4709,24 +4849,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
@@ -4782,9 +4950,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -4795,6 +4960,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -4851,24 +5019,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_realized",
@@ -4924,9 +5120,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -4937,6 +5130,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -4993,24 +5189,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
@@ -5066,9 +5290,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -5079,6 +5300,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -5135,24 +5359,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_pmr_realized",
@@ -5208,9 +5460,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -5221,6 +5470,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -5277,24 +5529,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_realized",
@@ -5350,9 +5630,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -5363,6 +5640,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -5419,24 +5699,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_pdi_realized",
@@ -5492,9 +5800,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -5505,6 +5810,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -5561,24 +5869,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
@@ -5634,9 +5970,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -5647,6 +5980,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -5703,24 +6039,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_realized",
@@ -5776,9 +6140,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -5789,6 +6150,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -5845,24 +6209,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_realized",
@@ -5918,9 +6310,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -5931,6 +6320,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -5987,24 +6379,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_turnover_realized",
@@ -6060,9 +6480,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -6073,6 +6490,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -6129,24 +6549,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_production_costs_realized",
@@ -6202,9 +6650,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -6215,6 +6660,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -6271,24 +6719,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_production_depreciation_realized",
@@ -6344,9 +6820,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -6357,6 +6830,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -6413,24 +6889,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_realized",
@@ -6486,9 +6990,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -6499,6 +7000,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -6555,24 +7059,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_production_oee_realized",
@@ -6628,9 +7160,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -6641,6 +7170,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -6697,24 +7229,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_production_otd_realized",
@@ -6770,9 +7330,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -6783,6 +7340,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -6839,24 +7399,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_realized",
@@ -6912,9 +7500,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -6925,6 +7510,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -6981,24 +7569,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
@@ -7054,9 +7670,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -7067,6 +7680,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -7123,24 +7739,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
@@ -7196,9 +7840,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -7209,6 +7850,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -7265,28 +7909,56 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
-      ],
-      "labelAliases": [
-        "PPM Externo Componentes — meta",
-        "PPM chicotes 9026 — meta"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
+      "labelAliases": [
+        "PPM Externo Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ],
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_components_realized",
@@ -7342,13 +8014,6 @@
       "valueFields": [
         "value"
       ],
-      "labelAliases": [
-        "PPM Externo Componentes — realizado",
-        "PPM chicotes 9026 — realizado"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -7359,9 +8024,16 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
-      }
+      },
+      "labelAliases": [
+        "PPM Externo Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
@@ -7415,24 +8087,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
@@ -7488,9 +8188,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -7501,6 +8198,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -7557,24 +8257,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_realized",
@@ -7630,9 +8358,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -7643,6 +8368,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -7699,28 +8427,56 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
-      ],
-      "labelAliases": [
-        "PPM Interno Componentes — meta",
-        "PPM chicotes 9026 — meta"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
+      "labelAliases": [
+        "PPM Interno Componentes — meta",
+        "PPM chicotes 9026 — meta"
+      ],
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
@@ -7776,13 +8532,6 @@
       "valueFields": [
         "value"
       ],
-      "labelAliases": [
-        "PPM Interno Componentes — realizado",
-        "PPM chicotes 9026 — realizado"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -7793,9 +8542,16 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
-      }
+      },
+      "labelAliases": [
+        "PPM Interno Componentes — realizado",
+        "PPM chicotes 9026 — realizado"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
@@ -7849,24 +8605,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
@@ -7922,9 +8706,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -7935,6 +8716,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -7991,24 +8775,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
@@ -8064,9 +8876,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -8077,6 +8886,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -8133,24 +8945,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
@@ -8206,9 +9046,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -8219,6 +9056,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -8275,24 +9115,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
@@ -8348,9 +9216,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -8361,6 +9226,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -8417,24 +9285,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_realized",
@@ -8490,9 +9386,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -8503,6 +9396,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -8559,24 +9455,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
@@ -8632,9 +9556,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -8645,6 +9566,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -8701,24 +9625,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_otd_realized",
@@ -8774,9 +9726,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -8787,6 +9736,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -8843,24 +9795,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
@@ -8916,9 +9896,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -8929,6 +9906,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -8985,24 +9965,52 @@
         "end_date"
       ],
       "valueFields": [
-        "value"
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
       ],
       "tvConstraints": {
         "maxRows": 1
       },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
       "projectableFields": [
         {
-          "name": "value",
+          "name": "comparable_goal",
           "type": "number",
           "nullable": true,
           "projectable": true,
           "origin": "result",
-          "semanticType": "number"
+          "semanticType": "number",
+          "label": "Meta do período"
+        },
+        {
+          "name": "goal_value",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta cadastrada"
+        },
+        {
+          "name": "reference_goal",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Meta mês (referência)"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_realized",
@@ -9058,9 +10066,6 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -9071,6 +10076,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       }
@@ -9483,15 +10491,6 @@
         "total_items",
         "comparable_goal"
       ],
-      "valueFieldLabels": {
-        "total_lmps": "Total de LMPs",
-        "percent_dentro_prazo": "% no prazo",
-        "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "total_lmps",
@@ -9533,7 +10532,16 @@
           "origin": "result",
           "label": "Meta do período"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      }
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -10329,27 +11337,6 @@
         "implemented_solutions_count",
         "solutions_started_in_period_count"
       ],
-      "valueFieldLabels": {
-        "total_investment_in_period": "Investimento total",
-        "total_gross_costs_until_now": "Investimento total",
-        "total_gross_savings_in_period": "Economia bruta",
-        "total_hours_saved_until_now": "Horas economizadas",
-        "implemented_solutions_count": "Soluções ativas",
-        "solutions_started_in_period_count": "Soluções iniciadas no período",
-        "total_net_savings_until_now": "Economia líquida",
-        "average_roi": "ROI médio",
-        "month": "Mês",
-        "gross_savings_month": "Economia bruta (mês)",
-        "gross_costs_month": "Custos brutos (mês)",
-        "gross_investment_month": "Investimento bruto (mês)",
-        "gross_recurring_investment_month": "Invest. recorrente (mês)",
-        "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
-        "investment_total_month": "Investimento total (mês)",
-        "net_savings_month": "Economia líquida (mês)",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "total_investment_in_period",
@@ -10397,6 +11384,27 @@
           "label": "Soluções iniciadas no período"
         }
       ],
+      "valueFieldLabels": {
+        "total_investment_in_period": "Investimento total",
+        "total_gross_costs_until_now": "Investimento total",
+        "total_gross_savings_in_period": "Economia bruta",
+        "total_hours_saved_until_now": "Horas economizadas",
+        "implemented_solutions_count": "Soluções ativas",
+        "solutions_started_in_period_count": "Soluções iniciadas no período",
+        "total_net_savings_until_now": "Economia líquida",
+        "average_roi": "ROI médio",
+        "month": "Mês",
+        "gross_savings_month": "Economia bruta (mês)",
+        "gross_costs_month": "Custos brutos (mês)",
+        "gross_investment_month": "Investimento bruto (mês)",
+        "gross_recurring_investment_month": "Invest. recorrente (mês)",
+        "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
+        "investment_total_month": "Investimento total (mês)",
+        "net_savings_month": "Economia líquida (mês)",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
       "valueFieldTypes": {
         "total_investment_in_period": "number",
         "total_gross_savings_in_period": "number",
@@ -10487,32 +11495,12 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "points",
       "valueFields": [
         "economia_bruta",
         "investimento"
       ],
       "openEndedDateRange": true,
-      "suggestedTransformSteps": [
-        {
-          "op": "select",
-          "columns": [
-            "periodo",
-            "economia_bruta",
-            "investimento"
-          ]
-        },
-        {
-          "op": "sort",
-          "column": "periodo",
-          "direction": "asc"
-        }
-      ],
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      },
+      "tableFields": "points",
       "projectableFields": [
         {
           "name": "economia_bruta",
@@ -10533,13 +11521,33 @@
           "label": "Investimento"
         }
       ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "economia_bruta": "number",
         "investimento": "number",
         "economia_liquida": "number",
         "horas_economizadas": "number"
-      }
+      },
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "economia_bruta",
+            "investimento"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "periodo",
+          "direction": "asc"
+        }
+      ]
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -16671,10 +17679,6 @@
         "tempo_previsto_horas"
       ],
       "whenToUse": "Use para tabelas detalhadas. Para gráfico de eficiência média por CT, prefira get_eficiencia_fabril_efficiency_by_work_center.",
-      "tvConstraints": {
-        "maxRows": 10000,
-        "bulkList": true
-      },
       "projectableFields": [
         {
           "name": "eficiencia_percentual",
@@ -16709,6 +17713,10 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 10000,
+        "bulkList": true
+      },
       "valueFieldTypes": {
         "eficiencia_percentual": "number",
         "resultado_mod": "number",
@@ -16878,14 +17886,6 @@
         "appointment_count"
       ],
       "whenToUse": "Gráfico de barras: categoria work_center, valor efficiency_pct com agregação first (já vem agregado).",
-      "tvConstraints": {
-        "maxRows": 200
-      },
-      "valueFieldLabels": {
-        "efficiency_pct": "Eficiência %",
-        "appointment_count": "Apontamentos",
-        "work_center": "Centro de trabalho"
-      },
       "projectableFields": [
         {
           "name": "efficiency_pct",
@@ -16906,6 +17906,14 @@
           "label": "Apontamentos"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
+      "valueFieldLabels": {
+        "efficiency_pct": "Eficiência %",
+        "appointment_count": "Apontamentos",
+        "work_center": "Centro de trabalho"
+      },
       "valueFieldTypes": {
         "efficiency_pct": "number",
         "appointment_count": "number"
@@ -17628,25 +18636,6 @@
         "oee_filial_01",
         "oee_filial_02"
       ],
-      "suggestedTransformSteps": [
-        {
-          "op": "select",
-          "columns": [
-            "periodo",
-            "oee_filial_01",
-            "oee_filial_02"
-          ]
-        },
-        {
-          "op": "sort",
-          "column": "periodo",
-          "direction": "asc"
-        }
-      ],
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "projectableFields": [
         {
           "name": "oee_filial_01",
@@ -17665,6 +18654,10 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -17672,7 +18665,22 @@
         "end_date": "date",
         "oee_filial_01": "number",
         "oee_filial_02": "number"
-      }
+      },
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "oee_filial_01",
+            "oee_filial_02"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "periodo",
+          "direction": "asc"
+        }
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -17730,10 +18738,6 @@
         "value",
         "otdPct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "projectableFields": [
         {
           "name": "on_time_delivery_pct",
@@ -17760,6 +18764,10 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
@@ -18190,10 +19198,10 @@
         "start_date",
         "end_date"
       ],
-      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "string",
         "sort_key": "string",
@@ -18259,10 +19267,6 @@
         "value",
         "oeePct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "projectableFields": [
         {
           "name": "overall_equipment_effectiveness_pct",
@@ -18289,6 +19293,10 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
@@ -19737,11 +20745,11 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
       },
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
@@ -22959,11 +23967,7 @@
         "end_date"
       ],
       "valueFields": [
-        "value",
         "average_score"
-      ],
-      "labelAliases": [
-        "Auditoria 5S — resumo"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -22972,15 +23976,10 @@
         "goal_value": "Meta cadastrada",
         "reference_goal": "Meta mês (referência)"
       },
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ],
       "projectableFields": [
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Valor"
-        },
         {
           "name": "average_score",
           "type": "string",
@@ -23594,19 +24593,6 @@
         "total_savings",
         "total_kaizens"
       ],
-      "labelAliases": [
-        "Kaizens — resumo e listagem (PostgreSQL)",
-        "Kaizens — resumo e listagem (Google Sheets)"
-      ],
-      "valueFieldLabels": {
-        "value": "Valor",
-        "total_savings": "Economia total",
-        "total_kaizens": "Total kaizens",
-        "comparable_goal": "Meta do período",
-        "ideas_goal": "Ideias / meta",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -23632,6 +24618,19 @@
           "origin": "result",
           "label": "Total kaizens"
         }
+      ],
+      "valueFieldLabels": {
+        "value": "Valor",
+        "total_savings": "Economia total",
+        "total_kaizens": "Total kaizens",
+        "comparable_goal": "Meta do período",
+        "ideas_goal": "Ideias / meta",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "labelAliases": [
+        "Kaizens — resumo e listagem (PostgreSQL)",
+        "Kaizens — resumo e listagem (Google Sheets)"
       ]
     },
     {
@@ -24239,17 +25238,12 @@
         }
       },
       "paramStrategy": "direct",
-      "valueFields": [
-        "value",
-        "current_days_without_nc"
-      ],
-      "labelAliases": [
-        "Qualidade — dias sem NC no cliente",
-        "Dias sem defeitos no cliente"
-      ],
       "defaultParams": {
         "type": "customer"
       },
+      "valueFields": [
+        "current_days_without_nc"
+      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -24260,16 +25254,17 @@
         "record_days_without_nc": "Recorde de dias sem NC",
         "last_nc_date": "Data da última NC"
       },
+      "valueFieldTypes": {
+        "value": "number",
+        "current_days_without_nc": "number",
+        "record_days_without_nc": "number",
+        "nc_count": "number"
+      },
+      "labelAliases": [
+        "Qualidade — dias sem NC no cliente",
+        "Dias sem defeitos no cliente"
+      ],
       "projectableFields": [
-        {
-          "name": "value",
-          "type": "number",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "semanticType": "number",
-          "label": "Dias sem NC"
-        },
         {
           "name": "current_days_without_nc",
           "type": "number",
@@ -24279,13 +25274,7 @@
           "semanticType": "number",
           "label": "Dias atuais sem NC"
         }
-      ],
-      "valueFieldTypes": {
-        "value": "number",
-        "current_days_without_nc": "number",
-        "record_days_without_nc": "number",
-        "nc_count": "number"
-      }
+      ]
     },
     {
       "operationId": "list_ppm_external",
@@ -24470,25 +25459,6 @@
         "ppm",
         "ppmValue"
       ],
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "valueFieldLabels": {
-        "value": "Valor",
-        "ppm": "PPM",
-        "ppmValue": "PPM",
-        "total_produzido_un": "Total produzido (un.)",
-        "total_produzido_milheiro": "Total produzido (milheiro)",
-        "total_devolvido_un": "Total devolvido (un.)",
-        "target": "Meta PPM",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -24518,6 +25488,22 @@
           "label": "PPM"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "value": "Valor",
+        "ppm": "PPM",
+        "ppmValue": "PPM",
+        "total_produzido_un": "Total produzido (un.)",
+        "total_produzido_milheiro": "Total produzido (milheiro)",
+        "total_devolvido_un": "Total devolvido (un.)",
+        "target": "Meta PPM",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
       "valueFieldTypes": {
         "value": "number",
         "ppm": "number",
@@ -24527,7 +25513,10 @@
         "target": "number",
         "comparable_goal": "number",
         "goal_value": "number"
-      }
+      },
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -24712,26 +25701,6 @@
         "ppm",
         "ppmValue"
       ],
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
-      "valueFieldLabels": {
-        "value": "Valor",
-        "ppm": "PPM",
-        "ppmValue": "PPM",
-        "total_produzido_un": "Total produzido (un.)",
-        "total_produzido_milheiro": "Total produzido (milheiro)",
-        "total_devolvido_un": "Total devolvido (un.)",
-        "target": "Meta PPM",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "value",
@@ -24761,6 +25730,22 @@
           "label": "PPM"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "value": "Valor",
+        "ppm": "PPM",
+        "ppmValue": "PPM",
+        "total_produzido_un": "Total produzido (un.)",
+        "total_produzido_milheiro": "Total produzido (milheiro)",
+        "total_devolvido_un": "Total devolvido (un.)",
+        "target": "Meta PPM",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
       "valueFieldTypes": {
         "value": "number",
         "ppm": "number",
@@ -24768,7 +25753,11 @@
         "target": "number",
         "comparable_goal": "number",
         "goal_value": "number"
-      }
+      },
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -24929,12 +25918,10 @@
         "end_date"
       ],
       "valueFields": [
-        "rework_cost_pct",
-        "value"
+        "rework_cost_pct"
       ],
       "valueFieldLabels": {
         "rework_cost_pct": "Custo de retrabalho / ROL (%)",
-        "value": "Valor",
         "rework_cost": "Custo de retrabalho (R$)",
         "rol": "ROL (R$)",
         "total_hours": "Horas de retrabalho",
@@ -24953,14 +25940,6 @@
           "projectable": true,
           "origin": "result",
           "label": "Custo de retrabalho / ROL (%)"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Valor"
         }
       ]
     },
@@ -25094,12 +26073,10 @@
         "end_date"
       ],
       "valueFields": [
-        "scrap_cost_pct",
-        "value"
+        "scrap_cost_pct"
       ],
       "valueFieldLabels": {
         "scrap_cost_pct": "Custo de refugo / ROL (%)",
-        "value": "Valor",
         "scrap_cost": "Custo de refugo (R$)",
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
@@ -25117,14 +26094,6 @@
           "projectable": true,
           "origin": "result",
           "label": "Custo de refugo / ROL (%)"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "nullable": true,
-          "projectable": true,
-          "origin": "result",
-          "label": "Valor"
         }
       ]
     },
@@ -25417,7 +26386,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "value",
         "sharePct",
@@ -25425,15 +26393,7 @@
         "quantity",
         "occurrenceCount"
       ],
-      "valueFieldLabels": {
-        "value": "Valor (R$)",
-        "sharePct": "Participação (%)",
-        "percentual": "Participação (%)",
-        "quantity": "Quantidade",
-        "occurrenceCount": "Ocorrências",
-        "code": "Código",
-        "label": "Descrição"
-      },
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "value",
@@ -25475,7 +26435,16 @@
           "origin": "result",
           "label": "Ocorrências"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "value": "Valor (R$)",
+        "sharePct": "Participação (%)",
+        "percentual": "Participação (%)",
+        "quantity": "Quantidade",
+        "occurrenceCount": "Ocorrências",
+        "code": "Código",
+        "label": "Descrição"
+      }
     },
     {
       "operationId": "get_refugos_registros",
@@ -25722,18 +26691,6 @@
         "scrap_cost_pct",
         "value"
       ],
-      "valueFieldLabels": {
-        "scrap_cost_pct": "Custo de refugo / ROL (%)",
-        "value": "Valor",
-        "scrap_cost": "Custo de refugo (R$)",
-        "rol": "ROL (R$)",
-        "occurrences": "Ocorrências de refugo",
-        "records_without_cost": "Registros sem custo",
-        "quantity": "Quantidade total",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "scrap_cost_pct",
@@ -25751,7 +26708,19 @@
           "origin": "result",
           "label": "Valor"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "scrap_cost_pct": "Custo de refugo / ROL (%)",
+        "value": "Valor",
+        "scrap_cost": "Custo de refugo (R$)",
+        "rol": "ROL (R$)",
+        "occurrences": "Ocorrências de refugo",
+        "records_without_cost": "Registros sem custo",
+        "quantity": "Quantidade total",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      }
     },
     {
       "operationId": "get_refugos_serie",
@@ -26820,19 +27789,6 @@
         "rework_cost_pct",
         "value"
       ],
-      "valueFieldLabels": {
-        "rework_cost_pct": "Custo de retrabalho / ROL (%)",
-        "value": "Valor",
-        "rework_cost": "Custo de retrabalho (R$)",
-        "rol": "ROL (R$)",
-        "total_hours": "Horas de retrabalho",
-        "appointment_count": "Apontamentos",
-        "average_cost_per_hour": "Custo médio por hora (R$)",
-        "records_without_cost": "Registros sem custo",
-        "comparable_goal": "Meta do período",
-        "goal_value": "Meta cadastrada",
-        "reference_goal": "Meta mês (referência)"
-      },
       "projectableFields": [
         {
           "name": "rework_cost_pct",
@@ -26850,7 +27806,20 @@
           "origin": "result",
           "label": "Valor"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "rework_cost_pct": "Custo de retrabalho / ROL (%)",
+        "value": "Valor",
+        "rework_cost": "Custo de retrabalho (R$)",
+        "rol": "ROL (R$)",
+        "total_hours": "Horas de retrabalho",
+        "appointment_count": "Apontamentos",
+        "average_cost_per_hour": "Custo médio por hora (R$)",
+        "records_without_cost": "Registros sem custo",
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      }
     },
     {
       "operationId": "list_sale_orders",
@@ -27411,7 +28380,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "lines",
       "valueFields": [
         "purchase_order_otd_pct",
         "late_lines",
@@ -27419,9 +28387,7 @@
       ],
       "openEndedDateRange": true,
       "whenToUse": "Tabela de pedidos de compra atrasados (MP): branch e status=late. Sem datas = histórico elegível da view.",
-      "tvConstraints": {
-        "maxRows": 200
-      },
+      "tableFields": "lines",
       "projectableFields": [
         {
           "name": "purchase_order_otd_pct",
@@ -27448,6 +28414,9 @@
           "semanticType": "number"
         }
       ],
+      "tvConstraints": {
+        "maxRows": 200
+      },
       "valueFieldTypes": {
         "purchase_order_otd_pct": "number",
         "late_lines": "number",
@@ -28747,25 +29716,17 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
-      "valueFields": [
-        "stock_value",
-        "quantity"
-      ],
       "defaultParams": {
         "page": 1,
         "page_size": 50,
         "only_positive": true,
         "sort": "stock_value_desc"
       },
-      "tvConstraints": {
-        "maxRows": 50,
-        "requiresBranchPermission": true
-      },
-      "valueFieldLabels": {
-        "stock_value": "Valor (R$)",
-        "quantity": "Quantidade"
-      },
+      "valueFields": [
+        "stock_value",
+        "quantity"
+      ],
+      "tableFields": "items",
       "projectableFields": [
         {
           "name": "stock_value",
@@ -28783,7 +29744,15 @@
           "origin": "result",
           "label": "Quantidade"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 50,
+        "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "stock_value": "Valor (R$)",
+        "quantity": "Quantidade"
+      }
     },
     {
       "operationId": "get_supplies_stock_balances_summary",
@@ -28826,21 +29795,12 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "by_warehouse",
       "valueFields": [
         "product_count",
         "total_stock_value",
         "total_quantity"
       ],
-      "tvConstraints": {
-        "maxRows": 12,
-        "requiresBranchPermission": true
-      },
-      "valueFieldLabels": {
-        "product_count": "Qtd. de produtos",
-        "total_stock_value": "Valor do estoque (R$)",
-        "total_quantity": "Quantidade total"
-      },
+      "tableFields": "by_warehouse",
       "projectableFields": [
         {
           "name": "product_count",
@@ -28866,7 +29826,16 @@
           "origin": "result",
           "label": "Quantidade total"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 12,
+        "requiresBranchPermission": true
+      },
+      "valueFieldLabels": {
+        "product_count": "Qtd. de produtos",
+        "total_stock_value": "Valor do estoque (R$)",
+        "total_quantity": "Quantidade total"
+      }
     },
     {
       "operationId": "get_supplies_stock_value",
@@ -28947,12 +29916,12 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "top_products",
       "valueFields": [
         "total_stock_value",
         "total_stock_quantity",
         "total_locations"
       ],
+      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true

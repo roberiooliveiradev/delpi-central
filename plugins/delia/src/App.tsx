@@ -1,4 +1,10 @@
-import { DELIA_ROOT_CLASS, DeliaEmptyState, DeliaPageHeader } from "./ui/deliaUi";
+import { useEffect, useRef, useState } from "react";
+
+import { DELIA_ROOT_CLASS, DeliaPageHeader } from "./ui/deliaUi";
+import {
+  DeliaInteractionError,
+  submitInteractionTurn,
+} from "./api/interactionClient";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -15,37 +21,169 @@ export type AppProps = {
   isSuperadmin?: boolean;
 };
 
+/** Transient UI display state only — not session persistence or memory. */
+type DisplayTurn = {
+  id: string;
+  role: "user" | "delia";
+  content: string;
+  epistemicClass?: string | null;
+  limitations?: string[];
+};
+
+const TOKEN_UNAVAILABLE_MESSAGE =
+  "Token de acesso indisponível. Recarregue pelo Portal.";
+
 /**
- * Minimal DÉLIA shell for C1 federated foundation.
+ * C3-INTERACTION-RUNTIME-01: minimal usable DÉLIA interaction surface.
  *
- * permissions / isSuperadmin are accepted for host-contract compatibility and
- * MUST NOT be treated as authoritative allow/deny for backend operations.
+ * One text request → authenticated delia-api POST /interaction/turns →
+ * rendered DELIA_RESULT. permissions / isSuperadmin remain host
+ * presentation hints and are never sent as backend authority.
  */
 export default function App({
   pathname,
   basePath,
   routeLabel,
-  getAccessToken: _getAccessToken,
+  getAccessToken,
   permissions: _permissions,
   isSuperadmin: _isSuperadmin,
 }: AppProps) {
-  void _getAccessToken;
   void _permissions;
   void _isSuperadmin;
 
   const hostPath = pathname || basePath || "/apps/delia";
+
+  const [input, setInput] = useState("");
+  const [turns, setTurns] = useState<DisplayTurn[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+    },
+    [],
+  );
+
+  async function handleSubmit() {
+    const value = input.trim();
+    if (!value || loading) return;
+    if (!getAccessToken || !getAccessToken()) {
+      setError(TOKEN_UNAVAILABLE_MESSAGE);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const result = await submitInteractionTurn(value, {
+        getAccessToken,
+        signal: controller.signal,
+      });
+      setTurns((previous) => [
+        ...previous,
+        { id: result.user_turn_id, role: "user", content: value },
+        {
+          id: result.result_turn_id,
+          role: "delia",
+          content: result.content,
+          epistemicClass: result.epistemic_class,
+          limitations: result.limitations,
+        },
+      ]);
+      setInput("");
+    } catch (submitError) {
+      if (
+        submitError instanceof Error &&
+        submitError.name === "AbortError"
+      ) {
+        return;
+      }
+      setError(
+        submitError instanceof DeliaInteractionError
+          ? submitError.message
+          : "Erro inesperado ao falar com a DÉLIA.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className={`${DELIA_ROOT_CLASS} dashboard-page`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
         <DeliaPageHeader
           title="DÉLIA"
-          subtitle="Inteligência operacional standalone"
+          subtitle="Converse com a inteligência operacional da DELPI — uma pergunta por vez, sem ações automatizadas nesta fase."
         />
-        <DeliaEmptyState
-          title="Fundação operacional pronta"
-          message="Shell standalone da DÉLIA. Capacidades de negócio entram em tarefas posteriores."
-        />
+
+        <section
+          className="delia-interaction"
+          aria-label="Interação com a DÉLIA"
+        >
+          {turns.length > 0 ? (
+            <ul className="delia-turns" aria-label="Respostas">
+              {turns.map((turn) => (
+                <li
+                  key={turn.id}
+                  className={`delia-turn delia-turn--${turn.role}`}
+                >
+                  <span className="delia-turn__label">
+                    {turn.role === "user" ? "Você" : "DÉLIA"}
+                  </span>
+                  <p className="delia-turn__content">{turn.content}</p>
+                  {turn.epistemicClass ? (
+                    <span className="delia-turn__meta">
+                      classificação: {turn.epistemicClass}
+                    </span>
+                  ) : null}
+                  {turn.limitations && turn.limitations.length > 0 ? (
+                    <span className="delia-turn__meta">
+                      limitações: {turn.limitations.join(", ")}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {error ? (
+            <p className="delia-interaction__error" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <form
+            className="delia-interaction__form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
+          >
+            <label htmlFor="delia-interaction-input">
+              Pergunte à DÉLIA
+            </label>
+            <textarea
+              id="delia-interaction-input"
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="Digite sua pergunta…"
+              rows={3}
+              disabled={loading}
+            />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+            >
+              {loading ? "Enviando…" : "Enviar"}
+            </button>
+          </form>
+        </section>
+
         <p className="delia-host-meta">
           {routeLabel ? `${routeLabel} · ` : null}
           Contexto de host: <span>{hostPath}</span>

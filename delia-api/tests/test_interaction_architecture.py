@@ -168,8 +168,25 @@ def test_session_turn_context_have_no_auth_secret_cot_or_mechanics_fields():
         )
 
 
-def test_no_application_layer_for_interaction():
-    for package in ("interaction", "conversation", "session", "chat"):
+def test_interaction_application_layer_stays_bounded():
+    """C3-INTERACTION-RUNTIME-01 introduced `application/interaction`.
+
+    The slice may contain exactly one request-scoped use case. No
+    conversation/session/chat engines, repositories, or new ports may
+    appear.
+    """
+    interaction_dir = APP_ROOT / "application" / "interaction"
+    assert interaction_dir.exists()
+    module_files = sorted(
+        p.name for p in interaction_dir.rglob("*.py") if p.name != "__init__.py"
+    )
+    assert module_files == [
+        "contracts.py",
+        "errors.py",
+        "handle_interactive_turn.py",
+        "instruction.py",
+    ]
+    for package in ("conversation", "session", "chat"):
         assert not (APP_ROOT / "application" / package).exists()
     ports = APP_ROOT / "application" / "ports"
     if ports.exists():

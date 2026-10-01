@@ -196,3 +196,162 @@ suites tv-dashboard-api: 1405 passed, 2 falhas pré-existentes em
 `test_focused_data_source_context.py` (fronteira de `end_date` — falham
 igualmente no HEAD sem a mudança). Contract impact: API HTTP = NONE;
 TV catalog = CORRECTIVE/BEHAVIORAL.
+
+
+---
+
+## Auditoria de consumidores persistidos — PRODUCAO (srv-api)
+
+Data: 2026-09-30. Ambiente autoritativo: `srv-api` (192.168.1.237),
+`plugins_hub.tv_dashboard` via `delpi-postgres-plugins`, acesso SSH
+`operador@srv-api` -> `docker exec psql` com
+`default_transaction_read_only=on`. Repositorio em producao:
+`5033d41` (== HEAD local pos-Wave 1); imagem `delpi-tv-dashboard-api`
+servindo catalogo corrigido (verificado in-container).
+
+READ-ONLY: nenhuma mutacao (SQL de leitura apenas).
+
+### Documentos inspecionados: 3.883
+
+| superficie | docs |
+|---|---|
+| slides.native_config | 110 |
+| playlists.master_config / data_defaults | 15 + 15 |
+| playlist_sections | 11 |
+| slide_templates | 4 |
+| playlist_history (snapshots) | 3.355 |
+| gpt_actions_idempotency_keys | 373 |
+
+### Referencias field=="value" — ATIVAS: 97 (todas em slides)
+
+| classe | n | ops |
+|---|---|---|
+| KEEP_REALIZED | 15 | SI `*_realized` (ppm x12, kaizen x3) |
+| MIGRATE_META | 7 | SI `*_meta` (ppm x5, kaizen x2) |
+| DEPRECATE_PARITY_ALIAS | 9 | nonconformity_streak x4, scrap/rework_cost_pct x4, audit_5s x1 |
+| LEGITIMATE_DOMAIN_VALUE | 11 | get_refugos_rankings (chart sobre items[].value) |
+| PRESENTATION_VALUE | 55 | projecao normalizada {label,value} — ops fora das 98 |
+| INVALID_CATALOG_FIELD | 0 | — |
+| TO_INVENTORY | 0 | — |
+
+Historico: 33.232 refs em playlist_history sao ecos de snapshots
+(~50 pares op+path unicos). GPT idem: 307 refs sao snapshots de
+write (REPLAY retorna resposta, nao re-aplica config) — evidencia
+historica, nao dependencia ativa.
+
+### Gate Wave 2 (SI meta)
+
+7 bindings ativos leem `value` de `*_meta` (canonical:
+`comparable_goal`) em 4 slides / 2 playlists. Nenhum binding meta
+usa `goal_value`/`reference_goal`. SI realized: 15 bindings `value`
+corretos (KEEP) — Wave 2 nao deve toca-los.
+
+Artefato sanitizado: `prod_value_binding_audit.json` (97 linhas:
+playlist/slide/block ids, operationId, field_path, classe — sem
+valores de negocio).
+
+
+---
+
+## Wave 2 — Migracao semantica SI meta (executada 2026-10-01)
+
+Escopo: catalogo SI `*_meta` + 7 bindings persistidos em producao.
+
+### Catalogo
+
+- Novo mecanismo `overlayEntities` no gerador/overlays (chave = `xDelpi.entity`)
+  — discrimina irmaos que o prefixo nao separa: precedencia
+  prefixo < entity < overlay exato.
+- `dashboard_si_indicator_meta` agora projeta
+  `comparable_goal`, `goal_value`, `reference_goal` (labels curados);
+  `projectableFields: null` purga a declaracao herdada de `value`.
+- 36 rotas `*_meta` migradas; 36 `*_realized` intactas (`["value"]`).
+- `value` permanece emitido no HTTP como alias de compatibilidade
+  (DEPRECATED COMPATIBILITY ALIAS) — nao removido nesta wave.
+- Gerador: CHECK=0 (525 rotas).
+
+### Migracao persistida (producao srv-api)
+
+- Backup: 4 slides -> ~/wave2_si_meta_backup_20261001.jsonl (srv-api)
+  + copia local; script tambem grava snapshot in-container.
+- Predicado limitado: bloco cujo operationId resolvido
+  (dataBinding ou dataSourceId->data_source) casa `get_si_indicator_*_meta`
+  E ref de campo == "value" (exact match, inclui selectedValueFields[]).
+- Escrita via `PlaylistRepository.update_slide` (transacao por slide +
+  snapshot em playlist_history + updated_at). Actor:
+  `wave2-si-meta-field-migration`, reason `si_meta_value_field_migration`.
+- expected=7 matched=7 updated=7 (4 slides / 2 playlists).
+- Pos-condicao lida por psql independente: SI_META value=0,
+  comparable_goal=7, SI_REALIZED value=15, outros 74 intactos.
+- Preview runtime in-container (SlideDataResolutionService, kind=service):
+  7/7 blocos resolvem comparable_goal com valor real
+  (225.81/306.45/9.35/64.52/0.26/290.32/74.19 == value alias);
+  irmao fora dos slides (ppm_external_meta) idem.
+
+### Testes
+
+- test_si_meta_value_field_migration.py: 10 casos (positive/sibling/
+  negative/idempotente/exact-match/lista/aninhado).
+- test_catalog_value_field_contract.py: +invariante SI meta/realized
+  (schema autoritativo do producer; 36+36 rotas).
+- test_tv_data_route_catalog.py: contrato meta atualizado para a tríade.
+- Suite completa tv-dashboard-api: 1417 pass, 2 falhas pre-existentes
+  (date-boundary — ja reprovadas em baseline).
+
+Nota residual: 10 refs `value` nao resolvidas via dataSourceId no slide
+870c19ed (fontes `rx_*` — dataModels); fora do escopo (nao sao `*_meta`).
+
+## Wave 3 — Migracao de parity aliases non-SI (executada 2026-10-01)
+
+Escopo: 9 bindings persistidos `DEPRECATE_PARITY_ALIAS` + catalogo das
+4 operacoes alvo. Motor extraido para
+`tv_app/application/services/data/value_field_binding_migration.py`
+(spec operacao -> campo canonico); `si_meta_value_field_migration.py`
+virou shim de compatibilidade sobre o mesmo engine.
+
+### Catalogo
+
+- `get_nonconformity_streak`: `valueFields` -> `["current_days_without_nc"]`;
+- `get_audit_5s_summary`: -> `["average_score"]`;
+- `get_quality_scrap_cost_pct`: -> `["scrap_cost_pct"]` (+ label stale removido);
+- `get_quality_rework_cost_pct`: -> `["rework_cost_pct"]` (+ idem).
+- `projectableFields: null` em todas para purgar `value` inferido via
+  `meta.fields` do producer.
+- `value` continua emitido onde o producer o produz (nonconformity, 5s)
+  como DEPRECATED COMPATIBILITY ALIAS; scrap/rework nunca emitiram `value`
+  (alias era catalog-only + fallback runtime).
+- `get_refugos_scrap_cost_pct` (irmao, sem bindings persistidos) permanece
+  declarando `value` — residual catalog-only para wave futura.
+- Gerador: CHECK=0 (525 rotas); diff semantico = exatamente 4 ops.
+
+### Migracao persistida (producao srv-api)
+
+- Pre-scan live: exatamente 9 refs `field:"value"` nos 4 ops alvo,
+  6 slides / 4 playlists (streak x4, 5s x1, scrap x2, rework x2).
+- Backup: 6 slides -> `/home/operador/wave3_parity_alias_backup_20261001.json`
+  (srv-api) + copia local + snapshot in-container.
+- Escrita via `PlaylistRepository.update_slide` (transacao + snapshot em
+  `playlist_history`); actor `wave3-parity-alias-field-migration`,
+  reason `parity_alias_value_field_migration`.
+- Pos-condicao (read-back in-container): parity_alias value=0,
+  si_meta=0 (comparable_goal=7 preservado), si_realized=15,
+  other=55, unresolved=10 — nada fora do escopo alterado.
+
+### Preview runtime (prod, in-container)
+
+- 9/9 blocos resolvem pelo `SlideDataResolutionService` com
+  `serverTextProjectionApplied` e `error: null`; `content` renderiza o
+  valor semantico (ex.: `Realizado 0,74` via `scrap_cost_pct` formato
+  percent). streak: `current_days_without_nc` == alias `value` (14/34/26/14);
+  5s: `average_score` == `value` (0.0); scrap/rework: campo presente,
+  alias `value` ausente no payload — binding agora deterministico.
+- Irmao `get_refugos_scrap_cost_pct` (sem binding persistido) resolve
+  `scrap_cost_pct=0.188` normalmente.
+
+### Testes
+
+- test_parity_alias_value_field_migration.py: 11 casos (positive por
+  familia, siblings non-target, same-op non-value, meta/realized
+  intocados, presentation/domain intocados, exact-match, idempotente).
+- Suite completa tv-dashboard-api: 1428 pass, 2 falhas pre-existentes
+  (date-boundary — identicas no baseline).
