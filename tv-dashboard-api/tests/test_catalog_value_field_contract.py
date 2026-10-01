@@ -544,3 +544,42 @@ def test_wave4_heuristic_no_longer_appends_value() -> None:
     fields = mod.infer_value_fields("get_some_new_metric_pct")
     assert "value" not in fields
     assert fields == ["some_new_metric_pct"]
+
+
+# Wave 5 — aliases camelCase catalog-only: producers api-delpi nunca emitem
+# otdPct/oeePct; zero consumers persistidos/codigo. (op -> alias -> canonico)
+WAVE5_CAMELCASE_ALIASES: dict[str, tuple[str, str]] = {
+    "get_on_time_delivery_pct": ("otdPct", "on_time_delivery_pct"),
+    "get_overall_equipment_effectiveness_pct": (
+        "oeePct",
+        "overall_equipment_effectiveness_pct",
+    ),
+}
+
+
+def test_wave5_camelcase_aliases_removed_from_catalog() -> None:
+    """Wave 5: aliases camelCase stale (otdPct/oeePct) nao sao mais declarados;
+    campo semantico permanece e resolve no schema emitido."""
+    routes = _load_routes()
+    for op, (alias, semantic) in WAVE5_CAMELCASE_ALIASES.items():
+        declared = _declared_fields(routes[op])
+        assert alias not in declared, f"{op} still advertises catalog-only {alias}"
+        assert semantic in declared, f"{op} lost semantic field {semantic!r}"
+        projectable = {f["name"] for f in routes[op].get("projectableFields") or []}
+        assert alias not in projectable, f"{op}: {alias} still projectable"
+        assert semantic in projectable, f"{op}: {semantic} not projectable"
+        assert field_resolves_in_response(
+            semantic, RESPONSE_SCHEMAS[op], routes[op].get("seriesField")
+        ), f"{op}: {semantic!r} absent from emitted response schema"
+
+
+def test_wave5_unrelated_camelcase_fields_unaffected() -> None:
+    """Negative: `otdPct` em ops de serie supplies/producao e campo de dominio
+    legitimo dentro das linhas (seriesField points) — nunca declarado como
+    scalar projectable — e o cleanup nao pode removê-lo nem quebrar a serie."""
+    routes = _load_routes()
+    series = routes["get_production_otd_series"]
+    assert series.get("seriesField") == "points"
+    # contrato series-only: nenhum scalar declarado; `otdPct` vive em points[]
+    # (campo de dominio legitimo do producer) e nunca foi alias top-level
+    assert _declared_fields(series) == []

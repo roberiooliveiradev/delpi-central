@@ -50,12 +50,10 @@
         "requiresBranchPermission": true
       },
       "valueFields": [
-        "on_time_delivery_pct",
-        "otdPct"
+        "on_time_delivery_pct"
       ],
       "valueFieldTypes": {
-        "on_time_delivery_pct": "number",
-        "otdPct": "number"
+        "on_time_delivery_pct": "number"
       },
       "projectableFields": null,
       "label": "OTD — produção",
@@ -75,12 +73,10 @@
         "requiresBranchPermission": true
       },
       "valueFields": [
-        "overall_equipment_effectiveness_pct",
-        "oeePct"
+        "overall_equipment_effectiveness_pct"
       ],
       "valueFieldTypes": {
-        "overall_equipment_effectiveness_pct": "number",
-        "oeePct": "number"
+        "overall_equipment_effectiveness_pct": "number"
       },
       "projectableFields": null,
       "label": "OEE — visão geral",

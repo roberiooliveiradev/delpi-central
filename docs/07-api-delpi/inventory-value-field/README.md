@@ -407,3 +407,39 @@ de declaracao stale removidos:
   heuristica nao reinjeta value). Schema de get_quality_scrap_cost_pct
   corrigido (Wave 3 provou que value nao e emitido).
 - Suite completa: 1431 pass, 2 falhas pre-existentes (date-boundary).
+
+## Wave 5 — Legacy camelCase catalog cleanup (executada 2026-10-01)
+
+Pass residual read-only provou para otdPct/oeePct: nao emitidos pelo
+producer api-delpi, zero consumers persistidos (106 slides), zero refs
+em playlist_history (3356 snapshots), zero code consumers de
+response-field (dashboard-production usa prop interna oeePct sobre
+oee_pct; supplies-api emite otdPct em ops proprias — dominio legitimo).
+
+Cleanup catalog-only em 2 operacoes:
+
+- get_on_time_delivery_pct: [on_time_delivery_pct, otdPct] -> [on_time_delivery_pct]
+- get_overall_equipment_effectiveness_pct:
+  [overall_equipment_effectiveness_pct, oeePct] -> [overall_equipment_effectiveness_pct]
+
+projectableFields:null (purge Wave 3/4) impede ressurreicao via
+merge_with_existing. Diff semantico: exatamente 2 ops. Producers
+intocados; sem mutacao em banco.
+
+### Testes
+
+- test_catalog_value_field_contract.py: +2 casos Wave 5 (aliases
+  removidos + campo semantico permanece/resolve; negativo — otdPct de
+  serie supplies e campo de dominio em points[], nao alias top-level).
+- Suite completa: 1432 pass, 3 falhas nao relacionadas (2 pre-existentes
+  date-boundary + 1 test_vista_mcp_read_surface por drift de versao
+  fastapi/starlette nao pinada no ambiente local).
+
+### Classificacao residual final
+
+- value no catalogo: 40 ops = 36 SI realized (canonico) + 4 keepers
+  (parity emitido / dominio legitimo).
+- Aliases camelCase catalog-only restantes: 0.
+- Aliases HTTP emitidos com zero consumers comprovados (meta value x36,
+  parity value x6): DEPRECATE_READY — remocao fisica pendente de sweep
+  de consumers externos.
