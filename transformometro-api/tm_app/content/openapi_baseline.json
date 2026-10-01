@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-30",
-  "operation_count": 206,
+  "generatedAt": "2026-10-01",
+  "operation_count": 203,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -34,33 +34,21 @@
       "module": "colaboracao"
     },
     {
-      "operationId": "get_diagnostic",
-      "method": "GET",
-      "path": "/transformometro/diagnostics/{diagnostic_id}",
-      "module": "crud"
-    },
-    {
       "operationId": "prepare_manage_diagnostic",
       "method": "POST",
       "path": "/transformometro/diagnostics/{diagnostic_id}/prepare",
       "module": "crud"
     },
     {
+      "operationId": "get_diagnostic",
+      "method": "GET",
+      "path": "/transformometro/diagnostics/{diagnostic_id}",
+      "module": "crud"
+    },
+    {
       "operationId": "get_diagrama_catalogo",
       "method": "GET",
       "path": "/transformometro/diagrama/catalogo",
-      "module": "crud"
-    },
-    {
-      "operationId": "list_filiais",
-      "method": "GET",
-      "path": "/transformometro/filiais",
-      "module": "crud"
-    },
-    {
-      "operationId": "create_filial",
-      "method": "POST",
-      "path": "/transformometro/filiais",
       "module": "crud"
     },
     {
@@ -82,6 +70,18 @@
       "module": "crud"
     },
     {
+      "operationId": "list_filiais",
+      "method": "GET",
+      "path": "/transformometro/filiais",
+      "module": "crud"
+    },
+    {
+      "operationId": "create_filial",
+      "method": "POST",
+      "path": "/transformometro/filiais",
+      "module": "crud"
+    },
+    {
       "operationId": "commit_governed_proposal",
       "method": "POST",
       "path": "/transformometro/governed-proposals/commit",
@@ -91,24 +91,6 @@
       "operationId": "module_health",
       "method": "GET",
       "path": "/transformometro/health",
-      "module": "crud"
-    },
-    {
-      "operationId": "delete_instancia",
-      "method": "DELETE",
-      "path": "/transformometro/instancias/{instancia_id}",
-      "module": "crud"
-    },
-    {
-      "operationId": "get_instancia",
-      "method": "GET",
-      "path": "/transformometro/instancias/{instancia_id}",
-      "module": "crud"
-    },
-    {
-      "operationId": "update_instancia",
-      "method": "PUT",
-      "path": "/transformometro/instancias/{instancia_id}",
       "module": "crud"
     },
     {
@@ -160,9 +142,21 @@
       "module": "crud"
     },
     {
-      "operationId": "create_investimento",
-      "method": "POST",
-      "path": "/transformometro/investimentos",
+      "operationId": "delete_instancia",
+      "method": "DELETE",
+      "path": "/transformometro/instancias/{instancia_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "get_instancia",
+      "method": "GET",
+      "path": "/transformometro/instancias/{instancia_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "update_instancia",
+      "method": "PUT",
+      "path": "/transformometro/instancias/{instancia_id}",
       "module": "crud"
     },
     {
@@ -178,6 +172,12 @@
       "module": "crud"
     },
     {
+      "operationId": "create_investimento",
+      "method": "POST",
+      "path": "/transformometro/investimentos",
+      "module": "crud"
+    },
+    {
       "operationId": "upsert_medicao",
       "method": "POST",
       "path": "/transformometro/medicoes",
@@ -190,51 +190,9 @@
       "module": "crud"
     },
     {
-      "operationId": "list_processos",
+      "operationId": "download_processo_arquivo",
       "method": "GET",
-      "path": "/transformometro/processos",
-      "module": "crud"
-    },
-    {
-      "operationId": "create_processo",
-      "method": "POST",
-      "path": "/transformometro/processos",
-      "module": "crud"
-    },
-    {
-      "operationId": "list_processos_calculados",
-      "method": "GET",
-      "path": "/transformometro/processos/calculados",
-      "module": "crud"
-    },
-    {
-      "operationId": "delete_processo",
-      "method": "DELETE",
-      "path": "/transformometro/processos/{processo_id}",
-      "module": "crud"
-    },
-    {
-      "operationId": "get_processo",
-      "method": "GET",
-      "path": "/transformometro/processos/{processo_id}",
-      "module": "crud"
-    },
-    {
-      "operationId": "update_processo",
-      "method": "PUT",
-      "path": "/transformometro/processos/{processo_id}",
-      "module": "crud"
-    },
-    {
-      "operationId": "list_processo_arquivos",
-      "method": "GET",
-      "path": "/transformometro/processos/{processo_id}/arquivos",
-      "module": "crud"
-    },
-    {
-      "operationId": "attach_processo_arquivo",
-      "method": "POST",
-      "path": "/transformometro/processos/{processo_id}/arquivos",
+      "path": "/transformometro/processos/{processo_id}/arquivos/{arquivo_id}/arquivo",
       "module": "crud"
     },
     {
@@ -250,27 +208,21 @@
       "module": "crud"
     },
     {
-      "operationId": "download_processo_arquivo",
+      "operationId": "list_processo_arquivos",
       "method": "GET",
-      "path": "/transformometro/processos/{processo_id}/arquivos/{arquivo_id}/arquivo",
+      "path": "/transformometro/processos/{processo_id}/arquivos",
+      "module": "crud"
+    },
+    {
+      "operationId": "attach_processo_arquivo",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/arquivos",
       "module": "crud"
     },
     {
       "operationId": "processo_comparativo_revisoes",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/comparativo",
-      "module": "crud"
-    },
-    {
-      "operationId": "get_processo_decomposicao",
-      "method": "GET",
-      "path": "/transformometro/processos/{processo_id}/decomposicao",
-      "module": "crud"
-    },
-    {
-      "operationId": "put_processo_decomposicao",
-      "method": "PUT",
-      "path": "/transformometro/processos/{processo_id}/decomposicao",
       "module": "crud"
     },
     {
@@ -298,15 +250,15 @@
       "module": "crud"
     },
     {
-      "operationId": "get_processo_diagrama",
+      "operationId": "get_processo_decomposicao",
       "method": "GET",
-      "path": "/transformometro/processos/{processo_id}/diagrama",
+      "path": "/transformometro/processos/{processo_id}/decomposicao",
       "module": "crud"
     },
     {
-      "operationId": "put_processo_diagrama",
+      "operationId": "put_processo_decomposicao",
       "method": "PUT",
-      "path": "/transformometro/processos/{processo_id}/diagrama",
+      "path": "/transformometro/processos/{processo_id}/decomposicao",
       "module": "crud"
     },
     {
@@ -334,15 +286,15 @@
       "module": "crud"
     },
     {
-      "operationId": "list_process_documents",
+      "operationId": "get_processo_diagrama",
       "method": "GET",
-      "path": "/transformometro/processos/{processo_id}/documents",
+      "path": "/transformometro/processos/{processo_id}/diagrama",
       "module": "crud"
     },
     {
-      "operationId": "create_process_document",
-      "method": "POST",
-      "path": "/transformometro/processos/{processo_id}/documents",
+      "operationId": "put_processo_diagrama",
+      "method": "PUT",
+      "path": "/transformometro/processos/{processo_id}/diagrama",
       "module": "crud"
     },
     {
@@ -361,6 +313,18 @@
       "operationId": "update_process_document",
       "method": "PATCH",
       "path": "/transformometro/processos/{processo_id}/documents/{document_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_process_documents",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/documents",
+      "module": "crud"
+    },
+    {
+      "operationId": "create_process_document",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/documents",
       "module": "crud"
     },
     {
@@ -406,6 +370,42 @@
       "module": "crud"
     },
     {
+      "operationId": "delete_processo",
+      "method": "DELETE",
+      "path": "/transformometro/processos/{processo_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "get_processo",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "update_processo",
+      "method": "PUT",
+      "path": "/transformometro/processos/{processo_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_processos_calculados",
+      "method": "GET",
+      "path": "/transformometro/processos/calculados",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_processos",
+      "method": "GET",
+      "path": "/transformometro/processos",
+      "module": "crud"
+    },
+    {
+      "operationId": "create_processo",
+      "method": "POST",
+      "path": "/transformometro/processos",
+      "module": "crud"
+    },
+    {
       "operationId": "delete_recurso_custo",
       "method": "DELETE",
       "path": "/transformometro/recurso-custos/{recurso_custo_id}",
@@ -418,15 +418,27 @@
       "module": "crud"
     },
     {
-      "operationId": "list_recursos",
-      "method": "GET",
-      "path": "/transformometro/recursos-compartilhados",
+      "operationId": "reajuste_recurso_custo",
+      "method": "POST",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos/reajuste",
       "module": "crud"
     },
     {
-      "operationId": "create_recurso",
+      "operationId": "list_recurso_custos",
+      "method": "GET",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos",
+      "module": "crud"
+    },
+    {
+      "operationId": "create_recurso_custo",
       "method": "POST",
-      "path": "/transformometro/recursos-compartilhados",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_recurso_vinculos",
+      "method": "GET",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/vinculos",
       "module": "crud"
     },
     {
@@ -448,33 +460,15 @@
       "module": "crud"
     },
     {
-      "operationId": "list_recurso_custos",
+      "operationId": "list_recursos",
       "method": "GET",
-      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos",
+      "path": "/transformometro/recursos-compartilhados",
       "module": "crud"
     },
     {
-      "operationId": "create_recurso_custo",
+      "operationId": "create_recurso",
       "method": "POST",
-      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos",
-      "module": "crud"
-    },
-    {
-      "operationId": "reajuste_recurso_custo",
-      "method": "POST",
-      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos/reajuste",
-      "module": "crud"
-    },
-    {
-      "operationId": "list_recurso_vinculos",
-      "method": "GET",
-      "path": "/transformometro/recursos-compartilhados/{recurso_id}/vinculos",
-      "module": "crud"
-    },
-    {
-      "operationId": "create_vinculo",
-      "method": "POST",
-      "path": "/transformometro/revisao-recursos-compartilhados",
+      "path": "/transformometro/recursos-compartilhados",
       "module": "crud"
     },
     {
@@ -490,9 +484,9 @@
       "module": "crud"
     },
     {
-      "operationId": "list_diagnostics_by_revision",
-      "method": "GET",
-      "path": "/transformometro/revisions/{revision_id}/diagnostics",
+      "operationId": "create_vinculo",
+      "method": "POST",
+      "path": "/transformometro/revisao-recursos-compartilhados",
       "module": "crud"
     },
     {
@@ -502,33 +496,15 @@
       "module": "crud"
     },
     {
-      "operationId": "create_revisao",
-      "method": "POST",
-      "path": "/transformometro/revisoes",
-      "module": "crud"
-    },
-    {
-      "operationId": "delete_revisao",
-      "method": "DELETE",
-      "path": "/transformometro/revisoes/{revisao_id}",
-      "module": "crud"
-    },
-    {
-      "operationId": "update_revisao",
-      "method": "PUT",
-      "path": "/transformometro/revisoes/{revisao_id}",
+      "operationId": "list_diagnostics_by_revision",
+      "method": "GET",
+      "path": "/transformometro/revisions/{revision_id}/diagnostics",
       "module": "crud"
     },
     {
       "operationId": "activate_revisao",
       "method": "POST",
       "path": "/transformometro/revisoes/{revisao_id}/ativar",
-      "module": "crud"
-    },
-    {
-      "operationId": "get_revisao_decomposicao_merged",
-      "method": "GET",
-      "path": "/transformometro/revisoes/{revisao_id}/decomposicao",
       "module": "crud"
     },
     {
@@ -544,15 +520,15 @@
       "module": "crud"
     },
     {
-      "operationId": "revisao_diagnostico_rateio",
+      "operationId": "get_revisao_decomposicao_merged",
       "method": "GET",
-      "path": "/transformometro/revisoes/{revisao_id}/diagnostico-rateio",
+      "path": "/transformometro/revisoes/{revisao_id}/decomposicao",
       "module": "crud"
     },
     {
-      "operationId": "get_revisao_diagrama_merged",
+      "operationId": "revisao_diagnostico_rateio",
       "method": "GET",
-      "path": "/transformometro/revisoes/{revisao_id}/diagrama",
+      "path": "/transformometro/revisoes/{revisao_id}/diagnostico-rateio",
       "module": "crud"
     },
     {
@@ -574,21 +550,21 @@
       "module": "crud"
     },
     {
+      "operationId": "get_revisao_diagrama_merged",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/diagrama",
+      "module": "crud"
+    },
+    {
       "operationId": "duplicate_revisao",
       "method": "POST",
       "path": "/transformometro/revisoes/{revisao_id}/duplicar",
       "module": "crud"
     },
     {
-      "operationId": "list_revisao_evidencias",
+      "operationId": "download_revisao_evidencia",
       "method": "GET",
-      "path": "/transformometro/revisoes/{revisao_id}/evidencias",
-      "module": "crud"
-    },
-    {
-      "operationId": "attach_revisao_evidencia",
-      "method": "POST",
-      "path": "/transformometro/revisoes/{revisao_id}/evidencias",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias/{evidencia_id}/arquivo",
       "module": "crud"
     },
     {
@@ -604,9 +580,15 @@
       "module": "crud"
     },
     {
-      "operationId": "download_revisao_evidencia",
+      "operationId": "list_revisao_evidencias",
       "method": "GET",
-      "path": "/transformometro/revisoes/{revisao_id}/evidencias/{evidencia_id}/arquivo",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias",
+      "module": "crud"
+    },
+    {
+      "operationId": "attach_revisao_evidencia",
+      "method": "POST",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias",
       "module": "crud"
     },
     {
@@ -640,15 +622,21 @@
       "module": "crud"
     },
     {
-      "operationId": "list_setores",
-      "method": "GET",
-      "path": "/transformometro/setores",
+      "operationId": "delete_revisao",
+      "method": "DELETE",
+      "path": "/transformometro/revisoes/{revisao_id}",
       "module": "crud"
     },
     {
-      "operationId": "create_setor",
+      "operationId": "update_revisao",
+      "method": "PUT",
+      "path": "/transformometro/revisoes/{revisao_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "create_revisao",
       "method": "POST",
-      "path": "/transformometro/setores",
+      "path": "/transformometro/revisoes",
       "module": "crud"
     },
     {
@@ -667,6 +655,18 @@
       "operationId": "update_setor",
       "method": "PUT",
       "path": "/transformometro/setores/{setor_id}",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_setores",
+      "method": "GET",
+      "path": "/transformometro/setores",
+      "module": "crud"
+    },
+    {
+      "operationId": "create_setor",
+      "method": "POST",
+      "path": "/transformometro/setores",
       "module": "crud"
     },
     {
@@ -760,15 +760,15 @@
       "module": "dashboard"
     },
     {
-      "operationId": "export_json",
-      "method": "GET",
-      "path": "/transformometro/data/export",
-      "module": "data"
-    },
-    {
       "operationId": "export_package",
       "method": "GET",
       "path": "/transformometro/data/export/package",
+      "module": "data"
+    },
+    {
+      "operationId": "export_json",
+      "method": "GET",
+      "path": "/transformometro/data/export",
       "module": "data"
     },
     {
@@ -814,21 +814,15 @@
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_list_evidence",
-      "method": "GET",
-      "path": "/transformometro/gpt-actions/v1/evidence",
-      "module": "gpt_actions"
-    },
-    {
       "operationId": "gpt_manage_evidence",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/evidence/manage",
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_commit_improvement_package",
-      "method": "POST",
-      "path": "/transformometro/gpt-actions/v1/improvement-packages",
+      "operationId": "gpt_list_evidence",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/evidence",
       "module": "gpt_actions"
     },
     {
@@ -838,9 +832,9 @@
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_get_my_context",
-      "method": "GET",
-      "path": "/transformometro/gpt-actions/v1/me",
+      "operationId": "gpt_meeting_minute_workflow",
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
       "module": "gpt_actions"
     },
     {
@@ -850,9 +844,9 @@
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_meeting_minute_workflow",
-      "method": "POST",
-      "path": "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
+      "operationId": "gpt_get_my_context",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/me",
       "module": "gpt_actions"
     },
     {
@@ -880,21 +874,9 @@
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_search_records",
-      "method": "GET",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}",
-      "module": "gpt_actions"
-    },
-    {
-      "operationId": "gpt_create_record",
+      "operationId": "gpt_commit_proposal",
       "method": "POST",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}",
-      "module": "gpt_actions"
-    },
-    {
-      "operationId": "gpt_delete_record",
-      "method": "DELETE",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+      "path": "/transformometro/gpt-actions/v1/proposals/commit",
       "module": "gpt_actions"
     },
     {
@@ -904,15 +886,15 @@
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_update_record",
-      "method": "PUT",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+      "operationId": "gpt_search_records",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/records/{entity}",
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_duplicate_record",
+      "operationId": "gpt_prepare_record_change",
       "method": "POST",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}/duplicate",
+      "path": "/transformometro/gpt-actions/v1/records/prepare-change",
       "module": "gpt_actions"
     },
     {
@@ -934,40 +916,16 @@
       "module": "health"
     },
     {
-      "operationId": "integration_list_processes",
-      "method": "GET",
-      "path": "/transformometro/integrations/engineering/transforma-mais/processes",
-      "module": "integrations"
-    },
-    {
       "operationId": "integration_process_summary",
       "method": "GET",
       "path": "/transformometro/integrations/engineering/transforma-mais/processes/summary",
       "module": "integrations"
     },
     {
-      "operationId": "list_transformometro_interaction_rooms",
+      "operationId": "integration_list_processes",
       "method": "GET",
-      "path": "/transformometro/interaction-rooms",
-      "module": "interaction_rooms"
-    },
-    {
-      "operationId": "open_transformometro_interaction_room",
-      "method": "POST",
-      "path": "/transformometro/interaction-rooms",
-      "module": "interaction_rooms"
-    },
-    {
-      "operationId": "get_transformometro_interaction_room",
-      "method": "GET",
-      "path": "/transformometro/interaction-rooms/{room_id}",
-      "module": "interaction_rooms"
-    },
-    {
-      "operationId": "list_transformometro_interaction_attachments",
-      "method": "GET",
-      "path": "/transformometro/interaction-rooms/{room_id}/attachments",
-      "module": "interaction_rooms"
+      "path": "/transformometro/integrations/engineering/transforma-mais/processes",
+      "module": "integrations"
     },
     {
       "operationId": "delete_transformometro_interaction_attachment",
@@ -982,27 +940,9 @@
       "module": "interaction_rooms"
     },
     {
-      "operationId": "list_transformometro_interaction_messages",
+      "operationId": "list_transformometro_interaction_attachments",
       "method": "GET",
-      "path": "/transformometro/interaction-rooms/{room_id}/messages",
-      "module": "interaction_rooms"
-    },
-    {
-      "operationId": "post_transformometro_interaction_message",
-      "method": "POST",
-      "path": "/transformometro/interaction-rooms/{room_id}/messages",
-      "module": "interaction_rooms"
-    },
-    {
-      "operationId": "delete_transformometro_interaction_message",
-      "method": "DELETE",
-      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}",
-      "module": "interaction_rooms"
-    },
-    {
-      "operationId": "patch_transformometro_interaction_message",
-      "method": "PATCH",
-      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}",
+      "path": "/transformometro/interaction-rooms/{room_id}/attachments",
       "module": "interaction_rooms"
     },
     {
@@ -1030,52 +970,76 @@
       "module": "interaction_rooms"
     },
     {
+      "operationId": "delete_transformometro_interaction_message",
+      "method": "DELETE",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "patch_transformometro_interaction_message",
+      "method": "PATCH",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages/{message_id}",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "list_transformometro_interaction_messages",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "post_transformometro_interaction_message",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/messages",
+      "module": "interaction_rooms"
+    },
+    {
       "operationId": "mark_transformometro_interaction_room_read",
       "method": "POST",
       "path": "/transformometro/interaction-rooms/{room_id}/read",
       "module": "interaction_rooms"
     },
     {
-      "operationId": "list_meeting_minutes",
+      "operationId": "get_transformometro_interaction_room",
       "method": "GET",
-      "path": "/transformometro/meeting-minutes",
-      "module": "meeting_minutes"
+      "path": "/transformometro/interaction-rooms/{room_id}",
+      "module": "interaction_rooms"
     },
     {
-      "operationId": "create_meeting_minute",
+      "operationId": "list_transformometro_interaction_rooms",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms",
+      "module": "interaction_rooms"
+    },
+    {
+      "operationId": "open_transformometro_interaction_room",
       "method": "POST",
-      "path": "/transformometro/meeting-minutes",
-      "module": "meeting_minutes"
+      "path": "/transformometro/interaction-rooms",
+      "module": "interaction_rooms"
     },
     {
-      "operationId": "generate_meeting_minute_from_transcript",
+      "operationId": "refuse_public_meeting_minute_invite",
       "method": "POST",
-      "path": "/transformometro/meeting-minutes/generate-from-transcript",
-      "module": "meeting_minutes"
+      "path": "/public/meeting-minutes/sign-invites/{token}/refuse",
+      "module": "meeting_minutes_public"
     },
     {
-      "operationId": "list_meeting_minutes_pending_signatures",
+      "operationId": "get_public_meeting_minute_signature_image",
       "method": "GET",
-      "path": "/transformometro/meeting-minutes/pending-signatures",
-      "module": "meeting_minutes"
+      "path": "/public/meeting-minutes/sign-invites/{token}/signatures/{signature_id}/image",
+      "module": "meeting_minutes_public"
     },
     {
-      "operationId": "delete_meeting_minute",
-      "method": "DELETE",
-      "path": "/transformometro/meeting-minutes/{minute_id}",
-      "module": "meeting_minutes"
+      "operationId": "sign_public_meeting_minute_invite",
+      "method": "POST",
+      "path": "/public/meeting-minutes/sign-invites/{token}/sign",
+      "module": "meeting_minutes_public"
     },
     {
-      "operationId": "get_meeting_minute",
+      "operationId": "get_public_meeting_minute_sign_invite",
       "method": "GET",
-      "path": "/transformometro/meeting-minutes/{minute_id}",
-      "module": "meeting_minutes"
-    },
-    {
-      "operationId": "update_meeting_minute",
-      "method": "PATCH",
-      "path": "/transformometro/meeting-minutes/{minute_id}",
-      "module": "meeting_minutes"
+      "path": "/public/meeting-minutes/sign-invites/{token}",
+      "module": "meeting_minutes_public"
     },
     {
       "operationId": "get_meeting_minute_audit",
@@ -1126,9 +1090,9 @@
       "module": "meeting_minutes"
     },
     {
-      "operationId": "sign_meeting_minute",
-      "method": "POST",
-      "path": "/transformometro/meeting-minutes/{minute_id}/signatures",
+      "operationId": "get_meeting_minute_signature_image",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/{minute_id}/signatures/{signature_id}/image",
       "module": "meeting_minutes"
     },
     {
@@ -1138,9 +1102,9 @@
       "module": "meeting_minutes"
     },
     {
-      "operationId": "get_meeting_minute_signature_image",
-      "method": "GET",
-      "path": "/transformometro/meeting-minutes/{minute_id}/signatures/{signature_id}/image",
+      "operationId": "sign_meeting_minute",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/{minute_id}/signatures",
       "module": "meeting_minutes"
     },
     {
@@ -1156,15 +1120,45 @@
       "module": "meeting_minutes"
     },
     {
-      "operationId": "get_my_signature_profile",
-      "method": "GET",
-      "path": "/transformometro/signatures/me",
+      "operationId": "delete_meeting_minute",
+      "method": "DELETE",
+      "path": "/transformometro/meeting-minutes/{minute_id}",
       "module": "meeting_minutes"
     },
     {
-      "operationId": "update_my_signature_profile",
-      "method": "PUT",
-      "path": "/transformometro/signatures/me",
+      "operationId": "get_meeting_minute",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/{minute_id}",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "update_meeting_minute",
+      "method": "PATCH",
+      "path": "/transformometro/meeting-minutes/{minute_id}",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "generate_meeting_minute_from_transcript",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes/generate-from-transcript",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "list_meeting_minutes_pending_signatures",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes/pending-signatures",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "list_meeting_minutes",
+      "method": "GET",
+      "path": "/transformometro/meeting-minutes",
+      "module": "meeting_minutes"
+    },
+    {
+      "operationId": "create_meeting_minute",
+      "method": "POST",
+      "path": "/transformometro/meeting-minutes",
       "module": "meeting_minutes"
     },
     {
@@ -1180,28 +1174,16 @@
       "module": "meeting_minutes"
     },
     {
-      "operationId": "get_public_meeting_minute_sign_invite",
+      "operationId": "get_my_signature_profile",
       "method": "GET",
-      "path": "/public/meeting-minutes/sign-invites/{token}",
-      "module": "meeting_minutes_public"
+      "path": "/transformometro/signatures/me",
+      "module": "meeting_minutes"
     },
     {
-      "operationId": "refuse_public_meeting_minute_invite",
-      "method": "POST",
-      "path": "/public/meeting-minutes/sign-invites/{token}/refuse",
-      "module": "meeting_minutes_public"
-    },
-    {
-      "operationId": "sign_public_meeting_minute_invite",
-      "method": "POST",
-      "path": "/public/meeting-minutes/sign-invites/{token}/sign",
-      "module": "meeting_minutes_public"
-    },
-    {
-      "operationId": "get_public_meeting_minute_signature_image",
-      "method": "GET",
-      "path": "/public/meeting-minutes/sign-invites/{token}/signatures/{signature_id}/image",
-      "module": "meeting_minutes_public"
+      "operationId": "update_my_signature_profile",
+      "method": "PUT",
+      "path": "/transformometro/signatures/me",
+      "module": "meeting_minutes"
     },
     {
       "operationId": "list_my_transformometro_tasks",
@@ -1210,9 +1192,15 @@
       "module": "tasks"
     },
     {
-      "operationId": "create_transformometro_task",
+      "operationId": "cancel_transformometro_task",
       "method": "POST",
-      "path": "/transformometro/tasks",
+      "path": "/transformometro/tasks/{task_id}/cancel",
+      "module": "tasks"
+    },
+    {
+      "operationId": "complete_transformometro_task",
+      "method": "POST",
+      "path": "/transformometro/tasks/{task_id}/complete",
       "module": "tasks"
     },
     {
@@ -1228,15 +1216,9 @@
       "module": "tasks"
     },
     {
-      "operationId": "cancel_transformometro_task",
+      "operationId": "create_transformometro_task",
       "method": "POST",
-      "path": "/transformometro/tasks/{task_id}/cancel",
-      "module": "tasks"
-    },
-    {
-      "operationId": "complete_transformometro_task",
-      "method": "POST",
-      "path": "/transformometro/tasks/{task_id}/complete",
+      "path": "/transformometro/tasks",
       "module": "tasks"
     }
   ]
