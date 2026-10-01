@@ -82,6 +82,52 @@
   --bio-focus: var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
 }
 
+/* chrome de interação do vendor (palette, context pad, popup, drag/drop,
+   connect, resize, bendpoints): o vendor resolve tudo por tokens --bio-*
+   definidos em .bio-theme-parent (.djs-container/.bjs-container) com
+   valores light fixos. Remapeamos no mesmo escopo para os tokens do
+   portal, que já alternam com :root[data-theme] — mesmo padrão usado no
+   properties-panel. Tokens invertidos (tooltips) ficam com o vendor:
+   tooltip escura funciona nos dois temas. */
+.dashboard-bpmn-modeler .bio-theme-parent {
+  --bio-surface: var(--delpi-ui-surface);
+  --bio-surface-overlay: var(--delpi-ui-surface-elevated);
+  --bio-surface-subtle: var(--delpi-ui-surface-muted);
+  --bio-surface-medium: var(--delpi-ui-surface-soft, var(--delpi-ui-surface-elevated));
+  --bio-text: var(--delpi-ui-text);
+  --bio-text-subtle: var(--delpi-ui-text-muted);
+  --bio-text-subtlest: var(--delpi-ui-text-muted);
+  --bio-border: var(--delpi-ui-border-strong);
+  --bio-border-disabled: var(--delpi-ui-border);
+  --bio-primary: var(--delpi-ui-accent);
+  --bio-primary-surface: var(--delpi-ui-surface-muted);
+  --bio-danger: var(--delpi-ui-danger);
+  --bio-danger-surface-subtle: color-mix(in srgb, var(--delpi-ui-danger) 8%, var(--delpi-ui-surface));
+  --bio-selected-surface: var(--delpi-ui-surface-soft, var(--delpi-ui-surface-elevated));
+  --bio-selected-text: var(--delpi-ui-text);
+  --bio-focus: var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
+  --bio-focus-surface: var(--delpi-ui-surface-muted);
+  --bio-canvas-accent: var(--delpi-ui-accent);
+  --bio-canvas-accent-subtle: var(--delpi-ui-text-muted);
+  --bio-shadow: rgba(0, 0, 0, 0.25);
+  --bio-shadow-subtle: rgba(0, 0, 0, 0.12);
+}
+
+:root[data-theme="dark"] .dashboard-bpmn-modeler .bio-theme-parent {
+  --bio-danger-surface-subtle: color-mix(in srgb, var(--delpi-ui-danger) 22%, var(--delpi-ui-surface));
+  --bio-shadow: rgba(0, 0, 0, 0.55);
+  --bio-shadow-subtle: rgba(0, 0, 0, 0.35);
+}
+
+/* feedback de alvo de drop/connect: lavagem translúcida de accent/perigo
+   sobre a superfície do tema, em vez de superfície sólida clara — o canvas
+   base (e os filhos do container) seguem visualmente dominantes. */
+.dashboard-bpmn-modeler .djs-parent {
+  --shape-drop-allowed-fill-color: color-mix(in srgb, var(--delpi-ui-accent) 15%, transparent);
+  --shape-connect-allowed-fill-color: color-mix(in srgb, var(--delpi-ui-accent) 15%, transparent);
+  --shape-drop-not-allowed-fill-color: color-mix(in srgb, var(--delpi-ui-danger) 14%, transparent);
+}
+
 /* chrome do vendor dentro da shell do editor (palette, popups, context pad) —
    somente superfície/cor; geometria e hit-areas são do vendor. */
 .dashboard-bpmn-modeler .bpmnm-canvas .djs-palette,
@@ -97,17 +143,20 @@
   color: var(--delpi-ui-text);
 }
 
-:root[data-theme="dark"] .dashboard-bpmn-modeler .bpmnm-canvas .djs-context-pad .entry,
-:root[data-theme="dark"] .dashboard-bpmn-modeler .bpmnm-canvas .djs-palette .entry:hover,
-:root[data-theme="dark"] .dashboard-bpmn-modeler .bpmnm-canvas .djs-popup .entry:hover {
-  background: var(--delpi-ui-surface-soft, var(--delpi-ui-surface-muted));
+/* context pad: respiro entre entries (mesmo mecanismo de margem do vendor)
+   e anel hairline no lugar do glow na cor do fundo (efeito "tecla" clara). */
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-context-pad .entry {
+  margin: 0 3px 3px 0;
+  box-shadow: 0 0 0 1px var(--delpi-ui-border);
 }
 
-/* ícones raster/svg da palette herdam contraste no dark (context pad usa
-   font glyphs → `color`, coberto acima). */
-:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry img,
-:root[data-theme="dark"] .dashboard-bpmn-modeler .djs-palette .entry svg {
-  filter: invert(0.85);
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-context-pad .entry:hover {
+  box-shadow: 0 0 0 1px var(--delpi-ui-accent);
+}
+
+.dashboard-bpmn-modeler .bpmnm-canvas .djs-context-pad .entry:focus-visible {
+  outline: 2px solid var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
+  outline-offset: 1px;
 }
 
 /* popup do vendor (replace/append menu): busca e separadores */
