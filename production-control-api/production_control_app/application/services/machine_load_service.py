@@ -241,11 +241,13 @@ class MachineLoadService:
         snapshots: MachineLoadSnapshotRepositoryPort,
         branch_access: BranchAccessService | None = None,
         change_notifier: Callable[..., None] | None = None,
+        list_open_runs: Callable[[str], list[dict[str, Any]]] | None = None,
     ) -> None:
         self._gateway = gateway
         self._snapshots = snapshots
         self._branch_access = branch_access or BranchAccessService()
         self._change_notifier = change_notifier
+        self._list_open_runs = list_open_runs
 
     def resolve_delivery_window(
         self,
@@ -374,6 +376,7 @@ class MachineLoadService:
             work_center=work_center,
             seeded=False,
             branch=code,
+            production_source="cockpit",
         )
         return self._strip_internal_identity(payload)
 
@@ -1774,6 +1777,7 @@ class MachineLoadService:
         view_start: date | None = None,
         view_end: date | None = None,
         allow_remote_status: bool = True,
+        production_source: str = "erp",
     ) -> dict[str, Any]:
         payload = decode_snapshot_payload(row)
         work_centers = payload_work_centers(payload)
@@ -1784,6 +1788,10 @@ class MachineLoadService:
             operations=operations,
             allow_remote=allow_remote_status,
         )
+        if production_source == "cockpit":
+            operations = self._apply_cockpit_production_status(
+                branch=branch, operations=operations
+            )
         # Conjunto retirado continua no snapshot (posição original preservada), mas some da fila.
         withdrawn_keys = withdrawn_order_numbers(payload)
         operations = visible_operations(operations, withdrawn_keys)
@@ -1880,6 +1888,53 @@ class MachineLoadService:
                 },
             },
         }
+
+    def _apply_cockpit_production_status(
+        self, *, branch: str, operations: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """«Em produção» do cockpit = run MES aberto no posto, não cronômetro TOTVS.
+
+        O enrich HZA continua alimentando saldo e contagem de apontamentos; a
+        flag de produção ativa e o operador exibido passam a vir dos runs locais
+        — quem tem cronômetro aberto no coletor mas sem run do cockpit deixa de
+        disputar o destaque da fila pública.
+        """
+        runs = self._list_open_runs(branch) if self._list_open_runs else []
+        runs_by_key = {
+            (
+                _norm_code(run.get("work_center")),
+                _norm_code(run.get("production_order")),
+                str(run.get("operation_code") or "").strip(),
+            ): run
+            for run in runs
+        }
+        for item in operations:
+            key = (
+                _norm_code(item.get("work_center")),
+                _norm_code(item.get("production_order")),
+                str(item.get("operation_code") or "").strip(),
+            )
+            run = runs_by_key.get(key)
+            if run is None:
+                item["is_in_production"] = False
+                item["active_operator_code"] = None
+                item["active_operator_name"] = None
+                item["active_operator_count"] = 0
+                item["production_started_date"] = None
+                item["production_started_time"] = None
+                if item.get("production_status") == "in_progress":
+                    item["production_status"] = "started"
+                continue
+            item["is_in_production"] = True
+            item["production_status"] = "in_progress"
+            item["active_operator_code"] = run.get("operator_code")
+            item["active_operator_name"] = run.get("operator_name")
+            item["active_operator_count"] = 1
+            started_at = run.get("started_at")
+            if isinstance(started_at, datetime):
+                item["production_started_date"] = started_at.date().isoformat()
+                item["production_started_time"] = started_at.strftime("%H:%M")
+        return operations
 
     def _live_status_map(
         self,

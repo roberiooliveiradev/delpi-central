@@ -225,11 +225,16 @@ def build_machine_load_service(
     *,
     snapshots: MachineLoadSnapshotRepositoryPort | None = None,
 ) -> MachineLoadService:
+    from production_control_app.infrastructure.persistence.postgres_production_run_repository import (  # noqa: E501
+        PostgresProductionRunRepository,
+    )
+
     return MachineLoadService(
         gateway or DelpiProductionGateway(),
         snapshots=snapshots or build_machine_load_snapshot_repository(),
         branch_access=build_branch_access_service(),
         change_notifier=notify_machine_load_changed,
+        list_open_runs=PostgresProductionRunRepository().list_open_runs_by_branch,
     )
 
 

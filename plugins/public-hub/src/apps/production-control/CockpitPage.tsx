@@ -4,6 +4,7 @@ import { BarChart3, Eye, ListFilter, MoreVertical, RefreshCw, Search, User } fro
 import {
   fetchActiveProductionRun,
   fetchPublicMachineLoad,
+  stopProductionRun,
   type MachineLoadOperation,
   type MachineLoadWorkCenter,
   type ProductionRunSnapshot,
@@ -32,6 +33,7 @@ import {
   OperatorSessionProvider,
 } from "./OperatorSessionProvider";
 import { ProductionRunControls } from "./ProductionRunControls";
+import { useOperatorSession } from "./OperatorSessionContext.ts";
 import {
   usePublicMachineLoadRealtime,
   type MachineLoadRealtimeEvent,
@@ -49,10 +51,6 @@ function matchesQueueSearch(operation: MachineLoadOperation, term: string): bool
   const pa = (operation.pa_product_code || "").toLowerCase();
   const product = (operation.product_code || "").toLowerCase();
   return op.includes(term) || pa.includes(term) || product.includes(term);
-}
-
-function isRunningOperation(operation: MachineLoadOperation): boolean {
-  return resolveStatus(operation).tone === "running";
 }
 
 const LIVE_STATUS_POLL_MS = 15_000;
@@ -275,8 +273,13 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   };
 
   const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
-  const items =
-    workCenter && payload.selected.work_center === workCenter ? payload.selected.items : [];
+  const items = useMemo(
+    () =>
+      workCenter && payload.selected.work_center === workCenter
+        ? payload.selected.items
+        : [],
+    [workCenter, payload.selected.work_center, payload.selected.items],
+  );
 
   const finishedCount = useMemo(
     () => items.filter(isFinishedOperation).length,
@@ -296,8 +299,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const activeEntry = useMemo<QueueEntry | null>(() => {
     if (visibleItems.length === 0) return null;
     // Regra: "Agora nesta bancada" é sempre a operação do run ativo no
-    // contador (Pulse/MES). Sem run ativo, cai na regra anterior — primeira
-    // operação com apontamento em produção, senão o topo da fila.
+    // contador (Pulse/MES). Sem run ativo na fila, cai no topo da fila —
+    // cronômetro aberto no TOTVS não disputa o destaque do cockpit.
     const counterOperation = counterRun
       ? items.find(
           (item) =>
@@ -305,12 +308,20 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             item.operation_code === counterRun.operationCode,
         )
       : null;
-    const runningIndex = visibleItems.findIndex(isRunningOperation);
-    const operation =
-      counterOperation ?? visibleItems[runningIndex >= 0 ? runningIndex : 0]!;
+    const operation = counterOperation ?? visibleItems[0]!;
     const position = items.findIndex((item) => operationKey(item) === operationKey(operation)) + 1;
     return { operation, position: Math.max(1, position) };
   }, [visibleItems, items, counterRun]);
+
+  const orphanRun = useMemo(() => {
+    if (!counterRun) return null;
+    const inQueue = items.some(
+      (item) =>
+        item.production_order === counterRun.productionOrder &&
+        item.operation_code === counterRun.operationCode,
+    );
+    return inQueue ? null : counterRun;
+  }, [counterRun, items]);
 
   const upcomingEntries = useMemo(() => {
     const term = queueQuery.trim().toLowerCase();
@@ -502,6 +513,14 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
       <div className="pcp-pub__wrap">
         {error ? <p className="pcp-pub__error">{error}</p> : null}
+
+        {orphanRun ? (
+          <OrphanRunCard
+            run={orphanRun}
+            token={token}
+            onStopped={() => void reload(workCenterRef.current, { quiet: true })}
+          />
+        ) : null}
 
         {items.length === 0 ? (
           <p className="pcp-pub__empty">
@@ -1136,5 +1155,79 @@ function DowntimeItemsModal({
         )}
       </div>
     </div>
+  );
+}
+
+/** Run aberto cuja OP saiu da fila publicada (apontada/retirada no TOTVS).
+ * Sem este card o run ficaria invisível e bloquearia a troca de operador —
+ * aqui o posto sempre consegue encerrar a produção órfã. */
+function OrphanRunCard({
+  run,
+  token,
+  onStopped,
+}: {
+  run: ProductionRunSnapshot;
+  token: string;
+  onStopped: () => void;
+}) {
+  const { session } = useOperatorSession();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const stop = async () => {
+    if (!session?.sessionToken) {
+      setError("Identifique-se no posto para encerrar a produção.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await stopProductionRun(token, session.sessionToken, run.id);
+      onStopped();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível encerrar a produção.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="pcp-pub__now" aria-labelledby="pcp-pub-orphan-title">
+      <div className="pcp-pub__now-head">
+        <h3 id="pcp-pub-orphan-title">Produção em andamento</h3>
+        <span className="pcp-pub__badge pcp-pub__badge--running">
+          <span className="pcp-pub__badge-dot" aria-hidden="true" />
+          {run.status === "paused" ? "Pausada" : "Em produção"}
+        </span>
+      </div>
+      <article className="pcp-pub__now-card pcp-pub__now-card--running">
+        <div className="pcp-pub__now-main">
+          <div className="pcp-pub__now-identity">
+            <div className="pcp-pub__now-order">
+              <strong>{run.productionOrder}</strong>
+              <CopyValueButton value={run.productionOrder} label="Copiar OP" />
+            </div>
+            <p className="pcp-pub__now-product">
+              Operação {run.operationCode}
+              {run.operatorName ? ` · ${run.operatorName}` : ""}
+            </p>
+          </div>
+        </div>
+        <p className="pcp-pub__run-note">
+          Esta OP saiu da fila deste posto. Encerre a produção para liberar a troca de operador.
+        </p>
+        {error ? <p className="pcp-pub__run-error">{error}</p> : null}
+        <div className="pcp-pub__run-actions">
+          <button
+            type="button"
+            className="pcp-pub__btn pcp-pub__btn--primary"
+            onClick={() => void stop()}
+            disabled={busy}
+          >
+            {busy ? "Encerrando…" : "Encerrar produção"}
+          </button>
+        </div>
+      </article>
+    </section>
   );
 }

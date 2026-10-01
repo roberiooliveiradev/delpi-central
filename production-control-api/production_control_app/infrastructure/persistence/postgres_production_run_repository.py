@@ -194,6 +194,24 @@ class PostgresProductionRunRepository:
                 row = cur.fetchone()
                 return dict(row) if row else None
 
+    def list_open_runs_by_branch(self, *, branch: str) -> list[dict[str, Any]]:
+        """Runs abertos (running/paused) da filial — fonte do «em produção» do cockpit."""
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT id::text AS id, branch, work_center, production_order,
+                           operation_code, operator_code, operator_name, status,
+                           started_at
+                    FROM {_RUNS}
+                    WHERE branch = %s
+                      AND status IN ('running', 'paused')
+                    """
+                    ,
+                    (branch,),
+                )
+                return [dict(row) for row in cur.fetchall()]
+
     def list_open_running_runs(self) -> list[dict[str, Any]]:
         with get_connection() as conn:
             with conn.cursor() as cur:

@@ -869,6 +869,113 @@ def test_public_build_rejects_unknown_branch() -> None:
         _service(FakeGateway()).build_public(branch="09")
 
 
+def _open_run(
+    *,
+    work_center: str = "CT-02",
+    production_order: str = "B1",
+    operation_code: str = "03",
+    operator_name: str | None = "MARIA",
+) -> dict[str, Any]:
+    return {
+        "id": "run-1",
+        "branch": "01",
+        "work_center": work_center,
+        "production_order": production_order,
+        "operation_code": operation_code,
+        "operator_code": "20040",
+        "operator_name": operator_name,
+        "status": "running",
+        "started_at": datetime(2026, 8, 20, 8, 30, tzinfo=timezone.utc),
+    }
+
+
+def test_public_build_marks_in_production_from_cockpit_run() -> None:
+    """«Em produção» na fila pública vem do run MES local, não do cronômetro TOTVS."""
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    service._list_open_runs = lambda branch: [_open_run()]  # noqa: SLF001
+    _seed_default_window_snapshot(service, snapshots)
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+    items = payload["selected"]["items"]
+    b1 = next(item for item in items if item["production_order"] == "B1")
+    b2 = next(item for item in items if item["production_order"] == "B2")
+
+    assert b1["is_in_production"] is True
+    assert b1["production_status"] == "in_progress"
+    assert b1["active_operator_name"] == "MARIA"
+    assert b1["production_started_time"] == "08:30"
+    assert b2["is_in_production"] is False
+
+
+def test_public_build_ignores_totvs_cronometro_without_local_run() -> None:
+    """Cronômetro aberto no TOTVS sem run do cockpit não marca «em produção»."""
+    gateway = FakeGateway()
+    gateway.status_by_key[("B1", "03")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+        "active_operator_code": "TOTVS-1",
+        "active_operator_name": "OPERADOR COLETOR",
+        "active_operator_count": 1,
+    }
+    snapshots = FakeSnapshotRepo()
+    service = _service(gateway, snapshots)
+    service._list_open_runs = lambda branch: []  # noqa: SLF001
+    _seed_default_window_snapshot(service, snapshots)
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+    b1 = next(
+        item for item in payload["selected"]["items"] if item["production_order"] == "B1"
+    )
+
+    assert b1["is_in_production"] is False
+    assert b1["production_status"] == "started"
+    assert b1["active_operator_name"] is None
+    assert b1["production_started_time"] is None
+
+
+def test_public_build_run_in_other_work_center_does_not_mark() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    service._list_open_runs = lambda branch: [_open_run(work_center="CT-99")]  # noqa: SLF001
+    _seed_default_window_snapshot(service, snapshots)
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+    b1 = next(
+        item for item in payload["selected"]["items"] if item["production_order"] == "B1"
+    )
+
+    assert b1["is_in_production"] is False
+
+
+def test_managerial_build_keeps_totvs_production_status() -> None:
+    """Visão gerencial continua refletindo o chão de fábrica (HZA/TOTVS)."""
+    gateway = FakeGateway()
+    gateway.status_by_key[("B1", "03")] = {
+        "production_status": "in_progress",
+        "is_in_production": True,
+        "active_operator_name": "OPERADOR COLETOR",
+        "active_operator_count": 1,
+    }
+    snapshots = FakeSnapshotRepo()
+    service = _service(gateway, snapshots)
+    _seed_default_window_snapshot(service, snapshots)
+    # O build gerencial lê o status só do cache — a consulta HZA vive em live_status.
+    service.live_status(_user(*FULL_PERMS), branch="01")
+
+    payload = service.build(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-02",
+    )
+    b1 = next(
+        item for item in payload["selected"]["items"] if item["production_order"] == "B1"
+    )
+
+    assert b1["is_in_production"] is True
+    assert b1["active_operator_name"] == "OPERADOR COLETOR"
+
+
 def test_reorder_sequence_notifies_connected_cockpits() -> None:
     snapshots = FakeSnapshotRepo()
     notifier = RecordingNotifier()
