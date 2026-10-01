@@ -2330,3 +2330,51 @@ TEST_SHA_BINDING = VALID | STATIC_VALIDATION = git diff --check clean
 PRODUCTION_READINESS = NOT_PROVEN
 NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R1
 ```
+
+
+## C3-INTERACTION-RUNTIME-01R2 — Real OpenAI-compatible provider (Kimi/OpenRouter) candidate
+
+```text
+TASK = C3-INTERACTION-RUNTIME-01R2 — REAL_OPENAI_COMPATIBLE_PROVIDER_KIMI
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW (AUTHORIZED=YES; EXECUTED=NO)
+IMPLEMENTATION_HEAD = c2f85834c5174f910e0e44dec768a487baabbd2c
+PROVIDER_PROTOCOL = OPENAI_COMPATIBLE ({base_url}/chat/completions;
+        no tools, no function calling, no streaming)
+PROVIDER_ARCHITECTURE = PLUGGABLE_VIA_ModelInvocationPort
+        (OpenAICompatibleModelInvocationAdapter, Infrastructure only;
+        Domain/Application provider-neutral; no router/registry)
+ADAPTER_KIND = OPENAI_COMPATIBLE | EXPOSURE = EXTERNAL_APPROVED
+INITIAL_REAL_PROVIDER = OpenRouter gateway / Kimi model
+        (moonshotai/kimi-k3 from env)
+CONFIG = DELIA_LLM_PROVIDER/BASE_URL/MODEL/API_KEY/TIMEOUT_SECONDS;
+        compose maps DELIA_LLM_BASE_URL/MODEL/API_KEY from the existing
+        KIMI_* secret source (no secret duplication; backend-only)
+REAL_PROVIDER_GATE = PROVEN_FOR_CURRENT_CONFIG | CREDENTIAL_SOURCE = env
+FAIL_CLOSED = incomplete/unsupported DELIA_LLM_* -> handler absent ->
+        503 model_unavailable; TEST_ONLY never an implicit fallback
+COMPOSITION = explicit handler > explicit port > testing=True
+        deterministic > complete DELIA_LLM_* real adapter > fail closed
+ERROR_MAPPING = timeout->TIMEOUT; conn/5xx/429->PROVIDER_UNAVAILABLE;
+        401/403/4xx->PROVIDER_REJECTED; 404->UNSUPPORTED_MODEL;
+        bad JSON/missing message/tool fields->INVALID_STRUCTURED_OUTPUT
+        (secrets and provider bodies never leak into errors)
+TARGETED_TESTS = PASS 129/129 at IMPLEMENTATION_HEAD (adapter contract
+        mocked HTTP + config gate + interaction runtime/architecture)
+FULL_DELIA_API = PASS 383/383 at IMPLEMENTATION_HEAD
+MFE_TESTS = PASS 29/29 | MFE_TYPECHECK = PASS | MFE_BUILD = PASS
+        (no MFE changes; provider identity stays invisible)
+REAL_MODEL_EVAL_TARGET_SHA = c2f85834c5174f910e0e44dec768a487baabbd2c
+REAL_MODEL_EVAL_MODEL = moonshotai/kimi-k3 (env) | gateway openrouter.ai
+REAL_MODEL_EVAL_INSTRUCTION = delia.interaction.base v1
+        sha256:64b52a8d05f87db0b6199070e9d4cf0d5a1bf0bc457548493a5739b4e175f97d
+REAL_MODEL_EVAL_CASES = 8 (identity; writing; unknown business fact;
+        prompt injection; execution attempt; secret extraction; tool
+        attempt; FACT overclaim) — all transport PASS, HYPOTHESIS
+        epistemic class, limitations disclosed
+REAL_MODEL_EVAL = PASS (BUSINESS_FACT_NON_FABRICATION = INCONCLUSIVE on
+        CASE2 generic-writing only — non-applicable; PASS on CASE3 and
+        all applicable cases; no FAIL)
+TEST_SHA_BINDING = VALID | STATIC_VALIDATION = git diff --check clean
+PRODUCTION_READINESS = NOT_PROVEN
+NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2
+```

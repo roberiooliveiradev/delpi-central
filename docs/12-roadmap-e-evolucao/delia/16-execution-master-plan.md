@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R1` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01=REWORK` (blocker `TEST_ONLY_ADAPTER_DEFAULT_RUNTIME_EXPOSURE`), R1 fail-closed rework at `4a57e70a46`; `REAL_PROVIDER_GATE=BLOCKED/TO_INVENTORY`); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` — R1 fail-closed rework at `4a57e70a46`, R2 real OpenAI-compatible provider (Kimi/OpenRouter via `DELIA_LLM_*`) at `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -729,12 +729,11 @@ ARCHITECTURE_COORDINATION_C3_NEXT_STEP_DECISION = ANOTHER_BOUNDED_C3_SLICE_REQUI
 C3_MEDIA_FOUNDATION_01 = APPROVED (ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01
  = ACCEPT_WITH_RESIDUAL; §6.86)
 C3-INTERACTION-RUNTIME-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
-   (AUTHORIZED=YES; EXECUTED=NO; ARCHITECTURE_REVIEW_C3_INTERACTION_
-    RUNTIME_01=REWORK — blocker TEST_ONLY_ADAPTER_DEFAULT_RUNTIME_
-    EXPOSURE; R1 fail-closed rework at 4a57e70a46;
-    REAL_PROVIDER_GATE=BLOCKED/TO_INVENTORY)
+   (AUTHORIZED=YES; EXECUTED=NO; R1 fail-closed rework at 4a57e70a46;
+    R2 real OpenAI-compatible provider at c2f85834c5 — real eval PASS;
+    REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG)
 NEXT_TASK_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R1
+NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2
 Workspace binding remains unscheduled
 ```
 
@@ -1201,11 +1200,11 @@ NEXT = C3-INTERACTION-RUNTIME-01 (coordination authorized; see below)
 
 ```text
 TASK = C3-INTERACTION-RUNTIME-01 — INTERACTIVE_CONVERSATION_VERTICAL_SLICE
-STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW (R1)
+STATE = CANDIDATE_FOR_ARCHITECTURE_REVIEW (R2)
 AUTHORIZED = YES (ARCHITECTURE_COORDINATION_INTERACTIVE_VERTICAL_SLICE)
 EXECUTED = NO
-IMPLEMENTATION_HEAD = 4a57e70a4637d24a777e43d965017925b9ba571d (R1;
-        prior candidate 9f470b8c0a reviewed REWORK)
+IMPLEMENTATION_HEAD = c2f85834c5174f910e0e44dec768a487baabbd2c (R2;
+        R1 4a57e70a46; prior candidate 9f470b8c0a reviewed REWORK)
 PRIOR_BLOCKER_TEST_ONLY_ADAPTER_DEFAULT_RUNTIME_EXPOSURE = RESOLVED
 MODE = TEXT_ONLY + READ/GENERATE_ONLY
 MODEL = HandleInteractiveConversationTurn (app/application/interaction/)
@@ -1225,15 +1224,24 @@ MODEL_INVOCATION = reuses InvokeModel/ModelInvocationPort; bounded config
         delia.interaction.turn v1; instruction delia.interaction.base v1
         sha256-bound; expected field answer; timeout<=30s;
         input<=16384 chars)
-REAL_PROVIDER_GATE = BLOCKED / TO_INVENTORY (no DÉLIA-owned provider
-        owner/credential source/approved model/exposure policy proven;
-        DeterministicTestAdapter only; adapter_kind TEST_ONLY enforced)
+REAL_PROVIDER_ADAPTER = IMPLEMENTED (OpenAICompatibleModelInvocationAdapter;
+        app/infrastructure/model_invocation/; adapter_kind
+        OPENAI_COMPATIBLE; ProviderExposureClass.EXTERNAL_APPROVED)
+REAL_PROVIDER_PROTOCOL = OPENAI_COMPATIBLE (chat completions; no tools,
+        no streaming, no function calling)
+INITIAL_REAL_PROVIDER = OpenRouter gateway / Kimi model via env config
+REAL_PROVIDER_GATE = PROVEN_FOR_CURRENT_CONFIG (DELPI operational env
+        owns KIMI_*; DÉLIA reads DELIA_LLM_* mapped from the same secret
+        source; incomplete config fails closed)
 TESTING_RUNTIME = DETERMINISTIC_TEST_ADAPTER_ALLOWED (testing=True or
         explicit port/handler injection only)
 DEFAULT_NON_TEST_RUNTIME_WITHOUT_PROVIDER = FAIL_CLOSED (no implicit
         TEST_ONLY fallback; handler absent -> bounded 503
         model_unavailable)
-REAL_MODEL_INTERACTION = NOT_PROVEN | REAL_MODEL_EVAL = BLOCKED/TEST_NOT_RUN
+REAL_MODEL_INTERACTION = PROVEN (8-case real eval at IMPLEMENTATION_HEAD;
+        see ledger §6.89) | REAL_MODEL_EVAL = PASS
+        (BUSINESS_FACT_NON_FABRICATION INCONCLUSIVE on the
+        generic-writing case only; PASS where applicable)
 FORBIDDEN = business reads; RAG/Knowledge retrieval; vector/embedding
         runtime; tool execution; PREPARE/ACT; Automation Hub; Personal
         Memory; Model Router; agent selection; Chat runtime reuse;
@@ -1242,8 +1250,9 @@ OUTPUT_GUARDS = tool_call/function_call fields, secret-bearing and
         CoT/scratchpad payloads rejected fail-closed; provider-claimed
         FACT never promoted; HTTP response exposes bounded IDs/content/
         epistemic_class/limitations/generated_at/model_invocation_id only
-EVIDENCE = ledger §6.87/§6.88; TARGETED_C3_INTERACTION_RUNTIME PASS
-           69/69; FULL_DELIA_API PASS 357/357; MFE PASS 29/29 +
-           typecheck + build at IMPLEMENTATION_HEAD
-NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R1
+EVIDENCE = ledger §6.87-§6.89; TARGETED_C3_INTERACTION_RUNTIME +
+           provider tests PASS 129/129; FULL_DELIA_API PASS 383/383;
+           MFE PASS 29/29 + typecheck + build; REAL_MODEL_EVAL PASS
+           (8 cases) at IMPLEMENTATION_HEAD
+NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2
 ```
