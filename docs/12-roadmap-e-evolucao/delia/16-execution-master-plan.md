@@ -754,11 +754,16 @@ ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01 = REWORK (§6.93)
    STATIC_GLOBAL_USER_TOKEN=REJECTED_FOR_PRODUCT_RUNTIME;
    IDENTITY_DIRECTION=SINGLE_DELIA_INTERNAL_CLIENT+TOKEN_EXCHANGE;
    CUSTOM_MCP_TRANSPORT=ACCEPTED_FOR_CURRENT_C3_SLICE
-C3-MCP-INTEROP-01R1A = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
-   (USER_DELEGATED_IDENTITY_FOUNDATION; §6.93 authz, §6.94 evidence;
+C3-MCP-INTEROP-01R1A = ACCEPT_WITH_RESIDUAL (§6.95;
+   ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1A on
    IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d;
-   identity delegation only — no business READ, no PREPARE/ACT)
-NEXT = C3-MCP-INTEROP-01R1B (authenticated specialist discovery; R1A evidence pending review)
+   residuals R1B-R1/R2/R3 close inside R1B)
+C3-MCP-INTEROP-01R1B = EXECUTED — evidence pending review (§6.96;
+   IMPLEMENTATION_HEAD=cc65cc6388371224d955f266257d6aa3ca4967ce;
+   authenticated initialize+tools/list PASS for DAVI/TEO/VISTA;
+   no business READ, no PREPARE/ACT)
+NEXT = C3-MCP-INTEROP-01R1C (security acceptance + bind — NOT yet
+   authorized; requires R1B review verdict)
 Workspace binding remains unscheduled
 ```
 
@@ -1373,11 +1378,11 @@ VERDICT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01 = REWORK (§6.93)
 NEXT = C3-MCP-INTEROP-01R1B (authenticated specialist discovery; R1A evidence pending review)
 ```
 
-### C3-MCP-INTEROP-01R1A — User-Delegated Identity Foundation (evidence ready for review)
+### C3-MCP-INTEROP-01R1A — User-Delegated Identity Foundation (ACCEPT_WITH_RESIDUAL §6.95)
 
 ```text
 TASK = C3-MCP-INTEROP-01R1A — USER_DELEGATED_IDENTITY_FOUNDATION
-STATE = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.94)
+STATE = ACCEPT_WITH_RESIDUAL (review §6.95; evidence §6.94)
 EXECUTED = NO
 IMPLEMENTATION_HEAD = a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d
 IDENTITY_MODEL = Portal user bearer (request-scoped) → single
@@ -1399,4 +1404,33 @@ SCOPE_OUT = business MCP READ (C4-gated), PREPARE/ACT (forbidden),
         MCP SDK migration, business tool execution
 NEXT_ON_SUCCESS = C3-MCP-INTEROP-01R1B —
         AUTHENTICATED_SPECIALIST_DISCOVERY
+```
+
+### C3-MCP-INTEROP-01R1B — Authenticated Specialist Discovery (EXECUTED — evidence §6.96)
+
+```text
+TASK = C3-MCP-INTEROP-01R1B — AUTHENTICATED_SPECIALIST_DISCOVERY
+STATE = EXECUTED — evidence pending architecture review (§6.96)
+IMPLEMENTATION_HEAD = cc65cc6388371224d955f266257d6aa3ca4967ce
+RESIDUALS_CLOSED = R1B-R1 mcp-* client parity (confidential, std flow,
+        PKCE S256, no DAG/service accounts, idempotent bootstrap);
+        R1B-R2 credential invalidation on auth failure from ANY wire
+        op (initialize/tools/list/tools/call, no auto-retry);
+        R1B-R3 exchanged-token azp == delia-api fail-closed
+LIVE_PROOF = Core /me context PASS -> per-specialist delegated
+        credential (same_sub, azp=delia-api, resource-bound,
+        mcp:tools, no foreign aud, exp valid) -> authenticated
+        initialize + tools/list PASS x3 -> SpecialistInterop
+        classification projection (DISCOVERY only) -> optional
+        discovery calls PASS (DAVI 2 tools / TEO 24 / VISTA 8;
+        blocked 1/23/7; unknown remote names none)
+DEV_ALIGNMENT = public-issuer Host on exchange request;
+        MCP_RESOURCE_URL pinned to canonical contracts;
+        per-specialist public Host header on internal MCP addressing;
+        classic 2024-11-05 negotiation (2026-07-28 envelope path is
+        handshake-less; server capability floor unchanged)
+UNCHANGED = no business READ (C4-gated), PREPARE/ACT forbidden,
+        C4_AUTHORIZED=NO, C3_EXECUTED=NO
+NEXT_ON_REVIEW_ACCEPT = C3-MCP-INTEROP-01R1C —
+        SECURITY_ACCEPTANCE_AND_BIND
 ```

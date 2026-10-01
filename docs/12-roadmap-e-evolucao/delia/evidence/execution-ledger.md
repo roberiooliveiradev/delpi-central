@@ -5875,3 +5875,173 @@ POSTCONDITION = authenticated discovery can be attempted via
   C3_EXECUTED=NO; C4_AUTHORIZED=NO.
 NEXT: C3-MCP-INTEROP-01R1B — AUTHENTICATED_SPECIALIST_DISCOVERY
 ```
+
+
+## 6.95 R1A architecture review verdict + R1B authorization
+
+```
+STEP: C3-MCP-INTEROP-01R1A review persistence + R1B authorization
+MODE: REVIEW RECORD (pre-execution, before R1B runtime changes)
+
+ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1A = ACCEPT_WITH_RESIDUAL
+REVIEWED_IMPLEMENTATION_HEAD = a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d
+REVIEWED_BIND_HEAD = dee8a256409a414a34798314769d4b220ad8bdde
+
+ACCEPTED:
+  USER_DELEGATED_IDENTITY = SINGLE_DELIA_INTERNAL_CLIENT + TOKEN_EXCHANGE
+  DELIA_REQUESTER_CLIENT = delia-api
+  SUBJECT_PRESERVATION = PASS
+  RESOURCE_ISOLATION = PASS
+  STATIC_GLOBAL_USER_TOKEN = RESOLVED (path removed)
+  SHORT_LIVED_CACHE = ACCEPTED (process-local, user+resource scoped,
+      <=120s reuse / <=300s cap, exp margin, invalidate API)
+
+RESIDUALS_TO_CLOSE_IN_R1B:
+  R1B-R1 = canonical mcp-* dev client parity (confidential, standard
+      flow + PKCE S256 for the shared ChatGPT-facing contract; no DAG,
+      no service accounts; DELIA itself uses only token exchange)
+  R1B-R2 = credential invalidation on MCP_AUTHENTICATION_FAILED from
+      ANY adapter wire operation (initialize, tools/list, tools/call)
+  R1B-R3 = exchanged-token requester binding: azp == configured
+      exchange_client_id, else fail closed
+
+AUTHORIZED: C3-MCP-INTEROP-01R1B — AUTHENTICATED_SPECIALIST_DISCOVERY
+  (authenticated initialize + tools/list + DELIA classification
+   projection for DAVI/TEO/VISTA; optional C3-safe DISCOVERY calls;
+   no business READ; no PREPARE/ACT; R1C not authorized by this record)
+
+C3_EXECUTED: NO
+C4_AUTHORIZED: NO
+BUSINESS_READ_EXECUTION = PHASE_GATED
+PREPARE: FORBIDDEN
+ACT: FORBIDDEN
+PRODUCTION_READINESS: NOT_PROVEN
+EXECUTION_DRIFT: NONE
+NEXT: C3-MCP-INTEROP-01R1B execution
+```
+
+## 6.96 C3-MCP-INTEROP-01R1B execution record — authenticated specialist discovery
+
+```
+STEP: C3-MCP-INTEROP-01R1B — AUTHENTICATED_SPECIALIST_DISCOVERY
+BASE_HEAD: dee8a256409a414a34798314769d4b220ad8bdde
+IMPLEMENTATION_HEAD: cc65cc6388371224d955f266257d6aa3ca4967ce
+MODE: C3 FOUNDATION + AUTHENTICATED MCP DISCOVERY + LIVE DEV EVIDENCE
+      + FAIL-CLOSED (no business READ, no PREPARE, no ACT)
+
+R1B-R1 — canonical mcp-* dev client parity: CLOSED
+  keycloak-dev-bootstrap.sh now idempotently creates-or-repairs
+  mcp-api-delpi / mcp-transformometro / mcp-tv-dashboard with the
+  canonical contract: confidential, client auth ON, Standard Flow ON
+  (shared ChatGPT-facing contract — DELIA itself never uses it, redirect
+  URIs left unconfigured), PKCE S256, Direct Access Grants OFF,
+  Service Accounts OFF; default scopes include built-in
+  openid/profile/email + mcp:tools + audience-delpi + dedicated
+  mcp-audience-* resource scope. Live parity check PASS for all three.
+  Bootstrap re-run clean (idempotent).
+
+R1B-R2 — auth-failure credential invalidation: CLOSED
+  McpSpecialistAdapter invalidates the cached delegated credential on
+  MCP_AUTHENTICATION_FAILED from initialize, tools/list AND tools/call;
+  semantic failure propagates, no automatic retry.
+  Tests: 401 initialize -> invalidate; 401 tools/list -> invalidate;
+  401 tools/call -> invalidate (all PASS).
+
+R1B-R3 — requester token invariant: CLOSED
+  KeycloakDelegatedCredentialProvider now requires exchanged-token
+  azp == configured exchange_client_id (delia-api); wrong azp fails
+  closed with MCP_AUTHENTICATION_FAILED. Positive + negative tests PASS.
+
+DEV RUNTIME ALIGNMENT (same task, ordinary bugs in scope):
+  - exchange request presents the public issuer Host
+    (DELIA_EXCHANGE_HOST_HEADER or KEYCLOAK_ISSUER netloc): Keycloak
+    derives `iss` and validates subject-token `iss` from request Host;
+    internal hostname (keycloak:8080) produced iss mismatch ->
+    exchange denied. With Host=localhost exchange succeeds and emitted
+    iss matches KEYCLOAK_ISSUER.
+  - specialists now pin MCP_RESOURCE_URL to the canonical resource
+    contract (compose dev env) — previously dev derived required
+    audience from PUBLIC_BASE_URL (http://localhost/apps/.../mcp)
+    which rejected tokens bound to the canonical audience.
+  - subject bearer must be an OIDC token (scope=openid ...): KC26 has
+    no `openid` client scope; exchange output scope mirrors granted
+    scopes — subject token without openid yields insufficient_scope
+    at the specialist. Eval acquires the portal token with
+    scope="openid profile email" (same as the real OIDC login).
+  - transport accepts optional per-specialist public Host header
+    (DELIA_MCP_*_HOST_HEADER) so internal container addressing
+    (api-delpi:8000 etc.) satisfies specialist DNS-rebinding
+    protection that only allows the public host.
+  - MCP protocol negotiation: specialists run mcp 2.2.0 where
+    LATEST=2026-07-28 switches to the per-request `_meta` envelope
+    path (no `initialize` method). DelpiMcpTransport speaks the
+    classic initialize/tools/* flow and negotiates 2024-11-05 —
+    accepted by all three specialists. DELPI_MCP_PROTOCOL_MINIMUM
+    (2026-07-28, server capability floor) unchanged.
+
+LIVE DEV EVIDENCE (delpi-delia-api, real Portal user rober,
+realm delpi; sanitized — no tokens/headers/secrets printed):
+
+  CORE_CONTEXT_LIVE = PASS (Core /me resolved; user sub present;
+      effective_permissions=64; is_superadmin=true — context only,
+      no business authorization claimed)
+
+  DAVI:  delegated credential PASS (same_sub, azp=delia-api,
+      resource-bound to canonical api-delpi aud, mcp:tools, no foreign
+      MCP auds, exp valid)
+      authenticated initialize + tools/list = PASS
+      remote_tool_count = 2; approved_discovery = [discover_delpi_information];
+      blocked = 1 (execute_delpi_information — READ, C4-gated);
+      unknown_remote_names = none
+      optional discovery call (discover_delpi_information) = PASS
+  TEO:   delegated credential PASS (same invariants)
+      authenticated initialize + tools/list = PASS
+      remote_tool_count = 24; approved_discovery = [get_catalog];
+      blocked = 23; unknown_remote_names = none
+      optional discovery call (get_catalog) = PASS
+  VISTA: delegated credential PASS (same invariants)
+      authenticated initialize + tools/list = PASS
+      remote_tool_count = 8; approved_discovery = [get_catalog];
+      blocked = 7; unknown_remote_names = none
+      optional discovery call (get_catalog) = PASS
+
+  SAME_USER_DELEGATION = PASS; RESOURCE_ISOLATION = PASS;
+  NO_FOREIGN_MCP_AUDIENCE = PASS; NO_STATIC_USER_TOKEN = PASS
+  (zero DELIA_MCP_*_USER_TOKEN refs remain in delia-api)
+
+TESTS at IMPLEMENTATION_HEAD:
+  targeted (delegated credentials + adapter + specialist interop) = PASS
+  full delia-api suite = 493 passed (clean env; container leaks
+      DELIA_LLM_*/DELPI_AUTH_CORE_API_URL — cleared for the run;
+      leakage is pre-existing, out of R1B scope)
+  architecture + security suites = included, PASS
+  git diff --check = PASS
+
+DISCOVERY_AUTO = catalog observed/classified only — no approval change
+APPROVAL_AUTO = NONE (registry untouched; remote existence != approval)
+UNKNOWN_TOOL_BEHAVIOR = discovered + blocked, invocation fails closed
+READ_PHASE_GATE = CAPABILITY_NOT_ALLOWED_IN_PHASE (test)
+PREPARE = BLOCKED (test) ; ACT = BLOCKED (test)
+SCHEMA_COMPATIBILITY_5A = additive metadata tolerated; annotation/
+      description/schema mutation cannot elevate operation class (tests)
+
+C3_EXECUTED: NO
+C4_AUTHORIZED: NO
+BUSINESS_READ_EXECUTION = PHASE_GATED
+PREPARE: FORBIDDEN
+ACT: FORBIDDEN
+PRODUCTION_READINESS: NOT_PROVEN
+EXECUTION_DRIFT: NONE (interim commits classified OUTSIDE_TASK;
+      unrelated dirty work preserved)
+RESIDUALS:
+  (1) KC dev feature flags token-exchange,admin-fine-grained-authz are
+      dev-compose only — production Keycloak unchanged;
+  (2) KC26 requires requester aud in subject token (delia-api mapper on
+      delpi-central) — documented in R1A;
+  (3) container env leakage (DELIA_LLM_*, DELPI_AUTH_CORE_API_URL)
+      makes `testing` wiring non-deterministic — pre-existing, flagged;
+  (4) classic 2024-11-05 negotiation works; native 2026-07-28 envelope
+      client support is a future transport extension if required.
+NEXT: C3-MCP-INTEROP-01R1C — SECURITY_ACCEPTANCE_AND_BIND (pending
+      review of this record; not authorized by it)
+```
