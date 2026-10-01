@@ -1,4 +1,5 @@
 import type { ElementSummary } from "../BpmnEditorAdapter";
+import { bpmnTypeLabel } from "../i18n/translate";
 
 type Props = {
   element: ElementSummary | null;
@@ -18,7 +19,7 @@ export function ElementInspector({ element }: Props) {
       <dt>ID</dt>
       <dd><code>{element.id}</code></dd>
       <dt>Tipo</dt>
-      <dd><code>{element.type}</code></dd>
+      <dd>{bpmnTypeLabel(element.type)}</dd>
       {element.name ? (
         <>
           <dt>Nome</dt>

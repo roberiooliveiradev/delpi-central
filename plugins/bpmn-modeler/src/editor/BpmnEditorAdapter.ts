@@ -12,6 +12,7 @@ import {
   BpmnPropertiesPanelModule,
   BpmnPropertiesProviderModule,
 } from "bpmn-js-properties-panel";
+import { ptBrTranslateModule } from "./i18n/translate";
 
 import { ApplyDiLayoutHandler } from "./layoutApply";
 import type { DiLayoutOp } from "../layout/diProposal";
@@ -106,6 +107,7 @@ export class BpmnEditorAdapter {
         bpmnRenderer,
         propertiesPanel: { parent: "#bpmn-properties-panel" },
         additionalModules: [
+          ptBrTranslateModule,
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
         ],
