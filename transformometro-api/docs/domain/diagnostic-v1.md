@@ -3,10 +3,15 @@
 **Status (per surface — runtime facts only):**
 - Domain + Persistence + Application + TÉO MCP: PROVEN IN PRODUCTION
   (deployed SHA `230fbb9b6a`).
-- Portal HTTP backend (`/transformometro/...`): IMPLEMENTED — covered by
-  route-level tests only; deployment NOT PERFORMED for this slice;
-  authenticated gateway/JWT runtime smoke TEST_NOT_RUN.
-**Date:** 2026-09-29
+- Portal HTTP backend (`/transformometro/...`): PROVEN — runtime acceptance
+  (Prompt 3/3) on the local dev stack at evaluated HEAD `63656e5741e321ad7b8abb21fe37c9992f45d1ff`;
+  authenticated gateway/JWT smoke PASSED; governed PREPARE→COMMIT→read-back,
+  realtime payload/fan-out, stale proposal and error contract all verified live.
+  Production deployment of the Portal routes NOT PERFORMED.
+- Final architecture verdict: **ACCEPT** (historical:
+  ACCEPT_WITH_RESIDUAL — governance/infra/fixture residuals closed in the
+  Master Residual Closure pass).
+**Date:** 2026-09-29 (acceptance record atualizado no fechamento de resíduos)
 **Owner:** Transformômetro (domain + persistence + use cases)
 **Surfaces:** TÉO MCP (`/apps/transformometro-api/mcp`) and Portal HTTP
 (`/transformometro/...`) — no GPT Actions operations.
@@ -27,7 +32,7 @@ Manage actions (closed enum): `add_finding`, `add_hypothesis`, `add_causal_link`
 `mark_hypothesis_revalidation_required`, `validate_conclusion`, `reject_conclusion`,
 `supersede_conclusion`.
 
-## Portal HTTP surface (IMPLEMENTED — backend only)
+## Portal HTTP surface (PROVEN — local runtime acceptance)
 
 | Route | Kind | Canonical path |
 |---|---|---|
@@ -105,25 +110,24 @@ explicit confirmation backend (omitted → validation error; false →
 CONFIRMATION_REQUIRED; true → persisted + verified read-back), single-use handles,
 authoritative read-back in production.
 
-**IMPLEMENTED (this pass)** — Portal HTTP Diagnostic surface (2 reads, 2
-governed prepares, shared commit route), Portal-forced `USER` provenance,
-server-generated ids, post-verify realtime invalidation
-(`entityType=diagnostic`, `sectionKey=diagnostico`, payload
-`{"revision_id"}`, `revisao:{revision_id}` fan-out).
-Proven by `tests/test_diagnostic_portal_routes.py` (route-level tests over
-the canonical governed stack with fake ports and the real fresh-AuthZ
-adapter). No GPT Actions operations added; MCP unchanged.
+**PROVEN (local dev stack — Prompt 3/3 runtime acceptance)** — Portal HTTP
+Diagnostic surface end-to-end through gateway + real Keycloak JWT: 5 canonical
+operations (2 reads, 2 governed prepares, shared commit), Portal-forced `USER`
+provenance, server-generated ids (`server_owned_field` 422 verified live),
+authoritative read-back, realtime invalidation post-verify (`entityType=diagnostic`,
+`sectionKey=diagnostico`, payload `{"revision_id"}` only, fan-out
+`diagnostic:{id}` + `revisao:{revision_id}`), stale proposal `409`, error
+contract 401/403/404/409/422/503, MFE Portal UX (zero/one/multiple, deep links,
+local-draft preservation, no auto-merge). Evaluated HEAD `63656e5741e321ad7b8abb21fe37c9992f45d1ff`.
+No GPT Actions operations added; MCP unchanged (24 tools, Diagnostic MCP-native).
 
-**NOT PERFORMED** — Portal HTTP deployment: no container rebuild/deploy for
-this slice; deployed SHA `230fbb9b6a` predates the Portal routes.
-
-**TEST_NOT_RUN** — authenticated HTTP runtime smoke of the Portal routes
-(end-to-end through gateway + real JWT); frontend does not consume these
-routes yet (Prompt 2/3).
+**NOT PERFORMED** — Portal HTTP **production** deployment: local runtime
+acceptance only; no claim of production availability.
 
 **TEST_NOT_RUN** — TÉO conversational confirmation UX (no real ChatGPT driver in this
 environment); runtime authz negatives (missing-permission user, service principal,
-revocation between PREPARE and ACT — covered by code/integration tests only).
+revocation between PREPARE and ACT — covered by code/integration tests plus
+live unauthenticated 401 probe).
 
 **ACCEPTED RESIDUAL** — proposal store is in-process; acceptable under the current
 single-container, single-uvicorn-process topology. Multi-replica deployment requires
