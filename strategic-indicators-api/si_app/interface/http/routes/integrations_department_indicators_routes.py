@@ -41,6 +41,8 @@ def get_dashboard_department_indicators(
         if payload is None:
             return {"item": None}
         return {"item": payload}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -71,6 +73,8 @@ def get_dashboard_departments_indicators(
             branch=branch,
             department_id=department_id,
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=500,

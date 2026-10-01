@@ -36,6 +36,8 @@ def list_dashboard_goals(
             department_id=department_id,
         )
         return {"items": items}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=500,

@@ -1,6 +1,15 @@
 # app/infrastructure/persistence/totvs/query_builder.py
 from typing import Optional, Union, Iterable
-from datetime import datetime
+from datetime import date, datetime
+
+
+class InvalidProtheusDateError(ValueError):
+    """Data de filtro fornecida não pôde ser convertida para o formato Protheus.
+
+    Distingue "filtro ausente" (None/vazio → predicado opcional) de
+    "filtro fornecido inválido" (falha explícita) para que uma data
+    malformada nunca remova silenciosamente um bound de consulta.
+    """
 
 
 class QueryBuilder:
@@ -203,21 +212,31 @@ class QueryBuilder:
 
         """
         Converte vários formatos de data para 'YYYYMMDD' (padrão Protheus).
+
+        None/vazio = filtro ausente (retorna None, predicado opcional).
+        Valor fornecido mas inválido = InvalidProtheusDateError, nunca None.
         """
 
         if not date_value:
             return None
 
-        if isinstance(date_value, datetime):
+        if isinstance(date_value, date):
             return date_value.strftime("%Y%m%d")
 
         if not isinstance(date_value, str):
+            raise InvalidProtheusDateError(
+                f"Data inválida para filtro de período: {date_value!r}. "
+                "Formatos aceitos: YYYYMMDD, YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY."
+            )
+
+        text = date_value.strip()
+
+        if not text:
+            # Contrato canônico (period_query_params._strip): blank = ausência.
             return None
 
-        date_value = date_value.strip()
-
-        if date_value.isdigit() and len(date_value) == 8:
-            return date_value
+        if text.isdigit() and len(text) == 8:
+            return text
 
         known_formats = [
             "%Y-%m-%d",
@@ -233,13 +252,18 @@ class QueryBuilder:
 
         for fmt in known_formats:
             try:
-                parsed = datetime.strptime(date_value, fmt)
+                parsed = datetime.strptime(text, fmt)
                 return parsed.strftime("%Y%m%d")
             except ValueError:
                 continue
 
         try:
-            parsed = datetime.fromisoformat(date_value.replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
             return parsed.strftime("%Y%m%d")
-        except Exception:
-            return None
+        except ValueError:
+            pass
+
+        raise InvalidProtheusDateError(
+            f"Data inválida para filtro de período: {date_value!r}. "
+            "Formatos aceitos: YYYYMMDD, YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY."
+        )

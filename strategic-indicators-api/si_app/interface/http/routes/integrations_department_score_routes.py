@@ -35,6 +35,8 @@ def get_dashboard_department_score(
         if payload is None:
             return {"item": None}
         return {"item": payload}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=500,

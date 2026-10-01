@@ -35,16 +35,28 @@ def _parse_dashboard_date_parts(value: str) -> tuple[int, int, int] | None:
         return None
 
     first, second, third = parts
-    if len(first) == 4:
-        try:
-            return int(third), int(second), int(first)
-        except ValueError:
-            return None
-
-    try:
-        return int(first), int(second), int(third)
-    except ValueError:
+    if not (first.isdigit() and second.isdigit() and third.isdigit()):
         return None
+
+    if len(first) == 4:
+        if len(second) > 2 or len(third) > 2:
+            return None
+        return int(third), int(second), int(first)
+
+    if len(third) != 4 or len(first) > 2 or len(second) > 2:
+        return None
+    return int(first), int(second), int(third)
+
+
+def _require_valid_period_date(value: str | None, *, field: str) -> None:
+    """Data ausente é opcional; data fornecida inválida falha explicitamente."""
+    if value is None or not value.strip():
+        return
+    if parse_period_date(value) is None:
+        raise ValueError(
+            f"Data {field} inválida: '{value.strip()}'. "
+            "Use DD-MM-YYYY ou YYYY-MM-DD."
+        )
 
 
 def resolve_period(
@@ -53,6 +65,9 @@ def resolve_period(
     start_date: str | None,
     end_date: str | None,
 ) -> ResolvedPeriod:
+    _require_valid_period_date(start_date, field="start_date")
+    _require_valid_period_date(end_date, field="end_date")
+
     start_date = normalize_dashboard_period_date(start_date)
     end_date = normalize_dashboard_period_date(end_date)
 

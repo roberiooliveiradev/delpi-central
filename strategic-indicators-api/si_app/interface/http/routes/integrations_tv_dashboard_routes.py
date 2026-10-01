@@ -50,6 +50,8 @@ def get_tv_dashboard_hero(
             "bestDepartment": (best or {}).get("name"),
             "primaryRisk": (worst or {}).get("name"),
         }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(
             status_code=500,

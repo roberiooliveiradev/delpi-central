@@ -305,6 +305,8 @@ def get_strategic_indicators_executive_summary(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1108,6 +1110,8 @@ def get_strategic_indicators_departments(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1147,6 +1151,8 @@ def get_strategic_indicators_departments_tree(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1184,6 +1190,8 @@ def get_strategic_indicators_departments_tree_snapshot(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1310,6 +1318,8 @@ def get_strategic_indicators_departments_tree_trends(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1350,6 +1360,8 @@ def get_strategic_indicators_department_details(
         )
     except DepartmentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1449,6 +1461,8 @@ def get_strategic_indicators(
             months=None,
             handler=lambda: payload,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1486,6 +1500,8 @@ def get_strategic_indicators_alerts(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1521,6 +1537,8 @@ def get_strategic_indicators_trends(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -1594,6 +1612,8 @@ def get_strategic_indicators_presentation(
                 )
             ),
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,

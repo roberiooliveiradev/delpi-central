@@ -7,7 +7,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import Response
+from fastapi import HTTPException, Response
 from fastapi.responses import JSONResponse
 
 from si_app.shared.json_encoding import to_json_safe
@@ -54,6 +54,8 @@ def run_logged_read_route(
             branch=branch,
             months=months,
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception:
         logger.exception(
             (

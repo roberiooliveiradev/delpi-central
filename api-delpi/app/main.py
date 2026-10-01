@@ -27,6 +27,9 @@ from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_hand
 from app.interface.socket.sio_server import create_socket_app
 from delpi_auth.credential_guard import check_credentials
 from app.config import settings
+from app.infrastructure.persistence.totvs.query_builder import (
+    InvalidProtheusDateError,
+)
 from app.interface.http.routes import customer_routes, product_drawing_routes, product_routes
 from app.interface.http.routes import gpt_actions_routes
 from app.interface.http.routes import system_routes
@@ -217,6 +220,16 @@ async def validation_exception_handler(_request: Request, exc: RequestValidation
     return error_response(
         "Parâmetros inválidos",
         status_code=422,
+        code="VALIDATION_ERROR",
+        recoverable=True,
+    )
+
+
+@app.exception_handler(InvalidProtheusDateError)
+async def invalid_protheus_date_handler(_request: Request, exc: InvalidProtheusDateError):
+    return error_response(
+        str(exc),
+        status_code=400,
         code="VALIDATION_ERROR",
         recoverable=True,
     )
