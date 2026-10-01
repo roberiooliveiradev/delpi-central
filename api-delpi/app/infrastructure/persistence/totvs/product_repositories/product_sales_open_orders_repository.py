@@ -38,6 +38,7 @@ class ProductSalesOpenOrdersRepository(
         branch: str | None = None,
         page: int = 1,
         page_size: int = 50,
+        allowed_customers: frozenset[tuple[str, str]] | None = None,
     ) -> ProductSalesOpenOrders:
         concrete_branch = optional_concrete_branch(branch)
         page = max(1, int(page or 1))
@@ -49,6 +50,23 @@ class ProductSalesOpenOrdersRepository(
         if concrete_branch:
             where += " AND C6.C6_FILIAL = ?"
             params.append(concrete_branch)
+        if allowed_customers is not None:
+            pairs = sorted(
+                {
+                    (str(customer_code or "").strip(), str(customer_store or "").strip())
+                    for customer_code, customer_store in allowed_customers
+                }
+            )
+            if pairs:
+                pair_clause = " OR ".join(
+                    "(LTRIM(RTRIM(C5.C5_CLIENTE)) = ? AND LTRIM(RTRIM(C5.C5_LOJACLI)) = ?)"
+                    for _ in pairs
+                )
+                where += f" AND ({pair_clause})"
+                for customer_code, customer_store in pairs:
+                    params.extend([customer_code, customer_store])
+            else:
+                where += " AND 1 = 0"
 
         summary_sql = f"""
         SELECT

@@ -134,6 +134,16 @@ def _apply_argument_limits_to_schema(
                 prop[bound_key] = min(existing_i, governed) if existing_i is not None else governed
             else:
                 prop[bound_key] = max(existing_i, governed) if existing_i is not None else governed
+        for bound_key in ("minItems", "maxItems"):
+            governed = _as_int(spec.get(bound_key))
+            if governed is None:
+                continue
+            existing = prop.get(bound_key)
+            existing_i = _as_int(existing)
+            if bound_key == "maxItems":
+                prop[bound_key] = min(existing_i, governed) if existing_i is not None else governed
+            else:
+                prop[bound_key] = max(existing_i, governed) if existing_i is not None else governed
         if "default" in spec:
             prop["default"] = spec["default"]
 
@@ -345,6 +355,21 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
         if param.get("required") and name not in required:
             required.append(name)
 
+    # Trusted JSON body fields (catalog-normalized requestBody ∩ approved inputs).
+    body = action.request_body or {}
+    body_properties = body.get("properties")
+    if isinstance(body_properties, Mapping):
+        for name, spec in body_properties.items():
+            if not isinstance(spec, Mapping):
+                continue
+            if approved is not None and name not in approved:
+                continue
+            if name not in properties:
+                properties[name] = dict(spec)
+        for name in body.get("required") or ():
+            if name in properties and name not in required:
+                required.append(name)
+
     constraints = _argument_constraints(action)
     _apply_argument_limits_to_schema(properties, constraints)
     _apply_require_arguments_to_schema(properties, required, constraints)
@@ -389,6 +414,22 @@ def _coerce_value(name: str, value: Any, prop: dict[str, Any]) -> Any:
             raise ArgumentValidationError(f"{name}: below minimum {prop['minimum']}")
         if "maximum" in prop and out > prop["maximum"]:
             raise ArgumentValidationError(f"{name}: above maximum {prop['maximum']}")
+        return out
+    if expected == "array":
+        if isinstance(value, str) or not isinstance(value, (list, tuple)):
+            raise ArgumentValidationError(f"{name}: must be an array")
+        item_type = (prop.get("items") or {}).get("type") or "string"
+        if item_type != "string":
+            raise ArgumentValidationError(f"{name}: unsupported array item type")
+        out = []
+        for item in value:
+            if not isinstance(item, str):
+                raise ArgumentValidationError(f"{name}: array items must be strings")
+            out.append(item)
+        if "minItems" in prop and len(out) < int(prop["minItems"]):
+            raise ArgumentValidationError(f"{name}: fewer than minItems {prop['minItems']}")
+        if "maxItems" in prop and len(out) > int(prop["maxItems"]):
+            raise ArgumentValidationError(f"{name}: more than maxItems {prop['maxItems']}")
         return out
     if expected == "boolean":
         if isinstance(value, bool):

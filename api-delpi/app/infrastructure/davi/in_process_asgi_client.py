@@ -31,13 +31,37 @@ class InProcessAsgiClient:
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> httpx.Response:
+        return self._invoke("get", path, params=params, headers=headers)
+
+    def post(
+        self,
+        path: str,
+        *,
+        json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> httpx.Response:
+        """Bounded catalog-fixed POST (path/json/headers only — no caller transport)."""
+        return self._invoke("post", path, json=json, params=params, headers=headers)
+
+    def _invoke(
+        self,
+        verb: str,
+        path: str,
+        *,
+        json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> httpx.Response:
         async def _request() -> httpx.Response:
             transport = httpx.ASGITransport(app=self._app)
             async with httpx.AsyncClient(
                 transport=transport,
                 base_url="http://davi-internal",
             ) as client:
-                return await client.get(path, params=params, headers=headers)
+                return await client.request(
+                    verb, path, json=json, params=params, headers=headers
+                )
 
         with start_blocking_portal() as portal:
             return portal.call(_request)

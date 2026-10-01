@@ -37,7 +37,8 @@ def test_open_orders_use_case_returns_items_and_summary() -> None:
     use_case = GetProductSalesOpenOrdersUseCase(repository=repository)
 
     payload = use_case.execute(
-        GetProductSalesOpenOrdersRequest(code="90262910", branch="01")
+        GetProductSalesOpenOrdersRequest(code="90262910", branch="01"),
+        scope=SimpleNamespace(unrestricted=True, allowed_customers=None),
     )
 
     repository.get_sales_open_orders.assert_called_once_with(
@@ -45,6 +46,7 @@ def test_open_orders_use_case_returns_items_and_summary() -> None:
         branch="01",
         page=1,
         page_size=50,
+        allowed_customers=None,
     )
     assert payload["orders"] == 1
     assert payload["summary"]["quantity"] == 16.0
@@ -60,11 +62,8 @@ def test_open_orders_repository_sql_includes_branch_and_items() -> None:
     repo = ProductSalesOpenOrdersRepository()
     captured: dict = {}
 
-    def fake_enter(self):
-        return self
-
-    def fake_exit(self, *args):
-        return False
+    repo._connect = lambda: None
+    repo._close = lambda **kwargs: None
 
     def fake_one(sql, params=()):
         captured["summary_sql"] = sql
@@ -95,8 +94,6 @@ def test_open_orders_repository_sql_includes_branch_and_items() -> None:
             }
         ]
 
-    repo.__enter__ = fake_enter.__get__(repo, ProductSalesOpenOrdersRepository)
-    repo.__exit__ = fake_exit.__get__(repo, ProductSalesOpenOrdersRepository)
     repo.execute_one = fake_one
     repo.execute_query = fake_query
 

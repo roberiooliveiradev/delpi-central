@@ -14,5 +14,6 @@ class ProductSalesOpenOrdersRepositoryPort(ABC):
         branch: str | None = None,
         page: int = 1,
         page_size: int = 50,
+        allowed_customers: frozenset[tuple[str, str]] | None = None,
     ) -> ProductSalesOpenOrders:
         pass

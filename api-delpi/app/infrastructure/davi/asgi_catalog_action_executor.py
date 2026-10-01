@@ -1,4 +1,4 @@
-"""Infrastructure: resolve catalog action + execute catalog-fixed ASGI GET."""
+"""Infrastructure: resolve catalog action + execute catalog-fixed ASGI READ calls."""
 
 from __future__ import annotations
 
@@ -8,6 +8,9 @@ from urllib.parse import quote
 
 from app.application.external_capabilities.dynamic_information.action_index import (
     get_action_by_id,
+)
+from app.application.external_capabilities.dynamic_information.constants import (
+    SEMANTIC_TRANSPORT_READ_POST,
 )
 from app.domain.ports.davi_catalog_action_executor_port import (
     CatalogActionExecutionResult,
@@ -59,10 +62,16 @@ class AsgiCatalogActionExecutor:
                 outcome="forbidden",
                 error_message="Action is not DAVI-eligible",
             )
-        if action.method != "GET":
+        semantic_post = (
+            action.method == "POST"
+            and action.semantic_transport == SEMANTIC_TRANSPORT_READ_POST
+            and action.request_body is not None
+            and bool(action.request_body.get("supported", True))
+        )
+        if action.method != "GET" and not semantic_post:
             return CatalogActionExecutionResult(
                 outcome="error",
-                error_message="Only GET actions are executable in V1",
+                error_message="Only governed READ actions are executable (GET or explicit SEMANTIC_READ_POST)",
             )
 
         try:
@@ -75,12 +84,31 @@ class AsgiCatalogActionExecutor:
 
         headers = {"Authorization": self._authorization}
         try:
-            response = self._client.get(path, params=query, headers=headers)
+            if semantic_post:
+                # Trusted catalog body binding: approved body fields go to the JSON
+                # body; any remaining declared parameters stay on the query string.
+                body_fields = action.body_fields
+                json_body = {
+                    key: value
+                    for key, value in query.items()
+                    if key in body_fields
+                }
+                query = {
+                    key: value
+                    for key, value in query.items()
+                    if key not in body_fields
+                }
+                response = self._client.post(
+                    path, json=json_body, params=query or None, headers=headers
+                )
+            else:
+                response = self._client.get(path, params=query, headers=headers)
         except Exception as exc:
             logger.exception(
-                "davi_catalog_asgi_invoke_failed action_id=%s stage=asgi_get "
+                "davi_catalog_asgi_invoke_failed action_id=%s stage=asgi_%s "
                 "exception_class=%s",
                 action_id,
+                "post" if semantic_post else "get",
                 type(exc).__name__,
             )
             return CatalogActionExecutionResult(
@@ -88,6 +116,12 @@ class AsgiCatalogActionExecutor:
                 error_message=f"Catalog ASGI invoke failed: {type(exc).__name__}",
             )
 
+        return self._map_response(action_id, action.path, response)
+
+    @staticmethod
+    def _map_response(
+        action_id: str, path_template: str, response: Any
+    ) -> CatalogActionExecutionResult:
         status = int(getattr(response, "status_code", 500))
         try:
             body = response.json()
@@ -100,7 +134,7 @@ class AsgiCatalogActionExecutor:
                 "status=%s path_template=%s",
                 action_id,
                 status,
-                action.path,
+                path_template,
             )
 
         if status == 401:

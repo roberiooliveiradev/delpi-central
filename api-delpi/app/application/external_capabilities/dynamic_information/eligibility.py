@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.application.external_capabilities.dynamic_information.constants import (
+    SEMANTIC_TRANSPORT_READ_POST,
     STATUS_ADMIN_OUT_OF_SCOPE,
     STATUS_DAVI_ELIGIBLE_READ,
     STATUS_DESTRUCTIVE_OUT_OF_SCOPE,
@@ -173,10 +174,20 @@ def classify_operation(
     if method_u in {"DELETE"}:
         return STATUS_DESTRUCTIVE_OUT_OF_SCOPE
 
-    if method_u in {"POST", "PUT", "PATCH"}:
+    if method_u in {"PUT", "PATCH"}:
         return STATUS_WRITE_OUT_OF_SCOPE
 
-    if method_u != "GET":
+    if method_u == "POST":
+        entry = _allowlist_operation_entry(allowlist, oid) if oid else None
+        marker = ((entry or {}).get("semanticTransport") or "").strip()
+        # Explicit governed opt-in only: marker + allowlisted + projections below.
+        if not (
+            marker == SEMANTIC_TRANSPORT_READ_POST
+            and oid in allowlisted_operation_ids
+            and entry is not None
+        ):
+            return STATUS_WRITE_OUT_OF_SCOPE
+    elif method_u != "GET":
         return STATUS_NOT_RELEVANT
 
     if oid and oid in _explicit_prohibition_ids(allowlist):

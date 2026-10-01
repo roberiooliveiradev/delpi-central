@@ -18,11 +18,17 @@ class GetProductSalesOpenOrdersUseCase:
     def execute(
         self,
         dto: GetProductSalesOpenOrdersRequest,
+        *,
+        scope,
     ):
+        allowed_customers = None
+        if not scope.unrestricted:
+            allowed_customers = scope.allowed_customers or frozenset()
         result = self.repository.get_sales_open_orders(
             code=dto.code,
             branch=dto.branch,
             page=dto.page,
             page_size=dto.page_size,
+            allowed_customers=allowed_customers,
         )
         return result.as_payload()

@@ -15,6 +15,7 @@ from delpi_auth.authorization import require_any_permission, require_permission
 from app.application.security.api_delpi_permissions import (
     API_DELPI_ACCESS,
     ENGINEERING_LMP_ACCESS,
+    PEDIDOS_VENDA_ABERTOS_PERMISSIONS,
 )
 from app.core.responses import error_response, not_found_response
 from app.interface.http.query_param_enums import (
@@ -176,6 +177,13 @@ from app.composition.product_composer import (
     build_list_exclusive_raw_materials_catalog_use_case,
     build_get_product_directives_use_case,
     )
+from app.composition.pedidos_venda_abertos_composer import (
+    build_resolve_portfolio_scope_use_case,
+)
+from app.interface.http.routes.pedidos_venda_abertos.portfolio_access import (
+    current_user_id,
+    is_portfolio_unrestricted,
+)
 
 
 
@@ -1601,7 +1609,7 @@ def product_sales_summary(code: str):
         return error_response(f"Unexpected error: {e}")
     
 @router.get("/{code}/sales/open-orders", **PRODUCT_SALES_OPEN_ORDERS)
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(PEDIDOS_VENDA_ABERTOS_PERMISSIONS)
 def product_sales_open_orders(
     code: str,
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
@@ -1611,6 +1619,14 @@ def product_sales_open_orders(
 
     try:
 
+        scope = (
+            build_resolve_portfolio_scope_use_case()
+            .execute(
+                user_id=current_user_id(),
+                is_unrestricted=is_portfolio_unrestricted(),
+            )
+            .for_open_orders()
+        )
         use_case = build_get_product_sales_open_orders()
 
         result = use_case.execute(
@@ -1619,7 +1635,8 @@ def product_sales_open_orders(
                 branch=branch,
                 page=page,
                 page_size=page_size,
-            )
+            ),
+            scope=scope,
         )
 
         return product_success(

@@ -105,7 +105,10 @@ Historical rebaseline coverage = docs/integrations/evidence/davi-governed-read-c
 Candidate tokens = actor-bound HMAC (DAVI_CANDIDATE_HMAC_SECRET preferred; JWT_SECRET fallback)
 Application dynamic broker = no HTTP/TestClient/Authorization header construction
 CatalogActionExecutorPort = action_id + validated_arguments only (Composition binds Authorization into Infrastructure)
-Infrastructure AsgiCatalogActionExecutor = catalog resolution + GET + Authorization + in-process ASGI
+Infrastructure AsgiCatalogActionExecutor = catalog resolution + governed READ + Authorization + in-process ASGI
+  — GET is the default executable transport; POST executes only with explicit semanticTransport=SEMANTIC_READ_POST
+    governance metadata + normalized requestBody contract (fail-closed; PUT/PATCH/DELETE never executable)
+  — HTTP verb does not determine semantic READ/ACT classification; semantic READ POST requires explicit governed opt-in
 Composition in-process ASGI client = httpx.ASGITransport (no FastAPI TestClient lifespan re-entry)
   — TestClient(app) as context manager re-enters MCP StreamableHTTPSessionManager and breaks catalog execute live
 Explicit mutation intent (retrievalReadOnlyGuard) → zero READ candidates (semantic guard ≠ AuthZ)

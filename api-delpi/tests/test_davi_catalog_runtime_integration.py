@@ -888,11 +888,10 @@ def test_search_products_discover_execute_still_pass(monkeypatch: pytest.MonkeyP
         assert search["action_id"] == "search_products"
 
 
-def test_mcp_still_exposes_exactly_three_tools():
+def test_mcp_still_exposes_exactly_two_tools():
     mcp = create_mcp_server()
     tools = {t.name for t in mcp._tool_manager.list_tools()}
     assert tools == {
-        "search_products",
         "discover_delpi_information",
         "execute_delpi_information",
     }
@@ -1132,9 +1131,12 @@ def test_pagination_completeness_stock_sibling_multi_and_single(
     assert single["truncated"] is False
 
 
-def test_eligible_set_is_seventeen():
+def test_eligible_set_is_sixty_three():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
-    assert ids == {
+    # The exact frozen set is asserted in test_davi_capability_expansion_inventory;
+    # here we keep the cardinality plus a regression subset.
+    assert len(ids) == 63
+    assert {
         "search_products",
         "get_product_stock",
         "get_product_suppliers",
@@ -1152,7 +1154,10 @@ def test_eligible_set_is_seventeen():
         "get_product_parents",
         "list_product_drawings",
         "get_product_drawing",
-    }
+    } <= ids
+    assert "get_product_sales_open_orders" not in ids
+    assert "list_product_physical_locations" not in ids
+    assert "list_product_inventory_blocks" not in ids
 
 
 def test_drawing_catalog_and_metadata_wired_projection(
