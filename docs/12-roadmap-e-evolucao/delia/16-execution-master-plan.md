@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` — R1 fail-closed rework at `4a57e70a46`, R2 real OpenAI-compatible provider (Kimi/OpenRouter via `DELIA_LLM_*`) at `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` — R1 fail-closed rework at `4a57e70a46`, R2 real OpenAI-compatible provider (Kimi/OpenRouter via `DELIA_LLM_*`) at `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`; `C3-INTERACTION-CONTINUITY-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` — bounded transient multi-turn context at `fdca215029` (real eval PASS §6.90)); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -733,7 +733,10 @@ C3-INTERACTION-RUNTIME-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
     R2 real OpenAI-compatible provider at c2f85834c5 — real eval PASS;
     REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG)
 NEXT_TASK_AUTHORIZED = NO
-NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2
+C3-INTERACTION-CONTINUITY-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+   (bounded transient multi-turn context; IMPLEMENTATION_HEAD
+    fdca215029a09dee862633460e7bc17bf1fa5639; real eval PASS §6.90)
+NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01
 Workspace binding remains unscheduled
 ```
 

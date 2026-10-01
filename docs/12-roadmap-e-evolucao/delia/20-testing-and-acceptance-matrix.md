@@ -2378,3 +2378,17 @@ TEST_SHA_BINDING = VALID | STATIC_VALIDATION = git diff --check clean
 PRODUCTION_READINESS = NOT_PROVEN
 NEXT = ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2
 ```
+### C3-INTERACTION-CONTINUITY-01 — bounded transient multi-turn conversation (candidate)
+
+Implementation: `fdca215029a09dee862633460e7bc17bf1fa5639` (evidence §6.90).
+
+| Check | Result |
+|---|---|
+| delia-api continuity tests (`test_interaction_continuity.py`) | 30/30 PASS — admissibility, FACT fail-closed, kinds, alternation, aggregate bound, authz-per-request, history-not-authority, adapter role mapping, HTTP 200/400/403/503, no-persistence symbols |
+| Full delia-api suite | 415/415 PASS |
+| MFE `plugins/delia` vitest | 36/36 PASS (7 continuity cases: context payload, ordering, no storage, remount reset, error resilience) |
+| MFE typecheck + build | PASS |
+| Real multi-turn eval (OpenRouter/Kimi, `real_model_continuity_eval.py`) | PASS — 5 cases: reference resolution, history-not-truth, prompt-injection resistance, no-execution, usefulness |
+| `git diff --check` | clean |
+
+Epistemic gates: prior `USER_INPUT` = `None|OBSERVATION`; prior `DELIA_RESULT` = all canonical non-FACT + `None`; `FACT` in client context → fail-closed `invalid_request`; oversize context → `context_too_large` (bounded, no silent truncation).

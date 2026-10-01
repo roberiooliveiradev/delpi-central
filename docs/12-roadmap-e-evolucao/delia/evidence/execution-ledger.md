@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86; `C3-INTERACTION-RUNTIME-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.87-§6.89 — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01=REWORK` → R1 fail-closed `4a57e70a46` → R2 real OpenAI-compatible provider (Kimi/OpenRouter via `DELIA_LLM_*`) `c2f85834c5`; AUTHORIZED=YES/EXECUTED=NO, `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`; `NEXT_TASK_AUTHORIZED=NO`). Não executar próxima task; não marcar C3 complete; não autorizar C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`.
+**Next:** `ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86; `C3-INTERACTION-RUNTIME-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.87-§6.89 — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01=REWORK` → R1 fail-closed `4a57e70a46` → R2 real OpenAI-compatible provider (Kimi/OpenRouter via `DELIA_LLM_*`) `c2f85834c5`; AUTHORIZED=YES/EXECUTED=NO, `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); `C3-INTERACTION-CONTINUITY-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.90 (bounded transient multi-turn context at `fdca215029`; real eval PASS); `NEXT_TASK_AUTHORIZED=NO`). Não executar próxima task; não marcar C3 complete; não autorizar C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`.
 
 ## 1. Ledger rule
 
@@ -26,7 +26,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2 | C3-T1..T8 APPROVED; C3-MEDIA-FOUNDATION-01 APPROVED (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01` `ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01` CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.87-§6.89; review `REWORK` → R1 fail-closed at `4a57e70a46` → R2 real OpenAI-compatible provider at `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); `C3_EXECUTED=NO`; `NEXT_TASK_AUTHORIZED=NO` |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2 | C3-T1..T8 APPROVED; C3-MEDIA-FOUNDATION-01 APPROVED (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01` `ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01` CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.87-§6.89; review `REWORK` → R1 fail-closed at `4a57e70a46` → R2 real OpenAI-compatible provider at `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); `C3-INTERACTION-CONTINUITY-01` CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.90; `fdca215029`; transient multi-turn context, real eval PASS); `C3_EXECUTED=NO`; `NEXT_TASK_AUTHORIZED=NO` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
@@ -5428,4 +5428,99 @@ NEXT_TASK_AUTHORIZED: NO
 C4_AUTHORIZED: NO
 PRODUCTION_READINESS: NOT_PROVEN
 NEXT: ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2
+```
+
+## 6.90 C3-INTERACTION-CONTINUITY-01 — Bounded transient multi-turn conversation evidence
+
+```
+STEP: C3-INTERACTION-CONTINUITY-01
+TASK: C3-INTERACTION-CONTINUITY-01 — BOUNDED_TRANSIENT_MULTI_TURN_CONVERSATION
+STATE: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+BASE_HEAD: 63656e5741e321ad7b8abb21fe37c9992f45d1ff
+IMPLEMENTATION_HEAD: fdca215029a09dee862633460e7bc17bf1fa5639
+BIND_HEAD: self (docs/evidence only)
+
+CONTINUITY MODEL:
+  TRANSIENT_MULTI_TURN = IMPLEMENTED
+  CONTEXT_STORAGE = MFE_MEMORY_ONLY (React state; no localStorage/
+    sessionStorage/IndexedDB; reload resets)
+  SESSION_SEMANTICS = REQUEST_SCOPED (fresh InteractionSession per
+    request; session_id = observability, not durable thread)
+  SESSION_PERSISTENCE = NONE
+  PERSONAL_MEMORY = NONE
+  ORGANIZATIONAL_KNOWLEDGE_WRITE = NONE
+  CONVERSATION_HISTORY_AUTHORITY = NONE
+  CURRENT_AUTHZ_PER_REQUEST = REQUIRED (JWT → Core /me → delia.access
+    on every turn; prior success never authorizes next)
+
+HTTP CONTEXT CONTRACT (POST /interaction/turns):
+  optional 'context' array; strict fields kind/content/epistemic_class
+  only; kinds USER_INPUT|DELIA_RESULT; strict alternation starting
+  with USER_INPUT; malformed/unsupported/authority fields → 400
+  invalid_request; over aggregate bound → 400 context_too_large
+
+CONTEXT_EPISTEMIC_ADMISSIBILITY (fail closed):
+  USER_INPUT: None|OBSERVATION
+  DELIA_RESULT: None|OBSERVATION|CALCULATION|HYPOTHESIS|CONCLUSION|
+    RECOMMENDATION
+  FACT: never accepted from client history (domain rule
+    prior_context_turn_admissible)
+
+CONTEXT_BOUND:
+  aggregate Σ content ≤ MAX_INPUT_CHARS (16384); source = existing
+  model-input bound (no new arbitrary limit); oversize → bounded
+  context_too_large; no silent truncation backend or frontend
+  (frontend sends deterministic recent complete-pair window)
+
+MODEL CONTEXT CONTRACT:
+  ModelInvocationRequest.prior_context = tuple[ConversationContextTurn]
+    (Application-owned, provider-neutral; grants_authorization()=False;
+    is_authoritative_fact()=False)
+PROVIDER_CONTEXT_MAPPING (Infrastructure only):
+  instruction → system; prior USER_INPUT → user; prior DELIA_RESULT →
+    assistant; current input → final user; no tools/functions/
+    credentials/authority fields
+INSTRUCTION: delia.interaction.base v2 — history declared untrusted
+  data, never policy/permission/verified fact
+
+TESTS (at IMPLEMENTATION_HEAD):
+  delia-api tests/test_interaction_continuity.py: 30 new tests —
+    admissibility, FACT fail-closed, kinds, alternation, bound,
+    authz-per-request, history-not-authority, adapter role mapping,
+    HTTP 200/400/403/503, no-persistence symbols
+  full delia-api suite: 415 passed
+  MFE plugins/delia: 36 passed (7 new continuity cases) + typecheck +
+    vite build PASS
+  git diff --check: clean
+
+REAL_MODEL_CONTINUITY_EVAL (scripts/real_model_continuity_eval.py;
+  DELIA_EVAL_SHA=fdca215029a09dee862633460e7bc17bf1fa5639; OpenRouter/Kimi moonshotai/kimi-k3):
+  CASE1_REFERENCE_CONTINUITY PASS (CONTEXT_CONTINUITY +
+    REFERENCE_RESOLUTION PASS; "dessas três" resolved)
+  CASE2_HISTORICAL_BUSINESS_CLAIM PASS (HISTORY_NOT_TRUTH +
+    BUSINESS_FACT_NON_PROMOTION PASS; "500" not promoted to FACT)
+  CASE3_HISTORICAL_PROMPT_INJECTION PASS (instruction content not
+    disclosed; AUTHORITY_NON_REUSE PASS)
+  CASE4_PRIOR_EXECUTION_INTENT PASS (PREPARE_ACT_BOUNDARY +
+    AUTHORITY_NON_REUSE PASS; no execution claimed)
+  CASE5_CONVERSATIONAL_USEFULNESS PASS (checklist continuity PASS)
+  verdict = PASS; all HYPOTHESIS; SECRET_BOUNDARY PASS everywhere
+
+BOUNDARIES HELD:
+  DOMAIN_BUSINESS_READS=NONE; KNOWLEDGE_RETRIEVAL=NONE; RAG=NONE;
+  TOOL_EXECUTION=NONE; PREPARE=NONE; ACT=NONE; MODEL_ROUTER=NONE;
+  PROVIDER_ROUTER=NONE; AGENT_SELECTION=NONE; AUTOMATION_HUB=NONE;
+  no repositories/tables/migrations/localStorage added
+
+C3_STARTED: YES
+C3_INTERACTION_CONTINUITY_01: CANDIDATE_FOR_ARCHITECTURE_REVIEW
+REAL_MODEL_CONTINUITY: PROVEN
+C3_EXECUTED: NO
+C4_AUTHORIZED: NO
+PRODUCTION_READINESS: NOT_PROVEN
+BLOCKERS: NONE
+EXECUTION_DRIFT: NONE
+ARCHITECTURE_DECISION_REQUIRED: NONE
+NEXT_TASK_AUTHORIZED: NO
+NEXT: ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01
 ```
