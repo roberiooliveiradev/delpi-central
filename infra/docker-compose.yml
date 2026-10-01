@@ -1883,11 +1883,12 @@ services:
       DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
       DELIA_CORE_TIMEOUT_SECONDS: ${DELIA_CORE_TIMEOUT_SECONDS:-5.0}
 
-      # DÉLIA real-provider gate (openai_compatible; same KIMI_* secret source)
-      DELIA_LLM_PROVIDER: ${DELIA_LLM_PROVIDER:-openai_compatible}
-      DELIA_LLM_BASE_URL: ${DELIA_LLM_BASE_URL:-${KIMI_BASE_URL:-}}
-      DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-${KIMI_MODEL:-}}
-      DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-${KIMI_API_KEY:-}}
+      # DÉLIA real-provider gate — DELIA_LLM_* only (materialized in .env;
+      # provider secret source never referenced at this boundary)
+      DELIA_LLM_PROVIDER: ${DELIA_LLM_PROVIDER:-}
+      DELIA_LLM_BASE_URL: ${DELIA_LLM_BASE_URL:-}
+      DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-}
+      DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
       DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-30}
 
     depends_on:
