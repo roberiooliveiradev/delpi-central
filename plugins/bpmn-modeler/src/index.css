@@ -437,12 +437,45 @@
   min-height: 0;
 }
 
-/* tabs da sidebar = delpi-ui-underline-nav (kit). O default do kit tem
-   `flex: 1 1 auto` (nav cresce em trilhos de página); dentro da coluna
-   flex da sidebar isso empurrava o tabpanel ~300px abaixo — override com
-   especificidade maior vence independente da ordem de carregamento. */
-.bpmnm-side > .bpmnm-side__tabs {
+/* head da sidebar: tabs (underline-nav do kit) + controle de recolher */
+.bpmnm-side__head {
   flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* a nav preenche o head; o default `flex: 1 1 auto` do kit aqui é correto
+   (linha horizontal), mas precisa de min-width para o scroller interno */
+.bpmnm-side__head > .bpmnm-side__tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bpmnm-side__head > .bpmnm-zoom {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-inline-end: 4px;
+}
+
+/* sidebar recolhida — rail de atalhos; o canvas fica com o espaço */
+.bpmnm-side.bpmnm-side--collapsed {
+  width: 48px;
+}
+
+.bpmnm-side__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+}
+
+.bpmnm-side__rail-sep {
+  width: 20px;
+  height: 1px;
+  background: var(--delpi-ui-border);
+  margin: 2px 0;
 }
 
 .bpmnm-side__content {

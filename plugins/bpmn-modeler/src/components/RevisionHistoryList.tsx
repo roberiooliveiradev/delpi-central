@@ -1,6 +1,8 @@
 import { ActionButton } from "@delpi/plugin-ui/index";
+import { Eye, Plus, RotateCcw } from "lucide-react";
 
 import type { RevisionSummary } from "../data/api/bpmnModelerApi";
+import { HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BpmnmEmptyState } from "../ui/kit";
 
 type Props = {
@@ -25,7 +27,12 @@ export function RevisionHistoryList({
       <div className="bpmnm-revisions__header">
         <h3>Revisões</h3>
         {canManage && (
-          <ActionButton type="button" onClick={onCreateRevision}>
+          <ActionButton
+            type="button"
+            title={HELP_TOOLTIPS.revisions.create}
+            onClick={onCreateRevision}
+          >
+            <Plus size={15} aria-hidden="true" />
             Criar revisão
           </ActionButton>
         )}
@@ -51,16 +58,20 @@ export function RevisionHistoryList({
               <ActionButton
                 type="button"
                 variant="ghost"
+                title={HELP_TOOLTIPS.revisions.view}
                 onClick={() => onView(rev.revision_number)}
               >
+                <Eye size={14} aria-hidden="true" />
                 Ver
               </ActionButton>
               {canManage && (
                 <ActionButton
                   type="button"
                   variant="ghost"
+                  title={HELP_TOOLTIPS.revisions.restore}
                   onClick={() => onRestore(rev.revision_number)}
                 >
+                  <RotateCcw size={14} aria-hidden="true" />
                   Restaurar
                 </ActionButton>
               )}

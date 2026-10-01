@@ -13,14 +13,21 @@ import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  ClipboardCheck,
   Download,
   FileText,
+  History,
   Maximize,
   MoreVertical,
   MousePointerSquareDashed,
+  PanelRightClose,
+  PanelRightOpen,
   Redo2,
+  Save,
+  SlidersHorizontal,
   Trash2,
   Undo2,
+  Wand2,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -107,6 +114,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
   const [readOnlyReason, setReadOnlyReason] = useState<ReadOnlyReason>(null);
   const [pageError, setPageError] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<SideTab>("properties");
+  const [sideCollapsed, setSideCollapsed] = useState(false);
   const [report, setReport] = useState<ValidationReport | null>(null);
   const [revisions, setRevisions] = useState<RevisionSummary[]>([]);
   const [revisionsLoading, setRevisionsLoading] = useState(false);
@@ -339,6 +347,12 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     if (sideTab === "history") void Promise.resolve().then(loadRevisions);
   }, [sideTab, loadRevisions]);
 
+  // sidebar collapse/expand: canvas ganha o espaço real — notifica o
+  // modeler para re-medir o container preservando zoom/pan/seleção
+  useEffect(() => {
+    adapterRef.current?.resized();
+  }, [sideCollapsed]);
+
   const onCreateRevision = async () => {
     try {
       await createRevision(modelId, version, { getAccessToken });
@@ -554,6 +568,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
               disabled={layoutBusy || !adapterInstance}
               onClick={() => void onOrganize()}
             >
+              <Wand2 size={15} aria-hidden="true" />
               {layoutBusy ? "Calculando layout…" : "Organizar"}
             </ActionButton>
             {layoutBusy && (
@@ -570,6 +585,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
               disabled={!adapterInstance}
               onClick={() => void onValidate()}
             >
+              <ClipboardCheck size={15} aria-hidden="true" />
               Validar
             </ActionButton>
           </div>
@@ -584,6 +600,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
               disabled={machineState !== "DIRTY" && machineState !== "SAVE_FAILED"}
               onClick={() => void save()}
             >
+              <Save size={15} aria-hidden="true" />
               Salvar
             </ActionButton>
           )}
@@ -720,66 +737,130 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
             </div>
           )}
         </div>
-        <aside className="bpmnm-side">
-          <BpmnmUnderlineNav
-            className="bpmnm-side__tabs"
-            aria-label="Painéis do editor"
-            activeId={sideTab}
-            mode="tabs"
-            items={[
-              {
-                id: "properties",
-                label: "Propriedades",
-                controlId: "bpmnm-side-panel",
-                onSelect: () => setSideTab("properties"),
-              },
-              {
-                id: "validation",
-                label: "Validação",
-                controlId: "bpmnm-side-panel",
-                onSelect: () => setSideTab("validation"),
-              },
-              {
-                id: "history",
-                label: "Histórico",
-                controlId: "bpmnm-side-panel",
-                onSelect: () => setSideTab("history"),
-              },
-            ]}
-          />
-          <div
-            id="bpmnm-side-panel"
-            className="bpmnm-side__content"
-            role="tabpanel"
-            aria-labelledby={`${sideTab}-tab`}
-          >
-            {/* o Modeler exige o parent no mount — sempre presente no DOM,
-                visível só na aba Propriedades em modo editável */}
-            <div
-              id="bpmn-properties-panel"
-              className="bpmnm-properties"
-              hidden={sideTab !== "properties" || !isEditable}
-            />
-            {sideTab === "properties" && !isEditable ? (
-              <ElementInspector element={selection} />
-            ) : null}
-            {sideTab === "validation" ? (
-              <ValidationPanel
-                report={report}
-                onSelectIssue={(ref) => adapterRef.current?.selectElement(ref)}
-              />
-            ) : null}
-            {sideTab === "history" ? (
-              <RevisionHistoryList
-                revisions={revisions}
-                loading={revisionsLoading}
-                canManage={capabilities.manage && !model?.archived_at}
-                onView={(n) => guardedNavigate(`/apps/bpmn-modeler/models/${modelId}/revisions/${n}`)}
-                onRestore={(n) => setRestoreTarget(n)}
-                onCreateRevision={() => void onCreateRevision()}
-              />
-            ) : null}
-          </div>
+        <aside
+          className={`bpmnm-side${sideCollapsed ? " bpmnm-side--collapsed" : ""}`}
+        >
+          {sideCollapsed ? (
+            <>
+              {/* rail colapsada: expander + atalhos que expandem já na aba */}
+              <div className="bpmnm-side__rail" role="toolbar" aria-label="Painéis do editor">
+                <span title={HELP_TOOLTIPS.sidebar.expand} className="bpmnm-zoom">
+                  <IconButton
+                    aria-label="Expandir painel lateral"
+                    aria-expanded={false}
+                    onClick={() => setSideCollapsed(false)}
+                  >
+                    <PanelRightOpen size={15} aria-hidden="true" />
+                  </IconButton>
+                </span>
+                <span className="bpmnm-side__rail-sep" aria-hidden="true" />
+                {(
+                  [
+                    ["properties", "Propriedades", HELP_TOOLTIPS.sidebar.propertiesTab, <SlidersHorizontal key="i" size={15} aria-hidden="true" />],
+                    ["validation", "Validação", HELP_TOOLTIPS.sidebar.validationTab, <ClipboardCheck key="i" size={15} aria-hidden="true" />],
+                    ["history", "Histórico", HELP_TOOLTIPS.sidebar.historyTab, <History key="i" size={15} aria-hidden="true" />],
+                  ] as const
+                ).map(([tab, label, tip, icon]) => (
+                  <span key={tab} title={tip} className="bpmnm-zoom">
+                    <IconButton
+                      aria-label={label}
+                      aria-expanded={false}
+                      tone={sideTab === tab ? "primary" : "default"}
+                      onClick={() => {
+                        setSideTab(tab);
+                        setSideCollapsed(false);
+                      }}
+                    >
+                      {icon}
+                    </IconButton>
+                  </span>
+                ))}
+              </div>
+              {/* host do properties panel permanece montado (attach do vendor) */}
+              <div id="bpmnm-side-panel" hidden>
+                <div id="bpmn-properties-panel" className="bpmnm-properties" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bpmnm-side__head">
+                <BpmnmUnderlineNav
+                  className="bpmnm-side__tabs"
+                  aria-label="Painéis do editor"
+                  activeId={sideTab}
+                  mode="tabs"
+                  items={[
+                    {
+                      id: "properties",
+                      label: "Propriedades",
+                      icon: <SlidersHorizontal size={14} aria-hidden="true" />,
+                      title: HELP_TOOLTIPS.sidebar.propertiesTab,
+                      controlId: "bpmnm-side-panel",
+                      onSelect: () => setSideTab("properties"),
+                    },
+                    {
+                      id: "validation",
+                      label: "Validação",
+                      icon: <ClipboardCheck size={14} aria-hidden="true" />,
+                      title: HELP_TOOLTIPS.sidebar.validationTab,
+                      controlId: "bpmnm-side-panel",
+                      onSelect: () => setSideTab("validation"),
+                    },
+                    {
+                      id: "history",
+                      label: "Histórico",
+                      icon: <History size={14} aria-hidden="true" />,
+                      title: HELP_TOOLTIPS.sidebar.historyTab,
+                      controlId: "bpmnm-side-panel",
+                      onSelect: () => setSideTab("history"),
+                    },
+                  ]}
+                />
+                <span title={HELP_TOOLTIPS.sidebar.collapse} className="bpmnm-zoom">
+                  <IconButton
+                    aria-label="Recolher painel lateral"
+                    aria-expanded={true}
+                    onClick={() => setSideCollapsed(true)}
+                  >
+                    <PanelRightClose size={15} aria-hidden="true" />
+                  </IconButton>
+                </span>
+              </div>
+              <div
+                id="bpmnm-side-panel"
+                className="bpmnm-side__content"
+                role="tabpanel"
+                aria-labelledby={`${sideTab}-tab`}
+              >
+                {/* o Modeler exige o parent no mount — sempre presente no DOM,
+                    visível só na aba Propriedades em modo editável */}
+                <div
+                  id="bpmn-properties-panel"
+                  className="bpmnm-properties"
+                  hidden={sideTab !== "properties" || !isEditable}
+                />
+                {sideTab === "properties" && !isEditable ? (
+                  <ElementInspector element={selection} />
+                ) : null}
+                {sideTab === "validation" ? (
+                  <ValidationPanel
+                    report={report}
+                    onSelectIssue={(ref) => adapterRef.current?.selectElement(ref)}
+                  />
+                ) : null}
+                {sideTab === "history" ? (
+                  <RevisionHistoryList
+                    revisions={revisions}
+                    loading={revisionsLoading}
+                    canManage={capabilities.manage && !model?.archived_at}
+                    onView={(n) => guardedNavigate(`/apps/bpmn-modeler/models/${modelId}/revisions/${n}`)}
+                    onRestore={(n) => setRestoreTarget(n)}
+                    onCreateRevision={() => void onCreateRevision()}
+                  />
+                ) : null}
+              </div>
+            </>
+          )}
         </aside>
       </div>
 

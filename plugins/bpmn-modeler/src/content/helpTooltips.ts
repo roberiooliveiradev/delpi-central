@@ -28,6 +28,18 @@ export const HELP_TOOLTIPS = {
     noRedo: "Nenhuma alteração para refazer.",
     editorLoading: "O editor ainda está carregando.",
   },
+  sidebar: {
+    propertiesTab: "Ver e editar as propriedades do elemento selecionado.",
+    validationTab: "Ver problemas e avisos encontrados no modelo.",
+    historyTab: "Consultar e restaurar revisões do modelo.",
+    collapse: "Recolher painel lateral.",
+    expand: "Expandir painel lateral.",
+  },
+  revisions: {
+    create: "Cria um marco imutável do estado atual do modelo.",
+    view: "Abre a revisão em modo somente leitura.",
+    restore: "Restaura o modelo para esta revisão.",
+  },
   readOnly: {
     archived: "Modelos arquivados são somente leitura. Desarquive para editar.",
     revision: "Revisões são imutáveis. Use Restaurar para voltar a uma versão.",
