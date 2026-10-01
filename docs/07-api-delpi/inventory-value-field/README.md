@@ -196,3 +196,56 @@ suites tv-dashboard-api: 1405 passed, 2 falhas pré-existentes em
 `test_focused_data_source_context.py` (fronteira de `end_date` — falham
 igualmente no HEAD sem a mudança). Contract impact: API HTTP = NONE;
 TV catalog = CORRECTIVE/BEHAVIORAL.
+
+
+---
+
+## Auditoria de consumidores persistidos — PRODUCAO (srv-api)
+
+Data: 2026-09-30. Ambiente autoritativo: `srv-api` (192.168.1.237),
+`plugins_hub.tv_dashboard` via `delpi-postgres-plugins`, acesso SSH
+`operador@srv-api` -> `docker exec psql` com
+`default_transaction_read_only=on`. Repositorio em producao:
+`5033d41` (== HEAD local pos-Wave 1); imagem `delpi-tv-dashboard-api`
+servindo catalogo corrigido (verificado in-container).
+
+READ-ONLY: nenhuma mutacao (SQL de leitura apenas).
+
+### Documentos inspecionados: 3.883
+
+| superficie | docs |
+|---|---|
+| slides.native_config | 110 |
+| playlists.master_config / data_defaults | 15 + 15 |
+| playlist_sections | 11 |
+| slide_templates | 4 |
+| playlist_history (snapshots) | 3.355 |
+| gpt_actions_idempotency_keys | 373 |
+
+### Referencias field=="value" — ATIVAS: 97 (todas em slides)
+
+| classe | n | ops |
+|---|---|---|
+| KEEP_REALIZED | 15 | SI `*_realized` (ppm x12, kaizen x3) |
+| MIGRATE_META | 7 | SI `*_meta` (ppm x5, kaizen x2) |
+| DEPRECATE_PARITY_ALIAS | 9 | nonconformity_streak x4, scrap/rework_cost_pct x4, audit_5s x1 |
+| LEGITIMATE_DOMAIN_VALUE | 11 | get_refugos_rankings (chart sobre items[].value) |
+| PRESENTATION_VALUE | 55 | projecao normalizada {label,value} — ops fora das 98 |
+| INVALID_CATALOG_FIELD | 0 | — |
+| TO_INVENTORY | 0 | — |
+
+Historico: 33.232 refs em playlist_history sao ecos de snapshots
+(~50 pares op+path unicos). GPT idem: 307 refs sao snapshots de
+write (REPLAY retorna resposta, nao re-aplica config) — evidencia
+historica, nao dependencia ativa.
+
+### Gate Wave 2 (SI meta)
+
+7 bindings ativos leem `value` de `*_meta` (canonical:
+`comparable_goal`) em 4 slides / 2 playlists. Nenhum binding meta
+usa `goal_value`/`reference_goal`. SI realized: 15 bindings `value`
+corretos (KEEP) — Wave 2 nao deve toca-los.
+
+Artefato sanitizado: `prod_value_binding_audit.json` (97 linhas:
+playlist/slide/block ids, operationId, field_path, classe — sem
+valores de negocio).
