@@ -238,6 +238,9 @@ def build_list_customers_in_scope_use_case():
         open_orders_metrics=DelpiOpenOrdersMetricsAdapter(
             gateway=build_delpi_commercial_gateway(),
         ),
+        customer_eligibility=DelpiCustomerEligibilityAdapter(
+            gateway=build_delpi_commercial_gateway(),
+        ),
     )
 
 

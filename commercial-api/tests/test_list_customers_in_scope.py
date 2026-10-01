@@ -140,6 +140,57 @@ def test_use_case_empty_portfolio() -> None:
     metrics.list_customer_metrics.assert_not_called()
 
 
+def test_use_case_excludes_inactive_linked_customers_when_port_wired() -> None:
+    """Cliente vinculado que inativou (A1_MSBLQL='1') sai da população
+    operacional da carteira; o vínculo persistido não é alterado."""
+    from commercial_app.domain.ports.customer_eligibility_port import (
+        CustomerEligibility,
+        CustomerEligibilityPort,
+    )
+
+    class _Eligibility(CustomerEligibilityPort):
+        def lookup(self, customers):
+            return {
+                ("000006", "01"): CustomerEligibility(exists=True, active=False),
+                ("000100", "01"): CustomerEligibility(exists=True, active=True),
+            }
+
+    repo = MagicMock()
+    repo.list_portfolios.return_value = [
+        SellerPortfolio(
+            id="p1",
+            user_id="u1",
+            display_name="Sul",
+            active=True,
+            customers=(
+                SellerCustomerAssignment("000006", "01", "AGC"),
+                SellerCustomerAssignment("000100", "01", "Com aberto"),
+            ),
+        )
+    ]
+    metrics = MagicMock()
+    metrics.list_customer_metrics.return_value = []
+    use_case = ListCustomersInScopeUseCase(
+        repository=repo,
+        open_orders_metrics=metrics,
+        customer_eligibility=_Eligibility(),
+    )
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("000006", "01"), ("000100", "01")}),
+        portfolio_id="p1",
+    )
+    payload = use_case.execute(scope)
+    codes = {item["customer_code"] for item in payload["items"]}
+    assert codes == {"000100"}
+    assert payload["summary"]["customer_count"] == 1
+    # Métricas só consultadas para clientes elegíveis.
+    called_keys = metrics.list_customer_metrics.call_args[0][0]
+    assert ("000006", "01") not in called_keys
+    # Vínculo histórico intacto — nenhuma escrita de remoção.
+    repo.remove_customer.assert_not_called()
+
+
 def test_use_case_unrestricted_unions_all_portfolios() -> None:
     repo = MagicMock()
     repo.list_portfolios.return_value = [

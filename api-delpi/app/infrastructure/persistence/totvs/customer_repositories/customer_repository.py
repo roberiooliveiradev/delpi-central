@@ -33,7 +33,7 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
             where_params.append(f"%{name.strip()}%")
 
         if len(where_clauses) == 1:
-            where_clauses.append("SA1.A1_MSBLQL <> '1'")
+            where_clauses.append("ISNULL(SA1.A1_MSBLQL, '') <> '1'")
 
         where_sql = " AND ".join(where_clauses)
 
@@ -103,7 +103,7 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
             "SA1.D_E_L_E_T_ = ''",
         ]
         if not include_blocked:
-            where_clauses.append("SA1.A1_MSBLQL <> '1'")
+            where_clauses.append("ISNULL(SA1.A1_MSBLQL, '') <> '1'")
         where_params: list[str] = []
         term = (query or "").strip()
         if term:

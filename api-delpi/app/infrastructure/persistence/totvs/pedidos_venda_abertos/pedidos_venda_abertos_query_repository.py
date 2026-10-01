@@ -282,7 +282,7 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
             WHERE NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') IS NOT NULL
               AND NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') IS NOT NULL
               AND RTRIM(v.tipo_entidade) = 'CLIENTE'
-              AND RTRIM(SA1.A1_MSBLQL) <> '1'
+              AND ISNULL(RTRIM(SA1.A1_MSBLQL), '') <> '1'
               {filter_sql}
             GROUP BY
                 NULLIF(LTRIM(RTRIM(SA1.A1_COD)), ''),

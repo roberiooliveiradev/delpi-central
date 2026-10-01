@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 from commercial_app.domain.entities.audit_log_entry import AuditLogEntry
 from commercial_app.domain.entities.portfolio_coverage import (
@@ -18,6 +18,7 @@ from commercial_app.domain.entities.seller_portfolio import (
 )
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
 from commercial_app.domain.ports.customer_eligibility_port import (
+    CustomerEligibility,
     CustomerEligibilityPort,
 )
 from commercial_app.domain.ports.open_orders_metrics_port import OpenOrdersMetricsPort
@@ -76,6 +77,7 @@ def portfolio_to_dict(
     portfolio: SellerPortfolio,
     *,
     portal_access_by_user: dict[str, bool] | None = None,
+    customer_eligibility: Mapping[tuple[str, str], CustomerEligibility] | None = None,
 ) -> dict[str, Any]:
     members = []
     for member in portfolio.members:
@@ -88,6 +90,20 @@ def portfolio_to_dict(
             item["has_portal_access"] = True
         members.append(item)
     summary = portfolio_membership_summary(portfolio)
+    customers = []
+    for item in portfolio.customers:
+        customer = {
+            "customer_code": item.customer_code,
+            "customer_store": item.customer_store,
+            "customer_center": item.customer_center,
+            "customer_name": item.customer_name,
+        }
+        if customer_eligibility is not None:
+            info = customer_eligibility.get(
+                customer_key(item.customer_code, item.customer_store)
+            )
+            customer["customer_active"] = bool(info and info.exists and info.active)
+        customers.append(customer)
     return {
         "id": portfolio.id,
         "user_id": portfolio.user_id,
@@ -96,15 +112,7 @@ def portfolio_to_dict(
         "active": portfolio.active,
         "customer_count": summary["customer_count"],
         "member_count": summary["member_count"],
-        "customers": [
-            {
-                "customer_code": item.customer_code,
-                "customer_store": item.customer_store,
-                "customer_center": item.customer_center,
-                "customer_name": item.customer_name,
-            }
-            for item in portfolio.customers
-        ],
+        "customers": customers,
         "members": members,
     }
 
@@ -443,18 +451,29 @@ class ManageSellerPortfolioUseCase:
 
     def serialize_portfolio(self, portfolio: SellerPortfolio) -> dict[str, Any]:
         access_map = self._portal_access_map(_member_user_ids(portfolio))
-        return portfolio_to_dict(portfolio, portal_access_by_user=access_map)
+        return portfolio_to_dict(
+            portfolio,
+            portal_access_by_user=access_map,
+            customer_eligibility=self._customer_eligibility_map(portfolio.customers),
+        )
 
     def serialize_portfolios(
         self,
         portfolios: Sequence[SellerPortfolio],
     ) -> list[dict[str, Any]]:
         all_ids: list[str] = []
+        all_customers: list[SellerCustomerAssignment] = []
         for portfolio in portfolios:
             all_ids.extend(_member_user_ids(portfolio))
+            all_customers.extend(portfolio.customers)
         access_map = self._portal_access_map(all_ids)
+        eligibility = self._customer_eligibility_map(all_customers)
         return [
-            portfolio_to_dict(item, portal_access_by_user=access_map)
+            portfolio_to_dict(
+                item,
+                portal_access_by_user=access_map,
+                customer_eligibility=eligibility,
+            )
             for item in portfolios
         ]
 

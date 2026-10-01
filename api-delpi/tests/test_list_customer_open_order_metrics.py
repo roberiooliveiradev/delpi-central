@@ -59,7 +59,7 @@ def test_aggregate_customer_open_order_metrics_filters_entity_and_blocked() -> N
     ).read_text(encoding="utf-8")
     method = src.split("def aggregate_customer_open_order_metrics", 1)[1]
     assert "RTRIM(v.tipo_entidade) = 'CLIENTE'" in method
-    assert "RTRIM(SA1.A1_MSBLQL) <> '1'" in method
+    assert "ISNULL(RTRIM(SA1.A1_MSBLQL), '') <> '1'" in method
     # View compartilhada não recebeu filtro global de entidade.
     list_orders = src.split("def list_open_orders(", 1)[1].split(
         "def list_open_orders_for_customer", 1

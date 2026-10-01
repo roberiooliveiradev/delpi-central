@@ -34,4 +34,5 @@ def test_search_active_customers_blocked_filter_is_opt_in() -> None:
     method = _method_source()
     assert "include_blocked: bool = True" in method
     assert "if not include_blocked" in method
-    assert "SA1.A1_MSBLQL <> '1'" in method
+    # NULL-safe: legado/NULL conta como ativo, não como bloqueado.
+    assert "ISNULL(SA1.A1_MSBLQL, '') <> '1'" in method

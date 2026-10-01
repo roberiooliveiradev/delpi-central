@@ -32,7 +32,7 @@ Universo operacional = pedidos abertos **∩ SA1 ativa** (`tipo_entidade='CLIENT
 
 ### Colisão cliente × fornecedor
 
-`C5_CLIENTE`/`C5_LOJACLI` podem carregar código de **fornecedor SA2** (ex.: pedidos de beneficiamento `C5_TIPO='B'`). SA1 e SA2 são entidades distintas que compartilham o espaço de códigos — `000006/01` pode ser um cliente e um fornecedor diferentes. Consultas com semântica de **cliente** devem filtrar `v.tipo_entidade = 'CLIENTE'` da `VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES`; consultas de **pedidos** preservam os dois tipos e resolvem o nome pela entidade real (`nome_cliente` da view; em queries diretas ao SC5, `C5_TIPO='B'` resolve na SA2).
+`C5_CLIENTE`/`C5_LOJACLI` podem carregar código de **fornecedor SA2** (evidência: pedido `002668`/`02` marcado `tipo_entidade='FORNECEDOR'` na view, contraparte TRAMAR). SA1 e SA2 são entidades distintas que compartilham o espaço de códigos — `000006/01` pode ser um cliente e um fornecedor diferentes. Consultas com semântica de **cliente** devem filtrar `v.tipo_entidade = 'CLIENTE'` da `VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES`; consultas de **pedidos** preservam os dois tipos e resolvem o nome pela entidade real (`nome_cliente` da view). A regra interna que a view usa para classificar `FORNECEDOR` **não** está auditada (DDL ilegível) — não reproduzir por inferência em queries diretas ao SC5.
 
 ## Segmento comercial (WEG × novos negócios)
 

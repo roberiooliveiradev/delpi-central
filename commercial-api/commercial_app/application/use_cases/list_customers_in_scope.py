@@ -10,6 +10,9 @@ from commercial_app.application.services.resolve_commercial_customer_scope_servi
 )
 from commercial_app.domain.entities.customers_in_scope import CustomersInScopeResult
 from commercial_app.domain.entities.seller_portfolio import SellerCustomerAssignment
+from commercial_app.domain.ports.customer_eligibility_port import (
+    CustomerEligibilityPort,
+)
 from commercial_app.domain.ports.open_orders_metrics_port import OpenOrdersMetricsPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
@@ -31,13 +34,16 @@ class ListCustomersInScopeUseCase:
         repository: SellerPortfolioRepositoryPort,
         open_orders_metrics: OpenOrdersMetricsPort,
         list_service: ListCustomersInScopeService | None = None,
+        customer_eligibility: CustomerEligibilityPort | None = None,
     ) -> None:
         self._repository = repository
         self._metrics = open_orders_metrics
         self._list_service = list_service or ListCustomersInScopeService()
+        # None = sem filtro de elegibilidade (legado/tests); produção injeta.
+        self._customer_eligibility = customer_eligibility
 
     def execute(self, scope: CommercialCustomerScope) -> dict[str, Any]:
-        assignments = self._resolve_assignments(scope)
+        assignments = self._eligible_only(self._resolve_assignments(scope))
         if not assignments:
             result = self._list_service.build(
                 (),
@@ -99,6 +105,27 @@ class ListCustomersInScopeUseCase:
         return self._dedupe_assignments(
             [assignment for portfolio in portfolios for assignment in portfolio.customers]
         )
+
+    def _eligible_only(
+        self,
+        assignments: list[SellerCustomerAssignment],
+    ) -> list[SellerCustomerAssignment]:
+        """População operacional = CLIENTES SA1 ativos. O vínculo histórico
+        permanece persistido; só sai da listagem operacional."""
+        if self._customer_eligibility is None or not assignments:
+            return assignments
+        keys = [
+            customer_coverage_key(item.customer_code, item.customer_store)
+            for item in assignments
+        ]
+        eligibility = dict(self._customer_eligibility.lookup(keys))
+        return [
+            item
+            for item, key in zip(assignments, keys)
+            if (info := eligibility.get(key)) is not None
+            and info.exists
+            and info.active
+        ]
 
     @staticmethod
     def _dedupe_assignments(

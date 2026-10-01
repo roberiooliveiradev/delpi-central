@@ -195,3 +195,51 @@ def test_transfer_customers_bulk_marks_blocked_item_failed() -> None:
     assert by_code["000001"].ok is True
     moved = repo.transfer_customers.call_args.kwargs["customers"]
     assert [c.customer_code for c in moved] == ["000001"]
+
+
+# -- READ path: vínculo histórico preservado, status sinalizado -------------
+
+
+def test_serialize_portfolio_flags_inactive_linked_customer() -> None:
+    """Cliente que inativou após o vínculo: permanece na resposta (histórico
+    gerenciável) mas marcado customer_active=false — não aparece como ativo."""
+    eligibility = FakeEligibility(
+        {
+            ("000006", "01"): CustomerEligibility(exists=True, active=False),
+            ("000001", "01"): CustomerEligibility(exists=True, active=True),
+        }
+    )
+    use_case, _ = _use_case(eligibility)
+
+    payload = use_case.serialize_portfolio(_portfolio())
+
+    by_code = {c["customer_code"]: c for c in payload["customers"]}
+    assert by_code["000006"]["customer_active"] is False
+    assert by_code["000001"]["customer_active"] is True
+    # Vínculo histórico continua na lista — nada é apagado nem escondido.
+    assert len(payload["customers"]) == 2
+
+
+def test_serialize_portfolio_without_port_keeps_legacy_payload() -> None:
+    use_case, _ = _use_case(None)
+    payload = use_case.serialize_portfolio(_portfolio())
+    assert "customer_active" not in payload["customers"][0]
+
+
+def test_inactive_link_is_not_deleted_and_still_stored() -> None:
+    """CASO 10: inativar o cliente não apaga o vínculo persistido."""
+    eligibility = FakeEligibility(
+        {("000006", "01"): CustomerEligibility(exists=True, active=False)}
+    )
+    repo = MagicMock()
+    linked = _portfolio()
+    repo.get_by_id.return_value = linked
+    use_case, _ = _use_case(eligibility, repository=repo)
+
+    portfolio = use_case.get_portfolio("p1")
+
+    # Entidade continua carregando o vínculo (dado histórico intacto).
+    assert any(c.customer_code == "000006" for c in portfolio.customers)
+    # Nenhuma operação de remoção foi disparada como efeito colateral.
+    repo.remove_customer.assert_not_called()
+    repo.replace_customers.assert_not_called()
