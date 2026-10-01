@@ -337,6 +337,15 @@ if policy_id is None:
             "?name=delia-exchange-requester")[1][0]["id"]
 print("[kc-bootstrap] delia-exchange-requester policy ok.")
 
+# R1A prototype policy (per-target name) — superseded by the canonical
+# `delia-exchange-requester`. Privilege-equivalent (same requester set);
+# converge permissions to the canonical policy, then drop the legacy one.
+st, legacy = api(
+    "GET",
+    f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/policy"
+    "?name=delia-exchange-requester-mcp-api-delpi")
+legacy_id = legacy[0]["id"] if legacy else None
+
 for client_id, _scope, _url in SPECIALISTS:
     cuuid = client_uuid(client_id)
     api("PUT", f"/realms/{REALM}/clients/{cuuid}/management/permissions",
@@ -349,7 +358,11 @@ for client_id, _scope, _url in SPECIALISTS:
         "GET",
         f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/"
         f"permission/scope/{perm_id}/associatedPolicies")
-    if any(p["id"] == policy_id for p in (assoc or [])):
+    desired = [p["id"] for p in (assoc or [])
+               if p["id"] != legacy_id]
+    if policy_id not in desired:
+        desired.append(policy_id)
+    if sorted(desired) == sorted(p["id"] for p in (assoc or [])):
         print(f"[kc-bootstrap] {client_id} token-exchange permission already bound.")
         continue
     st, scopes = api(
@@ -365,10 +378,16 @@ for client_id, _scope, _url in SPECIALISTS:
          "name": f"token-exchange.permission.client.{cuuid}",
          "type": "scope", "logic": "POSITIVE",
          "decisionStrategy": "UNANIMOUS",
-         "policies": [p["id"] for p in (assoc or [])] + [policy_id],
+         "policies": desired,
          "resources": [resource_id],
          "scopes": scope_ids})
     print(f"[kc-bootstrap] {client_id} token-exchange permission bound to delia-api.")
+
+if legacy_id:
+    api("DELETE",
+        f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/"
+        f"policy/client/{legacy_id}", tolerate=(404,))
+    print("[kc-bootstrap] legacy delia-exchange-requester-mcp-api-delpi removed.")
 
 # --- requester secret → gitignored infra/.env ---
 st, sec = api("GET", f"/realms/{REALM}/clients/{requester_uuid}/client-secret")

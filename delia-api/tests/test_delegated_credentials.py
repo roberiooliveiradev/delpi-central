@@ -504,3 +504,105 @@ def test_cache_expiry_bounded_by_token_exp():
     entry = cache._entries[("fp", DAVI_RESOURCE)]
     # 30s remaining minus 15s safety margin → expires at clock+15
     assert entry.expires_at == 50.0 + 15.0
+
+
+# --- C3-MCP-INTEROP-01R1C: redaction + host binding -----------------
+
+
+def test_exchange_failure_never_leaks_subject_token_or_secret():
+    """Provider errors must surface semantic codes only — no credential
+    material may propagate upward through raised exceptions."""
+    subject = _subject()
+    secret = "super-secret-value-9f8e"
+
+    def http_post(url, headers=None, data=None, timeout=None):
+        raise RuntimeError(f"boom {subject} {secret}")
+
+    provider = KeycloakDelegatedCredentialProvider(
+        token_url="http://kc/token",
+        client_id="delia-api",
+        client_secret=secret,
+        timeout_seconds=5.0,
+        http_post=http_post,
+        subject_bearer_getter=lambda: subject,
+        token_validator=lambda t: {},
+        cache=InMemoryDelegatedTokenCache(max_ttl_seconds=120.0),
+        known_resource_audiences=ALL_RESOURCES,
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        provider.credential_for(_profile())
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+    rendered = str(exc.value) + str(exc.value.args)
+    assert subject not in rendered
+    assert secret not in rendered
+
+
+def test_exchange_uses_configured_host_header_only():
+    """The exchange request Host comes from trusted config only —
+    never from subject token claims or caller input."""
+    recorded: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None):
+        recorded.append(dict(headers or {}))
+        return FakeResponse(200, {"access_token": _exchanged()})
+
+    provider = KeycloakDelegatedCredentialProvider(
+        token_url="http://kc/token",
+        client_id="delia-api",
+        client_secret="s",
+        timeout_seconds=5.0,
+        http_post=http_post,
+        subject_bearer_getter=_subject,
+        token_validator=lambda t: json.loads(
+            base64.urlsafe_b64decode(t.split(".")[1] + "==")
+        ),
+        cache=InMemoryDelegatedTokenCache(max_ttl_seconds=120.0),
+        known_resource_audiences=ALL_RESOURCES,
+        host_header="public.example",
+    )
+    provider.credential_for(_profile())
+    assert recorded[0]["Host"] == "public.example"
+
+    recorded.clear()
+    provider_no_host = KeycloakDelegatedCredentialProvider(
+        token_url="http://kc/token",
+        client_id="delia-api",
+        client_secret="s",
+        timeout_seconds=5.0,
+        http_post=http_post,
+        subject_bearer_getter=_subject,
+        token_validator=lambda t: json.loads(
+            base64.urlsafe_b64decode(t.split(".")[1] + "==")
+        ),
+        cache=InMemoryDelegatedTokenCache(max_ttl_seconds=120.0),
+        known_resource_audiences=ALL_RESOURCES,
+    )
+    provider_no_host.credential_for(_profile())
+    assert "Host" not in recorded[0]
+
+
+def test_exchange_audience_comes_from_profile_not_input():
+    """The exchange `audience` parameter is bound to the configured
+    profile — the subject token cannot steer the target."""
+    posted: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None):
+        posted.append(data)
+        return FakeResponse(200, {"access_token": _exchanged()})
+
+    provider = KeycloakDelegatedCredentialProvider(
+        token_url="http://kc/token",
+        client_id="delia-api",
+        client_secret="s",
+        timeout_seconds=5.0,
+        http_post=http_post,
+        subject_bearer_getter=_subject,
+        token_validator=lambda t: json.loads(
+            base64.urlsafe_b64decode(t.split(".")[1] + "==")
+        ),
+        cache=InMemoryDelegatedTokenCache(max_ttl_seconds=120.0),
+        known_resource_audiences=ALL_RESOURCES,
+    )
+    provider.credential_for(_profile())
+    assert posted[0]["audience"] == "mcp-api-delpi"
+    assert posted[0]["client_id"] == "delia-api"

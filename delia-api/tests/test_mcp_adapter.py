@@ -489,3 +489,69 @@ def test_transport_rejects_id_mismatch():
     with pytest.raises(SpecialistInteropError) as exc:
         transport.initialize()
     assert exc.value.code == MCP_INVALID_RESPONSE
+
+
+# --- C3-MCP-INTEROP-01R1C: host override trust boundary --------------
+
+
+def test_transport_sends_host_header_only_when_configured():
+    transport, posts = _transport(
+        [
+            (
+                _rpc_result(1, {"serverInfo": {"name": "davi"}}),
+                {"Content-Type": "application/json"},
+                200,
+            ),
+            (b"", {"Content-Type": "application/json"}, 202),
+        ]
+    )
+    transport.initialize()
+    assert "Host" not in posts[0][1]
+
+    posts.clear()
+
+    def http_post(url, headers=None, data=None, timeout=None):
+        posts.append((url, dict(headers or {}), data))
+        return FakeResponse(
+            status=200,
+            body=_rpc_result(1, {"serverInfo": {"name": "davi"}}),
+            headers={"Content-Type": "application/json"},
+        )
+
+    transport = DelpiMcpTransport(
+        "http://svc:8000/mcp",
+        timeout_seconds=2.0,
+        bearer_token=TOKEN,
+        http_post=http_post,
+        host_header="public.example",
+    )
+    transport.initialize()
+    assert posts[0][1]["Host"] == "public.example"
+
+
+def test_arguments_cannot_influence_transport_headers():
+    """tools/call arguments are body data only — they can never steer
+    transport-level headers such as Host or Authorization."""
+    transport, posts = _transport(
+        [
+            (
+                _rpc_result(1, {"serverInfo": {"name": "davi"}}),
+                {"Content-Type": "application/json"},
+                200,
+            ),
+            (b"", {"Content-Type": "application/json"}, 202),
+            (
+                _rpc_result(2, {"content": []}),
+                {"Content-Type": "application/json"},
+                200,
+            ),
+        ]
+    )
+    transport.initialize()
+    transport.call_tool(
+        "discover_delpi_information",
+        {"host": "evil.example", "authorization": "Bearer x", "query": "q"},
+    )
+    call_headers = posts[2][1]
+    assert "Host" not in call_headers
+    assert call_headers["Authorization"] == f"Bearer {TOKEN}"
