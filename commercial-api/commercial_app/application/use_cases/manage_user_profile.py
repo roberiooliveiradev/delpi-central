@@ -12,6 +12,13 @@ from commercial_app.application.use_cases.manage_commercial_groups import (
     ManageCommercialGroupsUseCase,
     group_summary_to_dict,
 )
+from commercial_app.application.use_cases.manage_seller_portfolio import (
+    lookup_customer_eligibility,
+    portfolio_with_operational_customers,
+)
+from commercial_app.domain.ports.customer_eligibility_port import (
+    CustomerEligibilityPort,
+)
 from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
     SellerPortfolioRepositoryPort,
@@ -50,6 +57,7 @@ class ManageUserProfileUseCase:
         portal_access: PortalAccessPort | None = None,
         directory_gateway: CoreApiPortalAccessPort | None = None,
         groups: ManageCommercialGroupsUseCase | None = None,
+        customer_eligibility: CustomerEligibilityPort | None = None,
     ) -> None:
         self._repo = repository
         self._storage = storage
@@ -57,6 +65,7 @@ class ManageUserProfileUseCase:
         self._portal_access = portal_access
         self._directory = directory_gateway
         self._groups = groups
+        self._customer_eligibility = customer_eligibility
 
     def _assert_can_view(self, *, target_user_id: str) -> None:
         # Qualquer usuário autenticado com permissão commercial de leitura (rota).
@@ -92,6 +101,17 @@ class ManageUserProfileUseCase:
             return []
         uid = (user_id or "").strip()
         portfolios = self._portfolios.list_by_user_id(uid, active_only=True)
+        # customer_count do card reflete a mesma população operacional da
+        # carteira (clientes elegíveis na SA1); vínculos históricos persistem.
+        if self._customer_eligibility is not None:
+            eligibility = lookup_customer_eligibility(
+                self._customer_eligibility,
+                [c for portfolio in portfolios for c in portfolio.customers],
+            )
+            portfolios = [
+                portfolio_with_operational_customers(item, eligibility)
+                for item in portfolios
+            ]
         return [
             portfolio_profile_summary_dict(item, viewer_user_id=uid)
             for item in portfolios

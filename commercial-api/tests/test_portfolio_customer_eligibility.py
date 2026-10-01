@@ -249,3 +249,150 @@ def test_inactive_link_is_not_deleted_and_still_stored() -> None:
     # Nenhuma operação de remoção foi disparada como efeito colateral.
     repo.remove_customer.assert_not_called()
     repo.replace_customers.assert_not_called()
+
+
+# -- Coverage audit / load summary: mesma população operacional -------------
+
+
+def test_coverage_audit_ignores_inactive_links_in_overlap() -> None:
+    """Vínculo histórico de cliente inativo não gera overlapping."""
+    eligibility = FakeEligibility(
+        {
+            ("000001", "01"): CustomerEligibility(exists=True, active=True),
+            ("000006", "01"): CustomerEligibility(exists=True, active=False),
+        }
+    )
+    repo = MagicMock()
+    use_case, _ = _use_case(eligibility, repository=repo)
+    repo.list_portfolios.return_value = [
+        _portfolio(
+            id="pA",
+            customers=(
+                SellerCustomerAssignment("000001", "01", "Cliente 1"),
+                SellerCustomerAssignment("000006", "01", "AGC"),
+            ),
+        ),
+        _portfolio(
+            id="pB",
+            customers=(SellerCustomerAssignment("000006", "01", "AGC"),),
+        ),
+    ]
+
+    audit = use_case.audit_customer_coverage()
+
+    assert audit.overlapping == ()
+    assert audit.overlapping_count == 0
+    assert audit.portfolios_with_overlap == ()
+    # Vínculos persistidos intactos no repository.
+    persisted = repo.list_portfolios.return_value
+    assert any(
+        c.customer_code == "000006" for c in persisted[0].customers
+    )
+
+
+def test_coverage_audit_still_flags_active_overlap() -> None:
+    """Cliente ATIVO em duas carteiras continua overlapping normalmente."""
+    eligibility = FakeEligibility(
+        {("000001", "01"): CustomerEligibility(exists=True, active=True)}
+    )
+    repo = MagicMock()
+    use_case, _ = _use_case(eligibility, repository=repo)
+    repo.list_portfolios.return_value = [
+        _portfolio(id="pA", customers=(SellerCustomerAssignment("000001", "01", "C1"),)),
+        _portfolio(id="pB", customers=(SellerCustomerAssignment("000001", "01", "C1"),)),
+    ]
+
+    audit = use_case.audit_customer_coverage()
+
+    assert audit.overlapping_count == 1
+    assert audit.overlapping[0].customer_code == "000001"
+
+
+def test_load_summary_counts_only_eligible_customers() -> None:
+    """customer_count operacional exclui vínculo inativo; member_count intacto."""
+    eligibility = FakeEligibility(
+        {
+            ("000001", "01"): CustomerEligibility(exists=True, active=True),
+            ("000006", "01"): CustomerEligibility(exists=True, active=False),
+        }
+    )
+    repo = MagicMock()
+    use_case, _ = _use_case(eligibility, repository=repo)
+    repo.list_portfolios.return_value = [
+        _portfolio(
+            id="p1",
+            customers=(
+                SellerCustomerAssignment("000001", "01", "Cliente 1"),
+                SellerCustomerAssignment("000006", "01", "AGC"),
+            ),
+        ),
+    ]
+
+    summary = use_case.summarize_portfolio_load(active_only=True)
+
+    assert summary.portfolios[0].customer_count == 1
+    assert summary.portfolios[0].member_count == 1
+    assert summary.by_person[0].customer_count == 1
+
+
+def test_shared_coverage_ignores_inactive_links() -> None:
+    """Cobertura compartilhada reflete apenas vínculos operacionais atuais."""
+    eligibility = FakeEligibility(
+        {
+            ("000001", "01"): CustomerEligibility(exists=True, active=True),
+            ("000006", "01"): CustomerEligibility(exists=True, active=False),
+        }
+    )
+    repo = MagicMock()
+    use_case, _ = _use_case(eligibility, repository=repo)
+    repo.list_portfolios.return_value = [
+        _portfolio(id="pA", customers=(SellerCustomerAssignment("000006", "01", "AGC"),)),
+        _portfolio(id="pB", customers=(SellerCustomerAssignment("000006", "01", "AGC"),)),
+        _portfolio(id="pC", customers=(SellerCustomerAssignment("000001", "01", "C1"),)),
+        _portfolio(id="pD", customers=(SellerCustomerAssignment("000001", "01", "C1"),)),
+    ]
+
+    items = use_case.lookup_customer_shared_coverage(
+        customers=[("000006", "01"), ("000001", "01")],
+        team_scope=True,
+    )
+    shared = {item.customer_code for item in items}
+    assert shared == {"000001"}
+
+
+def test_user_profile_portfolio_summary_counts_only_eligible() -> None:
+    """customer_count do card de perfil usa a mesma população operacional."""
+    from commercial_app.application.use_cases.manage_user_profile import (
+        ManageUserProfileUseCase,
+    )
+
+    eligibility = FakeEligibility(
+        {
+            ("000001", "01"): CustomerEligibility(exists=True, active=True),
+            ("000006", "01"): CustomerEligibility(exists=True, active=False),
+        }
+    )
+    repo = MagicMock()
+    repo.list_by_user_id.return_value = [
+        _portfolio(
+            id="p1",
+            customers=(
+                SellerCustomerAssignment("000001", "01", "Cliente 1"),
+                SellerCustomerAssignment("000006", "01", "AGC"),
+            ),
+        ),
+    ]
+    profile_repo = MagicMock()
+    profile_repo.get.return_value = None
+    use_case = ManageUserProfileUseCase(
+        repository=profile_repo,
+        storage=MagicMock(),
+        portfolio_repository=repo,
+        customer_eligibility=eligibility,
+    )
+
+    payload = use_case.get_profile(user_id="u1")
+
+    assert payload["portfolios"][0]["customer_count"] == 1
+    # Vínculo histórico permanece na entidade persistida.
+    assert len(repo.list_by_user_id.return_value[0].customers) == 2

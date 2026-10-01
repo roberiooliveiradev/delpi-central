@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any, Mapping, Sequence
 
@@ -54,6 +54,48 @@ def customer_key(code: str, store: str) -> tuple[str, str]:
     return (_normalize_code(code), _normalize_code(store))
 
 
+def lookup_customer_eligibility(
+    eligibility_port: CustomerEligibilityPort,
+    customers: Sequence[SellerCustomerAssignment],
+) -> dict[tuple[str, str], CustomerEligibility]:
+    """Resolve elegibilidade SA1 em lote para os clientes informados."""
+    keys = [
+        customer_key(item.customer_code, item.customer_store)
+        for item in customers
+    ]
+    keys = [key for key in keys if key[0] and key[1]]
+    if not keys:
+        return {}
+    return dict(eligibility_port.lookup(keys))
+
+
+def portfolio_with_operational_customers(
+    portfolio: SellerPortfolio,
+    eligibility: Mapping[tuple[str, str], CustomerEligibility],
+) -> SellerPortfolio:
+    """Visão operacional da carteira: mesma entidade com `customers` limitados
+    a clientes elegíveis na SA1 (existe + `A1_MSBLQL<>'1'`).
+
+    O vínculo histórico não é alterado nem apagado — a projeção é somente de
+    leitura/processo. Todas as superfícies operacionais (serialização, auditoria
+    de cobertura, resumo de carga, cobertura compartilhada, resumo de perfil)
+    consomem esta mesma semântica.
+    """
+    return replace(
+        portfolio,
+        customers=tuple(
+            item
+            for item in portfolio.customers
+            if (info := eligibility.get(
+                customer_key(item.customer_code, item.customer_store)
+            ))
+            is not None
+            and info.exists
+            and info.active
+        ),
+    )
+
+
 def _member_user_ids(portfolio: SellerPortfolio) -> list[str]:
     members = [
         _normalize_code(member.user_id)
@@ -77,7 +119,6 @@ def portfolio_to_dict(
     portfolio: SellerPortfolio,
     *,
     portal_access_by_user: dict[str, bool] | None = None,
-    customer_eligibility: Mapping[tuple[str, str], CustomerEligibility] | None = None,
 ) -> dict[str, Any]:
     members = []
     for member in portfolio.members:
@@ -90,32 +131,13 @@ def portfolio_to_dict(
             item["has_portal_access"] = True
         members.append(item)
     summary = portfolio_membership_summary(portfolio)
-    # População operacional: com a porta de elegibilidade ligada, vínculos de
-    # clientes inativos/inexistentes na SA1 não aparecem como clientes atuais
-    # da carteira — o vínculo histórico permanece persistido na entidade.
-    operational = [
-        item
-        for item in portfolio.customers
-        if customer_eligibility is None
-        or (
-            (info := customer_eligibility.get(
-                customer_key(item.customer_code, item.customer_store)
-            )) is not None
-            and info.exists
-            and info.active
-        )
-    ]
     return {
         "id": portfolio.id,
         "user_id": portfolio.user_id,
         "owner_user_id": portfolio.owner_user_id,
         "display_name": portfolio.display_name,
         "active": portfolio.active,
-        "customer_count": (
-            len(operational)
-            if customer_eligibility is not None
-            else summary["customer_count"]
-        ),
+        "customer_count": summary["customer_count"],
         "member_count": summary["member_count"],
         "customers": [
             {
@@ -124,7 +146,7 @@ def portfolio_to_dict(
                 "customer_center": item.customer_center,
                 "customer_name": item.customer_name,
             }
-            for item in operational
+            for item in portfolio.customers
         ],
         "members": members,
     }
@@ -304,12 +326,10 @@ def add_customer_result_to_dict(
     result: AddCustomerResult,
     *,
     portal_access_by_user: dict[str, bool] | None = None,
-    customer_eligibility: Mapping[tuple[str, str], CustomerEligibility] | None = None,
 ) -> dict[str, Any]:
     payload = portfolio_to_dict(
         result.portfolio,
         portal_access_by_user=portal_access_by_user,
-        customer_eligibility=customer_eligibility,
     )
     warning = customer_overlap_warning_to_dict(result.warning)
     if warning is not None:
@@ -325,18 +345,15 @@ def bulk_transfer_result_to_dict(
     result: BulkTransferResult,
     *,
     portal_access_by_user: dict[str, bool] | None = None,
-    customer_eligibility: Mapping[tuple[str, str], CustomerEligibility] | None = None,
 ) -> dict[str, Any]:
     return {
         "source": portfolio_to_dict(
             result.source,
             portal_access_by_user=portal_access_by_user,
-            customer_eligibility=customer_eligibility,
         ),
         "target": portfolio_to_dict(
             result.target,
             portal_access_by_user=portal_access_by_user,
-            customer_eligibility=customer_eligibility,
         ),
         "transferred_count": result.transferred_count,
         "failed_count": result.failed_count,
@@ -418,14 +435,29 @@ class ManageSellerPortfolioUseCase:
         """Resolve elegibilidade SA1 em lote; None quando a porta não está ligada."""
         if self._customer_eligibility is None:
             return None
-        keys = [
-            customer_key(item.customer_code, item.customer_store)
-            for item in customers
+        return lookup_customer_eligibility(self._customer_eligibility, customers)
+
+    def _operational_portfolios(
+        self,
+        portfolios: Sequence[SellerPortfolio],
+    ) -> list[SellerPortfolio]:
+        """Visão operacional da carteira: mesma entidade com `customers`
+        limitados a clientes elegíveis na SA1 (existe + `A1_MSBLQL<>'1'`).
+
+        Vínculo histórico não é alterado nem apagado — a filtragem é somente
+        de leitura/processo. Todas as superfícies operacionais (serialização,
+        auditoria de cobertura, resumo de carga, cobertura compartilhada)
+        consomem esta mesma visão. Porta ausente = sem filtro (legado/testes).
+        """
+        if self._customer_eligibility is None:
+            return list(portfolios)
+        eligibility = self._customer_eligibility_map(
+            [item for portfolio in portfolios for item in portfolio.customers]
+        ) or {}
+        return [
+            portfolio_with_operational_customers(portfolio, eligibility)
+            for portfolio in portfolios
         ]
-        keys = [key for key in keys if key[0] and key[1]]
-        if not keys:
-            return {}
-        return dict(self._customer_eligibility.lookup(keys))
 
     def _assert_customers_eligible(
         self,
@@ -469,53 +501,39 @@ class ManageSellerPortfolioUseCase:
 
     def serialize_portfolio(self, portfolio: SellerPortfolio) -> dict[str, Any]:
         access_map = self._portal_access_map(_member_user_ids(portfolio))
-        return portfolio_to_dict(
-            portfolio,
-            portal_access_by_user=access_map,
-            customer_eligibility=self._customer_eligibility_map(portfolio.customers),
-        )
+        [operational] = self._operational_portfolios([portfolio])
+        return portfolio_to_dict(operational, portal_access_by_user=access_map)
 
     def serialize_portfolios(
         self,
         portfolios: Sequence[SellerPortfolio],
     ) -> list[dict[str, Any]]:
         all_ids: list[str] = []
-        all_customers: list[SellerCustomerAssignment] = []
         for portfolio in portfolios:
             all_ids.extend(_member_user_ids(portfolio))
-            all_customers.extend(portfolio.customers)
         access_map = self._portal_access_map(all_ids)
-        eligibility = self._customer_eligibility_map(all_customers)
         return [
-            portfolio_to_dict(
-                item,
-                portal_access_by_user=access_map,
-                customer_eligibility=eligibility,
-            )
-            for item in portfolios
+            portfolio_to_dict(item, portal_access_by_user=access_map)
+            for item in self._operational_portfolios(portfolios)
         ]
 
     def serialize_add_customer_result(
         self,
         result: AddCustomerResult,
     ) -> dict[str, Any]:
+        [operational] = self._operational_portfolios([result.portfolio])
         return add_customer_result_to_dict(
-            result,
-            customer_eligibility=self._customer_eligibility_map(
-                result.portfolio.customers
-            ),
+            AddCustomerResult(portfolio=operational, warning=result.warning),
         )
 
     def serialize_bulk_transfer_result(
         self,
         result: BulkTransferResult,
     ) -> dict[str, Any]:
-        return bulk_transfer_result_to_dict(
-            result,
-            customer_eligibility=self._customer_eligibility_map(
-                [*result.source.customers, *result.target.customers]
-            ),
+        source, target = self._operational_portfolios(
+            [result.source, result.target]
         )
+        return bulk_transfer_result_to_dict(replace(result, source=source, target=target))
 
     def _ensure_portal_access(self, user_ids: Sequence[str]) -> None:
         if self._portal_access is None:
@@ -668,8 +686,14 @@ class ManageSellerPortfolioUseCase:
         return self._repository.get_by_id(portfolio_id)
 
     def audit_customer_coverage(self) -> PortfolioCoverageAudit:
-        """Relatório de overlapping + gap (universo = clientes com pedido aberto)."""
-        portfolios = self._repository.list_portfolios(active_only=True)
+        """Relatório de overlapping + gap (universo = clientes com pedido aberto).
+
+        Cobertura considera apenas a população operacional: vínculos de
+        clientes inativos na SA1 não entram em overlapping nem cobertura.
+        """
+        portfolios = self._operational_portfolios(
+            self._repository.list_portfolios(active_only=True)
+        )
         metrics, available, _reason = self._fetch_open_order_metrics()
         return self._coverage_audit.audit_active_portfolios(
             portfolios,
@@ -713,13 +737,19 @@ class ManageSellerPortfolioUseCase:
             portfolios = list(universe)
 
         return self._coverage_audit.lookup_shared_customer_memberships(
-            portfolios,
+            self._operational_portfolios(portfolios),
             keys,
         )
 
     def summarize_portfolio_load(self, *, active_only: bool = False) -> PortfolioLoadSummary:
-        """KPIs de carga (clientes/membros + métricas TOTVS quando disponíveis)."""
-        portfolios = self._repository.list_portfolios(active_only=active_only)
+        """KPIs de carga (clientes/membros + métricas TOTVS quando disponíveis).
+
+        `customer_count` conta apenas clientes elegíveis na SA1 (população
+        operacional); `member_count` e o vínculo histórico são preservados.
+        """
+        portfolios = self._operational_portfolios(
+            self._repository.list_portfolios(active_only=active_only)
+        )
         metrics, available, reason = self._fetch_open_order_metrics()
         return self._load_summary.summarize(
             portfolios,

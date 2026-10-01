@@ -461,6 +461,9 @@ def build_manage_user_profile_use_case() -> ManageUserProfileUseCase:
             portal_access=directory,
             directory_gateway=directory,
             groups=build_manage_commercial_groups_use_case(),
+            customer_eligibility=DelpiCustomerEligibilityAdapter(
+                gateway=build_delpi_commercial_gateway(),
+            ),
         )
     return _user_profile_use_case
 
