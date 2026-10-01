@@ -434,6 +434,7 @@ export function ProductionRunControls({
         open={reasonModalOpen && Boolean(modalDowntime)}
         downtime={modalDowntime}
         busy={busy}
+        serverNow={serverNow}
         loadReasons={loadDowntimeReasons}
         onClassify={async (reasonCode, note) => {
           if (manualTarget) {

@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import type { MesDowntimeReason, RunDowntimeView } from "./api";
+import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
+import { elapsedSeconds, formatDurationHms, formatTimeHm } from "./runTimeline";
 
 type Props = {
   open: boolean;
   downtime: RunDowntimeView | null | undefined;
   busy: boolean;
+  /** "Agora" no servidor (relógio local + offset) — alimenta o timer da parada. */
+  serverNow: () => number;
   loadReasons: () => Promise<MesDowntimeReason[]>;
   onClassify: (reasonCode: string, note: string | null) => Promise<void>;
   onClose: () => void;
@@ -19,6 +23,7 @@ export function DowntimeReasonModal({
   open,
   downtime,
   busy,
+  serverNow,
   loadReasons,
   onClassify,
   onClose,
@@ -84,8 +89,34 @@ export function DowntimeReasonModal({
         <h3 id="pcp-downtime-title" className="pcp-pub__run-title">
           Por que a produção parou?
         </h3>
+
+        {downtime?.startedAt ? (
+          <div className="pcp-pub__downtime" role="status">
+            <p className="pcp-pub__downtime-title">
+              {downtime.endedAt ? "Parada encerrada" : "Parada em registro"}
+            </p>
+            {downtime.endedAt ? (
+              <span className="pcp-pub__downtime-timer" role="timer">
+                {formatDurationHms(
+                  elapsedSeconds(downtime.startedAt, Date.parse(downtime.endedAt)),
+                )}
+              </span>
+            ) : (
+              <DowntimeElapsedTimer
+                startedAt={downtime.startedAt}
+                serverNow={serverNow}
+              />
+            )}
+            <p className="pcp-pub__downtime-note">
+              {downtime.endedAt
+                ? "Das " + formatTimeHm(downtime.startedAt) + " às " + formatTimeHm(downtime.endedAt)
+                : "Iniciada às " + formatTimeHm(downtime.startedAt) + " · em curso"}
+            </p>
+          </div>
+        ) : null}
+
         <p className="pcp-pub__run-note">
-          A parada já está sendo registrada. Selecione o motivo para continuar.
+          Selecione o motivo da parada para continuar.
         </p>
 
         {loadError ? <p className="pcp-pub__run-error">{loadError}</p> : null}
