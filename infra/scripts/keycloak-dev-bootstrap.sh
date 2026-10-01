@@ -110,6 +110,253 @@ else
   echo "[kc-bootstrap] client $CLIENT_ID já existe."
 fi
 
+# --- DÉLIA user-delegated MCP identity (C3-MCP-INTEROP-01R1A) ---
+# Materializes the approved exchange model in the dev realm:
+#   * generic client scope `mcp:tools`;
+#   * one resource client + one resource-audience scope per approved
+#     specialist (mcp-api-delpi / mcp-transformometro / mcp-tv-dashboard);
+#   * ONE confidential requester client `delia-api`
+#     (standard.token.exchange.enabled, no service account);
+#   * requester audience `delia-api` on the Portal client (required by
+#     KC26 token exchange — NOT an MCP audience on the Portal token);
+#   * per-target `token-exchange` scope permission bound to a clients
+#     policy containing only `delia-api` (requires the dev-only
+#     admin-fine-grained-authz feature flag);
+#   * DELIA_EXCHANGE_CLIENT_SECRET upserted into gitignored infra/.env.
+KC_SECRET_STORE="$INFRA_DIR/.env"
+ADMIN_TOKEN="$ADMIN_TOKEN" KC_BASE="$KC_BASE" REALM="$REALM" \
+  PORTAL_CLIENT_ID="$CLIENT_ID" KC_SECRET_STORE="$KC_SECRET_STORE" \
+  python3 <<'PY'
+import json, os, urllib.request, urllib.parse
+
+KC = os.environ["KC_BASE"].rstrip("/")
+REALM = os.environ["REALM"]
+ADMIN = os.environ["ADMIN_TOKEN"]
+PORTAL = os.environ["PORTAL_CLIENT_ID"]
+SECRET_STORE = os.environ["KC_SECRET_STORE"]
+
+SPECIALISTS = [
+    ("mcp-api-delpi", "mcp-audience-api-delpi",
+     "https://minhadelpi.com.br/apps/api-delpi/mcp"),
+    ("mcp-transformometro", "mcp-audience-transformometro",
+     "https://minhadelpi.com.br/apps/transformometro-api/mcp"),
+    ("mcp-tv-dashboard", "mcp-audience-tv-dashboard",
+     "https://minhadelpi.com.br/apps/tv-dashboard-api/mcp"),
+]
+REQUESTER = "delia-api"
+
+
+def api(method, path, body=None, tolerate=()):
+    r = urllib.request.Request(KC + "/admin" + path, method=method)
+    r.add_header("Authorization", "Bearer " + ADMIN)
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode()
+        r.add_header("Content-Type", "application/json")
+    try:
+        resp = urllib.request.urlopen(r, data=data, timeout=20)
+        raw = resp.read()
+        return resp.status, json.loads(raw) if raw else None
+    except urllib.error.HTTPError as e:
+        if e.code in tolerate:
+            e.read()
+            return e.code, None
+        raise SystemExit(
+            f"[kc-bootstrap][delia-exchange] {method} {path} -> {e.code}: "
+            f"{(e.read() or b'')[:200].decode('utf-8', 'replace')}"
+        )
+
+
+def client_uuid(client_id):
+    st, rows = api("GET", f"/realms/{REALM}/clients?clientId={client_id}")
+    return rows[0]["id"] if rows else ""
+
+
+def ensure_client_scope(name):
+    st, scopes = api("GET", f"/realms/{REALM}/client-scopes")
+    found = next((s for s in scopes if s["name"] == name), None)
+    if found is None:
+        api("POST", f"/realms/{REALM}/client-scopes", {
+            "name": name, "protocol": "openid-connect",
+            "attributes": {"include.in.token.scope": "true",
+                           "display.on.consent.screen": "false"},
+        }, tolerate=(409,))
+        st, scopes = api("GET", f"/realms/{REALM}/client-scopes")
+        found = next(s for s in scopes if s["name"] == name)
+    return found["id"]
+
+
+def ensure_audience_mapper(scope_id, aud):
+    st, mappers = api(
+        "GET",
+        f"/realms/{REALM}/client-scopes/{scope_id}/protocol-mappers/models")
+    for m in mappers:
+        if (m["protocolMapper"] == "oidc-audience-mapper"
+                and m.get("config", {}).get("included.custom.audience") == aud):
+            return
+    api("POST",
+        f"/realms/{REALM}/client-scopes/{scope_id}/protocol-mappers/models",
+        {"name": f"{aud.rsplit('/', 1)[-2]}-resource-aud",
+         "protocol": "openid-connect",
+         "protocolMapper": "oidc-audience-mapper",
+         "config": {"included.custom.audience": aud,
+                    "id.token.claim": "false",
+                    "access.token.claim": "true"}})
+
+
+def ensure_default_scope(client_uuid_, scope_id):
+    st, defaults = api(
+        "GET", f"/realms/{REALM}/clients/{client_uuid_}/default-client-scopes")
+    if scope_id not in {s["id"] for s in defaults}:
+        api("PUT",
+            f"/realms/{REALM}/clients/{client_uuid_}/default-client-scopes/{scope_id}",
+            tolerate=(404,))
+
+
+def ensure_confidential_client(client_id):
+    uuid_ = client_uuid(client_id)
+    if not uuid_:
+        api("POST", f"/realms/{REALM}/clients", {
+            "clientId": client_id, "enabled": True,
+            "protocol": "openid-connect", "publicClient": False,
+            "standardFlowEnabled": False, "implicitFlowEnabled": False,
+            "directAccessGrantsEnabled": False,
+            "serviceAccountsEnabled": False,
+        }, tolerate=(409,))
+        uuid_ = client_uuid(client_id)
+    return uuid_
+
+
+mcp_tools_id = ensure_client_scope("mcp:tools")
+delpi_aud_scope = ensure_client_scope("audience-delpi")
+# ^ reuses the canonical scope that keeps `delpi-central` in aud
+
+for client_id, scope_name, resource_url in SPECIALISTS:
+    scope_id = ensure_client_scope(scope_name)
+    ensure_audience_mapper(scope_id, resource_url)
+    cuuid = ensure_confidential_client(client_id)
+    ensure_default_scope(cuuid, mcp_tools_id)
+    ensure_default_scope(cuuid, delpi_aud_scope)
+    ensure_default_scope(cuuid, scope_id)
+    print(f"[kc-bootstrap] resource client {client_id} ok.")
+
+# --- single DÉLIA requester client ---
+requester_uuid = client_uuid(REQUESTER)
+if not requester_uuid:
+    api("POST", f"/realms/{REALM}/clients", {
+        "clientId": REQUESTER, "enabled": True,
+        "protocol": "openid-connect", "publicClient": False,
+        "standardFlowEnabled": False, "implicitFlowEnabled": False,
+        "directAccessGrantsEnabled": False,
+        "serviceAccountsEnabled": False,
+        "attributes": {"standard.token.exchange.enabled": "true"},
+    }, tolerate=(409,))
+    requester_uuid = client_uuid(REQUESTER)
+else:
+    st, full = api("GET", f"/realms/{REALM}/clients/{requester_uuid}")
+    attrs = full.get("attributes", {})
+    if attrs.get("standard.token.exchange.enabled") != "true":
+        attrs["standard.token.exchange.enabled"] = "true"
+        full["attributes"] = attrs
+        api("PUT", f"/realms/{REALM}/clients/{requester_uuid}", full)
+print(f"[kc-bootstrap] requester client {REQUESTER} ok.")
+
+# --- Portal subject eligibility: delia-api audience on portal token ---
+portal_uuid = client_uuid(PORTAL)
+st, mappers = api(
+    "GET", f"/realms/{REALM}/clients/{portal_uuid}/protocol-mappers/models")
+if not any(
+    m["protocolMapper"] == "oidc-audience-mapper"
+    and m.get("config", {}).get("included.custom.audience") == REQUESTER
+    for m in mappers
+):
+    api("POST",
+        f"/realms/{REALM}/clients/{portal_uuid}/protocol-mappers/models",
+        {"name": "delia-requester-audience",
+         "protocol": "openid-connect",
+         "protocolMapper": "oidc-audience-mapper",
+         "config": {"included.custom.audience": REQUESTER,
+                    "id.token.claim": "false",
+                    "access.token.claim": "true"}})
+    print("[kc-bootstrap] portal token now carries delia-api requester aud.")
+
+# --- per-target token-exchange permission bound to delia-api ---
+rm_uuid = client_uuid("realm-management")
+st, existing = api(
+    "GET",
+    f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/policy"
+    "?name=delia-exchange-requester")
+policy_id = existing[0]["id"] if existing else None
+if policy_id is None:
+    st, pol = api(
+        "POST",
+        f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/policy/client",
+        {"name": "delia-exchange-requester", "type": "client",
+         "logic": "POSITIVE", "decisionStrategy": "UNANIMOUS",
+         "clients": [requester_uuid]}, tolerate=(409,))
+    policy_id = pol["id"] if isinstance(pol, dict) else client_uuid(REQUESTER) and \
+        api("GET",
+            f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/policy"
+            "?name=delia-exchange-requester")[1][0]["id"]
+print("[kc-bootstrap] delia-exchange-requester policy ok.")
+
+for client_id, _scope, _url in SPECIALISTS:
+    cuuid = client_uuid(client_id)
+    api("PUT", f"/realms/{REALM}/clients/{cuuid}/management/permissions",
+        {"enabled": True})
+    st, mgmt = api(
+        "GET", f"/realms/{REALM}/clients/{cuuid}/management/permissions")
+    perm_id = mgmt["scopePermissions"]["token-exchange"]
+    resource_id = mgmt["resource"]
+    st, assoc = api(
+        "GET",
+        f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/"
+        f"permission/scope/{perm_id}/associatedPolicies")
+    if any(p["id"] == policy_id for p in (assoc or [])):
+        print(f"[kc-bootstrap] {client_id} token-exchange permission already bound.")
+        continue
+    st, scopes = api(
+        "GET",
+        f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/"
+        f"permission/scope/{perm_id}/scopes")
+    scope_ids = [s["id"] for s in (scopes or [])]
+    api(
+        "PUT",
+        f"/realms/{REALM}/clients/{rm_uuid}/authz/resource-server/"
+        f"permission/scope/{perm_id}",
+        {"id": perm_id,
+         "name": f"token-exchange.permission.client.{cuuid}",
+         "type": "scope", "logic": "POSITIVE",
+         "decisionStrategy": "UNANIMOUS",
+         "policies": [p["id"] for p in (assoc or [])] + [policy_id],
+         "resources": [resource_id],
+         "scopes": scope_ids})
+    print(f"[kc-bootstrap] {client_id} token-exchange permission bound to delia-api.")
+
+# --- requester secret → gitignored infra/.env ---
+st, sec = api("GET", f"/realms/{REALM}/clients/{requester_uuid}/client-secret")
+secret = sec["value"]
+lines = []
+try:
+    with open(SECRET_STORE, encoding="utf-8") as fh:
+        lines = fh.read().splitlines()
+except FileNotFoundError:
+    pass
+key = "DELIA_EXCHANGE_CLIENT_SECRET"
+out, replaced = [], False
+for line in lines:
+    if line.startswith(key + "="):
+        out.append(f"{key}={secret}")
+        replaced = True
+    else:
+        out.append(line)
+if not replaced:
+    out.append(f"{key}={secret}")
+with open(SECRET_STORE, "w", encoding="utf-8") as fh:
+    fh.write("\n".join(out) + "\n")
+print("[kc-bootstrap] DELIA_EXCHANGE_CLIENT_SECRET upserted in infra/.env.")
+PY
+
 # --- dev user (optional when .env.local not configured) ---
 if [ -n "$DEV_USER" ] && [ -n "$DEV_PASS" ]; then
   UID_=$(admin_api GET "/realms/$REALM/users?username=$DEV_USER&exact=true" \

@@ -42,6 +42,9 @@ from app.domain.specialist_interop.rules import (
 from app.infrastructure.interoperability.config import (
     SpecialistConnectionProfile,
 )
+from app.infrastructure.interoperability.delegation import (
+    DelegatedCredentialProvider,
+)
 from app.infrastructure.interoperability.mcp.transport import (
     DelpiMcpTransport,
 )
@@ -56,14 +59,16 @@ class McpSpecialistAdapter:
         self,
         connections: Mapping[str, SpecialistConnectionProfile],
         *,
+        credential_provider: DelegatedCredentialProvider | None = None,
         transport_factory: Callable[..., Any] | None = None,
     ) -> None:
         self._connections = dict(connections)
+        self._credential_provider = credential_provider
         self._transport_factory = transport_factory or (
-            lambda profile: DelpiMcpTransport(
+            lambda profile, bearer_token: DelpiMcpTransport(
                 profile.endpoint,
                 timeout_seconds=profile.timeout_seconds,
-                bearer_token=profile.user_token,
+                bearer_token=bearer_token,
             )
         )
 
@@ -124,16 +129,25 @@ class McpSpecialistAdapter:
 
     def _connect(self, specialist: SpecialistRef) -> Any:
         profile = self._profile(specialist.specialist_id)
-        if not profile.user_token:
-            # No user-delegated credential for the specialist resource —
+        if self._credential_provider is None:
+            # No user-delegated credential mechanism configured —
             # deterministic fail-closed before any wire activity. DÉLIA
-            # has no service-token path to the specialist MCPs.
+            # has no service-token or static-token path to the
+            # specialist MCPs.
             raise SpecialistInteropError(
                 MCP_AUTHENTICATION_FAILED,
-                "no user-delegated credential for specialist",
+                "no user-delegated credential provider for specialist",
             )
-        transport = self._transport_factory(profile)
-        transport.initialize()
+        bearer_token = self._credential_provider.credential_for(profile)
+        transport = self._transport_factory(profile, bearer_token)
+        try:
+            transport.initialize()
+        except SpecialistInteropError as exc:
+            if exc.code == MCP_AUTHENTICATION_FAILED:
+                # Refused credential — drop it so the next call
+                # re-exchanges instead of reusing a rejected token.
+                self._credential_provider.invalidate(profile)
+            raise
         return transport
 
     def _profile(self, specialist_id: str) -> SpecialistConnectionProfile:

@@ -4,9 +4,11 @@ For each approved specialist (DAVI/TÉO/VISTA):
 
 1. transport probe — unauthenticated POST initialize; 401 challenge
    proves reachability + fail-closed OAuth surface;
-2. authenticated catalog — tools/list via SpecialistInterop using the
-   optional DELIA_MCP_<ID>_USER_TOKEN (user-delegated bearer); absent
-   token reports AUTH_FAIL_CLOSED (expected when no delegation exists).
+2. authenticated catalog — tools/list via SpecialistInterop using a
+   user-delegated credential exchanged from the subject bearer supplied
+   in DELIA_EVAL_SUBJECT_TOKEN (eval-only injection point); absent
+   subject bearer reports AUTH_FAIL_CLOSED (expected when no
+   delegation exists).
 
 Never prints tokens. Exit code 0 always — results are in the report.
 """
@@ -33,6 +35,10 @@ from app.application.specialist_interop.specialist_interop import (
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.interoperability.config import (
     specialist_connections_from_settings,
+)
+from app.infrastructure.interoperability.delegation import (
+    InMemoryDelegatedTokenCache,
+    KeycloakDelegatedCredentialProvider,
 )
 from app.infrastructure.interoperability.mcp.adapter import McpSpecialistAdapter
 from app.infrastructure.interoperability.mcp.transport import (
@@ -80,10 +86,39 @@ def probe_transport(endpoint: str) -> dict:
         return {"reachable": False, "error": type(exc).__name__}
 
 
+def _eval_credential_provider(settings: Settings, profiles):
+    """Eval-only wiring: subject bearer from DELIA_EVAL_SUBJECT_TOKEN."""
+    if not (
+        settings.exchange_token_url
+        and settings.exchange_client_id
+        and settings.exchange_client_secret
+    ):
+        return None
+    from delpi_auth.jwt_validator import validate_token
+
+    return KeycloakDelegatedCredentialProvider(
+        token_url=settings.exchange_token_url,
+        client_id=settings.exchange_client_id,
+        client_secret=settings.exchange_client_secret,
+        timeout_seconds=settings.exchange_timeout_seconds,
+        http_post=requests.post,
+        subject_bearer_getter=lambda: os.getenv("DELIA_EVAL_SUBJECT_TOKEN"),
+        token_validator=validate_token,
+        cache=InMemoryDelegatedTokenCache(
+            max_ttl_seconds=settings.delegated_token_ttl_seconds
+        ),
+        known_resource_audiences=frozenset(
+            p.resource_audience for p in profiles.values()
+        ),
+    )
+
+
 def main() -> int:
     settings = Settings()
     profiles = specialist_connections_from_settings(settings)
-    adapter = McpSpecialistAdapter(profiles)
+    adapter = McpSpecialistAdapter(
+        profiles, credential_provider=_eval_credential_provider(settings, profiles)
+    )
     interop = SpecialistInterop(adapter)
     report: dict[str, dict] = {}
     for specialist_id in SPECIALISTS:
@@ -91,7 +126,10 @@ def main() -> int:
         entry: dict[str, object] = {
             "configured": bool(profile.endpoint),
             "enabled": profile.enabled,
-            "delegated_token_present": bool(profile.user_token),
+            "resource_audience_bound": bool(profile.resource_audience),
+            "subject_bearer_present": bool(
+                os.getenv("DELIA_EVAL_SUBJECT_TOKEN")
+            ),
         }
         if profile.endpoint:
             entry["transport_probe"] = probe_transport(profile.endpoint)

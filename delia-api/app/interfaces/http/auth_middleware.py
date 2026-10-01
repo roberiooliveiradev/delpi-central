@@ -75,4 +75,8 @@ def register_auth_middleware(app: Flask, *, logger) -> None:
             )
 
         g.platform_access = context
+        # C3-MCP-INTEROP-01R1A: request-scoped subject bearer for
+        # user-delegated credential exchange. Never persisted, logged,
+        # serialized, or propagated to contracts/model/MFE.
+        g.subject_bearer = token
         return None

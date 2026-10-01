@@ -106,6 +106,11 @@ services:
       # o Keycloak marca cookies Secure e o browser descarta → OAuth 400.
       # Produção (nginx.conf + HTTPS) continua com proxy headers no compose de prod.
 
+      # C3-MCP-INTEROP-01R1A: standard token exchange (RFC 8693) é o
+      # mecanismo aprovado de delegação user→DÉLIA→MCP; feature preview
+      # no KC 26 — habilitada apenas para o runtime DEV.
+      KC_FEATURES: ${KC_FEATURES:-token-exchange,admin-fine-grained-authz}
+
       TZ: ${TZ}
 
     depends_on:
@@ -1765,6 +1770,22 @@ services:
       DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-}
       DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
       DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-30}
+
+      # C3-MCP-INTEROP-01R1A: user-delegated credential exchange — single
+      # confidential DÉLIA requester client. Secret materialized only in
+      # gitignored infra/.env by keycloak-dev-bootstrap.sh.
+      DELIA_TOKEN_EXCHANGE_URL: ${KEYCLOAK_URL:-http://keycloak:8080/auth}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+      DELIA_EXCHANGE_CLIENT_ID: ${DELIA_EXCHANGE_CLIENT_ID:-delia-api}
+      DELIA_EXCHANGE_CLIENT_SECRET: ${DELIA_EXCHANGE_CLIENT_SECRET:-}
+      DELIA_EXCHANGE_TIMEOUT_SECONDS: ${DELIA_EXCHANGE_TIMEOUT_SECONDS:-10}
+      DELIA_MCP_DELEGATED_TOKEN_TTL_SECONDS: ${DELIA_MCP_DELEGATED_TOKEN_TTL_SECONDS:-120}
+      DELIA_MCP_DAVI_BASE_URL: ${DELIA_MCP_DAVI_BASE_URL:-}
+      DELIA_MCP_TEO_BASE_URL: ${DELIA_MCP_TEO_BASE_URL:-}
+      DELIA_MCP_VISTA_BASE_URL: ${DELIA_MCP_VISTA_BASE_URL:-}
+      DELIA_MCP_DAVI_ENABLED: ${DELIA_MCP_DAVI_ENABLED:-}
+      DELIA_MCP_TEO_ENABLED: ${DELIA_MCP_TEO_ENABLED:-}
+      DELIA_MCP_VISTA_ENABLED: ${DELIA_MCP_VISTA_ENABLED:-}
+      DELIA_MCP_TIMEOUT_SECONDS: ${DELIA_MCP_TIMEOUT_SECONDS:-15}
 
     volumes:
       - ../delia-api:/app

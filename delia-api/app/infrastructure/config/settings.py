@@ -42,9 +42,8 @@ class Settings:
             os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30.0"
         )
         # C3-MCP-INTEROP-01: approved specialist MCP connections (DAVI/TÉO/
-        # VISTA only). *_USER_TOKEN is a user-delegated bearer for the
-        # specialist MCP resource — never logged; absent token fails
-        # closed at the adapter. There is no service-token path.
+        # VISTA only). Static global user tokens were removed in R1A —
+        # credentials are per-request delegated tokens, never config.
         self.mcp_timeout_seconds = float(
             os.getenv("DELIA_MCP_TIMEOUT_SECONDS") or "15.0"
         )
@@ -58,11 +57,37 @@ class Settings:
             "teo": _env_flag("DELIA_MCP_TEO_ENABLED"),
             "vista": _env_flag("DELIA_MCP_VISTA_ENABLED"),
         }
-        self.mcp_specialist_user_tokens = {
-            key: (os.getenv(f"DELIA_MCP_{key.upper()}_USER_TOKEN") or "").strip()
-            or None
-            for key in ("davi", "teo", "vista")
-        }
+        # C3-MCP-INTEROP-01R1A: user-delegated identity via a single
+        # confidential DÉLIA requester client + RFC 8693 token exchange.
+        # The secret is runtime config only — never logged, never
+        # persisted, never propagated into contracts or model context.
+        keycloak_url = (os.getenv("KEYCLOAK_URL") or "").strip().rstrip("/")
+        keycloak_realm = (os.getenv("KEYCLOAK_REALM") or "").strip()
+        self.exchange_token_url = (
+            os.getenv("DELIA_TOKEN_EXCHANGE_URL") or ""
+        ).strip() or (
+            f"{keycloak_url}/realms/{keycloak_realm}"
+            "/protocol/openid-connect/token"
+            if keycloak_url and keycloak_realm
+            else ""
+        )
+        self.exchange_client_id = (
+            os.getenv("DELIA_EXCHANGE_CLIENT_ID") or "delia-api"
+        ).strip()
+        self.exchange_client_secret = (
+            os.getenv("DELIA_EXCHANGE_CLIENT_SECRET") or ""
+        ).strip()
+        self.exchange_timeout_seconds = float(
+            os.getenv("DELIA_EXCHANGE_TIMEOUT_SECONDS") or "10.0"
+        )
+        # Delegated-token reuse bound: default 120s, hard cap 300s.
+        self.delegated_token_ttl_seconds = min(
+            float(
+                os.getenv("DELIA_MCP_DELEGATED_TOKEN_TTL_SECONDS")
+                or "120.0"
+            ),
+            300.0,
+        )
 
     @classmethod
     def for_testing(cls) -> "Settings":

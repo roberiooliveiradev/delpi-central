@@ -41,6 +41,7 @@ DAVI = SpecialistRef(
 )
 
 TOKEN = "unit-test-delegated-token"
+DAVI_RESOURCE = "https://minhadelpi.com.br/apps/api-delpi/mcp"
 
 
 def _profile(**overrides):
@@ -48,10 +49,30 @@ def _profile(**overrides):
         "endpoint": "http://svc:8000/mcp",
         "enabled": True,
         "timeout_seconds": 5.0,
-        "user_token": TOKEN,
+        "exchange_audience": "mcp-api-delpi",
+        "resource_audience": DAVI_RESOURCE,
     }
     values.update(overrides)
     return SpecialistConnectionProfile(**values)
+
+
+class FakeCredentialProvider:
+    """Deterministic delegated-credential stub — no exchange I/O."""
+
+    def __init__(self, token: str = TOKEN, error: Exception | None = None):
+        self.token = token
+        self.error = error
+        self.requests: list[str] = []
+        self.invalidated: list[str] = []
+
+    def credential_for(self, profile) -> str:
+        self.requests.append(profile.resource_audience)
+        if self.error is not None:
+            raise self.error
+        return self.token
+
+    def invalidate(self, profile) -> None:
+        self.invalidated.append(profile.resource_audience)
 
 
 class FakeTransport:
@@ -59,8 +80,9 @@ class FakeTransport:
 
     instances: list["FakeTransport"] = []
 
-    def __init__(self, profile, tools=(), call_result=None):
+    def __init__(self, profile, bearer_token=None, tools=(), call_result=None):
         self.profile = profile
+        self.bearer_token = bearer_token
         self.tools = tools
         self.call_result = call_result or {"content": []}
         self.initialized = False
@@ -78,12 +100,20 @@ class FakeTransport:
         return self.call_result
 
 
-def _adapter(tools=(), call_result=None, **profile_overrides):
-    def factory(profile):
-        return FakeTransport(profile, tools=tools, call_result=call_result)
+def _adapter(tools=(), call_result=None, credential_provider=None, **profile_overrides):
+    def factory(profile, bearer_token):
+        return FakeTransport(
+            profile, bearer_token=bearer_token, tools=tools, call_result=call_result
+        )
 
     return McpSpecialistAdapter(
-        {"davi": _profile(**profile_overrides)}, transport_factory=factory
+        {"davi": _profile(**profile_overrides)},
+        credential_provider=(
+            credential_provider
+            if credential_provider is not None
+            else FakeCredentialProvider()
+        ),
+        transport_factory=factory,
     )
 
 
@@ -124,11 +154,43 @@ def test_specialist_disabled():
 
 def test_missing_delegated_token_fails_closed_before_wire():
     FakeTransport.instances.clear()
-    adapter = _adapter(user_token=None)
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=None,
+        transport_factory=lambda p, t: FakeTransport(p),
+    )
     with pytest.raises(SpecialistInteropError) as exc:
         adapter.list_remote_tools(DAVI, timeout_seconds=5.0)
     assert exc.value.code == MCP_AUTHENTICATION_FAILED
     assert FakeTransport.instances == []
+
+
+def test_delegated_token_reaches_transport():
+    FakeTransport.instances.clear()
+    adapter = _adapter()
+    adapter.list_remote_tools(DAVI, timeout_seconds=5.0)
+    assert FakeTransport.instances[0].bearer_token == TOKEN
+
+
+def test_auth_failure_invalidates_cached_credential():
+    FakeTransport.instances.clear()
+
+    class FailingTransport(FakeTransport):
+        def initialize(self):
+            raise SpecialistInteropError(
+                MCP_AUTHENTICATION_FAILED, "rejected"
+            )
+
+    provider = FakeCredentialProvider()
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=provider,
+        transport_factory=lambda p, t: FailingTransport(p),
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        adapter.list_remote_tools(DAVI, timeout_seconds=5.0)
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+    assert provider.invalidated == [DAVI_RESOURCE]
 
 
 def test_call_rechecks_allowlist_before_wire():
@@ -150,7 +212,8 @@ def test_call_rechecks_allowlist_before_wire():
 def test_call_write_class_blocked_even_with_valid_config():
     adapter = McpSpecialistAdapter(
         {"teo": _profile()},
-        transport_factory=lambda p: FakeTransport(p),
+        credential_provider=FakeCredentialProvider(),
+        transport_factory=lambda p, t: FakeTransport(p),
     )
     teo = SpecialistRef(
         specialist_id="teo", display_name="TEO", owner_ref="transformometro-api"

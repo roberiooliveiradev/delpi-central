@@ -13,8 +13,13 @@ from app.application.specialist_interop.specialist_interop import (
 from app.domain.evidence.model import ModelRef
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.auth.subject_bearer import current_subject_bearer
 from app.infrastructure.interoperability.config import (
     specialist_connections_from_settings,
+)
+from app.infrastructure.interoperability.delegation import (
+    InMemoryDelegatedTokenCache,
+    KeycloakDelegatedCredentialProvider,
 )
 from app.infrastructure.interoperability.mcp.adapter import (
     McpSpecialistAdapter,
@@ -89,8 +94,14 @@ def create_application(
     # C3-MCP-INTEROP-01: provider-neutral specialist boundary. The adapter
     # performs no I/O at composition; unconfigured/disabled specialists and
     # absent user-delegated credentials fail closed at call time.
+    connections = specialist_connections_from_settings(settings)
     app.config["SPECIALIST_INTEROP"] = SpecialistInterop(
-        McpSpecialistAdapter(specialist_connections_from_settings(settings))
+        McpSpecialistAdapter(
+            connections,
+            credential_provider=_wire_delegated_credential_provider(
+                settings, connections
+            ),
+        )
     )
 
     register_error_handlers(app)
@@ -106,6 +117,38 @@ def create_application(
         settings.environment,
     )
     return app
+
+
+def _wire_delegated_credential_provider(settings: Settings, connections):
+    """Wire the single-requester token exchange only from complete config.
+
+    C3-MCP-INTEROP-01R1A: without a configured requester client the
+    adapter fails closed at call time — no implicit fallback, no
+    static-token path.
+    """
+    if not (
+        settings.exchange_token_url
+        and settings.exchange_client_id
+        and settings.exchange_client_secret
+    ):
+        return None
+    from delpi_auth.jwt_validator import validate_token
+
+    return KeycloakDelegatedCredentialProvider(
+        token_url=settings.exchange_token_url,
+        client_id=settings.exchange_client_id,
+        client_secret=settings.exchange_client_secret,
+        timeout_seconds=settings.exchange_timeout_seconds,
+        http_post=requests.post,
+        subject_bearer_getter=current_subject_bearer,
+        token_validator=validate_token,
+        cache=InMemoryDelegatedTokenCache(
+            max_ttl_seconds=settings.delegated_token_ttl_seconds
+        ),
+        known_resource_audiences=frozenset(
+            profile.resource_audience for profile in connections.values()
+        ),
+    )
 
 
 def _wire_real_provider_handler(settings: Settings):
