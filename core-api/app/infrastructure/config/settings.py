@@ -88,7 +88,7 @@ class Config:
 
     # Password/user must be URL-encoded so characters like "@" do not break the URI host.
     SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://{quote_plus(DB_USER or '')}:{quote_plus(DB_PASSWORD or '')}"
+        f"postgresql+psycopg2://{quote_plus(DB_USER or '')}:{quote_plus(DB_PASSWORD or '')}"
         f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
 
@@ -98,5 +98,5 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "TEST_DATABASE_URL",
-        "postgresql://delpi:delpi123@postgres-core-test:5432/delpi_core_test",
+        "postgresql+psycopg2://delpi:delpi123@postgres-core-test:5432/delpi_core_test",
     )
