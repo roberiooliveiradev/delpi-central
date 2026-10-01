@@ -39,6 +39,7 @@ class CustomerEnrichmentItem:
     contact_name: str | None = None
     phone: str | None = None
     email: str | None = None
+    blocked: str | None = None
     window_days: int = 30
     nature: str = DEFAULT_BILLING_NATURE
 
@@ -68,6 +69,7 @@ class CustomerEnrichmentItem:
             "contact_name": self.contact_name,
             "phone": self.phone,
             "email": self.email,
+            "blocked": self.blocked,
         }
 
 
@@ -162,6 +164,7 @@ class EnrichPortfolioCustomersUseCase:
                     contact_name=geo_item.contact_name if geo_item else None,
                     phone=geo_item.phone if geo_item else None,
                     email=geo_item.email if geo_item else None,
+                    blocked=geo_item.blocked if geo_item else None,
                     window_days=window_days,
                     nature=nature,
                 )

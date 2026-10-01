@@ -75,7 +75,8 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
                 SA1.A1_EST AS state,
                 SA1.A1_CONTATO AS contact_name,
                 SA1.A1_TEL AS phone,
-                SA1.A1_EMAIL AS email
+                SA1.A1_EMAIL AS email,
+                SA1.A1_MSBLQL AS blocked
               FROM SA1010 SA1 WITH (NOLOCK)
              WHERE SA1.D_E_L_E_T_ = ''
                AND ({where_pairs})
@@ -91,6 +92,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
                 contact_name=_trim(row.get("contact_name")) or None,
                 phone=_trim(row.get("phone")) or None,
                 email=_trim(row.get("email")) or None,
+                blocked=_trim(row.get("blocked")),
             )
             for row in rows
         ]

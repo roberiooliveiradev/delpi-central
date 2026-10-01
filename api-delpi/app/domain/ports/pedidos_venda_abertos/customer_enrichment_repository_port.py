@@ -14,6 +14,7 @@ class CustomerGeoRow:
     contact_name: str | None = None
     phone: str | None = None
     email: str | None = None
+    blocked: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

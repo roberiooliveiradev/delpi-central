@@ -156,6 +156,7 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
         customer_where = """
             WHERE NULLIF(LTRIM(RTRIM(C5.C5_CLIENTE)), '') = ?
               AND NULLIF(LTRIM(RTRIM(C5.C5_LOJACLI)), '') = ?
+              AND RTRIM(v.tipo_entidade) = 'CLIENTE'
         """
         center_sql, center_params = _center_filter(customer_centers)
         params = (code, store, *center_params)
@@ -202,6 +203,12 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
         Só retorna pares que existem em `SA1010` (cadastro). Pedidos com
         `C5_CLIENTE` órfão (ex.: código sem SA1) não entram no gap/load-summary.
         Loja numérica `1`/`01` casa por valor inteiro. Nome preferencial: `A1_NREDUZ`.
+
+        A semântica é de CLIENTE: itens `tipo_entidade='FORNECEDOR'` da view
+        (ex.: pedidos de beneficiamento `C5_TIPO='B'` cujo `C5_CLIENTE` carrega
+        o código do fornecedor SA2) não entram — código/loja pode colidir com
+        um cliente SA1 distinto. Clientes bloqueados (`A1_MSBLQL='1'`) também
+        são excluídos: carteiras operam apenas com clientes ativos.
 
         Overdue = data_entrega < hoje e saldo > 0 (mesma regra do MFE commercial).
         """
@@ -274,6 +281,8 @@ class PedidosVendaAbertosQueryRepository(BaseRepository, PedidosVendaAbertosQuer
                  )
             WHERE NULLIF(LTRIM(RTRIM(SA1.A1_COD)), '') IS NOT NULL
               AND NULLIF(LTRIM(RTRIM(SA1.A1_LOJA)), '') IS NOT NULL
+              AND RTRIM(v.tipo_entidade) = 'CLIENTE'
+              AND RTRIM(SA1.A1_MSBLQL) <> '1'
               {filter_sql}
             GROUP BY
                 NULLIF(LTRIM(RTRIM(SA1.A1_COD)), ''),

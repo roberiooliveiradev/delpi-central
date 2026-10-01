@@ -70,6 +70,9 @@ from commercial_app.infrastructure.gateways.core_api_portal_access import (
     CoreApiPortalAccessPort,
 )
 from commercial_app.infrastructure.gateways.delpi_commercial_gateway import DelpiCommercialGateway
+from commercial_app.infrastructure.gateways.delpi_customer_eligibility_adapter import (
+    DelpiCustomerEligibilityAdapter,
+)
 from commercial_app.infrastructure.gateways.delpi_open_orders_metrics_adapter import (
     DelpiOpenOrdersMetricsAdapter,
 )
@@ -179,6 +182,9 @@ def build_manage_seller_portfolio_use_case() -> ManageSellerPortfolioUseCase:
             audit_repository=build_audit_log_repository(),
             portal_access=build_portal_access_port(),
             open_orders_metrics=DelpiOpenOrdersMetricsAdapter(
+                gateway=build_delpi_commercial_gateway(),
+            ),
+            customer_eligibility=DelpiCustomerEligibilityAdapter(
                 gateway=build_delpi_commercial_gateway(),
             ),
         )

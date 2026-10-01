@@ -14,13 +14,16 @@ class SearchActiveCustomersRequest:
     query: str | None = None
     page: int = 1
     page_size: int = 20
+    include_blocked: bool = True
 
 
 class SearchActiveCustomersUseCase:
-    """Busca clientes no cadastro TOTVS (SA1) para amarração de carteira.
+    """Busca clientes no cadastro TOTVS (SA1).
 
-    Inclui contas bloqueadas e match em nome reduzido (`A1_NREDUZ`), alinhado
-    ao universo do gap «sem cobertura» (pedidos abertos).
+    `include_blocked=True` (padrão) preserva contas bloqueadas para
+    superfícies de consulta (Conta 360, mentions). O domínio de Carteiras
+    chama com `include_blocked=False`: cliente `A1_MSBLQL='1'` não é
+    elegível a vínculo. Match em nome reduzido (`A1_NREDUZ`) nos dois modos.
     """
 
     def __init__(self, repository: CustomerQueryRepositoryPort):
@@ -33,4 +36,5 @@ class SearchActiveCustomersUseCase:
             query=request.query,
             page=page,
             page_size=page_size,
+            include_blocked=bool(request.include_blocked),
         )

@@ -415,6 +415,12 @@ def search_active_customers_for_portfolio_route(
     ),
     page: int = Query(1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_20_100"),
+    include_blocked: bool = Query(
+        True,
+        description=(
+            "false = somente elegíveis a carteira (exclui A1_MSBLQL='1')."
+        ),
+    ),
 ):
     """
     Clientes ativos no TOTVS (SA1).
@@ -424,7 +430,12 @@ def search_active_customers_for_portfolio_route(
     """
     try:
         result = build_search_active_customers_use_case().execute(
-            SearchActiveCustomersRequest(query=q, page=page, page_size=page_size)
+            SearchActiveCustomersRequest(
+                query=q,
+                page=page,
+                page_size=page_size,
+                include_blocked=include_blocked,
+            )
         )
         return api_delpi_success(
             result.to_dict(),

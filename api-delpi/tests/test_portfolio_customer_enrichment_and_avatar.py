@@ -82,3 +82,24 @@ def test_manage_avatar_rejects_empty_identity() -> None:
         assert False, "expected ValueError"
     except ValueError as exc:
         assert "obrigatórios" in str(exc)
+
+
+def test_enrich_portfolio_customers_propagates_blocked() -> None:
+    """`blocked` (SA1.A1_MSBLQL) alimenta a elegibilidade de carteiras no BFF."""
+    enrichment_repo = MagicMock()
+    enrichment_repo.fetch_customer_geo.return_value = [
+        CustomerGeoRow("000006", "01", "", "", blocked="1"),
+        CustomerGeoRow("000001", "01", "", "", blocked="2"),
+    ]
+    enrichment_repo.fetch_billing_12m.return_value = []
+    avatar_uc = MagicMock(spec=ManageCustomerAvatarUseCase)
+    avatar_uc.list_keys_with_avatar.return_value = set()
+
+    use_case = EnrichPortfolioCustomersUseCase(enrichment_repo, avatar_uc)
+    items = use_case.execute(
+        EnrichCustomersRequest(customers=[("000006", "01"), ("000001", "01")])
+    )
+
+    payload = {i.customer_code: i.to_dict() for i in items}
+    assert payload["000006"]["blocked"] == "1"
+    assert payload["000001"]["blocked"] == "2"

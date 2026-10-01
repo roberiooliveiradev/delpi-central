@@ -23,10 +23,12 @@ export function useActiveCustomerSearch(options?: {
   debounceMs?: number;
   pageSize?: number;
   enabled?: boolean;
+  includeBlocked?: boolean;
 }): UseActiveCustomerSearchResult {
   const debounceMs = options?.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   const pageSize = options?.pageSize ?? 15;
   const enabled = options?.enabled !== false;
+  const includeBlocked = options?.includeBlocked !== false;
 
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<TotvsCustomerHit[]>([]);
@@ -53,7 +55,11 @@ export function useActiveCustomerSearch(options?: {
     const timeoutId = window.setTimeout(() => {
       setSearching(true);
       setError(null);
-      searchActiveCustomers(normalized, { pageSize, signal: controller.signal })
+      searchActiveCustomers(normalized, {
+        pageSize,
+        includeBlocked,
+        signal: controller.signal,
+      })
         .then((result) => {
           if (!controller.signal.aborted) {
             setHits(result.items);
@@ -77,7 +83,7 @@ export function useActiveCustomerSearch(options?: {
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [debounceMs, enabled, pageSize, query]);
+  }, [debounceMs, enabled, includeBlocked, pageSize, query]);
 
   const reset = useCallback(() => {
     setQuery("");

@@ -30,9 +30,38 @@ def test_search_active_customers_delegates_and_clamps_page_size() -> None:
         query="  cli  ",
         page=1,
         page_size=100,
+        include_blocked=True,
     )
     assert result.total == 1
     assert result.items[0].code == "000001"
+
+
+def test_search_active_customers_propagates_include_blocked_false() -> None:
+    """Domínio de Carteiras pede apenas clientes elegíveis (A1_MSBLQL<>'1')."""
+    repo = MagicMock()
+    repo.search_active_customers.return_value = Page(
+        items=[], total=0, page=1, page_size=20
+    )
+    use_case = SearchActiveCustomersUseCase(repo)
+
+    use_case.execute(
+        SearchActiveCustomersRequest(query="agc", include_blocked=False)
+    )
+
+    repo.search_active_customers.assert_called_once_with(
+        query="agc",
+        page=1,
+        page_size=20,
+        include_blocked=False,
+    )
+
+
+def test_search_route_exposes_include_blocked_query_param() -> None:
+    router = open(
+        "app/interface/http/routes/pedidos_venda_abertos/pedidos_venda_abertos_router.py",
+        encoding="utf-8",
+    ).read()
+    assert "include_blocked" in router
 
 
 def test_search_active_customers_for_portfolio_operation_id_in_router() -> None:

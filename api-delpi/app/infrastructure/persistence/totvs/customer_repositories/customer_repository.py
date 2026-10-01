@@ -86,18 +86,24 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
         query: str | None = None,
         page: int = 1,
         page_size: int = 20,
+        include_blocked: bool = True,
     ) -> Page[CustomerMaster]:
-        """Busca SA1 para amarração de carteira.
+        """Busca SA1 para amarração de carteira e Conta 360.
 
-        Inclui clientes bloqueados (`A1_MSBLQL = '1'`): o gap «sem cobertura»
-        usa pedidos abertos e pode listar contas bloqueadas no cadastro.
+        `include_blocked=True` (padrão) mantém contas bloqueadas
+        (`A1_MSBLQL = '1'`) para superfícies de consulta (Conta 360,
+        mentions). Superfícies do domínio de Carteiras devem chamar com
+        `include_blocked=False` — cliente bloqueado não é elegível a vínculo.
         Busca também em `A1_NREDUZ` (nome fantasia / reduzido operacional).
         """
         paging = paginate(page, page_size)
-        # Soft-delete only — blocked customers remain linkable for portfolio coverage.
+        # Soft-delete sempre excluído; bloqueio só entra quando a superfície
+        # exige somente clientes elegíveis (carteiras).
         where_clauses = [
             "SA1.D_E_L_E_T_ = ''",
         ]
+        if not include_blocked:
+            where_clauses.append("SA1.A1_MSBLQL <> '1'")
         where_params: list[str] = []
         term = (query or "").strip()
         if term:

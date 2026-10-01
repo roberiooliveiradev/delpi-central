@@ -35,8 +35,15 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
         )
         sql = f"""
         SELECT TOP ({_MAX_ROWS})
-            RTRIM(ISNULL(SA1.A1_NOME, '')) AS nome_cliente,
-            'CLIENTE' AS tipo_entidade,
+            CASE
+                WHEN RTRIM(ISNULL(C5.C5_TIPO, '')) = 'B'
+                    THEN RTRIM(ISNULL(SA2.A2_NOME, ISNULL(SA1.A1_NOME, '')))
+                ELSE RTRIM(ISNULL(SA1.A1_NOME, ''))
+            END AS nome_cliente,
+            CASE
+                WHEN RTRIM(ISNULL(C5.C5_TIPO, '')) = 'B' THEN 'FORNECEDOR'
+                ELSE 'CLIENTE'
+            END AS tipo_entidade,
             RTRIM(ISNULL(C5.C5_TIPO, '')) AS tipo_pedido,
             RTRIM(ISNULL(C5.C5_PEDCLI, '')) AS pedido_cliente,
             RTRIM(C5.C5_FILIAL) AS filial,
@@ -83,6 +90,12 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
             ON SA1.A1_COD = C5.C5_CLIENTE
            AND SA1.A1_LOJA = C5.C5_LOJACLI
            AND SA1.D_E_L_E_T_ = ' '
+        -- Pedidos C5_TIPO='B' (beneficiamento) carregam o fornecedor SA2 em
+        -- C5_CLIENTE — mesmo discriminante observado na view de abertos.
+        LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+            ON SA2.A2_COD = C5.C5_CLIENTE
+           AND SA2.A2_LOJA = C5.C5_LOJACLI
+           AND SA2.D_E_L_E_T_ = ' '
         LEFT JOIN SB1010 B1 WITH (NOLOCK)
             ON B1.B1_COD = C6.C6_PRODUTO
            AND B1.D_E_L_E_T_ = ''

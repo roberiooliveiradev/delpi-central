@@ -24,6 +24,8 @@ class CustomerQueryRepositoryPort(ABC):
         query: str | None = None,
         page: int = 1,
         page_size: int = 20,
+        include_blocked: bool = True,
     ) -> Page[CustomerMaster]:
-        """Clientes ativos TOTVS (não excluídos / não bloqueados)."""
+        """Clientes TOTVS (não excluídos). `include_blocked=False` restringe a
+        elegíveis a carteira (`A1_MSBLQL <> '1'`)."""
         raise NotImplementedError

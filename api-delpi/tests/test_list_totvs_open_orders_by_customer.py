@@ -71,3 +71,18 @@ def test_execute_for_customer_requires_identity() -> None:
         raised = True
     assert raised
     repository.list_open_orders_for_customer.assert_not_called()
+
+
+def test_list_open_orders_for_customer_filters_supplier_entity() -> None:
+    """Contrato 'pedidos de um cliente': linhas FORNECEDOR cujo C5_CLIENTE
+    colide com um SA1 (ex.: C5_TIPO='B' beneficiamento) não entram na conta."""
+    from pathlib import Path
+
+    src = Path(
+        "app/infrastructure/persistence/totvs/pedidos_venda_abertos/"
+        "pedidos_venda_abertos_query_repository.py"
+    ).read_text(encoding="utf-8")
+    method = src.split("def list_open_orders_for_customer", 1)[1].split(
+        "def aggregate_customer_open_order_metrics", 1
+    )[0]
+    assert "RTRIM(v.tipo_entidade) = 'CLIENTE'" in method

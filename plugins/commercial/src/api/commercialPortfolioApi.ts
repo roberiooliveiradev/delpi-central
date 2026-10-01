@@ -299,12 +299,19 @@ export async function lookupDirectoryUsers(
 
 export async function searchActiveCustomers(
   query: string,
-  options?: { page?: number; pageSize?: number; signal?: AbortSignal },
+  options?: {
+    page?: number;
+    pageSize?: number;
+    /** false = somente clientes elegíveis a carteira (exclui SA1 bloqueados). */
+    includeBlocked?: boolean;
+    signal?: AbortSignal;
+  },
 ): Promise<{ items: TotvsCustomerHit[]; total: number }> {
   const params = new URLSearchParams({
     page: String(options?.page ?? 1),
     page_size: String(options?.pageSize ?? 15),
   });
+  if (options?.includeBlocked === false) params.set("include_blocked", "false");
   const normalized = query.trim();
   if (normalized) params.set("q", normalized);
 

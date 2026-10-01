@@ -22,6 +22,11 @@ export type CustomerSearchPickerProps = {
    * Chaves `code/store` já vinculadas (ou bloqueadas) — não entram na lista de resultados.
    */
   excludeKeys?: ReadonlySet<string>;
+  /**
+   * false = somente clientes elegíveis a carteira (exclui SA1 bloqueados).
+   * Default true preserva superfícies de consulta (Conta 360, mentions).
+   */
+  includeBlocked?: boolean;
   /** Conteúdo à esquerda de cada sugestão (ex.: avatar). */
   renderOptionLeading?: (hit: TotvsCustomerHit) => ReactNode;
   /**
@@ -66,13 +71,14 @@ export function CustomerSearchPicker({
   disabled = false,
   maxSelected = 20,
   excludeKeys,
+  includeBlocked = true,
   renderOptionLeading,
   renderSelectedChip,
   labels,
   className,
 }: CustomerSearchPickerProps) {
   const { query, setQuery, hits, searching, error, queryReady, reset } =
-    useActiveCustomerSearch({ pageSize: 12 });
+    useActiveCustomerSearch({ pageSize: 12, includeBlocked });
 
   const blockedKeys = useMemo(() => {
     const next = new Set<string>();

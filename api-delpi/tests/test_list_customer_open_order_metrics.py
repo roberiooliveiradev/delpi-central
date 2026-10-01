@@ -46,3 +46,22 @@ def test_list_customer_open_order_metrics_operation_id_in_router() -> None:
     ).read_text(encoding="utf-8")
     assert "list_customer_open_order_metrics" in router
     assert "/customers/open-order-metrics" in router
+
+
+def test_aggregate_customer_open_order_metrics_filters_entity_and_blocked() -> None:
+    """Semântica CUSTOMER: ignora linhas FORNECEDOR (colisão SA1×SA2 por
+    código/loja) e clientes bloqueados/inativos (A1_MSBLQL='1')."""
+    from pathlib import Path
+
+    src = Path(
+        "app/infrastructure/persistence/totvs/pedidos_venda_abertos/"
+        "pedidos_venda_abertos_query_repository.py"
+    ).read_text(encoding="utf-8")
+    method = src.split("def aggregate_customer_open_order_metrics", 1)[1]
+    assert "RTRIM(v.tipo_entidade) = 'CLIENTE'" in method
+    assert "RTRIM(SA1.A1_MSBLQL) <> '1'" in method
+    # View compartilhada não recebeu filtro global de entidade.
+    list_orders = src.split("def list_open_orders(", 1)[1].split(
+        "def list_open_orders_for_customer", 1
+    )[0]
+    assert "tipo_entidade = 'CLIENTE'" not in list_orders

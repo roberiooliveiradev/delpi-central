@@ -589,6 +589,7 @@ export function SellerPortfolioDetail({
               </h3>
               <CustomerSearchPicker
                 value={customerPicker}
+                includeBlocked={false}
                 onChange={(next) => {
                   setCustomerPicker(
                     next.filter(

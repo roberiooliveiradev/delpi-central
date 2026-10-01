@@ -104,10 +104,19 @@ def search_active_customers(
     q: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    include_blocked: bool = Query(
+        default=True,
+        description="false = somente elegíveis a carteira (exclui bloqueados SA1).",
+    ),
 ):
     try:
         payload = build_delpi_commercial_gateway().search_active_customers(
-            params={"q": q, "page": page, "page_size": page_size},
+            params={
+                "q": q,
+                "page": page,
+                "page_size": page_size,
+                "include_blocked": str(include_blocked).lower(),
+            },
         )
         return ok(payload.get("data", payload), message="Clientes encontrados.")
     except RuntimeError as exc:

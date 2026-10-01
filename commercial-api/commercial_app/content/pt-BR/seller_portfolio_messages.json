@@ -16,7 +16,9 @@
     "portfolioFilterRequiresTeam": "Filtro por vendedor disponível apenas para equipe ou gerentes.",
     "portfolioFilterOutsideMembership": "Você só pode filtrar pelas carteiras em que participa.",
     "portfolioNotFound": "Vendedor não encontrado para filtro de carteira.",
-    "portfolioInactiveFilter": "Vendedor inativo não pode ser usado como filtro."
+    "portfolioInactiveFilter": "Vendedor inativo não pode ser usado como filtro.",
+    "customerNotFoundTotvs": "Cliente {code}/{store} não encontrado no cadastro de clientes do TOTVS.",
+    "customerInactiveTotvs": "Cliente {code}/{store} está bloqueado/inativo no cadastro TOTVS e não pode ser vinculado a carteira."
   },
   "bulk": {
     "itemOk": "ok",

@@ -17,6 +17,9 @@ from commercial_app.domain.entities.seller_portfolio import (
     SellerPortfolioMember,
 )
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
+from commercial_app.domain.ports.customer_eligibility_port import (
+    CustomerEligibilityPort,
+)
 from commercial_app.domain.ports.open_orders_metrics_port import OpenOrdersMetricsPort
 from commercial_app.domain.ports.portal_access_port import PortalAccessPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import (
@@ -369,6 +372,7 @@ class ManageSellerPortfolioUseCase:
         load_summary: SellerPortfolioLoadSummaryService | None = None,
         audit_formatter: SellerPortfolioAuditFormatterService | None = None,
         open_orders_metrics: OpenOrdersMetricsPort | None = None,
+        customer_eligibility: CustomerEligibilityPort | None = None,
     ):
         self._repository = repository
         self._audit = audit_repository
@@ -378,6 +382,47 @@ class ManageSellerPortfolioUseCase:
         self._load_summary = load_summary or SellerPortfolioLoadSummaryService()
         self._audit_formatter = audit_formatter or SellerPortfolioAuditFormatterService()
         self._open_orders_metrics = open_orders_metrics
+        # None = sem validação TOTVS (legado/tests); produção sempre injeta.
+        self._customer_eligibility = customer_eligibility
+
+    def _customer_eligibility_map(
+        self,
+        customers: Sequence[SellerCustomerAssignment],
+    ):
+        """Resolve elegibilidade SA1 em lote; None quando a porta não está ligada."""
+        if self._customer_eligibility is None:
+            return None
+        keys = [
+            customer_key(item.customer_code, item.customer_store)
+            for item in customers
+        ]
+        keys = [key for key in keys if key[0] and key[1]]
+        if not keys:
+            return {}
+        return dict(self._customer_eligibility.lookup(keys))
+
+    def _assert_customers_eligible(
+        self,
+        customers: Sequence[SellerCustomerAssignment],
+    ) -> None:
+        """Carteiras só aceitam CLIENTE SA1 ativo (existência + A1_MSBLQL<>'1')."""
+        eligibility = self._customer_eligibility_map(customers)
+        if eligibility is None:
+            return
+        messages = SellerPortfolioMessagesContentService
+        for item in customers:
+            code, store = customer_key(item.customer_code, item.customer_store)
+            if not code or not store:
+                continue
+            info = eligibility.get((code, store))
+            if info is None or not info.exists:
+                raise ValueError(
+                    messages.error("customerNotFoundTotvs", code=code, store=store)
+                )
+            if not info.active:
+                raise ValueError(
+                    messages.error("customerInactiveTotvs", code=code, store=store)
+                )
 
     def _fetch_open_order_metrics(self):
         if self._open_orders_metrics is None:
@@ -629,6 +674,9 @@ class ManageSellerPortfolioUseCase:
         if not display_name:
             raise ValueError("display_name é obrigatório.")
 
+        if request.customers:
+            self._assert_customers_eligible(request.customers)
+
         user_ids = [
             uid
             for uid in (_normalize_code(raw) for raw in request.user_ids)
@@ -806,6 +854,7 @@ class ManageSellerPortfolioUseCase:
         customers: Sequence[SellerCustomerAssignment],
         actor_user_id: str | None = None,
     ) -> SellerPortfolio:
+        self._assert_customers_eligible(customers)
         updated = self._repository.replace_customers(
             portfolio_id=portfolio_id,
             customers=customers,
@@ -829,6 +878,7 @@ class ManageSellerPortfolioUseCase:
     ) -> AddCustomerResult:
         if not customer.customer_code or not customer.customer_store:
             raise ValueError("customer_code e customer_store são obrigatórios.")
+        self._assert_customers_eligible([customer])
         portfolio_id = _normalize_code(portfolio_id)
         active_portfolios = self._repository.list_portfolios(active_only=True)
         other = self._coverage_audit.find_other_active_portfolios_for_customer(
@@ -1098,6 +1148,7 @@ class ManageSellerPortfolioUseCase:
                 )
             )
 
+        self._assert_customers_eligible(to_move)
         result = self._repository.transfer_customers(
             source_portfolio_id=source_id,
             target_portfolio_id=target_id,
@@ -1165,6 +1216,7 @@ class ManageSellerPortfolioUseCase:
         owned = {
             (item.customer_code, item.customer_store): item for item in source.customers
         }
+        eligibility = self._customer_eligibility_map(list(customers))
         results: list[BulkTransferItemResult] = []
         transferred: list[SellerCustomerAssignment] = []
         seen: set[tuple[str, str]] = set()
@@ -1197,6 +1249,32 @@ class ManageSellerPortfolioUseCase:
                     )
                 )
                 continue
+            if eligibility is not None:
+                info = eligibility.get((code, store))
+                if info is None or not info.exists:
+                    results.append(
+                        BulkTransferItemResult(
+                            customer_code=code,
+                            customer_store=store,
+                            ok=False,
+                            error=messages.error(
+                                "customerNotFoundTotvs", code=code, store=store
+                            ),
+                        )
+                    )
+                    continue
+                if not info.active:
+                    results.append(
+                        BulkTransferItemResult(
+                            customer_code=code,
+                            customer_store=store,
+                            ok=False,
+                            error=messages.error(
+                                "customerInactiveTotvs", code=code, store=store
+                            ),
+                        )
+                    )
+                    continue
 
             to_move = SellerCustomerAssignment(
                 customer_code=owned_item.customer_code,
