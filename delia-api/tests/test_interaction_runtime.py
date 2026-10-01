@@ -372,6 +372,83 @@ def test_http_forbidden_model_output_maps_to_502():
     assert response.status_code == 502
 
 
+# --- E. R1 — TEST_ONLY adapter exposure gate --------------------------------
+
+
+def test_non_testing_runtime_does_not_wire_implicit_test_adapter():
+    app = create_app(testing=False)
+    assert app.config.get("INTERACTION_TURN_HANDLER") is None
+
+
+def test_non_testing_runtime_fails_closed_with_model_unavailable():
+    app = create_app(
+        testing=False,
+        platform_access_provider=_Provider(),
+    )
+    response = app.test_client().post(
+        PATH, json={"input": "oi"}, headers={"Authorization": "Bearer t"}
+    )
+    assert response.status_code == 503
+    body = response.get_json()
+    assert body["code"] == "model_unavailable"
+    assert set(body) == {"detail", "code"}
+
+
+def test_non_testing_response_never_returns_deterministic_placeholder():
+    app = create_app(
+        testing=False,
+        platform_access_provider=_Provider(),
+    )
+    response = app.test_client().post(
+        PATH, json={"input": "oi"}, headers={"Authorization": "Bearer t"}
+    )
+    text = response.get_data(as_text=True)
+    assert "deterministic" not in text
+    assert "content" not in response.get_json()
+
+
+def test_explicit_port_injection_works_outside_testing():
+    app = create_app(
+        testing=False,
+        platform_access_provider=_Provider(),
+        model_invocation_port=DeterministicTestAdapter(),
+    )
+    response = app.test_client().post(
+        PATH, json={"input": "oi"}, headers={"Authorization": "Bearer t"}
+    )
+    assert response.status_code == 200
+
+
+def test_explicit_handler_injection_works_outside_testing():
+    app = create_app(
+        testing=False,
+        platform_access_provider=_Provider(),
+        interaction_turn_handler=_use_case("timeout"),
+    )
+    response = app.test_client().post(
+        PATH, json={"input": "oi"}, headers={"Authorization": "Bearer t"}
+    )
+    assert response.status_code == 504
+
+
+def test_no_real_provider_imports_in_composition():
+    import inspect
+
+    from app.composition import root_composer
+
+    source = inspect.getsource(root_composer).lower()
+    for provider in (
+        "openai",
+        "anthropic",
+        "gemini",
+        "azure",
+        "openrouter",
+        "ollama",
+        "kimi",
+    ):
+        assert provider not in source
+
+
 def test_turn_kind_separation_user_input_vs_result():
     # USER_INPUT carries untrusted data; DELIA_RESULT carries the
     # classified output — both recorded on one request-scoped session.
