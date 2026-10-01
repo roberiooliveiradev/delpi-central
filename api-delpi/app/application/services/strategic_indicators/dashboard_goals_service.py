@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from delpi_auth.service_token import request_has_valid_internal_service_token
 from strategic_indicators_client import StrategicIndicatorsApiClient, StrategicIndicatorsApiError
 
 from app.application.shared.numeric_parsing import to_optional_float
@@ -10,7 +11,29 @@ from app.application.services.strategic_indicators.dashboard_goal_dates import (
     normalize_si_branch,
     normalize_si_period_date,
 )
+from app.infrastructure.observability.request_context import get_caller_app, get_request
 from app.utils.logger import log_error
+
+_STRATEGIC_INDICATORS_CALLER_APP = "strategic-indicators-api"
+
+
+def _is_internal_request_declared_by_si() -> bool:
+    """Authenticated internal request whose caller context declares SI.
+
+    Verified: the request carries the platform internal service token.
+    NOT verified: a distinct strategic-indicators-api identity — the token is
+    platform-wide shared and ``caller_app`` is self-declared metadata, so any
+    internal service can present the same combination.
+
+    Valid use: response-composition optimization only (skip goal enrichment).
+    Invalid use: authorization, RBAC, writes, or any identity authority.
+    """
+    if (get_caller_app() or "").strip() != _STRATEGIC_INDICATORS_CALLER_APP:
+        return False
+    request = get_request()
+    if request is None:
+        return False
+    return request_has_valid_internal_service_token(request)
 
 
 class DashboardGoalsService:
@@ -157,6 +180,9 @@ class DashboardGoalsService:
         branch: str | None,
         department_id: str | None,
     ) -> dict[str, dict[str, Any]]:
+        if _is_internal_request_declared_by_si():
+            return {}
+
         start_date = normalize_si_period_date(start_date)
         end_date = normalize_si_period_date(end_date)
         branch = normalize_si_branch(branch)
