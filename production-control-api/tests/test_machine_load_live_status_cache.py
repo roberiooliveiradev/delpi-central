@@ -41,3 +41,21 @@ def test_clear_live_status_cache_branch() -> None:
     clear_live_status_cache("01")
     assert get_live_status_cache("01") is None
     assert get_live_status_cache("02") is not None
+
+
+def test_live_status_cache_scopes_do_not_bleed() -> None:
+    """Mapa parcial de um CT não pode servir de resposta da filial inteira."""
+    put_live_status_cache("01", {("A", "01"): {}}, scope="CT-01A")
+    put_live_status_cache("01", {("B", "01"): {}}, scope="CT-02")
+
+    assert get_live_status_cache("01") is None
+    assert ("A", "01") in get_live_status_cache("01", scope="CT-01A")
+    assert ("B", "01") in get_live_status_cache("01", scope="CT-02")
+
+
+def test_clear_live_status_cache_branch_drops_all_scopes() -> None:
+    put_live_status_cache("01", {("A", "01"): {}}, scope="CT-01A")
+    put_live_status_cache("01", {("B", "01"): {}})
+    clear_live_status_cache("01")
+    assert get_live_status_cache("01", scope="CT-01A") is None
+    assert get_live_status_cache("01") is None

@@ -33,6 +33,7 @@ class MachineLoadRepositoryPort(ABC):
         branch: str,
         appointment_active_since: str,
         appointment_history_since: str,
+        production_orders: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         ...
 

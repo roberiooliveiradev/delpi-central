@@ -2439,3 +2439,151 @@ def test_public_operation_run_quantity_returns_none_for_unknown_operation() -> N
     )
 
     assert result is None
+
+
+def _scoped_op(order: str, work_center: str) -> dict[str, Any]:
+    return {
+        **_OPERATION,
+        "work_center": work_center,
+        "production_order": order,
+        "operation_code": "010",
+        "pending_qty": 5.0,
+    }
+
+
+def _appointment_calls(gateway: FakeGateway) -> list[int]:
+    return [
+        call[1]["count"] for call in gateway.calls if call[0] == "appointment_status"
+    ]
+
+
+def test_public_enrich_scopes_to_requested_work_center() -> None:
+    """F2: o cockpit enriquece só o CT pedido, não a filial inteira."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_scoped_op(f"A{i}", "CT-01A") for i in range(4)]
+        + [_scoped_op(f"B{i}", "CT-02") for i in range(6)],
+    )
+
+    service.build_public(branch="01", work_center="CT-01A")
+
+    assert _appointment_calls(gateway) == [4]
+
+
+def test_public_enrich_scopes_to_the_other_work_center() -> None:
+    """F2: CT-B recebe somente suas próprias operações no enrich."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_scoped_op(f"A{i}", "CT-01A") for i in range(4)]
+        + [_scoped_op(f"B{i}", "CT-02") for i in range(6)],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert _appointment_calls(gateway) == [6]
+    assert payload["selected"]["work_center"] == "CT-02"
+
+
+def test_public_without_work_center_skips_remote_status() -> None:
+    """F2: o seletor de postos usa o snapshot congelado — sem chão de fábrica."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_scoped_op(f"A{i}", "CT-01A") for i in range(4)]
+        + [_scoped_op(f"B{i}", "CT-02") for i in range(6)],
+    )
+
+    payload = service.build_public(branch="01")
+
+    assert _appointment_calls(gateway) == []
+    assert [wc["work_center"] for wc in payload["work_centers"]] == [
+        "CT-01A",
+        "CT-02",
+    ]
+
+
+def test_public_unknown_work_center_skips_remote_status() -> None:
+    """F2: CT inexistente não vira fallback de consulta da filial inteira."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service, snapshots, [_scoped_op(f"A{i}", "CT-01A") for i in range(4)]
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-999")
+
+    assert _appointment_calls(gateway) == []
+    assert payload["selected"]["requested_work_center"] == "CT-999"
+    assert payload["selected"]["work_center"] == "CT-01A"
+
+
+def test_public_enrich_cache_is_scoped_per_work_center() -> None:
+    """F2: o cache parcial de um CT nunca responde pelo mapa de outro CT."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_scoped_op(f"A{i}", "CT-01A") for i in range(4)]
+        + [_scoped_op(f"B{i}", "CT-02") for i in range(6)],
+    )
+
+    service.build_public(branch="01", work_center="CT-01A")
+    service.build_public(branch="01", work_center="CT-02")
+    # Repetição do mesmo CT usa o cache do próprio escopo.
+    service.build_public(branch="01", work_center="CT-01A")
+
+    assert _appointment_calls(gateway) == [4, 6]
+
+
+def test_public_enrich_cardinality_is_the_center_not_the_branch() -> None:
+    """F2: prova estrutural — 1000 operações na filial, 10 no CT → 10 ao gateway."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_scoped_op(f"X{i}", "CT-01A") for i in range(990)]
+        + [_scoped_op(f"T{i}", "CT-02") for i in range(10)],
+    )
+
+    service.build_public(branch="01", work_center="CT-02")
+
+    assert _appointment_calls(gateway) == [10]
+
+
+def test_public_scoped_enrich_keeps_open_only_and_order() -> None:
+    """F1+F2: saldo vivo chega via enrich do CT e a fila sai open-only ordenada."""
+    snapshots = FakeSnapshotRepo()
+    gateway = FakeGateway()
+    service = _service(gateway, snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _scoped_op("KEEP-1", "CT-02"),
+            _scoped_op("DONE", "CT-02"),
+            _scoped_op("KEEP-2", "CT-02"),
+            _scoped_op("OTHER-CT", "CT-01A"),
+        ],
+    )
+    gateway.status_by_key[("DONE", "010")] = {"operation_pending_qty": 0.0}
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert _public_orders(payload) == ["KEEP-1", "KEEP-2"]
+    assert payload["selected"]["pagination"]["total"] == 2

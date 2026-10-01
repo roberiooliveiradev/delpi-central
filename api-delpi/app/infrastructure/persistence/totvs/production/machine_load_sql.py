@@ -365,13 +365,28 @@ def build_appointment_status_query(
     branch: str,
     appointment_active_since: str,
     appointment_history_since: str,
+    production_orders: list[str] | None = None,
 ) -> tuple[str, tuple]:
-    """Status de apontamento por OP+operação — sem SH8 (enriquecimento vivo do snapshot)."""
+    """Status de apontamento por OP+operação — sem SH8 (enriquecimento vivo do snapshot).
+
+    production_orders recorta a HZA às OPs pedidas (cockpit lê um centro de
+    trabalho por vez); vazio preserva o agregado da filial usado pelos testes.
+    """
     active_predicate = active_appointment_predicate_sql("Z")
     marker = active_marker_sql("Z", operator_name_expr=operator_name_expr("USR"))
     operator_join = operator_name_join_sql(
         alias="USR", operator_expr="LTRIM(RTRIM(Z.HZA_OPERAD))"
     )
+    orders = _distinct_orders(production_orders or [])
+    # O CAST fica no parâmetro: função na coluna HZA_OP trocaria seek por scan.
+    order_filter = ""
+    order_params: tuple = ()
+    if orders:
+        placeholders = ", ".join(
+            f"CAST(? AS {_APPOINTMENT_ORDER_SQL_TYPE})" for _ in orders
+        )
+        order_filter = f" AND Z.HZA_OP IN ({placeholders})"
+        order_params = tuple(orders)
     query = f"""
         SELECT
             LTRIM(RTRIM(A.ap_branch)) AS branch,
@@ -398,11 +413,16 @@ def build_appointment_status_query(
             {operator_join}
             WHERE Z.D_E_L_E_T_ = ''
               AND Z.HZA_FILIAL = ?
-              AND Z.HZA_DTINI >= ?
+              AND Z.HZA_DTINI >= ?{order_filter}
         ) A
         GROUP BY A.ap_branch, A.ap_order, A.ap_operation
     """
-    return query, (appointment_active_since, branch, appointment_history_since)
+    return query, (
+        appointment_active_since,
+        branch,
+        appointment_history_since,
+        *order_params,
+    )
 
 
 # O driver manda string como NVARCHAR; sem o CAST o SQL Server converte a

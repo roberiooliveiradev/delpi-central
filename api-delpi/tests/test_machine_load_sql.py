@@ -317,3 +317,33 @@ def test_work_centers_query_skips_the_sh6_aggregate() -> None:
     """Contadores de aba não precisam do saldo da bancada."""
     query, _ = sql.build_work_centers_query(**_filters())
     assert MACHINE_LOAD_PRODUCTION_APPOINTMENT_TABLE not in query
+
+
+def test_appointment_status_query_filters_requested_orders() -> None:
+    """F2: a HZA só varre as OPs pedidas — CAST no parâmetro preserva o seek."""
+    query, params = sql.build_appointment_status_query(
+        branch="02",
+        appointment_active_since=_ACTIVE_SINCE,
+        appointment_history_since=_HISTORY_SINCE,
+        production_orders=["10808301002", "99999901001", "10808301002"],
+    )
+    assert "AND Z.HZA_OP IN (CAST(? AS CHAR(14)), CAST(? AS CHAR(14)))" in query
+    # Dedup: três pedidos, duas OPs distintas — placeholders e params casam.
+    assert params == (
+        _ACTIVE_SINCE,
+        "02",
+        _HISTORY_SINCE,
+        "10808301002",
+        "99999901001",
+    )
+
+
+def test_appointment_status_query_without_orders_keeps_branch_aggregate() -> None:
+    query, params = sql.build_appointment_status_query(
+        branch="02",
+        appointment_active_since=_ACTIVE_SINCE,
+        appointment_history_since=_HISTORY_SINCE,
+        production_orders=[],
+    )
+    assert "HZA_OP IN" not in query
+    assert params == (_ACTIVE_SINCE, "02", _HISTORY_SINCE)

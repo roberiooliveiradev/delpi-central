@@ -1799,18 +1799,44 @@ class MachineLoadService:
         work_centers = payload_work_centers(payload)
         operations = payload_operations(payload)
 
-        operations = self._enrich_live_status(
-            branch=branch,
-            operations=operations,
-            allow_remote=allow_remote_status,
-        )
+        # Conjunto retirado continua no snapshot (posição original preservada), mas some da fila.
+        withdrawn_keys = withdrawn_order_numbers(payload)
         if production_source == "cockpit":
+            # Cockpit público: runs MES locais marcam a fila inteira (barato), mas o
+            # enrich HZA só roda no centro de trabalho pedido — consultar a filial
+            # inteira para exibir um posto desperdiça TOTVS e rede.
+            operations = visible_operations(operations, withdrawn_keys)
+            scope_center = _norm_code(work_center)
+            if scope_center:
+                scoped = [
+                    item
+                    for item in operations
+                    if _norm_code(item.get("work_center")) == scope_center
+                ]
+                enriched = self._enrich_live_status(
+                    branch=branch,
+                    operations=scoped,
+                    allow_remote=allow_remote_status,
+                    scope=scope_center,
+                )
+                enriched_iter = iter(enriched)
+                operations = [
+                    next(enriched_iter)
+                    if _norm_code(item.get("work_center")) == scope_center
+                    else item
+                    for item in operations
+                ]
+            # Run MES sobrepõe o status HZA — quem decide «em produção» é o cockpit.
             operations = self._apply_cockpit_production_status(
                 branch=branch, operations=operations
             )
-        # Conjunto retirado continua no snapshot (posição original preservada), mas some da fila.
-        withdrawn_keys = withdrawn_order_numbers(payload)
-        operations = visible_operations(operations, withdrawn_keys)
+        else:
+            operations = self._enrich_live_status(
+                branch=branch,
+                operations=operations,
+                allow_remote=allow_remote_status,
+            )
+            operations = visible_operations(operations, withdrawn_keys)
         if open_only:
             # Projeção do cockpit: só o que ainda tem saldo a produzir.
             operations = [
@@ -1966,13 +1992,14 @@ class MachineLoadService:
         branch: str,
         operations: list[dict[str, Any]],
         allow_remote: bool = True,
+        scope: str | None = None,
     ) -> dict[tuple[str, str], dict[str, Any]]:
         """Mapa OP+operação → status HZA, do cache ou do TOTVS.
 
         Com ``allow_remote=False`` nunca consulta o ERP: serve para a leitura da
         fila não ficar presa ao chão de fábrica quando o cache está frio.
         """
-        cached = get_live_status_cache(branch)
+        cached = get_live_status_cache(branch, scope=scope)
         if cached is not None:
             return cached
         if not allow_remote or not operations:
@@ -2005,7 +2032,7 @@ class MachineLoadService:
         status_by_key = {
             _operation_key(item): item for item in dict_items(status_payload)
         }
-        put_live_status_cache(branch, status_by_key)
+        put_live_status_cache(branch, status_by_key, scope=scope)
         return status_by_key
 
     def _enrich_live_status(
@@ -2014,6 +2041,7 @@ class MachineLoadService:
         branch: str,
         operations: list[dict[str, Any]],
         allow_remote: bool = True,
+        scope: str | None = None,
     ) -> list[dict[str, Any]]:
         if not operations:
             return operations
@@ -2021,6 +2049,7 @@ class MachineLoadService:
             branch=branch,
             operations=operations,
             allow_remote=allow_remote,
+            scope=scope,
         )
         if not status_by_key:
             return operations

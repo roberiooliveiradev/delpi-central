@@ -81,12 +81,6 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             reference - timedelta(days=APPOINTMENT_HISTORY_LOOKBACK_DAYS)
         ).strftime("%Y%m%d")
 
-        rows = self._repository.get_appointment_status(
-            branch=branch,
-            appointment_active_since=active_since,
-            appointment_history_since=history_since,
-        )
-
         wanted: list[tuple[str, str]] = []
         for raw in items:
             order = str(raw.get("production_order") or "").strip()
@@ -94,7 +88,15 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             if order and operation:
                 wanted.append((order, operation))
 
-        # Sem lista explícita: devolve o agregado da filial (útil em testes).
+        # Recorte F2: a HZA só varre as OPs pedidas; sem lista explícita devolve
+        # o agregado da filial (útil em testes) — contrato preservado.
+        rows = self._repository.get_appointment_status(
+            branch=branch,
+            appointment_active_since=active_since,
+            appointment_history_since=history_since,
+            production_orders=sorted({order for order, _op in wanted}),
+        )
+
         keys = wanted or [
             (
                 str(row.get("production_order") or "").strip(),

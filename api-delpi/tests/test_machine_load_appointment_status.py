@@ -290,3 +290,30 @@ def test_zero_pending_with_open_appointment_is_started() -> None:
     assert item["is_in_production"] is False
     assert item["production_status"] == "started"
     assert result["summary"]["in_production_count"] == 0
+
+
+def test_appointment_status_passes_requested_orders_to_the_repository() -> None:
+    """F2: o use case recorta a HZA pelas OPs do request, deduplicadas."""
+    repo = FakeRepo([])
+    use_case = GetProductionMachineLoadAppointmentStatusUseCase(repo)
+
+    use_case.execute(
+        branch="02",
+        items=[
+            {"production_order": "OP001", "operation_code": "10"},
+            {"production_order": "OP001", "operation_code": "20"},
+            {"production_order": "OP002", "operation_code": "10"},
+        ],
+        today=date(2026, 8, 20),
+    )
+
+    assert repo.calls[0]["production_orders"] == ["OP001", "OP002"]
+
+
+def test_appointment_status_empty_items_keeps_branch_aggregate_mode() -> None:
+    repo = FakeRepo([])
+    use_case = GetProductionMachineLoadAppointmentStatusUseCase(repo)
+
+    use_case.execute(branch="02", items=[], today=date(2026, 8, 20))
+
+    assert repo.calls[0]["production_orders"] == []

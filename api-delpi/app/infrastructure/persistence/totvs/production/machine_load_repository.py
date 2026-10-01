@@ -80,11 +80,13 @@ class MachineLoadRepository(BaseRepository, MachineLoadRepositoryPort):
         branch: str,
         appointment_active_since: str,
         appointment_history_since: str,
+        production_orders: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         query, params = build_appointment_status_query(
             branch=branch,
             appointment_active_since=appointment_active_since,
             appointment_history_since=appointment_history_since,
+            production_orders=production_orders,
         )
         # Status vivo: sem cache — o PCP precisa refletir o chão de fábrica.
         with self:
