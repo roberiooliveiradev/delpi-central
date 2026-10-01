@@ -89,6 +89,37 @@ cp infra/.env.dev.example infra/.env
 
 **Dia a dia sem rebuild:** stack essencial com [`scripts/up-minimal-dev.sh`](scripts/up-minimal-dev.sh) (~8 containers).
 
+### Keycloak local — bootstrap/reset (reprodutível)
+
+Realm `delpi`, client `delpi-central` e usuários vivem no volume persistido
+`infra_keycloak_data` — **não há realm import automático**. Se o login local
+falhar (`invalid_grant`) ou as credenciais divergirem de `infra/.env.local`,
+o procedimento canônico é o bootstrap por Admin REST:
+
+```bash
+bash infra/scripts/keycloak-dev-bootstrap.sh
+```
+
+O script é **idempotente**: garante realm `delpi` ativo, client `delpi-central`
+(public, standard flow + direct grants) e sincroniza a senha de
+`DEV_PORTAL_USERNAME` com `DEV_PORTAL_PASSWORD` de `infra/.env.local`
+— sem SQL, sem hash manual, sem editar o banco do Keycloak.
+
+Se o **admin master** estiver divergente de `infra/.env` (bootstrap falha no
+admin token), o reset canônico é o volume do Keycloak — aceita perder os
+usuários seed locais:
+
+```bash
+docker compose -f infra/docker-compose.dev.yml stop keycloak keycloak-db
+docker volume rm infra_keycloak_data
+bash infra/scripts/up-dev-sequential.sh keycloak
+bash infra/scripts/keycloak-dev-bootstrap.sh   # recria realm/client/dev user
+```
+
+Escopo: somente dev local (`localhost`); falha fechado fora dele. Não usar em
+produção. Credenciais sempre via `infra/.env` / `infra/.env.local` — nunca em
+comandos ou logs.
+
 ### Produção
 
 ```bash
