@@ -15,8 +15,15 @@ import { BPMN_RENDERER_THEME } from "./BpmnEditorAdapter";
 const STAGE_W = 480;
 const STAGE_H = 270;
 const MAX_CONCURRENT = 2;
+/** Zoom-out após fit-viewport — safe padding visual na thumb (~12%). */
+const SAFE_PADDING_ZOOM = 0.88;
 
-type CanvasSvc = { zoom(scale: string, position?: string): void };
+type CanvasSvc = {
+  zoom(scale: string | number, position?: string): number;
+};
+type RegistrySvc = {
+  filter(fn: (el: { type?: string; id?: string }) => boolean): Array<unknown>;
+};
 
 let inflight = 0;
 const queue: Array<() => void> = [];
@@ -38,11 +45,18 @@ function releaseSlot(): void {
   }
 }
 
+export type BpmnThumbnailResult =
+  | { kind: "svg"; svg: string }
+  | { kind: "empty" };
+
 /**
- * Renderiza o XML canônico e devolve um SVG standalone (string) pronto para
- * `<img>`. Falhas viram exceção — o chamador decide o placeholder.
+ * Renderiza o XML canônico e devolve `{ kind: "svg", svg }` (standalone, pronto
+ * para `<img>`) ou `{ kind: "empty" }` quando o diagrama não tem elementos DI.
+ * Falhas viram exceção — o chamador decide o placeholder.
  */
-export async function renderBpmnThumbnail(xml: string): Promise<string> {
+export async function renderBpmnThumbnail(
+  xml: string,
+): Promise<BpmnThumbnailResult> {
   await acquireSlot();
   const stage = document.createElement("div");
   stage.className = "bpmnm-thumb-stage";
@@ -54,10 +68,21 @@ export async function renderBpmnThumbnail(xml: string): Promise<string> {
   });
   try {
     await viewer.importXML(xml);
-    viewer.get<CanvasSvc>("canvas").zoom("fit-viewport", "auto");
+    const registry = viewer.get<RegistrySvc>("elementRegistry");
+    const elements = registry.filter(
+      (el) =>
+        el.type !== "bpmn:Process" &&
+        el.type !== "bpmn:Collaboration" &&
+        el.type !== "label" &&
+        el.id !== "__implicitroot",
+    );
+    if (elements.length === 0) return { kind: "empty" };
+    const canvas = viewer.get<CanvasSvc>("canvas");
+    const fitted = canvas.zoom("fit-viewport", "auto");
+    canvas.zoom(Math.max(fitted * SAFE_PADDING_ZOOM, 0.05));
     const { svg } = await viewer.saveSVG();
     if (!svg) throw new Error("empty svg");
-    return svg;
+    return { kind: "svg", svg };
   } finally {
     viewer.destroy();
     stage.remove();

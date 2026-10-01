@@ -52,15 +52,24 @@ def create_application(
 
     app.config["PLATFORM_ACCESS_PROVIDER"] = provider
 
-    # C3-INTERACTION-RUNTIME-01: TEST_ONLY deterministic adapter only.
-    # The real-provider gate is BLOCKED (no proven DÉLIA provider
-    # ownership or exposure policy); InvokeModel still enforces
+    # C3-INTERACTION-RUNTIME-01R1: TEST_ONLY deterministic adapter is
+    # wired only for testing or explicit injection — never an implicit
+    # runtime fallback. Normal runtime without an approved provider
+    # leaves the handler absent; the route then fails closed with
+    # model_unavailable. InvokeModel still enforces
     # ProviderExposureClass.TEST_ONLY at the use-case boundary.
     if interaction_turn_handler is not None:
         handler = interaction_turn_handler
+    elif model_invocation_port is not None:
+        handler = HandleInteractiveConversationTurn(
+            InvokeModel(model_invocation_port)
+        )
+    elif testing:
+        handler = HandleInteractiveConversationTurn(
+            InvokeModel(DeterministicTestAdapter())
+        )
     else:
-        port = model_invocation_port or DeterministicTestAdapter()
-        handler = HandleInteractiveConversationTurn(InvokeModel(port))
+        handler = None
     app.config["INTERACTION_TURN_HANDLER"] = handler
 
     register_error_handlers(app)

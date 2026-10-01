@@ -3,18 +3,21 @@ import { useEffect, useRef, useState } from "react";
 import { Workflow } from "lucide-react";
 
 import { getWorkingCopy } from "../data/api/bpmnModelerApi";
-import { renderBpmnThumbnail } from "../editor/modelThumbnail";
+import {
+  renderBpmnThumbnail,
+  type BpmnThumbnailResult,
+} from "../editor/modelThumbnail";
 
 type GetToken = (() => string | undefined) | undefined;
 
 const CACHE_LIMIT = 60;
-const svgCache = new Map<string, Promise<string | null>>();
+const svgCache = new Map<string, Promise<BpmnThumbnailResult | null>>();
 
 function thumbnailFor(
   modelId: string,
   version: number,
   getAccessToken: GetToken,
-): Promise<string | null> {
+): Promise<BpmnThumbnailResult | null> {
   const key = `${modelId}@${version}`;
   const cached = svgCache.get(key);
   if (cached) return cached;
@@ -30,7 +33,7 @@ function thumbnailFor(
   return promise;
 }
 
-type ThumbState = "idle" | "loading" | "ready" | "error";
+type ThumbState = "idle" | "loading" | "ready" | "empty" | "error";
 
 type Props = {
   modelId: string;
@@ -56,8 +59,12 @@ export function BpmnModelThumb({ modelId, version, getAccessToken }: Props) {
       setState("loading");
       void thumbnailFor(modelId, version, getAccessToken).then((result) => {
         if (cancelled) return;
-        setSvg(result);
-        setState(result ? "ready" : "error");
+        if (result?.kind === "svg") {
+          setSvg(result.svg);
+          setState("ready");
+        } else {
+          setState(result?.kind === "empty" ? "empty" : "error");
+        }
       });
     };
     if (typeof IntersectionObserver === "undefined") {
@@ -93,13 +100,22 @@ export function BpmnModelThumb({ modelId, version, getAccessToken }: Props) {
     );
   }
 
+  const variant =
+    state === "ready" ? null : state === "idle" || state === "loading" ? "loading" : state;
+
   return (
     <span
       ref={hostRef}
-      className={`bpmnm-thumb bpmnm-thumb--${state === "error" ? "fallback" : "loading"}`}
+      className={`bpmnm-thumb bpmnm-thumb--${variant}`}
       aria-hidden="true"
     >
       <Workflow size={28} strokeWidth={1.6} />
+      {variant === "empty" ? (
+        <span className="bpmnm-thumb__hint">Diagrama sem elementos</span>
+      ) : null}
+      {variant === "error" ? (
+        <span className="bpmnm-thumb__hint">Preview indisponível</span>
+      ) : null}
     </span>
   );
 }
