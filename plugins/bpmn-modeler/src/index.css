@@ -36,7 +36,6 @@
 
   --delpi-ui-bpmn-canvas-bg: var(--delpi-ui-surface);
   --delpi-ui-bpmn-dot-color: var(--delpi-ui-border-strong);
-  --delpi-ui-bpmn-edge-color: var(--delpi-ui-text-muted);
   --delpi-ui-bpmn-minimap-bg: var(--delpi-ui-surface-muted);
   --delpi-ui-bpmn-minimap-node: var(--delpi-ui-accent);
   --delpi-ui-bpmn-controls-bg: var(--delpi-ui-surface-elevated);
