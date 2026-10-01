@@ -29,6 +29,7 @@ import {
 import { navigatePluginPath } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import { useCommercialConfirmChoice } from "../../app/CommercialConfirmDialogProvider";
 import { PROPOSALS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import type {
@@ -45,6 +46,10 @@ import {
   defaultProposalPdfContactValue,
   type ProposalPdfContactOption,
 } from "../../utils/resolveProposalPdfContact";
+import {
+  proposalPdfIdioma,
+  type ProposalPdfCurrency,
+} from "../../utils/proposalPdfCurrency";
 
 function applyPdfContactSelectionToFields(
   option: ProposalPdfContactOption | null | undefined,
@@ -105,6 +110,7 @@ type ProposalDetailPageProps = {
 
 export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageProps) {
   const { canExportProposals } = usePortfolioScope();
+  const confirmPdfCurrency = useCommercialConfirmChoice();
   const [data, setData] = useState<ProposalDocumentDetail | null>(null);
   const [contactsBundle, setContactsBundle] = useState<AccountContactsBundle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -214,7 +220,9 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
     },
   ];
 
-  function buildPdfOverrides(): ProposalDocumentPdfExportOverrides | undefined {
+  function buildPdfOverrides(
+    currency: ProposalPdfCurrency,
+  ): ProposalDocumentPdfExportOverrides | undefined {
     if (!data) return undefined;
     const overrides: ProposalDocumentPdfExportOverrides = {};
     const obs = pdfObservacoes.trim();
@@ -248,14 +256,25 @@ export function ProposalDetailPage({ basePath, propostaId }: ProposalDetailPageP
       }
     }
     if (Object.keys(condicoes).length) overrides.condicoes = condicoes;
+    const idioma = proposalPdfIdioma(currency);
+    if (idioma) overrides.idioma = idioma;
     return Object.keys(overrides).length ? overrides : undefined;
   }
 
   async function handleExportPdf() {
+    const choice = await confirmPdfCurrency({
+      title: PROPOSALS_CONTENT.detail.pdfCurrencyTitle,
+      message: PROPOSALS_CONTENT.detail.pdfCurrencyMessage,
+      confirmLabel: PROPOSALS_CONTENT.detail.pdfCurrencyBrl,
+      secondaryLabel: PROPOSALS_CONTENT.detail.pdfCurrencyUsd,
+      cancelLabel: PROPOSALS_CONTENT.detail.pdfCurrencyCancel,
+    });
+    if (choice === "cancel") return;
+    const currency: ProposalPdfCurrency = choice === "secondary" ? "usd" : "brl";
     try {
       setPdfLoading(true);
       setPdfError(null);
-      await openProposalDocumentPdf(propostaId, buildPdfOverrides());
+      await openProposalDocumentPdf(propostaId, buildPdfOverrides(currency));
     } catch (err) {
       setPdfError(err instanceof Error ? err.message : "Não foi possível gerar o PDF.");
     } finally {

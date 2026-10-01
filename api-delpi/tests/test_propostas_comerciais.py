@@ -712,7 +712,7 @@ def test_proposta_comercial_pdf_renderer_contact_card_includes_telefone() -> Non
     contact_block = source.split("contact_card = _build_labeled_card", 1)[1].split(
         "row = Table", 1
     )[0]
-    assert '("Telefone", _display(contato.get("telefone")))' in contact_block
+    assert '(labels["field_phone"], _display(contato.get("telefone")))' in contact_block
     assert '("E-mail", _display(contato.get("email")))' in contact_block
 
 
@@ -1017,3 +1017,74 @@ def test_export_proposta_comercial_pdf_route_not_found() -> None:
         response = export_proposta_comercial_pdf_route("004999")
 
     assert response.status_code == 404
+
+
+def test_pdf_labels_resolution_defaults_to_portuguese() -> None:
+    from app.infrastructure.pdf.propostas_comerciais.proposta_comercial_pdf_renderer import (
+        PDF_LABELS_EN,
+        PDF_LABELS_PT,
+        _resolve_labels,
+    )
+
+    assert _resolve_labels({}) is PDF_LABELS_PT
+    assert _resolve_labels({"idioma": "pt"}) is PDF_LABELS_PT
+    assert _resolve_labels({"idioma": "en"}) is PDF_LABELS_EN
+    assert _resolve_labels({"idioma": "EN-US"}) is PDF_LABELS_EN
+    assert _resolve_labels({"idioma": "fr"}) is PDF_LABELS_PT
+
+
+def test_proposta_comercial_pdf_renderer_renders_english_when_idioma_en() -> None:
+    renderer = PropostaComercialPdfRenderer()
+
+    pt_bytes = renderer.render(_sample_detail())
+    en_bytes = renderer.render({**_sample_detail(), "idioma": "en"})
+
+    assert pt_bytes.startswith(b"%PDF")
+    assert en_bytes.startswith(b"%PDF")
+    assert len(en_bytes) > 1000
+
+
+def test_english_formatters_use_labels() -> None:
+    from app.infrastructure.pdf.propostas_comerciais.proposta_comercial_pdf_renderer import (
+        PDF_LABELS_EN,
+        PDF_LABELS_PT,
+        _format_prazo_display,
+    )
+
+    assert _format_prazo_display("30") == "30 dias"
+    assert _format_prazo_display("30", PDF_LABELS_EN) == "30 days"
+    assert _format_frete_display("FOB") == "FOB - por conta do comprador"
+    assert _format_frete_display("FOB", PDF_LABELS_EN) == "FOB - buyer's account"
+    assert _format_icms_display("12%") == "12% - INCLUSO"
+    assert _format_icms_display("12%", PDF_LABELS_EN) == "12% - INCLUDED"
+
+    ncm_en = _compose_observacoes_text(
+        "", [{"item": "01", "ncm": "8544.42.00"}], PDF_LABELS_EN
+    )
+    assert ncm_en == "HS Code:\nItem 01 — HS Code 8544.42.00"
+    assert (
+        _compose_observacoes_text("", [{"item": "01", "ncm": "8544.42.00"}], PDF_LABELS_PT)
+        == "NCM:\nItem 01 — NCM 8544.42.00"
+    )
+
+
+def test_pdf_export_overrides_service_applies_idioma() -> None:
+    detail = _sample_detail()
+
+    merged = PropostaComercialPdfExportOverridesService.apply(detail, {"idioma": " EN "})
+    assert merged["idioma"] == "en"
+
+    untouched = PropostaComercialPdfExportOverridesService.apply(detail, {})
+    assert "idioma" not in untouched
+
+
+def test_pdf_export_request_normalizes_idioma() -> None:
+    from app.interface.http.schemas.proposta_comercial_pdf_schemas import (
+        PropostaComercialPdfExportRequest,
+    )
+
+    assert PropostaComercialPdfExportRequest(idioma=" EN ").to_overrides_dict() == {
+        "idioma": "en"
+    }
+    assert PropostaComercialPdfExportRequest(idioma="  ").to_overrides_dict() == {}
+    assert PropostaComercialPdfExportRequest().to_overrides_dict() == {}

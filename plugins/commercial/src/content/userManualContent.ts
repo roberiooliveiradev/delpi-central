@@ -328,6 +328,10 @@ export const USER_MANUAL_CONTENT = {
           a: "Sim. Em Propostas, abra o documento e use o ícone de editar no bloco Condições. Descrição, ICMS, PIS/COFINS e frete valem só para essa emissão — a proposta salva não muda.",
         },
         {
+          q: "Consigo emitir a proposta em dólar?",
+          a: "Sim. Ao clicar em Emitir PDF, escolha Real (R$) ou Dólar (US$). Em dólar, toda a proposta sai em inglês (títulos, condições, observações) — os valores não são convertidos.",
+        },
+        {
           q: "Qual a diferença entre data de entrega, despacho e previsão OP?",
           a: "Data de entrega é o compromisso da linha, interpretado pelo Incoterm: se o cliente busca (EXW ou FOB), é a data na expedição; se a Delpi entrega (CIF), é a data de saída da empresa. Despacho é a saída registrada da fábrica, quando houver. Previsão OP é a disponibilidade pela produção — o badge compara essa previsão com a data de entrega.",
         },

@@ -42,6 +42,10 @@ class PropostaComercialPdfExportOverridesService:
 
         result = deepcopy(detail)
 
+        idioma = overrides.get("idioma")
+        if isinstance(idioma, str) and idioma.strip():
+            result["idioma"] = idioma.strip().lower()
+
         if "observacoes" in overrides and overrides["observacoes"] is not None:
             result["observacoes"] = PropostaComercialFormatter.normalize_observacoes(
                 overrides["observacoes"]

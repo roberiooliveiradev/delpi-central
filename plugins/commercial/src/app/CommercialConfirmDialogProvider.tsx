@@ -62,3 +62,13 @@ export function useCommercialConfirm() {
   }
   return context.confirm;
 }
+
+export function useCommercialConfirmChoice() {
+  const context = useContext(ConfirmDialogContext);
+  if (!context) {
+    throw new Error(
+      "useCommercialConfirmChoice deve ser usado dentro de CommercialConfirmDialogProvider",
+    );
+  }
+  return context.confirmChoice;
+}

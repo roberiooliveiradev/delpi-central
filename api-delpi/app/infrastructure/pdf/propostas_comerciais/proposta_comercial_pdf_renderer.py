@@ -55,6 +55,103 @@ FIXED_CONDITION_TEXTS = (
     "Cancelamento/Reprogramação de pedido: somente mediante autorização prévia da Delpi.",
 )
 
+# Rótulos canônicos do documento por idioma (detail["idioma"]: pt default, en).
+# Valores de negócio (descrições, condições, totais) não são traduzidos.
+PDF_LABELS_PT: dict[str, str] = {
+    "document_title": "Proposta Comercial",
+    "header_label": "PROPOSTA COMERCIAL",
+    "number_prefix": "N°",
+    "version": "Versão",
+    "date": "Data",
+    "zip_prefix": "CEP",
+    "client_card": "Cliente",
+    "contact_card": "Contato",
+    "field_name": "Nome",
+    "field_address": "Endereço",
+    "field_city_state": "Cidade/UF",
+    "field_department": "Departamento",
+    "field_phone": "Telefone",
+    "items_section": "Itens",
+    "col_item": "Item",
+    "col_produto": "Ref. Delpi",
+    "col_referencia_cliente": "Ref. Cliente",
+    "col_descricao": "Descrição",
+    "col_valor_bruto": "Bruto R$/mil",
+    "col_valor_liquido": "Líquido R$/mil",
+    "col_prazo": "Prazo",
+    "col_lote_minimo": "Lote mín./mil",
+    "conditions_title": "Condições comerciais",
+    "cond_payment": "Condição de pagamento",
+    "cond_packaging": "Embalagem",
+    "cond_freight": "Frete",
+    "cond_validity": "Validade da proposta",
+    "days_suffix": "dias",
+    "tax_included": "INCLUSO",
+    "packaging_included": "INCLUSA",
+    "freight_fob": "FOB - por conta do comprador",
+    "freight_cif": "CIF - por conta do vendedor",
+    "notes_title": "Observações",
+    "notes_empty": "Sem observações registradas.",
+    "closing": "Atenciosamente,",
+    "running_header": "Proposta Comercial N°",
+    "page_of": "Página {page} de {total}",
+    "ncm_label": "NCM",
+    "fixed_cond_1": FIXED_CONDITION_TEXTS[0],
+    "fixed_cond_2": FIXED_CONDITION_TEXTS[1],
+}
+
+PDF_LABELS_EN: dict[str, str] = {
+    "document_title": "Commercial Proposal",
+    "header_label": "COMMERCIAL PROPOSAL",
+    "number_prefix": "No.",
+    "version": "Version",
+    "date": "Date",
+    "zip_prefix": "ZIP",
+    "client_card": "Customer",
+    "contact_card": "Contact",
+    "field_name": "Name",
+    "field_address": "Address",
+    "field_city_state": "City/State",
+    "field_department": "Department",
+    "field_phone": "Phone",
+    "items_section": "Items",
+    "col_item": "Item",
+    "col_produto": "Delpi Ref.",
+    "col_referencia_cliente": "Customer Ref.",
+    "col_descricao": "Description",
+    "col_valor_bruto": "Gross US$/k",
+    "col_valor_liquido": "Net US$/k",
+    "col_prazo": "Lead time",
+    "col_lote_minimo": "Min. lot/k",
+    "conditions_title": "Commercial terms",
+    "cond_payment": "Payment terms",
+    "cond_packaging": "Packaging",
+    "cond_freight": "Freight",
+    "cond_validity": "Proposal validity",
+    "days_suffix": "days",
+    "tax_included": "INCLUDED",
+    "packaging_included": "INCLUDED",
+    "freight_fob": "FOB - buyer's account",
+    "freight_cif": "CIF - seller's account",
+    "notes_title": "Notes",
+    "notes_empty": "No remarks recorded.",
+    "closing": "Best regards,",
+    "running_header": "Commercial Proposal No.",
+    "page_of": "Page {page} of {total}",
+    "ncm_label": "HS Code",
+    "fixed_cond_1": "Please reference our proposal number on your purchase order.",
+    "fixed_cond_2": "Order cancellation/rescheduling: only with prior Delpi authorization.",
+}
+
+_PDF_EN_LOCALES = frozenset({"en", "en-us", "en_us"})
+
+
+def _resolve_labels(detail: dict | None) -> dict[str, str]:
+    idioma = str((detail or {}).get("idioma") or "").strip().lower()
+    if idioma in _PDF_EN_LOCALES:
+        return PDF_LABELS_EN
+    return PDF_LABELS_PT
+
 
 class _DrawingFlowable(Flowable):
     def __init__(self, drawing, width: float, height: float):
@@ -72,9 +169,16 @@ class _DrawingFlowable(Flowable):
 
 
 class _NumberedCanvas(canvas.Canvas):
-    def __init__(self, *args, footer_site: str = "www.delpi.com.br", **kwargs):
+    def __init__(
+        self,
+        *args,
+        footer_site: str = "www.delpi.com.br",
+        page_of_template: str = "Página {page} de {total}",
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self._footer_site = footer_site
+        self._page_of_template = page_of_template
         self._page_states: list[dict] = []
 
     def showPage(self) -> None:
@@ -97,7 +201,11 @@ class _NumberedCanvas(canvas.Canvas):
         self.setFont("Helvetica", 7.5)
         self.setFillColor(TEXT_MUTED)
         self.drawString(MARGIN_LEFT, 9 * mm, self._footer_site)
-        self.drawRightString(A4[0] - MARGIN_RIGHT, 9 * mm, f"Página {self._pageNumber} de {total_pages}")
+        self.drawRightString(
+            A4[0] - MARGIN_RIGHT,
+            9 * mm,
+            self._page_of_template.format(page=self._pageNumber, total=total_pages),
+        )
         if self._pageNumber == total_pages:
             _draw_brand_footer_bar(self)
         self.restoreState()
@@ -122,6 +230,7 @@ def _draw_brand_footer_bar(page_canvas: canvas.Canvas) -> None:
 class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
     def render(self, detail: dict) -> bytes:
         buffer = _PdfBuffer()
+        labels = _resolve_labels(detail)
         empresa = detail.get("empresa") or {}
         footer_site = _display(empresa.get("site"), empty="www.delpi.com.br")
         if footer_site == "—":
@@ -134,19 +243,24 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             rightMargin=MARGIN_RIGHT,
             topMargin=MARGIN_TOP,
             bottomMargin=MARGIN_BOTTOM,
-            title=self._document_title(detail),
+            title=self._document_title(detail, labels),
             author="DELPI",
         )
         styles = _build_styles()
-        story = self._build_story(detail, styles)
+        story = self._build_story(detail, styles, labels)
 
         def on_page(page_canvas, document):
-            _draw_running_header(page_canvas, detail, first_page=document.page == 1)
+            _draw_running_header(
+                page_canvas, detail, first_page=document.page == 1, labels=labels
+            )
 
         doc.build(
             story,
             canvasmaker=lambda *args, **kwargs: _NumberedCanvas(
-                *args, footer_site=footer_site, **kwargs
+                *args,
+                footer_site=footer_site,
+                page_of_template=labels["page_of"],
+                **kwargs,
             ),
             onFirstPage=on_page,
             onLaterPages=on_page,
@@ -154,12 +268,18 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         return buffer.getvalue()
 
     @staticmethod
-    def _document_title(detail: dict) -> str:
+    def _document_title(detail: dict, labels: dict[str, str] | None = None) -> str:
+        labels = labels or _resolve_labels(detail)
         cabecalho = detail.get("cabecalho") or {}
         numero_ov = cabecalho.get("numero_ov") or cabecalho.get("proposta_interna") or "Proposta"
-        return f"Proposta Comercial {numero_ov}"
+        return f"{labels['document_title']} {numero_ov}"
 
-    def _build_story(self, detail: dict, styles: dict[str, ParagraphStyle]) -> list[Flowable]:
+    def _build_story(
+        self,
+        detail: dict,
+        styles: dict[str, ParagraphStyle],
+        labels: dict[str, str] | None = None,
+    ) -> list[Flowable]:
         cabecalho = detail.get("cabecalho") or {}
         empresa = detail.get("empresa") or {}
         cliente = detail.get("cliente") or {}
@@ -167,15 +287,17 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         condicoes = detail.get("condicoes") or {}
         vendedor = detail.get("vendedor") or {}
         itens = detail.get("itens") or []
+        labels = labels or _resolve_labels(detail)
         observacoes = _compose_observacoes_text(
             str(detail.get("observacoes") or "").strip(),
             itens,
+            labels,
         )
 
         story: list[Flowable] = []
-        story.extend(self._build_document_header(cabecalho, empresa, styles))
+        story.extend(self._build_document_header(cabecalho, empresa, styles, labels))
         story.append(Spacer(1, 2 * mm))
-        story.extend(self._build_client_contact_cards(cliente, contato, styles))
+        story.extend(self._build_client_contact_cards(cliente, contato, styles, labels))
         story.append(Spacer(1, 3 * mm))
         story.extend(
             self._build_items_section(
@@ -183,6 +305,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                 styles,
                 detail.get("rotulos") or {},
                 exibir_coluna_valor_liquido=_exibir_coluna_valor_liquido(detail),
+                labels=labels,
             )
         )
         story.append(Spacer(1, 3 * mm))
@@ -192,10 +315,11 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                 condicoes,
                 styles,
                 literal_fields=_literal_condition_fields(detail),
+                labels=labels,
             )
         )
         story.append(Spacer(1, 2.5 * mm))
-        story.extend(self._build_closing_sections(observacoes, vendedor, styles))
+        story.extend(self._build_closing_sections(observacoes, vendedor, styles, labels))
         return story
 
     def _build_document_header(
@@ -203,23 +327,30 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         cabecalho: dict,
         empresa: dict,
         styles: dict[str, ParagraphStyle],
+        labels: dict[str, str] | None = None,
     ) -> list[Flowable]:
         logo = _load_logo_flowable()
         if logo is None:
             logo = Paragraph('<font color="#013866"><b>DELPI</b></font>', styles["logoFallback"])
 
+        labels = labels or PDF_LABELS_PT
         numero_ov = _display(cabecalho.get("numero_ov"))
         versao = _display(cabecalho.get("versao"))
         data = _display(cabecalho.get("data"))
 
         meta = Table(
             [
-                [Paragraph("PROPOSTA COMERCIAL", styles["headerLabel"])],
-                [Paragraph(f"N° {_escape(numero_ov)}", styles["headerNumber"])],
+                [Paragraph(labels["header_label"], styles["headerLabel"])],
                 [
                     Paragraph(
-                        f'<font color="#64748B">Versão</font> {_escape(versao)}'
-                        f'&nbsp;&nbsp;&nbsp;<font color="#64748B">Data</font> {_escape(data)}',
+                        f"{labels['number_prefix']} {_escape(numero_ov)}",
+                        styles["headerNumber"],
+                    )
+                ],
+                [
+                    Paragraph(
+                        f'<font color="#64748B">{labels["version"]}</font> {_escape(versao)}'
+                        f'&nbsp;&nbsp;&nbsp;<font color="#64748B">{labels["date"]}</font> {_escape(data)}',
                         styles["headerMeta"],
                     )
                 ],
@@ -251,7 +382,9 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             )
         )
 
-        company_block = Paragraph(_format_empresa_lines(empresa), styles["headerCompany"])
+        company_block = Paragraph(
+            _format_empresa_lines(empresa, labels), styles["headerCompany"]
+        )
 
         block = Table(
             [
@@ -283,15 +416,17 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         cliente: dict,
         contato: dict,
         styles: dict[str, ParagraphStyle],
+        labels: dict[str, str] | None = None,
     ) -> list[Flowable]:
+        labels = labels or PDF_LABELS_PT
         card_width = (CONTENT_WIDTH - 4 * mm) / 2
         client_card = _build_labeled_card(
-            "Cliente",
+            labels["client_card"],
             [
-                ("Nome", _display(cliente.get("nome"))),
-                ("Endereço", _display(cliente.get("endereco"))),
+                (labels["field_name"], _display(cliente.get("nome"))),
+                (labels["field_address"], _display(cliente.get("endereco"))),
                 (
-                    "Cidade/UF",
+                    labels["field_city_state"],
                     " - ".join(
                         p
                         for p in (
@@ -308,12 +443,12 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             card_width,
         )
         contact_card = _build_labeled_card(
-            "Contato",
+            labels["contact_card"],
             [
-                ("Nome", _display(contato.get("nome"))),
-                ("Departamento", _display(contato.get("departamento"))),
+                (labels["field_name"], _display(contato.get("nome"))),
+                (labels["field_department"], _display(contato.get("departamento"))),
                 ("E-mail", _display(contato.get("email"))),
-                ("Telefone", _display(contato.get("telefone"))),
+                (labels["field_phone"], _display(contato.get("telefone"))),
             ],
             styles,
             card_width,
@@ -340,23 +475,27 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         rotulos: dict,
         *,
         exibir_coluna_valor_liquido: bool = True,
+        labels: dict[str, str] | None = None,
     ) -> list[Flowable]:
+        labels = labels or PDF_LABELS_PT
         descricao_width = (50 * mm if exibir_coluna_valor_liquido else 74 * mm) + 18 * mm
         headers = [
-            _rotulo_coluna_itens(rotulos, "item", "Item"),
-            _rotulo_coluna_itens(rotulos, "produto", "Ref. Delpi"),
-            _rotulo_coluna_itens(rotulos, "referencia_cliente", "Ref. Cliente"),
-            _rotulo_coluna_itens(rotulos, "descricao", "Descrição"),
-            _rotulo_coluna_itens(rotulos, "valor_bruto", "Bruto R$/mil"),
+            _rotulo_coluna_itens(rotulos, "item", labels["col_item"]),
+            _rotulo_coluna_itens(rotulos, "produto", labels["col_produto"]),
+            _rotulo_coluna_itens(rotulos, "referencia_cliente", labels["col_referencia_cliente"]),
+            _rotulo_coluna_itens(rotulos, "descricao", labels["col_descricao"]),
+            _rotulo_coluna_itens(rotulos, "valor_bruto", labels["col_valor_bruto"]),
         ]
         widths = [8 * mm, 15 * mm, 18 * mm, descricao_width, 24 * mm]
         if exibir_coluna_valor_liquido:
-            headers.append(_rotulo_coluna_itens(rotulos, "valor_liquido", "Líquido R$/mil"))
+            headers.append(
+                _rotulo_coluna_itens(rotulos, "valor_liquido", labels["col_valor_liquido"])
+            )
             widths.append(24 * mm)
         headers.extend(
             [
-                _rotulo_coluna_itens(rotulos, "prazo", "Prazo"),
-                _rotulo_coluna_itens(rotulos, "lote_minimo", "Lote mín./mil"),
+                _rotulo_coluna_itens(rotulos, "prazo", labels["col_prazo"]),
+                _rotulo_coluna_itens(rotulos, "lote_minimo", labels["col_lote_minimo"]),
             ]
         )
         widths.extend([12 * mm, 12 * mm])
@@ -366,7 +505,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         ]
 
         for item in itens:
-            prazo_text = _format_prazo_display(item.get("prazo_dias"))
+            prazo_text = _format_prazo_display(item.get("prazo_dias"), labels)
             lote = item.get("lote_minimo")
             lote_text = "—" if lote in (None, "") else str(lote)
             row: list[Flowable | str] = [
@@ -414,7 +553,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                 ]
             )
         )
-        return _section_block("Itens", [table], styles, title_spacing=2 * mm)
+        return _section_block(labels["items_section"], [table], styles, title_spacing=2 * mm)
 
     def _build_conditions_section(
         self,
@@ -422,22 +561,43 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         condicoes: dict,
         styles: dict[str, ParagraphStyle],
         literal_fields: set[str] | None = None,
+        labels: dict[str, str] | None = None,
     ) -> list[Flowable]:
+        labels = labels or PDF_LABELS_PT
         validade = cabecalho.get("validade_dias")
-        validade_text = "—" if validade in (None, "") else f"{validade} dias"
+        validade_text = (
+            "—"
+            if validade in (None, "")
+            else f"{validade} {labels['days_suffix']}"
+        )
         literal = literal_fields or set()
 
         entries = [
-            ("Condição de pagamento", _condition_text(condicoes, "descricao", literal)),
-            ("ICMS", _condition_text(condicoes, "icms", literal, _format_icms_display)),
+            (labels["cond_payment"], _condition_text(condicoes, "descricao", literal)),
+            (
+                "ICMS",
+                _condition_text(
+                    condicoes, "icms", literal, lambda v: _format_icms_display(v, labels)
+                ),
+            ),
             ("PIS/COFINS", _condition_text(condicoes, "pis_cofins", literal)),
             ("IPI", _condition_text(condicoes, "ipi", literal)),
             (
-                "Embalagem",
-                _condition_text(condicoes, "embalagem", literal, _format_embalagem_display),
+                labels["cond_packaging"],
+                _condition_text(
+                    condicoes,
+                    "embalagem",
+                    literal,
+                    lambda v: _format_embalagem_display(v, labels),
+                ),
             ),
-            ("Frete", _condition_text(condicoes, "frete", literal, _format_frete_display)),
-            ("Validade da proposta", validade_text),
+            (
+                labels["cond_freight"],
+                _condition_text(
+                    condicoes, "frete", literal, lambda v: _format_frete_display(v, labels)
+                ),
+            ),
+            (labels["cond_validity"], validade_text),
         ]
 
         rows = [
@@ -447,7 +607,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             ]
             for label, value in entries
         ]
-        for note in FIXED_CONDITION_TEXTS:
+        for note in (labels["fixed_cond_1"], labels["fixed_cond_2"]):
             rows.append(
                 [
                     Paragraph("", styles["conditionLabel"]),
@@ -480,7 +640,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             )
         )
 
-        title = Paragraph("Condições comerciais", styles["sectionTitle"])
+        title = Paragraph(labels["conditions_title"], styles["sectionTitle"])
         return [title, Spacer(1, 2 * mm), wrapper]
 
     def _build_closing_sections(
@@ -488,8 +648,10 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         observacoes: str,
         vendedor: dict,
         styles: dict[str, ParagraphStyle],
+        labels: dict[str, str] | None = None,
     ) -> list[Flowable]:
-        text = observacoes or "Sem observações registradas."
+        labels = labels or PDF_LABELS_PT
+        text = observacoes or labels["notes_empty"]
         obs_body = Paragraph(_escape_multiline(text), styles["observations"])
         obs_wrapper = Table([[obs_body]], colWidths=[CONTENT_WIDTH])
         obs_wrapper.setStyle(
@@ -506,7 +668,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         )
 
         obs_section = [
-            Paragraph("Observações", styles["sectionTitle"]),
+            Paragraph(labels["notes_title"], styles["sectionTitle"]),
             Spacer(1, 2 * mm),
             obs_wrapper,
         ]
@@ -537,7 +699,7 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
         return [
             *obs_section,
             Spacer(1, 2.5 * mm),
-            Paragraph("Atenciosamente,", styles["closingSalutation"]),
+            Paragraph(labels["closing"], styles["closingSalutation"]),
             Spacer(1, 2.5 * mm),
             signature_block,
         ]
@@ -568,7 +730,8 @@ def _section_block(
     ]
 
 
-def _format_empresa_lines(empresa: dict) -> str:
+def _format_empresa_lines(empresa: dict, labels: dict[str, str] | None = None) -> str:
+    labels = labels or PDF_LABELS_PT
     lines = [
         f"<b>{_escape(_display(empresa.get('nome')))}</b>",
         _escape(_display(empresa.get("endereco"))),
@@ -586,7 +749,7 @@ def _format_empresa_lines(empresa: dict) -> str:
     elif cidade or uf:
         city_parts.append(cidade or uf)
     if cep and cep != "—":
-        city_parts.append(f"CEP {cep}")
+        city_parts.append(f"{labels['zip_prefix']} {cep}")
     if city_parts:
         lines.append(_escape(" - ".join(city_parts)))
 
@@ -682,10 +845,17 @@ def _load_logo_flowable() -> Flowable | None:
         return None
 
 
-def _draw_running_header(page_canvas, detail: dict, *, first_page: bool) -> None:
+def _draw_running_header(
+    page_canvas,
+    detail: dict,
+    *,
+    first_page: bool,
+    labels: dict[str, str] | None = None,
+) -> None:
     if first_page:
         return
 
+    labels = labels or _resolve_labels(detail)
     cabecalho = detail.get("cabecalho") or {}
     numero_ov = _display(cabecalho.get("numero_ov"))
     page_canvas.saveState()
@@ -700,7 +870,7 @@ def _draw_running_header(page_canvas, detail: dict, *, first_page: bool) -> None
     page_canvas.drawRightString(
         A4[0] - MARGIN_RIGHT,
         A4[1] - 9 * mm,
-        f"Proposta Comercial N° {numero_ov}",
+        f"{labels['running_header']} {numero_ov}",
     )
     page_canvas.restoreState()
 
@@ -900,16 +1070,22 @@ def _build_styles() -> dict[str, ParagraphStyle]:
     }
 
 
-def _format_prazo_display(value: Any) -> str:
+def _format_prazo_display(value: Any, labels: dict[str, str] | None = None) -> str:
+    labels = labels or PDF_LABELS_PT
     if value in (None, ""):
         return "—"
     text = str(value).strip()
     if not text:
         return "—"
     if text.isdigit():
-        return f"{text} dias"
+        return f"{text} {labels['days_suffix']}"
     lowered = text.lower()
-    if lowered.endswith("dias") or lowered.endswith("dia"):
+    if (
+        lowered.endswith("dias")
+        or lowered.endswith("dia")
+        or lowered.endswith("days")
+        or lowered.endswith("day")
+    ):
         return text
     return text
 
@@ -934,50 +1110,58 @@ def _condition_text(
     return formatter(text)
 
 
-def _format_icms_display(value: str) -> str:
+def _format_icms_display(value: str, labels: dict[str, str] | None = None) -> str:
+    labels = labels or PDF_LABELS_PT
     if not value or value == "—":
         return "—"
     if "incluso" in value.lower():
         return value.replace("—", "-").upper()
     if value.endswith("%"):
-        return f"{value} - INCLUSO"
+        return f"{value} - {labels['tax_included']}"
     return value
 
 
-def _format_embalagem_display(value: str) -> str:
+def _format_embalagem_display(value: str, labels: dict[str, str] | None = None) -> str:
+    labels = labels or PDF_LABELS_PT
     if not value or value == "—":
         return "—"
     lowered = value.lower()
     if "padrao" in lowered or "padrão" in lowered or "inclusa" in lowered or "delpi" in lowered:
-        return "INCLUSA"
+        return labels["packaging_included"]
     return value
 
 
-def _format_frete_display(value: str) -> str:
+def _format_frete_display(value: str, labels: dict[str, str] | None = None) -> str:
+    labels = labels or PDF_LABELS_PT
     if not value or value == "—":
         return "—"
     normalized = value.replace("—", "-").replace("–", "-")
     upper = normalized.upper()
     if upper.startswith("FOB"):
-        return "FOB - por conta do comprador"
+        return labels["freight_fob"]
     if upper.startswith("CIF"):
-        return "CIF - por conta do vendedor"
+        return labels["freight_cif"]
     return normalized
 
 
-def _compose_observacoes_text(observacoes: str, itens: list[dict]) -> str:
+def _compose_observacoes_text(
+    observacoes: str,
+    itens: list[dict],
+    labels: dict[str, str] | None = None,
+) -> str:
+    labels = labels or PDF_LABELS_PT
     ncm_lines: list[str] = []
     for item in itens:
         ncm = _display(item.get("ncm"), empty="")
         if not ncm:
             continue
         item_label = _display(item.get("item"), empty="—")
-        ncm_lines.append(f"Item {item_label} — NCM {ncm}")
+        ncm_lines.append(f"Item {item_label} — {labels['ncm_label']} {ncm}")
 
     if not ncm_lines:
         return observacoes
 
-    ncm_block = "NCM:\n" + "\n".join(ncm_lines)
+    ncm_block = f"{labels['ncm_label']}:\n" + "\n".join(ncm_lines)
     if observacoes:
         return f"{observacoes}\n\n{ncm_block}"
     return ncm_block

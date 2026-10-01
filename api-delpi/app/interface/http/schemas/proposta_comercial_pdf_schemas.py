@@ -80,6 +80,7 @@ class PropostaComercialPdfRotulosOverrides(BaseModel):
 class PropostaComercialPdfExportRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    idioma: str | None = None
     exibir_coluna_valor_liquido: bool | None = None
     observacoes: str | None = None
     contato: PropostaComercialPdfContatoOverrides | None = None
@@ -90,6 +91,13 @@ class PropostaComercialPdfExportRequest(BaseModel):
 
     def to_overrides_dict(self) -> dict:
         payload = self.model_dump(exclude_none=True)
+        idioma = payload.get("idioma")
+        if isinstance(idioma, str):
+            normalized_idioma = idioma.strip().lower()
+            if normalized_idioma:
+                payload["idioma"] = normalized_idioma
+            else:
+                payload.pop("idioma", None)
         for key in ("contato", "condicoes", "vendedor"):
             nested = payload.get(key)
             if isinstance(nested, dict) and not nested:

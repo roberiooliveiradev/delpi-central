@@ -150,6 +150,7 @@ export type ProposalDocumentPdfLabelsOverrides = {
 };
 
 export type ProposalDocumentPdfExportOverrides = {
+  idioma?: "pt" | "en";
   exibir_coluna_valor_liquido?: boolean;
   observacoes?: string;
   contato?: Partial<Pick<ProposalDocumentContact, "nome" | "departamento" | "email" | "telefone">>;
