@@ -758,12 +758,16 @@ C3-MCP-INTEROP-01R1A = ACCEPT_WITH_RESIDUAL (§6.95;
    ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1A on
    IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d;
    residuals R1B-R1/R2/R3 close inside R1B)
-C3-MCP-INTEROP-01R1B = EXECUTED — evidence pending review (§6.96;
+C3-MCP-INTEROP-01R1B = ACCEPT_WITH_RESIDUAL (§6.97;
+   ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1B on
    IMPLEMENTATION_HEAD=cc65cc6388371224d955f266257d6aa3ca4967ce;
    authenticated initialize+tools/list PASS for DAVI/TEO/VISTA;
-   no business READ, no PREPARE/ACT)
-NEXT = C3-MCP-INTEROP-01R1C (security acceptance + bind — NOT yet
-   authorized; requires R1B review verdict)
+   residuals R1C-A..F close inside R1C)
+C3-MCP-INTEROP-01R1C = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.98;
+   IMPLEMENTATION_HEAD=78c87e12b079817de623adc7d4108ad3329a5364;
+   security matrix + live 3/3 DEV eval PASS; no business READ,
+   no PREPARE/ACT; C4 not authorized)
+NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1C
 Workspace binding remains unscheduled
 ```
 

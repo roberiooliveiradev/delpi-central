@@ -6045,3 +6045,193 @@ RESIDUALS:
 NEXT: C3-MCP-INTEROP-01R1C — SECURITY_ACCEPTANCE_AND_BIND (pending
       review of this record; not authorized by it)
 ```
+
+## 6.97 C3-MCP-INTEROP-01R1B architecture review verdict + R1C authorization (pre-execution freeze)
+
+```
+STEP: C3-MCP-INTEROP-01R1B review persistence + R1C authorization
+MODE: REVIEW RECORD (pre-execution, before any R1C runtime change)
+
+ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1B = ACCEPT_WITH_RESIDUAL
+REVIEWED_IMPLEMENTATION_HEAD = cc65cc6388371224d955f266257d6aa3ca4967ce
+REVIEWED_BIND_HEAD = 76a169d788b628ea450d7936c2023c6292b50fe6
+
+ACCEPTED:
+  DAVI_AUTHENTICATED_DISCOVERY = PASS
+  TEO_AUTHENTICATED_DISCOVERY = PASS
+  VISTA_AUTHENTICATED_DISCOVERY = PASS
+  SAME_USER_DELEGATION = PASS
+  RESOURCE_ISOLATION = PASS
+  AZP_REQUESTER_BINDING = PASS
+  AUTH_FAILURE_INVALIDATION = PASS
+  DISCOVERY_NOT_APPROVAL = PASS
+  READ_PHASE_GATE = PASS
+  PREPARE_BLOCK = PASS
+  ACT_BLOCK = PASS
+
+RESIDUALS_TO_CLOSE_OR_RECORD_IN_R1C:
+  R1C-A = exchange least-privilege audit (requester allowlist, negative
+      exchange proofs, prototype-policy disposition)
+  R1C-B = host-override trust-boundary verification (config-only, never
+      request/model/tool controlled)
+  R1C-C = MCP protocol conformance classification (server floor
+      2026-07-28 vs client-negotiated 2024-11-05)
+  R1C-D = adversarial discovery/identity negative matrix at bound SHA
+  R1C-E = test determinism vs ambient container env leakage
+  R1C-F = production exchange readiness stays NOT_PROVEN
+
+AUTHORIZED: C3-MCP-INTEROP-01R1C — MCP_FEDERATION_SECURITY_ACCEPTANCE_AND_BIND
+  (verification/hardening only; no new mechanism/endpoint/capability;
+   no business READ; no PREPARE/ACT; C4 not authorized by this record)
+
+C3_EXECUTED: NO
+C4_AUTHORIZED: NO
+BUSINESS_READ_EXECUTION = PHASE_GATED
+PREPARE: FORBIDDEN
+ACT: FORBIDDEN
+PRODUCTION_READINESS: NOT_PROVEN
+EXECUTION_DRIFT: NONE
+NEXT: C3-MCP-INTEROP-01R1C execution
+```
+
+
+## 6.98 C3-MCP-INTEROP-01R1C — security acceptance + adversarial verification + bind
+
+```
+STEP: C3-MCP-INTEROP-01R1C
+MODE: SECURITY ACCEPTANCE + MINIMAL HARDENING + LIVE DEV EVIDENCE
+BASE_HEAD = 7684f9ac12166eb3aacd832e74e606641f1cf692
+IMPLEMENTATION_HEAD = 78c87e12b079817de623adc7d4108ad3329a5364
+EVALUATED_SHA = 78c87e12b079817de623adc7d4108ad3329a5364
+
+PRE_DESIGN:
+  EXISTING_EQUIVALENT = provider/adapter/transport/registry/eval from
+      R1A+R1B reused; zero new abstractions, endpoints, clients,
+      registries, or persistence introduced
+  REUSE_DECISION = REUSE (hardening = tests + bootstrap convergence +
+      conftest determinism only)
+
+PORTAL_OIDC_CONTRACT (real dev token, sanitized):
+  iss = http://localhost/auth/realms/delpi
+  azp = delpi-central ; aud = [account, delia-api, delpi-central]
+  scope = [email, openid, profile] ; sub present ; exp ttl ~299s
+  delia-api requester audience = PRESENT
+  MCP resource auds on subject = NONE (DAVI/TEO/VISTA all absent)
+
+TOKEN_EXCHANGE_LEAST_PRIVILEGE (live DEV):
+  delia-api → mcp-api-delpi = 200 (sub preserved, azp=delia-api,
+      aud=[account, delpi-central, DAVI resource, mcp-api-delpi],
+      scope incl openid+mcp:tools, no foreign MCP resource aud)
+  delia-api → unknown target (mcp-nonexistent-target) = 400
+  delia-api → non-MCP client target (delpi-central) = 403
+  unrelated confidential client → mcp-api-delpi = 403
+  delia-api wrong secret → mcp-api-delpi = 401
+  delia-api client = confidential, service account OFF, direct
+      grants OFF, standard flow OFF, standard.token.exchange.enabled
+  prototype policy disposition = delia-exchange-requester-mcp-api-delpi
+      (R1A leftover, privilege-equivalent client policy [delia-api])
+      was the bound policy on all 3 targets; converged bindings to
+      canonical delia-exchange-requester and removed legacy policy
+      idempotently via bootstrap; re-verified exchange = 200 and
+      associatedPolicies = [delia-exchange-requester] x3
+
+HOST_OVERRIDE_SECURITY:
+  DELIA_EXCHANGE_HOST_HEADER / DELIA_MCP_*_HOST_HEADER are env-config
+      only (Settings/os.getenv -> profile/provider); no request, model,
+      tool-metadata, or capability-argument path reaches them (test:
+      arguments cannot influence transport headers; Host sent only
+      when configured)
+  specialist DNS-rebinding protection unchanged (421 contract intact)
+
+PROTOCOL CONFORMANCE:
+  DAVI_SERVER_PROTOCOL_SUPPORT = mcp 2.2.0, LATEST=2026-07-28 -> SUPPORTED
+  TEO_SERVER_PROTOCOL_SUPPORT  = mcp 2.2.0, LATEST=2026-07-28 -> SUPPORTED
+  VISTA_SERVER_PROTOCOL_SUPPORT= mcp 2.2.0, LATEST=2026-07-28 -> SUPPORTED
+  DELIA_NEGOTIATED_PROTOCOL = 2024-11-05 (classic initialize flow)
+  PROTOCOL_POLICY_CONFORMANCE = PASS — floor constrains SERVER
+      capability (>=2026-07-28 met); client negotiates a compatible
+      older revision lawfully; SERVER_CAPABILITY_FLOOR (2026-07-28)
+      != CLIENT_NEGOTIATED_REVISION (2024-11-05), recorded explicitly
+  PROTOCOL_DOWNGRADE_SECURITY_IMPACT = NONE — bearer+audience+
+      scope enforcement is revision-independent; older revision only
+      reduces available features
+
+IDENTITY_NEGATIVE_MATRIX = PASS (tests):
+  missing/malformed/expired subject, no sub, service-principal,
+  exchange denial, transport failure, malformed response, wrong
+  secret, wrong azp, subject mismatch, missing mcp:tools, wrong/
+  multiple MCP resource auds, expired delegated token, validator
+  failure, unknown specialist/target — all fail closed, no retry
+
+CACHE_SECURITY_MATRIX = PASS (tests):
+  bounded reuse same user/resource, cross-user + cross-resource
+  isolation, expired token not reused, hard cap 300s, token-exp
+  safety margin, initialize/tools_list/tools_call 401 invalidation,
+  non-auth wire error does not invalidate, process-local only
+
+DISCOVERY_ADVERSARIAL_MATRIX = PASS (tests):
+  poisoned descriptions/readOnlyHint/schema/operationClass cannot
+  elevate; unknown tools blocked incl. forged class claims; tool
+  disappears -> no stale grant; renamed tool -> no inherited
+  approval; poisoned result stays OBSERVATION never FACT; registry
+  remains DELIA-owned; discovery never mutates approval
+
+PHASE_GATES (tests, fail-closed):
+  DAVI execute_delpi_information (READ) = CAPABILITY_NOT_ALLOWED_IN_PHASE
+  TEO/VISTA representative READ = CAPABILITY_NOT_ALLOWED_IN_PHASE
+  TEO/VISTA PREPARE = WRITE_CAPABILITY_BLOCKED
+  TEO/VISTA ACT = WRITE_CAPABILITY_BLOCKED
+  unknown capability/tool = UNKNOWN_CAPABILITY
+
+SECRET_REDACTION = PASS:
+  provider/adapter/transport raise semantic codes only (no raw
+  bodies/tokens); test proves exception chain cannot surface subject
+  token or client secret; eval prints booleans/claim names only;
+  no secrets in logs/docs/ledger
+
+TEST_DETERMINISM = RESOLVED (task-local):
+  tests/conftest.py autouse fixture neutralizes ambient DELIA_LLM_*,
+  DELIA_MCP_*, DELIA_EXCHANGE_*, DELIA_EVAL_*, DELPI_AUTH_CORE_API_URL,
+  CORE_API_URL — full suite green WITH container env intact (closes
+  R1B residual 3 inside R1C)
+
+LIVE DEV FINAL EVAL (EVALUATED_SHA, real subject + real exchange):
+  core_context resolved (sub present, 64 effective permissions)
+  DAVI: init+list PASS, 2 remote tools, approved=[discover_delpi_information],
+      1 blocked, discovery_call PASS
+  TEO:  init+list PASS, 24 tools, approved=[get_catalog], 23 blocked,
+      discovery_call PASS
+  VISTA: init+list PASS, 8 tools, approved=[get_catalog], 7 blocked,
+      discovery_call PASS
+  delegated credential per specialist: same_sub, azp_is_requester,
+      resource_audience_bound, no foreign MCP auds, mcp:tools, exp valid
+
+TESTS AT EVALUATED_SHA:
+  targeted identity/delegation/adapter/security suites = PASS
+  full delia-api suite = 499/499 PASS (ambient env, post-conftest)
+  bootstrap idempotency = PASS (converged; second run fully clean)
+  git diff --check = PASS
+
+PRODUCTION_IDENTITY_READINESS = NOT_PROVEN (dev realm only; no
+  production Keycloak/feature-flag/secret changes made)
+RESIDUAL_SEARCH = CLEAN: no static user tokens, no service-account
+  substitution, no arbitrary exchange target, no generic proxy, no
+  model-controlled endpoint/Host, no unapproved auto-execution, no
+  PREPARE/ACT exposure, no duplicate identity/adapter mechanisms
+
+RESIDUALS:
+  (1) KC dev feature flags (token-exchange, admin-fine-grained-authz)
+      remain dev-compose only;
+  (2) KC26 requires requester aud in subject token (documented);
+  (3) native 2026-07-28 modern-envelope client support = future
+      transport extension (not required — classic revision is lawful);
+  (4) production token exchange NOT_PROVEN — normal release gate.
+
+C3_EXECUTED = NO ; C4_AUTHORIZED = NO
+BUSINESS_READ_EXECUTION = PHASE_GATED ; PREPARE/ACT = FORBIDDEN
+EXECUTION_DRIFT = NONE (interim bpmn commit OUTSIDE_TASK; user dirt
+  preserved untouched)
+POSTCONDITION = C3 MCP federation security evidence complete and bound
+C3-MCP-INTEROP-01R1C = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01R1C
+```
