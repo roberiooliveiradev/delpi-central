@@ -23,6 +23,26 @@
       }
     }
   },
+  "overlayEntities": {
+    "dashboard_si_indicator_meta": {
+      "valueFields": [
+        "comparable_goal",
+        "goal_value",
+        "reference_goal"
+      ],
+      "valueFieldTypes": {
+        "comparable_goal": "number",
+        "goal_value": "number",
+        "reference_goal": "number"
+      },
+      "valueFieldLabels": {
+        "comparable_goal": "Meta do período",
+        "goal_value": "Meta cadastrada",
+        "reference_goal": "Meta mês (referência)"
+      },
+      "projectableFields": null
+    }
+  },
   "overlays": {
     "get_on_time_delivery_pct": {
       "tvConstraints": {

@@ -1142,11 +1142,29 @@ def load_overlay_prefixes(overlays_path: Path) -> dict[str, dict[str, Any]]:
     }
 
 
+def load_overlay_entities(overlays_path: Path) -> dict[str, dict[str, Any]]:
+    """Overlay por `xDelpi.entity` — discrimina irmãos que o prefixo não separa
+    (ex.: `dashboard_si_indicator_meta` vs `dashboard_si_indicator_realized`)."""
+    if not overlays_path.is_file():
+        return {}
+    payload = load_json(overlays_path)
+    raw = payload.get("overlayEntities") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(key): dict(value)
+        for key, value in raw.items()
+        if isinstance(value, dict) and str(key).strip()
+    }
+
+
 def resolve_overlay(
     operation_id: str,
     *,
     overlays: dict[str, dict[str, Any]],
     prefixes: dict[str, dict[str, Any]],
+    entities: dict[str, dict[str, Any]] | None = None,
+    entity: str = "",
 ) -> dict[str, Any] | None:
     exact = overlays.get(operation_id)
     prefix_match: dict[str, Any] | None = None
@@ -1155,11 +1173,16 @@ def resolve_overlay(
         if operation_id.startswith(prefix):
             prefix_match = overlay
             break
-    if exact and prefix_match:
-        merged = dict(prefix_match)
+    entity_match = (entities or {}).get(entity) if entity else None
+    if not (exact or prefix_match or entity_match):
+        return None
+    # Precedência: prefixo < entity < overlay exato por operationId.
+    merged: dict[str, Any] = dict(prefix_match or {})
+    if entity_match:
+        merged.update(entity_match)
+    if exact:
         merged.update(exact)
-        return merged
-    return exact or prefix_match
+    return merged
 
 
 def extract_overlay_from_route(route: dict[str, Any], base: dict[str, Any]) -> dict[str, Any]:
@@ -1241,14 +1264,23 @@ def generate_routes(
     overlays_file = overlays_path or TV_OVERLAYS_PATH
     overlays = load_overlays(overlays_file)
     prefixes = load_overlay_prefixes(overlays_file)
+    entities = load_overlay_entities(overlays_file)
     generated: list[dict[str, Any]] = []
     for operation in load_openapi_get_operations(baseline_path):
         operation_id = str(operation.get("operationId") or "").strip()
+        x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+        entity = str(x_delpi.get("entity") or "").strip()
         base = build_base_route(operation)
         with_existing = merge_with_existing(base, existing.get(operation_id))
         with_overlay = apply_overlay(
             with_existing,
-            resolve_overlay(operation_id, overlays=overlays, prefixes=prefixes),
+            resolve_overlay(
+                operation_id,
+                overlays=overlays,
+                prefixes=prefixes,
+                entities=entities,
+                entity=entity,
+            ),
         )
         normalized = normalize_route_param_schema(with_overlay)
         generated.append(

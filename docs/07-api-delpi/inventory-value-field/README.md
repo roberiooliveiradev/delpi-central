@@ -249,3 +249,54 @@ corretos (KEEP) — Wave 2 nao deve toca-los.
 Artefato sanitizado: `prod_value_binding_audit.json` (97 linhas:
 playlist/slide/block ids, operationId, field_path, classe — sem
 valores de negocio).
+
+
+---
+
+## Wave 2 — Migracao semantica SI meta (executada 2026-10-01)
+
+Escopo: catalogo SI `*_meta` + 7 bindings persistidos em producao.
+
+### Catalogo
+
+- Novo mecanismo `overlayEntities` no gerador/overlays (chave = `xDelpi.entity`)
+  — discrimina irmaos que o prefixo nao separa: precedencia
+  prefixo < entity < overlay exato.
+- `dashboard_si_indicator_meta` agora projeta
+  `comparable_goal`, `goal_value`, `reference_goal` (labels curados);
+  `projectableFields: null` purga a declaracao herdada de `value`.
+- 36 rotas `*_meta` migradas; 36 `*_realized` intactas (`["value"]`).
+- `value` permanece emitido no HTTP como alias de compatibilidade
+  (DEPRECATED COMPATIBILITY ALIAS) — nao removido nesta wave.
+- Gerador: CHECK=0 (525 rotas).
+
+### Migracao persistida (producao srv-api)
+
+- Backup: 4 slides -> ~/wave2_si_meta_backup_20261001.jsonl (srv-api)
+  + copia local; script tambem grava snapshot in-container.
+- Predicado limitado: bloco cujo operationId resolvido
+  (dataBinding ou dataSourceId->data_source) casa `get_si_indicator_*_meta`
+  E ref de campo == "value" (exact match, inclui selectedValueFields[]).
+- Escrita via `PlaylistRepository.update_slide` (transacao por slide +
+  snapshot em playlist_history + updated_at). Actor:
+  `wave2-si-meta-field-migration`, reason `si_meta_value_field_migration`.
+- expected=7 matched=7 updated=7 (4 slides / 2 playlists).
+- Pos-condicao lida por psql independente: SI_META value=0,
+  comparable_goal=7, SI_REALIZED value=15, outros 74 intactos.
+- Preview runtime in-container (SlideDataResolutionService, kind=service):
+  7/7 blocos resolvem comparable_goal com valor real
+  (225.81/306.45/9.35/64.52/0.26/290.32/74.19 == value alias);
+  irmao fora dos slides (ppm_external_meta) idem.
+
+### Testes
+
+- test_si_meta_value_field_migration.py: 10 casos (positive/sibling/
+  negative/idempotente/exact-match/lista/aninhado).
+- test_catalog_value_field_contract.py: +invariante SI meta/realized
+  (schema autoritativo do producer; 36+36 rotas).
+- test_tv_data_route_catalog.py: contrato meta atualizado para a tríade.
+- Suite completa tv-dashboard-api: 1417 pass, 2 falhas pre-existentes
+  (date-boundary — ja reprovadas em baseline).
+
+Nota residual: 10 refs `value` nao resolvidas via dataSourceId no slide
+870c19ed (fontes `rx_*` — dataModels); fora do escopo (nao sao `*_meta`).
