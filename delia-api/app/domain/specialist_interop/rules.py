@@ -110,3 +110,36 @@ def invocable_in_foundation(operation_class: SpecialistOperationClass) -> bool:
     READ requires the separate C4 authorization; PREPARE/ACT are writes.
     """
     return operation_class is SpecialistOperationClass.DISCOVERY
+
+
+# C4-MCP-GOVERNED-READS-01: the only task-scoped bounded READ
+# authorization. Maps (specialist, remote capability) -> the exact set
+# of DAVI-side action ids DÉLIA orchestration may execute. This is
+# DÉLIA orchestration policy, not DAVI business authority — DAVI still
+# decides candidate eligibility and API DELPI still enforces Product
+# Master AuthZ. Everything outside this table stays phase-gated.
+GOVERNED_READ_ACTIONS: dict[tuple[str, str], frozenset[str]] = {
+    ("davi", "execute_delpi_information"): frozenset({"search_products"}),
+}
+
+# Canonical single binding for this slice — the only place specialist
+# identity for the governed read may be named.
+GOVERNED_READ_SPECIALIST = "davi"
+GOVERNED_READ_DISCOVERY_CAPABILITY = "discover_delpi_information"
+GOVERNED_READ_EXECUTE_CAPABILITY = "execute_delpi_information"
+GOVERNED_READ_ACTION_ID = "search_products"
+
+
+def governed_read_action_allowed(
+    specialist_id: str, remote_name: str, action_id: str | None
+) -> bool:
+    """Bounded C4 gate: True only for the explicitly authorized tuple."""
+    allowed = GOVERNED_READ_ACTIONS.get(
+        (
+            str(specialist_id or "").strip().lower(),
+            str(remote_name or "").strip(),
+        )
+    )
+    if not allowed or action_id is None:
+        return False
+    return str(action_id).strip() in allowed

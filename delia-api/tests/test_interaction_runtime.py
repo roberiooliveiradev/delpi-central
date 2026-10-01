@@ -331,8 +331,14 @@ def test_full_vertical_http_path_returns_bounded_result():
         "limitations",
         "generated_at",
         "model_invocation_id",
+        # C4-MCP-GOVERNED-READS-01: explicit grounding marker + bounded
+        # provenance projection (null when NON_GROUNDED).
+        "grounding_status",
+        "provenance",
     }
     assert body["epistemic_class"] == "HYPOTHESIS"
+    assert body["grounding_status"] == "NON_GROUNDED"
+    assert body["provenance"] is None
     assert body["content"].strip()
     assert isinstance(body["limitations"], list)
 

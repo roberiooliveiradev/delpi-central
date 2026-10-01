@@ -6,6 +6,7 @@ import {
   buildInteractionContext,
   submitInteractionTurn,
 } from "./api/interactionClient";
+import type { DeliaInteractionProvenance } from "./api/interactionClient";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -29,6 +30,8 @@ type DisplayTurn = {
   content: string;
   epistemicClass?: string | null;
   limitations?: string[];
+  groundingStatus?: "GROUNDED" | "NON_GROUNDED" | null;
+  provenance?: DeliaInteractionProvenance | null;
 };
 
 const TOKEN_UNAVAILABLE_MESSAGE =
@@ -105,6 +108,8 @@ export default function App({
           content: result.content,
           epistemicClass: result.epistemic_class,
           limitations: result.limitations,
+          groundingStatus: result.grounding_status,
+          provenance: result.provenance,
         },
       ]);
       setInput("");
@@ -154,6 +159,15 @@ export default function App({
                   {turn.epistemicClass ? (
                     <span className="delia-turn__meta">
                       classificação: {turn.epistemicClass}
+                    </span>
+                  ) : null}
+                  {turn.groundingStatus === "GROUNDED" &&
+                  turn.provenance?.source ? (
+                    <span className="delia-turn__meta">
+                      fonte: Cadastro de Produtos DELPI ·{" "}
+                      {turn.provenance.specialist_id ?? "especialista"}/
+                      {turn.provenance.protocol ?? "MCP"} ·{" "}
+                      {turn.provenance.observed_at ?? ""}
                     </span>
                   ) : null}
                   {turn.limitations && turn.limitations.length > 0 ? (

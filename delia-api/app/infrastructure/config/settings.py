@@ -100,6 +100,13 @@ class Settings:
             ),
             300.0,
         )
+        # C4-MCP-GOVERNED-READS-01: task-scoped bounded read switch.
+        # When off (default) every READ stays CAPABILITY_NOT_ALLOWED_IN_PHASE;
+        # a fresh runtime without this flag never gains the DAVI
+        # search_products read path.
+        self.c4_davi_product_read_enabled = _env_flag(
+            "DELIA_C4_DAVI_PRODUCT_READ_ENABLED"
+        )
 
     @classmethod
     def for_testing(cls) -> "Settings":

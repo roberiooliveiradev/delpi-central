@@ -36,6 +36,7 @@ from app.domain.specialist_interop.model import (
 )
 from app.domain.specialist_interop.rules import (
     APPROVED_SPECIALIST_IDS,
+    governed_read_action_allowed,
     invocable_in_foundation,
     operation_class_for,
 )
@@ -61,9 +62,14 @@ class McpSpecialistAdapter:
         *,
         credential_provider: DelegatedCredentialProvider | None = None,
         transport_factory: Callable[..., Any] | None = None,
+        governed_read_enabled: bool = False,
     ) -> None:
         self._connections = dict(connections)
         self._credential_provider = credential_provider
+        # Second enforcement boundary: mirrors the application-layer
+        # scoped gate — without the trusted config flag every READ is
+        # refused here as well.
+        self._governed_read_enabled = bool(governed_read_enabled)
         self._transport_factory = transport_factory or (
             lambda profile, bearer_token: DelpiMcpTransport(
                 profile.endpoint,
@@ -126,8 +132,11 @@ class McpSpecialistAdapter:
         *,
         correlation_id: str,
         timeout_seconds: float,
+        governed_action_id: str | None = None,
     ) -> RemoteToolOutcome:
-        self._require_invocable(specialist, remote_name)
+        self._require_invocable(
+            specialist, remote_name, governed_action_id
+        )
         profile, transport = self._connect(specialist)
         try:
             result = transport.call_tool(remote_name, arguments)
@@ -187,9 +196,11 @@ class McpSpecialistAdapter:
             )
         return profile
 
-    @staticmethod
     def _require_invocable(
-        specialist: SpecialistRef, remote_name: str
+        self,
+        specialist: SpecialistRef,
+        remote_name: str,
+        governed_action_id: str | None,
     ) -> None:
         operation_class = operation_class_for(
             specialist.specialist_id, remote_name
@@ -208,10 +219,19 @@ class McpSpecialistAdapter:
                     WRITE_CAPABILITY_BLOCKED,
                     "write-class capability is never invocable in this slice",
                 )
-            raise SpecialistInteropError(
-                CAPABILITY_NOT_ALLOWED_IN_PHASE,
-                "capability requires the C4 authorization gate",
-            )
+            if not (
+                operation_class is SpecialistOperationClass.READ
+                and self._governed_read_enabled
+                and governed_read_action_allowed(
+                    specialist.specialist_id,
+                    remote_name,
+                    governed_action_id,
+                )
+            ):
+                raise SpecialistInteropError(
+                    CAPABILITY_NOT_ALLOWED_IN_PHASE,
+                    "capability requires the C4 authorization gate",
+                )
 
     @staticmethod
     def _map_outcome(result: Mapping[str, Any]) -> RemoteToolOutcome:

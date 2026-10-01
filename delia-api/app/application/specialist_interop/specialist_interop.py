@@ -47,6 +47,7 @@ from app.domain.specialist_interop.model import (
     InteropProtocol,
 )
 from app.domain.specialist_interop.rules import (
+    governed_read_action_allowed,
     invocable_in_foundation,
     operation_class_for,
     specialist_ref_or_none,
@@ -60,8 +61,17 @@ def _now_utc() -> str:
 class SpecialistInterop:
     """One provider-neutral boundary for approved specialist interaction."""
 
-    def __init__(self, port: SpecialistInteropPort) -> None:
+    def __init__(
+        self,
+        port: SpecialistInteropPort,
+        *,
+        governed_read_enabled: bool = False,
+    ) -> None:
         self._port = port
+        # C4-MCP-GOVERNED-READS-01: task-scoped switch wired only from
+        # trusted server configuration. Without it every READ stays
+        # CAPABILITY_NOT_ALLOWED_IN_PHASE.
+        self._governed_read_enabled = bool(governed_read_enabled)
 
     def discover_catalog(
         self, request: SpecialistCatalogRequest
@@ -128,10 +138,19 @@ class SpecialistInterop:
                     WRITE_CAPABILITY_BLOCKED,
                     "write-class capability is never invocable in this slice",
                 )
-            raise SpecialistInteropError(
-                CAPABILITY_NOT_ALLOWED_IN_PHASE,
-                "READ capabilities require the C4 authorization gate",
-            )
+            if not (
+                operation_class is SpecialistOperationClass.READ
+                and self._governed_read_enabled
+                and governed_read_action_allowed(
+                    specialist.specialist_id,
+                    remote_name,
+                    request.governed_action_id,
+                )
+            ):
+                raise SpecialistInteropError(
+                    CAPABILITY_NOT_ALLOWED_IN_PHASE,
+                    "capability is not allowed in this phase",
+                )
         arguments = self._validate_arguments(request.arguments)
         outcome = self._port.call_remote_tool(
             specialist,
@@ -139,6 +158,7 @@ class SpecialistInterop:
             arguments,
             correlation_id=request.correlation_id,
             timeout_seconds=self._clamp_timeout(request.timeout_seconds),
+            governed_action_id=request.governed_action_id,
         )
         return self._normalize_outcome(
             specialist, remote_name, request.correlation_id, outcome

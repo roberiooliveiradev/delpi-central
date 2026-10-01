@@ -45,10 +45,16 @@ class SpecialistInteropPort(Protocol):
         *,
         correlation_id: str,
         timeout_seconds: float,
+        governed_action_id: str | None = None,
     ) -> RemoteToolOutcome:
         """Invoke one approved remote capability, fail closed.
 
         Implementations must re-check the DÉLIA allowlist (unknown
         specialist/capability, PREPARE/ACT, phase gate) before any wire
         activity — invocation is the second enforcement boundary.
+
+        ``governed_action_id`` carries the caller-declared underlying
+        governed action for the bounded C4 READ gate; it authorizes
+        nothing by itself and is re-validated against the canonical
+        registry here.
         """

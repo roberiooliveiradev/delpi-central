@@ -38,6 +38,19 @@ class TurnKind(str, Enum):
     DELIA_RESULT = "DELIA_RESULT"
 
 
+class GroundingStatus(str, Enum):
+    """C4-MCP-GOVERNED-READS-01: whether the result is backed by a
+    governed authoritative DELPI source read.
+
+    GROUNDED != FACT — grounding states provenance, not epistemic
+    truth elevation. NON_GROUNDED results must not claim current DELPI
+    data.
+    """
+
+    GROUNDED = "GROUNDED"
+    NON_GROUNDED = "NON_GROUNDED"
+
+
 class InteractionValidationCode(str, Enum):
     """Bounded deterministic validation codes — never CoT."""
 

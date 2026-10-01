@@ -13,7 +13,8 @@ from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
 from app.application.platform_access import PlatformAccessContext
-from app.domain.evidence.model import EpistemicClass
+from app.domain.evidence.model import EpistemicClass, SourceRef
+from app.domain.interaction.model import GroundingStatus
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,12 +36,59 @@ class InteractiveTurnRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class GovernedReadProvenance:
+    """Bounded user-facing provenance of a grounded governed read.
+
+    Exposes the business source (never the transport endpoint), the
+    interoperability specialist, and correlation metadata only. No
+    candidate tokens, credentials, URLs, or wire internals.
+    """
+
+    source_refs: tuple[SourceRef, ...]
+    specialist_id: str
+    remote_capability: str
+    action_id: str
+    protocol: str
+    observed_at: str
+    correlation_id: str
+    is_complete: bool
+
+    def to_projection(self) -> dict:
+        """Bounded HTTP-safe projection — no tokens, URLs, wire internals."""
+        first = self.source_refs[0] if self.source_refs else None
+        return {
+            "source": (
+                {
+                    "source_id": first.source_id,
+                    "source_system": first.source_system,
+                    "observed_at": first.observed_at,
+                }
+                if first is not None
+                else None
+            ),
+            "specialist_id": self.specialist_id,
+            "protocol": self.protocol,
+            "remote_capability": self.remote_capability,
+            "action_id": self.action_id,
+            "observed_at": self.observed_at,
+            "correlation_id": self.correlation_id,
+            "is_complete": self.is_complete,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class InteractiveTurnResult:
     """Bounded application response for one interaction turn.
 
     Exposes correlation IDs and validated result content only. No raw
     provider payload, credentials, instruction body, or authority
     snapshot is ever part of this contract.
+
+    C4-MCP-GOVERNED-READS-01: ``grounding_status`` distinguishes a
+    response backed by a governed authoritative DELPI source read
+    (GROUNDED) from a general model answer (NON_GROUNDED). There is no
+    ambiguous default — every result carries one. ``provenance`` is the
+    bounded evidence projection and is present only when GROUNDED.
     """
 
     session_id: str
@@ -50,7 +98,9 @@ class InteractiveTurnResult:
     epistemic_class: EpistemicClass | None
     limitations: tuple[str, ...]
     generated_at: str
-    model_invocation_id: str
+    model_invocation_id: str | None
+    grounding_status: GroundingStatus = GroundingStatus.NON_GROUNDED
+    provenance: GovernedReadProvenance | None = None
 
     def is_fact(self) -> bool:
         return False

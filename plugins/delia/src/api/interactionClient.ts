@@ -62,6 +62,25 @@ export function buildInteractionContext(
   return selected;
 }
 
+/**
+ * Bounded provenance projection of a grounded governed read
+ * (C4-MCP-GOVERNED-READS-01). Presentation only — never authority.
+ */
+export type DeliaInteractionProvenance = {
+  source?: {
+    source_id: string;
+    source_system: string;
+    observed_at?: string | null;
+  } | null;
+  specialist_id?: string;
+  protocol?: string;
+  remote_capability?: string;
+  action_id?: string;
+  observed_at?: string;
+  correlation_id?: string;
+  is_complete?: boolean;
+};
+
 export type DeliaInteractionResult = {
   session_id: string;
   user_turn_id: string;
@@ -71,6 +90,8 @@ export type DeliaInteractionResult = {
   limitations: string[];
   generated_at: string;
   model_invocation_id: string;
+  grounding_status: "GROUNDED" | "NON_GROUNDED" | null;
+  provenance: DeliaInteractionProvenance | null;
 };
 
 export class DeliaInteractionError extends Error {
@@ -187,5 +208,15 @@ export async function submitInteractionTurn(
       typeof payload.model_invocation_id === "string"
         ? payload.model_invocation_id
         : "",
+    grounding_status:
+      payload.grounding_status === "GROUNDED" ||
+      payload.grounding_status === "NON_GROUNDED"
+        ? payload.grounding_status
+        : null,
+    provenance:
+      payload.provenance &&
+      typeof payload.provenance === "object"
+        ? (payload.provenance as DeliaInteractionProvenance)
+        : null,
   };
 }

@@ -3,7 +3,11 @@ from __future__ import annotations
 import requests
 from flask import Flask
 
+from app.application.interaction.governed_product_read import (
+    GovernedProductRead,
+)
 from app.application.interaction.handle_interactive_turn import (
+    DEFAULT_MODEL_REF as DEFAULT_INTERACTION_MODEL_REF,
     HandleInteractiveConversationTurn,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
@@ -70,6 +74,24 @@ def create_application(
 
     app.config["PLATFORM_ACCESS_PROVIDER"] = provider
 
+    # C3-MCP-INTEROP-01: provider-neutral specialist boundary. The adapter
+    # performs no I/O at composition; unconfigured/disabled specialists and
+    # absent user-delegated credentials fail closed at call time.
+    # Built before the interaction handler so the bounded C4 governed
+    # read can compose on top of it (config-gated, bounded to this task).
+    connections = specialist_connections_from_settings(settings)
+    interop = SpecialistInterop(
+        McpSpecialistAdapter(
+            connections,
+            credential_provider=_wire_delegated_credential_provider(
+                settings, connections
+            ),
+            governed_read_enabled=settings.c4_davi_product_read_enabled,
+        ),
+        governed_read_enabled=settings.c4_davi_product_read_enabled,
+    )
+    app.config["SPECIALIST_INTEROP"] = interop
+
     # C3-INTERACTION-RUNTIME-01R2: TEST_ONLY deterministic adapter is
     # wired only for testing or explicit injection — never an implicit
     # runtime fallback. Normal runtime wires the approved real provider
@@ -80,29 +102,18 @@ def create_application(
     if interaction_turn_handler is not None:
         handler = interaction_turn_handler
     elif model_invocation_port is not None:
-        handler = HandleInteractiveConversationTurn(
-            InvokeModel(model_invocation_port)
+        invoke = InvokeModel(model_invocation_port)
+        handler = _compose_turn_handler(
+            invoke, DEFAULT_INTERACTION_MODEL_REF, interop, settings
         )
     elif testing:
-        handler = HandleInteractiveConversationTurn(
-            InvokeModel(DeterministicTestAdapter())
+        invoke = InvokeModel(DeterministicTestAdapter())
+        handler = _compose_turn_handler(
+            invoke, DEFAULT_INTERACTION_MODEL_REF, interop, settings
         )
     else:
-        handler = _wire_real_provider_handler(settings)
+        handler = _wire_real_provider_handler(settings, interop)
     app.config["INTERACTION_TURN_HANDLER"] = handler
-
-    # C3-MCP-INTEROP-01: provider-neutral specialist boundary. The adapter
-    # performs no I/O at composition; unconfigured/disabled specialists and
-    # absent user-delegated credentials fail closed at call time.
-    connections = specialist_connections_from_settings(settings)
-    app.config["SPECIALIST_INTEROP"] = SpecialistInterop(
-        McpSpecialistAdapter(
-            connections,
-            credential_provider=_wire_delegated_credential_provider(
-                settings, connections
-            ),
-        )
-    )
 
     register_error_handlers(app)
     register_request_logging(app, logger)
@@ -152,7 +163,32 @@ def _wire_delegated_credential_provider(settings: Settings, connections):
     )
 
 
-def _wire_real_provider_handler(settings: Settings):
+def _compose_turn_handler(
+    invoke_model: InvokeModel,
+    model_ref: ModelRef,
+    interop: SpecialistInterop,
+    settings: Settings,
+) -> HandleInteractiveConversationTurn:
+    """Compose the turn handler, attaching the bounded governed read.
+
+    C4-MCP-GOVERNED-READS-01: the governed read exists only under the
+    explicit bounded config flag; it reuses the same model port for
+    bounded argument extraction (proposal only) and the same
+    SpecialistInterop boundary for DAVI discovery/execute.
+    """
+    governed_read = (
+        GovernedProductRead(
+            interop, invoke_model=invoke_model, model_ref=model_ref
+        )
+        if settings.c4_davi_product_read_enabled
+        else None
+    )
+    return HandleInteractiveConversationTurn(
+        invoke_model, model_ref=model_ref, governed_read=governed_read
+    )
+
+
+def _wire_real_provider_handler(settings: Settings, interop):
     """Wire the real OpenAI-compatible provider only from complete config.
 
     provider=openai_compatible + base URL + model + key all present is the
@@ -172,12 +208,12 @@ def _wire_real_provider_handler(settings: Settings):
         model=settings.llm_model,
         timeout_seconds=settings.llm_timeout_seconds,
     )
-    return HandleInteractiveConversationTurn(
-        InvokeModel(adapter),
-        model_ref=ModelRef(
-            model_id=settings.llm_model,
-            version="configured",
-            owner_ref="DELPI",
-            provider_ref="openai_compatible",
-        ),
+    model_ref = ModelRef(
+        model_id=settings.llm_model,
+        version="configured",
+        owner_ref="DELPI",
+        provider_ref="openai_compatible",
+    )
+    return _compose_turn_handler(
+        InvokeModel(adapter), model_ref, interop, settings
     )

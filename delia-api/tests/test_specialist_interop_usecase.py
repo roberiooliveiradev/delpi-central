@@ -55,7 +55,7 @@ class FakePort:
 
     def call_remote_tool(
         self, specialist, remote_name, arguments, *, correlation_id,
-        timeout_seconds,
+        timeout_seconds, governed_action_id=None,
     ):
         self.calls.append((specialist.specialist_id, remote_name, arguments))
         return self._outcome
