@@ -1307,7 +1307,7 @@ TRACEABILITY_GAP = RESOLVED (C3_INTERACTION_RUNTIME_01 and
         C3_INTERACTION_CONTINUITY_01 review verdicts persisted §6.91)
 UNRELATED_REQUIREMENT_STATUS_CHANGED = NO
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+NEXT = C3-MCP-INTEROP-01R1A
 ```
 
 ## 37. C3-MCP-INTEROP-01 Existing Specialist MCP Federation — candidate linkage
@@ -1337,5 +1337,9 @@ DISCOVERED_REQUIREMENT = user-delegated MCP token propagation /
         MCP owners; prerequisite for authenticated connectivity)
 TRACEABILITY_GAP = NONE material
 PRODUCTION_READINESS = NOT_PROVEN
-NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+NEXT = C3-MCP-INTEROP-01R1A
 ```
+
+## 38. C3-MCP-INTEROP-01R1A User-Delegated Identity Foundation — decision linkage
+
+`ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01=REWORK` (ledger §6.93). The discovered requirement above is resolved in direction by the approved model: one confidential DÉLIA requester client (`delia-api`) + Keycloak standard token exchange → short-lived resource-bound access token preserving the same human subject; one MCP resource audience per delegated token; `mcp:tools` stays the generic transport scope; no global/static user token env; request-scoped subject bearer only; process-local bounded cache (≤120s reuse, ≤300s hard cap). Business READ remains C4-gated; PREPARE/ACT forbidden. CP statuses unchanged (CP-263..266 as above). `C3_EXECUTED=NO`. `NEXT=C3-MCP-INTEROP-01R1B` (authenticated specialist discovery). R1A executed: `IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d`, `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` (§6.94) — review verdict pending.

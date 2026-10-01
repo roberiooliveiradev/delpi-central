@@ -2402,6 +2402,24 @@ Implementation: `fdca215029a09dee862633460e7bc17bf1fa5639` (evidence §6.90).
 
 Epistemic gates: prior `USER_INPUT` = `None|OBSERVATION`; prior `DELIA_RESULT` = all canonical non-FACT + `None`; `FACT` in client context → fail-closed `invalid_request`; oversize context → `context_too_large` (bounded, no silent truncation).
 
+### C3-MCP-INTEROP-01R1A — user-delegated identity foundation (authorized, §6.93)
+
+`ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01=REWORK`. Acceptance for this slice:
+
+| Check | Required |
+|---|---|
+| Global `DELIA_MCP_*_USER_TOKEN` path removed from settings/profile/compose/adapter/docs | required |
+| Request-scoped subject bearer (never in PlatformAccessContext/model/MFE/logs) | required |
+| Provider-neutral delegation boundary; Keycloak mechanics confined to Infrastructure | required |
+| Exchanged credential validation (signature, iss, same sub, `mcp:tools`, exact resource aud, other resource auds absent, `delpi-central` aud, valid exp) | required |
+| Bounded process-local cache (subject+fingerprint+resource key; ≤120s reuse; ≤300s hard cap; expiry margin; invalidation on auth failure) | required |
+| Security negatives fail closed (missing/invalid subject, denied exchange, wrong/unknown resource, cross-user/cross-resource cache, expired reuse, missing scope, wrong aud, service token) | required |
+| Dev Keycloak evidence: bootstrap idempotent; portal token lacks MCP audiences; DAVI/TÉO/VISTA exchanges preserve subject + isolate audience | required |
+| Business READ / PREPARE / ACT execution | forbidden this slice |
+| Full delia-api suite + architecture tests | required |
+
+Execution evidence (§6.94, `EVALUATED_SHA=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d`): all required checks PASS — 42/42 targeted delegation+adapter tests (positive + all negative classes), 504/504 full suite, architecture/security suites PASS, bootstrap idempotent (2nd run clean), live dev exchanges DAVI/TÉO/VISTA all preserve `sub`, bind exactly one resource aud, carry `mcp:tools` + `delpi-central`, valid `exp`; Portal token carries only `delia-api` requester aud, no MCP resource auds. Business READ/PREPARE/ACT untouched. Status: `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — verdict pending, not ACCEPT.
+
 ### C3-MCP-INTEROP-01 — existing specialist MCP federation (candidate for architecture review)
 
 Implementation: `783cc13578fe281425ae7793ccf5e3b97e3be362` (evidence §6.92).

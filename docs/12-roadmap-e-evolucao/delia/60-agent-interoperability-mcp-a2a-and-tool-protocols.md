@@ -66,6 +66,12 @@ Domain authorization
 
 Provider/tool/agent scope não concede Core/domain permission. Credentials devem ser scoped, time-bounded quando possível e permanecer fora de prompt, memory, embeddings, MFE e ordinary logs.
 
+### 4.1 DÉLIA user-delegated credential model (C3-MCP-INTEROP-01R1A)
+
+Direção aprovada (ledger §6.93): DÉLIA autentica como **um** client confidencial (`delia-api`) e executa Keycloak token exchange sobre o bearer do usuário do Portal (request-scoped), recebendo access token curto com exatamente **um** resource audience MCP (`…/apps/<api>/mcp`), `mcp:tools` no `scope`, `aud` mantendo `delpi-central` (contrato `delpi_auth`), e `sub` preservado. O subject bearer nunca entra em `PlatformAccessContext`, model, MFE, logs ou persistência; cache process-local limitado (≤120s reuse, ≤300s hard cap, invalidação em falha de autenticação). Proibidos: token global estático por especialista, client DÉLIA por especialista, `aud` MCP no token do Portal, service account como substituto do usuário humano. Business READ continua `C4`-gated.
+
+Implementado (§6.94, `IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d`): `KeycloakDelegatedCredentialProvider` + `InMemoryDelegatedTokenCache` em Infrastructure; subject bearer request-scoped via `flask.g`; perfis carregam `exchange_audience` (`mcp-*` client) + `resource_audience` (URL canônica); validação fail-closed de `sub`/aud/scope/exp/service-principal; `GLOBAL_USER_TOKEN_PATH=REMOVED`. Dev realm: bootstrap materializa `mcp:tools`, `mcp-audience-*`, `mcp-*` clients, requester `delia-api`, audience mapper `delia-api` no `delpi-central` e permissões `token-exchange` por alvo — idempotente. Evidence live: 3/3 exchanges com subject preservado e isolamento de resource aud. Autenticaded `tools/list` = R1B.
+
 ## 5. Capability allowlist
 
 Se registry/projection for necessário, deve representar apenas approvals governados e refs dos owners.

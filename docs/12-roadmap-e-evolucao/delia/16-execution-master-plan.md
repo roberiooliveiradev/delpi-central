@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01` — architecture review of the existing-specialist MCP federation foundation (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED`; `C3-INTERACTION-RUNTIME-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2_FINAL=ACCEPT_WITH_RESIDUAL` §6.91; `C3-INTERACTION-CONTINUITY-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01=ACCEPT_WITH_RESIDUAL` §6.91; `C3-MCP-INTEROP-01=CANDIDATE_FOR_ARCHITECTURE_REVIEW` §6.92); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01` — architecture review of the existing-specialist MCP federation foundation (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED`; `C3-INTERACTION-RUNTIME-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2_FINAL=ACCEPT_WITH_RESIDUAL` §6.91; `C3-INTERACTION-CONTINUITY-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01=ACCEPT_WITH_RESIDUAL` §6.91; `C3-MCP-INTEROP-01` → `ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01=REWORK` §6.93 — identity rework implemented as `C3-MCP-INTEROP-01R1A` (`IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d`; §6.93 authz, §6.94 evidence; evidence ready for review, verdict pending); do not claim C3 complete; do not authorize C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -750,7 +750,15 @@ C3-MCP-INTEROP-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
     transport PROVEN 3/3 fail-closed 401; authenticated connectivity
     BLOCKED — no user-delegated token mechanism/owner clients yet;
     BUSINESS_READ_EXECUTION=PHASE_GATED while C4_AUTHORIZED=NO)
-NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01 = REWORK (§6.93)
+   STATIC_GLOBAL_USER_TOKEN=REJECTED_FOR_PRODUCT_RUNTIME;
+   IDENTITY_DIRECTION=SINGLE_DELIA_INTERNAL_CLIENT+TOKEN_EXCHANGE;
+   CUSTOM_MCP_TRANSPORT=ACCEPTED_FOR_CURRENT_C3_SLICE
+C3-MCP-INTEROP-01R1A = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+   (USER_DELEGATED_IDENTITY_FOUNDATION; §6.93 authz, §6.94 evidence;
+   IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d;
+   identity delegation only — no business READ, no PREPARE/ACT)
+NEXT = C3-MCP-INTEROP-01R1B (authenticated specialist discovery; R1A evidence pending review)
 Workspace binding remains unscheduled
 ```
 
@@ -1316,7 +1324,7 @@ ACCEPTED_RESIDUALS = SESSION_PERSISTENCE=NONE/intentional;
         REAL_BUSINESS_DATA_ACCESS=NONE/next governed capability family
 EVIDENCE = ledger §6.90-§6.91; continuity tests 30/30; full suite
            415/415; MFE 36/36 + typecheck + build; real eval PASS
-NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+NEXT = C3-MCP-INTEROP-01R1B (authenticated specialist discovery; R1A evidence pending review)
 ```
 
 ### C3-MCP-INTEROP-01 — Existing Specialist MCP Federation (candidate for review)
@@ -1361,5 +1369,34 @@ TARGETED_TESTS = PASS 48/48 | FULL_DELIA_API = PASS 461/461
 STATIC_VALIDATION = git diff --check clean
 EVIDENCE = ledger §6.92; scripts/real_mcp_interop_eval.py output
            at IMPLEMENTATION_HEAD
-NEXT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
+VERDICT = ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01 = REWORK (§6.93)
+NEXT = C3-MCP-INTEROP-01R1B (authenticated specialist discovery; R1A evidence pending review)
+```
+
+### C3-MCP-INTEROP-01R1A — User-Delegated Identity Foundation (evidence ready for review)
+
+```text
+TASK = C3-MCP-INTEROP-01R1A — USER_DELEGATED_IDENTITY_FOUNDATION
+STATE = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.94)
+EXECUTED = NO
+IMPLEMENTATION_HEAD = a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d
+IDENTITY_MODEL = Portal user bearer (request-scoped) → single
+        confidential DÉLIA backend client (delia-api) → Keycloak
+        token exchange → short-lived resource-bound access token
+        preserving the SAME human subject → selected specialist MCP
+RESOURCE_BINDING = exactly one MCP resource audience per delegated
+        token (dedicated resource audience client-scopes on the
+        requester client); mcp:tools remains the generic shared
+        transport scope — no resource mapper inside it
+REJECTED = static global user token envs; per-specialist DÉLIA
+        clients; Portal token carrying MCP resource audiences;
+        service-account/impersonation substitutes
+CACHE = process-local in-memory, subject+token-fingerprint+resource
+        keyed, <=120s reuse / <=300s hard cap, exp-margin enforced,
+        invalidation API on authentication failure
+REMOVED = DELIA_MCP_{DAVI,TEO,VISTA}_USER_TOKEN runtime path
+SCOPE_OUT = business MCP READ (C4-gated), PREPARE/ACT (forbidden),
+        MCP SDK migration, business tool execution
+NEXT_ON_SUCCESS = C3-MCP-INTEROP-01R1B —
+        AUTHENTICATED_SPECIALIST_DISCOVERY
 ```

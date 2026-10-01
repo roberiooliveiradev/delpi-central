@@ -5718,3 +5718,160 @@ BLOCKERS: IDENTITY_DELEGATION (no user-delegated MCP token path)
 EXECUTION_DRIFT: NONE
 NEXT: ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01
 ```
+
+## 6.93 C3-MCP-INTEROP-01 architecture review verdict + R1A authorization (pre-execution freeze)
+
+
+```
+STEP: C3-MCP-INTEROP-01R1A — USER_DELEGATED_IDENTITY_FOUNDATION
+MODE: DOCS-FIRST FREEZE (decision record; implementation follows)
+BASE_HEAD_AT_RECORD: ab19627bc3b686dff9faf2254ea2e628d0087871
+
+ARCHITECTURE_REVIEW_C3_MCP_INTEROP_01 = REWORK
+  Verdict driver (C3-MCP-IDENTITY-INVENTORY-01 evidence):
+  STATIC_GLOBAL_USER_TOKEN = REJECTED_FOR_PRODUCT_RUNTIME —
+      DELIA_MCP_{DAVI,TEO,VISTA}_USER_TOKEN would impersonate one
+      static bearer for all DÉLIA traffic (identity gap, not
+      delegation). Registry/allowlist, two fail-closed boundaries,
+      OBSERVATION pin and bounded transport were confirmed correct
+      and are retained.
+
+IDENTITY_DIRECTION (approved):
+  USER_DELEGATED_IDENTITY = SINGLE_DELIA_INTERNAL_CLIENT + TOKEN_EXCHANGE
+  Rejected alternatives: per-specialist DÉLIA clients; Portal token
+  carrying all MCP resource audiences; static shared user tokens;
+  service-account substitution for the human; naked impersonation;
+  fabricated identity.
+
+AUTHORITY_SPLIT (unchanged):
+  KEYCLOAK = identity / credential issuer
+  CORE     = effective platform RBAC authority (specialists re-check
+             via delpi_auth /me; reads <=60s cache / <=900s stale;
+             force_refresh exists for material TÉO writes)
+  MCP      = transport/interoperability boundary (resource aud +
+             mcp:tools scope != business permission)
+  DOMAIN   = final business authority
+  DELIA    = orchestration; never permission authority
+
+INVENTORY-PROVEN FACTS R1A builds on:
+  - Portal token (azp=delpi-central): aud=[delpi-central,account],
+    scope="email profile" — no mcp:tools, no MCP resource aud (live).
+  - Dev realm: no mcp-* clients, no mcp:tools scope, TOKEN_EXCHANGE
+    server feature enabled (KC 26.0.7), no client exchange permission
+    configured.
+  - MCP transport requires canonical KEYCLOAK_AUDIENCE (delpi-central)
+    membership + exact resource aud + openid/profile/email/mcp:tools.
+  - No existing delegation/OBO mechanism in repo or realm.
+
+CUSTOM_MCP_TRANSPORT = ACCEPTED_FOR_CURRENT_C3_SLICE
+  (bounded requests-based DelpiMcpTransport; mcp SDK absent;
+   LONG_TERM_STANDARD_NOT_FROZEN)
+
+CACHE_CONTRACT = short-lived in-memory process-local delegated-token
+  cache; key binds subject + subject-token fingerprint + resource;
+  reuse <=120s default, hard cap <=300s, exp-margin enforced; no
+  persistence, no background refresh, no raw-token keys in logs.
+
+C3_STARTED: YES
+C3_EXECUTED: NO
+C4_AUTHORIZED: NO
+BUSINESS_READ_EXECUTION = PHASE_GATED
+PREPARE: FORBIDDEN
+ACT: FORBIDDEN
+PRODUCTION_READINESS: NOT_PROVEN
+EXECUTION_DRIFT: NONE
+NEXT: C3-MCP-INTEROP-01R1A execution (identity foundation only;
+      authenticated specialist discovery = C3-MCP-INTEROP-01R1B)
+```
+
+## 6.94 C3-MCP-INTEROP-01R1A execution record — user-delegated identity foundation
+
+```
+STEP: C3-MCP-INTEROP-01R1A — USER_DELEGATED_IDENTITY_FOUNDATION
+MODE: IMPLEMENTATION EVIDENCE (post-execution factual record)
+BASE_HEAD: fa6f1e062b12cc6252bb620465f12a3e78884d6b
+IMPLEMENTATION_HEAD: a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d
+EVALUATED_SHA: a5512c0b5d18f728f15cf0c652ffb0e8417e8e9d
+
+IDENTITY_DELEGATION_IMPLEMENTATION:
+  DELIA_REQUESTER_CLIENT = delia-api (single confidential client;
+      standard.token.exchange.enabled; serviceAccountsEnabled=false;
+      secret via gitignored infra/.env DELIA_EXCHANGE_CLIENT_SECRET)
+  PORTAL_TOKEN_CHANGE = requester-audience-only — oidc-audience-mapper
+      on delpi-central adds aud=delia-api (KC26 V1 exchange requires
+      the requester in the subject token audience). NO MCP resource
+      audience added to the Portal token.
+  TOKEN_EXCHANGE_MECHANISM = RFC 8693 urn:ietf:params:oauth:grant-type:
+      token-exchange; audience=mcp-<resource-client>; KC 26.0.7 V1
+      provider + fine-grained-authz token-exchange scope permission
+      per mcp-* client bound to clients-policy {delia-api}.
+  RESOURCE_BINDING_MODEL = SpecialistConnectionProfile carries
+      exchange_audience (mcp-* client) + resource_audience (canonical
+      MCP resource URL); env-overridable, never user/model input.
+  MCP_TOOLS_SCOPE_MODEL = generic client scope mcp:tools, default
+      scope on each mcp-* resource client; resource aud via dedicated
+      mcp-audience-* scopes — never inside mcp:tools.
+  SUBJECT_PRESERVATION = exchanged sub == Portal sub (validated +
+      proven live); service-account-* sub rejected.
+  SERVICE_PRINCIPAL_BEHAVIOR = rejected fail-closed (no service
+      account on delia-api; explicit claim check).
+
+GLOBAL_USER_TOKEN_PATH = REMOVED
+  DELIA_MCP_{DAVI,TEO,VISTA}_USER_TOKEN deleted from settings/profile/
+  adapter/eval; zero references remain in delia-api.
+
+DELEGATED_TOKEN_CACHE = InMemoryDelegatedTokenCache — process-local,
+  key=(sha256(subject_token)[:32], resource_audience); TTL default
+  120s, hard cap 300s, expiry bounded by token exp minus 15s margin;
+  invalidate() on MCP_AUTHENTICATION_FAILED; no persistence/refresh.
+
+LIVE_DEV_EVIDENCE (KC 26.0.7 dev realm, user rober, sub=4ac305a6…):
+  PORTAL aud=[delia-api, delpi-central, account] scope="email profile"
+      MCP_RESOURCE_AUDS=NONE
+  DAVI  same_sub=True azp=delia-api res_bound=True other_mcp=NONE
+      mcp_tools=True delpi_central=True exp_ok=True ttl_s=300
+  TÉO   same_sub=True azp=delia-api res_bound=True other_mcp=NONE
+      mcp_tools=True delpi_central=True exp_ok=True ttl_s=300
+  VISTA same_sub=True azp=delia-api res_bound=True other_mcp=NONE
+      mcp_tools=True delpi_central=True exp_ok=True ttl_s=300
+
+TESTS:
+  TARGETED = test_delegated_credentials.py + test_mcp_adapter.py
+      42 PASS (exchange positives; subject/resource/scope/expiry/
+      service-principal/malformed/denial negatives; cache isolation,
+      expiry, hard cap, invalidation)
+  FULL_DELIA_SUITE = 504 PASS (clean env; 2 env-leakage-sensitive
+      tests verified unrelated to diff — pass with clean env)
+  ARCHITECTURE_TESTS = PASS (no MCP/HTTP/OAuth imports in
+      Domain/Application; provider-neutral boundary only)
+  SECURITY_TESTS = PASS
+  KEYCLOAK_BOOTSTRAP_IDEMPOTENCY = PASS (second run: all exists /
+      already bound, no errors)
+  GIT_DIFF_CHECK = PASS
+
+CONTRACT_IMPACT = SpecialistConnectionProfile.user_token removed;
+  new fields exchange_audience/resource_audience; middleware stores
+  request-scoped g.subject_bearer (never in PlatformAccessContext);
+  DelpiMcpTransport unchanged.
+SECURITY_IMPACT = positive — per-user resource-bound delegation
+  replaces rejected static-token path; secrets env-only; no raw
+  tokens/responses in logs; fail-closed everywhere.
+EXECUTION_DRIFT = NONE (HEAD had advanced to fa6f1e062b via unrelated
+  commits — bpmn/carteiras; classified OUTSIDE_TASK, untouched)
+BLOCKERS = none remaining for R1A
+RESIDUALS:
+  - KC_FEATURES=token-exchange,admin-fine-grained-authz is DEV-only
+    compose config; production Keycloak enablement is out of scope.
+  - KC26 V1 exchange requires requester aud in subject token —
+    implemented as single delia-api aud on delpi-central (narrow,
+    documented).
+  - leftover prototype policy name delia-exchange-requester-mcp-api-
+    delpi coexists bound on mcp-api-delpi alongside canonical
+    delia-exchange-requester — semantically identical (delia-api only).
+  - infra/.env values with spaces warn when sourced by shell
+    (pre-existing; bootstrap parses with grep, unaffected).
+POSTCONDITION = authenticated discovery can be attempted via
+  user-delegated credential; business READ/PREPARE/ACT remain blocked;
+  C3_EXECUTED=NO; C4_AUTHORIZED=NO.
+NEXT: C3-MCP-INTEROP-01R1B — AUTHENTICATED_SPECIALIST_DISCOVERY
+```
