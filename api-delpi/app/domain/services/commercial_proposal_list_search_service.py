@@ -31,6 +31,25 @@ class CommercialProposalListSearchService:
             clauses.append(f"AD1_STATUS IN ({placeholders})")
             params.extend(status_codes)
 
+        clauses.append(
+            """EXISTS (
+                SELECT 1
+                FROM ADJ010 ADJ_S
+                LEFT JOIN SB1010 SB1_S
+                    ON SB1_S.D_E_L_E_T_ = ''
+                   AND SB1_S.B1_COD = ADJ_S.ADJ_PROD
+                WHERE ADJ_S.D_E_L_E_T_ = ''
+                  AND ADJ_S.ADJ_FILIAL = AD1_FILIAL
+                  AND ADJ_S.ADJ_NROPOR = AD1_NROPOR
+                  AND ADJ_S.ADJ_REVISA = AD1_REVISA
+                  AND (
+                        ADJ_S.ADJ_PROD LIKE ?
+                     OR SB1_S.B1_DESC COLLATE Latin1_General_CI_AI LIKE ?
+                  )
+            )"""
+        )
+        params.extend([pattern, pattern])
+
         return f"AND ({' OR '.join(clauses)})", params
 
     @staticmethod

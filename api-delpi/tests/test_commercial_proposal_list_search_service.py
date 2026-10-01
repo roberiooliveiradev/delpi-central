@@ -18,6 +18,19 @@ def test_search_clause_matches_text_fields() -> None:
     assert all(param == "%weg%" for param in params[:8])
 
 
+def test_search_clause_matches_product_in_opportunity_items() -> None:
+    clause, params = CommercialProposalListSearchService.clause_for_latest_row("10080055")
+
+    assert "EXISTS (" in clause
+    assert "FROM ADJ010 ADJ_S" in clause
+    assert "ADJ_S.ADJ_FILIAL = AD1_FILIAL" in clause
+    assert "ADJ_S.ADJ_NROPOR = AD1_NROPOR" in clause
+    assert "ADJ_S.ADJ_REVISA = AD1_REVISA" in clause
+    assert "ADJ_S.ADJ_PROD LIKE ?" in clause
+    assert "SB1_S.B1_DESC COLLATE Latin1_General_CI_AI LIKE ?" in clause
+    assert params[-2:] == ["%10080055%", "%10080055%"]
+
+
 def test_search_clause_matches_status_label() -> None:
     clause, params = CommercialProposalListSearchService.clause_for_latest_row("ganha")
 

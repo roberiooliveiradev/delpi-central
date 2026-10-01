@@ -252,7 +252,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
               hint={CM_HELP.analytics.searchOpportunities}
               value={search}
               onChange={setSearch}
-              placeholder="Número da OV, cliente…"
+              placeholder="Número da OV, cliente, produto…"
             />
             <CommercialSelectField
               label="Status"

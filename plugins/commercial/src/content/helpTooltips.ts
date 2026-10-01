@@ -697,7 +697,7 @@ export const CM_HELP = {
     ovHistory:
       "Histórico da oportunidade em ordem cronológica, com os principais eventos comerciais.",
     searchOpportunities:
-      "Filtra a lista por número da OV, código ou nome do cliente no período selecionado.",
+      "Filtra a lista por número da OV, código ou nome do cliente e código ou descrição de produto contido na oportunidade.",
     opportunityStatus:
       "Filtra só a lista de OVs abaixo. Não altera Por colaborador (resumo global do período: abertas/perdidas por abertura, ganhas por aceite).",
     columns: {
