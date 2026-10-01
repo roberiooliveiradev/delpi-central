@@ -987,31 +987,82 @@ def test_internal_movements_kind_enum_and_tm_denied() -> None:
             validate_arguments(action, bad)
 
 
-@pytest.mark.parametrize(
-    ("oid", "start_field", "end_field"),
-    [
-        ("get_product_internal_movements", "start_date", "end_date"),
-        ("get_product_inbound_invoice_items", "issue_date_start", "issue_date_end"),
-        ("get_product_outbound_invoice_items", "issue_date_start", "issue_date_end"),
-    ],
-)
-def test_date_window_max_366_days(
+_DATE_RANGE_OPS = [
+    ("get_product_internal_movements", "start_date", "end_date"),
+    ("get_product_inbound_invoice_items", "issue_date_start", "issue_date_end"),
+    ("get_product_outbound_invoice_items", "issue_date_start", "issue_date_end"),
+]
+
+
+@pytest.mark.parametrize(("oid", "start_field", "end_field"), _DATE_RANGE_OPS)
+def test_date_window_one_sided_bounds(
     oid: str, start_field: str, end_field: str
 ) -> None:
     action = _action(oid)
+    # A. no dates
+    cleaned = validate_arguments(action, {"code": "P1"})
+    assert start_field not in cleaned
+    assert end_field not in cleaned
+    # B. start only — passes and no end bound is synthesized
+    cleaned = validate_arguments(action, {"code": "P1", start_field: "2026-01-01"})
+    assert cleaned[start_field] == "2026-01-01"
+    assert end_field not in cleaned
+    # C. end only — passes and no start bound is synthesized
+    cleaned = validate_arguments(action, {"code": "P1", end_field: "2026-06-30"})
+    assert cleaned[end_field] == "2026-06-30"
+    assert start_field not in cleaned
+    # D. both present, span <= 366 days
     ok = validate_arguments(
         action,
         {"code": "P1", start_field: "2025-10-02", end_field: "2026-10-02"},
     )
     assert ok[start_field] == "2025-10-02"
+    assert ok[end_field] == "2026-10-02"
+    # E. both present, span > 366 days
     with pytest.raises(ArgumentValidationError):
         validate_arguments(
             action,
             {"code": "P1", start_field: "2025-09-30", end_field: "2026-10-02"},
         )
-    # Date window is an atomic governed pair — a single bound is denied.
+    # F. end before start
     with pytest.raises(ArgumentValidationError):
-        validate_arguments(action, {"code": "P1", start_field: "2026-01-01"})
+        validate_arguments(
+            action,
+            {"code": "P1", start_field: "2026-10-02", end_field: "2025-10-02"},
+        )
+    # G/H. malformed dates, single-bound or paired
+    for bad in (
+        {"code": "P1", start_field: "not-a-date"},
+        {"code": "P1", end_field: "2026-13-40"},
+        {
+            "code": "P1",
+            start_field: "2026-01-01",
+            end_field: "soon",
+        },
+    ):
+        with pytest.raises(ArgumentValidationError):
+            validate_arguments(action, bad)
+
+
+@pytest.mark.parametrize(("oid", "start_field", "end_field"), _DATE_RANGE_OPS)
+def test_date_window_missing_bound_not_sent_to_owner(
+    _seeded, oid: str, start_field: str, end_field: str
+) -> None:
+    owner = _SPECS.get(oid, {}).get("owner") or {}
+    result, client = _execute(
+        oid, {"code": "P1", start_field: "2026-01-01"}, owner_payload=owner
+    )
+    assert result["status"] == "ok"
+    params = client.calls[0]["params"]
+    assert params[start_field] == "2026-01-01"
+    assert end_field not in params
+    result, client = _execute(
+        oid, {"code": "P1", end_field: "2026-06-30"}, owner_payload=owner
+    )
+    assert result["status"] == "ok"
+    params = client.calls[0]["params"]
+    assert params[end_field] == "2026-06-30"
+    assert start_field not in params
 
 
 def test_sales_summary_no_optional_inputs() -> None:

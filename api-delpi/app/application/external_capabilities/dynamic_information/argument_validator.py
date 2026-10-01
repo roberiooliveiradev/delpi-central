@@ -245,6 +245,17 @@ def _validate_one_date_range_spec(
             )
     if start_raw is None and end_raw is None and not uses_effective_window:
         return
+    # One-sided contract: a single supplied bound is validated as a date but the
+    # missing bound is never synthesized (no today / same-day / window injection
+    # into arguments); ordering and maxDays apply only when both are present.
+    if bool(spec.get("allowSingleBound")) and (start_raw is None) != (
+        end_raw is None
+    ):
+        if start_raw is not None:
+            _parse_constraint_date(start_field, start_raw)
+        else:
+            _parse_constraint_date(end_field, end_raw)
+        return
 
     today = _constraint_today()
     if uses_effective_window:

@@ -3244,7 +3244,7 @@
             "startField": "start_date",
             "endField": "end_date",
             "maxDays": 366,
-            "requireBothOrNeither": true
+            "allowSingleBound": true
           }
         ],
         "argumentLimits": {
@@ -3313,7 +3313,7 @@
             "startField": "issue_date_start",
             "endField": "issue_date_end",
             "maxDays": 366,
-            "requireBothOrNeither": true
+            "allowSingleBound": true
           }
         ],
         "argumentLimits": {
@@ -3377,7 +3377,7 @@
             "startField": "issue_date_start",
             "endField": "issue_date_end",
             "maxDays": 366,
-            "requireBothOrNeither": true
+            "allowSingleBound": true
           }
         ],
         "argumentLimits": {
