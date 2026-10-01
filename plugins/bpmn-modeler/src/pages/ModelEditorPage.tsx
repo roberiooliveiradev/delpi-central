@@ -61,6 +61,7 @@ import {
   BpmnmModal,
   BpmnmStateBanner,
   BpmnmStatusBadge,
+  BpmnmUnderlineNav,
   bpmnmConfirmModalClasses,
 } from "../ui/kit";
 
@@ -720,18 +721,38 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           )}
         </div>
         <aside className="bpmnm-side">
-          <div className="bpmnm-side__tabs" role="tablist">
-            <button role="tab" aria-selected={sideTab === "properties"} className={sideTab === "properties" ? "active" : ""} onClick={() => setSideTab("properties")}>
-              Propriedades
-            </button>
-            <button role="tab" aria-selected={sideTab === "validation"} className={sideTab === "validation" ? "active" : ""} onClick={() => setSideTab("validation")}>
-              Validação
-            </button>
-            <button role="tab" aria-selected={sideTab === "history"} className={sideTab === "history" ? "active" : ""} onClick={() => setSideTab("history")}>
-              Histórico
-            </button>
-          </div>
-          <div className="bpmnm-side__content">
+          <BpmnmUnderlineNav
+            className="bpmnm-side__tabs"
+            aria-label="Painéis do editor"
+            activeId={sideTab}
+            mode="tabs"
+            items={[
+              {
+                id: "properties",
+                label: "Propriedades",
+                controlId: "bpmnm-side-panel",
+                onSelect: () => setSideTab("properties"),
+              },
+              {
+                id: "validation",
+                label: "Validação",
+                controlId: "bpmnm-side-panel",
+                onSelect: () => setSideTab("validation"),
+              },
+              {
+                id: "history",
+                label: "Histórico",
+                controlId: "bpmnm-side-panel",
+                onSelect: () => setSideTab("history"),
+              },
+            ]}
+          />
+          <div
+            id="bpmnm-side-panel"
+            className="bpmnm-side__content"
+            role="tabpanel"
+            aria-labelledby={`${sideTab}-tab`}
+          >
             {/* o Modeler exige o parent no mount — sempre presente no DOM,
                 visível só na aba Propriedades em modo editável */}
             <div

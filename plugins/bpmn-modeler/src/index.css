@@ -264,24 +264,9 @@
   overflow: hidden;
 }
 
-.bpmnm-pagination {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-}
-
 .bpmnm-hint {
   color: var(--delpi-ui-text-muted);
   font-size: 13px;
-}
-
-.bpmnm-dialog__actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  margin-top: 12px;
 }
 
 .bpmnm-dialog__text {
@@ -452,32 +437,9 @@
   min-height: 0;
 }
 
+/* tabs da sidebar = delpi-ui-underline-nav (kit) — só o flex sizing é local */
 .bpmnm-side__tabs {
-  display: flex;
   flex: 0 0 auto;
-  border-bottom: 1px solid var(--delpi-ui-border);
-}
-
-.bpmnm-side__tabs button {
-  flex: 1;
-  padding: 8px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--delpi-ui-text-muted);
-  min-height: 40px;
-}
-
-.bpmnm-side__tabs button:focus-visible {
-  outline: 2px solid var(--delpi-ui-focus-ring, var(--delpi-ui-accent));
-  outline-offset: -2px;
-}
-
-.bpmnm-side__tabs button.active {
-  font-weight: 600;
-  color: var(--delpi-ui-text);
-  box-shadow: inset 0 -2px 0 var(--delpi-ui-accent);
 }
 
 .bpmnm-side__content {

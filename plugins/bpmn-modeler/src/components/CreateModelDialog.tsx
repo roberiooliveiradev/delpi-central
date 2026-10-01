@@ -28,8 +28,24 @@ export function CreateModelDialog({ open, busy, onCancel, onConfirm }: Props) {
       title="Novo modelo"
       onClose={onCancel}
       initialFocusSelector="input"
+      footer={
+        <>
+          <ActionButton type="button" onClick={onCancel} disabled={busy}>
+            Cancelar
+          </ActionButton>
+          <ActionButton
+            variant="primary"
+            type="submit"
+            form="bpmnm-create-model-form"
+            disabled={!valid || busy}
+          >
+            {busy ? "Criando…" : "Criar"}
+          </ActionButton>
+        </>
+      }
     >
       <form
+        id="bpmnm-create-model-form"
         onSubmit={(event) => {
           event.preventDefault();
           if (valid && !busy) onConfirm(name.trim());
@@ -41,18 +57,6 @@ export function CreateModelDialog({ open, busy, onCancel, onConfirm }: Props) {
           onChange={setName}
           required
         />
-        <div className="bpmnm-dialog__actions">
-          <ActionButton type="button" onClick={onCancel} disabled={busy}>
-            Cancelar
-          </ActionButton>
-          <ActionButton
-            variant="primary"
-            type="submit"
-            disabled={!valid || busy}
-          >
-            {busy ? "Criando…" : "Criar"}
-          </ActionButton>
-        </div>
       </form>
     </BpmnmModal>
   );

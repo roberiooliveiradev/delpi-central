@@ -89,6 +89,28 @@ export function ImportDialog({ open, getAccessToken, onCancel, onImported }: Pro
       title="Importar BPMN"
       onClose={onCancel}
       initialFocusSelector="input[type='file']"
+      footer={
+        <>
+          <ActionButton
+            type="button"
+            onClick={onCancel}
+            disabled={step === "creating"}
+          >
+            Cancelar
+          </ActionButton>
+          {step === "result" && eligible && (
+            <ActionButton
+              variant="primary"
+              type="button"
+              disabled={name.trim().length === 0}
+              onClick={() => void confirm()}
+            >
+              Importar
+            </ActionButton>
+          )}
+          {step === "creating" && <span className="bpmnm-hint">Importando…</span>}
+        </>
+      }
     >
       {step === "pick" && (
         <>
@@ -139,26 +161,6 @@ export function ImportDialog({ open, getAccessToken, onCancel, onImported }: Pro
         </>
       )}
 
-      <div className="bpmnm-dialog__actions">
-        <ActionButton
-          type="button"
-          onClick={onCancel}
-          disabled={step === "creating"}
-        >
-          Cancelar
-        </ActionButton>
-        {step === "result" && eligible && (
-          <ActionButton
-            variant="primary"
-            type="button"
-            disabled={name.trim().length === 0}
-            onClick={() => void confirm()}
-          >
-            Importar
-          </ActionButton>
-        )}
-        {step === "creating" && <span className="bpmnm-hint">Importando…</span>}
-      </div>
     </BpmnmModal>
   );
 }

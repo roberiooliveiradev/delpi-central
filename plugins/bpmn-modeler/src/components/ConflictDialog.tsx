@@ -15,22 +15,24 @@ export function ConflictDialog({ open, onReloadLatest, onExportLocal, onStay }: 
       open={open}
       title="Conflito de versão"
       onClose={onStay}
+      footer={
+        <>
+          <ActionButton variant="primary" onClick={onReloadLatest}>
+            Recarregar versão mais recente
+          </ActionButton>
+          <ActionButton onClick={onExportLocal}>
+            Exportar meu BPMN local
+          </ActionButton>
+          <ActionButton variant="ghost" onClick={onStay}>
+            Permanecer em conflito
+          </ActionButton>
+        </>
+      }
     >
       <p className="bpmnm-dialog__text">
         Outro usuário ou processo alterou este modelo enquanto você editava.
         Sua versão local diverge da versão autoritativa.
       </p>
-      <div className="bpmnm-dialog__actions">
-        <ActionButton variant="primary" onClick={onReloadLatest}>
-          Recarregar versão mais recente
-        </ActionButton>
-        <ActionButton onClick={onExportLocal}>
-          Exportar meu BPMN local
-        </ActionButton>
-        <ActionButton variant="ghost" onClick={onStay}>
-          Permanecer em conflito
-        </ActionButton>
-      </div>
     </BpmnmModal>
   );
 }

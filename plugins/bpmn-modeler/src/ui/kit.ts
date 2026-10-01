@@ -8,6 +8,7 @@
  */
 import {
   confirmModalBemClasses,
+  createCompactPagination,
   createDashboardDataCardsGrid,
   createDashboardDataRecordCard,
   createDashboardEmptyState,
@@ -19,6 +20,7 @@ import {
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextField,
+  createDashboardUnderlineNav,
   createFilterBarShell,
   createHostContainedModalShell,
   emptyStatePanelBemClasses,
@@ -97,3 +99,22 @@ export const BPMNM_FILE_DROPZONE_LABELS: FileDropzoneLabels = {
   title: "Arraste o arquivo BPMN aqui",
   hint: "ou clique para escolher (.bpmn, .xml)",
 };
+
+/** Tabs da sidebar do editor — tablist canônica do kit
+ *  (roving tabindex + setas Home/End). */
+export const BpmnmUnderlineNav = createDashboardUnderlineNav({ prefix: PREFIX });
+
+/** Paginação da library — a API devolve `has_more` (sem total), então
+ *  totalPages é derivado de `has_more` no consumidor. */
+export const BpmnmCompactPagination = createCompactPagination({
+  prefix: PREFIX,
+  layout: "flat",
+  labels: {
+    info: ({ page }) => `Página ${page}`,
+    previous: "Anterior",
+    next: "Próxima",
+    previousAriaLabel: "Página anterior",
+    nextAriaLabel: "Próxima página",
+    navigationAriaLabel: "Paginação",
+  },
+});

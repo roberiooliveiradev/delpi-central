@@ -22,23 +22,25 @@ export function UnsavedChangesDialog({
       open={open}
       title="Alterações não salvas"
       onClose={onContinue}
+      footer={
+        <>
+          <ActionButton onClick={onContinue}>
+            Continuar editando
+          </ActionButton>
+          <ActionButton variant="ghost" onClick={onDiscard}>
+            Descartar alterações
+          </ActionButton>
+          {canEdit ? (
+            <ActionButton variant="primary" onClick={onSaveAndExit}>
+              Salvar e sair
+            </ActionButton>
+          ) : null}
+        </>
+      }
     >
       <p className="bpmnm-dialog__text">
         Você tem alterações não salvas neste modelo.
       </p>
-      <div className="bpmnm-dialog__actions">
-        <ActionButton onClick={onContinue}>
-          Continuar editando
-        </ActionButton>
-        <ActionButton variant="ghost" onClick={onDiscard}>
-          Descartar alterações
-        </ActionButton>
-        {canEdit ? (
-          <ActionButton variant="primary" onClick={onSaveAndExit}>
-            Salvar e sair
-          </ActionButton>
-        ) : null}
-      </div>
     </BpmnmModal>
   );
 }

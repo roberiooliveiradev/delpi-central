@@ -1,3 +1,5 @@
+import { ActionButton } from "@delpi/plugin-ui/index";
+
 import type { ValidationReport } from "../data/api/bpmnModelerApi";
 import { BpmnmEmptyState, BpmnmStatusBadge } from "../ui/kit";
 
@@ -37,8 +39,9 @@ export function ValidationPanel({ report, onSelectIssue }: Props) {
           key={`${issue.rule_id}-${index}`}
           className={`bpmnm-issue bpmnm-issue--${issue.severity.toLowerCase()}`}
         >
-          <button
+          <ActionButton
             type="button"
+            variant="link"
             className="bpmnm-issue__link"
             disabled={!issue.element_id || !onSelectIssue}
             onClick={() => issue.element_id && onSelectIssue?.(issue.element_id)}
@@ -58,7 +61,7 @@ export function ValidationPanel({ report, onSelectIssue }: Props) {
             </span>
             {issue.message}
             {issue.element_id ? <em> ({issue.element_id})</em> : null}
-          </button>
+          </ActionButton>
         </li>
       ))}
     </ul>

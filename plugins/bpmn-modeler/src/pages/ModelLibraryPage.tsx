@@ -45,6 +45,7 @@ import {
   BpmnmModal,
   BpmnmNavigationCard,
   BpmnmPageHeader,
+  BpmnmCompactPagination,
   BpmnmPreviewDetailCard,
   BpmnmStateBanner,
   BpmnmStatusBadge,
@@ -415,23 +416,13 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
       )}
 
       {page && (page.page > 1 || page.has_more) ? (
-        <nav className="bpmnm-pagination" aria-label="Paginação">
-          <ActionButton
-            type="button"
-            disabled={pageNumber <= 1}
-            onClick={() => setPageNumber((p) => p - 1)}
-          >
-            Anterior
-          </ActionButton>
-          <span>Página {pageNumber}</span>
-          <ActionButton
-            type="button"
-            disabled={!page.has_more}
-            onClick={() => setPageNumber((p) => p + 1)}
-          >
-            Próxima
-          </ActionButton>
-        </nav>
+        <BpmnmCompactPagination
+          page={pageNumber}
+          pageSize={page.page_size}
+          total={page.page_size * pageNumber + (page.has_more ? 1 : 0)}
+          totalPages={pageNumber + (page.has_more ? 1 : 0)}
+          onPageChange={setPageNumber}
+        />
       ) : null}
 
       <ContextMenu
