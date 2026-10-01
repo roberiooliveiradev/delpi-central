@@ -466,14 +466,19 @@ def build_param_schema_from_openapi(
 
 
 def infer_value_fields(operation_id: str) -> list[str]:
-    """Heurística leve: operationId com _pct → campo homônimo + value."""
+    """Heurística leve: operationId com _pct → campo homônimo.
+
+    `value` não é mais declarado: producers não emitem esse alias nos _pct
+    (Wave 4 — declaração catalog-only obsoleta). Alias emitidos de verdade
+    (parity service, SI realized) seguem declarados via overlay explícito.
+    """
     oid = operation_id.strip()
     if "_pct" not in oid.lower():
         return []
     field = re.sub(r"^(get|list|search)_", "", oid, flags=re.IGNORECASE)
     if not field:
         return []
-    return [field, "value"]
+    return [field]
 
 
 def _openapi_type_to_projectable(schema: dict[str, Any] | None) -> tuple[str, str | None]:

@@ -152,6 +152,8 @@ RESPONSE_SCHEMAS: dict[str, dict] = {
         ],
     },
     # Sibling scalar das séries — sanity de que o schema cobre irmãos reais.
+    # Wave 3 provou via runtime: `value` NÃO é emitido por esta rota
+    # (alias era catalog-only; binding resolvia por fallback).
     "get_quality_scrap_cost_pct": {
         "scrap_cost": True,
         "rol": True,
@@ -159,10 +161,75 @@ RESPONSE_SCHEMAS: dict[str, dict] = {
         "occurrences": True,
         "records_without_cost": True,
         "quantity": True,
-        "value": True,  # parity: emissor espelha o campo primário em `value`
+        **{k: True for k in _SI_GOAL_FIELDS},
+    },
+    # Parity real: `value` é emitido espelhando o campo primário
+    # (attach_quality_kpi_parity / literal no use case).
+    "get_nonconformity_streak": {
+        "current_days_without_nc": True,
+        "record_days_without_nc": True,
+        "nc_count": True,
+        "last_nc_date": True,
+        "type": True,
+        "branch": True,
+        "product_prefix": True,
+        "value": True,
+    },
+    "get_audit_5s_summary": {
+        "average_score": True,
+        "value": True,
+        **{k: True for k in _SI_GOAL_FIELDS},
+    },
+    # Wave 4 — ops cujo `value` era catalog-only (producer nunca emite):
+    # schemas mínimos com o campo semântico canônico.
+    "get_sales_conversion_rate": {"sales_conversion_rate_pct": True, "qtd_proposals": True, "qtd_won": True},
+    "get_new_business_rol_pct": {"new_business_rol_pct": True, "rol": True},
+    "get_new_clients_rol_pct": {"new_clients_rol_pct": True, "rol": True},
+    "get_depreciation_pct": {"depreciation_pct": True},
+    "get_direct_labor_cost_pct": {"direct_labor_cost_pct": True},
+    "get_on_time_delivery_pct": {"on_time_delivery_pct": True},
+    "get_overall_equipment_effectiveness_pct": {
+        "overall_equipment_effectiveness_pct": True,
+    },
+    "get_production_cost_pct": {"production_cost_pct": True},
+    "get_refugos_scrap_cost_pct": {
+        "scrap_cost_pct": True,
+        "scrap_cost": True,
+        "rol": True,
+        **{k: True for k in _SI_GOAL_FIELDS},
+    },
+    "get_retrabalhos_rework_cost_pct": {
+        "rework_cost_pct": True,
+        "rework_cost": True,
+        "rol": True,
         **{k: True for k in _SI_GOAL_FIELDS},
     },
 }
+
+# Wave 4 — ops cujo `value` era catalog-only: catálogo declara só o campo
+# semântico emitido. (op -> campo canônico)
+WAVE4_CATALOG_ONLY_CLEANED: dict[str, str] = {
+    "get_sales_conversion_rate": "sales_conversion_rate_pct",
+    "get_new_business_rol_pct": "new_business_rol_pct",
+    "get_new_clients_rol_pct": "new_clients_rol_pct",
+    "get_depreciation_pct": "depreciation_pct",
+    "get_direct_labor_cost_pct": "direct_labor_cost_pct",
+    "get_on_time_delivery_pct": "on_time_delivery_pct",
+    "get_overall_equipment_effectiveness_pct": "overall_equipment_effectiveness_pct",
+    "get_production_cost_pct": "production_cost_pct",
+    "get_refugos_scrap_cost_pct": "scrap_cost_pct",
+    "get_retrabalhos_rework_cost_pct": "rework_cost_pct",
+}
+
+# `value` segue declarável onde realmente emitido (parity) ou domínio legítimo.
+WAVE4_VALUE_STILL_DECLARED = frozenset(
+    {
+        "get_kaizen_summary",
+        "get_ppm_external_summary",
+        "get_ppm_internal_summary",
+        "get_refugos_rankings",
+    }
+)
 
 # Wave 2 — SI scalar contract (strategic-indicators-api
 # get_dashboard_indicator_metric_use_case): shape compartilhado das 72 rotas
@@ -367,10 +434,14 @@ def test_resolver_positive_nested_and_row_relative_paths() -> None:
 
 
 def test_resolver_sibling_keeps_legitimate_value() -> None:
-    """Irmão (parity scalar): `value` é realmente emitido — permanece declarável."""
-    schema = RESPONSE_SCHEMAS["get_quality_scrap_cost_pct"]
+    """Irmão (parity real): `value` é emitido espelhando o campo primário."""
+    schema = RESPONSE_SCHEMAS["get_nonconformity_streak"]
     assert field_resolves_in_response("value", schema, None)
-    assert field_resolves_in_response("scrap_cost_pct", schema, None)
+    assert field_resolves_in_response("current_days_without_nc", schema, None)
+    # `value` não existe no payload do scalar de refugo (Wave 3, runtime prod).
+    schema_no_value = RESPONSE_SCHEMAS["get_quality_scrap_cost_pct"]
+    assert field_resolves_in_response("scrap_cost_pct", schema_no_value, None)
+    assert not field_resolves_in_response("value", schema_no_value, None)
 
 
 def test_resolver_negative_cases() -> None:
@@ -433,3 +504,43 @@ def test_si_realized_routes_keep_value_as_canonical() -> None:
             assert field_resolves_in_response(
                 field, _SI_REALIZED_RESPONSE_SCHEMA, route.get("seriesField")
             ), f"{op}: catalog field {field!r} absent from SI realized schema"
+
+
+def test_wave4_catalog_only_value_removed_from_cleaned_ops() -> None:
+    """Wave 4: ops cujo `value` era catalog-only (producer não emite, zero
+    consumers persistidos) declaram somente o campo semântico."""
+    routes = _load_routes()
+    assert set(WAVE4_CATALOG_ONLY_CLEANED) <= set(routes)
+    for op, semantic in WAVE4_CATALOG_ONLY_CLEANED.items():
+        declared = _declared_fields(routes[op])
+        assert "value" not in declared, f"{op} still advertises catalog-only value"
+        assert semantic in declared, f"{op} lost semantic field {semantic!r}"
+        # campo semântico deve existir no schema de resposta do producer
+        assert field_resolves_in_response(
+            semantic, RESPONSE_SCHEMAS[op], routes[op].get("seriesField")
+        ), f"{op}: {semantic!r} absent from emitted response schema"
+
+
+def test_wave4_emitted_aliases_and_domain_value_keep_declaration() -> None:
+    """Keepers: `value` realmente emitido (parity) ou valor de domínio
+    legítimo permanece declarado — não removido nesta wave."""
+    routes = _load_routes()
+    for op in sorted(WAVE4_VALUE_STILL_DECLARED):
+        assert "value" in _declared_fields(routes[op]), (
+            f"{op}: emitted/legitimate `value` must stay declared"
+        )
+
+
+def test_wave4_heuristic_no_longer_appends_value() -> None:
+    """Fonte canônica: infer_value_fields não deve reinjetar `value` em
+    operationIds _pct futuros."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "gen_tv_routes", REPO_ROOT / "scripts" / "generate_tv_data_routes_from_openapi.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    fields = mod.infer_value_fields("get_some_new_metric_pct")
+    assert "value" not in fields
+    assert fields == ["some_new_metric_pct"]

@@ -355,3 +355,55 @@ virou shim de compatibilidade sobre o mesmo engine.
   intocados, presentation/domain intocados, exact-match, idempotente).
 - Suite completa tv-dashboard-api: 1428 pass, 2 falhas pre-existentes
   (date-boundary — identicas no baseline).
+
+## Wave 4 — Residual catalog-only value cleanup (executada 2026-10-01)
+
+Sem escrita em producao — cleanup apenas de catalogo. Dois vetores
+de declaracao stale removidos:
+
+1. Fonte canonica: infer_value_fields deixou de injetar value em
+   operationIds _pct (producers nunca emitem; alias de transicao
+   obsoleto). merge_with_existing ainda preserva valueFields do
+   catalogo antigo — por isso 5 ops exigiram overlay explicito.
+2. Overlays: value removido de valueFields + projectableFields null
+   (purge do inferido) em 10 operacoes:
+
+   - get_sales_conversion_rate -> [sales_conversion_rate_pct]
+   - get_new_business_rol_pct -> [new_business_rol_pct]
+   - get_new_clients_rol_pct -> [new_clients_rol_pct]
+   - get_depreciation_pct -> [depreciation_pct]
+   - get_direct_labor_cost_pct -> [direct_labor_cost_pct]
+   - get_on_time_delivery_pct -> [on_time_delivery_pct, otdPct]
+   - get_overall_equipment_effectiveness_pct -> [oee_pct, oeePct]
+   - get_production_cost_pct -> [production_cost_pct]
+   - get_refugos_scrap_cost_pct -> [scrap_cost_pct]
+   - get_retrabalhos_rework_cost_pct -> [rework_cost_pct]
+
+   otdPct/oeePct (aliases camelCase catalog-only, mesma classe de
+   drift) permanecem — fora do escopo literal desta wave; consumo
+   persistido nao auditado para esses campos.
+
+### Prova de producao (scan live, container novo)
+
+- 0 refs field==value resolvendo para as 10 ops limpas.
+- Keepers confirmados: get_kaizen_summary / get_ppm_external_summary /
+  get_ppm_internal_summary (parity alias emitido via
+  attach_quality_kpi_parity) e get_refugos_rankings (11 refs
+  LEGITIMATE_DOMAIN_VALUE items[].value) — declaracoes mantidas.
+- Estado residual do catalogo: 40 ops declaram value =
+  36 SI realized (canonico) + 4 keepers non-SI.
+
+### Classificacao
+
+- HTTP API CONTRACT = NONE (producers intocados; value emitido segue
+  emitido onde existe).
+- TV CATALOG = CORRECTIVE (declaracao stale removida).
+- PERSISTED CONSUMER CONFIG = nenhuma mudanca necessaria.
+
+### Testes
+
+- test_catalog_value_field_contract.py: +3 casos Wave 4 (cleaned ops
+  nao declaram value + campo semantico resolve; keepers mantem value;
+  heuristica nao reinjeta value). Schema de get_quality_scrap_cost_pct
+  corrigido (Wave 3 provou que value nao e emitido).
+- Suite completa: 1431 pass, 2 falhas pre-existentes (date-boundary).

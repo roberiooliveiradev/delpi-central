@@ -51,14 +51,13 @@
       },
       "valueFields": [
         "on_time_delivery_pct",
-        "value",
         "otdPct"
       ],
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
-        "value": "number",
         "otdPct": "number"
       },
+      "projectableFields": null,
       "label": "OTD — produção",
       "description": "Percentual de entregas no prazo (On-Time Delivery) no período.",
       "whenToUse": "Use no plantão ou painel diário quando a TV precisa mostrar um único número de pontualidade de entrega.",
@@ -77,14 +76,13 @@
       },
       "valueFields": [
         "overall_equipment_effectiveness_pct",
-        "value",
         "oeePct"
       ],
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
-        "value": "number",
         "oeePct": "number"
       },
+      "projectableFields": null,
       "label": "OEE — visão geral",
       "description": "Eficiência global dos equipamentos (OEE) consolidada no período.",
       "whenToUse": "Ideal para um card KPI grande na TV da fábrica: um número que resume disponibilidade × performance × qualidade.",
@@ -323,9 +321,9 @@
         "requiresBranchPermission": true
       },
       "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
+        "sales_conversion_rate_pct"
       ],
+      "projectableFields": null,
       "label": "Comercial — taxa de fechamento",
       "description": "Percentual de propostas convertidas em venda no período.",
       "whenToUse": "KPI comercial na TV: um número de taxa de fechamento. Prefira filtros de período e, se quiser, segmento.",
@@ -833,15 +831,44 @@
       },
       "projectableFields": null
     },
+    "get_new_business_rol_pct": {
+      "valueFields": [
+        "new_business_rol_pct"
+      ],
+      "projectableFields": null
+    },
+    "get_new_clients_rol_pct": {
+      "valueFields": [
+        "new_clients_rol_pct"
+      ],
+      "projectableFields": null
+    },
+    "get_depreciation_pct": {
+      "valueFields": [
+        "depreciation_pct"
+      ],
+      "projectableFields": null
+    },
+    "get_direct_labor_cost_pct": {
+      "valueFields": [
+        "direct_labor_cost_pct"
+      ],
+      "projectableFields": null
+    },
+    "get_production_cost_pct": {
+      "valueFields": [
+        "production_cost_pct"
+      ],
+      "projectableFields": null
+    },
     "get_refugos_scrap_cost_pct": {
       "exposesSiGoal": true,
       "valueFields": [
-        "scrap_cost_pct",
-        "value"
+        "scrap_cost_pct"
       ],
+      "projectableFields": null,
       "valueFieldLabels": {
         "scrap_cost_pct": "Custo de refugo / ROL (%)",
-        "value": "Valor",
         "scrap_cost": "Custo de refugo (R$)",
         "rol": "ROL (R$)",
         "occurrences": "Ocorrências de refugo",
@@ -855,12 +882,11 @@
     "get_retrabalhos_rework_cost_pct": {
       "exposesSiGoal": true,
       "valueFields": [
-        "rework_cost_pct",
-        "value"
+        "rework_cost_pct"
       ],
+      "projectableFields": null,
       "valueFieldLabels": {
         "rework_cost_pct": "Custo de retrabalho / ROL (%)",
-        "value": "Valor",
         "rework_cost": "Custo de retrabalho (R$)",
         "rol": "ROL (R$)",
         "total_hours": "Horas de retrabalho",
