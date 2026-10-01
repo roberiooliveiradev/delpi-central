@@ -125,6 +125,16 @@ describe("translate — PT-BR", () => {
     );
     expect(translate("Terminate end event")).toBe("Evento final de terminação");
   });
+
+  it("I18N-14: runtime feedback — erros de regra BPMN em drag/drop", () => {
+    // ModelagemFeedback chama translate() antes do tooltip de erro.
+    expect(translate("flow elements must be children of pools/participants")).toBe(
+      "Elementos de fluxo devem pertencer a um pool/participante",
+    );
+    expect(
+      translate("Data object must be placed within a pool/participant."),
+    ).toBe("Objeto de dados deve ser posicionado dentro de um pool/participante");
+  });
 });
 
 describe("bpmnTypeLabel — tipos moddle brutos", () => {

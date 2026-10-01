@@ -487,6 +487,12 @@ export class BpmnEditorAdapter {
 
   private describe(err: unknown, phase: string): string {
     const detail = err instanceof Error ? err.message : String(err);
-    return `vendor ${phase} failure: ${detail}`;
+    const action =
+      phase === "import"
+        ? "carregar o diagrama no editor"
+        : phase === "export"
+          ? "exportar o diagrama"
+          : "exportar o SVG";
+    return `Falha ao ${action}: ${detail}`;
   }
 }

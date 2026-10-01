@@ -229,6 +229,13 @@ const PT_BR: Record<string, string> = {
   "Distribute elements vertically": "Distribuir elementos verticalmente",
   "Search in diagram": "Buscar no diagrama",
   "Open {element}": "Abrir {element}",
+
+  /* --- runtime feedback (ModelingFeedback — tooltips de erro em
+     drag/drop/move rejeitados; passam por translate() no vendor) --- */
+  "flow elements must be children of pools/participants":
+    "Elementos de fluxo devem pertencer a um pool/participante",
+  "Data object must be placed within a pool/participant.":
+    "Objeto de dados deve ser posicionado dentro de um pool/participante",
 };
 
 /** Sufixos/qualificadores dos labels do popup de replace
