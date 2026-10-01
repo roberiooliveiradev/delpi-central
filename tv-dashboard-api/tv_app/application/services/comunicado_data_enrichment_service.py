@@ -60,6 +60,7 @@ from tv_app.application.services.tv_data_route_catalog_service import (
     TEXT_DATA_BOUND_BLOCK_TYPES,
     TvDataRouteCatalogService,
 )
+from tv_app.infrastructure.cache.single_flight import SingleFlightRegistry
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
 from tv_app.application.services.tv_date_range_preset_service import EXCLUDE_WEEKENDS_KEY
 from tv_app.infrastructure.gateways.delpi_operational_gateway import DelpiOperationalGateway
@@ -69,6 +70,8 @@ from tv_app.application.services.series_points_extractor import (
 )
 
 _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
+# Single-flight por processo: mesma data cache key em voo ⇒ um único fetch downstream.
+_data_block_inflight = SingleFlightRegistry[dict[str, Any]]()
 
 # Sem maxRows explícito: série diária (~3 meses) cabe no scroll do bloco; não truncar em 5
 # (gráfico recebe a série inteira — tabela deve acompanhar).
@@ -2443,10 +2446,13 @@ class ComunicadoDataEnrichmentService:
                 if request_memo is not None:
                     request_memo[cache_key] = cached
                 return {**cached, "_tvCacheHit": True}
-        payload = self._gateway.fetch_by_operation_id(
-            operation_id,
-            params=params,
-            authorization=authorization,
+        payload = _data_block_inflight.run(
+            cache_key,
+            lambda: self._gateway.fetch_by_operation_id(
+                operation_id,
+                params=params,
+                authorization=authorization,
+            ),
         )
         if not payload.get("error"):
             _data_block_cache.set(cache_key, payload)
@@ -2457,4 +2463,5 @@ class ComunicadoDataEnrichmentService:
 
 def reset_comunicado_data_block_cache() -> None:
     _data_block_cache.invalidate_all()
+    _data_block_inflight.invalidate_all()
     reset_phase7_caches()

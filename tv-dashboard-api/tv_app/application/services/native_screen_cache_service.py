@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from tv_app.infrastructure.cache.single_flight import SingleFlightRegistry
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
 
 SETTINGS_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_dashboard_settings.json"
@@ -40,6 +41,8 @@ def build_native_data_cache_key(
 
 
 _native_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
+# Single-flight por processo: mesma native cache key em voo ⇒ um único resolve downstream.
+_native_inflight = SingleFlightRegistry[dict[str, Any]]()
 
 
 def get_cached_native_data(key: str) -> dict[str, Any] | None:
@@ -52,8 +55,13 @@ def set_cached_native_data(key: str, value: dict[str, Any]) -> None:
     _native_cache.set(key, value)
 
 
+def get_native_inflight() -> SingleFlightRegistry[dict[str, Any]]:
+    return _native_inflight
+
+
 def reset_native_data_cache() -> None:
     _native_cache.invalidate_all()
+    _native_inflight.invalidate_all()
 
 
 def native_data_cache_stats() -> dict[str, float | int]:

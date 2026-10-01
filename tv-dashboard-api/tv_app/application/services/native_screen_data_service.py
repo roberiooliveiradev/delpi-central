@@ -9,6 +9,7 @@ from tv_app.application.services.data.native_screen_display_service import (
 from tv_app.application.services.native_screen_cache_service import (
     build_native_data_cache_key,
     get_cached_native_data,
+    get_native_inflight,
     set_cached_native_data,
 )
 from tv_app.application.services.tv_dashboard_content_service import message
@@ -61,7 +62,9 @@ class NativeScreenDataService:
     ) -> dict[str, Any]:
         cfg = config or {}
         # custom_message + overrides: sem cache (sessão do kiosk).
-        if screen_key != "custom_message" and not filter_overrides:
+        use_cache = screen_key != "custom_message" and not filter_overrides
+        cache_key = ""
+        if use_cache:
             cache_key = build_native_data_cache_key(
                 screen_key=screen_key,
                 config=cfg,
@@ -71,24 +74,24 @@ class NativeScreenDataService:
             if cached is not None:
                 return cached
 
-        result = self._resolve_uncached(
-            screen_key=screen_key,
-            cfg=cfg,
-            authorization=authorization,
-            playlist_id=playlist_id,
-            public_token=public_token,
-            user=user,
-            playlist_defaults=playlist_defaults,
-            filter_overrides=filter_overrides,
-        )
-        result = apply_native_screen_display(result, screen_key)
-        if screen_key != "custom_message" and not filter_overrides and not result.get("error"):
-            cache_key = build_native_data_cache_key(
+        def _resolve() -> dict[str, Any]:
+            result = self._resolve_uncached(
                 screen_key=screen_key,
-                config=cfg,
+                cfg=cfg,
                 authorization=authorization,
+                playlist_id=playlist_id,
+                public_token=public_token,
+                user=user,
+                playlist_defaults=playlist_defaults,
+                filter_overrides=filter_overrides,
             )
-            set_cached_native_data(cache_key, result)
+            return apply_native_screen_display(result, screen_key)
+
+        if not use_cache:
+            return _resolve()
+
+        result = get_native_inflight().run(cache_key, _resolve)
+        set_cached_native_data(cache_key, result)
         return result
 
     def _resolve_uncached(
