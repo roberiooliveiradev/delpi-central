@@ -41,6 +41,28 @@ class Settings:
         self.llm_timeout_seconds = float(
             os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30.0"
         )
+        # C3-MCP-INTEROP-01: approved specialist MCP connections (DAVI/TÉO/
+        # VISTA only). *_USER_TOKEN is a user-delegated bearer for the
+        # specialist MCP resource — never logged; absent token fails
+        # closed at the adapter. There is no service-token path.
+        self.mcp_timeout_seconds = float(
+            os.getenv("DELIA_MCP_TIMEOUT_SECONDS") or "15.0"
+        )
+        self.mcp_specialist_endpoints = {
+            "davi": (os.getenv("DELIA_MCP_DAVI_BASE_URL") or "").strip(),
+            "teo": (os.getenv("DELIA_MCP_TEO_BASE_URL") or "").strip(),
+            "vista": (os.getenv("DELIA_MCP_VISTA_BASE_URL") or "").strip(),
+        }
+        self.mcp_specialist_enabled = {
+            "davi": _env_flag("DELIA_MCP_DAVI_ENABLED"),
+            "teo": _env_flag("DELIA_MCP_TEO_ENABLED"),
+            "vista": _env_flag("DELIA_MCP_VISTA_ENABLED"),
+        }
+        self.mcp_specialist_user_tokens = {
+            key: (os.getenv(f"DELIA_MCP_{key.upper()}_USER_TOKEN") or "").strip()
+            or None
+            for key in ("davi", "teo", "vista")
+        }
 
     @classmethod
     def for_testing(cls) -> "Settings":

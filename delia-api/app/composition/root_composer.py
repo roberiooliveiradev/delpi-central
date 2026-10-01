@@ -7,9 +7,18 @@ from app.application.interaction.handle_interactive_turn import (
     HandleInteractiveConversationTurn,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
+from app.application.specialist_interop.specialist_interop import (
+    SpecialistInterop,
+)
 from app.domain.evidence.model import ModelRef
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.interoperability.config import (
+    specialist_connections_from_settings,
+)
+from app.infrastructure.interoperability.mcp.adapter import (
+    McpSpecialistAdapter,
+)
 from app.infrastructure.logging import configure_logging
 from app.infrastructure.model_invocation.deterministic_test_adapter import (
     DeterministicTestAdapter,
@@ -76,6 +85,13 @@ def create_application(
     else:
         handler = _wire_real_provider_handler(settings)
     app.config["INTERACTION_TURN_HANDLER"] = handler
+
+    # C3-MCP-INTEROP-01: provider-neutral specialist boundary. The adapter
+    # performs no I/O at composition; unconfigured/disabled specialists and
+    # absent user-delegated credentials fail closed at call time.
+    app.config["SPECIALIST_INTEROP"] = SpecialistInterop(
+        McpSpecialistAdapter(specialist_connections_from_settings(settings))
+    )
 
     register_error_handlers(app)
     register_request_logging(app, logger)

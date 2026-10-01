@@ -1891,6 +1891,20 @@ services:
       DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
       DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-30}
 
+      # C3-MCP-INTEROP-01: approved specialist MCP endpoints (DAVI/TÉO/VISTA).
+      # No secrets here — *_USER_TOKEN is an optional user-delegated bearer
+      # injected via .env for governed evals; absent token fails closed.
+      DELIA_MCP_TIMEOUT_SECONDS: ${DELIA_MCP_TIMEOUT_SECONDS:-15}
+      DELIA_MCP_DAVI_BASE_URL: ${DELIA_MCP_DAVI_BASE_URL:-http://delpi-api-delpi:8000/mcp}
+      DELIA_MCP_DAVI_ENABLED: ${DELIA_MCP_DAVI_ENABLED:-true}
+      DELIA_MCP_DAVI_USER_TOKEN: ${DELIA_MCP_DAVI_USER_TOKEN:-}
+      DELIA_MCP_TEO_BASE_URL: ${DELIA_MCP_TEO_BASE_URL:-http://transformometro-api:8000/mcp}
+      DELIA_MCP_TEO_ENABLED: ${DELIA_MCP_TEO_ENABLED:-true}
+      DELIA_MCP_TEO_USER_TOKEN: ${DELIA_MCP_TEO_USER_TOKEN:-}
+      DELIA_MCP_VISTA_BASE_URL: ${DELIA_MCP_VISTA_BASE_URL:-http://tv-dashboard-api:8000/mcp}
+      DELIA_MCP_VISTA_ENABLED: ${DELIA_MCP_VISTA_ENABLED:-true}
+      DELIA_MCP_VISTA_USER_TOKEN: ${DELIA_MCP_VISTA_USER_TOKEN:-}
+
     depends_on:
       keycloak:
         condition: service_started
