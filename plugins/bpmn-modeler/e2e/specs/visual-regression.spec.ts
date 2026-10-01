@@ -1,6 +1,7 @@
 import {
   test,
   expect,
+  createModelViaApi,
   importModelViaApi,
   modelUrl,
   LIBRARY_URL,
@@ -410,41 +411,129 @@ test.describe("E2E-37 — model library (home redesign)", () => {
     ).toBeLessThanOrEqual(1440 + 1);
   });
 
-  test("click seleciona + abre menu; right-click e ⋮ abrem o mesmo; dblclick abre", async ({
+  test("contrato de interação: click abre, right-click/⋮/long-press abrem menu", async ({
     page,
   }) => {
     const modelId = await openLibrary(page);
     const c = card(page);
 
-    // left click → seleciona + menu contextual
-    await c.locator(".delpi-ui-preview-detail-card").click();
-    await expect(c).toHaveClass(/is-selected/);
-    await expect(menu(page)).toBeVisible({ timeout: 5_000 });
-    const menuBox = await menu(page).boundingBox();
-    expectInViewport(menuBox!, 1440, 900);
-    await page.keyboard.press("Escape");
-    await expect(menu(page)).toBeHidden();
-
-    // right-click → mesmo menu
+    // right-click → menu contextual no pointer, dentro do viewport
     await c
       .locator(".delpi-ui-preview-detail-card")
       .click({ button: "right" });
-    await expect(menu(page)).toBeVisible();
+    await expect(menu(page)).toBeVisible({ timeout: 5_000 });
+    expect(c).toHaveClass(/is-menu-open/);
+    const menuBox = await menu(page).boundingBox();
+    expectInViewport(menuBox!, 1440, 900);
     await expect(
       menu(page).getByRole("menuitem", { name: "Abrir" }),
     ).toBeVisible();
     await page.keyboard.press("Escape");
+    await expect(menu(page)).toBeHidden();
+    await expect(c).not.toHaveClass(/is-menu-open/);
 
-    // ⋮ → mesmo menu
+    // ⋮ → mesmo menu ancorado ao botão
     await c.locator(".bpmnm-model-card__menu button").click();
     await expect(menu(page)).toBeVisible();
     await page.keyboard.press("Escape");
 
-    // double click → abre o modelo
-    await c.locator(".delpi-ui-preview-detail-card").dblclick();
+    // long-press (touch pointerdown ~520ms) → mesmo menu, tap seguinte não navega
+    const cardEl = c.locator(".delpi-ui-preview-detail-card");
+    const cb = await cardEl.boundingBox();
+    const px = Math.round(cb!.x + cb!.width / 2);
+    const py = Math.round(cb!.y + cb!.height / 2);
+    await cardEl.dispatchEvent("pointerdown", {
+      pointerType: "touch",
+      clientX: px,
+      clientY: py,
+      bubbles: true,
+    });
+    await expect(menu(page)).toBeVisible({ timeout: 3_000 });
+    await cardEl.dispatchEvent("pointerup", {
+      pointerType: "touch",
+      clientX: px,
+      clientY: py,
+      bubbles: true,
+    });
+    await expect(page).toHaveURL(new RegExp(`${LIBRARY_URL}$`));
+    await page.keyboard.press("Escape");
+
+    // left click → abre o modelo diretamente
+    await cardEl.click();
     await page.waitForURL(new RegExp(`/models/${modelId}`), {
       timeout: 15_000,
     });
+  });
+
+  test("Enter abre o modelo; Shift+F10 abre o menu", async ({ page }) => {
+    const modelId = await openLibrary(page);
+    const c = card(page);
+    await c.locator(".delpi-ui-preview-detail-card").focus();
+    await page.keyboard.press("Shift+F10");
+    await expect(menu(page)).toBeVisible({ timeout: 5_000 });
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Enter");
+    await page.waitForURL(new RegExp(`/models/${modelId}`), {
+      timeout: 15_000,
+    });
+  });
+
+  test("preview com safe padding: conteúdo da imagem não toca as bordas", async ({
+    page,
+  }) => {
+    await openLibrary(page);
+    const c = card(page);
+    const media = c.locator(
+      ".delpi-ui-preview-detail-card__media, [class*='preview-detail-card__media']",
+    );
+    const img = c.locator(".bpmnm-thumb__img");
+    await expect(img).toBeVisible({ timeout: 20_000 });
+    const [mediaBox, imgPad] = await Promise.all([
+      media.boundingBox(),
+      img.evaluate(
+        (el) => parseFloat(getComputedStyle(el).paddingLeft) || 0,
+      ),
+    ]);
+    expect(mediaBox).not.toBeNull();
+    expect(imgPad).toBeGreaterThanOrEqual(8);
+    // media 16:9 no slot do kit
+    expect(mediaBox!.width / mediaBox!.height).toBeGreaterThan(1.4);
+    expect(mediaBox!.width / mediaBox!.height).toBeLessThan(2.0);
+  });
+
+  test("modelo vazio → placeholder discreto, não bloco branco nem erro", async ({
+    page,
+  }) => {
+    // modelo criado vazio (sem elementos DI) via API
+    await createModelViaApi("editor", "E2E-Empty");
+    await page.goto(LIBRARY_URL);
+    await expect(page.locator(".bpmnm-library")).toBeVisible({
+      timeout: 20_000,
+    });
+    const c = page
+      .locator(".bpmnm-model-card", { hasText: "E2E-Empty" })
+      .first();
+    await expect(c).toBeVisible();
+    await expect(c.locator(".bpmnm-thumb--empty")).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(c.locator(".bpmnm-thumb__hint")).toHaveText(
+      "Diagrama sem elementos",
+    );
+  });
+
+  test("filter bar sem overflow horizontal e em faixa única", async ({
+    page,
+  }) => {
+    await openLibrary(page);
+    const bar = page.locator(".bpmnm-library-toolbar");
+    const box = await bar.boundingBox();
+    expect(box).not.toBeNull();
+    // faixa única compacta (pills + campos no mesmo bloco)
+    expect(box!.height).toBeLessThanOrEqual(140);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(1440 + 1);
   });
 
   test("grid responsivo: ~4 colunas em 1920, 2+ em 1366, sem overflow", async ({

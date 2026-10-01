@@ -115,11 +115,11 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
   const [createOpen, setCreateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ model: ModelSummary; position: FixedPanelPoint } | null>(null);
   const [duplicateTarget, setDuplicateTarget] = useState<ModelSummary | null>(null);
   const [duplicateName, setDuplicateName] = useState("");
-  const clickTimer = useRef<number | null>(null);
+  const longPress = useRef<{ timer: number; x: number; y: number } | null>(null);
+  const suppressClick = useRef(false);
 
   const [sort, direction] = sortValue.split(":") as ["updated_at" | "created_at" | "display_name", "asc" | "desc"];
 
@@ -154,7 +154,7 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
 
   useEffect(
     () => () => {
-      if (clickTimer.current !== null) window.clearTimeout(clickTimer.current);
+      if (longPress.current !== null) window.clearTimeout(longPress.current.timer);
     },
     [],
   );
@@ -210,23 +210,39 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
   const openModelPath = (id: string) => `/apps/bpmn-modeler/models/${id}`;
 
   const openModelMenu = (model: ModelSummary, position: FixedPanelPoint) => {
-    setSelectedId(model.id);
     setMenu({ model, position });
   };
 
-  const scheduleMenu = (model: ModelSummary, position: FixedPanelPoint) => {
-    setSelectedId(model.id);
-    if (clickTimer.current !== null) window.clearTimeout(clickTimer.current);
-    clickTimer.current = window.setTimeout(() => {
-      clickTimer.current = null;
-      setMenu({ model, position });
-    }, 220);
+  const cancelLongPress = () => {
+    if (longPress.current !== null) {
+      window.clearTimeout(longPress.current.timer);
+      longPress.current = null;
+    }
   };
 
-  const cancelScheduledMenu = () => {
-    if (clickTimer.current !== null) {
-      window.clearTimeout(clickTimer.current);
-      clickTimer.current = null;
+  /** Touch/coarse pointer: press-and-hold ~520ms abre o mesmo menu contextual.
+   *  Tap simples abre o modelo; scroll/movimento cancela sem abrir nada. */
+  const onCardPointerDown = (model: ModelSummary, event: React.PointerEvent) => {
+    suppressClick.current = false;
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+    cancelLongPress();
+    const { clientX, clientY } = event;
+    longPress.current = {
+      x: clientX,
+      y: clientY,
+      timer: window.setTimeout(() => {
+        longPress.current = null;
+        suppressClick.current = true;
+        openModelMenu(model, { x: clientX, y: clientY });
+      }, 520),
+    };
+  };
+
+  const onCardPointerMove = (event: React.PointerEvent) => {
+    const lp = longPress.current;
+    if (!lp) return;
+    if (Math.hypot(event.clientX - lp.x, event.clientY - lp.y) > 10) {
+      cancelLongPress();
     }
   };
 
@@ -242,7 +258,6 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
             ? null
             : { model, position: { x: rect.right, y: rect.bottom } },
         );
-        setSelectedId(model.id);
       }}
     >
       <IconButton aria-label={`Ações de ${model.display_name}`}>
@@ -343,11 +358,11 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
           {(page?.items ?? []).map((model) => (
             <li
               key={model.id}
-              className={`bpmnm-model-card${selectedId === model.id ? " is-selected" : ""}`}
-              onDoubleClick={() => {
-                cancelScheduledMenu();
-                navigate(openModelPath(model.id));
-              }}
+              className={`bpmnm-model-card${menu?.model.id === model.id ? " is-menu-open" : ""}`}
+              onPointerDown={(event) => onCardPointerDown(model, event)}
+              onPointerMove={onCardPointerMove}
+              onPointerUp={cancelLongPress}
+              onPointerCancel={cancelLongPress}
               onKeyDown={(event) => {
                 if (
                   event.key === "ContextMenu" ||
@@ -360,7 +375,7 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
               }}
             >
               <BpmnmPreviewDetailCard
-                aria-label={model.display_name}
+                aria-label={`Abrir ${model.display_name}`}
                 media={
                   <BpmnModelThumb
                     modelId={model.id}
@@ -377,18 +392,21 @@ export function ModelLibraryPage({ getAccessToken, capabilities, navigate }: Pro
                     />
                     <span className="bpmnm-card-meta-line">
                       {revisionLabel(model.latest_revision_number)}
-                    </span>
-                    <span className="bpmnm-card-meta-line">
+                      {" · "}
                       Atualizado {formatUpdatedAt(model.updated_at)}
                     </span>
                   </>
                 }
-                onClick={(event) =>
-                  scheduleMenu(model, { x: event.clientX, y: event.clientY })
-                }
+                onClick={() => {
+                  if (suppressClick.current) {
+                    suppressClick.current = false;
+                    return;
+                  }
+                  navigate(openModelPath(model.id));
+                }}
                 onContextMenu={(event) => {
                   event.preventDefault();
-                  cancelScheduledMenu();
+                  cancelLongPress();
                   openModelMenu(model, { x: event.clientX, y: event.clientY });
                 }}
               />
