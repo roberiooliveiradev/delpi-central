@@ -163,6 +163,20 @@ def _optional_float(value: Any) -> float | None:
         return None
 
 
+def _has_open_operation_balance(item: dict[str, Any]) -> bool:
+    """Regra canônica da fila do operador: a operação ainda tem saldo a produzir.
+
+    Fonte: operation_pending_qty (saldo da própria operação); pending_qty
+    (cabeçalho da OP) só entra quando o saldo por operação não veio. Saldo
+    conhecido <= 1e-9 remove da fila; saldo desconhecido mantém — falha de
+    enriquecimento não pode esconder trabalho do operador.
+    """
+    pending = _optional_float(item.get("operation_pending_qty"))
+    if pending is None:
+        pending = _optional_float(item.get("pending_qty"))
+    return pending is None or pending > 1e-9
+
+
 def _parse_iso_date(value: str | None) -> date | None:
     text = str(value or "").strip()[:10]
     if not text:
@@ -377,6 +391,7 @@ class MachineLoadService:
             seeded=False,
             branch=code,
             production_source="cockpit",
+            open_only=True,
         )
         return self._strip_internal_identity(payload)
 
@@ -1778,6 +1793,7 @@ class MachineLoadService:
         view_end: date | None = None,
         allow_remote_status: bool = True,
         production_source: str = "erp",
+        open_only: bool = False,
     ) -> dict[str, Any]:
         payload = decode_snapshot_payload(row)
         work_centers = payload_work_centers(payload)
@@ -1795,6 +1811,11 @@ class MachineLoadService:
         # Conjunto retirado continua no snapshot (posição original preservada), mas some da fila.
         withdrawn_keys = withdrawn_order_numbers(payload)
         operations = visible_operations(operations, withdrawn_keys)
+        if open_only:
+            # Projeção do cockpit: só o que ainda tem saldo a produzir.
+            operations = [
+                item for item in operations if _has_open_operation_balance(item)
+            ]
         # A fila congelada é uma só; o período pedido na tela é lente de leitura.
         filtered = view_start is not None or view_end is not None
         if filtered:
@@ -1806,7 +1827,7 @@ class MachineLoadService:
         work_centers = self._recompute_center_counts(
             work_centers,
             operations,
-            recount_totals=moved_operations or filtered,
+            recount_totals=moved_operations or filtered or open_only,
             drop_empty=filtered,
         )
 
@@ -1823,7 +1844,7 @@ class MachineLoadService:
 
         summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
         in_production = sum(1 for item in operations if item.get("is_in_production"))
-        if withdrawn_keys or filtered:
+        if withdrawn_keys or filtered or open_only:
             operation_count = len(operations)
             order_count = len(
                 {order for item in operations if (order := _norm_code(item.get("production_order")))}
@@ -1899,7 +1920,7 @@ class MachineLoadService:
         — quem tem cronômetro aberto no coletor mas sem run do cockpit deixa de
         disputar o destaque da fila pública.
         """
-        runs = self._list_open_runs(branch) if self._list_open_runs else []
+        runs = self._list_open_runs(branch=branch) if self._list_open_runs else []
         runs_by_key = {
             (
                 _norm_code(run.get("work_center")),
@@ -1908,6 +1929,7 @@ class MachineLoadService:
             ): run
             for run in runs
         }
+        projected: list[dict[str, Any]] = []
         for item in operations:
             key = (
                 _norm_code(item.get("work_center")),
@@ -1915,26 +1937,28 @@ class MachineLoadService:
                 str(item.get("operation_code") or "").strip(),
             )
             run = runs_by_key.get(key)
+            merged = dict(item)
             if run is None:
-                item["is_in_production"] = False
-                item["active_operator_code"] = None
-                item["active_operator_name"] = None
-                item["active_operator_count"] = 0
-                item["production_started_date"] = None
-                item["production_started_time"] = None
-                if item.get("production_status") == "in_progress":
-                    item["production_status"] = "started"
-                continue
-            item["is_in_production"] = True
-            item["production_status"] = "in_progress"
-            item["active_operator_code"] = run.get("operator_code")
-            item["active_operator_name"] = run.get("operator_name")
-            item["active_operator_count"] = 1
-            started_at = run.get("started_at")
-            if isinstance(started_at, datetime):
-                item["production_started_date"] = started_at.date().isoformat()
-                item["production_started_time"] = started_at.strftime("%H:%M")
-        return operations
+                merged["is_in_production"] = False
+                merged["active_operator_code"] = None
+                merged["active_operator_name"] = None
+                merged["active_operator_count"] = 0
+                merged["production_started_date"] = None
+                merged["production_started_time"] = None
+                if merged.get("production_status") == "in_progress":
+                    merged["production_status"] = "started"
+            else:
+                merged["is_in_production"] = True
+                merged["production_status"] = "in_progress"
+                merged["active_operator_code"] = run.get("operator_code")
+                merged["active_operator_name"] = run.get("operator_name")
+                merged["active_operator_count"] = 1
+                started_at = run.get("started_at")
+                if isinstance(started_at, datetime):
+                    merged["production_started_date"] = started_at.date().isoformat()
+                    merged["production_started_time"] = started_at.strftime("%H:%M")
+            projected.append(merged)
+        return projected
 
     def _live_status_map(
         self,

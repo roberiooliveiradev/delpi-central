@@ -976,6 +976,201 @@ def test_managerial_build_keeps_totvs_production_status() -> None:
     assert b1["active_operator_name"] == "OPERADOR COLETOR"
 
 
+def _seed_public_balance_snapshot(
+    service: MachineLoadService,
+    snapshots: FakeSnapshotRepo,
+    operations: list[dict[str, Any]],
+) -> None:
+    start, end = service.resolve_delivery_window(start_date=None, end_date=None)
+    snapshots.upsert(
+        branch="01",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": operations,
+            "summary": {"work_center_count": 2, "operation_count": len(operations)},
+            "sequence_updated_at": "2026-08-19T22:10:00+00:00",
+        },
+        refreshed_by="planner-1",
+    )
+
+
+def _balance_op(
+    order: str,
+    *,
+    operation_pending: float | None | object = "missing",
+    pending: float | None | object = "missing",
+) -> dict[str, Any]:
+    item = {**_OPERATION, "production_order": order}
+    if operation_pending != "missing":
+        item["operation_pending_qty"] = operation_pending
+    else:
+        item.pop("operation_pending_qty", None)
+    if pending != "missing":
+        item["pending_qty"] = pending
+    return item
+
+
+def _public_orders(payload: dict[str, Any], work_center: str = "CT-02") -> list[str]:
+    return [
+        item["production_order"]
+        for item in payload["selected"]["items"]
+        if item["work_center"] == work_center
+    ]
+
+
+def test_public_queue_open_only_keeps_positive_balance() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _balance_op("A", operation_pending=10.0),
+            _balance_op("B", operation_pending=0.0),
+            _balance_op("C", operation_pending=35.0),
+            _balance_op("D", operation_pending=0.0),
+        ],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert _public_orders(payload) == ["A", "C"]
+
+
+def test_public_queue_open_only_drops_zero_and_negative_balance() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _balance_op("ZERO", operation_pending=0.0),
+            _balance_op("NEG", operation_pending=-0.001),
+            _balance_op("EPS", operation_pending=1e-10),
+            _balance_op("OPEN", operation_pending=0.5),
+        ],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert _public_orders(payload) == ["OPEN"]
+
+
+def test_public_queue_open_only_keeps_unknown_balance() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _balance_op("NULL-OP", operation_pending=None, pending=None),
+            _balance_op("NOFIELDS", operation_pending="missing", pending="missing"),
+        ],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert _public_orders(payload) == ["NULL-OP", "NOFIELDS"]
+
+
+def test_public_queue_pending_qty_is_only_fallback() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _balance_op("FB-ZERO", operation_pending=None, pending=0.0),
+            _balance_op("FB-OPEN", operation_pending=None, pending=12.0),
+            # Saldo da operação manda sobre o cabeçalho da OP.
+            _balance_op("HDR-ONLY", operation_pending=0.0, pending=100.0),
+        ],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert _public_orders(payload) == ["FB-OPEN"]
+
+
+def test_public_queue_open_only_pagination_counts_open_items() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _balance_op("O1"),
+            _balance_op("C1", operation_pending=0.0),
+            _balance_op("O2"),
+            _balance_op("C2", operation_pending=0.0),
+            _balance_op("O3"),
+        ],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+    pagination = payload["selected"]["pagination"]
+
+    assert _public_orders(payload) == ["O1", "O2", "O3"]
+    assert pagination == {"page": 1, "page_size": 3, "total": 3, "is_complete": True}
+
+
+def test_public_queue_open_only_does_not_mutate_snapshot() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [
+            _balance_op("OPEN"),
+            _balance_op("DONE", operation_pending=0.0),
+        ],
+    )
+    before = snapshots.get(branch="01")["payload_json"]
+
+    service.build_public(branch="01", work_center="CT-02")
+
+    after = snapshots.get(branch="01")["payload_json"]
+    assert after == before
+    assert [op["production_order"] for op in after["operations"]] == ["OPEN", "DONE"]
+    assert snapshots.payload_updates == 0
+
+
+def test_public_queue_empty_center_keeps_work_center_in_selector() -> None:
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_balance_op("DONE", operation_pending=0.0)],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert payload["selected"]["items"] == []
+    centers = [c["work_center"] for c in payload["work_centers"]]
+    assert "CT-02" in centers
+
+
+def test_public_queue_open_only_does_not_touch_open_runs() -> None:
+    """OP concluída sai da projeção pública; o run aberto continua recuperável."""
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
+    runs = [_open_run(production_order="DONE")]
+    service._list_open_runs = lambda branch: runs  # noqa: SLF001
+    _seed_public_balance_snapshot(
+        service,
+        snapshots,
+        [_balance_op("DONE", operation_pending=0.0)],
+    )
+
+    payload = service.build_public(branch="01", work_center="CT-02")
+
+    assert payload["selected"]["items"] == []
+    assert service._list_open_runs("01") == runs  # noqa: SLF001
+
+
 def test_reorder_sequence_notifies_connected_cockpits() -> None:
     snapshots = FakeSnapshotRepo()
     notifier = RecordingNotifier()
