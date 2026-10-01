@@ -709,8 +709,22 @@ class RealStrategicIndicatorsMeasurementsProvider(
             return []
 
         if len(collectors) == 1:
-            _name, fetcher = collectors[0]
-            return [fetcher()]
+            name, fetcher = collectors[0]
+            try:
+                return [fetcher()]
+            except Exception as exc:
+                return [
+                    {
+                        "items": [],
+                        "errors": [
+                            {
+                                "department_id": name,
+                                "source": f"{name}_snapshot",
+                                "message": str(exc),
+                            }
+                        ],
+                    }
+                ]
 
         results_by_name: dict[str, dict] = {}
 

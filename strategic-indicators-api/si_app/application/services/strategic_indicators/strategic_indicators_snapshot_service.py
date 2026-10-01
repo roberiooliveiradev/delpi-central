@@ -450,7 +450,11 @@ class StrategicIndicatorsSnapshotService:
                 department_scope,
                 branch,
             )
-            return catalog, stored
+            # Mesma projeção da base única usada por leituras departamentais:
+            # erros fora do escopo do indicador não podem depender de cache HIT/MISS.
+            return catalog, self._filter_period_to_department(
+                stored, department_scope
+            )
 
         measurement_period, _entirely_future = clamp_resolved_period_to_elapsed(
             period

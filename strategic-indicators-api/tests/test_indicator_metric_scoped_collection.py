@@ -261,6 +261,105 @@ def test_unknown_indicator_keeps_404_semantics_without_invented_scope() -> None:
     assert result is None
 
 
+def _fail_department(ports: dict[str, MagicMock], department: str) -> None:
+    getattr(
+        ports[department], f"get_{department}_indicators_snapshot"
+    ).side_effect = Exception("simulated collector failure")
+
+
+def _materialized_global_current(
+    *, failing_department: str | None = None
+):
+    """Linha global que `period_scores` serviria para o estado subjacente."""
+    _use_case, service, ports = _build_environment()
+    if failing_department:
+        _fail_department(ports, failing_department)
+    comparative = service.get_current_and_previous_snapshot(
+        competence="2026-04",
+        department_id=None,
+    )
+    return comparative.current
+
+
+def _execute_with_stored_global(stored) -> tuple[dict | None, dict[str, int]]:
+    use_case, service, ports = _build_environment()
+    service._load_stored_period_snapshot = MagicMock(return_value=stored)  # noqa: SLF001
+    result = use_case.execute(
+        indicator_id="quality-indicator",
+        kind="realized",
+        competence="2026-04",
+    )
+    return result, _collector_calls(ports)
+
+
+def _execute_live_miss(
+    *, failing_department: str | None = None
+) -> tuple[dict | None, dict[str, int]]:
+    use_case, _service, ports = _build_environment()
+    if failing_department:
+        _fail_department(ports, failing_department)
+    result = use_case.execute(
+        indicator_id="quality-indicator",
+        kind="realized",
+        competence="2026-04",
+    )
+    return result, _collector_calls(ports)
+
+
+def test_hit_and_miss_payloads_are_identical() -> None:
+    """Mesmo estado subjacente → resposta escalar idêntica em HIT e MISS."""
+    stored = _materialized_global_current()
+
+    clear_in_process_snapshot_cache()
+    result_hit, hit_calls = _execute_with_stored_global(stored)
+
+    clear_in_process_snapshot_cache()
+    result_miss, miss_calls = _execute_live_miss()
+
+    assert result_hit == result_miss
+    assert result_hit is not None and result_hit["value"] == 90.0
+    assert hit_calls == {department: 0 for department in DEPARTMENTS}
+    assert miss_calls["quality"] == 1
+    assert all(
+        count == 0
+        for department, count in miss_calls.items()
+        if department != "quality"
+    )
+
+
+def test_unrelated_department_error_not_flagged_on_hit_or_miss() -> None:
+    """Falha em Suprimentos não marca o indicador de Qualidade — em nenhum caminho."""
+    stored = _materialized_global_current(failing_department="supplies")
+
+    clear_in_process_snapshot_cache()
+    result_hit, _ = _execute_with_stored_global(stored)
+
+    clear_in_process_snapshot_cache()
+    result_miss, _ = _execute_live_miss(failing_department="supplies")
+
+    assert result_hit == result_miss
+    assert result_hit is not None
+    assert result_hit["value"] == 90.0
+    assert result_hit["partial_success"] is False
+    assert result_miss["partial_success"] is False
+
+
+def test_owning_department_error_flags_partial_on_hit_and_miss() -> None:
+    """Falha em Qualidade é reportada identicamente pelos dois caminhos."""
+    stored = _materialized_global_current(failing_department="quality")
+
+    clear_in_process_snapshot_cache()
+    result_hit, _ = _execute_with_stored_global(stored)
+
+    clear_in_process_snapshot_cache()
+    result_miss, _ = _execute_live_miss(failing_department="quality")
+
+    assert result_hit == result_miss
+    assert result_hit is not None
+    assert result_hit["partial_success"] is True
+    assert result_hit["value"] is None
+
+
 def test_stored_global_snapshot_serves_scalar_without_collectors() -> None:
     """Com `period_scores` global fresco, nenhum collector deve executar."""
     use_case, service, ports = _build_environment()
