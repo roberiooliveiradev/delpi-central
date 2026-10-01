@@ -89,6 +89,9 @@ export function ProductionRunControls({
     runId: string;
     downtime: RunDowntimeView;
   } | null>(null);
+  // Quando o alvo veio da lista de pendências, ao fechar/confirmar o modal de
+  // motivo retorna à lista (em vez de encerrar o fluxo) até o operador sair.
+  const [returnToPending, setReturnToPending] = useState(false);
   // Alvo do modal: escolha manual (lista de pendências/timeline) primeiro;
   // senão a parada aberta; senão a pendência encerrada do run ativo.
   const modalDowntime = manualTarget?.downtime ?? openDowntime ?? pendingDowntime;
@@ -123,6 +126,7 @@ export function ProductionRunControls({
   const openPendingTarget = (item: PendingMesDowntime) => {
     if (!item.runId) return;
     setPendingModalOpen(false);
+    setReturnToPending(true);
     setManualTarget({
       runId: item.runId,
       downtime: {
@@ -382,6 +386,7 @@ export function ProductionRunControls({
                     serverNow={serverNow}
                     onSelectDowntime={(item) => {
                       if (!item.downtime || item.downtime.confirmed || !run) return;
+                      setReturnToPending(false);
                       setManualTarget({
                         runId: run.id,
                         downtime: {
@@ -445,7 +450,11 @@ export function ProductionRunControls({
               note,
             );
             setManualTarget(null);
-            void refreshPending();
+            await refreshPending();
+            if (returnToPending) {
+              setReturnToPending(false);
+              setPendingModalOpen(true);
+            }
             return;
           }
           await classifyDowntime(reasonCode, note, modalDowntime?.id ?? null);
@@ -453,6 +462,11 @@ export function ProductionRunControls({
         onClose={() => {
           setManualTarget(null);
           setReasonModalOpen(false);
+          if (returnToPending) {
+            setReturnToPending(false);
+            void refreshPending();
+            setPendingModalOpen(true);
+          }
         }}
       />
     </div>
