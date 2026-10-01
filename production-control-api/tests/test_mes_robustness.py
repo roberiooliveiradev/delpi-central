@@ -72,8 +72,7 @@ def _setup(audit=None):
     session = service.create_bench_session(
         branch="01",
         work_center="CT01",
-        operator_code="USR01",
-        operator_name="Operador",
+        registration="USR01",
     )["sessionToken"]
     return service, repo, pulse, session
 
@@ -127,7 +126,7 @@ class TestPlayRequiresUsableSnapshot:
         )
         service = make_service(repo, pulse)
         session = service.create_bench_session(
-            branch="01", work_center="CT01", operator_code="U", operator_name="N"
+            branch="01", work_center="CT01", registration="U"
         )["sessionToken"]
         with pytest.raises(PulseDeviceUnavailable):
             _start(service, session)
@@ -138,7 +137,7 @@ class TestPlayRequiresUsableSnapshot:
         pulse = FakePulse(devices=[{"deviceId": "d", "counterEpoch": 1, "online": True}])
         service = make_service(repo, pulse)
         session = service.create_bench_session(
-            branch="01", work_center="CT01", operator_code="U", operator_name="N"
+            branch="01", work_center="CT01", registration="U"
         )["sessionToken"]
         with pytest.raises(PulseDeviceUnavailable):
             _start(service, session)
@@ -411,8 +410,7 @@ class TestAuditPostgres:
         session = service.create_bench_session(
             branch="01",
             work_center=clean_ct,
-            operator_code="USR01",
-            operator_name="Operador",
+            registration="USR01",
         )["sessionToken"]
         run = service.start_run(
             branch="01",
@@ -468,8 +466,7 @@ class TestAuditPostgres:
         session = service.create_bench_session(
             branch="01",
             work_center=clean_ct,
-            operator_code="USR01",
-            operator_name="Op",
+            registration="USR01",
         )["sessionToken"]
         run = service.start_run(
             branch="01",

@@ -111,3 +111,31 @@ class DowntimeReasonConflict(ProductionControlError):
 
 class InvalidDowntimeReason(ProductionControlError):
     """Dados administrativos do motivo fora do contrato do catálogo."""
+
+
+class OperatorNotFound(ProductionControlError):
+    """Matrícula inexistente no diretório de colaboradores (Portal RH 404)."""
+
+
+class OperatorDirectoryUnavailable(ProductionControlError):
+    """Diretório de colaboradores indisponível (timeout/rede/5xx/config)."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class OperatorDirectoryUnauthorized(OperatorDirectoryUnavailable):
+    """Credencial S2S do diretório rejeitada pelo Portal RH (401/403)."""
+
+
+class OperatorDirectoryContractError(ProductionControlError):
+    """Resposta 200 do Portal RH fora do contrato de colaborador."""
+
+
+class OperatorInactive(ProductionControlError):
+    """Matrícula existe, mas o colaborador está inativo no cadastro (C3)."""
+
+
+class InvalidOperatorRegistration(ProductionControlError):
+    """Matrícula fora do contrato textual (vazia ou > 30 caracteres)."""

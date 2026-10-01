@@ -92,9 +92,13 @@ async def lifespan(_app: FastAPI):
         yield
     finally:
         await production_run_poller.stop()
-        from production_control_app.composition.pc_composer import close_production_pulse_gateway
+        from production_control_app.composition.pc_composer import (
+            close_portal_rh_operator_directory_gateway,
+            close_production_pulse_gateway,
+        )
 
         close_production_pulse_gateway()
+        close_portal_rh_operator_directory_gateway()
         worker.cancel()
 
 

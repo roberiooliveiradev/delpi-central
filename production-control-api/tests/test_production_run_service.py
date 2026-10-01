@@ -500,9 +500,35 @@ def make_mes(reasons=None) -> tuple[MesRunLifecycleService, FakeStateRepo, FakeD
     )
 
 
+class FakeOperatorDirectory:
+    """Diretório de operadores fake (C3): eco da matrícula, active=True."""
+
+    def __init__(self, *, full_name: str = "Operador", active: bool = True,
+                 raises: Exception | None = None):
+        self.full_name = full_name
+        self.active = active
+        self.raises = raises
+        self.calls: list[str] = []
+
+    def find_by_registration(self, registration: str):
+        self.calls.append(registration)
+        if self.raises is not None:
+            raise self.raises
+        from production_control_app.domain.operator_identity import OperatorIdentity
+        return OperatorIdentity(
+            external_id=1,
+            registration=registration,
+            full_name=self.full_name,
+            branch_code="01",
+            active=self.active,
+        )
+
+
 def make_service(repo: FakeRepo, pulse: "FakePulse", **kwargs) -> ProductionRunService:
     if "mes_lifecycle" not in kwargs:
         kwargs["mes_lifecycle"] = make_mes()[0]
+    if "operator_directory" not in kwargs:
+        kwargs["operator_directory"] = FakeOperatorDirectory()
     return ProductionRunService(repository=repo, pulse_gateway=pulse, **kwargs)
 
 
@@ -846,7 +872,6 @@ def service_session(repo: FakeRepo) -> str:
     created = service.create_bench_session(
         branch="01",
         work_center="CT01",
-        operator_code="USR01",
-        operator_name="Operador",
+        registration="USR01",
     )
     return created["sessionToken"]

@@ -692,7 +692,7 @@ class TestAutoDowntimePostgres:
 
     def _session(self, service, wc):
         return service.create_bench_session(
-            branch="01", work_center=wc, operator_code="USR01"
+            branch="01", work_center=wc, registration="USR01"
         )["sessionToken"]
 
     def _start(self, service, wc, token):

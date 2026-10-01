@@ -311,7 +311,7 @@ class TestClassificationPostgres:
             mes_lifecycle=mes,
         )
         token = service.create_bench_session(
-            branch="01", work_center=wc, operator_code="USR02"
+            branch="01", work_center=wc, registration="USR02"
         )["sessionToken"]
         run = service.start_run(
             branch="01", work_center=wc,

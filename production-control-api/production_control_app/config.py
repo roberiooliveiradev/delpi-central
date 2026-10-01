@@ -42,6 +42,14 @@ class Settings:
     DELPI_API_TIMEOUT: float = float(_get_env("DELPI_API_TIMEOUT", default="30"))
     DELPI_API_CALLER_APP: str = _get_env("DELPI_API_CALLER_APP", default="production-control-api")
 
+    # Portal RH — diretório oficial de colaboradores (S2S dedicado; token sem
+    # default real; ausência falha só na chamada, não no startup).
+    PORTAL_RH_API_URL: str = _get_env("PORTAL_RH_API_URL", default="")
+    PORTAL_RH_API_SERVICE_TOKEN: str = _get_env("PORTAL_RH_API_SERVICE_TOKEN", default="")
+    PORTAL_RH_API_TIMEOUT: float = float(
+        _get_env("PORTAL_RH_API_TIMEOUT", default="5")
+    )
+
     # Integração MES → Production Pulse (snapshot de contador).
     # Dev (pulse em network_mode:host): http://host.docker.internal:80/apps/production-pulse-api
     # Prod (mesma delpi-network): http://delpi-production-pulse-api:8000

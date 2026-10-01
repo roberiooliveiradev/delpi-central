@@ -400,6 +400,35 @@ def close_production_pulse_gateway() -> None:
         build_production_pulse_gateway.cache_clear()
 
 
+@lru_cache(maxsize=1)
+def build_portal_rh_operator_directory_gateway() -> Any:
+    from production_control_app.infrastructure.gateways.portal_rh_operator_directory_gateway import (  # noqa: E501
+        PortalRhOperatorDirectoryGateway,
+    )
+
+    return PortalRhOperatorDirectoryGateway()
+
+
+def close_portal_rh_operator_directory_gateway() -> None:
+    if build_portal_rh_operator_directory_gateway.cache_info().currsize:
+        build_portal_rh_operator_directory_gateway().close()
+        build_portal_rh_operator_directory_gateway.cache_clear()
+
+
+@lru_cache(maxsize=1)
+def build_operator_directory_service() -> Any:
+    """Diretório oficial de colaboradores (C2) — ainda sem consumidor.
+
+    C3 injetará no fluxo de identificação do cockpit; hoje apenas
+    infraestrutura composta.
+    """
+    from production_control_app.application.services.operator_directory_service import (  # noqa: E501
+        OperatorDirectoryService,
+    )
+
+    return OperatorDirectoryService(build_portal_rh_operator_directory_gateway())
+
+
 def build_production_run_service(
     gateway: DelpiProductionGateway | None = None,
     *,
@@ -443,6 +472,7 @@ def build_production_run_service(
 
     return ProductionRunService(
         pulse_gateway=pulse_gateway or build_production_pulse_gateway(),
+        operator_directory=build_operator_directory_service(),
         queue_lookup=_queue_lookup,
         standard_time_lookup=resolved_gateway.fetch_operation_standard_time,
         mes_lifecycle=MesRunLifecycleService(

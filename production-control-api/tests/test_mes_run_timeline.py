@@ -182,7 +182,7 @@ class TestTimelineComposition:
     def test_session_of_other_work_center_cannot_read(self):
         service, repo, session, run, states, downtimes = _running_run()
         other = service.create_bench_session(
-            branch="01", work_center="CT99", operator_code="USR02"
+            branch="01", work_center="CT99", registration="USR02"
         )["sessionToken"]
         svc = _timeline(service, states, downtimes)
         with pytest.raises(ProductionRunNotFound):
@@ -295,7 +295,7 @@ class TestTimelinePostgres:
             mes_lifecycle=mes,
         )
         token = service.create_bench_session(
-            branch="01", work_center=clean_ct, operator_code="USR03"
+            branch="01", work_center=clean_ct, registration="USR03"
         )["sessionToken"]
         run = service.start_run(
             branch="01", work_center=clean_ct,

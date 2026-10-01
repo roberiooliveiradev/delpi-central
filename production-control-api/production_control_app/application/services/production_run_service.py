@@ -12,6 +12,9 @@ from production_control_app.config import settings
 from production_control_app.domain.errors import (
     BenchSessionRequired,
     DelpiGatewayError,
+    OperatorDirectoryUnavailable,
+    OperatorInactive,
+    OperatorNotFound,
     ProductionRunConflict,
     ProductionRunNotFound,
     PulseDeviceUnavailable,
@@ -114,6 +117,7 @@ class ProductionRunService:
         mes_lifecycle: Any | None = None,
         audit: Any | None = None,
         clock: Callable[[], datetime] | None = None,
+        operator_directory: Any | None = None,
         auto_downtime_seconds: int | None = None,
         dynamic_auto_downtime_enabled: bool | None = None,
         auto_downtime_min_seconds: int | None = None,
@@ -152,6 +156,7 @@ class ProductionRunService:
                 self._auto_downtime_min_seconds,
                 self._auto_downtime_cycle_multiplier,
             )
+        self._operator_directory = operator_directory
         self._pulse = pulse_gateway or ProductionPulseGateway()
         self._queue_lookup = queue_lookup
         self._standard_time_lookup = standard_time_lookup
@@ -182,24 +187,55 @@ class ProductionRunService:
         *,
         branch: str,
         work_center: str,
-        operator_code: str,
-        operator_name: str | None = None,
+        registration: str,
     ) -> dict[str, Any]:
-        code = str(operator_code or "").strip()
+        """Cria sessão de bancada resolvendo a identidade no Portal RH (C3).
+
+        O lookup HTTP acontece ANTES da persistência — nenhuma transação
+        PostgreSQL fica aberta durante a chamada ao diretório. O nome gravado
+        é sempre o oficial (identity.full_name); o browser nunca é
+        autoridade sobre operator_name.
+        """
         wc = str(work_center or "").strip()
-        if not code:
-            raise ValueError("Informe o código do operador.")
         if not wc:
             raise ValueError("Informe o centro de trabalho.")
         if branch not in {"01", "02"}:
             raise ValueError("Filial inválida.")
+        if self._operator_directory is None:
+            raise OperatorDirectoryUnavailable(
+                "Diretório de colaboradores não configurado."
+            )
+        reg = str(registration or "")
+        try:
+            identity = self._operator_directory.find_by_registration(reg)
+        except OperatorNotFound:
+            logger.info("bench_session_operator_not_found registration=%s", reg)
+            raise
+        except OperatorDirectoryUnavailable:
+            logger.warning(
+                "bench_session_operator_directory_unavailable registration=%s",
+                reg,
+            )
+            raise
+        if not identity.active:
+            logger.info(
+                "bench_session_operator_inactive registration=%s",
+                identity.registration,
+            )
+            raise OperatorInactive(
+                "Esta matrícula não está ativa no cadastro de colaboradores."
+            )
+        logger.info(
+            "bench_session_operator_resolved registration=%s",
+            identity.registration,
+        )
 
         raw_token = generate_session_token()
         row = self._repo.create_bench_session(
             branch=branch,
             work_center=wc,
-            operator_code=code,
-            operator_name=(operator_name or "").strip() or None,
+            operator_code=identity.registration,
+            operator_name=identity.full_name,
             raw_token=raw_token,
         )
         return {

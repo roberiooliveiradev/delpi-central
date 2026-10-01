@@ -35,6 +35,11 @@ from production_control_app.domain.errors import (
     InvalidBranch,
     InvalidMesEvent,
     MesStateConflict,
+    InvalidOperatorRegistration,
+    OperatorDirectoryContractError,
+    OperatorDirectoryUnavailable,
+    OperatorInactive,
+    OperatorNotFound,
     Product3DModelNotFound,
     ProductionRunConflict,
     ProductionRunNotFound,
@@ -55,8 +60,26 @@ class BenchSessionBody(BaseModel):
 
     branch: str = Field(..., min_length=2, max_length=2)
     work_center: str = Field(..., alias="workCenter", min_length=1, max_length=40)
-    operator_code: str = Field(..., alias="operatorCode", min_length=1, max_length=40)
-    operator_name: str | None = Field(default=None, alias="operatorName", max_length=120)
+    registration: str | None = Field(
+        default=None,
+        max_length=40,
+        description="Matrícula oficial do colaborador (Portal RH) — campo canônico.",
+    )
+    # DEPRECATED (C3→C4): alias legado da matrícula, usado até o cockpit ser
+    # redesenhado. Se registration + operatorCode divergirem → 422.
+    operator_code: str | None = Field(
+        default=None,
+        alias="operatorCode",
+        max_length=40,
+        description="DEPRECATED: alias legado temporário de registration.",
+    )
+    # DEPRECATED: ignorado como fonte de identidade — o nome vem do Portal RH.
+    operator_name: str | None = Field(
+        default=None,
+        alias="operatorName",
+        max_length=120,
+        description="DEPRECATED: ignorado; o nome oficial é resolvido no Portal RH.",
+    )
     website: str | None = None  # honeypot
 
 
@@ -113,6 +136,16 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 422)
     if isinstance(exc, PulseGatewayError):
         return fail(str(exc), 502)
+    if isinstance(exc, InvalidOperatorRegistration):
+        return fail(str(exc), 422)
+    if isinstance(exc, OperatorNotFound):
+        return fail("Matrícula não encontrada.", 404)
+    if isinstance(exc, OperatorInactive):
+        return fail(str(exc), 403)
+    # Diretório indisponível/credencial S2S/contrato upstream → 503 genérico;
+    # detalhes ficam só nos logs técnicos (nunca token/URL para o browser).
+    if isinstance(exc, (OperatorDirectoryUnavailable, OperatorDirectoryContractError)):
+        return fail("Não foi possível validar a matrícula no momento.", 503)
     if isinstance(exc, ValueError):
         return fail(str(exc), 422)
     if isinstance(exc, DelpiGatewayError):
@@ -339,13 +372,19 @@ def create_bench_session(token: str, body: BenchSessionBody):
         return denied
     if not _honeypot_ok(body.website):
         return ok({"accepted": True, "sessionToken": None})
+    registration = (body.registration or "").strip()
+    legacy = (body.operator_code or "").strip()
+    if registration and legacy and registration != legacy:
+        return fail("Matrícula divergente entre 'registration' e 'operatorCode'.", 422)
+    effective = registration or legacy
+    if not effective:
+        return fail("Informe a matrícula do operador.", 422)
     try:
         build_branch_access_service().assert_valid_branch(body.branch)
         data = build_production_run_service().create_bench_session(
             branch=body.branch,
             work_center=body.work_center,
-            operator_code=body.operator_code,
-            operator_name=body.operator_name,
+            registration=effective,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
