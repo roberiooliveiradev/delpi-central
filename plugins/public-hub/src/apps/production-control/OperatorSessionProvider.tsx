@@ -301,10 +301,13 @@ function IdentifyOperatorModal({ identify, onClose }: ModalProps) {
           void submit();
         }}
       >
-        <h3 id="pcp-identify-title" className="pcp-pub__run-title">
+        <div className="pcp-pub-modal__identify-badge" aria-hidden="true">
+          <UserRound size={28} strokeWidth={1.8} />
+        </div>
+        <h3 id="pcp-identify-title" className="pcp-pub-modal__identify-title">
           Identificar operador
         </h3>
-        <p className="pcp-pub__run-note">
+        <p className="pcp-pub-modal__identify-sub">
           Informe sua matrícula. O nome é confirmado pelo cadastro oficial.
         </p>
         <label className="pcp-pub__run-field">

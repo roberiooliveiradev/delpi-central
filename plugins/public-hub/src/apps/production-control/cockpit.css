@@ -25,7 +25,8 @@
 
 /* ---------- Tokens e base ---------- */
 
-.pcp-pub {
+.pcp-pub,
+.pcp-pub-modal {
   --pcp-brand: var(--pub-secondary, #003866);
   --pcp-brand-light: var(--pub-primary, #089bdb);
   --pcp-accent: var(--pub-accent, #089bdb);
@@ -40,16 +41,23 @@
   --pcp-shell: min(1360px, 100%);
   --pcp-gutter: clamp(12px, 2vw, 24px);
   --pcp-cols: minmax(220px, 1.7fr) minmax(150px, 1.1fr) 132px 118px 112px minmax(180px, auto);
+  color: var(--pcp-text);
+}
+
+.pcp-pub {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   width: 100%;
-  color: var(--pcp-text);
 }
 
 .pcp-pub *,
+.pcp-pub-modal,
+.pcp-pub-modal *,
 .pcp-pub *::before,
-.pcp-pub *::after {
+.pcp-pub *::after,
+.pcp-pub-modal *::before,
+.pcp-pub-modal *::after {
   box-sizing: border-box;
 }
 
@@ -3200,12 +3208,70 @@ button.pcp-pub-timeline__body--action:focus-visible {
 }
 
 .pcp-pub-modal__panel--identify {
-  max-width: 380px;
+  max-width: 400px;
+  padding: 30px 26px 24px;
+  text-align: center;
+}
+
+.pcp-pub-modal__identify-badge {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--pcp-brand) 0%,
+    color-mix(in srgb, var(--pcp-brand-light) 80%, var(--pcp-brand)) 100%
+  );
+  box-shadow:
+    0 12px 26px color-mix(in srgb, var(--pcp-brand) 38%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.pcp-pub-modal__identify-title {
+  margin: 0 0 6px;
+  font-size: 1.28rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--pcp-title);
+}
+
+.pcp-pub-modal__identify-sub {
+  margin: 0 auto 20px;
+  max-width: 30ch;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub-modal__panel--identify .pcp-pub__run-field {
+  text-align: left;
 }
 
 .pcp-pub-modal__panel--identify input {
-  min-height: 52px;
-  font-size: 1.15rem;
-  letter-spacing: 0.06em;
+  min-height: 56px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-align: center;
+  border-radius: 14px;
+}
+
+.pcp-pub-modal__panel--identify input:focus {
+  border-color: var(--pcp-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pcp-accent) 22%, transparent);
+  outline: none;
+}
+
+.pcp-pub-modal__panel--identify .pcp-pub__run-actions {
+  flex-direction: column;
+  margin-top: 18px;
+}
+
+.pcp-pub-modal__panel--identify .pcp-pub__run-actions .pcp-pub__btn {
+  width: 100%;
+  min-height: 48px;
 }
