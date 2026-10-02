@@ -21,6 +21,20 @@ def native_data_cache_ttl_seconds() -> float:
     return float(cache_cfg.get("ttlSeconds") or 120)
 
 
+def native_data_cache_retention_seconds() -> float:
+    """Physical entry lifetime. Must cover the largest legitimate consumer
+    max-age (playlist globalRefreshSec max = 3600)."""
+    cache_cfg = _load_settings().get("nativeDataCache") or {}
+    return float(cache_cfg.get("retentionSeconds") or 3600)
+
+
+def native_data_cache_max_entries() -> int:
+    """Hard bound on in-memory entries — retention extension (3600s) is only
+    safe while the cache is size-bounded."""
+    cache_cfg = _load_settings().get("nativeDataCache") or {}
+    return int(cache_cfg.get("maxEntries") or 1024)
+
+
 def build_native_data_cache_key(
     *,
     screen_key: str,
@@ -40,13 +54,19 @@ def build_native_data_cache_key(
     )
 
 
-_native_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
+_native_cache = TtlCache[dict[str, Any]](
+    ttl_seconds=native_data_cache_ttl_seconds(),
+    retention_seconds=native_data_cache_retention_seconds(),
+    max_entries=native_data_cache_max_entries(),
+)
 # Single-flight por processo: mesma native cache key em voo ⇒ um único resolve downstream.
 _native_inflight = SingleFlightRegistry[dict[str, Any]]()
 
 
-def get_cached_native_data(key: str) -> dict[str, Any] | None:
-    return _native_cache.get(key)
+def get_cached_native_data(
+    key: str, *, max_age_seconds: float | None = None
+) -> dict[str, Any] | None:
+    return _native_cache.get(key, max_age_seconds=max_age_seconds)
 
 
 def set_cached_native_data(key: str, value: dict[str, Any]) -> None:

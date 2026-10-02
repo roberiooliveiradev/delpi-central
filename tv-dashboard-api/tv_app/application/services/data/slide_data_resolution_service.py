@@ -44,6 +44,7 @@ class SlideDataResolutionService:
         target_step_name: str | None = None,
         target_source_id: str | None = None,
         preview_options: dict[str, Any] | None = None,
+        max_age_seconds: float | None = None,
     ) -> list[dict[str, Any]]:
         """Mesmo contrato de `ComunicadoDataEnrichmentService.enrich_blocks`."""
         return self._enrichment.enrich_blocks(
@@ -57,6 +58,7 @@ class SlideDataResolutionService:
             target_step_name=target_step_name,
             target_source_id=target_source_id,
             preview_options=preview_options,
+            max_age_seconds=max_age_seconds,
         )
 
     def enrich_data_models(
@@ -68,6 +70,7 @@ class SlideDataResolutionService:
         playlist_defaults: dict[str, Any] | None = None,
         user: Any | None = None,
         force_refresh: bool = False,
+        max_age_seconds: float | None = None,
     ) -> dict[str, dict[str, Any]]:
         """Executa DataModels do cfg → resolved por modelId (runtime canônico)."""
         return self._enrichment.enrich_data_models(
@@ -77,4 +80,5 @@ class SlideDataResolutionService:
             playlist_defaults=playlist_defaults,
             user=user,
             force_refresh=force_refresh,
+            max_age_seconds=max_age_seconds,
         )

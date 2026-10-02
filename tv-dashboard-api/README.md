@@ -259,6 +259,29 @@ Disparado após CRUD de slides, upload de mídia, alterações na programação 
 
 ---
 
+## Freshness de dados na TV
+
+`globalRefreshSec` (playlist, 30–3600s, default 300) = **idade máxima aceitável**
+do dado em cache quando a playlist executa seu refresh — não é identidade de
+cache nem TTL físico.
+
+- **Identidade de cache** (`operationId`, `params`, fingerprint de autorização,
+  dia) **não inclui** playlist, token público ou `globalRefreshSec` — playlists
+  equivalentes compartilham entradas.
+- **Retenção física ≠ freshness:** entradas ficam retidas até
+  `nativeDataCache.retentionSeconds` (3600s, contrato máximo do consumidor),
+  limitadas por `nativeDataCache.maxEntries` (LRU). Cada consumidor decide se a
+  entrada retida é aceitável pela sua própria `max_age` — uma entrada pode ser
+  válida para uma playlist de 300s e velha para uma de 30s.
+- `ttlSeconds` (120s) segue como bound de freshness para consumidores sem
+  `max_age` (editor, preview, GPT actions).
+- `SingleFlightRegistry` coalesce requisições concorrentes equivalentes em 1
+  fetch downstream — é coalescing de concorrência, não storage.
+- `binding.refreshSec` por bloco segue **não aplicado** ao player público
+  (apenas preview do editor).
+
+---
+
 ## Desenvolvimento
 
 ```bash

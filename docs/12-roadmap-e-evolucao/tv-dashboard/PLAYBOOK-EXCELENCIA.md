@@ -528,7 +528,7 @@ Componente central (sugestão: pacote compartilhado `plugins/tv-dashboard-presen
 | Loop | Ao fim da lista, volta ao slide 0 |
 | Pause | Tecla `Space` ou toque (preview); oculto em kiosk produção |
 | Fullscreen | Duplo-clique ou `F11`; botão opcional no preview |
-| Refresh | Timer `globalRefreshSec` — refetch payload (fallback) |
+| Refresh | Timer `globalRefreshSec` — refetch payload (fallback); também idade máxima aceitável do dado em cache (identity ≠ refresh; retenção física ≠ freshness) |
 | WebSocket | `WS /public/present/{token}/ws` ou admin `presentation-ws` — refetch imediato em `presentation_updated` |
 | Visibilidade | Pausa autoplay se `document.hidden` (economia em TV com overlay) |
 | Erro slide nativo | Tela de fallback «Dados indisponíveis» + avança após 10s |

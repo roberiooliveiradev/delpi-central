@@ -120,6 +120,7 @@ class PresentationPayloadService:
         ]
         default_duration = playlist.get("defaultDurationSec") or 30
         playlist_transition = playlist.get("transitionStyle") or "fade"
+        global_refresh_sec = playlist.get("globalRefreshSec") or 300
         playlist_id = str(playlist["id"])
         public_token = str(playlist["publicToken"]) if public_media_urls else None
         playlist_defaults = (
@@ -215,6 +216,7 @@ class PresentationPayloadService:
                         user=user,
                         playlist_defaults=playlist_defaults,
                         filter_overrides=safe_overrides,
+                        max_age_seconds=float(global_refresh_sec),
                     ),
                 }
             else:
@@ -245,7 +247,7 @@ class PresentationPayloadService:
                 "viewportWidth": vp_w,
                 "viewportHeight": vp_h,
                 "transitionStyle": playlist_transition,
-                "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
+                "globalRefreshSec": global_refresh_sec,
                 "defaultDurationSec": default_duration,
                 "playbackMode": playlist.get("playbackMode") or "presentation",
                 "publicToken": playlist["publicToken"],

@@ -45,6 +45,8 @@ from tv_app.application.services.data.tv_view_projection_service import (
     apply_view_projection_to_resolved,
 )
 from tv_app.application.services.native_screen_cache_service import (
+    native_data_cache_max_entries,
+    native_data_cache_retention_seconds,
     native_data_cache_ttl_seconds,
 )
 from tv_app.application.services.tv_dashboard_content_service import (
@@ -69,7 +71,11 @@ from tv_app.application.services.series_points_extractor import (
     unwrap_operational_data,
 )
 
-_data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
+_data_block_cache = TtlCache[dict[str, Any]](
+    ttl_seconds=native_data_cache_ttl_seconds(),
+    retention_seconds=native_data_cache_retention_seconds(),
+    max_entries=native_data_cache_max_entries(),
+)
 # Single-flight por processo: mesma data cache key em voo ⇒ um único fetch downstream.
 _data_block_inflight = SingleFlightRegistry[dict[str, Any]]()
 
@@ -1224,6 +1230,7 @@ class ComunicadoDataEnrichmentService:
         target_step_name: str | None = None,
         target_source_id: str | None = None,
         preview_options: dict[str, Any] | None = None,
+        max_age_seconds: float | None = None,
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
         # Preview isola um data_source em `blocks`, mas inputs vivem no slide (`cfg.blocks`).
@@ -1303,6 +1310,7 @@ class ComunicadoDataEnrichmentService:
             "user": user,
             "force_refresh": force_refresh,
             "request_memo": request_memo,
+            "max_age_seconds": max_age_seconds,
         }
         enriched: list[dict[str, Any]] = []
         source_blocks = {
@@ -1447,6 +1455,7 @@ class ComunicadoDataEnrichmentService:
             force_refresh=force_refresh,
             preview_options=preview_options,
             request_memo=request_memo,
+            max_age_seconds=max_age_seconds,
             _slide_ctx=ctx,
         )
         # Always stamp text presentation (static textCase → display*) even without
@@ -1466,6 +1475,7 @@ class ComunicadoDataEnrichmentService:
         force_refresh: bool = False,
         request_memo: dict[str, dict[str, Any]] | None = None,
         preview_options: dict[str, Any] | None = None,
+        max_age_seconds: float | None = None,
         _slide_ctx: dict[str, Any] | None = None,
     ) -> dict[str, dict[str, Any]]:
         """Executa DataModels de ``nativeConfig.dataModels[]`` → resolved por modelId.
@@ -1501,6 +1511,7 @@ class ComunicadoDataEnrichmentService:
             "user": user,
             "force_refresh": force_refresh,
             "request_memo": memo,
+            "max_age_seconds": max_age_seconds,
         }
 
         resolved_by_model: dict[str, dict[str, Any]] = {}
@@ -2089,6 +2100,7 @@ class ComunicadoDataEnrichmentService:
         query_bindings: tuple[dict[str, Any], ...] = (),
         target_step_name: str | None = None,
         preview_options: dict[str, Any] | None = None,
+        max_age_seconds: float | None = None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -2163,6 +2175,7 @@ class ComunicadoDataEnrichmentService:
                 service_context="user-preview" if user is not None else "presentation-service",
                 force_refresh=force_refresh,
                 request_memo=request_memo,
+                max_age_seconds=max_age_seconds,
             )
         except Exception as exc:  # noqa: BLE001
             result["resolved"] = resolve_data_fetch_error(exc)
@@ -2430,6 +2443,7 @@ class ComunicadoDataEnrichmentService:
         service_context: str | None = None,
         force_refresh: bool = False,
         request_memo: dict[str, dict[str, Any]] | None = None,
+        max_age_seconds: float | None = None,
     ) -> dict[str, Any]:
         cache_key = _build_data_cache_key(
             operation_id=operation_id,
@@ -2441,7 +2455,7 @@ class ComunicadoDataEnrichmentService:
         if request_memo is not None and cache_key in request_memo:
             return {**request_memo[cache_key], "_tvCacheHit": True}
         if not force_refresh:
-            cached = _data_block_cache.get(cache_key)
+            cached = _data_block_cache.get(cache_key, max_age_seconds=max_age_seconds)
             if cached is not None:
                 if request_memo is not None:
                     request_memo[cache_key] = cached
