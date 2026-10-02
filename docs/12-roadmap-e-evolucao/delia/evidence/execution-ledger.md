@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108 — contracts only; `GOVERNED_WRITE_BINDINGS` EMPTY; `FIRST_BOUNDED_GOVERNED_PREPARE_ACT` NOT authorized). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); SPECIALIST_CAPABILITY_CATALOG_OWNER=SPECIALIST — live authenticated tools/list is the primary capability surface (§6.118); APPROVED_SPECIALISTS=DAVI|TEO|VISTA; ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02=ACCEPT_CURRENT_READ_SCOPE (R3 + grounded-presentation reviews ACCEPT, §6.124); MCP_READ_FEDERATION=ACCEPTED_CURRENT_SCOPE; LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA=PASS (§6.119/§6.120, user subject via delpi-central OIDC, same-subject delegated exchange, azp=delia-api); PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN_ON_CURRENT_SHA; DEPLOYED_DELIA_SHA=ff27cfaf47; GROUNDED_BUSINESS_PRESENTATION=PASS; REAL_PRODUCTION_APPLY=PASS_FOR_CURRENT_MCP_READ_SCOPE; C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (§6.112); PROD-MCP-RUNTIME-ALIGNMENT-01 KC24 decision preserved (§6.116 — PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1, KC26 deferred; §6.115 rehearsal evidence historical). Superseded current-status claims (historical records preserved): THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED (§6.106), DELIA_C4_*_ENABLED per-capability flags, PRODUCTION_MCP_RUNTIME=NOT_PROVEN, REAL_PRODUCTION_APPLY=TEST_NOT_RUN. C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
+**Next:** `ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03` = `IN_EXECUTION` (§6.126 — Product Master binding decision: DÉLIA=MCP_ORCHESTRATOR, no local MCP capability catalog/pair registry/flags; `MCP_PREPARE`/`MCP_ACT` governed-invocable in the MCP federation scope; `GOVERNED_WRITE_BINDINGS` static model SUPERSEDED_AS_TARGET). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); SPECIALIST_CAPABILITY_CATALOG_OWNER=SPECIALIST — live authenticated tools/list is the primary capability surface (§6.118); APPROVED_SPECIALISTS=DAVI|TEO|VISTA; ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02=ACCEPT_CURRENT_READ_SCOPE (R3 + grounded-presentation reviews ACCEPT, §6.124); MCP_READ_FEDERATION=ACCEPTED_CURRENT_SCOPE; LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA=PASS (§6.119/§6.120, user subject via delpi-central OIDC, same-subject delegated exchange, azp=delia-api); PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN_ON_CURRENT_SHA; DEPLOYED_DELIA_SHA=ff27cfaf47; GROUNDED_BUSINESS_PRESENTATION=PASS; REAL_PRODUCTION_APPLY=PASS_FOR_CURRENT_MCP_READ_SCOPE; C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (§6.112); PROD-MCP-RUNTIME-ALIGNMENT-01 KC24 decision preserved (§6.116 — PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1, KC26 deferred; §6.115 rehearsal evidence historical). Superseded current-status claims (historical records preserved): THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED (§6.106), DELIA_C4_*_ENABLED per-capability flags, PRODUCTION_MCP_RUNTIME=NOT_PROVEN, REAL_PRODUCTION_APPLY=TEST_NOT_RUN. C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
 
 ## 1. Ledger rule
 
@@ -28,7 +28,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
 | C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | reviews pending (see Next) | C3-T1..T8 APPROVED; C3-MEDIA-FOUNDATION-01 APPROVED (§6.86); `C3-INTERACTION-RUNTIME-01` APPROVED (§6.87-§6.91; R2 real provider `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); `C3-INTERACTION-CONTINUITY-01` APPROVED (§6.90-§6.91); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1C `ACCEPT_WITH_RESIDUAL` §6.99 — delegated same-subject identity + authenticated tools/list 3/3); `C3-FINAL-READINESS-01` executed (§6.100: `FULL_C3=C3_NOT_COMPLETE`, open foundation families inventoried); `C3_EXECUTED=NO` |
 | C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED (phase level) — bounded slices approved | — | `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02=ACCEPT_CURRENT_READ_SCOPE` (§6.124 — specialist-owned live `tools/list` federation DAVI|TÉO|VISTA; `MCP_READ_FEDERATION=ACCEPTED_CURRENT_SCOPE`; `PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN_ON_CURRENT_SHA`; `DEPLOYED_DELIA_SHA=ff27cfaf47`; `GROUNDED_BUSINESS_PRESENTATION=PASS`); `C4_AUTHORIZED=NO` at phase level (other C4 families remain unopened). Superseded historical slices: `C4-MCP-GOVERNED-READS-01/02` (§6.104/§6.106), `THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED` |
-| C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED (phase level) — foundation candidate | review pending | `C5-GOVERNED-WRITE-FOUNDATION-01` `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (§6.108; contracts only, `GOVERNED_WRITE_BINDINGS` EMPTY, no wire write); `C5_AUTHORIZED=NO`; `PREPARE=BLOCKED`; `ACT=BLOCKED` |
+| C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED (phase level) — foundation candidate | review pending | `C5-GOVERNED-WRITE-FOUNDATION-01` static-binding model SUPERSEDED_AS_TARGET (§6.126 — governance concepts reusable, capability registry model retired); `C5_AUTHORIZED=NO`; non-MCP `PREPARE=BLOCKED`; non-MCP `ACT=BLOCKED`; MCP_PREPARE/MCP_ACT=GOVERNED_INVOKABLE_CURRENT_SCOPE (implementation in execution) |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
 | C7 Advanced Autonomy + Twin/Edge/Marketplace + Optimization + Scale/Rollout | LOCKED | — | C0–C6 gates |
 
@@ -8501,4 +8501,83 @@ FIRST_BOUNDED_GOVERNED_PREPARE_ACT = NOT_AUTHORIZED
 
 NEXT = ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) —
     review only; no writes, no PREPARE/ACT slice authorized.
+
+## 6.126. ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 — Product Master binding decision: DÉLIA = orchestrator of approved MCP specialists (no local capability catalog)
+
+DATE = 2026-10-02
+BASE_HEAD = e82d8eacfbf0d42764915d0d855ea123853db146
+STATUS = DECISION_PERSISTED — IMPLEMENTATION_IN_EXECUTION
+
+PRODUCT_MASTER_DECISION =
+    DELIA_ROLE = MCP_ORCHESTRATOR
+    SPECIALIST_CAPABILITY_CATALOG_OWNER = SPECIALIST
+    LIVE_CAPABILITY_SOURCE = authenticated live tools/list
+    APPROVED_SPECIALIST_CONNECTIONS = DAVI | TÉO | VISTA
+    DELIA_LOCAL_MCP_CAPABILITY_CATALOG = FORBIDDEN
+    DELIA_LOCAL_READ_CAPABILITY_LIST = NONE
+    DELIA_LOCAL_WRITE_CAPABILITY_LIST = NONE
+    DELIA_LOCAL_PREPARE_ACT_PAIR_REGISTRY = NONE
+    PER_CAPABILITY_ENABLE_FLAGS = FORBIDDEN
+    DÉLIA discovers, selects, governs, sends context/arguments,
+    tracks, receives results, verifies outcome evidence and
+    presents. Specialists own existence, naming, schema, class,
+    availability, mechanics and business execution.
+
+TARGET_INVOCABLE_CLASSES (approved MCP federation scope) =
+    MCP_DISCOVERY = GOVERNED_INVOKABLE
+    MCP_READ = GOVERNED_INVOKABLE
+    MCP_ANALYSIS = GOVERNED_INVOKABLE (projects READ semantics)
+    MCP_PREPARE = GOVERNED_INVOKABLE
+    MCP_ACT = GOVERNED_INVOKABLE
+    UNKNOWN = DISCOVERABLE_NOT_INVOCABLE
+
+DISTINCTIONS PRESERVED =
+    capability exists != user authorized; tools/list != permission;
+    toolClass != permission; model selection != authorization;
+    JWT != final permission; technical success != business Outcome;
+    PREPARE != ACT; confirmation != authorization.
+    Current host/app context does not force specialist selection.
+    OT/industrial safety and human/HR governance exceptions intact.
+
+SUPERSEDED_AS_TARGET (historical evidence preserved) =
+    GOVERNED_WRITE_BINDINGS as MCP capability availability registry
+    write_binding_for() as MCP capability availability resolver
+    GovernedWriteBinding fields duplicating capability names /
+    PREPARE-ACT pair / owner operation / per-capability enabled
+    INTERACTIVE_INVOCABLE_CLASSES = {DISCOVERY, READ} READ-only gate
+    FIRST_BOUNDED_GOVERNED_PREPARE_ACT one-tool-first direction
+    ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 as pending
+    review target (foundation concepts reusable — superseded target)
+
+REUSABLE C5 GOVERNANCE (not a capability catalog) =
+    WriteProposalPreview, StructuredConfirmation, WriteGateDecision,
+    WriteOutcomeProjection, WriteDecisionAuditRecord, proposal digest,
+    preview fingerprint, expiry, confirmation binding, live AuthZ,
+    postcondition verification, audit/secret hygiene.
+
+OWNER CONTRACT CONTINUATION (existing — REUSE, no local pairing) =
+    TÉO/VISTA owners advertise prepare_* PREPARE tools returning an
+    opaque proposal_handle plus a single ACT commit_proposal whose
+    input schema requires proposal_handle (+ confirmation /
+    idempotency_key where the owner requires them). Pairing is
+    detected structurally from the live owner schema — never stored
+    in a DÉLIA registry.
+
+DRIFT_CORRECTED =
+    STATIC_READ_CLASS_GATE (rules.py interactive gate + WRITE
+    block at both interop boundaries)
+    STATIC_WRITE_BINDING_MODEL (GovernedWriteBinding registry)
+
+PHASE GUARDS =
+    C3_EXECUTED = NO
+    C4_AUTHORIZED = NO (phase level)
+    C5_AUTHORIZED = NO (phase level; MCP PREPARE/ACT orchestration
+        is the authorized federation scope, not a C5 unlock)
+    NON_MCP_C5_WRITE_FAMILIES = NOT_AUTHORIZED
+    PREPARE = BLOCKED / ACT = BLOCKED for non-MCP families
+    PRODUCTION_READINESS = NOT_PROVEN
+
+IMPLEMENTATION_EVIDENCE = PENDING (runtime correction + tests +
+    live tools/list matrix + controlled production verification to
+    be recorded in this entry upon completion)
 

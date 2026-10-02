@@ -107,7 +107,9 @@ Capability existence/class is specialist-owned; DÉLIA retains orchestration pol
 
 Discovery != approval. Metadata != permission. Owner toolClass != permission.
 
-**Current acceptance (§6.124):** `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02=ACCEPT_CURRENT_READ_SCOPE` — the bounded MCP READ federation over DAVI|TÉO|VISTA (DISCOVERY/READ/ANALYSIS-as-READ) is accepted for the proven scope; production READ slice proven on DÉLIA SHA `ff27cfaf47`; PREPARE/ACT remain blocked; grounded output passes deterministic redaction + business projection before OBSERVATION rendering.
+**Current acceptance (§6.124):** `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02=ACCEPT_CURRENT_READ_SCOPE` — the bounded MCP READ federation over DAVI|TÉO|VISTA (DISCOVERY/READ/ANALYSIS-as-READ) is accepted for the proven scope; production READ slice proven on DÉLIA SHA `ff27cfaf47`; grounded output passes deterministic redaction + business projection before OBSERVATION rendering.
+
+**Binding extension (§6.126 — ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03, Product Master decision):** DÉLIA is the orchestrator of approved MCP specialists — it discovers, selects, governs, invokes, observes, verifies outcome evidence and presents; it never owns, mirrors, lists, pairs or flags MCP capabilities (`DELIA_LOCAL_MCP_CAPABILITY_CATALOG=FORBIDDEN`). For the approved MCP federation scope `MCP_PREPARE`/`MCP_ACT` are `GOVERNED_INVOKABLE` under generic write governance — capability existence is never permission: live Core AuthZ, specialist/domain authority, schema validation, confirmation when the owner contract requires it, idempotency and owner-authoritative postcondition all apply; `UNKNOWN` remains discoverable, never invocable. `PREPARE=BLOCKED`/`ACT=BLOCKED` still hold for every non-MCP write family. Static local write bindings (`GOVERNED_WRITE_BINDINGS`, `write_binding_for`, `GovernedWriteBinding` capability-name/enabled fields) are SUPERSEDED_AS_TARGET — reusable C5 concepts are preview/confirmation/gate/outcome/audit semantics, not a registry.
 
 ## 6. Tool poisoning / prompt injection
 
