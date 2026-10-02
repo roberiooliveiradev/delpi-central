@@ -11,6 +11,7 @@ import type { LayoutSnapshot } from "./elkGraph";
 
 const BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL";
 const BPMNDI_NS = "http://www.omg.org/spec/BPMN/20100524/DI";
+const DC_NS = "http://www.omg.org/spec/DD/20100524/DC";
 
 const FLOW_NODES = new Set([
   "task", "userTask", "serviceTask", "scriptTask", "manualTask",
@@ -31,11 +32,42 @@ const EDGES = new Set([
 
 const CONTAINERS = new Set(["process", "subProcess", "transaction", "adHocSubProcess", "laneSet"]);
 
-/** Extrai o snapshot de layout de um BPMN XML (sem DI necessário). */
+/** Famílias cujo tamanho o layout PODE recalcular (contêm filhos).
+ *  Todo o resto é SIZE_PRESERVED — auto-layout move, não redimensiona. */
+const RESIZABLE_CONTAINERS = new Set([
+  "subProcess",
+  "transaction",
+  "adHocSubProcess",
+  "eventSubProcess",
+  "participant",
+  "lane",
+]);
+
+function mayResize(node: LayoutSnapshot["nodes"][number]): boolean {
+  if (node.isParticipant || node.isLane) return true;
+  return RESIZABLE_CONTAINERS.has(node.type.replace(/^bpmn:/, ""));
+}
+
+/** Extrai o snapshot de layout de um BPMN XML (sem DI necessário).
+ *  Quando há BPMN-DI, captura os bounds atuais por bpmnElement —
+ *  a fonte de verdade do tamanho é o DI vigente, não o default vendor. */
 export function snapshotFromXml(xml: string): LayoutSnapshot {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
   const nodes: LayoutSnapshot["nodes"] = [];
   const edges: LayoutSnapshot["edges"] = [];
+
+  const diSize = new Map<string, { width: number; height: number }>();
+  for (const shape of Array.from(
+    doc.getElementsByTagNameNS(BPMNDI_NS, "BPMNShape"),
+  )) {
+    const ref = shape.getAttribute("bpmnElement");
+    const b = shape.getElementsByTagNameNS(DC_NS, "Bounds")[0];
+    const width = Number(b?.getAttribute("width"));
+    const height = Number(b?.getAttribute("height"));
+    if (ref && Number.isFinite(width) && Number.isFinite(height)) {
+      diSize.set(ref, { width, height });
+    }
+  }
 
   const localName = (el: Element) => el.localName || el.tagName.split(":").pop() || "";
 
@@ -45,10 +77,13 @@ export function snapshotFromXml(xml: string): LayoutSnapshot {
       const id = child.getAttribute("id");
       if (!id) continue;
       if (FLOW_NODES.has(name)) {
+        const size = diSize.get(id);
         nodes.push({
           id,
           type: `bpmn:${name}`,
           parentId,
+          width: size?.width,
+          height: size?.height,
           isBoundary: name === "boundaryEvent",
           attachedToId: child.getAttribute("attachedToRef") ?? undefined,
           isLane: name === "lane",
@@ -121,9 +156,32 @@ function computeGeometry(laidOut: ElkNode): LayoutGeometry {
   return { bounds, edgePoints };
 }
 
+/** Geometria final: posições ELK + width/height vigentes para nós que
+ *  não podem ser redimensionados pelo layout (SIZE_PRESERVED).
+ *  Containers (pool/lane/subProcess expandido) mantêm o tamanho ELK. */
+function resolveGeometry(
+  laidOut: ElkNode,
+  snapshot: LayoutSnapshot,
+): LayoutGeometry {
+  const geometry = computeGeometry(laidOut);
+  const byId = new Map(snapshot.nodes.map((n) => [n.id, n]));
+  for (const [id, b] of geometry.bounds) {
+    const node = byId.get(id);
+    if (!node || mayResize(node)) continue;
+    if (node.width != null && node.height != null) {
+      b.width = node.width;
+      b.height = node.height;
+    }
+  }
+  return geometry;
+}
+
 /** Ops geométricas por elemento (ordem estável: nodes depois edges). */
-export function buildDiOps(laidOut: ElkNode): DiLayoutOp[] {
-  const { bounds, edgePoints } = computeGeometry(laidOut);
+export function buildDiOps(
+  laidOut: ElkNode,
+  snapshot: LayoutSnapshot,
+): DiLayoutOp[] {
+  const { bounds, edgePoints } = resolveGeometry(laidOut, snapshot);
   const ops: DiLayoutOp[] = [];
   for (const [elementId, b] of bounds) ops.push({ elementId, bounds: b });
   for (const [elementId, pts] of edgePoints)
@@ -149,7 +207,7 @@ export function buildDiXml(
   snapshot: LayoutSnapshot,
   planeElementId: string,
 ): string {
-  const { bounds, edgePoints } = computeGeometry(laidOut);
+  const { bounds, edgePoints } = resolveGeometry(laidOut, snapshot);
 
   const diagramId = `bpmndi_${Math.random().toString(36).slice(2, 10)}`;
   const planeId = `${diagramId}_plane`;

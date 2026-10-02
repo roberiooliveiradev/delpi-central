@@ -17,6 +17,9 @@ export type LayoutNode = {
   attachedToId?: string;
   isLane?: boolean;
   isParticipant?: boolean;
+  /** Bounds DI atuais — auto-layout preserva o tamanho de não-containers. */
+  width?: number;
+  height?: number;
 };
 
 export type LayoutEdge = {
@@ -73,7 +76,10 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
 
   const build = (parentId: string | undefined): ElkNode[] =>
     (byParent.get(parentId) ?? []).map((node) => {
-      const size = nodeSizeFor(node.type);
+      const size =
+        node.width != null && node.height != null
+          ? { width: node.width, height: node.height }
+          : nodeSizeFor(node.type);
       const children = build(node.id);
       const elkNode: ElkNode = {
         id: node.id,

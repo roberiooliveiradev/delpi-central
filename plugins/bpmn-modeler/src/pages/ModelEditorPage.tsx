@@ -431,7 +431,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
 
       const planeElement = planeElementFor(xml);
       if (!planeElement) return;
-      const ops = buildDiOps(outcome.graph);
+      const ops = buildDiOps(outcome.graph, snapshot);
       // artefato transient de preview: DI existente removido para que o
       // viewer mostre a proposta (o artefato canônico nunca é reescrito aqui).
       const previewXml = injectDiIntoXml(
