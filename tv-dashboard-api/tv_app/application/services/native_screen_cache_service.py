@@ -5,6 +5,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from tv_app.application.security.authorization_fingerprint import (
+    build_authorization_fingerprint,
+)
 from tv_app.infrastructure.cache.bounded_ttl_lru_cache import BoundedTtlLruCache
 from tv_app.infrastructure.cache.single_flight import SingleFlightRegistry
 
@@ -40,14 +43,20 @@ def build_native_data_cache_key(
     screen_key: str,
     config: dict[str, Any] | None,
     authorization: str | None,
+    user: Any | None = None,
+    service_context: str | None = None,
 ) -> str:
     cfg = config or {}
-    auth_scope = "user" if authorization else "service"
+    auth_fingerprint = build_authorization_fingerprint(
+        authorization=authorization,
+        user=user,
+        service_context=service_context,
+    )
     return json.dumps(
         {
             "screenKey": screen_key,
             "config": cfg,
-            "authScope": auth_scope,
+            "authorizationFingerprint": f"sha256:{auth_fingerprint}",
         },
         sort_keys=True,
         default=str,

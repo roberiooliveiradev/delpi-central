@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-import hashlib
 import json
 from typing import Any
 
+from tv_app.application.security.authorization_fingerprint import (
+    build_authorization_fingerprint,
+)
 from tv_app.application.services.branch_policy_service import validate_data_route_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.application.services.data.value_expression_service import (
@@ -218,41 +220,11 @@ def _build_data_cache_key(
         calendar_today,
     )
 
-    permissions = sorted(
-        {
-            str(permission).strip()
-            for permission in (getattr(user, "permissions", None) or [])
-            if str(permission).strip()
-        }
+    auth_fingerprint = build_authorization_fingerprint(
+        authorization=authorization,
+        user=user,
+        service_context=service_context,
     )
-    identity = next(
-        (
-            str(value).strip()
-            for value in (
-                getattr(user, "sub", None),
-                getattr(user, "id", None),
-                getattr(user, "user_id", None),
-                getattr(user, "email", None),
-                getattr(user, "username", None),
-            )
-            if value is not None and str(value).strip()
-        ),
-        "",
-    )
-    principal = {
-        "kind": "user" if authorization or user is not None else "service",
-        "identity": identity,
-        "permissions": permissions,
-        "isSuperadmin": bool(getattr(user, "is_superadmin", False)),
-        "serviceContext": str(service_context or "tv-dashboard").strip(),
-        # Fallback opaco quando o modelo HTTP não expõe subject; nunca serializa o token.
-        "credentialDigest": hashlib.sha256(authorization.encode("utf-8")).hexdigest()
-        if authorization and not identity
-        else "",
-    }
-    auth_fingerprint = hashlib.sha256(
-        json.dumps(principal, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
     # Presets relativos expandem «hoje» — chave deve mudar no virar do dia civil.
     preset = str(params.get(DATE_RANGE_PRESET_KEY) or "").strip().lower().replace("-", "_")
     calendar_day = (

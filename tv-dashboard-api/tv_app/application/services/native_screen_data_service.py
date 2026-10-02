@@ -70,6 +70,10 @@ class NativeScreenDataService:
                 screen_key=screen_key,
                 config=cfg,
                 authorization=authorization,
+                user=user,
+                service_context=(
+                    "user-preview" if user is not None else "presentation-service"
+                ),
             )
             cached = get_cached_native_data(cache_key, max_age_seconds=max_age_seconds)
             if cached is not None:
