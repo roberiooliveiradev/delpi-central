@@ -368,11 +368,21 @@ def render_specialist_outcome(
     if isinstance(structured, Mapping) and structured:
         # Owner data lives in the structured payload; generic status
         # text alone (e.g. "Execution completed.") is not an answer.
-        payload = json.dumps(
+        # Owners that already embed the same payload in content_text
+        # are not duplicated.
+        full_payload = json.dumps(
             _sanitize_renderable(structured),
             ensure_ascii=False,
             default=str,
-        )[:MAX_STRUCTURED_RENDER_CHARS]
+        )
+        if text and full_payload.strip() in text:
+            content = text[:MAX_RENDER_CONTENT_CHARS]
+            if len(text) > MAX_RENDER_CONTENT_CHARS:
+                if LIMITATION_RESULT_TRUNCATED not in limitations:
+                    limitations.append(LIMITATION_RESULT_TRUNCATED)
+                content += "\n…(resultado parcial — truncado)"
+            return content, tuple(limitations)
+        payload = full_payload[:MAX_STRUCTURED_RENDER_CHARS]
         body = (
             (text + "\n\n" if text else "")
             + "Resultado do especialista (dados estruturados):\n"
