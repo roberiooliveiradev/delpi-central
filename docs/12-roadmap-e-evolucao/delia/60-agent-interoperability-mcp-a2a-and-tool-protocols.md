@@ -74,24 +74,22 @@ Implementado (§6.94, `IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8
 
 ## 5. Capability allowlist
 
-Se registry/projection for necessário, deve representar apenas approvals governados e refs dos owners.
+**Catalog ownership (decisão §6.109 — ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01):** cada specialist é owner do próprio catálogo/capabilities. `tools/list` é a fonte primária da superfície MCP observada em runtime; a classe semântica da operação é projetada a partir do contrato tipado do owner (`_meta["delpi/toolClass"]`: `DISCOVERY|READ|ANALYSIS|PREPARE|ACT` — `ANALYSIS` projeta como `READ` na DÉLIA). O mirror local completo de nomes de tools (`SPECIALIST_CAPABILITY_CLASSES`) é **SUPERSEDED**: a DÉLIA não precisa mais conhecer nomes remotos para descobrir/projetar a superfície.
 
-Candidate fields:
+O registry DÉLIA representa apenas approvals governados e refs dos owners:
 
 ```text
-provider/agent/server ref
-approved capabilities
-read/write classification
-risk tier
-data domains
-allowed callers/surfaces
-required decision policy
-timeout/budget
+provider/agent/server ref (approved specialist id + owner ref)
+governed invocation bindings (DISCOVERY bindings; READ tuples
+    task-scoped com governed_action_id)
+risk tier / phase limit
+connection profile ref
 status
-owner/sourceRef
 ```
 
-Discovery != approval. Metadata != permission.
+Classe ausente/inválida/desconhecida no owner ⇒ `UNKNOWN` ⇒ *discoverable, never invocable*. Invocation re-lê a classe do owner via `tools/list` fresco — reclassificação/remoção do owner é honrada sem mirror stale. `GOVERNED_READ_ACTIONS` permanece como **policy de autorização** (as duas slices C4 aprovadas), nunca como catálogo.
+
+Discovery != approval. Metadata != permission. Owner toolClass != permission.
 
 ## 6. Tool poisoning / prompt injection
 

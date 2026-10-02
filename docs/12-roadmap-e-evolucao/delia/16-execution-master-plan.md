@@ -1506,3 +1506,25 @@ UNCHANGED = C3_EXECUTED=NO, C4_AUTHORIZED=NO (phase level),
         PRODUCTION_READINESS=NOT_PROVEN
 NEXT_ON_REVIEW = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
 ```
+
+### ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 — Specialist-owned MCP catalog correction (decision persisted §6.109; implementation in task)
+
+```text
+TASK = ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01
+TYPE = EXECUTION_DRIFT_CORRECTION (architecture correction, NOT a
+        phase reset/promotion)
+DRIFT = SPECIALIST_CAPABILITY_CLASSES local full-tool mirror in
+        domain/specialist_interop/rules.py consulted by both
+        enforcement boundaries — SUPERSEDED AS TARGET
+DECISION = specialist owns catalog; DÉLIA = provider-neutral
+        orchestrator; tools/list + owner _meta["delpi/toolClass"] =
+        classification source; invocation = fresh owner class AND
+        DÉLIA policy bindings; unknown class = discoverable, never
+        invocable; discovery/metadata/model grant nothing
+PRESERVED = DAVI search_products + TÉO gpt_analyze governed slices,
+        delegated identity, Core/Domain authority, truthful fallback,
+        C5 foundation, PREPARE/ACT blocked
+UNCHANGED = C3_EXECUTED=NO, C4_AUTHORIZED=NO (phase), C5_AUTHORIZED=NO,
+        PRODUCTION_READINESS=NOT_PROVEN
+NEXT_ON_EVIDENCE = ARCHITECTURE_REVIEW of this correction
+```

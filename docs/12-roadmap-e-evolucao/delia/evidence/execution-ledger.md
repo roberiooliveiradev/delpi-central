@@ -7211,3 +7211,88 @@ NEXT = ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 —
     it requires this review + selection of exactly one owner
     capability with its full contract proven.
 ```
+
+## 6.109 ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 — catalog-ownership decision + drift correction (decision persisted before runtime diff)
+
+```text
+TASK = ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01
+MODE = EXECUTION_DRIFT_CORRECTION + DOCUMENTATION_FIRST +
+    REUSE_BEFORE_DESIGN + CONTRACT_FIRST + RUNTIME_REFACTOR +
+    SECURITY_VERIFICATION + LIVE_EVAL_WHEN_SAFE + DOCS/LEDGER_BIND
+BASE_HEAD = ab5fd2460eecaeec1cc4ee3da39399943683b856 (branch main;
+    revalidated == brief-observed remote HEAD)
+
+DRIFT_CONFIRMED = YES — delia-api/app/domain/specialist_interop/rules.py
+    carried SPECIALIST_CAPABILITY_CLASSES, an extensive DÉLIA-side
+    mirror of DAVI/TÉO/VISTA remote tool names consulted by both
+    SpecialistInterop (application) and McpSpecialistAdapter
+    (infrastructure) before accepting/invoking capabilities. Runtime
+    therefore required a local full-tool mirror — contradicting the
+    frozen direction that each specialist owns its catalog.
+
+DECISION (frozen by task brief; recorded before runtime diff):
+  SPECIALIST_CATALOG_OWNER = REMOTE SPECIALIST — DAVI, TÉO, VISTA
+      each own their capability catalog and operation-class typing.
+  DELIA_ROLE = PROVIDER_NEUTRAL_ORCHESTRATOR — DÉLIA discovers via
+      tools/list, projects owner-typed classes semantically, and gates
+      invocation by DÉLIA policy/phase; it never becomes catalog or
+      business authority.
+  AUTO_DISCOVERY = YES — a new owner-advertised capability appears in
+      the DÉLIA projection without any Python catalog edit.
+  AUTO_CATALOG_SYNC = YES — owner additions/removals/reclassifications
+      are reflected by live discovery, never by a stale local mirror.
+  AUTO_BUSINESS_AUTHORITY = NO / AUTO_PERMISSION = NO /
+      AUTO_UNGOVERNED_WRITE = NO.
+  LOCAL_FULL_TOOL_MIRROR = SUPERSEDED AS TARGET.
+
+  Classification source after correction = owner-typed
+  ``_meta["delpi/toolClass"]`` wire field (owner contract) mapped by a
+  provider-neutral DÉLIA vocabulary rule; unknown/missing/invalid
+  class => UNKNOWN => discoverable, never invocable. Remote
+  annotations/readOnlyHint/description/model output remain untrusted
+  and grant nothing.
+
+  Invocation gate after correction = owner-typed class re-read from a
+  fresh tools/list at invocation time AND DÉLIA policy:
+    PREPARE/ACT => WRITE_CAPABILITY_BLOCKED (unchanged);
+    DISCOVERY => only the bounded DÉLIA-approved discovery bindings;
+    READ => only the exact enabled governed tuples
+    (GOVERNED_READ_ACTIONS + config-enabled set);
+    UNKNOWN/unadvertised => fail closed.
+  A stale mirror can no longer keep a reclassified capability callable:
+  owner reclassification READ->PREPARE is honored immediately.
+
+  DÉLIA-side remnants that legitimately stay: APPROVED_SPECIALIST_IDS
+  + specialist identity refs (approval registry), governed invocation
+  bindings (approval policy — DISCOVERY and READ tuples), connection
+  profiles/adapter mechanics. None is a catalog mirror.
+
+OWNER_CONTRACT_EXTENSIONS (smallest compatible diffs, applied to
+    owners — not to DÉLIA):
+  shared/delpi_mcp/tool_metadata.py — TOOL_CLASS_DISCOVERY = "DISCOVERY"
+      added to the frozen DELPI ToolClass vocabulary (real consumer:
+      DAVI discover tool + TÉO/VISTA get_catalog).
+  VISTA — already emits delpi/toolClass via delpi_tool_meta;
+      get_catalog reclassed READ -> DISCOVERY (owner-truthful: it is a
+      catalog-introspection capability).
+  TÉO — owner TOOL_CLASS already existed; get_catalog reclassed
+      READ -> DISCOVERY; wire projection now emits
+      _meta["delpi/toolClass"] per tool at the single list_tools seam;
+      read_only annotation set gains DISCOVERY.
+  DAVI — owner had no typed class contract; minimal TOOL_CLASS added
+      ({discover: DISCOVERY, execute: READ}) and emitted as
+      _meta["delpi/toolClass"] at the single list_tools seam.
+
+DISTINCTION_PRESERVED = specialist-specific connection/configuration
+    mechanics (profiles, host headers, adapter wiring) remain allowed;
+    specialist-specific catalog/business authority inside DÉLIA
+    domain/planner is the superseded drift.
+
+PHASE_FLAGS = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+    PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN.
+    This task is an architecture correction — NOT a phase reset, NOT
+    C4/C5 expansion, NOT a third governed read, NOT a write enable.
+
+NEXT = runtime refactor + tests + live eval under this same task;
+    evidence bound in the following ledger entry.
+```
