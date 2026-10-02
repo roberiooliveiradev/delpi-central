@@ -759,10 +759,15 @@ def test_zero_candidate_discovery_renders_truthfully():
     assert "nenhuma" in (attempt.content or "").lower()
 
 
-def test_result_narrated_as_prose():
-    """A successful governed read is restated to the user as pt-BR
-    prose — the bounded narration proposal never receives tokens and
-    never elevates epistemic class."""
+def test_adversarial_model_prose_cannot_become_observation():
+    """RQ-EPI-02 — a well-formed but factually invented model answer
+    can never become the OBSERVATION/GROUNDED content: the grounded
+    path renders deterministically from the authoritative
+    SpecialistOutcome only."""
+    fabricated = (
+        "Encontrei TUBO 30X30X1500 e tambem TUBO 50X50X2000, "
+        "com estoque de 900 unidades."
+    )
     read, port = _davi_read(
         [
             _select(
@@ -770,8 +775,7 @@ def test_result_narrated_as_prose():
             ),
             {"applicable": True, "action_id": "search_products"},
             {"arguments": {"description": "tubo"}},
-            {"answer": "Encontrei o produto TUBO 30X30X1500 no "
-                       "cadastro."},
+            {"answer": fabricated},
         ],
         outcomes={
             "discover_delpi_information": MULTI_CANDIDATE_RESULT,
@@ -785,42 +789,14 @@ def test_result_narrated_as_prose():
     )
     attempt = read.attempt("busque tubo")
     _assert_success(attempt, "davi", "execute_delpi_information")
-    assert attempt.content == (
-        "Encontrei o produto TUBO 30X30X1500 no cadastro."
-    )
-    narration_request = read._invoke_model._port.requests[-1]
-    assert "tok-search" not in narration_request.input_text
-    assert "candidate_token" not in narration_request.input_text
-
-
-def test_result_narration_falls_back_when_malformed():
-    """Malformed narration proposals keep the deterministic bounded
-    render — never a fabricated or empty answer."""
-    for proposal in (
-        {"answer": ""},
-        {"answer": 42},
-        {"answer": "x", "extra": "y"},
-        "not-a-mapping",
-    ):
-        read, _ = _davi_read(
-            [
-                _select(
-                    "davi",
-                    "discover_delpi_information",
-                    {"query": "tubo"},
-                ),
-                proposal,
-            ],
-            outcomes={
-                "discover_delpi_information": RemoteToolOutcome(
-                    content_text="done",
-                    structured={"candidates": []},
-                )
-            },
-        )
-        attempt = read.attempt("busque tubo")
-        assert attempt.status is GovernedReadStatus.SUCCESS
-        assert (attempt.content or "").strip()
+    # Fabricated entities never reach the grounded answer.
+    assert "TUBO 50X50X2000" not in attempt.content
+    assert "900 unidades" not in attempt.content
+    # The deterministic bounded render carries the authoritative data.
+    assert "TUBO 30X30X1500" in attempt.content
+    # Only the three governed proposals ran — no presentation model
+    # call exists in the OBSERVATION path.
+    assert len(read._invoke_model._port.requests) == 3
 
 
 # --- failure semantics ---------------------------------------------------
