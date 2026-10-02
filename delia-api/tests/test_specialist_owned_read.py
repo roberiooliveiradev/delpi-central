@@ -625,8 +625,9 @@ def test_discovery_result_can_chain_into_candidate_bound_read():
 
 def test_chain_stops_when_candidate_schema_unsatisfiable():
     """When neither the selection args nor the schema-scoped proposal
-    satisfy the owner candidate schema, the truthful discovery result
-    is returned — execute is never reached."""
+    satisfy the owner candidate schema, the unresolved discovery is
+    NOT_APPLICABLE — never rendered as a bare discovery success, and
+    execute is never reached."""
     read, port = _davi_read(
         [
             _select(
@@ -636,8 +637,126 @@ def test_chain_stops_when_candidate_schema_unsatisfiable():
         ]
     )
     attempt = read.attempt("busque tubo")
-    _assert_success(attempt, "davi", "discover_delpi_information")
+    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
     assert [c[1] for c in port.calls] == ["discover_delpi_information"]
+
+
+MULTI_CANDIDATE_RESULT = RemoteToolOutcome(
+    content_text="{}",
+    structured={
+        "candidates": [
+            {
+                "action_id": "get_product_parents",
+                "candidate_token": "tok-parents",
+                "description": "Lista produtos pais de um produto",
+                "argument_schema": {
+                    "type": "object",
+                    "properties": {"code": {"type": "string"}},
+                },
+                "required_arguments": ["code"],
+            },
+            {
+                "action_id": "search_products",
+                "candidate_token": "tok-search",
+                "description": "Busca produtos por descricao",
+                "argument_schema": {
+                    "type": "object",
+                    "properties": {"description": {"type": "string"}},
+                },
+                "required_arguments": ["description"],
+            },
+        ]
+    },
+)
+
+
+def test_multi_candidate_resolved_by_model_selection():
+    """Discovery returning several owner candidates resolves via a
+    bounded action_id proposal — the token still comes only from the
+    owner payload, never from the model."""
+    read, port = _davi_read(
+        [
+            _select(
+                "davi", "discover_delpi_information", {"query": "tubo"}
+            ),
+            {"applicable": True, "action_id": "search_products"},
+            {"arguments": {"description": "tubo"}},
+        ],
+        outcomes={
+            "discover_delpi_information": MULTI_CANDIDATE_RESULT
+        },
+    )
+    attempt = read.attempt("busque tubo")
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    assert port.calls == [
+        (
+            "davi",
+            "discover_delpi_information",
+            {"query": "tubo"},
+        ),
+        (
+            "davi",
+            "execute_delpi_information",
+            {
+                "candidate_token": "tok-search",
+                "arguments": {"description": "tubo"},
+            },
+        ),
+    ]
+    # The candidate-selection prompt never carries owner tokens.
+    model = read._invoke_model._port
+    candidate_request = model.requests[1]
+    assert "tok-search" not in candidate_request.input_text
+    assert "tok-parents" not in candidate_request.input_text
+    assert attempt.provenance.action_id == "search_products"
+
+
+def test_multi_candidate_unresolvable_is_not_applicable():
+    """An invented or absent action_id fails closed — the unresolved
+    discovery is never rendered as a bare success."""
+    for proposal in (
+        {"applicable": True, "action_id": "invented_action"},
+        {"applicable": False},
+        {"applicable": True, "specialist_id": "davi"},
+    ):
+        read, port = _davi_read(
+            [
+                _select(
+                    "davi",
+                    "discover_delpi_information",
+                    {"query": "tubo"},
+                ),
+                proposal,
+            ],
+            outcomes={
+                "discover_delpi_information": MULTI_CANDIDATE_RESULT
+            },
+        )
+        attempt = read.attempt("busque tubo")
+        assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+        assert [c[1] for c in port.calls] == [
+            "discover_delpi_information"
+        ]
+
+
+def test_zero_candidate_discovery_renders_truthfully():
+    """A discovery with no candidates is grounded but honest — no
+    bare 'Discovery completed.' as if it were the answer."""
+    read, port = _davi_read(
+        _select(
+            "davi", "discover_delpi_information", {"query": "zzz"}
+        ),
+        outcomes={
+            "discover_delpi_information": RemoteToolOutcome(
+                content_text="Discovery completed.",
+                structured={"candidates": []},
+            )
+        },
+    )
+    attempt = read.attempt("busque zzz")
+    assert attempt.status is GovernedReadStatus.SUCCESS
+    assert "Discovery completed." not in (attempt.content or "")
+    assert "nenhuma" in (attempt.content or "").lower()
 
 
 # --- failure semantics ---------------------------------------------------
