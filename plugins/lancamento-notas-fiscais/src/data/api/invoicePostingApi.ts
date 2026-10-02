@@ -1,4 +1,4 @@
-import { httpGet, httpPatch, httpPost } from "./httpClient";
+import { httpGet, httpGetBlob, httpPatch, httpPost } from "./httpClient";
 import type {
   CreateRequestPayload,
   InvoicePostingComment,
@@ -6,6 +6,7 @@ import type {
   InvoicePostingListResponse,
   InvoicePostingRequest,
   ListFilters,
+  ReceivedInvoiceSearch,
   OpenPurchaseOrdersResponse,
   Supplier,
   UpdateRequestPayload,
@@ -84,6 +85,29 @@ export async function linkRequestPurchaseOrder(
     `${API_BASE}/requests/${requestId}/purchase-orders/link`,
     body,
   );
+}
+
+export async function searchReceivedInvoices(filters: {
+  invoiceNumber?: string;
+  supplierCnpj?: string;
+  page?: number;
+}): Promise<ReceivedInvoiceSearch> {
+  const params = new URLSearchParams();
+  if (filters.invoiceNumber) params.set("invoice_number", filters.invoiceNumber);
+  if (filters.supplierCnpj) params.set("supplier_cnpj", filters.supplierCnpj);
+  params.set("page", String(filters.page ?? 1));
+  params.set("page_size", "25");
+  return httpGet<ReceivedInvoiceSearch>(`${API_BASE}/received-invoices?${params.toString()}`);
+}
+
+export function fetchReceivedInvoicePreview(documentId: string, accessKey: string): Promise<Blob> {
+  const params = new URLSearchParams({ access_key: accessKey });
+  return httpGetBlob(`${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/danfe?${params.toString()}`);
+}
+
+export function fetchRequestDanfe(requestId: string, disposition: "inline" | "attachment"): Promise<Blob> {
+  const params = new URLSearchParams({ disposition });
+  return httpGetBlob(`${API_BASE}/requests/${encodeURIComponent(requestId)}/danfe?${params.toString()}`);
 }
 
 export async function createRequest(

@@ -23,12 +23,15 @@ Portal → /apps/lancamento-notas-fiscais
 Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
            ↓
          api-delpi → Postgres (plugins) + SQL Server (SA2/SF1)
+           ↓ JWT do usuário, só na seleção de NF-e
+         financial-api → Questor Zen (lista e DANFE)
 ```
 
 ---
 
 ## Funcionalidades
 
+- Nova solicitação: inclusão manual ou seleção de uma NF-e real (número ou CNPJ). A busca não dispara a cada tecla. O DANFE abre na própria tela antes de avançar. Ao salvar, o formulário vai preenchido e o PDF fica anexado para visualizar ou baixar no detalhe. A consulta passa pela api-delpi até a financial-api; o browser não fala com o Questor. Quem não tem acesso às notas do Portal Financeiro segue pela inclusão manual
 - Cadastro de solicitação após recebimento físico (filial, nota, série, tipo NF-e ou NFS-e, fornecedor, valor, data/hora)
 - Lista por `received_at` decrescente (mais recentes primeiro), filtros e cards no mobile
 - Refresh de conciliação ao abrir a fila (cooldown 45s) — não bloqueia a listagem

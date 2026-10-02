@@ -46,6 +46,11 @@ class InvoicePostingErpQueryError(InvoicePostingError):
     status_code = 502
 
 
+class InvoicePostingUpstreamError(InvoicePostingError):
+    code = "invoice_posting_request.upstream"
+    status_code = 502
+
+
 class InvoicePostingValidationError(InvoicePostingError):
     code = "invoice_posting_request.validation_error"
     status_code = 422

@@ -15,7 +15,8 @@ import {
   sanitizeAmountTyping,
   sanitizeDocumentTyping,
 } from "../../domain/fiscal";
-import type { CreateRequestPayload, FiscalModel, Supplier } from "../../domain/types";
+import type { CreateRequestPayload, FiscalModel, ReceivedInvoiceItem, Supplier } from "../../domain/types";
+import { ReceivedInvoicePicker } from "../components/ReceivedInvoicePicker";
 import { branchLabel, type BranchCode } from "../../constants/branch";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { SupplierSearch } from "../components/SupplierSearch";
@@ -118,6 +119,9 @@ export function RequestFormPage({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(mode === "edit");
+  const [step, setStep] = useState<"choose" | "search" | "form">(mode === "create" ? "choose" : "form");
+  const [attachment, setAttachment] = useState<{ document_id: string; access_key: string } | null>(null);
+  const [supplierHint, setSupplierHint] = useState<string | null>(null);
 
   const documentPreview = useMemo(
     () => normalizeDocumentInput(form.document),
@@ -217,6 +221,11 @@ export function RequestFormPage({
       received_at: fromLocalInputValue(form.received_at),
       observation: form.observation.trim() || undefined,
     };
+    if (attachment) {
+      payload.source = "received_nfe";
+      payload.document_id = attachment.document_id;
+      payload.access_key = attachment.access_key;
+    }
 
     setBusy(true);
     try {
@@ -240,21 +249,86 @@ export function RequestFormPage({
     }
   }
 
+  async function applyReceivedInvoice(row: ReceivedInvoiceItem, searchedCnpj: string | null) {
+    const cnpj = (row.issuerCnpj || searchedCnpj || "").replace(/\D/g, "");
+    const amount = row.amount.includes(",") ? row.amount : row.amount.replace(".", ",");
+    setForm((current) => ({
+      ...current,
+      document: sanitizeDocumentTyping(row.invoiceNumber),
+      series: normalizeSeriesInput(row.series),
+      fiscal_model: "nfe",
+      issue_date: row.emissionAt ? row.emissionAt.slice(0, 10) : "",
+      amount,
+    }));
+    setAttachment({ document_id: row.documentId, access_key: row.accessKey });
+    setSupplier(null);
+    setSupplierHint(null);
+    if (cnpj.length === 14) {
+      try {
+        const matches = await api.searchSuppliers(cnpj);
+        const exact = matches.filter(
+          (item) => (item.tax_id || "").replace(/\D/g, "") === cnpj && !item.blocked,
+        );
+        if (exact.length === 1) {
+          setSupplier(exact[0]);
+        } else if (exact.length > 1) {
+          setSupplierHint("Há mais de um fornecedor ativo com este CNPJ. Escolha a loja.");
+        } else {
+          setSupplierHint("Nenhum fornecedor ativo encontrado para este CNPJ. Selecione manualmente.");
+        }
+      } catch (err) {
+        setSupplierHint(err instanceof Error ? err.message : "Não foi possível localizar o fornecedor.");
+      }
+    } else {
+      setSupplierHint("Esta nota não trouxe o CNPJ do fornecedor. Selecione o fornecedor.");
+    }
+    setStep("form");
+  }
+
   if (loading) {
     return <p className="lnf-muted">Carregando formulário…</p>;
+  }
+
+  if (mode === "create" && step !== "form") {
+    return (
+      <ReceivedInvoicePicker
+        step={step}
+        onManual={() => {
+          setAttachment(null);
+          setSupplierHint(null);
+          setStep("form");
+        }}
+        onSelectNfe={() => setStep("search")}
+        onBackToChoice={() => setStep("choose")}
+        onCancel={onCancel}
+        onAdvance={(row, searchedCnpj) => {
+          void applyReceivedInvoice(row, searchedCnpj);
+        }}
+      />
+    );
   }
 
   return (
     <div className="lnf-stack" data-testid="request-form-page">
       <LnfPageHeader
         title={mode === "create" ? "Nova solicitação" : "Corrigir solicitação"}
-        subtitle="Informe os dados fiscais do recebimento físico da nota."
+        subtitle={
+          attachment
+            ? "Os dados vieram da NF-e. Confira, informe o recebimento físico e salve para anexar o DANFE."
+            : "Informe os dados fiscais do recebimento físico da nota."
+        }
         actions={
           <button type="button" className="lnf-btn lnf-btn--ghost" onClick={onCancel}>
             Voltar
           </button>
         }
       />
+
+      {attachment ? (
+        <p className="lnf-hint" data-testid="danfe-attach-notice">
+          O DANFE será anexado ao salvar. Você pode visualizar ou baixar o arquivo no detalhe da solicitação.
+        </p>
+      ) : null}
 
       <form
         className="lnf-form-shell"
@@ -416,6 +490,7 @@ export function RequestFormPage({
                 onSelect={setSupplier}
                 error={fieldErrors.supplier}
               />
+              {supplierHint ? <span className="lnf-hint">{supplierHint}</span> : null}
             </div>
           </div>
         </section>
@@ -456,6 +531,16 @@ export function RequestFormPage({
         ) : null}
 
         <div className="lnf-form__actions lnf-form__actions--sticky">
+          {attachment ? (
+            <button
+              type="button"
+              className="lnf-btn lnf-btn--ghost"
+              onClick={() => setStep("search")}
+              disabled={busy}
+            >
+              Voltar à busca
+            </button>
+          ) : null}
           <button
             type="button"
             className="lnf-btn lnf-btn--ghost"

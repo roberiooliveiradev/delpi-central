@@ -239,6 +239,27 @@
   font-size: 0.9rem;
 }
 
+.lnf-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.lnf-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.lnf-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .lnf-card {
   background: var(--lnf-surface);
   border: 1px solid var(--lnf-border);
@@ -681,6 +702,45 @@
 
 .lnf-actions--compact {
   margin-top: 8px;
+}
+
+.lnf-danfe-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.lnf-danfe-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lnf-danfe-panel__header h2,
+.lnf-danfe-panel__header p {
+  margin: 0;
+}
+
+.lnf-danfe-panel__viewer {
+  overflow: hidden;
+  border: 1px solid var(--lnf-border);
+  border-radius: 12px;
+  background: #f4f7fb;
+}
+
+.lnf-danfe-panel__viewer .delpi-ui-file-preview__pdf {
+  display: block;
+  width: 100%;
+  height: min(78vh, 960px);
+  min-height: 720px;
+  border: 0;
+  border-radius: 0;
+  background: #ffffff;
+}
+
+.lnf-danfe-panel__viewer .delpi-ui-file-preview__status {
+  margin: 0;
+  padding: 28px 16px;
 }
 
 .lnf-detail-board {
@@ -1450,6 +1510,16 @@
 }
 
 @media (max-width: 1100px) {
+  .lnf-danfe-panel__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lnf-danfe-panel__viewer .delpi-ui-file-preview__pdf {
+    height: 70vh;
+    min-height: 480px;
+  }
+
   .lnf-detail-board {
     grid-template-columns: 1fr;
   }

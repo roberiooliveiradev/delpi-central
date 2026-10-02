@@ -7,6 +7,18 @@ import * as meApi from "./data/api/meApi";
 vi.mock("./data/api/invoicePostingApi");
 vi.mock("./data/api/meApi");
 vi.mock("@delpi/plugin-ui/index", () => ({
+  FilePreviewModal: () => null,
+  useFilePreviewLoader: () => ({
+    kind: "none",
+    loading: false,
+    error: null,
+    previewUrl: null,
+    textContent: null,
+    textTruncated: false,
+    spreadsheetData: null,
+    docxData: null,
+  }),
+  FilePreviewView: () => null,
   UserDirectoryPicker: () => null,
 }));
 

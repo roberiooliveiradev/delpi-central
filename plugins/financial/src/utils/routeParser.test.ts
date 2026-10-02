@@ -81,6 +81,19 @@ describe("parseFinancialPath", () => {
     expect(route.page).toBe(2);
   });
 
+  it("reads invoice filters from the shareable URL", () => {
+    const route = parseFinancialPath(
+      "/apps/financial/invoices",
+      "?invoiceNumber=22844&invoiceValue=108%2C00&supplierCnpj=04.252.011%2F0001-10&page=2",
+      "01",
+    );
+    expect(route.subpluginId).toBe("invoices");
+    expect(route.invoiceNumber).toBe("22844");
+    expect(route.invoiceValue).toBe("108,00");
+    expect(route.supplierCnpj).toBe("04.252.011/0001-10");
+    expect(route.page).toBe(2);
+  });
+
   it("drops an unknown freight situation and malformed freight dates", () => {
     const route = parseFinancialPath(
       "/apps/financial/freight",
@@ -184,6 +197,21 @@ describe("buildFinancialHref", () => {
       }),
     ).toBe(
       "/apps/financial/freight?branch=all&entryStart=2026-02-01&entryEnd=2026-02-28&freightDocument=987654&situation=inconsistent",
+    );
+  });
+
+  it("serializes invoice filters and returns to the first page", () => {
+    expect(
+      buildFinancialHref({
+        subpluginId: "invoices",
+        branch: "01",
+        invoiceNumber: "22844",
+        invoiceValue: "108,00",
+        supplierCnpj: "04252011000110",
+        page: 1,
+      }),
+    ).toBe(
+      "/apps/financial/invoices?branch=01&invoiceNumber=22844&invoiceValue=108%2C00&supplierCnpj=04252011000110",
     );
   });
 });

@@ -1,14 +1,21 @@
 from __future__ import annotations
 
+import threading
+
 from financial_app.application.services.billing_service import BillingService
 from financial_app.application.services.cost_center_service import CostCenterService
 from financial_app.application.services.delinquency_service import DelinquencyService
 from financial_app.application.services.freight_service import FreightService
 from financial_app.application.services.indicators_service import IndicatorsService
 from financial_app.application.services.overview_service import OverviewService
+from financial_app.application.services.received_invoices_service import ReceivedInvoicesService
 from financial_app.application.services.subplugin_catalog_service import SubpluginCatalogService
+from financial_app.domain.ports.received_invoice_gateway import ReceivedInvoiceGateway
 from financial_app.domain.services.branch_access_service import BranchAccessService
 from financial_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
+from financial_app.infrastructure.gateways.questor_received_invoice_gateway import (
+    QuestorReceivedInvoiceGateway,
+)
 from financial_app.infrastructure.gateways.strategic_indicators_gateway import (
     StrategicIndicatorsGateway,
 )
@@ -28,6 +35,38 @@ def build_financial_gateway() -> DelpiFinancialGateway:
 
 def build_strategic_indicators_gateway() -> StrategicIndicatorsGateway:
     return StrategicIndicatorsGateway()
+
+
+_questor_gateway: QuestorReceivedInvoiceGateway | None = None
+_questor_gateway_lock = threading.Lock()
+
+
+def build_questor_received_invoice_gateway() -> QuestorReceivedInvoiceGateway:
+    """Uma sessão Questor por processo, para não autenticar a cada request."""
+
+    global _questor_gateway
+    if _questor_gateway is None:
+        with _questor_gateway_lock:
+            if _questor_gateway is None:
+                _questor_gateway = QuestorReceivedInvoiceGateway()
+    return _questor_gateway
+
+
+def close_questor_gateway() -> None:
+    global _questor_gateway
+    with _questor_gateway_lock:
+        if _questor_gateway is not None:
+            _questor_gateway.close()
+            _questor_gateway = None
+
+
+def build_received_invoices_service(
+    gateway: ReceivedInvoiceGateway | None = None,
+) -> ReceivedInvoicesService:
+    return ReceivedInvoicesService(
+        gateway if gateway is not None else build_questor_received_invoice_gateway(),
+        branch_access=build_branch_access_service(),
+    )
 
 
 def build_billing_service(

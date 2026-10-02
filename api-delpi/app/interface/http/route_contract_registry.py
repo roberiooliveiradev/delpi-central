@@ -1142,6 +1142,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "search_lancamento_notas_fiscais_suppliers": RouteContract(
         "invoice_posting_supplier", "paged_list"
     ),
+    "list_lancamento_notas_fiscais_received_invoices": RouteContract(
+        "received_invoice", "paged_list"
+    ),
+    "get_lancamento_notas_fiscais_received_invoice_danfe": RouteContract(
+        "received_invoice_danfe", "scalar"
+    ),
+    "get_lancamento_notas_fiscais_request_danfe": RouteContract(
+        "invoice_posting_danfe", "scalar"
+    ),
     "create_lancamento_notas_fiscais_request": RouteContract(
         "invoice_posting_request", "scalar"
     ),

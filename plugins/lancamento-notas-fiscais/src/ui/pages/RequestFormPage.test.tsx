@@ -1,10 +1,21 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RequestFormPage } from "./RequestFormPage";
 import * as api from "../../data/api/invoicePostingApi";
 import { ApiError } from "../../data/api/httpClient";
 
 vi.mock("../../data/api/invoicePostingApi");
+vi.mock("@delpi/plugin-ui/index", () => ({
+  FilePreviewModal: () => null,
+}));
+
+function renderCreate(ui: ReactElement) {
+  const view = render(ui);
+  const manual = screen.queryByRole("button", { name: /Inclusão manual/ });
+  if (manual) fireEvent.click(manual);
+  return view;
+}
 
 afterEach(() => {
   cleanup();
@@ -13,7 +24,7 @@ afterEach(() => {
 
 describe("RequestFormPage", () => {
   it("valida documento e mostra normalização", () => {
-    render(
+    renderCreate(
       <RequestFormPage
         mode="create"
         onCancel={() => undefined}
@@ -30,7 +41,7 @@ describe("RequestFormPage", () => {
   });
 
   it("pré-preenche recebimento com data/hora atual", () => {
-    render(
+    renderCreate(
       <RequestFormPage
         mode="create"
         onCancel={() => undefined}
@@ -53,7 +64,7 @@ describe("RequestFormPage", () => {
         blocked: false,
       },
     ]);
-    render(
+    renderCreate(
       <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
     );
     fireEvent.change(screen.getByLabelText("Número da nota"), {
@@ -85,7 +96,7 @@ describe("RequestFormPage", () => {
         blocked: false,
       },
     ]);
-    render(
+    renderCreate(
       <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
     );
     fireEvent.change(screen.getByLabelText("Número da nota"), {
@@ -119,7 +130,7 @@ describe("RequestFormPage", () => {
       },
     ]);
     vi.mocked(api.createRequest).mockResolvedValue({ id: "nfse-1" } as never);
-    render(
+    renderCreate(
       <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
     );
 
@@ -146,7 +157,7 @@ describe("RequestFormPage", () => {
   });
 
   it("Enter avança o foco como Tab", () => {
-    render(
+    renderCreate(
       <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
     );
     const documentInput = screen.getByLabelText("Número da nota");
@@ -171,7 +182,7 @@ describe("RequestFormPage", () => {
       id: "new-1",
     } as never);
     const onSuccess = vi.fn();
-    render(
+    renderCreate(
       <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={onSuccess} />,
     );
 
@@ -230,7 +241,7 @@ describe("RequestFormPage", () => {
         meta: { existing_request_id: "dup-9" },
       }),
     );
-    render(
+    renderCreate(
       <RequestFormPage
         mode="create"
         onCancel={() => undefined}
@@ -272,7 +283,7 @@ describe("RequestFormPage", () => {
         blocked: true,
       },
     ]);
-    render(
+    renderCreate(
       <RequestFormPage
         mode="create"
         onCancel={() => undefined}
@@ -286,5 +297,109 @@ describe("RequestFormPage", () => {
     const option = screen.getByText(/Bloqueado SA/).closest("button");
     expect(option).toBeTruthy();
     expect((option as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("inclusão manual não consulta notas fiscais", () => {
+    renderCreate(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    expect(api.searchReceivedInvoices).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Número da nota")).toBeTruthy();
+  });
+
+  it("busca a NF-e só ao enviar o filtro e exige DANFE para avançar", async () => {
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentId: "aabbccddeeff001122334455",
+          accessKey: "1".repeat(44),
+          invoiceNumber: "22844",
+          series: "1",
+          issuerName: "Fornecedor",
+          issuerCnpj: null,
+          emissionAt: "2026-09-30T21:40:44Z",
+          amount: "108.00",
+          amountFormatted: "R$ 108,00",
+          danfeAvailable: false,
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    render(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "22844" } });
+    expect(api.searchReceivedInvoices).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    await waitFor(() =>
+      expect(api.searchReceivedInvoices).toHaveBeenCalledWith({
+        invoiceNumber: "22844",
+        supplierCnpj: undefined,
+        page: 1,
+      }),
+    );
+    expect((screen.getByRole("button", { name: "Avançar" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("ao avançar preenche a nota e anexa a chave no cadastro", async () => {
+    const accessKey = "2".repeat(44);
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentId: "aabbccddeeff001122334455",
+          accessKey,
+          invoiceNumber: "22844",
+          series: "1",
+          issuerName: "Fornecedor",
+          issuerCnpj: "12345678000199",
+          emissionAt: "2026-09-30",
+          amount: "108.00",
+          amountFormatted: "R$ 108,00",
+          danfeAvailable: true,
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000010",
+        supplier_store: "01",
+        supplier_name: "Fornecedor",
+        supplier_short_name: null,
+        tax_id: "12345678000199",
+        state: "SC",
+        blocked: false,
+      },
+    ]);
+    vi.mocked(api.createRequest).mockResolvedValue({ id: "nfe-1" } as never);
+    render(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    expect(screen.getByText(/visualizar o DANFE antes de avançar/i)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.change(screen.getByLabelText("CNPJ do fornecedor"), {
+      target: { value: "12.345.678/0001-99" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Avançar" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
+    await waitFor(() => expect(screen.getByDisplayValue("22844")).toBeTruthy());
+    expect(screen.getByTestId("danfe-attach-notice").textContent).toMatch(/anexado/i);
+    fireEvent.change(screen.getByLabelText("Recebimento físico"), {
+      target: { value: "2026-10-01T09:30" },
+    });
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
+    expect(api.createRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "received_nfe",
+        document_id: "aabbccddeeff001122334455",
+        access_key: accessKey,
+        fiscal_model: "nfe",
+        document: "22844",
+        supplier_code: "000010",
+      }),
+    );
   });
 });

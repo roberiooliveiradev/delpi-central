@@ -39,6 +39,8 @@ export const helpTooltips = {
     "Vínculos de frete que o Protheus tem, mas que não fecham: nota ou CT-e não localizados, valor zerado, vínculo repetido ou documento de espécie fora do padrão. Aparecem para correção, não são escondidos.",
   indicators:
     "Nota IDD do departamento Financeiro e IGD da Delpi, publicados no Indicadores estratégicos. A nota pondera cada indicador pelo peso definido na competência.",
+  invoices:
+    "NF-e de entrada recebidas no Questor Zen. Dá para buscar pelo número da nota, pelo valor ou pelo CNPJ do fornecedor, visualizar o DANFE na própria tela e baixar o PDF. Esta consulta não filtra por filial nem pelo nome do fornecedor.",
   idd: "Índice de desempenho do departamento: média ponderada dos indicadores do Financeiro na competência.",
   igd: "Índice global da Delpi: consolida o IDD de todos os departamentos.",
   branch:

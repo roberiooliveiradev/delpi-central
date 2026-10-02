@@ -65,6 +65,13 @@ MIGRATION_V007 = (
     / PLUGIN_SLUG
     / "V007__fiscal_model.sql"
 )
+MIGRATION_V008 = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "plugins"
+    / PLUGIN_SLUG
+    / "V008__danfe_attachment.sql"
+)
 
 
 def _plugins_env_ready() -> bool:
@@ -142,6 +149,16 @@ def test_v007_migration_declares_fiscal_model() -> None:
     assert "'nfe'" in sql
     assert "'nfse'" in sql
     assert "ADD COLUMN IF NOT EXISTS fiscal_model" in sql
+
+
+def test_v008_migration_declares_danfe_attachment() -> None:
+    sql = MIGRATION_V008.read_text(encoding="utf-8")
+    assert "invoice_posting_danfe_attachments" in sql
+    assert "document_id" in sql
+    assert "access_key" in sql
+    assert "stored_name" in sql
+    assert "ON DELETE CASCADE" in sql
+    assert "PRIMARY KEY" in sql
 
 
 def test_v006_migration_declares_linked_purchase_order_lines() -> None:

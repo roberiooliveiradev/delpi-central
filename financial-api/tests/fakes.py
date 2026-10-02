@@ -630,3 +630,40 @@ class FakeStrategicIndicatorsGateway:
             "bestDepartment": "Qualidade",
             "primaryRisk": "Manutenção",
         }
+
+
+class FakeReceivedInvoiceGateway:
+    """Questor falso — a rota exercita o serviço real sem HTTP externo."""
+
+    def __init__(self) -> None:
+        self.queries: list[Any] = []
+        self.downloads: list[tuple[str, str]] = []
+        self.closed = False
+
+    def list_received_invoices(self, query: Any) -> Any:
+        from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoicePage
+
+        self.queries.append(query)
+        item = ReceivedInvoice(
+            document_id="aabbccddeeff001122334455",
+            access_key="3" * 44,
+            invoice_number="22844",
+            series="1",
+            issuer_name="FLORICULTURA FLORISA LTDA EPP",
+            issuer_cnpj=None,
+            receiver_name="DELPI COMPONENTES LTDA",
+            emission_at="2026-09-30T21:40:44Z",
+            amount="108",
+            amount_formatted="R$ 108,00",
+            manifestation_code="4",
+            manifestation_description="Ciência da Operação",
+            danfe_available=True,
+        )
+        return ReceivedInvoicePage(total_items=1, items=(item,))
+
+    def download_danfe(self, *, document_id: str, access_key: str) -> bytes:
+        self.downloads.append((document_id, access_key))
+        return b"%PDF-1.4\nfake\n"
+
+    def close(self) -> None:
+        self.closed = True

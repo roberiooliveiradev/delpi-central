@@ -46,6 +46,19 @@ class Settings:
         _get_env("STRATEGIC_INDICATORS_API_TIMEOUT", default="30")
     )
 
+    # Questor Zen — token sem default. Ausência não impede o boot da API.
+    FIN_QUESTOR_BASE_URL: str = _get_env(
+        "FIN_QUESTOR_BASE_URL",
+        default="https://alliance.app.questorpublico.com.br",
+    )
+    FIN_QUESTOR_API_TOKEN: str = _get_env("FIN_QUESTOR_API_TOKEN", default="") or ""
+    FIN_QUESTOR_TIMEOUT_SECONDS: float = float(
+        _get_env("FIN_QUESTOR_TIMEOUT_SECONDS", default="30")
+    )
+    FIN_QUESTOR_DANFE_MAX_BYTES: int = int(
+        _get_env("FIN_QUESTOR_DANFE_MAX_BYTES", default="10485760")
+    )
+
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
     PLUGINS_DB_NAME: str | None = _get_env("PLUGINS_DB_NAME")

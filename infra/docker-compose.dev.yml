@@ -1401,6 +1401,9 @@ services:
       LNF_NOTIFICATIONS_ENABLED: ${LNF_NOTIFICATIONS_ENABLED:-true}
       INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED: ${INVOICE_ISSUANCE_NOTIFICATIONS_ENABLED:-true}
       INVOICE_ISSUANCE_UPLOAD_DIR: ${INVOICE_ISSUANCE_UPLOAD_DIR:-/app/data/invoice-issuance}
+      LNF_DANFE_UPLOAD_DIR: ${LNF_DANFE_UPLOAD_DIR:-/app/data/lancamento-notas-fiscais-danfe}
+      FINANCIAL_API_BASE_URL: ${FINANCIAL_API_BASE_URL:-http://financial-api:8000}
+      FINANCIAL_API_TIMEOUT_SECONDS: ${FINANCIAL_API_TIMEOUT_SECONDS:-30}
       SCHEDULING_NOTIFICATIONS_ENABLED: ${SCHEDULING_NOTIFICATIONS_ENABLED:-true}
       SCHEDULING_APPROVAL_TTL_HOURS: ${SCHEDULING_APPROVAL_TTL_HOURS:-24}
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
@@ -1448,6 +1451,7 @@ services:
       # Evidências PAC e anexos Auditoria 5S — persistir no host (sobrevive a rebuild do container)
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/invoice-issuance:/app/data/invoice-issuance
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/lancamento-notas-fiscais-danfe:/app/data/lancamento-notas-fiscais-danfe
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences
@@ -2476,6 +2480,11 @@ services:
 
       STRATEGIC_INDICATORS_API_BASE_URL: ${STRATEGIC_INDICATORS_API_BASE_URL:-http://strategic-indicators-api:8000}
       STRATEGIC_INDICATORS_API_TIMEOUT: ${STRATEGIC_INDICATORS_API_TIMEOUT:-30}
+
+      FIN_QUESTOR_BASE_URL: ${FIN_QUESTOR_BASE_URL:-https://alliance.app.questorpublico.com.br}
+      FIN_QUESTOR_API_TOKEN: ${FIN_QUESTOR_API_TOKEN:-}
+      FIN_QUESTOR_TIMEOUT_SECONDS: ${FIN_QUESTOR_TIMEOUT_SECONDS:-30}
+      FIN_QUESTOR_DANFE_MAX_BYTES: ${FIN_QUESTOR_DANFE_MAX_BYTES:-10485760}
 
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}

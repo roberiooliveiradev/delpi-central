@@ -5,6 +5,7 @@ from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Query
+from fastapi.responses import Response
 from app.interface.http.pagination_query import (
     LIMIT_QUERY,
     PAGE_SIZE_QUERY,
@@ -14,7 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from delpi_auth.authz_core import has_permission
 from delpi_auth.authorization import require_any_permission, require_permission
-from delpi_auth.request_context import get_current_user
+from delpi_auth.request_context import get_current_user, get_request_authorization
 
 from app.application.security.api_delpi_permissions import (
     LANCAMENTO_NOTAS_FISCAIS_ACCESS,
@@ -29,16 +30,22 @@ from app.application.security.api_delpi_permissions import (
 from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases import (
     Actor,
 )
+from app.application.services.lancamento_notas_fiscais.danfe_storage import (
+    LancamentoDanfeStorage,
+    LancamentoDanfeStorageError,
+)
 from app.composition.lancamento_notas_fiscais_composer import (
     build_add_invoice_posting_comment_use_case,
     build_block_invoice_posting_request_use_case,
     build_cancel_invoice_posting_request_use_case,
-    build_create_invoice_posting_request_use_case,
     build_get_invoice_posting_request_use_case,
+    build_invoice_posting_request_repository,
     build_list_invoice_posting_requests_use_case,
     build_link_request_purchase_order_use_case,
     build_list_request_open_purchase_orders_use_case,
     build_post_manual_invoice_posting_request_use_case,
+    build_financial_received_invoice_gateway,
+    build_received_invoice_attachment_service,
     build_refresh_invoice_posting_reconciliation_use_case,
     build_resume_invoice_posting_request_use_case,
     build_run_invoice_posting_reconciliation_use_case,
@@ -48,6 +55,9 @@ from app.composition.lancamento_notas_fiscais_composer import (
 )
 from app.core.responses import error_response, not_found_response
 from app.domain.services.lancamento_notas_fiscais.exceptions import InvoicePostingError
+from app.infrastructure.gateways.financial_received_invoice_gateway import (
+    FinancialReceivedInvoiceGatewayError,
+)
 from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     FiscalNormalizationError,
     normalize_branch,
@@ -78,6 +88,9 @@ class CreateRequestBody(BaseModel):
     amount: float | str
     received_at: str
     observation: str | None = None
+    source: str | None = None
+    document_id: str | None = None
+    access_key: str | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -154,6 +167,24 @@ def _actor() -> Actor:
     )
 
 
+def _pdf_response(content: bytes, filename: str, disposition: str) -> Response:
+    safe_name = "".join(ch for ch in filename if ch.isalnum() or ch in {".", "-", "_"}) or "danfe.pdf"
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'{disposition}; filename="{safe_name}"'},
+    )
+
+
+def _handle_financial(exc: FinancialReceivedInvoiceGatewayError):
+    return error_response(
+        str(exc),
+        status_code=exc.status_code,
+        code="financial_invoices.upstream",
+        recoverable=exc.status_code in {403, 422, 503},
+    )
+
+
 def _handle_domain(exc: InvoicePostingError):
     meta = getattr(exc, "meta", None) or None
     if exc.status_code == 404:
@@ -218,6 +249,83 @@ def search_suppliers(
         )
 
 
+@router.get(
+    "/received-invoices",
+    operation_id="list_lancamento_notas_fiscais_received_invoices",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
+def list_received_invoices(
+    invoice_number: str | None = Query(None),
+    supplier_cnpj: str | None = Query(None),
+    page: int = Query(1),
+    page_size: int = Query(25),
+):
+    number = str(invoice_number or "").strip()
+    cnpj = str(supplier_cnpj or "").strip()
+    if not number and not cnpj:
+        return error_response(
+            "Informe o número da nota ou o CNPJ do fornecedor.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    if page < 1 or page_size < 1 or page_size > 100:
+        return error_response(
+            "Paginação inválida.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    try:
+        data = build_financial_received_invoice_gateway().list_received_invoices(
+            authorization=str(get_request_authorization() or ""),
+            invoice_number=number or None,
+            supplier_cnpj=cnpj or None,
+            page=page,
+            page_size=page_size,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="list_lancamento_notas_fiscais_received_invoices",
+            message="Notas fiscais de entrada carregadas.",
+        )
+    except FinancialReceivedInvoiceGatewayError as exc:
+        return _handle_financial(exc)
+    except Exception as exc:
+        log_error(f"Erro ao consultar NF-e de entrada no lançamento: {type(exc).__name__}")
+        return error_response(
+            "Erro ao consultar notas fiscais.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+
+
+@router.get(
+    "/received-invoices/{document_id}/danfe",
+    operation_id="get_lancamento_notas_fiscais_received_invoice_danfe",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
+def preview_received_invoice_danfe(document_id: str, access_key: str = Query("")):
+    try:
+        content, filename = build_financial_received_invoice_gateway().download_danfe(
+            authorization=str(get_request_authorization() or ""),
+            document_id=document_id,
+            access_key=access_key,
+        )
+    except FinancialReceivedInvoiceGatewayError as exc:
+        return _handle_financial(exc)
+    except Exception as exc:
+        log_error(f"Erro ao pré-visualizar DANFE no lançamento: {type(exc).__name__}")
+        return error_response(
+            "Erro ao obter o DANFE.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    return _pdf_response(content, filename, "inline")
+
+
 @router.post("/requests", operation_id="create_lancamento_notas_fiscais_request")
 @require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
 def create_request(body: CreateRequestBody):
@@ -225,15 +333,18 @@ def create_request(body: CreateRequestBody):
         branch_error = _gate_payload_branch(body.branch_code)
         if branch_error is not None:
             return branch_error
-        data = build_create_invoice_posting_request_use_case().execute(
+        data = build_received_invoice_attachment_service().execute(
             body.model_dump(by_alias=False),
             _actor(),
+            authorization=str(get_request_authorization() or ""),
         )
         return api_delpi_success(
             data,
             operation_id="create_lancamento_notas_fiscais_request",
             message="Solicitação criada com sucesso.",
         )
+    except FinancialReceivedInvoiceGatewayError as exc:
+        return _handle_financial(exc)
     except InvoicePostingError as exc:
         return _handle_domain(exc)
     except Exception as exc:
@@ -342,6 +453,51 @@ def get_request(request_id: UUID):
             code="INTERNAL_ERROR",
             recoverable=False,
         )
+
+
+@router.get(
+    "/requests/{request_id}/danfe",
+    operation_id="get_lancamento_notas_fiscais_request_danfe",
+)
+@require_any_permission(LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS)
+def download_request_danfe(
+    request_id: UUID,
+    disposition: str = Query("inline"),
+):
+    mode = str(disposition or "inline").strip().lower()
+    if mode not in {"inline", "attachment"}:
+        return error_response(
+            "Disposição do arquivo inválida.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    try:
+        data = build_get_invoice_posting_request_use_case().execute(str(request_id), _actor())
+        branch_error = _gate_loaded_branch(data)
+        if branch_error is not None:
+            return branch_error
+        attachment = data.get("danfe") if isinstance(data, dict) else None
+        if not isinstance(attachment, dict):
+            return not_found_response("DANFE não anexado a esta solicitação.", code="danfe.not_found")
+        stored = build_invoice_posting_request_repository().get_danfe_attachment(str(request_id))
+        if not isinstance(stored, dict) or not stored.get("stored_name"):
+            return not_found_response("DANFE não anexado a esta solicitação.", code="danfe.not_found")
+        content = LancamentoDanfeStorage().read(str(stored["stored_name"]))
+    except LancamentoDanfeStorageError:
+        return not_found_response("Arquivo do DANFE não encontrado.", code="danfe.not_found")
+    except InvoicePostingError as exc:
+        return _handle_domain(exc)
+    except Exception as exc:
+        log_error(f"Erro ao obter DANFE da solicitação LNF: {type(exc).__name__}")
+        return error_response(
+            "Erro ao obter o DANFE.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    filename = str(attachment.get("file_name") or stored.get("file_name") or "danfe.pdf")
+    return _pdf_response(content, filename, mode)
 
 
 @router.get(

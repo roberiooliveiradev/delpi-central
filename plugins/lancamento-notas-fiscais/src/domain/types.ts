@@ -128,6 +128,7 @@ export type InvoicePostingDetail = {
   history: InvoicePostingHistory[];
   comments: InvoicePostingComment[];
   allowed_actions: AllowedAction[];
+  danfe?: InvoicePostingDanfe | null;
 };
 
 export type InvoicePostingListResponse = {
@@ -213,6 +214,41 @@ export type CreateRequestPayload = {
   amount: number | string;
   received_at: string;
   observation?: string | null;
+  source?: "manual" | "received_nfe";
+  document_id?: string;
+  access_key?: string;
+};
+
+export type ReceivedInvoiceItem = {
+  documentId: string;
+  accessKey: string;
+  invoiceNumber: string;
+  series: string;
+  issuerName: string;
+  issuerCnpj: string | null;
+  emissionAt: string | null;
+  amount: string;
+  amountFormatted: string;
+  danfeAvailable: boolean;
+};
+
+export type ReceivedInvoiceSearch = {
+  items: ReceivedInvoiceItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+};
+
+export type InvoicePostingDanfe = {
+  available: boolean;
+  document_id: string;
+  access_key: string;
+  file_name: string;
+  size_bytes: number;
 };
 
 export type UpdateRequestPayload = {

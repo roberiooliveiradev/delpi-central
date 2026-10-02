@@ -46,6 +46,15 @@
       "permission": "financial.freight.view"
     },
     {
+      "id": "invoices",
+      "label": "Notas Fiscais",
+      "description": "NF-e de entrada recebidas no Questor Zen, com download do DANFE.",
+      "icon": "file-text",
+      "route": "/invoices",
+      "status": "active",
+      "permission": "financial.invoices.view"
+    },
+    {
       "id": "indicators",
       "label": "Indicadores estratégicos",
       "description": "Nota IDD do Financeiro e IGD da Delpi, com meta e realizado por indicador.",

@@ -23,3 +23,27 @@ class DelpiGatewayError(FinancialError):
 
 class StrategicIndicatorsGatewayError(FinancialError):
     """Falha ao consultar o strategic-indicators-api."""
+
+
+class InvalidReceivedInvoiceQuery(FinancialError):
+    """Filtro ou identificador de NF-e fora do contrato do Portal Financeiro."""
+
+
+class QuestorNotConfigured(FinancialError):
+    """Token ou base do Questor Zen ausentes. Os demais módulos seguem no ar."""
+
+
+class QuestorAuthenticationError(FinancialError):
+    """O Questor Zen recusou ou não concluiu a sessão por token."""
+
+
+class QuestorUnavailable(FinancialError):
+    """Timeout ou indisponibilidade transitória do Questor Zen."""
+
+
+class QuestorInvalidResponse(FinancialError):
+    """Corpo inesperado do Questor Zen, sem detalhe do provider."""
+
+
+class QuestorDocumentNotFound(FinancialError):
+    """DANFE inexistente quando o provider deixa isso inequívoco."""

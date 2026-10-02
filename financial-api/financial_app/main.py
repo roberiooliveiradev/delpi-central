@@ -15,6 +15,9 @@ from financial_app.interface.http.routes.delinquency_routes import router as del
 from financial_app.interface.http.routes.freight_routes import router as freight_router
 from financial_app.interface.http.routes.indicators_routes import router as indicators_router
 from financial_app.interface.http.routes.overview_routes import router as overview_router
+from financial_app.interface.http.routes.received_invoice_routes import (
+    router as received_invoice_router,
+)
 from financial_app.interface.http.routes.subplugin_routes import router as subplugin_router
 from financial_app.middleware.auth_middleware import jwt_middleware
 from financial_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -47,13 +50,16 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     run_migrations_on_startup()
     yield
+    from financial_app.composition.financial_composer import close_questor_gateway
+
+    close_questor_gateway()
 
 
 app = FastAPI(
     title="Portal Financeiro API",
     description=(
         "BFF do Portal Financeiro — gestão à vista, faturamento, inadimplência, despesas por centro "
-        "de custo e indicadores estratégicos do departamento Financeiro."
+        "de custo, frete, notas fiscais de entrada (Questor Zen) e indicadores estratégicos."
     ),
     version="0.1.0",
     root_path=settings.FIN_API_ROOT_PATH,
@@ -99,4 +105,5 @@ app.include_router(billing_router)
 app.include_router(delinquency_router)
 app.include_router(cost_center_router)
 app.include_router(freight_router)
+app.include_router(received_invoice_router)
 app.include_router(indicators_router)
