@@ -41,6 +41,10 @@ class SingleFlightRegistry(Generic[T]):
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._flights: dict[str, _Flight[T]] = {}
+        # Cumulative decision counters for stats()/diagnostics only.
+        self._leaders = 0
+        self._waiters = 0
+        self._errors = 0
 
     def run(self, key: str, fetch: Callable[[], T]) -> T:
         with self._lock:
@@ -49,8 +53,10 @@ class SingleFlightRegistry(Generic[T]):
                 flight = _Flight()
                 self._flights[key] = flight
                 leader = True
+                self._leaders += 1
             else:
                 leader = False
+                self._waiters += 1
 
         if not leader:
             return flight.wait()
@@ -58,6 +64,8 @@ class SingleFlightRegistry(Generic[T]):
         try:
             flight.complete_value(fetch())
         except BaseException as exc:
+            with self._lock:
+                self._errors += 1
             flight.complete_error(exc)
             raise
         finally:
@@ -76,4 +84,9 @@ class SingleFlightRegistry(Generic[T]):
 
     def stats(self) -> dict[str, int]:
         with self._lock:
-            return {"in_flight": len(self._flights)}
+            return {
+                "in_flight": len(self._flights),
+                "leaders": self._leaders,
+                "waiters": self._waiters,
+                "errors": self._errors,
+            }

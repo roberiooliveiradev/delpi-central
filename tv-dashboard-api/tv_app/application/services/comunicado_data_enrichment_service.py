@@ -2451,3 +2451,10 @@ def reset_comunicado_data_block_cache() -> None:
     _data_block_cache.clear()
     _data_block_inflight.invalidate_all()
     reset_phase7_caches()
+
+
+def data_block_cache_stats() -> dict[str, Any]:
+    return {
+        **_data_block_cache.stats(),
+        "singleFlight": _data_block_inflight.stats(),
+    }

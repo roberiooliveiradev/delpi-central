@@ -93,5 +93,8 @@ def reset_native_data_cache() -> None:
     _native_inflight.invalidate_all()
 
 
-def native_data_cache_stats() -> dict[str, float | int]:
-    return _native_cache.stats()
+def native_data_cache_stats() -> dict[str, Any]:
+    return {
+        **_native_cache.stats(),
+        "singleFlight": _native_inflight.stats(),
+    }

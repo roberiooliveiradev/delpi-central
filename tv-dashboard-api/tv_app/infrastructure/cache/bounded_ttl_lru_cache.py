@@ -44,6 +44,12 @@ class BoundedTtlLruCache(Generic[T]):
         self._clock = clock
         self._entries: OrderedDict[str, tuple[T, float, float]] = OrderedDict()
         self._lock = threading.Lock()
+        # Decision counters — cumulative per instance lifetime; `stats()` only.
+        self._hits = 0
+        self._misses_absent = 0
+        self._misses_expired = 0
+        self._misses_stale = 0
+        self._evictions_lru = 0
 
     def get(self, key: str, max_age_seconds: float | None = None) -> T | None:
         if self._ttl_seconds <= 0 or self._max_entries <= 0:
@@ -55,15 +61,19 @@ class BoundedTtlLruCache(Generic[T]):
         with self._lock:
             entry = self._entries.pop(key, None)
             if entry is None:
+                self._misses_absent += 1
                 return None
             value, stored_at, expires_at = entry
             if now > expires_at:
+                self._misses_expired += 1
                 return None
             self._entries[key] = entry
             if now - stored_at > bound:
                 # Stale for this consumer but physically alive: keep it for
                 # consumers with a larger acceptable age.
+                self._misses_stale += 1
                 return None
+            self._hits += 1
             return copy.deepcopy(value)
 
     def set(self, key: str, value: T) -> None:
@@ -79,6 +89,7 @@ class BoundedTtlLruCache(Generic[T]):
             )
             while len(self._entries) > self._max_entries:
                 self._entries.popitem(last=False)
+                self._evictions_lru += 1
 
     def clear(self) -> None:
         with self._lock:
@@ -91,4 +102,9 @@ class BoundedTtlLruCache(Generic[T]):
                 "maxEntries": self._max_entries,
                 "ttlSeconds": self._ttl_seconds,
                 "retentionSeconds": self._retention_seconds,
+                "hits": self._hits,
+                "missesAbsent": self._misses_absent,
+                "missesExpired": self._misses_expired,
+                "missesStale": self._misses_stale,
+                "evictionsLru": self._evictions_lru,
             }

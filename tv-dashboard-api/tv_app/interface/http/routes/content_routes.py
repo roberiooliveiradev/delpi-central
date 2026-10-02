@@ -4,6 +4,9 @@ from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import Response
 
 from tv_app.application.services.branch_access_scope_service import BranchAccessScopeService
+from tv_app.application.services.comunicado_data_enrichment_service import (
+    data_block_cache_stats,
+)
 from tv_app.application.services.native_screen_cache_service import native_data_cache_stats
 from tv_app.application.services.slide_preset_service import (
     SlidePresetNotFoundError,
@@ -160,5 +163,15 @@ def native_cache_health():
         {
             "namespace": "tv-dashboard-native-data",
             **native_data_cache_stats(),
+        }
+    )
+
+
+@router.get("/health/data-cache")
+def data_cache_health():
+    return ok(
+        {
+            "namespace": "tv-dashboard-data-block",
+            **data_block_cache_stats(),
         }
     )
