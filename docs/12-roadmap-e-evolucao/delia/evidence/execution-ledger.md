@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** architecture review of `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R3` (§6.122) + `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); SPECIALIST_CAPABILITY_CATALOG_OWNER=SPECIALIST — live authenticated tools/list is the primary capability surface (§6.118); APPROVED_SPECIALISTS=DAVI|TEO|VISTA; MCP_READ_FEDERATION=APPROVED_CURRENT_SCOPE; LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA=PASS (§6.119/§6.120, user subject via delpi-central OIDC, same-subject delegated exchange, azp=delia-api); PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN; REAL_PRODUCTION_APPLY=PASS_FOR_CURRENT_MCP_READ_SCOPE; C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (§6.112); PROD-MCP-RUNTIME-ALIGNMENT-01 KC24 decision preserved (§6.116 — PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1, KC26 deferred; §6.115 rehearsal evidence historical). Superseded current-status claims (historical records preserved): THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED (§6.106), DELIA_C4_*_ENABLED per-capability flags, PRODUCTION_MCP_RUNTIME=NOT_PROVEN, REAL_PRODUCTION_APPLY=TEST_NOT_RUN. C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
+**Next:** architecture review of `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R3` (§6.122) + `DELIA-GROUNDED-BUSINESS-PRESENTATION-01` (§6.123) + `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); SPECIALIST_CAPABILITY_CATALOG_OWNER=SPECIALIST — live authenticated tools/list is the primary capability surface (§6.118); APPROVED_SPECIALISTS=DAVI|TEO|VISTA; MCP_READ_FEDERATION=APPROVED_CURRENT_SCOPE; LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA=PASS (§6.119/§6.120, user subject via delpi-central OIDC, same-subject delegated exchange, azp=delia-api); PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN; REAL_PRODUCTION_APPLY=PASS_FOR_CURRENT_MCP_READ_SCOPE; C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (§6.112); PROD-MCP-RUNTIME-ALIGNMENT-01 KC24 decision preserved (§6.116 — PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1, KC26 deferred; §6.115 rehearsal evidence historical). Superseded current-status claims (historical records preserved): THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED (§6.106), DELIA_C4_*_ENABLED per-capability flags, PRODUCTION_MCP_RUNTIME=NOT_PROVEN, REAL_PRODUCTION_APPLY=TEST_NOT_RUN. C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
 
 ## 1. Ledger rule
 
@@ -8311,4 +8311,84 @@ CLAIMS =
 STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 NEXT = independent architecture review of
     ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R3.
+
+## 6.123. DELIA-GROUNDED-BUSINESS-PRESENTATION-01 — business-payload-first deterministic projection + R3 production SHA binding
+
+DATE = 2026-10-02
+BASE_HEAD = 35e86f32f455d57b4537d7359df632879cbe1196
+EVALUATED_SHA = ff27cfaf47fd8c26ca66cf10d08af2448741fe1d
+BRANCH = main; WORKING_TREE = clean at issuance
+
+CANONICAL_STATUS_DRIFT = PROVEN at preflight: doc 16 pointed to R1
+    while ledger had progressed through R2/R3 — reconciled here.
+
+ROOT UX DEFECT: the grounded renderer showed the full technical
+    envelope (action_id/status/entity/shape/projection/page_size/
+    response_bytes) plus generic completion text as the primary
+    answer, burying the business record.
+
+REUSE GATE: EXISTING_EQUIVALENT = YES — extended the existing
+    deterministic renderer (render_specialist_outcome +
+    _sanitize_renderable + _redact_text + _format_structured).
+    REUSE_DECISION = EXTEND; no presentation service, no LLM
+    narration, no per-specialist branches.
+
+IMPLEMENTATION (delia-api only):
+    - _business_lines: structural unwrap of the `data` business
+      payload; envelope siblings never reach the primary answer
+      (structural unwrap, not a destructive key blacklist — data is
+      never discarded, unknown shapes fall back to the generic
+      sanitized render).
+    - items=[] -> "Nenhum resultado encontrado." (authoritative empty
+      stays GROUNDED OBSERVATION, not failure); single record ->
+      flat field: value lines; multi-record -> bounded numbered list.
+    - Generic completion texts ("Execution completed.", "Discovery
+      completed.", "ok", "success") suppressed only when a business
+      payload is rendered; arbitrary owner text is preserved.
+    - Redaction strictly precedes projection (R3 boundary intact).
+
+TESTS: 52/52 test_specialist_owned_read.py incl. screenshot fixture
+    (envelope keys absent, product fields present), multi/single/
+    empty items, unknown-shape fallback, redaction-before-projection,
+    structural (non-specialist) equivalence; full delia-api suite
+    green; git diff --check clean.
+
+PRODUCTION CONVERGENCE (srv-api via ssh operador@192.168.1.237):
+    SERVER_HEAD_BEFORE = ed0027b2ef (R2 — R3 residual was real)
+    git pull --ff-only -> ff27cfaf47; docker compose build delia-api;
+    up -d --no-deps delia-api (Keycloak/DAVI/TEO/VISTA/gateway
+    untouched — keycloak Up 5h after recreate).
+    DEPLOYED_DELIA_SHA = ff27cfaf47 — proven by server checkout HEAD +
+    _business_lines marker present in container filesystem +
+    behavioral live output below.
+
+LIVE (production gateway /apps/delia-api/interaction/turns,
+    subject=user, real OIDC auth-code, token never printed):
+    "descrição do 10090045" -> 200 GROUNDED OBSERVATION davi;
+        content = product_code: 10090045 | description: ISOLADOR
+        NYLON RETO 6,3 NU UL 94V-2 - ROHS | group_category: 1009
+        — zero envelope keys.
+    TEO indicators -> 200 GROUNDED OBSERVATION teo; business
+        metrics readable, no envelope dump.
+    VISTA playlists -> 200 GROUNDED OBSERVATION vista;
+        "Nenhum resultado encontrado."
+    CONTROL -> 200 NON_GROUNDED HYPOTHESIS.
+    UNAUTH -> 401. SECRET_SCAN_HITS = 0.
+
+CLAIMS =
+    GROUNDED_BUSINESS_PRESENTATION = PASS
+    R3_PRODUCTION_SHA = PROVEN (ff27cfaf47 serving DÉLIA)
+    SPECIALIST_CAPABILITY_CATALOG_OWNER = SPECIALIST
+    MCP_READ_FEDERATION = APPROVED_CURRENT_SCOPE
+    DAVI/TÉO/VISTA = PASS
+    EPISTEMIC_INTEGRITY = PRESERVED (deterministic only,
+        model_invocation_id=None truthful)
+    PRODUCTION_MCP_RUNTIME = READ_SLICE_PROVEN_ON_CURRENT_SHA
+    PREPARE = BLOCKED; ACT = BLOCKED; UNKNOWN = discoverable only
+    C3_EXECUTED = NO; C4_AUTHORIZED = NO (phase); C5_AUTHORIZED = NO
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+NEXT = independent architecture review of
+    DELIA-GROUNDED-BUSINESS-PRESENTATION-01 (+ pending R3 review).
 
