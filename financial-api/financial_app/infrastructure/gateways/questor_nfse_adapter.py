@@ -23,7 +23,10 @@ from financial_app.domain.nfse_document_number import (
 from financial_app.domain.received_fiscal_document import ReceivedFiscalDocument, ReceivedFiscalPage
 from financial_app.domain.received_invoice import ReceivedInvoiceQuery
 from financial_app.infrastructure.gateways.questor_company_session import QuestorCompanySession
-from financial_app.infrastructure.xml.nfse_standard_xml import assert_plausible_xml
+from financial_app.infrastructure.xml.nfse_standard_xml import (
+    assert_plausible_xml,
+    xml_inspection_sample,
+)
 
 _LIST_PATH = "/cliente/nfse/listed"
 _XML_SIZE_ERROR = "O XML da NFS-e excede o tamanho máximo permitido."
@@ -137,7 +140,7 @@ def _xml_variant(value: str) -> str:
 def _xml_needs_reauth(status: int, body: bytes) -> bool:
     if status in {401, 403}:
         return True
-    sample = body.lstrip()[:240].lower()
+    sample = xml_inspection_sample(body)[:240].lower()
     return sample.startswith(b"<html") or sample.startswith(b"<!doctype") or sample.startswith(b"<head")
 
 
@@ -149,7 +152,7 @@ def _validate_xml_download(status: int, body: bytes, max_bytes: int) -> None:
     if status >= 400:
         raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
     assert_plausible_xml(body, max_bytes=max_bytes)
-    if not body.lstrip().startswith(b"<"):
+    if not xml_inspection_sample(body).startswith(b"<"):
         raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
 
 

@@ -270,6 +270,46 @@ def test_xml_downloads_use_document_id_not_file_ids() -> None:
     assert parsed.iss == "4.00"
 
 
+def test_utf8_bom_is_accepted_and_the_original_bytes_stay_intact() -> None:
+    payload = b"\xef\xbb\xbf" + STANDARD_XML
+    auth_calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "download-xml" in request.url.path:
+            return httpx.Response(200, content=payload)
+        return _auth(request, auth_calls)
+
+    adapter, session, client = _adapter(handler)
+    try:
+        body = adapter.download_xml(document_id=DOCUMENT_ID, variant="standard")
+    finally:
+        session.close()
+        client.close()
+    assert body == payload
+    assert body.startswith(b"\xef\xbb\xbf")
+    parsed = parse_nfse_standard_xml(body, max_bytes=len(body))
+    assert parsed.series == "E"
+    assert parsed.number == "2600000002224"
+
+
+def test_html_login_with_bom_still_reauthenticates() -> None:
+    auth_calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "download-xml" in request.url.path:
+            return httpx.Response(200, content=b"\xef\xbb\xbf<html>login</html>")
+        return _auth(request, auth_calls)
+
+    adapter, session, client = _adapter(handler)
+    try:
+        with pytest.raises(QuestorAuthenticationError):
+            adapter.download_xml(document_id=DOCUMENT_ID, variant="original")
+    finally:
+        session.close()
+        client.close()
+    assert sum(auth_calls) == 2
+
+
 def test_questor_standard_root_without_notas_wrapper_is_xml() -> None:
     payload = b"""<InvoiceQuestorXmlDto>
       <PREFEITURA>Jaragua</PREFEITURA>
