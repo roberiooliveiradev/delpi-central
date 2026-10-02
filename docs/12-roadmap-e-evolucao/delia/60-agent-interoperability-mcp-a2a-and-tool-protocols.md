@@ -107,6 +107,8 @@ Capability existence/class is specialist-owned; DÉLIA retains orchestration pol
 
 Discovery != approval. Metadata != permission. Owner toolClass != permission.
 
+**Current acceptance (§6.124):** `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02=ACCEPT_CURRENT_READ_SCOPE` — the bounded MCP READ federation over DAVI|TÉO|VISTA (DISCOVERY/READ/ANALYSIS-as-READ) is accepted for the proven scope; production READ slice proven on DÉLIA SHA `ff27cfaf47`; PREPARE/ACT remain blocked; grounded output passes deterministic redaction + business projection before OBSERVATION rendering.
+
 ## 6. Tool poisoning / prompt injection
 
 Treat as untrusted:
