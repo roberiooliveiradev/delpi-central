@@ -53,24 +53,35 @@ Limites por filial, data de corte (`minimumIssueDate`), espécies especiais, TTL
 
 ```text
 Portal Financeiro
-  → financial-api  (JWT Minha DELPI)
+  → financial-api  (JWT com financial.access + financial.invoices.view)
+Lançamento de notas
+  → api-delpi  (permissão de criar a solicitação)
+  → financial-api  (token de serviço, só nestas rotas)
   → adapter Questor
   → https://alliance.app.questorpublico.com.br
 ```
 
+Quem usa o lançamento e não tem o Portal Financeiro busca a NF-e pela api-delpi. Essa API autoriza `lancamento-notas-fiscais.create` e chama a financial-api com `X-Delpi-Service-Token`. O token de serviço não abre gestão à vista, faturamento nem as outras rotas do portal. O JWT do usuário não segue nessa chamada.
+
 `GET /invoices/received` lista NF-e de entrada. `GET /invoices/received/{document_id}/danfe?accessKey=` devolve o PDF. Sem token configurado, só estas rotas respondem 503; o restante do portal continua.
 
-Filtros da V1: `invoiceNumber`, `value` (valor exato) e `supplierCnpj` (14 dígitos, pontuação aceita na entrada). O valor exato é traduzido só no gateway Questor para `ValueOf` e `ToValue`, com vírgula decimal (`108,00`). O ponto é separador de milhar nesse portal, e o parâmetro `Value` não fecha o intervalo. Paginação server-side (`page`, `pageSize` máximo 100). Não há filtro por nome de fornecedor nem por filial: a conta Questor ainda não tem mapa com `financial.view.filial-01/02`.
+Filtros da V1: `invoiceNumber`, `value` (valor exato) e `supplierCnpj` (14 dígitos, pontuação aceita na entrada). O valor exato é traduzido só no gateway Questor para `ValueOf` e `ToValue`, com vírgula decimal (`108,00`). O ponto é separador de milhar nesse portal, e o parâmetro `Value` não fecha o intervalo. Paginação server-side (`page`, `pageSize` máximo 100). Não há filtro por nome de fornecedor nem seletor de filial nesta entrega: a consulta autorizada lê as duas empresas e devolve uma lista só.
 
-O DANFE usa o identificador de arquivo do portal (`documentId`), nunca o `Id` interno do Questor, junto com a chave de acesso de 44 dígitos. O BFF confere o tamanho e a assinatura `%PDF` antes de responder `application/pdf`.
+O token Questor é único. A empresa ativa é estado da sessão, então o processo mantém dois clientes HTTP isolados: filial `01` (Jaraguá do Sul) e filial `02` (Rio Bananal). Cada login repete `POST /trocarempresa` com o `CompanyId` daquela filial e só então chama `GET /autorizar`. Os cookies não são compartilhados. Cada item traz `branchCode`. O DANFE exige `branch=01|02` e usa somente a sessão dessa filial. Se uma das empresas falhar, a listagem inteira falha — não há resultado parcial. A página consolidada é calculada depois de ler o conjunto filtrado das duas empresas em blocos de 100, porque o Questor não oferece cursor entre empresas. Concatenar a página N de cada filial seria uma página falsa.
+
+O DANFE usa o identificador de arquivo do portal (`documentId`), nunca o `Id` interno do Questor, junto com a chave de acesso de 44 dígitos e a filial de origem. O BFF confere o tamanho e a assinatura `%PDF` antes de responder `application/pdf`.
 
 Variáveis no serviço `financial-api` (o token não vai para a imagem nem para o frontend):
 
 ```text
 FIN_QUESTOR_BASE_URL
 FIN_QUESTOR_API_TOKEN
+FIN_QUESTOR_COMPANY_01_ID
+FIN_QUESTOR_COMPANY_02_ID
 FIN_QUESTOR_TIMEOUT_SECONDS
 FIN_QUESTOR_DANFE_MAX_BYTES
+
+`FIN_QUESTOR_COMPANY_01_ID` e `FIN_QUESTOR_COMPANY_02_ID` são os identificadores de empresa do portal Questor, não o token. Sem os dois, as rotas de NF-e respondem indisponível. O token não entra em repositório, log nem teste.
 ```
 
 `/cliente/nfe/listagem` e `/cliente/nfe/pegarpdfdenfe` são endpoints do portal Questor, identificados empiricamente. São uma dependência mais frágil do que uma API pública versionada. O token trafega na query de `/entrarcomtoken` porque esse é o contrato do provider; a API não registra essa URL, o token nem os cookies. O nginx desse portal responde 403 ao User-Agent padrão do httpx; o cliente envia `MinhaDELPI-FinancialAPI/1.0`.

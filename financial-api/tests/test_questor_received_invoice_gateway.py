@@ -84,6 +84,8 @@ def _auth_response(request: httpx.Request, auth_calls: list[int]) -> httpx.Respo
                 "set-cookie": f"ASP.NET_SessionId={SESSION_COOKIE}; Path=/",
             },
         )
+    if path == "/trocarempresa" and request.method == "POST":
+        return httpx.Response(200, text="ok")
     if path == "/autorizar":
         return httpx.Response(302, headers={"location": "/cliente/painel"})
     if path == "/cliente/painel":
@@ -107,6 +109,8 @@ def build_gateway(
         timeout=httpx.Timeout(connect=1.0, read=timeout_seconds, write=1.0, pool=1.0),
     )
     gateway = QuestorReceivedInvoiceGateway(
+        branch_code="01",
+        company_id="company-01",
         base_url=BASE,
         api_token=api_token,
         timeout_seconds=timeout_seconds,
@@ -608,6 +612,10 @@ def test_concurrent_authentication_uses_a_single_login() -> None:
             )
         if request.url.path == "/cliente/painel":
             return httpx.Response(200, text="painel")
+        if request.url.path == "/trocarempresa" and request.method == "POST":
+            return httpx.Response(200, text="ok")
+        if request.url.path == "/autorizar":
+            return httpx.Response(302, headers={"location": "/cliente/painel"})
         if request.url.path == "/cliente/nfe/listagem":
             return httpx.Response(200, json=list_payload())
         return httpx.Response(404)
@@ -633,3 +641,207 @@ def test_concurrent_authentication_uses_a_single_login() -> None:
 
     assert errors == []
     assert sum(auth_calls) == 1
+
+
+COMPANY_01 = "5a85a32c4b541917008b2977"
+COMPANY_02 = "5a85a32c4b541917008b2979"
+
+
+def _company_client(handler) -> httpx.Client:
+    return httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url=BASE,
+        follow_redirects=True,
+        timeout=httpx.Timeout(connect=1.0, read=5.0, write=1.0, pool=1.0),
+    )
+
+
+def test_login_posts_the_company_id_and_then_authorizes() -> None:
+    seen: list[tuple[str, str, str]] = []
+    auth_calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/trocarempresa":
+            seen.append((request.method, request.headers.get("content-type", ""), request.content.decode()))
+            return httpx.Response(
+                200,
+                headers={"set-cookie": ".APPNAME=company-01-cookie; Path=/"},
+            )
+        if request.url.path == "/autorizar":
+            seen.append(("GET", "", request.url.path))
+        if request.url.path == "/cliente/nfe/listagem":
+            return httpx.Response(200, json=list_payload())
+        return _auth_response(request, auth_calls)
+
+    gateway, client = build_gateway(handler)
+    try:
+        page = gateway.list_received_invoices(query())
+    finally:
+        gateway.close()
+        client.close()
+
+    assert page.items[0].branch_code == "01"
+    post = next(item for item in seen if item[0] == "POST")
+    assert post[0] == "POST"
+    assert "application/x-www-form-urlencoded" in post[1]
+    assert post[2] == "CompanyId=company-01"
+    assert any(item[2] == "/autorizar" for item in seen)
+
+
+def test_each_company_posts_its_own_id_on_an_isolated_cookie_jar() -> None:
+    bodies: dict[str, str] = {}
+
+    def handler_for(app_name: str, company_id: str):
+        auth_calls: list[int] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/trocarempresa" and request.method == "POST":
+                bodies[company_id] = request.content.decode()
+                return httpx.Response(200, headers={"set-cookie": f".APPNAME={app_name}; Path=/"})
+            if request.url.path == "/cliente/nfe/listagem":
+                return httpx.Response(200, json=list_payload())
+            return _auth_response(request, auth_calls)
+
+        return handler
+
+    client_01 = _company_client(handler_for("jaragua", COMPANY_01))
+    client_02 = _company_client(handler_for("bananal", COMPANY_02))
+    gateway_01 = QuestorReceivedInvoiceGateway(
+        branch_code="01",
+        company_id=COMPANY_01,
+        base_url=BASE,
+        api_token=TOKEN,
+        client=client_01,
+        sleeper=lambda _delay: None,
+    )
+    gateway_02 = QuestorReceivedInvoiceGateway(
+        branch_code="02",
+        company_id=COMPANY_02,
+        base_url=BASE,
+        api_token=TOKEN,
+        client=client_02,
+        sleeper=lambda _delay: None,
+    )
+    try:
+        gateway_01.list_received_invoices(query())
+        gateway_02.list_received_invoices(query())
+        names_01 = {cookie.name: cookie.value for cookie in client_01.cookies.jar}
+        names_02 = {cookie.name: cookie.value for cookie in client_02.cookies.jar}
+    finally:
+        gateway_01.close()
+        gateway_02.close()
+        client_01.close()
+        client_02.close()
+
+    assert bodies[COMPANY_01] == f"CompanyId={COMPANY_01}"
+    assert bodies[COMPANY_02] == f"CompanyId={COMPANY_02}"
+    assert names_01[".APPNAME"] == "jaragua"
+    assert names_02[".APPNAME"] == "bananal"
+    assert names_01[".APPNAME"] != names_02[".APPNAME"]
+
+
+def test_reauthentication_selects_the_company_again() -> None:
+    posts: list[str] = []
+    auth_calls: list[int] = []
+    lists = {"count": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/trocarempresa" and request.method == "POST":
+            posts.append(request.content.decode())
+            return httpx.Response(200, text="ok")
+        if request.url.path == "/cliente/nfe/listagem":
+            lists["count"] += 1
+            if lists["count"] == 1:
+                return httpx.Response(401, content=b"<html>login</html>")
+            return httpx.Response(200, json=list_payload())
+        return _auth_response(request, auth_calls)
+
+    gateway, client = build_gateway(handler)
+    try:
+        gateway.list_received_invoices(query())
+    finally:
+        gateway.close()
+        client.close()
+
+    assert posts == ["CompanyId=company-01", "CompanyId=company-01"]
+    assert sum(auth_calls) == 2
+
+
+def test_company_switch_failure_does_not_list_invoices() -> None:
+    lists = {"count": 0}
+    auth_calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/trocarempresa":
+            return httpx.Response(500, text="falha")
+        if request.url.path == "/cliente/nfe/listagem":
+            lists["count"] += 1
+            return httpx.Response(200, json=list_payload())
+        return _auth_response(request, auth_calls)
+
+    gateway, client = build_gateway(handler)
+    try:
+        with pytest.raises(QuestorAuthenticationError) as caught:
+            gateway.list_received_invoices(query())
+    finally:
+        gateway.close()
+        client.close()
+
+    assert lists["count"] == 0
+    assert "token" not in str(caught.value).lower()
+    assert "cookie" not in str(caught.value).lower()
+
+
+def test_missing_company_id_fails_before_http() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        raise AssertionError("não deve chamar o Questor")
+
+    client = _company_client(handler)
+    gateway = QuestorReceivedInvoiceGateway(
+        branch_code="01",
+        company_id="",
+        base_url=BASE,
+        api_token=TOKEN,
+        client=client,
+        sleeper=lambda _delay: None,
+    )
+    try:
+        with pytest.raises(QuestorNotConfigured):
+            gateway.list_received_invoices(query())
+    finally:
+        gateway.close()
+        client.close()
+
+
+def test_danfe_download_stays_on_the_company_client() -> None:
+    calls: dict[str, int] = {"01": 0, "02": 0}
+
+    def handler_for(branch: str):
+        auth_calls: list[int] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.startswith("/cliente/nfe/pegarpdfdenfe"):
+                calls[branch] += 1
+                return httpx.Response(200, content=b"%PDF-1.4\n")
+            return _auth_response(request, auth_calls)
+
+        return handler
+
+    client_01 = _company_client(handler_for("01"))
+    client_02 = _company_client(handler_for("02"))
+    gateway_01 = QuestorReceivedInvoiceGateway(
+        branch_code="01", company_id=COMPANY_01, base_url=BASE, api_token=TOKEN, client=client_01, sleeper=lambda _delay: None
+    )
+    gateway_02 = QuestorReceivedInvoiceGateway(
+        branch_code="02", company_id=COMPANY_02, base_url=BASE, api_token=TOKEN, client=client_02, sleeper=lambda _delay: None
+    )
+    try:
+        payload = gateway_02.download_danfe(document_id=DOCUMENT_ID, access_key=ACCESS_KEY)
+    finally:
+        gateway_01.close()
+        gateway_02.close()
+        client_01.close()
+        client_02.close()
+
+    assert payload.startswith(b"%PDF")
+    assert calls == {"01": 0, "02": 1}

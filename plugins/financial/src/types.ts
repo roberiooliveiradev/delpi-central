@@ -557,6 +557,7 @@ export type ReceivedInvoice = {
   manifestationCode: string;
   manifestationDescription: string;
   danfeAvailable: boolean;
+  branchCode: string;
 };
 
 export type ReceivedInvoicesPayload = {

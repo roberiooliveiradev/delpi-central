@@ -38,6 +38,8 @@ logger = logging.getLogger(__name__)
 _LIST_PATH = "/cliente/nfe/listagem"
 _DANFE_PATH = "/cliente/nfe/pegarpdfdenfe/"
 _AUTH_PATH = "/entrarcomtoken"
+_SWITCH_COMPANY_PATH = "/trocarempresa"
+_AUTHORIZE_PATH = "/autorizar"
 # O nginx do portal responde 403 ao User-Agent padrão do httpx e aceita um
 # identificador próprio da aplicação. Comprovado em 2026-10-01 no host alliance.
 _USER_AGENT = "MinhaDELPI-FinancialAPI/1.0"
@@ -89,6 +91,8 @@ class QuestorReceivedInvoiceGateway:
     def __init__(
         self,
         *,
+        branch_code: str = "",
+        company_id: str | None = None,
         base_url: str | None = None,
         api_token: str | None = None,
         timeout_seconds: float | None = None,
@@ -100,6 +104,8 @@ class QuestorReceivedInvoiceGateway:
         configured_base = (base_url if base_url is not None else settings.FIN_QUESTOR_BASE_URL).rstrip("/")
         self._base_url = configured_base
         self._allowed_host = (urlparse(configured_base).hostname or "").lower()
+        self._branch_code = (branch_code or "").strip()
+        self._company_id = None if company_id is None else company_id.strip()
         self._api_token = api_token
         self._timeout_seconds = float(
             timeout_seconds if timeout_seconds is not None else settings.FIN_QUESTOR_TIMEOUT_SECONDS
@@ -192,11 +198,50 @@ class QuestorReceivedInvoiceGateway:
         credential = self._resolved_token()
         if not credential:
             raise QuestorNotConfigured("A integração com o Questor Zen não está configurada.")
+        company_id = self._resolved_company_id()
+        if not company_id:
+            raise QuestorNotConfigured("A integração com o Questor Zen não está configurada.")
         response = self._get("authenticate", _AUTH_PATH, {"token": credential})
         if response.status_code >= 400 or not self._has_session_cookie():
             self._authenticated = False
             raise QuestorAuthenticationError("Não foi possível autenticar no Questor Zen.")
+        self._select_company(company_id)
         self._authenticated = True
+
+    def _resolved_company_id(self) -> str:
+        return (self._company_id or "").strip()
+
+    def _select_company(self, company_id: str) -> None:
+        """A empresa ativa é o cookie da sessão. Cada gateway fica preso à sua."""
+
+        response = self._post_form(
+            "select_company",
+            _SWITCH_COMPANY_PATH,
+            {"CompanyId": company_id},
+        )
+        if response.status_code in _TRANSIENT_STATUSES:
+            self._authenticated = False
+            raise QuestorUnavailable("Não foi possível consultar todas as empresas no Questor Zen.")
+        if response.status_code >= 400:
+            self._authenticated = False
+            raise QuestorAuthenticationError("Não foi possível selecionar a empresa no Questor Zen.")
+        authorized = self._get("authorize_company", _AUTHORIZE_PATH, {})
+        if authorized.status_code >= 400 or not self._has_session_cookie():
+            self._authenticated = False
+            raise QuestorAuthenticationError("Não foi possível selecionar a empresa no Questor Zen.")
+
+    def _post_form(self, operation: str, path: str, form: dict[str, str]) -> httpx.Response:
+        started = time.perf_counter()
+        try:
+            response = self._http().post(path, data=form)
+        except httpx.TimeoutException:
+            self._log(operation, "timeout", 1, started)
+            raise QuestorUnavailable("Não foi possível consultar todas as empresas no Questor Zen.")
+        except httpx.HTTPError:
+            self._log(operation, "error", 1, started)
+            raise QuestorUnavailable("Não foi possível consultar todas as empresas no Questor Zen.")
+        self._log(operation, str(response.status_code), 1, started)
+        return response
 
     def _resolved_token(self) -> str:
         if self._api_token is None:
@@ -308,8 +353,9 @@ class QuestorReceivedInvoiceGateway:
     def _log(self, operation: str, status: str, attempt: int, started: float) -> None:
         duration_ms = int((time.perf_counter() - started) * 1000)
         logger.info(
-            "provider=questor operation=%s status=%s duration_ms=%s attempt=%s",
+            "provider=questor operation=%s branch=%s status=%s duration_ms=%s attempt=%s",
             operation,
+            self._branch_code or "-",
             status,
             duration_ms,
             attempt,
@@ -331,6 +377,7 @@ class QuestorReceivedInvoiceGateway:
             manifestation_code=_text(row.get("Manifestation")),
             manifestation_description=_text(row.get("ManifestationDescription")),
             danfe_available=_flag(row.get("XmlDanfe")),
+            branch_code=self._branch_code,
         )
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Mapping
 
 from financial_app.application.services.billing_service import BillingService
 from financial_app.application.services.cost_center_service import CostCenterService
@@ -13,6 +14,8 @@ from financial_app.application.services.subplugin_catalog_service import Subplug
 from financial_app.domain.ports.received_invoice_gateway import ReceivedInvoiceGateway
 from financial_app.domain.services.branch_access_service import BranchAccessService
 from financial_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
+from financial_app.config import settings
+from financial_app.infrastructure.gateways.questor_company_registry import QuestorCompanyRegistry
 from financial_app.infrastructure.gateways.questor_received_invoice_gateway import (
     QuestorReceivedInvoiceGateway,
 )
@@ -37,34 +40,43 @@ def build_strategic_indicators_gateway() -> StrategicIndicatorsGateway:
     return StrategicIndicatorsGateway()
 
 
-_questor_gateway: QuestorReceivedInvoiceGateway | None = None
-_questor_gateway_lock = threading.Lock()
+_questor_registry: QuestorCompanyRegistry | None = None
+_questor_registry_lock = threading.Lock()
 
 
-def build_questor_received_invoice_gateway() -> QuestorReceivedInvoiceGateway:
-    """Uma sessão Questor por processo, para não autenticar a cada request."""
+def build_questor_company_registry() -> QuestorCompanyRegistry:
+    """Sessões Questor independentes, uma por filial, reutilizadas no processo."""
 
-    global _questor_gateway
-    if _questor_gateway is None:
-        with _questor_gateway_lock:
-            if _questor_gateway is None:
-                _questor_gateway = QuestorReceivedInvoiceGateway()
-    return _questor_gateway
+    global _questor_registry
+    if _questor_registry is None:
+        with _questor_registry_lock:
+            if _questor_registry is None:
+                _questor_registry = QuestorCompanyRegistry(
+                    company_ids={
+                        "01": settings.FIN_QUESTOR_COMPANY_01_ID,
+                        "02": settings.FIN_QUESTOR_COMPANY_02_ID,
+                    },
+                    factory=lambda branch, company_id: QuestorReceivedInvoiceGateway(
+                        branch_code=branch,
+                        company_id=company_id,
+                    ),
+                )
+    return _questor_registry
 
 
 def close_questor_gateway() -> None:
-    global _questor_gateway
-    with _questor_gateway_lock:
-        if _questor_gateway is not None:
-            _questor_gateway.close()
-            _questor_gateway = None
+    global _questor_registry
+    with _questor_registry_lock:
+        if _questor_registry is not None:
+            _questor_registry.close()
+            _questor_registry = None
 
 
 def build_received_invoices_service(
-    gateway: ReceivedInvoiceGateway | None = None,
+    companies: Mapping[str, ReceivedInvoiceGateway] | None = None,
 ) -> ReceivedInvoicesService:
     return ReceivedInvoicesService(
-        gateway if gateway is not None else build_questor_received_invoice_gateway(),
+        companies if companies is not None else build_questor_company_registry().companies(),
         branch_access=build_branch_access_service(),
     )
 

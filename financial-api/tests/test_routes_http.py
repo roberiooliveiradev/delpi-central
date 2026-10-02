@@ -39,7 +39,18 @@ def client(monkeypatch: pytest.MonkeyPatch):
         financial_composer, "build_strategic_indicators_gateway", lambda: indicators_gateway
     )
     monkeypatch.setattr(
-        financial_composer, "build_questor_received_invoice_gateway", lambda: invoice_gateway
+        financial_composer,
+        "build_questor_company_registry",
+        lambda: type(
+            "Registry",
+            (),
+            {
+                "companies": lambda self: {
+                    "01": invoice_gateway,
+                    "02": FakeReceivedInvoiceGateway(items=()),
+                }
+            },
+        )(),
     )
 
     app = FastAPI()

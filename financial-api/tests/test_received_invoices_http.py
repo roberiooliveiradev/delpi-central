@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import pytest
+from types import SimpleNamespace
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from financial_app.composition import financial_composer
-from financial_app.domain.errors import QuestorNotConfigured
-from financial_app.domain.received_invoice import ReceivedInvoiceQuery
+from financial_app.middleware.auth_middleware import jwt_middleware
+from financial_app.domain.errors import QuestorNotConfigured, QuestorUnavailable
+from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoiceQuery
 from financial_app.interface.http.routes.received_invoice_routes import router
 from financial_app.application.services.received_invoices_service import ReceivedInvoicesService
 from tests.conftest import full_user, user
@@ -18,12 +21,52 @@ ACCESS_KEY = "3" * 44
 DOCUMENT_ID = "aabbccddeeff001122334455"
 
 
+def _invoice(
+    *,
+    branch_code: str,
+    access_key: str,
+    emission_at: str,
+    document_id: str,
+    invoice_number: str,
+) -> ReceivedInvoice:
+    return ReceivedInvoice(
+        document_id=document_id,
+        access_key=access_key,
+        invoice_number=invoice_number,
+        series="1",
+        issuer_name="Fornecedor",
+        issuer_cnpj=None,
+        receiver_name="DELPI",
+        emission_at=emission_at,
+        amount="10",
+        amount_formatted="R$ 10,00",
+        manifestation_code="4",
+        manifestation_description="Ciência",
+        danfe_available=True,
+        branch_code=branch_code,
+    )
+
+
+def _companies(
+    gateway_01: FakeReceivedInvoiceGateway,
+    gateway_02: FakeReceivedInvoiceGateway,
+) -> dict[str, FakeReceivedInvoiceGateway]:
+    return {"01": gateway_01, "02": gateway_02}
+
+
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch):
     state: dict[str, object] = {"user": full_user()}
     gateway = FakeReceivedInvoiceGateway()
+    gateway_02 = FakeReceivedInvoiceGateway(items=())
     monkeypatch.setattr(
-        financial_composer, "build_questor_received_invoice_gateway", lambda: gateway
+        financial_composer,
+        "build_questor_company_registry",
+        lambda: type(
+            "Registry",
+            (),
+            {"companies": lambda self: _companies(gateway, gateway_02)},
+        )(),
     )
     app = FastAPI()
 
@@ -36,6 +79,7 @@ def client(monkeypatch: pytest.MonkeyPatch):
     test_client = TestClient(app)
     test_client.state = state  # type: ignore[attr-defined]
     test_client.invoice_gateway = gateway  # type: ignore[attr-defined]
+    test_client.invoice_gateway_02 = gateway_02  # type: ignore[attr-defined]
     return test_client
 
 
@@ -61,6 +105,8 @@ def test_authorized_list_uses_the_portal_contract(client) -> None:
     assert item["documentId"] == DOCUMENT_ID
     assert item["accessKey"] == ACCESS_KEY
     assert item["invoiceNumber"] == "22844"
+    assert item["branchCode"] == "01"
+    assert client.invoice_gateway_02.queries
     assert "XmlFilename" not in item
     assert "Id" not in item
     assert item["issuerCnpj"] is None
@@ -78,12 +124,13 @@ def test_user_without_invoice_permission_receives_403(client) -> None:
     assert response.status_code == 403
     assert response.json()["success"] is False
     assert client.invoice_gateway.queries == []
+    assert client.invoice_gateway_02.queries == []
 
 
 def test_authorized_user_downloads_pdf_from_the_bff(client) -> None:
     response = client.get(
         f"/invoices/received/{DOCUMENT_ID}/danfe",
-        params={"accessKey": ACCESS_KEY},
+        params={"accessKey": ACCESS_KEY, "branch": "01"},
     )
 
     assert response.status_code == 200
@@ -93,16 +140,17 @@ def test_authorized_user_downloads_pdf_from_the_bff(client) -> None:
     assert f'filename="NFe-{ACCESS_KEY}.pdf"' in disposition
     assert "questor" not in response.text.lower()
     assert client.invoice_gateway.downloads == [(DOCUMENT_ID, ACCESS_KEY)]
+    assert client.invoice_gateway_02.downloads == []
 
 
 def test_invalid_document_id_and_access_key_return_422(client) -> None:
     bad_id = client.get(
         "/invoices/received/not-a-document/danfe",
-        params={"accessKey": ACCESS_KEY},
+        params={"accessKey": ACCESS_KEY, "branch": "01"},
     )
     bad_key = client.get(
         f"/invoices/received/{DOCUMENT_ID}/danfe",
-        params={"accessKey": "123"},
+        params={"accessKey": "123", "branch": "01"},
     )
 
     assert bad_id.status_code == 422
@@ -131,7 +179,9 @@ def test_unconfigured_questor_returns_503_without_leaking_secrets(client, monkey
             return None
 
     monkeypatch.setattr(
-        financial_composer, "build_questor_received_invoice_gateway", lambda: ExplodingGateway()
+        financial_composer,
+        "build_questor_company_registry",
+        lambda: type("Registry", (), {"companies": lambda self: {"01": ExplodingGateway(), "02": ExplodingGateway()}})(),
     )
     response = client.get("/invoices/received")
 
@@ -142,7 +192,212 @@ def test_unconfigured_questor_returns_503_without_leaking_secrets(client, monkey
     assert "ASP.NET_SessionId" not in message
 
 
+def _use(monkeypatch: pytest.MonkeyPatch, gateway_01, gateway_02) -> None:
+    monkeypatch.setattr(
+        financial_composer,
+        "build_questor_company_registry",
+        lambda: type(
+            "Registry",
+            (),
+            {"companies": lambda self: {"01": gateway_01, "02": gateway_02}},
+        )(),
+    )
+
+
+def test_consolidated_pages_keep_global_order(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    branch_01 = (
+        _invoice(branch_code="01", access_key="1" * 44, emission_at="2026-05-01T00:00:00Z", document_id="a" * 24, invoice_number="501"),
+        _invoice(branch_code="01", access_key="2" * 44, emission_at="2026-04-01T00:00:00Z", document_id="b" * 24, invoice_number="401"),
+        _invoice(branch_code="01", access_key="3" * 44, emission_at="2026-03-01T00:00:00Z", document_id="c" * 24, invoice_number="301"),
+    )
+    branch_02 = (
+        _invoice(branch_code="02", access_key="4" * 44, emission_at="2026-01-01T00:00:00Z", document_id="d" * 24, invoice_number="101"),
+    )
+    _use(monkeypatch, FakeReceivedInvoiceGateway(items=branch_01), FakeReceivedInvoiceGateway(items=branch_02))
+
+    first = client.get("/invoices/received", params={"page": 1, "pageSize": 2})
+    second = client.get("/invoices/received", params={"page": 2, "pageSize": 2})
+
+    assert first.status_code == 200
+    page_one = first.json()["data"]
+    assert [item["invoiceNumber"] for item in page_one["items"]] == ["501", "401"]
+    assert [item["branchCode"] for item in page_one["items"]] == ["01", "01"]
+    assert page_one["pagination"] == {
+        "page": 1,
+        "pageSize": 2,
+        "totalItems": 4,
+        "totalPages": 2,
+        "hasNext": True,
+        "hasPrevious": False,
+        "isComplete": True,
+    }
+    page_two = second.json()["data"]
+    assert [item["invoiceNumber"] for item in page_two["items"]] == ["301", "101"]
+    assert [item["branchCode"] for item in page_two["items"]] == ["01", "02"]
+    assert page_two["pagination"]["hasNext"] is False
+    assert page_two["pagination"]["hasPrevious"] is True
+
+
+def test_same_emission_orders_by_access_key_then_branch(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    shared_emission = "2026-02-01T00:00:00Z"
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(items=(
+            _invoice(branch_code="01", access_key="9" * 44, emission_at=shared_emission, document_id="e" * 24, invoice_number="9"),
+        )),
+        FakeReceivedInvoiceGateway(items=(
+            _invoice(branch_code="02", access_key="1" * 44, emission_at=shared_emission, document_id="f" * 24, invoice_number="1"),
+        )),
+    )
+    response = client.get("/invoices/received", params={"pageSize": 10})
+    numbers = [item["invoiceNumber"] for item in response.json()["data"]["items"]]
+    assert numbers == ["1", "9"]
+
+
+def test_duplicate_access_key_is_kept_once(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    shared = "7" * 44
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(items=(
+            _invoice(branch_code="01", access_key=shared, emission_at="2026-06-01T00:00:00Z", document_id="1" * 24, invoice_number="01"),
+        )),
+        FakeReceivedInvoiceGateway(items=(
+            _invoice(branch_code="02", access_key=shared, emission_at="2026-01-01T00:00:00Z", document_id="2" * 24, invoice_number="02"),
+        )),
+    )
+    data = client.get("/invoices/received").json()["data"]
+    assert data["pagination"]["totalItems"] == 1
+    assert data["items"][0]["branchCode"] == "01"
+    assert data["items"][0]["invoiceNumber"] == "01"
+
+
+def test_only_branch_02_still_requires_both_companies(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    gateway_01 = FakeReceivedInvoiceGateway(items=())
+    gateway_02 = FakeReceivedInvoiceGateway(items=(
+        _invoice(branch_code="02", access_key="5" * 44, emission_at="2026-08-01T00:00:00Z", document_id="a" * 24, invoice_number="132004"),
+    ))
+    _use(monkeypatch, gateway_01, gateway_02)
+    data = client.get("/invoices/received", params={"invoiceNumber": "132004"}).json()["data"]
+    assert data["items"][0]["branchCode"] == "02"
+    assert gateway_01.queries
+    assert gateway_02.queries
+
+
+def test_failure_of_one_company_does_not_return_a_partial_list(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(),
+        FakeReceivedInvoiceGateway(error=QuestorUnavailable("timeout interno")),
+    )
+    response = client.get("/invoices/received")
+    assert response.status_code == 503
+    body = response.json()
+    assert body["success"] is False
+    assert "todas as empresas" in body["message"]
+    assert "timeout interno" not in body["message"]
+    assert not body.get("data")
+
+
+def test_failure_of_branch_01_is_also_not_partial(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(error=QuestorUnavailable("falha 01")),
+        FakeReceivedInvoiceGateway(),
+    )
+    response = client.get("/invoices/received")
+    assert response.status_code == 503
+    assert "todas as empresas" in response.json()["message"]
+
+
+def test_danfe_uses_the_branch_session(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    gateway_01 = FakeReceivedInvoiceGateway(items=())
+    gateway_02 = FakeReceivedInvoiceGateway(items=())
+    _use(monkeypatch, gateway_01, gateway_02)
+    response = client.get(
+        f"/invoices/received/{DOCUMENT_ID}/danfe",
+        params={"accessKey": ACCESS_KEY, "branch": "02"},
+    )
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF")
+    assert gateway_02.downloads == [(DOCUMENT_ID, ACCESS_KEY)]
+    assert gateway_01.downloads == []
+
+
+def test_danfe_without_branch_or_with_unknown_branch_returns_422(client) -> None:
+    missing = client.get(f"/invoices/received/{DOCUMENT_ID}/danfe", params={"accessKey": ACCESS_KEY})
+    unknown = client.get(
+        f"/invoices/received/{DOCUMENT_ID}/danfe",
+        params={"accessKey": ACCESS_KEY, "branch": "03"},
+    )
+    assert missing.status_code == 422
+    assert unknown.status_code == 422
+    assert client.invoice_gateway.downloads == []
+    assert client.invoice_gateway_02.downloads == []
+
+
 def test_service_rejects_branch_free_permission_gap() -> None:
-    service = ReceivedInvoicesService(FakeReceivedInvoiceGateway())
+    service = ReceivedInvoicesService(
+        {"01": FakeReceivedInvoiceGateway(), "02": FakeReceivedInvoiceGateway(items=())}
+    )
     with pytest.raises(PermissionError):
         service.list_received(user("financial.access"), page=1, page_size=25)
+
+
+def test_internal_reader_lists_invoices_without_financial_permissions() -> None:
+    service = ReceivedInvoicesService(
+        {"01": FakeReceivedInvoiceGateway(), "02": FakeReceivedInvoiceGateway(items=())}
+    )
+    reader = SimpleNamespace(
+        principal_type="service",
+        internal_invoice_reader=True,
+        is_superadmin=False,
+        permissions=[],
+    )
+    data = service.list_received(reader, page=1, page_size=25)
+    assert data["items"][0]["branchCode"] == "01"
+
+
+def test_service_token_reaches_only_received_invoices(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("API_DELPI_INTERNAL_SERVICE_TOKEN", "test-internal-service")
+    gateway = FakeReceivedInvoiceGateway()
+    monkeypatch.setattr(
+        financial_composer,
+        "build_questor_company_registry",
+        lambda: type(
+            "Registry",
+            (),
+            {
+                "companies": lambda self: {
+                    "01": gateway,
+                    "02": FakeReceivedInvoiceGateway(items=()),
+                }
+            },
+        )(),
+    )
+    app = FastAPI()
+    app.middleware("http")(jwt_middleware)
+    app.include_router(router)
+
+    @app.get("/overview")
+    def overview() -> dict[str, bool]:
+        return {"ok": True}
+
+    http = TestClient(app)
+    headers = {"X-Delpi-Service-Token": "test-internal-service"}
+    listed = http.get("/invoices/received", headers=headers)
+    danfe = http.get(
+        f"/invoices/received/{DOCUMENT_ID}/danfe",
+        params={"accessKey": ACCESS_KEY, "branch": "01"},
+        headers=headers,
+    )
+    blocked = http.get("/overview", headers=headers)
+    wrong = http.get("/invoices/received", headers={"X-Delpi-Service-Token": "other-token"})
+
+    assert listed.status_code == 200
+    assert listed.json()["data"]["items"][0]["invoiceNumber"] == "22844"
+    assert danfe.status_code == 200
+    assert danfe.content.startswith(b"%PDF")
+    assert blocked.status_code == 403
+    assert "test-internal-service" not in blocked.text
+    assert "test-internal-service" not in listed.text
+    assert wrong.status_code == 401

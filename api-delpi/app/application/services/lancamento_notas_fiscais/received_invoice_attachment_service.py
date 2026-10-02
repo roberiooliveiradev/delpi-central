@@ -51,10 +51,19 @@ class ReceivedInvoiceAttachmentService:
 
         document_id = str(payload.get("document_id") or "").strip()
         access_key = str(payload.get("access_key") or "").strip()
+        source_branch = str(payload.get("source_branch") or "").strip()
+        request_branch = str(payload.get("branch_code") or payload.get("branch") or "").strip()
+        if source_branch not in {"01", "02"}:
+            raise InvoicePostingValidationError("Informe a filial de origem da nota fiscal.")
+        if source_branch != request_branch:
+            raise InvoicePostingValidationError(
+                "A nota fiscal pertence a outra filial e não pode ser lançada nesta solicitação."
+            )
         content, filename = self._gateway.download_danfe(
             authorization=authorization,
             document_id=document_id,
             access_key=access_key,
+            branch=source_branch,
         )
         created = self._create_request.execute(payload, actor)
         request_id = str(created.get("id") or "")

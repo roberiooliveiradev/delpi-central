@@ -91,6 +91,7 @@ class CreateRequestBody(BaseModel):
     source: str | None = None
     document_id: str | None = None
     access_key: str | None = None
+    source_branch: str | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -306,12 +307,17 @@ def list_received_invoices(
     operation_id="get_lancamento_notas_fiscais_received_invoice_danfe",
 )
 @require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
-def preview_received_invoice_danfe(document_id: str, access_key: str = Query("")):
+def preview_received_invoice_danfe(
+    document_id: str,
+    access_key: str = Query(""),
+    branch: str = Query(""),
+):
     try:
         content, filename = build_financial_received_invoice_gateway().download_danfe(
             authorization=str(get_request_authorization() or ""),
             document_id=document_id,
             access_key=access_key,
+            branch=branch,
         )
     except FinancialReceivedInvoiceGatewayError as exc:
         return _handle_financial(exc)

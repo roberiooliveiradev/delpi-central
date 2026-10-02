@@ -12,6 +12,7 @@ type Props = {
   onCancel: () => void;
   onBackToChoice: () => void;
   onAdvance: (row: ReceivedInvoiceItem, searchedCnpj: string | null) => void;
+  selectionError?: string | null;
 };
 
 function canUseDanfe(row: ReceivedInvoiceItem): boolean {
@@ -25,6 +26,7 @@ export function ReceivedInvoicePicker({
   onCancel,
   onBackToChoice,
   onAdvance,
+  selectionError = null,
 }: Props) {
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [supplierCnpj, setSupplierCnpj] = useState("");
@@ -39,7 +41,8 @@ export function ReceivedInvoicePicker({
     if (!preview) return null;
     const documentId = preview.documentId;
     const accessKey = preview.accessKey;
-    return () => fetchReceivedInvoicePreview(documentId, accessKey);
+    const branch = preview.branchCode;
+    return () => fetchReceivedInvoicePreview(documentId, accessKey, branch);
   }, [preview]);
 
   async function runSearch(event: FormEvent | null, nextPage: number) {
@@ -133,6 +136,11 @@ export function ReceivedInvoicePicker({
           </button>
         </div>
       </form>
+      {selectionError ? (
+        <p className="lnf-error" role="alert">
+          {selectionError}
+        </p>
+      ) : null}
       {error ? (
         <p className="lnf-error" role="alert">
           {error}

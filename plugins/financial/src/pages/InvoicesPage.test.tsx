@@ -57,6 +57,7 @@ function payload(danfeAvailable: boolean): ReceivedInvoicesPayload {
         manifestationCode: "4",
         manifestationDescription: "Ciência da Operação",
         danfeAvailable,
+        branchCode: "01",
       },
     ],
   };

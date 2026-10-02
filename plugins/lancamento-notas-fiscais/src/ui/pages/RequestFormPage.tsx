@@ -120,7 +120,12 @@ export function RequestFormPage({
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(mode === "edit");
   const [step, setStep] = useState<"choose" | "search" | "form">(mode === "create" ? "choose" : "form");
-  const [attachment, setAttachment] = useState<{ document_id: string; access_key: string } | null>(null);
+  const [attachment, setAttachment] = useState<{
+    document_id: string;
+    access_key: string;
+    branch_code: string;
+  } | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const [supplierHint, setSupplierHint] = useState<string | null>(null);
 
   const documentPreview = useMemo(
@@ -225,6 +230,7 @@ export function RequestFormPage({
       payload.source = "received_nfe";
       payload.document_id = attachment.document_id;
       payload.access_key = attachment.access_key;
+      payload.source_branch = attachment.branch_code;
     }
 
     setBusy(true);
@@ -250,17 +256,31 @@ export function RequestFormPage({
   }
 
   async function applyReceivedInvoice(row: ReceivedInvoiceItem, searchedCnpj: string | null) {
+    if (lockedBranch && row.branchCode !== lockedBranch) {
+      setSelectionError(
+        `Esta nota é da filial ${row.branchCode} e esta tela está restrita à filial ${lockedBranch}.`,
+      );
+      return;
+    }
+    setSelectionError(null);
     const cnpj = (row.issuerCnpj || searchedCnpj || "").replace(/\D/g, "");
     const amount = row.amount.includes(",") ? row.amount : row.amount.replace(".", ",");
     setForm((current) => ({
       ...current,
+      branch:
+        lockedBranch ??
+        (row.branchCode === "01" || row.branchCode === "02" ? row.branchCode : current.branch),
       document: sanitizeDocumentTyping(row.invoiceNumber),
       series: normalizeSeriesInput(row.series),
       fiscal_model: "nfe",
       issue_date: row.emissionAt ? row.emissionAt.slice(0, 10) : "",
       amount,
     }));
-    setAttachment({ document_id: row.documentId, access_key: row.accessKey });
+    setAttachment({
+      document_id: row.documentId,
+      access_key: row.accessKey,
+      branch_code: row.branchCode,
+    });
     setSupplier(null);
     setSupplierHint(null);
     if (cnpj.length === 14) {
@@ -301,6 +321,7 @@ export function RequestFormPage({
         onSelectNfe={() => setStep("search")}
         onBackToChoice={() => setStep("choose")}
         onCancel={onCancel}
+        selectionError={selectionError}
         onAdvance={(row, searchedCnpj) => {
           void applyReceivedInvoice(row, searchedCnpj);
         }}

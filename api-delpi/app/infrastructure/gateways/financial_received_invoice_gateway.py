@@ -1,7 +1,8 @@
 """Cliente HTTP da api-delpi para a financial-api (NF-e de entrada).
 
-O Questor fica só na financial-api. Este client repassa o JWT do usuário
-e não conhece token, cookie nem URL de login do provedor.
+O Questor fica só na financial-api. Quem pode buscar a nota é decidido na
+api-delpi, pela permissão de criar a solicitação. A chamada seguinte usa o
+token de serviço interno e não encaminha o JWT do usuário.
 """
 from __future__ import annotations
 
@@ -12,12 +13,14 @@ from urllib.parse import quote
 import httpx
 
 from app.config import settings
+from delpi_auth.service_token import get_internal_service_token
 
 _TRANSIENT_STATUS = {408, 429, 502, 503, 504}
 _MAX_ATTEMPTS = 3
 _MAX_PDF_BYTES = 10_485_760
 _DOCUMENT_ID_LENGTH = 24
 _ACCESS_KEY_LENGTH = 44
+_BRANCHES = {"01", "02"}
 
 
 class FinancialReceivedInvoiceGatewayError(Exception):
@@ -33,10 +36,12 @@ class FinancialReceivedInvoiceGateway:
         client: httpx.Client | None = None,
         base_url: str | None = None,
         timeout_seconds: float | None = None,
+        service_token: str | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._client = client
         self._base_url = (base_url or settings.FINANCIAL_API_BASE_URL).rstrip("/")
+        self._service_token = service_token
         self._timeout_seconds = float(
             timeout_seconds if timeout_seconds is not None else settings.FINANCIAL_API_TIMEOUT_SECONDS
         )
@@ -80,13 +85,15 @@ class FinancialReceivedInvoiceGateway:
         authorization: str,
         document_id: str,
         access_key: str,
+        branch: str,
     ) -> tuple[bytes, str]:
         normalized_id = _document_id(document_id)
         normalized_key = _access_key(access_key)
+        normalized_branch = _branch(branch)
         response = self._get(
             f"/invoices/received/{quote(normalized_id, safe='')}/danfe",
             authorization=authorization,
-            params={"accessKey": normalized_key},
+            params={"accessKey": normalized_key, "branch": normalized_branch},
         )
         if response.status_code >= 400:
             payload = _json_payload(response)
@@ -109,10 +116,13 @@ class FinancialReceivedInvoiceGateway:
         authorization: str,
         params: dict[str, str],
     ) -> httpx.Response:
-        token = str(authorization or "").strip()
-        if not token.lower().startswith("bearer "):
+        user_authorization = str(authorization or "").strip()
+        if not user_authorization.lower().startswith("bearer "):
             raise FinancialReceivedInvoiceGatewayError("Sessão ausente para consultar as notas.", 401)
-        headers = {"Authorization": token, "Accept": "application/json, application/pdf"}
+        headers = {
+            "X-Delpi-Service-Token": self._require_service_token(),
+            "Accept": "application/json, application/pdf",
+        }
         last_error: FinancialReceivedInvoiceGatewayError | None = None
         for attempt in range(1, _MAX_ATTEMPTS + 1):
             try:
@@ -139,6 +149,19 @@ class FinancialReceivedInvoiceGateway:
             "A consulta de notas fiscais está indisponível.",
             503,
         )
+
+    def _require_service_token(self) -> str:
+        if self._service_token is None:
+            configured = get_internal_service_token()
+        else:
+            configured = self._service_token
+        token = (configured or "").strip()
+        if not token:
+            raise FinancialReceivedInvoiceGatewayError(
+                "A consulta de notas fiscais está indisponível.",
+                503,
+            )
+        return token
 
     def _send(self, path: str, *, headers: dict[str, str], params: dict[str, str]) -> httpx.Response:
         timeout = _timeout(self._timeout_seconds)
@@ -215,4 +238,11 @@ def _access_key(value: str) -> str:
     normalized = str(value or "").strip()
     if len(normalized) != _ACCESS_KEY_LENGTH or not normalized.isdigit():
         raise FinancialReceivedInvoiceGatewayError("Chave de acesso inválida.", 422)
+    return normalized
+
+
+def _branch(value: str) -> str:
+    normalized = str(value or "").strip()
+    if normalized not in _BRANCHES:
+        raise FinancialReceivedInvoiceGatewayError("Filial de origem inválida.", 422)
     return normalized

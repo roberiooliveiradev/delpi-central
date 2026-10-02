@@ -22,6 +22,7 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
 from app.domain.services.lancamento_notas_fiscais.exceptions import (
     InvoicePostingDuplicateError,
     InvoicePostingUpstreamError,
+    InvoicePostingValidationError,
 )
 from app.infrastructure.gateways.financial_received_invoice_gateway import (
     FinancialReceivedInvoiceGateway,
@@ -40,11 +41,15 @@ def _client(handler) -> httpx.Client:
     )
 
 
+SERVICE_TOKEN = "test-internal-service"
+
+
 def _gateway(handler, **kwargs) -> FinancialReceivedInvoiceGateway:
     return FinancialReceivedInvoiceGateway(
         client=_client(handler),
         base_url="http://financial-api:8000",
         timeout_seconds=5,
+        service_token=kwargs.pop("service_token", SERVICE_TOKEN),
         sleep=lambda _seconds: None,
         **kwargs,
     )
@@ -56,12 +61,17 @@ def test_list_forwards_filters_and_authorization_without_questor_host() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         captured["url"] = str(request.url)
         captured["authorization"] = request.headers.get("authorization")
+        captured["service"] = request.headers.get("x-delpi-service-token")
+        captured["headers"] = " ".join(request.headers.values())
         return httpx.Response(
             200,
             json={
                 "success": True,
                 "message": "ok",
-                "data": {"items": [], "pagination": {"page": 1, "totalItems": 0}},
+                "data": {
+                    "items": [{"accessKey": ACCESS_KEY, "branchCode": "02"}],
+                    "pagination": {"page": 1, "totalItems": 1},
+                },
             },
         )
 
@@ -72,7 +82,7 @@ def test_list_forwards_filters_and_authorization_without_questor_host() -> None:
         page=2,
         page_size=25,
     )
-    assert data["items"] == []
+    assert data["items"][0]["branchCode"] == "02"
     url = str(captured["url"])
     assert url.startswith("http://financial-api:8000/invoices/received?")
     assert "invoiceNumber=22844" in url
@@ -80,7 +90,26 @@ def test_list_forwards_filters_and_authorization_without_questor_host() -> None:
     assert "page=2" in url
     assert "pageSize=25" in url
     assert "questorpublico" not in url
-    assert captured["authorization"] == "Bearer user-jwt"
+    assert captured["authorization"] is None
+    assert captured["service"] == SERVICE_TOKEN
+    assert "user-jwt" not in str(captured["headers"])
+
+
+def test_missing_service_token_does_not_call_upstream() -> None:
+    def handler(_request: httpx.Request) -> httpx.Response:
+        raise AssertionError("upstream não deve ser chamado")
+
+    with pytest.raises(FinancialReceivedInvoiceGatewayError) as caught:
+        _gateway(handler, service_token="").list_received_invoices(
+            authorization="Bearer user-jwt",
+            invoice_number="1",
+            supplier_cnpj=None,
+            page=1,
+            page_size=25,
+        )
+    assert caught.value.status_code == 503
+    assert "user-jwt" not in str(caught.value)
+    assert SERVICE_TOKEN not in str(caught.value)
 
 
 def test_financial_forbidden_is_passed_through() -> None:
@@ -111,6 +140,7 @@ def test_invalid_pdf_is_rejected() -> None:
             authorization="Bearer user-jwt",
             document_id=DOCUMENT_ID,
             access_key=ACCESS_KEY,
+            branch="01",
         )
     assert caught.value.status_code == 502
 
@@ -124,6 +154,7 @@ def test_invalid_document_id_does_not_call_upstream() -> None:
             authorization="Bearer user-jwt",
             document_id="questor-internal-id",
             access_key=ACCESS_KEY,
+            branch="01",
         )
     assert caught.value.status_code == 422
 
@@ -141,10 +172,28 @@ def test_transient_503_is_retried() -> None:
         authorization="Bearer user-jwt",
         document_id=DOCUMENT_ID,
         access_key=ACCESS_KEY,
+        branch="02",
     )
     assert content.startswith(b"%PDF")
     assert filename == f"NFe-{ACCESS_KEY}.pdf"
     assert calls["count"] == 2
+
+
+def test_preview_forwards_the_origin_branch() -> None:
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        return httpx.Response(200, content=PDF, headers={"content-type": "application/pdf"})
+
+    _gateway(handler).download_danfe(
+        authorization="Bearer user-jwt",
+        document_id=DOCUMENT_ID,
+        access_key=ACCESS_KEY,
+        branch="02",
+    )
+    assert "branch=02" in captured["url"]
+    assert "accessKey=" in captured["url"]
 
 
 def test_list_route_requires_create_permission() -> None:
@@ -255,6 +304,8 @@ def test_received_nfe_stores_pdf_and_metadata(tmp_path) -> None:
     created = service.execute(
         {
             "source": "received_nfe",
+            "branch_code": "01",
+            "source_branch": "01",
             "document_id": DOCUMENT_ID,
             "access_key": ACCESS_KEY,
         },
@@ -284,7 +335,13 @@ def test_pdf_failure_does_not_create_request() -> None:
     )
     with pytest.raises(FinancialReceivedInvoiceGatewayError):
         service.execute(
-            {"source": "received_nfe", "document_id": DOCUMENT_ID, "access_key": ACCESS_KEY},
+            {
+                "source": "received_nfe",
+                "branch_code": "01",
+                "source_branch": "01",
+                "document_id": DOCUMENT_ID,
+                "access_key": ACCESS_KEY,
+            },
             _actor(),
             authorization="Bearer user-jwt",
         )
@@ -302,7 +359,13 @@ def test_duplicate_request_does_not_store_file(tmp_path) -> None:
     )
     with pytest.raises(InvoicePostingDuplicateError):
         service.execute(
-            {"source": "received_nfe", "document_id": DOCUMENT_ID, "access_key": ACCESS_KEY},
+            {
+                "source": "received_nfe",
+                "branch_code": "01",
+                "source_branch": "01",
+                "document_id": DOCUMENT_ID,
+                "access_key": ACCESS_KEY,
+            },
             _actor(),
             authorization="Bearer user-jwt",
         )
@@ -325,12 +388,75 @@ def test_store_failure_rolls_back_the_request(tmp_path) -> None:
     )
     with pytest.raises(InvoicePostingUpstreamError):
         service.execute(
-            {"source": "received_nfe", "document_id": DOCUMENT_ID, "access_key": ACCESS_KEY},
+            {
+                "source": "received_nfe",
+                "branch_code": "01",
+                "source_branch": "01",
+                "document_id": DOCUMENT_ID,
+                "access_key": ACCESS_KEY,
+            },
             _actor(),
             authorization="Bearer user-jwt",
         )
     assert requests.deleted
     assert list(tmp_path.iterdir()) == []
+
+
+def test_source_branch_must_match_the_request_branch(tmp_path) -> None:
+    downloaded: list[str] = []
+
+    def _download(**kwargs):
+        downloaded.append(kwargs["branch"])
+        return PDF, "NFe.pdf"
+
+    service = ReceivedInvoiceAttachmentService(
+        create_request=_Create(),
+        gateway=SimpleNamespace(download_danfe=_download),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        requests=_Requests(),
+    )
+    with pytest.raises(InvoicePostingValidationError):
+        service.execute(
+            {
+                "source": "received_nfe",
+                "branch_code": "01",
+                "source_branch": "02",
+                "document_id": DOCUMENT_ID,
+                "access_key": ACCESS_KEY,
+            },
+            _actor(),
+            authorization="Bearer user-jwt",
+        )
+    assert downloaded == []
+
+
+def test_branch_02_danfe_is_requested_from_that_company(tmp_path) -> None:
+    downloaded: list[str] = []
+
+    def _download(**kwargs):
+        downloaded.append(kwargs["branch"])
+        return PDF, f"NFe-{ACCESS_KEY}.pdf"
+
+    requests = _Requests()
+    service = ReceivedInvoiceAttachmentService(
+        create_request=_Create(),
+        gateway=SimpleNamespace(download_danfe=_download),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        requests=requests,
+    )
+    service.execute(
+        {
+            "source": "received_nfe",
+            "branch_code": "02",
+            "source_branch": "02",
+            "document_id": DOCUMENT_ID,
+            "access_key": ACCESS_KEY,
+        },
+        _actor(),
+        authorization="Bearer user-jwt",
+    )
+    assert downloaded == ["02"]
+    assert requests.inserted["access_key"] == ACCESS_KEY
 
 
 def test_manual_create_does_not_call_the_gateway() -> None:

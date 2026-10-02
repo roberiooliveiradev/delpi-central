@@ -454,8 +454,8 @@ export function receivedInvoicesPath(params: {
   return `/invoices/received${query}`;
 }
 
-export function receivedInvoiceDanfePath(documentId: string, accessKey: string): string {
-  return `/invoices/received/${encodeURIComponent(documentId)}/danfe${buildQuery({ accessKey })}`;
+export function receivedInvoiceDanfePath(documentId: string, accessKey: string, branch: string): string {
+  return `/invoices/received/${encodeURIComponent(documentId)}/danfe${buildQuery({ accessKey, branch })}`;
 }
 
 export function fetchReceivedInvoices(params: {
@@ -472,17 +472,25 @@ export function fetchReceivedInvoices(params: {
   );
 }
 
-export async function fetchReceivedInvoiceDanfe(documentId: string, accessKey: string): Promise<Blob> {
+export async function fetchReceivedInvoiceDanfe(
+  documentId: string,
+  accessKey: string,
+  branch: string,
+): Promise<Blob> {
   const downloaded = await httpGetBlob(
-    financialApiUrl(receivedInvoiceDanfePath(documentId, accessKey)),
+    financialApiUrl(receivedInvoiceDanfePath(documentId, accessKey, branch)),
   );
   if (downloaded.blob.type === "application/pdf") return downloaded.blob;
   return new Blob([await downloaded.blob.arrayBuffer()], { type: "application/pdf" });
 }
 
-export function downloadReceivedInvoiceDanfe(documentId: string, accessKey: string): Promise<void> {
+export function downloadReceivedInvoiceDanfe(
+  documentId: string,
+  accessKey: string,
+  branch: string,
+): Promise<void> {
   return downloadAuthenticatedBlob(
-    financialApiUrl(receivedInvoiceDanfePath(documentId, accessKey)),
+    financialApiUrl(receivedInvoiceDanfePath(documentId, accessKey, branch)),
     `NFe-${accessKey}.pdf`,
   );
 }

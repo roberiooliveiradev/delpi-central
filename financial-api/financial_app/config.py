@@ -52,6 +52,8 @@ class Settings:
         default="https://alliance.app.questorpublico.com.br",
     )
     FIN_QUESTOR_API_TOKEN: str = _get_env("FIN_QUESTOR_API_TOKEN", default="") or ""
+    FIN_QUESTOR_COMPANY_01_ID: str = _get_env("FIN_QUESTOR_COMPANY_01_ID", default="") or ""
+    FIN_QUESTOR_COMPANY_02_ID: str = _get_env("FIN_QUESTOR_COMPANY_02_ID", default="") or ""
     FIN_QUESTOR_TIMEOUT_SECONDS: float = float(
         _get_env("FIN_QUESTOR_TIMEOUT_SECONDS", default="30")
     )

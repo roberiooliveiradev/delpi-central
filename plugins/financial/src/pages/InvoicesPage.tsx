@@ -131,7 +131,7 @@ export function InvoicesPage(props: InvoicesPageProps) {
     setDownloadError(null);
     setDownloadingId(row.documentId);
     try {
-      await downloadReceivedInvoiceDanfe(row.documentId, row.accessKey);
+      await downloadReceivedInvoiceDanfe(row.documentId, row.accessKey, row.branchCode);
     } catch (downloadFailure) {
       setDownloadError(
         downloadFailure instanceof Error && downloadFailure.message.trim()
@@ -147,7 +147,8 @@ export function InvoicesPage(props: InvoicesPageProps) {
     if (!preview) return null;
     const documentId = preview.documentId;
     const accessKey = preview.accessKey;
-    return () => fetchReceivedInvoiceDanfe(documentId, accessKey);
+    const branch = preview.branchCode;
+    return () => fetchReceivedInvoiceDanfe(documentId, accessKey, branch);
   }, [preview]);
 
   const columns = useMemo<DataTableColumn<ReceivedInvoice>[]>(

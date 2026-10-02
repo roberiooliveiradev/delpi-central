@@ -42,12 +42,14 @@ def download_received_invoice_danfe(
     request: Request,
     document_id: str,
     accessKey: str = Query(""),
+    branch: str = Query(""),
 ):
     try:
         payload, filename = build_received_invoices_service().download_danfe(
             resolve_user(request),
             document_id=document_id,
             access_key=accessKey,
+            branch_code=branch,
         )
     except Exception as exc:
         mapped = domain_error_response(exc)

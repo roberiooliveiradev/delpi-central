@@ -7,7 +7,16 @@ import { ApiError } from "../../data/api/httpClient";
 
 vi.mock("../../data/api/invoicePostingApi");
 vi.mock("@delpi/plugin-ui/index", () => ({
-  FilePreviewModal: () => null,
+  FilePreviewModal: ({
+    open,
+    source,
+  }: {
+    open?: boolean;
+    source?: (() => Promise<unknown>) | null;
+  }) => {
+    if (open && source) void source();
+    return null;
+  },
 }));
 
 function renderCreate(ui: ReactElement) {
@@ -317,6 +326,7 @@ describe("RequestFormPage", () => {
           series: "1",
           issuerName: "Fornecedor",
           issuerCnpj: null,
+          branchCode: "01",
           emissionAt: "2026-09-30T21:40:44Z",
           amount: "108.00",
           amountFormatted: "R$ 108,00",
@@ -357,6 +367,7 @@ describe("RequestFormPage", () => {
           amount: "108.00",
           amountFormatted: "R$ 108,00",
           danfeAvailable: true,
+          branchCode: "02",
         },
       ],
       pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
@@ -383,6 +394,14 @@ describe("RequestFormPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Avançar" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Visualizar" }));
+    await waitFor(() =>
+      expect(api.fetchReceivedInvoicePreview).toHaveBeenCalledWith(
+        "aabbccddeeff001122334455",
+        accessKey,
+        "02",
+      ),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
     await waitFor(() => expect(screen.getByDisplayValue("22844")).toBeTruthy());
     expect(screen.getByTestId("danfe-attach-notice").textContent).toMatch(/anexado/i);
@@ -396,10 +415,50 @@ describe("RequestFormPage", () => {
         source: "received_nfe",
         document_id: "aabbccddeeff001122334455",
         access_key: accessKey,
+        source_branch: "02",
+        branch: "02",
         fiscal_model: "nfe",
         document: "22844",
         supplier_code: "000010",
       }),
     );
+    expect((screen.getByLabelText("Filial") as HTMLSelectElement).value).toBe("02");
+  });
+
+  it("não avança quando a nota é de outra filial que a rota travada", async () => {
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentId: "aabbccddeeff001122334455",
+          accessKey: "2".repeat(44),
+          invoiceNumber: "132004",
+          series: "1",
+          issuerName: "Fornecedor",
+          issuerCnpj: null,
+          emissionAt: "2026-09-30",
+          amount: "10.00",
+          amountFormatted: "R$ 10,00",
+          danfeAvailable: true,
+          branchCode: "02",
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    render(
+      <RequestFormPage
+        mode="create"
+        lockedBranch="01"
+        onCancel={() => undefined}
+        onSuccess={() => undefined}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "132004" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Avançar" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/filial 02/);
+    expect(screen.queryByLabelText("Número da nota")).toBeNull();
+    expect(api.createRequest).not.toHaveBeenCalled();
   });
 });

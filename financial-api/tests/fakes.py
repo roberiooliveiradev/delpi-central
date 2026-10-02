@@ -635,15 +635,23 @@ class FakeStrategicIndicatorsGateway:
 class FakeReceivedInvoiceGateway:
     """Questor falso — a rota exercita o serviço real sem HTTP externo."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, items: tuple[Any, ...] | None = None, error: Exception | None = None) -> None:
         self.queries: list[Any] = []
         self.downloads: list[tuple[str, str]] = []
         self.closed = False
+        self._items = items
+        self._error = error
 
     def list_received_invoices(self, query: Any) -> Any:
         from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoicePage
 
         self.queries.append(query)
+        if self._error is not None:
+            raise self._error
+        if self._items is not None:
+            start = (query.page - 1) * query.page_size
+            window = self._items[start : start + query.page_size]
+            return ReceivedInvoicePage(total_items=len(self._items), items=tuple(window))
         item = ReceivedInvoice(
             document_id="aabbccddeeff001122334455",
             access_key="3" * 44,
@@ -658,6 +666,7 @@ class FakeReceivedInvoiceGateway:
             manifestation_code="4",
             manifestation_description="Ciência da Operação",
             danfe_available=True,
+            branch_code="01",
         )
         return ReceivedInvoicePage(total_items=1, items=(item,))
 

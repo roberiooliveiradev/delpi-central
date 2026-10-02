@@ -100,8 +100,12 @@ export async function searchReceivedInvoices(filters: {
   return httpGet<ReceivedInvoiceSearch>(`${API_BASE}/received-invoices?${params.toString()}`);
 }
 
-export function fetchReceivedInvoicePreview(documentId: string, accessKey: string): Promise<Blob> {
-  const params = new URLSearchParams({ access_key: accessKey });
+export function fetchReceivedInvoicePreview(
+  documentId: string,
+  accessKey: string,
+  branch: string,
+): Promise<Blob> {
+  const params = new URLSearchParams({ access_key: accessKey, branch });
   return httpGetBlob(`${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/danfe?${params.toString()}`);
 }
 

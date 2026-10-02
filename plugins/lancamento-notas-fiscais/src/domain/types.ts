@@ -217,6 +217,7 @@ export type CreateRequestPayload = {
   source?: "manual" | "received_nfe";
   document_id?: string;
   access_key?: string;
+  source_branch?: string;
 };
 
 export type ReceivedInvoiceItem = {
@@ -230,6 +231,7 @@ export type ReceivedInvoiceItem = {
   amount: string;
   amountFormatted: string;
   danfeAvailable: boolean;
+  branchCode: string;
 };
 
 export type ReceivedInvoiceSearch = {
