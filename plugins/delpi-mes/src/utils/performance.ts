@@ -16,6 +16,13 @@ export function formatPiecesPerHour(value: number | null | undefined): string {
   return value == null ? "—" : PIECES.format(Math.round(value)) + " pç/h";
 }
 
+/** Abaixo deste valor o percentual do run atual fica em vermelho forte. 90% não entra. */
+export const LOW_PERFORMANCE_PERCENT = 90;
+
+export function isLowPerformance(percent: number | null | undefined): boolean {
+  return percent != null && percent < LOW_PERFORMANCE_PERCENT;
+}
+
 /** Comparação factual com o ritmo padrão — sem faixas inventadas. */
 export function performancePaceLabel(percent: number | null | undefined): string | null {
   if (percent == null) return null;

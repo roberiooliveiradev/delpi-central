@@ -77,8 +77,12 @@ describe("RunPerformancePanel (detail)", () => {
     expect(screen.getByText("Tempo produzindo")).toBeTruthy();
     expect(screen.getByText("Tempo ideal previsto")).toBeTruthy();
     expect(screen.getByText("Peças produzidas")).toBeTruthy();
-    expect(screen.getByText("Origem do tempo padrão")).toBeTruthy();
-    expect(screen.getByText("Padrão da ordem de produção")).toBeTruthy();
+    expect(screen.queryByText("Origem do tempo padrão")).toBeNull();
+    expect(screen.getByText("85,7%").className).toContain("delpi-mes-perf-panel__percent--low");
+  });
+  it("keeps 90% and above in the default color", () => {
+    render(<RunPerformancePanel performance={perf({ performancePercent: 90 })} />);
+    expect(screen.getByText("90,0%").className).not.toContain("delpi-mes-perf-panel__percent--low");
   });
   it("keeps the panel alive and explains quality when percent is null", () => {
     render(<RunPerformancePanel performance={perf({ performancePercent: null, dataQuality: "invalid_standard_time_snapshot" })} />);

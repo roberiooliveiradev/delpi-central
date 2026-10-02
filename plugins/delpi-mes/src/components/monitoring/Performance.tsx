@@ -8,9 +8,9 @@ import {
   formatCycleSeconds,
   formatPerformancePercent,
   formatPiecesPerHour,
+  isLowPerformance,
   performancePaceLabel,
   performanceQualityHint,
-  standardTimeSourceLabel,
 } from "../../utils/performance";
 
 /** Valor principal + contexto curto — usado no card do Monitoramento. */
@@ -84,7 +84,14 @@ export function RunPerformancePanel({
       {performance ? (
         <div className="delpi-mes-perf-panel__body">
           <div className="delpi-mes-perf-panel__hero">
-            <strong className="delpi-mes-perf-panel__percent">
+            <strong
+              className={
+                "delpi-mes-perf-panel__percent" +
+                (isLowPerformance(performance.performancePercent)
+                  ? " delpi-mes-perf-panel__percent--low"
+                  : "")
+              }
+            >
               {formatPerformancePercent(performance.performancePercent)}
             </strong>
             {pace ? <span className="delpi-mes-perf__pace">{pace}</span> : null}
@@ -108,7 +115,6 @@ export function RunPerformancePanel({
               value={loading && idealProductionSeconds == null ? "…" : idealProductionSeconds != null ? formatHoursMinutes(idealProductionSeconds) : "—"}
             />
             <Row label="Peças produzidas" value={performance.producedPieces} />
-            <Row label="Origem do tempo padrão" value={standardTimeSourceLabel(performance.standardTimeSource)} />
           </div>
 
           {error ? (

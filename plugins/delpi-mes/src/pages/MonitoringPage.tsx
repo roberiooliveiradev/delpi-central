@@ -32,7 +32,7 @@ export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCod
       <div>
         <p className="delpi-mes-eyebrow">Supervisão gerencial</p>
         <h2 id="monitoring-title">Monitoramento Industrial</h2>
-        <p>Runs MES ativos na filial {branch === "01" ? "SC" : "ES"}.</p>
+        <p>Apontamentos ativos na filial {branch === "01" ? "SC" : "ES"}.</p>
       </div>
       <div className="delpi-mes-monitoring__refresh" aria-live="polite">
         <span className="delpi-mes-monitoring__updated" title={monitoring.refreshing ? "Atualizando…" : "Monitoramento ao vivo"}>
@@ -46,7 +46,7 @@ export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCod
       </div>
     </header>
     {monitoring.error ? <p className="delpi-mes-monitoring__stale" role="status">Último snapshot mantido. A atualização falhou: {monitoring.error}</p> : null}
-    <MonitoringStatCards items={monitoringStatItems(summary)} ariaLabel="Resumo dos runs ativos" />
+    <MonitoringStatCards items={monitoringStatItems(summary)} ariaLabel="Resumo dos apontamentos ativos" />
     <div className="delpi-mes-monitoring__filters" aria-label="Filtros do monitoramento">
       <label>Busca<input type="search" value={filters.search} placeholder="CT, OP, operação, operador ou motivo" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></label>
       <label>Estado<select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value as StatusFilter }))}><option value="all">Todos</option><option value="producing">Produzindo</option><option value="stopped">Parada</option><option value="paused">Pausa manual</option><option value="pending">Motivo pendente</option><option value="incomplete">Dados incompletos</option></select></label>
@@ -54,6 +54,6 @@ export function MonitoringPage({ branch, onOpenWorkCenter }: { branch: BranchCod
       <label>Ordenação<select value={filters.sort} onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value as SortMode }))}><option value="attention">Atenção primeiro</option><option value="workCenter">Centro de trabalho</option><option value="duration">Maior tempo no estado</option><option value="productionOrder">OP</option></select></label>
       {hasFilters ? <button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button> : null}
     </div>
-    {monitoring.data.items.length === 0 ? <EmptyState title="Nenhuma produção ativa nesta filial" defaultMessage="Os centros aparecem aqui quando possuem um Production Run ativo." classNames={emptyClasses} /> : items.length === 0 ? <EmptyState title="Nenhum centro corresponde aos filtros atuais" defaultMessage="Ajuste ou limpe os filtros para voltar a visualizar os runs ativos." classNames={emptyClasses}><button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button></EmptyState> : <div className="delpi-mes-work-center-grid">{items.map((item) => <WorkCenterCard key={item.runId} item={item} nowMs={nowMs} onOpen={() => onOpenWorkCenter(item.workCenter)} />)}</div>}
+    {monitoring.data.items.length === 0 ? <EmptyState title="Nenhuma produção ativa nesta filial" defaultMessage="Os centros aparecem aqui quando possuem um apontamento ativo." classNames={emptyClasses} /> : items.length === 0 ? <EmptyState title="Nenhum centro corresponde aos filtros atuais" defaultMessage="Ajuste ou limpe os filtros para voltar a visualizar os apontamentos ativos." classNames={emptyClasses}><button type="button" onClick={() => setFilters(initialFilters)}>Limpar filtros</button></EmptyState> : <div className="delpi-mes-work-center-grid">{items.map((item) => <WorkCenterCard key={item.runId} item={item} nowMs={nowMs} onOpen={() => onOpenWorkCenter(item.workCenter)} />)}</div>}
   </section>;
 }

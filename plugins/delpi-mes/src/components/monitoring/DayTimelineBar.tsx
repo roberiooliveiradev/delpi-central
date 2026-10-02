@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import type { DaySegment } from "../../utils/dayTimeline";
 import {
   dayEventContext, dayEventReason, endOfLocalDayMs, formatDayClock,
-  formatHoursMinutes, presentDayEvent,
+  formatHoursMinutes, presentDayEvent, timelineScrollLeftForNow,
 } from "../../utils/dayTimeline";
 import { downtimeReasonDisplay } from "../../utils/monitoringPresentation";
 
 const ZOOM_HOURS = [2, 4, 8, 12, 24];
-const DEFAULT_VISIBLE_HOURS = 4;
+const DEFAULT_VISIBLE_HOURS = 2;
 const FALLBACK_PX_PER_HOUR = 140;
 
 const SEGMENT_CLASS: Record<string, string> = {
@@ -42,7 +42,7 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
   const tooltipPanelRef = useRef<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
-  const initialized = useRef(false);
+  const initializedForDay = useRef<string | null>(null);
   const drag = useRef<{ x: number; scrollLeft: number } | null>(null);
 
   const dayStart = Date.parse(fromIso);
@@ -63,11 +63,16 @@ export function DayTimelineBar({ segments, fromIso, nowMs }: { segments: DaySegm
 
   useEffect(() => {
     const viewport = viewportRef.current;
-    if (!initialized.current && viewport && viewportWidth > 0) {
-      viewport.scrollLeft = Math.max(0, trackWidth - viewportWidth);
-      initialized.current = true;
-    }
-  }, [viewportWidth, trackWidth]);
+    if (!viewport || viewportWidth <= 0 || initializedForDay.current === fromIso) return;
+    viewport.scrollLeft = timelineScrollLeftForNow({
+      nowMs,
+      dayStartMs: dayStart,
+      daySpanMs: span,
+      trackWidthPx: trackWidth,
+      viewportWidthPx: viewportWidth,
+    });
+    initializedForDay.current = fromIso;
+  }, [viewportWidth, trackWidth, fromIso, dayStart, span, nowMs]);
 
   const zoom = (hours: number) => {
     const viewport = viewportRef.current;

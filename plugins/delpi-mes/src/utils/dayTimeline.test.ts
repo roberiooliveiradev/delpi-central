@@ -3,7 +3,7 @@ import type { WorkCenterTimelineItem } from "../types/mes";
 import {
   buildDaySegments, dayEventContext, dayEventDurationSeconds, dayEventReason,
   dayRangeIso, downtimeReasonTotals, formatDayEventRange, formatHoursMinutes,
-  localDayKey, presentDayEvent, startOfLocalDayIso, summarizeDay,
+  localDayKey, presentDayEvent, startOfLocalDayIso, summarizeDay, timelineScrollLeftForNow,
 } from "./dayTimeline";
 
 const FROM = "2026-01-01T00:00:00.000Z";
@@ -109,6 +109,44 @@ describe("work center day timeline", () => {
     const totals = downtimeReasonTotals(buildDaySegments(stopsItems, FROM, NOW));
     expect(totals.map((t) => t.label)).toEqual(["Falta de material", "Setup", "Sem motivo informado"]);
     expect(totals[0].seconds).toBe(1800);
+  });
+
+  it("opens the visible window on the hours leading up to now", () => {
+    const dayStartMs = Date.parse("2026-01-01T03:00:00.000Z");
+    const nowMs = Date.parse("2026-01-01T16:08:00.000Z");
+    const trackWidthPx = 2400;
+    const viewportWidthPx = 200;
+    const scroll = timelineScrollLeftForNow({
+      nowMs, dayStartMs, daySpanMs: 24 * 60 * 60 * 1000, trackWidthPx, viewportWidthPx,
+    });
+    const maxScroll = trackWidthPx - viewportWidthPx;
+    expect(scroll).toBeLessThan(maxScroll);
+    const visibleStart = dayStartMs + (scroll / trackWidthPx) * 24 * 60 * 60 * 1000;
+    const visibleEnd = visibleStart + 2 * 60 * 60 * 1000;
+    expect(nowMs).toBeGreaterThan(visibleStart);
+    expect(nowMs).toBeLessThanOrEqual(visibleEnd);
+  });
+
+  it("keeps an early-morning now inside the first window", () => {
+    const dayStartMs = Date.parse("2026-01-01T03:00:00.000Z");
+    expect(timelineScrollLeftForNow({
+      nowMs: dayStartMs + 30 * 60 * 1000,
+      dayStartMs,
+      daySpanMs: 24 * 60 * 60 * 1000,
+      trackWidthPx: 2400,
+      viewportWidthPx: 200,
+    })).toBe(0);
+  });
+
+  it("does not scroll a past day past its own end", () => {
+    const dayStartMs = Date.parse("2026-01-01T03:00:00.000Z");
+    expect(timelineScrollLeftForNow({
+      nowMs: Date.parse("2026-01-02T16:00:00.000Z"),
+      dayStartMs,
+      daySpanMs: 24 * 60 * 60 * 1000,
+      trackWidthPx: 2400,
+      viewportWidthPx: 200,
+    })).toBe(2200);
   });
 
   it("formats hours and minutes and resolves day ranges", () => {

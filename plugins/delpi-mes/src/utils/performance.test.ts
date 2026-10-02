@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCycleSeconds, formatPerformancePercent, formatPiecesPerHour,
-  performancePaceLabel, performanceQualityHint, standardTimeSourceLabel,
+  isLowPerformance, performancePaceLabel, performanceQualityHint, standardTimeSourceLabel,
 } from "./performance";
 
 describe("performance formatters", () => {
@@ -28,6 +28,13 @@ describe("performance formatters", () => {
     expect(performancePaceLabel(100)).toBe("No ritmo padrão");
     expect(performancePaceLabel(85.7)).toBe("Abaixo do ritmo padrão");
     expect(performancePaceLabel(null)).toBeNull();
+  });
+  it("marks only values below 90% as low performance", () => {
+    expect(isLowPerformance(89.9)).toBe(true);
+    expect(isLowPerformance(85.71)).toBe(true);
+    expect(isLowPerformance(90)).toBe(false);
+    expect(isLowPerformance(111.11)).toBe(false);
+    expect(isLowPerformance(null)).toBe(false);
   });
 });
 

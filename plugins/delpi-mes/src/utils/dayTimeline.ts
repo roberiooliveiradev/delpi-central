@@ -179,3 +179,27 @@ export function formatHoursMinutes(totalSeconds: number): string {
 export function formatDayClock(ms: number): string {
   return TIME_FORMAT.format(new Date(ms));
 }
+
+/** Keeps the "agora" marker inside the viewport, near the right edge. */
+const NOW_MARKER_INSET_PX = 40;
+
+/**
+ * Initial horizontal scroll so the visible window ends at the current instant.
+ * A stop or production in progress finishes at "now", so that marker stays near
+ * the right edge and the hours immediately before it stay on screen.
+ */
+export function timelineScrollLeftForNow(input: {
+  nowMs: number;
+  dayStartMs: number;
+  daySpanMs: number;
+  trackWidthPx: number;
+  viewportWidthPx: number;
+}): number {
+  const { nowMs, dayStartMs, daySpanMs, trackWidthPx, viewportWidthPx } = input;
+  const maxScroll = Math.max(0, trackWidthPx - viewportWidthPx);
+  if (daySpanMs <= 0 || viewportWidthPx <= 0 || trackWidthPx <= 0) return 0;
+  if (nowMs <= dayStartMs) return 0;
+  if (nowMs >= dayStartMs + daySpanMs) return maxScroll;
+  const nowPx = ((nowMs - dayStartMs) / daySpanMs) * trackWidthPx;
+  return Math.min(maxScroll, Math.max(0, nowPx - viewportWidthPx + NOW_MARKER_INSET_PX));
+}
