@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01` — the bounded governed MCP READ slice (DAVI `execute_delpi_information` → `search_products`, Product Master) is implemented and dev-evidenced at `58a2d018d1` (§6.101); it is a **candidate for independent architecture review**, not accepted. `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1A/R1B/R1C all `ACCEPT_WITH_RESIDUAL`; §6.95/§6.97/§6.99); `C4_AUTHORIZED=NO` at phase level — the task-scoped read proof does not broaden C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1` — the bounded governed MCP READ slice (DAVI `execute_delpi_information` → `search_products`, Product Master) closed its single REWORK blocker (undisclosed fallback on unreachable source) at `471c5a2be0` (§6.103) and is again a **candidate for independent architecture review**, not accepted. `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1A/R1B/R1C all `ACCEPT_WITH_RESIDUAL`; §6.95/§6.97/§6.99); `C4_AUTHORIZED=NO` at phase level — the task-scoped read proof does not broaden C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -778,8 +778,11 @@ C4-MCP-GOVERNED-READS-01 = REWORK (ARCHITECTURE_REVIEW §6.102;
    blocker: SPECIALIST_NOT_CONFIGURED/DISABLED silently degraded to
    undisclosed model fallback instead of SOURCE_UNAVAILABLE +
    delpi_source_unverified; everything else accepted unchanged)
-NEXT = C4-MCP-GOVERNED-READS-01R1 — truthful source-unavailable
-   fallback closure (bounded rework; no scope expansion)
+C4-MCP-GOVERNED-READS-01R1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.103;
+   IMPLEMENTATION_HEAD=8ea1e4b53835478138452e9004654d99b511b65c;
+   discovery-path failures now SOURCE_UNAVAILABLE with canonical
+   disclosure; live read re-proven PASS; 535/535 suite; MFE green)
+NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1
 Workspace binding remains unscheduled
 ```
 

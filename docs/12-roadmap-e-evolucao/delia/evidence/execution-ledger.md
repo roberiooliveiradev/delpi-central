@@ -6607,3 +6607,67 @@ REQUIRED_SEMANTICS (frozen):
   disclosure; no second warning string; no intent heuristic.
 NEXT = C4-MCP-GOVERNED-READS-01R1 — TRUTHFUL_SOURCE_UNAVAILABLE_FALLBACK_CLOSURE
 ```
+
+## 6.103 C4-MCP-GOVERNED-READS-01R1 — truthful source-unavailable fallback closure
+
+```
+STEP: C4-MCP-GOVERNED-READS-01R1 — TRUTHFUL_SOURCE_UNAVAILABLE_FALLBACK_CLOSURE
+MODE: BOUNDED REWORK (one blocker; no scope expansion)
+BASE_HEAD = f1d3ea2c9bfdcb7a6bfa5ad8b6c9b2924e709cf0 (+ 9477705eb5c5497409081edf2d02c1cbe37a2d19
+    review-persist)
+IMPLEMENTATION_HEAD = 8ea1e4b53835478138452e9004654d99b511b65c
+EVALUATED_SHA = 8ea1e4b53835478138452e9004654d99b511b65c
+BIND_HEAD = RECORDED_BY_FINAL_BIND_COMMIT
+BRANCH = main
+
+BLOCKER_CLOSED =
+  GOVERNED_SOURCE_UNAVAILABLE_CAN_DEGRADE_TO_UNDISCLOSED_MODEL_FALLBACK
+
+FIX = GovernedProductRead.attempt(): all SpecialistInteropError on the
+  discovery path -> SOURCE_UNAVAILABLE (SPECIALIST_NOT_CONFIGURED and
+  SPECIALIST_DISABLED no longer map to NOT_APPLICABLE). NOT_APPLICABLE
+  remains only for post-consultation outcomes (zero/ambiguous/other-
+  action candidates, bounded argument validation). Execute-path
+  AUTHZ_DENIED mapping unchanged; no new statuses, constants, engines,
+  or abstractions.
+
+SEMANTICS_PROVEN (tests at EVALUATED_SHA):
+  A not_configured   -> SOURCE_UNAVAILABLE -> NON_GROUNDED +
+      delpi_source_unverified + canonical disclosure + provenance none
+      (orchestrator + handler-level adversarial: product-looking
+      question still discloses)
+  B disabled         -> SOURCE_UNAVAILABLE (same contract)
+  C mcp_unavailable  -> SOURCE_UNAVAILABLE (preserved)
+  D discovery auth/exchange failure -> SOURCE_UNAVAILABLE (not
+      AUTHZ_DENIED — downstream authority never answered)
+  E discovery success + no search_products candidate -> NOT_APPLICABLE
+      -> plain model path, NON_GROUNDED, no unverified limitation
+  F successful read  -> GROUNDED + bounded provenance + OBSERVATION +
+      no model_invocation_id + no unverified limitation
+  G gate tuple unchanged -> other DAVI actions / TEO / VISTA / PREPARE /
+      ACT all still blocked
+
+LIVE_DEV_READ = PASS at EVALUATED_SHA (real Portal subject -> Core /me
+    -> exchange -> DAVI discover -> search_products candidate -> execute
+    -> 10 Product Master items; GROUNDED; provenance product-master/
+    api-delpi + davi + MCP + action_id + observed_at + correlation_id;
+    result_truncated; control query NON_GROUNDED; unauthenticated 401)
+LIVE_OUTAGE_SIMULATION = TEST_NOT_RUN (would require mutating shared
+    dev infra; negative availability proven deterministically in tests)
+
+TARGETED_TESTS = PASS (test_governed_product_read 34 tests)
+FULL_DELIA_TESTS = PASS 535/535
+MFE_TESTS = PASS 36/36  MFE_TYPECHECK = PASS  MFE_BUILD = PASS
+GIT_DIFF_CHECK = clean
+
+RESIDUAL_RECORDED:
+  GovernedProductRead = ACCEPTED_ONLY_FOR_CURRENT_BOUNDED_VERTICAL_SLICE
+  (future expansion must re-run the Abstraction Gate with semantic
+  capability contracts — no product-specific orchestrator cloning)
+  LIVE_NEGATIVE_DOMAIN_AUTHZ = TEST_NOT_RUN (unchanged)
+
+C3_EXECUTED = NO   C4_AUTHORIZED = NO (phase level)
+PRODUCTION_READINESS = NOT_PROVEN
+C4_MCP_GOVERNED_READS_01R1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1
+```

@@ -2457,3 +2457,21 @@ Implementation: `58a2d018d1ef28081e82e18148caa192d9d0b735` (evidence §6.101).
 | `git diff --check` | clean |
 
 Status: `C4_MCP_GOVERNED_READS_01=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO` (phase level); `PRODUCTION_READINESS=NOT_PROVEN`.
+
+### C4-MCP-GOVERNED-READS-01R1 — truthful source-unavailable fallback closure — candidate for architecture review
+
+Implementation: `8ea1e4b53835478138452e9004654d99b511b65c` (evidence §6.103; reworks the single §6.102 blocker on `58a2d018d1`).
+
+| Check | Result |
+|---|---|
+| `SPECIALIST_NOT_CONFIGURED` / `SPECIALIST_DISABLED` on active slice | SOURCE_UNAVAILABLE → NON_GROUNDED + `delpi_source_unverified` + canonical disclosure + `provenance=null` (orchestrator + handler-level adversarial) |
+| MCP unavailable / transport / exchange-auth failure on discovery | SOURCE_UNAVAILABLE (not AUTHZ_DENIED — downstream authority never answered) |
+| Discovery OK + zero/non-search_products/ambiguous candidates | NOT_APPLICABLE → plain model path, NON_GROUNDED, no unverified limitation |
+| Successful governed read | GROUNDED + bounded provenance + OBSERVATION + no `model_invocation_id` |
+| Gate invariants | PASS — other DAVI actions, TÉO/VISTA READ, PREPARE, ACT still blocked |
+| Full delia-api suite | 535/535 PASS at EVALUATED_SHA |
+| Live dev governed read (post-fix) | PASS — 10 Product Master items, GROUNDED, provenance intact, control NON_GROUNDED |
+| MFE tests / typecheck / build | PASS 36/36 · PASS · PASS |
+| `git diff --check` | clean |
+
+Status: `C4_MCP_GOVERNED_READS_01R1=CANDIDATE_FOR_ARCHITECTURE_REVIEW`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO` (phase level); `PRODUCTION_READINESS=NOT_PROVEN`.
