@@ -1,10 +1,12 @@
 """MCP adapter behind SpecialistInteropPort — C3-MCP-INTEROP-01.
 
 Binds the approved-specialist registry to the DELPI MCP wire profile.
-Second independent fail-closed boundary: the DÉLIA allowlist is
-re-checked here before any wire invocation — unknown specialist,
-unconfigured/disabled profile, unknown capability, PREPARE/ACT, and
-non-DISCOVERY classes are refused before any bytes are sent.
+Second independent fail-closed boundary: before any wire invocation the
+owner-typed ``delpi/toolClass`` is re-read from a fresh ``tools/list``
+on the same transport and re-checked against DÉLIA policy — unknown
+specialist, unconfigured/disabled profile, unadvertised capability,
+PREPARE/ACT, unbound DISCOVERY, and non-enabled READ are refused
+before ``tools/call`` is sent.
 
 No business rules, no specialist-specific logic, no generic HTTP/MCP
 proxy: connections come only from approved-specialist configuration.
@@ -36,9 +38,9 @@ from app.domain.specialist_interop.model import (
 )
 from app.domain.specialist_interop.rules import (
     APPROVED_SPECIALIST_IDS,
+    discovery_binding_allowed,
     governed_read_action_allowed,
-    invocable_in_foundation,
-    operation_class_for,
+    operation_class_from_owner,
 )
 from app.infrastructure.interoperability.config import (
     SpecialistConnectionProfile,
@@ -101,6 +103,12 @@ class McpSpecialistAdapter:
             name = tool.get("name")
             if not isinstance(name, str) or not name.strip():
                 continue
+            meta = tool.get("_meta")
+            operation_class = (
+                meta.get("delpi/toolClass")
+                if isinstance(meta, Mapping)
+                else None
+            )
             descriptors.append(
                 RemoteToolDescriptor(
                     remote_name=name.strip(),
@@ -124,6 +132,11 @@ class McpSpecialistAdapter:
                         if isinstance(tool.get("annotations"), Mapping)
                         else None
                     ),
+                    operation_class=(
+                        operation_class
+                        if isinstance(operation_class, str)
+                        else None
+                    ),
                 )
             )
         return tuple(descriptors)
@@ -138,11 +151,12 @@ class McpSpecialistAdapter:
         timeout_seconds: float,
         governed_action_id: str | None = None,
     ) -> RemoteToolOutcome:
-        self._require_invocable(
-            specialist, remote_name, governed_action_id
-        )
         profile, transport = self._connect(specialist)
         try:
+            tools = transport.list_tools()
+            self._require_invocable(
+                specialist, remote_name, governed_action_id, tools
+            )
             result = transport.call_tool(remote_name, arguments)
         except SpecialistInteropError as exc:
             self._invalidate_on_auth_failure(profile, exc)
@@ -205,42 +219,70 @@ class McpSpecialistAdapter:
         specialist: SpecialistRef,
         remote_name: str,
         governed_action_id: str | None,
+        tools: tuple[Mapping[str, Any], ...],
     ) -> None:
-        operation_class = operation_class_for(
-            specialist.specialist_id, remote_name
+        """Second fail-closed gate on a fresh owner tools/list.
+
+        The owner-typed ``delpi/toolClass`` is re-read here — a
+        reclassified or removed capability cannot ride a stale grant.
+        Class grants nothing by itself: DISCOVERY still needs a DÉLIA
+        binding, READ needs the exact enabled governed tuple.
+        """
+        tool = next(
+            (
+                t
+                for t in tools
+                if t.get("name") == remote_name
+                or (
+                    isinstance(t.get("name"), str)
+                    and t["name"].strip() == remote_name
+                )
+            ),
+            None,
         )
-        if operation_class is None:
+        if tool is None:
             raise SpecialistInteropError(
                 UNKNOWN_CAPABILITY,
-                "remote capability is not in the approved registry",
+                "remote capability is not advertised by the specialist",
             )
-        if not invocable_in_foundation(operation_class):
-            if operation_class in (
-                SpecialistOperationClass.PREPARE,
-                SpecialistOperationClass.ACT,
-            ):
-                raise SpecialistInteropError(
-                    WRITE_CAPABILITY_BLOCKED,
-                    "write-class capability is never invocable in this slice",
-                )
+        meta = tool.get("_meta")
+        raw_class = (
+            meta.get("delpi/toolClass") if isinstance(meta, Mapping) else None
+        )
+        operation_class = operation_class_from_owner(raw_class)
+        if operation_class in (
+            SpecialistOperationClass.PREPARE,
+            SpecialistOperationClass.ACT,
+        ):
+            raise SpecialistInteropError(
+                WRITE_CAPABILITY_BLOCKED,
+                "write-class capability is never invocable in this slice",
+            )
+        allowed = (
+            operation_class is SpecialistOperationClass.DISCOVERY
+            and discovery_binding_allowed(
+                specialist.specialist_id, remote_name
+            )
+        )
+        if not allowed and operation_class is SpecialistOperationClass.READ:
             governed_tuple = (
                 specialist.specialist_id,
                 remote_name,
                 str(governed_action_id or "").strip(),
             )
-            if not (
-                operation_class is SpecialistOperationClass.READ
-                and governed_tuple in self._enabled_governed_reads
+            allowed = (
+                governed_tuple in self._enabled_governed_reads
                 and governed_read_action_allowed(
                     specialist.specialist_id,
                     remote_name,
                     governed_action_id,
                 )
-            ):
-                raise SpecialistInteropError(
-                    CAPABILITY_NOT_ALLOWED_IN_PHASE,
-                    "capability requires the C4 authorization gate",
-                )
+            )
+        if not allowed:
+            raise SpecialistInteropError(
+                CAPABILITY_NOT_ALLOWED_IN_PHASE,
+                "capability requires a DÉLIA governance binding",
+            )
 
     @staticmethod
     def _map_outcome(result: Mapping[str, Any]) -> RemoteToolOutcome:

@@ -148,3 +148,23 @@ def test_specialist_ids_only_exist_in_canonical_registry():
         text = path.read_text()
         for literal in ('"davi"', '"teo"', '"vista"', "'davi'", "'teo'", "'vista'"):
             assert literal not in text, f"{path} hard-codes specialist id"
+
+
+def test_no_specialist_tool_name_mirror():
+    """ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01: remote tool catalogs
+    are owner-owned. DÉLIA must never recreate a per-specialist map of
+    remote tool names as a runtime requirement — the only remote names
+    allowed in app code are bounded governance bindings."""
+    for path in APP_ROOT.rglob("*.py"):
+        if "__pycache__" in str(path):
+            continue
+        text = path.read_text()
+        assert "SPECIALIST_CAPABILITY_CLASSES" not in text, path
+        assert "operation_class_for" not in text, path
+    rules_src = (
+        APP_ROOT / "domain" / "specialist_interop" / "rules.py"
+    ).read_text()
+    # Governance bindings may name only their own approved tuples —
+    # never a classification table of remote tool names.
+    for write_or_mirror_only_name in ("commit_proposal", "prepare_"):
+        assert write_or_mirror_only_name not in rules_src

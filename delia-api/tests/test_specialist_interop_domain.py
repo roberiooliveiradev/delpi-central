@@ -1,12 +1,20 @@
 """Domain contract tests for C3-MCP-INTEROP-01.
 
-Locks: the approved specialist set (DAVI/TÉO/VISTA only), the DÉLIA-owned
-operation classification, the C3 invocation gate (DISCOVERY only), and
-the epistemic pin (specialist outcome == OBSERVATION, never auto-FACT).
+Locks: the approved specialist set (DAVI/TÉO/VISTA only), the
+provider-neutral owner-class mapping, the DÉLIA governance bindings
+(DISCOVERY + governed READ tuples — policy, not catalog), the C3
+invocation gate, and the epistemic pin (specialist outcome ==
+OBSERVATION, never auto-FACT).
+
+ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 (ledger §6.109): the local
+full-tool mirror (SPECIALIST_CAPABILITY_CLASSES) is superseded — the
+remote specialist owns its catalog; these tests guard against its
+re-creation.
 """
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import fields
 
 import pytest
@@ -20,11 +28,14 @@ from app.domain.specialist_interop.model import (
     SpecialistResultProvenance,
     SpecialistResultStatus,
 )
+from app.domain.specialist_interop import rules
 from app.domain.specialist_interop.rules import (
     APPROVED_SPECIALIST_IDS,
-    SPECIALIST_CAPABILITY_CLASSES,
+    GOVERNED_DISCOVERY_BINDINGS,
+    GOVERNED_READ_ACTIONS,
+    discovery_binding_allowed,
     invocable_in_foundation,
-    operation_class_for,
+    operation_class_from_owner,
     specialist_ref_or_none,
 )
 
@@ -50,42 +61,73 @@ def test_specialist_ref_for_each_approved_specialist():
 def test_unknown_specialist_fails_closed():
     for unknown in ("", "chatgpt", "unknown-mcp", "DAVI2", " openai "):
         assert specialist_ref_or_none(unknown) is None
-        assert operation_class_for(unknown, "get_catalog") is None
+        assert discovery_binding_allowed(unknown, "get_catalog") is False
 
 
-def test_davi_classification():
+def test_no_local_full_tool_mirror():
+    """Regression guard: the superseded per-specialist tool-name mirror
+    must not be recreated — the remote specialist owns its catalog."""
+    assert not hasattr(rules, "SPECIALIST_CAPABILITY_CLASSES")
+    assert not hasattr(rules, "operation_class_for")
+    source = inspect.getsource(rules)
+    assert "SPECIALIST_CAPABILITY_CLASSES" not in source
+    # No per-specialist dict of remote tool names may exist: the only
+    # remote names in this module are the bounded governance bindings.
+    assert "commit_proposal" not in source
+    assert "prepare_" not in source
+    assert "execute_delpi_information" in source  # governed READ policy
+    assert "get_catalog" in source  # DISCOVERY binding policy
+
+
+def test_governance_bindings_are_bounded_policy_not_catalog():
+    """The only remote names DÉLIA lists are its own invocation policy —
+    3 DISCOVERY bindings + the 2 authorized C4 READ tuples."""
+    assert GOVERNED_DISCOVERY_BINDINGS == frozenset(
+        {
+            ("davi", "discover_delpi_information"),
+            ("teo", "get_catalog"),
+            ("vista", "get_catalog"),
+        }
+    )
+    assert set(GOVERNED_READ_ACTIONS) == {
+        ("davi", "execute_delpi_information"),
+        ("teo", "analyze"),
+    }
+    for specialist_id, _ in GOVERNED_DISCOVERY_BINDINGS:
+        assert specialist_id in APPROVED_SPECIALIST_IDS
+
+
+def test_owner_class_mapping_is_provider_neutral():
     assert (
-        operation_class_for("davi", "discover_delpi_information")
+        operation_class_from_owner("DISCOVERY")
         is SpecialistOperationClass.DISCOVERY
     )
     assert (
-        operation_class_for("davi", "execute_delpi_information")
+        operation_class_from_owner("READ") is SpecialistOperationClass.READ
+    )
+    # Owner ANALYSIS (non-persisting analysis) projects as READ.
+    assert (
+        operation_class_from_owner("ANALYSIS")
         is SpecialistOperationClass.READ
     )
+    assert (
+        operation_class_from_owner("PREPARE")
+        is SpecialistOperationClass.PREPARE
+    )
+    assert operation_class_from_owner("ACT") is SpecialistOperationClass.ACT
 
 
-def test_teo_classification_covers_full_surface():
-    teo = SPECIALIST_CAPABILITY_CLASSES["teo"]
-    assert len(teo) == 24
-    assert teo["get_catalog"] is SpecialistOperationClass.DISCOVERY
-    assert teo["generate_from_transcript"] is SpecialistOperationClass.READ
-    assert teo["prepare_record_change"] is SpecialistOperationClass.PREPARE
-    assert teo["commit_proposal"] is SpecialistOperationClass.ACT
-
-
-def test_vista_classification_covers_full_surface():
-    vista = SPECIALIST_CAPABILITY_CLASSES["vista"]
-    assert len(vista) == 8
-    assert vista["get_catalog"] is SpecialistOperationClass.DISCOVERY
-    assert vista["list_playlists"] is SpecialistOperationClass.READ
-    assert vista["prepare_change"] is SpecialistOperationClass.PREPARE
-    assert vista["commit_proposal"] is SpecialistOperationClass.ACT
-
-
-def test_unknown_capability_fails_closed():
-    assert operation_class_for("davi", "commit_proposal") is None
-    assert operation_class_for("teo", "drop_table") is None
-    assert operation_class_for("vista", "execute_sql") is None
+def test_owner_class_mapping_fail_closed():
+    """Missing/invalid/untrusted owner typing -> UNKNOWN: discoverable,
+    never invocable."""
+    for raw in (None, "", "  ", "read-only", "SAFE", 42, {"x": 1}, []):
+        assert (
+            operation_class_from_owner(raw) is SpecialistOperationClass.UNKNOWN
+        )
+    # Case-insensitive tolerance is fine — the vocabulary is bounded.
+    assert (
+        operation_class_from_owner(" read ") is SpecialistOperationClass.READ
+    )
 
 
 def test_c3_invocation_gate_is_discovery_only():
@@ -94,8 +136,18 @@ def test_c3_invocation_gate_is_discovery_only():
         SpecialistOperationClass.READ,
         SpecialistOperationClass.PREPARE,
         SpecialistOperationClass.ACT,
+        SpecialistOperationClass.UNKNOWN,
     ):
         assert invocable_in_foundation(cls) is False
+
+
+def test_discovery_binding_policy_exact():
+    assert discovery_binding_allowed("davi", "discover_delpi_information")
+    assert discovery_binding_allowed("teo", "get_catalog")
+    assert discovery_binding_allowed("vista", "get_catalog")
+    assert not discovery_binding_allowed("davi", "get_catalog")
+    assert not discovery_binding_allowed("teo", "discover_delpi_information")
+    assert not discovery_binding_allowed("vista", "preview_data_model")
 
 
 def test_capability_descriptor_grants_nothing():

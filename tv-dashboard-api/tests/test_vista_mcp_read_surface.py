@@ -153,7 +153,9 @@ def test_no_native_op_or_legacy_tools_registered():
 def test_tool_classification_read_prepare_act():
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 5
+    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
+    assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
     assert set(TOOL_CLASS.keys()) == set(MCP_TOOL_NAMES)
 
 
@@ -162,7 +164,7 @@ def test_tool_annotations_match_class():
     for name, t in tools.items():
         ann = t.annotations
         assert ann is not None, name
-        if TOOL_CLASS[name] == "READ":
+        if TOOL_CLASS[name] in ("DISCOVERY", "READ"):
             assert ann.read_only_hint is True, name
             assert ann.destructive_hint in (False, None), name
         elif TOOL_CLASS[name] == "PREPARE":

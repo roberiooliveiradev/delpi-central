@@ -28,13 +28,16 @@ class InteropProtocol(str, Enum):
 
 
 class SpecialistOperationClass(str, Enum):
-    """DÉLIA-owned classification of a remote capability.
+    """Semantic class of a remote capability.
 
-    The class comes from the canonical DÉLIA specialist registry, never
-    from remote tool metadata. PREPARE plans a write; ACT commits one.
-    Neither is ever invocable through the C3 foundation.
+    The class is projected from the owner-typed ``delpi/toolClass``
+    catalog metadata — the specialist owns its catalog. UNKNOWN covers
+    absent/invalid owner typing: the capability is discoverable but
+    never invocable. A class is classification only — invocation still
+    requires the matching DÉLIA governance binding.
     """
 
+    UNKNOWN = "UNKNOWN"
     DISCOVERY = "DISCOVERY"
     READ = "READ"
     PREPARE = "PREPARE"

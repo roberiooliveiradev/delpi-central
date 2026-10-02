@@ -4,12 +4,15 @@ Bounded discovery + bounded subtask delegation to approved specialists
 through the provider-neutral SpecialistInteropPort. Two independent
 fail-closed boundaries:
 
-1. here: the DÉLIA allowlist classifies every advertised remote
-   capability — only DISCOVERY is projected as invocable; READ/PREPARE/
-   ACT/unknown names are recorded as blocked;
-2. the adapter re-checks the same allowlist before any wire invocation.
+1. here: the owner-typed ``delpi/toolClass`` classifies every
+   advertised remote capability — only capabilities with a matching
+   DÉLIA governance binding are invocable (DISCOVERY bindings, or the
+   exact enabled READ tuples); everything else is recorded as blocked;
+2. the adapter re-checks owner class + DÉLIA policy against a fresh
+   tools/list before any wire invocation.
 
-Discovery != approval != permission. A catalog result never grants
+Discovery != approval != permission. The remote specialist owns its
+catalog; DÉLIA keeps no tool-name mirror. A catalog result never grants
 anything; a specialist outcome is untrusted OBSERVATION data.
 """
 
@@ -47,9 +50,9 @@ from app.domain.specialist_interop.model import (
     InteropProtocol,
 )
 from app.domain.specialist_interop.rules import (
+    discovery_binding_allowed,
     governed_read_action_allowed,
-    invocable_in_foundation,
-    operation_class_for,
+    operation_class_from_owner,
     specialist_ref_or_none,
 )
 
@@ -83,8 +86,11 @@ class SpecialistInterop:
     ) -> SpecialistCatalogResult:
         """Project an approved specialist's advertised surface, fail closed.
 
-        Remote metadata is untrusted data — it is classified by the DÉLIA
-        registry, never by its own annotations/descriptions.
+        The remote specialist owns the catalog: classification comes
+        from the owner-typed ``delpi/toolClass``, never from DÉLIA-local
+        name tables or untrusted annotations/descriptions. Discovery
+        grants nothing — invocation still requires the matching DÉLIA
+        policy binding.
         """
         specialist = self._require_specialist(request.specialist_id)
         observed_at = _now_utc()
@@ -95,25 +101,24 @@ class SpecialistInterop:
         capabilities: list[SpecialistCapabilityDescriptor] = []
         blocked: list[str] = []
         for tool in remote_tools:
-            operation_class = operation_class_for(
-                specialist.specialist_id, tool.remote_name
+            operation_class = operation_class_from_owner(
+                tool.operation_class
             )
-            if operation_class is not None and invocable_in_foundation(
-                operation_class
-            ):
-                capabilities.append(
-                    SpecialistCapabilityDescriptor(
-                        capability_id=f"{specialist.specialist_id}.{tool.remote_name}",
-                        specialist_id=specialist.specialist_id,
-                        remote_name=tool.remote_name,
-                        operation_class=operation_class,
-                        protocol=specialist.protocol,
-                        observed_at=observed_at,
-                        description=tool.description,
-                        input_schema=tool.input_schema,
-                    )
+            capabilities.append(
+                SpecialistCapabilityDescriptor(
+                    capability_id=f"{specialist.specialist_id}.{tool.remote_name}",
+                    specialist_id=specialist.specialist_id,
+                    remote_name=tool.remote_name,
+                    operation_class=operation_class,
+                    protocol=specialist.protocol,
+                    observed_at=observed_at,
+                    description=tool.description,
+                    input_schema=tool.input_schema,
                 )
-            else:
+            )
+            if not self._policy_invocable(
+                specialist.specialist_id, tool.remote_name, operation_class
+            ):
                 blocked.append(tool.remote_name)
         return SpecialistCatalogResult(
             specialist=specialist,
@@ -123,44 +128,59 @@ class SpecialistInterop:
         )
 
     def invoke(self, request: SpecialistInvocationRequest) -> SpecialistOutcome:
-        """Delegate one bounded subtask; C3 permits DISCOVERY class only."""
+        """Delegate one bounded subtask through the governance gate.
+
+        The owner class is re-read from a fresh ``tools/list`` — a
+        reclassified or removed remote capability is honored
+        immediately, never from a stale local mirror.
+        """
         specialist = self._require_specialist(request.specialist_id)
         remote_name = str(request.remote_capability or "").strip()
-        operation_class = operation_class_for(
-            specialist.specialist_id, remote_name
+        remote_tools = self._port.list_remote_tools(
+            specialist,
+            timeout_seconds=self._clamp_timeout(request.timeout_seconds),
         )
-        if operation_class is None:
+        tool = next(
+            (t for t in remote_tools if t.remote_name == remote_name),
+            None,
+        )
+        if tool is None:
             raise SpecialistInteropError(
                 UNKNOWN_CAPABILITY,
-                "remote capability is not in the approved specialist registry",
+                "remote capability is not advertised by the specialist",
             )
-        if not invocable_in_foundation(operation_class):
-            if operation_class in (
-                SpecialistOperationClass.PREPARE,
-                SpecialistOperationClass.ACT,
-            ):
-                raise SpecialistInteropError(
-                    WRITE_CAPABILITY_BLOCKED,
-                    "write-class capability is never invocable in this slice",
-                )
+        operation_class = operation_class_from_owner(tool.operation_class)
+        if operation_class in (
+            SpecialistOperationClass.PREPARE,
+            SpecialistOperationClass.ACT,
+        ):
+            raise SpecialistInteropError(
+                WRITE_CAPABILITY_BLOCKED,
+                "write-class capability is never invocable in this slice",
+            )
+        allowed = operation_class is SpecialistOperationClass.DISCOVERY
+        allowed = allowed and discovery_binding_allowed(
+            specialist.specialist_id, remote_name
+        )
+        if not allowed and operation_class is SpecialistOperationClass.READ:
             governed_tuple = (
                 specialist.specialist_id,
                 remote_name,
                 str(request.governed_action_id or "").strip(),
             )
-            if not (
-                operation_class is SpecialistOperationClass.READ
-                and governed_tuple in self._enabled_governed_reads
+            allowed = (
+                governed_tuple in self._enabled_governed_reads
                 and governed_read_action_allowed(
                     specialist.specialist_id,
                     remote_name,
                     request.governed_action_id,
                 )
-            ):
-                raise SpecialistInteropError(
-                    CAPABILITY_NOT_ALLOWED_IN_PHASE,
-                    "capability is not allowed in this phase",
-                )
+            )
+        if not allowed:
+            raise SpecialistInteropError(
+                CAPABILITY_NOT_ALLOWED_IN_PHASE,
+                "capability is not allowed in this phase",
+            )
         arguments = self._validate_arguments(request.arguments)
         outcome = self._port.call_remote_tool(
             specialist,
@@ -182,6 +202,27 @@ class SpecialistInterop:
                 "specialist is not in the approved allowlist",
             )
         return specialist
+
+    def _policy_invocable(
+        self,
+        specialist_id: str,
+        remote_name: str,
+        operation_class: SpecialistOperationClass,
+    ) -> bool:
+        """Catalog-level eligibility under current DÉLIA policy.
+
+        DISCOVERY requires a governed binding; READ requires an enabled
+        governed tuple for the (specialist, capability) pair; PREPARE/
+        ACT/UNKNOWN are never invocable in this phase.
+        """
+        if operation_class is SpecialistOperationClass.DISCOVERY:
+            return discovery_binding_allowed(specialist_id, remote_name)
+        if operation_class is SpecialistOperationClass.READ:
+            return any(
+                (s, n) == (specialist_id, remote_name)
+                for s, n, _ in self._enabled_governed_reads
+            )
+        return False
 
     @staticmethod
     def _clamp_timeout(timeout_seconds: float) -> float:

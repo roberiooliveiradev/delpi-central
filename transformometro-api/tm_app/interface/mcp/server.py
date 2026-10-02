@@ -7,7 +7,11 @@ from typing import Any, Literal
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
-from delpi_mcp.tool_metadata import security_schemes_meta, tool_annotations_payload
+from delpi_mcp.tool_metadata import (
+    DELPI_META_TOOL_CLASS,
+    security_schemes_meta,
+    tool_annotations_payload,
+)
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
 from pydantic import ConfigDict
@@ -44,6 +48,10 @@ class TransformometroMCPServer(MCPServer):
         listed: list[MCPTool] = []
         for info in tools:
             meta = dict(info.meta or {})
+            # Owner-typed operation class — typed catalog metadata the
+            # consumer may project; never a permission grant. Default
+            # ACT is the fail-closed class for unregistered names.
+            meta[DELPI_META_TOOL_CLASS] = TOOL_CLASS.get(info.name, "ACT")
             schemes = meta.get("securitySchemes") or TEO_MCP_SECURITY_SCHEMES
             payload: dict[str, Any] = {
                 "name": info.name,
@@ -62,7 +70,7 @@ class TransformometroMCPServer(MCPServer):
 
 def _annotations(tool_name: str, title: str) -> ToolAnnotations:
     kind = TOOL_CLASS.get(tool_name, "ACT")
-    read_only = kind in {"READ", "ANALYSIS"}
+    read_only = kind in {"DISCOVERY", "READ", "ANALYSIS"}
     # PREPARE is not read-only (plans a write) and not destructive by itself.
     destructive = tool_name in DESTRUCTIVE_ACT_TOOLS
     return ToolAnnotations.model_validate(

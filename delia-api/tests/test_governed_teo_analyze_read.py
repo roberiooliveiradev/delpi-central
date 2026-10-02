@@ -37,6 +37,7 @@ from app.application.interaction.handle_interactive_turn import (
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.platform_access import PlatformAccessContext
 from app.application.specialist_interop.contracts import (
+    RemoteToolDescriptor,
     RemoteToolOutcome,
     SpecialistInvocationRequest,
 )
@@ -64,16 +65,52 @@ DAVI_READ_TUPLE = ("davi", "execute_delpi_information", "search_products")
 TEO_READ_TUPLE = ("teo", "analyze", "gpt_analyze")
 
 
+# Owner-owned advertised surface (owner-typed delpi/toolClass), not a
+# DÉLIA mirror.
+DAVI_ADVERTISED_TOOLS = (
+    RemoteToolDescriptor(
+        remote_name="discover_delpi_information",
+        operation_class="DISCOVERY",
+    ),
+    RemoteToolDescriptor(
+        remote_name="execute_delpi_information",
+        operation_class="READ",
+    ),
+)
+TEO_ADVERTISED_TOOLS = tuple(
+    RemoteToolDescriptor(remote_name=name, operation_class=cls)
+    for name, cls in (
+        ("get_catalog", "DISCOVERY"),
+        ("analyze", "READ"),
+        ("get_my_context", "READ"),
+        ("get_process_context", "READ"),
+        ("search_records", "READ"),
+        ("get_record", "READ"),
+        ("list_evidence", "READ"),
+        ("get_process_timeline", "READ"),
+        ("meeting_minute_read", "READ"),
+        ("get_diagnostic", "READ"),
+        ("list_diagnostics_by_revision", "READ"),
+        ("generate_from_transcript", "ANALYSIS"),
+        ("prepare_record_change", "PREPARE"),
+        ("commit_proposal", "ACT"),
+    )
+)
+
+
 class FakePort:
     adapter_kind = "MCP_FAKE"
 
-    def __init__(self, outcomes=None, errors=None):
+    def __init__(self, outcomes=None, errors=None, tools=None):
         self._outcomes = dict(outcomes or {})
         self._errors = dict(errors or {})
+        self._tools = tuple(tools) if tools is not None else (
+            DAVI_ADVERTISED_TOOLS + TEO_ADVERTISED_TOOLS
+        )
         self.calls: list[tuple] = []
 
     def list_remote_tools(self, specialist, *, timeout_seconds):
-        return ()
+        return self._tools
 
     def call_remote_tool(
         self, specialist, remote_name, arguments, *, correlation_id,

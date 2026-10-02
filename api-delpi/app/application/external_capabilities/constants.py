@@ -35,5 +35,12 @@ MCP_TOOL_DISCOVER_DELPI_INFORMATION = "discover_delpi_information"
 MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE = "Discover DELPI information"
 MCP_TOOL_EXECUTE_DELPI_INFORMATION = "execute_delpi_information"
 MCP_TOOL_EXECUTE_DELPI_INFORMATION_TITLE = "Execute DELPI information"
+# Owner-typed operation classes, emitted on the wire as
+# _meta["delpi/toolClass"] (DELPI MCP vocabulary). Classification only —
+# never a permission grant for any consumer.
+MCP_TOOL_CLASSES: dict[str, str] = {
+    MCP_TOOL_DISCOVER_DELPI_INFORMATION: "DISCOVERY",
+    MCP_TOOL_EXECUTE_DELPI_INFORMATION: "READ",
+}
 MCP_GATEWAY_PATH = "/mcp"
 MCP_GATEWAY_ROOT = "/apps/api-delpi"

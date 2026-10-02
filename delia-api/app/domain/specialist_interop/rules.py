@@ -1,14 +1,22 @@
-"""Approved-specialist registry and classification rules — C3-MCP-INTEROP-01.
+"""Approved-specialist registry and governance rules — C3-MCP-INTEROP-01.
 
-The canonical DÉLIA-side allowlist for the C3 interoperability slice. Only
-DAVI, TÉO, and VISTA are approved; only the remote capability names listed
-here are classifiable, and only DISCOVERY-class capabilities are invocable
-while C4 read execution is not authorized.
+Catalog ownership lives in the remote specialists (ledger §6.109): each
+owner advertises its capabilities through ``tools/list`` and types them
+with ``_meta["delpi/toolClass"]``. DÉLIA keeps NO mirror of remote tool
+names — this module holds only DÉLIA-owned governance:
 
-Classification is DÉLIA-owned: remote tool metadata (descriptions,
-annotations like ``readOnlyHint``, securitySchemes) is untrusted data and
-can never elevate a capability's class. Unknown specialist or unknown
-remote name fails closed.
+  * the approved-specialist registry (identity/owner refs);
+  * the bounded DISCOVERY invocation bindings;
+  * the task-scoped governed READ authorizations;
+  * the provider-neutral mapping from owner-typed class to the
+    SpecialistOperationClass vocabulary.
+
+Remote metadata (descriptions, annotations like ``readOnlyHint``,
+securitySchemes, titles) is untrusted data and can never grant
+permission. The owner-typed class is trusted for classification only —
+invocation additionally requires the matching DÉLIA policy binding.
+Unknown specialist, unadvertised remote name, or unclassifiable
+operation class fails closed.
 """
 
 from __future__ import annotations
@@ -19,61 +27,13 @@ from app.domain.specialist_interop.model import (
 )
 
 
-# DÉLIA-owned remote capability classification per approved specialist.
-# Mirrors each owner's authoritative TOOL_CLASS contract:
-#   DAVI  — api-delpi/app/interface/mcp (discover + catalog-fixed execute)
-#   TÉO   — transformometro-api TOOL_CLASS (ANALYSIS -> READ here)
-#   VISTA — tv-dashboard-api TOOL_CLASS
-SPECIALIST_CAPABILITY_CLASSES: dict[str, dict[str, SpecialistOperationClass]] = {
-    "davi": {
-        "discover_delpi_information": SpecialistOperationClass.DISCOVERY,
-        "execute_delpi_information": SpecialistOperationClass.READ,
-    },
-    "teo": {
-        "get_catalog": SpecialistOperationClass.DISCOVERY,
-        "get_my_context": SpecialistOperationClass.READ,
-        "get_methodology_guide": SpecialistOperationClass.READ,
-        "get_process_context": SpecialistOperationClass.READ,
-        "analyze": SpecialistOperationClass.READ,
-        "search_records": SpecialistOperationClass.READ,
-        "get_record": SpecialistOperationClass.READ,
-        "list_evidence": SpecialistOperationClass.READ,
-        "get_process_timeline": SpecialistOperationClass.READ,
-        "meeting_minute_read": SpecialistOperationClass.READ,
-        "get_diagnostic": SpecialistOperationClass.READ,
-        "list_diagnostics_by_revision": SpecialistOperationClass.READ,
-        "generate_from_transcript": SpecialistOperationClass.READ,
-        "prepare_record_change": SpecialistOperationClass.PREPARE,
-        "prepare_activate_revision": SpecialistOperationClass.PREPARE,
-        "prepare_recalculate_dashboard": SpecialistOperationClass.PREPARE,
-        "prepare_meeting_minute_workflow": SpecialistOperationClass.PREPARE,
-        "prepare_improvement_package": SpecialistOperationClass.PREPARE,
-        "prepare_manage_evidence": SpecialistOperationClass.PREPARE,
-        "prepare_adjust_shared_resource_cost": SpecialistOperationClass.PREPARE,
-        "prepare_meeting_minute_manage": SpecialistOperationClass.PREPARE,
-        "prepare_create_diagnostic": SpecialistOperationClass.PREPARE,
-        "prepare_manage_diagnostic": SpecialistOperationClass.PREPARE,
-        "commit_proposal": SpecialistOperationClass.ACT,
-    },
-    "vista": {
-        "get_catalog": SpecialistOperationClass.DISCOVERY,
-        "list_playlists": SpecialistOperationClass.READ,
-        "get_playlist_context": SpecialistOperationClass.READ,
-        "search_data_routes": SpecialistOperationClass.READ,
-        "inspect_data_model": SpecialistOperationClass.READ,
-        "preview_data_model": SpecialistOperationClass.READ,
-        "prepare_change": SpecialistOperationClass.PREPARE,
-        "commit_proposal": SpecialistOperationClass.ACT,
-    },
-}
-
 _SPECIALIST_IDENTITY: dict[str, tuple[str, str]] = {
     "davi": ("DAVI", "api-delpi"),
     "teo": ("TEO", "transformometro-api"),
     "vista": ("VISTA", "tv-dashboard-api"),
 }
 
-APPROVED_SPECIALIST_IDS = frozenset(SPECIALIST_CAPABILITY_CLASSES)
+APPROVED_SPECIALIST_IDS = frozenset(_SPECIALIST_IDENTITY)
 
 
 def specialist_ref_or_none(specialist_id: str) -> SpecialistRef | None:
@@ -88,26 +48,59 @@ def specialist_ref_or_none(specialist_id: str) -> SpecialistRef | None:
     )
 
 
-def operation_class_for(
-    specialist_id: str, remote_name: str
-) -> SpecialistOperationClass | None:
-    """DÉLIA-owned class for a remote capability; None when unknown.
+# Provider-neutral mapping from the owner-typed DELPI ToolClass wire
+# vocabulary to the DÉLIA semantic class. ANALYSIS (non-persisting
+# analysis) projects as READ. Anything else -> UNKNOWN (discoverable,
+# never invocable).
+_OWNER_CLASS_MAP: dict[str, SpecialistOperationClass] = {
+    "DISCOVERY": SpecialistOperationClass.DISCOVERY,
+    "READ": SpecialistOperationClass.READ,
+    "ANALYSIS": SpecialistOperationClass.READ,
+    "PREPARE": SpecialistOperationClass.PREPARE,
+    "ACT": SpecialistOperationClass.ACT,
+}
 
-    Remote metadata claims are never consulted — a tool that calls itself
-    read-only while the registry classifies it as PREPARE/ACT stays blocked.
+
+def operation_class_from_owner(raw: object) -> SpecialistOperationClass:
+    """Project the owner-typed tool class; UNKNOWN when absent/invalid.
+
+    ``raw`` is the owner-emitted ``_meta["delpi/toolClass"]`` value —
+    trusted for classification only, never for permission.
     """
-    catalog = SPECIALIST_CAPABILITY_CLASSES.get(
-        str(specialist_id or "").strip().lower()
+    if not isinstance(raw, str):
+        return SpecialistOperationClass.UNKNOWN
+    return _OWNER_CLASS_MAP.get(
+        raw.strip().upper(), SpecialistOperationClass.UNKNOWN
     )
-    if catalog is None:
-        return None
-    return catalog.get(str(remote_name or "").strip())
+
+
+# DÉLIA approval policy (not a catalog mirror): the bounded set of
+# DISCOVERY-class capabilities DÉLIA may invoke through the C3
+# foundation. A remote tool projecting DISCOVERY without a binding here
+# is discoverable but not invocable — owner typing never self-grants.
+GOVERNED_DISCOVERY_BINDINGS: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("davi", "discover_delpi_information"),
+        ("teo", "get_catalog"),
+        ("vista", "get_catalog"),
+    }
+)
+
+
+def discovery_binding_allowed(specialist_id: str, remote_name: str) -> bool:
+    """True only for the DÉLIA-approved DISCOVERY invocation bindings."""
+    return (
+        str(specialist_id or "").strip().lower(),
+        str(remote_name or "").strip(),
+    ) in GOVERNED_DISCOVERY_BINDINGS
 
 
 def invocable_in_foundation(operation_class: SpecialistOperationClass) -> bool:
-    """C3 foundation invocation gate: DISCOVERY/CATALOG only.
+    """C3 foundation class gate: DISCOVERY/CATALOG only.
 
-    READ requires the separate C4 authorization; PREPARE/ACT are writes.
+    Class eligibility alone is not invocation permission — a DISCOVERY
+    class still requires a GOVERNED_DISCOVERY_BINDINGS entry, and READ
+    requires the separate C4 authorization. PREPARE/ACT are writes.
     """
     return operation_class is SpecialistOperationClass.DISCOVERY
 

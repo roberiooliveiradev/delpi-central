@@ -23,6 +23,7 @@ __all__ = [
     "SECURITY_SCHEMES_KEY",
     "TOOL_CLASS_ACT",
     "TOOL_CLASS_ANALYSIS",
+    "TOOL_CLASS_DISCOVERY",
     "TOOL_CLASS_PREPARE",
     "TOOL_CLASS_READ",
     "delpi_tool_meta",
@@ -30,8 +31,12 @@ __all__ = [
     "tool_annotations_payload",
 ]
 
-# Frozen DELPI ToolClass vocabulary — the classes actually registered
-# across VISTA/TÉO today. Do not extend without a real consumer.
+# Frozen DELPI ToolClass vocabulary — the classes registered across
+# the specialist owners (DAVI/TÉO/VISTA). Do not extend without a real
+# consumer. DISCOVERY types catalog-introspection capabilities
+# (owner get_catalog / discover_* surfaces); it is a classification,
+# never a permission.
+TOOL_CLASS_DISCOVERY = "DISCOVERY"
 TOOL_CLASS_READ = "READ"
 TOOL_CLASS_ANALYSIS = "ANALYSIS"
 TOOL_CLASS_PREPARE = "PREPARE"

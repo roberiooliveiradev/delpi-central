@@ -40,7 +40,7 @@ from app.application.specialist_interop.errors import SpecialistInteropError
 from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
-from app.domain.specialist_interop.rules import operation_class_for
+from app.domain.specialist_interop.model import SpecialistOperationClass
 from app.infrastructure.auth.core_platform_access import (
     CorePlatformAccessAdapter,
 )
@@ -216,21 +216,23 @@ def main() -> int:
                 )
             )
             unknown = [
-                name
-                for name in (
-                    list(catalog.blocked_remote_names)
-                    + [c.remote_name for c in catalog.capabilities]
-                )
-                if operation_class_for(specialist_id, name) is None
+                c.remote_name
+                for c in catalog.capabilities
+                if c.operation_class is SpecialistOperationClass.UNKNOWN
             ]
             entry["catalog"] = {
                 "status": "PASS",
                 "authenticated_initialize": True,
                 "authenticated_tools_list": True,
-                "remote_tool_count": len(catalog.capabilities)
-                + len(catalog.blocked_remote_names),
-                "approved_discovery": [
-                    c.remote_name for c in catalog.capabilities
+                "remote_tool_count": len(catalog.capabilities),
+                "owner_classes": {
+                    c.remote_name: c.operation_class.value
+                    for c in catalog.capabilities
+                },
+                "invocable": [
+                    c.remote_name
+                    for c in catalog.capabilities
+                    if c.remote_name not in catalog.blocked_remote_names
                 ],
                 "blocked_count": len(catalog.blocked_remote_names),
                 "unknown_remote_names": unknown,

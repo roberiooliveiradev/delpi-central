@@ -125,8 +125,12 @@ def test_list_remote_tools_maps_wire_metadata():
                 "name": "discover_delpi_information",
                 "description": "d",
                 "inputSchema": {"type": "object"},
+                "_meta": {"delpi/toolClass": "DISCOVERY"},
             },
-            {"name": "execute_delpi_information"},
+            {
+                "name": "execute_delpi_information",
+                "_meta": {"delpi/toolClass": "READ"},
+            },
         )
     )
     tools = adapter.list_remote_tools(DAVI, timeout_seconds=5.0)
@@ -135,6 +139,8 @@ def test_list_remote_tools_maps_wire_metadata():
         "execute_delpi_information",
     ]
     assert tools[0].input_schema == {"type": "object"}
+    assert tools[0].operation_class == "DISCOVERY"
+    assert tools[1].operation_class == "READ"
     assert FakeTransport.instances[0].initialized is True
 
 
@@ -193,6 +199,16 @@ def test_auth_failure_invalidates_cached_credential():
     assert provider.invalidated == [DAVI_RESOURCE]
 
 
+_DISCOVERY_TOOL = {
+    "name": "discover_delpi_information",
+    "_meta": {"delpi/toolClass": "DISCOVERY"},
+}
+_READ_TOOL = {
+    "name": "execute_delpi_information",
+    "_meta": {"delpi/toolClass": "READ"},
+}
+
+
 def _adapter_with_failing_op(op: str):
     """Transport that raises MCP_AUTHENTICATION_FAILED on `op`."""
 
@@ -202,7 +218,7 @@ def _adapter_with_failing_op(op: str):
                 raise SpecialistInteropError(
                     MCP_AUTHENTICATION_FAILED, "401"
                 )
-            return super().list_tools()
+            return (_DISCOVERY_TOOL,)
 
         def call_tool(self, name, arguments):
             if op == "call_tool":
@@ -259,27 +275,42 @@ def test_non_auth_wire_error_does_not_invalidate():
     assert provider.invalidated == []
 
 
-def test_call_rechecks_allowlist_before_wire():
+def test_call_rechecks_policy_before_tools_call():
+    """Second boundary: the owner class is re-read from a fresh
+    tools/list on the same transport — connect+list may happen, but
+    tools/call is never reached for a gated capability."""
     FakeTransport.instances.clear()
-    adapter = _adapter()
+    adapter = _adapter(
+        tools=(
+            _DISCOVERY_TOOL,
+            _READ_TOOL,
+            {"name": "commit_proposal", "_meta": {"delpi/toolClass": "ACT"}},
+        )
+    )
     for name, code in (
         ("commit_proposal_evil", UNKNOWN_CAPABILITY),
         ("execute_delpi_information", CAPABILITY_NOT_ALLOWED_IN_PHASE),
         ("prepare_x", UNKNOWN_CAPABILITY),
+        ("commit_proposal", WRITE_CAPABILITY_BLOCKED),
     ):
         with pytest.raises(SpecialistInteropError) as exc:
             adapter.call_remote_tool(
                 DAVI, name, {}, correlation_id="c", timeout_seconds=5.0
             )
         assert exc.value.code == code
-    assert FakeTransport.instances == []
+    assert all(not t.calls for t in FakeTransport.instances)
 
 
 def test_call_write_class_blocked_even_with_valid_config():
     adapter = McpSpecialistAdapter(
         {"teo": _profile()},
         credential_provider=FakeCredentialProvider(),
-        transport_factory=lambda p, t: FakeTransport(p),
+        transport_factory=lambda p, t: FakeTransport(
+            p,
+            tools=(
+                {"name": "commit_proposal", "_meta": {"delpi/toolClass": "ACT"}},
+            ),
+        ),
     )
     teo = SpecialistRef(
         specialist_id="teo", display_name="TEO", owner_ref="transformometro-api"
@@ -291,13 +322,45 @@ def test_call_write_class_blocked_even_with_valid_config():
     assert exc.value.code == WRITE_CAPABILITY_BLOCKED
 
 
+def test_call_reclassified_capability_loses_grant():
+    """Owner retypes a bound DISCOVERY tool to READ on the wire — the
+    fresh classification blocks the previously invocable call."""
+    adapter = _adapter(
+        tools=(
+            {
+                "name": "discover_delpi_information",
+                "_meta": {"delpi/toolClass": "READ"},
+            },
+        )
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        adapter.call_remote_tool(
+            DAVI,
+            "discover_delpi_information",
+            {},
+            correlation_id="c",
+            timeout_seconds=5.0,
+        )
+    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
+
+
+def test_call_untyped_capability_not_invocable():
+    adapter = _adapter(tools=({"name": "mystery_tool"},))
+    with pytest.raises(SpecialistInteropError) as exc:
+        adapter.call_remote_tool(
+            DAVI, "mystery_tool", {}, correlation_id="c", timeout_seconds=5.0
+        )
+    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
+
+
 def test_call_maps_bounded_outcome():
     adapter = _adapter(
+        tools=(_DISCOVERY_TOOL,),
         call_result={
             "content": [{"type": "text", "text": "hello"}],
             "structuredContent": {"candidates": []},
             "isError": False,
-        }
+        },
     )
     outcome = adapter.call_remote_tool(
         DAVI,
@@ -313,10 +376,11 @@ def test_call_maps_bounded_outcome():
 
 def test_call_propagates_remote_is_error():
     adapter = _adapter(
+        tools=(_DISCOVERY_TOOL,),
         call_result={
             "content": [{"type": "text", "text": "denied"}],
             "isError": True,
-        }
+        },
     )
     outcome = adapter.call_remote_tool(
         DAVI,

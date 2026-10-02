@@ -74,7 +74,7 @@ MCP_NATIVE_TOOLS: frozenset[str] = frozenset(
 # ACT class retained for commit_proposal (common governed commit).
 TOOL_CLASS: dict[str, str] = {
     "get_my_context": "READ",
-    "get_catalog": "READ",
+    "get_catalog": "DISCOVERY",
     "get_methodology_guide": "READ",
     "get_process_context": "READ",
     "analyze": "READ",

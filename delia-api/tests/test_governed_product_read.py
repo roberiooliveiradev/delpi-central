@@ -28,6 +28,7 @@ from app.application.interaction.governed_product_read import (
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.platform_access import PlatformAccessContext
 from app.application.specialist_interop.contracts import (
+    RemoteToolDescriptor,
     RemoteToolOutcome,
     SpecialistInvocationRequest,
 )
@@ -57,18 +58,68 @@ from app.infrastructure.model_invocation.deterministic_test_adapter import (
 )
 
 
+# Owner-owned advertised surface: the fake speaks for the specialist
+# catalog (owner-typed delpi/toolClass), not a DÉLIA mirror.
+DAVI_ADVERTISED_TOOLS = (
+    RemoteToolDescriptor(
+        remote_name="discover_delpi_information",
+        operation_class="DISCOVERY",
+    ),
+    RemoteToolDescriptor(
+        remote_name="execute_delpi_information",
+        operation_class="READ",
+    ),
+)
+TEO_ADVERTISED_TOOLS = (
+    RemoteToolDescriptor(
+        remote_name="get_catalog", operation_class="DISCOVERY"
+    ),
+    RemoteToolDescriptor(
+        remote_name="analyze", operation_class="READ"
+    ),
+    RemoteToolDescriptor(
+        remote_name="get_record", operation_class="READ"
+    ),
+    RemoteToolDescriptor(
+        remote_name="prepare_record_change", operation_class="PREPARE"
+    ),
+    RemoteToolDescriptor(
+        remote_name="commit_proposal", operation_class="ACT"
+    ),
+)
+VISTA_ADVERTISED_TOOLS = (
+    RemoteToolDescriptor(
+        remote_name="get_catalog", operation_class="DISCOVERY"
+    ),
+    RemoteToolDescriptor(
+        remote_name="list_playlists", operation_class="READ"
+    ),
+    RemoteToolDescriptor(
+        remote_name="prepare_change", operation_class="PREPARE"
+    ),
+    RemoteToolDescriptor(
+        remote_name="commit_proposal", operation_class="ACT"
+    ),
+)
+
+
 class FakePort:
     """Routes outcomes per remote capability name."""
 
     adapter_kind = "MCP_FAKE"
 
-    def __init__(self, outcomes=None, errors=None):
+    def __init__(self, outcomes=None, errors=None, tools=None):
         self._outcomes = dict(outcomes or {})
         self._errors = dict(errors or {})
+        self._tools = tuple(tools) if tools is not None else (
+            DAVI_ADVERTISED_TOOLS
+            + TEO_ADVERTISED_TOOLS
+            + VISTA_ADVERTISED_TOOLS
+        )
         self.calls: list[tuple] = []
 
     def list_remote_tools(self, specialist, *, timeout_seconds):
-        return ()
+        return self._tools
 
     def call_remote_tool(
         self, specialist, remote_name, arguments, *, correlation_id,

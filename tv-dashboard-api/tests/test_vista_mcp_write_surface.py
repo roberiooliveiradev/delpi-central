@@ -159,7 +159,9 @@ def test_surface_has_exactly_eight_tools():
     assert len(MCP_TOOL_NAMES) == 8
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 5
+    assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
+    assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
 
 
 # ---------------------------------------------------------------------------

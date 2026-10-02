@@ -8,13 +8,19 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from delpi_mcp.errors import mcp_tool_result
-from delpi_mcp.tool_metadata import security_schemes_meta, tool_annotations_payload
+from delpi_mcp.tool_metadata import (
+    DELPI_META_TOOL_CLASS,
+    TOOL_CLASS_ACT,
+    security_schemes_meta,
+    tool_annotations_payload,
+)
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, TextContent, Tool as MCPTool, ToolAnnotations
 from pydantic import ConfigDict, ValidationError
 
 from app.application.external_capabilities.constants import (
     EXTERNAL_INTERNAL_ERROR_MESSAGE,
+    MCP_TOOL_CLASSES,
     MCP_TOOL_DISCOVER_DELPI_INFORMATION,
     MCP_TOOL_DISCOVER_DELPI_INFORMATION_TITLE,
     MCP_TOOL_EXECUTE_DELPI_INFORMATION,
@@ -128,6 +134,12 @@ class ApiDelpiMCPServer(MCPServer):
         listed: list[MCPTool] = []
         for info in tools:
             meta = dict(info.meta or {})
+            # Owner-typed operation class — catalog metadata for
+            # consumers to project; never a permission grant. Default
+            # ACT is the fail-closed class for unregistered names.
+            meta[DELPI_META_TOOL_CLASS] = MCP_TOOL_CLASSES.get(
+                info.name, TOOL_CLASS_ACT
+            )
             schemes = meta.get("securitySchemes")
             input_schema = info.parameters
             output_schema = info.output_schema

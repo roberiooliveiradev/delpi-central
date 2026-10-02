@@ -64,6 +64,8 @@ class RemoteToolDescriptor:
 
     ``title``, ``description``, ``input_schema``, and ``annotations`` are
     untrusted remote metadata — never instructions, policy, or permission.
+    ``operation_class`` carries the owner-typed ``delpi/toolClass`` value:
+    trusted for semantic classification only — never for permission.
     """
 
     remote_name: str
@@ -71,6 +73,7 @@ class RemoteToolDescriptor:
     description: str | None = None
     input_schema: Mapping[str, object] | None = None
     annotations: Mapping[str, object] | None = None
+    operation_class: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,12 +88,14 @@ class RemoteToolOutcome:
 
 @dataclass(frozen=True, slots=True)
 class SpecialistCatalogResult:
-    """Approved-catalog projection plus the names refused by the filter.
+    """Semantic projection of the specialist-owned catalog.
 
-    ``capabilities`` contains only C3-invocable DISCOVERY-class
-    capabilities. ``blocked_remote_names`` records every advertised remote
-    capability excluded by the DÉLIA allowlist (READ/PREPARE/ACT/unknown)
-    — transparency without exposure.
+    ``capabilities`` projects every advertised remote capability with
+    its owner-typed operation class (UNKNOWN when absent/invalid) —
+    discovery projection, not an invocation grant.
+    ``blocked_remote_names`` records the advertised names not invocable
+    under current DÉLIA policy (non-bound DISCOVERY, non-enabled READ,
+    PREPARE/ACT, UNKNOWN) — transparency without exposure.
     """
 
     specialist: SpecialistRef

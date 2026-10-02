@@ -87,7 +87,7 @@ def test_tool_parity_with_gpt_actions_operation_ids() -> None:
     assert TOOL_CLASS["prepare_improvement_package"] == "PREPARE"
     assert TOOL_CLASS["prepare_record_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert TOOL_CLASS["get_catalog"] == "READ"
+    assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
     assert TOOL_CLASS["generate_from_transcript"] == "ANALYSIS"
     assert any(TOOL_CLASS[n] == "ACT" for n in MCP_TOOL_NAMES)
     assert any(TOOL_CLASS[n] == "PREPARE" for n in MCP_TOOL_NAMES)
