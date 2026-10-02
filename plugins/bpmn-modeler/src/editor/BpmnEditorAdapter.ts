@@ -13,6 +13,7 @@ import {
   BpmnPropertiesProviderModule,
 } from "bpmn-js-properties-panel";
 import { ptBrTranslateModule } from "./i18n/translate";
+import { propertiesPanelModule } from "./propertiesPanelModule";
 
 import { ApplyDiLayoutHandler } from "./layoutApply";
 import type { DiLayoutOp } from "../layout/diProposal";
@@ -110,6 +111,7 @@ export class BpmnEditorAdapter {
           ptBrTranslateModule,
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
+          propertiesPanelModule,
         ],
       });
     } else {

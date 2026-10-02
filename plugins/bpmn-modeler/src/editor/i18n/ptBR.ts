@@ -110,11 +110,13 @@ const PT_BR: Record<string, string> = {
 
   /* --- properties panel: campos --- */
   Name: "Nome",
-  ID: "ID",
+  ID: "ID BPMN",
+  "This maps to the process definition key.":
+    "Identificador técnico do elemento no arquivo BPMN. Deve ser único no diagrama. Alterações podem afetar referências externas ou integrações.",
   "Process name": "Nome do processo",
-  "Process ID": "ID do processo",
+  "Process ID": "ID BPMN do processo",
   "Participant Name": "Nome do participante",
-  "Participant ID": "ID do participante",
+  "Participant ID": "ID BPMN do participante",
   Executable: "Executável",
   "Version tag": "Tag de versão",
   "Version Tag": "Tag de versão",
@@ -236,6 +238,11 @@ const PT_BR: Record<string, string> = {
     "Elementos de fluxo devem pertencer a um pool/participante",
   "Data object must be placed within a pool/participant.":
     "Objeto de dados deve ser posicionado dentro de um pool/participante",
+
+  /* --- grupo avançado do product provider (propertiesPanelModule) --- */
+  "Advanced settings": "Configurações avançadas",
+  "Technical settings stored in the BPMN file. Changes may affect external references and integrations.":
+    "Configurações técnicas gravadas no arquivo BPMN. Alterações podem afetar referências externas ou integrações.",
 };
 
 /** Sufixos/qualificadores dos labels do popup de replace

@@ -816,7 +816,10 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                     },
                   ]}
                 />
-                <span title={HELP_TOOLTIPS.sidebar.collapse} className="bpmnm-zoom">
+                <span
+                  title={HELP_TOOLTIPS.sidebar.collapse}
+                  className="bpmnm-zoom bpmnm-side__collapse"
+                >
                   <IconButton
                     aria-label="Recolher painel lateral"
                     aria-expanded={true}

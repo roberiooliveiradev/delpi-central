@@ -200,6 +200,66 @@
   --group-background-color: transparent;
   --group-bottom-border-color: var(--delpi-ui-border);
   --sticky-group-background-color: var(--delpi-ui-surface);
+
+  /* visual parity com os controls do kit (`dashboard-filters`): tokens
+     `--delpi-ui-control-*` alimentam as vars oficiais do vendor. */
+  --text-size-base: var(--delpi-ui-control-font-size);
+  --input-height: var(--delpi-ui-control-height);
+  --input-border-radius: var(--delpi-ui-control-radius);
+  --input-border-color: var(--delpi-ui-control-border);
+  --input-background-color: var(--delpi-ui-control-bg);
+  --input-focus-background-color: var(--delpi-ui-control-bg);
+  --input-focus-border-color: var(--delpi-ui-accent);
+  --input-disabled-color: var(--delpi-ui-text-muted);
+  --input-disabled-background-color: var(--delpi-ui-surface-muted);
+  --input-disabled-border-color: var(--delpi-ui-border);
+  --input-error-background-color: color-mix(in srgb, var(--delpi-ui-danger) 8%, var(--delpi-ui-control-bg));
+  --input-error-border-color: var(--delpi-ui-danger);
+  --input-error-focus-border-color: var(--delpi-ui-danger);
+  --input-warning-background-color: color-mix(in srgb, var(--delpi-ui-warning) 10%, var(--delpi-ui-control-bg));
+  --input-warning-border-color: var(--delpi-ui-warning);
+  --input-warning-focus-border-color: var(--delpi-ui-warning);
+  --focus-ring-color: color-mix(in srgb, var(--delpi-ui-accent) 25%, transparent);
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 0px;
+  --focus-ring-error-color: color-mix(in srgb, var(--delpi-ui-danger) 40%, transparent);
+  --focus-ring-warning-color: color-mix(in srgb, var(--delpi-ui-warning) 40%, transparent);
+  --checkbox-size: 16px;
+  --checkbox-border-radius: 4px;
+  --checkbox-checked-background-color: var(--delpi-ui-accent);
+  --checkbox-checked-border-color: var(--delpi-ui-accent);
+  --toggle-switch-on-background-color: var(--delpi-ui-accent);
+  --toggle-switch-off-background-color: var(--delpi-ui-border-strong);
+  --label-offset: 5px;
+}
+
+/* padding/fonte dos fields vendor alinhados ao TextField do kit */
+.dashboard-bpmn-modeler .bio-properties-panel-input {
+  padding: 6px 10px;
+  color: var(--delpi-ui-text);
+  line-height: 1.35;
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-input::placeholder {
+  color: var(--control-placeholder, var(--delpi-ui-text-muted));
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-input:hover:not(:focus):not(:disabled) {
+  border-color: var(--delpi-ui-border-strong);
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-label,
+.dashboard-bpmn-modeler .bio-properties-panel-field .bio-properties-panel-label {
+  font-size: var(--delpi-ui-control-font-size);
+  font-weight: 500;
+  color: var(--delpi-ui-text-muted);
+}
+
+/* description/help de field — mesma linguagem dos hints do kit */
+.dashboard-bpmn-modeler .bio-properties-panel-description {
+  font-size: 12px;
+  color: var(--delpi-ui-text-muted);
+  margin-top: 4px;
 }
 
 .dashboard-bpmn-modeler .bio-properties-panel-header {
@@ -452,10 +512,15 @@
   min-width: 0;
 }
 
-.bpmnm-side__head > .bpmnm-zoom {
+/* recolher/expandir é controle estrutural da sidebar, não uma quarta tab:
+   célula própria separada da underline-nav por divisória vertical */
+.bpmnm-side__head > .bpmnm-side__collapse {
   flex: 0 0 auto;
-  align-self: center;
-  margin-inline-end: 4px;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 4px 8px;
+  border-inline-start: 1px solid var(--delpi-ui-border);
 }
 
 /* sidebar recolhida — rail de atalhos; o canvas fica com o espaço */
@@ -471,11 +536,12 @@
   padding: 8px 4px;
 }
 
+/* divisória full-width: separa o expander (controle estrutural) das tabs */
 .bpmnm-side__rail-sep {
-  width: 20px;
+  align-self: stretch;
   height: 1px;
   background: var(--delpi-ui-border);
-  margin: 2px 0;
+  margin: 4px 0 2px;
 }
 
 .bpmnm-side__content {
