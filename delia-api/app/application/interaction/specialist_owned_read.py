@@ -376,8 +376,11 @@ def _format_structured(node: object, depth: int = 0) -> list[str]:
                 lines.extend(sub or [f"{indent}  {{}}"])
             elif isinstance(value, (list, tuple)):
                 items = list(value)[:MAX_RENDER_LIST_ITEMS]
-                lines.append(f"{indent}{key}:")
-                lines.extend(_format_list(items, depth + 1))
+                if items:
+                    lines.append(f"{indent}{key}:")
+                    lines.extend(_format_list(items, depth + 1))
+                else:
+                    lines.append(f"{indent}{key}: (vazio)")
             else:
                 lines.append(f"{indent}{key}: {value}")
         return lines
