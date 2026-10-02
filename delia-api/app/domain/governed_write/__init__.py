@@ -1,11 +1,10 @@
-"""C5-GOVERNED-WRITE-FOUNDATION-01 governed-write semantic contracts."""
+"""Governed-write semantic contracts — provider-neutral orchestration."""
 
 from app.domain.governed_write.model import (
     ConfirmationDecision,
     ConfirmationReason,
     ConfirmationRecord,
     ConfirmationState,
-    GovernedWriteBinding,
     ProposalReadiness,
     StructuredConfirmation,
     WriteAuditStage,
@@ -18,14 +17,12 @@ from app.domain.governed_write.model import (
     WriteProposalPreview,
 )
 from app.domain.governed_write.rules import (
-    GOVERNED_WRITE_BINDINGS,
     bind_confirmation,
     evaluate_write_continuation,
     preview_fingerprint,
     project_proposal_preview,
     project_write_outcome,
     proposal_digest,
-    write_binding_for,
 )
 
 __all__ = [
@@ -33,8 +30,6 @@ __all__ = [
     "ConfirmationReason",
     "ConfirmationRecord",
     "ConfirmationState",
-    "GOVERNED_WRITE_BINDINGS",
-    "GovernedWriteBinding",
     "ProposalReadiness",
     "StructuredConfirmation",
     "WriteAuditStage",
@@ -51,5 +46,4 @@ __all__ = [
     "project_proposal_preview",
     "project_write_outcome",
     "proposal_digest",
-    "write_binding_for",
 ]

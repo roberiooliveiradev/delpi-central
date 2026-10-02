@@ -81,6 +81,29 @@ export type DeliaInteractionProvenance = {
   is_complete?: boolean;
 };
 
+/**
+ * Bounded confirmation surface emitted when a governed write awaits a
+ * structured user decision (ledger §6.126). Presentation/echo only:
+ * the MFE carries the non-reversible digests back verbatim on the
+ * confirmation turn — it never sees, stores, or derives the raw owner
+ * proposal handle, and never decides anything itself.
+ */
+export type DeliaConfirmationRequest = {
+  session_id: string;
+  capability_ref?: string;
+  proposal_digest: string;
+  preview_fingerprint: string;
+  expires_at_epoch?: number;
+};
+
+/** Structured decision echoed back on a confirmation turn. */
+export type DeliaConfirmationDecision = {
+  decision: "CONFIRM" | "REJECT";
+  proposal_digest: string;
+  preview_fingerprint: string;
+  session_id: string;
+};
+
 export type DeliaInteractionResult = {
   session_id: string;
   user_turn_id: string;
@@ -92,6 +115,7 @@ export type DeliaInteractionResult = {
   model_invocation_id: string;
   grounding_status: "GROUNDED" | "NON_GROUNDED" | null;
   provenance: DeliaInteractionProvenance | null;
+  confirmation_request: DeliaConfirmationRequest | null;
 };
 
 export class DeliaInteractionError extends Error {
@@ -123,6 +147,8 @@ export type SubmitInteractionTurnOptions = {
   signal?: AbortSignal;
   /** Bounded prior-turn context built from transient UI state. */
   context?: InteractionContextTurn[];
+  /** Structured confirmation for a pending write (digests only). */
+  confirmation?: DeliaConfirmationDecision;
 };
 
 export async function submitInteractionTurn(
@@ -145,11 +171,15 @@ export async function submitInteractionTurn(
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(
-        options.context && options.context.length > 0
-          ? { input, context: options.context }
-          : { input },
-      ),
+      body: JSON.stringify({
+        input,
+        ...(options.context && options.context.length > 0
+          ? { context: options.context }
+          : {}),
+        ...(options.confirmation
+          ? { confirmation: options.confirmation }
+          : {}),
+      }),
       signal: options.signal ?? null,
     });
   } catch (error) {
@@ -218,5 +248,40 @@ export async function submitInteractionTurn(
       typeof payload.provenance === "object"
         ? (payload.provenance as DeliaInteractionProvenance)
         : null,
+    confirmation_request: parseConfirmationRequest(
+      payload.confirmation_request,
+    ),
+  };
+}
+
+/**
+ * Bounded syntactic parse of the confirmation surface — digests only.
+ * Any malformed shape degrades to null (no card rendered); the backend
+ * remains the enforcing authority for binding semantics.
+ */
+function parseConfirmationRequest(
+  raw: unknown,
+): DeliaConfirmationRequest | null {
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  if (
+    typeof record.proposal_digest !== "string" ||
+    typeof record.preview_fingerprint !== "string" ||
+    typeof record.session_id !== "string"
+  ) {
+    return null;
+  }
+  return {
+    session_id: record.session_id,
+    capability_ref:
+      typeof record.capability_ref === "string"
+        ? record.capability_ref
+        : undefined,
+    proposal_digest: record.proposal_digest,
+    preview_fingerprint: record.preview_fingerprint,
+    expires_at_epoch:
+      typeof record.expires_at_epoch === "number"
+        ? record.expires_at_epoch
+        : undefined,
   };
 }

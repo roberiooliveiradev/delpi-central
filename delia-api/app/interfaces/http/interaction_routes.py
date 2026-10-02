@@ -36,8 +36,16 @@ from app.domain.evidence.model import EpistemicClass
 from app.domain.interaction.model import TurnKind
 
 
-ALLOWED_BODY_KEYS = frozenset({"input", "context"})
+ALLOWED_BODY_KEYS = frozenset({"input", "context", "confirmation"})
 CONTEXT_TURN_KEYS = frozenset({"kind", "content", "epistemic_class"})
+CONFIRMATION_KEYS = frozenset(
+    {
+        "decision",
+        "proposal_digest",
+        "preview_fingerprint",
+        "session_id",
+    }
+)
 _CONTEXT_KINDS = {
     "USER_INPUT": TurnKind.USER_INPUT,
     "DELIA_RESULT": TurnKind.DELIA_RESULT,
@@ -88,6 +96,12 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
         if parse_error is not None:
             return _error(INVALID_REQUEST, parse_error)
 
+        confirmation, conf_error = _parse_confirmation(
+            body.get("confirmation")
+        )
+        if conf_error is not None:
+            return _error(INVALID_REQUEST, conf_error)
+
         handler = current_app.config.get("INTERACTION_TURN_HANDLER")
         if handler is None:
             logger.warning("interaction_rejected reason=handler_not_configured")
@@ -97,6 +111,7 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
             access_context=getattr(g, "platform_access", None),
             input_text=input_text,
             prior_turns=prior_turns,
+            confirmation=confirmation,
         )
         try:
             result = handler.execute(command)
@@ -165,6 +180,42 @@ def _parse_context(
             )
         )
     return tuple(turns), None
+
+
+def _parse_confirmation(
+    raw: object,
+) -> tuple[dict[str, str] | None, str | None]:
+    """Syntactic validation of the untrusted confirmation payload.
+
+    A confirmation carries only structured decision fields and
+    non-reversible digests — never the raw owner proposal handle, which
+    stays backend-only. Semantic binding (actor/session/fingerprint/
+    expiry) belongs to the orchestration layer.
+    """
+    if raw is None:
+        return None, None
+    if not isinstance(raw, dict):
+        return None, "'confirmation' must be an object"
+    extra = set(raw) - CONFIRMATION_KEYS
+    if extra:
+        return None, (
+            f"'confirmation' unsupported fields: {sorted(extra)}"
+        )
+    confirmation: dict[str, str] = {}
+    for key in CONFIRMATION_KEYS:
+        value = raw.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            return None, f"'confirmation.{key}' must be a string"
+        confirmation[key] = value
+    if not confirmation.get("decision") or not confirmation.get(
+        "proposal_digest"
+    ):
+        return None, (
+            "'confirmation' requires 'decision' and 'proposal_digest'"
+        )
+    return confirmation, None
 
 
 def _log_result(logger: logging.Logger, result: InteractiveTurnResult) -> None:

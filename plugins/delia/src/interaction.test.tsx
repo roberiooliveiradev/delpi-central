@@ -425,3 +425,119 @@ describe("DÉLIA transient multi-turn continuity", () => {
     expect(sessionStorage.length).toBe(0);
   });
 });
+
+// --- ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: confirmation ---
+
+const CONFIRMATION_REQUEST = {
+  session_id: "s-1",
+  capability_ref: "vista.prepare_change",
+  proposal_digest: "a".repeat(64),
+  preview_fingerprint: "b".repeat(64),
+  expires_at_epoch: 9999999999,
+};
+
+function confirmationPayload(n: number) {
+  return {
+    ...successPayload(n),
+    content: `Prévia ${n}: confirme a alteração.`,
+    confirmation_request: CONFIRMATION_REQUEST,
+  };
+}
+
+describe("DÉLIA governed-write confirmation surface", () => {
+  it("renders a confirmation card when confirmation_request arrives", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSequence([confirmationPayload(1)]),
+    );
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("altere o nome");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("group", { name: "Confirmação pendente" }),
+      ).toBeTruthy(),
+    );
+    expect(
+      screen.getByRole("button", { name: "Confirmar" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Cancelar" }),
+    ).toBeTruthy();
+    // The digests are transport echoes — never rendered to the user.
+    expect(screen.queryByText(/a{64}/)).toBeNull();
+  });
+
+  it("Confirmar echoes the bounded digests back verbatim", async () => {
+    const fetchMock = mockFetchSequence([
+      confirmationPayload(1),
+      successPayload(2),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("altere o nome");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Confirmar" }),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(body.confirmation).toEqual({
+      decision: "CONFIRM",
+      proposal_digest: "a".repeat(64),
+      preview_fingerprint: "b".repeat(64),
+      session_id: "s-1",
+    });
+    // No raw owner handle exists client-side to leak.
+    expect(JSON.stringify(body)).not.toContain("proposal_handle");
+  });
+
+  it("Cancelar submits decision REJECT", async () => {
+    const fetchMock = mockFetchSequence([
+      confirmationPayload(1),
+      successPayload(2),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("altere o nome");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Cancelar" }),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(body.confirmation.decision).toBe("REJECT");
+  });
+
+  it("an answered confirmation card is consumed (single use)", async () => {
+    const fetchMock = mockFetchSequence([
+      confirmationPayload(1),
+      successPayload(2),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("altere o nome");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Confirmar" }),
+      ).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("group", { name: "Confirmação pendente" }),
+      ).toBeNull(),
+    );
+  });
+});

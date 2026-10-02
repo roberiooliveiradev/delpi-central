@@ -1,9 +1,13 @@
-"""C5-GOVERNED-WRITE-FOUNDATION-01 governed-write deterministic rules.
+"""Governed-write deterministic rules — provider-neutral.
 
-Foundation only: gate semantics, proposal-preview projection and
-readiness, deterministic confirmation binding, write-continuation
-decision, outcome projection, and digest/redaction helpers. No wire
-mechanics — PREPARE/ACT remote execution stays phase-gated elsewhere.
+ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126): the
+static write-binding registry (``GOVERNED_WRITE_BINDINGS`` /
+``write_binding_for`` / ``GovernedWriteBinding``) is superseded — the
+specialist owns capability existence and pairing, advertised live via
+``tools/list``. These rules only project owner payloads, bind exact
+confirmations, decide continuation and project outcomes against the
+live capability reference — no capability availability lookup exists
+here or anywhere else in DÉLIA.
 """
 
 from __future__ import annotations
@@ -17,7 +21,6 @@ from app.domain.governed_write.model import (
     ConfirmationReason,
     ConfirmationRecord,
     ConfirmationState,
-    GovernedWriteBinding,
     ProposalReadiness,
     StructuredConfirmation,
     WriteGateDecision,
@@ -27,19 +30,6 @@ from app.domain.governed_write.model import (
     WriteOutcomeStatus,
     WriteProposalPreview,
 )
-
-
-# C5-GOVERNED-WRITE-FOUNDATION-01: static DÉLIA-owned write bindings.
-# EMPTY BY DESIGN — no business binding is enabled in this task. Real
-# owner bindings (e.g. TÉO/VISTA PREPARE→ACT pairs) may appear here only
-# under an explicit future task authorization; naming a binding grants
-# nothing and a listed binding still requires enabled=True.
-GOVERNED_WRITE_BINDINGS: dict[str, GovernedWriteBinding] = {}
-
-
-def write_binding_for(binding_id: str) -> GovernedWriteBinding | None:
-    """Return the static binding, or None. Remote metadata is ignored."""
-    return GOVERNED_WRITE_BINDINGS.get(str(binding_id or "").strip())
 
 
 def proposal_digest(proposal_ref: str) -> str:
@@ -65,7 +55,7 @@ def preview_fingerprint(preview: WriteProposalPreview) -> str:
     replaces or reinterprets the owner's business state fingerprint.
     """
     canonical = {
-        "binding_id": preview.binding_id,
+        "capability_ref": preview.capability_ref,
         "owner_capability": preview.owner_capability,
         "proposal_digest": proposal_digest(preview.proposal_ref),
         "resource_ref": preview.resource_ref,
@@ -112,7 +102,8 @@ def _readiness_for(payload: Mapping[str, Any], now_epoch: float) -> ProposalRead
 
 def project_proposal_preview(
     *,
-    binding: GovernedWriteBinding,
+    capability_ref: str,
+    remote_capability: str,
     owner_payload: Mapping[str, Any],
     specialist_id: str,
     correlation_id: str,
@@ -135,9 +126,9 @@ def project_proposal_preview(
     except (TypeError, ValueError):
         expires = None
     return WriteProposalPreview(
-        binding_id=binding.binding_id,
+        capability_ref=capability_ref,
         owner_capability=str(
-            inner.get("capability") or binding.owner_operation_id
+            inner.get("capability") or remote_capability
         ).strip(),
         proposal_ref=str(inner.get("proposal_handle") or "").strip(),
         readiness=readiness,
@@ -167,6 +158,8 @@ def project_proposal_preview(
         confirmation_requirement=(
             inner.get("confirmation_requirement")
             if isinstance(inner.get("confirmation_requirement"), Mapping)
+            else inner.get("confirmationPolicy")
+            if isinstance(inner.get("confirmationPolicy"), Mapping)
             else None
         ),
         expected_postcondition=(
@@ -198,7 +191,7 @@ def bind_confirmation(
         reasons.append(ConfirmationReason.ACTOR_MISMATCH)
     if confirmation.session_id != expected_session_id:
         reasons.append(ConfirmationReason.SESSION_MISMATCH)
-    if confirmation.binding_id != preview.binding_id:
+    if confirmation.capability_ref != preview.capability_ref:
         reasons.append(ConfirmationReason.BINDING_MISMATCH)
     if confirmation.proposal_digest != proposal_digest(preview.proposal_ref):
         reasons.append(ConfirmationReason.PROPOSAL_MISMATCH)
@@ -236,33 +229,31 @@ def bind_confirmation(
 
 def evaluate_write_continuation(
     *,
-    binding: GovernedWriteBinding | None,
+    capability_live: bool,
+    confirmation_required: bool,
     preview: WriteProposalPreview | None,
     confirmation: ConfirmationRecord | None,
     now_epoch: float,
 ) -> WriteGateDecision:
-    """Decide whether a governed write may continue toward a future ACT.
+    """Decide whether a governed write may continue toward an ACT call.
 
-    Fail-closed ordering: unknown/disabled binding -> not-ready or
-    expired preview -> missing/mismatched/rejected confirmation ->
-    READY_FOR_LIVE_REVALIDATION at most. No state here authorizes ACT.
+    Fail-closed ordering: capability absent from the fresh live surface
+    -> not-ready or expired preview -> missing/mismatched/rejected
+    confirmation -> READY_FOR_LIVE_REVALIDATION at most. No state here
+    authorizes ACT.
     """
-    if binding is None:
+    capability_ref = preview.capability_ref if preview is not None else None
+    if not capability_live:
         return WriteGateDecision(
             status=WriteGateStatus.BLOCKED,
-            reason_codes=(WriteGateReason.UNKNOWN_BINDING,),
-        )
-    if not binding.enabled:
-        return WriteGateDecision(
-            status=WriteGateStatus.BLOCKED,
-            reason_codes=(WriteGateReason.BINDING_DISABLED,),
-            binding_id=binding.binding_id,
+            reason_codes=(WriteGateReason.CAPABILITY_NOT_LIVE,),
+            capability_ref=capability_ref,
         )
     if preview is None or preview.readiness is ProposalReadiness.INVALID:
         return WriteGateDecision(
             status=WriteGateStatus.BLOCKED,
             reason_codes=(WriteGateReason.PROPOSAL_NOT_READY,),
-            binding_id=binding.binding_id,
+            capability_ref=capability_ref,
         )
     if preview.readiness is ProposalReadiness.EXPIRED or (
         preview.expires_at_epoch is not None
@@ -271,43 +262,43 @@ def evaluate_write_continuation(
         return WriteGateDecision(
             status=WriteGateStatus.BLOCKED,
             reason_codes=(WriteGateReason.PROPOSAL_EXPIRED,),
-            binding_id=binding.binding_id,
+            capability_ref=capability_ref,
         )
     if preview.readiness is not ProposalReadiness.READY:
         return WriteGateDecision(
             status=WriteGateStatus.BLOCKED,
             reason_codes=(WriteGateReason.PROPOSAL_NOT_READY,),
-            binding_id=binding.binding_id,
+            capability_ref=capability_ref,
         )
-    if binding.confirmation_required and confirmation is None:
+    if confirmation_required and confirmation is None:
         return WriteGateDecision(
             status=WriteGateStatus.REQUIRES_CONFIRMATION,
             reason_codes=(WriteGateReason.CONFIRMATION_MISSING,),
-            binding_id=binding.binding_id,
+            capability_ref=capability_ref,
         )
     if confirmation is not None:
         if confirmation.state is ConfirmationState.REJECTED:
             return WriteGateDecision(
                 status=WriteGateStatus.REJECTED,
                 reason_codes=(WriteGateReason.USER_REJECTED,),
-                binding_id=binding.binding_id,
+                capability_ref=capability_ref,
             )
         if confirmation.state is not ConfirmationState.CONFIRMED:
             return WriteGateDecision(
                 status=WriteGateStatus.BLOCKED,
                 reason_codes=(WriteGateReason.CONFIRMATION_MISMATCH,),
-                binding_id=binding.binding_id,
+                capability_ref=capability_ref,
             )
-    # Strongest foundation state: the write may continue only to the
-    # future ACT boundary where live Core AuthZ + Domain revalidation
-    # MUST occur. This is never ACT_AUTHORIZED.
+    # Strongest state: the write may continue only to the ACT boundary
+    # where live Core AuthZ + Domain revalidation MUST occur. This is
+    # never ACT_AUTHORIZED.
     return WriteGateDecision(
         status=WriteGateStatus.READY_FOR_LIVE_REVALIDATION,
         reason_codes=(
             WriteGateReason.LIVE_AUTHZ_REQUIRED,
             WriteGateReason.DOMAIN_REVALIDATION_REQUIRED,
         ),
-        binding_id=binding.binding_id,
+        capability_ref=capability_ref,
         live_core_authz_required=True,
         domain_revalidation_required=True,
     )
@@ -315,14 +306,15 @@ def evaluate_write_continuation(
 
 def project_write_outcome(
     *,
-    binding: GovernedWriteBinding,
+    capability_ref: str,
+    remote_capability: str,
     owner_payload: Mapping[str, Any],
     specialist_id: str,
     correlation_id: str,
     occurred_at: str,
     limitations: tuple[str, ...] = (),
 ) -> WriteOutcomeProjection:
-    """Project a future owner ACT result into the bounded outcome.
+    """Project an owner ACT result into the bounded outcome.
 
     Technical/transport success is never VERIFIED: only an explicit
     owner-authoritative ``verified`` postcondition evidence projects
@@ -349,10 +341,10 @@ def project_write_outcome(
         postcondition = inner.get("verified_payload")
     return WriteOutcomeProjection(
         status=status,
-        binding_id=binding.binding_id,
+        capability_ref=capability_ref,
         specialist_id=specialist_id,
         owner_capability=str(
-            inner.get("capability") or binding.owner_operation_id
+            inner.get("capability") or remote_capability
         ).strip(),
         correlation_id=correlation_id,
         occurred_at=occurred_at,

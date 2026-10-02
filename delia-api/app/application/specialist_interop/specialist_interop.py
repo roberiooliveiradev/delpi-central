@@ -5,11 +5,19 @@ through the provider-neutral SpecialistInteropPort. Two independent
 fail-closed boundaries:
 
 1. here: the owner-typed ``delpi/toolClass`` classifies every
-   advertised remote capability — only capabilities with a matching
-   DÉLIA governance binding are invocable (DISCOVERY bindings, or the
-   exact enabled READ tuples); everything else is recorded as blocked;
+   advertised remote capability — every owner-typed known class is
+   governed-invocable (DISCOVERY/READ/ANALYSIS-as-READ/PREPARE/ACT);
+   UNKNOWN-class and unadvertised names fail closed;
 2. the adapter re-checks owner class + DÉLIA policy against a fresh
    tools/list before any wire invocation.
+
+ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126): the
+READ-only class gate is superseded — DÉLIA is the orchestrator of the
+full advertised owner surface. Class eligibility is orchestration
+eligibility, never permission: write-class invocations still pass the
+generic governed-write chain (confirmation, idempotency, live AuthZ,
+owner/domain authority, postcondition) orchestrated upstream, and live
+Core/Domain AuthZ is enforced by the owner at ACT time.
 
 Discovery != approval != permission. The remote specialist owns its
 catalog; DÉLIA keeps no tool-name mirror. A catalog result never grants
@@ -37,7 +45,6 @@ from app.application.specialist_interop.errors import (
     MCP_PROTOCOL_ERROR,
     UNKNOWN_CAPABILITY,
     UNKNOWN_SPECIALIST,
-    WRITE_CAPABILITY_BLOCKED,
     SpecialistInteropError,
 )
 from app.domain.specialist_interop.model import (
@@ -135,14 +142,6 @@ class SpecialistInterop:
                 "remote capability is not advertised by the specialist",
             )
         operation_class = operation_class_from_owner(tool.operation_class)
-        if operation_class in (
-            SpecialistOperationClass.PREPARE,
-            SpecialistOperationClass.ACT,
-        ):
-            raise SpecialistInteropError(
-                WRITE_CAPABILITY_BLOCKED,
-                "write-class capability is never invocable in this slice",
-            )
         if not invocable_in_interactive_phase(operation_class):
             raise SpecialistInteropError(
                 CAPABILITY_NOT_ALLOWED_IN_PHASE,
@@ -177,9 +176,10 @@ class SpecialistInterop:
     ) -> bool:
         """Catalog-level eligibility under current DÉLIA policy.
 
-        The class is specialist-owned and live: DISCOVERY and READ are
-        invocable in the current interactive phase; PREPARE/ACT/UNKNOWN
-        are discoverable but never invocable.
+        The class is specialist-owned and live: every owner-typed known
+        class is eligible for orchestration (writes still pass the
+        generic governed-write chain upstream); UNKNOWN is discoverable
+        but never invocable.
         """
         return invocable_in_interactive_phase(operation_class)
 

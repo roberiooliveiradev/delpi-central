@@ -1,8 +1,12 @@
-"""C5-GOVERNED-WRITE-FOUNDATION-01 tests — contracts, gates, adversarial.
+"""Governed-write foundation tests — contracts, gates, adversarial.
 
-Foundation only: no business PREPARE/ACT wire calls are exercised.
-Owner contracts (TÉO/VISTA proposal_handle model) are used purely as
-test fixtures.
+ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126): the
+static write-binding registry is superseded — the specialist owns
+capability existence/pairing via live tools/list. These tests lock the
+generic governance semantics bound to a live ``capability_ref``
+(``specialist_id.remote_name``): preview projection, exact-preview
+confirmation binding, fail-closed continuation gate, owner-authoritative
+outcome projection and digest-only audit.
 """
 
 from __future__ import annotations
@@ -18,8 +22,6 @@ from app.domain.governed_write import (
     ConfirmationDecision,
     ConfirmationReason,
     ConfirmationState,
-    GOVERNED_WRITE_BINDINGS,
-    GovernedWriteBinding,
     ProposalReadiness,
     StructuredConfirmation,
     WriteAuditStage,
@@ -34,25 +36,12 @@ from app.domain.governed_write import (
     project_proposal_preview,
     project_write_outcome,
     proposal_digest,
-    write_binding_for,
 )
 
 
 NOW = 1_700_000_000.0
 FUTURE = NOW + 300.0
-
-
-def _binding(**kw) -> GovernedWriteBinding:
-    args = dict(
-        binding_id="teo-record-change",
-        specialist_id="teo",
-        owner_ref="transformometro-api",
-        prepare_capability="prepare_record_change",
-        act_capability="commit_proposal",
-        owner_operation_id="gpt_manage_record",
-    )
-    args.update(kw)
-    return GovernedWriteBinding(**args)
+CAPABILITY_REF = "teo.prepare_record_change"
 
 
 def _owner_prepare_payload(**overrides) -> dict:
@@ -72,12 +61,12 @@ def _owner_prepare_payload(**overrides) -> dict:
     return payload
 
 
-def _preview(binding=None, **overrides) -> WriteProposalPreview:
-    binding = binding or _binding()
+def _preview(**overrides) -> WriteProposalPreview:
     payload = _owner_prepare_payload()
     payload.update(overrides.pop("payload_overrides", {}))
     preview = project_proposal_preview(
-        binding=binding,
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
         owner_payload=payload,
         specialist_id="teo",
         correlation_id="corr-1",
@@ -93,7 +82,7 @@ def _confirmation(preview, **overrides) -> StructuredConfirmation:
     args = dict(
         actor_user_id="user-1",
         session_id="sess-1",
-        binding_id=preview.binding_id,
+        capability_ref=preview.capability_ref,
         proposal_digest=proposal_digest(preview.proposal_ref),
         preview_fingerprint=preview_fingerprint(preview),
         decision=ConfirmationDecision.CONFIRM,
@@ -113,50 +102,54 @@ def _bound(preview, confirmation=None, **kw):
     )
 
 
-# ---------------------------------------------------------------- binding
-
-
-def test_binding_invariant_never_authorizes():
-    b = _binding(enabled=True)
-    assert b.authorizes_act() is False
-    assert b.grants_authorization() is False
-
-
-def test_binding_requires_non_empty_fields():
-    with pytest.raises(ValueError):
-        _binding(binding_id="")
-
-
-def test_binding_prepare_act_must_differ():
-    with pytest.raises(ValueError):
-        _binding(prepare_capability="x", act_capability="x")
-
-
-def test_foundation_registry_empty_and_fail_closed():
-    assert GOVERNED_WRITE_BINDINGS == {}
-    assert write_binding_for("teo-record-change") is None
-    assert write_binding_for("") is None
-    assert write_binding_for("anything") is None
-
-
-def test_unknown_binding_blocked_at_gate():
-    d = evaluate_write_continuation(
-        binding=None, preview=None, confirmation=None, now_epoch=NOW
+def _gate(preview=None, confirmation=None, **kw):
+    return evaluate_write_continuation(
+        capability_live=kw.get("capability_live", True),
+        confirmation_required=kw.get("confirmation_required", True),
+        preview=preview if preview is not None else _preview(),
+        confirmation=confirmation,
+        now_epoch=kw.get("now", NOW),
     )
-    assert d.status is WriteGateStatus.BLOCKED
-    assert WriteGateReason.UNKNOWN_BINDING in d.reason_codes
-    assert d.authorizes_act() is False
 
 
-def test_disabled_binding_blocked():
+# ------------------------------------------------------------ live surface
+
+
+def test_capability_ref_is_a_live_reference_not_a_registry_key():
+    """``capability_ref`` is the live ``specialist_id.remote_name``
+    identity — there is no local registry to resolve it against."""
+    p = _preview()
+    assert p.capability_ref == "teo.prepare_record_change"
+    assert p.authorizes_act() is False
+
+
+def test_capability_not_live_blocks_at_gate():
+    """Capability absent from the fresh live surface -> BLOCKED."""
     d = evaluate_write_continuation(
-        binding=_binding(enabled=False),
+        capability_live=False,
+        confirmation_required=True,
         preview=_preview(),
         confirmation=None,
         now_epoch=NOW,
     )
     assert d.status is WriteGateStatus.BLOCKED
-    assert WriteGateReason.BINDING_DISABLED in d.reason_codes
+    assert WriteGateReason.CAPABILITY_NOT_LIVE in d.reason_codes
+    assert d.authorizes_act() is False
+
+
+def test_no_local_write_registry_exists():
+    """The superseded static registry symbols must not exist."""
+    import app.domain.governed_write as pkg
+    import app.domain.governed_write.rules as rules
+    import app.domain.governed_write.model as model
+
+    for module in (pkg, rules, model):
+        for name in (
+            "GOVERNED_WRITE_BINDINGS",
+            "GovernedWriteBinding",
+            "write_binding_for",
+        ):
+            assert not hasattr(module, name), f"{module.__name__}.{name}"
 
 
 # ---------------------------------------------------------------- preview
@@ -206,7 +199,8 @@ def test_preview_unknown_when_readiness_inconclusive():
 
 def test_preview_unwraps_owner_data_envelope():
     p = project_proposal_preview(
-        binding=_binding(),
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
         owner_payload={"success": True, "data": _owner_prepare_payload()},
         specialist_id="teo",
         correlation_id="c",
@@ -241,7 +235,8 @@ def test_model_generated_payload_cannot_become_ready_proposal():
     fake = {"proposal_handle": "model-invented", "exact_change": {"x": 1},
             "ready": True, "expires_at": FUTURE}
     p = project_proposal_preview(
-        binding=_binding(),
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
         owner_payload=fake,
         specialist_id="teo",
         correlation_id="c",
@@ -278,9 +273,9 @@ def test_confirmation_session_mismatch_rejects():
     assert ConfirmationReason.SESSION_MISMATCH in r.reason_codes
 
 
-def test_confirmation_wrong_binding_rejects():
+def test_confirmation_wrong_capability_ref_rejects():
     p = _preview()
-    c = _confirmation(p, binding_id="other-binding")
+    c = _confirmation(p, capability_ref="teo.other_capability")
     r = _bound(p, confirmation=c)
     assert r.state is ConfirmationState.INVALIDATED
     assert ConfirmationReason.BINDING_MISMATCH in r.reason_codes
@@ -342,7 +337,7 @@ def test_confirmation_requires_all_fields():
         StructuredConfirmation(
             actor_user_id="",
             session_id="s",
-            binding_id="b",
+            capability_ref="c",
             proposal_digest="d",
             preview_fingerprint="f",
             decision=ConfirmationDecision.CONFIRM,
@@ -354,46 +349,25 @@ def test_confirmation_requires_all_fields():
 
 
 def test_gate_requires_confirmation_when_missing():
-    d = evaluate_write_continuation(
-        binding=_binding(enabled=True),
-        preview=_preview(),
-        confirmation=None,
-        now_epoch=NOW,
-    )
+    d = _gate()
     assert d.status is WriteGateStatus.REQUIRES_CONFIRMATION
     assert WriteGateReason.CONFIRMATION_MISSING in d.reason_codes
 
 
 def test_gate_blocks_not_ready_proposal():
-    d = evaluate_write_continuation(
-        binding=_binding(enabled=True),
-        preview=_preview(payload_overrides={"ready": False}),
-        confirmation=None,
-        now_epoch=NOW,
-    )
+    d = _gate(preview=_preview(payload_overrides={"ready": False}))
     assert d.status is WriteGateStatus.BLOCKED
     assert WriteGateReason.PROPOSAL_NOT_READY in d.reason_codes
 
 
 def test_gate_blocks_expired_proposal():
-    d = evaluate_write_continuation(
-        binding=_binding(enabled=True),
-        preview=_preview(payload_overrides={"expires_at": NOW - 1}),
-        confirmation=None,
-        now_epoch=NOW,
-    )
+    d = _gate(preview=_preview(payload_overrides={"expires_at": NOW - 1}))
     assert d.status is WriteGateStatus.BLOCKED
     assert WriteGateReason.PROPOSAL_EXPIRED in d.reason_codes
 
 
 def test_gate_blocks_expired_by_clock_even_if_marked_ready():
-    p = _preview()
-    d = evaluate_write_continuation(
-        binding=_binding(enabled=True),
-        preview=p,
-        confirmation=None,
-        now_epoch=FUTURE + 1,
-    )
+    d = _gate(now=FUTURE + 1)
     assert d.status is WriteGateStatus.BLOCKED
 
 
@@ -401,10 +375,7 @@ def test_gate_rejects_user_rejection():
     p = _preview()
     c = _confirmation(p, decision=ConfirmationDecision.REJECT)
     r = _bound(p, confirmation=c)
-    d = evaluate_write_continuation(
-        binding=_binding(enabled=True), preview=p, confirmation=r,
-        now_epoch=NOW,
-    )
+    d = _gate(preview=p, confirmation=r)
     assert d.status is WriteGateStatus.REJECTED
     assert WriteGateReason.USER_REJECTED in d.reason_codes
 
@@ -413,10 +384,7 @@ def test_gate_blocks_invalidated_confirmation():
     p = _preview()
     c = _confirmation(p, actor_user_id="someone-else")
     r = _bound(p, confirmation=c)
-    d = evaluate_write_continuation(
-        binding=_binding(enabled=True), preview=p, confirmation=r,
-        now_epoch=NOW,
-    )
+    d = _gate(preview=p, confirmation=r)
     assert d.status is WriteGateStatus.BLOCKED
     assert WriteGateReason.CONFIRMATION_MISMATCH in d.reason_codes
 
@@ -424,10 +392,7 @@ def test_gate_blocks_invalidated_confirmation():
 def test_gate_strongest_state_is_ready_for_live_revalidation():
     p = _preview()
     r = _bound(p)
-    d = evaluate_write_continuation(
-        binding=_binding(enabled=True), preview=p, confirmation=r,
-        now_epoch=NOW,
-    )
+    d = _gate(preview=p, confirmation=r)
     assert d.status is WriteGateStatus.READY_FOR_LIVE_REVALIDATION
     assert WriteGateReason.LIVE_AUTHZ_REQUIRED in d.reason_codes
     assert WriteGateReason.DOMAIN_REVALIDATION_REQUIRED in d.reason_codes
@@ -457,7 +422,8 @@ def test_gate_no_act_authorized_state_exists():
 
 def _outcome(payload, **kw):
     return project_write_outcome(
-        binding=_binding(enabled=True),
+        capability_ref="teo.commit_proposal",
+        remote_capability="commit_proposal",
         owner_payload=payload,
         specialist_id="teo",
         correlation_id="corr",
@@ -515,7 +481,7 @@ def _audit(**kw) -> WriteDecisionAuditRecord:
         audit_id=str(uuid.uuid4()),
         correlation_id="corr-1",
         actor_user_id="user-1",
-        binding_id="teo-record-change",
+        capability_ref=CAPABILITY_REF,
         specialist_id="teo",
         owner_capability="gpt_manage_record",
         stage=WriteAuditStage.CONFIRMATION_BOUND,
@@ -566,18 +532,24 @@ def test_audit_serialization_deterministic():
 
 
 def test_model_proposing_commit_proposal_grants_nothing():
-    # A model-shaped "capability" is just text; no code path consults it.
+    # A model-shaped "capability" is just text; no code path consults
+    # it as a local registry — the live owner surface decides.
     model_proposal = {"tool": "commit_proposal", "authoritative": True}
-    assert write_binding_for(model_proposal["tool"]) is None
-    b = _binding(enabled=True)
-    assert b.act_capability == "commit_proposal"
-    assert b.authorizes_act() is False
+    import app.domain.governed_write.rules as rules
+
+    assert not hasattr(rules, "write_binding_for")
+    preview = _preview()
+    assert preview.authorizes_act() is False
+    assert model_proposal["tool"] not in preview.capability_ref
 
 
 def test_remote_metadata_safety_claims_grant_nothing():
+    # readOnlyHint/safe annotations are untrusted data — they cannot
+    # create a binding or an authorization.
     remote_meta = {"readOnlyHint": True, "safe": True, "annotations": {}}
-    binding = write_binding_for(str(remote_meta.get("name") or ""))
-    assert binding is None
+    p = _preview()
+    assert p.authorizes_act() is False
+    assert remote_meta.get("readOnlyHint") is True  # inert metadata
 
 
 def test_handle_in_ordinary_text_is_not_confirmation():
@@ -619,6 +591,8 @@ FORBIDDEN_TYPES = {
     "DecisionPlatform",
     "AuditMicroservice",
     "WriteRegistryService",
+    # The superseded static registry type must never return.
+    "GovernedWriteBinding",
 }
 
 FORBIDDEN_FIELDS = {
@@ -657,7 +631,6 @@ def test_governed_write_models_have_no_mechanics_or_secret_fields():
     from app.domain.governed_write import model as m
 
     for cls_name in (
-        "GovernedWriteBinding",
         "WriteProposalPreview",
         "StructuredConfirmation",
         "ConfirmationRecord",
@@ -677,8 +650,9 @@ def test_governed_write_has_no_specialist_specific_branches():
         assert marker not in src
 
 
-def test_no_prepare_or_act_invocation_in_foundation():
-    # The foundation must not touch SpecialistInterop invocation paths.
+def test_governed_write_domain_has_no_invocation_paths():
+    # The domain projects payloads and decides gates; wire invocation
+    # belongs to the application/infrastructure layers.
     for path in (APP_ROOT / "domain" / "governed_write").rglob("*.py"):
         src = path.read_text()
         assert "SpecialistInterop" not in src

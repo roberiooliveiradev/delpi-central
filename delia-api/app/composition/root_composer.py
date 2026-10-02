@@ -3,8 +3,8 @@ from __future__ import annotations
 import requests
 from flask import Flask
 
-from app.application.interaction.specialist_owned_read import (
-    SpecialistOwnedRead,
+from app.application.interaction.specialist_capability_orchestration import (
+    SpecialistCapabilityOrchestrator,
 )
 from app.application.interaction.handle_interactive_turn import (
     DEFAULT_MODEL_REF as DEFAULT_INTERACTION_MODEL_REF,
@@ -184,16 +184,19 @@ def _compose_turn_handler(
     authority); deterministic validation + the owner class gate at both
     interop boundaries decide.
     """
-    # ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02: one specialist-owned read
-    # over the enabled+configured connections — live tools/list is the
-    # capability authority; no per-capability flag or static binding.
+    # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: one
+    # specialist-owned capability orchestration over the
+    # enabled+configured connections — live tools/list is the capability
+    # authority; no per-capability flag or static binding. Write-class
+    # capabilities route through the generic governed-write chain with
+    # bounded in-memory pending state.
     enabled_specialists = tuple(
         specialist_id
         for specialist_id, profile in connections.items()
         if profile.enabled and profile.endpoint
     )
-    governed_read = (
-        SpecialistOwnedRead(
+    orchestration = (
+        SpecialistCapabilityOrchestrator(
             interop,
             enabled_specialists,
             invoke_model=invoke_model,
@@ -203,7 +206,9 @@ def _compose_turn_handler(
         else None
     )
     return HandleInteractiveConversationTurn(
-        invoke_model, model_ref=model_ref, governed_read=governed_read
+        invoke_model,
+        model_ref=model_ref,
+        capability_orchestration=orchestration,
     )
 
 

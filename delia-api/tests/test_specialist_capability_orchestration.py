@@ -9,11 +9,13 @@ semantics and bounded provenance — across DAVI/TÉO/VISTA siblings.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
-from app.application.interaction.governed_read import GovernedReadStatus
-from app.application.interaction.specialist_owned_read import (
-    SpecialistOwnedRead,
+from app.application.interaction.capability_attempt import GovernedCapabilityStatus
+from app.application.interaction.specialist_capability_orchestration import (
+    SpecialistCapabilityOrchestrator,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.specialist_interop.contracts import (
@@ -62,6 +64,31 @@ DAVI_TOOLS = (
     ),
 )
 
+# Owner PREPARE->ACT structural contract: the ACT capability is the one
+# whose schema requires ``proposal_handle`` — detected from the owner
+# schema, never registered locally.
+PREPARE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "record_id": {"type": "string"},
+        "changes": {"type": "object"},
+    },
+}
+COMMIT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "proposal_handle": {"type": "string"},
+        "confirmation": {"type": "boolean"},
+        "idempotency_key": {"type": "string"},
+    },
+    "required": ["proposal_handle", "confirmation"],
+}
+DIRECT_ACT_SCHEMA = {
+    "type": "object",
+    "properties": {"target_id": {"type": "string"}},
+    "required": ["target_id"],
+}
+
 TEO_TOOLS = (
     RemoteToolDescriptor(
         remote_name="get_catalog", operation_class="DISCOVERY"
@@ -84,19 +111,52 @@ TEO_TOOLS = (
         },
     ),
     RemoteToolDescriptor(
-        remote_name="prepare_record_change", operation_class="PREPARE"
+        remote_name="prepare_record_change",
+        operation_class="PREPARE",
+        input_schema=PREPARE_SCHEMA,
     ),
-    RemoteToolDescriptor(remote_name="commit_proposal", operation_class="ACT"),
+    RemoteToolDescriptor(
+        remote_name="commit_proposal",
+        operation_class="ACT",
+        input_schema=COMMIT_SCHEMA,
+    ),
 )
 
-VISTA_TOOLS = tuple(
-    RemoteToolDescriptor(remote_name=name, operation_class=cls)
-    for name, cls in (
-        ("get_catalog", "DISCOVERY"),
-        ("list_playlists", "READ"),
-        ("prepare_change", "PREPARE"),
-        ("commit_proposal", "ACT"),
-    )
+VISTA_TOOLS = (
+    RemoteToolDescriptor(
+        remote_name="get_catalog", operation_class="DISCOVERY"
+    ),
+    RemoteToolDescriptor(
+        remote_name="list_playlists", operation_class="READ"
+    ),
+    RemoteToolDescriptor(
+        remote_name="prepare_change",
+        operation_class="PREPARE",
+        input_schema=PREPARE_SCHEMA,
+    ),
+    RemoteToolDescriptor(
+        remote_name="commit_proposal",
+        operation_class="ACT",
+        input_schema=COMMIT_SCHEMA,
+    ),
+)
+
+
+# Owner-issued PREPARE result carrying the opaque proposal handle —
+# the handle stays backend-only; only digests are projected.
+READY_PROPOSAL = RemoteToolOutcome(
+    content_text="Proposta pronta.",
+    structured={
+        "data": {
+            "capability": "prepare_change",
+            "proposal_handle": "prop-handle-1",
+            "resource_id": "playlist-1",
+            "exact_change": {"field": "name", "to": "Painel X"},
+            "validation_result": {"ready": True},
+            "ready": True,
+            "expires_at": None,
+        }
+    },
 )
 
 
@@ -181,7 +241,7 @@ def _read(
         if proposal is not None
         else None
     )
-    return SpecialistOwnedRead(
+    return SpecialistCapabilityOrchestrator(
         interop,
         specialist_ids,
         invoke_model=invoke_model,
@@ -206,7 +266,7 @@ def test_no_model_never_attempts_read():
     interaction path answers instead."""
     read = _read(_interop())
     attempt = read.attempt("Liste meus painéis")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 
 def test_model_marks_not_applicable():
@@ -215,21 +275,21 @@ def test_model_marks_not_applicable():
         proposal={"applicable": False},
     )
     attempt = read.attempt("Quanto é 2+2?")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 
 def test_empty_surface_not_applicable_when_all_specialists_healthy():
     port = FakePort(tools_by_specialist={"davi": (), "teo": (), "vista": ()})
     read = _read(_interop(port), proposal=_select("vista", "x"))
     attempt = read.attempt("Qualquer coisa")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 
 # --- dynamic READ selection (siblings) ---------------------------------
 
 
 def _assert_success(attempt, specialist_id, remote_name):
-    assert attempt.status is GovernedReadStatus.SUCCESS
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.outcome.epistemic_class is EpistemicClass.OBSERVATION
     provenance = attempt.provenance
     assert provenance.specialist_id == specialist_id
@@ -294,7 +354,8 @@ def test_metamorphic_add_remove_reclassify():
     """T0 baseline READ; T1 owner adds new_read_B -> discovered and
     invocable with zero DÉLIA code/config change; T2 owner removes it ->
     the fresh surface no longer contains it; T3 owner reclassifies
-    READ->PREPARE -> invocation blocked by class policy."""
+    READ->PREPARE -> orchestrated as a governed write preview (no
+    write executed); T4 owner drops the class -> never invocable."""
     port = FakePort(
         tools_by_specialist={
             "teo": (RemoteToolDescriptor("analyze", operation_class="READ"),)
@@ -308,7 +369,7 @@ def test_metamorphic_add_remove_reclassify():
 
     # T0: unknown to the owner -> selection rejected, no wire call.
     attempt = read.attempt("use new_read_b")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
     # T1: owner advertises new_read_b (READ) — same read object.
@@ -326,16 +387,30 @@ def test_metamorphic_add_remove_reclassify():
         RemoteToolDescriptor("analyze", operation_class="READ"),
     )
     attempt = read.attempt("use new_read_b")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
-    # T3: owner reclassifies it PREPARE — projection filters it out.
+    # T3: owner reclassifies it PREPARE — now orchestrated through the
+    # governed-write chain. The owner answered but returned no
+    # confirmable proposal -> truthful INVALID preview, no ACT call.
     port._tools["teo"] = (
         RemoteToolDescriptor("analyze", operation_class="READ"),
         RemoteToolDescriptor("new_read_b", operation_class="PREPARE"),
     )
     attempt = read.attempt("use new_read_b")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert port.calls == [("teo", "new_read_b", {})]
+    assert not any(c[1] == "commit_proposal" for c in port.calls)
+
+    # T4: owner drops the tool class — UNKNOWN is discoverable but
+    # never invocable: selection fails closed, no wire call.
+    port.calls.clear()
+    port._tools["teo"] = (
+        RemoteToolDescriptor("analyze", operation_class="READ"),
+        RemoteToolDescriptor("new_read_b", operation_class=None),
+    )
+    attempt = read.attempt("use new_read_b")
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
 
@@ -363,7 +438,7 @@ def test_model_invented_capability_rejected():
         proposal=_select("teo", "drop_all_records"),
     )
     attempt = read.attempt("apague tudo")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
 
@@ -375,23 +450,47 @@ def test_model_invented_specialist_rejected():
         proposal=_select("chatgpt", "analyze"),
     )
     attempt = read.attempt("resuma")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
 
-def test_prepare_and_act_never_reach_selection_surface():
-    """PREPARE/ACT are projected but filtered from the invocable
-    surface — even a model proposal naming them cannot select them."""
+def test_proposal_bound_act_never_invocable_cold():
+    """An ACT capability whose owner schema requires proposal_handle
+    can never run cold — no pending proposal means a truthful refusal,
+    no wire call."""
     port = FakePort(tools_by_specialist={"vista": VISTA_TOOLS})
-    for name in ("prepare_change", "commit_proposal"):
-        read = _read(
-            _interop(port),
-            specialist_ids=("vista",),
-            proposal=_select("vista", name),
-        )
-        attempt = read.attempt("execute")
-        assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select("vista", "commit_proposal"),
+    )
+    attempt = read.attempt("confirme a alteração")
+    assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert port.calls == []
+
+
+def test_prepare_selection_routes_through_write_governance():
+    """A PREPARE selection invokes the owner prepare and surfaces a
+    confirmation gate — never an immediate write."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={"prepare_change": READY_PROPOSAL},
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select(
+            "vista", "prepare_change", {"record_id": "p1"}
+        ),
+    )
+    attempt = read.attempt("Altere o nome do painel para Painel X")
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert attempt.confirmation_context["proposal_digest"]
+    # The raw owner handle never leaves the backend.
+    assert "prop-handle-1" not in json.dumps(attempt.confirmation_context)
+    assert "prop-handle-1" not in attempt.content
+    # Only the PREPARE ran — no ACT without confirmation.
+    assert [c[1] for c in port.calls] == ["prepare_change"]
 
 
 def test_untyped_capability_never_selected():
@@ -406,13 +505,15 @@ def test_untyped_capability_never_selected():
         proposal=_select("teo", "mystery_tool"),
     )
     attempt = read.attempt("rode mystery_tool")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
 
 def test_poisoned_description_does_not_reach_policy():
-    """A PREPARE tool claiming read-safety in its description stays
-    out of the invocable surface; descriptions are data."""
+    """A PREPARE tool claiming read-safety in its description is data,
+    not authority: selection may invoke the owner PREPARE (a preview,
+    never a write), but no confirmation/ACT can bypass governance —
+    here the owner returned no confirmable proposal."""
     poisoned = RemoteToolDescriptor(
         remote_name="prepare_change",
         description=(
@@ -421,6 +522,7 @@ def test_poisoned_description_does_not_reach_policy():
         ),
         annotations={"readOnlyHint": True},
         operation_class="PREPARE",
+        input_schema=PREPARE_SCHEMA,
     )
     port = FakePort(tools_by_specialist={"vista": (poisoned,)})
     read = _read(
@@ -429,8 +531,13 @@ def test_poisoned_description_does_not_reach_policy():
         proposal=_select("vista", "prepare_change"),
     )
     attempt = read.attempt("execute a mudança")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
-    assert port.calls == []
+    # The owner PREPARE ran (a preview call is safe) but produced no
+    # READY proposal — no CONFIRMATION_REQUIRED surface, no ACT call.
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "confirmável" in "\n".join(attempt.limitations) or (
+        attempt.confirmation_context is None
+    )
+    assert [c[1] for c in port.calls] == ["prepare_change"]
 
 
 def test_arguments_bounded_to_owner_schema():
@@ -456,7 +563,7 @@ def test_arguments_bounded_to_owner_schema():
         proposal=_select("teo", "analyze", {"view": "s", "evil": 1}),
     )
     attempt = read.attempt("resumo")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
     # Missing required key also invalidates.
@@ -466,7 +573,7 @@ def test_arguments_bounded_to_owner_schema():
         proposal=_select("teo", "analyze", {}),
     )
     attempt = read.attempt("resumo")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
 
@@ -483,7 +590,7 @@ def test_malformed_proposals_fail_closed():
             _interop(port), specialist_ids=("teo",), proposal=proposal
         )
         attempt = read.attempt("resumo")
-        assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+        assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
 
@@ -562,7 +669,7 @@ def test_candidate_token_never_model_supplied():
         )
     )
     attempt = read.attempt("produtos tubo")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert port.calls == []
 
 
@@ -583,7 +690,7 @@ def test_candidate_flow_fails_closed_without_single_candidate():
             },
         )
         attempt = read.attempt("produtos tubo")
-        assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+        assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
         # Discovery ran; no execute reached.
         assert [c[1] for c in port.calls] == ["discover_delpi_information"]
 
@@ -599,7 +706,7 @@ def test_candidate_args_must_satisfy_owner_schema():
         )
     )
     attempt = read.attempt("produtos tubo")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert [c[1] for c in port.calls] == ["discover_delpi_information"]
 
 
@@ -637,7 +744,7 @@ def test_chain_stops_when_candidate_schema_unsatisfiable():
         ]
     )
     attempt = read.attempt("busque tubo")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert [c[1] for c in port.calls] == ["discover_delpi_information"]
 
 
@@ -733,7 +840,7 @@ def test_multi_candidate_unresolvable_is_not_applicable():
             },
         )
         attempt = read.attempt("busque tubo")
-        assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+        assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
         assert [c[1] for c in port.calls] == [
             "discover_delpi_information"
         ]
@@ -754,7 +861,7 @@ def test_zero_candidate_discovery_renders_truthfully():
         },
     )
     attempt = read.attempt("busque zzz")
-    assert attempt.status is GovernedReadStatus.SUCCESS
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert "Discovery completed." not in (attempt.content or "")
     assert "nenhuma" in (attempt.content or "").lower()
 
@@ -801,7 +908,7 @@ def test_adversarial_model_prose_cannot_become_observation():
 
 # --- R2: generic secret/token redaction --------------------------------
 
-from app.application.interaction.specialist_owned_read import (
+from app.application.interaction.specialist_capability_orchestration import (
     _redact_text,
     _sanitize_renderable,
     render_specialist_outcome,
@@ -1236,7 +1343,7 @@ def test_domain_authz_denial_is_truthful():
         proposal=_select("vista", "list_playlists"),
     )
     attempt = read.attempt("liste minhas playlists")
-    assert attempt.status is GovernedReadStatus.AUTHZ_DENIED
+    assert attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
     assert attempt.error_code == MCP_AUTHORIZATION_DENIED
 
 
@@ -1255,7 +1362,7 @@ def test_auth_failure_is_authz_denied():
         proposal=_select("teo", "analyze"),
     )
     attempt = read.attempt("resumo")
-    assert attempt.status is GovernedReadStatus.AUTHZ_DENIED
+    assert attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
 
 
 def test_specialist_unavailable_is_source_unavailable():
@@ -1273,7 +1380,7 @@ def test_specialist_unavailable_is_source_unavailable():
         proposal=_select("teo", "analyze"),
     )
     attempt = read.attempt("resumo")
-    assert attempt.status is GovernedReadStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
 
 
 def test_catalog_failure_with_empty_surface_is_source_unavailable():
@@ -1287,7 +1394,7 @@ def test_catalog_failure_with_empty_surface_is_source_unavailable():
         proposal=_select("teo", "analyze"),
     )
     attempt = read.attempt("resumo")
-    assert attempt.status is GovernedReadStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
     assert attempt.error_code == SPECIALIST_DISABLED
 
 
@@ -1303,7 +1410,7 @@ def test_provenance_carries_no_secrets_or_internals():
         ),
     )
     attempt = read.attempt("produtos tubo")
-    assert attempt.status is GovernedReadStatus.SUCCESS
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
     blob = str(attempt.provenance) + str(attempt.content)
     for leaked in (
         "tok-owner-issued",  # candidate token never in provenance
@@ -1312,3 +1419,360 @@ def test_provenance_carries_no_secrets_or_internals():
         "http://",
     ):
         assert leaked not in blob
+
+
+# --- governed write lifecycle: PREPARE -> confirmation -> ACT --------
+#
+# Locks the generic write governance added by
+# ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126):
+# confirmation binding on every identity dimension, single-use pending
+# state, fresh live revalidation at commit, owner-authoritative outcome
+# projection, and the raw proposal handle never leaving the backend.
+
+COMMIT_VERIFIED = RemoteToolOutcome(
+    content_text="Nome alterado para Painel X.",
+    structured={
+        "data": {
+            "capability": "commit_proposal",
+            "success": True,
+            "verified": True,
+            "postcondition": {"field": "name", "value": "Painel X"},
+        }
+    },
+)
+COMMIT_UNVERIFIED = RemoteToolOutcome(
+    content_text="Alteração executada.",
+    structured={
+        "data": {"capability": "commit_proposal", "success": True}
+    },
+)
+
+
+def _vista_prepare(port=None):
+    port = port or FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "prepare_change": READY_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select(
+            "vista", "prepare_change", {"record_id": "p1"}
+        ),
+    )
+    pending = read.attempt(
+        "Altere o nome do painel para Painel X",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    return read, port, pending
+
+
+def _confirmation(attempt, **overrides):
+    ctx = attempt.confirmation_context
+    payload = {
+        "decision": "CONFIRM",
+        "proposal_digest": ctx["proposal_digest"],
+        "preview_fingerprint": ctx["preview_fingerprint"],
+        "session_id": ctx["session_id"],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_confirm_ready_proposal_invokes_owner_commit():
+    """CONFIRM binds to the exact pending proposal and invokes the
+    owner ACT capability with the raw handle verbatim, confirmation
+    flag, and a DÉLIA-generated idempotency key."""
+    read, port, pending = _vista_prepare()
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    # Fresh tools/list revalidation ran before the commit call.
+    assert port.list_calls.count("vista") >= 2
+    commit_calls = [c for c in port.calls if c[1] == "commit_proposal"]
+    assert len(commit_calls) == 1
+    _, _, args = commit_calls[0]
+    assert args["proposal_handle"] == "prop-handle-1"
+    assert args["confirmation"] is True
+    assert isinstance(args["idempotency_key"], str)
+    # Owner-authoritative verification is rendered truthfully.
+    assert "verificada" in result.content
+
+
+def test_reject_cancels_pending_write_no_act():
+    read, port, pending = _vista_prepare()
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending, decision="REJECT"),
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert [c[1] for c in port.calls] == ["prepare_change"]
+
+
+def test_confirmation_unknown_digest_rejected():
+    read, port, pending = _vista_prepare()
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending, proposal_digest="f" * 64),
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert result.error_code == "confirmation_unknown"
+    assert [c[1] for c in port.calls] == ["prepare_change"]
+
+
+def test_confirmation_actor_mismatch_denied():
+    """A confirmation bound to a different actor never reaches ACT."""
+    read, port, pending = _vista_prepare()
+    result = read.attempt(
+        "",
+        actor_user_id="other-user",
+        confirmation=_confirmation(pending),
+    )
+    assert result.status is GovernedCapabilityStatus.AUTHZ_DENIED
+    assert result.error_code == "actor_mismatch"
+    assert [c[1] for c in port.calls] == ["prepare_change"]
+
+
+def test_confirmation_session_mismatch_rejected():
+    read, port, pending = _vista_prepare()
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending, session_id="other-session"),
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert result.error_code == "session_mismatch"
+
+
+def test_confirmation_fingerprint_mismatch_rejected():
+    """Preview fingerprint mismatch => INVALIDATED, never CONFIRMED."""
+    read, port, pending = _vista_prepare()
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(
+            pending, preview_fingerprint="0" * 64
+        ),
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert result.error_code == "confirmation_mismatch"
+    assert [c[1] for c in port.calls] == ["prepare_change"]
+
+
+def test_confirmation_is_single_use_replay_rejected():
+    read, port, pending = _vista_prepare()
+    payload = _confirmation(pending)
+    first = read.attempt("", actor_user_id="u1", confirmation=payload)
+    assert first.status is GovernedCapabilityStatus.SUCCESS
+    replay = read.attempt("", actor_user_id="u1", confirmation=payload)
+    assert replay.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert replay.error_code == "confirmation_unknown"
+    assert [c[1] for c in port.calls].count("commit_proposal") == 1
+
+
+def test_expired_pending_proposal_fails_closed():
+    """An expired pending entry is evicted — confirmation_unknown."""
+    import time
+
+    from app.application.interaction.pending_proposals import (
+        PendingWrite,
+        PendingWriteStore,
+    )
+
+    store = PendingWriteStore()
+    store.put(
+        PendingWrite(
+            digest="e" * 64,
+            capability_ref="vista.prepare_change",
+            specialist_id="vista",
+            actor_user_id="u1",
+            session_id="s1",
+            expires_at_epoch=time.time() - 1,
+            created_at_epoch=time.time() - 10,
+        )
+    )
+    read = SpecialistCapabilityOrchestrator(
+        _interop(FakePort(tools_by_specialist={"vista": VISTA_TOOLS})),
+        ("vista",),
+        invoke_model=InvokeModel(
+            FakeProposalModel(_select("vista", "prepare_change"))
+        ),
+        model_ref=TEST_MODEL_REF,
+        pending_writes=store,
+    )
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation={
+            "decision": "CONFIRM",
+            "proposal_digest": "e" * 64,
+            "preview_fingerprint": "0" * 64,
+            "session_id": "s1",
+        },
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert result.error_code == "confirmation_unknown"
+
+
+def test_act_removed_from_live_surface_blocks_commit():
+    """TOCTOU: the owner drops commit_proposal between PREPARE and
+    CONFIRM — the write is rejected at the fresh live revalidation."""
+    read, port, pending = _vista_prepare()
+    port._tools["vista"] = tuple(
+        t for t in VISTA_TOOLS if t.remote_name != "commit_proposal"
+    )
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert "capability_not_live" in result.error_code
+    assert [c[1] for c in port.calls] == ["prepare_change"]
+
+
+def test_owner_denies_act_at_commit():
+    """Owner-side AuthZ denial at ACT surfaces as AUTHZ_DENIED — DÉLIA
+    confirmation never substitutes live owner/Core authorization."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={"prepare_change": READY_PROPOSAL},
+        errors={
+            ("vista", "commit_proposal"): SpecialistInteropError(
+                MCP_AUTHORIZATION_DENIED, "denied"
+            )
+        },
+    )
+    read, port, pending = _vista_prepare(port)
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+    )
+    assert result.status is GovernedCapabilityStatus.AUTHZ_DENIED
+
+
+def test_unverified_act_outcome_not_projected_as_verified():
+    """Technical success without owner ``verified`` evidence renders as
+    EXECUTION_REPORTED — never as a verified business outcome."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "prepare_change": READY_PROPOSAL,
+            "commit_proposal": COMMIT_UNVERIFIED,
+        },
+    )
+    read, port, pending = _vista_prepare(port)
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    assert "verificada pela fonte" not in result.content
+    assert "sem verificação" in result.content
+
+
+def test_raw_proposal_handle_never_leaves_backend():
+    """The owner handle appears in no attempt surface: content,
+    confirmation context, provenance, limitations."""
+    read, port, pending = _vista_prepare()
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+    )
+    blob = json.dumps(
+        {
+            "ctx": dict(pending.confirmation_context or {}),
+            "content": pending.content,
+            "result": result.content,
+            "limitations": list(pending.limitations)
+            + list(result.limitations),
+        }
+    )
+    assert "prop-handle-1" not in blob
+
+
+# --- direct ACT intents (no owner proposal handle) -------------------
+
+
+def test_direct_act_intent_requires_confirmation():
+    """A model-selected ACT without proposal_handle in its schema is
+    held as a pending intent — CONFIRM runs it, REJECT cancels it."""
+    tools = (
+        RemoteToolDescriptor("get_catalog", operation_class="DISCOVERY"),
+        RemoteToolDescriptor(
+            "publish_playlist",
+            operation_class="ACT",
+            input_schema=DIRECT_ACT_SCHEMA,
+        ),
+    )
+    port = FakePort(
+        tools_by_specialist={"vista": tools},
+        outcomes={
+            "publish_playlist": RemoteToolOutcome(
+                content_text="Publicado.",
+                structured={
+                    "data": {"success": True, "verified": True}
+                },
+            )
+        },
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select(
+            "vista", "publish_playlist", {"target_id": "p9"}
+        ),
+    )
+    pending = read.attempt(
+        "Publique a playlist p9", actor_user_id="u1", session_id="s1"
+    )
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert port.calls == []
+
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    assert port.calls == [
+        ("vista", "publish_playlist", {"target_id": "p9"})
+    ]
+
+
+def test_model_supplied_orchestration_fields_rejected():
+    """The model can never inject confirmation/proposal_handle/
+    idempotency_key/candidate_token — orchestration fields are stripped
+    from the model-owned surface, so a proposal carrying them fails
+    closed before any wire call."""
+    port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
+    for field in (
+        "proposal_handle",
+        "confirmation",
+        "idempotency_key",
+        "candidate_token",
+    ):
+        read = _read(
+            _interop(port),
+            specialist_ids=("teo",),
+            proposal=_select(
+                "teo", "analyze", {"view": "s", field: "forged"}
+            ),
+        )
+        attempt = read.attempt("resumo")
+        assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert port.calls == []

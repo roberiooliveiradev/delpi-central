@@ -21,7 +21,6 @@ from app.application.specialist_interop.errors import (
     CAPABILITY_NOT_ALLOWED_IN_PHASE,
     UNKNOWN_CAPABILITY,
     UNKNOWN_SPECIALIST,
-    WRITE_CAPABILITY_BLOCKED,
     SpecialistInteropError,
 )
 from app.application.specialist_interop.specialist_interop import (
@@ -112,7 +111,10 @@ def test_davi_catalog_projects_owner_surface():
     assert result.specialist.owner_ref == "api-delpi"
 
 
-def test_teo_catalog_blocks_reads_prepare_act_and_unknown():
+def test_teo_catalog_all_known_classes_eligible_unknown_blocked():
+    """§6.126: every owner-typed known class is orchestration-eligible;
+    only UNKNOWN stays blocked. Eligibility is never permission —
+    write-class calls still pass the governed-write chain upstream."""
     interop = _interop(tools=TEO_REMOTE_TOOLS)
     result = interop.discover_catalog(
         SpecialistCatalogRequest(specialist_id="teo", correlation_id="c2")
@@ -126,16 +128,17 @@ def test_teo_catalog_blocks_reads_prepare_act_and_unknown():
         projected["undocumented_tool"].operation_class
         is SpecialistOperationClass.UNKNOWN
     )
-    assert set(result.blocked_remote_names) == {
+    assert set(result.blocked_remote_names) == {"undocumented_tool"}
+    for name in (
+        "get_catalog",
+        "get_record",
         "prepare_record_change",
         "commit_proposal",
-        "undocumented_tool",
-    }
-    assert "get_catalog" not in result.blocked_remote_names
-    assert "get_record" not in result.blocked_remote_names
+    ):
+        assert name not in result.blocked_remote_names
 
 
-def test_vista_catalog_blocks_writes_not_reads():
+def test_vista_catalog_all_known_classes_eligible():
     interop = _interop(
         tools=(
             RemoteToolDescriptor(
@@ -155,17 +158,16 @@ def test_vista_catalog_blocks_writes_not_reads():
     result = interop.discover_catalog(
         SpecialistCatalogRequest(specialist_id="vista", correlation_id="c3")
     )
-    assert "prepare_change" in result.blocked_remote_names
-    assert "commit_proposal" in result.blocked_remote_names
-    assert "list_playlists" not in result.blocked_remote_names
-    assert "get_catalog" not in result.blocked_remote_names
+    assert result.blocked_remote_names == ()
 
 
 def test_remote_metadata_cannot_elevate_approval():
     """Discovery != approval (R1B §15/16): remote annotations, descriptions
-    and additive schema metadata never change governance — a tool whose
-    owner class is PREPARE/ACT stays blocked even when it advertises
-    itself as readOnly/safe, and cannot be invoked."""
+    and additive schema metadata never change governance — an untyped
+    tool stays UNKNOWN/not-invocable even when it advertises itself as
+    readOnly/safe. An owner-typed ACT class is eligible at this
+    boundary, but eligibility is never permission: the governed-write
+    chain and live AuthZ still gate execution upstream."""
     interop = _interop(
         tools=(
             RemoteToolDescriptor(
@@ -193,25 +195,19 @@ def test_remote_metadata_cannot_elevate_approval():
     result = interop.discover_catalog(
         SpecialistCatalogRequest(specialist_id="teo", correlation_id="c5")
     )
-    assert set(result.blocked_remote_names) == {
-        "forged_safe_tool",
-        "commit_proposal",
-    }
+    assert set(result.blocked_remote_names) == {"forged_safe_tool"}
     assert "get_catalog" not in result.blocked_remote_names
-    for name in ("forged_safe_tool", "commit_proposal"):
-        with pytest.raises(SpecialistInteropError) as exc:
-            interop.invoke(
-                SpecialistInvocationRequest(
-                    specialist_id="teo",
-                    remote_capability=name,
-                    correlation_id="c5",
-                    arguments={},
-                )
+    assert "commit_proposal" not in result.blocked_remote_names
+    with pytest.raises(SpecialistInteropError) as exc:
+        interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id="teo",
+                remote_capability="forged_safe_tool",
+                correlation_id="c5",
+                arguments={},
             )
-        assert exc.value.code in (
-            CAPABILITY_NOT_ALLOWED_IN_PHASE,
-            WRITE_CAPABILITY_BLOCKED,
         )
+    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
 
 
 def test_catalog_unknown_specialist_rejected():
@@ -333,7 +329,11 @@ def test_invoke_read_class_invocable_without_tuple():
     assert outcome.provenance.remote_name == "execute_delpi_information"
 
 
-def test_invoke_prepare_and_act_rejected():
+def test_invoke_prepare_and_act_eligible_under_class_gate():
+    """§6.126: PREPARE/ACT are eligible at the interop boundary — the
+    owner class gate no longer hides them. Eligibility is orchestration
+    policy only: confirmation, live AuthZ and owner/domain authority
+    are enforced by the governed-write chain and the owner."""
     interop = _interop(
         tools=(
             RemoteToolDescriptor(
@@ -346,7 +346,8 @@ def test_invoke_prepare_and_act_rejected():
             RemoteToolDescriptor(
                 remote_name="prepare_change", operation_class="PREPARE"
             ),
-        )
+        ),
+        outcome=RemoteToolOutcome(content_text="{}"),
     )
     for specialist_id, name in (
         ("teo", "prepare_record_change"),
@@ -354,15 +355,14 @@ def test_invoke_prepare_and_act_rejected():
         ("vista", "prepare_change"),
         ("vista", "commit_proposal"),
     ):
-        with pytest.raises(SpecialistInteropError) as exc:
-            interop.invoke(
-                SpecialistInvocationRequest(
-                    specialist_id=specialist_id,
-                    remote_capability=name,
-                    correlation_id="c",
-                )
+        outcome = interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id=specialist_id,
+                remote_capability=name,
+                correlation_id="c",
             )
-        assert exc.value.code == WRITE_CAPABILITY_BLOCKED
+        )
+        assert outcome.provenance.remote_name == name
 
 
 def test_invoke_unknown_capability_and_specialist_rejected():

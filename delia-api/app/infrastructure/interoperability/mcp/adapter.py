@@ -4,9 +4,13 @@ Binds the approved-specialist registry to the DELPI MCP wire profile.
 Second independent fail-closed boundary: before any wire invocation the
 owner-typed ``delpi/toolClass`` is re-read from a fresh ``tools/list``
 on the same transport and re-checked against DÉLIA policy — unknown
-specialist, unconfigured/disabled profile, unadvertised capability,
-PREPARE/ACT, unbound DISCOVERY, and non-enabled READ are refused
-before ``tools/call`` is sent.
+specialist, unconfigured/disabled profile, unadvertised capability, and
+UNKNOWN-class capabilities are refused before ``tools/call`` is sent.
+Every owner-typed known class (DISCOVERY/READ/ANALYSIS-as-READ/
+PREPARE/ACT) is eligible; class eligibility is orchestration policy,
+never permission — write-class calls still pass the generic
+governed-write chain upstream and live Core/Domain AuthZ at the owner
+(ledger §6.126).
 
 No business rules, no specialist-specific logic, no generic HTTP/MCP
 proxy: connections come only from approved-specialist configuration.
@@ -29,11 +33,9 @@ from app.application.specialist_interop.errors import (
     SPECIALIST_NOT_CONFIGURED,
     UNKNOWN_CAPABILITY,
     UNKNOWN_SPECIALIST,
-    WRITE_CAPABILITY_BLOCKED,
     SpecialistInteropError,
 )
 from app.domain.specialist_interop.model import (
-    SpecialistOperationClass,
     SpecialistRef,
 )
 from app.domain.specialist_interop.rules import (
@@ -211,9 +213,9 @@ class McpSpecialistAdapter:
 
         The owner-typed ``delpi/toolClass`` is re-read here — a
         reclassified or removed capability cannot ride a stale grant.
-        Class is orchestration policy, not permission: DISCOVERY and
-        READ are invocable; PREPARE/ACT/UNKNOWN are refused before
-        ``tools/call``.
+        Class is orchestration policy, not permission: every owner-typed
+        known class is eligible; UNKNOWN-class and unadvertised names
+        are refused before ``tools/call``.
         """
         tool = next(
             (
@@ -237,18 +239,10 @@ class McpSpecialistAdapter:
             meta.get("delpi/toolClass") if isinstance(meta, Mapping) else None
         )
         operation_class = operation_class_from_owner(raw_class)
-        if operation_class in (
-            SpecialistOperationClass.PREPARE,
-            SpecialistOperationClass.ACT,
-        ):
-            raise SpecialistInteropError(
-                WRITE_CAPABILITY_BLOCKED,
-                "write-class capability is never invocable in this slice",
-            )
         if not invocable_in_interactive_phase(operation_class):
             raise SpecialistInteropError(
                 CAPABILITY_NOT_ALLOWED_IN_PHASE,
-                "capability requires a DÉLIA governance binding",
+                "capability class is not eligible for orchestration",
             )
 
     @staticmethod

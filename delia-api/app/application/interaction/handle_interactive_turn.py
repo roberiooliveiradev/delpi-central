@@ -25,9 +25,9 @@ from app.application.interaction.contracts import (
     InteractiveTurnRequest,
     InteractiveTurnResult,
 )
-from app.application.interaction.governed_read import (
-    GovernedReadStatus,
-    SupportsGovernedReadAttempt,
+from app.application.interaction.capability_attempt import (
+    GovernedCapabilityStatus,
+    SupportsGovernedCapabilityAttempt,
 )
 from app.application.interaction.errors import (
     CONTEXT_TOO_LARGE,
@@ -137,7 +137,7 @@ class HandleInteractiveConversationTurn:
         instruction_lineage: InstructionLineage | None = None,
         instruction_content: str | None = None,
         timeout_seconds: float = INTERACTION_TIMEOUT_SECONDS,
-        governed_read: SupportsGovernedReadAttempt | None = None,
+        capability_orchestration: SupportsGovernedCapabilityAttempt | None = None,
     ) -> None:
         self._invoke_model = invoke_model
         self._model_ref = model_ref
@@ -148,9 +148,11 @@ class HandleInteractiveConversationTurn:
             DELIA_INTERACTION_INSTRUCTION
         )
         self._timeout_seconds = timeout_seconds
-        # C4-MCP-GOVERNED-READS-01: optional bounded governed read. When
-        # absent the handler behaves exactly like the C3 runtime.
-        self._governed_read = governed_read
+        # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: optional
+        # bounded capability orchestration (all owner classes under
+        # generic governance). When absent the handler behaves exactly
+        # like the C3 runtime.
+        self._capability_orchestration = capability_orchestration
 
     def execute(self, request: InteractiveTurnRequest) -> InteractiveTurnResult:
         self._require_access(request.access_context)
@@ -177,24 +179,42 @@ class HandleInteractiveConversationTurn:
                 ",".join(code.value for code in user_validation.error_codes),
             )
 
-        # C4-MCP-GOVERNED-READS-01/02: the bounded governed reads are
-        # tried first. Model selection/answers never authorize them —
-        # static bindings, owner discovery, and deterministic
-        # validation do.
+        # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: the bounded
+        # governed capability orchestration is tried first. Model
+        # selection/answers never authorize anything — the fresh live
+        # owner surface, deterministic validation and the write
+        # governance chain decide.
         attempt = (
-            self._governed_read.attempt(input_text)
-            if self._governed_read is not None
+            self._capability_orchestration.attempt(
+                input_text,
+                actor_user_id=request.access_context.user_id,
+                session_id=session.session_id,
+                confirmation=request.confirmation,
+            )
+            if self._capability_orchestration is not None
             else None
         )
 
-        if attempt is not None and attempt.status is GovernedReadStatus.SUCCESS:
+        if attempt is not None and (
+            attempt.status is GovernedCapabilityStatus.SUCCESS
+        ):
             return self._grounded_result(session, user_turn, attempt)
+
+        if attempt is not None and attempt.status in (
+            GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
+            GovernedCapabilityStatus.WRITE_REJECTED,
+        ):
+            # Write-class lifecycle answers are deterministic and
+            # truthful — never routed through the model.
+            return self._write_lifecycle_result(
+                session, user_turn, attempt
+            )
 
         model_result = self._invoke(input_text, prior_turns)
         content, limitations = self._validate_result(model_result)
         if attempt is not None and attempt.status in (
-            GovernedReadStatus.SOURCE_UNAVAILABLE,
-            GovernedReadStatus.AUTHZ_DENIED,
+            GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+            GovernedCapabilityStatus.AUTHZ_DENIED,
         ):
             # Truthful fallback: the model may answer from general
             # knowledge but the response must disclose that current
@@ -319,7 +339,7 @@ class HandleInteractiveConversationTurn:
 
         Deterministic rendering only — the bound read already produced
         the bounded content/limitations at the binding edge; no model
-        wording is needed (OPERATIONAL path). The governed read outcome
+        wording is needed (OPERATIONAL path). The governed capability outcome
         stays OBSERVATION; grounding marks provenance, never FACT
         elevation.
         """
@@ -364,6 +384,70 @@ class HandleInteractiveConversationTurn:
             model_invocation_id=None,
             grounding_status=GroundingStatus.GROUNDED,
             provenance=provenance,
+        )
+
+    def _write_lifecycle_result(
+        self,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+        attempt,
+    ) -> InteractiveTurnResult:
+        """Record a deterministic write-lifecycle DELIA_RESULT.
+
+        CONFIRMATION_REQUIRED carries the bounded confirmation surface
+        (digests only — never the raw owner proposal handle) and marks
+        provenance when the pending write came from an owner PREPARE.
+        WRITE_REJECTED is a truthful refusal/cancellation — never a
+        model narration and never a fabricated success.
+        """
+        content = attempt.content
+        if not isinstance(content, str) or not content.strip():
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "write lifecycle attempt produced no bounded content",
+            )
+        provenance = attempt.provenance
+        grounded = provenance is not None
+        result_turn = InteractionTurn(
+            turn_id=str(uuid.uuid4()),
+            session_id=session.session_id,
+            kind=TurnKind.DELIA_RESULT,
+            content=content,
+            occurred_at=_now_utc(),
+            epistemic_class=(
+                EpistemicClass.OBSERVATION
+                if grounded
+                else EpistemicClass.CONCLUSION
+            ),
+            source_refs=(
+                provenance.source_refs if grounded else ()
+            ),
+            limitations=attempt.limitations,
+        )
+        session, result_validation = record_interaction_turn(
+            session, result_turn
+        )
+        if not result_validation.valid:
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "write lifecycle DELIA_RESULT turn rejected by session rules",
+            )
+        return InteractiveTurnResult(
+            session_id=session.session_id,
+            user_turn_id=user_turn.turn_id,
+            result_turn_id=result_turn.turn_id,
+            content=content,
+            epistemic_class=result_turn.epistemic_class,
+            limitations=attempt.limitations,
+            generated_at=_now_utc(),
+            model_invocation_id=None,
+            grounding_status=(
+                GroundingStatus.GROUNDED
+                if grounded
+                else GroundingStatus.NON_GROUNDED
+            ),
+            provenance=provenance,
+            confirmation_request=attempt.confirmation_context,
         )
 
     def _invoke(
@@ -464,6 +548,13 @@ def serialize_result(result: InteractiveTurnResult) -> Mapping[str, Any]:
         "provenance": (
             result.provenance.to_projection()
             if result.provenance is not None
+            else None
+        ),
+        # Bounded confirmation surface (digests only — never raw owner
+        # proposal handles) emitted when a write awaits confirmation.
+        "confirmation_request": (
+            dict(result.confirmation_request)
+            if result.confirmation_request is not None
             else None
         ),
     }

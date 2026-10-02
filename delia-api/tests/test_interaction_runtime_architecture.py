@@ -112,10 +112,17 @@ def test_instruction_lineage_bound_and_not_user_overridable():
     assert lineage.version == "2"
     assert len(lineage.content_hash) == 64
     # The request contract exposes no prompt/instruction override fields.
+    # ``confirmation`` is a bounded digest-only write payload, never a
+    # prompt or authority override (§6.126).
     request_fields = {
         f.name for f in contracts.InteractiveTurnRequest.__dataclass_fields__.values()
     }
-    assert request_fields == {"access_context", "input_text", "prior_turns"}
+    assert request_fields == {
+        "access_context",
+        "input_text",
+        "prior_turns",
+        "confirmation",
+    }
 
 
 def test_single_http_route_shape():

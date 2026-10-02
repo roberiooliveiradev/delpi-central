@@ -6,7 +6,10 @@ import {
   buildInteractionContext,
   submitInteractionTurn,
 } from "./api/interactionClient";
-import type { DeliaInteractionProvenance } from "./api/interactionClient";
+import type {
+  DeliaConfirmationRequest,
+  DeliaInteractionProvenance,
+} from "./api/interactionClient";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -32,6 +35,10 @@ type DisplayTurn = {
   limitations?: string[];
   groundingStatus?: "GROUNDED" | "NON_GROUNDED" | null;
   provenance?: DeliaInteractionProvenance | null;
+  /** Bounded pending-write confirmation surface (digests only). */
+  confirmationRequest?: DeliaConfirmationRequest | null;
+  /** The structured decision was already submitted for this request. */
+  confirmationAnswered?: boolean;
 };
 
 const TOKEN_UNAVAILABLE_MESSAGE =
@@ -80,9 +87,15 @@ export default function App({
     [],
   );
 
-  async function handleSubmit() {
-    const value = input.trim();
-    if (!value || loading) return;
+  async function sendTurn(
+    value: string,
+    confirmation?: {
+      decision: "CONFIRM" | "REJECT";
+      proposal_digest: string;
+      preview_fingerprint: string;
+      session_id: string;
+    },
+  ) {
     if (!getAccessToken || !getAccessToken()) {
       setError(TOKEN_UNAVAILABLE_MESSAGE);
       return;
@@ -98,9 +111,16 @@ export default function App({
         getAccessToken,
         signal: controller.signal,
         context: buildInteractionContext(turns),
+        confirmation,
       });
       setTurns((previous) => [
-        ...previous,
+        // A submitted decision consumes the earlier pending card —
+        // the backend is the authority; this is presentation only.
+        ...previous.map((turn) =>
+          turn.confirmationRequest
+            ? { ...turn, confirmationAnswered: true }
+            : turn,
+        ),
         { id: result.user_turn_id, role: "user", content: value },
         {
           id: result.result_turn_id,
@@ -110,6 +130,7 @@ export default function App({
           limitations: result.limitations,
           groundingStatus: result.grounding_status,
           provenance: result.provenance,
+          confirmationRequest: result.confirmation_request,
         },
       ]);
       setInput("");
@@ -128,6 +149,34 @@ export default function App({
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSubmit() {
+    const value = input.trim();
+    if (!value || loading) return;
+    await sendTurn(value);
+  }
+
+  /**
+   * Governed-write confirmation (ledger §6.126): the MFE echoes the
+   * bounded digests back verbatim — it never sees the raw owner
+   * handle and never makes any authorization decision.
+   */
+  async function handleConfirmation(
+    request: DeliaConfirmationRequest,
+    decision: "CONFIRM" | "REJECT",
+  ) {
+    if (loading) return;
+    const label =
+      decision === "CONFIRM"
+        ? "Confirmação da operação solicitada."
+        : "Cancelamento da operação solicitada.";
+    await sendTurn(label, {
+      decision,
+      proposal_digest: request.proposal_digest,
+      preview_fingerprint: request.preview_fingerprint,
+      session_id: request.session_id,
+    });
   }
 
   return (
@@ -174,6 +223,41 @@ export default function App({
                     <span className="delia-turn__meta">
                       limitações: {turn.limitations.join(", ")}
                     </span>
+                  ) : null}
+                  {turn.confirmationRequest &&
+                  !turn.confirmationAnswered ? (
+                    <div
+                      className="delia-confirmation"
+                      role="group"
+                      aria-label="Confirmação pendente"
+                    >
+                      <button
+                        type="button"
+                        className="delia-confirmation__confirm"
+                        disabled={loading}
+                        onClick={() =>
+                          void handleConfirmation(
+                            turn.confirmationRequest as DeliaConfirmationRequest,
+                            "CONFIRM",
+                          )
+                        }
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        type="button"
+                        className="delia-confirmation__cancel"
+                        disabled={loading}
+                        onClick={() =>
+                          void handleConfirmation(
+                            turn.confirmationRequest as DeliaConfirmationRequest,
+                            "REJECT",
+                          )
+                        }
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   ) : null}
                 </li>
               ))}

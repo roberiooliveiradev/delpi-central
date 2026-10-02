@@ -25,7 +25,6 @@ from app.application.specialist_interop.errors import (
     SPECIALIST_DISABLED,
     SPECIALIST_NOT_CONFIGURED,
     UNKNOWN_CAPABILITY,
-    WRITE_CAPABILITY_BLOCKED,
     SpecialistInteropError,
 )
 from app.domain.specialist_interop.model import SpecialistRef
@@ -278,7 +277,9 @@ def test_non_auth_wire_error_does_not_invalidate():
 def test_call_rechecks_policy_before_tools_call():
     """Second boundary: the owner class is re-read from a fresh
     tools/list on the same transport — connect+list may happen, but
-    tools/call is never reached for a gated capability."""
+    tools/call is never reached for an unadvertised name. Every
+    owner-typed known class is eligible at this boundary (§6.126);
+    write governance lives upstream."""
     FakeTransport.instances.clear()
     adapter = _adapter(
         tools=(
@@ -290,7 +291,6 @@ def test_call_rechecks_policy_before_tools_call():
     for name, code in (
         ("commit_proposal_evil", UNKNOWN_CAPABILITY),
         ("prepare_x", UNKNOWN_CAPABILITY),
-        ("commit_proposal", WRITE_CAPABILITY_BLOCKED),
     ):
         with pytest.raises(SpecialistInteropError) as exc:
             adapter.call_remote_tool(
@@ -298,18 +298,24 @@ def test_call_rechecks_policy_before_tools_call():
             )
         assert exc.value.code == code
     assert all(not t.calls for t in FakeTransport.instances)
-    # READ is invocable through the same boundary (§6.118).
+    # READ and owner-typed ACT are both eligible at this boundary.
     adapter.call_remote_tool(
         DAVI, "execute_delpi_information", {"candidate_token": "t"},
         correlation_id="c2", timeout_seconds=5.0,
     )
-    assert any(
-        "execute_delpi_information" in [n for n, _ in t.calls]
-        for t in FakeTransport.instances
+    adapter.call_remote_tool(
+        DAVI, "commit_proposal", {"proposal_handle": "h"},
+        correlation_id="c3", timeout_seconds=5.0,
     )
+    wire = [n for t in FakeTransport.instances for n, _ in t.calls]
+    assert "execute_delpi_information" in wire
+    assert "commit_proposal" in wire
 
 
-def test_call_write_class_blocked_even_with_valid_config():
+def test_call_write_class_reaches_wire_when_owner_typed():
+    """Owner-typed ACT is eligible at the adapter boundary (§6.126) —
+    governed-write confirmation/AuthZ is enforced upstream; the owner
+    still revalidates live AuthZ at ACT time."""
     adapter = McpSpecialistAdapter(
         {"teo": _profile()},
         credential_provider=FakeCredentialProvider(),
@@ -323,16 +329,18 @@ def test_call_write_class_blocked_even_with_valid_config():
     teo = SpecialistRef(
         specialist_id="teo", display_name="TEO", owner_ref="transformometro-api"
     )
-    with pytest.raises(SpecialistInteropError) as exc:
-        adapter.call_remote_tool(
-            teo, "commit_proposal", {}, correlation_id="c", timeout_seconds=5.0
-        )
-    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
+    outcome = adapter.call_remote_tool(
+        teo, "commit_proposal", {"proposal_handle": "h"},
+        correlation_id="c", timeout_seconds=5.0,
+    )
+    assert outcome.is_error is False
 
 
-def test_call_reclassified_capability_loses_grant():
+def test_call_reclassified_capability_follows_fresh_owner_class():
     """Owner retypes a capability READ->PREPARE on the wire — the fresh
-    classification blocks the previously invocable call."""
+    classification is honored (the call is treated as a write-class
+    invocation, never a stale read grant). Retyping to an
+    unclassifiable/absent class still fails closed."""
     adapter = _adapter(
         tools=(
             {
@@ -341,15 +349,33 @@ def test_call_reclassified_capability_loses_grant():
             },
         )
     )
+    outcome = adapter.call_remote_tool(
+        DAVI,
+        "execute_delpi_information",
+        {},
+        correlation_id="c",
+        timeout_seconds=5.0,
+    )
+    assert outcome.is_error is False
+    assert any(
+        "execute_delpi_information" in [n for n, _ in t.calls]
+        for t in FakeTransport.instances
+    )
+
+    adapter2 = _adapter(
+        tools=(
+            {"name": "execute_delpi_information", "_meta": {}},
+        )
+    )
     with pytest.raises(SpecialistInteropError) as exc:
-        adapter.call_remote_tool(
+        adapter2.call_remote_tool(
             DAVI,
             "execute_delpi_information",
             {},
             correlation_id="c",
             timeout_seconds=5.0,
         )
-    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
+    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
 
 
 def test_call_untyped_capability_not_invocable():

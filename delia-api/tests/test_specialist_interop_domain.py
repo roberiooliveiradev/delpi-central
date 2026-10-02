@@ -119,29 +119,35 @@ def test_owner_class_mapping_fail_closed():
     )
 
 
-def test_interactive_gate_allows_discovery_and_read():
-    """ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 class gate — no per-name
-    or per-flag narrowing remains."""
+def test_interactive_gate_allows_all_known_owner_classes():
+    """ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 class gate —
+    every owner-typed known class is orchestration-eligible; no
+    per-name or per-flag narrowing exists. Eligibility is never
+    permission — the governed-write chain and live AuthZ apply
+    downstream."""
     assert INTERACTIVE_INVOCABLE_CLASSES == frozenset(
         {
             SpecialistOperationClass.DISCOVERY,
             SpecialistOperationClass.READ,
+            SpecialistOperationClass.PREPARE,
+            SpecialistOperationClass.ACT,
         }
     )
     for cls in (
         SpecialistOperationClass.DISCOVERY,
         SpecialistOperationClass.READ,
+        SpecialistOperationClass.PREPARE,
+        SpecialistOperationClass.ACT,
     ):
         assert invocable_in_interactive_phase(cls) is True
 
 
-def test_interactive_gate_blocks_writes_and_unknown():
-    for cls in (
-        SpecialistOperationClass.PREPARE,
-        SpecialistOperationClass.ACT,
-        SpecialistOperationClass.UNKNOWN,
-    ):
-        assert invocable_in_interactive_phase(cls) is False
+def test_interactive_gate_blocks_unknown_class():
+    """UNKNOWN (absent/invalid owner typing) is discoverable but never
+    invocable — the only class excluded from orchestration."""
+    assert invocable_in_interactive_phase(
+        SpecialistOperationClass.UNKNOWN
+    ) is False
 
 
 def test_capability_descriptor_grants_nothing():

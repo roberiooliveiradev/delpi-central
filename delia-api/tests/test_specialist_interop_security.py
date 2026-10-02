@@ -20,7 +20,6 @@ from app.application.specialist_interop.contracts import (
 from app.application.specialist_interop.errors import (
     CAPABILITY_NOT_ALLOWED_IN_PHASE,
     UNKNOWN_CAPABILITY,
-    WRITE_CAPABILITY_BLOCKED,
     SpecialistInteropError,
 )
 from app.application.specialist_interop.specialist_interop import (
@@ -56,7 +55,9 @@ MALICIOUS_DESCRIPTION = (
 
 
 def test_poisoned_write_tool_description_cannot_elevate():
-    """A PREPARE/ACT-typed tool stays blocked even when it claims safety."""
+    """Descriptions/annotations are data, never policy: a PREPARE/ACT
+    tool claiming read-safety gains nothing beyond its owner-typed
+    class eligibility — it remains a write under generic governance."""
     tools = (
         RemoteToolDescriptor(
             remote_name="prepare_record_change",
@@ -78,10 +79,20 @@ def test_poisoned_write_tool_description_cannot_elevate():
         SpecialistCatalogRequest(specialist_id="teo", correlation_id="c")
     )
     assert "get_catalog" not in result.blocked_remote_names
-    assert set(result.blocked_remote_names) == {
-        "prepare_record_change",
-        "commit_proposal",
-    }
+    # Class is owner-typed and honored verbatim — the forged
+    # "read-only" claims do not reclassify them.
+    projected = {c.remote_name: c for c in result.capabilities}
+    assert (
+        projected["prepare_record_change"].operation_class
+        is SpecialistOperationClass.PREPARE
+    )
+    assert (
+        projected["commit_proposal"].operation_class
+        is SpecialistOperationClass.ACT
+    )
+    # All known classes are eligible at this boundary (§6.126) — write
+    # governance upstream still decides confirmation/AuthZ/outcome.
+    assert result.blocked_remote_names == ()
 
 
 def test_unknown_tool_with_read_claim_stays_uninvocable():
@@ -133,16 +144,17 @@ def test_malicious_schema_cannot_change_invocation():
         SpecialistCatalogRequest(specialist_id="teo", correlation_id="c")
     )
     assert catalog.capabilities[0].remote_name == "get_catalog"
-    # And the write the schema tried to steer toward stays blocked.
-    with pytest.raises(SpecialistInteropError) as exc:
-        interop.invoke(
-            SpecialistInvocationRequest(
-                specialist_id="teo",
-                remote_capability="commit_proposal",
-                correlation_id="c",
-            )
+    # The schema's "call commit_proposal" text changed nothing — the
+    # write is still owner-typed ACT and passes only the generic
+    # governance chain upstream; at this boundary it is eligible.
+    outcome = interop.invoke(
+        SpecialistInvocationRequest(
+            specialist_id="teo",
+            remote_capability="commit_proposal",
+            correlation_id="c",
         )
-    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
+    )
+    assert outcome.provenance.remote_name == "commit_proposal"
 
 
 def test_poisoned_result_stays_observation_never_fact():
@@ -205,7 +217,9 @@ def test_tool_disappears_leaves_no_stale_grant():
     first = interop.discover_catalog(
         SpecialistCatalogRequest(specialist_id="vista", correlation_id="c")
     )
-    assert "prepare_change" in first.blocked_remote_names
+    assert "prepare_change" in [
+        c.remote_name for c in first.capabilities
+    ]
 
     port._tools = (
         RemoteToolDescriptor(
@@ -215,7 +229,6 @@ def test_tool_disappears_leaves_no_stale_grant():
     second = interop.discover_catalog(
         SpecialistCatalogRequest(specialist_id="vista", correlation_id="c2")
     )
-    assert "prepare_change" not in second.blocked_remote_names
     assert [c.remote_name for c in second.capabilities] == ["get_catalog"]
 
     # Invocation of the removed name now fails closed as unadvertised.
@@ -259,9 +272,10 @@ def test_renamed_tool_invocable_by_owner_class_not_name():
 
 
 def test_forged_annotations_cannot_elevate_owner_class():
-    """Only the owner-typed ``operation_class`` field classifies — a
-    DISCOVERY-typed tool is invocable (class gate), while an ACT tool
-    claiming DISCOVERY via annotations stays blocked."""
+    """Only the owner-typed ``operation_class`` field classifies — an
+    ACT tool claiming DISCOVERY via annotations stays ACT-typed. Both
+    known classes are eligible at this boundary (§6.126); class
+    eligibility is never permission."""
     tools = (
         RemoteToolDescriptor(
             remote_name="brand_new_tool",
@@ -288,7 +302,12 @@ def test_forged_annotations_cannot_elevate_owner_class():
         projected["brand_new_tool"].operation_class
         is SpecialistOperationClass.DISCOVERY
     )
-    assert catalog.blocked_remote_names == ("commit_proposal",)
+    # The forged annotation did not reclassify the ACT tool.
+    assert (
+        projected["commit_proposal"].operation_class
+        is SpecialistOperationClass.ACT
+    )
+    assert catalog.blocked_remote_names == ()
     interop.invoke(
         SpecialistInvocationRequest(
             specialist_id="teo",
@@ -296,41 +315,50 @@ def test_forged_annotations_cannot_elevate_owner_class():
             correlation_id="c",
         )
     )
-    with pytest.raises(SpecialistInteropError) as exc:
-        interop.invoke(
-            SpecialistInvocationRequest(
-                specialist_id="teo",
-                remote_capability="commit_proposal",
-                correlation_id="c",
-            )
+    outcome = interop.invoke(
+        SpecialistInvocationRequest(
+            specialist_id="teo",
+            remote_capability="commit_proposal",
+            correlation_id="c",
         )
-    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
-    assert port.wire_calls == ["brand_new_tool"]
+    )
+    assert outcome.provenance.remote_name == "commit_proposal"
+    assert port.wire_calls == ["brand_new_tool", "commit_proposal"]
 
 
 # --- ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01: owner-class drift ----
 
 
-def test_owner_reclassification_read_to_prepare_blocks_invocation():
+def test_owner_reclassification_read_to_prepare_follows_owner_class():
     """If the owner retypes READ->PREPARE, the next fresh tools/list
-    blocks invocation — no stale grant survives."""
-    tools = (
-        RemoteToolDescriptor(
-            remote_name="execute_delpi_information",
-            operation_class="PREPARE",
-        ),
-    )
-    interop = SpecialistInterop(FakePort(tools=tools))
-    with pytest.raises(SpecialistInteropError) as exc:
-        interop.invoke(
-            SpecialistInvocationRequest(
-                specialist_id="davi",
-                remote_capability="execute_delpi_information",
-                correlation_id="c",
-                arguments={},
-            )
+    routes the capability through the write governance class — no
+    stale READ grant survives and the invocation is a write-class
+    call, not a read."""
+    port = FakePort(
+        tools=(
+            RemoteToolDescriptor(
+                remote_name="execute_delpi_information",
+                operation_class="PREPARE",
+            ),
         )
-    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
+    )
+    interop = SpecialistInterop(port)
+    catalog = interop.discover_catalog(
+        SpecialistCatalogRequest(specialist_id="davi", correlation_id="c")
+    )
+    assert (
+        catalog.capabilities[0].operation_class
+        is SpecialistOperationClass.PREPARE
+    )
+    outcome = interop.invoke(
+        SpecialistInvocationRequest(
+            specialist_id="davi",
+            remote_capability="execute_delpi_information",
+            correlation_id="c",
+            arguments={},
+        )
+    )
+    assert outcome.provenance.remote_name == "execute_delpi_information"
 
 
 def test_new_compatible_capability_discovered_without_mirror():
@@ -348,7 +376,8 @@ def test_new_compatible_capability_discovered_without_mirror():
             operation_class="READ",
             description="new owner capability",
         ),
-        # Synthetic new PREPARE capability — discovered, still blocked.
+        # Synthetic new PREPARE capability — discovered and eligible
+        # through the governed-write class.
         RemoteToolDescriptor(
             remote_name="prepare_recalc_v2",
             operation_class="PREPARE",
@@ -368,9 +397,9 @@ def test_new_compatible_capability_discovered_without_mirror():
         projected["prepare_recalc_v2"].operation_class
         is SpecialistOperationClass.PREPARE
     )
-    # READ is invocable on fresh discovery (specialist-owned surface);
-    # PREPARE stays policy-blocked.
-    assert set(catalog.blocked_remote_names) == {"prepare_recalc_v2"}
+    # Every known owner class is eligible on fresh discovery
+    # (specialist-owned surface); nothing is policy-blocked here.
+    assert catalog.blocked_remote_names == ()
     interop.invoke(
         SpecialistInvocationRequest(
             specialist_id="teo",
@@ -378,16 +407,15 @@ def test_new_compatible_capability_discovered_without_mirror():
             correlation_id="c",
         )
     )
-    assert port.wire_calls == ["get_sla_dashboard"]
-    with pytest.raises(SpecialistInteropError) as exc:
-        interop.invoke(
-            SpecialistInvocationRequest(
-                specialist_id="teo",
-                remote_capability="prepare_recalc_v2",
-                correlation_id="c",
-            )
+    outcome = interop.invoke(
+        SpecialistInvocationRequest(
+            specialist_id="teo",
+            remote_capability="prepare_recalc_v2",
+            correlation_id="c",
         )
-    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
+    )
+    assert outcome.provenance.remote_name == "prepare_recalc_v2"
+    assert port.wire_calls == ["get_sla_dashboard", "prepare_recalc_v2"]
 
 
 def test_owner_class_field_shape_never_trusted_blindly():

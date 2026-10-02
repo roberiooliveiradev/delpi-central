@@ -335,6 +335,9 @@ def test_full_vertical_http_path_returns_bounded_result():
         # provenance projection (null when NON_GROUNDED).
         "grounding_status",
         "provenance",
+        # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: bounded
+        # confirmation surface (digests only, null when none pending).
+        "confirmation_request",
     }
     assert body["epistemic_class"] == "HYPOTHESIS"
     assert body["grounding_status"] == "NON_GROUNDED"

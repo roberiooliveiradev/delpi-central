@@ -158,3 +158,34 @@
   border-radius: 8px;
   padding: 8px 12px;
 }
+
+.dashboard-delia .delia-confirmation {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dashboard-delia .delia-confirmation button {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+.dashboard-delia .delia-confirmation__confirm {
+  color: #ffffff;
+  background: var(--delia-accent);
+  border: none;
+}
+
+.dashboard-delia .delia-confirmation__cancel {
+  color: var(--delia-text);
+  background: transparent;
+  border: 1px solid var(--delia-border);
+}
+
+.dashboard-delia .delia-confirmation button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

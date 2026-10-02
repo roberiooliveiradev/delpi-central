@@ -19,7 +19,6 @@ MCP_RESULT_TOO_LARGE = "mcp_result_too_large"
 MCP_AUTHENTICATION_FAILED = "mcp_authentication_failed"
 MCP_AUTHORIZATION_DENIED = "mcp_authorization_denied"
 CAPABILITY_NOT_ALLOWED_IN_PHASE = "capability_not_allowed_in_phase"
-WRITE_CAPABILITY_BLOCKED = "write_capability_blocked"
 
 
 class SpecialistInteropError(Exception):

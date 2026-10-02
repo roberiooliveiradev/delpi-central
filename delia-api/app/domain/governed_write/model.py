@@ -1,24 +1,31 @@
-"""C5-GOVERNED-WRITE-FOUNDATION-01 governed-write semantic model.
+"""Governed-write semantic model — provider-neutral orchestration.
 
-Provider-neutral DÉLIA-side contracts for a future bounded PREPARE→ACT
-flow. Foundation only — nothing here executes a business write.
+ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126): the
+static DÉLIA-owned write-binding registry (``GovernedWriteBinding`` /
+``GOVERNED_WRITE_BINDINGS`` / ``write_binding_for``) is SUPERSEDED — the
+specialist owns its capability surface and DÉLIA keeps no MCP capability
+catalog, pair registry, or per-capability enable flags. What remains
+DÉLIA-owned is generic write *governance*: preview, structured
+confirmation, gate decision, outcome projection and audit — all bound
+to the live capability identity (``capability_ref`` =
+``specialist_id.remote_name``), never to a local registry row.
 
 Permanent semantics:
 
-- A binding/preview/confirmation/decision/audit record never grants
-  business authorization. ``authorizes_act()`` is always False.
+- A preview/confirmation/decision/audit record never grants business
+  authorization. ``authorizes_act()`` is always False.
 - ``proposal_ref`` is an opaque owner-issued proposal handle. DÉLIA must
   never decode, re-sign, mutate, reinterpret, or invent it; only a
   non-reversible digest may be used for correlation/audit.
 - Confirmation means USER_CONFIRMED_EXACT_PREVIEW only — it is never
   Core/Domain AuthZ and never ACT authorization.
-- The strongest foundation decision is READY_FOR_LIVE_REVALIDATION —
+- The strongest DÉLIA-side decision is READY_FOR_LIVE_REVALIDATION —
   never ACT_AUTHORIZED. Live Core/Domain revalidation happens at the
-  future ACT request, which this foundation does not perform.
+  ACT call, enforced by the owner.
 - A technical 2xx is never a business VERIFIED outcome; only the owner's
   authoritative postcondition verification may project VERIFIED.
 
-Canonical semantics: 16 C5 gates, 17, 21, 57, 60; ledger §6.106/§6.107.
+Canonical semantics: 16 C5 gates, 17, 21, 57, 60; ledger §6.106/§6.126.
 """
 
 from __future__ import annotations
@@ -76,8 +83,8 @@ class ConfirmationReason(str, Enum):
 
 
 class WriteGateStatus(str, Enum):
-    """Bounded decision of whether a write may continue toward a future
-    ACT attempt. No state authorizes execution."""
+    """Bounded decision of whether a write may continue toward an ACT
+    attempt. No state authorizes execution."""
 
     BLOCKED = "BLOCKED"
     REQUIRES_CONFIRMATION = "REQUIRES_CONFIRMATION"
@@ -88,8 +95,7 @@ class WriteGateStatus(str, Enum):
 class WriteGateReason(str, Enum):
     """Bounded reason codes for the write continuation decision."""
 
-    UNKNOWN_BINDING = "unknown_binding"
-    BINDING_DISABLED = "binding_disabled"
+    CAPABILITY_NOT_LIVE = "capability_not_live"
     PROPOSAL_NOT_READY = "proposal_not_ready"
     PROPOSAL_EXPIRED = "proposal_expired"
     CONFIRMATION_MISSING = "confirmation_missing"
@@ -100,7 +106,7 @@ class WriteGateReason(str, Enum):
 
 
 class WriteOutcomeStatus(str, Enum):
-    """Truthful classification of a future owner ACT result."""
+    """Truthful classification of an owner ACT result."""
 
     EXECUTION_REPORTED = "EXECUTION_REPORTED"
     VERIFIED = "VERIFIED"
@@ -120,50 +126,12 @@ class WriteAuditStage(str, Enum):
 
 
 @dataclass(frozen=True, slots=True)
-class GovernedWriteBinding:
-    """DÉLIA-owned static identity of one approved write binding.
-
-    Semantic contract only — no endpoint, URL, HTTP method, MCP
-    mechanics, selector, scope, credential, or prompt. Naming a binding
-    grants nothing: ``enabled`` defaults to False and the binding itself
-    never authorizes ACT.
-    """
-
-    binding_id: str
-    specialist_id: str
-    owner_ref: str
-    prepare_capability: str
-    act_capability: str
-    owner_operation_id: str
-    confirmation_required: bool = True
-    enabled: bool = False
-
-    def __post_init__(self) -> None:
-        for name in (
-            "binding_id",
-            "specialist_id",
-            "owner_ref",
-            "prepare_capability",
-            "act_capability",
-            "owner_operation_id",
-        ):
-            if not str(getattr(self, name) or "").strip():
-                raise ValueError(f"GovernedWriteBinding.{name} is required")
-        if self.prepare_capability == self.act_capability:
-            raise ValueError(
-                "GovernedWriteBinding prepare/act capabilities must differ"
-            )
-
-    def authorizes_act(self) -> bool:
-        return False
-
-    def grants_authorization(self) -> bool:
-        return False
-
-
-@dataclass(frozen=True, slots=True)
 class WriteProposalPreview:
     """Bounded provider-neutral projection of an owner PREPARE result.
+
+    ``capability_ref`` is the live capability identity
+    (``specialist_id.remote_name``) — a correlation reference to the
+    capability that produced the preview, not a registry lookup.
 
     ``proposal_ref`` is the opaque owner handle kept only so a future
     authorized ACT call can pass it back verbatim to the owner. It is
@@ -172,7 +140,7 @@ class WriteProposalPreview:
     remain owner-owned; DÉLIA does not reimplement them.
     """
 
-    binding_id: str
+    capability_ref: str
     owner_capability: str
     proposal_ref: str
     readiness: ProposalReadiness
@@ -190,7 +158,7 @@ class WriteProposalPreview:
 
     def __post_init__(self) -> None:
         for name in (
-            "binding_id",
+            "capability_ref",
             "owner_capability",
             "specialist_id",
             "correlation_id",
@@ -226,7 +194,7 @@ class StructuredConfirmation:
 
     actor_user_id: str
     session_id: str
-    binding_id: str
+    capability_ref: str
     proposal_digest: str
     preview_fingerprint: str
     decision: ConfirmationDecision
@@ -236,7 +204,7 @@ class StructuredConfirmation:
         for name in (
             "actor_user_id",
             "session_id",
-            "binding_id",
+            "capability_ref",
             "proposal_digest",
             "preview_fingerprint",
         ):
@@ -268,17 +236,17 @@ class ConfirmationRecord:
 
 @dataclass(frozen=True, slots=True)
 class WriteGateDecision:
-    """Foundation decision on whether a governed write may continue.
+    """Decision on whether a governed write may continue.
 
     READY_FOR_LIVE_REVALIDATION is the strongest possible state and still
-    requires live Core + Domain authorization at the future ACT request —
+    requires live Core + Domain authorization at the ACT request —
     ``live_core_authz_required`` and ``domain_revalidation_required`` are
     always True on that state by construction.
     """
 
     status: WriteGateStatus
     reason_codes: tuple[WriteGateReason, ...] = ()
-    binding_id: str | None = None
+    capability_ref: str | None = None
     live_core_authz_required: bool = False
     domain_revalidation_required: bool = False
 
@@ -302,7 +270,7 @@ class WriteGateDecision:
 
 @dataclass(frozen=True, slots=True)
 class WriteOutcomeProjection:
-    """Bounded provider-neutral projection of a future owner ACT result.
+    """Bounded provider-neutral projection of an owner ACT result.
 
     VERIFIED requires owner-authoritative postcondition evidence; a
     technical transport success alone can only produce
@@ -310,7 +278,7 @@ class WriteOutcomeProjection:
     """
 
     status: WriteOutcomeStatus
-    binding_id: str
+    capability_ref: str
     specialist_id: str
     owner_capability: str
     correlation_id: str
@@ -337,7 +305,7 @@ class WriteDecisionAuditRecord:
     audit_id: str
     correlation_id: str
     actor_user_id: str
-    binding_id: str
+    capability_ref: str
     specialist_id: str
     owner_capability: str
     stage: WriteAuditStage
@@ -355,7 +323,7 @@ class WriteDecisionAuditRecord:
             "audit_id",
             "correlation_id",
             "actor_user_id",
-            "binding_id",
+            "capability_ref",
             "specialist_id",
             "owner_capability",
             "decision",
@@ -373,7 +341,7 @@ class WriteDecisionAuditRecord:
             "audit_id": self.audit_id,
             "correlation_id": self.correlation_id,
             "actor_user_id": self.actor_user_id,
-            "binding_id": self.binding_id,
+            "capability_ref": self.capability_ref,
             "specialist_id": self.specialist_id,
             "owner_capability": self.owner_capability,
             "stage": self.stage.value,

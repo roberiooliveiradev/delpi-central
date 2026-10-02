@@ -6,15 +6,23 @@ with ``_meta["delpi/toolClass"]``. DÉLIA keeps NO mirror of remote tool
 names — this module holds only DÉLIA-owned governance:
 
   * the approved-specialist registry (identity/owner refs);
-  * the interactive phase class gate (DISCOVERY | READ invocable;
-    PREPARE/ACT/UNKNOWN blocked);
+  * the operation-class gate (all owner-typed known classes are
+    governed-invocable; UNKNOWN is discoverable but never invocable);
   * the provider-neutral mapping from owner-typed class to the
     SpecialistOperationClass vocabulary.
 
+ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126): DÉLIA
+is the orchestrator of approved MCP specialists — the full advertised
+surface (DISCOVERY/READ/ANALYSIS-as-READ/PREPARE/ACT) is eligible for
+orchestration under generic write governance. Invocable class is
+orchestration eligibility, never permission: live Core AuthZ,
+specialist/domain authority, schema validation, confirmation when the
+owner contract requires it, idempotency and owner-authoritative
+postcondition all still apply downstream.
+
 Remote metadata (descriptions, annotations like ``readOnlyHint``,
 securitySchemes, titles) is untrusted data and can never grant
-permission. The owner-typed class is trusted for classification only —
-invocation additionally requires the matching DÉLIA policy binding.
+permission. The owner-typed class is trusted for classification only.
 Unknown specialist, unadvertised remote name, or unclassifiable
 operation class fails closed.
 """
@@ -80,23 +88,32 @@ def operation_class_from_owner(raw: object) -> SpecialistOperationClass:
 # state. The former second authority is superseded:
 # GOVERNED_DISCOVERY_BINDINGS, GOVERNED_READ_ACTIONS,
 # enabled_governed_read_tuples and the DELIA_C4_*_ENABLED switches no
-# longer gate invocation. What remains DÉLIA-owned policy:
+# longer gate invocation.
+#
+# ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126):
+# PREPARE/ACT are governed-invocable — the READ-only class gate is
+# superseded. What remains DÉLIA-owned policy:
 #
 #   * the approved-specialist registry above (identity/owner refs) and
 #     the configured connection approval (DELIA_MCP_*_ENABLED);
-#   * the class/phase gate below — which owner-typed classes may be
-#     invoked under the current interactive policy;
-#   * fail-closed unknown-specialist / unadvertised-capability checks.
+#   * the class gate below — every owner-typed known class is eligible
+#     for orchestration; writes still pass the generic write
+#     governance chain (live AuthZ, owner/domain authority,
+#     confirmation when required, idempotency, postcondition);
+#   * fail-closed unknown-specialist / unadvertised-capability /
+#     UNKNOWN-class checks.
 #
-# CURRENT_INTERACTIVE_INVOCABLE_CLASSES = DISCOVERY | READ
-# (ANALYSIS already projects as READ via _OWNER_CLASS_MAP).
-# PREPARE/ACT are writes — visible in the projection, never invocable
-# here. UNKNOWN (absent/invalid owner class) is never invocable.
+# GOVERNED_INVOCABLE_CLASSES = DISCOVERY | READ | PREPARE | ACT
+# (ANALYSIS projects as READ via _OWNER_CLASS_MAP). A class is
+# orchestration eligibility — never permission. UNKNOWN (absent or
+# invalid owner class) is never invocable.
 INTERACTIVE_INVOCABLE_CLASSES: frozenset[SpecialistOperationClass] = (
     frozenset(
         {
             SpecialistOperationClass.DISCOVERY,
             SpecialistOperationClass.READ,
+            SpecialistOperationClass.PREPARE,
+            SpecialistOperationClass.ACT,
         }
     )
 )
@@ -105,9 +122,12 @@ INTERACTIVE_INVOCABLE_CLASSES: frozenset[SpecialistOperationClass] = (
 def invocable_in_interactive_phase(
     operation_class: SpecialistOperationClass,
 ) -> bool:
-    """Current interactive class gate: DISCOVERY and READ only.
+    """Class gate: every known owner-typed class is governed-invocable.
 
     Class eligibility is orchestration policy, not permission — the
-    specialist/domain authorities still enforce live AuthZ downstream.
+    specialist/domain authorities still enforce live AuthZ downstream,
+    and write-class invocations pass generic write governance
+    (confirmation/idempotency/owner-verified postcondition) in the
+    orchestration layer.
     """
     return operation_class in INTERACTIVE_INVOCABLE_CLASSES
