@@ -1,4 +1,5 @@
 import type { ProductionRunSnapshot, RunDowntimeView } from "./api";
+import { isDowntimeReasonInformed } from "./downtimeReasonPrompt.ts";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
 export function applyProductionRunPiecesSnapshot(
@@ -60,7 +61,18 @@ export function applyProductionRunDowntimeEvent(
   // `downtime` no snapshot = parada ABERTA. Uma parada classificada que já
   // estava encerrada (ex.: pendência de run antigo) não pode sobrescrever a
   // parada atual — senão o timer passa a contar o horário da parada antiga.
-  if (downtime && !downtime.endedAt) next.downtime = downtime;
+  // Um evento atrasado da mesma parada também não pode apagar o motivo já
+  // gravado — senão o seletor reabre em loop.
+  if (downtime && !downtime.endedAt) {
+    const current = next.downtime;
+    const staleUnclassified =
+      current &&
+      current.id === downtime.id &&
+      !current.endedAt &&
+      isDowntimeReasonInformed(current) &&
+      !isDowntimeReasonInformed(downtime);
+    if (!staleUnclassified) next.downtime = downtime;
+  }
   if (downtime && next.pendingDowntime?.id === downtime.id) {
     next.pendingDowntime = null;
     next.pendingDowntimeCount = Math.max(0, (next.pendingDowntimeCount ?? 1) - 1);

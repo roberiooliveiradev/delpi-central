@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Clock, Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation, PendingMesDowntime, RunDowntimeView } from "./api.ts";
 import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
@@ -9,6 +9,10 @@ import { usePendingMesDowntimes } from "./usePendingMesDowntimes.ts";
 import { useRunTimeline } from "./useRunTimeline.ts";
 import { formatQty } from "./cockpitShared";
 import { formatTimeHm } from "./runTimeline";
+import {
+  isDowntimeReasonInformed,
+  resolveDowntimeReasonPrompt,
+} from "./downtimeReasonPrompt.ts";
 import {
   piecesToOperatorUnit,
   resolveProductionRunProgress,
@@ -66,7 +70,8 @@ export function ProductionRunControls({
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
-  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [reasonModalRequested, setReasonModalRequested] = useState(false);
+  const [dismissedPromptId, setDismissedPromptId] = useState<string | null>(null);
   const [downtimeClockForId, setDowntimeClockForId] = useState<string | null>(null);
   // `downtime` é a parada aberta do run — também com status "running"
   // quando a parada foi detectada automaticamente por ausência de peças.
@@ -74,7 +79,9 @@ export function ProductionRunControls({
   const openDowntimeId = openDowntime?.id ?? null;
   const downtimeClockOpen = downtimeClockForId === openDowntimeId && openDowntimeId !== null;
   const pendingDowntime = run?.pendingDowntime ?? null;
-  const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
+  const downtimeUnclassified = Boolean(
+    openDowntime && !isDowntimeReasonInformed(openDowntime),
+  );
 
   const {
     items: pendingItems,
@@ -112,20 +119,21 @@ export function ProductionRunControls({
     realtimeConnected,
   });
 
-  // A classificação abre automaticamente quando há parada aberta sem motivo
-  // (Pause manual ou auto-stop) ou uma parada encerrada pendente — inclusive
-  // após F5/reconexão, via pendingDowntime do snapshot.
-  const autoOpenRef = useRef<string | null>(null);
-  const classifyTarget = openDowntime?.confirmed === false ? openDowntime : null;
-  const pendingTarget = pendingDowntime?.confirmed === false ? pendingDowntime : null;
-  const classifyTargetId = (classifyTarget ?? pendingTarget)?.id ?? null;
-  useEffect(() => {
-    if (classifyTargetId && autoOpenRef.current !== classifyTargetId) {
-      autoOpenRef.current = classifyTargetId;
-      setReasonModalOpen(true);
+  // Abre sozinho só a parada que ainda não tem motivo. A parada em registro
+  // já classificada não reabre — nem por pendência antiga, nem quando o id
+  // some e volta num refresh. Fechar lembra o id; F5 ainda pergunta.
+  const autoPrompt = resolveDowntimeReasonPrompt(openDowntime, pendingDowntime);
+  const autoPromptId = autoPrompt?.id ?? null;
+  const reasonModalOpen =
+    reasonModalRequested || Boolean(autoPromptId && dismissedPromptId !== autoPromptId);
+
+  const editDowntimeReason = () => {
+    if (openDowntime && run) {
+      setReturnToPending(false);
+      setManualTarget({ runId: run.id, downtime: openDowntime });
     }
-    if (!classifyTargetId) autoOpenRef.current = null;
-  }, [classifyTargetId]);
+    setReasonModalRequested(true);
+  };
 
   const openPendingTarget = (item: PendingMesDowntime) => {
     if (!item.runId) return;
@@ -146,7 +154,7 @@ export function ProductionRunControls({
         endedAt: item.endedAt,
       },
     });
-    setReasonModalOpen(true);
+    setReasonModalRequested(true);
   };
   const piecesFactor = run?.piecesConversionFactor ?? operation.pieces_conversion_factor;
   const toOperatorUnit = (pieces: number) => piecesToOperatorUnit(pieces, piecesFactor);
@@ -345,16 +353,16 @@ export function ProductionRunControls({
                       <button
                         type="button"
                         className="pcp-pub__btn pcp-pub__btn--ghost"
-                        onClick={() => setReasonModalOpen(true)}
+                        onClick={editDowntimeReason}
                         disabled={busy}
                       >
-                        {openDowntime.confirmed ? "Alterar motivo" : "Informar motivo"}
+                        {isDowntimeReasonInformed(openDowntime) ? "Alterar motivo" : "Informar motivo"}
                       </button>
                     ) : pendingDowntime ? (
                       <button
                         type="button"
                         className="pcp-pub__btn pcp-pub__btn--ghost"
-                        onClick={() => setReasonModalOpen(true)}
+                        onClick={() => setReasonModalRequested(true)}
                         disabled={busy}
                       >
                         Informar motivo
@@ -379,17 +387,17 @@ export function ProductionRunControls({
                       <button
                         type="button"
                         className="pcp-pub__btn pcp-pub__btn--ghost"
-                        onClick={() => setReasonModalOpen(true)}
+                        onClick={editDowntimeReason}
                         disabled={busy}
                       >
-                        {openDowntime.confirmed ? "Alterar motivo" : "Informar motivo"}
+                        {isDowntimeReasonInformed(openDowntime) ? "Alterar motivo" : "Informar motivo"}
                       </button>
                     ) : null}
                     <button
                       type="button"
                       className="pcp-pub__btn pcp-pub__btn--primary"
                       onClick={() => {
-                        if (downtimeUnclassified) setReasonModalOpen(true);
+                        if (downtimeUnclassified) setReasonModalRequested(true);
                         else void resume();
                       }}
                       disabled={busy}
@@ -403,7 +411,7 @@ export function ProductionRunControls({
                   type="button"
                   className="pcp-pub__btn pcp-pub__btn--ghost"
                   onClick={() => {
-                    if (downtimeUnclassified) setReasonModalOpen(true);
+                    if (downtimeUnclassified) setReasonModalRequested(true);
                     else void stop();
                   }}
                   disabled={busy}
@@ -436,7 +444,7 @@ export function ProductionRunControls({
                           endedAt: item.endedAt,
                         },
                       });
-                      setReasonModalOpen(true);
+                      setReasonModalRequested(true);
                     }}
                   />
                 </details>
@@ -495,7 +503,8 @@ export function ProductionRunControls({
         }}
         onClose={() => {
           setManualTarget(null);
-          setReasonModalOpen(false);
+          setReasonModalRequested(false);
+          if (autoPromptId) setDismissedPromptId(autoPromptId);
           if (returnToPending) {
             setReturnToPending(false);
             void refreshPending();

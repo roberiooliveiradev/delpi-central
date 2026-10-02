@@ -166,6 +166,90 @@ describe("downtime_classified realtime event", () => {
     assert.equal(updated?.pendingDowntimeCount, 0);
   });
 
+  it("does not let a stale unclassified event erase the reason already saved", () => {
+    const classified: ProductionRunSnapshot = {
+      ...run,
+      downtime: {
+        id: "dt-current",
+        runId: "run-1",
+        reasonCode: "break",
+        reasonLabel: "Intervalo",
+        category: "planned",
+        note: null,
+        confirmed: true,
+        startedAt: "2026-01-01T12:00:00Z",
+        endedAt: null,
+      },
+    };
+    const updated = applyProductionRunDowntimeEvent(
+      classified,
+      {
+        type: "production_run_updated",
+        reason: "automatic_downtime_started",
+        branch: "01",
+        workCenter: "CT01",
+        runId: "run-1",
+        downtime: {
+          id: "dt-current",
+          runId: "run-1",
+          reasonCode: null,
+          reasonLabel: null,
+          category: null,
+          note: null,
+          confirmed: false,
+          startedAt: "2026-01-01T12:00:00Z",
+          endedAt: null,
+        },
+      },
+      "01",
+      "CT01",
+    );
+    assert.equal(updated?.downtime?.reasonLabel, "Intervalo");
+    assert.equal(updated?.downtime?.confirmed, true);
+  });
+
+  it("still replaces the open downtime when a new unclassified stop starts", () => {
+    const classified: ProductionRunSnapshot = {
+      ...run,
+      downtime: {
+        id: "dt-old",
+        runId: "run-1",
+        reasonCode: "break",
+        reasonLabel: "Intervalo",
+        category: "planned",
+        note: null,
+        confirmed: true,
+        startedAt: "2026-01-01T10:00:00Z",
+        endedAt: null,
+      },
+    };
+    const updated = applyProductionRunDowntimeEvent(
+      classified,
+      {
+        type: "production_run_updated",
+        reason: "automatic_downtime_started",
+        branch: "01",
+        workCenter: "CT01",
+        runId: "run-1",
+        downtime: {
+          id: "dt-new",
+          runId: "run-1",
+          reasonCode: null,
+          reasonLabel: null,
+          category: null,
+          note: null,
+          confirmed: false,
+          startedAt: "2026-01-01T12:00:00Z",
+          endedAt: null,
+        },
+      },
+      "01",
+      "CT01",
+    );
+    assert.equal(updated?.downtime?.id, "dt-new");
+    assert.equal(updated?.downtime?.confirmed, false);
+  });
+
   it("ignores the event when the downtime payload is missing", () => {
     const updated = applyProductionRunDowntimeEvent(
       run,
