@@ -81,6 +81,23 @@ class NfseStandardDocument:
         }
 
 
+_UTF_BOMS = (b"\xef\xbb\xbf", b"\xff\xfe", b"\xfe\xff")
+
+
+def xml_inspection_sample(payload: bytes) -> bytes:
+    """Prefixo usado só para classificar o payload. Não altera os bytes guardados.
+
+    O portal Questor pode iniciar o XML com BOM UTF-8. ``lstrip`` não remove esse
+    prefixo, e a declaração ``<?xml`` fica logo depois.
+    """
+
+    sample = payload.lstrip(b" \t\r\n\x0b\x0c")
+    for bom in _UTF_BOMS:
+        if sample.startswith(bom):
+            return sample[len(bom) :].lstrip(b" \t\r\n\x0b\x0c")
+    return sample
+
+
 def assert_plausible_xml(payload: bytes, *, max_bytes: int) -> None:
     """Rejeita HTML, DTD e payload acima do limite antes de qualquer parse."""
 
@@ -88,7 +105,7 @@ def assert_plausible_xml(payload: bytes, *, max_bytes: int) -> None:
         raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
     if len(payload) > max_bytes:
         raise QuestorInvalidResponse("O XML da NFS-e excede o tamanho máximo permitido.")
-    sample = payload.lstrip()[:240].lower()
+    sample = xml_inspection_sample(payload)[:240].lower()
     if sample.startswith(b"<html") or sample.startswith(b"<!doctype") or sample.startswith(b"<head"):
         raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
     folded = payload.upper()

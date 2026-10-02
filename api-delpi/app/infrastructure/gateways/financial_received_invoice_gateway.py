@@ -307,13 +307,21 @@ def _xml_variant(value: str) -> str:
 
 
 def _looks_like_xml(content: bytes) -> bool:
-    sample = content.lstrip()[:240].lower()
+    sample = _xml_inspection_sample(content)[:240].lower()
     if sample.startswith(b"<html") or sample.startswith(b"<!doctype") or sample.startswith(b"%pdf"):
         return False
     folded = content.upper()
     if b"<!DOCTYPE" in folded or b"<!ENTITY" in folded:
         return False
     return sample.startswith(b"<")
+
+
+def _xml_inspection_sample(payload: bytes) -> bytes:
+    sample = payload.lstrip(b" \t\r\n\x0b\x0c")
+    for bom in (b"\xef\xbb\xbf", b"\xff\xfe", b"\xfe\xff"):
+        if sample.startswith(bom):
+            return sample[len(bom) :].lstrip(b" \t\r\n\x0b\x0c")
+    return sample
 
 
 def _branch(value: str) -> str:

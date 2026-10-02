@@ -551,6 +551,37 @@ def test_nfse_xml_download_does_not_require_access_key() -> None:
     assert filename.endswith("-standard.xml")
 
 
+def test_fiscal_storage_keeps_utf8_bom(tmp_path) -> None:
+    from app.application.services.lancamento_notas_fiscais.fiscal_attachment_storage import (
+        LancamentoFiscalAttachmentStorage,
+    )
+
+    payload = b"\xef\xbb\xbf" + XML
+    storage = LancamentoFiscalAttachmentStorage(str(tmp_path))
+    stored_name = storage.save(
+        request_id="11111111-1111-1111-1111-111111111111",
+        attachment_type="xml_standard",
+        content=payload,
+    )
+    assert storage.read(stored_name) == payload
+
+
+def test_nfse_xml_with_utf8_bom_is_kept_byte_for_byte() -> None:
+    payload = b"\xef\xbb\xbf" + XML
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=payload, headers={"content-type": "text/xml"})
+
+    content, _filename = _gateway(handler).download_nfse_xml(
+        authorization="Bearer user-jwt",
+        document_id=NFSE_ID,
+        variant="standard",
+        branch="01",
+    )
+    assert content == payload
+    assert content.startswith(b"\xef\xbb\xbf")
+
+
 def test_questor_nfse_stores_both_xml_files_and_original_number(tmp_path) -> None:
     requests = _Requests()
     requests.fiscal = []

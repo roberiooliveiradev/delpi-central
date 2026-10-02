@@ -60,7 +60,7 @@ def _stored_name(request_id: str, attachment_type: str) -> str:
 def _validate_xml(content: bytes) -> None:
     if not content or len(content) > MAX_FISCAL_XML_BYTES:
         raise LancamentoFiscalAttachmentStorageError("O XML excede o tamanho permitido.")
-    sample = content.lstrip()[:240].lower()
+    sample = _xml_inspection_sample(content)[:240].lower()
     if sample.startswith(b"<html") or sample.startswith(b"<!doctype") or sample.startswith(b"%pdf"):
         raise LancamentoFiscalAttachmentStorageError("O anexo não é um XML fiscal.")
     folded = content.upper()
@@ -68,3 +68,11 @@ def _validate_xml(content: bytes) -> None:
         raise LancamentoFiscalAttachmentStorageError("O XML fiscal foi recusado por segurança.")
     if not sample.startswith(b"<"):
         raise LancamentoFiscalAttachmentStorageError("O anexo não é um XML fiscal.")
+
+
+def _xml_inspection_sample(payload: bytes) -> bytes:
+    sample = payload.lstrip(b" \t\r\n\x0b\x0c")
+    for bom in (b"\xef\xbb\xbf", b"\xff\xfe", b"\xfe\xff"):
+        if sample.startswith(bom):
+            return sample[len(bom) :].lstrip(b" \t\r\n\x0b\x0c")
+    return sample
