@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1` — the bounded governed MCP READ slice (DAVI `execute_delpi_information` → `search_products`, Product Master) closed its single REWORK blocker (undisclosed fallback on unreachable source) at `471c5a2be0` (§6.103) and is again a **candidate for independent architecture review**, not accepted. `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1A/R1B/R1C all `ACCEPT_WITH_RESIDUAL`; §6.95/§6.97/§6.99); `C4_AUTHORIZED=NO` at phase level — the task-scoped read proof does not broaden C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `C5-GOVERNED-WRITE-FOUNDATION-01` — bounded C5 foundation slice (DÉLIA-side governed-write primitives only: per-binding write gate, PREPARE proposal-preview projection, deterministic confirmation/Decision-Gate binding, write-outcome projection, write-decision audit contract; **no business PREPARE/ACT wire call authorized**), authorized by the C5 entry gate at §6.106 (`C5_ENTRY_VERDICT=C5_FOUNDATION_SLICE_REQUIRED`). `C4_MCP_GOVERNED_READS_01`/`02` = `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (DAVI `search_products` + TÉO `analyze`/`gpt_analyze` view=summary — two-consumer governed-read proof closed; third read NOT authorized). `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE`; `C4_AUTHORIZED=NO` at phase level; `C5_AUTHORIZED=NO` at phase level; `PREPARE=BLOCKED`; `ACT=BLOCKED`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -786,14 +786,20 @@ C4-MCP-GOVERNED-READS-01 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
    (DAVI execute_delpi_information -> search_products -> Product
    Master/API DELPI only; negative surface unchanged; phase-level
    C4_AUTHORIZED=NO; C5=NO; PRODUCTION_READINESS=NOT_PROVEN)
-C4-MCP-GOVERNED-READS-02 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.105;
+C4-MCP-GOVERNED-READS-02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
+   (ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02=ACCEPT_WITH_RESIDUAL
+   §6.106 on IMPLEMENTATION_HEAD=0161c77d260907ca573735c5dbc066776c2c2234;
+   prior candidate record §6.105:
    IMPLEMENTATION_HEAD=0161c77d260907ca573735c5dbc066776c2c2234; TÉO analyze → gpt_analyze,
    view=summary only, per-binding gate DELIA_C4_TEO_DASHBOARD_ANALYZE_
    ENABLED; shared capability-neutral governed_read.py semantic layer;
    live PASS grounded Transformômetro KPIs + provenance; DAVI
-   regression PASS; other TÉO reads/PREPARE/ACT blocked)
-NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02 (no third
-   governed READ automatically authorized)
+   regression PASS; other TÉO reads/PREPARE/ACT blocked))
+THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED (§6.106 — two consumers
+   suffice for the abstraction proof)
+NEXT = C5-GOVERNED-WRITE-FOUNDATION-01 (authorized §6.106:
+   C5_ENTRY_VERDICT=C5_FOUNDATION_SLICE_REQUIRED — DELIA-side write
+   foundation only; no business PREPARE/ACT authorized)
 Workspace binding remains unscheduled
 ```
 

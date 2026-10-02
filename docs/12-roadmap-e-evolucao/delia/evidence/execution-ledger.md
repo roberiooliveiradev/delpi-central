@@ -6857,3 +6857,229 @@ STATUS            = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 NEXT              = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02
     (no third governed READ automatically authorized)
 ```
+
+
+## 6.106 C4-MCP-READS-ACCEPTANCE-C5-ENTRY-01 — review persistence + C5 readiness gate
+
+```
+TASK_ID   = C4-MCP-READS-ACCEPTANCE-C5-ENTRY-01
+MODE      = ARCHITECTURE REVIEW PERSISTENCE + READINESS GATE +
+            INVENTORY + CONTRACT FREEZE (no runtime feature diff)
+BASE_HEAD = 0a7abdeb1702017dc6528b5afa103c06f290278f
+BASE_STATE = HEAD == 0a7abdeb1702017dc6528b5afa103c06f290278f; working tree only OUTSIDE_TASK
+    leftovers (tv-dashboard, bpmn-modeler, egg-info, wave scripts) —
+    preserved, untouched
+EXECUTION_DRIFT = NONE
+
+ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02 = ACCEPT_WITH_RESIDUAL
+REVIEWED_IMPLEMENTATION_HEAD = 0161c77d260907ca573735c5dbc066776c2c2234
+REVIEWED_BIND_HEAD           = 0a7abdeb1702017dc6528b5afa103c06f290278f
+ACCEPTED_FACTS = second consumer teo.analyze/gpt_analyze view=summary;
+    SHARED_GOVERNED_READ_SEMANTICS=PROVEN_WITH_TWO_CONSUMERS;
+    NO_PARALLEL_ENGINE=PASS; USER_IDENTITY_PRESERVATION=PASS;
+    CORE_CONTEXT=PASS; DOMAIN_AUTHZ_PATH=PROVEN; GROUNDING=PASS;
+    PROVENANCE=PASS; DAVI_REGRESSION=PASS; OTHER_READS=BLOCKED;
+    PREPARE=BLOCKED; ACT=BLOCKED; FULL_TESTS=584/584 PASS at impl SHA
+RESIDUALS_ACCEPTED = LIVE_NEGATIVE_DOMAIN_AUTHZ=TEST_NOT_RUN;
+    LIVE_SOURCE_OUTAGE_SIMULATION=TEST_NOT_RUN;
+    PRODUCTION_TOKEN_EXCHANGE=NOT_PROVEN;
+    NATIVE_MCP_2026_ENVELOPE_CLIENT=DEFERRED (non-blocking for current
+    bounded DEV slice)
+
+C4_MCP_GOVERNED_READS_02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
+C4_MCP_GOVERNED_READ_FOUNDATION = CLOSED_CURRENT_SCOPE — reusable
+    read architecture proven with two consumers:
+    Portal user -> DELIA interaction -> Core /me -> bounded
+    capability selection -> per-binding allowlist -> SpecialistInterop
+    -> delegated same-user MCP credential -> specialist/domain AuthZ
+    -> authoritative read -> SpecialistOutcome OBSERVATION ->
+    deterministic bounded rendering -> provenance -> GROUNDED.
+    SOURCE_UNAVAILABLE -> NON_GROUNDED + delpi_source_unverified +
+    canonical disclosure; AUTHZ_DENIED distinct; NOT_APPLICABLE
+    post-consultation only. model proposal != authorization; tool
+    metadata != authorization; MCP discovery != approval;
+    read != write.
+
+THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED — no additional TEO tool,
+    VISTA read, DAVI action, generic read router, or tools/list
+    auto-enablement. Two consumers suffice for the abstraction proof.
+
+DOC16_DRIFT_FIXED = YES — canonical header "Proxima etapa" no longer
+    points to ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1 (already
+    accepted §6.104); reconciled to current coordination state.
+
+C5_PREREQUISITE_MATRIX (owner evidence vs DELIA-side state):
+
+  A. POLICY_DECISION
+     OWNER: DELIA application/domain layer (write authorization
+        policy is orchestration-side, not owner-side)
+     CANONICAL_SOURCE: domain/specialist_interop rules +
+        interaction decision contracts
+     STATE = TARGET — PREPARE/ACT classification exists and blocks;
+        no governed-write policy/decision contract authorizes.
+        decision_path domain = routing primitive, != write Decision.
+  B. PREPARE_SEMANTICS
+     OWNER: transformometro-api / tv-dashboard-api (proposal mint)
+     STATE = PROVEN owner-side; DELIA-side TARGET — no bounded
+        PREPARE invocation/projection semantic exists (governed_read
+        is read-shaped; a proposal preview is not a grounded answer).
+  C. CONFIRMATION_DECISION_GATE
+     OWNER: DELIA interaction boundary (confirmation binding) +
+        owner (confirmation=true + proposal revalidation)
+     STATE = TARGET — owner enforces confirmation=true and
+        revalidates, but DELIA has NO deterministic
+        confirmation-contract turn binding user intent to the exact
+        previewed proposal (exact_change/fingerprint/actor/expiry).
+        Model echo of a handle is not confirmation.
+  D. LIVE_CORE_AUTHZ_REVALIDATION
+     OWNER: Core /me + Keycloak exchange (DELIA boundary)
+     STATE = PROVEN at request granularity — every turn re-resolves
+        Core effective context and mints a fresh delegated credential
+        (bounded cache <=120s). An ACT would be a distinct turn => /
+        me re-resolved before the material transition. Residual:
+        intra-request staleness window <=120s token cache.
+  E. FINAL_DOMAIN_AUTHZ
+     OWNER: transformometro-api / tv-dashboard-api
+     STATE = PROVEN — commit re-executes require_* domain checks and
+        actor binding at ACT time (orchestrator._execute).
+  F. IDEMPOTENCY
+     OWNER: transformometro-api (idempotency_store + single-use
+        consumed proposal + current_state_fingerprint TOCTOU
+        re-check); tv-dashboard-api requires caller idempotency_key
+     STATE = PROVEN owner-side => REUSE (DELIA carries
+        proposal_handle/idempotency_key; never invents keys).
+  G. AUDIT
+     OWNER: owner-side actor/proposal lifecycle + structured logs;
+        DELIA-side write-decision audit contract
+     STATE = TO_INVENTORY — no DELIA-owned audit event/record for
+        write decisions exists; owner audit depth per-capability not
+        fully inventoried.
+  H. TECHNICAL_EXECUTION_OWNER
+     OWNER: transformometro-api governed_writes orchestrator /
+        tv-dashboard-api proposal runtime
+     STATE = PROVEN (existing canonical write paths; DELIA must not
+        reimplement business write logic).
+  I. AUTHORITATIVE_POSTCONDITION
+     OWNER: transformometro-api (expected_postcondition +
+        _verify read-back); tv-dashboard-api (VERIFIED/
+        OUTCOME_NOT_VERIFIED)
+     STATE = PROVEN owner-side.
+  J. OUTCOME_VERIFICATION
+     OWNER: transformometro-api commit() verified payload +
+        OUTCOME_VERIFICATION_FAILED semantics
+     STATE = PROVEN owner-side; DELIA-side outcome projection =
+        TARGET (bounded rendering of verified/not-verified missing).
+  K. ROLLBACK_REVOKE_CANCEL
+     STATE = TO_INVENTORY — per-capability; proposal expiry/consume
+        prevents replay but post-commit reversibility is
+        capability-specific and not inventoried.
+  L. CAPABILITY_BINDING_ALLOWLIST
+     OWNER: DELIA domain rules.py
+     STATE = PROVEN pattern — GOVERNED_READ_ACTIONS per-binding tuple
+        gate exists; write needs an equivalent bounded write tuple
+        (EXTEND, trivially, inside a foundation slice — not yet done).
+  M. PREPARE_NE_ACT_SEPARATION
+     STATE = PROVEN — registry classifies prepare_*/commit_proposal
+        as PREPARE/ACT and both are blocked; owner enforces
+        two-call separation (handle only commits via commit_proposal
+        with confirmation=true).
+  N. MCP_SPECIALIST_WRITE_CONTRACTS
+     STATE = PROVEN contracts inventoried (see MCP_WRITE_CANDIDATES).
+  O. AUTOMATION_HUB_OWNERSHIP = NOT_REQUIRED for a bounded MCP write
+        slice (no durable/scheduled execution involved).
+  P. PERSISTENCE
+     STATE = PROVEN-SUFFICIENT for bounded slice — owner proposal
+        store is in-memory with expiry; a cross-restart loss fails
+        closed (PROPOSAL_NOT_FOUND -> re-PREPARE). No DELIA
+        persistence required while ACT is request-scoped; recurring/
+        durable work = out of scope, would require persistence.
+
+MCP_WRITE_CANDIDATES (existing surfaces, no preference ranking):
+
+  TEO/transformometro-api:
+    PREPARE tools = prepare_record_change, prepare_activate_revision,
+        prepare_recalculate_dashboard, prepare_meeting_minute_workflow,
+        prepare_improvement_package, prepare_manage_evidence,
+        prepare_adjust_shared_resource_cost, prepare_meeting_minute_manage,
+        prepare_create_diagnostic, prepare_manage_diagnostic
+    ACT = commit_proposal(proposal_handle, confirmation)
+    PROVEN: opaque HMAC-signed proposal_handle; expiry; actor binding
+        (PROPOSAL_ACTOR_MISMATCH); capability binding; exact_change;
+        current_state_fingerprint re-check at commit (PROPOSAL_STALE);
+        consume-on-use; confirmation=true required; live domain AuthZ
+        revalidation; expected_postcondition + verified read-back;
+        OUTCOME_VERIFICATION_FAILED distinct code.
+  VISTA/tv-dashboard-api:
+    PREPARE = prepare_change (target + ops[] catalog); ACT =
+        commit_proposal (proposal_handle + idempotency_key +
+        confirmation=true); postcondition VERIFIED/OUTCOME_NOT_VERIFIED
+        backend-verified.
+    PARTIAL_INVENTORY — proposal lifecycle internals (expiry/fingerprint/
+        actor binding) = TO_INVENTORY.
+  DAVI/api-delpi:
+    WRITE SURFACE AT MCP = NONE — registry exposes only
+        discover_delpi_information (DISCOVERY) + execute_delpi_information
+        (READ). No PREPARE/ACT pair => no DAVI write candidate.
+
+EXISTING_EQUIVALENTS / REUSE_DECISIONS:
+    SpecialistInterop/Port/adapter = YES -> REUSE (invoke mechanics
+        already enforce per-binding gates + delegated credential).
+    SpecialistOutcome/grounding/provenance projection = YES -> EXTEND
+        (write outcome projection is proposal/verify-shaped, not
+        product-summary-shaped).
+    Per-binding gate map = YES -> EXTEND (write tuple map).
+    Owner proposal_handle/fingerprint/idempotency/verify = YES ->
+        REUSE (pass-through only; DELIA never mints/mutates handles).
+    DELIA confirmation/Decision-Gate turn contract = NO -> NEW
+        (smallest bounded foundation; deterministic binding of user
+        confirmation to the exact previewed proposal — model output
+        cannot carry authorization).
+    DELIA write-decision audit record = TO_INVENTORY.
+
+STALE_RBAC_ASSESSMENT = PASS_WITH_RESIDUAL — material transition is a
+    distinct request => Core /me re-resolved + delegated credential
+    re-minted (or <=120s cached) + owner re-runs require_* domain
+    checks + fingerprint at commit. Residual: <=120s token-cache
+    window and intra-turn staleness; acceptable for bounded slice,
+    recorded.
+
+C5_ENTRY_VERDICT = C5_FOUNDATION_SLICE_REQUIRED
+    Reusable owner business writes are PROVEN (TEO, likely VISTA),
+    but DELIA-side foundation is missing: governed-write semantic/
+    outcome contract, deterministic confirmation/Decision-Gate turn
+    binding, write per-binding gate tuple, write-decision audit
+    contract. No business ACT can be authorized without these.
+
+AUTHORIZED_NEXT_TASK (exactly one):
+    C5-GOVERNED-WRITE-FOUNDATION-01
+    MODE = BOUNDED C5 FOUNDATION SLICE (contracts + semantics only)
+    SCOPE = DELIA-side governed-write primitives: per-binding write
+        gate tuples mirroring GOVERNED_READ_ACTIONS shape; governed
+        PREPARE invocation/projection (proposal preview: exact_change,
+        consequential_impact, confirmation_requirement, expiry —
+        rendered deterministically, handle treated as opaque evidence
+        never logged in full); deterministic confirmation binding
+        contract (confirmation turn must match the previewed proposal
+        deterministically — not model-echoed); write outcome
+        projection (VERIFIED/OUTCOME_NOT_VERIFIED/failure classes);
+        audit record contract for write decisions.
+    EXPLICITLY_NOT_AUTHORIZED = any business PREPARE/ACT wire call,
+        any TEO/VISTA write invocation, generic write engine,
+        durable/recurring work, Automation Hub. Implementation may be
+        exercised by tests/fakes only; live write = later task.
+    RATIONALE = smallest missing foundation identified by the
+        readiness matrix; unblocks a later single bounded
+        C5-MCP-GOVERNED-WRITE-01 (one PREPARE/ACT pair only) without
+        authorizing it now.
+
+PHASE_FLAGS_UNCHANGED = C3_EXECUTED=NO; FULL_C3=C3_NOT_COMPLETE;
+    C4_AUTHORIZED=NO (phase level); C5_AUTHORIZED=NO;
+    PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN.
+    Task-scoped C5 foundation authorization != C5_AUTHORIZED=YES.
+
+BLOCKERS  = NONE
+RESIDUALS = as listed per-matrix (audit depth, VISTA lifecycle
+    internals, rollback per-capability, token-cache window).
+NEXT = C5-GOVERNED-WRITE-FOUNDATION-01 (task-scoped authorization;
+    no runtime write authorized by it)
+```
