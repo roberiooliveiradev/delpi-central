@@ -8152,3 +8152,81 @@ STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 NEXT = independent architecture review of
     ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R1.
 
+## 6.121. ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R2 — grounded output secret/token redaction (REWORK evidence)
+
+DATE = 2026-10-02
+BASE_HEAD = fcf16abb1b995d0a54048cf8e823621678768556
+EVALUATED_SHA = ed0027b2ef (main, pushed; delia-api deployed)
+BRANCH = main; WORKING_TREE = clean at issuance
+
+ROOT CAUSE (review blocker
+GROUNDED_OUTPUT_GENERIC_SECRET_TOKEN_REDACTION):
+    the deterministic renderer sanitized only candidate_token;
+    untrusted MCP structured/text output could carry access_token,
+    client_secret, password, api_key, cookies, bearer/JWT or PEM
+    material straight into user-facing OBSERVATION content.
+
+REUSE GATE: EXISTING_EQUIVALENT = NO. shared/delpi_mcp
+    redact_error_details is substring-matched (would drop legitimate
+    fields like token_count/authorization_status — violates R2
+    false-positive control) and is scoped to owner-side error details.
+    REUSE_DECISION = NEW deterministic helpers at the DÉLIA
+    presentation boundary (Abstraction Gate: owner = presentation/
+    security boundary, consumer = grounded result renderer, authority
+    = none, provider-neutral).
+
+IMPLEMENTATION (delia-api only):
+    - Canonical sensitive-key set normalized to lowercase alnum —
+      snake/kebab/camel/Pascal/spaced variants all match
+      (candidate_token, access/refresh/id/session/bearer token,
+      client_secret, authorization, password, passwd, api_key,
+      private_key, credential(s), cookie, set_cookie). Exact canonical
+      names only — token_count, authorization_status and similar
+      business fields preserved.
+    - _sanitize_renderable: recursive Mapping/list redaction —
+      sensitive keys keep shape but values become [REDACTED]; no
+      value/length/prefix/hash leaks.
+    - _redact_text on untrusted content_text: PEM private-key blocks,
+      Authorization/Cookie/Set-Cookie header values, Bearer material,
+      named credential assignments (key=value, key: value, quoted
+      variants), JWT-shaped values (eyJ...). Business text preserved.
+    - Dead MAX_NARRATION_* constants removed.
+    - No raw SpecialistOutcome/structured/content_text logging exists
+      in the render path (verified) — SECRETS_TO_COMMON_LOGS = NO
+      already satisfied.
+
+TEST MATRIX (fake marker values only): structured access_token/
+clientSecret/nested refresh_token+password/list api_key -> hidden,
+siblings preserved; content_text bearer/named creds/cookie/PEM ->
+redacted; 24 naming variants -> redacted; token_count/token_usage/
+authorization_status/product -> preserved; depth>1 + list-of-
+mappings -> redacted; candidate_token in output -> hidden; JWT-like
+-> hidden, plain dot-separated codes -> preserved.
+38/38 test_specialist_owned_read.py; full delia-api suite green;
+git diff --check clean.
+
+LIVE REGRESSION (POST /interaction/turns, subject=user, fresh OIDC
+token, never printed):
+    DAVI tubo: 200 GROUNDED OBSERVATION search_products, real rows.
+    TEO indicators: 200 GROUNDED OBSERVATION teo/analyze.
+    VISTA playlists: 200 GROUNDED OBSERVATION vista/list_playlists,
+        items: (vazio).
+    CONTROL: 200 NON_GROUNDED HYPOTHESIS. UNAUTH: 401.
+    Deploy scope: delia-api only (rebuild+recreate); no specialist,
+    Keycloak, gateway or Portal change.
+
+CLAIMS =
+    GROUNDED_OUTPUT_GENERIC_SECRET_TOKEN_REDACTION = FIXED
+    EPISTEMIC_INTEGRITY_R1 = PRESERVED (deterministic render,
+        OBSERVATION+GROUNDED, model_invocation_id=None truthful)
+    LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA = PASS (post-R2)
+    PRODUCTION_MCP_RUNTIME = READ_SLICE_PROVEN
+    REAL_PRODUCTION_APPLY = PASS_FOR_CURRENT_MCP_READ_SCOPE
+    PREPARE = BLOCKED; ACT = BLOCKED; UNKNOWN = discoverable only
+    C4_AUTHORIZED = NO (phase); C5_AUTHORIZED = NO
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+NEXT = independent architecture review of
+    ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R2.
+
