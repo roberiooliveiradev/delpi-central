@@ -5,6 +5,10 @@
  * Input: elementos extraídos do moddle tree (via adapter — o grafo é
  * construído dentro de src/layout/ a partir de um snapshot serializável).
  * Ordenação estável: document order com tie-break por id (P5 §39).
+ *
+ * Hierarquia: node.parentId é derivado da semântica BPMN no snapshot
+ * (participant.processRef / lane.flowNodeRef / subProcess.flowElements)
+ * — o ELK recebe o containment real, não um flat layout.
  */
 
 import { LAYOUT_PROFILE_V1, nodeSizeFor } from "./layoutProfile";
@@ -17,6 +21,8 @@ export type LayoutNode = {
   attachedToId?: string;
   isLane?: boolean;
   isParticipant?: boolean;
+  /** BPMNShape.isExpanded vigente (subProcess expandido=true / collapsed=false). */
+  isExpanded?: boolean;
   /** Bounds DI atuais — auto-layout preserva o tamanho de não-containers. */
   x?: number;
   y?: number;
@@ -24,6 +30,11 @@ export type LayoutNode = {
   height?: number;
   /** BPMNLabel explícito do DI (label externa). */
   labelBounds?: LayoutBounds;
+  /** Atributos BPMNShape originais além de id/bpmnElement (isExpanded,
+   *  isHorizontal, isMarkerVisible, bioc:* etc.) — preservados no preview. */
+  diAttrs?: Record<string, string>;
+  /** id original da BPMNShape — reutilizado no preview DI. */
+  diId?: string;
 };
 
 export type LayoutEdge = {
@@ -34,6 +45,10 @@ export type LayoutEdge = {
   points?: { x: number; y: number }[];
   /** BPMNLabel explícito do DI. */
   labelBounds?: LayoutBounds;
+  /** Atributos BPMNEdge originais além de id/bpmnElement. */
+  diAttrs?: Record<string, string>;
+  /** id original da BPMNEdge — reutilizado no preview DI. */
+  diId?: string;
 };
 
 export type LayoutBounds = { x: number; y: number; width: number; height: number };
@@ -45,6 +60,9 @@ export type LayoutSnapshot = {
 
 export type ElkNode = {
   id: string;
+  /** x/y preenchidos pelo ELK no output (input não precisa). */
+  x?: number;
+  y?: number;
   width?: number;
   height?: number;
   children?: ElkNode[];
@@ -58,11 +76,54 @@ export type ElkEdge = {
   targets: string[];
 };
 
-/** Constrói o grafo ELK hierárquico a partir do snapshot. Determinístico. */
+const COLLAPSED = (n: LayoutNode) => n.isExpanded === false;
+
+/** Padding interno do container ELK conforme a família BPMN — lane/pool
+ *  têm header à esquerda (~30px) que não pode receber children. */
+function containerPadding(node: LayoutNode): string {
+  const p = LAYOUT_PROFILE_V1.containerPadding;
+  const type = node.type.replace(/^bpmn:/, "");
+  if (node.isParticipant) return p.participant;
+  if (node.isLane) return p.lane;
+  if (
+    type === "subProcess" ||
+    type === "transaction" ||
+    type === "adHocSubProcess" ||
+    type === "eventSubProcess"
+  ) {
+    return p.subprocess;
+  }
+  return p.default;
+}
+
+/** Constrói o grafo ELK hierárquico a partir do snapshot. Determinístico.
+ *  Descendentes de containers collapsed não entram no grafo (conteúdo
+ *  não visível não é laid out). Edges cujo scope real é um ancestor
+ *  comum (cross-lane, cross-pool) são declaradas no LCA — exigência do
+ *  ELK layered para hyperedges hierárquicas. */
 export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
-  const sortedNodes = [...snapshot.nodes].sort((a, b) =>
-    a.id.localeCompare(b.id),
-  );
+  const nodeById = new Map(snapshot.nodes.map((n) => [n.id, n]));
+  const parentOf = new Map(snapshot.nodes.map((n) => [n.id, n.parentId]));
+
+  // Nós escondidos: descendem (transitivo) de um container collapsed.
+  const hidden = new Set<string>();
+  for (const node of snapshot.nodes) {
+    let p = parentOf.get(node.id);
+    while (p) {
+      const parent = nodeById.get(p);
+      if (!parent) break;
+      if (COLLAPSED(parent) || hidden.has(p)) {
+        hidden.add(node.id);
+        break;
+      }
+      p = parentOf.get(p);
+    }
+  }
+  // Visível = existe e não está dentro de um container collapsed.
+  const isVisible = (id: string) => nodeById.has(id) && !hidden.has(id);
+  const sortedNodes = [...snapshot.nodes]
+    .filter((n) => !hidden.has(n.id))
+    .sort((a, b) => a.id.localeCompare(b.id));
   const sortedEdges = [...snapshot.edges].sort((a, b) =>
     a.id.localeCompare(b.id),
   );
@@ -74,11 +135,32 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
     byParent.set(node.parentId, list);
   }
 
+  /** Cadeia de ancestors (exclusivo) até a raiz. */
+  const ancestors = (id: string): Array<string | undefined> => {
+    const chain: Array<string | undefined> = [];
+    let p = parentOf.get(id);
+    while (p !== undefined) {
+      chain.push(p);
+      p = parentOf.get(p);
+    }
+    chain.push(undefined);
+    return chain;
+  };
+
+  /** Menor ancestor comum dos dois endpoints — scope válido da edge. */
+  const edgeScope = (
+    edge: LayoutEdge,
+  ): string | undefined => {
+    const a = ancestors(edge.sourceId);
+    const b = new Set(ancestors(edge.targetId));
+    return a.find((anc) => b.has(anc));
+  };
+
   const edgesByScope = new Map<string | undefined, LayoutEdge[]>();
-  const nodeById = new Map(sortedNodes.map((n) => [n.id, n]));
   for (const edge of sortedEdges) {
-    const source = nodeById.get(edge.sourceId);
-    const scope = source?.parentId;
+    // Endpoints precisam existir e estar visíveis no grafo.
+    if (!isVisible(edge.sourceId) || !isVisible(edge.targetId)) continue;
+    const scope = edgeScope(edge);
     const list = edgesByScope.get(scope) ?? [];
     list.push(edge);
     edgesByScope.set(scope, list);
@@ -90,7 +172,7 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
         node.width != null && node.height != null
           ? { width: node.width, height: node.height }
           : nodeSizeFor(node.type);
-      const children = build(node.id);
+      const children = COLLAPSED(node) ? [] : build(node.id);
       const elkNode: ElkNode = {
         id: node.id,
         width: size.width,
@@ -98,7 +180,13 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
       };
       if (children.length > 0) {
         elkNode.children = children;
-        elkNode.layoutOptions = { ...LAYOUT_PROFILE_V1.elk };
+        // Lane stacking/order é política de composição BPMN — aplicada
+        // na normalização pós-ELK (diProposal), não via ELK options
+        // (considerModelOrder + hierarquia crasha elkjs 0.12).
+        elkNode.layoutOptions = {
+          ...LAYOUT_PROFILE_V1.elk,
+          "elk.padding": containerPadding(node),
+        };
         const scoped = edgesByScope.get(node.id);
         if (scoped?.length) {
           elkNode.edges = scoped.map(toElkEdge);

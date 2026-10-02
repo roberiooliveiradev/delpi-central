@@ -30,13 +30,33 @@ export const LAYOUT_PROFILE_V1 = {
     rankSpacing: 50,
   },
 
-  /** ELK layered options (P5: orthogonal routing, seed fixo). */
+  /** ELK layered options (P5: orthogonal routing, seed fixo).
+   *  INCLUDE_CHILDREN: layout hierárquico real — filhos de pool/lane/
+   *  subProcess são posicionados DENTRO dos bounds do container
+   *  (default INHERIT deixaria níveis aninhados como grupos soltos). */
   elk: {
     algorithm: "layered",
     "elk.edgeRouting": "ORTHOGONAL",
     "elk.direction": "RIGHT",
     "elk.randomSeed": "1",
+    "elk.hierarchyHandling": "INCLUDE_CHILDREN",
   } as Record<string, string>,
+
+  /** Padding interno de containers hierárquicos (elk.padding).
+   *  Lane/participant reservam o header vertical (~30px) à esquerda. */
+  containerPadding: {
+    participant: "[top=10,left=42,bottom=10,right=12]",
+    lane: "[top=10,left=42,bottom=10,right=12]",
+    subprocess: "[top=20,left=20,bottom=20,right=20]",
+    default: "[top=12,left=12,bottom=12,right=12]",
+  },
+
+  /** Gap vertical entre pools irmãos na raiz (lanes internas ficam
+   *  flush — BPMN não tem espaço entre lanes do mesmo laneSet). */
+  poolGap: 40,
+  /** Gap entre membros unlaned de um participant, abaixo da stack
+   *  de lanes (PROCESS_LEVEL_UNLANED → região própria do pool). */
+  unlanedGap: 20,
 
   /** Timeout do cálculo de layout no worker. */
   timeoutMs: 15_000,

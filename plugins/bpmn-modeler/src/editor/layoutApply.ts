@@ -114,7 +114,7 @@ export class ApplyDiLayoutHandler {
       // delta do owner antes de mutar — label externa acompanha o owner.
       let dx = 0;
       let dy = 0;
-      if (op.bounds && element.x !== undefined) {
+      if (op.bounds && element.x !== undefined && element.y !== undefined) {
         dx = op.bounds.x - element.x;
         dy = op.bounds.y - element.y;
       } else if (op.waypoints && element.waypoints?.length) {
