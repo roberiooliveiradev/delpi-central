@@ -276,3 +276,78 @@ describe("ComunicadoDataRibbon — expressão (cenários C/D)", () => {
     expect(request.spec).toEqual(expr);
   });
 });
+
+describe("ComunicadoDataRibbon — visual ligado a DataModel", () => {
+  const MODEL = {
+    id: "dm-1",
+    label: "Modelo ROL",
+    primaryInputId: "in-1",
+    inputs: [
+      {
+        id: "in-1",
+        operationId: "comercial.rol.summary",
+        params: { branch: "01", dateRangePreset: "this_month" },
+      },
+      {
+        id: "in-2",
+        operationId: "comercial.rol.summary",
+        params: { branch: "01", dateRangePreset: "this_month" },
+      },
+    ],
+  };
+
+  const MODEL_KPI: ComunicadoKpiViewBlock = {
+    ...KPI,
+    id: "kpi-model",
+    dataSourceId: undefined,
+    modelId: "dm-1",
+  } as ComunicadoKpiViewBlock;
+
+  function modelEditor(overrides: Partial<EditorStub> = {}): EditorStub {
+    return freshEditorState({
+      blocks: [MODEL_KPI],
+      config: { dataModels: [MODEL] },
+      selected: MODEL_KPI,
+      selectedIds: ["kpi-model"],
+      selectedId: "kpi-model",
+      selectedBlocks: [MODEL_KPI],
+      refreshDataPreview: vi.fn(),
+      refreshingSourceIds: [],
+      ...overrides,
+    });
+  }
+
+  it("grupos de dados aparecem sem fonte legacy (Período/Atualização/Expressão/Mais)", () => {
+    editorState = modelEditor();
+    render(<ComunicadoDataRibbon />);
+    for (const caption of ["Fonte", "Campo", "Período", "Atualização", "Expressão", "Mais"]) {
+      expect(screen.getAllByText(caption).length).toBeGreaterThan(0);
+    }
+    // Tile de Período reflete o preset compartilhado dos inputs do modelo.
+    expect(screen.getByText("Este mês (até hoje)")).toBeTruthy();
+  });
+
+  it("MODEL_BOUND_VISUAL_REFRESH_TARGETS_MODEL: Atualizar dados força refresh do modelo", () => {
+    editorState = modelEditor();
+    render(<ComunicadoDataRibbon />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Atualização" })[0]!);
+    fireEvent.click(screen.getByRole("button", { name: "Atualizar dados" }));
+    expect(editorState.refreshDataPreview).toHaveBeenCalledWith({
+      force: true,
+      blockIds: ["dm-1"],
+    });
+  });
+
+  it("edição de parâmetro faz fan-out para os inputs compatíveis via saveDataModel", () => {
+    editorState = modelEditor();
+    render(<ComunicadoDataRibbon />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Mais" })[0]!);
+    chooseOption(screen.getByRole("button", { name: "Filial" }), /02/);
+    expect(editorState.saveDataModel).toHaveBeenCalledTimes(1);
+    const saved = editorState.saveDataModel.mock.calls[0]![0] as typeof MODEL;
+    expect(saved.id).toBe("dm-1");
+    expect(saved.inputs.map((input) => input.params?.branch)).toEqual(["02", "02"]);
+    // Preset do input 1 sobrevive ao patch mínimo.
+    expect(saved.inputs[0]?.params?.dateRangePreset).toBe("this_month");
+  });
+});

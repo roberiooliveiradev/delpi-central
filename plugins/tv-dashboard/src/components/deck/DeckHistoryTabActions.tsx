@@ -28,7 +28,7 @@ type Props = {
   backHint?: string;
 };
 
-/** Voltar + Desfazer/refazer + Atualizar dados (quando a tela tem blocos de dados). */
+/** Voltar + Desfazer/refazer + Atualizar dados (quando a tela tem alvos de dados). */
 export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
   const history = useDeckEditorHistoryContext();
   const editor = useOptionalComunicadoEditor();
@@ -37,6 +37,9 @@ export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
   const hasDataBlocks = Boolean(
     editor?.config?.blocks?.some((block) => isFetchableDataBlockType(block.type)),
   );
+  // DataModels também são alvos de preview — slide só-modelo mantém «Atualizar dados».
+  const hasDataTargets =
+    hasDataBlocks || (editor?.config?.dataModels?.length ?? 0) > 0;
   const refreshing = Boolean(
     editor?.dataPreviewLoading || (editor?.refreshingSourceIds?.length ?? 0) > 0,
   );
@@ -50,7 +53,7 @@ export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
   const canUndo = editor ? Boolean(editor.canUndo) || deckCanUndo : deckCanUndo;
   const canRedo = editor ? Boolean(editor.canRedo) || deckCanRedo : deckCanRedo;
 
-  if (!history && !onBack && !hasDataBlocks && !editor) return null;
+  if (!history && !onBack && !hasDataTargets && !editor) return null;
 
   return (
     <div className="td-deck-chrome__history" role="group" aria-label="Ações do editor">
@@ -113,7 +116,7 @@ export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
           </ShortcutTip>
         </>
       ) : null}
-      {hasDataBlocks && editor ? (
+      {hasDataTargets && editor ? (
         <HintAction hint={HEADER.refreshVisual} ariaLabel="Atualizar dados">
           <button
             type="button"

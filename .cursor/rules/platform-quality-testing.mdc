@@ -74,6 +74,23 @@ Todo bugfix material deve ter:
 
 Aplicar `root-cause-generalized-fix.mdc`.
 
+## Migração de abstração exige paridade de capacidades
+
+`ABSTRACTION_REPLACEMENT_REQUIRES_CAPABILITY_PARITY`: substituir uma abstração vigente (novo modelo de dados, store, pipeline, formato de config) exige **inventariar as capacidades user-facing da anterior** e provar para cada uma: preservada, substituída por equivalente na nova superfície, ou depreciada intencionalmente com decisão explícita.
+
+Sinais de regressão silenciosa típica:
+
+- superfícies de UI que descobrem configuração somente via a estrutura antiga (schema/filtros/ações gateados no tipo legado);
+- coletores agregados que varrem só a coleção antiga (`blocks`, `rows`, `steps`) e ignoram a nova;
+- ações globais (refresh, exportar, filtrar) que só existem quando o artefato antigo está presente.
+
+Checklist mínimo da migração:
+
+- [ ] matriz de capacidades antes/depois com evidência (não assumir "já funciona");
+- [ ] descoberta canônica estendida para a nova estrutura — sem coletor duplicado por consumidor;
+- [ ] casos só-antigo, só-novo e misto cobertos por teste;
+- [ ] nenhuma capacidade some por falta de wiring (a projeção da nova abstração deve alcançar as superfícies existentes).
+
 ## Contratos
 
 Mudança de API/evento/schema/manifest exige testes de contrato conforme `platform-api-contracts-integration.mdc` e `contract-evolution-backward-compatibility.mdc`.

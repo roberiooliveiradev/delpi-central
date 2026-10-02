@@ -435,6 +435,14 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Modelos de dados do slide: cada modelo combina uma ou mais rotas e um transform num único objeto lógico. Visuais ligam ao modelo — as rotas internas não aparecem no palco.",
     modelInspector:
       "Objeto lógico de dados (não visual). «Rotas do modelo» mostra as rotas internas, parâmetros e transform; «Campos de saída» lista o que os visuais podem projetar.",
+    modelFilters:
+      "Filtros compartilhados das rotas do modelo — sobrescrevem Tela/Programação e aplicam só nas rotas compatíveis. Edição por rota fica em «Rotas do modelo». Precedência: input > modelo > tela > programação.",
+    modelFiltersConflict:
+      "Estes campos têm definições diferentes entre as rotas do modelo ({keys}) — edite por rota abaixo.",
+    modelFiltersPartial:
+      "Estes campos valem só para parte das rotas do modelo ({keys}); as demais não recebem o valor.",
+    modelForceRefresh:
+      "Força nova busca do modelo ignorando cache — atualiza o preview e os visuais ligados. Na TV, a cadência vem do intervalo da tela/programação.",
     modelBinding:
       "Liga este bloco ao modelo de dados. O seletor de campo usa a saída do modelo; trocar para uma fonte legacy remove o vínculo do modelo.",
     valueFields:

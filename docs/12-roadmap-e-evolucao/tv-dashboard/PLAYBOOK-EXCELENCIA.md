@@ -1282,8 +1282,9 @@ Enriquecimentos manuais por `operationId` são **preservados** na regeneração 
 | Camada | Onde configura | Exemplo | Efeito |
 |---|---|---|---|
 | **Programação** | Aba Programação / defaults da playlist | Filial padrão, refresh global | Herança para todos os slides |
-| **Slide** | Painel «Filtros do slide» (novo) | `branch: "01"`, `periodDays: 30` | Aplica a **todos** os blocos `data_*` do slide que não sobrescreverem |
-| **Bloco** | Inspector do indicador | KPI OEE com `periodDays: 7`; tabela com `top_limit: 5` | Sobrescreve filtro do slide **só naquele bloco** |
+| **Slide** | Painel «Filtros do slide» (novo) | `branch: "01"`, `periodDays: 30` | Aplica a **todos** os blocos `data_*` e inputs de `dataModels` do slide que não sobrescreverem |
+| **Bloco / Input de modelo** | Inspector do indicador / «Rotas do modelo» | KPI OEE com `periodDays: 7`; input do modelo com `branch: "03"` | Sobrescreve filtro do slide **só naquele bloco/input** |
+| **Modelo (projeção)** | «Filtros do modelo» no DataModelInspector | `branch: "02"` aplicada às rotas compatíveis do modelo | Atalho de UX — persiste em `dataModels[].inputs[].params`, não cria camada nova |
 
 **Ordem de merge (prioridade crescente):**
 
@@ -1291,10 +1292,13 @@ Enriquecimentos manuais por `operationId` são **preservados** na regeneração 
 playlist.dataDefaults
   →  slide.dataFilters
   →  block.dataBinding.params   (ex.: dateRangePreset da fonte)
+     ∪ dataModels[].inputs[].params   (mesma camada "dados" para modelos)
   →  inputs targetScope=slide (+ overrides de sessão no kiosk)
      ∪ inputs targetScope=sources (por dataSourceId)
                               (herança)              (mais específico ganha)
 ```
+
+**Paridade DataModel ↔ fonte legacy (DM5).** Um slide só-DataModel mantém as mesmas capacidades de configuração de um slide `data_source`: filtros de Programação/Tela derivam das rotas dos `inputs[].operationId` via o coletor canônico `collectDataOperationIds` (não só de `config.blocks`); «Filtros do modelo» é projeção agregada dos inputs (fan-out mínimo por rota compatível; schemas conflitantes saem do agregado e seguem editáveis por rota); ribbon e ação «Atualizar dados» cobrem visuais ligados por `modelId` e slides sem fonte legacy; `refreshDataPreview({force:true})` alcança o `preview-model` com `forceRefresh` → bypass do cache compartilhado no backend. Nenhum `data_source` sintético é persistido para habilitar essas superfícies.
 
 Filtro interativo (`input` / kiosk) **vence** o preset relativo da fonte: se o input fixa `periodDays` ou datas (`start_*`/`end_*`), o merge remove `dateRangePreset` da camada inferior para o intervalo do filtro valer no fetch.
 
