@@ -960,6 +960,120 @@ def test_jwt_like_material_redacted():
     assert _redact_text("code ABC.DEF notes") == "code ABC.DEF notes"
 
 
+# --- R3: structured string-leaf + cookie multi-value redaction --------
+
+
+def test_structured_string_leaves_redacted():
+    """Credential material as a plain string value under an ordinary
+    business key cannot bypass text redaction."""
+    outcome = _outcome(
+        structured={
+            "message": "Authorization: Bearer abc.def.ghi",
+            "detail": "access_token=TEST_ACCESS_SECRET",
+            "notes": "client_secret: TEST_CLIENT_SECRET",
+            "description": "TUBO 30X30X1500",
+        }
+    )
+    content, _ = render_specialist_outcome(outcome)
+    for secret in ("abc.def.ghi", "TEST_ACCESS_SECRET",
+                   "TEST_CLIENT_SECRET"):
+        assert secret not in content
+    assert "TUBO 30X30X1500" in content
+
+
+def test_nested_list_string_leaves_redacted():
+    out = _sanitize_renderable(
+        {
+            "items": [
+                {"product": "ABC", "message": "Bearer TEST_BEARER"},
+                "access_token=TEST_TOKEN",
+                "Produto legítimo",
+            ]
+        }
+    )
+    rendered = str(out)
+    assert "TEST_BEARER" not in rendered
+    assert "TEST_TOKEN" not in rendered
+    assert out["items"][0]["product"] == "ABC"
+    assert out["items"][2] == "Produto legítimo"
+
+
+def test_cookie_multi_value_fully_redacted():
+    out = _redact_text(
+        "Cookie: session=FIRST_SECRET; csrftoken=SECOND_SECRET"
+    )
+    assert "FIRST_SECRET" not in out
+    assert "SECOND_SECRET" not in out
+    assert out.startswith("Cookie:")
+
+
+def test_set_cookie_fully_redacted():
+    out = _redact_text(
+        "Set-Cookie: session=FIRST_SECRET; Path=/; HttpOnly; Secure"
+    )
+    assert "FIRST_SECRET" not in out
+
+
+def test_multiline_business_siblings_preserved():
+    out = _redact_text(
+        "Status ok\n"
+        "Cookie: session=COOKIE_SECRET; csrf=CSRF_SECRET\n"
+        "Produto: TUBO 30X30X1500"
+    )
+    assert "Status ok" in out
+    assert "TUBO 30X30X1500" in out
+    assert "COOKIE_SECRET" not in out
+    assert "CSRF_SECRET" not in out
+
+
+def test_jwt_and_private_key_string_leaves_redacted():
+    out = _sanitize_renderable(
+        {
+            "message": "token eyJhbGciOiJIUzI1NiJ9.payload.signature",
+            "debug": (
+                "-----BEGIN PRIVATE KEY-----\nTEST_SECRET\n"
+                "-----END PRIVATE KEY-----"
+            ),
+            "code": "ABC.DEF.123",
+        }
+    )
+    rendered = str(out)
+    assert "eyJhbGciOiJIUzI1NiJ9" not in rendered
+    assert "TEST_SECRET" not in rendered
+    assert "PRIVATE KEY" not in rendered
+    assert out["code"] == "ABC.DEF.123"
+
+
+def test_final_renderer_combined_fixture_no_secret():
+    """End-to-end through render_specialist_outcome: business data +
+    sensitive keys + ordinary-key secret strings + cookie multi-value
+    + nested list secret — no fake marker survives user-visible
+    content."""
+    outcome = _outcome(
+        structured={
+            "product": "TUBO 30X30X1500",
+            "access_token": "TEST_ACCESS_SECRET",
+            "message": "Authorization: Bearer TEST_BEARER_SECRET",
+            "headers": "Cookie: session=TEST_COOKIE_SECRET; csrf=X",
+            "rows": [
+                {"code": "ABC", "detail": "client_secret=TEST_ROW"},
+            ],
+            "authorization_status": "APPROVED",
+        }
+    )
+    content, limitations = render_specialist_outcome(outcome)
+    for secret in (
+        "TEST_ACCESS_SECRET",
+        "TEST_BEARER_SECRET",
+        "TEST_COOKIE_SECRET",
+        "TEST_ROW",
+    ):
+        assert secret not in content
+        assert secret not in str(limitations)
+    assert "TUBO 30X30X1500" in content
+    assert "APPROVED" in content
+
+
 # --- failure semantics ---------------------------------------------------
 
 

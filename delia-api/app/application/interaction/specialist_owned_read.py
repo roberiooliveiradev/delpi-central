@@ -386,10 +386,11 @@ _TEXT_REDACTIONS = (
     ),
     (
         re.compile(
-            r"\b(authorization|cookie|set-cookie)\s*[:=]\s*\S+",
+            r"(\b(?:authorization|cookie|set-cookie)\s*[:=])\s*"
+            r"[^\r\n]+",
             re.IGNORECASE,
         ),
-        lambda m: re.sub(r"\S+$", REDACTION_MARKER, m.group(0)),
+        lambda m: m.group(1) + " " + REDACTION_MARKER,
     ),
     (
         re.compile(
@@ -446,6 +447,10 @@ def _sanitize_renderable(node: object) -> object:
             _sanitize_renderable(v)
             for v in list(node)[:MAX_RENDER_LIST_ITEMS]
         ]
+    if isinstance(node, str):
+        # Ordinary key + credential-bearing string value: text
+        # redaction still applies — no secret-bearing leaf bypasses.
+        return _redact_text(node)
     return node
 
 
