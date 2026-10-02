@@ -7818,3 +7818,76 @@ CLAIMS =
 STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 NEXT = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R1.
 ```
+
+## 6.117. PROD-MCP-RUNTIME-ALIGNMENT-01R3 — controlled production convergence evidence
+
+```text
+TASK = PROD-MCP-RUNTIME-ALIGNMENT-01R3 (authorized minimal convergence
+    after PROD-MCP-RUNTIME-DIAG-SSH-01 was ACCEPTED with
+    REVIEW_VERDICT=EXECUTION_DRIFT on the two runtime root causes).
+
+BASE_HEAD = 0c470ca6d019f8bf4fa3d81d6faeae3f1d0aebd1 (server + local;
+    branch main; server working tree clean, local unrelated dirty files
+    preserved untouched)
+
+CHANGE 1 — KEYCLOAK (realm delpi, KC 24.0.5):
+    client=mcp-transformometro client-scope mcp:tools binding
+    OPTIONAL -> DEFAULT. Method: Admin REST, same endpoints used by the
+    canonical provisioner (DELETE /optional-client-scopes/{id} then PUT
+    /default-client-scopes/{id}); the engine ensure_default_scope PUT
+    alone was a no-op on KC24 while the scope stayed optional — KC24
+    requires the optional binding to be removed first. Verified:
+    DAVI/TÉO/VISTA all show mcp:tools in default-client-scopes; no
+    other client, scope, mapper, policy or permission touched. The
+    full provisioner --apply was NOT run because it would converge
+    unauthorized drift (create mcp-audience-* client scopes, flip
+    delia-api standardFlowEnabled) — recorded as pre-existing realm
+    materialization drift, not by this task.
+
+CHANGE 2 — DÉLIA runtime config (infra/.env, production-owned,
+    gitignored):
+    DELIA_MCP_DAVI_HOST_HEADER=minhadelpi.com.br
+    DELIA_MCP_TEO_HOST_HEADER=minhadelpi.com.br
+    DELIA_MCP_VISTA_HOST_HEADER=minhadelpi.com.br
+    Service reload: docker compose up -d delia-api only (recreate for
+    env consumption). No other container touched. Health: PASS
+    (healthy, /health 200, clean boot logs).
+
+POSTCONDITIONS PROVEN (live prod, machine-identity subject):
+    token-exchange DAVI/TEO/VISTA = HTTP 200 x3; azp=delia-api; aud =
+    {resource URL + mcp-* client} only; scope now includes mcp:tools
+    x3 (TÉO previously MISSING — fix proven at token level).
+    Negatives: exchange->delpi-central = 403; unknown target = 400;
+    missing subject = rejected; wrong secret = 401. Specialist denied
+    the service-identity token (401 machine-identity gate) — working
+    as designed, not a regression.
+
+PENDING:
+    LIVE_HUMAN_VERIFICATION = PENDING_CREDENTIAL_REQUIRED — no human
+    Portal subject token available to executor; initialize/tools/list
+    with a human delegated token not yet re-proven end-to-end. Host
+    override is loaded and specialists allow the public host (config
+    proven); the 421 path can only be exercised by a request that
+    passes auth.
+
+PROCESS_DRIFT_RECORDED: production realm already contained the MCP
+    contract (delia-api requester, mcp-* clients, mcp:tools scope,
+    client-level audience mappers instead of mcp-audience-* scopes,
+    token-exchange permissions, delia-exchange-requester policy) before
+    any controlled R*-apply; materialization origin not audited.
+
+CLAIMS =
+    TEO_MCP_TOOLS_BINDING = CONVERGED (OPTIONAL -> DEFAULT, verified)
+    HOST_HEADER_OVERRIDE = CONFIGURED_AND_LOADED (x3)
+    DELIA_SERVICE_HEALTH_AFTER_RELOAD = PASS
+    TOKEN_EXCHANGE_POSTCONVERGENCE = PASS x3 (machine subject)
+    HUMAN_DELEGATED_END_TO_END = PENDING_CREDENTIAL_REQUIRED
+    PRODUCTION_MCP_RUNTIME = NOT_PROVEN (PENDING human live verify)
+    REAL_PRODUCTION_APPLY = PARTIAL_PASS (bounded scope only)
+    C4_AUTHORIZED = NO; C5_AUTHORIZED = NO; PREPARE/ACT = BLOCKED
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IMPLEMENTATION_INCONCLUSIVE
+NEXT = human-subject live verification of initialize+tools/list x3,
+    then ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R3.
+```
