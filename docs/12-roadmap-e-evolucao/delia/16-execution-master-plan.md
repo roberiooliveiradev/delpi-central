@@ -778,11 +778,18 @@ C4-MCP-GOVERNED-READS-01 = REWORK (ARCHITECTURE_REVIEW §6.102;
    blocker: SPECIALIST_NOT_CONFIGURED/DISABLED silently degraded to
    undisclosed model fallback instead of SOURCE_UNAVAILABLE +
    delpi_source_unverified; everything else accepted unchanged)
-C4-MCP-GOVERNED-READS-01R1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.103;
-   IMPLEMENTATION_HEAD=8ea1e4b53835478138452e9004654d99b511b65c;
-   discovery-path failures now SOURCE_UNAVAILABLE with canonical
-   disclosure; live read re-proven PASS; 535/535 suite; MFE green)
-NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1
+C4-MCP-GOVERNED-READS-01R1 = ACCEPT_WITH_RESIDUAL (§6.104;
+   ARCHITECTURE_REVIEW on IMPLEMENTATION_HEAD=
+   8ea1e4b53835478138452e9004654d99b511b65c, BIND_HEAD=
+   051687ff8957ee8fa1584a8ef655ae193a273d1c; blocker CLOSED — no R2)
+C4-MCP-GOVERNED-READS-01 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
+   (DAVI execute_delpi_information -> search_products -> Product
+   Master/API DELPI only; negative surface unchanged; phase-level
+   C4_AUTHORIZED=NO; C5=NO; PRODUCTION_READINESS=NOT_PROVEN)
+NEXT = C4-MCP-GOVERNED-READS-02 (authorized §6.104: second governed
+   READ teo.analyze bounded to {view,limit}; EXTEND via per-capability
+   binding — Abstraction Gate re-run required inside the task; no
+   GovernedXxxRead clones)
 Workspace binding remains unscheduled
 ```
 

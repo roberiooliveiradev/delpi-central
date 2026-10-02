@@ -6671,3 +6671,86 @@ PRODUCTION_READINESS = NOT_PROVEN
 C4_MCP_GOVERNED_READS_01R1 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1
 ```
+
+## 6.104 ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1 — final verdict + next coordination
+
+```
+ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1 = ACCEPT_WITH_RESIDUAL
+REVIEWED_IMPLEMENTATION_HEAD = 8ea1e4b53835478138452e9004654d99b511b65c
+REVIEWED_BIND_HEAD           = 051687ff8957ee8fa1584a8ef655ae193a273d1c
+C4_MCP_GOVERNED_READS_01     = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
+ORIGINAL_BLOCKER = GOVERNED_SOURCE_UNAVAILABLE_CAN_DEGRADE_TO_
+    UNDISCLOSED_MODEL_FALLBACK
+BLOCKER_STATUS = CLOSED (no R2; residuals non-blocking)
+
+ACCEPTED_SCOPE (frozen):
+  SPECIALIST = DAVI
+  DISCOVERY = discover_delpi_information
+  EXECUTION_CAPABILITY = execute_delpi_information
+  ONLY_APPROVED_ACTION = search_products
+  BUSINESS_SOURCE = Product Master / API DELPI
+  AUTHORITY = Keycloak(identity) -> Core(RBAC) -> DAVI(specialist) ->
+      API DELPI/Product Master(data); DELIA = governed orchestration
+  SUCCESS = GROUNDED + OBSERVATION + provenance REQUIRED;
+      model output != truth; authoritative empty = GROUNDED EMPTY
+  SOURCE_UNAVAILABLE = NON_GROUNDED + delpi_source_unverified +
+      canonical disclosure + provenance NONE (never looks GROUNDED)
+  NOT_APPLICABLE = post-consultation only; NON_GROUNDED without
+      unverified limitation
+  AUTHZ_DENIED = distinct downstream denial; statuses never merged
+  NEGATIVE SURFACE = other DAVI actions / TEO READ / VISTA READ /
+      PREPARE / ACT BLOCKED; unknown capability fail-closed;
+      caller token and remote metadata = no authority; candidate_token
+      opaque, actor-bound, never serialized
+
+RESIDUALS_ACCEPTED (carried to future gates, no R2):
+  LIVE_NEGATIVE_DOMAIN_AUTHZ = TEST_NOT_RUN
+  PRODUCTION_TOKEN_EXCHANGE = NOT_PROVEN
+  LIVE_SOURCE_OUTAGE_SIMULATION = TEST_NOT_RUN
+  NATIVE_MCP_2026_ENVELOPE_CLIENT = DEFERRED
+  GovernedProductRead = ACCEPTED_ONLY_FOR_CURRENT_BOUNDED_VERTICAL_SLICE
+
+C3_EXECUTED = NO; FULL_C3_STATUS = C3_NOT_COMPLETE
+C4_AUTHORIZED = NO (phase level); C5_AUTHORIZED = NO
+PRODUCTION_READINESS = NOT_PROVEN
+
+NEXT_TASK_COORDINATION (exactly one authorized):
+  C3 open foundation families rechecked - none is a prerequisite of the
+  candidate; 16 does not order a return to C3. Abstraction Gate answer:
+  the governed-read skeleton (bounded selection -> deterministic
+  validation -> invoke -> OBSERVATION outcome -> grounding/provenance ->
+  SOURCE_UNAVAILABLE/NOT_APPLICABLE/AUTHZ_DENIED semantics) is
+  capability-neutral and proven; only invocation mechanics are
+  specialist-specific (DAVI discover->candidate_token->execute vs TEO
+  direct tools/call). COMMON_SEMANTIC_BOUNDARY_PROVEN = YES at the
+  semantic-skeleton level; second concrete consumer identified below
+  proves it in implementation.
+NEXT_TASK_ID   = C4-MCP-GOVERNED-READS-02
+NEXT_TASK_NAME = SECOND_GOVERNED_MCP_READ_TEO_DASHBOARD_ANALYZE
+  PHASE = C4 (bounded slice only)   MODE = BOUNDED IMPLEMENTATION
+  RESPONSIBILITY = second governed business READ through existing
+      semantic primitives + per-capability binding (no new engine)
+  OWNER = transformometro-api (TEO MCP)
+  CANONICAL_SOURCE = Transformometro dashboard (analyze view)
+  CONSUMER = Portal user via DELIA interaction boundary
+  BUSINESS_USE_CASE = grounded Transformometro dashboard KPI summary
+      ("como estao os indicadores do meu transformometro")
+  CONTRACT = teo.analyze (READ) with argument surface bounded to
+      {view in allowlisted subset, limit} - extraction/validation
+      deterministic; all other TEO args rejected
+  EXISTING_EQUIVALENT = YES (skeleton proven by Product Master slice)
+  REUSE_DECISION = EXTEND (per-capability binding record; re-run the
+      Abstraction Gate inside the task; no GovernedXxxRead clones)
+  ALLOWED_SCOPE = one flag-gated binding teo.analyze + shared
+      semantics reuse + tests + live eval + bind
+  FORBIDDEN_SCOPE = other TEO tools, other DAVI actions, VISTA,
+      PREPARE, ACT, writes, generic read engine/router/registry,
+      generic MCP proxy, RBAC mutation, C5
+  ACCEPTANCE_CRITERIA = same governed-read contract (GROUNDED +
+      provenance on success; NON_GROUNDED + delpi_source_unverified +
+      canonical disclosure on SOURCE_UNAVAILABLE/AUTHZ_DENIED;
+      NOT_APPLICABLE post-consultation only; all other capabilities
+      blocked; suites green; live dev read PASS; docs bind;
+      CANDIDATE_FOR_ARCHITECTURE_REVIEW)
+NEXT_TASK_AUTHORIZED = YES
+```
