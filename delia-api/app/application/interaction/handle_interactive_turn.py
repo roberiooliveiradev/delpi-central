@@ -21,11 +21,12 @@ from datetime import datetime, timezone
 from typing import Any, Mapping
 
 from app.application.interaction.contracts import (
+    LIMITATION_RESULT_TRUNCATED,
     InteractiveTurnRequest,
     InteractiveTurnResult,
 )
-from app.application.interaction.governed_product_read import (
-    GovernedProductRead,
+from app.application.interaction.governed_read import (
+    GovernedRead,
     GovernedReadStatus,
 )
 from app.application.interaction.errors import (
@@ -88,7 +89,6 @@ INTERACTION_TIMEOUT_SECONDS = 30.0
 # answers produced while the authoritative DELPI source could not be
 # consulted. Never lets a model fabricate current DELPI state.
 LIMITATION_DELPI_SOURCE_UNVERIFIED = "delpi_source_unverified"
-LIMITATION_RESULT_TRUNCATED = "result_truncated"
 DELPI_UNVERIFIED_DISCLOSURE = (
     "Não consegui consultar a fonte DELPI neste momento. A resposta é "
     "conhecimento geral e não confirma o dado atual da DELPI."
@@ -137,7 +137,7 @@ class HandleInteractiveConversationTurn:
         instruction_lineage: InstructionLineage | None = None,
         instruction_content: str | None = None,
         timeout_seconds: float = INTERACTION_TIMEOUT_SECONDS,
-        governed_read: GovernedProductRead | None = None,
+        governed_read: GovernedRead | None = None,
     ) -> None:
         self._invoke_model = invoke_model
         self._model_ref = model_ref
@@ -177,9 +177,10 @@ class HandleInteractiveConversationTurn:
                 ",".join(code.value for code in user_validation.error_codes),
             )
 
-        # C4-MCP-GOVERNED-READS-01: the bounded governed read is tried
-        # first. Model selection/answers never authorize it — discovery
-        # and the deterministic action binding do.
+        # C4-MCP-GOVERNED-READS-01/02: the bounded governed reads are
+        # tried first. Model selection/answers never authorize them —
+        # static bindings, owner discovery, and deterministic
+        # validation do.
         attempt = (
             self._governed_read.attempt(input_text)
             if self._governed_read is not None
@@ -316,15 +317,21 @@ class HandleInteractiveConversationTurn:
     ) -> InteractiveTurnResult:
         """Record a grounded DELIA_RESULT from the authoritative read.
 
-        Deterministic rendering only — the authoritative structured
-        result is untrusted content and is bounded/normalized here; no
-        model wording is needed (OPERATIONAL path). The governed read
-        outcome stays OBSERVATION; grounding marks provenance, never
-        FACT elevation.
+        Deterministic rendering only — the bound read already produced
+        the bounded content/limitations at the binding edge; no model
+        wording is needed (OPERATIONAL path). The governed read outcome
+        stays OBSERVATION; grounding marks provenance, never FACT
+        elevation.
         """
         outcome = attempt.outcome
         provenance = attempt.provenance
-        content, limitations = _render_product_search(outcome)
+        content = attempt.content
+        limitations = attempt.limitations
+        if not isinstance(content, str) or not content.strip():
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "grounded read produced no bounded content",
+            )
         source_refs = (
             provenance.source_refs if provenance is not None else ()
         )
@@ -418,69 +425,6 @@ def _is_string_list(value: Any) -> bool:
     return isinstance(value, (list, tuple)) and all(
         isinstance(item, str) for item in value
     )
-
-
-_MAX_DISPLAYED_PRODUCT_ITEMS = 10
-
-
-def _render_product_search(outcome) -> tuple[str, tuple[str, ...]]:
-    """Bounded deterministic rendering of the authoritative result.
-
-    The remote payload is untrusted content: only the approved
-    projected fields are read, item count is display-bounded, and
-    truncation is surfaced as an explicit limitation. An empty
-    authoritative search is GROUNDED + empty — not a failure.
-    """
-    structured = outcome.structured if isinstance(outcome.structured, Mapping) else {}
-    data = structured.get("data") if isinstance(structured.get("data"), Mapping) else {}
-    raw_items = data.get("items") if isinstance(data.get("items"), (list, tuple)) else []
-    items = [
-        item for item in raw_items if isinstance(item, Mapping)
-    ]
-
-    limitations = list(outcome.limitations)
-    truncated = bool(
-        structured.get("truncated")
-        or not outcome.is_complete
-        or (
-            isinstance(data.get("pagination"), Mapping)
-            and data["pagination"].get("has_next") is True
-        )
-    )
-    if truncated and LIMITATION_RESULT_TRUNCATED not in limitations:
-        limitations.append(LIMITATION_RESULT_TRUNCATED)
-
-    if not items:
-        content = (
-            "Não encontrei produtos no Cadastro de Produtos DELPI com "
-            "esses critérios."
-        )
-        return content, tuple(limitations)
-
-    lines = []
-    for item in items[:_MAX_DISPLAYED_PRODUCT_ITEMS]:
-        code = str(item.get("product_code") or "").strip()
-        description = str(item.get("description") or "").strip()
-        group = str(item.get("group_category") or "").strip()
-        label = f"{code} — {description}" if code else description
-        if group:
-            label = f"{label} (grupo {group})" if label else group
-        if label:
-            lines.append(f"- {label}")
-
-    header = (
-        f"Encontrei {len(items)} produto(s) no Cadastro de Produtos "
-        "DELPI:"
-    )
-    content = header + ("\n" + "\n".join(lines) if lines else "")
-    if len(items) > _MAX_DISPLAYED_PRODUCT_ITEMS:
-        content += (
-            f"\n…e mais {len(items) - _MAX_DISPLAYED_PRODUCT_ITEMS} "
-            "item(ns)."
-        )
-    if truncated:
-        content += "\nResultado parcial — pode haver mais itens na fonte."
-    return content, tuple(limitations)
 
 
 def _map_invocation_error(exc: ModelInvocationError) -> InteractionError:

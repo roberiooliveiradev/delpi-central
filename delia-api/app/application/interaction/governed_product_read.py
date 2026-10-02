@@ -19,10 +19,18 @@ from __future__ import annotations
 
 import hashlib
 import uuid
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Mapping
 
+from app.application.interaction.contracts import (
+    LIMITATION_RESULT_TRUNCATED,
+)
+from app.application.interaction.governed_read import (
+    GovernedReadAttempt,
+    GovernedReadBinding,
+    GovernedReadStatus,
+    _error_attempt,
+    _success_attempt,
+)
 from app.application.model_invocation.contracts import ModelInvocationRequest
 from app.application.model_invocation.errors import ModelInvocationError
 from app.application.model_invocation.invoke_model import InvokeModel
@@ -30,20 +38,17 @@ from app.application.specialist_interop.contracts import (
     SpecialistInvocationRequest,
 )
 from app.application.specialist_interop.errors import (
-    MCP_AUTHENTICATION_FAILED,
-    MCP_AUTHORIZATION_DENIED,
     SpecialistInteropError,
 )
 from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
-from app.application.interaction.contracts import GovernedReadProvenance
 from app.domain.evidence.model import EpistemicClass, SourceRef
+from app.domain.specialist_interop.model import SpecialistOutcome
 from app.domain.model_invocation.model import (
     InstructionLineage,
     ModelInvocationId,
 )
-from app.domain.specialist_interop.model import SpecialistOutcome
 from app.domain.specialist_interop.rules import (
     GOVERNED_READ_ACTION_ID,
     GOVERNED_READ_DISCOVERY_CAPABILITY,
@@ -65,6 +70,15 @@ PRODUCT_MASTER_SOURCE = SourceRef(
     source_id="product-master",
     source_system="api-delpi",
     provider_name="DAVI",
+)
+
+# Static binding identity for this slice.
+DAVI_PRODUCT_BINDING = GovernedReadBinding(
+    binding_id="davi.search_products",
+    specialist_id=GOVERNED_READ_SPECIALIST,
+    remote_capability=GOVERNED_READ_EXECUTE_CAPABILITY,
+    governed_action_id=GOVERNED_READ_ACTION_ID,
+    source=PRODUCT_MASTER_SOURCE,
 )
 
 # Bounded argument surface authorized for the search_products action.
@@ -92,26 +106,6 @@ exactly the fields "code", "description", and "group_code".
 - Never invent values, never emit any other field, never answer the
   question itself.
 """
-
-
-class GovernedReadStatus(str, Enum):
-    """Truthful outcome classification for one governed read attempt."""
-
-    SUCCESS = "SUCCESS"
-    NOT_APPLICABLE = "NOT_APPLICABLE"
-    SOURCE_UNAVAILABLE = "SOURCE_UNAVAILABLE"
-    AUTHZ_DENIED = "AUTHZ_DENIED"
-
-
-@dataclass(frozen=True, slots=True)
-class GovernedReadAttempt:
-    """Bounded result of attempting the authorized governed read."""
-
-    status: GovernedReadStatus
-    correlation_id: str
-    outcome: SpecialistOutcome | None = None
-    provenance: GovernedReadProvenance | None = None
-    error_code: str | None = None
 
 
 def _extraction_lineage() -> InstructionLineage:
@@ -208,39 +202,13 @@ class GovernedProductRead:
                 )
             )
         except SpecialistInteropError as exc:
-            status = (
-                GovernedReadStatus.AUTHZ_DENIED
-                if exc.code
-                in (MCP_AUTHENTICATION_FAILED, MCP_AUTHORIZATION_DENIED)
-                else GovernedReadStatus.SOURCE_UNAVAILABLE
-            )
-            return GovernedReadAttempt(
-                status=status,
-                correlation_id=correlation,
-                error_code=exc.code,
-            )
+            return _error_attempt(correlation, exc)
 
-        return GovernedReadAttempt(
-            status=GovernedReadStatus.SUCCESS,
+        return _success_attempt(
             correlation_id=correlation,
+            binding=DAVI_PRODUCT_BINDING,
             outcome=outcome,
-            provenance=GovernedReadProvenance(
-                source_refs=(
-                    SourceRef(
-                        source_id=PRODUCT_MASTER_SOURCE.source_id,
-                        source_system=PRODUCT_MASTER_SOURCE.source_system,
-                        provider_name=PRODUCT_MASTER_SOURCE.provider_name,
-                        observed_at=outcome.provenance.observed_at,
-                    ),
-                ),
-                specialist_id=outcome.provenance.specialist_id,
-                remote_capability=outcome.provenance.remote_name,
-                action_id=GOVERNED_ACTION_ID,
-                protocol=outcome.provenance.protocol.value,
-                observed_at=outcome.provenance.observed_at,
-                correlation_id=outcome.provenance.correlation_id,
-                is_complete=outcome.is_complete,
-            ),
+            render=render_product_search,
         )
 
     def _select_search_products_candidate(
@@ -373,3 +341,76 @@ class GovernedProductRead:
             for key, value in proposal.items()
             if key in ALLOWED_ARGUMENT_FIELDS
         }
+
+
+_MAX_DISPLAYED_PRODUCT_ITEMS = 10
+
+
+def render_product_search(
+    outcome: SpecialistOutcome,
+) -> tuple[str, tuple[str, ...]]:
+    """Bounded deterministic rendering of the authoritative result.
+
+    The remote payload is untrusted content: only the approved
+    projected fields are read, item count is display-bounded, and
+    truncation is surfaced as an explicit limitation. An empty
+    authoritative search is GROUNDED + empty — not a failure.
+    """
+    structured = (
+        outcome.structured if isinstance(outcome.structured, Mapping) else {}
+    )
+    data = (
+        structured.get("data")
+        if isinstance(structured.get("data"), Mapping)
+        else {}
+    )
+    raw_items = (
+        data.get("items")
+        if isinstance(data.get("items"), (list, tuple))
+        else []
+    )
+    items = [item for item in raw_items if isinstance(item, Mapping)]
+
+    limitations = list(outcome.limitations)
+    truncated = bool(
+        structured.get("truncated")
+        or not outcome.is_complete
+        or (
+            isinstance(data.get("pagination"), Mapping)
+            and data["pagination"].get("has_next") is True
+        )
+    )
+    if truncated and LIMITATION_RESULT_TRUNCATED not in limitations:
+        limitations.append(LIMITATION_RESULT_TRUNCATED)
+
+    if not items:
+        content = (
+            "Não encontrei produtos no Cadastro de Produtos DELPI com "
+            "esses critérios."
+        )
+        return content, tuple(limitations)
+
+    lines = []
+    for item in items[:_MAX_DISPLAYED_PRODUCT_ITEMS]:
+        code = str(item.get("product_code") or "").strip()
+        description = str(item.get("description") or "").strip()
+        group = str(item.get("group_category") or "").strip()
+        label = f"{code} — {description}" if code else description
+        if group:
+            label = f"{label} (grupo {group})" if label else group
+        if label:
+            lines.append(f"- {label}")
+
+    header = (
+        f"Encontrei {len(items)} produto(s) no Cadastro de Produtos "
+        "DELPI:"
+    )
+    content = header + ("\n" + "\n".join(lines) if lines else "")
+    if len(items) > _MAX_DISPLAYED_PRODUCT_ITEMS:
+        content += (
+            f"\n…e mais {len(items) - _MAX_DISPLAYED_PRODUCT_ITEMS} "
+            "item(ns)."
+        )
+    if truncated:
+        content += "\nResultado parcial — pode haver mais itens na fonte."
+    return content, tuple(limitations)

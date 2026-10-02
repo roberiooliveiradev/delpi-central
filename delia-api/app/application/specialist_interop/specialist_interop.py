@@ -65,13 +65,18 @@ class SpecialistInterop:
         self,
         port: SpecialistInteropPort,
         *,
-        governed_read_enabled: bool = False,
+        enabled_governed_reads: frozenset[tuple[str, str, str]]
+        | None = None,
     ) -> None:
         self._port = port
-        # C4-MCP-GOVERNED-READS-01: task-scoped switch wired only from
-        # trusted server configuration. Without it every READ stays
-        # CAPABILITY_NOT_ALLOWED_IN_PHASE.
-        self._governed_read_enabled = bool(governed_read_enabled)
+        # C4-MCP-GOVERNED-READS-01/02: the exact authorized READ tuples
+        # enabled by trusted server configuration. Without an entry here
+        # every READ stays CAPABILITY_NOT_ALLOWED_IN_PHASE — enabling one
+        # binding never enables another.
+        self._enabled_governed_reads = frozenset(
+            tuple(str(part).strip() for part in entry)
+            for entry in (enabled_governed_reads or frozenset())
+        )
 
     def discover_catalog(
         self, request: SpecialistCatalogRequest
@@ -138,9 +143,14 @@ class SpecialistInterop:
                     WRITE_CAPABILITY_BLOCKED,
                     "write-class capability is never invocable in this slice",
                 )
+            governed_tuple = (
+                specialist.specialist_id,
+                remote_name,
+                str(request.governed_action_id or "").strip(),
+            )
             if not (
                 operation_class is SpecialistOperationClass.READ
-                and self._governed_read_enabled
+                and governed_tuple in self._enabled_governed_reads
                 and governed_read_action_allowed(
                     specialist.specialist_id,
                     remote_name,

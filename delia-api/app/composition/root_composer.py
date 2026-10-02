@@ -6,6 +6,10 @@ from flask import Flask
 from app.application.interaction.governed_product_read import (
     GovernedProductRead,
 )
+from app.application.interaction.governed_read import GovernedRead
+from app.application.interaction.governed_teo_analyze import (
+    build_teo_dashboard_analyze_read,
+)
 from app.application.interaction.handle_interactive_turn import (
     DEFAULT_MODEL_REF as DEFAULT_INTERACTION_MODEL_REF,
     HandleInteractiveConversationTurn,
@@ -15,6 +19,9 @@ from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
 from app.domain.evidence.model import ModelRef
+from app.domain.specialist_interop.rules import (
+    enabled_governed_read_tuples,
+)
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.auth.subject_bearer import current_subject_bearer
@@ -80,15 +87,22 @@ def create_application(
     # Built before the interaction handler so the bounded C4 governed
     # read can compose on top of it (config-gated, bounded to this task).
     connections = specialist_connections_from_settings(settings)
+    # C4-MCP-GOVERNED-READS-01/02: per-binding enabled set — each
+    # bounded flag contributes exactly its own authorized tuple at
+    # both enforcement boundaries.
+    enabled_governed_reads = enabled_governed_read_tuples(
+        davi_product_read=settings.c4_davi_product_read_enabled,
+        teo_dashboard_analyze=settings.c4_teo_dashboard_analyze_enabled,
+    )
     interop = SpecialistInterop(
         McpSpecialistAdapter(
             connections,
             credential_provider=_wire_delegated_credential_provider(
                 settings, connections
             ),
-            governed_read_enabled=settings.c4_davi_product_read_enabled,
+            enabled_governed_reads=enabled_governed_reads,
         ),
-        governed_read_enabled=settings.c4_davi_product_read_enabled,
+        enabled_governed_reads=enabled_governed_reads,
     )
     app.config["SPECIALIST_INTEROP"] = interop
 
@@ -169,20 +183,29 @@ def _compose_turn_handler(
     interop: SpecialistInterop,
     settings: Settings,
 ) -> HandleInteractiveConversationTurn:
-    """Compose the turn handler, attaching the bounded governed read.
+    """Compose the turn handler, attaching the bounded governed reads.
 
-    C4-MCP-GOVERNED-READS-01: the governed read exists only under the
-    explicit bounded config flag; it reuses the same model port for
-    bounded argument extraction (proposal only) and the same
-    SpecialistInterop boundary for DAVI discovery/execute.
+    C4-MCP-GOVERNED-READS-01/02: each governed read exists only under
+    its own explicit bounded config flag; both reuse the same model
+    port for bounded argument proposals (never authority) and the same
+    SpecialistInterop boundary. Fixed order: the TÉO direct binding is
+    gated by a model applicability proposal before any wire call; the
+    DAVI binding's own discovery remains its applicability check.
     """
-    governed_read = (
-        GovernedProductRead(
-            interop, invoke_model=invoke_model, model_ref=model_ref
+    bound_reads = []
+    if settings.c4_teo_dashboard_analyze_enabled:
+        bound_reads.append(
+            build_teo_dashboard_analyze_read(
+                interop, invoke_model=invoke_model, model_ref=model_ref
+            )
         )
-        if settings.c4_davi_product_read_enabled
-        else None
-    )
+    if settings.c4_davi_product_read_enabled:
+        bound_reads.append(
+            GovernedProductRead(
+                interop, invoke_model=invoke_model, model_ref=model_ref
+            )
+        )
+    governed_read = GovernedRead(bound_reads) if bound_reads else None
     return HandleInteractiveConversationTurn(
         invoke_model, model_ref=model_ref, governed_read=governed_read
     )

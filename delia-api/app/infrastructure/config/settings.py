@@ -100,12 +100,15 @@ class Settings:
             ),
             300.0,
         )
-        # C4-MCP-GOVERNED-READS-01: task-scoped bounded read switch.
+        # C4-MCP-GOVERNED-READS-01/02: task-scoped bounded read switches.
         # When off (default) every READ stays CAPABILITY_NOT_ALLOWED_IN_PHASE;
-        # a fresh runtime without this flag never gains the DAVI
-        # search_products read path.
+        # a fresh runtime without these flags never gains a governed
+        # read path, and one flag never enables the other binding.
         self.c4_davi_product_read_enabled = _env_flag(
             "DELIA_C4_DAVI_PRODUCT_READ_ENABLED"
+        )
+        self.c4_teo_dashboard_analyze_enabled = _env_flag(
+            "DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED"
         )
 
     @classmethod

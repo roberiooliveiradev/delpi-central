@@ -1795,9 +1795,12 @@ services:
       DELIA_MCP_TEO_HOST_HEADER: ${DELIA_MCP_TEO_HOST_HEADER:-}
       DELIA_MCP_VISTA_HOST_HEADER: ${DELIA_MCP_VISTA_HOST_HEADER:-}
       DELIA_MCP_TIMEOUT_SECONDS: ${DELIA_MCP_TIMEOUT_SECONDS:-15}
-      # C4-MCP-GOVERNED-READS-01: task-scoped bounded read switch
-      # (DAVI execute_delpi_information -> search_products only).
+      # C4-MCP-GOVERNED-READS-01/02: bounded read switches — each flag
+      # enables exactly its own authorized tuple.
+      # DAVI: execute_delpi_information -> search_products only.
+      # TEO: analyze -> gpt_analyze (view=summary only).
       DELIA_C4_DAVI_PRODUCT_READ_ENABLED: ${DELIA_C4_DAVI_PRODUCT_READ_ENABLED:-}
+      DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED: ${DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED:-}
 
     volumes:
       - ../delia-api:/app

@@ -180,14 +180,18 @@ def test_interaction_application_layer_stays_bounded():
     module_files = sorted(
         p.name for p in interaction_dir.rglob("*.py") if p.name != "__init__.py"
     )
-    # C4-MCP-GOVERNED-READS-01 adds exactly one bounded application
-    # service (governed_product_read.py) — the DAVI search_products
-    # orchestration for the authorized governed read. No engine,
-    # repository, router, or new port is introduced.
+    # C4-MCP-GOVERNED-READS-01/02 add the shared capability-neutral
+    # governed-read semantics (governed_read.py: statuses, attempt,
+    # binding, combiner, direct-invocation edge) plus two static
+    # bindings — governed_product_read.py (DAVI candidate flow) and
+    # governed_teo_analyze.py (TÉO direct call). No engine, router,
+    # registry, repository, or new port is introduced.
     assert module_files == [
         "contracts.py",
         "errors.py",
         "governed_product_read.py",
+        "governed_read.py",
+        "governed_teo_analyze.py",
         "handle_interactive_turn.py",
         "instruction.py",
     ]

@@ -62,14 +62,18 @@ class McpSpecialistAdapter:
         *,
         credential_provider: DelegatedCredentialProvider | None = None,
         transport_factory: Callable[..., Any] | None = None,
-        governed_read_enabled: bool = False,
+        enabled_governed_reads: frozenset[tuple[str, str, str]]
+        | None = None,
     ) -> None:
         self._connections = dict(connections)
         self._credential_provider = credential_provider
         # Second enforcement boundary: mirrors the application-layer
-        # scoped gate — without the trusted config flag every READ is
-        # refused here as well.
-        self._governed_read_enabled = bool(governed_read_enabled)
+        # scoped gate — a READ tuple absent from this trusted enabled
+        # set is refused here as well.
+        self._enabled_governed_reads = frozenset(
+            tuple(str(part).strip() for part in entry)
+            for entry in (enabled_governed_reads or frozenset())
+        )
         self._transport_factory = transport_factory or (
             lambda profile, bearer_token: DelpiMcpTransport(
                 profile.endpoint,
@@ -219,9 +223,14 @@ class McpSpecialistAdapter:
                     WRITE_CAPABILITY_BLOCKED,
                     "write-class capability is never invocable in this slice",
                 )
+            governed_tuple = (
+                specialist.specialist_id,
+                remote_name,
+                str(governed_action_id or "").strip(),
+            )
             if not (
                 operation_class is SpecialistOperationClass.READ
-                and self._governed_read_enabled
+                and governed_tuple in self._enabled_governed_reads
                 and governed_read_action_allowed(
                     specialist.specialist_id,
                     remote_name,

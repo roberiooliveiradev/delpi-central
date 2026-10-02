@@ -8,10 +8,14 @@ End-to-end proof through the real HTTP boundary:
     -> search_products candidate -> execute_delpi_information
     -> grounded InteractiveTurnResult
 
-Also runs a non-product control question (expected NON_GROUNDED).
+C4-MCP-GOVERNED-READS-02 adds a TÉO analyze query when the
+DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED flag is set (bounded
+view=summary read). Also runs a non-product control question
+(expected NON_GROUNDED).
 
 Required env (never printed): DEV_PORTAL_USERNAME, DEV_PORTAL_PASSWORD.
-Optional: DELIA_EVAL_PRODUCT_QUERY (default a generic product query).
+Optional: DELIA_EVAL_PRODUCT_QUERY, DELIA_EVAL_TEO_QUERY
+(defaults are generic queries).
 
 Never prints tokens, secrets, or authorization headers.
 Exit code 0 always — results are in the report.
@@ -98,9 +102,13 @@ def main() -> int:
     query = os.getenv("DELIA_EVAL_PRODUCT_QUERY") or (
         "quero encontrar um produto pelo código"
     )
+    teo_query = os.getenv("DELIA_EVAL_TEO_QUERY") or (
+        "Como estão os indicadores do meu Transformômetro?"
+    )
     report = {
         "subject_token": claims,
         "product_query": _turn(token, query),
+        "teo_query": _turn(token, teo_query),
         "control_query": _turn(token, "o que você pode fazer?"),
         "unauthenticated": requests.post(
             "http://localhost:8000/interaction/turns",

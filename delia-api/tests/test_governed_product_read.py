@@ -86,10 +86,19 @@ class FakePort:
         )
 
 
-def _interop(outcomes=None, errors=None, *, governed=False):
+DAVI_READ_TUPLE = ("davi", "execute_delpi_information", "search_products")
+TEO_READ_TUPLE = ("teo", "analyze", "gpt_analyze")
+
+
+def _interop(outcomes=None, errors=None, *, governed=False, teo=False):
+    enabled = set()
+    if governed:
+        enabled.add(DAVI_READ_TUPLE)
+    if teo:
+        enabled.add(TEO_READ_TUPLE)
     return SpecialistInterop(
         FakePort(outcomes=outcomes, errors=errors),
-        governed_read_enabled=governed,
+        enabled_governed_reads=frozenset(enabled),
     )
 
 

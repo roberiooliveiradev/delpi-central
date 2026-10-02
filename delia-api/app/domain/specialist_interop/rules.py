@@ -112,22 +112,32 @@ def invocable_in_foundation(operation_class: SpecialistOperationClass) -> bool:
     return operation_class is SpecialistOperationClass.DISCOVERY
 
 
-# C4-MCP-GOVERNED-READS-01: the only task-scoped bounded READ
-# authorization. Maps (specialist, remote capability) -> the exact set
-# of DAVI-side action ids DÉLIA orchestration may execute. This is
-# DÉLIA orchestration policy, not DAVI business authority — DAVI still
-# decides candidate eligibility and API DELPI still enforces Product
-# Master AuthZ. Everything outside this table stays phase-gated.
+# C4-MCP-GOVERNED-READS-01/02: the only task-scoped bounded READ
+# authorizations. Maps (specialist, remote capability) -> the exact set
+# of governed action ids DÉLIA orchestration may execute. This is
+# DÉLIA orchestration policy, not specialist business authority — DAVI
+# still decides candidate eligibility, API DELPI still enforces Product
+# Master AuthZ, and transformometro-api still enforces dashboard view
+# access. Everything outside this table stays phase-gated.
 GOVERNED_READ_ACTIONS: dict[tuple[str, str], frozenset[str]] = {
     ("davi", "execute_delpi_information"): frozenset({"search_products"}),
+    ("teo", "analyze"): frozenset({"gpt_analyze"}),
 }
 
-# Canonical single binding for this slice — the only place specialist
-# identity for the governed read may be named.
+# Canonical single binding for the first slice — the only place
+# specialist identity for the DAVI governed read may be named.
 GOVERNED_READ_SPECIALIST = "davi"
 GOVERNED_READ_DISCOVERY_CAPABILITY = "discover_delpi_information"
 GOVERNED_READ_EXECUTE_CAPABILITY = "execute_delpi_information"
 GOVERNED_READ_ACTION_ID = "search_products"
+
+# C4-MCP-GOVERNED-READS-02: canonical binding for the TÉO dashboard
+# read. `gpt_analyze` is the owner's stable operation identifier for the
+# MCP `analyze` capability — it identifies the binding, it grants
+# nothing.
+GOVERNED_READ_TEO_SPECIALIST = "teo"
+GOVERNED_READ_TEO_CAPABILITY = "analyze"
+GOVERNED_READ_TEO_ACTION_ID = "gpt_analyze"
 
 
 def governed_read_action_allowed(
@@ -143,3 +153,33 @@ def governed_read_action_allowed(
     if not allowed or action_id is None:
         return False
     return str(action_id).strip() in allowed
+
+
+def enabled_governed_read_tuples(
+    *,
+    davi_product_read: bool = False,
+    teo_dashboard_analyze: bool = False,
+) -> frozenset[tuple[str, str, str]]:
+    """The exact governed READ tuples switched on by trusted config.
+
+    Each task-scoped flag contributes exactly its own tuple; no flag
+    ever widens another binding's authorization surface.
+    """
+    enabled: set[tuple[str, str, str]] = set()
+    if davi_product_read:
+        enabled.add(
+            (
+                GOVERNED_READ_SPECIALIST,
+                GOVERNED_READ_EXECUTE_CAPABILITY,
+                GOVERNED_READ_ACTION_ID,
+            )
+        )
+    if teo_dashboard_analyze:
+        enabled.add(
+            (
+                GOVERNED_READ_TEO_SPECIALIST,
+                GOVERNED_READ_TEO_CAPABILITY,
+                GOVERNED_READ_TEO_ACTION_ID,
+            )
+        )
+    return frozenset(enabled)

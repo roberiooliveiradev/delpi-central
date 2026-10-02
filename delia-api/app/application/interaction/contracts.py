@@ -17,6 +17,11 @@ from app.domain.evidence.model import EpistemicClass, SourceRef
 from app.domain.interaction.model import GroundingStatus
 
 
+# C4-MCP-GOVERNED-READS-01/02: canonical limitation codes surfaced when
+# a governed read returned a bounded/partial authoritative result.
+LIMITATION_RESULT_TRUNCATED = "result_truncated"
+
+
 @dataclass(frozen=True, slots=True)
 class InteractiveTurnRequest:
     """One bounded interactive turn request.
