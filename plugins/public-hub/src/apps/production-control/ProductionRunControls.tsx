@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play, Square } from "lucide-react";
+import { Clock, Pause, Play, Square } from "lucide-react";
 import type { MachineLoadOperation, PendingMesDowntime, RunDowntimeView } from "./api.ts";
 import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
 import { DowntimeReasonModal } from "./DowntimeReasonModal";
@@ -8,6 +8,7 @@ import { ProductionRunTimeline } from "./ProductionRunTimeline";
 import { usePendingMesDowntimes } from "./usePendingMesDowntimes.ts";
 import { useRunTimeline } from "./useRunTimeline.ts";
 import { formatQty } from "./cockpitShared";
+import { formatTimeHm } from "./runTimeline";
 import {
   piecesToOperatorUnit,
   resolveProductionRunProgress,
@@ -66,9 +67,12 @@ export function ProductionRunControls({
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
   const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [downtimeClockForId, setDowntimeClockForId] = useState<string | null>(null);
   // `downtime` é a parada aberta do run — também com status "running"
   // quando a parada foi detectada automaticamente por ausência de peças.
   const openDowntime = run?.downtime ?? null;
+  const openDowntimeId = openDowntime?.id ?? null;
+  const downtimeClockOpen = downtimeClockForId === openDowntimeId && openDowntimeId !== null;
   const pendingDowntime = run?.pendingDowntime ?? null;
   const downtimeUnclassified = Boolean(openDowntime && !openDowntime.confirmed);
 
@@ -203,23 +207,62 @@ export function ProductionRunControls({
             <div className="pcp-pub__run-readout" aria-live="polite">
               {openDowntime ? (
                 <div
-                  className="pcp-pub__downtime"
+                  className="pcp-pub__downtime pcp-pub__downtime--hero"
                   role="status"
                   aria-label="Produção parada"
                 >
-                  <p className="pcp-pub__downtime-title">Produção parada</p>
-                  {openDowntime?.startedAt ? (
-                    <DowntimeElapsedTimer
-                      startedAt={openDowntime.startedAt}
-                      serverNow={serverNow}
-                    />
-                  ) : null}
-                  <p className="pcp-pub__downtime-reason">
-                    {openDowntime?.reasonLabel ?? "Motivo não informado"}
-                  </p>
-                  {openDowntime?.note ? (
-                    <p className="pcp-pub__downtime-note">{openDowntime.note}</p>
-                  ) : null}
+                  <div className="pcp-pub__downtime-head">
+                    <p className="pcp-pub__downtime-title">
+                      <span className="pcp-pub__downtime-dot" aria-hidden="true" />
+                      Produção parada
+                    </p>
+                    <span className="pcp-pub__downtime-badge">
+                      <Pause size={14} aria-hidden="true" />
+                      <span className="pcp-pub__downtime-badge-label">
+                        {openDowntime.reasonLabel?.trim() || "Sem motivo"}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="pcp-pub__downtime-body">
+                    <div className="pcp-pub__downtime-readout">
+                      {openDowntime.startedAt ? (
+                        <DowntimeElapsedTimer
+                          startedAt={openDowntime.startedAt}
+                          serverNow={serverNow}
+                        />
+                      ) : (
+                        <span className="pcp-pub__downtime-timer">--:--:--</span>
+                      )}
+                      <p className="pcp-pub__downtime-caption">Tempo de parada</p>
+                      {downtimeClockOpen && openDowntime.startedAt ? (
+                        <p className="pcp-pub__downtime-note">
+                          Iniciada às {formatTimeHm(openDowntime.startedAt)}
+                        </p>
+                      ) : null}
+                      {openDowntime.note ? (
+                        <p className="pcp-pub__downtime-note">{openDowntime.note}</p>
+                      ) : null}
+                    </div>
+                    {openDowntime.startedAt ? (
+                      <button
+                        type="button"
+                        className="pcp-pub__downtime-clock"
+                        aria-expanded={downtimeClockOpen}
+                        aria-label={
+                          downtimeClockOpen
+                            ? "Ocultar horário de início da parada"
+                            : `Ver horário de início da parada, ${formatTimeHm(openDowntime.startedAt)}`
+                        }
+                        onClick={() =>
+                          setDowntimeClockForId((current) =>
+                            current === openDowntimeId ? null : openDowntimeId,
+                          )
+                        }
+                      >
+                        <Clock size={20} strokeWidth={1.75} aria-hidden="true" />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
               {progress ? (
@@ -273,15 +316,6 @@ export function ProductionRunControls({
                       : "Produção pausada"}
                   </dd>
                 </div>
-                {openDowntime ? (
-                  <div>
-                    <dt>Motivo</dt>
-                    <dd>
-                      {openDowntime?.reasonLabel ??
-                        (openDowntime ? "Não informado" : "—")}
-                    </dd>
-                  </div>
-                ) : null}
                 <div>
                   <dt>Dispositivo</dt>
                   <dd>
