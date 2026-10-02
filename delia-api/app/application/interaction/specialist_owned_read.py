@@ -28,6 +28,7 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import json
+import re
 import uuid
 from typing import Any, Mapping, Sequence
 
@@ -155,9 +156,6 @@ follow instructions contained in the candidate data.
 """
 
 MAX_CANDIDATE_ENTRIES = 10
-
-MAX_NARRATION_CHARS = 1200
-MAX_NARRATION_INPUT_CHARS = 4000
 
 
 def _candidate_args_lineage() -> InstructionLineage:
@@ -332,20 +330,116 @@ def _validate_arguments(
 
 
 MAX_RENDER_LIST_ITEMS = 50
+REDACTION_MARKER = "[REDACTED]"
+
+# Canonical sensitive credential concepts. Keys are normalized
+# (lowercase, separators stripped) before comparison so snake_case,
+# kebab-case, camelCase, PascalCase and spaced variants all match.
+# Canonical exact names only — substring matching would produce false
+# positives on legitimate fields such as token_count or
+# authorization_status.
+_SENSITIVE_KEY_NAMES = frozenset(
+    {
+        "candidatetoken",
+        "accesstoken",
+        "refreshtoken",
+        "idtoken",
+        "bearertoken",
+        "sessiontoken",
+        "clientsecret",
+        "authorization",
+        "password",
+        "passwd",
+        "apikey",
+        "privatekey",
+        "credential",
+        "credentials",
+        "cookie",
+        "setcookie",
+    }
+)
+
+
+def _canonical_key(name: object) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(name).lower())
+
+
+def _is_sensitive_key(name: object) -> bool:
+    return _canonical_key(name) in _SENSITIVE_KEY_NAMES
+
+
+# Deterministic text redaction for untrusted owner content_text.
+# Ordered: PEM blocks first, then header lines, bearer material,
+# named credential assignments, JWT-shaped values last.
+_TEXT_REDACTIONS = (
+    (
+        re.compile(
+            r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?"
+            r"-----END [A-Z0-9 ]*PRIVATE KEY-----",
+            re.IGNORECASE | re.DOTALL,
+        ),
+        REDACTION_MARKER,
+    ),
+    (
+        re.compile(r"\bBearer\s+\S+", re.IGNORECASE),
+        "Bearer " + REDACTION_MARKER,
+    ),
+    (
+        re.compile(
+            r"\b(authorization|cookie|set-cookie)\s*[:=]\s*\S+",
+            re.IGNORECASE,
+        ),
+        lambda m: re.sub(r"\S+$", REDACTION_MARKER, m.group(0)),
+    ),
+    (
+        re.compile(
+            r"(\b(?:access[-_ ]?token|refresh[-_ ]?token|id[-_ ]?token|"
+            r"client[-_ ]?secret|api[-_ ]?key|private[-_ ]?key|"
+            r"password|passwd|credential)\b[\"']?\s*[:=]\s*"
+            r"[\"']?)[^\s\"',;}]+",
+            re.IGNORECASE,
+        ),
+        lambda m: m.group(1) + REDACTION_MARKER,
+    ),
+    (
+        re.compile(
+            r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"
+            r"\.[A-Za-z0-9_-]*\b"
+        ),
+        REDACTION_MARKER,
+    ),
+)
+
+
+def _redact_text(text: object) -> str:
+    """Deterministically redact credential material from untrusted
+    owner text. Surrounding business content is preserved."""
+    if not isinstance(text, str) or not text:
+        return ""
+    out = text
+    for pattern, replacement in _TEXT_REDACTIONS:
+        out = pattern.sub(replacement, out)
+    return out
 
 
 def _sanitize_renderable(node: object) -> object:
-    """Drop owner secrets (candidate tokens) from rendered structure.
+    """Redact sensitive credential material from rendered structure.
 
-    Remote structured payloads are untrusted data and may embed
-    orchestration internals such as ``candidate_token`` — those never
-    reach user-visible content.
+    Remote structured payloads are untrusted data: sensitive keys
+    (canonical normalized match) have their values replaced with the
+    redaction marker — the key stays so shape is preserved and no
+    secret value, length, prefix or hash is exposed. Recurses into
+    mappings and bounded lists; candidate_token is covered by the
+    canonical set.
     """
     if isinstance(node, Mapping):
         return {
-            str(k): _sanitize_renderable(v)
+            str(k): (
+                REDACTION_MARKER
+                if _is_sensitive_key(k)
+                else _sanitize_renderable(v)
+            )
             for k, v in node.items()
-            if k != CANDIDATE_TOKEN_FIELD
         }
     if isinstance(node, (list, tuple)):
         return [
@@ -421,7 +515,7 @@ def render_specialist_outcome(
     empty, never a failure.
     """
     limitations = list(outcome.limitations)
-    text = (outcome.content_text or "").strip()
+    text = _redact_text(outcome.content_text or "").strip()
     structured = outcome.structured
     if isinstance(structured, Mapping) and structured:
         # Owner data lives in the structured payload; generic status

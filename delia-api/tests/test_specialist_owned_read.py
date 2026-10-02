@@ -799,6 +799,167 @@ def test_adversarial_model_prose_cannot_become_observation():
     assert len(read._invoke_model._port.requests) == 3
 
 
+# --- R2: generic secret/token redaction --------------------------------
+
+from app.application.interaction.specialist_owned_read import (
+    _redact_text,
+    _sanitize_renderable,
+    render_specialist_outcome,
+)
+
+
+def _outcome(content_text="", structured=None):
+    from app.domain.specialist_interop.model import (
+        InteropProtocol,
+        SpecialistOutcome,
+        SpecialistResultProvenance,
+        SpecialistResultStatus,
+    )
+
+    return SpecialistOutcome(
+        status=SpecialistResultStatus.COMPLETED,
+        provenance=SpecialistResultProvenance(
+            specialist_id="davi",
+            remote_name="t",
+            protocol=InteropProtocol.MCP,
+            correlation_id="c",
+            observed_at="2026-01-01T00:00:00+00:00",
+        ),
+        content_text=content_text,
+        structured=structured,
+    )
+
+
+def test_structured_credentials_never_rendered():
+    """Mandatory security fixture: credential values never reach
+    user-facing content, limitations or provenance — legitimate
+    siblings survive."""
+    outcome = _outcome(
+        structured={
+            "product": "TUBO 30X30X1500",
+            "access_token": "ACCESS-SECRET",
+            "clientSecret": "CLIENT-SECRET",
+            "nested": {
+                "refresh_token": "REFRESH-SECRET",
+                "password": "PASSWORD-SECRET",
+            },
+            "items": [{"code": "ABC", "api_key": "API-SECRET"}],
+        }
+    )
+    content, limitations = render_specialist_outcome(outcome)
+    for secret in (
+        "ACCESS-SECRET",
+        "CLIENT-SECRET",
+        "REFRESH-SECRET",
+        "PASSWORD-SECRET",
+        "API-SECRET",
+    ):
+        assert secret not in content
+        assert secret not in str(limitations)
+    assert "TUBO 30X30X1500" in content
+    assert "ABC" in content
+
+
+def test_content_text_credentials_redacted():
+    """content_text is untrusted: bearer, named credentials, cookies
+    and PEM blocks are deterministically redacted; surrounding
+    business text survives."""
+    leaked = (
+        "Status ok. Authorization: Bearer abc.def.ghi; "
+        "access_token=TEST_ACCESS_TOKEN_DO_NOT_USE "
+        "client_secret: TEST_CLIENT_SECRET_DO_NOT_USE "
+        'password="TEST_PASSWORD_DO_NOT_USE" '
+        "api-key: TEST_API_KEY_DO_NOT_USE "
+        "Cookie: session=TEST_COOKIE_DO_NOT_USE "
+        "-----BEGIN PRIVATE KEY-----\nXYZ\n-----END PRIVATE KEY-----"
+    )
+    out = _redact_text(leaked)
+    for secret in (
+        "abc.def.ghi",
+        "TEST_ACCESS_TOKEN_DO_NOT_USE",
+        "TEST_CLIENT_SECRET_DO_NOT_USE",
+        "TEST_PASSWORD_DO_NOT_USE",
+        "TEST_API_KEY_DO_NOT_USE",
+        "TEST_COOKIE_DO_NOT_USE",
+        "PRIVATE KEY",
+        "XYZ",
+    ):
+        assert secret not in out
+    assert "Status ok." in out
+
+
+def test_key_naming_variants_redacted():
+    """Case-insensitive canonical matching covers snake/kebab/camel/
+    Pascal naming styles."""
+    for key in (
+        "access_token", "ACCESS_TOKEN", "AccessToken", "accessToken",
+        "access-token", "client_secret", "ClientSecret",
+        "clientSecret", "refresh_token", "refreshToken", "api_key",
+        "apiKey", "api-key", "candidate_token", "candidateToken",
+        "id_token", "idToken", "authorization", "Authorization",
+        "password", "passwd", "private_key", "privateKey",
+        "credential", "credentials", "cookie", "set_cookie",
+        "set-cookie",
+    ):
+        out = _sanitize_renderable({key: "SECRET-VALUE"})
+        assert "SECRET-VALUE" not in str(out), key
+
+
+def test_false_positive_business_fields_preserved():
+    """Legitimate business fields whose names merely contain a
+    sensitive substring keep their values."""
+    out = _sanitize_renderable(
+        {
+            "token_count": 123,
+            "token_usage": 456,
+            "authorization_status": "APPROVED",
+            "product": "TUBO 30X30X1500",
+        }
+    )
+    assert out["token_count"] == 123
+    assert out["token_usage"] == 456
+    assert out["authorization_status"] == "APPROVED"
+    assert out["product"] == "TUBO 30X30X1500"
+
+
+def test_nested_and_list_credentials_redacted():
+    """Redaction recurses into nested mappings and lists of mappings."""
+    out = _sanitize_renderable(
+        {
+            "data": {
+                "session": {"refreshToken": "DEEP-SECRET"},
+                "rows": [
+                    {"name": "n1", "client_secret": "ROW-SECRET"},
+                    {"name": "n2", "value": 7},
+                ],
+            }
+        }
+    )
+    rendered = str(out)
+    assert "DEEP-SECRET" not in rendered
+    assert "ROW-SECRET" not in rendered
+    assert out["data"]["rows"][1]["value"] == 7
+
+
+def test_candidate_token_redacted_in_rendered_output():
+    """Candidate-token regression: owner tokens never reach
+    user-visible grounded content."""
+    outcome = _outcome(
+        structured={
+            "candidates": [
+                {"action_id": "a", "candidate_token": "TOK-LEAK"}
+            ]
+        }
+    )
+    content, _ = render_specialist_outcome(outcome)
+    assert "TOK-LEAK" not in content
+
+
+def test_jwt_like_material_redacted():
+    assert "eyJ" not in _redact_text("tok eyJhbGciOiJIUzI1.eyJzdWI.Sig9 x")
+    assert _redact_text("code ABC.DEF notes") == "code ABC.DEF notes"
+
+
 # --- failure semantics ---------------------------------------------------
 
 
