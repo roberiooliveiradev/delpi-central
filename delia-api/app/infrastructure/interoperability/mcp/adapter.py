@@ -38,8 +38,7 @@ from app.domain.specialist_interop.model import (
 )
 from app.domain.specialist_interop.rules import (
     APPROVED_SPECIALIST_IDS,
-    discovery_binding_allowed,
-    governed_read_action_allowed,
+    invocable_in_interactive_phase,
     operation_class_from_owner,
 )
 from app.infrastructure.interoperability.config import (
@@ -64,18 +63,9 @@ class McpSpecialistAdapter:
         *,
         credential_provider: DelegatedCredentialProvider | None = None,
         transport_factory: Callable[..., Any] | None = None,
-        enabled_governed_reads: frozenset[tuple[str, str, str]]
-        | None = None,
     ) -> None:
         self._connections = dict(connections)
         self._credential_provider = credential_provider
-        # Second enforcement boundary: mirrors the application-layer
-        # scoped gate — a READ tuple absent from this trusted enabled
-        # set is refused here as well.
-        self._enabled_governed_reads = frozenset(
-            tuple(str(part).strip() for part in entry)
-            for entry in (enabled_governed_reads or frozenset())
-        )
         self._transport_factory = transport_factory or (
             lambda profile, bearer_token: DelpiMcpTransport(
                 profile.endpoint,
@@ -149,14 +139,11 @@ class McpSpecialistAdapter:
         *,
         correlation_id: str,
         timeout_seconds: float,
-        governed_action_id: str | None = None,
     ) -> RemoteToolOutcome:
         profile, transport = self._connect(specialist)
         try:
             tools = transport.list_tools()
-            self._require_invocable(
-                specialist, remote_name, governed_action_id, tools
-            )
+            self._require_invocable(specialist, remote_name, tools)
             result = transport.call_tool(remote_name, arguments)
         except SpecialistInteropError as exc:
             self._invalidate_on_auth_failure(profile, exc)
@@ -218,15 +205,15 @@ class McpSpecialistAdapter:
         self,
         specialist: SpecialistRef,
         remote_name: str,
-        governed_action_id: str | None,
         tools: tuple[Mapping[str, Any], ...],
     ) -> None:
         """Second fail-closed gate on a fresh owner tools/list.
 
         The owner-typed ``delpi/toolClass`` is re-read here — a
         reclassified or removed capability cannot ride a stale grant.
-        Class grants nothing by itself: DISCOVERY still needs a DÉLIA
-        binding, READ needs the exact enabled governed tuple.
+        Class is orchestration policy, not permission: DISCOVERY and
+        READ are invocable; PREPARE/ACT/UNKNOWN are refused before
+        ``tools/call``.
         """
         tool = next(
             (
@@ -258,27 +245,7 @@ class McpSpecialistAdapter:
                 WRITE_CAPABILITY_BLOCKED,
                 "write-class capability is never invocable in this slice",
             )
-        allowed = (
-            operation_class is SpecialistOperationClass.DISCOVERY
-            and discovery_binding_allowed(
-                specialist.specialist_id, remote_name
-            )
-        )
-        if not allowed and operation_class is SpecialistOperationClass.READ:
-            governed_tuple = (
-                specialist.specialist_id,
-                remote_name,
-                str(governed_action_id or "").strip(),
-            )
-            allowed = (
-                governed_tuple in self._enabled_governed_reads
-                and governed_read_action_allowed(
-                    specialist.specialist_id,
-                    remote_name,
-                    governed_action_id,
-                )
-            )
-        if not allowed:
+        if not invocable_in_interactive_phase(operation_class):
             raise SpecialistInteropError(
                 CAPABILITY_NOT_ALLOWED_IN_PHASE,
                 "capability requires a DÉLIA governance binding",

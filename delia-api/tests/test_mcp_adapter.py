@@ -289,7 +289,6 @@ def test_call_rechecks_policy_before_tools_call():
     )
     for name, code in (
         ("commit_proposal_evil", UNKNOWN_CAPABILITY),
-        ("execute_delpi_information", CAPABILITY_NOT_ALLOWED_IN_PHASE),
         ("prepare_x", UNKNOWN_CAPABILITY),
         ("commit_proposal", WRITE_CAPABILITY_BLOCKED),
     ):
@@ -299,6 +298,15 @@ def test_call_rechecks_policy_before_tools_call():
             )
         assert exc.value.code == code
     assert all(not t.calls for t in FakeTransport.instances)
+    # READ is invocable through the same boundary (§6.118).
+    adapter.call_remote_tool(
+        DAVI, "execute_delpi_information", {"candidate_token": "t"},
+        correlation_id="c2", timeout_seconds=5.0,
+    )
+    assert any(
+        "execute_delpi_information" in [n for n, _ in t.calls]
+        for t in FakeTransport.instances
+    )
 
 
 def test_call_write_class_blocked_even_with_valid_config():
@@ -323,25 +331,25 @@ def test_call_write_class_blocked_even_with_valid_config():
 
 
 def test_call_reclassified_capability_loses_grant():
-    """Owner retypes a bound DISCOVERY tool to READ on the wire — the
-    fresh classification blocks the previously invocable call."""
+    """Owner retypes a capability READ->PREPARE on the wire — the fresh
+    classification blocks the previously invocable call."""
     adapter = _adapter(
         tools=(
             {
-                "name": "discover_delpi_information",
-                "_meta": {"delpi/toolClass": "READ"},
+                "name": "execute_delpi_information",
+                "_meta": {"delpi/toolClass": "PREPARE"},
             },
         )
     )
     with pytest.raises(SpecialistInteropError) as exc:
         adapter.call_remote_tool(
             DAVI,
-            "discover_delpi_information",
+            "execute_delpi_information",
             {},
             correlation_id="c",
             timeout_seconds=5.0,
         )
-    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
+    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
 
 
 def test_call_untyped_capability_not_invocable():

@@ -180,20 +180,19 @@ def test_interaction_application_layer_stays_bounded():
     module_files = sorted(
         p.name for p in interaction_dir.rglob("*.py") if p.name != "__init__.py"
     )
-    # C4-MCP-GOVERNED-READS-01/02 add the shared capability-neutral
-    # governed-read semantics (governed_read.py: statuses, attempt,
-    # binding, combiner, direct-invocation edge) plus two static
-    # bindings — governed_product_read.py (DAVI candidate flow) and
-    # governed_teo_analyze.py (TÉO direct call). No engine, router,
-    # registry, repository, or new port is introduced.
+    # C4-MCP-GOVERNED-READS-01/02 introduced the capability-neutral
+    # governed-read skeleton (governed_read.py: statuses, attempt,
+    # bounded provenance edge); ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02
+    # replaced the two static bound reads with specialist_owned_read.py
+    # — live tools/list surfaces, class-gated selection. No engine,
+    # router, registry, repository, or new port is introduced.
     assert module_files == [
         "contracts.py",
         "errors.py",
-        "governed_product_read.py",
         "governed_read.py",
-        "governed_teo_analyze.py",
         "handle_interactive_turn.py",
         "instruction.py",
+        "specialist_owned_read.py",
     ]
     for package in ("conversation", "session", "chat"):
         assert not (APP_ROOT / "application" / package).exists()

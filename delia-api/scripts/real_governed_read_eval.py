@@ -8,10 +8,10 @@ End-to-end proof through the real HTTP boundary:
     -> search_products candidate -> execute_delpi_information
     -> grounded InteractiveTurnResult
 
-C4-MCP-GOVERNED-READS-02 adds a TÉO analyze query when the
-DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED flag is set (bounded
-view=summary read). Also runs a non-product control question
-(expected NON_GROUNDED).
+Under ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 (ledger §6.118) there are
+no per-capability flags: DAVI/TÉO/VISTA reads are selected from the
+live tools/list projection when enabled+connected. Also runs a
+non-product control question (expected NON_GROUNDED).
 
 Required env (never printed): DEV_PORTAL_USERNAME, DEV_PORTAL_PASSWORD.
 Optional: DELIA_EVAL_PRODUCT_QUERY, DELIA_EVAL_TEO_QUERY

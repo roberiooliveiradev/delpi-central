@@ -3,12 +3,8 @@ from __future__ import annotations
 import requests
 from flask import Flask
 
-from app.application.interaction.governed_product_read import (
-    GovernedProductRead,
-)
-from app.application.interaction.governed_read import GovernedRead
-from app.application.interaction.governed_teo_analyze import (
-    build_teo_dashboard_analyze_read,
+from app.application.interaction.specialist_owned_read import (
+    SpecialistOwnedRead,
 )
 from app.application.interaction.handle_interactive_turn import (
     DEFAULT_MODEL_REF as DEFAULT_INTERACTION_MODEL_REF,
@@ -19,9 +15,6 @@ from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
 from app.domain.evidence.model import ModelRef
-from app.domain.specialist_interop.rules import (
-    enabled_governed_read_tuples,
-)
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.auth.subject_bearer import current_subject_bearer
@@ -90,19 +83,13 @@ def create_application(
     # C4-MCP-GOVERNED-READS-01/02: per-binding enabled set — each
     # bounded flag contributes exactly its own authorized tuple at
     # both enforcement boundaries.
-    enabled_governed_reads = enabled_governed_read_tuples(
-        davi_product_read=settings.c4_davi_product_read_enabled,
-        teo_dashboard_analyze=settings.c4_teo_dashboard_analyze_enabled,
-    )
     interop = SpecialistInterop(
         McpSpecialistAdapter(
             connections,
             credential_provider=_wire_delegated_credential_provider(
                 settings, connections
             ),
-            enabled_governed_reads=enabled_governed_reads,
         ),
-        enabled_governed_reads=enabled_governed_reads,
     )
     app.config["SPECIALIST_INTEROP"] = interop
 
@@ -118,15 +105,19 @@ def create_application(
     elif model_invocation_port is not None:
         invoke = InvokeModel(model_invocation_port)
         handler = _compose_turn_handler(
-            invoke, DEFAULT_INTERACTION_MODEL_REF, interop, settings
+            invoke, DEFAULT_INTERACTION_MODEL_REF, interop, settings,
+            connections,
         )
     elif testing:
         invoke = InvokeModel(DeterministicTestAdapter())
         handler = _compose_turn_handler(
-            invoke, DEFAULT_INTERACTION_MODEL_REF, interop, settings
+            invoke, DEFAULT_INTERACTION_MODEL_REF, interop, settings,
+            connections,
         )
     else:
-        handler = _wire_real_provider_handler(settings, interop)
+        handler = _wire_real_provider_handler(
+            settings, interop, connections
+        )
     app.config["INTERACTION_TURN_HANDLER"] = handler
 
     register_error_handlers(app)
@@ -182,36 +173,41 @@ def _compose_turn_handler(
     model_ref: ModelRef,
     interop: SpecialistInterop,
     settings: Settings,
+    connections,
 ) -> HandleInteractiveConversationTurn:
-    """Compose the turn handler, attaching the bounded governed reads.
+    """Compose the turn handler with the specialist-owned live read.
 
-    C4-MCP-GOVERNED-READS-01/02: each governed read exists only under
-    its own explicit bounded config flag; both reuse the same model
-    port for bounded argument proposals (never authority) and the same
-    SpecialistInterop boundary. Fixed order: the TÉO direct binding is
-    gated by a model applicability proposal before any wire call; the
-    DAVI binding's own discovery remains its applicability check.
+    ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02: capability availability is
+    specialist-owned via live tools/list — the read composes over the
+    enabled+configured connections with no per-capability flag or
+    static binding. The model may propose a selection (never
+    authority); deterministic validation + the owner class gate at both
+    interop boundaries decide.
     """
-    bound_reads = []
-    if settings.c4_teo_dashboard_analyze_enabled:
-        bound_reads.append(
-            build_teo_dashboard_analyze_read(
-                interop, invoke_model=invoke_model, model_ref=model_ref
-            )
+    # ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02: one specialist-owned read
+    # over the enabled+configured connections — live tools/list is the
+    # capability authority; no per-capability flag or static binding.
+    enabled_specialists = tuple(
+        specialist_id
+        for specialist_id, profile in connections.items()
+        if profile.enabled and profile.endpoint
+    )
+    governed_read = (
+        SpecialistOwnedRead(
+            interop,
+            enabled_specialists,
+            invoke_model=invoke_model,
+            model_ref=model_ref,
         )
-    if settings.c4_davi_product_read_enabled:
-        bound_reads.append(
-            GovernedProductRead(
-                interop, invoke_model=invoke_model, model_ref=model_ref
-            )
-        )
-    governed_read = GovernedRead(bound_reads) if bound_reads else None
+        if enabled_specialists
+        else None
+    )
     return HandleInteractiveConversationTurn(
         invoke_model, model_ref=model_ref, governed_read=governed_read
     )
 
 
-def _wire_real_provider_handler(settings: Settings, interop):
+def _wire_real_provider_handler(settings: Settings, interop, connections):
     """Wire the real OpenAI-compatible provider only from complete config.
 
     provider=openai_compatible + base URL + model + key all present is the
@@ -238,5 +234,5 @@ def _wire_real_provider_handler(settings: Settings, interop):
         provider_ref="openai_compatible",
     )
     return _compose_turn_handler(
-        InvokeModel(adapter), model_ref, interop, settings
+        InvokeModel(adapter), model_ref, interop, settings, connections
     )

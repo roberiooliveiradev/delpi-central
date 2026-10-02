@@ -67,17 +67,14 @@ class FakePort:
 
     def call_remote_tool(
         self, specialist, remote_name, arguments, *, correlation_id,
-        timeout_seconds, governed_action_id=None,
+        timeout_seconds,
     ):
         self.calls.append((specialist.specialist_id, remote_name, arguments))
         return self._outcome
 
 
-def _interop(tools=(), outcome=None, enabled=()):
-    return SpecialistInterop(
-        FakePort(tools=tools, outcome=outcome),
-        enabled_governed_reads=frozenset(enabled),
-    )
+def _interop(tools=(), outcome=None):
+    return SpecialistInterop(FakePort(tools=tools, outcome=outcome))
 
 
 def _by_name(result):
@@ -109,8 +106,9 @@ def test_davi_catalog_projects_owner_surface():
         _by_name(result)["execute_delpi_information"].operation_class
         is SpecialistOperationClass.READ
     )
-    # Only the bound DISCOVERY capability is policy-invocable.
-    assert result.blocked_remote_names == ("execute_delpi_information",)
+    # Class gate only — DISCOVERY and READ are both invocable now
+    # (specialist-owned availability, §6.118); nothing is blocked here.
+    assert result.blocked_remote_names == ()
     assert result.specialist.owner_ref == "api-delpi"
 
 
@@ -129,15 +127,15 @@ def test_teo_catalog_blocks_reads_prepare_act_and_unknown():
         is SpecialistOperationClass.UNKNOWN
     )
     assert set(result.blocked_remote_names) == {
-        "get_record",
         "prepare_record_change",
         "commit_proposal",
         "undocumented_tool",
     }
     assert "get_catalog" not in result.blocked_remote_names
+    assert "get_record" not in result.blocked_remote_names
 
 
-def test_vista_catalog_blocks_writes_and_reads():
+def test_vista_catalog_blocks_writes_not_reads():
     interop = _interop(
         tools=(
             RemoteToolDescriptor(
@@ -159,7 +157,7 @@ def test_vista_catalog_blocks_writes_and_reads():
     )
     assert "prepare_change" in result.blocked_remote_names
     assert "commit_proposal" in result.blocked_remote_names
-    assert "list_playlists" in result.blocked_remote_names
+    assert "list_playlists" not in result.blocked_remote_names
     assert "get_catalog" not in result.blocked_remote_names
 
 
@@ -253,33 +251,35 @@ def test_invoke_discovery_succeeds_and_is_observation():
     assert outcome.is_complete is True
 
 
-def test_invoke_discovery_requires_delia_binding():
-    """Owner-typed DISCOVERY alone never self-grants invocation — only
-    the three DÉLIA-approved discovery bindings are callable."""
+def test_invoke_discovery_is_class_gated_not_name_bound():
+    """ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02: any owner-typed
+    DISCOVERY capability on an approved specialist is invocable — the
+    per-name binding table is superseded."""
     interop = _interop(
         tools=(
             RemoteToolDescriptor(
                 remote_name="get_catalog", operation_class="DISCOVERY"
             ),
-            # Owner advertises a second discovery tool with no DÉLIA
-            # binding: discovered, but not invocable.
             RemoteToolDescriptor(
                 remote_name="discover_v2", operation_class="DISCOVERY"
             ),
-        )
+        ),
+        outcome=RemoteToolOutcome(content_text="{}"),
     )
-    with pytest.raises(SpecialistInteropError) as exc:
-        interop.invoke(
+    for name in ("get_catalog", "discover_v2"):
+        outcome = interop.invoke(
             SpecialistInvocationRequest(
                 specialist_id="teo",
-                remote_capability="discover_v2",
+                remote_capability=name,
                 correlation_id="c",
             )
         )
-    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
+        assert outcome.provenance.remote_name == name
 
 
-def test_invoke_read_capability_phase_gated():
+def test_invoke_read_capabilities_invocable_on_all_specialists():
+    """READ class is invocable for every approved specialist without a
+    per-tool tuple or env flag (§6.118)."""
     interop = _interop(
         tools=(
             RemoteToolDescriptor(
@@ -292,26 +292,27 @@ def test_invoke_read_capability_phase_gated():
             RemoteToolDescriptor(
                 remote_name="list_playlists", operation_class="READ"
             ),
-        )
+        ),
+        outcome=RemoteToolOutcome(content_text="{}"),
     )
     for specialist_id, name in (
         ("davi", "execute_delpi_information"),
         ("teo", "get_record"),
         ("vista", "list_playlists"),
     ):
-        with pytest.raises(SpecialistInteropError) as exc:
-            interop.invoke(
-                SpecialistInvocationRequest(
-                    specialist_id=specialist_id,
-                    remote_capability=name,
-                    correlation_id="c",
-                )
+        outcome = interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id=specialist_id,
+                remote_capability=name,
+                correlation_id="c",
             )
-        assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
+        )
+        assert outcome.provenance.remote_name == name
 
 
-def test_invoke_enabled_read_requires_exact_tuple():
-    """An enabled governed tuple authorizes only its exact action."""
+def test_invoke_read_class_invocable_without_tuple():
+    """READ-class capabilities are invocable on approval — no
+    per-tuple gate remains (§6.118)."""
     interop = _interop(
         tools=(
             RemoteToolDescriptor(
@@ -319,7 +320,6 @@ def test_invoke_enabled_read_requires_exact_tuple():
                 operation_class="READ",
             ),
         ),
-        enabled={("davi", "execute_delpi_information", "search_products")},
         outcome=RemoteToolOutcome(content_text='{"ok": true}'),
     )
     outcome = interop.invoke(
@@ -327,22 +327,10 @@ def test_invoke_enabled_read_requires_exact_tuple():
             specialist_id="davi",
             remote_capability="execute_delpi_information",
             correlation_id="c",
-            arguments={"candidate_token": "t"},
-            governed_action_id="search_products",
+            arguments={"candidate_token": "t", "arguments": {}},
         )
     )
     assert outcome.provenance.remote_name == "execute_delpi_information"
-    with pytest.raises(SpecialistInteropError) as exc:
-        interop.invoke(
-            SpecialistInvocationRequest(
-                specialist_id="davi",
-                remote_capability="execute_delpi_information",
-                correlation_id="c2",
-                arguments={},
-                governed_action_id="other_action",
-            )
-        )
-    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
 
 
 def test_invoke_prepare_and_act_rejected():

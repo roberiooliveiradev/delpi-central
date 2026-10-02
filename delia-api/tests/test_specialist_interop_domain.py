@@ -1,15 +1,17 @@
-"""Domain contract tests for C3-MCP-INTEROP-01.
+"""Domain contract tests for the specialist-interop boundary.
 
 Locks: the approved specialist set (DAVI/TÉO/VISTA only), the
-provider-neutral owner-class mapping, the DÉLIA governance bindings
-(DISCOVERY + governed READ tuples — policy, not catalog), the C3
-invocation gate, and the epistemic pin (specialist outcome ==
-OBSERVATION, never auto-FACT).
+provider-neutral owner-class mapping, the interactive phase class gate
+(DISCOVERY|READ invocable; PREPARE/ACT/UNKNOWN never), and the
+epistemic pin (specialist outcome == OBSERVATION, never auto-FACT).
 
-ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 (ledger §6.109): the local
-full-tool mirror (SPECIALIST_CAPABILITY_CLASSES) is superseded — the
-remote specialist owns its catalog; these tests guard against its
-re-creation.
+ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 (§6.109) superseded the
+local full-tool mirror; ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 (§6.118)
+superseded the remaining second capability authority — the per-name
+DISCOVERY bindings, the per-tuple READ actions, the enabled-tuple
+config plumbing and the DELIA_C4_*_ENABLED flags. These tests guard
+against their re-creation: no remote tool name may appear in this
+module as DÉLIA policy.
 """
 
 from __future__ import annotations
@@ -31,10 +33,8 @@ from app.domain.specialist_interop.model import (
 from app.domain.specialist_interop import rules
 from app.domain.specialist_interop.rules import (
     APPROVED_SPECIALIST_IDS,
-    GOVERNED_DISCOVERY_BINDINGS,
-    GOVERNED_READ_ACTIONS,
-    discovery_binding_allowed,
-    invocable_in_foundation,
+    INTERACTIVE_INVOCABLE_CLASSES,
+    invocable_in_interactive_phase,
     operation_class_from_owner,
     specialist_ref_or_none,
 )
@@ -61,40 +61,29 @@ def test_specialist_ref_for_each_approved_specialist():
 def test_unknown_specialist_fails_closed():
     for unknown in ("", "chatgpt", "unknown-mcp", "DAVI2", " openai "):
         assert specialist_ref_or_none(unknown) is None
-        assert discovery_binding_allowed(unknown, "get_catalog") is False
 
 
-def test_no_local_full_tool_mirror():
-    """Regression guard: the superseded per-specialist tool-name mirror
-    must not be recreated — the remote specialist owns its catalog."""
+def test_no_local_tool_authority():
+    """Regression guard: no per-tool catalog or availability table may
+    be recreated — the remote specialist owns its capability surface."""
     assert not hasattr(rules, "SPECIALIST_CAPABILITY_CLASSES")
-    assert not hasattr(rules, "operation_class_for")
+    assert not hasattr(rules, "GOVERNED_DISCOVERY_BINDINGS")
+    assert not hasattr(rules, "GOVERNED_READ_ACTIONS")
+    assert not hasattr(rules, "enabled_governed_read_tuples")
+    assert not hasattr(rules, "governed_read_action_allowed")
+    assert not hasattr(rules, "discovery_binding_allowed")
     source = inspect.getsource(rules)
-    assert "SPECIALIST_CAPABILITY_CLASSES" not in source
-    # No per-specialist dict of remote tool names may exist: the only
-    # remote names in this module are the bounded governance bindings.
-    assert "commit_proposal" not in source
-    assert "prepare_" not in source
-    assert "execute_delpi_information" in source  # governed READ policy
-    assert "get_catalog" in source  # DISCOVERY binding policy
-
-
-def test_governance_bindings_are_bounded_policy_not_catalog():
-    """The only remote names DÉLIA lists are its own invocation policy —
-    3 DISCOVERY bindings + the 2 authorized C4 READ tuples."""
-    assert GOVERNED_DISCOVERY_BINDINGS == frozenset(
-        {
-            ("davi", "discover_delpi_information"),
-            ("teo", "get_catalog"),
-            ("vista", "get_catalog"),
-        }
-    )
-    assert set(GOVERNED_READ_ACTIONS) == {
-        ("davi", "execute_delpi_information"),
-        ("teo", "analyze"),
-    }
-    for specialist_id, _ in GOVERNED_DISCOVERY_BINDINGS:
-        assert specialist_id in APPROVED_SPECIALIST_IDS
+    for leaked_remote_name in (
+        "execute_delpi_information",
+        "discover_delpi_information",
+        "get_catalog",
+        "search_products",
+        "gpt_analyze",
+        "list_playlists",
+        "prepare_",
+        "commit_proposal",
+    ):
+        assert leaked_remote_name not in source
 
 
 def test_owner_class_mapping_is_provider_neutral():
@@ -130,32 +119,37 @@ def test_owner_class_mapping_fail_closed():
     )
 
 
-def test_c3_invocation_gate_is_discovery_only():
-    assert invocable_in_foundation(SpecialistOperationClass.DISCOVERY) is True
+def test_interactive_gate_allows_discovery_and_read():
+    """ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 class gate — no per-name
+    or per-flag narrowing remains."""
+    assert INTERACTIVE_INVOCABLE_CLASSES == frozenset(
+        {
+            SpecialistOperationClass.DISCOVERY,
+            SpecialistOperationClass.READ,
+        }
+    )
     for cls in (
+        SpecialistOperationClass.DISCOVERY,
         SpecialistOperationClass.READ,
+    ):
+        assert invocable_in_interactive_phase(cls) is True
+
+
+def test_interactive_gate_blocks_writes_and_unknown():
+    for cls in (
         SpecialistOperationClass.PREPARE,
         SpecialistOperationClass.ACT,
         SpecialistOperationClass.UNKNOWN,
     ):
-        assert invocable_in_foundation(cls) is False
-
-
-def test_discovery_binding_policy_exact():
-    assert discovery_binding_allowed("davi", "discover_delpi_information")
-    assert discovery_binding_allowed("teo", "get_catalog")
-    assert discovery_binding_allowed("vista", "get_catalog")
-    assert not discovery_binding_allowed("davi", "get_catalog")
-    assert not discovery_binding_allowed("teo", "discover_delpi_information")
-    assert not discovery_binding_allowed("vista", "preview_data_model")
+        assert invocable_in_interactive_phase(cls) is False
 
 
 def test_capability_descriptor_grants_nothing():
     descriptor = SpecialistCapabilityDescriptor(
-        capability_id="davi.discover_delpi_information",
+        capability_id="davi.some_read",
         specialist_id="davi",
-        remote_name="discover_delpi_information",
-        operation_class=SpecialistOperationClass.DISCOVERY,
+        remote_name="some_read",
+        operation_class=SpecialistOperationClass.READ,
         protocol=InteropProtocol.MCP,
         observed_at="2026-01-01T00:00:00+00:00",
     )
@@ -169,7 +163,7 @@ def test_outcome_epistemic_class_is_pinned_observation():
         status=SpecialistResultStatus.COMPLETED,
         provenance=SpecialistResultProvenance(
             specialist_id="davi",
-            remote_name="discover_delpi_information",
+            remote_name="some_read",
             protocol=InteropProtocol.MCP,
             correlation_id="corr-1",
             observed_at="2026-01-01T00:00:00+00:00",

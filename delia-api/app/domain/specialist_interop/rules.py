@@ -6,8 +6,8 @@ with ``_meta["delpi/toolClass"]``. DÉLIA keeps NO mirror of remote tool
 names — this module holds only DÉLIA-owned governance:
 
   * the approved-specialist registry (identity/owner refs);
-  * the bounded DISCOVERY invocation bindings;
-  * the task-scoped governed READ authorizations;
+  * the interactive phase class gate (DISCOVERY | READ invocable;
+    PREPARE/ACT/UNKNOWN blocked);
   * the provider-neutral mapping from owner-typed class to the
     SpecialistOperationClass vocabulary.
 
@@ -74,105 +74,40 @@ def operation_class_from_owner(raw: object) -> SpecialistOperationClass:
     )
 
 
-# DÉLIA approval policy (not a catalog mirror): the bounded set of
-# DISCOVERY-class capabilities DÉLIA may invoke through the C3
-# foundation. A remote tool projecting DISCOVERY without a binding here
-# is discoverable but not invocable — owner typing never self-grants.
-GOVERNED_DISCOVERY_BINDINGS: frozenset[tuple[str, str]] = frozenset(
-    {
-        ("davi", "discover_delpi_information"),
-        ("teo", "get_catalog"),
-        ("vista", "get_catalog"),
-    }
+# ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 (ledger §6.118): the specialist
+# owns its capability surface end-to-end — existence, naming, class and
+# availability are live owner data from ``tools/list``, not DÉLIA-local
+# state. The former second authority is superseded:
+# GOVERNED_DISCOVERY_BINDINGS, GOVERNED_READ_ACTIONS,
+# enabled_governed_read_tuples and the DELIA_C4_*_ENABLED switches no
+# longer gate invocation. What remains DÉLIA-owned policy:
+#
+#   * the approved-specialist registry above (identity/owner refs) and
+#     the configured connection approval (DELIA_MCP_*_ENABLED);
+#   * the class/phase gate below — which owner-typed classes may be
+#     invoked under the current interactive policy;
+#   * fail-closed unknown-specialist / unadvertised-capability checks.
+#
+# CURRENT_INTERACTIVE_INVOCABLE_CLASSES = DISCOVERY | READ
+# (ANALYSIS already projects as READ via _OWNER_CLASS_MAP).
+# PREPARE/ACT are writes — visible in the projection, never invocable
+# here. UNKNOWN (absent/invalid owner class) is never invocable.
+INTERACTIVE_INVOCABLE_CLASSES: frozenset[SpecialistOperationClass] = (
+    frozenset(
+        {
+            SpecialistOperationClass.DISCOVERY,
+            SpecialistOperationClass.READ,
+        }
+    )
 )
 
 
-def discovery_binding_allowed(specialist_id: str, remote_name: str) -> bool:
-    """True only for the DÉLIA-approved DISCOVERY invocation bindings."""
-    return (
-        str(specialist_id or "").strip().lower(),
-        str(remote_name or "").strip(),
-    ) in GOVERNED_DISCOVERY_BINDINGS
-
-
-def invocable_in_foundation(operation_class: SpecialistOperationClass) -> bool:
-    """C3 foundation class gate: DISCOVERY/CATALOG only.
-
-    Class eligibility alone is not invocation permission — a DISCOVERY
-    class still requires a GOVERNED_DISCOVERY_BINDINGS entry, and READ
-    requires the separate C4 authorization. PREPARE/ACT are writes.
-    """
-    return operation_class is SpecialistOperationClass.DISCOVERY
-
-
-# C4-MCP-GOVERNED-READS-01/02: the only task-scoped bounded READ
-# authorizations. Maps (specialist, remote capability) -> the exact set
-# of governed action ids DÉLIA orchestration may execute. This is
-# DÉLIA orchestration policy, not specialist business authority — DAVI
-# still decides candidate eligibility, API DELPI still enforces Product
-# Master AuthZ, and transformometro-api still enforces dashboard view
-# access. Everything outside this table stays phase-gated.
-GOVERNED_READ_ACTIONS: dict[tuple[str, str], frozenset[str]] = {
-    ("davi", "execute_delpi_information"): frozenset({"search_products"}),
-    ("teo", "analyze"): frozenset({"gpt_analyze"}),
-}
-
-# Canonical single binding for the first slice — the only place
-# specialist identity for the DAVI governed read may be named.
-GOVERNED_READ_SPECIALIST = "davi"
-GOVERNED_READ_DISCOVERY_CAPABILITY = "discover_delpi_information"
-GOVERNED_READ_EXECUTE_CAPABILITY = "execute_delpi_information"
-GOVERNED_READ_ACTION_ID = "search_products"
-
-# C4-MCP-GOVERNED-READS-02: canonical binding for the TÉO dashboard
-# read. `gpt_analyze` is the owner's stable operation identifier for the
-# MCP `analyze` capability — it identifies the binding, it grants
-# nothing.
-GOVERNED_READ_TEO_SPECIALIST = "teo"
-GOVERNED_READ_TEO_CAPABILITY = "analyze"
-GOVERNED_READ_TEO_ACTION_ID = "gpt_analyze"
-
-
-def governed_read_action_allowed(
-    specialist_id: str, remote_name: str, action_id: str | None
+def invocable_in_interactive_phase(
+    operation_class: SpecialistOperationClass,
 ) -> bool:
-    """Bounded C4 gate: True only for the explicitly authorized tuple."""
-    allowed = GOVERNED_READ_ACTIONS.get(
-        (
-            str(specialist_id or "").strip().lower(),
-            str(remote_name or "").strip(),
-        )
-    )
-    if not allowed or action_id is None:
-        return False
-    return str(action_id).strip() in allowed
+    """Current interactive class gate: DISCOVERY and READ only.
 
-
-def enabled_governed_read_tuples(
-    *,
-    davi_product_read: bool = False,
-    teo_dashboard_analyze: bool = False,
-) -> frozenset[tuple[str, str, str]]:
-    """The exact governed READ tuples switched on by trusted config.
-
-    Each task-scoped flag contributes exactly its own tuple; no flag
-    ever widens another binding's authorization surface.
+    Class eligibility is orchestration policy, not permission — the
+    specialist/domain authorities still enforce live AuthZ downstream.
     """
-    enabled: set[tuple[str, str, str]] = set()
-    if davi_product_read:
-        enabled.add(
-            (
-                GOVERNED_READ_SPECIALIST,
-                GOVERNED_READ_EXECUTE_CAPABILITY,
-                GOVERNED_READ_ACTION_ID,
-            )
-        )
-    if teo_dashboard_analyze:
-        enabled.add(
-            (
-                GOVERNED_READ_TEO_SPECIALIST,
-                GOVERNED_READ_TEO_CAPABILITY,
-                GOVERNED_READ_TEO_ACTION_ID,
-            )
-        )
-    return frozenset(enabled)
+    return operation_class in INTERACTIVE_INVOCABLE_CLASSES

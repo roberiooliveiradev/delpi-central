@@ -50,12 +50,6 @@ class SpecialistInvocationRequest:
     correlation_id: str
     arguments: Mapping[str, object] = field(default_factory=dict)
     timeout_seconds: float = DEFAULT_INVOCATION_TIMEOUT_SECONDS
-    # C4-MCP-GOVERNED-READS-01: for READ-class capabilities only, the
-    # DAVI-side action id already proven by DÉLIA orchestration against
-    # the discovery response. It is a bounded scope marker checked
-    # against GOVERNED_READ_ACTIONS — never authority by itself, never
-    # accepted from user/model input.
-    governed_action_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

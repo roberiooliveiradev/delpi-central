@@ -26,8 +26,8 @@ from app.application.interaction.contracts import (
     InteractiveTurnResult,
 )
 from app.application.interaction.governed_read import (
-    GovernedRead,
     GovernedReadStatus,
+    SupportsGovernedReadAttempt,
 )
 from app.application.interaction.errors import (
     CONTEXT_TOO_LARGE,
@@ -137,7 +137,7 @@ class HandleInteractiveConversationTurn:
         instruction_lineage: InstructionLineage | None = None,
         instruction_content: str | None = None,
         timeout_seconds: float = INTERACTION_TIMEOUT_SECONDS,
-        governed_read: GovernedRead | None = None,
+        governed_read: SupportsGovernedReadAttempt | None = None,
     ) -> None:
         self._invoke_model = invoke_model
         self._model_ref = model_ref

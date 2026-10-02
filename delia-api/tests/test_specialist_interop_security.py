@@ -43,7 +43,7 @@ class FakePort:
 
     def call_remote_tool(
         self, specialist, remote_name, arguments, *, correlation_id,
-        timeout_seconds, governed_action_id=None,
+        timeout_seconds,
     ):
         self.wire_calls.append(remote_name)
         return self._outcome
@@ -230,37 +230,38 @@ def test_tool_disappears_leaves_no_stale_grant():
     assert exc.value.code == UNKNOWN_CAPABILITY
 
 
-def test_renamed_tool_does_not_inherit_approval():
-    """A renamed DISCOVERY-typed tool is discoverable but never gains
-    the prior binding's invocation grant."""
+def test_renamed_tool_invocable_by_owner_class_not_name():
+    """ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02: the owner class is the
+    gate — a renamed owner-typed DISCOVERY tool is invocable with no
+    DÉLIA-side name entry."""
     tools = (
         RemoteToolDescriptor(
             remote_name="get_catalog_v2", operation_class="DISCOVERY"
         ),
     )
-    interop = SpecialistInterop(FakePort(tools=tools))
+    port = FakePort(tools=tools)
+    interop = SpecialistInterop(port)
     catalog = interop.discover_catalog(
         SpecialistCatalogRequest(specialist_id="teo", correlation_id="c")
     )
     assert [c.remote_name for c in catalog.capabilities] == [
         "get_catalog_v2"
     ]
-    assert catalog.blocked_remote_names == ("get_catalog_v2",)
-    with pytest.raises(SpecialistInteropError) as exc:
-        interop.invoke(
-            SpecialistInvocationRequest(
-                specialist_id="teo",
-                remote_capability="get_catalog_v2",
-                correlation_id="c",
-            )
+    assert catalog.blocked_remote_names == ()
+    interop.invoke(
+        SpecialistInvocationRequest(
+            specialist_id="teo",
+            remote_capability="get_catalog_v2",
+            correlation_id="c",
         )
-    assert exc.value.code == CAPABILITY_NOT_ALLOWED_IN_PHASE
+    )
+    assert port.wire_calls == ["get_catalog_v2"]
 
 
-def test_forged_discovery_class_cannot_elevate():
-    """Even a tool the owner types as DISCOVERY cannot self-invoke —
-    invocation requires a DÉLIA GOVERNED_DISCOVERY_BINDINGS entry, and
-    no binding exists for an unvetted name."""
+def test_forged_annotations_cannot_elevate_owner_class():
+    """Only the owner-typed ``operation_class`` field classifies — a
+    DISCOVERY-typed tool is invocable (class gate), while an ACT tool
+    claiming DISCOVERY via annotations stays blocked."""
     tools = (
         RemoteToolDescriptor(
             remote_name="brand_new_tool",
@@ -282,50 +283,44 @@ def test_forged_discovery_class_cannot_elevate():
     catalog = interop.discover_catalog(
         SpecialistCatalogRequest(specialist_id="teo", correlation_id="c")
     )
-    # Both are discovered/projected; neither is invocable.
     projected = {c.remote_name: c for c in catalog.capabilities}
     assert (
         projected["brand_new_tool"].operation_class
         is SpecialistOperationClass.DISCOVERY
     )
-    assert set(catalog.blocked_remote_names) == {
-        "brand_new_tool",
-        "commit_proposal",
-    }
-    for name, code in (
-        ("brand_new_tool", CAPABILITY_NOT_ALLOWED_IN_PHASE),
-        ("commit_proposal", WRITE_CAPABILITY_BLOCKED),
-    ):
-        with pytest.raises(SpecialistInteropError) as exc:
-            interop.invoke(
-                SpecialistInvocationRequest(
-                    specialist_id="teo",
-                    remote_capability=name,
-                    correlation_id="c",
-                )
+    assert catalog.blocked_remote_names == ("commit_proposal",)
+    interop.invoke(
+        SpecialistInvocationRequest(
+            specialist_id="teo",
+            remote_capability="brand_new_tool",
+            correlation_id="c",
+        )
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id="teo",
+                remote_capability="commit_proposal",
+                correlation_id="c",
             )
-        assert exc.value.code == code
-    assert port.wire_calls == []
+        )
+    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
+    assert port.wire_calls == ["brand_new_tool"]
 
 
 # --- ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01: owner-class drift ----
 
 
-def test_owner_reclassification_read_to_prepare_revokes_stale_grant():
-    """If the owner retypes READ->PREPARE, a still-enabled governed tuple
-    cannot keep invoking — the fresh owner class wins fail-closed."""
+def test_owner_reclassification_read_to_prepare_blocks_invocation():
+    """If the owner retypes READ->PREPARE, the next fresh tools/list
+    blocks invocation — no stale grant survives."""
     tools = (
         RemoteToolDescriptor(
             remote_name="execute_delpi_information",
             operation_class="PREPARE",
         ),
     )
-    interop = SpecialistInterop(
-        FakePort(tools=tools),
-        enabled_governed_reads=frozenset(
-            {("davi", "execute_delpi_information", "search_products")}
-        ),
-    )
+    interop = SpecialistInterop(FakePort(tools=tools))
     with pytest.raises(SpecialistInteropError) as exc:
         interop.invoke(
             SpecialistInvocationRequest(
@@ -333,7 +328,6 @@ def test_owner_reclassification_read_to_prepare_revokes_stale_grant():
                 remote_capability="execute_delpi_information",
                 correlation_id="c",
                 arguments={},
-                governed_action_id="search_products",
             )
         )
     assert exc.value.code == WRITE_CAPABILITY_BLOCKED
@@ -374,24 +368,26 @@ def test_new_compatible_capability_discovered_without_mirror():
         projected["prepare_recalc_v2"].operation_class
         is SpecialistOperationClass.PREPARE
     )
-    assert set(catalog.blocked_remote_names) == {
-        "get_sla_dashboard",
-        "prepare_recalc_v2",
-    }
-    for name, code in (
-        ("get_sla_dashboard", CAPABILITY_NOT_ALLOWED_IN_PHASE),
-        ("prepare_recalc_v2", WRITE_CAPABILITY_BLOCKED),
-    ):
-        with pytest.raises(SpecialistInteropError) as exc:
-            interop.invoke(
-                SpecialistInvocationRequest(
-                    specialist_id="teo",
-                    remote_capability=name,
-                    correlation_id="c",
-                )
+    # READ is invocable on fresh discovery (specialist-owned surface);
+    # PREPARE stays policy-blocked.
+    assert set(catalog.blocked_remote_names) == {"prepare_recalc_v2"}
+    interop.invoke(
+        SpecialistInvocationRequest(
+            specialist_id="teo",
+            remote_capability="get_sla_dashboard",
+            correlation_id="c",
+        )
+    )
+    assert port.wire_calls == ["get_sla_dashboard"]
+    with pytest.raises(SpecialistInteropError) as exc:
+        interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id="teo",
+                remote_capability="prepare_recalc_v2",
+                correlation_id="c",
             )
-        assert exc.value.code == code
-    assert port.wire_calls == []
+        )
+    assert exc.value.code == WRITE_CAPABILITY_BLOCKED
 
 
 def test_owner_class_field_shape_never_trusted_blindly():
