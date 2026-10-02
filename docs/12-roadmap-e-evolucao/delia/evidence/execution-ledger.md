@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** `ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ` (`C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO`; `C3-T1..T8=APPROVED`; `C3-MEDIA-FOUNDATION-01=APPROVED` — `ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01=ACCEPT_WITH_RESIDUAL` §6.86; `C3-INTERACTION-RUNTIME-01=APPROVED` §6.87-§6.91 — `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01=REWORK` → R1 fail-closed `4a57e70a46` → R2 real provider `c2f85834c5` → `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2_FINAL=ACCEPT_WITH_RESIDUAL` §6.91; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`; `DELIA_RUNTIME_VOCABULARY=DELIA_LLM_*`); `C3-INTERACTION-CONTINUITY-01=APPROVED` §6.90-§6.91 (`ARCHITECTURE_REVIEW_C3_INTERACTION_CONTINUITY_01=ACCEPT_WITH_RESIDUAL`; `fdca215029`; real eval PASS); `NEXT_TASK_AUTHORIZED=NO` — coordination only). Não executar próxima task; não marcar C3 complete; não autorizar C4; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`.
+**Next:** two independent architecture reviews pending — ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) and ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 (§6.109 decision / §6.110 evidence). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); C4-MCP-GOVERNED-READS-01 + -02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE (§6.104/§6.106; bounded DAVI search_products + TEO gpt_analyze view=summary only; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED); C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.110; specialist-owned catalogs via owner _meta[delpi/toolClass], DELIA mirror removed, discovery!=authorization). C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
 
 ## 1. Ledger rule
 
@@ -7295,4 +7295,72 @@ PHASE_FLAGS = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
 
 NEXT = runtime refactor + tests + live eval under this same task;
     evidence bound in the following ledger entry.
+```
+
+
+## 6.110. ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 — evidence bind
+
+```text
+TASK = ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01
+TYPE = EXECUTION_DRIFT_CORRECTION evidence bind (decision §6.109;
+    heads below)
+
+HEADS = BASE_HEAD=ab5fd2460eecaeec1cc4ee3da39399943683b856;
+    DECISION_HEAD=ef9142307fd3bdb054ce35694246835669abe3a4;
+    IMPLEMENTATION_HEAD=fe434cdaf3713c9cb0d8e752f49690ed4bd81cee
+
+EXECUTED =
+  DÉLIA: SPECIALIST_CAPABILITY_CLASSES mirror REMOVED from
+      domain/specialist_interop/rules.py (retained: approved-
+      specialist registry, governed-read policy bindings, PREPARE/
+      ACT hard block — DÉLIA policy only, no remote catalog copy);
+      SpecialistCapabilityDescriptor projection now classifies from
+      owner-declared _meta["delpi/toolClass"] via RemoteToolDescriptor;
+      invoke path re-lists tools/list on the same transport and
+      re-applies fresh owner class + governed tuple before tools/call;
+      McpSpecialistAdapter enforces the same gate at the wire boundary.
+  OWNERS: shared delpi_mcp TOOL_CLASS_DISCOVERY added; TÉO emits
+      delpi/toolClass (get_catalog reclassified READ->DISCOVERY);
+      VISTA get_catalog reclassified ->DISCOVERY; DAVI emits
+      delpi/toolClass (discover=DISCOVERY, execute=READ).
+
+EVIDENCE =
+  TESTS: 652 delia-api suite PASS incl. new owner-discovery,
+      sibling-specialist, unknown-capability, forged-metadata,
+      readOnlyHint/description/model non-elevation, PREPARE/ACT
+      negatives, fresh-catalog disappearance, renamed-tool
+      non-inheritance, synthetic-new-capability generalization and
+      no-mirror architecture guards; TÉO MCP tests PASS; VISTA class
+      tests PASS (2 unrelated date-fixture failures pre-existing);
+      DAVI MCP tests PASS.
+  LIVE: real_mcp_interop_eval PASS 3/3 — authenticated
+      initialize+tools/list DAVI (2 tools: DISCOVERY+READ), TÉO
+      (24 tools owner-typed: 12 READ, 10 PREPARE, 1 ACT,
+      1 DISCOVERY), VISTA (8 tools) — only DISCOVERY-class
+      invocable per specialist; delegated credential same_sub +
+      azp=delia-api + resource-bound + mcp:tools + no foreign auds;
+      Core /me resolved (64 effective permissions).
+  LIVE: real_governed_read_eval PASS — DAVI search_products
+      GROUNDED OBSERVATION product-master provenance
+      (result_truncated surfaced); TÉO gpt_analyze view=summary
+      GROUNDED OBSERVATION transformometro-api provenance;
+      control query NON_GROUNDED; unauthenticated 401.
+  GIT: diff --check clean; outside-task dirty files preserved.
+
+DRIFT = CLOSED — no DÉLIA full remote-tool mirror; catalog ownership
+    lives at the specialists; discovery grants nothing.
+
+UNCHANGED = C3_EXECUTED=NO; C4_AUTHORIZED=NO (phase); C5_AUTHORIZED=NO;
+    PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN;
+    GovernedWriteBinding registry still EMPTY.
+
+RESIDUALS = LIVE_NEGATIVE_DOMAIN_AUTHZ=TEST_NOT_RUN; outage
+    simulation TEST_NOT_RUN; production token exchange NOT_PROVEN;
+    VISTA business read not authorized (discovery-only proof);
+    third governed read NOT authorized.
+
+REPORT = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    (executor may not declare ACCEPT/ACCEPT_WITH_RESIDUAL)
+
+NEXT = ARCHITECTURE_REVIEW of this correction
 ```

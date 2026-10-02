@@ -214,7 +214,7 @@ Process Intelligence != process business authority
 | 26 | Artifact Workspace | DÉLIA artifact lifecycle/refs | DÉLIA artifacts; publish owner preserved where applicable | UX / Knowledge candidate | artifact copy≠authoritative source | artifact store/refs | TARGET | YES |
 | 27 | Predictive / Prescriptive | model/provider/business owner; DÉLIA=orch/intelligence | model + authorized inputs | Decision PREPARE / UX | prediction≠FACT; recommendation≠authorization | model adapters | TARGET | YES |
 | 28 | Operational Twin / Scenario | DÉLIA/domain scenario projection per source/model owner | live/authoritative sources + models | Decision / UX | Twin≠SoT; simulation≠production; simulate≠apply | scenario contracts | TARGET | YES |
-| 29 | MCP / A2A | approved server/agent owner; DÉLIA=adapter/orch/policy | external/internal tool/agent | Planner / Work | discovery≠approval; metadata≠authority/permission | protocol adapters | TARGET; runtime TO_INVENTORY | YES |
+| 29 | MCP / A2A | approved server/agent owner; DÉLIA=adapter/orch/policy | external/internal tool/agent | Planner / Work | discovery≠approval; metadata≠authority/permission; owner `_meta["delpi/toolClass"]` declares class, DÉLIA policy decides invocability | protocol adapters | IMPLEMENTED_CURRENT_SCOPE (MCP tools/list discovery 3/3 + 2 bounded governed reads live; A2A TO_INVENTORY) | YES |
 | 30 | AI Control Tower | DÉLIA (MODULE_IN_DELIA) | governance/admin projection | admin UX | Tower≠second planner≠executor≠permission≠model lifecycle authority | admin/governance plane | TARGET | YES |
 | 31 | Model Lifecycle | actual model owner/provider; DÉLIA=governance/projection | model registry/evals/deploy metadata | Tower / Marketplace / runtime | router selection≠model approval; deploy metadata≠business authority; MLOps TO_INVENTORY | model governance contracts | TARGET | YES |
 | 32 | Capability Marketplace | DÉLIA governance/catalog + asset publisher/owner | package/catalog | admin / install flows | publish≠enable≠permission; install≠authorization | catalog/signing (later) | TARGET | YES |
@@ -360,7 +360,7 @@ Expande §2.2. Cada linha: OWNER / CONSUMER / DIRECTION / AUTHORITY / R/W / TRUS
 | DÉLIA ↔ Sandbox runtime | isolated runtime owner (TBD) | DÉLIA | analysis exec | no general shell | bounded exec | isolation | TO_INVENTORY |
 | DÉLIA ↔ Artifact store/publication | DÉLIA + publish owner | both | artifact lifecycle | copy≠SoT | R/W refs | storage ACL | TARGET |
 | DÉLIA ↔ model/predictive runtimes | model owner/provider | DÉLIA | inference | pred≠FACT | R/invoke | model trust | TARGET |
-| DÉLIA ↔ MCP/A2A | server/agent owner | DÉLIA | tool/agent call | discovery≠approval | governed | remote trust | TARGET; runtime TO_INVENTORY |
+| DÉLIA ↔ MCP/A2A | server/agent owner | DÉLIA | tool/agent call | discovery≠approval | governed | remote trust | IMPLEMENTED_CURRENT_SCOPE (MCP live 3/3; A2A TO_INVENTORY) |
 | DÉLIA ↔ Marketplace asset owners | publisher + DÉLIA gov | both | catalog/install | install≠AuthZ | R/W catalog | supply chain | TARGET |
 | DÉLIA ↔ notification channels | channel/provider owner | DÉLIA | notify | sent≠Outcome | W notify | channel | PLANNED/TARGET |
 | DÉLIA ↔ Edge | device/Edge owner | DÉLIA | sync/adapter | offline≠↑AuthZ | bounded | device | TARGET; physical TO_INVENTORY |
@@ -1074,7 +1074,7 @@ match = purpose qualifier for biometric READ (not AuthN/AuthZ)
 | DELIA.ARTIFACT | Artifact owner | DÉLIA/consumers | READ \| ACT (share=governed ACT) | FROZEN_ACCEPTED |
 | DELIA.MODEL.INFERENCE | Model runtime (TO_INVENTORY) | DÉLIA | READ \| ADVISE | FROZEN_ACCEPTED |
 | DELIA.SCENARIO.SIMULATE | Twin/scenario boundary | DÉLIA | ADVISE (SIMULATE=qualifier; ≠APPLY) | FROZEN_ACCEPTED |
-| DELIA.MCP.INVOCATION | MCP host (TO_INVENTORY) | DÉLIA | READ \| ACT (bounded) | FROZEN_ACCEPTED |
+| DELIA.MCP.INVOCATION | approved specialist MCP server owner (DAVI api-delpi, TÉO transformometro-api, VISTA tv-dashboard-api) | DÉLIA | READ (bounded) \| PREPARE/ACT (BLOCKED current phase) | FROZEN_ACCEPTED |
 | DELIA.A2A.DELEGATION | A2A host (TO_INVENTORY) | DÉLIA | READ \| ACT (bounded) | FROZEN_ACCEPTED |
 | DELIA.MARKETPLACE.ASSET | Marketplace metadata | Tower/consumers | READ | FROZEN_ACCEPTED |
 | DELIA.NOTIFICATION.REQUEST | Notification adapters | DÉLIA | ACT (delivery) | FROZEN_ACCEPTED |

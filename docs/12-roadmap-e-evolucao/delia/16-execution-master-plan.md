@@ -800,9 +800,16 @@ THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED (§6.106 — two consumers
 C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
    (§6.108; IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce; contracts only —
    GOVERNED_WRITE_BINDINGS EMPTY, no wire write)
-NEXT = ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (authorized §6.106:
-   C5_ENTRY_VERDICT=C5_FOUNDATION_SLICE_REQUIRED — DELIA-side write
-   foundation only; no business PREPARE/ACT authorized)
+ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 =
+   IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.109 decision,
+   §6.110 evidence; IMPLEMENTATION_HEAD=
+   fe434cdaf3713c9cb0d8e752f49690ed4bd81cee; specialist-owned
+   catalog + owner-typed delpi/toolClass; DELIA mirror removed;
+   discovery 3/3 + governed reads live PASS; PREPARE/ACT blocked)
+NEXT = ARCHITECTURE_REVIEW (two pending, independent):
+   1) ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108)
+   2) ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01
+      (§6.109/§6.110)
 Workspace binding remains unscheduled
 ```
 
@@ -1507,7 +1514,7 @@ UNCHANGED = C3_EXECUTED=NO, C4_AUTHORIZED=NO (phase level),
 NEXT_ON_REVIEW = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
 ```
 
-### ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 — Specialist-owned MCP catalog correction (decision persisted §6.109; implementation in task)
+### ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 — Specialist-owned MCP catalog correction (decision §6.109; evidence §6.110)
 
 ```text
 TASK = ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01
@@ -1515,16 +1522,25 @@ TYPE = EXECUTION_DRIFT_CORRECTION (architecture correction, NOT a
         phase reset/promotion)
 DRIFT = SPECIALIST_CAPABILITY_CLASSES local full-tool mirror in
         domain/specialist_interop/rules.py consulted by both
-        enforcement boundaries — SUPERSEDED AS TARGET
+        enforcement boundaries — SUPERSEDED AS TARGET (removed)
 DECISION = specialist owns catalog; DÉLIA = provider-neutral
         orchestrator; tools/list + owner _meta["delpi/toolClass"] =
         classification source; invocation = fresh owner class AND
         DÉLIA policy bindings; unknown class = discoverable, never
         invocable; discovery/metadata/model grant nothing
+IMPLEMENTATION_HEAD = fe434cdaf3713c9cb0d8e752f49690ed4bd81cee
+        (runtime refactor + tests)
+EVIDENCE = full delia suite 652 PASS incl. auto-discovery/synthetic-
+        capability, disappearance, reclassification, adversarial
+        metadata, owner-class fail-closed tests; live MCP eval PASS
+        3/3 (DAVI 2 tools owner-typed, TÉO 24, VISTA 8 — only
+        DISCOVERY-class invocable); live governed reads DAVI+TÉO
+        PASS with provenance; PREPARE/ACT blocked unchanged
 PRESERVED = DAVI search_products + TÉO gpt_analyze governed slices,
         delegated identity, Core/Domain authority, truthful fallback,
         C5 foundation, PREPARE/ACT blocked
 UNCHANGED = C3_EXECUTED=NO, C4_AUTHORIZED=NO (phase), C5_AUTHORIZED=NO,
         PRODUCTION_READINESS=NOT_PROVEN
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 NEXT_ON_EVIDENCE = ARCHITECTURE_REVIEW of this correction
 ```
