@@ -328,6 +328,30 @@ def _validate_arguments(
     return arguments
 
 
+MAX_RENDER_LIST_ITEMS = 50
+
+
+def _sanitize_renderable(node: object) -> object:
+    """Drop owner secrets (candidate tokens) from rendered structure.
+
+    Remote structured payloads are untrusted data and may embed
+    orchestration internals such as ``candidate_token`` — those never
+    reach user-visible content.
+    """
+    if isinstance(node, Mapping):
+        return {
+            str(k): _sanitize_renderable(v)
+            for k, v in node.items()
+            if k != CANDIDATE_TOKEN_FIELD
+        }
+    if isinstance(node, (list, tuple)):
+        return [
+            _sanitize_renderable(v)
+            for v in list(node)[:MAX_RENDER_LIST_ITEMS]
+        ]
+    return node
+
+
 def render_specialist_outcome(
     outcome: SpecialistOutcome,
 ) -> tuple[str, tuple[str, ...]]:
@@ -340,6 +364,26 @@ def render_specialist_outcome(
     """
     limitations = list(outcome.limitations)
     text = (outcome.content_text or "").strip()
+    structured = outcome.structured
+    if isinstance(structured, Mapping) and structured:
+        # Owner data lives in the structured payload; generic status
+        # text alone (e.g. "Execution completed.") is not an answer.
+        payload = json.dumps(
+            _sanitize_renderable(structured),
+            ensure_ascii=False,
+            default=str,
+        )[:MAX_STRUCTURED_RENDER_CHARS]
+        body = (
+            (text + "\n\n" if text else "")
+            + "Resultado do especialista (dados estruturados):\n"
+            + payload
+        )
+        content = body[:MAX_RENDER_CONTENT_CHARS]
+        if len(body) > MAX_RENDER_CONTENT_CHARS:
+            if LIMITATION_RESULT_TRUNCATED not in limitations:
+                limitations.append(LIMITATION_RESULT_TRUNCATED)
+            content += "\n…(resultado parcial — truncado)"
+        return content, tuple(limitations)
     if text:
         content = text[:MAX_RENDER_CONTENT_CHARS]
         if len(text) > MAX_RENDER_CONTENT_CHARS:
@@ -347,14 +391,6 @@ def render_specialist_outcome(
                 limitations.append(LIMITATION_RESULT_TRUNCATED)
             content += "\n…(resultado parcial — truncado)"
         return content, tuple(limitations)
-    structured = outcome.structured
-    if isinstance(structured, Mapping) and structured:
-        payload = json.dumps(
-            structured, ensure_ascii=False, default=str
-        )[:MAX_STRUCTURED_RENDER_CHARS]
-        return (
-            "Resultado do especialista (dados estruturados):\n" + payload
-        ), tuple(limitations)
     return "O especialista retornou um resultado vazio.", tuple(limitations)
 
 
