@@ -16,6 +16,11 @@ def _has_value(layer: dict[str, Any], key: str) -> bool:
     return value is not None and value != ""
 
 
+def _is_expression_param(value: Any) -> bool:
+    """True quando o valor é um ExpressionSpec (override deliberado, nunca stale)."""
+    return isinstance(value, Mapping) and isinstance(value.get("expression"), Mapping)
+
+
 # Aliases de filial Protheus — vazio/all na camada superior limpa herança 01/02.
 BRANCH_PARAM_KEYS = frozenset({"branch", "filial", "branch_code", "filial_id"})
 
@@ -131,7 +136,14 @@ def reconcile_merged_params_after_input(
         return merged
     out = dict(merged)
     overrides = input_overrides if isinstance(input_overrides, dict) else {}
-    out.pop(DATE_RANGE_PRESET_KEY, None)
+    # Ponta parcial em ExpressionSpec convive com o preset: a expressão é
+    # override deliberado e o preset materializa a outra ponta como default.
+    # Datas literais fecham intenção atômica e removem o preset (legado).
+    has_expr_dates = any(
+        _is_expression_param(overrides.get(key)) for key in (*START_KEYS, *END_KEYS)
+    )
+    if not has_expr_dates:
+        out.pop(DATE_RANGE_PRESET_KEY, None)
     has_explicit_dates = any(_has_value(overrides, key) for key in (*START_KEYS, *END_KEYS))
     has_period_days = _has_value(overrides, PERIOD_DAYS_KEY)
     if has_explicit_dates and not has_period_days:
@@ -216,10 +228,16 @@ def merge_data_params(
         _apply_period_layer(merged, layer)
         # Mesma camada com this_year + start/end stale: UI esconde as datas quando o
         # preset é relativo — não reintroduzir absolutas no merge (fim congelado D-1).
+        # Preset relativo na camada torna datas literais stale; ExpressionSpec é
+        # override deliberado (preset contribui defaults, explícito vence).
         skip_layer_dates = _layer_relative_preset(layer) is not None
         for key, value in layer.items():
             key_str = str(key)
-            if skip_layer_dates and key_str in date_keys:
+            if (
+                skip_layer_dates
+                and key_str in date_keys
+                and not _is_expression_param(value)
+            ):
                 continue
             # Filial vazia limpa herança; all/Todas grava wire canônico ``all``.
             if key_str in BRANCH_PARAM_KEYS and _is_all_branches_scope(value):

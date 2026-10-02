@@ -309,7 +309,12 @@ def test_type_mismatch_date_param():
     merged = {"start_date": _spec(_bin("+", _lit(1), _lit(2)))}
     result = _resolve(merged)
     assert result.error is not None
-    assert result.error["code"] in {"m.expression_type_mismatch", "m.date_conversion"}
+    # Typecheck estático rejeita antes do fetch; runtime coercion é fallback.
+    assert result.error["code"] in {
+        "m.expression_type_mismatch",
+        "m.date_conversion",
+        "expression.type_mismatch",
+    }
 
 
 def test_enum_mismatch():
@@ -426,6 +431,22 @@ def test_marker_detection():
 # --------------------------------------------------------- catalog contract
 
 
+_CATALOG_TEST_IDENTIFIERS = frozenset(
+    {
+        "today",
+        "now",
+        "param.<schemaParam>",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    }
+)
+
+
 def test_catalog_examples_round_trip_through_loader_and_phase():
     examples = expression_capability()["ast"]["examples"]
     assert {
@@ -439,7 +460,7 @@ def test_catalog_examples_round_trip_through_loader_and_phase():
         node = compile_expression_spec(
             _spec(ast),
             phase=ExpressionPhase.PARAMETER,
-            allowed_identifiers=frozenset({"today", "now"}),
+            allowed_identifiers=_CATALOG_TEST_IDENTIFIERS,
         )
         assert isinstance(node, CompiledExpression), name
 
@@ -461,13 +482,18 @@ def test_catalog_operators_match_backend_loader():
 
 def test_catalog_refs_map_to_identifier_nodes():
     refs = expression_capability()["ast"]["refs"]
-    assert set(refs) == {"context:today", "context:now", "param.<schemaParam>"}
+    assert set(refs) == {
+        "context:today",
+        "context:now",
+        "param.<schemaParam>",
+        "weekday.<Monday..Sunday>",
+    }
     for node in refs.values():
         assert node["kind"] == "identifier"
         compile_expression_spec(
             _spec(dict(node)),
             phase=ExpressionPhase.PARAMETER,
-            allowed_identifiers=frozenset({"today", "now", "param.<schemaParam>"}),
+            allowed_identifiers=_CATALOG_TEST_IDENTIFIERS,
         )
 
 

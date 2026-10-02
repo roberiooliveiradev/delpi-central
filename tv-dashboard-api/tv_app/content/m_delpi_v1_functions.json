@@ -1,84 +1,3062 @@
 {
   "profile": "m-delpi-v1",
-  "registryVersion": "1.3.0",
+  "registryVersion": "1.4.0",
   "functions": [
-    {"name":"Table.RenameColumns","kind":"transform","category":"Tabela","signature":"Table.RenameColumns(table, renames) as table","description":"Renomeia uma ou mais colunas.","parameters":["table","renames"],"examples":["Table.RenameColumns(Fonte, {{\"A\", \"B\"}})"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Table.SelectColumns","kind":"transform","category":"Tabela","signature":"Table.SelectColumns(table, columns) as table","description":"Mantém as colunas informadas.","parameters":["table","columns"],"examples":["Table.SelectColumns(Fonte, {\"A\", \"B\"})"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Table.RemoveColumns","kind":"transform","category":"Tabela","signature":"Table.RemoveColumns(table, columns) as table","description":"Remove as colunas informadas.","parameters":["table","columns"],"examples":["Table.RemoveColumns(Fonte, {\"Interna\"})"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Table.SelectRows","kind":"transform","category":"Tabela","signature":"Table.SelectRows(table, condition) as table","description":"Mantém as linhas que atendem ao predicado.","parameters":["table","condition"],"examples":["Table.SelectRows(Fonte, each [oee] >= 80)"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.Sort","kind":"transform","category":"Tabela","signature":"Table.Sort(table, comparisonCriteria) as table","description":"Ordena a tabela por uma ou mais colunas.","parameters":["table","comparisonCriteria"],"examples":["Table.Sort(Fonte, {{\"data\", Order.Ascending}})"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.ReplaceValue","kind":"transform","category":"Tabela","signature":"Table.ReplaceValue(table, oldValue, newValue, replacer, columns) as table","description":"Substitui valores nas colunas selecionadas.","parameters":["table","oldValue","newValue","replacer","columns"],"examples":["Table.ReplaceValue(Fonte, \"N/A\", null, Replacer.ReplaceValue, {\"valor\"})"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":5,"maxArgs":5},
-    {"name":"Table.FirstN","kind":"transform","category":"Linhas","signature":"Table.FirstN(table, count) as table","description":"Mantém as primeiras linhas.","parameters":["table","count"],"examples":["Table.FirstN(Fonte, 100)"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.LastN","kind":"transform","category":"Linhas","signature":"Table.LastN(table, count) as table","description":"Mantém as últimas linhas.","parameters":["table","count"],"examples":["Table.LastN(Fonte, 10)"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.Skip","kind":"transform","category":"Linhas","signature":"Table.Skip(table, count) as table","description":"Remove as primeiras linhas.","parameters":["table","count"],"examples":["Table.Skip(Fonte, 1)"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.RemoveLastN","kind":"transform","category":"Linhas","signature":"Table.RemoveLastN(table, count) as table","description":"Remove as últimas linhas.","parameters":["table","count"],"examples":["Table.RemoveLastN(Fonte, 1)"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.TransformColumnTypes","kind":"transform","category":"Tipos","signature":"Table.TransformColumnTypes(table, typeTransformations, optional culture) as table","description":"Altera os tipos declarados das colunas.","parameters":["table","typeTransformations","culture"],"examples":["Table.TransformColumnTypes(Fonte, {{\"data\", type date}}, \"pt-BR\")"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Table.FillDown","kind":"transform","category":"Transformar","signature":"Table.FillDown(table, columns) as table","description":"Preenche valores nulos com o valor anterior.","parameters":["table","columns"],"examples":["Table.FillDown(Fonte, {\"grupo\"})"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.PromoteHeaders","kind":"transform","category":"Transformar","signature":"Table.PromoteHeaders(table, optional options) as table","description":"Promove a primeira linha a cabeçalho.","parameters":["table","options"],"examples":["Table.PromoteHeaders(Fonte, [PromoteAllScalars = true])"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Table.AddColumn","kind":"transform","category":"Adicionar coluna","signature":"Table.AddColumn(table, newColumnName, columnGenerator, optional columnType) as table","description":"Adiciona uma coluna calculada.","parameters":["table","newColumnName","columnGenerator","columnType"],"examples":["Table.AddColumn(Fonte, \"gap\", each [meta] - [oee], type number)"],"introducedIn":"1.0.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":3,"maxArgs":4},
-    {"name":"Table.Group","kind":"transform","category":"Agrupar","signature":"Table.Group(table, key, aggregatedColumns) as table","description":"Agrupa linhas e calcula agregações controladas.","parameters":["table","key","aggregatedColumns"],"examples":["Table.Group(Fonte, {\"filial\"}, {{\"total\", each List.Sum([valor]), type number}})"],"introducedIn":"1.1.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":3,"maxArgs":3},
-    {"name":"Table.Pivot","kind":"transform","category":"Transformar","signature":"Table.Pivot(table, pivotValues, attributeColumn, valueColumn, optional aggregationFunction) as table","description":"Transforma valores de atributo em colunas.","parameters":["table","pivotValues","attributeColumn","valueColumn","aggregationFunction"],"examples":["Table.Pivot(Fonte, {\"01\", \"02\"}, \"filial\", \"valor\", List.Sum)"],"introducedIn":"1.1.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":4,"maxArgs":5},
-    {"name":"Table.Unpivot","kind":"transform","category":"Transformar","signature":"Table.Unpivot(table, pivotColumns, attributeColumn, valueColumn) as table","description":"Transforma colunas em pares atributo/valor.","parameters":["table","pivotColumns","attributeColumn","valueColumn"],"examples":["Table.Unpivot(Fonte, {\"01\", \"02\"}, \"filial\", \"valor\")"],"introducedIn":"1.1.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":4,"maxArgs":4},
-    {"name":"Table.UnpivotOtherColumns","kind":"transform","category":"Transformar","signature":"Table.UnpivotOtherColumns(table, pivotColumns, attributeColumn, valueColumn) as table","description":"Transforma todas as colunas exceto as informadas.","parameters":["table","pivotColumns","attributeColumn","valueColumn"],"examples":["Table.UnpivotOtherColumns(Fonte, {\"periodo\"}, \"filial\", \"valor\")"],"introducedIn":"1.1.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":4,"maxArgs":4},
-    {"name":"Table.NestedJoin","kind":"transform","category":"Combinar","signature":"Table.NestedJoin(table1, key1, table2, key2, newColumnName, optional joinKind) as table","description":"Cria uma coluna de tabelas com todas as correspondências de um left join.","parameters":["table1","key1","table2","key2","newColumnName","joinKind"],"examples":["Table.NestedJoin(Fonte, {\"codigo\"}, Produtos, {\"codigo\"}, \"Produtos\", JoinKind.LeftOuter)"],"introducedIn":"1.1.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":5,"maxArgs":6},
-    {"name":"Table.ExpandTableColumn","kind":"transform","category":"Combinar","signature":"Table.ExpandTableColumn(table, column, columnNames, optional newColumnNames) as table","description":"Expande uma tabela aninhada preservando múltiplas correspondências.","parameters":["table","column","columnNames","newColumnNames"],"examples":["Table.ExpandTableColumn(Fonte, \"Produtos\", {\"nome\"}, {\"produto\"})"],"introducedIn":"1.1.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":3,"maxArgs":4},
-    {"name":"Table.ReorderColumns","kind":"transform","category":"Colunas","signature":"Table.ReorderColumns(table, columnOrder) as table","description":"Reordena colunas preservando as não informadas.","parameters":["table","columnOrder"],"examples":["Table.ReorderColumns(Fonte, {\"codigo\", \"nome\"})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.DuplicateColumn","kind":"transform","category":"Adicionar coluna","signature":"Table.DuplicateColumn(table, column, newColumnName, optional columnType) as table","description":"Duplica uma coluna com nome estável.","parameters":["table","column","newColumnName","columnType"],"examples":["Table.DuplicateColumn(Fonte, \"codigo\", \"codigo copia\")"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":3,"maxArgs":4},
-    {"name":"Table.SplitColumn","kind":"transform","category":"Colunas","signature":"Table.SplitColumn(table, sourceColumn, splitter, columnNames) as table","description":"Divide texto por delimitador literal em colunas nomeadas.","parameters":["table","sourceColumn","splitter","columnNames"],"examples":["Table.SplitColumn(Fonte, \"codigo\", Splitter.SplitTextByDelimiter(\"-\", QuoteStyle.Csv), {\"familia\", \"item\"})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":4,"maxArgs":4},
-    {"name":"Table.AddIndexColumn","kind":"transform","category":"Adicionar coluna","signature":"Table.AddIndexColumn(table, newColumnName, optional initialValue, optional increment, optional columnType) as table","description":"Adiciona índice numérico determinístico.","parameters":["table","newColumnName","initialValue","increment","columnType"],"examples":["Table.AddIndexColumn(Fonte, \"Índice\", 1, 1, type number)"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":5},
-    {"name":"Table.Distinct","kind":"transform","category":"Linhas","signature":"Table.Distinct(table, optional equationCriteria) as table","description":"Remove linhas duplicadas pelas colunas indicadas.","parameters":["table","equationCriteria"],"examples":["Table.Distinct(Fonte, {\"codigo\"})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Table.Range","kind":"transform","category":"Linhas","signature":"Table.Range(table, offset, optional count) as table","description":"Mantém um intervalo de linhas.","parameters":["table","offset","count"],"examples":["Table.Range(Fonte, 10, 20)"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Table.FillUp","kind":"transform","category":"Transformar","signature":"Table.FillUp(table, columns) as table","description":"Preenche valores nulos com o próximo valor.","parameters":["table","columns"],"examples":["Table.FillUp(Fonte, {\"grupo\"})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.Transpose","kind":"transform","category":"Transformar","signature":"Table.Transpose(table) as table","description":"Transpõe linhas e colunas.","parameters":["table"],"examples":["Table.Transpose(Fonte)"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Table.ReverseRows","kind":"transform","category":"Linhas","signature":"Table.ReverseRows(table) as table","description":"Inverte a ordem das linhas.","parameters":["table"],"examples":["Table.ReverseRows(Fonte)"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Table.Combine","kind":"transform","category":"Combinar","signature":"Table.Combine(tables) as table","description":"Acrescenta consultas autorizadas por união de schema.","parameters":["tables"],"examples":["Table.Combine({Fonte, VendasAnteriores})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Table.TransformColumns","kind":"transform","category":"Transformar","signature":"Table.TransformColumns(table, transformOperations) as table","description":"Aplica funções escalares permitidas a colunas.","parameters":["table","transformOperations"],"examples":["Table.TransformColumns(Fonte, {{\"nome\", each Text.Trim(_), type text}})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Table.RemoveRowsWithErrors","kind":"transform","category":"Erros","signature":"Table.RemoveRowsWithErrors(table, optional columns) as table","description":"Remove linhas com erro rastreável nas colunas indicadas.","parameters":["table","columns"],"examples":["Table.RemoveRowsWithErrors(Fonte, {\"valor\"})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Table.ReplaceErrorValues","kind":"transform","category":"Erros","signature":"Table.ReplaceErrorValues(table, errorReplacement) as table","description":"Substitui erros rastreáveis por valores explícitos.","parameters":["table","errorReplacement"],"examples":["Table.ReplaceErrorValues(Fonte, {{\"valor\", 0}})"],"introducedIn":"1.2.0","availability":{"ribbon":true,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Splitter.SplitTextByDelimiter","kind":"scalar","category":"Texto","signature":"Splitter.SplitTextByDelimiter(delimiter, optional quoteStyle) as function","description":"Cria um divisor seguro por delimitador literal.","parameters":["delimiter","quoteStyle"],"examples":["Splitter.SplitTextByDelimiter(\"-\", QuoteStyle.Csv)"],"introducedIn":"1.2.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-
-    {"name":"Text.Trim","kind":"scalar","category":"Texto","signature":"Text.Trim(value) as text","description":"Remove espaços nas extremidades.","parameters":["value"],"examples":["Text.Trim([nome])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Text.Clean","kind":"scalar","category":"Texto","signature":"Text.Clean(value) as text","description":"Remove caracteres de controle.","parameters":["value"],"examples":["Text.Clean([nome])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Text.Upper","kind":"scalar","category":"Texto","signature":"Text.Upper(value) as text","description":"Converte texto para maiúsculas.","parameters":["value"],"examples":["Text.Upper([nome])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Text.Lower","kind":"scalar","category":"Texto","signature":"Text.Lower(value) as text","description":"Converte texto para minúsculas.","parameters":["value"],"examples":["Text.Lower([nome])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Text.Proper","kind":"scalar","category":"Texto","signature":"Text.Proper(value) as text","description":"Capitaliza palavras.","parameters":["value"],"examples":["Text.Proper([nome])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Text.Length","kind":"scalar","category":"Texto","signature":"Text.Length(value) as number","description":"Retorna o tamanho do texto.","parameters":["value"],"examples":["Text.Length([codigo])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Text.Contains","kind":"scalar","category":"Texto","signature":"Text.Contains(value, substring) as logical","description":"Verifica se o texto contém um trecho.","parameters":["value","substring"],"examples":["Text.Contains([nome], \"DELPI\")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Text.StartsWith","kind":"scalar","category":"Texto","signature":"Text.StartsWith(value, prefix) as logical","description":"Verifica o prefixo do texto.","parameters":["value","prefix"],"examples":["Text.StartsWith([codigo], \"90\")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Text.EndsWith","kind":"scalar","category":"Texto","signature":"Text.EndsWith(value, suffix) as logical","description":"Verifica o sufixo do texto.","parameters":["value","suffix"],"examples":["Text.EndsWith([arquivo], \".csv\")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Text.BeforeDelimiter","kind":"scalar","category":"Texto","signature":"Text.BeforeDelimiter(value, delimiter) as text","description":"Retorna o texto anterior ao delimitador.","parameters":["value","delimiter"],"examples":["Text.BeforeDelimiter([codigo], \"-\")"],"introducedIn":"1.1.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Text.AfterDelimiter","kind":"scalar","category":"Texto","signature":"Text.AfterDelimiter(value, delimiter) as text","description":"Retorna o texto posterior ao delimitador.","parameters":["value","delimiter"],"examples":["Text.AfterDelimiter([codigo], \"-\")"],"introducedIn":"1.1.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Text.BetweenDelimiters","kind":"scalar","category":"Texto","signature":"Text.BetweenDelimiters(value, startDelimiter, endDelimiter) as text","description":"Retorna o texto entre delimitadores.","parameters":["value","startDelimiter","endDelimiter"],"examples":["Text.BetweenDelimiters([codigo], \"[\", \"]\")"],"introducedIn":"1.1.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":3,"maxArgs":3},
-    {"name":"Text.Combine","kind":"scalar","category":"Texto","signature":"Text.Combine(texts, optional separator) as text","description":"Combina uma lista controlada de textos.","parameters":["texts","separator"],"examples":["Text.Combine({[nome], [codigo]}, \" - \")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Text.From","kind":"scalar","category":"Texto","signature":"Text.From(value, optional culture) as text","description":"Converte um valor em texto.","parameters":["value","culture"],"examples":["Text.From([valor], \"pt-BR\")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-
-    {"name":"Number.Abs","kind":"scalar","category":"Número","signature":"Number.Abs(value) as number","description":"Retorna o valor absoluto.","parameters":["value"],"examples":["Number.Abs([desvio])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Number.Round","kind":"scalar","category":"Número","signature":"Number.Round(value, optional digits) as number","description":"Arredonda um número.","parameters":["value","digits"],"examples":["Number.Round([valor], 2)"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":3},
-    {"name":"Number.RoundUp","kind":"scalar","category":"Número","signature":"Number.RoundUp(value, optional digits) as number","description":"Arredonda um número para cima.","parameters":["value","digits"],"examples":["Number.RoundUp([valor], 2)"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Number.RoundDown","kind":"scalar","category":"Número","signature":"Number.RoundDown(value, optional digits) as number","description":"Arredonda um número para baixo.","parameters":["value","digits"],"examples":["Number.RoundDown([valor], 2)"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Number.Mod","kind":"scalar","category":"Número","signature":"Number.Mod(value, divisor) as number","description":"Retorna o resto da divisão.","parameters":["value","divisor"],"examples":["Number.Mod([valor], 2)"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":3},
-    {"name":"Number.From","kind":"scalar","category":"Número","signature":"Number.From(value, optional culture) as number","description":"Converte um valor em número.","parameters":["value","culture"],"examples":["Number.From([valor], \"pt-BR\")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-
-    {"name":"Date.From","kind":"scalar","category":"Data","signature":"Date.From(value, optional culture) as date","description":"Converte um valor em data.","parameters":["value","culture"],"examples":["Date.From([data], \"pt-BR\")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Date.Year","kind":"scalar","category":"Data","signature":"Date.Year(value) as number","description":"Retorna o ano.","parameters":["value"],"examples":["Date.Year([data])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.Month","kind":"scalar","category":"Data","signature":"Date.Month(value) as number","description":"Retorna o mês.","parameters":["value"],"examples":["Date.Month([data])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.Day","kind":"scalar","category":"Data","signature":"Date.Day(value) as number","description":"Retorna o dia.","parameters":["value"],"examples":["Date.Day([data])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.StartOfMonth","kind":"scalar","category":"Data","signature":"Date.StartOfMonth(value) as date","description":"Retorna o início do mês.","parameters":["value"],"examples":["Date.StartOfMonth([data])"],"introducedIn":"1.1.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.EndOfMonth","kind":"scalar","category":"Data","signature":"Date.EndOfMonth(value) as date","description":"Retorna o fim do mês.","parameters":["value"],"examples":["Date.EndOfMonth([data])"],"introducedIn":"1.1.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.StartOfYear","kind":"scalar","category":"Data","signature":"Date.StartOfYear(value) as date","description":"Retorna o primeiro dia do ano.","parameters":["value"],"examples":["Date.StartOfYear([data])"],"introducedIn":"1.3.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.EndOfYear","kind":"scalar","category":"Data","signature":"Date.EndOfYear(value) as date","description":"Retorna o último dia do ano.","parameters":["value"],"examples":["Date.EndOfYear([data])"],"introducedIn":"1.3.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.StartOfQuarter","kind":"scalar","category":"Data","signature":"Date.StartOfQuarter(value) as date","description":"Retorna o primeiro dia do trimestre civil.","parameters":["value"],"examples":["Date.StartOfQuarter([data])"],"introducedIn":"1.3.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.EndOfQuarter","kind":"scalar","category":"Data","signature":"Date.EndOfQuarter(value) as date","description":"Retorna o último dia do trimestre civil.","parameters":["value"],"examples":["Date.EndOfQuarter([data])"],"introducedIn":"1.3.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"Date.AddDays","kind":"scalar","category":"Data","signature":"Date.AddDays(value, days) as date","description":"Adiciona dias a uma data.","parameters":["value","days"],"examples":["Date.AddDays([data], 1)"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"Date.AddMonths","kind":"scalar","category":"Data","signature":"Date.AddMonths(value, months) as date","description":"Adiciona meses a uma data.","parameters":["value","months"],"examples":["Date.AddMonths([data], 1)"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":2,"maxArgs":2},
-    {"name":"DateTime.From","kind":"scalar","category":"Data","signature":"DateTime.From(value, optional culture) as datetime","description":"Converte um valor em data e hora.","parameters":["value","culture"],"examples":["DateTime.From([instante], \"pt-BR\")"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"Duration.Days","kind":"scalar","category":"Data","signature":"Duration.Days(value) as number","description":"Retorna os dias de uma duração.","parameters":["value"],"examples":["Duration.Days([prazo])"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-
-    {"name":"List.Sum","kind":"scalar","category":"Lista","signature":"List.Sum(values) as any","description":"Soma uma lista controlada.","parameters":["values"],"examples":["List.Sum({[a], [b]})"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"List.Average","kind":"scalar","category":"Lista","signature":"List.Average(values) as any","description":"Calcula a média de uma lista controlada.","parameters":["values"],"examples":["List.Average({[a], [b]})"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2},
-    {"name":"List.Min","kind":"scalar","category":"Lista","signature":"List.Min(values) as any","description":"Retorna o menor item da lista.","parameters":["values"],"examples":["List.Min({[a], [b]})"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":4},
-    {"name":"List.Max","kind":"scalar","category":"Lista","signature":"List.Max(values) as any","description":"Retorna o maior item da lista.","parameters":["values"],"examples":["List.Max({[a], [b]})"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":4},
-    {"name":"List.Count","kind":"scalar","category":"Lista","signature":"List.Count(values) as number","description":"Conta os itens da lista.","parameters":["values"],"examples":["List.Count({[a], [b]})"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":1},
-    {"name":"List.First","kind":"scalar","category":"Lista","signature":"List.First(values, optional defaultValue) as any","description":"Retorna o primeiro item da lista.","parameters":["values","defaultValue"],"examples":["List.First({[a], [b]}, null)"],"introducedIn":"1.0.0","availability":{"ribbon":false,"formulaBar":true,"advancedEditor":true},"minArgs":1,"maxArgs":2}
+    {
+      "name": "Table.RenameColumns",
+      "kind": "transform",
+      "category": "Tabela",
+      "signature": "Table.RenameColumns(table, renames) as table",
+      "description": "Renomeia uma ou mais colunas.",
+      "parameters": [
+        "table",
+        "renames"
+      ],
+      "examples": [
+        "Table.RenameColumns(Fonte, {{\"A\", \"B\"}})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.SelectColumns",
+      "kind": "transform",
+      "category": "Tabela",
+      "signature": "Table.SelectColumns(table, columns) as table",
+      "description": "Mantém as colunas informadas.",
+      "parameters": [
+        "table",
+        "columns"
+      ],
+      "examples": [
+        "Table.SelectColumns(Fonte, {\"A\", \"B\"})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.RemoveColumns",
+      "kind": "transform",
+      "category": "Tabela",
+      "signature": "Table.RemoveColumns(table, columns) as table",
+      "description": "Remove as colunas informadas.",
+      "parameters": [
+        "table",
+        "columns"
+      ],
+      "examples": [
+        "Table.RemoveColumns(Fonte, {\"Interna\"})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.SelectRows",
+      "kind": "transform",
+      "category": "Tabela",
+      "signature": "Table.SelectRows(table, condition) as table",
+      "description": "Mantém as linhas que atendem ao predicado.",
+      "parameters": [
+        "table",
+        "condition"
+      ],
+      "examples": [
+        "Table.SelectRows(Fonte, each [oee] >= 80)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "any"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Sort",
+      "kind": "transform",
+      "category": "Tabela",
+      "signature": "Table.Sort(table, comparisonCriteria) as table",
+      "description": "Ordena a tabela por uma ou mais colunas.",
+      "parameters": [
+        "table",
+        "comparisonCriteria"
+      ],
+      "examples": [
+        "Table.Sort(Fonte, {{\"data\", Order.Ascending}})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "any"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.ReplaceValue",
+      "kind": "transform",
+      "category": "Tabela",
+      "signature": "Table.ReplaceValue(table, oldValue, newValue, replacer, columns) as table",
+      "description": "Substitui valores nas colunas selecionadas.",
+      "parameters": [
+        "table",
+        "oldValue",
+        "newValue",
+        "replacer",
+        "columns"
+      ],
+      "examples": [
+        "Table.ReplaceValue(Fonte, \"N/A\", null, Replacer.ReplaceValue, {\"valor\"})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 5,
+      "maxArgs": 5,
+      "argumentTypes": [
+        "table",
+        "any",
+        "any",
+        "any",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.FirstN",
+      "kind": "transform",
+      "category": "Linhas",
+      "signature": "Table.FirstN(table, count) as table",
+      "description": "Mantém as primeiras linhas.",
+      "parameters": [
+        "table",
+        "count"
+      ],
+      "examples": [
+        "Table.FirstN(Fonte, 100)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "number"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.LastN",
+      "kind": "transform",
+      "category": "Linhas",
+      "signature": "Table.LastN(table, count) as table",
+      "description": "Mantém as últimas linhas.",
+      "parameters": [
+        "table",
+        "count"
+      ],
+      "examples": [
+        "Table.LastN(Fonte, 10)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "number"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Skip",
+      "kind": "transform",
+      "category": "Linhas",
+      "signature": "Table.Skip(table, count) as table",
+      "description": "Remove as primeiras linhas.",
+      "parameters": [
+        "table",
+        "count"
+      ],
+      "examples": [
+        "Table.Skip(Fonte, 1)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "number"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.RemoveLastN",
+      "kind": "transform",
+      "category": "Linhas",
+      "signature": "Table.RemoveLastN(table, count) as table",
+      "description": "Remove as últimas linhas.",
+      "parameters": [
+        "table",
+        "count"
+      ],
+      "examples": [
+        "Table.RemoveLastN(Fonte, 1)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "number"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.TransformColumnTypes",
+      "kind": "transform",
+      "category": "Tipos",
+      "signature": "Table.TransformColumnTypes(table, typeTransformations, optional culture) as table",
+      "description": "Altera os tipos declarados das colunas.",
+      "parameters": [
+        "table",
+        "typeTransformations",
+        "culture"
+      ],
+      "examples": [
+        "Table.TransformColumnTypes(Fonte, {{\"data\", type date}}, \"pt-BR\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "table",
+        "list",
+        "text"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.FillDown",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.FillDown(table, columns) as table",
+      "description": "Preenche valores nulos com o valor anterior.",
+      "parameters": [
+        "table",
+        "columns"
+      ],
+      "examples": [
+        "Table.FillDown(Fonte, {\"grupo\"})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.PromoteHeaders",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.PromoteHeaders(table, optional options) as table",
+      "description": "Promove a primeira linha a cabeçalho.",
+      "parameters": [
+        "table",
+        "options"
+      ],
+      "examples": [
+        "Table.PromoteHeaders(Fonte, [PromoteAllScalars = true])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "record"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.AddColumn",
+      "kind": "transform",
+      "category": "Adicionar coluna",
+      "signature": "Table.AddColumn(table, newColumnName, columnGenerator, optional columnType) as table",
+      "description": "Adiciona uma coluna calculada.",
+      "parameters": [
+        "table",
+        "newColumnName",
+        "columnGenerator",
+        "columnType"
+      ],
+      "examples": [
+        "Table.AddColumn(Fonte, \"gap\", each [meta] - [oee], type number)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "table",
+        "text",
+        "any",
+        "type"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Group",
+      "kind": "transform",
+      "category": "Agrupar",
+      "signature": "Table.Group(table, key, aggregatedColumns) as table",
+      "description": "Agrupa linhas e calcula agregações controladas.",
+      "parameters": [
+        "table",
+        "key",
+        "aggregatedColumns"
+      ],
+      "examples": [
+        "Table.Group(Fonte, {\"filial\"}, {{\"total\", each List.Sum([valor]), type number}})"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "table",
+        "any",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Pivot",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.Pivot(table, pivotValues, attributeColumn, valueColumn, optional aggregationFunction) as table",
+      "description": "Transforma valores de atributo em colunas.",
+      "parameters": [
+        "table",
+        "pivotValues",
+        "attributeColumn",
+        "valueColumn",
+        "aggregationFunction"
+      ],
+      "examples": [
+        "Table.Pivot(Fonte, {\"01\", \"02\"}, \"filial\", \"valor\", List.Sum)"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 4,
+      "maxArgs": 5,
+      "argumentTypes": [
+        "table",
+        "list",
+        "text",
+        "text",
+        "any"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Unpivot",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.Unpivot(table, pivotColumns, attributeColumn, valueColumn) as table",
+      "description": "Transforma colunas em pares atributo/valor.",
+      "parameters": [
+        "table",
+        "pivotColumns",
+        "attributeColumn",
+        "valueColumn"
+      ],
+      "examples": [
+        "Table.Unpivot(Fonte, {\"01\", \"02\"}, \"filial\", \"valor\")"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 4,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "table",
+        "list",
+        "text",
+        "text"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.UnpivotOtherColumns",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.UnpivotOtherColumns(table, pivotColumns, attributeColumn, valueColumn) as table",
+      "description": "Transforma todas as colunas exceto as informadas.",
+      "parameters": [
+        "table",
+        "pivotColumns",
+        "attributeColumn",
+        "valueColumn"
+      ],
+      "examples": [
+        "Table.UnpivotOtherColumns(Fonte, {\"periodo\"}, \"filial\", \"valor\")"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 4,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "table",
+        "list",
+        "text",
+        "text"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.NestedJoin",
+      "kind": "transform",
+      "category": "Combinar",
+      "signature": "Table.NestedJoin(table1, key1, table2, key2, newColumnName, optional joinKind) as table",
+      "description": "Cria uma coluna de tabelas com todas as correspondências de um left join.",
+      "parameters": [
+        "table1",
+        "key1",
+        "table2",
+        "key2",
+        "newColumnName",
+        "joinKind"
+      ],
+      "examples": [
+        "Table.NestedJoin(Fonte, {\"codigo\"}, Produtos, {\"codigo\"}, \"Produtos\", JoinKind.LeftOuter)"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 5,
+      "maxArgs": 6,
+      "argumentTypes": [
+        "table",
+        "any",
+        "table",
+        "any",
+        "text",
+        "any"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.ExpandTableColumn",
+      "kind": "transform",
+      "category": "Combinar",
+      "signature": "Table.ExpandTableColumn(table, column, columnNames, optional newColumnNames) as table",
+      "description": "Expande uma tabela aninhada preservando múltiplas correspondências.",
+      "parameters": [
+        "table",
+        "column",
+        "columnNames",
+        "newColumnNames"
+      ],
+      "examples": [
+        "Table.ExpandTableColumn(Fonte, \"Produtos\", {\"nome\"}, {\"produto\"})"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "table",
+        "text",
+        "list",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.ReorderColumns",
+      "kind": "transform",
+      "category": "Colunas",
+      "signature": "Table.ReorderColumns(table, columnOrder) as table",
+      "description": "Reordena colunas preservando as não informadas.",
+      "parameters": [
+        "table",
+        "columnOrder"
+      ],
+      "examples": [
+        "Table.ReorderColumns(Fonte, {\"codigo\", \"nome\"})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.DuplicateColumn",
+      "kind": "transform",
+      "category": "Adicionar coluna",
+      "signature": "Table.DuplicateColumn(table, column, newColumnName, optional columnType) as table",
+      "description": "Duplica uma coluna com nome estável.",
+      "parameters": [
+        "table",
+        "column",
+        "newColumnName",
+        "columnType"
+      ],
+      "examples": [
+        "Table.DuplicateColumn(Fonte, \"codigo\", \"codigo copia\")"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "table",
+        "text",
+        "text",
+        "type"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.SplitColumn",
+      "kind": "transform",
+      "category": "Colunas",
+      "signature": "Table.SplitColumn(table, sourceColumn, splitter, columnNames) as table",
+      "description": "Divide texto por delimitador literal em colunas nomeadas.",
+      "parameters": [
+        "table",
+        "sourceColumn",
+        "splitter",
+        "columnNames"
+      ],
+      "examples": [
+        "Table.SplitColumn(Fonte, \"codigo\", Splitter.SplitTextByDelimiter(\"-\", QuoteStyle.Csv), {\"familia\", \"item\"})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 4,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "table",
+        "text",
+        "function",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.AddIndexColumn",
+      "kind": "transform",
+      "category": "Adicionar coluna",
+      "signature": "Table.AddIndexColumn(table, newColumnName, optional initialValue, optional increment, optional columnType) as table",
+      "description": "Adiciona índice numérico determinístico.",
+      "parameters": [
+        "table",
+        "newColumnName",
+        "initialValue",
+        "increment",
+        "columnType"
+      ],
+      "examples": [
+        "Table.AddIndexColumn(Fonte, \"Índice\", 1, 1, type number)"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 5,
+      "argumentTypes": [
+        "table",
+        "text",
+        "number",
+        "number",
+        "type"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Distinct",
+      "kind": "transform",
+      "category": "Linhas",
+      "signature": "Table.Distinct(table, optional equationCriteria) as table",
+      "description": "Remove linhas duplicadas pelas colunas indicadas.",
+      "parameters": [
+        "table",
+        "equationCriteria"
+      ],
+      "examples": [
+        "Table.Distinct(Fonte, {\"codigo\"})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "any"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Range",
+      "kind": "transform",
+      "category": "Linhas",
+      "signature": "Table.Range(table, offset, optional count) as table",
+      "description": "Mantém um intervalo de linhas.",
+      "parameters": [
+        "table",
+        "offset",
+        "count"
+      ],
+      "examples": [
+        "Table.Range(Fonte, 10, 20)"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "table",
+        "number",
+        "number"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.FillUp",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.FillUp(table, columns) as table",
+      "description": "Preenche valores nulos com o próximo valor.",
+      "parameters": [
+        "table",
+        "columns"
+      ],
+      "examples": [
+        "Table.FillUp(Fonte, {\"grupo\"})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Transpose",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.Transpose(table) as table",
+      "description": "Transpõe linhas e colunas.",
+      "parameters": [
+        "table"
+      ],
+      "examples": [
+        "Table.Transpose(Fonte)"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "table"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.ReverseRows",
+      "kind": "transform",
+      "category": "Linhas",
+      "signature": "Table.ReverseRows(table) as table",
+      "description": "Inverte a ordem das linhas.",
+      "parameters": [
+        "table"
+      ],
+      "examples": [
+        "Table.ReverseRows(Fonte)"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "table"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.Combine",
+      "kind": "transform",
+      "category": "Combinar",
+      "signature": "Table.Combine(tables) as table",
+      "description": "Acrescenta consultas autorizadas por união de schema.",
+      "parameters": [
+        "tables"
+      ],
+      "examples": [
+        "Table.Combine({Fonte, VendasAnteriores})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.TransformColumns",
+      "kind": "transform",
+      "category": "Transformar",
+      "signature": "Table.TransformColumns(table, transformOperations) as table",
+      "description": "Aplica funções escalares permitidas a colunas.",
+      "parameters": [
+        "table",
+        "transformOperations"
+      ],
+      "examples": [
+        "Table.TransformColumns(Fonte, {{\"nome\", each Text.Trim(_), type text}})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.RemoveRowsWithErrors",
+      "kind": "transform",
+      "category": "Erros",
+      "signature": "Table.RemoveRowsWithErrors(table, optional columns) as table",
+      "description": "Remove linhas com erro rastreável nas colunas indicadas.",
+      "parameters": [
+        "table",
+        "columns"
+      ],
+      "examples": [
+        "Table.RemoveRowsWithErrors(Fonte, {\"valor\"})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Table.ReplaceErrorValues",
+      "kind": "transform",
+      "category": "Erros",
+      "signature": "Table.ReplaceErrorValues(table, errorReplacement) as table",
+      "description": "Substitui erros rastreáveis por valores explícitos.",
+      "parameters": [
+        "table",
+        "errorReplacement"
+      ],
+      "examples": [
+        "Table.ReplaceErrorValues(Fonte, {{\"valor\", 0}})"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": true,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "table",
+        "list"
+      ],
+      "returnType": "table",
+      "parameterExpression": false
+    },
+    {
+      "name": "Splitter.SplitTextByDelimiter",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Splitter.SplitTextByDelimiter(delimiter, optional quoteStyle) as function",
+      "description": "Cria um divisor seguro por delimitador literal.",
+      "parameters": [
+        "delimiter",
+        "quoteStyle"
+      ],
+      "examples": [
+        "Splitter.SplitTextByDelimiter(\"-\", QuoteStyle.Csv)"
+      ],
+      "introducedIn": "1.2.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text",
+        "any"
+      ],
+      "returnType": "function",
+      "parameterExpression": false
+    },
+    {
+      "name": "Text.Trim",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Trim(value) as text",
+      "description": "Remove espaços nas extremidades.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Text.Trim([nome])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Clean",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Clean(value) as text",
+      "description": "Remove caracteres de controle.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Text.Clean([nome])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Upper",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Upper(value) as text",
+      "description": "Converte texto para maiúsculas.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Text.Upper([nome])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Lower",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Lower(value) as text",
+      "description": "Converte texto para minúsculas.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Text.Lower([nome])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Proper",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Proper(value) as text",
+      "description": "Capitaliza palavras.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Text.Proper([nome])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Length",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Length(value) as number",
+      "description": "Retorna o tamanho do texto.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Text.Length([codigo])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "text"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Contains",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Contains(value, substring) as logical",
+      "description": "Verifica se o texto contém um trecho.",
+      "parameters": [
+        "value",
+        "substring"
+      ],
+      "examples": [
+        "Text.Contains([nome], \"DELPI\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "text",
+        "any"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.StartsWith",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.StartsWith(value, prefix) as logical",
+      "description": "Verifica o prefixo do texto.",
+      "parameters": [
+        "value",
+        "prefix"
+      ],
+      "examples": [
+        "Text.StartsWith([codigo], \"90\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "text",
+        "any"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.EndsWith",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.EndsWith(value, suffix) as logical",
+      "description": "Verifica o sufixo do texto.",
+      "parameters": [
+        "value",
+        "suffix"
+      ],
+      "examples": [
+        "Text.EndsWith([arquivo], \".csv\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "text",
+        "any"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.BeforeDelimiter",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.BeforeDelimiter(value, delimiter) as text",
+      "description": "Retorna o texto anterior ao delimitador.",
+      "parameters": [
+        "value",
+        "delimiter"
+      ],
+      "examples": [
+        "Text.BeforeDelimiter([codigo], \"-\")"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.AfterDelimiter",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.AfterDelimiter(value, delimiter) as text",
+      "description": "Retorna o texto posterior ao delimitador.",
+      "parameters": [
+        "value",
+        "delimiter"
+      ],
+      "examples": [
+        "Text.AfterDelimiter([codigo], \"-\")"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.BetweenDelimiters",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.BetweenDelimiters(value, startDelimiter, endDelimiter) as text",
+      "description": "Retorna o texto entre delimitadores.",
+      "parameters": [
+        "value",
+        "startDelimiter",
+        "endDelimiter"
+      ],
+      "examples": [
+        "Text.BetweenDelimiters([codigo], \"[\", \"]\")"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "text",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Combine",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Combine(texts, optional separator) as text",
+      "description": "Combina uma lista controlada de textos.",
+      "parameters": [
+        "texts",
+        "separator"
+      ],
+      "examples": [
+        "Text.Combine({[nome], [codigo]}, \" - \")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "list",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.From",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.From(value, optional culture) as text",
+      "description": "Converte um valor em texto.",
+      "parameters": [
+        "value",
+        "culture"
+      ],
+      "examples": [
+        "Text.From([valor], \"pt-BR\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "any",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.Abs",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.Abs(value) as number",
+      "description": "Retorna o valor absoluto.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Number.Abs([desvio])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "number"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.Round",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.Round(value, optional digits) as number",
+      "description": "Arredonda um número.",
+      "parameters": [
+        "value",
+        "digits"
+      ],
+      "examples": [
+        "Number.Round([valor], 2)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "number",
+        "number",
+        "any"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.RoundUp",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.RoundUp(value, optional digits) as number",
+      "description": "Arredonda um número para cima.",
+      "parameters": [
+        "value",
+        "digits"
+      ],
+      "examples": [
+        "Number.RoundUp([valor], 2)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "number",
+        "number"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.RoundDown",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.RoundDown(value, optional digits) as number",
+      "description": "Arredonda um número para baixo.",
+      "parameters": [
+        "value",
+        "digits"
+      ],
+      "examples": [
+        "Number.RoundDown([valor], 2)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "number",
+        "number"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.Mod",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.Mod(value, divisor) as number",
+      "description": "Retorna o resto da divisão.",
+      "parameters": [
+        "value",
+        "divisor"
+      ],
+      "examples": [
+        "Number.Mod([valor], 2)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "number",
+        "number",
+        "any"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.From",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.From(value, optional culture) as number",
+      "description": "Converte um valor em número.",
+      "parameters": [
+        "value",
+        "culture"
+      ],
+      "examples": [
+        "Number.From([valor], \"pt-BR\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "any",
+        "text"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.From",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.From(value, optional culture) as date",
+      "description": "Converte um valor em data.",
+      "parameters": [
+        "value",
+        "culture"
+      ],
+      "examples": [
+        "Date.From([data], \"pt-BR\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "any",
+        "text"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.Year",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.Year(value) as number",
+      "description": "Retorna o ano.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.Year([data])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.Month",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.Month(value) as number",
+      "description": "Retorna o mês.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.Month([data])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.Day",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.Day(value) as number",
+      "description": "Retorna o dia.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.Day([data])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.StartOfMonth",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.StartOfMonth(value) as date",
+      "description": "Retorna o início do mês.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.StartOfMonth([data])"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.EndOfMonth",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.EndOfMonth(value) as date",
+      "description": "Retorna o fim do mês.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.EndOfMonth([data])"
+      ],
+      "introducedIn": "1.1.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.StartOfYear",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.StartOfYear(value) as date",
+      "description": "Retorna o primeiro dia do ano.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.StartOfYear([data])"
+      ],
+      "introducedIn": "1.3.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.EndOfYear",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.EndOfYear(value) as date",
+      "description": "Retorna o último dia do ano.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.EndOfYear([data])"
+      ],
+      "introducedIn": "1.3.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.StartOfQuarter",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.StartOfQuarter(value) as date",
+      "description": "Retorna o primeiro dia do trimestre civil.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.StartOfQuarter([data])"
+      ],
+      "introducedIn": "1.3.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.EndOfQuarter",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.EndOfQuarter(value) as date",
+      "description": "Retorna o último dia do trimestre civil.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.EndOfQuarter([data])"
+      ],
+      "introducedIn": "1.3.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.AddDays",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.AddDays(value, days) as date",
+      "description": "Adiciona dias a uma data.",
+      "parameters": [
+        "value",
+        "days"
+      ],
+      "examples": [
+        "Date.AddDays([data], 1)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "number"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.AddMonths",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.AddMonths(value, months) as date",
+      "description": "Adiciona meses a uma data.",
+      "parameters": [
+        "value",
+        "months"
+      ],
+      "examples": [
+        "Date.AddMonths([data], 1)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "number"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "DateTime.From",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "DateTime.From(value, optional culture) as datetime",
+      "description": "Converte um valor em data e hora.",
+      "parameters": [
+        "value",
+        "culture"
+      ],
+      "examples": [
+        "DateTime.From([instante], \"pt-BR\")"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "any",
+        "text"
+      ],
+      "returnType": "datetime",
+      "parameterExpression": true
+    },
+    {
+      "name": "Duration.Days",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Duration.Days(value) as number",
+      "description": "Retorna os dias de uma duração.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Duration.Days([prazo])"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "duration"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Sum",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Sum(values) as any",
+      "description": "Soma uma lista controlada.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.Sum({[a], [b]})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "list",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Average",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Average(values) as any",
+      "description": "Calcula a média de uma lista controlada.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.Average({[a], [b]})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "list",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Min",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Min(values) as any",
+      "description": "Retorna o menor item da lista.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.Min({[a], [b]})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "list",
+        "any",
+        "any",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Max",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Max(values) as any",
+      "description": "Retorna o maior item da lista.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.Max({[a], [b]})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 4,
+      "argumentTypes": [
+        "list",
+        "any",
+        "any",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Count",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Count(values) as number",
+      "description": "Conta os itens da lista.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.Count({[a], [b]})"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "list"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.First",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.First(values, optional defaultValue) as any",
+      "description": "Retorna o primeiro item da lista.",
+      "parameters": [
+        "values",
+        "defaultValue"
+      ],
+      "examples": [
+        "List.First({[a], [b]}, null)"
+      ],
+      "introducedIn": "1.0.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "list",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.StartOfWeek",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.StartOfWeek(value, firstDayOfWeek) as date",
+      "description": "Primeiro dia da semana que contém a data (ex.: Monday).",
+      "parameters": [
+        "value",
+        "firstDayOfWeek"
+      ],
+      "examples": [
+        "Date.StartOfWeek(today, Monday)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "weekday"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.EndOfWeek",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.EndOfWeek(value, firstDayOfWeek) as date",
+      "description": "Último dia da semana que contém a data (ex.: Monday → domingo).",
+      "parameters": [
+        "value",
+        "firstDayOfWeek"
+      ],
+      "examples": [
+        "Date.EndOfWeek(today, Monday)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "weekday"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.DayOfWeek",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.DayOfWeek(value, firstDayOfWeek) as number",
+      "description": "Dia da semana 0–6 relativo a firstDayOfWeek (Monday=0).",
+      "parameters": [
+        "value",
+        "firstDayOfWeek"
+      ],
+      "examples": [
+        "Date.DayOfWeek(today, Monday)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "weekday"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.AddWeeks",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.AddWeeks(value, weeks) as date",
+      "description": "Adiciona semanas civis (7 dias) a uma data.",
+      "parameters": [
+        "value",
+        "weeks"
+      ],
+      "examples": [
+        "Date.AddWeeks(today, -1)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "number"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.WeekOfYear",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.WeekOfYear(value, optional firstDayOfWeek) as number",
+      "description": "Número da semana ISO-8601 (Monday) do ano.",
+      "parameters": [
+        "value",
+        "firstDayOfWeek"
+      ],
+      "examples": [
+        "Date.WeekOfYear(today)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "weekday"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.AddYears",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.AddYears(value, years) as date",
+      "description": "Adiciona anos civis (29/02 → 28/02 em ano não-bissexto).",
+      "parameters": [
+        "value",
+        "years"
+      ],
+      "examples": [
+        "Date.AddYears(today, -1)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "number"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.DaysInMonth",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.DaysInMonth(value) as number",
+      "description": "Quantidade de dias do mês que contém a data.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.DaysInMonth(today)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.StartOfDay",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.StartOfDay(value) as datetime",
+      "description": "Início do dia (00:00:00) da data informada.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.StartOfDay(today)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "datetime",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.EndOfDay",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.EndOfDay(value) as datetime",
+      "description": "Fim do dia (23:59:59.999999) da data informada.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Date.EndOfDay(today)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "date|datetime"
+      ],
+      "returnType": "datetime",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.Min",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.Min(a, b) as date",
+      "description": "Menor de duas datas.",
+      "parameters": [
+        "a",
+        "b"
+      ],
+      "examples": [
+        "Date.Min(today, \"2026-01-01\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.Max",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.Max(a, b) as date",
+      "description": "Maior de duas datas.",
+      "parameters": [
+        "a",
+        "b"
+      ],
+      "examples": [
+        "Date.Max(today, \"2026-01-01\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "date|datetime",
+        "date|datetime"
+      ],
+      "returnType": "date",
+      "parameterExpression": true
+    },
+    {
+      "name": "Date.Between",
+      "kind": "scalar",
+      "category": "Data",
+      "signature": "Date.Between(value, startDate, endDate) as logical",
+      "description": "True quando value está entre startDate e endDate (inclusivo).",
+      "parameters": [
+        "value",
+        "startDate",
+        "endDate"
+      ],
+      "examples": [
+        "Date.Between(today, Date.StartOfMonth(today), today)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "date|datetime",
+        "date|datetime",
+        "date|datetime"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.Min",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.Min(a, b, ...) as number",
+      "description": "Menor número entre os argumentos.",
+      "parameters": [
+        "a",
+        "b"
+      ],
+      "examples": [
+        "Number.Min(1, 2)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 8,
+      "argumentTypes": [
+        "number",
+        "number"
+      ],
+      "returnType": "number",
+      "parameterExpression": true,
+      "variadic": true
+    },
+    {
+      "name": "Number.Max",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.Max(a, b, ...) as number",
+      "description": "Maior número entre os argumentos.",
+      "parameters": [
+        "a",
+        "b"
+      ],
+      "examples": [
+        "Number.Max(1, 2)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 8,
+      "argumentTypes": [
+        "number",
+        "number"
+      ],
+      "returnType": "number",
+      "parameterExpression": true,
+      "variadic": true
+    },
+    {
+      "name": "Number.Clamp",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.Clamp(value, min, max) as number",
+      "description": "Limita o número ao intervalo [min, max].",
+      "parameters": [
+        "value",
+        "min",
+        "max"
+      ],
+      "examples": [
+        "Number.Clamp(150, 0, 100)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "number",
+        "number",
+        "number"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Number.SafeDivide",
+      "kind": "scalar",
+      "category": "Número",
+      "signature": "Number.SafeDivide(numerator, denominator, fallback) as number",
+      "description": "Divisão segura: denominador zero ou inválido retorna fallback.",
+      "parameters": [
+        "numerator",
+        "denominator",
+        "fallback"
+      ],
+      "examples": [
+        "Number.SafeDivide(10, 0, 0)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "number",
+        "number",
+        "number"
+      ],
+      "returnType": "number",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Replace",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Replace(value, old, new) as text",
+      "description": "Substitui todas as ocorrências de old por new.",
+      "parameters": [
+        "value",
+        "old",
+        "new"
+      ],
+      "examples": [
+        "Text.Replace([codigo], \"-\", \"\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "text",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Substring",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Substring(value, start, optional length) as text",
+      "description": "Trecho do texto a partir do índice (base 0).",
+      "parameters": [
+        "value",
+        "start",
+        "length"
+      ],
+      "examples": [
+        "Text.Substring([codigo], 0, 4)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "number",
+        "number"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.Split",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.Split(value, delimiter) as list",
+      "description": "Divide o texto por delimitador literal em lista de textos.",
+      "parameters": [
+        "value",
+        "delimiter"
+      ],
+      "examples": [
+        "Text.Split([tags], \",\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text",
+        "text"
+      ],
+      "returnType": "list",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.PadStart",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.PadStart(value, length, optional fill) as text",
+      "description": "Preenche à esquerda até o comprimento alvo (padrão espaço).",
+      "parameters": [
+        "value",
+        "length",
+        "fill"
+      ],
+      "examples": [
+        "Text.PadStart([codigo], 8, \"0\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "number",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.PadEnd",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.PadEnd(value, length, optional fill) as text",
+      "description": "Preenche à direita até o comprimento alvo (padrão espaço).",
+      "parameters": [
+        "value",
+        "length",
+        "fill"
+      ],
+      "examples": [
+        "Text.PadEnd([codigo], 8, \"0\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "text",
+        "number",
+        "text"
+      ],
+      "returnType": "text",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.IsNullOrEmpty",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.IsNullOrEmpty(value) as logical",
+      "description": "True quando o valor é null ou texto vazio.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Text.IsNullOrEmpty(param.branch)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "any"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "Text.EqualsIgnoreCase",
+      "kind": "scalar",
+      "category": "Texto",
+      "signature": "Text.EqualsIgnoreCase(a, b) as logical",
+      "description": "Comparação de texto sem diferenciar maiúsculas.",
+      "parameters": [
+        "a",
+        "b"
+      ],
+      "examples": [
+        "Text.EqualsIgnoreCase(param.branch, \"SC\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "text",
+        "text"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Contains",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Contains(values, item) as logical",
+      "description": "True quando a lista contém o item.",
+      "parameters": [
+        "values",
+        "item"
+      ],
+      "examples": [
+        "List.Contains({\"01\", \"02\"}, param.branch)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "list",
+        "any"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Distinct",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Distinct(values) as list",
+      "description": "Remove duplicados preservando a ordem.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.Distinct({1, 1, 2})"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "list"
+      ],
+      "returnType": "list",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Last",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Last(values, optional defaultValue) as any",
+      "description": "Último item da lista (ou default quando vazia).",
+      "parameters": [
+        "values",
+        "defaultValue"
+      ],
+      "examples": [
+        "List.Last({1, 2, 3})"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "list",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.Nth",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.Nth(values, index, optional defaultValue) as any",
+      "description": "Item na posição index (base 0) ou default quando fora do intervalo.",
+      "parameters": [
+        "values",
+        "index",
+        "defaultValue"
+      ],
+      "examples": [
+        "List.Nth({1, 2, 3}, 0)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 3,
+      "argumentTypes": [
+        "list",
+        "number",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.AnyTrue",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.AnyTrue(values) as logical",
+      "description": "True quando algum item da lista é true.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.AnyTrue({x > 1, y > 1})"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "list"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "List.AllTrue",
+      "kind": "scalar",
+      "category": "Lista",
+      "signature": "List.AllTrue(values) as logical",
+      "description": "True quando todos os itens da lista são true.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "List.AllTrue({x > 1, y > 1})"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "list"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "Value.IsNull",
+      "kind": "scalar",
+      "category": "Valor",
+      "signature": "Value.IsNull(value) as logical",
+      "description": "True quando o valor é null.",
+      "parameters": [
+        "value"
+      ],
+      "examples": [
+        "Value.IsNull(param.branch)"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 1,
+      "argumentTypes": [
+        "any"
+      ],
+      "returnType": "logical",
+      "parameterExpression": true
+    },
+    {
+      "name": "Value.Coalesce",
+      "kind": "scalar",
+      "category": "Valor",
+      "signature": "Value.Coalesce(values...) as any",
+      "description": "Primeiro valor não-nulo — argumentos avaliados preguiçosamente.",
+      "parameters": [
+        "values"
+      ],
+      "examples": [
+        "Value.Coalesce(param.branch, \"01\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 1,
+      "maxArgs": 8,
+      "argumentTypes": [
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true,
+      "variadic": true,
+      "lazyArgs": "all"
+    },
+    {
+      "name": "Value.NullIf",
+      "kind": "scalar",
+      "category": "Valor",
+      "signature": "Value.NullIf(value, match) as any",
+      "description": "Null quando value = match; caso contrário value.",
+      "parameters": [
+        "value",
+        "match"
+      ],
+      "examples": [
+        "Value.NullIf(param.branch, \"all\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 2,
+      "maxArgs": 2,
+      "argumentTypes": [
+        "any",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true
+    },
+    {
+      "name": "Logic.Switch",
+      "kind": "scalar",
+      "category": "Lógica",
+      "signature": "Logic.Switch(value, case1, result1, ..., optional default) as any",
+      "description": "Retorna o resultado do primeiro case igual a value — branches avaliadas preguiçosamente.",
+      "parameters": [
+        "value",
+        "case1",
+        "result1",
+        "default"
+      ],
+      "examples": [
+        "Logic.Switch(param.branch, \"01\", \"SC\", \"ES\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 17,
+      "argumentTypes": [
+        "any",
+        "any",
+        "any",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true,
+      "lazyArgs": "branches"
+    },
+    {
+      "name": "Logic.Ifs",
+      "kind": "scalar",
+      "category": "Lógica",
+      "signature": "Logic.Ifs(cond1, result1, ..., optional default) as any",
+      "description": "Retorna o resultado da primeira condição true — avaliação preguiçosa.",
+      "parameters": [
+        "cond1",
+        "result1",
+        "default"
+      ],
+      "examples": [
+        "Logic.Ifs(param.x > 10, \"alto\", \"baixo\")"
+      ],
+      "introducedIn": "1.4.0",
+      "availability": {
+        "ribbon": false,
+        "formulaBar": true,
+        "advancedEditor": true
+      },
+      "minArgs": 3,
+      "maxArgs": 17,
+      "argumentTypes": [
+        "logical",
+        "any",
+        "any"
+      ],
+      "returnType": "any",
+      "parameterExpression": true,
+      "lazyArgs": "branches"
+    }
   ]
 }

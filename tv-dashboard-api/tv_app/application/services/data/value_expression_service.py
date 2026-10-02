@@ -24,8 +24,17 @@ from zoneinfo import ZoneInfo
 
 from tv_app.application.services.data.m_query.m_expression_interpreter import (
     MExpressionError,
+    WEEKDAY_CONSTANTS,
     convert_m_value,
     evaluate_compiled_expression,
+)
+from tv_app.application.services.data.m_query.m_expression_typecheck import (
+    TYPE_ANY,
+    TYPE_DATE,
+    TYPE_DATETIME,
+    TYPE_WEEKDAY,
+    check_output_type,
+    typecheck_expression,
 )
 from tv_app.application.services.data.m_query.m_function_registry import (
     get_function_registry,
@@ -35,9 +44,17 @@ from tv_app.application.services.tv_dashboard_content_service import (
     value_expression_setting,
 )
 from tv_app.application.services.tv_date_range_preset_service import (
+    DATE_RANGE_PRESET_KEY,
     DEFAULT_BUSINESS_TIMEZONE,
+    DEFAULT_DATE_RANGE_KEYS,
+    END_KEYS,
+    PERIOD_DAYS_KEY,
+    START_KEYS,
     business_timezone_name,
     calendar_today,
+    compute_preset_range,
+    find_date_range_keys,
+    resolve_output_date_range_keys,
 )
 from tv_app.domain.data_query.transform_plan import (
     CompiledExpression,
@@ -194,7 +211,9 @@ def _walk_phase(
         if item.kind == "call":
             name = str(item.value or "")
             spec = registry.resolve(name)
-            if spec is None or spec.kind != "scalar":
+            if spec is None or spec.kind != "scalar" or (
+                phase == ExpressionPhase.PARAMETER and not spec.parameter_expression
+            ):
                 _fail(
                     "m.expression_operator_not_allowed",
                     f"A função {name} não é permitida em expressão de parâmetro.",
@@ -216,6 +235,9 @@ def compile_expression_spec(
     *,
     phase: ExpressionPhase,
     allowed_identifiers: frozenset[str],
+    identifier_types: Mapping[str, str] | None = None,
+    expected_type: str | None = None,
+    param_name: str | None = None,
 ) -> CompiledExpression:
     """ExpressionSpec persistido → CompiledExpression validado (sem fallback)."""
     if not is_expression_value(raw_value):
@@ -241,6 +263,21 @@ def compile_expression_spec(
     except ExpressionSpecError as exc:
         raise MExpressionError(exc.code, str(exc)) from exc
     _walk_phase(node, phase, allowed_identifiers)
+    if phase == ExpressionPhase.PARAMETER and identifier_types is not None:
+        # Gate estático pré-avaliação: falha antes do fetch e do persist.
+        root_path = str(param_name or "")
+        actual = typecheck_expression(
+            node,
+            registry=get_function_registry(),
+            identifier_types=identifier_types,
+            path=root_path,
+        )
+        check_output_type(
+            actual,
+            expected=expected_type,
+            param_name=root_path,
+            path=root_path,
+        )
     return node
 
 
@@ -261,10 +298,75 @@ def _environment(
 
 
 def _allowed_param_identifiers(schema: Mapping[str, Any]) -> frozenset[str]:
-    names = {CONTEXT_TODAY, CONTEXT_NOW}
+    names = {CONTEXT_TODAY, CONTEXT_NOW, *WEEKDAY_CONSTANTS}
     for key in schema.keys():
         names.add(f"{PARAM_REF_PREFIX}{key}")
     return frozenset(names)
+
+
+def _identifier_types(schema: Mapping[str, Any]) -> dict[str, str]:
+    # Refs tipadas do contexto PARAMETER — única fonte para o typecheck.
+    types: dict[str, str] = {
+        CONTEXT_TODAY: TYPE_DATE,
+        CONTEXT_NOW: TYPE_DATETIME,
+        **{name: TYPE_WEEKDAY for name in WEEKDAY_CONSTANTS},
+    }
+    for key, spec in schema.items():
+        expected = (
+            param_spec_expected_mtype(spec) if isinstance(spec, Mapping) else None
+        )
+        types[f"{PARAM_REF_PREFIX}{key}"] = expected or TYPE_ANY
+    return types
+
+
+def _consume_preset_for_expression_overrides(
+    params: dict[str, Any],
+    *,
+    route: Mapping[str, Any] | None,
+    schema: Mapping[str, Any],
+    resolved_keys: frozenset[str],
+    today: date,
+) -> tuple[str, str] | None:
+    """Preset relativo é *default por ponta* frente a ExpressionSpec.
+
+    Quando ao menos uma ponta do range foi resolvida por expressão, o preset
+    materializa somente a ponta não-expression e é consumido aqui — o wire
+    recebe somente datas concretas. Sem datas-expression → no-op e a
+    materialização segue no gateway (``apply_date_range_preset``), que mantém
+    a defesa anti-stale sobre literais.
+    """
+    preset = str(params.get(DATE_RANGE_PRESET_KEY) or "").strip()
+    if not preset:
+        return None
+    start_resolved = bool(resolved_keys.intersection(START_KEYS))
+    end_resolved = bool(resolved_keys.intersection(END_KEYS))
+    if not (start_resolved or end_resolved):
+        return None
+    route_map = route if isinstance(route, Mapping) else {}
+    pair = resolve_output_date_range_keys(
+        schema_keys=schema,
+        date_range_keys=route_map.get("dateRangeKeys"),
+        strategy=str(route_map.get("paramStrategy") or "direct"),
+    )
+    if pair is None:
+        pair = find_date_range_keys(params) or DEFAULT_DATE_RANGE_KEYS
+    period_raw = params.get(PERIOD_DAYS_KEY)
+    try:
+        period_days = (
+            int(period_raw) if period_raw is not None and period_raw != "" else None
+        )
+    except (TypeError, ValueError):
+        period_days = None
+    computed = compute_preset_range(preset, period_days=period_days, today=today)
+    if computed is None:
+        return None
+    start_key, end_key = pair
+    if not start_resolved:
+        params[start_key] = computed[0].isoformat()
+    if not end_resolved:
+        params[end_key] = computed[1].isoformat()
+    params.pop(DATE_RANGE_PRESET_KEY, None)
+    return start_key, end_key
 
 
 def _coerce_result(
@@ -359,6 +461,8 @@ def resolve_param_expressions(
         else {}
     )
     allowed_ids = _allowed_param_identifiers(schema)
+    id_types = _identifier_types(schema)
+    registry = get_function_registry()
     env = _environment(ctx, params)
     for key in expression_keys:
         raw = params[key]
@@ -368,6 +472,8 @@ def resolve_param_expressions(
             "expectedType": param_spec_expected_mtype(schema.get(key))
             if isinstance(schema.get(key), Mapping)
             else None,
+            "timezone": ctx.timezone,
+            "registryVersion": registry.version,
         }
         try:
             if not param_allows_expression(str(key), route):
@@ -379,6 +485,9 @@ def resolve_param_expressions(
                 raw,
                 phase=ExpressionPhase.PARAMETER,
                 allowed_identifiers=allowed_ids,
+                identifier_types=id_types,
+                expected_type=entry["expectedType"],
+                param_name=str(key),
             )
             value = evaluate_compiled_expression(
                 node,
@@ -403,6 +512,27 @@ def resolve_param_expressions(
         params[str(key)] = wire
         entry["resolved"] = wire
         trace.append(entry)
+    resolved_keys = frozenset(
+        str(item["param"]) for item in trace if "resolved" in item
+    )
+    consumed = _consume_preset_for_expression_overrides(
+        params,
+        route=route,
+        schema=schema,
+        resolved_keys=resolved_keys,
+        today=ctx.today,
+    )
+    if consumed is not None:
+        trace.append(
+            {
+                "param": DATE_RANGE_PRESET_KEY,
+                "materializedAsDefaults": True,
+                "filled": [
+                    key for key in consumed if key not in resolved_keys
+                ],
+                "timezone": ctx.timezone,
+            }
+        )
     return ParamExpressionResolution(params=params, trace=trace, error=None)
 
 
@@ -428,6 +558,9 @@ def validate_expression_param_value(
         raw_value,
         phase=ExpressionPhase.PARAMETER,
         allowed_identifiers=_allowed_param_identifiers(schema),
+        identifier_types=_identifier_types(schema),
+        expected_type=param_spec_expected_mtype(schema.get(param_name)),
+        param_name=param_name,
     )
 
 
@@ -476,6 +609,18 @@ _CATALOG_AST_EXAMPLES: dict[str, dict[str, Any]] = {
         "kind": "call",
         "value": "Date.StartOfYear",
         "children": [{"kind": "identifier", "value": CONTEXT_TODAY}],
+    },
+    "weekStartOfCurrentMonth": {
+        "kind": "call",
+        "value": "Date.StartOfWeek",
+        "children": [
+            {
+                "kind": "call",
+                "value": "Date.StartOfMonth",
+                "children": [{"kind": "identifier", "value": CONTEXT_TODAY}],
+            },
+            {"kind": "identifier", "value": "Monday"},
+        ],
     },
     "numericVariationPct": {
         "kind": "binary",
@@ -527,6 +672,10 @@ def _parameter_ast_contract() -> dict[str, Any]:
                 "kind": "identifier",
                 "value": "param.<schemaParam>",
             },
+            "weekday.<Monday..Sunday>": {
+                "kind": "identifier",
+                "value": "Monday",
+            },
         },
         "literalValue": "kind=literal; value = escalar JSON (str|number|bool|null) — tipo inferido do JSON",
         "callShape": 'kind=call; value=<functionName>; children=[args...] na ordem dos parâmetros da signature',
@@ -558,11 +707,12 @@ def expression_capability(*, transport: str = "mcp") -> dict[str, Any]:
             f"context:{CONTEXT_TODAY}",
             f"context:{CONTEXT_NOW}",
             "param.<schemaParam>",
+            "weekday.<Monday..Sunday>",
         ],
         "functions": [
             spec.to_dict()
             for spec in registry.functions.values()
-            if spec.kind == "scalar"
+            if spec.kind == "scalar" and spec.parameter_expression
         ],
         "limits": {
             "maxDepth": int(value_expression_setting("maxDepth", 40)),

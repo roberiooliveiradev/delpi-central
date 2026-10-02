@@ -25,6 +25,11 @@ class MFunctionSpec:
     availability: Mapping[str, bool]
     min_args: int
     max_args: int
+    argument_types: tuple[str, ...]
+    return_type: str
+    parameter_expression: bool
+    variadic: bool
+    lazy_args: str | None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -37,6 +42,26 @@ class MFunctionSpec:
             "examples": list(self.examples),
             "introducedIn": self.introduced_in,
             "availability": dict(self.availability),
+            "minArgs": self.min_args,
+            "maxArgs": self.max_args,
+            "argumentTypes": list(self.argument_types),
+            "returnType": self.return_type,
+            "parameterExpression": self.parameter_expression,
+            **({"variadic": True} if self.variadic else {}),
+            **({"lazyArgs": self.lazy_args} if self.lazy_args else {}),
+        }
+
+    def compact_dict(self) -> dict[str, Any]:
+        """Projeção mínima para authoring (VISTA actions / frontend)."""
+        return {
+            "name": self.name,
+            "argumentTypes": list(self.argument_types),
+            "returnType": self.return_type,
+            "minArgs": self.min_args,
+            "maxArgs": self.max_args,
+            "category": self.category,
+            **({"variadic": True} if self.variadic else {}),
+            **({"lazyArgs": self.lazy_args} if self.lazy_args else {}),
         }
 
 
@@ -72,6 +97,15 @@ def get_function_registry() -> MFunctionRegistry:
             ),
             min_args=int(item["minArgs"]),
             max_args=int(item["maxArgs"]),
+            argument_types=tuple(
+                str(value) for value in item.get("argumentTypes") or ()
+            ),
+            return_type=str(item.get("returnType") or "any"),
+            parameter_expression=bool(item.get("parameterExpression")),
+            variadic=bool(item.get("variadic")),
+            lazy_args=(
+                str(item["lazyArgs"]) if item.get("lazyArgs") is not None else None
+            ),
         )
         if spec.name in specs:
             raise ValueError(f"Função duplicada no registry: {spec.name}")

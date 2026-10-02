@@ -47,6 +47,29 @@ CUR = 4516461.10
 
 
 # ---------------------------------------------------------------------------
+import calendar as _calendar
+from datetime import date as _date
+
+from tv_app.application.services.tv_date_range_preset_service import (
+    calendar_today as _business_today,
+)
+
+
+def _expected_ranges():
+    """Expected dinâmico — mesmo contrato do runtime (clock de negócio)."""
+    today = _business_today()
+    last_day_prev = _calendar.monthrange(today.year - 1, today.month)[1]
+    prev_end = _date(today.year - 1, today.month, min(today.day, last_day_prev))
+    prev_start = prev_end.replace(day=1)
+    cur_start = today.replace(day=1)
+    return {
+        "prev_start": prev_start.isoformat(),
+        "prev_end": prev_end.isoformat(),
+        "cur_start": cur_start.isoformat(),
+        "cur_end": today.isoformat(),
+    }
+
+
 # REPRESENTATIVE_DEPENDENCY_FIXTURE — modelado após o caso mensal real:
 # pct_weg_sc_m26 = this_month (2026-09-01 → 2026-09-29 no clock de negócio) e
 # pct_weg_sc_m25 = auxiliar do mesmo mês no ano anterior via ParamExpression
@@ -140,7 +163,7 @@ def _rol_gateway():
         calls.append(params)
         key = (
             "previous"
-            if str(params.get("start_date") or "").startswith("2025")
+            if str(params.get("start_date") or "") == _expected_ranges()["prev_start"]
             else "current"
         )
         return {"previous": _rol_payload(PREV), "current": _rol_payload(CUR)}[key]
@@ -452,16 +475,17 @@ class TestInspectRuntime:
         persisted_start = dep_entry["params"]["start_date"]["expression"]["expression"]
         assert persisted_start["kind"] == "call"
         assert persisted_start["value"] == "Date.StartOfMonth"
-        assert prev["effectiveParams"]["start_date"] == "2025-09-01"
-        assert prev["effectiveParams"]["end_date"] == "2025-09-29"
+        expected = _expected_ranges()
+        assert prev["effectiveParams"]["start_date"] == expected["prev_start"]
+        assert prev["effectiveParams"]["end_date"] == expected["prev_end"]
         # Valor que entrou no transform: campo consumido do sibling.
         assert prev["fields"]["rol_prev"] == pytest.approx(PREV)
         assert prev["rowCount"] >= 1
 
         # Params efetivos do alvo.
         assert runtime["requestedParams"]["dateRangePreset"] == "this_month"
-        assert runtime["effectiveParams"]["start_date"] == "2026-09-01"
-        assert runtime["effectiveParams"]["end_date"] == "2026-09-29"
+        assert runtime["effectiveParams"]["start_date"] == expected["cur_start"]
+        assert runtime["effectiveParams"]["end_date"] == expected["cur_end"]
         assert runtime["requestedParams"]["branch"] == "01"
 
         # Valor que saiu do transform — variação calculada, não recriada.
@@ -490,8 +514,9 @@ class TestInspectRuntime:
         trace = {
             entry["param"]: entry for entry in prev.get("paramExpressions") or []
         }
-        assert trace["start_date"]["resolved"] == "2025-09-01"
-        assert trace["end_date"]["resolved"] == "2025-09-29"
+        expected = _expected_ranges()
+        assert trace["start_date"]["resolved"] == expected["prev_start"]
+        assert trace["end_date"]["resolved"] == expected["prev_end"]
 
     def test_runtime_single_source_no_merge(self):
         slide = _slide(

@@ -32,6 +32,12 @@ DATE_RANGE_KEY_PAIRS: tuple[tuple[str, str], ...] = (
 START_KEYS = tuple(pair[0] for pair in DATE_RANGE_KEY_PAIRS)
 END_KEYS = tuple(pair[1] for pair in DATE_RANGE_KEY_PAIRS)
 
+
+def _is_expression_param(value: Any) -> bool:
+    """Marcador ExpressionSpec — mesmo shape de ``is_expression_value`` no
+    value_expression_service (import direto criaria ciclo)."""
+    return isinstance(value, Mapping) and isinstance(value.get("expression"), Mapping)
+
 # Chaves internas — não devem ir na query HTTP da api-delpi.
 INTERNAL_PARAM_KEYS = frozenset({DATE_RANGE_PRESET_KEY, EXCLUDE_WEEKENDS_KEY})
 
@@ -63,9 +69,10 @@ def normalize_period_params_for_persistence(
 ) -> dict[str, Any]:
     """Estado canônico persistido: uma única intenção de período por camada.
 
-    - preset dinâmico válido → remove datas manuais (todos os aliases) e
-      competence; o preset é re-materializado a cada fetch, então datas
-      persistidas ao lado dele são sempre stale;
+    - preset dinâmico válido → remove datas manuais *literais* (stale) e
+      competence; o preset é re-materializado a cada fetch;
+    - datas em ``ExpressionSpec`` são overrides deliberados — convivem com o
+      preset (o preset contribui os defaults que o override não cobre);
     - preset dinâmico + periodDays explícito → periodDays vence (mesmo
       contrato do merge runtime — `periodDays` é mais específico);
     - preset ``last_n_days`` convive com periodDays (o N é o próprio param);
@@ -84,6 +91,8 @@ def normalize_period_params_for_persistence(
     if compute_preset_range(preset, period_days=period_days) is None:
         return out
     for key in (*START_KEYS, *END_KEYS):
+        if _is_expression_param(out.get(key)):
+            continue  # override deliberado — não é data stale
         out.pop(key, None)
     out.pop("competence", None)
     if preset in _PERIOD_DAYS_PRESET_KEYS:
@@ -424,9 +433,13 @@ def apply_date_range_preset(
         # a UI as esconde quando Período ≠ Personalizado). custom / ausente → manuais.
         computed = compute_preset_range(preset, period_days=period_days, today=today)
         if computed is not None:
+            # Literal ISO ao lado de preset é stale → preset recalcula (defesa).
+            # ExpressionSpec é override deliberado → preserva a ponta.
             start_d, end_d = computed
-            merged[start_key] = start_d.isoformat()
-            merged[end_key] = end_d.isoformat()
+            if not _is_expression_param(merged.get(start_key)):
+                merged[start_key] = start_d.isoformat()
+            if not _is_expression_param(merged.get(end_key)):
+                merged[end_key] = end_d.isoformat()
         elif period_days is not None and not _as_iso(merged.get(start_key)):
             day = calendar_today(today=today)
             start_d, end_d = day - timedelta(days=max(period_days, 1) - 1), day
