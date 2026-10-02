@@ -1074,6 +1074,150 @@ def test_final_renderer_combined_fixture_no_secret():
     assert "APPROVED" in content
 
 
+# --- GROUNDED-BUSINESS-PRESENTATION-01: business payload first ---------
+
+
+SCREENSHOT_STRUCTURED = {
+    "action_id": "search_products",
+    "status": "ok",
+    "entity": "product_search",
+    "shape": "paged_list",
+    "projection": "approved_fields",
+    "data": {
+        "items": [
+            {
+                "product_code": "10090045",
+                "description": "ISOLADOR NYLON RETO 6,3 NU UL 94V-2 - ROHS",
+                "group_category": "1009",
+            }
+        ]
+    },
+    "total": 1,
+    "page": 1,
+    "page_size": 50,
+    "total_pages": 1,
+    "is_complete": True,
+    "response_bytes": 186,
+    "truncated": False,
+}
+
+
+def test_screenshot_case_business_payload_first():
+    """Observed production defect fixture: the primary answer is the
+    product record — not the technical envelope."""
+    content, _ = render_specialist_outcome(
+        _outcome("Execution completed.", SCREENSHOT_STRUCTURED)
+    )
+    for expected in (
+        "10090045",
+        "ISOLADOR NYLON RETO 6,3 NU UL 94V-2 - ROHS",
+        "1009",
+    ):
+        assert expected in content
+    for noise in (
+        "Execution completed.",
+        "Resultado do especialista:",
+        "action_id",
+        "search_products",
+        "product_search",
+        "paged_list",
+        "approved_fields",
+        "page_size",
+        "total_pages",
+        "response_bytes",
+        "is_complete",
+        "truncated",
+    ):
+        assert noise not in content
+
+
+def test_multi_item_business_payload_numbered():
+    content, _ = render_specialist_outcome(
+        _outcome(
+            "",
+            {"data": {"items": [
+                {"code": "A", "description": "TUBO A"},
+                {"code": "B", "description": "TUBO B"},
+            ]}},
+        )
+    )
+    assert "TUBO A" in content and "TUBO B" in content
+    assert "1." in content and "2." in content
+
+
+def test_empty_items_clear_empty_wording():
+    """Authoritative empty collection -> deterministic empty message,
+    still a grounded result, not a failure."""
+    content, _ = render_specialist_outcome(
+        _outcome("ok", {"status": "success", "data": {"items": [],
+                                                    "limit": 50}})
+    )
+    assert "Nenhum resultado encontrado." in content
+    assert "status" not in content
+    assert "items" not in content
+
+
+def test_owner_message_kept_above_business_payload():
+    """Non-generic owner text is real content and stays."""
+    content, _ = render_specialist_outcome(
+        _outcome(
+            "Análise do Transformômetro.",
+            {"success": True,
+             "data": {"meta": {"mode": "live", "row_count": 7}}},
+        )
+    )
+    assert "Análise do Transformômetro." in content
+    assert "row_count: 7" in content
+    assert "success" not in content
+
+
+def test_unknown_shape_generic_fallback_preserves_data():
+    """No recognized business wrapper -> existing generic sanitized
+    render, never data loss."""
+    content, _ = render_specialist_outcome(
+        _outcome("Execution completed.", {"custom": {"k": "v-1"}})
+    )
+    assert "v-1" in content
+
+
+def test_redaction_runs_before_business_projection():
+    """R3 ordering: secrets inside data/items string leaves never
+    reach the business projection."""
+    content, _ = render_specialist_outcome(
+        _outcome(
+            "",
+            {"data": {"items": [
+                {"code": "ABC",
+                 "detail": "access_token=TEST_SECRET_LEAF"}
+            ]},
+             "headers": "Cookie: session=TEST_COOKIE; csrf=TEST_CSRF"},
+        )
+    )
+    for secret in ("TEST_SECRET_LEAF", "TEST_COOKIE", "TEST_CSRF"):
+        assert secret not in content
+    assert "ABC" in content
+
+
+def test_no_specialist_specific_presentation_branch():
+    """Projection operates on structure only — identical envelope
+    renders identically regardless of specialist identity."""
+    structured = {"data": {"items": [{"code": "X"}]}}
+    for sid in ("davi", "teo", "vista"):
+        from app.domain.specialist_interop.model import (
+            InteropProtocol, SpecialistOutcome,
+            SpecialistResultProvenance, SpecialistResultStatus,
+        )
+        out = SpecialistOutcome(
+            status=SpecialistResultStatus.COMPLETED,
+            provenance=SpecialistResultProvenance(
+                specialist_id=sid, remote_name="t",
+                protocol=InteropProtocol.MCP, correlation_id="c",
+                observed_at="2026-01-01T00:00:00+00:00"),
+            content_text="", structured=structured)
+        content, _ = render_specialist_outcome(out)
+        assert "code: X" in content
+
+
 # --- failure semantics ---------------------------------------------------
 
 

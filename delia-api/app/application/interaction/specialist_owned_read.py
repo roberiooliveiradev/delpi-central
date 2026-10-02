@@ -454,6 +454,21 @@ def _sanitize_renderable(node: object) -> object:
     return node
 
 
+# Bounded set of known transport-level completion texts — suppressed
+# only when authoritative business data is rendered instead. Arbitrary
+# owner text is never suppressed.
+_GENERIC_COMPLETION_TEXTS = frozenset(
+    {"execution completed.", "discovery completed.", "ok", "success"}
+)
+EMPTY_RESULT_TEXT = "Nenhum resultado encontrado."
+_BUSINESS_PAYLOAD_KEY = "data"
+_ITEMS_KEY = "items"
+
+
+def _is_generic_status(text: str) -> bool:
+    return text.strip().lower() in _GENERIC_COMPLETION_TEXTS
+
+
 def _format_structured(node: object, depth: int = 0) -> list[str]:
     """Deterministic human-readable projection of owner data.
 
@@ -509,6 +524,49 @@ def _format_list(items: list, depth: int) -> list[str]:
     return lines
 
 
+def _format_records(items: list, depth: int = 0) -> list[str]:
+    """Bounded numbered record list for multi-item business payloads."""
+    indent = "  " * depth
+    lines: list[str] = []
+    for idx, item in enumerate(items, 1):
+        if isinstance(item, Mapping):
+            lines.append(f"{indent}{idx}.")
+            lines.extend(
+                _format_structured(item, depth + 1)
+                or [f"{indent}  {{}}"]
+            )
+        else:
+            lines.append(f"{indent}{idx}. {item}")
+    return lines
+
+
+def _business_lines(node: Mapping) -> list[str] | None:
+    """Project the authoritative business payload for user display.
+
+    Owners commonly wrap business data in a technical envelope: the
+    ``data`` member carries the payload while siblings carry
+    transport/pagination metadata that must not dominate the primary
+    answer. Unwrapping is structural — never a per-specialist or
+    per-action branch. Returns ``None`` for unrecognized shapes so the
+    caller can fall back to the generic sanitized render.
+    """
+    payload = node.get(_BUSINESS_PAYLOAD_KEY)
+    if isinstance(payload, Mapping):
+        items = payload.get(_ITEMS_KEY)
+        if isinstance(items, list):
+            if not items:
+                return [EMPTY_RESULT_TEXT]
+            if len(items) == 1 and isinstance(items[0], Mapping):
+                return _format_structured(items[0]) or None
+            return _format_records(items)
+        return _format_structured(payload) or None
+    if isinstance(payload, list):
+        if not payload:
+            return [EMPTY_RESULT_TEXT]
+        return _format_records(payload)
+    return None
+
+
 def render_specialist_outcome(
     outcome: SpecialistOutcome,
 ) -> tuple[str, tuple[str, ...]]:
@@ -527,17 +585,18 @@ def render_specialist_outcome(
         # text alone (e.g. "Execution completed.") is not an answer.
         # Owners that already embed the same payload in content_text
         # are not duplicated.
+        sanitized = _sanitize_renderable(structured)
         full_payload = json.dumps(
-            _sanitize_renderable(structured),
+            sanitized,
             ensure_ascii=False,
             default=str,
         )
         if text and full_payload.strip() in text:
             if text.lstrip()[:1] in ("{", "["):
                 # content_text is the raw JSON payload itself — render
-                # the deterministic formatted projection instead.
-                lines = _format_structured(
-                    _sanitize_renderable(structured)
+                # the deterministic business projection instead.
+                lines = _business_lines(sanitized) or (
+                    _format_structured(sanitized)
                 )
                 body = (
                     "\n".join(lines) if lines else text
@@ -549,17 +608,30 @@ def render_specialist_outcome(
             ):
                 limitations.append(LIMITATION_RESULT_TRUNCATED)
             return body, tuple(limitations)
-        lines = _format_structured(_sanitize_renderable(structured))
-        payload = (
-            "\n".join(lines)
-            if lines
-            else full_payload[:MAX_STRUCTURED_RENDER_CHARS]
-        )
-        body = (
-            (text + "\n\n" if text else "")
-            + "Resultado do especialista:\n"
-            + payload
-        )
+        business = _business_lines(sanitized)
+        if business is not None:
+            # Authoritative business payload exists — it is the
+            # primary answer. Transport envelope and generic
+            # completion text stay out of the user-facing body.
+            body_text = "" if _is_generic_status(text) else text
+            body = (
+                (body_text + "\n\n" if body_text else "")
+                + "\n".join(business)
+            )
+        else:
+            # Unknown shape — fall back to the generic sanitized
+            # structured render rather than discarding data.
+            lines = _format_structured(sanitized)
+            payload = (
+                "\n".join(lines)
+                if lines
+                else full_payload[:MAX_STRUCTURED_RENDER_CHARS]
+            )
+            body = (
+                (text + "\n\n" if text else "")
+                + "Resultado do especialista:\n"
+                + payload
+            )
         content = body[:MAX_RENDER_CONTENT_CHARS]
         if len(body) > MAX_RENDER_CONTENT_CHARS:
             if LIMITATION_RESULT_TRUNCATED not in limitations:
