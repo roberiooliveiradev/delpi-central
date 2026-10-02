@@ -7083,3 +7083,24 @@ RESIDUALS = as listed per-matrix (audit depth, VISTA lifecycle
 NEXT = C5-GOVERNED-WRITE-FOUNDATION-01 (task-scoped authorization;
     no runtime write authorized by it)
 ```
+
+
+## 6.107 ARCHITECTURE_REVIEW_C4_MCP_READS_ACCEPTANCE_C5_ENTRY_01 — verdict persistence
+
+```
+REVIEWED_TASK = C4-MCP-READS-ACCEPTANCE-C5-ENTRY-01 (coordination-only;
+    §6.106 record at BIND_HEAD=3214ae276de521ed841adc4ca3c9143d5ea7edad)
+VERDICT = ACCEPT_WITH_RESIDUAL
+ACCEPTED = READS-02 acceptance persisted; doc-16 stale NEXT reconciled;
+    bounded MCP read proof closed; C5 prerequisite matrix + write-candidate
+    inventory factual; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED preserved.
+RESIDUALS = production token exchange NOT_PROVEN; VISTA proposal
+    lifecycle internals partially TO_INVENTORY; write-decision audit
+    persistence/owner not implemented; rollback capability-specific;
+    delegated credential cache <=120s; material ACT still requires
+    live revalidation at a future ACT request.
+PHASE_FLAGS = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+    PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN.
+AUTHORIZED_NEXT_TASK = C5-GOVERNED-WRITE-FOUNDATION-01 (foundation
+    contracts only; NO business PREPARE/ACT wire call authorized).
+```
