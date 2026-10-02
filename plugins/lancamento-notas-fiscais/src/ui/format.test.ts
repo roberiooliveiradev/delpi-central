@@ -16,8 +16,9 @@ describe("formatFiscalModel", () => {
   it("rotula NF-e e NFS-e e deixa vazio sem modelo", () => {
     expect(formatFiscalModel("nfe")).toBe("NF-e");
     expect(formatFiscalModel("nfse")).toBe("NFS-e");
+    expect(formatFiscalModel("cte")).toBe("CT-e");
     expect(formatFiscalModel(null)).toBe("—");
-    expect(formatFiscalModel("cte")).toBe("—");
+    expect(formatFiscalModel("mdfe")).toBe("—");
   });
 });
 

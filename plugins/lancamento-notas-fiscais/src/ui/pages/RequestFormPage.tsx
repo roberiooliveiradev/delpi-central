@@ -29,6 +29,15 @@ type Props = {
   onSuccess: (requestId: string) => void;
 };
 
+type LinkedInvoiceDraft = {
+  document: string;
+  series: string;
+};
+
+function isFiscalModel(value: string | null | undefined): value is FiscalModel {
+  return value === "nfe" || value === "nfse" || value === "cte";
+}
+
 type FormState = {
   branch: string;
   document: string;
@@ -127,6 +136,7 @@ export function RequestFormPage({
   } | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [supplierHint, setSupplierHint] = useState<string | null>(null);
+  const [linkedInvoices, setLinkedInvoices] = useState<LinkedInvoiceDraft[]>([]);
 
   const documentPreview = useMemo(
     () => normalizeDocumentInput(form.document),
@@ -138,6 +148,7 @@ export function RequestFormPage({
     if (mode === "create") {
       setForm(buildCreateForm(lockedBranch));
       setSupplier(null);
+      setLinkedInvoices([]);
       setFieldErrors({});
       setSubmitError(null);
       setLoading(false);
@@ -155,12 +166,18 @@ export function RequestFormPage({
           branch: lockedBranch ?? r.branch_code,
           document: r.document_number.replace(/^0+/, "") || r.document_number,
           series: r.series ?? "",
-          fiscal_model: r.fiscal_model === "nfe" || r.fiscal_model === "nfse" ? r.fiscal_model : "",
+          fiscal_model: isFiscalModel(r.fiscal_model) ? r.fiscal_model : "",
           issue_date: r.issue_date,
           amount: String(r.amount).replace(".", ","),
           received_at: toLocalInputValue(r.received_at),
           observation: r.observation ?? "",
         });
+        setLinkedInvoices(
+          (r.linked_invoices ?? []).map((item) => ({
+            document: item.document_number.replace(/^0+/, "") || item.document_number,
+            series: item.series,
+          })),
+        );
         setSupplier({
           supplier_code: r.supplier_code,
           supplier_store: r.supplier_store,
@@ -194,8 +211,33 @@ export function RequestFormPage({
     if (!doc.digits) errors.document = "Informe o número da nota.";
     if (!(lockedBranch ?? form.branch)) errors.branch = "Selecione a filial.";
     if (seriesRequired && !series) errors.series = "Informe a série (como no Protheus).";
-    if (fiscalModel !== "nfe" && fiscalModel !== "nfse") {
-      errors.fiscal_model = "Informe se a nota é NF-e ou NFS-e.";
+    if (!isFiscalModel(fiscalModel)) {
+      errors.fiscal_model = "Informe se a nota é NF-e, NFS-e ou CT-e.";
+    }
+    const filledLinks =
+      fiscalModel === "cte"
+        ? linkedInvoices.filter((row) => row.document.trim() || row.series.trim())
+        : [];
+    if (fiscalModel === "cte") {
+      const seen = new Set<string>();
+      for (const row of filledLinks) {
+        const doc = normalizeDocumentInput(row.document);
+        const series = normalizeSeriesInput(row.series);
+        if (!doc.valid || !series) {
+          errors.linked_invoices = "Cada nota vinculada precisa de número e série.";
+          break;
+        }
+        const key = `${doc.matchKey}/${series}`;
+        if (seen.has(key)) {
+          errors.linked_invoices = "Há notas vinculadas repetidas.";
+          break;
+        }
+        if (doc.matchKey === documentPreview.matchKey && series === normalizeSeriesInput(form.series)) {
+          errors.linked_invoices = "A nota vinculada não pode ser o próprio CT-e.";
+          break;
+        }
+        seen.add(key);
+      }
     }
     if (!supplier) errors.supplier = "Selecione o fornecedor.";
     if (!form.issue_date) errors.issue_date = "Informe a data de emissão.";
@@ -208,7 +250,7 @@ export function RequestFormPage({
       !supplier ||
       !doc.digits ||
       (seriesRequired && !series) ||
-      (fiscalModel !== "nfe" && fiscalModel !== "nfse") ||
+      !isFiscalModel(fiscalModel) ||
       amountValue === null
     ) {
       return;
@@ -226,6 +268,12 @@ export function RequestFormPage({
       received_at: fromLocalInputValue(form.received_at),
       observation: form.observation.trim() || undefined,
     };
+    if (fiscalModel === "cte" && filledLinks.length > 0) {
+      payload.linked_invoices = filledLinks.map((row) => ({
+        document: normalizeDocumentInput(row.document).digits,
+        series: normalizeSeriesInput(row.series),
+      }));
+    }
     if (attachment) {
       payload.source = "received_nfe";
       payload.document_id = attachment.document_id;
@@ -434,7 +482,9 @@ export function RequestFormPage({
               <span className="lnf-hint">
                 {form.fiscal_model === "nfse"
                   ? "Opcional na NFS-e."
-                  : "Obrigatória na NF-e — igual à série no Protheus."}
+                  : form.fiscal_model === "cte"
+                    ? "Obrigatória no CT-e — igual à série no Protheus."
+                    : "Obrigatória na NF-e — igual à série no Protheus."}
               </span>
               {fieldErrors.series ? (
                 <span className="lnf-error">{fieldErrors.series}</span>
@@ -446,20 +496,21 @@ export function RequestFormPage({
               <select
                 aria-label="Tipo da nota"
                 value={form.fiscal_model}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    fiscal_model: e.target.value === "nfse" ? "nfse" : e.target.value === "nfe" ? "nfe" : "",
-                  }))
-                }
+                onChange={(e) => {
+                  const next = isFiscalModel(e.target.value) ? e.target.value : "";
+                  if (next === "cte") setAttachment(null);
+                  if (next !== "cte") setLinkedInvoices([]);
+                  setForm((f) => ({ ...f, fiscal_model: next }));
+                }}
                 aria-required
                 aria-invalid={Boolean(fieldErrors.fiscal_model)}
               >
                 <option value="">Selecione</option>
                 <option value="nfe">NF-e</option>
                 <option value="nfse">NFS-e</option>
+                <option value="cte">CT-e</option>
               </select>
-              <span className="lnf-hint">Obrigatório — produto (NF-e) ou serviço (NFS-e).</span>
+              <span className="lnf-hint">Obrigatório — produto (NF-e), serviço (NFS-e) ou frete (CT-e).</span>
               {fieldErrors.fiscal_model ? (
                 <span className="lnf-error">{fieldErrors.fiscal_model}</span>
               ) : null}
@@ -502,8 +553,80 @@ export function RequestFormPage({
           </div>
         </section>
 
+        {form.fiscal_model === "cte" ? (
+          <section className="lnf-card lnf-form-section" data-testid="linked-invoices">
+            <h2>Notas vinculadas</h2>
+            <p className="lnf-hint">
+              Notas de mercadoria amarradas a este frete. Pode incluir mais de uma.
+            </p>
+            <div className="lnf-stack">
+              {linkedInvoices.map((row, index) => (
+                <div className="lnf-form-grid" key={index}>
+                  <label className="lnf-field">
+                    Número da nota
+                    <input
+                      aria-label={`Número da nota vinculada ${index + 1}`}
+                      inputMode="numeric"
+                      value={row.document}
+                      onChange={(e) =>
+                        setLinkedInvoices((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, document: sanitizeDocumentTyping(e.target.value) }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="lnf-field">
+                    Série
+                    <input
+                      aria-label={`Série da nota vinculada ${index + 1}`}
+                      value={row.series}
+                      maxLength={3}
+                      onChange={(e) =>
+                        setLinkedInvoices((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, series: normalizeSeriesInput(e.target.value) }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  </label>
+                  <div className="lnf-field">
+                    <span className="lnf-hint">Remover</span>
+                    <button
+                      type="button"
+                      className="lnf-btn lnf-btn--ghost"
+                      onClick={() =>
+                        setLinkedInvoices((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                      }
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="lnf-btn lnf-btn--ghost"
+              data-testid="btn-add-linked-invoice"
+              onClick={() => setLinkedInvoices((current) => [...current, { document: "", series: "" }])}
+            >
+              Adicionar nota
+            </button>
+            {fieldErrors.linked_invoices ? (
+              <span className="lnf-error">{fieldErrors.linked_invoices}</span>
+            ) : null}
+          </section>
+        ) : null}
+
         <section className="lnf-card lnf-form-section">
-          <h2>Fornecedor</h2>
+          <h2>{form.fiscal_model === "cte" ? "Transportadora" : "Fornecedor"}</h2>
           <div className="lnf-form-grid">
             <div className="lnf-form-grid__full">
               <SupplierSearch

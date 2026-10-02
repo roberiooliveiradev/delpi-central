@@ -77,6 +77,13 @@ router = APIRouter(
 )
 
 
+class LinkedInvoiceBody(BaseModel):
+    document_number: str = Field(..., alias="document")
+    series: str | None = None
+
+    model_config = {"populate_by_name": True}
+
+
 class CreateRequestBody(BaseModel):
     branch_code: str = Field(..., alias="branch")
     document_number: str = Field(..., alias="document")
@@ -92,6 +99,7 @@ class CreateRequestBody(BaseModel):
     document_id: str | None = None
     access_key: str | None = None
     source_branch: str | None = None
+    linked_invoices: list[LinkedInvoiceBody] | None = None
 
     model_config = {"populate_by_name": True}
 

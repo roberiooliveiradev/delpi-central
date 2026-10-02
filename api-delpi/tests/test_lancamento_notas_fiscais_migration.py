@@ -72,6 +72,13 @@ MIGRATION_V008 = (
     / PLUGIN_SLUG
     / "V008__danfe_attachment.sql"
 )
+MIGRATION_V009 = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "plugins"
+    / PLUGIN_SLUG
+    / "V009__cte_linked_invoices.sql"
+)
 
 
 def _plugins_env_ready() -> bool:
@@ -149,6 +156,15 @@ def test_v007_migration_declares_fiscal_model() -> None:
     assert "'nfe'" in sql
     assert "'nfse'" in sql
     assert "ADD COLUMN IF NOT EXISTS fiscal_model" in sql
+
+
+def test_v009_migration_adds_cte_and_linked_invoices() -> None:
+    sql = MIGRATION_V009.read_text(encoding="utf-8")
+    assert "'cte'" in sql
+    assert "ck_lnf_requests_fiscal_model" in sql
+    assert "invoice_posting_linked_invoices" in sql
+    assert "uq_lnf_linked_invoices_request_document" in sql
+    assert "ON DELETE CASCADE" in sql
 
 
 def test_v008_migration_declares_danfe_attachment() -> None:

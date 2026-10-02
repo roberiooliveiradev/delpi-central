@@ -19,6 +19,7 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     RECONCILIATION_ELIGIBLE_STATUSES,
     RECONCILIATION_LOCK_CLASS_ID,
     RECONCILIATION_LOCK_OBJECT_ID,
+    public_linked_invoices,
     resolve_list_status_filter,
 )
 from app.domain.services.lancamento_notas_fiscais.history_serialization import (
@@ -108,6 +109,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         *,
         request_fields: dict[str, Any],
         history_fields: dict[str, Any],
+        linked_invoices: list[dict[str, str]] | None = None,
     ) -> dict[str, Any]:
         try:
             # Lease único: cada execute(auto_commit=False) sem lease externo
@@ -155,9 +157,15 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                     "request_id": row["id"],
                 }
                 self._insert_history(history_fields, auto_commit=False)
+                self._replace_linked_invoices(
+                    str(row["id"]),
+                    linked_invoices or [],
+                    auto_commit=False,
+                )
                 self.commit()
             out = _serialize_request(row)
             out["linked_purchase_orders"] = []
+            out["linked_invoices"] = public_linked_invoices(linked_invoices)
             return out
         except PluginsRepositoryError as exc:
             if _is_unique_violation(exc):
@@ -415,6 +423,9 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         out["linked_purchase_orders"] = (
             self.list_linked_purchase_orders(rid) if rid else []
         )
+        out["linked_invoices"] = (
+            self.list_linked_invoices_for_requests([rid]).get(rid, []) if rid else []
+        )
         return out
 
     def _serialize_request_rows(self, rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -423,8 +434,10 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         serialized = [_serialize_request(r) for r in rows]
         ids = [str(r["id"]) for r in serialized]
         by_id = self.list_linked_purchase_orders_for_requests(ids)
+        linked_invoices = self.list_linked_invoices_for_requests(ids)
         for item in serialized:
             item["linked_purchase_orders"] = by_id.get(str(item["id"]), [])
+            item["linked_invoices"] = linked_invoices.get(str(item["id"]), [])
         return serialized
 
     def list_history(self, request_id: str) -> list[dict[str, Any]]:
@@ -757,14 +770,74 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             """
         )
 
+    def list_linked_invoices_for_requests(
+        self,
+        request_ids: Sequence[str],
+    ) -> dict[str, list[dict[str, str]]]:
+        ids = [str(item) for item in request_ids if str(item).strip()]
+        if not ids:
+            return {}
+        rows = self.fetch_all(
+            f"""
+            SELECT request_id, document_number, series
+              FROM {SCHEMA}.invoice_posting_linked_invoices
+             WHERE request_id = ANY(%s::uuid[])
+             ORDER BY request_id, position ASC
+            """,
+            (ids,),
+        )
+        out: dict[str, list[dict[str, str]]] = {rid: [] for rid in ids}
+        for row in rows:
+            rid = str(row["request_id"])
+            out.setdefault(rid, []).append(
+                {
+                    "document_number": str(row["document_number"]),
+                    "series": str(row["series"]),
+                }
+            )
+        return out
+
+    def _replace_linked_invoices(
+        self,
+        request_id: str,
+        rows: list[dict[str, str]],
+        *,
+        auto_commit: bool,
+    ) -> None:
+        self.execute(
+            f"""
+            DELETE FROM {SCHEMA}.invoice_posting_linked_invoices
+             WHERE request_id = %s::uuid
+            """,
+            (request_id,),
+            auto_commit=auto_commit,
+        )
+        for position, row in enumerate(rows):
+            self.execute(
+                f"""
+                INSERT INTO {SCHEMA}.invoice_posting_linked_invoices (
+                    request_id, document_number, document_match_key, series, position
+                ) VALUES (%s::uuid, %s, %s, %s, %s)
+                """,
+                (
+                    request_id,
+                    row["document_number"],
+                    row["document_match_key"],
+                    row["series"],
+                    position,
+                ),
+                auto_commit=auto_commit,
+            )
+
     def update_request_with_history(
         self,
         *,
         request_id: str,
         updates: dict[str, Any],
         history_fields: dict[str, Any],
+        linked_invoices: list[dict[str, str]] | None = None,
     ) -> dict[str, Any]:
-        if not updates:
+        if not updates and linked_invoices is None:
             current = self.get_request(request_id)
             if current is None:
                 raise LookupError(request_id)
@@ -795,6 +868,12 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                     raise LookupError(request_id)
                 history_fields = {**history_fields, "request_id": row["id"]}
                 self._insert_history(history_fields, auto_commit=False)
+                if linked_invoices is not None:
+                    self._replace_linked_invoices(
+                        str(row["id"]),
+                        linked_invoices,
+                        auto_commit=False,
+                    )
                 self.commit()
             return self._serialize_request_with_links(row)
         except PluginsRepositoryError as exc:
@@ -929,6 +1008,8 @@ def _serialize_request(row: dict[str, Any]) -> dict[str, Any]:
         out["linked_po_open_value"] = float(out["linked_po_open_value"])
     if "linked_purchase_orders" not in out:
         out["linked_purchase_orders"] = []
+    if "linked_invoices" not in out:
+        out["linked_invoices"] = []
     return out
 
 

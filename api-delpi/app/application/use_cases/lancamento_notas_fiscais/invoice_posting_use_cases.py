@@ -39,7 +39,10 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     FiscalNormalizationError,
     normalize_branch,
     normalize_document,
+    linked_invoices_differ,
     normalize_fiscal_model,
+    normalize_linked_invoices,
+    public_linked_invoices,
     normalize_series,
     series_is_required,
     should_auto_resume_after_purchase_order_link,
@@ -175,6 +178,39 @@ def _raise_duplicate(existing: dict[str, Any] | None) -> None:
     )
 
 
+def _reject_self_linked_invoice(
+    *,
+    document_match_key: str,
+    series: str,
+    linked_invoices: list[dict[str, str]],
+) -> None:
+    parent = (document_match_key, series)
+    for item in linked_invoices:
+        if (item["document_match_key"], item["series"]) == parent:
+            raise InvoicePostingValidationError(
+                "A nota vinculada não pode ser o próprio CT-e."
+            )
+
+
+def _linked_invoices_for_update(
+    current: dict[str, Any],
+    payload: dict[str, Any],
+    fiscal_model: str | None,
+) -> list[dict[str, str]] | None:
+    if fiscal_model != "cte":
+        desired: list[dict[str, str]] = []
+    elif "linked_invoices" in payload:
+        desired = normalize_linked_invoices(
+            payload.get("linked_invoices"),
+            fiscal_model="cte",
+        )
+    else:
+        return None
+    if not linked_invoices_differ(current.get("linked_invoices"), desired):
+        return None
+    return desired
+
+
 def allowed_actions(request: dict[str, Any], actor: Actor) -> list[str]:
     status = request.get("status")
     is_owner = request.get("created_by_user_id") == actor.user_id
@@ -259,6 +295,18 @@ class CreateInvoicePostingRequestUseCase:
             payload.get("received_at"), field="Data/hora de recebimento"
         )
         observation = str(payload.get("observation") or "").strip() or None
+        try:
+            linked_invoices = normalize_linked_invoices(
+                payload.get("linked_invoices"),
+                fiscal_model=fiscal_model,
+            )
+        except FiscalNormalizationError as exc:
+            raise InvoicePostingValidationError(str(exc)) from exc
+        _reject_self_linked_invoice(
+            document_match_key=document.document_match_key,
+            series=series,
+            linked_invoices=linked_invoices,
+        )
 
         duplicate = self._requests.find_active_by_fiscal_key(
             branch_code=branch,
@@ -303,6 +351,7 @@ class CreateInvoicePostingRequestUseCase:
                 "fiscal_model": fiscal_model,
                 "supplier_code": supplier["supplier_code"],
                 "supplier_store": supplier["supplier_store"],
+                "linked_invoices": public_linked_invoices(linked_invoices),
             },
             "justification": None,
         }
@@ -310,6 +359,7 @@ class CreateInvoicePostingRequestUseCase:
             return self._requests.create_request_with_history(
                 request_fields=fields,
                 history_fields=history,
+                linked_invoices=linked_invoices,
             )
         except DuplicateFiscalKeyError:
             existing = self._requests.find_active_by_fiscal_key(
@@ -820,7 +870,24 @@ class UpdateInvoicePostingRequestUseCase:
             obs = str(payload.get("observation") or "").strip() or None
             _set("observation", obs)
 
-        if not updates:
+        try:
+            linked_invoices = _linked_invoices_for_update(current, payload, next_model)
+        except FiscalNormalizationError as exc:
+            raise InvoicePostingValidationError(str(exc)) from exc
+        if linked_invoices is not None:
+            parent_document = updates.get("document_match_key", current["document_match_key"])
+            parent_series = updates.get("series", current.get("series") or "")
+            _reject_self_linked_invoice(
+                document_match_key=str(parent_document or ""),
+                series=str(parent_series or ""),
+                linked_invoices=linked_invoices,
+            )
+            changes["linked_invoices"] = {
+                "from": public_linked_invoices(current.get("linked_invoices")),
+                "to": public_linked_invoices(linked_invoices),
+            }
+
+        if not updates and linked_invoices is None:
             return current
 
         branch = updates.get("branch_code", current["branch_code"])
@@ -856,6 +923,7 @@ class UpdateInvoicePostingRequestUseCase:
                 request_id=request_id,
                 updates=updates,
                 history_fields=history,
+                linked_invoices=linked_invoices,
             )
         except DuplicateFiscalKeyError:
             existing = self._requests.find_active_by_fiscal_key(

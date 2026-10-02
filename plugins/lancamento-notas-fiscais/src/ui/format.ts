@@ -21,6 +21,7 @@ export function formatMoney(value: number): string {
 export function formatFiscalModel(value: string | null | undefined): string {
   if (value === "nfe") return "NF-e";
   if (value === "nfse") return "NFS-e";
+  if (value === "cte") return "CT-e";
   return "—";
 }
 

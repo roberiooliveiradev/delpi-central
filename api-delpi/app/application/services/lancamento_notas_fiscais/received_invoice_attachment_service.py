@@ -48,6 +48,9 @@ class ReceivedInvoiceAttachmentService:
             return self._create_request.execute(payload, actor)
         if source != "received_nfe":
             raise InvoicePostingValidationError("Origem da solicitação inválida.")
+        fiscal_model = str(payload.get("fiscal_model") or "").strip().lower().replace(" ", "")
+        if fiscal_model in {"cte", "ct-e"}:
+            raise InvoicePostingValidationError("CT-e não anexa o DANFE de uma NF-e.")
 
         document_id = str(payload.get("document_id") or "").strip()
         access_key = str(payload.get("access_key") or "").strip()

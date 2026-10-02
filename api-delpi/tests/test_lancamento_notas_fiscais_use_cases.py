@@ -175,6 +175,7 @@ class FakeRequests:
         *,
         request_fields: dict[str, Any],
         history_fields: dict[str, Any],
+        linked_invoices: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         if self.find_active_by_fiscal_key(
             branch_code=request_fields["branch_code"],
@@ -205,6 +206,7 @@ class FakeRequests:
             "linked_po_linked_by_user_id": None,
             "linked_po_linked_by_name": None,
             "linked_purchase_orders": [],
+            "linked_invoices": deepcopy(linked_invoices or []),
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -346,11 +348,14 @@ class FakeRequests:
         request_id: str,
         updates: dict[str, Any],
         history_fields: dict[str, Any],
+        linked_invoices: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         current = self.rows.get(request_id)
         if current is None:
             raise LookupError(request_id)
         candidate = {**current, **updates}
+        if linked_invoices is not None:
+            candidate["linked_invoices"] = deepcopy(linked_invoices)
         if isinstance(candidate.get("issue_date"), date):
             candidate["issue_date"] = candidate["issue_date"].isoformat()
         if isinstance(candidate.get("received_at"), datetime):
@@ -575,7 +580,57 @@ def test_create_requires_fiscal_model() -> None:
     with pytest.raises(InvoicePostingValidationError):
         uc.execute(_payload(fiscal_model=None), _creator())
     with pytest.raises(InvoicePostingValidationError):
-        uc.execute(_payload(fiscal_model="cte"), _creator())
+        uc.execute(_payload(fiscal_model="mdfe"), _creator())
+
+
+def test_create_freight_invoice_links_several_notes_and_rejects_the_others() -> None:
+    repo = FakeRequests()
+    uc = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers())
+    created = uc.execute(
+        _payload(
+            fiscal_model="CT-e",
+            document="700",
+            series="1",
+            linked_invoices=[
+                {"document": "10", "series": "1"},
+                {"document": "11", "series": "2"},
+            ],
+        ),
+        _creator(),
+    )
+    assert created["fiscal_model"] == "cte"
+    assert [item["document_number"] for item in created["linked_invoices"]] == [
+        "000000010",
+        "000000011",
+    ]
+    with pytest.raises(InvoicePostingValidationError):
+        uc.execute(
+            _payload(document="701", linked_invoices=[{"document": "10", "series": "1"}]),
+            _creator(),
+        )
+    with pytest.raises(InvoicePostingValidationError):
+        uc.execute(
+            _payload(
+                fiscal_model="cte",
+                document="700",
+                series="1",
+                linked_invoices=[{"document": "700", "series": "1"}],
+            ),
+            _creator(),
+        )
+    updated = UpdateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        created["id"],
+        {"linked_invoices": [{"document": "12", "series": "3"}]},
+        _creator(),
+    )
+    assert updated["linked_invoices"][0]["document_number"] == "000000012"
+    cleared = UpdateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        created["id"],
+        {"fiscal_model": "nfe"},
+        _creator(),
+    )
+    assert cleared["fiscal_model"] == "nfe"
+    assert cleared["linked_invoices"] == []
 
 
 def test_create_accepts_service_invoice_without_series() -> None:

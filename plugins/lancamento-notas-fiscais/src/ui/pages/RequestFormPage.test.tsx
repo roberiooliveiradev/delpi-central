@@ -122,7 +122,7 @@ describe("RequestFormPage", () => {
     await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
     fireEvent.click(screen.getByText(/000001\/01/));
     fireEvent.click(screen.getByTestId("btn-submit-request"));
-    expect(screen.getByText(/NF-e ou NFS-e/i)).toBeTruthy();
+    expect(screen.getByText(/NF-e, NFS-e ou CT-e/i)).toBeTruthy();
     expect(api.createRequest).not.toHaveBeenCalled();
   });
 
@@ -163,6 +163,53 @@ describe("RequestFormPage", () => {
     expect(api.createRequest).toHaveBeenCalledWith(
       expect.objectContaining({ fiscal_model: "nfse", series: "", document: "55" }),
     );
+  });
+
+  it("cadastra CT-e de frete com mais de uma nota vinculada", async () => {
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000001",
+        supplier_store: "01",
+        supplier_name: "Alpha",
+        supplier_short_name: "A",
+        tax_id: "123",
+        state: "SC",
+        blocked: false,
+      },
+    ]);
+    vi.mocked(api.createRequest).mockResolvedValue({ id: "cte-1" } as never);
+    renderCreate(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    fireEvent.change(screen.getByLabelText("Número da nota"), { target: { value: "700" } });
+    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "cte" } });
+    fireEvent.click(screen.getByTestId("btn-add-linked-invoice"));
+    fireEvent.click(screen.getByTestId("btn-add-linked-invoice"));
+    fireEvent.change(screen.getByLabelText("Número da nota vinculada 1"), { target: { value: "10" } });
+    fireEvent.change(screen.getByLabelText("Série da nota vinculada 1"), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText("Número da nota vinculada 2"), { target: { value: "11" } });
+    fireEvent.change(screen.getByLabelText("Série da nota vinculada 2"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Data de emissão"), { target: { value: "2026-07-01" } });
+    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "80,00" } });
+    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), {
+      target: { value: "Alpha" },
+    });
+    await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
+    fireEvent.click(screen.getByText(/000001\/01/));
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
+    expect(api.createRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fiscal_model: "cte",
+        document: "700",
+        linked_invoices: [
+          { document: "10", series: "1" },
+          { document: "11", series: "2" },
+        ],
+      }),
+    );
+    expect(screen.getByRole("heading", { name: "Transportadora" })).toBeTruthy();
   });
 
   it("Enter avança o foco como Tab", () => {
