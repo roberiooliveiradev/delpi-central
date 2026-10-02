@@ -1065,3 +1065,93 @@ class TestParamPrecedence:
             playlist_defaults={"dateRangePreset": "this_month_full"},
         )
         assert gateway.calls[0]["dateRangePreset"] == "same_period_previous_year"
+
+    def test_slide_filters_beat_playlist_defaults_for_model_inputs(self):
+        """Slide só-DataModel: nativeConfig.dataFilters alcança inputs do
+        modelo pela mesma merge_data_params (slide > programação)."""
+        gateway = _gateway_by_preset({"current": _rol_payload(5.0)})
+        model = {
+            "id": "mdl_slide",
+            "primaryInputId": "only",
+            "inputs": [{"id": "only", "operationId": _OP, "params": {}}],
+        }
+        cfg = {
+            "version": 5,
+            "blocks": [],
+            "dataModels": [model],
+            "dataFilters": {
+                "branch": "02",
+                "dateRangePreset": "this_year",
+            },
+        }
+        _resolve_model(
+            model,
+            gateway=gateway,
+            cfg=cfg,
+            playlist_defaults={
+                "branch": "01",
+                "customer_segment": "weg",
+                "dateRangePreset": "same_period_previous_year",
+            },
+        )
+        merged = gateway.calls[0]
+        assert merged["branch"] == "02"
+        assert merged["dateRangePreset"] == "this_year"
+        # chave só na programação sobrevive (merge, não replace)
+        assert merged["customer_segment"] == "weg"
+
+    def test_input_params_beat_slide_filters_for_model_inputs(self):
+        """params do input do modelo são a camada persistida mais forte
+        (input > tela > programação; runtime override segue acima)."""
+        gateway = _gateway_by_preset({"current": _rol_payload(7.0)})
+        model = {
+            "id": "mdl_input",
+            "primaryInputId": "only",
+            "inputs": [
+                {
+                    "id": "only",
+                    "operationId": _OP,
+                    "params": {"branch": "03", "dateRangePreset": "this_year"},
+                }
+            ],
+        }
+        cfg = {
+            "version": 5,
+            "blocks": [],
+            "dataModels": [model],
+            "dataFilters": {"branch": "02", "dateRangePreset": "this_month"},
+        }
+        _resolve_model(
+            model,
+            gateway=gateway,
+            cfg=cfg,
+            playlist_defaults={"branch": "01"},
+        )
+        merged = gateway.calls[0]
+        assert merged["branch"] == "03"
+        assert merged["dateRangePreset"] == "this_year"
+
+    def test_force_refresh_bypasses_cache_for_model_inputs(self):
+        """enrich_data_models(force_refresh=True) refaz o fetch — não serve
+        o _data_block_cache compartilhado com as fontes legacy."""
+        gateway = _gateway_by_preset({"current": _rol_payload(1.0)})
+        model = {
+            "id": "mdl_cache",
+            "primaryInputId": "only",
+            "inputs": [
+                {
+                    "id": "only",
+                    "operationId": _OP,
+                    "params": {"dateRangePreset": "this_year"},
+                }
+            ],
+        }
+        enrichment = _enrichment(gateway)
+        cfg = {"version": 5, "blocks": [], "dataModels": [model]}
+        enrichment.enrich_data_models([model], cfg=cfg, authorization=None)
+        enrichment.enrich_data_models([model], cfg=cfg, authorization=None)
+        assert len(gateway.calls) == 1  # segunda chamada saiu do cache
+        enrichment.enrich_data_models(
+            [model], cfg=cfg, authorization=None, force_refresh=True
+        )
+        assert len(gateway.calls) == 2

@@ -91,9 +91,10 @@ export function ComunicadoDataRibbon() {
   }, [selectedId, selectedType, setDataPanelIntent, setDataPanelOpen, setSelectionPanelTab]);
 
   const hasBinding = model.bindingTarget != null && model.binding != null;
+  const hasDataOwner = hasBinding || model.bindingModel != null;
   const hasParams = Object.keys(model.paramSchema).length > 0;
   const hasExpressionSurface =
-    hasBinding &&
+    hasDataOwner &&
     (model.expressionParams.length > 0 ||
       Object.values(model.params ?? {}).some(isParamExpressionValue));
   const refreshLabel = hasBinding

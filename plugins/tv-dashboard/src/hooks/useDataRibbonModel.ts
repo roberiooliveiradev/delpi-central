@@ -8,6 +8,8 @@ import {
   type ComunicadoDataBinding,
   type ComunicadoDataResolved,
   type ComunicadoDataSourceBlock,
+  type ParamExpressionSpec,
+  type TvDataModel,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
@@ -26,6 +28,12 @@ import {
   type DataParamSchema,
   type DataParamSchemaField,
 } from "../utils/dataParamSchema";
+import {
+  buildDataModelParamPatch,
+  collectDataModelParamSchema,
+  resolveModelPrimaryRoute,
+  resolveModelSharedParamValues,
+} from "../utils/dataModelParamProjection";
 import { resolveRouteForDataBoundBlock } from "../utils/resolveDataBoundBlockRoute";
 import { resolveSelectedDataContext, type SelectedDataContext } from "../utils/selectedDataContext";
 
@@ -43,10 +51,25 @@ export type DataRibbonModel = {
   primary: ComunicadoBlock | null;
   /** Dono dos params editáveis (fonte ligada ou próprio bloco). */
   bindingTarget: (ComunicadoBlock & { dataBinding?: ComunicadoDataBinding }) | null;
+  /**
+   * DataModel ligado ao primário via `modelId`. Quando presente, `params`/
+   * `paramSchema`/`updateParams` projetam o agregado dos inputs do modelo
+   * (owner persistido segue sendo `dataModels[].inputs[].params`).
+   */
+  bindingModel: TvDataModel | null;
   route: TvDataRouteCatalogItem | null;
   binding: ComunicadoDataBinding | null;
-  params: Record<string, string | number | boolean | null | undefined> | undefined;
+  params:
+    | Record<
+        string,
+        string | number | boolean | null | ParamExpressionSpec | undefined
+      >
+    | undefined;
   paramSchema: DataParamSchema;
+  /** Chaves divergentes entre inputs do modelo (status «Valores diferentes»). */
+  modelDivergedKeys: Set<string>;
+  /** Chaves aceitas só por parte dos inputs do modelo — escopo explícito. */
+  modelPartialKeys: Set<string>;
   /** `resolved` enriquecido do backend (preview da fonte ligada). */
   resolved: ComunicadoDataResolved | undefined;
   /** Rótulo da fonte/modelo ligado e total de fontes na seleção (§70 "+2"). */
@@ -77,6 +100,7 @@ export function useDataRibbonModel(): DataRibbonModel {
     selectedIds,
     updateBlock,
     getDataPreviewResolved,
+    saveDataModel,
   } = useComunicadoEditor();
   const { routes, labelCatalog } = useTvDataRouteLabelCatalog();
   const expressionSupport = useParamExpressionCapability();
@@ -87,30 +111,49 @@ export function useDataRibbonModel(): DataRibbonModel {
   );
   const { primary, bindingTarget, bindingTargets, bindingModel } = context;
 
-  const route = useMemo(
-    () => resolveRouteForDataBoundBlock(bindingTarget, blocks, routes, config.dataModels),
-    [bindingTarget, blocks, config.dataModels, routes],
-  );
+  const route = useMemo(() => {
+    if (bindingModel) return resolveModelPrimaryRoute(routes, bindingModel);
+    return resolveRouteForDataBoundBlock(bindingTarget, blocks, routes, config.dataModels);
+  }, [bindingTarget, bindingModel, blocks, config.dataModels, routes]);
 
   const binding =
     bindingTarget && "dataBinding" in bindingTarget
       ? (bindingTarget.dataBinding ?? null)
       : null;
-  const params = binding?.params;
+
+  const modelSchema = useMemo(
+    () =>
+      bindingModel ? collectDataModelParamSchema(routes, bindingModel).schema : {},
+    [bindingModel, routes],
+  );
+  const modelShared = useMemo(
+    () =>
+      bindingModel
+        ? resolveModelSharedParamValues(bindingModel, routes, modelSchema)
+        : { values: {}, divergedKeys: new Set<string>(), partialKeys: new Set<string>() },
+    [bindingModel, routes, modelSchema],
+  );
+
+  const params = bindingModel ? modelShared.values : binding?.params;
   const paramSchema = useMemo(
     () =>
-      visibleParamSchema(
-        (route?.paramSchema ?? undefined) as DataParamSchema | undefined,
-        route?.fixedQueryParams,
-      ),
-    [route],
+      bindingModel
+        ? modelSchema
+        : visibleParamSchema(
+            (route?.paramSchema ?? undefined) as DataParamSchema | undefined,
+            route?.fixedQueryParams,
+          ),
+    [bindingModel, modelSchema, route],
   );
 
   const resolved = useMemo(() => {
-    if (!bindingTarget) return undefined;
     if (bindingModel) {
-      return getDataPreviewResolved?.(bindingModel.id) ?? bindingModelResolvedFallback(bindingTarget);
+      return (
+        getDataPreviewResolved?.(bindingModel.id) ??
+        (bindingTarget ? bindingModelResolvedFallback(bindingTarget) : undefined)
+      );
     }
+    if (!bindingTarget) return undefined;
     if ("resolved" in bindingTarget && bindingTarget.resolved) {
       return bindingTarget.resolved as ComunicadoDataResolved;
     }
@@ -132,18 +175,27 @@ export function useDataRibbonModel(): DataRibbonModel {
 
   const updateParams = useCallback(
     (updates: Record<string, DataParamUpdateValue>) => {
+      if (bindingModel) {
+        // Fan-out mínimo para os inputs compatíveis — mesmo write path
+        // governado do inspetor (saveDataModel → upsert_data_model).
+        const next = buildDataModelParamPatch(bindingModel, routes, updates);
+        if (next) void saveDataModel(next).catch(() => undefined);
+        return;
+      }
       if (!bindingTarget || !binding) return;
       const nextParams = applyDataParamRawUpdates(binding.params, updates, paramSchema);
       updateBlock(bindingTarget.id, {
         dataBinding: { ...binding, params: nextParams },
       } as Partial<ComunicadoBlock>);
     },
-    [binding, bindingTarget, paramSchema, updateBlock],
+    [binding, bindingModel, bindingTarget, paramSchema, routes, saveDataModel, updateBlock],
   );
 
   const expressionParams = useMemo<RibbonExpressionParam[]>(() => {
     if (!expressionSupport.enabled) return [];
-    const fixedKeys = new Set(Object.keys(route?.fixedQueryParams ?? {}));
+    const fixedKeys = bindingModel
+      ? undefined
+      : new Set(Object.keys(route?.fixedQueryParams ?? {}));
     return Object.entries(paramSchema)
       .filter(([key, field]) => paramAllowsExpression(key, field, fixedKeys))
       .map(([key, field]) => ({
@@ -154,7 +206,7 @@ export function useDataRibbonModel(): DataRibbonModel {
           paramFormatToReturnTypes(field.format) ??
           paramTypeToReturnTypes(field.type),
       }));
-  }, [expressionSupport.enabled, paramSchema, route]);
+  }, [expressionSupport.enabled, paramSchema, route, bindingModel]);
 
   const applyBinding = useCallback(
     (patch: Partial<ComunicadoDataBinding>) => {
@@ -170,10 +222,13 @@ export function useDataRibbonModel(): DataRibbonModel {
     context,
     primary: primary ?? null,
     bindingTarget: bindingTarget as DataRibbonModel["bindingTarget"],
+    bindingModel,
     route,
     binding,
     params: params as DataRibbonModel["params"],
     paramSchema,
+    modelDivergedKeys: modelShared.divergedKeys,
+    modelPartialKeys: modelShared.partialKeys,
     resolved,
     targetLabel,
     targetCount: bindingTargets.length,

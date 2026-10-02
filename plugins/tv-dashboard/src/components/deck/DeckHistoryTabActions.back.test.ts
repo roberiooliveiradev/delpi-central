@@ -40,4 +40,10 @@ describe("deck history back button contract", () => {
     expect(history).toContain("isFetchableDataBlockType");
     expect(history).toContain("refreshDataPreview");
   });
+
+  it("Atualizar dados também aparece em slide só-DataModel (sem fonte legacy)", () => {
+    // Gating reconhece alvos modelo: config.dataModels conta como alvo de dados.
+    expect(history).toContain("dataModels");
+    expect(history).toContain("hasDataTargets");
+  });
 });

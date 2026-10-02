@@ -83,6 +83,7 @@ import { ENUM_OPTION_LABELS, resolveParamFieldLabel } from "../content/dataParam
 import { DATE_RANGE_PRESET_OPTIONS } from "../utils/dateRangePresets";
 
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
+import { collectDataOperationIds } from "../utils/collectPlaylistDataParamSchema";
 import { renameTableColumnFieldLabel } from "../utils/renameTableColumnFieldLabel";
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
@@ -1195,6 +1196,7 @@ function EditorInputBlock({
     snapshotEditorConfig,
     finalizeHistoryGesture,
     blocks,
+    config,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -1204,10 +1206,15 @@ function EditorInputBlock({
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
   }, []);
 
-  const linkedIds = useMemo(
-    () => resolveInputRefreshSourceIds(block, configBlocks),
-    [block, configBlocks],
-  );
+  const dataModels = config?.dataModels ?? [];
+
+  const linkedIds = useMemo(() => {
+    const sourceIds = resolveInputRefreshSourceIds(block, configBlocks);
+    // Escopo «slide» também alcança inputs de DataModel (mesma contribuição
+    // que o backend aplica via slide_input_contrib).
+    if (resolveInputTargetScope(block.input) !== "slide") return sourceIds;
+    return [...sourceIds, ...dataModels.map((model) => model.id)];
+  }, [block, configBlocks, dataModels]);
 
   const dataLoading = useMemo(
     () => linkedIds.some((id) => refreshingSourceIds.includes(id)),
@@ -1221,12 +1228,22 @@ function EditorInputBlock({
       scope === "slide"
         ? fetchable
         : fetchable.filter((item) => (block.input.targetSourceIds ?? []).includes(item.id));
-    const schemas: InputParamSchema[] = targets
-      .map((item) => {
-        const operationId =
+    const targetOperationIds = new Set(
+      targets
+        .map((item) =>
           "dataBinding" in item && item.dataBinding?.operationId
-            ? item.dataBinding.operationId
-            : "";
+            ? String(item.dataBinding.operationId)
+            : "",
+        )
+        .filter(Boolean),
+    );
+    // Escopo «slide»: schema união inclui inputs de DataModel do slide.
+    const operationIds =
+      scope === "slide"
+        ? collectDataOperationIds({ blocks: configBlocks, dataModels })
+        : [...targetOperationIds];
+    const schemas: InputParamSchema[] = operationIds
+      .map((operationId) => {
         const route = routes.find((entry) => entry.operationId === operationId);
         return (route?.paramSchema ?? {}) as InputParamSchema;
       })
@@ -1247,7 +1264,7 @@ function EditorInputBlock({
         paramAvailable?: boolean;
       };
     };
-  }, [block, configBlocks, routes]);
+  }, [block, configBlocks, dataModels, routes]);
 
   const onPartPointerDown = useCallback(
     (part: ComunicadoInputPartRef, event?: ReactPointerEvent) => {

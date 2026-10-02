@@ -52,7 +52,12 @@ describe("multiSourceDataParams", () => {
       source("a", "get_refugo"),
       source("b", "get_retrabalho"),
     ]);
-    expect(Object.keys(schema).sort()).toEqual(["branch", "granularity", "periodDays"]);
+    expect(Object.keys(schema).sort()).toEqual([
+      "branch",
+      "excludeWeekends",
+      "granularity",
+      "periodDays",
+    ]);
     expect(schema.page).toBeUndefined();
   });
 

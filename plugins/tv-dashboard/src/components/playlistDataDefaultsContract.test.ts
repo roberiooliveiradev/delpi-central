@@ -14,9 +14,9 @@ describe("playlist dataDefaults editor contract", () => {
     expect(fields).toContain("playlistFiltersEmpty");
   });
 
-  it("filtros do slide usam só operationIds das fontes do slide (mesmos campos que Programação)", () => {
+  it("filtros do slide usam só operationIds dos alvos do slide — fontes + DataModel inputs (mesmos campos que Programação)", () => {
     const panel = readFileSync(join(here, "SlideDataFiltersPanel.tsx"), "utf8");
-    expect(panel).toContain("collectFetchableOperationIds");
+    expect(panel).toContain("collectDataOperationIds");
     expect(panel).toContain("mergeRouteParamSchemas");
     expect(panel).not.toContain("omitSchemaKeysCoveredByDefaults");
     expect(panel).not.toContain("mergeParamSchemas(routes)");

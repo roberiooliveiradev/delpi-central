@@ -568,4 +568,69 @@ describe("useComunicadoDataPreview", () => {
     ]);
     expect(result.current.loading).toBe(false);
   });
+
+  it("MODEL_FORCE_REFRESH_BYPASSES_CACHE: refreshDataPreview({force}) refaz preview-model com forceRefresh", async () => {
+    const hydrated = enrichComunicadoConfigForEditor(
+      {
+        version: 2,
+        background: { type: "color", value: "#ffffff" },
+        dataModels: [
+          {
+            id: "dm-1",
+            primaryInputId: "in-1",
+            inputs: [
+              { id: "in-1", operationId: "get_comercial_rol_summary", params: {} },
+            ],
+          },
+        ],
+        blocks: [
+          {
+            id: "kpi-1",
+            type: "kpi_view",
+            frame: { x: 0, y: 0, w: 20, h: 10 },
+            modelId: "dm-1",
+            textProjection: { field: "meta_ytd" },
+          },
+        ],
+      },
+      "pl-1",
+    );
+
+    mockedModelPreview.mockResolvedValue({
+      model: { resolved: { table: { rows: [{ meta_ytd: 1 }] } } },
+    } as Awaited<ReturnType<typeof previewDataModelV2>>);
+
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({
+        playlistId: "pl-1",
+        config: hydrated,
+      }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.resolvedByBlockId["dm-1"]?.table?.rows).toEqual([
+      { meta_ytd: 1 },
+    ]);
+
+    mockedModelPreview.mockClear();
+    mockedModelPreview.mockResolvedValue({
+      model: { resolved: { table: { rows: [{ meta_ytd: 2 }] } } },
+    } as Awaited<ReturnType<typeof previewDataModelV2>>);
+
+    await act(async () => {
+      await result.current.refreshDataPreview({ force: true });
+    });
+
+    expect(mockedModelPreview).toHaveBeenCalledTimes(1);
+    expect(mockedModelPreview.mock.calls[0]?.[0]?.modelId).toBe("dm-1");
+    expect(mockedModelPreview.mock.calls[0]?.[0]?.forceRefresh).toBe(true);
+    // Preview novo substitui o cache de sessão — UI nunca repete resultado velho.
+    expect(result.current.resolvedByBlockId["dm-1"]?.table?.rows).toEqual([
+      { meta_ytd: 2 },
+    ]);
+    expect(result.current.refreshingSourceIds).toEqual([]);
+  });
 });

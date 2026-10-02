@@ -19,6 +19,7 @@ import {
   PERIOD_DAYS_PARAM,
   findDateRangeKeys,
 } from "../utils/dateRangePresets";
+import { collectDataOperationIds } from "../utils/collectPlaylistDataParamSchema";
 import {
   buildInputEditorValues,
   buildInputValueEditorSchema,
@@ -63,6 +64,11 @@ export function InputBindingInspector({ pane = false }: Props) {
     () => (config.blocks ?? []).filter((item) => isFetchableDataBlockType(item.type)),
     [config.blocks],
   );
+  const dataModels = useMemo(() => config.dataModels ?? [], [config.dataModels]);
+  // Escopo «slide» alcança fontes legacy + inputs de DataModel (o backend
+  // aplica slide_input_contrib aos dois). «sources» segue só fontes legacy —
+  // o backend não tem contribuição por-source para inputs de modelo.
+  const hasDataTargets = fetchable.length > 0 || dataModels.length > 0;
 
   const targetScope = block?.input?.targetScope === "sources" ? "sources" : "slide";
   const targetSourceIds = block?.input?.targetSourceIds ?? [];
@@ -74,17 +80,18 @@ export function InputBindingInspector({ pane = false }: Props) {
     return fetchable.filter((item) => idSet.has(item.id));
   }, [block, fetchable, targetScope, targetSourceIds]);
 
-  const operationIds = useMemo(
-    () =>
-      targetBlocks
-        .map((item) =>
-          "dataBinding" in item && item.dataBinding?.operationId
-            ? item.dataBinding.operationId
-            : "",
-        )
-        .filter(Boolean),
-    [targetBlocks],
-  );
+  const operationIds = useMemo(() => {
+    if (targetScope === "slide") {
+      return collectDataOperationIds({ blocks: config.blocks, dataModels });
+    }
+    return targetBlocks
+      .map((item) =>
+        "dataBinding" in item && item.dataBinding?.operationId
+          ? item.dataBinding.operationId
+          : "",
+      )
+      .filter(Boolean);
+  }, [targetScope, config.blocks, dataModels, targetBlocks]);
 
   const schemas = useMemo(() => schemasForTargets(routes, operationIds), [routes, operationIds]);
   const paramKeys = useMemo(() => intersectInputParamKeysWithPresets(schemas), [schemas]);
@@ -227,16 +234,16 @@ export function InputBindingInspector({ pane = false }: Props) {
         title="Campo / Filtro"
         hint={TV_DASHBOARD_HELP_TOOLTIPS.data.inputFilterPresets}
       >
-        {fetchable.length === 0 ? (
+        {!hasDataTargets ? (
           <p className="td-deck-inspector__hint">
-            Inclua uma fonte de dados no slide antes de configurar o filtro.
+            Inclua uma fonte de dados ou modelo no slide antes de configurar o filtro.
           </p>
         ) : null}
 
         <DeckField
           id="td-input-scope"
           label="Alvo"
-          hint="Dados da página = todas as fontes do slide. Dado específico = só as fontes que você marcar."
+          hint="Dados da página = todas as fontes e modelos do slide. Dado específico = só as fontes que você marcar."
         >
           <FormSelectControl
             id="td-input-scope"
@@ -289,14 +296,14 @@ export function InputBindingInspector({ pane = false }: Props) {
           id="td-input-param"
           label="Parâmetro"
           hint={
-            fetchable.length === 0
-              ? "Inclua uma fonte de dados no slide para listar parâmetros (período, filial…)."
+            !hasDataTargets
+              ? "Inclua uma fonte de dados ou modelo no slide para listar parâmetros (período, filial…)."
               : routes.length === 0
                 ? "Carregando catálogo de rotas…"
                 : paramKeys.length === 0
                   ? "As fontes alvo não expõem parâmetros filtráveis. Verifique se as fontes têm rota configurada."
                   : targetScope === "slide"
-                    ? "Dados da página: o valor aplica-se a todas as fontes do slide que aceitam este parâmetro."
+                    ? "Dados da página: o valor aplica-se a todas as fontes e modelos do slide que aceitam este parâmetro."
                     : "Dado específico: o valor aplica-se só às fontes marcadas acima."
           }
         >
@@ -306,7 +313,7 @@ export function InputBindingInspector({ pane = false }: Props) {
             portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
             className="td-input-param-select"
             searchable={paramKeys.length > 8}
-            disabled={fetchable.length === 0 || (routes.length === 0 && paramKeys.length === 0)}
+            disabled={!hasDataTargets || (routes.length === 0 && paramKeys.length === 0)}
             value={block.input.paramKey || ""}
             onChange={(value) => applyInputPatch({ paramKey: value, defaultValue: null })}
             options={[

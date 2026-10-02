@@ -15,6 +15,11 @@ import {
   applyDataParamRawUpdates,
   type DataParamUpdateValue,
 } from "../utils/applyDataParamUpdates";
+import {
+  buildDataModelParamPatch,
+  collectDataModelParamSchema,
+  resolveModelSharedParamValues,
+} from "../utils/dataModelParamProjection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { visibleParamSchema } from "../utils/dataParamSchema";
 import { DataParamFields } from "./DataParamFields";
@@ -82,6 +87,17 @@ export function DataModelInspector({ model, pane = false, layout = "pane" }: Pro
     }
     return map;
   }, [routeById]);
+
+  // «Filtros do modelo»: projeção agregada dos params dos inputs (schema
+  // união conflict-safe); edição faz fan-out mínimo via saveDataModel.
+  const modelSchema = useMemo(
+    () => collectDataModelParamSchema(routes, model),
+    [routes, model],
+  );
+  const modelShared = useMemo(
+    () => resolveModelSharedParamValues(model, routes, modelSchema.schema),
+    [model, routes, modelSchema],
+  );
 
   const isEmpty =
     !loading &&
@@ -172,6 +188,20 @@ export function DataModelInspector({ model, pane = false, layout = "pane" }: Pro
     });
   };
 
+  const saveModelFilters = (updates: Record<string, DataParamUpdateValue>) => {
+    const next = buildDataModelParamPatch(model, routes, updates);
+    if (!next) return;
+    setBusy(true);
+    setActionError(null);
+    void saveDataModel(next)
+      .catch((err: unknown) => {
+        setActionError(
+          err instanceof Error ? err.message : "Falha ao salvar os filtros do modelo.",
+        );
+      })
+      .finally(() => setBusy(false));
+  };
+
   const onDelete = () => {
     setBusy(true);
     setActionError(null);
@@ -260,6 +290,44 @@ export function DataModelInspector({ model, pane = false, layout = "pane" }: Pro
           </button>
         </div>
       </DeckPropertySection>
+
+      {Object.keys(modelSchema.schema).length > 0 || modelSchema.conflicts.length > 0 ? (
+        <DeckPropertySection
+          pane={pane}
+          title="Filtros do modelo"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.modelFilters}
+          defaultOpen
+        >
+          {modelSchema.conflicts.length > 0 ? (
+            <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
+              {TV_DASHBOARD_HELP_TOOLTIPS.data.modelFiltersConflict.replace(
+                "{keys}",
+                modelSchema.conflicts.map((conflict) => conflict.key).join(", "),
+              )}
+            </p>
+          ) : null}
+          {Object.keys(modelSchema.schema).length > 0 ? (
+            <DataParamFields
+              schema={modelSchema.schema}
+              values={modelShared.values}
+              divergedKeys={modelShared.divergedKeys}
+              idPrefix="td-model-filter"
+              filterLayer="multi"
+              expressionSupport={expressionSupport}
+              resolved={resolved}
+              onChange={saveModelFilters}
+            />
+          ) : null}
+          {modelShared.partialKeys.size > 0 ? (
+            <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
+              {TV_DASHBOARD_HELP_TOOLTIPS.data.modelFiltersPartial.replace(
+                "{keys}",
+                [...modelShared.partialKeys].join(", "),
+              )}
+            </p>
+          ) : null}
+        </DeckPropertySection>
+      ) : null}
 
       <DeckPropertySection pane={pane} title="Rotas do modelo" defaultOpen>
         <ul className="td-project-sources-list">

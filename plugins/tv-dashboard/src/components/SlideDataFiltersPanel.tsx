@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Filter } from "lucide-react";
-import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import {
-  collectFetchableOperationIds,
+  collectDataOperationIds,
   mergeRouteParamSchemas,
 } from "../utils/collectPlaylistDataParamSchema";
 import { DataParamFields } from "./DataParamFields";
@@ -36,8 +35,8 @@ export function SlideDataFiltersPanel({
   }, []);
 
   const operationIds = useMemo(
-    () => collectFetchableOperationIds((config.blocks ?? []) as ComunicadoBlock[]),
-    [config.blocks],
+    () => collectDataOperationIds(config),
+    [config],
   );
 
   const schema = useMemo(

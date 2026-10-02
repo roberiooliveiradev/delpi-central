@@ -365,29 +365,64 @@ export function DataRibbonFieldFlyout({ model }: { model: DataRibbonModel }) {
 export function DataRibbonPeriodFlyout({ model }: { model: DataRibbonModel }) {
   const periodKeys = periodParamFieldKeys(Object.keys(model.paramSchema));
 
-  if (!model.bindingTarget || Object.keys(model.paramSchema).length === 0) {
+  if ((!model.bindingTarget && !model.bindingModel) || Object.keys(model.paramSchema).length === 0) {
     return <RibbonHint>Vincule uma fonte para configurar o período.</RibbonHint>;
   }
 
   return (
-    <DataParamFields
-      schema={model.paramSchema}
-      values={model.params}
-      layout="pane"
-      idPrefix="td-ribbon-period"
-      openEndedDateRange={Boolean(model.route?.openEndedDateRange)}
-      expressionSupport={model.expressionSupport}
-      fixedQueryParams={model.route?.fixedQueryParams}
-      onlyParams={periodKeys}
-      resolved={model.resolved}
-      onChange={model.updateParams}
-    />
+    <>
+      {model.bindingModel ? (
+        <RibbonHint>Aplica às rotas compatíveis do modelo ligado.</RibbonHint>
+      ) : null}
+      <DataParamFields
+        schema={model.paramSchema}
+        values={model.params}
+        divergedKeys={model.bindingModel ? model.modelDivergedKeys : undefined}
+        layout="pane"
+        idPrefix="td-ribbon-period"
+        openEndedDateRange={Boolean(model.route?.openEndedDateRange)}
+        expressionSupport={model.expressionSupport}
+        fixedQueryParams={model.bindingModel ? undefined : model.route?.fixedQueryParams}
+        onlyParams={periodKeys}
+        filterLayer={model.bindingModel ? "multi" : undefined}
+        resolved={model.resolved}
+        onChange={model.updateParams}
+      />
+    </>
   );
 }
 
-/** Flyout «Atualização» — mesmo campo do inspector (refreshSec da fonte). */
+/**
+ * Flyout «Atualização» — `refreshSec` da fonte (mesmo campo do inspector).
+ * Visual ligado a DataModel: modelo não tem refreshSec próprio — expõe a
+ * ação manual «Atualizar dados» (force refresh do modelo, ignora cache).
+ */
 export function DataRibbonRefreshFlyout({ model }: { model: DataRibbonModel }) {
-  const { globalRefreshSec } = useComunicadoEditor();
+  const { globalRefreshSec, refreshDataPreview, refreshingSourceIds } =
+    useComunicadoEditor();
+
+  if (model.bindingModel) {
+    const refreshing = refreshingSourceIds.includes(model.bindingModel.id);
+    return (
+      <>
+        <button
+          type="button"
+          className="td-btn td-btn--sm"
+          disabled={refreshing}
+          aria-busy={refreshing}
+          onClick={() =>
+            void refreshDataPreview({
+              force: true,
+              blockIds: [model.bindingModel!.id],
+            })
+          }
+        >
+          {refreshing ? "Atualizando…" : "Atualizar dados"}
+        </button>
+        <RibbonHint>{H.data.modelForceRefresh}</RibbonHint>
+      </>
+    );
+  }
 
   if (!model.binding) {
     return <RibbonHint>Vincule uma fonte para definir o intervalo.</RibbonHint>;
@@ -434,13 +469,15 @@ export function DataRibbonExpressionFlyout({
   const { openExpressionEditor } = useComunicadoEditor();
   const capable = model.expressionParams;
 
-  if (!model.bindingTarget) {
+  if (!model.bindingTarget && !model.bindingModel) {
     return <RibbonHint>Vincule uma fonte para usar expressões.</RibbonHint>;
   }
   if (capable.length === 0) {
     return (
       <RibbonHint>
-        Esta fonte não expõe parâmetros editáveis por expressão.
+        {model.bindingModel
+          ? "Nenhum parâmetro do modelo aceita expressão."
+          : "Esta fonte não expõe parâmetros editáveis por expressão."}
       </RibbonHint>
     );
   }
@@ -526,16 +563,19 @@ export function DataRibbonMoreFlyout({ model }: { model: DataRibbonModel }) {
 
   return (
     <>
-      {model.bindingTarget && Object.keys(model.paramSchema).length > 0 ? (
+      {(model.bindingTarget || model.bindingModel) &&
+      Object.keys(model.paramSchema).length > 0 ? (
         <DataParamFields
           schema={model.paramSchema}
           values={model.params}
+          divergedKeys={model.bindingModel ? model.modelDivergedKeys : undefined}
           layout="pane"
           idPrefix="td-ribbon-more"
           openEndedDateRange={Boolean(model.route?.openEndedDateRange)}
           expressionSupport={model.expressionSupport}
-          fixedQueryParams={model.route?.fixedQueryParams}
+          fixedQueryParams={model.bindingModel ? undefined : model.route?.fixedQueryParams}
           excludeParams={periodKeys}
+          filterLayer={model.bindingModel ? "multi" : undefined}
           resolved={model.resolved}
           onChange={model.updateParams}
         />
@@ -555,13 +595,13 @@ export function DataRibbonMoreFlyout({ model }: { model: DataRibbonModel }) {
       >
         Abrir painel de dados…
       </button>
-      {model.primary && model.binding ? (
+      {model.primary && (model.binding || model.bindingModel) ? (
         <button
           type="button"
           className="td-btn td-btn--sm td-btn--ghost"
           onClick={() => link.unlink()}
         >
-          Desvincular fonte
+          {model.bindingModel ? "Desvincular modelo" : "Desvincular fonte"}
         </button>
       ) : null}
     </>
