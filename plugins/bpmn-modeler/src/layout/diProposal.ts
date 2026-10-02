@@ -12,6 +12,7 @@ import type { LayoutSnapshot } from "./elkGraph";
 const BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL";
 const BPMNDI_NS = "http://www.omg.org/spec/BPMN/20100524/DI";
 const DC_NS = "http://www.omg.org/spec/DD/20100524/DC";
+const DI_NS = "http://www.omg.org/spec/DD/20100524/DI";
 
 const FLOW_NODES = new Set([
   "task", "userTask", "serviceTask", "scriptTask", "manualTask",
@@ -56,16 +57,54 @@ export function snapshotFromXml(xml: string): LayoutSnapshot {
   const nodes: LayoutSnapshot["nodes"] = [];
   const edges: LayoutSnapshot["edges"] = [];
 
-  const diSize = new Map<string, { width: number; height: number }>();
+  const readBounds = (el: Element | undefined) => {
+    if (!el) return undefined;
+    const b = {
+      x: Number(el.getAttribute("x")),
+      y: Number(el.getAttribute("y")),
+      width: Number(el.getAttribute("width")),
+      height: Number(el.getAttribute("height")),
+    };
+    return Object.values(b).every(Number.isFinite) ? b : undefined;
+  };
+  const readLabel = (diEl: Element) => {
+    const label = diEl.getElementsByTagNameNS(BPMNDI_NS, "BPMNLabel")[0];
+    return label
+      ? readBounds(label.getElementsByTagNameNS(DC_NS, "Bounds")[0])
+      : undefined;
+  };
+
+  const diSize = new Map<
+    string,
+    { x: number; y: number; width: number; height: number; label?: DiBounds }
+  >();
   for (const shape of Array.from(
     doc.getElementsByTagNameNS(BPMNDI_NS, "BPMNShape"),
   )) {
     const ref = shape.getAttribute("bpmnElement");
-    const b = shape.getElementsByTagNameNS(DC_NS, "Bounds")[0];
-    const width = Number(b?.getAttribute("width"));
-    const height = Number(b?.getAttribute("height"));
-    if (ref && Number.isFinite(width) && Number.isFinite(height)) {
-      diSize.set(ref, { width, height });
+    const b = readBounds(
+      shape.getElementsByTagNameNS(DC_NS, "Bounds")[0],
+    );
+    if (ref && b) {
+      diSize.set(ref, { ...b, label: readLabel(shape) });
+    }
+  }
+  const diEdge = new Map<
+    string,
+    { points: { x: number; y: number }[]; label?: DiBounds }
+  >();
+  for (const edge of Array.from(
+    doc.getElementsByTagNameNS(BPMNDI_NS, "BPMNEdge"),
+  )) {
+    const ref = edge.getAttribute("bpmnElement");
+    const points = Array.from(
+      edge.getElementsByTagNameNS(DI_NS, "waypoint"),
+    ).map((w) => ({
+      x: Number(w.getAttribute("x")),
+      y: Number(w.getAttribute("y")),
+    }));
+    if (ref && points.length) {
+      diEdge.set(ref, { points, label: readLabel(edge) });
     }
   }
 
@@ -82,8 +121,11 @@ export function snapshotFromXml(xml: string): LayoutSnapshot {
           id,
           type: `bpmn:${name}`,
           parentId,
+          x: size?.x,
+          y: size?.y,
           width: size?.width,
           height: size?.height,
+          labelBounds: size?.label,
           isBoundary: name === "boundaryEvent",
           attachedToId: child.getAttribute("attachedToRef") ?? undefined,
           isLane: name === "lane",
@@ -93,8 +135,16 @@ export function snapshotFromXml(xml: string): LayoutSnapshot {
       } else if (EDGES.has(name)) {
         const source = child.getAttribute("sourceRef");
         const target = child.getAttribute("targetRef");
-        if (source && target)
-          edges.push({ id, sourceId: source, targetId: target });
+        if (source && target) {
+          const di = diEdge.get(id);
+          edges.push({
+            id,
+            sourceId: source,
+            targetId: target,
+            points: di?.points,
+            labelBounds: di?.label,
+          });
+        }
       } else if (CONTAINERS.has(name) || name === "collaboration" || name === "definitions") {
         walk(child, parentId);
       }
@@ -117,12 +167,47 @@ export type DiLayoutOp = {
   elementId: string;
   bounds?: DiBounds;
   waypoints?: Array<{ x: number; y: number }>;
+  /** Bounds resolvidas da BPMNLabel externa (delta do owner). */
+  labelBounds?: DiBounds;
 };
 
 type LayoutGeometry = {
   bounds: Map<string, DiBounds>;
   edgePoints: Map<string, Array<{ x: number; y: number }>>;
+  /** Labels externas explicitas: novas bounds após o delta do owner. */
+  labels: Map<string, DiBounds>;
 };
+
+/** Ponto médio de uma polyline (50% do comprimento) — mesmo referencial
+ *  que o vendor usa para posicionar labels de connection. */
+export function polylineMid(
+  points: Array<{ x: number; y: number }>,
+): { x: number; y: number } {
+  if (!points.length) return { x: 0, y: 0 };
+  if (points.length === 1) return points[0];
+  let total = 0;
+  const segs: number[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const len = Math.hypot(
+      points[i].x - points[i - 1].x,
+      points[i].y - points[i - 1].y,
+    );
+    segs.push(len);
+    total += len;
+  }
+  let rest = total / 2;
+  for (let i = 0; i < segs.length; i++) {
+    if (rest <= segs[i] || i === segs.length - 1) {
+      const t = segs[i] === 0 ? 0 : rest / segs[i];
+      return {
+        x: points[i].x + (points[i + 1].x - points[i].x) * t,
+        y: points[i].y + (points[i + 1].y - points[i].y) * t,
+      };
+    }
+    rest -= segs[i];
+  }
+  return points[points.length - 1];
+}
 
 function computeGeometry(laidOut: ElkNode): LayoutGeometry {
   const bounds = new Map<string, DiBounds>();
@@ -153,7 +238,7 @@ function computeGeometry(laidOut: ElkNode): LayoutGeometry {
     for (const child of node.children ?? []) collect(child, x, y);
   };
   collect(laidOut);
-  return { bounds, edgePoints };
+  return { bounds, edgePoints, labels: new Map() };
 }
 
 /** Geometria final: posições ELK + width/height vigentes para nós que
@@ -173,6 +258,34 @@ function resolveGeometry(
       b.height = node.height;
     }
   }
+
+  // Labels externas explícitas acompanham o owner pelo mesmo delta,
+  // preservando offset custom do usuário e dims da label.
+  for (const node of snapshot.nodes) {
+    const label = node.labelBounds;
+    const nb = geometry.bounds.get(node.id);
+    if (!label || !nb || node.x == null || node.y == null) continue;
+    geometry.labels.set(node.id, {
+      x: label.x + (nb.x - node.x),
+      y: label.y + (nb.y - node.y),
+      width: label.width,
+      height: label.height,
+    });
+  }
+  const edgeById = new Map(snapshot.edges.map((e) => [e.id, e]));
+  for (const [id, pts] of geometry.edgePoints) {
+    const edge = edgeById.get(id);
+    const label = edge?.labelBounds;
+    if (!edge?.points?.length || !label) continue;
+    const midOld = polylineMid(edge.points);
+    const midNew = polylineMid(pts);
+    geometry.labels.set(id, {
+      x: label.x + (midNew.x - midOld.x),
+      y: label.y + (midNew.y - midOld.y),
+      width: label.width,
+      height: label.height,
+    });
+  }
   return geometry;
 }
 
@@ -181,11 +294,19 @@ export function buildDiOps(
   laidOut: ElkNode,
   snapshot: LayoutSnapshot,
 ): DiLayoutOp[] {
-  const { bounds, edgePoints } = resolveGeometry(laidOut, snapshot);
+  const { bounds, edgePoints, labels } = resolveGeometry(
+    laidOut,
+    snapshot,
+  );
   const ops: DiLayoutOp[] = [];
-  for (const [elementId, b] of bounds) ops.push({ elementId, bounds: b });
+  for (const [elementId, b] of bounds)
+    ops.push({ elementId, bounds: b, labelBounds: labels.get(elementId) });
   for (const [elementId, pts] of edgePoints)
-    ops.push({ elementId, waypoints: pts });
+    ops.push({
+      elementId,
+      waypoints: pts,
+      labelBounds: labels.get(elementId),
+    });
   return ops;
 }
 
@@ -207,7 +328,14 @@ export function buildDiXml(
   snapshot: LayoutSnapshot,
   planeElementId: string,
 ): string {
-  const { bounds, edgePoints } = resolveGeometry(laidOut, snapshot);
+  const { bounds, edgePoints, labels } = resolveGeometry(laidOut, snapshot);
+
+  const labelXml = (id: string) => {
+    const l = labels.get(id);
+    return l
+      ? `\n        <bpmndi:BPMNLabel id="lbl_${id}">\n          <dc:Bounds x="${round(l.x)}" y="${round(l.y)}" width="${round(l.width)}" height="${round(l.height)}"/>\n        </bpmndi:BPMNLabel>`
+      : "";
+  };
 
   const diagramId = `bpmndi_${Math.random().toString(36).slice(2, 10)}`;
   const planeId = `${diagramId}_plane`;
@@ -216,7 +344,7 @@ export function buildDiXml(
     .filter((n) => bounds.has(n.id))
     .map((n) => {
       const b = bounds.get(n.id)!;
-      return `      <bpmndi:BPMNShape id="shape_${n.id}" bpmnElement="${n.id}">\n        <dc:Bounds x="${round(b.x)}" y="${round(b.y)}" width="${round(b.width)}" height="${round(b.height)}"/>\n      </bpmndi:BPMNShape>`;
+      return `      <bpmndi:BPMNShape id="shape_${n.id}" bpmnElement="${n.id}">\n        <dc:Bounds x="${round(b.x)}" y="${round(b.y)}" width="${round(b.width)}" height="${round(b.height)}"/>${labelXml(n.id)}\n      </bpmndi:BPMNShape>`;
     });
 
   const diEdges = snapshot.edges
@@ -225,7 +353,7 @@ export function buildDiXml(
       const pts = edgePoints.get(e.id)!
         .map((p) => `        <di:waypoint x="${round(p.x)}" y="${round(p.y)}"/>`)
         .join("\n");
-      return `      <bpmndi:BPMNEdge id="edge_${e.id}" bpmnElement="${e.id}">\n${pts}\n      </bpmndi:BPMNEdge>`;
+      return `      <bpmndi:BPMNEdge id="edge_${e.id}" bpmnElement="${e.id}">\n${pts}${labelXml(e.id)}\n      </bpmndi:BPMNEdge>`;
     });
 
   return [

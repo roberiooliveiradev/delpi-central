@@ -147,6 +147,58 @@ describe("size preservation policy", () => {
     expect(byId.get("POOL")).toMatchObject({ width: 800, height: 400 });
   });
 
+  it("label externa acompanha o owner pelo delta; edge pelo mid", () => {
+    // shape T1 move de (10,10)→(300,300); label (15,100,60,14) → +290/+290
+    // edge F1 mid (0,0)→(100,100) → label (5,5,40,14) → +95/+95... verificar mid
+    const snapshot = {
+      nodes: [
+        { id: "T1", type: "bpmn:task", x: 10, y: 10, width: 100, height: 80,
+          labelBounds: { x: 15, y: 100, width: 60, height: 14 } },
+      ],
+      edges: [
+        { id: "F1", sourceId: "T1", targetId: "T2",
+          points: [{ x: 0, y: 0 }, { x: 100, y: 0 }],
+          labelBounds: { x: 40, y: -20, width: 40, height: 14 } },
+      ],
+    };
+    const laidOut = {
+      id: "__root__",
+      children: [{ id: "T1", x: 300, y: 300, width: 100, height: 80 }],
+      edges: [
+        { id: "F1", sources: ["T1"], targets: ["T2"],
+          sections: [{ startPoint: { x: 300, y: 200 }, endPoint: { x: 500, y: 200 } }] },
+      ],
+    };
+    const ops = buildDiOps(laidOut, snapshot);
+    const t1 = ops.find((o) => o.elementId === "T1")!;
+    expect(t1.labelBounds).toMatchObject({
+      x: 305,
+      y: 390,
+      width: 60,
+      height: 14,
+    });
+    const f1 = ops.find((o) => o.elementId === "F1")!;
+    // edge old mid = (50,0); new mid = (400,200) → label +350/+200
+    expect(f1.labelBounds).toMatchObject({
+      x: 390,
+      y: 180,
+      width: 40,
+      height: 14,
+    });
+  });
+
+  it("nó sem BPMNLabel no DI não emite labelBounds (vendor auto-posiciona)", () => {
+    const snapshot = {
+      nodes: [{ id: "T1", type: "bpmn:task", x: 0, y: 0, width: 100, height: 80 }],
+      edges: [],
+    };
+    const laidOut = {
+      id: "__root__",
+      children: [{ id: "T1", x: 50, y: 50, width: 100, height: 80 }],
+    };
+    expect(buildDiOps(laidOut, snapshot)[0].labelBounds).toBeUndefined();
+  });
+
   it("nó sem DI vigente aceita o tamanho ELK (primeiro layout)", () => {
     const snapshot = { nodes: [{ id: "T1", type: "bpmn:task" }], edges: [] };
     const laidOut = {

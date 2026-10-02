@@ -7,7 +7,7 @@
  * inteiro (não N comandos individuais). Só APIs públicas do diagram-js
  * são usadas (registerHandler/execute); nada de internals privados.
  */
-import type { DiBounds, DiLayoutOp } from "../layout/diProposal";
+import { polylineMid, type DiBounds, type DiLayoutOp } from "../layout/diProposal";
 
 type Point = { x: number; y: number };
 
@@ -27,6 +27,8 @@ type RegistryElement = {
   height?: number;
   waypoints?: Point[];
   di?: DiModdle;
+  /** Label element associado (external label) — acompanha o owner. */
+  label?: RegistryElement;
 };
 
 type OldEntry = {
@@ -38,7 +40,10 @@ type OldEntry = {
   waypoints?: Point[];
   diBounds?: DiBounds;
   diWaypoints?: Point[];
+  /** Bounds do BPMNLabel (moddle); undefined = DI não tinha bounds. */
   labelBounds?: DiBounds;
+  /** Coords anteriores do label element associado. */
+  labelEl?: { x?: number; y?: number; width?: number; height?: number };
 };
 
 type Context = {
@@ -84,6 +89,8 @@ export class ApplyDiLayoutHandler {
       const di = element?.di;
       if (!element || !di) continue;
 
+      const labelEl = element.label;
+      const labelDi = di.label;
       const prev: OldEntry = {
         element,
         x: element.x,
@@ -93,8 +100,29 @@ export class ApplyDiLayoutHandler {
         waypoints: element.waypoints,
         diBounds: di.bounds ? { ...di.bounds } : undefined,
         diWaypoints: di.waypoint,
-        labelBounds: di.label?.bounds ? { ...di.label.bounds } : undefined,
+        labelBounds: labelDi?.bounds ? { ...labelDi.bounds } : undefined,
+        labelEl: labelEl
+          ? {
+              x: labelEl.x,
+              y: labelEl.y,
+              width: labelEl.width,
+              height: labelEl.height,
+            }
+          : undefined,
       };
+
+      // delta do owner antes de mutar — label externa acompanha o owner.
+      let dx = 0;
+      let dy = 0;
+      if (op.bounds && element.x !== undefined) {
+        dx = op.bounds.x - element.x;
+        dy = op.bounds.y - element.y;
+      } else if (op.waypoints && element.waypoints?.length) {
+        const midOld = polylineMid(element.waypoints);
+        const midNew = polylineMid(op.waypoints);
+        dx = midNew.x - midOld.x;
+        dy = midNew.y - midOld.y;
+      }
 
       if (op.bounds && element.width !== undefined) {
         element.x = op.bounds.x;
@@ -123,6 +151,41 @@ export class ApplyDiLayoutHandler {
           pt.$parent = di;
           return pt;
         });
+      }
+
+      // Label externa: acompanha o owner pelo delta (preserva offset
+      // custom e dims). BPMNLabel explícito recebe bounds resolvidas.
+      if (labelEl && (dx !== 0 || dy !== 0 || op.labelBounds)) {
+        const lb = op.labelBounds;
+        labelEl.x = lb ? lb.x : (labelEl.x ?? 0) + dx;
+        labelEl.y = lb ? lb.y : (labelEl.y ?? 0) + dy;
+        if (lb) {
+          labelEl.width = lb.width;
+          labelEl.height = lb.height;
+        }
+        if (labelDi) {
+          const nb = {
+            x: labelEl.x ?? 0,
+            y: labelEl.y ?? 0,
+            width: labelEl.width ?? 0,
+            height: labelEl.height ?? 0,
+          };
+          if (labelDi.bounds) {
+            Object.assign(labelDi.bounds, nb);
+          } else {
+            const created = this.moddle.create<DiBounds & { $parent?: unknown }>(
+              "dc:Bounds",
+              nb,
+            );
+            created.$parent = labelDi;
+            labelDi.bounds = created;
+          }
+        }
+        this.graphicsFactory.update(
+          "shape",
+          labelEl,
+          this.elementRegistry.getGraphics(labelEl.id),
+        );
       }
 
       const type = element.waypoints ? "connection" : "shape";
@@ -166,12 +229,41 @@ export class ApplyDiLayoutHandler {
           di.bounds = undefined;
         }
         if (prev.diWaypoints) di.waypoint = prev.diWaypoints;
-        if (prev.labelBounds && di.label?.bounds) {
-          di.label.bounds.x = prev.labelBounds.x;
-          di.label.bounds.y = prev.labelBounds.y;
-          di.label.bounds.width = prev.labelBounds.width;
-          di.label.bounds.height = prev.labelBounds.height;
+        if (di.label) {
+          if (prev.labelBounds) {
+            const nb = {
+              x: prev.labelBounds.x,
+              y: prev.labelBounds.y,
+              width: prev.labelBounds.width,
+              height: prev.labelBounds.height,
+            };
+            if (di.label.bounds) {
+              Object.assign(di.label.bounds, nb);
+            } else {
+              const created = this.moddle.create<DiBounds & { $parent?: unknown }>(
+                "dc:Bounds",
+                nb,
+              );
+              created.$parent = di.label;
+              di.label.bounds = created;
+            }
+          } else {
+            // bounds criado pelo execute (DI não tinha) — remover
+            di.label.bounds = undefined;
+          }
         }
+      }
+      const labelEl = prev.labelEl ? element.label : undefined;
+      if (labelEl && prev.labelEl) {
+        labelEl.x = prev.labelEl.x;
+        labelEl.y = prev.labelEl.y;
+        labelEl.width = prev.labelEl.width;
+        labelEl.height = prev.labelEl.height;
+        this.graphicsFactory.update(
+          "shape",
+          labelEl,
+          this.elementRegistry.getGraphics(labelEl.id),
+        );
       }
       const type = element.waypoints ? "connection" : "shape";
       this.graphicsFactory.update(

@@ -18,15 +18,25 @@ export type LayoutNode = {
   isLane?: boolean;
   isParticipant?: boolean;
   /** Bounds DI atuais — auto-layout preserva o tamanho de não-containers. */
+  x?: number;
+  y?: number;
   width?: number;
   height?: number;
+  /** BPMNLabel explícito do DI (label externa). */
+  labelBounds?: LayoutBounds;
 };
 
 export type LayoutEdge = {
   id: string;
   sourceId: string;
   targetId: string;
+  /** Waypoints DI atuais — necessários para mover a label da edge. */
+  points?: { x: number; y: number }[];
+  /** BPMNLabel explícito do DI. */
+  labelBounds?: LayoutBounds;
 };
+
+export type LayoutBounds = { x: number; y: number; width: number; height: number };
 
 export type LayoutSnapshot = {
   nodes: LayoutNode[];
