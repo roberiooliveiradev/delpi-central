@@ -52,7 +52,7 @@ services:
       - delpi-network
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.0.7
+    image: quay.io/keycloak/keycloak:24.0
     command: ["start"]
     environment:
       KC_DB: postgres
@@ -62,8 +62,14 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
 
-      # DÉLIA MCP user-delegated token exchange requires both features;
-      # provisioned by infra/scripts/keycloak-prod-delia-mcp-provision.sh
+      # DÉLIA MCP user-delegated identity (KC24 legacy internal→internal
+      # token exchange, Preview feature): token-exchange + the
+      # admin-fine-grained-authz endpoints the provisioner uses to bind
+      # the delia-exchange-requester policy to each MCP resource client.
+      # Both are REQUIRED on KC24 — management/permissions returns HTTP 500
+      # (NPE) without admin-fine-grained-authz. Proven on isolated 24.0.5.
+      # Provisioned by infra/scripts/keycloak-prod-delia-mcp-provision.sh
+      # (--strategy KC24_LEGACY). KC26 migration is deferred hardening.
       KC_FEATURES: ${KC_FEATURES:-token-exchange,admin-fine-grained-authz}
 
       KC_HTTP_ENABLED: "${KC_HTTP_ENABLED}"

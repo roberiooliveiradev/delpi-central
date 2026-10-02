@@ -127,6 +127,7 @@ fi
 #   * DELIA_EXCHANGE_CLIENT_SECRET upserted into gitignored infra/.env.
 KC_ADMIN_TOKEN="$ADMIN_TOKEN" KC_BASE="$KC_BASE" REALM="$REALM" \
   PORTAL_CLIENT_ID="$CLIENT_ID" \
+  DELIA_KC_STRATEGY=KC26_STANDARD \
   DELIA_MCP_AUDIENCE_BASE="${DELIA_MCP_AUDIENCE_BASE:-https://minhadelpi.com.br}" \
   python3 "$SCRIPT_DIR/delia_mcp_keycloak_state.py" --apply \
     --install-secret-to "$INFRA_DIR/.env"

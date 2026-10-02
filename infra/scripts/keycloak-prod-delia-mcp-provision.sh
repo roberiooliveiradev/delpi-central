@@ -10,9 +10,9 @@
 #     the engine fails closed otherwise (they are never created here);
 #   * no user creation, no password reset, no SQL/DB access, no realm or
 #     volume deletion — ever;
-#   * Keycloak >= 26 required (standard token-exchange contract proven in
-#     DEV); the engine fails closed on older versions — run the documented
-#     Keycloak upgrade as a SEPARATE reviewed operation first;
+#   * Keycloak 24 required — production runs the KC24_LEGACY strategy
+#     (legacy internal->internal token exchange, Preview feature); the
+#     engine fails closed on any other major version;
 #   * secrets are never printed; DELIA_EXCHANGE_CLIENT_SECRET is installed
 #     ONLY when --install-secret-to <gitignored-path> is passed explicitly.
 #
@@ -84,5 +84,6 @@ for arg in "$@"; do
   esac
 done
 
-echo "[kc-prod-provision] mode=$MODE realm=${KEYCLOAK_REALM:-delpi} base=${KC_BASE:-$KEYCLOAK_URL}"
-exec python3 "$ENGINE" "$MODE" ${PASS[@]+"${PASS[@]}"}
+echo "[kc-prod-provision] mode=$MODE realm=${KEYCLOAK_REALM:-delpi} base=${KC_BASE:-$KEYCLOAK_URL} strategy=KC24_LEGACY"
+exec python3 "$ENGINE" "$MODE" --strategy KC24_LEGACY \
+  ${PASS[@]+"${PASS[@]}"}

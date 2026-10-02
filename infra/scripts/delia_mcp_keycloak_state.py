@@ -31,10 +31,24 @@ Modes:
     failure. Never writes.
   * ``--apply``: converges the bounded contract idempotently.
 
-Requires Keycloak >= 26 (the ``standard.token.exchange.enabled``
-contract and the admin-fine-grained-authz resource-server endpoints
-proven by the DEV model). Older versions fail closed — this engine
-never emulates a legacy token-exchange contract.
+Two explicit infrastructure strategies exist because there are two
+proven physical contracts (selected via ``--strategy`` or
+``DELIA_KC_STRATEGY``, pinned by the DEV/PROD wrappers):
+
+* ``KC24_LEGACY`` — production baseline: Keycloak 24.x with
+  ``KC_FEATURES=token-exchange,admin-fine-grained-authz`` (both
+  PREVIEW). Legacy internal→internal token exchange; the requester
+  client does NOT carry ``standard.token.exchange.enabled`` (KC26-only
+  attribute, never written in this mode).
+* ``KC26_STANDARD`` — DEV: Keycloak 26.x with the
+  ``standard.token.exchange.enabled`` requester attribute and the same
+  fine-grained permission endpoints.
+
+The strategy is validated against the actual server major version and
+fails closed on mismatch or unknown versions. The desired semantic
+state (scopes, resource clients, requester, exchange policy,
+permissions, portal audience) is identical; only the version-specific
+mechanics differ.
 
 Secret installation is opt-in and explicit: ``--install-secret-to
 PATH`` (apply mode only) upserts ``DELIA_EXCHANGE_CLIENT_SECRET`` into
@@ -68,7 +82,12 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-REQUIRED_MAJOR_VERSION = 26
+# strategy name → accepted server major versions
+STRATEGY_MAJORS = {
+    "KC24_LEGACY": (24,),
+    "KC26_STANDARD": (26,),
+}
+DEFAULT_STRATEGY = "KC24_LEGACY"
 
 SPECIALISTS = (
     # (resource client_id, audience scope name, public path suffix)
@@ -222,12 +241,21 @@ class Provisioner:
     """Converges/inspects the bounded DÉLIA MCP IAM contract."""
 
     def __init__(self, admin: KcAdmin, realm: str, portal_client_id: str,
-                 public_base_url: str, apply: bool = False) -> None:
+                 public_base_url: str, apply: bool = False,
+                 strategy: str = DEFAULT_STRATEGY) -> None:
+        if strategy not in STRATEGY_MAJORS:
+            raise ProvisioningError(
+                f"unknown strategy {strategy!r} — supported: "
+                + ", ".join(sorted(STRATEGY_MAJORS)))
         self.admin = admin
         self.realm = realm
         self.portal_client_id = portal_client_id
         self.public_base_url = public_base_url.rstrip("/")
         self.apply = apply
+        self.strategy = strategy
+        # KC26-only client attribute; never written on the KC24 legacy
+        # contract where the preview exchange needs no client flag.
+        self._needs_std_exchange_attr = strategy == "KC26_STANDARD"
         self.report = DriftReport()
         self._client_uuid_cache: dict[str, str] = {}
 
@@ -400,12 +428,14 @@ class Provisioner:
         element = f"requester client {REQUESTER_CLIENT_ID}"
         uuid_ = self.client_uuid(REQUESTER_CLIENT_ID)
         if not uuid_:
+            body = {"clientId": REQUESTER_CLIENT_ID, "enabled": True,
+                    "protocol": "openid-connect",
+                    **REQUESTER_DESIRED_FLAGS}
+            if self._needs_std_exchange_attr:
+                body["attributes"] = \
+                    {"standard.token.exchange.enabled": "true"}
             self._mutate(element, "POST", f"/realms/{self.realm}/clients",
-                         {"clientId": REQUESTER_CLIENT_ID, "enabled": True,
-                          "protocol": "openid-connect",
-                          "attributes":
-                              {"standard.token.exchange.enabled": "true"},
-                          **REQUESTER_DESIRED_FLAGS},
+                         body,
                          f"create requester client {REQUESTER_CLIENT_ID}")
             self._client_uuid_cache.pop(REQUESTER_CLIENT_ID, None)
             return self.client_uuid(REQUESTER_CLIENT_ID)
@@ -414,7 +444,8 @@ class Provisioner:
         dirty = [k for k, v in REQUESTER_DESIRED_FLAGS.items()
                  if full.get(k) != v]
         attrs = full.get("attributes", {})
-        if attrs.get("standard.token.exchange.enabled") != "true":
+        if self._needs_std_exchange_attr and \
+                attrs.get("standard.token.exchange.enabled") != "true":
             dirty.append("standard.token.exchange.enabled")
         if dirty:
             if not self.apply:
@@ -422,8 +453,9 @@ class Provisioner:
                                   + ",".join(sorted(dirty)))
             else:
                 full.update(REQUESTER_DESIRED_FLAGS)
-                attrs["standard.token.exchange.enabled"] = "true"
-                full["attributes"] = attrs
+                if self._needs_std_exchange_attr:
+                    attrs["standard.token.exchange.enabled"] = "true"
+                    full["attributes"] = attrs
                 self.admin.call(
                     "PUT", f"/realms/{self.realm}/clients/{uuid_}", full)
                 self.report.ok(element, "repaired: "
@@ -631,7 +663,14 @@ class Provisioner:
                 self.report.ok(element, f"resource client {client_id}")
 
         requester_uuid = self.ensure_requester()
-        self.ensure_portal_audience()
+        # KC24 legacy V1 does not require subject-token eligibility for the
+        # requester (proven on isolated 24.0.5: a subject token minted by a
+        # client without delia-api in aud still exchanges; the gate is the
+        # target-client token-exchange permission). Only the KC26 standard
+        # contract needs the Portal audience mapper — skipping it on KC24
+        # keeps the production Portal client completely untouched.
+        if self._needs_std_exchange_attr:
+            self.ensure_portal_audience()
 
         rm_uuid = self.client_uuid("realm-management")
         if not rm_uuid:
@@ -745,9 +784,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--install-secret-to", metavar="PATH",
                         help="upsert DELIA_EXCHANGE_CLIENT_SECRET into a "
                              "gitignored env file (apply mode only)")
-    parser.add_argument("--min-major-version", type=int,
-                        default=REQUIRED_MAJOR_VERSION,
-                        help="minimum supported Keycloak major version")
+    parser.add_argument("--strategy", choices=sorted(STRATEGY_MAJORS),
+                        default=_env("DELIA_KC_STRATEGY")
+                        or DEFAULT_STRATEGY,
+                        help="infrastructure strategy matching the target "
+                             "Keycloak line (pinned by the DEV/PROD "
+                             "wrappers; validated against the actual "
+                             "server version — fail-closed on mismatch)")
     args = parser.parse_args(argv)
 
     kc_base = _env("KC_BASE") or _env("KC_BASE_URL") or _env("KEYCLOAK_URL")
@@ -774,18 +817,21 @@ def main(argv: list[str] | None = None) -> int:
             admin_token = mint_admin_token(kc_base, admin_user, admin_pass)
 
         version = server_version(kc_base, admin_token)
-        print(f"[delia-mcp-provision] keycloak {version} at {kc_base}")
-        if _major(version) < args.min_major_version:
+        print(f"[delia-mcp-provision] keycloak {version} at {kc_base} "
+              f"(strategy {args.strategy})")
+        major = _major(version)
+        if major not in STRATEGY_MAJORS[args.strategy]:
             raise ProvisioningError(
-                f"Keycloak {version} < required {args.min_major_version}.x "
-                "— the standard token-exchange contract is unsupported; "
-                "upgrade Keycloak first (runbook precondition), this tool "
-                "fails closed on legacy versions")
+                f"strategy {args.strategy} does not match server "
+                f"Keycloak {version or 'unknown'} — expected major "
+                f"{STRATEGY_MAJORS[args.strategy]}; fail closed instead "
+                "of emulating a different contract")
 
         admin = KcAdmin(kc_base, admin_token)
         provisioner = Provisioner(
             admin, realm=realm, portal_client_id=portal,
-            public_base_url=public_base, apply=args.apply)
+            public_base_url=public_base, apply=args.apply,
+            strategy=args.strategy)
         report = provisioner.converge()
 
         for element, status, note in report.items:
