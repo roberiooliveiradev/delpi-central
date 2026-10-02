@@ -187,15 +187,6 @@ def davi_mcp_transport_security() -> TransportSecuritySettings:
 
 
 def create_mcp_server() -> MCPServer:
-    try:
-        from app.composition.davi_dynamic_read_composer import (
-            refresh_davi_action_index_from_live_openapi,
-        )
-
-        refresh_davi_action_index_from_live_openapi()
-    except Exception as exc:
-        logger.warning("DAVI action index live OpenAPI refresh skipped: %s", exc)
-
     mcp = ApiDelpiMCPServer(
         name="api-delpi",
         instructions=DAVI_MCP_INSTRUCTIONS,

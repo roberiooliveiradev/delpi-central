@@ -1,4 +1,5 @@
 # app/main.py
+import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -131,6 +132,8 @@ def build_allowed_origins() -> list[str]:
 
 ALLOWED_ORIGINS = build_allowed_origins()
 
+logger = logging.getLogger(__name__)
+
 check_credentials()
 
 # ==========================================================
@@ -141,6 +144,16 @@ check_credentials()
 async def _app_lifespan(app: FastAPI):
     run_plugins_migrations_on_startup()
     schedule_openapi_consumer_notify_on_startup()
+    # Live DAVI action-index bootstrap belongs to app startup: only here is the
+    # FastAPI route table complete, so app.openapi() is the authoritative source.
+    try:
+        from app.composition.davi_dynamic_read_composer import (
+            refresh_davi_action_index_from_live_openapi,
+        )
+
+        refresh_davi_action_index_from_live_openapi()
+    except Exception as exc:
+        logger.warning("DAVI action index live OpenAPI refresh skipped: %s", exc)
     try:
         yield
     finally:
