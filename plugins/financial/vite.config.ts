@@ -11,18 +11,24 @@ import {
   reactResolveAliases,
 } from "../vite/federation.shared";
 
+const isVitest = Boolean(process.env.VITEST);
+
 export default defineConfig({
   plugins: [
-    federation({
-      name: "financial",
-      filename: "remoteEntry.js",
-      remotes: pluginUiRemote(),
-      exposes: {
-        "./App": "./src/bootstrap.tsx",
-      },
-      shared: { ...FEDERATION_SHARED_REACT },
-    }),
-    federationReactProxyFixPlugin(),
+    ...(isVitest
+      ? []
+      : [
+          federation({
+            name: "financial",
+            filename: "remoteEntry.js",
+            remotes: pluginUiRemote(),
+            exposes: {
+              "./App": "./src/bootstrap.tsx",
+            },
+            shared: { ...FEDERATION_SHARED_REACT },
+          }),
+          federationReactProxyFixPlugin(),
+        ]),
     react(),
   ],
   resolve: {

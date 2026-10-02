@@ -1,0 +1,218 @@
+"""Cliente HTTP da api-delpi para a financial-api (NF-e de entrada).
+
+O Questor fica só na financial-api. Este client repassa o JWT do usuário
+e não conhece token, cookie nem URL de login do provedor.
+"""
+from __future__ import annotations
+
+import time
+from typing import Any, Callable
+from urllib.parse import quote
+
+import httpx
+
+from app.config import settings
+
+_TRANSIENT_STATUS = {408, 429, 502, 503, 504}
+_MAX_ATTEMPTS = 3
+_MAX_PDF_BYTES = 10_485_760
+_DOCUMENT_ID_LENGTH = 24
+_ACCESS_KEY_LENGTH = 44
+
+
+class FinancialReceivedInvoiceGatewayError(Exception):
+    def __init__(self, message: str, status_code: int) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class FinancialReceivedInvoiceGateway:
+    def __init__(
+        self,
+        *,
+        client: httpx.Client | None = None,
+        base_url: str | None = None,
+        timeout_seconds: float | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
+        self._client = client
+        self._base_url = (base_url or settings.FINANCIAL_API_BASE_URL).rstrip("/")
+        self._timeout_seconds = float(
+            timeout_seconds if timeout_seconds is not None else settings.FINANCIAL_API_TIMEOUT_SECONDS
+        )
+        self._sleep = sleep
+
+    def list_received_invoices(
+        self,
+        *,
+        authorization: str,
+        invoice_number: str | None,
+        supplier_cnpj: str | None,
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        params: dict[str, str] = {
+            "page": str(page),
+            "pageSize": str(page_size),
+        }
+        if invoice_number:
+            params["invoiceNumber"] = invoice_number
+        if supplier_cnpj:
+            params["supplierCnpj"] = supplier_cnpj
+        response = self._get("/invoices/received", authorization=authorization, params=params)
+        payload = _json_payload(response)
+        if response.status_code >= 400 or payload.get("success") is False:
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível consultar as notas fiscais."),
+                _mapped_status(response.status_code),
+            )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise FinancialReceivedInvoiceGatewayError(
+                "A consulta de notas fiscais retornou um formato inválido.",
+                502,
+            )
+        return data
+
+    def download_danfe(
+        self,
+        *,
+        authorization: str,
+        document_id: str,
+        access_key: str,
+    ) -> tuple[bytes, str]:
+        normalized_id = _document_id(document_id)
+        normalized_key = _access_key(access_key)
+        response = self._get(
+            f"/invoices/received/{quote(normalized_id, safe='')}/danfe",
+            authorization=authorization,
+            params={"accessKey": normalized_key},
+        )
+        if response.status_code >= 400:
+            payload = _json_payload(response)
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível obter o DANFE."),
+                _mapped_status(response.status_code),
+            )
+        content = response.content or b""
+        declared = response.headers.get("content-length")
+        if declared and declared.isdigit() and int(declared) > _MAX_PDF_BYTES:
+            raise FinancialReceivedInvoiceGatewayError("O DANFE excede o tamanho permitido.", 502)
+        if len(content) > _MAX_PDF_BYTES or not content.startswith(b"%PDF"):
+            raise FinancialReceivedInvoiceGatewayError("O DANFE retornado não é um PDF válido.", 502)
+        return content, f"NFe-{normalized_key}.pdf"
+
+    def _get(
+        self,
+        path: str,
+        *,
+        authorization: str,
+        params: dict[str, str],
+    ) -> httpx.Response:
+        token = str(authorization or "").strip()
+        if not token.lower().startswith("bearer "):
+            raise FinancialReceivedInvoiceGatewayError("Sessão ausente para consultar as notas.", 401)
+        headers = {"Authorization": token, "Accept": "application/json, application/pdf"}
+        last_error: FinancialReceivedInvoiceGatewayError | None = None
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                response = self._send(path, headers=headers, params=params)
+            except httpx.TimeoutException:
+                last_error = FinancialReceivedInvoiceGatewayError(
+                    "A consulta de notas fiscais demorou além do limite.",
+                    503,
+                )
+            except httpx.HTTPError:
+                last_error = FinancialReceivedInvoiceGatewayError(
+                    "A consulta de notas fiscais está indisponível.",
+                    503,
+                )
+            else:
+                if response.status_code not in _TRANSIENT_STATUS or attempt == _MAX_ATTEMPTS:
+                    return response
+                self._sleep(_retry_delay(attempt, response))
+                continue
+            if attempt == _MAX_ATTEMPTS and last_error is not None:
+                raise last_error
+            self._sleep(_retry_delay(attempt, None))
+        raise FinancialReceivedInvoiceGatewayError(
+            "A consulta de notas fiscais está indisponível.",
+            503,
+        )
+
+    def _send(self, path: str, *, headers: dict[str, str], params: dict[str, str]) -> httpx.Response:
+        timeout = _timeout(self._timeout_seconds)
+        if self._client is not None:
+            return self._client.get(
+                f"{self._base_url}{path}",
+                headers=headers,
+                params=params,
+                timeout=timeout,
+            )
+        with httpx.Client(timeout=timeout, follow_redirects=False) as client:
+            return client.get(
+                f"{self._base_url}{path}",
+                headers=headers,
+                params=params,
+            )
+
+
+def _timeout(total: float) -> httpx.Timeout:
+    bounded = max(1.0, total)
+    short = min(10.0, bounded)
+    return httpx.Timeout(connect=short, read=bounded, write=short, pool=short)
+
+
+def _retry_delay(attempt: int, response: httpx.Response | None) -> float:
+    if response is not None:
+        retry_after = response.headers.get("retry-after", "")
+        if retry_after.isdigit():
+            return min(int(retry_after), 2)
+    return min(0.2 * (2 ** (attempt - 1)), 2)
+
+
+def _json_payload(response: httpx.Response) -> dict[str, Any]:
+    try:
+        payload = response.json()
+    except ValueError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _safe_message(payload: dict[str, Any], fallback: str) -> str:
+    message = str(payload.get("message") or "").strip()
+    lowered = message.lower()
+    if (
+        not message
+        or "<" in message
+        or "entrarcomtoken" in lowered
+        or "token=" in lowered
+        or "questorpublico" in lowered
+    ):
+        return fallback
+    return message[:300]
+
+
+def _mapped_status(status_code: int) -> int:
+    if status_code in {401, 403, 404, 422, 502, 503}:
+        return status_code
+    if 400 <= status_code < 500:
+        return 422
+    return 502
+
+
+def _document_id(value: str) -> str:
+    normalized = str(value or "").strip().lower()
+    if len(normalized) != _DOCUMENT_ID_LENGTH or any(ch not in "0123456789abcdef" for ch in normalized):
+        raise FinancialReceivedInvoiceGatewayError(
+            "Identificador do DANFE inválido.",
+            422,
+        )
+    return normalized
+
+
+def _access_key(value: str) -> str:
+    normalized = str(value or "").strip()
+    if len(normalized) != _ACCESS_KEY_LENGTH or not normalized.isdigit():
+        raise FinancialReceivedInvoiceGatewayError("Chave de acesso inválida.", 422)
+    return normalized

@@ -1,8 +1,8 @@
 # financial-api
 
-BFF do **Portal Financeiro**. Dono do catálogo de subplugins, do RBAC de filial, do cache e da agregação da gestão à vista. SQL TOTVS permanece na api-delpi; IDD/IGD vêm do strategic-indicators-api.
+BFF do **Portal Financeiro**. Dono do catálogo de subplugins, do RBAC de filial, do cache, da agregação da gestão à vista e, nesta V1, da integração com o Questor Zen para NF-e de entrada. SQL TOTVS permanece na api-delpi; IDD/IGD vêm do strategic-indicators-api. O Questor não passa pela api-delpi.
 
-O MFE fala **apenas** com esta API (`/apps/financial-api`). SQL TOTVS permanece na api-delpi.
+O MFE fala **apenas** com esta API (`/apps/financial-api`).
 
 ## Endpoints
 
@@ -16,6 +16,8 @@ O MFE fala **apenas** com esta API (`/apps/financial-api`). SQL TOTVS permanece 
 | GET | `/delinquency/{summary,monthly,aging,customers,titles}` | JWT + `financial.delinquency.view` + ambas as filiais |
 | GET | `/cost-centers/{filters,summary,series,ranking-cost-centers,ranking-suppliers,entries}` | JWT + `financial.cost-centers.view` + filial |
 | GET | `/freight/{dashboard,inconsistencies}` | JWT + `financial.freight.view` + filial |
+| GET | `/invoices/received` | JWT + `financial.access` + `financial.invoices.view` |
+| GET | `/invoices/received/{document_id}/danfe?accessKey=` | JWT + `financial.access` + `financial.invoices.view` |
 | GET | `/indicators/department` | JWT + `financial.indicators.view` |
 | GET | `/indicators/global` | JWT + `financial.indicators.view` |
 
@@ -46,6 +48,32 @@ Três decisões sustentam o número:
 - **Inconsistência não vira zero.** Vínculo sem NF, sem CT-e, com valor não positivo, repetido, sem base ou com espécie fora do padrão sai classificado com código, fica **fora** dos totais e aparece em `/freight/inconsistencies`.
 
 Limites por filial, data de corte (`minimumIssueDate`), espécies especiais, TTL de cache e todos os textos ficam em `financial_app/content/freight.json`. A consulta exige um intervalo completo de emissão **ou** de digitação da NF.
+
+### Notas fiscais de entrada — Questor Zen
+
+```text
+Portal Financeiro
+  → financial-api  (JWT Minha DELPI)
+  → adapter Questor
+  → https://alliance.app.questorpublico.com.br
+```
+
+`GET /invoices/received` lista NF-e de entrada. `GET /invoices/received/{document_id}/danfe?accessKey=` devolve o PDF. Sem token configurado, só estas rotas respondem 503; o restante do portal continua.
+
+Filtros da V1: `invoiceNumber`, `value` (valor exato) e `supplierCnpj` (14 dígitos, pontuação aceita na entrada). O valor exato é traduzido só no gateway Questor para `ValueOf` e `ToValue`, com vírgula decimal (`108,00`). O ponto é separador de milhar nesse portal, e o parâmetro `Value` não fecha o intervalo. Paginação server-side (`page`, `pageSize` máximo 100). Não há filtro por nome de fornecedor nem por filial: a conta Questor ainda não tem mapa com `financial.view.filial-01/02`.
+
+O DANFE usa o identificador de arquivo do portal (`documentId`), nunca o `Id` interno do Questor, junto com a chave de acesso de 44 dígitos. O BFF confere o tamanho e a assinatura `%PDF` antes de responder `application/pdf`.
+
+Variáveis no serviço `financial-api` (o token não vai para a imagem nem para o frontend):
+
+```text
+FIN_QUESTOR_BASE_URL
+FIN_QUESTOR_API_TOKEN
+FIN_QUESTOR_TIMEOUT_SECONDS
+FIN_QUESTOR_DANFE_MAX_BYTES
+```
+
+`/cliente/nfe/listagem` e `/cliente/nfe/pegarpdfdenfe` são endpoints do portal Questor, identificados empiricamente. São uma dependência mais frágil do que uma API pública versionada. O token trafega na query de `/entrarcomtoken` porque esse é o contrato do provider; a API não registra essa URL, o token nem os cookies. O nginx desse portal responde 403 ao User-Agent padrão do httpx; o cliente envia `MinhaDELPI-FinancialAPI/1.0`.
 
 EBITDA %, custo fixo % e PMR vêm de **Google Sheets** na api-delpi (`/financial/ebitda_pct`, `/fixed_cost_pct`, `/pmr`). Sem as variáveis abaixo no `infra/.env` da **api-delpi**, esses blocos ficam indisponíveis (ROL e inadimplência continuam, pois leem TOTVS):
 

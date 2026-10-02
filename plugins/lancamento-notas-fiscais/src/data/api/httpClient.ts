@@ -98,6 +98,25 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return body as T;
 }
 
+export async function httpGetBlob(url: string): Promise<Blob> {
+  const headers = authHeaders();
+  headers.Accept = "application/pdf";
+  const response = await fetch(url, { method: "GET", headers });
+  if (!response.ok) {
+    let message = friendlyMessage(response.status, `Erro HTTP ${response.status}`);
+    try {
+      const body = (await response.json()) as { message?: string };
+      if (body.message) message = body.message;
+    } catch {
+      message = friendlyMessage(response.status, message);
+    }
+    throw new ApiError(message, { status: response.status });
+  }
+  const blob = await response.blob();
+  if (blob.type === "application/pdf") return blob;
+  return new Blob([await blob.arrayBuffer()], { type: "application/pdf" });
+}
+
 export async function httpGet<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "GET",

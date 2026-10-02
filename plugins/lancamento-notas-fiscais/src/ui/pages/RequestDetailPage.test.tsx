@@ -6,6 +6,18 @@ import type { InvoicePostingDetail } from "../../domain/types";
 
 vi.mock("../../data/api/invoicePostingApi");
 vi.mock("@delpi/plugin-ui/index", () => ({
+  FilePreviewModal: () => null,
+  useFilePreviewLoader: () => ({
+    kind: "pdf",
+    loading: false,
+    error: null,
+    previewUrl: "blob:danfe",
+    textContent: null,
+    textTruncated: false,
+    spreadsheetData: null,
+    docxData: null,
+  }),
+  FilePreviewView: ({ title }: { title?: string }) => <div data-testid="danfe-inline-preview">{title}</div>,
   UserDirectoryPicker: ({
     value,
     onChange,
@@ -110,6 +122,26 @@ afterEach(() => {
 });
 
 describe("RequestDetailPage", () => {
+  it("mostra o DANFE na própria tela quando a solicitação tem anexo", async () => {
+    vi.mocked(api.getRequest).mockResolvedValue({
+      ...detail(["view"]),
+      danfe: {
+        available: true,
+        document_id: "aabbccddeeff001122334455",
+        access_key: "1".repeat(44),
+        file_name: "NFe-132004.pdf",
+        size_bytes: 12000,
+      },
+    });
+    render(
+      <RequestDetailPage requestId="req-1" onBack={() => undefined} onEdit={() => undefined} />,
+    );
+    await waitFor(() => expect(screen.getByTestId("danfe-preview")).toBeTruthy());
+    expect(screen.getByTestId("danfe-inline-preview").textContent).toContain("DANFE");
+    expect(screen.getByRole("button", { name: "Baixar DANFE" })).toBeTruthy();
+    expect(screen.getByText("NFe-132004.pdf")).toBeTruthy();
+  });
+
   it("abre detalhes e histórico", async () => {
     vi.mocked(api.getRequest).mockResolvedValue({
       ...detail(["view", "comment"]),

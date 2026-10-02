@@ -32,6 +32,9 @@ export type FinancialRoute = {
   invoiceDocument: string | null;
   freightDocument: string | null;
   situation: string | null;
+  invoiceNumber: string | null;
+  invoiceValue: string | null;
+  supplierCnpj: string | null;
   page: number;
   pathname: string;
 };
@@ -120,6 +123,9 @@ export function parseFinancialPath(
     invoiceDocument: params.get("invoiceDocument")?.trim() || null,
     freightDocument: params.get("freightDocument")?.trim() || null,
     situation: FREIGHT_SITUATIONS.has(situationRaw) ? situationRaw : null,
+    invoiceNumber: params.get("invoiceNumber")?.trim() || null,
+    invoiceValue: params.get("invoiceValue")?.trim() || null,
+    supplierCnpj: params.get("supplierCnpj")?.trim() || null,
     page: positiveIntOrOne(params.get("page")),
     pathname: path || FINANCIAL_BASE_PATH,
   };
@@ -149,6 +155,9 @@ export function buildFinancialHref(input: {
   invoiceDocument?: string | null;
   freightDocument?: string | null;
   situation?: string | null;
+  invoiceNumber?: string | null;
+  invoiceValue?: string | null;
+  supplierCnpj?: string | null;
   page?: number | null;
 }): string {
   const path =
@@ -178,6 +187,9 @@ export function buildFinancialHref(input: {
   if (input.invoiceDocument) params.set("invoiceDocument", input.invoiceDocument);
   if (input.freightDocument) params.set("freightDocument", input.freightDocument);
   if (input.situation && input.situation !== "all") params.set("situation", input.situation);
+  if (input.invoiceNumber) params.set("invoiceNumber", input.invoiceNumber);
+  if (input.invoiceValue) params.set("invoiceValue", input.invoiceValue);
+  if (input.supplierCnpj) params.set("supplierCnpj", input.supplierCnpj);
   if (input.page && input.page > 1) params.set("page", String(input.page));
   return `${path}?${params.toString()}`;
 }

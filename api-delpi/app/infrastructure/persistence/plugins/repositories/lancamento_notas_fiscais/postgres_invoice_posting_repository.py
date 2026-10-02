@@ -170,6 +170,51 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             self.rollback()
             raise
 
+    def insert_danfe_attachment(
+        self,
+        *,
+        request_id: str,
+        document_id: str,
+        access_key: str,
+        stored_name: str,
+        original_name: str,
+        size_bytes: int,
+    ) -> None:
+        self.execute(
+            f"""
+            INSERT INTO {SCHEMA}.invoice_posting_danfe_attachments (
+                request_id, document_id, access_key, stored_name, original_name, size_bytes
+            ) VALUES (%s::uuid, %s, %s, %s, %s, %s)
+            """,
+            (request_id, document_id, access_key, stored_name, original_name, size_bytes),
+        )
+
+    def get_danfe_attachment(self, request_id: str) -> dict[str, Any] | None:
+        row = self.fetch_one(
+            f"""
+            SELECT document_id, access_key, stored_name, original_name, size_bytes
+              FROM {SCHEMA}.invoice_posting_danfe_attachments
+             WHERE request_id = %s::uuid
+            """,
+            (request_id,),
+        )
+        if not row:
+            return None
+        return {
+            "available": True,
+            "document_id": row["document_id"],
+            "access_key": row["access_key"],
+            "file_name": row["original_name"],
+            "stored_name": row.get("stored_name") or f"{request_id}.pdf",
+            "size_bytes": row["size_bytes"],
+        }
+
+    def delete_request(self, request_id: str) -> None:
+        self.execute(
+            f"DELETE FROM {SCHEMA}.invoice_posting_requests WHERE id = %s::uuid",
+            (request_id,),
+        )
+
     def get_request(self, request_id: str) -> dict[str, Any] | None:
         row = self.fetch_one(
             f"""

@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "financial",
   "name": "Portal Financeiro",
-  "description": "Gestão à vista financeira, faturamento (ROL), inadimplência de clientes, despesas por centro de custo, frete das compras e indicadores IDD/IGD.",
+  "description": "Gestão à vista financeira, faturamento (ROL), inadimplência de clientes, despesas por centro de custo, frete das compras, notas fiscais de entrada e indicadores IDD/IGD.",
   "category": "financeiro",
   "icon": "wallet",
   "version": "0.1.0",
@@ -32,6 +32,12 @@
       "code": "financial.freight.view",
       "name": "Frete das compras",
       "description": "Ver o percentual de frete das notas de compra e os vínculos com CT-e.",
+      "module": "financial"
+    },
+    {
+      "code": "financial.invoices.view",
+      "name": "Notas Fiscais",
+      "description": "Consultar NF-e de entrada recebidas no Questor Zen e baixar o DANFE.",
       "module": "financial"
     },
     {
@@ -110,11 +116,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/financial/invoices",
+      "label": "Notas Fiscais",
+      "permission": "financial.invoices.view",
+      "icon": "file-text",
+      "order": 44,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/financial/indicators",
       "label": "Indicadores",
       "permission": "financial.indicators.view",
       "icon": "gauge",
-      "order": 44,
+      "order": 45,
       "showInMenu": false
     }
   ],

@@ -12,6 +12,7 @@ import { CostCentersPage } from "./pages/CostCentersPage";
 import { DelinquencyPage } from "./pages/DelinquencyPage";
 import { FreightPage } from "./pages/FreightPage";
 import { IndicatorsPage } from "./pages/IndicatorsPage";
+import { InvoicesPage } from "./pages/InvoicesPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import {
   buildFinancialHref,
@@ -28,6 +29,7 @@ const WORKSPACES = new Set([
   "delinquency",
   "cost-centers",
   "freight",
+  "invoices",
   "indicators",
 ]);
 
@@ -126,6 +128,16 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         invoiceDocument={route.invoiceDocument}
         freightDocument={route.freightDocument}
         situation={route.situation}
+        page={route.page}
+      />
+    );
+  } else if (route.subpluginId === "invoices") {
+    workspace = (
+      <InvoicesPage
+        branch={route.branch}
+        invoiceNumber={route.invoiceNumber}
+        invoiceValue={route.invoiceValue}
+        supplierCnpj={route.supplierCnpj}
         page={route.page}
       />
     );

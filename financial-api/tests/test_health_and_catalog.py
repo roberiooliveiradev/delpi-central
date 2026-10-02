@@ -40,6 +40,7 @@ def test_catalog_filters_by_permission() -> None:
         "delinquency",
         "cost-centers",
         "freight",
+        "invoices",
         "indicators",
     }
     assert any(item.status == "coming_soon" for item in catalog)
@@ -52,6 +53,7 @@ def test_catalog_filters_by_permission() -> None:
         "delinquency",
         "cost-centers",
         "freight",
+        "invoices",
         "indicators",
     } <= visible_ids
 
@@ -61,6 +63,7 @@ def test_catalog_filters_by_permission() -> None:
     assert "delinquency" not in only_access_ids
     assert "cost-centers" not in only_access_ids
     assert "freight" not in only_access_ids
+    assert "invoices" not in only_access_ids
     assert "indicators" not in only_access_ids
 
 
@@ -73,6 +76,20 @@ def test_catalog_shows_freight_only_with_its_permission() -> None:
     granted = user("financial.access", "financial.freight.view")
 
     assert "freight" in {item.id for item in service.list_visible(granted)}
+
+
+def test_catalog_shows_invoices_only_with_its_permission() -> None:
+    from financial_app.application.services.subplugin_catalog_service import (
+        SubpluginCatalogService,
+    )
+
+    service = SubpluginCatalogService()
+    granted = user("financial.access", "financial.invoices.view")
+
+    assert "invoices" in {item.id for item in service.list_visible(granted)}
+    assert "invoices" not in {
+        item.id for item in service.list_visible(user("financial.access"))
+    }
 
 
 def test_catalog_requires_access_permission() -> None:

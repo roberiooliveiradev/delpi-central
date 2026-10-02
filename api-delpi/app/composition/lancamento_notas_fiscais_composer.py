@@ -1,6 +1,12 @@
 """Composition root — lançamento-notas-fiscais."""
 from __future__ import annotations
 
+from app.application.services.lancamento_notas_fiscais.danfe_storage import (
+    LancamentoDanfeStorage,
+)
+from app.application.services.lancamento_notas_fiscais.received_invoice_attachment_service import (
+    ReceivedInvoiceAttachmentService,
+)
 from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases import (
     AddInvoicePostingCommentUseCase,
     BlockInvoicePostingRequestUseCase,
@@ -17,6 +23,9 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
     SearchSuppliersUseCase,
     StartInvoicePostingRequestUseCase,
     UpdateInvoicePostingRequestUseCase,
+)
+from app.infrastructure.gateways.financial_received_invoice_gateway import (
+    FinancialReceivedInvoiceGateway,
 )
 from app.infrastructure.persistence.plugins.repositories.lancamento_notas_fiscais.postgres_invoice_posting_repository import (
     PostgresInvoicePostingRepository,
@@ -52,6 +61,23 @@ def build_create_invoice_posting_request_use_case() -> CreateInvoicePostingReque
     return CreateInvoicePostingRequestUseCase(
         build_invoice_posting_request_repository(),
         build_supplier_repository(),
+    )
+
+
+def build_financial_received_invoice_gateway() -> FinancialReceivedInvoiceGateway:
+    return FinancialReceivedInvoiceGateway()
+
+
+def build_received_invoice_attachment_service() -> ReceivedInvoiceAttachmentService:
+    repository = build_invoice_posting_request_repository()
+    return ReceivedInvoiceAttachmentService(
+        create_request=CreateInvoicePostingRequestUseCase(
+            repository,
+            build_supplier_repository(),
+        ),
+        gateway=build_financial_received_invoice_gateway(),
+        storage=LancamentoDanfeStorage(),
+        requests=repository,
     )
 
 

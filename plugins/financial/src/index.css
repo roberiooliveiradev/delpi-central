@@ -444,20 +444,33 @@
   min-height: 36px;
   min-width: 44px;
   padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.36);
+  border: 1px solid var(--fin-border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--fin-accent) 8%, var(--fin-surface));
+  color: var(--fin-title);
   font: inherit;
   font-size: var(--fin-font-sm);
   font-weight: 600;
   cursor: pointer;
 }
 
+.dashboard-financial .fin-header .fin-branch__btn,
+.dashboard-financial .fin-header .fin-icon-btn {
+  border-color: rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
 .dashboard-financial .fin-icon-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.dashboard-financial .fin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .dashboard-financial .fin-icon-btn:disabled {
@@ -481,10 +494,9 @@
   }
 }
 
-.dashboard-financial .fin-branch__btn:hover,
-.dashboard-financial .fin-icon-btn:hover:not(:disabled) {
-  border-color: #ffffff;
-  background: rgba(255, 255, 255, 0.22);
+.dashboard-financial .fin-icon-btn:hover:not(:disabled),
+.dashboard-financial .fin-link-btn:hover {
+  background: color-mix(in srgb, var(--fin-accent) 16%, var(--fin-surface));
 }
 
 /* Header escuro: o portal aplica `button:hover { color: var(--primary); background: var(--surface-2) }`
@@ -505,7 +517,7 @@
   color: currentColor;
 }
 
-.dashboard-financial .fin-branch__btn--on {
+.dashboard-financial .fin-header .fin-branch__btn--on {
   border-color: #ffffff;
   background: rgba(255, 255, 255, 0.28);
 }
@@ -520,14 +532,8 @@
   outline-offset: 2px;
 }
 
-.dashboard-financial .fin-link-btn {
-  border-color: var(--fin-border);
-  background: color-mix(in srgb, var(--fin-accent) 8%, var(--fin-surface));
-  color: var(--fin-title);
-}
-
-.dashboard-financial .fin-link-btn:hover {
-  background: color-mix(in srgb, var(--fin-accent) 16%, var(--fin-surface));
+.dashboard-financial .fin-icon-btn svg {
+  color: currentColor;
 }
 
 .dashboard-financial .fin-board {

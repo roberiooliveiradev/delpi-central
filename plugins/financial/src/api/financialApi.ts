@@ -1,4 +1,4 @@
-import { financialApiUrl, httpGet, unwrapEnvelope } from "./httpClient";
+import { downloadAuthenticatedBlob, financialApiUrl, httpGet, httpGetBlob, unwrapEnvelope } from "./httpClient";
 import { buildQuery } from "../utils/queryParams";
 import type {
   CostCenterEntriesPayload,
@@ -21,6 +21,7 @@ import type {
   BillingInvoicesPayload,
   OverviewPayload,
   Period,
+  ReceivedInvoicesPayload,
   SubpluginsPayload,
 } from "../types";
 
@@ -430,6 +431,59 @@ export function fetchFreightInconsistencies(
     `/freight/inconsistencies${freightQuery(params)}`,
     "Não foi possível carregar as inconsistências de frete.",
     params.signal,
+  );
+}
+
+// ------------------------------------------------------------------ notas fiscais
+
+const RECEIVED_INVOICE_PAGE_SIZE = 25;
+
+export function receivedInvoicesPath(params: {
+  invoiceNumber?: string | null;
+  invoiceValue?: string | null;
+  supplierCnpj?: string | null;
+  page?: number;
+}): string {
+  const query = buildQuery({
+    invoiceNumber: params.invoiceNumber,
+    value: params.invoiceValue,
+    supplierCnpj: params.supplierCnpj,
+    page: params.page,
+    pageSize: RECEIVED_INVOICE_PAGE_SIZE,
+  });
+  return `/invoices/received${query}`;
+}
+
+export function receivedInvoiceDanfePath(documentId: string, accessKey: string): string {
+  return `/invoices/received/${encodeURIComponent(documentId)}/danfe${buildQuery({ accessKey })}`;
+}
+
+export function fetchReceivedInvoices(params: {
+  invoiceNumber?: string | null;
+  invoiceValue?: string | null;
+  supplierCnpj?: string | null;
+  page?: number;
+  signal?: AbortSignal;
+}): Promise<ReceivedInvoicesPayload> {
+  return get<ReceivedInvoicesPayload>(
+    receivedInvoicesPath(params),
+    "Não foi possível carregar as notas fiscais.",
+    params.signal,
+  );
+}
+
+export async function fetchReceivedInvoiceDanfe(documentId: string, accessKey: string): Promise<Blob> {
+  const downloaded = await httpGetBlob(
+    financialApiUrl(receivedInvoiceDanfePath(documentId, accessKey)),
+  );
+  if (downloaded.blob.type === "application/pdf") return downloaded.blob;
+  return new Blob([await downloaded.blob.arrayBuffer()], { type: "application/pdf" });
+}
+
+export function downloadReceivedInvoiceDanfe(documentId: string, accessKey: string): Promise<void> {
+  return downloadAuthenticatedBlob(
+    financialApiUrl(receivedInvoiceDanfePath(documentId, accessKey)),
+    `NFe-${accessKey}.pdf`,
   );
 }
 

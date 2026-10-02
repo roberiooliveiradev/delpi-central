@@ -1,5 +1,6 @@
 import {
   Banknote,
+  FileText,
   Gauge,
   HandCoins,
   House,
@@ -21,6 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
   "hand-coins": HandCoins,
   receipt: Receipt,
   truck: Truck,
+  "file-text": FileText,
   gauge: Gauge,
   target: Target,
   "trending-up": TrendingUp,

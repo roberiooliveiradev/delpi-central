@@ -114,7 +114,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 **Experiência do Cliente:** admin `/apps/customer-experience`; público `/p/customer-experience/thanks/{token}` e `/form/{token}`. API: `/apps/customer-experience-api/*`. [README do plugin](../../plugins/customer-experience/README.md) · [roadmap](../12-roadmap-e-volucao/customer-experience/).
 **Etiquetas da Qualidade:** admin `/apps/quality-labels`; público `/p/quality-labels/inspection/{token}`. CRUD na api-delpi (`/quality/labels`). [README](../../plugins/quality-labels/README.md) · [API](../../api-delpi/docs/api/quality-labels.md).
 **Portal PCP:** `/apps/production-control` (gestão à vista + demanda + carga máquina + análise de problemas + materiais + alimentador de linha). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
-**Portal Financeiro:** `/apps/financial` (gestão à vista + faturamento/ROL + inadimplência + despesas por CC + IDD/IGD). API: `/apps/financial-api/*`. Plugins legados permanecem. [README do plugin](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [spec](../12-roadmap-e-evolucao/financial/README.md).
+**Portal Financeiro:** `/apps/financial` (gestão à vista + faturamento/ROL + inadimplência + despesas por CC + notas fiscais de entrada + IDD/IGD). API: `/apps/financial-api/*`. Plugins legados permanecem. [README do plugin](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [spec](../12-roadmap-e-evolucao/financial/README.md).
 **Despesas de Viagem:** `/apps/travel-expenses` (prestação, cupons e pacote). API: `/apps/travel-expenses-api/*`. [README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md).
 **Pulso de Produção:** `/apps/production-pulse` (dispositivos IoT + modo operador). API: `/apps/production-pulse-api/*`. [README](../../plugins/production-pulse/README.md) · [API](../../production-pulse-api/README.md) · [roadmap](../12-roadmap-e-evolucao/production-pulse/ROADMAP.md).
 **CIPA SIPAT:** admin `/apps/cipa/filial-{01|02}/sipat`; público `/p/cipa/sipat/{token}`. API: `/apps/cipa-api/public/sipat/*`.
@@ -148,7 +148,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Experiência do Cliente | `/apps/customer-experience-api/*` (participantes + formulários; público por token) |
 | Etiquetas da Qualidade | `/apps/api-delpi/quality/labels/*` (Postgres plugins + TOTVS OP/SB1/SA1); público `/public/quality-labels/inspection/{token}` |
 | Portal PCP | `/apps/production-control-api/*` (subplugins + demanda + carga máquina + análise de problemas + materiais + alimentador de linha; TOTVS via api-delpi) |
-| Portal Financeiro | `/apps/financial-api/*` (subplugins + overview + faturamento + inadimplência + centros de custo + IDD/IGD; TOTVS via api-delpi, SI direto) |
+| Portal Financeiro | `/apps/financial-api/*` (subplugins + overview + faturamento + inadimplência + centros de custo + notas fiscais via Questor Zen + IDD/IGD; TOTVS via api-delpi, SI direto) |
 | Despesas de Viagem | `/apps/travel-expenses-api/*` (prestações, cupons, PDF; Postgres plugins) |
 | Pulso de Produção | `/apps/production-pulse-api/*` (devices, bindings, readings, poll, operador; Postgres plugins; CT via api-delpi gateway) |
 | Delpi MES | `/apps/delpi-mes-api/*` (BFF gerencial read-only; fatos MES permanecem no Production Control) |
@@ -248,7 +248,7 @@ Declaradas no manifesto e persistidas na Core API:
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
 | kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
 | quality-labels | `quality-labels.view`, `quality-labels.write` |
-| financial | `financial.access`, `.delinquency.view`, `.cost-centers.view`, `.indicators.view`, `.export`, `.view.filial-01/02` |
+| financial | `financial.access`, `.delinquency.view`, `.cost-centers.view`, `.freight.view`, `.invoices.view`, `.indicators.view`, `.export`, `.view.filial-01/02` |
 | travel-expenses | `travel-expenses.view`, `.write`, `.manage`, `.admin`, `.unit.filial-01/02` |
 | production-pulse | `production-pulse.access`, `.devices.view`, `.devices.manage`, `.devices.command`, `.operator`, `.view.filial-01/02`, `.admin` |
 

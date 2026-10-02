@@ -542,3 +542,29 @@ export type OverviewPayload = {
     indicators: OverviewIndicatorsBlock;
   };
 };
+
+export type ReceivedInvoice = {
+  documentId: string;
+  accessKey: string;
+  invoiceNumber: string;
+  series: string;
+  issuerName: string;
+  issuerCnpj: string | null;
+  receiverName: string;
+  emissionAt: string | null;
+  amount: string;
+  amountFormatted: string;
+  manifestationCode: string;
+  manifestationDescription: string;
+  danfeAvailable: boolean;
+};
+
+export type ReceivedInvoicesPayload = {
+  filters: {
+    invoiceNumber: string | null;
+    value: string | null;
+    supplierCnpj: string | null;
+  };
+  pagination: Pagination;
+  items: ReceivedInvoice[];
+};

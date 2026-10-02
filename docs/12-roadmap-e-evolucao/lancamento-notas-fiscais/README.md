@@ -4,6 +4,8 @@ Controle do **recebimento físico → solicitação → atendimento → lançame
 
 **Status (2026-07):** MVP entregue — MFE + rotas api-delpi + migrations V001–V003 + conciliação sob demanda (refresh/run).
 
+A nova solicitação também pode partir de uma NF-e de entrada: a api-delpi consulta a financial-api, preenche o formulário e grava o DANFE no volume `lancamento-notas-fiscais-danfe` (migration V008). O arquivo XML do Questor não faz parte desse fluxo.
+
 ---
 
 ## Documentos

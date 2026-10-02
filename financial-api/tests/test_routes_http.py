@@ -13,8 +13,15 @@ from financial_app.interface.http.routes.delinquency_routes import router as del
 from financial_app.interface.http.routes.freight_routes import router as freight_router
 from financial_app.interface.http.routes.indicators_routes import router as indicators_router
 from financial_app.interface.http.routes.overview_routes import router as overview_router
+from financial_app.interface.http.routes.received_invoice_routes import (
+    router as received_invoice_router,
+)
 from tests.conftest import full_user
-from tests.fakes import FakeFinancialGateway, FakeStrategicIndicatorsGateway
+from tests.fakes import (
+    FakeFinancialGateway,
+    FakeReceivedInvoiceGateway,
+    FakeStrategicIndicatorsGateway,
+)
 
 
 @pytest.fixture
@@ -23,12 +30,16 @@ def client(monkeypatch: pytest.MonkeyPatch):
     state: dict[str, object] = {"user": full_user()}
     financial_gateway = FakeFinancialGateway()
     indicators_gateway = FakeStrategicIndicatorsGateway()
+    invoice_gateway = FakeReceivedInvoiceGateway()
 
     monkeypatch.setattr(
         financial_composer, "build_financial_gateway", lambda: financial_gateway
     )
     monkeypatch.setattr(
         financial_composer, "build_strategic_indicators_gateway", lambda: indicators_gateway
+    )
+    monkeypatch.setattr(
+        financial_composer, "build_questor_received_invoice_gateway", lambda: invoice_gateway
     )
 
     app = FastAPI()
@@ -45,6 +56,7 @@ def client(monkeypatch: pytest.MonkeyPatch):
         indicators_router,
         overview_router,
         billing_router,
+        received_invoice_router,
     ):
         app.include_router(router)
 
@@ -74,6 +86,7 @@ def client(monkeypatch: pytest.MonkeyPatch):
         "/overview?branch=01",
         "/billing/dashboard?branch=01",
         "/billing/invoices?branch=01",
+        "/invoices/received",
     ],
 )
 def test_every_route_family_answers_with_the_envelope(client, path: str) -> None:

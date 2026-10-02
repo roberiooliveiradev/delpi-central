@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { FilePreviewView, useFilePreviewLoader } from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError } from "../../data/api/httpClient";
 import * as api from "../../data/api/invoicePostingApi";
 import type { InvoicePostingDetail } from "../../domain/types";
@@ -46,6 +47,36 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
   const [purchaseOrdersOpen, setPurchaseOrdersOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [commentMentions, setCommentMentions] = useState<MentionSelection[]>([]);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const hasDanfe = Boolean(detail?.danfe);
+
+  const danfeSource = useMemo(() => {
+    if (!hasDanfe) return null;
+    return () => api.fetchRequestDanfe(requestId, "inline");
+  }, [hasDanfe, requestId]);
+
+  const danfePreview = useFilePreviewLoader({
+    source: danfeSource,
+    mimeType: "application/pdf",
+    declaredType: "pdf",
+    fileName: detail?.danfe?.file_name ?? null,
+    enabled: hasDanfe,
+  });
+
+  async function downloadDanfe() {
+    setDownloadError(null);
+    try {
+      const blob = await api.fetchRequestDanfe(requestId, "attachment");
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = detail?.danfe?.file_name || "danfe.pdf";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : "Não foi possível baixar o DANFE.");
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -231,6 +262,32 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
               </p>
             ) : null}
           </section>
+
+          {detail.danfe ? (
+            <section className="lnf-card lnf-danfe-panel" data-testid="danfe-preview">
+              <div className="lnf-danfe-panel__header">
+                <div>
+                  <h2>DANFE</h2>
+                  <p className="lnf-muted">{detail.danfe.file_name}</p>
+                </div>
+                <button type="button" className="lnf-btn lnf-btn--ghost" onClick={() => void downloadDanfe()}>
+                  Baixar DANFE
+                </button>
+              </div>
+              {downloadError ? (
+                <p className="lnf-error" role="alert">
+                  {downloadError}
+                </p>
+              ) : null}
+              <div className="lnf-danfe-panel__viewer">
+                <FilePreviewView
+                  state={danfePreview}
+                  title={`DANFE ${formatDocument(request.document_number, request.series)}`}
+                  labels={{ loading: "Abrindo o DANFE…", loadFailed: "Não foi possível abrir o DANFE." }}
+                />
+              </div>
+            </section>
+          ) : null}
 
           <section className="lnf-card lnf-detail-panel lnf-detail-twin">
             <div className="lnf-detail-twin__col">

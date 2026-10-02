@@ -356,11 +356,16 @@ class GetInvoicePostingRequestUseCase:
         is_owner = request.get("created_by_user_id") == actor.user_id
         if not actor.can_view_all and not (actor.has_create and is_owner):
             raise InvoicePostingForbiddenError("Sem permissão para consultar esta solicitação.")
+        load_danfe = getattr(self._requests, "get_danfe_attachment", None)
+        danfe = load_danfe(request_id) if callable(load_danfe) else None
+        if isinstance(danfe, dict):
+            danfe = {key: value for key, value in danfe.items() if key != "stored_name"}
         return {
             "request": request,
             "history": self._requests.list_history(request_id),
             "comments": self._requests.list_comments(request_id),
             "allowed_actions": allowed_actions(request, actor),
+            "danfe": danfe,
         }
 
 

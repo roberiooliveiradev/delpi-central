@@ -1,17 +1,18 @@
 # Portal Financeiro (MFE)
 
-Microfrontend federado do **Portal Financeiro** (`id`: `financial`): shell com rail de subplugins — gestão à vista, faturamento (ROL), inadimplência, despesas por centro de custo, frete das compras e indicadores IDD/IGD.
+Microfrontend federado do **Portal Financeiro** (`id`: `financial`): shell com rail de subplugins — gestão à vista, faturamento (ROL), inadimplência, despesas por centro de custo, frete das compras, notas fiscais de entrada e indicadores IDD/IGD.
 
 ## Fluxo técnico
 
 ```text
 Portal → financial (remoteEntry.js)
       → /apps/financial-api/*
-      → api-delpi (/financeiro/*, /financial/*) e strategic-indicators-api
+      → api-delpi (/financeiro/*, /financial/*), strategic-indicators-api
+        e, só para NF-e de entrada, o Questor Zen via adapter da financial-api
       → @delpi/plugin-ui (Module Federation)
 ```
 
-O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: financial`.
+O MFE **não** chama `/apps/api-delpi` nem o Questor. Header: `X-Delpi-Caller-App: financial`. O token do Questor fica só na `financial-api`.
 
 ## Rotas UI
 
@@ -22,6 +23,7 @@ O MFE **não** chama `/apps/api-delpi`. Header: `X-Delpi-Caller-App: financial`.
 | `…/delinquency?startDate=&endDate=&q=&customer=&status=` | Inadimplência (consolidada na origem — sem seletor de filial) |
 | `…/cost-centers?branch=&startDate=&endDate=&costCenter=&supplier=` | Despesas por centro de custo |
 | `…/freight?branch=&issueStart=&issueEnd=&entryStart=&entryEnd=&supplier=&invoiceDocument=&freightDocument=&situation=` | Frete das compras: % de frete por NF, CT-es rateados e inconsistências |
+| `…/invoices?invoiceNumber=&invoiceValue=&supplierCnpj=&page=` | Notas fiscais de entrada (Questor Zen), visualização do DANFE na tela e download. Sem seletor de filial |
 | `…/indicators?branch=` | IDD do Financeiro e IGD da Delpi |
 
 Subplugins futuros (`budget`, `cash-flow`) aparecem na rail como *Em breve*.
@@ -42,6 +44,8 @@ Base: `/apps/financial-api`
 | GET | `/delinquency/{summary,monthly,aging,customers,titles}` | Inadimplência |
 | GET | `/cost-centers/{filters,summary,series,ranking-cost-centers,ranking-suppliers,entries}` | Despesas por CC |
 | GET | `/freight/{dashboard,inconsistencies}` | Frete das compras (rateio já calculado no BFF) |
+| GET | `/invoices/received` | NF-e de entrada paginadas no Questor Zen |
+| GET | `/invoices/received/{documentId}/danfe?accessKey=` | DANFE em PDF, servido pelo BFF |
 | GET | `/indicators/{department,global}` | IDD / IGD |
 
 ### Frete das compras
@@ -52,10 +56,24 @@ Exige um intervalo completo de **emissão** ou de **digitação** da NF de compr
 - Inconsistências ficam em seção própria com paginação separada e **não** entram nos totais.
 - O detalhe da nota lista os CT-es com valor bruto, base do rateio, valor rateado e chave eletrônica; quando a base é dividida com notas fora do filtro, a linha sinaliza isso.
 
+### Notas fiscais de entrada
+
+A tela **Notas Fiscais** lista NF-e de entrada, abre o DANFE no leitor de PDF da própria tela e também permite baixar o arquivo. O browser fala só com `/apps/financial-api`. A `financial-api` autentica no Questor Zen e devolve a lista paginada e o PDF.
+
+Filtros desta V1, aplicados no botão **Buscar** e gravados na URL (`invoiceNumber`, `invoiceValue`, `supplierCnpj`, `page`):
+
+- número da NF;
+- valor exato;
+- CNPJ do fornecedor.
+
+Não há busca pelo nome do fornecedor: o portal do Questor não oferece esse filtro, e a V1 não varre páginas para simular. A tela também não mostra seletor de filial — a conta Questor ainda não tem um mapa comprovado com `financial.view.filial-01/02`.
+
+O DANFE é servido pelo BFF. Na tela, **Visualizar** abre o PDF num modal grande, no leitor do navegador, sem sair do Portal Financeiro. **Baixar DANFE** continua disponível na linha e no cabeçalho do modal. A URL, o token e os cookies do Questor não aparecem no browser.
+
 ## Permissões
 
 - `financial.access` — abrir o portal
-- `financial.delinquency.view` / `financial.cost-centers.view` / `financial.freight.view` / `financial.indicators.view`
+- `financial.delinquency.view` / `financial.cost-centers.view` / `financial.freight.view` / `financial.invoices.view` / `financial.indicators.view`
 - `financial.export` — Excel de clientes, lançamentos, notas com frete e inconsistências
 - `financial.view.filial-01` / `financial.view.filial-02` — gate de filial no BFF
 
@@ -86,7 +104,7 @@ src/
   api/           httpClient + financialApi (só /apps/financial-api)
   components/    shell, rail, header, dialog host-contained
   content/       copy + helpTooltips (sem path de API)
-  hooks/         overview, delinquency, cost-centers, freight, indicators
-  pages/         gestão à vista, faturamento, inadimplência, centros de custo, frete, indicadores
+  hooks/         overview, delinquency, cost-centers, freight, invoices, indicators
+  pages/         gestão à vista, faturamento, inadimplência, centros de custo, frete, notas fiscais, indicadores
   utils/         rota, query, formatação, Excel
 ```

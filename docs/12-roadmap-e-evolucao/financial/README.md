@@ -29,6 +29,11 @@ Desativar os três plugins legados é decisão operacional futura — o portal n
 | `branch=01` | `financial.view.filial-01` |
 | `branch=02` | `financial.view.filial-02` |
 | Consolidado / inadimplência | as duas |
+| Notas fiscais (Questor Zen) | `financial.access` + `financial.invoices.view`. Sem filtro de filial nesta V1 |
+
+## Notas fiscais de entrada
+
+A área `/apps/financial/invoices` consulta NF-e de entrada no Questor Zen pela `financial-api`. Não há rota nova na api-delpi. Busca por nome de fornecedor fica fora desta V1.
 
 ## Fontes
 
