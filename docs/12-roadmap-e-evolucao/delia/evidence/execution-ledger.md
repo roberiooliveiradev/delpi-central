@@ -6754,3 +6754,106 @@ NEXT_TASK_NAME = SECOND_GOVERNED_MCP_READ_TEO_DASHBOARD_ANALYZE
       CANDIDATE_FOR_ARCHITECTURE_REVIEW)
 NEXT_TASK_AUTHORIZED = YES
 ```
+
+
+## 6.105 C4-MCP-GOVERNED-READS-02 — second governed MCP read (TÉO analyze)
+
+```
+TASK_ID           = C4-MCP-GOVERNED-READS-02
+TASK_NAME         = SECOND_GOVERNED_MCP_READ_TEO_DASHBOARD_ANALYZE
+BASE_HEAD         = 9310730b6c97dd83b1cd6f0df222117a63d62363
+IMPLEMENTATION_HEAD = 0161c77d260907ca573735c5dbc066776c2c2234
+EVALUATED_SHA     = 0161c77d260907ca573735c5dbc066776c2c2234
+BRANCH            = main (pushed)
+
+SPECIALIST        = teo
+OWNER             = transformometro-api
+REMOTE_CAPABILITY = analyze
+OWNER_OPERATION_ID = gpt_analyze (existing stable identifier)
+BUSINESS_USE_CASE = grounded Transformometro dashboard KPI summary
+BINDING           = ("teo","analyze") -> {"gpt_analyze"} in
+    GOVERNED_READ_ACTIONS; static DÉLIA-owned binding, no runtime
+    registry/discovery-driven authority
+
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION      = EXTEND
+ABSTRACTION_GATE    = PASS — two real consumers now share a
+    capability-neutral semantic layer: app/application/interaction/
+    governed_read.py (GovernedReadStatus/Attempt/Provenance
+    combinators, SOURCE_UNAVAILABLE/AUTHZ_DENIED/NOT_APPLICABLE
+    mapping, BoundDirectRead for direct tools/call). DAVI keeps its
+    discovery -> candidate_token -> execute flow in
+    governed_product_read.py; TÉO uses BoundDirectRead in
+    governed_teo_analyze.py. NO GovernedTeoRead clone, NO
+    engine/router/registry/proxy created.
+
+TEO_FEATURE_GATE  = DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED (default off;
+    compose passthrough only; .env sets =1 for dev). DAVI flag
+    unchanged: DELIA_C4_DAVI_PRODUCT_READ_ENABLED. Per-binding enabled
+    tuple set replaces the prior single boolean at BOTH boundaries
+    (SpecialistInterop.invoke + McpSpecialistAdapter._require_invocable).
+TEO_ALLOWED_VIEWS = ["summary"]  (meta/processes/instances/rows NOT
+    authorized — least access for the frozen KPI-summary use case)
+TEO_ALLOWED_ARGS  = {view} — view fixed to "summary"; limit NOT
+    forwarded (summary does not consume it). filial_id, setor_id,
+    processo_id, revisao_id, familia_processo, competencia_inicio,
+    competencia_fim and any unknown arg are rejected before the wire.
+CAPABILITY_SELECTION = static binding map; model used ONLY as
+    applicability/view proposal classifier (StructuredOutput
+    {applicable, view}); deterministic validator rejects string bool
+    coercion except bounded "true"/"false", non-allowlisted views,
+    extra fields, forged specialist/tool/action — no wire call on
+    invalid proposal.
+
+AUTH_CHAIN        = Portal bearer -> DÉLIA auth -> Core /me ->
+    same-subject token exchange (requester delia-api, resource aud
+    mcp-transformometro-api) -> TÉO MCP tools/call analyze ->
+    require_transformometro_view_access -> dashboard filial checks ->
+    dashboard snapshot service. No TÉO source changes (expected NONE —
+    confirmed). No caller-supplied token; no permission mutation.
+
+TESTS             = 584/584 delia-api suite PASS on IMPLEMENTATION_HEAD
+    (49 new in tests/test_governed_teo_analyze_read.py: flag off,
+    wrong specialist/tool/action, non-allowlisted view, forbidden
+    args, limit policy, model extra fields, forged metadata,
+    readOnlyHint non-elevation, source unavailable, AUTHZ_DENIED
+    distinct, empty=GROUNDED, PREPARE/ACT blocked, DAVI regression).
+    git diff --check clean. MFE untouched by this task.
+
+LIVE_DEV_EVAL     = PASS — scripts/real_governed_read_eval.py:
+    TEO_ANALYZE_LIVE=PASS; REAL_TRANSFORMOMETRO_DATA=PASS
+    (solucoes_implementadas=39, economia_bruta_total=280958.08,
+    economia_liquida_total=200396.07, investimento_total=80562.01,
+    horas_economizadas_total=7717.4 — real owner payload rendered
+    deterministically, model did not author numbers);
+    CORE_CONTEXT=PASS; USER_IDENTITY_PRESERVED=PASS (delegated
+    same-subject resource-bound exchange; subject token has zero MCP
+    resource auds); DOMAIN_AUTHZ_PATH=PROVEN (transformometro view
+    access + dashboard scope resolved inside transformometro-api);
+    GROUNDING=GROUNDED; EPISTEMIC_CLASS=OBSERVATION;
+    PROVENANCE=PRESENT (source transformometro-dashboard /
+    transformometro-api, specialist teo, protocol MCP, action
+    gpt_analyze, observed_at, correlation_id — no tokens/URLs);
+    DAVI_REGRESSION=PASS (grounded Product Master read unchanged);
+    control query NON_GROUNDED; unauthenticated 401;
+    OTHER_TEO_READS=BLOCKED; PREPARE=BLOCKED; ACT=BLOCKED.
+    NO_SECRET_LEAK=PASS.
+
+LIVE_NEGATIVE_DOMAIN_AUTHZ = TEST_NOT_RUN (no safe second identity;
+    RBAC untouched — unit negatives cover denial path).
+LIVE_SOURCE_OUTAGE_SIMULATION = TEST_NOT_RUN (unit/transport-level
+    mapping proven; no infra fault injected).
+
+RESIDUALS         = PRODUCTION_TOKEN_EXCHANGE=NOT_PROVEN;
+    NATIVE_MCP_2026_ENVELOPE_CLIENT=DEFERRED; live negative AuthZ and
+    outage simulation not run (TEST_NOT_RUN, non-blocking);
+    PRODUCTION_READINESS=NOT_PROVEN.
+
+PHASE_FLAGS       = C3_EXECUTED=NO; FULL_C3=C3_NOT_COMPLETE;
+    C4_AUTHORIZED=NO (phase level); C5_AUTHORIZED=NO;
+    PREPARE=BLOCKED; ACT=BLOCKED.
+
+STATUS            = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT              = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02
+    (no third governed READ automatically authorized)
+```

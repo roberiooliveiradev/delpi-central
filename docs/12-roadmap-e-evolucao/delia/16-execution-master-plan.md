@@ -786,10 +786,14 @@ C4-MCP-GOVERNED-READS-01 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
    (DAVI execute_delpi_information -> search_products -> Product
    Master/API DELPI only; negative surface unchanged; phase-level
    C4_AUTHORIZED=NO; C5=NO; PRODUCTION_READINESS=NOT_PROVEN)
-NEXT = C4-MCP-GOVERNED-READS-02 (authorized §6.104: second governed
-   READ teo.analyze bounded to {view,limit}; EXTEND via per-capability
-   binding — Abstraction Gate re-run required inside the task; no
-   GovernedXxxRead clones)
+C4-MCP-GOVERNED-READS-02 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.105;
+   IMPLEMENTATION_HEAD=0161c77d260907ca573735c5dbc066776c2c2234; TÉO analyze → gpt_analyze,
+   view=summary only, per-binding gate DELIA_C4_TEO_DASHBOARD_ANALYZE_
+   ENABLED; shared capability-neutral governed_read.py semantic layer;
+   live PASS grounded Transformômetro KPIs + provenance; DAVI
+   regression PASS; other TÉO reads/PREPARE/ACT blocked)
+NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02 (no third
+   governed READ automatically authorized)
 Workspace binding remains unscheduled
 ```
 
