@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** architecture review of `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R1` (§6.120) + `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); SPECIALIST_CAPABILITY_CATALOG_OWNER=SPECIALIST — live authenticated tools/list is the primary capability surface (§6.118); APPROVED_SPECIALISTS=DAVI|TEO|VISTA; MCP_READ_FEDERATION=APPROVED_CURRENT_SCOPE; LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA=PASS (§6.119/§6.120, user subject via delpi-central OIDC, same-subject delegated exchange, azp=delia-api); PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN; REAL_PRODUCTION_APPLY=PASS_FOR_CURRENT_MCP_READ_SCOPE; C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (§6.112); PROD-MCP-RUNTIME-ALIGNMENT-01 KC24 decision preserved (§6.116 — PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1, KC26 deferred; §6.115 rehearsal evidence historical). Superseded current-status claims (historical records preserved): THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED (§6.106), DELIA_C4_*_ENABLED per-capability flags, PRODUCTION_MCP_RUNTIME=NOT_PROVEN, REAL_PRODUCTION_APPLY=TEST_NOT_RUN. C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
+**Next:** architecture review of `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R3` (§6.122) + `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); SPECIALIST_CAPABILITY_CATALOG_OWNER=SPECIALIST — live authenticated tools/list is the primary capability surface (§6.118); APPROVED_SPECIALISTS=DAVI|TEO|VISTA; MCP_READ_FEDERATION=APPROVED_CURRENT_SCOPE; LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA=PASS (§6.119/§6.120, user subject via delpi-central OIDC, same-subject delegated exchange, azp=delia-api); PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN; REAL_PRODUCTION_APPLY=PASS_FOR_CURRENT_MCP_READ_SCOPE; C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (§6.112); PROD-MCP-RUNTIME-ALIGNMENT-01 KC24 decision preserved (§6.116 — PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1, KC26 deferred; §6.115 rehearsal evidence historical). Superseded current-status claims (historical records preserved): THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED (§6.106), DELIA_C4_*_ENABLED per-capability flags, PRODUCTION_MCP_RUNTIME=NOT_PROVEN, REAL_PRODUCTION_APPLY=TEST_NOT_RUN. C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
 
 ## 1. Ledger rule
 
@@ -8229,4 +8229,86 @@ CLAIMS =
 STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 NEXT = independent architecture review of
     ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R2.
+
+## 6.122. ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R3 — structured string-leaf secret redaction + cookie multi-value hardening (REWORK evidence)
+
+DATE = 2026-10-02
+BASE_HEAD = 9f5cd2e12c4b91df5c09abc1ef062cc9b95d5cf6
+EVALUATED_SHA = bdc72193ea (main, pushed; delia-api rebuilt/recreated)
+BRANCH = main; WORKING_TREE = clean at issuance
+
+ROOT CAUSE (review blocker
+STRUCTURED_FREE_TEXT_SECRET_REDACTION):
+    _sanitize_renderable redacted sensitive KEYS but returned string
+    values verbatim — a credential embedded as a plain string below an
+    ordinary business key (message/detail/notes) bypassed
+    _redact_text entirely.
+
+SECONDARY HARDENING (COOKIE_MULTI_VALUE_REDACTION):
+    header patterns consumed only the first whitespace-delimited
+    value — `Cookie: session=A; csrf=B` leaked the second cookie.
+    Authorization/Cookie/Set-Cookie now redact the whole
+    credential-bearing header value to end of line.
+
+REUSE GATE: EXISTING_EQUIVALENT = YES — R2 helpers
+    (_is_sensitive_key/_redact_text/_sanitize_renderable) extended in
+    place; REUSE_DECISION = EXTEND; no new service/engine.
+
+IMPLEMENTATION (delia-api only):
+    - _sanitize_renderable: str leaves -> _redact_text(node); mapping
+      keys checked first (sensitive key -> [REDACTED], value never
+      inspected); lists/tuples recurse within existing bounds.
+    - Header regex now captures name+separator and replaces the full
+      line value: `Cookie: session=A; csrf=B` -> `Cookie: [REDACTED]`;
+      same for Set-Cookie/Authorization (Bearer prefix still redacted
+      first, then whole line value).
+    - False-positive policy unchanged (exact canonical names);
+      token_count/token_usage/authorization_status/ABC.DEF.123
+      preserved.
+    - limitations/provenance channels re-inventoried: both are
+      DÉLIA-created bounded projections (only "remote result is
+      partial" + specialist_id/remote_name/protocol/correlation_id/
+      observed_at) — LIMITATIONS_SECRET_VECTOR = NOT_APPLICABLE,
+      PROVENANCE_SECRET_VECTOR = NOT_APPLICABLE.
+    - No raw outcome logging in render path (re-verified).
+
+TEST MATRIX (fake markers only): string leaves under ordinary keys
+    (bearer/access_token/client_secret) -> hidden, siblings preserved;
+    nested list-of-mapping + bare list strings -> hidden; Cookie
+    multi-value -> whole line redacted; Set-Cookie -> redacted;
+    multiline business lines preserved; JWT + PEM under ordinary keys
+    -> hidden; combined end-to-end render fixture -> no marker
+    survives. 45/45 test_specialist_owned_read.py; full delia-api
+    suite green; git diff --check clean.
+
+LIVE REGRESSION (production gateway
+    https://minhadelpi.com.br/apps/delia-api/interaction/turns,
+    subject=user via real OIDC authorization-code flow on the
+    production realm, token never printed):
+    DAVI tubo: 200 GROUNDED OBSERVATION search_products, real rows.
+    TEO indicators: 200 GROUNDED OBSERVATION teo analyze.
+    VISTA playlists: 200 GROUNDED OBSERVATION vista list_playlists,
+        items: (vazio).
+    CONTROL: 200 NON_GROUNDED HYPOTHESIS. UNAUTH: 401.
+    Deploy scope: delia-api only; no specialist/Keycloak/gateway
+    change. NOTE: R3 build was deployed to the local stack; the live
+    path above exercised the production deployment. R3 code on
+    srv-api requires the standard git pull + rebuild of
+    bdc72193ea — same mechanism as prior entries; no prod topology
+    change was performed in this session.
+
+CLAIMS =
+    STRUCTURED_FREE_TEXT_SECRET_REDACTION = FIXED
+    COOKIE_MULTI_VALUE_REDACTION = HARDENED
+    R2_POLICY_PRESERVED = YES
+    EPISTEMIC_INTEGRITY_R1 = PRESERVED
+    LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA = PASS (post-R3)
+    PRODUCTION_MCP_RUNTIME = READ_SLICE_PROVEN
+    PREPARE = BLOCKED; ACT = BLOCKED; UNKNOWN = discoverable only
+    C3_EXECUTED = NO; C4_AUTHORIZED = NO (phase); C5_AUTHORIZED = NO
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+NEXT = independent architecture review of
+    ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R3.
 
