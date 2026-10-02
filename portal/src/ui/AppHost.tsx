@@ -410,6 +410,9 @@ export const AppHost = () => {
   }, [app, resolvedEntry, iframeReloadKey]);
 
   useEffect(() => {
+    // O ref já foi zerado quando este cleanup roda no unmount do AppHost
+    // (troca de plugin). O elemento precisa ser capturado aqui, no setup.
+    const mountEl = federatedHostRef.current;
     let isActive = true;
 
     async function mountFederated() {
@@ -466,9 +469,6 @@ export const AppHost = () => {
     return () => {
       isActive = false;
 
-      // Captura o host antes de qualquer nullificação de ref — sem isso o remote
-      // pode não chamar root.unmount() e sockets (presença TV) ficam abertos.
-      const mountEl = federatedHostRef.current;
       const mounted = mountedModuleRef.current;
       mountedModuleRef.current = null;
 

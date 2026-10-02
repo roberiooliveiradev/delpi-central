@@ -9,6 +9,7 @@ import {
 } from "./constants/permissions";
 import {
   AREAS,
+  BASE_PATH,
   BRANCH_PERMISSIONS,
   isGlobalArea,
   type BranchCode,
@@ -68,6 +69,7 @@ export default function App({
 
   useEffect(() => {
     if (!activeArea || registrationsDenied) return;
+    if (!window.location.pathname.startsWith(BASE_PATH)) return;
     const canonical = areaIsGlobal
       ? route.registrationPage
         ? buildRegistrationHref(route.registrationPage)

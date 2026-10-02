@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
@@ -72,6 +72,38 @@ describe("Delpi MES App — registrations area", () => {
   it("keeps branch-scoped areas forbidden without a branch permission", async () => {
     renderApp("/apps/delpi-mes/monitoring", ["delpi-mes.access", "delpi-mes.monitoring.view"]);
     await screen.findByRole("heading", { name: "Acesso não disponível" });
+  });
+
+  it("does not pull another plugin back to the MES canonical url", async () => {
+    window.history.pushState({}, "", "/apps/production-control/machine-load?branch=02");
+    render(
+      <App
+        pathname="/apps/delpi-mes/monitoring"
+        permissions={[
+          "delpi-mes.access",
+          "delpi-mes.monitoring.view",
+          "delpi-mes.view.filial-01",
+          "delpi-mes.view.filial-02",
+        ]}
+        getAccessToken={() => "token"}
+      />,
+    );
+    await screen.findByRole("heading", { name: "Delpi MES" });
+    expect(window.location.pathname).toBe("/apps/production-control/machine-load");
+    expect(window.location.search).toBe("?branch=02");
+  });
+
+  it("still canonicalizes a MES url that is missing the branch", async () => {
+    renderApp("/apps/delpi-mes/monitoring", [
+      "delpi-mes.access",
+      "delpi-mes.monitoring.view",
+      "delpi-mes.view.filial-01",
+    ]);
+    await screen.findByRole("heading", { name: "Delpi MES" });
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/apps/delpi-mes/monitoring");
+      expect(window.location.search).toBe("?branch=01");
+    });
   });
 
   it("navigates from the hub to the downtime-reasons catalog", async () => {
