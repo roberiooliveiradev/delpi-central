@@ -355,6 +355,58 @@ def _sanitize_renderable(node: object) -> object:
     return node
 
 
+def _format_structured(node: object, depth: int = 0) -> list[str]:
+    """Deterministic human-readable projection of owner data.
+
+    Formats bounded sanitized structures into key/value lines and list
+    items — formatting only: no inference, no semantic renaming, no
+    computed values. Returns [] when the node is not formattable so
+    the caller may fall back to a bounded JSON dump.
+    """
+    indent = "  " * depth
+    if depth > 3:
+        return []
+    if isinstance(node, Mapping):
+        lines: list[str] = []
+        for key, value in node.items():
+            key = str(key)
+            if isinstance(value, Mapping):
+                sub = _format_structured(value, depth + 1)
+                lines.append(f"{indent}{key}:")
+                lines.extend(sub or [f"{indent}  {{}}"])
+            elif isinstance(value, (list, tuple)):
+                items = list(value)[:MAX_RENDER_LIST_ITEMS]
+                lines.append(f"{indent}{key}:")
+                lines.extend(_format_list(items, depth + 1))
+            else:
+                lines.append(f"{indent}{key}: {value}")
+        return lines
+    return []
+
+
+def _format_list(items: list, depth: int) -> list[str]:
+    indent = "  " * depth
+    lines: list[str] = []
+    for item in items:
+        if isinstance(item, Mapping):
+            first = True
+            for key, value in item.items():
+                if isinstance(value, (Mapping, list, tuple)):
+                    continue
+                prefix = "- " if first else "  "
+                lines.append(
+                    f"{indent}{prefix}{key}: {value}"
+                )
+                first = False
+            if first:
+                lines.append(f"{indent}- {{}}")
+        elif isinstance(item, (list, tuple)):
+            return []
+        else:
+            lines.append(f"{indent}- {item}")
+    return lines
+
+
 def render_specialist_outcome(
     outcome: SpecialistOutcome,
 ) -> tuple[str, tuple[str, ...]]:
@@ -379,16 +431,31 @@ def render_specialist_outcome(
             default=str,
         )
         if text and full_payload.strip() in text:
-            content = text[:MAX_RENDER_CONTENT_CHARS]
-            if len(text) > MAX_RENDER_CONTENT_CHARS:
-                if LIMITATION_RESULT_TRUNCATED not in limitations:
-                    limitations.append(LIMITATION_RESULT_TRUNCATED)
-                content += "\n…(resultado parcial — truncado)"
-            return content, tuple(limitations)
-        payload = full_payload[:MAX_STRUCTURED_RENDER_CHARS]
+            if text.lstrip()[:1] in ("{", "["):
+                # content_text is the raw JSON payload itself — render
+                # the deterministic formatted projection instead.
+                lines = _format_structured(
+                    _sanitize_renderable(structured)
+                )
+                body = (
+                    "\n".join(lines) if lines else text
+                )[:MAX_RENDER_CONTENT_CHARS]
+            else:
+                body = text[:MAX_RENDER_CONTENT_CHARS]
+            if len(body) >= MAX_RENDER_CONTENT_CHARS and (
+                LIMITATION_RESULT_TRUNCATED not in limitations
+            ):
+                limitations.append(LIMITATION_RESULT_TRUNCATED)
+            return body, tuple(limitations)
+        lines = _format_structured(_sanitize_renderable(structured))
+        payload = (
+            "\n".join(lines)
+            if lines
+            else full_payload[:MAX_STRUCTURED_RENDER_CHARS]
+        )
         body = (
             (text + "\n\n" if text else "")
-            + "Resultado do especialista (dados estruturados):\n"
+            + "Resultado do especialista:\n"
             + payload
         )
         content = body[:MAX_RENDER_CONTENT_CHARS]
