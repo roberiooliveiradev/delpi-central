@@ -135,6 +135,7 @@ export type InvoicePostingDetail = {
   comments: InvoicePostingComment[];
   allowed_actions: AllowedAction[];
   danfe?: InvoicePostingDanfe | null;
+  fiscal_attachments?: FiscalAttachment[];
 };
 
 export type InvoicePostingListResponse = {
@@ -220,25 +221,85 @@ export type CreateRequestPayload = {
   amount: number | string;
   received_at: string;
   observation?: string | null;
-  source?: "manual" | "received_nfe";
+  source?: "manual" | "received_nfe" | "questor";
   document_id?: string;
   access_key?: string;
   source_branch?: string;
+  source_document_type?: "nfe" | "nfse";
+  provider_document_number?: string;
   linked_invoices?: Array<{ document: string; series: string }>;
 };
 
+export type ReceivedDocumentType = "nfe" | "nfse";
+
 export type ReceivedInvoiceItem = {
+  documentType?: ReceivedDocumentType;
   documentId: string;
+  providerDocumentNumber?: string | null;
+  documentNumber?: string | null;
   accessKey: string;
   invoiceNumber: string;
   series: string;
   issuerName: string;
   issuerCnpj: string | null;
+  receiverName?: string | null;
+  receiverCnpj?: string | null;
   emissionAt: string | null;
   amount: string;
   amountFormatted: string;
+  cityHall?: string | null;
   danfeAvailable: boolean;
+  xmlOriginalAvailable?: boolean;
+  xmlStandardAvailable?: boolean;
   branchCode: string;
+};
+
+export type NfseServiceLine = {
+  serviceCode?: string | null;
+  description?: string | null;
+  issRate?: string | null;
+  serviceAmount?: string | null;
+  nbs?: string | null;
+  ibsCbs?: Record<string, string> | null;
+};
+
+export type NfseDetail = {
+  documentId?: string;
+  branchCode?: string;
+  documentType?: "nfse";
+  cityHall?: string | null;
+  number?: string | null;
+  series?: string | null;
+  providerDocumentKey?: string | null;
+  emissionDate?: string | null;
+  competence?: string | null;
+  verificationCode?: string | null;
+  rpsNumber?: string | null;
+  serviceCode?: string | null;
+  providerName?: string | null;
+  providerCnpj?: string | null;
+  takerName?: string | null;
+  takerCnpj?: string | null;
+  pis?: string | null;
+  cofins?: string | null;
+  csll?: string | null;
+  iss?: string | null;
+  ir?: string | null;
+  inss?: string | null;
+  netAmount?: string | null;
+  services?: NfseServiceLine[];
+};
+
+export type FiscalAttachment = {
+  document_type: string;
+  attachment_type: "xml_original" | "xml_standard" | "danfe" | "dacte";
+  provider_document_id: string;
+  provider_document_number: string;
+  provider_document_key?: string | null;
+  branch_code: string;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
 };
 
 export type ReceivedInvoiceSearch = {

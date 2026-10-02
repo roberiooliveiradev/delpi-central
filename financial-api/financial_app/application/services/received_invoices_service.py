@@ -22,8 +22,10 @@ from financial_app.domain.errors import (
     QuestorUnavailable,
 )
 from financial_app.domain.ports.received_invoice_gateway import ReceivedInvoiceGateway
-from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoicePage, ReceivedInvoiceQuery
+from financial_app.domain.received_fiscal_document import ReceivedFiscalDocument, ReceivedFiscalPage
+from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoiceQuery
 from financial_app.domain.services.branch_access_service import BranchAccessService
+from financial_app.infrastructure.xml.nfse_standard_xml import parse_nfse_standard_xml
 
 _DOCUMENT_ID = re.compile(r"^[0-9a-fA-F]{24}$")
 _ACCESS_KEY = re.compile(r"^\d{44}$")
@@ -35,7 +37,10 @@ _MAX_PAGE_SIZE = 100
 _SCAN_PAGE_SIZE = 100
 _SCAN_MAX_PAGES = 100
 _BRANCHES = ("01", "02")
+_DOCUMENT_TYPES = {"all", "nfe", "nfse"}
+_XML_VARIANTS = {"original", "standard"}
 _CONSULT_ALL = "Não foi possível consultar todas as empresas no Questor Zen."
+_XML_MAX_BYTES = 10_485_760
 
 
 class ReceivedInvoicesService:
@@ -59,8 +64,10 @@ class ReceivedInvoicesService:
         supplier_cnpj: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        document_type: str | None = None,
     ) -> dict[str, Any]:
         self._authorize(user)
+        kind = _document_type(document_type)
         query = self._query(
             invoice_number=invoice_number,
             value=value,
@@ -68,12 +75,13 @@ class ReceivedInvoicesService:
             page=page,
             page_size=page_size,
         )
-        merged = _consolidate(self._load_companies(query), query.page, query.page_size)
+        merged = _consolidate(self._load_companies(query, kind), query.page, query.page_size)
         return {
             "filters": {
                 "invoiceNumber": query.invoice_number,
                 "value": query.amount_text,
                 "supplierCnpj": query.supplier_cnpj,
+                "documentType": kind,
             },
             "pagination": _pagination(query.page, query.page_size, merged.total_items),
             "items": [_item(item) for item in merged.items],
@@ -97,17 +105,57 @@ class ReceivedInvoicesService:
         )
         return payload, f"NFe-{normalized_key}.pdf"
 
+    def download_nfse_xml(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        variant: str,
+        branch_code: str | None,
+    ) -> tuple[bytes, str]:
+        self._authorize(user)
+        branch = _origin_branch(branch_code)
+        normalized_id = _document_id(document_id)
+        kind = _xml_variant(variant)
+        payload = self._companies[branch].download_nfse_xml(document_id=normalized_id, variant=kind)
+        return payload, f"NFSe-{normalized_id}-{kind}.xml"
+
+    def nfse_standard_detail(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        branch_code: str | None,
+    ) -> dict[str, Any]:
+        payload, _filename = self.download_nfse_xml(
+            user,
+            document_id=document_id,
+            variant="standard",
+            branch_code=branch_code,
+        )
+        parsed = parse_nfse_standard_xml(payload, max_bytes=_XML_MAX_BYTES)
+        data = parsed.as_public_dict()
+        data["documentId"] = _document_id(document_id)
+        data["branchCode"] = _origin_branch(branch_code)
+        data["documentType"] = "nfse"
+        return data
+
     def _authorize(self, user: object | None) -> None:
         if _is_internal_invoice_reader(user):
             return
         self._branch_access.assert_can_use(user, FIN_INVOICES_VIEW)
 
-    def _load_companies(self, query: ReceivedInvoiceQuery) -> list[ReceivedInvoice]:
-        def load(branch: str) -> list[ReceivedInvoice]:
-            return _collect_company(self._companies[branch], query, branch)
+    def _load_companies(self, query: ReceivedInvoiceQuery, document_type: str) -> list[ReceivedFiscalDocument]:
+        sources = ("nfe", "nfse") if document_type == "all" else (document_type,)
+
+        def load(branch: str) -> list[ReceivedFiscalDocument]:
+            collected: list[ReceivedFiscalDocument] = []
+            for source in sources:
+                collected.extend(_collect_source(self._companies[branch], query, branch, source))
+            return collected
 
         errors: list[BaseException] = []
-        collected: list[ReceivedInvoice] = []
+        collected: list[ReceivedFiscalDocument] = []
         with ThreadPoolExecutor(max_workers=len(self._companies)) as pool:
             futures = [pool.submit(load, branch) for branch in _BRANCHES]
             for future in futures:
@@ -152,22 +200,35 @@ def _pagination(page: int, page_size: int, total_items: int) -> dict[str, Any]:
     }
 
 
-def _item(invoice: ReceivedInvoice) -> dict[str, Any]:
+def _item(document: ReceivedFiscalDocument) -> dict[str, Any]:
+    invoice_number = document.document_number if document.document_type == "nfse" else document.provider_document_number
     return {
-        "documentId": invoice.document_id,
-        "accessKey": invoice.access_key,
-        "invoiceNumber": invoice.invoice_number,
-        "series": invoice.series,
-        "issuerName": invoice.issuer_name,
-        "issuerCnpj": invoice.issuer_cnpj,
-        "receiverName": invoice.receiver_name,
-        "emissionAt": invoice.emission_at,
-        "amount": invoice.amount,
-        "amountFormatted": invoice.amount_formatted,
-        "manifestationCode": invoice.manifestation_code,
-        "manifestationDescription": invoice.manifestation_description,
-        "danfeAvailable": invoice.danfe_available,
-        "branchCode": invoice.branch_code,
+        "documentType": document.document_type,
+        "documentId": document.provider_document_id,
+        "providerDocumentId": document.provider_document_id,
+        "providerDocumentNumber": document.provider_document_number,
+        "documentNumber": document.document_number,
+        "documentMatchKey": document.document_match_key,
+        "providerDocumentKey": document.provider_document_key,
+        "accessKey": document.access_key,
+        "invoiceNumber": invoice_number,
+        "series": document.series,
+        "issuerName": document.issuer_name,
+        "issuerCnpj": document.issuer_cnpj,
+        "receiverName": document.receiver_name,
+        "receiverCnpj": document.receiver_cnpj,
+        "emissionAt": document.emission_at,
+        "amount": document.amount,
+        "amountFormatted": document.amount_formatted,
+        "cityHall": document.city_hall,
+        "manifestationCode": document.manifestation_code,
+        "manifestationDescription": document.manifestation_description,
+        "danfeAvailable": document.danfe_available,
+        "printableAvailable": document.printable_available,
+        "xmlOriginalAvailable": document.xml_original_available,
+        "xmlStandardAvailable": document.xml_standard_available,
+        "providerStatus": document.provider_status or None,
+        "branchCode": document.branch_code,
     }
 
 
@@ -196,32 +257,36 @@ def _raise_company_failure(exc: BaseException) -> None:
     raise exc
 
 
-def _collect_company(
+def _collect_source(
     gateway: ReceivedInvoiceGateway,
     query: ReceivedInvoiceQuery,
     branch_code: str,
-) -> list[ReceivedInvoice]:
-    """Lê o conjunto filtrado da empresa antes de paginar a visão consolidada.
+    source: str,
+) -> list[ReceivedFiscalDocument]:
+    """Lê o conjunto filtrado de uma fonte antes de paginar a visão consolidada.
 
-    O Questor não oferece cursor entre empresas. Concatenar a página N de cada
-    filial produziria uma página que não existe no conjunto ordenado.
+    NF-e e NFS-e da mesma filial usam a sessão em sequência. Filiais distintas
+    seguem em paralelo, cada uma com o próprio cookie jar.
     """
 
-    collected: list[ReceivedInvoice] = []
+    collected: list[ReceivedFiscalDocument] = []
     reported_total = 0
     for page in range(1, _SCAN_MAX_PAGES + 1):
-        partial = gateway.list_received_invoices(
-            ReceivedInvoiceQuery(
-                invoice_number=query.invoice_number,
-                supplier_cnpj=query.supplier_cnpj,
-                amount=query.amount,
-                amount_text=query.amount_text,
-                page=page,
-                page_size=_SCAN_PAGE_SIZE,
-            )
+        scan = ReceivedInvoiceQuery(
+            invoice_number=query.invoice_number,
+            supplier_cnpj=query.supplier_cnpj,
+            amount=query.amount,
+            amount_text=query.amount_text,
+            page=page,
+            page_size=_SCAN_PAGE_SIZE,
         )
+        if source == "nfe":
+            partial = gateway.list_received_invoices(scan)
+            batch = tuple(_from_nfe(item, branch_code) for item in partial.items)
+        else:
+            partial = gateway.list_received_nfse(scan)
+            batch = tuple(_with_branch(item, branch_code) for item in partial.items)
         reported_total = partial.total_items
-        batch = tuple(_with_branch(item, branch_code) for item in partial.items)
         collected.extend(batch)
         if not batch or len(batch) < _SCAN_PAGE_SIZE or len(collected) >= reported_total:
             return collected
@@ -230,48 +295,96 @@ def _collect_company(
     return collected
 
 
-def _with_branch(invoice: ReceivedInvoice, branch_code: str) -> ReceivedInvoice:
-    if invoice.branch_code == branch_code:
-        return invoice
-    return ReceivedInvoice(
-        document_id=invoice.document_id,
-        access_key=invoice.access_key,
-        invoice_number=invoice.invoice_number,
+def _from_nfe(invoice: ReceivedInvoice, branch_code: str) -> ReceivedFiscalDocument:
+    number = invoice.invoice_number
+    return ReceivedFiscalDocument(
+        document_type="nfe",
+        branch_code=branch_code,
+        provider_document_id=invoice.document_id,
+        provider_document_number=number,
+        document_number=number,
+        document_match_key=number,
+        provider_document_key=invoice.access_key or None,
         series=invoice.series,
         issuer_name=invoice.issuer_name,
         issuer_cnpj=invoice.issuer_cnpj,
         receiver_name=invoice.receiver_name,
+        receiver_cnpj=None,
         emission_at=invoice.emission_at,
         amount=invoice.amount,
         amount_formatted=invoice.amount_formatted,
+        city_hall=None,
+        printable_available=invoice.danfe_available,
+        xml_original_available=False,
+        xml_standard_available=False,
+        access_key=invoice.access_key,
         manifestation_code=invoice.manifestation_code,
         manifestation_description=invoice.manifestation_description,
         danfe_available=invoice.danfe_available,
+    )
+
+
+def _with_branch(document: ReceivedFiscalDocument, branch_code: str) -> ReceivedFiscalDocument:
+    if document.branch_code == branch_code:
+        return document
+    return ReceivedFiscalDocument(
+        document_type=document.document_type,
         branch_code=branch_code,
+        provider_document_id=document.provider_document_id,
+        provider_document_number=document.provider_document_number,
+        document_number=document.document_number,
+        document_match_key=document.document_match_key,
+        provider_document_key=document.provider_document_key,
+        series=document.series,
+        issuer_name=document.issuer_name,
+        issuer_cnpj=document.issuer_cnpj,
+        receiver_name=document.receiver_name,
+        receiver_cnpj=document.receiver_cnpj,
+        emission_at=document.emission_at,
+        amount=document.amount,
+        amount_formatted=document.amount_formatted,
+        city_hall=document.city_hall,
+        printable_available=document.printable_available,
+        xml_original_available=document.xml_original_available,
+        xml_standard_available=document.xml_standard_available,
+        access_key=document.access_key,
+        manifestation_code=document.manifestation_code,
+        manifestation_description=document.manifestation_description,
+        danfe_available=document.danfe_available,
+        provider_status=document.provider_status,
     )
 
 
 def _consolidate(
-    items: list[ReceivedInvoice],
+    items: list[ReceivedFiscalDocument],
     page: int,
     page_size: int,
-) -> ReceivedInvoicePage:
+) -> ReceivedFiscalPage:
     ordered = sorted(items, key=_sort_key)
-    unique: list[ReceivedInvoice] = []
+    unique: list[ReceivedFiscalDocument] = []
     seen: set[str] = set()
     for item in ordered:
-        if item.access_key and item.access_key in seen:
+        identity = _identity(item)
+        if identity in seen:
             continue
-        if item.access_key:
-            seen.add(item.access_key)
+        seen.add(identity)
         unique.append(item)
     start = (page - 1) * page_size
-    return ReceivedInvoicePage(total_items=len(unique), items=tuple(unique[start : start + page_size]))
+    return ReceivedFiscalPage(total_items=len(unique), items=tuple(unique[start : start + page_size]))
 
 
-def _sort_key(invoice: ReceivedInvoice) -> tuple[int, float, str, str]:
-    emission = _emission_rank(invoice.emission_at)
-    return (emission[0], emission[1], invoice.access_key, invoice.branch_code)
+def _identity(document: ReceivedFiscalDocument) -> str:
+    if document.document_type == "nfe" and document.access_key:
+        return f"nfe:{document.access_key}"
+    if document.document_type == "nfse":
+        token = document.provider_document_key or document.provider_document_id or document.provider_document_number
+        return f"nfse:{token}"
+    return f"{document.document_type}:{document.provider_document_id}:{document.branch_code}"
+
+
+def _sort_key(document: ReceivedFiscalDocument) -> tuple[int, float, str, str, str]:
+    emission = _emission_rank(document.emission_at)
+    return (emission[0], emission[1], document.document_type, _identity(document), document.branch_code)
 
 
 def _emission_rank(value: str | None) -> tuple[int, float]:
@@ -337,6 +450,20 @@ def _amount(value: str | None) -> tuple[Decimal | None, str | None]:
         raise InvalidReceivedInvoiceQuery("Valor inválido.")
     normalized = amount.quantize(_CENTS, rounding=ROUND_HALF_UP)
     return normalized, format(normalized, "f")
+
+
+def _document_type(value: str | None) -> str:
+    text = (value or "all").strip().lower()
+    if text not in _DOCUMENT_TYPES:
+        raise InvalidReceivedInvoiceQuery("Tipo de documento fiscal inválido.")
+    return text
+
+
+def _xml_variant(value: str) -> str:
+    text = (value or "").strip().lower().replace("-", "_")
+    if text not in _XML_VARIANTS:
+        raise InvalidReceivedInvoiceQuery("Tipo de XML da NFS-e inválido.")
+    return text
 
 
 def _document_id(value: str) -> str:

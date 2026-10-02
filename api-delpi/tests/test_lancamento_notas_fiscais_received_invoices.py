@@ -255,6 +255,7 @@ def test_list_route_requires_a_filter() -> None:
             supplier_cnpj=None,
             page=1,
             page_size=25,
+            document_type=None,
         )
     payload = json.loads(response.body.decode("utf-8"))
     assert response.status_code == 422
@@ -507,3 +508,187 @@ def test_download_route_forbidden_without_branch(tmp_path) -> None:
         build_get.return_value.execute.return_value = detail
         response = download_request_danfe(request_id, disposition="attachment")
     assert response.status_code == 403
+
+
+XML = b"""<?xml version="1.0" encoding="utf-8"?><Notas><Nota><SERIE>E</SERIE><N_DA_NFSE>2600000002224</N_DA_NFSE></Nota></Notas>"""
+NFSE_ID = "6abf21d2ac12fe2654ee8fe9"
+
+
+def test_list_forwards_document_type() -> None:
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        return httpx.Response(200, json={"success": True, "data": {"items": [], "pagination": {}}})
+
+    _gateway(handler).list_received_invoices(
+        authorization="Bearer user-jwt",
+        invoice_number="2224",
+        supplier_cnpj=None,
+        page=1,
+        page_size=25,
+        document_type="nfse",
+    )
+    assert "documentType=nfse" in captured["url"]
+
+
+def test_nfse_xml_download_does_not_require_access_key() -> None:
+    captured: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        return httpx.Response(200, content=XML, headers={"content-type": "text/xml"})
+
+    content, filename = _gateway(handler).download_nfse_xml(
+        authorization="Bearer user-jwt",
+        document_id=NFSE_ID,
+        variant="standard",
+        branch="02",
+    )
+    assert content == XML
+    assert "branch=02" in captured["url"]
+    assert "accessKey" not in captured["url"]
+    assert filename.endswith("-standard.xml")
+
+
+def test_questor_nfse_stores_both_xml_files_and_original_number(tmp_path) -> None:
+    requests = _Requests()
+    requests.fiscal = []
+
+    def insert_fiscal_attachment(**kwargs) -> None:
+        requests.fiscal.append(kwargs)
+
+    requests.insert_fiscal_attachment = insert_fiscal_attachment
+    create = _Create()
+    downloads: list[str] = []
+
+    def download_nfse_xml(**kwargs):
+        downloads.append(kwargs["variant"])
+        return XML, f"NFSe-{kwargs['variant']}.xml"
+
+    service = ReceivedInvoiceAttachmentService(
+        create_request=create,
+        gateway=SimpleNamespace(download_nfse_xml=download_nfse_xml),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        requests=requests,
+    )
+    created = service.execute(
+        {
+            "source": "questor",
+            "source_document_type": "nfse",
+            "fiscal_model": "nfse",
+            "branch_code": "02",
+            "source_branch": "02",
+            "document_id": NFSE_ID,
+            "provider_document_number": "2600000002224",
+            "document_number": "000002224",
+        },
+        _actor(),
+        authorization="Bearer user-jwt",
+    )
+    assert downloads == ["original", "standard"]
+    assert create.calls == 1
+    assert {item["attachment_type"] for item in requests.fiscal} == {"xml_original", "xml_standard"}
+    assert requests.fiscal[0]["provider_document_number"] == "2600000002224"
+    assert requests.fiscal[0]["branch_code"] == "02"
+    stored = list(tmp_path.glob("*.xml"))
+    assert len(stored) == 2
+    assert stored[0].read_bytes() == XML
+    assert created["fiscal_attachments"][0]["provider_document_number"] == "2600000002224"
+
+
+def test_nfse_branch_and_model_mismatch_are_422(tmp_path) -> None:
+    service = ReceivedInvoiceAttachmentService(
+        create_request=_Create(),
+        gateway=SimpleNamespace(download_nfse_xml=lambda **_kwargs: (_ for _ in ()).throw(AssertionError("download"))),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        requests=_Requests(),
+    )
+    with pytest.raises(InvoicePostingValidationError):
+        service.execute(
+            {
+                "source": "questor",
+                "source_document_type": "nfse",
+                "fiscal_model": "nfse",
+                "branch_code": "01",
+                "source_branch": "02",
+                "document_id": NFSE_ID,
+            },
+            _actor(),
+            authorization="Bearer user-jwt",
+        )
+    with pytest.raises(InvoicePostingValidationError):
+        service.execute(
+            {
+                "source": "questor",
+                "source_document_type": "nfe",
+                "fiscal_model": "nfse",
+                "branch_code": "01",
+                "source_branch": "01",
+                "document_id": NFSE_ID,
+            },
+            _actor(),
+            authorization="Bearer user-jwt",
+        )
+
+
+def test_nfse_second_attachment_failure_removes_the_first_file(tmp_path) -> None:
+    from app.application.services.lancamento_notas_fiscais.fiscal_attachment_storage import (
+        LancamentoFiscalAttachmentStorage,
+    )
+
+    requests = _Requests()
+    requests.fiscal = []
+
+    def insert_fiscal_attachment(**kwargs) -> None:
+        if kwargs["attachment_type"] == "xml_standard":
+            raise OSError("disk")
+        requests.fiscal.append(kwargs)
+
+    requests.insert_fiscal_attachment = insert_fiscal_attachment
+    service = ReceivedInvoiceAttachmentService(
+        create_request=_Create(),
+        gateway=SimpleNamespace(
+            download_nfse_xml=lambda **kwargs: (XML, f"{kwargs['variant']}.xml")
+        ),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        fiscal_storage=LancamentoFiscalAttachmentStorage(str(tmp_path)),
+        requests=requests,
+    )
+    with pytest.raises(InvoicePostingUpstreamError):
+        service.execute(
+            {
+                "source": "questor",
+                "source_document_type": "nfse",
+                "fiscal_model": "nfse",
+                "branch_code": "01",
+                "source_branch": "01",
+                "document_id": NFSE_ID,
+                "provider_document_number": "1830",
+            },
+            _actor(),
+            authorization="Bearer user-jwt",
+        )
+    assert requests.deleted
+    assert list(tmp_path.glob("*.xml")) == []
+
+
+def test_manual_nfse_and_cte_do_not_download_questor_files() -> None:
+    create = _Create()
+
+    def _forbidden(**_kwargs):
+        raise AssertionError("gateway não deve ser chamado")
+
+    service = ReceivedInvoiceAttachmentService(
+        create_request=create,
+        gateway=SimpleNamespace(download_danfe=_forbidden, download_nfse_xml=_forbidden),
+        storage=LancamentoDanfeStorage("/tmp/lnf-danfe-unused"),
+        requests=_Requests(),
+    )
+    service.execute({"source": "manual", "fiscal_model": "nfse"}, _actor(), authorization="")
+    service.execute(
+        {"source": "manual", "fiscal_model": "cte", "linked_invoices": []},
+        _actor(),
+        authorization="",
+    )
+    assert create.calls == 2

@@ -410,12 +410,23 @@ class GetInvoicePostingRequestUseCase:
         danfe = load_danfe(request_id) if callable(load_danfe) else None
         if isinstance(danfe, dict):
             danfe = {key: value for key, value in danfe.items() if key != "stored_name"}
+        load_fiscal = getattr(self._requests, "list_fiscal_attachments", None)
+        fiscal_attachments = load_fiscal(request_id) if callable(load_fiscal) else []
+        if isinstance(fiscal_attachments, list):
+            fiscal_attachments = [
+                {key: value for key, value in item.items() if key != "stored_name"}
+                for item in fiscal_attachments
+                if isinstance(item, dict)
+            ]
+        else:
+            fiscal_attachments = []
         return {
             "request": request,
             "history": self._requests.list_history(request_id),
             "comments": self._requests.list_comments(request_id),
             "allowed_actions": allowed_actions(request, actor),
             "danfe": danfe,
+            "fiscal_attachments": fiscal_attachments,
         }
 
 

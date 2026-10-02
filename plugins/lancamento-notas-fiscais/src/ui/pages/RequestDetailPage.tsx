@@ -63,6 +63,21 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
     enabled: hasDanfe,
   });
 
+  async function downloadFiscal(attachmentType: "xml_original" | "xml_standard", fileName: string) {
+    setDownloadError(null);
+    try {
+      const blob = await api.fetchRequestFiscalAttachment(requestId, attachmentType);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName || `${attachmentType}.xml`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : "Não foi possível baixar o XML.");
+    }
+  }
+
   async function downloadDanfe() {
     setDownloadError(null);
     try {
@@ -285,6 +300,31 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                   title={`DANFE ${formatDocument(request.document_number, request.series)}`}
                   labels={{ loading: "Abrindo o DANFE…", loadFailed: "Não foi possível abrir o DANFE." }}
                 />
+              </div>
+            </section>
+          ) : null}
+
+          {detail.fiscal_attachments && detail.fiscal_attachments.length > 0 ? (
+            <section className="lnf-card" data-testid="nfse-attachments">
+              <h2>XML da NFS-e</h2>
+              <p className="lnf-muted">Arquivos recebidos do prestador e a versão padronizada. Não são um DANFSE.</p>
+              <div className="lnf-form__actions">
+                {detail.fiscal_attachments.map((item) => {
+                  if (item.attachment_type !== "xml_original" && item.attachment_type !== "xml_standard") {
+                    return null;
+                  }
+                  const attachmentType = item.attachment_type;
+                  return (
+                    <button
+                      key={attachmentType}
+                      type="button"
+                      className="lnf-btn lnf-btn--ghost"
+                      onClick={() => void downloadFiscal(attachmentType, item.file_name)}
+                    >
+                      {attachmentType === "xml_original" ? "Baixar XML original" : "Baixar XML padronizado"}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           ) : null}

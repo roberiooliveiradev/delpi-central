@@ -217,6 +217,80 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             "size_bytes": row["size_bytes"],
         }
 
+    def insert_fiscal_attachment(
+        self,
+        *,
+        request_id: str,
+        document_type: str,
+        attachment_type: str,
+        provider_document_id: str,
+        provider_document_number: str,
+        provider_document_key: str | None,
+        branch_code: str,
+        stored_name: str,
+        original_name: str,
+        content_type: str,
+        size_bytes: int,
+    ) -> None:
+        self.execute(
+            f"""
+            INSERT INTO {SCHEMA}.invoice_posting_fiscal_attachments (
+                request_id, document_type, attachment_type, provider_document_id,
+                provider_document_number, provider_document_key, branch_code,
+                stored_name, original_name, content_type, size_bytes
+            ) VALUES (
+                %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            """,
+            (
+                request_id,
+                document_type,
+                attachment_type,
+                provider_document_id,
+                provider_document_number,
+                provider_document_key,
+                branch_code,
+                stored_name,
+                original_name,
+                content_type,
+                size_bytes,
+            ),
+        )
+
+    def list_fiscal_attachments(self, request_id: str) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            f"""
+            SELECT document_type, attachment_type, provider_document_id,
+                   provider_document_number, provider_document_key, branch_code,
+                   stored_name, original_name, content_type, size_bytes
+              FROM {SCHEMA}.invoice_posting_fiscal_attachments
+             WHERE request_id = %s::uuid
+             ORDER BY attachment_type ASC
+            """,
+            (request_id,),
+        )
+        return [
+            {
+                "document_type": row["document_type"],
+                "attachment_type": row["attachment_type"],
+                "provider_document_id": row["provider_document_id"],
+                "provider_document_number": row["provider_document_number"],
+                "provider_document_key": row.get("provider_document_key"),
+                "branch_code": row["branch_code"],
+                "file_name": row["original_name"],
+                "stored_name": row["stored_name"],
+                "content_type": row["content_type"],
+                "size_bytes": row["size_bytes"],
+            }
+            for row in rows
+        ]
+
+    def get_fiscal_attachment(self, request_id: str, attachment_type: str) -> dict[str, Any] | None:
+        for item in self.list_fiscal_attachments(request_id):
+            if item["attachment_type"] == attachment_type:
+                return item
+        return None
+
     def delete_request(self, request_id: str) -> None:
         self.execute(
             f"DELETE FROM {SCHEMA}.invoice_posting_requests WHERE id = %s::uuid",

@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable, Mapping
+from typing import Any
 
 from financial_app.domain.errors import InvalidReceivedInvoiceQuery, QuestorNotConfigured
-from financial_app.infrastructure.gateways.questor_received_invoice_gateway import (
-    QuestorReceivedInvoiceGateway,
-)
 
 _BRANCHES = ("01", "02")
-GatewayFactory = Callable[[str, str], QuestorReceivedInvoiceGateway]
+GatewayFactory = Callable[[str, str], Any]
 
 
 class QuestorCompanyRegistry:
@@ -23,10 +21,10 @@ class QuestorCompanyRegistry:
     ) -> None:
         self._company_ids = {branch: (company_ids.get(branch) or "").strip() for branch in _BRANCHES}
         self._factory = factory
-        self._gateways: dict[str, QuestorReceivedInvoiceGateway] = {}
+        self._gateways: dict[str, Any] = {}
         self._lock = threading.Lock()
 
-    def companies(self) -> dict[str, QuestorReceivedInvoiceGateway]:
+    def companies(self) -> dict[str, Any]:
         self._require_configuration()
         with self._lock:
             for branch in _BRANCHES:
@@ -34,7 +32,7 @@ class QuestorCompanyRegistry:
                     self._gateways[branch] = self._factory(branch, self._company_ids[branch])
             return dict(self._gateways)
 
-    def gateway_for(self, branch_code: str) -> QuestorReceivedInvoiceGateway:
+    def gateway_for(self, branch_code: str) -> Any:
         branch = (branch_code or "").strip()
         if branch not in _BRANCHES:
             raise InvalidReceivedInvoiceQuery("Filial de origem inválida.")

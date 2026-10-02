@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  displayDocumentNumber,
   normalizeDocumentInput,
   normalizeSeriesInput,
   parseAmountInput,
@@ -34,6 +35,14 @@ describe("parseAmountInput", () => {
     expect(parseAmountInput("1100,5")).toBe(1100.5);
     expect(parseAmountInput("1100.50")).toBe(1100.5);
     expect(sanitizeAmountTyping("1100,5a")).toBe("1100,5");
+  });
+});
+
+describe("displayDocumentNumber", () => {
+  it("mostra o número operacional sem zeros à esquerda e não corta acima de 9", () => {
+    expect(displayDocumentNumber("000002224")).toBe("2224");
+    expect(displayDocumentNumber("000074919")).toBe("74919");
+    expect(displayDocumentNumber("2600000002224")).toBe("2600000002224");
   });
 });
 

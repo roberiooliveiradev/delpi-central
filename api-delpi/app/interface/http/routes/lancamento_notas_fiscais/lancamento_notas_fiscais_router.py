@@ -30,6 +30,10 @@ from app.application.security.api_delpi_permissions import (
 from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases import (
     Actor,
 )
+from app.application.services.lancamento_notas_fiscais.fiscal_attachment_storage import (
+    LancamentoFiscalAttachmentStorage,
+    LancamentoFiscalAttachmentStorageError,
+)
 from app.application.services.lancamento_notas_fiscais.danfe_storage import (
     LancamentoDanfeStorage,
     LancamentoDanfeStorageError,
@@ -99,6 +103,9 @@ class CreateRequestBody(BaseModel):
     document_id: str | None = None
     access_key: str | None = None
     source_branch: str | None = None
+    source_document_type: str | None = None
+    source_document_id: str | None = None
+    provider_document_number: str | None = None
     linked_invoices: list[LinkedInvoiceBody] | None = None
 
     model_config = {"populate_by_name": True}
@@ -268,6 +275,7 @@ def list_received_invoices(
     supplier_cnpj: str | None = Query(None),
     page: int = Query(1),
     page_size: int = Query(25),
+    document_type: str | None = Query(None),
 ):
     number = str(invoice_number or "").strip()
     cnpj = str(supplier_cnpj or "").strip()
@@ -292,6 +300,7 @@ def list_received_invoices(
             supplier_cnpj=cnpj or None,
             page=page,
             page_size=page_size,
+            document_type=document_type if isinstance(document_type, str) else None,
         )
         return api_delpi_success(
             data,
@@ -338,6 +347,89 @@ def preview_received_invoice_danfe(
             recoverable=False,
         )
     return _pdf_response(content, filename, "inline")
+
+
+@router.get(
+    "/received-invoices/{document_id}/detail",
+    operation_id="get_lancamento_notas_fiscais_received_nfse_detail",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
+def received_nfse_detail(
+    document_id: str,
+    branch: str = Query(""),
+    document_type: str = Query("nfse"),
+):
+    if str(document_type or "").strip().lower() != "nfse":
+        return error_response(
+            "O detalhe estruturado está disponível para NFS-e.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    try:
+        data = build_financial_received_invoice_gateway().get_nfse_detail(
+            authorization=str(get_request_authorization() or ""),
+            document_id=document_id,
+            branch=branch,
+        )
+    except FinancialReceivedInvoiceGatewayError as exc:
+        return _handle_financial(exc)
+    except Exception as exc:
+        log_error(f"Erro ao detalhar NFS-e no lançamento: {type(exc).__name__}")
+        return error_response(
+            "Erro ao carregar os dados da NFS-e.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    return api_delpi_success(
+        data,
+        operation_id="get_lancamento_notas_fiscais_received_nfse_detail",
+        message="Dados da NFS-e carregados.",
+    )
+
+
+@router.get(
+    "/received-invoices/{document_id}/xml/{variant}",
+    operation_id="get_lancamento_notas_fiscais_received_nfse_xml",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
+def download_received_nfse_xml(
+    document_id: str,
+    variant: str,
+    branch: str = Query(""),
+    document_type: str = Query("nfse"),
+):
+    if str(document_type or "").strip().lower() != "nfse":
+        return error_response(
+            "O download de XML está disponível para NFS-e.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    try:
+        content, filename = build_financial_received_invoice_gateway().download_nfse_xml(
+            authorization=str(get_request_authorization() or ""),
+            document_id=document_id,
+            variant=variant,
+            branch=branch,
+        )
+    except FinancialReceivedInvoiceGatewayError as exc:
+        return _handle_financial(exc)
+    except Exception as exc:
+        log_error(f"Erro ao baixar XML de NFS-e no lançamento: {type(exc).__name__}")
+        return error_response(
+            "Erro ao obter o XML da NFS-e.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    safe_name = "".join(ch for ch in filename if ch.isalnum() or ch in {".", "-", "_"}) or "nfse.xml"
+    return Response(
+        content=content,
+        media_type="text/xml",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )
 
 
 @router.post("/requests", operation_id="create_lancamento_notas_fiscais_request")
@@ -512,6 +604,50 @@ def download_request_danfe(
         )
     filename = str(attachment.get("file_name") or stored.get("file_name") or "danfe.pdf")
     return _pdf_response(content, filename, mode)
+
+
+@router.get(
+    "/requests/{request_id}/fiscal-attachments/{attachment_type}",
+    operation_id="get_lancamento_notas_fiscais_request_fiscal_attachment",
+)
+@require_any_permission(LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS)
+def download_request_fiscal_attachment(request_id: UUID, attachment_type: str):
+    kind = str(attachment_type or "").strip().lower().replace("-", "_")
+    if kind not in {"xml_original", "xml_standard"}:
+        return error_response(
+            "Tipo de anexo fiscal inválido.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    try:
+        data = build_get_invoice_posting_request_use_case().execute(str(request_id), _actor())
+        branch_error = _gate_loaded_branch(data)
+        if branch_error is not None:
+            return branch_error
+        stored = build_invoice_posting_request_repository().get_fiscal_attachment(str(request_id), kind)
+        if not isinstance(stored, dict) or not stored.get("stored_name"):
+            return not_found_response("XML não anexado a esta solicitação.", code="fiscal_attachment.not_found")
+        content = LancamentoFiscalAttachmentStorage().read(str(stored["stored_name"]))
+    except LancamentoFiscalAttachmentStorageError:
+        return not_found_response("Arquivo fiscal não encontrado.", code="fiscal_attachment.not_found")
+    except InvoicePostingError as exc:
+        return _handle_domain(exc)
+    except Exception as exc:
+        log_error(f"Erro ao obter XML da solicitação LNF: {type(exc).__name__}")
+        return error_response(
+            "Erro ao obter o XML da NFS-e.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    filename = str(stored.get("file_name") or f"{kind}.xml")
+    safe_name = "".join(ch for ch in filename if ch.isalnum() or ch in {".", "-", "_"}) or "nfse.xml"
+    return Response(
+        content=content,
+        media_type="text/xml",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )
 
 
 @router.get(
