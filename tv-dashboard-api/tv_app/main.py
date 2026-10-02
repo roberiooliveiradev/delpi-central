@@ -28,6 +28,9 @@ from tv_app.interface.http.routes.public_routes import router as public_router
 from tv_app.interface.http.routes.slide_routes import router as slide_router
 from tv_app.interface.http.routes.section_routes import router as section_router
 from tv_app.interface.http.routes.template_routes import router as template_router
+from tv_app.infrastructure.log_sanitization import (
+    install_sensitive_query_params_log_filter,
+)
 from tv_app.middleware.auth_middleware import jwt_middleware
 from tv_app.startup.run_migrations_on_startup import run_migrations_on_startup
 from tv_app.startup.seed_slide_templates import seed_slide_templates_on_startup
@@ -36,6 +39,7 @@ logging.basicConfig(
     level=getattr(logging, str(settings.LOG_LEVEL).upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
+install_sensitive_query_params_log_filter()
 
 
 def build_allowed_origins() -> list[str]:
