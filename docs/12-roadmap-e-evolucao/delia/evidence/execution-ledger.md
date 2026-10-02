@@ -1,6 +1,6 @@
 # DÉLIA — Execution Ledger
 
-**Status:** `PLANNED / NOT_STARTED`  
+**Status:** `EXECUTING / IN_PROGRESS` (C1 ACCEPTED_WITH_RESIDUAL §6.45; C2 ACCEPTED_WITH_RESIDUAL + `C2_EXECUTED=YES` §6.61; C3 `AUTHORIZED/STARTED` com `C3_EXECUTED=NO`; C4/C5 phase-level `LOCKED` com bounded slices individuais conforme §2 — ver tabela canônica)  
 **Product boundary:** standalone application  
 **Plan:** [`../16-execution-master-plan.md`](../16-execution-master-plan.md)  
 **Patterns:** [`../49-architecture-and-design-patterns-standard.md`](../49-architecture-and-design-patterns-standard.md)  
@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** two independent architecture reviews pending — ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) and ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 (§6.109 decision / §6.110 evidence). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); C4-MCP-GOVERNED-READS-01 + -02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE (§6.104/§6.106; bounded DAVI search_products + TEO gpt_analyze view=summary only; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED); C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW (§6.110; specialist-owned catalogs via owner _meta[delpi/toolClass], DELIA mirror removed, discovery!=authorization). C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
+**Next:** two independent architecture reviews pending — ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) and ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 (§6.109 decision / §6.110 evidence). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); C4-MCP-GOVERNED-READS-01 + -02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE (§6.104/§6.106; bounded DAVI search_products + TEO gpt_analyze view=summary only; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED); C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ARCHITECTURE_REVIEW verdict REWORK (§6.111; RUNTIME_FINDING=ACCEPTABLE / NO RUNTIME REWORK REQUESTED — runtime implementation evidence-valid at fe434cdaf3; BLOCKER=CANONICAL_CURRENT_STATE_DOCUMENTATION_DRIFT, rework scope = documentation current-state reconciliation only; specialist-owned catalogs via owner _meta[delpi/toolClass], DELIA mirror removed, discovery!=authorization). C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
 
 ## 1. Ledger rule
 
@@ -26,9 +26,9 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C0 Platform + Architecture + Privacy/Security/Data/Automation/AI Foundations | **NOT_STARTED** | **C1 bootstrap continues (T2 review → next C1 step)** | C0.S0..=C0.S7=APPROVED; FOUNDATION_FREEZE=APPROVED; C1_AUTHORIZED=YES; C1_STARTED=YES |
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
-| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | ARCHITECTURE_COORDINATION_FIRST_GOVERNED_DELPI_READ | C3-T1..T8 APPROVED; C3-MEDIA-FOUNDATION-01 APPROVED (`ARCHITECTURE_REVIEW_C3_MEDIA_FOUNDATION_01` `ACCEPT_WITH_RESIDUAL` §6.86); `C3-INTERACTION-RUNTIME-01` APPROVED (§6.87-§6.91; `ARCHITECTURE_REVIEW_C3_INTERACTION_RUNTIME_01R2_FINAL=ACCEPT_WITH_RESIDUAL`; R2 real provider at `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); `C3-INTERACTION-CONTINUITY-01` APPROVED (§6.90-§6.91; `ACCEPT_WITH_RESIDUAL`; `fdca215029`; transient multi-turn, real eval PASS); `C3_EXECUTED=NO`; `NEXT_TASK_AUTHORIZED=NO` — coordination only |
-| C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED | — | C3 foundations |
-| C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED | — | C4 reads/evidence |
+| C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | reviews pending (see Next) | C3-T1..T8 APPROVED; C3-MEDIA-FOUNDATION-01 APPROVED (§6.86); `C3-INTERACTION-RUNTIME-01` APPROVED (§6.87-§6.91; R2 real provider `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); `C3-INTERACTION-CONTINUITY-01` APPROVED (§6.90-§6.91); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1C `ACCEPT_WITH_RESIDUAL` §6.99 — delegated same-subject identity + authenticated tools/list 3/3); `C3-FINAL-READINESS-01` executed (§6.100: `FULL_C3=C3_NOT_COMPLETE`, open foundation families inventoried); `C3_EXECUTED=NO` |
+| C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED (phase level) — bounded slices approved | — | `C4-MCP-GOVERNED-READS-01` `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (§6.104 — DAVI `search_products`); `C4-MCP-GOVERNED-READS-02` `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (§6.106 — TÉO `gpt_analyze` `view=summary`); `THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED`; `C4_AUTHORIZED=NO` at phase level |
+| C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED (phase level) — foundation candidate | review pending | `C5-GOVERNED-WRITE-FOUNDATION-01` `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (§6.108; contracts only, `GOVERNED_WRITE_BINDINGS` EMPTY, no wire write); `C5_AUTHORIZED=NO`; `PREPARE=BLOCKED`; `ACT=BLOCKED` |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
 | C7 Advanced Autonomy + Twin/Edge/Marketplace + Optimization + Scale/Rollout | LOCKED | — | C0–C6 gates |
 
@@ -7363,4 +7363,54 @@ REPORT = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
     (executor may not declare ACCEPT/ACCEPT_WITH_RESIDUAL)
 
 NEXT = ARCHITECTURE_REVIEW of this correction
+```
+
+
+## 6.111. ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 — verdict REWORK (documentation-only)
+
+```text
+REVIEW = ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01
+VERDICT = REWORK
+REVIEWED_HEAD = b037322f8959a8254a1872bbb20fda1a9ded9972
+REVIEWED_IMPLEMENTATION_HEAD =
+    fe434cdaf3713c9cb0d8e752f49690ed4bd81cee
+
+RUNTIME_FINDING = ACCEPTABLE / NO RUNTIME REWORK REQUESTED
+    Runtime implementation reviewed and architecturally coherent
+    with the specialist-owned catalog decision. PRESERVED (do not
+    reopen): SPECIALIST_CAPABILITY_CLASSES=REMOVED;
+    CATALOG_OWNER=REMOTE_SPECIALIST; AUTO_DISCOVERY=YES;
+    AUTO_CATALOG_SYNC=YES; AUTO_PERMISSION=NO; owner-typed
+    delpi/toolClass on DAVI/TEO/VISTA; UNKNOWN=discoverable/
+    non-invocable; GOVERNED_DISCOVERY_BINDINGS and
+    GOVERNED_READ_ACTIONS = DELIA governance policy;
+    PREPARE=BLOCKED; ACT=BLOCKED.
+
+BLOCKER = CANONICAL_CURRENT_STATE_DOCUMENTATION_DRIFT
+    Canonical current-state surfaces contradicted the factual
+    entries: doc 16 top-level "Proxima etapa" named only the C5
+    review while the same document later records two independent
+    pending reviews; ledger header still read Status=PLANNED /
+    NOT_STARTED despite executed C1/C2 and started C3; canonical
+    phase table kept stale NEXT/LOCKED wording that did not
+    represent the accepted bounded C4 slices nor the C5 candidate.
+
+REWORK_SCOPE = documentation current-state reconciliation only —
+    FILES=16-execution-master-plan.md + evidence/execution-ledger.md.
+    No runtime/contract/test change requested or performed.
+
+REWORK_EVIDENCE = doc 16 top-level Next reconciled to two pending
+    reviews with REWORK_DOCUMENTATION_ONLY status; ledger header
+    status -> EXECUTING/IN_PROGRESS (C1/C2 executed-accepted,
+    C3 started, C4/C5 phase-locked with bounded slices); phase
+    table rows C3/C4/C5 reconciled — phase-level authorization
+    explicitly distinguished from bounded slice approvals.
+
+PHASE_FLAGS = C3_EXECUTED=NO; C4_AUTHORIZED=NO (phase);
+    C5_AUTHORIZED=NO (phase); PREPARE=BLOCKED; ACT=BLOCKED;
+    PRODUCTION_READINESS=NOT_PROVEN — all unchanged.
+
+NEXT = ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_
+    OWNER_01R1 — re-review after doc-only rework; C5 governed-write
+    foundation review remains pending independently.
 ```
