@@ -33,8 +33,10 @@ from app.application.specialist_interop.contracts import (
 )
 from app.application.specialist_interop.errors import (
     CAPABILITY_NOT_ALLOWED_IN_PHASE,
+    MCP_AUTHENTICATION_FAILED,
     MCP_AUTHORIZATION_DENIED,
     MCP_UNAVAILABLE,
+    SPECIALIST_DISABLED,
     SPECIALIST_NOT_CONFIGURED,
     UNKNOWN_CAPABILITY,
     WRITE_CAPABILITY_BLOCKED,
@@ -414,7 +416,8 @@ def test_discovery_failure_is_source_unavailable():
     assert attempt.error_code == MCP_UNAVAILABLE
 
 
-def test_unconfigured_specialist_is_not_applicable():
+def test_unconfigured_specialist_is_source_unavailable():
+    """R1: active slice + unreachable specialist = source failure."""
     governed = _governed(
         errors={
             "discover_delpi_information": SpecialistInteropError(
@@ -423,7 +426,37 @@ def test_unconfigured_specialist_is_not_applicable():
         }
     )
     attempt = governed.attempt("produto")
-    assert attempt.status is GovernedReadStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedReadStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == SPECIALIST_NOT_CONFIGURED
+
+
+def test_disabled_specialist_is_source_unavailable():
+    governed = _governed(
+        errors={
+            "discover_delpi_information": SpecialistInteropError(
+                SPECIALIST_DISABLED, "off"
+            )
+        }
+    )
+    attempt = governed.attempt("produto")
+    assert attempt.status is GovernedReadStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == SPECIALIST_DISABLED
+
+
+def test_discovery_auth_failure_is_source_unavailable():
+    """Token exchange / authentication failure preventing source
+    consultation is SOURCE_UNAVAILABLE, not AUTHZ_DENIED — the
+    downstream authority never answered."""
+    governed = _governed(
+        errors={
+            "discover_delpi_information": SpecialistInteropError(
+                MCP_AUTHENTICATION_FAILED, "exchange failed"
+            )
+        }
+    )
+    attempt = governed.attempt("produto")
+    assert attempt.status is GovernedReadStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == MCP_AUTHENTICATION_FAILED
 
 
 def test_execute_authz_denied_maps_to_authz_denied():
@@ -612,6 +645,26 @@ def test_source_unavailable_yields_truthful_non_grounded():
         }
     )
     result = _handler(governed).execute(_request())
+    assert result.grounding_status is GroundingStatus.NON_GROUNDED
+    assert LIMITATION_DELPI_SOURCE_UNVERIFIED in result.limitations
+    assert DELPI_UNVERIFIED_DISCLOSURE in result.content
+    assert result.provenance is None
+
+
+def test_unconfigured_specialist_yields_truthful_non_grounded():
+    """R1 adversarial: governed read enabled + DAVI not configured +
+    a product-looking question must still disclose that the DELPI
+    source was not consulted — never an undisclosed model fallback."""
+    governed = _governed(
+        errors={
+            "discover_delpi_information": SpecialistInteropError(
+                SPECIALIST_NOT_CONFIGURED, "off"
+            )
+        }
+    )
+    result = _handler(governed).execute(
+        _request("qual o preço atual do produto ANEL 11A?")
+    )
     assert result.grounding_status is GroundingStatus.NON_GROUNDED
     assert LIMITATION_DELPI_SOURCE_UNVERIFIED in result.limitations
     assert DELPI_UNVERIFIED_DISCLOSURE in result.content

@@ -32,8 +32,6 @@ from app.application.specialist_interop.contracts import (
 from app.application.specialist_interop.errors import (
     MCP_AUTHENTICATION_FAILED,
     MCP_AUTHORIZATION_DENIED,
-    SPECIALIST_DISABLED,
-    SPECIALIST_NOT_CONFIGURED,
     SpecialistInteropError,
 )
 from app.application.specialist_interop.specialist_interop import (
@@ -168,16 +166,14 @@ class GovernedProductRead:
                 )
             )
         except SpecialistInteropError as exc:
-            # An unconfigured/disabled specialist means the read path is
-            # simply inactive — not a user-facing source failure.
-            status = (
-                GovernedReadStatus.NOT_APPLICABLE
-                if exc.code
-                in (SPECIALIST_NOT_CONFIGURED, SPECIALIST_DISABLED)
-                else GovernedReadStatus.SOURCE_UNAVAILABLE
-            )
+            # R1: with this slice active, any failure to establish or
+            # consult the authoritative source — including an
+            # unconfigured or disabled specialist — is a source
+            # availability failure, never silent evidence that the
+            # question was unrelated. The user-facing result must
+            # disclose that current DELPI data was not verified.
             return GovernedReadAttempt(
-                status=status,
+                status=GovernedReadStatus.SOURCE_UNAVAILABLE,
                 correlation_id=correlation,
                 error_code=exc.code,
             )
