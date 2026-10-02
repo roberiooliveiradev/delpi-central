@@ -8069,3 +8069,86 @@ CLAIMS =
 STATUS = EVIDENCE_READY_FOR_REVIEW
 NEXT = architecture review of ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02.
 
+## 6.120. ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R1 — grounded presentation epistemic integrity (REWORK evidence)
+
+DATE = 2026-10-02
+BASE_HEAD = ba0f57333ae6569384ddb05b66583e046ebc550f
+EVALUATED_SHA = 3aa5e58538 (main, pushed)
+BRANCH = main; WORKING_TREE = clean at issuance
+
+ROOT CAUSE (review blocker GROUNDED_MODEL_NARRATION_EPISTEMIC_DRIFT):
+    delia.specialist_read.narrate_result produced model free-text that
+    was returned as final content labeled OBSERVATION + GROUNDED with
+    model_invocation_id=None — model-generated wording silently
+    inherited the epistemic status of the authoritative observation.
+    Post-validation checked shape only; no factual entailment.
+
+CORRECTION (minimal diff, no architecture change):
+    - Removed RESULT_NARRATION_INSTRUCTION /
+      delia.specialist_read.narrate_result and _render_prose entirely.
+      No model sits between the authoritative SpecialistOutcome and
+      the OBSERVATION-labeled content.
+    - Grounded content = deterministic bounded render of the
+      sanitized authoritative outcome: key/value + list projection of
+      the structured payload (format only — no inference, renaming or
+      computed values); generic owner status text never masks real
+      data; owner-embedded JSON deduplicated; empty collections render
+      a truthful deterministic "(vazio)" label; candidate_token and
+      transport internals never rendered.
+    - handle_interactive_turn unchanged: epistemic OBSERVATION +
+      GROUNDED + generated_at=source observed_at +
+      model_invocation_id=None is now truthful by construction (no
+      model generated the final wording). Selection/candidate/argument
+      models remain proposals with lineage, unchanged.
+
+ADVERSARIAL TEST (RQ-EPI-02):
+    authoritative items = [TUBO 30X30X1500]; fabricated model proposal
+    "answer" = "TUBO 30X30X1500 e tambem TUBO 50X50X2000, com estoque
+    de 900 unidades." Result: fabricated entities absent from content;
+    authoritative data rendered; only the 3 governed proposals ran —
+    no presentation model call exists in the OBSERVATION path. PASS.
+
+LIVE REGRESSION (POST /interaction/turns, subject=user, fresh OIDC
+auth-code token; token never printed/persisted):
+    DAVI tubo query: HTTP 200 GROUNDED OBSERVATION
+        davi/execute_delpi_information search_products; deterministic
+        formatted product rows; result_truncated limitation.
+    TEO Transformometro indicators: HTTP 200 GROUNDED OBSERVATION
+        teo/analyze; formatted key/value aggregates.
+    VISTA Paineis TV playlists: HTTP 200 GROUNDED OBSERVATION
+        vista/list_playlists; "items: (vazio)" truthful empty.
+    CONTROL: HTTP 200 NON_GROUNDED HYPOTHESIS generic.
+    UNAUTHENTICATED: HTTP 401.
+
+TESTS = 31/31 test_specialist_owned_read.py; full delia-api suite
+    green; git diff --check clean.
+
+SECURITY MATRIX (unchanged, verified): unauth=401; missing
+    delia.access=403; candidate_token never in prompt/response/model;
+    PREPARE/ACT/UNKNOWN blocked; tool metadata never authority;
+    proposals revalidated against fresh projection.
+
+COMMITS = 66a26df4eb (epistemic integrity), 005596c55a (canonical
+    status reconciliation doc16+ledger), 6bb21ba532 + 3aa5e58538
+    (deterministic readable projection + empty-list label).
+
+DOC RECONCILIATION: doc 16 "Proxima etapa" and ledger "Next:" + C4
+    phase row updated to current canonical state; historical
+    §§6.101–6.119 preserved verbatim.
+
+CLAIMS =
+    GROUNDED_MODEL_NARRATION_EPISTEMIC_DRIFT = FIXED
+    CANONICAL_TOP_LEVEL_STATUS_DRIFT = FIXED
+    LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA = PASS (post-R1 rerun)
+    SPECIALIST_CAPABILITY_CATALOG_OWNER = SPECIALIST (unchanged)
+    MCP_READ_FEDERATION = APPROVED_CURRENT_SCOPE
+    PRODUCTION_MCP_RUNTIME = READ_SLICE_PROVEN
+    REAL_PRODUCTION_APPLY = PASS_FOR_CURRENT_MCP_READ_SCOPE
+    PREPARE = BLOCKED; ACT = BLOCKED; UNKNOWN = discoverable only
+    C4_AUTHORIZED = NO (phase level); C5_AUTHORIZED = NO
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+NEXT = independent architecture review of
+    ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R1.
+
