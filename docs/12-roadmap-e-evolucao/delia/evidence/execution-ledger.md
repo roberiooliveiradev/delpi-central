@@ -7964,3 +7964,108 @@ STATUS = IN_EXECUTION
 NEXT = implementation + tests -> controlled delia-api deploy ->
     live human-subject verification x3 -> architecture review.
 ```
+
+## 6.119. ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 — live human-subject verification evidence (DAVI/TEO/VISTA PASS)
+
+DATE = 2026-10-02
+SCOPE = production live verification of the specialist-owned live
+    capability authority (6.118) through POST /interaction/turns with
+    a real human subject (user via delpi-central OIDC auth-code flow;
+    azp=delpi-central; delegated exchange same-subject; azp=delia-api;
+    one MCP resource audience; mcp:tools).
+
+DEFECTS FOUND AND FIXED (root causes, not symptoms):
+
+1. TEO image drift — infra-transformometro-api image built
+   2026-10-01, predating commit fe434cdaf3 (delpi/toolClass emission,
+   2026-10-02). tools/list arrived with no owner class -> all 23
+   capabilities classified UNKNOWN -> get_catalog refused with
+   capability_not_allowed_in_phase. Fix: rebuilt only
+   transformometro-api from server HEAD (4922607f05). Post-rebuild
+   surface: get_catalog=DISCOVERY; get_my_context/analyze/
+   search_records/get_diagnostic etc = READ; prepare_*=PREPARE;
+   commit_proposal=ACT — owner classes honored.
+
+2. DAVI multi-candidate discovery unresolved — owner discovery
+   returns ~5 candidates per query; the chain required exactly one
+   live-token candidate, so it aborted and rendered the bare owner
+   text "Discovery completed." as if it were the answer. Fix
+   (0e15f86446): bounded second-level model proposal
+   (delia.specialist_read.select_candidate) picks the owner-declared
+   action_id; tokens and candidate internals never reach the model;
+   zero candidates render a truthful "nenhuma ação correspondente";
+   unresolvable discovery is NOT_APPLICABLE, never a generic success.
+
+3. Cross-specialist selection defaulting to DAVI — selection
+   instruction gained explicit domain-matching guidance (product/
+   register vs dashboard/indicator); proposal still revalidated
+   against the fresh live projection.
+
+4. Generic status text hiding real data — owners put results in the
+   structured payload while content_text says "Execution completed.".
+   Fix (4ca6aedd55, 3c74e7da82): render appends the bounded,
+   candidate_token-sanitized structured projection, skipping
+   duplication when the owner already embeds the payload in
+   content_text.
+
+5. Raw JSON as the user-facing answer — a bounded narration proposal
+   (delia.specialist_read.narrate_result, 6727b2b0f7) restates the
+   verified OBSERVATION as pt-BR prose; instructed never to add
+   facts; candidate_token never in prompt; malformed/absent proposals
+   fall back to the deterministic bounded render; epistemic class
+   unchanged.
+
+LIVE EVIDENCE (POST /interaction/turns, subject=user):
+
+    DAVI "produtos DELPI relacionados a tubo":
+        HTTP 200; GROUNDED; OBSERVATION;
+        davi/execute_delpi_information action_id=search_products;
+        source=api-delpi; real product rows returned
+        (e.g. TUBO 30X30X1500); limitation result_truncated.
+        Call chain observed: discover_delpi_information (5 owner
+        candidates) -> select_candidate -> search_products ->
+        candidate_arguments -> execute.
+
+    TEO "resumo dos indicadores atuais do Transformômetro":
+        HTTP 200; GROUNDED; OBSERVATION;
+        teo/analyze; source=transformometro-api; real aggregates
+        (68 soluções, economia bruta/líquida) narrated as prose.
+
+    VISTA "minhas programações dos Painéis TV":
+        HTTP 200; GROUNDED; OBSERVATION;
+        vista/list_playlists; source=tv-dashboard-api; truthful
+        empty-set prose ("nenhuma programação encontrada").
+
+    CONTROL (non-business question): HTTP 200; NON_GROUNDED;
+        truthful generic answer; provenance null.
+
+    UNAUTHENTICATED: HTTP 401.
+    Subject without delia.access (earlier run): HTTP 403 forbidden —
+    Core AuthZ gate verified truthful.
+
+TESTS = 32/32 test_specialist_owned_read.py (incl. multi-candidate
+    selection positive/negative, token-never-in-prompt, truthful
+    zero-candidate render, prose narration + malformed-proposal
+    fallback); full delia-api suite green.
+
+COMMITS = 4922607f05 (capability authority), 0e15f86446
+    (multi-candidate selection + truthful discovery),
+    4ca6aedd55 + 3c74e7da82 (structured render + dedup),
+    6727b2b0f7 (prose narration).
+
+CLAIMS =
+    LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA = PASS (user subject,
+        delia.access granted)
+    METAMORPHIC_PROOF = PASS (TEO owner surface change from UNKNOWN to
+        typed classes took effect with zero DELIA code/config change —
+        observed live)
+    IMPLEMENTATION = EVIDENCE_READY_FOR_REVIEW
+    PRODUCTION_MCP_RUNTIME = READ_SLICE_PROVEN (DISCOVERY+READ only)
+    C4_AUTHORIZED = PHASE_SCOPED (unchanged)
+    PREPARE/ACT = BLOCKED (verified live: TEO prepare_*/commit_proposal
+        never surfaced as invocable)
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = EVIDENCE_READY_FOR_REVIEW
+NEXT = architecture review of ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02.
+
