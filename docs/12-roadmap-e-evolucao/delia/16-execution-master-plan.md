@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** dois architecture reviews independentes pendentes — (1) `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`, §6.108, `IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce`: DÉLIA-side governed-write semantic contracts — binding gate, proposal preview, deterministic confirmation, decision gate capped at `READY_FOR_LIVE_REVALIDATION`, outcome projection, audit record; **no business PREPARE/ACT wire call exists**; `FIRST_BOUNDED_GOVERNED_PREPARE_ACT` NOT authorized pending review); (2) `ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01` — verdict `REWORK` com `BLOCKER=CANONICAL_CURRENT_STATE_DOCUMENTATION_DRIFT` e `RUNTIME_FINDING=ACCEPTABLE / NO RUNTIME REWORK REQUESTED` (§6.109 decision / §6.110 evidence / §6.111 review; `IMPLEMENTATION_HEAD=fe434cdaf3713c9cb0d8e752f49690ed4bd81cee` — specialist-owned catalogs via owner `_meta["delpi/toolClass"]`, DÉLIA full mirror removed, live discovery 3/3 + governed reads DAVI/TÉO PASS; runtime implementation remains implementation-evidence-valid — rework is documentation current-state reconciliation only). `C4_MCP_GOVERNED_READS_01`/`02` = `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (DAVI `search_products` + TÉO `analyze`/`gpt_analyze` view=summary — two-consumer governed-read proof closed; third read NOT authorized). `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE`; `C4_AUTHORIZED=NO` at phase level; `C5_AUTHORIZED=NO` at phase level; `PREPARE=BLOCKED`; `ACT=BLOCKED`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`
+**Próxima etapa:** `PROD-MCP-RUNTIME-ALIGNMENT-01` — alinhamento do ambiente de produção ao modelo MCP user-delegated já provado em DEV (compose/env PROD + provisionador Keycloak fail-closed + runbook; **sem apply em produção real**). Review pendente independente: `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108, `IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce` — contracts only, `GOVERNED_WRITE_BINDINGS` EMPTY; `FIRST_BOUNDED_GOVERNED_PREPARE_ACT` NOT authorized). `ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01R1=ACCEPT_WITH_RESIDUAL` (§6.112 — specialist-owned catalogs via owner `_meta["delpi/toolClass"]`, DÉLIA mirror removed; residual `PRODUCTION_MCP_RUNTIME=NOT_PROVEN`). `C4_MCP_GOVERNED_READS_01`/`02` = `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (DAVI `search_products` + TÉO `analyze`/`gpt_analyze` view=summary — two-consumer governed-read proof closed; third read NOT authorized). `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE`; `C4_AUTHORIZED=NO` at phase level; `C5_AUTHORIZED=NO` at phase level; `PREPARE=BLOCKED`; `ACT=BLOCKED`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -801,18 +801,20 @@ C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
    (§6.108; IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce; contracts only —
    GOVERNED_WRITE_BINDINGS EMPTY, no wire write)
 ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 =
-   REWORK_DOCUMENTATION_ONLY (ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_
-   FEDERATION_CATALOG_OWNER_01=REWORK, §6.111;
-   RUNTIME_FINDING=ACCEPTABLE / NO RUNTIME REWORK REQUESTED;
-   BLOCKER=CANONICAL_CURRENT_STATE_DOCUMENTATION_DRIFT;
+   ACCEPT_WITH_RESIDUAL (ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_
+   FEDERATION_CATALOG_OWNER_01R1=ACCEPT_WITH_RESIDUAL, §6.112;
+   prior REWORK §6.111 closed by doc-only reconciliation;
    §6.109 decision, §6.110 evidence; IMPLEMENTATION_HEAD=
    fe434cdaf3713c9cb0d8e752f49690ed4bd81cee; specialist-owned
    catalog + owner-typed delpi/toolClass; DELIA mirror removed;
-   discovery 3/3 + governed reads live PASS; PREPARE/ACT blocked)
-NEXT = ARCHITECTURE_REVIEW (two pending, independent):
+   discovery 3/3 + governed reads live PASS; PREPARE/ACT blocked;
+   residual: PRODUCTION_MCP_RUNTIME=NOT_PROVEN)
+NEXT =
    1) ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108)
-   2) ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01R1
-      (re-review after doc-only rework, §6.111)
+      — pending independently
+   2) PROD-MCP-RUNTIME-ALIGNMENT-01 — production compose/env
+      alignment + prod-safe Keycloak provisioner + runbook;
+      NO real production apply
 Workspace binding remains unscheduled
 ```
 
@@ -1544,11 +1546,10 @@ PRESERVED = DAVI search_products + TÉO gpt_analyze governed slices,
         C5 foundation, PREPARE/ACT blocked
 UNCHANGED = C3_EXECUTED=NO, C4_AUTHORIZED=NO (phase), C5_AUTHORIZED=NO,
         PRODUCTION_READINESS=NOT_PROVEN
-STATUS = REWORK_DOCUMENTATION_ONLY
-        (ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01
-        =REWORK §6.111; RUNTIME_FINDING=ACCEPTABLE — runtime
-        implementation remains evidence-valid; blocker is canonical
-        current-state documentation drift only)
-NEXT_ON_EVIDENCE = ARCHITECTURE_REVIEW of this correction
-        (R1 re-review after doc reconciliation)
+STATUS = ACCEPT_WITH_RESIDUAL
+        (ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01R1
+        =ACCEPT_WITH_RESIDUAL §6.112; prior REWORK §6.111 closed by
+        doc-only reconciliation; residual
+        PRODUCTION_MCP_RUNTIME=NOT_PROVEN)
+NEXT_ON_EVIDENCE = PROD-MCP-RUNTIME-ALIGNMENT-01
 ```
