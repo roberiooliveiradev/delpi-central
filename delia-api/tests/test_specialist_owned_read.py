@@ -759,6 +759,70 @@ def test_zero_candidate_discovery_renders_truthfully():
     assert "nenhuma" in (attempt.content or "").lower()
 
 
+def test_result_narrated_as_prose():
+    """A successful governed read is restated to the user as pt-BR
+    prose — the bounded narration proposal never receives tokens and
+    never elevates epistemic class."""
+    read, port = _davi_read(
+        [
+            _select(
+                "davi", "discover_delpi_information", {"query": "tubo"}
+            ),
+            {"applicable": True, "action_id": "search_products"},
+            {"arguments": {"description": "tubo"}},
+            {"answer": "Encontrei o produto TUBO 30X30X1500 no "
+                       "cadastro."},
+        ],
+        outcomes={
+            "discover_delpi_information": MULTI_CANDIDATE_RESULT,
+            "execute_delpi_information": RemoteToolOutcome(
+                content_text="Execution completed.",
+                structured={"action_id": "search_products",
+                            "data": {"items": [
+                                {"description": "TUBO 30X30X1500"}]}},
+            ),
+        },
+    )
+    attempt = read.attempt("busque tubo")
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    assert attempt.content == (
+        "Encontrei o produto TUBO 30X30X1500 no cadastro."
+    )
+    narration_request = read._invoke_model._port.requests[-1]
+    assert "tok-search" not in narration_request.input_text
+    assert "candidate_token" not in narration_request.input_text
+
+
+def test_result_narration_falls_back_when_malformed():
+    """Malformed narration proposals keep the deterministic bounded
+    render — never a fabricated or empty answer."""
+    for proposal in (
+        {"answer": ""},
+        {"answer": 42},
+        {"answer": "x", "extra": "y"},
+        "not-a-mapping",
+    ):
+        read, _ = _davi_read(
+            [
+                _select(
+                    "davi",
+                    "discover_delpi_information",
+                    {"query": "tubo"},
+                ),
+                proposal,
+            ],
+            outcomes={
+                "discover_delpi_information": RemoteToolOutcome(
+                    content_text="done",
+                    structured={"candidates": []},
+                )
+            },
+        )
+        attempt = read.attempt("busque tubo")
+        assert attempt.status is GovernedReadStatus.SUCCESS
+        assert (attempt.content or "").strip()
+
+
 # --- failure semantics ---------------------------------------------------
 
 
