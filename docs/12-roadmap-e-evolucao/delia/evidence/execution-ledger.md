@@ -27,7 +27,7 @@ Estado factual de inventory usa `PROVEN | TO_INVENTORY`; planejamento usa `PLANN
 | C1 Standalone Bootstrap | ACCEPTED_WITH_RESIDUAL | — | C1-FINAL §6.45 |
 | C2 Portal + Operational Context + Commands | ACCEPTED_WITH_RESIDUAL | — | C2-FINAL §6.61; `C2_EXECUTED=YES` |
 | C3 Intelligence + Capability Foundations | AUTHORIZED / STARTED | reviews pending (see Next) | C3-T1..T8 APPROVED; C3-MEDIA-FOUNDATION-01 APPROVED (§6.86); `C3-INTERACTION-RUNTIME-01` APPROVED (§6.87-§6.91; R2 real provider `c2f85834c5`; `REAL_PROVIDER_GATE=PROVEN_FOR_CURRENT_CONFIG`); `C3-INTERACTION-CONTINUITY-01` APPROVED (§6.90-§6.91); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE` (R1C `ACCEPT_WITH_RESIDUAL` §6.99 — delegated same-subject identity + authenticated tools/list 3/3); `C3-FINAL-READINESS-01` executed (§6.100: `FULL_C3=C3_NOT_COMPLETE`, open foundation families inventoried); `C3_EXECUTED=NO` |
-| C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED (phase level) — bounded slices approved | — | `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02R1` `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` (§6.118–§6.120 — specialist-owned live tools/list authority; `MCP_READ_FEDERATION=APPROVED_CURRENT_SCOPE`, DAVI/TÉO/VISTA live-verified); `C4_AUTHORIZED=NO` at phase level (other C4 families unopened). Superseded historical slices: `C4-MCP-GOVERNED-READS-01/02` (§6.104/§6.106), `THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED` |
+| C4 Governed Reads + Graph/Semantics/Analysis/Predictive Discovery | LOCKED (phase level) — bounded slices approved | — | `ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02=ACCEPT_CURRENT_READ_SCOPE` (§6.124 — specialist-owned live `tools/list` federation DAVI|TÉO|VISTA; `MCP_READ_FEDERATION=ACCEPTED_CURRENT_SCOPE`; `PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN_ON_CURRENT_SHA`; `DEPLOYED_DELIA_SHA=ff27cfaf47`; `GROUNDED_BUSINESS_PRESENTATION=PASS`); `C4_AUTHORIZED=NO` at phase level (other C4 families remain unopened). Superseded historical slices: `C4-MCP-GOVERNED-READS-01/02` (§6.104/§6.106), `THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED` |
 | C5 Governed Writes + Executors + Durable/Recurring Work + Artifacts/Prescriptive Prepare | LOCKED (phase level) — foundation candidate | review pending | `C5-GOVERNED-WRITE-FOUNDATION-01` `CANDIDATE_FOR_ARCHITECTURE_REVIEW` (§6.108; contracts only, `GOVERNED_WRITE_BINDINGS` EMPTY, no wire write); `C5_AUTHORIZED=NO`; `PREPARE=BLOCKED`; `ACT=BLOCKED` |
 | C6 Product Work + Process Intelligence + Control Tower + Meeting/Frontline + Ecosystem | LOCKED | — | C5 governed-write/durable foundation |
 | C7 Advanced Autonomy + Twin/Edge/Marketplace + Optimization + Scale/Rollout | LOCKED | — | C0–C6 gates |
@@ -8470,4 +8470,35 @@ STATUS = REVIEW_PERSISTED (documentation task
 NEXT = ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) —
     review of the already-created foundation only; no writes, no
     PREPARE/ACT slice authorized.
+
+## 6.125. DOC-ARCH-REVIEW-MCP-READ-FEDERATION-01R1 — canonical C4 row reconciliation
+
+DATE = 2026-10-02
+BASE_HEAD = 90356d054add46bf63a5f1e6e3b6dcde2f0463dc
+FINAL_HEAD = this commit (documentation only)
+SOURCE_REVIEW = DOCUMENTATION_REVIEW_DOC_ARCH_REVIEW_MCP_READ_FEDERATION_01
+PRIOR_VERDICT = REWORK
+ROOT_CAUSE = LEDGER_CANONICAL_C4_ROW_STALE — §2 C4 row still carried
+    02R1/IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW while §6.124 and the
+    ledger top summary already recorded ACCEPT_CURRENT_READ_SCOPE.
+CORRECTION = C4 canonical phase row reconciled with §6.124
+    (ACCEPT_CURRENT_READ_SCOPE; MCP_READ_FEDERATION=ACCEPTED_CURRENT_SCOPE;
+    PRODUCTION_MCP_RUNTIME=READ_SLICE_PROVEN_ON_CURRENT_SHA).
+
+ARCHITECTURE_CHANGED = NO
+CODE_CHANGED = NO
+RUNTIME_CHANGED = NO
+PHASE_ADVANCED = NO
+
+CURRENT_C4_PHASE = LOCKED (phase level; bounded slices approved)
+MCP_READ_FEDERATION = ACCEPTED_CURRENT_SCOPE
+C4_AUTHORIZED = NO (phase level)
+C5_AUTHORIZED = NO
+PREPARE = BLOCKED; ACT = BLOCKED
+PRODUCTION_READINESS = NOT_PROVEN
+GOVERNED_WRITE_BINDINGS = EMPTY
+FIRST_BOUNDED_GOVERNED_PREPARE_ACT = NOT_AUTHORIZED
+
+NEXT = ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) —
+    review only; no writes, no PREPARE/ACT slice authorized.
 
