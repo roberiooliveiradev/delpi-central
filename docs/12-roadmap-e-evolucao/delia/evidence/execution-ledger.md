@@ -7891,3 +7891,76 @@ STATUS = IMPLEMENTATION_INCONCLUSIVE
 NEXT = human-subject live verification of initialize+tools/list x3,
     then ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R3.
 ```
+
+## 6.118. ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 — specialist-owned live capability authority (Product Master decision)
+
+```text
+TASK = ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 (architecture correction;
+    documentation-first; implementation pending evidence).
+
+BINDING PRODUCT MASTER DECISION:
+    SPECIALIST_CAPABILITY_CATALOG_OWNER = THE SPECIALIST MCP ITSELF
+    LIVE_CAPABILITY_SOURCE = authenticated initialize + tools/list
+    DELIA_LOCAL_FULL_TOOL_MIRROR = NONE (FORBIDDEN)
+    PER_CAPABILITY_ENV_ENABLE_FLAGS = SUPERSEDED
+        (DELIA_C4_DAVI_PRODUCT_READ_ENABLED,
+         DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED)
+    PER_TOOL_NAME_AVAILABILITY_ALLOWLIST = SUPERSEDED
+        (GOVERNED_DISCOVERY_BINDINGS, GOVERNED_READ_ACTIONS,
+         enabled_governed_read_tuples)
+    APPROVED_SPECIALIST_CONNECTIONS = davi | teo | vista
+        (DELIA_MCP_*_ENABLED remain DELIA policy — connection approval,
+         not per-capability catalog ownership)
+    CURRENT_INTERACTIVE_INVOCABLE_CLASSES = DISCOVERY | READ
+        (ANALYSIS projected as governed READ)
+    PREPARE = BLOCKED; ACT = BLOCKED; L5 = OFF
+    UNKNOWN_CLASS = discoverable, never invocable
+    OWNER_REMOVAL / OWNER_RECLASSIFICATION = honored on fresh discovery
+
+SUPERSEDES (historical records preserved):
+    THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED — superseded for this
+        federation model.
+    C4 bounded local-gate model (per-tuple GOVERNED_READ_ACTIONS +
+        per-capability env flags) — superseded; was a second local
+        capability authority that made specialist-owned capabilities
+        dependent on DELIA-local availability state. Observed prod
+        consequence: DELIA_C4_DAVI_PRODUCT_READ_ENABLED=false silently
+        suppressed the live DAVI surface -> ungrounded answer
+        (PROD-MCP-HUMAN-INTERACTION-DIAG-01).
+
+INVARIANTS PRESERVED:
+    discovery != approval; tool metadata != permission;
+    MCP scope != Core/domain authorization; MCP result != FACT;
+    technical success != business outcome; same-subject delegated
+    exchange; one resource audience per invocation; azp=delia-api;
+    service-account substitution rejected; PREPARE/ACT fail closed by
+    class at both enforcement boundaries; model selection = proposal
+    only, revalidated against fresh projection; tool descriptions are
+    untrusted data, never system instructions.
+
+DAVI OWNER WORKFLOW PRESERVED:
+    discover -> candidates -> opaque candidate_token -> owner argument
+    schema -> execute. DELIA holds no local action list; the candidate
+    is owned by DAVI; caller/model-supplied candidate_token rejected.
+
+METAMORPHIC ACCEPTANCE (mandatory proof):
+    new owner READ capability -> discoverable+invocable with no DELIA
+    code/config/registry change; owner removal -> non-invocable on
+    fresh discovery; owner reclass READ->PREPARE -> policy-blocked
+    without DELIA deploy.
+
+CLAIMS =
+    DECISION = PERSISTED (docs 16/17/25/60 + this entry)
+    IMPLEMENTATION = IN_EXECUTION
+    METAMORPHIC_PROOF = PENDING
+    PRODUCTION_DEPLOY = PENDING
+    LIVE_HUMAN_VERIFICATION_DAVI/TEO/VISTA = PENDING
+    PRODUCTION_MCP_RUNTIME = NOT_PROVEN
+    C4_AUTHORIZED = PHASE_SCOPED (class-gated READ/DISCOVERY only)
+    PREPARE/ACT = BLOCKED
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IN_EXECUTION
+NEXT = implementation + tests -> controlled delia-api deploy ->
+    live human-subject verification x3 -> architecture review.
+```

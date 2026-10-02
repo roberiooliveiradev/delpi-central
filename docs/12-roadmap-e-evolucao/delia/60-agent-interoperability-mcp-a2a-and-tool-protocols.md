@@ -87,7 +87,23 @@ connection profile ref
 status
 ```
 
-Classe ausente/inválida/desconhecida no owner ⇒ `UNKNOWN` ⇒ *discoverable, never invocable*. Invocation re-lê a classe do owner via `tools/list` fresco — reclassificação/remoção do owner é honrada sem mirror stale. `GOVERNED_READ_ACTIONS` permanece como **policy de autorização** (as duas slices C4 aprovadas), nunca como catálogo.
+Classe ausente/inválida/desconhecida no owner ⇒ `UNKNOWN` ⇒ *discoverable, never invocable*. Invocation re-lê a classe do owner via `tools/list` fresco — reclassificação/remoção do owner é honrada sem mirror stale.
+
+**Decision supersession (§6.118 — ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02):** per-capability availability state lived in DÉLIA config/code (`DELIA_C4_*_ENABLED`, `GOVERNED_READ_ACTIONS`, `GOVERNED_DISCOVERY_BINDINGS`, `enabled_governed_read_tuples`) — a second local capability authority that made specialist-owned capabilities dependent on DÉLIA-local state. That model is **SUPERSEDED** (historical records preserved):
+
+```text
+SPECIALIST_CAPABILITY_CATALOG_OWNER = SPECIALIST
+LIVE_CAPABILITY_SOURCE = authenticated tools/list (fresh, per call)
+DELIA_LOCAL_FULL_TOOL_MIRROR = NONE
+PER_CAPABILITY_ENV_ENABLE_FLAGS = SUPERSEDED
+PER_TOOL_NAME_AVAILABILITY_ALLOWLIST = SUPERSEDED
+CURRENT_INTERACTIVE_INVOCABLE_CLASSES = DISCOVERY | READ (ANALYSIS projects READ)
+PREPARE = BLOCKED; ACT = BLOCKED; UNKNOWN = discoverable, never invocable
+OWNER_REMOVAL / OWNER_RECLASSIFICATION = HONORED_LIVE
+THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED -> SUPERSEDED_BY AUTHORITY-02
+```
+
+Capability existence/class is specialist-owned; DÉLIA retains orchestration policy only: approved+enabled specialist connections (`DELIA_MCP_*_ENABLED`), class/phase gates, human-subject delegated identity, and domain AuthZ downstream. `GOVERNED_READ_ACTIONS`, `GOVERNED_DISCOVERY_BINDINGS` and the `DELIA_C4_*_ENABLED` switches are superseded as active authority — they remain only as historical evidence of the bounded slices. Discovery != approval; class != permission; PREPARE/ACT stay policy-blocked regardless of advertisement.
 
 Discovery != approval. Metadata != permission. Owner toolClass != permission.
 

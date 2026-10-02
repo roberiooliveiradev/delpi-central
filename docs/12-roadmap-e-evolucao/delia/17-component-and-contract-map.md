@@ -900,7 +900,9 @@ Operational Twin is a projection of authoritative live state. Scenario never bec
 
 ## 16. MCP/A2A ownership
 
-MCP server/A2A agent remains external integration authority only for capabilities it exposes. DÉLIA owns allowlist/policy/delegation orchestration. Discovery/metadata/result cannot grant authority.
+MCP server/A2A agent remains external integration authority only for capabilities it exposes. DÉLIA owns policy/delegation orchestration. Discovery/metadata/result cannot grant authority.
+
+**Ownership correction (§6.118 — ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02):** capability *existence, naming, class and availability* are owned by the specialist MCP itself — the authenticated live `tools/list` is the primary capability surface. The earlier DÉLIA-side per-capability availability gates (`DELIA_C4_*_ENABLED`, `GOVERNED_READ_ACTIONS`, `GOVERNED_DISCOVERY_BINDINGS`, `enabled_governed_read_tuples`) formed a second local capability authority and are **SUPERSEDED**. What remains DÉLIA-owned: approved specialist *connection* policy (`DELIA_MCP_*_ENABLED`), operation-class policy (DISCOVERY/READ invocable; PREPARE/ACT blocked; UNKNOWN never), live Core/domain AuthZ, schema validation and provenance.
 
 ## 17. Control Tower / Model / Marketplace ownership
 

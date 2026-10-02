@@ -796,7 +796,15 @@ C4-MCP-GOVERNED-READS-02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
    live PASS grounded Transformômetro KPIs + provenance; DAVI
    regression PASS; other TÉO reads/PREPARE/ACT blocked))
 THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED (§6.106 — two consumers
-   suffice for the abstraction proof)
+   suffice for the abstraction proof) — SUPERSEDED_BY
+   ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 (§6.118): capability
+   existence/availability is specialist-owned via live tools/list;
+   per-capability DÉLIA gates no longer bound READ availability
+ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02 = DECIDED / IN_EXECUTION
+   (§6.118; specialist-owned live capability discovery for davi|teo|
+   vista; DISCOVERY|READ|ANALYSIS invocable under current interactive
+   policy; PREPARE/ACT blocked; per-capability env flags and
+   local tool-name allowlists SUPERSEDED)
 C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
    (§6.108; IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce; contracts only —
    GOVERNED_WRITE_BINDINGS EMPTY, no wire write)
