@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `PROD-MCP-RUNTIME-ALIGNMENT-01` = `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` (§6.113 — compose/env PROD alinhados ao contrato `DELIA_EXCHANGE_*`, legacy `*_USER_TOKEN` removido, provisionador Keycloak fail-closed `--check`/`--apply` compartilhado com DEV, runbook operacional; **nenhum apply em produção real**; `PRODUCTION_MCP_RUNTIME=NOT_PROVEN`). Reviews pendentes independentes: `ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01` (nova) e `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108, `IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce` — contracts only, `GOVERNED_WRITE_BINDINGS` EMPTY; `FIRST_BOUNDED_GOVERNED_PREPARE_ACT` NOT authorized). `ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01R1=ACCEPT_WITH_RESIDUAL` (§6.112 — specialist-owned catalogs via owner `_meta["delpi/toolClass"]`, DÉLIA mirror removed; residual `PRODUCTION_MCP_RUNTIME=NOT_PROVEN`). `C4_MCP_GOVERNED_READS_01`/`02` = `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (DAVI `search_products` + TÉO `analyze`/`gpt_analyze` view=summary — two-consumer governed-read proof closed; third read NOT authorized). `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE`; `C4_AUTHORIZED=NO` at phase level; `C5_AUTHORIZED=NO` at phase level; `PREPARE=BLOCKED`; `ACT=BLOCKED`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`
+**Próxima etapa:** `PROD-MCP-RUNTIME-ALIGNMENT-01` = `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` após rework R2 (§6.113 + review REWORK §6.114 + rework evidence §6.116 — decisão vinculante: **PROD permanece em Keycloak 24.x**, `PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1` Preview, provisioner estratégia `KC24_LEGACY`/`KC26_STANDARD` com gate fail-closed por versão, exchange legado internal→internal provado em KC24.0.5 isolado 3/3 sem alterar runtime nem `delpi-central`; KC26 migração deferida — §6.115 preservado como evidência de rehearsal futuro; **nenhum apply em produção real**; `REAL_PRODUCTION_APPLY=TEST_NOT_RUN`; `PRODUCTION_MCP_RUNTIME=NOT_PROVEN`). Reviews pendentes independentes: `ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R1` e `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` (§6.108, `IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce` — contracts only, `GOVERNED_WRITE_BINDINGS` EMPTY; `FIRST_BOUNDED_GOVERNED_PREPARE_ACT` NOT authorized). `ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01R1=ACCEPT_WITH_RESIDUAL` (§6.112 — specialist-owned catalogs via owner `_meta["delpi/toolClass"]`, DÉLIA mirror removed; residual `PRODUCTION_MCP_RUNTIME=NOT_PROVEN`). `C4_MCP_GOVERNED_READS_01`/`02` = `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (DAVI `search_products` + TÉO `analyze`/`gpt_analyze` view=summary — two-consumer governed-read proof closed; third read NOT authorized). `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE`; `C4_AUTHORIZED=NO` at phase level; `C5_AUTHORIZED=NO` at phase level; `PREPARE=BLOCKED`; `ACT=BLOCKED`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -1567,13 +1567,30 @@ SCOPE = production compose/env aligned to DELIA_EXCHANGE_* contract;
         DEV/PROD thin wrappers; C4 bounded read flags present, OFF
         by default; operational runbook
 IMPLEMENTATION_HEAD = 9857ebbd1e174b4a752f790a1e6a3a9267ab3318
+        (rework head bound at commit — see §6.115)
 EVIDENCE = provisioner unit suite 23 PASS (in-memory fake KC);
-        isolated real Keycloak 26.0.7 end-to-end: check=DRIFT(2)
+        isolated real Keycloak end-to-end: check=DRIFT(2)
         → apply=APPLIED(0) → check=NO_DRIFT(0) → re-apply
         idempotent; delegated exchange 3/3 same-sub/azp=delia-api/
         resource-bound aud/mcp:tools; dev bootstrap regression on
         live dev KC; delia-api full suite 652 PASS; docker compose
         config valid DEV+PROD
+REWORK = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01=REWORK
+        (§6.114) → R2 rework (§6.116): binding decision superseded —
+        PROD stays on Keycloak 24.x (no upgrade prerequisite);
+        PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1 (Preview feature);
+        KC_FEATURES=token-exchange,admin-fine-grained-authz (both
+        required — FGAP endpoints 500/NPE without the latter, proven
+        on real 24.0.5); shared engine gained explicit strategy
+        (KC24_LEGACY prod / KC26_STANDARD dev) with fail-closed
+        version gate; KC24 path never touches delpi-central and never
+        reads/writes standard.token.exchange.enabled; isolated real
+        24.0.5 check→apply→check→idempotent + exchange 3/3 (same-sub,
+        azp=delia-api, resource-bound aud, mcp:tools, no
+        cross-audience) + negatives (403/401/400) PASS;
+        DELIA_RUNTIME_CHANGE=NO; DEV KC26 regression PASS
+        (tools/list 3/3). §6.115 KC26 rehearsal kept as deferred
+        migration evidence only.
 PRESERVED = specialist-owned catalogs, governed DAVI/TEO reads,
         PREPARE=BLOCKED, ACT=BLOCKED, no user/password management,
         no SQL, realm/portal preconditions fail-closed
@@ -1582,6 +1599,6 @@ UNCHANGED = C3_EXECUTED=NO, C4_AUTHORIZED=NO (phase),
         PRODUCTION_MCP_RUNTIME=NOT_PROVEN, REAL_PRODUCTION_APPLY=
         TEST_NOT_RUN
 STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
-NEXT_ON_EVIDENCE = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01
+NEXT_ON_EVIDENCE = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R1
         (independent) then future controlled apply per runbook
 ```

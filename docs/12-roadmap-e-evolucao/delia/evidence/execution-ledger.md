@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** two independent architecture reviews pending — ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) and ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 (§6.109 decision / §6.110 evidence). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); C4-MCP-GOVERNED-READS-01 + -02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE (§6.104/§6.106; bounded DAVI search_products + TEO gpt_analyze view=summary only; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED); C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (R1 re-review §6.112 — prior REWORK blocker closed at bd6a26e883; specialist-owned catalogs via owner _meta[delpi/toolClass], DELIA mirror removed, discovery!=authorization; residual PRODUCTION_MCP_RUNTIME=NOT_PROVEN). Pending next: ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 + ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01 (PROD-MCP-RUNTIME-ALIGNMENT-01 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW §6.113 — DELIA_EXCHANGE_* contract in PROD compose, legacy *_USER_TOKEN removed, shared fail-closed provisioner + runbook; REAL_PRODUCTION_APPLY=TEST_NOT_RUN; PRODUCTION_MCP_RUNTIME=NOT_PROVEN). C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
+**Next:** two independent architecture reviews pending — ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) and ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 (§6.109 decision / §6.110 evidence). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); C4-MCP-GOVERNED-READS-01 + -02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE (§6.104/§6.106; bounded DAVI search_products + TEO gpt_analyze view=summary only; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED); C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (R1 re-review §6.112 — prior REWORK blocker closed at bd6a26e883; specialist-owned catalogs via owner _meta[delpi/toolClass], DELIA mirror removed, discovery!=authorization; residual PRODUCTION_MCP_RUNTIME=NOT_PROVEN). Pending next: ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 + ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R1 (PROD-MCP-RUNTIME-ALIGNMENT-01 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW §6.116 — PROD stays on Keycloak 24.x, KC24_LEGACY_V1 exchange proven on isolated 24.0.5 3/3, engine strategy KC24_LEGACY/KC26_STANDARD fail-closed version gate, prod compose reverted to keycloak:24.0 + token-exchange,admin-fine-grained-authz, no runtime/delpi-central change; KC26 migration deferred, §6.115 retained as historical rehearsal evidence; REAL_PRODUCTION_APPLY=TEST_NOT_RUN; PRODUCTION_MCP_RUNTIME=NOT_PROVEN). C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
 
 ## 1. Ledger rule
 
@@ -7466,14 +7466,11 @@ REUSE = shared engine extracted from keycloak-dev-bootstrap.sh into
     NEW_AUTH_SYSTEM=NO; NEW_TOKEN_EXCHANGE_MECHANISM=NO;
     NEW_MCP_RUNTIME=NO.
 
-KEYCLOAK_VERSION_GATE = resolved. PROD was keycloak:24.0 (legacy
-    token-exchange contract, incompatible with KC26 standard
-    exchange endpoints used by the proven model). Target set to
-    quay.io/keycloak/keycloak:26.0.7 + KC_FEATURES=token-exchange,
-    admin-fine-grained-authz — identical to DEV. Contract proven on a
-    real isolated KC26.0.7 (see E2E below). Hostname env vars already
-    tolerated by KC26 (dev runs them today). Downgrade 26→24 requires
-    DB backup restore — documented as rollback precondition.
+KEYCLOAK_VERSION_GATE = superseded by §6.115. This entry originally
+    claimed RESOLVED with target 26.0.7; R1 review found the claim
+    over-scoped — what was proven is TOKEN_EXCHANGE_CONTRACT on a clean
+    KC26.0.7, NOT real-prod KC24 migration. Corrected claims and target
+    in §6.115 (rework).
 
 PROD_COMPOSE = DELIA_MCP_{DAVI,TEO,VISTA}_USER_TOKEN removed from
     delia-api prod service; added DELIA_TOKEN_EXCHANGE_URL (derived
@@ -7541,4 +7538,283 @@ STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 NEXT = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01 (independent
     review); then future controlled apply strictly per runbook with
     fresh evidence before any production-readiness claim.
+```
+
+## 6.114. ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01 — verdict REWORK (Keycloak upgrade/runtime compatibility only)
+
+```text
+REVIEW = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01
+VERDICT = REWORK
+REVIEWED_HEAD = 5375e3a9182f355a8166d6b1ed6b39208c4ac50c
+REWORK_SCOPE = PRODUCTION_KEYCLOAK_UPGRADE_AND_RUNTIME_COMPATIBILITY_ONLY
+
+FINDINGS =
+    1. VERSION GATE OVERCLAIM — contract proven on clean KC26.0.7 is
+       not proof of real-prod KC24→26 migration; split claims required.
+    2. 26.0.7 must not be frozen as prod target without current
+       security review of the supported 26.x line.
+    3. hostname/proxy env must use the hostname-v2 contract of the
+       selected target — removed/deprecated v1 options must not be
+       preserved merely because DEV tolerated them.
+    4. migration rehearsal on KC24-state copy required, not only a
+       clean-instance proof.
+    5. production runbook smoke must not depend on
+       grant_type=password; canonical subject token = Portal/OIDC
+       user-session flow.
+
+PRESERVED = shared provisioner engine, --check/--apply, fail-closed,
+    realm/client boundaries, no user/password mgmt, no SQL,
+    DELIA_EXCHANGE_*, same-subject delegation, resource-bound audience,
+    mcp:tools, delia-exchange-requester, secret redaction, C4 flags OFF,
+    VISTA discovery-only, PREPARE=BLOCKED, ACT=BLOCKED.
+
+PHASE_FLAGS = unchanged — C4_AUTHORIZED=NO (phase); C5_AUTHORIZED=NO;
+    PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN.
+
+NEXT = PROD-MCP-RUNTIME-ALIGNMENT-01 rework →
+    ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R1.
+```
+
+## 6.115. PROD-MCP-RUNTIME-ALIGNMENT-01 — rework evidence (Keycloak target + migration rehearsal)
+
+```text
+TASK = PROD-MCP-RUNTIME-ALIGNMENT-01 (rework of §6.113 scope:
+    production Keycloak upgrade + runtime compatibility only)
+RUNTIME_MCP_CHANGED = NO. PROVISIONER_CHANGED = NO (engine untouched;
+    only infra compose/env flags + runbook + docs changed).
+
+SECURITY_VERSION_REVIEW =
+    CURRENT_PROD_VERSION = keycloak:24.0 (compose), observed server
+        24.0.5 behavior via rehearsal image pull.
+    CANDIDATE_TARGET_VERSION = quay.io/keycloak/keycloak:26.8.0 —
+        latest stable 26.x release (2026-10-01).
+    WHY_THIS_TARGET = 26.0.7 carries unpatched CVEs material to this
+        contract — incl. token-exchange fixes in 26.7.x line
+        (e.g. CVE-2026-93999 token-exchange refresh/audience,
+        CVE-2026-18215/-18214 exchange bypasses) and FGAP/authorization-
+        services fixes; 26.8.0 aggregates all 26.x security patches.
+    SECURITY_PATCH_STATUS = 26.8.0 = fully patched 26.x line today;
+        26.0.7 = multiple unpatched HIGH-severity items incl.
+        token-exchange.
+    24_TO_TARGET_MIGRATION_CHANGES = hostname-v1 options removed;
+        FGAP v2 + token-exchange-standard v2 default-on in >=26.7 —
+        see BREAKING_CONFIG_CHANGES.
+    BREAKING_CONFIG_CHANGES = (a) KC_HOSTNAME_STRICT /
+        KC_HOSTNAME_STRICT_HTTPS / KC_PROXY removed in 26 —
+        KC_HOSTNAME becomes full public URL incl. /auth path;
+        (b) unversioned `admin-fine-grained-authz` flag no longer
+        enables the v1 API in >=26.7 — `management/permissions`
+        returns 501 under FGAP v2 (verified live); requires
+        `admin-fine-grained-authz:v1`;
+        (c) `token-exchange-standard` (V2) is default-on and changes
+        exchange request semantics (scope/audience resolution —
+        verified `invalid_scope` + `audience not available`); requires
+        `KC_FEATURES_DISABLED=token-exchange-standard` to keep the V1
+        request contract the runtime uses;
+        (d) resulting prod flags:
+        KC_FEATURES=token-exchange:v1,admin-fine-grained-authz:v1 +
+        KC_FEATURES_DISABLED=token-exchange-standard — proven live on
+        26.8.0.
+    DB_MIGRATION_IMPACT = automatic stepwise realm migrations on first
+        start (observed 24.0.5 → 26.6.2 → 26.7.0 → 26.8.0 on same
+        postgres:15 volume); no manual SQL.
+    ROLLBACK_REQUIREMENTS = KC downgrade in-place unsupported —
+        rollback = DB backup restore + previous image (runbook).
+    TRANSITIONAL_DEBT = v1 features deprecated upstream; eventual
+        migration to token-exchange-standard v2 request semantics is
+        tracked debt (requires runtime contract change — out of scope).
+
+HOSTNAME_PROXY_MIGRATION = prod compose now uses hostname-v2:
+    KC_HOSTNAME = full public URL incl. /auth (issuer
+    https://<host>/auth/realms/delpi preserved; https enforced by URL
+    scheme); removed KC_HOSTNAME_STRICT, KC_HOSTNAME_STRICT_HTTPS,
+    KC_PROXY; kept KC_HTTP_ENABLED/PORT/RELATIVE_PATH +
+    KC_PROXY_HEADERS=xforwarded; backchannel-dynamic left default(false)
+    so issued tokens keep the public issuer. .env.prod.example updated.
+
+KC24_TO_TARGET_MIGRATION_EVIDENCE = rehearsal on real containers:
+    postgres:15 + keycloak:24.0 (prod mode `start`) seeded with
+    prod-like state (realm delpi + displayName, delpi-central with
+    redirectUris/webOrigins/audience mapper, unrelated confidential
+    client, realm role, user with credentials, extra client-scope)
+    → stop KC24 → start 26.8.0 with the prod flag contract on the
+    same DB → all state verified preserved via admin API; OIDC
+    password-grant login works post-migration; provisioner
+    --check=DRIFT(2) → --apply=APPLIED(0) → --check=NO_DRIFT(0);
+    delegated exchange 3/3 (same-sub, azp=delia-api, resource-bound
+    aud, mcp:tools). Isolated containers destroyed after evidence.
+
+    CLAIM SPLIT (truthful):
+    TOKEN_EXCHANGE_CONTRACT_COMPATIBILITY =
+        PROVEN_FOR_EVALUATED_CONFIG (clean + migrated KC26.8.0 with
+        :v1 feature contract)
+    KC24_TO_26_MIGRATION_COMPATIBILITY =
+        PROVEN_FOR_REHEARSED_CONFIG (sanitized prod-like rehearsal only)
+    REAL_PROD_KC24_MIGRATION = TEST_NOT_RUN — real production apply
+        remains forbidden and unproven until controlled apply.
+
+SUBJECT_TOKEN_ACQUISITION = runbook smoke rewritten: canonical
+    production smoke uses the Portal authorization-code user session
+    (delpi-central standard flow + PKCE) — no password grant, no
+    user password in command history, no service-account substitution.
+    Direct Access Grant remains only as local/dev rehearsal evidence.
+
+VERIFICATION = provisioner unit suite re-run: 23 PASS (engine
+    unchanged); docker compose config valid for prod + dev; live
+    migration rehearsal PASS as above.
+
+BOUNDARIES = no real production apply; no real secrets; C4 read flags
+    remain OFF defaults; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED.
+
+CLAIMS =
+    PROD_MCP_ALIGNMENT_IMPLEMENTATION = IMPLEMENTED
+    TOKEN_EXCHANGE_CONTRACT = PROVEN_FOR_EVALUATED_CONFIG
+    REAL_PRODUCTION_APPLY = TEST_NOT_RUN
+    REAL_PRODUCTION_MCP_RUNTIME = NOT_PROVEN
+    REAL_PROD_KC24_MIGRATION = TEST_NOT_RUN (rehearsal-level proof only)
+    C4_AUTHORIZED = NO (phase); C5_AUTHORIZED = NO (phase)
+    PREPARE = BLOCKED; ACT = BLOCKED;
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+NEXT = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R1.
+```
+
+## 6.116. PROD-MCP-RUNTIME-ALIGNMENT-01 — rework evidence (KC24 legacy token exchange — production stays on Keycloak 24)
+
+```text
+TASK = PROD-MCP-RUNTIME-ALIGNMENT-01 (rework of §6.113 scope;
+    supersedes the §6.115 production target: the binding architectural
+    decision is now PROD_KEYCLOAK_MAJOR_VERSION=24,
+    PROD_TOKEN_EXCHANGE_MODE=KC24_LEGACY_V1,
+    NO_KEYCLOAK_UPGRADE_IN_THIS_TASK=YES. §6.115 remains valid
+    historical evidence — its KC24→26.8.0 migration rehearsal is
+    preserved for the deferred future task, but KC26 is no longer the
+    production prerequisite for this bounded MCP scope.)
+
+PROD_COMPOSE = infra/docker-compose.yml keycloak reverted to
+    quay.io/keycloak/keycloak:24.0 (pre-upgrade production baseline at
+    bcffcf5b42); hostname-v1 contract restored (KC_HOSTNAME host-only,
+    KC_HOSTNAME_STRICT, KC_HOSTNAME_STRICT_HTTPS, KC_PROXY,
+    KC_PROXY_HEADERS). Added the minimum proven feature set:
+    KC_FEATURES=token-exchange,admin-fine-grained-authz —
+    token-exchange enables the legacy internal→internal grant;
+    admin-fine-grained-authz is REQUIRED (empirically: without it
+    clients/{uuid}/management/permissions PUT returns HTTP 500 NPE
+    ClientPermissionManagement on real 24.0.5; with both flags the
+    endpoints work). .env.prod.example updated accordingly.
+    standard.token.exchange.enabled does not exist on KC24 and is
+    never read/written on the KC24 path.
+
+SHARED_ENGINE_STRATEGY = delia_mcp_keycloak_state.py now carries an
+    explicit infrastructure strategy (STRATEGY_MAJORS):
+    KC24_LEGACY → server major 24; KC26_STANDARD → server major 26.
+    Selected via --strategy or DELIA_KC_STRATEGY (default KC24_LEGACY);
+    production wrapper pins --strategy KC24_LEGACY; dev bootstrap pins
+    DELIA_KC_STRATEGY=KC26_STANDARD. Actual server major is fetched
+    from /admin/serverinfo and validated — mode/version mismatch or
+    unknown version fails closed in BOTH --check and --apply.
+    KC26-only mechanics gated to the KC26 strategy:
+    standard.token.exchange.enabled requester attribute and the Portal
+    delia-api audience mapper. KC24 legacy V1 does NOT require
+    subject-token eligibility for the requester (proven: a subject
+    token minted by a foreign client without delia-api in aud still
+    exchanged on 24.0.5 — the effective gate is the target-client
+    token-exchange permission bound to delia-api), so the KC24 path
+    leaves delpi-central completely untouched.
+
+ISOLATED_KC24_EVAL = real container quay.io/keycloak/keycloak:24.0.5
+    (prod mode start, postgres DB, realm delpi + delpi-central +
+    human test user seeded):
+    --check = DRIFT_DETECTED (2)
+    --apply = APPLIED (0)
+    --check = NO_DRIFT (0)
+    second --apply = idempotent (all items OK, no unexpected writes)
+    strategy mismatch (--strategy KC26_STANDARD vs server 24.0.5)
+    = FAIL_CLOSED exit 1.
+
+TOKEN_EXCHANGE = real KC24.0.5, exact existing runtime request shape
+    (grant_type=token-exchange, client_id=delia-api + secret,
+    subject_token=<human Portal token>, audience=<target client>,
+    scope="openid profile email mcp:tools"):
+    mcp-api-delpi     PASS — aud=[api-delpi resource, account,
+                       mcp-api-delpi]; azp=delia-api
+    mcp-transformometro PASS — aud=[transformometro resource, account,
+                       mcp-transformometro]; azp=delia-api
+    mcp-tv-dashboard  PASS — aud=[tv-dashboard resource, account,
+                       mcp-tv-dashboard]; azp=delia-api
+    All three: same human sub preserved, mcp:tools present, bounded
+    exp, NO foreign MCP resource audience leaked.
+    requester client verified: serviceAccountsEnabled=false,
+    publicClient=false, directAccessGrantsEnabled=false,
+    standard.token.exchange.enabled ABSENT.
+
+NEGATIVE_TESTS (real KC24.0.5) =
+    wrong delia-api secret            → 401
+    missing subject_token             → rejected (non-2xx)
+    audience=delpi-central (no perm)  → 403 "Client not allowed to
+                                       exchange"
+    audience=nonexistent-client       → 400
+    foreign-client subject token      → exchange succeeds per KC24 V1
+        semantics (requester eligibility not enforced); classified as
+        documented legacy behavior — the binding gate is target
+        permission + possession of the user token
+    strategy/version mismatch         → FAIL_CLOSED exit 1
+
+DELIA_RUNTIME_CHANGE = NO — the existing
+    KeycloakDelegatedCredentialProvider request works verbatim against
+    real KC24; no Domain/Application/Infrastructure runtime diff.
+
+DEV_KC26_REGRESSION = PASS — delpi dev stack (keycloak:26.0.7):
+    real_mcp_interop_eval.py inside delpi-delia-api: delegated
+    credential green for DAVI/TÉO/VISTA (same_sub, azp=delia-api,
+    resource-bound aud, mcp:tools, zero foreign audiences) and
+    tools/list PASS 3/3 (2/24/8 remote tools). Dev bootstrap now pins
+    DELIA_KC_STRATEGY=KC26_STANDARD; KC26 path unchanged.
+
+TOOLS_LIST (isolated KC24) = TEST_NOT_RUN — the MCP specialist
+    services run against the dev realm; no KC24-bound specialist
+    runtime exists in this task. tools/list on KC24-issued tokens is
+    covered by the runbook future real-prod sequence.
+GOVERNED_READ (isolated KC24) = TEST_NOT_RUN — same bound; DAVI/TÉO
+    governed reads remain proven on DEV KC26 (ledger §6.113 evidence)
+    and are scheduled in the runbook sequence for real-prod smoke.
+
+TESTS = infra provisioner suite extended to the strategy matrix:
+    KC24_LEGACY check/apply/idempotent; KC26_STANDARD
+    check/apply/idempotent; KC24 never writes
+    standard.token.exchange.enabled; KC26 writes it; portal audience
+    mapper written only on KC26 (KC24 leaves delpi-central untouched);
+    version/mode mismatch fails closed both directions; unknown major
+    fails closed. Result: 27 PASS. docker compose config valid for
+    PROD (keycloak:24.0 rendered) and DEV.
+
+KC24_TOKEN_EXCHANGE_STABILITY = PREVIEW — official KC24 docs classify
+    token-exchange as a preview feature and admin-fine-grained-authz
+    as preview; proven functional on isolated 24.0.5 but not upstream
+    stable/supported. Risk registered: pin the KC24 patch, keep kill
+    switches, keep regression tests, plan the future standard-exchange
+    migration.
+
+CLAIMS =
+    PROD_KEYCLOAK_VERSION = 24.x (unchanged baseline; no upgrade)
+    PROD_TOKEN_EXCHANGE_MODE = KC24_LEGACY_V1
+    KC24_INTERNAL_INTERNAL_TOKEN_EXCHANGE =
+        PROVEN_AVAILABLE_IF_OFFICIAL_DOC_AND_RUNTIME_CONFIRM
+    STANDARD_TOKEN_EXCHANGE_ATTRIBUTE_IN_KC24 = ABSENT / NOT_USED
+    PORTAL_CLIENT_MODIFICATION_IN_PROD = NONE (KC24 path)
+    DELIA_RUNTIME_CHANGE = NO
+    PROD_MCP_ALIGNMENT_IMPLEMENTATION = IMPLEMENTED
+    REAL_PRODUCTION_APPLY = TEST_NOT_RUN
+    REAL_PRODUCTION_MCP_RUNTIME = NOT_PROVEN
+    KC26_MIGRATION = DEFERRED (candidate future task
+        KEYCLOAK-LEGACY-TO-STANDARD-TOKEN-EXCHANGE-MIGRATION; §6.115
+        rehearsal evidence retained)
+    C3_EXECUTED = NO; C4_AUTHORIZED = NO (phase); C5_AUTHORIZED = NO
+    THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED
+    PREPARE = BLOCKED; ACT = BLOCKED
+    PRODUCTION_READINESS = NOT_PROVEN
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+NEXT = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01R1.
 ```
