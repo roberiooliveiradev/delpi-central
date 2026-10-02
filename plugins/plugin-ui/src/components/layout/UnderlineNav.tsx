@@ -15,6 +15,11 @@ export type UnderlineNavItem = {
   count?: number;
   /** Tooltip / título nativo do botão. */
   title?: string;
+  /**
+   * Renderização icon-only: o label permanece no DOM como visually-hidden
+   * (accessible name intacto) e o item vira um alvo compacto quadrado.
+   */
+  iconOnly?: boolean;
   /** Id do painel controlado, obrigatório semanticamente no modo tabs. */
   controlId?: string;
   /** Id do tab usado pelo painel em aria-labelledby. */
@@ -139,7 +144,15 @@ export function UnderlineNav({
               onKeyDown={(event) => onKeyDown(event, index)}
             >
               {item.icon ? <span className={classNames.icon}>{item.icon}</span> : null}
-              <span className={classNames.label}>{item.label}</span>
+              <span
+                className={
+                  item.iconOnly
+                    ? withBemModifier(classNames.label, "sr-only")
+                    : classNames.label
+                }
+              >
+                {item.label}
+              </span>
               {count != null ? (
                 <span className={classNames.count} aria-hidden="true">
                   {count > 99 ? "99+" : count}

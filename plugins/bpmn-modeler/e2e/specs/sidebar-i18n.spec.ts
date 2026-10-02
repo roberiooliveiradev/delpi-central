@@ -193,16 +193,12 @@ test.describe("E2E-41 — sidebar PT-BR", () => {
   }) => {
     await openEditor(page, "dark");
 
-    await page
-      .locator('.bpmnm-side__tabs button', { hasText: "Valida" })
-      .click();
+    await page.getByRole("tab", { name: "Validação" }).click();
     await expect(
       page.locator(".bpmnm-side").getByText(/Sem validação|Nenhum/).first(),
     ).toBeVisible();
 
-    await page
-      .locator('.bpmnm-side__tabs button', { hasText: "Hist" })
-      .click();
+    await page.getByRole("tab", { name: "Histórico" }).click();
     await expect(
       page
         .locator(".bpmnm-side")

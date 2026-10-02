@@ -123,6 +123,25 @@
   display: inline-flex;
 }
 
+/* icon-only: label permanece acessível (accessible name) sem ocupar largura */
+.delpi-ui-underline-nav__label--sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* item icon-only: hit-area compacta quadrada (~40×40 no default) */
+.delpi-ui-underline-nav__item:has(.delpi-ui-underline-nav__label--sr-only) {
+  padding: 10px 12px;
+  gap: 0;
+}
+
 .delpi-ui-underline-nav__count {
   display: inline-flex;
   align-items: center;

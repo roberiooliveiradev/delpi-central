@@ -793,7 +793,8 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                     {
                       id: "properties",
                       label: "Propriedades",
-                      icon: <SlidersHorizontal size={14} aria-hidden="true" />,
+                      iconOnly: true,
+                      icon: <SlidersHorizontal size={15} aria-hidden="true" />,
                       title: HELP_TOOLTIPS.sidebar.propertiesTab,
                       controlId: "bpmnm-side-panel",
                       onSelect: () => setSideTab("properties"),
@@ -801,7 +802,8 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                     {
                       id: "validation",
                       label: "Validação",
-                      icon: <ClipboardCheck size={14} aria-hidden="true" />,
+                      iconOnly: true,
+                      icon: <ClipboardCheck size={15} aria-hidden="true" />,
                       title: HELP_TOOLTIPS.sidebar.validationTab,
                       controlId: "bpmnm-side-panel",
                       onSelect: () => setSideTab("validation"),
@@ -809,7 +811,8 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                     {
                       id: "history",
                       label: "Histórico",
-                      icon: <History size={14} aria-hidden="true" />,
+                      iconOnly: true,
+                      icon: <History size={15} aria-hidden="true" />,
                       title: HELP_TOOLTIPS.sidebar.historyTab,
                       controlId: "bpmnm-side-panel",
                       onSelect: () => setSideTab("history"),

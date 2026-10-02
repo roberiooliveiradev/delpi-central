@@ -119,4 +119,38 @@ describe("UnderlineNav", () => {
     expect(document.activeElement).toBe(tabs[0]);
     expect(first).toHaveBeenCalledTimes(1);
   });
+
+  it("iconOnly: label fica sr-only mas accessible name e tabs semantics intactos", () => {
+    const cn = underlineNavBemClasses("cm");
+    render(
+      <UnderlineNav
+        mode="tabs"
+        classNames={cn}
+        activeId="properties"
+        aria-label="Painéis"
+        items={[
+          {
+            id: "properties",
+            label: "Propriedades",
+            iconOnly: true,
+            icon: <svg data-testid="icon" />,
+            controlId: "panel",
+          },
+          { id: "history", label: "Histórico", controlId: "panel" },
+        ]}
+      />,
+    );
+
+    const tab = screen.getByRole("tab", { name: "Propriedades" });
+    expect(tab.getAttribute("aria-selected")).toBe("true");
+    // label no DOM como sr-only — nome acessível preservado sem largura visual
+    const label = tab.querySelector(".delpi-ui-underline-nav__label");
+    expect(label?.className).toContain("--sr-only");
+    expect(tab.querySelector('[data-testid="icon"]')).toBeTruthy();
+    // item sem iconOnly segue normal
+    const other = screen.getByRole("tab", { name: "Histórico" });
+    expect(
+      other.querySelector(".delpi-ui-underline-nav__label")?.className,
+    ).not.toContain("--sr-only");
+  });
 });

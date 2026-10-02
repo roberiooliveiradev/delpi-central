@@ -64,7 +64,7 @@ test.describe("E2E-43 — sidebar collapse", () => {
   test("sidebar tabs têm ícone + tooltip PT-BR", async ({ page }) => {
     await openEditor(page);
     for (const tab of ["Propriedades", "Validação", "Histórico"]) {
-      const t = page.locator(`[role="tab"]:has-text("${tab}")`);
+      const t = page.getByRole("tab", { name: tab });
       await expect(t.locator("svg")).toHaveCount(1);
       expect(await t.getAttribute("title")).toBeTruthy();
     }
@@ -104,16 +104,16 @@ test.describe("E2E-43 — sidebar collapse", () => {
 
     expect(await page.locator('button[aria-label="Expandir painel lateral"]').count()).toBe(0);
     await expect(
-      page.locator('[role="tab"]:has-text("Histórico")'),
+      page.getByRole("tab", { name: "Histórico" }),
     ).toHaveAttribute("aria-selected", "true");
     await expect(page.locator(".bpmnm-revisions")).toBeVisible();
   });
 
   test("aba ativa sobrevive a collapse→expand", async ({ page }) => {
     await openEditor(page);
-    await page.locator('[role="tab"]:has-text("Validação")').click();
+    await page.getByRole("tab", { name: "Validação" }).click();
     await expect(
-      page.locator('[role="tab"]:has-text("Validação")'),
+      page.getByRole("tab", { name: "Validação" }),
     ).toHaveAttribute("aria-selected", "true");
 
     await page.locator('button[aria-label="Recolher painel lateral"]').click();
@@ -122,7 +122,7 @@ test.describe("E2E-43 — sidebar collapse", () => {
     await page.waitForTimeout(300);
 
     await expect(
-      page.locator('[role="tab"]:has-text("Validação")'),
+      page.getByRole("tab", { name: "Validação" }),
     ).toHaveAttribute("aria-selected", "true");
   });
 
