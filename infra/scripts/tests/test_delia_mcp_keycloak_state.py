@@ -260,10 +260,12 @@ FakeKcAdmin._dispatch = _dispatch_with_scopes
 PUB = "https://minhadelpi.com.br"
 
 
-def make_provisioner(fake: FakeKcAdmin, apply_: bool) -> mod.Provisioner:
+def make_provisioner(fake: FakeKcAdmin, apply_: bool,
+                     strategy: str = "KC24_LEGACY") -> mod.Provisioner:
     return mod.Provisioner(fake, realm="delpi",
                            portal_client_id="delpi-central",
-                           public_base_url=PUB, apply=apply_)
+                           public_base_url=PUB, apply=apply_,
+                           strategy=strategy)
 
 
 @pytest.fixture()
@@ -344,9 +346,14 @@ def test_missing_portal_client_fails_closed():
         p.preflight()
 
 
-def test_old_keycloak_version_fails_closed():
-    assert mod._major("24.0.5") < mod.REQUIRED_MAJOR_VERSION
-    assert mod._major("26.0.7") >= mod.REQUIRED_MAJOR_VERSION
+def test_strategy_version_matrix():
+    # KC24 legacy contract only on Keycloak 24
+    assert 24 in mod.STRATEGY_MAJORS["KC24_LEGACY"]
+    # KC26 contract only on Keycloak 26
+    assert 26 in mod.STRATEGY_MAJORS["KC26_STANDARD"]
+    assert mod._major("24.0.5") in mod.STRATEGY_MAJORS["KC24_LEGACY"]
+    assert mod._major("26.0.7") in mod.STRATEGY_MAJORS["KC26_STANDARD"]
+    assert mod._major("26.8.0") in mod.STRATEGY_MAJORS["KC26_STANDARD"]
 
 
 def test_existing_correct_resources_unchanged(converged):
@@ -411,16 +418,56 @@ def test_requester_client_contract(converged):
     assert req["directAccessGrantsEnabled"] is False
     assert req["standardFlowEnabled"] is False
     assert req["implicitFlowEnabled"] is False
+    # KC24_LEGACY: KC26-only attribute is never written
+    assert "standard.token.exchange.enabled" not in \
+        req.get("attributes", {})
+
+
+def test_requester_kc26_attribute_written_only_on_kc26(fake):
+    p = make_provisioner(fake, apply_=True, strategy="KC26_STANDARD")
+    p.converge()
+    req = next(c for c in fake.clients.values()
+               if c["clientId"] == "delia-api")
     assert req["attributes"]["standard.token.exchange.enabled"] == "true"
 
 
-def test_portal_audience_is_requester_only(converged):
-    portal = next(u for u, c in converged.clients.items()
+@pytest.mark.parametrize("strategy", ["KC24_LEGACY", "KC26_STANDARD"])
+def test_strategy_check_apply_idempotent(fake, strategy):
+    # check → apply → check → apply for both infrastructure strategies
+    chk = make_provisioner(fake, apply_=False, strategy=strategy)
+    report = chk.converge()
+    assert any(i[1] == "DRIFT" for i in report.items)
+    ap = make_provisioner(fake, apply_=True, strategy=strategy)
+    ap.converge()
+    fake.calls.clear()
+    chk2 = make_provisioner(fake, apply_=False, strategy=strategy)
+    report2 = chk2.converge()
+    assert all(i[1] == "OK" for i in report2.items)
+    assert not any(c[0] in ("POST", "PUT", "DELETE")
+                   for c in fake.calls)          # check = zero writes
+    ap2 = make_provisioner(fake, apply_=True, strategy=strategy)
+    ap2._client_uuid_cache.clear()
+    ap2.converge()                               # idempotent re-apply
+
+
+def test_portal_audience_is_requester_only(fake):
+    # KC26 standard contract: subject token must carry delia-api aud.
+    p = make_provisioner(fake, apply_=True, strategy="KC26_STANDARD")
+    p.converge()
+    portal = next(u for u, c in fake.clients.items()
                   if c["clientId"] == "delpi-central")
-    mappers = converged.client_mappers.get(portal, [])
+    mappers = fake.client_mappers.get(portal, [])
     auds = {m["config"]["included.custom.audience"] for m in mappers
             if m["protocolMapper"] == "oidc-audience-mapper"}
     assert auds == {"delia-api"}              # no mcp-* audience on Portal
+
+
+def test_portal_untouched_on_kc24(converged):
+    # KC24 legacy V1: requester eligibility is not enforced on the
+    # subject token — the Portal client must never be modified.
+    portal = next(u for u, c in converged.clients.items()
+                  if c["clientId"] == "delpi-central")
+    assert not converged.client_mappers.get(portal)
 
 
 def test_resource_audiences_on_scopes(converged):
@@ -500,7 +547,8 @@ def test_cli_check_vs_apply(monkeypatch, fake, capsys):
     monkeypatch.setenv("KC_BASE", "https://kc.example/auth")
     monkeypatch.setenv("KC_ADMIN_TOKEN", "t")
     monkeypatch.setenv("PUBLIC_BASE_URL", PUB)
-    monkeypatch.setattr(mod, "server_version", lambda *_: "26.0.7")
+    monkeypatch.setenv("DELIA_KC_STRATEGY", "KC24_LEGACY")
+    monkeypatch.setattr(mod, "server_version", lambda *_: "24.0.5")
     monkeypatch.setattr(mod, "KcAdmin", lambda *_a, **_k: fake)
     assert mod.main(["--check"]) == 2        # drift on empty realm
     assert mod.main(["--apply"]) == 0
@@ -514,9 +562,18 @@ def test_cli_version_gate(monkeypatch, fake, capsys):
     monkeypatch.setenv("KC_BASE", "https://kc.example/auth")
     monkeypatch.setenv("KC_ADMIN_TOKEN", "t")
     monkeypatch.setenv("PUBLIC_BASE_URL", PUB)
-    monkeypatch.setattr(mod, "server_version", lambda *_: "24.0.5")
+    # mode/version mismatch fails closed in both directions
+    monkeypatch.delenv("DELIA_KC_STRATEGY", raising=False)
+    monkeypatch.setattr(mod, "server_version", lambda *_: "26.0.7")
     monkeypatch.setattr(mod, "KcAdmin", lambda *_a, **_k: fake)
-    assert mod.main(["--apply"]) == 1        # fail closed <26
+    # default strategy is KC24_LEGACY: KC26 server → mismatch
+    assert mod.main(["--apply"]) == 1
     assert mod.main(["--check"]) == 1        # even check fails closed
     err = capsys.readouterr().err
-    assert "FAIL_CLOSED" in err and "24" in err
+    assert "FAIL_CLOSED" in err and "26" in err
+    # KC24 server under KC26_STANDARD → mismatch
+    monkeypatch.setattr(mod, "server_version", lambda *_: "24.0.5")
+    assert mod.main(["--apply", "--strategy", "KC26_STANDARD"]) == 1
+    # unknown future version under KC24_LEGACY → fail closed
+    monkeypatch.setattr(mod, "server_version", lambda *_: "99.0.0")
+    assert mod.main(["--apply"]) == 1
