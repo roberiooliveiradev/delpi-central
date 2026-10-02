@@ -772,13 +772,14 @@ C3-FINAL-READINESS-01 = EXECUTED (§6.100):
    FULL_C3 = C3_NOT_COMPLETE (open foundation families inventoried);
    C4_BOUNDED_MCP_READ_CAN_BE_AUTHORIZED — dependencies proven,
    missing links task-scoped; C4_AUTHORIZED stays NO at phase level
-C4-MCP-GOVERNED-READS-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.101;
+C4-MCP-GOVERNED-READS-01 = REWORK (ARCHITECTURE_REVIEW §6.102;
    IMPLEMENTATION_HEAD=58a2d018d1ef28081e82e18148caa192d9d0b735;
-   DAVI execute_delpi_information -> search_products only;
-   live dev read PASS grounded+provenance; TEO/VISTA READ, other DAVI
-   actions, PREPARE/ACT all still blocked; C3_EXECUTED=NO,
-   C4_AUTHORIZED=NO at phase level)
-NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
+   BIND_HEAD=f1d3ea2c9bfdcb7a6bfa5ad8b6c9b2924e709cf0;
+   blocker: SPECIALIST_NOT_CONFIGURED/DISABLED silently degraded to
+   undisclosed model fallback instead of SOURCE_UNAVAILABLE +
+   delpi_source_unverified; everything else accepted unchanged)
+NEXT = C4-MCP-GOVERNED-READS-01R1 — truthful source-unavailable
+   fallback closure (bounded rework; no scope expansion)
 Workspace binding remains unscheduled
 ```
 

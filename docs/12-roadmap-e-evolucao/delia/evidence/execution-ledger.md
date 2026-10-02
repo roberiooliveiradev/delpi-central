@@ -6573,3 +6573,37 @@ PRODUCTION_READINESS = NOT_PROVEN
 C4_MCP_GOVERNED_READS_01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
 NEXT = ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
 ```
+
+## 6.102 ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01 — verdict REWORK (pre-R1 freeze)
+
+```
+STEP: ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01
+REVIEWED_IMPLEMENTATION_HEAD = 58a2d018d1ef28081e82e18148caa192d9d0b735
+REVIEWED_BIND_HEAD = f1d3ea2c9bfdcb7a6bfa5ad8b6c9b2924e709cf0
+VERDICT = REWORK
+BLOCKERS = 1
+BLOCKER =
+  GOVERNED_SOURCE_UNAVAILABLE_CAN_DEGRADE_TO_UNDISCLOSED_MODEL_FALLBACK
+  GovernedProductRead.attempt() maps SPECIALIST_NOT_CONFIGURED /
+  SPECIALIST_DISABLED to NOT_APPLICABLE, so an ENABLED governed-read
+  slice whose authoritative source cannot be reached falls to the
+  ordinary model path WITHOUT the canonical delpi_source_unverified
+  limitation / DELPI_UNVERIFIED_DISCLOSURE.
+ACCEPTED_UNCHANGED (must not reopen):
+  DAVI only; execute_delpi_information only; action_id=search_products
+  only; Product Master/API DELPI business authority; Core/domain AuthZ;
+  user-delegated identity; candidate_token never user/model authority;
+  bounded schema validation; SpecialistOutcome OBSERVATION;
+  grounding != FACT; TEO/VISTA READ blocked; other DAVI READs blocked;
+  PREPARE/ACT blocked; C4_AUTHORIZED=NO phase-level;
+  PRODUCTION_READINESS=NOT_PROVEN
+REQUIRED_SEMANTICS (frozen):
+  NOT_APPLICABLE only when the source was sufficiently consulted to
+  determine the authorized read does not apply;
+  SPECIALIST_NOT_CONFIGURED/DISABLED/MCP_UNAVAILABLE/auth-or-transport
+  failure preventing consultation = SOURCE_UNAVAILABLE ->
+  NON_GROUNDED + delpi_source_unverified + DELPI_UNVERIFIED_DISCLOSURE
+  + provenance=NONE; AUTHZ_DENIED keeps fail-safe non-grounded
+  disclosure; no second warning string; no intent heuristic.
+NEXT = C4-MCP-GOVERNED-READS-01R1 — TRUTHFUL_SOURCE_UNAVAILABLE_FALLBACK_CLOSURE
+```
