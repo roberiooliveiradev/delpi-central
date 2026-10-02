@@ -9,7 +9,7 @@
 **Internet/External Connectors:** [`../55-internet-research-and-external-connectors.md`](../55-internet-research-and-external-connectors.md)  
 **Microsoft Teams:** [`../56-microsoft-teams-connector-and-meeting-integration.md`](../56-microsoft-teams-connector-and-meeting-integration.md)  
 **Autonomous Operations/Execution Hub:** [`../57-event-driven-autonomous-operations-and-automation-execution-hub.md`](../57-event-driven-autonomous-operations-and-automation-execution-hub.md)  
-**Next:** two independent architecture reviews pending — ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) and ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 (§6.109 decision / §6.110 evidence). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); C4-MCP-GOVERNED-READS-01 + -02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE (§6.104/§6.106; bounded DAVI search_products + TEO gpt_analyze view=summary only; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED); C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (R1 re-review §6.112 — prior REWORK blocker closed at bd6a26e883; specialist-owned catalogs via owner _meta[delpi/toolClass], DELIA mirror removed, discovery!=authorization; residual PRODUCTION_MCP_RUNTIME=NOT_PROVEN). Pending next: ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 + PROD-MCP-RUNTIME-ALIGNMENT-01. C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
+**Next:** two independent architecture reviews pending — ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (§6.108) and ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FEDERATION_CATALOG_OWNER_01 (§6.109 decision / §6.110 evidence). Current state: C3_AUTHORIZED=YES; C3_STARTED=YES; C3_EXECUTED=NO; C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE (§6.99); C4-MCP-GOVERNED-READS-01 + -02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE (§6.104/§6.106; bounded DAVI search_products + TEO gpt_analyze view=summary only; THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED); C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW (§6.108; GOVERNED_WRITE_BINDINGS EMPTY); ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01 = ACCEPT_WITH_RESIDUAL (R1 re-review §6.112 — prior REWORK blocker closed at bd6a26e883; specialist-owned catalogs via owner _meta[delpi/toolClass], DELIA mirror removed, discovery!=authorization; residual PRODUCTION_MCP_RUNTIME=NOT_PROVEN). Pending next: ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 + ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01 (PROD-MCP-RUNTIME-ALIGNMENT-01 = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW §6.113 — DELIA_EXCHANGE_* contract in PROD compose, legacy *_USER_TOKEN removed, shared fail-closed provisioner + runbook; REAL_PRODUCTION_APPLY=TEST_NOT_RUN; PRODUCTION_MCP_RUNTIME=NOT_PROVEN). C4_AUTHORIZED=NO / C5_AUTHORIZED=NO at phase level; PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN; REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN.
 
 ## 1. Ledger rule
 
@@ -7447,4 +7447,98 @@ NEXT = PROD-MCP-RUNTIME-ALIGNMENT-01 — production compose/env
     alignment + production-safe Keycloak provisioner + runbook;
     NO real production apply; C5 governed-write foundation review
     remains pending independently.
+```
+
+## 6.113. PROD-MCP-RUNTIME-ALIGNMENT-01 — implementation evidence (production delegated-identity alignment)
+
+```text
+TASK = PROD-MCP-RUNTIME-ALIGNMENT-01
+MODE = INFRASTRUCTURE_IMPLEMENTATION + PRODUCTION_HARDENING +
+       REUSE_BEFORE_DESIGN + SECURITY_FIRST + NO_REAL_PRODUCTION_APPLY
+
+REANCHOR = HEAD revalidated; R1 verdict persisted at §6.112 before
+    this task began.
+
+REUSE = shared engine extracted from keycloak-dev-bootstrap.sh into
+    infra/scripts/delia_mcp_keycloak_state.py; DEV bootstrap refactored
+    to a thin wrapper (same engine, dev env); PROD wrapper
+    keycloak-prod-delia-mcp-provision.sh defaults to --check.
+    NEW_AUTH_SYSTEM=NO; NEW_TOKEN_EXCHANGE_MECHANISM=NO;
+    NEW_MCP_RUNTIME=NO.
+
+KEYCLOAK_VERSION_GATE = resolved. PROD was keycloak:24.0 (legacy
+    token-exchange contract, incompatible with KC26 standard
+    exchange endpoints used by the proven model). Target set to
+    quay.io/keycloak/keycloak:26.0.7 + KC_FEATURES=token-exchange,
+    admin-fine-grained-authz — identical to DEV. Contract proven on a
+    real isolated KC26.0.7 (see E2E below). Hostname env vars already
+    tolerated by KC26 (dev runs them today). Downgrade 26→24 requires
+    DB backup restore — documented as rollback precondition.
+
+PROD_COMPOSE = DELIA_MCP_{DAVI,TEO,VISTA}_USER_TOKEN removed from
+    delia-api prod service; added DELIA_TOKEN_EXCHANGE_URL (derived
+    default), DELIA_EXCHANGE_CLIENT_ID/SECRET/TIMEOUT_SECONDS,
+    DELIA_MCP_DELEGATED_TOKEN_TTL_SECONDS, DELIA_MCP_*_BASE_URL/
+    ENABLED/HOST_HEADER(empty default), DELIA_C4_DAVI_PRODUCT_
+    READ_ENABLED + DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED (empty
+    default = fail-closed OFF). .env.prod.example updated with safe
+    placeholders (CHANGE_ME_OR_SECRET_STORE; C4 flags = false).
+
+PROVISIONER = --check (zero writes, DRIFT_DETECTED exit 2 / NO_DRIFT
+    exit 0 / FAIL_CLOSED exit 1) and --apply (bounded bounded-scope
+    resources only, idempotent). Preconditions: realm delpi +
+    client delpi-central must already exist — fail closed otherwise.
+    Never creates users/passwords, never runs SQL, never deletes
+    unknown policies; realm-management authz resource-server lazy
+    init handled by enabling management/permissions before policy
+    endpoints; fresh-client {"enabled":false} (HTTP 200) treated
+    correctly. Secret installed only via --install-secret-to to a gitignored
+    path (git check-ignore enforced, atomic line update, never
+    echoed).
+
+TESTS = infra/scripts/tests/test_delia_mcp_keycloak_state.py —
+    23 PASS (delia-api/.venv/bin/python -m pytest): check=zero
+    writes, idempotent re-apply, missing realm/portal fail-closed,
+    incompatible version fail-closed, drift detection, unrelated
+    resources untouched, secret never on stdout/stderr, no
+    service-account/DAG substitution, portal audience = delia-api
+    only, per-specialist resource isolation, no user/password ops.
+
+E2E_REAL_KC26 = isolated quay.io/keycloak/keycloak:26.0.7 (features
+    token-exchange,admin-fine-grained-authz), fresh realm delpi +
+    delpi-central: --check=DRIFT_DETECTED(2) → --apply=APPLIED(0) →
+    --check=NO_DRIFT(0) → --apply again all-OK (idempotent). Delegated
+    exchange 3/3: mcp-api-delpi / mcp-transformometro /
+    mcp-tv-dashboard — same human sub preserved, azp=delia-api, aud
+    contains only target resource URL, mcp:tools scope present.
+
+DEV_REGRESSION = keycloak-dev-bootstrap.sh on live dev KC26 — engine
+    converged idempotently; provisioner --check on dev realm =
+    NO_DRIFT. delia-api full suite = 652 PASS.
+
+COMPOSE_VALIDATION = docker compose config valid for
+    docker-compose.yml (prod) and docker-compose.dev.yml; rendered
+    config contains DELIA_EXCHANGE_* contract and no
+    DELIA_MCP_*_USER_TOKEN anywhere.
+
+RUNBOOK = infra/scripts/keycloak-prod-delia-mcp-provision.runbook.md —
+    preconditions, backup, version check, check/apply commands,
+    secret installation, restart order, exchange smoke, tools/list,
+    negative tests, per-layer rollback, emergency disable, future
+    real-prod sequence (documented, not executed).
+
+RESIDUAL_SEARCH = DELIA_MCP_*_USER_TOKEN survives only as a
+    removal-comment in .env.prod.example (LEGACY_REMOVED note);
+    keycloak:24 absent from all compose files.
+
+BOUNDARIES = no real production apply; no real production secrets;
+    no realm/portal creation; no users; PREPARE=BLOCKED; ACT=BLOCKED;
+    THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED; C4_AUTHORIZED=NO (phase);
+    C5_AUTHORIZED=NO (phase); PRODUCTION_MCP_RUNTIME=NOT_PROVEN;
+    PRODUCTION_READINESS=NOT_PROVEN.
+
+STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+NEXT = ARCHITECTURE_REVIEW_PROD_MCP_RUNTIME_ALIGNMENT_01 (independent
+    review); then future controlled apply strictly per runbook with
+    fresh evidence before any production-readiness claim.
 ```
