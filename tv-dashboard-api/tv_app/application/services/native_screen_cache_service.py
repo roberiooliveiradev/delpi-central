@@ -5,8 +5,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from tv_app.infrastructure.cache.bounded_ttl_lru_cache import BoundedTtlLruCache
 from tv_app.infrastructure.cache.single_flight import SingleFlightRegistry
-from tv_app.infrastructure.cache.ttl_cache import TtlCache
 
 SETTINGS_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_dashboard_settings.json"
 
@@ -54,7 +54,7 @@ def build_native_data_cache_key(
     )
 
 
-_native_cache = TtlCache[dict[str, Any]](
+_native_cache = BoundedTtlLruCache[dict[str, Any]](
     ttl_seconds=native_data_cache_ttl_seconds(),
     retention_seconds=native_data_cache_retention_seconds(),
     max_entries=native_data_cache_max_entries(),
@@ -80,7 +80,7 @@ def get_native_inflight() -> SingleFlightRegistry[dict[str, Any]]:
 
 
 def reset_native_data_cache() -> None:
-    _native_cache.invalidate_all()
+    _native_cache.clear()
     _native_inflight.invalidate_all()
 
 

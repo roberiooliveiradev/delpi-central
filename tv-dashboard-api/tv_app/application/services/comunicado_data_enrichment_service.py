@@ -63,7 +63,7 @@ from tv_app.application.services.tv_data_route_catalog_service import (
     TvDataRouteCatalogService,
 )
 from tv_app.infrastructure.cache.single_flight import SingleFlightRegistry
-from tv_app.infrastructure.cache.ttl_cache import TtlCache
+from tv_app.infrastructure.cache.bounded_ttl_lru_cache import BoundedTtlLruCache
 from tv_app.application.services.tv_date_range_preset_service import EXCLUDE_WEEKENDS_KEY
 from tv_app.infrastructure.gateways.delpi_operational_gateway import DelpiOperationalGateway
 from tv_app.application.services.series_points_extractor import (
@@ -71,7 +71,7 @@ from tv_app.application.services.series_points_extractor import (
     unwrap_operational_data,
 )
 
-_data_block_cache = TtlCache[dict[str, Any]](
+_data_block_cache = BoundedTtlLruCache[dict[str, Any]](
     ttl_seconds=native_data_cache_ttl_seconds(),
     retention_seconds=native_data_cache_retention_seconds(),
     max_entries=native_data_cache_max_entries(),
@@ -2476,6 +2476,6 @@ class ComunicadoDataEnrichmentService:
 
 
 def reset_comunicado_data_block_cache() -> None:
-    _data_block_cache.invalidate_all()
+    _data_block_cache.clear()
     _data_block_inflight.invalidate_all()
     reset_phase7_caches()

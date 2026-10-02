@@ -1,6 +1,7 @@
 """PERF-005 — consumer-aware freshness (globalRefreshSec = max cache age).
 
-Deterministic: a fake clock is injected into TtlCache instances; no sleeps.
+Deterministic: a fake clock is injected into BoundedTtlLruCache instances;
+no sleeps.
 """
 
 import threading
@@ -21,7 +22,7 @@ from tv_app.application.services.native_screen_data_service import NativeScreenD
 from tv_app.application.services.tv_data_route_catalog_service import (
     TvDataRouteCatalogService,
 )
-from tv_app.infrastructure.cache.ttl_cache import TtlCache
+from tv_app.infrastructure.cache.bounded_ttl_lru_cache import BoundedTtlLruCache
 
 
 class FakeClock:
@@ -82,15 +83,25 @@ def _native_service(fetch_impl):
 
 
 # --------------------------------------------------------------------------
-# TtlCache unit semantics (baseline + freshness matrix)
+# BoundedTtlLruCache unit semantics (baseline + freshness matrix)
 # --------------------------------------------------------------------------
+
+
+def _cache(clock: FakeClock, **kw) -> BoundedTtlLruCache:
+    kw.setdefault("max_entries", 16)
+    return BoundedTtlLruCache[str](
+        ttl_seconds=120,
+        retention_seconds=3600,
+        clock=clock,
+        **kw,
+    )
 
 
 def test_baseline_legacy_consumer_serves_31s_entry():
     """Pre-PERF-005 defect, kept for legacy callers: bound = ttl (120s), so a
     31s-old entry is a hit even though a 30s playlist demands fresher data."""
     clock = FakeClock()
-    cache = TtlCache[str](ttl_seconds=120, retention_seconds=3600, clock=clock)
+    cache = _cache(clock)
     cache.set("k", "v")
     clock.advance(31)
     assert cache.get("k") == "v"  # legacy bound: hit (baseline violation shape)
@@ -98,7 +109,7 @@ def test_baseline_legacy_consumer_serves_31s_entry():
 
 def test_strict_30s_consumer_rejects_31s_entry():
     clock = FakeClock()
-    cache = TtlCache[str](ttl_seconds=120, retention_seconds=3600, clock=clock)
+    cache = _cache(clock)
     cache.set("k", "v")
     clock.advance(31)
     assert cache.get("k", max_age_seconds=30) is None
@@ -106,7 +117,7 @@ def test_strict_30s_consumer_rejects_31s_entry():
 
 def test_300s_consumer_accepts_90s_entry():
     clock = FakeClock()
-    cache = TtlCache[str](ttl_seconds=120, retention_seconds=3600, clock=clock)
+    cache = _cache(clock)
     cache.set("k", "v")
     clock.advance(90)
     assert cache.get("k", max_age_seconds=300) == "v"
@@ -114,7 +125,7 @@ def test_300s_consumer_accepts_90s_entry():
 
 def test_same_entry_different_consumer_decisions_and_no_eviction():
     clock = FakeClock()
-    cache = TtlCache[str](ttl_seconds=120, retention_seconds=3600, clock=clock)
+    cache = _cache(clock)
     cache.set("k", "v")
     clock.advance(90)
     assert cache.get("k", max_age_seconds=30) is None
@@ -124,7 +135,7 @@ def test_same_entry_different_consumer_decisions_and_no_eviction():
 
 def test_3600s_consumer_reuses_physically_retained_entry():
     clock = FakeClock()
-    cache = TtlCache[str](ttl_seconds=120, retention_seconds=3600, clock=clock)
+    cache = _cache(clock)
     cache.set("k", "v")
     clock.advance(3000)  # far beyond legacy 120s TTL, within retention
     assert cache.get("k", max_age_seconds=3600) == "v"
@@ -133,18 +144,32 @@ def test_3600s_consumer_reuses_physically_retained_entry():
 
 def test_physical_expiry_evicts_entry():
     clock = FakeClock()
-    cache = TtlCache[str](ttl_seconds=120, retention_seconds=3600, clock=clock)
+    cache = _cache(clock)
     cache.set("k", "v")
     clock.advance(3601)
     assert cache.get("k", max_age_seconds=3600) is None
     assert cache.stats()["entries"] == 0
 
 
+def test_3600_boundary_inclusive_contract():
+    """Boundary contract: live while age <= retention; fresh while
+    age <= max_age. Both layers use the same inclusive comparison."""
+    clock = FakeClock()
+    cache = _cache(clock)
+    cache.set("k", "v")
+    clock.advance(3600 - 0.001)
+    assert cache.get("k", max_age_seconds=3600) == "v"
+    cache.set("k", "v")  # reset stored_at
+    clock.advance(3600)  # age exactly == retention == max_age → still usable
+    assert cache.get("k", max_age_seconds=3600) == "v"
+    cache.set("k", "v")
+    clock.advance(3600.001)
+    assert cache.get("k", max_age_seconds=3600) is None
+
+
 def test_max_entries_lru_eviction():
     clock = FakeClock()
-    cache = TtlCache[str](
-        ttl_seconds=120, retention_seconds=3600, max_entries=2, clock=clock
-    )
+    cache = _cache(clock, max_entries=2)
     cache.set("a", "1")
     cache.set("b", "2")
     cache.get("a")  # refresh recency: b becomes oldest
@@ -157,10 +182,17 @@ def test_max_entries_lru_eviction():
 
 def test_retention_defaults_to_ttl_when_unset():
     clock = FakeClock()
-    cache = TtlCache[str](ttl_seconds=120, clock=clock)
+    cache = BoundedTtlLruCache[str](ttl_seconds=120, max_entries=16, clock=clock)
     cache.set("k", "v")
     clock.advance(121)
     assert cache.get("k", max_age_seconds=3600) is None
+
+
+def test_get_returns_defensive_copy():
+    cache = BoundedTtlLruCache[dict](ttl_seconds=60, max_entries=4)
+    cache.set("k", {"rows": [1]})
+    cache.get("k")["rows"].append(9)
+    assert cache.get("k") == {"rows": [1]}
 
 
 # --------------------------------------------------------------------------

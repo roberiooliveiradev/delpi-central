@@ -272,7 +272,8 @@ cache nem TTL físico.
   `nativeDataCache.retentionSeconds` (3600s, contrato máximo do consumidor),
   limitadas por `nativeDataCache.maxEntries` (LRU). Cada consumidor decide se a
   entrada retida é aceitável pela sua própria `max_age` — uma entrada pode ser
-  válida para uma playlist de 300s e velha para uma de 30s.
+  válida para uma playlist de 300s e velha para uma de 30s. Primitivo
+  compartilhado: `BoundedTtlLruCache` (mesmo das caches M-query).
 - `ttlSeconds` (120s) segue como bound de freshness para consumidores sem
   `max_age` (editor, preview, GPT actions).
 - `SingleFlightRegistry` coalesce requisições concorrentes equivalentes em 1
