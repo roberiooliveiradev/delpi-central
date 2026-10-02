@@ -9,6 +9,7 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     normalize_branch,
     normalize_document,
     normalize_fiscal_model,
+    normalize_linked_invoices,
     normalize_series,
     series_is_required,
     should_auto_resume_after_purchase_order_link,
@@ -49,12 +50,36 @@ def test_normalize_fiscal_model_rejects_empty_and_unknown() -> None:
     with pytest.raises(FiscalNormalizationError):
         normalize_fiscal_model("")
     with pytest.raises(FiscalNormalizationError):
-        normalize_fiscal_model("cte")
+        normalize_fiscal_model("mdfe")
     assert normalize_fiscal_model(None, required=False) is None
+
+
+def test_normalize_fiscal_model_accepts_freight_invoice() -> None:
+    assert normalize_fiscal_model("cte") == "cte"
+    assert normalize_fiscal_model("CT-e") == "cte"
+
+
+def test_linked_invoices_belong_only_to_freight() -> None:
+    linked = normalize_linked_invoices(
+        [{"document": "10", "series": "1"}, {"document": "11", "series": "2"}],
+        fiscal_model="cte",
+    )
+    assert linked[0]["document_number"] == "000000010"
+    assert linked[1]["series"] == "2"
+    assert normalize_linked_invoices(None, fiscal_model="nfe") == []
+    assert normalize_linked_invoices([], fiscal_model="nfse") == []
+    with pytest.raises(FiscalNormalizationError):
+        normalize_linked_invoices([{"document": "10", "series": "1"}], fiscal_model="nfe")
+    with pytest.raises(FiscalNormalizationError):
+        normalize_linked_invoices(
+            [{"document": "10", "series": "1"}, {"document": "10", "series": "1"}],
+            fiscal_model="cte",
+        )
 
 
 def test_series_is_required_only_for_product_invoice() -> None:
     assert series_is_required("nfe") is True
+    assert series_is_required("cte") is True
     assert series_is_required(None) is True
     assert series_is_required("nfse") is False
 

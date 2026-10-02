@@ -305,6 +305,18 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                   <dt>Tipo da nota</dt>
                   <dd>{formatFiscalModel(request.fiscal_model)}</dd>
                 </div>
+                {request.fiscal_model === "cte" ? (
+                  <div className="lnf-dl__span" data-testid="linked-invoices">
+                    <dt>Notas vinculadas</dt>
+                    <dd>
+                      {(request.linked_invoices ?? []).length > 0
+                        ? (request.linked_invoices ?? [])
+                            .map((item) => formatDocument(item.document_number, item.series))
+                            .join(", ")
+                        : "Nenhuma"}
+                    </dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt>Emissão</dt>
                   <dd>{formatDate(request.issue_date)}</dd>

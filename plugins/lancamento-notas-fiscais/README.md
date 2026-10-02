@@ -32,7 +32,7 @@ Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
 ## Funcionalidades
 
 - Nova solicitação: inclusão manual ou seleção de uma NF-e real (número ou CNPJ). A busca não dispara a cada tecla. O DANFE abre na própria tela antes de avançar. Ao salvar, o formulário vai preenchido e o PDF fica anexado para visualizar ou baixar no detalhe. A consulta passa pela api-delpi até a financial-api; o browser não fala com o Questor. Quem não tem o Portal Financeiro também busca a NF-e aqui, se puder criar a solicitação, ou inclui a nota manualmente
-- Cadastro de solicitação após recebimento físico (filial, nota, série, tipo NF-e ou NFS-e, fornecedor, valor, data/hora)
+- Cadastro de solicitação após recebimento físico (filial, nota, série, tipo NF-e, NFS-e ou CT-e de frete, fornecedor, valor, data/hora). No CT-e dá para amarrar mais de uma nota pelo número e pela série
 - Lista por `received_at` decrescente (mais recentes primeiro), filtros e cards no mobile
 - Refresh de conciliação ao abrir a fila (cooldown 45s) — não bloqueia a listagem
 - Conciliação automática SF1: match direto (SA2) e beneficiamento (`F1_TIPO=B` via CNPJ SA1↔SA2)

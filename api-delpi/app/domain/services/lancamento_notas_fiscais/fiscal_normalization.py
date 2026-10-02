@@ -32,26 +32,108 @@ def normalize_document(raw: str | None) -> NormalizedDocument:
     )
 
 
-FISCAL_MODELS = frozenset({"nfe", "nfse"})
+FISCAL_MODELS = frozenset({"nfe", "nfse", "cte"})
 _FISCAL_MODEL_ALIASES = {
     "nfe": "nfe",
     "nf-e": "nfe",
     "nfse": "nfse",
     "nfs-e": "nfse",
+    "cte": "cte",
+    "ct-e": "cte",
 }
+MAX_LINKED_INVOICES = 30
 
 
 def normalize_fiscal_model(raw: str | None, *, required: bool = True) -> str | None:
-    """Modelo da nota na solicitação: ``nfe`` (NF-e) ou ``nfse`` (NFS-e)."""
+    """Modelo da nota na solicitação: ``nfe``, ``nfse`` ou ``cte`` (frete)."""
     token = str(raw or "").strip().lower().replace(" ", "")
     if not token:
         if required:
-            raise FiscalNormalizationError("Informe se a nota é NF-e ou NFS-e.")
+            raise FiscalNormalizationError("Informe se a nota é NF-e, NFS-e ou CT-e.")
         return None
     mapped = _FISCAL_MODEL_ALIASES.get(token)
     if mapped not in FISCAL_MODELS:
-        raise FiscalNormalizationError("Tipo da nota deve ser NF-e ou NFS-e.")
+        raise FiscalNormalizationError("Tipo da nota deve ser NF-e, NFS-e ou CT-e.")
     return mapped
+
+
+def normalize_linked_invoices(
+    raw: object,
+    *,
+    fiscal_model: str | None,
+) -> list[dict[str, str]]:
+    """Notas amarradas a um CT-e. Nos demais tipos a lista tem de estar vazia."""
+    if raw is None:
+        items: list[object] = []
+    elif isinstance(raw, list):
+        items = raw
+    else:
+        raise FiscalNormalizationError("As notas vinculadas devem ser uma lista.")
+    if fiscal_model != "cte":
+        if items:
+            raise FiscalNormalizationError(
+                "Notas vinculadas só podem ser informadas em CT-e."
+            )
+        return []
+    if len(items) > MAX_LINKED_INVOICES:
+        raise FiscalNormalizationError(
+            f"Informe no máximo {MAX_LINKED_INVOICES} notas vinculadas ao CT-e."
+        )
+    normalized: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise FiscalNormalizationError("Cada nota vinculada precisa de número e série.")
+        document = normalize_document(item.get("document_number") or item.get("document"))
+        series = normalize_series(item.get("series"), required=True)
+        key = (document.document_match_key, series)
+        if key in seen:
+            raise FiscalNormalizationError("Há notas vinculadas repetidas.")
+        seen.add(key)
+        normalized.append(
+            {
+                "document_number": document.document_number,
+                "document_match_key": document.document_match_key,
+                "series": series,
+            }
+        )
+    return normalized
+
+
+def linked_invoices_differ(
+    current: object,
+    desired: list[dict[str, str]],
+) -> bool:
+    return _linked_invoice_signature(current) != _linked_invoice_signature(desired)
+
+
+def public_linked_invoices(raw: object) -> list[dict[str, str]]:
+    public: list[dict[str, str]] = []
+    if not isinstance(raw, list):
+        return public
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        document = str(item.get("document_number") or "").strip()
+        series = str(item.get("series") or "").strip()
+        if document or series:
+            public.append({"document_number": document, "series": series})
+    return public
+
+
+def _linked_invoice_signature(raw: object) -> list[tuple[str, str]]:
+    signature: list[tuple[str, str]] = []
+    if not isinstance(raw, list):
+        return signature
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        document = str(
+            item.get("document_match_key") or item.get("document_number") or ""
+        ).strip()
+        series = str(item.get("series") or "").strip().upper()
+        signature.append((document, series))
+    return signature
 
 
 def series_is_required(fiscal_model: str | None) -> bool:

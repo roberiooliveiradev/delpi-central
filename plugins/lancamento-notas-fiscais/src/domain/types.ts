@@ -52,7 +52,12 @@ export type LinkedPurchaseOrderSnapshot = {
   lines?: LinkedPurchaseOrderLine[];
 };
 
-export type FiscalModel = "nfe" | "nfse";
+export type FiscalModel = "nfe" | "nfse" | "cte";
+
+export type LinkedInvoice = {
+  document_number: string;
+  series: string;
+};
 
 export type InvoicePostingRequest = {
   id: string;
@@ -96,6 +101,7 @@ export type InvoicePostingRequest = {
   linked_po_linked_by_user_id: string | null;
   linked_po_linked_by_name: string | null;
   linked_purchase_orders: LinkedPurchaseOrderSnapshot[];
+  linked_invoices?: LinkedInvoice[];
   created_at: string;
   updated_at: string;
 };
@@ -218,6 +224,7 @@ export type CreateRequestPayload = {
   document_id?: string;
   access_key?: string;
   source_branch?: string;
+  linked_invoices?: Array<{ document: string; series: string }>;
 };
 
 export type ReceivedInvoiceItem = {
