@@ -130,9 +130,11 @@ export function RequestFormPage({
   const [loading, setLoading] = useState(mode === "edit");
   const [step, setStep] = useState<"choose" | "search" | "form">(mode === "create" ? "choose" : "form");
   const [attachment, setAttachment] = useState<{
+    document_type: "nfe" | "nfse";
     document_id: string;
     access_key: string;
     branch_code: string;
+    provider_document_number?: string;
   } | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [supplierHint, setSupplierHint] = useState<string | null>(null);
@@ -274,7 +276,13 @@ export function RequestFormPage({
         series: normalizeSeriesInput(row.series),
       }));
     }
-    if (attachment) {
+    if (attachment?.document_type === "nfse") {
+      payload.source = "questor";
+      payload.source_document_type = "nfse";
+      payload.document_id = attachment.document_id;
+      payload.source_branch = attachment.branch_code;
+      payload.provider_document_number = attachment.provider_document_number;
+    } else if (attachment) {
       payload.source = "received_nfe";
       payload.document_id = attachment.document_id;
       payload.access_key = attachment.access_key;
@@ -310,24 +318,40 @@ export function RequestFormPage({
       );
       return;
     }
+    const isNfse = row.documentType === "nfse";
+    let series = row.series;
+    if (isNfse) {
+      try {
+        const detail = await api.fetchReceivedNfseDetail(row.documentId, row.branchCode);
+        series = detail.series || series;
+      } catch (err) {
+        setSelectionError(
+          err instanceof Error ? err.message : "Não foi possível ler a série da NFS-e.",
+        );
+        return;
+      }
+    }
     setSelectionError(null);
     const cnpj = (row.issuerCnpj || searchedCnpj || "").replace(/\D/g, "");
     const amount = row.amount.includes(",") ? row.amount : row.amount.replace(".", ",");
+    const documentSource = isNfse ? row.documentNumber || row.invoiceNumber : row.invoiceNumber;
     setForm((current) => ({
       ...current,
       branch:
         lockedBranch ??
         (row.branchCode === "01" || row.branchCode === "02" ? row.branchCode : current.branch),
-      document: sanitizeDocumentTyping(row.invoiceNumber),
-      series: normalizeSeriesInput(row.series),
-      fiscal_model: "nfe",
+      document: sanitizeDocumentTyping(documentSource),
+      series: normalizeSeriesInput(series),
+      fiscal_model: isNfse ? "nfse" : "nfe",
       issue_date: row.emissionAt ? row.emissionAt.slice(0, 10) : "",
       amount,
     }));
     setAttachment({
+      document_type: isNfse ? "nfse" : "nfe",
       document_id: row.documentId,
-      access_key: row.accessKey,
+      access_key: isNfse ? "" : row.accessKey,
       branch_code: row.branchCode,
+      provider_document_number: row.providerDocumentNumber || undefined,
     });
     setSupplier(null);
     setSupplierHint(null);
@@ -382,9 +406,11 @@ export function RequestFormPage({
       <LnfPageHeader
         title={mode === "create" ? "Nova solicitação" : "Corrigir solicitação"}
         subtitle={
-          attachment
-            ? "Os dados vieram da NF-e. Confira, informe o recebimento físico e salve para anexar o DANFE."
-            : "Informe os dados fiscais do recebimento físico da nota."
+          attachment?.document_type === "nfse"
+            ? "Os dados vieram da NFS-e. Confira, informe o recebimento físico e salve para anexar os XML."
+            : attachment
+              ? "Os dados vieram da NF-e. Confira, informe o recebimento físico e salve para anexar o DANFE."
+              : "Informe os dados fiscais do recebimento físico da nota."
         }
         actions={
           <button type="button" className="lnf-btn lnf-btn--ghost" onClick={onCancel}>
@@ -393,7 +419,11 @@ export function RequestFormPage({
         }
       />
 
-      {attachment ? (
+      {attachment?.document_type === "nfse" ? (
+        <p className="lnf-hint" data-testid="nfse-attach-notice">
+          O XML original e o XML padronizado serão anexados ao salvar. A NFS-e não exige DANFE.
+        </p>
+      ) : attachment ? (
         <p className="lnf-hint" data-testid="danfe-attach-notice">
           O DANFE será anexado ao salvar. Você pode visualizar ou baixar o arquivo no detalhe da solicitação.
         </p>

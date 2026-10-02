@@ -104,8 +104,37 @@ Duplicidade em solicitação **não cancelada** → **409** com `existing_reques
 | `amount` | — | sim |
 | `received_at` | — | sim (ISO datetime) |
 | `observation` | — | não |
+| `source` | — | não (`received_nfe` na NF-e do Questor; `questor` na NFS-e) |
+| `source_document_type` | — | sim quando `source=questor` (`nfse`; tem de ser igual a `fiscal_model`) |
+| `source_document_id` | — | sim na NFS-e do Questor |
+| `source_branch` | — | sim na origem Questor; tem de ser igual a `branch` (senão **422**) |
+| `provider_document_number` | — | não; `NumberNfse` original, fora dos 9 dígitos operacionais |
 
-Cria em `pending` com snapshot do fornecedor.
+Cria em `pending` com snapshot do fornecedor. NF-e de origem `received_nfe` anexa o DANFE PDF na tabela legada. NFS-e de origem `questor` baixa e grava XML original e XML padronizado em `invoice_posting_fiscal_attachments` (migration `V010`). Divergência de filial ou de tipo fiscal responde **422**. Falha de download, storage ou metadado desfaz a solicitação e os arquivos já gravados.
+
+---
+
+## GET `/received-invoices`
+
+**Query:** `invoice_number`, `supplier_cnpj`, `value`, `page`, `page_size`, `document_type` (`all` padrão, `nfe`, `nfse`).
+
+**`data`:** lista paginada. Cada item traz `documentType`, `branchCode` e, na NFS-e, `providerDocumentNumber` (original) e `documentNumber` (9 dígitos). A api-delpi autoriza `lancamento-notas-fiscais.create` e consulta a financial-api.
+
+### GET `/received-invoices/{document_id}/danfe`
+
+NF-e. Query `access_key` (44) e `branch`. Resposta `application/pdf`.
+
+### GET `/received-invoices/{document_id}/detail`
+
+NFS-e. Query `branch` e `document_type=nfse`. JSON normalizado do XML padronizado.
+
+### GET `/received-invoices/{document_id}/xml/{variant}`
+
+NFS-e. `variant` = `original` ou `standard`. Query `branch` e `document_type=nfse`. Resposta `text/xml`.
+
+### GET `/requests/{id}/fiscal-attachments/{attachment_type}`
+
+`attachment_type` = `xml_original` ou `xml_standard`. O DANFE legado continua em `GET /requests/{id}/danfe`.
 
 ---
 

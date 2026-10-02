@@ -635,12 +635,23 @@ class FakeStrategicIndicatorsGateway:
 class FakeReceivedInvoiceGateway:
     """Questor falso — a rota exercita o serviço real sem HTTP externo."""
 
-    def __init__(self, *, items: tuple[Any, ...] | None = None, error: Exception | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        items: tuple[Any, ...] | None = None,
+        nfse_items: tuple[Any, ...] | None = None,
+        error: Exception | None = None,
+        nfse_error: Exception | None = None,
+    ) -> None:
         self.queries: list[Any] = []
+        self.nfse_queries: list[Any] = []
         self.downloads: list[tuple[str, str]] = []
+        self.xml_downloads: list[tuple[str, str]] = []
         self.closed = False
         self._items = items
+        self._nfse_items = nfse_items
         self._error = error
+        self._nfse_error = nfse_error
 
     def list_received_invoices(self, query: Any) -> Any:
         from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoicePage
@@ -670,9 +681,24 @@ class FakeReceivedInvoiceGateway:
         )
         return ReceivedInvoicePage(total_items=1, items=(item,))
 
+    def list_received_nfse(self, query: Any) -> Any:
+        from financial_app.domain.received_fiscal_document import ReceivedFiscalPage
+
+        self.nfse_queries.append(query)
+        if self._nfse_error is not None:
+            raise self._nfse_error
+        items = self._nfse_items or ()
+        start = (query.page - 1) * query.page_size
+        window = items[start : start + query.page_size]
+        return ReceivedFiscalPage(total_items=len(items), items=tuple(window))
+
     def download_danfe(self, *, document_id: str, access_key: str) -> bytes:
         self.downloads.append((document_id, access_key))
         return b"%PDF-1.4\nfake\n"
+
+    def download_nfse_xml(self, *, document_id: str, variant: str) -> bytes:
+        self.xml_downloads.append((document_id, variant))
+        return b"<?xml version='1.0' encoding='utf-8'?><Notas><Nota><SERIE>E</SERIE></Nota></Notas>"
 
     def close(self) -> None:
         self.closed = True

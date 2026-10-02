@@ -1614,3 +1614,89 @@
     justify-content: center;
   }
 }
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-tabs__tab {
+  min-height: 40px;
+  border: 1px solid var(--lnf-border);
+  background: transparent;
+  color: var(--lnf-text);
+  border-radius: 999px;
+  padding: 0 14px;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-tabs__tab--active {
+  background: color-mix(in srgb, var(--lnf-accent) 16%, transparent);
+  border-color: var(--lnf-accent);
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-doc-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lnf-accent) 12%, transparent);
+  font-size: 12px;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in srgb, #013866 35%, transparent);
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-modal__panel {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: min(85vh, 820px);
+  overflow: auto;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-modal__header,
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-facts {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 16px 0;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-facts dt {
+  color: var(--lnf-muted);
+  font-size: 12px;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-taxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 768px) {
+  .dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfse-facts {
+    grid-template-columns: 1fr;
+  }
+}

@@ -167,6 +167,24 @@ def test_v009_migration_adds_cte_and_linked_invoices() -> None:
     assert "ON DELETE CASCADE" in sql
 
 
+def test_v010_migration_adds_fiscal_attachments_without_touching_danfe() -> None:
+    sql = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "plugins"
+        / "lancamento-notas-fiscais"
+        / "V010__fiscal_attachments.sql"
+    ).read_text(encoding="utf-8")
+    assert "invoice_posting_fiscal_attachments" in sql
+    assert "xml_original" in sql
+    assert "xml_standard" in sql
+    assert "provider_document_number" in sql
+    assert "dacte" in sql
+    assert "DROP TABLE" not in sql.upper()
+    assert "invoice_posting_danfe_attachments" in sql
+    assert "DELETE FROM" not in sql.upper()
+
+
 def test_v008_migration_declares_danfe_attachment() -> None:
     sql = MIGRATION_V008.read_text(encoding="utf-8")
     assert "invoice_posting_danfe_attachments" in sql

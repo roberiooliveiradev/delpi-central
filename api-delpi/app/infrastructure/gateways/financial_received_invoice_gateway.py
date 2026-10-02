@@ -55,6 +55,7 @@ class FinancialReceivedInvoiceGateway:
         supplier_cnpj: str | None,
         page: int,
         page_size: int,
+        document_type: str | None = None,
     ) -> dict[str, Any]:
         params: dict[str, str] = {
             "page": str(page),
@@ -64,6 +65,8 @@ class FinancialReceivedInvoiceGateway:
             params["invoiceNumber"] = invoice_number
         if supplier_cnpj:
             params["supplierCnpj"] = supplier_cnpj
+        if document_type:
+            params["documentType"] = document_type
         response = self._get("/invoices/received", authorization=authorization, params=params)
         payload = _json_payload(response)
         if response.status_code >= 400 or payload.get("success") is False:
@@ -109,6 +112,61 @@ class FinancialReceivedInvoiceGateway:
             raise FinancialReceivedInvoiceGatewayError("O DANFE retornado não é um PDF válido.", 502)
         return content, f"NFe-{normalized_key}.pdf"
 
+    def download_nfse_xml(
+        self,
+        *,
+        authorization: str,
+        document_id: str,
+        variant: str,
+        branch: str,
+    ) -> tuple[bytes, str]:
+        normalized_id = _document_id(document_id)
+        kind = _xml_variant(variant)
+        normalized_branch = _branch(branch)
+        response = self._get(
+            f"/invoices/received/{quote(normalized_id, safe='')}/xml/{kind}",
+            authorization=authorization,
+            params={"documentType": "nfse", "branch": normalized_branch},
+        )
+        if response.status_code >= 400:
+            payload = _json_payload(response)
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível obter o XML da NFS-e."),
+                _mapped_status(response.status_code),
+            )
+        content = response.content or b""
+        if len(content) > _MAX_PDF_BYTES or not _looks_like_xml(content):
+            raise FinancialReceivedInvoiceGatewayError("O XML da NFS-e retornado é inválido.", 502)
+        return content, f"NFSe-{normalized_id}-{kind}.xml"
+
+    def get_nfse_detail(
+        self,
+        *,
+        authorization: str,
+        document_id: str,
+        branch: str,
+    ) -> dict[str, Any]:
+        normalized_id = _document_id(document_id)
+        normalized_branch = _branch(branch)
+        response = self._get(
+            f"/invoices/received/{quote(normalized_id, safe='')}/detail",
+            authorization=authorization,
+            params={"documentType": "nfse", "branch": normalized_branch},
+        )
+        payload = _json_payload(response)
+        if response.status_code >= 400 or payload.get("success") is False:
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível carregar os dados da NFS-e."),
+                _mapped_status(response.status_code),
+            )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise FinancialReceivedInvoiceGatewayError(
+                "Os dados da NFS-e retornaram um formato inválido.",
+                502,
+            )
+        return data
+
     def _get(
         self,
         path: str,
@@ -121,7 +179,7 @@ class FinancialReceivedInvoiceGateway:
             raise FinancialReceivedInvoiceGatewayError("Sessão ausente para consultar as notas.", 401)
         headers = {
             "X-Delpi-Service-Token": self._require_service_token(),
-            "Accept": "application/json, application/pdf",
+            "Accept": "application/json, application/pdf, text/xml",
         }
         last_error: FinancialReceivedInvoiceGatewayError | None = None
         for attempt in range(1, _MAX_ATTEMPTS + 1):
@@ -228,7 +286,7 @@ def _document_id(value: str) -> str:
     normalized = str(value or "").strip().lower()
     if len(normalized) != _DOCUMENT_ID_LENGTH or any(ch not in "0123456789abcdef" for ch in normalized):
         raise FinancialReceivedInvoiceGatewayError(
-            "Identificador do DANFE inválido.",
+            "Identificador do documento fiscal inválido.",
             422,
         )
     return normalized
@@ -239,6 +297,23 @@ def _access_key(value: str) -> str:
     if len(normalized) != _ACCESS_KEY_LENGTH or not normalized.isdigit():
         raise FinancialReceivedInvoiceGatewayError("Chave de acesso inválida.", 422)
     return normalized
+
+
+def _xml_variant(value: str) -> str:
+    normalized = str(value or "").strip().lower().replace("-", "_")
+    if normalized not in {"original", "standard"}:
+        raise FinancialReceivedInvoiceGatewayError("Tipo de XML da NFS-e inválido.", 422)
+    return normalized
+
+
+def _looks_like_xml(content: bytes) -> bool:
+    sample = content.lstrip()[:240].lower()
+    if sample.startswith(b"<html") or sample.startswith(b"<!doctype") or sample.startswith(b"%pdf"):
+        return False
+    folded = content.upper()
+    if b"<!DOCTYPE" in folded or b"<!ENTITY" in folded:
+        return False
+    return sample.startswith(b"<")
 
 
 def _branch(value: str) -> str:

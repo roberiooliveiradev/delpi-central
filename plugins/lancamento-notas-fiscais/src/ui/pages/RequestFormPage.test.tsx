@@ -394,6 +394,7 @@ describe("RequestFormPage", () => {
         invoiceNumber: "22844",
         supplierCnpj: undefined,
         page: 1,
+        documentType: "all",
       }),
     );
     expect((screen.getByRole("button", { name: "Avançar" }) as HTMLButtonElement).disabled).toBe(true);
@@ -470,6 +471,145 @@ describe("RequestFormPage", () => {
       }),
     );
     expect((screen.getByLabelText("Filial") as HTMLSelectElement).value).toBe("02");
+  });
+
+  it("avança NFS-e com número operacional, prestador e XML", async () => {
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentType: "nfse",
+          documentId: "6abf21d2ac12fe2654ee8fe9",
+          providerDocumentNumber: "2600000002224",
+          documentNumber: "000002224",
+          accessKey: "",
+          invoiceNumber: "000002224",
+          series: "",
+          issuerName: "Prestador LTDA",
+          issuerCnpj: "12345678000199",
+          receiverName: "DELPI",
+          emissionAt: "2026-08-01",
+          amount: "150.50",
+          amountFormatted: "R$ 150,50",
+          danfeAvailable: false,
+          xmlOriginalAvailable: true,
+          xmlStandardAvailable: true,
+          cityHall: "Rio Bananal",
+          branchCode: "02",
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    vi.mocked(api.fetchReceivedNfseDetail).mockResolvedValue({
+      series: "E",
+      providerName: "Prestador LTDA",
+      providerCnpj: "12345678000199",
+      takerName: "DELPI",
+      cityHall: "Rio Bananal",
+      iss: "4.00",
+      services: [{ description: "Manutenção", serviceCode: "17.02", nbs: "1.1501.00" }],
+    });
+    vi.mocked(api.downloadReceivedNfseXml).mockResolvedValue(new Blob(["<Notas/>"]));
+    vi.stubGlobal("URL", {
+      createObjectURL: () => "blob:nfse",
+      revokeObjectURL: () => undefined,
+    });
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000010",
+        supplier_store: "01",
+        supplier_name: "Prestador LTDA",
+        supplier_short_name: null,
+        tax_id: "12345678000199",
+        state: "ES",
+        blocked: false,
+      },
+    ]);
+    vi.mocked(api.createRequest).mockResolvedValue({ id: "nfse-1" } as never);
+    render(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    expect(screen.getByText("Selecionar documento fiscal")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.click(screen.getByRole("tab", { name: "NFS-e" }));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "2224" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    await waitFor(() => expect(screen.getByTestId("doc-type-nfse")).toBeTruthy());
+    expect(screen.getByText("2224")).toBeTruthy();
+    expect(screen.getByText(/Original Questor: 2600000002224/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Visualizar" }));
+    await waitFor(() => expect(screen.getByRole("dialog", { name: "Dados da NFS-e" })).toBeTruthy());
+    expect(screen.getByText(/Número original no Questor/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Baixar XML original" }));
+    await waitFor(() =>
+      expect(api.downloadReceivedNfseXml).toHaveBeenCalledWith(
+        "6abf21d2ac12fe2654ee8fe9",
+        "original",
+        "02",
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
+    await waitFor(() => expect(screen.getByDisplayValue("000002224")).toBeTruthy());
+    expect(screen.getByTestId("nfse-attach-notice").textContent).toMatch(/XML/);
+    expect((screen.getByLabelText("Tipo da nota") as HTMLSelectElement).value).toBe("nfse");
+    fireEvent.change(screen.getByLabelText("Recebimento físico"), {
+      target: { value: "2026-10-01T09:30" },
+    });
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
+    expect(api.createRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "questor",
+        source_document_type: "nfse",
+        fiscal_model: "nfse",
+        document: "000002224",
+        series: "E",
+        branch: "02",
+        supplier_code: "000010",
+        provider_document_number: "2600000002224",
+      }),
+    );
+    expect(api.searchSuppliers).toHaveBeenCalledWith("12345678000199");
+  });
+
+  it("não avança NFS-e de outra filial quando a rota está travada", async () => {
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentType: "nfse",
+          documentId: "6abf21d2ac12fe2654ee8fe9",
+          documentNumber: "000002224",
+          providerDocumentNumber: "2600000002224",
+          accessKey: "",
+          invoiceNumber: "000002224",
+          series: "",
+          issuerName: "Prestador",
+          issuerCnpj: null,
+          emissionAt: "2026-08-01",
+          amount: "10",
+          amountFormatted: "R$ 10,00",
+          danfeAvailable: false,
+          branchCode: "02",
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    render(
+      <RequestFormPage
+        mode="create"
+        lockedBranch="01"
+        onCancel={() => undefined}
+        onSuccess={() => undefined}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.click(screen.getByRole("tab", { name: "NFS-e" }));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "2224" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Avançar" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/filial 02/);
+    expect(api.fetchReceivedNfseDetail).not.toHaveBeenCalled();
   });
 
   it("não avança quando a nota é de outra filial que a rota travada", async () => {

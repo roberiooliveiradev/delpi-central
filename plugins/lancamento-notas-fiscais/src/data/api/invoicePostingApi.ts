@@ -6,6 +6,7 @@ import type {
   InvoicePostingListResponse,
   InvoicePostingRequest,
   ListFilters,
+  NfseDetail,
   ReceivedInvoiceSearch,
   OpenPurchaseOrdersResponse,
   Supplier,
@@ -91,13 +92,42 @@ export async function searchReceivedInvoices(filters: {
   invoiceNumber?: string;
   supplierCnpj?: string;
   page?: number;
+  documentType?: "all" | "nfe" | "nfse";
 }): Promise<ReceivedInvoiceSearch> {
   const params = new URLSearchParams();
   if (filters.invoiceNumber) params.set("invoice_number", filters.invoiceNumber);
   if (filters.supplierCnpj) params.set("supplier_cnpj", filters.supplierCnpj);
+  if (filters.documentType) params.set("document_type", filters.documentType);
   params.set("page", String(filters.page ?? 1));
   params.set("page_size", "25");
   return httpGet<ReceivedInvoiceSearch>(`${API_BASE}/received-invoices?${params.toString()}`);
+}
+
+export function fetchReceivedNfseDetail(documentId: string, branch: string): Promise<NfseDetail> {
+  const params = new URLSearchParams({ branch, document_type: "nfse" });
+  return httpGet<NfseDetail>(
+    `${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/detail?${params.toString()}`,
+  );
+}
+
+export function downloadReceivedNfseXml(
+  documentId: string,
+  variant: "original" | "standard",
+  branch: string,
+): Promise<Blob> {
+  const params = new URLSearchParams({ branch, document_type: "nfse" });
+  return httpGetBlob(
+    `${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/xml/${variant}?${params.toString()}`,
+  );
+}
+
+export function fetchRequestFiscalAttachment(
+  requestId: string,
+  attachmentType: "xml_original" | "xml_standard",
+): Promise<Blob> {
+  return httpGetBlob(
+    `${API_BASE}/requests/${encodeURIComponent(requestId)}/fiscal-attachments/${attachmentType}`,
+  );
 }
 
 export function fetchReceivedInvoicePreview(

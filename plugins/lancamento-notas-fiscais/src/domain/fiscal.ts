@@ -43,6 +43,13 @@ export function sanitizeDocumentTyping(raw: string): string {
   return String(raw ?? "").replace(/\D/g, "").slice(0, 9);
 }
 
+/** Apresentação do número operacional já normalizado. Não aplica a regra do Questor. */
+export function displayDocumentNumber(raw: string): string {
+  const digits = String(raw ?? "").replace(/\D/g, "");
+  const trimmed = digits.replace(/^0+/, "");
+  return trimmed || (digits ? "0" : "");
+}
+
 /** Digitação de valor monetário BR: dígitos + uma vírgula/ponto decimal. */
 export function sanitizeAmountTyping(raw: string): string {
   const cleaned = String(raw ?? "").replace(/[^\d.,]/g, "");

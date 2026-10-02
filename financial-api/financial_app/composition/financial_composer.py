@@ -15,10 +15,11 @@ from financial_app.domain.ports.received_invoice_gateway import ReceivedInvoiceG
 from financial_app.domain.services.branch_access_service import BranchAccessService
 from financial_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 from financial_app.config import settings
-from financial_app.infrastructure.gateways.questor_company_registry import QuestorCompanyRegistry
-from financial_app.infrastructure.gateways.questor_received_invoice_gateway import (
-    QuestorReceivedInvoiceGateway,
+from financial_app.infrastructure.gateways.questor_branch_fiscal_client import (
+    QuestorBranchFiscalClient,
 )
+from financial_app.infrastructure.gateways.questor_company_registry import QuestorCompanyRegistry
+from financial_app.infrastructure.gateways.questor_company_session import QuestorCompanySession
 from financial_app.infrastructure.gateways.strategic_indicators_gateway import (
     StrategicIndicatorsGateway,
 )
@@ -56,9 +57,8 @@ def build_questor_company_registry() -> QuestorCompanyRegistry:
                         "01": settings.FIN_QUESTOR_COMPANY_01_ID,
                         "02": settings.FIN_QUESTOR_COMPANY_02_ID,
                     },
-                    factory=lambda branch, company_id: QuestorReceivedInvoiceGateway(
-                        branch_code=branch,
-                        company_id=company_id,
+                    factory=lambda branch, company_id: QuestorBranchFiscalClient(
+                        QuestorCompanySession(branch_code=branch, company_id=company_id)
                     ),
                 )
     return _questor_registry

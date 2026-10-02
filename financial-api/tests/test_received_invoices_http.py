@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from financial_app.composition import financial_composer
 from financial_app.middleware.auth_middleware import jwt_middleware
 from financial_app.domain.errors import QuestorNotConfigured, QuestorUnavailable
+from financial_app.domain.received_fiscal_document import ReceivedFiscalDocument
 from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoiceQuery
 from financial_app.interface.http.routes.received_invoice_routes import router
 from financial_app.application.services.received_invoices_service import ReceivedInvoicesService
@@ -97,6 +98,7 @@ def test_authorized_list_uses_the_portal_contract(client) -> None:
         "invoiceNumber": "22844",
         "value": "108.00",
         "supplierCnpj": "04252011000110",
+        "documentType": "all",
     }
     assert data["pagination"]["page"] == 1
     assert data["pagination"]["pageSize"] == 25
@@ -355,6 +357,176 @@ def test_internal_reader_lists_invoices_without_financial_permissions() -> None:
     )
     data = service.list_received(reader, page=1, page_size=25)
     assert data["items"][0]["branchCode"] == "01"
+
+
+def _nfse(
+    *,
+    branch_code: str,
+    document_id: str,
+    provider_number: str,
+    operational: str,
+    emission_at: str,
+) -> ReceivedFiscalDocument:
+    return ReceivedFiscalDocument(
+        document_type="nfse",
+        branch_code=branch_code,
+        provider_document_id=document_id,
+        provider_document_number=provider_number,
+        document_number=operational,
+        document_match_key=operational,
+        provider_document_key=None,
+        series="",
+        issuer_name="Prestador",
+        issuer_cnpj="12345678000199",
+        receiver_name="DELPI",
+        receiver_cnpj=None,
+        emission_at=emission_at,
+        amount="10",
+        amount_formatted="R$ 10,00",
+        city_hall="Rio Bananal",
+        printable_available=False,
+        xml_original_available=True,
+        xml_standard_available=True,
+    )
+
+
+def test_document_type_nfse_skips_nfe_and_keeps_operational_number(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    gateway_01 = FakeReceivedInvoiceGateway(
+        items=(),
+        nfse_items=(
+            _nfse(
+                branch_code="01",
+                document_id="a" * 24,
+                provider_number="2600000002224",
+                operational="000002224",
+                emission_at="2026-08-02T00:00:00Z",
+            ),
+        ),
+    )
+    gateway_02 = FakeReceivedInvoiceGateway(items=(), nfse_items=())
+    _use(monkeypatch, gateway_01, gateway_02)
+    data = client.get("/invoices/received", params={"documentType": "nfse"}).json()["data"]
+    assert data["filters"]["documentType"] == "nfse"
+    assert data["items"][0]["documentType"] == "nfse"
+    assert data["items"][0]["branchCode"] == "01"
+    assert data["items"][0]["providerDocumentNumber"] == "2600000002224"
+    assert data["items"][0]["documentNumber"] == "000002224"
+    assert data["items"][0]["invoiceNumber"] == "000002224"
+    assert data["items"][0]["danfeAvailable"] is False
+    assert gateway_01.queries == []
+    assert gateway_02.queries == []
+    assert gateway_01.nfse_queries
+
+
+def test_document_type_nfe_ignores_nfse_failure(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(nfse_error=QuestorUnavailable("nfse fora")),
+        FakeReceivedInvoiceGateway(items=(), nfse_error=QuestorUnavailable("nfse fora")),
+    )
+    response = client.get("/invoices/received", params={"documentType": "nfe"})
+    assert response.status_code == 200
+    assert response.json()["data"]["items"][0]["documentType"] == "nfe"
+
+
+def test_nfse_failure_in_all_view_is_not_a_silent_nfe_list(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(nfse_error=QuestorUnavailable("nfse 01")),
+        FakeReceivedInvoiceGateway(items=()),
+    )
+    response = client.get("/invoices/received", params={"documentType": "all"})
+    assert response.status_code == 503
+    assert "todas as empresas" in response.json()["message"]
+
+
+def test_all_combines_types_paginates_globally_and_does_not_dedup_across_types(
+    client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    shared_number_nfe = _invoice(
+        branch_code="01",
+        access_key="8" * 44,
+        emission_at="2026-07-01T00:00:00Z",
+        document_id="c" * 24,
+        invoice_number="000002224",
+    )
+    nfse_same_number = _nfse(
+        branch_code="02",
+        document_id="d" * 24,
+        provider_number="2600000002224",
+        operational="000002224",
+        emission_at="2026-09-01T00:00:00Z",
+    )
+    older_nfse = _nfse(
+        branch_code="01",
+        document_id="e" * 24,
+        provider_number="1830",
+        operational="000001830",
+        emission_at="2026-01-01T00:00:00Z",
+    )
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(items=(shared_number_nfe,), nfse_items=(older_nfse,)),
+        FakeReceivedInvoiceGateway(items=(), nfse_items=(nfse_same_number,)),
+    )
+    first = client.get("/invoices/received", params={"documentType": "all", "pageSize": 2})
+    second = client.get("/invoices/received", params={"documentType": "all", "page": 2, "pageSize": 2})
+    page_one = first.json()["data"]
+    assert page_one["pagination"]["totalItems"] == 3
+    assert [item["documentType"] for item in page_one["items"]] == ["nfse", "nfe"]
+    assert page_one["items"][0]["providerDocumentNumber"] == "2600000002224"
+    assert page_one["items"][1]["invoiceNumber"] == "000002224"
+    page_two = second.json()["data"]
+    assert [item["documentType"] for item in page_two["items"]] == ["nfse"]
+    assert page_two["items"][0]["documentNumber"] == "000001830"
+
+
+def test_duplicate_nfse_id_collapses_but_same_number_as_nfe_does_not(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    shared_id = "f" * 24
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(
+            items=(),
+            nfse_items=(
+                _nfse(
+                    branch_code="01",
+                    document_id=shared_id,
+                    provider_number="291",
+                    operational="000000291",
+                    emission_at="2026-03-01T00:00:00Z",
+                ),
+            ),
+        ),
+        FakeReceivedInvoiceGateway(
+            items=(),
+            nfse_items=(
+                _nfse(
+                    branch_code="02",
+                    document_id=shared_id,
+                    provider_number="291",
+                    operational="000000291",
+                    emission_at="2026-02-01T00:00:00Z",
+                ),
+            ),
+        ),
+    )
+    data = client.get("/invoices/received", params={"documentType": "nfse"}).json()["data"]
+    assert data["pagination"]["totalItems"] == 1
+    assert data["items"][0]["branchCode"] == "01"
+
+
+def test_nfse_xml_download_uses_only_the_informed_branch(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    gateway_01 = FakeReceivedInvoiceGateway(items=())
+    gateway_02 = FakeReceivedInvoiceGateway(items=())
+    _use(monkeypatch, gateway_01, gateway_02)
+    response = client.get(
+        f"/invoices/received/{'a' * 24}/xml/original",
+        params={"documentType": "nfse", "branch": "02"},
+    )
+    assert response.status_code == 200
+    assert response.content.startswith(b"<?xml")
+    assert gateway_02.xml_downloads == [("a" * 24, "original")]
+    assert gateway_01.xml_downloads == []
 
 
 def test_service_token_reaches_only_received_invoices(monkeypatch: pytest.MonkeyPatch) -> None:
