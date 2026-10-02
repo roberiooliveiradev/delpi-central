@@ -1,11 +1,15 @@
 /**
- * Save state machine — contrato FROZEN (P4 §12/§13).
+ * Save state machine — contrato FROZEN (P4 §12/§13) + autosave.
  *
- * states: LOADING | CLEAN | DIRTY | SAVING | SAVE_FAILED | CONFLICT
+ * states: LOADING | CLEAN | DIRTY | SAVING | SAVE_FAILED | OFFLINE |
+ *         SESSION_EXPIRED | CONFLICT
  * modo ortogonal: READ_ONLY (substitui estados de save; nunca DIRTY)
  *
  * Dirty tracking é branch-aware: identidade de estado por tokens,
  * nunca profundidade de stack (undo→undo→novas edições ≠ mesmo token).
+ * Comandos durante SAVING continuam registrados: SAVE_VERIFIED marca
+ * como salvo o token capturado no SAVE_REQUEST, nunca o cursor atual —
+ * edições in-flight voltam a DIRTY para o próximo autosave.
  */
 
 export type SaveState =
@@ -14,6 +18,8 @@ export type SaveState =
   | "DIRTY"
   | "SAVING"
   | "SAVE_FAILED"
+  | "OFFLINE"
+  | "SESSION_EXPIRED"
   | "CONFLICT"
   | "READ_ONLY";
 
@@ -32,6 +38,8 @@ export type SaveEvent =
   | { type: "VALIDATION_BLOCKED" }
   | { type: "VERSION_CONFLICT" }
   | { type: "SAVE_FAILED" }
+  | { type: "NETWORK_OFFLINE" }
+  | { type: "AUTH_EXPIRED" }
   | { type: "RETRY_SAVE" }
   | { type: "DISCARD_AND_RELOAD" }
   | { type: "CONFLICT_RELOAD" }
@@ -48,6 +56,8 @@ export class SaveMachine {
   private stateTokens: string[] = [];
   private cursor = -1;
   private savedToken: string | null = null;
+  /** Token do estado capturado no início do write in-flight. */
+  private pendingSaveToken: string | null = null;
 
   /** Chamado pelo adapter após import/load inicial. */
   markLoaded(): void {
@@ -58,7 +68,7 @@ export class SaveMachine {
 
   /** commandStack.changed → execute|undo|redo|clear (API pública do vendor). */
   onCommand(trigger: SaveTrigger): boolean {
-    if (this.state !== "CLEAN" && this.state !== "DIRTY") return this.dirty();
+    if (this.cursor < 0) return this.dirty();
     switch (trigger) {
       case "execute":
         this.stateTokens = this.stateTokens.slice(0, this.cursor + 1);
@@ -75,7 +85,11 @@ export class SaveMachine {
         this.markLoaded();
         break;
     }
-    this.state = this.dirty() ? "DIRTY" : "CLEAN";
+    // durante SAVING/SAVE_FAILED/etc. o estado permanece — dirty() segue
+    // calculável via tokens e decide o retomar do autosave.
+    if (this.state === "CLEAN" || this.state === "DIRTY") {
+      this.state = this.dirty() ? "DIRTY" : "CLEAN";
+    }
     return this.dirty();
   }
 
@@ -85,11 +99,25 @@ export class SaveMachine {
   }
 
   /** Somente após read-back verificado pelo backend. */
-  markSaved(): void {
-    if (this.cursor >= 0) {
-      this.savedToken = this.stateTokens[this.cursor];
-      this.state = "CLEAN";
-    }
+  markSaved(token?: string | null): void {
+    if (this.cursor < 0) return;
+    this.savedToken = token ?? this.stateTokens[this.cursor];
+  }
+
+  private beginSave(): boolean {
+    const saveable =
+      this.state === "DIRTY" ||
+      this.state === "SAVE_FAILED" ||
+      this.state === "OFFLINE" ||
+      this.state === "SESSION_EXPIRED";
+    if (!saveable || !this.dirty()) return false;
+    this.pendingSaveToken = this.stateTokens[this.cursor];
+    this.state = "SAVING";
+    return true;
+  }
+
+  private endSave(): void {
+    this.pendingSaveToken = null;
   }
 
   dispatch(event: SaveEvent): SaveState {
@@ -104,22 +132,47 @@ export class SaveMachine {
         this.onCommand(event.trigger);
         break;
       case "SAVE_REQUEST":
-        if (this.state === "DIRTY") this.state = "SAVING";
+      case "RETRY_SAVE":
+        this.beginSave();
         break;
       case "SAVE_VERIFIED":
-        if (this.state === "SAVING") this.markSaved();
+        if (this.state === "SAVING") {
+          // marca como salvo o token do início do write: edições feitas
+          // durante o save permanecem DIRTY para o próximo autosave.
+          this.markSaved(this.pendingSaveToken);
+          this.endSave();
+          this.state = this.dirty() ? "DIRTY" : "CLEAN";
+        }
         break;
       case "VALIDATION_BLOCKED":
-        if (this.state === "SAVING") this.state = "DIRTY";
+        if (this.state === "SAVING") {
+          this.endSave();
+          this.state = "DIRTY";
+        }
         break;
       case "VERSION_CONFLICT":
-        if (this.state === "SAVING") this.state = "CONFLICT";
+        if (this.state === "SAVING") {
+          this.endSave();
+          this.state = "CONFLICT";
+        }
         break;
       case "SAVE_FAILED":
-        if (this.state === "SAVING") this.state = "SAVE_FAILED";
+        if (this.state === "SAVING") {
+          this.endSave();
+          this.state = "SAVE_FAILED";
+        }
         break;
-      case "RETRY_SAVE":
-        if (this.state === "SAVE_FAILED") this.state = "SAVING";
+      case "NETWORK_OFFLINE":
+        if (this.state === "SAVING") {
+          this.endSave();
+          this.state = "OFFLINE";
+        }
+        break;
+      case "AUTH_EXPIRED":
+        if (this.state === "SAVING") {
+          this.endSave();
+          this.state = "SESSION_EXPIRED";
+        }
         break;
       case "DISCARD_AND_RELOAD":
         if (this.state === "SAVE_FAILED") this.state = "READ_ONLY";
@@ -139,6 +192,12 @@ export class SaveMachine {
   }
 
   canSave(): boolean {
-    return this.state === "DIRTY" || this.state === "SAVE_FAILED";
+    return (
+      this.dirty() &&
+      (this.state === "DIRTY" ||
+        this.state === "SAVE_FAILED" ||
+        this.state === "OFFLINE" ||
+        this.state === "SESSION_EXPIRED")
+    );
   }
 }

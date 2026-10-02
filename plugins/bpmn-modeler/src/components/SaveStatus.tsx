@@ -4,10 +4,12 @@ import { BpmnmStatusBadge } from "../ui/kit";
 const LABELS: Record<SaveState, string> = {
   LOADING: "Carregando…",
   CLEAN: "Salvo",
-  DIRTY: "Alterações não salvas",
+  DIRTY: "Alterações aguardando salvamento",
   SAVING: "Salvando…",
   SAVE_FAILED: "Falha ao salvar",
-  CONFLICT: "Conflito de versão",
+  OFFLINE: "Sem conexão",
+  SESSION_EXPIRED: "Sessão expirada",
+  CONFLICT: "Conflito de edição",
   READ_ONLY: "Somente leitura",
 };
 
@@ -17,6 +19,8 @@ const VARIANTS: Record<SaveState, "neutral" | "success" | "warning" | "danger" |
   DIRTY: "warning",
   SAVING: "info",
   SAVE_FAILED: "danger",
+  OFFLINE: "warning",
+  SESSION_EXPIRED: "danger",
   CONFLICT: "danger",
   READ_ONLY: "neutral",
 };

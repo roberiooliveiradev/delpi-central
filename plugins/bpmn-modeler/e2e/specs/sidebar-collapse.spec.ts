@@ -47,7 +47,7 @@ test.describe("E2E-43 — sidebar collapse", () => {
   test("top bar: ícones + helps nos controles textuais", async ({ page }) => {
     await openEditor(page);
 
-    for (const label of ["Organizar", "Validar", "Salvar"]) {
+    for (const label of ["Organizar", "Validar"]) {
       const btn = page.locator(`.bpmnm-editor__header button:has-text("${label}")`);
       await expect(btn).toBeVisible();
       // ícone lucide dentro do ActionButton

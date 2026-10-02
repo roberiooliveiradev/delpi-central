@@ -6,6 +6,8 @@ import {
   importModelViaApi,
   LIBRARY_URL,
   modelUrl,
+  waitSaved,
+  PENDING_SAVE_RE,
   type Actor,
 } from "../helpers";
 import { request } from "@playwright/test";
@@ -149,15 +151,12 @@ test.describe("E2E-01/03 — create→edit→save→reload→export", () => {
       .click({ position: { x: 400, y: 200 } });
     await expect(page.locator(".bpmnm-canvas .djs-element")).toHaveCount(1);
     await expect(page.locator(".bpmnm-save-status")).toHaveText(
-      "Alterações não salvas",
+      PENDING_SAVE_RE,
       { timeout: 10_000 },
     );
 
-    // save explícito → CLEAN
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
-      timeout: 15_000,
-    });
+    // autosave → CLEAN sem ação manual
+    await waitSaved(page);
 
     // reload → diagrama reaparece (authoritative)
     await page.reload();
@@ -262,20 +261,15 @@ test.describe("E2E-06 — Organizar → Accept → DIRTY → undo/redo → save"
 
     await previewEl.getByRole("button", { name: "Aceitar" }).click();
     await expect(page.locator(".bpmnm-save-status")).toHaveText(
-      "Alterações não salvas",
+      PENDING_SAVE_RE,
       { timeout: 10_000 },
     );
 
-    // undo reverte o batch inteiro → CLEAN; redo reaplica → DIRTY
+    // undo reverte o batch inteiro → autosave → CLEAN; redo reaplica
     await page.getByRole("button", { name: "Desfazer" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo");
+    await waitSaved(page);
     await page.getByRole("button", { name: "Refazer" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Alterações não salvas");
-
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
-      timeout: 15_000,
-    });
+    await waitSaved(page);
 
     // reopen → DI persistida no artefato canônico
     const exported = await apiExportXml("editor", modelId);
@@ -322,12 +316,9 @@ test.describe("E2E-07 — structural issue → issues → navegar → reparar", 
     await page.locator(".bpmnm-canvas svg").first().focus();
     await page.keyboard.press("Delete");
     await expect(page.locator(".bpmnm-save-status")).toHaveText(
-      "Alterações não salvas",
+      PENDING_SAVE_RE,
     );
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
-      timeout: 15_000,
-    });
+    await waitSaved(page);
     await page.getByRole("button", { name: "Validar" }).click();
     await expect(navigable).toHaveCount(0, { timeout: 15_000 });
     // sibling: o flow quebrado não foi reparado — issues permanecem
@@ -482,7 +473,7 @@ test.describe("E2E-14 — archive/unarchive lifecycle", () => {
 
     await page.getByRole("button", { name: "Mais ações" }).click();
     await page.getByRole("menuitem", { name: "Desarquivar" }).click();
-    await expect(page.getByRole("button", { name: "Salvar" })).toBeVisible({
+    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
       timeout: 15_000,
     });
   });

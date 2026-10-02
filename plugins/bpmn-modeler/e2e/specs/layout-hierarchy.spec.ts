@@ -169,10 +169,10 @@ async function startOrganize(page: Page) {
 }
 
 async function save(page: Page) {
-  const btn = page.getByRole("button", { name: "Salvar" });
-  await expect(btn).toBeEnabled({ timeout: 10_000 });
-  await btn.click();
-  await expect(btn).toBeDisabled({ timeout: 15_000 });
+  // autosave: aguarda write → read-back → Salvo
+  await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
+    timeout: 20_000,
+  });
 }
 
 const LANE_A_MEMBERS = ["S1", "T1", "G1", "SUB1", "DO1"];

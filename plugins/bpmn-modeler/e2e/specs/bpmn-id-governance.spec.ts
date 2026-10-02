@@ -1,4 +1,4 @@
-import { test, expect, importModelViaApi, modelUrl, apiToken } from "../helpers";
+import { test, expect, waitSaved, importModelViaApi, modelUrl, apiToken } from "../helpers";
 import { request } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import path from "node:path";
@@ -174,14 +174,8 @@ test.describe("E2E-45 — BPMN ID governance", () => {
     await expect(idInput(page)).toHaveValue("Proc_Compras");
 
     // save → authoritative read-back pela API
-    await expect(page.locator(".bpmnm-save-status")).toHaveText(
-      "Alterações não salvas",
-      { timeout: 8000 },
-    );
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
-      timeout: 10000,
-    });
+    // autosave: write → read-back → Salvo
+    await waitSaved(page);
 
     const xml = await readBackXml(modelId);
     expect(xml).toContain('id="Proc_Compras"');
@@ -239,14 +233,8 @@ test.describe("E2E-45 — BPMN ID governance", () => {
     await page.keyboard.press("Tab"); // blur → commit vendor debounce
     await page.waitForTimeout(400);
 
-    await expect(page.locator(".bpmnm-save-status")).toHaveText(
-      "Alterações não salvas",
-      { timeout: 8000 },
-    );
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
-      timeout: 10000,
-    });
+    // autosave: write → read-back → Salvo
+    await waitSaved(page);
 
     const xml = await readBackXml(modelId);
     expect(xml).toContain('id="T1_Renamed"');
@@ -274,14 +262,8 @@ test.describe("E2E-45 — BPMN ID governance", () => {
     await page.keyboard.press("Tab"); // blur → commit vendor debounce
     await page.waitForTimeout(400);
 
-    await expect(page.locator(".bpmnm-save-status")).toHaveText(
-      "Alterações não salvas",
-      { timeout: 8000 },
-    );
-    await page.getByRole("button", { name: "Salvar" }).click();
-    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
-      timeout: 10000,
-    });
+    // autosave: write → read-back → Salvo
+    await waitSaved(page);
 
     const xml = await readBackXml(modelId);
     expect(xml).toContain('id="P_V2"');

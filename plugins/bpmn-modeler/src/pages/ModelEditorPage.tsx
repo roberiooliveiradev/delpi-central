@@ -23,7 +23,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Redo2,
-  Save,
+  RefreshCw,
   SlidersHorizontal,
   Trash2,
   Undo2,
@@ -47,6 +47,7 @@ import {
   type RevisionSummary,
   type ValidationReport,
 } from "../data/api/bpmnModelerApi";
+import { AutosaveController } from "../state/autosave";
 import { BpmnEditorAdapter, type DiagramRef, type ElementSummary } from "../editor/BpmnEditorAdapter";
 import { ElementInspector } from "../editor/inspector/ElementInspector";
 import { buildElkGraph } from "../layout/elkGraph";
@@ -140,6 +141,76 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
   const isEditable =
     editableMode(capabilities, !!model?.archived_at, readOnlyReason) && !isTablet;
 
+  // refs para o autosave ler valores vivos sem recriar o controller
+  const versionRef = useRef(version);
+  const isEditableRef = useRef(isEditable);
+  const applyVersion = useCallback((v: number) => {
+    versionRef.current = v;
+    setVersion(v);
+  }, []);
+  useEffect(() => {
+    isEditableRef.current = isEditable;
+  }, [isEditable]);
+
+  // pedido de refresh ao host (portal AppHost → DELPI_REFRESH_REQUEST);
+  // fora do portal (standalone dev) expira por timeout sem efeito.
+  const requestTokenRefresh = useCallback((): Promise<boolean> => {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (ok: boolean) => {
+        if (done) return;
+        done = true;
+        window.removeEventListener("DELPI_TOKEN_UPDATE", onUpdate);
+        resolve(ok);
+      };
+      const onUpdate = () => finish(true);
+      window.addEventListener("DELPI_TOKEN_UPDATE", onUpdate);
+      window.postMessage(
+        { type: "DELPI_REFRESH_REQUEST" },
+        window.location.origin,
+      );
+      window.setTimeout(() => finish(false), 4000);
+    });
+  }, []);
+
+  const autosaveRef = useRef<AutosaveController | null>(null);
+  const autosave = useCallback((): AutosaveController => {
+    if (!autosaveRef.current) {
+      autosaveRef.current = new AutosaveController({
+        machine: machineRef.current,
+        canAutosave: () => isEditableRef.current && !!adapterRef.current,
+        exportXml: () => adapterRef.current!.exportXml(),
+        write: (xml, v) =>
+          saveWorkingCopy(modelId, xml, v, { getAccessToken }),
+        readBack: () => getWorkingCopy(modelId, { getAccessToken }),
+        getVersion: () => versionRef.current,
+        setVersion: applyVersion,
+        requestTokenRefresh,
+        emit: setState,
+        onValidationBlocked: (err) => {
+          const details = err.details as {
+            validation_report?: ValidationReport;
+          };
+          if (details.validation_report) setReport(details.validation_report);
+          setSideTab("validation");
+        },
+        onVerificationFailed: () =>
+          setPageError(
+            "Não foi possível confirmar a gravação. Recarregue o estado autoritativo.",
+          ),
+      });
+    }
+    return autosaveRef.current;
+  }, [modelId, getAccessToken, applyVersion, requestTokenRefresh, setState]);
+
+  useEffect(() => {
+    autosave();
+    return () => {
+      autosaveRef.current?.dispose();
+      autosaveRef.current = null;
+    };
+  }, [autosave]);
+
   // ---------- load ----------
   const loadModel = useCallback(async () => {
     setState("LOADING");
@@ -150,7 +221,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
         getWorkingCopy(modelId, { getAccessToken }),
       ]);
       setModel(meta);
-      setVersion(v);
+      applyVersion(v);
 
       let reason: ReadOnlyReason = null;
       if (meta.archived_at) reason = "ARCHIVED";
@@ -169,6 +240,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           const m = machineRef.current;
           m.dispatch({ type: "COMMAND", trigger });
           setState(m.state);
+          autosaveRef.current?.notifyCommand();
         },
         onSelectionChanged: (ids) => {
           setSelection(ids[0] ? adapter.getElementSummary(ids[0]) : null);
@@ -263,9 +335,12 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     };
   }, [adapterInstance]);
 
-  // beforeunload enquanto DIRTY (P4 §16)
+  // beforeunload somente em estado genuinamente inseguro (dirty ou write
+  // in-flight). Token refresh nunca passa por aqui — auth ≠ model change.
   useEffect(() => {
-    if (machineState !== "DIRTY" && machineState !== "SAVE_FAILED") return;
+    const unsafe =
+      machineState === "SAVING" || machineRef.current.dirty();
+    if (!unsafe) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
@@ -273,51 +348,13 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     return () => window.removeEventListener("beforeunload", handler);
   }, [machineState]);
 
-  // ---------- save ----------
-  const save = async (): Promise<boolean> => {
-    const adapter = adapterRef.current;
-    const m = machineRef.current;
-    if (!adapter || !m.canSave()) return false;
-    m.dispatch({ type: "SAVE_REQUEST" });
-    setState(m.state);
-    try {
-      const candidate = await adapter.exportXml();
-      const outcome = await saveWorkingCopy(modelId, candidate, version, {
-        getAccessToken,
-      });
-      // authoritative read-back (P4 §9): nunca confiar no eco do request
-      const readBack = await getWorkingCopy(modelId, { getAccessToken });
-      if (readBack.xml !== candidate) {
-        setPageError("Não foi possível confirmar a gravação. Recarregue o estado autoritativo.");
-        m.dispatch({ type: "SAVE_FAILED" });
-        setState(m.state);
-        return false;
-      }
-      setVersion(outcome.version);
-      m.dispatch({ type: "SAVE_VERIFIED" });
-      setState(m.state);
-      return true;
-    } catch (err) {
-      if (err instanceof BpmnModelerApiError) {
-        if (err.code === "VALIDATION_BLOCKED") {
-          const details = err.details as { validation_report?: ValidationReport };
-          if (details.validation_report) setReport(details.validation_report);
-          setSideTab("validation");
-          m.dispatch({ type: "VALIDATION_BLOCKED" });
-        } else if (err.code === "CONFLICT") {
-          m.dispatch({ type: "VERSION_CONFLICT" });
-        } else {
-          m.dispatch({ type: "SAVE_FAILED" });
-        }
-      } else {
-        m.dispatch({ type: "SAVE_FAILED" });
-      }
-      setState(m.state);
-      return false;
-    }
-  };
+  // ---------- save (autosave + flush manual secundário) ----------
+  const save = useCallback(
+    (): Promise<boolean> => autosave().flush(),
+    [autosave],
+  );
 
-  // Ctrl/Cmd+S
+  // Ctrl/Cmd+S — atalho de flush; o fluxo normal não exige ação manual.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
@@ -328,7 +365,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [machineState, version]);
+  }, [save]);
 
   // ---------- revisions ----------
   const loadRevisions = useCallback(async () => {
@@ -357,7 +394,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     try {
       await createRevision(modelId, version, { getAccessToken });
       const { version: v } = await getModel(modelId, { getAccessToken });
-      setVersion(v);
+      applyVersion(v);
       void loadRevisions();
     } catch (err) {
       setPageError(err instanceof BpmnModelerApiError ? err.message : "Falha ao criar revisão.");
@@ -388,7 +425,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       const outcome = model.archived_at
         ? await unarchiveModel(modelId, version, { getAccessToken })
         : await archiveModel(modelId, version, { getAccessToken });
-      setVersion(outcome.version);
+      applyVersion(outcome.version);
       await loadModel();
     } catch (err) {
       setPageError(err instanceof BpmnModelerApiError ? err.message : "Falha ao alterar arquivamento.");
@@ -476,18 +513,25 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
   };
 
   // ---------- navigation guard ----------
+  // flush do autosave pendente → verifica → navega; falha → UI do produto.
   const guardedNavigate = (path: string) => {
     // saída forçada durante preview ⇒ Cancel automático (P5 §18)
     if (preview) closePreview();
     const m = machineRef.current;
-    if (m.dirty() || m.state === "SAVE_FAILED") {
-      setUnsavedOpen(() => () => {
-        setUnsavedOpen(null);
-        navigate(path);
-      });
-    } else {
+    if (!m.dirty() && m.state !== "SAVING") {
       navigate(path);
+      return;
     }
+    void save().then((ok) => {
+      if (ok) {
+        navigate(path);
+      } else {
+        setUnsavedOpen(() => () => {
+          setUnsavedOpen(null);
+          navigate(path);
+        });
+      }
+    });
   };
 
   if (pageError && machineState === "LOADING") {
@@ -592,18 +636,18 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
         )}
 
         <div className="bpmnm-editor__group bpmnm-editor__group--right">
-          {isEditable && !preview && (
-            <ActionButton
-              type="button"
-              variant="primary"
-              title={HELP_TOOLTIPS.editor.save}
-              disabled={machineState !== "DIRTY" && machineState !== "SAVE_FAILED"}
-              onClick={() => void save()}
-            >
-              <Save size={15} aria-hidden="true" />
-              Salvar
-            </ActionButton>
-          )}
+          {isEditable &&
+            !preview &&
+            (machineState === "SAVE_FAILED" || machineState === "OFFLINE") && (
+              <ActionButton
+                type="button"
+                title={HELP_TOOLTIPS.editor.retrySave}
+                onClick={() => void save()}
+              >
+                <RefreshCw size={15} aria-hidden="true" />
+                Tentar novamente
+              </ActionButton>
+            )}
           {!preview && (
             <>
               <DiagramSelector
@@ -639,6 +683,18 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       {isTablet && capabilities.edit && !readOnlyReason ? (
         <BpmnmStateBanner className="bpmnm-banner bpmnm-banner--readonly">
           Em tablets o editor opera em modo somente leitura.
+        </BpmnmStateBanner>
+      ) : null}
+      {machineState === "OFFLINE" ? (
+        <BpmnmStateBanner className="bpmnm-banner">
+          Sem conexão — suas alterações estão preservadas neste navegador e
+          serão salvas automaticamente ao reconectar.
+        </BpmnmStateBanner>
+      ) : null}
+      {machineState === "SESSION_EXPIRED" ? (
+        <BpmnmStateBanner variant="error" className="bpmnm-error">
+          Sessão expirada. Suas alterações locais foram preservadas —
+          entre novamente para continuar salvando.
         </BpmnmStateBanner>
       ) : null}
       {pageError ? (

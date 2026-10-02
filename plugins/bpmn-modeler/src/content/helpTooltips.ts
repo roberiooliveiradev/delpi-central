@@ -13,7 +13,8 @@ export const HELP_TOOLTIPS = {
     actions: "Ações do modelo: abrir, exportar, duplicar, arquivar.",
   },
   editor: {
-    save: "Salva o modelo (Ctrl+S). A gravação só é confirmada após leitura do servidor.",
+    save: "Alterações são salvas automaticamente (Ctrl+S grava na hora).",
+    retrySave: "Tenta salvar novamente as alterações pendentes.",
     undo: "Desfaz a última edição do diagrama.",
     redo: "Refaz a edição desfeita.",
     validate: "Valida o diagrama sem salvar e lista problemas na aba Validação.",

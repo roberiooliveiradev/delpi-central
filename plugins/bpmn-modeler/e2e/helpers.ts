@@ -128,3 +128,21 @@ export async function importModelViaApi(
     throw new Error(`import failed: ${resp.status()} ${await resp.text()}`);
   return (await resp.json()).data.model_id as string;
 }
+
+/** Autosave: aguarda o estado autoritativo verificado (write→read-back). */
+export async function waitSaved(page: Page, timeout = 20_000): Promise<void> {
+  await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
+    timeout,
+  });
+}
+
+/** Estado "não persistido ainda" visível (queued, in-flight ou falha). */
+export const PENDING_SAVE_RE =
+  /Alterações aguardando salvamento|Salvando…|Falha ao salvar|Sem conexão/;
+
+/** Força ciclo de refresh de token no portal (AppHost → refreshToken real). */
+export async function requestTokenRefresh(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    window.postMessage({ type: "DELPI_REFRESH_REQUEST" }, location.origin),
+  );
+}

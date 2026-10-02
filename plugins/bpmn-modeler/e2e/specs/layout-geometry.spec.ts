@@ -144,10 +144,10 @@ async function organize(page: Page, accept: boolean) {
 }
 
 async function save(page: Page) {
-  const btn = page.getByRole("button", { name: "Salvar" });
-  await expect(btn).toBeEnabled({ timeout: 10_000 });
-  await btn.click();
-  await expect(btn).toBeDisabled({ timeout: 15_000 });
+  // autosave: aguarda write → read-back → Salvo
+  await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
+    timeout: 20_000,
+  });
 }
 
 // famílias SIZE_PRESERVED (w/h nunca mudam no layout)
@@ -219,10 +219,8 @@ test.describe("E2E-47 — auto-layout size preservation", () => {
     expect(domAfter).toEqual(domBefore);
     const after = await diBoundsFromXml(modelId);
     expect(after.get("T1")).toEqual(before.get("T1"));
-    // Salvar continua desabilitado (preview não sujou o canvas)
-    await expect(
-      page.getByRole("button", { name: "Salvar" }),
-    ).toBeDisabled();
+    // preview cancelado não sujou o canvas → permanece Salvo (sem autosave)
+    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo");
   });
 
   test("LGEO-03: undo/redo restauram a geometria exata", async ({ page }) => {

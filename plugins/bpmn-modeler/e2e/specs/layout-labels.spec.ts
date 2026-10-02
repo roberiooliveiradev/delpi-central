@@ -165,10 +165,10 @@ async function organize(page: Page, accept: boolean) {
 }
 
 async function save(page: Page) {
-  const btn = page.getByRole("button", { name: "Salvar" });
-  await expect(btn).toBeEnabled({ timeout: 10_000 });
-  await btn.click();
-  await expect(btn).toBeDisabled({ timeout: 15_000 });
+  // autosave: aguarda write → read-back → Salvo
+  await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
+    timeout: 20_000,
+  });
 }
 
 const NAMED = ["S1", "G1", "E1", "DO1", "DS1"]; // shapes c/ BPMNLabel

@@ -337,10 +337,9 @@ test.describe("E2E-39 — canvas theme lifecycle", () => {
     );
     await appendTask.click();
     await page.waitForTimeout(500);
-    const saveBtn = page.getByRole("button", { name: "Salvar" });
-    await expect(saveBtn).toBeEnabled();
-    await saveBtn.click();
-    await page.waitForTimeout(1500);
+    await expect(page.locator(".bpmnm-save-status")).toHaveText("Salvo", {
+      timeout: 15_000,
+    });
 
     // XML autoritativo não pode conter tokens/metadata de tema
     const token = await apiToken("editor");

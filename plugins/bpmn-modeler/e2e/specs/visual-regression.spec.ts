@@ -207,7 +207,7 @@ test.describe("E2E-33 — toolbar / sidebar", () => {
     expect(box).not.toBeNull();
     expectInViewport(box!, 1366, 768);
     // ações primárias e overflow acessíveis dentro do viewport
-    for (const name of ["Salvar", "Organizar", "Validar", "Mais ações"]) {
+    for (const name of ["Organizar", "Validar", "Mais ações"]) {
       const btn = page.getByRole("button", { name, exact: false }).first();
       await expect(btn).toBeVisible();
       const b = await btn.boundingBox();

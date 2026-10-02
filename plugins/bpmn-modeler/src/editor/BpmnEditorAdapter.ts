@@ -88,6 +88,8 @@ export const BPMN_RENDERER_THEME = {
  * destroy() + mount() + importXml() — nunca import por cima de edição viva.
  */
 export class BpmnEditorAdapter {
+  /** Seqüência global de mounts — evidência E2E de continuidade (sem remount). */
+  private static mountSeq = 0;
   private modeler: EditorInstance | null = null;
   private mode: EditorMode = "edit";
   private subs: EditorSubscriptions = {};
@@ -101,6 +103,8 @@ export class BpmnEditorAdapter {
   mount(container: HTMLElement, mode: EditorMode): void {
     this.destroy();
     this.mode = mode;
+    BpmnEditorAdapter.mountSeq += 1;
+    container.dataset.bpmnmMountId = String(BpmnEditorAdapter.mountSeq);
     const bpmnRenderer = { ...BPMN_RENDERER_THEME };
     if (mode === "edit") {
       this.modeler = new Modeler({
