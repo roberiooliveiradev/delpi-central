@@ -2023,6 +2023,11 @@ KnowledgeRetrievalPort = DEFERRED
 filter_organizational_retrieval_eligibility = deterministic in-memory eligibility only
 retrieval hit != FACT / Evidence / permission
 Personal/session/transient != auto Organizational Knowledge
+GOVERNED_WRITE_CONTRACTS = IMPLEMENTED (§6.108, in-memory/value contracts only —
+   `domain/governed_write`: WriteProposalPreview, StructuredConfirmation,
+   ConfirmationState, WriteGateDecision, WriteOutcomeProjection,
+   WriteDecisionAuditRecord; PERSISTENCE=NONE; proposal_ref is opaque
+   owner data carried for future pass-through commit — not DELIA state)
 PHYSICAL_KNOWLEDGE_STORE = TO_INVENTORY / DEFERRED
 NEW_RUNTIME_ABSTRACTIONS = NONE
 PERSISTENCE = NONE

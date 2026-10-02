@@ -7104,3 +7104,110 @@ PHASE_FLAGS = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
 AUTHORIZED_NEXT_TASK = C5-GOVERNED-WRITE-FOUNDATION-01 (foundation
     contracts only; NO business PREPARE/ACT wire call authorized).
 ```
+
+
+## 6.108 C5-GOVERNED-WRITE-FOUNDATION-01 — implementation evidence
+
+```
+TASK_ID   = C5-GOVERNED-WRITE-FOUNDATION-01
+TASK_NAME = GOVERNED_WRITE_SEMANTIC_FOUNDATION
+BASE_HEAD = 532130dfdd (review persistence of C5-entry task)
+IMPLEMENTATION_HEAD = c258a839bac117316e1105e9aa15acf8c29892ce
+EVALUATED_SHA       = c258a839bac117316e1105e9aa15acf8c29892ce
+BRANCH = main (pushed)
+MODE = FOUNDATION IMPLEMENTATION — contracts/rules/tests only;
+    NO business PREPARE/ACT wire call; NO MCP write execution;
+    NO persistence; NO new authority.
+
+DELIVERED (delia-api/app/domain/governed_write/):
+  GovernedWriteBinding — static binding identity (specialist/owner/
+      prepare+act capability pair/owner_operation_id/confirmation flag);
+      enabled=False default; authorizes_act()=False always; no
+      endpoint/URL/HTTP/scope/credential/prompt fields.
+  GOVERNED_WRITE_BINDINGS — EMPTY registry by design; write_binding_for
+      fail-closed; remote metadata consulted never.
+  WriteProposalPreview + project_proposal_preview — bounded provider-
+      neutral projection of owner PREPARE result; opaque proposal_ref
+      (sha256 digest for correlation only); readiness
+      READY/NOT_READY/EXPIRED/INVALID/UNKNOWN fail-closed on missing
+      mandatory governance fields (handle, exact_change); envelope
+      ({"data": ...}) unwrapped; never inferred from text.
+  preview_fingerprint — deterministic sha256 over bounded canonical
+      preview fields; DÉLIA correlation fingerprint only (owner
+      business fingerprint untouched).
+  StructuredConfirmation + bind_confirmation — the ONLY admissible
+      confirmation shape; deterministic exact-match on actor/session/
+      binding/proposal digest/preview fingerprint/expiry/readiness;
+      states PENDING/CONFIRMED/REJECTED/EXPIRED/INVALIDATED;
+      CONFIRMED = USER_CONFIRMED_EXACT_PREVIEW only (authorizes_act
+      =False).
+  WriteGateDecision via evaluate_write_continuation — fail-closed
+      ordering (unknown/disabled binding -> proposal readiness/expiry
+      -> missing/mismatched/rejected confirmation); strongest state
+      READY_FOR_LIVE_REVALIDATION with live_core_authz_required and
+      domain_revalidation_required pinned True by construction; no
+      ACT_AUTHORIZED state exists.
+  WriteOutcomeProjection via project_write_outcome — technical success
+      never VERIFIED; VERIFIED requires owner verified postcondition
+      evidence; verified=false -> OUTCOME_VERIFICATION_FAILED;
+      success without verification -> EXECUTION_REPORTED; failure ->
+      FAILED; unknown shapes -> UNKNOWN.
+  WriteDecisionAuditRecord — stage contract (PREPARE_PROJECTED/
+      CONFIRMATION_BOUND/DECISION_GATE/ACT_ATTEMPT/OUTCOME_VERIFIED)
+      with digest-only references; deterministic to_dict; no tokens,
+      secrets, raw handles, provider payloads, prompts, or CoT.
+
+OWNER_CONTRACTS_REUSED = TÉO governed_writes (opaque HMAC
+    proposal_handle, expiry, actor binding, current_state_fingerprint
+    TOCTOU re-check, consume-on-use, confirmation=true, live domain
+    AuthZ at commit, expected_postcondition + verified read-back,
+    OUTCOME_VERIFICATION_FAILED) and VISTA prepare_change/
+    commit_proposal (handle + idempotency_key + confirmation +
+    backend VERIFIED/OUTCOME_NOT_VERIFIED) — inspected, compatible
+    with the provider-neutral foundation; no business rule duplicated
+    in DÉLIA. VISTA lifecycle internals remain partially TO_INVENTORY.
+    DAVI has no MCP write surface.
+
+TESTS = 58 new targeted tests (binding gate, preview readiness,
+    confirmation binding all mismatch axes, decision gate ordering,
+    outcome classification, audit hygiene, adversarial: model-proposed
+    commit_proposal/remote safety metadata/plain-text handle/replay —
+    all grant nothing; architecture: no infra/provider imports, no
+    engine/orchestrator/registry types, no mechanic/secret fields, no
+    specialist branching, no interop invocation inside foundation).
+    FULL_SUITE = 642/642 PASS at IMPLEMENTATION_HEAD (584 prior +
+    58 new); DAVI/TÉO governed-read regression unchanged; PREPARE/ACT
+    wire paths still WRITE_CAPABILITY_BLOCKED.
+GIT_DIFF_CHECK = PASS.
+
+PREPARE_REMOTE_EXECUTION = NONE
+ACT_REMOTE_EXECUTION = NONE
+TEO_WRITE_AUTHORIZED = NO
+VISTA_WRITE_AUTHORIZED = NO
+THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED (unchanged)
+
+NOTE = implementation commit c258a839ba also carried two pre-staged
+    OUTSIDE_TASK deletions belonging to the user's in-progress
+    tv-dashboard refactor (ttl_cache.py + test_ttl_cache.py); user's
+    own staged work, disclosed — no DELIA impact.
+
+CP_MAPPING = CP-057 (write idempotency semantics) -> owner idempotency
+    reused, DELIA contract contribution only (PLANNED, not PASS);
+    CP-265 (delegated write gate) -> foundation contribution: binding
+    gate + confirmation + decision gate + outcome contracts now exist
+    (still LOCKED pending runtime slice); CP-263/CP-264 unchanged;
+    no CP promoted to PASS on contract-only evidence.
+RESIDUALS = audit persistence owner/location = later task; rollback =
+    capability-specific TO_INVENTORY; VISTA lifecycle internals
+    TO_INVENTORY; token-cache <=120s window; live negative AuthZ and
+    outage simulation still TEST_NOT_RUN from C4; production token
+    exchange NOT_PROVEN.
+PHASE_FLAGS = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+    PREPARE=BLOCKED; ACT=BLOCKED; PRODUCTION_READINESS=NOT_PROVEN.
+
+STATUS = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+NEXT = ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 —
+    Prompt 6 (FIRST_BOUNDED_GOVERNED_PREPARE_ACT) is NOT authorized;
+    it requires this review + selection of exactly one owner
+    capability with its full contract proven.
+```

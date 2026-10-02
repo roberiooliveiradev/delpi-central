@@ -3,7 +3,7 @@
 **Status:** planejamento executável canônico  
 **Autoridade de ordem:** **este documento é a única fonte de verdade para a sequência de implementação**  
 **Produto:** **DÉLIA**, aplicação standalone nova  
-**Próxima etapa:** `C5-GOVERNED-WRITE-FOUNDATION-01` — bounded C5 foundation slice (DÉLIA-side governed-write primitives only: per-binding write gate, PREPARE proposal-preview projection, deterministic confirmation/Decision-Gate binding, write-outcome projection, write-decision audit contract; **no business PREPARE/ACT wire call authorized**), authorized by the C5 entry gate at §6.106 (`C5_ENTRY_VERDICT=C5_FOUNDATION_SLICE_REQUIRED`). `C4_MCP_GOVERNED_READS_01`/`02` = `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (DAVI `search_products` + TÉO `analyze`/`gpt_analyze` view=summary — two-consumer governed-read proof closed; third read NOT authorized). `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE`; `C4_AUTHORIZED=NO` at phase level; `C5_AUTHORIZED=NO` at phase level; `PREPARE=BLOCKED`; `ACT=BLOCKED`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
+**Próxima etapa:** `ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01` — `C5-GOVERNED-WRITE-FOUNDATION-01` executed (`CANDIDATE_FOR_ARCHITECTURE_REVIEW`, §6.108, `IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce`): DÉLIA-side governed-write semantic contracts (`domain/governed_write`) — binding gate, proposal-preview projection, deterministic confirmation binding, decision gate (strongest state `READY_FOR_LIVE_REVALIDATION`), outcome projection, audit record — **no business PREPARE/ACT wire call exists**; prompt 6 (`FIRST_BOUNDED_GOVERNED_PREPARE_ACT`) remains NOT authorized pending review. `C4_MCP_GOVERNED_READS_01`/`02` = `APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE` (DAVI `search_products` + TÉO `analyze`/`gpt_analyze` view=summary — two-consumer governed-read proof closed; third read NOT authorized). `C3_AUTHORIZED=YES`; `C3_STARTED=YES`; `C3_EXECUTED=NO` (remaining C3 foundation families open — §6.100 matrix); `C3_MCP_FEDERATION=APPROVED_CURRENT_SCOPE`; `C4_AUTHORIZED=NO` at phase level; `C5_AUTHORIZED=NO` at phase level; `PREPARE=BLOCKED`; `ACT=BLOCKED`; `PRODUCTION_READINESS=NOT_PROVEN`; `REAL_DELPI_OPENAPI_COVERAGE=NOT_PROVEN`)
 **Boundary:** [`50-standalone-copilot-application-architecture.md`](./50-standalone-copilot-application-architecture.md)  
 **Baseline:** [`51-platform-integration-baseline.md`](./51-platform-integration-baseline.md)  
 **Bootstrap:** [`52-standalone-repository-and-bootstrap-plan.md`](./52-standalone-repository-and-bootstrap-plan.md)  
@@ -797,7 +797,10 @@ C4-MCP-GOVERNED-READS-02 = APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE
    regression PASS; other TÉO reads/PREPARE/ACT blocked))
 THIRD_MCP_GOVERNED_READ = NOT_AUTHORIZED (§6.106 — two consumers
    suffice for the abstraction proof)
-NEXT = C5-GOVERNED-WRITE-FOUNDATION-01 (authorized §6.106:
+C5-GOVERNED-WRITE-FOUNDATION-01 = CANDIDATE_FOR_ARCHITECTURE_REVIEW
+   (§6.108; IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce; contracts only —
+   GOVERNED_WRITE_BINDINGS EMPTY, no wire write)
+NEXT = ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01 (authorized §6.106:
    C5_ENTRY_VERDICT=C5_FOUNDATION_SLICE_REQUIRED — DELIA-side write
    foundation only; no business PREPARE/ACT authorized)
 Workspace binding remains unscheduled

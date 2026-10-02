@@ -1037,3 +1037,6 @@ Não altera ordem C0–C7 de `16`. Não promove TARGET→PROVEN sem runtime evid
 Authority: `CP-317–CP-332` em [`25-requirements-traceability.md`](./25-requirements-traceability.md).
 
 Cobertura parcial herdada (não substitui OII first-class): CP-051, CP-056, CP-093–094, CP-101–103, CP-118/125, CP-231–234, CP-239–240, CP-243–244, CP-258.
+
+
+> Estado factual (§6.108): `C5-GOVERNED-WRITE-FOUNDATION-01` implementou os contratos semânticos DÉLIA-side de governed write (binding gate, proposal preview, confirmation binding determinístico, decision gate máximo `READY_FOR_LIVE_REVALIDATION`, outcome verificado pelo owner, audit record com digests) — contratos apenas; sem PREPARE/ACT de negócio, sem runtime de Automation Hub, `C5_AUTHORIZED=NO`.
