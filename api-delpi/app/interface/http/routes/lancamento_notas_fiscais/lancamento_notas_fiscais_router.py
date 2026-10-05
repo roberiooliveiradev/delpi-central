@@ -107,6 +107,7 @@ class CreateRequestBody(BaseModel):
     source_document_id: str | None = None
     provider_document_number: str | None = None
     linked_invoices: list[LinkedInvoiceBody] | None = None
+    provider_file_id: str | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -350,34 +351,82 @@ def preview_received_invoice_danfe(
 
 
 @router.get(
-    "/received-invoices/{document_id}/detail",
-    operation_id="get_lancamento_notas_fiscais_received_nfse_detail",
+    "/received-invoices/{document_id}/dacte",
+    operation_id="get_lancamento_notas_fiscais_received_cte_dacte",
 )
 @require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
-def received_nfse_detail(
+def preview_received_cte_dacte(
     document_id: str,
+    file_id: str = Query(""),
+    access_key: str = Query(""),
     branch: str = Query(""),
-    document_type: str = Query("nfse"),
 ):
-    if str(document_type or "").strip().lower() != "nfse":
-        return error_response(
-            "O detalhe estruturado está disponível para NFS-e.",
-            status_code=422,
-            code="VALIDATION_ERROR",
-            recoverable=True,
-        )
     try:
-        data = build_financial_received_invoice_gateway().get_nfse_detail(
+        content, filename = build_financial_received_invoice_gateway().download_dacte(
             authorization=str(get_request_authorization() or ""),
             document_id=document_id,
+            file_id=file_id,
+            access_key=access_key,
             branch=branch,
         )
     except FinancialReceivedInvoiceGatewayError as exc:
         return _handle_financial(exc)
     except Exception as exc:
-        log_error(f"Erro ao detalhar NFS-e no lançamento: {type(exc).__name__}")
+        log_error(f"Erro ao pré-visualizar DACTE no lançamento: {type(exc).__name__}")
         return error_response(
-            "Erro ao carregar os dados da NFS-e.",
+            "Erro ao obter o DACTE.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    return _pdf_response(content, filename, "inline")
+
+
+@router.get(
+    "/received-invoices/{document_id}/detail",
+    operation_id="get_lancamento_notas_fiscais_received_nfse_detail",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
+def received_fiscal_detail(
+    document_id: str,
+    branch: str = Query(""),
+    document_type: str = Query("nfse"),
+    file_id: str = Query(""),
+    access_key: str = Query(""),
+):
+    kind = str(document_type or "").strip().lower()
+    gateway = build_financial_received_invoice_gateway()
+    authorization = str(get_request_authorization() or "")
+    try:
+        if kind == "nfse":
+            data = gateway.get_nfse_detail(
+                authorization=authorization,
+                document_id=document_id,
+                branch=branch,
+            )
+            message = "Dados da NFS-e carregados."
+        elif kind == "cte":
+            data = gateway.get_cte_detail(
+                authorization=authorization,
+                document_id=document_id,
+                file_id=file_id,
+                access_key=access_key,
+                branch=branch,
+            )
+            message = "Dados do CT-e carregados."
+        else:
+            return error_response(
+                "O detalhe estruturado está disponível para NFS-e e CT-e.",
+                status_code=422,
+                code="VALIDATION_ERROR",
+                recoverable=True,
+            )
+    except FinancialReceivedInvoiceGatewayError as exc:
+        return _handle_financial(exc)
+    except Exception as exc:
+        log_error(f"Erro ao detalhar documento fiscal no lançamento: {type(exc).__name__}")
+        return error_response(
+            "Erro ao carregar os dados do documento fiscal.",
             status_code=500,
             code="INTERNAL_ERROR",
             recoverable=False,
@@ -385,7 +434,7 @@ def received_nfse_detail(
     return api_delpi_success(
         data,
         operation_id="get_lancamento_notas_fiscais_received_nfse_detail",
-        message="Dados da NFS-e carregados.",
+        message=message,
     )
 
 
@@ -394,32 +443,44 @@ def received_nfse_detail(
     operation_id="get_lancamento_notas_fiscais_received_nfse_xml",
 )
 @require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
-def download_received_nfse_xml(
+def download_received_fiscal_xml(
     document_id: str,
     variant: str,
     branch: str = Query(""),
     document_type: str = Query("nfse"),
+    file_id: str = Query(""),
 ):
-    if str(document_type or "").strip().lower() != "nfse":
-        return error_response(
-            "O download de XML está disponível para NFS-e.",
-            status_code=422,
-            code="VALIDATION_ERROR",
-            recoverable=True,
-        )
+    kind = str(document_type or "").strip().lower()
+    gateway = build_financial_received_invoice_gateway()
+    authorization = str(get_request_authorization() or "")
     try:
-        content, filename = build_financial_received_invoice_gateway().download_nfse_xml(
-            authorization=str(get_request_authorization() or ""),
-            document_id=document_id,
-            variant=variant,
-            branch=branch,
-        )
+        if kind == "nfse":
+            content, filename = gateway.download_nfse_xml(
+                authorization=authorization,
+                document_id=document_id,
+                variant=variant,
+                branch=branch,
+            )
+        elif kind == "cte":
+            content, filename = gateway.download_cte_xml(
+                authorization=authorization,
+                document_id=document_id,
+                file_id=file_id,
+                branch=branch,
+            )
+        else:
+            return error_response(
+                "O download de XML está disponível para NFS-e e CT-e.",
+                status_code=422,
+                code="VALIDATION_ERROR",
+                recoverable=True,
+            )
     except FinancialReceivedInvoiceGatewayError as exc:
         return _handle_financial(exc)
     except Exception as exc:
-        log_error(f"Erro ao baixar XML de NFS-e no lançamento: {type(exc).__name__}")
+        log_error(f"Erro ao baixar XML fiscal no lançamento: {type(exc).__name__}")
         return error_response(
-            "Erro ao obter o XML da NFS-e.",
+            "Erro ao obter o XML do documento fiscal.",
             status_code=500,
             code="INTERNAL_ERROR",
             recoverable=False,
@@ -613,7 +674,7 @@ def download_request_danfe(
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS)
 def download_request_fiscal_attachment(request_id: UUID, attachment_type: str):
     kind = str(attachment_type or "").strip().lower().replace("-", "_")
-    if kind not in {"xml_original", "xml_standard"}:
+    if kind not in {"xml_original", "xml_standard", "dacte"}:
         return error_response(
             "Tipo de anexo fiscal inválido.",
             status_code=422,
@@ -627,7 +688,7 @@ def download_request_fiscal_attachment(request_id: UUID, attachment_type: str):
             return branch_error
         stored = build_invoice_posting_request_repository().get_fiscal_attachment(str(request_id), kind)
         if not isinstance(stored, dict) or not stored.get("stored_name"):
-            return not_found_response("XML não anexado a esta solicitação.", code="fiscal_attachment.not_found")
+            return not_found_response("Anexo fiscal não encontrado nesta solicitação.", code="fiscal_attachment.not_found")
         content = LancamentoFiscalAttachmentStorage().read(str(stored["stored_name"]))
     except LancamentoFiscalAttachmentStorageError:
         return not_found_response("Arquivo fiscal não encontrado.", code="fiscal_attachment.not_found")
@@ -641,11 +702,14 @@ def download_request_fiscal_attachment(request_id: UUID, attachment_type: str):
             code="INTERNAL_ERROR",
             recoverable=False,
         )
-    filename = str(stored.get("file_name") or f"{kind}.xml")
-    safe_name = "".join(ch for ch in filename if ch.isalnum() or ch in {".", "-", "_"}) or "nfse.xml"
+    filename = str(stored.get("file_name") or (f"{kind}.pdf" if kind == "dacte" else f"{kind}.xml"))
+    safe_name = "".join(ch for ch in filename if ch.isalnum() or ch in {".", "-", "_"}) or (
+        "dacte.pdf" if kind == "dacte" else "fiscal.xml"
+    )
+    media_type = "application/pdf" if kind == "dacte" else "text/xml"
     return Response(
         content=content,
-        media_type="text/xml",
+        media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )
 

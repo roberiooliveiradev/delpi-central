@@ -640,18 +640,25 @@ class FakeReceivedInvoiceGateway:
         *,
         items: tuple[Any, ...] | None = None,
         nfse_items: tuple[Any, ...] | None = None,
+        cte_items: tuple[Any, ...] | None = None,
         error: Exception | None = None,
         nfse_error: Exception | None = None,
+        cte_error: Exception | None = None,
     ) -> None:
         self.queries: list[Any] = []
         self.nfse_queries: list[Any] = []
+        self.cte_queries: list[Any] = []
         self.downloads: list[tuple[str, str]] = []
         self.xml_downloads: list[tuple[str, str]] = []
+        self.cte_downloads: list[tuple[str, str]] = []
+        self.dacte_downloads: list[tuple[str, str, str]] = []
         self.closed = False
         self._items = items
         self._nfse_items = nfse_items
+        self._cte_items = cte_items
         self._error = error
         self._nfse_error = nfse_error
+        self._cte_error = cte_error
 
     def list_received_invoices(self, query: Any) -> Any:
         from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoicePage
@@ -692,6 +699,17 @@ class FakeReceivedInvoiceGateway:
         window = items[start : start + query.page_size]
         return ReceivedFiscalPage(total_items=len(items), items=tuple(window))
 
+    def list_received_cte(self, query: Any) -> Any:
+        from financial_app.domain.received_fiscal_document import ReceivedFiscalPage
+
+        self.cte_queries.append(query)
+        if self._cte_error is not None:
+            raise self._cte_error
+        items = self._cte_items or ()
+        start = (query.page - 1) * query.page_size
+        window = items[start : start + query.page_size]
+        return ReceivedFiscalPage(total_items=len(items), items=tuple(window))
+
     def download_danfe(self, *, document_id: str, access_key: str) -> bytes:
         self.downloads.append((document_id, access_key))
         return b"%PDF-1.4\nfake\n"
@@ -699,6 +717,20 @@ class FakeReceivedInvoiceGateway:
     def download_nfse_xml(self, *, document_id: str, variant: str) -> bytes:
         self.xml_downloads.append((document_id, variant))
         return b"<?xml version='1.0' encoding='utf-8'?><Notas><Nota><SERIE>E</SERIE></Nota></Notas>"
+
+    def download_cte_xml(self, *, provider_file_id: str, provider_document_id: str) -> bytes:
+        self.cte_downloads.append((provider_file_id, provider_document_id))
+        return b"<?xml version='1.0' encoding='utf-8'?><cteProc></cteProc>"
+
+    def download_dacte(
+        self,
+        *,
+        provider_file_id: str,
+        provider_document_id: str,
+        access_key: str,
+    ) -> bytes:
+        self.dacte_downloads.append((provider_file_id, provider_document_id, access_key))
+        return b"%PDF-1.4\nfake\n"
 
     def close(self) -> None:
         self.closed = True

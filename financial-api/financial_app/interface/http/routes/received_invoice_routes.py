@@ -66,27 +66,42 @@ def download_received_invoice_danfe(
 
 
 @router.get("/received/{document_id}/xml/{variant}")
-def download_received_nfse_xml(
+def download_received_fiscal_xml(
     request: Request,
     document_id: str,
     variant: str,
     branch: str = Query(""),
     documentType: str = Query("nfse"),
+    fileId: str = Query(""),
 ):
-    if (documentType or "").strip().lower() != "nfse":
-        from financial_app.domain.errors import InvalidReceivedInvoiceQuery
-
-        mapped = domain_error_response(
-            InvalidReceivedInvoiceQuery("O download de XML está disponível para NFS-e.")
-        )
-        return mapped
+    kind = (documentType or "").strip().lower()
     try:
-        payload, filename = build_received_invoices_service().download_nfse_xml(
-            resolve_user(request),
-            document_id=document_id,
-            variant=variant,
-            branch_code=branch,
-        )
+        if kind == "nfse":
+            payload, filename = build_received_invoices_service().download_nfse_xml(
+                resolve_user(request),
+                document_id=document_id,
+                variant=variant,
+                branch_code=branch,
+            )
+        elif kind == "cte":
+            if (variant or "").strip().lower().replace("-", "_") not in {"original", "xml_original"}:
+                from financial_app.domain.errors import InvalidReceivedInvoiceQuery
+
+                return domain_error_response(
+                    InvalidReceivedInvoiceQuery("O CT-e só entrega o XML original.")
+                )
+            payload, filename = build_received_invoices_service().download_cte_xml(
+                resolve_user(request),
+                document_id=document_id,
+                file_id=fileId,
+                branch_code=branch,
+            )
+        else:
+            from financial_app.domain.errors import InvalidReceivedInvoiceQuery
+
+            return domain_error_response(
+                InvalidReceivedInvoiceQuery("O download de XML está disponível para NFS-e e CT-e.")
+            )
     except Exception as exc:
         mapped = domain_error_response(exc)
         if mapped is not None:
@@ -99,23 +114,20 @@ def download_received_nfse_xml(
     )
 
 
-@router.get("/received/{document_id}/detail")
-def received_nfse_detail(
+@router.get("/received/{document_id}/dacte")
+def download_received_cte_dacte(
     request: Request,
     document_id: str,
+    fileId: str = Query(""),
+    accessKey: str = Query(""),
     branch: str = Query(""),
-    documentType: str = Query("nfse"),
 ):
-    if (documentType or "").strip().lower() != "nfse":
-        from financial_app.domain.errors import InvalidReceivedInvoiceQuery
-
-        return domain_error_response(
-            InvalidReceivedInvoiceQuery("O detalhe estruturado está disponível para NFS-e.")
-        )
     try:
-        data = build_received_invoices_service().nfse_standard_detail(
+        payload, filename = build_received_invoices_service().download_dacte(
             resolve_user(request),
             document_id=document_id,
+            file_id=fileId,
+            access_key=accessKey,
             branch_code=branch,
         )
     except Exception as exc:
@@ -123,4 +135,49 @@ def received_nfse_detail(
         if mapped is not None:
             return mapped
         raise
-    return ok(data, message="Dados da NFS-e carregados.")
+    return Response(
+        content=payload,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
+
+
+@router.get("/received/{document_id}/detail")
+def received_fiscal_detail(
+    request: Request,
+    document_id: str,
+    branch: str = Query(""),
+    documentType: str = Query("nfse"),
+    fileId: str = Query(""),
+    accessKey: str = Query(""),
+):
+    kind = (documentType or "").strip().lower()
+    try:
+        if kind == "nfse":
+            data = build_received_invoices_service().nfse_standard_detail(
+                resolve_user(request),
+                document_id=document_id,
+                branch_code=branch,
+            )
+            message = "Dados da NFS-e carregados."
+        elif kind == "cte":
+            data = build_received_invoices_service().cte_detail(
+                resolve_user(request),
+                document_id=document_id,
+                file_id=fileId,
+                branch_code=branch,
+                access_key=accessKey,
+            )
+            message = "Dados do CT-e carregados."
+        else:
+            from financial_app.domain.errors import InvalidReceivedInvoiceQuery
+
+            return domain_error_response(
+                InvalidReceivedInvoiceQuery("O detalhe estruturado está disponível para NFS-e e CT-e.")
+            )
+    except Exception as exc:
+        mapped = domain_error_response(exc)
+        if mapped is not None:
+            return mapped
+        raise
+    return ok(data, message=message)

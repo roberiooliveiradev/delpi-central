@@ -285,20 +285,25 @@ def _cnpj_from_access_key(access_key: str) -> str | None:
     """O CNPJ do emitente ocupa as posições 7 a 20 da chave da NF-e modelo 55.
 
     A listagem do portal Questor não devolve esse campo. A chave válida traz
-    o CNPJ sem consultar outro endpoint.
+    o CNPJ sem consultar outro endpoint. O dígito verificador mora em
+    `fiscal_access_key` e também vale para o CT-e modelo 57.
     """
+    from financial_app.domain.fiscal_access_key import (
+        access_key_check_digit_ok,
+        access_key_cnpj,
+        access_key_model,
+    )
+
     digits = _digits(access_key)
-    if len(digits) != 44 or digits[20:22] != "55" or not _access_key_check_digit_ok(digits):
+    if len(digits) != 44 or access_key_model(digits) != "55" or not access_key_check_digit_ok(digits):
         return None
-    return digits[6:20]
+    return access_key_cnpj(digits)
 
 
 def _access_key_check_digit_ok(digits: str) -> bool:
-    weights = (2, 3, 4, 5, 6, 7, 8, 9)
-    total = sum(int(digit) * weights[index % 8] for index, digit in enumerate(reversed(digits[:43])))
-    remainder = total % 11
-    expected = 0 if remainder < 2 else 11 - remainder
-    return digits[43] == str(expected)
+    from financial_app.domain.fiscal_access_key import access_key_check_digit_ok
+
+    return access_key_check_digit_ok(digits)
 
 
 def _flag(value: Any) -> bool:

@@ -104,19 +104,20 @@ Duplicidade em solicitação **não cancelada** → **409** com `existing_reques
 | `amount` | — | sim |
 | `received_at` | — | sim (ISO datetime) |
 | `observation` | — | não |
-| `source` | — | não (`received_nfe` na NF-e do Questor; `questor` na NFS-e) |
-| `source_document_type` | — | sim quando `source=questor` (`nfse`; tem de ser igual a `fiscal_model`) |
+| `source` | — | não (`received_nfe` na NF-e do Questor; `questor` na NFS-e e no CT-e) |
+| `provider_file_id` | — | sim no CT-e do Questor (`XmlFilename`, 24 hex) |
+| `source_document_type` | — | sim quando `source=questor` (`nfse` ou `cte`; tem de ser igual a `fiscal_model`) |
 | `source_document_id` | — | sim na NFS-e do Questor |
 | `source_branch` | — | sim na origem Questor; tem de ser igual a `branch` (senão **422**) |
 | `provider_document_number` | — | não; `NumberNfse` original, fora dos 9 dígitos operacionais |
 
-Cria em `pending` com snapshot do fornecedor. NF-e de origem `received_nfe` anexa o DANFE PDF na tabela legada. NFS-e de origem `questor` baixa e grava XML original e XML padronizado em `invoice_posting_fiscal_attachments` (migration `V010`). Divergência de filial ou de tipo fiscal responde **422**. Falha de download, storage ou metadado desfaz a solicitação e os arquivos já gravados.
+Cria em `pending` com snapshot do fornecedor. NF-e de origem `received_nfe` anexa o DANFE PDF na tabela legada. NFS-e de origem `questor` baixa e grava XML original e XML padronizado em `invoice_posting_fiscal_attachments` (migration `V010`). CT-e de origem `questor` (`source_document_type=cte`) grava o XML original e, se o portal devolver o PDF, o DACTE na mesma tabela (`document_type=cte`, `attachment_type` `xml_original` ou `dacte`). O DACTE não entra na tabela legada de DANFE. As `linked_invoices` do CT-e vêm de `infNFe/chave` no XML baixado pelo backend; a lista enviada pelo browser não é a fonte. Divergência de filial, número, série ou tipo fiscal responde **422**. DACTE 404 permite seguir só com o XML. Falha 5xx, timeout, storage ou metadado desfaz a solicitação e os arquivos já gravados. Mais de 30 NF-e vinculadas é erro; a lista não é truncada.
 
 ---
 
 ## GET `/received-invoices`
 
-**Query:** `invoice_number`, `supplier_cnpj`, `value`, `page`, `page_size`, `document_type` (`all` padrão, `nfe`, `nfse`).
+**Query:** `invoice_number`, `supplier_cnpj`, `value`, `page`, `page_size`, `document_type` (`all` padrão, `nfe`, `nfse`, `cte`).
 
 **`data`:** lista paginada. Cada item traz `documentType`, `branchCode` e, na NFS-e, `providerDocumentNumber` (original) e `documentNumber` (9 dígitos). A api-delpi autoriza `lancamento-notas-fiscais.create` e consulta a financial-api.
 
@@ -126,15 +127,21 @@ NF-e. Query `access_key` (44) e `branch`. Resposta `application/pdf`.
 
 ### GET `/received-invoices/{document_id}/detail`
 
-NFS-e. Query `branch` e `document_type=nfse`. JSON normalizado do XML padronizado.
+NFS-e com `document_type=nfse`. CT-e com `document_type=cte`, `file_id` e `access_key`. JSON normalizado; o CT-e traz emitente, remetente, destinatário, origem, destino, valor e `linkedInvoices`. O frontend não interpreta XML.
 
 ### GET `/received-invoices/{document_id}/xml/{variant}`
 
-NFS-e. `variant` = `original` ou `standard`. Query `branch` e `document_type=nfse`. Resposta `text/xml`.
+NFS-e: `variant` = `original` ou `standard`, query `branch` e `document_type=nfse`. CT-e: `variant=original`, query `document_type=cte`, `file_id` e `branch`. Resposta `text/xml`.
+
+### `GET /lancamento-notas-fiscais/received-invoices/{document_id}/dacte`
+
+CT-e. Query `file_id`, `access_key` (44 dígitos, modelo 57) e `branch`. Resposta `application/pdf`. Não é DANFE.
+
+O download de anexo da solicitação aceita `xml_original`, `xml_standard` e `dacte`. DACTE responde `application/pdf`.
 
 ### GET `/requests/{id}/fiscal-attachments/{attachment_type}`
 
-`attachment_type` = `xml_original` ou `xml_standard`. O DANFE legado continua em `GET /requests/{id}/danfe`.
+`attachment_type` = `xml_original`, `xml_standard` ou `dacte`. XML responde `text/xml`. DACTE responde `application/pdf`. O DANFE legado continua em `GET /requests/{id}/danfe`.
 
 ---
 

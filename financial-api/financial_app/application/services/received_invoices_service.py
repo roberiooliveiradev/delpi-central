@@ -25,6 +25,8 @@ from financial_app.domain.ports.received_invoice_gateway import ReceivedInvoiceG
 from financial_app.domain.received_fiscal_document import ReceivedFiscalDocument, ReceivedFiscalPage
 from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoiceQuery
 from financial_app.domain.services.branch_access_service import BranchAccessService
+from financial_app.domain.fiscal_access_key import access_key_check_digit_ok, access_key_model
+from financial_app.infrastructure.xml.cte_xml import parse_cte_xml
 from financial_app.infrastructure.xml.nfse_standard_xml import parse_nfse_standard_xml
 
 _DOCUMENT_ID = re.compile(r"^[0-9a-fA-F]{24}$")
@@ -37,7 +39,7 @@ _MAX_PAGE_SIZE = 100
 _SCAN_PAGE_SIZE = 100
 _SCAN_MAX_PAGES = 100
 _BRANCHES = ("01", "02")
-_DOCUMENT_TYPES = {"all", "nfe", "nfse"}
+_DOCUMENT_TYPES = {"all", "nfe", "nfse", "cte"}
 _XML_VARIANTS = {"original", "standard"}
 _CONSULT_ALL = "Não foi possível consultar todas as empresas no Questor Zen."
 _XML_MAX_BYTES = 10_485_760
@@ -140,13 +142,76 @@ class ReceivedInvoicesService:
         data["documentType"] = "nfse"
         return data
 
+    def download_cte_xml(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        file_id: str,
+        branch_code: str | None,
+    ) -> tuple[bytes, str]:
+        self._authorize(user)
+        branch = _origin_branch(branch_code)
+        normalized_id = _document_id(document_id)
+        normalized_file = _file_id(file_id)
+        payload = self._companies[branch].download_cte_xml(
+            provider_file_id=normalized_file,
+            provider_document_id=normalized_id,
+        )
+        return payload, f"CTe-{normalized_id}.xml"
+
+    def download_dacte(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        file_id: str,
+        access_key: str,
+        branch_code: str | None,
+    ) -> tuple[bytes, str]:
+        self._authorize(user)
+        branch = _origin_branch(branch_code)
+        normalized_id = _document_id(document_id)
+        normalized_file = _file_id(file_id)
+        normalized_key = _cte_access_key(access_key)
+        payload = self._companies[branch].download_dacte(
+            provider_file_id=normalized_file,
+            provider_document_id=normalized_id,
+            access_key=normalized_key,
+        )
+        return payload, f"CTe-{normalized_key}.pdf"
+
+    def cte_detail(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        file_id: str,
+        branch_code: str | None,
+        access_key: str | None = None,
+    ) -> dict[str, Any]:
+        payload, _filename = self.download_cte_xml(
+            user,
+            document_id=document_id,
+            file_id=file_id,
+            branch_code=branch_code,
+        )
+        expected = (access_key or "").strip() or None
+        parsed = parse_cte_xml(payload, max_bytes=_XML_MAX_BYTES, expected_access_key=expected)
+        data = parsed.as_public_dict()
+        data["documentId"] = _document_id(document_id)
+        data["providerFileId"] = _file_id(file_id)
+        data["branchCode"] = _origin_branch(branch_code)
+        data["documentType"] = "cte"
+        return data
+
     def _authorize(self, user: object | None) -> None:
         if _is_internal_invoice_reader(user):
             return
         self._branch_access.assert_can_use(user, FIN_INVOICES_VIEW)
 
     def _load_companies(self, query: ReceivedInvoiceQuery, document_type: str) -> list[ReceivedFiscalDocument]:
-        sources = ("nfe", "nfse") if document_type == "all" else (document_type,)
+        sources = ("nfe", "nfse", "cte") if document_type == "all" else (document_type,)
 
         def load(branch: str) -> list[ReceivedFiscalDocument]:
             collected: list[ReceivedFiscalDocument] = []
@@ -201,7 +266,11 @@ def _pagination(page: int, page_size: int, total_items: int) -> dict[str, Any]:
 
 
 def _item(document: ReceivedFiscalDocument) -> dict[str, Any]:
-    invoice_number = document.document_number if document.document_type == "nfse" else document.provider_document_number
+    invoice_number = (
+        document.document_number
+        if document.document_type in {"nfse", "cte"}
+        else document.provider_document_number
+    )
     return {
         "documentType": document.document_type,
         "documentId": document.provider_document_id,
@@ -228,6 +297,7 @@ def _item(document: ReceivedFiscalDocument) -> dict[str, Any]:
         "xmlOriginalAvailable": document.xml_original_available,
         "xmlStandardAvailable": document.xml_standard_available,
         "providerStatus": document.provider_status or None,
+        "providerFileId": document.provider_file_id,
         "branchCode": document.branch_code,
     }
 
@@ -265,16 +335,20 @@ def _collect_source(
 ) -> list[ReceivedFiscalDocument]:
     """Lê o conjunto filtrado de uma fonte antes de paginar a visão consolidada.
 
-    NF-e e NFS-e da mesma filial usam a sessão em sequência. Filiais distintas
-    seguem em paralelo, cada uma com o próprio cookie jar.
+    NF-e, NFS-e e CT-e da mesma filial usam a sessão em sequência. Filiais
+    distintas seguem em paralelo, cada uma com o próprio cookie jar.
+
+    O portal do CT-e não tem filtro de CNPJ. O CNPJ do emitente é aplicado
+    depois de ler as páginas, para uma página localmente vazia não encerrar o scan.
     """
 
     collected: list[ReceivedFiscalDocument] = []
     reported_total = 0
+    exhausted = True
     for page in range(1, _SCAN_MAX_PAGES + 1):
         scan = ReceivedInvoiceQuery(
             invoice_number=query.invoice_number,
-            supplier_cnpj=query.supplier_cnpj,
+            supplier_cnpj=None if source == "cte" else query.supplier_cnpj,
             amount=query.amount,
             amount_text=query.amount_text,
             page=page,
@@ -283,15 +357,24 @@ def _collect_source(
         if source == "nfe":
             partial = gateway.list_received_invoices(scan)
             batch = tuple(_from_nfe(item, branch_code) for item in partial.items)
-        else:
+        elif source == "nfse":
             partial = gateway.list_received_nfse(scan)
             batch = tuple(_with_branch(item, branch_code) for item in partial.items)
+        elif source == "cte":
+            partial = gateway.list_received_cte(scan)
+            batch = tuple(_with_branch(item, branch_code) for item in partial.items)
+        else:
+            raise InvalidReceivedInvoiceQuery("Tipo de documento fiscal inválido.")
         reported_total = partial.total_items
         collected.extend(batch)
         if not batch or len(batch) < _SCAN_PAGE_SIZE or len(collected) >= reported_total:
-            return collected
-    if reported_total > len(collected):
+            exhausted = False
+            break
+    if exhausted and reported_total > len(collected):
         raise QuestorInvalidResponse(_CONSULT_ALL)
+    if source == "cte" and query.supplier_cnpj:
+        wanted = query.supplier_cnpj
+        collected = [item for item in collected if (item.issuer_cnpj or "") == wanted]
     return collected
 
 
@@ -352,6 +435,7 @@ def _with_branch(document: ReceivedFiscalDocument, branch_code: str) -> Received
         manifestation_description=document.manifestation_description,
         danfe_available=document.danfe_available,
         provider_status=document.provider_status,
+        provider_file_id=document.provider_file_id,
     )
 
 
@@ -379,6 +463,9 @@ def _identity(document: ReceivedFiscalDocument) -> str:
     if document.document_type == "nfse":
         token = document.provider_document_key or document.provider_document_id or document.provider_document_number
         return f"nfse:{token}"
+    if document.document_type == "cte":
+        token = document.provider_document_key or document.provider_document_id
+        return f"cte:{token}"
     return f"{document.document_type}:{document.provider_document_id}:{document.branch_code}"
 
 
@@ -477,4 +564,18 @@ def _access_key(value: str) -> str:
     text = (value or "").strip()
     if not _ACCESS_KEY.fullmatch(text):
         raise InvalidReceivedInvoiceQuery("Chave de acesso deve ter 44 dígitos.")
+    return text
+
+
+def _cte_access_key(value: str) -> str:
+    text = _access_key(value)
+    if access_key_model(text) != "57" or not access_key_check_digit_ok(text):
+        raise InvalidReceivedInvoiceQuery("Chave de acesso do CT-e inválida.")
+    return text
+
+
+def _file_id(value: str) -> str:
+    text = (value or "").strip()
+    if not _DOCUMENT_ID.fullmatch(text):
+        raise InvalidReceivedInvoiceQuery("Identificador do arquivo do CT-e inválido.")
     return text

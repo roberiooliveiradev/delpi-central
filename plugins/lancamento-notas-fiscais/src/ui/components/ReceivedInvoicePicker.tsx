@@ -3,6 +3,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { helpTooltips } from "../../content/helpTooltips";
 import {
   downloadReceivedNfseXml,
+  fetchReceivedCteDacte,
   fetchReceivedInvoicePreview,
   fetchReceivedNfseDetail,
   searchReceivedInvoices,
@@ -25,25 +26,36 @@ type Props = {
 type DocumentFilter = "all" | ReceivedDocumentType;
 
 function rowType(row: ReceivedInvoiceItem): ReceivedDocumentType {
-  return row.documentType === "nfse" ? "nfse" : "nfe";
+  if (row.documentType === "nfse" || row.documentType === "cte") return row.documentType;
+  return "nfe";
 }
 
 function canAdvance(row: ReceivedInvoiceItem): boolean {
-  if (rowType(row) === "nfse") {
-    return Boolean(row.documentId);
+  const kind = rowType(row);
+  if (kind === "nfse") return Boolean(row.documentId);
+  if (kind === "cte") {
+    return Boolean(row.documentId) && Boolean(row.providerFileId) && row.accessKey.length === 44;
   }
   return Boolean(row.danfeAvailable) && Boolean(row.documentId) && row.accessKey.length === 44;
 }
 
+function canPreview(row: ReceivedInvoiceItem): boolean {
+  if (rowType(row) === "cte") {
+    return Boolean(row.printableAvailable) && Boolean(row.providerFileId) && row.accessKey.length === 44;
+  }
+  return canAdvance(row);
+}
+
 function typeLabel(row: ReceivedInvoiceItem): string {
-  return rowType(row) === "nfse" ? "NFS-e" : "NF-e";
+  const kind = rowType(row);
+  if (kind === "nfse") return "NFS-e";
+  if (kind === "cte") return "CT-e";
+  return "NF-e";
 }
 
 function primaryNumber(row: ReceivedInvoiceItem): string {
-  if (rowType(row) === "nfse") {
-    return displayDocumentNumber(row.documentNumber || row.invoiceNumber) || "—";
-  }
-  return row.invoiceNumber || "—";
+  if (rowType(row) === "nfe") return row.invoiceNumber || "—";
+  return displayDocumentNumber(row.documentNumber || row.invoiceNumber) || "—";
 }
 
 export function ReceivedInvoicePicker({
@@ -74,6 +86,10 @@ export function ReceivedInvoicePicker({
     const documentId = preview.documentId;
     const accessKey = preview.accessKey;
     const branch = preview.branchCode;
+    if (rowType(preview) === "cte" && preview.providerFileId) {
+      const fileId = preview.providerFileId;
+      return () => fetchReceivedCteDacte(documentId, fileId, accessKey, branch);
+    }
     return () => fetchReceivedInvoicePreview(documentId, accessKey, branch);
   }, [preview]);
 
@@ -150,7 +166,7 @@ export function ReceivedInvoicePicker({
           </button>
           <button type="button" className="lnf-card lnf-choice" data-testid="btn-select-nfe" onClick={onSelectNfe}>
             <strong>Selecionar documento fiscal</strong>
-            <span>Buscar NF-e ou NFS-e e trazer os dados para a solicitação.</span>
+            <span>Buscar NF-e, NFS-e ou CT-e e trazer os dados para a solicitação.</span>
           </button>
         </div>
       </div>
@@ -163,7 +179,7 @@ export function ReceivedInvoicePicker({
     <div className="lnf-stack" data-testid="received-invoice-search">
       <LnfPageHeader
         title="Selecionar documento fiscal"
-        subtitle="A busca usa o número ou o CNPJ. NF-e abre o DANFE. NFS-e mostra os dados da nota."
+        subtitle="A busca usa o número ou o CNPJ. NF-e abre o DANFE. NFS-e mostra os dados da nota. CT-e abre o DACTE."
         actions={
           <button type="button" className="lnf-btn lnf-btn--ghost" onClick={onBackToChoice}>
             Voltar
@@ -177,6 +193,7 @@ export function ReceivedInvoicePicker({
               ["all", "Todos"],
               ["nfe", "NF-e"],
               ["nfse", "NFS-e"],
+              ["cte", "CT-e"],
             ] as const
           ).map(([value, label]) => (
             <button
@@ -246,6 +263,7 @@ export function ReceivedInvoicePicker({
             <tbody>
               {items.map((row) => {
                 const usable = canAdvance(row);
+                const viewable = canPreview(row);
                 const original = row.providerDocumentNumber;
                 const showOriginal =
                   rowType(row) === "nfse" && original && original !== (row.documentNumber || row.invoiceNumber);
@@ -269,9 +287,9 @@ export function ReceivedInvoicePicker({
                         <button
                           type="button"
                           className="lnf-btn lnf-btn--ghost"
-                          disabled={!usable}
+                          disabled={!viewable}
                           onClick={() => {
-                            if (!usable) return;
+                            if (!viewable) return;
                             if (rowType(row) === "nfse") {
                               void openNfse(row);
                               return;
@@ -320,14 +338,30 @@ export function ReceivedInvoicePicker({
       ) : null}
       <FilePreviewModal
         open={preview != null}
-        title={preview ? `DANFE ${preview.invoiceNumber}` : "DANFE"}
+        title={
+          preview
+            ? rowType(preview) === "cte"
+              ? `DACTE ${primaryNumber(preview)}`
+              : `DANFE ${preview.invoiceNumber}`
+            : "DANFE"
+        }
         onClose={() => setPreview(null)}
         source={previewSource}
         mimeType="application/pdf"
         declaredType="pdf"
-        fileName={preview ? `NFe-${preview.accessKey}.pdf` : null}
+        fileName={
+          preview
+            ? rowType(preview) === "cte"
+              ? `CTe-${preview.accessKey}.pdf`
+              : `NFe-${preview.accessKey}.pdf`
+            : null
+        }
         portalScopeClassName="dashboard-lancamento-notas-fiscais"
-        labels={{ loading: "Abrindo o DANFE…", loadFailed: "Não foi possível abrir o DANFE." }}
+        labels={
+          preview && rowType(preview) === "cte"
+            ? { loading: "Abrindo o DACTE…", loadFailed: "Não foi possível abrir o DACTE." }
+            : { loading: "Abrindo o DANFE…", loadFailed: "Não foi possível abrir o DANFE." }
+        }
       />
       {nfseRow ? (
         <NfseDataModal

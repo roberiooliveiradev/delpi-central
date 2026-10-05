@@ -573,3 +573,169 @@ def test_service_token_reaches_only_received_invoices(monkeypatch: pytest.Monkey
     assert "test-internal-service" not in blocked.text
     assert "test-internal-service" not in listed.text
     assert wrong.status_code == 401
+
+
+def _cte(
+    *,
+    branch_code: str,
+    document_id: str,
+    file_id: str,
+    access_key: str,
+    emission_at: str,
+    number: str = "000024568",
+    cnpj: str = "78517588000495",
+) -> ReceivedFiscalDocument:
+    return ReceivedFiscalDocument(
+        document_type="cte",
+        branch_code=branch_code,
+        provider_document_id=document_id,
+        provider_document_number=number,
+        document_number=number,
+        document_match_key=number,
+        provider_document_key=access_key,
+        series="040",
+        issuer_name="J.J. SUL TRANSPORTES / SPO",
+        issuer_cnpj=cnpj,
+        receiver_name="",
+        receiver_cnpj=None,
+        emission_at=emission_at,
+        amount="141.08",
+        amount_formatted="R$ 141,08",
+        city_hall=None,
+        printable_available=True,
+        xml_original_available=True,
+        xml_standard_available=False,
+        access_key=access_key,
+        provider_file_id=file_id,
+    )
+
+
+def test_document_type_cte_does_not_query_nfe_or_nfse(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    cte = _cte(
+        branch_code="02",
+        document_id="6ac06838ac12fe59b441884d",
+        file_id="6ac06838ac12fe59b441884b",
+        access_key="35261078517588000495570400000245681618422746",
+        emission_at="2026-10-02T03:00:00Z",
+    )
+    gateway_01 = FakeReceivedInvoiceGateway(items=(), cte_items=())
+    gateway_02 = FakeReceivedInvoiceGateway(items=(), cte_items=(cte,))
+    _use(monkeypatch, gateway_01, gateway_02)
+    data = client.get("/invoices/received", params={"documentType": "cte"}).json()["data"]
+    assert data["filters"]["documentType"] == "cte"
+    assert data["pagination"]["totalItems"] == 1
+    assert data["items"][0]["documentType"] == "cte"
+    assert data["items"][0]["branchCode"] == "02"
+    assert data["items"][0]["providerFileId"] == "6ac06838ac12fe59b441884b"
+    assert data["items"][0]["invoiceNumber"] == "000024568"
+    assert data["items"][0]["series"] == "040"
+    assert gateway_01.queries == []
+    assert gateway_01.nfse_queries == []
+    assert gateway_02.queries == []
+    assert gateway_02.nfse_queries == []
+    assert gateway_02.cte_queries
+
+
+def test_cte_failure_breaks_all_but_not_an_nfe_query(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(cte_error=QuestorUnavailable("cte fora")),
+        FakeReceivedInvoiceGateway(items=(), cte_error=QuestorUnavailable("cte fora")),
+    )
+    nfe = client.get("/invoices/received", params={"documentType": "nfe"})
+    assert nfe.status_code == 200
+    assert nfe.json()["data"]["items"][0]["documentType"] == "nfe"
+    failed = client.get("/invoices/received", params={"documentType": "all"})
+    assert failed.status_code == 503
+    assert "todas as empresas" in failed.json()["message"]
+
+
+def test_all_includes_cte_sorted_and_not_deduped_with_nfe(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    shared_key = "35261078517588000495570400000245681618422746"
+    nfe = _invoice(
+        branch_code="01",
+        access_key="1" * 44,
+        emission_at="2026-08-01T00:00:00Z",
+        document_id="a" * 24,
+        invoice_number="000024568",
+    )
+    cte_new = _cte(
+        branch_code="01",
+        document_id="b" * 24,
+        file_id="c" * 24,
+        access_key=shared_key,
+        emission_at="2026-10-02T03:00:00Z",
+    )
+    cte_old = _cte(
+        branch_code="02",
+        document_id="d" * 24,
+        file_id="e" * 24,
+        access_key="9" * 44,
+        emission_at="2026-01-01T00:00:00Z",
+        number="000000111",
+    )
+    duplicate = _cte(
+        branch_code="02",
+        document_id="f" * 24,
+        file_id="1" * 24,
+        access_key=shared_key,
+        emission_at="2026-10-02T03:00:00Z",
+    )
+    nfse = _nfse(
+        branch_code="02",
+        document_id="2" * 24,
+        provider_number="1830",
+        operational="000001830",
+        emission_at="2026-09-01T00:00:00Z",
+    )
+    _use(
+        monkeypatch,
+        FakeReceivedInvoiceGateway(items=(nfe,), cte_items=(cte_new,)),
+        FakeReceivedInvoiceGateway(items=(), nfse_items=(nfse,), cte_items=(cte_old, duplicate)),
+    )
+    first = client.get("/invoices/received", params={"documentType": "all", "page": 1, "pageSize": 2})
+    second = client.get("/invoices/received", params={"documentType": "all", "page": 2, "pageSize": 2})
+    page_one = first.json()["data"]
+    page_two = second.json()["data"]
+    assert page_one["pagination"]["totalItems"] == 4
+    assert page_one["pagination"]["hasNext"] is True
+    assert page_one["pagination"]["hasPrevious"] is False
+    assert [item["documentType"] for item in page_one["items"]] == ["cte", "nfse"]
+    assert page_two["pagination"]["hasPrevious"] is True
+    assert [item["documentType"] for item in page_two["items"]] == ["nfe", "cte"]
+    assert page_two["items"][0]["invoiceNumber"] == "000024568"
+    assert page_two["items"][1]["documentNumber"] == "000000111"
+
+
+def test_cte_cnpj_filter_scans_past_an_empty_local_page(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    others = tuple(
+        _cte(
+            branch_code="01",
+            document_id=f"{index:024x}",
+            file_id=f"{index + 1000:024x}",
+            access_key=f"{index % 10}" * 44,
+            emission_at="2026-01-01T00:00:00Z",
+            number=f"{index:09d}",
+            cnpj="11111111000111",
+        )
+        for index in range(1, 101)
+    )
+    match = _cte(
+        branch_code="01",
+        document_id="6ac06838ac12fe59b441884d",
+        file_id="6ac06838ac12fe59b441884b",
+        access_key="35261078517588000495570400000245681618422746",
+        emission_at="2026-10-02T03:00:00Z",
+        cnpj="78517588000495",
+    )
+    gateway = FakeReceivedInvoiceGateway(items=(), cte_items=others + (match,))
+    _use(monkeypatch, gateway, FakeReceivedInvoiceGateway(items=(), cte_items=()))
+    data = client.get(
+        "/invoices/received",
+        params={"documentType": "cte", "supplierCnpj": "78517588000495", "page": 1, "pageSize": 25},
+    ).json()["data"]
+    assert data["pagination"]["totalItems"] == 1
+    assert data["pagination"]["hasNext"] is False
+    assert data["items"][0]["issuerCnpj"] == "78517588000495"
+    assert len(gateway.cte_queries) >= 2
+    assert all(query.supplier_cnpj is None for query in gateway.cte_queries)

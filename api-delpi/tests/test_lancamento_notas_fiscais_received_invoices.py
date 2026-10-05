@@ -723,3 +723,246 @@ def test_manual_nfse_and_cte_do_not_download_questor_files() -> None:
         authorization="",
     )
     assert create.calls == 2
+
+
+CTE_ID = "6ac06838ac12fe59b441884d"
+CTE_FILE = "6ac06838ac12fe59b441884b"
+CTE_KEY = "35261078517588000495570400000245681618422746"
+CTE_XML = b"<?xml version='1.0'?><cteProc></cteProc>"
+CTE_DETAIL = {
+    "documentType": "cte",
+    "number": "000024568",
+    "series": "040",
+    "linkedInvoices": [
+        {"accessKey": "35261005233912000127550010001154491427295770", "documentNumber": "000115449", "series": "001"},
+        {"accessKey": "35261005233912000127550010001154501021092889", "documentNumber": "000115450", "series": "001"},
+    ],
+}
+
+
+def _cte_payload(**overrides):
+    payload = {
+        "source": "questor",
+        "source_document_type": "cte",
+        "fiscal_model": "cte",
+        "branch_code": "01",
+        "source_branch": "01",
+        "document_id": CTE_ID,
+        "provider_file_id": CTE_FILE,
+        "access_key": CTE_KEY,
+        "document_number": "000024568",
+        "series": "040",
+        "linked_invoices": [{"document": "000000001", "series": "009"}],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_cte_proxy_xml_dacte_and_detail() -> None:
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        if request.url.path.endswith("/dacte"):
+            return httpx.Response(200, content=PDF, headers={"content-type": "application/pdf"})
+        if "/xml/" in request.url.path:
+            return httpx.Response(200, content=CTE_XML, headers={"content-type": "text/xml"})
+        return httpx.Response(200, json={"success": True, "data": CTE_DETAIL})
+
+    gateway = _gateway(handler)
+    xml, _name = gateway.download_cte_xml(
+        authorization="Bearer user-jwt",
+        document_id=CTE_ID,
+        file_id=CTE_FILE,
+        branch="01",
+    )
+    pdf, _pdf_name = gateway.download_dacte(
+        authorization="Bearer user-jwt",
+        document_id=CTE_ID,
+        file_id=CTE_FILE,
+        access_key=CTE_KEY,
+        branch="02",
+    )
+    detail = gateway.get_cte_detail(
+        authorization="Bearer user-jwt",
+        document_id=CTE_ID,
+        file_id=CTE_FILE,
+        access_key=CTE_KEY,
+        branch="01",
+    )
+    assert xml == CTE_XML
+    assert pdf.startswith(b"%PDF")
+    assert detail["number"] == "000024568"
+    assert "documentType=cte" in seen[0]
+    assert f"fileId={CTE_FILE}" in seen[0]
+    assert "accessKey" not in seen[0]
+    assert f"accessKey={CTE_KEY}" in seen[1]
+    assert "branch=02" in seen[1]
+    assert "questor" not in " ".join(seen)
+    with pytest.raises(FinancialReceivedInvoiceGatewayError) as caught:
+        gateway.download_dacte(
+            authorization="Bearer user-jwt",
+            document_id=CTE_ID,
+            file_id=CTE_FILE,
+            access_key="3" * 44,
+            branch="01",
+        )
+    assert caught.value.status_code == 422
+
+
+def test_questor_cte_stores_xml_dacte_and_replaces_browser_links(tmp_path) -> None:
+    from app.application.services.lancamento_notas_fiscais.fiscal_attachment_storage import (
+        LancamentoFiscalAttachmentStorage,
+    )
+
+    requests = _Requests()
+    requests.fiscal = []
+    requests.insert_fiscal_attachment = lambda **kwargs: requests.fiscal.append(kwargs)
+    create = _Create()
+    create.payload = None
+
+    def execute(payload, _actor):
+        create.payload = payload
+        return _Create.execute(create, payload, _actor)
+
+    create.execute = execute
+    service = ReceivedInvoiceAttachmentService(
+        create_request=create,
+        gateway=SimpleNamespace(
+            get_cte_detail=lambda **_kwargs: CTE_DETAIL,
+            download_cte_xml=lambda **_kwargs: (CTE_XML, "CTe.xml"),
+            download_dacte=lambda **_kwargs: (PDF, "CTe.pdf"),
+        ),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        fiscal_storage=LancamentoFiscalAttachmentStorage(str(tmp_path)),
+        requests=requests,
+    )
+    created = service.execute(_cte_payload(), _actor(), authorization="Bearer user-jwt")
+    assert [item["document"] for item in create.payload["linked_invoices"]] == ["000115449", "000115450"]
+    assert [item["series"] for item in create.payload["linked_invoices"]] == ["001", "001"]
+    assert {item["attachment_type"] for item in requests.fiscal} == {"xml_original", "dacte"}
+    assert requests.fiscal[0]["document_type"] == "cte"
+    assert requests.fiscal[0]["provider_document_key"] == CTE_KEY
+    assert list(tmp_path.glob("*.xml"))
+    assert list(tmp_path.glob("*.pdf"))
+    assert created["fiscal_attachments"][1]["content_type"] == "application/pdf"
+
+
+def test_cte_dacte_404_keeps_xml_and_503_does_not_create(tmp_path) -> None:
+    from app.application.services.lancamento_notas_fiscais.fiscal_attachment_storage import (
+        LancamentoFiscalAttachmentStorage,
+    )
+
+    requests = _Requests()
+    requests.fiscal = []
+    requests.insert_fiscal_attachment = lambda **kwargs: requests.fiscal.append(kwargs)
+    create = _Create()
+    service = ReceivedInvoiceAttachmentService(
+        create_request=create,
+        gateway=SimpleNamespace(
+            get_cte_detail=lambda **_kwargs: CTE_DETAIL,
+            download_cte_xml=lambda **_kwargs: (CTE_XML, "CTe.xml"),
+            download_dacte=lambda **_kwargs: (_ for _ in ()).throw(
+                FinancialReceivedInvoiceGatewayError("DACTE ausente.", 404)
+            ),
+        ),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        fiscal_storage=LancamentoFiscalAttachmentStorage(str(tmp_path)),
+        requests=requests,
+    )
+    service.execute(_cte_payload(), _actor(), authorization="Bearer user-jwt")
+    assert create.calls == 1
+    assert {item["attachment_type"] for item in requests.fiscal} == {"xml_original"}
+
+    blocked = _Create()
+    failing = ReceivedInvoiceAttachmentService(
+        create_request=blocked,
+        gateway=SimpleNamespace(
+            get_cte_detail=lambda **_kwargs: CTE_DETAIL,
+            download_cte_xml=lambda **_kwargs: (CTE_XML, "CTe.xml"),
+            download_dacte=lambda **_kwargs: (_ for _ in ()).throw(
+                FinancialReceivedInvoiceGatewayError("indisponível", 503)
+            ),
+        ),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        fiscal_storage=LancamentoFiscalAttachmentStorage(str(tmp_path)),
+        requests=_Requests(),
+    )
+    with pytest.raises(FinancialReceivedInvoiceGatewayError):
+        failing.execute(_cte_payload(), _actor(), authorization="Bearer user-jwt")
+    assert blocked.calls == 0
+
+
+def test_cte_mismatches_reject_before_create(tmp_path) -> None:
+    create = _Create()
+    service = ReceivedInvoiceAttachmentService(
+        create_request=create,
+        gateway=SimpleNamespace(get_cte_detail=lambda **_kwargs: CTE_DETAIL),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        requests=_Requests(),
+    )
+    with pytest.raises(InvoicePostingValidationError):
+        service.execute(_cte_payload(source_branch="02"), _actor(), authorization="Bearer user-jwt")
+    with pytest.raises(InvoicePostingValidationError):
+        service.execute(_cte_payload(document_number="000000001"), _actor(), authorization="Bearer user-jwt")
+    with pytest.raises(InvoicePostingValidationError):
+        service.execute(_cte_payload(series="099"), _actor(), authorization="Bearer user-jwt")
+    with pytest.raises(InvoicePostingValidationError):
+        service.execute(_cte_payload(fiscal_model="nfe"), _actor(), authorization="Bearer user-jwt")
+    assert create.calls == 0
+
+
+def test_cte_storage_and_metadata_failures_compensate(tmp_path) -> None:
+    from app.application.services.lancamento_notas_fiscais.fiscal_attachment_storage import (
+        LancamentoFiscalAttachmentStorage,
+        LancamentoFiscalAttachmentStorageError,
+    )
+
+    requests = _Requests()
+
+    class BrokenStorage(LancamentoFiscalAttachmentStorage):
+        def save(self, **_kwargs):
+            raise LancamentoFiscalAttachmentStorageError("disk")
+
+    create = _Create()
+    service = ReceivedInvoiceAttachmentService(
+        create_request=create,
+        gateway=SimpleNamespace(
+            get_cte_detail=lambda **_kwargs: CTE_DETAIL,
+            download_cte_xml=lambda **_kwargs: (CTE_XML, "CTe.xml"),
+            download_dacte=lambda **_kwargs: (_ for _ in ()).throw(
+                FinancialReceivedInvoiceGatewayError("ausente", 404)
+            ),
+        ),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        fiscal_storage=BrokenStorage(str(tmp_path)),
+        requests=requests,
+    )
+    with pytest.raises(InvoicePostingUpstreamError):
+        service.execute(_cte_payload(), _actor(), authorization="Bearer user-jwt")
+    assert requests.deleted
+
+    requests = _Requests()
+    requests.fiscal = []
+
+    def insert_fiscal_attachment(**kwargs):
+        raise OSError("metadata")
+
+    requests.insert_fiscal_attachment = insert_fiscal_attachment
+    service = ReceivedInvoiceAttachmentService(
+        create_request=_Create(),
+        gateway=SimpleNamespace(
+            get_cte_detail=lambda **_kwargs: CTE_DETAIL,
+            download_cte_xml=lambda **_kwargs: (CTE_XML, "CTe.xml"),
+            download_dacte=lambda **_kwargs: (_ for _ in ()).throw(
+                FinancialReceivedInvoiceGatewayError("ausente", 404)
+            ),
+        ),
+        storage=LancamentoDanfeStorage(str(tmp_path)),
+        fiscal_storage=LancamentoFiscalAttachmentStorage(str(tmp_path)),
+        requests=requests,
+    )
+    with pytest.raises(InvoicePostingUpstreamError):
+        service.execute(_cte_payload(), _actor(), authorization="Bearer user-jwt")
+    assert requests.deleted
+    assert list(tmp_path.glob("*.xml")) == []

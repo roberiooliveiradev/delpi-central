@@ -648,4 +648,155 @@ describe("RequestFormPage", () => {
     expect(screen.queryByLabelText("Número da nota")).toBeNull();
     expect(api.createRequest).not.toHaveBeenCalled();
   });
+
+  it("avança CT-e com DACTE, transportadora e notas vinculadas do detalhe", async () => {
+    const accessKey = "35261078517588000495570400000245681618422746";
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentType: "cte",
+          documentId: "6ac06838ac12fe59b441884d",
+          providerFileId: "6ac06838ac12fe59b441884b",
+          providerDocumentNumber: "000024568",
+          documentNumber: "000024568",
+          accessKey,
+          invoiceNumber: "000024568",
+          series: "040",
+          issuerName: "J.J. SUL TRANSPORTES / SPO",
+          issuerCnpj: "78517588000495",
+          emissionAt: "2026-10-02T03:00:00Z",
+          amount: "141.08",
+          amountFormatted: "R$ 141,08",
+          danfeAvailable: false,
+          printableAvailable: true,
+          branchCode: "01",
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    vi.mocked(api.fetchReceivedCteDetail).mockResolvedValue({
+      number: "000024568",
+      series: "040",
+      emissionAt: "2026-10-02T10:58:37-03:00",
+      serviceValue: "141.08",
+      issuer: { name: "J.J. SUL TRANSPORTES / SPO", cnpj: "78517588000495" },
+      linkedInvoices: [
+        { accessKey: "a", documentNumber: "000115449", series: "001" },
+        { accessKey: "b", documentNumber: "000115450", series: "001" },
+      ],
+    });
+    vi.mocked(api.fetchReceivedCteDacte).mockResolvedValue(new Blob(["%PDF"]));
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000777",
+        supplier_store: "01",
+        supplier_name: "J.J. SUL TRANSPORTES / SPO",
+        supplier_short_name: null,
+        tax_id: "78517588000495",
+        state: "SP",
+        blocked: false,
+      },
+    ]);
+    vi.mocked(api.createRequest).mockResolvedValue({ id: "cte-q" } as never);
+    render(<RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />);
+    expect(screen.getByText(/Buscar NF-e, NFS-e ou CT-e/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    expect(screen.getByRole("tab", { name: "CT-e" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Todos" }));
+    fireEvent.click(screen.getByRole("tab", { name: "CT-e" }));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "24568" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    await waitFor(() =>     expect(screen.getByTestId("doc-type-cte")).toBeTruthy());
+    expect(screen.getByTestId("doc-type-cte").textContent).toBe("CT-e");
+    expect(screen.getByText("24568")).toBeTruthy();
+    expect(screen.getByText("040")).toBeTruthy();
+    expect(screen.getByText("J.J. SUL TRANSPORTES / SPO")).toBeTruthy();
+    expect(screen.getByText("R$ 141,08")).toBeTruthy();
+    expect(api.searchReceivedInvoices).toHaveBeenLastCalledWith(
+      expect.objectContaining({ documentType: "cte" }),
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Todos" }));
+    await waitFor(() =>
+      expect(api.searchReceivedInvoices).toHaveBeenLastCalledWith(
+        expect.objectContaining({ documentType: "all" }),
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Visualizar" }));
+    await waitFor(() =>
+      expect(api.fetchReceivedCteDacte).toHaveBeenCalledWith(
+        "6ac06838ac12fe59b441884d",
+        "6ac06838ac12fe59b441884b",
+        accessKey,
+        "01",
+      ),
+    );
+    expect(api.fetchReceivedInvoicePreview).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
+    await waitFor(() => expect(screen.getByDisplayValue("000024568")).toBeTruthy());
+    expect((screen.getByLabelText("Tipo da nota") as HTMLSelectElement).value).toBe("cte");
+    expect((screen.getByRole("textbox", { name: "Série" }) as HTMLInputElement).value).toBe("040");
+    expect(screen.getByDisplayValue("000115449")).toBeTruthy();
+    expect(screen.getByDisplayValue("000115450")).toBeTruthy();
+    expect(screen.getByTestId("cte-attach-notice").textContent).toMatch(/XML/);
+    expect(api.searchSuppliers).toHaveBeenCalledWith("78517588000495");
+    fireEvent.change(screen.getByLabelText("Recebimento físico"), {
+      target: { value: "2026-10-02T11:00" },
+    });
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
+    expect(api.createRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "questor",
+        source_document_type: "cte",
+        fiscal_model: "cte",
+        document: "000024568",
+        series: "040",
+        branch: "01",
+        provider_file_id: "6ac06838ac12fe59b441884b",
+        access_key: accessKey,
+        supplier_code: "000777",
+        linked_invoices: [
+          { document: "000115449", series: "001" },
+          { document: "000115450", series: "001" },
+        ],
+      }),
+    );
+  });
+
+  it("desabilita o DACTE ausente e bloqueia CT-e de outra filial", async () => {
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentType: "cte",
+          documentId: "6ac06838ac12fe59b441884d",
+          providerFileId: "6ac06838ac12fe59b441884b",
+          documentNumber: "000024568",
+          accessKey: "35261078517588000495570400000245681618422746",
+          invoiceNumber: "000024568",
+          series: "040",
+          issuerName: "Transportadora",
+          issuerCnpj: "78517588000495",
+          emissionAt: "2026-10-02",
+          amount: "10",
+          amountFormatted: "R$ 10,00",
+          danfeAvailable: false,
+          printableAvailable: false,
+          branchCode: "02",
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    render(
+      <RequestFormPage mode="create" lockedBranch="01" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.click(screen.getByRole("tab", { name: "CT-e" }));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "24568" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    const view = await screen.findByRole("button", { name: "Visualizar" });
+    expect((view as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/filial 02/);
+    expect(api.fetchReceivedCteDetail).not.toHaveBeenCalled();
+  });
 });

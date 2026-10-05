@@ -1154,6 +1154,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_lancamento_notas_fiscais_received_nfse_xml": RouteContract(
         "received_nfse_xml", "scalar"
     ),
+    "get_lancamento_notas_fiscais_received_cte_dacte": RouteContract(
+        "received_cte_dacte", "scalar"
+    ),
     "get_lancamento_notas_fiscais_request_fiscal_attachment": RouteContract(
         "invoice_posting_fiscal_attachment", "scalar"
     ),
