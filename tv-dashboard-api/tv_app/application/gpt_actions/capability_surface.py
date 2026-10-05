@@ -168,6 +168,7 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                 ],
                 "write_operations": [
                     "upsert_data_model",
+                    "patch_data_model",
                     "delete_data_model",
                     "migrate_data_sources_to_model",
                     "bind_visual",

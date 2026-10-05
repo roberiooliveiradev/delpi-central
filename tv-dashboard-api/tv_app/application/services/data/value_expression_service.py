@@ -724,6 +724,7 @@ def expression_capability(*, transport: str = "mcp") -> dict[str, Any]:
             "patch_data_source_params.set.<param>",
             "upsert_data_source.params.<param>",
             "upsert_data_model.model.inputs[].params.<param>",
+            "patch_data_model.inputPatches[].params.set.<param>",
         ],
         "ast": _parameter_ast_contract(),
     }

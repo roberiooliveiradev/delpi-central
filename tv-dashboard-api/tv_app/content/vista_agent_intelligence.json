@@ -707,7 +707,9 @@
       "bind_visual{modelId} limpa dataSourceId; bind_visual{dataSourceId} limpa modelId — um target ativo por visual.",
       "NO_LEGACY_SOURCE_BLOCKS_FOR_NEW_MODELS: 1 rota = inputs:[rota],transform:null; N rotas = UM modelo com N inputs. upsert_data_source/set_data_transform = só legado.",
       "LEGACY_MIGRATION_IS_EXPLICIT + DO_NOT_DELETE_SHARED_SOURCE: só quando pedida, via migrate_data_sources_to_model{primaryDataSourceId}; fonte com outro consumer fica retida.",
-      "inspect_data_model devolve definition/inputs/transform/outputSchema/consumers/runtime — inspecionar antes de rebind/migração."
+      "inspect_data_model = definition LOSSLESS (inputs[].transform, model transform, fieldLabels) + definitionDigest — use como base de candidato.",
+      "MUTATE_MODEL_VIA_PATCH: alterar modelo existente = patch_data_model{modelId, inputPatches[].params.set/unset|transform, modelPatch} em prepare_change; params.set aceita scalar OU ExpressionSpec (AST persiste, nunca literal).",
+      "modelId vem de dataModels[]/blockIndex.modelId/focusedBinding — nunca inventar nem derivar de field/block id."
     ]
   },
   "compound_slide": {

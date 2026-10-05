@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 from typing import Any
 from uuid import UUID
 
@@ -1305,6 +1307,11 @@ class GptActionsDispatchService:
         from tv_app.application.services.data.projection_fields_contract import (
             collect_source_consumer_field_refs,
         )
+        from tv_app.application.gpt_actions.response_compact import (
+            GPT_ACTIONS_RESPONSE_MAX_BYTES,
+            ascii_utf8_size,
+            exceeds_actions_budget,
+        )
 
         assert_permission(user, TV_READ)
         pid_raw = str(playlist_id or "").strip()
@@ -1354,7 +1361,10 @@ class GptActionsDispatchService:
                 details={"modelId": mid},
             )
 
-        # Definição persistida — whitelist do contrato (sem artefatos de runtime).
+        # Definição persistida — lossless authoring contract (round-trip seguro
+        # para upsert/patch): nenhum campo persistido é descartado e nenhum
+        # artefato de runtime entra. hasTransform permanece como metadado de
+        # conveniência; transform é a fonte de verdade.
         definition = {
             "id": model.get("id"),
             "label": model.get("label"),
@@ -1366,14 +1376,24 @@ class GptActionsDispatchService:
                     "queryName": item.get("queryName"),
                     "operationId": item.get("operationId"),
                     "params": item.get("params") or {},
+                    "transform": item.get("transform")
+                    if isinstance(item.get("transform"), dict)
+                    else None,
                     "hasTransform": isinstance(item.get("transform"), dict),
                 }
                 for item in model.get("inputs") or []
                 if isinstance(item, dict)
             ],
-            "transform": model.get("transform"),
+            "transform": model.get("transform")
+            if isinstance(model.get("transform"), dict)
+            else None,
             "fieldLabels": model.get("fieldLabels") or {},
         }
+        definition_digest = hashlib.sha256(
+            json.dumps(
+                definition, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+            ).encode("utf-8")
+        ).hexdigest()
 
         blocks = cfg.get("blocks")
         consumers = collect_source_consumer_field_refs(
@@ -1415,14 +1435,36 @@ class GptActionsDispatchService:
             if columns is not None:
                 output_schema = {"columns": sorted(columns)}
 
-        return {
+        out = {
             "modelId": mid,
             "definition": definition,
+            "definitionCompleteness": "full",
+            "definitionDigest": definition_digest,
             "consumers": consumers,
             "consumerCount": len(consumers),
             "outputSchema": output_schema,
             "runtime": runtime,
         }
+        # Budget: definition nunca é truncada — metadados de runtime são
+        # compactados primeiro; se a definição canônica não couber, erro tipado.
+        if exceeds_actions_budget(out):
+            out["outputSchema"] = None
+            out["runtime"] = {
+                "state": "omitted",
+                "reason": "response_budget",
+            }
+        if exceeds_actions_budget(out):
+            raise GptActionsError(
+                "Definição do DataModel excede o response budget.",
+                code="RESPONSE_BUDGET_EXCEEDED",
+                status_code=422,
+                details={
+                    "modelId": mid,
+                    "sizeBytes": ascii_utf8_size(out),
+                    "budgetBytes": GPT_ACTIONS_RESPONSE_MAX_BYTES,
+                },
+            )
+        return out
 
     @staticmethod
     def _find_data_source_host_slide(

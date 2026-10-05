@@ -416,6 +416,7 @@ _NATIVE_OP_NAMES = frozenset(
         "bump_font_size",
         # DM1 — DataModel é objeto lógico em nativeConfig.dataModels (não-block).
         "upsert_data_model",
+        "patch_data_model",
         "delete_data_model",
         # DM4 — migração legacy→DataModel também atua sobre nativeConfig.
         "migrate_data_sources_to_model",
@@ -934,6 +935,13 @@ class PresentationPatchService:
                 self._op_upsert_data_model(
                     native_config, raw_op, playlist_defaults=playlist_defaults
                 )
+            elif op_name == "patch_data_model":
+                self._op_patch_data_model(
+                    native_config,
+                    raw_op,
+                    side_effects=side_effects,
+                    playlist_defaults=playlist_defaults,
+                )
             elif op_name == "delete_data_model":
                 self._op_delete_data_model(native_config, raw_op)
             elif op_name == "migrate_data_sources_to_model":
@@ -1229,8 +1237,9 @@ class PresentationPatchService:
             "re_layer_playlist_filters",
             "add_slide_from_preset",
             "apply_published_slide_template",
-            # DM1 — modelo novo/substituído precisa executar antes do proposal.
+            # DM1 — modelo novo/substituído/patchado precisa executar antes do proposal.
             "upsert_data_model",
+            "patch_data_model",
             # DM2 — binding/rebind a modelId valida consumer contra output do modelo.
             "bind_visual",
             "upsert_block",
@@ -1327,7 +1336,7 @@ class PresentationPatchService:
             touched.update(ids)
         models_touched = validate_all or any(
             str(op.get("op") or "").strip()
-            in {"upsert_data_model", "migrate_data_sources_to_model"}
+            in {"upsert_data_model", "patch_data_model", "migrate_data_sources_to_model"}
             for op in touching_ops
         )
         if not models_touched and models:
@@ -1716,6 +1725,254 @@ class PresentationPatchService:
             for model in models
             if not (isinstance(model, dict) and str(model.get("id") or "") == model_id)
         ]
+
+    def _op_patch_data_model(
+        self,
+        cfg: dict[str, Any],
+        op: dict[str, Any],
+        *,
+        side_effects: dict[str, Any] | None = None,
+        playlist_defaults: dict[str, Any] | None = None,
+    ) -> None:
+        """Patch semântico mínimo de DataModel persistido (DM-native op).
+
+        O backend reconstrói o candidato completo a partir do modelo
+        persistido: campos omitidos são preservados — nunca é preciso
+        reenviar inputs/transforms intactos. `params` usa o mesmo núcleo
+        set/unset/ExpressionSpec de `patch_data_source_params`; `transform`
+        (input ou model) passa pelo sanitizer canônico de TransformPlan.
+        O candidato completo é normalizado/validado; consumers são checados
+        pelo gate de execução do candidate (mesma validação de upsert).
+        """
+        from tv_app.application.services.data.data_model_service import (
+            DataModelContractError,
+            find_data_model,
+            normalize_data_model,
+        )
+
+        model_id = str(op.get("modelId") or "").strip()
+        if not model_id:
+            raise PresentationPatchError(
+                "modelId é obrigatório para patch_data_model.",
+                code="data_model.contract_invalid",
+                details={"field": "modelId"},
+            )
+        models = cfg.get("dataModels")
+        existing = find_data_model(cfg, model_id)
+        if not isinstance(models, list) or existing is None:
+            raise PresentationPatchError(
+                f'DataModel "{model_id}" não encontrado no slide.',
+                code="data_model.not_found",
+                details={"modelId": model_id},
+            )
+
+        candidate = copy.deepcopy(existing)
+        inputs = (
+            candidate.get("inputs") if isinstance(candidate.get("inputs"), list) else []
+        )
+        slide_filters = (
+            cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else None
+        )
+
+        changed: dict[str, Any] = {
+            "modelId": model_id,
+            "changedInputs": [],
+            "changedParams": {},
+            "changedInputTransforms": [],
+            "modelTransformChanged": False,
+            "labelChanged": False,
+            "fieldLabelsChanged": False,
+        }
+
+        for patch in op.get("inputPatches") or []:
+            if not isinstance(patch, dict):
+                raise PresentationPatchError(
+                    "inputPatches[] deve conter objetos.",
+                    code="data_model.contract_invalid",
+                    details={"field": "inputPatches"},
+                )
+            input_id = str(patch.get("inputId") or "").strip()
+            if not input_id:
+                raise PresentationPatchError(
+                    "inputId é obrigatório em inputPatches[].",
+                    code="data_model.contract_invalid",
+                    details={"field": "inputId", "modelId": model_id},
+                )
+            index = next(
+                (
+                    i
+                    for i, item in enumerate(inputs)
+                    if isinstance(item, dict)
+                    and str(item.get("id") or "") == input_id
+                ),
+                -1,
+            )
+            if index < 0:
+                raise PresentationPatchError(
+                    f'Input "{input_id}" não existe no DataModel "{model_id}".',
+                    code="data_model.input_not_found",
+                    details={"modelId": model_id, "inputId": input_id},
+                )
+            item = dict(inputs[index])
+            touched = False
+
+            raw_params = patch.get("params")
+            if isinstance(raw_params, dict) and (
+                raw_params.get("set") or raw_params.get("unset")
+            ):
+                operation_id = str(item.get("operationId") or "").strip()
+                route = (
+                    self._catalog.get_route(operation_id) if operation_id else None
+                )
+                if not isinstance(route, dict):
+                    raise PresentationPatchError(
+                        PresentationOpsContentService.message(
+                            "operationNotInCatalog", operationId=operation_id
+                        )
+                    )
+                next_params, changed_set, removed = self._apply_params_patch(
+                    route=route,
+                    current=(
+                        item.get("params") if isinstance(item.get("params"), dict) else {}
+                    ),
+                    raw_set=raw_params.get("set"),
+                    raw_unset=raw_params.get("unset"),
+                    cfg=cfg,
+                    playlist_defaults=playlist_defaults,
+                    owner_id=f"{model_id}.{input_id}",
+                )
+                if changed_set or removed:
+                    item["params"] = next_params
+                    changed["changedParams"][input_id] = {
+                        "set": changed_set,
+                        "unset": removed,
+                    }
+                    touched = True
+            elif raw_params is not None and not isinstance(raw_params, dict):
+                raise PresentationPatchError(
+                    "inputPatches[].params deve ser {set, unset}.",
+                    code="data_model.contract_invalid",
+                    details={"field": "params", "modelId": model_id, "inputId": input_id},
+                )
+
+            if "transform" in patch:
+                raw_transform = patch.get("transform")
+                if raw_transform is None:
+                    if item.pop("transform", None) is not None:
+                        changed["changedInputTransforms"].append(input_id)
+                        touched = True
+                elif isinstance(raw_transform, dict):
+                    next_transform = self._sanitize_vista_data_transform(raw_transform)
+                    if item.get("transform") != next_transform:
+                        item["transform"] = next_transform
+                        changed["changedInputTransforms"].append(input_id)
+                        touched = True
+                else:
+                    raise PresentationPatchError(
+                        "inputPatches[].transform deve ser TransformPlan v1 ou null.",
+                        code="data_model.contract_invalid",
+                        details={
+                            "field": "transform",
+                            "modelId": model_id,
+                            "inputId": input_id,
+                        },
+                    )
+
+            if touched:
+                inputs[index] = item
+                changed["changedInputs"].append(input_id)
+
+        model_patch = op.get("modelPatch")
+        if model_patch is not None:
+            if not isinstance(model_patch, dict):
+                raise PresentationPatchError(
+                    "modelPatch deve ser um objeto.",
+                    code="data_model.contract_invalid",
+                    details={"field": "modelPatch", "modelId": model_id},
+                )
+            if "label" in model_patch:
+                label = str(model_patch.get("label") or "").strip()
+                if label != str(candidate.get("label") or "").strip():
+                    candidate["label"] = label
+                    changed["labelChanged"] = True
+            if "transform" in model_patch:
+                raw_transform = model_patch.get("transform")
+                if raw_transform is None:
+                    if candidate.pop("transform", None) is not None:
+                        changed["modelTransformChanged"] = True
+                elif isinstance(raw_transform, dict):
+                    next_transform = self._sanitize_vista_data_transform(raw_transform)
+                    if candidate.get("transform") != next_transform:
+                        candidate["transform"] = next_transform
+                        changed["modelTransformChanged"] = True
+                else:
+                    raise PresentationPatchError(
+                        "modelPatch.transform deve ser TransformPlan v1 ou null.",
+                        code="data_model.contract_invalid",
+                        details={"field": "transform", "modelId": model_id},
+                    )
+            if "fieldLabels" in model_patch:
+                raw_labels = model_patch.get("fieldLabels")
+                if raw_labels is None:
+                    if candidate.pop("fieldLabels", None) is not None:
+                        changed["fieldLabelsChanged"] = True
+                elif isinstance(raw_labels, dict):
+                    labels = {
+                        str(k): str(v)
+                        for k, v in raw_labels.items()
+                        if str(k).strip()
+                    }
+                    merged = dict(candidate.get("fieldLabels") or {})
+                    merged.update(labels)
+                    if merged != (candidate.get("fieldLabels") or {}):
+                        candidate["fieldLabels"] = merged
+                        changed["fieldLabelsChanged"] = True
+                else:
+                    raise PresentationPatchError(
+                        "modelPatch.fieldLabels deve ser um objeto ou null.",
+                        code="data_model.contract_invalid",
+                        details={"field": "fieldLabels", "modelId": model_id},
+                    )
+
+        if not any(
+            [
+                changed["changedInputs"],
+                changed["modelTransformChanged"],
+                changed["labelChanged"],
+                changed["fieldLabelsChanged"],
+            ]
+        ):
+            raise PresentationPatchError(
+                "patch_data_model não altera nenhum campo persistido.",
+                code="data_model.patch_noop",
+                details={"modelId": model_id},
+            )
+
+        try:
+            normalized = normalize_data_model(
+                candidate,
+                catalog=self._catalog,
+                sanitize_transform=self._sanitize_vista_data_transform,
+                generate_id=False,
+            )
+        except DataModelContractError as exc:
+            raise PresentationPatchError(
+                str(exc), code=exc.code, details=dict(exc.details)
+            ) from exc
+        if str(normalized.get("id") or "") != model_id:
+            raise PresentationPatchError(
+                "patch_data_model não pode alterar o id do DataModel.",
+                code="data_model.contract_invalid",
+                details={"modelId": model_id},
+            )
+        index = next(
+            i
+            for i, item in enumerate(models)
+            if isinstance(item, dict) and str(item.get("id") or "") == model_id
+        )
+        models[index] = normalized
+        if side_effects is not None:
+            side_effects.setdefault("dataModelPatches", []).append(changed)
 
     def _op_migrate_data_sources_to_model(
         self,
@@ -2256,8 +2513,49 @@ class PresentationPatchService:
                 )
             )
 
-        raw_set = op.get("set") if isinstance(op.get("set"), dict) else {}
-        raw_unset = op.get("unset") if isinstance(op.get("unset"), list) else []
+        next_params, changed_set, removed = self._apply_params_patch(
+            route=route,
+            current=(
+                binding.get("params") if isinstance(binding.get("params"), dict) else {}
+            ),
+            raw_set=op.get("set"),
+            raw_unset=op.get("unset"),
+            cfg=cfg,
+            playlist_defaults=playlist_defaults,
+            owner_id=block_id,
+        )
+        next_binding = dict(binding)
+        next_binding["params"] = next_params
+        existing["dataBinding"] = next_binding
+        existing.pop("resolved", None)
+        if side_effects is not None:
+            side_effects.setdefault("dataSourceParamPatches", []).append(
+                {
+                    "blockId": block_id,
+                    "changed": {"set": changed_set, "unset": removed},
+                }
+            )
+
+    def _apply_params_patch(
+        self,
+        *,
+        route: dict[str, Any],
+        current: dict[str, Any],
+        raw_set: Any,
+        raw_unset: Any,
+        cfg: dict[str, Any],
+        playlist_defaults: dict[str, Any] | None,
+        owner_id: str,
+    ) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
+        """Núcleo canônico de patch set/unset de params de uma rota.
+
+        Compartilhado por `patch_data_source_params` (bloco data_source) e
+        `patch_data_model` (input de DataModel): allowlist do paramSchema,
+        ExpressionSpec, remap e `merge_period_params_layer` — mesma semântica.
+        Retorna (next_params, changed_set, removed_keys).
+        """
+        raw_set = raw_set if isinstance(raw_set, dict) else {}
+        raw_unset = raw_unset if isinstance(raw_unset, list) else []
 
         set_patch: dict[str, Any] = {}
         unset_keys: set[str] = set()
@@ -2290,7 +2588,6 @@ class PresentationPatchService:
         )
         schema_keys = set(schema.keys())
         allowed = schema_keys | _KEEP_WITHOUT_SCHEMA | set(_PARAM_KEY_REMAP)
-        current = binding.get("params") if isinstance(binding.get("params"), dict) else {}
 
         rejected = sorted(key for key in set_patch if key not in allowed) + sorted(
             key for key in unset_keys if key not in allowed and key not in current
@@ -2299,7 +2596,7 @@ class PresentationPatchService:
             raise PresentationPatchError(
                 PresentationOpsContentService.message(
                     "dataSourceParamNotAllowed",
-                    blockId=block_id,
+                    blockId=owner_id,
                     keys=", ".join(rejected),
                 )
             )
@@ -2324,17 +2621,7 @@ class PresentationPatchService:
             for key in set_patch
             if key in next_params and current.get(key) != next_params[key]
         }
-        next_binding = dict(binding)
-        next_binding["params"] = next_params
-        existing["dataBinding"] = next_binding
-        existing.pop("resolved", None)
-        if side_effects is not None:
-            side_effects.setdefault("dataSourceParamPatches", []).append(
-                {
-                    "blockId": block_id,
-                    "changed": {"set": changed_set, "unset": removed},
-                }
-            )
+        return next_params, changed_set, removed
 
     def _assert_data_source_expressions(
         self,

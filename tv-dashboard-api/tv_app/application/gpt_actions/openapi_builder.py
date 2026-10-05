@@ -629,11 +629,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Authorized playlist context",
                 "description": (
                     "Playlist context with slides and focused slide. "
-                    "editorFocus omits nativeConfig and returns dataSources + "
-                    "dataModels + blockIndex.modelId + focusedBinding. "
-                    "full auto-downgrades over budget keeping that "
-                    "addressability. objectQuery returns persisted "
-                    "objectMatches. includePreview adds a signed preview."
+                    "editorFocus omits nativeConfig; returns dataSources, "
+                    "dataModels, blockIndex.modelId, focusedBinding. "
+                    "full auto-downgrades over budget keeping addressability. "
+                    "objectQuery returns persisted objectMatches."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],
@@ -804,10 +803,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_inspect_data_model",
                 "summary": "Inspect a persisted DataModel",
                 "description": (
-                    "Read-only DataModel inspection: persisted definition "
-                    "(inputs, transform, fieldLabels), output schema, consumer "
-                    "bindings (views/text/canvas cells) and runtime state. "
-                    "Use before binding or migration decisions."
+                    "Read-only DataModel inspection: lossless persisted definition "
+                    "(inputs incl. per-input transform + hasTransform, model transform, "
+                    "fieldLabels), definitionCompleteness + definitionDigest, output "
+                    "schema, consumer bindings and runtime state. Use as candidate base "
+                    "for governed mutation."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],

@@ -466,6 +466,7 @@ def test_catalog_expressions_metadata_matches_writable_ops():
         "patch_data_source_params.set.<param>",
         "upsert_data_source.params.<param>",
         "upsert_data_model.model.inputs[].params.<param>",
+        "patch_data_model.inputPatches[].params.set.<param>",
     }
     # Cada caminho anunciado tem a variante ExpressionSpec no schema da op.
     assert set(_expression_variants()) == {"patch", "upsert", "model_inputs"}

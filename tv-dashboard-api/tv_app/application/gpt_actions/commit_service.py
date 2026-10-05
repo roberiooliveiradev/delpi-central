@@ -48,6 +48,7 @@ _NATIVE_CONFIG_OPS = frozenset(
         "re_layer_playlist_filters",
         # DM1 — DataModel muta o documento nativeConfig (coalescido por slide).
         "upsert_data_model",
+        "patch_data_model",
         "delete_data_model",
         # DM4 — migração legacy→DataModel também resolve em PATCH do slide.
         "migrate_data_sources_to_model",

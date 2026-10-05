@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.09.24.presentation-authority",
+  "catalogVersion": "2026.10.05.presentation-authority.datamodel-patch",
   "opAliases": {
     "create_slide": {
       "canonical": "add_blank_slide",
@@ -3640,6 +3640,205 @@
         "slide"
       ]
     },
+    "patch_data_model": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "modelId"
+        ],
+        "example": {
+          "op": "patch_data_model",
+          "modelId": "mdl_demo",
+          "inputPatches": [
+            {
+              "inputId": "previous",
+              "params": {
+                "set": {
+                  "start_date": {
+                    "expression": {
+                      "version": 1,
+                      "expression": {
+                        "kind": "call",
+                        "value": "Date.StartOfMonth",
+                        "children": [
+                          {
+                            "kind": "call",
+                            "value": "Date.AddYears",
+                            "children": [
+                              {
+                                "kind": "identifier",
+                                "value": "today"
+                              },
+                              {
+                                "kind": "literal",
+                                "value": -1
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "unset": [
+                  "dateRangePreset"
+                ]
+              }
+            }
+          ],
+          "modelPatch": {
+            "transform": {
+              "version": 1,
+              "steps": [
+                {
+                  "op": "addColumn",
+                  "name": "value",
+                  "expr": "(rol / rol_prev - 1) * 100"
+                }
+              ]
+            }
+          }
+        },
+        "description": "Typed minimal patch over an EXISTING DataModel: the backend rebuilds the full candidate from the persisted model — omitted fields are preserved (never resend untouched inputs/transforms). inputPatches[].params uses the same set/unset/ExpressionSpec contract as patch_data_source_params; inputPatches[].transform and modelPatch.transform are TransformPlan v1 {version, steps} applied only when the key is present (null clears). modelPatch.fieldLabels merges over persisted labels (null clears). Resulting model is normalized and re-validated against consumers before PREPARE.",
+        "properties": {
+          "op": {
+            "const": "patch_data_model"
+          },
+          "modelId": {
+            "type": "string",
+            "description": "Persisted DataModel id — discover via get_playlist_context dataModels[]/blockIndex[].modelId/focusedBinding or inspect_data_model. Never inferred from labels/fields/blockIds."
+          },
+          "inputPatches": {
+            "type": "array",
+            "description": "Patches por input existente; inputId desconhecido falha. Campo omitido = preservado.",
+            "items": {
+              "type": "object",
+              "required": [
+                "inputId"
+              ],
+              "properties": {
+                "inputId": {
+                  "type": "string"
+                },
+                "params": {
+                  "type": "object",
+                  "description": "Same set/unset semantics as patch_data_source_params (literal scalars or canonical ParamExpression spec; null/empty in set = unset).",
+                  "properties": {
+                    "set": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "object",
+                            "description": "Canonical ParamExpression spec (ExpressionSpec v1).",
+                            "required": [
+                              "expression"
+                            ],
+                            "properties": {
+                              "expression": {
+                                "type": "object",
+                                "required": [
+                                  "version",
+                                  "expression"
+                                ],
+                                "properties": {
+                                  "version": {
+                                    "const": 1
+                                  },
+                                  "expression": {
+                                    "type": "object",
+                                    "required": [
+                                      "kind"
+                                    ],
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "additionalProperties": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "unset": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "transform": {
+                  "type": "object",
+                  "nullable": true,
+                  "x-delpi-gpt-opaque-object": true,
+                  "properties": {},
+                  "description": "TransformPlan v1 {version, steps} for this input only; applied only when key present; null clears the input transform."
+                }
+              }
+            }
+          },
+          "modelPatch": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "transform": {
+                "type": "object",
+                "nullable": true,
+                "x-delpi-gpt-opaque-object": true,
+                "properties": {},
+                "description": "TransformPlan v1 {version, steps} for the model-level transform; applied only when key present; null clears."
+              },
+              "fieldLabels": {
+                "type": "object",
+                "description": "Entries merged over persisted fieldLabels; null clears the map.",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "produces": [
+        "dataModel"
+      ],
+      "consumes": [
+        "playlist",
+        "slide"
+      ]
+    },
     "delete_data_model": {
       "requiresPlaylist": true,
       "requiresSlide": true,
@@ -4271,6 +4470,33 @@
           "id": "{{newModelId}}",
           "inputs": []
         }
+      }
+    },
+    {
+      "key": "patch_data_model",
+      "op": "patch_data_model",
+      "whenToUse": "Minimal patch on an existing DataModel (input params incl. ExpressionSpec, input/model transform, label, fieldLabels). Prefer over upsert_data_model for point changes; never set_data_transform/patch_data_source_params.",
+      "contentMarkers": [
+        "modelo de dados",
+        "data model",
+        "datamodel",
+        "períodos do modelo",
+        "fórmula do modelo"
+      ],
+      "actionTermSet": "mutation",
+      "clarificationMessageKey": "suggestNeedDataModel",
+      "payloadTemplate": {
+        "op": "patch_data_model",
+        "modelId": "{{modelId}}",
+        "inputPatches": [
+          {
+            "inputId": "{{inputId}}",
+            "params": {
+              "set": {},
+              "unset": []
+            }
+          }
+        ]
       }
     },
     {

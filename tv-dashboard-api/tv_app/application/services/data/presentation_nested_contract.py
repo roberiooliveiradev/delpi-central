@@ -37,6 +37,9 @@ def _validate(instance: Any, schema: dict[str, Any], *, path: str, op_name: str)
     types = declared if isinstance(declared, list) else [declared] if declared else []
     types = [str(item) for item in types if item]
 
+    if instance is None and schema.get("nullable") is True:
+        return
+
     if types and not _matches_type(instance, types):
         _fail(op_name, f"{path} deve ser {'/'.join(types)}")
 

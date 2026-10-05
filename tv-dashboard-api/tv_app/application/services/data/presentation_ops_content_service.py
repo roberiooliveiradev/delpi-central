@@ -508,6 +508,7 @@ class PresentationOpsContentService:
     def _capabilities_for_actions(cls) -> list[dict[str, Any]]:
         compact: list[dict[str, Any]] = []
         drop = {
+            "payloadTemplate",
             "payloadTemplates",
             "contentMarkers",
             "excludeMarkers",
