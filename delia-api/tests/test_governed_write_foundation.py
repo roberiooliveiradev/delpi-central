@@ -266,6 +266,69 @@ def test_preview_unwraps_declared_proposal_envelope():
     assert p.expires_at_epoch == FUTURE
 
 
+def test_preview_split_shape_flat_handle_nested_change_can_commit():
+    """VISTA-style payload: ``proposal_handle`` flat on the data level
+    while ``exact_change`` lives inside the declared ``proposal``
+    object, and commitability is declared as ``canCommit``. The
+    envelope-first projection must still find all governance fields —
+    same contract, split shape."""
+    p = project_proposal_preview(
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_change",
+        owner_payload={
+            "success": True,
+            "data": {
+                "proposal_handle": "opaque-handle-9",
+                "canCommit": True,
+                "proposal": {
+                    "capability": "presentation_change",
+                    "resource_id": "pl-1",
+                    "exact_change": {
+                        "target": {"playlistId": "pl-1"},
+                        "ops": [{"op": "add_blank_slide"}],
+                    },
+                    "expires_at": FUTURE,
+                },
+            },
+        },
+        specialist_id="vista",
+        correlation_id="c",
+        observed_at="t",
+        now_epoch=NOW,
+    )
+    assert p.readiness is ProposalReadiness.READY
+    assert p.proposal_ref == "opaque-handle-9"
+    assert p.exact_change == {
+        "target": {"playlistId": "pl-1"},
+        "ops": [{"op": "add_blank_slide"}],
+    }
+
+
+def test_preview_split_shape_can_commit_false_is_not_ready():
+    """``canCommit: false`` is the owner's own not-ready verdict —
+    never promoted to READY."""
+    p = project_proposal_preview(
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_change",
+        owner_payload={
+            "success": True,
+            "data": {
+                "proposal_handle": "opaque-handle-9",
+                "canCommit": False,
+                "proposal": {
+                    "exact_change": {"ops": [{"op": "x"}]},
+                    "expires_at": FUTURE,
+                },
+            },
+        },
+        specialist_id="vista",
+        correlation_id="c",
+        observed_at="t",
+        now_epoch=NOW,
+    )
+    assert p.readiness is ProposalReadiness.NOT_READY
+
+
 def test_proposal_envelope_not_ready_and_invalid_variants():
     """Enveloped proposals still fail closed: missing ref/exact_change
     or a not-ready verdict never reach the confirmation gate."""

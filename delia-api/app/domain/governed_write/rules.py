@@ -88,20 +88,37 @@ def _readiness_for(payload: Mapping[str, Any], now_epoch: float) -> ProposalRead
     malformed mandatory fields -> INVALID, never inferred READY.
     """
     container = _proposal_container(payload)
+
+    def _field(name: str) -> Any:
+        """Envelope-first lookup — governance fields may live inside the
+        declared ``proposal`` object or flat on the data payload."""
+        value = container.get(name)
+        if value is None and container is not payload:
+            value = payload.get(name)
+        return value
+
     proposal_ref = str(
-        container.get("proposal_handle") or container.get("handle") or ""
+        _field("proposal_handle") or _field("handle") or ""
     ).strip()
-    exact_change = container.get("exact_change")
+    exact_change = _field("exact_change")
     if not proposal_ref or not isinstance(exact_change, Mapping):
         return ProposalReadiness.INVALID
-    expires_at = container.get("expires_at")
+    expires_at = _field("expires_at")
     try:
         expires = float(expires_at) if expires_at is not None else None
     except (TypeError, ValueError):
         return ProposalReadiness.INVALID
     if expires is not None and expires <= now_epoch:
         return ProposalReadiness.EXPIRED
-    ready = container.get("ready")
+    ready = _field("ready")
+    if ready is None:
+        # Owners declare commitability under their own vocabulary —
+        # ``canCommit`` is the same boolean contract signal.
+        can_commit = _field("canCommit")
+        if can_commit is None:
+            can_commit = _field("can_commit")
+        if isinstance(can_commit, bool):
+            ready = can_commit
     validation = container.get("validation_result")
     if not isinstance(validation, Mapping):
         validation = payload.get("validation_result")
@@ -154,7 +171,9 @@ def project_proposal_preview(
     except (TypeError, ValueError):
         expires = None
     proposal_ref = str(
-        container.get("proposal_handle") or container.get("handle") or ""
+        _governance_field("proposal_handle")
+        or _governance_field("handle")
+        or ""
     ).strip()
     exact_change = _governance_field("exact_change")
     validation_result = _governance_field("validation_result")

@@ -38,7 +38,7 @@ BASE = os.getenv("DELIA_EVAL_BASE_URL") or "http://localhost:8000"
 ADVISORY = os.getenv("DELIA_EVAL_ADVISORY") == "1"
 PLAYLIST_ID = (
     os.getenv("DELIA_EVAL_PLAYLIST_ID")
-    or "16746517-51a1-4011-af8c-047fb12c2524"
+    or "fa84e9f7-5ba4-4c12-ab58-e231dfa52204"
 )
 SLIDE_ID = (
     os.getenv("DELIA_EVAL_SLIDE_ID")
@@ -218,11 +218,12 @@ def main() -> int:
 
     # D. Governed write PREPARE -> REJECT (VISTA prepare_change through
     # owner DISCOVERY -> bounded PREPARE -> structured confirmation).
-    # Slide rename maps to the owner ``update_slide`` op; the workspace
-    # supplies the selected slide/playlist entity refs.
+    # add_blank_slide is a real owner op requiring only target.playlistId;
+    # the workspace supplies the playlist entity ref.
     prepare = _turn(
         token,
-        "renomeie o slide que estou vendo para 'teste avaliação'",
+        "crie um slide em branco chamado 'teste avaliação' na playlist "
+        "que estou vendo",
         workspace=_workspace(),
     )
     report["write_prepare"] = prepare
