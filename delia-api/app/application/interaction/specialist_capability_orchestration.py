@@ -206,6 +206,12 @@ top-level "properties" and whose values satisfy the declared types
 and "required". Nested objects and arrays must follow the schema
 structure. Use {} when no field applies.
 
+The block also carries the capability's name and description. Value
+hints declared in the description (e.g. "view=a|b|c") are the allowed
+value set — prefer them. Literal examples inside descriptions
+(e.g. "e.g. something") are placeholders: derive values from the user
+message, never copy an example verbatim.
+
 Never invent fields or values; never supply orchestration-resolved
 fields (candidate_token, proposal_handle, confirmation,
 idempotency_key, commit_now); never answer the question itself;
