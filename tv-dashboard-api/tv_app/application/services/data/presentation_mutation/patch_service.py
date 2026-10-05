@@ -392,36 +392,7 @@ def _validate_target_for_ops(
         raise PresentationPatchError(PresentationOpsContentService.message("missingSlide"))
 
 
-_NATIVE_OP_NAMES = frozenset(
-    {
-        "upsert_data_source",
-        "patch_data_source_params",
-        "set_data_transform",
-        "upsert_block",
-        "set_display_format",
-        "delete_block",
-        "bind_visual",
-        "patch_native_config",
-        "ensure_brand_logo_on_slide",
-        "apply_published_slide_template",
-        # Mutates slide nativeConfig / dataFilters; must preload like other native ops.
-        # Without this, preview raises misleading missingTarget even with valid target IDs.
-        "re_layer_playlist_filters",
-        # PRESENTATION-001 — geometry / identity ops on nativeConfig.
-        "create_block",
-        "align_blocks",
-        "reorder_block_z",
-        "duplicate_blocks",
-        "transform_text_case",
-        "bump_font_size",
-        # DM1 — DataModel é objeto lógico em nativeConfig.dataModels (não-block).
-        "upsert_data_model",
-        "patch_data_model",
-        "delete_data_model",
-        # DM4 — migração legacy→DataModel também atua sobre nativeConfig.
-        "migrate_data_sources_to_model",
-    }
-)
+_NATIVE_OP_NAMES = PresentationOpsContentService.native_config_ops()
 
 
 def _op_name_of(raw: dict[str, Any]) -> str:
@@ -3987,17 +3958,29 @@ class PresentationPatchService:
                 PresentationOpsContentService.message("playlistDefaultsRequired")
             )
         replace = bool(op.get("replace"))
+        from tv_app.application.services.tv_presentation_write_service import (
+            PresentationWriteError,
+            TvPresentationWriteService,
+        )
+
+        writes = TvPresentationWriteService(self._repo)
         if not persist:
             from tv_app.application.services.tv_date_range_preset_service import (
                 merge_period_params_layer,
                 normalize_period_params_for_persistence,
             )
 
+            try:
+                cleaned = writes.validate_playlist_data_defaults_write(
+                    UUID(playlist_id), raw_defaults
+                )
+            except PresentationWriteError as exc:
+                raise PresentationPatchError(str(exc)) from exc
             existing = self._playlist_defaults(playlist_id) or {}
             merged = (
-                normalize_period_params_for_persistence(raw_defaults)
+                normalize_period_params_for_persistence(cleaned)
                 if replace
-                else merge_period_params_layer(existing, raw_defaults)
+                else merge_period_params_layer(existing, cleaned)
             )
             return {
                 "id": playlist_id,
@@ -4006,12 +3989,6 @@ class PresentationPatchService:
             }
         if not actor_user_id:
             raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
-        from tv_app.application.services.tv_presentation_write_service import (
-            PresentationWriteError,
-            TvPresentationWriteService,
-        )
-
-        writes = TvPresentationWriteService(self._repo)
         try:
             return writes.patch_playlist_data_defaults(
                 UUID(playlist_id),

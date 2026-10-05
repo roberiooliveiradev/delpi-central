@@ -9441,3 +9441,34 @@ EVIDENCE (live production, 2026-10-05):
          (DELIA_EVAL_BEARER) — eval script updated for the
          new contract incl. self-cleaning destructive leg.
     STILL_OPEN: commit + live acceptance + §6.132 close-out.
+
+    ADDENDUM (owner-side root cause found in live eval):
+      The DÉLIA-side contract was correct — 'escreva um texto'
+      selected mcp:vista.prepare_change and the model built
+      ops=[create_block] from fieldVocabulary. PREPARE still
+      failed with INVALID_CHANGE 'Operacao nao suportada:
+      create_block' because
+      PresentationHttpCommandPlannerService._NATIVE_CONFIG_OPS was
+      a second, stale copy of patch_service._NATIVE_OP_NAMES
+      missing the six geometry/text ops (create_block,
+      align_blocks, reorder_block_z, duplicate_blocks,
+      transform_text_case, bump_font_size).
+      Fix: canonical
+      PresentationOpsContentService.native_config_ops() consumed
+      by BOTH modules — the duplicated set was the defect, not
+      an op gap in the engine.
+    EVIDENCE (local stack, rober subject, playlist 16746517):
+      write_direct_create_slide: CONFIRMATION_POLICY=direct ->
+        DECISION_GATE READY_FOR_LIVE_REVALIDATION -> ACT_ATTEMPT
+        INVOKED -> OUTCOME_VERIFIED VERIFIED, revisionBefore 2->3,
+        persisted slide e63e8703 — NO user confirmation (DEFECT-A
+        fixed, proven live on local stack).
+      write_destructive_prepare: CONFIRMATION_POLICY=
+        explicit_confirmation_required -> REQUIRES_CONFIRMATION;
+        reject probe -> CONFIRMATION_BOUND REJECTED (fail-closed).
+      create_block preview in-container: compiled + applied
+        after the native-ops unification.
+      tv-dashboard-api suite: 1645 passed; delia-api: 761 passed.
+    STILL_OPEN: production deploy on srv-api (commits pushed;
+      up-prod-sequential --fase api --build delia-api
+      tv-dashboard-api) + live UI acceptance on prod.

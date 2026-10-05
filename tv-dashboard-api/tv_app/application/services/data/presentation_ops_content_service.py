@@ -14,6 +14,41 @@ _RISK_RANK = {"additive": 1, "mutation": 2, "destructive": 3}
 
 _REF_PREFIX = "#/definitions/"
 
+# Ops that mutate the slide nativeConfig document — single canonical
+# source shared by the patch engine (mutation semantics) and the HTTP
+# command planner (CRUD projection). Both consumers must stay in lockstep;
+# a divergent copy silently rejects catalog-declared ops at runtime.
+NATIVE_CONFIG_OPS = frozenset(
+    {
+        "upsert_data_source",
+        "patch_data_source_params",
+        "set_data_transform",
+        "upsert_block",
+        "set_display_format",
+        "delete_block",
+        "bind_visual",
+        "patch_native_config",
+        "ensure_brand_logo_on_slide",
+        "apply_published_slide_template",
+        # Mutates slide nativeConfig / dataFilters; must preload like other
+        # native ops or preview raises misleading missingTarget.
+        "re_layer_playlist_filters",
+        # PRESENTATION-001 — geometry / identity ops on nativeConfig.
+        "create_block",
+        "align_blocks",
+        "reorder_block_z",
+        "duplicate_blocks",
+        "transform_text_case",
+        "bump_font_size",
+        # DM1 — DataModel is a logical document in nativeConfig.dataModels.
+        "upsert_data_model",
+        "patch_data_model",
+        "delete_data_model",
+        # DM4 — legacy→DataModel migration also acts on nativeConfig.
+        "migrate_data_sources_to_model",
+    }
+)
+
 
 def _expand_definitions_refs(node: Any, definitions: dict[str, Any], seen: frozenset[str]) -> Any:
     """Expande ``$ref: #/definitions/*`` inline na carga do catálogo.
@@ -453,6 +488,11 @@ class PresentationOpsContentService:
             if canonical:
                 out[key] = canonical
         return out
+
+    @classmethod
+    def native_config_ops(cls) -> frozenset[str]:
+        """Canonical set of ops that mutate the slide nativeConfig document."""
+        return NATIVE_CONFIG_OPS
 
     @classmethod
     def resolve_op_name(cls, name: str | None) -> str:

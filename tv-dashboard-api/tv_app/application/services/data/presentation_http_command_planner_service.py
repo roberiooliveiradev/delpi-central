@@ -17,27 +17,9 @@ from tv_app.application.services.data.presentation_ops_content_service import (
 )
 
 # Ops que mutam o documento nativeConfig do slide — um PATCH coalescido por slide.
-_NATIVE_CONFIG_OPS = frozenset(
-    {
-        "upsert_data_source",
-        "patch_data_source_params",
-        "set_data_transform",
-        "upsert_block",
-        "set_display_format",
-        "delete_block",
-        "bind_visual",
-        "patch_native_config",
-        "ensure_brand_logo_on_slide",
-        "apply_published_slide_template",
-        "re_layer_playlist_filters",
-        # DM1 — DataModel é documento lógico dentro do nativeConfig do slide.
-        "upsert_data_model",
-        "patch_data_model",
-        "delete_data_model",
-        # DM4 — migração legacy→DataModel também resolve em PATCH do slide.
-        "migrate_data_sources_to_model",
-    }
-)
+# Fonte canônica única: PresentationOpsContentService.native_config_ops()
+# (uma segunda lista aqui divergiu e rejeitava ops declaradas no catálogo).
+_NATIVE_CONFIG_OPS = PresentationOpsContentService.native_config_ops()
 
 _ALLOWED_METHODS = frozenset({"GET", "POST", "PATCH", "DELETE"})
 
