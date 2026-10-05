@@ -107,36 +107,45 @@ def _project(response: requests.Response) -> dict:
     }
 
 
+TURN_TIMEOUT = float(os.getenv("DELIA_EVAL_TURN_TIMEOUT") or 240)
+
+
 def _turn(token: str, text: str, workspace: dict | None = None) -> dict:
     body: dict = {"input": text}
     if workspace is not None:
         body["workspace"] = workspace
-    response = requests.post(
-        f"{BASE}/interaction/turns",
-        json=body,
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=90,
-    )
+    try:
+        response = requests.post(
+            f"{BASE}/interaction/turns",
+            json=body,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TURN_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        return {"http_status": None, "error": type(exc).__name__}
     return _project(response)
 
 
 def _confirm(token: str, confirmation: dict, decision: str) -> dict:
-    response = requests.post(
-        f"{BASE}/interaction/turns",
-        json={
-            "input": "decisão do usuário",
-            "confirmation": {
-                "decision": decision,
-                "proposal_digest": confirmation["proposal_digest"],
-                "preview_fingerprint": confirmation[
-                    "preview_fingerprint"
-                ],
-                "session_id": confirmation["session_id"],
+    try:
+        response = requests.post(
+            f"{BASE}/interaction/turns",
+            json={
+                "input": "decisão do usuário",
+                "confirmation": {
+                    "decision": decision,
+                    "proposal_digest": confirmation["proposal_digest"],
+                    "preview_fingerprint": confirmation[
+                        "preview_fingerprint"
+                    ],
+                    "session_id": confirmation["session_id"],
+                },
             },
-        },
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=90,
-    )
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TURN_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        return {"http_status": None, "error": type(exc).__name__}
     return _project(response)
 
 

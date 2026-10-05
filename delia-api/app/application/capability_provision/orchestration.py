@@ -1095,6 +1095,11 @@ class OperationalCapabilityOrchestrator:
             input_text, groups, workspace_context
         )
         if selection is None:
+            _logger.info(
+                "orchestration stage=target_selection decision=none "
+                "correlation_id=%s",
+                correlation,
+            )
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
@@ -1102,6 +1107,14 @@ class OperationalCapabilityOrchestrator:
         group_key, descriptor = selection
         group = groups[group_key]
         remote_name = descriptor.remote_name
+        _logger.info(
+            "orchestration stage=target_selection decision=selected "
+            "group=%s capability=%s class=%s correlation_id=%s",
+            group_key,
+            remote_name,
+            descriptor.operation_class.value,
+            correlation,
+        )
 
         # Bounded operational plan (§6.131 R1): when the selected
         # capability is an opaque envelope, the owner's DISCOVERY
@@ -1113,6 +1126,14 @@ class OperationalCapabilityOrchestrator:
             if _requires_owner_vocabulary(descriptor)
             and not _is_candidate_bound(descriptor)
             else None
+        )
+        _logger.info(
+            "orchestration stage=plan decision=%s envelope=%s "
+            "discovery=%s correlation_id=%s",
+            "with_discovery" if discovery is not None else "direct",
+            _requires_owner_vocabulary(descriptor),
+            discovery.remote_name if discovery is not None else "",
+            correlation,
         )
         plan = self._build_plan(
             input_text, descriptor, group, discovery, correlation
@@ -1150,6 +1171,14 @@ class OperationalCapabilityOrchestrator:
             descriptor,
             workspace_context,
             owner_evidence=owner_evidence,
+        )
+        _logger.info(
+            "orchestration stage=arguments decision=%s "
+            "correlation_id=%s",
+            "built" if arguments is not None else (
+                "missing_inputs" if missing_inputs else "none"
+            ),
+            correlation,
         )
         if arguments is None:
             if missing_inputs:
