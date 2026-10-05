@@ -37,7 +37,13 @@ from tv_app.application.services.playlist_access_service import PlaylistAccessSe
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
-from tv_app.core.security import TV_READ, TV_WRITE, assert_permission
+import tv_app.core.security as core_security
+from tv_app.core.security import (
+    TV_READ,
+    TV_WRITE,
+    GovernedWriteAuthzError,
+    assert_permission,
+)
 
 
 def _typed_ops(ops: list[Any] | None) -> list[dict[str, Any]]:
@@ -213,6 +219,23 @@ class GptActionsDispatchService:
                 status_code=401,
             )
         return actor
+
+    def _governed_write_user(self, user: Any, authorization: str | None) -> Any:
+        """Human-governed material write gate: end-user principal + fresh Core
+        RBAC + TV_WRITE, fail-closed. Returns the freshly-authorized principal.
+        Covers GPT Actions and MCP equally (both delegate here)."""
+        try:
+            return core_security.require_fresh_write_authorization(
+                user,
+                authorization=authorization,
+                permission=TV_WRITE,
+            )
+        except GovernedWriteAuthzError as exc:
+            raise GptActionsError(
+                str(exc),
+                code=exc.code,
+                status_code=exc.status_code,
+            ) from exc
 
     def get_catalog(self, *, user: Any, transport: str = "actions") -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
@@ -1829,7 +1852,7 @@ class GptActionsDispatchService:
         confirmation: dict[str, Any] | bool | None = None,
         idempotency_key: str | None = None,
     ) -> dict[str, Any]:
-        assert_permission(user, TV_WRITE)
+        user = self._governed_write_user(user, authorization)
         actor = self._actor(user)
         playlist_id = str((target or {}).get("playlistId") or "").strip()
         if playlist_id:
@@ -1999,7 +2022,7 @@ class GptActionsDispatchService:
         idempotency_key: str,
         authorization: str | None,
     ) -> dict[str, Any]:
-        assert_permission(user, TV_WRITE)
+        user = self._governed_write_user(user, authorization)
         actor = self._actor(user)
         from tv_app.application.gpt_actions.response_compact import (
             project_mutation_actions_payload,

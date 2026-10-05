@@ -18,6 +18,7 @@ class FakeUser:
 class FakeRequest:
     def __init__(self, user: FakeUser | None):
         self.state = SimpleNamespace(user=user)
+        self.headers: dict[str, str] = {}
 
 
 def test_can_templates_manage():

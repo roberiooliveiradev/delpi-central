@@ -26,6 +26,11 @@ from tv_app.core.security import (
     can,
 )
 from tv_app.interface.http.auth_http import resolve_user
+from tv_app.interface.http.playlist_access_http import (
+    arequire_governed_write,
+    is_access_error,
+    require_governed_write,
+)
 
 router = APIRouter(prefix="/slide-templates", tags=["SlideTemplates"])
 _service = SlideTemplateLibraryService()
@@ -117,9 +122,11 @@ def list_slide_templates(
 
 @router.post("")
 def create_slide_template(request: Request, body: CreateTemplateBody):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.create(
             label=body.label,
             description=body.description,
@@ -138,9 +145,11 @@ def create_slide_template(request: Request, body: CreateTemplateBody):
 
 @router.post("/from-slide")
 def create_from_slide(request: Request, body: FromSlideBody):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.from_slide(
             label=body.label,
             description=body.description,
@@ -178,11 +187,10 @@ async def import_apply(
     file: UploadFile = File(...),
     publishNow: bool = Query(default=False),
 ):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = await arequire_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     raw = await file.read()
     if not raw:
         return fail("Arquivo vazio.", 400)
@@ -211,9 +219,11 @@ def get_slide_template(request: Request, template_id: UUID):
 
 @router.patch("/{template_id}")
 def patch_slide_template(request: Request, template_id: UUID, body: PatchTemplateBody):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.update(
             template_id,
             expected_version=body.version,
@@ -231,9 +241,11 @@ def patch_slide_template(request: Request, template_id: UUID, body: PatchTemplat
 
 @router.delete("/{template_id}")
 def delete_slide_template(request: Request, template_id: UUID):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.delete(template_id)
     except Exception as exc:
         return _deny(exc)
@@ -242,9 +254,11 @@ def delete_slide_template(request: Request, template_id: UUID):
 
 @router.post("/{template_id}/publish")
 def publish_slide_template(request: Request, template_id: UUID):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.publish(template_id, updated_by=_actor(request))
     except Exception as exc:
         return _deny(exc)
@@ -253,9 +267,11 @@ def publish_slide_template(request: Request, template_id: UUID):
 
 @router.post("/{template_id}/unpublish")
 def unpublish_slide_template(request: Request, template_id: UUID):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.unpublish(template_id, updated_by=_actor(request))
     except Exception as exc:
         return _deny(exc)
@@ -264,9 +280,11 @@ def unpublish_slide_template(request: Request, template_id: UUID):
 
 @router.post("/{template_id}/archive")
 def archive_slide_template(request: Request, template_id: UUID):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.archive(template_id, updated_by=_actor(request))
     except Exception as exc:
         return _deny(exc)
@@ -275,9 +293,11 @@ def archive_slide_template(request: Request, template_id: UUID):
 
 @router.post("/{template_id}/clone")
 def clone_slide_template(request: Request, template_id: UUID):
-    user = resolve_user(request)
+    guarded = require_governed_write(request, permission=TV_TEMPLATES_MANAGE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
-        assert_permission(user, TV_TEMPLATES_MANAGE)
         item = _service.clone(
             template_id,
             updated_by=_actor(request),

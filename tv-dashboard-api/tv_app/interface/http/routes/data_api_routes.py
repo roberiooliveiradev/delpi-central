@@ -25,7 +25,11 @@ from tv_app.application.services.tv_data_route_catalog_service import TvDataRout
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_MANAGE, TV_READ, TV_WRITE, assert_permission
 from tv_app.interface.http.auth_http import resolve_user
-from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+from tv_app.interface.http.playlist_access_http import (
+    is_access_error,
+    require_governed_write,
+    require_playlist_access,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -282,11 +286,10 @@ class BuilderTurnBody(BaseModel):
 @router.post("/builder/sessions")
 def create_data_builder_session(request: Request):
     """Inicia sessão do assistente conversacional de dados."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request, permission=TV_WRITE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
 
     session = TvDataBuilderService(_catalog).create_session()
@@ -311,11 +314,10 @@ def get_data_builder_session(request: Request, session_id: str):
 @router.post("/builder/sessions/{session_id}/turn")
 def data_builder_turn(request: Request, session_id: str, body: BuilderTurnBody):
     """Action-only draft mutations (add_source, set_params, …). NL message turns retired."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request, permission=TV_WRITE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     has_action = isinstance(body.action, dict) and bool(body.action)
     has_message = bool(body.message and str(body.message).strip())
     if has_message and not has_action:
@@ -349,11 +351,10 @@ def data_builder_turn(request: Request, session_id: str, body: BuilderTurnBody):
 
 @router.post("/builder/sessions/{session_id}/materialize")
 def data_builder_materialize(request: Request, session_id: str):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request, permission=TV_WRITE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
 
     result = TvDataBuilderService(_catalog).materialize(session_id)
@@ -367,11 +368,10 @@ def data_builder_materialize(request: Request, session_id: str):
 @router.post("/builder/sessions/{session_id}/to-presentation-ops")
 def data_builder_to_presentation_ops(request: Request, session_id: str):
     """Draft Builder → PresentationMutation typed ops (same materialize, no second pipeline)."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request, permission=TV_WRITE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     from tv_app.application.services.data.presentation_builder_facade import (
         materialize_session_to_presentation_ops,
     )
@@ -402,11 +402,10 @@ def data_builder_to_copilot_ops_gone(request: Request, session_id: str):
 @router.post("/builder/sessions/{session_id}/preview")
 def data_builder_preview(request: Request, session_id: str):
     """Força prévia tabular do rascunho (sob demanda)."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request, permission=TV_WRITE)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
 
     result = TvDataBuilderService(_catalog).preview(

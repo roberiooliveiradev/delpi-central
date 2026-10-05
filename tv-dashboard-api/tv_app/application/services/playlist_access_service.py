@@ -55,10 +55,12 @@ class PlaylistAccessService:
             return PlaylistAccess(level="none")
 
         # Admin do módulo / superadmin: acesso total; órfã recebe dono na abertura (suporte).
+        # Service principals nunca assumem ownership — claim só para principal humano.
         if can(user, TV_ADMIN):
             actor = self.actor_id(user)
+            is_human = getattr(user, "principal_type", "user") == "user"
             owner = str(playlist.get("ownerUserId") or playlist.get("createdBy") or "").strip()
-            if not owner and actor:
+            if not owner and actor and is_human:
                 claimed = self._repo.try_claim_owner(playlist_id, actor)
                 if claimed:
                     return PlaylistAccess(level="owner", playlist=claimed)

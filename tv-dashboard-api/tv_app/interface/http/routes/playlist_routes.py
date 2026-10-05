@@ -37,7 +37,12 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistRepository,
 )
 from tv_app.interface.http.auth_http import resolve_user
-from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+from tv_app.interface.http.playlist_access_http import (
+    arequire_governed_write,
+    is_access_error,
+    require_governed_write,
+    require_playlist_access,
+)
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 _repo = PlaylistRepository()
@@ -153,11 +158,10 @@ def list_playlists(request: Request, limit: int = 50, offset: int = 0):
 
 @router.post("")
 def create_playlist(request: Request, body: CreatePlaylistBody):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     created_by = _actor_id(user)
     if not created_by:
         return fail("Usuário não identificado.", 401)
@@ -175,11 +179,10 @@ def create_playlist(request: Request, body: CreatePlaylistBody):
 @router.post("/edit-invites/accept")
 def accept_edit_invite(request: Request, body: RedeemEditInviteBody):
     """Resgata invite: grava share com o user_id do JWT (não usa e-mail)."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_READ)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request, permission=TV_READ)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
@@ -207,11 +210,10 @@ def accept_edit_invite(request: Request, body: RedeemEditInviteBody):
 @router.post("/import/preview")
 async def import_deck_preview(request: Request, file: UploadFile = File(...)):
     """Valida pacote MDD (`.mdd` / Minha Delpi Deck) e devolve relatório + importToken."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = await arequire_governed_write(request)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     if not _actor_id(user):
         return fail("Usuário não identificado.", 401)
     raw = await file.read()
@@ -222,11 +224,10 @@ async def import_deck_preview(request: Request, file: UploadFile = File(...)):
 @router.post("/import/apply")
 def import_deck_apply(request: Request, body: ApplyDeckImportBody):
     """Aplica pacote pré-visualizado (cria programação inativa por padrão)."""
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
+    guarded = require_governed_write(request)
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     created_by = _actor_id(user)
     if not created_by:
         return fail("Usuário não identificado.", 401)
@@ -483,14 +484,13 @@ def download_qr(request: Request, playlist_id: UUID):
 
 @router.post("/{playlist_id}/duplicate")
 def duplicate_playlist(request: Request, playlist_id: UUID):
+    write_guard = require_governed_write(request)
+    if is_access_error(write_guard):
+        return write_guard
+    user, _ = write_guard
     guarded = require_playlist_access(request, playlist_id, need="read")
     if is_access_error(guarded):
         return guarded
-    user, _ = guarded
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
     created_by = _actor_id(user)
     if not created_by:
         return fail("Usuário não identificado.", 401)
