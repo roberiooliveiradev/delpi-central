@@ -1453,8 +1453,9 @@ class OperationalCapabilityOrchestrator:
         except CapabilityProviderError as exc:
             _logger.info(
                 "orchestration stage=execute decision=error "
-                "error_code=%s correlation_id=%s",
+                "error_code=%s detail=%s correlation_id=%s",
                 exc.code,
+                exc.message[:240],
                 correlation,
             )
             return _error_attempt(correlation, exc)
@@ -2124,6 +2125,13 @@ class OperationalCapabilityOrchestrator:
                 group, remote_name, dict(arguments), correlation
             )
         except CapabilityProviderError as exc:
+            _logger.info(
+                "orchestration stage=act_invoke decision=error "
+                "error_code=%s detail=%s correlation_id=%s",
+                exc.code,
+                exc.message[:240],
+                correlation,
+            )
             return _error_attempt(correlation, exc)
         projection = project_write_outcome(
             capability_ref=capability_ref,
