@@ -2086,12 +2086,22 @@ class OperationalCapabilityOrchestrator:
             input_text, groups, workspace_context
         )
         if group_key is None or group_key not in groups:
+            _logger.info(
+                "orchestration stage=select_group decision=none "
+                "groups=%d",
+                len(groups),
+            )
             return None
         group = groups[group_key]
         descriptor = self._select_capability(
             input_text, group, workspace_context
         )
         if descriptor is None:
+            _logger.info(
+                "orchestration stage=select_capability decision=none "
+                "group=%s",
+                group_key,
+            )
             return None
         return group_key, descriptor
 
