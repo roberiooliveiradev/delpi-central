@@ -194,8 +194,9 @@ class TvPresentationWriteService:
         existing = current.get("dataDefaults")
         if not isinstance(existing, dict):
             existing = {}
-        cleaned = _sanitize_playlist_data_defaults(data_defaults)
-        self._assert_data_defaults_expressions(playlist_id, cleaned)
+        cleaned = self.validate_playlist_data_defaults_write(
+            playlist_id, data_defaults
+        )
         if replace:
             next_defaults = normalize_period_params_for_persistence(cleaned)
         else:
@@ -540,10 +541,54 @@ class TvPresentationWriteService:
                 code="RESOURCE_NOT_FOUND",
             ) from exc
 
+    def validate_playlist_data_defaults_write(
+        self,
+        playlist_id: UUID | None,
+        data_defaults: dict[str, Any],
+        *,
+        slides: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Gate canônico de escrita para ``playlist.dataDefaults``.
+
+        Pipeline único compartilhado por PresentationMutation, HTTP PATCH e
+        import MDD: sanitize (scalar|ExpressionSpec) → validação de expressão
+        contra as rotas consumidoras da programação. Retorna o mapa limpo sem
+        merge/normalização de período — o chamador aplica a semântica da
+        camada (``merge_period_params_layer`` para patch incremental,
+        ``normalize_period_params_for_persistence`` para replace).
+        ``slides`` sobrescreve a leitura de slides persistidos (import MDD
+        valida contra os slides do próprio pacote, ainda não persistidos).
+        """
+        cleaned = _sanitize_playlist_data_defaults(data_defaults)
+        self._assert_data_defaults_expressions(
+            playlist_id, cleaned, slides=slides
+        )
+        return cleaned
+
+    def prepare_playlist_data_defaults_write(
+        self,
+        playlist_id: UUID | None,
+        data_defaults: dict[str, Any],
+        *,
+        slides: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Gate para writes replace de ``playlist.dataDefaults`` fora do
+        pipeline PresentationMutation (PATCH /playlists, import MDD).
+
+        O retorno é o estado persistido final: sanitizado, validado e com
+        período normalizado para persistência."""
+        return normalize_period_params_for_persistence(
+            self.validate_playlist_data_defaults_write(
+                playlist_id, data_defaults, slides=slides
+            )
+        )
+
     def _assert_data_defaults_expressions(
         self,
-        playlist_id: UUID,
+        playlist_id: UUID | None,
         data_defaults: dict[str, Any],
+        *,
+        slides: list[dict[str, Any]] | None = None,
     ) -> None:
         """ExpressionSpec em dataDefaults: chave precisa existir no
         paramSchema de ≥1 rota consumidora do playlist (blocks + inputs de
@@ -564,7 +609,13 @@ class TvPresentationWriteService:
             return
         catalog = TvDataRouteCatalogService()
         routes: list[dict[str, Any]] = []
-        for slide in self._repo.list_slides(playlist_id):
+        if slides is not None:
+            source_slides = slides
+        elif playlist_id is not None:
+            source_slides = self._repo.list_slides(playlist_id)
+        else:
+            source_slides = []
+        for slide in source_slides:
             if not isinstance(slide, dict):
                 continue
             cfg = slide.get("nativeConfig")

@@ -609,6 +609,22 @@ class TvDeckPackageService:
             asset_id_map,
         )
         remapped_defaults = playlist_payload.get("dataDefaults") or {}
+        if isinstance(remapped_defaults, dict) and remapped_defaults:
+            # Mesmo gate canônico do PATCH/PresentationMutation — valida contra
+            # as rotas dos slides do próprio pacote (ainda não persistidos).
+            from tv_app.application.services.tv_presentation_write_service import (
+                PresentationWriteError,
+                TvPresentationWriteService,
+            )
+
+            try:
+                remapped_defaults = TvPresentationWriteService(
+                    repo=self._playlists
+                ).prepare_playlist_data_defaults_write(
+                    None, remapped_defaults, slides=slides_payload
+                )
+            except PresentationWriteError as exc:
+                raise TvDeckPackageError(str(exc)) from exc
 
         updated = self._playlists.update(
             new_playlist_id,

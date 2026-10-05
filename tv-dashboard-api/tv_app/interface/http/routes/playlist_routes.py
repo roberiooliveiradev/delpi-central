@@ -28,7 +28,10 @@ from tv_app.application.services.tv_deck_package_service import (
     TvDeckPackageError,
     TvDeckPackageService,
 )
-from tv_app.application.services.tv_presentation_write_service import TvPresentationWriteService
+from tv_app.application.services.tv_presentation_write_service import (
+    PresentationWriteError,
+    TvPresentationWriteService,
+)
 from tv_app.application.services.viewport_profile_service import normalize_playlist_viewport_update
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_ADMIN, TV_READ, TV_WRITE, assert_permission, can
@@ -302,6 +305,11 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
     except ValueError as exc:
         return fail(str(exc), 400)
     try:
+        data_defaults = body.dataDefaults
+        if data_defaults is not None:
+            data_defaults = _writes.prepare_playlist_data_defaults_write(
+                playlist_id, data_defaults
+            )
         playlist = _repo.update(
             playlist_id,
             actor_user_id=actor,
@@ -316,9 +324,11 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
             default_duration_sec=body.defaultDurationSec,
             playback_mode=body.playbackMode,
             global_refresh_sec=body.globalRefreshSec,
-            data_defaults=body.dataDefaults,
+            data_defaults=data_defaults,
             master_config=body.masterConfig,
         )
+    except PresentationWriteError as exc:
+        return fail(exc.message, exc.status_code, data=exc.details or None)
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     _with_public_url(playlist)

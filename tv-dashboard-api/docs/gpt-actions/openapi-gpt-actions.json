@@ -3103,7 +3103,7 @@
                                 },
                                 "dataFilters": {
                                   "type": "object",
-                                  "description": "Slide-level data filters as a primitive param map.",
+                                  "description": "Slide-level data filters: literais escalares ou ParamExpression canônica {expression:{version:1,expression:<AST CompiledExpression>}}; null = unset. Chaves do union paramSchema das rotas consumidas pela tela (bindings + inputs de DataModel).",
                                   "additionalProperties": {
                                     "oneOf": [
                                       {
@@ -3117,6 +3117,90 @@
                                       },
                                       {
                                         "type": "boolean"
+                                      },
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "object",
+                                        "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
+                                        "required": [
+                                          "expression"
+                                        ],
+                                        "properties": {
+                                          "expression": {
+                                            "type": "object",
+                                            "required": [
+                                              "version",
+                                              "expression"
+                                            ],
+                                            "properties": {
+                                              "version": {
+                                                "const": 1,
+                                                "type": "integer"
+                                              },
+                                              "expression": {
+                                                "type": "object",
+                                                "description": "CompiledExpression AST node {kind,value,children}.",
+                                                "required": [
+                                                  "kind"
+                                                ],
+                                                "properties": {
+                                                  "kind": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "literal",
+                                                      "identifier",
+                                                      "call",
+                                                      "binary",
+                                                      "unary",
+                                                      "if",
+                                                      "list"
+                                                    ]
+                                                  },
+                                                  "value": {
+                                                    "oneOf": [
+                                                      {
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "type": "number"
+                                                      },
+                                                      {
+                                                        "type": "integer"
+                                                      },
+                                                      {
+                                                        "type": "boolean"
+                                                      },
+                                                      {
+                                                        "type": "null"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "object",
+                                                      "description": "Nested CompiledExpression AST node.",
+                                                      "required": [
+                                                        "kind"
+                                                      ],
+                                                      "properties": {
+                                                        "kind": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "additionalProperties": true
+                                                    }
+                                                  }
+                                                },
+                                                "additionalProperties": false
+                                              }
+                                            },
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "additionalProperties": false
                                       }
                                     ]
                                   }
@@ -3169,8 +3253,107 @@
                             },
                             "dataDefaults": {
                               "type": "object",
-                              "additionalProperties": true,
-                              "description": "Defaults da programação (merge). Keys tipadas: branch/filial, dateRangePreset, start_date/end_date, periodDays, competence, etc.",
+                              "additionalProperties": {
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "integer"
+                                  },
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "object",
+                                    "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
+                                    "required": [
+                                      "expression"
+                                    ],
+                                    "properties": {
+                                      "expression": {
+                                        "type": "object",
+                                        "required": [
+                                          "version",
+                                          "expression"
+                                        ],
+                                        "properties": {
+                                          "version": {
+                                            "const": 1,
+                                            "type": "integer"
+                                          },
+                                          "expression": {
+                                            "type": "object",
+                                            "description": "CompiledExpression AST node {kind,value,children}.",
+                                            "required": [
+                                              "kind"
+                                            ],
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string",
+                                                "enum": [
+                                                  "literal",
+                                                  "identifier",
+                                                  "call",
+                                                  "binary",
+                                                  "unary",
+                                                  "if",
+                                                  "list"
+                                                ]
+                                              },
+                                              "value": {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "string"
+                                                  },
+                                                  {
+                                                    "type": "number"
+                                                  },
+                                                  {
+                                                    "type": "integer"
+                                                  },
+                                                  {
+                                                    "type": "boolean"
+                                                  },
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ]
+                                              },
+                                              "children": {
+                                                "type": "array",
+                                                "items": {
+                                                  "type": "object",
+                                                  "description": "Nested CompiledExpression AST node.",
+                                                  "required": [
+                                                    "kind"
+                                                  ],
+                                                  "properties": {
+                                                    "kind": {
+                                                      "type": "string"
+                                                    }
+                                                  },
+                                                  "additionalProperties": true
+                                                }
+                                              }
+                                            },
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              },
+                              "description": "Defaults da programação (merge): literais escalares ou ParamExpression canônica (ExpressionSpec v1, mesmo contrato de patch_data_source_params). Keys tipadas: branch/filial, dateRangePreset, start_date/end_date, periodDays, competence, etc.",
                               "properties": {
                                 "branch": {
                                   "type": "string"
