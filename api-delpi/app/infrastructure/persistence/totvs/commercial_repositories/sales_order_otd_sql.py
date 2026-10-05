@@ -7,6 +7,7 @@ from app.application.dto.commercial.get_sales_order_otd_panel_request import (
 )
 from app.domain.totvs.protheus_customer_center import (
     CUSTOMER_CENTER_ALIAS,
+    customer_center_classification_join_sql,
     customer_center_link_sql,
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
@@ -45,6 +46,27 @@ def sales_order_otd_center_join(customer_centers: Optional[list[str]]) -> str:
     if not customer_centers:
         return ""
     return customer_center_link_sql(
+        product_column="C6.C6_PRODUTO",
+        customer_column="C5.C5_CLIENTE",
+        store_column="C5.C5_LOJACLI",
+    )
+
+
+def sales_order_otd_center_resolution_join(
+    customer_centers: Optional[list[str]],
+) -> str:
+    """Join that makes ``customer_center`` resolvable in projections.
+
+    INNER link when the ``customer_centers`` filter is active (same behavior as
+    ``sales_order_otd_center_join``); otherwise a LEFT grouped link so lines
+    without a product-customer link keep flowing with ``customer_center`` NULL.
+    The grouped subquery is 1:1 per product+customer+store, so it never
+    multiplies fact lines and never changes OTD/fulfillment counts.
+    """
+    filter_join = sales_order_otd_center_join(customer_centers)
+    if filter_join:
+        return filter_join
+    return customer_center_classification_join_sql(
         product_column="C6.C6_PRODUTO",
         customer_column="C5.C5_CLIENTE",
         store_column="C5.C5_LOJACLI",

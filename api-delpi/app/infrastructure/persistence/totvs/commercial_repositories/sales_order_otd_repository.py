@@ -28,6 +28,7 @@ from app.infrastructure.persistence.totvs.commercial_repositories.sales_order_ot
     build_sales_order_otd_worst_delays_sql,
     compose_sales_order_otd_lines_params,
     sales_order_otd_center_join,
+    sales_order_otd_center_resolution_join,
     sales_order_otd_search_params,
 )
 from app.infrastructure.persistence.totvs.pagination import paginate
@@ -73,6 +74,12 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
     @staticmethod
     def _center_join(request) -> str:
         return sales_order_otd_center_join(getattr(request, "customer_centers", None))
+
+    @staticmethod
+    def _center_resolution_join(request) -> str:
+        return sales_order_otd_center_resolution_join(
+            getattr(request, "customer_centers", None)
+        )
 
     def get_sales_order_otd(self, request: SalesOrderOtdRequest) -> SalesOrderOtd:
         where_clause, where_params = build_sales_order_otd_filters(
@@ -142,7 +149,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
         sql, reference_params = build_sales_order_otd_analysis_by_customer_sql(
             where_clause=where_clause,
             reference_end_date=request.end_date,
-            center_join=self._center_join(request),
+            center_join=self._center_resolution_join(request),
         )
         with self:
             rows = self.execute_query(sql, reference_params + where_params) or []
@@ -192,7 +199,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
             where_clause=where_clause,
             request=request,
             reference_end_date=request.end_date,
-            center_join=self._center_join(request),
+            center_join=self._center_resolution_join(request),
         )
 
         count_params = compose_sales_order_otd_lines_params(
@@ -263,12 +270,12 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
         worst_sql, _ = build_sales_order_otd_worst_delays_sql(
             where_clause=where_clause,
             reference_end_date=request.end_date,
-            center_join=self._center_join(request),
+            center_join=self._center_resolution_join(request),
         )
         upcoming_sql, _ = build_sales_order_otd_upcoming_promises_sql(
             where_clause=where_clause,
             reference_end_date=request.end_date,
-            center_join=self._center_join(request),
+            center_join=self._center_resolution_join(request),
         )
         with self:
             recurring = self.execute_query(recurring_sql, params) or []
@@ -297,7 +304,7 @@ class SalesOrderOtdRepository(BaseRepository, SalesOrderOtdRepositoryPort):
         )
         sql = build_sales_order_otd_line_detail_sql(
             where_clause=where_clause,
-            center_join=self._center_join(request),
+            center_join=self._center_resolution_join(request),
         )
         params = compose_sales_order_otd_lines_params(
             where_params=where_params,

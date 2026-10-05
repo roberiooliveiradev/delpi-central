@@ -1,6 +1,6 @@
 # OTD de pedidos de venda — `/commercial/sales-order-otd`
 
-**Última atualização:** 2026-09-21  
+**Última atualização:** 2026-10-05
 **Operação OpenAPI:** `get_sales_order_otd` (+ `…/summary`, `…/panel`, `…/series`, `…/lines/{…}`)  
 **Repositório:** `app/infrastructure/persistence/totvs/commercial_repositories/sales_order_otd_repository.py`  
 **SQL:** `sales_order_otd_sql.py`
@@ -28,7 +28,7 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `customer_segment` | `weg` (cliente `000001`) ou `new_business` (demais clientes). |
 | `customer_codes` | CSV de códigos TOTVS a incluir (todas as lojas do código). |
 | `customer_code_stores` | CSV de pares `codigo\|loja` (ex.: `000001\|01,000001\|05`). **AND** com `customer_codes` quando ambos vêm. |
-| `customer_centers` | CSV de centros do cliente na amarração produto–cliente (`SA7.A7_XCENT`), ex.: `1320,1505`. O join só entra quando o parâmetro vem preenchido. Dois centros na mesma loja não se misturam. Ver [centro-cliente.md](./padroes-totvs/centro-cliente.md). |
+| `customer_centers` | CSV de centros do cliente na amarração produto–cliente (`SA7.A7_XCENT`), ex.: `1320,1505`. Com o parâmetro preenchido o link vira `INNER JOIN` e restringe as linhas; sem ele as projeções usam `LEFT JOIN` apenas para **resolver** a coluna. Dois centros na mesma loja não se misturam. Ver [centro-cliente.md](./padroes-totvs/centro-cliente.md). |
 | `customer_names` / `exclude_customer_*` | Include/exclude por nome (LIKE) ou código. |
 | `status` (panel) | `on_time` \| `late` (opcional). |
 | `search` (panel) | Busca em pedido, cliente (código/nome), produto (código/descrição). |
@@ -44,7 +44,7 @@ GET /commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}
 | `SC6010` (C6) | Itens do pedido de venda |
 | `SC5010` (C5) | Cabeçalho do pedido (cliente, segmento) |
 | `SA1010` (A1) | Cliente — `A1_NOME`, `A1_NREDUZ` (nome reduzido) |
-| `SA7010` (A7) | Centro do cliente (`A7_XCENT`), só quando `customer_centers` vem preenchido |
+| `SA7010` (A7) | Centro do cliente (`A7_XCENT`) — `INNER JOIN` quando `customer_centers` filtra; `LEFT JOIN` agrupado nas projeções que expõem `customer_center` |
 | `SB1010` (B1) | Produto — fallback de UM (`B1_UM`) e descrição |
 
 Leitura analítica com `WITH (NOLOCK)`.
@@ -108,7 +108,7 @@ Painel — campos de linha relevantes:
 | `customer_code` | `C5.C5_CLIENTE` |
 | `customer_store` | `C5.C5_LOJACLI` (loja do cliente) |
 | `customer_name` | Preferência `SA1.A1_NREDUZ`; se vazio, `SA1.A1_NOME` |
-| `customer_center` | Nas agregações por cliente (`by-customer`, `series-by-customer`), preenchido só quando o grupo código+loja tem um único `A7_XCENT`. Dois centros na mesma loja permanecem um grupo com o campo nulo. No **painel de linhas**, o join SA7 (e portanto o valor da coluna) só entra quando o filtro `customer_centers` está ativo; sem filtro a coluna vem nula. |
+| `customer_center` | `SA7.A7_XCENT` do link produto+cliente+loja da linha. Em **grão de linha** (painel `lines`, `insights.worstDelays`, `insights.upcomingPromises`, detalhe `/lines/{…}`) vem preenchido sempre que existir amarração (`NULL` quando a linha não tem link ou o link tem `A7_XCENT` vazio). Nas **agregações por cliente** (`by-customer`, `series-by-customer`), preenchido só quando o grupo código+loja tem um único centro; dois centros na mesma loja permanecem um grupo com o campo nulo. Agregados sem dimensão de cliente (`/sales-order-otd`, `/summary`, `/by-branch`, `/series`) não expõem o campo. |
 | `customer_short_name` | `SA1.A1_NREDUZ` (nome reduzido do **cliente**) |
 | `unit` | `C6.C6_UM` com fallback `B1.B1_UM` (sem conversão) |
 | `days_diff` | Dias entre promessa e fatura (ou data de referência se aberta) |
@@ -127,6 +127,7 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 
 | Data | Alteração |
 |------|-----------|
+| 2026-10-05 | `customer_center` passa a ser resolvido sempre nas projeções com grão de linha ou cliente+loja (LEFT JOIN SA7 agrupado quando não há filtro de centro); antes só vinha preenchido quando `customer_centers` estava ativo. Filtro e fórmulas inalterados. |
 | 2026-09-17 | Aberto sem fatura: atraso só com `GETDATE() > C6_ENTREG` (não no próprio dia prometido); referência de aberto = calendário, não `end_date` do bucket. |
 | 2026-09-17 | (superado) Tentativa com `ref >= C6_ENTREG` — revertida: dia prometido ainda não é atraso. |
 | 2026-08-28 | Hub `GET /commercial/sales-order-otd/summary` (`get_sales_order_otd_summary`): realizado + meta SI para TV. |

@@ -16,11 +16,13 @@ def _customer_row(
     otd_pct: float,
     store: str = "01",
     branch: str = "01",
+    center=None,
 ) -> dict:
     return {
         "customer_code": code,
         "customer_store": store,
         "customer_name": name,
+        "customer_center": center,
         "branch": branch,
         "total_lines": 2,
         "total_qty": total_qty,
@@ -185,3 +187,71 @@ def test_series_by_customer_centers_skip_top_customers(_mock_get, _mock_set) -> 
     req = repository.list_sales_order_otd_analysis_by_customer.call_args.args[0]
     assert req.customer_centers == ["1320"]
     assert req.customer_codes is None
+
+
+@patch(_CACHE_SET)
+@patch(_CACHE_GET, return_value=None)
+def test_series_by_customer_propagates_customer_center(_mock_get, _mock_set) -> None:
+    repository = MagicMock()
+    repository.list_sales_order_otd_analysis_by_customer.return_value = [
+        _customer_row(
+            code="000001",
+            name="WEG AMAZONIA",
+            total_qty=10.0,
+            otd_pct=90.0,
+            store="06",
+            center="1700",
+        ),
+        _customer_row(
+            code="000001",
+            name="WEG LINHARES",
+            total_qty=8.0,
+            otd_pct=80.0,
+            store="09",
+            center="1106",
+        ),
+    ]
+    use_case = GetSalesOrderOtdSeriesByCustomerUseCase(
+        sales_order_otd_repository=repository
+    )
+    result = use_case.execute(
+        GetSalesOrderOtdSeriesByCustomerRequest(
+            granularity="week",
+            date_start="2026-08-03",
+            date_end="2026-08-09",
+            customer_code_stores=[("000001", "06"), ("000001", "09")],
+        )
+    )
+    centers = {(i["customer_store"], i["customer_center"]) for i in result["items"]}
+    assert centers == {("06", "1700"), ("09", "1106")}
+
+
+@patch(_CACHE_SET)
+@patch(_CACHE_GET, return_value=None)
+def test_series_by_customer_keeps_null_center_on_ambiguous_group(
+    _mock_get, _mock_set
+) -> None:
+    repository = MagicMock()
+    repository.list_sales_order_otd_analysis_by_customer.return_value = [
+        _customer_row(
+            code="000001",
+            name="WEG MULTI",
+            total_qty=10.0,
+            otd_pct=90.0,
+            store="11",
+            center=None,
+        ),
+    ]
+    use_case = GetSalesOrderOtdSeriesByCustomerUseCase(
+        sales_order_otd_repository=repository
+    )
+    result = use_case.execute(
+        GetSalesOrderOtdSeriesByCustomerRequest(
+            granularity="week",
+            date_start="2026-08-03",
+            date_end="2026-08-09",
+            customer_centers=["1106", "1320"],
+        )
+    )
+    assert result["items"][0]["customer_store"] == "11"
+    assert result["items"][0]["customer_center"] is None

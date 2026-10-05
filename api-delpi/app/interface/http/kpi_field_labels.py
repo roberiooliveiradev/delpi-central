@@ -225,6 +225,7 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "customer_code": "Código cliente",
     "customer_name": "Cliente",
     "customer_short_name": "Nome reduzido",
+    "customer_center": "Centro do cliente",
     "order_number": "Pedido",
     "line_item": "Item",
     "product_code": "Produto",
