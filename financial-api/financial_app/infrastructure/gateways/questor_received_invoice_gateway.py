@@ -1,8 +1,12 @@
-"""Adapter do portal Questor Zen para NF-e de entrada e DANFE.
+"""Adapter do portal Questor Zen para NF-e de entrada, DANFE e XML.
 
-Os paths `/cliente/nfe/listagem` e `/cliente/nfe/pegarpdfdenfe` foram
-identificados no portal, não numa API pública versionada. A sessão HTTP é
-da filial e pode ser compartilhada com a NFS-e.
+Os paths abaixo foram identificados no portal, não numa API pública versionada:
+
+- `GET /cliente/nfe/listagem`
+- `GET /cliente/nfe/pegarpdfdenfe`
+- `GET /cliente/transferenciaArquivo/download` (XML; Id=XmlFilename, IdEntity=row.Id)
+
+A sessão HTTP é da filial e pode ser compartilhada com a NFS-e e o CT-e.
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ from financial_app.domain.errors import (
     QuestorInvalidResponse,
     QuestorUnavailable,
 )
+from financial_app.domain.nfe_export import NfeExportListingPage, QuestorNfeListing
 from financial_app.domain.received_invoice import (
     ReceivedInvoice,
     ReceivedInvoicePage,
@@ -28,10 +33,14 @@ from financial_app.infrastructure.gateways.questor_company_session import (
     QuestorCompanySession,
     _QuestorLogRedactionFilter,
 )
+from financial_app.infrastructure.xml.nfse_standard_xml import xml_inspection_sample
 
 _LIST_PATH = "/cliente/nfe/listagem"
 _DANFE_PATH = "/cliente/nfe/pegarpdfdenfe/"
+_XML_PATH = "/cliente/transferenciaArquivo/download"
 _DANFE_SIZE_ERROR = "O DANFE excede o tamanho máximo permitido."
+_XML_SIZE_ERROR = "O XML da NF-e excede o tamanho máximo permitido."
+_HEX_24 = re.compile(r"^[0-9a-fA-F]{24}$")
 _ISSUER_CNPJ_KEYS = (
     "IssuerFederalRegistration",
     "IssuerCnpj",
@@ -106,6 +115,54 @@ class QuestorReceivedInvoiceGateway:
                 raise QuestorAuthenticationError("Não foi possível autenticar no Questor Zen.")
         return _validate_pdf(status, body)
 
+    def list_nfe_export_page(self, query: ReceivedInvoiceQuery) -> NfeExportListingPage:
+        """Listagem NF-e para exportação. Preserva row.Id e XmlFilename."""
+
+        payload = self._session.get_json("nfe.list", _LIST_PATH, self._list_params(query))
+        items = tuple(
+            self._map_export_row(row)
+            for row in payload.get("aaData") or []
+            if isinstance(row, dict)
+        )
+        total = _as_int(
+            payload.get("iTotalDisplayRecords"),
+            _as_int(payload.get("iTotalRecords"), len(items)),
+        )
+        return NfeExportListingPage(total_items=total, items=items)
+
+    def download_nfe_xml(self, *, provider_file_id: str, provider_document_id: str) -> bytes:
+        """Baixa o XML da NF-e na sessão da filial.
+
+        Id é o XmlFilename. IdEntity é o Id da linha. Os dois não se substituem.
+        """
+
+        params = {
+            "Id": _hex24(provider_file_id, "Identificador do arquivo da NF-e inválido."),
+            "IdEntity": _hex24(provider_document_id, "Identificador da NF-e inválido."),
+        }
+        status, body = self._session.get_bytes(
+            "nfe.xml",
+            _XML_PATH,
+            params,
+            size_error=_XML_SIZE_ERROR,
+        )
+        if _xml_needs_reauth(status, body):
+            self._session.force_reauthenticate()
+            status, body = self._session.get_bytes(
+                "nfe.xml",
+                _XML_PATH,
+                params,
+                size_error=_XML_SIZE_ERROR,
+            )
+            if _xml_needs_reauth(status, body):
+                raise QuestorAuthenticationError("Não foi possível autenticar no Questor Zen.")
+        _validate_nfe_xml_payload(status, body, self._session.max_bytes)
+        return body
+
+    @property
+    def branch_code(self) -> str:
+        return self._session.branch_code
+
     def _http(self) -> httpx.Client:
         return self._session.http()
 
@@ -143,6 +200,18 @@ class QuestorReceivedInvoiceGateway:
             manifestation_code=_text(row.get("Manifestation")),
             manifestation_description=_text(row.get("ManifestationDescription")),
             danfe_available=_flag(row.get("XmlDanfe")),
+            branch_code=self._session.branch_code,
+        )
+
+    def _map_export_row(self, row: dict[str, Any]) -> QuestorNfeListing:
+        return QuestorNfeListing(
+            provider_file_id=_text(row.get("XmlFilename")),
+            provider_entity_id=_text(row.get("Id")),
+            access_key=_text(row.get("Number")),
+            invoice_number=_text(row.get("NfeNumber")),
+            series=_text(row.get("Serie")),
+            issuer_cnpj=_issuer_cnpj(row),
+            emission_at=_text(row.get("Emission")) or None,
             branch_code=self._session.branch_code,
         )
 
@@ -217,6 +286,35 @@ def _parse_list_payload(response: httpx.Response) -> dict[str, Any]:
     if not isinstance(payload, dict) or not isinstance(payload.get("aaData"), list):
         raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
     return payload
+
+
+def _hex24(value: str, message: str) -> str:
+    text = (value or "").strip()
+    if not _HEX_24.fullmatch(text):
+        raise QuestorInvalidResponse(message)
+    return text
+
+
+def _xml_needs_reauth(status: int, body: bytes) -> bool:
+    if status in {401, 403}:
+        return True
+    sample = xml_inspection_sample(body)[:240].lower()
+    return sample.startswith(b"<html") or sample.startswith(b"<!doctype") or sample.startswith(b"<head")
+
+
+def _validate_nfe_xml_payload(status: int, body: bytes, max_bytes: int) -> None:
+    if status == 404:
+        raise QuestorDocumentNotFound("XML da NF-e não encontrado.")
+    if status >= 500:
+        raise QuestorUnavailable("Não foi possível consultar o Questor Zen.")
+    if status >= 400 or len(body) > max_bytes:
+        raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
+    sample = xml_inspection_sample(body)
+    if not sample.startswith(b"<"):
+        raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
+    folded = body.upper()
+    if b"<!DOCTYPE" in folded or b"<!ENTITY" in folded:
+        raise QuestorInvalidResponse("O XML da NF-e foi recusado por segurança.")
 
 
 def _validate_pdf(status: int, body: bytes) -> bytes:

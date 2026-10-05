@@ -47,3 +47,15 @@ class QuestorInvalidResponse(FinancialError):
 
 class QuestorDocumentNotFound(FinancialError):
     """DANFE inexistente quando o provider deixa isso inequívoco."""
+
+
+class NfeExportConfigurationError(FinancialError):
+    """Configuração do exporter de XML NF-e inválida. Nenhum arquivo é gravado."""
+
+
+class NfeXmlRejected(InvalidReceivedInvoiceQuery):
+    """XML de NF-e recusado por identidade fiscal, sem incluir o documento no erro."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code

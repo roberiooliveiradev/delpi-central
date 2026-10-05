@@ -2748,6 +2748,69 @@ services:
     networks:
       - delpi-network
 
+  # Exporter de XML NF-e. Profile nfe-export: não sobe no up padrão.
+  # ENABLED default false. O bind inicial aponta para delpi-test, não para inn.
+  financial-nfe-exporter:
+    profiles:
+      - nfe-export
+    build:
+      context: ..
+      dockerfile: financial-api/Dockerfile
+
+    container_name: delpi-financial-nfe-exporter
+    restart: unless-stopped
+    command:
+      ["python", "-m", "financial_app.jobs.questor_nfe_xml_export", "worker"]
+
+    env_file:
+      - .env
+
+    environment:
+      FIN_RUN_MIGRATIONS_ON_STARTUP: "false"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      TZ: ${TZ:-America/Sao_Paulo}
+
+      FIN_QUESTOR_BASE_URL: ${FIN_QUESTOR_BASE_URL:-https://alliance.app.questorpublico.com.br}
+      FIN_QUESTOR_API_TOKEN: ${FIN_QUESTOR_API_TOKEN:-}
+      FIN_QUESTOR_COMPANY_01_ID: ${FIN_QUESTOR_COMPANY_01_ID:-}
+      FIN_QUESTOR_COMPANY_02_ID: ${FIN_QUESTOR_COMPANY_02_ID:-}
+      FIN_QUESTOR_TIMEOUT_SECONDS: ${FIN_QUESTOR_TIMEOUT_SECONDS:-30}
+      FIN_QUESTOR_DANFE_MAX_BYTES: ${FIN_QUESTOR_DANFE_MAX_BYTES:-10485760}
+
+      FIN_QUESTOR_NFE_EXPORT_ENABLED: ${FIN_QUESTOR_NFE_EXPORT_ENABLED:-false}
+      FIN_QUESTOR_NFE_EXPORT_DIR: /exports/protheus-nfe
+      FIN_QUESTOR_NFE_EXPORT_INTERVAL_SECONDS: ${FIN_QUESTOR_NFE_EXPORT_INTERVAL_SECONDS:-900}
+      FIN_QUESTOR_NFE_EXPORT_START_DATE: ${FIN_QUESTOR_NFE_EXPORT_START_DATE:-2026-10-02}
+      FIN_QUESTOR_NFE_EXPORT_SCAN_PAGE_SIZE: ${FIN_QUESTOR_NFE_EXPORT_SCAN_PAGE_SIZE:-100}
+      FIN_QUESTOR_NFE_EXPORT_MAX_PAGES: ${FIN_QUESTOR_NFE_EXPORT_MAX_PAGES:-1000}
+      FIN_QUESTOR_NFE_XML_MAX_BYTES: ${FIN_QUESTOR_NFE_XML_MAX_BYTES:-10485760}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    volumes:
+      - ${FIN_QUESTOR_NFE_EXPORT_HOST_DIR:-/mnt/protheus-impxml/Protheus/ProtheusData/impxml/delpi-test}:/exports/protheus-nfe
+
+    depends_on:
+      postgres-plugins:
+        condition: service_healthy
+      financial-api:
+        condition: service_started
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   production-control-api:
     build:
       context: ..

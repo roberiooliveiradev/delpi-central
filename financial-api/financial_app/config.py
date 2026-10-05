@@ -1,6 +1,10 @@
 import os
+from datetime import date
 
 from dotenv import load_dotenv
+
+from financial_app.domain.errors import NfeExportConfigurationError
+from financial_app.domain.nfe_export import NfeExportSettings
 
 load_dotenv()
 
@@ -11,6 +15,13 @@ def _get_env(*names: str, default=None):
         if value is not None and value != "":
             return value
     return default
+
+
+def _env_flag(name: str, *, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None or raw == "":
+        return default
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
 
 
 class Settings:
@@ -60,6 +71,24 @@ class Settings:
     FIN_QUESTOR_DANFE_MAX_BYTES: int = int(
         _get_env("FIN_QUESTOR_DANFE_MAX_BYTES", default="10485760")
     )
+    # Exporter de XML NF-e. Permanece desligado até habilitação explícita.
+    FIN_QUESTOR_NFE_EXPORT_ENABLED: bool = _env_flag("FIN_QUESTOR_NFE_EXPORT_ENABLED", default=False)
+    FIN_QUESTOR_NFE_EXPORT_DIR: str = _get_env("FIN_QUESTOR_NFE_EXPORT_DIR", default="") or ""
+    FIN_QUESTOR_NFE_EXPORT_INTERVAL_SECONDS: int = int(
+        _get_env("FIN_QUESTOR_NFE_EXPORT_INTERVAL_SECONDS", default="900")
+    )
+    FIN_QUESTOR_NFE_EXPORT_START_DATE: str = (
+        _get_env("FIN_QUESTOR_NFE_EXPORT_START_DATE", default="") or ""
+    )
+    FIN_QUESTOR_NFE_EXPORT_SCAN_PAGE_SIZE: int = int(
+        _get_env("FIN_QUESTOR_NFE_EXPORT_SCAN_PAGE_SIZE", default="100")
+    )
+    FIN_QUESTOR_NFE_EXPORT_MAX_PAGES: int = int(
+        _get_env("FIN_QUESTOR_NFE_EXPORT_MAX_PAGES", default="1000")
+    )
+    FIN_QUESTOR_NFE_XML_MAX_BYTES: int = int(
+        _get_env("FIN_QUESTOR_NFE_XML_MAX_BYTES", default="10485760")
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
@@ -68,6 +97,39 @@ class Settings:
     PLUGINS_DB_PASSWORD: str | None = _get_env("PLUGINS_DB_PASSWORD")
     PLUGINS_DB_CONNECT_TIMEOUT: str = _get_env("PLUGINS_DB_CONNECT_TIMEOUT", default="5")
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
+
+
+def load_nfe_export_settings() -> NfeExportSettings:
+    """Lê o ambiente no momento da chamada. O default de enabled é false."""
+
+    start_raw = (os.getenv("FIN_QUESTOR_NFE_EXPORT_START_DATE") or "").strip()
+    start_date = None
+    if start_raw:
+        try:
+            start_date = date.fromisoformat(start_raw)
+        except ValueError as exc:
+            raise NfeExportConfigurationError(
+                "FIN_QUESTOR_NFE_EXPORT_START_DATE inválida."
+            ) from exc
+    return NfeExportSettings(
+        enabled=_env_flag("FIN_QUESTOR_NFE_EXPORT_ENABLED", default=False),
+        directory=(os.getenv("FIN_QUESTOR_NFE_EXPORT_DIR") or "").strip(),
+        interval_seconds=_bounded_int("FIN_QUESTOR_NFE_EXPORT_INTERVAL_SECONDS", 900),
+        start_date=start_date,
+        page_size=_bounded_int("FIN_QUESTOR_NFE_EXPORT_SCAN_PAGE_SIZE", 100),
+        max_pages=_bounded_int("FIN_QUESTOR_NFE_EXPORT_MAX_PAGES", 1000),
+        max_bytes=_bounded_int("FIN_QUESTOR_NFE_XML_MAX_BYTES", 10485760),
+    )
+
+
+def _bounded_int(name: str, default: int) -> int:
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise NfeExportConfigurationError(f"{name} inválida.") from exc
 
 
 settings = Settings()
