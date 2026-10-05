@@ -20,6 +20,7 @@ Os UUIDs ficam somente neste mapa e não são usados como nomes de arquivos.
 | 05 | Inventário de Sistemas/Rotinas | `ee4a13ab-f8df-4081-9bd2-1a2a3da13652` |
 | 06 | Matriz de Regras | `f781a8dd-8850-45d4-b2ba-17728f9a1d06` |
 | 06.1 | Regras de Negócio Consolidadas | `7899ab20-8884-42c1-9616-f0609313b677` |
+| 06.2 | Regra de Paridade Monetária da Conciliação Tripla | `8bca8036-aca7-4823-bc0a-56bf4af50524` |
 | 07 | Responsabilidades e Handoffs | `01391b02-bbe7-40cf-b041-4139392d2513` |
 | 08 | Gaps / Validação AS-IS | `a01c7e13-e01d-4904-acec-e358ad1f3e52` |
 | 09 | Exceções e Casos Reais | `83d66936-2f11-4417-ad5b-1e764bd7bda5` |
@@ -58,9 +59,11 @@ Os UUIDs ficam somente neste mapa e não são usados como nomes de arquivos.
 ## Manutenção
 
 Quando o TÉO mudar materialmente:
-1. identificar o documento editorial afetado;
-2. atualizar a documentação consolidada;
-3. manter este mapa;
+1. identificar se a mudança é evidência/descrição do processo ou se invalida uma premissa necessária da ferramenta;
+2. atualizar o documento editorial do GitHub somente quando a especificação implementável for afetada;
+3. manter este mapa quando houver novo documento/ID relevante;
 4. registrar rationale;
 5. não criar arquivo com UUID como nome;
-6. se contradizer TARGET, registrar EXECUTION_DRIFT.
+6. não copiar documentos do TÉO para o GitHub apenas para espelhamento;
+7. `AS-IS != TO-BE` por redesign aprovado não é drift;
+8. se nova evidência do processo invalidar premissa necessária do TARGET, registrar `EXECUTION_DRIFT`.

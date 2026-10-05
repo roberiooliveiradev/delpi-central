@@ -33,7 +33,7 @@ Também deve existir reprocessamento/revalidação manual para usuário autoriza
 Requer:
 - cutoff confirmado;
 - revalidação aplicável;
-- divergência operacional zero;
+- divergência monetária exatamente R$ 0,00;
 - sources necessários disponíveis.
 
 Não equivale a STOCK_CLOSED.
@@ -59,8 +59,19 @@ Se T03 provar ausência/incompatibilidade, registrar EXECUTION_DRIFT.
 ## Conciliação
 
 ```text
-Divergência = Entradas/Saídas - P7 - H02
+DIVERGENCIA = ENTRADAS_SAIDAS - P7 - H02
+PARIDADE_OK <=> DIVERGENCIA = R$ 0,00
 ```
+
+A igualdade é exata até os centavos.
+
+- R$ 0,00 = paridade;
+- R$ 0,01 = divergência;
+- R$ -0,01 = divergência;
+- R$ 0,25 = divergência;
+- qualquer resultado diferente de R$ 0,00 permanece divergente.
+
+Não existe tolerância monetária implícita ou aceitação por arredondamento. A implementação não pode usar epsilon/tolerância de ponto flutuante como regra de negócio para liberar `READY_TO_CLOSE`.
 
 Drilldown:
 - total;
@@ -82,7 +93,8 @@ Resultados estruturados devem carregar:
 - H02 indisponível;
 - P7 indisponível;
 - cutoff confirmado com source falhando;
-- divergência zero pre-cutoff;
+- divergência R$ 0,00 pre-cutoff;
+- divergência residual de R$ 0,01 ou R$ -0,01 pós-cutoff;
 - input alterado pós-revalidação;
 - estado owner atrasado;
 - unidade não aplicável.

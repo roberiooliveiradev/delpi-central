@@ -104,9 +104,24 @@ Diferença R$0,01 = UNKNOWN_CAUSE.
 
 Não inventar hidden decimals/transcription.
 
-Target final = zero / "fechar na vírgula".
+A regra corrente exige **paridade monetária exata até os centavos**:
 
-R$0,25 em Insumos = caso específico, não tolerância.
+```text
+DIVERGENCIA = ENTRADAS_SAIDAS - P7 - H02
+PARIDADE_OK <=> DIVERGENCIA = R$ 0,00
+```
+
+- R$ 0,00 = paridade;
+- R$ 0,01 = divergência;
+- R$ -0,01 = divergência;
+- R$ 0,25 = divergência;
+- qualquer valor diferente de R$ 0,00 = divergência.
+
+Não existe tolerância monetária implícita, faixa de arredondamento aceitável ou descarte de centavos.
+
+R$0,25 em Insumos permanece como caso/evidência histórica; **não é valor aceitável de fechamento**.
+
+A implementação não pode introduzir epsilon/tolerância numérica para decidir a paridade monetária. A representação técnica do valor é decisão de implementação, mas o critério de negócio continua sendo igualdade exata em centavos.
 
 Investigação: `total → grupo → item/evidência`.
 

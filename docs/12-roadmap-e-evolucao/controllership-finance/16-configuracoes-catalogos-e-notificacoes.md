@@ -52,6 +52,8 @@ Além de rejeição/reversão:
 - PACKAGE_READY;
 - PACKAGE_SENT.
 
+`READY_TO_FINALIZE` é estado do pacote. `PACKAGE_READY` é evento de notificação emitido quando esse estado é alcançado; não é um segundo estado.
+
 ## Reversão de rejeição
 
 A notificação de reversão usa os mesmos destinatários efetivos da rejeição original.
