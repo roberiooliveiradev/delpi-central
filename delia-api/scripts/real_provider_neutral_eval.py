@@ -30,6 +30,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import re
 import sys
 
 import requests
@@ -149,19 +150,33 @@ def _confirm(token: str, confirmation: dict, decision: str) -> dict:
     return _project(response)
 
 
-def _workspace() -> dict:
+def _extract_slide_id(content: str | None) -> str | None:
+    """Best-effort capture of the slide id surfaced by a bounded write
+    outcome — used only to self-clean the resource this eval creates."""
+    if not content:
+        return None
+    match = re.search(
+        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+        r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        content,
+    )
+    return match.group(0) if match else None
+
+
+def _workspace(selected_slide_id: str | None = None) -> dict:
+    slide_id = selected_slide_id or SLIDE_ID
     return {
         "host_app_id": "tv-dashboard",
         "view_ref": "deck_editor",
         "selected_entity_ref": {
             "entity_type": "slide",
-            "entity_id": SLIDE_ID,
+            "entity_id": slide_id,
             "source_system": "vista",
         },
         "entity_refs": [
             {
                 "entity_type": "slide",
-                "entity_id": SLIDE_ID,
+                "entity_id": slide_id,
                 "source_system": "vista",
             },
             {
@@ -216,30 +231,88 @@ def main() -> int:
         failures,
     )
 
-    # D. Governed write PREPARE -> REJECT (VISTA prepare_change through
-    # owner DISCOVERY -> bounded PREPARE -> structured confirmation).
-    # add_blank_slide is a real owner op requiring only target.playlistId;
-    # the workspace supplies the playlist entity ref.
+    # D. §6.132 owner-policy writes (VISTA prepare_change/commit_proposal
+    # through owner DISCOVERY -> bounded PREPARE -> deterministic policy
+    # gate). Direct ops ACT without a redundant user confirmation;
+    # destructive ops still require the structured confirmation.
+    #
+    # D1. add_blank_slide is owner-declared direct: the explicit user
+    # request is the intent record — 200 with NO confirmation surface
+    # and an owner-verified outcome note.
     prepare = _turn(
         token,
         "crie um slide em branco chamado 'teste avaliação' na playlist "
         "que estou vendo",
         workspace=_workspace(),
     )
-    report["write_prepare"] = prepare
-    confirmation = prepare.get("confirmation") or {}
+    report["write_direct_create_slide"] = prepare
+    direct_ok = (
+        prepare["http_status"] == 200
+        and not prepare.get("has_confirmation")
+    )
+    _check("write_direct_no_confirmation", direct_ok, failures)
     _check(
-        "write_prepare_confirmation_surface",
-        prepare["http_status"] == 200 and bool(confirmation),
+        "write_direct_owner_verified",
+        "verificada" in str(prepare.get("content_prefix") or "").lower(),
+        failures,
+    )
+
+    # D2. create_block type=text on the current slide — also direct;
+    # workspace context supplies the slide reference.
+    write_text = _turn(
+        token,
+        "escreva um texto 'délia deu certo' no slide atual",
+        workspace=_workspace(),
+    )
+    report["write_direct_create_text"] = write_text
+    _check(
+        "write_direct_create_text",
+        write_text["http_status"] == 200
+        and not write_text.get("has_confirmation"),
+        failures,
+    )
+
+    # D3. Destructive op (delete_slide) — explicit confirmation gate,
+    # zero ACT before it. Self-cleaning: delete the slide created by D1
+    # (never the user's selected slide). CONFIRM is sent only when the
+    # confirmation surface demonstrably binds to the created slide id;
+    # otherwise REJECT — the gate itself is the blocking evidence.
+    created_slide_id = _extract_slide_id(prepare.get("content_prefix"))
+    destructive_ws = _workspace(selected_slide_id=created_slide_id)
+    delete_probe = _turn(
+        token,
+        "apague o slide recém-criado desta playlist",
+        workspace=destructive_ws,
+    )
+    report["write_destructive_prepare"] = delete_probe
+    confirmation = delete_probe.get("confirmation") or {}
+    _check(
+        "write_destructive_requires_confirmation",
+        delete_probe["http_status"] == 200 and bool(confirmation),
         failures,
     )
     if confirmation:
-        report["write_reject"] = _confirm(token, confirmation, "REJECT")
-        _check(
-            "write_reject",
-            report["write_reject"]["http_status"] == 200,
-            failures,
-        )
+        bound_to_created = bool(created_slide_id) and created_slide_id in json.dumps(
+            confirmation
+        ) + str(delete_probe.get("content_prefix") or "")
+        if bound_to_created:
+            report["write_destructive_confirm"] = _confirm(
+                token, confirmation, "CONFIRM"
+            )
+            _check(
+                "write_destructive_confirm",
+                report["write_destructive_confirm"]["http_status"] == 200,
+                failures,
+            )
+        else:
+            report["write_destructive_reject"] = _confirm(
+                token, confirmation, "REJECT"
+            )
+            _check(
+                "write_destructive_reject",
+                report["write_destructive_reject"]["http_status"] == 200,
+                failures,
+            )
 
     # E. Fail-closed: malformed workspace payloads.
     report["malformed_workspace_missing_host"] = _turn(

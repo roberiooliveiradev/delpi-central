@@ -9336,3 +9336,108 @@ EVIDENCE (live production, 2026-10-05):
        only); playlist rename is absent from the owner catalog by
        design (no such op — truthful missing-inputs path observed);
        docs reconciliation pending.
+
+§6.132 — ARCH-DRIFT-DELIA-WRITE-CONFIRMATION-AND-OWNER-VOCABULARY-01
+    STATUS = IN_EXECUTION
+    PRODUCT_MASTER_DECISION =
+       EXPLICIT_USER_CONFIRMATION = ONLY_FOR_DESTRUCTIVE_OPERATIONS.
+       READ/ANALYSIS/PREPARE: no user confirmation. NON-DESTRUCTIVE
+       ACT: direct execution after all governance gates (fresh
+       revalidation, live AuthZ, domain authority, idempotency,
+       postcondition verification). DESTRUCTIVE ACT: explicit
+       structured user confirmation required. Contradictory/unknown
+       owner policy: FAIL CLOSED (owner contract invalid) — never
+       auto-ACT, never confirmation-as-generic-fallback.
+       Model output never determines confirmation/destructiveness.
+       DÉLIA never fakes user confirmation; audit distinguishes
+       DIRECT_POLICY_EXECUTION from EXPLICIT_USER_CONFIRMATION.
+    ROOT_DEFECT_A = DÉLIA orchestration hardcodes
+       confirmation_required=True for every READY PREPARE, and VISTA
+       owner contract forces explicit_user_confirmation/confirmation
+       for every proposal/commit regardless of owner-declared
+       confirmationPolicy (direct vs confirm). Reproduction + fix
+       per task §§11–27.
+    ROOT_DEFECT_B = create-text user goal fails despite owner mutation
+       capability. First reproduction: select_group chose
+       openapi:delpi for "escreva um texto" inside a tv-dashboard
+       workspace (SEMANTIC_SELECTION_FAILURE) — group surface lacked
+       source_system matching key; fixed by exposing group
+       source_system + workspace-domain matching instruction.
+       Residual: owner op vocabulary may not expose block-type
+       values (create_block.type is plain string) — inventory
+       per task §§31–34 before modifying.
+    PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5 phase-level=NO,
+       PRODUCTION_READINESS=NOT_PROVEN.
+
+    IMPLEMENTATION (2026-10-05, working tree on ecd9d121) =
+       DELIA orchestration.py:
+         - group summaries expose source_system; selection
+           instruction v6 binds host_app_id/source_system to
+           owner-domain matching (provider-neutral, no
+           vista-specific routing);
+         - _compact_evidence preserves bounded scalar lists
+           (<=48 items) so owner fields/requiredFields/
+           fieldVocabulary reach the model — previously any list
+           at depth>=3 collapsed to "<N items>"
+           (OWNER_VOCABULARY_COMPACTION_LOSS);
+         - _effective_confirmation_policy(): deterministic gate —
+           ops[] x owner-catalog index (risk x confirmationPolicy
+           coherence enforced); DIRECT | CONFIRM |
+           owner_policy_invalid (fail-closed WRITE_REJECTED);
+           non-envelope providers fall back to proposal
+           confirmation_requirement;
+         - _execute_prepared_act(): single governed ACT tail —
+           fresh group revalidation, capability-liveness,
+           decision gate, owner ACT, outcome projection —
+           shared by direct mode and explicit_user_confirmation
+           mode; audit emits execution_mode on every stage;
+         - _act_arguments(confirmed): confirmation field now
+           carries the real mode — no fabricated "user
+           confirmed" for direct commits.
+       VISTA owner:
+         - proposal.create_proposal derives
+           explicit_user_confirmation/requires_confirmed_true
+           from owner confirmation_policy (not hardcoded True);
+         - commit_service loads stored-proposal policy via
+           non-validating peek before idempotency acquire
+           (replay preserved: consumed proposals fall to
+           REPLAY snapshot), re-checks after authoritative
+           load, fingerprint records the caller's real
+           confirmation flag, missing/unknown policy fails
+           closed to confirmation-required;
+         - dispatch preview_change drops the direct-policy
+           commit_now confirmation pre-gate (commit service
+           enforces policy), confirm-policy commit_now stays
+           ignored with zero writes;
+         - catalog index emits fieldVocabulary only on the
+           orchestrator-facing MCP transport (Actions surface
+           keeps OpenAPI schemas as contract authority and its
+           100KiB budget); canonical block-type vocabulary
+           projected from blockDefaults + type/block.type
+           discriminator enums only — nested *.type enums
+           (background.type color/gradient) no longer pollute
+           the block vocabulary;
+         - capability_surface agent_directives and MCP tool
+           descriptions now state scoped per-operation policy
+           (direct vs confirm).
+       Tests updated to the new contract (encoding old
+       "always confirm" behavior fixed to assert
+       confirm-policy ops): test_commit_requires_confirmation
+       now uses delete_slide; commit_now tests split into
+       direct-policy-executes vs confirm-policy-ignored;
+       datamodel roundtrip ACT leg is direct-policy commit.
+       New coverage: MCP catalog fieldVocabulary exposure,
+       direct commit without confirmation, confirm-policy
+       gate, policy coherence.
+    TESTS =
+       tv-dashboard-api: 1625 passed (full suite).
+       delia-api: 760 passed (full suite, incl. new
+         direct/confirm/invalid-policy battery).
+       frontend typecheck: PREEXISTING_BASELINE_FAIL — 110
+         errors in ComunicadoBlock/TablePartStyle-adjacent
+         files untouched by this task (stash@{0} holds the
+         matching type evolution; not applied to worktree).
+       live UI acceptance: PENDING subject token
+         (DELIA_EVAL_BEARER) — eval script updated for the
+         new contract incl. self-cleaning destructive leg.
+    STILL_OPEN: commit + live acceptance + §6.132 close-out.

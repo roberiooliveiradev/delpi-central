@@ -164,6 +164,23 @@ def test_surface_has_exactly_eight_tools():
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
 
 
+def test_mcp_catalog_exposes_field_vocabulary():
+    """Orchestrator-facing catalog carries canonical enum vocabulary —
+    a provider-neutral consumer can build create_block{type:'text'}
+    without owner-specific knowledge."""
+    dispatch, _, _ = _governed_dispatch()
+    with _ctx(_editor()), patch.object(tool_bridge, "_dispatch", dispatch):
+        result = tool_bridge.tool_get_catalog()
+    assert result.is_error is False
+    ops = result.structured_content["data"]["operations"]
+    create_block = ops["create_block"]
+    assert "text" in create_block["fieldVocabulary"]["type"]
+    assert "content" in create_block["fields"]
+    # Destructive policy is owner-declared, not consumer-inferred.
+    assert ops["delete_slide"]["confirmationPolicy"] == "confirm"
+    assert create_block["confirmationPolicy"] == "direct"
+
+
 # ---------------------------------------------------------------------------
 # PREPARE — delegation, non-persistence, output passthrough
 # ---------------------------------------------------------------------------
@@ -287,10 +304,29 @@ def test_commit_requires_idempotency_key():
 
 
 def test_commit_requires_explicit_confirmation():
+    """confirmationPolicy=confirm ops (e.g. delete_slide) gate on explicit
+    user confirmation; direct-policy ops never reach this gate."""
     dispatch, writes, _ = _governed_dispatch()
     playlist_id = str(uuid4())
     user = _editor()
-    handle = _prepare_handle(dispatch, user, [{"op": "add_blank_slide", "title": "T"}], playlist_id)
+    delete_ops = [{"op": "delete_slide", "slideId": str(uuid4())}]
+    with _ctx(user), _access_patches(dispatch)[0], patch.object(
+        tool_bridge, "_dispatch", dispatch
+    ), patch.object(
+        PresentationPatchService,
+        "preview",
+        return_value=_preview_result(
+            appliedOps=["delete_slide"],
+            orderedOps=delete_ops,
+            risk="destructive",
+            confirmationPolicy="confirm",
+        ),
+    ):
+        prepared = tool_bridge.tool_prepare_change(
+            target={"playlistId": playlist_id}, ops=delete_ops
+        )
+    assert prepared.is_error is False
+    handle = prepared.structured_content["data"]["proposal_handle"]
     with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch):
         result = tool_bridge.tool_commit_proposal(
             proposal_handle=handle, idempotency_key="k-1", confirmation=False
@@ -299,6 +335,32 @@ def test_commit_requires_explicit_confirmation():
     assert result.structured_content["code"] == "CONFIRMATION_REQUIRED"
     assert result.structured_content["httpStatus"] == 400
     assert writes.method_calls == []
+
+
+def test_commit_direct_policy_needs_no_confirmation():
+    """confirmationPolicy=direct proposal commits without explicit user
+    confirmation — write port invoked via governed ACT path."""
+    dispatch, writes, _ = _governed_dispatch()
+    playlist_id = str(uuid4())
+    slide_id = str(uuid4())
+    writes.assert_expected_revision.return_value = 3
+    writes.get_revision.return_value = 4
+    writes.add_slide.return_value = {"id": slide_id, "title": "T"}
+    writes.list_slides.return_value = [{"id": slide_id, "title": "T", "nativeConfig": {}}]
+    writes.list_sections.return_value = []
+    writes.get_playlist.return_value = {"id": playlist_id}
+    user = _editor()
+    handle = _prepare_handle(dispatch, user, [{"op": "add_blank_slide", "title": "T"}], playlist_id)
+    with _ctx(user), patch.object(tool_bridge, "_dispatch", dispatch), patch.object(
+        PresentationPatchService, "preview", return_value={"confirmationPolicy": "direct"}
+    ):
+        result = tool_bridge.tool_commit_proposal(
+            proposal_handle=handle, idempotency_key="k-direct-1", confirmation=None
+        )
+    assert result.is_error is False
+    data = result.structured_content["data"]
+    assert data["status"] == "VERIFIED"
+    writes.add_slide.assert_called_once()
 
 
 def test_commit_unknown_handle_fails_closed():

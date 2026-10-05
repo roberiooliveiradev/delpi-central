@@ -624,10 +624,14 @@ def _envelope_vista_provider(
                         {
                             "name": "add_blank_slide",
                             "fields": ["playlistId"],
+                            "risk": "additive",
+                            "confirmationPolicy": "direct",
                         },
                         {
                             "name": "rename_playlist",
                             "fields": ["playlistId", "name"],
+                            "risk": "mutation",
+                            "confirmationPolicy": "direct",
                         },
                     ]
                 },

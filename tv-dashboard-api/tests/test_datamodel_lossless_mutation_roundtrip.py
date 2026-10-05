@@ -1291,38 +1291,13 @@ def test_prepare_commit_patch_data_model_authoritative_readback():
         assert preview["proposal_handle"]
         assert slide["nativeConfig"]["dataModels"][0]["inputs"][0]["params"].get("branch") == "01"
 
-        # ACT sem confirmação explícita → bloqueado
-        with pytest.raises(GptActionsError) as excinfo:
-            dispatch.commit_change(
-                user=user,
-                proposal_handle=preview["proposal_handle"],
-                confirmation=None,
-                idempotency_key="k-dm-1",
-                authorization=None,
-            )
-        assert excinfo.value.code == "CONFIRMATION_REQUIRED"
-        reset_proposal_store_for_tests()
-
-        preview = dispatch.preview_change(
-            user=user,
-            target={"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
-            ops=[
-                {
-                    "op": "patch_data_model",
-                    "modelId": MODEL_ID,
-                    "inputPatches": [
-                        {"inputId": first_input["id"], "params": {"set": {"branch": "02"}}}
-                    ],
-                }
-            ],
-            catalog_version=None,
-            authorization=None,
-        )
+        # ACT — patch_data_model é confirmationPolicy=direct: commit sem
+        # confirmação explícita executa pelo caminho governado (§6.132).
         outcome = dispatch.commit_change(
             user=user,
             proposal_handle=preview["proposal_handle"],
-            confirmation={"confirmed": True},
-            idempotency_key="k-dm-2",
+            confirmation=None,
+            idempotency_key="k-dm-1",
             authorization=None,
         )
         assert outcome

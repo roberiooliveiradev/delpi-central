@@ -239,7 +239,9 @@ class GptActionsDispatchService:
 
     def get_catalog(self, *, user: Any, transport: str = "actions") -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
-        doc = PresentationOpsContentService.capability_catalog_document()
+        doc = PresentationOpsContentService.capability_catalog_document(
+            include_field_vocabulary=(transport == "mcp")
+        )
         from tv_app.application.services.data.display_format_service import DisplayFormatService
 
         doc["displayFormatCatalog"] = [
@@ -1977,14 +1979,6 @@ class GptActionsDispatchService:
             )
             preview_payload["commit_now_applied"] = False
             return project_mutation_actions_payload(preview_payload)
-
-        if not TvGptCommitService._normalize_confirmation(confirmation):
-            raise GptActionsError(
-                "commit_now=true exige confirmation.confirmed=true "
-                "(policy direct). Nada foi gravado.",
-                code="CONFIRMATION_REQUIRED",
-                status_code=400,
-            )
 
         key = str(idempotency_key or "").strip()
         if not key:

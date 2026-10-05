@@ -490,13 +490,19 @@ class PresentationOpsContentService:
         return frozenset(str(item).strip() for item in raw if str(item).strip())
 
     @classmethod
-    def capability_catalog_document(cls) -> dict[str, Any]:
+    def capability_catalog_document(
+        cls, *, include_field_vocabulary: bool = False
+    ) -> dict[str, Any]:
         """Catalog projected on ``gpt_get_catalog`` (GPT Actions response budget).
 
         Operations are a **compact index** (risk / requires / hints) — full JSON
         Schemas live in the Custom GPT Action ``requestBody`` oneOf and in the
         server-side ``presentation_ops_content.json`` validator. Duplicating
         schemas here was the main ResponseTooLargeError driver.
+
+        ``include_field_vocabulary`` projects canonical enum/discriminator
+        vocabularies per op — used by the orchestrator-facing MCP surface,
+        which has no attached OpenAPI schemas to discover values from.
         """
         return {
             "catalogVersion": cls.catalog_version(),
@@ -508,7 +514,9 @@ class PresentationOpsContentService:
                 ),
             },
             "capabilities": cls._capabilities_for_actions(),
-            "operations": cls._operations_for_actions(),
+            "operations": cls._operations_for_actions(
+                include_field_vocabulary=include_field_vocabulary
+            ),
             "operationSchemas": "openapi_requestBody_oneOf",
             "allowedOps": sorted(cls.allowed_ops()),
             "sideEffectHintCatalog": cls.side_effect_hint_catalog(),
@@ -527,8 +535,16 @@ class PresentationOpsContentService:
         return node
 
     @classmethod
-    def _operations_for_actions(cls) -> dict[str, Any]:
-        """Index-only projection — no inputSchema trees (OpenAPI owns those)."""
+    def _operations_for_actions(
+        cls, *, include_field_vocabulary: bool = False
+    ) -> dict[str, Any]:
+        """Index-only projection — no inputSchema trees (OpenAPI owns those).
+
+        ``fieldVocabulary`` is emitted only on the orchestrator-facing
+        transport (MCP ``get_catalog``): the Actions surface already
+        carries full JSON Schemas via OpenAPI, so duplicating enum
+        vocabularies here would breach the Actions response budget
+        without adding information to that consumer."""
         out: dict[str, Any] = {}
         for name, spec in cls.operations().items():
             if not isinstance(spec, dict):
@@ -562,11 +578,96 @@ class PresentationOpsContentService:
                 )
                 if fields:
                     row["fields"] = fields
+                if include_field_vocabulary:
+                    vocab = cls._field_vocabulary(schema)
+                    # The canonical block-type vocabulary fills a declared
+                    # discriminator field that carries no enum — never
+                    # injected for fields the schema does not declare.
+                    declares_type = "type" in properties
+                    declares_block_type = (
+                        isinstance(properties.get("block"), dict)
+                        and "type"
+                        in (properties["block"].get("properties") or {})
+                    )
+                    if (
+                        declares_type
+                        and "type" not in vocab
+                        or declares_block_type
+                        and "block.type" not in vocab
+                    ):
+                        block_types = cls.block_type_vocabulary()
+                        if block_types:
+                            key = "block.type" if declares_block_type else "type"
+                            vocab[key] = block_types
+                    if vocab:
+                        row["fieldVocabulary"] = vocab
             when = spec.get("whenToUse")
             if isinstance(when, list) and when:
                 row["whenToUse"] = [str(item).strip() for item in when[:3] if str(item).strip()]
             out[str(name)] = row
         return out
+
+    @classmethod
+    def block_type_vocabulary(cls) -> list[str]:
+        """Canonical block-type vocabulary — projected from
+        ``blockDefaults`` keys plus every enum value declared under a
+        ``type``/``block.type`` field in the operation schemas. A new
+        block type added to the canonical sources becomes visible to
+        consumers automatically; nothing is duplicated."""
+        vocab = {
+            str(key).strip()
+            for key in (_load().get("blockDefaults") or {})
+            if str(key).strip() and str(key).strip() != "default"
+        }
+        for spec in cls.operations().values():
+            schema = (
+                spec.get("inputSchema")
+                if isinstance(spec.get("inputSchema"), dict)
+                else {}
+            )
+            props = schema.get("properties") or {}
+            for field, fprop in props.items():
+                if not isinstance(fprop, dict):
+                    continue
+                if field == "type" and isinstance(fprop.get("enum"), list):
+                    vocab.update(str(v) for v in fprop["enum"])
+                if field != "block":
+                    continue
+                sub = fprop.get("properties")
+                if isinstance(sub, dict) and isinstance(sub.get("type"), dict):
+                    enum = sub["type"].get("enum")
+                    if isinstance(enum, list):
+                        vocab.update(str(v) for v in enum)
+        return sorted(vocab)
+
+    @classmethod
+    def _field_vocabulary(cls, schema: dict[str, Any]) -> dict[str, list[str]]:
+        """Bounded enum/const vocabulary declared by an op schema —
+        the discriminator values a consumer needs to build valid ops.
+        Projected from the canonical schema, never duplicated."""
+        properties = schema.get("properties")
+        if not isinstance(properties, dict):
+            return {}
+        vocab: dict[str, list[str]] = {}
+        for field, fprop in list(properties.items())[:32]:
+            if not isinstance(fprop, dict) or field == "op":
+                continue
+            enum = fprop.get("enum")
+            if isinstance(enum, list) and enum:
+                vocab[str(field)] = [str(v) for v in enum[:32]]
+            const = fprop.get("const")
+            if const is not None:
+                vocab.setdefault(str(field), [str(const)])
+            sub = fprop.get("properties")
+            if isinstance(sub, dict):
+                for subfield, subprop in list(sub.items())[:32]:
+                    if isinstance(subprop, dict) and isinstance(
+                        subprop.get("enum"), list
+                    ):
+                        vocab[f"{field}.{subfield}"] = [
+                            str(v) for v in subprop["enum"][:32]
+                        ]
+        return vocab
 
     @classmethod
     def _capabilities_for_actions(cls) -> list[dict[str, Any]]:

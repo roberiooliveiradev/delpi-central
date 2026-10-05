@@ -1229,8 +1229,9 @@ def test_dispatch_maps_nested_contract_error_to_invalid_change():
 
 def test_commit_requires_confirmation():
     handle = _mint_proposal_handle(
-        ops=[{"op": "create_playlist", "name": "X"}],
+        ops=[{"op": "delete_slide"}],
         base_revision=None,
+        confirmation_policy="confirm",
     )
     service = TvGptCommitService(
         writes=_writes_mock(),
@@ -1527,8 +1528,23 @@ def test_preview_commit_now_confirm_policy_does_not_write():
     writes.delete_slide.assert_not_called()
 
 
-def test_preview_commit_now_without_confirmation_requires_confirm():
+def test_preview_commit_now_direct_policy_needs_no_confirmation():
+    """confirmationPolicy=direct: commit_now commits without an explicit
+    user confirmation — policy-scoped per §6.132; idempotency and all
+    execution gates remain."""
     writes = _writes_mock()
+    new_id = uuid4()
+    writes.create_playlist.return_value = {
+        "id": str(new_id),
+        "name": "Needs Confirm",
+    }
+    writes.get_revision.return_value = 1
+    writes.list_slides.return_value = []
+    writes.list_sections.return_value = []
+    writes.get_playlist.return_value = {
+        "id": str(new_id),
+        "name": "Needs Confirm",
+    }
     ops = [{"op": "create_playlist", "name": "Needs Confirm"}]
     catalog = PresentationOpsContentService.catalog_version()
     commit = TvGptCommitService(
@@ -1537,6 +1553,11 @@ def test_preview_commit_now_without_confirmation_requires_confirm():
     dispatch = GptActionsDispatchService(repo=MagicMock(), writes=writes, commit=commit)
 
     with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+        ),
         patch.object(dispatch._access, "actor_id", return_value="actor-1"),
         patch.object(
             PresentationPatchService,
@@ -1550,19 +1571,64 @@ def test_preview_commit_now_without_confirmation_requires_confirm():
             },
         ),
     ):
-        with pytest.raises(GptActionsError) as caught:
-            dispatch.preview_change(
-                user=_superadmin(),
-                target={},
-                ops=ops,
-                catalog_version=catalog,
-                authorization=None,
-                commit_now=True,
-                confirmation={"confirmed": False},
-                idempotency_key="commit-now-no-confirm",
-            )
-    assert caught.value.code == "CONFIRMATION_REQUIRED"
-    writes.create_playlist.assert_not_called()
+        result = dispatch.preview_change(
+            user=_superadmin(),
+            target={},
+            ops=ops,
+            catalog_version=catalog,
+            authorization=None,
+            commit_now=True,
+            confirmation=None,
+            idempotency_key="commit-now-no-confirm",
+        )
+    assert result["commit_now_applied"] is True
+    assert result.get("persisted") is True
+    writes.create_playlist.assert_called_once()
+
+
+def test_commit_now_confirm_policy_still_requires_confirmation():
+    """confirmationPolicy=confirm: commit_now is ignored and no write
+    happens — destructive ops always gate on explicit confirmation."""
+    writes = _writes_mock()
+    playlist_id = uuid4()
+    ops = [{"op": "delete_slide", "slideId": str(uuid4())}]
+    catalog = PresentationOpsContentService.catalog_version()
+    commit = TvGptCommitService(
+        writes=writes, idempotency=InMemoryIdempotencyRepository()
+    )
+    dispatch = GptActionsDispatchService(repo=MagicMock(), writes=writes, commit=commit)
+
+    with (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(can_edit=True, can_read=True, level="owner"),
+        ),
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+        patch.object(
+            PresentationPatchService,
+            "preview",
+            return_value={
+                "appliedOps": ["delete_slide"],
+                "baseRevision": None,
+                "diff": {},
+                "fingerprint": "fp",
+                "message": "ok",
+            },
+        ),
+    ):
+        result = dispatch.preview_change(
+            user=_superadmin(),
+            target={"playlistId": str(playlist_id)},
+            ops=ops,
+            catalog_version=catalog,
+            authorization=None,
+            commit_now=True,
+            confirmation={"confirmed": True},
+            idempotency_key="commit-now-confirm-1",
+        )
+    assert result.get("commit_now_applied") is False
+    writes.delete_slide.assert_not_called()
 
 
 def test_http_preview_accepts_idempotency_key_in_body_for_commit_now():

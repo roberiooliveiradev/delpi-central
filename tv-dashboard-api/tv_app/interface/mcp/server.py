@@ -264,8 +264,11 @@ def _register_read_tools(mcp: MCPServer) -> None:
         title="ACT — commit de proposta validada",
         description=(
             "Executa o commit de uma proposta retornada por prepare_change. "
-            "Exige proposal_handle exato, idempotency_key do chamador e "
-            "confirmation=true explícito. O postcondition é verificado pelo "
+            "Exige proposal_handle exato e idempotency_key do chamador. "
+            "confirmation=true é exigido apenas quando a proposta declara "
+            "confirmação explícita (confirmationPolicy=confirm / "
+            "destructive); propostas direct commitam sem confirmação. "
+            "O postcondition é verificado pelo "
             "backend (VERIFIED / OUTCOME_NOT_VERIFIED)."
         ),
         annotations=ann_act,

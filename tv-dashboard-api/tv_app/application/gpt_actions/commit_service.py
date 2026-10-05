@@ -18,6 +18,7 @@ from tv_app.application.gpt_actions.proposal import (
 from tv_app.application.gpt_actions.proposal_store import (
     get_proposal_store,
     load_valid_proposal,
+    parse_proposal_handle,
 )
 from tv_app.application.ports import IdempotencyRepositoryPort
 from tv_app.application.services.data.presentation_ops_content_service import PresentationOpsContentService
@@ -124,6 +125,34 @@ class TvGptCommitService:
             return bool(confirmation.get("confirmed") is True or confirmation.get("confirmation") is True)
         return False
 
+    @staticmethod
+    def _requires_user_confirmation(proposal: Any) -> bool:
+        """Stored proposal policy is the authority — never the caller.
+
+        ``confirmationPolicy=confirm`` requires an explicit user
+        confirmation; ``direct`` proposals commit without one.
+        Missing/contradictory policy data fails closed (confirmation
+        required), never silently direct.
+        """
+        requirement = (
+            proposal.confirmation_requirement
+            if isinstance(getattr(proposal, "confirmation_requirement", None), dict)
+            else {}
+        )
+        declared = requirement.get("explicit_user_confirmation")
+        if declared is None:
+            declared = requirement.get("requires_confirmed_true")
+        if isinstance(declared, bool):
+            return declared
+        # Fail closed: only an explicit "direct" policy waives
+        # confirmation; "confirm", missing or unknown values require it.
+        return (
+            str(getattr(proposal, "confirmation_policy", "") or "")
+            .strip()
+            .lower()
+            != "direct"
+        )
+
     def commit(
         self,
         *,
@@ -141,18 +170,35 @@ class TvGptCommitService:
                 code="INVALID_CHANGE",
                 status_code=422,
             )
-        if not self._normalize_confirmation(confirmation):
+
+        handle = str(proposal_handle or "").strip()
+        confirmed = self._normalize_confirmation(confirmation)
+        # Policy peek before the idempotency reservation: the stored
+        # proposal decides whether explicit user confirmation is
+        # required. A missing/consumed proposal cannot be peeked — it
+        # fails authoritatively at load_valid_proposal below (or the
+        # REPLAY branch returns the stored snapshot).
+        proposal_id = parse_proposal_handle(handle)
+        peek = get_proposal_store().get(proposal_id)
+        if (
+            peek is not None
+            and self._requires_user_confirmation(peek)
+            and not confirmed
+        ):
             raise GptActionsError(
-                "confirmation.confirmed=true é obrigatório para COMMIT. "
-                "Confirmação conversacional não substitui AuthZ.",
+                "confirmation.confirmed=true é obrigatório para COMMIT "
+                "desta proposta (política confirm). Confirmação "
+                "conversacional não substitui AuthZ.",
                 code="CONFIRMATION_REQUIRED",
                 status_code=400,
             )
-
-        handle = str(proposal_handle or "").strip()
+        # Replay/conflict semantics stay deterministic: the fingerprint
+        # records the caller's actual confirmation flag (a request
+        # fact), never a fabricated "user confirmed" — a direct commit
+        # carries confirmation=false.
         fingerprint_payload = {
             "proposal_handle": handle,
-            "confirmation": True,
+            "confirmation": confirmed,
         }
         request_fingerprint = compute_request_fingerprint(fingerprint_payload)
 
@@ -182,6 +228,14 @@ class TvGptCommitService:
             actor_id=actor_id,
             expected_capability=CAPABILITY_PRESENTATION_CHANGE,
         )
+        if self._requires_user_confirmation(proposal) and not confirmed:
+            raise GptActionsError(
+                "confirmation.confirmed=true é obrigatório para COMMIT "
+                "desta proposta (política confirm). Confirmação "
+                "conversacional não substitui AuthZ.",
+                code="CONFIRMATION_REQUIRED",
+                status_code=400,
+            )
         exact = proposal.exact_change if isinstance(proposal.exact_change, dict) else {}
         target = exact.get("target") if isinstance(exact.get("target"), dict) else {}
         ops = exact.get("ops") if isinstance(exact.get("ops"), list) else []

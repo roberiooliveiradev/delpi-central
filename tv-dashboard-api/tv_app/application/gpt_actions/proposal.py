@@ -91,10 +91,11 @@ def create_proposal(
     now = time.time()
     playlist_id = str((target or {}).get("playlistId") or "").strip() or None
     policy = str(confirmation_policy or "direct").strip().lower()
+    requires_confirmation = policy == "confirm"
     confirmation_requirement = {
-        "explicit_user_confirmation": True,
+        "explicit_user_confirmation": requires_confirmation,
         "confirmation_policy": policy,
-        "requires_confirmed_true": True,
+        "requires_confirmed_true": requires_confirmation,
         "destructive": policy == "confirm",
     }
     exact_change = {

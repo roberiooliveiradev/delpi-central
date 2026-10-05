@@ -332,9 +332,11 @@ def tool_commit_proposal(
 ) -> CallToolResult:
     """Commit a proposal returned by ``prepare_change``.
 
-    Caller must supply the exact opaque ``proposal_handle``, a caller-owned
-    ``idempotency_key``, and ``confirmation=True`` — tool invocation alone is
-    never confirmation. Postcondition is verified by the canonical backend
+    Caller must supply the exact opaque ``proposal_handle`` and a
+    caller-owned ``idempotency_key``. ``confirmation=True`` is required
+    only when the proposal's policy demands explicit user confirmation
+    (confirmationPolicy=confirm / destructive); direct proposals commit
+    without it. Postcondition is verified by the canonical backend
     (VERIFIED / OUTCOME_NOT_VERIFIED).
     """
     try:

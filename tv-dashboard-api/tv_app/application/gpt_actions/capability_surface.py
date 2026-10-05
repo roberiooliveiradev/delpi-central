@@ -117,8 +117,9 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                     "plan_compiler": "topo_sort",
                 },
                 "confirmation_policy": {
-                    "always_require_confirmed_true": True,
+                    "scoped_per_operation": True,
                     "destructive_ops_policy": "confirm",
+                    "non_destructive_ops_policy": "direct",
                 },
                 "read_back_policy": "authoritative_after_commit",
                 "required_permission_metadata": {
