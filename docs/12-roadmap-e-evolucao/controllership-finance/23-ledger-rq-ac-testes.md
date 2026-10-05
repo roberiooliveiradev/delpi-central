@@ -15,7 +15,7 @@ Este ledger complementa:
 
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
 |---|---|---|---|---|---|
-| RQ-P1-01 | selecionar/identificar competência e unidade no scope | contexto exibido e preservado em navegação/deep link | positive + cross-unit negative + F5 | T05 | TARGET |
+| RQ-P1-01 | selecionar/identificar competência e contexto de empresa/unidade quando aplicável | contexto exibido e preservado em navegação/deep link sem criar permission por filial | positive + contexto alternativo + F5 | T05 | TARGET |
 | RQ-P1-02 | mostrar eixos Estoque/Documentos/Pacote independentemente | mudança em um eixo não falsifica estado dos demais | positive + sibling | P2/P3/P5 | TARGET |
 | RQ-P1-03 | mostrar blockers com motivo/source/ação | blocker material aparece sem percentual mascarando causa | positive + partial source | T01 | TARGET |
 | RQ-P1-04 | source indisponível não pode virar zero/sucesso | estado PARTIAL/UNAVAILABLE_SOURCE explícito | negative | T01 | TARGET |
@@ -104,9 +104,9 @@ Este ledger complementa:
 |---|---|---|
 | RQ-SEC-01 | backend autoriza fail-closed | UI ocultar ação não concede autorização |
 | RQ-SEC-02 | effective permissions vêm do Core | JWT sozinho não é authority final |
-| RQ-SEC-03 | unit/resource scope sempre aplicados | URL direta cross-unit é rejeitada |
+| RQ-SEC-03 | resource ownership/context access sempre aplicados quando houver recurso restrito | URL direta para recurso não autorizado é rejeitada |
 | RQ-SEC-04 | MANAGE não apaga histórico | delete/overwrite material rejeitado |
-| RQ-SEC-05 | IA respeita scope e não muda estado | tool/prompt não contorna business rule |
+| RQ-SEC-05 | IA respeita acesso/ownership e não muda estado | tool/prompt não contorna business rule |
 | RQ-SEC-06 | secrets/tokens não entram em frontend state/logs/prompts comuns | scanner/review sem exposição |
 
 ## Requisitos transversais de experiência
