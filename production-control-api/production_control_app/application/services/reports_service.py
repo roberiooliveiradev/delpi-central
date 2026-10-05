@@ -5,9 +5,13 @@ do filtro de prefixo/busca. Sem cache, cada troca de página no MFE repetia
 várias idas ao TOTVS — o mesmo padrão de Demanda/Materiais (snapshot + TTL).
 
 O relatório de OPs pagina na api-delpi (`/production/pcp-orders`) com
-`open_only` + `unbounded_delivery` por padrão, para não perder entrega futura
-no recorte de 12 meses. Janela de `C2_DATRF` (`actual_end_*`) só vale para
-OPs encerradas (`open_only=false`).
+`open_only` + `unbounded_delivery` sempre ligados na consulta de catálogo.
+Datas de entrega preenchidas continuam como filtro opcional (`>=` / `<=`),
+sem reativar a janela padrão de 12 meses nem o teto de 24 meses — senão uma
+única ponta, uma entrega futura ou um intervalo longo vira 400 na api-delpi
+e 502 neste BFF. `actual_end_*` entra em encerradas e em todas as situações.
+Em todas, a data de fim recorta só quem já encerrou; OP em aberto (sem fim)
+permanece. Em somente abertas a data de fim não é enviada.
 """
 
 from __future__ import annotations
@@ -450,11 +454,10 @@ class ReportsService:
         size = max(1, min(int(page_size or default_page_size), max_page_size))
         resolved_open_only = _tri_state_bool(open_only, default=True)
         resolved_mother_only = _tri_state_bool(mother_only, default=None)
-        has_delivery_window = bool(_text(delivery_start) or _text(delivery_end))
-        unbounded_delivery = not has_delivery_window
-        closed_only = resolved_open_only is False
-        actual_end_start_resolved = _text(actual_end_start) if closed_only else None
-        actual_end_end_resolved = _text(actual_end_end) if closed_only else None
+        include_actual_end = resolved_open_only is not True
+        actual_end_start_resolved = (_text(actual_end_start) or None) if include_actual_end else None
+        actual_end_end_resolved = (_text(actual_end_end) or None) if include_actual_end else None
+        include_missing_actual_end = resolved_open_only is None
         filters = {
             "branch": branch,
             "page": page,
@@ -462,13 +465,14 @@ class ReportsService:
             "sort": resolved_sort,
             "open_only": resolved_open_only,
             "mother_only": resolved_mother_only,
-            "unbounded_delivery": unbounded_delivery,
+            "unbounded_delivery": True,
             "op_key": _text(op_key) or None,
             "product_code": _text(product_code) or None,
             "delivery_start": _text(delivery_start) or None,
             "delivery_end": _text(delivery_end) or None,
             "actual_end_start": actual_end_start_resolved,
             "actual_end_end": actual_end_end_resolved,
+            "include_missing_actual_end": include_missing_actual_end,
         }
         try:
             items_payload = self._gateway.fetch_pcp_orders_catalog(**filters)
@@ -495,11 +499,12 @@ class ReportsService:
                 "product_code": _text(product_code),
                 "mother_only": resolved_mother_only,
                 "open_only": resolved_open_only,
-                "unbounded_delivery": unbounded_delivery,
+                "unbounded_delivery": True,
                 "delivery_start": _text(delivery_start) or None,
                 "delivery_end": _text(delivery_end) or None,
                 "actual_end_start": actual_end_start_resolved,
                 "actual_end_end": actual_end_end_resolved,
+                "include_missing_actual_end": include_missing_actual_end,
                 "sort": resolved_sort,
             },
             "summary": {

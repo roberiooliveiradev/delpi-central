@@ -30,6 +30,7 @@ def _pcp_orders_catalog_params(
     delivery_end: str | None = None,
     actual_end_start: str | None = None,
     actual_end_end: str | None = None,
+    include_missing_actual_end: bool | None = None,
     page: int | None = None,
     page_size: int | None = None,
     sort: str | None = None,
@@ -45,6 +46,7 @@ def _pcp_orders_catalog_params(
         "delivery_end": delivery_end,
         "actual_end_start": actual_end_start,
         "actual_end_end": actual_end_end,
+        "include_missing_actual_end": _bool_query(include_missing_actual_end),
         "page": page,
         "page_size": page_size,
         "sort": sort,
@@ -170,6 +172,7 @@ class DelpiProductionGateway:
         delivery_end: str | None = None,
         actual_end_start: str | None = None,
         actual_end_end: str | None = None,
+        include_missing_actual_end: bool | None = None,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
@@ -188,6 +191,7 @@ class DelpiProductionGateway:
                 delivery_end=delivery_end,
                 actual_end_start=actual_end_start,
                 actual_end_end=actual_end_end,
+                include_missing_actual_end=include_missing_actual_end,
             ),
         )
 
@@ -204,6 +208,7 @@ class DelpiProductionGateway:
         delivery_end: str | None = None,
         actual_end_start: str | None = None,
         actual_end_end: str | None = None,
+        include_missing_actual_end: bool | None = None,
     ) -> dict[str, Any]:
         return self._request(
             "GET",
@@ -219,6 +224,7 @@ class DelpiProductionGateway:
                 delivery_end=delivery_end,
                 actual_end_start=actual_end_start,
                 actual_end_end=actual_end_end,
+                include_missing_actual_end=include_missing_actual_end,
             ),
         )
 

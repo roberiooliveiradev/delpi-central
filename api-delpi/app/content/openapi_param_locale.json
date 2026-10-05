@@ -4905,6 +4905,18 @@
         }
       }
     },
+    "include_missing_actual_end": {
+      "locale": {
+        "en": {
+          "label": "Keep orders without actual end",
+          "description": "When true, an actual-end window still includes orders that have no finish date. Closed orders outside the window stay excluded."
+        },
+        "pt-BR": {
+          "label": "Manter OPs sem fim real",
+          "description": "Quando verdadeiro, o intervalo de fim real mantém as OPs que ainda não têm data de fim. Encerradas fora do intervalo continuam de fora."
+        }
+      }
+    },
     "unbounded_delivery": {
       "locale": {
         "en": {

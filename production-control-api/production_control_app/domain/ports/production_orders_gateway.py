@@ -46,6 +46,7 @@ class ProductionOrdersGateway(Protocol):
         delivery_end: str | None = None,
         actual_end_start: str | None = None,
         actual_end_end: str | None = None,
+        include_missing_actual_end: bool | None = None,
     ) -> dict[str, Any]:
         ...
 
@@ -62,6 +63,7 @@ class ProductionOrdersGateway(Protocol):
         delivery_end: str | None = None,
         actual_end_start: str | None = None,
         actual_end_end: str | None = None,
+        include_missing_actual_end: bool | None = None,
     ) -> dict[str, Any]:
         ...
 

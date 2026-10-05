@@ -163,6 +163,7 @@ class PcpOrdersFilterRequest:
     mother_only: bool | None = None
     open_only: bool | None = None
     delayed_only: bool | None = None
+    include_missing_actual_end: bool = False
 
     @classmethod
     def from_params(
@@ -177,6 +178,7 @@ class PcpOrdersFilterRequest:
         mother_only: bool | str | None = None,
         open_only: bool | str | None = None,
         delayed_only: bool | str | None = None,
+        include_missing_actual_end: bool | str | None = False,
     ) -> PcpOrdersFilterRequest:
         ae_start = _parse_iso_date(actual_end_start)
         ae_end = _parse_iso_date(actual_end_end)
@@ -202,6 +204,7 @@ class PcpOrdersFilterRequest:
             mother_only=_as_bool(mother_only),
             open_only=_as_bool(open_only),
             delayed_only=_as_bool(delayed_only),
+            include_missing_actual_end=_as_bool(include_missing_actual_end) is True,
         )
 
     def filter_kwargs(self) -> dict[str, Any]:
@@ -215,6 +218,7 @@ class PcpOrdersFilterRequest:
             "mother_only": self.mother_only,
             "open_only": self.open_only,
             "delayed_only": self.delayed_only,
+            "include_missing_actual_end": self.include_missing_actual_end,
         }
 
 
@@ -237,6 +241,7 @@ class PcpOrdersItemsRequest(PcpOrdersFilterRequest):
         mother_only: bool | str | None = None,
         open_only: bool | str | None = None,
         delayed_only: bool | str | None = None,
+        include_missing_actual_end: bool | str | None = False,
         page: int = 1,
         page_size: int = DEFAULT_PAGE_SIZE,
         sort: str | None = None,
@@ -251,6 +256,7 @@ class PcpOrdersItemsRequest(PcpOrdersFilterRequest):
             mother_only=mother_only,
             open_only=open_only,
             delayed_only=delayed_only,
+            include_missing_actual_end=include_missing_actual_end,
         )
         resolved_sort = (sort or DEFAULT_ITEMS_SORT).strip()
         if resolved_sort not in ITEMS_SORT_VALUES:
@@ -269,6 +275,7 @@ class PcpOrdersItemsRequest(PcpOrdersFilterRequest):
             mother_only=base.mother_only,
             open_only=base.open_only,
             delayed_only=base.delayed_only,
+            include_missing_actual_end=base.include_missing_actual_end,
             page=resolved_page,
             page_size=resolved_size,
             sort=resolved_sort,
@@ -301,6 +308,7 @@ class PcpOrdersRankingRequest(PcpOrdersFilterRequest):
         mother_only: bool | str | None = None,
         open_only: bool | str | None = None,
         delayed_only: bool | str | None = None,
+        include_missing_actual_end: bool | str | None = False,
     ) -> PcpOrdersRankingRequest:
         base = PcpOrdersFilterRequest.from_params(
             period=period,
@@ -312,6 +320,7 @@ class PcpOrdersRankingRequest(PcpOrdersFilterRequest):
             mother_only=mother_only,
             open_only=open_only,
             delayed_only=delayed_only,
+            include_missing_actual_end=include_missing_actual_end,
         )
         resolved_rank = str(rank_by or "").strip()
         if resolved_rank not in RANK_BY_VALUES:
@@ -336,6 +345,7 @@ class PcpOrdersRankingRequest(PcpOrdersFilterRequest):
             mother_only=base.mother_only,
             open_only=base.open_only,
             delayed_only=base.delayed_only,
+            include_missing_actual_end=base.include_missing_actual_end,
             rank_by=resolved_rank,
             metric=resolved_metric,
             limit=resolved_limit,

@@ -102,6 +102,71 @@ def test_bounded_delivery_still_requires_dt_entrega_window() -> None:
     assert params[:2] == ("2025-07-01", "2026-07-01")
 
 
+def test_all_situations_actual_end_keeps_open_orders_without_finish_date() -> None:
+    query, params = sql.build_items_query(
+        delivery_start=None,
+        delivery_end=None,
+        branch="01",
+        open_only=None,
+        unbounded_delivery=True,
+        include_missing_actual_end=True,
+        actual_end_start="2026-01-01",
+        actual_end_end="2026-06-30",
+        sort="op_asc",
+        offset=0,
+        page_size=50,
+    )
+    assert "ISNULL(v.FL_OP_EM_ABERTO, 0) = 0" not in query
+    assert "v.DT_REAL_FIM IS NULL OR (v.DT_REAL_FIM >= ? AND v.DT_REAL_FIM <= ?)" in query
+    assert "v.DT_REAL_FIM IS NOT NULL AND v.DT_REAL_FIM >= ?" not in query
+    assert params == ("01", "2026-01-01", "2026-06-30", 0, 50)
+
+
+def test_all_situations_without_actual_end_does_not_require_finish_date() -> None:
+    query, params = sql.build_summary_query(
+        delivery_start=None,
+        delivery_end=None,
+        branch="02",
+        open_only=None,
+        unbounded_delivery=True,
+    )
+    assert "DT_REAL_FIM" not in query
+    assert "ISNULL(v.FL_OP_EM_ABERTO, 0) = 0" not in query
+    assert params == ("02",)
+
+
+def test_all_situations_one_sided_actual_end_keeps_missing_finish_date() -> None:
+    query, params = sql.build_summary_query(
+        delivery_start=None,
+        delivery_end=None,
+        branch="01",
+        open_only=None,
+        unbounded_delivery=True,
+        include_missing_actual_end=True,
+        actual_end_end="2026-06-30",
+    )
+    assert "v.DT_REAL_FIM IS NULL OR (v.DT_REAL_FIM <= ?)" in query
+    assert params == ("01", "2026-06-30")
+
+
+def test_actual_end_without_flag_still_requires_finish_date() -> None:
+    query, params = sql.build_items_query(
+        delivery_start=None,
+        delivery_end=None,
+        branch="01",
+        open_only=None,
+        unbounded_delivery=True,
+        actual_end_start="2026-01-01",
+        actual_end_end="2026-06-30",
+        sort="op_asc",
+        offset=0,
+        page_size=50,
+    )
+    assert "v.DT_REAL_FIM IS NOT NULL AND v.DT_REAL_FIM >= ?" in query
+    assert "v.DT_REAL_FIM IS NULL OR" not in query
+    assert params == ("01", "2026-01-01", "2026-06-30", 0, 50)
+
+
 def test_actual_end_filters_dt_real_fim() -> None:
     query, params = sql.build_items_query(
         delivery_start=None,

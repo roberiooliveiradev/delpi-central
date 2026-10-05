@@ -8,7 +8,7 @@ import { PpcLiquidLoading } from "./PpcLiquidLoading";
 import { copy } from "../content/copy";
 import {
   PRODUCTION_ORDERS_DEFAULT_FILTERS,
-  isClosedProductionOrdersFilter,
+  showsProductionOrderFinishDate,
   useProductionOrdersReport,
   type ProductionOrderTriFilter,
   type ProductionOrdersFilters,
@@ -61,10 +61,10 @@ async function fetchProductionOrdersForExport(params: {
       openOnly: params.filters.openOnly,
       deliveryStart: params.filters.deliveryStart || null,
       deliveryEnd: params.filters.deliveryEnd || null,
-      actualEndStart: isClosedProductionOrdersFilter(params.filters.openOnly)
+      actualEndStart: showsProductionOrderFinishDate(params.filters.openOnly)
         ? params.filters.actualEndStart || null
         : null,
-      actualEndEnd: isClosedProductionOrdersFilter(params.filters.openOnly)
+      actualEndEnd: showsProductionOrderFinishDate(params.filters.openOnly)
         ? params.filters.actualEndEnd || null
         : null,
       sort: params.filters.sort,
@@ -111,12 +111,11 @@ export function ProductionOrdersReportPanel({ branch, onRefreshReady }: Props) {
   const patch = (partial: Partial<ProductionOrdersFilters>) => {
     setFilters((current) => {
       const nextOpenOnly = partial.openOnly ?? current.openOnly;
-      const leavingClosed =
-        current.openOnly === "no" && nextOpenOnly !== "no";
+      const enteringOpenOnly = nextOpenOnly === "yes" && current.openOnly !== "yes";
       return {
         ...current,
         ...partial,
-        ...(leavingClosed ? { actualEndStart: "", actualEndEnd: "" } : {}),
+        ...(enteringOpenOnly ? { actualEndStart: "", actualEndEnd: "" } : {}),
         page:
           partial.page ??
           (partial.sort !== undefined || partial.pageSize !== undefined ? 1 : current.page),
@@ -130,7 +129,7 @@ export function ProductionOrdersReportPanel({ branch, onRefreshReady }: Props) {
     try {
       const lines = await fetchProductionOrdersForExport({ branch, filters });
       await downloadProductionOrdersExcel(lines, branch, {
-        includeFinishDate: isClosedProductionOrdersFilter(filters.openOnly),
+        includeFinishDate: showsProductionOrderFinishDate(filters.openOnly),
       });
     } catch (err) {
       console.error("[ProductionOrdersReportPanel] excel export", err);
@@ -140,7 +139,7 @@ export function ProductionOrdersReportPanel({ branch, onRefreshReady }: Props) {
     }
   }, [branch, exporting, filters, reports.exportError]);
 
-  const closedOnly = isClosedProductionOrdersFilter(filters.openOnly);
+  const showFinishDate = showsProductionOrderFinishDate(filters.openOnly);
 
   const columns = useMemo<DataTableColumn<ProductionOrderLine>[]>(
     () => [
@@ -172,7 +171,7 @@ export function ProductionOrdersReportPanel({ branch, onRefreshReady }: Props) {
         sortable: true,
         render: (row) => formatIsoDate(row.due_date),
       },
-      ...(closedOnly
+      ...(showFinishDate
         ? [
             {
               key: "finish_date",
@@ -200,7 +199,7 @@ export function ProductionOrdersReportPanel({ branch, onRefreshReady }: Props) {
         render: (row) => row.observation || "—",
       },
     ],
-    [closedOnly, reports.columns],
+    [showFinishDate, reports.columns],
   );
 
   const rows = data?.items ?? [];
@@ -265,7 +264,7 @@ export function ProductionOrdersReportPanel({ branch, onRefreshReady }: Props) {
               value={filters.deliveryEnd}
               onChange={(value) => patch({ deliveryEnd: value, page: 1 })}
             />
-            {closedOnly ? (
+            {showFinishDate ? (
               <>
                 <FilterInputField
                   label={reports.finishStartLabel}

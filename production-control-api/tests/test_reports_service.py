@@ -354,7 +354,7 @@ def test_production_orders_passes_mother_and_product_filters() -> None:
     assert payload["filters"]["mother_only"] is True
 
 
-def test_production_orders_uses_delivery_window_when_dates_are_set() -> None:
+def test_production_orders_keeps_unbounded_delivery_when_dates_are_set() -> None:
     gateway = FakeGateway()
     service = _service(gateway)
     payload = service.production_orders(
@@ -365,11 +365,33 @@ def test_production_orders_uses_delivery_window_when_dates_are_set() -> None:
         open_only=False,
     )
     catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
-    assert catalog_calls[0]["unbounded_delivery"] is False
+    summary_calls = [
+        call["catalog_summary"] for call in gateway.calls if "catalog_summary" in call
+    ]
+    assert catalog_calls[0]["unbounded_delivery"] is True
     assert catalog_calls[0]["delivery_start"] == "2026-01-01"
     assert catalog_calls[0]["delivery_end"] == "2026-12-31"
     assert catalog_calls[0]["open_only"] is False
-    assert payload["filters"]["unbounded_delivery"] is False
+    assert summary_calls[0]["unbounded_delivery"] is True
+    assert summary_calls[0]["delivery_start"] == "2026-01-01"
+    assert payload["filters"]["unbounded_delivery"] is True
+
+
+def test_production_orders_keeps_one_sided_future_delivery_unbounded() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(
+        _user(*FULL_PERMS),
+        branch="02",
+        delivery_start="2027-03-01",
+    )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["unbounded_delivery"] is True
+    assert catalog_calls[0]["delivery_start"] == "2027-03-01"
+    assert catalog_calls[0]["delivery_end"] is None
+    assert payload["filters"]["delivery_start"] == "2027-03-01"
+    assert payload["filters"]["delivery_end"] is None
+    assert payload["filters"]["unbounded_delivery"] is True
 
 
 def test_production_orders_all_skips_open_flag() -> None:
@@ -393,6 +415,7 @@ def test_production_orders_passes_actual_end_only_when_closed() -> None:
     )
     catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
     assert catalog_calls[0]["open_only"] is False
+    assert catalog_calls[0]["include_missing_actual_end"] is False
     assert catalog_calls[0]["actual_end_start"] == "2026-01-01"
     assert catalog_calls[0]["actual_end_end"] == "2026-06-30"
     assert payload["filters"]["actual_end_start"] == "2026-01-01"
@@ -417,7 +440,7 @@ def test_production_orders_drops_actual_end_when_open() -> None:
     assert payload["filters"]["actual_end_end"] is None
 
 
-def test_production_orders_drops_actual_end_when_all() -> None:
+def test_production_orders_keeps_actual_end_when_all_situations() -> None:
     gateway = FakeGateway()
     service = _service(gateway)
     payload = service.production_orders(
@@ -427,6 +450,21 @@ def test_production_orders_drops_actual_end_when_all() -> None:
         actual_end_start="2026-01-01",
         actual_end_end="2026-06-30",
     )
+    catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
+    assert catalog_calls[0]["open_only"] is None
+    assert catalog_calls[0]["actual_end_start"] == "2026-01-01"
+    assert catalog_calls[0]["actual_end_end"] == "2026-06-30"
+    assert catalog_calls[0]["include_missing_actual_end"] is True
+    assert payload["filters"]["open_only"] is None
+    assert payload["filters"]["actual_end_start"] == "2026-01-01"
+    assert payload["filters"]["actual_end_end"] == "2026-06-30"
+    assert payload["filters"]["include_missing_actual_end"] is True
+
+
+def test_production_orders_all_without_actual_end_stays_unfiltered() -> None:
+    gateway = FakeGateway()
+    service = _service(gateway)
+    payload = service.production_orders(_user(*FULL_PERMS), branch="01", open_only="all")
     catalog_calls = [call["catalog"] for call in gateway.calls if "catalog" in call]
     assert catalog_calls[0]["open_only"] is None
     assert catalog_calls[0]["actual_end_start"] is None

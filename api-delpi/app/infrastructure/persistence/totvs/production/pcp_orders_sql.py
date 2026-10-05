@@ -103,6 +103,7 @@ def build_base_where(
     open_only: bool | None = None,
     delayed_only: bool | None = None,
     unbounded_delivery: bool | None = False,
+    include_missing_actual_end: bool | None = False,
 ) -> tuple[str, tuple]:
     branch_sql, branch_params = _branch_filter_sql(branch)
     clauses: list[str] = []
@@ -126,12 +127,27 @@ def build_base_where(
     clauses.append(branch_sql)
     params.extend(branch_params)
 
-    if actual_end_start:
-        clauses.append("v.DT_REAL_FIM IS NOT NULL AND v.DT_REAL_FIM >= ?")
-        params.append(actual_end_start)
-    if actual_end_end:
-        clauses.append("v.DT_REAL_FIM IS NOT NULL AND v.DT_REAL_FIM <= ?")
-        params.append(actual_end_end)
+    # Sem a flag, a data de fim exige DT_REAL_FIM preenchida (encerradas no
+    # intervalo). Com include_missing_actual_end, o intervalo recorta só quem
+    # já tem fim; OP sem data de fim permanece no mesmo resultado.
+    if actual_end_start or actual_end_end:
+        if include_missing_actual_end:
+            bounds: list[str] = []
+            if actual_end_start:
+                bounds.append("v.DT_REAL_FIM >= ?")
+                params.append(actual_end_start)
+            if actual_end_end:
+                bounds.append("v.DT_REAL_FIM <= ?")
+                params.append(actual_end_end)
+            ranged = " AND ".join(bounds)
+            clauses.append(f"(v.DT_REAL_FIM IS NULL OR ({ranged}))")
+        else:
+            if actual_end_start:
+                clauses.append("v.DT_REAL_FIM IS NOT NULL AND v.DT_REAL_FIM >= ?")
+                params.append(actual_end_start)
+            if actual_end_end:
+                clauses.append("v.DT_REAL_FIM IS NOT NULL AND v.DT_REAL_FIM <= ?")
+                params.append(actual_end_end)
     if op_key:
         clauses.append("LTRIM(RTRIM(v.OP_CHAVE)) LIKE ?")
         params.append(f"%{op_key.strip()}%")

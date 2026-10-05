@@ -898,6 +898,7 @@ export type ProductionOrdersReportPayload = {
     delivery_end: string | null;
     actual_end_start: string | null;
     actual_end_end: string | null;
+    include_missing_actual_end: boolean;
     sort: string;
   };
   summary: {

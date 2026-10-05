@@ -34,8 +34,9 @@ export const PRODUCTION_ORDERS_DEFAULT_FILTERS: ProductionOrdersFilters = {
   sort: "op_asc",
 };
 
-export function isClosedProductionOrdersFilter(openOnly: ProductionOrderTriFilter): boolean {
-  return openOnly === "no";
+/** Data de fim vale para encerradas e para todas as situações. Em aberto ela não existe. */
+export function showsProductionOrderFinishDate(openOnly: ProductionOrderTriFilter): boolean {
+  return openOnly !== "yes";
 }
 
 export function useProductionOrdersReport(branch: PpcBranch, filters: ProductionOrdersFilters) {
@@ -57,10 +58,10 @@ export function useProductionOrdersReport(branch: PpcBranch, filters: Production
       openOnly: filters.openOnly,
       deliveryStart: filters.deliveryStart || null,
       deliveryEnd: filters.deliveryEnd || null,
-      actualEndStart: isClosedProductionOrdersFilter(filters.openOnly)
+      actualEndStart: showsProductionOrderFinishDate(filters.openOnly)
         ? filters.actualEndStart || null
         : null,
-      actualEndEnd: isClosedProductionOrdersFilter(filters.openOnly)
+      actualEndEnd: showsProductionOrderFinishDate(filters.openOnly)
         ? filters.actualEndEnd || null
         : null,
       sort: filters.sort,

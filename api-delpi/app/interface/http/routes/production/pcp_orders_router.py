@@ -109,6 +109,7 @@ class PcpOrdersCommonQuery:
         open_only: bool | None = None,
         delayed_only: bool | None = None,
         unbounded_delivery: bool | None = None,
+        include_missing_actual_end: bool | None = None,
     ) -> None:
         self.branch = branch
         self.delivery_start = delivery_start
@@ -122,6 +123,7 @@ class PcpOrdersCommonQuery:
         self.open_only = open_only
         self.delayed_only = delayed_only
         self.unbounded_delivery = unbounded_delivery
+        self.include_missing_actual_end = include_missing_actual_end
 
 
 def pcp_orders_common_query(
@@ -176,6 +178,13 @@ def pcp_orders_common_query(
             "24-month cap. Optional delivery_start/delivery_end still apply."
         ),
     ),
+    include_missing_actual_end: bool = Query(
+        default=False,
+        description=(
+            "When true, an actual-end window keeps orders that have no "
+            "DT_REAL_FIM. Closed orders outside the window are still excluded."
+        ),
+    ),
 ) -> PcpOrdersCommonQuery:
     return PcpOrdersCommonQuery(
         branch=branch,
@@ -190,6 +199,7 @@ def pcp_orders_common_query(
         open_only=open_only,
         delayed_only=delayed_only,
         unbounded_delivery=unbounded_delivery,
+        include_missing_actual_end=include_missing_actual_end,
     )
 
 
@@ -210,6 +220,7 @@ def _filter_request(common: PcpOrdersCommonQuery) -> PcpOrdersFilterRequest:
         mother_only=common.mother_only,
         open_only=common.open_only,
         delayed_only=common.delayed_only,
+        include_missing_actual_end=common.include_missing_actual_end,
     )
 
 
@@ -286,6 +297,7 @@ def get_production_pcp_orders_items(
             mother_only=common.mother_only,
             open_only=common.open_only,
             delayed_only=common.delayed_only,
+            include_missing_actual_end=common.include_missing_actual_end,
             page=page,
             page_size=page_size,
             sort=sort,
@@ -343,6 +355,7 @@ def get_production_pcp_orders_ranking(
             mother_only=common.mother_only,
             open_only=common.open_only,
             delayed_only=common.delayed_only,
+            include_missing_actual_end=common.include_missing_actual_end,
         )
         result = build_get_production_pcp_orders_ranking_use_case().execute(request)
         return api_delpi_success(

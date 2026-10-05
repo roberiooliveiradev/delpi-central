@@ -939,13 +939,15 @@ export const copy = {
       motherLabel: "Apenas OP mãe",
       motherHint: "Recorta só as OPs mãe, só as filhas, ou todas.",
       openLabel: "OP em aberto",
-      openHint: "Em aberto = sem data real de fim. Padrão: somente abertas.",
+      openHint:
+        "Sim: só em aberto. Não: só encerradas. Todas: as duas juntas, mesmo sem data de fim.",
       deliveryStartLabel: "Entrega de",
       deliveryEndLabel: "Entrega até",
-      deliveryHint: "Vazio = todas as datas de entrega. Preencha os dois para recortar.",
+      deliveryHint: "Cada ponta é opcional. Vazio não recorta essa ponta da entrega.",
       finishStartLabel: "Fim real de",
       finishEndLabel: "Fim real até",
-      finishHint: "Recorta pela data real de fim (C2_DATRF). Só aparece para OPs encerradas.",
+      finishHint:
+        "Opcional. Em Todas, recorta só as encerradas; as em aberto continuam na lista. Em Não, recorta as encerradas.",
       triYes: "Sim",
       triNo: "Não",
       triAll: "Todas",
