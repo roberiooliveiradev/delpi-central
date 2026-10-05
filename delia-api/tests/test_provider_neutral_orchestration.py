@@ -913,11 +913,12 @@ def test_missing_owner_input_yields_clarification():
 
 
 def test_owner_vocabulary_is_size_bounded():
-    """A huge owner catalog is truncated before it reaches the model
-    prompt — untrusted owner data stays bounded."""
+    """A huge owner catalog stays bounded before the model prompt —
+    breadth-first: every vocabulary entry keeps a row, deep values are
+    truncated per entry, and the total stays under the hard bound."""
     big = {
         "operations": [
-            {"name": f"op_{i}", "pad": "x" * 500} for i in range(40)
+            {"name": f"op_{i}", "pad": "x" * 5000} for i in range(60)
         ]
     }
     provider = _envelope_vista_provider(
@@ -935,7 +936,64 @@ def test_owner_vocabulary_is_size_bounded():
     stage3 = _stage3_requests(orch)[-1]
     marker = stage3.input_text.index('"owner_vocabulary"')
     tail = stage3.input_text[marker:]
-    # Evidence stays within the hard bound — the 40 x 500-char pads
-    # can never leak fully into the prompt.
-    assert len(tail) < 6000
-    assert "op_39" not in tail
+    # Total evidence stays under the hard bound — the 60 x 5000-char
+    # pads can never leak fully into the prompt.
+    assert len(tail) < 13000
+    assert "x" * 5000 not in tail
+    # Breadth preserved: early entries reach the model; overflow rows
+    # past the bound are dropped.
+    assert "op_0" in tail
+    assert "op_59" not in tail
+
+
+def test_empty_arguments_with_missing_inputs_yield_clarification():
+    """Model-declared missing owner inputs are never overridden by an
+    empty-but-valid argument object — clarification, not an empty
+    invocation the owner must reject."""
+    prepare = _cap(
+        "vista", "mcp", "prepare_change", SpecialistOperationClass.PREPARE
+    )
+    prepare = ProviderCapability(
+        capability_id=prepare.capability_id,
+        group_id=prepare.group_id,
+        provider_id=prepare.provider_id,
+        remote_name=prepare.remote_name,
+        owner=prepare.owner,
+        operation_class=prepare.operation_class,
+        description=prepare.description,
+        input_schema={
+            "type": "object",
+            "properties": {
+                "target": {"type": "object"},
+                "ops": {"type": "array"},
+            },
+        },
+        binding=prepare.binding,
+    )
+    provider = FakeProvider(
+        "mcp", [_group("mcp", "vista", [prepare])]
+    )
+    orch = _orchestrator(
+        [provider],
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "mcp:vista",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "prepare_change",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": {},
+                "missing_inputs": ["ops"],
+            },
+        },
+    )
+    attempt = orch.attempt("mude algo")
+    assert (
+        attempt.status
+        is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+    assert "ops" in attempt.content
+    assert "prepare_change" not in [c[0] for c in provider.calls]

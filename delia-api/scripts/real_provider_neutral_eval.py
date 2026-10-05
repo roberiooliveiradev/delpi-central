@@ -218,9 +218,11 @@ def main() -> int:
 
     # D. Governed write PREPARE -> REJECT (VISTA prepare_change through
     # owner DISCOVERY -> bounded PREPARE -> structured confirmation).
+    # Slide rename maps to the owner ``update_slide`` op; the workspace
+    # supplies the selected slide/playlist entity refs.
     prepare = _turn(
         token,
-        "renomeie a playlist que estou vendo para 'teste avaliação'",
+        "renomeie o slide que estou vendo para 'teste avaliação'",
         workspace=_workspace(),
     )
     report["write_prepare"] = prepare

@@ -147,7 +147,9 @@ MAX_STRUCTURED_RENDER_CHARS = 2000
 # discovery evidence is sanitized and bounded before it reaches the
 # argument-projection prompt — it is data, never instruction.
 MAX_OPERATIONAL_PLAN_STEPS = 2
-MAX_OWNER_EVIDENCE_CHARS = 3000
+MAX_OWNER_EVIDENCE_CHARS = 12000
+MAX_OWNER_EVIDENCE_ENTRY_CHARS = 800
+MAX_ARGUMENTS_BLOCK_CHARS = 14000
 MAX_MISSING_INPUTS = 8
 
 # Hierarchical selection (R1): the model makes three bounded
@@ -155,7 +157,7 @@ MAX_MISSING_INPUTS = 8
 # surface, then arguments projected into the owner's live inputSchema.
 # Each stage is independently revalidated against fresh catalog data;
 # a proposal is never authority.
-SELECTION_INSTRUCTION_VERSION = "4"
+SELECTION_INSTRUCTION_VERSION = "5"
 
 GROUP_SELECTION_INSTRUCTION_ID = (
     "delia.capability_orchestration.select_group"
@@ -237,7 +239,8 @@ verbatim from that vocabulary; never invent operation names, field
 names, or value shapes it does not declare.
 
 When a required field cannot be satisfied from the user message, the
-workspace context, or the owner vocabulary, respond with
+workspace context, or the owner vocabulary — including when no
+vocabulary operation matches the user's intent — respond with
 "arguments": null and "missing_inputs": a JSON array of short strings
 naming each required input that is missing (field names or the owner
 vocabulary term — no values, no instructions).
@@ -409,8 +412,11 @@ def _bound_owner_evidence(outcome: SpecialistOutcome) -> str:
     """Sanitized, size-bounded projection of an owner DISCOVERY result.
 
     The catalog is untrusted owner data: sensitive keys are redacted,
-    it is rendered as data (never instruction), and truncated to a
-    hard character bound before reaching the argument prompt.
+    it is rendered as data (never instruction), and bounded before
+    reaching the argument prompt. Bounding is breadth-first — every
+    top-level and second-level entry keeps a bounded row so the whole
+    owner vocabulary stays visible; a single deep JSON truncation
+    would silently drop the operations the owner actually declares.
     """
     payload = (
         outcome.structured
@@ -418,12 +424,74 @@ def _bound_owner_evidence(outcome: SpecialistOutcome) -> str:
         else outcome.content_text
     )
     if isinstance(payload, str):
-        text = _redact_text(payload)
-    else:
-        text = json.dumps(
-            _sanitize_renderable(payload), ensure_ascii=False, default=str
-        )
-    return text[:MAX_OWNER_EVIDENCE_CHARS]
+        return _redact_text(payload)[:MAX_OWNER_EVIDENCE_CHARS]
+    sanitized = _sanitize_renderable(payload)
+    compacted = _compact_evidence(sanitized)
+    if not isinstance(compacted, Mapping):
+        return json.dumps(
+            compacted, ensure_ascii=False, default=str
+        )[:MAX_OWNER_EVIDENCE_CHARS]
+
+    lines: list[str] = []
+    for key, value in list(compacted.items())[:MAX_SURFACE_ENTRIES]:
+        _evidence_rows(str(key), value, lines, depth=0)
+        if sum(len(line) for line in lines) > MAX_OWNER_EVIDENCE_CHARS:
+            break
+    return "\n".join(lines)[:MAX_OWNER_EVIDENCE_CHARS]
+
+
+_EVIDENCE_DROPPED_KEYS = frozenset({"example", "examples"})
+
+
+def _compact_evidence(value: Any, depth: int = 0) -> Any:
+    """Deterministic shrink of owner vocabulary before bounding.
+
+    The full catalog must fit the model-input budget, so verbosity is
+    removed while every entry stays visible: mappings keep all keys,
+    strings are capped, deep lists collapse to a count, and ``example``
+    placeholders (owner data the instruction already forbids copying
+    verbatim) are dropped entirely.
+    """
+    if isinstance(value, Mapping):
+        return {
+            str(k)[:80]: _compact_evidence(v, depth + 1)
+            for k, v in list(value.items())[:MAX_SURFACE_ENTRIES]
+            if str(k) not in _EVIDENCE_DROPPED_KEYS
+        }
+    if isinstance(value, (list, tuple)):
+        if depth >= 3:
+            return f"<{len(value)} items>"
+        return [
+            _compact_evidence(v, depth + 1)
+            for v in list(value)[:MAX_SURFACE_ENTRIES]
+        ]
+    if isinstance(value, str):
+        return value[:MAX_DESCRIPTION_CHARS]
+    return value
+
+
+def _evidence_rows(
+    key: str, value: Any, lines: list[str], *, depth: int
+) -> None:
+    """Flatten mapping/list-of-entries into per-entry bounded rows.
+
+    Large collections fan out so every vocabulary entry keeps a row;
+    small or scalar values render inline bounded by the entry cap.
+    """
+    if isinstance(value, Mapping) and depth < 1 and len(value) > 4:
+        for child_key, child in list(value.items())[:MAX_SURFACE_ENTRIES]:
+            _evidence_rows(
+                f"{key}.{child_key}", child, lines, depth=depth + 1
+            )
+        return
+    if isinstance(value, (list, tuple)) and depth < 1 and len(value) > 4:
+        for index, child in enumerate(list(value)[:MAX_SURFACE_ENTRIES]):
+            _evidence_rows(
+                f"{key}[{index}]", child, lines, depth=depth + 1
+            )
+        return
+    text = json.dumps(value, ensure_ascii=False, default=str)
+    lines.append(f"{key}: {text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}")
 
 
 def _missing_inputs(raw: object) -> tuple[str, ...]:
@@ -1180,10 +1248,11 @@ class OperationalCapabilityOrchestrator:
         )
         _logger.info(
             "orchestration stage=arguments decision=%s "
-            "correlation_id=%s",
+            "missing=%d correlation_id=%s",
             "built" if arguments is not None else (
                 "missing_inputs" if missing_inputs else "none"
             ),
+            len(missing_inputs),
             correlation,
         )
         if arguments is None:
@@ -2299,7 +2368,7 @@ class OperationalCapabilityOrchestrator:
                 block,
                 ensure_ascii=False,
                 default=str,
-            )[:MAX_SURFACE_CHARS],
+            )[:MAX_ARGUMENTS_BLOCK_CHARS],
             instruction_id=ARGUMENTS_INSTRUCTION_ID,
             instruction=ARGUMENTS_INSTRUCTION,
             expected_fields=("arguments",),
@@ -2317,6 +2386,11 @@ class OperationalCapabilityOrchestrator:
             return None, missing
         validated = _validate_instance(normalized, descriptor.input_schema)
         if validated is None:
+            return None, missing
+        if missing and not validated:
+            # The model declared owner-required inputs absent and
+            # produced no arguments — an empty invocation would
+            # fabricate a call the owner must reject. Clarify instead.
             return None, missing
         return validated, ()
 

@@ -500,6 +500,13 @@ class PresentationOpsContentService:
         """
         return {
             "catalogVersion": cls.catalog_version(),
+            "targetShape": {
+                "fields": ["playlistId", "slideId"],
+                "description": (
+                    "Envelope target: playlistId quando a operação "
+                    "requiresPlaylist; slideId quando requiresSlide."
+                ),
+            },
             "capabilities": cls._capabilities_for_actions(),
             "operations": cls._operations_for_actions(),
             "operationSchemas": "openapi_requestBody_oneOf",
@@ -546,6 +553,15 @@ class PresentationOpsContentService:
             req = [str(item).strip() for item in required if str(item).strip() and str(item) != "op"]
             if req:
                 row["requiredFields"] = req
+            properties = schema.get("properties")
+            if isinstance(properties, dict):
+                fields = sorted(
+                    str(k).strip()
+                    for k in properties
+                    if str(k).strip() and str(k) != "op"
+                )
+                if fields:
+                    row["fields"] = fields
             when = spec.get("whenToUse")
             if isinstance(when, list) and when:
                 row["whenToUse"] = [str(item).strip() for item in when[:3] if str(item).strip()]
