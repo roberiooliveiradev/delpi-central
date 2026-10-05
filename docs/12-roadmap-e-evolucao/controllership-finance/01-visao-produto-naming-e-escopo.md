@@ -24,17 +24,37 @@ Produto multi-macroprocesso na Minha DELPI para:
 
 Primeiro processo: **PROC-0072 — Gestão do Fechamento Mensal da Controladoria**.
 
+## Arquitetura de informação
+
+Topbar canônica:
+
 ```text
 Portal Controladoria & Finanças
-├── Central de Fechamento
-│   ├── Visão Geral
-│   ├── Checklist e Documentos
-│   ├── Estoque e Conciliação
-│   ├── Classificações e Pendências
-│   ├── Pacote e Envio
-│   └── Configurações
-└── futuros macroprocessos
+├── Início
+├── Visão geral
+├── Sala de interação
+├── Minhas tarefas
+├── Administração
+└── Ajuda
 ```
+
+O `Início` funciona como hub das funcionalidades:
+
+```text
+Início
+└── Central de Fechamento
+    ├── Cockpit da Competência
+    ├── Checklist e Documentos
+    ├── Estoque e Conciliação
+    ├── Classificações e Pendências
+    └── Pacote e Envio
+```
+
+A `Visão geral` é a superfície analítica do Portal e deve apresentar indicadores financeiros com owner/source/fórmula comprovados.
+
+Administração é transversal ao Portal e consolida P6.
+
+Novos macroprocessos entram futuramente no Início sem alterar a identidade do produto.
 
 ## Fronteiras
 
@@ -46,6 +66,19 @@ A matriz detalhada de produtos, owners e regras de integração está em [21-bou
 
 ### Roadmap financeiro-controladoria
 Permanece discovery/histórico Transforma+. Não substitui este TARGET.
+
+## Permissions do produto
+
+O modelo permanece deliberadamente simples:
+
+```text
+controllership-finance.access
+controllership-finance.manage
+```
+
+Não criar permission por página, botão, CRUD, filial ou unidade.
+
+Filial/unidade pode existir como dimensão de dados, não como permission code dedicado deste Portal.
 
 ## Ainda não definido tecnicamente
 
