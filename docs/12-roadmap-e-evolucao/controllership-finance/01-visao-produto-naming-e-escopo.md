@@ -80,12 +80,24 @@ Não criar permission por página, botão, CRUD, filial ou unidade.
 
 Filial/unidade pode existir como dimensão de dados, não como permission code dedicado deste Portal.
 
+## Identidade técnica congelada
+
+```text
+plugin id       = controllership-finance
+plugin folder   = plugins/controllership-finance
+basePath        = /apps/controllership-finance
+BFF             = controllership-finance-api
+BFF baseUrl     = /apps/controllership-finance-api
+ACCESS          = controllership-finance.access
+MANAGE          = controllership-finance.manage
+```
+
+O BFF deve seguir o padrão vigente das APIs/portais atuais da plataforma, revalidado no HEAD antes do scaffold.
+
 ## Ainda não definido tecnicamente
 
-- plugin id;
-- rota/basePath;
-- BFF;
 - storage;
-- manifest;
-- schemas;
-- deployment topology.
+- schema físico/migrations;
+- detalhes de persistência;
+- deployment topology;
+- bindings concretos de cada source/owner.
