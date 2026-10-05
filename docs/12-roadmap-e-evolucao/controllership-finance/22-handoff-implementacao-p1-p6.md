@@ -14,6 +14,13 @@ Fontes primárias:
 
 Este documento organiza o handoff; em conflito, a regra específica comprovada no documento canônico da página vence.
 
+Reuso frontend obrigatório:
+- [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md)
+- runtime import: `@delpi/plugin-ui/index`
+- styles: `@delpi/plugin-ui/styles`
+
+Antes de criar UI reutilizável local, verificar o catálogo do kit.
+
 ## Baseline transversal de experiência
 
 Todas as páginas devem tratar, quando aplicável:
@@ -30,7 +37,8 @@ Todas as páginas devem tratar, quando aplicável:
 - deep link/F5;
 - freshness/proveniência;
 - Help contextual;
-- nenhuma autorização baseada apenas em UI.
+- nenhuma autorização baseada apenas em UI;
+- `@delpi/plugin-ui` first; chrome reutilizável local só quando o kit não oferecer equivalente.
 
 ## P1 — Cockpit da Competência
 
