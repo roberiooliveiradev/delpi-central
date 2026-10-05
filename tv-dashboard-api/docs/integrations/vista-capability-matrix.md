@@ -15,7 +15,7 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 | **TV Dashboard** | Domain authority (playlists, slides, data blocks, PresentationMutation) |
 | **Chat interno (Minha DELPI)** | Handoff only (`tv_dashboard_handoff`) — **não** muta TV; **não** é VISTA nem DÉLIA |
 | **DÉLIA** | App standalone industrial — **≠** Chat; adapter TV = **TARGET** (mesmo contrato PresentationMutation; sem HTTP neste HEAD) |
-| **MCP** | Adapter futuro (TARGET Plugin + remote MCP) — **não implementado neste HEAD** |
+| **MCP** | Backend adapter **PROVEN** (`/mcp`, 8 tools sobre o mesmo `GptActionsDispatchService`); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
 | **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
 
 ```text
@@ -23,7 +23,7 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
   → TvPresentationWriteService
     → HTTP domain API (UI editor)
     → GPT Action adapter (VISTA)
-    → MCP adapter (TARGET)
+    → MCP adapter (PROVEN backend; external provisioning/go-live PENDING)
     → DÉLIA capability adapter (TARGET — not implemented)
 ```
 
@@ -40,6 +40,40 @@ Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
 - `/data/copilot/*` is **410 Gone**; Chat Copilot skill/tool and MFE dock are retired.
 - Internal Chat TV intent → **handoff** (`tv_dashboard_handoff` direct answer → VISTA); never mint mutation tools.
 - DÉLIA TV capability adapter = **TARGET** (same PresentationMutation contract; no code in this HEAD).
+
+## Governed write authorization (PROVEN — 2026-10-05, commit `7d1cc86c61`)
+
+Canonical invariant for every **human-governed material write** (editor CRUD,
+PresentationMutation, GPT Actions PREPARE/commit_now/COMMIT, MCP
+`prepare_change`/`commit_proposal` — the latter two inherit the boundary by
+delegating to the same dispatch):
+
+```text
+end-user principal (principal_type == "user")
+  → bearer user credential
+  → fresh effective Core RBAC (no cache, no stale fallback, fail closed)
+  → required permission
+  → resource/domain authorization (PlaylistAccessService) when applicable
+  → canonical write boundary (TvPresentationWriteService)
+```
+
+- Keycloak = AuthN; Core API = effective platform RBAC; TV Dashboard =
+  governed-write policy + resource AuthZ; VISTA/GPT Actions/MCP = adapters and
+  consumers, never a permission source.
+- Service principals are denied on all human-governed write surfaces
+  (`PRINCIPAL_TYPE_DENIED` 403) and can never acquire orphan-playlist ownership
+  via `PlaylistAccessService.try_claim_owner`.
+- Revoked permission denies the next write even with a previously warm cache;
+  Core unavailability fails closed (`AUTHZ_UNAVAILABLE` 503). **Reads are
+  unchanged** — fresh RBAC is not applied globally.
+- `capability_surface`, GPT confirmation, MCP metadata and provider scopes do
+  not authorize writes.
+
+**Bounded S2S exception (INTERNAL ADMIN):** `POST /data/openapi/sync` accepts
+`X-Delpi-Service-Token` from `api-delpi` (producer:
+`OpenApiConsumerNotifyService`) under effective `TV_MANAGE`. This does **not**
+make service principals valid VISTA users and does not generalize to GPT
+Actions, MCP, CRUD, PresentationMutation, template or builder writes.
 
 ## Source of truth
 
@@ -133,7 +167,8 @@ Owner-local services (not new GPT Actions):
 | Playlist clarification / curation | `object_resolution` + `playlist_curation` | **PROVEN** directives |
 | Branch / SI goals | `branch_scope` + `si_goals` | **PROVEN** directives |
 | Media | `assetId` only; `mediaInventory.assets[]` + brand logos via `ensure_brand_logo_on_slide` | **PROVEN** inventory/seed; generic upload **TARGET** |
-| MCP / DÉLIA TV | `mcp_delia` | **TARGET** (same PresentationMutation) |
+| MCP VISTA backend | `/mcp` + `interface/mcp` adapter → shared dispatch | **PROVEN** (incl. PREPARE `prepare_change` + ACT `commit_proposal`); go-live externo **PENDING** |
+| DÉLIA TV adapter | `mcp_delia` | **TARGET** (same PresentationMutation; no code in this HEAD) |
 | Eval corpus | `docs/gpt-actions/vista-ready-slide-eval-corpus.md` + `tests/fixtures/vista_ready_slide_corpus.json` | **PROVEN** gate (`test_vista_ready_slide_corpus_gate.py`) |
 
 DTOs (internal): `JoinPlanProposal`, `FormatHint`, `PresentationRecipeId` in `domain/presentation_intelligence`.
@@ -186,7 +221,7 @@ Importable operations remain **8**. Margin vs ≤30 unchanged.
 
 | Surface | Status |
 |---|---|
-| MCP VISTA | **NONE** this HEAD (architecture allows future adapter without duplicating rules) |
+| MCP VISTA | **PROVEN** backend (`/mcp` mount + 8 semantic tools on shared dispatch; service-token rejected at transport). External provisioning (`mcp-tv-dashboard`) / provider go-live = **PENDING** |
 | DÉLIA → VISTA Actions | **NONE** — target is capability/core adapter, not Actions HTTP |
 
 ## Proposal store residual

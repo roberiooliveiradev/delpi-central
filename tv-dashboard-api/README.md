@@ -28,6 +28,18 @@ Scripts v2 legados ainda executam em dual-read no enrichment até backfill opcio
 
 ### Admin (JWT + RBAC)
 
+> **Writes governados (2026-10-05):** toda escrita material governada por humano
+> (CRUD de playlists/telas/seções/mídia/templates, history restore,
+> PresentationMutation, GPT Actions PREPARE/commit_now/COMMIT, MCP
+> `prepare_change`/`commit_proposal`, builder de dados) exige principal de
+> usuário final + credencial bearer + **RBAC efetivo fresco do Core**
+> (`force_refresh`: sem cache, sem fallback stale, fail-closed) antes de
+> permissão e autorização de recurso (`PlaylistAccessService`). Principais de
+> serviço são negados (403 `PRINCIPAL_TYPE_DENIED`) e não assumem ownership de
+> playlist órfã. Exceção única e explícita: `POST /data/openapi/sync` (S2S
+> administrativo interno, `X-Delpi-Service-Token`, `TV_MANAGE`). Leituras não
+> foram alteradas.
+
 | Grupo | Prefixo |
 |---|---|
 | Programações | `/playlists` |
@@ -51,7 +63,7 @@ Fontes de dados (catálogo + draft actions): [`docs/data-builder-chat.md`](./doc
 | `GET` | `/data/routes` | `TV_READ` | Catálogo allowlist com `suggestedDisplayModes` |
 | `GET` | `/data/routes/{operationId}` | `TV_READ` | Detalhe de uma rota |
 | `GET` | `/data/openapi/candidates` | `TV_MANAGE` | Rotas GET da api-delpi (curadoria / diff vs allowlist) |
-| `POST` | `/data/openapi/sync` | `TV_MANAGE` | Reimporta OpenAPI live → regenera `tv_data_routes.json` |
+| `POST` | `/data/openapi/sync` | `TV_MANAGE` | Reimporta OpenAPI live → regenera `tv_data_routes.json`. **INTERNAL ADMIN S2S**: aceita `X-Delpi-Service-Token` (api-delpi) — exceção explícita e limitada, não é write humano |
 | `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
 | `POST` | `/data/builder/sessions` | `TV_WRITE` | Inicia sessão do builder de fontes (catálogo/actions) |
 | `POST` | `/data/builder/sessions/{id}/turn` | `TV_WRITE` | Action tipada → rascunho (`message` NL → 422 `NL_TURN_RETIRED`) |

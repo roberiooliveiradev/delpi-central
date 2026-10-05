@@ -1,4 +1,4 @@
-# ADR — VISTA specialist capability surfaces (GPT Actions / future MCP)
+# ADR — VISTA specialist capability surfaces (GPT Actions / MCP)
 
 **Status:** DECIDED  
 **Date:** 2026-09-22  
@@ -37,3 +37,30 @@
 - Legacy `POST /data/copilot/*` returns **410 Gone** (successor: `/gpt-actions/v1`).
 - Internal Chat: TV intent → VISTA handoff only (no mutation tool).
 - DÉLIA TV adapter = documental TARGET on PresentationMutation; zero runtime coupling in this HEAD.
+
+## Amendments / supersessions
+
+### 2026-10-05 — MCP backend adapter implemented (supersedes item 9 in part)
+
+The MCP adapter was subsequently implemented: `/mcp` mount, `interface/mcp`
+adapter and **8 semantic tools** (6 READ + `prepare_change` + `commit_proposal`)
+delegating to the same `GptActionsDispatchService` — no new domain or AuthZ
+authority was created (the "keep application core adapter-ready" intent of
+item 9 held). What remains **PENDING** is external provisioning: Keycloak
+client `mcp-tv-dashboard`, provider/gateway go-live — see
+[`../integrations/openai-plugin-mcp.md`](../integrations/openai-plugin-mcp.md).
+DÉLIA TV capability adapter remains TARGET.
+
+### 2026-10-05 — Governed-write authorization contract (commit `7d1cc86c61`)
+
+Human-governed material writes now require, before permission/resource
+authorization: an **end-user principal** (`principal_type == "user"`), a bearer
+user credential and **fresh effective Core RBAC** (`load_user_rbac(force_refresh=True)`
+— bypasses the permission cache, no stale fallback, fails closed when Core is
+unavailable). Service principals are denied on every governed write surface and
+cannot acquire orphan-playlist ownership via `try_claim_owner`. Bounded
+exception: `POST /data/openapi/sync` remains an explicit INTERNAL ADMIN S2S
+contract (`X-Delpi-Service-Token`, `TV_MANAGE`). Ownership unchanged:
+Keycloak = AuthN, Core = effective RBAC, TV Dashboard = governed-write policy,
+`PlaylistAccessService` = resource AuthZ, `TvPresentationWriteService` =
+canonical writer. Reads and the shared `delpi_auth` defaults are unchanged.

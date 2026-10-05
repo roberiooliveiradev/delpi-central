@@ -1,4 +1,4 @@
-# VISTA / TV Dashboard — OpenAI Plugin + MCP (READ surface)
+# VISTA / TV Dashboard — OpenAI Plugin + MCP (governed READ + PREPARE/ACT)
 
 > Documentation does not prove runtime. Evidence is classified; revalidate after material deploy/auth changes.
 
@@ -92,6 +92,18 @@ commit_proposal(proposal_handle, idempotency_key, confirmation=true)
 ```
 
 `TV_WRITE` permission is enforced by the application on both tools.
+
+**Governed-write authorization boundary (2026-10-05):** `prepare_change` and
+`commit_proposal` inherit the human-governed write gate of the shared dispatch —
+end-user principal (`principal_type == "user"`), bearer user credential and
+**fresh effective Core RBAC** (`load_user_rbac(force_refresh=True)`: bypasses
+permission cache, no stale fallback, fails closed when Core is unavailable)
+before permission and `PlaylistAccessService` resource checks. Service
+principals are denied twice: at MCP transport (401) and downstream at the
+dispatch gate (`PRINCIPAL_TYPE_DENIED` 403) — defense in depth, not duplicated
+authority. The only service-token consumer is the unrelated
+`POST /data/openapi/sync` INTERNAL ADMIN S2S contract, which is not part of the
+MCP surface.
 
 ## OAuth transport requirements
 

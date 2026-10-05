@@ -37,6 +37,32 @@ Canonical matrix: [`../integrations/vista-capability-matrix.md`](../integrations
 - Only ``GET /gpt-actions/v1/openapi.json`` is public (exact path).
 - No API Key authority for writes. No OpenAI email identity. No GPT-local RBAC matrix.
 
+### Governed-write authorization (2026-10-05, commit ``7d1cc86c61``)
+
+Every write workflow entrypoint (``gpt_preview_change`` — including
+``commit_now`` — and ``gpt_commit_change``) is backend-governed:
+
+```text
+end-user principal (principal_type == "user")
+  → bearer user credential
+  → fresh effective Core RBAC (load_user_rbac force_refresh: no cache,
+    no stale fallback, fail closed when Core is unavailable)
+  → TV_WRITE
+  → PlaylistAccessService resource AuthZ (when playlist-scoped)
+  → TvPresentationWriteService
+```
+
+- Service principals (``principal_type == "service"``, e.g.
+  ``X-Delpi-Service-Token``) are denied with 403 ``PRINCIPAL_TYPE_DENIED``
+  before proposal creation, ``commit_now`` and commit — a service token cannot
+  mint or consume a VISTA write proposal.
+- A revoked Core permission denies the next write even if a previous cache was
+  warm; Core outage fails closed (503 ``AUTHZ_UNAVAILABLE``) — never stale.
+- Bounded exception: ``POST /data/openapi/sync`` remains the INTERNAL ADMIN S2S
+  contract (``X-Delpi-Service-Token`` from api-delpi, ``TV_MANAGE``). It does
+  not extend service-principal access to any VISTA/GPT Actions write surface.
+- Reads keep the standard cached-RBAC policy — unchanged by this work.
+
 OAuth client ``chatgpt-tv-dashboard`` is a **TEMPORARY_BRIDGE_CLIENT**
 (``MANUAL_CONFIGURATION_REQUIRED`` in Keycloak + GPT Builder). Go-live checklist:
 ``docs/gpt-actions/gpt-builder-go-live.md``. Specialist persona **VISTA**:

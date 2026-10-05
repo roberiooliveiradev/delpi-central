@@ -205,6 +205,14 @@ O cliente recarrega o payload HTTP; o polling periódico permanece como fallback
 | `tv-dashboard.view.filial-01` / `.filial-02` | Escopo filial nas telas nativas |
 | `tv-dashboard.view.consolidated` | Visão consolidada |
 
+**Escritas governadas:** todo material write exige principal de usuário final +
+RBAC efetivo **fresco** do Core (sem cache/stale, fail-closed) antes de
+permissão e escopo de recurso (`PlaylistAccessService`). Principais de serviço
+são negados — exceção única: `POST /data/openapi/sync` (S2S interno admin,
+`X-Delpi-Service-Token`, `TV_MANAGE`). Contrato completo:
+[`tv-dashboard-api/README.md`](../../../tv-dashboard-api/README.md) ·
+[vista-capability-matrix.md](../../../tv-dashboard-api/docs/integrations/vista-capability-matrix.md).
+
 ---
 
 ## Ambiente e deploy
