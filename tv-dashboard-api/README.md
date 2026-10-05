@@ -36,9 +36,10 @@ Scripts v2 legados ainda executam em dual-read no enrichment até backfill opcio
 > (`force_refresh`: sem cache, sem fallback stale, fail-closed) antes de
 > permissão e autorização de recurso (`PlaylistAccessService`). Principais de
 > serviço são negados (403 `PRINCIPAL_TYPE_DENIED`) e não assumem ownership de
-> playlist órfã. Exceção única e explícita: `POST /data/openapi/sync` (S2S
-> administrativo interno, `X-Delpi-Service-Token`, `TV_MANAGE`). Leituras não
-> foram alteradas.
+> playlist órfã. Única exceção de material write neste boundary: `POST
+> /data/openapi/sync` (S2S administrativo interno, `X-Delpi-Service-Token`,
+> `TV_MANAGE`). Leituras e o comportamento de service principal em
+> leitura/resolução de acesso não foram alterados.
 
 | Grupo | Prefixo |
 |---|---|

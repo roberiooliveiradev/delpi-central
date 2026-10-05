@@ -101,9 +101,10 @@ permission cache, no stale fallback, fails closed when Core is unavailable)
 before permission and `PlaylistAccessService` resource checks. Service
 principals are denied twice: at MCP transport (401) and downstream at the
 dispatch gate (`PRINCIPAL_TYPE_DENIED` 403) — defense in depth, not duplicated
-authority. The only service-token consumer is the unrelated
-`POST /data/openapi/sync` INTERNAL ADMIN S2S contract, which is not part of the
-MCP surface.
+authority. `POST /data/openapi/sync` is the explicit service-token
+material-write exception covered by this authorization boundary — it is not
+part of the MCP surface. Service-principal read behavior is unchanged and
+remains outside this write-hardening workstream.
 
 ## OAuth transport requirements
 

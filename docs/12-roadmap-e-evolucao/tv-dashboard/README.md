@@ -208,8 +208,10 @@ O cliente recarrega o payload HTTP; o polling periódico permanece como fallback
 **Escritas governadas:** todo material write exige principal de usuário final +
 RBAC efetivo **fresco** do Core (sem cache/stale, fail-closed) antes de
 permissão e escopo de recurso (`PlaylistAccessService`). Principais de serviço
-são negados — exceção única: `POST /data/openapi/sync` (S2S interno admin,
-`X-Delpi-Service-Token`, `TV_MANAGE`). Contrato completo:
+são negados — única exceção de material write neste boundary: `POST
+/data/openapi/sync` (S2S interno admin, `X-Delpi-Service-Token`, `TV_MANAGE`).
+Leituras e o comportamento de service principal em leitura permanecem
+inalterados (TO_INVENTORY para necessidade futura). Contrato completo:
 [`tv-dashboard-api/README.md`](../../../tv-dashboard-api/README.md) ·
 [vista-capability-matrix.md](../../../tv-dashboard-api/docs/integrations/vista-capability-matrix.md).
 
