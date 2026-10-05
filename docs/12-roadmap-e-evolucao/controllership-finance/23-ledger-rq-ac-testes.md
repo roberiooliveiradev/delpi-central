@@ -98,6 +98,19 @@ Este ledger complementa:
 | RQ-P6-09 | um MANAGE pode publicar com auditoria no target atual | segundo MANAGE não é requisito implícito | positive | T05 | TARGET |
 | RQ-P6-10 | Help explica draft/publish/effective_from/snapshot/inativação | conteúdo contextual disponível | UI/help check | feature help | TARGET |
 
+## Superfícies da topbar
+
+| RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
+|---|---|---|---|---|---|
+| RQ-NAV-01 | topbar contém exatamente Início, Visão geral, Sala de interação, Minhas tarefas, Administração e Ajuda | ordem/conjunto canônico sem item de P1–P5 na topbar | navigation + mobile + keyboard | 24 | TARGET |
+| RQ-HOME-01 | Início funciona como hub de funcionalidades | Central de Fechamento é acessível sem duplicar o Cockpit completo | positive + empty/partial | foundation | TARGET |
+| RQ-OVW-01 | Visão geral apresenta indicadores financeiros governados | nenhum KPI sem owner/source/fórmula/freshness; indisponível != zero | positive + partial + source failure | indicator inventory | SOURCE_INVENTORY_REQUIRED |
+| RQ-INT-01 | Sala de interação é contextual e não muda estado de negócio por mensagem | mensagem/comentário não valida, aprova, fecha estoque ou envia pacote | positive + resource negative | interaction contract inventory | CONTRACT_INVENTORY_REQUIRED |
+| RQ-TASK-01 | Minhas tarefas projeta responsabilidades dos owners | concluir tarefa usa o caso de uso owner; source indisponível não vira empty | positive + partial + sibling | producer/projection inventory | PROJECTION_CONTRACT_REQUIRED |
+| RQ-ADM-01 | Administração usa somente MANAGE | usuário apenas ACCESS não altera mestre; MANAGE não implica ACCESS operacional | positive + permission negative | Core effective permissions | TARGET |
+| RQ-HELP-01 | Ajuda acompanha toda mudança user-facing | conteúdo/deep links sincronizados no mesmo gate da feature | help sync + link check | feature-help-sync | TARGET |
+| RQ-AUTHZ-01 | permissions do Portal são somente access e manage | nenhum permission code por página, CRUD, filial, unidade ou indicador | manifest/contract review | Core | TARGET |
+
 ## Requisitos transversais de segurança
 
 | RQ | Requisito | Aceite mínimo |
