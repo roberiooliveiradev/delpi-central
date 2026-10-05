@@ -109,7 +109,7 @@ A Visão geral é a superfície de indicadores financeiros do Portal; o conjunto
 
 A cobertura Transforma+, boundaries, handoff P1–P6 e ledger de requisitos estão consolidados em 20–23.
 
-Isso permite preparar briefs técnicos página por página, mas não define plugin id, BFF, rota, storage, schemas ou deployment. Esses itens continuam dependentes de inventário do HEAD.
+Isso permite preparar briefs técnicos página por página. A identidade técnica do produto está congelada como `controllership-finance` + `controllership-finance-api`, com base paths `/apps/controllership-finance` e `/apps/controllership-finance-api`. Storage, schemas físicos, migrations e deployment continuam dependentes de inventário do HEAD.
 
 ## Execução
 
