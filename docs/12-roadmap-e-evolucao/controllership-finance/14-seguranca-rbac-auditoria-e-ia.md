@@ -26,7 +26,7 @@ Dentro do acesso e ownership autorizados:
 
 ## MANAGE
 
-Inclui ACCESS e adiciona administração:
+Autoriza administração/configuração:
 - templates;
 - catálogos;
 - validators;
@@ -34,6 +34,8 @@ Inclui ACCESS e adiciona administração:
 - promoção de item excepcional;
 - correções estruturais;
 - publicação.
+
+`MANAGE` não implica automaticamente `ACCESS` operacional. Se o mesmo usuário precisar usar as superfícies operacionais, deve possuir `controllership-finance.access` conforme effective permissions do Core.
 
 Não criar permission por botão, tela, endpoint, CRUD, filial ou unidade.
 
