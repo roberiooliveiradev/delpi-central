@@ -11,6 +11,9 @@ from tv_app.application.services.data.tv_commercial_composite_binding_migration_
     migrate_composite_commercial_binding,
     migrate_dual_commercial_rol_binding,
 )
+from tv_app.application.services.data.data_model_service import (
+    collect_native_config_operation_ids,
+)
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
     TvDataRouteCatalogService,
@@ -197,16 +200,13 @@ def hydrate_comunicado_data_bindings(
 
     filters = result.get("dataFilters")
     if isinstance(filters, dict) and filters:
-        # União de schemas das rotas do slide para strip conservador.
+        # União de schemas das rotas do slide para strip conservador —
+        # inclui rotas dos inputs de DataModel (mesmo conjunto do merge
+        # agregado do editor); sem isso, filtros válidos só para rotas de
+        # inputs eram stripados ao persistir em slides mistos.
         union_schema: dict[str, Any] = {}
-        for block in result.get("blocks") or []:
-            if not isinstance(block, dict):
-                continue
-            binding = block.get("dataBinding")
-            if not isinstance(binding, dict):
-                continue
-            op = str(binding.get("operationId") or "").strip()
-            route = cat.get_route(op) if op else None
+        for operation_id in collect_native_config_operation_ids(result):
+            route = cat.get_route(operation_id) if operation_id else None
             schema = route.get("paramSchema") if isinstance(route, dict) else None
             if isinstance(schema, dict):
                 union_schema.update(schema)

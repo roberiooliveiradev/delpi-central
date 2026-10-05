@@ -74,7 +74,17 @@ _PLAYLIST_DEFAULT_SCALAR_TYPES = (str, int, float, bool, type(None))
 
 
 def _sanitize_playlist_data_defaults(raw: dict[str, Any]) -> dict[str, Any]:
-    """Shallow scalar defaults only (branch, period, dates, …)."""
+    """Shallow scalar + ExpressionSpec defaults (branch, period, dates, …).
+
+    ExpressionSpec é dado tipado canônico — aplica-se às rotas do escopo que
+    declaram e permitem o param (scoping por rota no runtime, mesmo contrato
+    das camadas de tela). A validação semântica das specs contra as rotas do
+    playlist fica em ``patch_playlist_data_defaults``.
+    """
+    from tv_app.application.services.data.value_expression_service import (
+        is_expression_value,
+    )
+
     out: dict[str, Any] = {}
     if not isinstance(raw, dict):
         raise PresentationWriteError(
@@ -86,11 +96,14 @@ def _sanitize_playlist_data_defaults(raw: dict[str, Any]) -> dict[str, Any]:
         key_s = str(key or "").strip()
         if not key_s or len(key_s) > 64:
             continue
-        if isinstance(value, _PLAYLIST_DEFAULT_SCALAR_TYPES):
+        if isinstance(value, _PLAYLIST_DEFAULT_SCALAR_TYPES) or is_expression_value(
+            value
+        ):
             out[key_s] = value
             continue
         raise PresentationWriteError(
-            f"dataDefaults.«{key_s}» deve ser escalar (string/número/boolean/null).",
+            f"dataDefaults.«{key_s}» deve ser escalar (string/número/boolean/null) "
+            "ou ExpressionSpec.",
             status_code=422,
             code="INVALID_CHANGE",
         )
@@ -182,6 +195,7 @@ class TvPresentationWriteService:
         if not isinstance(existing, dict):
             existing = {}
         cleaned = _sanitize_playlist_data_defaults(data_defaults)
+        self._assert_data_defaults_expressions(playlist_id, cleaned)
         if replace:
             next_defaults = normalize_period_params_for_persistence(cleaned)
         else:
@@ -524,6 +538,46 @@ class TvPresentationWriteService:
                 "Tela não encontrada.",
                 status_code=404,
                 code="RESOURCE_NOT_FOUND",
+            ) from exc
+
+    def _assert_data_defaults_expressions(
+        self,
+        playlist_id: UUID,
+        data_defaults: dict[str, Any],
+    ) -> None:
+        """ExpressionSpec em dataDefaults: chave precisa existir no
+        paramSchema de ≥1 rota consumidora do playlist (blocks + inputs de
+        DataModel) e ser permitida em toda rota que a declara."""
+        from tv_app.application.services.data.data_model_service import (
+            collect_native_config_data_routes,
+        )
+        from tv_app.application.services.data.value_expression_service import (
+            MExpressionError,
+            params_contain_expressions,
+            validate_shared_layer_expressions,
+        )
+        from tv_app.application.services.tv_data_route_catalog_service import (
+            TvDataRouteCatalogService,
+        )
+
+        if not params_contain_expressions(data_defaults):
+            return
+        catalog = TvDataRouteCatalogService()
+        routes: list[dict[str, Any]] = []
+        for slide in self._repo.list_slides(playlist_id):
+            if not isinstance(slide, dict):
+                continue
+            cfg = slide.get("nativeConfig")
+            if not isinstance(cfg, dict):
+                continue
+            routes.extend(
+                collect_native_config_data_routes(cfg, catalog=catalog)
+            )
+        try:
+            validate_shared_layer_expressions(data_defaults, routes=routes)
+        except MExpressionError as exc:
+            raise PresentationWriteError(
+                str(exc), status_code=422, code="INVALID_CHANGE"
             ) from exc
 
     def get_playlist(self, playlist_id: UUID) -> dict[str, Any]:

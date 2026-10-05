@@ -8,6 +8,9 @@ from tv_app.application.services.comunicado_data_params_service import (
     BRANCH_PARAM_KEYS,
     resolve_any_branch_value,
 )
+from tv_app.application.services.data.data_model_service import (
+    native_config_model_source_params,
+)
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
     PERIOD_DAYS_KEY,
@@ -59,6 +62,16 @@ def _collect_sources(native_config: Mapping[str, Any] | None) -> list[dict[str, 
                 "params": params,
             }
         )
+    # Inputs de DataModel são fontes reais no runtime — mesmo pipeline que os
+    # blocos data_source (projeção canônica de data_model_service).
+    for source in native_config_model_source_params(native_config):
+        entry: dict[str, Any] = {
+            "blockId": source.get("blockId"),
+            "params": source.get("params") or {},
+        }
+        if source.get("modelId"):
+            entry["modelId"] = source["modelId"]
+        out.append(entry)
     return out
 
 

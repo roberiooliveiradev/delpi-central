@@ -10,7 +10,9 @@ describe("playlist dataDefaults editor contract", () => {
     const fields = readFileSync(join(here, "PlaylistDataFiltersFields.tsx"), "utf8");
     expect(fields).toContain("collectPlaylistDataParamSchema");
     expect(fields).toContain("DataParamFields");
-    expect(fields).toContain("hydrateDefaultPreset={false}");
+    // Camada agregada = mesma semântica de hydrateDefaultPreset={false}
+    // (spelling legado deprecated — filterLayer é o contrato canônico).
+    expect(fields).toContain('filterLayer: "aggregate"');
     expect(fields).toContain("playlistFiltersEmpty");
   });
 

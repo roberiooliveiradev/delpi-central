@@ -170,6 +170,15 @@ export function mergeRouteParamSchemasDetailed(
           const allowed = new Set(field.enum.map(String));
           current.enum = current.enum.filter((item) => allowed.has(String(item)));
         }
+        // expressionAllowed agregado = AND das rotas que declaram a chave:
+        // camada compartilhada só oferece expressão quando toda rota
+        // declarante permite (mesma regra do validate no backend).
+        if (field.expressionAllowed === false) {
+          current.expressionAllowed = false;
+        }
+        if (String(field.in ?? "").toLowerCase() === "path") {
+          current.in = "path";
+        }
         continue;
       }
       delete merged[key];

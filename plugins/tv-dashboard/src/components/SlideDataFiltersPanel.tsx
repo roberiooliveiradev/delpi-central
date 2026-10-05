@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Filter } from "lucide-react";
 import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
+import { useParamExpressionCapability } from "../hooks/useParamExpressionCapability";
+import { applyDataParamRawUpdates, type DataParamUpdateValue } from "../utils/applyDataParamUpdates";
 import {
   collectDataOperationIds,
   mergeRouteParamSchemas,
 } from "../utils/collectPlaylistDataParamSchema";
+import { periodParamFieldKeys } from "../utils/dateRangePresets";
 import { DataParamFields } from "./DataParamFields";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -26,7 +28,8 @@ export function SlideDataFiltersPanel({
   branchScope = null,
   compact = false,
 }: Props) {
-  const { config, setDataFilters } = useComunicadoEditor();
+  const { config, setDataFilters, openExpressionEditor } = useComunicadoEditor();
+  const expressionSupport = useParamExpressionCapability();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const filters = config.dataFilters ?? {};
 
@@ -44,12 +47,28 @@ export function SlideDataFiltersPanel({
     [routes, operationIds],
   );
 
-  function updateFilters(updates: Record<string, string>) {
+  const periodKeys = useMemo(
+    () => periodParamFieldKeys(Object.keys(schema)),
+    [schema],
+  );
+
+  function updateFilters(updates: Record<string, DataParamUpdateValue>) {
     const next = applyDataParamRawUpdates(filters, updates, schema);
     setDataFilters(Object.keys(next).length > 0 ? next : undefined);
   }
 
   if (operationIds.length === 0 || Object.keys(schema).length === 0) return null;
+
+  const sharedProps = {
+    schema,
+    values: filters,
+    branchScope,
+    filterLayer: "aggregate" as const,
+    expressionSupport,
+    onEditExpression: openExpressionEditor,
+  };
+  const periodEntries = periodKeys.size > 0;
+  const otherEntries = Object.keys(schema).some((key) => !periodKeys.has(key));
 
   const body = (
     <DeckPropertySection
@@ -57,15 +76,30 @@ export function SlideDataFiltersPanel({
       hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.slideDataFilters}
       compact={compact}
     >
-      <DataParamFields
-        schema={schema}
-        values={filters}
-        branchScope={branchScope}
-        idPrefix="td-slide-filter"
-        hydrateDefaultPreset={false}
-        filterLayer="aggregate"
-        onChange={updateFilters}
-      />
+      {periodEntries ? (
+        <>
+          <p className="td-deck-inspector__hint td-data-param-group">Período</p>
+          <DataParamFields
+            {...sharedProps}
+            idPrefix="td-slide-filter-period"
+            onlyParams={periodKeys}
+            onChange={updateFilters}
+          />
+        </>
+      ) : null}
+      {otherEntries ? (
+        <>
+          {periodEntries ? (
+            <p className="td-deck-inspector__hint td-data-param-group">Filtros</p>
+          ) : null}
+          <DataParamFields
+            {...sharedProps}
+            idPrefix="td-slide-filter"
+            excludeParams={periodKeys}
+            onChange={updateFilters}
+          />
+        </>
+      ) : null}
     </DeckPropertySection>
   );
 

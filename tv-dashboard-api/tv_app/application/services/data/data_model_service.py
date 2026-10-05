@@ -378,3 +378,101 @@ def find_data_model(cfg: dict[str, Any], model_id: str) -> dict[str, Any] | None
         if isinstance(model, dict) and str(model.get("id") or "") == model_id:
             return model
     return None
+
+
+def collect_native_config_operation_ids(
+    cfg: Any,
+) -> list[str]:
+    """operationIds fetchable de um nativeConfig — blocos data_* + inputs de
+    dataModels. Mesmo conjunto que o agregador do editor
+    (``collectDataOperationIds``): camadas de filtro (dataFilters, digest,
+    relayer, validate) não podem enxergar só os blocos.
+    """
+    if not isinstance(cfg, dict):
+        return []
+    from tv_app.application.services.tv_data_route_catalog_service import (
+        DATA_BLOCK_TYPES,
+    )
+
+    ids: list[str] = []
+    seen: set[str] = set()
+    for block in cfg.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        if str(block.get("type") or "") not in DATA_BLOCK_TYPES:
+            continue
+        binding = block.get("dataBinding")
+        operation_id = (
+            str(binding.get("operationId") or "").strip()
+            if isinstance(binding, dict)
+            else ""
+        )
+        if operation_id and operation_id not in seen:
+            seen.add(operation_id)
+            ids.append(operation_id)
+    for model in cfg.get("dataModels") or []:
+        if not isinstance(model, dict):
+            continue
+        for item in model.get("inputs") or []:
+            if not isinstance(item, dict):
+                continue
+            operation_id = str(item.get("operationId") or "").strip()
+            if operation_id and operation_id not in seen:
+                seen.add(operation_id)
+                ids.append(operation_id)
+    return ids
+
+
+def native_config_model_source_params(
+    cfg: Any,
+) -> list[dict[str, Any]]:
+    """Inputs de dataModels projetados como fontes (mesmo pipeline do runtime
+    — ``data_model_source_blocks``). Ferramentas de camada (digest, relayer)
+    consomem a mesma projeção em vez de re-ler ``inputs[]`` à sua maneira.
+    Modelos inválidos são ignorados: o runtime reporta o erro tipado.
+    """
+    out: list[dict[str, Any]] = []
+    if not isinstance(cfg, dict):
+        return out
+    for model in cfg.get("dataModels") or []:
+        if not isinstance(model, dict):
+            continue
+        model_id = str(model.get("id") or "")
+        try:
+            nodes, _primary = data_model_source_blocks(normalize_data_model(model))
+        except DataModelContractError:
+            continue
+        for node in nodes:
+            binding = (
+                node.get("dataBinding") if isinstance(node.get("dataBinding"), dict) else {}
+            )
+            params = (
+                binding.get("params") if isinstance(binding.get("params"), dict) else {}
+            )
+            out.append(
+                {
+                    "blockId": str(node.get("id") or ""),
+                    "modelId": model_id,
+                    "operationId": str(binding.get("operationId") or ""),
+                    "params": dict(params),
+                }
+            )
+    return out
+
+
+def collect_native_config_data_routes(
+    cfg: Any,
+    *,
+    catalog: Any,
+) -> list[dict[str, Any]]:
+    """Rotas do catálogo correspondentes às fontes do nativeConfig (blocks +
+    inputs de DataModel) — union de schemas para camadas agregadas."""
+    get_route = getattr(catalog, "get_route", None)
+    if get_route is None:
+        return []
+    routes: list[dict[str, Any]] = []
+    for operation_id in collect_native_config_operation_ids(cfg):
+        route = get_route(operation_id)
+        if isinstance(route, dict):
+            routes.append(route)
+    return routes

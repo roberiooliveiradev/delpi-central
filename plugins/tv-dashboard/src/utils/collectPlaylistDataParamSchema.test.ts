@@ -329,6 +329,58 @@ describe("collectPlaylistDataParamSchema", () => {
     expect(schema.shared?.enum).toEqual(["y"]);
   });
 
+  it("MODEL_FILTER_EXPR_ALLOWED_AND: expressionAllowed=false em qualquer rota declarante propaga", () => {
+    const exprRoutes: TvDataRouteCatalogItem[] = [
+      {
+        operationId: "route_a",
+        category: "x",
+        path: "/a",
+        label: "A",
+        paramSchema: { limit: { type: "integer", label: "Limite" } },
+      },
+      {
+        operationId: "route_b",
+        category: "x",
+        path: "/b",
+        label: "B",
+        paramSchema: {
+          limit: { type: "integer", expressionAllowed: false },
+        },
+      },
+    ];
+    // Declarante permissivo primeiro — ainda assim o agregado proíbe,
+    // espelhando o validate_data_filters do backend.
+    const { schema } = mergeRouteParamSchemasDetailed(exprRoutes, [
+      "route_a",
+      "route_b",
+    ]);
+    expect(schema.limit?.expressionAllowed).toBe(false);
+  });
+
+  it("MODEL_FILTER_PATH_PROPAGATE: path param de qualquer rota declarante não vira expressão", () => {
+    const pathRoutes: TvDataRouteCatalogItem[] = [
+      {
+        operationId: "route_a",
+        category: "x",
+        path: "/a",
+        label: "A",
+        paramSchema: { id: { type: "string" } },
+      },
+      {
+        operationId: "route_b",
+        category: "x",
+        path: "/b/{id}",
+        label: "B",
+        paramSchema: { id: { type: "string", in: "path" } },
+      },
+    ];
+    const { schema } = mergeRouteParamSchemasDetailed(pathRoutes, [
+      "route_a",
+      "route_b",
+    ]);
+    expect(schema.id?.in).toBe("path");
+  });
+
   it("asDataFilterValues normaliza tipos", () => {
     expect(asDataFilterValues({ branch: "01", periodDays: 7, flag: true, x: null })).toEqual({
       branch: "01",

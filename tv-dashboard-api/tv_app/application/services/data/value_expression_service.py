@@ -19,7 +19,7 @@ import math
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from tv_app.application.services.data.m_query.m_expression_interpreter import (
@@ -577,6 +577,88 @@ def assert_no_unresolved_expressions(params: Mapping[str, Any] | None) -> None:
             "Parâmetro com expressão chegou ao gateway sem avaliação: "
             + ", ".join(offending),
         )
+
+
+def scope_layer_expressions_to_route(
+    params: Mapping[str, Any] | None,
+    *,
+    route: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Scoping de ExpressionSpec em camada compartilhada (tela/programação).
+
+    A expressão da camada aplica-se apenas às rotas que declaram e permitem
+    o parâmetro — mesmo scoping que o wire dá a literais fora do schema
+    (``_filter_query_to_route_schema``). Params da fonte/input NÃO passam
+    por aqui: na camada da fonte, expressão em chave não permitida segue
+    sendo erro no resolver.
+    """
+    if not isinstance(params, Mapping):
+        return {}
+    out: dict[str, Any] = {}
+    for key, value in params.items():
+        if is_expression_value(value) and not param_allows_expression(
+            str(key), route
+        ):
+            continue
+        out[str(key)] = value
+    return out
+
+
+def validate_shared_layer_expressions(
+    params: Mapping[str, Any] | None,
+    *,
+    routes: Sequence[Mapping[str, Any]],
+) -> None:
+    """Validação de escrita para ExpressionSpec em ``dataFilters``/``dataDefaults``.
+
+    Regra do escopo: a chave precisa ser declarada no ``paramSchema`` de ≥1
+    rota consumidora e nenhuma rota que a declara pode proibir expressão
+    nela (``expressionAllowed: false`` / ``in: path``). ``fixedQueryParams``
+    apenas excluem a rota do escopo (runtime faz o scoping), não vetam.
+    AST/refs/tipos compilam contra o union schema do escopo.
+    """
+    if not isinstance(params, Mapping):
+        return
+    route_list = [r for r in routes if isinstance(r, Mapping)]
+    union_schema: dict[str, Any] = {}
+    for route in route_list:
+        schema = route.get("paramSchema")
+        if isinstance(schema, Mapping):
+            for key, spec in schema.items():
+                union_schema.setdefault(str(key), spec)
+    union_route: dict[str, Any] = {"paramSchema": union_schema}
+    for key, value in params.items():
+        if not is_expression_value(value):
+            continue
+        key_s = str(key)
+        declaring = [
+            r
+            for r in route_list
+            if isinstance(r.get("paramSchema"), Mapping)
+            and key_s in r["paramSchema"]
+        ]
+        if not declaring:
+            _fail(
+                "m.expression_param_not_allowed",
+                f"O parâmetro {key_s} não existe nas rotas deste escopo.",
+            )
+        forbidden = [
+            r
+            for r in declaring
+            if str(
+                (r["paramSchema"].get(key_s) or {}).get("in") or ""
+            ).strip().lower()
+            == "path"
+            or (r["paramSchema"].get(key_s) or {}).get("expressionAllowed")
+            is False
+        ]
+        if forbidden:
+            _fail(
+                "m.expression_param_not_allowed",
+                f"O parâmetro {key_s} não aceita expressão em todas as rotas "
+                "que o declaram neste escopo.",
+            )
+        validate_expression_param_value(key_s, value, route=union_route)
 
 
 # Exemplos canônicos de AST — cada um deve passar por CompiledExpression.from_dict

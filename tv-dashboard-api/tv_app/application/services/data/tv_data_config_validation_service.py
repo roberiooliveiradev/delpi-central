@@ -9,6 +9,9 @@ from tv_app.application.services.branch_policy_service import (
 from tv_app.application.services.comunicado_native_config_sanitize import (
     sanitize_comunicado_config,
 )
+from tv_app.application.services.data.data_model_service import (
+    collect_native_config_data_routes,
+)
 from tv_app.application.services.data.data_transform_contract import (
     DATA_TRANSFORM_V2,
     read_data_transform,
@@ -109,6 +112,16 @@ class TvDataConfigValidationService:
                 validate_data_route_branch(route, params, user=user)
             except ValueError as exc:
                 issues.append({"field": f"{prefix}.params", "message": str(exc)})
+
+        # Rotas dos inputs de DataModel entram no union schema de dataFilters
+        # (mesma fonte do runtime/agregador do editor).
+        routes_for_filters.extend(
+            route
+            for route in collect_native_config_data_routes(
+                cfg, catalog=self._catalog
+            )
+            if route not in routes_for_filters
+        )
 
         try:
             if isinstance(data_filters, dict) and data_filters and routes_for_filters:

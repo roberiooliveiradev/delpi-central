@@ -11,6 +11,7 @@ from tv_app.application.services.comunicado_data_params_service import merge_dat
 from tv_app.application.services.data.value_expression_service import (
     is_expression_value,
     resolve_param_expressions,
+    scope_layer_expressions_to_route,
 )
 from tv_app.application.services.comunicado_input_filters_service import (
     collect_input_filter_contributions,
@@ -1260,8 +1261,12 @@ class ComunicadoDataEnrichmentService:
                 else {}
             )
             merged = merge_data_params(
-                playlist_defaults=playlist_defaults,
-                slide_filters=slide_filters,
+                playlist_defaults=scope_layer_expressions_to_route(
+                    playlist_defaults, route=route
+                ),
+                slide_filters=scope_layer_expressions_to_route(
+                    slide_filters, route=route
+                ),
                 block_params=block_params,
                 input_overrides=merge_filter_layers(slide_input_contrib, source_contrib),
             )
@@ -1535,8 +1540,12 @@ class ComunicadoDataEnrichmentService:
                     denied = (source_id, "Indicador indisponível")
                     break
                 merged = merge_data_params(
-                    playlist_defaults=playlist_defaults,
-                    slide_filters=slide_filters,
+                    playlist_defaults=scope_layer_expressions_to_route(
+                        playlist_defaults, route=route
+                    ),
+                    slide_filters=scope_layer_expressions_to_route(
+                        slide_filters, route=route
+                    ),
                     block_params=binding.get("params")
                     if isinstance(binding.get("params"), dict)
                     else {},
@@ -2086,18 +2095,18 @@ class ComunicadoDataEnrichmentService:
             return result
 
         block_params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
+        route = self._catalog.get_route(operation_id)
         merged_params = merge_data_params(
-            playlist_defaults=playlist_defaults,
-            slide_filters=slide_filters,
+            playlist_defaults=scope_layer_expressions_to_route(
+                playlist_defaults, route=route
+            ),
+            slide_filters=scope_layer_expressions_to_route(
+                slide_filters, route=route
+            ),
             block_params=block_params,
             input_overrides=input_overrides,
         )
-        merged_params = _apply_incremental_pagination_defaults(
-            merged_params,
-            self._catalog.get_route(operation_id),
-        )
-
-        route = self._catalog.get_route(operation_id)
+        merged_params = _apply_incremental_pagination_defaults(merged_params, route)
         if isinstance(route, dict):
             route_label = str(route.get("label") or "").strip()
             stored_label = str(binding.get("label") or "").strip()

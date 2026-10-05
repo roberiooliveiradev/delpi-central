@@ -8,6 +8,9 @@ from tv_app.application.services.comunicado_data_params_service import (
     BRANCH_PARAM_KEYS,
     resolve_any_branch_value,
 )
+from tv_app.application.services.data.data_model_service import (
+    native_config_model_source_params,
+)
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
     PERIOD_DAYS_KEY,
@@ -47,6 +50,16 @@ def shared_keys_across_sources(
         binding = block.get("dataBinding") if isinstance(block.get("dataBinding"), dict) else {}
         params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
         sources.append({"blockId": str(block.get("id") or ""), "params": dict(params)})
+    # Inputs de DataModel participam da mesma camada de fonte (projeção
+    # canônica de data_model_service — runtime enxerga os dois).
+    for source in native_config_model_source_params(native_config):
+        sources.append(
+            {
+                "blockId": str(source.get("blockId") or ""),
+                "modelId": str(source.get("modelId") or ""),
+                "params": dict(source.get("params") or {}),
+            }
+        )
     if len(sources) < 1:
         return {}
     allowed = {str(k) for k in (keys or []) if str(k).strip()} or set(_PROMOTE_KEYS)
@@ -108,5 +121,24 @@ def apply_relayer(
                     next_params.pop(alias, None)
             binding["params"] = next_params
             block.pop("resolved", None)
+
+    # Mesma remoção nos inputs de DataModel — a chave promovida sai da fonte.
+    models = native_config.get("dataModels")
+    if isinstance(models, list):
+        for model in models:
+            if not isinstance(model, dict):
+                continue
+            for item in model.get("inputs") or []:
+                if not isinstance(item, dict):
+                    continue
+                params = item.get("params")
+                if not isinstance(params, dict):
+                    continue
+                next_params = dict(params)
+                for key in list(promoted.keys()):
+                    for alias in (key, *BRANCH_PARAM_KEYS):
+                        next_params.pop(alias, None)
+                item["params"] = next_params
+            model.pop("resolved", None)
 
     return native_config, playlist_defaults, promoted

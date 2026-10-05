@@ -12,6 +12,7 @@ from tv_app.application.services.data.tv_data_presentation_modes_service import 
 )
 from tv_app.application.services.data.value_expression_service import (
     is_expression_value,
+    validate_shared_layer_expressions,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.tv_dashboard_content_service import filter_label, message
@@ -299,9 +300,16 @@ def validate_data_filters(
     *,
     routes: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Camada parcial (tela/programação): tipa/normaliza; não exige obrigatórios."""
+    """Camada parcial (tela/programação): tipa/normaliza; não exige obrigatórios.
+
+    ExpressionSpec é dado tipado válido nesta camada: cada spec é validado
+    contra o escopo de rotas (chave precisa existir e ser permitida em toda
+    rota que a declara); o scoping por rota no runtime aplica o valor só
+    onde o param existe.
+    """
     if not isinstance(filters, dict) or not filters:
         return {}
+    validate_shared_layer_expressions(filters, routes=routes)
     merged_schema: dict[str, Any] = {}
     for route in routes:
         schema = route.get("paramSchema")
