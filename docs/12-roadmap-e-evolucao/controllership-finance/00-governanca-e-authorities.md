@@ -31,19 +31,27 @@ Documentação não prova runtime. Teste isolado não prova objetivo inteiro. Ca
 
 ## GitHub ↔ TÉO
 
-TÉO preserva processo, evidência, AS-IS, diagnóstico e decisões de negócio.
+TÉO / Transformômetro é a authority da **descrição e evidência do processo**: AS-IS, proveniência operacional, diagnóstico e decisões de negócio registradas no processo.
 
-GitHub preserva documentação implementável, contratos, ADRs, código, testes e SHAs.
+GitHub é a authority da **especificação funcional TARGET da ferramenta a implementar**, além de contratos, ADRs, código, testes e SHAs quando existirem.
 
-A documentação desta pasta **consolida** o que foi construído no TÉO. IDs ficam apenas em [19-rastreabilidade-teo.md](./19-rastreabilidade-teo.md).
+A documentação desta pasta usa o TÉO como fonte de processo, mas **não é um espelho documental do TÉO**. Diferenças deliberadas entre AS-IS e TO-BE são esperadas quando representam redesign aprovado. IDs ficam apenas em [19-rastreabilidade-teo.md](./19-rastreabilidade-teo.md).
 
 ## Drift
 
 ```text
-nova evidência contradiz TARGET
+AS-IS diferente do TO-BE
+!= EXECUTION_DRIFT
+```
+
+```text
+nova evidência do processo
+invalida uma premissa necessária do TARGET
 → EXECUTION_DRIFT
 → não adaptar silenciosamente
 ```
+
+Se a nova evidência apenas descreve um comportamento atual que o TARGET decidiu melhorar/substituir, preservar a evidência e o rationale sem reabrir automaticamente a decisão de produto.
 
 ```text
 falta binding/seed/contrato
