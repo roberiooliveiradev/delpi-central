@@ -18,17 +18,21 @@ export const SELECTION_CHROME_STACK_FLOOR = 10_000;
  */
 export const SELECTION_FLOAT_TOOLBAR_STACK_FLOOR = 14_000;
 
-/** z-index de paint do wrap — só o modelo, nunca o floor de chrome. */
+/**
+ * z-index de paint do wrap — só o modelo, nunca o floor de chrome.
+ * Preserva 0 e negativos como a TV (`blockCssStyle`: `zIndex ?? 1`) —
+ * clamp para ≥1 elevaria cards/envios-ao-fundo e divergiria o empilhamento.
+ */
 export function resolveBlockWrapStackZIndex(params: {
   modelZIndex?: number | null;
 }): number {
-  const raw = Number(params.modelZIndex);
-  return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 1;
+  const raw = Number(params.modelZIndex ?? Number.NaN);
+  return Number.isFinite(raw) ? Math.round(raw) : 1;
 }
 
 function modelStackBase(modelZIndex?: number | null): number {
-  const raw = Number(modelZIndex);
-  return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 1;
+  const raw = Number(modelZIndex ?? Number.NaN);
+  return Number.isFinite(raw) ? Math.round(raw) : 1;
 }
 
 /** Overlay de handles — acima do conteúdo; primário acima do multi. */

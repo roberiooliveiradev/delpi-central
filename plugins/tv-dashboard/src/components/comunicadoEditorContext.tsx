@@ -1007,6 +1007,7 @@ export function ComunicadoEditorProvider({
     playlistId,
     publicToken: publicToken?.trim() || null,
     playlistDefaults: playlistDefaults ?? null,
+    resolvedMaster,
     masterLogo,
     mediaLibraryOpen: media.mediaLibraryOpen,
     mediaLibraryTarget: media.mediaLibraryTarget,

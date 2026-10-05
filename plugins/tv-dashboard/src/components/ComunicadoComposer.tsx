@@ -6,7 +6,6 @@ import {
   buildViewDataLinkPatch,
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
-  comunicadoBackgroundRootStyle,
   bindingTargetId,
   hugFrameToContentSizePx,
   isClickPathDrawTool,
@@ -22,17 +21,16 @@ import {
   resolveViewportPixelSize,
   isLineShapeKind,
   resolveBlockPlacementStyle,
-  RichComunicadoBackground,
-  RichComunicadoMasterLogo,
+  RichComunicadoStage,
   staticLabelFromTextBoundBlock,
-  useComunicadoGoogleFonts,
   getDelpiBrandAccent,
+  type ComunicadoBackground,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
+import { useResolvedAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { isAdminProtectedMediaUrl } from "../api/browserSafeMediaUrl";
 import { useStageLineDraw } from "../hooks/useStageLineDraw";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
@@ -86,7 +84,7 @@ import {
   selectionChromeCssVars,
 } from "../utils/selectionChromeMetrics";
 import { shouldRenderStageGrid } from "../utils/stageViewport";
-import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
+import { stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { ComunicadoTextSelectionContextMenu } from "./ComunicadoTextSelectionContextMenu";
@@ -121,12 +119,14 @@ function resolveComposerBlockDataLoading(
   return !hasResolved && dataPreviewLoading;
 }
 
-function useCanvasBackgroundPaint(): {
-  style: CSSProperties;
+function useCanvasBackgroundPaint(
+  background: ComunicadoBackground | undefined,
+): {
+  imageApiUrl?: string;
   imageSrc?: string;
   imageLoading: boolean;
 } {
-  const { background, playlistId } = useComunicadoEditor();
+  const { playlistId } = useComunicadoEditor();
   const imageApiUrl =
     background?.type === "image"
       ? resolveEditorMediaUrl(playlistId, background.assetId, background.url)
@@ -138,30 +138,13 @@ function useCanvasBackgroundPaint(): {
     if (imageBlobUrl) previousSrcRef.current = imageBlobUrl;
   }, [imageBlobUrl]);
 
-  const style = useMemo(() => comunicadoBackgroundRootStyle(background), [background]);
   const imageSrc = imageBlobUrl ?? (imageLoading ? previousSrcRef.current : undefined);
 
-  return { style, imageSrc, imageLoading: Boolean(imageApiUrl) && imageLoading && !imageSrc };
-}
-
-function MasterLogoOverlay() {
-  const { masterLogo } = useComunicadoEditor();
-  const apiUrl =
-    masterLogo?.url && isAdminProtectedMediaUrl(masterLogo.url) ? masterLogo.url : undefined;
-  const { src: logoBlobUrl } = useAuthenticatedBlobUrl(apiUrl);
-  // Brand / public / asset estático: URL direta. Admin media: blob com Bearer.
-  const url = apiUrl ? logoBlobUrl : masterLogo?.url;
-  if (!url) return null;
-  return (
-    <RichComunicadoMasterLogo
-      url={url}
-      frame={masterLogo?.frame}
-      opacity={masterLogo?.opacity ?? 1}
-      className={ensureComunicadoDualClass(
-        `td-composer__master-logo ${COMPOSER_STAGE_BEM.masterLogo}`,
-      )}
-    />
-  );
+  return {
+    imageApiUrl,
+    imageSrc,
+    imageLoading: Boolean(imageApiUrl) && imageLoading && !imageSrc,
+  };
 }
 
 export function ComunicadoComposerCanvas() {
@@ -216,10 +199,25 @@ export function ComunicadoComposerCanvas() {
     bootstrapStageViewPosition,
     persistStageViewPosition,
     stageViewReady,
+    resolvedMaster,
+    masterLogo,
   } = useComunicadoEditor();
-  useComunicadoGoogleFonts(config);
-  useAuthenticatedComunicadoCustomFonts(config.customFonts);
-  const { style: canvasStyle, imageSrc: backgroundImageSrc } = useCanvasBackgroundPaint();
+  const resolvedCustomFonts = useResolvedAuthenticatedComunicadoCustomFonts(config.customFonts);
+  const logoApiUrl =
+    masterLogo?.url && isAdminProtectedMediaUrl(masterLogo.url) ? masterLogo.url : undefined;
+  const { src: logoBlobUrl } = useAuthenticatedBlobUrl(logoApiUrl);
+  /*
+   * Fundo efetivo do palco (mesma precedência do `RichComunicadoStage`:
+   * `config.background` → `master.background`) — o blob autenticado
+   * precisa apontar para a imagem que o palco realmente pinta.
+   */
+  const stageBackground =
+    config.background ??
+    (resolvedMaster?.enabled
+      ? (resolvedMaster.background as ComunicadoBackground | undefined)
+      : undefined);
+  const { imageApiUrl: backgroundApiUrl, imageSrc: backgroundImageSrc } =
+    useCanvasBackgroundPaint(stageBackground);
   const designSize = useMemo(
     () =>
       resolveViewportPixelSize(viewportProfile, {
@@ -238,6 +236,15 @@ export function ComunicadoComposerCanvas() {
   const gridSizePx = useMemo(
     () => stageGridSizePercentToDesignPx(stageGridSizePercent, designSize),
     [stageGridSizePercent, designSize],
+  );
+  /*
+   * Palco canônico: mesma montagem de `NativeSlideView` (parse → fundo → logo →
+   * blocos ordenados/filtrados). `blocks` do contexto já traz `resolved` da
+   * sessão; `data.master` leva o master resolvido para o logo/fundo.
+   */
+  const stageData = useMemo(
+    () => ({ ...config, blocks, master: resolvedMaster }),
+    [config, blocks, resolvedMaster],
   );
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const [contextMenu, setContextMenu] = useState<{
@@ -1088,21 +1095,35 @@ export function ComunicadoComposerCanvas() {
         onPointerDown={handleCanvasPointerDown}
         onContextMenu={handleCanvasContextMenu}
       >
-        <div
-          ref={canvasRef}
+        {/*
+         * Palco canônico (`RichComunicadoStage`) — mesma árvore da TV:
+         * moldura dual-class + __stage + fundo + logo + blocos ordenados.
+         * O editor só adiciona chrome de interação (grade, guias, marquee,
+         * wraps de seleção) via os pontos de extensão do palco.
+         */}
+        <RichComunicadoStage
+          data={stageData}
+          renderBlock={(stageBlock) =>
+            layeredMemberIds.has(stageBlock.id) ? null : renderBlock(stageBlock)
+          }
           className={ensureComunicadoDualClass(
             [
               "td-composer__canvas",
               COMPOSER_STAGE_BEM.root,
+              "delpi-ui-comunicado--editor",
               marquee ? "td-composer__canvas--marqueeing" : "",
               isDrawToolActive ? "td-composer__canvas--draw-tool" : "",
             ]
               .filter(Boolean)
               .join(" "),
           )}
-          data-viewport={viewportProfile || "1080p"}
+          stageClassName={ensureComunicadoDualClass(
+            `td-composer__stage ${COMPOSER_STAGE_BEM.stage}`,
+          )}
+          masterLogoClassName={ensureComunicadoDualClass(
+            `td-composer__master-logo ${COMPOSER_STAGE_BEM.masterLogo}`,
+          )}
           style={{
-            ...canvasStyle,
             ...selectionChromeStyle,
             width: designSize.width,
             height: designSize.height,
@@ -1110,266 +1131,28 @@ export function ComunicadoComposerCanvas() {
             transformOrigin: "top left",
             ...(isDrawToolActive ? { cursor: "crosshair" } : {}),
           }}
-          onContextMenu={handleCanvasContextMenu}
-        >
-          <RichComunicadoBackground url={backgroundImageSrc} />
-          {/*
-           * Mesma árvore da TV (`ComunicadoStageFrame`): root + __stage.
-           * Blocos/logo posicionam no stage — paridade de containing block.
-           */}
-          <div className={ensureComunicadoDualClass(`td-composer__stage ${COMPOSER_STAGE_BEM.stage}`)}>
-          {shouldRenderStageGrid(showStageGrid, stageZoom) ? (
-            <div
-              className="td-composer__stage-grid"
-              aria-hidden="true"
-              style={{
-                backgroundSize: `${gridSizePx.xPx}px ${gridSizePx.yPx}px`,
-              }}
-            />
-          ) : null}
-          {/*
-           * Conteúdo isolado (z-index próprio): blocos não cobrem guias/overlays.
-           * Guias e sites de conexão ficam como irmãos com z-index maior.
-           */}
-          <div className="td-composer__stage-content">
-          <MasterLogoOverlay />
-          {blocks.map((block) => {
-            if (layeredMemberIds.has(block.id)) {
-              return null;
-            }
-            if (isBlockHiddenOnStage(block, blocks)) {
-              return null;
-            }
-            const isSelected = isBlockSelected(block.id);
-            const inClosedGroup = Boolean(isSelected && closedGroupMemberIds.has(block.id));
-            const remoteEditors = remoteSelections.filter((selection) =>
-              selection.selectedIds.includes(block.id),
-            );
-            const isPrimary = block.id === primarySelected;
-            const partForChrome =
-              block.type === "kpi_view"
-                ? selectedKpiPart
-                : block.type === "chart_view"
-                  ? selectedChartPart
-                  : block.type === "table_view"
-                    ? selectedTablePart
-                    : block.type === "input"
-                      ? selectedInputPart
-                      : null;
-            const wrapChrome = resolveBlockWrapChromeFlags({
-              hierarchy: selectionHierarchy,
-              blockId: block.id,
-              blockType: block.type,
-              isSelected,
-              closedGroupActive: inClosedGroup,
-              selectedPart: partForChrome,
-            });
-            const hasPartChrome = wrapChrome.partChildrenActive;
-            const selectionRadius = isSelected || remoteEditors.length > 0
-              ? resolveBlockSelectionBorderRadiusPx(block)
-              : undefined;
-            const wrapTransform = buildBlockTransformCss(block.style);
-            return (
+          rootRef={canvasRef}
+          rootProps={{
+            "data-viewport": viewportProfile || "1080p",
+            onContextMenu: handleCanvasContextMenu,
+          }}
+          customFonts={resolvedCustomFonts}
+          backgroundImageUrl={backgroundApiUrl ? (backgroundImageSrc ?? null) : undefined}
+          masterLogoUrl={logoApiUrl ? (logoBlobUrl ?? null) : undefined}
+          stageLeadingOverlay={
+            shouldRenderStageGrid(showStageGrid, stageZoom) ? (
               <div
-                key={block.id}
-                data-block-id={block.id}
-                className={[
-                  "td-composer__block-wrap",
-                  wrapChrome.showOutline ? "td-composer__block-wrap--selected" : "",
-                  isSelected && !isPrimary && wrapChrome.showOutline
-                    ? "td-composer__block-wrap--multi"
-                    : "",
-                  wrapChrome.mutedAsGroupMember ? "td-composer__block-wrap--group-member" : "",
-                  hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
-                  block.type === "text" || block.type === "heading"
-                    ? "td-composer__block-wrap--text"
-                    : "",
-                  block.type === "shape" && isLineShapeKind(block.shape)
-                    ? "td-composer__block-wrap--line-shape"
-                    : "",
-                  block.type === "chart_view" ? "td-composer__block-wrap--chart" : "",
-                  block.type === "kpi_view" ? "td-composer__block-wrap--kpi" : "",
-                  block.type === "table_view" ? "td-composer__block-wrap--table" : "",
-                  block.type === "input" ? "td-composer__block-wrap--input" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                className="td-composer__stage-grid"
+                aria-hidden="true"
                 style={{
-                  ...resolveBlockPlacementStyle(block),
-                  zIndex: resolveBlockWrapStackZIndex({
-                    modelZIndex: block.style?.zIndex,
-                  }),
-                  ...(wrapTransform ? { transform: wrapTransform } : {}),
-                  ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
+                  backgroundSize: `${gridSizePx.xPx}px ${gridSizePx.yPx}px`,
                 }}
-                onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
-                onDoubleClick={(event) => {
-                  if (shouldDeferToStagePan(event, stagePanMode)) return;
-                  event.stopPropagation();
-                  event.preventDefault();
-                  cancelPendingTapDeselect();
-                  const action = resolveStageDblClickAction({
-                    block,
-                    blocks,
-                    selectedIds,
-                  });
-                  if (action.type === "enter-text-edit") {
-                    enterTextEdit(action.blockId);
-                    return;
-                  }
-                  if (action.type === "isolate-child") {
-                    selectBlock(action.blockId, { expandGroup: false });
-                  }
-                }}
-                onPointerDown={(event) => {
-                  /* Só botão esquerdo seleciona / arrasta; direito fica para o menu. */
-                  if (event.button !== 0) return;
-                  /*
-                   * Ctrl/Cmd+clique vai pela policy (`beginBlockStageMoveDrag`):
-                   * irmão do mesmo grupo → toggle-child; senão → subtract.
-                   */
-                  if (
-                    (event.ctrlKey || event.metaKey) &&
-                    !event.shiftKey &&
-                    !stagePanMode
-                  ) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    beginBlockStageMoveDrag({
-                      event,
-                      block,
-                      blocks,
-                      isBlockSelected,
-                      selectedIds,
-                      selectedId,
-                      preferGroupChildrenSelection,
-                      selectBlock,
-                      selectBlocksByIds,
-                      armMultiDragSelection,
-                      startDrag,
-                      armTapDeselect,
-                    });
-                    return;
-                  }
-                  // Pan (mão): não engolir o evento — o wrap do palco arrasta o scroll.
-                  if (shouldDeferToStagePan(event, stagePanMode)) return;
-                  event.stopPropagation();
-                  if (
-                    isDataSourceBlockType(block.type) &&
-                    selected &&
-                    (selected.type === "chart_view" ||
-                      selected.type === "kpi_view" ||
-                      selected.type === "table_view") &&
-                    !bindingTargetId(selected)
-                  ) {
-                    const resolved =
-                      "resolved" in block ? block.resolved : undefined;
-                    updateBlock(
-                      selected.id,
-                      buildViewDataLinkPatch({
-                        viewType: selected.type,
-                        dataSourceId: block.id,
-                        resolved,
-                        currentFrame: selected.frame,
-                        existing: {
-                          kpiProjection:
-                            "kpiProjection" in selected ? selected.kpiProjection : undefined,
-                          chartProjection:
-                            "chartProjection" in selected ? selected.chartProjection : undefined,
-                          tableProjection:
-                            "tableProjection" in selected ? selected.tableProjection : undefined,
-                        },
-                        chartType: selected.type === "chart_view" ? selected.chartType : undefined,
-                      }) as Partial<ComunicadoBlock>,
-                    );
-                    return;
-                  }
-                  if (
-                    isDataSourceBlockType(block.type) &&
-                    selected &&
-                    isComunicadoVisualBoxBlock(selected) &&
-                    !bindingTargetId(selected)
-                  ) {
-                    const resolved =
-                      "resolved" in block ? block.resolved : undefined;
-                    updateBlock(
-                      selected.id,
-                      buildTextDataLinkPatch({
-                        dataSourceId: block.id,
-                        resolved,
-                        existing: selected.textProjection,
-                        staticContent: staticLabelFromTextBoundBlock(selected),
-                      }) as Partial<ComunicadoBlock>,
-                    );
-                    return;
-                  }
-                  if (
-                    isDataSourceBlockType(block.type) &&
-                    selected &&
-                    isCanvasTableDataBoundBlockType(selected.type) &&
-                    selected.type === "canvas_table" &&
-                    !bindingTargetId(selected)
-                  ) {
-                    const resolved =
-                      "resolved" in block ? block.resolved : undefined;
-                    updateBlock(
-                      selected.id,
-                      buildCanvasTableDataLinkPatch({
-                        dataSourceId: block.id,
-                        resolved,
-                        existingCells: selected.cells,
-                      }) as Partial<ComunicadoBlock>,
-                    );
-                    return;
-                  }
-                  if (
-                    editingTextId === block.id &&
-                    (event.target as HTMLElement).closest(".td-composer__inline-text")
-                  ) {
-                    return;
-                  }
-                  beginBlockStageMoveDrag({
-                    event,
-                    block,
-                    blocks,
-                    isBlockSelected,
-                    selectedIds,
-                    selectedId,
-                    preferGroupChildrenSelection,
-                    selectBlock,
-                    selectBlocksByIds,
-                    armMultiDragSelection,
-                    startDrag,
-                    armTapDeselect,
-                  });
-                }}
-              >
-                <ComunicadoEditorBlockView
-                  block={block}
-                  fontScale={1}
-                  isSelected={isSelected && !inClosedGroup}
-                  isEditingText={editingTextId === block.id}
-                  className={[
-                    isSelected ? "td-composer__block--selected" : "",
-                    block.type === "chart_view" ? "td-composer__block--chart" : "",
-                    block.type === "kpi_view" ? "td-composer__block--kpi" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ") || undefined}
-                  dataLoading={resolveComposerBlockDataLoading(
-                    block,
-                    dataPreviewLoading,
-                    refreshingSourceIds,
-                  )}
-                />
-                {remoteEditors.length > 0 ? (
-                  <RemoteSelectionFrame
-                    displayNames={remoteEditors.map((selection) => selection.displayName)}
-                  />
-                ) : null}
-              </div>
-            );
-          })}
+              />
+            ) : null
+          }
+          stageContentWrapper={(stageContent) => (
+          <div className="td-composer__stage-content">
+          {stageContent}
           {/* Chrome de seleção acima do conteúdo — não eleva o wrap (ordem do modelo). */}
           {blocks.map((block) => {
             if (layeredMemberIds.has(block.id)) return null;
@@ -1564,6 +1347,9 @@ export function ComunicadoComposerCanvas() {
             />
           ) : null}
           </div>
+          )}
+          stageTrailingOverlay={
+            <>
           {showStageGuides ? (
             <>
               <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
@@ -1639,8 +1425,9 @@ export function ComunicadoComposerCanvas() {
               onPointerDown={handleCanvasPointerDown}
             />
           ) : null}
-          </div>
-        </div>
+            </>
+          }
+        />
       </div>
       <ComunicadoStageContextMenu
         open={contextMenu != null}

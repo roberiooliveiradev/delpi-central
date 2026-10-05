@@ -1,5 +1,10 @@
-import type { CSSProperties, ReactNode } from "react";
-import { useMemo } from "react";
+import type {
+  ComponentPropsWithRef,
+  CSSProperties,
+  HTMLAttributes,
+  ReactNode,
+} from "react";
+import { Fragment, useMemo } from "react";
 import {
   ComunicadoStageFrame,
   comunicadoStageBemClasses,
@@ -20,7 +25,11 @@ import {
   type ComunicadoScreenDataLike,
 } from "./comunicadoHelpers";
 import { filterBlocksVisibleOnStage } from "./comunicadoStageVisibility";
-import type { ComunicadoBackground, ComunicadoBlock } from "./comunicadoTypes";
+import type {
+  ComunicadoBackground,
+  ComunicadoBlock,
+  ComunicadoCustomFontRef,
+} from "./comunicadoTypes";
 import { RichComunicadoBackground } from "./RichComunicadoBackground";
 import { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
 
@@ -58,6 +67,38 @@ export type RichComunicadoStageProps = {
   className?: string;
   stageClassName?: string;
   masterLogoClassName?: string;
+  /** Estilo extra no root, aplicado sobre o estilo de fundo (editor: design size + scale). */
+  style?: CSSProperties;
+  /** Ref do root da moldura (editor: medições de drag). */
+  rootRef?: ComponentPropsWithRef<typeof ComunicadoStageFrame>["ref"];
+  /** Atributos extras do root (editor: `data-viewport`, handlers de context menu). */
+  rootProps?: Omit<HTMLAttributes<HTMLDivElement>, "className" | "style" | "children"> & {
+    [dataAttr: `data-${string}`]: string | number | boolean | undefined;
+  };
+  /**
+   * Fonts já resolvidas pelo consumidor (editor: blob autenticado via Bearer).
+   * Default: `normalized.customFonts` do `data`.
+   */
+  customFonts?: readonly ComunicadoCustomFontRef[];
+  /**
+   * URL da imagem de fundo já resolvida pelo consumidor (editor: blob autenticado).
+   * `undefined` = resolve de `data` (default); `null` = suprime a camada.
+   */
+  backgroundImageUrl?: string | null;
+  /**
+   * URL do logo já resolvida pelo consumidor (editor: blob autenticado).
+   * `undefined` = usa `resolveStageMasterLogo`; `null` = suprime o logo.
+   */
+  masterLogoUrl?: string | null;
+  /** Conteúdo no início do `__stage`, antes de logo+blocos (editor: grade). */
+  stageLeadingOverlay?: ReactNode;
+  /**
+   * Envolve logo+blocos dentro do `__stage` — ilha de z-index para o conteúdo
+   * do slide sob overlays de interação (editor: `__stage-content`).
+   */
+  stageContentWrapper?: (content: ReactNode) => ReactNode;
+  /** Conteúdo ao final do `__stage` (editor: guias/marquee/camada de desenho). */
+  stageTrailingOverlay?: ReactNode;
 };
 
 const DEFAULT_BEM = comunicadoStageBemClasses("tdp");
@@ -77,6 +118,15 @@ export function RichComunicadoStage({
   className = DEFAULT_BEM.root,
   stageClassName = DEFAULT_BEM.stage,
   masterLogoClassName = DEFAULT_BEM.masterLogo,
+  style,
+  rootRef,
+  rootProps,
+  customFonts,
+  backgroundImageUrl,
+  masterLogoUrl,
+  stageLeadingOverlay,
+  stageContentWrapper,
+  stageTrailingOverlay,
 }: RichComunicadoStageProps) {
   const normalized = useMemo(
     () =>
@@ -95,7 +145,9 @@ export function RichComunicadoStage({
   );
 
   useComunicadoGoogleFonts({ blocks: normalized.blocks });
-  useComunicadoCustomFonts(normalized.customFonts ?? (data.customFonts as never));
+  useComunicadoCustomFonts(
+    customFonts ?? normalized.customFonts ?? (data.customFonts as never),
+  );
 
   const master = data.master?.enabled ? data.master : null;
   const slideBackground = normalized.background ?? data.background;
@@ -103,7 +155,10 @@ export function RichComunicadoStage({
     slideBackground ??
     master?.background ??
     ({ type: "color", value: "#ffffff" } as ComunicadoBackground);
-  const imageUrl = comunicadoBackgroundImageUrl(background);
+  const imageUrl =
+    backgroundImageUrl === undefined
+      ? comunicadoBackgroundImageUrl(background)
+      : backgroundImageUrl;
   const bgStyle: CSSProperties = comunicadoBackgroundRootStyle(background);
 
   const blocks = filterBlocksVisibleOnStage(sortBlocksByZIndex(normalized.blocks ?? []));
@@ -112,17 +167,14 @@ export function RichComunicadoStage({
     customLogo: master?.logo,
     brandThemeKey: normalized.brandThemeKey ?? (data.brandThemeKey as string | undefined),
   });
+  const resolvedLogoUrl =
+    masterLogoUrl === undefined ? logo?.url : masterLogoUrl;
 
-  return (
-    <ComunicadoStageFrame
-      className={className}
-      stageClassName={stageClassName}
-      style={bgStyle}
-      backgroundLayer={<RichComunicadoBackground url={imageUrl} />}
-    >
-      {logo ? (
+  const stageContent = (
+    <>
+      {logo && resolvedLogoUrl ? (
         <RichComunicadoMasterLogo
-          url={logo.url}
+          url={resolvedLogoUrl}
           frame={logo.frame}
           opacity={logo.opacity}
           className={ensureComunicadoDualClass(masterLogoClassName)}
@@ -130,7 +182,7 @@ export function RichComunicadoStage({
       ) : null}
       {blocks.map((block) =>
         renderBlock ? (
-          <div key={block.id}>{renderBlock(block)}</div>
+          <Fragment key={block.id}>{renderBlock(block)}</Fragment>
         ) : (
           <ComunicadoBlockView
             key={block.id}
@@ -148,6 +200,21 @@ export function RichComunicadoStage({
           />
         ),
       )}
+    </>
+  );
+
+  return (
+    <ComunicadoStageFrame
+      ref={rootRef}
+      className={className}
+      stageClassName={stageClassName}
+      style={style ? { ...bgStyle, ...style } : bgStyle}
+      backgroundLayer={<RichComunicadoBackground url={imageUrl} />}
+      {...rootProps}
+    >
+      {stageLeadingOverlay}
+      {stageContentWrapper ? stageContentWrapper(stageContent) : stageContent}
+      {stageTrailingOverlay}
     </ComunicadoStageFrame>
   );
 }

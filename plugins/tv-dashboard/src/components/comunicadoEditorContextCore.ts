@@ -440,6 +440,8 @@ export type ComunicadoEditorContextValue = {
   publicToken: string | null;
   /** dataDefaults live da programação — preview/refresh canônicos. */
   playlistDefaults: Record<string, unknown> | null;
+  /** Master da playlist resolvido para exibição (`resolveMasterForPreview`) — alimenta `data.master` do palco canônico. */
+  resolvedMaster: Record<string, unknown> | undefined;
   /** Master slide / logo Delpi brand no palco (custom master.logo vence brand). */
   masterLogo: {
     url?: string;
