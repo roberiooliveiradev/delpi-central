@@ -58,6 +58,7 @@ P1 não sacramenta, valida ou envia. É cockpit + navegação P2/P3/P5.
 - STOCK_CLOSED + REQUIRED pendente → pacote incompleto;
 - último doc aceito → sem auto-send;
 - pre-cut zero → não final;
+- paridade monetária exige divergência exatamente R$ 0,00; qualquer valor monetário não zero continua divergência e bloqueia READY_TO_CLOSE;
 - H02 indisponível → não zero;
 - PACKAGE_SENT + clarification → não complete;
 - source parcial → PARTIAL;
