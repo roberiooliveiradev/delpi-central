@@ -957,6 +957,8 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+  /* data_table legado: var de bloco; table_view usa a regra escopada ao
+     frame no comunicado-stage.css (autoridade = tableParts.frame). */
   box-shadow: var(--tdp-block-box-shadow, none);
 }
 
@@ -1156,10 +1158,8 @@
   padding: 0.25rem;
   overflow: hidden;
   background-clip: padding-box;
-  box-shadow: var(
-    --tdp-block-box-shadow,
-    var(--tdp-table-frame-shadow, none)
-  );
+  /* Sombra da moldura = tableParts.frame (autoridade única). */
+  box-shadow: var(--tdp-table-frame-shadow, none);
 }
 
 .tdp-table-title {

@@ -198,6 +198,17 @@
 }
 
 /*
+ * table_view: sombra da moldura tem autoridade única — tableParts.frame
+ * (--tdp-table-frame-shadow, emitido por TableContainer). Vence
+ * `.tdp-data-block--table .tdp-configurable-table` (0,3,0 > 0,2,0),
+ * que segue servindo data_table legado.
+ */
+.delpi-ui-comunicado__block--table-view .tdp-data-block--table .tdp-configurable-table,
+.delpi-ui-comunicado__block--table_view .tdp-data-block--table .tdp-configurable-table {
+  box-shadow: var(--tdp-table-frame-shadow, none);
+}
+
+/*
  * Forma (não caixa de texto): sombra no fill; overflow no wrapper cortaria a sombra.
  * Caixas heading/text também levam `visual-box--shape` (texto = forma sem fundo) —
  * NÃO liberar overflow nelas, senão tipografia longa invade frames vizinhos

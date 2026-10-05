@@ -412,11 +412,11 @@ export function createTableViewBlock(
     tableParts: tableOptionsToParts(presetDefaultTableOptions(preset)),
     // rows/cols do picker só dimensionam o frame — limite de dados fica no binding da fonte.
     frame: { x: 5, y: 55 - height / 2, w: width, h: height },
+    /* Sombra default já vem do seed de tableParts.frame — não espelhar em block.style. */
     style: {
       zIndex: 2,
       borderRadius: 0,
       color: DECK_COLOR_TEXT_STRONG,
-      boxShadow: DECK_TABLE_DEFAULTS.boxShadow,
     },
   };
 }
@@ -2070,11 +2070,21 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     if (style.color) css.color = style.color;
   }
 
-  /* KPI/chart/tabela/filtro: moldura no componente interno — sem borda/fill no wrapper. */
+  /*
+   * table_view: sombra da moldura = tableParts.frame.style.boxShadow
+   * (paint via --tdp-table-frame-shadow). block.style.boxShadow é só
+   * compat de payload legado (migrado no load) — não pode virar
+   * --tdp-block-box-shadow, que tem precedência no CSS da tabela.
+   */
+  if (block.type === "table_view") {
+    stripOuterChromeStyle(css);
+    delete css.boxShadow;
+  }
+
+  /* KPI/chart/filtro: moldura no componente interno — sem borda/fill no wrapper. */
   if (
     block.type === "kpi_view" ||
     block.type === "chart_view" ||
-    block.type === "table_view" ||
     block.type === "input"
   ) {
     stripOuterChromeStyle(css);

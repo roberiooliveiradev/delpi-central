@@ -5,9 +5,11 @@ import {
   createInputBlock,
   createKpiViewBlock,
   createShapeBlock,
+  createTableViewBlock,
   getChartPartState,
   getInputPartState,
   getKpiPartState,
+  getTablePartState,
 } from "@delpi/tv-dashboard-presentation";
 
 import { applyComunicadoBlockStylePatch } from "./applyComunicadoBlockStylePatch";
@@ -51,6 +53,31 @@ describe("applyComunicadoBlockStylePatch", () => {
         kind: "frame",
       })?.style?.boxShadow,
     ).toBe("none");
+  });
+
+  it("table_view: sombra só na moldura — sem espelho legado em block.style", () => {
+    /* TV-TABLE-SHADOW-001: block.style.boxShadow não é autoridade de paint. */
+    const table = {
+      ...createTableViewBlock(3, 3),
+      style: { zIndex: 2, boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)" },
+    };
+    const applied = applyComunicadoBlockStylePatch(table, {
+      boxShadow: "0 4px 14px rgba(0, 0, 0, 0.28)",
+    });
+    expect(
+      getTablePartState(applied.type === "table_view" ? applied.tableParts : null, {
+        kind: "frame",
+      })?.style?.boxShadow,
+    ).toBe("0 4px 14px rgba(0, 0, 0, 0.28)");
+    expect(applied.style?.boxShadow).toBeUndefined();
+
+    const cleared = applyComunicadoBlockStylePatch(table, { boxShadow: undefined });
+    expect(
+      getTablePartState(cleared.type === "table_view" ? cleared.tableParts : null, {
+        kind: "frame",
+      })?.style?.boxShadow,
+    ).toBe("none");
+    expect(cleared.style?.boxShadow).toBeUndefined();
   });
 
   it("mantém outras chaves ao limpar só a sombra", () => {

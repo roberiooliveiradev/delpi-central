@@ -5,6 +5,8 @@ import {
   deleteTablePart,
   isTablePartRefEqual,
   migrateLegacyTableChromeToFrame,
+  mergeTablePartsWithOptions,
+  normalizeTablePartsForLoad,
   parseTablePartRef,
   partsToTableOptions,
   resolveTableBandedRowFills,
@@ -146,6 +148,68 @@ describe("configurableTableParts", () => {
     );
     expect(keep.frame?.style?.fill).toBe("#000000");
     expect(keep.frame?.style?.borderRadius).toBe(2);
+  });
+
+  it("normalizeTablePartsForLoad migra boxShadow legado quando frame não decide", () => {
+    const legacyShadow = "0 8px 24px rgba(0, 0, 0, 0.35)";
+    /* CASE A: sem frame.boxShadow persistido → legado migra para o frame. */
+    const migrated = normalizeTablePartsForLoad(undefined, undefined, {
+      boxShadow: legacyShadow,
+    });
+    expect(migrated.frame?.style?.boxShadow).toBe(legacyShadow);
+    expect(resolveTableFrameStyle(migrated).boxShadow).toBe(legacyShadow);
+  });
+
+  it("normalizeTablePartsForLoad: frame 'none' explícito vence legado", () => {
+    /* CASE B: sentinel "none" persistido → legado NÃO ressuscita. */
+    const parts = upsertTablePartState({}, { kind: "frame" }, {
+      style: { boxShadow: "none" },
+    });
+    const migrated = normalizeTablePartsForLoad(parts, undefined, {
+      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
+    });
+    expect(migrated.frame?.style?.boxShadow).toBe("none");
+    expect(resolveTableFrameStyle(migrated).boxShadow).toBe("none");
+  });
+
+  it("normalizeTablePartsForLoad: frame explícito vence legado", () => {
+    /* CASE C: sombra explícita do frame > block.style legado. */
+    const explicit = "0 2px 8px rgba(0,0,0,0.2)";
+    const parts = upsertTablePartState({}, { kind: "frame" }, {
+      style: { boxShadow: explicit },
+    });
+    const migrated = normalizeTablePartsForLoad(parts, undefined, {
+      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
+    });
+    expect(migrated.frame?.style?.boxShadow).toBe(explicit);
+  });
+
+  it("normalizeTablePartsForLoad é idempotente para a sombra do frame", () => {
+    const legacyShadow = "0 8px 24px rgba(0, 0, 0, 0.35)";
+    const once = normalizeTablePartsForLoad(undefined, undefined, {
+      boxShadow: legacyShadow,
+    });
+    /* Segundo load: frame já tem a sombra explícita — sem drift. */
+    const twice = normalizeTablePartsForLoad(once, undefined, {
+      boxShadow: legacyShadow,
+    });
+    expect(twice.frame?.style?.boxShadow).toBe(once.frame?.style?.boxShadow);
+  });
+
+  it("mergeTablePartsWithOptions preserva frame.boxShadow 'none' explícito sobre o seed", () => {
+    const parts = upsertTablePartState({}, { kind: "frame" }, {
+      style: { boxShadow: "none" },
+    });
+    const merged = mergeTablePartsWithOptions(parts);
+    expect(merged.frame?.style?.boxShadow).toBe("none");
+    expect(resolveTableFrameStyle(merged).boxShadow).toBe("none");
+  });
+
+  it("resolveTableFrameStyle honra 'none' explícito — default não retorna", () => {
+    const parts = upsertTablePartState({}, { kind: "frame" }, {
+      style: { fill: "#ffffff", stroke: "#b4b4b4", boxShadow: "none" },
+    });
+    expect(resolveTableFrameStyle(parts).boxShadow).toBe("none");
   });
 
   it("capabilities: título editável/deletável; célula só selecionável", () => {

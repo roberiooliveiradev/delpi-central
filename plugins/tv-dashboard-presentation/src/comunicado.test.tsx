@@ -276,12 +276,11 @@ describe("comunicadoHelpers", () => {
     expect(block.chartOptions?.displayCategoryFormat?.presetId).toBe("date-short");
   });
 
-  it("promove boxShadow de kpi/chart/tabela/filtro para --tdp-block-box-shadow na moldura", () => {
+  it("promove boxShadow de kpi/chart/filtro para --tdp-block-box-shadow na moldura", () => {
     const shadow = "0 4px 14px rgba(0, 0, 0, 0.28)";
     const blocks = [
       createKpiViewBlock(),
       createChartViewBlock("line"),
-      createTableViewBlock(3, 3),
       createInputBlock({ paramKey: "branch" }),
     ];
     for (const block of blocks) {
@@ -291,6 +290,19 @@ describe("comunicadoHelpers", () => {
       expect(css.border).toBeUndefined();
       expect(css["--tdp-block-box-shadow"]).toBe(shadow);
     }
+  });
+
+  it("table_view não emite --tdp-block-box-shadow — sombra = tableParts.frame", () => {
+    /* Regressão TV-TABLE-SHADOW-001: block.style.boxShadow legado não pode
+       competir com a moldura — o menu lê frame e o paint deve obedecer. */
+    const block = createTableViewBlock(3, 3);
+    block.style = {
+      ...block.style,
+      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
+    };
+    const css = blockCssStyle(block) as CSSProperties & Record<string, string>;
+    expect(css.boxShadow).toBeUndefined();
+    expect(css["--tdp-block-box-shadow"]).toBeUndefined();
   });
 
   it("promove boxShadow da forma para --tdp-block-shape-filter (drop-shadow)", () => {

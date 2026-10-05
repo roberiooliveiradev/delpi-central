@@ -7,6 +7,7 @@ import {
   blockSupportsShapeChromeHandles,
   resolveBlockSelectionBorderRadiusPx,
   resolveBlockShapeChromeAdjustmentValues,
+  resolveBlockShapeChromeBoxShadow,
   resolveBlockShapeChromeCornerPx,
   resolveBlockShapeChromeStyle,
 } from "./comunicadoBlockShapeChrome";
@@ -205,9 +206,54 @@ describe("comunicadoBlockShapeChrome", () => {
 
   it("createTableViewBlock nasce com chrome Delpi (raio/sombra) na moldura", () => {
     const block = createTableViewBlock(3, 3) as ComunicadoTableViewBlock;
-    expect(block.style?.boxShadow).toContain("rgba(15, 23, 42");
+    /* Sombra default só no frame — sem espelho legado em block.style. */
+    expect(block.style?.boxShadow).toBeUndefined();
     expect(getTablePartState(block.tableParts, { kind: "frame" })?.style?.borderRadius).toBe(16);
     expect(getTablePartState(block.tableParts, { kind: "frame" })?.style?.boxShadow).toContain("rgba(15, 23, 42");
     expect(block.tableOptions?.showTitle).toBe(true);
+  });
+
+  it("table_view: menu lê sombra efetiva do frame (inclui default, 'none' → Nenhuma)", () => {
+    const block = createTableViewBlock(3, 3) as ComunicadoTableViewBlock;
+    /* Seed do frame → sombra default visível → menu mostra o valor efetivo. */
+    expect(resolveBlockShapeChromeBoxShadow(block)).toContain("rgba(15, 23, 42");
+
+    const noShadow = {
+      ...block,
+      ...applyBlockShapeChromeStyle(block, { boxShadow: undefined }),
+    } as ComunicadoTableViewBlock;
+    expect(getTablePartState(noShadow.tableParts, { kind: "frame" })?.style?.boxShadow).toBe(
+      "none",
+    );
+    expect(resolveBlockShapeChromeBoxShadow(noShadow)).toBeUndefined();
+  });
+
+  it("table_view: aplicar sombra grava no frame e remove espelho legado de block.style", () => {
+    /* Incidente: block.style.boxShadow legado sobrevivia e sobrepunha o frame no paint. */
+    const legacy = "0 8px 24px rgba(0, 0, 0, 0.35)";
+    const block = {
+      ...(createTableViewBlock(3, 3) as ComunicadoTableViewBlock),
+      style: { zIndex: 2, borderRadius: 0, boxShadow: legacy },
+    } as ComunicadoTableViewBlock;
+
+    const applied = {
+      ...block,
+      ...applyBlockShapeChromeStyle(block, {
+        boxShadow: "0 4px 14px rgba(0, 0, 0, 0.28)",
+      }),
+    } as ComunicadoTableViewBlock;
+    expect(getTablePartState(applied.tableParts, { kind: "frame" })?.style?.boxShadow).toBe(
+      "0 4px 14px rgba(0, 0, 0, 0.28)",
+    );
+    expect(applied.style?.boxShadow).toBeUndefined();
+
+    const cleared = {
+      ...block,
+      ...applyBlockShapeChromeStyle(block, { boxShadow: undefined }),
+    } as ComunicadoTableViewBlock;
+    expect(getTablePartState(cleared.tableParts, { kind: "frame" })?.style?.boxShadow).toBe(
+      "none",
+    );
+    expect(cleared.style?.boxShadow).toBeUndefined();
   });
 });

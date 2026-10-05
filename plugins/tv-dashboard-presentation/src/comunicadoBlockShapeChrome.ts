@@ -27,6 +27,7 @@ import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import {
   getTablePartState,
   mergeTablePartsWithOptions,
+  resolveTableFrameStyle,
   upsertTablePartState,
 } from "./comunicadoTableParts";
 import type { ComunicadoBlock, ComunicadoBlockStyle } from "./comunicadoTypes";
@@ -342,7 +343,8 @@ export function resolveBlockShapeChromeBoxShadow(
   if (block.type === "kpi_view") {
     raw = getKpiPartState(block.kpiParts, { kind: "card" })?.style?.boxShadow;
   } else if (block.type === "table_view") {
-    raw = getTablePartState(block.tableParts, { kind: "frame" })?.style?.boxShadow;
+    /* Efetiva (com seed/default), não raw — menu reflete o que pinta. */
+    raw = resolveTableFrameStyle(block.tableParts).boxShadow;
   } else if (block.type === "chart_view") {
     raw = resolveChartAreaStyle(block.chartOptions ?? {}, block.chartParts).boxShadow;
   } else if (block.type === "input") {
@@ -436,7 +438,11 @@ export function applyBlockShapeChromeStyle(
       else delete style.strokePaint;
     }
     if (hasBoxShadowKey) {
-      if (clearShadowOnBlock) delete style.boxShadow;
+      /*
+       * table_view: frame é a única autoridade — nunca escreve o espelho
+       * legado e limpa `block.style.boxShadow` residual ao tocar a sombra.
+       */
+      if (block.type === "table_view" || clearShadowOnBlock) delete style.boxShadow;
       else if (mirrorShadow) style.boxShadow = mirrorShadow;
     }
     return style;

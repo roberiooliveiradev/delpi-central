@@ -481,26 +481,49 @@ type LegacyTableChromeStyle = {
   strokeWidth?: number;
   borderWidth?: number;
   borderRadius?: number;
+  boxShadow?: string;
 } | null | undefined;
 
 /**
  * Migra chrome legado em `block.style` para `tableParts.frame` (Onda 4O.A).
  * Só preenche campos ainda ausentes na parte `frame` explícita do payload.
+ *
+ * `persistedParts` = parts como persistidas (pré-merge). O merge semeia
+ * `DECK_TABLE_DEFAULTS` em `frame.style`, o que tornaria todo campo
+ * artificialmente "explícito" — a checagem de explicitness precisa olhar
+ * o payload real. Omitido → assume `parts` já como fonte de explicitness;
+ * `null` → payload não tinha frame explícito. `"none"` em
+ * `frame.style.boxShadow` é decisão explícita do usuário e vence o legado
+ * (nunca ressuscita `block.style.boxShadow`).
  */
 export function migrateLegacyTableChromeToFrame(
   parts: TablePartsMap | null | undefined,
   style?: LegacyTableChromeStyle,
+  persistedParts?: TablePartsMap | null,
 ): TablePartsMap {
-  const rawFrameStyle = parts?.frame?.style;
+  const rawFrameStyle =
+    (persistedParts === undefined ? parts : persistedParts)?.frame?.style;
   const merged = mergeTablePartsWithOptions(parts);
   if (!style) return merged;
   const legacyFill = style.backgroundColor ?? style.fill;
   const legacyStroke = style.borderColor ?? style.stroke;
   const legacyWidth = style.borderWidth ?? style.strokeWidth;
   const legacyRadius = style.borderRadius;
+  const legacyBoxShadow =
+    typeof style.boxShadow === "string" && style.boxShadow.trim()
+      ? style.boxShadow.trim()
+      : undefined;
   const hasLegacy =
-    legacyFill != null || legacyStroke != null || legacyWidth != null || legacyRadius != null;
+    legacyFill != null ||
+    legacyStroke != null ||
+    legacyWidth != null ||
+    legacyRadius != null ||
+    legacyBoxShadow != null;
   if (!hasLegacy) return merged;
+  const persistedFrameShadow =
+    typeof rawFrameStyle?.boxShadow === "string" && rawFrameStyle.boxShadow.trim()
+      ? rawFrameStyle.boxShadow.trim()
+      : undefined;
   return upsertTablePartState(merged, { kind: "frame" }, {
     style: {
       fill: rawFrameStyle?.fill ?? legacyFill ?? merged.frame?.style?.fill,
@@ -508,6 +531,8 @@ export function migrateLegacyTableChromeToFrame(
       strokeWidth: rawFrameStyle?.strokeWidth ?? legacyWidth ?? merged.frame?.style?.strokeWidth,
       borderRadius:
         rawFrameStyle?.borderRadius ?? legacyRadius ?? merged.frame?.style?.borderRadius ?? 0,
+      boxShadow:
+        persistedFrameShadow ?? legacyBoxShadow ?? merged.frame?.style?.boxShadow,
     },
   });
 }
@@ -517,7 +542,11 @@ export function normalizeTablePartsForLoad(
   options?: ConfigurableTableOptions | null,
   style?: LegacyTableChromeStyle,
 ): TablePartsMap {
-  return migrateLegacyTableChromeToFrame(mergeTablePartsWithOptions(parts, options), style);
+  return migrateLegacyTableChromeToFrame(
+    mergeTablePartsWithOptions(parts, options),
+    style,
+    parts ?? null,
+  );
 }
 
 /** Delete Excel: oculta título/cabeçalho; células só deselecionam no caller. */
