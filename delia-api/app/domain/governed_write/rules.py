@@ -67,6 +67,19 @@ def preview_fingerprint(preview: WriteProposalPreview) -> str:
     return hashlib.sha256(_canonical(canonical).encode("utf-8")).hexdigest()
 
 
+def _proposal_container(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Locate the owner proposal object — generic envelope handling.
+
+    Owners may project governance fields flat on the data payload or
+    nested under a declared ``proposal`` object; both shapes carry the
+    same contract. Absent envelope, the payload is the container.
+    """
+    proposal = payload.get("proposal")
+    if isinstance(proposal, Mapping):
+        return proposal
+    return payload
+
+
 def _readiness_for(payload: Mapping[str, Any], now_epoch: float) -> ProposalReadiness:
     """Classify owner PREPARE payload readiness — fail closed.
 
@@ -74,19 +87,24 @@ def _readiness_for(payload: Mapping[str, Any], now_epoch: float) -> ProposalRead
     proposal reference and a bounded exact-change preview. Missing or
     malformed mandatory fields -> INVALID, never inferred READY.
     """
-    proposal_ref = str(payload.get("proposal_handle") or "").strip()
-    exact_change = payload.get("exact_change")
+    container = _proposal_container(payload)
+    proposal_ref = str(
+        container.get("proposal_handle") or container.get("handle") or ""
+    ).strip()
+    exact_change = container.get("exact_change")
     if not proposal_ref or not isinstance(exact_change, Mapping):
         return ProposalReadiness.INVALID
-    expires_at = payload.get("expires_at")
+    expires_at = container.get("expires_at")
     try:
         expires = float(expires_at) if expires_at is not None else None
     except (TypeError, ValueError):
         return ProposalReadiness.INVALID
     if expires is not None and expires <= now_epoch:
         return ProposalReadiness.EXPIRED
-    ready = payload.get("ready")
-    validation = payload.get("validation_result")
+    ready = container.get("ready")
+    validation = container.get("validation_result")
+    if not isinstance(validation, Mapping):
+        validation = payload.get("validation_result")
     if isinstance(validation, Mapping) and validation.get("ready") is False:
         return ProposalReadiness.NOT_READY
     if ready is True or (
@@ -119,53 +137,64 @@ def project_proposal_preview(
     """
     data = owner_payload.get("data")
     inner = data if isinstance(data, Mapping) else owner_payload
+    container = _proposal_container(inner)
     readiness = _readiness_for(inner, now_epoch)
-    expires_raw = inner.get("expires_at")
+
+    def _governance_field(name: str) -> Any:
+        """Envelope-first lookup — governance fields may live inside the
+        declared ``proposal`` object or flat on the data payload."""
+        value = container.get(name)
+        if value is None and container is not inner:
+            value = inner.get(name)
+        return value
+
+    expires_raw = _governance_field("expires_at")
     try:
         expires = float(expires_raw) if expires_raw is not None else None
     except (TypeError, ValueError):
         expires = None
+    proposal_ref = str(
+        container.get("proposal_handle") or container.get("handle") or ""
+    ).strip()
+    exact_change = _governance_field("exact_change")
+    validation_result = _governance_field("validation_result")
+    resource_id = _governance_field("resource_id")
+    impact = _governance_field("consequential_impact")
+    confirmation_req = _governance_field("confirmation_requirement")
+    if not isinstance(confirmation_req, Mapping):
+        confirmation_req = _governance_field("confirmationPolicy")
+    postcondition = _governance_field("expected_postcondition")
     return WriteProposalPreview(
         capability_ref=capability_ref,
         owner_capability=str(
-            inner.get("capability") or remote_capability
+            _governance_field("capability") or remote_capability
         ).strip(),
-        proposal_ref=str(inner.get("proposal_handle") or "").strip(),
+        proposal_ref=proposal_ref,
         readiness=readiness,
         specialist_id=specialist_id,
         correlation_id=correlation_id,
         observed_at=observed_at,
         resource_ref=(
-            str(inner.get("resource_id")).strip()
-            if inner.get("resource_id") is not None
-            else None
+            str(resource_id).strip() if resource_id is not None else None
         ),
         exact_change=(
-            inner.get("exact_change")
-            if isinstance(inner.get("exact_change"), Mapping)
-            else None
+            exact_change if isinstance(exact_change, Mapping) else None
         ),
         validation_summary=(
-            inner.get("validation_result")
-            if isinstance(inner.get("validation_result"), Mapping)
+            validation_result
+            if isinstance(validation_result, Mapping)
             else None
         ),
         consequential_impact=(
-            inner.get("consequential_impact")
-            if isinstance(inner.get("consequential_impact"), Mapping)
-            else None
+            impact if isinstance(impact, Mapping) else None
         ),
         confirmation_requirement=(
-            inner.get("confirmation_requirement")
-            if isinstance(inner.get("confirmation_requirement"), Mapping)
-            else inner.get("confirmationPolicy")
-            if isinstance(inner.get("confirmationPolicy"), Mapping)
+            confirmation_req
+            if isinstance(confirmation_req, Mapping)
             else None
         ),
         expected_postcondition=(
-            inner.get("expected_postcondition")
-            if isinstance(inner.get("expected_postcondition"), Mapping)
-            else None
+            postcondition if isinstance(postcondition, Mapping) else None
         ),
         expires_at_epoch=expires,
         limitations=limitations,

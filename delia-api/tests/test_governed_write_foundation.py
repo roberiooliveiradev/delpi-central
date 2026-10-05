@@ -210,6 +210,125 @@ def test_preview_unwraps_owner_data_envelope():
     assert p.readiness is ProposalReadiness.READY
 
 
+def test_preview_unwraps_declared_proposal_envelope():
+    """Owners may nest the proposal object under ``data.proposal`` —
+    same governance contract, generic envelope normalization. The
+    ``handle``/``proposal_handle`` aliases carry the same opaque ref."""
+    p = project_proposal_preview(
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
+        owner_payload={
+            "success": True,
+            "data": {
+                "status": "proposal_ready",
+                "proposal": {
+                    "handle": "raw-handle-1",
+                    "capability": "update_record",
+                    "resource_id": "rec-1",
+                    "exact_change": {
+                        "entity": "process",
+                        "id": "rec-1",
+                        "data": {"name": "X"},
+                    },
+                    "confirmation_requirement": {
+                        "explicit_user_confirmation": True
+                    },
+                    "expected_postcondition": {
+                        "type": "resource_matches_change"
+                    },
+                    "expires_at": FUTURE,
+                    "ready": True,
+                },
+                "validation_result": {"ready": True},
+                "consequential_impact": {"persists": True},
+            },
+        },
+        specialist_id="teo",
+        correlation_id="c",
+        observed_at="t",
+        now_epoch=NOW,
+    )
+    assert p.readiness is ProposalReadiness.READY
+    assert p.proposal_ref == "raw-handle-1"
+    assert p.owner_capability == "update_record"
+    assert p.resource_ref == "rec-1"
+    assert p.exact_change == {
+        "entity": "process",
+        "id": "rec-1",
+        "data": {"name": "X"},
+    }
+    assert p.validation_summary == {"ready": True}
+    assert p.consequential_impact == {"persists": True}
+    assert p.confirmation_requirement == {
+        "explicit_user_confirmation": True
+    }
+    assert p.expected_postcondition == {"type": "resource_matches_change"}
+    assert p.expires_at_epoch == FUTURE
+
+
+def test_proposal_envelope_not_ready_and_invalid_variants():
+    """Enveloped proposals still fail closed: missing ref/exact_change
+    or a not-ready verdict never reach the confirmation gate."""
+    base = {
+        "handle": "h",
+        "exact_change": {"x": 1},
+        "ready": True,
+    }
+    not_ready = project_proposal_preview(
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
+        owner_payload={
+            "data": {
+                "proposal": {**base, "ready": False},
+            }
+        },
+        specialist_id="teo",
+        correlation_id="c",
+        observed_at="t",
+        now_epoch=NOW,
+    )
+    assert not_ready.readiness is ProposalReadiness.NOT_READY
+
+    no_handle = project_proposal_preview(
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
+        owner_payload={
+            "data": {"proposal": {"exact_change": {"x": 1}, "ready": True}}
+        },
+        specialist_id="teo",
+        correlation_id="c",
+        observed_at="t",
+        now_epoch=NOW,
+    )
+    assert no_handle.readiness is ProposalReadiness.INVALID
+
+    no_change = project_proposal_preview(
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
+        owner_payload={
+            "data": {"proposal": {"handle": "h", "ready": True}}
+        },
+        specialist_id="teo",
+        correlation_id="c",
+        observed_at="t",
+        now_epoch=NOW,
+    )
+    assert no_change.readiness is ProposalReadiness.INVALID
+
+    expired = project_proposal_preview(
+        capability_ref=CAPABILITY_REF,
+        remote_capability="prepare_record_change",
+        owner_payload={
+            "data": {"proposal": {**base, "expires_at": NOW - 1}}
+        },
+        specialist_id="teo",
+        correlation_id="c",
+        observed_at="t",
+        now_epoch=NOW,
+    )
+    assert expired.readiness is ProposalReadiness.EXPIRED
+
+
 def test_handle_opacity_digest_only_for_correlation():
     p = _preview()
     digest = proposal_digest(p.proposal_ref)

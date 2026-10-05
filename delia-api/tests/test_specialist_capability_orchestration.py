@@ -533,6 +533,106 @@ def test_prepare_selection_routes_through_write_governance():
     assert [c[1] for c in port.calls] == ["prepare_change"]
 
 
+# Owner may wrap the proposal under ``data.proposal`` — the same
+# governance contract in envelope form (observed on the live TÉO
+# PREPARE surface). Generic normalization, not a specialist branch.
+ENVELOPED_READY_PROPOSAL = RemoteToolOutcome(
+    content_text="Governed proposal prepared.",
+    structured={
+        "data": {
+            "status": "proposal_ready",
+            "proposal": {
+                "handle": "env-handle-9",
+                "proposal_id": "gp_1",
+                "capability": "update_record",
+                "resource_id": "rec-1",
+                "exact_change": {"field": "name", "to": "Painel X"},
+                "confirmation_requirement": {
+                    "explicit_user_confirmation": True
+                },
+                "expected_postcondition": {"type": "resource_matches"},
+                "expires_at": None,
+                "ready": True,
+            },
+            "validation_result": {"ready": True},
+        }
+    },
+)
+
+
+def test_prepare_enveloped_proposal_reaches_confirmation_gate():
+    """An enveloped READY proposal binds to the pending write and
+    surfaces digests only — the raw ``handle`` never leaves backend."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "prepare_change": ENVELOPED_READY_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select(
+            "vista", "prepare_change", {"record_id": "p1"}
+        ),
+    )
+    attempt = read.attempt(
+        "Altere o nome do painel",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert attempt.confirmation_context["proposal_digest"]
+    assert "env-handle-9" not in json.dumps(attempt.confirmation_context)
+    assert "env-handle-9" not in attempt.content
+    assert [c[1] for c in port.calls] == ["prepare_change"]
+
+    # The bound confirmation reaches the owner ACT with the raw handle.
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(attempt),
+    )
+    assert result.status is GovernedCapabilityStatus.SUCCESS
+    commit = [c for c in port.calls if c[1] == "commit_proposal"]
+    assert commit and commit[0][2]["proposal_handle"] == "env-handle-9"
+
+
+def test_prepare_not_ready_envelope_scrubs_handle_from_render():
+    """A non-READY envelope renders the owner answer truthfully — and
+    the raw handle is still redacted from user-facing content."""
+    outcome = RemoteToolOutcome(
+        content_text="",
+        structured={
+            "data": {
+                "status": "draft",
+                "proposal": {
+                    "handle": "env-handle-9",
+                    "exact_change": {"field": "name"},
+                    "ready": False,
+                },
+            }
+        },
+    )
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={"prepare_change": outcome},
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select(
+            "vista", "prepare_change", {"record_id": "p1"}
+        ),
+    )
+    attempt = read.attempt("Altere o painel")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.confirmation_context is None
+    assert "env-handle-9" not in attempt.content
+    assert "[REDACTED]" in attempt.content
+
+
 def test_untyped_capability_never_selected():
     port = FakePort(
         tools_by_specialist={

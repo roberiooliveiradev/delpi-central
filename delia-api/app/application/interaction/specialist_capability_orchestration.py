@@ -425,6 +425,9 @@ REDACTION_MARKER = "[REDACTED]"
 _SENSITIVE_KEY_NAMES = frozenset(
     {
         "candidatetoken",
+        "handle",
+        "proposalhandle",
+        "proposalref",
         "accesstoken",
         "refreshtoken",
         "idtoken",
