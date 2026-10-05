@@ -18,6 +18,58 @@ Para este Portal, o padrão pode ser reutilizado em arquitetura de informação,
 
 Não copiar regras do domínio Comercial.
 
+
+## Reuso obrigatório de `@delpi/plugin-ui`
+
+A página completa de Sala de interação já existe no kit e deve ser a primeira opção.
+
+Import canônico:
+
+```ts
+import {
+  InteractionRoomPage,
+  INTERACTION_ROOM_PAGE_LABELS_PT,
+  PluginErrorBoundary,
+} from "@delpi/plugin-ui/index";
+```
+
+Estilos/runtime:
+
+```ts
+await import("@delpi/plugin-ui/styles");
+```
+
+O Portal deve fornecer ao `InteractionRoomPage` os adapters/contracts do seu próprio domínio; não deve copiar a implementação visual do Portal Comercial.
+
+Quando houver extensão comprovada da composição, os primitives públicos disponíveis no mesmo import incluem:
+
+```ts
+import {
+  RoomInboxPanel,
+  RoomInboxList,
+  RoomHeader,
+  RoomContextPanel,
+  RoomSidePanel,
+  RoomConversationShell,
+  RoomConversationChatColumn,
+  MessageThread,
+  MentionComposer,
+  EntityUnfurlCard,
+  ReactionBar,
+  RoomSharedItemList,
+} from "@delpi/plugin-ui/index";
+```
+
+Regra:
+
+```text
+InteractionRoomPage first
+→ compose primitives only if the page contract requires extension
+→ never copy domain/persistence from Commercial
+```
+
+**DO NOT RECREATE:** inbox shell, room header, message thread chrome, composer, reactions, context panel ou full-page interaction room.
+
 ## Rota lógica
 
 ```text

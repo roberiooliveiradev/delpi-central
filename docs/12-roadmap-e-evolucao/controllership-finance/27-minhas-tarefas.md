@@ -23,6 +23,48 @@ Minhas tarefas
 
 Permission: `controllership-finance.access`.
 
+
+## Reuso obrigatório de `@delpi/plugin-ui`
+
+O chrome de Minhas tarefas já existe no kit e deve ser reutilizado.
+
+Import canônico:
+
+```ts
+import {
+  TaskWorkspacePage,
+  TaskWorklistSection,
+  TaskItemsTable,
+  TaskSearchField,
+  TaskEmptyState,
+  TaskEditorFrame,
+  buildTaskWorkspaceHighlights,
+} from "@delpi/plugin-ui/index";
+```
+
+Estilos/runtime:
+
+```ts
+await import("@delpi/plugin-ui/styles");
+```
+
+Responsabilidade do Portal:
+- produzir o `TaskProjection`;
+- mapear os itens para a apresentação esperada pelo kit;
+- preservar deep links;
+- chamar o use case/owner correto ao agir;
+- controlar AuthZ e estados parciais.
+
+Responsabilidade do kit:
+- workspace/chrome;
+- busca;
+- lista/tabela;
+- seção de worklist;
+- empty state;
+- editor frame/presentation helpers.
+
+**DO NOT RECREATE:** task workspace, task table, task search, worklist chrome ou empty state de tarefas.
+
 ## Fontes de tarefas
 
 A página deve compor trabalho já existente nas páginas owners, por exemplo:

@@ -37,6 +37,55 @@ Ela não deve copiar telas do Portal Financeiro, duplicar fórmula/SQL, mover ow
 REUSE SOURCE/OWNER != COPY PRODUCT
 ```
 
+
+## Reuso obrigatório de `@delpi/plugin-ui`
+
+A Visão geral deve reutilizar o kit analítico da plataforma; não criar cards KPI, containers de gráfico, filtros ou tabelas locais equivalentes.
+
+Import canônico:
+
+```ts
+import {
+  KpiCard,
+  MetricKpiCard,
+  ChartCard,
+  QuickPeriodSelector,
+  createDashboardFiltersKit,
+  LineSeriesChart,
+  AreaSeriesChart,
+  BarSeriesChart,
+  ComparativeAreaChart,
+  DataTableSection,
+  EmptyState,
+  LoadingState,
+  StateBox,
+} from "@delpi/plugin-ui/index";
+```
+
+Estilos/runtime:
+
+```ts
+await import("@delpi/plugin-ui/styles");
+```
+
+Diretriz de uso:
+
+| Necessidade | Reuso canônico |
+|---|---|
+| KPI principal | `KpiCard` ou `MetricKpiCard` |
+| container de visualização | `ChartCard` |
+| filtro rápido de período | `QuickPeriodSelector` |
+| filtros gerais | `createDashboardFiltersKit` |
+| tendência temporal | `LineSeriesChart` / `AreaSeriesChart` |
+| comparação categórica | `BarSeriesChart` |
+| comparação de áreas/séries | `ComparativeAreaChart` quando o contrato justificar |
+| drilldown tabular | `DataTableSection` |
+| unavailable/empty/loading | `StateBox`, `EmptyState`, `LoadingState` |
+
+A escolha do tipo de gráfico vem do **contrato do indicador**, não da disponibilidade de um componente.
+
+**DO NOT RECREATE:** KPI card, chart card, period selector, filter chrome, chart primitive ou data table que já exista no kit.
+
 ## Indicadores
 
 O conjunto exato de indicadores ainda precisa de inventário técnico/funcional.
