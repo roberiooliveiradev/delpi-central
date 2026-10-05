@@ -52,7 +52,8 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md) | P5 |
 | [13-p6-administracao-e-configuracao.md](./13-p6-administracao-e-configuracao.md) | P6 |
 | [14-seguranca-rbac-auditoria-e-ia.md](./14-seguranca-rbac-auditoria-e-ia.md) | AuthZ, auditoria e IA |
-| [15-requisitos-criterios-de-aceite-e-testes.md](./15-requisitos-criterios-de-aceite-e-testes.md) | RQ/AC e testes |
+| [15-requisitos-criterios-de-aceite-e-testes.md](./15-requisitos-criterios-de-aceite-e-testes.md) | RQ/AC e testes transversais |
+| [15.1-p3-criterios-paridade-monetaria.md](./15.1-p3-criterios-paridade-monetaria.md) | ACs específicos de paridade monetária P3 |
 | [16-configuracoes-catalogos-e-notificacoes.md](./16-configuracoes-catalogos-e-notificacoes.md) | configurações e notificações |
 | [17-backlog-de-confirmacoes-e-inventarios.md](./17-backlog-de-confirmacoes-e-inventarios.md) | E01–E06 e T01–T05 |
 | [18-readiness-e-handoff-de-implementacao.md](./18-readiness-e-handoff-de-implementacao.md) | readiness e handoff |
