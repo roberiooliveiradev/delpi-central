@@ -37,6 +37,19 @@ Todas as páginas devem tratar, quando aplicável:
 ### Objetivo
 Responder como está o fechamento, quais eixos estão prontos e o que bloqueia avanço/conclusão.
 
+### Composição lógica
+
+```text
+ContextHeader
+→ StatusAxes
+→ BlockerList
+→ PendingItems
+→ ClosingHistory
+→ ContextualHelp
+```
+
+Os nomes acima são lógicos, não contrato de componente React.
+
 ### Atores e acesso
 - ACCESS dentro do scope consulta cockpit e navega para superfícies operacionais;
 - MANAGE não recebe poderes adicionais em P1 apenas por ser MANAGE;
@@ -72,6 +85,18 @@ T01/T05 para bindings/scopes. Falta de source não vira zero nem sucesso.
 
 ### Objetivo
 Operar entregáveis da competência com snapshot, evidência, validação e histórico auditável.
+
+### Composição lógica
+
+```text
+ChecklistFilters
+→ ChecklistList
+→ ChecklistItemDetail
+→ EvidencePanel
+→ ValidationPanel
+→ ItemHistory
+→ ContextualHelp
+```
 
 ### Atores e acesso
 - ACCESS opera itens da competência no scope;
@@ -112,6 +137,19 @@ E05/E06 para seeds; T02 para capability de notificação; T05 para scopes reais.
 ### Objetivo
 Expor readiness do estoque, confirmar cutoff, revalidar fontes e provar paridade monetária antes do fechamento canônico.
 
+### Composição lógica
+
+```text
+ClosingContext
+→ CutoffStatus
+→ RevalidationPanel
+→ ReconciliationSummary
+→ ReconciliationDrilldown
+→ SourceFreshness
+→ ClosingHistory
+→ ContextualHelp
+```
+
 ### Atores e acesso
 - usuário autorizado pode confirmar cutoff/reprocessar;
 - V1 não executa escrita ERP;
@@ -150,6 +188,18 @@ T03 é stop condition material. Se owner canônico não existir ou for incompat�
 ### Objetivo
 Assistir classificação/CC necessária ao fechamento e operar filas de pendências sem automatizar decisão humana.
 
+### Composição lógica
+
+```text
+PendencyFilters
+→ PendencyQueue
+→ ClassificationWorkbench
+→ PendencyDetail
+→ EvidenceContext
+→ OwnershipHistory
+→ ContextualHelp
+```
+
 ### Atores e acesso
 - ACCESS opera pendências dentro do scope;
 - usuário/papel autorizado pode claim/reassign/resolve;
@@ -179,6 +229,18 @@ T01/T05 para source/scopes. Regra nova de classificação sem homologação não
 
 ### Objetivo
 Versionar o pacote do fechamento, finalizar, enviar por destinatário, tratar esclarecimentos e derivar conclusão mensal.
+
+### Composição lógica
+
+```text
+PackageSummary
+→ RecipientPackages
+→ FinalizationPanel
+→ DeliveryStatus
+→ ClarificationPanel
+→ VersionHistory
+→ ContextualHelp
+```
 
 ### Atores e acesso
 Ações dependem de ACCESS + scope + business rule. Envio exige capability real; UI não autoriza sozinha.
@@ -216,6 +278,18 @@ Q22/E04/T04 bloqueiam implementação do envio real, não a modelagem de pacote/
 
 ### Objetivo
 Administrar templates, catálogos, vigências e regras futuras sem alterar snapshots históricos.
+
+### Composição lógica
+
+```text
+AdministrationNavigation
+→ TemplateVersions
+→ CatalogManagement
+→ EffectiveDatePanel
+→ PublicationPanel
+→ AuditHistory
+→ ContextualHelp
+```
 
 ### Atores e acesso
 - ACCESS usa opções vigentes;
@@ -255,6 +329,12 @@ Draft vs publicado, effective_from, snapshot, inativação, ACCESS vs MANAGE e i
 
 ### Dependências / stop
 E01/E05/E06 para seeds; T02 para notificações; T05 para scopes.
+
+## Deep links
+
+Cada página deve preservar contexto relevante — competência, unidade, item, destinatário ou filtro — no mecanismo de navegação definido durante arquitetura técnica.
+
+Não definir route pattern antes do inventário de plugin/basePath. O contrato de deep link deve ser provado no HEAD e testado com F5 sem bypass de AuthZ.
 
 ## Matriz de completude
 
