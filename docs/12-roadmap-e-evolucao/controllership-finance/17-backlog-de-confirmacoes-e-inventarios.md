@@ -1,0 +1,110 @@
+# 17 — Backlog de Confirmações e Inventários
+
+```text
+PENDING_IMPLEMENTATION != OPEN_PRODUCT_DESIGN
+```
+
+## E01 — Lista bancária inicial
+
+Confirmar seed, banco/conta, unidade/empresa e owner.
+
+Já decidido: lista configurável, sem hardcode.
+
+Não fazer union silencioso de fontes históricas divergentes.
+
+## E02 — Correção pós-sacramentação
+
+Confirmar:
+- existe reabertura?
+- quem autoriza?
+- quais correções são possíveis?
+- o que precisa revalidar?
+- como fica a competência?
+- qual evidência/auditoria?
+
+## E03 — Executor/permissões de sacramentação
+
+Confirmar roles, scopes, rotina owner e segregações.
+
+## E04 — Canal real de envio
+
+Necessário para Q22.
+
+Confirmar:
+- canal;
+- formato;
+- comprovante;
+- aceite;
+- segurança;
+- capability disponível.
+
+## E05 — Attachment roles reais
+
+Modelo configurável já fechado.
+
+Confirmar seed e obrigatoriedade.
+
+## E06 — Cobertura dos motivos de rejeição
+
+Modelo núcleo + extensões já fechado.
+
+Confirmar seed inicial.
+
+## T01 — DAVI / api-delpi
+
+Mapear:
+- endpoints;
+- campos;
+- sources;
+- freshness;
+- erros;
+- scope;
+- owner.
+
+Não inventar campos físicos.
+
+## T02 — Notificações Minha DELPI
+
+Mapear:
+- API/event;
+- templates;
+- destinatários;
+- preferences;
+- e-mail;
+- delivery status;
+- retry/failure;
+- deep links.
+
+## T03 — Cutoff / STOCK_CLOSED
+
+Verificar estado canônico do owner.
+
+Se não existir/for incompatível → EXECUTION_DRIFT.
+
+## T04 — Capability corporativa de envio
+
+Inventariar serviços para:
+- documentos;
+- e-mail;
+- tracking;
+- retry;
+- proof of delivery.
+
+## T05 — Core RBAC
+
+Mapear:
+- ACCESS;
+- MANAGE;
+- unit scope;
+- resource scope;
+- effective permissions.
+
+## Stop conditions
+
+Parar e escalar quando:
+- E02 contradizer state model;
+- T03 invalidar canonical state;
+- E04/T04 não suportarem envio;
+- T05 conflitar com ACCESS/MANAGE;
+- owner não for identificável;
+- nova evidência invalidar TARGET.
