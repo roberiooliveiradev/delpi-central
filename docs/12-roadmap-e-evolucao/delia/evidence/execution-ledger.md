@@ -9299,3 +9299,40 @@ PENDING (not yet proven):
         until that evidence exists.
     docs/16, 50, 17, 21, 20, 25, 60 reconciliation pending final
         review pass.
+
+EVIDENCE (live production, 2026-10-05):
+    Root-cause chain proven and fixed across three layers:
+    1) owner catalog (16kB, 31 ops) exceeded evidence bound (3kB) and
+       the InvokeModel input budget (16384) — evidence projection is
+       now deterministic compaction (breadth-first rows, per-entry
+       bound, examples dropped, strings capped), all ops reach stage-3
+       within budget (orchestration.py).
+    2) missing_inputs was discarded whenever arguments validated —
+       {} + missing now yields CLARIFICATION_REQUIRED instead of an
+       empty PREPARE the owner must reject.
+    3) governed_write readiness assumed a single-container shape —
+       VISTA emits proposal_handle flat + exact_change nested under
+       proposal + canCommit; _readiness_for/proposal_ref now use
+       envelope-first lookup and canCommit as the owner boolean
+       (fail-closed preserved: both mandatory fields still required).
+    Owner-side (tv-dashboard-api): catalog index now declares
+       per-op fields + targetShape — the minimal vocabulary
+       an envelope consumer needs (owner-owned, not DÉLIA hardcode).
+    Live eval (real_provider_neutral_eval.py, user=user):
+       verdict=PASS, blocking_failures=[].
+       - mcp_product_read: 200 GROUNDED delpi.search_products
+       - openapi_product_search: 200 GROUNDED delpi.search_products
+       - workspace_current_slide: 200 GROUNDED get_playlist_context
+       - write_prepare: 200 GROUNDED prepare_change +
+         confirmation {proposal_digest, preview_fingerprint,
+         expires_at_epoch} — raw proposal_handle never surfaced
+       - write_reject: truthful cancel; malformed workspace: 400;
+         unauthenticated: 401.
+       Production log chain observed: plan with_discovery ->
+       operational_plan accepted (get_catalog -> prepare_change) ->
+       arguments built (ops,target) -> PREPARE_PROJECTED READY ->
+       DECISION_GATE REQUIRES_CONFIRMATION -> CONFIRMATION_REQUIRED.
+    STILL_NOT_PROVEN: ACT/commit path not exercised live (PREPARE
+       only); playlist rename is absent from the owner catalog by
+       design (no such op — truthful missing-inputs path observed);
+       docs reconciliation pending.
