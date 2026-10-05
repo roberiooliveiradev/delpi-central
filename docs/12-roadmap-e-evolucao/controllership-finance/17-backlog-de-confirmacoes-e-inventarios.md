@@ -95,9 +95,18 @@ Inventariar serviços para:
 Mapear:
 - ACCESS;
 - MANAGE;
-- unit scope;
-- resource scope;
-- effective permissions.
+- resource ownership/context access;
+- effective permissions;
+- fail-closed quando a resolução do Core estiver indisponível.
+
+Decisão de produto já fechada:
+
+```text
+BRANCH_PERMISSION_CODES = NO
+UNIT_SCOPE_PERMISSION_MODEL = NOT_APPLICABLE
+```
+
+Filial/unidade pode ser filtro/dimensão do dado, mas não permission code dedicado deste Portal.
 
 ## Stop conditions
 
