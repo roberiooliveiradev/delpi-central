@@ -36,6 +36,46 @@ Seguindo o padrão atual dos Portais Comercial e Suprimentos:
 
 Identifiers técnicos são em inglês; labels de UX permanecem PT-BR.
 
+
+## Reuso obrigatório de `@delpi/plugin-ui`
+
+Esta página não deve recriar chrome de navegação, cards de launcher ou estados genéricos.
+
+Import canônico em MFE federado:
+
+```ts
+import {
+  createDashboardTopBar,
+  createDashboardSectionRouteCard,
+  createDashboardNavigationCard,
+  createDashboardRecentAccessStrip,
+  createDashboardPageHero,
+  EmptyState,
+  LoadingState,
+} from "@delpi/plugin-ui/index";
+```
+
+Estilos/runtime do kit:
+
+```ts
+await import("@delpi/plugin-ui/styles");
+```
+
+Uso esperado:
+
+| Necessidade | Reuso canônico |
+|---|---|
+| topbar principal | `createDashboardTopBar` |
+| launcher de funcionalidades com subrotas | `createDashboardSectionRouteCard` |
+| card simples de entrada em uma funcionalidade | `createDashboardNavigationCard` |
+| acessos recentes, quando habilitados | `createDashboardRecentAccessStrip` |
+| hero/cabeçalho da página | `createDashboardPageHero` |
+| loading/empty genéricos | `LoadingState` / `EmptyState` |
+
+`SectionRouteCard` e `NavigationCard` recebem conteúdo de domínio do Portal; o kit controla chrome, foco e acessibilidade.
+
+**DO NOT RECREATE:** TopBar, underline/nav chrome, launcher-card chrome, recent-access chrome, loading/empty genéricos.
+
 ## Modelo de permissions
 
 O Portal usa somente:
