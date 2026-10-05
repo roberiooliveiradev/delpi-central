@@ -70,6 +70,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [27-minhas-tarefas.md](./27-minhas-tarefas.md) | projeção pessoal de tarefas |
 | [28-administracao.md](./28-administracao.md) | página de Administração / P6 |
 | [29-ajuda.md](./29-ajuda.md) | manual e Help contextual |
+| [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md) | mapa canônico página → componente → import de `@delpi/plugin-ui` |
 
 ## Navegação principal
 
@@ -104,6 +105,19 @@ A Visão geral é a superfície de indicadores financeiros do Portal; o conjunto
 ## Produtos existentes
 
 `plugins/financial` + `financial-api` e o roadmap `financeiro-controladoria` continuam distintos. O novo portal não absorve nem remove esses contextos automaticamente.
+
+## UI kit
+
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md).
+
+Import runtime canônico para MFE federado:
+
+```ts
+import { ... } from "@delpi/plugin-ui/index";
+await import("@delpi/plugin-ui/styles");
+```
+
+Não recriar localmente componentes já exportados pelo kit.
 
 ## Handoff para implementação
 
