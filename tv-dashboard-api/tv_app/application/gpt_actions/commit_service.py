@@ -34,27 +34,10 @@ from tv_app.application.services.tv_presentation_write_service import (
     TvPresentationWriteService,
 )
 
-_NATIVE_CONFIG_OPS = frozenset(
-    {
-        "upsert_data_source",
-        "patch_data_source_params",
-        "set_data_transform",
-        "upsert_block",
-        "set_display_format",
-        "delete_block",
-        "bind_visual",
-        "patch_native_config",
-        "ensure_brand_logo_on_slide",
-        "apply_published_slide_template",
-        "re_layer_playlist_filters",
-        # DM1 — DataModel muta o documento nativeConfig (coalescido por slide).
-        "upsert_data_model",
-        "patch_data_model",
-        "delete_data_model",
-        # DM4 — migração legacy→DataModel também resolve em PATCH do slide.
-        "migrate_data_sources_to_model",
-    }
-)
+# Fonte canônica única: PresentationOpsContentService.native_config_ops().
+# Esta era a terceira cópia divergente do conjunto (sem create_block e as
+# demais ops de geometria/texto) — commit rejeitava ops válidas do catálogo.
+_NATIVE_CONFIG_OPS = PresentationOpsContentService.native_config_ops()
 
 _ERROR_OUTCOME_STATUSES = frozenset(
     {"PARTIAL_COMMIT", "OUTCOME_NOT_VERIFIED"}
