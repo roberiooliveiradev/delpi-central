@@ -1286,11 +1286,25 @@ class OperationalCapabilityOrchestrator:
         owner answers, not DÉLIA failures).
         """
         capability_ref = f"{group_key}.{remote_name}"
+        _logger.info(
+            "orchestration stage=prepare_invoke decision=call "
+            "capability=%s arg_keys=%s correlation_id=%s",
+            capability_ref,
+            ",".join(sorted(str(k) for k in arguments))[:200],
+            correlation,
+        )
         try:
             outcome = self._invoke(
                 group, remote_name, dict(arguments), correlation
             )
         except CapabilityProviderError as exc:
+            _logger.info(
+                "orchestration stage=prepare_invoke decision=error "
+                "error_code=%s detail=%s correlation_id=%s",
+                exc.code,
+                exc.message[:240],
+                correlation,
+            )
             return _error_attempt(correlation, exc)
 
         payload = outcome.structured or {}

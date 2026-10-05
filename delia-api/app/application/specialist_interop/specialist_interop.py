@@ -222,9 +222,14 @@ class SpecialistInterop:
         outcome: RemoteToolOutcome,
     ) -> SpecialistOutcome:
         if outcome.is_error:
+            detail = "".join(
+                ch if ch.isprintable() else " "
+                for ch in outcome.content_text[:240]
+            ).strip()
             raise SpecialistInteropError(
                 MCP_PROTOCOL_ERROR,
-                "specialist reported a remote capability error",
+                "specialist reported a remote capability error"
+                + (f": {detail}" if detail else ""),
             )
         return SpecialistOutcome(
             status=(
