@@ -27,6 +27,59 @@ controllership-finance.manage
 
 Não criar permissions adicionais por subseção, botão ou CRUD.
 
+
+## Reuso obrigatório de `@delpi/plugin-ui`
+
+Não há uma `AdministrationPage` completa canônica exportada. Administração deve ser composta com primitives do kit, sem recriar seus chromes.
+
+Import base recomendado:
+
+```ts
+import {
+  createDashboardPageHero,
+  createDashboardPagePath,
+  createDashboardSectionRouteCard,
+  DataTableSection,
+  createDashboardFiltersKit,
+  FormGrid,
+  FormActions,
+  NativeTextField,
+  NativeSelectField,
+  NativeTextAreaField,
+  ModalShell,
+  ConfirmModalPanel,
+  FloatingNoticeStack,
+  StatusBadge,
+  EmptyState,
+  LoadingState,
+} from "@delpi/plugin-ui/index";
+```
+
+Estilos/runtime:
+
+```ts
+await import("@delpi/plugin-ui/styles");
+```
+
+Mapeamento esperado:
+
+| Necessidade | Reuso canônico |
+|---|---|
+| entrada/seções administrativas | `createDashboardSectionRouteCard` |
+| cabeçalho/breadcrumb | `createDashboardPageHero` + `createDashboardPagePath` |
+| listas de catálogos/templates | `DataTableSection` |
+| filtros | `createDashboardFiltersKit` |
+| formulários | `FormGrid` + Native form fields |
+| ações de formulário | `FormActions` |
+| confirmação/publicação/inativação | `ModalShell` / `ConfirmModalPanel` |
+| feedback assíncrono | `FloatingNoticeStack` |
+| estado/vigência | `StatusBadge` |
+| loading/empty | `LoadingState` / `EmptyState` |
+
+O domínio de templates, catálogos, vigência e auditoria permanece no Portal/BFF.
+
+**DO NOT RECREATE:** tables, filter chrome, form controls, modal shell, confirm panel, notices e status badges já públicos no kit.
+
 ## Acesso
 
 `MANAGE` administra.
