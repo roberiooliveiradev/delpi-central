@@ -12,7 +12,7 @@ Este documento complementa [01-visao-produto-naming-e-escopo.md](./01-visao-prod
 |---|---|---|
 | Portal Controladoria & Finanças | TARGET / NOT_STARTED | UX/composição funcional da Controladoria & Finanças; Central de Fechamento é a primeira funcionalidade |
 | Portal Financeiro P0 | PROVEN / runtime atual | gestão à vista, faturamento, inadimplência, despesas por CC, frete, indicadores; permanece `plugins/financial` + `financial-api` |
-| Core | authority de plataforma | apps, manifest, rotas, effective permissions, RBAC, usuários, scopes e auditoria de plataforma |
+| Core | authority de plataforma | apps, manifest, rotas, effective permissions, RBAC, usuários e auditoria de plataforma |
 | api-delpi | owner de integração TOTVS/Protheus | SQL, consultas e regras canônicas de acesso aos dados TOTVS conforme contracts vigentes |
 | Portal Suprimentos / owners de Suprimentos | contexto distinto | custos/importações e demais regras próprias; CTL-007 não autoriza duplicação de fonte |
 | Planejamento Orçamentário | contexto distinto | orçamento, aprovações e capacidades próprias; não é fechamento mensal da Controladoria |
@@ -88,7 +88,6 @@ A autorização segue:
 
 ```text
 capability
-AND unit_scope
 AND resource_scope / ownership
 AND business_rule
 ```
@@ -98,6 +97,8 @@ Core resolve effective permissions. O backend do produto, quando definido, deve 
 `ACCESS` opera. `MANAGE` administra. Validator não é sinônimo de MANAGE.
 
 T05 define os bindings reais sem criar permission por botão/tela/CRUD.
+
+Para este Portal, não haverá permission code por filial/unidade. Unidade pode existir como contexto/filtro de dados, não como dimensão de RBAC própria do produto.
 
 ## Notificações
 

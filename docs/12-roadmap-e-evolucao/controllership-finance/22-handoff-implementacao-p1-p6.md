@@ -51,14 +51,14 @@ ContextHeader
 Os nomes acima são lógicos, não contrato de componente React.
 
 ### Atores e acesso
-- ACCESS dentro do scope consulta cockpit e navega para superfícies operacionais;
+- ACCESS consulta cockpit e navega para superfícies operacionais, respeitando resource ownership/business rules quando aplicável;
 - MANAGE não recebe poderes adicionais em P1 apenas por ser MANAGE;
 - sem ACCESS: FORBIDDEN, sem exposição de dados.
 
 ### Owners / sources
 P1 compõe estados vindos de P2, P3, P4 e P5. Não se torna owner das regras desses módulos.
 
-Bindings físicos/freshness dos dados internos permanecem T01/T05 quando aplicável.
+Bindings físicos/freshness permanecem T01; effective permissions/ownership permanecem T05 quando aplicável.
 
 ### Estados e interações
 Eixos independentes:
@@ -79,7 +79,7 @@ P1 não sacramenta, valida evidência nem envia pacote.
 Explicar eixos independentes, preliminary/final, freshness, blockers e diferença entre estoque fechado, pacote enviado e fechamento concluído.
 
 ### Dependências / stop
-T01/T05 para bindings/scopes. Falta de source não vira zero nem sucesso.
+T01 para bindings e T05 para effective permissions/ownership. Falta de source não vira zero nem sucesso.
 
 ## P2 — Checklist e Documentos
 
@@ -99,7 +99,7 @@ ChecklistFilters
 ```
 
 ### Atores e acesso
-- ACCESS opera itens da competência no scope;
+- ACCESS opera itens da competência conforme ownership/business rules aplicáveis;
 - validator valida/rejeita quando autorizado;
 - MANAGE administra mestre/catálogos/correções estruturais;
 - MANAGE_APPROVAL != EVIDENCE_VALIDATION.
@@ -130,7 +130,7 @@ Notificações seguem [16-configuracoes-catalogos-e-notificacoes.md](./16-config
 Requirement types, satisfaction rules, upload vs validation, multi-anexo, N/A, rejeição/substituição, cancelamento e correção estrutural.
 
 ### Dependências / stop
-E05/E06 para seeds; T02 para capability de notificação; T05 para scopes reais.
+E05/E06 para seeds; T02 para capability de notificação; T05 para effective permissions/ownership.
 
 ## P3 — Estoque, Cutoff e Conciliação
 
@@ -201,7 +201,7 @@ PendencyFilters
 ```
 
 ### Atores e acesso
-- ACCESS opera pendências dentro do scope;
+- ACCESS opera pendências conforme ownership/business rules aplicáveis;
 - usuário/papel autorizado pode claim/reassign/resolve;
 - IA sugere; humano confirma;
 - V1 não grava ERP.
@@ -223,7 +223,7 @@ A fatia P4 do fechamento não é a mesma feature que despesas por CC do Portal F
 Owner/responsável, estado, evidência, sugestão IA, decisão humana, dismiss e ausência de SLA/overdue.
 
 ### Dependências / stop
-T01/T05 para source/scopes. Regra nova de classificação sem homologação não pode ser inventada.
+T01 para source e T05 para effective permissions/ownership. Regra nova de classificação sem homologação não pode ser inventada.
 
 ## P5 — Pacote, Finalização e Envio
 
@@ -243,7 +243,7 @@ PackageSummary
 ```
 
 ### Atores e acesso
-Ações dependem de ACCESS + scope + business rule. Envio exige capability real; UI não autoriza sozinha.
+Ações dependem de ACCESS + resource ownership quando aplicável + business rule. Envio exige capability real; UI não autoriza sozinha.
 
 ### Estados/interações
 ```text
@@ -328,7 +328,7 @@ Registrar draft/update/publish/inactivation e mudanças de catálogo com ator, m
 Draft vs publicado, effective_from, snapshot, inativação, ACCESS vs MANAGE e impacto prospectivo.
 
 ### Dependências / stop
-E01/E05/E06 para seeds; T02 para notificações; T05 para scopes.
+E01/E05/E06 para seeds; T02 para notificações; T05 para effective permissions/ownership.
 
 ## Deep links
 

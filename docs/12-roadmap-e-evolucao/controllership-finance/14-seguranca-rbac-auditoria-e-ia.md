@@ -6,7 +6,6 @@ JWT identifica e contextualiza, mas não é a fonte final de permissions.
 
 ```text
 capability
-AND unit_scope
 AND resource_scope / ownership
 AND business_rule
 ```
@@ -15,7 +14,7 @@ A autorização final deve ocorrer server-side e fail-closed.
 
 ## ACCESS
 
-Dentro do scope autorizado:
+Dentro do acesso e ownership autorizados:
 - operar competência;
 - consultar e tratar checklist;
 - anexar evidências;
@@ -27,7 +26,7 @@ Dentro do scope autorizado:
 
 ## MANAGE
 
-Inclui ACCESS e adiciona administração:
+Autoriza administração/configuração:
 - templates;
 - catálogos;
 - validators;
@@ -36,7 +35,11 @@ Inclui ACCESS e adiciona administração:
 - correções estruturais;
 - publicação.
 
-Não criar permission por botão, tela, endpoint ou CRUD.
+`MANAGE` não implica automaticamente `ACCESS` operacional. Se o mesmo usuário precisar usar as superfícies operacionais, deve possuir `controllership-finance.access` conforme effective permissions do Core.
+
+Não criar permission por botão, tela, endpoint, CRUD, filial ou unidade.
+
+Para este Portal, filial/unidade é dimensão de dados quando aplicável, não permission code dedicado.
 
 ## Validator
 
@@ -76,9 +79,9 @@ Cobrir:
 ## Negative cases
 
 - ACCESS alterando mestre;
-- cross-unit por URL direta;
+- acesso direto a recurso fora de ownership/autorização;
 - UI escondendo botão, mas backend aceitando;
-- IA acessando dados fora do scope;
+- IA acessando dados fora do acesso/ownership autorizado;
 - MANAGE apagando histórico;
 - troca de validator para contornar rejeição;
 - delete de evidência rejeitada;
