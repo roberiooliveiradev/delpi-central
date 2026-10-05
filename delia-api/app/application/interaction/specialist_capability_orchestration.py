@@ -1850,7 +1850,15 @@ class SpecialistCapabilityOrchestrator:
             input_text,
             block_tag="schema",
             block_payload=json.dumps(
-                descriptor.input_schema, ensure_ascii=False, default=str
+                {
+                    "capability": descriptor.remote_name,
+                    "description": (descriptor.description or "")[
+                        :MAX_DESCRIPTION_CHARS
+                    ],
+                    "input_schema": descriptor.input_schema,
+                },
+                ensure_ascii=False,
+                default=str,
             )[:MAX_SURFACE_CHARS],
             instruction_id=ARGUMENTS_INSTRUCTION_ID,
             instruction=ARGUMENTS_INSTRUCTION,
