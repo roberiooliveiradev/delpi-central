@@ -46,6 +46,9 @@ NATIVE_CONFIG_OPS = frozenset(
         "delete_data_model",
         # DM4 — legacy→DataModel migration also acts on nativeConfig.
         "migrate_data_sources_to_model",
+        # Owner quality loop — marker op expanding to deterministic
+        # safe corrections on the slide nativeConfig (safe_auto_fix).
+        "apply_safe_layout_fixes",
     }
 )
 

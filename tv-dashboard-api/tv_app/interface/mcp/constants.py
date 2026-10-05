@@ -32,6 +32,7 @@ TOOL_CLASS: dict[str, str] = {
     "search_data_routes": "READ",
     "inspect_data_model": "READ",
     "preview_data_model": "READ",
+    "preview_data_block": "ANALYSIS",
     "prepare_change": "PREPARE",
     "commit_proposal": "ACT",
 }
@@ -50,7 +51,6 @@ MCP_FORBIDDEN_TOOLS: frozenset[str] = frozenset(
         "upsert_data_source",
         "set_data_transform",
         "patch_data_source_params",
-        "preview_data_block",
         "suggest_change",
         "preview_change",
         "commit_change",

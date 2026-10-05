@@ -27,6 +27,7 @@ from .tool_bridge import (
     tool_inspect_data_model,
     tool_list_playlists,
     tool_prepare_change,
+    tool_preview_data_block,
     tool_preview_data_model,
     tool_search_data_routes,
 )
@@ -114,7 +115,7 @@ class TvDashboardMCPServer(MCPServer):
 
 
 def create_mcp_server() -> MCPServer:
-    """Build the VISTA MCP server — exactly eight semantic tools."""
+    """Build the VISTA MCP server — the complete owner capability surface."""
     mcp = TvDashboardMCPServer(
         name="tv-dashboard",
         instructions=VISTA_MCP_INSTRUCTIONS,
@@ -130,6 +131,14 @@ def _register_read_tools(mcp: MCPServer) -> None:
     ann = ToolAnnotations.model_validate(
         tool_annotations_payload(
             "READ — tv-dashboard",
+            read_only=True,
+            destructive=False,
+            idempotent=True,
+        )
+    )
+    ann_analysis = ToolAnnotations.model_validate(
+        tool_annotations_payload(
+            "ANALYSIS — tv-dashboard",
             read_only=True,
             destructive=False,
             idempotent=True,
@@ -184,8 +193,11 @@ def _register_read_tools(mcp: MCPServer) -> None:
             "renderização. Opcionalmente foca uma fonte de dados legada "
             "(data_source_id): devolve o transform persistido, dependências, "
             "consumidores e — com include_runtime=true — effectiveParams e "
-            "resultado do runtime. Requer playlist_id e permissão de leitura "
-            "sobre a programação."
+            "resultado do runtime. Cada tela inclui designAudit (issues de "
+            "layout detectadas pelo owner: cobertura de frame, sobreposição, "
+            "contraste, tipografia, safe-area) — use para revisar qualidade "
+            "antes/depois de mutações. Requer playlist_id e permissão de "
+            "leitura sobre a programação."
         ),
         annotations=ann,
         meta=_meta("get_playlist_context"),
@@ -242,6 +254,26 @@ def _register_read_tools(mcp: MCPServer) -> None:
         ),
         annotations=ann,
         meta=_meta("preview_data_model"),
+    )
+
+    mcp.add_tool(
+        tool_preview_data_block,
+        name="preview_data_block",
+        title="Análise de bloco de dados (não persiste)",
+        description=(
+            "ANALYSIS do owner sobre um bloco de dados — nunca persiste. "
+            "Retorna semanticDigest (colunas/métricas/filtros resolvidos), "
+            "visualRecommendation (tipo de bloco/família de gráfico adequada "
+            "aos dados), joinHints, formatHints e erro tipado quando a "
+            "resolução/transform falha (nunca dataset vazio disfarçado). "
+            "Três formas de alvo: (a) playlist_id+slide_id+block_id para "
+            "bloco persistido; (b) operation_id+params para bloco hipotético "
+            "derivado de rota; (c) block(+native_config) para candidato "
+            "inline. Use ANTES de prepare_change para entender o que o bloco "
+            "mostra e se o tratamento visual cabe nos dados."
+        ),
+        annotations=ann_analysis,
+        meta=_meta("preview_data_block"),
     )
 
     mcp.add_tool(

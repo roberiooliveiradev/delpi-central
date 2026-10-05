@@ -1963,6 +1963,13 @@ class GptActionsDispatchService:
         )
         if candidate is not None:
             preview_payload["candidatePreview"] = candidate
+        safe_fixes = (
+            result.get("sideEffects", {}).get("safeFixesApplied")
+            if isinstance(result.get("sideEffects"), dict)
+            else None
+        )
+        if isinstance(safe_fixes, list) and safe_fixes:
+            preview_payload["safeFixesApplied"] = safe_fixes
 
         from tv_app.application.gpt_actions.response_compact import (
             project_mutation_actions_payload,

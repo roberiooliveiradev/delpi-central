@@ -1364,6 +1364,30 @@
                         {
                           "type": "object",
                           "required": [
+                            "op"
+                          ],
+                          "example": {
+                            "op": "apply_safe_layout_fixes"
+                          },
+                          "properties": {
+                            "op": {
+                              "const": "apply_safe_layout_fixes",
+                              "type": "string"
+                            },
+                            "playlistRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative playlist UUID. Omit to use current playlist slot."
+                            },
+                            "slideRef": {
+                              "type": "string",
+                              "description": "Alias or authoritative slide UUID. Omit to use current slide slot."
+                            }
+                          },
+                          "title": "apply_safe_layout_fixes"
+                        },
+                        {
+                          "type": "object",
+                          "required": [
                             "op",
                             "visualId"
                           ],

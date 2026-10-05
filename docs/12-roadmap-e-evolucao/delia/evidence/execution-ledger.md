@@ -9472,3 +9472,151 @@ EVIDENCE (live production, 2026-10-05):
     STILL_OPEN: production deploy on srv-api (commits pushed;
       up-prod-sequential --fase api --build delia-api
       tv-dashboard-api) + live UI acceptance on prod.
+
+    LIVE_PROD_ACCEPTANCE (2026-10-05, srv-api deploy 40baf656):
+      user 'teste' via product UI, playlist fa84e9f7:
+      'crie uma caixa de texto "delia deu certo!"' ->
+        CONFIRMATION_POLICY=direct -> ACT once -> OUTCOME_VERIFIED
+        VERIFIED (persisted/rendered/layoutGatePassed=true,
+        issuesIntroduced=0, remainingIssues=[]). Block persisted
+        blk_0bc1a0119e type=text color=#000000 on bg #ffffff —
+        model selected contrast-aware color via owner
+        fieldVocabulary/colorVocabulary. DEFECT-A and DEFECT-B
+        proven PASS in production. §6.132 CLOSED.
+
+## 6.133. ARCH-DRIFT-MCP-OWNER-FULL-CAPABILITY-INTELLIGENCE-SURFACE-01 — owner-owned full capability/intelligence surface (VISTA first reference owner)
+    STATUS = IN_EXECUTION
+    BASE_HEAD = 40baf656839a53d4bded87a319a3f72d70d3ede1 (matches expected)
+    BRANCH = main
+    WORKING_TREE = no tracked modifications; 75 untracked
+      diagnostic .tmp-* files pending cleanup.
+    PRODUCT_MASTER_DECISION =
+      MCP OWNER = owner of its tools + capabilities + business
+      vocabulary + domain intelligence + quality intelligence +
+      safe corrections + result verification.
+      DELIA = OPERATIONAL_CAPABILITY_ORCHESTRATOR (discovers,
+      selects, plans, governs, invokes, verifies Outcome contract).
+      DÉLIA is NOT a business/layout/design engine, NOT an MCP
+      tool registry, NOT a capability authority.
+      DELIA_LOCAL_MCP_CAPABILITY_CATALOG = FORBIDDEN.
+      tools/list = primary live capability surface; owner
+      DISCOVERY (get_catalog) is optional additional context.
+      Quality is part of the owner Outcome; persistence alone is
+      NOT verified success.
+    ROOT_OBSERVATION (live prod, §6.132 acceptance):
+      create-text VERIFIED but flagged product concern: owner
+      intelligence (design_audit/low_contrast/safe autofix/
+      semantic digest/visual recommendation) exists owner-side
+      but is only reachable via the HTTP/GPT-Actions facade,
+      not via MCP — MCP_PARITY_GAP suspected; inventory required.
+      Also: SafeAutoFixService low_contrast handler forces
+      color=#ffffff unconditionally = NOT_PROVEN_SAFE.
+    PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5 phase-level=NO,
+      PRODUCTION_READINESS=NOT_PROVEN.
+
+    INVENTORY (owner surface, this HEAD):
+      HTTP/GPT-Actions facade exposes 10 ops incl. analysis-only
+      gpt_preview_data_block (semanticDigest + visualRecommendation
+      + joinHints/formatHints) and gpt_suggest_change (NL->ops
+      materializer). MCP surface exposed 8 tools — preview_data_block
+      was in MCP_FORBIDDEN_TOOLS by name although it persists
+      nothing; the owner ANALYSIS capability had no MCP leg.
+      designAudit already reached MCP inside
+      get_playlist_context snapshots (read path) and
+      candidatePreview.designAudit inside PREPARE.
+    DESIGN DECISIONS (provider-neutral, owner-canonical):
+      1. preview_data_block promoted to MCP tool with
+         toolClass=ANALYSIS (owner-typed; DÉLIA maps ANALYSIS->READ,
+         already supported in _OWNER_CLASS_MAP — zero DÉLIA code
+         change for the new tool).
+      2. suggest_change stays FORBIDDEN on MCP: it is an NL->ops
+         materializer; on MCP the orchestrator materializes intent
+         via get_catalog capability markers + typed envelope.
+         Functional parity preserved (catalog vocabulary +
+         preview_data_block + prepare_change), no capability loss.
+      3. apply_safe_layout_fixes added as canonical owner op
+         (catalog vocabulary, not a per-tool surface) — explicit
+         opt-in fixing every safeAutoFix issue on the slide.
+      4. Owner quality loop inside PREPARE: deterministic safe
+         corrections applied to the candidate in memory BEFORE
+         fingerprint/diff — corrections on issues the plan
+         INTRODUCED run automatically (pristine per-slide snapshot
+         in ExecutionContext distinguishes introduced vs
+         pre-existing); pre-existing issues are never silently
+         mutated without the explicit op. SafeFixesApplied is
+         emitted as evidence in the PREPARE payload; the corrected
+         candidate is what ACT commits — single governed write,
+         no hidden second ACT.
+      5. SafeAutoFixService low_contrast correction replaced:
+         hardcoded #ffffff -> safe_contrast_color() resolving the
+         slide EFFECTIVE background (explicit color/gradient, else
+         brandThemeKey -> canonical solid) and picking the
+         designTokens.minContrastPairs fg provably satisfying
+         CONTRAST_MIN_RATIO (2.5) against the real background;
+         unknown/unparseable background or absent pairs -> NO
+         patch, issue remains visible (fail-closed, owner never
+         guesses). Issue-id subset filtering restricts overlap
+         relayout to blocks named by in-scope issues.
+    IMPLEMENTATION (working tree on 40baf656):
+      slide_layout_quality_service: CONTRAST_MIN_RATIO constant,
+        _THEME_BG map, effective_slide_bg(), safe_contrast_color().
+      safe_auto_fix_service: ops_for(issue_ids=...), in-scope
+        issue filter + allowed_block_ids restriction, context-aware
+        contrast patch.
+      execution_context: pristine_native_by_slide snapshot.
+      patch_service: _issue_identity_key() (stable prefix:target
+        identity so volatile metric suffixes do not masquerade
+        pre-existing issues as introduced), per-slide correction
+        stage in _run (post apply_missing_defaults, pre
+        sanitize/validate/fingerprint), apply_safe_layout_fixes
+        marker branch, _apply_safe_layout_corrections().
+      presentation_ops_content_service: apply_safe_layout_fixes in
+        NATIVE_CONFIG_OPS.
+      presentation_ops_content.json: op spec (direct policy,
+        requires playlist+slide, replaceNativeConfig hint) +
+        capability key fix_slide_layout with contentMarkers.
+      vista_agent_intelligence.json: parity_map +
+        gpt_preview_data_block->preview_data_block; removed from
+        not_exposed_in_mcp.
+      mcp/constants: preview_data_block ANALYSIS; removed from
+        MCP_FORBIDDEN_TOOLS.
+      mcp/tool_bridge: tool_preview_data_block (arg->body mapping,
+        authed context, typed error passthrough).
+      mcp/server: registered with ANALYSIS annotations + delpi meta;
+        get_playlist_context description now advertises designAudit.
+      dispatch_service: safeFixesApplied projected into PREPARE
+        payload.
+      docs: openai-plugin-mcp.md surface policy 9 tools + quality
+        loop + parity map; vista-capability-matrix.md 9 tools.
+    DÉLIA CENTRAL: zero code change required — live tools/list
+      discovers preview_data_block; ANALYSIS projects READ;
+      class-gated invocation already generic (test:
+      fake fourth specialist 'quarto' orchestrated by the same
+      mechanism — discover_catalog projects, invoke class-gates).
+      Residual searches: no vista operation names, no quality
+      rules, no tool-name mirror, no preview_data_block reference
+      in delia-api/app.
+    TESTS =
+      tv-dashboard-api: 1660 passed (full suite) — incl. new
+        test_safe_layout_quality_loop.py (13 tests: dark/light/mid
+        bg safe color, unknown/unparseable bg -> None, no token
+        pairs -> None, brand theme resolution, introduced-only
+        correction inside candidate, pre-existing never silently
+        fixed, explicit op fixes all, no-safe-fix keeps issue,
+        catalog vocabulary presence, unknown op fails closed) and
+        3 new preview_data_block bridge tests (auth required,
+        delegation with live authz, domain error code preserved).
+        Surface-exactness tests updated to 9 tools + ANALYSIS
+        class; openapi-gpt-actions.json artifact regenerated
+        (apply_safe_layout_fixes op schema); catalog budget kept
+        under 100KiB.
+      delia-api: 762 passed (full suite) — incl. new
+        test_fake_fourth_owner_orchestrated_by_same_generic_mechanism.
+    STILL_OPEN: commit + controlled deploy + live acceptance
+      (text-block creation on white slide must produce readable,
+      contrast-safe candidate without user-facing white-on-white;
+      designAudit reachable via MCP get_playlist_context;
+      preview_data_block invocable through DÉLIA via live
+      tools/list).
+    PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5 phase-level=NO,
+      PRODUCTION_READINESS=NOT_PROVEN.

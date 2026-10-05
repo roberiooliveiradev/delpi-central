@@ -15,7 +15,7 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 | **TV Dashboard** | Domain authority (playlists, slides, data blocks, PresentationMutation) |
 | **Chat interno (Minha DELPI)** | Handoff only (`tv_dashboard_handoff`) — **não** muta TV; **não** é VISTA nem DÉLIA |
 | **DÉLIA** | App standalone industrial — **≠** Chat; adapter TV = **TARGET** (mesmo contrato PresentationMutation; sem HTTP neste HEAD) |
-| **MCP** | Backend adapter **PROVEN** (`/mcp`, 8 tools sobre o mesmo `GptActionsDispatchService`); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
+| **MCP** | Backend adapter **PROVEN** (`/mcp`, 9 tools sobre o mesmo `GptActionsDispatchService`: 5 READ + 1 DISCOVERY + 1 ANALYSIS `preview_data_block` + PREPARE + ACT); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
 | **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
 
 ```text

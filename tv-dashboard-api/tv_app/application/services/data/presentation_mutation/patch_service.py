@@ -398,6 +398,19 @@ _NATIVE_OP_NAMES = PresentationOpsContentService.native_config_ops()
 def _op_name_of(raw: dict[str, Any]) -> str:
     return str(raw.get("op") or "").strip()
 
+
+def _issue_identity_key(code: str) -> str:
+    """Stable identity of an audit issue across before/after candidates.
+
+    Issue codes may embed volatile metrics (``low_contrast:blk:1.8``); the
+    identity for introduced-vs-pre-existing comparison is ``prefix:target``
+    (``low_contrast:blk``), so a contrast ratio drifting after a write does
+    not disguise a pre-existing issue as a newly introduced one.
+    """
+    parts = str(code or "").split(":")
+    return ":".join(parts[:2]) if len(parts) > 2 else str(code or "")
+
+
 def _collect_side_effect_hints(applied: list[str]) -> list[str]:
     ordered: list[str] = []
     seen: set[str] = set()
@@ -605,6 +618,10 @@ class PresentationPatchService:
             playlist_defaults = self._playlist_defaults(playlist_id)
             ctx.native_config = native_config
             ctx.native_by_slide[str(slide_id)] = native_config
+            ctx.pristine_native_by_slide.setdefault(
+                str(slide_id),
+                slide.get("nativeConfig") if isinstance(slide.get("nativeConfig"), dict) else {},
+            )
         elif needs_native and not creates_slide:
             raise PresentationPatchError(PresentationOpsContentService.message("missingTarget"))
 
@@ -935,6 +952,13 @@ class PresentationPatchService:
                 )
             elif op_name == "apply_published_slide_template":
                 self._op_apply_published_slide_template(native_config, raw_op)
+            elif op_name == "apply_safe_layout_fixes":
+                # Marker op: the deterministic safe corrections are applied
+                # by the post-candidate quality loop below (single pass,
+                # owner-computed). Declaring the op keeps the intent
+                # auditable in orderedOps and guarantees the slide's
+                # nativeConfig is loaded even on a fix-only plan.
+                pass
             else:
                 raise PresentationPatchError(
                     PresentationOpsContentService.message("unknownOp", op=op_name or "?")
@@ -956,6 +980,17 @@ class PresentationPatchService:
 
             ctx.stash_native()
             cleaned_by_slide: dict[str, dict[str, Any]] = {}
+            # Owner quality loop (PREPARE-candidate stage, pre-persist):
+            # deterministic safe corrections run INSIDE the candidate —
+            # never a hidden second ACT. ``apply_safe_layout_fixes`` fixes
+            # every safeAutoFix issue on the slide; otherwise only issues
+            # the plan itself INTRODUCED are corrected (pristine snapshot),
+            # so unrelated pre-existing layout is never silently mutated.
+            fix_all = any(
+                isinstance(op, dict) and _op_name_of(op) == "apply_safe_layout_fixes"
+                for op in ops
+            )
+            safe_fixes: list[dict[str, Any]] = []
             slide_ids = (
                 set(ctx.touched_native_slides)
                 if ctx.touched_native_slides
@@ -972,6 +1007,11 @@ class PresentationPatchService:
                 SlidePartChromeService.apply_missing_defaults(
                     cfg,
                     informed_block_ids=informed_frame_ids,
+                )
+                safe_fixes.extend(
+                    self._apply_safe_layout_corrections(
+                        ctx, cfg, slide_id=str(sid), fix_all=fix_all
+                    )
                 )
                 cleaned = sanitize_and_hydrate_comunicado_config(cfg, catalog=self._catalog)
                 try:
@@ -1002,6 +1042,9 @@ class PresentationPatchService:
                         iter(cleaned_by_slide.values())
                     )
                 ctx.native_config = native_config
+
+            if safe_fixes:
+                side_effects["safeFixesApplied"] = safe_fixes
 
         hints = _collect_side_effect_hints(applied)
         if removed_block_ids:
@@ -1095,6 +1138,80 @@ class PresentationPatchService:
 
         return result
 
+    def _apply_safe_layout_corrections(
+        self,
+        ctx: ExecutionContext,
+        cfg: dict[str, Any],
+        *,
+        slide_id: str,
+        fix_all: bool,
+    ) -> list[dict[str, Any]]:
+        """Owner-side deterministic safe corrections on the candidate.
+
+        ``fix_all=False`` (default): only issues the plan introduced versus
+        the slide's pristine snapshot are corrected — the user's intent is
+        preserved and unrelated pre-existing layout is never touched.
+        ``fix_all=True`` (explicit ``apply_safe_layout_fixes``): every
+        safeAutoFix issue is corrected. Issues with no provably-safe fix
+        (e.g. low contrast on an unknown background) are left untouched and
+        stay visible in the audit/outcome — the owner never guesses.
+
+        Mutates ``cfg`` in place; the caller sanitizes/validates afterwards
+        so the corrected candidate is the object that gets fingerprinted,
+        diffed and committed — a single governed write, not a second ACT.
+        """
+        from tv_app.application.services.data.design_intelligence_service import (
+            DesignIntelligenceService,
+        )
+        from tv_app.application.services.data.safe_auto_fix_service import (
+            SafeAutoFixService,
+        )
+
+        issue_ids: set[str] | None = None
+        if not fix_all:
+            pristine = ctx.pristine_native_by_slide.get(str(slide_id))
+            before_keys = (
+                {
+                    _issue_identity_key(str(issue.get("id") or ""))
+                    for issue in (
+                        DesignIntelligenceService.design_audit(pristine).get("issues")
+                        or []
+                    )
+                    if isinstance(issue, dict)
+                }
+                if isinstance(pristine, dict)
+                else set()
+            )
+            after_audit = DesignIntelligenceService.design_audit(cfg)
+            issue_ids = {
+                str(issue.get("id") or "")
+                for issue in (after_audit.get("issues") or [])
+                if isinstance(issue, dict)
+                and _issue_identity_key(str(issue.get("id") or ""))
+                not in before_keys
+            }
+            if not issue_ids:
+                return []
+        fix_ops = SafeAutoFixService.ops_for(cfg, issue_ids=issue_ids)
+        applied: list[dict[str, Any]] = []
+        for fix_op in fix_ops:
+            try:
+                block_id, _ = self._op_upsert_block(cfg, fix_op)
+            except PresentationPatchError:
+                # A fix that fails owner validation is skipped — the audit
+                # issue remains as truthful evidence instead of aborting
+                # the user's write.
+                continue
+            if block_id:
+                applied.append(
+                    {
+                        "slideId": str(slide_id),
+                        "blockId": str(block_id),
+                        "op": str(fix_op.get("op") or "upsert_block"),
+                    }
+                )
+        return applied[:24]
+
     def _ensure_native_for_slide(
         self,
         ctx: ExecutionContext,
@@ -1123,6 +1240,10 @@ class PresentationPatchService:
             cfg = {}
         if "version" not in cfg:
             cfg["version"] = 5
+        ctx.pristine_native_by_slide.setdefault(
+            sid,
+            slide.get("nativeConfig") if isinstance(slide.get("nativeConfig"), dict) else {},
+        )
         return ctx.activate_native(sid, cfg)
 
     def _playlist_revision(self, playlist_id: str | None) -> int | None:

@@ -123,7 +123,7 @@ def _test_dispatch(**overrides) -> GptActionsDispatchService:
 # ---------------------------------------------------------------------------
 
 
-def test_tools_list_exactly_eight_governed_tools():
+def test_tools_list_exactly_nine_governed_tools():
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
     assert names == set(MCP_TOOL_NAMES)
@@ -134,17 +134,18 @@ def test_tools_list_exactly_eight_governed_tools():
         "search_data_routes",
         "inspect_data_model",
         "preview_data_model",
+        "preview_data_block",
         "prepare_change",
         "commit_proposal",
     }
-    assert len(tools) == 8
+    assert len(tools) == 9
     assert "inspect_data_source" not in names
 
 
 def test_no_native_op_or_legacy_tools_registered():
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
     assert MCP_FORBIDDEN_TOOLS.isdisjoint(names)
-    banned = {"preview_change", "commit_change", "suggest_change", "preview_data_block",
+    banned = {"preview_change", "commit_change", "suggest_change",
               "upsert_data_model", "bind_visual", "migrate_data_sources_to_model",
               "execute_capability", "generic_http"}
     assert banned.isdisjoint(names)
@@ -156,6 +157,10 @@ def test_tool_classification_read_prepare_act():
     assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 5
     assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
+    # §6.133: owner ANALYSIS surface — preview_data_block is non-persisting
+    # owner intelligence (semantic digest + visual recommendation).
+    assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 1
     assert set(TOOL_CLASS.keys()) == set(MCP_TOOL_NAMES)
 
 
@@ -164,7 +169,7 @@ def test_tool_annotations_match_class():
     for name, t in tools.items():
         ann = t.annotations
         assert ann is not None, name
-        if TOOL_CLASS[name] in ("DISCOVERY", "READ"):
+        if TOOL_CLASS[name] in ("DISCOVERY", "READ", "ANALYSIS"):
             assert ann.read_only_hint is True, name
             assert ann.destructive_hint in (False, None), name
         elif TOOL_CLASS[name] == "PREPARE":

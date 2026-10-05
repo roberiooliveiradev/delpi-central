@@ -284,6 +284,42 @@ def tool_preview_data_model(
         return handle_tool_error(e, tool="preview_data_model", label="mcp tool")
 
 
+def tool_preview_data_block(
+    playlist_id: str | None = None,
+    slide_id: str | None = None,
+    block_id: str | None = None,
+    block: dict | None = None,
+    native_config: dict | None = None,
+    operation_id: str | None = None,
+    params: dict | None = None,
+    playlist_defaults: dict | None = None,
+) -> CallToolResult:
+    try:
+        body: dict[str, Any] = {}
+        if playlist_id:
+            body["playlistId"] = playlist_id
+        if slide_id:
+            body["slideId"] = slide_id
+        if block_id:
+            body["blockId"] = block_id
+        if block is not None:
+            body["block"] = block
+        if native_config is not None:
+            body["nativeConfig"] = native_config
+        if operation_id:
+            body["operationId"] = operation_id
+        if params is not None:
+            body["params"] = params
+        if playlist_defaults is not None:
+            body["playlistDefaults"] = playlist_defaults
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.preview_data_block(user=user, body=body, authorization=auth)
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="preview_data_block", label="mcp tool")
+
+
 # ---------------------------------------------------------------------------
 # MCP2 — governed write envelope (PREPARE → proposal_handle → ACT).
 # Adapter only: ops[] are canonical catalog vocabulary validated by the

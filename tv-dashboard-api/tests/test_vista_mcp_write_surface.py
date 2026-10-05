@@ -151,17 +151,21 @@ def _clean_proposal_store():
 
 
 # ---------------------------------------------------------------------------
-# Surface exactness (8 tools: 6 READ + 1 PREPARE + 1 ACT)
+# Surface exactness (9 tools: 5 READ + 1 DISCOVERY + 1 ANALYSIS + PREPARE + ACT)
 # ---------------------------------------------------------------------------
 
 
-def test_surface_has_exactly_eight_tools():
-    assert len(MCP_TOOL_NAMES) == 8
+def test_surface_has_exactly_nine_tools():
+    assert len(MCP_TOOL_NAMES) == 9
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 5
     assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
+    # Owner intelligence surface: ANALYSIS exposes the owner's semantic/
+    # visual recommendation pipeline (preview_data_block) — non-persisting.
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 1
+    assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
 
 
 def test_mcp_catalog_exposes_field_vocabulary():
@@ -621,3 +625,4 @@ def test_prepare_preserves_migration_conflict_code():
     assert result.is_error is True
     assert result.structured_content["code"] == "data_model.migration_conflict"
     assert result.structured_content["httpStatus"] == 422
+

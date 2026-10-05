@@ -453,6 +453,60 @@ def test_request_contracts_carry_no_context_or_credentials():
         assert not any(leaked in name for name in request_fields)
 
 
+def test_fake_fourth_owner_orchestrated_by_same_generic_mechanism(
+    monkeypatch,
+):
+    """Provider-neutral proof (§6.133): registering a NEW approved
+    specialist requires only an identity entry — the whole machinery
+    (live tools/list, owner-typed classes, class gate, bounded args,
+    observation semantics) applies with zero capability-specific code.
+
+    A new owner ANALYSIS capability (e.g. an owner exposing richer
+    intelligence) is discoverable and invocable immediately — no DÉLIA
+    central change, no name table, no per-tool flag.
+    """
+    from app.domain.specialist_interop import rules
+
+    monkeypatch.setitem(
+        rules._SPECIALIST_IDENTITY, "quarto", ("QUARTO", "quarto-api")
+    )
+    interop = _interop(
+        tools=(
+            RemoteToolDescriptor(
+                remote_name="owner_analysis_surface",
+                description="owner-side intelligence",
+                operation_class="ANALYSIS",
+            ),
+            RemoteToolDescriptor(
+                remote_name="owner_prepare", operation_class="PREPARE"
+            ),
+            RemoteToolDescriptor(remote_name="rogue_untyped"),
+        ),
+        outcome=RemoteToolOutcome(content_text='{"ok": true}'),
+    )
+    catalog = interop.discover_catalog(
+        SpecialistCatalogRequest(specialist_id="quarto", correlation_id="cq")
+    )
+    assert catalog.specialist.owner_ref == "quarto-api"
+    projected = _by_name(catalog)
+    # ANALYSIS projects as READ (non-persisting analysis) — invocable.
+    assert (
+        projected["owner_analysis_surface"].operation_class
+        is SpecialistOperationClass.READ
+    )
+    assert set(catalog.blocked_remote_names) == {"rogue_untyped"}
+    for name in ("owner_analysis_surface", "owner_prepare"):
+        outcome = interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id="quarto",
+                remote_capability=name,
+                correlation_id="cq",
+            )
+        )
+        assert outcome.provenance.specialist_id == "quarto"
+        assert outcome.provenance.remote_name == name
+
+
 def test_remote_error_is_truthful_failure():
     interop = _interop(
         tools=(

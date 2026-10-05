@@ -52,13 +52,13 @@ No HTTP loop: tools call the dispatch service directly — never `/gpt-actions` 
 
 ```text
 VISTA_MCP_SURFACE = GOVERNED_WRITE_V1
-6 READ + 1 PREPARE + 1 ACT = exactly 8 tools
+5 READ + 1 DISCOVERY + 1 ANALYSIS + 1 PREPARE + 1 ACT = exactly 9 tools
 native ops (upsert_data_model, bind_visual, migrate_data_sources_to_model,
-upsert_data_source, patch_data_source_params, …) = vocabulary inside
-prepare_change.ops[] — never per-op tools
+upsert_data_source, patch_data_source_params, apply_safe_layout_fixes, …)
+= vocabulary inside prepare_change.ops[] — never per-op tools
 resources / prompts = FORBIDDEN
-legacy primitive tools (suggest_change, preview_data_block,
-preview_change, commit_change) = FORBIDDEN as tools
+legacy primitive tools (suggest_change, preview_change,
+commit_change) = FORBIDDEN as tools
 ```
 
 Tools:
@@ -66,13 +66,24 @@ Tools:
 | Tool | Class | Delegates to |
 |---|---|---|
 | `list_playlists` | READ | `GptActionsDispatchService.list_playlists` |
-| `get_playlist_context` | READ | `GptActionsDispatchService.get_playlist_context` |
-| `get_catalog` | READ | `GptActionsDispatchService.get_catalog` |
+| `get_playlist_context` | READ | `GptActionsDispatchService.get_playlist_context` (slide snapshots include `designAudit` — owner layout issues) |
+| `get_catalog` | DISCOVERY | `GptActionsDispatchService.get_catalog` |
 | `search_data_routes` | READ | `GptActionsDispatchService.search_data_routes` |
 | `inspect_data_model` | READ | `GptActionsDispatchService.inspect_data_model` |
 | `preview_data_model` | READ | `GptActionsDispatchService.preview_data_model` (inline candidate never persisted) |
+| `preview_data_block` | ANALYSIS | `GptActionsDispatchService.preview_data_block` (`semanticDigest` + `visualRecommendation` + `joinHints`/`formatHints`, never persisted) |
 | `prepare_change` | PREPARE | `GptActionsDispatchService.preview_change` (commit_now=False) |
 | `commit_proposal` | ACT | `GptActionsDispatchService.commit_change` |
+
+**Owner quality loop (§6.133):** `prepare_change` runs the owner's
+deterministic safe corrections inside the candidate before it is returned —
+issues the plan *introduced* are auto-corrected (safe-area/frame clamp,
+overlap relayout, min font, context-aware contrast, hierarchy); the
+explicit catalog op `apply_safe_layout_fixes` widens that to every
+`safeAutoFix` issue on the slide. Corrections appear in `diff` +
+`safeFixesApplied` evidence; issues with no provably-safe fix stay
+visible in `candidatePreview.designAudit`. One governed write — never a
+hidden second ACT.
 
 ## Governed write envelope
 
@@ -162,6 +173,7 @@ parity is total; only transport names differ.
 | `gpt_search_data_routes` | `search_data_routes` | READ |
 | `gpt_inspect_data_model` | `inspect_data_model` | READ |
 | `gpt_preview_data_model` | `preview_data_model` | READ |
+| `gpt_preview_data_block` | `preview_data_block` | ANALYSIS |
 | `gpt_preview_change` | `prepare_change` | PREPARE |
 | `gpt_commit_change` | `commit_proposal` | ACT |
 
@@ -174,9 +186,11 @@ Semantic differences:
 - `gpt_preview_change` accepts `commit_now=true` as an HTTP shortcut; MCP has
   no commit_now — PREPARE is never ACT. Additive commits still call
   `commit_proposal` explicitly.
-- `gpt_preview_data_block`, `gpt_suggest_change`, `gpt_get_slide_preview_png`
-  are Actions-only (legacy auxiliary); they are *not* part of the governed
-  MCP vocabulary. VISTA must not depend on them in MCP-primary mode.
+- `gpt_suggest_change`, `gpt_get_slide_preview_png` are Actions-only
+  (legacy auxiliary); they are *not* part of the governed MCP vocabulary.
+  VISTA must not depend on them in MCP-primary mode — the NL→ops
+  materialization role of `gpt_suggest_change` is covered by `get_catalog`
+  capability markers + the generic `prepare_change` envelope.
 
 ### Coexistence / rollout
 

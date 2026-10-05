@@ -31,6 +31,10 @@ class ExecutionContext:
     native_config: dict[str, Any] | None = None
     native_by_slide: dict[str, dict[str, Any]] = field(default_factory=dict)
     touched_native_slides: set[str] = field(default_factory=set)
+    # Persisted snapshot per slide at load time — the owner quality loop
+    # uses it to distinguish issues the plan INTRODUCED from pre-existing
+    # ones. Slides created inside the plan have no pristine entry.
+    pristine_native_by_slide: dict[str, dict[str, Any]] = field(default_factory=dict)
     created: dict[str, Any] = field(default_factory=dict)
     _syn_counter: itertools.count = field(
         default_factory=lambda: itertools.count(1), repr=False
@@ -89,6 +93,9 @@ class ExecutionContext:
             self.native_config = copy.deepcopy(native_config)
             self.native_by_slide[str(slide_id)] = self.native_config
             self.mark_native_touched(slide_id)
+            self.pristine_native_by_slide.setdefault(
+                str(slide_id), copy.deepcopy(native_config)
+            )
         elif str(slide_id) in self.native_by_slide:
             self.native_config = self.native_by_slide[str(slide_id)]
         if op:

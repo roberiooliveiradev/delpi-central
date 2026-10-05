@@ -8,6 +8,23 @@ from tv_app.application.services.data.presentation_recipe_service import (
     PresentationRecipeService,
 )
 
+# Owner contrast floor for text over slide background (design audit gate).
+# Shared with SafeAutoFixService so detection and correction use the same
+# threshold — a single canonical value, never duplicated literals.
+CONTRAST_MIN_RATIO = 2.5
+
+# brandThemeKey → representative background color, mirroring the canonical
+# tv-dashboard-presentation delpiBrandTheme.json contract (dark.bgSolid /
+# light.bgSolid). Used to resolve the effective background when the slide
+# relies on the brand theme instead of an explicit color/gradient.
+_THEME_BG: dict[str, str] = {
+    "delpi-dark": "#05070a",
+    "delpi": "#05070a",
+    "dark": "#05070a",
+    "delpi-light": "#f8fafc",
+    "light": "#f8fafc",
+}
+
 _KPI_TYPES = frozenset({"kpi_view", "data_kpi"})
 _DATA_VISUAL_TYPES = frozenset(
     {
@@ -92,14 +109,64 @@ def _contrast_ratio(fg: str, bg: str) -> float | None:
 
 def _slide_bg_color(cfg: Mapping[str, Any]) -> str | None:
     bg = cfg.get("background")
-    if not isinstance(bg, dict):
+    if isinstance(bg, dict):
+        if bg.get("type") == "color" and isinstance(bg.get("value"), str):
+            return str(bg["value"])
+        if bg.get("type") == "gradient":
+            for key in ("to", "from"):
+                if isinstance(bg.get(key), str):
+                    return str(bg[key])
+    theme = str(cfg.get("brandThemeKey") or "").strip().lower()
+    return _THEME_BG.get(theme)
+
+
+def effective_slide_bg(cfg: Mapping[str, Any]) -> str | None:
+    """Effective slide background color for contrast checks.
+
+    Explicit background (color/gradient) wins; brand theme keys resolve to
+    their canonical solid background. ``None`` means the background cannot
+    be determined safely — callers must NOT guess.
+    """
+    return _slide_bg_color(cfg)
+
+
+def safe_contrast_color(
+    cfg: Mapping[str, Any], *, tokens: Mapping[str, Any] | None = None
+) -> str | None:
+    """Deterministic compliant text color for the slide's effective bg.
+
+    Picks the ``fg`` of the designTokens.minContrastPairs entry whose ``bg``
+    is luminance-closest to the effective background, but only when that fg
+    actually satisfies CONTRAST_MIN_RATIO against the real background.
+    ``None`` when the background is unknown or no owner-approved pair is
+    provably safe — callers must surface the issue instead of guessing.
+    """
+    bg = effective_slide_bg(cfg)
+    if not bg:
         return None
-    if bg.get("type") == "color" and isinstance(bg.get("value"), str):
-        return str(bg["value"])
-    if bg.get("type") == "gradient":
-        for key in ("to", "from"):
-            if isinstance(bg.get(key), str):
-                return str(bg[key])
+    bg_rgb = _parse_hex(bg)
+    if not bg_rgb:
+        return None
+    pairs = (tokens or SlideLayoutQualityService.design_tokens()).get(
+        "minContrastPairs"
+    )
+    if not isinstance(pairs, list):
+        return None
+    bg_lum = _luminance(bg_rgb)
+
+    def _bg_distance(pair: Mapping[str, Any]) -> float:
+        rgb = _parse_hex(pair.get("bg"))
+        return abs(_luminance(rgb) - bg_lum) if rgb else 1.0
+
+    ordered = sorted(
+        (p for p in pairs if isinstance(p, Mapping)),
+        key=_bg_distance,
+    )
+    for pair in ordered:
+        fg = pair.get("fg")
+        ratio = _contrast_ratio(str(fg or ""), bg)
+        if ratio is not None and ratio >= CONTRAST_MIN_RATIO:
+            return str(fg)
     return None
 
 
@@ -209,7 +276,7 @@ class SlideLayoutQualityService:
                 if not fg:
                     continue
                 ratio = _contrast_ratio(fg, bg)
-                if ratio is not None and ratio < 2.5:
+                if ratio is not None and ratio < CONTRAST_MIN_RATIO:
                     issues.append(
                         f"low_contrast:{block.get('id') or block.get('type')}:{ratio:.1f}"
                     )

@@ -15,6 +15,9 @@ from tv_app.application.services.data.presentation_recipe_service import (
 from tv_app.application.services.data.slide_auto_layout_service import (
     SlideAutoLayoutService,
 )
+from tv_app.application.services.data.slide_layout_quality_service import (
+    safe_contrast_color,
+)
 
 _REVIEW_RE = re.compile(
     r"(revis\w*|corrig\w*|ajuste(?:\s+o)?\s+layout|safe area|sobreposi\w*|tipografia|fonte pequena|autofix|layout quebrado)",
@@ -36,7 +39,12 @@ class SafeAutoFixService:
         return bool(_NEW_CONTENT_RE.search(message or ""))
 
     @classmethod
-    def ops_for(cls, native_config: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    def ops_for(
+        cls,
+        native_config: Mapping[str, Any] | None,
+        *,
+        issue_ids: set[str] | frozenset[str] | None = None,
+    ) -> list[dict[str, Any]]:
         if not isinstance(native_config, Mapping):
             return []
         audit = DesignIntelligenceService.design_audit(native_config)
@@ -45,11 +53,26 @@ class SafeAutoFixService:
             for block in (native_config.get("blocks") or [])
             if isinstance(block, dict) and block.get("id")
         }
+        in_scope = [
+            issue
+            for issue in (audit.get("issues") or [])
+            if isinstance(issue, dict)
+            and issue.get("safeAutoFix")
+            and (issue_ids is None or str(issue.get("id") or "") in issue_ids)
+        ]
+        # When a subset is requested (introduced-only corrections), patches
+        # may only touch blocks named by in-scope issues — a pre-existing
+        # issue on an unrelated block must never be silently mutated.
+        allowed_block_ids: set[str] | None = None
+        if issue_ids is not None:
+            allowed_block_ids = {
+                str(bid)
+                for issue in in_scope
+                for bid in (issue.get("blockIds") or [])
+            }
         patches: dict[str, dict[str, Any]] = {}
         margin = _safe_margin()
-        for issue in audit.get("issues") or []:
-            if not isinstance(issue, dict) or not issue.get("safeAutoFix"):
-                continue
+        for issue in in_scope:
             code = str(issue.get("id") or "")
             prefix = code.split(":", 1)[0]
             if prefix in {"block_frame_overflow", "safe_area_violation", "block_frame_non_positive"}:
@@ -60,14 +83,22 @@ class SafeAutoFixService:
             elif prefix == "part_font_below_min":
                 _font_patch(patches, blocks, code)
             elif prefix == "low_contrast":
-                for block_id in issue.get("blockIds") or []:
-                    _style_patch(patches, blocks, str(block_id), {"color": "#ffffff"})
+                # Context-aware correction: pick the owner-approved fg for
+                # the slide's EFFECTIVE background (designTokens
+                # minContrastPairs). Unknown/unsafe background -> no patch,
+                # the audit issue remains visible instead of guessing.
+                safe_color = safe_contrast_color(native_config)
+                if safe_color:
+                    for block_id in issue.get("blockIds") or []:
+                        _style_patch(patches, blocks, str(block_id), {"color": safe_color})
             elif prefix == "hierarchy_inverted":
                 _hierarchy_patch(patches, blocks, code)
         return [
             {"op": "upsert_block", "block": patch}
             for patch in patches.values()
-            if patch.get("id") and patch.get("type")
+            if patch.get("id")
+            and patch.get("type")
+            and (allowed_block_ids is None or str(patch["id"]) in allowed_block_ids)
         ]
 
 

@@ -3237,6 +3237,35 @@
         "playlist",
         "slide"
       ]
+    },
+    "apply_safe_layout_fixes": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "example": {
+          "op": "apply_safe_layout_fixes"
+        },
+        "properties": {
+          "op": {
+            "const": "apply_safe_layout_fixes"
+          }
+        }
+      },
+      "produces": [],
+      "consumes": [
+        "playlist",
+        "slide"
+      ],
+      "description": "Aplica as correções de layout determinísticas e seguras do owner (safe-area/frame clamp, resolução de overlap, fonte mínima, correção de contraste context-aware, hierarquia tipográfica) sobre o slide-alvo. Sem parâmetros: as correções são computadas pelo design_audit do owner. Issues sem correção segura permanecem visíveis no outcome."
     }
   },
   "capabilities": [
@@ -4531,6 +4560,33 @@
         },
         "displayFormat": {}
       }
+    },
+    {
+      "key": "fix_slide_layout",
+      "op": "apply_safe_layout_fixes",
+      "whenToUse": "Corrigir layout: sobreposição, safe area, fonte, contraste.",
+      "contentMarkers": [
+        "corrija o layout",
+        "corrigir layout",
+        "arrume o slide",
+        "arrumar o slide",
+        "revise o layout",
+        "problemas de layout",
+        "safe area",
+        "sobreposição",
+        "sobreposicao",
+        "baixo contraste",
+        "autofix",
+        "melhore o layout",
+        "conserte o slide",
+        "consertar layout"
+      ],
+      "excludeMarkers": [],
+      "payloadTemplates": [
+        {
+          "op": "apply_safe_layout_fixes"
+        }
+      ]
     }
   ],
   "definitions": {
