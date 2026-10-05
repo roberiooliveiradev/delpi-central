@@ -8728,7 +8728,9 @@ DATE = 2026-10-05
 BASE_HEAD = 044da56bf083485cc29c1fa0baa94c25e66bb88d (main, delta
     69c65bdf98..044da56bf08 = tv-dashboard-api only; zero DELIA
     runtime change — revalidated)
-STATUS = IN_EXECUTION
+STATUS = EVIDENCE_COMPLETE (implementation + production verification
+    recorded; see OPEN_ITEMS — nothing here authorizes phase
+    progression or production readiness)
 PARENT = ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03
 ARCHITECTURE_CHANGED = NO
 TARGET = repair generic orchestration implementation without local
@@ -8778,8 +8780,27 @@ PREPARE_SIDE_EFFECT_INVENTORY (commit_now) =
         MCP PREPARE surface is owner-side scope).
 
 IMPLEMENTATION_EVIDENCE =
-
-IMPLEMENTATION_SHA = 45f95a3a15 (runtime correction + tests)
+    IMPLEMENTATION_SHA = 45f95a3a15 (runtime correction + tests)
+    FOLLOW_UP_SHAS =
+        00370b169e (stage-3 instruction: owner examples are untrusted
+            data, never valid argument values)
+        610ea330c2 (transformometro-api — owner-side contract fix:
+            canonical Literal enums projected into the live MCP
+            inputSchema for analyze.view / search_records.entity /
+            get_record.entity / prepare_record_change.entity|operation;
+            owner knowledge stays owner-side)
+        4dd65651cc (proposal envelope normalization —
+            project_proposal_preview/_readiness_for accept the
+            owner-declared ``data.proposal`` object shape, generic
+            envelope handling; ``handle``/``proposal_handle``/
+            ``proposal_ref`` added to the renderable sensitive-key set)
+        c76f4e533d (text-level redaction of handle/candidate_token
+            values — owners serialize the whole payload into
+            content_text, bypassing structure-key scrubbing)
+        9f859adb71 (Dockerfile.prod gunicorn --workers 2 -> 1:
+            PendingWriteStore is process-local by design; a second
+            worker made confirmations unreachable ~50% of the time
+            — confirmation_unknown on REJECT/CONFIRM)
 DOC_COMMIT = 87b4e22ca1 (reproduction evidence + R1 opening)
 
 REUSE_INVENTORY =
@@ -8820,7 +8841,7 @@ IMPLEMENTATION =
         class; owner metadata never enters instruction lineage.
 
 TESTS_LOCAL =
-    delia-api pytest = 704 PASS (baseline 632 + 72 new)
+    delia-api pytest = 710 PASS (baseline 632 + 78 new)
         test_argument_validation.py = 64 (primitive/nested/array
             matrix, enum/const/bounds, unknown+required, orchestrated
             fields top-level+nested+stringified, deterministic
@@ -8831,9 +8852,20 @@ TESTS_LOCAL =
             metamorphic reclassification READ->UNKNOWN fail-closed,
             stage-1 fairness (all specialists represented), untrusted
             metadata never reaches instructions, AST residual scan
-            (no local catalog/flags/pairs/specialist branches)
+            (no local catalog/flags/pairs/specialist branches),
+            enveloped proposal -> CONFIRMATION_REQUIRED ->
+            bound CONFIRM reaches owner ACT with the raw handle,
+            not-ready envelope renders truthfully with the handle
+            redacted (structure keys AND content_text value)
+        governed_write foundation additions = proposal-envelope
+            projection (positive + INVALID/NOT_READY/EXPIRED
+            envelope variants)
     plugins/delia vitest = 40 PASS; typecheck PASS; build PASS
         (same chunk-size warning as baseline)
+    transformometro-api focused MCP/governance = 111 PASS
+        (1112 deselected); full owner suite 11 PRE-EXISTING
+        unrelated failures (dashboard/bootstrap/repository/
+        validation/mail — reproduced without the enum change)
     git diff --check = CLEAN
 
 RESIDUAL_SEARCH =
@@ -8843,13 +8875,87 @@ RESIDUAL_SEARCH =
     (remaining mentions are SUPERSEDED docstring markers + existing
     negative assertions in governed-write/interop tests)
 
-MODEL_EVALS = PENDING (runs against the production-configured model
-    during controlled deploy verification — no local LLM provider
-    is configured)
+LIVE_FOUND_DEFECTS (production verification surfaced — all fixed
+    and redeployed):
+    OWNER_SCHEMA_ENUM_ABSENT = owner MCP inputSchema typed
+        entity/view/operation as bare ``str`` with prose examples;
+        the model copied ``process_document`` (example) instead of
+        the real ``process`` slug. Fixed owner-side (610ea330c2) —
+        canonical Literal enums projected; verified on live
+        tools/list. DÉLIA gained no domain knowledge.
+    PROPOSAL_ENVELOPE_UNRECOGNIZED = TÉO PREPARE nests governance
+        fields under ``data.proposal`` (handle/exact_change/ready/
+        expires_at); DÉLIA read flat only -> INVALID -> verbatim
+        render. Fixed generically (4dd65651cc): declared
+        ``proposal`` envelope normalized.
+    HANDLE_TEXT_LEAK = owner content_text serializes the whole
+        payload; structure-key scrubbing did not reach raw text ->
+        proposal handle value exposed. Fixed (c76f4e533d):
+        text-level redaction of handle/proposal_handle/
+        candidate_token values.
+    PENDING_STATE_MULTI_WORKER = gunicorn --workers 2 made the
+        process-local PendingWriteStore unreachable ~50% of the
+        time (confirmation_unknown on REJECT). Fixed (9f859adb71):
+        single worker + threads until a durable shared store is a
+        decided contract.
+    RECORD_IDENTITY = ``record_id`` must be the owner UUID, not the
+        human code — correctly owner domain knowledge; verified
+        reachable via a natural-language request carrying the UUID.
 
-PRODUCTION_VERIFICATION = PENDING (controlled deploy of delia-api
-    after push; routing x5 per specialist, PREPARE-only safe probe,
-    cancel, secret/log hygiene)
+PRODUCTION_VERIFICATION (post-deploy at 9f859adb71 +
+    owner at 610ea330c2, real subject token via Keycloak exchange):
+    HEALTH = PASS (200, service available)
+    ROUTING_READS =
+        TEO analyze = GROUNDED 2/2 (canonical enum picked by the
+            model)
+        VISTA list = GROUNDED 2/2 (truthful empty result; prior 401s
+            were missing subject-token audience, not a DÉLIA defect)
+        DAVI products = GROUNDED 1/2 (one paraphrase fell back —
+            model stochasticity, NON_GROUNDED truthful refusal)
+    PREPARE_LIFECYCLE = PROVEN end-to-end on the real wire:
+        natural-language update intent -> hierarchical stages
+        (specialist=teo, capability=prepare_record_change,
+        schema-valid nested arguments) -> owner READY proposal ->
+        CONFIRMATION_REQUIRED with digests only (no handle value
+        anywhere in the response) -> REJECT consumed the pending
+        write ("Operação cancelada — nenhuma escrita foi executada.")
+        -> replay CONFIRM on the consumed digest fails closed
+        (single-use).
+    CONFIRM_POSITIVE_LIVE = NOT_PROVEN by design — a real CONFIRM
+        mutates a production record; covered by unit tests (raw
+        handle forwarded verbatim to the owner ACT, confirmation
+        flag, generated idempotency key).
+    NEGATIVES = non-applicable query answered plainly (no specialist
+        call); prompt-injection request refused NON_GROUNDED with
+        zero owner calls.
+    LEAK_AUDIT = raw proposal handle value absent from every
+        response surface; Bearer/candidate_token absent;
+        confirmation_request carries only capability_ref +
+        digests + session/expiry.
 
-STATUS_NOTE = local evidence complete; production + eval evidence
-    pending controlled deploy
+MODEL_EVALS = LIVE_BOUNDED_MATRIX DONE (production-configured model):
+    routing/paraphrase quality remains probabilistic — DAVI 1/2 on
+    this matrix (single paraphrase miss -> truthful NON_GROUNDED,
+    never a fabrication); a fuller configured-model evaluation
+    matrix remains the dedicated eval task. No DÉLIA routing rule
+    exists to tune — the model selects from live summaries only.
+
+STATUS_NOTE = implementation + production verification evidence
+    recorded; open items below.
+
+OPEN_ITEMS =
+    OWNER_COMMIT_NOW_CONTRACT = follow-up bounded task on
+        transformometro-api (DÉLIA-side fail-closed; owner contract
+        defect classified above)
+    CONFIRM_POSITIVE_LIVE = NOT_PROVEN (would mutate a real record;
+        requires an explicitly authorized write probe)
+    MODEL_ROUTING_QUALITY = probabilistic misses documented; fuller
+        configured-model eval matrix = dedicated eval task
+    DURABLE_PENDING_STORE = current design is process-local
+        (single worker enforced); durable store = future contract
+        decision if capacity requires >1 worker
+    TÉO_FULL_SUITE = 11 pre-existing unrelated failures remain
+        owner-side (not introduced or touched by this task)
+    PRODUCTION_READINESS = NOT_PROVEN (phase/phase-readiness claims
+        unchanged; this task repairs orchestration correctness,
+        it does not certify production)
