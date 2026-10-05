@@ -64,6 +64,24 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [21-boundaries-produtos-e-owners.md](./21-boundaries-produtos-e-owners.md) | boundaries, owners e integrações |
 | [22-handoff-implementacao-p1-p6.md](./22-handoff-implementacao-p1-p6.md) | handoff funcional uniforme P1–P6 |
 | [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md) | ledger RQ → AC → teste → dependência |
+| [24-inicio-e-navegacao-principal.md](./24-inicio-e-navegacao-principal.md) | topbar e página Início |
+| [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md) | Visão geral com indicadores financeiros |
+| [26-sala-de-interacao.md](./26-sala-de-interacao.md) | Sala de interação contextual |
+| [27-minhas-tarefas.md](./27-minhas-tarefas.md) | projeção pessoal de tarefas |
+| [28-administracao.md](./28-administracao.md) | página de Administração / P6 |
+| [29-ajuda.md](./29-ajuda.md) | manual e Help contextual |
+
+## Navegação principal
+
+A topbar do Portal é:
+
+```text
+Início | Visão geral | Sala de interação | Minhas tarefas | Administração | Ajuda
+```
+
+As páginas P1–P5 pertencem à Central de Fechamento e não viram itens independentes da topbar.
+
+A Visão geral é a superfície de indicadores financeiros do Portal; o conjunto exato de KPIs depende de inventário de owner/source/fórmula.
 
 ## Invariantes
 
