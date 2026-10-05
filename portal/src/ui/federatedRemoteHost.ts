@@ -12,6 +12,28 @@ export type FederatedHostProps = {
   routeLabel?: string;
   permissions?: string[];
   isSuperadmin?: boolean;
+  /** Bounded untrusted workspace hint (§6.130) — host app, route,
+   *  selected entity refs. Never authority. */
+  getWorkspaceContext?: () => DeliaWorkspaceContext | null;
+};
+
+/** Bounded workspace hint shape — mirrors utils/workspaceContext. */
+export type DeliaWorkspaceContext = {
+  host_app_id: string;
+  route?: string;
+  view_ref?: string;
+  selected_entity_ref?: {
+    entity_type: string;
+    entity_id: string;
+    source_system: string;
+    label?: string;
+  };
+  entity_refs?: Array<{
+    entity_type: string;
+    entity_id: string;
+    source_system: string;
+    label?: string;
+  }>;
 };
 
 export type FederatedRemoteModule = {

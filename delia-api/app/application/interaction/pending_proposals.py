@@ -34,12 +34,12 @@ DEFAULT_PENDING_TTL_SECONDS = 300.0
 
 
 def intent_digest(
-    specialist_id: str, remote_capability: str, arguments: Mapping[str, Any]
+    group_key: str, remote_capability: str, arguments: Mapping[str, Any]
 ) -> str:
     """Non-reversible identity for a direct-ACT pending intent."""
     canonical = json.dumps(
         {
-            "specialist_id": specialist_id,
+            "group_key": group_key,
             "remote_capability": remote_capability,
             "arguments": dict(arguments),
         },
@@ -62,7 +62,7 @@ class PendingWrite:
 
     digest: str
     capability_ref: str
-    specialist_id: str
+    group_key: str
     actor_user_id: str
     session_id: str
     expires_at_epoch: float

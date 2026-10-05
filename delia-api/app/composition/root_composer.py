@@ -3,8 +3,14 @@ from __future__ import annotations
 import requests
 from flask import Flask
 
-from app.application.interaction.specialist_capability_orchestration import (
-    SpecialistCapabilityOrchestrator,
+from app.application.capability_provision.mcp_provider import (
+    McpCapabilityProvider,
+)
+from app.application.capability_provision.orchestration import (
+    OperationalCapabilityOrchestrator,
+)
+from app.application.capability_provision.openapi_provider import (
+    OpenApiCapabilityProvider,
 )
 from app.application.interaction.handle_interactive_turn import (
     DEFAULT_MODEL_REF as DEFAULT_INTERACTION_MODEL_REF,
@@ -135,6 +141,36 @@ def create_application(
     return app
 
 
+def _wire_openapi_provider(settings: Settings):
+    """Compose the OpenAPI provider family — absent unless configured.
+
+    ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130): the
+    DELPI OpenAPI source activates only with base URL + governed
+    declarations file; anything missing fails closed to no source.
+    """
+    if not (
+        settings.openapi_delpi_enabled
+        and settings.openapi_delpi_base_url
+        and settings.openapi_delpi_declarations_path
+    ):
+        return None
+    from app.infrastructure.openapi.source_loader import (
+        build_openapi_source,
+    )
+
+    source = build_openapi_source(
+        source_id="delpi",
+        base_url=settings.openapi_delpi_base_url,
+        declarations_path=settings.openapi_delpi_declarations_path,
+        http_get=requests.get,
+        subject_bearer_getter=current_subject_bearer,
+        timeout_seconds=settings.openapi_timeout_seconds,
+    )
+    if source is None:
+        return None
+    return OpenApiCapabilityProvider([source])
+
+
 def _wire_delegated_credential_provider(settings: Settings, connections):
     """Wire the single-requester token exchange only from complete config.
 
@@ -184,25 +220,35 @@ def _compose_turn_handler(
     authority); deterministic validation + the owner class gate at both
     interop boundaries decide.
     """
-    # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: one
-    # specialist-owned capability orchestration over the
-    # enabled+configured connections — live tools/list is the capability
-    # authority; no per-capability flag or static binding. Write-class
-    # capabilities route through the generic governed-write chain with
-    # bounded in-memory pending state.
+    # ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130):
+    # DÉLIA is the OPERATIONAL_CAPABILITY_ORCHESTRATOR over
+    # provider-neutral capability groups. MCP is one provider family —
+    # the approved specialist connections project through
+    # McpCapabilityProvider; OpenAPI sources project through
+    # OpenApiCapabilityProvider when configured. Live provider surfaces
+    # are the capability authority; no per-capability flag or static
+    # binding exists. Write-class selections route through the generic
+    # governed-write chain with bounded in-memory pending state.
     enabled_specialists = tuple(
         specialist_id
         for specialist_id, profile in connections.items()
         if profile.enabled and profile.endpoint
     )
+    providers = []
+    if enabled_specialists:
+        providers.append(
+            McpCapabilityProvider(interop, enabled_specialists)
+        )
+    openapi_provider = _wire_openapi_provider(settings)
+    if openapi_provider is not None:
+        providers.append(openapi_provider)
     orchestration = (
-        SpecialistCapabilityOrchestrator(
-            interop,
-            enabled_specialists,
+        OperationalCapabilityOrchestrator(
+            providers,
             invoke_model=invoke_model,
             model_ref=model_ref,
         )
-        if enabled_specialists
+        if providers
         else None
     )
     return HandleInteractiveConversationTurn(

@@ -10,6 +10,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+from app.application.interaction.workspace_context import (
+    WorkspaceContext,
+)
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
@@ -48,6 +51,9 @@ class InteractiveTurnRequest:
         default_factory=tuple
     )
     confirmation: Mapping[str, Any] | None = None
+    # Untrusted, bounded client-supplied workspace hints (host app,
+    # route, selected entity refs) — never authority (§6.130).
+    workspace_context: WorkspaceContext | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +74,11 @@ class GovernedCapabilityProvenance:
     observed_at: str
     correlation_id: str
     is_complete: bool
+    # Provider-neutral lineage (§6.130): which provider family and
+    # capability group produced the result. Optional for backward
+    # compatibility with earlier projections.
+    provider_id: str | None = None
+    capability_group_id: str | None = None
 
     def to_projection(self) -> dict:
         """Bounded HTTP-safe projection — no tokens, URLs, wire internals."""
@@ -83,6 +94,8 @@ class GovernedCapabilityProvenance:
                 else None
             ),
             "specialist_id": self.specialist_id,
+            "provider_id": self.provider_id,
+            "capability_group_id": self.capability_group_id,
             "protocol": self.protocol,
             "remote_capability": self.remote_capability,
             "action_id": self.action_id,

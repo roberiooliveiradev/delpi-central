@@ -1,22 +1,22 @@
 """Capability-neutral governed attempt semantics — shared skeleton.
 
-Consumer: specialist_capability_orchestration.py — the live
-specialist-owned capability orchestration
-(ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03, ledger §6.126;
-previously specialist-owned READ, §6.118). Only the genuinely common
-semantic skeleton lives here:
+Consumer: capability_provision/orchestration.py — the provider-neutral
+operational capability orchestration
+(ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01, ledger §6.130;
+previously MCP-specialist orchestration, §6.126/§6.118). Only the
+genuinely common semantic skeleton lives here:
 
   governed capability attempt
     -> GovernedCapabilityStatus (SUCCESS | NOT_APPLICABLE
        | SOURCE_UNAVAILABLE | AUTHZ_DENIED | CONFIRMATION_REQUIRED
        | WRITE_REJECTED)
-    -> bounded provenance projection (source != specialist)
+    -> bounded provenance projection (source != capability group)
     -> deterministic bounded rendering carried on the attempt
 
 The earlier static bound-read orchestration (BoundDirectRead /
 GovernedRead) and the per-capability C4 bindings are SUPERSEDED —
-capability availability is specialist-owned via live tools/list. The
-static write-binding registry (GOVERNED_WRITE_BINDINGS /
+capability availability is owner-owned via the live provider surface.
+The static write-binding registry (GOVERNED_WRITE_BINDINGS /
 write_binding_for) is equally SUPERSEDED (§6.126).
 """
 
@@ -26,11 +26,14 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Mapping, Protocol
 
+from app.application.capability_provision.contracts import (
+    CapabilityProviderError,
+)
 from app.application.interaction.contracts import GovernedCapabilityProvenance
+from app.application.interaction.workspace_context import WorkspaceContext
 from app.application.specialist_interop.errors import (
     MCP_AUTHENTICATION_FAILED,
     MCP_AUTHORIZATION_DENIED,
-    SpecialistInteropError,
 )
 from app.domain.evidence.model import SourceRef
 from app.domain.specialist_interop.model import SpecialistOutcome
@@ -77,17 +80,19 @@ class GovernedCapabilityAttempt:
 class GovernedCapabilityBinding:
     """DÉLIA-owned invocation context of one governed capability call.
 
-    Correlation identity only: names the specialist/capability invoked
-    and the business source the result is grounded in. Naming a
-    capability grants nothing — every invocation passes both
+    Correlation identity only: names the capability group/capability
+    invoked and the business source the result is grounded in. Naming
+    a capability grants nothing — every invocation passes both
     enforcement boundaries and the owner-side authorization.
     """
 
     binding_id: str
-    specialist_id: str
+    group_key: str
     remote_capability: str
     action_id: str
     source: SourceRef
+    provider_id: str | None = None
+    capability_group_id: str | None = None
 
 
 def _success_attempt(
@@ -124,6 +129,8 @@ def _success_attempt(
             observed_at=outcome.provenance.observed_at,
             correlation_id=outcome.provenance.correlation_id,
             is_complete=outcome.is_complete,
+            provider_id=binding.provider_id,
+            capability_group_id=binding.capability_group_id,
         ),
         content=content,
         limitations=limitations,
@@ -131,7 +138,7 @@ def _success_attempt(
 
 
 def _error_attempt(
-    correlation_id: str, exc: SpecialistInteropError
+    correlation_id: str, exc: CapabilityProviderError
 ) -> GovernedCapabilityAttempt:
     """Frozen failure semantics: distinct unavailable vs denied."""
     status = (
@@ -147,8 +154,8 @@ def _error_attempt(
 class SupportsGovernedCapabilityAttempt(Protocol):
     """Structural contract the interaction handler consumes.
 
-    The specialist-owned live orchestration
-    (specialist_capability_orchestration.py) is the runtime
+    The provider-neutral operational orchestration
+    (capability_provision/orchestration.py) is the runtime
     implementation; any governed-attempt producer must return a
     GovernedCapabilityAttempt.
     """
@@ -161,4 +168,5 @@ class SupportsGovernedCapabilityAttempt(Protocol):
         actor_user_id: str | None = None,
         session_id: str | None = None,
         confirmation: Mapping[str, Any] | None = None,
+        workspace_context: WorkspaceContext | None = None,
     ) -> GovernedCapabilityAttempt: ...

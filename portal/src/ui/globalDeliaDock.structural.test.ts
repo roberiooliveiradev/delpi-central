@@ -47,9 +47,22 @@ describe("companion dock wiring", () => {
     const dock = read("GlobalDeliaDock.tsx");
     assert.doesNotMatch(dockLogic, /delia\.global|delia\.panel|delia\.assistant/);
     assert.doesNotMatch(dock, /delia\.global|delia\.panel/);
-    assert.doesNotMatch(dockLogic, /WorkspaceContext|EntityRef|SourceRef|surface:|mode:/);
-    assert.doesNotMatch(dock, /WorkspaceContext|EntityRef|SourceRef/);
     assert.doesNotMatch(dock, /surface="dock"|mode="companion"/);
+  });
+
+  it("workspace context vem do módulo canônico e nunca carrega autoridade", () => {
+    // §6.130: the bounded workspace hint is a governed contract — it
+    // must flow through utils/workspaceContext, not ad-hoc props.
+    const dockLogic = read("globalDeliaDock.ts");
+    const dock = read("GlobalDeliaDock.tsx");
+    const remoteHost = read("federatedRemoteHost.ts");
+    assert.match(dockLogic, /DeliaWorkspaceContext/);
+    assert.match(dock, /utils\/workspaceContext/);
+    assert.match(dock, /getWorkspaceContext/);
+    assert.match(remoteHost, /getWorkspaceContext/);
+    // No authority/business semantics may ride the hint surface.
+    assert.doesNotMatch(dockLogic, /workspaceContext.*permission|permission.*workspaceContext/i);
+    assert.doesNotMatch(dock, /workspaceContext.*permission|permission.*workspaceContext/i);
   });
 
   it("remove o launcher especial da sidebar e da barra mobile", () => {

@@ -1,4 +1,5 @@
 import type { AppItem, MeResponse, RouteItem } from "../data/coreApi";
+import type { DeliaWorkspaceContext } from "../utils/workspaceContext";
 import {
   resolveMatchingRoute,
   resolveRouteAlternateUrl,
@@ -151,6 +152,8 @@ export type GlobalDeliaHostInput = {
   search: string;
   getAccessToken: () => string | undefined;
   user?: Pick<MeResponse, "permissions" | "is_superadmin"> | null;
+  /** Bounded untrusted workspace hint getter (§6.130). */
+  getWorkspaceContext?: () => DeliaWorkspaceContext | null;
 };
 
 /**
@@ -173,5 +176,6 @@ export function buildGlobalDeliaHostProps(input: GlobalDeliaHostInput): Federate
     routeLabel: deliaRoute?.label,
     permissions: input.user?.permissions,
     isSuperadmin: input.user?.is_superadmin,
+    getWorkspaceContext: input.getWorkspaceContext,
   };
 }

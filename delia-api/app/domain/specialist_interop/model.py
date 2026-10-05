@@ -22,9 +22,11 @@ from app.domain.evidence.model import EpistemicClass
 
 
 class InteropProtocol(str, Enum):
-    """Interop protocol kinds. MCP is the only implemented runtime."""
+    """Interop protocol kinds. MCP and OpenAPI-HTTP are implemented
+    runtimes."""
 
     MCP = "MCP"
+    HTTP = "HTTP"
 
 
 class SpecialistOperationClass(str, Enum):

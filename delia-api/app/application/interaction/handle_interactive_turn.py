@@ -190,6 +190,7 @@ class HandleInteractiveConversationTurn:
                 actor_user_id=request.access_context.user_id,
                 session_id=session.session_id,
                 confirmation=request.confirmation,
+                workspace_context=request.workspace_context,
             )
             if self._capability_orchestration is not None
             else None

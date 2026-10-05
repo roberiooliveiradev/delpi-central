@@ -426,6 +426,93 @@ describe("DÉLIA transient multi-turn continuity", () => {
   });
 });
 
+// --- §6.130: provider-neutral workspace context ---
+
+describe("DÉLIA workspace context propagation", () => {
+  it("sends the bounded workspace hint when the host provides one", async () => {
+    const fetchMock = mockFetchOk();
+    vi.stubGlobal("fetch", fetchMock);
+    const getWorkspaceContext = vi.fn().mockReturnValue({
+      host_app_id: "tv-dashboard",
+      view_ref: "deck_editor",
+      selected_entity_ref: {
+        entity_type: "slide",
+        entity_id: "sl-9",
+        source_system: "vista",
+      },
+    });
+
+    render(
+      <App
+        getAccessToken={() => "t"}
+        getWorkspaceContext={getWorkspaceContext}
+      />,
+    );
+    submitTurn("descreva este slide");
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = JSON.parse(
+      fetchMock.mock.calls[0][1].body as string,
+    ) as Record<string, unknown>;
+    expect(getWorkspaceContext).toHaveBeenCalled();
+    expect(body.workspace).toEqual({
+      host_app_id: "tv-dashboard",
+      view_ref: "deck_editor",
+      selected_entity_ref: {
+        entity_type: "slide",
+        entity_id: "sl-9",
+        source_system: "vista",
+      },
+    });
+  });
+
+  it("omits workspace when the host has no context", async () => {
+    const fetchMock = mockFetchOk();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <App
+        getAccessToken={() => "t"}
+        getWorkspaceContext={() => null}
+      />,
+    );
+
+    submitTurn("olá");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = JSON.parse(
+      fetchMock.mock.calls[0][1].body as string,
+    ) as Record<string, unknown>;
+    expect(body.workspace).toBeUndefined();
+  });
+
+  it("workspace hint carries no authority or credentials", async () => {
+    const fetchMock = mockFetchOk();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <App
+        getAccessToken={() => "secret-token"}
+        getWorkspaceContext={() => ({
+          host_app_id: "tv-dashboard",
+          view_ref: "deck_editor",
+        })}
+      />,
+    );
+
+    submitTurn("olá");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const serialized = JSON.stringify(
+      fetchMock.mock.calls[0][1].body as string,
+    ).toLowerCase();
+    for (const forbidden of [
+      "permission",
+      "superadmin",
+      "secret-token",
+      "authorization",
+    ]) {
+      expect(serialized).not.toContain(forbidden);
+    }
+  });
+});
+
 // --- ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: confirmation ---
 
 const CONFIRMATION_REQUEST = {

@@ -14,8 +14,11 @@ import json
 import pytest
 
 from app.application.interaction.capability_attempt import GovernedCapabilityStatus
-from app.application.interaction.specialist_capability_orchestration import (
-    SpecialistCapabilityOrchestrator,
+from app.application.capability_provision.orchestration import (
+    OperationalCapabilityOrchestrator,
+)
+from app.application.capability_provision.mcp_provider import (
+    McpCapabilityProvider,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.specialist_interop.contracts import (
@@ -195,15 +198,15 @@ def _interop(port=None, **kwargs):
     return SpecialistInterop(port or FakePort(**kwargs))
 
 
-from app.application.interaction.specialist_capability_orchestration import (
+from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
-    SPECIALIST_SELECTION_INSTRUCTION_ID,
+    GROUP_SELECTION_INSTRUCTION_ID,
 )
 
 _STAGE_IDS = frozenset(
     {
-        SPECIALIST_SELECTION_INSTRUCTION_ID,
+        GROUP_SELECTION_INSTRUCTION_ID,
         CAPABILITY_SELECTION_INSTRUCTION_ID,
         ARGUMENTS_INSTRUCTION_ID,
     }
@@ -274,9 +277,8 @@ def _read(
         if proposal is not None
         else None
     )
-    return SpecialistCapabilityOrchestrator(
-        interop,
-        specialist_ids,
+    return OperationalCapabilityOrchestrator(
+        [McpCapabilityProvider(interop, specialist_ids)],
         invoke_model=invoke_model,
         model_ref=TEST_MODEL_REF if invoke_model else None,
     )
@@ -285,9 +287,9 @@ def _read(
 def _select(specialist_id, remote_name, arguments=None):
     """Routing-map proposal for the hierarchical pipeline."""
     return {
-        SPECIALIST_SELECTION_INSTRUCTION_ID: {
+        GROUP_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
-            "specialist_id": specialist_id,
+            "capability_group_id": f"mcp:{specialist_id}",
         },
         CAPABILITY_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
@@ -978,7 +980,7 @@ def test_multi_candidate_unresolvable_is_not_applicable():
     for proposal in (
         {"applicable": True, "action_id": "invented_action"},
         {"applicable": False},
-        {"applicable": True, "specialist_id": "davi"},
+        {"applicable": True, "capability_group_id": "mcp:davi"},
     ):
         read, port = _davi_read(
             [
@@ -1063,7 +1065,7 @@ def test_adversarial_model_prose_cannot_become_observation():
 
 # --- R2: generic secret/token redaction --------------------------------
 
-from app.application.interaction.specialist_capability_orchestration import (
+from app.application.capability_provision.orchestration import (
     _redact_text,
     _sanitize_renderable,
     render_specialist_outcome,
@@ -1749,17 +1751,23 @@ def test_expired_pending_proposal_fails_closed():
     store.put(
         PendingWrite(
             digest="e" * 64,
-            capability_ref="vista.prepare_change",
-            specialist_id="vista",
+            capability_ref="mcp:vista.prepare_change",
+            group_key="mcp:vista",
             actor_user_id="u1",
             session_id="s1",
             expires_at_epoch=time.time() - 1,
             created_at_epoch=time.time() - 10,
         )
     )
-    read = SpecialistCapabilityOrchestrator(
-        _interop(FakePort(tools_by_specialist={"vista": VISTA_TOOLS})),
-        ("vista",),
+    read = OperationalCapabilityOrchestrator(
+        [
+            McpCapabilityProvider(
+                _interop(
+                    FakePort(tools_by_specialist={"vista": VISTA_TOOLS})
+                ),
+                ("vista",),
+            )
+        ],
         invoke_model=InvokeModel(
             FakeProposalModel(_select("vista", "prepare_change"))
         ),
@@ -2123,11 +2131,11 @@ def test_specialist_selection_is_a_separate_stage():
     requests = read._invoke_model._port.requests
     specialist_req = next(
         r for r in requests
-        if r.task_purpose_id == SPECIALIST_SELECTION_INSTRUCTION_ID
+        if r.task_purpose_id == GROUP_SELECTION_INSTRUCTION_ID
     )
     for specialist in ("davi", "teo", "vista"):
         assert (
-            f'"specialist_id": "{specialist}"'
+            f'"capability_group_id": "mcp:{specialist}"'
             in specialist_req.input_text
         )
     capability_req = next(
@@ -2186,8 +2194,8 @@ def test_orchestration_runtime_has_no_local_capability_authority():
 
     src = (
         pathlib.Path(__file__).parent.parent
-        / "app/application/interaction"
-        / "specialist_capability_orchestration.py"
+        / "app/application/capability_provision"
+        / "orchestration.py"
     ).read_text()
     tree = ast.parse(src)
     identifiers = set()
@@ -2220,7 +2228,7 @@ def test_orchestration_runtime_has_no_local_capability_authority():
             left = node.left
             if (
                 isinstance(left, ast.Name)
-                and left.id == "specialist_id"
+                and left.id == "group_key"
                 and any(
                     v in ("davi", "teo", "vista")
                     for v in comparator_constants

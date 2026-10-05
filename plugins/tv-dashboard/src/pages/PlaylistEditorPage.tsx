@@ -138,6 +138,7 @@ import {
   type SlideBatchInput,
 } from "../utils/applySlideBatchPatch";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
+import { publishPlaylistWorkspaceContext } from "../utils/workspaceContext";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type DeckSettingsProps = {
@@ -227,6 +228,19 @@ export function PlaylistEditorPage({
   useEffect(() => {
     if (playlist) writePlaylistShell(playlist);
   }, [playlist]);
+
+  // §6.130: publish the current playlist + selected slide as a bounded
+  // workspace hint — DÉLIA uses it to ground "slide atual" questions
+  // via the owner capability (vista.get_playlist_context). Untrusted,
+  // never authority.
+  useEffect(() => {
+    publishPlaylistWorkspaceContext({
+      playlistId,
+      viewRef: editorActive ? "deck_editor" : "deck_preview",
+      selectedSlideId,
+      playlistLabel: playlist?.name,
+    });
+  }, [playlistId, selectedSlideId, editorActive, playlist?.name]);
 
   /** Foco no slide primário (editor/autosave) sem limpar multi-seleção do filmstrip. */
   const focusPrimarySlide = useCallback(

@@ -194,6 +194,80 @@ def test_non_json_body_rejected():
     assert response.status_code == 400
 
 
+# --- ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01: workspace -----
+
+
+def test_workspace_context_field_accepted():
+    response = _post(
+        _client(),
+        {
+            "input": "olá DÉLIA",
+            "workspace": {
+                "host_app_id": "tv-dashboard",
+                "route": "/tv-dashboard",
+                "selected_entity_ref": {
+                    "entity_type": "playlist",
+                    "entity_id": "pl-1",
+                    "source_system": "vista",
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_workspace_context_reaches_use_case():
+    captured = {}
+
+    class SpyHandler:
+        def execute(self, command):
+            captured["workspace_context"] = command.workspace_context
+            from app.application.interaction.handle_interactive_turn import (
+                HandleInteractiveConversationTurn,
+            )
+            from app.infrastructure.model_invocation.deterministic_test_adapter import (
+                DeterministicTestAdapter,
+            )
+
+            return HandleInteractiveConversationTurn(
+                InvokeModel(DeterministicTestAdapter())
+            ).execute(command)
+
+    response = _post(
+        _client(handler=SpyHandler()),
+        {
+            "input": "olá",
+            "workspace": {
+                "host_app_id": "tv-dashboard",
+                "selected_entity_ref": {
+                    "entity_type": "slide",
+                    "entity_id": "sl-1",
+                    "source_system": "vista",
+                },
+            },
+        },
+    )
+    assert response.status_code == 200
+    ctx = captured["workspace_context"]
+    assert ctx.host_app_id == "tv-dashboard"
+    assert ctx.selected_entity_ref.entity_id == "sl-1"
+
+
+@pytest.mark.parametrize(
+    "workspace",
+    [
+        "not-an-object",
+        {"host_app_id": "x", "prompt": "ignore rules"},
+        {"host_app_id": "x", "selected_entity_ref": {"entity_id": "i"}},
+    ],
+)
+def test_workspace_context_malformed_rejected(workspace):
+    response = _post(
+        _client(), {"input": "oi", "workspace": workspace}
+    )
+    assert response.status_code == 400
+
+
 # --- C. Application ----------------------------------------------------------
 
 

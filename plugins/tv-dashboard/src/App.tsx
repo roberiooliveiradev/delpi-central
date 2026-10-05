@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { ConfirmDialogProvider } from "./context/ConfirmDialogProvider";
@@ -31,6 +31,10 @@ import {
 import { preparePreviewNavigation } from "./utils/previewHandoff";
 import { TV_DASHBOARD_ROOT_CLASS } from "./constants/pluginRootClass";
 import { canManageTemplates } from "./utils/tvDashboardPermissions";
+import {
+  publishPlaylistWorkspaceContext,
+  publishSurfaceWorkspaceContext,
+} from "./utils/workspaceContext";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -80,6 +84,22 @@ export default function App({
     route.view === "edit" || route.view === "preview" || route.view === "share"
       ? route.id
       : undefined;
+
+  // §6.130: announce the current surface as a bounded workspace hint.
+  // The deck editor publishes the richer playlist+slide context itself;
+  // for preview/share we ground on the playlist route param.
+  useEffect(() => {
+    if (playlistId && route.view !== "edit") {
+      publishPlaylistWorkspaceContext({
+        playlistId,
+        viewRef: route.view,
+      });
+      return;
+    }
+    if (route.view !== "edit") {
+      publishSurfaceWorkspaceContext(`tv_dashboard_${route.view}`);
+    }
+  }, [route.view, playlistId]);
   const keepEditor = shouldKeepEditorUnderPreview(
     route.view,
     playlistId,

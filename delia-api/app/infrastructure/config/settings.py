@@ -100,6 +100,22 @@ class Settings:
             ),
             300.0,
         )
+        # ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130):
+        # OpenAPI is one provider family. A source activates only with
+        # complete config: base URL + a governed declarations file.
+        # Missing pieces fail closed — no implicit surface.
+        self.openapi_delpi_enabled = _env_flag(
+            "DELIA_OPENAPI_DELPI_ENABLED"
+        )
+        self.openapi_delpi_base_url = (
+            os.getenv("DELIA_OPENAPI_DELPI_BASE_URL") or ""
+        ).strip()
+        self.openapi_delpi_declarations_path = (
+            os.getenv("DELIA_OPENAPI_DELPI_DECLARATIONS_PATH") or ""
+        ).strip()
+        self.openapi_timeout_seconds = float(
+            os.getenv("DELIA_OPENAPI_TIMEOUT_SECONDS") or "15.0"
+        )
 
 
     @classmethod

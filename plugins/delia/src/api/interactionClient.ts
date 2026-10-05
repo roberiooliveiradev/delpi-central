@@ -142,11 +142,34 @@ const ERROR_MESSAGES: Record<string, string> = {
   internal_error: "Erro interno. Tente novamente.",
 };
 
+/**
+ * Bounded workspace hint published by the host app through the Portal
+ * (§6.130). Transient and untrusted: host app identity, route/view
+ * and entity references only — never authority, secrets, or provider
+ * payloads. The backend resolves and enforces.
+ */
+export type DeliaWorkspaceEntityRef = {
+  entity_type: string;
+  entity_id: string;
+  source_system: string;
+  label?: string;
+};
+
+export type DeliaWorkspaceContext = {
+  host_app_id: string;
+  route?: string;
+  view_ref?: string;
+  selected_entity_ref?: DeliaWorkspaceEntityRef;
+  entity_refs?: DeliaWorkspaceEntityRef[];
+};
+
 export type SubmitInteractionTurnOptions = {
   getAccessToken: () => string | undefined;
   signal?: AbortSignal;
   /** Bounded prior-turn context built from transient UI state. */
   context?: InteractionContextTurn[];
+  /** Bounded untrusted workspace hint from the host app. */
+  workspace?: DeliaWorkspaceContext;
   /** Structured confirmation for a pending write (digests only). */
   confirmation?: DeliaConfirmationDecision;
 };
@@ -176,6 +199,7 @@ export async function submitInteractionTurn(
         ...(options.context && options.context.length > 0
           ? { context: options.context }
           : {}),
+        ...(options.workspace ? { workspace: options.workspace } : {}),
         ...(options.confirmation
           ? { confirmation: options.confirmation }
           : {}),

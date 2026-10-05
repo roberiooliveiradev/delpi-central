@@ -113,7 +113,8 @@ def test_instruction_lineage_bound_and_not_user_overridable():
     assert len(lineage.content_hash) == 64
     # The request contract exposes no prompt/instruction override fields.
     # ``confirmation`` is a bounded digest-only write payload, never a
-    # prompt or authority override (§6.126).
+    # prompt or authority override (§6.126). ``workspace_context`` is a
+    # bounded untrusted client hint (§6.130) — never authority.
     request_fields = {
         f.name for f in contracts.InteractiveTurnRequest.__dataclass_fields__.values()
     }
@@ -122,6 +123,7 @@ def test_instruction_lineage_bound_and_not_user_overridable():
         "input_text",
         "prior_turns",
         "confirmation",
+        "workspace_context",
     }
 
 

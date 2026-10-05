@@ -13,6 +13,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ExternalLink, Sparkles, X } from "lucide-react";
 
 import { AuthContext } from "../state/AuthContext";
+import {
+  clearWorkspaceContext,
+  getWorkspaceContext,
+  initWorkspaceContextListener,
+} from "../utils/workspaceContext";
 import { resolveFederationEntry } from "./appHostEntry";
 import {
   DELIA_DOCK_DEFAULT_WIDTH,
@@ -46,6 +51,16 @@ export function GlobalDeliaDockProvider({ children }: { children: ReactNode }) {
   const [workspaceWidth, setWorkspaceWidth] = useState(0);
   const [dockWidth, setDockWidth] = useState(DELIA_DOCK_DEFAULT_WIDTH);
   const dockWidthRef = useRef(DELIA_DOCK_DEFAULT_WIDTH);
+
+  // §6.130: install the workspace-context listener once; clear stale
+  // context on every route change so a previous screen's selection
+  // can never leak into a new view.
+  useEffect(() => {
+    initWorkspaceContextListener();
+  }, []);
+  useEffect(() => {
+    clearWorkspaceContext();
+  }, [location.pathname]);
 
   const deliaApp = useMemo(() => findAuthorizedDeliaApp(apps), [apps]);
   const handleVisible = shouldRenderCompanionHandle({
@@ -117,6 +132,17 @@ export function GlobalDeliaDockProvider({ children }: { children: ReactNode }) {
       search: location.search,
       getAccessToken,
       user,
+      // Enrich the publisher's hint with the Portal route — the MFE may
+      // omit it; the host knows it canonically. When no app published a
+      // context, the Portal itself is the host surface.
+      getWorkspaceContext: () => {
+        const published = getWorkspaceContext();
+        return {
+          host_app_id: published?.host_app_id ?? "portal",
+          route: location.pathname,
+          ...(published ?? {}),
+        };
+      },
     });
   }, [deliaApp, location.pathname, location.search, getAccessToken, user]);
 

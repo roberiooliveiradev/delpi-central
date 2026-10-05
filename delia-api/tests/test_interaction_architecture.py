@@ -184,16 +184,17 @@ def test_interaction_application_layer_stays_bounded():
     # governed-attempt skeleton (capability_attempt.py: statuses,
     # attempt, bounded provenance edge);
     # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 generalized the
-    # specialist-owned read into specialist_capability_orchestration.py
-    # — live tools/list surfaces covering every owner-typed class under
-    # generic write governance — and added pending_proposals.py, the
-    # bounded process-local store for confirmation-pending write state
-    # (orchestration state, not a capability registry).
-    # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03R1 added
-    # argument_validation.py — bounded deterministic argument-instance
-    # validation (schema-aware nested values + JSON-string
-    # normalization), not a capability registry. No engine, router,
-    # registry, repository, or new port is introduced.
+    # specialist-owned read into the orchestration module and added
+    # pending_proposals.py, the bounded process-local store for
+    # confirmation-pending write state (orchestration state, not a
+    # capability registry). ARCH-DRIFT-MCP-FULL-CAPABILITY-
+    # ORCHESTRATION-03R1 added argument_validation.py — bounded
+    # deterministic argument-instance validation.
+    # ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130) moved
+    # the central orchestration to application/capability_provision
+    # (provider-neutral) and added workspace_context.py — the bounded
+    # untrusted client-supplied workspace hints contract. No engine,
+    # router, registry, repository, or new port is introduced.
     assert module_files == [
         "argument_validation.py",
         "capability_attempt.py",
@@ -202,7 +203,7 @@ def test_interaction_application_layer_stays_bounded():
         "handle_interactive_turn.py",
         "instruction.py",
         "pending_proposals.py",
-        "specialist_capability_orchestration.py",
+        "workspace_context.py",
     ]
     for package in ("conversation", "session", "chat"):
         assert not (APP_ROOT / "application" / package).exists()

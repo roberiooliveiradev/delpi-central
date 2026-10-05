@@ -1,0 +1,39 @@
+{
+  "owner": "DELPI",
+  "contract_id": "api-delpi",
+  "display_name": "API DELPI",
+  "declarations": [
+    {
+      "operation_id": "search_products",
+      "capability_id": "delpi.search_products",
+      "semantic_name": "Buscar produtos DELPI",
+      "operation_character": "READ",
+      "idempotency_semantics": "safe",
+      "reversible": true
+    },
+    {
+      "operation_id": "get_product_summary",
+      "capability_id": "delpi.get_product_summary",
+      "semantic_name": "Resumo de produto DELPI",
+      "operation_character": "READ",
+      "idempotency_semantics": "safe",
+      "reversible": true
+    },
+    {
+      "operation_id": "get_product_stock",
+      "capability_id": "delpi.get_product_stock",
+      "semantic_name": "Estoque de produto DELPI",
+      "operation_character": "READ",
+      "idempotency_semantics": "safe",
+      "reversible": true
+    },
+    {
+      "operation_id": "search_customers",
+      "capability_id": "delpi.search_customers",
+      "semantic_name": "Buscar clientes DELPI",
+      "operation_character": "READ",
+      "idempotency_semantics": "safe",
+      "reversible": true
+    }
+  ]
+}

@@ -1934,6 +1934,13 @@ services:
       # TEO: analyze -> gpt_analyze (view=summary only).
       DELIA_C4_DAVI_PRODUCT_READ_ENABLED: ${DELIA_C4_DAVI_PRODUCT_READ_ENABLED:-}
       DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED: ${DELIA_C4_TEO_DASHBOARD_ANALYZE_ENABLED:-}
+      # §6.130: governed OpenAPI provider family — api-delpi source.
+      # Activates only with enabled + base URL + declarations file;
+      # GET-only invoker, undeclared operations fail closed.
+      DELIA_OPENAPI_DELPI_ENABLED: ${DELIA_OPENAPI_DELPI_ENABLED:-}
+      DELIA_OPENAPI_DELPI_BASE_URL: ${DELIA_OPENAPI_DELPI_BASE_URL:-http://delpi-api-delpi:8000}
+      DELIA_OPENAPI_DELPI_DECLARATIONS_PATH: ${DELIA_OPENAPI_DELPI_DECLARATIONS_PATH:-/app/config/openapi_declarations.delpi.json}
+      DELIA_OPENAPI_TIMEOUT_SECONDS: ${DELIA_OPENAPI_TIMEOUT_SECONDS:-15}
 
     depends_on:
       keycloak:

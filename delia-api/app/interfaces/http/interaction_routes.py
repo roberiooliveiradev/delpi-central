@@ -29,6 +29,9 @@ from app.application.interaction.errors import (
 from app.application.interaction.handle_interactive_turn import (
     serialize_result,
 )
+from app.application.interaction.workspace_context import (
+    parse_workspace_context,
+)
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
 )
@@ -36,7 +39,9 @@ from app.domain.evidence.model import EpistemicClass
 from app.domain.interaction.model import TurnKind
 
 
-ALLOWED_BODY_KEYS = frozenset({"input", "context", "confirmation"})
+ALLOWED_BODY_KEYS = frozenset(
+    {"input", "context", "confirmation", "workspace"}
+)
 CONTEXT_TURN_KEYS = frozenset({"kind", "content", "epistemic_class"})
 CONFIRMATION_KEYS = frozenset(
     {
@@ -102,6 +107,12 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
         if conf_error is not None:
             return _error(INVALID_REQUEST, conf_error)
 
+        workspace_context, ws_error = parse_workspace_context(
+            body.get("workspace")
+        )
+        if ws_error is not None:
+            return _error(INVALID_REQUEST, ws_error)
+
         handler = current_app.config.get("INTERACTION_TURN_HANDLER")
         if handler is None:
             logger.warning("interaction_rejected reason=handler_not_configured")
@@ -112,6 +123,7 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
             input_text=input_text,
             prior_turns=prior_turns,
             confirmation=confirmation,
+            workspace_context=workspace_context,
         )
         try:
             result = handler.execute(command)

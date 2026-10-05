@@ -9,6 +9,7 @@ import {
 import type {
   DeliaConfirmationRequest,
   DeliaInteractionProvenance,
+  DeliaWorkspaceContext,
 } from "./api/interactionClient";
 
 /** Host props from Portal AppHost — presentation/transport only. */
@@ -24,6 +25,9 @@ export type AppProps = {
   permissions?: string[];
   /** Frontend presentation hint only — never backend authorization authority. */
   isSuperadmin?: boolean;
+  /** Bounded untrusted workspace hint getter (§6.130) — called per
+   *  turn so the freshest published context is sent. Never authority. */
+  getWorkspaceContext?: () => DeliaWorkspaceContext | null;
 };
 
 /** Transient UI display state only — not session persistence or memory. */
@@ -58,6 +62,7 @@ export default function App({
   basePath,
   routeLabel,
   getAccessToken,
+  getWorkspaceContext,
   permissions: _permissions,
   isSuperadmin: _isSuperadmin,
 }: AppProps) {
@@ -111,6 +116,7 @@ export default function App({
         getAccessToken,
         signal: controller.signal,
         context: buildInteractionContext(turns),
+        workspace: getWorkspaceContext?.() ?? undefined,
         confirmation,
       });
       setTurns((previous) => [
