@@ -347,3 +347,214 @@ def test_get_sales_order_otd_by_customer_meta_labels_customer_center(
     payload = body_json(response)
     assert payload["data"]["items"][0]["customer_center"] == "1700"
     assert payload["meta"]["fields"]["customer_center"] == "Centro do cliente"
+
+
+@patch(f"{_COMMERCIAL}.enrich_dashboard_metric", side_effect=lambda payload, **_: payload)
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_use_case")
+def test_get_sales_order_otd_scalar_does_not_announce_customer_center(
+    mock_build, _mock_enrich
+) -> None:
+    """Rota escalar: grain não carrega centro → meta.fields não anuncia."""
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "branch": "all",
+        "start_date": "2026-08-01",
+        "end_date": "2026-08-28",
+        "total_lines": 10,
+        "on_time_lines": 9,
+        "late_lines": 1,
+        "sales_order_otd_pct": 90.0,
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd(
+        branch="all",
+        start_date="2026-08-01",
+        end_date="2026-08-28",
+        customer_segment=None,
+        customer_codes=None,
+        customer_names=None,
+        customer_code_stores=None,
+        customer_centers=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+    )
+    payload = body_json(response)
+    assert "customer_center" not in payload["meta"]["fields"]
+
+
+@patch(f"{_COMMERCIAL}.enrich_dashboard_metric", side_effect=lambda payload, **_: payload)
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_use_case")
+def test_get_sales_order_otd_summary_does_not_announce_customer_center(
+    mock_build, _mock_enrich
+) -> None:
+    """Summary agrega por filial → customer_center fora do meta.fields."""
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "branch": "01",
+        "start_date": "2026-08-01",
+        "end_date": "2026-08-28",
+        "total_lines": 10,
+        "on_time_lines": 9,
+        "late_lines": 1,
+        "sales_order_otd_pct": 90.0,
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd_summary(
+        branch="01",
+        start_date="2026-08-01",
+        end_date="2026-08-28",
+        customer_segment=None,
+        customer_codes=None,
+        customer_names=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+    )
+    payload = body_json(response)
+    assert "customer_center" not in payload["meta"]["fields"]
+
+
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_by_branch_use_case")
+def test_get_sales_order_otd_by_branch_does_not_announce_customer_center(
+    mock_build,
+) -> None:
+    """Grain por filial → meta.fields sem customer_center."""
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "start_date": "2026-06-01",
+        "end_date": "2026-06-30",
+        "items": [
+            {
+                "branch": "01",
+                "total_lines": 10,
+                "total_qty": 100.0,
+                "fulfilled_qty": 90.0,
+                "on_time_lines": 8,
+                "late_lines": 2,
+                "fulfillment_pct": 90.0,
+                "otd_pct": 80.0,
+            }
+        ],
+        "summary": {"items_count": 1},
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd_by_branch(
+        start_date="2026-06-01",
+        end_date="2026-06-30",
+        customer_segment=None,
+        customer_codes=None,
+        customer_names=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+    )
+    payload = body_json(response)
+    assert "customer_center" not in payload["meta"]["fields"]
+
+
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_series_use_case")
+def test_get_sales_order_otd_series_does_not_announce_customer_center(
+    mock_build,
+) -> None:
+    """Série período×filial → meta.fields sem customer_center."""
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value.to_dict.return_value = {
+        "granularity": "week",
+        "start_date": "2026-08-03",
+        "end_date": "2026-08-09",
+        "branch": None,
+        "items": [
+            {
+                "branch": "01",
+                "periodo": "03/08/26 – 09/08/26",
+                "sort_key": "2026-W32",
+                "total_lines": 2,
+                "total_qty": 10.0,
+                "fulfilled_qty": 8.0,
+                "fulfillment_pct": 80.0,
+                "otd_pct": 50.0,
+            }
+        ],
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd_series(
+        granularity="week",
+        start_date="2026-08-03",
+        end_date="2026-08-09",
+        branch=None,
+        customer_segment=None,
+        customer_codes=None,
+        customer_names=None,
+        customer_code_stores=None,
+        customer_centers=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+    )
+    payload = body_json(response)
+    assert "customer_center" not in payload["meta"]["fields"]
+
+
+@patch(f"{_COMMERCIAL}.enrich_dashboard_metric", side_effect=lambda payload, **_: payload)
+@patch(f"{_COMMERCIAL}.build_get_sales_order_otd_panel_use_case")
+def test_get_sales_order_otd_panel_announces_customer_center(
+    mock_build, _mock_enrich
+) -> None:
+    """Panel: lines carregam customer_center → meta.fields anuncia."""
+    import app.interface.http.routes.commercial.commercial_router as router_mod
+
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "branch": None,
+        "sales_order_otd_pct": 90.0,
+        "total_lines": 1,
+        "late_lines": 0,
+        "late_percentage": 0.0,
+        "lines": {
+            "items": [
+                {
+                    "order_number": "0001",
+                    "line_item": "01",
+                    "customer_code": "000001",
+                    "customer_name": "WEG AMAZONIA",
+                    "customer_center": "1700",
+                }
+            ],
+            "pagination": {"page": 1, "page_size": 50, "total": 1, "has_more": False},
+        },
+        "worstDelays": {"items": []},
+        "upcomingPromises": {"items": []},
+        "recurringCustomers": {"items": []},
+    }
+    mock_build.return_value = use_case
+
+    response = router_mod.get_sales_order_otd_panel(
+        branch=None,
+        start_date=None,
+        end_date=None,
+        customer_segment=None,
+        customer_codes=None,
+        customer_names=None,
+        customer_code_stores=None,
+        customer_centers=None,
+        exclude_customer_codes=None,
+        exclude_customer_names=None,
+        status=None,
+        page=1,
+        page_size=50,
+        sort_by=None,
+        sort_dir="asc",
+        search=None,
+    )
+    payload = body_json(response)
+    assert payload["meta"]["fields"]["customer_center"] == "Centro do cliente"
+    assert payload["data"]["lines"]["items"][0]["customer_center"] == "1700"

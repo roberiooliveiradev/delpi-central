@@ -144,6 +144,7 @@ from app.interface.http.kpi_field_labels import (
     COMMERCIAL_ROL_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
     COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
+    COMMERCIAL_SALES_ORDER_OTD_CUSTOMER_CENTER_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
@@ -1480,6 +1481,7 @@ def get_sales_order_otd_by_customer(
             fields=kpi_fields(
                 COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
                 COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
+                COMMERCIAL_SALES_ORDER_OTD_CUSTOMER_CENTER_FIELD_LABELS,
             ),
         )
     except ValueError as exc:
@@ -1697,6 +1699,7 @@ def get_sales_order_otd_series_by_customer(
             fields=kpi_fields(
                 COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
                 COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS,
+                COMMERCIAL_SALES_ORDER_OTD_CUSTOMER_CENTER_FIELD_LABELS,
             ),
         )
     except ValueError as exc:
@@ -1789,7 +1792,10 @@ def get_sales_order_otd_panel(
             result,
             operation_id="get_sales_order_otd_panel",
             message="Painel de OTD de pedidos de venda carregado com sucesso.",
-            fields=kpi_fields(COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS),
+            fields=kpi_fields(
+                COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS,
+                COMMERCIAL_SALES_ORDER_OTD_CUSTOMER_CENTER_FIELD_LABELS,
+            ),
         )
 
     except ValueError as exc:

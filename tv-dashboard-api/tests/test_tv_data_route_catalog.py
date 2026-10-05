@@ -169,6 +169,63 @@ def test_catalog_si_meta_routes_list_value_field():
         assert "value" not in fields, operation_id
 
 
+def test_catalog_otd_customer_routes_expose_customer_center():
+    """customer_center (SA7010.A7_XCENT) é dimensão de resposta: label+type
+    declarados nas rotas cujo payload o carrega, ausente nas agregadas."""
+    catalog = TvDataRouteCatalogService()
+    for operation_id in (
+        "get_sales_order_otd_by_customer",
+        "get_sales_order_otd_series_by_customer",
+        "get_sales_order_otd_panel",
+    ):
+        route = catalog.get_route(operation_id)
+        assert route is not None, operation_id
+        labels = route.get("valueFieldLabels") or {}
+        assert labels.get("customer_center") == "Centro do cliente", operation_id
+        types = route.get("valueFieldTypes") or {}
+        assert types.get("customer_center") == "string", operation_id
+        # Dimensão: nunca entra em valueFields (measures) nem projectableFields.
+        assert "customer_center" not in (route.get("valueFields") or []), operation_id
+        projectable = route.get("projectableFields") or []
+        assert all(
+            f.get("name") != "customer_center" for f in projectable if isinstance(f, dict)
+        ), operation_id
+
+    for operation_id in (
+        "get_sales_order_otd",
+        "get_sales_order_otd_summary",
+        "get_sales_order_otd_by_branch",
+        "get_sales_order_otd_series",
+    ):
+        route = catalog.get_route(operation_id)
+        assert route is not None, operation_id
+        assert "customer_center" not in (route.get("valueFieldLabels") or {}), operation_id
+        assert "customer_center" not in (route.get("valueFieldTypes") or {}), operation_id
+
+
+def test_search_data_routes_discovers_customer_center_routes():
+    """search_data_routes retorna as rotas por cliente já com o campo canônico."""
+    from tv_app.application.services.data.tv_data_route_discovery_service import (
+        TvDataRouteDiscoveryService,
+    )
+
+    result = TvDataRouteDiscoveryService().discover(
+        query="sales order otd por cliente",
+        category="commercial",
+        limit=8,
+    )
+    by_op = {s["operationId"]: s for s in result["suggestions"]}
+    for operation_id in (
+        "get_sales_order_otd_by_customer",
+        "get_sales_order_otd_series_by_customer",
+    ):
+        assert operation_id in by_op, (operation_id, list(by_op))
+        labels = by_op[operation_id].get("valueFieldLabels") or {}
+        assert labels.get("customer_center") == "Centro do cliente", operation_id
+        types = by_op[operation_id].get("valueFieldTypes") or {}
+        assert types.get("customer_center") == "string", operation_id
+
+
 def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():
     merged = merge_data_params(
         playlist_defaults={"branch": "01", "periodDays": 30},

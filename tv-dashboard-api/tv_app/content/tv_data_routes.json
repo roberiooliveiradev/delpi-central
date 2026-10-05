@@ -2568,6 +2568,7 @@
         "customer_code": "Código cliente",
         "customer_store": "Loja cliente",
         "customer_name": "Cliente",
+        "customer_center": "Centro do cliente",
         "branch": "Filial",
         "total_lines": "Total de linhas",
         "total_qty": "Quantidade total",
@@ -2621,6 +2622,7 @@
         }
       ],
       "valueFieldTypes": {
+        "customer_center": "string",
         "unit": "string",
         "mixed_units": "boolean"
       },
@@ -2862,6 +2864,7 @@
         "line_item": "Item",
         "customer_name": "Cliente",
         "customer_short_name": "Nome reduzido",
+        "customer_center": "Centro do cliente",
         "promised_date": "Data prometida",
         "invoice_date": "Data faturamento",
         "status": "Status",
@@ -2924,6 +2927,7 @@
         "promised_date": "date",
         "invoice_date": "date",
         "unit": "string",
+        "customer_center": "string",
         "qty_sold": "number",
         "qty_delivered": "number",
         "days_diff": "number"
@@ -3289,6 +3293,7 @@
         "customer_code": "Código cliente",
         "customer_store": "Loja cliente",
         "customer_name": "Cliente",
+        "customer_center": "Centro do cliente",
         "branch": "Filial",
         "periodo": "Período",
         "sort_key": "Chave de ordenação",
@@ -3360,6 +3365,7 @@
         }
       ],
       "valueFieldTypes": {
+        "customer_center": "string",
         "periodo": "string",
         "sort_key": "string",
         "start_date": "date",

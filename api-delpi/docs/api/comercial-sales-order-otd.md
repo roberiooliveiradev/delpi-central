@@ -128,6 +128,7 @@ Metas do Indicadores Estratégicos: `source_key` = `commercial_sales_order_otd`.
 | Data | Alteração |
 |------|-----------|
 | 2026-10-05 | `customer_center` passa a ser resolvido sempre nas projeções com grão de linha ou cliente+loja (LEFT JOIN SA7 agrupado quando não há filtro de centro); antes só vinha preenchido quando `customer_centers` estava ativo. Filtro e fórmulas inalterados. |
+| 2026-10-05 | `meta.fields` anuncia `customer_center` ("Centro do cliente") só nas rotas cujo payload o carrega (`by-customer`, `series-by-customer`, `panel`); rotas agregadas sem dimensão de cliente deixam de anunciá-lo. |
 | 2026-09-17 | Aberto sem fatura: atraso só com `GETDATE() > C6_ENTREG` (não no próprio dia prometido); referência de aberto = calendário, não `end_date` do bucket. |
 | 2026-09-17 | (superado) Tentativa com `ref >= C6_ENTREG` — revertida: dia prometido ainda não é atraso. |
 | 2026-08-28 | Hub `GET /commercial/sales-order-otd/summary` (`get_sales_order_otd_summary`): realizado + meta SI para TV. |

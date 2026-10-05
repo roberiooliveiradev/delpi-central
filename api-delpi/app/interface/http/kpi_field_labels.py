@@ -225,7 +225,6 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
     "customer_code": "Código cliente",
     "customer_name": "Cliente",
     "customer_short_name": "Nome reduzido",
-    "customer_center": "Centro do cliente",
     "order_number": "Pedido",
     "line_item": "Item",
     "product_code": "Produto",
@@ -255,6 +254,10 @@ COMMERCIAL_SALES_ORDER_OTD_ANALYSIS_FIELD_LABELS: dict[str, str] = {
     "branch": "Filial",
     "unit": "Unidade",
     "mixed_units": "UMs mistas",
+}
+
+COMMERCIAL_SALES_ORDER_OTD_CUSTOMER_CENTER_FIELD_LABELS: dict[str, str] = {
+    "customer_center": "Centro do cliente",
 }
 
 COMMERCIAL_PROFILE_BY_BRANCH_FIELD_LABELS: dict[str, str] = {
