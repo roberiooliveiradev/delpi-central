@@ -42,6 +42,7 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 |---|---|---|---|
 | Início | `createDashboardTopBar`, `createDashboardSectionRouteCard`, `createDashboardNavigationCard`, `createDashboardRecentAccessStrip`, `createDashboardPageHero` | `@delpi/plugin-ui/index` | composição reutilizável |
 | Visão geral | `KpiCard`, `MetricKpiCard`, `ChartCard`, `QuickPeriodSelector`, `createDashboardFiltersKit`, charts, `DataTableSection` | `@delpi/plugin-ui/index` | kit analítico reutilizável |
+| Central de Fechamento / Cockpit | PagePath/PageHero/SectionCard, `StatusBadge`, `ProgressTracker`, `MetricStrip`, `AlertQueue`, `WorklistItem`, `Timeline` | `@delpi/plugin-ui/index` | composição de cockpit reutilizável |
 | Sala de interação | `InteractionRoomPage`, `INTERACTION_ROOM_PAGE_LABELS_PT`, `PluginErrorBoundary` | `@delpi/plugin-ui/index` | **full-page reusable** |
 | Minhas tarefas | `TaskWorkspacePage`, `TaskWorklistSection`, `TaskItemsTable`, `TaskSearchField`, `TaskEmptyState` | `@delpi/plugin-ui/index` | **workspace reusable** |
 | Administração | PageHero/PagePath, SectionRouteCard, DataTableSection, forms, Modal/Confirm/Notice/Status | `@delpi/plugin-ui/index` | composição reutilizável; sem full page pronta |
@@ -83,6 +84,35 @@ import {
 ```
 
 O contract do indicador decide o componente adequado. Disponibilidade de chart no kit não cria KPI nem regra.
+
+## Central de Fechamento — Cockpit da Competência
+
+### Import preferencial
+
+```ts
+import {
+  createDashboardPagePath,
+  createDashboardPageHero,
+  createDashboardSectionCard,
+  StatusBadge,
+  ProgressTracker,
+  MetricStrip,
+  AlertQueue,
+  WorklistItem,
+  Timeline,
+  StateBanner,
+  StateBox,
+  EmptyState,
+  LoadingState,
+  HelpTooltip,
+  ActionButton,
+} from "@delpi/plugin-ui/index";
+```
+
+Contrato visual detalhado:
+- [08-p1-cockpit-da-competencia.md](./08-p1-cockpit-da-competencia.md)
+
+O Cockpit deve compor os três eixos independentes e navegar aos owners. O kit fornece chrome; P2/P3/P4/P5 continuam owners de suas regras.
 
 ## Sala de interação
 
