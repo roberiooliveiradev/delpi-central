@@ -3,7 +3,7 @@
 ## Invariante
 
 ```text
-PACKAGE_READY
+READY_TO_FINALIZE
 != PACKAGE_FINALIZED
 != PACKAGE_SENT
 != MONTHLY_CLOSING_COMPLETED
@@ -112,7 +112,7 @@ Sem botão independente de força.
 ## Edge cases
 
 - destinatário sem itens;
-- package ready com source falha;
+- READY_TO_FINALIZE com source falha;
 - envio parcial;
 - reabertura antes do envio;
 - correção pós-envio;
