@@ -15,7 +15,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
       "@delpi/tv-dashboard-presentation": ["../tv-dashboard-presentation/src/index.ts"],
       "@delpi/plugin-ui": ["../plugin-ui/src/index.ts"],
