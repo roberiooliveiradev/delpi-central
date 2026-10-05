@@ -541,3 +541,114 @@ def test_suggest_rename_data_source_label_only():
     assert not source.get("params")
     assert not source.get("dataTransform")
 
+
+# ---------------------------------------------------------------------------
+# TV-DM-MUT-002 — DataModel vs legacy routing (fail-closed, no legacy ops on models)
+# ---------------------------------------------------------------------------
+
+_MODEL_HOST = {
+    "slideId": "s1",
+    "playlistId": "pl-1",
+    "dataSources": [
+        {"id": "ds-1", "operationId": "get_vendas", "label": "Vendas"}
+    ],
+    "dataModels": [
+        {
+            "id": "mdl_1",
+            "label": "Mensal",
+            "inputs": [
+                {"id": "in_a", "label": "Atual", "operationId": "get_vendas"}
+            ],
+        }
+    ],
+}
+
+
+def test_suggest_model_intent_routes_patch_data_model():
+    result = PresentationSuggestOpsService.suggest(
+        message="defina o transform do modelo com top 10",
+        host_context=dict(_MODEL_HOST),
+    )
+    ops = [op for op in result["ops"] if op.get("op") == "patch_data_model"]
+    assert len(ops) == 1
+    assert ops[0]["modelId"] == "mdl_1"
+    assert ops[0]["modelPatch"]["transform"]["steps"][0]["op"] == "keepRows"
+    assert not any(
+        op.get("op") in ("set_data_transform", "patch_data_source_params")
+        for op in result["ops"]
+    )
+
+
+def test_suggest_model_rename_routes_patch_not_legacy_rename():
+    result = PresentationSuggestOpsService.suggest(
+        message='renomeie o modelo para "Anual"',
+        host_context=dict(_MODEL_HOST),
+    )
+    ops = result["ops"]
+    assert len(ops) == 1
+    assert ops[0]["op"] == "patch_data_model"
+    assert ops[0]["modelPatch"]["label"] == "Anual"
+    assert not any(op.get("op") == "upsert_data_source" for op in ops)
+
+
+def test_suggest_model_input_transform_targets_input():
+    result = PresentationSuggestOpsService.suggest(
+        message="defina o transform do input Atual do modelo com top 5",
+        host_context=dict(_MODEL_HOST),
+    )
+    ops = [op for op in result["ops"] if op.get("op") == "patch_data_model"]
+    assert len(ops) == 1
+    patch = ops[0]["inputPatches"][0]
+    assert patch["inputId"] == "in_a"
+    assert patch["transform"]["steps"][0]["count"] == 5
+
+
+def test_suggest_legacy_source_intent_stays_on_source_ops():
+    result = PresentationSuggestOpsService.suggest(
+        message="troque o transform da fonte para top 5",
+        host_context=dict(_MODEL_HOST),
+    )
+    ops = [op for op in result["ops"] if op.get("op") == "set_data_transform"]
+    assert len(ops) == 1
+    assert ops[0]["blockId"] == "ds-1"
+    assert not any(op.get("op") == "patch_data_model" for op in result["ops"])
+
+
+def test_suggest_model_intent_without_model_fails_closed():
+    """Vocabulário de modelo sem modelo resolvível → clarificação, nunca op
+    com modelId vazio nem fallback para op legacy."""
+    result = PresentationSuggestOpsService.suggest(
+        message="mude o período do modelo",
+        host_context={
+            "slideId": "s1",
+            "playlistId": "pl-1",
+            "dataSources": _MODEL_HOST["dataSources"],
+        },
+    )
+    assert not result["ops"]
+    assert result.get("clarificationKey")
+    assert "patch_data_model" in result["matchedCapabilityKeys"]
+
+
+def test_suggest_ambiguous_multi_model_fails_closed():
+    host = dict(_MODEL_HOST)
+    host["dataModels"] = [
+        {"id": "mdl_1", "label": "Mensal"},
+        {"id": "mdl_2", "label": "Anual"},
+    ]
+    result = PresentationSuggestOpsService.suggest(
+        message="defina o transform do modelo com top 10",
+        host_context=host,
+    )
+    assert not result["ops"]
+    assert result.get("clarificationKey")
+
+
+def test_suggest_model_param_patch_uses_explicit_params_only():
+    """Sem param explícito a op não inventa dateRangePreset — clarifica."""
+    result = PresentationSuggestOpsService.suggest(
+        message="atualize o modelo",
+        host_context=dict(_MODEL_HOST),
+    )
+    assert not result["ops"]
+    assert result.get("clarificationKey")

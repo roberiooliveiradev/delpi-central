@@ -36,6 +36,7 @@ import {
 } from "../utils/dataModelParamProjection";
 import { resolveRouteForDataBoundBlock } from "../utils/resolveDataBoundBlockRoute";
 import { resolveSelectedDataContext, type SelectedDataContext } from "../utils/selectedDataContext";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 /** Parâmetro elegível a expressão tipada — projeção canônica do model. */
 export type RibbonExpressionParam = {
@@ -177,9 +178,15 @@ export function useDataRibbonModel(): DataRibbonModel {
     (updates: Record<string, DataParamUpdateValue>) => {
       if (bindingModel) {
         // Fan-out mínimo para os inputs compatíveis — mesmo write path
-        // governado do inspetor (saveDataModel → upsert_data_model).
+        // governado do inspetor (saveDataModel → patch_data_model/upsert).
         const next = buildDataModelParamPatch(bindingModel, routes, updates);
-        if (next) void saveDataModel(next).catch(() => undefined);
+        if (next) {
+          void saveDataModel(next).catch(() =>
+            tvDashboardNotice(
+              "Não foi possível salvar a alteração no modelo de dados.",
+            ),
+          );
+        }
         return;
       }
       if (!bindingTarget || !binding) return;

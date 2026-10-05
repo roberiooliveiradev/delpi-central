@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.10.05.presentation-authority.datamodel-patch",
+  "catalogVersion": "2026.10.05.presentation-authority.datamodel-patch.lossless",
   "opAliases": {
     "create_slide": {
       "canonical": "add_blank_slide",
@@ -387,7 +387,7 @@
     "applyConfirmRequired": "Esta ação remove dados da programação. Confirme com «pode aplicar» ou «confirmo».",
     "planReady": "Plano CRUD pronto ({ops} comando(s)) — execução nas rotas da programação.",
     "nestedSchemaInvalid": "Operação «{op}» tem payload aninhado inválido: {reason}.",
-    "transformStepUnknown": "set_data_transform não aceita o step «{stepOp}». Use apenas steps allowlisted do catálogo.",
+    "transformStepUnknown": "{op} não aceita o step «{stepOp}». Use apenas steps allowlisted do catálogo.",
     "fieldLabelsInvalid": "fieldLabels deve ser um mapa string→string.",
     "paramsInvalid": "params deve ser um objeto com valores primitivos (string/number/boolean).",
     "dataSourceParamNotAllowed": "A fonte «{blockId}» não aceita a(s) chave(s) de params: {keys}.",
@@ -396,7 +396,9 @@
     "playlistDefaultsRequired": "patch_playlist_data_defaults exige um objeto dataDefaults.",
     "layoutNeedBlockIds": "align_blocks / reorder_block_z / duplicate_blocks exigem blockIds.",
     "createBlockTypeRequired": "create_block exige type.",
-    "layoutCommandInvalid": "Comando de layout inválido: {command}."
+    "layoutCommandInvalid": "Comando de layout inválido: {command}.",
+    "suggestNeedModelInput": "Informe o input do DataModel (inputId de inspect_data_model).",
+    "suggestNeedDataModelChange": "Informe a alteração desejada no DataModel (params de input, transform, label ou fieldLabels)."
   },
   "placeholderClarifications": {
     "backgroundColor": "suggestNeedColor",
@@ -422,7 +424,8 @@
     "blockType": "createBlockTypeRequired",
     "formatTargetOwner": "suggestNeedSelection",
     "formatField": "suggestNeedSelection",
-    "formatHintJson": "suggestIncompleteGeneric"
+    "formatHintJson": "suggestIncompleteGeneric",
+    "inputId": "suggestNeedModelInput"
   },
   "opFieldClarifications": {
     "align_blocks.blockIds": "layoutNeedBlockIds",
@@ -450,7 +453,10 @@
     "update_slide.title": "suggestNeedQuotedTitle",
     "set_data_transform.steps": "suggestNeedTransformSteps",
     "set_data_transform.blockId": "suggestNeedDataSource",
-    "delete_data_model.modelId": "suggestNeedDataModel"
+    "delete_data_model.modelId": "suggestNeedDataModel",
+    "patch_data_model.modelId": "suggestNeedDataModel",
+    "patch_data_model.inputId": "suggestNeedModelInput",
+    "patch_data_model.patch": "suggestNeedDataModelChange"
   },
   "recognition": {
     "fuzzyThreshold": 0.8,
@@ -931,84 +937,8 @@
                   "type": "boolean"
                 },
                 {
-                  "type": "object",
-                  "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
-                  "required": [
-                    "expression"
-                  ],
-                  "properties": {
-                    "expression": {
-                      "type": "object",
-                      "required": [
-                        "version",
-                        "expression"
-                      ],
-                      "properties": {
-                        "version": {
-                          "const": 1
-                        },
-                        "expression": {
-                          "type": "object",
-                          "description": "CompiledExpression AST root node {kind,value,children}.",
-                          "required": [
-                            "kind"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "type": "string",
-                              "enum": [
-                                "literal",
-                                "identifier",
-                                "call",
-                                "binary",
-                                "unary",
-                                "if",
-                                "list"
-                              ]
-                            },
-                            "value": {
-                              "oneOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "integer"
-                                },
-                                {
-                                  "type": "boolean"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "children": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "description": "Nested CompiledExpression AST node.",
-                                "required": [
-                                  "kind"
-                                ],
-                                "properties": {
-                                  "kind": {
-                                    "type": "string"
-                                  }
-                                },
-                                "additionalProperties": true
-                              }
-                            }
-                          },
-                          "additionalProperties": false
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
+                  "$ref": "#/definitions/ParamExpressionSpec",
+                  "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed."
                 }
               ]
             }
@@ -1100,84 +1030,8 @@
                   "type": "null"
                 },
                 {
-                  "type": "object",
-                  "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
-                  "required": [
-                    "expression"
-                  ],
-                  "properties": {
-                    "expression": {
-                      "type": "object",
-                      "required": [
-                        "version",
-                        "expression"
-                      ],
-                      "properties": {
-                        "version": {
-                          "const": 1
-                        },
-                        "expression": {
-                          "type": "object",
-                          "description": "CompiledExpression AST root node {kind,value,children}.",
-                          "required": [
-                            "kind"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "type": "string",
-                              "enum": [
-                                "literal",
-                                "identifier",
-                                "call",
-                                "binary",
-                                "unary",
-                                "if",
-                                "list"
-                              ]
-                            },
-                            "value": {
-                              "oneOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "integer"
-                                },
-                                {
-                                  "type": "boolean"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "children": {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "description": "Nested CompiledExpression AST node.",
-                                "required": [
-                                  "kind"
-                                ],
-                                "properties": {
-                                  "kind": {
-                                    "type": "string"
-                                  }
-                                },
-                                "additionalProperties": true
-                              }
-                            }
-                          },
-                          "additionalProperties": false
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
+                  "$ref": "#/definitions/ParamExpressionSpec",
+                  "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed."
                 }
               ]
             }
@@ -1234,409 +1088,7 @@
             "type": "array",
             "description": "Allowlisted v1 transform steps (same ops as apply_data_transform_steps). No free SQL/M/DAX.",
             "items": {
-              "oneOf": [
-                {
-                  "title": "keepRows",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "count"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "keepRows"
-                    },
-                    "count": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "from": {
-                      "type": "string",
-                      "enum": [
-                        "top",
-                        "bottom"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "title": "removeRows",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "count"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "removeRows"
-                    },
-                    "count": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "from": {
-                      "type": "string",
-                      "enum": [
-                        "top",
-                        "bottom"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "title": "select",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "columns"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "select"
-                    },
-                    "columns": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "minItems": 1
-                    }
-                  }
-                },
-                {
-                  "title": "rename",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "from",
-                    "to"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "rename"
-                    },
-                    "from": {
-                      "type": "string"
-                    },
-                    "to": {
-                      "type": "string"
-                    }
-                  }
-                },
-                {
-                  "title": "filter",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "column",
-                    "cmp"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "filter"
-                    },
-                    "column": {
-                      "type": "string"
-                    },
-                    "cmp": {
-                      "type": "string",
-                      "enum": [
-                        "eq",
-                        "neq",
-                        "gt",
-                        "lt",
-                        "notNull",
-                        "contains",
-                        "startsWith"
-                      ]
-                    },
-                    "value": {
-                      "oneOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
-                    }
-                  }
-                },
-                {
-                  "title": "addColumn",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "name",
-                    "expr"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "addColumn"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "expr": {
-                      "type": "string",
-                      "description": "Safe arithmetic/column expression (no SQL/M)."
-                    }
-                  }
-                },
-                {
-                  "title": "replace",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "column"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "replace"
-                    },
-                    "column": {
-                      "type": "string"
-                    },
-                    "find": {
-                      "type": "string"
-                    },
-                    "replaceWith": {
-                      "type": "string"
-                    }
-                  }
-                },
-                {
-                  "title": "sort",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "column"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "sort"
-                    },
-                    "column": {
-                      "type": "string"
-                    },
-                    "direction": {
-                      "type": "string",
-                      "enum": [
-                        "asc",
-                        "desc"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "title": "changeType",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "column"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "changeType"
-                    },
-                    "column": {
-                      "type": "string"
-                    },
-                    "to": {
-                      "type": "string",
-                      "enum": [
-                        "string",
-                        "number"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "title": "fillDown",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "column"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "fillDown"
-                    },
-                    "column": {
-                      "type": "string"
-                    }
-                  }
-                },
-                {
-                  "title": "firstRowAsHeader",
-                  "type": "object",
-                  "required": [
-                    "op"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "firstRowAsHeader"
-                    }
-                  }
-                },
-                {
-                  "title": "groupBy",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "keys"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "groupBy"
-                    },
-                    "keys": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "minItems": 1
-                    },
-                    "aggregations": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "column",
-                          "fn"
-                        ],
-                        "properties": {
-                          "column": {
-                            "type": "string"
-                          },
-                          "fn": {
-                            "type": "string",
-                            "enum": [
-                              "sum",
-                              "avg",
-                              "min",
-                              "max",
-                              "count",
-                              "first"
-                            ]
-                          },
-                          "as": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                {
-                  "title": "pivot",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "column",
-                    "valueColumn"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "pivot"
-                    },
-                    "column": {
-                      "type": "string"
-                    },
-                    "valueColumn": {
-                      "type": "string"
-                    },
-                    "aggregation": {
-                      "type": "string",
-                      "enum": [
-                        "sum",
-                        "avg",
-                        "min",
-                        "max",
-                        "count",
-                        "first"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "title": "unpivot",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "columns"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "unpivot"
-                    },
-                    "columns": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "minItems": 1
-                    },
-                    "nameColumn": {
-                      "type": "string"
-                    },
-                    "valueColumn": {
-                      "type": "string"
-                    }
-                  }
-                },
-                {
-                  "title": "merge",
-                  "type": "object",
-                  "required": [
-                    "op",
-                    "sourceId",
-                    "leftKey",
-                    "rightKey"
-                  ],
-                  "properties": {
-                    "op": {
-                      "type": "string",
-                      "const": "merge"
-                    },
-                    "sourceId": {
-                      "type": "string"
-                    },
-                    "leftKey": {
-                      "type": "string"
-                    },
-                    "rightKey": {
-                      "type": "string"
-                    },
-                    "columns": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              ]
+              "$ref": "#/definitions/TransformStep"
             }
           }
         }
@@ -2145,11 +1597,8 @@
                 }
               },
               "dataTransform": {
-                "type": "object",
-                "additionalProperties": true,
-                "description": "Prefer set_data_transform; if present must be {steps} only.",
-                "x-delpi-gpt-opaque-object": true,
-                "properties": {}
+                "$ref": "#/definitions/TransformPlanV1",
+                "description": "Prefer set_data_transform; if present must be a TransformPlan ({steps})."
               }
             }
           }
@@ -3523,112 +2972,35 @@
                             "type": "boolean"
                           },
                           {
-                            "type": "object",
-                            "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
-                            "required": [
-                              "expression"
-                            ],
-                            "properties": {
-                              "expression": {
-                                "type": "object",
-                                "required": [
-                                  "version",
-                                  "expression"
-                                ],
-                                "properties": {
-                                  "version": {
-                                    "const": 1
-                                  },
-                                  "expression": {
-                                    "type": "object",
-                                    "description": "CompiledExpression AST root node {kind,value,children}.",
-                                    "required": [
-                                      "kind"
-                                    ],
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string",
-                                        "enum": [
-                                          "literal",
-                                          "identifier",
-                                          "call",
-                                          "binary",
-                                          "unary",
-                                          "if",
-                                          "list"
-                                        ]
-                                      },
-                                      "value": {
-                                        "oneOf": [
-                                          {
-                                            "type": "string"
-                                          },
-                                          {
-                                            "type": "number"
-                                          },
-                                          {
-                                            "type": "integer"
-                                          },
-                                          {
-                                            "type": "boolean"
-                                          },
-                                          {
-                                            "type": "null"
-                                          }
-                                        ]
-                                      },
-                                      "children": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "object",
-                                          "description": "Nested CompiledExpression AST node.",
-                                          "required": [
-                                            "kind"
-                                          ],
-                                          "properties": {
-                                            "kind": {
-                                              "type": "string"
-                                            }
-                                          },
-                                          "additionalProperties": true
-                                        }
-                                      }
-                                    },
-                                    "additionalProperties": false
-                                  }
-                                },
-                                "additionalProperties": false
-                              }
-                            },
-                            "additionalProperties": false
+                            "$ref": "#/definitions/ParamExpressionSpec",
+                            "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed."
                           }
                         ]
                       }
                     },
                     "transform": {
-                      "type": "object",
+                      "$ref": "#/definitions/TransformPlanV1",
                       "nullable": true,
-                      "x-delpi-gpt-opaque-object": true,
-                      "properties": {},
                       "description": "TransformPlan v1 {version, steps}; same step contract as set_data_transform.steps."
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 }
               },
               "transform": {
-                "type": "object",
+                "$ref": "#/definitions/TransformPlanV1",
                 "nullable": true,
-                "x-delpi-gpt-opaque-object": true,
-                "properties": {},
                 "description": "TransformPlan v1 {version, steps}; same step contract as set_data_transform.steps."
               },
               "fieldLabels": {
                 "type": "object",
                 "additionalProperties": {
                   "type": "string"
-                }
+                },
+                "nullable": true
               }
-            }
+            },
+            "additionalProperties": false
           }
         }
       },
@@ -3752,39 +3124,8 @@
                             "type": "null"
                           },
                           {
-                            "type": "object",
-                            "description": "Canonical ParamExpression spec (ExpressionSpec v1).",
-                            "required": [
-                              "expression"
-                            ],
-                            "properties": {
-                              "expression": {
-                                "type": "object",
-                                "required": [
-                                  "version",
-                                  "expression"
-                                ],
-                                "properties": {
-                                  "version": {
-                                    "const": 1
-                                  },
-                                  "expression": {
-                                    "type": "object",
-                                    "required": [
-                                      "kind"
-                                    ],
-                                    "properties": {
-                                      "kind": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "additionalProperties": true
-                                  }
-                                },
-                                "additionalProperties": false
-                              }
-                            },
-                            "additionalProperties": false
+                            "$ref": "#/definitions/ParamExpressionSpec",
+                            "description": "Canonical ParamExpression spec (ExpressionSpec v1)."
                           }
                         ]
                       }
@@ -3795,16 +3136,16 @@
                         "type": "string"
                       }
                     }
-                  }
+                  },
+                  "additionalProperties": false
                 },
                 "transform": {
-                  "type": "object",
+                  "$ref": "#/definitions/TransformPlanV1",
                   "nullable": true,
-                  "x-delpi-gpt-opaque-object": true,
-                  "properties": {},
                   "description": "TransformPlan v1 {version, steps} for this input only; applied only when key present; null clears the input transform."
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "modelPatch": {
@@ -3814,20 +3155,20 @@
                 "type": "string"
               },
               "transform": {
-                "type": "object",
+                "$ref": "#/definitions/TransformPlanV1",
                 "nullable": true,
-                "x-delpi-gpt-opaque-object": true,
-                "properties": {},
                 "description": "TransformPlan v1 {version, steps} for the model-level transform; applied only when key present; null clears."
               },
               "fieldLabels": {
                 "type": "object",
-                "description": "Entries merged over persisted fieldLabels; null clears the map.",
+                "description": "Entries merged over persisted fieldLabels (set an entry to empty string to remove it); null clears the map.",
                 "additionalProperties": {
                   "type": "string"
-                }
+                },
+                "nullable": true
               }
-            }
+            },
+            "additionalProperties": false
           }
         }
       },
@@ -4150,7 +3491,17 @@
         "renomear a fonte",
         "renomeie o modelo",
         "nome da fonte",
-        "rótulo da fonte"
+        "rótulo da fonte",
+        "modelo de dados",
+        "data model",
+        "datamodel",
+        "do modelo",
+        "no modelo",
+        "o modelo",
+        "input do modelo",
+        "transform do modelo",
+        "período do modelo",
+        "periodo do modelo"
       ],
       "actionTermSet": "mutation",
       "requiresFilledPlaceholders": [
@@ -4199,7 +3550,17 @@
         "trocar a fonte",
         "duração",
         "pausar slide",
-        "ativar slide"
+        "ativar slide",
+        "modelo de dados",
+        "data model",
+        "datamodel",
+        "do modelo",
+        "no modelo",
+        "o modelo",
+        "input do modelo",
+        "transform do modelo",
+        "período do modelo",
+        "periodo do modelo"
       ],
       "actionTermSet": "mutation",
       "requiresFilledPlaceholders": [
@@ -4240,7 +3601,17 @@
         "nome da fonte",
         "filtro da tela",
         "filtros da tela",
-        "programação inteira"
+        "programação inteira",
+        "modelo de dados",
+        "data model",
+        "datamodel",
+        "do modelo",
+        "no modelo",
+        "o modelo",
+        "input do modelo",
+        "transform do modelo",
+        "período do modelo",
+        "periodo do modelo"
       ],
       "actionTermSet": "mutation",
       "requiresFilledPlaceholders": [
@@ -4275,7 +3646,17 @@
       "excludeMarkers": [
         "script m",
         "power query",
-        "sql"
+        "sql",
+        "modelo de dados",
+        "data model",
+        "datamodel",
+        "do modelo",
+        "no modelo",
+        "o modelo",
+        "input do modelo",
+        "transform do modelo",
+        "período do modelo",
+        "periodo do modelo"
       ],
       "actionTermSet": "mutation",
       "requiresFilledPlaceholders": [
@@ -4470,7 +3851,11 @@
           "id": "{{newModelId}}",
           "inputs": []
         }
-      }
+      },
+      "excludeMarkers": [
+        "existente",
+        "existing model"
+      ]
     },
     {
       "key": "patch_data_model",
@@ -4481,23 +3866,27 @@
         "data model",
         "datamodel",
         "períodos do modelo",
-        "fórmula do modelo"
+        "fórmula do modelo",
+        "do modelo",
+        "no modelo",
+        "o modelo",
+        "input do modelo",
+        "período do modelo",
+        "periodo do modelo",
+        "transform do modelo",
+        "renomeie o modelo",
+        "renomear o modelo",
+        "nome do modelo"
       ],
       "actionTermSet": "mutation",
       "clarificationMessageKey": "suggestNeedDataModel",
       "payloadTemplate": {
         "op": "patch_data_model",
-        "modelId": "{{modelId}}",
-        "inputPatches": [
-          {
-            "inputId": "{{inputId}}",
-            "params": {
-              "set": {},
-              "unset": []
-            }
-          }
-        ]
-      }
+        "modelId": "{{modelId}}"
+      },
+      "requiresFilledPlaceholders": [
+        "modelId"
+      ]
     },
     {
       "key": "delete_data_model",
@@ -4512,7 +3901,10 @@
       "payloadTemplate": {
         "op": "delete_data_model",
         "modelId": "{{modelId}}"
-      }
+      },
+      "requiresFilledPlaceholders": [
+        "modelId"
+      ]
     },
     {
       "key": "migrate_data_sources_to_model",
@@ -5111,5 +4503,514 @@
         "displayFormat": {}
       }
     }
-  ]
+  ],
+  "definitions": {
+    "CompiledExpressionNode": {
+      "type": "object",
+      "description": "CompiledExpression AST node {kind,value,children}.",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "literal",
+            "identifier",
+            "call",
+            "binary",
+            "unary",
+            "if",
+            "list"
+          ]
+        },
+        "value": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "Nested CompiledExpression AST node.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ParamExpressionSpec": {
+      "type": "object",
+      "description": "Canonical ParamExpression spec (ExpressionSpec v1); semantic validation enforces route paramSchema/expressionAllowed.",
+      "required": [
+        "expression"
+      ],
+      "properties": {
+        "expression": {
+          "type": "object",
+          "required": [
+            "version",
+            "expression"
+          ],
+          "properties": {
+            "version": {
+              "const": 1
+            },
+            "expression": {
+              "$ref": "#/definitions/CompiledExpressionNode"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "TransformStep": {
+      "oneOf": [
+        {
+          "title": "keepRows",
+          "type": "object",
+          "required": [
+            "op",
+            "count"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "keepRows"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "from": {
+              "type": "string",
+              "enum": [
+                "top",
+                "bottom"
+              ]
+            }
+          }
+        },
+        {
+          "title": "removeRows",
+          "type": "object",
+          "required": [
+            "op",
+            "count"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "removeRows"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "from": {
+              "type": "string",
+              "enum": [
+                "top",
+                "bottom"
+              ]
+            }
+          }
+        },
+        {
+          "title": "select",
+          "type": "object",
+          "required": [
+            "op",
+            "columns"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "select"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "title": "rename",
+          "type": "object",
+          "required": [
+            "op",
+            "from",
+            "to"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "rename"
+            },
+            "from": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "title": "filter",
+          "type": "object",
+          "required": [
+            "op",
+            "column",
+            "cmp"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "filter"
+            },
+            "column": {
+              "type": "string"
+            },
+            "cmp": {
+              "type": "string",
+              "enum": [
+                "eq",
+                "neq",
+                "gt",
+                "lt",
+                "notNull",
+                "contains",
+                "startsWith"
+              ]
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "title": "addColumn",
+          "type": "object",
+          "required": [
+            "op",
+            "name",
+            "expr"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "addColumn"
+            },
+            "name": {
+              "type": "string"
+            },
+            "expr": {
+              "type": "string",
+              "description": "Safe arithmetic/column expression (no SQL/M)."
+            }
+          }
+        },
+        {
+          "title": "replace",
+          "type": "object",
+          "required": [
+            "op",
+            "column"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "replace"
+            },
+            "column": {
+              "type": "string"
+            },
+            "find": {
+              "type": "string"
+            },
+            "replaceWith": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "title": "sort",
+          "type": "object",
+          "required": [
+            "op",
+            "column"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "sort"
+            },
+            "column": {
+              "type": "string"
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        },
+        {
+          "title": "changeType",
+          "type": "object",
+          "required": [
+            "op",
+            "column"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "changeType"
+            },
+            "column": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string",
+              "enum": [
+                "string",
+                "number"
+              ]
+            }
+          }
+        },
+        {
+          "title": "fillDown",
+          "type": "object",
+          "required": [
+            "op",
+            "column"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "fillDown"
+            },
+            "column": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "title": "firstRowAsHeader",
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "firstRowAsHeader"
+            }
+          }
+        },
+        {
+          "title": "groupBy",
+          "type": "object",
+          "required": [
+            "op",
+            "keys"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "groupBy"
+            },
+            "keys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "aggregations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "column",
+                  "fn"
+                ],
+                "properties": {
+                  "column": {
+                    "type": "string"
+                  },
+                  "fn": {
+                    "type": "string",
+                    "enum": [
+                      "sum",
+                      "avg",
+                      "min",
+                      "max",
+                      "count",
+                      "first"
+                    ]
+                  },
+                  "as": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "pivot",
+          "type": "object",
+          "required": [
+            "op",
+            "column",
+            "valueColumn"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "pivot"
+            },
+            "column": {
+              "type": "string"
+            },
+            "valueColumn": {
+              "type": "string"
+            },
+            "aggregation": {
+              "type": "string",
+              "enum": [
+                "sum",
+                "avg",
+                "min",
+                "max",
+                "count",
+                "first"
+              ]
+            }
+          }
+        },
+        {
+          "title": "unpivot",
+          "type": "object",
+          "required": [
+            "op",
+            "columns"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "unpivot"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "nameColumn": {
+              "type": "string"
+            },
+            "valueColumn": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "title": "merge",
+          "type": "object",
+          "required": [
+            "op",
+            "sourceId",
+            "leftKey",
+            "rightKey"
+          ],
+          "properties": {
+            "op": {
+              "type": "string",
+              "const": "merge"
+            },
+            "sourceId": {
+              "type": "string"
+            },
+            "leftKey": {
+              "type": "string"
+            },
+            "rightKey": {
+              "type": "string"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TransformPlanV1": {
+      "type": "object",
+      "description": "TransformPlan v1 {version, steps}; steps share the allowlisted contract of set_data_transform.steps. No free SQL/M/DAX; version 2/script is not writable via this surface.",
+      "required": [
+        "steps"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TransformStep"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
 }

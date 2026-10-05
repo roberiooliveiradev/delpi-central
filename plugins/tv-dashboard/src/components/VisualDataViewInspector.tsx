@@ -31,6 +31,7 @@ import { ChartAxesProjectionEditor } from "./ChartAxesProjectionEditor";
 import { KpiMetricsProjectionEditor } from "./KpiMetricsProjectionEditor";
 import { TableColumnsMultiSelect, resolveVisibleKeys } from "./TableColumnsMultiSelect";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import type { DataSourceLabelCatalog } from "@delpi/tv-dashboard-presentation";
 
 type Props = {
@@ -380,7 +381,11 @@ export function VisualDataViewInspector({
                     void saveDataModel({
                       ...linkedModel,
                       fieldLabels: patchFieldLabels(linkedModel.fieldLabels, key, label),
-                    });
+                    }).catch(() =>
+                      tvDashboardNotice(
+                        "Não foi possível salvar a alteração no modelo de dados.",
+                      ),
+                    );
                   }
                 : linkedSource && isDataSourceBlockType(linkedSource.type)
                   ? (key, label) => {

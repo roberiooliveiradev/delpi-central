@@ -259,7 +259,9 @@ class PresentationSuggestOpsService:
                 filled = cls._fill_template(template, placeholders)
                 if not isinstance(filled, dict) or not filled:
                     continue
-                filled = cls._enrich_filled_op(filled, placeholders)
+                filled = cls._enrich_filled_op(
+                    filled, placeholders, normalized=normalized
+                )
                 incomplete_field = cls._incomplete_op_field(filled)
                 if incomplete_field:
                     mapped = PresentationOpsContentService.op_field_clarifications().get(
@@ -503,6 +505,139 @@ class PresentationSuggestOpsService:
         if len(sources) == 1:
             return sources[0]["id"]
         return ""
+
+    @classmethod
+    def _host_data_models(cls, host: dict[str, Any]) -> list[dict[str, Any]]:
+        """Modelos endereçáveis do host context (compact get_playlist_context
+        ou payload rico de inspect_data_model repassado pelo caller)."""
+        raw = host.get("dataModels")
+        out: list[dict[str, Any]] = []
+        if isinstance(raw, list):
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                mid = str(item.get("id") or "").strip()
+                if not mid:
+                    continue
+                # Compact rows (só inputCount) não trazem inputs; o caller pode
+                # repassar a resposta de inspect_data_model (definition.inputs).
+                inputs = item.get("inputs")
+                if not isinstance(inputs, list):
+                    definition = item.get("definition")
+                    if isinstance(definition, dict):
+                        inputs = definition.get("inputs")
+                if not isinstance(inputs, list):
+                    inputs = []
+                out.append(
+                    {
+                        "id": mid,
+                        "label": str(item.get("label") or "").strip(),
+                        "inputs": inputs,
+                    }
+                )
+        return out
+
+    @classmethod
+    def _resolve_model_id(
+        cls,
+        *,
+        host: dict[str, Any],
+        normalized: str,
+        message: str,
+    ) -> str:
+        """modelId só de evidência persistida — nunca inferido de labels de
+        bloco/campo. Ordem: seleção explícita → focusedBinding → focusedModel
+        → label citada → único modelo do slide."""
+        for key in ("modelId", "selectedDataModelId", "selectedModelId"):
+            selected = str(host.get(key) or "").strip()
+            if selected:
+                return selected
+        focused_binding = host.get("focusedBinding")
+        if isinstance(focused_binding, dict):
+            bound = str(focused_binding.get("modelId") or "").strip()
+            if bound:
+                return bound
+        focused_model = host.get("focusedModel")
+        if isinstance(focused_model, dict):
+            bound = str(
+                focused_model.get("id") or focused_model.get("modelId") or ""
+            ).strip()
+            if bound:
+                return bound
+
+        models = cls._host_data_models(host)
+        if not models:
+            block_index = host.get("blockIndex")
+            ids: list[str] = []
+            if isinstance(block_index, list):
+                for item in block_index:
+                    if not isinstance(item, dict):
+                        continue
+                    mid = str(item.get("modelId") or "").strip()
+                    if mid and mid not in ids:
+                        ids.append(mid)
+            return ids[0] if len(ids) == 1 else ""
+
+        for needle in (v.lower() for v in cls._quoted_values(message) if v):
+            for item in models:
+                if item["label"].lower() == needle:
+                    return item["id"]
+        if normalized:
+            for item in sorted(models, key=lambda row: -len(row["label"])):
+                if item["label"] and item["label"].lower() in normalized:
+                    return item["id"]
+        return models[0]["id"] if len(models) == 1 else ""
+
+    @classmethod
+    def _resolve_model_input_id(
+        cls,
+        *,
+        host: dict[str, Any],
+        model_id: str,
+        normalized: str,
+    ) -> str:
+        """inputId só quando o host traz inputs (contexto rico ou inspect
+        repassado). Compact rows (só inputCount) não resolvem — fail closed."""
+        for key in ("inputId", "selectedModelInputId"):
+            selected = str(host.get(key) or "").strip()
+            if selected:
+                return selected
+        candidates: list[dict[str, Any]] = []
+        focused_model = host.get("focusedModel")
+        if isinstance(focused_model, dict):
+            fid = str(
+                focused_model.get("id") or focused_model.get("modelId") or ""
+            ).strip()
+            if fid and fid != model_id:
+                focused_model = None
+        containers = []
+        if isinstance(focused_model, dict):
+            containers.append(focused_model)
+        containers.extend(cls._host_data_models(host))
+        for container in containers:
+            cid = str(container.get("id") or "").strip()
+            if model_id and cid and cid != model_id:
+                continue
+            inputs = container.get("inputs")
+            if not isinstance(inputs, list):
+                continue
+            candidates.extend(i for i in inputs if isinstance(i, dict))
+        if not candidates:
+            return ""
+        for item in sorted(
+            candidates,
+            key=lambda row: -len(str(row.get("label") or row.get("queryName") or "")),
+        ):
+            iid = str(item.get("id") or "").strip()
+            label = str(item.get("label") or "").strip().lower()
+            query_name = str(item.get("queryName") or "").strip().lower()
+            if iid and iid.lower() in normalized:
+                return iid
+            if label and label in normalized:
+                return iid
+            if query_name and query_name in normalized:
+                return iid
+        return candidates[0].get("id", "") if len(candidates) == 1 else ""
 
     @classmethod
     def _resolve_selected_visual_id(cls, host: dict[str, Any]) -> str:
@@ -979,12 +1114,24 @@ class PresentationSuggestOpsService:
             operation_id=operation_id,
             message=message,
         )
+        model_id = cls._resolve_model_id(
+            host=host,
+            normalized=normalized,
+            message=message,
+        )
+        model_input_id = cls._resolve_model_input_id(
+            host=host,
+            model_id=model_id,
+            normalized=normalized,
+        )
         selected_visual_id = cls._resolve_selected_visual_id(host)
         params = cls._extract_params(normalized)
+        explicit_params = dict(params)
         host_defaults = host.get("playlistDefaults") if isinstance(host.get("playlistDefaults"), dict) else {}
         if "branch" not in params and host_defaults.get("branch") not in (None, ""):
             params["branch"] = host_defaults.get("branch")
-        # Default tipado para rotas date_range fechadas (enrich no patch também aplica).
+        # Default tipado para rotas date_range fechadas — só para criação de
+        # fonte/modelo; patch de modelo existente usa explicitParamsJson.
         if "dateRangePreset" not in params and "periodDays" not in params:
             # Só antecipa se o pedido não trouxe datas explícitas.
             if not any(k in params for k in ("start_date", "end_date", "startDate", "endDate")):
@@ -1002,11 +1149,18 @@ class PresentationSuggestOpsService:
             "playlistId": str(host.get("playlistId") or "").strip(),
             "sectionId": str(host.get("sectionId") or "").strip(),
             "dataSourceId": data_source_id,
+            "modelId": model_id,
+            "inputId": model_input_id,
             "operationId": operation_id,
             "routeLabel": route_label,
             "presetKey": str(host.get("presetKey") or "").strip(),
             "backgroundColor": background_color,
             "paramsJson": json.dumps(params, ensure_ascii=False) if params else "",
+            "explicitParamsJson": (
+                json.dumps(explicit_params, ensure_ascii=False)
+                if explicit_params
+                else ""
+            ),
             "transformStepsJson": (
                 json.dumps(transform_steps, ensure_ascii=False) if transform_steps else ""
             ),
@@ -1124,8 +1278,81 @@ class PresentationSuggestOpsService:
         cls,
         op: dict[str, Any],
         placeholders: dict[str, str],
+        *,
+        normalized: str = "",
     ) -> dict[str, Any]:
         name = str(op.get("op") or "").strip()
+        if name == "patch_data_model":
+            model_patch: dict[str, Any] = {}
+            input_patches: list[dict[str, Any]] = []
+            input_id = str(placeholders.get("inputId") or "").strip()
+            input_targeted = "input" in normalized or "consulta" in normalized
+
+            quoted = str(placeholders.get("quoted") or "").strip()
+            if quoted and (
+                cls._marker_hit("renome", normalized)
+                or cls._marker_hit("nome do modelo", normalized)
+            ):
+                model_patch["label"] = quoted
+
+            labels_raw = str(placeholders.get("fieldLabelsJson") or "").strip()
+            if labels_raw:
+                try:
+                    labels = json.loads(labels_raw)
+                except json.JSONDecodeError:
+                    labels = None
+                if isinstance(labels, dict) and labels:
+                    model_patch["fieldLabels"] = {
+                        str(k): str(v)
+                        for k, v in labels.items()
+                        if str(k).strip()
+                    }
+
+            steps_raw = str(placeholders.get("transformStepsJson") or "").strip()
+            steps: list[Any] | None = None
+            if steps_raw:
+                try:
+                    parsed_steps = json.loads(steps_raw)
+                except json.JSONDecodeError:
+                    parsed_steps = None
+                if isinstance(parsed_steps, list) and parsed_steps:
+                    steps = parsed_steps
+            params_raw = str(placeholders.get("explicitParamsJson") or "").strip()
+            params: dict[str, Any] | None = None
+            if params_raw:
+                try:
+                    parsed_params = json.loads(params_raw)
+                except json.JSONDecodeError:
+                    parsed_params = None
+                if isinstance(parsed_params, dict) and parsed_params:
+                    params = parsed_params
+
+            input_patch: dict[str, Any] = {}
+            if params:
+                input_patch["params"] = {"set": params}
+            if steps and input_targeted:
+                input_patch["transform"] = {"version": 1, "steps": steps}
+            if input_patch:
+                # Sem inputId resolvido a op fica incompleta → clarificação
+                # (fail closed); nunca mirar input por chute.
+                input_patch["inputId"] = input_id
+                input_patches.append(input_patch)
+            elif input_targeted and (params is not None or steps is not None):
+                input_patches.append({"inputId": input_id})
+
+            if steps and not input_targeted:
+                model_patch["transform"] = {"version": 1, "steps": steps}
+
+            if model_patch:
+                op["modelPatch"] = model_patch
+            else:
+                op.pop("modelPatch", None)
+            if input_patches:
+                op["inputPatches"] = input_patches
+            else:
+                op.pop("inputPatches", None)
+            return op
+
         if name == "upsert_data_source":
             # Label-only rename must not inject default params (would force full upsert).
             label_only = bool(str(op.get("label") or "").strip()) and not str(
@@ -1401,6 +1628,29 @@ class PresentationSuggestOpsService:
             steps = op.get("steps")
             if not isinstance(steps, list) or not steps:
                 return "set_data_transform.steps"
+            return None
+        if name == "patch_data_model":
+            if not str(op.get("modelId") or "").strip():
+                return "patch_data_model.modelId"
+            input_patches = op.get("inputPatches")
+            if isinstance(input_patches, list):
+                for item in input_patches:
+                    if not isinstance(item, dict):
+                        return "patch_data_model.inputId"
+                    if not str(item.get("inputId") or "").strip():
+                        return "patch_data_model.inputId"
+            has_input_patch = isinstance(input_patches, list) and any(
+                isinstance(item, dict)
+                and (item.get("params") or "transform" in item)
+                for item in input_patches
+            )
+            model_patch = op.get("modelPatch")
+            has_model_patch = isinstance(model_patch, dict) and any(
+                key in model_patch
+                for key in ("label", "transform", "fieldLabels")
+            )
+            if not has_input_patch and not has_model_patch:
+                return "patch_data_model.patch"
             return None
         if name == "bind_visual":
             if not str(op.get("visualId") or "").strip():

@@ -85,6 +85,7 @@ import { DATE_RANGE_PRESET_OPTIONS } from "../utils/dateRangePresets";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { collectDataOperationIds } from "../utils/collectPlaylistDataParamSchema";
 import { renameTableColumnFieldLabel } from "../utils/renameTableColumnFieldLabel";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -685,7 +686,12 @@ function EditorTableViewBlock({
       if (modelPatch) {
         const model = (config.dataModels ?? []).find((item) => item.id === modelPatch.id);
         if (model) {
-          void saveDataModel({ ...model, fieldLabels: modelPatch.fieldLabels });
+          void saveDataModel({ ...model, fieldLabels: modelPatch.fieldLabels }).catch(
+            () =>
+              tvDashboardNotice(
+                "Não foi possível salvar a alteração no modelo de dados.",
+              ),
+          );
         }
       }
       if (tableProjection) {

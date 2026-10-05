@@ -141,6 +141,32 @@ export async function commitUpsertDataModel(args: {
   });
 }
 
+/**
+ * Minimal patch on an EXISTING DataModel (TV-DM-MUT-002). Omitted fields are
+ * preserved by the backend — send only what changed (see buildDataModelEditPlan).
+ */
+export async function commitPatchDataModel(args: {
+  playlistId: string;
+  slideId: string;
+  modelId: string;
+  inputPatches?: Record<string, unknown>[];
+  modelPatch?: Record<string, unknown>;
+}): Promise<ComunicadoConfig | null> {
+  const op: PresentationMutationOp = {
+    op: "patch_data_model",
+    modelId: args.modelId,
+  };
+  if (args.inputPatches?.length) op.inputPatches = args.inputPatches;
+  if (args.modelPatch && Object.keys(args.modelPatch).length) {
+    op.modelPatch = args.modelPatch;
+  }
+  return commitPresentationOps({
+    playlistId: args.playlistId,
+    slideId: args.slideId,
+    ops: [op],
+  });
+}
+
 /** Delete DataModel — backend rejects `data_model.in_use` with consumer details. */
 export async function commitDeleteDataModel(args: {
   playlistId: string;

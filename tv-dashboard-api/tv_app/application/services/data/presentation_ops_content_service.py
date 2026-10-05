@@ -12,10 +12,58 @@ CONTENT_PATH = Path(__file__).resolve().parents[3] / "content" / "presentation_o
 
 _RISK_RANK = {"additive": 1, "mutation": 2, "destructive": 3}
 
+_REF_PREFIX = "#/definitions/"
+
+
+def _expand_definitions_refs(node: Any, definitions: dict[str, Any], seen: frozenset[str]) -> Any:
+    """Expande ``$ref: #/definitions/*`` inline na carga do catálogo.
+
+    Consumers (nested contract, OpenAPI builder, capability surface) recebem o
+    schema já resolvido — ``definitions`` é a única fonte de fragments tipados
+    (TransformPlan/TransformStep/ExpressionSpec) e refs são não-recursivas.
+    """
+    if isinstance(node, list):
+        return [_expand_definitions_refs(item, definitions, seen) for item in node]
+    if not isinstance(node, dict):
+        return node
+    ref = node.get("$ref")
+    if isinstance(ref, str) and ref.startswith(_REF_PREFIX):
+        name = ref[len(_REF_PREFIX) :]
+        target = definitions.get(name)
+        if not isinstance(target, dict):
+            raise ValueError(f"presentation_ops_content: $ref não resolvido {ref!r}")
+        if name in seen:
+            raise ValueError(f"presentation_ops_content: $ref cíclico {ref!r}")
+        merged = _expand_definitions_refs(target, definitions, seen | {name})
+        siblings = {k: v for k, v in node.items() if k != "$ref"}
+        if siblings:
+            merged = {
+                **merged,
+                **{
+                    k: _expand_definitions_refs(v, definitions, seen)
+                    for k, v in siblings.items()
+                },
+            }
+        return merged
+    if ref is not None:
+        raise ValueError(f"presentation_ops_content: $ref externo não suportado {ref!r}")
+    return {
+        key: _expand_definitions_refs(value, definitions, seen)
+        for key, value in node.items()
+    }
+
 
 @lru_cache(maxsize=1)
 def _load() -> dict[str, Any]:
-    return json.loads(CONTENT_PATH.read_text(encoding="utf-8"))
+    content = json.loads(CONTENT_PATH.read_text(encoding="utf-8"))
+    definitions = content.get("definitions")
+    if isinstance(definitions, dict) and definitions:
+        operations = content.get("operations")
+        if isinstance(operations, dict):
+            content["operations"] = _expand_definitions_refs(
+                operations, definitions, frozenset()
+            )
+    return content
 
 
 def clear_presentation_ops_content_cache() -> None:

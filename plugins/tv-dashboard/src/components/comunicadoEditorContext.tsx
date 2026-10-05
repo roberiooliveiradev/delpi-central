@@ -57,8 +57,10 @@ import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
 import { resolveCanvasTableMergeCommand } from "../utils/canvasTableMergeCommands";
 import { serializeDataModelForPreview } from "../utils/dataPreviewRequest";
 import { preferEditorViewResolved } from "../utils/preferEditorViewResolved";
+import { buildDataModelEditPlan } from "../utils/dataModelPatchPlan";
 import {
   commitDeleteDataModel,
+  commitPatchDataModel,
   commitUpsertDataModel,
 } from "../utils/presentationMutationClient";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
@@ -698,12 +700,17 @@ export function ComunicadoEditorProvider({
   );
 
   /**
-   * DataModel mutations — backend ops (`upsert_data_model`/`delete_data_model`)
-   * quando há playlist+slide persistidos; fallback local no editor standalone.
-   * Erros da API propagam para o chamador (ex.: `data_model.in_use`).
+   * DataModel mutations — ops governadas (`patch_data_model` para edições
+   * pontuais, `upsert_data_model` só para create/structural replace,
+   * `delete_data_model`) quando há playlist+slide persistidos; fallback
+   * local apenas no editor standalone. Erros da API propagam para o
+   * chamador — falha de persistência nunca vira escrita local silenciosa.
    */
   const saveDataModel = useCallback(
     async (model: TvDataModel) => {
+      const existing = (configRef.current.dataModels ?? []).find(
+        (item) => item.id === model.id,
+      );
       const next = {
         ...configRef.current,
         dataModels: [
@@ -713,15 +720,34 @@ export function ComunicadoEditorProvider({
       };
       const currentSlideId = slideIdRef.current;
       if (playlistId && currentSlideId) {
-        const canonical = await commitUpsertDataModel({
-          playlistId,
-          slideId: currentSlideId,
-          model: serializeDataModelForPreview(model),
-        });
-        if (canonical) {
-          commitWithHistory(canonical);
+        const plan = existing
+          ? buildDataModelEditPlan(existing, model)
+          : ({ kind: "replace" } as const);
+        if (plan.kind === "noop") {
+          commitWithHistory(next);
           return;
         }
+        const canonical =
+          plan.kind === "patch"
+            ? await commitPatchDataModel({
+                playlistId,
+                slideId: currentSlideId,
+                modelId: plan.patch.modelId,
+                inputPatches: plan.patch.inputPatches,
+                modelPatch: plan.patch.modelPatch,
+              })
+            : await commitUpsertDataModel({
+                playlistId,
+                slideId: currentSlideId,
+                model: serializeDataModelForPreview(model),
+              });
+        if (!canonical) {
+          throw new Error(
+            "Persisted DataModel mutation returned no canonical config.",
+          );
+        }
+        commitWithHistory(canonical);
+        return;
       }
       commitWithHistory(next);
     },
@@ -737,7 +763,12 @@ export function ComunicadoEditorProvider({
           slideId: currentSlideId,
           modelId,
         });
-        if (canonical) commitWithHistory(canonical);
+        if (!canonical) {
+          throw new Error(
+            "Persisted DataModel delete returned no canonical config.",
+          );
+        }
+        commitWithHistory(canonical);
         return;
       }
       commitWithHistory({

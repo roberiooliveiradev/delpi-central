@@ -911,8 +911,8 @@ export type TvDataModelInput = {
   label?: string;
   queryName?: string;
   params?: Record<string, DataParamValue>;
-  /** Transform local do input (executa antes do transform do modelo). */
-  transform?: unknown;
+  /** Transform local do input (executa antes do transform do modelo). Persisted shape may carry `null` (cleared). */
+  transform?: unknown | null;
 };
 
 /**
@@ -925,8 +925,8 @@ export type TvDataModel = {
   label?: string;
   primaryInputId: string;
   inputs: TvDataModelInput[];
-  /** Transform do modelo (aplicado após o transform do input primário). */
-  transform?: unknown;
+  /** Transform do modelo (aplicado após o transform do input primário). Persisted shape may carry `null` (cleared). */
+  transform?: unknown | null;
   /** Rótulos de display por campo do output. */
   fieldLabels?: Record<string, string>;
 };

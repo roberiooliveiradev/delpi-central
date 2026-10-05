@@ -138,10 +138,13 @@ import {
   commitAlignBlocks,
   commitCreateBlock,
   commitDuplicateBlocks,
+  commitPatchDataModel,
   commitPatchNativeConfig,
   commitPresentationOps,
   commitReorderBlockZ,
 } from "../../utils/presentationMutationClient";
+import { buildFieldLabelsMergePatch } from "../../utils/dataModelPatchPlan";
+import { tvDashboardNotice } from "../../utils/tvDashboardNotice";
 import {
   ackUpsertBlocksWithGeneration,
   commitOpsAndApplyAck,
@@ -893,14 +896,47 @@ export function useComunicadoEditorBlocks({
           } as Partial<ComunicadoBlock>);
         }
         if (modelPatch) {
-          commitWithHistory({
-            ...configRef.current,
-            dataModels: (configRef.current.dataModels ?? []).map((model) =>
-              model.id === modelPatch.id
-                ? { ...model, fieldLabels: modelPatch.fieldLabels }
-                : model,
-            ),
-          });
+          const existingModel = (configRef.current.dataModels ?? []).find(
+            (model) => model.id === modelPatch.id,
+          );
+          const applyLocal = () =>
+            commitWithHistory({
+              ...configRef.current,
+              dataModels: (configRef.current.dataModels ?? []).map((model) =>
+                model.id === modelPatch.id
+                  ? { ...model, fieldLabels: modelPatch.fieldLabels }
+                  : model,
+              ),
+            });
+          // Edição pontual de fieldLabels de DataModel existente: op
+          // governada patch_data_model (merge; "" remove a chave).
+          const fieldLabelsPatch = buildFieldLabelsMergePatch(
+            existingModel?.fieldLabels,
+            modelPatch.fieldLabels,
+          );
+          if (playlistId && slideId && existingModel && fieldLabelsPatch !== undefined) {
+            // Slide persistido: falha da mutação governada é visível e NUNCA
+            // vira escrita local silenciosa (TV-DM-MUT-002).
+            const reportPersistFailure = () =>
+              tvDashboardNotice(
+                "Não foi possível salvar a alteração no modelo de dados.",
+              );
+            void commitPatchDataModel({
+              playlistId,
+              slideId,
+              modelId: modelPatch.id,
+              modelPatch: { fieldLabels: fieldLabelsPatch },
+            })
+              .then((canonical) => {
+                if (canonical) commitWithHistory(canonical);
+                else reportPersistFailure();
+              })
+              .catch(() => {
+                reportPersistFailure();
+              });
+          } else {
+            applyLocal();
+          }
         }
         const viewPatch: Partial<ComunicadoBlock> = {};
         if (kpiProjection) {

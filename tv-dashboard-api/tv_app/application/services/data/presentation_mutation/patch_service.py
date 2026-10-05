@@ -1949,10 +1949,13 @@ class PresentationPatchService:
             )
 
         try:
+            # Transforms já foram sanitizados quando persistidos; os campos
+            # patcheados passaram pelo sanitizer acima. Re-sanitizar o candidato
+            # completo quebraria patch em modelos com transform v2 (script).
             normalized = normalize_data_model(
                 candidate,
                 catalog=self._catalog,
-                sanitize_transform=self._sanitize_vista_data_transform,
+                sanitize_transform=None,
                 generate_id=False,
             )
         except DataModelContractError as exc:

@@ -324,7 +324,10 @@ def test_inspect_lossless_single_input_no_transform():
     out = _inspect(slide, playlist_id, slide_id, include_runtime=False)
     definition = out["definition"]
     assert definition["inputs"][0]["transform"] is None
-    assert definition["inputs"][0]["hasTransform"] is False
+    # hasTransform é metadado derivado — fora da definição persistida.
+    assert "hasTransform" not in definition["inputs"][0]
+    assert out["derived"]["inputHasTransform"] == {"only": False}
+    assert out["derived"]["modelHasTransform"] is False
     assert definition["transform"] is None
     assert out["definitionCompleteness"] == "full"
     assert len(out["definitionDigest"]) == 64
@@ -354,7 +357,10 @@ def test_inspect_lossless_twenty_inputs_seven_transforms():
         assert item["params"] == raw["params"]
         expected_transform = raw.get("transform")
         assert item["transform"] == expected_transform
-        assert item["hasTransform"] == isinstance(expected_transform, dict)
+        assert "hasTransform" not in item
+        assert out["derived"]["inputHasTransform"][item["id"]] == isinstance(
+            expected_transform, dict
+        )
     assert definition["transform"] == persisted["transform"]
     assert definition["fieldLabels"] == persisted["fieldLabels"]
     assert definition["label"] == persisted["label"]
@@ -855,3 +861,485 @@ def test_business_case_period_expressions_and_calculated_field():
     assert row["nn_es_mom_pct"] == pytest.approx(35.9, abs=0.05)
     assert row["rol_00"] == pytest.approx(1359.0)
     assert row["rol_01"] == pytest.approx(1000.0)
+
+
+# ---------------------------------------------------------------------------
+# L — derived metadata separation + contract-honest inspection
+# ---------------------------------------------------------------------------
+
+
+def test_inspect_derived_metadata_outside_definition():
+    slide_id = str(uuid4())
+    playlist_id = str(uuid4())
+    slide = _slide(slide_id)
+    out = _inspect(slide, playlist_id, slide_id, include_runtime=False)
+    definition = out["definition"]
+    canonical_keys = {"id", "label", "queryName", "operationId", "params", "transform"}
+    for item in definition["inputs"]:
+        assert set(item.keys()) == canonical_keys
+    derived = out["derived"]
+    assert derived["modelHasTransform"] is True
+    assert derived["inputHasTransform"]["inp_00"] is True
+    assert derived["inputHasTransform"]["inp_19"] is False
+    assert derived["nonCanonicalKeys"] == []
+
+
+def test_inspect_marks_non_canonical_persisted_keys():
+    slide_id = str(uuid4())
+    playlist_id = str(uuid4())
+    model = _incident_model()
+    model["legacyBlob"] = {"x": 1}
+    model["inputs"][0]["runtimeCache"] = {"rows": []}
+    slide = {
+        "id": slide_id,
+        "nativeConfig": {"version": 5, "blocks": [], "dataModels": [model]},
+    }
+    out = _inspect(slide, playlist_id, slide_id, include_runtime=False)
+    assert out["derived"]["nonCanonicalKeys"] == ["legacyBlob"]
+    assert out["derived"]["nonCanonicalInputKeys"] == {"inp_00": ["runtimeCache"]}
+    assert "legacyBlob" not in out["definition"]
+
+
+def test_inspect_non_contract_model_falls_back_honestly():
+    """Modelo persistido fora do contrato (sem primaryInputId) ainda é
+    inspecionável — completeness denuncia, definição não é mascarada."""
+    slide_id = str(uuid4())
+    playlist_id = str(uuid4())
+    model = {
+        "id": MODEL_ID,
+        "inputs": [{"id": "only", "operationId": OP_ROL, "params": {}}],
+    }
+    slide = {
+        "id": slide_id,
+        "nativeConfig": {"version": 5, "blocks": [], "dataModels": [model]},
+    }
+    out = _inspect(slide, playlist_id, slide_id, include_runtime=False)
+    assert out["definitionCompleteness"] == "raw_unvalidated"
+    assert out["derived"]["contractError"]["code"]
+    assert out["definition"]["id"] == MODEL_ID
+
+
+def test_inspect_patch_inspect_authoritative_readback():
+    """inspect → patch → persist candidate → inspect reflete só o delta."""
+    slide = _slide(SLIDE_ID)
+    playlist_id = str(uuid4())
+    before = _inspect(slide, playlist_id, SLIDE_ID, include_runtime=False)
+    svc = _patch_service(slide)
+    result = svc.preview(
+        _envelope(
+            [
+                {
+                    "op": "patch_data_model",
+                    "modelId": MODEL_ID,
+                    "modelPatch": {"label": "Renomeado", "fieldLabels": None},
+                }
+            ]
+        ),
+        user=_user(),
+    )
+    candidate_cfg = result["nativeConfig"]
+    after_slide = {
+        "id": SLIDE_ID,
+        "nativeConfig": candidate_cfg,
+    }
+    after = _inspect(after_slide, playlist_id, SLIDE_ID, include_runtime=False)
+    assert after["definition"]["label"] == "Renomeado"
+    assert not normalize_data_model(
+        candidate_cfg["dataModels"][0], catalog=TvDataRouteCatalogService()
+    ).get("fieldLabels")
+    assert len(after["definition"]["inputs"]) == 20
+    assert after["definition"]["transform"] == before["definition"]["transform"]
+    assert after["definitionDigest"] != before["definitionDigest"]
+
+
+# ---------------------------------------------------------------------------
+# M — fieldLabels/label/null semantics (schema + runtime parity)
+# ---------------------------------------------------------------------------
+
+
+def test_patch_fieldlabels_null_clears_map():
+    slide = _slide(SLIDE_ID)
+    svc = _patch_service(slide)
+    result = svc.preview(
+        _envelope(
+            [
+                {
+                    "op": "patch_data_model",
+                    "modelId": MODEL_ID,
+                    "modelPatch": {"fieldLabels": None},
+                }
+            ]
+        ),
+        user=_user(),
+    )
+    candidate = _patched_model(result)
+    assert not normalize_data_model(
+        candidate, catalog=TvDataRouteCatalogService()
+    ).get("fieldLabels")
+    patch_info = result["sideEffects"]["dataModelPatches"][0]
+    assert patch_info["fieldLabelsChanged"] is True
+
+
+def test_patch_fieldlabels_empty_string_removes_entry():
+    slide = _slide(SLIDE_ID)
+    svc = _patch_service(slide)
+    result = svc.preview(
+        _envelope(
+            [
+                {
+                    "op": "patch_data_model",
+                    "modelId": MODEL_ID,
+                    "modelPatch": {"fieldLabels": {"weg_sc_m25": ""}},
+                }
+            ]
+        ),
+        user=_user(),
+    )
+    candidate = _patched_model(result)
+    normalized = normalize_data_model(candidate, catalog=TvDataRouteCatalogService())
+    assert "weg_sc_m25" not in normalized["fieldLabels"]
+    assert normalized["fieldLabels"]["nn_es_mom_pct"] == "ES MoM %"
+
+
+def test_patch_label_only_preserves_everything_else():
+    slide = _slide(SLIDE_ID)
+    svc = _patch_service(slide)
+    result = svc.preview(
+        _envelope(
+            [
+                {
+                    "op": "patch_data_model",
+                    "modelId": MODEL_ID,
+                    "modelPatch": {"label": "Só label"},
+                }
+            ]
+        ),
+        user=_user(),
+    )
+    candidate = _patched_model(result)
+    persisted = slide["nativeConfig"]["dataModels"][0]
+    assert candidate["label"] == "Só label"
+    assert _normalized(candidate)["inputs"] == _normalized(persisted)["inputs"]
+    assert _normalized(candidate)["transform"] == _normalized(persisted)["transform"]
+    assert _normalized(candidate)["fieldLabels"] == _normalized(persisted)["fieldLabels"]
+
+
+def test_patch_on_script_transform_model_succeeds():
+    """Modelo persistido com transform v2 (script) aceita patch de label —
+    a re-normalização não re-sanitiza transforms já persistidos."""
+    model = {
+        "id": MODEL_ID,
+        "label": "Script model",
+        "primaryInputId": "only",
+        "inputs": [
+            {
+                "id": "only",
+                "operationId": OP_ROL,
+                "params": {"branch": "01", "dateRangePreset": "this_year"},
+            }
+        ],
+        "transform": {
+            "version": 2,
+            "language": "m-delpi-v1",
+            "script": "let\n  A = Table.Skip(Fonte, 0)\nin\n  A",
+        },
+    }
+    slide = {
+        "id": SLIDE_ID,
+        "nativeConfig": {"version": 5, "blocks": [], "dataModels": [model]},
+    }
+    svc = _patch_service(slide)
+    result = svc.preview(
+        _envelope(
+            [
+                {
+                    "op": "patch_data_model",
+                    "modelId": MODEL_ID,
+                    "modelPatch": {"label": "Renomeado"},
+                }
+            ]
+        ),
+        user=_user(),
+    )
+    candidate = _patched_model(result)
+    assert candidate["label"] == "Renomeado"
+    assert candidate["transform"]["version"] == 2
+
+
+def test_schema_rejects_unknown_modelpatch_and_null_label():
+    from tv_app.application.services.data.presentation_nested_contract import (
+        NestedContractError,
+        validate_operation_payload,
+    )
+
+    with pytest.raises(NestedContractError):
+        validate_operation_payload(
+            "patch_data_model",
+            {"op": "patch_data_model", "modelId": "m", "modelPatch": {"bogus": 1}},
+        )
+    with pytest.raises(NestedContractError):
+        validate_operation_payload(
+            "patch_data_model",
+            {"op": "patch_data_model", "modelId": "m", "modelPatch": {"label": None}},
+        )
+
+
+def test_schema_transform_typed_and_expression_single_source():
+    """TransformPlan/ExpressionSpec são defs canônicas: mesmo contrato em
+    set_data_transform, upsert_data_model e patch_data_model."""
+    from tv_app.application.services.data.presentation_nested_contract import (
+        NestedContractError,
+        validate_operation_payload,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        PresentationOpsContentService,
+    )
+
+    ops = PresentationOpsContentService.operations()
+    patch_transform = (
+        ops["patch_data_model"]["inputSchema"]["properties"]["modelPatch"][
+            "properties"
+        ]["transform"]
+    )
+    sdt_items = ops["set_data_transform"]["inputSchema"]["properties"]["steps"][
+        "items"
+    ]
+    assert patch_transform["properties"]["steps"]["items"] == sdt_items
+    assert patch_transform.get("x-delpi-gpt-opaque-object") is not True
+
+    expr_set = (
+        ops["patch_data_model"]["inputSchema"]["properties"]["inputPatches"][
+            "items"
+        ]["properties"]["params"]["properties"]["set"]["additionalProperties"][
+            "oneOf"
+        ]
+    )
+    expr_upsert = (
+        ops["patch_data_source_params"]["inputSchema"]["properties"]["set"][
+            "additionalProperties"
+        ]["oneOf"]
+    )
+    def _strip_desc(node):
+        if isinstance(node, dict):
+            return {
+                k: _strip_desc(v) for k, v in node.items() if k != "description"
+            }
+        if isinstance(node, list):
+            return [_strip_desc(v) for v in node]
+        return node
+
+    assert _strip_desc(expr_set[-1]) == _strip_desc(expr_upsert[-1])
+
+    validate_operation_payload(
+        "patch_data_model",
+        {
+            "op": "patch_data_model",
+            "modelId": "m",
+            "modelPatch": {"transform": {"steps": [{"op": "keepRows", "count": 2}]}},
+        },
+    )
+    with pytest.raises(NestedContractError):
+        validate_operation_payload(
+            "patch_data_model",
+            {
+                "op": "patch_data_model",
+                "modelId": "m",
+                "inputPatches": [
+                    {"inputId": "i", "transform": {"script": "let x=1 in x"}}
+                ],
+            },
+        )
+
+
+# ---------------------------------------------------------------------------
+# PREPARE/ACT — governed pipeline end-to-end with authoritative read-back
+# ---------------------------------------------------------------------------
+
+
+class _WritesFake:
+    """Writes port mínimo: update_slide persiste o nativeConfig no slide
+    in-memory — pós-commit, inspect lê o ESTADO AUTORITATIVO persistido."""
+
+    def __init__(self, slide: dict) -> None:
+        self._slide = slide
+        self.revision = 7
+
+    def get_slide(self, slide_id, *args, **kwargs):
+        return self._slide
+
+    def get_playlist(self, playlist_id, *args, **kwargs):
+        return {
+            "id": str(playlist_id),
+            "name": "Comercial",
+            "dataDefaults": {"branch": "01"},
+        }
+
+    def list_slides(self, playlist_id):
+        return [self._slide]
+
+    def list_sections(self, playlist_id):
+        return []
+
+    def get_revision(self, playlist_id):
+        return self.revision
+
+    def assert_expected_revision(self, playlist_id, expected):
+        assert int(expected) == self.revision
+
+    def update_slide(self, playlist_id, slide_id, patch, **kwargs):
+        if isinstance(patch, dict) and isinstance(patch.get("nativeConfig"), dict):
+            self._slide["nativeConfig"] = patch["nativeConfig"]
+        self.revision += 1
+        return self._slide
+
+
+def _governed_dispatch(slide: dict):
+    """Dispatch com patch service REAL + commit real + writes fake."""
+    from tv_app.application.gpt_actions.commit_service import TvGptCommitService
+    from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
+        InMemoryIdempotencyRepository,
+    )
+
+    svc = _patch_service(slide)
+    writes = _WritesFake(slide)
+    commit = TvGptCommitService(
+        writes=writes,
+        idempotency=InMemoryIdempotencyRepository(),
+        patch=svc,
+    )
+    dispatch = GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=commit, patch=svc
+    )
+    user = _user()
+    patches = (
+        patch.object(
+            dispatch._access,
+            "resolve",
+            return_value=SimpleNamespace(
+                can_read=True,
+                can_edit=True,
+                level="owner",
+                playlist={
+                    "id": PLAYLIST_ID,
+                    "name": "Comercial",
+                    "dataDefaults": {"branch": "01"},
+                },
+            ),
+        ),
+        patch(
+            "tv_app.application.gpt_actions.dispatch_service.assert_permission",
+            return_value=None,
+        ),
+        patch.object(dispatch._access, "actor_id", return_value="actor-1"),
+        patch.object(
+            commit._access,
+            "resolve",
+            return_value=SimpleNamespace(
+                can_read=True,
+                can_edit=True,
+                level="owner",
+                playlist={
+                    "id": PLAYLIST_ID,
+                    "name": "Comercial",
+                    "dataDefaults": {"branch": "01"},
+                },
+            ),
+        ),
+    )
+    return dispatch, writes, user, patches
+
+
+def test_prepare_commit_patch_data_model_authoritative_readback():
+    """inspect → preview_change (PREPARE) → commit (ACT) → inspect read-back
+    reflete o delta persistido — nunca o estado otimista do caller."""
+    from tv_app.application.gpt_actions.proposal_store import (
+        reset_proposal_store_for_tests,
+    )
+
+    slide = _slide(SLIDE_ID)
+    dispatch, writes, user, patches = _governed_dispatch(slide)
+    reset_proposal_store_for_tests()
+
+    with patches[0], patches[1], patches[2], patches[3]:
+        before = dispatch.inspect_data_model(
+            user=user,
+            playlist_id=PLAYLIST_ID,
+            slide_id=SLIDE_ID,
+            model_id=MODEL_ID,
+            authorization=None,
+            include_runtime=False,
+        )
+        first_input = before["definition"]["inputs"][0]
+
+        # PREPARE — mint proposal, nada persiste
+        preview = dispatch.preview_change(
+            user=user,
+            target={"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            ops=[
+                {
+                    "op": "patch_data_model",
+                    "modelId": MODEL_ID,
+                    "inputPatches": [
+                        {"inputId": first_input["id"], "params": {"set": {"branch": "02"}}}
+                    ],
+                }
+            ],
+            catalog_version=None,
+            authorization=None,
+        )
+        assert preview["persisted"] is False
+        assert preview["proposal_handle"]
+        assert slide["nativeConfig"]["dataModels"][0]["inputs"][0]["params"].get("branch") == "01"
+
+        # ACT sem confirmação explícita → bloqueado
+        with pytest.raises(GptActionsError) as excinfo:
+            dispatch.commit_change(
+                user=user,
+                proposal_handle=preview["proposal_handle"],
+                confirmation=None,
+                idempotency_key="k-dm-1",
+                authorization=None,
+            )
+        assert excinfo.value.code == "CONFIRMATION_REQUIRED"
+        reset_proposal_store_for_tests()
+
+        preview = dispatch.preview_change(
+            user=user,
+            target={"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            ops=[
+                {
+                    "op": "patch_data_model",
+                    "modelId": MODEL_ID,
+                    "inputPatches": [
+                        {"inputId": first_input["id"], "params": {"set": {"branch": "02"}}}
+                    ],
+                }
+            ],
+            catalog_version=None,
+            authorization=None,
+        )
+        outcome = dispatch.commit_change(
+            user=user,
+            proposal_handle=preview["proposal_handle"],
+            confirmation={"confirmed": True},
+            idempotency_key="k-dm-2",
+            authorization=None,
+        )
+        assert outcome
+
+        # Read-back autoritativo — estado persistido, não otimista
+        after = dispatch.inspect_data_model(
+            user=user,
+            playlist_id=PLAYLIST_ID,
+            slide_id=SLIDE_ID,
+            model_id=MODEL_ID,
+            authorization=None,
+            include_runtime=False,
+        )
+        persisted = slide["nativeConfig"]["dataModels"][0]
+        assert persisted["inputs"][0]["params"]["branch"] == "02"
+        assert after["definition"]["inputs"][0]["params"]["branch"] == "02"
+        # outros 19 inputs preservados
+        assert after["definition"]["inputs"][1]["params"] == before["definition"]["inputs"][1]["params"]
+        assert len(after["definition"]["inputs"]) == 20
+        assert after["definitionDigest"] != before["definitionDigest"]

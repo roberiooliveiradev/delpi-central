@@ -266,6 +266,55 @@ def normalize_data_model(
     return normalized
 
 
+_CANONICAL_MODEL_KEYS = frozenset(
+    {"id", "label", "primaryInputId", "inputs", "transform", "fieldLabels"}
+)
+_CANONICAL_INPUT_KEYS = frozenset(
+    {"id", "label", "queryName", "operationId", "params", "transform"}
+)
+
+
+def canonical_data_model_definition(
+    model: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Projeção canônica da definição persistida — lossless por construção.
+
+    Retorna ``(definition, derived)`` onde ``definition`` é exatamente o
+    objeto que ``normalize_data_model`` persiste (mesma função, path de
+    leitura ``sanitize_transform=None``): um inspect→edit→patch/upsert
+    round-trip preserva todos os campos do contrato. Metadados derivados
+    (``hasTransform``, chaves fora do contrato) ficam fora da definição
+    para não contaminar ``definitionDigest`` nem serem confundidos com
+    dados persistidos.
+    """
+    definition = normalize_data_model(
+        model, catalog=None, sanitize_transform=None, generate_id=False
+    )
+    input_has_transform = {
+        str(item.get("id") or ""): isinstance(item.get("transform"), dict)
+        for item in definition.get("inputs") or []
+        if isinstance(item, dict)
+    }
+    non_canonical_keys = sorted(
+        str(key) for key in model.keys() if key not in _CANONICAL_MODEL_KEYS
+    )
+    non_canonical_input_keys = {
+        str(item.get("id") or ""): sorted(
+            str(key) for key in item.keys() if key not in _CANONICAL_INPUT_KEYS
+        )
+        for item in model.get("inputs") or []
+        if isinstance(item, dict)
+        and any(key not in _CANONICAL_INPUT_KEYS for key in item.keys())
+    }
+    derived = {
+        "inputHasTransform": input_has_transform,
+        "modelHasTransform": isinstance(definition.get("transform"), dict),
+        "nonCanonicalKeys": non_canonical_keys,
+        "nonCanonicalInputKeys": non_canonical_input_keys,
+    }
+    return definition, derived
+
+
 def data_model_source_blocks(
     model: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], str]:

@@ -66,6 +66,7 @@ def _validate(instance: Any, schema: dict[str, Any], *, path: str, op_name: str)
                     raise NestedContractError(
                         PresentationOpsContentService.message(
                             "transformStepUnknown",
+                            op=op_name,
                             stepOp=step_op,
                         )
                     )

@@ -1299,6 +1299,8 @@ class GptActionsDispatchService:
         """Inspect persistido de DataModel — definition, inputs, transform,
         output schema, consumers e runtime status. Somente leitura."""
         from tv_app.application.services.data.data_model_service import (
+            DataModelContractError,
+            canonical_data_model_definition,
             find_data_model,
         )
         from tv_app.application.services.data.presentation_mutation.patch_service import (
@@ -1361,34 +1363,27 @@ class GptActionsDispatchService:
                 details={"modelId": mid},
             )
 
-        # Definição persistida — lossless authoring contract (round-trip seguro
-        # para upsert/patch): nenhum campo persistido é descartado e nenhum
-        # artefato de runtime entra. hasTransform permanece como metadado de
-        # conveniência; transform é a fonte de verdade.
-        definition = {
-            "id": model.get("id"),
-            "label": model.get("label"),
-            "primaryInputId": model.get("primaryInputId"),
-            "inputs": [
-                {
-                    "id": item.get("id"),
-                    "label": item.get("label"),
-                    "queryName": item.get("queryName"),
-                    "operationId": item.get("operationId"),
-                    "params": item.get("params") or {},
-                    "transform": item.get("transform")
-                    if isinstance(item.get("transform"), dict)
-                    else None,
-                    "hasTransform": isinstance(item.get("transform"), dict),
-                }
-                for item in model.get("inputs") or []
-                if isinstance(item, dict)
-            ],
-            "transform": model.get("transform")
-            if isinstance(model.get("transform"), dict)
-            else None,
-            "fieldLabels": model.get("fieldLabels") or {},
-        }
+        # Definição persistida — projeção canônica de normalize_data_model:
+        # exatamente o objeto que o contrato DM0 persiste/round-trips
+        # (upsert/patch). Metadados derivados (hasTransform, chaves fora do
+        # contrato) ficam em `derived`, fora do digest.
+        try:
+            definition, derived = canonical_data_model_definition(model)
+            definition_completeness = "full"
+        except DataModelContractError as exc:
+            # Modelo persistido fora do contrato: inspect continua lendo o
+            # estado cru para diagnóstico, sem mascarar a falha.
+            definition = dict(model)
+            derived = {
+                "inputHasTransform": {
+                    str(item.get("id") or ""): isinstance(item.get("transform"), dict)
+                    for item in model.get("inputs") or []
+                    if isinstance(item, dict)
+                },
+                "modelHasTransform": isinstance(model.get("transform"), dict),
+                "contractError": {"code": exc.code, "message": str(exc)},
+            }
+            definition_completeness = "raw_unvalidated"
         definition_digest = hashlib.sha256(
             json.dumps(
                 definition, sort_keys=True, ensure_ascii=False, separators=(",", ":")
@@ -1438,8 +1433,9 @@ class GptActionsDispatchService:
         out = {
             "modelId": mid,
             "definition": definition,
-            "definitionCompleteness": "full",
+            "definitionCompleteness": definition_completeness,
             "definitionDigest": definition_digest,
+            "derived": derived,
             "consumers": consumers,
             "consumerCount": len(consumers),
             "outputSchema": output_schema,

@@ -21,6 +21,7 @@ import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { useComunicadoEditor } from "../components/comunicadoEditorContext";
 import { resolveVisibleKeys } from "../components/TableColumnsMultiSelect";
 import type { ValueFieldOption } from "../components/ValueFieldsMultiSelect";
+import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 export type ViewProjectionModel = {
   /** Bloco view selecionado (chart_view/kpi_view/table_view) ou null. */
@@ -182,7 +183,11 @@ export function useViewProjectionModel(
         void saveDataModel({
           ...linkedModel,
           fieldLabels: patchFieldLabels(linkedModel.fieldLabels, key, label),
-        });
+        }).catch(() =>
+          tvDashboardNotice(
+            "Não foi possível salvar a alteração no modelo de dados.",
+          ),
+        );
       };
     }
     if (linkedSource && isDataSourceBlockType(linkedSource.type)) {
