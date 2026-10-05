@@ -1160,6 +1160,12 @@ class OperationalCapabilityOrchestrator:
                         correlation,
                     )
                 except CapabilityProviderError as exc:
+                    _logger.info(
+                        "orchestration stage=discovery decision=error "
+                        "error_code=%s correlation_id=%s",
+                        exc.code,
+                        correlation,
+                    )
                     return _error_attempt(correlation, exc)
                 owner_evidence = _bound_owner_evidence(discovery_outcome)
                 self._log_plan(plan, correlation, discovery_ran=True)
@@ -1196,7 +1202,7 @@ class OperationalCapabilityOrchestrator:
             )
 
         if descriptor.operation_class is SpecialistOperationClass.PREPARE:
-            return self._attempt_prepare(
+            attempt = self._attempt_prepare(
                 group_key,
                 remote_name,
                 arguments,
@@ -1205,6 +1211,14 @@ class OperationalCapabilityOrchestrator:
                 session_id,
                 correlation,
             )
+            _logger.info(
+                "orchestration stage=execute decision=%s "
+                "error_code=%s correlation_id=%s",
+                attempt.status.value,
+                attempt.error_code or "",
+                correlation,
+            )
+            return attempt
         if descriptor.operation_class is SpecialistOperationClass.ACT:
             return self._attempt_direct_act(
                 group_key,
@@ -1226,6 +1240,12 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
         except CapabilityProviderError as exc:
+            _logger.info(
+                "orchestration stage=execute decision=error "
+                "error_code=%s correlation_id=%s",
+                exc.code,
+                correlation,
+            )
             return _error_attempt(correlation, exc)
         if invoked is None:
             # Post-consultation miss: the owner produced no eligible
