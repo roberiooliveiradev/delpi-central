@@ -16,6 +16,13 @@ from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
 from pydantic import ConfigDict
 
+from tm_app.application.gpt_actions.capability_descriptors import (
+    RECORD_OPERATIONS,
+)
+from tm_app.application.gpt_actions.entities import (
+    GptAnalysisView,
+    GptEntity,
+)
 from tm_app.interface.mcp.branding import TEO_MCP_INSTRUCTIONS
 from tm_app.interface.mcp.constants import (
     DESTRUCTIVE_ACT_TOOLS,
@@ -27,6 +34,14 @@ from tm_app.interface.mcp.resource_metadata import public_host_allowed_for_mcp
 from tm_app.interface.mcp import tool_bridge as bridge
 
 logger = logging.getLogger(__name__)
+
+# Canonical owner value domains projected as Literal so the MCP
+# inputSchema declares the valid values (enum) — the same authority
+# the GPT Actions OpenAPI builder already uses; handlers still
+# receive plain strings at runtime.
+_EntityParam = Literal[tuple(e.value for e in GptEntity)]
+_AnalysisViewParam = Literal[tuple(v.value for v in GptAnalysisView)]
+_RecordOperationParam = Literal[tuple(sorted(RECORD_OPERATIONS))]
 
 
 class _TeoWireTool(MCPTool):
@@ -167,7 +182,7 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def analyze(
-        view: str,
+        view: _AnalysisViewParam,
         filial_id: str | None = None,
         setor_id: str | None = None,
         processo_id: str | None = None,
@@ -197,7 +212,7 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def search_records(
-        entity: str,
+        entity: _EntityParam,
         parent_id: str | None = None,
         instance_id: str | None = None,
         filial_id: str | None = None,
@@ -226,7 +241,7 @@ def create_mcp_server() -> MCPServer:
         annotations=_annotations("get_record", "Get record"),
         meta=meta,
     )
-    def get_record(entity: str, id: str) -> CallToolResult:
+    def get_record(entity: _EntityParam, id: str) -> CallToolResult:
         return bridge.tool_get_record(entity=entity, id=id)
 
     @mcp.tool(
@@ -341,8 +356,8 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def prepare_record_change(
-        entity: str,
-        operation: str,
+        entity: _EntityParam,
+        operation: _RecordOperationParam,
         record_id: str | None = None,
         changes: dict | None = None,
         commit_now: bool = False,
