@@ -8777,4 +8777,79 @@ PREPARE_SIDE_EFFECT_INVENTORY (commit_now) =
         Actions additive feature; removing/reclassifying it on the
         MCP PREPARE surface is owner-side scope).
 
-IMPLEMENTATION_EVIDENCE = PENDING
+IMPLEMENTATION_EVIDENCE =
+
+IMPLEMENTATION_SHA = 45f95a3a15 (runtime correction + tests)
+DOC_COMMIT = 87b4e22ca1 (reproduction evidence + R1 opening)
+
+REUSE_INVENTORY =
+    shared/delpi_mcp/tool_validation.py validates tool-definition
+        wire shape, never invocation instances ->
+        EXISTING_EQUIVALENT = NO for argument-instance validation ->
+        NEW bounded validator (minimum provider-neutral subset)
+    specialist orchestration argument flow -> EXISTING_EQUIVALENT =
+        YES -> REUSE_DECISION = EXTEND
+    DAVI second-stage candidate argument extraction ->
+        EXISTING_EQUIVALENT = YES -> REUSE_DECISION = EXTEND
+    static MCP capability registry -> REUSE_DECISION = DO_NOT_CREATE
+
+IMPLEMENTATION =
+    argument_validation.py (NEW, application/interaction):
+        normalize_arguments — JSON-object-string normalization only
+        when the ENTIRE trimmed payload parses to a JSON object
+        (no eval, no prose, bounded); validate_arguments —
+        deterministic bounded JSON-Schema-subset instance
+        validation (object/array/string/integer/number/boolean/null;
+        properties/required/items/enum/const/additionalProperties/
+        anyOf/oneOf/min-max); ORCHESTRATED_FIELDS denylist at the
+        top-level parameter boundary; DÉLIA resource bounds
+        (depth 6, nodes 96, keys 24/obj, items 32/array,
+        string 4000, serialized 8192, top-level keys 32).
+    specialist_capability_orchestration.py (EXTEND):
+        single flat selection call replaced by a hierarchical
+        bounded pipeline — _select_specialist (per-specialist fair
+        summaries, no global first-N truncation; invented specialist
+        revalidated against fresh catalogs) -> _select_capability
+        (selected specialist's live surface only; invented/stale
+        names revalidated) -> _build_arguments (owner inputSchema as
+        untrusted data block; model projects "arguments"; normalize
+        + schema validation decide). Candidate-bound executors keep
+        the owner discovery flow; inner payload proposed under the
+        executor's "arguments" object then revalidated against the
+        owner candidate schema. All stages keep HYPOTHESIS epistemic
+        class; owner metadata never enters instruction lineage.
+
+TESTS_LOCAL =
+    delia-api pytest = 704 PASS (baseline 632 + 72 new)
+        test_argument_validation.py = 64 (primitive/nested/array
+            matrix, enum/const/bounds, unknown+required, orchestrated
+            fields top-level+nested+stringified, deterministic
+            bounds, JSON-string normalization matrix)
+        orchestration suite additions = nested args reach owner wire,
+            stringified-JSON end-to-end, prose-wrapped JSON rejected,
+            metamorphic new capability (zero DELIA change),
+            metamorphic reclassification READ->UNKNOWN fail-closed,
+            stage-1 fairness (all specialists represented), untrusted
+            metadata never reaches instructions, AST residual scan
+            (no local catalog/flags/pairs/specialist branches)
+    plugins/delia vitest = 40 PASS; typecheck PASS; build PASS
+        (same chunk-size warning as baseline)
+    git diff --check = CLEAN
+
+RESIDUAL_SEARCH =
+    ACTIVE_LOCAL_MCP_CATALOG_HITS = 0
+    ACTIVE_SPECIALIST_ROUTING_RULE_HITS = 0
+    ACTIVE_STATIC_PREPARE_ACT_PAIR_HITS = 0
+    (remaining mentions are SUPERSEDED docstring markers + existing
+    negative assertions in governed-write/interop tests)
+
+MODEL_EVALS = PENDING (runs against the production-configured model
+    during controlled deploy verification — no local LLM provider
+    is configured)
+
+PRODUCTION_VERIFICATION = PENDING (controlled deploy of delia-api
+    after push; routing x5 per specialist, PREPARE-only safe probe,
+    cancel, secret/log hygiene)
+
+STATUS_NOTE = local evidence complete; production + eval evidence
+    pending controlled deploy
