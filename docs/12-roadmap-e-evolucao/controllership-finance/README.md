@@ -30,8 +30,10 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - implementação: **NOT_STARTED**
 - ROI: **não calculado**
 - P1/P2/P4/P6: **READY_FOR_IMPLEMENTATION_INVENTORY**
-- P3: **READY com stop condition em T03**
-- P5: **PARTIALLY_READY**, canal de envio depende E04/T04
+- P3: **READY_WITH_STOP_CONDITION_ON_T03**
+- P5 pacote/finalização: **READY_FOR_IMPLEMENTATION_INVENTORY**
+- P5 envio real: **BLOCKED_WITH_EVIDENCE**, Q22 depende E04/T04
+- handoff funcional P1–P6: **DOCUMENTED**, sujeito aos inventories E/T da página
 
 ## Documentação
 
@@ -58,6 +60,10 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [17-backlog-de-confirmacoes-e-inventarios.md](./17-backlog-de-confirmacoes-e-inventarios.md) | E01–E06 e T01–T05 |
 | [18-readiness-e-handoff-de-implementacao.md](./18-readiness-e-handoff-de-implementacao.md) | readiness e handoff |
 | [19-rastreabilidade-teo.md](./19-rastreabilidade-teo.md) | mapa dos registros TÉO |
+| [20-transforma-plus-coverage.md](./20-transforma-plus-coverage.md) | cobertura CTL/CORE e residuais Transforma+ |
+| [21-boundaries-produtos-e-owners.md](./21-boundaries-produtos-e-owners.md) | boundaries, owners e integrações |
+| [22-handoff-implementacao-p1-p6.md](./22-handoff-implementacao-p1-p6.md) | handoff funcional uniforme P1–P6 |
+| [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md) | ledger RQ → AC → teste → dependência |
 
 ## Invariantes
 
@@ -81,7 +87,14 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 
 `plugins/financial` + `financial-api` e o roadmap `financeiro-controladoria` continuam distintos. O novo portal não absorve nem remove esses contextos automaticamente.
 
+## Handoff para implementação
+
+A cobertura Transforma+, boundaries, handoff P1–P6 e ledger de requisitos estão consolidados em 20–23.
+
+Isso permite preparar briefs técnicos página por página, mas não define plugin id, BFF, rota, storage, schemas ou deployment. Esses itens continuam dependentes de inventário do HEAD.
+
 ## Execução
+
 
 ```text
 READ → INVENTORY → VERIFY → CLASSIFY → DECIDE

@@ -1,5 +1,7 @@
 # 15 — Requisitos, Critérios de Aceite e Testes
 
+O ledger detalhado por página está em [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md). Os ACs específicos de paridade P3 permanecem em [15.1-p3-criterios-paridade-monetaria.md](./15.1-p3-criterios-paridade-monetaria.md).
+
 ## Famílias de requisitos
 
 ### P1
