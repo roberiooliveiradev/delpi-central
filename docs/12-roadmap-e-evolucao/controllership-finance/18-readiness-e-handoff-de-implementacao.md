@@ -14,6 +14,21 @@ O pacote funcional de implementação está organizado em:
 
 ## Readiness
 
+### Superfícies da topbar
+
+| Página | Estado | Stop / inventário material |
+|---|---|---|
+| Início | READY_FOR_IMPLEMENTATION_INVENTORY | foundation + contract mínimo da Central |
+| Visão geral | SOURCE_INVENTORY_REQUIRED | inventariar indicadores, owners, fórmulas e sources |
+| Sala de interação | CONTRACT_INVENTORY_REQUIRED | inventariar capability/contract/realtime/retention |
+| Minhas tarefas | PROJECTION_CONTRACT_REQUIRED | inventariar producers e estratégia de projeção |
+| Administração | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02 conforme slice |
+| Ajuda | SYNCHRONIZED_WITH_FEATURES | implementar/sincronizar junto das superfícies liberadas |
+
+A topbar usa somente `controllership-finance.access` e `controllership-finance.manage`. Não existe permission code por filial/unidade neste Portal.
+
+### Central de Fechamento
+
 | Página / slice | Estado | Stop / inventário material |
 |---|---|---|
 | P1 | READY_FOR_IMPLEMENTATION_INVENTORY | T01 para bindings; T05 para effective permissions/AuthZ |
