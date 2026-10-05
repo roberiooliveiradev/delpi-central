@@ -7,24 +7,45 @@ Validation does not invoke, prepare, execute or authorize anything.
 
 from __future__ import annotations
 
-from app.domain.capability_catalog.model import CapabilityProjection
+from typing import Protocol, runtime_checkable
+
 from app.domain.planning.model import (
     PlanCandidate,
     PlanValidationCode,
     PlanValidationResult,
 )
+from app.domain.capability_catalog.model import OperationCharacter
+
+
+@runtime_checkable
+class PlanCapabilityView(Protocol):
+    """Minimal structural view a validation subject must expose.
+
+    CapabilityProjection satisfies it directly; provider-neutral runtime
+    capability descriptors satisfy it through a bounded adapter so the
+    same deterministic rules govern both catalogs.
+    """
+
+    @property
+    def capability_id(self) -> str: ...
+
+    @property
+    def operation_character(self) -> OperationCharacter: ...
 
 
 def validate_plan_candidate(
     plan: PlanCandidate,
-    available_capabilities: tuple[CapabilityProjection, ...],
+    available_capabilities: tuple[PlanCapabilityView, ...],
+    *,
+    max_steps: int | None = None,
 ) -> PlanValidationResult:
     """Validate a PlanCandidate against a bounded capability set.
 
     Duplicate capability ids make the bounded set ambiguous and fail closed
     before any order-dependent lookup is built — no first/last-wins
     reconciliation. Unknown capability ids and semantic escalation also fail
-    closed. Steps are ordered; no dependency graph or cycle semantics exist.
+    closed. Steps are ordered; dependencies may only reference earlier steps,
+    so cycles are structurally impossible and no graph walk exists.
     """
     capability_ids = [cap.capability_id for cap in available_capabilities]
     if len(set(capability_ids)) != len(capability_ids):
@@ -33,13 +54,23 @@ def validate_plan_candidate(
             error_codes=(PlanValidationCode.DUPLICATE_CAPABILITY_ID,),
             limitations=plan.limitations,
         )
-    by_id = {cap.capability_id: cap for cap in available_capabilities}
     errors: list[PlanValidationCode] = []
+    if max_steps is not None and len(plan.steps) > max_steps:
+        errors.append(PlanValidationCode.MAX_STEPS_EXCEEDED)
+    by_id = {cap.capability_id: cap for cap in available_capabilities}
     seen_step_ids: set[str] = set()
     known_evidence = set(plan.evidence_refs)
     for step in plan.steps:
         if step.step_id in seen_step_ids:
             errors.append(PlanValidationCode.DUPLICATE_STEP_ID)
+        for dep in step.depends_on_step_ids:
+            if dep not in seen_step_ids:
+                code = (
+                    PlanValidationCode.FORWARD_STEP_DEPENDENCY
+                    if dep in {s.step_id for s in plan.steps}
+                    else PlanValidationCode.UNKNOWN_STEP_DEPENDENCY
+                )
+                errors.append(code)
         seen_step_ids.add(step.step_id)
         capability = by_id.get(step.capability_id)
         if capability is None:

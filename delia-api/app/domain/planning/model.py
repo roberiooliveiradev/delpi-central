@@ -24,6 +24,9 @@ class PlanValidationCode(str, Enum):
     MISSING_REQUIRED_EVIDENCE = "missing_required_evidence"
     DUPLICATE_STEP_ID = "duplicate_step_id"
     DUPLICATE_CAPABILITY_ID = "duplicate_capability_id"
+    MAX_STEPS_EXCEEDED = "max_steps_exceeded"
+    UNKNOWN_STEP_DEPENDENCY = "unknown_step_dependency"
+    FORWARD_STEP_DEPENDENCY = "forward_step_dependency"
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +46,7 @@ class PlanStep:
     expected_result: str | None = None
     expected_postcondition: str | None = None
     limitations: tuple[str, ...] = ()
+    depends_on_step_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for name, value in (

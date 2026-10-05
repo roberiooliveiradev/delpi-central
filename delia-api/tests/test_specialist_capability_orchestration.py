@@ -531,8 +531,10 @@ def test_prepare_selection_routes_through_write_governance():
     # The raw owner handle never leaves the backend.
     assert "prop-handle-1" not in json.dumps(attempt.confirmation_context)
     assert "prop-handle-1" not in attempt.content
-    # Only the PREPARE ran — no ACT without confirmation.
-    assert [c[1] for c in port.calls] == ["prepare_change"]
+    # Owner vocabulary DISCOVERY ran before PREPARE (the envelope
+    # schema cannot express the owner's operation vocabulary) — and
+    # no ACT without confirmation.
+    assert [c[1] for c in port.calls] == ["get_catalog", "prepare_change"]
 
 
 # Owner may wrap the proposal under ``data.proposal`` — the same
@@ -594,7 +596,8 @@ def test_prepare_enveloped_proposal_reaches_confirmation_gate():
     assert attempt.confirmation_context["proposal_digest"]
     assert "env-handle-9" not in json.dumps(attempt.confirmation_context)
     assert "env-handle-9" not in attempt.content
-    assert [c[1] for c in port.calls] == ["prepare_change"]
+    # DISCOVERY (owner vocabulary) -> PREPARE; still no ACT.
+    assert [c[1] for c in port.calls] == ["get_catalog", "prepare_change"]
 
     # The bound confirmation reaches the owner ACT with the raw handle.
     result = read.attempt(
@@ -1673,7 +1676,8 @@ def test_reject_cancels_pending_write_no_act():
         confirmation=_confirmation(pending, decision="REJECT"),
     )
     assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
-    assert [c[1] for c in port.calls] == ["prepare_change"]
+    # DISCOVERY -> PREPARE ran for the write; REJECT cancelled — no ACT.
+    assert [c[1] for c in port.calls] == ["get_catalog", "prepare_change"]
 
 
 def test_confirmation_unknown_digest_rejected():
@@ -1685,7 +1689,7 @@ def test_confirmation_unknown_digest_rejected():
     )
     assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert result.error_code == "confirmation_unknown"
-    assert [c[1] for c in port.calls] == ["prepare_change"]
+    assert [c[1] for c in port.calls] == ["get_catalog", "prepare_change"]
 
 
 def test_confirmation_actor_mismatch_denied():
@@ -1698,7 +1702,7 @@ def test_confirmation_actor_mismatch_denied():
     )
     assert result.status is GovernedCapabilityStatus.AUTHZ_DENIED
     assert result.error_code == "actor_mismatch"
-    assert [c[1] for c in port.calls] == ["prepare_change"]
+    assert [c[1] for c in port.calls] == ["get_catalog", "prepare_change"]
 
 
 def test_confirmation_session_mismatch_rejected():
@@ -1724,7 +1728,7 @@ def test_confirmation_fingerprint_mismatch_rejected():
     )
     assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert result.error_code == "confirmation_mismatch"
-    assert [c[1] for c in port.calls] == ["prepare_change"]
+    assert [c[1] for c in port.calls] == ["get_catalog", "prepare_change"]
 
 
 def test_confirmation_is_single_use_replay_rejected():
@@ -1802,7 +1806,7 @@ def test_act_removed_from_live_surface_blocks_commit():
     )
     assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert "capability_not_live" in result.error_code
-    assert [c[1] for c in port.calls] == ["prepare_change"]
+    assert [c[1] for c in port.calls] == ["get_catalog", "prepare_change"]
 
 
 def test_owner_denies_act_at_commit():
@@ -1965,7 +1969,9 @@ def test_nested_arguments_reach_owner_wire():
     )
     attempt = read.attempt("Altere o registro r1")
     assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    # DISCOVERY (owner vocabulary) precedes the envelope PREPARE.
     assert port.calls == [
+        ("teo", "get_catalog", {}),
         (
             "teo",
             "prepare_record_change",
@@ -2057,7 +2063,10 @@ def test_metamorphic_new_capability_requires_no_delia_change():
     )
     attempt = read.attempt("use a nova capability")
     _assert_success(attempt, "teo", "new_dynamic_tool")
+    # The envelope schema (opaque target/ops) triggers owner-vocabulary
+    # DISCOVERY first — still zero DELIA code/config change.
     assert port.calls == [
+        ("teo", "get_catalog", {}),
         (
             "teo",
             "new_dynamic_tool",

@@ -9,7 +9,7 @@ genuinely common semantic skeleton lives here:
   governed capability attempt
     -> GovernedCapabilityStatus (SUCCESS | NOT_APPLICABLE
        | SOURCE_UNAVAILABLE | AUTHZ_DENIED | CONFIRMATION_REQUIRED
-       | WRITE_REJECTED)
+       | WRITE_REJECTED | CLARIFICATION_REQUIRED)
     -> bounded provenance projection (source != capability group)
     -> deterministic bounded rendering carried on the attempt
 
@@ -52,6 +52,11 @@ class GovernedCapabilityStatus(str, Enum):
     # or by the owner/domain authority (truthful denial, no bypass).
     CONFIRMATION_REQUIRED = "CONFIRMATION_REQUIRED"
     WRITE_REJECTED = "WRITE_REJECTED"
+    # Applicable request whose owner-required input cannot be satisfied
+    # from the turn (§6.131): the capability path exists but the bounded
+    # argument projection cannot fill mandatory owner inputs. Truthful
+    # ask-back instead of a generic refusal or an invented value.
+    CLARIFICATION_REQUIRED = "CLARIFICATION_REQUIRED"
 
 
 @dataclass(frozen=True, slots=True)

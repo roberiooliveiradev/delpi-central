@@ -299,3 +299,63 @@ def test_step_requires_semantic_identity():
             capability_id="cap.x",
             operation_character="ACT",
         )
+
+
+def test_max_steps_bound_fails_closed():
+    """A plan exceeding the caller-declared step bound fails closed —
+    bounded multi-step execution is a hard structural limit (§6.131)."""
+    plan = _plan(
+        steps=(
+            _step("s1"),
+            _step(
+                "s2",
+                capability_id="purchasing.request.prepare",
+                character=OperationCharacter.PREPARE,
+            ),
+        )
+    )
+    result = validate_plan_candidate(
+        plan, _capabilities(), max_steps=1
+    )
+    assert result.valid is False
+    assert PlanValidationCode.MAX_STEPS_EXCEEDED in result.error_codes
+
+
+def test_step_dependency_must_reference_earlier_step():
+    """Backward-only dependencies: a step may consume evidence from a
+    prior step; forward or unknown references fail closed."""
+    valid = _plan(
+        steps=(
+            _step("s1"),
+            _step(
+                "s2",
+                capability_id="purchasing.request.prepare",
+                character=OperationCharacter.PREPARE,
+                depends_on_step_ids=("s1",),
+            ),
+        )
+    )
+    assert validate_plan_candidate(valid, _capabilities()).valid is True
+
+    unknown = _plan(
+        steps=(
+            _step("s1", depends_on_step_ids=("ghost",)),
+        )
+    )
+    result = validate_plan_candidate(unknown, _capabilities())
+    assert result.valid is False
+    assert (
+        PlanValidationCode.UNKNOWN_STEP_DEPENDENCY in result.error_codes
+    )
+
+    forward = _plan(
+        steps=(
+            _step("s1", depends_on_step_ids=("s2",)),
+            _step("s2"),
+        )
+    )
+    result = validate_plan_candidate(forward, _capabilities())
+    assert result.valid is False
+    assert (
+        PlanValidationCode.FORWARD_STEP_DEPENDENCY in result.error_codes
+    )

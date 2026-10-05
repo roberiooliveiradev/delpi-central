@@ -204,9 +204,11 @@ class HandleInteractiveConversationTurn:
         if attempt is not None and attempt.status in (
             GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
             GovernedCapabilityStatus.WRITE_REJECTED,
+            GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
         ):
-            # Write-class lifecycle answers are deterministic and
-            # truthful — never routed through the model.
+            # Write-class lifecycle answers and clarification ask-backs
+            # are deterministic and truthful — never routed through the
+            # model.
             return self._write_lifecycle_result(
                 session, user_turn, attempt
             )

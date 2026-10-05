@@ -539,3 +539,403 @@ def test_prepare_confirms_through_generic_chain():
         GovernedCapabilityStatus.SUCCESS,
         GovernedCapabilityStatus.WRITE_REJECTED,
     )
+
+
+# --- R1: owner-vocabulary discovery before envelope arguments ------------
+#
+# §6.131: an opaque envelope capability (schema fields that leave their
+# inner vocabulary owner-defined) cannot be argumented from the schema
+# alone — the owner DISCOVERY capability must supply the vocabulary
+# first.
+
+
+def _envelope_schema():
+    """Opaque owner envelope: fields the JSON Schema cannot constrain."""
+    return {
+        "type": "object",
+        "properties": {
+            "target": {"type": "object"},
+            "ops": {"type": "array", "items": {}},
+        },
+        "required": ["target", "ops"],
+    }
+
+
+def _envelope_cap(group_id, provider_id, name, op_class):
+    base = _cap(group_id, provider_id, name, op_class)
+    return ProviderCapability(
+        capability_id=base.capability_id,
+        group_id=base.group_id,
+        provider_id=base.provider_id,
+        remote_name=base.remote_name,
+        owner=base.owner,
+        operation_class=base.operation_class,
+        description=base.description,
+        input_schema=_envelope_schema(),
+        binding=base.binding,
+    )
+
+
+def _catalog_outcome(group_id, structured):
+    return SpecialistOutcome(
+        status=SpecialistResultStatus.COMPLETED,
+        provenance=SpecialistResultProvenance(
+            specialist_id=group_id,
+            remote_name="get_catalog",
+            protocol=InteropProtocol.MCP,
+            correlation_id="c",
+            observed_at="2026-01-01T00:00:00+00:00",
+        ),
+        content_text="catalog",
+        structured=structured,
+    )
+
+
+def _envelope_vista_provider(
+    extra_outcomes=None, *, discovery_caps=1, extra_caps=()
+):
+    """MCP group with N DISCOVERY caps + one opaque-envelope PREPARE."""
+    caps = [
+        _cap(
+            "vista",
+            "mcp",
+            "get_catalog" if discovery_caps == 1
+            else f"get_catalog_{i}",
+            SpecialistOperationClass.DISCOVERY,
+            desc="owner capability catalog",
+        )
+        for i in range(discovery_caps)
+    ]
+    caps.append(
+        _envelope_cap(
+            "vista", "mcp", "prepare_change",
+            SpecialistOperationClass.PREPARE,
+        )
+    )
+    caps.extend(extra_caps)
+    outcomes = dict(extra_outcomes or {})
+    if discovery_caps == 1:
+        outcomes.setdefault(
+            ("vista", "get_catalog"),
+            _catalog_outcome(
+                "vista",
+                {
+                    "operations": [
+                        {
+                            "name": "add_blank_slide",
+                            "fields": ["playlistId"],
+                        },
+                        {
+                            "name": "rename_playlist",
+                            "fields": ["playlistId", "name"],
+                        },
+                    ]
+                },
+            ),
+        )
+    return FakeProvider(
+        "mcp", [_group("mcp", "vista", caps)], outcomes=outcomes
+    )
+
+
+def _stage3_requests(orch):
+    return [
+        r
+        for r in orch._invoke_model._port.requests
+        if r.task_purpose_id == ARGUMENTS_INSTRUCTION_ID
+    ]
+
+
+def test_envelope_capability_runs_owner_discovery_first():
+    """DISCOVERY evidence feeds stage-3 before the envelope PREPARE."""
+    provider = _envelope_vista_provider()
+    orch = _orchestrator(
+        [provider],
+        _select(
+            "mcp:vista",
+            "prepare_change",
+            {
+                "target": {"playlistId": "pl-1"},
+                "ops": [{"op": "add_blank_slide"}],
+            },
+        ),
+    )
+    attempt = orch.attempt("adicione um slide em branco")
+    assert attempt.status in (
+        GovernedCapabilityStatus.SUCCESS,
+        GovernedCapabilityStatus.WRITE_REJECTED,
+        GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
+    )
+    # Ordering: the owner vocabulary call precedes the write PREPARE.
+    assert [c[0] for c in provider.calls] == [
+        "get_catalog",
+        "prepare_change",
+    ]
+    # The bounded owner vocabulary reached the argument prompt.
+    stage3 = _stage3_requests(orch)[-1]
+    assert "owner_vocabulary" in stage3.input_text
+    assert "add_blank_slide" in stage3.input_text
+
+
+def test_envelope_discovery_is_provider_neutral():
+    """Sibling: the same DISCOVERY->envelope flow works on a non-MCP
+    provider — no provider-name branch anywhere."""
+    caps = [
+        _cap(
+            "catalog_api",
+            "openapi",
+            "describe_operations",
+            SpecialistOperationClass.DISCOVERY,
+        ),
+        _envelope_cap(
+            "catalog_api",
+            "openapi",
+            "stage_change",
+            SpecialistOperationClass.PREPARE,
+        ),
+    ]
+    provider = FakeProvider(
+        "openapi",
+        [_group("openapi", "catalog_api", caps)],
+        outcomes={
+            ("catalog_api", "describe_operations"): _catalog_outcome(
+                "catalog_api",
+                {"operations": [{"name": "set_flag"}]},
+            ),
+        },
+    )
+    orch = _orchestrator(
+        [provider],
+        _select(
+            "openapi:catalog_api",
+            "stage_change",
+            {"target": {"k": "v"}, "ops": [{"op": "set_flag"}]},
+        ),
+    )
+    attempt = orch.attempt("prepare a flag change")
+    assert attempt.status in (
+        GovernedCapabilityStatus.SUCCESS,
+        GovernedCapabilityStatus.WRITE_REJECTED,
+        GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
+    )
+    assert [c[0] for c in provider.calls] == [
+        "describe_operations",
+        "stage_change",
+    ]
+
+
+def test_non_envelope_capability_never_triggers_discovery():
+    """A closed-schema READ must not pay the discovery round-trip."""
+    read_cap = _cap(
+        "vista", "mcp", "list_playlists", SpecialistOperationClass.READ
+    )
+    provider = FakeProvider(
+        "mcp",
+        [
+            _group(
+                "mcp",
+                "vista",
+                [
+                    _cap(
+                        "vista",
+                        "mcp",
+                        "get_catalog",
+                        SpecialistOperationClass.DISCOVERY,
+                    ),
+                    read_cap,
+                ],
+            )
+        ],
+    )
+    orch = _orchestrator(
+        [provider], _select("mcp:vista", "list_playlists")
+    )
+    attempt = orch.attempt("liste as playlists")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert [c[0] for c in provider.calls] == ["list_playlists"]
+
+
+def test_envelope_without_discovery_still_owner_validated():
+    """No DISCOVERY advertised: the owner schema alone validates the
+    arguments; the owner remains the vocabulary authority."""
+    provider = FakeProvider(
+        "mcp",
+        [
+            _group(
+                "mcp",
+                "vista",
+                [
+                    _envelope_cap(
+                        "vista",
+                        "mcp",
+                        "prepare_change",
+                        SpecialistOperationClass.PREPARE,
+                    )
+                ],
+            )
+        ],
+    )
+    orch = _orchestrator(
+        [provider],
+        _select(
+            "mcp:vista",
+            "prepare_change",
+            {"target": {"x": 1}, "ops": [{"op": "y"}]},
+        ),
+    )
+    attempt = orch.attempt("mude algo")
+    # No discovery call existed to make; args went to owner validation.
+    assert [c[0] for c in provider.calls] == ["prepare_change"]
+    assert attempt.status is not GovernedCapabilityStatus.NOT_APPLICABLE
+
+
+def test_ambiguous_discovery_never_used():
+    """Two DISCOVERY capabilities in one group make the vocabulary
+    source ambiguous — fail closed to schema-only arguments."""
+    provider = _envelope_vista_provider(discovery_caps=2)
+    orch = _orchestrator(
+        [provider],
+        _select(
+            "mcp:vista",
+            "prepare_change",
+            {"target": {"x": 1}, "ops": [{"op": "y"}]},
+        ),
+    )
+    attempt = orch.attempt("mude algo")
+    invoked = [c[0] for c in provider.calls]
+    assert "get_catalog_0" not in invoked
+    assert "get_catalog_1" not in invoked
+    assert invoked == ["prepare_change"]
+
+
+def test_discovery_failure_is_truthful():
+    """A failing owner DISCOVERY fails closed — envelope arguments are
+    never projected against an invented vocabulary."""
+
+    class DiscoveryDown(FakeProvider):
+        def invoke(
+            self, capability, arguments, *, correlation_id,
+            timeout_seconds=None,
+        ):
+            if capability.remote_name == "get_catalog":
+                raise CapabilityProviderError(
+                    "mcp_protocol_error", "owner rejected"
+                )
+            return super().invoke(
+                capability,
+                arguments,
+                correlation_id=correlation_id,
+                timeout_seconds=timeout_seconds,
+            )
+
+    provider = DiscoveryDown(
+        "mcp",
+        [
+            _group(
+                "mcp",
+                "vista",
+                [
+                    _cap(
+                        "vista",
+                        "mcp",
+                        "get_catalog",
+                        SpecialistOperationClass.DISCOVERY,
+                    ),
+                    _envelope_cap(
+                        "vista",
+                        "mcp",
+                        "prepare_change",
+                        SpecialistOperationClass.PREPARE,
+                    ),
+                ],
+            )
+        ],
+    )
+    orch = _orchestrator(
+        [provider], _select("mcp:vista", "prepare_change", {})
+    )
+    attempt = orch.attempt("mude algo")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "mcp_protocol_error"
+    # The write was never attempted.
+    assert "prepare_change" not in [c[0] for c in provider.calls]
+
+
+def test_missing_owner_input_yields_clarification():
+    """Owner-required input absent from the turn produces a truthful
+    ask-back — never a fabricated value nor a generic refusal."""
+    apply_cap = _cap(
+        "vista", "mcp", "apply_preset", SpecialistOperationClass.READ
+    )
+    apply_cap = ProviderCapability(
+        capability_id=apply_cap.capability_id,
+        group_id=apply_cap.group_id,
+        provider_id=apply_cap.provider_id,
+        remote_name=apply_cap.remote_name,
+        owner=apply_cap.owner,
+        operation_class=apply_cap.operation_class,
+        description=apply_cap.description,
+        input_schema={
+            "type": "object",
+            "properties": {"preset_key": {"type": "string"}},
+            "required": ["preset_key"],
+        },
+        binding=apply_cap.binding,
+    )
+    provider = FakeProvider(
+        "mcp", [_group("mcp", "vista", [apply_cap])]
+    )
+    orch = _orchestrator(
+        [provider],
+        {
+            GROUP_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "capability_group_id": "mcp:vista",
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "apply_preset",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {
+                "arguments": None,
+                "missing_inputs": ["preset_key"],
+            },
+        },
+    )
+    attempt = orch.attempt("aplique o preset")
+    assert (
+        attempt.status
+        is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+    assert "preset_key" in attempt.content
+    # Nothing was invoked — the turn ended at the ask-back.
+    assert provider.calls == []
+
+
+def test_owner_vocabulary_is_size_bounded():
+    """A huge owner catalog is truncated before it reaches the model
+    prompt — untrusted owner data stays bounded."""
+    big = {
+        "operations": [
+            {"name": f"op_{i}", "pad": "x" * 500} for i in range(40)
+        ]
+    }
+    provider = _envelope_vista_provider(
+        {("vista", "get_catalog"): _catalog_outcome("vista", big)}
+    )
+    orch = _orchestrator(
+        [provider],
+        _select(
+            "mcp:vista",
+            "prepare_change",
+            {"target": {"x": 1}, "ops": [{"op": "y"}]},
+        ),
+    )
+    orch.attempt("mude algo")
+    stage3 = _stage3_requests(orch)[-1]
+    marker = stage3.input_text.index('"owner_vocabulary"')
+    tail = stage3.input_text[marker:]
+    # Evidence stays within the hard bound — the 40 x 500-char pads
+    # can never leak fully into the prompt.
+    assert len(tail) < 6000
+    assert "op_39" not in tail

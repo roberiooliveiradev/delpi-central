@@ -9191,3 +9191,111 @@ ROOT_CAUSE =
     general path. Component-level MCP tests proved federation mechanics
     but did not prove provider-neutral contextual user outcomes (e.g.
     o
+
+## 6.131. ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01R1 — bounded multi-step semantic planning (DISCOVERY→PREPARE→CONFIRM→ACT) + write-outcome correction
+
+DATE = 2026-10-05
+BASE_HEAD = 6b57208e4b0e38b543e620ea31a5f56a2fdf3c69 (main; delta over
+    a864696c9 = unrelated docs + tv-dashboard RBAC hardening SEC-REPRO;
+    a864696c9 provider-neutral implementation preserved)
+BRANCH = main
+WORKING_TREE = clean (untracked scratch files only)
+STATUS = IN_EXECUTION
+PARENT = ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130 —
+    binding decision preserved; this task corrects its implementation,
+    not its architecture)
+
+ROOT_FAILURE =
+    provider-neutral READ/context PROVEN live (OpenAPI READ GROUNDED;
+    contextual VISTA get_playlist_context GROUNDED; workspace
+    fail-closed 400s; unauthenticated 401), but contextual governed
+    write failed in the real product surface: the user goal
+    create-a-slide with a playlist open produced a generic NON_GROUNDED
+    refusal. Live in-container reproduction (delpi-delia-api, real
+    subject token): group selection picked mcp:vista, capability
+    selection picked prepare_change (PREPARE), but stage-3 argument
+    projection invented owner vocabulary (op create_slide,
+    target.entity_type/entity_id) because the owner envelope
+    inputSchema is opaque and the group DISCOVERY capability
+    (get_catalog) was never consulted. Owner answered isError 422
+    DEPENDENCY_UNSATISFIABLE -> mapped to mcp_protocol_error ->
+    SOURCE_UNAVAILABLE -> generic model fallback.
+    USER_GOAL_ACHIEVED = FAIL.
+    ONE_CAPABILITY_RUNTIME_LIMITATION = PROVEN (precise form: single
+    capability selection works, but owner-envelope arguments require
+    prior owner discovery evidence; the runtime had no continuation
+    mechanism feeding DISCOVERY output into argument construction).
+
+BINDING_CONSTRAINTS (task issuance):
+    NO architecture redesign; provider-neutral orchestrator preserved.
+    NO MCP-first regression; no provider/specialist branches in the
+        central planner.
+    NO VISTA business vocabulary in DÉLIA authority (op names may exist
+        only in tests/fixtures).
+    NO local MCP tool catalog; live owner surfaces remain authority.
+    NO Keycloak security changes for testing (no directAccessGrants,
+        no password resets); production user-outcome tests use the
+        authenticated product UI or a supplied short-lived bearer.
+    MAX_OPERATIONAL_PLAN_STEPS = 2 (smallest bound justified by the
+        owner-envelope pattern: DISCOVERY -> target capability).
+    REUSE: PlanCandidate/PlanStep/validate_plan_candidate foundation
+        extended minimally; GovernedCapabilityAttempt/Status reused;
+        CLARIFICATION_REQUIRED added (no existing status covered
+        "applicable but missing owner-required input").
+
+IMPLEMENTATION (2026-10-05):
+    domain/planning — PlanStep.depends_on_step_ids added;
+        PlanValidationCode extended (MAX_STEPS_EXCEEDED,
+        UNKNOWN_STEP_DEPENDENCY, FORWARD_STEP_DEPENDENCY);
+        validate_plan_candidate accepts a structural
+        PlanCapabilityView + optional max_steps. Backward compatible:
+        existing C3-T7 callers unchanged.
+    capability_attempt — GovernedCapabilityStatus.CLARIFICATION_
+        REQUIRED added (truthful ask-back status).
+    orchestration — attempt() restructured into staged selection +
+        bounded plan: _is_open_vocabulary detects owner-opaque schema
+        fields (object without properties / array without items
+        shape); _discovery_capability picks the single live DISCOVERY
+        capability (ambiguous surface fails closed to schema-only);
+        _build_plan constructs a deterministic PlanCandidate
+        (DISCOVERY -> target, backward dependency) validated by
+        validate_plan_candidate (max_steps=2) — invalid plans fail
+        closed SOURCE_UNAVAILABLE/plan_validation_failed; owner
+        discovery outcome is sanitized/redacted and bounded to
+        MAX_OWNER_EVIDENCE_CHARS before entering the stage-3 prompt
+        as "owner_vocabulary"; ARGUMENTS_INSTRUCTION now requires
+        verbatim owner-vocabulary values for open fields and allows
+        "missing_inputs" -> CLARIFICATION_REQUIRED. _select renamed
+        _select_target (group+capability only; arguments are a
+        post-evidence stage). SELECTION_INSTRUCTION_VERSION = "4".
+    handle_interactive_turn — CLARIFICATION_REQUIRED renders through
+        the deterministic write-lifecycle path (non-grounded, no
+        confirmation surface, never model-narrated).
+    instruction.py — stale "cannot execute actions/tools/PREPARE/ACT"
+        fallback text replaced with the truthful layered statement;
+        INSTRUCTION_VERSION = "3".
+    scripts/real_provider_neutral_eval.py — DELIA_EVAL_BEARER external
+        token support (no Keycloak grant change needed); blocking
+        check list + exit code 1 on blocking failure;
+        DELIA_EVAL_ADVISORY=1 keeps report-only mode.
+
+EVIDENCE (component):
+    delia-api suite: 747 passed. New coverage in
+        tests/test_provider_neutral_orchestration.py —
+        discovery-before-envelope ordering, provider-neutral sibling
+        (openapi), no-discovery fallback, ambiguous discovery
+        fail-closed, discovery failure truthful SOURCE_UNAVAILABLE,
+        missing_inputs -> CLARIFICATION_REQUIRED (no invocation),
+        owner vocabulary bounded; tests/test_planning_foundation.py —
+        max_steps bound + backward-only dependency validation.
+        Existing governed-write tests updated: discovery now precedes
+        envelope PREPARE (observable call order get_catalog ->
+        prepare_change).
+
+PENDING (not yet proven):
+    live production re-eval on operador@192.168.1.237 — contextual
+        governed write must reach PREPARE/confirmation surface with
+        real Keycloak token; PRODUCTION_READINESS stays NOT_PROVEN
+        until that evidence exists.
+    docs/16, 50, 17, 21, 20, 25, 60 reconciliation pending final
+        review pass.

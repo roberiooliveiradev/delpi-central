@@ -109,7 +109,7 @@ def test_contracts_carry_no_provider_or_authority_leak():
 def test_instruction_lineage_bound_and_not_user_overridable():
     lineage = instruction.interaction_instruction_lineage()
     assert lineage.instruction_id == "delia.interaction.base"
-    assert lineage.version == "2"
+    assert lineage.version == "3"
     assert len(lineage.content_hash) == 64
     # The request contract exposes no prompt/instruction override fields.
     # ``confirmation`` is a bounded digest-only write payload, never a
