@@ -39,6 +39,18 @@ ACT = commit_proposal only (opaque proposal_handle; capability from store)
 commit_proposal schema: proposal_handle and confirmation are BOTH required;
 confirmation has NO default — omitted confirmation never means confirmed.
 unbound ACT = 0
+
+PREPARE purity (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):
+- MCP prepare_* inputSchema exposes NO ACT-collapse controls
+  (commit_now / confirmation / idempotency_key absent — enforced by
+  tests/test_teo_mcp_prepare_contract.py).
+- MCP PREPARE is side-effect-free w.r.t. material business writes:
+  orchestrator.act call count = 0 on every prepare_* invocation.
+- Material execution occurs ONLY through ACT-class commit_proposal after
+  consumer confirmation/governance.
+- GPT Actions has a DISTINCT additive commit_now contract (policy-allowed
+  capabilities, confirmation + Idempotency-Key required) — that contract is
+  NOT part of the MCP PREPARE surface and cannot be reached through it.
 GPT importable operations = 18
 meta route gpt_get_openapi_schema is not importable
 ```

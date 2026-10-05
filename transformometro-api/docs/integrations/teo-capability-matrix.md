@@ -54,18 +54,37 @@ Canonical domain capability
 
 ## PREPARE / CONFIRM / COMMIT (canonical flow)
 
+Two distinct consumer contracts share the same governed-write engine
+(`GovernedWriteOrchestrator`); they are separated at the adapter boundary:
+
 ```text
-UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE
-→ (additive) commit_now=true + confirmation + Idempotency-Key → ACT + READ-BACK
-→ (destructive) SHOW USER → EXPLICIT CONFIRMATION → COMMIT → AUTHORITATIVE READ-BACK
-→ VERIFY → REPORT OUTCOME
+GPT Actions adapter (additive contract):
+UNDERSTAND → READ → PREPARE EXACT CHANGE → VALIDATE
+→ (allowed capabilities only) commit_now=true + confirmation + Idempotency-Key
+  → ACT + READ-BACK
+→ (destructive) SHOW USER → EXPLICIT CONFIRMATION → COMMIT → READ-BACK
+
+MCP adapter (pure PREPARE):
+prepare_* → proposal_handle + exact_change + readiness + expiry
+  (persisted=false always; NEVER materializes business state)
+→ consumer confirmation/governance
+→ commit_proposal (ACT) → fresh AuthZ → DOMAIN → SAVE
+→ AUTHORITATIVE READ-BACK → VERIFY → REPORT
 ```
 
-- Additive create/update/duplicate/package-ready/cost-adjust tipável: **não** pedir Confirma? no chat — `commit_now` no mesmo turno.
-- Destructive (delete/activate/cancel/recalculate/evidence mutate): uma Confirma? → `gpt_commit_proposal` / `commit_proposal`.
-- COMMIT = ACT stage (`gpt_commit_proposal` / MCP `commit_proposal`) ou ACT embutido via `commit_now`.
+- **MCP invariant (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):**
+  `PREPARE != ACT`. MCP `prepare_*` tools are side-effect-free w.r.t.
+  material business writes and expose NO `commit_now` / `confirmation` /
+  `idempotency_key` fields — enforced by `tests/test_teo_mcp_prepare_contract.py`.
+- `commit_now` exists ONLY in the GPT Actions additive contract; it is not
+  reachable through the MCP surface.
+- Actions additive create/update/duplicate/package-ready/cost-adjust tipável:
+  **não** pedir Confirma? no chat — `commit_now` no mesmo turno.
+- Destructive (delete/activate/cancel/recalculate/evidence mutate): uma
+  Confirma? → `gpt_commit_proposal` / `commit_proposal`.
 - Explicit confirmation ≠ AuthZ (backend revalidates on commit).
-- Live mutation intelligence: `capability_surface.agent_directives` from `teo_agent_intelligence.json`.
+- Live mutation intelligence: `capability_surface.agent_directives` from
+  `teo_agent_intelligence.json`.
 - Technical 2xx ≠ business outcome (need verified read-back).
 - Proposal store: in-process, single-replica → **ACCEPT_WITH_RESIDUAL**.
 

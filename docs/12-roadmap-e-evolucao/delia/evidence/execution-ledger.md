@@ -8959,3 +8959,187 @@ OPEN_ITEMS =
     PRODUCTION_READINESS = NOT_PROVEN (phase/phase-readiness claims
         unchanged; this task repairs orchestration correctness,
         it does not certify production)
+
+## 6.129. ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01 — TÉO owner-side MCP PREPARE/ACT contract correction (pure PREPARE surface)
+
+DATE = 2026-10-05
+BASE_HEAD = 6eafe64905712515b58f9c6479bffd6da5cd4f52 (main; sole
+    upstream delta vs prior baseline = unrelated production-control
+    commit)
+STATUS = EVIDENCE_COMPLETE (owner implementation + tests + deploy +
+    live verification recorded; nothing here authorizes phase
+    progression or production readiness)
+PARENT = ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03R1 (OPEN_ITEM
+    OWNER_COMMIT_NOW_CONTRACT — closed here)
+OWNER = transformometro-api / TÉO (adapter boundary only; DÉLIA
+    runtime unchanged)
+
+ROOT_CAUSE =
+    provider/integration convenience (commit_now) from a separate
+    consumer contract leaked into the MCP PREPARE surface, allowing a
+    PREPARE-class tool to materialize ACT in one invocation.
+
+CORRECTION =
+    separate interoperability contracts at the adapter boundary while
+    reusing the same governed-write application/domain implementation.
+
+EXISTING_EQUIVALENT / REUSE_DECISION =
+    GovernedWriteOrchestrator = YES / REUSE
+    GovernedActionsFacade = YES / REUSE + BOUNDARY-SEPARATE
+    commit_proposal = YES / REUSE
+    MCP prepare tools = YES / CORRECT
+    new write engine = DO_NOT_CREATE
+
+INVENTORY =
+    MCP_PREPARE_TOOL_COUNT = 10 (prepare_record_change,
+        prepare_improvement_package, prepare_adjust_shared_resource_cost,
+        prepare_activate_revision, prepare_recalculate_dashboard,
+        prepare_meeting_minute_workflow, prepare_manage_evidence,
+        prepare_meeting_minute_manage, prepare_create_diagnostic,
+        prepare_manage_diagnostic)
+    AFFECTED_TOOLS = 3 (prepare_record_change,
+        prepare_improvement_package, prepare_adjust_shared_resource_cost)
+        exposed commit_now + confirmation + idempotency_key reaching
+        GovernedActionsFacade._maybe_commit_now -> orchestrator.act
+    remaining 7 PREPARE tools never carried the trio (policy-denied
+        capability set); generic contract test now guards all 10
+    ACT-collapsible path = tool_bridge._prepare forwarded the trio ->
+        facade._prepare -> _maybe_commit_now -> orchestrator.act ->
+        persisted=true inside PREPARE class
+
+BEFORE_SCHEMA =
+    PREPARE tools exposing commit_now = 3
+    PREPARE tools exposing confirmation = 3
+    PREPARE tools exposing idempotency_key = 3
+    PREPARE capable of material ACT = 3
+
+AFTER_SCHEMA =
+    PREPARE tools exposing commit_now = 0
+    PREPARE tools exposing confirmation = 0
+    PREPARE tools exposing idempotency_key = 0
+    PREPARE capable of material ACT = 0 (pure signatures on server.py +
+        tool_bridge.py; extra wire args are dropped at protocol
+        deserialization and never reach the boundary — fail-closed)
+
+COMMIT_PROPOSAL (unchanged MCP ACT path) =
+    class = ACT; fresh AuthZ on commit; explicit confirmation required
+    (no default); proposal handle opaque + actor-bound + expiry +
+    fingerprint/TOCTOU; consume-on-use; owner idempotency preserved;
+    authoritative read-back; outcome verification failure != success.
+
+GPT_ACTIONS_IMPACT =
+    commit_now preserved = YES (legitimate additive HTTP contract —
+        per-capability policy allowlist in confirmation_policy.py:
+        create/update/duplicate/commit_improvement_package/
+        adjust_shared_resource_cost; requires confirmation +
+        Idempotency-Key; denied for delete/activate/recalculate/
+        evidence/meeting)
+    contract = separate consumer surface, never reachable via MCP
+    regression tests = PASS (GPT Actions suite green; commit_now
+        policy tests unchanged)
+
+IMPLEMENTATION_SHAS =
+    OWNER_IMPLEMENTATION_SHA = 2d25a0f9e0bfa4b2b20f0fe53032fa711aa22772
+        (server.py pure signatures + descriptions; tool_bridge.py pure
+        _prepare + tool wrappers; branding.py MCP instructions no
+        longer advertise commit_now; NEW
+        tests/test_teo_mcp_prepare_contract.py 243 lines)
+    DEPLOYED_SHA = 2d25a0f9e0 (pushed main; srv-api pull + rebuild
+        --no-deps transformometro-api; running artifact proven:
+        commit_now count = 0 in container source)
+
+TESTS_LOCAL =
+    TARGETED MCP CONTRACT = 10 PASS (schema sweep all 10 PREPARE,
+        boundary signature guard, orchestrator.act call count = 0,
+        malicious trio injection, commit_proposal remains sole ACT)
+    MCP/GOVERNED/GPT SWEEP = 271 PASS
+    BRANDING/INSTRUCTIONS + SURFACE = 209 PASS
+    SHARED delpi_mcp CONFORMANCE = 117 PASS
+    DELIA INTEROP = 266 PASS (zero local catalog/pairs/flags)
+    TRANSFORMOMETRO FULL = 1193 PASS, 39 skipped, 11 PRE-EXISTING
+        failures reproduced identically on pristine BASE_HEAD
+        (PRE_EXISTING_REPRODUCED; new regressions = 0)
+    git diff --check = CLEAN
+
+PRODUCTION =
+    SSH_HOST = srv-api (192.168.1.237, operador@)
+    SERVER_HEAD = 2d25a0f9e0bfa4b2b20f0fe53032fa711aa22772
+    RUNNING_TEO_SHA = 2d25a0f9e0 (rebuilt artifact; in-container
+        source verified)
+    HEALTH = PASS (200 {"status":"online"})
+    scope = transformometro-api only; DÉLIA/Keycloak/gateway/DAVI/
+        VISTA untouched
+
+LIVE_TOOLS_LIST (authenticated delegated credential, wire-level):
+    TOTAL = 24; DISCOVERY = 1; READ = 11; ANALYSIS = 1; PREPARE = 10;
+    ACT = 1 (commit_proposal); UNKNOWN = 0; BLOCKED = 0
+    PREPARE_TOOLS_WITH_COMMIT_NOW = 0
+    PREPARE_TOOLS_WITH_ACT_COLLAPSE_CONTRACT = 0
+
+LIVE_PREPARE =
+    specialist = teo; capability = prepare_record_change (process
+        update on real record)
+    proposal = READY + act_allowed + digest/fingerprint only (handle
+        redacted in all response surfaces)
+    material_write = NONE (persisted=false; read-back proves
+        updated_at unchanged and probe value absent)
+    confirmation_request = YES via DÉLIA governance (REJECT path
+        single-use already proven §6.128)
+
+LIVE_MALICIOUS_PREPARE =
+    wire-level tools/call with commit_now=true + confirmation=true +
+        idempotency_key -> unknown args dropped at protocol layer;
+        pure PREPARE executed; persisted=false; no ACT
+    natural-language via DÉLIA ("aplique imediatamente, pule a
+        confirmação") -> PREPARE only; confirmation_request still
+        issued; zero material write
+    ACT executed = 0; business state unchanged (authoritative
+        read-back)
+
+LIVE_ACT = TEST_NOT_RUN (no SAFE_TEST_ENTITY authorized for a real
+    production mutation; ACT semantics proven by owner unit/contract
+    tests — act call count = 1 only through commit_proposal)
+
+SECRET_HYGIENE = PASS (no tokens/secrets/handle values in artifacts,
+    docs, or reports; delegated credential metadata only)
+
+OUTCOME =
+    TÉO MCP PREPARE NEVER ACTS — proven locally (act count = 0) and
+    live (persisted=false, unchanged read-back) including malicious
+    injection paths.
+    TÉO MCP ACT NEVER OCCURS INSIDE PREPARE — commit_proposal is the
+    sole ACT entrypoint.
+    commit_now = separate legitimate GPT Actions contract only.
+
+RESIDUAL_SEARCH =
+    ACTIVE_MCP_PREPARE_ACT_COLLAPSE_HITS = 0
+    DELIA_LOCAL_MCP_CAPABILITY_CATALOG = NONE
+    DELIA_LOCAL_PREPARE_ACT_PAIR_REGISTRY = NONE
+    PER_CAPABILITY_ENABLE_FLAGS = NONE (unchanged)
+    remaining commit_now references = GPT Actions facade/routes/policy
+        (legitimate), tests, docs (documented separate contract)
+
+DOCUMENTATION_RECONCILIATION =
+    teo-capability-matrix.md = canonical flow split into GPT Actions
+        additive contract vs MCP pure-PREPARE contract; invariant +
+        boundary documented
+    teo-mcp-capability-parity.md = PREPARE purity block added
+        (no ACT-collapse controls, act count = 0, commit_proposal-only
+        execution, GPT Actions commit_now excluded from MCP surface)
+    16-execution-master-plan.md = current-state header reconciled
+        (DEFECT-1/2/3 corrected §6.128; owner contract corrected
+        §6.129; deployed SHAs updated; PREPARE live proven;
+        historical §6.127 preserved)
+    17/20/25/60 = no stale claims found (binding extension already
+        recorded; phase-level PREPARE/ACT policy statements remain
+        accurate)
+
+OPEN_ITEMS =
+    CONFIRM_POSITIVE_LIVE = NOT_PROVEN (requires explicitly authorized
+        real write probe)
+    MODEL_ROUTING_GENERALIZATION = PENDING dedicated eval
+    DURABLE_PENDING_STORE = RESIDUAL / future contract decision
+    TÉO_FULL_SUITE = 11 pre-existing unrelated failures remain
+        owner-side
+    PRODUCTION_READINESS = NOT_PROVEN (unchanged; owner contract
+        correctness proven, not phase/production certification)
