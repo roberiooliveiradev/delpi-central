@@ -629,10 +629,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Authorized playlist context",
                 "description": (
                     "Playlist context with slides and focused slide. "
-                    "editorFocus omits nativeConfig and returns dataSources + blockIndex. "
-                    "full may auto-downgrade when over budget. "
-                    "objectQuery can return persisted objectMatches. "
-                    "includePreview adds a signed slide preview."
+                    "editorFocus omits nativeConfig and returns dataSources + "
+                    "dataModels + blockIndex.modelId + focusedBinding. "
+                    "full auto-downgrades over budget keeping that "
+                    "addressability. objectQuery returns persisted "
+                    "objectMatches. includePreview adds a signed preview."
                 ),
                 "tags": [tag],
                 "security": [{"BearerAuth": []}],

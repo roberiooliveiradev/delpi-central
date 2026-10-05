@@ -5,6 +5,10 @@ from __future__ import annotations
 import json
 from typing import Any, Mapping
 
+from tv_app.application.services.data.projection_fields_contract import (
+    collect_source_consumer_field_refs,
+)
+
 # OpenAI Custom GPT Actions tool response ceiling (ResponseTooLargeError).
 GPT_ACTIONS_RESPONSE_MAX_BYTES = 100 * 1024
 
@@ -186,6 +190,8 @@ def project_editor_focus_context(
     slide_preview: Mapping[str, Any] | None = None,
     block_index: Mapping[str, Any] | None = None,
     object_matches: list[dict[str, Any]] | None = None,
+    data_models: list[dict[str, Any]] | None = None,
+    focused_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compact playlist context without focusedSlide.nativeConfig (rename-safe READ)."""
     focused_meta = None
@@ -210,7 +216,10 @@ def project_editor_focus_context(
     note = (
         "scope=editorFocus omits focusedSlide.nativeConfig and heavy digests. "
         "dataSources[] = data_source addressability (id/label/operationId/params). "
-        "blockIndex = persisted visual/object addressability (id/type/frame/preview/formatBindings). "
+        "dataModels[] = DataModel addressability (id/label/primaryInputId/"
+        "inputCount/hasTransform/consumerBlockIds) — inspect_data_model carries "
+        "the full definition after id discovery. "
+        "blockIndex = persisted visual/object addressability (id/type/frame/preview/formatBindings/modelId). "
         "editorFocus.selectedIds are hints, not required to resolve blockIds. "
         "Never invent UUID. Use scope=full only when nativeConfig is required."
     )
@@ -218,8 +227,8 @@ def project_editor_focus_context(
         note = (
             "scope auto-downgraded to editorFocus: full nativeConfig exceeded the "
             "Custom GPT Actions response budget (ResponseTooLargeError). "
-            "blockIndex + dataSources[] remain authoritative for existing-object "
-            "resolution after downgrade. "
+            "blockIndex + dataSources[] + dataModels[] remain authoritative for "
+            "existing-object resolution after downgrade. "
             + note
         )
     out: dict[str, Any] = {
@@ -232,6 +241,7 @@ def project_editor_focus_context(
         else None,
         "dataSources": data_sources,
         "dataSource": selected_source,
+        "dataModels": data_models if data_models is not None else [],
         "sections": sections,
         "accessRole": access_role,
         "currentRevision": revision,
@@ -243,6 +253,8 @@ def project_editor_focus_context(
         out["scopeDowngradeReason"] = "response_budget"
     if isinstance(block_index, dict) and block_index:
         out["blockIndex"] = dict(block_index)
+    if isinstance(focused_binding, dict) and focused_binding:
+        out["focusedBinding"] = dict(focused_binding)
     if isinstance(object_matches, list):
         out["objectMatches"] = object_matches
     if isinstance(slide_preview, dict) and slide_preview:
@@ -365,6 +377,12 @@ def project_block_index_item(block: Mapping[str, Any]) -> dict[str, Any] | None:
     ds_id = str(block.get("dataSourceId") or "").strip()
     if ds_id:
         item["dataSourceId"] = ds_id
+    # DataModel addressability — id persistido, nunca inferido de label/field.
+    # modelId tem precedência semântica (binding_target_id) sem apagar o
+    # dataSourceId legado quando ambos existem.
+    model_id = str(block.get("modelId") or "").strip()
+    if model_id:
+        item["modelId"] = model_id
     binding_field = binding_field_from_block(block)
     if binding_field:
         item["bindingField"] = binding_field
@@ -685,6 +703,88 @@ def project_data_sources_from_slide(slide: Mapping[str, Any] | None) -> list[dic
         if row is not None:
             out.append(row)
     return out
+
+
+def project_data_models_from_slide(
+    slide: Mapping[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Compact DataModel addressability derived from nativeConfig.dataModels[].
+
+    Exposes only stable identity metadata — full definition/inputs/runtime
+    belong to inspect_data_model after id discovery. consumerCount counts
+    consuming blocks (not bound fields), resolved via the canonical
+    collect_source_consumer_field_refs (modelId > dataSourceId).
+    """
+    if not isinstance(slide, dict):
+        return []
+    native = (
+        slide.get("nativeConfig") if isinstance(slide.get("nativeConfig"), dict) else {}
+    )
+    models = (
+        native.get("dataModels") if isinstance(native.get("dataModels"), list) else []
+    )
+    blocks = native.get("blocks") if isinstance(native.get("blocks"), list) else []
+    rows: list[dict[str, Any]] = []
+    for model in models:
+        if not isinstance(model, dict):
+            continue
+        model_id = str(model.get("id") or "").strip()
+        if not model_id:
+            continue
+        consumers = collect_source_consumer_field_refs(blocks, model_id)
+        inputs = (
+            model.get("inputs") if isinstance(model.get("inputs"), list) else []
+        )
+        row: dict[str, Any] = {
+            "id": model_id,
+            "inputCount": len(inputs),
+            "hasTransform": bool(model.get("transform")),
+            "consumerCount": len(consumers),
+            "consumerBlockIds": sorted(str(b) for b in consumers),
+        }
+        label = str(model.get("label") or "").strip()
+        if label:
+            row["label"] = label
+        primary = str(model.get("primaryInputId") or "").strip()
+        if primary:
+            row["primaryInputId"] = primary
+        rows.append(row)
+    return sorted(rows, key=lambda r: str(r.get("id") or ""))
+
+
+def focused_binding_from_blocks(
+    blocks: Any,
+    selected_ids: Any,
+) -> dict[str, Any] | None:
+    """Persisted binding of the single selected block — convenience only.
+
+    Derives strictly from persisted block data (modelId/dataSourceId/projection
+    field); never infers identity from field names, labels or block ids.
+    """
+    if not isinstance(selected_ids, (list, tuple)) or len(selected_ids) != 1:
+        return None
+    block_id = str(selected_ids[0] or "").strip()
+    if not block_id or not isinstance(blocks, list):
+        return None
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        if str(block.get("id") or "").strip() != block_id:
+            continue
+        model_id = str(block.get("modelId") or "").strip()
+        ds_id = str(block.get("dataSourceId") or "").strip()
+        field = binding_field_from_block(block)
+        if not (model_id or ds_id or field):
+            return None
+        row: dict[str, Any] = {
+            "blockId": block_id,
+            "modelId": model_id or None,
+            "dataSourceId": ds_id or None,
+        }
+        if field:
+            row["bindingField"] = field
+        return row
+    return None
 
 
 def resolve_selected_data_source_id(

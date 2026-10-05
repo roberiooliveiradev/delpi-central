@@ -282,9 +282,11 @@ class GptActionsDispatchService:
     ) -> dict[str, Any]:
         from tv_app.application.gpt_actions.response_compact import (
             exceeds_actions_budget,
+            focused_binding_from_blocks,
             iter_block_index_items,
             pick_focus_slide_id,
             project_block_index,
+            project_data_models_from_slide,
             project_data_sources_from_slide,
             project_editor_focus_context,
             project_media_inventory,
@@ -403,6 +405,17 @@ class GptActionsDispatchService:
             object_query=object_query,
             object_types=object_types,
         )
+        # DataModel addressability: derived from persisted nativeConfig +
+        # persisted block bindings (modelId > dataSourceId). Ids are never
+        # inferred from labels/fields/blockIds — inspect_data_model carries
+        # the full definition after discovery.
+        data_models = project_data_models_from_slide(
+            detail_slide if isinstance(detail_slide, dict) else None
+        )
+        focused_binding = focused_binding_from_blocks(
+            native_for_index.get("blocks"),
+            (editor_focus or {}).get("selectedIds"),
+        )
 
         # Inspeção focada de data_source legado: bounded à fonte + deps dela.
         # Sem data_source_id o comportamento do contexto é inalterado;
@@ -437,6 +450,8 @@ class GptActionsDispatchService:
                 editor_focus=editor_focus,
                 block_index=block_index,
                 object_matches=object_matches,
+                data_models=data_models,
+                focused_binding=focused_binding,
             )
             if focused_payload is not None:
                 focused_ctx["focusedDataSource"] = focused_payload
@@ -467,8 +482,9 @@ class GptActionsDispatchService:
                 "slides[] is a compact index (no nativeConfig). "
                 "focusedSlide has full nativeConfig for the editorFocus/preview/first slide. "
                 "dataSources[] lists id/label/operationId/params for the focused slide. "
+                "dataModels[] lists DataModel ids + compact summaries for the focused slide. "
                 "If this response is too large, the API auto-downgrades to scope=editorFocus "
-                "and retains blockIndex + dataSources[] (no invented blockIds). "
+                "and retains blockIndex + dataSources[] + dataModels[] (no invented blockIds). "
                 "Pass scope=editorFocus explicitly for compact addressability without nativeConfig."
             ),
         }
@@ -563,6 +579,8 @@ class GptActionsDispatchService:
                 slide_preview=slide_preview,
                 block_index=block_index,
                 object_matches=object_matches,
+                data_models=data_models,
+                focused_binding=focused_binding,
             )
         return out
 

@@ -158,7 +158,7 @@ Typed vs heuristic:
 |---|---|---|
 | gpt_get_catalog | READ | discovery |
 | gpt_list_playlists | READ | playlist entity |
-| gpt_get_playlist_context | READ | playlist entity + `layoutDigest` + `filterDigest` + `designAudit` + `mediaInventory`; optional `includePreview` → `slidePreview` |
+| gpt_get_playlist_context | READ | playlist entity + `layoutDigest` + `filterDigest` + `designAudit` + `mediaInventory` + `dataModels[]`/`blockIndex[].modelId`/`focusedBinding` (DataModel addressability, survives budget downgrade); optional `includePreview` → `slidePreview` |
 | gpt_search_data_routes | ANALYSIS | data discovery |
 | gpt_preview_data_block | ANALYSIS | data preview + `semanticDigest` + `visualRecommendation` |
 | gpt_suggest_change | WORKFLOW PREPARE | NL → typed ops |

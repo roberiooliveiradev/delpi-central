@@ -229,7 +229,7 @@
       "get": {
         "operationId": "gpt_get_playlist_context",
         "summary": "Authorized playlist context",
-        "description": "Playlist context with slides and focused slide. editorFocus omits nativeConfig and returns dataSources + blockIndex. full may auto-downgrade when over budget. objectQuery can return persisted objectMatches. includePreview adds a signed slide preview.",
+        "description": "Playlist context with slides and focused slide. editorFocus omits nativeConfig and returns dataSources + dataModels + blockIndex.modelId + focusedBinding. full auto-downgrades over budget keeping that addressability. objectQuery returns persisted objectMatches. includePreview adds a signed preview.",
         "tags": [
           "TV Dashboard GPT"
         ],
