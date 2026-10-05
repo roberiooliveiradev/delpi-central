@@ -31,6 +31,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 
 | Arquivo | Conteúdo |
 |---|---|
+| [controllership-finance/README.md](./controllership-finance/README.md) | **Portal Controladoria & Finanças (TARGET)** — produto multi-macroprocesso; Central de Fechamento/PROC-0072; snapshot TÉO e readiness |
 | [financial/README.md](./financial/README.md) | Portal Financeiro P0 (billing, inadimplência, CC, frete) |
 | [financeiro-controladoria/README.md](./financeiro-controladoria/README.md) | Índice Transforma+ Controladoria |
 | [financeiro-controladoria/ROADMAP.md](./financeiro-controladoria/ROADMAP.md) | **Transforma+** — fechamento, Contabilidade, CTL-* (não autoriza implementação) |

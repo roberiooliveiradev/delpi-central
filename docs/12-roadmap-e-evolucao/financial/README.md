@@ -1,5 +1,7 @@
 # Portal Financeiro — spec e absorção dos plugins legados
 
+> **Novo TARGET de produto:** [Portal Controladoria & Finanças](../controllership-finance/README.md) é uma iniciativa multi-macroprocesso distinta. Este P0 continua PROVEN/runtime atual; absorção, migração ou desativação não são inferidas pelo novo TARGET.
+>
 > **Status:** P0 entregue (`plugins/financial` + `financial-api`)
 >
 > **Fora do P0:** orçamento, contas a pagar / fluxo de caixa, desativação dos plugins legados

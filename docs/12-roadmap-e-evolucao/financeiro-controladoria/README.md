@@ -1,5 +1,7 @@
 # Financeiro / Controladoria — índice Transforma+
 
+> **TARGET atual:** o novo produto multi-macroprocesso está documentado em [../controllership-finance/README.md](../controllership-finance/README.md). Esta pasta permanece como roadmap Transforma+/discovery histórico e não substitui o TARGET consolidado do PROC-0072.  
+
 > **Papel:** roadmap de negócio Transforma+ para fechamento, Contabilidade e custos sob a ótica de Controladoria.  
 > **Não substitui** o Portal Financeiro P0 nem o Planejamento Orçamentário.  
 > **Não autoriza** implementação, permission nova, gravação ERP ou fórmula contábil/mão de obra.
