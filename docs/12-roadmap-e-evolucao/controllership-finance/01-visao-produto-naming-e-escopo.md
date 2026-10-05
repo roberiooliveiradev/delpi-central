@@ -38,6 +38,9 @@ Portal Controladoria & Finanças
 
 ## Fronteiras
 
+A matriz detalhada de produtos, owners e regras de integração está em [21-boundaries-produtos-e-owners.md](./21-boundaries-produtos-e-owners.md).
+
+
 ### Portal Financeiro P0
 `plugins/financial` + `financial-api` continuam distintos. Não inferir absorção, migração, desativação, banco comum ou transferência de ownership.
 
