@@ -537,7 +537,13 @@ def test_prepare_selection_routes_through_write_governance():
 # governance contract in envelope form (observed on the live TÉO
 # PREPARE surface). Generic normalization, not a specialist branch.
 ENVELOPED_READY_PROPOSAL = RemoteToolOutcome(
-    content_text="Governed proposal prepared.",
+    # Live owners serialize the whole payload into content_text too —
+    # the raw handle must be redacted there, not only in structure keys.
+    content_text=(
+        '{"data": {"status": "proposal_ready", "proposal": '
+        '{"handle": "env-handle-9", "exact_change": {"f": "n"}, '
+        '"ready": true}}}'
+    ),
     structured={
         "data": {
             "status": "proposal_ready",

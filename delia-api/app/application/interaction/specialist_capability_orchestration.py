@@ -491,6 +491,14 @@ _TEXT_REDACTIONS = (
     ),
     (
         re.compile(
+            r"(\b(?:proposal[-_ ]?handle|handle|candidate[-_ ]?token)\b"
+            r"[\"']?\s*[:=]\s*[\"']?)[^\s\"',;}]+",
+            re.IGNORECASE,
+        ),
+        lambda m: m.group(1) + REDACTION_MARKER,
+    ),
+    (
+        re.compile(
             r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"
             r"\.[A-Za-z0-9_-]*\b"
         ),
