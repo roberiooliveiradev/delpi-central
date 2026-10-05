@@ -5,6 +5,7 @@ import type {
   InvoicePostingDetail,
   InvoicePostingListResponse,
   InvoicePostingRequest,
+  CteDetail,
   ListFilters,
   NfseDetail,
   ReceivedInvoiceSearch,
@@ -92,7 +93,7 @@ export async function searchReceivedInvoices(filters: {
   invoiceNumber?: string;
   supplierCnpj?: string;
   page?: number;
-  documentType?: "all" | "nfe" | "nfse";
+  documentType?: "all" | "nfe" | "nfse" | "cte";
 }): Promise<ReceivedInvoiceSearch> {
   const params = new URLSearchParams();
   if (filters.invoiceNumber) params.set("invoice_number", filters.invoiceNumber);
@@ -110,6 +111,39 @@ export function fetchReceivedNfseDetail(documentId: string, branch: string): Pro
   );
 }
 
+export function fetchReceivedCteDetail(
+  documentId: string,
+  fileId: string,
+  accessKey: string,
+  branch: string,
+): Promise<CteDetail> {
+  const params = new URLSearchParams({
+    branch,
+    document_type: "cte",
+    file_id: fileId,
+    access_key: accessKey,
+  });
+  return httpGet<CteDetail>(
+    `${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/detail?${params.toString()}`,
+  );
+}
+
+export function fetchReceivedCteDacte(
+  documentId: string,
+  fileId: string,
+  accessKey: string,
+  branch: string,
+): Promise<Blob> {
+  const params = new URLSearchParams({
+    branch,
+    file_id: fileId,
+    access_key: accessKey,
+  });
+  return httpGetBlob(
+    `${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/dacte?${params.toString()}`,
+  );
+}
+
 export function downloadReceivedNfseXml(
   documentId: string,
   variant: "original" | "standard",
@@ -123,7 +157,7 @@ export function downloadReceivedNfseXml(
 
 export function fetchRequestFiscalAttachment(
   requestId: string,
-  attachmentType: "xml_original" | "xml_standard",
+  attachmentType: "xml_original" | "xml_standard" | "dacte",
 ): Promise<Blob> {
   return httpGetBlob(
     `${API_BASE}/requests/${encodeURIComponent(requestId)}/fiscal-attachments/${attachmentType}`,

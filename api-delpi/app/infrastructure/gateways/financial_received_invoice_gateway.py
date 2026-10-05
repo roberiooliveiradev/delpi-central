@@ -167,6 +167,107 @@ class FinancialReceivedInvoiceGateway:
             )
         return data
 
+    def download_cte_xml(
+        self,
+        *,
+        authorization: str,
+        document_id: str,
+        file_id: str,
+        branch: str,
+    ) -> tuple[bytes, str]:
+        normalized_id = _document_id(document_id)
+        normalized_file = _document_id(file_id)
+        normalized_branch = _branch(branch)
+        response = self._get(
+            f"/invoices/received/{quote(normalized_id, safe='')}/xml/original",
+            authorization=authorization,
+            params={
+                "documentType": "cte",
+                "fileId": normalized_file,
+                "branch": normalized_branch,
+            },
+        )
+        if response.status_code >= 400:
+            payload = _json_payload(response)
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível obter o XML do CT-e."),
+                _mapped_status(response.status_code),
+            )
+        content = response.content or b""
+        if len(content) > _MAX_PDF_BYTES or not _looks_like_xml(content):
+            raise FinancialReceivedInvoiceGatewayError("O XML do CT-e retornado é inválido.", 502)
+        return content, f"CTe-{normalized_id}.xml"
+
+    def download_dacte(
+        self,
+        *,
+        authorization: str,
+        document_id: str,
+        file_id: str,
+        access_key: str,
+        branch: str,
+    ) -> tuple[bytes, str]:
+        normalized_id = _document_id(document_id)
+        normalized_file = _document_id(file_id)
+        normalized_key = _cte_access_key(access_key)
+        normalized_branch = _branch(branch)
+        response = self._get(
+            f"/invoices/received/{quote(normalized_id, safe='')}/dacte",
+            authorization=authorization,
+            params={
+                "fileId": normalized_file,
+                "accessKey": normalized_key,
+                "branch": normalized_branch,
+            },
+        )
+        if response.status_code >= 400:
+            payload = _json_payload(response)
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível obter o DACTE."),
+                _mapped_status(response.status_code),
+            )
+        content = response.content or b""
+        if len(content) > _MAX_PDF_BYTES or not content.startswith(b"%PDF"):
+            raise FinancialReceivedInvoiceGatewayError("O DACTE retornado não é um PDF válido.", 502)
+        return content, f"CTe-{normalized_key}.pdf"
+
+    def get_cte_detail(
+        self,
+        *,
+        authorization: str,
+        document_id: str,
+        file_id: str,
+        access_key: str,
+        branch: str,
+    ) -> dict[str, Any]:
+        normalized_id = _document_id(document_id)
+        normalized_file = _document_id(file_id)
+        normalized_key = _cte_access_key(access_key)
+        normalized_branch = _branch(branch)
+        response = self._get(
+            f"/invoices/received/{quote(normalized_id, safe='')}/detail",
+            authorization=authorization,
+            params={
+                "documentType": "cte",
+                "fileId": normalized_file,
+                "accessKey": normalized_key,
+                "branch": normalized_branch,
+            },
+        )
+        payload = _json_payload(response)
+        if response.status_code >= 400 or payload.get("success") is False:
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível carregar os dados do CT-e."),
+                _mapped_status(response.status_code),
+            )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise FinancialReceivedInvoiceGatewayError(
+                "Os dados do CT-e retornaram um formato inválido.",
+                502,
+            )
+        return data
+
     def _get(
         self,
         path: str,
@@ -296,6 +397,13 @@ def _access_key(value: str) -> str:
     normalized = str(value or "").strip()
     if len(normalized) != _ACCESS_KEY_LENGTH or not normalized.isdigit():
         raise FinancialReceivedInvoiceGatewayError("Chave de acesso inválida.", 422)
+    return normalized
+
+
+def _cte_access_key(value: str) -> str:
+    normalized = _access_key(value)
+    if normalized[20:22] != "57":
+        raise FinancialReceivedInvoiceGatewayError("Chave de acesso do CT-e inválida.", 422)
     return normalized
 
 

@@ -1,4 +1,7 @@
-"""XML fiscal persistido no mesmo volume do DANFE. O bytes original não é reescrito."""
+"""XML fiscal e DACTE persistidos no mesmo volume do DANFE. O bytes original não é reescrito.
+
+`xml_original` e `xml_standard` continuam exigindo XML. `dacte` exige PDF.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +10,8 @@ from pathlib import Path
 from app.config import settings
 
 MAX_FISCAL_XML_BYTES = 10_485_760
-_ATTACHMENT_TYPES = frozenset({"xml_original", "xml_standard"})
+_ATTACHMENT_TYPES = frozenset({"xml_original", "xml_standard", "dacte"})
+_EXTENSIONS = {"xml_original": ".xml", "xml_standard": ".xml", "dacte": ".pdf"}
 
 
 class LancamentoFiscalAttachmentStorageError(ValueError):
@@ -21,7 +25,10 @@ class LancamentoFiscalAttachmentStorage:
 
     def save(self, *, request_id: str, attachment_type: str, content: bytes) -> str:
         stored_name = _stored_name(request_id, attachment_type)
-        _validate_xml(content)
+        if attachment_type == "dacte":
+            _validate_pdf(content)
+        else:
+            _validate_xml(content)
         target = self._resolve(stored_name)
         target.write_bytes(content)
         return stored_name
@@ -39,7 +46,7 @@ class LancamentoFiscalAttachmentStorage:
 
     def _resolve(self, stored_name: str) -> Path:
         safe = Path(stored_name).name
-        if safe != stored_name or not safe.endswith(".xml"):
+        if safe != stored_name or not (safe.endswith(".xml") or safe.endswith(".pdf")):
             raise LancamentoFiscalAttachmentStorageError("Nome de arquivo inválido.")
         target = (self.base_dir / safe).resolve()
         if self.base_dir.resolve() not in target.parents:
@@ -54,7 +61,12 @@ def _stored_name(request_id: str, attachment_type: str) -> str:
         raise LancamentoFiscalAttachmentStorageError("Solicitação inválida para gravar o XML.")
     if kind not in _ATTACHMENT_TYPES:
         raise LancamentoFiscalAttachmentStorageError("Tipo de anexo fiscal inválido.")
-    return f"{normalized}-{kind}.xml"
+    return f"{normalized}-{kind}{_EXTENSIONS[kind]}"
+
+
+def _validate_pdf(content: bytes) -> None:
+    if not content or len(content) > MAX_FISCAL_XML_BYTES or not content.startswith(b"%PDF"):
+        raise LancamentoFiscalAttachmentStorageError("O DACTE não é um PDF válido.")
 
 
 def _validate_xml(content: bytes) -> None:

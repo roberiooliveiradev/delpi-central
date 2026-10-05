@@ -225,16 +225,18 @@ export type CreateRequestPayload = {
   document_id?: string;
   access_key?: string;
   source_branch?: string;
-  source_document_type?: "nfe" | "nfse";
+  source_document_type?: "nfe" | "nfse" | "cte";
   provider_document_number?: string;
+  provider_file_id?: string;
   linked_invoices?: Array<{ document: string; series: string }>;
 };
 
-export type ReceivedDocumentType = "nfe" | "nfse";
+export type ReceivedDocumentType = "nfe" | "nfse" | "cte";
 
 export type ReceivedInvoiceItem = {
   documentType?: ReceivedDocumentType;
   documentId: string;
+  providerFileId?: string | null;
   providerDocumentNumber?: string | null;
   documentNumber?: string | null;
   accessKey: string;
@@ -249,6 +251,7 @@ export type ReceivedInvoiceItem = {
   amountFormatted: string;
   cityHall?: string | null;
   danfeAvailable: boolean;
+  printableAvailable?: boolean;
   xmlOriginalAvailable?: boolean;
   xmlStandardAvailable?: boolean;
   branchCode: string;
@@ -288,6 +291,42 @@ export type NfseDetail = {
   inss?: string | null;
   netAmount?: string | null;
   services?: NfseServiceLine[];
+};
+
+export type CteLinkedInvoice = {
+  accessKey: string;
+  documentNumber: string;
+  series: string;
+};
+
+export type CteParty = {
+  name?: string | null;
+  cnpj?: string | null;
+};
+
+export type CtePlace = {
+  city?: string | null;
+  state?: string | null;
+};
+
+export type CteDetail = {
+  documentType?: "cte";
+  documentId?: string;
+  providerFileId?: string | null;
+  branchCode?: string;
+  accessKey?: string | null;
+  number?: string | null;
+  series?: string | null;
+  model?: string | null;
+  emissionAt?: string | null;
+  issuer?: CteParty | null;
+  sender?: CteParty | null;
+  recipient?: CteParty | null;
+  origin?: CtePlace | null;
+  destination?: CtePlace | null;
+  serviceValue?: string | null;
+  cargoValue?: string | null;
+  linkedInvoices?: CteLinkedInvoice[];
 };
 
 export type FiscalAttachment = {

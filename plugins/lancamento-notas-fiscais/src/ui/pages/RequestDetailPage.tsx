@@ -63,7 +63,10 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
     enabled: hasDanfe,
   });
 
-  async function downloadFiscal(attachmentType: "xml_original" | "xml_standard", fileName: string) {
+  async function downloadFiscal(
+    attachmentType: "xml_original" | "xml_standard" | "dacte",
+    fileName: string,
+  ) {
     setDownloadError(null);
     try {
       const blob = await api.fetchRequestFiscalAttachment(requestId, attachmentType);
@@ -306,14 +309,32 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
 
           {detail.fiscal_attachments && detail.fiscal_attachments.length > 0 ? (
             <section className="lnf-card" data-testid="nfse-attachments">
-              <h2>XML da NFS-e</h2>
-              <p className="lnf-muted">Arquivos recebidos do prestador e a versão padronizada. Não são um DANFSE.</p>
+              <h2>
+                {detail.fiscal_attachments.some((item) => item.document_type === "cte")
+                  ? "Anexos do CT-e"
+                  : "XML da NFS-e"}
+              </h2>
+              <p className="lnf-muted">
+                {detail.fiscal_attachments.some((item) => item.document_type === "cte")
+                  ? "XML do conhecimento e o DACTE, quando o portal entregou o PDF."
+                  : "Arquivos recebidos do prestador e a versão padronizada. Não são um DANFSE."}
+              </p>
               <div className="lnf-form__actions">
                 {detail.fiscal_attachments.map((item) => {
-                  if (item.attachment_type !== "xml_original" && item.attachment_type !== "xml_standard") {
+                  if (
+                    item.attachment_type !== "xml_original" &&
+                    item.attachment_type !== "xml_standard" &&
+                    item.attachment_type !== "dacte"
+                  ) {
                     return null;
                   }
                   const attachmentType = item.attachment_type;
+                  const label =
+                    attachmentType === "xml_original"
+                      ? "Baixar XML original"
+                      : attachmentType === "xml_standard"
+                        ? "Baixar XML padronizado"
+                        : "Baixar DACTE";
                   return (
                     <button
                       key={attachmentType}
@@ -321,7 +342,7 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                       className="lnf-btn lnf-btn--ghost"
                       onClick={() => void downloadFiscal(attachmentType, item.file_name)}
                     >
-                      {attachmentType === "xml_original" ? "Baixar XML original" : "Baixar XML padronizado"}
+                      {label}
                     </button>
                   );
                 })}

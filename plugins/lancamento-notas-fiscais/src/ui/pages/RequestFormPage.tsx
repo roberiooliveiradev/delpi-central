@@ -130,11 +130,12 @@ export function RequestFormPage({
   const [loading, setLoading] = useState(mode === "edit");
   const [step, setStep] = useState<"choose" | "search" | "form">(mode === "create" ? "choose" : "form");
   const [attachment, setAttachment] = useState<{
-    document_type: "nfe" | "nfse";
+    document_type: "nfe" | "nfse" | "cte";
     document_id: string;
     access_key: string;
     branch_code: string;
     provider_document_number?: string;
+    provider_file_id?: string;
   } | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [supplierHint, setSupplierHint] = useState<string | null>(null);
@@ -276,12 +277,16 @@ export function RequestFormPage({
         series: normalizeSeriesInput(row.series),
       }));
     }
-    if (attachment?.document_type === "nfse") {
+    if (attachment?.document_type === "nfse" || attachment?.document_type === "cte") {
       payload.source = "questor";
-      payload.source_document_type = "nfse";
+      payload.source_document_type = attachment.document_type;
       payload.document_id = attachment.document_id;
       payload.source_branch = attachment.branch_code;
       payload.provider_document_number = attachment.provider_document_number;
+      if (attachment.document_type === "cte") {
+        payload.access_key = attachment.access_key;
+        payload.provider_file_id = attachment.provider_file_id;
+      }
     } else if (attachment) {
       payload.source = "received_nfe";
       payload.document_id = attachment.document_id;
@@ -319,7 +324,12 @@ export function RequestFormPage({
       return;
     }
     const isNfse = row.documentType === "nfse";
+    const isCte = row.documentType === "cte";
     let series = row.series;
+    let documentSource = isNfse || isCte ? row.documentNumber || row.invoiceNumber : row.invoiceNumber;
+    let amountSource = row.amount;
+    let emissionSource = row.emissionAt;
+    let issuerCnpj = row.issuerCnpj;
     if (isNfse) {
       try {
         const detail = await api.fetchReceivedNfseDetail(row.documentId, row.branchCode);
@@ -331,10 +341,39 @@ export function RequestFormPage({
         return;
       }
     }
+    if (isCte) {
+      if (!row.providerFileId) {
+        setSelectionError("Este CT-e não tem o arquivo necessário para continuar.");
+        return;
+      }
+      try {
+        const detail = await api.fetchReceivedCteDetail(
+          row.documentId,
+          row.providerFileId,
+          row.accessKey,
+          row.branchCode,
+        );
+        series = detail.series || series;
+        documentSource = detail.number || documentSource;
+        amountSource = detail.serviceValue || amountSource;
+        emissionSource = detail.emissionAt || emissionSource;
+        issuerCnpj = detail.issuer?.cnpj || issuerCnpj;
+        setLinkedInvoices(
+          (detail.linkedInvoices ?? []).map((item) => ({
+            document: item.documentNumber,
+            series: item.series,
+          })),
+        );
+      } catch (err) {
+        setSelectionError(
+          err instanceof Error ? err.message : "Não foi possível ler o CT-e.",
+        );
+        return;
+      }
+    }
     setSelectionError(null);
-    const cnpj = (row.issuerCnpj || searchedCnpj || "").replace(/\D/g, "");
-    const amount = row.amount.includes(",") ? row.amount : row.amount.replace(".", ",");
-    const documentSource = isNfse ? row.documentNumber || row.invoiceNumber : row.invoiceNumber;
+    const cnpj = (issuerCnpj || searchedCnpj || "").replace(/\D/g, "");
+    const amount = amountSource.includes(",") ? amountSource : amountSource.replace(".", ",");
     setForm((current) => ({
       ...current,
       branch:
@@ -342,16 +381,17 @@ export function RequestFormPage({
         (row.branchCode === "01" || row.branchCode === "02" ? row.branchCode : current.branch),
       document: sanitizeDocumentTyping(documentSource),
       series: normalizeSeriesInput(series),
-      fiscal_model: isNfse ? "nfse" : "nfe",
-      issue_date: row.emissionAt ? row.emissionAt.slice(0, 10) : "",
+      fiscal_model: isCte ? "cte" : isNfse ? "nfse" : "nfe",
+      issue_date: emissionSource ? emissionSource.slice(0, 10) : "",
       amount,
     }));
     setAttachment({
-      document_type: isNfse ? "nfse" : "nfe",
+      document_type: isCte ? "cte" : isNfse ? "nfse" : "nfe",
       document_id: row.documentId,
       access_key: isNfse ? "" : row.accessKey,
       branch_code: row.branchCode,
       provider_document_number: row.providerDocumentNumber || undefined,
+      provider_file_id: isCte ? row.providerFileId || undefined : undefined,
     });
     setSupplier(null);
     setSupplierHint(null);
@@ -406,11 +446,13 @@ export function RequestFormPage({
       <LnfPageHeader
         title={mode === "create" ? "Nova solicitação" : "Corrigir solicitação"}
         subtitle={
-          attachment?.document_type === "nfse"
-            ? "Os dados vieram da NFS-e. Confira, informe o recebimento físico e salve para anexar os XML."
-            : attachment
-              ? "Os dados vieram da NF-e. Confira, informe o recebimento físico e salve para anexar o DANFE."
-              : "Informe os dados fiscais do recebimento físico da nota."
+          attachment?.document_type === "cte"
+            ? "Os dados vieram do CT-e. Confira as notas vinculadas, informe o recebimento físico e salve para anexar o XML."
+            : attachment?.document_type === "nfse"
+              ? "Os dados vieram da NFS-e. Confira, informe o recebimento físico e salve para anexar os XML."
+              : attachment
+                ? "Os dados vieram da NF-e. Confira, informe o recebimento físico e salve para anexar o DANFE."
+                : "Informe os dados fiscais do recebimento físico da nota."
         }
         actions={
           <button type="button" className="lnf-btn lnf-btn--ghost" onClick={onCancel}>
@@ -419,7 +461,11 @@ export function RequestFormPage({
         }
       />
 
-      {attachment?.document_type === "nfse" ? (
+      {attachment?.document_type === "cte" ? (
+        <p className="lnf-hint" data-testid="cte-attach-notice">
+          O XML do CT-e será anexado ao salvar. O DACTE entra quando o portal tiver o PDF. As notas vinculadas vêm do XML.
+        </p>
+      ) : attachment?.document_type === "nfse" ? (
         <p className="lnf-hint" data-testid="nfse-attach-notice">
           O XML original e o XML padronizado serão anexados ao salvar. A NFS-e não exige DANFE.
         </p>

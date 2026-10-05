@@ -1,4 +1,4 @@
-"""Documento fiscal recebido. NF-e e NFS-e compartilham o contrato; CT-e cabe depois."""
+"""Documento fiscal recebido. NF-e, NFS-e e CT-e compartilham o contrato."""
 
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ class ReceivedFiscalDocument:
     manifestation_description: str = ""
     danfe_available: bool = False
     provider_status: str = ""
+    provider_file_id: str | None = None
 
 
 @dataclass(frozen=True)
