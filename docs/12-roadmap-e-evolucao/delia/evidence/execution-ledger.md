@@ -9143,3 +9143,51 @@ OPEN_ITEMS =
         owner-side
     PRODUCTION_READINESS = NOT_PROVEN (unchanged; owner contract
         correctness proven, not phase/production certification)
+
+## 6.130. ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 — provider-neutral operational orchestration boundary (binding Product Master decision)
+
+DATE = 2026-10-05
+BASE_HEAD = 482352c2aeaae13b7cda6bb5a17318bd9868f0b3 (main; includes
+    2d25a0f9e0 TÉO pure-PREPARE owner fix + §6.129 reconciliation —
+    preserved, do not regress)
+BRANCH = main
+WORKING_TREE = clean (untracked scratch files only)
+STATUS = IN_EXECUTION
+
+PRODUCT_MASTER_DECISION (binding, supersedes central role naming only —
+    §6.129 TÉO PREPARE/ACT contract and all MCP federation decisions
+    remain valid):
+    DELIA_ROLE = OPERATIONAL_CAPABILITY_ORCHESTRATOR
+        (supersedes DELIA_ROLE=MCP_ORCHESTRATOR as central target;
+        historical records preserved)
+    MCP = CAPABILITY_PROVIDER_FAMILY (full owner surface preserved:
+        DISCOVERY|READ|ANALYSIS|PREPARE|ACT governed; UNKNOWN
+        discoverable-never-invocable; SPECIALIST_CAPABILITY_CATALOG_
+        OWNER=SPECIALIST; live authenticated tools/list is the
+        capability authority)
+    OPENAPI = CAPABILITY_PROVIDER_FAMILY (existing projection
+        adapter + declarations; non-MCP write families remain
+        NOT_AUTHORIZED — C5_AUTHORIZED=NO)
+    MEDIA_SCREEN = CAPABILITY_PROVIDER_FAMILY
+        (SCREEN_SEMANTIC_FOUNDATION=PROVEN via domain/media;
+        SCREEN_RUNTIME_PROVIDER=NOT_IMPLEMENTED — fake-provider tests
+        prove the architecture only)
+    A2A = CAPABILITY_PROVIDER_FAMILY (future; NOT_IMPLEMENTED)
+    AUTOMATION = EXECUTION_PROVIDER_FAMILY (future; NOT_IMPLEMENTED)
+    PLANNER = PROVIDER_NEUTRAL (selection over semantic capability
+        groups; no provider branches, no tool-name routing, no
+        wire mechanics in planner)
+    DELIA_LOCAL_MCP_CAPABILITY_CATALOG = FORBIDDEN
+    DELIA_RUNTIME_CAPABILITY_VIEW = ALLOWED (request-scoped
+        projection of live provider surfaces; never persistent
+        authority)
+    WORKSPACE_CONTEXT = INPUT_TO_ORCHESTRATION_NOT_AUTHORITY
+        (bounded host/route/EntityRef hints; never grants RBAC,
+        domain permission or ACT)
+
+ROOT_CAUSE =
+    the implementation evolved from bounded MCP slices into a central
+    interaction path that tried specialist/MCP orchestration before the
+    general path. Component-level MCP tests proved federation mechanics
+    but did not prove provider-neutral contextual user outcomes (e.g.
+    o
