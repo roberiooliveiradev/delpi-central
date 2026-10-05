@@ -25,6 +25,51 @@ Deve seguir o padrão atual dos Portais Comercial e Suprimentos:
 
 Permission: `controllership-finance.access`.
 
+
+## Reuso obrigatório de `@delpi/plugin-ui`
+
+A estrutura do manual já existe no kit e deve ser usada em vez de um manual local paralelo.
+
+Import canônico:
+
+```ts
+import {
+  createDashboardUserManual,
+  createDashboardPageHero,
+  createDashboardPagePath,
+  createDashboardSectionCard,
+  HelpTooltip,
+  FieldLabel,
+  SectionHintLabel,
+} from "@delpi/plugin-ui/index";
+```
+
+Estilos/runtime:
+
+```ts
+await import("@delpi/plugin-ui/styles");
+```
+
+`createDashboardUserManual` fornece o conjunto estrutural de manual:
+
+```text
+Frame
+Scope
+Layout / TOC
+Section
+Concepts
+GuideTable
+Faq
+Glossary
+Eyebrow
+```
+
+O conteúdo PT-BR permanece no plugin consumidor e deve ser sincronizado com as features.
+
+Os Portais Comercial e Suprimentos já usam esse padrão; o novo Portal deve seguir a mesma abordagem.
+
+**DO NOT RECREATE:** frame do manual, TOC/layout, concepts table, guide table, FAQ/glossary chrome ou tooltip genérico.
+
 ## Princípio
 
 ```text
