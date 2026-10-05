@@ -8577,7 +8577,204 @@ PHASE GUARDS =
     PREPARE = BLOCKED / ACT = BLOCKED for non-MCP families
     PRODUCTION_READINESS = NOT_PROVEN
 
-IMPLEMENTATION_EVIDENCE = PENDING (runtime correction + tests +
-    live tools/list matrix + controlled production verification to
-    be recorded in this entry upon completion)
+IMPLEMENTATION_EVIDENCE =
+    IMPLEMENTATION_SHA = 630863ecf0e8f8749b717a9e7dbe94e7ac34b408
+    FINAL_MAIN_SHA = 69c65bdf984cf3cda4b611c328e688b12034923e
+    DELIA_API_TESTS = 632 PASS (rerun on FINAL_MAIN_SHA)
+    DELIA_MFE_TESTS = 40 PASS | typecheck PASS | build PASS
+    MERGE_DELIA_REGRESSION = NO (diff impl..merge over delia-api/
+        plugins/delia/docs = empty)
+    PRODUCTION_VERIFICATION = PROD-MCP-FULL-CAPABILITY-VERIFY-01
+        -> ledger 6.127 (2026-10-05): deployment + live catalog +
+        read leg PROVEN; write leg UNREACHABLE due to two defects
+        (argument-shape validation) + one selection-quality defect
+    STATUS = IMPLEMENTATION_EVIDENCE_RECORDED_WITH_OPEN_DEFECTS
+        independent review ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FULL_
+        CAPABILITY_ORCHESTRATION_03 still pending (no self-accept)
 
+## 6.127. PROD-MCP-FULL-CAPABILITY-VERIFY-01 — controlled production verification (evidence only)
+
+DATE = 2026-10-05
+MODE = EVIDENCE_ONLY (WSL + SSH operador@192.168.1.237 -> srv-api +
+    public HTTPS endpoint); no redeploy, no restart, no code change,
+    no production mutation
+
+SHA_BINDING =
+    LOCAL_HEAD = 69c65bdf984cf3cda4b611c328e688b12034923e (main, clean)
+    SERVER_REPO_PATH = /home/operador/projetos/delpi-central
+    SERVER_HEAD = 69c65bdf984cf3cda4b611c328e688b12034923e
+        (main, clean working tree)
+    DELIA_CONTAINER = delpi-delia-api (compose project infra)
+    RUNNING_SHA_BINDING = PROVEN — running container loads
+        specialist_capability_orchestration and
+        INTERACTIVE_INVOCABLE_CLASSES = {DISCOVERY, READ, PREPARE,
+        ACT}; module files byte-identical to repo HEAD
+    RUNNING_NO_LOCAL_MCP_CATALOG = PASS — no active
+        GOVERNED_WRITE_BINDINGS / write_binding_for /
+        GovernedWriteBinding registry / per-capability flags in the
+        running module set
+
+LIVE_MCP_SURFACE (authenticated initialize + tools/list via the
+    delegated-user-credential adapter inside the container) =
+    DAVI  total=2  {DISCOVERY:1, READ:1}
+          blocked=0 unknown=0 -> PASS
+    TEO   total=24 {DISCOVERY:1, READ:12, PREPARE:10, ACT:1}
+          blocked=0 unknown=0 -> PASS
+    VISTA total=8  {DISCOVERY:1, READ:5, PREPARE:1, ACT:1}
+          blocked=0 unknown=0 -> PASS
+    ALL_KNOWN_CLASS_CAPABILITIES_PROJECTED = PASS
+
+READ_REGRESSION (public /interaction/turns, human OIDC auth-code
+    subject token; token never persisted or printed) =
+    DAVI_READ = PASS (GROUNDED/OBSERVATION; davi/
+        execute_delpi_information -> search_products; 10090045
+        resolved)
+    TEO_READ = PASS on second attempt (GROUNDED/OBSERVATION;
+        teo/analyze view=summary; first attempt fell back to model —
+        selection flake, not a gate failure)
+    VISTA_READ = FAIL (specialist selection) — "programações dos
+        Painéis TV" deterministically routed to
+        davi/discover_delpi_information instead of
+        vista/list_playlists; reproduced at raw proposal level
+        inside the container. Response itself was truthful
+        (GROUNDED, empty result — user owns no playlists) but the
+        specialist-selection expectation is not met.
+    CONTROL = PASS (NON_GROUNDED/HYPOTHESIS; no false attribution)
+    UNAUTH = PASS (401 unauthenticated)
+    NEGATIVE_AUTHZ = TEST_NOT_RUN (no available test identity
+        lacking permission; none created)
+
+WRITE_LEG (natural-language path only — no direct-invoke endpoint
+    exists by design) =
+    SAFE_TEST_ENTITY = NOT_FOUND — TEO: 68 real business processes,
+        zero test fixtures; VISTA: user owns zero playlists and every
+        write op requires a slide target; no legitimate reversible
+        designated record exists
+    LIVE_PREPARE = BLOCKED_BY_DEFECT — never reached live: the
+        production model selects the correct capability
+        (teo/prepare_record_change) but serializes "arguments" as a
+        JSON-encoded string, and _validate_arguments /
+        _bounded_arguments accept Mapping values of bounded
+        primitives only; both fail closed to NOT_APPLICABLE ->
+        honest model fallback. Even a correctly-typed proposal would
+        be rejected: every live PREPARE/ACT contract requires nested
+        object/array arguments (changes/ops/target/payload). The
+        entire live write leg is currently UNREACHABLE through the
+        selection path.
+    LIVE_ACT / CONFIRM_ACT / CANCEL_FLOW / DIRECT_ACT /
+        WRITE_OUTCOME / ROLLBACK = TEST_NOT_RUN
+    CONFIRMATION_CONTRACT = verified in code + automated tests only
+        (no confirmation_request was ever emitted live)
+    CONFIRMATION_UI = INCONCLUSIVE (never exercised; HTTP contract +
+        MFE unit tests green)
+
+AUTOMATED_WRITE_EVIDENCE (green on DEPLOYED_SHA) =
+    test_confirm_ready_proposal_invokes_owner_commit
+    test_reject_cancels_pending_write_no_act
+    test_confirmation_unknown_digest_rejected
+    test_confirmation_actor_mismatch_denied
+    test_confirmation_session_mismatch_rejected
+    test_confirmation_fingerprint_mismatch_rejected
+    test_confirmation_is_single_use_replay_rejected
+    test_expired_pending_proposal_fails_closed
+    test_act_removed_from_live_surface_blocks_commit (TOCTOU)
+    test_owner_denies_act_at_commit
+    test_unverified_act_outcome_not_projected_as_verified
+    test_raw_proposal_handle_never_leaves_backend
+    test_direct_act_intent_requires_confirmation
+    test_model_supplied_orchestration_fields_rejected
+    OWNER_DENIAL / REPLAY / EXPIRY / TOCTOU = PASS (automated)
+
+HYGIENE =
+    SECRET_SCAN_HITS = 0 (captured evidence: no tokens, handles,
+        bearer, cookies, private keys)
+    LOG_SECRET_HYGIENE = PASS (container logs carry request/
+        interaction IDs only — no tokens, prompts or payloads)
+    RUNTIME_CHANGED_BY_VERIFICATION = NO | KEYCLOAK = untouched |
+        GATEWAY = untouched | SPECIALISTS = untouched
+
+OPEN_DEFECTS (block re-verification of the write leg) =
+    DEFECT-1 BLOCKING: _select rejects proposals whose "arguments"
+        is a JSON-encoded string — the production model emits this
+        shape. Fix candidate: bounded json.loads normalization in
+        _select before validation.
+    DEFECT-2 BLOCKING: _validate_arguments / _bounded_arguments
+        accept primitives only — every live PREPARE/ACT contract
+        requires nested objects/arrays (changes/ops/target/payload).
+        Fix candidate: bounded nested validation (depth/size caps;
+        ORCHESTRATED_FIELDS denylist applied at all depths).
+    DEFECT-3 SELECTION QUALITY: VISTA-domain queries deterministically
+        route to DAVI generic discovery; instruction v2 unchanged —
+        likely needs stronger domain-signal guidance (no
+        specialist-specific branches — instruction-level only).
+    OBSERVATION-4: TEO prepare_record_change exposes owner field
+        commit_now — not covered by ORCHESTRATED_FIELDS; if the owner
+        honors it inside PREPARE it bypasses the DÉLIA confirmation
+        gate. Recommend adding commit_now to the denylist.
+
+STATUS = VERIFICATION_PARTIAL — IMPLEMENTATION_EVIDENCE_RECORDED
+    (deployment + catalog + read leg proven; write leg blocked by
+    DEFECT-1/DEFECT-2; DEFECT-3 open)
+NEXT = bounded fix task for DEFECT-1/2 (+3, +OBSERVATION-4), then
+    re-run PROD-MCP-FULL-CAPABILITY-VERIFY before independent review
+PHASE_GUARDS_UNCHANGED = C3_EXECUTED=NO | C4_AUTHORIZED=NO
+    (phase level) | C5_AUTHORIZED=NO (phase level) |
+    NON_MCP_C5_WRITE_FAMILIES=NOT_AUTHORIZED |
+    PRODUCTION_READINESS=NOT_PROVEN
+
+## 6.128. ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03R1 — production defect reproduction + bounded correction (schema-aware arguments, hierarchical live routing, PREPARE contract hardening)
+
+DATE = 2026-10-05
+BASE_HEAD = 044da56bf083485cc29c1fa0baa94c25e66bb88d (main, delta
+    69c65bdf98..044da56bf08 = tv-dashboard-api only; zero DELIA
+    runtime change — revalidated)
+STATUS = IN_EXECUTION
+PARENT = ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03
+ARCHITECTURE_CHANGED = NO
+TARGET = repair generic orchestration implementation without local
+    MCP capability authority — no local catalog, no per-tool flags,
+    no static PREPARE/ACT pairs, no specialist routing rules.
+
+DEFECT_REPRODUCTION =
+    DEFECT-1 JSON_STRING_ARGUMENTS = PROVEN (deterministic unit
+        reproduction on BASE_HEAD: _validate_arguments returns None
+        for the exact live-observed JSON-encoded-string "arguments";
+        live proposals show the production model emits that shape)
+    DEFECT-2 NESTED_ARGUMENTS = PROVEN (deterministic unit
+        reproduction: owner-valid arguments containing nested
+        "changes" object rejected by primitives-only validators;
+        every live PREPARE/ACT contract requires object/array
+        arguments -> write leg unreachable end-to-end)
+    DEFECT-3 CROSS_SPECIALIST_ROUTING = PROVEN (production evidence
+        6.127 + raw proposal inside container: "programações dos
+        Painéis TV" selects davi/discover_delpi_information instead
+        of vista/list_playlists; TEO one-time miss observed)
+
+PREPARE_SIDE_EFFECT_INVENTORY (commit_now) =
+    FIELD_EXISTS = YES
+    OWNER = TEO (transformometro-api)
+    CAPABILITY = prepare_record_change (+ prepare_* where policy
+        allows: entity ops create|update|duplicate; capabilities
+        create_record|update_record|duplicate_record|
+        commit_improvement_package|adjust_shared_resource_cost)
+    TOOL_CLASS = PREPARE
+    MATERIAL_WRITE_IF_TRUE = YES —
+        tm_app/application/gpt_actions/governed_actions_facade.py
+        _maybe_commit_now: commit_now=true + confirmation=true +
+        idempotency_key + policy_allows -> orchestrator.act() ->
+        persisted=True inside a PREPARE-class tool
+    CLASSIFICATION = OWNER_CONTRACT_DEFECT — a PREPARE-class tool can
+        perform material ACT in one call (breaks PREPARE != ACT).
+        DÉLIA-side risk is already fail-closed today (DÉLIA never
+        forwards confirmation/idempotency_key on PREPARE -> owner
+        raises CONFIRMATION_REQUIRED), now hardened explicitly:
+        "commit_now" is generic orchestration-control semantics
+        (collapses PREPARE+ACT, bypassing the DÉLIA confirmation
+        gate) -> added to ORCHESTRATED_FIELDS denylist, never
+        accepted from model output, never forwarded.
+    OWNER_CONTRACT_CORRECTION = follow-up bounded task on
+        transformometro-api (commit_now is an intentional GPT
+        Actions additive feature; removing/reclassifying it on the
+        MCP PREPARE surface is owner-side scope).
+
+IMPLEMENTATION_EVIDENCE = PENDING
