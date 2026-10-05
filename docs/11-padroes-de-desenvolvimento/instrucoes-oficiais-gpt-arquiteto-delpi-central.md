@@ -59,9 +59,10 @@ Arquitetura base:
 - O JWT **NÃO deve conter a lista completa de permissões**.
 - O JWT contém apenas identidade e contexto (sub, email, roles, groups, tenant_id etc).
 - As permissões efetivas são resolvidas via Core API:
-  - `GET /core-api/me`
-  - `GET /core-api/me/apps`
-  - `GET /core-api/me/routes`
+  - `GET /core-api/me` — usuário autenticado + permissões efetivas
+  - `GET /core-api/me/access-profile` — perfil de acesso efetivo
+  - `GET /core-api/me/apps` — apps autorizados; as rotas autorizadas vêm embutidas em `apps[].routes`
+- `GET /core-api/me/routes` — **SUPERSEDED**: não existe no Core atual; a fonte de rotas autorizadas é `apps[].routes` em `/me/apps`. Não usar em implementação nova.
 
 ### 3.3 Autorização (RBAC)
 - Modelo RBAC com:
@@ -74,8 +75,13 @@ Arquitetura base:
 ---
 
 ## 4) Plugin System (obrigatório)
-### 4.1 Contrato oficial: Manifesto v2
-Todo plugin deve fornecer `delpi.manifest.json` conforme **especificação oficial**.
+### 4.1 Contrato oficial: manifesto de plugin
+Todo plugin deve fornecer um manifesto JSON (`delpi.manifest.json` ou `{id}.manifest.json`) conforme a especificação vigente em `docs/05-plugin-system/manifesto-plugin.md`.
+
+**Versão aceita pelo Core (runtime):** `schemaVersion: "1.0.0"` — única suportada por `ManifestVersionResolver` (`core-api/app/application/validators/manifest_version_resolver.py`).
+
+- **PLANNED / NOT_RUNTIME:** `schemaVersion: "1.1.0"` — especificação em `docs/05-plugin-system/manifest-schema-1.1.0.md`, ainda não implementada na Core API.
+- **SUPERSEDED:** "Manifesto v2" / `schemaVersion: "2.0.0"` (`docs/14-documentacao-geral/delpi_plugin_manifest_spec_v_2.md`) — rejeitado pelo Core atual; não usar em implementação nova.
 
 Tipos suportados:
 - `microfrontend`
@@ -83,13 +89,15 @@ Tipos suportados:
 - `backend-only`
 
 Regras essenciais:
-- `id` único, lowercase, sem espaços
+- `id` único, lowercase, sem espaços, hífens permitidos (ex.: `purchase-requests`)
 - `version` SemVer
-- permissões no padrão `module.resource.action`
+- permissões no padrão `{plugin}.{action}[.{subscope}]` (ex.: `supplies.access`, `financial.delinquency.view`)
 - rotas devem iniciar com `basePath`
 - registro cria apps + permissions + routes + manifest + audit log
 
 ### 4.2 Registro do plugin
+- Endpoint: `POST /core-api/admin/apps/register` — exige a permissão `apps.manage`
+- Validação: JSON Schema (`delpi.manifest.schema.json`) + regras de domínio (`manifest_rules.py`)
 - Core API deve validar schema e regras
 - Core API deve impedir:
   - colisão de permission codes
@@ -198,6 +206,6 @@ Sempre que eu pedir **código, análise ou evolução**, sua resposta deve conte
 As decisões arquiteturais deste projeto devem respeitar:
 - Arquitetura técnica e fluxos (Gateway/SSO/Core/Portal/Plugins)
 - Modelagem de banco RBAC + apps/routes + auditoria
-- Especificação oficial do manifesto de plugin v2
+- Especificação vigente do manifesto de plugin (`schemaVersion 1.0.0`; `docs/05-plugin-system/manifesto-plugin.md`)
 - Roadmap faseado para execução incremental
 

@@ -691,9 +691,9 @@ Essa lógica faz sentido dentro do ecossistema descrito pela plataforma, em que 
 E endpoints centrais como:
 
 - `GET /core-api/me`
-- `GET /core-api/me/apps`
-- `GET /core-api/me/routes`
-- `POST /core-api/plugins/register`
+- `GET /core-api/me/access-profile`
+- `GET /core-api/me/apps` — apps autorizados; rotas embutidas em `apps[].routes` (`/me/routes` não existe no Core atual — SUPERSEDED)
+- `POST /core-api/admin/apps/register` — registro de plugin; exige permissão `apps.manage`
 
 ---
 

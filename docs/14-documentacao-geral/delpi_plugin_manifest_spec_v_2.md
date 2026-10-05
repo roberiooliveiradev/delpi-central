@@ -1,8 +1,17 @@
 # 🧩 DELPI Central — Especificação Oficial de Manifesto de Plugin
 
 Versão do Documento: 2.0.0  
-Status: Produção  
-Compatível com Core API + RBAC + Plugin Registry
+Status: **SUPERSEDED — referência histórica, não usar para implementação nova**
+
+> ⚠️ Este documento descreve `schemaVersion: "2.0.0"`, que **não é aceito** pelo Core atual
+> (`ManifestVersionResolver.SUPPORTED_VERSIONS = {"1.0.0"}` em
+> `core-api/app/application/validators/manifest_version_resolver.py`).
+>
+> **Contrato vigente (CURRENT):** `schemaVersion: "1.0.0"` —
+> ver `docs/05-plugin-system/manifesto-plugin.md` e
+> `docs/05-plugin-system/novo-plugin-mfe-checklist.md`.
+> **PLANNED / NOT_RUNTIME:** `schemaVersion: "1.1.0"` —
+> `docs/05-plugin-system/manifest-schema-1.1.0.md`.
 
 ---
 
