@@ -25,4 +25,8 @@ ENV FLASK_APP=app.main:app
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "find /app -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true; exec gunicorn -b 0.0.0.0:8000 --workers 2 --threads 4 --timeout 60 app.main:app"]
+# Pending-write orchestration state is process-local by design
+# (PendingWriteStore): confirmations must reach the same process that
+# issued the PREPARE, so a single worker is required until a durable
+# shared store exists. Threads still give intra-process concurrency.
+CMD ["sh", "-c", "find /app -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true; exec gunicorn -b 0.0.0.0:8000 --workers 1 --threads 4 --timeout 60 app.main:app"]
