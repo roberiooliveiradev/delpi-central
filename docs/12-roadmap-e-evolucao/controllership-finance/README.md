@@ -74,6 +74,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 12. aprovação administrativa != validação
 13. sem SLA formal
 14. V1 sem escrita ERP para sacramentação/classificação
+15. paridade monetária da conciliação tripla exige exatamente R$ 0,00; não existe tolerância de centavos
 
 ## Produtos existentes
 
