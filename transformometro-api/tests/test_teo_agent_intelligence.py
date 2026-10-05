@@ -76,9 +76,11 @@ def test_entity_confirmation_policy_labels_on_catalog():
 def test_mcp_branding_obeys_directives_not_universal_package_confirm():
     text = TEO_MCP_INSTRUCTIONS
     assert "agent_directives" in text
-    assert "commit_now" in text
+    # MCP PREPARE is pure — commit_now is a GPT-Actions-HTTP-only contract.
+    assert "commit_now" not in text
     assert "sempre confirmation antes de package" not in text.lower()
-    assert "do not ask Confirma?" in text or "Confirma?" in text
+    assert "confirmation" in text.lower() or "Confirma?" in text
+    assert "commit_proposal" in text
 
 
 def test_intelligence_json_covers_all_gpt_ops_and_mcp_tools():

@@ -215,14 +215,14 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
     )
 
 
-def _prepare(
-    capability: str,
-    args: dict[str, Any],
-    *,
-    commit_now: bool = False,
-    confirmation: bool = False,
-    idempotency_key: str | None = None,
-) -> CallToolResult:
+def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
+    """Pure MCP PREPARE — never invokes ACT.
+
+    ``commit_now``/``confirmation``/``idempotency_key`` belong to the
+    GPT Actions HTTP additive contract (``GovernedActionsFacade``), not
+    to the MCP surface; they are intentionally absent here so no caller
+    can collapse PREPARE into ACT through this boundary.
+    """
     try:
         request = build_mcp_request()
         data = _governed.prepare_capability(
@@ -230,9 +230,6 @@ def _prepare(
             capability=capability,
             args=args,
             operation_label=f"prepare_{capability}",
-            commit_now=bool(commit_now),
-            confirmation=bool(confirmation),
-            idempotency_key=idempotency_key,
         )
         if data.get("persisted"):
             return _ok_result(data, "Change persisted and verified (commit_now).")
@@ -492,13 +489,11 @@ def tool_prepare_record_change(
     operation: str,
     record_id: str | None = None,
     changes: dict | None = None,
-    commit_now: bool = False,
-    confirmation: bool = False,
-    idempotency_key: str | None = None,
 ) -> CallToolResult:
     """Generic ENTITY prepare (create|update|delete|duplicate) → proposal_handle.
 
-    Additive ops may set commit_now=true for atomic PREPARE+ACT.
+    Pure PREPARE on the MCP surface — the additive ``commit_now`` contract
+    is GPT-Actions-HTTP-only and is not reachable from this boundary.
     """
     try:
         request = build_mcp_request()
@@ -508,9 +503,6 @@ def tool_prepare_record_change(
             operation=operation,
             record_id=record_id,
             changes=changes or {},
-            commit_now=bool(commit_now),
-            confirmation=bool(confirmation),
-            idempotency_key=idempotency_key,
         )
         if data.get("persisted"):
             return _ok_result(data, "Change persisted and verified (commit_now).")
@@ -618,9 +610,6 @@ def tool_prepare_improvement_package(
     scenario: dict | None = None,
     activate_scenario: bool = False,
     recalculate: bool = False,
-    commit_now: bool = False,
-    confirmation: bool = False,
-    idempotency_key: str | None = None,
 ) -> CallToolResult:
     return _prepare(
         "commit_improvement_package",
@@ -632,9 +621,6 @@ def tool_prepare_improvement_package(
             "activate_scenario": activate_scenario,
             "recalculate": recalculate,
         },
-        commit_now=commit_now,
-        confirmation=confirmation,
-        idempotency_key=idempotency_key,
     )
 
 
@@ -666,9 +652,6 @@ def tool_prepare_adjust_shared_resource_cost(
     valor_mensal: float,
     vigente_desde: str,
     observacoes: str | None = None,
-    commit_now: bool = False,
-    confirmation: bool = False,
-    idempotency_key: str | None = None,
 ) -> CallToolResult:
     return _prepare(
         "adjust_shared_resource_cost",
@@ -678,9 +661,6 @@ def tool_prepare_adjust_shared_resource_cost(
             "vigente_desde": vigente_desde,
             "observacoes": observacoes,
         },
-        commit_now=commit_now,
-        confirmation=confirmation,
-        idempotency_key=idempotency_key,
     )
 
 

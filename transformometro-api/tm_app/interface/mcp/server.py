@@ -344,13 +344,14 @@ def create_mcp_server() -> MCPServer:
         name="prepare_record_change",
         title="Prepare record change",
         description=(
-            "PREPARE only (no write): conventional ENTITY CRUD "
-            "(create|update|delete|duplicate) for catalog entities "
-            "(e.g. process_document). Returns opaque proposal_handle. "
-            "Do NOT use for business workflows (revision activation, "
-            "evidence, meeting minutes, packages, cost adjustment) — "
-            "use the specialized prepare_* tools instead. "
-            "Then call commit_proposal(proposal_handle)."
+            "PREPARE only — never persists business state. Conventional "
+            "ENTITY CRUD (create|update|delete|duplicate) for catalog "
+            "entities (e.g. process_document). Returns opaque "
+            "proposal_handle + exact sealed change. Do NOT use for "
+            "business workflows (revision activation, evidence, meeting "
+            "minutes, packages, cost adjustment) — use the specialized "
+            "prepare_* tools instead. Material execution only via "
+            "commit_proposal(proposal_handle) after confirmation."
         ),
         annotations=_annotations("prepare_record_change", "Prepare record change"),
         meta=meta,
@@ -360,18 +361,12 @@ def create_mcp_server() -> MCPServer:
         operation: _RecordOperationParam,
         record_id: str | None = None,
         changes: dict | None = None,
-        commit_now: bool = False,
-        confirmation: bool = False,
-        idempotency_key: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_record_change(
             entity=entity,
             operation=operation,
             record_id=record_id,
             changes=changes,
-            commit_now=commit_now,
-            confirmation=confirmation,
-            idempotency_key=idempotency_key,
         )
 
     @mcp.tool(
@@ -437,9 +432,11 @@ def create_mcp_server() -> MCPServer:
         name="prepare_improvement_package",
         title="Prepare improvement package",
         description=(
-            "PREPARE WORKFLOW: validate package + AuthZ + proposal_handle (NO WRITE). "
-            "Incomplete packages: ready=false / act_allowed=false. "
-            "Commit only via commit_proposal(proposal_handle)."
+            "PREPARE only — never persists business state. Validate package "
+            "+ AuthZ + proposal_handle. Incomplete packages: ready=false / "
+            "act_allowed=false. activate_scenario/recalculate are PREPARE "
+            "simulation flags only — material execution only via "
+            "commit_proposal(proposal_handle) after confirmation."
         ),
         annotations=_annotations(
             "prepare_improvement_package", "Prepare improvement package"
@@ -453,9 +450,6 @@ def create_mcp_server() -> MCPServer:
         scenario: dict | None = None,
         activate_scenario: bool = False,
         recalculate: bool = False,
-        commit_now: bool = False,
-        confirmation: bool = False,
-        idempotency_key: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_improvement_package(
             process=process,
@@ -464,9 +458,6 @@ def create_mcp_server() -> MCPServer:
             scenario=scenario,
             activate_scenario=activate_scenario,
             recalculate=recalculate,
-            commit_now=commit_now,
-            confirmation=confirmation,
-            idempotency_key=idempotency_key,
         )
 
     @mcp.tool(
@@ -503,8 +494,10 @@ def create_mcp_server() -> MCPServer:
         name="prepare_adjust_shared_resource_cost",
         title="Prepare adjust shared resource cost",
         description=(
-            "PREPARE WORKFLOW: shared-resource cost adjustment with domain rules. "
-            "Then commit_proposal."
+            "PREPARE only — never persists business state. Shared-resource "
+            "cost adjustment with domain rules; returns proposal_handle + "
+            "exact change. Material execution only via "
+            "commit_proposal(proposal_handle) after confirmation."
         ),
         annotations=_annotations(
             "prepare_adjust_shared_resource_cost",
@@ -517,18 +510,12 @@ def create_mcp_server() -> MCPServer:
         valor_mensal: float,
         vigente_desde: str,
         observacoes: str | None = None,
-        commit_now: bool = False,
-        confirmation: bool = False,
-        idempotency_key: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_adjust_shared_resource_cost(
             recurso_compartilhado_id=recurso_compartilhado_id,
             valor_mensal=valor_mensal,
             vigente_desde=vigente_desde,
             observacoes=observacoes,
-            commit_now=commit_now,
-            confirmation=confirmation,
-            idempotency_key=idempotency_key,
         )
 
     @mcp.tool(
