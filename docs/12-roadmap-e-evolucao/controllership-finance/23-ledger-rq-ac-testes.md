@@ -151,7 +151,18 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-OVW-09 | light/dark/mobile/a11y seguem padrão comum | mesma ordem/DOM conceitual, tokens e teclado/foco | visual/a11y | plugin-ui | TARGET |
 | RQ-OVW-10 | Ajuda acompanha indicadores aprovados | significado/fórmula/source/freshness/deep links sincronizados | help sync | feature-help-sync | TARGET |
 | RQ-INT-01 | Sala de interação é contextual e não muda estado de negócio por mensagem | mensagem/comentário não valida, aprova, fecha estoque ou envia pacote | positive + resource negative | interaction contract inventory | CONTRACT_INVENTORY_REQUIRED |
-| RQ-ADM-01 | Administração usa somente MANAGE | usuário apenas ACCESS não altera mestre; MANAGE não implica ACCESS operacional | positive + permission negative | Core effective permissions | TARGET |
+| RQ-ADM-01 | Administração exige somente MANAGE | ACCESS sozinho não altera mestre; nenhum permission code adicional | positive + permission negative | Core effective permissions | TARGET |
+| RQ-ADM-02 | IA administrativa é Painel/Templates/Catálogos/Histórico | catálogos não viram topbar/permission; deep links preservados | navigation + F5 | router + 28 | TARGET |
+| RQ-ADM-03 | template segue lifecycle canônico | DRAFT→REVIEW→PUBLISH→EFFECTIVE_FROM; save != publish; published immutable | positive + transition negative | P6 | TARGET |
+| RQ-ADM-04 | snapshot não sofre retroatividade | nova publicação não altera competência aberta/histórico | positive + sibling | P2 snapshot | TARGET |
+| RQ-ADM-05 | catálogos são tipados | registry explicita schema/validation; sem free-form generic CRUD | contract + invalid field negative | ADM01 | TARGET |
+| RQ-ADM-06 | inativação é prospectiva | sem hard delete; reason/actor/time/effective date; histórico interpretável | positive + delete negative | audit | TARGET |
+| RQ-ADM-07 | identidades permanecem no Core | selectors usam referências elegíveis; nenhum user/role/permission write | integration + security negative | ADM06/Core | TARGET |
+| RQ-ADM-08 | notification target não é delivery engine | targets lógicos; Minha DELPI entrega; sem SMTP/preferences local | integration negative | ADM05/T02 | TARGET |
+| RQ-ADM-09 | writes tratam concorrência | stale revision rejeitada; sem overwrite silencioso | stale/concurrency negative | ADM07 | TARGET |
+| RQ-ADM-10 | histórico administrativo é auditável/read-only | actor/time/entity/action/before-after/reason/effective/version | positive + immutable negative | audit store | TARGET |
+| RQ-ADM-11 | Administração é plugin-ui first | primitives públicos; zero design-system local; mobile/dark/a11y | component + visual/a11y | plugin-ui | TARGET |
+| RQ-ADM-12 | Help acompanha P6 | lifecycle/snapshot/inativação/catálogos ensinados somente quando implementados | help sync | feature-help-sync | TARGET |
 | RQ-HELP-01 | Ajuda acompanha toda mudança user-facing | conteúdo/deep links sincronizados no mesmo gate da feature | help sync + link check | feature-help-sync | TARGET |
 | RQ-AUTHZ-01 | permissions do Portal são somente access e manage | nenhum permission code por página, CRUD, filial, unidade ou indicador | manifest/contract review | Core | TARGET |
 

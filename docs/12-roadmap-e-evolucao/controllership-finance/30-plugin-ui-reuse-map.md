@@ -335,13 +335,14 @@ Se as colunas fixas de `TaskItemsTable` forem inadequadas para self-only/no-due,
 
 Não existe `AdministrationPage` full-page pública no kit.
 
-Compor a página a partir de:
+### Composição canônica
 
 ```ts
 import {
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardSectionRouteCard,
+  createDashboardUnderlineNav,
   DataTableSection,
   createDashboardFiltersKit,
   FormGrid,
@@ -349,14 +350,38 @@ import {
   NativeTextField,
   NativeSelectField,
   NativeTextAreaField,
+  EditableSectionCard,
+  ReadOnlyField,
   ModalShell,
   ConfirmModalPanel,
   FloatingNoticeStack,
   StatusBadge,
+  StateBanner,
+  EmptyState,
+  LoadingState,
+  Timeline,
+  ActionButton,
 } from "@delpi/plugin-ui/index";
 ```
 
-Não criar um novo design-system administrativo dentro do Portal.
+Contrato detalhado:
+- [28-administracao.md](./28-administracao.md)
+
+Arquitetura visual:
+
+```text
+PagePath
+→ UnderlineNav: Painel | Templates | Catálogos | Histórico
+→ PageHero
+→ SectionRouteCard / DataTableSection / forms
+→ Modal/Confirm/Notice/Status
+```
+
+O Portal owns template lifecycle, catalog registry, effective dating, audit e contracts. O kit owns o chrome.
+
+**DO NOT RECREATE:** subnav, hero/path, route cards, DataTableSection, filter chrome, form fields, editable/read-only cards, modal/confirm, notices, badges, timeline ou generic states.
+
+Não criar uma aba/permission/componente visual diferente para cada catálogo.
 
 ## Ajuda
 

@@ -1,5 +1,7 @@
 # 16 — Configurações, Catálogos e Notificações
 
+A superfície de gestão desses catálogos está especificada em [28-administracao.md](./28-administracao.md). Este documento permanece authority das regras de configuração/notificação.
+
 ## Princípio
 
 Listas operacionais mutáveis não devem ser hardcoded.

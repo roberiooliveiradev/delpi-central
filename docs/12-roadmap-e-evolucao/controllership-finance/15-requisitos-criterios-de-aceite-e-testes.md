@@ -19,8 +19,11 @@ Cobrir sugestão, confirmação humana, filas, claim/reassign, states, resoluç�
 ### P5
 Cobrir package version, finalize, reopen, recipient packages, partial send, clarification, correction after send e completion.
 
-### P6
-Cobrir draft/publish/effective_from, snapshot immutability, inactivation, catalogs, audit e permission.
+### P6 / Administração
+
+Cobrir Painel/Templates/Catálogos/Histórico, `controllership-finance.manage` como única permission administrativa, DRAFT→REVIEW→PUBLISH→EFFECTIVE_FROM, snapshot immutability, catálogos tipados, inativação prospectiva sem hard delete, referências de pessoas via Core, notifications boundary, optimistic concurrency, audit, URL/F5, light/dark/mobile/a11y e Help.
+
+Fonte de página: [28-administracao.md](./28-administracao.md).
 
 ### Minhas tarefas
 
@@ -96,7 +99,12 @@ Testar:
 - tentativa de listar tarefas de outro usuário;
 - task projection sem responsabilidade individual;
 - source indisponível interpretada como fila vazia;
-- pendingSince tratado como SLA/overdue.
+- pendingSince tratado como SLA/overdue;
+- ACCESS alterando configuração;
+- permission code criado por catálogo/CRUD;
+- stale admin write sobrescrevendo revisão mais nova;
+- hard delete de item mestre histórico;
+- Administração criando usuário/RBAC no lugar do Core.
 
 ## Experiência
 
