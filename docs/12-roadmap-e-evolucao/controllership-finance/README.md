@@ -104,7 +104,7 @@ Início | Visão geral | Sala de interação | Minhas tarefas | Administração 
 
 As páginas P1–P5 pertencem à Central de Fechamento e não viram itens independentes da topbar.
 
-A Visão geral é a superfície de indicadores financeiros do Portal; o conjunto exato de KPIs depende de inventário de owner/source/fórmula.
+A Visão geral é a superfície analítica financeira do Portal. O padrão visual, filtros, states, drilldowns e conjunto V1 estão documentados em [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md). Decisões congeladas: D-OVW-01=C (núcleo financeiro + contexto operacional + desempenho estratégico), D-OVW-02=A (mês atual) e D-OVW-03=A (Consolidado).
 
 ## Invariantes
 
