@@ -17,7 +17,7 @@
 - **Consumidores transacionais** (apenas leem SA2): SC1, SC7, SC8, SD1, SF1, SE2, SE5, SF3, SFT, SCY, SCE, SDS, SFJ — centenas de milhares de linhas. **[PROVEN]**
 - **Rotina dona do cadastro**: `MATA020` (referenciada na SX2). A API/ponte deverá respeitar as mesmas validações. **[PROVEN]**
 - Inventário de relacionamentos: **607 relações SX9 com SA2 como dominante** — a maioria de módulos TOTVS não instalados/sem dados na DELPI. Classificação: `COMPLETE_BY_AVAILABLE_METADATA` para a metadesesencial; `INCOMPLETE` para módulos verticais sem evidência de uso.
-- **Capacidade não coberta**: a lógica interna da rotina MATA020 (ADVPL server-side) e o contrato da API/ponte do Gabriel não são introspectáveis por esta auditoria → seções `Questions for Gabriel` e `Capability Gaps`.
+- **Capacidade não coberta**: a lógica interna da rotina MATA020 (ADVPL server-side) e o contrato da API/ponte do Gabriel não são introspectáveis por esta auditoria → seção `Capability Gaps` e os gaps Protheus do §44.
 
 # 2. Scope and Evidence
 
@@ -414,7 +414,7 @@ Classificação por campo (evidência entre parênteses):
 **X3_OBRIGAT (bitmap pos.1) — interpretação ratificada:**
 - `DICTIONARY_OBRIG_FLAG` = **PROVEN** para `A2_TEL, A2_CONTATO, A2_NATUREZ, A2_COD_MUN, A2_CODPAIS, A2_CONTA, A2_EMAIL, A2_FORMPAG, A2_YROHS` (metadata SX3_OBRIGAT).
 - `RUNTIME_CREATE_BLOCKING` = **UNKNOWN** — registros históricos válidos possuem TEL/CONTATO/EMAIL/FORMPAG em branco; divergência flag × dados documentada (fill <100% prova apenas que não bloquearam o passado — não prova comportamento atual da rotina).
-- `PUBLIC_API_REQUIRED` = **TO_INVENTORY** — decisão de contrato (§39, q12).
+- `PUBLIC_API_REQUIRED` = **TO_INVENTORY** — decisão de contrato — fora de escopo (§39).
 
 **DEFAULTED — `default_source` por campo:**
 - `SX3_DEFAULT` (X3_RELACAO, emp. 01): `A2_COD` `GETSXENUM("SA2")` · `A2_MSBLQL` `"2"` · `A2_PLFIL` `"N"` · `A2_RECCSLL/RECCOFI/RECPIS` `"1"` · `A2_TIPO` derivado de `A2_CGC` · `A2_VINCULA` `"1"` · `A2_ID_REPR` `'2'` · `A2_B2B` `"2"` · `A2_PLCRRES` `"N"` · `A2_CONTPRE` `"1"` · `A2_REGESIM` `"2"` · `A2_MINIRF` `"2"` · `A2_TIPCTA` `"1"` · `A2_IMPIP` `"2"` · `A2_MJURIDI` `"2"` · `A2_CONFFIS` `'0'` · `A2_RETISI` `"2"` · `A2_INOVAUT` `"2"` · `A2_INDRUR` `"0"` · `A2_PAGGFE` `"2"` · `A2_FORNEMA` `"2"` · `A2_MINPUB` `"2"` · `A2_MOTNIF` `"1"` · `A2_DEDBSPC` `'1'` · `A2_CPRB` `"2"` · `A2_DTINIR`/`A2_DTFIMR` `CTOD('//')` · `A2_DTVAL` `A100ReDV()` · virtuais `A2_NOMFAV`/`A2_PAISDES`/`A2_DTPAWB`.
@@ -492,7 +492,7 @@ Classificação por campo (evidência entre parênteses):
 | Códigos manuais | 21 ativos não-numéricos (VIAGEM, VIAGF2/3, FISCO, INPS, MUNIC, UNIAO, CONSUM, CONFRA, ESTADO, DPRF...) | PROVEN (dados) |
 | Onde fica a sequência | Tabela `SXE*` **inexistente** nas bases acessíveis (DELPI, DELPI_TST01, DELPI_TST_WS; TSS sem permissão) | TO_INVENTORY — mecanismo interno do appserver |
 | `A2_LOJA` default | Inexistente no dicionário (`default_source=NONE`); `'01'` é `OBSERVED_CONVENTION` dominante (3.266/3.644), não default Protheus | PROVEN |
-| Retorno pós-CREATE | sem evidência de contrato — decisão da ponte | UNKNOWN → §39 |
+| Retorno pós-CREATE | sem evidência de contrato — decisão da ponte | UNKNOWN — decisão de contrato (§39) |
 
 # 12. Related Tables Inventory
 
@@ -534,7 +534,7 @@ Referência a SA2 **não** implica participação no cadastro: `TRANSACTION_CONS
 
 ## Multi-company dictionary matrix
 
-Regras de uma empresa **não** são universais. A futura API precisa decidir explicitamente `target_company` (ou provar que só escreve na empresa 01) — permanece pergunta para Gabriel/owner (§39).
+Regras de uma empresa **não** são universais. A futura API precisa decidir explicitamente `target_company` (ou provar que só escreve na empresa 01) — decisão de contrato da integração — fora de escopo (§39).
 
 | Campo / regra | COMPANY_01 | COMPANY_03 | COMPANY_04 | COMPANY_05 | Status |
 |---|---|---|---|---|---|
@@ -727,7 +727,7 @@ Parâmetros de tolerância por fornecedor/produto no recebimento.
 - É necessária para o fornecedor existir? Evidência atual aponta **NÃO** — denominador: 3.644 fornecedores vs subconjunto com SA5. **[PROVEN nos dados]**
 - `SA5_AUTO_CREATE` = **NOT_OBSERVED / NOT_REQUIRED** — nenhuma relação SX9 de criação automática; rotinas distintas (MATA020 × MATA061). **Sem prova runtime** de que a MATA020 não escreve nada além da SA2 — ver `MATA020_INTERNAL_SIDE_EFFECTS = UNKNOWN`.
 - Podem ser operações futuras separadas? **SIM, TARGET somente** — se a ponte precisar amarrar produto, é chamada distinta.
-- Faz parte da primeira API Gabriel? **UNKNOWN até escopo explícito** — não incluir automaticamente no contrato CREATE Supplier.
+- Faz parte do escopo da integração? **UNKNOWN até escopo explícito** — não incluir automaticamente no contrato CREATE Supplier.
 - Quando SA5 passa a ser necessária? Quando o fornecedor precisa ser vinculado a produto (compras/cotação). Momento exato no processo DELPI: **TO_INVENTORY**.
 
 ### SA5010 — schema completo (SX3010)
@@ -1080,7 +1080,7 @@ Sinais comprovados na base:
 - `A2_COD+A2_LOJA` — único garantido fisicamente (`SA2010_UNQ`). **Chave de dedupe forte.**
 - `A2_CGC` — **não** único: 32 valores duplicados (ex.: mesmo CNPJ com 2 códigos distintos) e 159 vazios. Índice 3 existe para pesquisa — usar como **sinal de possível existência**, não como identidade.
 - `A2_NOME` — 106 razões sociais repetidas — sinal fraco.
-- Recomendação de dedupe para POSSIBLE_EXISTING_SUPPLIER: `CGC normalizado` (alto sinal) + `NOME` (apoio) + `COD+LOJA` (identidade pós-existência). Bloqueios: `A2_MSBLQL='1'` (104 registros); deletados logicamente `D_E_L_E_T_='*'` (19) — considerar se o candidato deve incluir registros bloqueados/excluídos (decisão de contrato — ver §39).
+- Recomendação de dedupe para POSSIBLE_EXISTING_SUPPLIER: `CGC normalizado` (alto sinal) + `NOME` (apoio) + `COD+LOJA` (identidade pós-existência). Bloqueios: `A2_MSBLQL='1'` (104 registros); deletados logicamente `D_E_L_E_T_='*'` (19) — considerar se o candidato deve incluir registros bloqueados/excluídos (decisão de contrato — fora de escopo (§39)).
 
 # 27. Data Quality Findings
 
@@ -1089,7 +1089,7 @@ Sinais comprovados na base:
 | `A2_LOJA` sujo: `'1 '`, `' 1'`, `'2 '` além de `'01'`..`'15'` | profiling | normalização `RTRIM`/padding obrigatória na ponte |
 | `A2_COD` com espaços à direita ('00157 ') | profiling | normalizar trim |
 | `A2_CGC` vazio em 159 registros (4,4%) | profiling | não assumir preenchido |
-| `A2_MSBLQL` vazio em 158 (4,3%) | profiling | tratar branco como "não bloqueado"? → validar com Gabriel |
+| `A2_MSBLQL` vazio em 158 (4,3%) | profiling | tratar branco como "não bloqueado"? → decisão de contrato (§39) |
 | `A2_TIPO` vazio em 1 registro; `A2_TPESSOA` 99,9% vazio | profiling | campos mal povoados |
 | `A2_PAIS` só preenchido p/ estrangeiros; `A2_CODPAIS` universal (`01058`) | profiling | modelo canônico deve usar código BACEN |
 | `A2_GRUPO` 0% — grupos reais em SAD | profiling | não mapear grupo→A2_GRUPO sem decisão |
@@ -1099,54 +1099,54 @@ Sinais comprovados na base:
 
 # 28. Full Business-to-TOTVS Mapping (de-para proposto)
 
-Campos do modelo canônico → SA2. Somente campos com evidência de uso ou materialidade. `default_source`: `SX3_DEFAULT | RUNTIME_RULE | OBSERVED_CONVENTION | API_PROPOSAL | NONE | UNKNOWN`. `contract_status`: `READY_FOR_GABRIEL_REVIEW | NEEDS_GABRIEL_DECISION | NEEDS_TOTVS_RUNTIME_PROOF | OUT_OF_SCOPE`.
+Campos do modelo canônico → SA2. Somente campos com evidência de uso ou materialidade. `default_source`: `SX3_DEFAULT | RUNTIME_RULE | OBSERVED_CONVENTION | API_PROPOSAL | NONE | UNKNOWN`. `contract_status`: `READY_FOR_INTEGRATION_REVIEW | CONTRACT_DECISION | NEEDS_TOTVS_RUNTIME_PROOF | OUT_OF_SCOPE`.
 
 | api_field | business_meaning | totvs | descrição SX3 | type/len | create_class | update_class | default_source | default | lookup | normalization | sensitivity | contract_status | notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| supplier.identity.code | Código | A2_COD | Codigo | C6 | SYSTEM_GENERATED | IDENTITY | SX3_DEFAULT | GETSXENUM (01/05) | — | trim/zfill6 | interno | NEEDS_GABRIEL_DECISION | q2 — quem gera; 03/04 sem default |
-| supplier.identity.store | Loja | A2_LOJA | Loja | C2 | UNKNOWN (CONTRACT_DECISION) | IDENTITY | OBSERVED_CONVENTION | '01' | — | RTRIM+zfill2 | interno | NEEDS_GABRIEL_DECISION | q4 — request vs ponte vs rotina |
-| supplier.identity.branch | Filial | A2_FILIAL | Filial | C2 | DO_NOT_SEND | IDENTITY | RUNTIME_RULE | branco=compartilhado | — | — | interno | READY_FOR_GABRIEL_REVIEW | MODO=C |
+| supplier.identity.code | Código | A2_COD | Codigo | C6 | SYSTEM_GENERATED | IDENTITY | SX3_DEFAULT | GETSXENUM (01/05) | — | trim/zfill6 | interno | CONTRACT_DECISION | q2 — quem gera; 03/04 sem default |
+| supplier.identity.store | Loja | A2_LOJA | Loja | C2 | UNKNOWN (CONTRACT_DECISION) | IDENTITY | OBSERVED_CONVENTION | '01' | — | RTRIM+zfill2 | interno | CONTRACT_DECISION | CONTRACT_DECISION — fora de escopo (§39) |
+| supplier.identity.branch | Filial | A2_FILIAL | Filial | C2 | DO_NOT_SEND | IDENTITY | RUNTIME_RULE | branco=compartilhado | — | — | interno | READY_FOR_INTEGRATION_REVIEW | MODO=C |
 | supplier.company.legal_name | Razão social | A2_NOME | Razao Social | C50 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | fill 100% |
 | supplier.company.trade_name | Nome fantasia | A2_NREDUZ | N Fantasia | C20 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | — | — | NEEDS_TOTVS_RUNTIME_PROOF | fill 100% |
-| supplier.tax.document | CNPJ/CPF | A2_CGC | CNPJ/CPF | C14 | CONDITIONAL | RESTRICTED | NONE | — | CGC()+dedup | digits-only | fiscal | READY_FOR_GABRIEL_REVIEW | dup-signal, não identidade |
-| supplier.tax.person_type | Tipo pessoa | A2_TIPO | Tipo | C1 | CONDITIONAL | MUTABLE_CANDIDATE | SX3_DEFAULT | deriva do CGC | enum F/J/X | — | fiscal | READY_FOR_GABRIEL_REVIEW | |
-| supplier.tax.state_registration | Inscr. estadual | A2_INSCR | Ins. Estad. | C18 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | IE() por UF | digits-only | fiscal | READY_FOR_GABRIEL_REVIEW | |
-| supplier.tax.city_registration | Inscr. municipal | A2_INSCRM | Ins. Municip | C18 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | fiscal | READY_FOR_GABRIEL_REVIEW | |
-| supplier.tax.cnae | CNAE | A2_CNAE | Cod CNAE | C9 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | fiscal | READY_FOR_GABRIEL_REVIEW | WHEN TIPO J/X |
-| supplier.tax.contributor | Contribuinte | A2_CONTRIB | Contribuinte | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | CBOX 1/2 | — | fiscal | READY_FOR_GABRIEL_REVIEW | |
+| supplier.tax.document | CNPJ/CPF | A2_CGC | CNPJ/CPF | C14 | CONDITIONAL | RESTRICTED | NONE | — | CGC()+dedup | digits-only | fiscal | READY_FOR_INTEGRATION_REVIEW | dup-signal, não identidade |
+| supplier.tax.person_type | Tipo pessoa | A2_TIPO | Tipo | C1 | CONDITIONAL | MUTABLE_CANDIDATE | SX3_DEFAULT | deriva do CGC | enum F/J/X | — | fiscal | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.tax.state_registration | Inscr. estadual | A2_INSCR | Ins. Estad. | C18 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | IE() por UF | digits-only | fiscal | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.tax.city_registration | Inscr. municipal | A2_INSCRM | Ins. Municip | C18 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | fiscal | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.tax.cnae | CNAE | A2_CNAE | Cod CNAE | C9 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | fiscal | READY_FOR_INTEGRATION_REVIEW | WHEN TIPO J/X |
+| supplier.tax.contributor | Contribuinte | A2_CONTRIB | Contribuinte | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | CBOX 1/2 | — | fiscal | READY_FOR_INTEGRATION_REVIEW | |
 | supplier.address.street | Logradouro | A2_END | Endereco | C40 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | fill 100% |
-| supplier.address.number | Número | A2_NR_END | Numero | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | READY_FOR_GABRIEL_REVIEW | 0% uso |
-| supplier.address.complement | Complemento | A2_ENDCOMP / A2_COMPLEM | Compl. End. | C21/C50 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | NEEDS_GABRIEL_DECISION | 2 campos — qual usar? |
+| supplier.address.number | Número | A2_NR_END | Numero | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | READY_FOR_INTEGRATION_REVIEW | 0% uso |
+| supplier.address.complement | Complemento | A2_ENDCOMP / A2_COMPLEM | Compl. End. | C21/C50 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | CONTRACT_DECISION | 2 campos — qual usar? |
 | supplier.address.district | Bairro | A2_BAIRRO | Bairro | C20 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | 97,6% |
 | supplier.address.postal_code | CEP | A2_CEP | CEP | C8 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | digits-only | — | NEEDS_TOTVS_RUNTIME_PROOF | 94,6% |
 | supplier.address.city | Município | A2_MUN | Municipio | C25 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | 100% |
-| supplier.address.city_ibge_code | Cód. município | A2_COD_MUN | Cod. Municip | C5 | CANDIDATE_REQUIRED (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | CC2 c/ UF | — | — | NEEDS_GABRIEL_DECISION | 99,8% + flag |
+| supplier.address.city_ibge_code | Cód. município | A2_COD_MUN | Cod. Municip | C5 | CANDIDATE_REQUIRED (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | CC2 c/ UF | — | — | CONTRACT_DECISION | 99,8% + flag |
 | supplier.address.state | UF | A2_EST | Estado | C2 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | SX5-12 | upper | — | NEEDS_TOTVS_RUNTIME_PROOF | 'EX'=exterior |
-| supplier.address.country_code_bacen | País BACEN | A2_CODPAIS | Paìs Bacen | C5 | CANDIDATE_REQUIRED (OBRIG1) | MUTABLE_CANDIDATE | OBSERVED_CONVENTION | '01058' | CCH | — | — | NEEDS_GABRIEL_DECISION | 100% preenchido; não é SX3 default |
-| supplier.address.country | País | A2_PAIS | Pais | C3 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | SYA | — | — | READY_FOR_GABRIEL_REVIEW | estrangeiros |
-| supplier.contact.phone_ddd | DDD | A2_DDD | DDD | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | digits-only | — | READY_FOR_GABRIEL_REVIEW | 88% |
-| supplier.contact.phone | Telefone | A2_TEL | Telefone | C50 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | digits-only | dados contato | NEEDS_GABRIEL_DECISION | flag × fill 91% |
-| supplier.contact.email | E-mail | A2_EMAIL | E-Mail | C50 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | lower | dados contato | NEEDS_GABRIEL_DECISION | flag × fill 55% |
-| supplier.contact.person | Contato | A2_CONTATO | Contato | C15 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | — | dados contato | NEEDS_GABRIEL_DECISION | flag × fill 44% |
-| supplier.contact.website | Site | A2_HPAGE | Home-Page | C30 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | READY_FOR_GABRIEL_REVIEW | |
-| supplier.payment.condition_code | Cond. pagto | A2_COND | Cond. Pagto | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SE4 | — | — | READY_FOR_GABRIEL_REVIEW | 17,5% |
-| supplier.payment.method | Forma pgto | A2_FORMPAG | Form. Pgto | C2 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | SX5-58 | — | — | NEEDS_GABRIEL_DECISION | flag × fill 30% |
+| supplier.address.country_code_bacen | País BACEN | A2_CODPAIS | Paìs Bacen | C5 | CANDIDATE_REQUIRED (OBRIG1) | MUTABLE_CANDIDATE | OBSERVED_CONVENTION | '01058' | CCH | — | — | CONTRACT_DECISION | 100% preenchido; não é SX3 default |
+| supplier.address.country | País | A2_PAIS | Pais | C3 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | SYA | — | — | READY_FOR_INTEGRATION_REVIEW | estrangeiros |
+| supplier.contact.phone_ddd | DDD | A2_DDD | DDD | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | digits-only | — | READY_FOR_INTEGRATION_REVIEW | 88% |
+| supplier.contact.phone | Telefone | A2_TEL | Telefone | C50 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | digits-only | dados contato | CONTRACT_DECISION | flag × fill 91% |
+| supplier.contact.email | E-mail | A2_EMAIL | E-Mail | C50 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | lower | dados contato | CONTRACT_DECISION | flag × fill 55% |
+| supplier.contact.person | Contato | A2_CONTATO | Contato | C15 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | — | dados contato | CONTRACT_DECISION | flag × fill 44% |
+| supplier.contact.website | Site | A2_HPAGE | Home-Page | C30 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.payment.condition_code | Cond. pagto | A2_COND | Cond. Pagto | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SE4 | — | — | READY_FOR_INTEGRATION_REVIEW | 17,5% |
+| supplier.payment.method | Forma pgto | A2_FORMPAG | Form. Pgto | C2 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | SX5-58 | — | — | CONTRACT_DECISION | flag × fill 30% |
 | supplier.payment.finance_nature | Natureza | A2_NATUREZ | Natureza | C10 | CANDIDATE_REQUIRED (OBRIG1) | RESTRICTED | NONE | — | SED | — | financeiro | NEEDS_TOTVS_RUNTIME_PROOF | 99,9% |
 | supplier.payment.ledger_account | Conta contábil | A2_CONTA | C Contabil | C20 | CANDIDATE_REQUIRED (OBRIG1) | RESTRICTED | NONE | — | CT1 | — | financeiro | NEEDS_TOTVS_RUNTIME_PROOF | 99,9% |
-| supplier.banking.bank_code | Banco | A2_BANCO | Banco | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_GABRIEL_REVIEW | 1,2% |
-| supplier.banking.branch | Agência | A2_AGENCIA | Cod Agencia | C5 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_GABRIEL_REVIEW | com banco+conta |
-| supplier.banking.branch_digit | DV agência | A2_DVAGE | DV Ag Cnab | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | **sensível** | READY_FOR_GABRIEL_REVIEW | |
-| supplier.banking.account | Conta | A2_NUMCON | Cta Corrente | C10 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_GABRIEL_REVIEW | |
-| supplier.banking.account_digit | DV conta | A2_DVCTA | DV Cta Cnab | C2 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | **sensível** | READY_FOR_GABRIEL_REVIEW | |
-| supplier.banking.account_type | Tipo conta | A2_TIPCTA / A2_TPCONTA | Tp. Cta./Tipo Conta | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | SX3_DEFAULT | '1' (TIPCTA) | CBOX | — | **sensível** | NEEDS_GABRIEL_DECISION | 2 campos equivalentes |
-| supplier.banking.swift | SWIFT | A2_SWIFT | Swift | C30 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | upper | **sensível** | READY_FOR_GABRIEL_REVIEW | exterior |
-| supplier.flags.blocked | Bloqueado | A2_MSBLQL | Bloqueado | C1 | SYSTEM_GENERATED | RESTRICTED | SX3_DEFAULT | '2' | CBOX 1/2 | — | — | NEEDS_GABRIEL_DECISION | q13 — operação governada? |
-| supplier.flags.rohs | RoHS | A2_YROHS | RoHS ? | C1 | UNKNOWN (OBRIG1, DELPI) | MUTABLE_CANDIDATE | NONE | — | CBOX | — | DELPI | NEEDS_GABRIEL_DECISION | só emp 01/05 |
-| supplier.flags.generic | Forn. genérico | A2_YFGEN | For Generico | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | DELPI | READY_FOR_GABRIEL_REVIEW | só emp 01/05 |
-| supplier.commercial.price_table | Tab. preço | A2_ZTABPRC | Tab Prc Comp | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | AIA | — | DELPI | READY_FOR_GABRIEL_REVIEW | |
-| supplier.links.customer | Cliente vinculado | A2_CLIENTE+A2_LOJCLI | Cód. Cliente+Loja | C6+C2 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA1 | — | — | READY_FOR_GABRIEL_REVIEW | par conjunto |
-| supplier.links.employee | Funcionário vínculo | A2_NUMRA | Cód Func | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SRA | — | — | READY_FOR_GABRIEL_REVIEW | |
-| supplier.links.carrier | Transportadora | A2_TRANSP | Transp. | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA4 | — | — | READY_FOR_GABRIEL_REVIEW | |
+| supplier.banking.bank_code | Banco | A2_BANCO | Banco | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_INTEGRATION_REVIEW | 1,2% |
+| supplier.banking.branch | Agência | A2_AGENCIA | Cod Agencia | C5 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_INTEGRATION_REVIEW | com banco+conta |
+| supplier.banking.branch_digit | DV agência | A2_DVAGE | DV Ag Cnab | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | **sensível** | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.banking.account | Conta | A2_NUMCON | Cta Corrente | C10 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.banking.account_digit | DV conta | A2_DVCTA | DV Cta Cnab | C2 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | **sensível** | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.banking.account_type | Tipo conta | A2_TIPCTA / A2_TPCONTA | Tp. Cta./Tipo Conta | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | SX3_DEFAULT | '1' (TIPCTA) | CBOX | — | **sensível** | CONTRACT_DECISION | 2 campos equivalentes |
+| supplier.banking.swift | SWIFT | A2_SWIFT | Swift | C30 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | upper | **sensível** | READY_FOR_INTEGRATION_REVIEW | exterior |
+| supplier.flags.blocked | Bloqueado | A2_MSBLQL | Bloqueado | C1 | SYSTEM_GENERATED | RESTRICTED | SX3_DEFAULT | '2' | CBOX 1/2 | — | — | CONTRACT_DECISION | CONTRACT_DECISION — fora de escopo (§39) |
+| supplier.flags.rohs | RoHS | A2_YROHS | RoHS ? | C1 | UNKNOWN (OBRIG1, DELPI) | MUTABLE_CANDIDATE | NONE | — | CBOX | — | DELPI | CONTRACT_DECISION | só emp 01/05 |
+| supplier.flags.generic | Forn. genérico | A2_YFGEN | For Generico | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | DELPI | READY_FOR_INTEGRATION_REVIEW | só emp 01/05 |
+| supplier.commercial.price_table | Tab. preço | A2_ZTABPRC | Tab Prc Comp | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | AIA | — | DELPI | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.links.customer | Cliente vinculado | A2_CLIENTE+A2_LOJCLI | Cód. Cliente+Loja | C6+C2 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA1 | — | — | READY_FOR_INTEGRATION_REVIEW | par conjunto |
+| supplier.links.employee | Funcionário vínculo | A2_NUMRA | Cód Func | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SRA | — | — | READY_FOR_INTEGRATION_REVIEW | |
+| supplier.links.carrier | Transportadora | A2_TRANSP | Transp. | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA4 | — | — | READY_FOR_INTEGRATION_REVIEW | |
 
 # 29. CREATE_REQUIRED_PROVEN
 
@@ -1162,7 +1162,7 @@ Campos do modelo canônico → SA2. Somente campos com evidência de uso ou mate
 - `A2_PAIS`, endereço exterior — quando `A2_EST='EX'`.
 - `A2_BANCO`+`AGENCIA`+`NUMCON` — trinca conjunta.
 - Lookups — qualquer campo enviado deve existir na tabela lookup.
-- `OBRIG1` fields (TEL/CONTATO/EMAIL/FORMPAG/NATUREZ/COD_MUN/CODPAIS/CONTA/YROHS): `DICTIONARY_OBRIG_FLAG=PROVEN`; `RUNTIME_CREATE_BLOCKING=UNKNOWN`; `PUBLIC_API_REQUIRED=TO_INVENTORY` (§39 q12).
+- `OBRIG1` fields (TEL/CONTATO/EMAIL/FORMPAG/NATUREZ/COD_MUN/CODPAIS/CONTA/YROHS): `DICTIONARY_OBRIG_FLAG=PROVEN`; `RUNTIME_CREATE_BLOCKING=UNKNOWN`; `PUBLIC_API_REQUIRED=TO_INVENTORY` (§39).
 
 # 31. CREATE_SYSTEM_GENERATED
 
@@ -1183,7 +1183,7 @@ Existência do campo ≠ autorização de alteração. Nenhum campo é `MUTABLE_
 
 # 34. UPDATE_RESTRICTED
 
-- `A2_MSBLQL` — bloqueio é decisão governada (update comum ou operação separada: §39 q13).
+- `A2_MSBLQL` — bloqueio é decisão governada (update comum ou operação separada: §39).
 - `A2_COD`, `A2_LOJA`, `A2_FILIAL` — identidade.
 - `A2_CGC` — mudança de documento é operação sensível (re-dispara dedup; potencial exigência de aprovação).
 - `A2_NATUREZ`, `A2_CONTA`, campos fiscais/retenção, dados bancários — mutabilidade candidata, mas sensíveis: exigem trilha de auditoria e confirmação de contrato.
@@ -1232,7 +1232,7 @@ Existência do campo ≠ autorização de alteração. Nenhum campo é `MUTABLE_
 # 37. Proposed CREATE Contract
 
 - Sem `identity.code` (geração via GETSXENUM na emp 01/05; confirmar 03/04).
-- `identity.store` proposto `"01"` (`API_PROPOSAL`); `company` = empresa alvo (SA2010 vs SA2030/40/50) — decisão §39 q3.
+- `identity.store` proposto `"01"` (`API_PROPOSAL`); `company` = empresa alvo (SA2010 vs SA2030/40/50) — decisão de contrato — §39.
 - Candidatos a obrigatório (CANDIDATE_REQUIRED, sujeitos a prova de runtime/contrato): `legal_name`, `trade_name`, `person_type`, `address.state`, `address.city`, `address.city_ibge_code`, `address.country_bacen_code`, `payment.finance_nature`, `payment.ledger_account`.
 - `tax.document` com normalização (apenas dígitos) + dedupe sugerido (sinal por CGC, não idempotência).
 - Idempotência/upsert: decisão da ponte (§39).
@@ -1240,28 +1240,14 @@ Existência do campo ≠ autorização de alteração. Nenhum campo é `MUTABLE_
 
 # 38. Proposed UPDATE Contract
 
-- `PATCH`-semântica: somente campos presentes são alterados; `null` NUNCA deve "limpar" (documentar semântica explícita — decisão §39).
+- `PATCH`-semântica: somente campos presentes são alterados; `null` NUNCA deve "limpar" (documentar semântica explícita — decisão de contrato — §39).
 - Identidade por `code`+`store` (+`company` quando multi-empresa).
 - Campos restritos: `blocked`, `document`, `finance_nature`, `ledger_account`, bancário — fluxo governado.
 - Retorno idem CREATE + lista de campos efetivamente alterados.
 
-# 39. Questions for Gabriel
+# 39. API Design Questions
 
-Somente decisões que a auditoria Protheus não resolve:
-
-1. A ponte usa MATA020 / ExecAuto / API oficial TOTVS ou SQL direto? Se direto, quais validações da MATA020 serão reimplementadas?
-2. Quem executa a geração de `A2_COD`? Como funciona nas empresas 03/04 (sem default SX3)?
-3. Qual empresa alvo — só 01, ou 01/03/04/05? (`target_company` explícito ou escopo fixo?)
-4. `A2_LOJA`: request, default da ponte ou regra da rotina?
-5. CREATE separado de UPDATE? Existe UPSERT?
-6. Semântica de UPDATE: PATCH ou PUT? Campo ausente = não alterar? `null` = limpar ou erro?
-7. Idempotency key do request?
-8. Fornecedor possivelmente duplicado por CNPJ — bloqueia ou sinaliza `POSSIBLE_EXISTING_SUPPLIER`?
-9. Formato de erro por campo (código + mensagem + field)?
-10. Retorno da criação: `code`, `store`, `correlation_id`, read-back?
-11. Actor: como Minha DELPI user → usuário TOTVS é propagado e auditado (campo, log, staging)?
-12. Quais campos a rotina realmente bloqueia no CREATE — em especial os OBRIGAT (`TEL/CONTATO/EMAIL/FORMPAG/NATUREZ/COD_MUN/CODPAIS/CONTA/YROHS`)?
-13. `A2_MSBLQL` — update comum ou operação governada separada (bloquear/desbloquear)?
+`NONE — OUT OF SCOPE` neste documento. Decisões de endpoints, verbos HTTP, payload, PATCH/PUT, idempotência, retry, tratamento de erro, autenticação, actor, correlation id e regras internas da integração pertencem ao desenvolvedor da API/ponte e não fazem parte deste SUPPLIER DATA MODEL MAP. A seção anterior "Questions for Gabriel" foi removida na rodada de extração final do de-para; o entregável é apenas CAMPO DE NEGÓCIO → TABELA TOTVS → CAMPO TOTVS → REGRA DE PERSISTÊNCIA/VALIDAÇÃO TOTVS (§44).
 
 # 40. Unknown / To Inventory
 
@@ -1272,13 +1258,11 @@ Somente decisões que a auditoria Protheus não resolve:
 | `MATA020_INTERNAL_CREATE_VALIDATION` | UNKNOWN | ADVPL não introspectável |
 | `MATA020_SIDE_EFFECTS` (gravação em outras tabelas) | UNKNOWN | sem prova runtime |
 | Semântica exata das posições do bitmap X3_OBRIGAT | TO_INVENTORY | metadata ambígua |
-| Se a ponte escreve via rotina ou SQL direto | UNKNOWN | decisão de implementação futura |
 | Tabela `BA4` referenciada por validação A2_SIGLCR/CONREG mas ausente fisicamente | PROVEN gap | validação pode estar desativada por módulo |
 | `PIX_SUPPLIER_PAYMENT_MODEL` | TO_INVENTORY | PIX não existe no master; modelo de pagamento PIX não mapeado |
 | Origem dos códigos manuais e da política de lojas | TO_INVENTORY | processo de negócio |
 | Por que X2_UNICO inclui `A2_FILIAL` mas todos os registros têm filial em branco | PROVEN por dados (MODO=C) | comportamento esperado |
 | Se DKI/D30/DD1/FV6/G4R serão usadas futuramente | UNKNOWN | hoje vazias |
-| Primeira API Gabriel incluir SA5/SAD/AIA? | UNKNOWN | escopo não ratificado |
 
 # 41. Capability Gaps
 
@@ -1287,25 +1271,24 @@ Somente decisões que a auditoria Protheus não resolve:
 | CG-1 | introspecção ADVPL/MATA020 | validações efetivas no create (além do X3) | CANDIDATE_REQUIRED permanece sem prova de bloqueio |
 | CG-2 | acesso à base TSS/licença | local da sequência GETSXENUM | não impede create (default existe); afeta compreensão do mecanismo |
 | CG-3 | metadados SM0/empresas | nomes das empresas 03/04/05 | cosmético — códigos conhecidos |
-| CG-4 | contrato da ponte Gabriel | endpoints, verbos, idempotência, erros | bloqueia fechamento do de-para público |
 | CG-5 | SX6 parâmetros | MV_* que afetam obrigatoriedade (ex.: MV_PLORDA2) | obrigatoriedades condicionais de parâmetros não avaliadas |
 
 # 42. Ratified Integration Field Matrix
 
-A matriz de §28 é a versão ratificada pronta para discussão com Gabriel (`contract_status` por linha). Resumo executivo:
+A matriz de §28 é a versão ratificada pronta para uso pela integração (`contract_status` por linha). Resumo executivo:
 
-- **READY_FOR_GABRIEL_REVIEW**: document, person_type, registrations, cnae, contributor, number, country, ddd, website, condition_code, banking_*, swift, flags.generic, price_table, links.*.
-- **NEEDS_GABRIEL_DECISION**: store, code (geração), complement (2 campos), city_ibge_code + country_bacen_code (OBRIG1×fill), phone/email/person/method (OBRIG1×fill baixo), account_type (2 campos), flags.blocked, flags.rohs.
+- **READY_FOR_INTEGRATION_REVIEW**: document, person_type, registrations, cnae, contributor, number, country, ddd, website, condition_code, banking_*, swift, flags.generic, price_table, links.*.
+- **CONTRACT_DECISION**: store, code (geração), complement (2 campos), city_ibge_code + country_bacen_code (OBRIG1×fill), phone/email/person/method (OBRIG1×fill baixo), account_type (2 campos), flags.blocked, flags.rohs.
 - **NEEDS_TOTVS_RUNTIME_PROOF**: legal_name, trade_name, street, district, postal_code, city, state, finance_nature, ledger_account (fill ~100% mas sem prova de bloqueio).
 - **OUT_OF_SCOPE (primeira API)**: SA5/SAD/AIA/AIB/AIC e demais relações — operações separadas (TARGET).
 
-# 43. Gabriel Handoff — Supplier Create / Update
+# 43. Integration Handoff — Supplier Create / Update
 
-**Status**: `AUDIT INVENTORY = ACCEPTED` · `PUBLIC INTEGRATION CONTRACT = READY_FOR_GABRIEL_REVIEW` (não congelado).
+**Status**: `AUDIT INVENTORY = ACCEPTED` · `PUBLIC INTEGRATION CONTRACT = READY_FOR_INTEGRATION_REVIEW` (não congelado).
 
 ### A. CREATE CANDIDATE PAYLOAD
 
-Ver modelo canônico §36. Enviar identidade sem `code`; `store`/`company` conforme decisão q3/q4. Candidatos obrigatórios: §37.
+Ver modelo canônico §36. Enviar identidade sem `code`; `store`/`company` conforme decisão de contrato (§39). Candidatos obrigatórios: §37.
 
 ### B. UPDATE IDENTITY
 
@@ -1324,13 +1307,640 @@ Todos os campos de negócio do §28 são MUTABLE_CANDIDATE — nenhum MUTABLE_PR
 - Lookups exigidos quando campo enviado: SX5('12'/'58'/'T3'/'Y7'), CC2, CCH, SYA, SE4, SED, SA6 (trinca), CT1, SA1, SRA, SA4, SAE, ACJ, SYR.
 - Normalização mínima: `A2_LOJA` `RTRIM`+`zfill(2)`; `A2_COD` `RTRIM`+`zfill(6)` quando numérico; `A2_CGC`/`A2_CEP`/telefones digits-only; `A2_EST`/`A2_SWIFT` upper; `A2_EMAIL` lower.
 
-### F. QUESTIONS FOR GABRIEL
+### F. API DESIGN QUESTIONS
 
-§39 (13 perguntas).
+`NONE — OUT OF SCOPE` (§39). Decisões de contrato/integração pertencem ao desenvolvedor da API.
 
 ### G. OPEN TOTVS GAPS
 
 §40/§41 — principal: `MATA020_INTERNAL_CREATE_VALIDATION` e `MATA020_SIDE_EFFECTS` = UNKNOWN.
+
+# 44. FINAL SUPPLIER FIELD MAPPING
+
+De-para final e neutro do cadastro de fornecedores, extraído exclusivamente da auditoria SX2/SX3/SIX/SX9 + profiling já realizada. **Não define API**: `business_field` é apenas um identificador semântico neutro — não é nome de campo de payload nem contrato público.
+
+## 44.1 Scope
+
+- Entidade: **FORNECEDOR** · Master: `SA2` → tabela física `SA2010` (empresa 01; SA2030/40/50 nas demais).
+- 248 campos SX3 inventariados; todos aparecem na `SUPPLIER_MASTER_FULL_MAPPING` (44.3).
+- `SA5`, `SAD`, `AIA`/`AIB`, `AIC`, `DKI`, `D30`, `DD1`, `FV6`, `G4R`, `D2C`, `CPW`/`CPX` e consumidores transacionais **não** fazem parte do de-para master — ver 44.12 e 44.13.
+- `create_class` usa somente: `PROVEN_REQUIRED` · `CANDIDATE_REQUIRED` · `CONDITIONAL` · `PROVEN_OPTIONAL` · `SYSTEM_GENERATED` · `DO_NOT_SEND` · `UNKNOWN`. Fill-rate nunca é prova de obrigatoriedade; `OBRIGAT` SX3 sem prova de bloqueio ⇒ `CANDIDATE_REQUIRED`.
+- `default_source` usa somente: `SX3_DEFAULT` · `RUNTIME_RULE` · `OBSERVED_CONVENTION` · `NONE` · `UNKNOWN`. Convenção observada em dados nunca é promovida a default nativo.
+
+## 44.2 Supplier master identity
+
+| campo | função | chave | geração/default | empresa | input vs system |
+|---|---|---|---|---|---|
+| `A2_FILIAL` | contexto de filial do registro | participa de `X2_UNICO`/`SA2010_UNQ` | `RUNTIME_RULE` — branco = compartilhado (MODO=C, 100% dos registros em branco) | todas | system — não enviar |
+| `A2_COD` | código do fornecedor | componente da identidade | `SX3_DEFAULT` `GETSXENUM("SA2")` em **01/05**; **ausente em 03/04** (mecanismo físico TO_INVENTORY — SXE não presente) | difere | system-generated onde o default existe; comportamento em 03/04 = UNKNOWN |
+| `A2_LOJA` | loja do fornecedor (multi-loja por código — 143 códigos com >1 loja) | componente da identidade | `OBSERVED_CONVENTION` `'01'` — sem default SX3 | todas | input vs geração = CONTRACT_DECISION (fora de escopo) |
+
+Identidade persistida = `A2_FILIAL` + `A2_COD` + `A2_LOJA` (PROVEN). `A2_CGC` **não** é identidade nem chave única — é sinal de duplicidade (32 CNPJs duplicados, 159 vazios).
+
+## 44.3 SUPPLIER_MASTER_FULL_MAPPING
+
+Todos os 248 campos SX3 de `SA2` (empresa 01). Colunas: `business_field` neutro · `business_label`/`sx3_title`/`sx3_description` do dicionário · tipagem física · classificação de cadastro · default · validação X3_VALID · lookup F3 · domínio CBOX · normalização justificada pela estrutura/dados · sensibilidade · `company_scope` · evidência.
+
+| business_field | business_label | totvs_table | totvs_field | sx3_title | sx3_description | data_type | length | decimals | create_class | default_source | default_value | validation | lookup_table | lookup_key | allowed_values | normalization | sensitivity | company_scope | evidence_status | notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| branch | Filial do Sistema | SA2010 | `A2_FILIAL` | Filial | Filial do Sistema | C | 2 | 0 | SYSTEM_GENERATED | RUNTIME_RULE | branch context (blank=shared) | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| tax_document | CNPJ/CPF do cliente | SA2010 | `A2_CGC` | CNPJ/CPF | CNPJ/CPF do cliente | C | 14 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. IIF( M->A2_TIPO == 'X', .T., (CGC(M->A2_CGC) .And. A020CGC(M->A2_TI | — | — | — | digits-only; picture:@R! NN.NNN.NNN/NNNN-99 | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| supplier_code | Codigo do Fornecedor | SA2010 | `A2_COD` | Codigo | Codigo do Fornecedor | C | 6 | 0 | SYSTEM_GENERATED | SX3_DEFAULT | GETSXENUM("SA2") | IIF(Empty(M->A2_LOJA),.T.,ExistChav("SA2",M->A2_COD+M->A2_LOJA,,"EXISTFOR")) .An | — | — | — | RTRIM+zfill; picture:@! | — | 01,03,04,05 | PROVEN | — |
+| supplier_store | Loja do Fornecedor | SA2010 | `A2_LOJA` | Loja | Loja do Fornecedor | C | 2 | 0 | UNKNOWN | OBSERVED_CONVENTION | '01' | existchav("SA2",M->a2_cod+M->a2_loja,,"EXISTFOR") .And. A020CarEsp() | — | — | — | RTRIM+zfill; picture:@! | — | 01,03,04,05 | PROVEN | — |
+| legal_name | Nome ou Razao Social | SA2010 | `A2_NOME` | Razao Social | Nome ou Razao Social | C | 50 | 0 | CANDIDATE_REQUIRED | NONE | — | A020CarEsp() | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| trade_name | Nome de Fantasia | SA2010 | `A2_NREDUZ` | N Fantasia | Nome de Fantasia | C | 20 | 0 | CANDIDATE_REQUIRED | NONE | — | A020CarEsp() | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| street | Endereco do Fornecedor | SA2010 | `A2_END` | Endereco | Endereco do Fornecedor | C | 40 | 0 | CANDIDATE_REQUIRED | NONE | — | A020CarEsp() | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| street_number | Numero do Endereco | SA2010 | `A2_NR_END` | Numero | Numero do Endereco | C | 6 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | digits-only | — | 01,03,04,05 | PROVEN | — |
+| district | Bairro do Fornecedor | SA2010 | `A2_BAIRRO` | Bairro | Bairro do Fornecedor | C | 20 | 0 | CANDIDATE_REQUIRED | NONE | — | A020CarEsp() | — | — | — | picture:@!S15 | — | 01,03,04,05 | PROVEN | — |
+| min_royalty | Pagamento minimo Royalty | SA2010 | `A2_ROYMIN` | Royalt Min. | Pagamento minimo Royalty | N | 7 | 2 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| sub_code | Sub Codigo | SA2010 | `A2_SUBCOD` | Sub Codigo | Sub Codigo | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| payment_freq | Recebe Pagamento? | SA2010 | `A2_PAGAMEN` | Receb.Pagto. | Recebe Pagamento? | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| segment_code | Segmentacao de Ativid. 1 | SA2010 | `A2_SATIV1` | Segmento 1 | Segmentacao de Ativid. 1 | C | 6 | 0 | CONDITIONAL | NONE | — | ExistCpo("SX5","T3"+M->A2_SATIV1) | SX5 | T3+CHAVE | — | — | — | 01,03,04,05 | PROVEN | — |
+| council_reg_number | Numero do Conselho Regio. | SA2010 | `A2_CONREG` | Numero C.R | Numero do Conselho Regio. | C | 10 | 0 | CONDITIONAL | NONE | — | ExistChav("SA2",M->A2_CONREG+M->A2_SIGLCR,GETMV("MV_PLORDA2")) .And. ExistChav(" | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| council_sigla | Sigla C.R | SA2010 | `A2_SIGLCR` | Sigla C.R | Sigla C.R | C | 7 | 0 | PROVEN_OPTIONAL | NONE | — | — | BA4 | SIGLCR+CONREG (tabela ausente) | — | uppercase; picture:@! | — | 01,03,04,05 | PROVEN | — |
+| pl_fil | Filial do Grupo | SA2010 | `A2_PLFIL` | Filial Grupo | Filial do Grupo | C | 1 | 0 | PROVEN_OPTIONAL | SX3_DEFAULT | "N" | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| phone_ddd | Codigo do DDD | SA2010 | `A2_DDD` | DDD | Codigo do DDD | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | digits-only | contact PII | 01,03,04,05 | PROVEN | — |
+| civil_status | Estado Civil | SA2010 | `A2_CIVIL` | Estado Civil | Estado Civil | C | 1 | 0 | CONDITIONAL | NONE | — | naovazio() | — | — | CBOX | picture:@! | fiscal/PII | 01,03,04,05 | PROVEN | WHEN: M->A2_TIPO = "F" |
+| phone_ddi | Codigo do DDI | SA2010 | `A2_DDI` | DDI | Codigo do DDI | C | 6 | 0 | PROVEN_OPTIONAL | NONE | — | IIF(!EMPTY(M->A2_DDI), ExistCpo("ACJ",M->A2_DDI),.T.) | ACJ | DDI | — | — | contact PII | 01,03,04,05 | PROVEN | — |
+| pl_pedes | % Desconto Producao Med. | SA2010 | `A2_PLPEDES` | % Desc. PLS | % Desconto Producao Med. | N | 13 | 4 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| phone | Numero do Telefone | SA2010 | `A2_TEL` | Telefone | Numero do Telefone | C | 50 | 0 | CANDIDATE_REQUIRED | NONE | — | — | — | — | — | digits-only; picture:@R 9999999999 | contact PII | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| blocked_since | Data do Bloqueio | SA2010 | `A2_DATBLO` | Data Bloq. | Data do Bloqueio | D | 8 | 0 | DO_NOT_SEND | NONE | — | — | — | — | — | YYYYMMDD; picture:@! | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| state_registration | Inscricao Estadual | SA2010 | `A2_INSCR` | Ins. Estad. | Inscricao Estadual | C | 18 | 0 | CONDITIONAL | NONE | — | IE(M->A2_INSCR,M->A2_EST) .And. A020VldUCod() | — | — | — | digits-only; picture:@! | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| blocked_flag | Bloqueia o Fornecedor | SA2010 | `A2_MSBLQL` | Bloqueado | Bloqueia o Fornecedor | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| city_registration | Inscricao Municipal | SA2010 | `A2_INSCRM` | Ins. Municip | Inscricao Municipal | C | 18 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | digits-only; picture:@! | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| fax | Numero do FAX do fornec. | SA2010 | `A2_FAX` | FAX | Numero do FAX do fornec. | C | 15 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | digits-only; picture:@R 9999999999 | contact PII | 01,03,04,05 | PROVEN | — |
+| contact_person | Contato na Empresa | SA2010 | `A2_CONTATO` | Contato | Contato na Empresa | C | 15 | 0 | CANDIDATE_REQUIRED | NONE | — | — | — | — | — | picture:@! | contact PII | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| bank_code | Codigo do Banco | SA2010 | `A2_BANCO` | Banco | Codigo do Banco | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | SA6 | COD+AGENCIA+NUMCON | — | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| csll_withholding | Recolhimento da CSLL | SA2010 | `A2_RECCSLL` | Rec.CSLL | Recolhimento da CSLL | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "1" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| bank_branch | Cod Agencia Fornecedor | SA2010 | `A2_AGENCIA` | Cod Agencia | Cod Agencia Fornecedor | C | 5 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| linked_employee | C¢digo do funcion rio | SA2010 | `A2_NUMRA` | C¢d Func | C¢digo do funcion rio | C | 6 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. (ExistCpo("SRA") .And. A020NUMRA(M->A2_NUMRA)) | SRA | RA_MAT | — | — | — | 01,03,04,05 | PROVEN | — |
+| abics_code | Cod. Abics | SA2010 | `A2_ABICS` | Cod. Abics | Cod. Abics | C | 4 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| bank_branch_digit | Digito Verific. Agencia | SA2010 | `A2_DVAGE` | DV Ag Cnab | Digito Verific. Agencia | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| bank_account | Conta Corrente Fornecedor | SA2010 | `A2_NUMCON` | Cta Corrente | Conta Corrente Fornecedor | C | 10 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| senat_sest | Recolhe SEST | SA2010 | `A2_RECSEST` | Recolhe SEST | Recolhe SEST | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_dtpawb | Descricao do Tipo da AWB | SA2010 | `A2_DTPAWB` | Desc.Tip.AWB | Descricao do Tipo da AWB | C | 30 | 0 | DO_NOT_SEND | RUNTIME_RULE | virtual | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | virtual (no physical column) |
+| bank_account_digit | Digito Verificador Conta | SA2010 | `A2_DVCTA` | DV Cta Cnab | Digito Verificador Conta | C | 2 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| a2_tipawb | Tipo AWB | SA2010 | `A2_TIPAWB` | Tipo AWB | Tipo AWB | C | 1 | 0 | CONDITIONAL | NONE | — | Empty(M->A2_TIPAWB) .Or. ExistCpo("SX5", "MF"+M->A2_TIPAWB) | SX5 | MF+CHAVE | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| swift_code | Swift do Fornecedor | SA2010 | `A2_SWIFT` | Swift | Swift do Fornecedor | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | uppercase; picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| finance_nature | Cod Natureza Financeira | SA2010 | `A2_NATUREZ` | Natureza | Cod Natureza Financeira | C | 10 | 0 | CANDIDATE_REQUIRED | NONE | — | FinVldNat( .T. ,,2) .And. Vazio() .Or.  Existcpo("SED") | SED | CODIGO | — | picture:@! | financial | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| cofins_withholding | Recolhimento da COFINS | SA2010 | `A2_RECCOFI` | Rec.COFINS | Recolhimento da COFINS | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "1" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| carrier_code | Codigo da Transportadora | SA2010 | `A2_TRANSP` | Transp. | Codigo da Transportadora | C | 6 | 0 | PROVEN_OPTIONAL | NONE | — | vazio().or.existcpo("SA4") | SA4 | COD | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| pis_withholding | Recolhimento de PIS | SA2010 | `A2_RECPIS` | Rec. PIS | Recolhimento de PIS | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "1" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_prior | Prioridade de Pagamento | SA2010 | `A2_PRIOR` | Prioridade | Prioridade de Pagamento | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| debit_branch | Filial de Debito | SA2010 | `A2_FILDEB` | Fil.Debito | Filial de Debito | C | 2 | 0 | DO_NOT_SEND | NONE | — | Vazio() .Or. TMSValidEmp(cEmpAnt+M->A2_FILDEB) | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| state | Sigla da Federacao | SA2010 | `A2_EST` | Estado | Sigla da Federacao | C | 2 | 0 | CANDIDATE_REQUIRED | NONE | — | ExistCpo("SX5","12"+M->A2_EST) | SX5 | 12+UF | — | uppercase; picture:@! | — | 01,03,04,05 | PROVEN | — |
+| risk_code | Nivel de Risco | SA2010 | `A2_RISCO` | Risco | Nivel de Risco | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | financial | 01,03,04,05 | PROVEN | — |
+| city_ibge_code | Codigo do Municipio | SA2010 | `A2_COD_MUN` | Cod. Municip | Codigo do Municipio | C | 5 | 0 | CANDIDATE_REQUIRED | NONE | — | ExistCpo("CC2", FWFldGet("A2_EST") + FWFldGet("A2_COD_MUN"), 1) | CC2 | EST+CODMUN | — | — | — | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| payment_condition | Condicao de Pagamento | SA2010 | `A2_COND` | Cond. Pagto | Condicao de Pagamento | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | vazio().or.existcpo("SE4") | SE4 | CODIGO | — | picture:@! | financial | 01,03,04,05 | PROVEN | — |
+| city | Municipio do Fornecedor | SA2010 | `A2_MUN` | Municipio | Municipio do Fornecedor | C | 25 | 0 | CANDIDATE_REQUIRED | NONE | — | A020CarEsp() | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| credit_limit | Limite de Credito | SA2010 | `A2_LC` | Lim. Credito | Limite de Credito | C | 14 | 0 | DO_NOT_SEND | NONE | — | — | — | — | — | picture:@! | financial | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| state_name | Nome do Estado Fornecedor | SA2010 | `A2_ESTADO` | Nome Estado | Nome do Estado Fornecedor | C | 20 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@!S20 | — | 01,03,04,05 | PROVEN | — |
+| a2_matr | Maior Atraso em dias | SA2010 | `A2_MATR` | Maior Atraso | Maior Atraso em dias | N | 4 | 0 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| country_bacen_code | C¢d. pa¡s Banco Central | SA2010 | `A2_CODPAIS` | Pa¡s Bacen | C¢d. pa¡s Banco Central | C | 5 | 0 | CANDIDATE_REQUIRED | OBSERVED_CONVENTION | '01058' | ExistCpo("CCH") | CCH | CODIGO | — | picture:@R 99999 | — | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| a2_mcompra | Maior Compra em Valor | SA2010 | `A2_MCOMPRA` | Maior Compra | Maior Compra em Valor | N | 17 | 2 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| postal_code | Cod Enderecamento Postal | SA2010 | `A2_CEP` | CEP | Cod Enderecamento Postal | C | 8 | 0 | CANDIDATE_REQUIRED | NONE | — | — | — | — | — | digits-only; picture:@R 99999-999 | — | 01,03,04,05 | PROVEN | — |
+| a2_metr | Media de Atraso em dias | SA2010 | `A2_METR` | Media Atraso | Media de Atraso em dias | N | 5 | 1 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| po_box | Caixa Postal | SA2010 | `A2_CX_POST` | Caixa Postal | Caixa Postal | C | 5 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | digits-only; picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_ultcom | Data da ultima Compra | SA2010 | `A2_ULTCOM` | Ult Compra | Data da ultima Compra | D | 8 | 0 | DO_NOT_SEND | NONE | — | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| person_type | Tipo do Fornecedor | SA2010 | `A2_TIPO` | Tipo | Tipo do Fornecedor | C | 1 | 0 | CANDIDATE_REQUIRED | SX3_DEFAULT | IF(LEFT(SA2->A2_CGC,2) == '  ',' ',IF(LE | pertence("FJX") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_msaldo | Maior Saldo Credor | SA2010 | `A2_MSALDO` | Maior Saldo | Maior Saldo Credor | N | 17 | 2 | DO_NOT_SEND | NONE | — | — | — | — | — | — | financial | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| national_id_doc | Reg.Geral/Ced.Estrangeiro | SA2010 | `A2_PFISICA` | RG/Ced.Estr. | Reg.Geral/Ced.Estrangeiro | C | 18 | 0 | CONDITIONAL | NONE | — | A020VldUCod() | — | — | — | digits-only; picture:@! | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| a2_nrocom | Numero total de Compras | SA2010 | `A2_NROCOM` | No Compras | Numero total de Compras | N | 6 | 0 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| a2_pricom | Data da Primeira Compra | SA2010 | `A2_PRICOM` | 1a Compra | Data da Primeira Compra | D | 8 | 0 | DO_NOT_SEND | NONE | — | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| ledger_account | Codigo da Conta Contabil | SA2010 | `A2_CONTA` | C Contabil | Codigo da Conta Contabil | C | 20 | 0 | CANDIDATE_REQUIRED | NONE | — | vazio().or. Ctb105Cta() | CT1 | CONTA | — | picture:@! | financial | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| rural_type | Tp.Fornec.ref.Contr.Seg. | SA2010 | `A2_TIPORUR` | Tp.Contr.Soc | Tp.Fornec.ref.Contr.Seg. | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_saldup | Saldo de Duplicatas | SA2010 | `A2_SALDUP` | Sld Duplict | Saldo de Duplicatas | N | 17 | 2 | DO_NOT_SEND | NONE | — | — | — | — | — | — | financial | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| a2_desvio | Desvio do prz de entrega | SA2010 | `A2_DESVIO` | Desvio | Desvio do prz de entrega | N | 6 | 1 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| a2_saldupm | Saldo em Moeda Forte | SA2010 | `A2_SALDUPM` | Sld Moed.For | Saldo em Moeda Forte | N | 17 | 2 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| iss_withholding | Recolhe ISS ? | SA2010 | `A2_RECISS` | Recolhe ISS? | Recolhe ISS ? | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("SN ") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| fiscal_id | Identificacao do Fornec. | SA2010 | `A2_ID_FBFN` | Identificac. | Identificacao do Fornec. | C | 7 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. ExistCpo("SX5","48"+LEFT(M->A2_ID_FBFN,1)) | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| status | Fornecedor Homologado | SA2010 | `A2_STATUS` | Status | Fornecedor Homologado | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | — | financial | 01,03,04,05 | PROVEN | — |
+| group_code | Grupo | SA2010 | `A2_GRUPO` | Grupo | Grupo | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio().or.ExistCpo("SX5","Y7"+M->A2_GRUPO,1) | SX5 | Y7+CHAVE | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_ativida | Cod.Atividade Economica | SA2010 | `A2_ATIVIDA` | Cod.Ativida. | Cod.Atividade Economica | C | 7 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| country_code | Pais do Fornecedor | SA2010 | `A2_PAIS` | Pais | Pais do Fornecedor | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. ExistCpo("SYA",M->A2_PAIS) | SYA | CODGI | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_paisdes | Descr. Pais | SA2010 | `A2_PAISDES` | Descr. Pais | Descr. Pais | C | 25 | 0 | DO_NOT_SEND | RUNTIME_RULE | virtual | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | virtual (no physical column) |
+| a2_depto | Departamento p/ Contato | SA2010 | `A2_DEPTO` | Departamento | Departamento p/ Contato | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| origin_1 | Origem 1 | SA2010 | `A2_ORIG_1` | Origem 1 | Origem 1 | C | 3 | 0 | CONDITIONAL | NONE | — | EicFBOrigem(M->A2_ORIG_1,"1") | SYR | ORIGEM | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| representative_code | Representante | SA2010 | `A2_REPRES` | Represent. | Representante | C | 52 | 0 | PROVEN_OPTIONAL | NONE | — | — | SA2 | COD+LOJA (self) | — | picture:@!S50 | — | 01,03,04,05 | PROVEN | — |
+| repr_contact | Contato | SA2010 | `A2_REPCONT` | Contato Repr | Contato | C | 50 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| repr_phone | Numero do Telefone | SA2010 | `A2_REPRTEL` | Tel. Repres. | Numero do Telefone | C | 50 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| repr_fax | Numero do FAX do Repres. | SA2010 | `A2_REPRFAX` | FAX Repres. | Numero do FAX do Repres. | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| origin_2 | Origem 2 | SA2010 | `A2_ORIG_2` | Origem 2 | Origem 2 | C | 3 | 0 | CONDITIONAL | NONE | — | EicFBOrigem(M->A2_ORIG_2,"2") | SYR | ORIGEM | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| origin_3 | Origem 3 | SA2010 | `A2_ORIG_3` | Origem 3 | Origem 3 | C | 3 | 0 | CONDITIONAL | NONE | — | EicFBOrigem(M->A2_ORIG_3,"3") | SYR | ORIGEM | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| vincula_flag | Tipo Vinculacao | SA2010 | `A2_VINCULA` | Vinculacao | Tipo Vinculacao | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "1" | Pertence("123") | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| a2_reprmun | Cidade do Represent. | SA2010 | `A2_REPRMUN` | Cidade | Cidade do Represent. | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_represt | Nome do Estado Represent. | SA2010 | `A2_REPREST` | Estado Reprs | Nome do Estado Represent. | C | 2 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. ExistCpo("SX5","12"+M->A2_REPREST) | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_reprcep | Cod Enderecamento Postal | SA2010 | `A2_REPRCEP` | CEP Repres. | Cod Enderecamento Postal | C | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@R 99999-999 | — | 01,03,04,05 | PROVEN | — |
+| a2_reppais | Pais do Representante | SA2010 | `A2_REPPAIS` | Pais Repres. | Pais do Representante | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. ExistCpo("SYA",M->A2_REPPAIS) | SYA | CODGI | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| repr_email | E-Mail Representante | SA2010 | `A2_REPR_EM` | E-Mail Repr. | E-Mail Representante | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| repr_district | Banco do Representate | SA2010 | `A2_REPR_BA` | Bco. Repres. | Banco do Representate | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | vazio().or.existcpo("SA6") | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| repr_street | Endereco Representante | SA2010 | `A2_REPR_EN` | End.Repres. | Endereco Representante | C | 52 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@!S50 | — | 01,03,04,05 | PROVEN | — |
+| a2_repbair | Bairro do Representante | SA2010 | `A2_REPBAIR` | Bairro Repr. | Bairro do Representante | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| repr_id | Identifica Repres.na L.I. | SA2010 | `A2_ID_REPR` | Identif.Repr | Identifica Repres.na L.I. | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | '2' | Pertence("12") | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| a2_repr_ag | Agencia do Representante | SA2010 | `A2_REPR_AG` | Agenc. Repr. | Agencia do Representante | C | 5 | 0 | CONDITIONAL | NONE | — | Vazio() .or. IF(EMPTY(ALLTRIM(M->A2_REPR_BA)),.T.,ExistCpo("SA6",M->A2_REPR_BA+M | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | WHEN: !Empty(M->A2_REPR_BA) |
+| a2_comi_so | Tipo Comissao | SA2010 | `A2_COMI_SO` | Tipo Comis. | Tipo Comissao | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("1234") | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| a2_repr_co | Conta Corrente Represent. | SA2010 | `A2_REPR_CO` | C/C Repres. | Conta Corrente Represent. | C | 10 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| repr_tax_doc | CNPJ Representante | SA2010 | `A2_REPRCGC` | CNPJ Repres. | CNPJ Representante | C | 14 | 0 | PROVEN_OPTIONAL | NONE | — | vazio() .or. cgc(M->A2_REPRCGC) | — | — | — | picture:@R! NN.NNN.NNN/NNNN-99 | — | 01,03,04,05 | PROVEN | — |
+| zf_city_code | Cod. Mun. ZF Manaus e ALC | SA2010 | `A2_CODMUN` | Cod. Mun. ZF | Cod. Mun. ZF Manaus e ALC | C | 5 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. ExistCpo("SX5","S1"+M->A2_CODMUN) | S1 | municipio ZF | — | — | — | 01,03,04,05 | PROVEN | — |
+| a2_ret_pai | Comissao Retida no Pais | SA2010 | `A2_RET_PAI` | Comis.Retida | Comissao Retida no Pais | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12 ") | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| email | E-Mail | SA2010 | `A2_EMAIL` | E-Mail | E-Mail | C | 50 | 0 | CANDIDATE_REQUIRED | NONE | — | — | — | — | — | lowercase | contact PII | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| website | Home-Page | SA2010 | `A2_HPAGE` | Home-Page | Home-Page | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | contact PII | 01,03,04,05 | PROVEN | — |
+| commercial_contact | Contato Comercial (NNC) | SA2010 | `A2_CONTCOM` | Contato Com. | Contato Comercial (NNC) | C | 15 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | contact PII | 01,03,04,05 | PROVEN | — |
+| a2_ok | OK | SA2010 | `A2_OK` | OK | OK | C | 2 | 0 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| eval_factor | Fator de Avaliacao | SA2010 | `A2_FATAVA` | Fator Aval. | Fator de Avaliacao | N | 6 | 2 | CONDITIONAL | NONE | — | M->A2_FATAVA >= 0.00 .and. M->A2_FATAVA <= 100.00 | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| eval_date | Data da Avaliacao | SA2010 | `A2_DTAVA` | Data Aval. | Data da Avaliacao | D | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| valid_until | Data Validade Avaliacao | SA2010 | `A2_DTVAL` | Data Valid. | Data Validade Avaliacao | D | 8 | 0 | CONDITIONAL | SX3_DEFAULT | A100ReDV() | M->A2_DTVAL >= M->A2_DTAVA | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| a2_unfedrp | Unidade Fed. no Exterior | SA2010 | `A2_UNFEDRP` | Unid.Fed.Ext | Unidade Fed. no Exterior | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@!S18 | — | 01,03,04,05 | PROVEN | — |
+| a2_contab | Conta Contabil ImportaçÆo | SA2010 | `A2_CONTAB` | C.Contab.Imp | Conta Contabil ImportaçÆo | C | 15 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| inss_withholding | Calcula INSS p/ Fornec. ? | SA2010 | `A2_RECINSS` | Calc. INSS ? | Calcula INSS p/ Fornec. ? | C | 1 | 0 | CONDITIONAL | NONE | — | pertence("SN") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| telex | Numero do Telex | SA2010 | `A2_TELEX` | Telex | Numero do Telex | C | 10 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | contact PII | 01,03,04,05 | PROVEN | — |
+| tax_group | Grupo de Tributacao | SA2010 | `A2_GRPTRIB` | Grp. Tribut. | Grupo de Tributacao | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_cliqf | Liquidacao Futura | SA2010 | `A2_CLIQF` | Liquid.Futur | Liquidacao Futura | C | 15 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@R 999999999999999 | — | 01,03,04,05 | PROVEN | — |
+| pl_group | Classe de Fornecedor | SA2010 | `A2_PLGRUPO` | Classe Forn. | Classe de Fornecedor | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. ExistCpo("SX5","B9"+M->A2_PLGRUPO) | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_codblo | Codigo do Bloqueio | SA2010 | `A2_CODBLO` | Cod.Bloqueio | Codigo do Bloqueio | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_paisori | Pais de Origem Fornecedor | SA2010 | `A2_PAISORI` | Pais Origem | Pais de Origem Fornecedor | C | 20 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_royalty | Royalty | SA2010 | `A2_ROYALTY` | Royalty | Royalty | C | 1 | 0 | CONDITIONAL | NONE | — | ExistCpo("SX5","H4"+M->A2_ROYALTY) | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_txtribu | Taxa de Bi-Tributacao | SA2010 | `A2_TXTRIBU` | TX-BI-Tribut | Taxa de Bi-Tributacao | N | 6 | 2 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| b2b_flag | Utiliza B2B? | SA2010 | `A2_B2B` | Utiliza B2B | Utiliza B2B? | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| complement | Complemento Endereco | SA2010 | `A2_ENDCOMP` | Compl. End. | Complemento Endereco | C | 21 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_grpdep | Grupo de Almoxarifados | SA2010 | `A2_GRPDEP` | Grupo Almox | Grupo de Almoxarifados | C | 5 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. ExistCpo("SX5","74"+M->A2_GRPDEP) | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_fretiss | Forma retenÆo ISSQN | SA2010 | `A2_FRETISS` | F.Ret.ISS | Forma retenÆo ISSQN | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(' 12') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| bc_pa | Codigo do Pais - BCB | SA2010 | `A2_PABCB` | Cod.Pais BCB | Codigo do Pais - BCB | C | 5 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,05 | PROVEN | SYS |
+| a2_fabrica | Fabricante | SA2010 | `A2_FABRICA` | Fabricante | Fabricante | C | 1 | 0 | CONDITIONAL | NONE | — | ExistCpo("SX5","48"+LEFT(M->A2_FABRICA,1)) | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| pl_crres | Obrigat. Dig. Resp. Mov ? | SA2010 | `A2_PLCRRES` | Obrig.Resp? | Obrigat. Dig. Resp. Mov ? | C | 1 | 0 | PROVEN_OPTIONAL | SX3_DEFAULT | "N" | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_tpissrs | Tipo de EscrituraÆo | SA2010 | `A2_TPISSRS` | Tipo de Escr | Tipo de EscrituraÆo | C | 2 | 0 | CONDITIONAL | NONE | — | Pertence("01/02/03/04/05/07/08/09/10/11/12/14/15/16/17/18/19") | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| ct_are | Contribuinte TARE ? | SA2010 | `A2_CTARE` | Contr TARE ? | Contribuinte TARE ? | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| fet_withholding | Recolhe FETHAB | SA2010 | `A2_RECFET` | Rec. FETHAB | Recolhe FETHAB | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| person_category | Tipo de Pessoa | SA2010 | `A2_TPESSOA` | Tipo Pessoa | Tipo de Pessoa | C | 2 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| cide_withholding | Recolhe CIDE | SA2010 | `A2_RECCIDE` | Rec Cide | Recolhe CIDE | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_codloc | Codigo da Localidade | SA2010 | `A2_CODLOC` | Cod.Local | Codigo da Localidade | C | 8 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio().Or.ExistCpo("SX5","AB"+M->A2_CODLOC) | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| a2_mnota | Maior Nota do Fornecedor | SA2010 | `A2_MNOTA` | Maior Nota | Maior Nota do Fornecedor | N | 17 | 2 | DO_NOT_SEND | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| cbo | Codigo CBO do Fornecedor | SA2010 | `A2_CBO` | Cod CBO | Codigo CBO do Fornecedor | C | 7 | 0 | CONDITIONAL | NONE | — | — | — | — | — | picture:@! | fiscal/PII | 01,03,04,05 | PROVEN | WHEN: M->A2_TIPO $ "F,X" |
+| cnae | Codigo CNAE do Fornecedor | SA2010 | `A2_CNAE` | Cod CNAE | Codigo CNAE do Fornecedor | C | 9 | 0 | CONDITIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | WHEN: M->A2_TIPO $ "J,X" |
+| payee_code | Codigo do Favorecido | SA2010 | `A2_CODFAV` | Cod.Favorec | Codigo do Favorecido | C | 6 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. ExistCpo("SA2") | SA2 | COD+LOJA (self) | — | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| payee_store | Loja do Favorecido | SA2010 | `A2_LOJFAV` | Loja Favorec | Loja do Favorecido | C | 2 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. ExistCpo("SA2",M->A2_CODFAV+M->A2_LOJFAV) | — | — | — | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| payee_name | Nome do Favorecido | SA2010 | `A2_NOMFAV` | Nome Favorec | Nome do Favorecido | C | 50 | 0 | DO_NOT_SEND | RUNTIME_RULE | virtual | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | virtual (no physical column) |
+| dependents | N§ de Dependentes | SA2010 | `A2_NUMDEP` | Dependentes | N§ de Dependentes | N | 2 | 0 | CONDITIONAL | NONE | — | Positivo() | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| calc_irf | C lculo do IRRF. | SA2010 | `A2_CALCIRF` | C lc. IRRF | C lculo do IRRF. | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence('1234') | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| link_type | Pessoa Vinculada | SA2010 | `A2_VINCULO` | P. Vinculo | Pessoa Vinculada | C | 2 | 0 | CONDITIONAL | NONE | — | ExistCpo("CC1") | CC1 | CODIGO | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_codinss | C¢digo do INSS | SA2010 | `A2_CODINSS` | C¢d. INSS | C¢digo do INSS | C | 11 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_dtiniv | Data Inicial do Vinculo | SA2010 | `A2_DTINIV` | Dt Ini Vincu | Data Inicial do Vinculo | D | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | YYYYMMDD; picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_dtfimv | Data Final do Vinculo | SA2010 | `A2_DTFIMV` | Dt Fim Vincu | Data Final do Vinculo | D | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| city_code_siaf | Cod.Municipio SIAFI | SA2010 | `A2_CODSIAF` | Cod.Mun.SIAF | Cod.Municipio SIAFI | C | 4 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_prstser | Ind. Prestador de Serv. | SA2010 | `A2_PRSTSER` | Ind. Prest. | Ind. Prestador de Serv. | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| simples_nacional | Optante Simples Nacional | SA2010 | `A2_SIMPNAC` | Opt Simp Nac | Optante Simples Nacional | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_inscmu | Inscrito no Municipio do | SA2010 | `A2_INSCMU` | Ins. no Munc | Inscrito no Municipio do | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| complement_alt | Complemento do endereo | SA2010 | `A2_COMPLEM` | Complemento | Complemento do endereo | C | 50 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| ir_prog_flag | Calcula IRRF Progressivo | SA2010 | `A2_IRPROG` | IRRF Prog | Calcula IRRF Progressivo | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| rf_acs | Recolhe FACS | SA2010 | `A2_RFACS` | Rec. FACS | Recolhe FACS | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| rf_abov | Recolhe FABOV | SA2010 | `A2_RFABOV` | Rec. FABOV | Recolhe FABOV | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| incult_flag | Incentivo a Cultura | SA2010 | `A2_INCULT` | Inc. Cultura | Incentivo a Cultura | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| contract_prev | Contribuinte previdenciar | SA2010 | `A2_CONTPRE` | Contrib. Pre | Contribuinte previdenciar | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "1" | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| fome_zero | ParticipaÆo no Fome Zero | SA2010 | `A2_FOMEZER` | Fome Zero | ParticipaÆo no Fome Zero | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| simp_regime | Reg. Simlificado MT | SA2010 | `A2_REGESIM` | Rg. Simp. MT | Reg. Simlificado MT | C | 1 | 0 | PROVEN_OPTIONAL | SX3_DEFAULT | "2" | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_doc | CNPJ Empresa Exterior | SA2010 | `A2_CGCEX` | CNPJ Empr.Ex | CNPJ Empresa Exterior | C | 14 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. CGC(M->A2_CGCEX) | — | — | — | picture:@R! NN.NNN.NNN/NNNN-99 | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| foreign_company_name | Nome Empresarial | SA2010 | `A2_NEMPR` | Nome Empres. | Nome Empresarial | C | 150 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| contract_type | Tipo Contrato | SA2010 | `A2_TPCON` | Tipo Contrat | Tipo Contrato | C | 2 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| risk_start | Data Inicio Contrato | SA2010 | `A2_DTINIR` | Data Inicio | Data Inicio Contrato | D | 8 | 0 | PROVEN_OPTIONAL | SX3_DEFAULT | empty date | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| risk_end | Data Final Contrato | SA2010 | `A2_DTFIMR` | Data Fim | Data Final Contrato | D | 8 | 0 | PROVEN_OPTIONAL | SX3_DEFAULT | empty date | Vazio() .Or. M->A2_DTFIMR >= M->A2_DTINIR | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| foreign_country | Codigo do Pais pela RFB | SA2010 | `A2_PAISEX` | Codigo Pais | Codigo do Pais pela RFB | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. FCkResExt("A2_PAISEX",M->A2_PAISEX) | SYA | CODGI | — | — | — | 01,03,04,05 | PROVEN | — |
+| foreign_tax_id | No.Identificacao Fiscal | SA2010 | `A2_NIFEX` | Codigo NIF | No.Identificacao Fiscal | C | 30 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| foreign_street | Logradouro do Fornecedor | SA2010 | `A2_LOGEX` | Logradouro | Logradouro do Fornecedor | C | 60 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_number | Numero da Residencia | SA2010 | `A2_NUMEX` | Numero | Numero da Residencia | C | 6 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_complement | Complemento Residencial | SA2010 | `A2_COMPLR` | Complemento | Complemento Residencial | C | 25 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_district | Bairro/Distrito do Func. | SA2010 | `A2_BAIEX` | Bairro/Dist. | Bairro/Distrito do Func. | C | 20 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_postal | Cod.Postal Fornecedor | SA2010 | `A2_POSEX` | Cod.Postal | Cod.Postal Fornecedor | C | 10 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_city | Cidade do Fornecedor | SA2010 | `A2_CIDEX` | Cidade | Cidade do Fornecedor | C | 40 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_state | Estado/Provindia do Func. | SA2010 | `A2_ESTEX` | Est./Prov. | Estado/Provindia do Func. | C | 40 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_telre | Numero do Telefone | SA2010 | `A2_TELRE` | Telefone | Numero do Telefone | C | 15 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_branch | Beneficiario Rendimento | SA2010 | `A2_BREEX` | Benef.Rend. | Beneficiario Rendimento | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. FCkResExt("A2_BREEX",M->A2_BREEX) | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| foreign_type | Tipo do Rendimento | SA2010 | `A2_TPREX` | Rendimento | Tipo do Rendimento | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. FCkResExt("A2_TPREX",M->A2_TPREX) | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| a2_endnot | Endereo nÆo formatado | SA2010 | `A2_ENDNOT` | End.Not.Form | Endereo nÆo formatado | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| foreign_trib | Forma de Tributacao | SA2010 | `A2_TRBEX` | Forma Trib. | Forma de Tributacao | C | 2 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .or. FCkResExt("A2_TRBEX",M->A2_TRBEX) | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| irpf_cpf | CPF PJ ref IR Progressivo | SA2010 | `A2_CPFIRP` | CPF IR Progr | CPF PJ ref IR Progressivo | C | 11 | 0 | CONDITIONAL | NONE | — | Vazio() .Or. Cgc(M->A2_CPFIRP) | — | — | — | picture:@R 999.999.999-99 | — | 01,03,04,05 | PROVEN | WHEN: M->A2_IRPROG == '1' |
+| a2_incltmg | Incentivo Prod.Leite-MG | SA2010 | `A2_INCLTMG` | Inc.Prd.Leit | Incentivo Prod.Leite-MG | C | 1 | 0 | DO_NOT_SEND | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| min_irf | Valor M¡nimo de IRRF | SA2010 | `A2_MINIRF` | Vlr. Min. IR | Valor M¡nimo de IRRF | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| administrator_code | C¢digo Adm. Financeira | SA2010 | `A2_CODADM` | C¢d. Adm. | C¢digo Adm. Financeira | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. ExistCpo("SAE") | SAE | COD | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| account_type | Tipo de Conta Fornecedor | SA2010 | `A2_TIPCTA` | Tp. Cta. For | Tipo de Conta Fornecedor | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "1" | Pertence("12") | — | — | CBOX | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| ibge_code | Codigo do IBGE | SA2010 | `A2_IBGE` | Cod.IBGE | Codigo do IBGE | C | 11 | 0 | CONDITIONAL | NONE | — | FS_VLCIDEST(6).and.(vazio().or.ExistCpo("VAM")) | AM1 | IBGE | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| imp_ip | Identificacao de Produto | SA2010 | `A2_IMPIP` | Ident.Prod. | Identificacao de Produto | C | 1 | 0 | PROVEN_OPTIONAL | SX3_DEFAULT | "2" | — | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| legal_month | Dispon¡vel m¢d. Jur¡dico | SA2010 | `A2_MJURIDI` | M.Jur¡dico | Dispon¡vel m¢d. Jur¡dico | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_rntrc | Reg. Nac. Tr. Rod. Cargas | SA2010 | `A2_RNTRC` | RNTRC | Reg. Nac. Tr. Rod. Cargas | C | 14 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| city_code_sc | Codigo do Municipio de SC | SA2010 | `A2_MUNSC` | Cod Mun SC | Codigo do Municipio de SC | C | 5 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| a2_conffis | Indica o local da confe. | SA2010 | `A2_CONFFIS` | Conf. F¡sica | Indica o local da confe. | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | '0' | Pertence('0123') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_cpomsp | Registro CPOM | SA2010 | `A2_CPOMSP` | Reg. CPOM | Registro CPOM | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| street_type | Tipo Logradouro | SA2010 | `A2_TPLOGR` | Tp.Lograd | Tipo Logradouro | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_ccicms | Inscrito no CCICMS | SA2010 | `A2_CCICMS` | CCICMS | Inscrito no CCICMS | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_tribfav | Pessoa Trib. Favor. | SA2010 | `A2_TRIBFAV` | Pes.Tri.Fav. | Pessoa Trib. Favor. | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence (" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_sitesbh | SituaÆo Especial de Resp | SA2010 | `A2_SITESBH` | SitEspRes BH | SituaÆo Especial de Resp | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 1234567") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| legal_entity_type | Tipo de Pessoa Jur¡dica | SA2010 | `A2_TPJ` | TPJ | Tipo de Pessoa Jur¡dica | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12345") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_retisi | Reten. a taxa de ISI | SA2010 | `A2_RETISI` | Retem ISI | Reten. a taxa de ISI | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence('12') | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| a2_isicm | Conv. Multilateral de ISI | SA2010 | `A2_ISICM` | Conv. ISI | Conv. Multilateral de ISI | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence('12') | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| transfer_branch | Filial para transferncia | SA2010 | `A2_FILTRF` | Fil. Transf. | Filial para transferncia | C | 2 | 0 | DO_NOT_SEND | NONE | — | Vazio() .Or. IIF(FindFunction('MtValidFil'),MtValidFil(cEmpAnt+M->A2_FILTRF),.T. | — | — | — | — | — | 01,03,04,05 | PROVEN | system accumulator/screen flag |
+| a2_dtrntrc | Vencimento RNTRC | SA2010 | `A2_DTRNTRC` | Venc. RNTRC | Vencimento RNTRC | D | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| history_id | ID Hist¢rico | SA2010 | `A2_IDHIST` | ID Hist. | ID Hist¢rico | C | 20 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| account_type_alt | Tipo de Conta Bancaria | SA2010 | `A2_TPCONTA` | Tipo Conta | Tipo de Conta Bancaria | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | CBOX | picture:@! | sensitive (banking) | 01,03,04,05 | PROVEN | — |
+| a2_locquit | Local de Quitacao | SA2010 | `A2_LOCQUIT` | Local Quitac | Local de Quitacao | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | Vazio() .Or. Pertence('01') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_tprntrc | Tipo RNTRC | SA2010 | `A2_TPRNTRC` | Tipo RNTRC | Tipo RNTRC | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_strntrc | Status RNTRC | SA2010 | `A2_STRNTRC` | Status RNTRC | Status RNTRC | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| fmd_withholding | Recolhe FAMAD | SA2010 | `A2_RECFMD` | Rec. Famad | Recolhe FAMAD | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_eqptac | Equipara  a um TAC | SA2010 | `A2_EQPTAC` | Equipara TAC | Equipara  a um TAC | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| inova_auto | Inovar Auto | SA2010 | `A2_INOVAUT` | Inovar Auto | Inovar Auto | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence(" 123") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_dtconv | Data do Convite | SA2010 | `A2_DTCONV` | Dt. Conv | Data do Convite | D | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| responsible_name | Nome do Responsavel | SA2010 | `A2_NOMRESP` | Nome Resp. | Nome do Responsavel | C | 45 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | contact PII | 01,03,04,05 | PROVEN | — |
+| responsible_role | Cargo Responsavel | SA2010 | `A2_CARGO` | Cargo Resp. | Cargo Responsavel | C | 40 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_apolice | Num. Apolice | SA2010 | `A2_APOLICE` | Num. Apolice | Num. Apolice | C | 15 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| tax_regime_resp | Reg. Esp. de TributaÆo | SA2010 | `A2_RESPTRI` | Reg.Esp.Trib | Reg. Esp. de TributaÆo | C | 2 | 0 | CONDITIONAL | NONE | — | ExistCpo("SX5","83"+M->A2_RESPTRI) | SX5 | 83+CHAVE | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| rural_indicator | Indicador produtor rural | SA2010 | `A2_INDRUR` | Ind.Prod.Rur | Indicador produtor rural | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "0" | Pertence('0123') | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| ec_dt | Data da Exportacao | SA2010 | `A2_ECDTEX` | Dt Exp | Data da Exportacao | C | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,05 | PROVEN | SYS |
+| fiscal_uf | UF Ficticia | SA2010 | `A2_UFFIC` | UF Ficticia | UF Ficticia | C | 2 | 0 | CONDITIONAL | NONE | — | — | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | WHEN: M->A2_EST == 'EX' |
+| ec_seq | Seq.Exportac Intermed | SA2010 | `A2_ECSEQ` | Seq.Exp | Seq.Exportac Intermed | C | 15 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,05 | PROVEN | SYS |
+| a2_tpreg | Tipo de Regime | SA2010 | `A2_TPREG` | Tp. Reg | Tipo de Regime | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_subcon | SUBCON - Sub Contratista | SA2010 | `A2_SUBCON` | SUBCON | SUBCON - Sub Contratista | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| rf_asemt | Recolhe FASE-MT | SA2010 | `A2_RFASEMT` | Rec.FASE-MT | Recolhe FASE-MT | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(' 12') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| ri_mamt | Recolhe IMA-MT | SA2010 | `A2_RIMAMT` | Rec. IMA-MT | Recolhe IMA-MT | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(' 12') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_categ | Categoria para SEFIP | SA2010 | `A2_CATEG` | Categ. SEFIP | Categoria para SEFIP | C | 2 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| nit_pis | N£mero InscriÆo Autnomo | SA2010 | `A2_CODNIT` | Num Insc Aut | N£mero InscriÆo Autnomo | C | 11 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | digits-only; picture:@R 9999.9999.999 | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| icms_contributor | Contribuinte do ICMS | SA2010 | `A2_CONTRIB` | Contribuinte | Contribuinte do ICMS | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(' 12') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| birth_date | Data de nascimento | SA2010 | `A2_DTNASC` | Data nasc. | Data de nascimento | D | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | YYYYMMDD | fiscal/PII | 01,03,04,05 | PROVEN | — |
+| occurrence | Ocorrncia SEFIP | SA2010 | `A2_OCORREN` | Ocorrncia | Ocorrncia SEFIP | C | 2 | 0 | CONDITIONAL | NONE | — | FHIST() | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | WHEN: FOpOcor() |
+| a2_codfi | C¢digo FIESP | SA2010 | `A2_CODFI` | Cod. FIESP | C¢digo FIESP | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| payment_method | Forma de pagamento prefer | SA2010 | `A2_FORMPAG` | Form. Pgto | Forma de pagamento prefer | C | 2 | 0 | CANDIDATE_REQUIRED | NONE | — | Vazio() .Or. ExistCpo("SX5", "58" + M->A2_FORMPAG) | SX5 | 58+CHAVE | — | picture:@! | — | 01,03,04,05 | PROVEN | OBRIGAT flag |
+| r_fundes | Recolhe FUNDESA. | SA2010 | `A2_RFUNDES` | Rec.FUNDESA | Recolhe FUNDESA. | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(' 12') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_msblqd | Bloqueio Temporal | SA2010 | `A2_MSBLQD` | BlqTemporal | Bloqueio Temporal | D | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | YYYYMMDD | — | 01,03,04,05 | PROVEN | — |
+| ecommerce_flag | E-Commerce  Status | SA2010 | `A2_ECFLAG` | E-Commerce | E-Commerce  Status | C | 1 | 0 | CONDITIONAL | NONE | — | — | — | — | CBOX | — | — | 01,05 | PROVEN | SYS; WHEN: SuperGetMV("MV_LJECOMM",,.F.) |
+| a2_issrslc | LC Enq. ISS | SA2010 | `A2_ISSRSLC` | LC ISS RS | LC Enq. ISS | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence ("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| pag_gfe | Pagamento pelo SIGAGFE | SA2010 | `A2_PAGGFE` | Pagto GFE | Pagamento pelo SIGAGFE | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| forn_ma | Fornecedor de Mailing | SA2010 | `A2_FORNEMA` | Forn.Mailing | Fornecedor de Mailing | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| min_pub | Valor M¡n. PCC e IR EmPub | SA2010 | `A2_MINPUB` | Vl. M¡n. Pub | Valor M¡n. PCC e IR EmPub | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence('12') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| regime_pb | Regime Para¡ba | SA2010 | `A2_REGPB` | Reg.Para¡ba | Regime Para¡ba | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12" ) | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| nif_reason | Mot. N.Preench NIF | SA2010 | `A2_MOTNIF` | Mot.NIF | Mot. N.Preench NIF | C | 1 | 0 | PROVEN_OPTIONAL | SX3_DEFAULT | "1" | — | — | — | CBOX | — | — | 01,03,04,05 | PROVEN | — |
+| a2_desport | AssociaÆo Desportiva | SA2010 | `A2_DESPORT` | Assoc. Desp. | AssociaÆo Desportiva | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("01") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| linked_customer_code | C¢digo Cliente | SA2010 | `A2_CLIENTE` | C¢d. Cliente | C¢digo Cliente | C | 6 | 0 | CONDITIONAL | NONE | — | ExistCpo("SA1", M->A2_CLIENTE ) | SA1 | COD+LOJA | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| calc_inp | Calcula INSS Patronal? | SA2010 | `A2_CALCINP` | Calc.INSS.Pt | Calcula INSS Patronal? | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| ded_bspc | Ded. Base de PIS/COFINS | SA2010 | `A2_DEDBSPC` | Ded.PIS/COF | Ded. Base de PIS/COFINS | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | '1' | Pertence(' 123456') | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| linked_customer_store | Loja Cliente | SA2010 | `A2_LOJCLI` | Loja Cliente | Loja Cliente | C | 2 | 0 | CONDITIONAL | NONE | — | ExistCpo("SA1", M->A2_CLIENTE + M->A2_LOJCLI ) | — | — | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_drpexp | Ident.Exp.Dados | SA2010 | `A2_DRPEXP` | Ident.Exp. | Ident.Exp.Dados | C | 8 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | — | — | — | 01,03,04,05 | PROVEN | — |
+| cprb | Indicativo RetenÆo CPRB | SA2010 | `A2_CPRB` | Ret. CPRB | Indicativo RetenÆo CPRB | C | 1 | 0 | CONDITIONAL | SX3_DEFAULT | "2" | Pertence("12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| gross_ir | Base de C lculo IRRF | SA2010 | `A2_GROSSIR` | Base Calc IR | Base de C lculo IRRF | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| a2_tpent | Class. Pessoa Jur¡dica | SA2010 | `A2_TPENT` | Clas.PJ | Class. Pessoa Jur¡dica | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| rohs_flag | RoHS ? | SA2010 | `A2_YROHS` | RoHS ? | RoHS ? | C | 1 | 0 | CANDIDATE_REQUIRED | NONE | — | — | — | — | CBOX | — | — | 01,05 | PROVEN | OBRIGAT flag; DELPI custom |
+| cp_indicator | Indicativo da opcao rural | SA2010 | `A2_INDCP` | Ind. Rural | Indicativo da opcao rural | C | 1 | 0 | CONDITIONAL | NONE | — | Pertence(" 12") | — | — | CBOX | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| rural_cpf | CPF do produtor rural | SA2010 | `A2_CPFRUR` | CPF Rural | CPF do produtor rural | C | 11 | 0 | CONDITIONAL | NONE | — | Iif(FindFunction( "VldRur"), VldRur(), .F.) | — | — | — | picture:@R 999.999.999-99 | — | 01,03,04,05 | PROVEN | WHEN: Iif(FindFunction( "VldRur"), VldRur(), .F.) |
+| generic_supplier_flag | Fornecedor Generico | SA2010 | `A2_YFGEN` | For Generico | Fornecedor Generico | C | 1 | 0 | PROVEN_OPTIONAL | NONE | — | — | — | — | CBOX | — | — | 01,05 | PROVEN | DELPI custom |
+| country_subst | SubdivisÆo Pa¡s | SA2010 | `A2_PAISSUB` | SubDivPais | SubdivisÆo Pa¡s | C | 6 | 0 | PROVEN_OPTIONAL | NONE | — | — | SYA | CODGI | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| esocial_category | Categoria eSocial | SA2010 | `A2_CATEFD` | Cat eSocial | Categoria eSocial | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | S049BR | eSocial categoria | — | picture:@! | — | 01,03,04,05 | PROVEN | — |
+| purchase_price_table | Tab Prc Comp | SA2010 | `A2_ZTABPRC` | Tab Prc Comp | Tab Prc Comp | C | 3 | 0 | PROVEN_OPTIONAL | NONE | — | — | AIA | CODFOR+LOJFOR+CODTAB | — | — | — | 01,03,04,05 | PROVEN | DELPI custom |
+
+## 44.4 SUPPLIER_MASTER_RECOMMENDED_MAPPING
+
+Subconjunto prático para cadastro de fornecedor, agrupado por domínio de negócio. Documento de de-para para o desenvolvedor — **não** é payload de API.
+
+
+**IDENTITY**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| branch | `A2_FILIAL` | C | 2 | SYSTEM_GENERATED | branch context (blank=shared) | — | — |
+| supplier_code | `A2_COD` | C | 6 | SYSTEM_GENERATED | GETSXENUM("SA2") | — | — |
+| supplier_store | `A2_LOJA` | C | 2 | UNKNOWN | '01' | — | — |
+
+**DADOS CADASTRAIS**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| legal_name | `A2_NOME` | C | 50 | CANDIDATE_REQUIRED | — | — | — |
+| trade_name | `A2_NREDUZ` | C | 20 | CANDIDATE_REQUIRED | — | — | — |
+| tax_document | `A2_CGC` | C | 14 | PROVEN_OPTIONAL | — | — | — |
+| person_type | `A2_TIPO` | C | 1 | CANDIDATE_REQUIRED | IF(LEFT(SA2->A2_CGC,2) == '  ',' ',IF(LE | — | — |
+| street | `A2_END` | C | 40 | CANDIDATE_REQUIRED | — | — | — |
+| street_number | `A2_NR_END` | C | 6 | PROVEN_OPTIONAL | — | — | — |
+| district | `A2_BAIRRO` | C | 20 | CANDIDATE_REQUIRED | — | — | — |
+| state | `A2_EST` | C | 2 | CANDIDATE_REQUIRED | — | SX5 | — |
+| city | `A2_MUN` | C | 25 | CANDIDATE_REQUIRED | — | — | — |
+| city_ibge_code | `A2_COD_MUN` | C | 5 | CANDIDATE_REQUIRED | — | CC2 | OBRIGAT flag |
+| postal_code | `A2_CEP` | C | 8 | CANDIDATE_REQUIRED | — | — | — |
+| country_bacen_code | `A2_CODPAIS` | C | 5 | CANDIDATE_REQUIRED | '01058' | CCH | OBRIGAT flag |
+| blocked_flag | `A2_MSBLQL` | C | 1 | CONDITIONAL | "2" | — | — |
+| segment_code | `A2_SATIV1` | C | 6 | CONDITIONAL | — | SX5 | — |
+| linked_customer_code | `A2_CLIENTE` | C | 6 | CONDITIONAL | — | SA1 | — |
+| linked_customer_store | `A2_LOJCLI` | C | 2 | CONDITIONAL | — | — | — |
+| linked_employee | `A2_NUMRA` | C | 6 | PROVEN_OPTIONAL | — | SRA | — |
+| carrier_code | `A2_TRANSP` | C | 6 | PROVEN_OPTIONAL | — | SA4 | — |
+| group_code | `A2_GRUPO` | C | 3 | PROVEN_OPTIONAL | — | SX5 | — |
+| link_type | `A2_VINCULO` | C | 2 | CONDITIONAL | — | CC1 | — |
+| administrator_code | `A2_CODADM` | C | 3 | PROVEN_OPTIONAL | — | SAE | — |
+
+**ENDEREÇO**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| complement | `A2_ENDCOMP` | C | 21 | PROVEN_OPTIONAL | — | — | — |
+| country_code | `A2_PAIS` | C | 3 | PROVEN_OPTIONAL | — | SYA | — |
+| po_box | `A2_CX_POST` | C | 5 | PROVEN_OPTIONAL | — | — | — |
+
+**FISCAL**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| state_registration | `A2_INSCR` | C | 18 | CONDITIONAL | — | — | — |
+| city_registration | `A2_INSCRM` | C | 18 | PROVEN_OPTIONAL | — | — | — |
+| icms_contributor | `A2_CONTRIB` | C | 1 | CONDITIONAL | — | — | — |
+| simples_nacional | `A2_SIMPNAC` | C | 1 | CONDITIONAL | — | — | — |
+| cnae | `A2_CNAE` | C | 9 | CONDITIONAL | — | — | — |
+| legal_entity_type | `A2_TPJ` | C | 1 | CONDITIONAL | — | — | — |
+| person_category | `A2_TPESSOA` | C | 2 | PROVEN_OPTIONAL | — | — | — |
+| simp_regime | `A2_REGESIM` | C | 1 | PROVEN_OPTIONAL | "2" | — | — |
+| regime_pb | `A2_REGPB` | C | 1 | CONDITIONAL | — | — | — |
+| finance_nature | `A2_NATUREZ` | C | 10 | CANDIDATE_REQUIRED | — | SED | OBRIGAT flag |
+| inss_withholding | `A2_RECINSS` | C | 1 | CONDITIONAL | — | — | — |
+| iss_withholding | `A2_RECISS` | C | 1 | CONDITIONAL | — | — | — |
+| csll_withholding | `A2_RECCSLL` | C | 1 | CONDITIONAL | "1" | — | — |
+| cofins_withholding | `A2_RECCOFI` | C | 1 | CONDITIONAL | "1" | — | — |
+| pis_withholding | `A2_RECPIS` | C | 1 | CONDITIONAL | "1" | — | — |
+| calc_irf | `A2_CALCIRF` | C | 1 | CONDITIONAL | — | — | — |
+| calc_inp | `A2_CALCINP` | C | 1 | CONDITIONAL | — | — | — |
+| tax_group | `A2_GRPTRIB` | C | 3 | PROVEN_OPTIONAL | — | — | — |
+| esocial_category | `A2_CATEFD` | C | 3 | PROVEN_OPTIONAL | — | S049BR | — |
+
+**CONTATO**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| contact_person | `A2_CONTATO` | C | 15 | CANDIDATE_REQUIRED | — | — | OBRIGAT flag |
+| commercial_contact | `A2_CONTCOM` | C | 15 | PROVEN_OPTIONAL | — | — | — |
+| phone_ddd | `A2_DDD` | C | 3 | PROVEN_OPTIONAL | — | — | — |
+| phone | `A2_TEL` | C | 50 | CANDIDATE_REQUIRED | — | — | OBRIGAT flag |
+| email | `A2_EMAIL` | C | 50 | CANDIDATE_REQUIRED | — | — | OBRIGAT flag |
+| website | `A2_HPAGE` | C | 30 | PROVEN_OPTIONAL | — | — | — |
+| fax | `A2_FAX` | C | 15 | PROVEN_OPTIONAL | — | — | — |
+| responsible_name | `A2_NOMRESP` | C | 45 | PROVEN_OPTIONAL | — | — | — |
+
+**FINANCEIRO**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| payment_condition | `A2_COND` | C | 3 | PROVEN_OPTIONAL | — | SE4 | — |
+| payment_method | `A2_FORMPAG` | C | 2 | CANDIDATE_REQUIRED | — | SX5 | OBRIGAT flag |
+| ledger_account | `A2_CONTA` | C | 20 | CANDIDATE_REQUIRED | — | CT1 | OBRIGAT flag |
+| credit_limit | `A2_LC` | C | 14 | DO_NOT_SEND | — | — | — |
+| risk_code | `A2_RISCO` | C | 3 | PROVEN_OPTIONAL | — | — | — |
+
+**BANCÁRIO**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| bank_code | `A2_BANCO` | C | 3 | PROVEN_OPTIONAL | — | SA6 | — |
+| bank_branch | `A2_AGENCIA` | C | 5 | PROVEN_OPTIONAL | — | — | — |
+| bank_branch_digit | `A2_DVAGE` | C | 1 | PROVEN_OPTIONAL | — | — | — |
+| bank_account | `A2_NUMCON` | C | 10 | PROVEN_OPTIONAL | — | — | — |
+| bank_account_digit | `A2_DVCTA` | C | 2 | PROVEN_OPTIONAL | — | — | — |
+| account_type | `A2_TIPCTA` | C | 1 | CONDITIONAL | "1" | — | — |
+| account_type_alt | `A2_TPCONTA` | C | 1 | PROVEN_OPTIONAL | — | — | — |
+| payee_code | `A2_CODFAV` | C | 6 | PROVEN_OPTIONAL | — | SA2 | — |
+| payee_store | `A2_LOJFAV` | C | 2 | PROVEN_OPTIONAL | — | — | — |
+| swift_code | `A2_SWIFT` | C | 30 | PROVEN_OPTIONAL | — | — | — |
+
+**FLAGS / DELPI**
+
+| business_field | totvs_field | type | len | create_class | default | lookup | notes |
+|---|---|---|---|---|---|---|---|
+| rohs_flag | `A2_YROHS` | C | 1 | CANDIDATE_REQUIRED | — | — | OBRIGAT flag |
+| generic_supplier_flag | `A2_YFGEN` | C | 1 | PROVEN_OPTIONAL | — | — | — |
+| purchase_price_table | `A2_ZTABPRC` | C | 3 | PROVEN_OPTIONAL | — | AIA | — |
+
+## 44.5 REQUIRED_AND_CANDIDATE_FIELDS
+
+Nenhum campo tem prova de bloqueio de runtime (rotina MATA020 não introspectável). `OBRIGAT` SX3 ⇒ `CANDIDATE_REQUIRED`.
+
+**PROVEN_REQUIRED** (0)
+
+
+
+**CANDIDATE_REQUIRED** (17)
+
+`A2_NOME` `A2_NREDUZ` `A2_END` `A2_BAIRRO` `A2_TEL` `A2_CONTATO` `A2_NATUREZ` `A2_EST` `A2_COD_MUN` `A2_MUN` `A2_CODPAIS` `A2_CEP` `A2_TIPO` `A2_CONTA` `A2_EMAIL` `A2_FORMPAG` `A2_YROHS`
+
+**CONDITIONAL** (87)
+
+`A2_PAGAMEN` `A2_SATIV1` `A2_CONREG` `A2_CIVIL` `A2_INSCR` `A2_MSBLQL` `A2_RECCSLL` `A2_TIPAWB` `A2_RECCOFI` `A2_RECPIS` `A2_PFISICA` `A2_RECISS` `A2_STATUS` `A2_ORIG_1` `A2_ORIG_2` `A2_ORIG_3` `A2_VINCULA` `A2_ID_REPR` `A2_REPR_AG` `A2_COMI_SO` `A2_RET_PAI` `A2_FATAVA` `A2_DTVAL` `A2_RECINSS` `A2_ROYALTY` `A2_B2B` `A2_FRETISS` `A2_FABRICA` `A2_TPISSRS` `A2_CTARE` `A2_RECFET` `A2_RECCIDE` `A2_CBO` `A2_CNAE` `A2_NUMDEP` `A2_CALCIRF` `A2_VINCULO` `A2_SIMPNAC` `A2_INSCMU` `A2_IRPROG` `A2_RFACS` `A2_RFABOV` `A2_INCULT` `A2_CONTPRE` `A2_FOMEZER` `A2_ENDNOT` `A2_CPFIRP` `A2_MINIRF` `A2_TIPCTA` `A2_IBGE` `A2_MJURIDI` `A2_CONFFIS` `A2_CPOMSP` `A2_CCICMS` `A2_TRIBFAV` `A2_SITESBH` `A2_TPJ` `A2_RETISI` `A2_ISICM` `A2_RECFMD` `A2_EQPTAC` `A2_INOVAUT` `A2_RESPTRI` `A2_INDRUR` `A2_UFFIC` `A2_TPREG` `A2_SUBCON` `A2_RFASEMT` `A2_RIMAMT` `A2_CONTRIB` `A2_OCORREN` `A2_RFUNDES` `A2_ECFLAG` `A2_ISSRSLC` `A2_PAGGFE` `A2_FORNEMA` `A2_MINPUB` `A2_REGPB` `A2_DESPORT` `A2_CLIENTE` `A2_CALCINP` `A2_DEDBSPC` `A2_LOJCLI` `A2_CPRB` `A2_TPENT` `A2_INDCP` `A2_CPFRUR`
+
+**SYSTEM_GENERATED** (2)
+
+`A2_FILIAL` `A2_COD`
+
+**UNKNOWN** (1)
+
+`A2_LOJA`
+
+**DO_NOT_SEND** (20)
+
+`A2_DATBLO` `A2_DTPAWB` `A2_FILDEB` `A2_LC` `A2_MATR` `A2_MCOMPRA` `A2_METR` `A2_ULTCOM` `A2_MSALDO` `A2_NROCOM` `A2_PRICOM` `A2_SALDUP` `A2_DESVIO` `A2_SALDUPM` `A2_PAISDES` `A2_OK` `A2_MNOTA` `A2_NOMFAV` `A2_INCLTMG` `A2_FILTRF`
+
+**PROVEN_OPTIONAL** (121)
+
+`A2_CGC` `A2_NR_END` `A2_ROYMIN` `A2_SUBCOD` `A2_SIGLCR` `A2_PLFIL` `A2_DDD` `A2_DDI` `A2_PLPEDES` `A2_INSCRM` `A2_FAX` `A2_BANCO` `A2_AGENCIA` `A2_NUMRA` `A2_ABICS` `A2_DVAGE` `A2_NUMCON` `A2_RECSEST` `A2_DVCTA` `A2_SWIFT` `A2_TRANSP` `A2_PRIOR` `A2_RISCO` `A2_COND` `A2_ESTADO` `A2_CX_POST` `A2_TIPORUR` `A2_ID_FBFN` `A2_GRUPO` `A2_ATIVIDA` `A2_PAIS` `A2_DEPTO` `A2_REPRES` `A2_REPCONT` `A2_REPRTEL` `A2_REPRFAX` `A2_REPRMUN` `A2_REPREST` `A2_REPRCEP` `A2_REPPAIS` `A2_REPR_EM` `A2_REPR_BA` `A2_REPR_EN` `A2_REPBAIR` `A2_REPR_CO` `A2_REPRCGC` `A2_CODMUN` `A2_HPAGE` `A2_CONTCOM` `A2_DTAVA` `A2_UNFEDRP` `A2_CONTAB` `A2_TELEX` `A2_GRPTRIB` `A2_CLIQF` `A2_PLGRUPO` `A2_CODBLO` `A2_PAISORI` `A2_TXTRIBU` `A2_ENDCOMP` `A2_GRPDEP` `A2_PABCB` `A2_PLCRRES` `A2_TPESSOA` `A2_CODLOC` `A2_CODFAV` `A2_LOJFAV` `A2_CODINSS` `A2_DTINIV` `A2_DTFIMV` `A2_CODSIAF` `A2_PRSTSER` `A2_COMPLEM` `A2_REGESIM` `A2_CGCEX` `A2_NEMPR` `A2_TPCON` `A2_DTINIR` `A2_DTFIMR` `A2_PAISEX` `A2_NIFEX` `A2_LOGEX` `A2_NUMEX` `A2_COMPLR` `A2_BAIEX` `A2_POSEX` `A2_CIDEX` `A2_ESTEX` `A2_TELRE` `A2_BREEX` `A2_TPREX` `A2_TRBEX` `A2_CODADM` `A2_IMPIP` `A2_RNTRC` `A2_MUNSC` `A2_TPLOGR` `A2_DTRNTRC` `A2_IDHIST` `A2_TPCONTA` `A2_LOCQUIT` `A2_TPRNTRC` `A2_STRNTRC` `A2_DTCONV` `A2_NOMRESP` `A2_CARGO` `A2_APOLICE` `A2_ECDTEX` `A2_ECSEQ` `A2_CATEG` `A2_CODNIT` `A2_DTNASC` `A2_CODFI` `A2_MSBLQD` `A2_MOTNIF` `A2_DRPEXP` `A2_GROSSIR` `A2_YFGEN` `A2_PAISSUB` `A2_CATEFD` `A2_ZTABPRC`
+
+## 44.6 LOOKUP_MATRIX
+
+Lookups com evidência em SX3 (`X3_F3`/`X3_VALID`/`X3_RELACAO`). Lookup é **referência de validação**, não tabela a gravar no cadastro.
+
+| business_field | totvs_field | lookup_table | lookup_key | validation | notes |
+|---|---|---|---|---|---|
+| state | `A2_EST` | SX5 | 12+UF | ExistCpo("SX5","12"+M->A2_EST) | Sigla da Federacao |
+| city_ibge_code | `A2_COD_MUN` | CC2 | EST+CODMUN | ExistCpo("CC2", FWFldGet("A2_EST") + FWFldGet("A2_COD_MUN"), 1) | Codigo do Municipio |
+| country_bacen_code | `A2_CODPAIS` | CCH | CODIGO | ExistCpo("CCH") | C¢d. pa¡s Banco Central |
+| country_code | `A2_PAIS` | SYA | CODGI | Vazio() .or. ExistCpo("SYA",M->A2_PAIS) | Pais do Fornecedor |
+| payment_condition | `A2_COND` | SE4 | CODIGO | vazio().or.existcpo("SE4") | Condicao de Pagamento |
+| finance_nature | `A2_NATUREZ` | SED | CODIGO | FinVldNat( .T. ,,2) .And. Vazio() .Or.  Existcpo("SED") | Cod Natureza Financeira |
+| bank_code | `A2_BANCO` | SA6 | COD+AGENCIA+NUMCON | — | Codigo do Banco |
+| ledger_account | `A2_CONTA` | CT1 | CONTA | vazio().or. Ctb105Cta() | Codigo da Conta Contabil |
+| payment_method | `A2_FORMPAG` | SX5 | 58+CHAVE | Vazio() .Or. ExistCpo("SX5", "58" + M->A2_FORMPAG) | Forma de pagamento prefer |
+| carrier_code | `A2_TRANSP` | SA4 | COD | vazio().or.existcpo("SA4") | Codigo da Transportadora |
+| group_code | `A2_GRUPO` | SX5 | Y7+CHAVE | Vazio().or.ExistCpo("SX5","Y7"+M->A2_GRUPO,1) | Grupo |
+| segment_code | `A2_SATIV1` | SX5 | T3+CHAVE | ExistCpo("SX5","T3"+M->A2_SATIV1) | Segmentacao de Ativid. 1 |
+| linked_customer_code | `A2_CLIENTE` | SA1 | COD+LOJA | ExistCpo("SA1", M->A2_CLIENTE ) | C¢digo Cliente |
+| linked_employee | `A2_NUMRA` | SRA | RA_MAT | Vazio() .Or. (ExistCpo("SRA") .And. A020NUMRA(M->A2_NUMRA)) | C¢digo do funcion rio |
+| administrator_code | `A2_CODADM` | SAE | COD | Vazio() .Or. ExistCpo("SAE") | C¢digo Adm. Financeira |
+| phone_ddi | `A2_DDI` | ACJ | DDI | IIF(!EMPTY(M->A2_DDI), ExistCpo("ACJ",M->A2_DDI),.T.) | Codigo do DDI |
+| origin_1 | `A2_ORIG_1` | SYR | ORIGEM | EicFBOrigem(M->A2_ORIG_1,"1") | Origem 1 |
+| origin_2 | `A2_ORIG_2` | SYR | ORIGEM | EicFBOrigem(M->A2_ORIG_2,"2") | Origem 2 |
+| origin_3 | `A2_ORIG_3` | SYR | ORIGEM | EicFBOrigem(M->A2_ORIG_3,"3") | Origem 3 |
+| council_sigla | `A2_SIGLCR` | BA4 | SIGLCR+CONREG (tabela ausente) | — | Sigla C.R |
+| purchase_price_table | `A2_ZTABPRC` | AIA | CODFOR+LOJFOR+CODTAB | — | Tab Prc Comp |
+| esocial_category | `A2_CATEFD` | S049BR | eSocial categoria | — | Categoria eSocial |
+| ibge_code | `A2_IBGE` | AM1 | IBGE | FS_VLCIDEST(6).and.(vazio().or.ExistCpo("VAM")) | Codigo do IBGE |
+| link_type | `A2_VINCULO` | CC1 | CODIGO | ExistCpo("CC1") | Pessoa Vinculada |
+| payee_code | `A2_CODFAV` | SA2 | COD+LOJA (self) | Vazio() .Or. ExistCpo("SA2") | Codigo do Favorecido |
+| representative_code | `A2_REPRES` | SA2 | COD+LOJA (self) | — | Representante |
+| foreign_country | `A2_PAISEX` | SYA | CODGI | Vazio() .or. FCkResExt("A2_PAISEX",M->A2_PAISEX) | Codigo do Pais pela RFB |
+| a2_reppais | `A2_REPPAIS` | SYA | CODGI | Vazio() .or. ExistCpo("SYA",M->A2_REPPAIS) | Pais do Representante |
+| country_subst | `A2_PAISSUB` | SYA | CODGI | — | SubdivisÆo Pa¡s |
+| tax_regime_resp | `A2_RESPTRI` | SX5 | 83+CHAVE | ExistCpo("SX5","83"+M->A2_RESPTRI) | Reg. Esp. de TributaÆo |
+| a2_tipawb | `A2_TIPAWB` | SX5 | MF+CHAVE | Empty(M->A2_TIPAWB) .Or. ExistCpo("SX5", "MF"+M->A2_TIPAWB) | Tipo AWB |
+| zf_city_code | `A2_CODMUN` | S1 | municipio ZF | Vazio() .Or. ExistCpo("SX5","S1"+M->A2_CODMUN) | Cod. Mun. ZF Manaus e ALC |
+
+## 44.7 Defaults
+
+Defaults SX3 (`X3_RELACAO`) e convenções observadas — nunca confundir os dois.
+
+| totvs_field | default_source | default_value | notes |
+|---|---|---|---|
+| `A2_FILIAL` | RUNTIME_RULE | branch context (blank=shared) | Filial do Sistema |
+| `A2_COD` | SX3_DEFAULT | GETSXENUM("SA2") | Codigo do Fornecedor |
+| `A2_LOJA` | OBSERVED_CONVENTION | '01' | Loja do Fornecedor |
+| `A2_PLFIL` | SX3_DEFAULT | "N" | Filial do Grupo |
+| `A2_MSBLQL` | SX3_DEFAULT | "2" | Bloqueia o Fornecedor |
+| `A2_RECCSLL` | SX3_DEFAULT | "1" | Recolhimento da CSLL |
+| `A2_DTPAWB` | RUNTIME_RULE | virtual | Descricao do Tipo da AWB |
+| `A2_RECCOFI` | SX3_DEFAULT | "1" | Recolhimento da COFINS |
+| `A2_RECPIS` | SX3_DEFAULT | "1" | Recolhimento de PIS |
+| `A2_CODPAIS` | OBSERVED_CONVENTION | '01058' | C¢d. pa¡s Banco Central |
+| `A2_TIPO` | SX3_DEFAULT | IF(LEFT(SA2->A2_CGC,2) == '  ',' ',IF(LE | Tipo do Fornecedor |
+| `A2_PAISDES` | RUNTIME_RULE | virtual | Descr. Pais |
+| `A2_VINCULA` | SX3_DEFAULT | "1" | Tipo Vinculacao |
+| `A2_ID_REPR` | SX3_DEFAULT | '2' | Identifica Repres.na L.I. |
+| `A2_DTVAL` | SX3_DEFAULT | A100ReDV() | Data Validade Avaliacao |
+| `A2_B2B` | SX3_DEFAULT | "2" | Utiliza B2B? |
+| `A2_PLCRRES` | SX3_DEFAULT | "N" | Obrigat. Dig. Resp. Mov ? |
+| `A2_NOMFAV` | RUNTIME_RULE | virtual | Nome do Favorecido |
+| `A2_CONTPRE` | SX3_DEFAULT | "1" | Contribuinte previdenciar |
+| `A2_REGESIM` | SX3_DEFAULT | "2" | Reg. Simlificado MT |
+| `A2_DTINIR` | SX3_DEFAULT | empty date | Data Inicio Contrato |
+| `A2_DTFIMR` | SX3_DEFAULT | empty date | Data Final Contrato |
+| `A2_MINIRF` | SX3_DEFAULT | "2" | Valor M¡nimo de IRRF |
+| `A2_TIPCTA` | SX3_DEFAULT | "1" | Tipo de Conta Fornecedor |
+| `A2_IMPIP` | SX3_DEFAULT | "2" | Identificacao de Produto |
+| `A2_MJURIDI` | SX3_DEFAULT | "2" | Dispon¡vel m¢d. Jur¡dico |
+| `A2_CONFFIS` | SX3_DEFAULT | '0' | Indica o local da confe. |
+| `A2_RETISI` | SX3_DEFAULT | "2" | Reten. a taxa de ISI |
+| `A2_INOVAUT` | SX3_DEFAULT | "2" | Inovar Auto |
+| `A2_INDRUR` | SX3_DEFAULT | "0" | Indicador produtor rural |
+| `A2_PAGGFE` | SX3_DEFAULT | "2" | Pagamento pelo SIGAGFE |
+| `A2_FORNEMA` | SX3_DEFAULT | "2" | Fornecedor de Mailing |
+| `A2_MINPUB` | SX3_DEFAULT | "2" | Valor M¡n. PCC e IR EmPub |
+| `A2_MOTNIF` | SX3_DEFAULT | "1" | Mot. N.Preench NIF |
+| `A2_DEDBSPC` | SX3_DEFAULT | '1' | Ded. Base de PIS/COFINS |
+| `A2_CPRB` | SX3_DEFAULT | "2" | Indicativo RetenÆo CPRB |
+
+## 44.8 Normalization
+
+Somente normalizações justificadas pela estrutura/dados observados:
+
+| campo(s) | regra | evidência |
+|---|---|---|
+| `A2_COD` | `RTRIM` + zfill(6) quando numérico | trailing spaces observados; picture `@!` |
+| `A2_LOJA` | `RTRIM` + zfill(2) | padding inconsistente observado (`'01'`, `'1 '`, `' 1'`) |
+| `A2_CGC`, `A2_CEP`, `A2_TEL`, `A2_DDD`, `A2_FAX`, `A2_INSCR`, `A2_INSCRM`, `A2_NR_END`, `A2_CX_POST`, `A2_PFISICA`, `A2_CODNIT` | digits-only | pictures `@R`/`@!` com máscara; dados armazenam só dígitos |
+| `A2_EST`, `A2_SWIFT`, `A2_SIGLCR` | uppercase | domínios SX5/BA4 em caixa alta |
+| `A2_EMAIL` | lowercase | convenção observada |
+| campos `D` (`A2_DTNASC`, `A2_DTVAL`, …) | `YYYYMMDD` | tipo `D` Protheus |
+| campos CBOX | valor ∈ enum SX5/dicionário | ver `allowed_values` por campo |
+
+Nenhuma normalização adicional é regra deste documento — formato esperado pelo TOTVS apenas.
+
+## 44.9 DELPI custom fields
+
+| campo | descrição | tipo | tam | default | validação | uso observado | empresa | create_class |
+|---|---|---|---|---|---|---|---|---|
+| `A2_YROHS` | flag RoHS (X3_PROPRI=U) | C | 1 | — | — | preenchido | 01,05 | `CANDIDATE_REQUIRED` (OBRIGAT flag) |
+| `A2_YFGEN` | fornecedor genérico (X3_PROPRI=U) | C | 1 | — | — | preenchido | 01,05 | `PROVEN_OPTIONAL` |
+| `A2_ZTABPRC` | tabela de preço de compra (X3_PROPRI=U) | C | 6 | — | lookup `AIA` | parcial | 01,03,04,05 | `CONDITIONAL` |
+
+Nenhuma tabela `Z*` de fornecedor existe. Grupos de fornecedor estão em `SAD`, não em `A2_GRUPO`.
+
+## 44.10 COMPANY_DIFFERENCES
+
+| aspecto | 01 | 03 | 04 | 05 |
+|---|---|---|---|---|
+| tabela física | SA2010 | SA2030 | SA2040 | SA2050 |
+| campos SX3 | 248 | 243 | 243 | 248 |
+| `GETSXENUM("SA2")` em `A2_COD` | SX3_DEFAULT | ausente | ausente | SX3_DEFAULT |
+| `A2_YROHS`, `A2_YFGEN` | presente | ausente | ausente | presente |
+| `A2_PABCB`, `A2_ECDTEX`, `A2_ECSEQ`, `A2_ECFLAG` (SYS) | presente | ausente | ausente | presente |
+| `A2_ZTABPRC` | presente | presente | presente | presente |
+
+Regras de uma empresa não são universais — `company_scope` por campo consta na matriz 44.3.
+
+## 44.11 SYSTEM_OWNED_DO_NOT_SEND
+
+Campos que consumidor externo não manipula: identidade gerada pelo runtime, virtuais sem coluna física, acumuladores estatísticos, flags internas de tela e colunas técnicas do DBMS Protheus.
+
+| totvs_field | type | length | reason |
+|---|---|---|---|
+| `A2_FILIAL` | C | 2 | contexto de filial — preenchido pelo runtime Protheus |
+| `A2_DATBLO` | D | 8 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_DTPAWB` | C | 30 | campo virtual sem coluna física — derivado em runtime |
+| `A2_FILDEB` | C | 2 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_LC` | C | 14 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_MATR` | N | 4 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_MCOMPRA` | N | 17 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_METR` | N | 5 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_ULTCOM` | D | 8 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_MSALDO` | N | 17 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_NROCOM` | N | 6 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_PRICOM` | D | 8 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_SALDUP` | N | 17 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_DESVIO` | N | 6 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_SALDUPM` | N | 17 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_PAISDES` | C | 25 | campo virtual sem coluna física — derivado em runtime |
+| `A2_OK` | C | 2 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_MNOTA` | N | 17 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_NOMFAV` | C | 50 | campo virtual sem coluna física — derivado em runtime |
+| `A2_INCLTMG` | C | 1 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `A2_FILTRF` | C | 2 | acumulador estatístico / flag interna mantida pelo Protheus |
+| `D_E_L_E_T_` | - | - | coluna física de controle Protheus (deleção lógica, RECNO, timestamp) — gerida pelo DBMS/runtime |
+| `R_E_C_N_O_` | - | - | coluna física de controle Protheus (deleção lógica, RECNO, timestamp) — gerida pelo DBMS/runtime |
+| `R_E_C_D_E_L_` | - | - | coluna física de controle Protheus (deleção lógica, RECNO, timestamp) — gerida pelo DBMS/runtime |
+| `S_T_A_M_P_` | - | - | coluna física de controle Protheus (deleção lógica, RECNO, timestamp) — gerida pelo DBMS/runtime |
+| `I_N_S_D_T_` | - | - | coluna física de controle Protheus (deleção lógica, RECNO, timestamp) — gerida pelo DBMS/runtime |
+
+## 44.12 SUPPLIER_RELATED_TABLES
+
+Relações complementares — **não** entram no de-para master e não são provadas como requeridas para CREATE de fornecedor.
+
+| table | description | relation_key | business_purpose | current_usage | relation_to_supplier |
+|---|---|---|---|---|---|
+| `SA5`/`SA5010` | Produto × Fornecedor | A5_FORNECE+A5_LOJA | vínculo produto↔fornecedor | em uso | auxiliar |
+| `SAD`/`SAD010` | Grupo × Fornecedor | AD_GRUPO+AD_COD+AD_LOJA | classificação por grupo | em uso | auxiliar |
+| `AIA`/`AIA010` | Tabela de preço (cabeçalho) | AIA_CODTAB(+CODFOR) | tabela de preço de compra | em uso | referência via `A2_ZTABPRC` |
+| `AIB`/`AIB010` | Tabela de preço (itens) | AIB_CODTAB+AIB_CODPRD | itens da tabela de preço | em uso | dependente de AIA |
+| `AIC`/`AIC010` | Tolerância de entrada | por fornecedor/produto | tolerância recebimento | em uso | auxiliar |
+| `SA6`/`SA6010` | Bancos | A6_COD+AGENCIA+NUMCON | cadastro de bancos/contas | em uso | lookup de `A2_BANCO`/`A2_AGENCIA`/`A2_NUMCON` |
+| `DKI`/`DKI010` | Contatos múltiplos | KI_FORNECE+KI_LOJA | contatos do fornecedor | 0 linhas — AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET | auxiliar |
+| `D30`/`D30010` | Complemento SIMP/importação | D30_COD+D30_LOJA | dados de importação | 0 linhas — idem | auxiliar |
+| `DD1`/`DD1010` | Documentos exigidos | D1_COD+D1_LOJA | documentação do fornecedor | 0 linhas — idem | auxiliar |
+| `FV6`/`FV6010` | Favorecido de pagamento | FV6_* | beneficiário | 0 linhas — idem | auxiliar |
+| `G4R`/`G4R010` | Complemento turismo | G4R_* | fornecedor turismo | 0 linhas — idem | módulo específico |
+| `D2C`/`D2C010` | Contatos/relacionados | D2C_* | contatos adicionais | 0 linhas — idem | auxiliar |
+| `CPW`/`CPX` | Tabelas de módulo | — | módulo específico | mínimas/vazias — idem | módulo |
+| `SX5` | Domínios | X5_TABELA+X5_CHAVE | enums (UF, FORMPAG, segmento, grupo…) | em uso | lookup |
+| `SE4`/`SED`/`SYA`/`CCH`/`CC2`/`CT1`/`SA4`/`SA1`/`SRA`/`SAE`/`ACJ`/`SYR`/`SB1`/`SAH`/`QEG` | lookups | ver LOOKUP_MATRIX | condição pgto, natureza, país, município, conta, transportadora… | em uso | lookup |
+
+Vazio ≠ ausência do modelo: tabelas com 0 linhas estão `AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET`, não "nunca usadas".
+
+## 44.13 TRANSACTIONAL_CONSUMERS
+
+Consomem/referenciam fornecedor (`*_FORNECE`/`*_LOJA`/`F2_FORNECE` etc.) — não fazem parte do cadastro mestre:
+
+`SC1` (solicitação de compra) · `SC7` (pedido de compra) · `SC8` (cotação) · `SD1` (NF entrada itens) · `SF1` (NF entrada cabeçalho) · `SE2` (contas a pagar) · `SE5` (movimentação bancária) · `SF3`/`SFT` (livros fiscais) · `SCY`/`SCE`/`SDS`/`SFJ` e demais referências SX9.
+
+## 44.14 Protheus gaps
+
+Gaps de conhecimento **do Protheus** — não são perguntas de API/integração:
+
+```text
+MATA020_INTERNAL_VALIDATION = UNKNOWN   (ADVPL não introspectável)
+MATA020_SIDE_EFFECTS        = UNKNOWN   (sem prova runtime de gravação em outras tabelas)
+GETSXENUM_INTERNAL_MECHANISM = TO_INVENTORY (SXE ausente na base)
+X3_OBRIGAT_RUNTIME_SEMANTICS = TO_INVENTORY (flag ≠ prova de bloqueio)
+SX6_MV_PARAMS               = TO_INVENTORY (MV_* que afetam obrigatoriedade)
+BA4_LOOKUP_TARGET           = PROVEN gap (referenciada por A2_SIGLCR, ausente fisicamente)
+PIX_SUPPLIER_PAYMENT_MODEL  = TO_INVENTORY
+```
+
+---
+*De-para gerado a partir da evidência SX3 read-only (`scripts/_supplier_audit/gen_depara.js` sobre dump SX3010). Sem escrita em banco. `API_DESIGN_QUESTIONS: NONE — OUT OF SCOPE`.*
 
 ---
 *Auditoria gerada via leitura read-only (SX2/SX3/SIX/SX9/SXB/sys.\*/agregações com NOLOCK). Nenhuma escrita executada. Evidência reproduzível pelos scripts em `scripts/_supplier_audit/` (`q.sh` + `q*.sql`); dumps de saída são regeneráveis e não versionados.*

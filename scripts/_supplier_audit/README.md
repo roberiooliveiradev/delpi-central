@@ -27,6 +27,7 @@ stored here. **Read-only only** — the audit class forbids any write.
 | `q7_mech.sql` | Physical mechanisms — indexes, triggers, TTAT log structure |
 | `q8_material_schemas.sql` | Complete SX3 schemas for material related tables |
 | `q9_counts.sql` | Row counts for material/transactional tables |
+| `gen_depara.js` | Generates §44 `FINAL SUPPLIER FIELD MAPPING` tables from an SX3 dump of SA2 (expects `.work/sa2_full.txt`, pipe-separated `ORDEM\|CAMPO\|TIPO\|TAM\|DEC\|TITULO\|DESCRIC\|PICTURE\|VALID\|RELACAO\|F3\|CBOX\|WHEN\|OBRIGAT\|PROPRI\|USADO\|BROWSE`) |
 
-Outputs (`out/`, `out_utf8/`, `*.md` fragments) are regenerated artifacts —
+Outputs (`out/`, `out_utf8/`, `.work/`, `*.md` fragments) are regenerated artifacts —
 not versioned. Do not commit raw dumps: they may contain real supplier data.
