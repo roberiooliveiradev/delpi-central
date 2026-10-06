@@ -9,6 +9,7 @@ IMPLEMENTATION_AUTHORIZED = NO
 DOCUMENTATION_CLOSURE_COMPLETE = NO
 PORTAL_DESIGN_FREEZE = PENDING_DOCUMENTATION_CLOSURE
 PRODUCT_CONTRACT_FREEZE = PENDING_DOCUMENTATION_CLOSURE
+FRONTEND_PATTERN_FREEZE = PENDING_DOCUMENTATION_CLOSURE
 SECURITY_MODEL_FREEZE = PENDING_DOCUMENTATION_CLOSURE
 TEST_STRATEGY_FREEZE = PENDING_DOCUMENTATION_CLOSURE
 ```
@@ -55,6 +56,77 @@ abertura da competência / checklist
 ```
 
 A conciliação monetária exige paridade exata em centavos.
+
+## Gate de trabalho vigente — FASE A
+
+Decisão do Product Owner em 06/10/2026:
+
+```text
+DOCUMENTED != IMPLEMENTED
+```
+
+Não haverá implementação de nenhuma página durante a FASE A.
+
+Ordem obrigatória de fechamento:
+
+```text
+Página do usuário
+→ Início
+→ Visão geral
+→ Minhas tarefas
+→ Sala de interação
+→ Administração
+→ Ajuda
+→ P1 Cockpit da Competência
+→ P2 Checklist e Documentos
+→ P3 Estoque e Conciliação
+→ P4 Classificações e Pendências
+→ P5 Pacote, Finalização e Envio
+→ P6 Administração / Configuração
+→ REVISÃO TRANSVERSAL FINAL
+→ CONTRATOS + REGRAS + SCRIPTS + TEST MATRIX
+→ futura IMPLEMENTAÇÃO PAGE-BY-PAGE
+```
+
+Uma página entra na fila futura somente quando:
+
+```text
+VISUAL_SPEC_DEFINED
++ CONTRACT_DEFINED
++ AUTHZ_DEFINED
++ PLUGIN_UI_REUSE_DEFINED
++ STATES_DEFINED
++ TEST_MATRIX_DEFINED
+= READY_FOR_IMPLEMENTATION_BRIEF
+```
+
+Mesmo `READY_FOR_IMPLEMENTATION_BRIEF` significa apenas maturidade documental.
+
+### Page Documentation Gate V2
+
+O pacote uniforme de cada página deve conter:
+
+1. objetivo e responsabilidade;
+2. owners de dados/regras e explicit non-goals;
+3. família visual canônica;
+4. wireframes desktop/mobile;
+5. paridade light/dark;
+6. componentes/full-pages do `@delpi/plugin-ui`, imports exatos e `DO NOT RECREATE`;
+7. topbar/PageHero/PagePath/filtros/tabelas/master-detail/navegação conforme aplicável;
+8. contratos TARGET MFE → BFF → owners, distinguindo contrato semântico de binding físico;
+9. AuthZ somente com `controllership-finance.access` / `controllership-finance.manage`;
+10. estados `LOADING / SUCCESS / EMPTY / PARTIAL / UNAVAILABLE / ERROR / 403 / 404`;
+11. deep link/F5;
+12. responsividade;
+13. teclado/foco/acessibilidade;
+14. Help sincronizada;
+15. RQ/AC;
+16. matriz positive + sibling + negative + experiência;
+17. scripts/validators/artefatos PLANNED para futura implementação e teste;
+18. inventories/stop conditions;
+19. gate final `READY_FOR_IMPLEMENTATION_BRIEF` ou pendência explícita.
+
+Qualquer `DOCUMENTATION_GATE PASS` emitido antes deste Gate V2 é tratado como **documentação existente a revalidar**, não como fechamento definitivo da FASE A.
 
 ## Regra de fechamento documental
 
@@ -540,27 +612,28 @@ Não bloquear o V1 atual por:
 
 Esses itens exigem futuro gate de produto quando forem promovidos para escopo.
 
-## Ordem de execução documental
+## Ordem de execução documental — Gate V2
 
 ```text
-D0  rebaseline authorities + TÉO
-→ D1  P1 gate
-→ D2  P2 gate + reconciliação TÉO
-→ D3  P3 gate
-→ D4  P4/P5 residual
-→ D5  P6 rules/page alignment
-→ D6  consolidar regras no 04
-→ D7  revisar E01–E06 por materialidade
-→ D8  reconciliar 14/16/17/20/21
-→ D9  reconciliar ledger 23
-→ D10 revisar páginas comuns 24–32
-→ D11 Help final
-→ D12 README/readiness/traceability
-→ D13 residual search
-→ D14 documentation freeze review
+A01 Página do usuário
+A02 Início
+A03 Visão geral
+A04 Minhas tarefas
+A05 Sala de interação
+A06 Administração
+A07 Ajuda
+A08 P1 Cockpit da Competência
+A09 P2 Checklist e Documentos
+A10 P3 Estoque e Conciliação
+A11 P4 Classificações e Pendências
+A12 P5 Pacote, Finalização e Envio
+A13 P6 Administração / Configuração
+A14 Revisão transversal final
+A15 Consolidação contracts + regras + scripts + test matrix
+A16 Documentation closure review
 ```
 
-Nenhum passo acima inclui scaffold, endpoint, migration, permission, schema ou implementação de página.
+Nenhum passo A01–A16 inclui scaffold, endpoint runtime, migration, permission, schema físico ou implementação de página.
 
 ## Gate final de fechamento documental
 
