@@ -1,5 +1,11 @@
 # 13 — P6 — Administração e Configuração
 
+## Contrato da página
+
+A especificação completa de UX, rotas, contracts lógicos, plugin-ui, estados, AuthZ, auditoria e testes da superfície administrativa está em [28-administracao.md](./28-administracao.md).
+
+Este documento permanece authority das regras funcionais P6.
+
 ## Template mestre
 
 ```text

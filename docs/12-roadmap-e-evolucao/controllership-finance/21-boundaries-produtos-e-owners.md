@@ -155,6 +155,18 @@ Para [27-minhas-tarefas.md](./27-minhas-tarefas.md):
 - a estratégia física da projection pode ser on-read/materialized/event-driven, mas deve preservar owner/source e partial coverage;
 - a ação V1 navega ao owner; business writes continuam no contexto owner.
 
+### Administração / master data
+
+Para [28-administracao.md](./28-administracao.md):
+- `controllership-finance-api` é owner do estado próprio de templates, catálogos, vigências e auditoria administrativa do produto;
+- Core continua owner de identidade, app access, effective permissions e RBAC;
+- responsible/validator/recipient armazenam referências a identidades do Core, não cópias autoritativas nem permission grants;
+- Minha DELPI continua owner da capability de notificações; P6 configura targets lógicos, não SMTP/preferences;
+- api-delpi/TOTVS não recebe write direto de P6 apenas porque um catálogo representa banco/conta ou outro dado operacional;
+- snapshots de competências abertas permanecem no owner operacional e não são reescritos por publicação nova;
+- não importar domain/application do Comercial para copiar administração;
+- não usar banco de outro Portal como master-data store.
+
 ### Identidade de usuário
 
 Para a Página do usuário:

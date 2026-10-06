@@ -230,7 +230,32 @@ Não publicar capability de producer, team scope ou task entity antes do runtime
 
 ### Administração
 
-Explicar ACCESS vs MANAGE, draft/review/publish/effective_from, snapshot, inativação e catálogos.
+Conteúdo a publicar somente quando a rota estiver implementada:
+
+- quem pode acessar Administração;
+- diferença entre ACCESS e MANAGE;
+- subáreas Painel, Templates, Catálogos e Histórico;
+- DRAFT, REVIEW, PUBLISH e EFFECTIVE_FROM;
+- salvar draft não publica;
+- publicação com vigência;
+- snapshot da competência aberta;
+- por que mudança nova não altera competência já aberta;
+- catálogo tipado vs campo livre;
+- bancos/contas configuráveis;
+- checklist master;
+- operational responsible, validator e recipient como referências a usuários do Core;
+- motivos de rejeição;
+- attachment roles;
+- notification targets e boundary com Minha DELPI;
+- inativação prospectiva vs exclusão;
+- stale version/conflito;
+- histórico/auditoria;
+- ausência de gestão de usuário, role ou permission no P6.
+
+Contrato fonte:
+- [28-administracao.md](./28-administracao.md)
+
+Não publicar catálogo/capability ainda não implementado.
 
 ## Composição lógica
 

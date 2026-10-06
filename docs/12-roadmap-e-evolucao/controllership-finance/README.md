@@ -29,7 +29,8 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - TO-BE: **TARGET consolidado**
 - implementação: **NOT_STARTED**
 - ROI: **não calculado**
-- P1/P2/P4/P6: **READY_FOR_IMPLEMENTATION_INVENTORY**
+- P1/P2/P4: **READY_FOR_IMPLEMENTATION_INVENTORY**
+- P6/Administração: **READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 - P3: **READY_WITH_STOP_CONDITION_ON_T03**
 - P5 pacote/finalização: **READY_FOR_IMPLEMENTATION_INVENTORY**
 - P5 envio real: **BLOCKED_WITH_EVIDENCE**, Q22 depende E04/T04
@@ -128,6 +129,25 @@ Decisões congeladas:
 
 Implementação permanece não autorizada durante o review global.
 
+## Administração
+
+O Item 6 — Administração está fechado documentalmente em [28-administracao.md](./28-administracao.md).
+
+Decisões congeladas:
+- uma única permission administrativa: `controllership-finance.manage`;
+- MANAGE não implica ACCESS operacional;
+- subáreas: Painel, Templates, Catálogos e Histórico;
+- catálogos não viram topbar nem permission;
+- template segue DRAFT → REVIEW → PUBLISH → EFFECTIVE_FROM;
+- publicação não altera snapshots de competências abertas;
+- inativação é prospectiva e sem hard delete;
+- responsáveis/validators/destinatários referenciam identidades do Core, sem criar usuário/RBAC;
+- notification targets configuram destinatários lógicos, não infraestrutura SMTP;
+- optimistic concurrency é obrigatório; mecanismo físico fica para inventário;
+- `@delpi/plugin-ui` fornece o chrome administrativo reutilizável.
+
+Implementação permanece não autorizada durante o review global.
+
 ## Navegação principal
 
 A topbar do Portal é:
@@ -164,7 +184,7 @@ A Visão geral é a superfície analítica financeira do Portal. O padrão visua
 
 ## UI kit
 
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md).
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md). Administração segue [28-administracao.md](./28-administracao.md). Administração segue [28-administracao.md](./28-administracao.md).
 
 Import runtime canônico para MFE federado:
 
