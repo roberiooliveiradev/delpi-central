@@ -11,8 +11,27 @@ from app.application.external_capabilities.dynamic_information.eligibility impor
     is_dynamically_executable,
     load_allowlist_operation_ids,
 )
+from app.application.external_capabilities.dynamic_information.projection import (
+    _SIMPLE_KEY,
+)
 
 _HTTP = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
+
+
+class _InvalidNameBindings:
+    """Marker for present-but-malformed trusted binding metadata.
+
+    Distinct from ABSENT (metadata key missing → empty mapping): INVALID must
+    never normalize to "no binding requested", which would let owner payload
+    keys satisfy approved external fields implicitly. An action carrying this
+    marker is non-executable and the projection layer drops everything.
+    """
+
+    def __repr__(self) -> str:
+        return "<INVALID_NAME_BINDINGS>"
+
+
+INVALID_NAME_BINDINGS = _InvalidNameBindings()
 
 
 @dataclass(frozen=True)
@@ -37,12 +56,19 @@ class TechnicalAction:
     semantic_transport: str | None = None
     request_body: Mapping[str, Any] | None = None
     argument_bindings: Mapping[str, Any] = field(default_factory=dict)
-    response_bindings: Mapping[str, Any] = field(default_factory=dict)
+    response_bindings: Mapping[str, Any] | _InvalidNameBindings = field(
+        default_factory=dict
+    )
     negative_aliases: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def executable(self) -> bool:
-        return is_dynamically_executable(self.davi_status)
+        # Invalid trusted binding metadata fails closed before execution:
+        # the action is excluded from retrieval/discovery/token/execution
+        # rather than running with silently degraded governance config.
+        return is_dynamically_executable(self.davi_status) and not isinstance(
+            self.response_bindings, _InvalidNameBindings
+        )
 
     @property
     def body_fields(self) -> frozenset[str]:
@@ -95,6 +121,37 @@ def _normalize_name_bindings(raw: Any, *, owner_key: str | None = None) -> Mappi
     return MappingProxyType(out)
 
 
+def _normalize_response_bindings(raw: Any) -> Mapping[str, str] | _InvalidNameBindings:
+    """Normalize trusted external←source response bindings.
+
+    Three-state contract:
+      ABSENT  — metadata key missing/``None`` → empty mapping, no translation;
+      VALID   — all entries are safe ``external: source`` (or
+                ``external: {"source": source}``) identifier pairs;
+      INVALID — present but malformed → :data:`INVALID_NAME_BINDINGS`,
+                never downgraded to "no binding".
+    """
+    if raw is None:
+        return MappingProxyType({})
+    if not isinstance(raw, dict):
+        return INVALID_NAME_BINDINGS
+    out: dict[str, str] = {}
+    for external, spec in raw.items():
+        source = spec.get("source") if isinstance(spec, dict) else spec
+        if not (
+            isinstance(external, str)
+            and isinstance(source, str)
+            and external.strip()
+            and source.strip()
+            and _SIMPLE_KEY.fullmatch(external.strip())
+            and _SIMPLE_KEY.fullmatch(source.strip())
+            and external.strip() != source.strip()
+        ):
+            return INVALID_NAME_BINDINGS
+        out[external.strip()] = source.strip()
+    return MappingProxyType(out)
+
+
 def _enrich_from_allowlist(
     allowlist: dict[str, Any],
     operation_id: str,
@@ -106,7 +163,7 @@ def _enrich_from_allowlist(
     Mapping[str, Any],
     str | None,
     Mapping[str, Any],
-    Mapping[str, Any],
+    Mapping[str, Any] | _InvalidNameBindings,
     tuple[str, ...],
 ]:
     entry = _allowlist_entry(allowlist, operation_id)
@@ -127,9 +184,7 @@ def _enrich_from_allowlist(
     argument_bindings = _normalize_name_bindings(
         entry.get("argumentBindings"), owner_key="ownerName"
     )
-    response_bindings = _normalize_name_bindings(
-        entry.get("responseBindings"), owner_key="source"
-    )
+    response_bindings = _normalize_response_bindings(entry.get("responseBindings"))
     return (
         str(mode) if mode else None,
         response_fields,
