@@ -12,9 +12,12 @@ the real gate and control ``_fetch_fresh_rbac`` directly.
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from types import SimpleNamespace
 from uuid import uuid4
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -496,3 +499,176 @@ def test_human_admin_still_claims_orphan_playlist():
     access = PlaylistAccessService(repo=_Repo()).resolve(uuid4(), user)
     assert claimed, "human admin keeps claim behavior"
     assert access.level == "owner"
+
+
+# ------------------------------------------------------------------
+# AUTHZ_UNAVAILABLE observability: diagnosable, redacted, contract intact
+# ------------------------------------------------------------------
+
+_AUTHZ_EVENT = "governed_write_authz_unavailable"
+_BEARER_SENTINEL = "SUPER_SECRET_BEARER_SENTINEL"
+_ACCESS_TOKEN_SENTINEL = "SUPER_SECRET_ACCESS_TOKEN_SENTINEL"
+
+
+def _authz_events(caplog) -> list[logging.LogRecord]:
+    return [
+        r
+        for r in caplog.records
+        if r.name == sec.__name__ and r.getMessage().startswith(_AUTHZ_EVENT)
+    ]
+
+
+def _raising(exc: Exception):
+    async def _fake(token):
+        raise exc
+
+    return _fake
+
+
+def _call_gate(mode: str, user, **kwargs):
+    if mode == "sync":
+        return _real_sync_gate(user, **kwargs)
+    return asyncio.run(_real_async_gate(user, **kwargs))
+
+
+def _assert_unavailable_contract(exc: GovernedWriteAuthzError) -> None:
+    assert exc.status_code == 503
+    assert exc.code == "AUTHZ_UNAVAILABLE"
+    assert str(exc) == "Serviço de autorização indisponível."
+
+
+@pytest.mark.parametrize("mode", ["sync", "async"])
+def test_unexpected_rbac_error_emits_structured_event(monkeypatch, caplog, mode):
+    caplog.set_level(logging.INFO, logger=sec.__name__)
+    monkeypatch.setattr(sec, "_fetch_fresh_rbac", _raising(httpx.ConnectTimeout("timed out")))
+
+    with pytest.raises(GovernedWriteAuthzError) as exc:
+        _call_gate(mode, _human_user(), permission=sec.TV_WRITE)
+
+    _assert_unavailable_contract(exc.value)
+    assert isinstance(exc.value.__cause__, httpx.ConnectTimeout)
+    events = _authz_events(caplog)
+    assert len(events) == 1
+    record = events[0]
+    message = record.getMessage()
+    assert record.levelno == logging.ERROR
+    assert record.exc_info is None
+    for field in (
+        "operation=fresh_write_authorization",
+        f"mode={mode}",
+        "permission=tv-dashboard.write",
+        "dependency=core_rbac",
+        "outcome=AUTHZ_UNAVAILABLE",
+        "error_class=ConnectTimeout",
+        "error_module=httpx",
+        "downstream_status=-",
+    ):
+        assert field in message, (field, message)
+
+
+def test_sync_gate_inside_event_loop_is_distinguishable(monkeypatch, caplog):
+    """Incident class fixed by af250bc8d7: sync gate under a running loop."""
+    caplog.set_level(logging.INFO, logger=sec.__name__)
+    created: list = []
+
+    async def _rbac_lookup():
+        return _rbac()
+
+    def _fake(token):
+        created.append(_rbac_lookup())
+        return created[-1]
+
+    monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
+
+    async def _async_handler():
+        return _real_sync_gate(_human_user())
+
+    with pytest.raises(GovernedWriteAuthzError) as exc:
+        asyncio.run(_async_handler())
+    for coro in created:
+        coro.close()
+
+    _assert_unavailable_contract(exc.value)
+    message = _authz_events(caplog)[0].getMessage()
+    assert "mode=sync" in message
+    assert "error_class=RuntimeError" in message
+    assert "event_loop_running=True" in message
+
+
+def test_downstream_core_status_is_distinguishable(monkeypatch, caplog):
+    caplog.set_level(logging.INFO, logger=sec.__name__)
+    monkeypatch.setattr(
+        sec,
+        "_fetch_fresh_rbac",
+        _raising(RuntimeError("RBAC lookup failed with status 503")),
+    )
+
+    with pytest.raises(GovernedWriteAuthzError) as exc:
+        _real_sync_gate(_human_user())
+
+    _assert_unavailable_contract(exc.value)
+    message = _authz_events(caplog)[0].getMessage()
+    assert "error_class=RuntimeError" in message
+    assert "event_loop_running=False" in message
+    assert "downstream_status=503" in message
+
+
+@pytest.mark.parametrize("mode", ["sync", "async"])
+def test_authz_unavailable_log_never_contains_credentials(monkeypatch, caplog, mode):
+    caplog.set_level(logging.DEBUG)
+    leaky = httpx.LocalProtocolError(
+        f"Illegal header value b'Bearer {_BEARER_SENTINEL} {_ACCESS_TOKEN_SENTINEL}'"
+    )
+    monkeypatch.setattr(sec, "_fetch_fresh_rbac", _raising(leaky))
+    user = _human_user(access_token=_ACCESS_TOKEN_SENTINEL)
+
+    with pytest.raises(GovernedWriteAuthzError) as exc:
+        _call_gate(mode, user, authorization=f"Bearer {_BEARER_SENTINEL}")
+
+    _assert_unavailable_contract(exc.value)
+    assert _authz_events(caplog), "event emitted"
+    formatter = logging.Formatter("%(levelname)s %(name)s %(message)s")
+    rendered = [formatter.format(r) for r in caplog.records]
+    for sentinel in (_BEARER_SENTINEL, _ACCESS_TOKEN_SENTINEL):
+        assert sentinel not in caplog.text
+        assert sentinel not in str(exc.value)
+        for record in caplog.records:
+            assert sentinel not in record.getMessage()
+            assert sentinel not in repr(record.args)
+            assert sentinel not in repr(vars(record))
+        assert all(sentinel not in line for line in rendered)
+
+
+@pytest.mark.parametrize("mode", ["sync", "async"])
+@pytest.mark.parametrize(
+    ("user", "authorization", "fresh", "status", "code"),
+    [
+        (None, None, None, 401, "UNAUTHENTICATED"),
+        ("service", None, None, 403, "PRINCIPAL_TYPE_DENIED"),
+        ("no_bearer", None, None, 401, "UNAUTHENTICATED"),
+        ("human", None, {"permissions": []}, 403, "PERMISSION_DENIED"),
+    ],
+)
+def test_expected_denials_are_not_classified_unavailable(
+    monkeypatch, caplog, mode, user, authorization, fresh, status, code
+):
+    caplog.set_level(logging.DEBUG)
+    principal = {
+        None: None,
+        "service": _service_user(),
+        "no_bearer": _human_user(access_token=None),
+        "human": _human_user(),
+    }[user]
+
+    async def _fake(token):
+        return _rbac(**(fresh or {}))
+
+    monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
+
+    with pytest.raises(GovernedWriteAuthzError) as exc:
+        _call_gate(mode, principal, authorization=authorization)
+
+    assert exc.value.status_code == status
+    assert exc.value.code == code
+    assert _authz_events(caplog) == []
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]

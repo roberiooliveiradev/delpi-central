@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import asyncio
+import logging
+import re
 from types import SimpleNamespace
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 
 from delpi_auth.authz_core import has_permission
 from fastapi import Request
+
+logger = logging.getLogger(__name__)
 
 TV_READ = "tv-dashboard.read"
 TV_WRITE = "tv-dashboard.write"
@@ -135,6 +139,50 @@ def _fresh_principal_from_rbac(user: Any, rbac: Mapping[str, Any]) -> Any:
     )
 
 
+_RBAC_DOWNSTREAM_STATUS_RE = re.compile(r"RBAC lookup failed with status (\d{3})")
+
+
+def _event_loop_running() -> bool:
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return False
+    return True
+
+
+def _authz_unavailable(
+    exc: Exception,
+    *,
+    mode: Literal["sync", "async"],
+    permission: str,
+) -> GovernedWriteAuthzError:
+    """Log an unexpected fresh-RBAC failure and build the fail-closed error.
+
+    Only allowlisted metadata is logged — never ``str(exc)`` nor the
+    traceback: transport errors can embed request headers (h11 raises
+    ``Illegal header value b'Bearer …'``) and there is no canonical redaction
+    for free-form exception text. ``downstream_status`` extracts only the
+    digits of the Core ``/me`` status from ``load_user_rbac``'s error.
+    """
+    downstream = _RBAC_DOWNSTREAM_STATUS_RE.fullmatch(str(exc))
+    logger.error(
+        "governed_write_authz_unavailable operation=fresh_write_authorization "
+        "mode=%s permission=%s dependency=core_rbac outcome=AUTHZ_UNAVAILABLE "
+        "error_class=%s error_module=%s event_loop_running=%s downstream_status=%s",
+        mode,
+        permission,
+        type(exc).__name__,
+        type(exc).__module__,
+        _event_loop_running(),
+        downstream.group(1) if downstream else "-",
+    )
+    return GovernedWriteAuthzError(
+        "Serviço de autorização indisponível.",
+        code="AUTHZ_UNAVAILABLE",
+        status_code=503,
+    )
+
+
 def _assert_fresh_permission(fresh_user: Any, permission: str) -> Any:
     try:
         assert_permission(fresh_user, permission)
@@ -167,11 +215,7 @@ def require_fresh_write_authorization(
     except GovernedWriteAuthzError:
         raise
     except Exception as exc:
-        raise GovernedWriteAuthzError(
-            "Serviço de autorização indisponível.",
-            code="AUTHZ_UNAVAILABLE",
-            status_code=503,
-        ) from exc
+        raise _authz_unavailable(exc, mode="sync", permission=permission) from exc
     return _assert_fresh_permission(_fresh_principal_from_rbac(user, rbac), permission)
 
 
@@ -189,9 +233,5 @@ async def arequire_fresh_write_authorization(
     except GovernedWriteAuthzError:
         raise
     except Exception as exc:
-        raise GovernedWriteAuthzError(
-            "Serviço de autorização indisponível.",
-            code="AUTHZ_UNAVAILABLE",
-            status_code=503,
-        ) from exc
+        raise _authz_unavailable(exc, mode="async", permission=permission) from exc
     return _assert_fresh_permission(_fresh_principal_from_rbac(user, rbac), permission)
