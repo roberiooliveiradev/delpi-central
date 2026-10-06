@@ -9,7 +9,13 @@ from __future__ import annotations
 
 import pytest
 
-from bpmn_modeler.application.errors import MODEL_NOT_FOUND, ApplicationError
+from bpmn_modeler.application.errors import (
+    CONFLICT,
+    MODEL_ARCHIVED,
+    MODEL_NOT_FOUND,
+    REVISION_NOT_FOUND,
+    ApplicationError,
+)
 from bpmn_modeler.application.use_cases import CallerIdentity
 
 from .conftest import ALL_PERMISSIONS, clean_input
@@ -142,6 +148,61 @@ def test_nonexistent_and_foreign_indistinguishable(service, alice_model):
     missing = _not_found(service.get_model, str(uuid.uuid4()), BOB)
     assert foreign.code == missing.code == MODEL_NOT_FOUND
     assert foreign.message == missing.message
+
+
+def test_foreign_archived_model_is_not_found(service, alice_model):
+    # estado do recurso foreign não vaza: archived é NOT_FOUND, nunca
+    # MODEL_ARCHIVED (enumeração de lifecycle negada).
+    service.archive_model(alice_model, 1, ALICE)
+
+    err = _not_found(service.get_model, alice_model, BOB)
+    assert err.code == MODEL_NOT_FOUND and err.code != MODEL_ARCHIVED
+    _not_found(service.get_working_copy, alice_model, BOB)
+    _not_found(
+        service.save_working_copy,
+        alice_model, clean_input(XML_ALT), 2, BOB,
+    )
+    _not_found(service.rename_model, alice_model, "Bob", 2, BOB)
+
+
+def test_foreign_write_with_valid_version_is_not_found(service, alice_model):
+    # If-Match válido não muda nada: ownership nega antes do CAS —
+    # nunca CONFLICT (412-equivalent) para foreign.
+    current = service.get_model(alice_model, ALICE)
+
+    err = _not_found(
+        service.save_working_copy,
+        alice_model, clean_input(XML_ALT), current.version, BOB,
+    )
+    assert err.code != CONFLICT
+    err = _not_found(
+        service.archive_model, alice_model, current.version, BOB,
+    )
+    assert err.code != CONFLICT
+
+
+def test_foreign_nonexistent_revision_denied_at_model_boundary(
+    service, alice_model
+):
+    # Bob não sabe nem se a revisão existe: a boundary é o Model —
+    # MODEL_NOT_FOUND, nunca REVISION_NOT_FOUND.
+    err = _not_found(service.get_revision, alice_model, 99, BOB)
+    assert err.code == MODEL_NOT_FOUND and err.code != REVISION_NOT_FOUND
+    _not_found(service.export_revision, alice_model, 99, BOB)
+    _not_found(service.restore_revision, alice_model, 99, 1, BOB)
+
+
+def test_foreign_duplicate_creates_nothing(service, alice_model):
+    _not_found(service.duplicate_model, alice_model, "Bob Copy", BOB)
+
+    bob_models = service.list_models(
+        query=None, archived="all", sort="updated_at",
+        direction="desc", page=1, page_size=100, caller=BOB,
+    )
+    assert bob_models.items == []
+    # fonte também intacta
+    source = service.get_model(alice_model, ALICE)
+    assert source.display_name == "Alice Model"
 
 
 # --------------------------------------------------------------------- #

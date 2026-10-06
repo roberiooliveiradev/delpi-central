@@ -46,10 +46,11 @@ def client(validator):
     return TestClient(app, raise_server_exceptions=False)
 
 
-def authed(permissions=ALL_PERMS, uid: str = "u1"):
+def authed(permissions=ALL_PERMS, uid: str = "u1", superadmin: bool = False):
     rbac = {
         "id": uid, "email": "u@x.dev", "name": "U", "roles": [],
-        "groups": [], "permissions": permissions, "is_superadmin": False,
+        "groups": [], "permissions": permissions,
+        "is_superadmin": superadmin,
     }
     return (
         patch(
@@ -360,9 +361,14 @@ def test_ownership_isolation_http(client):
                 "Content-Type": "application/xml",
             },
         ).status_code == 404
-        assert client.get(
+        export_resp = client.get(
             f"/models/{model_id}/working-copy/export", headers=H
-        ).status_code == 404
+        )
+        assert export_resp.status_code == 404
+        # export negado não pode vazar XML nem filename do recurso foreign
+        assert "xml" not in export_resp.headers.get("content-type", "")
+        assert "Alice" not in export_resp.text
+        assert "content-disposition" not in export_resp.headers
         assert client.post(
             f"/models/{model_id}/working-copy/validate",
             content=b"<x/>",
@@ -416,6 +422,55 @@ def test_ownership_isolation_http(client):
     # owner segue autorizado no mesmo path
     with alice_vt, alice_rbac:
         assert client.get(f"/models/{model_id}", headers=H).status_code == 200
+
+
+def test_http_superadmin_has_no_cross_owner_access(client):
+    """Real superadmin principal (RBAC is_superadmin, subject próprio):
+    capabilities globais não implicam ownership — foreign é 404."""
+    alice_vt, alice_rbac = authed(uid="alice")
+    with alice_vt, alice_rbac:
+        model_id = client.post(
+            "/models", json={"display_name": "Alice Only"}, headers=H
+        ).json()["data"]["model_id"]
+
+    root_vt, root_rbac = authed(uid="root-1", superadmin=True)
+    with root_vt, root_rbac:
+        listed = client.get("/models", headers=H).json()["data"]["items"]
+        assert not any(m["id"] == model_id for m in listed)
+        assert client.get(
+            f"/models/{model_id}", headers=H
+        ).status_code == 404
+        assert client.patch(
+            f"/models/{model_id}",
+            json={"display_name": "Root Rename"},
+            headers={**H, "If-Match": '"v1"'},
+        ).status_code == 404
+
+
+def test_created_by_mass_assignment_rejected(client):
+    """Ownership deriva exclusivamente do caller autenticado — campo
+    created_by/owner no payload público é rejeitado (extra=forbid)."""
+    vt, rbac = authed(uid="alice")
+    with vt, rbac:
+        assert client.post(
+            "/models",
+            json={"display_name": "X", "created_by": "bob"},
+            headers=H,
+        ).status_code == 422
+        assert client.post(
+            "/models",
+            json={"display_name": "X", "owner": "bob"},
+            headers=H,
+        ).status_code == 422
+
+        model_id = client.post(
+            "/models", json={"display_name": "Y"}, headers=H
+        ).json()["data"]["model_id"]
+        assert client.patch(
+            f"/models/{model_id}",
+            json={"display_name": "Z", "created_by": "bob"},
+            headers={**H, "If-Match": '"v1"'},
+        ).status_code == 422
 
 
 def test_rename_extra_field_rejected(client):
