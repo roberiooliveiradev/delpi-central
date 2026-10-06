@@ -323,17 +323,17 @@ Pin não transforma mensagem em aprovação/decisão.
 
 ### D-ROOM-08 — create task from message
 
-O `plugin-ui` suporta `onCreateTask`.
+O `plugin-ui` suporta `onCreateTask`, mas o Item 5 confirmou que a V1 não possui task entity própria.
 
 Para Controladoria:
 
 ```text
-CREATE_TASK_FROM_MESSAGE = PLANNED / BLOCKED_ON_TASK_MODEL
+CREATE_TASK_FROM_MESSAGE = NOT_INCLUDED_IN_V1
 ```
 
-Não expor a ação até o Item 5 — Minhas tarefas — fechar o contrato de TaskProjection/task owner.
+Não expor a ação na V1.
 
-Não é decisão aberta de produto; é dependência conhecida.
+Uma evolução futura exige decisão explícita sobre entidade/owner/lifecycle de task. A Sala nunca cria TaskProjection diretamente; projection nasce de state/responsibility do owner.
 
 ## Invariantes de negócio
 
@@ -1119,10 +1119,11 @@ Aceite:
 - sem SMTP/preferences local;
 - não notificar toda mensagem.
 
-### RQ-ROOM-11 — task action depende de Item 5
+### RQ-ROOM-11 — create task não existe na V1
 Aceite:
-- ação não aparece antes do task contract;
-- quando aparecer, task owner permanece fora da Sala.
+- `onCreateTask` não é exposto;
+- mensagem/menção não criam TaskProjection;
+- evolução futura exige contract de task entity e owner separado da Sala.
 
 ### RQ-ROOM-12 — Help sync
 Aceite:
@@ -1281,10 +1282,10 @@ Policy técnica/legal.
 ### R06 — TaskProjection
 
 ```text
-WAITING_FOR_ITEM_5
+CLOSED_PRODUCT_BOUNDARY
 ```
 
-Somente para create-task-from-message.
+Item 5 definiu que TaskProjection deriva dos owners e não é criada pela Sala. `CREATE_TASK_FROM_MESSAGE = NOT_INCLUDED_IN_V1`.
 
 Nenhum desses inventários é decisão de produto aberta.
 
