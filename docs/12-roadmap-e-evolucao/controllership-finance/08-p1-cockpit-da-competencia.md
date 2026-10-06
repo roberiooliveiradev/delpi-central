@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 ## Job
 
@@ -13,6 +25,35 @@ O Cockpit é a página principal de uma competência dentro da **Central de Fech
 Ele é uma superfície de **leitura, composição e navegação**.
 
 Não é owner das regras de P2/P3/P4/P5 e não executa validação, sacramentação ou envio.
+
+
+## Responsabilidade, owners e non-goals
+
+P1 owns **composição e navegação da competência**, não os estados que apresenta.
+
+| Informação | Owner | Papel de P1 |
+|---|---|---|
+| contexto/competência | contract da Central | identificar recorte |
+| documentos/completude | P2 | projetar eixo/blocker |
+| estoque/cutoff/paridade/STOCK_CLOSED | P3 / owner canônico | projetar eixo/blocker |
+| classificações/pendências | P4 | destacar atenção/navegar |
+| pacote/finalização/envio/clarifications | P5 | projetar eixo/blocker |
+| effective permissions | Core | autorizar leitura |
+| histórico material | owners P2–P5 / composição auditável | apresentar timeline |
+| chrome visual | `@delpi/plugin-ui` | composição |
+
+Não pertence a P1:
+- alterar lifecycle de P2–P5;
+- calcular regra financeira nova;
+- validar evidence;
+- confirmar cutoff;
+- sacramentar estoque;
+- resolver classificação;
+- finalizar/enviar pacote;
+- criar task;
+- criar permission;
+- persistir estado duplicado apenas para reproduzir owner state.
+
 
 ---
 
@@ -359,6 +400,55 @@ A mesma estrutura visual não significa mesma regra de negócio.
 
 ---
 
+## Contratos TARGET — MFE → BFF → owners
+
+O browser consome somente `controllership-finance-api`.
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → Core effective permissions
+   → P2 / P3 / P4 / P5 contracts
+```
+
+P1 é read model/composição. A FASE A não congela um endpoint agregado específico por preferência.
+
+Operações semânticas necessárias:
+
+| Operação | Semântica |
+|---|---|
+| resolveClosingContext | competência/contexto autorizado |
+| composeStockAxis | estado/freshness/blockers vindos de P3 |
+| composeDocumentsAxis | completude/validation blockers vindos de P2 |
+| composePackageAxis | package/finalization/send/clarification state vindo de P5 |
+| listPriorityPendencies | subset navegável de P4/owners |
+| listClosingHistory | eventos materiais dos owners |
+| composeBlockers | normalização sem transferir regra/ownership |
+
+Se uma futura BFF oferecer um único read endpoint ou múltiplos endpoints, isso é decisão física de implementação; a semântica acima permanece.
+
+Regras:
+- BFF pode normalizar shapes/provenance;
+- BFF não recalcula state machine de owner;
+- source indisponível permanece indisponível;
+- blocker só existe quando owner/contract o sustenta;
+- nenhuma operação de write pertence a P1.
+
+### AuthZ
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND context/resource_scope
+AND business_rule_allows_read
+```
+
+- `MANAGE` não substitui `ACCESS`;
+- unidade/filial é contexto, não permission code;
+- UI não autoriza;
+- falha do Core/effective permissions → fail-closed;
+- navegação ao owner será reautorizada na página destino.
+
 ## Estados de experiência
 
 ### LOADING
@@ -366,14 +456,23 @@ A mesma estrutura visual não significa mesma regra de negócio.
 - manter layout previsível;
 - não exibir zero/default como dado real.
 
+### SUCCESS
+- contexto e eixos carregados com coverage suficiente;
+- estados e blockers refletem os owners;
+- zero real só aparece quando source respondeu validamente.
+
 ### EMPTY
 Somente quando a ausência é válida e todas as sources necessárias responderam.
 
 ### PARTIAL
 Mostrar o que é confiável + banner claro indicando o que não foi carregado.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 Identificar a source indisponível e impacto no eixo.
+
+`UNAVAILABLE` é o estado de experiência do módulo/eixo; `UNAVAILABLE_SOURCE` qualifica a dependência afetada.
+
+Se a source for necessária para afirmar readiness, o eixo não pode aparecer como pronto.
 
 ### ERROR
 Mensagem clara + retry quando tecnicamente possível.
@@ -385,6 +484,29 @@ Sem exposição de dados do cockpit.
 Competência/contexto inexistente ou inválido.
 
 ---
+
+## Light / dark, responsividade e acessibilidade
+
+Contrato de tema:
+
+```text
+SAME DOM
++ SAME SECTION ORDER
++ SAME STATES
++ SAME ACTIONS
++ THEME TOKENS
+= LIGHT / DARK PARITY
+```
+
+- TopBar pertence ao shell;
+- P1 é deep page da Central e usa `PagePath`;
+- desktop mantém blockers antes dos eixos;
+- mobile empilha eixos sem esconder blockers;
+- nenhum status depende só de cor;
+- CTAs/links e timeline são operáveis por teclado;
+- foco permanece visível;
+- refresh/navegação não deve perder contexto de competência;
+- CSS de componentes compartilhados permanece no `plugin-ui`.
 
 ## Navegação
 
@@ -505,6 +627,41 @@ Matriz futura mínima:
 - deep link/F5;
 - Help.
 
+## Scripts e artefatos auxiliares PLANNED
+
+Não criar durante a FASE A.
+
+```text
+validate-p1-axis-contracts
+- cada eixo tem owner conhecido
+- owner state não é duplicado/recalculado
+
+validate-p1-blockers
+- blocker possui reason/source/owner/deep link
+- unavailable não vira success
+
+validate-p1-deep-links
+- competence/context roundtrip
+- F5
+- owner routes conhecidas
+- no open redirect
+
+validate-p1-authz
+- ACCESS required
+- MANAGE-only denied
+- context scope revalidado
+- fail-closed
+
+validate-p1-help
+- invariantes e links P2–P5 sincronizados
+
+validate-p1-plugin-ui
+- primitives canônicas usadas
+- nenhum clone local
+```
+
+Tecnologia/localização serão escolhidas conforme padrão vigente no HEAD da futura implementação.
+
 ## Inventários técnicos remanescentes
 
 - `T01` — bindings/source/freshness dos eixos;
@@ -514,29 +671,40 @@ Matriz futura mínima:
 
 Esses itens são `TO_INVENTORY_BEFORE_IMPLEMENTATION` e não reabrem as regras funcionais de P1 salvo evidência incompatível.
 
-## Gate documental P1
+## Gate documental V2
 
 ```text
-PRODUCT_RULES_DEFINED       = PASS
-INFORMATION_ARCH_DEFINED    = PASS
-DESKTOP_DEFINED             = PASS
-MOBILE_DEFINED              = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
-UX_STATES_DEFINED           = PASS
-AUTHZ_MODEL_DEFINED         = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
 A11Y_DEFINED                = PASS
-DEEP_LINK_SEMANTICS_DEFINED = PASS
-HELP_CONTRACT_DEFINED       = PASS
-RQ_ACCEPTANCE_DEFINED       = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
 TEST_MATRIX_DEFINED         = PASS
-PHYSICAL_BINDINGS           = TO_INVENTORY
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
 IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-P1 está documentalmente fechado para o escopo V1. Isso não autoriza runtime enquanto o fechamento documental transversal do Portal não estiver concluído.
+Inventários:
+- T01 bindings/source/freshness;
+- T05 effective permissions/resource scope;
+- contratos físicos de composição do BFF;
+- route/query param names.
 
----
+Resultado:
+
+```text
+A08 P1 COCKPIT DA COMPETÊNCIA
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
+```
 
 ## Resultado esperado
 
