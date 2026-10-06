@@ -42,7 +42,7 @@ Estados históricos desta tabela representam maturidade documental acumulada. A 
 
 | Página | Estado | Stop / inventário material |
 |---|---|---|
-| Início | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | H01 favoritos + H02 TaskProjection + H03 active competence + H04 blocker summary; implementação ainda não autorizada |
+| Início | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A02 fechado; H01/H03/H04 e TSK aplicáveis continuam inventário físico; runtime não autorizado |
 | Visão geral | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | D-OVW-01=C, D-OVW-02=A, D-OVW-03=A; revalidar O04 contracts físicos e O05 conflitos de source/fórmula antes do futuro slice |
 | Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task-from-message não incluído na V1 |
 | Minhas tarefas | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | TSK01 producer contracts + TSK02 projection strategy + TSK03 deep-link registry + TSK04 source health/cache + TSK05 TaskItemsTable columns |
