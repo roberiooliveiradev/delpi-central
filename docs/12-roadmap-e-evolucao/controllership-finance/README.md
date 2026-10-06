@@ -147,8 +147,31 @@ A cobertura Transforma+, boundaries, handoff P1–P6 e ledger de requisitos est�
 
 Isso permite preparar briefs técnicos página por página. A identidade técnica do produto está congelada como `controllership-finance` + `controllership-finance-api`, com base paths `/apps/controllership-finance` e `/apps/controllership-finance-api`. Storage, schemas físicos, migrations e deployment continuam dependentes de inventário do HEAD.
 
-## Execução
+## Gate global de revisão
 
+A fase atual é exclusivamente documental/design/contratos:
+
+```text
+PORTAL_REVIEW_PHASE = ACTIVE
+IMPLEMENTATION_AUTHORIZED = NO
+```
+
+Nenhuma página deve ser implementada enquanto não forem revisadas e fechadas todas as superfícies do Portal, incluindo páginas comuns, P1–P6, padrões visuais, contracts, AuthZ, estados, Help, RQ/AC e matriz de testes/scripts planejados.
+
+`READY_FOR_IMPLEMENTATION_BRIEF` significa somente que a página já possui documentação suficiente para um brief futuro.
+
+Somente após um gate transversal explícito do produto:
+
+```text
+PORTAL_DESIGN_FREEZE = PASS
+PRODUCT_CONTRACT_FREEZE = PASS
+SECURITY_MODEL_FREEZE = PASS
+TEST_STRATEGY_FREEZE = PASS
+```
+
+poderá começar a implementação page-by-page.
+
+## Execução
 
 ```text
 READ → INVENTORY → VERIFY → CLASSIFY → DECIDE
