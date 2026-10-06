@@ -148,6 +148,23 @@ Decisões congeladas:
 
 Implementação permanece não autorizada durante o review global.
 
+## Ajuda
+
+O Item 7 — Ajuda está fechado documentalmente em [29-ajuda.md](./29-ajuda.md).
+
+Decisões congeladas:
+- usar `createDashboardUserManual` do `@delpi/plugin-ui`;
+- conteúdo do manual é versionado no MFE, sem BFF/DB/CMS/editor administrativo na V1;
+- runtime Help documenta somente capabilities realmente implementadas;
+- Help contextual aponta para `/help#manual-{sectionId}`;
+- Administração só entra no manual para viewer com `controllership-finance.manage`;
+- tool links usam registry tipado e nunca URL arbitrária;
+- sem search engine própria no manual V1;
+- FAQ, glossário e guide table seguem o kit;
+- mudança user-facing material exige Help sync no mesmo gate.
+
+Implementação permanece não autorizada durante o review global.
+
 ## Navegação principal
 
 A topbar do Portal é:
@@ -184,7 +201,7 @@ A Visão geral é a superfície analítica financeira do Portal. O padrão visua
 
 ## UI kit
 
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md). Administração segue [28-administracao.md](./28-administracao.md). Administração segue [28-administracao.md](./28-administracao.md).
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md). Administração segue [28-administracao.md](./28-administracao.md). Ajuda segue [29-ajuda.md](./29-ajuda.md).
 
 Import runtime canônico para MFE federado:
 

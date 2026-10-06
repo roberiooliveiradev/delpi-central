@@ -32,7 +32,7 @@ Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, 
 | Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task-from-message não incluído na V1 |
 | Minhas tarefas | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | TSK01 producer contracts + TSK02 projection strategy + TSK03 deep-link registry + TSK04 source health/cache + TSK05 TaskItemsTable columns |
 | Administração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | ADM01 persistência + ADM02/E01 bancos + ADM03/E05 attachment roles + ADM04/E06 motivos + ADM05/T02 notifications + ADM06 people selector + ADM07 concurrency |
-| Ajuda | SYNCHRONIZED_WITH_FEATURES | implementar/sincronizar junto das superfícies liberadas |
+| Ajuda | READY_FOR_IMPLEMENTATION_BRIEF | HELP01 route/catalog + HELP02 permission-aware sections + HELP03 hash/focus + HELP04 validator placement; conteúdo continua sincronizado feature-by-feature |
 
 A topbar usa somente `controllership-finance.access` e `controllership-finance.manage`. Não existe permission code por filial/unidade neste Portal.
 
@@ -45,7 +45,9 @@ Contrato da Sala de interação: [26-sala-de-interacao.md](./26-sala-de-interaca
 
 Contrato de Minhas tarefas: [27-minhas-tarefas.md](./27-minhas-tarefas.md).
 
-Contrato de Administração: [28-administracao.md](./28-administracao.md). Arquitetura Painel/Templates/Catálogos/Histórico, lifecycle, snapshot, MANAGE-only, inativação, audit e plugin-ui estão fechados; persistência/seeds/integrations/concurrency permanecem inventories técnicos. O modelo de projection, self-only, producers, action policy, sem SLA global e integração Home/Sala estão fechados; apenas a estratégia física e bindings permanecem inventories técnicos. O modelo de contexto, AuthZ, mensagem, attachment boundary, deep link e full-page reuse estão fechados; transport/storage/retention permanecem inventories técnicos do futuro slice. D-OVW-01=C congela núcleo + contexto operacional + desempenho estratégico; D-OVW-02=A congela mês atual; D-OVW-03=A congela Consolidado. O04/O05 permanecem inventários técnicos para o futuro brief, sem autorização de implementação.
+Contrato de Administração: [28-administracao.md](./28-administracao.md).
+
+Contrato de Ajuda: [29-ajuda.md](./29-ajuda.md). Manual kit, conteúdo versionado no MFE, runtime-only publication, capability gating, contextual deep links e feature-help-sync estão fechados. Arquitetura Painel/Templates/Catálogos/Histórico, lifecycle, snapshot, MANAGE-only, inativação, audit e plugin-ui estão fechados; persistência/seeds/integrations/concurrency permanecem inventories técnicos. O modelo de projection, self-only, producers, action policy, sem SLA global e integração Home/Sala estão fechados; apenas a estratégia física e bindings permanecem inventories técnicos. O modelo de contexto, AuthZ, mensagem, attachment boundary, deep link e full-page reuse estão fechados; transport/storage/retention permanecem inventories técnicos do futuro slice. D-OVW-01=C congela núcleo + contexto operacional + desempenho estratégico; D-OVW-02=A congela mês atual; D-OVW-03=A congela Consolidado. O04/O05 permanecem inventários técnicos para o futuro brief, sem autorização de implementação.
 
 O Início tem design/UX/RQ/AC fechados, mas mantém inventories conhecidos para persistência de favoritos e projeções dinâmicas. Isso não autoriza implementação durante a fase atual de revisão global.
 
