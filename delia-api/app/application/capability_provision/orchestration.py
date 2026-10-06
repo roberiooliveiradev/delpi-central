@@ -710,6 +710,13 @@ def _entity_identifier(
     bare = entity.get("id")
     if isinstance(bare, (str, int, float)):
         return str(bare).strip()
+    for key, value in entity.items():
+        if (
+            _canonical_key(key).endswith("id")
+            and _canonical_key(key) != "id"
+            and isinstance(value, (str, int, float))
+        ):
+            return str(value).strip()
     return None
 
 
