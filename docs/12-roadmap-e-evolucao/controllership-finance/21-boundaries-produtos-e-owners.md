@@ -146,10 +146,12 @@ Essas decisões não devem ser derivadas do Portal Financeiro P0.
 
 Para a Página do usuário:
 - Core é owner de diretório, person profile, foto e effective permissions;
-- `controllership-finance-api` compõe e autoriza;
-- o MFE apresenta;
+- o Portal principal Minha DELPI é a superfície canônica de **autoedição** do person profile e da foto, usando `/core-api/me/person-profile` e `/core-api/me/person-profile/photo`;
+- `controllership-finance-api` compõe e autoriza apenas a leitura necessária ao produto;
+- o MFE de Controladoria apresenta esses dados em modo read-only e redireciona o self para Meu Perfil quando houver intenção de editar;
 - não importar internals de Core nem ler seu banco;
-- não persistir cópia local de identidade/foto.
+- não persistir cópia local de identidade/foto;
+- não criar proxy de write, editor de cargo/contatos nem upload de foto dentro do Portal Controladoria & Finanças.
 
 Fonte: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 
