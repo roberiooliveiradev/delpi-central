@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -75,6 +87,33 @@ Também:
 - falha de dados dinâmicos não deve inutilizar o launcher;
 - rota futura no roadmap não aparece como funcionalidade disponível.
 
+## Responsabilidade, owners e non-goals
+
+A Home é uma **composição/launcher**. Ela não cria regra operacional própria para competência, tarefas, blockers ou eventos.
+
+| Informação/capability | Owner semântico | Papel da Home |
+|---|---|---|
+| identidade/primeiro nome | Core | apresentar saudação |
+| competência ativa | Central de Fechamento / owner do estado | projetar contexto |
+| TaskProjection | owners P2/P4/P5 + composição do Portal | preview/navegação |
+| blockers | P1 compondo owners P2/P3/P5 | contar/apontar owner |
+| eventos/alertas | owner de cada evento | compor sem mudar state |
+| catálogo de rotas | MFE/router do Portal | launcher autorizado |
+| favoritos | capability a inventariar | pin/unpin sem conceder acesso |
+| recentes | MFE local efêmero | conveniência, sem dado sensível |
+| indicadores financeiros | Visão geral / owners dos indicadores | **não pertence à Home** |
+
+Explicitamente não pertence à Home:
+- cálculo de regra financeira;
+- lifecycle de fechamento;
+- criação/edição de tarefa;
+- envio de mensagem;
+- CRUD administrativo;
+- persistência de competência;
+- regra própria de prioridade;
+- SLA/overdue;
+- autorização final.
+
 ## Rota e acesso
 
 Rota:
@@ -122,6 +161,9 @@ Buscar | Favoritos | Avatar/Nome
 ```
 
 A TopBar não é renderizada pela Home; pertence ao shell do Portal.
+
+A Home é a rota raiz do Portal e, por padrão, **não usa PagePath**. `PagePath` fica reservado a superfícies profundas/contextuais; não adicionar breadcrumb apenas para satisfazer uniformidade visual.
+
 
 ## Arquitetura visual — desktop
 
@@ -646,6 +688,57 @@ HOME = launcher
 P1 = cockpit
 ```
 
+## Contratos TARGET — MFE → BFF → owners
+
+O browser consome apenas `controllership-finance-api` para dados dinâmicos do Portal.
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+→ Core / owners da Central / demais owners autorizados
+```
+
+Proibido:
+
+```text
+MFE → Core direto
+MFE → api-delpi direto
+MFE → banco/serviço vizinho
+```
+
+A FASE A congela **operações semânticas**, não paths físicos:
+
+| Operação lógica da Home | BFF responsibility | Owner downstream |
+|---|---|---|
+| resolveViewerContext | AuthZ + identidade mínima | Core effective access/profile |
+| getActiveCompetenceSummary | composição read-only | owner da competência/P1 |
+| getMyTaskPreview | projeção self-only | TaskProjection / P2/P4/P5 |
+| getBlockerSummary | composição sem duplicar regra | P1 / P2 / P3 / P5 |
+| getAttentionEvents | compor eventos já autorizados | owners correspondentes |
+| getFavorites / saveFavorites | somente se capability física for decidida | H01 TO_INVENTORY |
+| routeCatalog | não precisa BFF para catálogo estático | MFE/router |
+| recentViews | não precisa BFF | state local efêmero |
+
+### Política de endpoint
+
+Não congelar um `GET /home` agregado por preferência.
+
+Na futura implementação:
+
+1. revalidar contratos existentes dos owners;
+2. expor no BFF as menores surfaces necessárias;
+3. se múltiplos roundtrips criarem problema material comprovado, propor read-model/agregação;
+4. qualquer agregador continua composição, nunca novo owner das regras.
+
+### Contrato de degradação
+
+- authorization dependency falhou → fail-closed;
+- competência indisponível → módulo correspondente `UNAVAILABLE`, launcher preservado se seguro;
+- TaskProjection indisponível → tasks `UNAVAILABLE`, sem inventar zero;
+- blocker owner indisponível → blocker `UNAVAILABLE`, sem inferir “sem blockers”;
+- um módulo falho não transforma siblings confiáveis em error;
+- nenhuma source externa é chamada diretamente pelo MFE.
+
 ## Dados dinâmicos e composição
 
 Não criar endpoint agregado `/home` apenas para copiar o Comercial sem evidência.
@@ -703,9 +796,11 @@ Válido quando:
 
 Empty de eventos não é error.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 
 Identificar a capability afetada sem converter para zero.
+
+`UNAVAILABLE` é o estado de experiência; `UNAVAILABLE_SOURCE` pode ser o qualifier interno de uma capability/source.
 
 ### ERROR
 
@@ -1106,22 +1201,36 @@ Reusar P1/owners; não duplicar regra na Home.
 
 Nenhum desses inventários autoriza implementar feature durante a fase atual de revisão global.
 
-## Gate de documentação
+## Gate documental V2
 
 ```text
-VISUAL_FAMILY_DEFINED      = PASS
-WIREFRAMES_DEFINED         = PASS
-PLUGIN_UI_REUSE_DEFINED    = PASS
-AUTHZ_DEFINED              = PASS
-STATES_DEFINED             = PASS
-DEEP_LINK_DEFINED          = PASS
-LIGHT_DARK_DEFINED         = PASS
-MOBILE_DEFINED             = PASS
-RQ_AC_DEFINED              = PASS
-TEST_MATRIX_DEFINED        = PASS
-HELP_CONTRACT_DEFINED      = PASS
-IMPLEMENTATION             = NOT_AUTHORIZED
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
+
+Resultado:
+
+```text
+A02 INÍCIO
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
+```
+
+Inventários H01/H03/H04 e TSK aplicáveis permanecem para o futuro brief físico e não autorizam runtime.
 
 ## Resultado esperado
 
