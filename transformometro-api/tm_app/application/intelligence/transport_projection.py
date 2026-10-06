@@ -1,8 +1,9 @@
 """Transport projection for TÉO capability/intelligence payloads.
 
-Canonical parity record: ``tm_app.interface.mcp.constants.GPT_TO_MCP_TOOLS``
-(owner: the MCP contract surface). This module derives per-transport
-projections — it never re-defines operation names or write semantics.
+Canonical capability/parity record:
+``tm_app.application.intelligence.capability_registry`` — this module only
+*derives* per-transport projections from it; it never re-defines operation
+names or write semantics and never imports a transport adapter.
 
 Transports:
 
@@ -12,13 +13,27 @@ Transports:
   PREPARE is pure: no ``commit_now``, no atomic prepare+commit, every
   material write requires ``commit_proposal`` with explicit confirmation
   and backend AuthZ.
+
+Fail closed: an unknown ``gpt_*`` name or a residual ``commit_now`` token
+in the MCP projection raises :class:`ProjectionContractError`. Only the
+explicitly listed legacy tombstones render as ``removed_*`` markers.
 """
 
 from __future__ import annotations
 
 import re
-from functools import lru_cache
 from typing import Any
+
+from tm_app.application.intelligence.capability_registry import (
+    ProjectionContractError,
+    actions_to_mcp_primary,
+)
+
+__all__ = [
+    "actions_to_mcp_primary",
+    "neutralize_for_mcp",
+    "MCP_DROP_KEYS",
+]
 
 _GPT_NAME_RE = re.compile(r"gpt_[a-z_]+")
 _PAREN_RE = re.compile(r"\(([^()]*)\)")
@@ -61,31 +76,16 @@ _MCP_TOKEN_REWRITE = {
     ),
 }
 
-# Known non-callable ``gpt_*`` names → neutral MCP rendering: removed legacy
-# Actions ops become tombstones; ``gpt_actions`` is the sibling surface name.
-_MCP_REMOVED_OPS = {
-    "gpt_actions": "actions",
+# Known non-callable ``gpt_*`` names → neutral MCP rendering. Explicit,
+# enumerable tombstones only — UNKNOWN names raise ProjectionContractError.
+_MCP_KNOWN_TOMBSTONES = {
+    "gpt_actions": "actions",  # sibling surface name (availability flags)
     "gpt_create_record": "removed_legacy_create_record",
     "gpt_update_record": "removed_legacy_update_record",
     "gpt_delete_record": "removed_legacy_delete_record",
     "gpt_duplicate_record": "removed_legacy_duplicate_record",
     "gpt_commit_improvement_package": "removed_legacy_package_commit",
 }
-
-
-@lru_cache(maxsize=1)
-def actions_to_mcp_primary() -> dict[str, str]:
-    """``gpt_*`` operationId → primary MCP tool name (canonical parity record)."""
-    from tm_app.interface.mcp.constants import GPT_TO_MCP_TOOLS
-
-    mapping: dict[str, str] = {}
-    for gpt_op, tools in GPT_TO_MCP_TOOLS.items():
-        suffix = gpt_op.removeprefix("gpt_")
-        primary = next((t for t in tools if t.endswith(suffix)), None)
-        if primary is None:
-            primary = next((t for t in tools if t.startswith("prepare_")), tools[0])
-        mapping[gpt_op] = primary
-    return mapping
 
 
 def _strip_actions_annotations(text: str) -> str:
@@ -107,23 +107,35 @@ def _neutralize_text_for_mcp(text: str) -> str:
 
     def _sub(match: re.Match) -> str:
         name = match.group(0)
-        return mapping.get(name) or _MCP_REMOVED_OPS.get(name) or (
-            "removed_actions_operation"
-        )
+        resolved = mapping.get(name) or _MCP_KNOWN_TOMBSTONES.get(name)
+        if resolved is None:
+            raise ProjectionContractError(
+                f"Unknown gpt_* name '{name}' in MCP projection — "
+                "no parity binding and not a registered legacy tombstone.",
+                detail={"name": name},
+            )
+        return resolved
 
     text = _GPT_NAME_RE.sub(_sub, text)
     for token, replacement in _MCP_TOKEN_REWRITE.items():
         text = text.replace(token, replacement)
+    if "commit_now" in text or _GPT_NAME_RE.search(text):
+        raise ProjectionContractError(
+            "Residual Actions semantics after MCP neutralization.",
+            detail={"fragment": text[:200]},
+        )
     return text
 
 
 def neutralize_for_mcp(node: Any) -> Any:
-    """Project an Actions-shaped payload onto the MCP transport.
+    """Project residual descriptive prose onto the MCP transport.
 
+    Used ONLY for descriptive prose/labels — never for capability identity
+    (structured projections resolve names through the capability registry).
     Drops Actions-only keys, strips ``(Actions: ...)`` annotations, rewrites
-    ``gpt_*`` operation names through the canonical parity map (unknown names
-    become ``removed_actions_operation`` tombstones), and rewrites pipeline/
-    policy tokens that encode the atomic prepare+commit path.
+    ``gpt_*`` names through the canonical parity map, and rewrites
+    pipeline/policy tokens that encode the atomic prepare+commit path.
+    Any unmapped name or residual ``commit_now`` fails closed.
     """
     if isinstance(node, dict):
         out: dict[str, Any] = {}

@@ -25,79 +25,30 @@ GPT_ACTIONS_LIFECYCLE = "GOVERNED_PREPARE_COMMIT_V2"
 TEO_MCP_SURFACE = "CAPABILITY_GOVERNED_V2"
 
 # ---------------------------------------------------------------------------
-# Capability parity: GPT operationId → MCP tool names (1→N allowed)
+# Capability parity — DERIVED from the canonical inward registry
+# (tm_app.application.intelligence.capability_registry). Adapters consume
+# the model; the model never imports this module.
 # ---------------------------------------------------------------------------
 
-GPT_TO_MCP_TOOLS: dict[str, tuple[str, ...]] = {
-    "gpt_get_my_context": ("get_my_context",),
-    "gpt_get_catalog": ("get_catalog",),
-    "gpt_get_methodology_guide": ("get_methodology_guide",),
-    "gpt_get_process_context": ("get_process_context",),
-    "gpt_analyze": ("analyze",),
-    "gpt_search_records": ("search_records",),
-    "gpt_get_record": ("get_record",),
-    "gpt_prepare_record_change": ("prepare_record_change",),
-    "gpt_commit_proposal": ("commit_proposal",),
-    "gpt_activate_revision": ("prepare_activate_revision",),
-    "gpt_recalculate_dashboard": ("prepare_recalculate_dashboard",),
-    "gpt_meeting_minute_workflow": ("prepare_meeting_minute_workflow",),
-    "gpt_validate_improvement_package": ("prepare_improvement_package",),
-    "gpt_list_evidence": ("list_evidence",),
-    "gpt_manage_evidence": ("prepare_manage_evidence",),
-    "gpt_get_process_timeline": ("get_process_timeline",),
-    "gpt_adjust_shared_resource_cost": ("prepare_adjust_shared_resource_cost",),
-    "gpt_meeting_minute_manage": (
-        "meeting_minute_read",
-        "generate_from_transcript",
-        "prepare_meeting_minute_manage",
-    ),
-}
+from tm_app.application.intelligence.capability_registry import (
+    actions_parity,
+    mcp_native_tool_names,
+    mcp_tool_classes,
+    mcp_tool_to_actions,
+)
 
-TOOL_TO_GPT_OPERATION: dict[str, str] = {
-    tool: gpt_op
-    for gpt_op, tools in GPT_TO_MCP_TOOLS.items()
-    for tool in tools
-}
+# Capability parity: GPT operationId → MCP tool names (1→N allowed)
+GPT_TO_MCP_TOOLS: dict[str, tuple[str, ...]] = actions_parity()
+
+TOOL_TO_GPT_OPERATION: dict[str, str] = mcp_tool_to_actions()
 
 # MCP tools with no GPT Action. Diagnostic V1 is MCP-native in this slice —
 # GPT parity, if desired, is a separate decision (no fake parity mapping).
-MCP_NATIVE_TOOLS: frozenset[str] = frozenset(
-    {
-        "get_diagnostic",
-        "list_diagnostics_by_revision",
-        "prepare_create_diagnostic",
-        "prepare_manage_diagnostic",
-    }
-)
+MCP_NATIVE_TOOLS: frozenset[str] = mcp_native_tool_names()
 
 # READ | PREPARE | ACT | ANALYSIS (non-persist)
 # ACT class retained for commit_proposal (common governed commit).
-TOOL_CLASS: dict[str, str] = {
-    "get_my_context": "READ",
-    "get_catalog": "DISCOVERY",
-    "get_methodology_guide": "READ",
-    "get_process_context": "READ",
-    "analyze": "READ",
-    "search_records": "READ",
-    "get_record": "READ",
-    "list_evidence": "READ",
-    "get_process_timeline": "READ",
-    "meeting_minute_read": "READ",
-    "get_diagnostic": "READ",
-    "list_diagnostics_by_revision": "READ",
-    "generate_from_transcript": "ANALYSIS",
-    "prepare_record_change": "PREPARE",
-    "prepare_activate_revision": "PREPARE",
-    "prepare_recalculate_dashboard": "PREPARE",
-    "prepare_meeting_minute_workflow": "PREPARE",
-    "prepare_improvement_package": "PREPARE",
-    "prepare_manage_evidence": "PREPARE",
-    "prepare_adjust_shared_resource_cost": "PREPARE",
-    "prepare_meeting_minute_manage": "PREPARE",
-    "prepare_create_diagnostic": "PREPARE",
-    "prepare_manage_diagnostic": "PREPARE",
-    "commit_proposal": "ACT",
-}
+TOOL_CLASS: dict[str, str] = mcp_tool_classes()
 
 # commit_proposal may execute destructive capabilities → truthful annotation.
 DESTRUCTIVE_ACT_TOOLS: frozenset[str] = frozenset({"commit_proposal"})

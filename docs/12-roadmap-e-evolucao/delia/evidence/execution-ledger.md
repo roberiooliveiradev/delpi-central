@@ -9905,3 +9905,70 @@ EVIDENCE (live production, 2026-10-05):
   RESIDUALS: live re-validation against the ChatGPT plugin pending
     (local code-level evidence only; container serves mounted source
     after restart). PRODUCTION_READINESS = NOT_PROVEN unchanged.
+
+## 6.137. TEO-UNIFIED-BOUNDARY-FINAL-CORRECTION-03 — final transport-neutral TÉO capability boundary (canonical registry + fail-closed projections)
+
+  SCOPE: close the ACCEPT_WITH_RESIDUAL from §6.135. The wire leak was
+  fixed by sanitizing an Actions-shaped model; the final architecture
+  requires ONE canonical transport-neutral model with Actions/MCP as
+  derived projections, no application→adapter dependency, fail-closed
+  unknown mappings, and MCP PREPARE that cannot report persisted success.
+
+  REPROVEN RESIDUALS:
+  - R1 CONFIRMED→FIXED: application/intelligence imported
+    interface/mcp/constants.py (GPT_TO_MCP_TOOLS). Now
+    capability_registry.py is the inward canonical source and
+    constants.py derives GPT_TO_MCP_TOOLS / TOOL_TO_GPT_OPERATION /
+    MCP_NATIVE_TOOLS / TOOL_CLASS from it. AST test proves zero
+    application→interface.mcp imports.
+  - R2 CONFIRMED→FIXED: build_capability_surface_catalog() built the
+    Actions model then sanitized for MCP. Now _canonical_catalog()
+    holds neutral names + semantic confirmation kinds; Actions and MCP
+    are sibling projections (_project_catalog_for_actions /
+    _project_catalog_for_mcp).
+  - R3 CONFIRMED→FIXED: unknown gpt_* names no longer fall back to a
+    generic tombstone — ProjectionContractError. Only explicit
+    _MCP_KNOWN_TOMBSTONES (legacy removed ops) render as removed_*.
+    1→N parity (meeting_minute.manage → 3 tools) declares an explicit
+    mcp_primary validated at binding construction — no naming heuristic.
+  - R4 CONFIRMED→FIXED: both MCP PREPARE paths trusted
+    data["persisted"]==True and reported success. Now they raise
+    GovernedWriteError(prepare_persisted_state_violation, 500) — the
+    wire carries the violation code, never a business outcome.
+
+  CHANGES:
+  - NEW tm_app/application/intelligence/capability_registry.py —
+    CapabilityBinding(id, actions_operation|None, mcp_tools with class,
+    explicit mcp_primary) + derived projections (actions_parity,
+    actions_to_mcp_primary, mcp_tool_to_actions, mcp_native_tool_names,
+    mcp_tool_classes) + ProjectionContractError + neutral
+    confirmation-policy label projections.
+  - interface/mcp/constants.py derives all parity/class maps inward.
+  - capability_descriptors.py: canonical neutral catalog; Actions
+    projection injects gpt_* ids + commit_now envelope; MCP projection
+    is the canonical surface (commit_proposal, zero commit_now).
+  - confirmation_policy.py: neutral ConfirmationKind classifiers;
+    transport labels rendered by the registry.
+  - transport_projection.py: prose neutralizer only — fail-closed on
+    unknown gpt_* names, explicit tombstones, residual-token guard.
+  - tool_bridge.py: PREPARE persisted=true → fail closed (both sites).
+  - teo_agent_intelligence_service.py: parity sourced from registry.
+  - NEW tests/test_teo_capability_boundary.py (12 tests): AST
+    dependency-direction gate, single-source derivation, fail-closed
+    unknowns, explicit primary, persisted-violation wire contract.
+
+  TESTS:
+  - focused: 146 pass across 11 contract suites.
+  - full: 1216 passed, 11 failed — identical pre-existing baseline
+    (bootstrap_filiais, dashboard_live, sign_invite_mail, etc.),
+    zero new failures.
+  - residual search: 0 application→interface.mcp imports, 0 duplicate
+    parity registries, 0 removed_actions_operation fallbacks, 0
+    persisted-success paths, 0 stale tool-count literals.
+
+  COMPATIBILITY: Actions projection byte-compatible (teo-gpt-actions-v2,
+  gpt_* ids, commit_now additive). OpenAPI unchanged → no Builder
+  reimport. MCP tool count/classes unchanged (24 tools, 1 ACT).
+
+  RESIDUAL: live MCP acceptance post-deploy not yet executed —
+  PRODUCTION_READINESS=NOT_PROVEN until deployed-runtime evidence.

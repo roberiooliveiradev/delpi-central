@@ -71,11 +71,13 @@ class TeoAgentIntelligenceService:
         name is rewritten through the canonical parity map — zero
         ``commit_now`` / atomic prepare+commit semantics.
         """
-        from tm_app.application.intelligence.transport_projection import (
+        from tm_app.application.intelligence.capability_registry import (
+            actions_parity,
             actions_to_mcp_primary,
+        )
+        from tm_app.application.intelligence.transport_projection import (
             neutralize_for_mcp,
         )
-        from tm_app.interface.mcp.constants import GPT_TO_MCP_TOOLS
 
         doc = cls.document()
         posture = dict(doc.get("execution_posture") or {})
@@ -100,7 +102,7 @@ class TeoAgentIntelligenceService:
             anti_patterns += list(doc.get("anti_patterns_actions") or [])
             # Canonical parity record: gpt operationId → MCP tool names.
             parity["parity_map"] = {
-                gpt_op: list(tools) for gpt_op, tools in GPT_TO_MCP_TOOLS.items()
+                gpt_op: list(tools) for gpt_op, tools in actions_parity().items()
             }
             parity["parity_map_primary"] = actions_to_mcp_primary()
         raw = {

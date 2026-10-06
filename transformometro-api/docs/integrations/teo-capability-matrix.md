@@ -45,8 +45,8 @@ Canonical domain capability
 | Entity contracts | `entities.py` + `registration_guide.entity_schemas` |
 | Capability metadata | `capability_descriptors` + catalog `capability_surface` |
 | Agent intelligence | `teo_agent_intelligence.json` → `TeoAgentIntelligenceService.agent_directives(transport)` |
-| Transport parity map | `interface/mcp/constants.py` `GPT_TO_MCP_TOOLS` (canonical record) |
-| Transport projection | `application/intelligence/transport_projection.py` (`neutralize_for_mcp`) |
+| Transport parity map | `application/intelligence/capability_registry.py` `CAPABILITY_BINDINGS` (canonical; `interface/mcp/constants.py` derives) |
+| Transport projection | `application/intelligence/transport_projection.py` + canonical projections in `capability_descriptors` (`neutralize_for_mcp` only for prose, fail-closed) |
 | Actions surface | `openapi_builder.py` → generated OpenAPI (18 ops) |
 | MCP surface | `constants.py` / `server.py` registration (24 tools) |
 | AuthZ | Core RBAC + domain enforcement |
@@ -92,7 +92,8 @@ prepare_* → proposal_handle + exact_change + readiness + expiry
   `get_catalog` serves one canonical intelligence on both transports via a
   per-transport projection. The Actions projection keeps `gpt_*` names and
   the additive `commit_now` policy; the MCP projection (`transport="mcp"`)
-  rewrites every `gpt_*` name through the canonical parity map, drops
+  derives every name from the canonical capability registry (unknown
+  mappings fail closed), drops
   Actions-only sections (`write_flow`, `gpt_operations`, `*_actions`
   lists), ships `write_flow_mcp` instead, and contains zero `commit_now` /
   atomic prepare+commit semantics — enforced by

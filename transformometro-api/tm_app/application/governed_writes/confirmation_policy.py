@@ -60,12 +60,33 @@ def allows_commit_now_for_workflow(workflow_id: str) -> bool:
 
 
 def confirmation_policy_label_for_entity_operation(operation: str) -> str:
+    """Legacy Actions-vocabulary label — kept for callers on that surface."""
     if allows_commit_now_for_entity_operation(operation):
         return "commit_now_allowed_additive"
     return "explicit_user_confirmation_before_commit"
 
 
 def confirmation_policy_label_for_workflow(workflow_id: str) -> str:
+    """Legacy Actions-vocabulary label — kept for callers on that surface."""
     if allows_commit_now_for_workflow(workflow_id):
         return "commit_now_allowed_additive"
     return "explicit_user_confirmation_before_commit"
+
+
+# --- Neutral semantic kinds (transport-agnostic) -----------------------------
+# Canonical model stores the KIND; each transport projection renders its own
+# label via capability_registry.confirmation_policy_label(kind, transport).
+
+ConfirmationKind = Literal["additive_atomic_allowed", "explicit_confirmation"]
+
+
+def confirmation_kind_for_entity_operation(operation: str) -> ConfirmationKind:
+    if allows_commit_now_for_entity_operation(operation):
+        return "additive_atomic_allowed"
+    return "explicit_confirmation"
+
+
+def confirmation_kind_for_workflow(workflow_id: str) -> ConfirmationKind:
+    if allows_commit_now_for_workflow(workflow_id):
+        return "additive_atomic_allowed"
+    return "explicit_confirmation"

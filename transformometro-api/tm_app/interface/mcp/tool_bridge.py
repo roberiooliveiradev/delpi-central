@@ -25,6 +25,7 @@ from delpi_mcp.identity import (
 )
 from tm_app.application.governed_writes.errors import (
     OUTCOME_VERIFICATION_FAILED,
+    PREPARE_PERSISTED_STATE_VIOLATION,
     GovernedWriteError,
 )
 from tm_app.application.governed_writes.orchestrator import (
@@ -232,7 +233,12 @@ def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
             operation_label=f"prepare_{capability}",
         )
         if data.get("persisted"):
-            return _ok_result(data, "Change persisted and verified (commit_now).")
+            raise GovernedWriteError(
+                "MCP PREPARE contract violation: prepare reported "
+                "persisted=true — business outcome NOT declared.",
+                code=PREPARE_PERSISTED_STATE_VIOLATION,
+                status_code=500,
+            )
         prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
         if prop and not prop.get("act_allowed", True):
             return _ok_result(
@@ -508,7 +514,12 @@ def tool_prepare_record_change(
             changes=changes or {},
         )
         if data.get("persisted"):
-            return _ok_result(data, "Change persisted and verified (commit_now).")
+            raise GovernedWriteError(
+                "MCP PREPARE contract violation: prepare reported "
+                "persisted=true — business outcome NOT declared.",
+                code=PREPARE_PERSISTED_STATE_VIOLATION,
+                status_code=500,
+            )
         prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
         if prop and not prop.get("act_allowed", True):
             return _ok_result(

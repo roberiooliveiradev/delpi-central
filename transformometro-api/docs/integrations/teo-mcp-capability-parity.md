@@ -56,16 +56,24 @@ meta route gpt_get_openapi_schema is not importable
 
 Knowledge/intelligence parity (ARCH-DRIFT-TEO-MCP-EXPERT-KNOWLEDGE-DELIVERY-02):
 - get_catalog serves ONE canonical capability/intelligence source on both
-  transports; per-transport projection happens at the adapter boundary
-  (tm_app/application/intelligence/transport_projection.py).
+  transports; the canonical surface is transport-neutral; per-transport projections
+  derive from tm_app/application/intelligence/capability_registry.py
+  (+ transport_projection.py for residual prose).
 - MCP get_catalog: only MCP-callable names (prepare_*/commit_proposal),
   write_flow_mcp envelope, parity-neutral surface_version
   (teo-capabilities-v3), zero commit_now / gpt_* — enforced by
   tests/test_teo_mcp_transport_projection.py.
 - Actions gpt_get_catalog: unchanged gpt_* operationIds + additive
   commit_now policy + canonical surface_parity.parity_map.
-- Canonical parity record: interface/mcp/constants.py GPT_TO_MCP_TOOLS
-  (single map; projections derive names — no second name registry).
+- Canonical parity record (TEO-UNIFIED-BOUNDARY-FINAL-CORRECTION-03):
+  tm_app/application/intelligence/capability_registry.py — ONE binding
+  table owns capability ids, Actions operationIds, MCP tool names,
+  classes and explicit 1→N primary tools. interface/mcp/constants.py
+  derives GPT_TO_MCP_TOOLS / TOOL_CLASS / MCP_NATIVE_TOOLS from it
+  (adapter depends inward; application never imports interface.mcp).
+  Unknown mappings fail closed via ProjectionContractError; MCP PREPARE
+  reporting persisted=true now raises prepare_persisted_state_violation
+  instead of reporting success (tests/test_teo_capability_boundary.py).
 ```
 
 ## Surface budget
