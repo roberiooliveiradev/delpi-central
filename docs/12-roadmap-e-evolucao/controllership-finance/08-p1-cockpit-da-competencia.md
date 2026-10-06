@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / VISUAL_SPEC_DEFINED / READY_FOR_IMPLEMENTATION_INVENTORY**
+**TARGET / VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 
 ## Job
 
@@ -450,6 +450,91 @@ Help contextual explica eixos, freshness, blockers, preliminary/final e diferen�
 - PACKAGE_SENT + clarification → não complete;
 - source parcial → PARTIAL;
 - FORBIDDEN → sem exposição.
+
+---
+
+## RQ / AC / testes
+
+Rastreabilidade canônica:
+- `RQ-P1-01` — competência/contexto e F5;
+- `RQ-P1-02` — eixos independentes;
+- `RQ-P1-03` — blockers com source/ação;
+- `RQ-P1-04` — source indisponível não vira zero/sucesso;
+- `RQ-P1-05` — P1 é composição/read-only;
+- `RQ-P1-06` — histórico navegável;
+- `RQ-P1-07` — Help contextual.
+
+Authority executável: [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md).
+
+Matriz futura mínima:
+
+### Positive
+- abrir competência válida;
+- navegar entre P2/P3/P4/P5 preservando contexto;
+- exibir três eixos independentes;
+- mostrar blocker com motivo/source/ação;
+- reconstruir contexto após F5;
+- exibir histórico material.
+
+### Sibling
+- mudança em Estoque não falsifica Documentos/Pacote;
+- mudança em Documentos não falsifica Estoque/Pacote;
+- source parcial de um eixo preserva siblings confiáveis.
+
+### Negative
+- sem ACCESS;
+- resource/contexto fora do scope;
+- source indisponível tratado como zero;
+- zero pré-cutoff tratado como final;
+- P1 tentando validar evidência;
+- P1 tentando sacramentar;
+- P1 tentando finalizar/enviar;
+- PACKAGE_SENT tratado como conclusão quando existe clarification.
+
+### Experiência
+- loading;
+- empty;
+- partial;
+- unavailable source;
+- error;
+- 403;
+- 404;
+- desktop/mobile;
+- light/dark;
+- keyboard/focus;
+- deep link/F5;
+- Help.
+
+## Inventários técnicos remanescentes
+
+- `T01` — bindings/source/freshness dos eixos;
+- `T05` — Core effective permissions e resource ownership;
+- contratos físicos de agregação do BFF;
+- route/query param names.
+
+Esses itens são `TO_INVENTORY_BEFORE_IMPLEMENTATION` e não reabrem as regras funcionais de P1 salvo evidência incompatível.
+
+## Gate documental P1
+
+```text
+PRODUCT_RULES_DEFINED       = PASS
+INFORMATION_ARCH_DEFINED    = PASS
+DESKTOP_DEFINED             = PASS
+MOBILE_DEFINED              = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+UX_STATES_DEFINED           = PASS
+AUTHZ_MODEL_DEFINED         = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+DEEP_LINK_SEMANTICS_DEFINED = PASS
+HELP_CONTRACT_DEFINED       = PASS
+RQ_ACCEPTANCE_DEFINED       = PASS
+TEST_MATRIX_DEFINED         = PASS
+PHYSICAL_BINDINGS           = TO_INVENTORY
+IMPLEMENTATION_AUTHORIZED   = NO
+```
+
+P1 está documentalmente fechado para o escopo V1. Isso não autoriza runtime enquanto o fechamento documental transversal do Portal não estiver concluído.
 
 ---
 
