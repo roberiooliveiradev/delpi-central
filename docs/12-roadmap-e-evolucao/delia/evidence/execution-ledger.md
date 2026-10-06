@@ -10324,7 +10324,6 @@ EVIDENCE (live production, 2026-10-05):
         5. ambiguity regression PASS; 6. ANALYSIS->PREPARE PASS;
         7. structural direct/destructive policy PASS.
         8. Full delia-api suite 777/777 PASS.
-      EVALUATED_SHA = rework HEAD (commit of this entry).
-      DEPLOY: not redeployed in this rework — runtime diff vs
-      e6e3ebb is the provenance gate narrowing only; deploy may
-      follow the same delia-api-only path if requested.
+      EVALUATED_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39.
+      DEPLOYED_DELIA_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39
+        (delia-api only; delpi-delia-api healthy; owners untouched).
