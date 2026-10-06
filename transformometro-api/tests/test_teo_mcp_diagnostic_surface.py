@@ -654,19 +654,21 @@ class TestPrepareManageDiagnostic:
 
 
 class TestCommonCommit:
-    def test_commit_requires_confirmation_and_fresh_authz(
+    def test_commit_auto_act_no_extra_confirmation_and_fresh_authz(
         self, governed, repo, rbac
     ):
+        """create_diagnostic is execution_policy=auto_act: the user request
+        is the intent — commit_proposal(confirmation=False) must execute,
+        still with fresh AuthZ + authoritative read-back + verify."""
         _prime_ctx()
         prepared = bridge.tool_prepare_create_diagnostic(
             revision_id=REV_A, problem_statement="fluxo real"
         )
-        handle = _structured(prepared)["data"]["proposal"]["handle"]
+        proposal = _structured(prepared)["data"]["proposal"]
+        assert proposal.get("execution_policy") == "auto_act"
+        handle = proposal["handle"]
 
-        denied = bridge.tool_commit_proposal(handle, confirmation=False)
-        assert _structured(denied)["success"] is False
-
-        committed = bridge.tool_commit_proposal(handle, confirmation=True)
+        committed = bridge.tool_commit_proposal(handle, confirmation=False)
         data = _structured(committed)
         assert data["success"] is True
         # fresh Core AuthZ ran at ACT
@@ -675,6 +677,29 @@ class TestCommonCommit:
         repo.create.assert_called_once()
         assert data["data"]["postcondition"]["verified"] is True
         assert data["data"]["persisted"] is True
+
+    def test_commit_confirm_before_act_requires_confirmation(
+        self, governed, repo, rbac
+    ):
+        """manage_diagnostic is execution_policy=confirm_before_act:
+        commit_proposal(confirmation=False) must be rejected; explicit
+        confirmation then executes normally."""
+        _prime_ctx()
+        diagnostic = _seed_diagnostic(repo)
+        prepared = bridge.tool_prepare_manage_diagnostic(
+            diagnostic_id=diagnostic.diagnostic_id,
+            action="add_finding",
+            payload={"statement": "obs"},
+        )
+        proposal = _structured(prepared)["data"]["proposal"]
+        assert proposal.get("execution_policy") == "confirm_before_act"
+        handle = proposal["handle"]
+
+        denied = bridge.tool_commit_proposal(handle, confirmation=False)
+        assert _structured(denied)["success"] is False
+
+        committed = bridge.tool_commit_proposal(handle, confirmation=True)
+        assert _structured(committed)["success"] is True
 
     def test_revoke_between_prepare_and_commit_denied(
         self, governed, repo, rbac

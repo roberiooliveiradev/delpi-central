@@ -238,13 +238,13 @@ def actions_operation_for_neutral(
 # ---------------------------------------------------------------------------
 
 _CONFIRMATION_POLICY_LABELS = {
-    "additive_atomic_allowed": {
+    "auto_act": {
         "gpt_actions": "commit_now_allowed_additive",
-        "mcp": "explicit_confirmation_required",
+        "mcp": "auto_act",
     },
-    "explicit_confirmation": {
+    "confirm_before_act": {
         "gpt_actions": "explicit_user_confirmation_before_commit",
-        "mcp": "explicit_user_confirmation_before_commit",
+        "mcp": "confirm_before_act",
     },
 }
 

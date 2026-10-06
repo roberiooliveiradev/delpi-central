@@ -30,6 +30,10 @@ from tm_app.application.governed_writes.errors import (
     VALIDATION,
     GovernedWriteError,
 )
+from tm_app.application.governed_writes.confirmation_policy import (
+    CONFIRM_BEFORE_ACT,
+    execution_policy_for_capability,
+)
 from tm_app.application.governed_writes.proposal import (
     create_proposal,
     fingerprint,
@@ -148,6 +152,17 @@ class GovernedWriteOrchestrator:
         except GptActionsError as exc:
             _raise_gpt(exc)
 
+        # Canonical write-execution policy (TEO-CANONICAL-WRITE-EXECUTION-
+        # POLICY-04): NON_DESTRUCTIVE = auto_act, DESTRUCTIVE =
+        # confirm_before_act. The explicit-confirmation flag is sealed
+        # from the canonical policy — never hardcoded per transport.
+        execution_policy = execution_policy_for_capability(capability)
+        requirement = dict(prepared.get("confirmation_requirement") or {})
+        requirement["explicit_user_confirmation"] = (
+            execution_policy == CONFIRM_BEFORE_ACT
+        )
+        prepared["confirmation_requirement"] = requirement
+
         proposal = create_proposal(
             capability=capability,
             actor_id=actor_id,
@@ -160,6 +175,7 @@ class GovernedWriteOrchestrator:
             consequential_impact=prepared["consequential_impact"],
             confirmation_requirement=prepared["confirmation_requirement"],
             expected_postcondition=prepared["expected_postcondition"],
+            execution_policy=execution_policy,
             meta=prepared.get("meta") or {},
         )
         handle = get_proposal_store().put(proposal)
@@ -255,7 +271,7 @@ class GovernedWriteOrchestrator:
             "exact_change": exact,
             "validation_result": {"ready": True, "checks": ["entity_known", "authz_probe"]},
             "consequential_impact": {"persists": True, "operation": "create"},
-            "confirmation_requirement": {"explicit_user_confirmation": True},
+            "confirmation_requirement": {},
             "expected_postcondition": {
                 "type": "resource_exists",
                 "entity": entity,
@@ -268,7 +284,7 @@ class GovernedWriteOrchestrator:
         data = dict(args.get("data") or {})
         current = self._dispatch.get_record(request, entity, record_id)
         exact = {"entity": entity, "id": record_id, "data": data}
-        conf: dict[str, Any] = {"explicit_user_confirmation": True}
+        conf: dict[str, Any] = {}
         if entity == "revision" and (
             "vigencia_inicio" in data or "vigencia_fim" in data or "data" in args
         ):
@@ -303,7 +319,7 @@ class GovernedWriteOrchestrator:
                 "operation": "soft_delete",
                 "destructive": True,
             },
-            "confirmation_requirement": {"explicit_user_confirmation": True},
+            "confirmation_requirement": {},
             "expected_postcondition": {
                 "type": "resource_soft_deleted_or_absent",
                 "entity": entity,
@@ -328,7 +344,7 @@ class GovernedWriteOrchestrator:
             },
             "validation_result": {"ready": True},
             "consequential_impact": {"persists": True, "operation": "duplicate"},
-            "confirmation_requirement": {"explicit_user_confirmation": True},
+            "confirmation_requirement": {},
             "expected_postcondition": {
                 "type": "duplicate_exists",
                 "source_id": record_id,
@@ -352,7 +368,7 @@ class GovernedWriteOrchestrator:
                 "operation": "activate_revision",
                 "overwrites_current": True,
             },
-            "confirmation_requirement": {"explicit_user_confirmation": True},
+            "confirmation_requirement": {},
             "expected_postcondition": {
                 "type": "revision_active",
                 "revisao_id": revisao_id,
@@ -379,7 +395,7 @@ class GovernedWriteOrchestrator:
                 "operation": "recalculate",
                 "note": "Updates materialised dashboard cache; GET dashboard may use live engine.",
             },
-            "confirmation_requirement": {"explicit_user_confirmation": True},
+            "confirmation_requirement": {},
             "expected_postcondition": {
                 "type": "recalculate_result_present",
                 "fields": ["mode"],
@@ -414,7 +430,7 @@ class GovernedWriteOrchestrator:
                 "persists": True,
                 "operation": f"meeting_workflow_{action}",
             },
-            "confirmation_requirement": {"explicit_user_confirmation": True},
+            "confirmation_requirement": {},
             "expected_postcondition": {
                 "type": "meeting_minute_workflow_state",
                 "minute_id": minute_id,
@@ -476,7 +492,6 @@ class GovernedWriteOrchestrator:
                 "recalculate": body["recalculate"],
             },
             "confirmation_requirement": {
-                "explicit_user_confirmation": True,
                 "requires_ready": True,
             },
             "expected_postcondition": {
@@ -504,7 +519,7 @@ class GovernedWriteOrchestrator:
         listed = self._dispatch.list_evidence(
             request, scope=str(exact["scope"]), parent_id=str(exact["parent_id"])
         )
-        conf = {"explicit_user_confirmation": True}
+        conf = {}
         if exact["operation"] == "delete":
             conf["confirm_delete"] = True
         return {
@@ -541,7 +556,7 @@ class GovernedWriteOrchestrator:
             "exact_change": exact,
             "validation_result": {"ready": True},
             "consequential_impact": {"persists": True, "operation": "adjust_cost"},
-            "confirmation_requirement": {"explicit_user_confirmation": True},
+            "confirmation_requirement": {},
             "expected_postcondition": {"type": "cost_verified_flag"},
         }
 
@@ -562,7 +577,7 @@ class GovernedWriteOrchestrator:
             if minute_id
             else {"minute_id": None}
         )
-        conf: dict[str, Any] = {"explicit_user_confirmation": True}
+        conf: dict[str, Any] = {}
         if action == "resend":
             conf["confirm_resend"] = True
         return {

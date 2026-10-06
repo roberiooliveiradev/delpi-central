@@ -873,11 +873,26 @@ def test_invalid_causal_reference_rejected(db, anchors, rbac):
 
 
 def test_diagnostic_commit_now_deny_by_default():
+    """Canonical execution policy for Diagnostic capabilities.
+
+    create_diagnostic is a pure additive root entity -> auto_act
+    (the Actions commit_now mechanism may implement it, though
+    diagnostic writes remain MCP-native today). manage_diagnostic
+    includes lifecycle supersession -> confirm_before_act.
+    """
     from tm_app.application.governed_writes.confirmation_policy import (
+        AUTO_ACT,
+        CONFIRM_BEFORE_ACT,
         allows_commit_now_for_capability,
+        execution_policy_for_capability,
     )
 
-    assert allows_commit_now_for_capability("create_diagnostic") is False
+    assert execution_policy_for_capability("create_diagnostic") == AUTO_ACT
+    assert (
+        execution_policy_for_capability("manage_diagnostic")
+        == CONFIRM_BEFORE_ACT
+    )
+    assert allows_commit_now_for_capability("create_diagnostic") is True
     assert allows_commit_now_for_capability("manage_diagnostic") is False
 
 

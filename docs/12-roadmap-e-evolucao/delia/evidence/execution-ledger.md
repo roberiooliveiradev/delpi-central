@@ -9980,3 +9980,94 @@ EVIDENCE (live production, 2026-10-05):
     business outcome claimed.
   PRODUCTION_READINESS=NOT_PROVEN for the public prod host (local
   runtime evidence only; production deploy is a separate gate).
+
+## 6.138. TEO-CANONICAL-WRITE-EXECUTION-POLICY-04 — canonical AUTO_ACT / CONFIRM_BEFORE_ACT write policy
+
+  DECISION: NON_DESTRUCTIVE_WRITE = AUTO_ACT executes directly after
+  governed PREPARE (direct user request = intent). DESTRUCTIVE_WRITE =
+  CONFIRM_BEFORE_ACT requires exactly ONE explicit user confirmation of
+  the sealed change. Confirmation is a destructive-action safeguard, not
+  an authorization mechanism. AUTO_ACT does not bypass AuthZ, validation,
+  proposal integrity, audit, read-back or verification.
+
+  OWNER / SOURCE: tm_app/application/governed_writes/
+  confirmation_policy.py remains THE canonical policy owner (refactored,
+  not forked): _CAPABILITY_EXECUTION_POLICY +
+  _ENTITY_EXECUTION_POLICY + _WORKFLOW_EXECUTION_POLICY with
+  execution_policy_for_*() lookups that fail closed to
+  confirm_before_act on unknown capabilities. allows_commit_now_*()
+  kept as Actions-transport compat delegates (commit_now = mechanism,
+  never canonical policy). Destructiveness classified per capability —
+  never inferred from verbs.
+
+  CLASSIFICATION (explicit, business-effect based):
+  - auto_act: create_record, update_record, duplicate_record,
+    adjust_shared_resource_cost (append-only reajuste), create_diagnostic.
+  - confirm_before_act: delete_record, commit_improvement_package
+    (compound; may supersede active scenario + recalculate materialized
+    state — reclassified from additive commit_now), activate_revision
+    (supersedes operational scenario), recalculate_dashboard (overwrites
+    materialized state), meeting_minute_workflow (send/finalize/cancel),
+    manage_evidence (includes delete), meeting_minute_manage (external
+    comm side effects), manage_diagnostic (lifecycle supersession).
+
+  CHANGES:
+  - proposal.py: GovernedProposal.execution_policy sealed at PREPARE;
+    default confirm_before_act for pre-policy stored proposals (fail safe).
+  - orchestrator.prepare(): stamps execution_policy on the sealed
+    proposal AND derives confirmation_requirement
+    .explicit_user_confirmation from the canonical policy — all
+    per-prep hardcoded True literals removed (13 sites).
+  - governed_actions_facade.commit_proposal(): loads proposal first,
+    enforces confirmation=true only when sealed policy is
+    confirm_before_act; auto_act proposals commit without the flag.
+    _maybe_commit_now() unchanged in shape — policy_allows now resolves
+    through the canonical map (package no longer atomic).
+  - proposal envelope surfaces proposal.execution_policy on the wire.
+  - capability_descriptors.py: entities carry execution_policy per write
+    op + workflows carry execution_policy + confirmation_requirement
+    derived; proposal_model.write_execution_policy documents both
+    classes; Actions projection renders legacy confirmation_policy
+    labels (compat), MCP renders canonical values.
+  - teo_agent_intelligence.json: write_flow/write_flow_mcp/flows/
+    execution_posture rewritten to canonical vocabulary; package moved
+    to the destructive list.
+  - registration_guide.py entity_write_flow: policy-gated text with
+    (Actions: ...) annotation for the commit_now mechanism (stripped on
+    the MCP projection).
+  - branding.py TEO_MCP_INSTRUCTIONS: prepare returns execution_policy;
+    auto_act commits directly, confirm_before_act asks once.
+  - transport_projection.py: comment corrected; legacy token rewrites
+    retained as fail-closed compat layer.
+  - tests/test_teo_write_execution_policy.py (16 contract tests):
+    classification table completeness, fail-closed unknowns, sealed
+    policy on proposals, Actions commit_now allowed only for auto_act,
+    commit(confirmation=False) allowed for auto_act / rejected for
+    confirm_before_act, AuthZ re-run inside ACT, catalog projections
+    for both transports, single-source one-change propagation,
+    transport-independence.
+  - Updated pre-existing tests pinning the old universal-confirmation
+    contract (surface_v2, diagnostic_surface, agent_intelligence,
+    diagnostic_governed_writes, diagnostic_integration_acceptance,
+    gpt_actions_v2_governed_surface) — now pin the canonical classes.
+
+  MCP: PREPARE stays pure (persisted=false; prepare_persisted_state_
+  violation still enforced). No new tools; commit_proposal remains the
+  sole ACT. AUTO_ACT on MCP = prepare -> commit_proposal same turn,
+  driven by catalog execution_policy + agent_directives — never inside
+  the PREPARE handler. confirmation=false wire flag accepted only for
+  auto_act-sealed proposals.
+
+  ACTIONS: OpenAPI unchanged; commit_now=true remains the additive
+  transport mechanism for auto_act entity ops. No Builder reimport.
+
+  TESTS: focused = 384 pass (23 suites). full = 1233 passed, 11 failed
+  = identical pre-existing baseline, 0 new failures.
+
+  RESIDUAL SEARCH: only canonical gate site carries
+  explicit_user_confirmation; 0 hardcoded confirm-all-writes; 0
+  commit_now on MCP surface; 0 duplicate policy registries.
+
+  DEPLOYMENT / LIVE ACCEPTANCE: pending (local docker transformometro-api
+  restart + gateway acceptance planned for this task).
+

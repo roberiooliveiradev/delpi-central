@@ -147,11 +147,34 @@ def test_prepare_create_process_document_no_write_then_commit():
 
 
 def test_commit_requires_confirmation():
+    """CONFIRM_BEFORE_ACT proposals still demand explicit confirmation.
+
+    The policy gate now reads the sealed execution_policy — so the
+    check needs a real destructive proposal, not a bogus handle.
+    """
     facade = GovernedActionsFacade()
-    with pytest.raises(GovernedWriteError) as exc:
-        facade.commit_proposal(
-            _request(), proposal_handle="x.y", confirmation=False
+    req = _request()
+    with (
+        patch.object(facade._dispatch, "_require_capability"),
+        patch(
+            "tm_app.interface.http.branch_access_http."
+            "require_transformometro_view_access",
+            return_value=None,
+        ),
+        patch.object(
+            facade._dispatch, "get_record", return_value=_doc().to_dict()
+        ),
+    ):
+        prepared = facade.prepare_record_change(
+            req,
+            entity="process_document",
+            operation="delete",
+            record_id="doc-1",
         )
+    handle = prepared["proposal"]["handle"]
+    assert prepared["proposal"]["execution_policy"] == "confirm_before_act"
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(req, proposal_handle=handle, confirmation=False)
     assert exc.value.data.get("error_code") == "CONFIRMATION_REQUIRED"
 
 

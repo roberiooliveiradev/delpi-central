@@ -58,7 +58,10 @@ _MCP_KEY_REWRITE = {
 }
 
 # Pipeline/policy tokens that encode the Actions atomic prepare+commit path.
-# On MCP every write is PREPARE → explicit confirmation → commit_proposal.
+# On MCP the canonical policy is execution_policy: auto_act writes still
+# run PREPARE -> commit_proposal (same turn, no extra confirmation); only
+# confirm_before_act requires an explicit user confirmation. These legacy
+# tokens are kept as a fail-closed rewrite layer for bounded prose.
 _MCP_TOKEN_REWRITE = {
     "commit_now_or_confirm": "confirm_then_commit_proposal",
     "commit_now_if_additive": "confirm_then_commit_proposal",

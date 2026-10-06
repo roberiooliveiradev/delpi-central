@@ -459,7 +459,7 @@ def prepare_create(stack: DiagnosticWriteStack, args: dict) -> dict[str, Any]:
             "persists": True,
             "operation": "create_diagnostic",
         },
-        "confirmation_requirement": {"explicit_user_confirmation": True},
+        "confirmation_requirement": {},
         "expected_postcondition": {
             "type": "diagnostic_created",
             "diagnostic_id": diagnostic_id,
@@ -516,7 +516,7 @@ def prepare_manage(stack: DiagnosticWriteStack, args: dict) -> dict[str, Any]:
             "persists": True,
             "operation": f"diagnostic_{action}",
         },
-        "confirmation_requirement": {"explicit_user_confirmation": True},
+        "confirmation_requirement": {},
         "expected_postcondition": _postcondition(action, normalized),
     }
 

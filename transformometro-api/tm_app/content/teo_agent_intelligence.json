@@ -17,29 +17,29 @@
   "execution_posture": {
     "principle": "EXECUTE_TYPED_CHANGE_NOW",
     "rules": [
-      "Pedido tipável (grave/salve/cadastre/aplique) → encadear READ→PREPARE no mesmo turno (Actions: +commit_now se additive).",
-      "Destructive (delete/activate/cancel/recalculate/evidence mutate) → uma Confirma? explícita → commit_proposal."
+      "Pedido tipável (grave/salve/cadastre/aplique) → encadear READ→PREPARE(+commit se execution_policy=auto_act) no mesmo turno (Actions: commit_now implementa auto_act).",
+      "Destructive (delete/activate/cancel/package/recalculate/evidence mutate/workflow) → uma Confirma? explícita → commit_proposal."
     ],
     "rules_actions": [
-      "Não perguntar 'Posso aplicar?' / 'Confirma?' em write additive com commit_now permitido."
+      "Não perguntar 'Posso aplicar?' / 'Confirma?' em capability com execution_policy=auto_act."
     ],
     "forbidden": [
       "Menu de opções em vez de chamar a Action/tool tipada"
     ],
     "forbidden_actions": [
-      "Confirma? em create/update/duplicate/package ready com commit_now"
+      "Confirma? em capability execution_policy=auto_act (commit_now permitido no transport Actions)"
     ]
   },
   "write_flow": {
-    "additive": "prepare_* com commit_now=true + confirmation=true + Idempotency-Key → PREPARE+ACT atômico. Pedido do usuário = autorização de intenção — não perguntar Confirma?.",
-    "destructive": "prepare_* sem commit_now → mostrar proposal → uma Confirma? → commit_proposal(proposal_handle, confirmation=true).",
+    "additive": "execution_policy=auto_act (create/update/duplicate/cost-adjust): commit_now=true + confirmation=true + Idempotency-Key → PREPARE+ACT atômico. Pedido do usuário = intenção — não perguntar Confirma?.",
+    "destructive": "execution_policy=confirm_before_act (delete/activate/cancel/package/recalculate/workflow): prepare_* → mostrar proposal → uma Confirma? → commit_proposal(proposal_handle, confirmation=true).",
     "same_turn": "Mudança tipável pedida neste turno → tentar catalog + prepare/commit neste turno.",
-    "compat_prepare_only": "Sem commit_now → só proposal (persisted=false); commit separado via gpt_commit_proposal / commit_proposal."
+    "compat_prepare_only": "Sem commit_now → só proposal (persisted=false); commit separado via gpt_commit_proposal / commit_proposal respeitando execution_policy."
   },
   "write_flow_mcp": {
     "prepare": "prepare_* valida e sela a mudança (persisted=false) e retorna proposal_handle opaco — PREPARE nunca persiste estado.",
-    "commit": "commit_proposal(proposal_handle, confirmation=true) é o único caminho ACT — exige Confirma? explícita do usuário + AuthZ backend.",
-    "same_turn": "Mudança tipável pedida neste turno → catalog + prepare neste turno; commit só após proposta mostrada e confirmada.",
+    "commit": "commit_proposal(proposal_handle, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança (confirmation=true é protocol ack da intenção já expressa — sem Confirma? adicional). confirm_before_act → uma Confirma? explícita do usuário antes do commit. AuthZ backend sempre revalidada.",
+    "same_turn": "Mudança tipável pedida neste turno → catalog + prepare + commit (auto_act) ou prepare + Confirma? + commit (confirm_before_act) neste turno.",
     "verify": "Após commit: read-back autoritativo + VERIFY. 2xx técnico ≠ sucesso de negócio."
   },
   "modes": {
@@ -81,7 +81,7 @@
     "Duplicar regra de confirmação no paste em vez de obedecer agent_directives."
   ],
   "anti_patterns_actions": [
-    "Perguntar Confirma? em write additive com commit_now permitido."
+    "Perguntar Confirma? em capability execution_policy=auto_act (commit_now permitido no transport Actions)."
   ],
   "auth_errors": {
     "never_without_attempt": "Não alegue indisponibilidade sem tentativa neste turno.",
@@ -111,10 +111,12 @@
       "pipeline": [
         "catalog",
         "validate_package",
-        "commit_now_or_confirm",
+        "show_exact_change",
+        "explicit_confirmation",
+        "commit_proposal",
         "read_back"
       ],
-      "confirmation_policy": "commit_now_allowed_additive"
+      "confirmation_policy": "confirm_before_act"
     },
     "guided_transform": {
       "gpt_operations": [
@@ -154,10 +156,10 @@
       "pipeline": [
         "catalog_schema",
         "prepare",
-        "commit_now_if_additive",
+        "policy_gate",
         "verify"
       ],
-      "confirmation_policy": "create_update_duplicate_commit_now_delete_confirm"
+      "confirmation_policy": "auto_act_delete_confirm_before_act"
     },
     "meeting_minutes": {
       "gpt_operations": [
@@ -184,7 +186,7 @@
         "crud_or_workflow",
         "confirm_if_destructive"
       ],
-      "confirmation_policy": "crud_additive_commit_now_workflow_confirm",
+      "confirmation_policy": "auto_act_crud_confirm_before_act_workflow",
       "search_canonical": {
         "gpt": "gpt_search_records",
         "mcp": "search_records",
@@ -210,9 +212,9 @@
       "pipeline": [
         "diagram_catalog",
         "prepare_conteudo",
-        "commit_now_additive"
+        "auto_act"
       ],
-      "confirmation_policy": "commit_now_allowed_additive"
+      "confirmation_policy": "auto_act"
     },
     "process_document": {
       "gpt_operations": [
@@ -230,9 +232,9 @@
       "pipeline": [
         "search",
         "prepare_content_md",
-        "commit_now_additive"
+        "auto_act"
       ],
-      "confirmation_policy": "commit_now_allowed_additive"
+      "confirmation_policy": "auto_act"
     },
     "evidence": {
       "gpt_operations": [
@@ -251,7 +253,7 @@
         "confirm",
         "commit"
       ],
-      "confirmation_policy": "explicit_user_confirmation_before_commit",
+      "confirmation_policy": "confirm_before_act",
       "binary": "UI-only"
     },
     "dashboard": {
@@ -273,7 +275,7 @@
         "analyze_read",
         "recalculate_confirm"
       ],
-      "confirmation_policy": "recalculate_confirm"
+      "confirmation_policy": "confirm_before_act"
     },
     "shared_resource": {
       "gpt_operations": [
@@ -292,7 +294,7 @@
         "crud_or_cost",
         "commit_now_if_additive"
       ],
-      "confirmation_policy": "mixed_cost_allows_commit_now"
+      "confirmation_policy": "mixed"
     },
     "catalog_admin": {
       "gpt_operations": [
@@ -308,7 +310,7 @@
       "pipeline": [
         "branch_department_crud"
       ],
-      "confirmation_policy": "commit_now_allowed_additive"
+      "confirmation_policy": "auto_act"
     },
     "methodology": {
       "gpt_operations": [
@@ -357,12 +359,11 @@
       "pipeline": [
         "read_first",
         "prepare",
-        "show_exact_change",
-        "explicit_confirmation",
+        "policy_gate",
         "commit_proposal",
         "read_back"
       ],
-      "confirmation_policy": "explicit_confirmation_required_no_commit_now",
+      "confirmation_policy": "mixed",
       "notes": "MCP-native. New claim ids are server-generated; existing reference ids are caller-provided and never fabricated."
     }
   }

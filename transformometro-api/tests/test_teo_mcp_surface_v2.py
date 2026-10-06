@@ -117,8 +117,34 @@ def test_commit_proposal_rejects_confirmation_false() -> None:
         )
     )
     auth_token = set_request_authorization("Bearer test")
+    reset_proposal_store_for_tests()
     try:
-        result = tool_commit_proposal("any.handle", confirmation=False)
+        # CONFIRM_BEFORE_ACT proposals still require explicit confirmation.
+        # Prepare a real destructive proposal (delete_record) so the
+        # canonical execution_policy sealed on the proposal is exercised.
+        import tm_app.interface.mcp.tool_bridge as bridge
+
+        with (
+            patch.object(bridge._governed._dispatch, "_require_capability"),
+            patch(
+                "tm_app.interface.http.branch_access_http."
+                "require_transformometro_view_access",
+                return_value=None,
+            ),
+            patch.object(
+                bridge._governed._dispatch,
+                "get_record",
+                return_value={"id": "doc-1", "processo_id": "p1"},
+            ),
+        ):
+            prepared = bridge.tool_prepare_delete_record(
+                entity="process_document", id="doc-1"
+            )
+        pdata = prepared.structured_content["data"]
+        handle = pdata["proposal"]["handle"]
+        assert pdata["proposal"]["execution_policy"] == "confirm_before_act"
+
+        result = tool_commit_proposal(handle, confirmation=False)
         assert result.is_error is True
         msg = (result.structured_content or {}).get("message", "")
         assert "confirmation" in msg.lower() or "CONFIRMATION" in str(
@@ -127,6 +153,7 @@ def test_commit_proposal_rejects_confirmation_false() -> None:
     finally:
         reset_request_authorization(auth_token)
         reset_current_user(user_token)
+        reset_proposal_store_for_tests()
 
 
 def test_specialized_prepares_still_registered() -> None:

@@ -347,7 +347,8 @@ def test_prepare_create_success(rbac):
         "problem_statement": "problema X",
         "provenance": None,
     }
-    assert result["confirmation_requirement"]["explicit_user_confirmation"]
+    # create_diagnostic is execution_policy=auto_act — no confirmation gate.
+    assert not result["confirmation_requirement"]["explicit_user_confirmation"]
     repo.create.assert_not_called()  # PREPARE never persists
 
 

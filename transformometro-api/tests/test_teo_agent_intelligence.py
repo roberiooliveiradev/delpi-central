@@ -53,11 +53,15 @@ def test_confirmation_policy_pos_sib_neg():
     assert allows_commit_now_for_entity_operation("update")
     assert allows_commit_now_for_entity_operation("duplicate")
     assert not allows_commit_now_for_entity_operation("delete")
-    assert allows_commit_now_for_capability("commit_improvement_package")
+    # commit_improvement_package reclassified CONFIRM_BEFORE_ACT:
+    # compound write that can supersede the active scenario and
+    # recalculate materialized state (TEO-CANONICAL-WRITE-
+    # EXECUTION-POLICY-04).
+    assert not allows_commit_now_for_capability("commit_improvement_package")
     assert allows_commit_now_for_capability("adjust_shared_resource_cost")
     assert not allows_commit_now_for_capability("activate_revision")
     assert not allows_commit_now_for_workflow("meeting_minute_workflow")
-    assert allows_commit_now_for_workflow("improvement_package")
+    assert not allows_commit_now_for_workflow("improvement_package")
 
 
 def test_entity_confirmation_policy_labels_on_catalog():
@@ -68,7 +72,7 @@ def test_entity_confirmation_policy_labels_on_catalog():
         "explicit_user_confirmation_before_commit"
     )
     pkg = next(w for w in surface["workflows"] if w["id"] == "improvement_package")
-    assert pkg["confirmation_policy"] == "commit_now_allowed_additive"
+    assert pkg["confirmation_policy"] == "explicit_user_confirmation_before_commit"
     act = next(w for w in surface["workflows"] if w["id"] == "activate_revision")
     assert act["confirmation_policy"] == "explicit_user_confirmation_before_commit"
 

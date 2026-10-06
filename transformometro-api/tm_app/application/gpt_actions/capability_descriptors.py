@@ -25,6 +25,9 @@ import copy
 from typing import Any
 
 from tm_app.application.governed_writes.confirmation_policy import (
+    CONFIRM_BEFORE_ACT,
+    execution_policy_for_entity_operation,
+    execution_policy_for_workflow,
     confirmation_kind_for_entity_operation,
     confirmation_kind_for_workflow,
 )
@@ -130,6 +133,14 @@ def _canonical_catalog() -> dict[str, Any]:
                     "prepare_record_change → commit_proposal"
                     if write_ops
                     else "read_only"
+                ),
+                "execution_policy": (
+                    {
+                        op: execution_policy_for_entity_operation(op)
+                        for op in write_ops
+                    }
+                    if write_ops
+                    else None
                 ),
                 "confirmation_policy": (
                     {
@@ -271,6 +282,12 @@ def _canonical_catalog() -> dict[str, Any]:
             "operation": "get_process_timeline",
         },
     ]
+    # Canonical write-execution policy drives the confirmation flag
+    # and is exposed verbatim so transports/agents can branch on it.
+    for workflow in workflows:
+        policy = execution_policy_for_workflow(workflow["id"])
+        workflow["execution_policy"] = policy
+        workflow["confirmation_requirement"] = policy == CONFIRM_BEFORE_ACT
 
     return {
         "surface_version": "teo-capabilities-v3",
@@ -278,6 +295,16 @@ def _canonical_catalog() -> dict[str, Any]:
             "prepare_then_commit": True,
             "opaque_proposal_handle": True,
             "commit_operation": "commit_proposal",
+            "write_execution_policy": {
+                "auto_act": (
+                    "non-destructive write executes immediately after "
+                    "governed PREPARE; no conversational confirmation"
+                ),
+                "confirm_before_act": (
+                    "destructive/consequential write requires ONE explicit "
+                    "user confirmation of the exact prepared change"
+                ),
+            },
             "ttl_seconds_default": 900,
             "store": "in_process",
             "store_residual": "ACCEPTED_WITH_RESIDUAL for multi-replica",
@@ -368,7 +395,7 @@ def _render_confirmation_labels(node: Any, transport: str) -> None:
             else:
                 entity["prepare_act_policy"] = (
                     "prepare_record_change → commit_proposal "
-                    "(explicit confirmation required)"
+                    "(per-op execution_policy: auto_act | confirm_before_act)"
                 )
     for workflow in node.get("workflows") or []:
         kind = workflow.get("confirmation_policy")

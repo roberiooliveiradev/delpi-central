@@ -55,24 +55,49 @@ Canonical domain capability
 | Runtime status | deploy + acceptance evidence (not docs alone) |
 | Capability matrix | **this file** |
 
-## PREPARE / CONFIRM / COMMIT (canonical flow)
+## PREPARE / POLICY GATE / COMMIT (canonical flow)
 
 Two distinct consumer contracts share the same governed-write engine
-(`GovernedWriteOrchestrator`); they are separated at the adapter boundary:
+(`GovernedWriteOrchestrator`); they are separated at the adapter boundary.
+The canonical write-execution policy
+(`application/governed_writes/confirmation_policy.py`, sealed on every
+proposal as `execution_policy`) classifies each material-write capability:
+
+- `auto_act` — NON_DESTRUCTIVE writes (create/update/duplicate, append-only
+  cost adjust, additive diagnostic create): execute directly after governed
+  PREPARE. The direct user request is the intent — no conversational
+  confirmation round-trip.
+- `confirm_before_act` — DESTRUCTIVE/consequential writes (delete,
+  activation/supersession, package commit, recalculate, workflow
+  transitions, evidence manage, diagnostic manage): exactly ONE explicit
+  user confirmation before ACT.
 
 ```text
-GPT Actions adapter (additive contract):
-UNDERSTAND → READ → PREPARE EXACT CHANGE → VALIDATE
-→ (allowed capabilities only) commit_now=true + confirmation + Idempotency-Key
-  → ACT + READ-BACK
-→ (destructive) SHOW USER → EXPLICIT CONFIRMATION → COMMIT → READ-BACK
+UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE → AUTHZ
+→ WRITE EXECUTION POLICY GATE
+
+AUTO_ACT:
+    ACT → AUTHORITATIVE READ-BACK → VERIFY → REPORT
+
+CONFIRM_BEFORE_ACT:
+    SHOW EXACT DESTRUCTIVE CHANGE → ONE EXPLICIT CONFIRMATION
+    → ACT → AUTHORITATIVE READ-BACK → VERIFY → REPORT
+```
+
+Transport mechanics (adapters only, never canonical policy):
+
+```text
+GPT Actions adapter:
+  auto_act implemented via commit_now=true + confirmation +
+  Idempotency-Key (atomic PREPARE+ACT) — a transport mechanism only.
+  confirm_before_act → gpt_commit_proposal requires confirmation:true.
 
 MCP adapter (pure PREPARE):
-prepare_* → proposal_handle + exact_change + readiness + expiry
+  prepare_* → proposal_handle + exact_change + execution_policy + expiry
   (persisted=false always; NEVER materializes business state)
-→ consumer confirmation/governance
-→ commit_proposal (ACT) → fresh AuthZ → DOMAIN → SAVE
-→ AUTHORITATIVE READ-BACK → VERIFY → REPORT
+  auto_act → commit_proposal in the same turn (no extra Confirma?)
+  confirm_before_act → show change → Confirma? → commit_proposal
+  ACT → fresh AuthZ → DOMAIN → SAVE → AUTHORITATIVE READ-BACK → VERIFY
 ```
 
 - **MCP invariant (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):**
@@ -81,11 +106,14 @@ prepare_* → proposal_handle + exact_change + readiness + expiry
   `idempotency_key` fields — enforced by `tests/test_teo_mcp_prepare_contract.py`.
 - `commit_now` exists ONLY in the GPT Actions additive contract; it is not
   reachable through the MCP surface.
-- Actions additive create/update/duplicate/package-ready/cost-adjust tipável:
-  **não** pedir Confirma? no chat — `commit_now` no mesmo turno.
-- Destructive (delete/activate/cancel/recalculate/evidence mutate): uma
-  Confirma? → `gpt_commit_proposal` / `commit_proposal`.
-- Explicit confirmation ≠ AuthZ (backend revalidates on commit).
+- Capabilities `execution_policy=auto_act` (create/update/duplicate/
+  cost-adjust/additive diagnostic): **não** pedir Confirma? no chat — o
+  pedido direto do usuário é a intenção.
+- Destructive (delete/activate/cancel/package/recalculate/evidence
+  mutate/workflow/diagnostic manage): uma Confirma? → `gpt_commit_proposal`
+  / `commit_proposal`.
+- Explicit confirmation ≠ AuthZ (backend revalidates on commit); AUTO_ACT
+  also never bypasses AuthZ/validation/audit/read-back/verify.
 - Live mutation intelligence: `capability_surface.agent_directives` from
   `teo_agent_intelligence.json`.
 - **Knowledge parity (ARCH-DRIFT-TEO-MCP-EXPERT-KNOWLEDGE-DELIVERY-02):**
@@ -181,9 +209,9 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 |---|---|---|---|---|
 | Process document | User JWT → use case `require_access` | Same dispatch → use case | Must use user delegation when built | `ProcessDocumentUseCases` |
 | Entity CRUD (other) | Same as GPT services | Same | PLANNED | Domain + branch_access helpers |
-| Writes governed | PREPARE → commit_proposal + confirm flags | Conversational confirm + backend AuthZ | Must show + human confirm before commit | Orchestrator / services |
+| Writes governed | PREPARE → commit_proposal; confirm flag required only for confirm_before_act | execution_policy gate + backend AuthZ | Must show + human confirm before destructive commit; auto_act direct | Orchestrator / services |
 | MCP tool count | **24** (`CAPABILITY_GOVERNED_V2`) | — | — | constants.MCP_SURFACE_BUDGET |
-| Explicit confirmation | `commit_proposal` requires `confirmation` (no default — omitted ≠ confirmed) | `gpt_commit_proposal` body `confirmation` default `false` (fail-closed) | Same contract | `GovernedActionsFacade.commit_proposal` CONFIRMATION_REQUIRED gate |
+| Explicit confirmation | `commit_proposal` requires `confirmation` only for `confirm_before_act` proposals (auto_act commits without it) | `gpt_commit_proposal` body `confirmation` default `false` (fail-closed for destructive) | Same contract | `GovernedActionsFacade.commit_proposal` policy gate on the sealed `execution_policy` |
 
 Profile/cargo/department/context ≠ AuthZ. Service account must not impersonate user on MCP `/mcp`.
 

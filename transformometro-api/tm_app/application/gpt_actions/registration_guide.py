@@ -125,11 +125,15 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
             ),
             "entity_write_flow": (
                 "ENTITY CRUD: gpt_prepare_record_change "
-                "{entity, operation, record_id?, changes{...}} → SHOW proposal → "
-                "EXPLICIT CONFIRMATION → gpt_commit_proposal "
-                "{proposal_handle, confirmation:true} → AUTHORITATIVE READ-BACK → VERIFY. "
-                "PREPARE = NO WRITE. commit_proposal is NOT a generic executor "
-                "(only opaque proposal_handle from PREPARE)."
+                "{entity, operation, record_id?, changes{...}} → sealed proposal "
+                "carries execution_policy. auto_act (create/update/duplicate): "
+                "commit executes immediately after PREPARE — no extra Confirma? "
+                "(Actions: commit_now=true + confirmation:true + Idempotency-Key "
+                "for atomic PREPARE+ACT). confirm_before_act (delete): SHOW "
+                "proposal → ONE EXPLICIT CONFIRMATION → gpt_commit_proposal "
+                "{proposal_handle, confirmation:true}. ACT → AUTHORITATIVE "
+                "READ-BACK → VERIFY. PREPARE = NO WRITE. commit_proposal is "
+                "NOT a generic executor (only opaque proposal_handle from PREPARE)."
             ),
             "changes_wrapper": (
                 "Put canonical fields under changes.<field>. "

@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import Request
 
 from tm_app.application.governed_writes.confirmation_policy import (
+    CONFIRM_BEFORE_ACT,
     allows_commit_now_for_capability,
     allows_commit_now_for_entity_operation,
 )
@@ -164,14 +165,6 @@ class GovernedActionsFacade:
         proposal_handle: str,
         confirmation: bool,
     ) -> dict[str, Any]:
-        if not confirmation:
-            raise GovernedWriteError(
-                "confirmation=true is required to commit a proposal. "
-                "Conversational confirmation is not AuthZ; backend still revalidates.",
-                code=VALIDATION,
-                status_code=400,
-                data={"error_code": "CONFIRMATION_REQUIRED"},
-            )
         from tm_app.application.governed_writes.proposal_store import (
             load_valid_proposal,
         )
@@ -182,6 +175,23 @@ class GovernedActionsFacade:
             actor_id=actor_id,
             expected_capability=None,
         )
+        # Canonical write-execution policy sealed on the proposal at
+        # PREPARE time. AUTO_ACT proposals may commit without a
+        # conversational confirmation round-trip (user request is the
+        # intent); CONFIRM_BEFORE_ACT still requires one explicit
+        # confirmation. Confirmation is never AuthZ — the orchestrator
+        # revalidates authorization at ACT regardless.
+        execution_policy = (
+            getattr(proposal, "execution_policy", "") or CONFIRM_BEFORE_ACT
+        )
+        if execution_policy == CONFIRM_BEFORE_ACT and not confirmation:
+            raise GovernedWriteError(
+                "confirmation=true is required to commit a proposal. "
+                "Conversational confirmation is not AuthZ; backend still revalidates.",
+                code=VALIDATION,
+                status_code=400,
+                data={"error_code": "CONFIRMATION_REQUIRED"},
+            )
         result = self._orchestrator.act(
             request,
             capability=proposal.capability,
@@ -316,6 +326,7 @@ class GovernedActionsFacade:
                 "resource_id": public.get("resource_id"),
                 "summary": summary,
                 "exact_change": exact,
+                "execution_policy": public.get("execution_policy"),
                 "confirmation_requirement": public.get("confirmation_requirement"),
                 "expected_postcondition": public.get("expected_postcondition"),
                 "expires_at": public.get("expires_at"),

@@ -40,6 +40,10 @@ class GovernedProposal:
     created_at: float
     expires_at: float
     content_hash: str
+    # Canonical write-execution policy sealed at PREPARE time.
+    # Defaults to the safest class for proposals sealed before the field
+    # existed (fail closed = require confirmation).
+    execution_policy: str = "confirm_before_act"
     consumed: bool = False
     meta: dict[str, Any] = field(default_factory=dict)
 
@@ -53,6 +57,7 @@ class GovernedProposal:
             "consequential_impact": self.consequential_impact,
             "confirmation_requirement": self.confirmation_requirement,
             "expected_postcondition": self.expected_postcondition,
+            "execution_policy": self.execution_policy,
             "expires_at": self.expires_at,
             "current_state_fingerprint": self.current_state_fingerprint,
             "exact_change": self.exact_change,
@@ -104,6 +109,7 @@ def create_proposal(
     consequential_impact: dict[str, Any],
     confirmation_requirement: dict[str, Any],
     expected_postcondition: dict[str, Any],
+    execution_policy: str = "confirm_before_act",
     ttl_seconds: int = DEFAULT_TTL_SECONDS,
     meta: dict[str, Any] | None = None,
 ) -> GovernedProposal:
@@ -129,6 +135,7 @@ def create_proposal(
         consequential_impact=consequential_impact,
         confirmation_requirement=confirmation_requirement,
         expected_postcondition=expected_postcondition,
+        execution_policy=execution_policy,
         created_at=now,
         expires_at=now + max(60, int(ttl_seconds)),
         content_hash=content_hash,

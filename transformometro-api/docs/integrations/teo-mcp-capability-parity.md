@@ -38,6 +38,9 @@ PREPARE includes prepare_record_change + specialized workflow prepares + 2 Diagn
 ACT = commit_proposal only (opaque proposal_handle; capability from store)
 commit_proposal schema: proposal_handle and confirmation are BOTH required;
 confirmation has NO default — omitted confirmation never means confirmed.
+For proposals sealed with execution_policy=auto_act, confirmation is a
+protocol assertion of the already-expressed user intent (no extra
+conversational gate); confirm_before_act proposals require confirmation=true.
 unbound ACT = 0
 
 PREPARE purity (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):
@@ -47,7 +50,7 @@ PREPARE purity (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):
 - MCP PREPARE is side-effect-free w.r.t. material business writes:
   orchestrator.act call count = 0 on every prepare_* invocation.
 - Material execution occurs ONLY through ACT-class commit_proposal after
-  consumer confirmation/governance.
+  consumer governance per execution_policy.
 - GPT Actions has a DISTINCT additive commit_now contract (policy-allowed
   capabilities, confirmation + Idempotency-Key required) — that contract is
   NOT part of the MCP PREPARE surface and cannot be reached through it.
