@@ -108,6 +108,7 @@ def execute_delpi_information(
             list_key="items",
             max_depth=int(budgets.get("projection_max_depth") or 8),
             max_array_items=int(budgets.get("execute_max_items") or 50),
+            response_bindings=action.response_bindings,
         )
     else:
         raise GovernedExecutionError("Unsupported execution plan")

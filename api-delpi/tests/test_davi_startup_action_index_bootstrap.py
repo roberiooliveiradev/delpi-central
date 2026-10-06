@@ -134,7 +134,7 @@ def test_real_startup_seeds_live_action_index() -> None:
     after = out["post_startup"]
 
     # Fail-closed fallback before any live seed exists.
-    assert before["executable"] == 70
+    assert before["executable"] == 75
     assert before["physical_locations"] == {
         "davi_status": STATUS_NEEDS_BOUNDED_EXECUTION,
         "executable": False,
@@ -145,7 +145,7 @@ def test_real_startup_seeds_live_action_index() -> None:
     }
 
     # Real startup seeds the live OpenAPI contract.
-    assert after["executable"] == 72
+    assert after["executable"] == 77
     assert after["physical_locations"] == {
         "davi_status": STATUS_DAVI_ELIGIBLE_READ,
         "executable": True,
@@ -160,7 +160,7 @@ def test_real_startup_discovery_reaches_semantic_posts() -> None:
     """Post-startup discovery resolves both governed intents with 72 eligible."""
     out = _run_child()
     for key in ("physical_query", "blocks_query"):
-        assert out[key]["eligible_action_count"] == 72, out[key]
+        assert out[key]["eligible_action_count"] == 77, out[key]
         assert out[key]["expected_in_candidates"], out[key]
 
 
@@ -170,7 +170,7 @@ def test_reset_index_falls_back_to_baseline() -> None:
     try:
         actions = get_technical_actions()
         by_id = {a.operation_id: a for a in actions}
-        assert sum(1 for a in actions if a.executable) == 70
+        assert sum(1 for a in actions if a.executable) == 75
         for oid in (
             "list_product_physical_locations",
             "list_product_inventory_blocks",

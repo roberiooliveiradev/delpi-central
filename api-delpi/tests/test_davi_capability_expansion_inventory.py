@@ -100,6 +100,11 @@ _ELIGIBLE = {
     "get_product_outbound_invoice_items",
     "get_product_sales_summary",
     "get_product_sales_open_orders",
+    "search_tables_by_description",
+    "search_protheus_columns_by_description",
+    "search_protheus_columns_in_table",
+    "get_protheus_table",
+    "list_protheus_table_columns",
 }
 
 # Allowlisted governed SEMANTIC_READ_POST entries: the baseline fallback carries
@@ -136,7 +141,7 @@ def test_current_eligible_set_matches_allowlist() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 70
+    assert len(eligible) == 75
 
 
 def test_mcp_tools_remain_two() -> None:
@@ -184,9 +189,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 70
+    assert doc["wave_1_freeze"]["current_eligible"] == 75
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 73
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 78
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 

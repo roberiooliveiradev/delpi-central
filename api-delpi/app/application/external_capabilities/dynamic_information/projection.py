@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Mapping
 from typing import Any
 
 # Strict path: identifiers + optional [] segments, joined by dots. No wildcards.
@@ -149,6 +150,41 @@ def _copy_technical_meta(source: dict[str, Any], target: dict[str, Any]) -> None
             target[meta_key] = source[meta_key]
 
 
+_SIMPLE_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _apply_response_bindings(payload: Any, bindings: Any) -> Any:
+    """Rename trusted top-level source keys to frozen external keys.
+
+    Mapping source is allowlist ``responseBindings`` metadata only — never
+    caller input. A rename never shadows a non-source key already present
+    (fail closed) and the source key itself is consumed by the rename.
+    """
+    if not isinstance(payload, dict) or not isinstance(bindings, Mapping):
+        return payload
+    pairs: list[tuple[str, str]] = []
+    for external, source in bindings.items():
+        if not (isinstance(external, str) and isinstance(source, str)):
+            continue
+        external = external.strip()
+        source = source.strip()
+        if not (_SIMPLE_KEY.fullmatch(external) and _SIMPLE_KEY.fullmatch(source)):
+            continue
+        pairs.append((external, source))
+    if not pairs:
+        return payload
+    consumed: set[str] = set()
+    out: dict[str, Any] = {}
+    for external, source in pairs:
+        if source in payload and external not in payload:
+            out[external] = payload[source]
+            consumed.add(source)
+    for key, value in payload.items():
+        if key not in consumed and key not in out:
+            out[key] = value
+    return out
+
+
 def apply_approved_field_projection(
     data: Any,
     *,
@@ -156,12 +192,13 @@ def apply_approved_field_projection(
     list_key: str = "items",
     max_depth: int = 8,
     max_array_items: int = 50,
+    response_bindings: Any = None,
 ) -> Any:
     """Build a new payload with only approved fields. Never preserve originals."""
     if not approved_fields:
         return {}
 
-    payload = unwrap_api_payload(data)
+    payload = _apply_response_bindings(unwrap_api_payload(data), response_bindings)
     fields = [str(f) for f in approved_fields if f]
     if not fields:
         return {}
@@ -191,8 +228,11 @@ def apply_approved_field_projection(
 
     # Flat mode — construct from scratch.
     if isinstance(payload, list):
+        # No slice here: size bounding owns the truncation step so an
+        # over-max source length survives as completeness evidence
+        # (truncated/is_complete) instead of being silently flattened.
         out_list: list[Any] = []
-        for item in payload[:max_array_items]:
+        for item in payload:
             if not isinstance(item, dict):
                 continue
             out_list.append({k: item[k] for k in fields if k in item})

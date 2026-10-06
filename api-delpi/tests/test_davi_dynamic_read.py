@@ -203,6 +203,15 @@ _PRODUCT_MASTER_SEMANTIC_POST_IDS = frozenset(
         "list_product_inventory_blocks",
     }
 )
+_SYSTEM_METADATA_OPERATION_IDS = frozenset(
+    {
+        "search_tables_by_description",
+        "search_protheus_columns_by_description",
+        "search_protheus_columns_in_table",
+        "get_protheus_table",
+        "list_protheus_table_columns",
+    }
+)
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
@@ -213,6 +222,7 @@ _ELIGIBLE_OPERATION_IDS = (
     | _WAVE5_SUPPLIES_OPERATION_IDS
     | _WAVE6_PRODUCTION_OPERATION_IDS
     | _PRODUCT_MASTER_OPERATION_IDS
+    | _SYSTEM_METADATA_OPERATION_IDS
 )
 _ALLOWLIST_OPERATION_IDS = _ELIGIBLE_OPERATION_IDS | _PRODUCT_MASTER_SEMANTIC_POST_IDS
 
@@ -334,9 +344,9 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 16
+    assert allow.get("version") == 17
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_PRODUCT_MASTER_GOVERNED_READS"
+        "PROMOTE_SYSTEM_METADATA_GOVERNED_READS"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
@@ -500,7 +510,7 @@ def test_classify_hard_blocks():
     )
 
 
-def test_inventory_eligible_count_is_thirteen():
+def test_inventory_eligible_count_is_seventy_five():
     baseline = json.loads(
         (_api_root() / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
     )
@@ -509,7 +519,7 @@ def test_inventory_eligible_count_is_thirteen():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 70
+    assert len(eligible) == 75
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -529,7 +539,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 70, query
+        assert discovered["eligible_action_count"] == 75, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1240,7 +1250,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 70
+    assert discovered["eligible_action_count"] == 75
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -2002,7 +2012,13 @@ def test_top_level_list_fail_closed():
         approved_fields=("name",),
         max_array_items=2,
     )
-    assert projected == [{"name": "A"}, {"name": "B"}]
+    # Projection is not the truncating stage: it preserves full length so the
+    # size-bounding stage can cut AND signal truncated/is_complete together.
+    assert projected == [{"name": "A"}, {"name": "B"}, {"name": "C"}]
+    bounded = bound_response_payload(projected, max_bytes=65536, max_items=2)
+    assert bounded["data"] == [{"name": "A"}, {"name": "B"}]
+    assert bounded["truncated"] is True
+    assert bounded["is_complete"] is False
 
 
 def test_scalar_and_empty_projection_fail_closed():
@@ -2044,8 +2060,8 @@ def test_nested_unknown_fields_dropped_and_bounds():
     assert "secret" not in projected["root"]["components"][0]
 
 
-def test_eligible_count_is_thirteen():
+def test_eligible_count_is_seventy_five():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 70
+    assert len(eligible) == 75

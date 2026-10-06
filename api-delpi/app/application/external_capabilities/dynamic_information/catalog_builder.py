@@ -36,6 +36,8 @@ class TechnicalAction:
     argument_constraints: Mapping[str, Any] = field(default_factory=dict)
     semantic_transport: str | None = None
     request_body: Mapping[str, Any] | None = None
+    argument_bindings: Mapping[str, Any] = field(default_factory=dict)
+    response_bindings: Mapping[str, Any] = field(default_factory=dict)
 
     @property
     def executable(self) -> bool:
@@ -73,10 +75,38 @@ def _allowlist_entry(allowlist: dict[str, Any], operation_id: str) -> dict[str, 
     return {}
 
 
+def _normalize_name_bindings(raw: Any, *, owner_key: str | None = None) -> Mapping[str, str]:
+    """Normalize trusted external→owner name bindings from allowlist metadata.
+
+    Accepts ``{"external": "owner"}`` or ``{"external": {"ownerName": "owner"}}``.
+    Non-string names are dropped (fail closed); empty output is an empty map.
+    """
+    if not isinstance(raw, dict):
+        return MappingProxyType({})
+    out: dict[str, str] = {}
+    for external, spec in raw.items():
+        if not isinstance(external, str) or not external.strip():
+            continue
+        owner = spec.get(owner_key) if isinstance(spec, dict) and owner_key else spec
+        if not isinstance(owner, str) or not owner.strip():
+            continue
+        out[external.strip()] = owner.strip()
+    return MappingProxyType(out)
+
+
 def _enrich_from_allowlist(
     allowlist: dict[str, Any],
     operation_id: str,
-) -> tuple[str | None, tuple[str, ...], tuple[str, ...], tuple[str, ...], Mapping[str, Any], str | None]:
+) -> tuple[
+    str | None,
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[str, ...],
+    Mapping[str, Any],
+    str | None,
+    Mapping[str, Any],
+    Mapping[str, Any],
+]:
     entry = _allowlist_entry(allowlist, operation_id)
     mode = entry.get("executionMode")
     response_fields = tuple(str(f) for f in (entry.get("approvedResponseFields") or []) if f)
@@ -89,6 +119,12 @@ def _enrich_from_allowlist(
         else MappingProxyType({})
     )
     transport = (entry.get("semanticTransport") or "").strip() or None
+    argument_bindings = _normalize_name_bindings(
+        entry.get("argumentBindings"), owner_key="ownerName"
+    )
+    response_bindings = _normalize_name_bindings(
+        entry.get("responseBindings"), owner_key="source"
+    )
     return (
         str(mode) if mode else None,
         response_fields,
@@ -96,6 +132,8 @@ def _enrich_from_allowlist(
         aliases,
         constraints,
         transport,
+        argument_bindings,
+        response_bindings,
     )
 
 
@@ -244,6 +282,8 @@ def build_technical_actions_from_openapi(
                 aliases,
                 constraints,
                 transport,
+                argument_bindings,
+                response_bindings,
             ) = _enrich_from_allowlist(allowlist, str(oid))
             actions.append(
                 TechnicalAction(
@@ -276,6 +316,8 @@ def build_technical_actions_from_openapi(
                     argument_constraints=constraints,
                     semantic_transport=transport,
                     request_body=request_body,
+                    argument_bindings=argument_bindings,
+                    response_bindings=response_bindings,
                 )
             )
     return actions
@@ -324,6 +366,8 @@ def build_technical_actions_from_baseline(
             aliases,
             constraints,
             transport,
+            argument_bindings,
+            response_bindings,
         ) = _enrich_from_allowlist(allowlist, oid_s)
         actions.append(
             TechnicalAction(
@@ -355,6 +399,8 @@ def build_technical_actions_from_baseline(
                 semantic_aliases=aliases,
                 argument_constraints=constraints,
                 semantic_transport=transport,
+                argument_bindings=argument_bindings,
+                response_bindings=response_bindings,
             )
         )
     return actions

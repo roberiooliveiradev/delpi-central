@@ -76,6 +76,97 @@ def _approved_input_allowset(action: TechnicalAction) -> set[str] | None:
     return None
 
 
+_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _argument_bindings(action: TechnicalAction) -> dict[str, str]:
+    """Trusted external→owner argument-name bindings (allowlist metadata only)."""
+    raw = getattr(action, "argument_bindings", None) or {}
+    if not isinstance(raw, Mapping):
+        return {}
+    out: dict[str, str] = {}
+    for external, owner in raw.items():
+        if not isinstance(external, str) or not isinstance(owner, str):
+            continue
+        external = external.strip()
+        owner = owner.strip()
+        if not (_IDENT.fullmatch(external) and _IDENT.fullmatch(owner)):
+            continue
+        if external in _TRANSPORT_FORBIDDEN or owner in _TRANSPORT_FORBIDDEN:
+            continue
+        out[external] = owner
+    return out
+
+
+def _owner_param_names(action: TechnicalAction) -> set[str]:
+    """Owner-declared names: path placeholders, declared parameters, body fields."""
+    names: set[str] = set()
+    for segment in action.path.split("/"):
+        if segment.startswith("{") and segment.endswith("}"):
+            names.add(segment[1:-1])
+    for param in action.parameters or ():
+        if isinstance(param, dict) and isinstance(param.get("name"), str):
+            names.add(param["name"])
+    for name in getattr(action, "body_fields", frozenset()) or ():
+        names.add(str(name))
+    return names
+
+
+def _owner_to_external(action: TechnicalAction) -> dict[str, str]:
+    """Reverse trusted bindings, dropping collisions and nonexistent targets."""
+    bindings = _argument_bindings(action)
+    owners = _owner_param_names(action)
+    seen: dict[str, str] = {}
+    duplicates: set[str] = set()
+    for external, owner in bindings.items():
+        if owner in seen:
+            duplicates.add(owner)
+            continue
+        seen[owner] = external
+    return {
+        owner: external
+        for owner, external in seen.items()
+        if owner not in duplicates and owner in owners
+    }
+
+
+def bind_owner_arguments(
+    action: TechnicalAction,
+    validated_arguments: dict[str, Any],
+) -> dict[str, Any]:
+    """Rename validated EXTERNAL arguments to trusted owner names (fail closed).
+
+    Runs after external validation, before fixed catalog HTTP binding. The
+    mapping source is allowlist metadata only; a binding to an owner name that
+    is not declared in trusted OpenAPI/path/query metadata fails closed.
+    """
+    raw = getattr(action, "argument_bindings", None) or {}
+    if isinstance(raw, Mapping):
+        for external, owner in raw.items():
+            pair = {external, owner} if isinstance(external, str) and isinstance(owner, str) else set()
+            if pair & _TRANSPORT_FORBIDDEN:
+                raise ArgumentValidationError("Argument binding targets forbidden name")
+    bindings = _argument_bindings(action)
+    if not bindings:
+        return dict(validated_arguments or {})
+    owners = _owner_param_names(action)
+    owners_seen: set[str] = set()
+    for owner in bindings.values():
+        if owner in owners_seen:
+            raise ArgumentValidationError("Ambiguous argument binding target")
+        owners_seen.add(owner)
+        if owner not in owners:
+            raise ArgumentValidationError("Argument binding target is not declared")
+    out = dict(validated_arguments or {})
+    for external, owner in bindings.items():
+        if external not in out:
+            continue
+        if owner in out and out[owner] != out[external]:
+            raise ArgumentValidationError("Ambiguous argument binding target")
+        out[owner] = out.pop(external)
+    return out
+
+
 def _argument_constraints(action: TechnicalAction) -> Mapping[str, Any]:
     raw = getattr(action, "argument_constraints", None) or {}
     return raw if isinstance(raw, Mapping) else {}
@@ -142,6 +233,16 @@ def _apply_argument_limits_to_schema(
             existing = prop.get(bound_key)
             existing_i = _as_int(existing)
             if bound_key == "maxItems":
+                prop[bound_key] = min(existing_i, governed) if existing_i is not None else governed
+            else:
+                prop[bound_key] = max(existing_i, governed) if existing_i is not None else governed
+        for bound_key in ("minLength", "maxLength"):
+            governed = _as_int(spec.get(bound_key))
+            if governed is None:
+                continue
+            existing = prop.get(bound_key)
+            existing_i = _as_int(existing)
+            if bound_key == "maxLength":
                 prop[bound_key] = min(existing_i, governed) if existing_i is not None else governed
             else:
                 prop[bound_key] = max(existing_i, governed) if existing_i is not None else governed
@@ -332,14 +433,16 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
     properties: dict[str, Any] = {}
     required: list[str] = []
     approved = _approved_input_allowset(action)
+    owner_to_external = _owner_to_external(action)
 
     for segment in action.path.split("/"):
         if segment.startswith("{") and segment.endswith("}"):
             name = segment[1:-1]
-            if approved is not None and name not in approved:
+            external = owner_to_external.get(name, name)
+            if approved is not None and external not in approved:
                 continue
-            properties[name] = {"type": "string"}
-            required.append(name)
+            properties[external] = {"type": "string"}
+            required.append(external)
 
     for param in action.parameters:
         if not isinstance(param, dict):
@@ -347,13 +450,14 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
         name = param.get("name")
         if not name or not isinstance(name, str):
             continue
-        if approved is not None and name not in approved:
+        external = owner_to_external.get(name, name)
+        if approved is not None and external not in approved:
             continue
         location = (param.get("in") or "query").lower()
         if location not in {"path", "query"}:
             continue
         prop = _param_schema(param)
-        if name == "page_size":
+        if external == "page_size":
             default_size, max_size = _pagination_limits()
             prop["type"] = "integer"
             prop["minimum"] = 1
@@ -366,14 +470,14 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
             prop["maximum"] = max_size
             if "default" not in prop:
                 prop["default"] = min(default_size, max_size)
-        if name == "page":
+        if external == "page":
             prop["type"] = "integer"
             prop["minimum"] = 1
             if "default" not in prop:
                 prop["default"] = 1
-        properties[name] = prop
-        if param.get("required") and name not in required:
-            required.append(name)
+        properties[external] = prop
+        if param.get("required") and external not in required:
+            required.append(external)
 
     # Trusted JSON body fields (catalog-normalized requestBody ∩ approved inputs).
     body = action.request_body or {}
@@ -382,13 +486,15 @@ def build_argument_json_schema(action: TechnicalAction) -> dict[str, Any]:
         for name, spec in body_properties.items():
             if not isinstance(spec, Mapping):
                 continue
-            if approved is not None and name not in approved:
+            external = owner_to_external.get(name, name)
+            if approved is not None and external not in approved:
                 continue
-            if name not in properties:
-                properties[name] = dict(spec)
+            if external not in properties:
+                properties[external] = dict(spec)
         for name in body.get("required") or ():
-            if name in properties and name not in required:
-                required.append(name)
+            external = owner_to_external.get(name, name)
+            if external in properties and external not in required:
+                required.append(external)
 
     constraints = _argument_constraints(action)
     _apply_argument_limits_to_schema(properties, constraints)

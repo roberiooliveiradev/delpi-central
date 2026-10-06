@@ -1131,11 +1131,11 @@ def test_pagination_completeness_stock_sibling_multi_and_single(
     assert single["truncated"] is False
 
 
-def test_eligible_set_is_seventy_two():
+def test_eligible_set_is_seventy_seven():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
     # The exact frozen set is asserted in test_davi_capability_expansion_inventory;
     # here we keep the cardinality plus a regression subset.
-    assert len(ids) == 72
+    assert len(ids) == 77
     assert {
         "search_products",
         "get_product_stock",

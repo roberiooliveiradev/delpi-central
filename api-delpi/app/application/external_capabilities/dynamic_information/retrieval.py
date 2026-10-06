@@ -208,6 +208,11 @@ def score_action(query: str, action: TechnicalAction) -> float:
     if not hay_tokens:
         return 0.0
 
+    # Pure filler tokens (da/os/me/mostre/…) appear in almost every haystack.
+    # A candidate whose overlap is ONLY filler tokens is lexical noise, not a
+    # semantic match, so it is suppressed below without altering the scoring
+    # of queries that share at least one durable content token.
+
     # Phrase boost: full aliases as ordered semantic phrases in the query.
     # Longer precise aliases outrank short ones so "OTD por cliente" beats bare
     # "cliente" without operationId hardcodes (generic retrieval quality).
@@ -230,7 +235,10 @@ def score_action(query: str, action: TechnicalAction) -> float:
             best_multiword_len = max(best_multiword_len, len(alias_n))
 
     overlap = q_tokens & hay_tokens
-    if not overlap and multiword_hits == 0 and single_hits == 0:
+    if not (overlap - _PHRASE_FILLERS) and multiword_hits == 0 and single_hits == 0:
+        if overlap:
+            # Filler-only overlap: suppress instead of emitting a junk candidate.
+            return 0.0
         text = normalize_text(action.searchable_text)
         partial = sum(1 for t in q_tokens if t in text)
         if partial == 0:

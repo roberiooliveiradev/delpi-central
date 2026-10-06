@@ -1,16 +1,21 @@
 {
-  "version": 16,
+  "version": 17,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
   "dataClassification": "MINIMIZATION_REQUIRED_TAXONOMY_OPTIONAL",
   "coverageDecision": {
-    "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-    "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-    "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+    "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+    "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+    "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-      "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+      "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+      "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+      "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+      "previousDecision": {
+        "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+        "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+      }
     }
   },
   "retrievalQuarantineTokens": [
@@ -32,7 +37,10 @@
     "admin",
     "brutos",
     "bruto",
-    "otd"
+    "otd",
+    "registros",
+    "registro",
+    "select"
   ],
   "retrievalReadOnlyGuard": {
     "description": "Semantic READ-only discovery guard for explicit mutation requests. retrieval semantic guard only — NOT AuthZ, NOT business permission, NOT capability grant.",
@@ -3469,6 +3477,264 @@
             "default": 1
           },
           "page_size": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 50
+          }
+        }
+      }
+    },
+    {
+      "operationId": "search_tables_by_description",
+      "reason": "Protheus table catalog search (SX2); SYSTEM_METADATA_ACCESS backend AuthZ; BOUNDED_METADATA_READ opt-in on restricted /system path; ranking fields and X2_CHAVE dropped by model-safe projection",
+      "executionMode": "catalog_action",
+      "restrictedPathRead": "BOUNDED_METADATA_READ",
+      "approvedInputFields": [
+        "description",
+        "page",
+        "limit"
+      ],
+      "approvedResponseFields": [
+        "page",
+        "page_size",
+        "total_records",
+        "total_pages",
+        "results[].X2_ARQUIVO",
+        "results[].X2_NOME"
+      ],
+      "semanticAliases": [
+        "qual tabela",
+        "qual a tabela",
+        "em qual tabela",
+        "tabela que guarda",
+        "qual tabela guarda",
+        "tabela de produtos",
+        "tabela de pedidos",
+        "buscar tabela",
+        "procurar tabela",
+        "pesquisar tabela",
+        "nome da tabela",
+        "dicionario de tabelas",
+        "dicionário de tabelas",
+        "tabela protheus",
+        "tabela do protheus",
+        "table search",
+        "protheus table",
+        "find table",
+        "which table"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "description": {
+            "minLength": 2
+          },
+          "limit": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20
+          }
+        }
+      }
+    },
+    {
+      "operationId": "search_protheus_columns_by_description",
+      "reason": "Protheus column catalog search (SX3010 + SX2 join); SYSTEM_METADATA_ACCESS; BOUNDED_METADATA_READ opt-in; owner results[] rebound to frozen data[]; ranking fields dropped",
+      "executionMode": "catalog_action",
+      "restrictedPathRead": "BOUNDED_METADATA_READ",
+      "approvedInputFields": [
+        "description",
+        "page",
+        "limit"
+      ],
+      "approvedResponseFields": [
+        "page",
+        "page_size",
+        "total_records",
+        "total_pages",
+        "data[].table_name",
+        "data[].table_description",
+        "data[].column_name",
+        "data[].column_description"
+      ],
+      "responseBindings": {
+        "data": "results"
+      },
+      "semanticAliases": [
+        "qual campo",
+        "qual a coluna",
+        "em qual campo",
+        "qual campo representa",
+        "qual coluna representa",
+        "campo que representa",
+        "campo que guarda",
+        "buscar campo",
+        "procurar campo",
+        "pesquisar coluna",
+        "campo protheus",
+        "coluna protheus",
+        "campo por descricao",
+        "campo por descrição",
+        "descricao de campo",
+        "descrição de campo",
+        "dicionario de campos",
+        "dicionário de campos",
+        "find column",
+        "column search",
+        "which field",
+        "protheus field",
+        "qual campo representa",
+        "campo representa",
+        "qual coluna representa",
+        "coluna representa",
+        "qual campo representa referencia",
+        "qual campo representa referência",
+        "campo representa referencia",
+        "campo representa referência"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "description": {
+            "minLength": 2
+          },
+          "limit": {
+            "minimum": 1,
+            "maximum": 50,
+            "default": 20
+          }
+        }
+      }
+    },
+    {
+      "operationId": "search_protheus_columns_in_table",
+      "reason": "Column search inside one Protheus table (SX3); SYSTEM_METADATA_ACCESS; BOUNDED_METADATA_READ opt-in; frozen external names table_name/text bound to owner tableName/q; raw list bounded to 50 rows",
+      "executionMode": "catalog_action",
+      "restrictedPathRead": "BOUNDED_METADATA_READ",
+      "approvedInputFields": [
+        "table_name",
+        "text"
+      ],
+      "approvedResponseFields": [
+        "X3_CAMPO",
+        "X3_DESCRIC",
+        "X3_ORDEM",
+        "X3_TIPO",
+        "X3_TAMANHO",
+        "X3_DECIMAL"
+      ],
+      "argumentBindings": {
+        "table_name": {
+          "ownerName": "tableName"
+        },
+        "text": {
+          "ownerName": "q"
+        }
+      },
+      "semanticAliases": [
+        "campos da tabela que",
+        "campo dentro da tabela",
+        "buscar campo na tabela",
+        "procurar campo na tabela",
+        "campo especifico da tabela",
+        "campo específico da tabela",
+        "tem o campo na tabela",
+        "coluna dentro da tabela",
+        "campos que contem",
+        "campos que contêm",
+        "campos da tabela tem",
+        "campos da tabela têm",
+        "campos da",
+        "campo na tabela",
+        "field in table",
+        "columns in table containing",
+        "quais campos da",
+        "campos da tabela tem fornecedor"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "text": {
+            "minLength": 2
+          }
+        }
+      }
+    },
+    {
+      "operationId": "get_protheus_table",
+      "reason": "Single Protheus table describe (SX2); SYSTEM_METADATA_ACCESS; BOUNDED_METADATA_READ opt-in; frozen external table_name bound to owner tableName path param; X2_CHAVE allowed only here, forbidden in table search",
+      "executionMode": "catalog_action",
+      "restrictedPathRead": "BOUNDED_METADATA_READ",
+      "approvedInputFields": [
+        "table_name"
+      ],
+      "approvedResponseFields": [
+        "TableName",
+        "X2_ARQUIVO",
+        "X2_NOME",
+        "X2_CHAVE"
+      ],
+      "argumentBindings": {
+        "table_name": {
+          "ownerName": "tableName"
+        }
+      },
+      "semanticAliases": [
+        "o que é a tabela",
+        "o que e a tabela",
+        "descricao da tabela",
+        "descrição da tabela",
+        "informacoes da tabela",
+        "informações da tabela",
+        "detalhes da tabela",
+        "sobre a tabela",
+        "o que significa a tabela",
+        "describe table",
+        "table info",
+        "table description",
+        "protheus table info",
+        "o que é a sb1",
+        "o que e a sb1"
+      ]
+    },
+    {
+      "operationId": "list_protheus_table_columns",
+      "reason": "Protheus table column listing (SX3); SYSTEM_METADATA_ACCESS; BOUNDED_METADATA_READ opt-in; frozen external table_name bound to owner tableName; owner pageSize/totalPages are not authorized technical meta",
+      "executionMode": "catalog_action",
+      "restrictedPathRead": "BOUNDED_METADATA_READ",
+      "approvedInputFields": [
+        "table_name",
+        "page",
+        "limit"
+      ],
+      "approvedResponseFields": [
+        "results[].X3_CAMPO",
+        "results[].X3_DESCRIC",
+        "results[].X3_ORDEM",
+        "results[].X3_TIPO",
+        "results[].X3_TAMANHO",
+        "results[].X3_DECIMAL"
+      ],
+      "argumentBindings": {
+        "table_name": {
+          "ownerName": "tableName"
+        }
+      },
+      "semanticAliases": [
+        "quais são os campos da",
+        "quais sao os campos da",
+        "quais são as colunas",
+        "quais sao as colunas",
+        "campos da tabela",
+        "colunas da tabela",
+        "estrutura da tabela",
+        "lista de campos",
+        "listar campos",
+        "list columns",
+        "table columns",
+        "table structure",
+        "fields of the table"
+      ],
+      "argumentConstraints": {
+        "argumentLimits": {
+          "limit": {
             "minimum": 1,
             "maximum": 50,
             "default": 50

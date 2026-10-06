@@ -92,7 +92,7 @@ def test_explicit_write_intent_returns_zero_candidates(query, monkeypatch):
     result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
     assert result["candidate_count"] == 0
     assert result["candidates"] == []
-    assert result["eligible_action_count"] == 70
+    assert result["eligible_action_count"] == 75
 
 
 @pytest.mark.parametrize(
@@ -131,7 +131,7 @@ def test_read_queries_still_retrieve(query, action_id, monkeypatch):
     result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
     assert result["candidate_count"] >= 1
     assert result["candidates"][0]["action_id"] == action_id
-    assert result["eligible_action_count"] == 70
+    assert result["eligible_action_count"] == 75
 
 
 def test_bare_product_query_is_ambiguous_but_not_write(monkeypatch):
@@ -208,6 +208,7 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
         "get_production_oee_series",
         "get_production_otd",
         "get_production_otd_series",
+        "get_protheus_table",
         "get_sales_conversion_rate",
         "get_sales_conversion_rate_series",
         "get_sales_order_otd",
@@ -238,7 +239,11 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
         "list_product_drawings",
         "list_product_inventory_blocks",
         "list_product_physical_locations",
+        "list_protheus_table_columns",
         "list_supplies_purchase_request_lines",
         "search_products",
         "search_products_by_supplier_part_number",
+        "search_protheus_columns_by_description",
+        "search_protheus_columns_in_table",
+        "search_tables_by_description",
     }

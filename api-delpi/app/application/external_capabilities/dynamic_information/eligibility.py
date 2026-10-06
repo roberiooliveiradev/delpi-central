@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.application.external_capabilities.dynamic_information.constants import (
+    RESTRICTED_PATH_BOUNDED_METADATA_READ,
     SEMANTIC_TRANSPORT_READ_POST,
     STATUS_ADMIN_OUT_OF_SCOPE,
     STATUS_DAVI_ELIGIBLE_READ,
@@ -168,7 +169,22 @@ def classify_operation(
     if any(m in path_l for m in _ADMIN_MARKERS) or "gpt_actions" in path_l or path_l.startswith(
         "/gpt-actions"
     ):
-        return STATUS_LEGACY_UNSAFE if "gpt" in path_l else STATUS_ADMIN_OUT_OF_SCOPE
+        # Restricted-path opt-in: only an explicitly allowlisted GET carrying the
+        # trusted bounded-metadata marker may continue into the generic
+        # projection checks below. Everything else stays fail-closed.
+        admin_entry = _allowlist_operation_entry(allowlist, oid) if oid else None
+        restricted_marker = ((admin_entry or {}).get("restrictedPathRead") or "").strip()
+        restricted_opt_in = (
+            method_u == "GET"
+            and bool(oid)
+            and oid in allowlisted_operation_ids
+            and admin_entry is not None
+            and restricted_marker == RESTRICTED_PATH_BOUNDED_METADATA_READ
+        )
+        if not restricted_opt_in:
+            return (
+                STATUS_LEGACY_UNSAFE if "gpt" in path_l else STATUS_ADMIN_OUT_OF_SCOPE
+            )
 
     if any(m in path_l for m in _BINARY_MARKERS):
         return STATUS_STREAM_BINARY_OUT_OF_SCOPE

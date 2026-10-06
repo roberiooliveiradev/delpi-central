@@ -7,6 +7,7 @@ from typing import Any, Literal
 
 from app.application.external_capabilities.dynamic_information.argument_validator import (
     ArgumentValidationError,
+    bind_owner_arguments,
     validate_arguments,
 )
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
@@ -64,5 +65,5 @@ def build_execution_plan(
     return CatalogActionPlan(
         kind="catalog_action",
         action_id=action.action_id,
-        validated_arguments=validated,
+        validated_arguments=bind_owner_arguments(action, validated),
     )

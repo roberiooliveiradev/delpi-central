@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.01.1",
+  "version": "2026.10.06.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -119,6 +119,18 @@
       "gpt_operations": ["gpt_get_catalog"],
       "pipeline": ["state_read_only", "discover_may_return_zero", "never_claim_persisted"],
       "confirmation_policy": "read_only_deny_write"
+    },
+    "system_metadata": {
+      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
+      "gpt_operations": ["gpt_get_catalog"],
+      "capabilities": [
+        "system.protheus.table.search",
+        "system.protheus.column.search",
+        "system.protheus.table.describe"
+      ],
+      "pipeline": ["discover", "execute_candidate", "report_or_gap"],
+      "confirmation_policy": "read_only",
+      "note": "Dicionário Protheus (SX2/SX3/sys.tables) via discover→execute only. Metadata naming a table grants ZERO authority over its rows — nome de tabela retornado NÃO autoriza ler registros de negócio dela. Backend SYSTEM_METADATA_ACCESS is final AuthZ; api-delpi.access alone is not sufficient."
     }
   }
 }

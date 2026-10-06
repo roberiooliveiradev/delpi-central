@@ -201,14 +201,14 @@ def _execute(
 # ---------------------------------------------------------------------------
 
 
-def test_allowlist_v16_promotes_exactly_nine_operations() -> None:
+def test_allowlist_v17_promotes_exactly_nine_operations() -> None:
     allow = load_external_read_allowlist()
-    assert allow.get("version") == 16
+    assert allow.get("version") == 17
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001"
+        "SYSTEM-METADATA-IMPLEMENTATION-001"
     )
     ids = {e["operationId"] for e in allow["operations"]}
-    assert len(ids) == 72
+    assert len(ids) == 77
     assert PROMOTED <= ids
     for oid in PROMOTED_POST:
         entry = next(e for e in allow["operations"] if e["operationId"] == oid)
@@ -233,7 +233,7 @@ def test_redundant_and_deferred_operations_not_promoted() -> None:
 
 def test_all_nine_executable_on_live_openapi() -> None:
     actions = {a.operation_id: a for a in _actions()}
-    assert sum(1 for a in actions.values() if a.executable) == 72
+    assert sum(1 for a in actions.values() if a.executable) == 77
     for oid in PROMOTED:
         action = actions[oid]
         assert action.davi_status == STATUS_DAVI_ELIGIBLE_READ, oid
@@ -243,7 +243,7 @@ def test_all_nine_executable_on_live_openapi() -> None:
 def test_baseline_fallback_keeps_semantic_posts_closed() -> None:
     """Baseline rows carry no requestBody contract → POSTs fail closed."""
     actions = {a.operation_id: a for a in _baseline_actions()}
-    assert sum(1 for a in actions.values() if a.executable) == 70
+    assert sum(1 for a in actions.values() if a.executable) == 75
     for oid in PROMOTED_POST:
         action = actions[oid]
         assert action.davi_status == STATUS_NEEDS_BOUNDED_EXECUTION, oid
@@ -793,7 +793,7 @@ def test_pos_owned_intent_discovers_candidate(_seeded, query: str, oid: str) -> 
     ]
     assert oid in ranked_ids, (query, ranked_ids)
     discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
-    assert discovered["eligible_action_count"] == 72
+    assert discovered["eligible_action_count"] == 77
     ids = [c["action_id"] for c in discovered["candidates"]]
     assert oid in ids, (query, ids)
     top = discovered["candidates"][0]

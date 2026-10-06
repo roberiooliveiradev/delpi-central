@@ -2,24 +2,29 @@
 
 > Evidence artifact. Not runtime authority. Not semantic capability catalog.
 
-- Task: `PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001`
+- Task: `SYSTEM-METADATA-IMPLEMENTATION-001`
 - Source: `openapi_baseline.json` version `3`
 - TOTAL OPERATIONS: **726**
 - TOTAL GET: **525**
 - WRITE VERBS (POST/PUT/PATCH/DELETE): **201**
-- DAVI_ELIGIBLE_READ (before→after): **53 → 70**
-- NEWLY ELIGIBLE: **17**
+- DAVI_ELIGIBLE_READ (before→after): **70 → 75**
+- NEWLY ELIGIBLE: **5**
 
 ## Coverage decision
 
 ```json
 {
-  "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-  "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-  "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+  "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+  "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+  "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
   "previousDecision": {
-    "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-    "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+    "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+    "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+    "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+    "previousDecision": {
+      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+      "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+    }
   }
 }
 ```
@@ -28,11 +33,11 @@
 
 ```json
 {
-  "previous_total_operations": 720,
+  "previous_total_operations": 726,
   "current_total_operations": 726,
-  "previous_total_get": 520,
+  "previous_total_get": 525,
   "current_total_get": 525,
-  "added_operations": 6,
+  "added_operations": 0,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -42,8 +47,8 @@
 
 | Status | Count |
 |---|---:|
-| `ADMIN_OUT_OF_SCOPE` | 76 |
-| `DAVI_ELIGIBLE_READ` | 70 |
+| `ADMIN_OUT_OF_SCOPE` | 71 |
+| `DAVI_ELIGIBLE_READ` | 75 |
 | `DESTRUCTIVE_OUT_OF_SCOPE` | 17 |
 | `GENERIC_SQL_FORBIDDEN` | 2 |
 | `LEGACY_UNSAFE` | 2 |
@@ -95,6 +100,7 @@
 - `get_production_oee_series`
 - `get_production_otd`
 - `get_production_otd_series`
+- `get_protheus_table`
 - `get_sales_conversion_rate`
 - `get_sales_conversion_rate_series`
 - `get_sales_order_otd`
@@ -123,9 +129,13 @@
 - `get_weg_rol_target_pct`
 - `list_exclusive_raw_materials_catalog`
 - `list_product_drawings`
+- `list_protheus_table_columns`
 - `list_supplies_purchase_request_lines`
 - `search_products`
 - `search_products_by_supplier_part_number`
+- `search_protheus_columns_by_description`
+- `search_protheus_columns_in_table`
+- `search_tables_by_description`
 
 ## High-value blocked (primary blocker)
 

@@ -2,49 +2,42 @@
   "source": "openapi_baseline.json",
   "baseline_version": "3",
   "baseline_operation_count": 726,
-  "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+  "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
   "TOTAL_OPERATIONS": 726,
   "TOTAL_GET": 525,
   "TOTAL_WRITE_VERBS": 201,
-  "DAVI_ELIGIBLE_READ": 70,
-  "ELIGIBLE_BEFORE": 53,
-  "ELIGIBLE_AFTER": 70,
+  "DAVI_ELIGIBLE_READ": 75,
+  "ELIGIBLE_BEFORE": 70,
+  "ELIGIBLE_AFTER": 75,
   "NEWLY_ELIGIBLE": [
-    "get_on_time_delivery_pct",
-    "get_overall_equipment_effectiveness_pct",
-    "get_product_inbound_invoice_items",
-    "get_product_internal_movements",
-    "get_product_outbound_invoice_items",
-    "get_product_sales_open_orders",
-    "get_product_sales_summary",
-    "get_production_appointments_produced_totals",
-    "get_production_appointments_summary",
-    "get_production_machine_load_operations",
-    "get_production_machine_load_work_centers",
-    "get_production_oee",
-    "get_production_oee_series",
-    "get_production_otd",
-    "get_production_otd_series",
-    "list_exclusive_raw_materials_catalog",
-    "search_products_by_supplier_part_number"
+    "get_protheus_table",
+    "list_protheus_table_columns",
+    "search_protheus_columns_by_description",
+    "search_protheus_columns_in_table",
+    "search_tables_by_description"
   ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
-    "previous_total_operations": 720,
+    "previous_total_operations": 726,
     "current_total_operations": 726,
-    "previous_total_get": 520,
+    "previous_total_get": 525,
     "current_total_get": 525,
-    "added_operations": 6,
+    "added_operations": 0,
     "removed_operations": 0,
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-    "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-    "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+    "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+    "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+    "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
     "previousDecision": {
-      "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-      "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+      "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+      "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+      "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+      "previousDecision": {
+        "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+        "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+      }
     }
   },
   "HIGH_VALUE_BLOCKED": [
@@ -195,8 +188,8 @@
     }
   ],
   "STATUS_COUNTS": {
-    "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 70,
+    "ADMIN_OUT_OF_SCOPE": 71,
+    "DAVI_ELIGIBLE_READ": 75,
     "DESTRUCTIVE_OUT_OF_SCOPE": 17,
     "GENERIC_SQL_FORBIDDEN": 2,
     "LEGACY_UNSAFE": 2,
@@ -247,6 +240,7 @@
     "get_production_oee_series",
     "get_production_otd",
     "get_production_otd_series",
+    "get_protheus_table",
     "get_sales_conversion_rate",
     "get_sales_conversion_rate_series",
     "get_sales_order_otd",
@@ -275,9 +269,13 @@
     "get_weg_rol_target_pct",
     "list_exclusive_raw_materials_catalog",
     "list_product_drawings",
+    "list_protheus_table_columns",
     "list_supplies_purchase_request_lines",
     "search_products",
-    "search_products_by_supplier_part_number"
+    "search_products_by_supplier_part_number",
+    "search_protheus_columns_by_description",
+    "search_protheus_columns_in_table",
+    "search_tables_by_description"
   ],
   "MATRIX": [
     {
@@ -601,16 +599,6 @@
       "executable": false
     },
     {
-      "operationId": "get_protheus_table",
-      "method": "GET",
-      "path": "/system/tables/{tableName}",
-      "summary": "Protheus table",
-      "entity": "protheus_table",
-      "shape": "scalar",
-      "davi_status": "ADMIN_OUT_OF_SCOPE",
-      "executable": false
-    },
-    {
       "operationId": "get_protheus_table_indexes",
       "method": "GET",
       "path": "/system/tables/{tableName}/indexes",
@@ -751,16 +739,6 @@
       "executable": false
     },
     {
-      "operationId": "list_protheus_table_columns",
-      "method": "GET",
-      "path": "/system/tables/{tableName}/columns",
-      "summary": "Protheus table columns",
-      "entity": "protheus_column",
-      "shape": "paged_list",
-      "davi_status": "ADMIN_OUT_OF_SCOPE",
-      "executable": false
-    },
-    {
       "operationId": "notify_console_smoke_alerts",
       "method": "POST",
       "path": "/system/console-alerts/smoke",
@@ -817,36 +795,6 @@
       "summary": "Restore Admin Procedure",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "davi_status": "ADMIN_OUT_OF_SCOPE",
-      "executable": false
-    },
-    {
-      "operationId": "search_protheus_columns_by_description",
-      "method": "GET",
-      "path": "/system/columns/search",
-      "summary": "Protheus columns by description",
-      "entity": "protheus_column",
-      "shape": "paged_list",
-      "davi_status": "ADMIN_OUT_OF_SCOPE",
-      "executable": false
-    },
-    {
-      "operationId": "search_protheus_columns_in_table",
-      "method": "GET",
-      "path": "/system/tables/{tableName}/columns/search",
-      "summary": "search colunas por texto",
-      "entity": "protheus_column",
-      "shape": "paged_list",
-      "davi_status": "ADMIN_OUT_OF_SCOPE",
-      "executable": false
-    },
-    {
-      "operationId": "search_tables_by_description",
-      "method": "GET",
-      "path": "/system/tables/search",
-      "summary": "Tables by description",
-      "entity": "protheus_table",
-      "shape": "paged_list",
       "davi_status": "ADMIN_OUT_OF_SCOPE",
       "executable": false
     },
@@ -1431,6 +1379,16 @@
       "executable": true
     },
     {
+      "operationId": "get_protheus_table",
+      "method": "GET",
+      "path": "/system/tables/{tableName}",
+      "summary": "Protheus table",
+      "entity": "protheus_table",
+      "shape": "scalar",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "get_sales_conversion_rate",
       "method": "GET",
       "path": "/commercial/closing-rate",
@@ -1711,6 +1669,16 @@
       "executable": true
     },
     {
+      "operationId": "list_protheus_table_columns",
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns",
+      "summary": "Protheus table columns",
+      "entity": "protheus_column",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
       "operationId": "list_supplies_purchase_request_lines",
       "method": "GET",
       "path": "/supplies/purchase-requests/lines",
@@ -1736,6 +1704,36 @@
       "path": "/products/by-supplier-part-number",
       "summary": "Products by supplier part number",
       "entity": "product_by_supplier_part_number",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "search_protheus_columns_by_description",
+      "method": "GET",
+      "path": "/system/columns/search",
+      "summary": "Protheus columns by description",
+      "entity": "protheus_column",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "search_protheus_columns_in_table",
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns/search",
+      "summary": "search colunas por texto",
+      "entity": "protheus_column",
+      "shape": "paged_list",
+      "davi_status": "DAVI_ELIGIBLE_READ",
+      "executable": true
+    },
+    {
+      "operationId": "search_tables_by_description",
+      "method": "GET",
+      "path": "/system/tables/search",
+      "summary": "Tables by description",
+      "entity": "protheus_table",
       "shape": "paged_list",
       "davi_status": "DAVI_ELIGIBLE_READ",
       "executable": true
