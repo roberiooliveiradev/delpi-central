@@ -23,6 +23,9 @@ from tm_app.application.gpt_actions.entities import (
     GptAnalysisView,
     GptEntity,
 )
+from tm_app.application.gpt_actions.parity_capabilities_service import (
+    MEETING_MINUTE_READ_ACTION_VALUES,
+)
 from tm_app.interface.mcp.branding import TEO_MCP_INSTRUCTIONS
 from tm_app.interface.mcp.constants import (
     DESTRUCTIVE_ACT_TOOLS,
@@ -42,6 +45,9 @@ logger = logging.getLogger(__name__)
 _EntityParam = Literal[tuple(e.value for e in GptEntity)]
 _AnalysisViewParam = Literal[tuple(v.value for v in GptAnalysisView)]
 _RecordOperationParam = Literal[tuple(sorted(RECORD_OPERATIONS))]
+_MinuteReadActionParam = Literal[
+    tuple(sorted(MEETING_MINUTE_READ_ACTION_VALUES))
+]
 
 
 class _TeoWireTool(MCPTool):
@@ -296,7 +302,7 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def meeting_minute_read(
-        action: str,
+        action: _MinuteReadActionParam,
         minute_id: str | None = None,
         data: dict | None = None,
     ) -> CallToolResult:

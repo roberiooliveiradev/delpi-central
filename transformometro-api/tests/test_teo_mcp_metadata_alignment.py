@@ -186,6 +186,65 @@ def test_r9_meeting_minute_read_metadata_matches_canonical_read_set() -> None:
         )
 
 
+def test_r11_meeting_minute_read_inputschema_enum_is_canonical() -> None:
+    """MCP inputSchema.action.enum must equal the canonical READ set —
+    same source as catalog, OpenAPI and runtime validation."""
+    from tm_app.application.gpt_actions.capability_descriptors import (
+        build_capability_surface_catalog,
+    )
+    from tm_app.application.gpt_actions.openapi_builder import (
+        build_gpt_actions_openapi,
+    )
+    from tm_app.application.gpt_actions.parity_capabilities_service import (
+        MEETING_MINUTE_READ_ACTION_VALUES,
+    )
+    from tm_app.application.governed_writes.orchestrator import (
+        MEETING_MINUTE_READ_ACTIONS,
+    )
+
+    canonical = set(MEETING_MINUTE_READ_ACTION_VALUES)
+    assert set(MEETING_MINUTE_READ_ACTIONS) == canonical
+
+    # Generated MCP inputSchema (the real contract the client receives).
+    tools = asyncio.run(create_mcp_server().list_tools())
+    tool = next(t for t in tools if t.name == "meeting_minute_read")
+    schema = getattr(tool, "input_schema", None) or getattr(
+        tool, "inputSchema"
+    )
+    mcp_enum = set(schema["properties"]["action"]["enum"])
+    assert mcp_enum == canonical
+
+    # OpenAPI projection.
+    doc = build_gpt_actions_openapi()
+    openapi_enum = set(
+        doc["components"]["schemas"]["GptMeetingMinuteReadBody"]["properties"][
+            "action"
+        ]["enum"]
+    )
+    assert openapi_enum == canonical
+
+    # Catalog projection.
+    catalog = build_capability_surface_catalog()
+    minute = next(
+        c
+        for c in catalog["workflows"]
+        if isinstance(c, dict) and c.get("id") == "meeting_minute_manage"
+    )
+    assert set(minute["read_actions"]) == canonical
+
+    # WRITE actions must not leak into the READ enum.
+    for write_action in (
+        "send",
+        "finalize",
+        "cancel",
+        "resend",
+        "create_version",
+        "set_participants",
+        "set_signers",
+    ):
+        assert write_action not in mcp_enum
+
+
 def test_r10_meeting_minute_read_rejects_write_actions() -> None:
     """meeting_minute_read must fail-closed on write/unknown actions and
     never reach the dispatch layer."""
