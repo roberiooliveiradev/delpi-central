@@ -40,7 +40,7 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 
 | Página | Reuso principal | Import runtime | Natureza |
 |---|---|---|---|
-| Início | `createDashboardTopBar`, `createDashboardSectionRouteCard`, `createDashboardNavigationCard`, `createDashboardRecentAccessStrip`, `createDashboardPageHero` | `@delpi/plugin-ui/index` | composição reutilizável |
+| Início | `createDashboardPageHero`, `createDashboardEventsSection`, `createDashboardCatalogSearchBar`, `createDashboardRecentAccessStrip`, `createDashboardSectionRouteCard`, TopBar/Search/Favorites factories | `@delpi/plugin-ui/index` | **Home family comum** |
 | Visão geral | `KpiCard`, `MetricKpiCard`, `ChartCard`, `QuickPeriodSelector`, `createDashboardFiltersKit`, charts, `DataTableSection` | `@delpi/plugin-ui/index` | kit analítico reutilizável |
 | Central de Fechamento / Cockpit | PagePath/PageHero/SectionCard, `StatusBadge`, `ProgressTracker`, `MetricStrip`, `AlertQueue`, `WorklistItem`, `Timeline` | `@delpi/plugin-ui/index` | composição de cockpit reutilizável |
 | Central de Fechamento / Checklist e Documentos | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, attachment kit, forms, `Timeline`, modals/notices | `@delpi/plugin-ui/index` | master-detail operacional reutilizável |
@@ -53,19 +53,51 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 
 ## Início
 
+### Família visual
+
+```text
+HOME FAMILY
+= Hero
+→ Eventos e interações
+→ busca de caminhos
+→ Últimos acessos
+→ SectionRouteCards
+```
+
 ### Import preferencial
 
 ```ts
 import {
-  createDashboardTopBar,
+  formatPortalGreeting,
+  createDashboardPageHero,
+  createDashboardTitleWithHelp,
+  createDashboardStatusBadge,
+  createDashboardEventsSection,
+  createDashboardScopeChipBar,
+  createDashboardWorklistItem,
+  createDashboardLoadingActivityCard,
+  createDashboardCatalogSearchBar,
+  createDashboardRecentAccessStrip,
   createDashboardSectionRouteCard,
   createDashboardNavigationCard,
-  createDashboardRecentAccessStrip,
-  createDashboardPageHero,
+  createDashboardCommandPalette,
+  createDashboardTopBar,
+  createDashboardTopBarSearchTrigger,
+  createDashboardTopBarFavoritesStrip,
+  createDashboardTopBarUtilityCluster,
+  createDashboardTopBarUserIdentity,
+  ActionButton,
+  EmptyState,
+  StateBanner,
 } from "@delpi/plugin-ui/index";
 ```
 
-O Portal fornece labels, rotas, badges e conteúdo de domínio.
+Contrato detalhado:
+- [32-inicio-home.md](./32-inicio-home.md)
+
+O Portal fornece catálogo, conteúdo, dados operacionais e AuthZ. O kit owns chrome, foco, responsividade e tema.
+
+**DO NOT RECREATE:** TopBar, Command Palette, PageHero, EventsSection, worklist item, CatalogSearchBar, RecentAccessStrip, SectionRouteCard, NavigationCard, FavoritesStrip ou generic state/loading/empty chrome.
 
 ## Visão geral
 
