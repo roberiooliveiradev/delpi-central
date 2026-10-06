@@ -979,6 +979,16 @@ def _system_route_authz(*, permissions: list[str]) -> Iterator[Any]:
         "X2_NOME": "Produtos",
         "X2_CHAVE": "000123",
     }
+    paged_uc = MagicMock()
+    paged_uc.execute.return_value = {
+        "page": 1,
+        "page_size": 20,
+        "total_records": 0,
+        "total_pages": 0,
+        "results": [],
+    }
+    flat_uc = MagicMock()
+    flat_uc.execute.return_value = []
 
     with ExitStack() as stack:
         stack.enter_context(
@@ -1013,6 +1023,34 @@ def _system_route_authz(*, permissions: list[str]) -> Iterator[Any]:
             )
         )
         stack.enter_context(
+            patch.object(
+                system_routes,
+                "build_search_tables_by_description_use_case",
+                return_value=paged_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                system_routes,
+                "build_search_columns_by_description_use_case",
+                return_value=paged_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                system_routes,
+                "build_search_columns_in_table_use_case",
+                return_value=flat_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                system_routes,
+                "build_list_table_columns_use_case",
+                return_value=paged_uc,
+            )
+        )
+        stack.enter_context(
             patch(
                 "app.startup.run_plugins_migrations_on_startup.run_plugins_migrations_on_startup",
                 lambda: None,
@@ -1031,6 +1069,15 @@ def _system_route_authz(*, permissions: list[str]) -> Iterator[Any]:
         yield TestClient(app)
 
 
+_SYSTEM_METADATA_ROUTES = (
+    "/system/tables/search?description=prod",
+    "/system/columns/search?description=forn",
+    "/system/tables/SB1010/columns/search?q=ab",
+    "/system/tables/SB1010",
+    "/system/tables/SB1010/columns",
+)
+
+
 @pytest.mark.parametrize(
     ("permissions", "expected"),
     [
@@ -1041,9 +1088,286 @@ def _system_route_authz(*, permissions: list[str]) -> Iterator[Any]:
     ],
 )
 def test_system_metadata_route_authz_matrix(permissions, expected):
+    """All five promoted routes honor SYSTEM_METADATA_ACCESS on the real app."""
     with _system_route_authz(permissions=permissions) as client:
-        response = client.get(
-            "/system/tables/SB1010",
-            headers={"Authorization": "Bearer end-user-token"},
-        )
-    assert response.status_code == expected
+        for path in _SYSTEM_METADATA_ROUTES:
+            response = client.get(
+                path,
+                headers={"Authorization": "Bearer end-user-token"},
+            )
+            assert response.status_code == expected, (path, permissions, expected)
+
+
+# ---------------------------------------------------------------------------
+# CORRECTIVE-001 — response binding fail-closed matrix (RB-01..RB-08)
+# ---------------------------------------------------------------------------
+
+_COL_SEARCH_FIELDS = tuple(
+    _allowlist_entry("search_protheus_columns_by_description")[
+        "approvedResponseFields"
+    ]
+)
+_COL_SEARCH_BINDINGS = {"data": "results"}
+
+
+def test_rb01_results_present_maps_to_data():
+    """RB-01: results present, data absent -> normal results->data mapping."""
+    projected = apply_approved_field_projection(
+        _envelope(
+            {
+                "page": 1,
+                "results": [
+                    {
+                        "table_name": "SC7010",
+                        "table_description": "Pedidos",
+                        "column_name": "C7_FORNECE",
+                        "column_description": "Fornecedor",
+                    }
+                ],
+            }
+        ),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=_COL_SEARCH_BINDINGS,
+    )
+    assert "results" not in projected
+    assert len(projected["data"]) == 1
+
+
+def test_rb02_both_keys_absent_no_data_output():
+    """RB-02: results absent, data absent -> no data output."""
+    projected = apply_approved_field_projection(
+        _envelope({"page": 1, "page_size": 20}),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=_COL_SEARCH_BINDINGS,
+    )
+    assert "data" not in projected
+    assert "results" not in projected
+
+
+def test_rb03_owner_data_not_accepted_without_source():
+    """RB-03: owner `data` with `results` absent is NOT a binding substitute."""
+    projected = apply_approved_field_projection(
+        _envelope(
+            {
+                "page": 1,
+                "data": [
+                    {
+                        "table_name": "ZZ9010",
+                        "table_description": "not-from-results",
+                        "column_name": "X",
+                        "column_description": "X",
+                    }
+                ],
+            }
+        ),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=_COL_SEARCH_BINDINGS,
+    )
+    assert "data" not in projected
+    assert "results" not in projected
+
+
+def test_rb04_source_external_collision_fails_closed():
+    """RB-04: payload with BOTH `data` and `results` -> neither is emitted."""
+    projected = apply_approved_field_projection(
+        _envelope(
+            {
+                "page": 1,
+                "data": [{"table_name": "ZZ9010"}],
+                "results": [
+                    {
+                        "table_name": "SC7010",
+                        "table_description": "Pedidos",
+                        "column_name": "C7_FORNECE",
+                        "column_description": "Fornecedor",
+                    }
+                ],
+            }
+        ),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=_COL_SEARCH_BINDINGS,
+    )
+    assert "data" not in projected
+    assert "results" not in projected
+    assert projected.get("page") == 1
+
+
+def test_rb05_unmapped_root_fields_dropped():
+    """RB-05: unrelated owner keys are dropped normally."""
+    projected = apply_approved_field_projection(
+        _envelope(
+            {
+                "page": 1,
+                "results": [],
+                "internal": {"debug": True},
+                "sql_text": "select 1",
+            }
+        ),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=_COL_SEARCH_BINDINGS,
+    )
+    assert "internal" not in projected
+    assert "sql_text" not in projected
+    assert "results" not in projected
+
+
+def test_rb06_row_extra_fields_exact_four_only():
+    """RB-06: rows under results project only the four approved fields."""
+    projected = apply_approved_field_projection(
+        _envelope(
+            {
+                "results": [
+                    {
+                        "table_name": "SC7010",
+                        "table_description": "Pedidos",
+                        "column_name": "C7_FORNECE",
+                        "column_description": "Fornecedor",
+                        "similarity_ratio": 0.9,
+                        "rank": 1,
+                    }
+                ]
+            }
+        ),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=_COL_SEARCH_BINDINGS,
+    )
+    assert projected["data"][0] == {
+        "table_name": "SC7010",
+        "table_description": "Pedidos",
+        "column_name": "C7_FORNECE",
+        "column_description": "Fornecedor",
+    }
+
+
+def test_rb07_malformed_binding_fails_closed():
+    """RB-07: wildcard/invalid binding spec strips the ambiguous key."""
+    projected = apply_approved_field_projection(
+        _envelope({"data": [{"table_name": "ZZ9010"}], "results": []}),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings={"data": "*"},
+    )
+    assert "data" not in projected
+    assert "results" not in projected
+    # Non-mapping binding metadata fails fully closed.
+    projected = apply_approved_field_projection(
+        _envelope({"data": [{"table_name": "ZZ9010"}]}),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings="data:results",
+    )
+    assert "data" not in projected
+
+
+def test_rb08_source_key_never_leaks():
+    """RB-08: the trusted source key is consumed by the rename, not emitted."""
+    projected = apply_approved_field_projection(
+        _envelope(
+            {
+                "results": [
+                    {
+                        "table_name": "SC7010",
+                        "table_description": "P",
+                        "column_name": "C",
+                        "column_description": "D",
+                    }
+                ]
+            }
+        ),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=_COL_SEARCH_BINDINGS,
+    )
+    assert "results" not in projected
+    assert projected["data"]
+
+
+# ---------------------------------------------------------------------------
+# CORRECTIVE-001 — retrieval: negative phrases + non-regression
+# ---------------------------------------------------------------------------
+
+
+def test_registro_tokens_not_in_global_quarantine():
+    allow = load_external_read_allowlist()
+    quarantine = set(allow.get("retrievalQuarantineTokens") or [])
+    assert "registros" not in quarantine
+    assert "registro" not in quarantine
+    assert "select" in quarantine
+
+
+def test_promoted_ops_declare_row_intent_negative_phrases():
+    for oid in _PROMOTED:
+        entry = _allowlist_entry(oid)
+        negatives = entry.get("retrievalNegativePhrases") or []
+        assert negatives, oid
+        # multiword-only: never a global single-word ban
+        for phrase in negatives:
+            assert len(phrase.split()) >= 2, (oid, phrase)
+
+
+@pytest.mark.parametrize(
+    ("query", "expected_any"),
+    [
+        # global "registros" must not suppress the governed purchase read
+        (
+            "pedidos de compra do produto",
+            {"get_product_purchases"},
+        ),
+        (
+            "registros de pedidos de compra do produto",
+            {"get_product_purchases"},
+        ),
+        # second existing READ capability with natural "registros de" wording
+        (
+            "registros de movimentações internas do produto 10080055",
+            {"get_product_internal_movements"},
+        ),
+    ],
+)
+def test_registros_queries_still_reach_business_capabilities(
+    query, expected_any, monkeypatch
+):
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids, query
+    assert not set(ids) & set(_PROMOTED), (query, ids)
+    assert "execute_readonly_sql" not in ids
+    assert ids[0] in expected_any or expected_any & set(ids), (query, ids)
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "me mostre os registros da SB1",
+        "me mostre os registros da tabela SB1",
+        "traga todos os dados da SC7",
+        "liste clientes da SA1",
+        "quero ver os dados da tabela SB1010",
+        "linhas da SC5",
+        "conteúdo da tabela SA1",
+    ],
+)
+def test_row_intent_negative_phrases_suppress_metadata(query, monkeypatch):
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert not set(ids) & set(_PROMOTED), (query, ids)
+    assert "execute_readonly_sql" not in ids
+
+
+def test_negative_phrase_is_multiword_only_and_metadata_driven():
+    """Single-token negative phrases are inert (no per-action word ban)."""
+    from app.application.external_capabilities.dynamic_information.retrieval import (
+        score_action,
+    )
+
+    action = _action("get_protheus_table")
+    fields = {
+        f: getattr(action, f) for f in action.__dataclass_fields__
+    }
+    hacked = TechnicalAction(**{**fields, "negative_aliases": ("sb1",)})
+    assert score_action("o que é a SB1?", hacked) > 0
+    legit = TechnicalAction(
+        **{**fields, "negative_aliases": ("registros da", "registros de")}
+    )
+    assert score_action("me mostre os registros da SB1", legit) == 0.0

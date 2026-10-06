@@ -157,30 +157,60 @@ def _apply_response_bindings(payload: Any, bindings: Any) -> Any:
     """Rename trusted top-level source keys to frozen external keys.
 
     Mapping source is allowlist ``responseBindings`` metadata only — never
-    caller input. A rename never shadows a non-source key already present
-    (fail closed) and the source key itself is consumed by the rename.
+    caller input. Fail-closed invariants:
+
+    * an external key is populated ONLY from its configured trusted source;
+    * a payload key matching an external binding name is never accepted as an
+      implicit substitute when the trusted source is absent;
+    * a payload that contains BOTH the source and the external key is an
+      ambiguous collision — neither is emitted;
+    * malformed binding entries strip any same-named payload key instead of
+      silently trusting it.
     """
-    if not isinstance(payload, dict) or not isinstance(bindings, Mapping):
+    if not isinstance(payload, dict):
+        return payload
+    if bindings is None:
+        return payload
+    if not isinstance(bindings, Mapping):
+        # Binding metadata present but malformed: fail closed rather than let
+        # an unmapped owner key satisfy an approved external field implicitly.
+        return {}
+    if not bindings:
         return payload
     pairs: list[tuple[str, str]] = []
+    deny: set[str] = set()
     for external, source in bindings.items():
-        if not (isinstance(external, str) and isinstance(source, str)):
-            continue
-        external = external.strip()
-        source = source.strip()
-        if not (_SIMPLE_KEY.fullmatch(external) and _SIMPLE_KEY.fullmatch(source)):
-            continue
-        pairs.append((external, source))
-    if not pairs:
+        valid = (
+            isinstance(external, str)
+            and isinstance(source, str)
+            and bool(external.strip())
+            and bool(source.strip())
+            and bool(_SIMPLE_KEY.fullmatch(external.strip()))
+            and bool(_SIMPLE_KEY.fullmatch(source.strip()))
+            and external.strip() != source.strip()
+        )
+        if valid:
+            pairs.append((external.strip(), source.strip()))
+            deny.add(external.strip())
+        elif isinstance(external, str) and external.strip():
+            deny.add(external.strip())
+    if not pairs and not deny:
         return payload
     consumed: set[str] = set()
     out: dict[str, Any] = {}
     for external, source in pairs:
-        if source in payload and external not in payload:
-            out[external] = payload[source]
+        if source not in payload:
+            # Trusted source absent: the same-named owner key cannot satisfy
+            # the binding implicitly; `deny` strips it below.
+            continue
+        if external in payload:
+            # Ambiguous source/external collision: emit neither.
             consumed.add(source)
+            continue
+        out[external] = payload[source]
+        consumed.add(source)
     for key, value in payload.items():
-        if key not in consumed and key not in out:
+        if key not in consumed and key not in deny and key not in out:
             out[key] = value
     return out
 

@@ -38,8 +38,6 @@
     "brutos",
     "bruto",
     "otd",
-    "registros",
-    "registro",
     "select"
   ],
   "retrievalReadOnlyGuard": {
@@ -3534,7 +3532,36 @@
             "default": 20
           }
         }
-      }
+      },
+      "retrievalNegativePhrases": [
+        "registros da",
+        "registros de",
+        "registros do",
+        "registros na",
+        "registros no",
+        "registro da",
+        "registro de",
+        "registro do",
+        "registro na",
+        "registro no",
+        "dados da tabela",
+        "dados de uma tabela",
+        "todos os dados",
+        "todos os registros",
+        "clientes da",
+        "clientes de",
+        "clientes do",
+        "linhas da",
+        "linhas de",
+        "linhas do",
+        "conteudo da tabela",
+        "conteúdo da tabela",
+        "dump da tabela",
+        "dump de tabela",
+        "itens da tabela",
+        "registros da tabela",
+        "registros de uma tabela"
+      ]
     },
     {
       "operationId": "search_protheus_columns_by_description",
@@ -3602,7 +3629,36 @@
             "default": 20
           }
         }
-      }
+      },
+      "retrievalNegativePhrases": [
+        "registros da",
+        "registros de",
+        "registros do",
+        "registros na",
+        "registros no",
+        "registro da",
+        "registro de",
+        "registro do",
+        "registro na",
+        "registro no",
+        "dados da tabela",
+        "dados de uma tabela",
+        "todos os dados",
+        "todos os registros",
+        "clientes da",
+        "clientes de",
+        "clientes do",
+        "linhas da",
+        "linhas de",
+        "linhas do",
+        "conteudo da tabela",
+        "conteúdo da tabela",
+        "dump da tabela",
+        "dump de tabela",
+        "itens da tabela",
+        "registros da tabela",
+        "registros de uma tabela"
+      ]
     },
     {
       "operationId": "search_protheus_columns_in_table",
@@ -3655,7 +3711,36 @@
             "minLength": 2
           }
         }
-      }
+      },
+      "retrievalNegativePhrases": [
+        "registros da",
+        "registros de",
+        "registros do",
+        "registros na",
+        "registros no",
+        "registro da",
+        "registro de",
+        "registro do",
+        "registro na",
+        "registro no",
+        "dados da tabela",
+        "dados de uma tabela",
+        "todos os dados",
+        "todos os registros",
+        "clientes da",
+        "clientes de",
+        "clientes do",
+        "linhas da",
+        "linhas de",
+        "linhas do",
+        "conteudo da tabela",
+        "conteúdo da tabela",
+        "dump da tabela",
+        "dump de tabela",
+        "itens da tabela",
+        "registros da tabela",
+        "registros de uma tabela"
+      ]
     },
     {
       "operationId": "get_protheus_table",
@@ -3692,6 +3777,35 @@
         "protheus table info",
         "o que é a sb1",
         "o que e a sb1"
+      ],
+      "retrievalNegativePhrases": [
+        "registros da",
+        "registros de",
+        "registros do",
+        "registros na",
+        "registros no",
+        "registro da",
+        "registro de",
+        "registro do",
+        "registro na",
+        "registro no",
+        "dados da tabela",
+        "dados de uma tabela",
+        "todos os dados",
+        "todos os registros",
+        "clientes da",
+        "clientes de",
+        "clientes do",
+        "linhas da",
+        "linhas de",
+        "linhas do",
+        "conteudo da tabela",
+        "conteúdo da tabela",
+        "dump da tabela",
+        "dump de tabela",
+        "itens da tabela",
+        "registros da tabela",
+        "registros de uma tabela"
       ]
     },
     {
@@ -3740,7 +3854,36 @@
             "default": 50
           }
         }
-      }
+      },
+      "retrievalNegativePhrases": [
+        "registros da",
+        "registros de",
+        "registros do",
+        "registros na",
+        "registros no",
+        "registro da",
+        "registro de",
+        "registro do",
+        "registro na",
+        "registro no",
+        "dados da tabela",
+        "dados de uma tabela",
+        "todos os dados",
+        "todos os registros",
+        "clientes da",
+        "clientes de",
+        "clientes do",
+        "linhas da",
+        "linhas de",
+        "linhas do",
+        "conteudo da tabela",
+        "conteúdo da tabela",
+        "dump da tabela",
+        "dump de tabela",
+        "itens da tabela",
+        "registros da tabela",
+        "registros de uma tabela"
+      ]
     }
   ],
   "explicitlyNotApproved": [

@@ -200,6 +200,17 @@ def score_action(query: str, action: TechnicalAction) -> float:
     if _query_has_foreign_quarantine(query, action):
         return 0.0
 
+    # Trusted negative phrases: an action may declare multiword intents outside
+    # its semantic scope (e.g. row-record access on metadata actions). Only
+    # multiword phrases are honored so normal single Portuguese tokens can
+    # never be banned per-action.
+    for negative in action.negative_aliases:
+        if (
+            len(ordered_tokens(negative)) >= 2
+            and _alias_matches_query(negative, query)
+        ):
+            return 0.0
+
     q_tokens = tokenize(query)
     if not q_tokens:
         return 0.0
