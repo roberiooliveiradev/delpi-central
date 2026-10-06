@@ -1,0 +1,4 @@
+# Regenerated audit outputs — never commit raw dumps (may contain real supplier data)
+out/
+out_utf8/
+part*.md

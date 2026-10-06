@@ -1,8 +1,9 @@
 # Auditoria do Modelo de Fornecedores — TOTVS Protheus (DELPI)
 
 > CLASS = READ / INVENTORY / AUDIT. Nenhuma escrita foi executada. Todas as consultas foram SELECT read-only (com `NOLOCK` apenas em contagens agregadas), dicionário SX\* e catálogo `sys.*`.
-> Base de evidência: SQL Server `srv-db01` (192.168.1.230), database `DELPI`, dicionários por empresa `SX?010` (empresa 01), `SX?030`, `SX?040`, `SX?050`.
-> Convenção de evidência: **PROVEN** (evidência direta em dicionário/schema físico/dados/código), **TO_INVENTORY** (existe lead mas sem prova), **UNKNOWN** (não determinável com as capabilities disponíveis), **NOT_APPLICABLE**.
+> Base de evidência: authorized DELPI TOTVS SQL Server, database `DELPI`, dicionários por empresa `SX?010` (empresa 01), `SX?030`, `SX?040`, `SX?050`.
+> Convenção de evidência (conclusões): **PROVEN** (evidência direta em dicionário/schema físico/dados/código) · **TO_INVENTORY** (existe lead mas sem prova) · **PLANNED** (decidido, ainda não implementado) · **TARGET** (direção proposta, sujeita a ratificação) · **UNKNOWN** (não determinável com as capabilities disponíveis) · **NOT_APPLICABLE** · **EXECUTION_DRIFT** (premissa invalidada).
+> Convenção para campos de contrato: **PROVEN_REQUIRED** · **PROVEN_OPTIONAL** · **CANDIDATE_REQUIRED** · **CONDITIONAL** · **SYSTEM_GENERATED** · **DEFAULTED** · **DO_NOT_SEND** · **UNKNOWN**. Fill-rate alto **não** prova obrigatoriedade.
 
 # 1. Executive Summary
 
@@ -11,7 +12,7 @@
 - **Identidade física**: PK `R_E_C_N_O_` + índice único `SA2010_UNQ (A2_FILIAL, A2_COD, A2_LOJA, R_E_C_D_E_L_)`. Chave de negócio = **`A2_COD` + `A2_LOJA`** (filial em branco). **CNPJ/CPF não é chave e não é único** (32 valores duplicados, inclusive entre códigos distintos). **[PROVEN]**
 - **Geração de código**: `A2_COD` tem default `GETSXENUM("SA2")` nas empresas 01 e 05; nas empresas 03/04 o default não existe (entrada manual). Padrão observado: sequencial numérico 6 dígitos (`003929` atual máximo), com exceções manuais (`VIAGEM`, `FISCO`, `INPS`...). A tabela de numerador `SXE` **não existe** na base DELPI — mecanismo de resolução do próximo número é **TO_INVENTORY** (provavelmente lado appserver/licença TOTVS ou rotina MATA020). **[PROVEN parcial + TO_INVENTORY]**
 - **Customizações DELPI na SA2**: apenas 3 campos de usuário — `A2_YROHS` (RoHS?, usado em 67% dos registros), `A2_YFGEN` (For. Genérico) e `A2_ZTABPRC` (Tab. Preço Compra, F3→AIA). Não há tabelas Z\* de fornecedor. **[PROVEN]**
-- **Tabelas relacionadas materialmente usadas**: `SA5` Produto×Fornecedor (40.671 linhas, tabela cadastral separada — NÃO criada junto com SA2), `SAD` Grupo×Fornecedor (5.512), `AIA`/`AIB` tabelas de preço (329/8.616), `AIC` tolerância de entrada (636). Contatos/dados bancários ficam **dentro da SA2** (tabelas DKI/D30/FV6 existem mas têm 0 linhas). **[PROVEN]**
+- **Tabelas relacionadas materialmente usadas**: `SA5` Produto×Fornecedor (40.671 linhas, tabela cadastral separada — nenhuma evidência de criação automática junto com SA2), `SAD` Grupo×Fornecedor (5.512), `AIA`/`AIB` tabelas de preço (329/8.616), `AIC` tolerância de entrada (636). Contato principal e dados bancários ficam **dentro da SA2**. Tabelas DKI/D30/DD1/FV6/G4R existem fisicamente com **0 linhas** → `AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET` (não prova de desuso permanente). **[PROVEN]**
 - **Lookups obrigatórios por validação** (SX9/X3): `SE4` cond. pagamento, `SED` natureza, `SA6` banco, `SA4` transportadora, `SYA` país, `CCH` país BACEN, `CC2` município IBGE, `CT1` conta contábil, `SX5` tabelas genéricas (12=UF, Y7=grupo, 58=forma pgto, T3=segmento, 48, 83, MF...), `SA1` cliente vinculado, `SRA` funcionário vinculado, `SAE`, `ACJ` DDI, `SYR` origem. **[PROVEN]**
 - **Consumidores transacionais** (apenas leem SA2): SC1, SC7, SC8, SD1, SF1, SE2, SE5, SF3, SFT, SCY, SCE, SDS, SFJ — centenas de milhares de linhas. **[PROVEN]**
 - **Rotina dona do cadastro**: `MATA020` (referenciada na SX2). A API/ponte deverá respeitar as mesmas validações. **[PROVEN]**
@@ -112,7 +113,7 @@ Legenda de metadata: `V`=X3_VALID · `DEF`=X3_RELACAO (init/default) · `F3=`con
 | 28 | `A2_BANCO` | C | 3 | 0 | Banco | F3=SA6  |
 | 29 | `A2_RECCSLL` | C | 1 | 0 | Rec.CSLL | V DEF CBOX  |
 | 30 | `A2_AGENCIA` | C | 5 | 0 | Cod Agencia |  |
-| 31 | `A2_NUMRA` | C | 6 | 0 | C�d Func | V  |
+| 31 | `A2_NUMRA` | C | 6 | 0 | Cód Func | V  |
 | 32 | `A2_ABICS` | C | 4 | 0 | Cod. Abics |  |
 | 33 | `A2_DVAGE` | C | 1 | 0 | DV Ag Cnab |  |
 | 34 | `A2_NUMCON` | C | 10 | 0 | Cta Corrente |  |
@@ -135,7 +136,7 @@ Legenda de metadata: `V`=X3_VALID · `DEF`=X3_RELACAO (init/default) · `F3=`con
 | 51 | `A2_LC` | C | 14 | 0 | Lim. Credito |  |
 | 52 | `A2_ESTADO` | C | 20 | 0 | Nome Estado |  |
 | 53 | `A2_MATR` | N | 4 | 0 | Maior Atraso |  |
-| 54 | `A2_CODPAIS` | C | 5 | 0 | Pa�s Bacen | V F3=CCH OBRIG1  |
+| 54 | `A2_CODPAIS` | C | 5 | 0 | País Bacen | V F3=CCH OBRIG1  |
 | 55 | `A2_MCOMPRA` | N | 17 | 2 | Maior Compra |  |
 | 56 | `A2_CEP` | C | 8 | 0 | CEP |  |
 | 57 | `A2_METR` | N | 5 | 1 | Media Atraso |  |
@@ -220,9 +221,9 @@ Legenda de metadata: `V`=X3_VALID · `DEF`=X3_RELACAO (init/default) · `F3=`con
 | B0 | `A2_LOJFAV` | C | 2 | 0 | Loja Favorec | V  |
 | B1 | `A2_NOMFAV` | C | 50 | 0 | Nome Favorec | DEF  |
 | B2 | `A2_NUMDEP` | N | 2 | 0 | Dependentes | V  |
-| B3 | `A2_CALCIRF` | C | 1 | 0 | C�lc. IRRF | V CBOX  |
+| B3 | `A2_CALCIRF` | C | 1 | 0 | Cálc. IRRF | V CBOX  |
 | B4 | `A2_VINCULO` | C | 2 | 0 | P. Vinculo | V F3=CC1TIP  |
-| B5 | `A2_CODINSS` | C | 11 | 0 | C�d. INSS |  |
+| B5 | `A2_CODINSS` | C | 11 | 0 | Cód. INSS |  |
 | B6 | `A2_DTINIV` | D | 8 | 0 | Dt Ini Vincu |  |
 | B7 | `A2_DTFIMV` | D | 8 | 0 | Dt Fim Vincu |  |
 | B8 | `A2_CODSIAF` | C | 4 | 0 | Cod.Mun.SIAF |  |
@@ -259,14 +260,14 @@ Legenda de metadata: `V`=X3_VALID · `DEF`=X3_RELACAO (init/default) · `F3=`con
 | C3 | `A2_CPFIRP` | C | 11 | 0 | CPF IR Progr | V WHEN  |
 | C4 | `A2_INCLTMG` | C | 1 | 0 | Inc.Prd.Leit | V CBOX  |
 | C5 | `A2_MINIRF` | C | 1 | 0 | Vlr. Min. IR | V DEF CBOX  |
-| C6 | `A2_CODADM` | C | 3 | 0 | C�d. Adm. | V F3=SAE  |
+| C6 | `A2_CODADM` | C | 3 | 0 | Cód. Adm. | V F3=SAE  |
 | C7 | `A2_TIPCTA` | C | 1 | 0 | Tp. Cta. For | V DEF CBOX  |
 | C8 | `A2_IBGE` | C | 11 | 0 | Cod.IBGE | V F3=AM1  |
 | C9 | `A2_IMPIP` | C | 1 | 0 | Ident.Prod. | DEF CBOX  |
-| CA | `A2_MJURIDI` | C | 1 | 0 | M.Jur�dico | V DEF CBOX  |
+| CA | `A2_MJURIDI` | C | 1 | 0 | M.Jurídico | V DEF CBOX  |
 | CB | `A2_RNTRC` | C | 14 | 0 | RNTRC |  |
 | CC | `A2_MUNSC` | C | 5 | 0 | Cod Mun SC |  |
-| CD | `A2_CONFFIS` | C | 1 | 0 | Conf. F�sica | V DEF CBOX  |
+| CD | `A2_CONFFIS` | C | 1 | 0 | Conf. Física | V DEF CBOX  |
 | CE | `A2_CPOMSP` | C | 1 | 0 | Reg. CPOM | V CBOX  |
 | CF | `A2_TPLOGR` | C | 3 | 0 | Tp.Lograd |  |
 | CG | `A2_CCICMS` | C | 1 | 0 | CCICMS | V CBOX  |
@@ -302,7 +303,7 @@ Legenda de metadata: `V`=X3_VALID · `DEF`=X3_RELACAO (init/default) · `F3=`con
 | DA | `A2_CODNIT` | C | 11 | 0 | Num Insc Aut |  |
 | DB | `A2_CONTRIB` | C | 1 | 0 | Contribuinte | V CBOX  |
 | DC | `A2_DTNASC` | D | 8 | 0 | Data nasc. |  |
-| DD | `A2_OCORREN` | C | 2 | 0 | Ocorr�ncia | V WHEN  |
+| DD | `A2_OCORREN` | C | 2 | 0 | Ocorrência | V WHEN  |
 | DE | `A2_CODFI` | C | 3 | 0 | Cod. FIESP |  |
 | DF | `A2_FORMPAG` | C | 2 | 0 | Form. Pgto | V F3=58 OBRIG1  |
 | DG | `A2_RFUNDES` | C | 1 | 0 | Rec.FUNDESA | V CBOX  |
@@ -311,11 +312,11 @@ Legenda de metadata: `V`=X3_VALID · `DEF`=X3_RELACAO (init/default) · `F3=`con
 | DJ | `A2_ISSRSLC` | C | 1 | 0 | LC ISS RS | V CBOX  |
 | DK | `A2_PAGGFE` | C | 1 | 0 | Pagto GFE | V DEF CBOX  |
 | DL | `A2_FORNEMA` | C | 1 | 0 | Forn.Mailing | V DEF CBOX  |
-| DM | `A2_MINPUB` | C | 1 | 0 | Vl. M�n. Pub | V DEF CBOX  |
-| DN | `A2_REGPB` | C | 1 | 0 | Reg.Para�ba | V CBOX  |
+| DM | `A2_MINPUB` | C | 1 | 0 | Vl. Mín. Pub | V DEF CBOX  |
+| DN | `A2_REGPB` | C | 1 | 0 | Reg.Paraíba | V CBOX  |
 | DO | `A2_MOTNIF` | C | 1 | 0 | Mot.NIF | DEF CBOX  |
 | DP | `A2_DESPORT` | C | 1 | 0 | Assoc. Desp. | V CBOX  |
-| DQ | `A2_CLIENTE` | C | 6 | 0 | C�d. Cliente | V F3=SA1  |
+| DQ | `A2_CLIENTE` | C | 6 | 0 | Cód. Cliente | V F3=SA1  |
 | DR | `A2_CALCINP` | C | 1 | 0 | Calc.INSS.Pt | V CBOX  |
 | DS | `A2_DEDBSPC` | C | 1 | 0 | Ded.PIS/COF | V DEF CBOX  |
 | DT | `A2_LOJCLI` | C | 2 | 0 | Loja Cliente | V  |
@@ -388,23 +389,38 @@ A totalidade é o mapa referencial padrão TOTVS (módulos Compras, Financeiro, 
 
 # 8. Mandatory Fields Analysis
 
+**Princípio desta revisão**: fill-rate alto ≠ obrigatoriedade provada. `PROVEN_REQUIRED` exige evidência explícita de rejeição ou contrato autoritativo; sem introspecção da MATA020, campos com fill ~100% são **CANDIDATE_REQUIRED**.
+
 Classificação por campo (evidência entre parênteses):
 
 **REQUIRED_BY_DICTIONARY (chave única X2_UNICO):**
-- `A2_FILIAL` — integra a chave única; na prática sempre vazio (tabela compartilhada). A ponte deve enviar `'  '` (branco) ou omitir → rotina preenche com a filial corrente/branco.
+- `A2_FILIAL` — integra a chave única; na prática sempre vazio (tabela compartilhada). Quem preenche (caller/ponte/rotina) é decisão de contrato.
 - `A2_COD` — chave; possui DEFAULT `GETSXENUM("SA2")` (emp 01/05) → **SYSTEM_GENERATED quando a ponte delega à rotina**; nas empresas 03/04 não há default.
-- `A2_LOJA` — chave; sem default de dicionário; **deve ser enviado** (convenção observada `'01'`).
+- `A2_LOJA` — chave; sem default de dicionário. Separação exigida:
+  - `PERSISTED_IDENTITY_REQUIRED` = **PROVEN** (participa da identidade persistida);
+  - `OBSERVED_DEFAULT_CONVENTION_01` = **PROVEN** (`'01'` em 3.266/3.644 registros);
+  - `CREATE_REQUEST_REQUIRED` = **TO_INVENTORY** — ainda é decisão se o caller envia, se a API assume `'01'`, se a ponte calcula ou se a rotina Protheus define;
+  - `API_DEFAULT_01` = **TARGET / CONTRACT_DECISION**.
 
 **REQUIRED_BY_VALIDATION (VALID rejeita vazio ou exige existência):**
 - `A2_CGC` — `Vazio() .Or. (CGC() .And. A020CGC() .And. A020VldUCod())`: tecnicamente admite vazio, mas se informado precisa de dígito verificador válido e passa por verificação de duplicidade (`A020CGC`/`A020VldUCod`). 159 registros legados estão sem CGC — **não usar CNPJ como dedupe único**.
 - `A2_CIVIL` — `naovazio()` quando `A2_TIPO='F'` (WHEN) → CONDITIONAL.
 - Campos com `ExistCpo(...)` **sem** `Vazio()` antes — quando informados devem existir na tabela lookup: `A2_SATIV1` (SX5 'T3'), `A2_CONREG`+`A2_SIGLCR` (BA4 — tabela inexistente fisicamente!), `A2_EST` (SX5 '12'), `A2_COD_MUN` (CC2), `A2_CODPAIS` (CCH), `A2_NATUREZ` (SED), `A2_CONTA` (CT1 via `Ctb105Cta()`), `A2_CLIENTE`/`A2_LOJCLI` (SA1), `A2_CODADM` (SAE).
 
-**REQUIRED_BY_PROCESS (não marcado no dicionário, mas obrigatório na prática — evidência: preenchimento ~100% + índices de busca + rotina MATA020):**
+**CANDIDATE_REQUIRED (não marcado no dicionário, mas candidato forte — evidência: fill ~100% + participação em índice de busca; sem prova de rejeição na rotina):**
 - `A2_NOME` (100%), `A2_NREDUZ` (100%), `A2_TIPO` (99,9% — J/F/X), `A2_EST` (100%), `A2_MUN` (100%), `A2_END` (100%), `A2_BAIRRO` (97,6%), `A2_CEP` (94,6%), `A2_COD_MUN` (99,8%), `A2_CODPAIS` (100%), `A2_CONTA` (99,9%), `A2_NATUREZ` (99,9%).
-- Observação: fill-rate ≠ obrigatoriedade formal. Classificação `REQUIRED_BY_PROCESS` com confiança MÉDIA — a regra de tela da MATA020 (MVC, pasta Cadastro) não é introspectável via SQL. Campos marcados `OBRIG1` no bitmap X3_OBRIGAT pos.1: `A2_TEL, A2_CONTATO, A2_NATUREZ, A2_COD_MUN, A2_CODPAIS, A2_CONTA, A2_EMAIL, A2_FORMPAG, A2_YROHS`. Fill <100% em TEL/CONTATO/EMAIL prova que **não são bloqueantes** no create atual → tratar como CONDITIONAL até confirmação da rotina (ver §39/§40).
+- A regra de tela da MATA020 (MVC, pasta Cadastro) não é introspectável via SQL → nenhum destes é `PROVEN_REQUIRED` até evidência de rejeição ou contrato.
 
-**DEFAULTED (X3_RELACAO — defaults de dicionário, emp. 01):**
+**X3_OBRIGAT (bitmap pos.1) — interpretação ratificada:**
+- `DICTIONARY_OBRIG_FLAG` = **PROVEN** para `A2_TEL, A2_CONTATO, A2_NATUREZ, A2_COD_MUN, A2_CODPAIS, A2_CONTA, A2_EMAIL, A2_FORMPAG, A2_YROHS` (metadata SX3_OBRIGAT).
+- `RUNTIME_CREATE_BLOCKING` = **UNKNOWN** — registros históricos válidos possuem TEL/CONTATO/EMAIL/FORMPAG em branco; divergência flag × dados documentada (fill <100% prova apenas que não bloquearam o passado — não prova comportamento atual da rotina).
+- `PUBLIC_API_REQUIRED` = **TO_INVENTORY** — decisão de contrato (§39, q12).
+
+**DEFAULTED — `default_source` por campo:**
+- `SX3_DEFAULT` (X3_RELACAO, emp. 01): `A2_COD` `GETSXENUM("SA2")` · `A2_MSBLQL` `"2"` · `A2_PLFIL` `"N"` · `A2_RECCSLL/RECCOFI/RECPIS` `"1"` · `A2_TIPO` derivado de `A2_CGC` · `A2_VINCULA` `"1"` · `A2_ID_REPR` `'2'` · `A2_B2B` `"2"` · `A2_PLCRRES` `"N"` · `A2_CONTPRE` `"1"` · `A2_REGESIM` `"2"` · `A2_MINIRF` `"2"` · `A2_TIPCTA` `"1"` · `A2_IMPIP` `"2"` · `A2_MJURIDI` `"2"` · `A2_CONFFIS` `'0'` · `A2_RETISI` `"2"` · `A2_INOVAUT` `"2"` · `A2_INDRUR` `"0"` · `A2_PAGGFE` `"2"` · `A2_FORNEMA` `"2"` · `A2_MINPUB` `"2"` · `A2_MOTNIF` `"1"` · `A2_DEDBSPC` `'1'` · `A2_CPRB` `"2"` · `A2_DTINIR`/`A2_DTFIMR` `CTOD('//')` · `A2_DTVAL` `A100ReDV()` · virtuais `A2_NOMFAV`/`A2_PAISDES`/`A2_DTPAWB`.
+- `OBSERVED_CONVENTION` (dados, **não** metadata): `A2_LOJA='01'` (89,6%), `A2_CODPAIS='01058'` Brasil (98,1% — sem X3_RELACAO).
+- `API_PROPOSAL` (ainda sem base Protheus): defaults do modelo canônico §36 (ex.: `store="01"`, `country_bacen_code="01058"`).
+- `default_source` valores permitidos: `SX3_DEFAULT | RUNTIME_RULE | OBSERVED_CONVENTION | API_PROPOSAL | NONE | UNKNOWN`.
 - `A2_COD` `GETSXENUM("SA2")` · `A2_MSBLQL` `"2"` (não bloqueado) · `A2_PLFIL` `"N"` · `A2_RECCSLL/RECCOFI/RECPIS` `"1"` · `A2_TIPO` derivado de `A2_CGC` (F se <14 dígitos, J se 14) · `A2_VINCULA` `"1"` · `A2_ID_REPR` `'2'` · `A2_B2B` `"2"` · `A2_PLCRRES` `"N"` · `A2_CONTPRE` `"1"` · `A2_REGESIM` `"2"` · `A2_MINIRF` `"2"` · `A2_TIPCTA` `"1"` · `A2_IMPIP` `"2"` · `A2_MJURIDI` `"2"` · `A2_CONFFIS` `'0'` · `A2_RETISI` `"2"` · `A2_INOVAUT` `"2"` · `A2_INDRUR` `"0"` · `A2_PAGGFE` `"2"` · `A2_FORNEMA` `"2"` · `A2_MINPUB` `"2"` · `A2_MOTNIF` `"1"` · `A2_DEDBSPC` `'1'` · `A2_CPRB` `"2"` · `A2_DTINIR`/`A2_DTFIMR` `CTOD('//')` (vazio) · `A2_DTVAL` `A100ReDV()` · `A2_NOMFAV` `A020NomFav()` (virtual) · `A2_PAISDES` `E_Field("A2_PAIS","YA_DESCR")` (virtual) · `A2_DTPAWB` `Tabela("MF",...)` (virtual).
 
 **OPTIONAL (VALID começa com `Vazio() .Or.` ou sem VALID):** demais campos — incluindo todos os dados bancários (A2_BANCO/AGENCIA/DVAGE/NUMCON/DVCTA/SWIFT/TIPCTA), fiscais avançados, representante, exterior, RNTRC etc.
@@ -461,16 +477,21 @@ Classificação por campo (evidência entre parênteses):
 | Mesmo documento em múltiplos registros? | Sim — casos de mesmo CGC em CODs diferentes (ex.: 1 CGC aparecendo com 2 códigos distintos — valor mascarado neste relatório) | profiling |
 | Como localizar para UPDATE | `WHERE A2_COD=@cod AND A2_LOJA=@loja AND D_E_L_E_T_<>'*'` | — |
 
+**Separação ratificada** — `IDENTITY` ≠ `DUPLICATE_SIGNAL` ≠ `IDEMPOTENCY_KEY`:
+- `A2_COD+A2_LOJA` = identidade persistida comprovada no contexto analisado (**PROVEN**);
+- `A2_CGC` normalizado = forte **sinal** de `POSSIBLE_EXISTING_SUPPLIER` (**PROVEN** como sinal, não como chave);
+- `A2_CGC` **não** é idempotency key comprovada — a chave de idempotência da API segue **TO_INVENTORY / CONTRACT_DECISION**.
+
 # 11. Code / Store Generation
 
 | Item | Evidência | Status |
 |---|---|---|
 | Quem gera `A2_COD` | Default de dicionário `GETSXENUM("SA2")` (empresas 01 e 05) | PROVEN (metadata) |
-| Empresas 03/04 | Sem default — entrada manual na MATA020 | PROVEN (SX3 diff) |
+| Empresas 03/04 | Sem default — entrada manual na MATA020 | PROVEN (SX3 diff) — **não** generalizar "o Protheus sempre gera" |
 | Formato do sequencial | numérico 6 dígitos zero-padded; maior atual `003929`; 3.623/3.644 numéricos | PROVEN (dados) |
 | Códigos manuais | 21 ativos não-numéricos (VIAGEM, VIAGF2/3, FISCO, INPS, MUNIC, UNIAO, CONSUM, CONFRA, ESTADO, DPRF...) | PROVEN (dados) |
 | Onde fica a sequência | Tabela `SXE*` **inexistente** nas bases acessíveis (DELPI, DELPI_TST01, DELPI_TST_WS; TSS sem permissão) | TO_INVENTORY — mecanismo interno do appserver |
-| `A2_LOJA` default | Inexistente no dicionário; `'01'` é convenção dominante (3.266/3.644) | PROVEN |
+| `A2_LOJA` default | Inexistente no dicionário (`default_source=NONE`); `'01'` é `OBSERVED_CONVENTION` dominante (3.266/3.644), não default Protheus | PROVEN |
 | Retorno pós-CREATE | sem evidência de contrato — decisão da ponte | UNKNOWN → §39 |
 
 # 12. Related Tables Inventory
@@ -484,12 +505,12 @@ Materialidade medida por dados reais (empresa 01). "Dict-only" = existe no SX3/S
 | SAD010 | SAD | Amarração Grupo × Fornecedor | RELATION | 5.512 | opcional pós-create |
 | AIA010/AIB010 | AIA/AIB | Tabela de Preços do Fornecedor / itens | PURCHASE | 329 / 8.616 | opcional |
 | AIC010 | AIC | Tolerância na Entrada Material | CONFIGURATION | 636 | opcional |
-| DKI010 | DKI | Contatos × Fornecedores | CONTACT | 0 | não usada (contato fica na SA2) |
-| D30010 | D30 | Complemento de Fornecedor (SIMP/import.) | FISCAL | 0 | não usada |
-| DD1010 | DD1 | Docs Exigidos × Fornecedor | CONFIGURATION | 0 | não usada |
-| FV6010 | FV6 | Dados Pagamento Favorecidos | FINANCIAL | 0 | não usada |
-| G4R010 | G4R | Complemento de Fornecedores (Turismo) | CONFIGURATION | 0 | não usada |
-| AI5010 | AI5 | "Fornecedores" (módulo vertical, não é SA2) | — | 0 | não confundir |
+| DKI010 | DKI | Contatos × Fornecedores | CONTACT | 0 | AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET (contato principal fica na SA2) |
+| D30010 | D30 | Complemento de Fornecedor (SIMP/import.) | FISCAL | 0 | AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET |
+| DD1010 | DD1 | Docs Exigidos × Fornecedor | CONFIGURATION | 0 | AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET |
+| FV6010 | FV6 | Dados Pagamento Favorecidos | FINANCIAL | 0 | AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET |
+| G4R010 | G4R | Complemento de Fornecedores (Turismo) | MODULE_UNUSED | 0 | AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET |
+| AI5010 | AI5 | "Fornecedores" (módulo vertical, não é SA2) | MODULE_UNUSED | 0 | não confundir com SA2 |
 | **Lookups** | | | | | |
 | SA6010 | SA6 | Bancos | LOOKUP (A2_BANCO) | 26 | validar se enviado |
 | SE4010 | SE4 | Condições de Pagamento | LOOKUP (A2_COND) | 239 | validar se enviado |
@@ -505,9 +526,27 @@ Materialidade medida por dados reais (empresa 01). "Dict-only" = existe no SX3/S
 | SRA010 | SRA | Funcionários | LOOKUP (A2_NUMRA) | — | validar se enviado |
 | SA3010 | SA3 | Vendedores | LOOKUP | — | opcional |
 | SA7010 | SA7 | Amarração Produto × **Cliente** | — | — | NÃO é de fornecedor |
-| Dict-only (sem físico) | D2C, COP, DD5, FTG, BA4, G4S, SS3, SU6* | vários | — | — | ignorar |
+| Dict-only (sem físico) | D2C, COP, DD5, FTG, BA4, G4S, SS3, SU6* | vários | DICT_ONLY | — | ignorar (módulo ausente) |
 
 *SU6010 existe ("Itens das Listas de Contatos") mas não tem chave de fornecedor direta no recorte analisado.
+
+Referência a SA2 **não** implica participação no cadastro: `TRANSACTION_CONSUMER` = apenas leem SA2 (§19/§20); `LOOKUP` = consultados quando o campo correspondente é enviado; nenhuma `RELATION`/`AUXILIARY_MASTER` precisa ser escrita para o fornecedor existir na base atual.
+
+## Multi-company dictionary matrix
+
+Regras de uma empresa **não** são universais. A futura API precisa decidir explicitamente `target_company` (ou provar que só escreve na empresa 01) — permanece pergunta para Gabriel/owner (§39).
+
+| Campo / regra | COMPANY_01 | COMPANY_03 | COMPANY_04 | COMPANY_05 | Status |
+|---|---|---|---|---|---|
+| Tabela física | SA2010 | SA2030 | SA2040 | SA2050 | PROVEN |
+| Campos SX3 | 248 | 242 | 242 | 248 | PROVEN |
+| `A2_COD` default `GETSXENUM` | sim | **não** | **não** | sim | PROVEN |
+| `A2_YROHS` (DELPI) | sim | não | não | sim | PROVEN |
+| `A2_YFGEN` (DELPI) | sim | não | não | sim | PROVEN |
+| `A2_ZTABPRC` (DELPI) | sim | sim | sim | sim | PROVEN |
+| `A2_PABCB/ECDTEX/ECSEQ/ECFLAG` (SYS) | sim | não | não | sim | PROVEN |
+| Registros | 3.663 | 226 | 68 | 314 | PROVEN |
+| SM0 / nomes de empresa | — | — | — | — | UNKNOWN (tabela ausente nesta base) |
 
 ## 12.x — Schemas completos das tabelas materiais
 
@@ -516,7 +555,7 @@ Schemas extraídos de SX3010 (empresa 01). Tabelas com **0 linhas** estão docum
 ### SA6 — Bancos (lookup de A2_BANCO)
 Chave: `A6_COD+A6_AGENCIA+A6_NUMCON` (SX9 rels 021/083 — a trinca banco+agência+conta é validada em conjunto). 26 bancos cadastrados. Campos PIX existem na SA6 (`A6_CFGPIX`, `A6_DIASEXP`, `A6_PIXMULT`) mas referem-se à configuração PIX **da empresa** (recebimento), não do fornecedor.
 
-### DKI010 — Contatos × Fornecedores (0 linhas — disponível, não usada)
+### DKI010 — Contatos × Fornecedores (0 linhas — AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET)
 Permite **N contatos por fornecedor** (chave `DKI_FILIAL+DKI_FORNEC+DKI_LOJA+DKI_ITEM`):
 
 | # | Campo | Tipo | Tam | Dec | Título |
@@ -533,10 +572,10 @@ Permite **N contatos por fornecedor** (chave `DKI_FILIAL+DKI_FORNEC+DKI_LOJA+DKI
 | 10 | `DKI_RAMAL` | C | 4 | 0 | Ramal | V: R: F3: |
 | 11 | `DKI_CEL` | C | 15 | 0 | Celular | V: R: F3: |
 | 12 | `DKI_EMAIL` | C | 40 | 0 | E-mail | V: R: F3: |
-| 13 | `DKI_OBS` | M | 10 | 0 | Observa��o | V: R: F3: |
+| 13 | `DKI_OBS` | M | 10 | 0 | Observação | V: R: F3: |
 | 14 | `DKI_WFNFC` | C | 1 | 0 | Env. WF NFC? | V:Pertence("12") R:"2" F3: |
 
-### D30010 — Complemento de Fornecedor — SIMP/importação (0 linhas)
+### D30010 — Complemento de Fornecedor — SIMP/importação (0 linhas — AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET
 
 | # | Campo | Tipo | Tam | Dec | Título |
 |---|---|---|---|---|---|
@@ -550,7 +589,7 @@ Permite **N contatos por fornecedor** (chave `DKI_FILIAL+DKI_FORNEC+DKI_LOJA+DKI
 | 08 | `D30_PAISIM` | C | 6 | 0 | Cd Pais SIMP | V:ExistCpo("SX5", "HC"+M->D30_PAISIM) .OR. Vazio(M->D30_PAISIM R: F3:HC |
 | 09 | `D30_CLTRIB` | C | 3 | 0 | Clas. Trib | V:ExistCpo("SX5","HH"+M->D30_CLTRIB) R: F3: |
 
-### DD1010 — Documentos Exigidos × Fornecedor (0 linhas)
+### DD1010 — Documentos Exigidos × Fornecedor (0 linhas — AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET
 
 | # | Campo | Tipo | Tam | Dec | Título |
 |---|---|---|---|---|---|
@@ -578,7 +617,7 @@ Permite **N contatos por fornecedor** (chave `DKI_FILIAL+DKI_FORNEC+DKI_LOJA+DKI
 | 03 | `AIA_LOJFOR` | C | 2 | 0 | Loja Fornec. | V:ExistCpo("SA2",M->AIA_CODFOR+M->AIA_LOJFOR).And.Com010Pk() R: F3: |
 | 04 | `AIA_NOMFOR` | C | 50 | 0 | Nome | V:.F. R:IIF(!INCLUI,Posicione("SA2",1,xFilial("S F3: |
 | 05 | `AIA_CODTAB` | C | 3 | 0 | Tab.Preco | V:ExistChav("AIA",M->AIA_CODFOR+M->AIA_LOJFOR+M->AIA_CODTAB).A R: F3: |
-| 06 | `AIA_DESCRI` | C | 30 | 0 | Descric�o | V:Texto() R: F3: |
+| 06 | `AIA_DESCRI` | C | 30 | 0 | Descricäo | V:Texto() R: F3: |
 | 07 | `AIA_DATDE` | D | 8 | 0 | Dt.Vld.Ini. | V:Com010Data() R: F3: |
 | 08 | `AIA_DATATE` | D | 8 | 0 | Dt.Vld.Final | V:Com010Data() R: F3: |
 | 09 | `AIA_CONDPG` | C | 3 | 0 | Cond.Pagto | V:Vazio().Or.ExistCpo("SE4") R: F3:SE4 |
@@ -588,7 +627,7 @@ Permite **N contatos por fornecedor** (chave `DKI_FILIAL+DKI_FORNEC+DKI_LOJA+DKI
 | 04 | `AIB_CODTAB` | C | 3 | 0 | Tabela Preco | V: R: F3: |
 | 05 | `AIB_ITEM` | C | 4 | 0 | Item | V: R: F3: |
 | 06 | `AIB_CODPRO` | C | 15 | 0 | Produto | V:ExistCpo("SB1") R: F3:SB1 |
-| 07 | `AIB_DESCRI` | C | 120 | 0 | Descric�o | V:Texto() R:If(!INCLUI,Posicione("SB1",1,xFilial("SB F3: |
+| 07 | `AIB_DESCRI` | C | 120 | 0 | Descricäo | V:Texto() R:If(!INCLUI,Posicione("SB1",1,xFilial("SB F3: |
 | 08 | `AIB_PRCCOM` | N | 14 | 7 | Preco Unit. | V:Positivo() R: F3: |
 | 09 | `AIB_QTDLOT` | N | 14 | 3 | Faixa | V:Positivo() R:999999.99 F3: |
 | 10 | `AIB_INDLOT` | C | 20 | 0 | Faixa | V: R: F3: |
@@ -609,7 +648,7 @@ Chave `AD_FILIAL+AD_FORNECE+AD_LOJA+AD_GRUPO`. Valida `ExistCpo("SA2")` + unicid
 | 04 | `AD_NOMEFOR` | C | 50 | 0 | Nome | V: R: F3: |
 | 05 | `AD_GRUPO` | C | 4 | 0 | Grupo | V:ExistChav("SAD",M->AD_FORNECE+M->AD_LOJA+M->AD_GRUPO) .And.  R: F3:SBM |
 | 06 | `AD_NOMGRUP` | C | 120 | 0 | Descricao | V: R: F3: |
-| 07 | `AD_CODTAB` | C | 3 | 0 | Tab. Pre�o | V:Vazio().OR.ExistCpo("AIA",M->AD_FORNECE+M->AD_LOJA+M->AD_COD R: F3:AIA |
+| 07 | `AD_CODTAB` | C | 3 | 0 | Tab. Preço | V:Vazio().OR.ExistCpo("AIA",M->AD_FORNECE+M->AD_LOJA+M->AD_COD R: F3:AIA |
 
 ### AIC010 — Tolerância na Entrada de Material (636 linhas)
 Parâmetros de tolerância por fornecedor/produto no recebimento.
@@ -630,7 +669,7 @@ Parâmetros de tolerância por fornecedor/produto no recebimento.
 | 06 | `CPX_LOJFOR` | C | 2 | 0 | Loja | V:COM001VldF(a) .And. COM001VldI('CPX') R: F3: |
 | 07 | `CPX_NOME` | C | 50 | 0 | Nome Fornec. | V: R:IF(INCLUI,'',Posicione("SA2",1,xFilial(" F3: |
 
-### FV6010 — Dados Pagamento Favorecidos (0 linhas — refere favorecido SA2 + CNPJ + valor)
+### FV6010 — Dados Pagamento Favorecidos (0 linhas — AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET; refere favorecido SA2 + CNPJ + valor)
 
 | # | Campo | Tipo | Tam | Dec | Título |
 |---|---|---|---|---|---|
@@ -645,12 +684,12 @@ Parâmetros de tolerância por fornecedor/produto no recebimento.
 | 09 | `FV6_CODPRO` | C | 6 | 0 | ID Processo | V: R: F3:FV0 |
 | 10 | `FV6_VALOR` | N | 16 | 2 | Valor Pag. | V: R: F3: |
 
-### G4R010 — Complemento de Fornecedores Turismo (0 linhas — módulo SIGATUR)
+### G4R010 — Complemento de Fornecedores Turismo (0 linhas — AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET; módulo SIGATUR)
 
 | # | Campo | Tipo | Tam | Dec | Título |
 |---|---|---|---|---|---|
 | 01 | `G4R_FILIAL` | C | 2 | 0 | Filial | V: R: F3: |
-| 02 | `G4R_FORNEC` | C | 6 | 0 | C�d. Fornec. | V:Vazio() .Or. ExistCpo("SA2",M->G4R_FORNEC) R: F3:SA2A |
+| 02 | `G4R_FORNEC` | C | 6 | 0 | Cód. Fornec. | V:Vazio() .Or. ExistCpo("SA2",M->G4R_FORNEC) R: F3:SA2A |
 | 03 | `G4R_LOJA` | C | 2 | 0 | Loja | V:(Vazio() .Or. ExistCpo("SA2",M->G4R_FORNEC+M->G4R_LOJA)) .an R: F3: |
 | 04 | `G4R_NOME` | C | 40 | 0 | Fornecedor | V: R:IF(!INCLUI,POSICIONE("SA2",1,XFILIAL("SA F3: |
 
@@ -659,7 +698,7 @@ Parâmetros de tolerância por fornecedor/produto no recebimento.
 | # | Campo | Tipo | Tam | Dec | Título |
 |---|---|---|---|---|---|
 | 01 | `D2C_FILIAL` | C | 2 | 0 | Filial | V: R: F3: |
-| 02 | `D2C_CODFOR` | C | 6 | 0 | C�digo | V: R: F3: |
+| 02 | `D2C_CODFOR` | C | 6 | 0 | Código | V: R: F3: |
 | 03 | `D2C_LOJA` | C | 2 | 0 | Loja | V: R: F3: |
 | 04 | `D2C_ITEM` | C | 4 | 0 | Item | V: R: F3: |
 | 05 | `D2C_NOME` | C | 50 | 0 | Nome | V: R: F3: |
@@ -683,10 +722,12 @@ Parâmetros de tolerância por fornecedor/produto no recebimento.
 - Índices lógicos (SIX010): 15 índices (ver dump); físicos espelham + `SA5010_PK` + `SA5010_UNQ`.
 - Uso DELPI: lida por `product_suppliers_repository.py` (api-delpi) — `A5_FORNECE, A5_LOJA, A5_CODPRF, A5_CODPRCA, A5_CODBAR, A5_LEAD_T`.
 
-**Perguntas respondidas:**
-- SA5 é criada automaticamente com SA2? **Não** — não há relação SX9 dizendo isso; são rotinas distintas (MATA020 × MATA061) e podem existir 3.6k fornecedores para 40k amarrações. **[PROVEN por ausência de vínculo de criação]**
-- SA5 exige chamada separada? **Sim** — tabela/rotina própria. Se a ponte precisar amarrar produto, é operação distinta. **[PROVEN]**
-- Pode existir fornecedor sem SA5? **Sim** — denominador: 3.644 fornecedores vs subconjunto com SA5. **[PROVEN]**
+**Perguntas respondidas (ratificação):**
+- Faz parte do master SA2? **NÃO.** **[PROVEN]**
+- É necessária para o fornecedor existir? Evidência atual aponta **NÃO** — denominador: 3.644 fornecedores vs subconjunto com SA5. **[PROVEN nos dados]**
+- `SA5_AUTO_CREATE` = **NOT_OBSERVED / NOT_REQUIRED** — nenhuma relação SX9 de criação automática; rotinas distintas (MATA020 × MATA061). **Sem prova runtime** de que a MATA020 não escreve nada além da SA2 — ver `MATA020_INTERNAL_SIDE_EFFECTS = UNKNOWN`.
+- Podem ser operações futuras separadas? **SIM, TARGET somente** — se a ponte precisar amarrar produto, é chamada distinta.
+- Faz parte da primeira API Gabriel? **UNKNOWN até escopo explícito** — não incluir automaticamente no contrato CREATE Supplier.
 - Quando SA5 passa a ser necessária? Quando o fornecedor precisa ser vinculado a produto (compras/cotação). Momento exato no processo DELPI: **TO_INVENTORY**.
 
 ### SA5010 — schema completo (SX3010)
@@ -709,7 +750,7 @@ Parâmetros de tolerância por fornecedor/produto no recebimento.
 | 14 | `A5_EMBAL` | N | 5 | 0 | Qtde Embalag |  |
 | 15 | `A5_FABRRED` | C | 20 | 0 | Nome Fabric. | DEF  |
 | 16 | `A5_MOE_US` | C | 3 | 0 | Moeda Utiliz | V F3=SYF  |
-| 17 | `A5_VLCOTUS` | N | 15 | 5 | Vlr.Cota�ao | V WHEN  |
+| 17 | `A5_VLCOTUS` | N | 15 | 5 | Vlr.Cotaþao | V WHEN  |
 | 18 | `A5_ULT_ENT` | D | 8 | 0 | Ult. Entrega |  |
 | 19 | `A5_QT_COT` | N | 13 | 3 | Quant.Cotada | V  |
 | 20 | `A5_ULT_FOB` | N | 15 | 5 | Vlr.Ult.FOB |  |
@@ -821,15 +862,15 @@ Dados bancários do fornecedor moram **na própria SA2** (conta única — não 
 | `A2_SWIFT` C(30) | SWIFT | — | — |
 | `A2_CODFAV`+`A2_LOJFAV`+`A2_NOMFAV` | favorecido divergente | SA2 self | 0 |
 
-PIX: **não existe chave PIX no cadastro** — PIX é dado de pagamento (F70/F71/F72) ou config de recebimento na SA6. Sensibilidade: dados bancários = **SENSITIVE** (não retornar valores; só metadados).
+PIX: `PIX_IN_SA2_MASTER` = **NOT_FOUND** (nenhum campo de chave PIX no dicionário SA2). `PIX_SUPPLIER_PAYMENT_MODEL` = **TO_INVENTORY** — PIX existe em tabelas financeiras de pagamento (F70/F71/F72) e como configuração de recebimento na SA6; a busca não prova inexistência global de PIX-no-contexto-fornecedor. Sensibilidade: dados bancários = **SENSITIVE** (não retornar valores; só metadados).
 
-Múltiplas contas: **não suportado** no modelo usado na DELPI (FV6 tem 0 linhas; não é conta bancária, é favorecido por pagamento).
+Múltiplas contas: **não observado** no modelo usado na DELPI (FV6 tem 0 linhas — `AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET`; não é conta bancária, é favorecido por pagamento).
 
 # 15. Contact Model
 
 Contato principal **na SA2**: `A2_CONTATO`(15), `A2_CONTCOM`(15 contato comercial), `A2_TEL`(50), `A2_DDD`(3), `A2_DDI`(6→ACJ), `A2_FAX`(15), `A2_TELEX`(10), `A2_EMAIL`(50), `A2_HPAGE`(30), `A2_NOMRESP`(45)+`A2_CARGO`(40) — responsável. Bloco representante: `A2_REPRES`(52), `A2_REPCONT`, `A2_REPRTEL`, `A2_REPRFAX`, `A2_REPR_EM`, endereço do representante (`A2_REPR_EN/BAIR/MUN/EST/CEP/PAIS`), `A2_REPR_BA/AG/CO` (banco do representante), `A2_REPRCGC`.
 
-Múltiplos contatos: DKI010 suporta (`DKI_FORNEC+DKI_LOJA+DKI_ITEM`) mas **0 linhas** — múltiplos contatos não são prática atual.
+Múltiplos contatos: DKI010 suporta (`DKI_FORNEC+DKI_LOJA+DKI_ITEM`) mas **0 linhas** — `AVAILABLE_BUT_NOT_USED_IN_CURRENT_DATASET` (não prova que nunca será usada).
 
 # 16. Address Model
 
@@ -967,11 +1008,11 @@ Estas tabelas apenas **consomem** SA2 — não são necessárias ao create/updat
 | AIA | AIA_CODFOR+AIA_LOJFOR | SA2 | COD+LOJA | N:1 | sim | tabela preço header | X3 |
 | AIB | AIB_CODFOR+AIB_LOJFOR+AIB_CODTAB | AIA | — | N:1 | sim | itens | X3 |
 | AIB | AIB_CODPRO | SB1 | COD | N:1 | sim | produto | X3 |
-| DKI | DKI_FORNEC+DKI_LOJA | SA2 | COD+LOJA | N:1 | sim | contatos (não usada) | SX9/X3 |
-| D30 | D30_CODFOR+D30_LOJFOR | SA2 | COD+LOJA | N:1 | sim | complemento (não usada) | SX9/X3 |
-| DD1 | DD1_CODFOR+DD1_LOJFOR | SA2 | COD+LOJA | N:1 | sim | docs exigidos (não usada) | SX9/X3 |
-| FV6 | FV6_FAVORE+FV6_LOJA | SA2 | COD+LOJA | N:1 | sim | favorecido pgto (não usada) | X3 |
-| G4R | G4R_FORNEC+G4R_LOJA | SA2 | COD+LOJA | N:1 | sim | compl. turismo (não usada) | X3 |
+| DKI | DKI_FORNEC+DKI_LOJA | SA2 | COD+LOJA | N:1 | sim | contatos (0 linhas) | SX9/X3 |
+| D30 | D30_CODFOR+D30_LOJFOR | SA2 | COD+LOJA | N:1 | sim | complemento (0 linhas) | SX9/X3 |
+| DD1 | DD1_CODFOR+DD1_LOJFOR | SA2 | COD+LOJA | N:1 | sim | docs exigidos (0 linhas) | SX9/X3 |
+| FV6 | FV6_FAVORE+FV6_LOJA | SA2 | COD+LOJA | N:1 | sim | favorecido pgto (0 linhas) | X3 |
+| G4R | G4R_FORNEC+G4R_LOJA | SA2 | COD+LOJA | N:1 | sim | compl. turismo (0 linhas) | X3 |
 | SC1/SC7/SC8/SD1/SF1/SE2/SE5/SF3/SFT/SCY/SDS/SCE/SFJ | *_FORNECE* | SA2 | COD+LOJA | N:1 | transacional | consumidores | SX9/SX3 |
 
 # 23. Supplier Data Flow (reconstruído de evidências)
@@ -981,10 +1022,10 @@ CREATE (referência MATA020):
   entrada identidade fiscal (CGC/CPF)     → A2_CGC VALID: dígito + A020CGC dedup [PROVEN]
   resolver lookups                        → SX5/CC2/CCH/SE4/SED/SA6/CT1/SYA... [PROVEN]
   código                                  → GETSXENUM("SA2") (emp 01/05) ou manual [PROVEN/TO_INVENTORY]
-  loja                                    → default operacional '01' [PROVEN convenção]
+  loja                                    → OBSERVED_CONVENTION '01'; quem informa = TO_INVENTORY
   gravar SA2010 (X2_UNICO + SA2010_UNQ)   → [PROVEN]
   defaults RELACAO preenchidos            → [PROVEN]
-  SA5/auxiliares                          → NÃO criadas automaticamente [PROVEN]
+  SA5/auxiliares                          → criação automática NÃO observada [PROVEN nos dados; MATA020 side-effects UNKNOWN]
   retorno identidade (COD+LOJA)           → contrato da ponte [UNKNOWN]
 
 UPDATE (referência MATA020 alteração):
@@ -999,7 +1040,7 @@ UPDATE (referência MATA020 alteração):
 | Step | Tabela | Campo | Dependência | Deve existir antes | Criado durante | Status |
 |---|---|---|---|---|---|---|
 | 1 | SA2 | A2_COD | GETSXENUM('SA2') | numerador (appserver) | sim | TO_INVENTORY (local do numerador) |
-| 2 | SA2 | A2_LOJA | convenção '01' | — | enviado | PROVEN |
+| 2 | SA2 | A2_LOJA | OBSERVED_CONVENTION .01.; quem informa = contract decision | — | sim (persistido) | TO_INVENTORY |
 | 3 | SX5 | — | UF `12` | sim | — | PROVEN |
 | 4 | CC2 | — | município por UF | sim | — | PROVEN |
 | 5 | CCH | — | país BACEN `01058` | sim | — | PROVEN |
@@ -1013,7 +1054,11 @@ UPDATE (referência MATA020 alteração):
 | 13 | SA5 | — | amarração produto | pós-create, chamada separada | não | PROVEN |
 | 14 | SAD/AIA/AIC | — | grupos/preços/tolerância | pós-create, separado | não | PROVEN |
 
-**Conclusão**: para `CREATE` mínimo não há tabela obrigatória a ser escrita além da SA2. Obrigatórias a **consultar/validar**: lookups conforme campos enviados.
+**Conclusão ratificada**:
+- `RELATED_TABLE_WRITE_REQUIRED_BY_AVAILABLE_METADATA` = **NONE_FOUND** — metadata e dados mostram fornecedor existindo sem SA5/SAD/AIA/AIC.
+- `SA5_AUTO_CREATE` = **NOT_OBSERVED / NOT_REQUIRED**.
+- `MATA020_INTERNAL_SIDE_EFFECTS` = **UNKNOWN** — a auditoria não prova que a rotina não escreva em outras tabelas internamente (sem introspecção ADVPL).
+- Obrigatórias a **consultar/validar**: lookups conforme campos enviados.
 
 # 25. UPDATE Dependency Flow
 
@@ -1023,7 +1068,7 @@ IDENTITY (A2_COD+A2_LOJA)
 → VALIDATE mudanças (mesmas regras X3_VALID; A2_COD/A2_LOJA são chave — mudança de chave é operação especial)
 → lookups conforme campos alterados
 → UPDATE SA2010 (S_T_A_M_P_ atualizado por trigger)
-→ nenhuma tabela filha é escrita pela alteração cadastral
+→ escrita em tabelas filhas pela alteração cadastral: NÃO observada via metadata/dados; MATA020 internals = UNKNOWN
 ```
 
 Restrito/imutável por convenção: `A2_COD`, `A2_LOJA`, `A2_FILIAL` (identidade), `D_E_L_E_T_`/`R_E_C_*`/`S_T_A_M_P_`/`I_N_S_D_T_` (sistema), acumuladores estatísticos (A2_MCOMPRA, A2_ULTCOM, A2_LC...).
@@ -1054,59 +1099,59 @@ Sinais comprovados na base:
 
 # 28. Full Business-to-TOTVS Mapping (de-para proposto)
 
-Campos do modelo canônico → SA2. Somente campos com evidência de uso ou materialidade.
+Campos do modelo canônico → SA2. Somente campos com evidência de uso ou materialidade. `default_source`: `SX3_DEFAULT | RUNTIME_RULE | OBSERVED_CONVENTION | API_PROPOSAL | NONE | UNKNOWN`. `contract_status`: `READY_FOR_GABRIEL_REVIEW | NEEDS_GABRIEL_DECISION | NEEDS_TOTVS_RUNTIME_PROOF | OUT_OF_SCOPE`.
 
-| api_field | business_label | totvs | descrição SX3 | type/len | create | update | lookup | sensitivity |
-|---|---|---|---|---|---|---|---|---|
-| supplier.identity.code | Código | A2_COD | Codigo | C6 | SYSTEM_GENERATED (GETSXENUM emp 01/05) | identity | — | interno |
-| supplier.identity.store | Loja | A2_LOJA | Loja | C2 | REQUIRED (conv '01') | identity | — | interno |
-| supplier.identity.branch | Filial | A2_FILIAL | Filial | C2 | SYSTEM_GENERATED (branco=compartilhado) | identity | — | interno |
-| supplier.company.legal_name | Razão social | A2_NOME | Razao Social | C50 | REQUIRED_BY_PROCESS | mutable | — | — |
-| supplier.company.trade_name | Nome fantasia | A2_NREDUZ | N Fantasia | C20 | REQUIRED_BY_PROCESS | mutable | — | — |
-| supplier.tax.document | CNPJ/CPF | A2_CGC | CNPJ/CPF | C14 | CONDITIONAL (validação dígito+dedup quando enviado) | mutable c/ validação | CGC() | fiscal |
-| supplier.tax.person_type | Tipo pessoa | A2_TIPO | Tipo | C1 | DEFAULTED (deriva do CGC) | mutable | enum F/J/X | fiscal |
-| supplier.tax.state_registration | Inscr. estadual | A2_INSCR | Ins. Estad. | C18 | CONDITIONAL (IE por UF) | mutable | IE() | fiscal |
-| supplier.tax.city_registration | Inscr. municipal | A2_INSCRM | Ins. Municip | C18 | OPTIONAL | mutable | — | fiscal |
-| supplier.tax.cnae | CNAE | A2_CNAE | Cod CNAE | C9 | CONDITIONAL (TIPO J/X) | mutable | — | fiscal |
-| supplier.tax.contributor | Contribuinte | A2_CONTRIB | Contribuinte | C1 | OPTIONAL (CBOX 1/2) | mutable | — | fiscal |
-| supplier.address.street | Logradouro | A2_END | Endereco | C40 | REQUIRED_BY_PROCESS | mutable | — | — |
-| supplier.address.number | Número | A2_NR_END | Numero | C6 | OPTIONAL (0% uso) | mutable | — | — |
-| supplier.address.complement | Complemento | A2_ENDCOMP / A2_COMPLEM | Compl. End./Complemento | C21/C50 | OPTIONAL | mutable | — | — |
-| supplier.address.district | Bairro | A2_BAIRRO | Bairro | C20 | REQUIRED_BY_PROCESS (97,6%) | mutable | — | — |
-| supplier.address.postal_code | CEP | A2_CEP | CEP | C8 | REQUIRED_BY_PROCESS (94,6%) | mutable | — | — |
-| supplier.address.city | Município | A2_MUN | Municipio | C25 | REQUIRED_BY_PROCESS | mutable | — | — |
-| supplier.address.city_ibge_code | Cód. município | A2_COD_MUN | Cod. Municip | C5 | REQUIRED_BY_PROCESS (99,8%) + valida CC2 | mutable | CC2 | — |
-| supplier.address.state | UF | A2_EST | Estado | C2 | REQUIRED_BY_PROCESS + valida SX5 '12' | mutable | SX5-12 | — |
-| supplier.address.country_code_bacen | País BACEN | A2_CODPAIS | Paìs Bacen | C5 | REQUIRED (100%; default '01058' Brasil) | mutable | CCH | — |
-| supplier.address.country | País | A2_PAIS | Pais | C3 | CONDITIONAL (estrangeiro) | mutable | SYA | — |
-| supplier.contact.phone_ddd | DDD | A2_DDD | DDD | C3 | OPTIONAL (88%) | mutable | — | — |
-| supplier.contact.phone | Telefone | A2_TEL | Telefone | C50 | OPTIONAL (91%; OBRIG1?) | mutable | — | — |
-| supplier.contact.email | E-mail | A2_EMAIL | E-Mail | C50 | OPTIONAL (55%; OBRIG1?) | mutable | — | dados de contato |
-| supplier.contact.person | Contato | A2_CONTATO | Contato | C15 | OPTIONAL (44%; OBRIG1?) | mutable | — | — |
-| supplier.contact.website | Site | A2_HPAGE | Home-Page | C30 | OPTIONAL | mutable | — | — |
-| supplier.payment.condition_code | Cond. pagto | A2_COND | Cond. Pagto | C3 | OPTIONAL (17,5%) | mutable | SE4 | — |
-| supplier.payment.method | Forma pgto | A2_FORMPAG | Form. Pgto | C2 | OPTIONAL (30%; OBRIG1?) | mutable | SX5-58 | — |
-| supplier.payment.finance_nature | Natureza | A2_NATUREZ | Natureza | C10 | REQUIRED_BY_PROCESS (99,9%) | mutable | SED | — |
-| supplier.payment.ledger_account | Conta contábil | A2_CONTA | C Contabil | C20 | REQUIRED_BY_PROCESS (99,9%) | mutable | CT1 | — |
-| supplier.banking.bank_code | Banco | A2_BANCO | Banco | C3 | OPTIONAL (1,2%) | mutable | SA6 | **sensível** |
-| supplier.banking.branch | Agência | A2_AGENCIA | Cod Agencia | C5 | OPTIONAL | mutable | SA6 trinca | **sensível** |
-| supplier.banking.branch_digit | DV agência | A2_DVAGE | DV Ag Cnab | C1 | OPTIONAL | mutable | — | **sensível** |
-| supplier.banking.account | Conta | A2_NUMCON | Cta Corrente | C10 | OPTIONAL | mutable | SA6 trinca | **sensível** |
-| supplier.banking.account_digit | DV conta | A2_DVCTA | DV Cta Cnab | C2 | OPTIONAL | mutable | — | **sensível** |
-| supplier.banking.account_type | Tipo conta | A2_TIPCTA / A2_TPCONTA | Tp. Cta./Tipo Conta | C1 | OPTIONAL (72%) | mutable | CBOX | **sensível** |
-| supplier.banking.swift | SWIFT | A2_SWIFT | Swift | C30 | OPTIONAL | mutable | — | **sensível** |
-| supplier.flags.blocked | Bloqueado | A2_MSBLQL | Bloqueado | C1 | DEFAULTED '2' (não bloq.) | **restricted** | CBOX 1/2 | — |
-| supplier.flags.rohs | RoHS | A2_YROHS | RoHS ? | C1 | OPTIONAL (67% uso; OBRIG1?) | mutable | CBOX | DELPI |
-| supplier.flags.generic | Forn. genérico | A2_YFGEN | For Generico | C1 | OPTIONAL | mutable | — | DELPI |
-| supplier.commercial.price_table | Tab. preço | A2_ZTABPRC | Tab Prc Comp | C3 | OPTIONAL (1,7%) | mutable | AIA | DELPI |
-| supplier.links.customer | Cliente vinculado | A2_CLIENTE+A2_LOJCLI | Cód. Cliente+Loja | C6+C2 | OPTIONAL | mutable | SA1 | — |
-| supplier.links.employee | Funcionário vínculo | A2_NUMRA | Cód Func | C6 | OPTIONAL | mutable | SRA | — |
-| supplier.links.carrier | Transportadora | A2_TRANSP | Transp. | C6 | OPTIONAL | mutable | SA4 | — |
+| api_field | business_meaning | totvs | descrição SX3 | type/len | create_class | update_class | default_source | default | lookup | normalization | sensitivity | contract_status | notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| supplier.identity.code | Código | A2_COD | Codigo | C6 | SYSTEM_GENERATED | IDENTITY | SX3_DEFAULT | GETSXENUM (01/05) | — | trim/zfill6 | interno | NEEDS_GABRIEL_DECISION | q2 — quem gera; 03/04 sem default |
+| supplier.identity.store | Loja | A2_LOJA | Loja | C2 | UNKNOWN (CONTRACT_DECISION) | IDENTITY | OBSERVED_CONVENTION | '01' | — | RTRIM+zfill2 | interno | NEEDS_GABRIEL_DECISION | q4 — request vs ponte vs rotina |
+| supplier.identity.branch | Filial | A2_FILIAL | Filial | C2 | DO_NOT_SEND | IDENTITY | RUNTIME_RULE | branco=compartilhado | — | — | interno | READY_FOR_GABRIEL_REVIEW | MODO=C |
+| supplier.company.legal_name | Razão social | A2_NOME | Razao Social | C50 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | fill 100% |
+| supplier.company.trade_name | Nome fantasia | A2_NREDUZ | N Fantasia | C20 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | — | — | NEEDS_TOTVS_RUNTIME_PROOF | fill 100% |
+| supplier.tax.document | CNPJ/CPF | A2_CGC | CNPJ/CPF | C14 | CONDITIONAL | RESTRICTED | NONE | — | CGC()+dedup | digits-only | fiscal | READY_FOR_GABRIEL_REVIEW | dup-signal, não identidade |
+| supplier.tax.person_type | Tipo pessoa | A2_TIPO | Tipo | C1 | CONDITIONAL | MUTABLE_CANDIDATE | SX3_DEFAULT | deriva do CGC | enum F/J/X | — | fiscal | READY_FOR_GABRIEL_REVIEW | |
+| supplier.tax.state_registration | Inscr. estadual | A2_INSCR | Ins. Estad. | C18 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | IE() por UF | digits-only | fiscal | READY_FOR_GABRIEL_REVIEW | |
+| supplier.tax.city_registration | Inscr. municipal | A2_INSCRM | Ins. Municip | C18 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | fiscal | READY_FOR_GABRIEL_REVIEW | |
+| supplier.tax.cnae | CNAE | A2_CNAE | Cod CNAE | C9 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | fiscal | READY_FOR_GABRIEL_REVIEW | WHEN TIPO J/X |
+| supplier.tax.contributor | Contribuinte | A2_CONTRIB | Contribuinte | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | CBOX 1/2 | — | fiscal | READY_FOR_GABRIEL_REVIEW | |
+| supplier.address.street | Logradouro | A2_END | Endereco | C40 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | fill 100% |
+| supplier.address.number | Número | A2_NR_END | Numero | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | READY_FOR_GABRIEL_REVIEW | 0% uso |
+| supplier.address.complement | Complemento | A2_ENDCOMP / A2_COMPLEM | Compl. End. | C21/C50 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | NEEDS_GABRIEL_DECISION | 2 campos — qual usar? |
+| supplier.address.district | Bairro | A2_BAIRRO | Bairro | C20 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | 97,6% |
+| supplier.address.postal_code | CEP | A2_CEP | CEP | C8 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | digits-only | — | NEEDS_TOTVS_RUNTIME_PROOF | 94,6% |
+| supplier.address.city | Município | A2_MUN | Municipio | C25 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | — | A020CarEsp | — | NEEDS_TOTVS_RUNTIME_PROOF | 100% |
+| supplier.address.city_ibge_code | Cód. município | A2_COD_MUN | Cod. Municip | C5 | CANDIDATE_REQUIRED (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | CC2 c/ UF | — | — | NEEDS_GABRIEL_DECISION | 99,8% + flag |
+| supplier.address.state | UF | A2_EST | Estado | C2 | CANDIDATE_REQUIRED | MUTABLE_CANDIDATE | NONE | — | SX5-12 | upper | — | NEEDS_TOTVS_RUNTIME_PROOF | 'EX'=exterior |
+| supplier.address.country_code_bacen | País BACEN | A2_CODPAIS | Paìs Bacen | C5 | CANDIDATE_REQUIRED (OBRIG1) | MUTABLE_CANDIDATE | OBSERVED_CONVENTION | '01058' | CCH | — | — | NEEDS_GABRIEL_DECISION | 100% preenchido; não é SX3 default |
+| supplier.address.country | País | A2_PAIS | Pais | C3 | CONDITIONAL | MUTABLE_CANDIDATE | NONE | — | SYA | — | — | READY_FOR_GABRIEL_REVIEW | estrangeiros |
+| supplier.contact.phone_ddd | DDD | A2_DDD | DDD | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | digits-only | — | READY_FOR_GABRIEL_REVIEW | 88% |
+| supplier.contact.phone | Telefone | A2_TEL | Telefone | C50 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | digits-only | dados contato | NEEDS_GABRIEL_DECISION | flag × fill 91% |
+| supplier.contact.email | E-mail | A2_EMAIL | E-Mail | C50 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | lower | dados contato | NEEDS_GABRIEL_DECISION | flag × fill 55% |
+| supplier.contact.person | Contato | A2_CONTATO | Contato | C15 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | — | — | dados contato | NEEDS_GABRIEL_DECISION | flag × fill 44% |
+| supplier.contact.website | Site | A2_HPAGE | Home-Page | C30 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | — | READY_FOR_GABRIEL_REVIEW | |
+| supplier.payment.condition_code | Cond. pagto | A2_COND | Cond. Pagto | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SE4 | — | — | READY_FOR_GABRIEL_REVIEW | 17,5% |
+| supplier.payment.method | Forma pgto | A2_FORMPAG | Form. Pgto | C2 | UNKNOWN (OBRIG1) | MUTABLE_CANDIDATE | NONE | — | SX5-58 | — | — | NEEDS_GABRIEL_DECISION | flag × fill 30% |
+| supplier.payment.finance_nature | Natureza | A2_NATUREZ | Natureza | C10 | CANDIDATE_REQUIRED (OBRIG1) | RESTRICTED | NONE | — | SED | — | financeiro | NEEDS_TOTVS_RUNTIME_PROOF | 99,9% |
+| supplier.payment.ledger_account | Conta contábil | A2_CONTA | C Contabil | C20 | CANDIDATE_REQUIRED (OBRIG1) | RESTRICTED | NONE | — | CT1 | — | financeiro | NEEDS_TOTVS_RUNTIME_PROOF | 99,9% |
+| supplier.banking.bank_code | Banco | A2_BANCO | Banco | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_GABRIEL_REVIEW | 1,2% |
+| supplier.banking.branch | Agência | A2_AGENCIA | Cod Agencia | C5 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_GABRIEL_REVIEW | com banco+conta |
+| supplier.banking.branch_digit | DV agência | A2_DVAGE | DV Ag Cnab | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | **sensível** | READY_FOR_GABRIEL_REVIEW | |
+| supplier.banking.account | Conta | A2_NUMCON | Cta Corrente | C10 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA6 trinca | — | **sensível** | READY_FOR_GABRIEL_REVIEW | |
+| supplier.banking.account_digit | DV conta | A2_DVCTA | DV Cta Cnab | C2 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | **sensível** | READY_FOR_GABRIEL_REVIEW | |
+| supplier.banking.account_type | Tipo conta | A2_TIPCTA / A2_TPCONTA | Tp. Cta./Tipo Conta | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | SX3_DEFAULT | '1' (TIPCTA) | CBOX | — | **sensível** | NEEDS_GABRIEL_DECISION | 2 campos equivalentes |
+| supplier.banking.swift | SWIFT | A2_SWIFT | Swift | C30 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | upper | **sensível** | READY_FOR_GABRIEL_REVIEW | exterior |
+| supplier.flags.blocked | Bloqueado | A2_MSBLQL | Bloqueado | C1 | SYSTEM_GENERATED | RESTRICTED | SX3_DEFAULT | '2' | CBOX 1/2 | — | — | NEEDS_GABRIEL_DECISION | q13 — operação governada? |
+| supplier.flags.rohs | RoHS | A2_YROHS | RoHS ? | C1 | UNKNOWN (OBRIG1, DELPI) | MUTABLE_CANDIDATE | NONE | — | CBOX | — | DELPI | NEEDS_GABRIEL_DECISION | só emp 01/05 |
+| supplier.flags.generic | Forn. genérico | A2_YFGEN | For Generico | C1 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | — | — | DELPI | READY_FOR_GABRIEL_REVIEW | só emp 01/05 |
+| supplier.commercial.price_table | Tab. preço | A2_ZTABPRC | Tab Prc Comp | C3 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | AIA | — | DELPI | READY_FOR_GABRIEL_REVIEW | |
+| supplier.links.customer | Cliente vinculado | A2_CLIENTE+A2_LOJCLI | Cód. Cliente+Loja | C6+C2 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA1 | — | — | READY_FOR_GABRIEL_REVIEW | par conjunto |
+| supplier.links.employee | Funcionário vínculo | A2_NUMRA | Cód Func | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SRA | — | — | READY_FOR_GABRIEL_REVIEW | |
+| supplier.links.carrier | Transportadora | A2_TRANSP | Transp. | C6 | PROVEN_OPTIONAL | MUTABLE_CANDIDATE | NONE | — | SA4 | — | — | READY_FOR_GABRIEL_REVIEW | |
 
 # 29. CREATE_REQUIRED_PROVEN
 
-- `A2_LOJA` — chave única, sem default → enviar ('01' convenção).
-- Identidade efetiva: o par COD+LOJA é gravado na inclusão; `A2_COD` pode ser gerado (abaixo).
+- `A2_LOJA` — exigida **na persistência** (chave única); `CREATE_REQUEST_REQUIRED` = TO_INVENTORY (decisão de quem informa: caller/ponte/rotina).
+- Identidade efetiva: par COD+LOJA gravado na inclusão; `A2_COD` pode ser gerado (§31).
 
 # 30. CREATE_CONDITIONAL
 
@@ -1117,12 +1162,13 @@ Campos do modelo canônico → SA2. Somente campos com evidência de uso ou mate
 - `A2_PAIS`, endereço exterior — quando `A2_EST='EX'`.
 - `A2_BANCO`+`AGENCIA`+`NUMCON` — trinca conjunta.
 - Lookups — qualquer campo enviado deve existir na tabela lookup.
-- `OBRIG1` fields (TEL/CONTATO/EMAIL/FORMPAG/NATUREZ/COD_MUN/CODPAIS/CONTA/YROHS): dicionário sinaliza obrigatoriedade contextual; dados provam não-bloqueio universal → confirmar com a rotina/ponte.
+- `OBRIG1` fields (TEL/CONTATO/EMAIL/FORMPAG/NATUREZ/COD_MUN/CODPAIS/CONTA/YROHS): `DICTIONARY_OBRIG_FLAG=PROVEN`; `RUNTIME_CREATE_BLOCKING=UNKNOWN`; `PUBLIC_API_REQUIRED=TO_INVENTORY` (§39 q12).
 
 # 31. CREATE_SYSTEM_GENERATED
 
-- `A2_COD` — `GETSXENUM("SA2")` (emp 01/05); manual em 03/04. **Recomendação: não enviar; deixar a ponte/Protheus gerar e retornar.**
+- `A2_COD` — `GETSXENUM("SA2")` (emp 01/05); manual em 03/04. **TARGET: não enviar; deixar a ponte/rotina gerar e retornar.** Nunca `MAX+1` custom.
 - `A2_FILIAL` — contexto de filial da sessão (branco na base atual).
+- `A2_MSBLQL` — default `'2'` (SX3_DEFAULT); não enviar no create.
 - Virtuais: `A2_NOMFAV`, `A2_PAISDES`, `A2_DTPAWB` — não enviar.
 - Técnicos: `D_E_L_E_T_`, `R_E_C_N_O_`, `R_E_C_D_E_L_`, `S_T_A_M_P_`, `I_N_S_D_T_` — nunca enviar.
 - Estatísticos: `A2_LC, A2_MATR, A2_MCOMPRA, A2_METR, A2_MSALDO, A2_NROCOM, A2_PRICOM, A2_SALDUP, A2_SALDUPM, A2_ULTCOM, A2_DESVIO, A2_MNOTA, A2_DATBLO` — mantidos por processos (não enviar).
@@ -1133,13 +1179,14 @@ Campos do modelo canônico → SA2. Somente campos com evidência de uso ou mate
 
 # 33. UPDATE_MUTABLE
 
-Todos os campos de negócio do de-para (§28) salvo identidade e sistema — com revalidação das mesmas regras.
+Existência do campo ≠ autorização de alteração. Nenhum campo é `MUTABLE_PROVEN` sem evidência de alteração aceita pela rotina — todos os campos de negócio do de-para (§28) são **MUTABLE_CANDIDATE** até prova/contrato, salvo os classificados em §34/§35.
 
 # 34. UPDATE_RESTRICTED
 
-- `A2_MSBLQL` — bloqueio é decisão governada (não um campo "a atualizar" livremente).
+- `A2_MSBLQL` — bloqueio é decisão governada (update comum ou operação separada: §39 q13).
 - `A2_COD`, `A2_LOJA`, `A2_FILIAL` — identidade.
 - `A2_CGC` — mudança de documento é operação sensível (re-dispara dedup; potencial exigência de aprovação).
+- `A2_NATUREZ`, `A2_CONTA`, campos fiscais/retenção, dados bancários — mutabilidade candidata, mas sensíveis: exigem trilha de auditoria e confirmação de contrato.
 - Acumuladores estatísticos — nunca atualizar via API.
 
 # 35. SYSTEM_OWNED_DO_NOT_SEND
@@ -1180,14 +1227,14 @@ Todos os campos de negócio do de-para (§28) salvo identidade e sistema — com
 }
 ```
 
-`products` vazio — amarração SA5 é operação separada. `actor` separado de `supplier` (ver §ator).
+`products` vazio — amarração SA5 é operação separada. `actor` separado de `supplier`. Defaults `store`/`country_bacen_code`/`company` são `API_PROPOSAL` — não Protheus.
 
 # 37. Proposed CREATE Contract
 
-- Sem `identity.code` (geração no Protheus via GETSXENUM — emp 01; confirmar comportamento para 03/04/05).
-- `identity.store` default `"01"`; `company`/`branch` = empresa alvo (SA2010 vs SA2030/40/50).
-- Obrigatórios propostos: `legal_name`, `trade_name`, `person_type`, `address.state`, `address.city`, `address.city_ibge_code`, `address.country_bacen_code`, `payment.finance_nature`, `payment.ledger_account` — marcar como `REQUIRED_BY_PROCESS` até validação com rotina/ponte.
-- `tax.document` com normalização (apenas dígitos) + dedupe sugerido (CGC+loja).
+- Sem `identity.code` (geração via GETSXENUM na emp 01/05; confirmar 03/04).
+- `identity.store` proposto `"01"` (`API_PROPOSAL`); `company` = empresa alvo (SA2010 vs SA2030/40/50) — decisão §39 q3.
+- Candidatos a obrigatório (CANDIDATE_REQUIRED, sujeitos a prova de runtime/contrato): `legal_name`, `trade_name`, `person_type`, `address.state`, `address.city`, `address.city_ibge_code`, `address.country_bacen_code`, `payment.finance_nature`, `payment.ledger_account`.
+- `tax.document` com normalização (apenas dígitos) + dedupe sugerido (sinal por CGC, não idempotência).
 - Idempotência/upsert: decisão da ponte (§39).
 - Resposta mínima: `supplier_code`, `supplier_store`, `operation`, `status`, `correlation_id`, read-back da SA2010 criada (prova de pós-condição).
 
@@ -1195,25 +1242,26 @@ Todos os campos de negócio do de-para (§28) salvo identidade e sistema — com
 
 - `PATCH`-semântica: somente campos presentes são alterados; `null` NUNCA deve "limpar" (documentar semântica explícita — decisão §39).
 - Identidade por `code`+`store` (+`company` quando multi-empresa).
-- Campos restritos: `blocked`, `document` — fluxo governado.
+- Campos restritos: `blocked`, `document`, `finance_nature`, `ledger_account`, bancário — fluxo governado.
 - Retorno idem CREATE + lista de campos efetivamente alterados.
 
 # 39. Questions for Gabriel
 
-1. Qual endpoint/operação executa CREATE e qual executa UPDATE? Existe UPSERT separado?
-2. A ponte executa a rotina MATA020 (ExecAuto/REST Job) ou grava direto na SA2010? Se direto, quais validações da MATA020 serão reimplementadas?
-3. Quem gera `A2_COD` na ponte (GETSXENUM/rotina) e como funciona para empresas 03/04 (sem default)?
-4. Idempotency: chave de idempotência do request? Comportamento em retry?
-5. Semântica de `null` (limpar campo?) e de campo ausente (não alterar)?
-6. Retorno: inclui `A2_COD`+`A2_LOJA` criados e read-back? Formato de erro (código+mensagem+campo)?
-7. Boundary transacional: create falha como unidade única? Como é feito rollback se auxiliares falharem?
-8. Actor: como o usuário Minha DELPI é propagado (USR_EMAIL→SYS_USR)? Onde fica registrado (campo, log, auditoria)?
-9. Multi-empresa: a ponte escreve só em SA2010 (emp 01) ou recebe empresa alvo?
-10. `A2_LOJA`: convenção '01' assumida pela ponte ou campo do request?
-11. Duplicidade de CNPJ: a ponte bloqueia ou apenas sinaliza `POSSIBLE_EXISTING_SUPPLIER`?
-12. Confirmação do conjunto efetivamente obrigatório da rotina (TEL/EMAIL/CONTATO/FORMPAG marcados OBRIG1 mas não universalmente preenchidos)?
-13. `A2_MSBLQL`: criação sempre '2' (não bloqueado)? Bloqueio/desbloqueio é operação separada?
-14. Códigos manuais (VIAGEM, FISCO...) — a ponte deve suportar código explícito ou só sequencial?
+Somente decisões que a auditoria Protheus não resolve:
+
+1. A ponte usa MATA020 / ExecAuto / API oficial TOTVS ou SQL direto? Se direto, quais validações da MATA020 serão reimplementadas?
+2. Quem executa a geração de `A2_COD`? Como funciona nas empresas 03/04 (sem default SX3)?
+3. Qual empresa alvo — só 01, ou 01/03/04/05? (`target_company` explícito ou escopo fixo?)
+4. `A2_LOJA`: request, default da ponte ou regra da rotina?
+5. CREATE separado de UPDATE? Existe UPSERT?
+6. Semântica de UPDATE: PATCH ou PUT? Campo ausente = não alterar? `null` = limpar ou erro?
+7. Idempotency key do request?
+8. Fornecedor possivelmente duplicado por CNPJ — bloqueia ou sinaliza `POSSIBLE_EXISTING_SUPPLIER`?
+9. Formato de erro por campo (código + mensagem + field)?
+10. Retorno da criação: `code`, `store`, `correlation_id`, read-back?
+11. Actor: como Minha DELPI user → usuário TOTVS é propagado e auditado (campo, log, staging)?
+12. Quais campos a rotina realmente bloqueia no CREATE — em especial os OBRIGAT (`TEL/CONTATO/EMAIL/FORMPAG/NATUREZ/COD_MUN/CODPAIS/CONTA/YROHS`)?
+13. `A2_MSBLQL` — update comum ou operação governada separada (bloquear/desbloquear)?
 
 # 40. Unknown / To Inventory
 
@@ -1221,22 +1269,68 @@ Todos os campos de negócio do de-para (§28) salvo identidade e sistema — com
 |---|---|---|
 | Mecanismo físico do numerador GETSXENUM (SXE ausente) | TO_INVENTORY | provável appserver/licença TOTVS |
 | Nomes das empresas 03/04/05 (sem SM0 na base) | TO_INVENTORY | registro fora do SQL acessível |
-| Validações internas das funções ADVPL (A020CGC, A020VldUCod, A060*, Ctb105Cta...) | UNKNOWN | código fonte não introspectável |
+| `MATA020_INTERNAL_CREATE_VALIDATION` | UNKNOWN | ADVPL não introspectável |
+| `MATA020_SIDE_EFFECTS` (gravação em outras tabelas) | UNKNOWN | sem prova runtime |
 | Semântica exata das posições do bitmap X3_OBRIGAT | TO_INVENTORY | metadata ambígua |
 | Se a ponte escreve via rotina ou SQL direto | UNKNOWN | decisão de implementação futura |
 | Tabela `BA4` referenciada por validação A2_SIGLCR/CONREG mas ausente fisicamente | PROVEN gap | validação pode estar desativada por módulo |
+| `PIX_SUPPLIER_PAYMENT_MODEL` | TO_INVENTORY | PIX não existe no master; modelo de pagamento PIX não mapeado |
 | Origem dos códigos manuais e da política de lojas | TO_INVENTORY | processo de negócio |
 | Por que X2_UNICO inclui `A2_FILIAL` mas todos os registros têm filial em branco | PROVEN por dados (MODO=C) | comportamento esperado |
+| Se DKI/D30/DD1/FV6/G4R serão usadas futuramente | UNKNOWN | hoje vazias |
+| Primeira API Gabriel incluir SA5/SAD/AIA? | UNKNOWN | escopo não ratificado |
 
 # 41. Capability Gaps
 
 | CAPABILITY_GAP | capability | informação buscada | impacto |
 |---|---|---|---|
-| CG-1 | introspecção ADVPL/MATA020 | validações efetivas no create (além do X3) | conjunto REQUIRED_BY_PROCESS permanece inferência estatística até confirmar com rotina/ponte |
+| CG-1 | introspecção ADVPL/MATA020 | validações efetivas no create (além do X3) | CANDIDATE_REQUIRED permanece sem prova de bloqueio |
 | CG-2 | acesso à base TSS/licença | local da sequência GETSXENUM | não impede create (default existe); afeta compreensão do mecanismo |
 | CG-3 | metadados SM0/empresas | nomes das empresas 03/04/05 | cosmético — códigos conhecidos |
 | CG-4 | contrato da ponte Gabriel | endpoints, verbos, idempotência, erros | bloqueia fechamento do de-para público |
 | CG-5 | SX6 parâmetros | MV_* que afetam obrigatoriedade (ex.: MV_PLORDA2) | obrigatoriedades condicionais de parâmetros não avaliadas |
 
+# 42. Ratified Integration Field Matrix
+
+A matriz de §28 é a versão ratificada pronta para discussão com Gabriel (`contract_status` por linha). Resumo executivo:
+
+- **READY_FOR_GABRIEL_REVIEW**: document, person_type, registrations, cnae, contributor, number, country, ddd, website, condition_code, banking_*, swift, flags.generic, price_table, links.*.
+- **NEEDS_GABRIEL_DECISION**: store, code (geração), complement (2 campos), city_ibge_code + country_bacen_code (OBRIG1×fill), phone/email/person/method (OBRIG1×fill baixo), account_type (2 campos), flags.blocked, flags.rohs.
+- **NEEDS_TOTVS_RUNTIME_PROOF**: legal_name, trade_name, street, district, postal_code, city, state, finance_nature, ledger_account (fill ~100% mas sem prova de bloqueio).
+- **OUT_OF_SCOPE (primeira API)**: SA5/SAD/AIA/AIB/AIC e demais relações — operações separadas (TARGET).
+
+# 43. Gabriel Handoff — Supplier Create / Update
+
+**Status**: `AUDIT INVENTORY = ACCEPTED` · `PUBLIC INTEGRATION CONTRACT = READY_FOR_GABRIEL_REVIEW` (não congelado).
+
+### A. CREATE CANDIDATE PAYLOAD
+
+Ver modelo canônico §36. Enviar identidade sem `code`; `store`/`company` conforme decisão q3/q4. Candidatos obrigatórios: §37.
+
+### B. UPDATE IDENTITY
+
+`code` + `store` (+`company` quando multi-empresa).
+
+### C. UPDATE CANDIDATE FIELDS
+
+Todos os campos de negócio do §28 são MUTABLE_CANDIDATE — nenhum MUTABLE_PROVEN.
+
+### D. SYSTEM OWNED FIELDS
+
+§35 + acumuladores estatísticos + virtuais + `A2_OK`/`A2_INCLTMG`.
+
+### E. LOOKUPS / NORMALIZATION
+
+- Lookups exigidos quando campo enviado: SX5('12'/'58'/'T3'/'Y7'), CC2, CCH, SYA, SE4, SED, SA6 (trinca), CT1, SA1, SRA, SA4, SAE, ACJ, SYR.
+- Normalização mínima: `A2_LOJA` `RTRIM`+`zfill(2)`; `A2_COD` `RTRIM`+`zfill(6)` quando numérico; `A2_CGC`/`A2_CEP`/telefones digits-only; `A2_EST`/`A2_SWIFT` upper; `A2_EMAIL` lower.
+
+### F. QUESTIONS FOR GABRIEL
+
+§39 (13 perguntas).
+
+### G. OPEN TOTVS GAPS
+
+§40/§41 — principal: `MATA020_INTERNAL_CREATE_VALIDATION` e `MATA020_SIDE_EFFECTS` = UNKNOWN.
+
 ---
-*Auditoria gerada via leitura read-only (SX2/SX3/SIX/SX9/SXB/sys.\*/agregações com NOLOCK). Nenhuma escrita executada. Evidências brutas em `scripts/_supplier_audit/out/`.*
+*Auditoria gerada via leitura read-only (SX2/SX3/SIX/SX9/SXB/sys.\*/agregações com NOLOCK). Nenhuma escrita executada. Evidência reproduzível pelos scripts em `scripts/_supplier_audit/` (`q.sh` + `q*.sql`); dumps de saída são regeneráveis e não versionados.*

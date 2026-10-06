@@ -8,7 +8,7 @@ Convenções Delpi ao buscar / identificar fornecedor TOTVS. Detalhe completo (2
 |------|-------|
 | Chave de negócio | `A2_FILIAL + A2_COD + A2_LOJA` (única física: `SA2010_UNQ`) |
 | `A2_CGC` (CNPJ/CPF) | **Não** é chave — duplicado em base (mesmo CGC com códigos distintos) e pode ser vazio |
-| `A2_LOJA` | Convenção `'01'`; base contém valores sujos (`'1 '`, `' 1'`) — normalizar com `RTRIM`/`zfill(2)` |
+| `A2_LOJA` | Convenção observada `'01'` (não é default de dicionário); base contém valores sujos (`'1 '`, `' 1'`) — normalizar com `RTRIM`/`zfill(2)`. Quem informa no create (caller/ponte/rotina) é decisão de contrato — não assumir como requisito público |
 | `A2_FILIAL` | Branco = cadastro compartilhado entre filiais (MODO=C); nunca filtrar por filial fixa sem tratar branco |
 
 ## Geração de código
@@ -18,6 +18,10 @@ Convenções Delpi ao buscar / identificar fornecedor TOTVS. Detalhe completo (2
 ## Bloqueio (`A2_MSBLQL`)
 
 `'1'` = bloqueado (104 registros); `'2'` = ativo; **vazio** em ~4% — tratar branco como "não bloqueado" somente após decisão de contrato (ver playbook §26/§39).
+
+## Obrigatoriedade
+
+Fill-rate alto **não** prova obrigatoriedade. Campos com ~100% de preenchimento (`A2_NOME`, `A2_EST`, `A2_CODPAIS`…) são `CANDIDATE_REQUIRED` até prova de bloqueio na MATA020. Campos marcados `OBRIGAT` no dicionário (`A2_TEL`, `A2_EMAIL`, `A2_CONTATO`, `A2_FORMPAG`…) têm histórico com branco — flag de dicionário ≠ bloqueio comprovado no create. Matriz completa: playbook §8/§28.
 
 ## Campos DELPI na SA2
 
