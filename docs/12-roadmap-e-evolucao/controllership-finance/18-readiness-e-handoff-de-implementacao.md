@@ -12,6 +12,15 @@ O pacote funcional de implementação está organizado em:
 
 `DOCUMENTATION_GATE` não prova runtime e não substitui o inventário técnico da página.
 
+## Gate global da fase atual
+
+```text
+PORTAL_REVIEW_PHASE = ACTIVE
+IMPLEMENTATION_AUTHORIZED = NO
+```
+
+Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, não autorização de execução. Nenhum diff runtime deve começar antes do fechamento da revisão de todas as páginas e de um `PORTAL_DESIGN_FREEZE = PASS` explícito.
+
 ## Readiness
 
 ### Superfícies da topbar
@@ -58,7 +67,7 @@ Decisões congeladas:
 | P5 — envio real | BLOCKED_WITH_EVIDENCE | Q22 depende E04/T04 |
 | P6 | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02/T05 conforme configuração |
 
-Readiness não é autorização global. O Portal evolui uma página/slice por vez.
+Readiness não é autorização global. Depois do freeze transversal, o Portal evoluirá uma página/slice por vez.
 
 ## Interpretação dos estados
 
