@@ -44,6 +44,7 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 | Visão geral | `KpiCard`, `MetricKpiCard`, `ChartCard`, `QuickPeriodSelector`, `createDashboardFiltersKit`, charts, `DataTableSection` | `@delpi/plugin-ui/index` | kit analítico reutilizável |
 | Central de Fechamento / Cockpit | PagePath/PageHero/SectionCard, `StatusBadge`, `ProgressTracker`, `MetricStrip`, `AlertQueue`, `WorklistItem`, `Timeline` | `@delpi/plugin-ui/index` | composição de cockpit reutilizável |
 | Central de Fechamento / Checklist e Documentos | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, attachment kit, forms, `Timeline`, modals/notices | `@delpi/plugin-ui/index` | master-detail operacional reutilizável |
+| Central de Fechamento / Estoque e Conciliação | `MetricKpiCard`, `ProgressTracker`, `AlertQueue`, `DetailFieldGrid`, `DataTableSection`, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | mesa de conciliação/readiness reutilizável |
 | Sala de interação | `InteractionRoomPage`, `INTERACTION_ROOM_PAGE_LABELS_PT`, `PluginErrorBoundary` | `@delpi/plugin-ui/index` | **full-page reusable** |
 | Minhas tarefas | `TaskWorkspacePage`, `TaskWorklistSection`, `TaskItemsTable`, `TaskSearchField`, `TaskEmptyState` | `@delpi/plugin-ui/index` | **workspace reusable** |
 | Administração | PageHero/PagePath, SectionRouteCard, DataTableSection, forms, Modal/Confirm/Notice/Status | `@delpi/plugin-ui/index` | composição reutilizável; sem full page pronta |
@@ -153,6 +154,39 @@ Contrato visual detalhado:
 - [09-p2-checklist-e-documentos.md](./09-p2-checklist-e-documentos.md)
 
 Desktop usa master-detail com `ResizableColumns`; mobile usa lista → detalhe full-width. Evidências usam o attachment kit público. O Portal continua owner dos contracts, estados, AuthZ e regras de validação.
+
+## Central de Fechamento — Estoque e Conciliação
+
+### Import preferencial
+
+```ts
+import {
+  createDashboardPagePath,
+  createDashboardPageHero,
+  createDashboardSectionCard,
+  MetricKpiCard,
+  StatusBadge,
+  ProgressTracker,
+  AlertQueue,
+  DetailFieldGrid,
+  DataTableSection,
+  Timeline,
+  StateBanner,
+  StateBox,
+  ModalShell,
+  ConfirmModalPanel,
+  FloatingNoticeStack,
+  ActionButton,
+  HelpTooltip,
+  EmptyState,
+  LoadingState,
+} from "@delpi/plugin-ui/index";
+```
+
+Contrato visual detalhado:
+- [10-p3-estoque-cutoff-e-conciliacao.md](./10-p3-estoque-cutoff-e-conciliacao.md)
+
+A divergência é a métrica monetária de maior destaque, mas o estado de readiness depende também de cutoff, revalidação e disponibilidade/freshness das sources. O kit fornece chrome; os contracts de source, regra e estado canônico continuam nos owners.
 
 ## Sala de interação
 
