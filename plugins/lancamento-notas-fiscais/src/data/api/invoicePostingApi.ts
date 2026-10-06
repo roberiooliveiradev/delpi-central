@@ -72,6 +72,23 @@ export async function listRequestPurchaseOrders(
   );
 }
 
+export async function listOpenPurchaseOrders(
+  branch: string,
+  supplierCode: string,
+  supplierStore: string,
+  signal?: AbortSignal,
+): Promise<OpenPurchaseOrdersResponse> {
+  const params = new URLSearchParams({
+    branch,
+    supplier_code: supplierCode,
+    supplier_store: supplierStore,
+  });
+  return httpGet<OpenPurchaseOrdersResponse>(
+    `${API_BASE}/purchase-orders/open?${params.toString()}`,
+    { signal },
+  );
+}
+
 export async function linkRequestPurchaseOrder(
   requestId: string,
   body:

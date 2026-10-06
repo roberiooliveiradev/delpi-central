@@ -16,6 +16,7 @@ import { NfeProductMappingPanel, type NfeProductMappingView } from "../component
 import { ManualPostModal } from "../components/ManualPostModal";
 import { LinkedPurchaseOrderReceipt } from "../components/LinkedPurchaseOrderReceipt";
 import { PurchaseOrdersModal } from "../components/PurchaseOrdersModal";
+import { delpiProductCodesWhenFullyMapped } from "../components/purchaseOrderProductFilter";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   formatDate,
@@ -737,6 +738,7 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
         supplierName={request.supplier_name}
         branchCode={request.branch_code}
         canLink={hasAction(allowed_actions, "link_purchase_order")}
+        restrictToProductCodes={delpiProductCodesWhenFullyMapped(productMapping)}
         onClose={() => setPurchaseOrdersOpen(false)}
         onLinked={() => {
           void load();
