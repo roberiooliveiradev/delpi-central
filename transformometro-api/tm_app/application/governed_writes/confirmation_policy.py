@@ -131,6 +131,74 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
     WritePolicyRecord(
         "diagnostic.manage", CONFIRM_BEFORE_ACT, "manage_diagnostic"
     ),
+    # --- Transformômetro tasks (Portal parity) -------------------------------
+    # Additive task record for an assignee; reversible via cancel.
+    WritePolicyRecord(
+        "task.create", AUTO_ACT, "create_task"
+    ),
+    # Non-destructive field update on a pending task.
+    WritePolicyRecord(
+        "task.update", AUTO_ACT, "update_task"
+    ),
+    # Terminal lifecycle closure that PRESERVES the record (visible as
+    # completed); routine transition the user explicitly requested.
+    WritePolicyRecord(
+        "task.complete", AUTO_ACT, "complete_task"
+    ),
+    # Discard semantics: abandons a pending work item (delete-class risk).
+    WritePolicyRecord(
+        "task.cancel",
+        CONFIRM_BEFORE_ACT,
+        "cancel_task",
+    ),
+    # --- Interaction room / messages (Portal parity) --------------------------
+    # Idempotent get-or-create scoped to a process.
+    WritePolicyRecord(
+        "interaction_room.open",
+        AUTO_ACT,
+        "open_interaction_room"
+    ),
+    # Append-only message authored by the caller; user content is the intent.
+    WritePolicyRecord(
+        "interaction_room.post_message",
+        AUTO_ACT,
+        "post_interaction_message"
+    ),
+    # Content update on the caller's own message.
+    WritePolicyRecord(
+        "interaction_room.edit_message",
+        AUTO_ACT,
+        "edit_interaction_message"
+    ),
+    # Removes message content (delete-class risk).
+    WritePolicyRecord(
+        "interaction_room.delete_message",
+        CONFIRM_BEFORE_ACT,
+        "delete_interaction_message"
+    ),
+    # Reversible personal reaction marker.
+    WritePolicyRecord(
+        "interaction_room.reaction",
+        AUTO_ACT,
+        "toggle_interaction_reaction"
+    ),
+    # Reversible pin state on a message.
+    WritePolicyRecord(
+        "interaction_room.pin",
+        AUTO_ACT,
+        "pin_interaction_message"
+    ),
+    WritePolicyRecord(
+        "interaction_room.unpin",
+        AUTO_ACT,
+        "unpin_interaction_message"
+    ),
+    # Per-actor read marker (personal metadata, no shared content change).
+    WritePolicyRecord(
+        "interaction_room.mark_read",
+        AUTO_ACT,
+        "mark_interaction_read"
+    ),
 )
 
 

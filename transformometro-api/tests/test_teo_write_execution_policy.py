@@ -541,9 +541,13 @@ def test_every_exposed_write_alias_resolves_and_no_orphans():
     catalog = build_capability_surface_catalog("mcp")
     for workflow in catalog["workflows"]:
         wid = workflow["id"]
-        assert workflow["execution_policy"] == execution_policy_for_workflow(
-            wid
-        )
+        policy = workflow["execution_policy"]
+        if isinstance(policy, dict):
+            assert set(policy) == set(workflow["capability_execution_policy"])
+            for capability, cap_policy in policy.items():
+                assert cap_policy == execution_policy_for_capability(capability)
+        else:
+            assert policy == execution_policy_for_workflow(wid)
     for entity in catalog["entities"]:
         for op in entity.get("write_operations", ()):
             assert entity["execution_policy"][

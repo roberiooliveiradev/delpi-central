@@ -122,6 +122,28 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
         ("prepare_meeting_minute_manage", "PREPARE"),
         primary="prepare_meeting_minute_manage",
     ),
+    # Portal parity — Transformômetro tasks (TaskCommandUseCases authority).
+    _b("task.read", "gpt_task_read", ("task_read", "READ"), primary="task_read"),
+    _b(
+        "task.change.prepare",
+        "gpt_prepare_task",
+        ("prepare_task", "PREPARE"),
+        primary="prepare_task",
+    ),
+    # Portal parity — interaction room / messages
+    # (InteractionRoomUseCases authority; binary attachments stay UI-only).
+    _b(
+        "interaction_room.read",
+        "gpt_interaction_room_read",
+        ("interaction_room_read", "READ"),
+        primary="interaction_room_read",
+    ),
+    _b(
+        "interaction_room.change.prepare",
+        "gpt_prepare_interaction_room",
+        ("prepare_interaction_room", "PREPARE"),
+        primary="prepare_interaction_room",
+    ),
     # MCP-native — no Actions surface; never fake a parity mapping.
     _b("diagnostic.read", None, ("get_diagnostic", "READ"), primary="get_diagnostic"),
     _b("diagnostic.list_by_revision", None, ("list_diagnostics_by_revision", "READ"), primary="list_diagnostics_by_revision"),

@@ -18,7 +18,9 @@ from tm_app.application.gpt_actions.improvement_package_service import (
 )
 from tm_app.application.governed_writes.errors import GovernedWriteError
 from tm_app.application.governed_writes.orchestrator import (
+    INTERACTION_ROOM_ACTION_TO_CAPABILITY,
     MEETING_MANAGE_NON_ACT,
+    TASK_ACTION_TO_CAPABILITY,
     GovernedWriteOrchestrator,
 )
 from tm_app.application.gpt_actions.process_context_service import ProcessContextService
@@ -187,6 +189,41 @@ class GptPrepareRecordChangeBody(BaseModel):
 class GptCommitProposalBody(BaseModel):
     proposal_handle: str
     confirmation: bool = False
+
+
+class GptTaskPrepareBody(BaseModel):
+    action: str = Field(
+        ..., description="create | update | complete | cancel"
+    )
+    task_id: str | None = None
+    title: str | None = None
+    description: str | None = None
+    assignee_user_id: str | None = None
+    due_date: str | None = None
+    source_interaction_message_id: str | None = None
+    commit_now: bool = False
+    confirmation: bool = False
+    idempotency_key: str | None = None
+
+
+class GptInteractionRoomPrepareBody(BaseModel):
+    action: str = Field(
+        ...,
+        description=(
+            "open | post_message | edit_message | delete_message | "
+            "reaction | pin | unpin | mark_read"
+        ),
+    )
+    processo_id: str | None = None
+    room_id: str | None = None
+    message_id: str | None = None
+    content: str | None = None
+    parent_id: str | None = None
+    mentions: list | None = None
+    reaction: str | None = None
+    commit_now: bool = False
+    confirmation: bool = False
+    idempotency_key: str | None = None
 
 
 def _idempotency_key_from_request(request: Request, body_key: str | None) -> str | None:
@@ -800,5 +837,168 @@ def gpt_meeting_minute_manage(request: Request, body: GptMeetingMinuteManageBody
             operation_label="prepare_meeting_minute_manage",
         )
         return ok(data, "Meeting-minute write proposal ready — then gpt_commit_proposal.")
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/tasks",
+    operation_id="gpt_task_read",
+    summary="READ Transformômetro tasks (mine | related | get)",
+)
+def gpt_task_read(
+    request: Request,
+    action: str = Query(..., description="mine | related | get"),
+    task_id: str | None = Query(None),
+    processo_id: str | None = Query(None),
+    status: str = Query("pending"),
+):
+    try:
+        action_norm = str(action or "").strip().lower()
+        if action_norm == "mine":
+            return ok(
+                _dispatch.list_my_tasks(request, status=status),
+                "Tarefas do usuário autenticado.",
+            )
+        if action_norm == "related":
+            if not str(processo_id or "").strip():
+                return fail("processo_id is required for action 'related'.", 400)
+            return ok(
+                _dispatch.list_process_tasks(request, str(processo_id)),
+                "Tarefas relacionadas ao processo.",
+            )
+        if action_norm == "get":
+            if not str(task_id or "").strip():
+                return fail("task_id is required for action 'get'.", 400)
+            return ok(
+                _dispatch.get_task(request, str(task_id)), "Tarefa carregada."
+            )
+        return fail(
+            "Invalid action. Allowed: mine | related | get.", 400
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/tasks/prepare",
+    operation_id="gpt_prepare_task",
+    summary="PREPARE task create|update|complete|cancel (commit via gpt_commit_proposal)",
+)
+def gpt_prepare_task(request: Request, body: GptTaskPrepareBody):
+    try:
+        action_norm = str(body.action or "").strip().lower()
+        capability = TASK_ACTION_TO_CAPABILITY.get(action_norm)
+        if capability is None:
+            return fail(
+                "Invalid task action. Allowed: "
+                f"{sorted(TASK_ACTION_TO_CAPABILITY)}.",
+                400,
+            )
+        args = body.model_dump(
+            exclude={"commit_now", "confirmation", "idempotency_key"}
+        )
+        data = _governed.prepare_capability(
+            request,
+            capability=capability,
+            args=args,
+            operation_label="prepare_task",
+            commit_now=bool(body.commit_now),
+            confirmation=bool(body.confirmation),
+            idempotency_key=_idempotency_key_from_request(
+                request, body.idempotency_key
+            ),
+        )
+        if data.get("persisted"):
+            return ok(data, "Task write persisted (commit_now).")
+        return ok(data, "Task proposal ready — then gpt_commit_proposal.")
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/interaction-rooms",
+    operation_id="gpt_interaction_room_read",
+    summary="READ interaction rooms (list | get | messages | attachments)",
+)
+def gpt_interaction_room_read(
+    request: Request,
+    action: str = Query(..., description="list | get | messages | attachments"),
+    room_id: str | None = Query(None),
+    inbox_filter: str = Query("all"),
+    limit: int = Query(50),
+    before_id: str | None = Query(None),
+):
+    try:
+        action_norm = str(action or "").strip().lower()
+        if action_norm == "list":
+            return ok(
+                _dispatch.list_rooms(request, inbox_filter=inbox_filter),
+                "Salas de interação.",
+            )
+        if not str(room_id or "").strip():
+            return fail(
+                f"room_id is required for action '{action_norm}'.", 400
+            )
+        if action_norm == "get":
+            return ok(_dispatch.get_room(request, str(room_id)), "Sala carregada.")
+        if action_norm == "messages":
+            return ok(
+                _dispatch.list_room_messages(
+                    request, str(room_id), limit=limit, before_id=before_id
+                ),
+                "Mensagens da sala.",
+            )
+        if action_norm == "attachments":
+            return ok(
+                _dispatch.list_room_attachments(request, str(room_id)),
+                "Metadados de anexos (binary transfer not on this surface).",
+            )
+        return fail(
+            "Invalid action. Allowed: list | get | messages | attachments.", 400
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/prepare",
+    operation_id="gpt_prepare_interaction_room",
+    summary=(
+        "PREPARE interaction room/message write "
+        "(commit via gpt_commit_proposal)"
+    ),
+)
+def gpt_prepare_interaction_room(
+    request: Request, body: GptInteractionRoomPrepareBody
+):
+    try:
+        action_norm = str(body.action or "").strip().lower()
+        capability = INTERACTION_ROOM_ACTION_TO_CAPABILITY.get(action_norm)
+        if capability is None:
+            return fail(
+                "Invalid interaction-room action. Allowed: "
+                f"{sorted(INTERACTION_ROOM_ACTION_TO_CAPABILITY)}.",
+                400,
+            )
+        args = body.model_dump(
+            exclude={"commit_now", "confirmation", "idempotency_key"}
+        )
+        data = _governed.prepare_capability(
+            request,
+            capability=capability,
+            args=args,
+            operation_label="prepare_interaction_room",
+            commit_now=bool(body.commit_now),
+            confirmation=bool(body.confirmation),
+            idempotency_key=_idempotency_key_from_request(
+                request, body.idempotency_key
+            ),
+        )
+        if data.get("persisted"):
+            return ok(data, "Interaction-room write persisted (commit_now).")
+        return ok(
+            data, "Interaction-room proposal ready — then gpt_commit_proposal."
+        )
     except Exception as exc:
         return _handle(exc)

@@ -289,6 +289,58 @@ def create_mcp_server() -> MCPServer:
         )
 
     @mcp.tool(
+        name="task_read",
+        title="Task read",
+        description=(
+            "READ: Transformômetro tasks — action=mine (status filter: "
+            "pending|completed|cancelled|all), action=related "
+            "(processo_id required), action=get (task_id required). "
+            "Same canonical use cases as the Portal."
+        ),
+        annotations=_annotations("task_read", "Task read"),
+        meta=meta,
+    )
+    def task_read(
+        action: Literal["mine", "related", "get"],
+        task_id: str | None = None,
+        processo_id: str | None = None,
+        status: str = "pending",
+    ) -> CallToolResult:
+        return bridge.tool_task_read(
+            action=action,
+            task_id=task_id,
+            processo_id=processo_id,
+            status=status,
+        )
+
+    @mcp.tool(
+        name="interaction_room_read",
+        title="Interaction room read",
+        description=(
+            "READ: interaction rooms — action=list (inbox_filter), "
+            "action=get, action=messages (limit/before_id), "
+            "action=attachments (metadata only — binary transfer has no "
+            "MCP transport). Same canonical use cases as the Portal."
+        ),
+        annotations=_annotations("interaction_room_read", "Interaction room read"),
+        meta=meta,
+    )
+    def interaction_room_read(
+        action: Literal["list", "get", "messages", "attachments"],
+        room_id: str | None = None,
+        inbox_filter: str = "all",
+        limit: int = 50,
+        before_id: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_interaction_room_read(
+            action=action,
+            room_id=room_id,
+            inbox_filter=inbox_filter,
+            limit=limit,
+            before_id=before_id,
+        )
+
+    @mcp.tool(
         name="get_diagnostic",
         title="Get diagnostic",
         description=(
@@ -547,6 +599,90 @@ def create_mcp_server() -> MCPServer:
     ) -> CallToolResult:
         return bridge.tool_prepare_meeting_minute_manage(
             action=action, minute_id=minute_id, data=data
+        )
+
+    @mcp.tool(
+        name="prepare_task",
+        title="Prepare task",
+        description=(
+            "PREPARE only — never persists business state. Transformômetro "
+            "task action=create|update|complete|cancel via the same "
+            "canonical TaskCommandUseCases as the Portal. Returns "
+            "proposal_handle + exact sealed change; then commit_proposal "
+            "follows proposal.execution_policy — auto_act (create/update/"
+            "complete) commits immediately with no extra confirmation; "
+            "confirm_before_act (cancel) shows the exact change and "
+            "requires one explicit user confirmation first."
+        ),
+        annotations=_annotations("prepare_task", "Prepare task"),
+        meta=meta,
+    )
+    def prepare_task(
+        action: Literal["create", "update", "complete", "cancel"],
+        task_id: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        assignee_user_id: str | None = None,
+        due_date: str | None = None,
+        source_interaction_message_id: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_prepare_task(
+            action=action,
+            task_id=task_id,
+            title=title,
+            description=description,
+            assignee_user_id=assignee_user_id,
+            due_date=due_date,
+            source_interaction_message_id=source_interaction_message_id,
+        )
+
+    @mcp.tool(
+        name="prepare_interaction_room",
+        title="Prepare interaction room",
+        description=(
+            "PREPARE only — never persists business state. Interaction "
+            "room action=open|post_message|edit_message|delete_message|"
+            "reaction|pin|unpin|mark_read via the same canonical "
+            "InteractionRoomUseCases as the Portal. Returns proposal_handle "
+            "+ exact sealed change; then commit_proposal follows proposal."
+            "execution_policy — auto_act commits immediately with no extra "
+            "confirmation; confirm_before_act (delete_message) requires one "
+            "explicit user confirmation first. Binary attachment upload/"
+            "download is not available on this transport."
+        ),
+        annotations=_annotations(
+            "prepare_interaction_room", "Prepare interaction room"
+        ),
+        meta=meta,
+    )
+    def prepare_interaction_room(
+        action: Literal[
+            "open",
+            "post_message",
+            "edit_message",
+            "delete_message",
+            "reaction",
+            "pin",
+            "unpin",
+            "mark_read",
+        ],
+        processo_id: str | None = None,
+        room_id: str | None = None,
+        message_id: str | None = None,
+        content: str | None = None,
+        parent_id: str | None = None,
+        mentions: list | None = None,
+        reaction: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_prepare_interaction_room(
+            action=action,
+            processo_id=processo_id,
+            room_id=room_id,
+            message_id=message_id,
+            content=content,
+            parent_id=parent_id,
+            mentions=mentions,
+            reaction=reaction,
         )
 
     @mcp.tool(

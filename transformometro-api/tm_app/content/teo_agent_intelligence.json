@@ -88,11 +88,11 @@
     "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
   },
   "not_exposed": {
-    "tasks": "NOT_EXPOSED",
-    "interaction_room": "NOT_EXPOSED",
     "binary_upload": "UI-only / BLOCKED_BY_PLATFORM",
+    "interaction_room_attachment_binary": "UI-only / BLOCKED_BY_PLATFORM (metadata via gpt_interaction_room_read action=attachments / interaction_room_read action=attachments)",
     "generic_proxy": "FORBIDDEN",
-    "signature_pdf": "NOT via GPT/MCP search path"
+    "signature_pdf": "NOT via GPT/MCP search path",
+    "process_workspace": "UI navigation surface — not a business capability (data via context/records/tasks/rooms)"
   },
   "flows": {
     "process_registration": {
@@ -346,6 +346,48 @@
         "read_context"
       ],
       "confirmation_policy": "read_only"
+    },
+    "tasks": {
+      "gpt_operations": [
+        "gpt_task_read",
+        "gpt_prepare_task",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "task_read",
+        "prepare_task",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "read_tasks",
+        "prepare_action",
+        "policy_gate",
+        "commit_proposal",
+        "read_back"
+      ],
+      "confirmation_policy": "mixed",
+      "notes": "Portal parity — TaskCommandUseCases. create|update|complete auto_act; cancel confirm_before_act."
+    },
+    "interaction_room": {
+      "gpt_operations": [
+        "gpt_interaction_room_read",
+        "gpt_prepare_interaction_room",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "interaction_room_read",
+        "prepare_interaction_room",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "read_room",
+        "prepare_action",
+        "policy_gate",
+        "commit_proposal",
+        "read_back"
+      ],
+      "confirmation_policy": "mixed",
+      "notes": "Portal parity — InteractionRoomUseCases. delete_message confirm_before_act; outros auto_act. Binary attachments BLOCKED_BY_PLATFORM."
     },
     "diagnostic_v1": {
       "gpt_operations": [],

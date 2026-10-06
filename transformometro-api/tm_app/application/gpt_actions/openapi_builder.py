@@ -65,6 +65,10 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_process_timeline",
     "gpt_adjust_shared_resource_cost",
     "gpt_meeting_minute_manage",
+    "gpt_task_read",
+    "gpt_prepare_task",
+    "gpt_interaction_room_read",
+    "gpt_prepare_interaction_room",
 )
 
 # Legacy HTTP still mounted (prepare-only shim) — not Builder-importable.
@@ -1143,6 +1147,159 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "x-openai-isConsequential": True,
             }
         },
+        f"{GPT_ACTIONS_BASE_PATH}/tasks": {
+            "get": {
+                "operationId": "gpt_task_read",
+                "summary": "READ Transformômetro tasks (mine | related | get)",
+                "description": (
+                    "Same canonical task use cases as the Portal. "
+                    "action=mine (status: pending|completed|cancelled|all); "
+                    "action=related (processo_id required); "
+                    "action=get (task_id required)."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": True,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["mine", "related", "get"],
+                        },
+                    },
+                    {"name": "task_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "processo_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "status", "in": "query", "required": False, "schema": {"type": "string"}},
+                ],
+                "responses": {
+                    "200": _ok_response("Tasks"),
+                    **_error_responses(),
+                },
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/tasks/prepare": {
+            "post": {
+                "operationId": "gpt_prepare_task",
+                "summary": "PREPARE task change; optional commit_now for additive",
+                "description": (
+                    "PREPARE task create|update|complete|cancel via canonical "
+                    "TaskCommandUseCases (Portal parity). Returns opaque "
+                    "proposal_handle. execution_policy per action: "
+                    "create/update/complete auto_act (commit_now allowed); "
+                    "cancel confirm_before_act (gpt_commit_proposal)."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Required when commit_now=true.",
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptTaskPrepareBody"
+                            },
+                            "example": {
+                                "action": "create",
+                                "title": "Follow up with process owner",
+                                "due_date": "2026-12-01",
+                            },
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("proposal_ready or persisted commit_now outcome"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/interaction-rooms": {
+            "get": {
+                "operationId": "gpt_interaction_room_read",
+                "summary": "READ interaction rooms (list | get | messages | attachments)",
+                "description": (
+                    "Same canonical InteractionRoomUseCases as the Portal. "
+                    "attachments returns metadata only — binary upload/"
+                    "download is BLOCKED_BY_PLATFORM on this transport."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": True,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["list", "get", "messages", "attachments"],
+                        },
+                    },
+                    {"name": "room_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "inbox_filter", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer"}},
+                    {"name": "before_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                ],
+                "responses": {
+                    "200": _ok_response("Interaction rooms"),
+                    **_error_responses(),
+                },
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/interaction-rooms/prepare": {
+            "post": {
+                "operationId": "gpt_prepare_interaction_room",
+                "summary": "PREPARE room/message write; optional commit_now for additive",
+                "description": (
+                    "PREPARE open|post_message|edit_message|delete_message|"
+                    "reaction|pin|unpin|mark_read via canonical "
+                    "InteractionRoomUseCases (Portal parity). Returns opaque "
+                    "proposal_handle. delete_message is confirm_before_act "
+                    "(gpt_commit_proposal); others auto_act (commit_now ok). "
+                    "No binary attachments."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Required when commit_now=true.",
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptInteractionRoomPrepareBody"
+                            },
+                            "example": {
+                                "action": "post_message",
+                                "room_id": "<room_uuid>",
+                                "content": "Checklist updated.",
+                            },
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("proposal_ready or persisted commit_now outcome"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
     }
 
     doc = {
@@ -1376,6 +1533,113 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "valor_mensal": 1500.0,
                         "vigente_desde": "2026-10-01",
                         "observacoes": "Reajuste anual",
+                    },
+                },
+                "GptTaskPrepareBody": {
+                    "type": "object",
+                    "required": ["action"],
+                    "description": (
+                        "Task governed write (same TaskCommandUseCases as the "
+                        "Portal). task_id required for update|complete|cancel."
+                    ),
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": ["create", "update", "complete", "cancel"],
+                        },
+                        "task_id": {
+                            "type": "string",
+                            "description": "Required for update|complete|cancel",
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "Required for create|update (1-200 chars)",
+                        },
+                        "description": {"type": "string"},
+                        "assignee_user_id": {"type": "string"},
+                        "due_date": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "YYYY-MM-DD",
+                        },
+                        "source_interaction_message_id": {"type": "string"},
+                        "commit_now": {"type": "boolean", "default": False},
+                        "confirmation": {"type": "boolean", "default": False},
+                        "idempotency_key": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "action": "create",
+                        "title": "Follow up with process owner",
+                        "due_date": "2026-12-01",
+                    },
+                },
+                "GptInteractionRoomPrepareBody": {
+                    "type": "object",
+                    "required": ["action"],
+                    "description": (
+                        "Interaction-room governed write (same "
+                        "InteractionRoomUseCases as the Portal). Binary "
+                        "attachment upload/download is BLOCKED_BY_PLATFORM."
+                    ),
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": [
+                                "open",
+                                "post_message",
+                                "edit_message",
+                                "delete_message",
+                                "reaction",
+                                "pin",
+                                "unpin",
+                                "mark_read",
+                            ],
+                        },
+                        "processo_id": {
+                            "type": "string",
+                            "description": "Required for open",
+                        },
+                        "room_id": {
+                            "type": "string",
+                            "description": "Required for all message ops + mark_read",
+                        },
+                        "message_id": {
+                            "type": "string",
+                            "description": (
+                                "Required for edit_message|delete_message|"
+                                "reaction|pin|unpin"
+                            ),
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "Required for post_message|edit_message",
+                        },
+                        "parent_id": {"type": "string"},
+                        "mentions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": True,
+                                "properties": {
+                                    "user_id": {"type": "string"},
+                                    "label": {"type": "string"},
+                                },
+                            },
+                        },
+                        "reaction": {
+                            "type": "string",
+                            "description": "Required for reaction (emoji code)",
+                        },
+                        "commit_now": {"type": "boolean", "default": False},
+                        "confirmation": {"type": "boolean", "default": False},
+                        "idempotency_key": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "action": "post_message",
+                        "room_id": "<room_uuid>",
+                        "content": "Checklist updated.",
                     },
                 },
                 "GptMeetingMinuteManageBody": {

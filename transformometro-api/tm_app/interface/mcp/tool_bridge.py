@@ -30,8 +30,10 @@ from tm_app.application.governed_writes.errors import (
     GovernedWriteError,
 )
 from tm_app.application.governed_writes.orchestrator import (
+    INTERACTION_ROOM_ACTION_TO_CAPABILITY,
     MEETING_MANAGE_NON_ACT,
     MEETING_MANAGE_READ_ACTIONS,
+    TASK_ACTION_TO_CAPABILITY,
     GovernedWriteOrchestrator,
 )
 from tm_app.application.governed_writes.diagnostic_capabilities import (
@@ -693,6 +695,185 @@ def tool_prepare_meeting_minute_manage(
     return _prepare(
         "meeting_minute_manage",
         {"action": action_norm, "minute_id": minute_id, "data": data or {}},
+    )
+
+
+# --- Portal parity: Transformômetro tasks (TaskCommandUseCases authority) ---
+
+_TASK_READ_ACTIONS = frozenset({"mine", "related", "get"})
+
+
+def tool_task_read(
+    action: str,
+    task_id: str | None = None,
+    processo_id: str | None = None,
+    status: str = "pending",
+) -> CallToolResult:
+    """READ: my tasks / process-related tasks / one task."""
+    try:
+        action_norm = str(action or "").strip().lower()
+        if action_norm not in _TASK_READ_ACTIONS:
+            return _error_result(
+                f"Unknown task_read action '{action_norm}'. "
+                f"Allowed: {sorted(_TASK_READ_ACTIONS)}.",
+                status_code=400,
+                error_code="validation",
+            )
+        request = build_mcp_request()
+        if action_norm == "mine":
+            return _ok_result(
+                _dispatch.list_my_tasks(request, status=status),
+                "Tarefas do usuário autenticado.",
+            )
+        if action_norm == "related":
+            if not str(processo_id or "").strip():
+                return _error_result(
+                    "processo_id is required for action 'related'.",
+                    status_code=400,
+                    error_code="validation",
+                )
+            return _ok_result(
+                _dispatch.list_process_tasks(request, str(processo_id)),
+                "Tarefas relacionadas ao processo.",
+            )
+        if not str(task_id or "").strip():
+            return _error_result(
+                "task_id is required for action 'get'.",
+                status_code=400,
+                error_code="validation",
+            )
+        return _ok_result(
+            _dispatch.get_task(request, str(task_id)), "Tarefa carregada."
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_prepare_task(
+    action: str,
+    task_id: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    assignee_user_id: str | None = None,
+    due_date: str | None = None,
+    source_interaction_message_id: str | None = None,
+) -> CallToolResult:
+    """PREPARE only — task create|update|complete|cancel."""
+    action_norm = str(action or "").strip().lower()
+    capability = TASK_ACTION_TO_CAPABILITY.get(action_norm)
+    if capability is None:
+        return _error_result(
+            f"Unknown task action '{action_norm}'. "
+            f"Allowed: {sorted(TASK_ACTION_TO_CAPABILITY)}.",
+            status_code=400,
+            error_code="validation",
+        )
+    return _prepare(
+        capability,
+        {
+            "action": action_norm,
+            "task_id": task_id,
+            "title": title,
+            "description": description,
+            "assignee_user_id": assignee_user_id,
+            "due_date": due_date,
+            "source_interaction_message_id": source_interaction_message_id,
+        },
+    )
+
+
+# --- Portal parity: interaction rooms (InteractionRoomUseCases authority) ---
+
+_ROOM_READ_ACTIONS = frozenset({"list", "get", "messages", "attachments"})
+
+
+def tool_interaction_room_read(
+    action: str,
+    room_id: str | None = None,
+    inbox_filter: str = "all",
+    limit: int = 50,
+    before_id: str | None = None,
+) -> CallToolResult:
+    """READ: rooms / one room / messages / attachment metadata."""
+    try:
+        action_norm = str(action or "").strip().lower()
+        if action_norm not in _ROOM_READ_ACTIONS:
+            return _error_result(
+                f"Unknown interaction_room_read action '{action_norm}'. "
+                f"Allowed: {sorted(_ROOM_READ_ACTIONS)}.",
+                status_code=400,
+                error_code="validation",
+            )
+        request = build_mcp_request()
+        if action_norm == "list":
+            return _ok_result(
+                _dispatch.list_rooms(request, inbox_filter=inbox_filter),
+                "Salas de interação.",
+            )
+        if not str(room_id or "").strip():
+            return _error_result(
+                f"room_id is required for action '{action_norm}'.",
+                status_code=400,
+                error_code="validation",
+            )
+        if action_norm == "get":
+            return _ok_result(
+                _dispatch.get_room(request, str(room_id)), "Sala carregada."
+            )
+        if action_norm == "messages":
+            return _ok_result(
+                _dispatch.list_room_messages(
+                    request,
+                    str(room_id),
+                    limit=int(limit),
+                    before_id=before_id,
+                ),
+                "Mensagens da sala.",
+            )
+        return _ok_result(
+            _dispatch.list_room_attachments(request, str(room_id)),
+            "Metadados de anexos da sala.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_prepare_interaction_room(
+    action: str,
+    processo_id: str | None = None,
+    room_id: str | None = None,
+    message_id: str | None = None,
+    content: str | None = None,
+    parent_id: str | None = None,
+    mentions: list | None = None,
+    reaction: str | None = None,
+) -> CallToolResult:
+    """PREPARE only — room open|post|edit|delete|reaction|pin|unpin|mark_read.
+
+    Binary attachment upload/download is NOT exposed on this surface —
+    no file transport exists in MCP/ChatGPT (platform_blocked).
+    """
+    action_norm = str(action or "").strip().lower()
+    capability = INTERACTION_ROOM_ACTION_TO_CAPABILITY.get(action_norm)
+    if capability is None:
+        return _error_result(
+            f"Unknown interaction-room action '{action_norm}'. "
+            f"Allowed: {sorted(INTERACTION_ROOM_ACTION_TO_CAPABILITY)}.",
+            status_code=400,
+            error_code="validation",
+        )
+    return _prepare(
+        capability,
+        {
+            "action": action_norm,
+            "processo_id": processo_id,
+            "room_id": room_id,
+            "message_id": message_id,
+            "content": content,
+            "parent_id": parent_id,
+            "mentions": mentions,
+            "reaction": reaction,
+        },
     )
 
 

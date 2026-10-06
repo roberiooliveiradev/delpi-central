@@ -27,7 +27,14 @@ from tm_app.application.services.instance_duplicate_service import (
 )
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
 from tm_app.application.security.authorization_policy import AuthorizationDenied
+from tm_app.application.use_cases.list_my_task_items import ListMyTaskItemsUseCase
+from tm_app.application.use_cases.manage_interaction_rooms import (
+    InteractionRoomUseCases,
+)
 from tm_app.application.use_cases.manage_process_documents import ProcessDocumentUseCases
+from tm_app.application.use_cases.manage_transformometro_tasks import (
+    TaskCommandUseCases,
+)
 from tm_app.application.services.process_duplicate_service import (
     ProcessoDuplicateService,
     ProcessoNotFoundError,
@@ -122,6 +129,10 @@ from tm_app.infrastructure.persistence.repositories.shared_resource_repository i
     RecursoRepository,
     VinculoRepository,
 )
+from tm_app.infrastructure.persistence.repositories.task_repository import TaskRepository
+from tm_app.infrastructure.persistence.repositories.interaction_room_repository import (
+    InteractionRoomRepository,
+)
 from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
 from tm_app.application.services.decomposition_write_service import (
     DecompositionWriteError,
@@ -195,6 +206,13 @@ class GptActionsDispatchService:
         self._process_docs = ProcessDocumentUseCases(ProcessDocumentRepository())
         self._diagram_writes = DiagramWriteService()
         self._decomp_writes = DecompositionWriteService()
+        # Same canonical use cases as the Portal HTTP surface (task_routes /
+        # interaction_room_routes) — no duplicated domain rules.
+        self._tasks = TaskCommandUseCases(TaskRepository())
+        self._task_items = ListMyTaskItemsUseCase(
+            self._tasks, self._minutes.pending_signatures
+        )
+        self._rooms = InteractionRoomUseCases(InteractionRoomRepository())
         from tm_app.application.gpt_actions.parity_capabilities_service import (
             ParityCapabilitiesService,
         )
@@ -1579,6 +1597,178 @@ class GptActionsDispatchService:
             raise GptActionsError(str(exc), 404) from exc
         except ValueError as exc:
             raise GptActionsError(str(exc), 400) from exc
+
+    # --- Transformômetro tasks (Portal parity) ---------------------------
+    # Delegates to TaskCommandUseCases / ListMyTaskItemsUseCase — the same
+    # canonical use cases as task_routes.py. Domain rules, AuthZ and
+    # read-back verification stay owned by the use-case layer.
+
+    def _map_task_room_exc(self, exc: Exception) -> GptActionsError:
+        """Translate canonical use-case errors to transport errors."""
+        if isinstance(exc, AuthorizationDenied):
+            return GptActionsError(str(exc), exc.status_code)
+        if isinstance(exc, PermissionError):
+            return GptActionsError(str(exc), 403)
+        if isinstance(exc, LookupError):
+            return GptActionsError(str(exc), 404)
+        if isinstance(exc, ValueError):
+            return GptActionsError(str(exc), 400)
+        if isinstance(exc, RuntimeError) and str(exc) == "OUTCOME_VERIFICATION_FAILED":
+            return GptActionsError(str(exc), 409)
+        return GptActionsError(str(exc), 500)
+
+    def list_my_tasks(self, request: Request, *, status: str = "pending") -> dict[str, Any]:
+        try:
+            return self._task_items.execute(request.state.user, status=status)
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def list_process_tasks(self, request: Request, processo_id: str) -> dict[str, Any]:
+        try:
+            if not ProcessoRepository().get(str(processo_id or "").strip()):
+                raise LookupError("Processo não encontrado.")
+            items = self._tasks.list_related_to_process(request.state.user, processo_id)
+            return {"items": [item.to_dict() for item in items], "total": len(items)}
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def get_task(self, request: Request, task_id: str) -> dict[str, Any]:
+        try:
+            return self._tasks.get(request.state.user, str(task_id)).to_dict()
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def task_write(self, request: Request, action: str, args: dict[str, Any]) -> dict[str, Any]:
+        """Material write via TaskCommandUseCases (ACT path only)."""
+        user = request.state.user
+        try:
+            if action == "create":
+                return self._tasks.create(
+                    user,
+                    title=str(args.get("title") or ""),
+                    description=args.get("description"),
+                    assignee_user_id=args.get("assignee_user_id"),
+                    due_date=args.get("due_date"),
+                    source_interaction_message_id=args.get("source_interaction_message_id"),
+                ).to_dict()
+            task_id = str(args.get("task_id") or "")
+            if action == "update":
+                return self._tasks.update(
+                    user,
+                    task_id,
+                    title=str(args.get("title") or ""),
+                    description=args.get("description"),
+                    assignee_user_id=args.get("assignee_user_id"),
+                    due_date=args.get("due_date"),
+                ).to_dict()
+            if action == "complete":
+                return self._tasks.complete(user, task_id).to_dict()
+            if action == "cancel":
+                return self._tasks.cancel(user, task_id).to_dict()
+            raise GptActionsError(f"Unknown task action '{action}'.", 400)
+        except GptActionsError:
+            raise
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    # --- Interaction rooms / messages (Portal parity) --------------------
+    # Delegates to InteractionRoomUseCases — the same canonical use cases as
+    # interaction_room_routes.py. Binary attachment transfer is NOT mapped:
+    # MCP/ChatGPT have no file transport (platform_blocked, not base64).
+
+    def list_rooms(self, request: Request, *, inbox_filter: str = "all") -> dict[str, Any]:
+        try:
+            rooms = self._rooms.list_rooms(request.state.user, inbox_filter=inbox_filter)
+            return {"items": [room.to_dict() for room in rooms], "total": len(rooms)}
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def get_room(self, request: Request, room_id: str) -> dict[str, Any]:
+        try:
+            return self._rooms.get_room(request.state.user, str(room_id)).to_dict()
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def list_room_messages(
+        self,
+        request: Request,
+        room_id: str,
+        *,
+        limit: int = 50,
+        before_id: str | None = None,
+    ) -> dict[str, Any]:
+        try:
+            return self._rooms.list_messages(
+                request.state.user,
+                str(room_id),
+                limit=int(limit),
+                before_id=before_id,
+            )
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def get_room_message(
+        self, request: Request, room_id: str, message_id: str
+    ) -> dict[str, Any]:
+        try:
+            return self._rooms.get_message(
+                request.state.user, str(room_id), str(message_id)
+            ).to_dict()
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def list_room_attachments(self, request: Request, room_id: str) -> dict[str, Any]:
+        try:
+            items = self._rooms.list_attachments(request.state.user, str(room_id))
+            return {"items": [item.to_dict() for item in items], "total": len(items)}
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def room_write(self, request: Request, action: str, args: dict[str, Any]) -> dict[str, Any]:
+        """Material write via InteractionRoomUseCases (ACT path only)."""
+        user = request.state.user
+        room_id = str(args.get("room_id") or "")
+        message_id = str(args.get("message_id") or "")
+        try:
+            if action == "open":
+                return self._rooms.open_for_process(
+                    user, str(args.get("processo_id") or "")
+                ).to_dict()
+            if action == "post_message":
+                return self._rooms.post_message(
+                    user,
+                    room_id,
+                    str(args.get("content") or ""),
+                    parent_id=args.get("parent_id"),
+                    mentions=args.get("mentions"),
+                ).to_dict()
+            if action == "edit_message":
+                return self._rooms.edit_message(
+                    user, room_id, message_id, str(args.get("content") or "")
+                ).to_dict()
+            if action == "delete_message":
+                return self._rooms.delete_message(user, room_id, message_id).to_dict()
+            if action == "reaction":
+                return self._rooms.toggle_reaction(
+                    user, room_id, message_id, str(args.get("reaction") or "")
+                ).to_dict()
+            if action == "pin":
+                return self._rooms.pin_message(user, room_id, message_id).to_dict()
+            if action == "unpin":
+                return self._rooms.unpin_message(user, room_id, message_id).to_dict()
+            if action == "mark_read":
+                self._rooms.mark_read(user, room_id)
+                # Authoritative read-back: viewer-scoped unread_count must
+                # be zero after the write.
+                for room in self._rooms.list_rooms(user):
+                    if room.id == room_id:
+                        return room.to_dict()
+                raise LookupError("Sala não encontrada.")
+            raise GptActionsError(f"Unknown interaction-room action '{action}'.", 400)
+        except GptActionsError:
+            raise
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
 
     # --- private entity helpers ------------------------------------------
 

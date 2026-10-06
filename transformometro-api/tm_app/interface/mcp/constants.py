@@ -109,4 +109,6 @@ PREPARE_TOOL_CAPABILITY: dict[str, str] = {
     "prepare_meeting_minute_manage": "meeting_minute_manage",
     "prepare_create_diagnostic": "create_diagnostic",
     "prepare_manage_diagnostic": "manage_diagnostic",
+    "prepare_task": "create_task",  # action selects exact capability
+    "prepare_interaction_room": "open_interaction_room",  # action selects
 }

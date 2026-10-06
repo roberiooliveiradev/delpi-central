@@ -256,6 +256,16 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "(pending/audit/versions/participants/signers/resend/create_version/"
                     "generate_from_transcript). send/finalize/cancel stay on "
                     "gpt_meeting_minute_workflow.",
+                    "Tasks: gpt_task_read (mine|related|get) + "
+                    "gpt_prepare_task (create|update|complete|cancel) → "
+                    "gpt_commit_proposal. cancel is confirm_before_act.",
+                    "Interaction rooms: gpt_interaction_room_read "
+                    "(list|get|messages|attachments) + "
+                    "gpt_prepare_interaction_room (open|post_message|"
+                    "edit_message|delete_message|reaction|pin|unpin|"
+                    "mark_read) → gpt_commit_proposal. delete_message is "
+                    "confirm_before_act. Binary attachments are "
+                    "BLOCKED_BY_PLATFORM (metadata read only).",
                     "Offer gpt_analyze for KPIs after recalculate.",
                 ],
             },

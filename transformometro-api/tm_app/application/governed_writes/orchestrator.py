@@ -69,8 +69,62 @@ WRITE_CAPABILITIES = frozenset(
         "meeting_minute_manage",
         _DIAG_CREATE,
         _DIAG_MANAGE,
+        # Portal parity — Transformômetro tasks
+        "create_task",
+        "update_task",
+        "complete_task",
+        "cancel_task",
+        # Portal parity — interaction room / messages
+        "open_interaction_room",
+        "post_interaction_message",
+        "edit_interaction_message",
+        "delete_interaction_message",
+        "toggle_interaction_reaction",
+        "pin_interaction_message",
+        "unpin_interaction_message",
+        "mark_interaction_read",
     }
 )
+
+# Transformômetro task capabilities (Portal parity — TaskCommandUseCases).
+TASK_CAPABILITIES = frozenset(
+    {"create_task", "update_task", "complete_task", "cancel_task"}
+)
+
+# Interaction room capabilities (Portal parity — InteractionRoomUseCases).
+INTERACTION_ROOM_CAPABILITIES = frozenset(
+    {
+        "open_interaction_room",
+        "post_interaction_message",
+        "edit_interaction_message",
+        "delete_interaction_message",
+        "toggle_interaction_reaction",
+        "pin_interaction_message",
+        "unpin_interaction_message",
+        "mark_interaction_read",
+    }
+)
+
+# Tool/Actions ``action`` argument → orchestrator capability. The transport
+# passes a coarse action; the semantic capability (which carries the
+# canonical execution_policy) is resolved here — never by transport prose.
+TASK_ACTION_TO_CAPABILITY = {
+    "create": "create_task",
+    "update": "update_task",
+    "complete": "complete_task",
+    "cancel": "cancel_task",
+}
+
+INTERACTION_ROOM_ACTION_TO_CAPABILITY = {
+    "open": "open_interaction_room",
+    "post_message": "post_interaction_message",
+    "edit_message": "edit_interaction_message",
+    "delete_message": "delete_interaction_message",
+    "reaction": "toggle_interaction_reaction",
+    "pin": "pin_interaction_message",
+    "unpin": "unpin_interaction_message",
+    "mark_read": "mark_interaction_read",
+}
 
 # meeting_minute_manage actions that are READ (no prepare)
 MEETING_MANAGE_READ_ACTIONS = frozenset(
@@ -220,6 +274,12 @@ class GovernedWriteOrchestrator:
             if capability == _DIAG_CREATE:
                 return _diag_prepare_create(stack, args)
             return _diag_prepare_manage(stack, args)
+        if capability in TASK_CAPABILITIES:
+            return self._prep_task(request, capability=capability, args=args)
+        if capability in INTERACTION_ROOM_CAPABILITIES:
+            return self._prep_interaction_room(
+                request, capability=capability, args=args
+            )
         raise GovernedWriteError(
             f"Prepare not implemented for '{capability}'.",
             code=VALIDATION,
@@ -234,6 +294,152 @@ class GovernedWriteOrchestrator:
                 status_code=500,
             )
         return self._diagnostic_stack
+
+    # --- Portal parity: tasks / interaction room ---------------------------
+    # PREPARE only reads current state and seals the exact change — the
+    # canonical use cases (TaskCommandUseCases / InteractionRoomUseCases)
+    # execute the write at ACT and re-validate AuthZ + domain rules.
+
+    def _prep_task(
+        self, request: Request, *, capability: str, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        self._dispatch._require_access(request)
+        action = str(args.get("action") or "").strip()
+        task_id = str(args.get("task_id") or "").strip()
+        missing: list[str] = []
+        if capability == "create_task":
+            if not str(args.get("title") or "").strip():
+                missing.append("title")
+            current_fp = fingerprint(
+                {"resource": "transformometro_task", "exists": False}
+            )
+            resource_id = None
+        else:
+            if not task_id:
+                missing.append("task_id")
+                current_fp = fingerprint({"task_id": None})
+                resource_id = None
+            else:
+                current = self._dispatch.get_task(request, task_id)
+                current_fp = fingerprint(current)
+                resource_id = task_id
+        if capability == "update_task" and not str(
+            args.get("title") or ""
+        ).strip():
+            missing.append("title")
+        exact = {
+            "action": action,
+            "task_id": task_id or None,
+            "title": args.get("title"),
+            "description": args.get("description"),
+            "assignee_user_id": args.get("assignee_user_id"),
+            "due_date": args.get("due_date"),
+            "source_interaction_message_id": args.get(
+                "source_interaction_message_id"
+            ),
+        }
+        return {
+            "resource_type": "transformometro_task",
+            "resource_id": resource_id,
+            "current_state_fingerprint": current_fp,
+            "exact_change": exact,
+            "validation_result": {
+                "ready": not missing,
+                "missing": missing,
+                "checks": ["authz_probe", "current_state_read"],
+            },
+            "consequential_impact": {
+                "persists": True,
+                "operation": capability,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "task_state",
+                "action": action,
+                "task_id": resource_id,
+            },
+        }
+
+    def _prep_interaction_room(
+        self, request: Request, *, capability: str, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        self._dispatch._require_access(request)
+        action = str(args.get("action") or "").strip()
+        room_id = str(args.get("room_id") or "").strip()
+        message_id = str(args.get("message_id") or "").strip()
+        missing: list[str] = []
+        resource_id = None
+        if capability == "open_interaction_room":
+            processo_id = str(args.get("processo_id") or "").strip()
+            if not processo_id:
+                missing.append("processo_id")
+            current_fp = fingerprint(
+                {"interaction_room": "get_or_create", "processo_id": processo_id}
+            )
+        elif capability in {"post_interaction_message", "mark_interaction_read"}:
+            if not room_id:
+                missing.append("room_id")
+                current_fp = fingerprint({"room_id": None})
+            else:
+                current_fp = fingerprint(
+                    self._dispatch.get_room(request, room_id)
+                )
+                resource_id = room_id
+            if capability == "post_interaction_message" and not str(
+                args.get("content") or ""
+            ).strip():
+                missing.append("content")
+        else:
+            for field, value in (("room_id", room_id), ("message_id", message_id)):
+                if not value:
+                    missing.append(field)
+            if missing:
+                current_fp = fingerprint({"room_id": room_id or None})
+            else:
+                current_fp = fingerprint(
+                    self._dispatch.get_room_message(request, room_id, message_id)
+                )
+                resource_id = message_id
+            if capability in {
+                "edit_interaction_message",
+            } and not str(args.get("content") or "").strip():
+                missing.append("content")
+            if capability == "toggle_interaction_reaction" and not str(
+                args.get("reaction") or ""
+            ).strip():
+                missing.append("reaction")
+        exact = {
+            "action": action,
+            "processo_id": args.get("processo_id"),
+            "room_id": room_id or None,
+            "message_id": message_id or None,
+            "content": args.get("content"),
+            "parent_id": args.get("parent_id"),
+            "mentions": args.get("mentions"),
+            "reaction": args.get("reaction"),
+        }
+        return {
+            "resource_type": "interaction_room",
+            "resource_id": resource_id,
+            "current_state_fingerprint": current_fp,
+            "exact_change": exact,
+            "validation_result": {
+                "ready": not missing,
+                "missing": missing,
+                "checks": ["authz_probe", "current_state_read"],
+            },
+            "consequential_impact": {
+                "persists": True,
+                "operation": capability,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "interaction_room_state",
+                "action": action,
+                "room_id": room_id or None,
+                "message_id": message_id or None,
+            },
+        }
 
     def _prep_create(self, request: Request, args: dict[str, Any]) -> dict[str, Any]:
         entity = str(args.get("entity") or "").strip()
@@ -747,6 +953,31 @@ class GovernedWriteOrchestrator:
             return _diag_recompute_fingerprint(
                 self._require_diag_stack(), cap, change
             )
+        if cap == "create_task":
+            return fingerprint(
+                {"resource": "transformometro_task", "exists": False}
+            )
+        if cap in TASK_CAPABILITIES:
+            return fingerprint(
+                self._dispatch.get_task(request, str(change["task_id"]))
+            )
+        if cap == "open_interaction_room":
+            return fingerprint(
+                {
+                    "interaction_room": "get_or_create",
+                    "processo_id": change.get("processo_id"),
+                }
+            )
+        if cap in {"post_interaction_message", "mark_interaction_read"}:
+            return fingerprint(
+                self._dispatch.get_room(request, str(change["room_id"]))
+            )
+        if cap in INTERACTION_ROOM_CAPABILITIES:
+            return fingerprint(
+                self._dispatch.get_room_message(
+                    request, str(change["room_id"]), str(change["message_id"])
+                )
+            )
         raise GovernedWriteError(
             "Fingerprint recompute unsupported.",
             code=VALIDATION,
@@ -822,6 +1053,14 @@ class GovernedWriteOrchestrator:
                 valor_mensal=float(change["valor_mensal"]),
                 vigente_desde=str(change["vigente_desde"]),
                 observacoes=change.get("observacoes"),
+            )
+        if cap in TASK_CAPABILITIES:
+            return self._dispatch.task_write(
+                request, str(change["action"]), change
+            )
+        if cap in INTERACTION_ROOM_CAPABILITIES:
+            return self._dispatch.room_write(
+                request, str(change["action"]), change
             )
         if cap == "meeting_minute_manage":
             return self._dispatch.manage_meeting_minute(
@@ -956,6 +1195,36 @@ class GovernedWriteOrchestrator:
                     data={"write_result": write_result},
                 )
             return write_result
+
+        if cap in TASK_CAPABILITIES:
+            # Use cases already verify read-back; assert the authoritative
+            # state matches the sealed postcondition.
+            tid = str(change.get("task_id") or (write_result or {}).get("id") or "")
+            read = self._dispatch.get_task(request, tid)
+            action = str(change.get("action") or "")
+            if action == "complete" and read.get("status") != "completed":
+                raise GovernedWriteError(
+                    "Task completion not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                )
+            if action == "cancel" and read.get("status") != "cancelled":
+                raise GovernedWriteError(
+                    "Task cancellation not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                )
+            return {"task": read, "write_result": write_result}
+
+        if cap in INTERACTION_ROOM_CAPABILITIES:
+            if not isinstance(write_result, dict) or not write_result.get("id"):
+                raise GovernedWriteError(
+                    "Interaction-room write not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                    data={"write_result": write_result},
+                )
+            return {"interaction_room": write_result}
 
         if cap == "meeting_minute_manage":
             if isinstance(write_result, dict) and write_result.get("verified") is False:

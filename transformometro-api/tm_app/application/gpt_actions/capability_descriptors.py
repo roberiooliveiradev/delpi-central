@@ -255,6 +255,69 @@ def _canonical_catalog() -> dict[str, Any]:
             ),
             "read_back_policy": "authoritative_when_write",
         },
+        {
+            "id": "manage_task",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Transformômetro tasks (Portal parity): "
+                "create|update|complete|cancel via TaskCommandUseCases; "
+                "reads via task_read."
+            ),
+            "read_write": "MIXED",
+            "read_operation": "task_read",
+            "prepare_operation": "prepare_task",
+            "commit_via": "commit_proposal",
+            # Mixed policies — derived per semantic capability in the loop
+            # below; never a single workflow-level boolean.
+            "capability_execution_policy": [
+                "create_task",
+                "update_task",
+                "complete_task",
+                "cancel_task",
+            ],
+            "actions": ["create", "update", "complete", "cancel"],
+            "read_actions": ["mine", "related", "get"],
+            "read_back_policy": "authoritative",
+        },
+        {
+            "id": "interaction_room",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Interaction rooms/messages (Portal parity): open|"
+                "post_message|edit_message|delete_message|reaction|pin|"
+                "unpin|mark_read via InteractionRoomUseCases; reads via "
+                "interaction_room_read. Binary attachments remain "
+                "platform_blocked (no MCP/ChatGPT file transport)."
+            ),
+            "read_write": "MIXED",
+            "read_operation": "interaction_room_read",
+            "prepare_operation": "prepare_interaction_room",
+            "commit_via": "commit_proposal",
+            "capability_execution_policy": [
+                "open_interaction_room",
+                "post_interaction_message",
+                "edit_interaction_message",
+                "delete_interaction_message",
+                "toggle_interaction_reaction",
+                "pin_interaction_message",
+                "unpin_interaction_message",
+                "mark_interaction_read",
+            ],
+            "actions": [
+                "open",
+                "post_message",
+                "edit_message",
+                "delete_message",
+                "reaction",
+                "pin",
+                "unpin",
+                "mark_read",
+            ],
+            "read_actions": ["list", "get", "messages", "attachments"],
+            "read_back_policy": "authoritative",
+        },
     ]
 
     analyses = [
@@ -282,10 +345,42 @@ def _canonical_catalog() -> dict[str, Any]:
             "read_only": True,
             "operation": "get_process_timeline",
         },
+        {
+            "id": "task_read",
+            "kind": "analysis",
+            "owner": "transformometro-api",
+            "description": (
+                "Transformômetro task reads: mine | related | get "
+                "(same ListMyTaskItemsUseCase/TaskCommandUseCases as Portal)."
+            ),
+            "read_only": True,
+            "operation": "task_read",
+        },
+        {
+            "id": "interaction_room_read",
+            "kind": "analysis",
+            "owner": "transformometro-api",
+            "description": (
+                "Interaction-room reads: list | get | messages | "
+                "attachments metadata (InteractionRoomUseCases)."
+            ),
+            "read_only": True,
+            "operation": "interaction_room_read",
+        },
     ]
     # Canonical write-execution policy drives the confirmation flag
     # and is exposed verbatim so transports/agents can branch on it.
     for workflow in workflows:
+        caps = workflow.get("capability_execution_policy")
+        if isinstance(caps, list):
+            # Mixed-policy surface: per-capability map derived from the
+            # canonical policy records; a single boolean would lie.
+            workflow["execution_policy"] = {
+                cap: execution_policy_for_capability(cap) for cap in caps
+            }
+            workflow["confirmation_policy"] = dict(workflow["execution_policy"])
+            workflow["confirmation_requirement"] = "mixed"
+            continue
         policy = execution_policy_for_workflow(workflow["id"])
         workflow["execution_policy"] = policy
         workflow["confirmation_requirement"] = policy == CONFIRM_BEFORE_ACT
@@ -376,7 +471,179 @@ def _canonical_catalog() -> dict[str, Any]:
                 },
             }
         ],
-        "not_exposed_by_design": ["tm_task", "interaction_room", "process_workspace"],
+        # Explicit classification for capability areas — NOT_EXPOSED is not a
+        # valid category for a real business capability. Buckets: exposed /
+        # parity_gap / platform_blocked / technical_only / public_token_flow /
+        # intentionally_not_applicable. Remove from a bucket only when the
+        # governed surface is implemented AND tested.
+        "exposure_classification": {
+            "exposed": [
+                {
+                    "id": "tm_task",
+                    "via": "manage_task workflow + task_read "
+                    "(TaskCommandUseCases / ListMyTaskItemsUseCases — same "
+                    "canonical use cases as task_routes.py)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
+                {
+                    "id": "interaction_room",
+                    "via": "interaction_room workflow + interaction_room_read "
+                    "(InteractionRoomUseCases — same canonical use cases as "
+                    "interaction_room_routes.py)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
+            ],
+            "parity_gap": [
+                {
+                    "id": "meeting_minute.sign_refuse",
+                    "justification": (
+                        "Authenticated attestation/refusal flow. Signature is "
+                        "a legal attestation — conversational exposure needs "
+                        "an explicit attestation-semantics decision; "
+                        "registered, not yet exposed."
+                    ),
+                },
+                {
+                    "id": "process_file.metadata_write",
+                    "justification": (
+                        "Process-file metadata update/delete exist as Portal "
+                        "routes (binary attach/download is platform_blocked); "
+                        "record-CRUD entity projection not yet defined."
+                    ),
+                },
+                {
+                    "id": "dashboard.extended_views",
+                    "justification": (
+                        "alertas|evolucao|por_familia|vencimentos|"
+                        "strategic_indicators exist on Portal; analyze "
+                        "currently covers meta|summary|processes|instances|"
+                        "rows."
+                    ),
+                },
+                {
+                    "id": "decomposition.suggest_validate",
+                    "justification": (
+                        "sugerir_rascunho_decomposicao / validar_vinculos_"
+                        "fluxo / diagrama_validacao are compute helpers "
+                        "without persistence; projection as ANALYSIS pending."
+                    ),
+                },
+                {
+                    "id": "processo.comparativo_revisoes",
+                    "justification": (
+                        "AS-IS × TO-BE revision comparison read exists on "
+                        "Portal; dedicated read projection pending."
+                    ),
+                },
+                {
+                    "id": "instance.contexto",
+                    "justification": (
+                        "get/put_instancia_contexto is a distinct context "
+                        "resource, not the instance record; projection "
+                        "pending."
+                    ),
+                },
+            ],
+            "platform_blocked": [
+                {
+                    "id": "interaction_room.attachment_binary",
+                    "justification": (
+                        "upload/download/delete of binary attachments has no "
+                        "MCP/ChatGPT file transport. list_attachments "
+                        "(metadata) IS exposed. No base64 workaround."
+                    ),
+                },
+                {
+                    "id": "process_file.binary",
+                    "justification": "Binary attach/download — no file transport.",
+                },
+                {
+                    "id": "revision_evidence.binary",
+                    "justification": "Binary evidence attach/download — no file transport.",
+                },
+                {
+                    "id": "signature_image",
+                    "justification": "Signature image upload/download — binary.",
+                },
+                {
+                    "id": "binary_exports",
+                    "justification": (
+                        "dashboard CSV/Excel, meeting-minute PDF, BPMN XML, "
+                        "decomposition CSV — binary payloads; the underlying "
+                        "data is exposed via records/analyze."
+                    ),
+                },
+                {
+                    "id": "person_profile.photo",
+                    "justification": "Profile photo binary read — no file transport.",
+                },
+            ],
+            "technical_only": [
+                {
+                    "id": "collaboration.presence_lock",
+                    "justification": (
+                        "Presence heartbeat + technical doc locks — "
+                        "infrastructure, not a business capability."
+                    ),
+                },
+                {
+                    "id": "realtime.websocket",
+                    "justification": "Realtime/SSE channels — transport plumbing.",
+                },
+                {
+                    "id": "module_health",
+                    "justification": "Health endpoint — infrastructure.",
+                },
+                {
+                    "id": "integrations.external",
+                    "justification": (
+                        "integration_list_processes/summary serve external "
+                        "system consumers — not an end-user conversational "
+                        "capability."
+                    ),
+                },
+            ],
+            "public_token_flow": [
+                {
+                    "id": "public_meeting_minute_signing",
+                    "justification": (
+                        "External-signer token flow — TÉO must not use the "
+                        "authenticated identity to impersonate a signatory."
+                    ),
+                },
+            ],
+            "intentionally_not_applicable": [
+                {
+                    "id": "process_workspace",
+                    "justification": (
+                        "UI navigation surface — its domain data is already "
+                        "exposed via context/records/tasks/rooms. Not a "
+                        "business capability."
+                    ),
+                },
+                {
+                    "id": "json_backup_import",
+                    "justification": (
+                        "Bulk admin batch import/export — not a "
+                        "conversational capability."
+                    ),
+                },
+                {
+                    "id": "signature_profile",
+                    "justification": (
+                        "Personal signing-identity configuration — "
+                        "attestation-adjacent; not conversational."
+                    ),
+                },
+                {
+                    "id": "person_profile",
+                    "justification": (
+                        "Display-support profile read for UI rendering "
+                        "(avatar/name) — not a business capability."
+                    ),
+                },
+            ],
+        },
         "entities": entities,
         "workflows": workflows,
         "analyses": analyses,
@@ -412,6 +679,9 @@ def _render_confirmation_labels(node: Any, transport: str) -> None:
             workflow["confirmation_policy"] = confirmation_policy_label(
                 kind, transport
             )
+        elif isinstance(kind, dict):
+            for cap, cap_kind in kind.items():
+                kind[cap] = confirmation_policy_label(cap_kind, transport)
 
 
 def _project_catalog_for_actions(catalog: dict[str, Any]) -> dict[str, Any]:
@@ -434,7 +704,7 @@ def _project_catalog_for_actions(catalog: dict[str, Any]) -> dict[str, Any]:
         "Additive prepare may set commit_now=true for atomic PREPARE+ACT."
     )
     for workflow in out.get("workflows") or []:
-        for key in ("prepare_operation", "commit_via"):
+        for key in ("prepare_operation", "commit_via", "read_operation"):
             name = workflow.get(key)
             if name:
                 workflow[key] = actions_operation_for_neutral(name)
