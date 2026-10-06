@@ -10412,3 +10412,95 @@ EVIDENCE (live production, 2026-10-05):
         transformometro-api); DÉLIA fails closed, never fabricates.
       - LIVE_DISCOVERY_CONNECTION_COST: fresh authenticated
         tools/list per attempt (no cache by design).
+
+## 6.141. ARCH-REVIEW-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-DECOUPLING-01 — adversarial provider-neutrality proof
+    TASK = ARCH-REVIEW-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-DECOUPLING-01
+    STATUS = ACCEPT_WITH_RESIDUAL
+    BASE_HEAD = 83144f9796af766a363d54b2bd15878cdb777300
+    RUNTIME_CHANGE = NONE (test-only additions allowed and used)
+    FLOW_PROVEN =
+      user intent -> OperationalCapabilityOrchestrator ->
+      CapabilityProviderPort.list_groups (fresh per attempt, no
+      cache) -> ProviderSurface/CapabilityGroup/ProviderCapability ->
+      semantic model proposal -> deterministic revalidation against
+      the live projection -> provider.invoke() ->
+      SpecialistOutcome/evidence.
+    STATIC_COUPLING_SEARCH (delia-api/app/**):
+      OWNER_NAME_BRANCHES_RUNTIME = 0
+      TOOL_NAME_BRANCHES_RUNTIME = 0
+      STATIC_PREPARE_ACT_PAIRING = NONE (ACT leg detected
+        structurally via proposal_handle input in owner schema)
+      LOCAL_CAPABILITY_CATALOG = NONE (domain/capability_catalog is
+        a DÉLIA-owned projection model, not a remote tool mirror)
+      PER_TOOL_ENABLE_FLAGS = NONE
+      PROVIDER_MECHANICS_IN_DOMAIN = NO
+      PROVIDER_MECHANICS_IN_APPLICATION_CORE = NO (orchestrator
+        imports only the port + domain contracts; binding never read)
+      ORCHESTRATOR_INTERPRETS_PROVIDER_BINDING = NO (_invoke
+        dispatches by provider_id; binding stays inside the adapter)
+      Owner-name literals (davi/teo/vista) exist only in: approved-
+        specialist identity registry (domain allowlist), adapter/
+        infra config, comments/docstrings — never in a conditional
+        branch of the orchestrator.
+    ADVERSARIAL_PROOFS (tests/test_generic_multistep_orchestration.py,
+      fake owner ACME/foo-corp, capability names alpha..echo —
+      no DELPI vocabulary):
+      A1 no owner-name branches = PASS
+      A2 no tool-name branches = PASS
+      A3 no local capability catalog = PASS
+      A4 no static PREPARE/ACT pairs = PASS
+      A5 no MCP mechanics in core = PASS
+      A6 fake owner works = PASS
+      A7 owner rename invariant = PASS (test_owner_rename_invariance)
+      A8 tool rename invariant = PASS (resolver chain + write
+        governance under alpha..echo names)
+      A9 capability ADD live = PASS (zulu invocable after surface
+        mutation, zero DÉLIA change)
+      A10 capability REMOVE live = PASS (stale model proposal for a
+        removed capability revalidated out — zero provider calls)
+      A11 capability RECLASSIFY live = PASS (READ->PREPARE applies
+        structural confirmation gate immediately)
+      A12 non-MCP fake provider = PASS (provider_id acme-rest,
+        InteropProtocol.HTTP provenance, same orchestrator)
+      A13 resolver generic = PASS (renamed resolver/target same
+        behavior — RESOLVER_ROLE != HARDCODED_TOOL)
+      A14 ANALYSIS generic = PASS (existing ANALYSIS->PREPARE /
+        terminal tests on fake owner)
+      A15 write policy structural = PASS (confirmation_requirement
+        sole authority under renamed owner/tools)
+      A16 binding opaque = PASS (arbitrary binding content ignored
+        by the orchestrator)
+      A17 model proposal revalidated = PASS (removed/unknown
+        proposals never reach provider)
+      A18 UNKNOWN never invocable = PASS (shadow_op never dispatched)
+    MULTI_PROVIDER = PASS (two providers same port; selection over
+      live groups; unselected provider receives zero calls)
+    MODEL_ROLE = PROPOSAL_ONLY (selection/arguments/resolver/
+      continuation proposals deterministically revalidated)
+    PROVIDER_ROLE = ADAPTER_ONLY
+    RESIDUAL (non-blocking, no coupling created):
+      APPROVED_SPECIALIST_REGISTRY_IN_DOMAIN —
+      _SPECIALIST_IDENTITY (domain/specialist_interop/rules.py) is a
+      hardcoded identity allowlist {davi,teo,vista -> display_name,
+      owner_ref}. Approving a NEW MCP specialist requires a registry
+      entry — intentional fail-closed authorization governance
+      (approved-connection boundary), NOT orchestration coupling:
+      the orchestrator never consults it; the MCP adapter filters
+      configured ids through it. Adding a capability INSIDE an
+      approved specialist requires zero DÉLIA change (proven A9-A11).
+    TESTS = 787/787 PASS (777 baseline + 10 adversarial proofs);
+      documentation/runtime untouched outside the test file.
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    CONCLUSION =
+      DELIA_ORCHESTRATION_COUPLING = SEMANTIC_CONTRACT_ONLY
+      OWNER_SPECIFIC_RUNTIME_COUPLING = NONE
+      TOOL_NAME_RUNTIME_COUPLING = NONE
+      MCP_MECHANICS_IN_ORCHESTRATOR = NONE
+      PROVIDER_MECHANICS = ADAPTER_ONLY
+      CAPABILITY_DISCOVERY = LIVE
+      CAPABILITY_ADD_REMOVE_RECLASSIFY =
+        NO_DELIA_RUNTIME_CHANGE_REQUIRED
+      MCP = ONE PROVIDER FAMILY — NOT THE ORCHESTRATION ARCHITECTURE
+      FUTURE_PROVIDER = implement CapabilityProviderPort + project
+        semantic capabilities; no central orchestrator redesign.

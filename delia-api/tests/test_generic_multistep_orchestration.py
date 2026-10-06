@@ -969,3 +969,459 @@ def test_identifier_in_current_user_input_invokes_directly():
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert [c[0] for c in provider.calls] == ["fixture_detail"]
     assert provider.calls[0][1]["fixture_id"] == "FX-0057"
+
+
+# --- adversarial provider-neutrality proofs (DECOUPLING-01) ---------------
+
+
+def _renamed_caps():
+    """Same semantic classes/schemas as _quarto_caps() under names that
+    share no lexical token with the originals."""
+    return [
+        _cap(
+            "quinto", "acme-http", "alpha",
+            SpecialistOperationClass.READ,
+            schema={
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
+            },
+            desc="locate records by human-readable name",
+        ),
+        _cap(
+            "quinto", "acme-http", "bravo",
+            SpecialistOperationClass.READ,
+            schema={
+                "type": "object",
+                "properties": {"fixture_id": {"type": "string"}},
+                "required": ["fixture_id"],
+            },
+            desc="read the full record of one entry",
+        ),
+        _cap(
+            "quinto", "acme-http", "charlie",
+            SpecialistOperationClass.ANALYSIS,
+            schema={
+                "type": "object",
+                "properties": {"topic": {"type": "string"}},
+            },
+            desc="owner-side assessment",
+        ),
+        _cap(
+            "quinto", "acme-http", "delta",
+            SpecialistOperationClass.PREPARE,
+            schema={
+                "type": "object",
+                "properties": {
+                    "fixture_id": {"type": "string"},
+                    "note": {"type": "string"},
+                },
+            },
+            desc="stage a mutation for review",
+        ),
+        _cap(
+            "quinto", "acme-http", "echo",
+            SpecialistOperationClass.ACT,
+            schema={
+                "type": "object",
+                "properties": {
+                    "proposal_handle": {"type": "string"},
+                    "confirmation": {"type": "boolean"},
+                },
+                "required": ["proposal_handle", "confirmation"],
+            },
+            desc="execute a staged mutation",
+        ),
+    ]
+
+
+_ACME_KEY = "acme-http:quinto"
+
+
+def _acme_provider(outcomes=None, caps=None):
+    return FakeProvider(
+        "acme-http",
+        [_group("acme-http", "quinto", caps or _renamed_caps())],
+        outcomes=outcomes or {},
+    )
+
+
+def _acme_prepare(*, confirmation: bool | None):
+    data = {
+        "capability": "delta",
+        "proposal_handle": _HANDLE,
+        "ready": True,
+        "exact_change": {"field": "label", "to": "Novo"},
+    }
+    if confirmation is not None:
+        data["confirmation_requirement"] = {
+            "explicit_user_confirmation": confirmation
+        }
+    return _outcome(
+        "quinto", "delta", "Preparado.", structured={"data": data}
+    )
+
+
+def test_tool_rename_invariance_resolver_chain():
+    """Every capability name renamed (alpha..echo): the resolver chain
+    is unchanged — tool name is never policy."""
+    provider = _acme_provider(
+        {
+            ("quinto", "alpha"): _outcome(
+                "quinto", "alpha", "1 registro",
+                structured={
+                    "matches": [
+                        {"fixture_id": "AX-9", "name": "Bomba"}
+                    ]
+                },
+            ),
+            ("quinto", "bravo"): _outcome(
+                "quinto", "bravo", "detalhe"
+            ),
+        }
+    )
+    orch = _orchestrator(
+        [provider],
+        [
+            _select(
+                _ACME_KEY,
+                "bravo",
+                arg_payload={
+                    "arguments": {},
+                    "missing_inputs": ["fixture_id"],
+                },
+            ),
+            {
+                RESOLVER_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "alpha",
+                }
+            },
+            {ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": "Bomba"}}},
+            {
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"fixture_id": "AX-9"}
+                }
+            },
+        ],
+    )
+    attempt = orch.attempt(
+        "me mostre a Bomba", actor_user_id="u1", session_id="s1"
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert [c[0] for c in provider.calls] == ["alpha", "bravo"]
+    assert provider.calls[-1][1]["fixture_id"] == "AX-9"
+
+
+def test_tool_rename_invariance_write_governance():
+    """Renamed PREPARE/ACT keep structural governance:
+    confirmation=true -> CONFIRMATION_REQUIRED; ACT never runs
+    early; the opaque handle never reaches the user surface."""
+    provider = _acme_provider(
+        {("quinto", "delta"): _acme_prepare(confirmation=True)}
+    )
+    orch = _orchestrator(
+        [provider],
+        [_select(_ACME_KEY, "delta", {"fixture_id": "AX-9"})],
+    )
+    attempt = orch.attempt(
+        "corrija o rotulo de AX-9", actor_user_id="u1", session_id="s1"
+    )
+    assert (
+        attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    )
+    assert [c[0] for c in provider.calls] == ["delta"]
+    assert _HANDLE not in (attempt.content or "")
+
+
+def test_owner_rename_invariance():
+    """The identical semantic surface under a different provider id /
+    group id orchestrates identically — no owner coupling."""
+    provider = FakeProvider(
+        "foo-corp",
+        [
+            _group(
+                "foo-corp",
+                "omega",
+                [
+                    _cap(
+                        "omega",
+                        "foo-corp",
+                        "read_thing",
+                        SpecialistOperationClass.READ,
+                        schema={
+                            "type": "object",
+                            "properties": {
+                                "thing_id": {"type": "string"}
+                            },
+                            "required": ["thing_id"],
+                        },
+                    )
+                ],
+            )
+        ],
+        outcomes={
+            ("omega", "read_thing"): _outcome(
+                "omega", "read_thing", "ok"
+            )
+        },
+    )
+    orch = _orchestrator(
+        [provider],
+        [_select("foo-corp:omega", "read_thing", {"thing_id": "T-1"})],
+    )
+    attempt = orch.attempt(
+        "leia o registro T-1", actor_user_id="u1", session_id="s1"
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert provider.calls == [("read_thing", {"thing_id": "T-1"})]
+
+
+def test_capability_added_live_no_delia_change():
+    """A capability added to the live surface between turns becomes
+    invocable with zero DÉLIA change — list_groups is re-read."""
+    base = _acme_provider()
+    orch = _orchestrator([base], [_select(_ACME_KEY, "zulu", {})])
+    a1 = orch.attempt("x", actor_user_id="u1", session_id="s1")
+    assert "zulu" not in [c[0] for c in base.calls]
+
+    base._groups = [
+        _group(
+            "acme-http",
+            "quinto",
+            _renamed_caps()
+            + [
+                _cap(
+                    "quinto", "acme-http", "zulu",
+                    SpecialistOperationClass.READ,
+                )
+            ],
+        )
+    ]
+    orch2 = _orchestrator([base], [_select(_ACME_KEY, "zulu", {})])
+    a2 = orch2.attempt("x", actor_user_id="u1", session_id="s1")
+    assert a2.status is GovernedCapabilityStatus.SUCCESS
+    assert "zulu" in [c[0] for c in base.calls]
+
+
+def test_capability_removed_live_honored():
+    """A capability removed from the live surface cannot be invoked
+    even when the model still proposes its name."""
+    provider = _acme_provider(
+        {("quinto", "bravo"): _outcome("quinto", "bravo", "ok")}
+    )
+    provider._groups = [
+        _group(
+            "acme-http",
+            "quinto",
+            [c for c in _renamed_caps() if c.remote_name != "bravo"],
+        )
+    ]
+    orch = _orchestrator(
+        [provider],
+        [_select(_ACME_KEY, "bravo", {"fixture_id": "AX-9"})],
+    )
+    attempt = orch.attempt("leia AX-9", actor_user_id="u1")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    assert provider.calls == []
+
+
+def test_capability_reclassified_live_honored():
+    """A capability reclassified to PREPARE between turns immediately
+    falls under the structural confirmation gate — no stale mirror."""
+    provider = _acme_provider()
+    provider._groups = [
+        _group(
+            "acme-http",
+            "quinto",
+            [
+                _cap(
+                    "quinto",
+                    "acme-http",
+                    "charlie",
+                    SpecialistOperationClass.PREPARE,
+                    schema={
+                        "type": "object",
+                        "properties": {
+                            "fixture_id": {"type": "string"}
+                        },
+                    },
+                )
+            ]
+            + [c for c in _renamed_caps() if c.remote_name == "echo"],
+        )
+    ]
+    provider._outcomes[("quinto", "charlie")] = _outcome(
+        "quinto",
+        "charlie",
+        "staged",
+        structured={
+            "data": {
+                "capability": "charlie",
+                "proposal_handle": _HANDLE,
+                "ready": True,
+                "exact_change": {"field": "label", "to": "Novo"},
+                "validation_result": {"ready": True},
+                "confirmation_requirement": {
+                    "explicit_user_confirmation": True
+                },
+            }
+        },
+    )
+    orch = _orchestrator(
+        [provider],
+        [_select(_ACME_KEY, "charlie", {"fixture_id": "AX-9"})],
+    )
+    attempt = orch.attempt("ajuste AX-9", actor_user_id="u1")
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert [c[0] for c in provider.calls] == ["charlie"]
+
+
+def test_non_mcp_provider_family_orchestrates():
+    """A provider whose id/transport is not MCP implements the same
+    CapabilityProviderPort — the orchestrator cannot tell the
+    difference (provenance protocol HTTP is owner evidence only)."""
+    provider = FakeProvider(
+        "acme-rest",
+        [
+            _group(
+                "acme-rest",
+                "nebula",
+                [
+                    _cap(
+                        "nebula",
+                        "acme-rest",
+                        "lookup",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+        outcomes={
+            ("nebula", "lookup"): SpecialistOutcome(
+                status=SpecialistResultStatus.COMPLETED,
+                provenance=SpecialistResultProvenance(
+                    specialist_id="nebula",
+                    remote_name="lookup",
+                    protocol=InteropProtocol.HTTP,
+                    correlation_id="c",
+                    observed_at="2026-01-01T00:00:00+00:00",
+                ),
+                content_text="dado",
+            )
+        },
+    )
+    orch = _orchestrator(
+        [provider], [_select("acme-rest:nebula", "lookup", {})]
+    )
+    attempt = orch.attempt("consulta", actor_user_id="u1")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert provider.calls == [("lookup", {})]
+
+
+def test_multiple_providers_semantic_group_selection():
+    """Two providers behind the same port: group selection is semantic
+    over live groups — no provider branch in the orchestrator."""
+    pa = _acme_provider(
+        {("quinto", "bravo"): _outcome("quinto", "bravo", "ok")}
+    )
+    pb = FakeProvider(
+        "foo-corp",
+        [
+            _group(
+                "foo-corp",
+                "omega",
+                [
+                    _cap(
+                        "omega",
+                        "foo-corp",
+                        "read_thing",
+                        SpecialistOperationClass.READ,
+                        schema={
+                            "type": "object",
+                            "properties": {
+                                "thing_id": {"type": "string"}
+                            },
+                            "required": ["thing_id"],
+                        },
+                    )
+                ],
+            )
+        ],
+        outcomes={
+            ("omega", "read_thing"): _outcome(
+                "omega", "read_thing", "dado"
+            )
+        },
+    )
+    orch = _orchestrator(
+        [pa, pb],
+        [_select("foo-corp:omega", "read_thing", {"thing_id": "T-1"})],
+    )
+    attempt = orch.attempt("leia T-1", actor_user_id="u1")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert pa.calls == []
+    assert pb.calls == [("read_thing", {"thing_id": "T-1"})]
+
+
+def test_unknown_class_never_invocable():
+    """UNKNOWN-class capability stays discoverable in the projection
+    but a model proposal for it is never dispatched to the provider."""
+    provider = _acme_provider(
+        caps=[
+            _cap(
+                "quinto",
+                "acme-http",
+                "shadow_op",
+                SpecialistOperationClass.UNKNOWN,
+            )
+        ]
+    )
+    orch = _orchestrator(
+        [provider], [_select(_ACME_KEY, "shadow_op", {})]
+    )
+    attempt = orch.attempt("x", actor_user_id="u1")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    assert provider.calls == []
+
+
+def test_binding_is_opaque_to_orchestrator():
+    """binding carries adapter-owned mechanics; arbitrary content never
+    affects orchestration — the orchestrator never reads it."""
+    base = _cap(
+        "quinto",
+        "acme-http",
+        "bravo",
+        SpecialistOperationClass.READ,
+        schema={
+            "type": "object",
+            "properties": {"fixture_id": {"type": "string"}},
+            "required": ["fixture_id"],
+        },
+    )
+    cap = ProviderCapability(
+        capability_id=base.capability_id,
+        group_id=base.group_id,
+        provider_id=base.provider_id,
+        remote_name=base.remote_name,
+        owner=base.owner,
+        operation_class=base.operation_class,
+        description=base.description,
+        input_schema=base.input_schema,
+        binding={
+            "server": "tcp://internal:9999",
+            "method": "weird.rpc/call",
+            "opaque": {"nested": [1, 2, {"deep": True}]},
+        },
+    )
+    provider = _acme_provider(
+        {("quinto", "bravo"): _outcome("quinto", "bravo", "ok")},
+        caps=[cap],
+    )
+    orch = _orchestrator(
+        [provider],
+        [_select(_ACME_KEY, "bravo", {"fixture_id": "AX-9"})],
+    )
+    attempt = orch.attempt("leia AX-9", actor_user_id="u1")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert provider.calls[0][1] == {"fixture_id": "AX-9"}
