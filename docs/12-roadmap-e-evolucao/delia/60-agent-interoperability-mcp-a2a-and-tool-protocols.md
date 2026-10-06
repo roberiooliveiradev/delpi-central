@@ -89,6 +89,60 @@ status
 
 Classe ausente/inválida/desconhecida no owner ⇒ `UNKNOWN` ⇒ *discoverable, never invocable*. Invocation re-lê a classe do owner via `tools/list` fresco — reclassificação/remoção do owner é honrada sem mirror stale.
 
+### 5.1 Future provider approval source — Core projection, not Keycloak (DEFERRED)
+
+**Status: TARGET / DEFERRED. No implementation is authorized by this section.**
+
+A prova de desacoplamento provider-neutral (§6.141) deixa um residual intencional: a identidade dos especialistas MCP atualmente aprovados ainda é mantida por uma allowlist fail-closed da DÉLIA. Isso **não** é capability coupling, mas pode ser removido futuramente quando houver necessidade operacional de onboarding/revoke em escala.
+
+Direção preferida para essa evolução:
+
+```text
+Core
+→ canonical platform-governance projection of approved providers
+
+DÉLIA
+→ consumes approved provider refs
+→ CapabilityProviderPort
+→ provider live capability surface
+
+Provider
+→ owns capability names / schemas / classes / availability
+
+Keycloak
+→ identity / authentication / token exchange only
+```
+
+Antes de implementar, inventariar o que já existe no Core (app/plugin registry, manifest governance, active/inactive lifecycle e metadata) e provar `EXISTING_EQUIVALENT` / `REUSE_DECISION`. A expectativa arquitetural é **REUSE/EXTEND antes de NEW**, mas documentação não prova que o contrato necessário já exista.
+
+O Core **não** deve se tornar mirror de `tools/list`, tool names, schemas, operation classes ou PREPARE/ACT pairs. Capability add/remove/reclassify continua sendo observada ao vivo no provider sem mudança central da DÉLIA.
+
+Keycloak também **não** é a fonte de aprovação operacional: a presença de client, audience, scope ou token-exchange permission prova apenas configuração de identidade/credencial; `identity != authorization` e `provider scope != Core/domain permission`.
+
+Contrato futuro mínimo, somente quando necessário, deve separar:
+
+```text
+provider approval / lifecycle        → Core governance
+provider credential mechanics        → Keycloak/provider boundary
+provider capability surface          → provider owner, live
+capability orchestration             → DÉLIA
+business authorization/postcondition → Domain/provider authority
+```
+
+Possíveis campos da projeção do Core devem ser definidos contract-first no momento da implementação, sem congelar schema agora. Exemplos conceituais: provider id, owner ref, provider family/protocol, approved/enabled/revoked state e connection/profile ref quando necessário. Esses exemplos **não** são um contrato implementado.
+
+Implementation trigger:
+
+```text
+onboarding of additional providers
+or
+central disable/revoke/governance need
+or
+proven operational risk/cost of the current hardcoded approval registry
+```
+
+Até lá, o registry atual permanece um residual governado e fail-closed; não abrir task de implementação apenas por esta documentação.
+
 **Decision supersession (§6.118 — ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02):** per-capability availability state lived in DÉLIA config/code (`DELIA_C4_*_ENABLED`, `GOVERNED_READ_ACTIONS`, `GOVERNED_DISCOVERY_BINDINGS`, `enabled_governed_read_tuples`) — a second local capability authority that made specialist-owned capabilities dependent on DÉLIA-local state. That model is **SUPERSEDED** (historical records preserved):
 
 ```text
