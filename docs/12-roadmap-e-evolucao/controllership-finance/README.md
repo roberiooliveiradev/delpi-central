@@ -104,7 +104,7 @@ Início | Visão geral | Sala de interação | Minhas tarefas | Administração 
 
 As páginas P1–P5 pertencem à Central de Fechamento e não viram itens independentes da topbar.
 
-A Visão geral é a superfície de indicadores financeiros do Portal; o conjunto exato de KPIs depende de inventário de owner/source/fórmula.
+A Visão geral é a superfície de indicadores financeiros do Portal. O padrão visual, filtros, states, drilldowns e inventário técnico de candidatos estão documentados em [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md); o Item 3 aguarda decisão explícita do Product Owner sobre conjunto inicial, período default e unidade default.
 
 ## Invariantes
 
