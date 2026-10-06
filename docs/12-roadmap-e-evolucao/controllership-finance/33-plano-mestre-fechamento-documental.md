@@ -171,8 +171,9 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 |---|---|---|
 | A01 | Página do usuário | **PASS / READY_FOR_IMPLEMENTATION_BRIEF** |
 | A02 | Início | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
-| A03 | Visão geral | **IN_REVIEW** |
-| A04–A13 | Demais páginas | PENDING_V2_REVALIDATION |
+| A03 | Visão geral | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
+| A04 | Minhas tarefas | **IN_REVIEW** |
+| A05–A13 | Demais páginas | PENDING_V2_REVALIDATION |
 
 A01 está apenas na fila futura. Runtime permanece inexistente.
 
