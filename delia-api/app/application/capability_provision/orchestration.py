@@ -797,6 +797,80 @@ def _resolved_values_proven(
     return True
 
 
+def _schema_declared_literals(descriptor: ProviderCapability) -> str:
+    """Bounded serialization of owner-declared literal values
+    (``enum``/``const``/``default``). A value the owner itself declares
+    in the schema is owner vocabulary, not a model invention."""
+    schema = descriptor.input_schema
+    literals: list[str] = []
+
+    def _walk(node: object, depth: int = 0) -> None:
+        if depth > 4 or len(literals) >= MAX_ARGUMENT_KEYS * 4:
+            return
+        if isinstance(node, Mapping):
+            for key in ("enum", "const", "default"):
+                value = node.get(key)
+                values = (
+                    value if isinstance(value, (list, tuple)) else (value,)
+                )
+                for item in values:
+                    if isinstance(item, (str, int, float)):
+                        literals.append(str(item))
+            for value in list(node.values())[:MAX_SURFACE_ENTRIES]:
+                if isinstance(value, (Mapping, list, tuple)):
+                    _walk(value, depth + 1)
+        elif isinstance(node, (list, tuple)):
+            for item in list(node)[:MAX_SURFACE_ENTRIES]:
+                _walk(item, depth + 1)
+
+    _walk(schema)
+    return json.dumps(literals, ensure_ascii=False, default=str)[
+        :MAX_ARGUMENTS_BLOCK_CHARS
+    ]
+
+
+def _unproven_identifier_inputs(
+    arguments: Mapping[str, Any],
+    descriptor: ProviderCapability,
+    input_text: str,
+    workspace_context: WorkspaceContext | None,
+    owner_evidence: str | None,
+    prior_turns: tuple[ConversationContextTurn, ...] = (),
+) -> tuple[str, ...]:
+    """Identifier-typed arguments whose proposed scalar occurs in no
+    trusted source — an invented id is demoted to a missing input so
+    the resolver/clarification path handles it (§10/§21, fail closed).
+
+    Trusted sources: the user message, workspace context, prior turns,
+    owner evidence already obtained, and literal values the owner
+    itself declares in the input schema (``enum``/``const``/
+    ``default``). Only keys canonically equal to ``id`` or ending in
+    ``id`` are gated — enums and free text are not identifiers.
+    """
+    haystack_parts = [input_text or ""]
+    if owner_evidence:
+        haystack_parts.append(owner_evidence)
+    if workspace_context is not None:
+        haystack_parts.append(workspace_context.to_prompt_block())
+    for turn in prior_turns[:16]:
+        content = getattr(turn, "content", None)
+        if isinstance(content, str) and content:
+            haystack_parts.append(content[:MAX_OWNER_EVIDENCE_ENTRY_CHARS])
+    haystack_parts.append(_schema_declared_literals(descriptor))
+    haystack = "\n".join(haystack_parts)
+    unproven: list[str] = []
+    for key, value in list(arguments.items())[:MAX_ARGUMENT_KEYS]:
+        canon = _canonical_key(key)
+        if not (canon == "id" or canon.endswith("id")):
+            continue
+        if not isinstance(value, (str, int, float)):
+            continue
+        text = str(value).strip()
+        if text and text not in haystack:
+            unproven.append(str(key))
+    return tuple(unproven[:MAX_MISSING_INPUTS])
+
+
 CONFIRMATION_POLICY_DIRECT = "direct"
 CONFIRMATION_POLICY_CONFIRM = "explicit_confirmation_required"
 CONFIRMATION_POLICY_INVALID = "owner_policy_invalid"
@@ -862,7 +936,7 @@ def _project_surface(
 ) -> list[tuple[str, ProviderCapability]]:
     """Bounded orchestratable surface: all owner-typed known classes.
 
-    DISCOVERY/READ/ANALYSIS-as-READ/PREPARE/ACT are visible to the
+    DISCOVERY/READ/ANALYSIS/PREPARE/ACT are visible to the
     selection proposal; UNKNOWN is excluded (never invocable). Class
     visibility is orchestration eligibility only — writes route
     through the governed-write chain downstream.
@@ -1581,6 +1655,30 @@ class OperationalCapabilityOrchestrator:
             len(missing_inputs),
             correlation,
         )
+        if arguments is not None:
+            unproven = _unproven_identifier_inputs(
+                arguments,
+                descriptor,
+                input_text,
+                workspace_context,
+                owner_evidence,
+                prior_turns,
+            )
+            if unproven:
+                # An identifier the model produced with no provenance
+                # is an invented id — demote it to a missing input so
+                # the generic resolver (or clarification) handles it.
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=unproven_identifier fields=%d "
+                    "correlation_id=%s",
+                    len(unproven),
+                    correlation,
+                )
+                arguments = None
+                missing_inputs = tuple(
+                    dict.fromkeys(missing_inputs + unproven)
+                )[:MAX_MISSING_INPUTS]
         if arguments is None and missing_inputs:
             # Generic resolver step (§6.140): before asking the user
             # for an identifier the owner itself can resolve, run one
@@ -1788,6 +1886,22 @@ class OperationalCapabilityOrchestrator:
                 "orchestration stage=resolver decision=args_failed "
                 "missing=%d correlation_id=%s",
                 len(resolver_missing),
+                correlation,
+            )
+            return self._Resolution()
+        if _unproven_identifier_inputs(
+            resolver_arguments,
+            resolver,
+            input_text,
+            workspace_context,
+            None,
+            prior_turns,
+        ):
+            # A resolver invoked with an invented identifier cannot
+            # produce trustworthy evidence — fail closed.
+            _logger.info(
+                "orchestration stage=resolver "
+                "decision=unproven_identifier correlation_id=%s",
                 correlation,
             )
             return self._Resolution()

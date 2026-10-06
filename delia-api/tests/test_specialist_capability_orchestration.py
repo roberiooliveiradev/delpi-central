@@ -585,7 +585,7 @@ def test_prepare_selection_routes_through_write_governance():
             "vista", "prepare_change", {"record_id": "p1"}
         ),
     )
-    attempt = read.attempt("Altere o nome do painel para Painel X")
+    attempt = read.attempt("Altere o nome do painel p1 para Painel X")
     assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
     assert attempt.confirmation_context["proposal_digest"]
     # The raw owner handle never leaves the backend.
@@ -648,7 +648,7 @@ def test_prepare_enveloped_proposal_reaches_confirmation_gate():
         ),
     )
     attempt = read.attempt(
-        "Altere o nome do painel",
+        "Altere o nome do painel p1",
         actor_user_id="u1",
         session_id="s1",
     )
@@ -697,7 +697,7 @@ def test_prepare_not_ready_envelope_scrubs_handle_from_render():
             "vista", "prepare_change", {"record_id": "p1"}
         ),
     )
-    attempt = read.attempt("Altere o painel")
+    attempt = read.attempt("Altere o painel p1")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
     assert "env-handle-9" not in attempt.content
@@ -1684,7 +1684,7 @@ def _vista_prepare(port=None):
         ),
     )
     pending = read.attempt(
-        "Altere o nome do painel para Painel X",
+        "Altere o nome do painel p1 para Painel X",
         actor_user_id="u1",
         session_id="s1",
     )
@@ -2466,7 +2466,7 @@ def test_contradictory_owner_policy_fails_closed():
         },
     )
     read = _vista_ops_prepare(port, [{"op": "contradictory_op"}])
-    attempt = read.attempt("execute", actor_user_id="u1", session_id="s1")
+    attempt = read.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert attempt.error_code == "owner_policy_invalid"
     assert "commit_proposal" not in [c[1] for c in port.calls]
@@ -2483,7 +2483,7 @@ def test_malformed_policy_fails_closed():
         },
     )
     read = _vista_ops_prepare(port, [{"op": "undeclared_op"}])
-    attempt = read.attempt("execute", actor_user_id="u1", session_id="s1")
+    attempt = read.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert attempt.error_code == "owner_policy_invalid"
 
@@ -2573,7 +2573,7 @@ def test_preview_declared_direct_executes_without_ops_catalog():
         ),
     )
     attempt = read.attempt(
-        "Altere o nome do painel", actor_user_id="u1", session_id="s1"
+        "Altere o nome do painel p1", actor_user_id="u1", session_id="s1"
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
@@ -2607,7 +2607,7 @@ def test_undeclared_policy_fails_closed_not_lazy_confirmation():
         ),
     )
     attempt = read.attempt(
-        "Altere o nome", actor_user_id="u1", session_id="s1"
+        "Altere o nome p1", actor_user_id="u1", session_id="s1"
     )
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert attempt.error_code == "owner_policy_invalid"
@@ -2627,14 +2627,14 @@ def test_owner_reclassification_flips_confirmation_live():
         },
     )
     read = _vista_ops_prepare(port, [{"op": "rotate_banner"}])
-    first = read.attempt("execute", actor_user_id="u1", session_id="s1")
+    first = read.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert first.status is GovernedCapabilityStatus.SUCCESS
     assert "commit_proposal" in [c[1] for c in port.calls]
 
     port._outcomes["prepare_change"] = READY_PROPOSAL
     port.calls.clear()
     read2 = _vista_ops_prepare(port, [{"op": "rotate_banner"}])
-    second = read2.attempt("execute", actor_user_id="u1", session_id="s1")
+    second = read2.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert second.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
     assert "commit_proposal" not in [c[1] for c in port.calls]
 

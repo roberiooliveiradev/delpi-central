@@ -496,6 +496,102 @@ def test_resolver_never_invents_identifier():
     assert "fixture_detail" not in [c[0] for c in provider.calls]
 
 
+def test_invented_identifier_demoted_to_resolver():
+    """The model proposes a complete argument set whose identifier has
+    no provenance (absent from the user message, workspace, evidence
+    and owner schema literals). The invented value is demoted to a
+    missing input: the generic resolver resolves the real id and the
+    target is invoked with owner evidence — the invented value never
+    reaches the owner."""
+    provider = _quarto_provider(
+        {
+            ("quarto", "find_fixture"): _outcome(
+                "quarto", "find_fixture", "1 registro",
+                structured={
+                    "matches": [
+                        {"fixture_id": "FX-0042", "name": "Bomba"}
+                    ]
+                },
+            ),
+            ("quarto", "fixture_detail"): _outcome(
+                "quarto", "fixture_detail", "detalhe"
+            ),
+        }
+    )
+    orch = _orchestrator(
+        [provider],
+        [
+            _select(
+                GROUP_KEY,
+                "fixture_detail",
+                # no missing_inputs declared — the model 'filled' the
+                # id itself, with a value present in no trusted source
+                arg_payload={"arguments": {"fixture_id": "FX-9999"}},
+            ),
+            {
+                RESOLVER_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "find_fixture",
+                }
+            },
+            {ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": "Bomba"}}},
+            {
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"fixture_id": "FX-0042"}
+                }
+            },
+        ],
+    )
+    attempt = orch.attempt(
+        "me mostre a Bomba", actor_user_id="u1", session_id="s1"
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    names = [c[0] for c in provider.calls]
+    assert names == ["find_fixture", "fixture_detail"]
+    # only the owner-evidence id reaches the wire
+    assert provider.calls[-1][1]["fixture_id"] == "FX-0042"
+    assert "FX-9999" not in json.dumps(provider.calls)
+
+
+def test_invented_identifier_unresolved_asks_user():
+    """When the resolver cannot produce evidence for the demoted id,
+    the turn fails closed to clarification — the invented identifier
+    is never invoked and never asked back as a fabricated value."""
+    provider = _quarto_provider(
+        {
+            ("quarto", "find_fixture"): _outcome(
+                "quarto", "find_fixture", "0 registros",
+                structured={"matches": []},
+            ),
+        }
+    )
+    orch = _orchestrator(
+        [provider],
+        [
+            _select(
+                GROUP_KEY,
+                "fixture_detail",
+                arg_payload={"arguments": {"fixture_id": "FX-9999"}},
+            ),
+            {
+                RESOLVER_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "find_fixture",
+                }
+            },
+            {ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": "Bomba"}}},
+        ],
+    )
+    attempt = orch.attempt(
+        "me mostre a Bomba", actor_user_id="u1", session_id="s1"
+    )
+    assert (
+        attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+    assert "fixture_detail" not in [c[0] for c in provider.calls]
+    assert "FX-9999" not in (attempt.content or "")
+
+
 # --- ANALYSIS --------------------------------------------------------------
 
 
@@ -597,7 +693,7 @@ def test_direct_write_executes_act_same_turn():
         [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
     )
     attempt = orch.attempt(
-        "corrija o rotulo do ativo",
+        "corrija o rotulo do ativo FX-1",
         actor_user_id="u1",
         session_id="s1",
     )
@@ -623,7 +719,7 @@ def test_confirm_policy_gates_act_until_confirmation():
         [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
     )
     pending = orch.attempt(
-        "corrija o rotulo do ativo",
+        "corrija o rotulo do ativo FX-1",
         actor_user_id="u1",
         session_id="s1",
     )
@@ -659,7 +755,7 @@ def test_unknown_policy_fails_closed():
         [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
     )
     attempt = orch.attempt(
-        "corrija o rotulo", actor_user_id="u1", session_id="s1"
+        "corrija o rotulo do FX-1", actor_user_id="u1", session_id="s1"
     )
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert attempt.error_code == "owner_policy_invalid"
@@ -696,7 +792,7 @@ def test_opaque_handle_never_reaches_user_surface():
         [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
     )
     attempt = orch.attempt(
-        "corrija o rotulo", actor_user_id="u1", session_id="s1"
+        "corrija o rotulo do FX-1", actor_user_id="u1", session_id="s1"
     )
     assert (
         attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
