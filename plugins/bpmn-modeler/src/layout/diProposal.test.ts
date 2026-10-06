@@ -354,3 +354,157 @@ describe("hierarquia semântica → ELK", () => {
     expect(xml).not.toContain('bpmnElement="SC1"');
   });
 });
+
+describe("bpmn:group — visual enclosure semântico-falso", () => {
+  /** G1 encloses T1 completamente; G2 vazio; G3 sobrepõe E1 parcialmente. */
+  const GROUPS =
+    HEAD +
+    '<bpmn:process id="P1">' +
+    '<bpmn:startEvent id="S1"/><bpmn:task id="T1"/>' +
+    '<bpmn:task id="T2"/><bpmn:endEvent id="E1"/>' +
+    '<bpmn:group id="G1" categoryValueRef="CV"/>' +
+    '<bpmn:group id="G2"/><bpmn:group id="G3"/>' +
+    '<bpmn:sequenceFlow id="F1" sourceRef="S1" targetRef="T1"/>' +
+    "</bpmn:process>" +
+    '<bpmndi:BPMNDiagram id="D"><bpmndi:BPMNPlane id="PL" bpmnElement="P1">' +
+    '<bpmndi:BPMNShape id="sp_S1" bpmnElement="S1"><dc:Bounds x="40" y="40" width="36" height="36"/></bpmndi:BPMNShape>' +
+    '<bpmndi:BPMNShape id="sp_T1" bpmnElement="T1"><dc:Bounds x="120" y="40" width="100" height="80"/></bpmndi:BPMNShape>' +
+    '<bpmndi:BPMNShape id="sp_T2" bpmnElement="T2"><dc:Bounds x="300" y="40" width="100" height="80"/></bpmndi:BPMNShape>' +
+    '<bpmndi:BPMNShape id="sp_E1" bpmnElement="E1"><dc:Bounds x="500" y="40" width="36" height="36"/></bpmndi:BPMNShape>' +
+    '<bpmndi:BPMNShape id="sp_G1" bpmnElement="G1"><dc:Bounds x="100" y="20" width="140" height="120"/></bpmndi:BPMNShape>' +
+    '<bpmndi:BPMNShape id="sp_G2" bpmnElement="G2"><dc:Bounds x="600" y="200" width="80" height="80"/></bpmndi:BPMNShape>' +
+    '<bpmndi:BPMNShape id="sp_G3" bpmnElement="G3"><dc:Bounds x="490" y="30" width="140" height="40"/></bpmndi:BPMNShape>' +
+    "</bpmndi:BPMNPlane></bpmndi:BPMNDiagram></bpmn:definitions>";
+
+  it("GROUP-06/07: enclosure derivado do DI — full inside só; parcial não vira membro", () => {
+    const s = snapshotFromXml(GROUPS);
+    const g1 = s.nodes.find((n) => n.id === "G1");
+    const g2 = s.nodes.find((n) => n.id === "G2");
+    const g3 = s.nodes.find((n) => n.id === "G3");
+    expect(g1?.visualMembers).toEqual(["T1"]);
+    expect(g2?.visualMembers).toEqual([]); // EMPTY_GROUP
+    // E1 só parcialmente dentro de G3 → não é membro
+    expect(g3?.visualMembers).toEqual([]);
+    // Group NÃO ganha parentId semântico (não é lane/subprocess)
+    expect(g1?.parentId).toBeUndefined();
+  });
+
+  it("groups não entram no grafo ELK nem como endpoints de edge", () => {
+    const s = snapshotFromXml(GROUPS);
+    const g = buildElkGraph(s);
+    const json = JSON.stringify(g);
+    expect(json).not.toContain('"G1"');
+    expect(json).not.toContain('"G2"');
+    expect(json).not.toContain('"G3"');
+    // nós reais continuam lá
+    expect(g.children?.map((c) => c.id).sort()).toEqual([
+      "E1",
+      "S1",
+      "T1",
+      "T2",
+    ]);
+  });
+
+  it("GROUP-01/02: bounds do grupo = bbox dos membros pós-layout + padding", () => {
+    const snapshot = {
+      nodes: [
+        { id: "T1", type: "bpmn:task", x: 120, y: 40, width: 100, height: 80 },
+        {
+          id: "G1",
+          type: "bpmn:group",
+          x: 100,
+          y: 20,
+          width: 140,
+          height: 120,
+          visualMembers: ["T1"],
+        },
+      ],
+      edges: [],
+    };
+    const laidOut = {
+      id: "__root__",
+      children: [{ id: "T1", x: 500, y: 300, width: 100, height: 80 }],
+    };
+    const ops = buildDiOps(laidOut, snapshot);
+    const g1 = ops.find((o) => o.elementId === "G1")!;
+    // bbox(T1) + groupPadding(16): x=484, y=284, w=132, h=112
+    expect(g1.bounds).toMatchObject({ x: 484, y: 284, width: 132, height: 112 });
+    // membro preserva tamanho próprio
+    expect(ops.find((o) => o.elementId === "T1")!.bounds).toMatchObject({
+      x: 500,
+      y: 300,
+      width: 100,
+      height: 80,
+    });
+  });
+
+  it("grupo vazio/sem membros resolvidos preserva bounds DI originais", () => {
+    const snapshot = {
+      nodes: [
+        { id: "T1", type: "bpmn:task", x: 0, y: 0, width: 100, height: 80 },
+        {
+          id: "G2",
+          type: "bpmn:group",
+          x: 600,
+          y: 200,
+          width: 80,
+          height: 80,
+          visualMembers: [],
+        },
+      ],
+      edges: [],
+    };
+    const laidOut = {
+      id: "__root__",
+      children: [{ id: "T1", x: 10, y: 10, width: 100, height: 80 }],
+    };
+    const ops = buildDiOps(laidOut, snapshot);
+    expect(ops.find((o) => o.elementId === "G2")!.bounds).toMatchObject({
+      x: 600,
+      y: 200,
+      width: 80,
+      height: 80,
+    });
+  });
+
+  it("grupo aninhado resolve de dentro para fora (outer = bbox do inner)", () => {
+    const snapshot = {
+      nodes: [
+        { id: "T1", type: "bpmn:task", x: 0, y: 0, width: 100, height: 80 },
+        {
+          id: "GI",
+          type: "bpmn:group",
+          x: -10, y: -10, width: 120, height: 100,
+          visualMembers: ["T1"],
+        },
+        {
+          id: "GO",
+          type: "bpmn:group",
+          x: -30, y: -30, width: 200, height: 160,
+          visualMembers: ["GI"],
+        },
+      ],
+      edges: [],
+    };
+    const laidOut = {
+      id: "__root__",
+      children: [{ id: "T1", x: 400, y: 200, width: 100, height: 80 }],
+    };
+    const ops = buildDiOps(laidOut, snapshot);
+    const gi = ops.find((o) => o.elementId === "GI")!.bounds!;
+    const go = ops.find((o) => o.elementId === "GO")!.bounds!;
+    // GI = bbox(T1)+16 → GO = bbox(GI)+16 → todos contêm T1
+    expect(gi.x).toBe(400 - 16);
+    expect(go.x).toBe(gi.x - 16);
+    expect(go.width).toBe(gi.width + 32);
+  });
+
+  it("buildDiXml emite o BPMNShape do grupo no preview DI", () => {
+    const s = snapshotFromXml(GROUPS);
+    const g = buildElkGraph(s);
+    const xml = buildDiXml(g, s, "P1");
+    expect(xml).toContain('bpmnElement="G1"');
+    expect(xml).toContain('bpmnElement="G2"');
+    expect(xml).toContain('id="sp_G1"'); // diId preservado
+  });
+});

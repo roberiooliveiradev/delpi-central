@@ -145,7 +145,12 @@ def current_caller() -> CallerIdentity:
             "bpmn-modeler.view", "bpmn-modeler.edit", "bpmn-modeler.manage"
         }
     subject = str(getattr(user, "id", "") or getattr(user, "sub", "") or "")
-    return CallerIdentity(subject=subject, permissions=frozenset(permissions))
+    display_name = str(getattr(user, "name", "") or "")
+    return CallerIdentity(
+        subject=subject,
+        permissions=frozenset(permissions),
+        display_name=display_name,
+    )
 
 
 from typing import Annotated

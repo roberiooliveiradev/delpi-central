@@ -122,6 +122,47 @@ def test_revision_lifecycle(service, caller, model_id):
     assert len(service.list_revisions(model_id, 1, 50, caller).items) == 3
 
 
+def test_revision_metadata(service, caller, model_id):
+    caller_named = CallerIdentity(
+        subject="user-9",
+        permissions=caller.permissions,
+        display_name="Ana Souza",
+    )
+    wc = service.get_working_copy(model_id, caller)
+    edited = wc.artifact.content.replace("<bpmn:process", '<bpmn:process name="n"')
+    service.save_working_copy(model_id, clean_input(edited), 1, caller)
+
+    service.create_revision(
+        model_id,
+        2,
+        caller_named,
+        name="  Versão inicial  ",
+        description="Primeira versão aprovada.",
+    )
+    rev = service.get_revision(model_id, 1, caller)
+    assert rev.name == "Versão inicial"
+    assert rev.description == "Primeira versão aprovada."
+    assert rev.created_by_name == "Ana Souza"
+    assert rev.created_by == "user-9"
+
+    edited2 = edited.replace('name="n"', 'name="n2"')
+    service.save_working_copy(model_id, clean_input(edited2), 3, caller)
+    service.create_revision(model_id, 4, caller)  # sem metadata
+    rev2 = service.get_revision(model_id, 2, caller)
+    assert rev2.name is None
+    assert rev2.description is None
+
+
+def test_revision_name_validation(service, caller, model_id):
+    wc = service.get_working_copy(model_id, caller)
+    edited = wc.artifact.content.replace("<bpmn:process", '<bpmn:process name="n"')
+    service.save_working_copy(model_id, clean_input(edited), 1, caller)
+    with pytest.raises(ValueError):
+        service.create_revision(model_id, 2, caller, name="x" * 121)
+    with pytest.raises(ValueError):
+        service.create_revision(model_id, 2, caller, description="x" * 501)
+
+
 def test_archive_matrix(service, caller, model_id):
     out = service.archive_model(model_id, 1, caller)
     assert out.version == 2

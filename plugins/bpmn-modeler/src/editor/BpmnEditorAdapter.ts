@@ -110,7 +110,14 @@ export class BpmnEditorAdapter {
       this.modeler = new Modeler({
         container,
         bpmnRenderer,
-        propertiesPanel: { parent: "#bpmn-properties-panel" },
+        propertiesPanel: {
+          parent: "#bpmn-properties-panel",
+          // popup expandido renderiza via portal; sem container ele cai em
+          // document.body — fora do escopo de tema do plugin (popup branco
+          // no dark). O container mantém position:fixed funcionando e faz
+          // o popup herdar os tokens --bio-*/--delpi-ui-* da shell.
+          feelPopupContainer: container,
+        },
         additionalModules: [
           ptBrTranslateModule,
           BpmnPropertiesPanelModule,

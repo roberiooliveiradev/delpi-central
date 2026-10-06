@@ -50,7 +50,12 @@ export type RevisionSummary = {
   origin: "explicit" | "restore";
   source_revision_number?: number | null;
   created_at: string;
+  /** Subject técnico (uuid) — nunca exibido como informação primária. */
   created_by: string;
+  /** Display name do autor, denormalizado na criação da revisão. */
+  created_by_name?: string | null;
+  name?: string | null;
+  description?: string | null;
 };
 
 export type RevisionListPage = {
@@ -361,16 +366,24 @@ export async function validateWorkingCopy(
 export async function createRevision(
   modelId: string,
   expectedVersion: number,
-  opts: { getAccessToken?: GetToken } = {},
+  opts: { getAccessToken?: GetToken; name?: string; description?: string } = {},
 ): Promise<{ revision_number: number; version: number }> {
+  const { name, description, ...rest } = opts;
   const response = await fetch(
     `${BPMN_MODELER_API_BASE}/models/${modelId}/revisions`,
     {
       method: "POST",
       headers: {
         "If-Match": etagFor(expectedVersion),
-        ...buildAuthHeaders(opts.getAccessToken),
+        ...(name != null || description != null
+          ? { "Content-Type": "application/json" }
+          : {}),
+        ...buildAuthHeaders(rest.getAccessToken),
       },
+      body:
+        name != null || description != null
+          ? JSON.stringify({ name: name ?? null, description: description ?? null })
+          : undefined,
     },
   );
   return jsonOrThrow<{ revision_number: number; version: number }>(response);

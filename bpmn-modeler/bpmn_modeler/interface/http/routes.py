@@ -36,6 +36,7 @@ from .filenames import content_disposition, export_filename
 from .responses import error_response, success_envelope
 from .schemas import (
     CreateModelRequest,
+    CreateRevisionRequest,
     DuplicateModelRequest,
     RenameModelRequest,
     issue_response,
@@ -433,11 +434,19 @@ async def list_revisions(
 @router.post("/models/{model_id}/revisions", operation_id="createRevision",
              status_code=201, openapi_extra={"x-required-permission": PERM_MANAGE})
 async def create_revision(
-    model_id: str, request: Request, service: ServiceDep, caller: CallerDep
+    model_id: str,
+    request: Request,
+    service: ServiceDep,
+    caller: CallerDep,
+    body: CreateRevisionRequest | None = None,
 ):
     expected = _require_if_match(request)
     outcome = service.create_revision(
-        _parse_model_id(model_id, request), expected, caller
+        _parse_model_id(model_id, request),
+        expected,
+        caller,
+        name=body.name if body else None,
+        description=body.description if body else None,
     )
     return _mutation_response(outcome, request, status=201)
 

@@ -61,6 +61,7 @@ import { useExportActions } from "../components/ExportMenu";
 import { ReadOnlyBanner } from "../components/ReadOnlyBanner";
 import { SaveStatus } from "../components/SaveStatus";
 import { UnsavedChangesDialog } from "../components/UnsavedChangesDialog";
+import { CreateRevisionDialog } from "../components/CreateRevisionDialog";
 import { ValidationPanel } from "../components/ValidationPanel";
 import { RevisionHistoryList } from "../components/RevisionHistoryList";
 import { HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -390,14 +391,25 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
     adapterRef.current?.resized();
   }, [sideCollapsed]);
 
-  const onCreateRevision = async () => {
+  const [createRevOpen, setCreateRevOpen] = useState(false);
+  const [createRevBusy, setCreateRevBusy] = useState(false);
+
+  const onCreateRevision = async (meta: {
+    name?: string;
+    description?: string;
+  }) => {
+    setCreateRevBusy(true);
     try {
-      await createRevision(modelId, version, { getAccessToken });
+      await createRevision(modelId, version, { getAccessToken, ...meta });
       const { version: v } = await getModel(modelId, { getAccessToken });
       applyVersion(v);
+      setCreateRevOpen(false);
       void loadRevisions();
     } catch (err) {
       setPageError(err instanceof BpmnModelerApiError ? err.message : "Falha ao criar revisão.");
+      setCreateRevOpen(false);
+    } finally {
+      setCreateRevBusy(false);
     }
   };
 
@@ -917,7 +929,7 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
                     canManage={capabilities.manage && !model?.archived_at}
                     onView={(n) => guardedNavigate(`/apps/bpmn-modeler/models/${modelId}/revisions/${n}`)}
                     onRestore={(n) => setRestoreTarget(n)}
-                    onCreateRevision={() => void onCreateRevision()}
+                    onCreateRevision={() => setCreateRevOpen(true)}
                   />
                 ) : null}
               </div>
@@ -1077,6 +1089,13 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
           classNames={bpmnmConfirmModalClasses}
         />
       </BpmnmModal>
+
+      <CreateRevisionDialog
+        open={createRevOpen}
+        busy={createRevBusy}
+        onCancel={() => setCreateRevOpen(false)}
+        onConfirm={(meta) => void onCreateRevision(meta)}
+      />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextField,
+  createDashboardTextAreaField,
   createDashboardUnderlineNav,
   createFilterBarShell,
   createHostContainedModalShell,
@@ -30,6 +31,7 @@ import {
   previewDetailCardBemClasses,
   stateBannerBemClasses,
   textFieldBemClasses,
+  textAreaFieldBemClasses,
   type FileDropzoneLabels,
 } from "@delpi/plugin-ui/index";
 
@@ -81,6 +83,10 @@ export const BpmnmEmptyState = createDashboardEmptyState({
 
 export const BpmnmTextField = createDashboardTextField({
   classNames: textFieldBemClasses(PREFIX),
+});
+
+export const BpmnmTextAreaField = createDashboardTextAreaField({
+  classNames: textAreaFieldBemClasses(PREFIX),
 });
 
 export const BpmnmDataCardsGrid = createDashboardDataCardsGrid({ prefix: PREFIX });

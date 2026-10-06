@@ -35,6 +35,10 @@ export type LayoutNode = {
   diAttrs?: Record<string, string>;
   /** id original da BPMNShape — reutilizado no preview DI. */
   diId?: string;
+  /** IDs de elementos geometricamente contidos neste bpmn:group antes do
+   *  layout (artifact visual, SEM ownership semântico). Derivado do
+   *  BPMN-DI corrente no snapshot; usado só para re-bounds pós-ELK. */
+  visualMembers?: string[];
 };
 
 export type LayoutEdge = {
@@ -121,8 +125,12 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
   }
   // Visível = existe e não está dentro de um container collapsed.
   const isVisible = (id: string) => nodeById.has(id) && !hidden.has(id);
+  const isGroup = (id: string) => nodeById.get(id)?.type === "bpmn:group";
+  // bpmn:group é artifact VISUAL — não entra no grafo ELK (não é
+  // container semântico). Seus bounds são recalculados pós-layout a
+  // partir dos visualMembers derivados do DI (diProposal).
   const sortedNodes = [...snapshot.nodes]
-    .filter((n) => !hidden.has(n.id))
+    .filter((n) => !hidden.has(n.id) && n.type !== "bpmn:group")
     .sort((a, b) => a.id.localeCompare(b.id));
   const sortedEdges = [...snapshot.edges].sort((a, b) =>
     a.id.localeCompare(b.id),
@@ -160,6 +168,9 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
   for (const edge of sortedEdges) {
     // Endpoints precisam existir e estar visíveis no grafo.
     if (!isVisible(edge.sourceId) || !isVisible(edge.targetId)) continue;
+    // Edges ligadas a bpmn:group (association) ficam fora do ELK — o
+    // endpoint não é node do grafo. Seus waypoints DI são preservados.
+    if (isGroup(edge.sourceId) || isGroup(edge.targetId)) continue;
     const scope = edgeScope(edge);
     const list = edgesByScope.get(scope) ?? [];
     list.push(edge);

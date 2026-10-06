@@ -286,6 +286,103 @@
   background-color: var(--delpi-ui-surface-muted);
 }
 
+/* launcher "editor ampliado" do vendor — hit-area e cor seguem o kit;
+   hover só tinge (o botão já aparece via :hover do container vendor). */
+.dashboard-bpmn-modeler
+  .bio-properties-panel-textarea-container
+  .bio-properties-panel-open-feel-popup,
+.dashboard-bpmn-modeler
+  .bio-properties-panel-feel-container
+  .bio-properties-panel-open-feel-popup,
+.dashboard-bpmn-modeler
+  .bio-properties-panel-feelers-editor-container
+  .bio-properties-panel-open-feel-popup {
+  border-radius: var(--delpi-ui-radius-sm, 6px);
+  color: var(--delpi-ui-text-muted);
+  background: var(--delpi-ui-surface-elevated);
+  box-shadow: 0 0 0 1px var(--delpi-ui-border);
+}
+
+.dashboard-bpmn-modeler
+  .bio-properties-panel-textarea-container
+  .bio-properties-panel-open-feel-popup:hover,
+.dashboard-bpmn-modeler
+  .bio-properties-panel-feel-container
+  .bio-properties-panel-open-feel-popup:hover,
+.dashboard-bpmn-modeler
+  .bio-properties-panel-feelers-editor-container
+  .bio-properties-panel-open-feel-popup:hover,
+.dashboard-bpmn-modeler
+  .bio-properties-panel-open-feel-popup:focus-visible {
+  color: var(--delpi-ui-accent);
+  box-shadow: 0 0 0 1px var(--delpi-ui-accent);
+}
+
+/* popup do editor expandido — montado via portal dentro do plugin
+   (feelPopupContainer), por isso já está no escopo .dashboard-bpmn-modeler.
+   Superfície elevada + radius/sombra do design system; header compacto
+   com título PT-BR (element.type traduzido via propertiesPanelModule). */
+.dashboard-bpmn-modeler .bio-properties-panel-popup {
+  --popup-background-color: var(--delpi-ui-surface-elevated);
+  --popup-header-background-color: var(--delpi-ui-surface-elevated);
+  border-radius: var(--delpi-ui-radius, 8px);
+  border: 1px solid var(--delpi-ui-border);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.24),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  max-width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  font-family: inherit;
+}
+
+:root[data-theme="dark"] .dashboard-bpmn-modeler .bio-properties-panel-popup {
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-popup__header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--delpi-ui-border);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--delpi-ui-text);
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-popup__title {
+  margin-left: 6px;
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-popup__close {
+  margin: -10px -12px;
+  margin-left: 12px;
+  border-radius: 0;
+  color: var(--delpi-ui-text-muted);
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-popup__close:hover,
+.dashboard-bpmn-modeler .bio-properties-panel-popup__close:focus-visible {
+  background-color: var(--delpi-ui-surface-muted);
+  color: var(--delpi-ui-text);
+}
+
+/* o body do popup recebe o textarea/feel editor do vendor — alinhado aos
+   controls do kit via as mesmas vars --bio-input-* mapeadas acima */
+.dashboard-bpmn-modeler .bio-properties-panel-popup__body {
+  padding: 10px 12px;
+}
+
+.dashboard-bpmn-modeler .bio-properties-panel-popup textarea,
+.dashboard-bpmn-modeler .bio-properties-panel-popup input {
+  background: var(--delpi-ui-control-bg, var(--delpi-ui-surface));
+  color: var(--delpi-ui-text);
+  border-color: var(--delpi-ui-control-border, var(--delpi-ui-border));
+  border-radius: var(--delpi-ui-control-radius);
+  font-family: inherit;
+}
+
 /* anel de foco do canvas: default do browser virava caixa preta ao clicar —
    remapeado para o focus-ring do design system. */
 .dashboard-bpmn-modeler .bpmnm-canvas:focus-visible,
@@ -630,24 +727,68 @@
 
 .bpmnm-revision-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   border: 1px solid var(--delpi-ui-border);
   border-radius: var(--delpi-ui-radius-sm, 6px);
-  padding: 8px;
+  padding: 10px 12px;
   background: var(--delpi-ui-surface);
   color: var(--delpi-ui-text);
+}
+
+.bpmnm-revision-item__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bpmnm-revision-item__title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bpmnm-revision-item__title strong {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bpmnm-revision-item__tag {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--delpi-ui-text-muted);
+  border: 1px solid var(--delpi-ui-border);
+  border-radius: 999px;
+  padding: 0 7px;
 }
 
 .bpmnm-revision-item small {
   display: block;
   color: var(--delpi-ui-text-muted);
+  font-size: 12px;
+}
+
+.bpmnm-revision-item__desc {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--delpi-ui-text);
+  opacity: 0.85;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .bpmnm-revision-item__actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  border-top: 1px solid var(--delpi-ui-border);
+  padding-top: 8px;
 }
 
 /* --- diagram selector --- */

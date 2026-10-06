@@ -51,6 +51,10 @@ export const LAYOUT_PROFILE_V1 = {
     default: "[top=12,left=12,bottom=12,right=12]",
   },
 
+  /** Padding aplicado ao redor dos membros visuais de um bpmn:group
+   *  (artifact sem ownership semântico — só enclosure de DI). */
+  groupPadding: 16,
+
   /** Gap vertical entre pools irmãos na raiz (lanes internas ficam
    *  flush — BPMN não tem espaço entre lanes do mesmo laneSet). */
   poolGap: 40,

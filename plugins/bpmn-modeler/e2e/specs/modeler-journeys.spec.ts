@@ -412,6 +412,10 @@ test.describe("E2E-12 — revisions/restore append-only", () => {
 
     await page.getByRole("tab", { name: "Histórico" }).click();
     await page.getByRole("button", { name: "Criar revisão" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Criar revisão" })
+      .click();
     await expect(page.getByText("Revisão 1")).toBeVisible({ timeout: 15_000 });
 
     // edita + salva + rev2 via API (edição de canvas coberta em E2E-01);
@@ -421,6 +425,10 @@ test.describe("E2E-12 — revisions/restore append-only", () => {
     await page.reload();
     await page.getByRole("tab", { name: "Histórico" }).click();
     await page.getByRole("button", { name: "Criar revisão" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Criar revisão" })
+      .click();
     await expect(page.getByText("Revisão 2")).toBeVisible({ timeout: 15_000 });
 
     // restore rev1 → rev3 origin=restore (confirmação via modal)
@@ -449,8 +457,16 @@ test.describe("E2E-13 — duplicate revision → NO_CHANGES", () => {
     });
     await page.getByRole("tab", { name: "Histórico" }).click();
     await page.getByRole("button", { name: "Criar revisão" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Criar revisão" })
+      .click();
     await expect(page.getByText("Revisão 1")).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: "Criar revisão" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Criar revisão" })
+      .click();
     await expect(page.locator(".bpmnm-error")).toBeVisible({ timeout: 15_000 });
   });
 });

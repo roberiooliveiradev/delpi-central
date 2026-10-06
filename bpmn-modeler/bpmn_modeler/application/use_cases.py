@@ -59,6 +59,7 @@ PERMISSION_MANAGE = "bpmn-modeler.manage"
 class CallerIdentity:
     subject: str
     permissions: frozenset[str] = frozenset()
+    display_name: str = ""
 
     def can(self, permission: str) -> bool:
         return permission in self.permissions
@@ -706,7 +707,12 @@ class BpmnModelerService:
     # ------------------------------------------------------------------ #
 
     def create_revision(
-        self, model_id: str, expected_version: int, caller: CallerIdentity
+        self,
+        model_id: str,
+        expected_version: int,
+        caller: CallerIdentity,
+        name: str | None = None,
+        description: str | None = None,
     ) -> MutationOutcome:
         self._require(caller, PERMISSION_MANAGE)
         model = self._get_or_404(model_id)
@@ -732,6 +738,12 @@ class BpmnModelerService:
         next_number = (latest.revision_number + 1) if latest else 1
         revision_id = self._ids.new_revision_id()
         now = self._clock.now()
+        rev_name = name.strip() if name else None
+        if not rev_name:
+            rev_name = None
+        rev_description = (
+            description.strip() if description and description.strip() else None
+        )
 
         def _apply(aggregate: Model) -> str:
             aggregate.append_revision(
@@ -745,6 +757,9 @@ class BpmnModelerService:
                     created_at=now,
                     created_by=caller.subject,
                     origin=RevisionOrigin.EXPLICIT,
+                    name=rev_name,
+                    description=rev_description,
+                    created_by_name=caller.display_name or None,
                 )
             )
             self._touch(aggregate, caller)
@@ -824,6 +839,7 @@ class BpmnModelerService:
                     created_by=caller.subject,
                     origin=RevisionOrigin.RESTORE,
                     restored_from_revision_id=restored_id,
+                    created_by_name=caller.display_name or None,
                 )
             )
             self._touch(aggregate, caller)

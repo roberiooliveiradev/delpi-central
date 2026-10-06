@@ -296,6 +296,31 @@ export function snapshotFromXml(xml: string): LayoutSnapshot {
     if (host) node.parentId = host.parentId;
   }
 
+  // bpmn:group — artifact VISUAL (Group não é container semântico:
+  // sem flowNodeRef/children). A relação de enclosure é derivada do
+  // BPMN-DI corrente por containment geométrico total e vive apenas
+  // no snapshot efêmero — o XML semântico nunca recebe membership.
+  const hasDiBounds = (n: (typeof nodes)[number]): n is (typeof nodes)[number] & { x: number; y: number; width: number; height: number } =>
+    n.x != null && n.y != null && n.width != null && n.height != null;
+  const fullyInside = (
+    inner: (typeof nodes)[number],
+    outer: (typeof nodes)[number],
+  ): boolean => {
+    if (!hasDiBounds(inner) || !hasDiBounds(outer)) return false;
+    return (
+      inner.x >= outer.x &&
+      inner.y >= outer.y &&
+      inner.x + inner.width <= outer.x + outer.width &&
+      inner.y + inner.height <= outer.y + outer.height
+    );
+  };
+  for (const group of nodes.filter((n) => n.type === "bpmn:group")) {
+    group.visualMembers = nodes
+      .filter((n) => n.id !== group.id && fullyInside(n, group))
+      .map((n) => n.id)
+      .sort();
+  }
+
   return { nodes, edges };
 }
 
@@ -507,6 +532,59 @@ function resolveGeometry(
       b.height = node.height;
     }
   }
+
+  // bpmn:group — artifact visual fora do ELK. Re-bounds: bounding box
+  // dos visualMembers (enclosure derivado do DI pré-layout) + padding
+  // do profile. Preserva a INTENÇÃO VISUAL do usuário sem tocar na
+  // semântica. Iterativo para grupos aninhados (grupo membro de grupo
+  // resolve de dentro para fora). Grupo vazio ou não resolvível mantém
+  // os bounds DI originais — nunca perde o shape no preview.
+  const preserveDiBounds = (group: (typeof snapshot.nodes)[number]) => {
+    if (
+      group.x != null &&
+      group.y != null &&
+      group.width != null &&
+      group.height != null
+    ) {
+      geometry.bounds.set(group.id, {
+        x: group.x,
+        y: group.y,
+        width: group.width,
+        height: group.height,
+      });
+    }
+  };
+  const groups = snapshot.nodes.filter((n) => n.type === "bpmn:group");
+  const pending = new Map(groups.map((g) => [g.id, g]));
+  for (let pass = 0; pass <= groups.length && pending.size; pass++) {
+    let progressed = false;
+    for (const [gid, group] of pending) {
+      const members = group.visualMembers ?? [];
+      if (!members.length) {
+        preserveDiBounds(group);
+        pending.delete(gid);
+        progressed = true;
+        continue;
+      }
+      const memberBounds = members.map((id) => geometry.bounds.get(id));
+      if (memberBounds.some((b) => !b)) continue; // member oculto/pendente
+      const xs = memberBounds.map((b) => b!.x);
+      const ys = memberBounds.map((b) => b!.y);
+      const x2 = Math.max(...memberBounds.map((b) => b!.x + b!.width));
+      const y2 = Math.max(...memberBounds.map((b) => b!.y + b!.height));
+      const pad = LAYOUT_PROFILE_V1.groupPadding;
+      geometry.bounds.set(gid, {
+        x: Math.min(...xs) - pad,
+        y: Math.min(...ys) - pad,
+        width: x2 - Math.min(...xs) + pad * 2,
+        height: y2 - Math.min(...ys) + pad * 2,
+      });
+      pending.delete(gid);
+      progressed = true;
+    }
+    if (!progressed) break;
+  }
+  for (const [, group] of pending) preserveDiBounds(group);
 
   // Edges cruzando fronteira lane/pool: pontos ELK obsoletos após a
   // normalização da stack → rota orthogonal entre bounds finais.

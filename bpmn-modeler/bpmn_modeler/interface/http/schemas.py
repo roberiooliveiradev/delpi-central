@@ -37,6 +37,16 @@ class RevisionSummaryResponse(BaseModel):
     created_at: datetime
     created_by: str
     artifact_sha256: str
+    name: str | None = None
+    description: str | None = None
+    created_by_name: str | None = None
+
+
+class CreateRevisionRequest(BaseModel):
+    """Metadados opcionais do checkpoint — imutáveis após a criação."""
+
+    name: str | None = Field(default=None, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
 
 
 class ValidationIssueResponse(BaseModel):
@@ -146,6 +156,9 @@ def revision_summary(revision: Revision) -> RevisionSummaryResponse:
         created_at=revision.created_at,
         created_by=revision.created_by,
         artifact_sha256=revision.checksum,
+        name=revision.name,
+        description=revision.description,
+        created_by_name=revision.created_by_name,
     )
 
 
