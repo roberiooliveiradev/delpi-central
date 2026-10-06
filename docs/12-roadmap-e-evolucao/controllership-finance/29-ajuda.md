@@ -2,35 +2,204 @@
 
 ## Estado
 
-**TARGET / SYNCHRONIZED_WITH_FEATURES**
+**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF**
+
+Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
+
+A fase atual é exclusivamente documental:
+
+```text
+PORTAL_REVIEW_PHASE       = ACTIVE
+IMPLEMENTATION_AUTHORIZED = NO
+```
+
+Este documento fecha o **Item 7 — Ajuda** no nível de UX, arquitetura de conteúdo, reuso do `@delpi/plugin-ui`, navegação, deep links, feature gating, Help contextual, governança de sincronização, acessibilidade e testes futuros.
+
+---
 
 ## Objetivo
 
-**Ajuda** é o manual do usuário do Portal Controladoria & Finanças.
+**Ajuda** é o manual de usuário canônico do Portal Controladoria & Finanças.
 
-Deve seguir o padrão atual dos Portais Comercial e Suprimentos:
-- página própria;
-- acesso pela topbar;
-- índice de conteúdo;
-- conceitos;
-- orientação "o que quero fazer / onde / como";
-- FAQ/glossário quando útil;
-- links/deep links para superfícies do Portal.
+Ela deve responder:
 
-## Rota lógica
+> O que é cada conceito, onde faço cada ação, como uso cada página e o que determinado estado significa?
+
+Princípio:
+
+```text
+USER_FACING_CHANGE
+→ HELP_SYNC
+→ FEATURE ACCEPTANCE
+```
+
+A Ajuda é parte do produto.
+
+Ela não é documentação técnica, changelog, backlog ou roadmap.
+
+---
+
+## Decisões congeladas
+
+### D-HELP-01 — usar manual canônico do plugin-ui
+
+```text
+MANUAL_CHROME = @delpi/plugin-ui
+LOCAL_MANUAL_FRAME = FORBIDDEN
+```
+
+Usar `createDashboardUserManual`.
+
+### D-HELP-02 — conteúdo fica no MFE
+
+V1:
+
+```text
+HELP_CONTENT
+= VERSIONED FRONTEND CONTENT
+!= DATABASE CMS
+!= BFF OWNED CONTENT
+!= ADMIN EDITABLE CONTENT
+```
+
+Não criar:
+- tabela de manual;
+- API de Help;
+- editor WYSIWYG;
+- catálogo administrativo de artigos;
+- storage de Markdown;
+- permission de edição de Help.
+
+O conteúdo acompanha o código da feature e o mesmo gate de aceite.
+
+### D-HELP-03 — Help só documenta runtime existente
+
+```text
+PLANNED FEATURE
+!= PUBLISHED HELP CAPABILITY
+```
+
+Documentação TARGET deste repositório pode descrever futuro.
+
+O manual runtime não pode prometer:
+- página ainda inexistente;
+- botão ainda não implementado;
+- catálogo ainda não publicado;
+- integration ainda bloqueada;
+- ação que o usuário não pode executar.
+
+### D-HELP-04 — Help contextual aponta para seção canônica
+
+Tooltips explicam algo curto.
+
+O manual contém orientação completa.
+
+```text
+SHORT FIELD HINT
+→ HelpTooltip
+
+PAGE / PROCESS GUIDANCE
+→ /help#manual-{sectionId}
+```
+
+Não duplicar parágrafos longos em tooltips.
+
+### D-HELP-05 — conteúdo respeita capabilities
+
+Rota da Ajuda exige:
+
+```text
+controllership-finance.access
+```
+
+Seção de Administração:
+
+```text
+requires = controllership-finance.manage
+```
+
+Usuário sem `manage` não recebe instruções de operação administrativa como capability disponível.
+
+Conceitos gerais podem mencionar que existe Administração, mas sem expor ações internas não autorizadas.
+
+### D-HELP-06 — sem busca própria na V1
+
+O kit atual fornece TOC/navegação do manual, não search engine.
+
+```text
+HELP_SEARCH_V1 = NOT_INCLUDED
+```
+
+A busca global da TopBar continua separada.
+
+Se no futuro o kit ganhar busca de manual:
+- adotar no `plugin-ui`;
+- não criar busca local paralela agora.
+
+---
+
+## Rota
 
 ```text
 /apps/controllership-finance/help
 ```
 
-Permission: `controllership-finance.access`.
+Permission:
 
+```text
+controllership-finance.access
+```
 
-## Reuso obrigatório de `@delpi/plugin-ui`
+Deep link por seção:
 
-A estrutura do manual já existe no kit e deve ser usada em vez de um manual local paralelo.
+```text
+/apps/controllership-finance/help#manual-concepts
+/apps/controllership-finance/help#manual-start
+/apps/controllership-finance/help#manual-home
+/apps/controllership-finance/help#manual-overview
+/apps/controllership-finance/help#manual-interaction-room
+/apps/controllership-finance/help#manual-my-tasks
+/apps/controllership-finance/help#manual-administration
+/apps/controllership-finance/help#manual-closing
+/apps/controllership-finance/help#manual-user-profile
+/apps/controllership-finance/help#manual-faq
+/apps/controllership-finance/help#manual-glossary
+```
 
-Import canônico:
+Hash é navegação local segura.
+
+Não colocar conteúdo sensível em query/hash.
+
+---
+
+## Família visual
+
+```text
+VISUAL_FAMILY     = USER_MANUAL
+PRIMARY_FACTORY   = createDashboardUserManual
+PLUGIN_UI_FIRST   = REQUIRED
+REFERENCE         = Commercial + Supplies
+```
+
+Comercial e Suprimentos já usam o mesmo padrão:
+
+```text
+PagePath
+→ PageHero
+→ Manual.Scope
+→ Manual.Layout / TOC
+→ Manual.Section
+→ SectionCard
+→ Concepts / GuideTable / FAQ / Glossary
+```
+
+Controladoria deve seguir a mesma família visual.
+
+---
+
+## Reuso obrigatório de @delpi/plugin-ui
+
+Import preferencial:
 
 ```ts
 import {
@@ -41,264 +210,1397 @@ import {
   HelpTooltip,
   FieldLabel,
   SectionHintLabel,
+  ActionButton,
+  StateBanner,
+  EmptyState,
 } from "@delpi/plugin-ui/index";
 ```
 
-Estilos/runtime:
+Styles:
 
 ```ts
 await import("@delpi/plugin-ui/styles");
 ```
 
-`createDashboardUserManual` fornece o conjunto estrutural de manual:
+Factory:
 
-```text
-Frame
-Scope
-Layout / TOC
-Section
-Concepts
-GuideTable
-Faq
-Glossary
-Eyebrow
+```ts
+const Manual = createDashboardUserManual({
+  prefix: "cf",
+});
 ```
 
-O conteúdo PT-BR permanece no plugin consumidor e deve ser sincronizado com as features.
-
-Os Portais Comercial e Suprimentos já usam esse padrão; o novo Portal deve seguir a mesma abordagem.
-
-**DO NOT RECREATE:** frame do manual, TOC/layout, concepts table, guide table, FAQ/glossary chrome ou tooltip genérico.
-
-## Princípio
+O kit fornece:
 
 ```text
-USER_FACING_CHANGE
-→ HELP_SYNC
+Manual.Frame
+Manual.Eyebrow
+Manual.Scope
+Manual.Layout
+Manual.Section
+Manual.Concepts
+Manual.GuideTable
+Manual.Faq
+Manual.Glossary
+Manual.classNames
 ```
 
-Mudança material user-facing não está concluída enquanto a Ajuda correspondente estiver stale.
+### DO NOT RECREATE
 
-## Estrutura inicial
+- frame do manual;
+- TOC;
+- concepts grid;
+- guide table;
+- FAQ chrome;
+- glossary chrome;
+- tool-link styling;
+- help tooltip;
+- PageHero/PagePath/SectionCard;
+- light/dark/mobile CSS do kit.
 
-### Conceitos
+---
 
-Explicar pelo menos:
-- Portal Controladoria & Finanças;
-- Central de Fechamento;
-- competência;
-- preliminary/final;
-- source/freshness;
-- blocker;
-- evidence/anexo;
-- validação;
-- N/A;
-- pendência;
-- finalizar;
-- enviar;
-- pacote/versão;
-- Sala de interação;
-- Minhas tarefas;
-- ACCESS/MANAGE em linguagem de usuário.
+## Wireframe — desktop
 
-### Navegação
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Início | Visão geral | Sala | Minhas tarefas | Administração | Ajuda       │
+│                                      Buscar | Favoritos | [avatar] Usuário │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-Orientar:
-- Início;
-- Visão geral;
-- Sala de interação;
-- Minhas tarefas;
-- Administração;
-- Ajuda;
-- Página do usuário quando a rota estiver implementada;
-- Central de Fechamento e páginas internas.
+← Início / Ajuda
 
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ AJUDA                                                     [Voltar ao Início]│
+│ Manual do usuário                                                            │
+│ Conceitos, caminhos, dúvidas frequentes e termos do Portal.                  │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-### Início
+Este manual mostra somente funcionalidades disponíveis para o seu acesso.
 
-Conteúdo a publicar **somente quando a Home estiver implementada**:
+┌───────────────────────┐  ┌──────────────────────────────────────────────────┐
+│ NESTA PÁGINA          │  │ CONCEITOS QUE NÃO MISTURE                       │
+│ Conceitos             │  │ Competência | Snapshot | Evidência | ...       │
+│ Comece por aqui       │  └──────────────────────────────────────────────────┘
+│ Visão geral           │
+│ Sala de interação     │  ┌──────────────────────────────────────────────────┐
+│ Minhas tarefas        │  │ QUERO… → ONDE IR → COMO                         │
+│ Administração*        │  │ ...                                              │
+│ Central de Fechamento │  └──────────────────────────────────────────────────┘
+│ Página do usuário     │
+│ FAQ                   │  [...]
+│ Glossário             │
+└───────────────────────┘
 
-- papel do Início como launcher operacional;
-- Hero e highlights Competência ativa / Minhas tarefas / Blockers;
+* somente com MANAGE
+```
+
+---
+
+## Wireframe — mobile
+
+```text
+TOPBAR COMPACTA
+
+← Início
+
+Ajuda
+Manual do usuário
+
+Este manual mostra somente funcionalidades disponíveis para o seu acesso.
+
+[Nesta página ▼]
+- Conceitos
+- Comece por aqui
+- Visão geral
+- Sala de interação
+- Minhas tarefas
+- Administração*
+- Central de Fechamento
+- Página do usuário
+- FAQ
+- Glossário
+
+[seção selecionada]
+```
+
+A estratégia mobile real do `Manual.Layout` deve ser preservada.
+
+Se o TOC atual precisar evolução de UX mobile:
+- evoluir o kit;
+- não recriar manual local.
+
+---
+
+## Hero
+
+Eyebrow:
+
+```text
+Ajuda
+```
+
+Título:
+
+```text
+Manual do usuário
+```
+
+Descrição:
+
+```text
+Conceitos, caminhos, dúvidas frequentes e termos do Portal Controladoria & Finanças.
+```
+
+CTA:
+
+```text
+Voltar ao Início
+```
+
+Não usar Hero para:
+- versão técnica;
+- SHA;
+- status de deployment;
+- backlog.
+
+---
+
+## Scope note
+
+Texto TARGET:
+
+```text
+Este manual mostra somente funcionalidades disponíveis no Portal e compatíveis com o seu acesso.
+```
+
+Quando algum recurso ainda não estiver implementado:
+- não aparece como instrução executável;
+- não aparece como `Onde ir`;
+- não vira link.
+
+---
+
+## Arquitetura de conteúdo
+
+Ordem canônica:
+
+```text
+1. Conceitos
+2. Comece por aqui
+3. Visão geral
+4. Sala de interação
+5. Minhas tarefas
+6. Administração [MANAGE]
+7. Central de Fechamento
+8. Página do usuário
+9. Perguntas frequentes
+10. Glossário
+```
+
+A ordem privilegia:
+- entendimento;
+- navegação;
+- páginas comuns;
+- processo operacional;
+- referência.
+
+---
+
+# 1. Conceitos
+
+Título:
+
+```text
+Conceitos que não misture
+```
+
+Itens mínimos:
+
+### Portal Controladoria & Finanças
+
+Produto multi-macroprocesso da Minha DELPI.
+
+A Central de Fechamento é a primeira funcionalidade, não o Portal inteiro.
+
+### Central de Fechamento
+
+Conjunto de páginas que suporta o processo de fechamento mensal da Controladoria.
+
+### Competência
+
+Recorte mensal do fechamento.
+
+Não é sinônimo de data de consulta.
+
+### Snapshot
+
+Cópia governada da configuração aplicável à competência quando ela é aberta.
+
+Mudança posterior do mestre não altera silenciosamente esse snapshot.
+
+### Preliminary vs final
+
+Resultado preliminar ainda depende de cutoff, source, revalidação ou outra condição material.
+
+```text
+PRELIMINARY != FINAL
+```
+
+### Source / freshness
+
+Source é a origem autorizada do dado.
+
+Freshness indica quando aquele dado foi obtido/calculado.
+
+```text
+SOURCE ERROR != ZERO
+```
+
+### Blocker
+
+Condição que impede avanço de um estado do fechamento.
+
+```text
+BLOCKER != MY_TASK
+```
+
+### Evidência / anexo
+
+Arquivo/documento associado a um item.
+
+```text
+ATTACHED != VALIDATED
+```
+
+### Validação
+
+Decisão humana ou regra governada sobre evidência conforme o item.
+
+### N/A
+
+Aplicável apenas quando a regra permite.
+
+```text
+NOT_APPLICABLE != CANCELLED
+```
+
+### Pendência
+
+Item que exige análise/resolução no fluxo.
+
+Pendência não significa automaticamente atraso/SLA.
+
+### Finalizar vs Enviar
+
+```text
+PACKAGE_FINALIZED != PACKAGE_SENT
+```
+
+Finalizar cria/congela uma versão do pacote.
+
+Enviar usa capability real de entrega quando disponível.
+
+### Sala de interação
+
+Colaboração contextual.
+
+Mensagem não executa decisão de negócio.
+
+### Minhas tarefas
+
+Projeção das responsabilidades reais dos owners.
+
+Não é gerenciador genérico de tarefas.
+
+### ACCESS / MANAGE
+
+Em linguagem de usuário:
+
+```text
+ACCESS
+= usar superfícies operacionais autorizadas
+
+MANAGE
+= administrar configuração do Portal
+```
+
+Um não implica automaticamente o outro.
+
+---
+
+# 2. Comece por aqui
+
+Section id:
+
+```text
+start
+```
+
+Guide table TARGET:
+
+| Quero… | Onde ir | Como |
+|---|---|---|
+| Saber o que precisa de atenção | Início | Veja Eventos e interações, Minhas tarefas e caminhos disponíveis |
+| Ver indicadores financeiros | Visão geral | Escolha período/unidade e abra o indicador/drilldown |
+| Conversar sobre um contexto | Sala de interação | Abra a sala vinculada à competência/item/pendência/pacote |
+| Ver ações que dependem de mim | Minhas tarefas | Use a fila pessoal e abra o contexto owner |
+| Configurar o Portal | Administração | Disponível apenas com MANAGE |
+| Operar o fechamento mensal | Central de Fechamento | Abra a competência e entre na etapa necessária |
+| Entender um campo | ícone de ajuda | Passe/focalize o HelpTooltip |
+| Ver meu perfil | avatar | Abra a Página do usuário do Portal |
+| Editar foto/cargo/contatos | Meu Perfil da Minha DELPI | Identidade é owned pelo Core |
+| Entender um conceito/processo | Ajuda | Use o índice e as seções deste manual |
+
+Somente rows cujo destino existe no runtime podem ser renderizadas.
+
+---
+
+# 3. Início
+
+O conteúdo runtime só entra quando a Home estiver implementada.
+
+Explicar:
+- Início é launcher operacional;
 - diferença entre Início e Visão geral;
+- Hero e highlights reais implementados;
 - Eventos e interações;
-- busca local "Caminhos e funcionalidades";
+- Caminhos e funcionalidades;
+- busca local do catálogo;
 - diferença entre busca local e Buscar da TopBar;
 - Últimos acessos;
-- Favoritos e relação com a TopBar;
+- Favoritos;
 - Central de Fechamento como primeira funcionalidade;
-- motivo pelo qual rotas futuras/não autorizadas não aparecem;
-- indisponível != zero;
-- Administração apenas para viewer com MANAGE.
+- rotas futuras não aparecem;
+- source indisponível não vira zero;
+- Administração só aparece quando MANAGE.
 
 Contrato fonte:
 - [32-inicio-home.md](./32-inicio-home.md)
 
-### Página do usuário
+Section id:
 
-Conteúdo a publicar **somente quando a rota estiver implementada**:
+```text
+home
+```
 
-- o que é o perfil de usuário do Portal;
-- quais dados vêm do cadastro corporativo/Core;
-- onde editar foto, cargo e contatos no Meu Perfil do Portal principal Minha DELPI, que usa a Core API como owner desses dados;
-- diferença entre "Não informado" e "temporariamente indisponível";
-- que outro usuário do mesmo Portal pode ser consultado por viewer com ACCESS;
-- que permissions/capabilities de outro usuário não são exibidas;
-- que, no próprio perfil, o Portal pode mostrar label + códigos técnicos `controllership-finance.access` e `controllership-finance.manage`;
-- que a página do Controladoria é somente leitura para identidade/person profile; edição e upload de foto acontecem no Meu Perfil da Minha DELPI;
-- que visualizar perfil não concede poder administrativo;
-- que Administração continua dependente de MANAGE;
+---
+
+# 4. Visão geral
+
+Section id:
+
+```text
+overview
+```
+
+Publicar somente indicadores implementados.
+
+Explicar:
+- objetivo analítico;
+- período;
+- unidade/contexto;
+- KPIs financeiros;
+- contexto operacional financeiro;
+- indicadores estratégicos aprovados;
+- significado/fórmula em linguagem de negócio;
+- source/owner;
+- freshness;
+- meta/score somente quando owner fornecer;
+- zero vs vazio vs indisponível;
+- drilldown;
+- filtros e compartilhamento de recorte quando implementados;
+- IA não cria fórmula/authority.
+
+Contrato fonte:
+- [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md)
+
+Não publicar indicador apenas porque consta no roadmap.
+
+---
+
+# 5. Sala de interação
+
+Section id:
+
+```text
+interaction-room
+```
+
+Explicar:
+- colaboração contextual;
+- não existe wall/chat genérico;
+- contextos suportados em runtime;
+- Inbox;
+- Todas / Não lidas / Menções;
+- responder;
+- mencionar;
+- reação;
+- fixar;
+- editar própria mensagem;
+- soft-delete;
+- anexos;
+- Arquivos e links;
+- Localizar no chat;
+- painel Neste chat;
+- participants não são ACL;
+- mensagem não aprova/valida/fecha/envia;
+- attachment do chat não vira evidência P2 automaticamente;
+- realtime degradado;
+- voltar ao owner;
+- criar task da mensagem não existe na V1.
+
+Contrato fonte:
+- [26-sala-de-interacao.md](./26-sala-de-interacao.md)
+
+---
+
+# 6. Minhas tarefas
+
+Section id:
+
+```text
+my-tasks
+```
+
+Explicar:
+- TaskProjection;
+- tarefa vem do owner;
+- diferença entre task, blocker, warning e mention;
+- sources realmente implementadas;
+- responsabilidade individual;
+- busca;
+- filtro source;
+- filtro competência;
+- `pendingSince` é idade factual;
+- due só existe se owner possuir prazo real;
+- sem SLA global;
+- ação `Abrir`;
+- concluir ocorre no owner;
+- sem `Nova tarefa`;
+- sem editor genérico;
+- sem Equipe;
+- sem bucket local Concluídas;
+- source unavailable != empty;
+- coverage COMPLETE/PARTIAL;
+- Home usa a mesma projection.
+
+Contrato fonte:
+- [27-minhas-tarefas.md](./27-minhas-tarefas.md)
+
+---
+
+# 7. Administração
+
+Section id:
+
+```text
+administration
+```
+
+Visibility:
+
+```text
+effective_permission(controllership-finance.manage)
+```
+
+Explicar somente quando runtime administrativo existir:
+- MANAGE vs ACCESS;
+- Painel;
+- Templates;
+- Catálogos;
+- Histórico;
+- DRAFT;
+- REVIEW;
+- PUBLISH;
+- EFFECTIVE_FROM;
+- salvar != publicar;
+- snapshot;
+- publicação prospectiva;
+- inativação != exclusão;
+- bancos/contas;
+- checklist master;
+- responsible/validator/recipient;
+- referências a Core;
+- motivos;
+- attachment roles;
+- notification targets;
+- stale version/conflito;
+- auditoria;
+- P6 não administra usuário/role/permission.
+
+Contrato fonte:
+- [28-administracao.md](./28-administracao.md)
+
+Usuário sem MANAGE:
+- seção não entra no TOC;
+- guide rows administrativas não viram links;
+- manual não sugere ação que ele não pode executar.
+
+---
+
+# 8. Central de Fechamento
+
+Section id:
+
+```text
+closing
+```
+
+Organizar a seção em subseções.
+
+## Cockpit da Competência — P1
+
+Explicar:
+- competência;
+- três eixos independentes;
+- blockers;
+- freshness;
+- navegação aos owners;
+- Estoque fechado != pacote enviado != fechamento concluído.
+
+Fonte:
+- [08-p1-cockpit-da-competencia.md](./08-p1-cockpit-da-competencia.md)
+
+## Checklist e Documentos — P2
+
+Explicar:
+- snapshot;
+- requirement;
+- origin;
+- evidência;
+- ATTACHED != VALIDATED;
+- validation scope;
+- REQUIRED vs CONDITIONAL;
+- N/A;
+- rejeição;
+- replacement;
+- item excepcional;
+- correção estrutural;
+- histórico.
+
+Fonte:
+- [09-p2-checklist-e-documentos.md](./09-p2-checklist-e-documentos.md)
+
+## Estoque e Conciliação — P3
+
+Explicar:
+- preliminary;
+- cutoff;
+- revalidação;
+- P7;
+- Entradas/Saídas;
+- H02;
+- paridade monetária exata;
+- divergência;
+- READY_TO_CLOSE;
+- STOCK_CLOSED;
+- source unavailable;
+- V1 sem write ERP.
+
+Regra visível:
+
+```text
+DIVERGENCIA = ENTRADAS_SAIDAS - P7 - H02
+PARIDADE_OK <=> DIVERGENCIA = R$ 0,00
+```
+
+Fonte:
+- [10-p3-estoque-cutoff-e-conciliacao.md](./10-p3-estoque-cutoff-e-conciliacao.md)
+
+## Classificações e Pendências — P4
+
+Explicar:
+- sugestão vs decisão humana;
+- pendência;
+- claim;
+- responsável;
+- states;
+- WAITING_EXTERNAL;
+- RESOLVED;
+- DISMISSED;
+- dismiss exige justificativa;
+- sem SLA/overdue formal;
+- V1 sem write ERP.
+
+Fonte:
+- [11-p4-classificacoes-e-pendencias.md](./11-p4-classificacoes-e-pendencias.md)
+
+## Pacote, Finalização e Envio — P5
+
+Explicar apenas capacidades realmente liberadas:
+- pacote;
+- versão;
+- finalizar != enviar;
+- recipient package;
+- package sent imutável;
+- complemento/correção;
+- esclarecimento;
+- conclusão mensal.
+
+Se envio real continuar bloqueado:
+- não instruir botão/canal inexistente;
+- explicar apenas finalização/versionamento implementados.
+
+Fonte:
+- [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md)
+
+---
+
+# 9. Página do usuário
+
+Section id:
+
+```text
+user-profile
+```
+
+Publicar quando rota existir.
+
+Explicar:
+- perfil corporativo;
+- dados vindos do Core;
+- read-only no Controladoria;
+- editar foto/cargo/contatos no Meu Perfil da Minha DELPI;
+- outro usuário com app access pode ser consultado conforme regra;
+- permissions de outro usuário não são expostas;
+- self pode mostrar labels/codes do próprio Portal conforme contract;
+- `Não informado` != `temporariamente indisponível`;
 - como retornar ao contexto anterior.
 
 Contrato fonte:
 - [31-pagina-do-usuario.md](./31-pagina-do-usuario.md)
 
-### Central de Fechamento
+---
 
-Referenciar conteúdo de Cockpit, Checklist e Documentos, Estoque e Conciliação, Classificações e Pendências e Pacote e Envio.
+# 10. Perguntas frequentes
 
-### Visão geral
-
-Conteúdo a publicar somente quando a rota estiver implementada:
-
-- objetivo da superfície analítica;
-- indicadores aprovados em D-OVW-01=C, organizados em desempenho financeiro, contexto operacional financeiro e desempenho estratégico;
-- significado e fórmula em linguagem de negócio;
-- unidade;
-- período e filtros;
-- source/owner;
-- freshness;
-- meta e score somente quando owned;
-- diferença entre zero, vazio e indisponível;
-- drilldowns;
-- IDD/IGD e indicadores estratégicos do departamento, mantendo-os separados dos KPIs financeiros;
-- limites da IA.
-
-Contrato fonte:
-- [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md).
-
-Não publicar no manual um indicador apenas por estar inventariado; publicar somente quando o respectivo contract estiver implementado e validado no runtime.
-
-### Sala de interação
-
-Conteúdo a publicar somente quando a rota estiver implementada:
-
-- Sala como colaboração contextual, não chat genérico;
-- como abrir conversa de competência, checklist, pendência/classificação e pacote;
-- Inbox, busca, Não lidas e Menções;
-- mensagem vs ação formal do processo;
-- reply, reaction e pin não equivalem a aprovação;
-- attachments de chat não são evidência formal de P2;
-- menções e limites de acesso;
-- edição da própria mensagem;
-- soft-delete;
-- Arquivos e links;
-- Localizar no chat;
-- painel "Neste chat";
-- participantes não são ACL;
-- realtime degradado;
-- como voltar ao contexto owner;
-- limites da IA;
-- criar tarefa a partir de mensagem não existe na V1; eventual evolução exige nova task entity/owner aprovados.
-
-Contrato fonte:
-- [26-sala-de-interacao.md](./26-sala-de-interacao.md)
-
-### Minhas tarefas
-
-Conteúdo a publicar somente quando a rota estiver implementada:
-
-- Minhas tarefas como projeção do trabalho dos owners;
-- diferença entre tarefa, blocker, warning e menção;
-- sources P2/P4 e P5 somente quando seu producer estiver implementado;
-- por que uma responsabilidade aparece para o usuário;
-- busca, filtro por source e competência;
-- `pendingSince` como idade factual, não SLA;
-- prazo/overdue somente quando o owner possuir regra formal;
-- ação `Abrir` e conclusão no contexto owner;
-- ausência de `Nova tarefa`, editor genérico e escopo Equipe na V1;
-- ausência de bucket local `Concluídas`;
-- source unavailable != fila vazia;
-- coverage COMPLETE/PARTIAL;
-- integração com o highlight/preview do Início;
-- Sala de interação não cria task genérica na V1.
-
-Contrato fonte:
-- [27-minhas-tarefas.md](./27-minhas-tarefas.md)
-
-Não publicar capability de producer, team scope ou task entity antes do runtime correspondente.
-
-### Administração
-
-Conteúdo a publicar somente quando a rota estiver implementada:
-
-- quem pode acessar Administração;
-- diferença entre ACCESS e MANAGE;
-- subáreas Painel, Templates, Catálogos e Histórico;
-- DRAFT, REVIEW, PUBLISH e EFFECTIVE_FROM;
-- salvar draft não publica;
-- publicação com vigência;
-- snapshot da competência aberta;
-- por que mudança nova não altera competência já aberta;
-- catálogo tipado vs campo livre;
-- bancos/contas configuráveis;
-- checklist master;
-- operational responsible, validator e recipient como referências a usuários do Core;
-- motivos de rejeição;
-- attachment roles;
-- notification targets e boundary com Minha DELPI;
-- inativação prospectiva vs exclusão;
-- stale version/conflito;
-- histórico/auditoria;
-- ausência de gestão de usuário, role ou permission no P6.
-
-Contrato fonte:
-- [28-administracao.md](./28-administracao.md)
-
-Não publicar catálogo/capability ainda não implementado.
-
-## Composição lógica
+Section id:
 
 ```text
-HelpHeader
-→ HelpScope
-→ TableOfContents
-→ Concepts
-→ Guides
-→ FAQs
-→ Glossary
-→ ContextualLinks
+faq
 ```
 
-Preferir componentes de `@delpi/plugin-ui` e padrões já usados nos Portais Comercial/Suprimentos.
+FAQ inicial TARGET:
+
+### Qual a diferença entre Início e Visão geral?
+
+Início organiza ações, eventos e caminhos. Visão geral é a superfície analítica com indicadores.
+
+### Por que um valor aparece indisponível em vez de zero?
+
+Porque a fonte necessária não respondeu ou não possui evidência confiável. Ausência/erro de source não é zero.
+
+### Um anexo enviado já está aprovado?
+
+Não.
+
+```text
+ATTACHED != VALIDATED
+```
+
+### Um blocker sempre aparece em Minhas tarefas?
+
+Não. Só vira TaskProjection quando existe responsabilidade individual acionável atribuída a você.
+
+### Uma mensagem na Sala aprova ou conclui alguma etapa?
+
+Não. Conversa não substitui ação formal do owner.
+
+### Posso criar uma tarefa livre?
+
+Não na V1. Minhas tarefas projeta trabalho dos processos.
+
+### Por que não vejo Administração?
+
+A área exige `controllership-finance.manage`.
+
+### Salvar uma alteração administrativa publica automaticamente?
+
+Não. Draft e publicação são etapas diferentes.
+
+### Alterar um template muda a competência que já está aberta?
+
+Não. A competência preserva o snapshot aplicável à sua abertura.
+
+### O que significa fechamento concluído?
+
+Somente o contract implementado pode determinar. Estoque fechado e pacote enviado são estados distintos; não inferir conclusão por um deles isoladamente.
+
+### Existe tolerância de centavos na conciliação?
+
+Não.
+
+```text
+R$ 0,00 = paridade
+qualquer valor diferente de zero = divergência
+```
+
+### O Portal altera diretamente classificação ou fechamento no Protheus?
+
+Na V1, não para as ações explicitamente documentadas como sem write ERP.
+
+---
+
+# 11. Glossário
+
+Section id:
+
+```text
+glossary
+```
+
+Termos mínimos:
+
+| Termo | Significado | Onde aparece |
+|---|---|---|
+| ACCESS | acesso operacional ao Portal | superfícies operacionais |
+| MANAGE | administração/configuração | Administração |
+| Competência | período mensal do fechamento | Central de Fechamento |
+| Snapshot | configuração congelada para um contexto | P2/P6 |
+| Preliminary | resultado ainda não final | P3/Visão geral |
+| Freshness | momento/versão da fonte | dashboards/cockpit |
+| Blocker | condição que impede avanço | P1/P2/P3/P5 |
+| Evidência | arquivo/dado que suporta item | P2 |
+| Validator | responsabilidade de validação | P2/P6 |
+| Replacement | nova evidência após rejeição | P2 |
+| Cutoff | marco que encerra movimentos relevantes | P3 |
+| Revalidação | nova validação após cutoff/mudança | P3 |
+| Divergência | diferença da conciliação | P3 |
+| Pendência | item aguardando análise/ação | P4 |
+| TaskProjection | projeção pessoal de trabalho owner | Minhas tarefas |
+| Sala contextual | conversa vinculada a objeto de trabalho | Sala |
+| Finalizar | congelar versão do pacote | P5 |
+| Enviar | executar entrega por capability real | P5 |
+| Effective from | data de vigência administrativa | P6 |
+| Inativação | fim prospectivo de uso | P6 |
+
+Glossário deve refletir somente terminologia vigente.
+
+---
+
+## Links internos no texto
+
+Seguir o padrão Comercial/Suprimentos:
+
+```text
+manual text
+→ token/label reconhecido
+→ route registry
+→ link interno seguro
+```
+
+Exemplo conceitual:
+
+```text
+"Início"
+→ route home
+
+"Visão geral"
+→ route overview
+
+"Minhas tarefas"
+→ route my-tasks
+```
+
+Não parsear URL livre embutida em conteúdo.
+
+Usar registry tipado de destinos.
+
+Somente destinos implementados e autorizados entram no registry runtime.
+
+---
+
+## Modelo lógico de conteúdo
+
+Exemplo:
+
+```ts
+type UserManualSection = {
+  id: string;
+  title: string;
+  intro?: string;
+  bullets?: readonly string[];
+  links?: readonly UserManualLinkRow[];
+  faqs?: readonly UserManualFaq[];
+  glossary?: readonly UserManualGlossaryEntry[];
+  requiresFeature?: FeatureId;
+  requiresPermission?: "controllership-finance.manage";
+};
+```
+
+TARGET:
+
+```text
+USER_MANUAL_CONTENT
+MANUAL_TOOL_TARGETS
+USER_MANUAL_TERM_CATALOG
+```
+
+Nomes físicos finais podem seguir o padrão do Portal quando o MFE existir.
+
+---
+
+## Feature gating do manual
+
+Pipeline lógico:
+
+```text
+DOCUMENTED TARGET
+→ route/capability implemented
+→ runtime feature catalog says available
+→ permission check
+→ manual section/link becomes visible
+```
+
+Não usar roadmap como feature flag.
+
+### Regra de seção
+
+Uma seção operacional pode entrar no manual se:
+
+```text
+route exists
+AND capability implemented
+AND viewer authorized
+```
+
+### Regra de conceito
+
+Conceito geral pode existir mesmo que uma subfeature ainda não esteja disponível, desde que:
+- não instrua uso de botão inexistente;
+- não ofereça link para rota futura;
+- não prometa capability.
+
+---
 
 ## Help contextual
 
-Além da página geral, páginas materiais devem poder apontar para a seção correspondente da Ajuda.
+Cada página material deve possuir um entrypoint de Ajuda contextual quando isso melhorar compreensão.
 
-O Help contextual não duplica conteúdo integral; direciona para a fonte vigente.
+Target:
+
+```text
+Page / section
+→ "Ajuda" / HelpTooltip / hint
+→ /apps/controllership-finance/help#manual-{sectionId}
+```
+
+### Mapa
+
+| Página | Help target |
+|---|---|
+| Início | `#manual-home` |
+| Visão geral | `#manual-overview` |
+| Sala de interação | `#manual-interaction-room` |
+| Minhas tarefas | `#manual-my-tasks` |
+| Administração | `#manual-administration` |
+| P1–P5 | `#manual-closing` ou subâncora futura |
+| Página do usuário | `#manual-user-profile` |
+
+Tooltips de campo continuam locais ao controle e curtos.
+
+---
+
+## Deep link / hash behavior
+
+Ao abrir:
+
+```text
+/help#manual-my-tasks
+```
+
+o consumidor deve:
+1. validar que a seção existe e está visível para o viewer;
+2. carregar o manual;
+3. focar/rolar para a seção;
+4. não bypassar permission;
+5. manter heading identificável.
+
+Se hash aponta para seção:
+- desconhecida → topo do manual ou not-found local amigável;
+- não autorizada → não revelar conteúdo; voltar ao topo/section geral.
+
+Não retornar 403 da página inteira apenas porque uma subseção MANAGE foi solicitada por hash; a rota Help continua ACCESS, mas o conteúdo MANAGE permanece oculto.
+
+---
 
 ## Estados
 
-A Ajuda é conteúdo versionado do produto e não deve depender de source operacional para renderizar o manual básico.
+Ajuda é conteúdo local/versionado.
 
-Ainda assim, tratar loading quando o conteúdo for carregado dinamicamente, not found para seção/deep link inválido e forbidden quando o usuário não possui acesso ao Portal.
+Portanto não depende de source operacional para renderizar conteúdo base.
 
-## Governança
+### LOADING
 
-- UX/textos em PT-BR;
-- identificadores técnicos em inglês;
-- evitar detalhe técnico irrelevante ao usuário;
-- não prometer funcionalidade ainda não implementada;
-- conteúdo futuro deve ser marcado/ocultado até o gate correspondente; a seção Início não deve prometer cards/rotas ainda não implementados; a seção Página do usuário não deve aparecer como funcionalidade disponível antes do runtime da rota;
-- exemplos não substituem regra.
+Somente se houver code-splitting/loading do bundle.
 
-## Critérios de aceite
+Não simular carregamento de API inexistente.
 
-- acessível pela topbar;
-- manual navegável por teclado;
-- índice e headings semânticos;
-- links internos/deep links válidos;
-- conteúdo sincronizado com páginas implementadas;
-- claro/escuro e mobile;
-- nenhuma instrução contradiz AuthZ/business rules vigentes.
+### SUCCESS
+
+Manual renderizado com seções disponíveis.
+
+### EMPTY
+
+Não é estado esperado do manual publicado.
+
+Se content registry resultar vazio:
+- tratar como erro de build/config;
+- não mostrar `Nenhuma ajuda disponível` como estado normal.
+
+### ERROR
+
+Falha de bundle/renderização.
+
+Usar error boundary/chrome comum.
+
+### FORBIDDEN
+
+Sem `controllership-finance.access`:
+- 403;
+- manual não renderiza.
+
+### NOT_FOUND
+
+Rota `/help` existe.
+
+Hash inválido não deve virar 404 da aplicação inteira.
+
+### PARTIAL
+
+Não usar PARTIAL para esconder feature ainda não implementada.
+
+Feature ausente simplesmente não entra no manual.
+
+---
+
+## Light / dark
+
+```text
+SAME DOM
+SAME CONTENT
+SAME TOC
++ THEME TOKENS
+```
+
+Sem versão separada do manual por tema.
+
+---
+
+## Responsividade
+
+Desktop:
+- TOC lateral;
+- conteúdo principal;
+- tabelas/FAQ/glossário.
+
+Mobile:
+- TOC adaptado pelo kit;
+- conteúdo em uma coluna;
+- guide table permanece legível/scroll-safe;
+- tool links continuam acessíveis;
+- nenhum item depende de hover.
+
+---
+
+## Acessibilidade
+
+Obrigatório:
+- heading único de página;
+- TOC dentro de `nav` com aria-label;
+- botões do TOC operáveis por teclado;
+- `section` com id estável;
+- foco/scroll contextual previsível;
+- links com nomes compreensíveis;
+- tabelas com headings semânticos;
+- FAQ com `dt/dd`;
+- glossary com `dt/dd`;
+- HelpTooltip acessível via foco;
+- estado/permissão não comunicado só por cor;
+- hash navigation não deve deixar foco perdido.
+
+---
+
+## Governança editorial
+
+### Linguagem
+
+UX em PT-BR.
+
+Evitar:
+- nomes de classes;
+- endpoints;
+- detalhes de DB;
+- jargon técnico sem tradução;
+- referências a código.
+
+Technical identifiers só entram quando realmente ajudam o usuário, por exemplo permission codes no próprio perfil conforme decisão existente.
+
+### Fonte
+
+Cada seção deve apontar na documentação técnica para seu contract fonte.
+
+No runtime, não exibir links ao GitHub/documentação técnica para uso normal.
+
+### Exemplos
+
+Exemplo ilustra regra.
+
+```text
+EXAMPLE != BUSINESS RULE
+```
+
+Não transformar valor histórico em threshold/regra.
+
+### Terminologia
+
+Se a feature muda nomenclatura:
+- atualizar UI;
+- manual;
+- FAQ;
+- glossary;
+- tool links;
+- tests estruturais
+no mesmo gate.
+
+---
+
+## Política de sincronização
+
+Toda mudança user-facing material deve verificar:
+
+```text
+PAGE COPY
+ROUTE
+ACTION
+STATE
+BUSINESS TERM
+FILTER
+PERMISSION BEHAVIOR
+DEEP LINK
+→ HELP IMPACT?
+```
+
+Se `YES`:
+- Help muda no mesmo PR/slice.
+
+### Mudanças que normalmente exigem Help
+
+- nova página;
+- nova ação;
+- novo status;
+- mudança de regra;
+- mudança de filtro;
+- nova source visível;
+- nova mensagem de indisponibilidade;
+- mudança de permission/comportamento;
+- novo catálogo administrativo;
+- novo deep link;
+- mudança de terminologia.
+
+### Mudanças que normalmente não exigem Help
+
+- refactor interno sem efeito visível;
+- performance sem mudança comportamental;
+- alteração de teste;
+- correção de typing sem UX;
+- infraestrutura invisível.
+
+---
+
+## Testes estruturais futuros
+
+Seguir padrão Comercial.
+
+Validator/teste deve provar:
+
+```text
+USER_MANUAL_CONTENT exists
+route /help exists
+manifest includes /help
+createDashboardUserManual is used
+tool links are registered
+TOC sections have unique ids
+Help content contains only enabled features
+Admin section is MANAGE-gated
+contextual help targets resolve
+glossary catalog is consistent
+```
+
+Não copiar assertions do Comercial sobre conteúdo comercial.
+
+---
+
+## RQ / AC
+
+### RQ-HELP-01 — manual usa kit canônico
+
+Aceite:
+- `createDashboardUserManual`;
+- PageHero/PagePath/SectionCard do kit;
+- zero manual chrome local.
+
+### RQ-HELP-02 — Ajuda é rota da topbar
+
+Aceite:
+- `/help`;
+- item Ajuda na topbar;
+- ACCESS necessário;
+- F5 funciona.
+
+### RQ-HELP-03 — conteúdo segue runtime
+
+Aceite:
+- capability futura não aparece;
+- route inexistente não vira link;
+- manual não usa roadmap como prova de disponibilidade.
+
+### RQ-HELP-04 — capability gating
+
+Aceite:
+- seção Administração somente com MANAGE;
+- usuário ACCESS-only não recebe instruções administrativas executáveis;
+- nenhuma permission nova.
+
+### RQ-HELP-05 — Help contextual usa deep link
+
+Aceite:
+- páginas materiais apontam para seção correta;
+- hash válido rola/foca;
+- hash inválido não quebra página;
+- hash MANAGE não revela conteúdo sem MANAGE.
+
+### RQ-HELP-06 — guide table é mapa operacional
+
+Aceite:
+- `Quero / Onde ir / Como`;
+- destinos tipados;
+- links somente para runtime implementado/autorizado.
+
+### RQ-HELP-07 — conceitos preservam invariantes
+
+Aceite:
+- ATTACHED != VALIDATED;
+- BLOCKER != MY_TASK;
+- Finalizar != Enviar;
+- ACCESS != MANAGE;
+- source error != zero;
+- preliminary != final.
+
+### RQ-HELP-08 — Central de Fechamento acompanha P1–P5
+
+Aceite:
+- seções publicadas refletem apenas slices implementados;
+- P5 não promete envio enquanto capability estiver bloqueada;
+- P3 documenta paridade exata sem tolerância.
+
+### RQ-HELP-09 — FAQ/glossário versionados
+
+Aceite:
+- termos usados nas telas;
+- sem stale terminology;
+- exemplos não viram regra.
+
+### RQ-HELP-10 — sem backend de Help na V1
+
+Aceite:
+- nenhum BFF endpoint/table/CMS criado;
+- conteúdo versionado no MFE;
+- autorização continua na rota/app.
+
+### RQ-HELP-11 — light/dark/mobile/a11y
+
+Aceite:
+- mesma estrutura;
+- responsive;
+- teclado/foco;
+- TOC/nav semântico;
+- tooltips acessíveis.
+
+### RQ-HELP-12 — feature-help-sync obrigatório
+
+Aceite:
+- mudança user-facing material atualiza Help no mesmo gate;
+- teste/validator detecta links/sections stale quando aplicável.
+
+---
+
+## Matriz futura de testes
+
+### Positive
+- ACCESS abre Ajuda;
+- TOC navega para Conceitos;
+- TOC navega para seção implementada;
+- guide link abre rota real;
+- hash abre seção;
+- MANAGE vê Administração;
+- FAQ renderiza;
+- Glossário renderiza;
+- Voltar ao Início;
+- Help contextual chega à seção esperada.
+
+### Sibling
+- habilitar feature A não publica B;
+- MANAGE section não altera conteúdo comum;
+- remover tool link de rota desativada não remove conceito geral válido;
+- atualização de P2 não altera texto P3 indevidamente.
+
+### Negative
+- sem ACCESS;
+- ACCESS-only tentando hash de Administração;
+- link para rota não implementada;
+- seção futura publicada;
+- manual mencionando botão inexistente;
+- stale nomenclature;
+- hash inválido;
+- URL arbitrária em tool link;
+- endpoint/table/CMS de Help criado sem nova decisão;
+- duplicação de manual chrome local.
+
+### Experiência
+- desktop;
+- mobile;
+- light;
+- dark;
+- teclado;
+- foco;
+- TOC;
+- scroll/foco respeitando `prefers-reduced-motion`;
+- FAQ;
+- glossary;
+- contextual deep link;
+- 403;
+- error boundary.
+
+---
+
+## Scripts / validators planejados
+
+Não criar agora.
+
+```text
+validate-help-route
+- /help existe
+- manifest/router consistentes
+- ACCESS guard
+
+validate-help-section-registry
+- ids únicos
+- source docs conhecidos
+- feature/permission gates válidos
+
+validate-help-tool-links
+- destino tipado
+- rota implementada
+- no arbitrary URL
+
+validate-help-capability-gating
+- feature disabled => section/link absent
+- MANAGE section hidden for ACCESS-only
+
+validate-help-contextual-links
+- page → section target existente
+- hash roundtrip
+
+validate-help-terminology
+- glossary/FAQ termos canônicos
+- no deprecated labels
+
+validate-help-sync
+- feature user-facing material possui seção/help impact explicitamente avaliado
+
+validate-help-plugin-ui
+- createDashboardUserManual used
+- no duplicated manual chrome
+```
+
+Tecnologia/localização seguem padrão vigente no HEAD futuro.
+
+---
+
+## Inventários técnicos restantes
+
+### HELP01 — route/catalog binding
+
+```text
+TO_INVENTORY_BEFORE_IMPLEMENTATION
+```
+
+Revalidar router, manifest e catálogo real de features quando o MFE existir.
+
+### HELP02 — permission-aware section filtering
+
+```text
+TO_INVENTORY_BEFORE_IMPLEMENTATION
+```
+
+Reusar effective permissions já carregadas pelo Portal; não criar fetch/AuthZ paralelo só para Help.
+
+### HELP03 — hash/focus behavior
+
+```text
+TO_VALIDATE_WITH_PLUGIN_UI
+```
+
+Confirmar melhor comportamento de scroll/foco com o `Manual.Layout` atual.
+
+Se capability reutilizável estiver faltando:
+- evoluir `plugin-ui`;
+- não clonar layout.
+
+### HELP04 — structural validator placement
+
+```text
+TO_INVENTORY_BEFORE_IMPLEMENTATION
+```
+
+Seguir convenções do MFE futuro.
+
+Nenhum desses itens reabre as decisões D-HELP-01..06.
+
+---
+
+## Gate
+
+```text
+VISUAL_FAMILY_DEFINED       = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+CONTENT_ARCHITECTURE        = PASS
+RUNTIME_ONLY_POLICY         = PASS
+CAPABILITY_GATING_DEFINED   = PASS
+CONTEXTUAL_HELP_DEFINED     = PASS
+DEEPLINK_HASH_DEFINED       = PASS
+CONCEPTS_DEFINED            = PASS
+GUIDE_TABLE_DEFINED         = PASS
+P1_P5_HELP_MODEL_DEFINED    = PASS
+FAQ_DEFINED                 = PASS
+GLOSSARY_DEFINED            = PASS
+EDITORIAL_GOVERNANCE        = PASS
+HELP_SYNC_POLICY            = PASS
+LIGHT_DARK_DEFINED          = PASS
+MOBILE_DEFINED              = PASS
+A11Y_DEFINED                = PASS
+RQ_AC_TEST_MATRIX_DEFINED   = PASS
+IMPLEMENTATION              = NOT_AUTHORIZED
+```
+
+Estado:
+
+```text
+ITEM 7 = READY_FOR_IMPLEMENTATION_BRIEF
+```
+
+---
+
+## Resultado esperado
+
+```text
+FEATURE EXISTS
+→ USER SEES FEATURE
+→ HELP EXPLAINS FEATURE
+→ CONTEXTUAL LINK OPENS RIGHT SECTION
+→ SAME TERMINOLOGY / SAME RULE
+```
+
+Sem manual paralelo, sem documentação de capability futura no runtime e sem Help stale.

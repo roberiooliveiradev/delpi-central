@@ -49,6 +49,12 @@ Cobrir Home family comum, Hero operacional, Eventos resilientes, catálogo runti
 
 Fonte detalhada: [32-inicio-home.md](./32-inicio-home.md).
 
+### Ajuda
+
+Cobrir `createDashboardUserManual`, rota `/help`, ACCESS guard, TOC/deep-link por hash, concepts/guide table/FAQ/glossary, feature gating por runtime, seção Administração condicionada a MANAGE, links tipados, Help contextual, ausência de BFF/CMS na V1, light/dark/mobile/a11y e `feature-help-sync`.
+
+Fonte detalhada: [29-ajuda.md](./29-ajuda.md).
+
 ### Página do usuário
 Cobrir deep route sem item de topbar, identidade owned pelo Core, leitura de outro usuário com ACCESS, RBAC self-only, edição via Meu Perfil, estados honestos de source, reuso full-page do `plugin-ui`, atalhos somente para runtime autorizado e Help sincronizada.
 
@@ -104,7 +110,11 @@ Testar:
 - permission code criado por catálogo/CRUD;
 - stale admin write sobrescrevendo revisão mais nova;
 - hard delete de item mestre histórico;
-- Administração criando usuário/RBAC no lugar do Core.
+- Administração criando usuário/RBAC no lugar do Core;
+- Help publicando capability/rota futura;
+- usuário ACCESS-only recebendo instruções executáveis de Administração;
+- tool link do manual apontando URL arbitrária;
+- criação de BFF/DB/CMS para Help sem nova decisão.
 
 ## Experiência
 

@@ -121,6 +121,19 @@ Regras:
 - published version e histórico não podem ser sobrescritos silenciosamente;
 - hard delete de referência histórica não faz parte da V1.
 
+## Ajuda
+
+Contrato detalhado: [29-ajuda.md](./29-ajuda.md).
+
+Regras:
+- rota `/help` exige `controllership-finance.access`;
+- conteúdo runtime respeita feature availability e effective permissions;
+- seção/links de Administração exigem `controllership-finance.manage`;
+- hash de seção não bypassa AuthZ nem revela conteúdo MANAGE;
+- tool links usam destinos internos tipados; não aceitar URL arbitrária em conteúdo;
+- Ajuda V1 não cria endpoint, DB, CMS ou editor administrativo;
+- ausência de capability futura significa ausência da instrução runtime, não conteúdo disabled que revela comportamento ainda não liberado.
+
 ## Validator
 
 Validator é papel/responsabilidade operacional, não sinônimo de MANAGE.
@@ -174,7 +187,10 @@ Cobrir:
 - ACCESS alterando template/catálogo;
 - stale admin write sobrescrevendo revisão nova;
 - Administração criando usuário/role/permission no lugar do Core;
-- hard delete de item/versionamento histórico.
+- hard delete de item/versionamento histórico;
+- Help exibindo instrução administrativa para ACCESS-only;
+- deep link de Help revelando seção não autorizada;
+- tool link do manual navegando para URL arbitrária.
 
 ## IA
 

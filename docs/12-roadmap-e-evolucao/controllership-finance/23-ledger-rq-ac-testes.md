@@ -163,7 +163,18 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-ADM-10 | histórico administrativo é auditável/read-only | actor/time/entity/action/before-after/reason/effective/version | positive + immutable negative | audit store | TARGET |
 | RQ-ADM-11 | Administração é plugin-ui first | primitives públicos; zero design-system local; mobile/dark/a11y | component + visual/a11y | plugin-ui | TARGET |
 | RQ-ADM-12 | Help acompanha P6 | lifecycle/snapshot/inativação/catálogos ensinados somente quando implementados | help sync | feature-help-sync | TARGET |
-| RQ-HELP-01 | Ajuda acompanha toda mudança user-facing | conteúdo/deep links sincronizados no mesmo gate da feature | help sync + link check | feature-help-sync | TARGET |
+| RQ-HELP-01 | Ajuda usa manual canônico | `createDashboardUserManual` + PageHero/Path/SectionCard; zero chrome local | component + structural | plugin-ui + 29 | TARGET |
+| RQ-HELP-02 | Ajuda é rota de topbar com ACCESS | `/help` funciona em F5; sem ACCESS = 403 | navigation + permission negative | router/manifest/Core | TARGET |
+| RQ-HELP-03 | manual publica somente runtime real | feature/route futura não aparece nem vira link | route-disabled negative | feature catalog | TARGET |
+| RQ-HELP-04 | conteúdo respeita capability | Administração só com MANAGE; sem permission nova | positive + permission sibling | Core effective permissions | TARGET |
+| RQ-HELP-05 | Help contextual usa hash seguro | página abre seção correta; inválido não quebra; MANAGE hash não vaza conteúdo | deep-link + negative | HELP03 | TARGET |
+| RQ-HELP-06 | guide table navega por registry tipado | Quero/Onde/Como; destinos existentes/autorizados; sem arbitrary URL | structural + navigation negative | HELP01 | TARGET |
+| RQ-HELP-07 | conceitos preservam invariantes | ATTACHED!=VALIDATED, BLOCKER!=MY_TASK, Finalizar!=Enviar, ACCESS!=MANAGE, source error!=zero | content assertions | business contracts | TARGET |
+| RQ-HELP-08 | Central de Fechamento acompanha slices reais | P1–P5 publicados conforme runtime; P5 não promete envio bloqueado; P3 zero tolerance | feature sibling + content negative | P1–P5 contracts | TARGET |
+| RQ-HELP-09 | FAQ/glossário seguem terminologia vigente | nenhum termo stale; exemplos não viram regra | structural/content | terminology catalog | TARGET |
+| RQ-HELP-10 | Help V1 não cria backend/CMS | conteúdo versionado no MFE; sem endpoint/table/editor | architecture negative | D-HELP-02 | TARGET |
+| RQ-HELP-11 | light/dark/mobile/a11y seguem kit | mesmo conteúdo; TOC/nav semântico; teclado/foco | visual/a11y | plugin-ui | TARGET |
+| RQ-HELP-12 | feature-help-sync é gate | mudança user-facing avalia/atualiza Help no mesmo slice | help sync + link check | feature-help-sync | TARGET |
 | RQ-AUTHZ-01 | permissions do Portal são somente access e manage | nenhum permission code por página, CRUD, filial, unidade ou indicador | manifest/contract review | Core | TARGET |
 
 
