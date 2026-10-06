@@ -45,6 +45,7 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 | Central de Fechamento / Cockpit | PagePath/PageHero/SectionCard, `StatusBadge`, `ProgressTracker`, `MetricStrip`, `AlertQueue`, `WorklistItem`, `Timeline` | `@delpi/plugin-ui/index` | composição de cockpit reutilizável |
 | Central de Fechamento / Checklist e Documentos | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, attachment kit, forms, `Timeline`, modals/notices | `@delpi/plugin-ui/index` | master-detail operacional reutilizável |
 | Central de Fechamento / Estoque e Conciliação | `MetricKpiCard`, `ProgressTracker`, `AlertQueue`, `DetailFieldGrid`, `DataTableSection`, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | mesa de conciliação/readiness reutilizável |
+| Central de Fechamento / Classificações e Pendências | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, filters, `DetailFieldGrid`, forms, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | master-detail operacional com decisão humana |
 | Sala de interação | `InteractionRoomPage`, `INTERACTION_ROOM_PAGE_LABELS_PT`, `PluginErrorBoundary` | `@delpi/plugin-ui/index` | **full-page reusable** |
 | Minhas tarefas | `TaskWorkspacePage`, `TaskWorklistSection`, `TaskItemsTable`, `TaskSearchField`, `TaskEmptyState` | `@delpi/plugin-ui/index` | **workspace reusable** |
 | Administração | PageHero/PagePath, SectionRouteCard, DataTableSection, forms, Modal/Confirm/Notice/Status | `@delpi/plugin-ui/index` | composição reutilizável; sem full page pronta |
@@ -248,6 +249,50 @@ Contrato visual detalhado:
 - [10-p3-estoque-cutoff-e-conciliacao.md](./10-p3-estoque-cutoff-e-conciliacao.md)
 
 A divergência é a métrica monetária de maior destaque, mas o estado de readiness depende também de cutoff, revalidação e disponibilidade/freshness das sources. O kit fornece chrome; os contracts de source, regra e estado canônico continuam nos owners.
+
+## Central de Fechamento — Classificações e Pendências
+
+### Import preferencial
+
+```ts
+import {
+  createDashboardPagePath,
+  createDashboardPageHero,
+  createDashboardSectionCard,
+  ResizableColumns,
+  DataTableSection,
+  DataRecordCard,
+  createDashboardFiltersKit,
+  DetailFieldGrid,
+  ReadOnlyField,
+  SelectField,
+  TextAreaField,
+  StatusBadge,
+  AlertQueue,
+  Timeline,
+  StateBanner,
+  StateBox,
+  ModalShell,
+  ConfirmModalPanel,
+  FloatingNoticeStack,
+  ActionButton,
+  BackLink,
+  HelpTooltip,
+  EmptyState,
+  LoadingState,
+} from "@delpi/plugin-ui/index";
+```
+
+Contrato visual detalhado:
+- [11-p4-classificacoes-e-pendencias.md](./11-p4-classificacoes-e-pendencias.md)
+
+Desktop usa master-detail com `ResizableColumns`; mobile usa lista → detalhe full-width. A fila usa `DataTableSection`/ `DataRecordCard`, o detalhe compõe primitives do kit e o histórico usa `Timeline`.
+
+A sugestão de IA não ganha chrome de decisão concluída: deve permanecer dentro da composição existente (`SectionCard`/detail primitives), com confirmação humana separada quando autorizada.
+
+**DO NOT RECREATE:** master-detail, fila responsiva, filtros, badges, state chrome, detail fields, formulários, modal/confirm, notices, timeline ou HelpTooltip.
+
+P4 continua dono apenas do estado próprio do fechamento; regra upstream/CC, effective permissions e sources permanecem nos owners definidos pelos contracts.
 
 ## Sala de interação
 
