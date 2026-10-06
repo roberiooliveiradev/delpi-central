@@ -16,6 +16,34 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para catálogos (TV, cha
 
 Consumidores **importam** o contrato (baseline / OpenAPI), não reinventam enums nem labels.
 
+## Convenção de nomes de campos (Minha DELPI)
+
+Este documento é o owner global da convenção de nomes de campos da API DELPI. De-para de domínio (ex.: fornecedores) fica no documento canônico do domínio, não aqui.
+
+| Regra | Detalhe |
+|-------|---------|
+| idioma | nomes técnicos em **inglês**; português só em `label_pt_br`/locale |
+| formato | `snake_case`; sem `camelCase`; sem abreviações herdadas do Protheus |
+| nomes físicos | **nunca** `A2_*`, `B1_*`, `C5_*` etc. no contrato Minha DELPI — ficam restritos à camada adapter/persistence |
+| semântica | o nome expressa o conceito de negócio, não a coluna TOTVS |
+| unicidade | `1 conceito = 1 nome canônico`; reutilizar nome já publicado antes de criar outro |
+| prefixo de entidade | somente quando distingue identidade ou já é contrato publicado (`supplier_code`, `customer_code`); atributos intrínsecos sem prefixo (`email`, `phone`, `blocked`) |
+
+Sufixos canônicos:
+
+| sufixo | uso |
+|--------|-----|
+| `_code` | código de negócio/cadastro (ex.: `supplier_code`, `carrier_code`) |
+| `_id` | somente identificador técnico real — **nunca** para código Protheus |
+| `_date` | data |
+| `_datetime` | data/hora, quando realmente aplicável |
+| `_days` | duração em dias |
+| `_quantity` | quantidade |
+| `_percent` | percentual |
+| `_amount` | montante monetário |
+
+Dicionários de-para por domínio (ex.: fornecedores) vivem em `padroes-totvs/` e seguem esta convenção.
+
 Diretriz Cursor (obrigatória em rotas novas): **`.cursor/rules/api-delpi-openapi-route-standards.mdc`**.
 
 Qualidade transversal (envelope `paged_list`, DRY, migração A/B/C): **[padrao-qualidade-rotas.md](./padrao-qualidade-rotas.md)**.
