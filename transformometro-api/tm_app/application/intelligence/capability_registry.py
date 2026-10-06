@@ -106,49 +106,55 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
     _b("record.read", "gpt_get_record", ("get_record", "READ"), primary="get_record"),
     _b("record.change.prepare", "gpt_prepare_record_change", ("prepare_record_change", "PREPARE"), primary="prepare_record_change"),
     _b("proposal.commit", "gpt_commit_proposal", ("commit_proposal", "ACT"), primary="commit_proposal"),
-    _b("revision.activate.prepare", "gpt_activate_revision", ("prepare_activate_revision", "PREPARE"), primary="prepare_activate_revision"),
-    _b("dashboard.recalculate.prepare", "gpt_recalculate_dashboard", ("prepare_recalculate_dashboard", "PREPARE"), primary="prepare_recalculate_dashboard"),
-    _b("meeting_minute.workflow.prepare", "gpt_meeting_minute_workflow", ("prepare_meeting_minute_workflow", "PREPARE"), primary="prepare_meeting_minute_workflow"),
-    _b("improvement_package.prepare", "gpt_validate_improvement_package", ("prepare_improvement_package", "PREPARE"), primary="prepare_improvement_package"),
-    _b("evidence.list", "gpt_list_evidence", ("list_evidence", "READ"), primary="list_evidence"),
-    _b("evidence.manage.prepare", "gpt_manage_evidence", ("prepare_manage_evidence", "PREPARE"), primary="prepare_manage_evidence"),
     _b("process_timeline.read", "gpt_get_process_timeline", ("get_process_timeline", "READ"), primary="get_process_timeline"),
-    _b("shared_resource_cost.adjust.prepare", "gpt_adjust_shared_resource_cost", ("prepare_adjust_shared_resource_cost", "PREPARE"), primary="prepare_adjust_shared_resource_cost"),
+    # Semantic family: special governed operations — single-action
+    # capabilities share one PREPARE tool; policy stays per-capability.
+    _b("revision.activate.prepare", "gpt_prepare_governed_operation", ("prepare_governed_operation", "PREPARE"), primary="prepare_governed_operation"),
+    _b("dashboard.recalculate.prepare", "gpt_prepare_governed_operation", ("prepare_governed_operation", "PREPARE"), primary="prepare_governed_operation"),
+    _b("improvement_package.prepare", "gpt_prepare_governed_operation", ("prepare_governed_operation", "PREPARE"), primary="prepare_governed_operation"),
+    _b("shared_resource_cost.adjust.prepare", "gpt_prepare_governed_operation", ("prepare_governed_operation", "PREPARE"), primary="prepare_governed_operation"),
+    # Semantic family: meeting minutes — reads (incl. transcript analysis)
+    # on meeting_minute_read; workflow transitions + manage writes on
+    # prepare_meeting_minute_change.
+    _b("meeting_minute.read", "gpt_meeting_minute_read", ("meeting_minute_read", "READ"), primary="meeting_minute_read"),
+    _b("meeting_minute.workflow.prepare", "gpt_prepare_meeting_minute_change", ("prepare_meeting_minute_change", "PREPARE"), primary="prepare_meeting_minute_change"),
     _b(
         "meeting_minute.manage",
-        "gpt_meeting_minute_manage",
-        ("meeting_minute_read", "READ"),
-        ("generate_from_transcript", "ANALYSIS"),
-        ("prepare_meeting_minute_manage", "PREPARE"),
-        primary="prepare_meeting_minute_manage",
+        "gpt_prepare_meeting_minute_change",
+        ("prepare_meeting_minute_change", "PREPARE"),
+        primary="prepare_meeting_minute_change",
     ),
-    # Portal parity — Transformômetro tasks (TaskCommandUseCases authority).
-    _b("task.read", "gpt_task_read", ("task_read", "READ"), primary="task_read"),
-    _b(
-        "task.change.prepare",
-        "gpt_prepare_task",
-        ("prepare_task", "PREPARE"),
-        primary="prepare_task",
-    ),
-    # Portal parity — interaction room / messages
-    # (InteractionRoomUseCases authority; binary attachments stay UI-only).
+    # Semantic family: evidence (structured metadata only — binary
+    # transfer stays platform_blocked).
+    _b("evidence.list", "gpt_evidence_read", ("evidence_read", "READ"), primary="evidence_read"),
+    _b("evidence.manage.prepare", "gpt_prepare_evidence_change", ("prepare_evidence_change", "PREPARE"), primary="prepare_evidence_change"),
+    # Semantic family: collaboration — Transformômetro tasks
+    # (TaskCommandUseCases) + interaction rooms/messages
+    # (InteractionRoomUseCases; binary attachments stay UI-only).
+    _b("task.read", "gpt_collaboration_read", ("collaboration_read", "READ"), primary="collaboration_read"),
     _b(
         "interaction_room.read",
-        "gpt_interaction_room_read",
-        ("interaction_room_read", "READ"),
-        primary="interaction_room_read",
+        "gpt_collaboration_read",
+        ("collaboration_read", "READ"),
+        primary="collaboration_read",
+    ),
+    _b(
+        "task.change.prepare",
+        "gpt_prepare_collaboration_change",
+        ("prepare_collaboration_change", "PREPARE"),
+        primary="prepare_collaboration_change",
     ),
     _b(
         "interaction_room.change.prepare",
-        "gpt_prepare_interaction_room",
-        ("prepare_interaction_room", "PREPARE"),
-        primary="prepare_interaction_room",
+        "gpt_prepare_collaboration_change",
+        ("prepare_collaboration_change", "PREPARE"),
+        primary="prepare_collaboration_change",
     ),
     # MCP-native — no Actions surface; never fake a parity mapping.
-    _b("diagnostic.read", None, ("get_diagnostic", "READ"), primary="get_diagnostic"),
-    _b("diagnostic.list_by_revision", None, ("list_diagnostics_by_revision", "READ"), primary="list_diagnostics_by_revision"),
-    _b("diagnostic.create.prepare", None, ("prepare_create_diagnostic", "PREPARE"), primary="prepare_create_diagnostic"),
-    _b("diagnostic.manage.prepare", None, ("prepare_manage_diagnostic", "PREPARE"), primary="prepare_manage_diagnostic"),
+    _b("diagnostic.read", None, ("diagnostic_read", "READ"), primary="diagnostic_read"),
+    _b("diagnostic.list_by_revision", None, ("diagnostic_read", "READ"), primary="diagnostic_read"),
+    _b("diagnostic.create.prepare", None, ("prepare_diagnostic_change", "PREPARE"), primary="prepare_diagnostic_change"),
+    _b("diagnostic.manage.prepare", None, ("prepare_diagnostic_change", "PREPARE"), primary="prepare_diagnostic_change"),
 )
 
 
@@ -160,12 +166,21 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
 def actions_parity(
     bindings: tuple[CapabilityBinding, ...] = CAPABILITY_BINDINGS,
 ) -> dict[str, tuple[str, ...]]:
-    """Actions operationId → bound MCP tool names (the canonical parity map)."""
-    return {
-        b.actions_operation: tuple(ref.name for ref in b.mcp_tools)
-        for b in bindings
-        if b.actions_operation is not None
-    }
+    """Actions operationId → bound MCP tool names (the canonical parity map).
+
+    Multiple semantic capabilities may share one Actions operation (a
+    semantic family); the parity map merges their tool refs, deduped in
+    binding order.
+    """
+    parity: dict[str, list[str]] = {}
+    for b in bindings:
+        if b.actions_operation is None:
+            continue
+        tools = parity.setdefault(b.actions_operation, [])
+        for ref in b.mcp_tools:
+            if ref.name not in tools:
+                tools.append(ref.name)
+    return {op: tuple(tools) for op, tools in parity.items()}
 
 
 def actions_to_mcp_primary(

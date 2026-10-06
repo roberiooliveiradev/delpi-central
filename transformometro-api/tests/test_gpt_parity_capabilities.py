@@ -24,12 +24,17 @@ def _request() -> MagicMock:
 
 
 def test_parity_operation_ids_in_openapi_and_builder():
+    # Tool Surface Rationalization V1: parity ops consolidated into the
+    # family operations below (same capabilities, typed actions).
     expected = {
-        "gpt_list_evidence",
-        "gpt_manage_evidence",
+        "gpt_evidence_read",
+        "gpt_prepare_evidence_change",
         "gpt_get_process_timeline",
-        "gpt_adjust_shared_resource_cost",
-        "gpt_meeting_minute_manage",
+        "gpt_prepare_governed_operation",
+        "gpt_meeting_minute_read",
+        "gpt_prepare_meeting_minute_change",
+        "gpt_collaboration_read",
+        "gpt_prepare_collaboration_change",
     }
     assert expected <= set(GPT_ACTIONS_OPERATION_IDS)
     doc = build_gpt_actions_openapi()
@@ -40,9 +45,10 @@ def test_parity_operation_ids_in_openapi_and_builder():
         if isinstance(method, dict) and "operationId" in method
     }
     assert expected <= found
-    assert "GptEvidenceManageBody" in doc["components"]["schemas"]
-    assert "GptAdjustSharedResourceCostBody" in doc["components"]["schemas"]
-    assert "GptMeetingMinuteManageBody" in doc["components"]["schemas"]
+    assert "GptEvidenceChangeBody" in doc["components"]["schemas"]
+    assert "GptGovernedOperationBody" in doc["components"]["schemas"]
+    assert "GptMeetingMinuteChangeBody" in doc["components"]["schemas"]
+    assert "GptCollaborationChangeBody" in doc["components"]["schemas"]
 
 
 def test_list_evidence_process_requires_view_authz():
@@ -554,8 +560,8 @@ def test_no_generic_proxy_or_binary_payload_in_parity_openapi():
     assert "gpt_call_any_route" not in blob
     assert "multipart" not in blob
     assert "base64" not in blob
-    manage = doc["paths"]["/transformometro/gpt-actions/v1/evidence/manage"]["post"]
-    # V2: manage is PREPARE-only; commit is consequential on gpt_commit_proposal.
+    manage = doc["paths"]["/transformometro/gpt-actions/v1/evidence/prepare"]["post"]
+    # V2: evidence change is PREPARE-only; commit is consequential on gpt_commit_proposal.
     assert manage.get("x-openai-isConsequential") is False
     commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
     assert commit["x-openai-isConsequential"] is True

@@ -36,7 +36,11 @@ cd transformometro-api
 PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 ```
 
-## Operations (18 no schema importado — V2 prepare/commit)
+## Operations (17 no schema importado — V2 prepare/commit + famílias)
+
+Tool Surface Rationalization V1: ops de workflow especializadas foram
+consolidadas em famílias semânticas com `action` fechado — mesma capability,
+mesma policy por ação, mesmo `commit_proposal` como ACT único.
 
 | operationId | Método / path | Kind |
 |-------------|----------------|------|
@@ -49,37 +53,41 @@ PYTHONPATH=.:../shared python scripts/sync_gpt_actions_openapi.py
 | `gpt_get_record` | `GET .../records/{entity}/{id}` | ENTITY READ |
 | `gpt_prepare_record_change` | `POST .../records/prepare-change` | ENTITY PREPARE |
 | `gpt_commit_proposal` | `POST .../proposals/commit` | COMMON COMMIT (ACT) |
-| `gpt_activate_revision` | `POST .../revisions/{id}/activate` | WORKFLOW PREPARE |
-| `gpt_recalculate_dashboard` | `POST .../dashboard/recalculate` | WORKFLOW PREPARE |
-| `gpt_meeting_minute_workflow` | `POST .../meeting-minutes/{id}/workflow` | WORKFLOW PREPARE |
-| `gpt_validate_improvement_package` | `POST .../improvement-packages/validate` | WORKFLOW PREPARE |
-| `gpt_list_evidence` | `GET .../evidence` | READ |
-| `gpt_manage_evidence` | `POST .../evidence/manage` | WORKFLOW PREPARE |
+| `gpt_prepare_governed_operation` | `POST .../governed-operations/prepare` | WORKFLOW PREPARE (action=activate_revision\|recalculate_dashboard\|commit_improvement_package\|adjust_shared_resource_cost) |
+| `gpt_evidence_read` | `GET .../evidence` | READ (action=list) |
+| `gpt_prepare_evidence_change` | `POST .../evidence/prepare` | WORKFLOW PREPARE (action=create_link\|update_description\|delete) |
 | `gpt_get_process_timeline` | `GET .../processes/{id}/timeline` | READ |
-| `gpt_adjust_shared_resource_cost` | `POST .../shared-resources/adjust-cost` | WORKFLOW PREPARE |
-| `gpt_meeting_minute_manage` | `POST .../meeting-minutes/manage` | WORKFLOW PREPARE |
+| `gpt_meeting_minute_read` | `POST .../meeting-minutes/read` | READ (action=pending_signatures\|audit\|versions\|participants\|signers\|generate_from_transcript) |
+| `gpt_prepare_meeting_minute_change` | `POST .../meeting-minutes/prepare` | WORKFLOW PREPARE (action=send\|finalize\|cancel\|resend\|create_version\|set_participants\|set_signers) |
+| `gpt_collaboration_read` | `GET .../collaboration` | READ (action=my_tasks\|task\|process_tasks\|rooms\|room\|messages\|attachments) |
+| `gpt_prepare_collaboration_change` | `POST .../collaboration/prepare` | WORKFLOW PREPARE (action=create_task\|update_task\|complete_task\|cancel_task\|open_room\|post_message\|edit_message\|delete_message\|toggle_reaction\|pin_message\|unpin_message\|mark_room_read) |
 
 ### Legacy (NOT Builder-visible)
 
 | Legacy | Replacement | Public? |
 |---|---|---|
 | `gpt_create_record` / `gpt_update_record` / `gpt_delete_record` / `gpt_duplicate_record` | `gpt_prepare_record_change` + `gpt_commit_proposal` | No |
-| `gpt_commit_improvement_package` | `gpt_validate_improvement_package` + `gpt_commit_proposal` | No |
+| `gpt_commit_improvement_package` | `gpt_prepare_governed_operation` (action=commit_improvement_package) + `gpt_commit_proposal` | No |
+| `gpt_activate_revision` / `gpt_recalculate_dashboard` / `gpt_validate_improvement_package` / `gpt_adjust_shared_resource_cost` | `gpt_prepare_governed_operation` | Removed (tombstoned) |
+| `gpt_list_evidence` / `gpt_manage_evidence` | `gpt_evidence_read` / `gpt_prepare_evidence_change` | Removed |
+| `gpt_meeting_minute_workflow` / `gpt_meeting_minute_manage` | `gpt_prepare_meeting_minute_change` / `gpt_meeting_minute_read` | Removed |
+| `gpt_task_read` / `gpt_prepare_task` / `gpt_interaction_room_read` / `gpt_prepare_interaction_room` | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | Removed |
 
 ### Capacidade × superfície (TM-GPI-006)
 
 | Capacidade | Classificação |
 |---|---|
 | Contexto pessoal (nome/e-mail/cargo) | **SUPPORTED_BY_TÉO** (`gpt_get_my_context`) — perfil ≠ autorização |
-| Link/metadata de evidência (processo/revisão) | **SUPPORTED_BY_TÉO** (`gpt_list_evidence` / `gpt_manage_evidence` → `gpt_commit_proposal`) |
+| Link/metadata de evidência (processo/revisão) | **SUPPORTED_BY_TÉO** (`gpt_evidence_read` / `gpt_prepare_evidence_change` → `gpt_commit_proposal`) |
 | Upload/download binário de evidência | **BLOCKED_BY_PLATFORM** / **SUPPORTED_BY_UI_ONLY** |
 | Timeline de auditoria do processo | **SUPPORTED_BY_TÉO** (`gpt_get_process_timeline`) |
-| Reajuste semântico de custo de recurso compartilhado | **SUPPORTED_BY_TÉO** (`gpt_adjust_shared_resource_cost` → commit) |
-| Ata: send/finalize/cancel | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_workflow` → commit) |
-| Ata: pending/audit/versions/participants/signers/resend/create_version/generate_from_transcript | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_manage` → commit) |
+| Reajuste semântico de custo de recurso compartilhado | **SUPPORTED_BY_TÉO** (`gpt_prepare_governed_operation` action=adjust_shared_resource_cost → commit) |
+| Ata: send/finalize/cancel/resend/create_version/set_participants/set_signers | **SUPPORTED_BY_TÉO** (`gpt_prepare_meeting_minute_change` → commit) |
+| Ata: pending/audit/versions/participants/signers/generate_from_transcript | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_read`) |
+| Tasks (my/process/create/update/complete/cancel) | **SUPPORTED_BY_TÉO** (`gpt_collaboration_read` / `gpt_prepare_collaboration_change` → commit) |
+| Interaction rooms/messages/reactions/pins/read-state | **SUPPORTED_BY_TÉO** (mesma família collaboration; anexos binários = platform_blocked) |
 | Assinatura PNG / PDF / magic-link público | **NOT_EXPOSED_BY_DESIGN** / **SUPPORTED_BY_UI_ONLY** |
 | Proxy HTTP genérico, locks, websocket, backup JSON, S2S | **NOT_EXPOSED_BY_DESIGN** |
-| Tasks / Interaction Room | **DOMAIN_ONLY_BY_DESIGN** |
 
 Proveniência: ata = registro formal; áudio/vídeo = evidência original quando governada; transcript = representação derivada; resumo TÉO = conteúdo derivado. Não converter derivado em evidência autoritativa.
 
@@ -181,13 +189,13 @@ Checklist operacional: [`gpt-builder-go-live.md`](./gpt-builder-go-live.md).
 
 1. Create GPT → Actions → Import from URL  
    `https://<host>/apps/transformometro-api/transformometro/gpt-actions/v1/openapi.json`  
-   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **18** actions importáveis — V2).
+   ou cole o conteúdo de `docs/gpt-actions/openapi-gpt-actions.json` (esperar **17** actions importáveis — famílias V2).
 2. Authentication → OAuth (valores da tabela acima).
 3. Colar o bloco Instructions de [`specialist-instructions.md`](./specialist-instructions.md) (**REPLACE INSTRUCTIONS**).
 4. Adicionar [`teo-method-playbooks.md`](./teo-method-playbooks.md) como Knowledge do GPT (metodologia; não authority de dados).
-5. OpenAPI: reimportar **somente** quando o schema mudar. Contrato importável = **18** operationIds (`GOVERNED_PREPARE_COMMIT_V2`). Inventários 20/21 = HISTORICAL.
+5. OpenAPI: reimportar **somente** quando o schema mudar. Contrato importável = **17** operationIds (`GOVERNED_PREPARE_COMMIT_V2` + famílias). Inventários 18/20/21/22 = HISTORICAL.
 
-Fluxo guiado preferido: `gpt_get_catalog` → `registration_guide.package_hints` → entrevista → `gpt_validate_improvement_package` (`ready=true`) → SHOW → EXPLICIT CONFIRMATION → `gpt_commit_proposal`.
+Fluxo guiado preferido: `gpt_get_catalog` → `registration_guide.package_hints` → entrevista → `gpt_prepare_governed_operation` (action=commit_improvement_package, `ready=true`) → SHOW → EXPLICIT CONFIRMATION → `gpt_commit_proposal`.
 
 ### Envelope canônico do improvement package
 
@@ -199,7 +207,7 @@ process + instance + baseline? + scenario?
 
 - Reuso: `process.processo_id` / `instance.instancia_id`.
 - Cenário: campos de revisão **somente** em `scenario.revision` (nunca flat em `scenario`).
-- Validar com `gpt_validate_improvement_package` (PREPARE; nunca escreve).
+- Validar com `gpt_prepare_governed_operation` action=commit_improvement_package (PREPARE; nunca escreve).
 - Commit via `gpt_commit_proposal` (opaque `proposal_handle`). `gpt_commit_improvement_package` = LEGACY_TRANSITIONAL off-schema.
 - Pacote incompleto → proposal com `ready=false` / `act_allowed=false`, sem escrita.
 - Não há dialeto flat→nested; um único contrato.

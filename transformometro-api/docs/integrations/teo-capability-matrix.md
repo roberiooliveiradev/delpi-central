@@ -196,17 +196,17 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Process context | TM | R | `get_process_context` | `gpt_get_process_context` | PLANNED | view/process | FULL_PARITY* |
 | Dashboard analyze | TM | R | `analyze` | `gpt_analyze` | PLANNED | dashboard | FULL_PARITY* |
 | Entity CRUD (17 legacy + process_document) | TM | R/W | search/get + prepare_record_change + commit_proposal | gpt_prepare_record_change + gpt_commit_proposal | PLANNED | per entity | FULL_PARITY* |
-| Activate revision | TM | W | prepare_activate_revision → commit_proposal | `gpt_activate_revision` + commit | PLANNED | revisao manage | FULL_PARITY* |
-| Recalculate dashboard | TM | W | prepare_recalculate_dashboard → commit_proposal | `gpt_recalculate_dashboard` + commit | PLANNED | dashboard | FULL_PARITY* |
-| Improvement package | TM | W | prepare_improvement_package → commit_proposal | validate + commit | PLANNED | package AuthZ | FULL_PARITY* |
-| Evidence link/metadata | TM | R/W | list + prepare_manage_evidence → commit_proposal | list + manage + commit | PLANNED | manage + confirm_delete | FULL_PARITY* |
+| Activate revision | TM | W | prepare_governed_operation(activate_revision) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | revisao manage | FULL_PARITY* |
+| Recalculate dashboard | TM | W | prepare_governed_operation(recalculate_dashboard) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | dashboard | FULL_PARITY* |
+| Improvement package | TM | W | prepare_governed_operation(commit_improvement_package) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | package AuthZ | FULL_PARITY* |
+| Evidence link/metadata | TM | R/W | evidence_read(list) + prepare_evidence_change → commit_proposal | `gpt_evidence_read` / `gpt_prepare_evidence_change` + commit | PLANNED | manage + confirm_delete | FULL_PARITY* |
 | Process timeline | TM | R | `get_process_timeline` | `gpt_get_process_timeline` | PLANNED | view | FULL_PARITY* |
-| Shared resource cost adjust | TM | W | prepare_adjust_shared_resource_cost → commit_proposal | `gpt_adjust_shared_resource_cost` + commit | PLANNED | parity | FULL_PARITY* |
-| Meeting minute workflow/manage | TM | R/W | prepare_* + commit_proposal (+ read/analysis) | gpt_meeting_* + commit | PLANNED | minutes svc | FULL_PARITY* |
-| **Diagnostic V1** | TM | R/W | `get_diagnostic` / `list_diagnostics_by_revision` + `prepare_create_diagnostic` / `prepare_manage_diagnostic` → `commit_proposal` | — (MCP-native, no GPT ops) | PLANNED | `transformometro.access` + fresh Core AuthZ on ACT | **MCP_ONLY** |
+| Shared resource cost adjust | TM | W | prepare_governed_operation(adjust_shared_resource_cost) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | parity | FULL_PARITY* |
+| Meeting minute workflow/manage | TM | R/W | meeting_minute_read + prepare_meeting_minute_change → commit_proposal | `gpt_meeting_minute_read` / `gpt_prepare_meeting_minute_change` + commit | PLANNED | minutes svc | FULL_PARITY* |
+| **Diagnostic V1** | TM | R/W | `diagnostic_read`(get\|by_revision) + `prepare_diagnostic_change`(create\|13 manage actions) → `commit_proposal` | — (MCP-native, no GPT ops) | PLANNED | `transformometro.access` + fresh Core AuthZ on ACT | **MCP_ONLY** |
 | **Process documentation** | TM | R/W | via record tools | via record entity | PLANNED | `transformometro.access` | FULL_PARITY* |
-| Tasks | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
-| Interaction room | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
+| Tasks | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* |
+| Interaction room | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* (binary attachments platform_blocked) |
 | Process workspace UI | MFE | R | — | — | — | — | NOT_APPLICABLE |
 
 \*FULL_PARITY = Actions + MCP mapped to same application services. DÉLIA consumption = **PLANNED / NOT_PROVEN** (no runtime adapter in `delia-api` at this HEAD).

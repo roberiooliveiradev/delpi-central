@@ -54,7 +54,7 @@ https://<host-publico>/apps/transformometro-api/transformometro/gpt-actions/v1/o
 
 Alternativa: colar `docs/gpt-actions/openapi-gpt-actions.json`.
 
-Esperado: **18** operations importáveis (V2), incluindo `gpt_get_methodology_guide`, `gpt_prepare_record_change`, `gpt_commit_proposal` (`gpt_get_my_context`, `gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_validate_improvement_package`, `gpt_list_evidence`, `gpt_manage_evidence`, `gpt_get_process_timeline`, `gpt_adjust_shared_resource_cost`, `gpt_meeting_minute_manage`, …). Sem `gpt_commit_improvement_package` no schema (commit via `gpt_commit_proposal`). O GET `openapi.json` não aparece como Action. Inventários de 20/21 operations são HISTORICAL.
+Esperado: **17** operations importáveis (famílias V2), incluindo `gpt_get_methodology_guide`, `gpt_prepare_record_change`, `gpt_commit_proposal`, `gpt_prepare_governed_operation`, `gpt_evidence_read`, `gpt_prepare_evidence_change`, `gpt_meeting_minute_read`, `gpt_prepare_meeting_minute_change`, `gpt_collaboration_read`, `gpt_prepare_collaboration_change` (`gpt_get_my_context`, `gpt_get_process_context`, `gpt_analyze`, `gpt_get_catalog`, `gpt_get_process_timeline`, `gpt_search_records`, `gpt_get_record`). Sem `gpt_commit_improvement_package` no schema (commit via `gpt_commit_proposal`). O GET `openapi.json` não aparece como Action. Inventários de 18/20/21/22 operations são HISTORICAL.
 
 O ChatGPT **rejeita** `servers.url` relativo (`/apps/transformometro-api`). Se aparecer «Não foi possível encontrar uma URL válida em `servers`», altere no editor para:
 
@@ -90,13 +90,13 @@ Resumo operacional:
 - Method Router escolhe o menor método suficiente; `INFERRED != FACT`; `PROPOSED != SAVED`.
 - `gpt_get_catalog` + `registration_guide.entity_schemas` antes de qualquer gravação.
 - Schema canônico da entidade prevalece sobre a assinatura genérica da Action; não empacotar campos em `conteudo` (exceto documentos).
-- Envelope nested (`process` + `instance` + `scenario.revision`) → `gpt_validate_improvement_package` → `ready=true` → mostrar → confirmar → `gpt_commit_proposal`.
+- Envelope nested (`process` + `instance` + `scenario.revision`) → `gpt_prepare_governed_operation` action=commit_improvement_package → `ready=true` → mostrar → confirmar → `gpt_commit_proposal`.
 - Diagramas/WBS: draft = PROPOSED; persistência governada com validators, manage AuthZ e read-back.
 - Após write rejeitado: read-back antes de retry; evitar duplicata.
-- Evidência: links/metadados via `gpt_list_evidence` / `gpt_manage_evidence`; upload/download binário permanece UI-only / BLOCKED_BY_PLATFORM.
+- Evidência: links/metadados via `gpt_evidence_read` / `gpt_prepare_evidence_change`; upload/download binário permanece UI-only / BLOCKED_BY_PLATFORM.
 - Assinatura manuscrita PNG/PDF/magic-link público: UI-only / NOT_EXPOSED_BY_DESIGN.
 - Timeline de processo, reajuste canônico de custo e extras de ata: Actions semânticas dedicadas (não proxy genérico).
-- REIMPORT OpenAPI quando o schema mudar. No código, o contrato importável tem **18** operationIds (`GPT_ACTIONS_OPERATION_IDS`, lifecycle `GOVERNED_PREPARE_COMMIT_V2`). **20/21** são HISTORICAL. Este checklist não prova que o Builder já foi reimportado.
+- REIMPORT OpenAPI quando o schema mudar. No código, o contrato importável tem **17** operationIds (`GPT_ACTIONS_OPERATION_IDS`, lifecycle `GOVERNED_PREPARE_COMMIT_V2` + famílias semânticas). **18/20/21/22** são HISTORICAL. Este checklist não prova que o Builder já foi reimportado.
 - `gpt_get_my_context` = contexto pessoal (nome/cargo), não permissões.
 
 ## 4. Fechar redirects com o GPT ID real

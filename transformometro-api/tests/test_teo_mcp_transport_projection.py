@@ -141,5 +141,18 @@ def test_parity_map_derives_from_canonical_record():
     assert set(mapping.values()) <= names
     assert mapping["gpt_commit_proposal"] == "commit_proposal"
     assert mapping["gpt_prepare_record_change"] == "prepare_record_change"
-    # 1→N parity picks the write-path tool as primary.
-    assert mapping["gpt_meeting_minute_manage"] == "prepare_meeting_minute_manage"
+    # Family transport: each consolidated Actions op projects to the
+    # matching MCP family tool.
+    assert (
+        mapping["gpt_prepare_meeting_minute_change"]
+        == "prepare_meeting_minute_change"
+    )
+    assert mapping["gpt_meeting_minute_read"] == "meeting_minute_read"
+    assert (
+        mapping["gpt_prepare_collaboration_change"]
+        == "prepare_collaboration_change"
+    )
+    assert (
+        mapping["gpt_prepare_governed_operation"]
+        == "prepare_governed_operation"
+    )

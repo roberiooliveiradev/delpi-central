@@ -229,7 +229,9 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 "actions": [
                     "Create non-baseline revision with revisao_referencia_id = baseline (or prior active).",
                     "Upsert measurement + investments.",
-                    "Prefer gpt_validate_improvement_package (PREPARE) then gpt_commit_proposal.",
+                    "Prefer gpt_prepare_governed_operation "
+                    "(action=commit_improvement_package, PREPARE) then "
+                    "gpt_commit_proposal.",
                     "Activate only the scenario revision when the user confirms.",
                 ],
             },
@@ -244,26 +246,30 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "PREPARE → POLICY GATE: auto_act commits direto; "
                     "confirm_before_act → SHOW → uma Confirma? → COMMIT; "
                     "sempre VERIFY + manage AuthZ required.",
-                    "Evidence link/metadata: gpt_list_evidence + gpt_manage_evidence "
+                    "Evidence link/metadata: gpt_evidence_read (action=list) + "
+                    "gpt_prepare_evidence_change "
                     "(create_link|update_description|delete with confirm_delete). "
                     "Binary evidence upload/download remains UI-only / BLOCKED_BY_PLATFORM.",
                     "Point user to Minha DELPI UI for binary evidence uploads and "
                     "meeting-minute handwritten signatures (PNG/PDF/public sign not exposed).",
                     "Process timeline: gpt_get_process_timeline (read-only, process-scoped).",
-                    "Shared-resource cost adjustment: gpt_adjust_shared_resource_cost "
-                    "(canonical registrar_reajuste — not generic resource_cost update).",
-                    "Meeting-minute extras: gpt_meeting_minute_manage "
-                    "(pending/audit/versions/participants/signers/resend/create_version/"
-                    "generate_from_transcript). send/finalize/cancel stay on "
-                    "gpt_meeting_minute_workflow.",
-                    "Tasks: gpt_task_read (mine|related|get) + "
-                    "gpt_prepare_task (create|update|complete|cancel) → "
-                    "gpt_commit_proposal. cancel is confirm_before_act.",
-                    "Interaction rooms: gpt_interaction_room_read "
-                    "(list|get|messages|attachments) + "
-                    "gpt_prepare_interaction_room (open|post_message|"
-                    "edit_message|delete_message|reaction|pin|unpin|"
-                    "mark_read) → gpt_commit_proposal. delete_message is "
+                    "Special governed operations (revision activation, dashboard "
+                    "recalculation, improvement package, shared-resource cost "
+                    "adjustment): gpt_prepare_governed_operation — action selects "
+                    "the capability; canonical registrar_reajuste for cost — not "
+                    "generic resource_cost update.",
+                    "Meeting minutes: gpt_meeting_minute_read "
+                    "(pending_signatures|audit|versions|participants|signers|"
+                    "generate_from_transcript) + gpt_prepare_meeting_minute_change "
+                    "(send|finalize|cancel|resend|create_version|set_participants|"
+                    "set_signers) → gpt_commit_proposal.",
+                    "Tasks + interaction rooms (collaboration family): "
+                    "gpt_collaboration_read (my_tasks|task|process_tasks|rooms|"
+                    "room|messages|attachments) + gpt_prepare_collaboration_change "
+                    "(create_task|update_task|complete_task|cancel_task|"
+                    "open_room|post_message|edit_message|delete_message|"
+                    "toggle_reaction|pin_message|unpin_message|mark_room_read) → "
+                    "gpt_commit_proposal. cancel_task and delete_message are "
                     "confirm_before_act. Binary attachments are "
                     "BLOCKED_BY_PLATFORM (metadata read only).",
                     "Offer gpt_analyze for KPIs after recalculate.",
@@ -534,14 +540,16 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "meeting_date MUST be YYYY-MM-DD (not DD/MM/AAAA).",
                     "start_time/end_time: HH:MM or HH:MM:SS (not 14h30).",
                     "Optional UUIDs: omit or null — never send empty string \"\".",
-                    "WORKFLOW send/finalize/cancel: gpt_meeting_minute_workflow (PREPARE) "
-                    "→ gpt_commit_proposal — not generic record update.",
-                    "Extras (pending_signatures/audit/versions/participants/signers/resend/"
-                    "create_version/generate_from_transcript): gpt_meeting_minute_manage (PREPARE) "
-                    "→ gpt_commit_proposal. resend requires confirm_resend=true in the manage body.",
+                    "WORKFLOW + manage writes send/finalize/cancel/resend/create_version/"
+                    "set_participants/set_signers: gpt_prepare_meeting_minute_change (PREPARE) "
+                    "→ gpt_commit_proposal — not generic record update. resend requires "
+                    "data.confirm_resend=true.",
+                    "READ actions (pending_signatures/audit/versions/participants/signers/"
+                    "generate_from_transcript): gpt_meeting_minute_read.",
                     "Handwritten signature PNG/PDF/public magic-link remain UI-only / not exposed.",
                     "Binary evidence upload/download remains UI-only (BLOCKED_BY_PLATFORM); "
-                    "link/metadata evidence uses gpt_list_evidence / gpt_manage_evidence → commit.",
+                    "link/metadata evidence uses gpt_evidence_read / "
+                    "gpt_prepare_evidence_change → commit.",
                     "Alias: ata → meeting_minute.",
                     "Not process_document (Markdown process knowledge).",
                 ],

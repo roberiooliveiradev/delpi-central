@@ -45,19 +45,21 @@ def test_r1_prepare_record_change_description_is_policy_aware() -> None:
 
 
 def test_r2_adjust_shared_resource_cost_is_auto_act() -> None:
-    desc = _tool_descriptions()["prepare_adjust_shared_resource_cost"]
+    # Family tool: execution_policy is per action; adjust_shared_resource_cost
+    # stays auto_act inside prepare_governed_operation.
+    desc = _tool_descriptions()["prepare_governed_operation"]
     assert "after confirmation" not in desc
     assert "auto_act" in desc
+    assert "adjust_shared_resource_cost" in desc
 
 
 def test_r3_create_diagnostic_is_auto_act() -> None:
-    desc = _tool_descriptions()["prepare_create_diagnostic"]
-    assert "explicit user confirmation" not in desc
+    desc = _tool_descriptions()["prepare_diagnostic_change"]
     assert "auto_act" in desc
 
 
 def test_r4_manage_diagnostic_is_confirm_before_act() -> None:
-    desc = _tool_descriptions()["prepare_manage_diagnostic"]
+    desc = _tool_descriptions()["prepare_diagnostic_change"]
     assert "confirm_before_act" in desc
     assert "explicit" in desc and "confirmation" in desc
 

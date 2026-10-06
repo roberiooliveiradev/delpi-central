@@ -108,44 +108,35 @@ def test_new_capabilities_are_governed_write_capabilities() -> None:
 
 def test_registry_bindings_cover_task_and_room() -> None:
     by_id = {b.id: b for b in CAPABILITY_BINDINGS}
-    assert by_id["task.read"].actions_operation == "gpt_task_read"
-    assert by_id["task.change.prepare"].actions_operation == "gpt_prepare_task"
+    assert by_id["task.read"].actions_operation == "gpt_collaboration_read"
+    assert (
+        by_id["task.change.prepare"].actions_operation
+        == "gpt_prepare_collaboration_change"
+    )
     assert (
         by_id["interaction_room.read"].actions_operation
-        == "gpt_interaction_room_read"
+        == "gpt_collaboration_read"
     )
     assert (
         by_id["interaction_room.change.prepare"].actions_operation
-        == "gpt_prepare_interaction_room"
+        == "gpt_prepare_collaboration_change"
     )
     parity = actions_parity()
-    assert parity["gpt_task_read"] == ("task_read",)
-    assert parity["gpt_prepare_task"] == ("prepare_task",)
-    assert parity["gpt_interaction_room_read"] == ("interaction_room_read",)
-    assert parity["gpt_prepare_interaction_room"] == (
-        "prepare_interaction_room",
+    assert parity["gpt_collaboration_read"] == ("collaboration_read",)
+    assert parity["gpt_prepare_collaboration_change"] == (
+        "prepare_collaboration_change",
     )
 
 
 def test_mcp_tool_registration_and_classes() -> None:
-    assert "task_read" in MCP_TOOL_NAMES
-    assert "prepare_task" in MCP_TOOL_NAMES
-    assert "interaction_room_read" in MCP_TOOL_NAMES
-    assert "prepare_interaction_room" in MCP_TOOL_NAMES
-    assert TOOL_CLASS["task_read"] == "READ"
-    assert TOOL_CLASS["prepare_task"] == "PREPARE"
-    assert TOOL_CLASS["interaction_room_read"] == "READ"
-    assert TOOL_CLASS["prepare_interaction_room"] == "PREPARE"
-    assert "prepare_task" in PREPARE_TOOL_CAPABILITY
-    assert "prepare_interaction_room" in PREPARE_TOOL_CAPABILITY
+    assert "collaboration_read" in MCP_TOOL_NAMES
+    assert "prepare_collaboration_change" in MCP_TOOL_NAMES
+    assert TOOL_CLASS["collaboration_read"] == "READ"
+    assert TOOL_CLASS["prepare_collaboration_change"] == "PREPARE"
+    assert "prepare_collaboration_change" in PREPARE_TOOL_CAPABILITY
     tools = asyncio.run(create_mcp_server().list_tools())
     names = {t.name for t in tools}
-    assert {
-        "task_read",
-        "prepare_task",
-        "interaction_room_read",
-        "prepare_interaction_room",
-    } <= names
+    assert {"collaboration_read", "prepare_collaboration_change"} <= names
     assert len(names) == len(MCP_TOOL_NAMES)
 
 
@@ -172,10 +163,8 @@ def test_actions_openapi_contains_new_operations() -> None:
         for op in methods.values()
     }
     assert {
-        "gpt_task_read",
-        "gpt_prepare_task",
-        "gpt_interaction_room_read",
-        "gpt_prepare_interaction_room",
+        "gpt_collaboration_read",
+        "gpt_prepare_collaboration_change",
     } <= op_ids
 
 
@@ -405,7 +394,7 @@ def test_agent_intelligence_flows_reference_real_tools() -> None:
     )
     mcp_names = set(MCP_TOOL_NAMES)
     actions_names = set(GPT_ACTIONS_OPERATION_IDS)
-    for flow_id in ("tasks", "interaction_room"):
+    for flow_id in ("collaboration",):
         flow = content["flows"][flow_id]
         assert set(flow["mcp_tools"]) <= mcp_names, flow_id
         assert set(flow["gpt_operations"]) <= actions_names, flow_id

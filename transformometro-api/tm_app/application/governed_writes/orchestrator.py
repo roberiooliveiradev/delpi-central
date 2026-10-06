@@ -108,6 +108,39 @@ INTERACTION_ROOM_CAPABILITIES = frozenset(
 # Tool/Actions ``action`` argument → orchestrator capability. The transport
 # passes a coarse action; the semantic capability (which carries the
 # canonical execution_policy) is resolved here — never by transport prose.
+# Semantic family: collaboration (tasks + interaction rooms share the
+# same governed PREPARE family; policy stays per-capability).
+COLLABORATION_ACTION_TO_CAPABILITY = {
+    "create_task": "create_task",
+    "update_task": "update_task",
+    "complete_task": "complete_task",
+    "cancel_task": "cancel_task",
+    "open_room": "open_interaction_room",
+    "post_message": "post_interaction_message",
+    "edit_message": "edit_interaction_message",
+    "delete_message": "delete_interaction_message",
+    "toggle_reaction": "toggle_interaction_reaction",
+    "pin_message": "pin_interaction_message",
+    "unpin_message": "unpin_interaction_message",
+    "mark_room_read": "mark_interaction_read",
+}
+
+# Collaboration READ surface — shared by MCP + GPT Actions projections.
+COLLABORATION_READ_ACTIONS = frozenset(
+    {
+        "my_tasks",
+        "task",
+        "process_tasks",
+        "rooms",
+        "room",
+        "messages",
+        "attachments",
+    }
+)
+
+# Back-compat alias — legacy single-domain transports (task_read /
+# prepare_task, interaction_room_read / prepare_interaction_room) kept
+# for internal callers; resolves to the same canonical capabilities.
 TASK_ACTION_TO_CAPABILITY = {
     "create": "create_task",
     "update": "update_task",
@@ -126,6 +159,29 @@ INTERACTION_ROOM_ACTION_TO_CAPABILITY = {
     "mark_read": "mark_interaction_read",
 }
 
+# Semantic family: special governed operations — one-shot domain writes
+# that are neither records nor collaboration (revision lifecycle,
+# dashboard recompute, improvement package, shared-resource cost).
+GOVERNED_OPERATION_ACTION_TO_CAPABILITY = {
+    "activate_revision": "activate_revision",
+    "recalculate_dashboard": "recalculate_dashboard",
+    "commit_improvement_package": "commit_improvement_package",
+    "adjust_shared_resource_cost": "adjust_shared_resource_cost",
+}
+
+# Semantic family: meeting minutes — workflow transitions and minute
+# manage writes share one PREPARE surface; READ actions stay on the
+# meeting_minute_read tool. Policy stays per-capability.
+MEETING_MINUTE_ACTION_TO_CAPABILITY = {
+    "send": "meeting_minute_workflow",
+    "finalize": "meeting_minute_workflow",
+    "cancel": "meeting_minute_workflow",
+    "resend": "meeting_minute_manage",
+    "create_version": "meeting_minute_manage",
+    "set_participants": "meeting_minute_manage",
+    "set_signers": "meeting_minute_manage",
+}
+
 # meeting_minute_manage actions that are READ (no prepare)
 MEETING_MANAGE_READ_ACTIONS = frozenset(
     {
@@ -139,6 +195,12 @@ MEETING_MANAGE_READ_ACTIONS = frozenset(
 
 # generate_from_transcript = PREPARE-like analysis, no persist
 MEETING_MANAGE_NON_ACT = frozenset({"generate_from_transcript"}) | MEETING_MANAGE_READ_ACTIONS
+
+# Canonical meeting_minute_read surface — READ actions plus the
+# non-persisting transcript analysis. Shared by MCP + GPT Actions.
+MEETING_MINUTE_READ_ACTIONS = MEETING_MANAGE_READ_ACTIONS | frozenset(
+    {"generate_from_transcript"}
+)
 
 
 def _actor(request: Request) -> tuple[str, str | None]:
@@ -1201,14 +1263,13 @@ class GovernedWriteOrchestrator:
             # state matches the sealed postcondition.
             tid = str(change.get("task_id") or (write_result or {}).get("id") or "")
             read = self._dispatch.get_task(request, tid)
-            action = str(change.get("action") or "")
-            if action == "complete" and read.get("status") != "completed":
+            if cap == "complete_task" and read.get("status") != "completed":
                 raise GovernedWriteError(
                     "Task completion not confirmed by read-back.",
                     code=OUTCOME_VERIFICATION_FAILED,
                     status_code=409,
                 )
-            if action == "cancel" and read.get("status") != "cancelled":
+            if cap == "cancel_task" and read.get("status") != "cancelled":
                 raise GovernedWriteError(
                     "Task cancellation not confirmed by read-back.",
                     code=OUTCOME_VERIFICATION_FAILED,

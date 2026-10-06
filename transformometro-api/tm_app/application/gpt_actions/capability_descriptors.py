@@ -165,7 +165,8 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": "Activate a revision as the operational scenario (overwrite current).",
             "read_write": "WRITE",
-            "prepare_operation": "prepare_activate_revision",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "activate_revision",
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow("activate_revision"),
@@ -177,7 +178,8 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": "Nested process+instance+revision+measurement package.",
             "read_write": "WRITE",
-            "prepare_operation": "prepare_improvement_package",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "commit_improvement_package",
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
@@ -191,7 +193,8 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": "send / finalize / cancel meeting minute transitions.",
             "read_write": "WRITE",
-            "prepare_operation": "prepare_meeting_minute_workflow",
+            "prepare_operation": "prepare_meeting_minute_change",
+            "actions": ["send", "finalize", "cancel"],
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
@@ -205,7 +208,8 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": "Link/metadata evidence (binary upload remains UI-only).",
             "read_write": "WRITE",
-            "prepare_operation": "prepare_manage_evidence",
+            "prepare_operation": "prepare_evidence_change",
+            "actions": ["create_link", "update_description", "delete"],
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
@@ -219,7 +223,8 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": "Business cost adjustment for shared resources.",
             "read_write": "WRITE",
-            "prepare_operation": "prepare_adjust_shared_resource_cost",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "adjust_shared_resource_cost",
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
@@ -233,7 +238,8 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": "Recalculate materialised dashboard cache.",
             "read_write": "WRITE",
-            "prepare_operation": "prepare_recalculate_dashboard",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "recalculate_dashboard",
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
@@ -247,7 +253,22 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": "Meeting-minute extras (reads + governed writes like resend).",
             "read_write": "MIXED",
-            "prepare_operation": "prepare_meeting_minute_manage",
+            "read_operation": "meeting_minute_read",
+            "prepare_operation": "prepare_meeting_minute_change",
+            "read_actions": [
+                "pending_signatures",
+                "audit",
+                "versions",
+                "participants",
+                "signers",
+                "generate_from_transcript",
+            ],
+            "actions": [
+                "resend",
+                "create_version",
+                "set_participants",
+                "set_signers",
+            ],
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
@@ -260,13 +281,13 @@ def _canonical_catalog() -> dict[str, Any]:
             "kind": "workflow",
             "owner": "transformometro-api",
             "description": (
-                "Transformômetro tasks (Portal parity): "
-                "create|update|complete|cancel via TaskCommandUseCases; "
-                "reads via task_read."
+                "Transformômetro tasks (Portal parity) — collaboration "
+                "family: create_task|update_task|complete_task|cancel_task "
+                "via TaskCommandUseCases; reads via collaboration_read."
             ),
             "read_write": "MIXED",
-            "read_operation": "task_read",
-            "prepare_operation": "prepare_task",
+            "read_operation": "collaboration_read",
+            "prepare_operation": "prepare_collaboration_change",
             "commit_via": "commit_proposal",
             # Mixed policies — derived per semantic capability in the loop
             # below; never a single workflow-level boolean.
@@ -276,8 +297,13 @@ def _canonical_catalog() -> dict[str, Any]:
                 "complete_task",
                 "cancel_task",
             ],
-            "actions": ["create", "update", "complete", "cancel"],
-            "read_actions": ["mine", "related", "get"],
+            "actions": [
+                "create_task",
+                "update_task",
+                "complete_task",
+                "cancel_task",
+            ],
+            "read_actions": ["my_tasks", "task", "process_tasks"],
             "read_back_policy": "authoritative",
         },
         {
@@ -285,15 +311,16 @@ def _canonical_catalog() -> dict[str, Any]:
             "kind": "workflow",
             "owner": "transformometro-api",
             "description": (
-                "Interaction rooms/messages (Portal parity): open|"
-                "post_message|edit_message|delete_message|reaction|pin|"
-                "unpin|mark_read via InteractionRoomUseCases; reads via "
-                "interaction_room_read. Binary attachments remain "
-                "platform_blocked (no MCP/ChatGPT file transport)."
+                "Interaction rooms/messages (Portal parity) — collaboration "
+                "family: open_room|post_message|edit_message|delete_message|"
+                "toggle_reaction|pin_message|unpin_message|mark_room_read "
+                "via InteractionRoomUseCases; reads via collaboration_read. "
+                "Binary attachments remain platform_blocked (no MCP/ChatGPT "
+                "file transport)."
             ),
             "read_write": "MIXED",
-            "read_operation": "interaction_room_read",
-            "prepare_operation": "prepare_interaction_room",
+            "read_operation": "collaboration_read",
+            "prepare_operation": "prepare_collaboration_change",
             "commit_via": "commit_proposal",
             "capability_execution_policy": [
                 "open_interaction_room",
@@ -306,16 +333,16 @@ def _canonical_catalog() -> dict[str, Any]:
                 "mark_interaction_read",
             ],
             "actions": [
-                "open",
+                "open_room",
                 "post_message",
                 "edit_message",
                 "delete_message",
-                "reaction",
-                "pin",
-                "unpin",
-                "mark_read",
+                "toggle_reaction",
+                "pin_message",
+                "unpin_message",
+                "mark_room_read",
             ],
-            "read_actions": ["list", "get", "messages", "attachments"],
+            "read_actions": ["rooms", "room", "messages", "attachments"],
             "read_back_policy": "authoritative",
         },
     ]
@@ -350,22 +377,24 @@ def _canonical_catalog() -> dict[str, Any]:
             "kind": "analysis",
             "owner": "transformometro-api",
             "description": (
-                "Transformômetro task reads: mine | related | get "
-                "(same ListMyTaskItemsUseCase/TaskCommandUseCases as Portal)."
+                "Transformômetro task reads — collaboration family: "
+                "my_tasks | task | process_tasks (same "
+                "ListMyTaskItemsUseCase/TaskCommandUseCases as Portal)."
             ),
             "read_only": True,
-            "operation": "task_read",
+            "operation": "collaboration_read",
         },
         {
             "id": "interaction_room_read",
             "kind": "analysis",
             "owner": "transformometro-api",
             "description": (
-                "Interaction-room reads: list | get | messages | "
-                "attachments metadata (InteractionRoomUseCases)."
+                "Interaction-room reads — collaboration family: "
+                "rooms | room | messages | attachments metadata "
+                "(InteractionRoomUseCases)."
             ),
             "read_only": True,
-            "operation": "interaction_room_read",
+            "operation": "collaboration_read",
         },
     ]
     # Canonical write-execution policy drives the confirmation flag
@@ -423,14 +452,8 @@ def _canonical_catalog() -> dict[str, Any]:
                 "owner": "transformometro-api",
                 "surface_availability": {"mcp": True, "gpt_actions": False},
                 "mcp": {
-                    "read_tools": [
-                        "get_diagnostic",
-                        "list_diagnostics_by_revision",
-                    ],
-                    "prepare_tools": [
-                        "prepare_create_diagnostic",
-                        "prepare_manage_diagnostic",
-                    ],
+                    "read_tools": ["diagnostic_read"],
+                    "prepare_tools": ["prepare_diagnostic_change"],
                     "commit_tool": "commit_proposal",
                 },
                 "manage_actions": [
@@ -480,14 +503,14 @@ def _canonical_catalog() -> dict[str, Any]:
             "exposed": [
                 {
                     "id": "tm_task",
-                    "via": "manage_task workflow + task_read "
+                    "via": "manage_task workflow + collaboration_read "
                     "(TaskCommandUseCases / ListMyTaskItemsUseCases — same "
                     "canonical use cases as task_routes.py)",
                     "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
                 {
                     "id": "interaction_room",
-                    "via": "interaction_room workflow + interaction_room_read "
+                    "via": "interaction_room workflow + collaboration_read "
                     "(InteractionRoomUseCases — same canonical use cases as "
                     "interaction_room_routes.py)",
                     "surfaces": ["portal_http", "gpt_actions", "mcp"],

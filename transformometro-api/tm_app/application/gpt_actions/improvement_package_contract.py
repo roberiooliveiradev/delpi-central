@@ -117,7 +117,8 @@ OPERATIONAL_SEQUENCE = [
     "READ CONTRACT (gpt_get_catalog.registration_guide.package_hints)",
     "RESOLVE IDs / CONTEXT (gpt_search_records / gpt_get_process_context)",
     "PREPARE nested package payload",
-    "VALIDATE PACKAGE (gpt_validate_improvement_package) = PREPARE WORKFLOW",
+    "VALIDATE/PREPARE PACKAGE "
+    "(gpt_prepare_governed_operation action=commit_improvement_package) = PREPARE WORKFLOW",
     "REQUIRE ready=true (ready=false is checklist, not tool failure)",
     "SHOW USER the exact package / proposal",
     "EXPLICIT CONFIRMATION",
@@ -218,8 +219,9 @@ def _baseline_plus_scenario_example() -> dict[str, Any]:
 def build_package_hints() -> dict[str, Any]:
     """Structured package contract exposed via gpt_get_catalog."""
     return {
-        "operationId": "gpt_validate_improvement_package",
-        "validate_operationId": "gpt_validate_improvement_package",
+        "operationId": "gpt_prepare_governed_operation",
+        "validate_operationId": "gpt_prepare_governed_operation",
+        "validate_action": "commit_improvement_package",
         "commit_operationId": "gpt_commit_proposal",
         "prepare_then_commit": True,
         "dry_run_first": False,
@@ -227,7 +229,8 @@ def build_package_hints() -> dict[str, Any]:
         "compatibility": (
             "Legacy HTTP gpt_commit_improvement_package / dry_run remain "
             "LEGACY_TRANSITIONAL (include_in_schema=False). "
-            "Specialists must use gpt_validate_improvement_package then gpt_commit_proposal."
+            "Specialists must use gpt_prepare_governed_operation "
+            "(action=commit_improvement_package) then gpt_commit_proposal."
         ),
         "canonical_package_shape": {
             "top_level": list(PACKAGE_TOP_LEVEL_KEYS),
@@ -302,14 +305,17 @@ def build_package_hints() -> dict[str, Any]:
         ],
         "gpt_governed_parity": {
             "evidence_link_metadata": [
-                "gpt_list_evidence",
-                "gpt_manage_evidence",
+                "gpt_evidence_read",
+                "gpt_prepare_evidence_change",
             ],
             "process_timeline": ["gpt_get_process_timeline"],
-            "shared_resource_cost_adjustment": [
-                "gpt_adjust_shared_resource_cost"
+            "governed_operations": [
+                "gpt_prepare_governed_operation"
             ],
-            "meeting_minute_extras": ["gpt_meeting_minute_manage"],
+            "meeting_minutes": [
+                "gpt_meeting_minute_read",
+                "gpt_prepare_meeting_minute_change",
+            ],
             "not_exposed": [
                 "arbitrary HTTP proxy",
                 "collaboration locks",

@@ -67,7 +67,8 @@ def _doc(**overrides) -> ProcessDocument:
 
 def test_builder_surface_budget_reduced_and_no_legacy_crud():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 22
+    # Tool Surface Rationalization V1: family ops consolidated 22 → 17.
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 17
     assert count_operations(doc) <= 30
     found = []
     for methods in doc["paths"].values():

@@ -97,7 +97,7 @@ def test_application_user_context_has_no_infrastructure_or_framework_imports():
 def test_openapi_includes_gpt_get_my_context():
     doc = build_gpt_actions_openapi()
     assert "gpt_get_my_context" in GPT_ACTIONS_OPERATION_IDS
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 22
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 17
     op = doc["paths"]["/transformometro/gpt-actions/v1/me"]["get"]
     assert op["operationId"] == "gpt_get_my_context"
     assert op["x-openai-isConsequential"] is False
@@ -239,22 +239,17 @@ def test_existing_operation_ids_preserved_and_methodology_added():
         "gpt_get_record",
         "gpt_prepare_record_change",
         "gpt_commit_proposal",
-        "gpt_activate_revision",
-        "gpt_recalculate_dashboard",
-        "gpt_meeting_minute_workflow",
-        "gpt_validate_improvement_package",
+        "gpt_prepare_governed_operation",
         "gpt_get_process_context",
-        "gpt_list_evidence",
-        "gpt_manage_evidence",
+        "gpt_evidence_read",
+        "gpt_prepare_evidence_change",
         "gpt_get_process_timeline",
-        "gpt_adjust_shared_resource_cost",
-        "gpt_meeting_minute_manage",
+        "gpt_meeting_minute_read",
+        "gpt_prepare_meeting_minute_change",
         "gpt_get_my_context",
         "gpt_get_methodology_guide",
-        "gpt_task_read",
-        "gpt_prepare_task",
-        "gpt_interaction_room_read",
-        "gpt_prepare_interaction_room",
+        "gpt_collaboration_read",
+        "gpt_prepare_collaboration_change",
     }
     assert current_core == set(GPT_ACTIONS_OPERATION_IDS)
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 22
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 17

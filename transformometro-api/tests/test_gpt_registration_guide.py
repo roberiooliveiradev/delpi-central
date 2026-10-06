@@ -21,13 +21,12 @@ def test_registration_guide_does_not_mark_governed_document_writes_ui_only():
     assert "meeting-minute handwritten signature" in hints["ui_only_persist"]
     assert "evidence uploads" not in hints["ui_only_persist"]
     parity = hints["gpt_governed_parity"]
-    assert "gpt_list_evidence" in parity["evidence_link_metadata"]
-    assert "gpt_manage_evidence" in parity["evidence_link_metadata"]
+    assert "gpt_evidence_read" in parity["evidence_link_metadata"]
+    assert "gpt_prepare_evidence_change" in parity["evidence_link_metadata"]
     assert "gpt_get_process_timeline" in parity["process_timeline"]
-    assert "gpt_adjust_shared_resource_cost" in parity[
-        "shared_resource_cost_adjustment"
-    ]
-    assert "gpt_meeting_minute_manage" in parity["meeting_minute_extras"]
+    assert "gpt_prepare_governed_operation" in parity["governed_operations"]
+    assert "gpt_meeting_minute_read" in parity["meeting_minutes"]
+    assert "gpt_prepare_meeting_minute_change" in parity["meeting_minutes"]
 
     governed = hints["governed_document_writes"]
     assert governed["support_is_not_authorization"] is True
@@ -46,8 +45,10 @@ def test_registration_flow_routes_only_unsupported_followups_to_ui():
     actions = " ".join(followup["actions"])
 
     assert "Diagrams and WBS/decomposition may be persisted via GPT" in actions
-    assert "gpt_list_evidence" in actions
-    assert "gpt_manage_evidence" in actions
+    assert "gpt_evidence_read" in actions
+    assert "gpt_prepare_evidence_change" in actions
+    assert "gpt_prepare_governed_operation" in actions
+    assert "gpt_prepare_collaboration_change" in actions
     assert "binary evidence upload" in actions.lower()
     assert "meeting-minute handwritten signatures" in actions
     assert "Point user to Minha DELPI UI for diagrams" not in actions
@@ -64,8 +65,8 @@ def test_registration_guide_contains_canonical_package_shape():
     assert "investments" in shape["scenario"]["keys"]
     assert "beneficio_calculo_categoria" in shape["revision_fields"]
     assert "READ CONTRACT" in hints["operational_sequence"][0]
-    assert "VALIDATE PACKAGE" in hints["operational_sequence"][3]
-    assert hints["validate_operationId"] == "gpt_validate_improvement_package"
+    assert "VALIDATE/PREPARE PACKAGE" in hints["operational_sequence"][3]
+    assert hints["validate_operationId"] == "gpt_prepare_governed_operation"
     assert hints["commit_operationId"] == "gpt_commit_proposal"
     assert hints["dry_run_semantics"]["ready_false_is_not_tool_failure"] is True
 
@@ -98,7 +99,7 @@ def test_package_hints_examples_include_create_and_baseline_plus_scenario():
 def test_registration_guide_official_flow_validate_confirm_commit_readback():
     hints = build_registration_guide()["package_hints"]
     seq = " | ".join(hints["operational_sequence"])
-    assert "VALIDATE PACKAGE" in seq
+    assert "VALIDATE/PREPARE PACKAGE" in seq
     assert "SHOW USER" in seq
     assert "EXPLICIT CONFIRMATION" in seq
     assert "COMMIT" in seq
@@ -141,20 +142,23 @@ def test_teo_contract_drift_openapi_guide_instructions():
 
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS)
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 22
-    assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+    # Tool Surface Rationalization V1: 22 → 17 family operations.
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 17
+    assert "gpt_prepare_governed_operation" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_commit_proposal" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_prepare_record_change" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_commit_improvement_package" not in GPT_ACTIONS_OPERATION_IDS
-    assert "gpt_list_evidence" in GPT_ACTIONS_OPERATION_IDS
-    assert "gpt_manage_evidence" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_evidence_read" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_prepare_evidence_change" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_get_process_timeline" in GPT_ACTIONS_OPERATION_IDS
-    assert "gpt_adjust_shared_resource_cost" in GPT_ACTIONS_OPERATION_IDS
-    assert "gpt_meeting_minute_manage" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_meeting_minute_read" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_prepare_meeting_minute_change" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_collaboration_read" in GPT_ACTIONS_OPERATION_IDS
+    assert "gpt_prepare_collaboration_change" in GPT_ACTIONS_OPERATION_IDS
 
-    validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
-        "post"
-    ]
+    validate = doc["paths"][
+        "/transformometro/gpt-actions/v1/governed-operations/prepare"
+    ]["post"]
     commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
     assert validate["x-openai-isConsequential"] is False
     assert commit["x-openai-isConsequential"] is True
@@ -169,6 +173,6 @@ def test_teo_contract_drift_openapi_guide_instructions():
     assert "agent_directives" in text
     assert "commit_now" in text
     assert "AUTHORITATIVE READ-BACK" in text
-    # Package validate lives in OpenAPI + registration_guide; paste stays budget-stable.
-    assert hints["validate_operationId"] == "gpt_validate_improvement_package"
+    # Package PREPARE lives in OpenAPI + registration_guide; paste stays budget-stable.
+    assert hints["validate_operationId"] == "gpt_prepare_governed_operation"
 

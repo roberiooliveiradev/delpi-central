@@ -1639,10 +1639,15 @@ class GptActionsDispatchService:
             raise self._map_task_room_exc(exc) from exc
 
     def task_write(self, request: Request, action: str, args: dict[str, Any]) -> dict[str, Any]:
-        """Material write via TaskCommandUseCases (ACT path only)."""
+        """Material write via TaskCommandUseCases (ACT path only).
+
+        ``action`` is the canonical collaboration action vocabulary
+        (create_task / update_task / complete_task / cancel_task) sealed
+        at PREPARE — transports never reach here with arbitrary names.
+        """
         user = request.state.user
         try:
-            if action == "create":
+            if action == "create_task":
                 return self._tasks.create(
                     user,
                     title=str(args.get("title") or ""),
@@ -1652,7 +1657,7 @@ class GptActionsDispatchService:
                     source_interaction_message_id=args.get("source_interaction_message_id"),
                 ).to_dict()
             task_id = str(args.get("task_id") or "")
-            if action == "update":
+            if action == "update_task":
                 return self._tasks.update(
                     user,
                     task_id,
@@ -1661,9 +1666,9 @@ class GptActionsDispatchService:
                     assignee_user_id=args.get("assignee_user_id"),
                     due_date=args.get("due_date"),
                 ).to_dict()
-            if action == "complete":
+            if action == "complete_task":
                 return self._tasks.complete(user, task_id).to_dict()
-            if action == "cancel":
+            if action == "cancel_task":
                 return self._tasks.cancel(user, task_id).to_dict()
             raise GptActionsError(f"Unknown task action '{action}'.", 400)
         except GptActionsError:
@@ -1725,12 +1730,16 @@ class GptActionsDispatchService:
             raise self._map_task_room_exc(exc) from exc
 
     def room_write(self, request: Request, action: str, args: dict[str, Any]) -> dict[str, Any]:
-        """Material write via InteractionRoomUseCases (ACT path only)."""
+        """Material write via InteractionRoomUseCases (ACT path only).
+
+        ``action`` is the canonical collaboration action vocabulary
+        (open_room / post_message / ... / mark_room_read) sealed at PREPARE.
+        """
         user = request.state.user
         room_id = str(args.get("room_id") or "")
         message_id = str(args.get("message_id") or "")
         try:
-            if action == "open":
+            if action == "open_room":
                 return self._rooms.open_for_process(
                     user, str(args.get("processo_id") or "")
                 ).to_dict()
@@ -1748,15 +1757,15 @@ class GptActionsDispatchService:
                 ).to_dict()
             if action == "delete_message":
                 return self._rooms.delete_message(user, room_id, message_id).to_dict()
-            if action == "reaction":
+            if action == "toggle_reaction":
                 return self._rooms.toggle_reaction(
                     user, room_id, message_id, str(args.get("reaction") or "")
                 ).to_dict()
-            if action == "pin":
+            if action == "pin_message":
                 return self._rooms.pin_message(user, room_id, message_id).to_dict()
-            if action == "unpin":
+            if action == "unpin_message":
                 return self._rooms.unpin_message(user, room_id, message_id).to_dict()
-            if action == "mark_read":
+            if action == "mark_room_read":
                 self._rooms.mark_read(user, room_id)
                 # Authoritative read-back: viewer-scoped unread_count must
                 # be zero after the write.

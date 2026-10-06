@@ -20,11 +20,15 @@
 
 | Tool | Class | Canonical path |
 |---|---|---|
-| `get_diagnostic` | READ | `GetDiagnostic` use case → aggregate read projection + revision context + resolved evidence links + data-quality signals |
-| `list_diagnostics_by_revision` | READ | `ListDiagnosticsByRevision` → canonical ordering, compact summaries, no evidence fan-out |
-| `prepare_create_diagnostic` | PREPARE | `create_diagnostic` governed capability; server-generated `diagnostic_id` |
-| `prepare_manage_diagnostic` | PREPARE | `manage_diagnostic` governed capability; closed enum of 13 actions |
+| `diagnostic_read` | READ | `action=get` → `GetDiagnostic` use case → aggregate read projection + revision context + resolved evidence links + data-quality signals; `action=by_revision` → `ListDiagnosticsByRevision` → canonical ordering, compact summaries, no evidence fan-out |
+| `prepare_diagnostic_change` | PREPARE | `action=create` → `create_diagnostic` governed capability (server-generated `diagnostic_id`); manage actions → `manage_diagnostic` governed capability (closed enum of 13 actions) |
 | `commit_proposal` | ACT (shared, single) | opaque `proposal_handle` + explicit `confirmation` |
+
+> Tool Surface Rationalization V1: the pre-family tools (`get_diagnostic`,
+> `list_diagnostics_by_revision`, `prepare_create_diagnostic`,
+> `prepare_manage_diagnostic`) were consolidated into the two family tools
+> above — same use cases, same closed action enum, tombstoned from
+> `tools/list`.
 
 Manage actions (closed enum): `add_finding`, `add_hypothesis`, `add_causal_link`,
 `add_evidence_link`, `add_conclusion`, `validate_hypothesis`, `reject_hypothesis`,
