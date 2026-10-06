@@ -142,19 +142,6 @@ Continuam `TO_INVENTORY` conforme o slice:
 
 Essas decisões não devem ser derivadas do Portal Financeiro P0.
 
-### TaskProjection / Minhas tarefas
-
-Para [27-minhas-tarefas.md](./27-minhas-tarefas.md):
-- `controllership-finance-api` compõe uma projeção read-only das responsabilidades dos owners;
-- P2/P4 permanecem owners do business state;
-- P5 só entra quando houver responsabilidade individual comprovada;
-- não existe task entity genérica na V1;
-- não importar task/domain do Comercial;
-- não copiar endpoints `/tasks` do `commercial-api`;
-- não persistir lifecycle paralelo apenas para montar worklist;
-- a estratégia física da projection pode ser on-read/materialized/event-driven, mas deve preservar owner/source e partial coverage;
-- a ação V1 navega ao owner; business writes continuam no contexto owner.
-
 ### Identidade de usuário
 
 Para a Página do usuário:

@@ -29,8 +29,8 @@ Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, 
 |---|---|---|
 | Início | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | H01 favoritos + H02 TaskProjection + H03 active competence + H04 blocker summary; implementação ainda não autorizada |
 | Visão geral | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | D-OVW-01=C, D-OVW-02=A, D-OVW-03=A; revalidar O04 contracts físicos e O05 conflitos de source/fórmula antes do futuro slice |
-| Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task-from-message não incluído na V1 |
-| Minhas tarefas | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | TSK01 producer contracts + TSK02 projection strategy + TSK03 deep-link registry + TSK04 source health/cache + TSK05 TaskItemsTable columns |
+| Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task aguarda Item 5 |
+| Minhas tarefas | PROJECTION_CONTRACT_REQUIRED | inventariar producers e estratégia de projeção |
 | Administração | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02 conforme slice |
 | Ajuda | SYNCHRONIZED_WITH_FEATURES | implementar/sincronizar junto das superfícies liberadas |
 
@@ -41,9 +41,7 @@ Contrato Home: [32-inicio-home.md](./32-inicio-home.md).
 
 Contrato da Visão geral: [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md).
 
-Contrato da Sala de interação: [26-sala-de-interacao.md](./26-sala-de-interacao.md).
-
-Contrato de Minhas tarefas: [27-minhas-tarefas.md](./27-minhas-tarefas.md). O modelo de projection, self-only, producers, action policy, sem SLA global e integração Home/Sala estão fechados; apenas a estratégia física e bindings permanecem inventories técnicos. O modelo de contexto, AuthZ, mensagem, attachment boundary, deep link e full-page reuse estão fechados; transport/storage/retention permanecem inventories técnicos do futuro slice. D-OVW-01=C congela núcleo + contexto operacional + desempenho estratégico; D-OVW-02=A congela mês atual; D-OVW-03=A congela Consolidado. O04/O05 permanecem inventários técnicos para o futuro brief, sem autorização de implementação.
+Contrato da Sala de interação: [26-sala-de-interacao.md](./26-sala-de-interacao.md). O modelo de contexto, AuthZ, mensagem, attachment boundary, deep link e full-page reuse estão fechados; transport/storage/retention permanecem inventories técnicos do futuro slice. D-OVW-01=C congela núcleo + contexto operacional + desempenho estratégico; D-OVW-02=A congela mês atual; D-OVW-03=A congela Consolidado. O04/O05 permanecem inventários técnicos para o futuro brief, sem autorização de implementação.
 
 O Início tem design/UX/RQ/AC fechados, mas mantém inventories conhecidos para persistência de favoritos e projeções dinâmicas. Isso não autoriza implementação durante a fase atual de revisão global.
 

@@ -135,13 +135,10 @@ import {
 } from "../../utils/selectionPropertyApply";
 import { clampFontSize } from "@delpi/tv-dashboard-presentation";
 import {
-  commitAlignBlocks,
+  buildSlideThemeOps,
   commitCreateBlock,
   commitDuplicateBlocks,
   commitPatchDataModel,
-  commitPatchNativeConfig,
-  commitPresentationOps,
-  commitReorderBlockZ,
 } from "../../utils/presentationMutationClient";
 import { buildFieldLabelsMergePatch } from "../../utils/dataModelPatchPlan";
 import { tvDashboardNotice } from "../../utils/tvDashboardNotice";
@@ -921,6 +918,7 @@ export function useComunicadoEditorBlocks({
               tvDashboardNotice(
                 "Não foi possível salvar a alteração no modelo de dados.",
               );
+            const token = mutationGateRef.current.next();
             void commitPatchDataModel({
               playlistId,
               slideId,
@@ -928,8 +926,14 @@ export function useComunicadoEditorBlocks({
               modelPatch: { fieldLabels: fieldLabelsPatch },
             })
               .then((canonical) => {
-                if (canonical) commitWithHistory(canonical);
-                else reportPersistFailure();
+                if (canonical) {
+                  // Ack stale não pode reverter uma mutation mais nova.
+                  if (mutationGateRef.current.isCurrent(token)) {
+                    commitWithHistory(canonical);
+                  }
+                } else {
+                  reportPersistFailure();
+                }
               })
               .catch(() => {
                 reportPersistFailure();
@@ -1294,12 +1298,16 @@ export function useComunicadoEditorBlocks({
     );
     if (playlistId && slideId && !needsDataPolicy) {
       try {
+        const token = mutationGateRef.current.next();
         const canonical = await commitDuplicateBlocks({
           playlistId,
           slideId,
           blockIds: sourceIds,
         });
         if (canonical) {
+          // Ack stale: outra mutation mais nova já detém o estado —
+          // não aplicar o canônico antigo nem duplicar localmente.
+          if (!mutationGateRef.current.isCurrent(token)) return;
           const before = new Set((configRef.current.blocks ?? []).map((b) => b.id));
           commitWithHistory(canonical);
           const pastedIds = (canonical.blocks ?? [])
@@ -1540,17 +1548,17 @@ export function useComunicadoEditorBlocks({
         applyLocal();
         return;
       }
-      void commitReorderBlockZ({ playlistId, slideId, blockIds: ids, command })
-        .then((canonical) => {
-          if (!canonical) {
-            applyLocal();
-            return;
-          }
+      void commitOpsAndApplyAck({
+        playlistId,
+        slideId,
+        ops: [{ op: "reorder_block_z", blockIds: ids, command }],
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
           commitWithHistory(canonical);
-        })
-        .catch(() => {
-          applyLocal();
-        });
+        },
+      }).then((canonical) => {
+        if (!canonical) applyLocal();
+      });
     },
     [commitWithHistory, configRef, getActionSelectedIds, playlistId, slideId, updateBlocks],
   );
@@ -1676,13 +1684,36 @@ export function useComunicadoEditorBlocks({
     [commitWithHistory, configRef, getActionSelectedIds, selectBlocksByIds],
   );
 
+  /**
+   * Tema = UMA PresentationMutation autoritativa (patch_native_config +
+   * upsert_block dos blocos restilizados). O ack canônico já carrega
+   * background/brandThemeKey novos — não existe mais um segundo write
+   * block-only cujo ack reenfileiraria o tema anterior pelo autosave.
+   */
   const applySlideTheme = useCallback(
     (theme: ComunicadoSlideTheme) => {
-      const next = applyComunicadoSlideTheme(configRef.current, theme);
-      commitWithHistory(next);
-      ackBlocksMutation(next.blocks ?? []);
+      const before = configRef.current;
+      const next = applyComunicadoSlideTheme(before, theme);
+      if (!playlistId || !slideId) {
+        commitWithHistory(next);
+        return;
+      }
+      const ops = buildSlideThemeOps({ before, next });
+      if (ops.length === 0) return;
+      void commitOpsAndApplyAck({
+        playlistId,
+        slideId,
+        ops,
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
+          commitWithHistory(canonical);
+        },
+        optimistic: () => {
+          commitWithHistory(next);
+        },
+      });
     },
-    [ackBlocksMutation, commitWithHistory, configRef],
+    [commitWithHistory, configRef, playlistId, slideId],
   );
 
   const alignSelected = useCallback(
@@ -1697,17 +1728,17 @@ export function useComunicadoEditorBlocks({
         applyLocal();
         return;
       }
-      void commitAlignBlocks({ playlistId, slideId, blockIds: ids, command })
-        .then((canonical) => {
-          if (!canonical) {
-            applyLocal();
-            return;
-          }
+      void commitOpsAndApplyAck({
+        playlistId,
+        slideId,
+        ops: [{ op: "align_blocks", blockIds: ids, command }],
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
           commitWithHistory(canonical);
-        })
-        .catch(() => {
-          applyLocal();
-        });
+        },
+      }).then((canonical) => {
+        if (!canonical) applyLocal();
+      });
     },
     [commitWithHistory, configRef, getActionSelectedIds, playlistId, slideId, updateBlocks],
   );
@@ -1866,17 +1897,23 @@ export function useComunicadoEditorBlocks({
 
   const setBackground = useCallback(
     (background: ComunicadoBackground) => {
-      commitWithHistory({ ...configRef.current, background });
-      if (!playlistId || !slideId) return;
-      void commitPatchNativeConfig({
+      const next = { ...configRef.current, background };
+      if (!playlistId || !slideId) {
+        commitWithHistory(next);
+        return;
+      }
+      void commitOpsAndApplyAck({
         playlistId,
         slideId,
-        patch: { background },
-      })
-        .then((canonical) => {
-          if (canonical) commitWithHistory(canonical);
-        })
-        .catch(() => undefined);
+        ops: [{ op: "patch_native_config", patch: { background } }],
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
+          commitWithHistory(canonical);
+        },
+        optimistic: () => {
+          commitWithHistory(next);
+        },
+      });
     },
     [commitWithHistory, configRef, playlistId, slideId],
   );

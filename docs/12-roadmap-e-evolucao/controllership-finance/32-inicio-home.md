@@ -1077,16 +1077,10 @@ Provar Core/shared preference capability ou justificar product-local.
 ### H02 — TaskProjection
 
 ```text
-CLOSED_PRODUCT_CONTRACT / TECHNICAL_INVENTORY_REMAINS
+TO_INVENTORY
 ```
 
-O contrato de produto está fechado em [27-minhas-tarefas.md](./27-minhas-tarefas.md):
-- self-only;
-- projection dos owners;
-- sem task entity livre;
-- summary com coverage COMPLETE/PARTIAL.
-
-Antes da implementação, ainda revalidar TSK01–TSK04 do Item 5.
+Fechar Item 4 — Minhas tarefas antes de implementar preview final.
 
 ### H03 — active competence
 

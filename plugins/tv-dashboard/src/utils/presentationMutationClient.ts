@@ -116,6 +116,56 @@ export async function commitDuplicateBlocks(args: {
   });
 }
 
+/**
+ * ONE authoritative mutation set for slide-theme application
+ * (TV-THEME-PERSISTENCE-RACE-001): slide-level fields via a single
+ * `patch_native_config` plus `upsert_block` only for the blocks the theme
+ * actually restyled (existing ids, no ghost-create). Sending both in a
+ * single PresentationMutation keeps the canonical ack aligned with the
+ * optimistic preview — a block-only ack computed over pre-theme persisted
+ * state can no longer replay the previous background/brandThemeKey.
+ */
+export function buildSlideThemeOps(args: {
+  before: ComunicadoConfig;
+  next: ComunicadoConfig;
+}): PresentationMutationOp[] {
+  const { before, next } = args;
+  const ops: PresentationMutationOp[] = [];
+
+  const patch: Record<string, unknown> = {};
+  if (JSON.stringify(before.background ?? null) !== JSON.stringify(next.background ?? null)) {
+    patch.background = next.background ?? null;
+  }
+  const beforeBrand = before.brandThemeKey ?? "";
+  const nextBrand = next.brandThemeKey ?? "";
+  if (beforeBrand !== nextBrand) {
+    patch.brandThemeKey = nextBrand; // "" clears the brand binding per contract
+  }
+  if (Object.keys(patch).length > 0) {
+    ops.push({ op: "patch_native_config", patch });
+  }
+
+  const beforeById = new Map((before.blocks ?? []).map((block) => [block.id, block]));
+  for (const block of next.blocks ?? []) {
+    const prev = beforeById.get(block.id);
+    // Theme never creates blocks; unknown ids here would be stale state.
+    if (!prev) continue;
+    if (JSON.stringify(prev) === JSON.stringify(block)) continue;
+    const { block: cleanBlock, expressionSet } = splitBlockForAck(
+      block as unknown as Record<string, unknown>,
+    );
+    ops.push({ op: "upsert_block", block: cleanBlock });
+    if (Object.keys(expressionSet).length > 0 && typeof block.id === "string") {
+      ops.push({
+        op: "patch_data_source_params",
+        blockId: block.id,
+        set: expressionSet,
+      });
+    }
+  }
+  return ops;
+}
+
 export async function commitPatchNativeConfig(args: {
   playlistId: string;
   slideId: string;

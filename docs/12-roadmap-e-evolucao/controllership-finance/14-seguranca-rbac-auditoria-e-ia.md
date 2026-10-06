@@ -75,30 +75,6 @@ Regras:
 - o Portal não cria permission nova, tabela de perfil ou storage de foto;
 - resolução de permission indisponível → fail-closed.
 
-## Minhas tarefas
-
-Contrato detalhado: [27-minhas-tarefas.md](./27-minhas-tarefas.md).
-
-AuthZ:
-
-```text
-authenticated
-AND effective_permission(controllership-finance.access)
-AND projection.assignee_user_id = authenticated_user
-AND owner_resource_access
-```
-
-Regras:
-- a worklist é self-only;
-- frontend não escolhe outro `userId`;
-- `MANAGE` não cria visão de equipe;
-- TaskProjection não concede acesso ao recurso;
-- owner reautoriza no deep link;
-- blocker, warning ou mention sem responsabilidade individual não geram task;
-- nenhum permission code novo é criado para source/task/action;
-- source failure não pode ser convertido em empty;
-- due/overdue só existem quando o owner possuir regra formal.
-
 ## Validator
 
 Validator é papel/responsabilidade operacional, não sinônimo de MANAGE.
@@ -145,10 +121,7 @@ Cobrir:
 - delete de evidência rejeitada;
 - envio de pacote sem capability;
 - usuário sem ACCESS consultando perfil do Portal;
-- perfil de outro usuário vazando permissions/capabilities;
-- usuário consultando task de outro usuário;
-- MANAGE usado como bypass para team worklist;
-- projection de recurso ao qual o usuário perdeu acesso.
+- perfil de outro usuário vazando permissions/capabilities.
 
 ## IA
 
