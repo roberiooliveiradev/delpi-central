@@ -194,10 +194,10 @@ def _canonical_catalog() -> dict[str, Any]:
             "id": "meeting_minute_workflow",
             "kind": "workflow",
             "owner": "transformometro-api",
-            "description": "send / finalize / cancel meeting minute transitions.",
+            "description": "send / finalize / cancel / refuse meeting minute transitions.",
             "read_write": "WRITE",
             "prepare_operation": "prepare_meeting_minute_change",
-            "actions": ["send", "finalize", "cancel"],
+            "actions": ["send", "finalize", "cancel", "refuse"],
             "commit_via": "commit_proposal",
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
@@ -247,6 +247,42 @@ def _canonical_catalog() -> dict[str, Any]:
             "confirmation_requirement": True,
             "confirmation_policy": confirmation_kind_for_workflow(
                 "recalculate_dashboard"
+            ),
+            "read_back_policy": "authoritative",
+        },
+        {
+            "id": "update_signature_profile",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Own signature-profile display name (metadata only — the "
+                "signature image binary stays platform_blocked)."
+            ),
+            "read_write": "WRITE",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "update_signature_profile",
+            "commit_via": "commit_proposal",
+            "confirmation_requirement": True,
+            "confirmation_policy": confirmation_kind_for_workflow(
+                "update_signature_profile"
+            ),
+            "read_back_policy": "authoritative",
+        },
+        {
+            "id": "import_diagram_bpmn_xml",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Import BPMN XML text as the process macro diagram "
+                "(replaces current diagram — text transport, not binary)."
+            ),
+            "read_write": "WRITE",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "import_diagram_bpmn_xml",
+            "commit_via": "commit_proposal",
+            "confirmation_requirement": True,
+            "confirmation_policy": confirmation_kind_for_workflow(
+                "import_diagram_bpmn_xml"
             ),
             "read_back_policy": "authoritative",
         },
@@ -348,7 +384,17 @@ def _canonical_catalog() -> dict[str, Any]:
             "id": "analyze",
             "kind": "analysis",
             "owner": "transformometro-api",
-            "description": "Dashboard KPI views (meta/summary/processes/instances/rows).",
+            "description": (
+                "Analysis views — snapshot (meta/summary/processes/instances/"
+                "rows), live dashboard (summary_live/process_ranking/alerts/"
+                "evolution/by_family/due_dates/strategic_indicators/"
+                "processes_calculated), process-scoped compute "
+                "(revision_comparison/impact_effort_matrix/"
+                "decomposition_link_validation/decomposition_draft_suggestion/"
+                "diagram_validation/diagram_bpmn_xml) and revision-scoped "
+                "merges (allocation_diagnostic/diagram_merged/"
+                "decomposition_merged) — all read-only canonical services."
+            ),
             "read_only": True,
             "operation": "analyze",
         },
@@ -511,58 +557,78 @@ def _canonical_catalog() -> dict[str, Any]:
                     "interaction_room_routes.py)",
                     "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
-            ],
-            "parity_gap": [
-                {
-                    "id": "meeting_minute.sign_refuse",
-                    "justification": (
-                        "Authenticated attestation/refusal flow. Signature is "
-                        "a legal attestation — conversational exposure needs "
-                        "an explicit attestation-semantics decision; "
-                        "registered, not yet exposed."
-                    ),
-                },
-                {
-                    "id": "process_file.metadata_write",
-                    "justification": (
-                        "Process-file metadata update/delete exist as Portal "
-                        "routes (binary attach/download is platform_blocked); "
-                        "record-CRUD entity projection not yet defined."
-                    ),
-                },
                 {
                     "id": "dashboard.extended_views",
-                    "justification": (
-                        "alertas|evolucao|por_familia|vencimentos|"
-                        "strategic_indicators exist on Portal; analyze "
-                        "currently covers meta|summary|processes|instances|"
-                        "rows."
-                    ),
+                    "via": "analyze views dashboard_summary_live|"
+                    "dashboard_process_ranking|dashboard_alerts|"
+                    "dashboard_evolution|dashboard_by_family|"
+                    "dashboard_due_dates|dashboard_strategic_indicators|"
+                    "processes_calculated (DashboardLiveService/"
+                    "DashboardAlertsService/DashboardStrategicIndicatorsService "
+                    "— same owners as dashboard_routes.py)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
                 {
                     "id": "decomposition.suggest_validate",
-                    "justification": (
-                        "sugerir_rascunho_decomposicao / validar_vinculos_"
-                        "fluxo / diagrama_validacao are compute helpers "
-                        "without persistence; projection as ANALYSIS pending."
-                    ),
+                    "via": "analyze views decomposition_link_validation|"
+                    "decomposition_draft_suggestion|diagram_validation|"
+                    "revision_diagram_merged|revision_decomposition_merged "
+                    "(compute-only, PROPOSED != SAVED — canonical services "
+                    "shared with decomposition_routes.py)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
                 {
                     "id": "processo.comparativo_revisoes",
-                    "justification": (
-                        "AS-IS × TO-BE revision comparison read exists on "
-                        "Portal; dedicated read projection pending."
-                    ),
+                    "via": "analyze view process_revision_comparison "
+                    "(ProcessRevisionCompareService — same service embedded "
+                    "in get_process_context)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
                 {
                     "id": "instance.contexto",
-                    "justification": (
-                        "get/put_instancia_contexto is a distinct context "
-                        "resource, not the instance record; projection "
-                        "pending."
-                    ),
+                    "via": "READ via get_record(entity=instance); WRITE via "
+                    "prepare_record_change(instance, data.contexto) → "
+                    "commit_proposal (validate_instancia_contexto_v1 + "
+                    "ProcessoInstanciaRepository.update_contexto — same "
+                    "canonical path as put_instancia_contexto)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
+                {
+                    "id": "meeting_minute.sign_refuse",
+                    "via": "prepare_meeting_minute_change action=refuse "
+                    "(meeting_minute_workflow, confirm_before_act) → "
+                    "MeetingMinutesService.refuse — authenticated signer "
+                    "refusal with mandatory reason; handwritten sign stays "
+                    "UI/public-token only (attestation)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
+                {
+                    "id": "process_file.metadata_write",
+                    "via": "manage_evidence scope=process — "
+                    "create_link/update_description/delete on "
+                    "ProcessoArquivoRepository (same owner as "
+                    "process_file_routes.py); binary transport stays "
+                    "platform_blocked",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
+                {
+                    "id": "signature_profile",
+                    "via": "READ via get_my_context.signature_profile "
+                    "(permission-gated); WRITE display_name via "
+                    "prepare_governed_operation action=update_signature_profile "
+                    "(UserSignatureService — same owner as signature_routes.py)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
+                {
+                    "id": "diagram.bpmn_xml",
+                    "via": "export via analyze view diagram_bpmn_xml "
+                    "(FlowchartBpmnXmlService.export_xml — text); import via "
+                    "prepare_governed_operation action=import_diagram_bpmn_xml "
+                    "(confirm_before_act — replaces macro diagram)",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
             ],
+            "parity_gap": [],
             "platform_blocked": [
                 {
                     "id": "interaction_room.attachment_binary",
@@ -587,9 +653,19 @@ def _canonical_catalog() -> dict[str, Any]:
                 {
                     "id": "binary_exports",
                     "justification": (
-                        "dashboard CSV/Excel, meeting-minute PDF, BPMN XML, "
+                        "dashboard CSV/Excel, meeting-minute PDF, "
                         "decomposition CSV — binary payloads; the underlying "
-                        "data is exposed via records/analyze."
+                        "data is exposed via records/analyze. BPMN XML is "
+                        "text and IS exposed (diagram.bpmn_xml)."
+                    ),
+                },
+                {
+                    "id": "json_backup.package_binary",
+                    "justification": (
+                        ".tmbackup.zip export/import (multipart upload + zip "
+                        "download) — binary transport has no MCP/ChatGPT "
+                        "channel; structured-JSON variant is "
+                        "intentionally_not_applicable (see json_backup_import)."
                     ),
                 },
                 {
@@ -643,22 +719,32 @@ def _canonical_catalog() -> dict[str, Any]:
                 {
                     "id": "json_backup_import",
                     "justification": (
-                        "Bulk admin batch import/export — not a "
-                        "conversational capability."
+                        "Full-database backup export/import (JsonBackupService "
+                        "preview/apply). The real payload is the complete DB "
+                        "bundle — no secure conversational transport can carry "
+                        "it as tool args, and bulk merge/replace restore is an "
+                        "admin data-portability operation, not a business "
+                        "intent. Backend preview/apply remain Portal-only."
                     ),
                 },
                 {
-                    "id": "signature_profile",
+                    "id": "meeting_minute.sign_handwritten",
                     "justification": (
-                        "Personal signing-identity configuration — "
-                        "attestation-adjacent; not conversational."
+                        "Handwritten signature is a legal attestation act — "
+                        "deliberately not exposed conversationally; signer "
+                        "identity declaration stays in UI/public-token flow. "
+                        "Refusal (sign_refuse) IS exposed — it is a recorded "
+                        "rejection, not an attestation."
                     ),
                 },
                 {
                     "id": "person_profile",
                     "justification": (
                         "Display-support profile read for UI rendering "
-                        "(avatar/name) — not a business capability."
+                        "(avatar/name of other users). The canonical port "
+                        "only exposes the caller's own profile — already "
+                        "covered by get_my_context; photo binary is "
+                        "platform_blocked."
                     ),
                 },
             ],

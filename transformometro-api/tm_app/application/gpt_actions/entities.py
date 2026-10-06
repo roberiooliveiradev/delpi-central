@@ -34,12 +34,34 @@ class GptAnalysisView(str, Enum):
     PROCESSES = "processes"
     INSTANCES = "instances"
     ROWS = "rows"
+    # Live dashboard projections (DashboardLiveService / canonical owners).
+    DASHBOARD_SUMMARY_LIVE = "dashboard_summary_live"
+    DASHBOARD_PROCESS_RANKING = "dashboard_process_ranking"
+    DASHBOARD_ALERTS = "dashboard_alerts"
+    DASHBOARD_EVOLUTION = "dashboard_evolution"
+    DASHBOARD_BY_FAMILY = "dashboard_by_family"
+    DASHBOARD_DUE_DATES = "dashboard_due_dates"
+    DASHBOARD_STRATEGIC_INDICATORS = "dashboard_strategic_indicators"
+    PROCESSES_CALCULATED = "processes_calculated"
+    # Process/revision-scoped compute views (no persistence).
+    PROCESS_REVISION_COMPARISON = "process_revision_comparison"
+    IMPACT_EFFORT_MATRIX = "impact_effort_matrix"
+    DECOMPOSITION_LINK_VALIDATION = "decomposition_link_validation"
+    DECOMPOSITION_DRAFT_SUGGESTION = "decomposition_draft_suggestion"
+    DIAGRAM_VALIDATION = "diagram_validation"
+    DIAGRAM_BPMN_XML = "diagram_bpmn_xml"
+    REVISION_ALLOCATION_DIAGNOSTIC = "revision_allocation_diagnostic"
+    REVISION_DIAGRAM_MERGED = "revision_diagram_merged"
+    REVISION_DECOMPOSITION_MERGED = "revision_decomposition_merged"
 
 
 class GptMeetingMinuteWorkflow(str, Enum):
     SEND = "send"
     FINALIZE = "finalize"
     CANCEL = "cancel"
+    # Authenticated refusal of a signature invite — distinct from public
+    # token refusal; legally lighter than sign but still a recorded decision.
+    REFUSE = "refuse"
 
 
 # Capabilities per entity: search, get, create, update, delete, duplicate

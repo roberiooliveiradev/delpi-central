@@ -108,6 +108,15 @@ def openapi_record_data_properties() -> dict[str, Any]:
     "prioridade": {
         "type": "string"
     },
+    "contexto": {
+        "type": "object",
+        "additionalProperties": True,
+        "description": (
+            "entity=instance only — operational context doc "
+            "(instancia_contexto_v1: node_notes/links). Validated by the "
+            "canonical domain validator and persisted via update_contexto."
+        )
+    },
     "versao_revisao": {
         "type": "string"
     },

@@ -86,6 +86,10 @@ WRITE_CAPABILITIES = frozenset(
         "pin_interaction_message",
         "unpin_interaction_message",
         "mark_interaction_read",
+        # Portal parity — governed special operations (signature profile
+        # metadata; BPMN XML macro-diagram import — text transport).
+        "update_signature_profile",
+        "import_diagram_bpmn_xml",
     }
 )
 
@@ -170,6 +174,8 @@ GOVERNED_OPERATION_ACTION_TO_CAPABILITY = {
     "recalculate_dashboard": "recalculate_dashboard",
     "commit_improvement_package": "commit_improvement_package",
     "adjust_shared_resource_cost": "adjust_shared_resource_cost",
+    "update_signature_profile": "update_signature_profile",
+    "import_diagram_bpmn_xml": "import_diagram_bpmn_xml",
 }
 
 # Semantic family: meeting minutes — workflow transitions and minute
@@ -179,6 +185,7 @@ MEETING_MINUTE_ACTION_TO_CAPABILITY = {
     "send": "meeting_minute_workflow",
     "finalize": "meeting_minute_workflow",
     "cancel": "meeting_minute_workflow",
+    "refuse": "meeting_minute_workflow",
     "resend": "meeting_minute_manage",
     "create_version": "meeting_minute_manage",
     "set_participants": "meeting_minute_manage",
@@ -324,6 +331,10 @@ class GovernedWriteOrchestrator:
             return self._prep_evidence(request, args)
         if capability == "adjust_shared_resource_cost":
             return self._prep_cost(request, args)
+        if capability == "update_signature_profile":
+            return self._prep_signature_profile(request, args)
+        if capability == "import_diagram_bpmn_xml":
+            return self._prep_bpmn_import(request, args)
         if capability == "meeting_minute_manage":
             return self._prep_minute_manage(request, args)
         if capability in (_DIAG_CREATE, _DIAG_MANAGE):
@@ -553,12 +564,23 @@ class GovernedWriteOrchestrator:
             "vigencia_inicio" in data or "vigencia_fim" in data or "data" in args
         ):
             conf["confirm_vigencia_change_may_be_required"] = True
+        validation: dict[str, Any] = {"ready": True}
+        if entity == "instance" and "contexto" in data:
+            from tm_app.domain.decomposition.decomposition_tree_v1 import (
+                DecompositionValidationError,
+                validate_instancia_contexto_v1,
+            )
+
+            try:
+                validate_instancia_contexto_v1(data["contexto"])
+            except DecompositionValidationError as exc:
+                validation = {"ready": False, "errors": [str(exc)]}
         return {
             "resource_type": entity,
             "resource_id": record_id,
             "current_state_fingerprint": fingerprint(current),
             "exact_change": exact,
-            "validation_result": {"ready": True},
+            "validation_result": validation,
             "consequential_impact": {"persists": True, "operation": "update"},
             "confirmation_requirement": conf,
             "expected_postcondition": {
@@ -679,6 +701,18 @@ class GovernedWriteOrchestrator:
             raise GptActionsError(str(exc), 403) from exc
         except LookupError as exc:
             raise GptActionsError(str(exc), 404) from exc
+        from tm_app.application.gpt_actions.entities import GptMeetingMinuteWorkflow
+
+        try:
+            GptMeetingMinuteWorkflow(action)
+        except ValueError as exc:
+            raise GptActionsError(
+                f"Invalid action '{action}'. Allowed: {[a.value for a in GptMeetingMinuteWorkflow]}",
+                400,
+            ) from exc
+        validation = {"ready": True}
+        if action == GptMeetingMinuteWorkflow.REFUSE.value and not str(reason or "").strip():
+            validation = {"ready": False, "missing": ["reason"]}
         current = self._dispatch.get_record(request, "meeting_minute", minute_id)
         return {
             "resource_type": "meeting_minute",
@@ -689,7 +723,7 @@ class GovernedWriteOrchestrator:
                 "action": action,
                 "reason": reason,
             },
-            "validation_result": {"ready": True},
+            "validation_result": validation,
             "consequential_impact": {
                 "persists": True,
                 "operation": f"meeting_workflow_{action}",
@@ -822,6 +856,67 @@ class GovernedWriteOrchestrator:
             "consequential_impact": {"persists": True, "operation": "adjust_cost"},
             "confirmation_requirement": {},
             "expected_postcondition": {"type": "cost_verified_flag"},
+        }
+
+    def _prep_signature_profile(
+        self, request: Request, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        display_name = str(args.get("display_name") or "").strip()
+        if not display_name:
+            raise GptActionsError("display_name is required.", 400)
+        # AuthZ probe at PREPARE: read current profile as the caller (the
+        # canonical service enforces authentication again at ACT).
+        current = self._dispatch.get_my_signature_profile(request)
+        return {
+            "resource_type": "user_signature_profile",
+            "resource_id": "me",
+            "current_state_fingerprint": fingerprint(current),
+            "exact_change": {"display_name": display_name},
+            "validation_result": {"ready": True},
+            "consequential_impact": {
+                "persists": True,
+                "operation": "update_signature_profile",
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "signature_profile_display_name",
+                "display_name": display_name,
+            },
+        }
+
+    def _prep_bpmn_import(
+        self, request: Request, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        processo_id = str(
+            args.get("processo_id") or args.get("id") or ""
+        ).strip()
+        xml = str(args.get("xml") or "")
+        # PREPARE: manage-scope AuthZ + existence + dry XML parse.
+        validation = self._dispatch.validate_bpmn_import(
+            request, processo_id=processo_id, xml=xml
+        )
+        return {
+            "resource_type": "process_diagram",
+            "resource_id": processo_id,
+            "current_state_fingerprint": fingerprint(
+                validation["current_diagram"]
+            ),
+            "exact_change": {"processo_id": processo_id, "xml": xml},
+            "validation_result": {
+                "ready": True,
+                "parsed_nodes": validation["parsed_nodes"],
+                "parsed_edges": validation["parsed_edges"],
+            },
+            "consequential_impact": {
+                "persists": True,
+                "operation": "import_diagram_bpmn_xml",
+                "overwrites_macro_diagram": True,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "diagram_bpmn_imported",
+                "processo_id": processo_id,
+            },
         }
 
     def _prep_minute_manage(
@@ -1000,6 +1095,16 @@ class GovernedWriteOrchestrator:
                     str(change["recurso_compartilhado_id"]),
                 )
             )
+        if cap == "update_signature_profile":
+            return fingerprint(
+                self._dispatch.get_my_signature_profile(request)
+            )
+        if cap == "import_diagram_bpmn_xml":
+            return fingerprint(
+                self._dispatch.read_process_diagram(
+                    request, str(change["processo_id"])
+                )
+            )
         if cap == "meeting_minute_manage":
             mid = change.get("minute_id")
             if mid:
@@ -1111,6 +1216,16 @@ class GovernedWriteOrchestrator:
                 valor_mensal=float(change["valor_mensal"]),
                 vigente_desde=str(change["vigente_desde"]),
                 observacoes=change.get("observacoes"),
+            )
+        if cap == "update_signature_profile":
+            return self._dispatch.update_signature_profile(
+                request, display_name=str(change["display_name"])
+            )
+        if cap == "import_diagram_bpmn_xml":
+            return self._dispatch.import_diagram_bpmn_xml(
+                request,
+                processo_id=str(change["processo_id"]),
+                xml=str(change["xml"]),
             )
         if cap in TASK_CAPABILITIES:
             return self._dispatch.task_write(
@@ -1253,6 +1368,34 @@ class GovernedWriteOrchestrator:
                     data={"write_result": write_result},
                 )
             return write_result
+
+        if cap == "update_signature_profile":
+            read = self._dispatch.get_my_signature_profile(request)
+            expected_name = str(
+                expected.get("display_name") or change.get("display_name") or ""
+            )
+            if str(read.get("display_name") or "") != expected_name:
+                raise GovernedWriteError(
+                    "Signature profile update not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                )
+            return {"signature_profile": read, "write_result": write_result}
+
+        if cap == "import_diagram_bpmn_xml":
+            if not isinstance(write_result, dict) or not write_result.get(
+                "verified"
+            ):
+                raise GovernedWriteError(
+                    "BPMN import not verified by authoritative read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                    data={"write_result": write_result},
+                )
+            read = self._dispatch.read_process_diagram(
+                request, str(change["processo_id"])
+            )
+            return {"diagram": read, "write_result": write_result}
 
         if cap in TASK_CAPABILITIES:
             # Use cases already verify read-back; assert the authoritative

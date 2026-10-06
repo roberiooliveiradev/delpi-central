@@ -231,6 +231,48 @@ Profile/cargo/department/context ≠ AuthZ. Service account must not impersonate
 | activate / package / evidence / cost / meeting | MCP specialized `prepare_*` | confirm_* where required | MCP/Actions `commit_proposal` | Yes | MCP + Actions |
 | Tasks / Room | N/A | N/A | N/A | N/A | Not exposed |
 
+## Portal × TÉO parity closure (capability accounting wave)
+
+Every Portal capability is accounted in exactly one class via
+`capability_descriptors.build_capability_surface_catalog().exposure_classification`:
+
+```text
+EXPOSED = 10 capability groups
+PLATFORM_BLOCKED = 7 (binary transport: file upload/download, signature
+    image, minute PDF, XLS/CSV/binary exports, .tmbackup.zip package)
+TECHNICAL_ONLY = 4 (websocket/presence/locks/health plumbing)
+PUBLIC_TOKEN_FLOW = 1 (external meeting-minute signer — never impersonated)
+INTENTIONALLY_NOT_APPLICABLE = 4 (UI composition, json_backup bulk
+    portability, other-person profile read, navigation helpers)
+PARITY_GAP = 0 · TO_INVENTORY = 0 · UNCLASSIFIED = 0
+TOTAL = 26 capability groups covering the full Portal route inventory
+```
+
+Newly exposed (no new MCP tools — typed actions/views on existing families):
+
+| Intent | Family | Action/view | Owner | Policy |
+|---|---|---|---|---|
+| Dashboard live views (summary/ranking/alerts/evolution/family/due_dates/strategic/calculated) | `analyze` | 8 views | Dashboard*Service | READ |
+| Revision comparison | `analyze` | `process_revision_comparison` | ProcessRevisionCompareService | READ |
+| Impact/effort matrix | `analyze` | `impact_effort_matrix` | RevisaoImpactEffortMatrixService | READ |
+| Decomposition link validation + draft suggestion | `analyze` | 2 views | DecompositionFlowchartLinkValidator / DecompositionDraftService | READ (no persistence) |
+| Diagram validation + BPMN XML export | `analyze` | `diagram_validation`, `diagram_bpmn_xml` | FlowchartValidationService / FlowchartBpmnXmlService | READ |
+| Revision merged views + rateio diagnostic | `analyze` | 3 views | Revisao*Merge/Diagnostic services | READ |
+| Instance `contexto` | `prepare_record_change` + `get_record` | entity=`instance`, `changes.contexto` | validate_instancia_contexto_v1 + ProcessoInstanciaRepository | auto_act |
+| Meeting-minute refuse | `prepare_meeting_minute_change` | `refuse` (reason required) | MeetingMinutesService.refuse | confirm_before_act |
+| Signature profile | `get_my_context` (read, permission-gated, no binary) + `prepare_governed_operation` | `update_signature_profile` | UserSignatureService | auto_act |
+| BPMN XML import | `prepare_governed_operation` | `import_diagram_bpmn_xml` | FlowchartBpmnXmlService + DiagramWriteService | confirm_before_act |
+| Process-file metadata | `evidence_read`/`prepare_evidence_change` | scope=`process` | ProcessoArquivoRepository | per action |
+
+Reclassified: `process_file.metadata_write` (already covered by
+`manage_evidence(scope=process)` — same repo, manage AuthZ, audit, read-back);
+`bpmn_xml` moved from binary-blocked to text capability (`{xml: str}`);
+`meeting_minute.sign` stays excluded (UploadFile signature image + terms =
+binary attestation; authenticated `sign` never exposed, public token flow
+separate); `json_backup` stays INTENTIONALLY_NOT_APPLICABLE (bulk DB
+portability bundle, not a conversational payload); binary stays
+PLATFORM_BLOCKED.
+
 ## DÉLIA readiness
 
 | Item | Status |

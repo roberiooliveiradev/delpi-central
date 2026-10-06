@@ -17,9 +17,35 @@ from tm_app.application.gpt_actions.entities import (
 )
 from tm_app.application.gpt_actions.registration_guide import build_registration_guide
 from tm_app.application.methodology.guide import query_methodology_guide
+from tm_app.application.services.dashboard_alerts_service import DashboardAlertsService
+from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
+)
+from tm_app.application.services.dashboard_strategic_indicators_service import (
+    DashboardStrategicIndicatorsService,
+)
+from tm_app.application.services.decomposition_draft_service import (
+    DecompositionDraftService,
+)
+from tm_app.application.services.decomposition_flowchart_link_validator import (
+    DecompositionFlowchartLinkValidator,
+)
+from tm_app.application.services.revision_allocation_diagnostic_service import (
+    RevisaoRateioDiagnosticService,
+)
+from tm_app.application.services.revision_decomposition_merge_service import (
+    RevisaoDecomposicaoMergeService,
+)
+from tm_app.application.services.revision_diagram_merge_service import (
+    RevisaoDiagramMergeService,
+)
+from tm_app.application.services.flowchart_bpmn_xml_service import (
+    FlowchartBpmnXmlService,
+)
+from tm_app.infrastructure.gateways.strategic_indicators_gateway import (
+    StrategicIndicatorsGateway,
 )
 from tm_app.application.services.instance_duplicate_service import (
     InstanciaDuplicateService,
@@ -42,6 +68,9 @@ from tm_app.application.services.process_duplicate_service import (
 from tm_app.application.services.revision_duplicate_service import (
     RevisaoDuplicateService,
     RevisaoNotFoundError,
+)
+from tm_app.application.services.process_revision_compare_service import (
+    ProcessRevisionCompareService,
 )
 from tm_app.application.services.revision_impact_effort_matrix_service import (
     RevisaoImpactEffortMatrixService,
@@ -71,7 +100,26 @@ from tm_app.core.catalogs import (
 )
 from tm_app.core.errors import format_api_error
 from tm_app.core.serialize import row_to_json, rows_to_json
+from tm_app.domain.decomposition.decomposition_tree_v1 import (
+    empty_escopo as empty_decomposition_escopo,
+)
+from tm_app.domain.decomposition.decomposition_tree_v1 import (
+    empty_tree,
+    validate_instancia_contexto_v1,
+)
+from tm_app.domain.decomposition.decomposition_tree_v1 import (
+    DecompositionValidationError,
+)
 from tm_app.domain.diagram.bpmn_mermaid_mapping import build_bpmn_catalog_for_api
+from tm_app.domain.diagram.flowchart_v1 import (
+    FlowchartValidationError,
+    empty_escopo as empty_diagram_escopo,
+    empty_flowchart,
+    validate_flowchart_v1,
+)
+from tm_app.domain.diagram.flowchart_validation_service import (
+    FlowchartValidationService,
+)
 from tm_app.domain.services.branch_catalog_service import assert_filial_ativa
 from tm_app.domain.services.process_instance_service import ProcessoInstanciaDomainError
 from tm_app.domain.services.process_scope_service import ProcessoEscopoDomainError
@@ -142,7 +190,9 @@ from tm_app.application.services.diagram_write_service import (
     DiagramWriteError,
     DiagramWriteService,
 )
+from tm_app.application.services.process_activity_touch import touch_processo_updated_at
 from tm_app.application.services.process_setup_stats_service import ProcessoSetupStatsService
+from tm_app.application.services.user_signature_service import UserSignatureService
 from tm_app.application.services.process_write_service import (
     ProcessWriteError,
     ProcessWriteService,
@@ -410,6 +460,23 @@ class GptActionsDispatchService:
             )
         return codigo
 
+    _PROCESS_SCOPED_VIEWS = frozenset(
+        {
+            GptAnalysisView.PROCESS_REVISION_COMPARISON,
+            GptAnalysisView.DECOMPOSITION_LINK_VALIDATION,
+            GptAnalysisView.DECOMPOSITION_DRAFT_SUGGESTION,
+            GptAnalysisView.DIAGRAM_VALIDATION,
+            GptAnalysisView.DIAGRAM_BPMN_XML,
+        }
+    )
+    _REVISION_SCOPED_VIEWS = frozenset(
+        {
+            GptAnalysisView.REVISION_ALLOCATION_DIAGNOSTIC,
+            GptAnalysisView.REVISION_DIAGRAM_MERGED,
+            GptAnalysisView.REVISION_DECOMPOSITION_MERGED,
+        }
+    )
+
     def analyze(
         self,
         request: Request,
@@ -419,9 +486,12 @@ class GptActionsDispatchService:
         setor_id: str | None = None,
         processo_id: str | None = None,
         revisao_id: str | None = None,
+        instancia_id: str | None = None,
         familia_processo: str | None = None,
+        competencia: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
+        horizonte_meses: int | None = None,
         limit: int | None = None,
     ) -> dict[str, Any]:
         self._raise_http_err(require_transformometro_view_access(request))
@@ -435,7 +505,32 @@ class GptActionsDispatchService:
 
         setor_codigo = self._resolve_setor_codigo(setor_id)
 
-        if analysis_view != GptAnalysisView.META:
+        if analysis_view in self._PROCESS_SCOPED_VIEWS:
+            pid = self._require_analyze_id(processo_id, "processo_id", analysis_view)
+            self._raise_http_err(check_processo_view_access(request, pid))
+        elif analysis_view in self._REVISION_SCOPED_VIEWS:
+            rid = self._require_analyze_id(revisao_id, "revisao_id", analysis_view)
+            self._raise_http_err(self._check_revisao_view_access(request, rid))
+        elif analysis_view == GptAnalysisView.IMPACT_EFFORT_MATRIX:
+            if not (processo_id or instancia_id or revisao_id):
+                raise GptActionsError(
+                    "impact_effort_matrix requires processo_id, instancia_id "
+                    "or revisao_id.",
+                    400,
+                )
+            if revisao_id:
+                self._raise_http_err(
+                    self._check_revisao_view_access(request, str(revisao_id))
+                )
+            elif instancia_id:
+                self._raise_http_err(
+                    check_instancia_view_access(request, str(instancia_id))
+                )
+            else:
+                self._raise_http_err(
+                    check_processo_view_access(request, str(processo_id))
+                )
+        elif analysis_view != GptAnalysisView.META:
             self._raise_http_err(
                 check_dashboard_filial_access(
                     request,
@@ -445,6 +540,61 @@ class GptActionsDispatchService:
                 )
             )
 
+        return self._analyze_view(
+            request,
+            analysis_view,
+            filial_id=filial_id,
+            setor_codigo=setor_codigo,
+            processo_id=processo_id,
+            revisao_id=revisao_id,
+            instancia_id=instancia_id,
+            familia_processo=familia_processo,
+            competencia=competencia,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+            horizonte_meses=horizonte_meses,
+            limit=limit,
+        )
+
+    @staticmethod
+    def _require_analyze_id(
+        value: str | None, name: str, view: GptAnalysisView
+    ) -> str:
+        rid = str(value or "").strip()
+        if not rid:
+            raise GptActionsError(
+                f"{name} is required for view '{view.value}'.", 400
+            )
+        return rid
+
+    def _check_revisao_view_access(self, request: Request, revisao_id: str):
+        revisao = RevisaoRepository().get(revisao_id)
+        if not revisao:
+            raise GptActionsError("Revisão não encontrada.", 404)
+        instancia_id = str(revisao.get("instancia_id") or "").strip()
+        if instancia_id:
+            return check_instancia_view_access(request, instancia_id)
+        return check_processo_view_access(
+            request, str(revisao.get("processo_id") or "")
+        )
+
+    def _analyze_view(
+        self,
+        request: Request,
+        analysis_view: GptAnalysisView,
+        *,
+        filial_id: str | None,
+        setor_codigo: str | None,
+        processo_id: str | None,
+        revisao_id: str | None,
+        instancia_id: str | None,
+        familia_processo: str | None,
+        competencia: str | None,
+        competencia_inicio: str | None,
+        competencia_fim: str | None,
+        horizonte_meses: int | None,
+        limit: int | None,
+    ) -> dict[str, Any]:
         if analysis_view == GptAnalysisView.META:
             return self._snapshot.meta()
         if analysis_view == GptAnalysisView.SUMMARY:
@@ -471,15 +621,284 @@ class GptActionsDispatchService:
                 processo_id=processo_id,
                 limit=limit or 500,
             )
-        return self._snapshot.linhas(
-            processo_id=processo_id,
-            revisao_id=revisao_id,
-            filial_id=filial_id,
-            setor_id=setor_codigo,
-            competencia_inicio=competencia_inicio,
-            competencia_fim=competencia_fim,
-            limit=limit or 500,
+        if analysis_view == GptAnalysisView.ROWS:
+            return self._snapshot.linhas(
+                processo_id=processo_id,
+                revisao_id=revisao_id,
+                filial_id=filial_id,
+                setor_id=setor_codigo,
+                competencia_inicio=competencia_inicio,
+                competencia_fim=competencia_fim,
+                limit=limit or 500,
+            )
+        if analysis_view == GptAnalysisView.DASHBOARD_SUMMARY_LIVE:
+            return DashboardLiveService().build_summary(
+                filial_id=filial_id,
+                setor_id=setor_codigo,
+                competencia_inicio=competencia_inicio,
+                competencia_fim=competencia_fim,
+            )
+        if analysis_view == GptAnalysisView.DASHBOARD_PROCESS_RANKING:
+            return {
+                "items": DashboardLiveService().query_ranking_processos(
+                    filial_id=filial_id,
+                    setor_id=setor_codigo,
+                    competencia=competencia,
+                    competencia_inicio=competencia_inicio,
+                    competencia_fim=competencia_fim,
+                    limit=limit or 50,
+                )
+            }
+        if analysis_view == GptAnalysisView.DASHBOARD_ALERTS:
+            return DashboardAlertsService().list_negative_savings_alerts(
+                filial_id=filial_id,
+                setor_id=setor_codigo,
+                familia_processo=familia_processo,
+                competencia_inicio=competencia_inicio,
+                competencia_fim=competencia_fim,
+            )
+        if analysis_view == GptAnalysisView.DASHBOARD_EVOLUTION:
+            return {
+                "items": DashboardLiveService().query_evolucao(
+                    filial_id=filial_id,
+                    setor_id=setor_codigo,
+                    competencia_inicio=competencia_inicio,
+                    competencia_fim=competencia_fim,
+                    granularity="month",
+                )
+            }
+        if analysis_view == GptAnalysisView.DASHBOARD_BY_FAMILY:
+            return {
+                "items": DashboardLiveService().query_resumo_por_familia(
+                    filial_id=filial_id,
+                    setor_id=setor_codigo,
+                    competencia_inicio=competencia_inicio,
+                    competencia_fim=competencia_fim,
+                )
+            }
+        if analysis_view == GptAnalysisView.DASHBOARD_DUE_DATES:
+            return DashboardLiveService().list_vencimentos(
+                filial_id=filial_id,
+                setor_id=setor_codigo,
+                familia_processo=familia_processo,
+            )
+        if analysis_view == GptAnalysisView.DASHBOARD_STRATEGIC_INDICATORS:
+            try:
+                return DashboardStrategicIndicatorsService(
+                    StrategicIndicatorsGateway()
+                ).get_program_context(
+                    competence=competencia,
+                    start_date=competencia_inicio,
+                    end_date=competencia_fim,
+                    branch=filial_id,
+                )
+            except Exception as exc:
+                return {
+                    "available": False,
+                    "strategic_indicators_department": "engineering",
+                    "department_idd": None,
+                    "indicators": [],
+                    "gross_savings": None,
+                    "error": format_api_error(exc),
+                }
+        if analysis_view == GptAnalysisView.PROCESSES_CALCULATED:
+            items = DashboardLiveService().list_processos_calculados(
+                filial_id=filial_id,
+                setor_id=setor_codigo,
+                familia_processo=familia_processo,
+            )
+            items = filter_rows_for_access(request, items)
+            return {"total": len(items), "items": rows_to_json(items)}
+        if analysis_view == GptAnalysisView.PROCESS_REVISION_COMPARISON:
+            comparison = ProcessRevisionCompareService().compare(str(processo_id))
+            if not comparison:
+                raise GptActionsError("Processo não encontrado.", 404)
+            return {"processo_id": processo_id, "comparison": comparison}
+        if analysis_view == GptAnalysisView.IMPACT_EFFORT_MATRIX:
+            matrix = RevisaoImpactEffortMatrixService()
+            horizon = horizonte_meses or 12
+            if revisao_id:
+                data = matrix.build_for_revisao(
+                    str(revisao_id), competencia=competencia, horizonte_meses=horizon
+                )
+            elif instancia_id:
+                data = matrix.build_for_instancia(
+                    str(instancia_id), competencia=competencia, horizonte_meses=horizon
+                )
+            else:
+                data = matrix.build_for_processo(
+                    str(processo_id), competencia=competencia, horizonte_meses=horizon
+                )
+            if not data:
+                raise GptActionsError("Escopo da matriz não encontrado.", 404)
+            return data
+        if analysis_view == GptAnalysisView.DECOMPOSITION_LINK_VALIDATION:
+            tree_row = ProcessoDecomposicaoRepository().get(str(processo_id))
+            diagram_row = ProcessoDiagramRepository().get(str(processo_id))
+            return DecompositionFlowchartLinkValidator().validate(
+                tree=(tree_row or {}).get("conteudo") or empty_tree(),
+                flowchart=(diagram_row or {}).get("conteudo") or empty_flowchart(),
+            )
+        if analysis_view == GptAnalysisView.DECOMPOSITION_DRAFT_SUGGESTION:
+            if not ProcessoRepository().get(str(processo_id)):
+                raise GptActionsError("Processo não encontrado.", 404)
+            return DecompositionDraftService().suggest_for_processo(str(processo_id))
+        if analysis_view == GptAnalysisView.DIAGRAM_VALIDATION:
+            diagram_row = ProcessoDiagramRepository().get(str(processo_id))
+            conteudo = validate_flowchart_v1(
+                (diagram_row or {}).get("conteudo") or empty_flowchart()
+            )
+            return FlowchartValidationService().validate(conteudo)
+        if analysis_view == GptAnalysisView.DIAGRAM_BPMN_XML:
+            processo = ProcessoRepository().get(str(processo_id))
+            diagram_row = ProcessoDiagramRepository().get(str(processo_id))
+            conteudo = (diagram_row or {}).get("conteudo") or empty_flowchart()
+            try:
+                xml_text = FlowchartBpmnXmlService().export_xml(
+                    conteudo,
+                    process_name=str(
+                        (processo or {}).get("nome_processo") or "Processo"
+                    ),
+                )
+            except FlowchartValidationError as exc:
+                raise GptActionsError(str(exc), 400) from exc
+            return {"processo_id": processo_id, "xml": xml_text}
+        if analysis_view == GptAnalysisView.REVISION_ALLOCATION_DIAGNOSTIC:
+            data = RevisaoRateioDiagnosticService().diagnose(
+                str(revisao_id), competencia=competencia
+            )
+            if data is None:
+                raise GptActionsError("Revisão não encontrada.", 404)
+            return data
+        if analysis_view == GptAnalysisView.REVISION_DIAGRAM_MERGED:
+            return self._revision_diagram_merged(str(revisao_id))
+        return self._revision_decomposition_merged(str(revisao_id))
+
+    def _revision_diagram_merged(self, revisao_id: str) -> dict[str, Any]:
+        revisao, macro, escopo, overlay = self._load_diagram_merge_context(
+            revisao_id
         )
+        if not revisao:
+            raise GptActionsError("Revisão não encontrada.", 404)
+        reference_overlay = None
+        reference_meta = None
+        baseline_revisao = RevisaoRepository().find_reference_for_revisao(
+            revisao_id,
+            revisao_row=revisao,
+        )
+        if baseline_revisao:
+            _, _, _, reference_overlay = self._load_diagram_merge_context(
+                str(baseline_revisao["revisao_id"])
+            )
+            reference_meta = {
+                "revisao_id": str(baseline_revisao["revisao_id"]),
+                "versao_revisao": baseline_revisao.get("versao_revisao"),
+                "cenario_tipo": baseline_revisao.get("cenario_tipo"),
+            }
+        view = RevisaoDiagramMergeService().build_revisao_view(
+            macro=macro,
+            escopo=escopo,
+            overlay=overlay,
+            reference_overlay=reference_overlay,
+            reference_meta=reference_meta,
+        )
+        return {
+            "revisao_id": revisao_id,
+            "cenario_tipo": revisao.get("cenario_tipo"),
+            **view,
+        }
+
+    @staticmethod
+    def _load_diagram_merge_context(revisao_id: str):
+        revisao = RevisaoRepository().get(revisao_id)
+        if not revisao:
+            return None, None, None, None
+        processo_id = str(revisao["processo_id"])
+        instancia_id = str(revisao.get("instancia_id") or "")
+        macro_row = ProcessoDiagramRepository().get(processo_id)
+        macro = (macro_row or {}).get("conteudo") if macro_row else None
+        escopo_row = (
+            InstanciaDiagramEscopoRepository().get(instancia_id)
+            if instancia_id
+            else None
+        )
+        escopo = (
+            {
+                "node_ids": escopo_row.get("node_ids") or [],
+                "inherit_all": bool(escopo_row.get("inherit_all", True)),
+                "include_boundary_edges": bool(
+                    escopo_row.get("include_boundary_edges", False)
+                ),
+            }
+            if escopo_row
+            else empty_diagram_escopo()
+        )
+        overlay_row = RevisaoDiagramOverlayRepository().get(revisao_id)
+        overlay = (overlay_row or {}).get("conteudo") if overlay_row else None
+        return revisao, macro, escopo, overlay
+
+    def _revision_decomposition_merged(self, revisao_id: str) -> dict[str, Any]:
+        revisao, tree, escopo, overlay = self._load_decomp_merge_context(
+            revisao_id
+        )
+        if not revisao:
+            raise GptActionsError("Revisão não encontrada.", 404)
+        reference_overlay = None
+        reference_meta = None
+        baseline_revisao = RevisaoRepository().find_reference_for_revisao(
+            revisao_id,
+            revisao_row=revisao,
+        )
+        if baseline_revisao:
+            _, _, _, reference_overlay = self._load_decomp_merge_context(
+                str(baseline_revisao["revisao_id"])
+            )
+            reference_meta = {
+                "revisao_id": str(baseline_revisao["revisao_id"]),
+                "versao_revisao": baseline_revisao.get("versao_revisao"),
+                "cenario_tipo": baseline_revisao.get("cenario_tipo"),
+            }
+        view = RevisaoDecomposicaoMergeService().build_revisao_view(
+            tree=tree,
+            escopo=escopo,
+            overlay=overlay,
+            reference_overlay=reference_overlay,
+            reference_meta=reference_meta,
+        )
+        return {
+            "revisao_id": revisao_id,
+            "cenario_tipo": revisao.get("cenario_tipo"),
+            **view,
+        }
+
+    @staticmethod
+    def _load_decomp_merge_context(revisao_id: str):
+        revisao = RevisaoRepository().get(revisao_id)
+        if not revisao:
+            return None, None, None, None
+        processo_id = str(revisao["processo_id"])
+        instancia_id = str(revisao.get("instancia_id") or "")
+        tree_row = ProcessoDecomposicaoRepository().get(processo_id)
+        tree = (tree_row or {}).get("conteudo") if tree_row else None
+        escopo_row = (
+            InstanciaDecomposicaoEscopoRepository().get(instancia_id)
+            if instancia_id
+            else None
+        )
+        escopo = (
+            {
+                "node_ids": escopo_row.get("node_ids") or [],
+                "inherit_all": bool(escopo_row.get("inherit_all", True)),
+                "include_descendants": bool(
+                    escopo_row.get("include_descendants", True)
+                ),
+            }
+            if escopo_row
+            else empty_decomposition_escopo()
+        )
+        overlay_row = RevisaoDecomposicaoOverlayRepository().get(revisao_id)
+        overlay = (overlay_row or {}).get("conteudo") if overlay_row else None
+        return revisao, tree, escopo, overlay
 
     # --- records CRUD ----------------------------------------------------
 
@@ -1595,6 +2014,15 @@ class GptActionsDispatchService:
                 return self._minutes.send_for_signature(user, minute_id)
             if workflow == GptMeetingMinuteWorkflow.FINALIZE:
                 return self._minutes.finalize(user, minute_id)
+            if workflow == GptMeetingMinuteWorkflow.REFUSE:
+                result = self._minutes.refuse(user, minute_id, str(reason or ""))
+                read_back = self._minutes.get_detail(user, minute_id)
+                minute = (read_back or {}).get("minute") or {}
+                return {
+                    **result,
+                    "read_back": read_back,
+                    "verified": str(minute.get("status") or "") == "in_review",
+                }
             return self._minutes.cancel(user, minute_id, reason=reason)
         except PermissionError as exc:
             raise GptActionsError(str(exc), 403) from exc
@@ -1890,6 +2318,18 @@ class GptActionsDispatchService:
         existing = ProcessoInstanciaRepository().get(instancia_id)
         if not existing:
             raise GptActionsError("Instância não encontrada.", 404)
+        # Operational context (contexto_v1) is a distinct field channel: it is
+        # validated by the domain validator and persisted via update_contexto,
+        # not through the InstanciaUpdateBody field map.
+        _MISSING = object()
+        contexto_value = data.pop("contexto", _MISSING)
+        contexto_requested = contexto_value is not _MISSING
+        if contexto_requested and not data:
+            # Contexto-only update: same AuthZ (check_instancia_manage_access
+            # already ran), same audit trail as put_instancia_contexto.
+            return self._update_instancia_contexto(
+                request, existing, instancia_id, contexto_value
+            )
         body = InstanciaUpdateBody.model_validate(data)
         filial_atual = str(existing.get("codigo_filial") or existing.get("filial_id") or "")
         if filial_atual and not existing.get("todas_filiais_ativas"):
@@ -1916,7 +2356,148 @@ class GptActionsDispatchService:
             raise GptActionsError(str(exc), 400) from exc
         self._audit(request, "processo_instancia", instancia_id, "update", body.model_dump())
         self._recalc_hook.after_processo(str(existing.get("processo_id") or ""))
-        return row_to_json(row), "Melhoria atualizada."
+        result = row_to_json(row)
+        if contexto_requested:
+            contexto_result, _msg = self._update_instancia_contexto(
+                request, existing, instancia_id, contexto_value
+            )
+            result = {**result, **contexto_result}
+        return result, "Melhoria atualizada."
+
+    def _update_instancia_contexto(
+        self,
+        request: Request,
+        existing: dict[str, Any],
+        instancia_id: str,
+        contexto_value: Any,
+    ) -> tuple[dict[str, Any], str]:
+        """Same canonical write as put_instancia_contexto."""
+        try:
+            contexto = validate_instancia_contexto_v1(contexto_value)
+        except DecompositionValidationError as exc:
+            raise GptActionsError(str(exc), 400) from exc
+        ProcessoInstanciaRepository().update_contexto(instancia_id, contexto)
+        touch_processo_updated_at(str(existing.get("processo_id") or ""))
+        self._audit(
+            request,
+            "processo_instancia",
+            instancia_id,
+            "decomposition.context.updated",
+            {"node_notes": len(contexto.get("node_notes") or {})},
+        )
+        read_back = ProcessoInstanciaRepository().get(instancia_id)
+        return {
+            "instancia_id": instancia_id,
+            "contexto": (read_back or {}).get("contexto") or contexto,
+            "verified": read_back is not None,
+        }, "Contexto operacional da melhoria atualizado."
+
+    def get_my_signature_profile(self, request: Request) -> dict[str, Any]:
+        """Read-only signature profile (display metadata only — no image)."""
+        try:
+            return UserSignatureService().get_me(request.state.user)
+        except PermissionError as exc:
+            raise GptActionsError(str(exc), 403) from exc
+
+    @staticmethod
+    def my_signature_profile_or_none(user: Any) -> dict[str, Any] | None:
+        """Signature profile for context enrichment — None when the caller
+        lacks the signing-profile permission (field is permission-gated)."""
+        try:
+            return UserSignatureService().get_me(user)
+        except PermissionError:
+            return None
+
+    def update_signature_profile(
+        self, request: Request, *, display_name: str
+    ) -> dict[str, Any]:
+        """Canonical write for PUT /signatures/me (display name only)."""
+        name = str(display_name or "").strip()
+        if not name:
+            raise GptActionsError("display_name is required.", 400)
+        try:
+            UserSignatureService().update_display_name(request.state.user, name)
+        except PermissionError as exc:
+            raise GptActionsError(str(exc), 403) from exc
+        except ValueError as exc:
+            raise GptActionsError(str(exc), 400) from exc
+        read_back = UserSignatureService().get_me(request.state.user)
+        return {
+            "updated": read_back,
+            "persisted": True,
+            "verified": str(read_back.get("display_name") or "") == name,
+        }
+
+    def read_process_diagram(self, request: Request, processo_id: str) -> dict[str, Any]:
+        """Current macro diagram row — used for proposal fingerprint/read-back."""
+        return ProcessoDiagramRepository().get(str(processo_id or "")) or {}
+
+    def validate_bpmn_import(
+        self, request: Request, *, processo_id: str, xml: str
+    ) -> dict[str, Any]:
+        """PREPARE-side validation for import_diagram_bpmn_xml.
+
+        AuthZ + existence + dry XML→flowchart parse. Never persists; ACT
+        re-runs the same parse and saves through DiagramWriteService.
+        """
+        pid = str(processo_id or "").strip()
+        if not pid:
+            raise GptActionsError("processo_id is required.", 400)
+        self._raise_http_err(check_processo_manage_access(request, pid))
+        if not ProcessoRepository().get(pid):
+            raise GptActionsError("Processo não encontrado.", 404)
+        xml_text = str(xml or "").strip()
+        if not xml_text:
+            raise GptActionsError("xml content is required.", 400)
+        try:
+            parsed = FlowchartBpmnXmlService().import_xml(xml_text)
+        except FlowchartValidationError as exc:
+            raise GptActionsError(str(exc), 400) from exc
+        return {
+            "processo_id": pid,
+            "current_diagram": self.read_process_diagram(request, pid),
+            "parsed_nodes": len(parsed.get("nodes") or []),
+            "parsed_edges": len(parsed.get("edges") or []),
+        }
+
+    def import_diagram_bpmn_xml(
+        self, request: Request, *, processo_id: str, xml: str
+    ) -> dict[str, Any]:
+        """Canonical write for PUT /processos/{id}/diagrama/bpmn.xml."""
+        pid = str(processo_id or "").strip()
+        if not pid:
+            raise GptActionsError("processo_id is required.", 400)
+        self._raise_http_err(check_processo_manage_access(request, pid))
+        if not ProcessoRepository().get(pid):
+            raise GptActionsError("Processo não encontrado.", 404)
+        xml_text = str(xml or "").strip()
+        if not xml_text:
+            raise GptActionsError("xml content is required.", 400)
+        try:
+            conteudo = FlowchartBpmnXmlService().import_xml(xml_text)
+        except FlowchartValidationError as exc:
+            raise GptActionsError(str(exc), 400) from exc
+        try:
+            saved = DiagramWriteService().save_macro(pid, conteudo)
+        except DiagramWriteError as exc:
+            raise GptActionsError(
+                exc.message, getattr(exc, "status_code", 400)
+            ) from exc
+        self._audit(
+            request,
+            "processo",
+            pid,
+            "diagram.macro.imported_bpmn",
+            {"nodes": saved["nodes"]},
+        )
+        read_back = ProcessoDiagramRepository().get(pid)
+        return {
+            "processo_id": pid,
+            "nodes": saved.get("nodes"),
+            "read_back_present": read_back is not None,
+            "persisted": True,
+            "verified": read_back is not None,
+        }
 
     def _has_processo_escopo(self, body: ProcessoCreateBody | ProcessoUpdateBody) -> bool:
         if isinstance(body, ProcessoUpdateBody):

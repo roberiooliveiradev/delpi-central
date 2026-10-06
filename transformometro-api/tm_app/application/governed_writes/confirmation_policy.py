@@ -199,6 +199,20 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         AUTO_ACT,
         "mark_interaction_read"
     ),
+    # Own-profile signing display name — non-destructive personal metadata.
+    WritePolicyRecord(
+        "signature_profile.update",
+        AUTO_ACT,
+        "update_signature_profile",
+        workflow_id="update_signature_profile",
+    ),
+    # Replaces the whole macro diagram with the imported BPMN content.
+    WritePolicyRecord(
+        "diagram.bpmn_import",
+        CONFIRM_BEFORE_ACT,
+        "import_diagram_bpmn_xml",
+        workflow_id="import_diagram_bpmn_xml",
+    ),
 )
 
 

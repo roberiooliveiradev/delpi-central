@@ -18,6 +18,9 @@ from tm_app.application.services.decomposition_flowchart_link_validator import (
 from tm_app.application.services.decomposition_composition_service import (
     DecomposicaoCompositionService,
 )
+from tm_app.application.services.decomposition_draft_service import (
+    DecompositionDraftService,
+)
 from tm_app.application.services.decomposition_write_service import (
     DecompositionWriteError,
     DecompositionWriteService,
@@ -333,57 +336,9 @@ def post_validar_vinculos_fluxo(processo_id: str):
 def post_sugerir_rascunho_decomposicao(processo_id: str):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
-    diagram_row = ProcessoDiagramRepository().get(processo_id)
-    flowchart = (diagram_row or {}).get("conteudo") or empty_flowchart()
-
-    draft_nodes: list[dict[str, Any]] = []
-    ordem_pk = 1
-    for node in flowchart.get("nodes", []):
-        if not isinstance(node, dict):
-            continue
-        if node.get("type") != "subprocess":
-            continue
-        pk_id = f"pk_{node.get('id', ordem_pk)}"
-        draft_nodes.append(
-            {
-                "id": pk_id,
-                "level": "processo_chave",
-                "ordem": ordem_pk,
-                "label": str(node.get("label") or f"Processo-chave {ordem_pk}"),
-                "parent_id": None,
-                "descricao": None,
-                "meta": {"source_flow_node_id": str(node.get("id") or "")},
-            }
-        )
-        ordem_pk += 1
-
-    ordem_st = 1
-    for node in flowchart.get("nodes", []):
-        if not isinstance(node, dict) or node.get("type") != "process":
-            continue
-        parent_pk = draft_nodes[0]["id"] if draft_nodes else None
-        if not parent_pk:
-            continue
-        draft_nodes.append(
-            {
-                "id": f"st_{node.get('id', ordem_st)}",
-                "level": "sub_tarefa",
-                "ordem": ordem_st,
-                "label": str(node.get("label") or f"Sub-tarefa {ordem_st}"),
-                "parent_id": parent_pk,
-                "descricao": None,
-                "meta": {"source_flow_node_id": str(node.get("id") or "")},
-            }
-        )
-        ordem_st += 1
-
-    draft = {
-        "format": "decomposition_tree_v1",
-        "format_version": 1,
-        "nodes": draft_nodes,
-    }
+    draft = DecompositionDraftService().suggest_for_processo(processo_id)
     return ok(
-        {"conteudo": draft, "persisted": False},
+        draft,
         "Rascunho sugerido a partir do diagrama macro — revise antes de salvar.",
     )
 

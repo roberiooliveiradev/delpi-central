@@ -41,7 +41,7 @@ class DecompositionFlowchartLinkValidator:
             if isinstance(node, dict) and (node.get("meta") or {}).get("decomposition_id")
         }
         orphan_pks = [
-            node_id
+            str(node["id"])
             for node in tree.get("nodes", [])
             if isinstance(node, dict)
             and node.get("level") == "processo_chave"

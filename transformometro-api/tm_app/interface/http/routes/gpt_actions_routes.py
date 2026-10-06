@@ -92,7 +92,8 @@ class GptGovernedOperationBody(BaseModel):
         ...,
         description=(
             "activate_revision | recalculate_dashboard | "
-            "commit_improvement_package | adjust_shared_resource_cost"
+            "commit_improvement_package | adjust_shared_resource_cost | "
+            "update_signature_profile | import_diagram_bpmn_xml"
         ),
     )
     id: str | None = None
@@ -110,6 +111,8 @@ class GptGovernedOperationBody(BaseModel):
     scenario: dict | None = None
     activate_scenario: bool = False
     recalculate: bool = False
+    display_name: str | None = None
+    xml: str | None = None
     commit_now: bool = False
     confirmation: bool = False
     idempotency_key: str | None = None
@@ -146,8 +149,8 @@ class GptMeetingMinuteChangeBody(BaseModel):
     action: str = Field(
         ...,
         description=(
-            "send | finalize | cancel | resend | create_version | "
-            "set_participants | set_signers"
+            "send | finalize | cancel | refuse | resend | create_version | "
+            "set_participants | set_signers (reason required for refuse)"
         ),
     )
     minute_id: str | None = None
@@ -278,16 +281,17 @@ def gpt_get_my_context(request: Request):
         if not authorization:
             return fail("Usuário não autenticado.", 401, {"error_kind": "authn"})
         _user_id, email, display_name = actor_from_request(request)
-        return ok(
-            _user_context.get_my_context(
-                AuthenticatedUserContext(
-                    display_name=display_name,
-                    email=email,
-                    authorization=authorization,
-                )
-            ),
-            "Contexto pessoal do usuário autenticado.",
+        data = _user_context.get_my_context(
+            AuthenticatedUserContext(
+                display_name=display_name,
+                email=email,
+                authorization=authorization,
+            )
         )
+        data["signature_profile"] = _dispatch.my_signature_profile_or_none(
+            request.state.user
+        )
+        return ok(data, "Contexto pessoal do usuário autenticado.")
     except Exception as exc:
         return _handle(exc)
 
@@ -347,18 +351,34 @@ def gpt_get_process_context(
 @router.get(
     "/analysis",
     operation_id="gpt_analyze",
-    summary="Analyze dashboard KPIs from snapshot/live cache",
+    summary="Analyze dashboard KPIs and process/revision compute views",
 )
 def gpt_analyze(
     request: Request,
-    view: str = Query(..., description="meta|summary|processes|instances|rows"),
+    view: str = Query(
+        ...,
+        description=(
+            "meta|summary|processes|instances|rows|dashboard_summary_live|"
+            "dashboard_process_ranking|dashboard_alerts|dashboard_evolution|"
+            "dashboard_by_family|dashboard_due_dates|"
+            "dashboard_strategic_indicators|processes_calculated|"
+            "process_revision_comparison|impact_effort_matrix|"
+            "decomposition_link_validation|decomposition_draft_suggestion|"
+            "diagram_validation|diagram_bpmn_xml|"
+            "revision_allocation_diagnostic|revision_diagram_merged|"
+            "revision_decomposition_merged"
+        ),
+    ),
     filial_id: str | None = None,
     setor_id: str | None = None,
     processo_id: str | None = None,
     revisao_id: str | None = None,
+    instancia_id: str | None = None,
     familia_processo: str | None = None,
+    competencia: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
+    horizonte_meses: int | None = Query(default=None, ge=1, le=120),
     limit: int | None = Query(default=None, ge=1, le=500),
 ):
     try:
@@ -369,9 +389,12 @@ def gpt_analyze(
             setor_id=setor_id,
             processo_id=processo_id,
             revisao_id=revisao_id,
+            instancia_id=instancia_id,
             familia_processo=familia_processo,
+            competencia=competencia,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
+            horizonte_meses=horizonte_meses,
             limit=limit,
         )
         return ok(data, "Análise do Transformômetro.")

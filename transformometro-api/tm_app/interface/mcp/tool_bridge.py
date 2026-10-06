@@ -306,6 +306,7 @@ def tool_get_my_context() -> CallToolResult:
                 authorization=authorization,
             )
         )
+        data["signature_profile"] = _dispatch.my_signature_profile_or_none(user)
         return _ok_result(data, "Contexto pessoal do usuário autenticado.")
     except Exception as exc:
         return handle_tool_error(exc)
@@ -362,9 +363,12 @@ def tool_analyze(
     setor_id: str | None = None,
     processo_id: str | None = None,
     revisao_id: str | None = None,
+    instancia_id: str | None = None,
     familia_processo: str | None = None,
+    competencia: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
+    horizonte_meses: int | None = None,
     limit: int | None = None,
 ) -> CallToolResult:
     try:
@@ -376,9 +380,12 @@ def tool_analyze(
             setor_id=setor_id,
             processo_id=processo_id,
             revisao_id=revisao_id,
+            instancia_id=instancia_id,
             familia_processo=familia_processo,
+            competencia=competencia,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
+            horizonte_meses=horizonte_meses,
             limit=limit,
         )
         return _ok_result(data, "Análise do Transformômetro.")
@@ -641,6 +648,8 @@ _GOVERNED_OPERATION_REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     # commit_improvement_package completeness is owned by the package
     # validator — both report missing fields via the ready=false
     # checklist proposal, not a transport error.
+    "update_signature_profile": ("display_name",),
+    "import_diagram_bpmn_xml": ("processo_id", "xml"),
 }
 
 
@@ -661,6 +670,8 @@ def tool_prepare_governed_operation(
     scenario: dict | None = None,
     activate_scenario: bool = False,
     recalculate: bool = False,
+    display_name: str | None = None,
+    xml: str | None = None,
 ) -> CallToolResult:
     """PREPARE only — one of the closed special governed operations."""
     action_norm = str(action or "").strip()
@@ -688,6 +699,8 @@ def tool_prepare_governed_operation(
         "scenario": scenario,
         "activate_scenario": activate_scenario,
         "recalculate": recalculate,
+        "display_name": display_name,
+        "xml": xml,
     }
     missing = [
         field

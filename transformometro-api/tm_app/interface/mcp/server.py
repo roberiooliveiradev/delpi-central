@@ -26,6 +26,10 @@ from tm_app.application.gpt_actions.entities import (
 from tm_app.application.gpt_actions.parity_capabilities_service import (
     MEETING_MINUTE_READ_ACTION_VALUES,
 )
+from tm_app.application.governed_writes.orchestrator import (
+    GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
+    MEETING_MINUTE_ACTION_TO_CAPABILITY,
+)
 from tm_app.interface.mcp.branding import TEO_MCP_INSTRUCTIONS
 from tm_app.interface.mcp.constants import (
     DESTRUCTIVE_ACT_TOOLS,
@@ -47,6 +51,12 @@ _AnalysisViewParam = Literal[tuple(v.value for v in GptAnalysisView)]
 _RecordOperationParam = Literal[tuple(sorted(RECORD_OPERATIONS))]
 _MinuteReadActionParam = Literal[
     tuple(sorted(MEETING_MINUTE_READ_ACTION_VALUES))
+]
+_MinuteChangeActionParam = Literal[
+    tuple(sorted(MEETING_MINUTE_ACTION_TO_CAPABILITY))
+]
+_GovernedOperationParam = Literal[
+    tuple(sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY))
 ]
 
 
@@ -183,7 +193,20 @@ def create_mcp_server() -> MCPServer:
     @mcp.tool(
         name="analyze",
         title="Analyze dashboard",
-        description="Dashboard KPIs. view=meta|summary|processes|instances|rows.",
+        description=(
+            "Analysis views. Snapshot views: meta|summary|processes|instances|"
+            "rows (filial_id/setor_id/competencia filters). Live dashboard: "
+            "dashboard_summary_live|dashboard_process_ranking|dashboard_alerts|"
+            "dashboard_evolution|dashboard_by_family|dashboard_due_dates|"
+            "dashboard_strategic_indicators|processes_calculated. "
+            "Process-scoped (processo_id): process_revision_comparison|"
+            "decomposition_link_validation|decomposition_draft_suggestion|"
+            "diagram_validation|diagram_bpmn_xml. Revision-scoped "
+            "(revisao_id): revision_allocation_diagnostic|"
+            "revision_diagram_merged|revision_decomposition_merged. "
+            "impact_effort_matrix accepts processo_id|instancia_id|revisao_id "
+            "(competencia/horizonte_meses optional). READ-only — never persists."
+        ),
         annotations=_annotations("analyze", "Analyze dashboard"),
         meta=meta,
     )
@@ -193,9 +216,12 @@ def create_mcp_server() -> MCPServer:
         setor_id: str | None = None,
         processo_id: str | None = None,
         revisao_id: str | None = None,
+        instancia_id: str | None = None,
         familia_processo: str | None = None,
+        competencia: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
+        horizonte_meses: int | None = None,
         limit: int | None = None,
     ) -> CallToolResult:
         return bridge.tool_analyze(
@@ -204,9 +230,12 @@ def create_mcp_server() -> MCPServer:
             setor_id=setor_id,
             processo_id=processo_id,
             revisao_id=revisao_id,
+            instancia_id=instancia_id,
             familia_processo=familia_processo,
+            competencia=competencia,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
+            horizonte_meses=horizonte_meses,
             limit=limit,
         )
 
@@ -436,8 +465,11 @@ def create_mcp_server() -> MCPServer:
             "instance + optional baseline/scenario; ready=false when "
             "incomplete — confirm_before_act), adjust_shared_resource_cost "
             "(recurso_compartilhado_id + valor_mensal + vigente_desde + "
-            "optional observacoes — auto_act: commit immediately via "
-            "commit_proposal without extra confirmation). Then "
+            "optional observacoes — auto_act), update_signature_profile "
+            "(display_name — auto_act; updates only the display name, "
+            "signature image stays in UI), import_diagram_bpmn_xml "
+            "(processo_id + xml text — replaces the macro diagram — "
+            "confirm_before_act). Then "
             "commit_proposal per proposal.execution_policy; AuthZ is "
             "revalidated at ACT with authoritative read-back."
         ),
@@ -447,12 +479,7 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def prepare_governed_operation(
-        action: Literal[
-            "activate_revision",
-            "recalculate_dashboard",
-            "commit_improvement_package",
-            "adjust_shared_resource_cost",
-        ],
+        action: _GovernedOperationParam,
         id: str | None = None,
         revisao_id: str | None = None,
         processo_id: str | None = None,
@@ -468,6 +495,8 @@ def create_mcp_server() -> MCPServer:
         scenario: dict | None = None,
         activate_scenario: bool = False,
         recalculate: bool = False,
+        display_name: str | None = None,
+        xml: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_governed_operation(
             action=action,
@@ -486,6 +515,8 @@ def create_mcp_server() -> MCPServer:
             scenario=scenario,
             activate_scenario=activate_scenario,
             recalculate=recalculate,
+            display_name=display_name,
+            xml=xml,
         )
 
     @mcp.tool(
@@ -529,8 +560,9 @@ def create_mcp_server() -> MCPServer:
         title="Prepare meeting minute change",
         description=(
             "PREPARE only — never persists business state. Meeting-minute "
-            "writes: workflow transitions send|finalize|cancel (minute_id "
-            "+ optional reason) and manage writes resend|create_version|"
+            "writes: workflow transitions send|finalize|cancel|refuse "
+            "(minute_id + reason; reason required for refuse) and manage "
+            "writes resend|create_version|"
             "set_participants|set_signers (minute_id + data payload; "
             "resend requires data.confirm_resend=true). READ/analyze "
             "actions — pending_signatures|audit|versions|participants|"
@@ -545,15 +577,7 @@ def create_mcp_server() -> MCPServer:
         meta=meta,
     )
     def prepare_meeting_minute_change(
-        action: Literal[
-            "send",
-            "finalize",
-            "cancel",
-            "resend",
-            "create_version",
-            "set_participants",
-            "set_signers",
-        ],
+        action: _MinuteChangeActionParam,
         minute_id: str | None = None,
         reason: str | None = None,
         data: dict | None = None,

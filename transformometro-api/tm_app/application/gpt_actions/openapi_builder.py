@@ -14,6 +14,7 @@ from tm_app.application.gpt_actions.entities import (
 from tm_app.application.gpt_actions.parity_capabilities_service import (
     MEETING_MINUTE_READ_ACTION_VALUES,
 )
+
 from tm_app.application.methodology.guide import list_method_ids, list_task_ids
 from tm_app.application.gpt_actions.improvement_package_contract import (
     NESTING_RULES,
@@ -92,6 +93,15 @@ GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID = "gpt_get_openapi_schema"
 _ENTITY_ENUM = [e.value for e in GptEntity]
 _VIEW_ENUM = [v.value for v in GptAnalysisView]
 _WORKFLOW_ENUM = [w.value for w in GptMeetingMinuteWorkflow]
+
+
+def _governed_operation_action_values() -> list[str]:
+    # Lazy: orchestrator imports dispatch_service, which imports this package.
+    from tm_app.application.governed_writes.orchestrator import (
+        GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
+    )
+
+    return sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY)
 
 # OpenAI Custom GPT: parameter description ≤700 chars, operation description ≤300.
 _ENTITY_DESCRIPTION = (
@@ -544,11 +554,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         f"{GPT_ACTIONS_BASE_PATH}/analysis": {
             "get": {
                 "operationId": "gpt_analyze",
-                "summary": "Analyze dashboard KPIs from snapshot/live cache",
+                "summary": "Analyze dashboard KPIs and process/revision compute views",
                 "description": (
-                    "Read-only analytics. Prefer `summary` for totals, `processes` for ranking, "
-                    "`instances` for operational improvements, `rows` for revision-level detail, "
-                    "`meta` to check cache freshness. Competencies use YYYY-MM."
+                    "Read-only analytics. Views: meta|summary|processes|instances|rows; "
+                    "dashboard_*; processes_calculated; process_revision_comparison; "
+                    "impact_effort_matrix; decomposition_*; diagram_*; revision_*. "
+                    "Scoped views need processo_id|instancia_id|revisao_id."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -594,10 +605,24 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "schema": {"type": "string"},
                     },
                     {
+                        "name": "instancia_id",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Improvement-instance UUID (impact_effort_matrix).",
+                    },
+                    {
                         "name": "familia_processo",
                         "in": "query",
                         "required": False,
                         "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "competencia",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "pattern": "^\\d{4}-\\d{2}$"},
+                        "description": "Single competence month YYYY-MM.",
                     },
                     {
                         "name": "competencia_inicio",
@@ -612,6 +637,13 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "required": False,
                         "schema": {"type": "string", "pattern": "^\\d{4}-\\d{2}$"},
                         "description": "End month YYYY-MM.",
+                    },
+                    {
+                        "name": "horizonte_meses",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "integer", "minimum": 1, "maximum": 120},
+                        "description": "Horizon in months (impact_effort_matrix).",
                     },
                     {
                         "name": "limit",
@@ -1324,12 +1356,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "properties": {
                         "action": {
                             "type": "string",
-                            "enum": [
-                                "activate_revision",
-                                "recalculate_dashboard",
-                                "commit_improvement_package",
-                                "adjust_shared_resource_cost",
-                            ],
+                            "enum": sorted(
+                                _governed_operation_action_values()
+                            ),
                         },
                         "id": {
                             "type": "string",
@@ -1362,6 +1391,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "scenario": {"type": "object", "additionalProperties": True},
                         "activate_scenario": {"type": "boolean", "default": False},
                         "recalculate": {"type": "boolean", "default": False},
+                        "display_name": {
+                            "type": "string",
+                            "description": "Required for update_signature_profile.",
+                        },
+                        "xml": {
+                            "type": "string",
+                            "description": "BPMN XML text — required for import_diagram_bpmn_xml.",
+                        },
                         "commit_now": {"type": "boolean", "default": False},
                         "confirmation": {"type": "boolean", "default": False},
                         "idempotency_key": {"type": "string"},
@@ -1558,7 +1595,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "required": ["action"],
                     "description": (
                         "Meeting-minute governed write — workflow transitions "
-                        "(send|finalize|cancel) and manage writes (resend|"
+                        "(send|finalize|cancel|refuse) and manage writes (resend|"
                         "create_version|set_participants|set_signers)."
                     ),
                     "properties": {
@@ -1578,7 +1615,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         },
                         "reason": {
                             "type": "string",
-                            "description": "Optional cancel reason.",
+                            "description": "Optional cancel reason; required for refuse.",
                         },
                         "data": {
                             "type": "object",
