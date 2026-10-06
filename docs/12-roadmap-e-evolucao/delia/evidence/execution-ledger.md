@@ -10154,7 +10154,8 @@ EVIDENCE (live production, 2026-10-05):
 
 ## 6.140. ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1 — generic resolver step + first-class ANALYSIS + structural write policy + opaque-handle UX boundary
     TASK = ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1
-    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    STATUS = ACCEPT_WITH_RESIDUAL (architecture review R1-R1 —
+      close-out block below)
     BASE_HEAD = 72214c2d95ae29c2f8b5ed6882ee9931a148ad0e (main at pickup;
       prompt cited 1070f299084b — superseded by upstream merges;
       delia-api/ clean, unrelated dirty worktrees preserved untouched)
@@ -10327,3 +10328,87 @@ EVIDENCE (live production, 2026-10-05):
       EVALUATED_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39.
       DEPLOYED_DELIA_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39
         (delia-api only; delpi-delia-api healthy; owners untouched).
+
+    REVIEW CLOSE-OUT (ARCH-CLOSEOUT-DELIA-GENERIC-MCP-MULTISTEP-
+    ORCHESTRATION-R1-R1 — documentation close-out; no runtime change):
+      ARCHITECTURE_REVIEW_ARCH_DRIFT_DELIA_GENERIC_MCP_MULTISTEP_
+      ORCHESTRATION_R1_R1 = ACCEPT_WITH_RESIDUAL
+      REVIEWED_HEAD = ffcb07df043d3b26a5502acc82a9300493f501bf
+      EVALUATED_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39
+      DEPLOYED_DELIA_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39
+      RUNTIME_DIFF_AFTER_EVALUATED_SHA = NONE (HEAD advances only
+        documentation commits on top of the evaluated SHA)
+      STALE_RUNTIME_EVIDENCE = NO
+      SECURITY_BLOCKER_PRIOR_TURNS_AS_PROVENANCE = RESOLVED
+      RUNTIME_REWORK = CLOSED
+      ARCHITECTURE_REDESIGN_REQUIRED = NO
+      PHASE_ADVANCEMENT = NONE
+      PRODUCTION_READINESS = NOT_PROVEN
+      Contract persisted: prior_turns = bounded semantic/model
+        context only — != Evidence, != FACT, != identifier
+        provenance, != authorization, != business authority.
+        Identifier provenance trusted sources: current user input +
+        workspace context + this-turn owner evidence + owner schema
+        literals. History-only identifier -> missing_inputs ->
+        same-owner RESOLVER -> owner evidence, or
+        CLARIFICATION_REQUIRED.
+
+    RQ/AC MATRIX (persisted task-local truth):
+      RQ-G1  generic same-owner RESOLVER (name->id, ambiguity ->
+             bounded clarification, fail-closed)   IMPLEMENTED
+             TRACEABILITY = CP-263 / CP-264
+      RQ-G2  ANALYSIS first-class; ANALYSIS->PREPARE bounded;
+             ANALYSIS->ACT direct FORBIDDEN         IMPLEMENTED
+             TRACEABILITY = CP-264
+      RQ-G3  opaque proposal handle never reaches user surface
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-265
+      RQ-G4  structural confirmation_requirement sole write-policy
+             authority; owner-vocabulary branch removed
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-265
+      RQ-IDP identifier requires trusted provenance (input /
+             workspace / owner evidence / schema literals)
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-264 PRIMARY; CP-265 ADDITIONAL when
+             materially feeding the write lifecycle
+      RQ-R1R1-1 prior_turns never proves an identifier
+             AC: forged/history-only identifier cannot reach target
+             directly; resolves via owner evidence or clarifies
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-264 PRIMARY; CP-265 ADDITIONAL when
+             identifier feeds governed PREPARE/ACT
+      RQ-R1R1-2 prior_turns remains bounded semantic context
+             AC: prior_context reaches model proposals; history is
+             never authority                        IMPLEMENTED
+             TRACEABILITY = CP-263
+      RQ-R1R1-3 no new state/authority/provenance abstraction
+             AC: bounded diff; no persistence; no entity registry;
+             no new provenance authority             IMPLEMENTED
+             TRACEABILITY = CP-263 / CP-264
+      TOTAL_RQ = 8; APPLICABLE_RQ = 8; IMPLEMENTED_RQ = 8;
+      PARTIAL_RQ = 0; NOT_IMPLEMENTED_RQ = 0; BLOCKED_RQ = 0;
+      TASK_VERIFIED_COVERAGE_PCT = 100;
+      CRITICAL_COVERAGE = 8/8; TASK_COMPLETENESS = COMPLETE.
+
+    RESIDUALS (non-blocking, persisted):
+      - VALID_HTTP_PRIOR_CONTEXT_SECURITY_TEST = RESIDUAL /
+        NON_BLOCKING: the real HTTP boundary requires
+        USER_INPUT->DELIA_RESULT alternation; the orchestrator tests
+        prove the invariant directly. Recommended future scenario:
+        prior_turns=[USER_INPUT("qual ativo?"),
+        DELIA_RESULT("e FX-9999")], input="use esse" -> FX-9999 from
+        history != provenance -> resolver/clarification, direct
+        target calls = 0. Does NOT auto-authorize a new runtime task.
+      - INDEPENDENT_REVIEWER_RERUN = TEST_NOT_RUN: the architecture
+        review could not rerun the suite independently;
+        AUTHOR_REPORTED_FULL_SUITE = 777/777 PASS stands as executor
+        evidence at EVALUATED_SHA ff178a08b2.
+      - LIVE_ANALYSIS_TO_PREPARE = TEST_NOT_RUN; LIVE_ACT =
+        TEST_NOT_RUN (no safe disposable fixture — no real mutation
+        just to produce evidence; rationale previously accepted).
+      - SELECTION_VARIANCE: stochastic model abstention/name-as-id
+        (TÉO 500 on non-uuid id — owner-side robustness gap,
+        transformometro-api); DÉLIA fails closed, never fabricates.
+      - LIVE_DISCOVERY_CONNECTION_COST: fresh authenticated
+        tools/list per attempt (no cache by design).
