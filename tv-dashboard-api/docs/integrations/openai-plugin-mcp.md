@@ -52,13 +52,16 @@ No HTTP loop: tools call the dispatch service directly — never `/gpt-actions` 
 
 ```text
 VISTA_MCP_SURFACE = GOVERNED_WRITE_V1
-5 READ + 1 DISCOVERY + 1 ANALYSIS + 1 PREPARE + 1 ACT = exactly 9 tools
+5 READ + 1 DISCOVERY + 2 ANALYSIS + 1 PREPARE + 1 ACT = exactly 10 tools
 native ops (upsert_data_model, bind_visual, migrate_data_sources_to_model,
 upsert_data_source, patch_data_source_params, apply_safe_layout_fixes, …)
 = vocabulary inside prepare_change.ops[] — never per-op tools
 resources / prompts = FORBIDDEN
-legacy primitive tools (suggest_change, preview_change,
-commit_change) = FORBIDDEN as tools
+legacy primitive names (preview_change, commit_change) = FORBIDDEN as tools —
+the governed envelope exposes them only as prepare_change / commit_proposal;
+suggest_change is exposed as ANALYSIS over the shared canonical planner
+(GptActionsDispatchService → PresentationCommandPlannerService), never a
+transport-specific interpreter
 ```
 
 Tools:
@@ -72,6 +75,7 @@ Tools:
 | `inspect_data_model` | READ | `GptActionsDispatchService.inspect_data_model` |
 | `preview_data_model` | READ | `GptActionsDispatchService.preview_data_model` (inline candidate never persisted) |
 | `preview_data_block` | ANALYSIS | `GptActionsDispatchService.preview_data_block` (`semanticDigest` + `visualRecommendation` + `joinHints`/`formatHints`, never persisted) |
+| `suggest_change` | ANALYSIS | `GptActionsDispatchService.suggest_change` → `PresentationCommandPlannerService.plan` → `PresentationSuggestOpsService.materialize` (NL → typed ops + clarification/policy; never persists, never authorizes) |
 | `prepare_change` | PREPARE | `GptActionsDispatchService.preview_change` (commit_now=False) |
 | `commit_proposal` | ACT | `GptActionsDispatchService.commit_change` |
 
@@ -174,6 +178,7 @@ parity is total; only transport names differ.
 | `gpt_inspect_data_model` | `inspect_data_model` | READ |
 | `gpt_preview_data_model` | `preview_data_model` | READ |
 | `gpt_preview_data_block` | `preview_data_block` | ANALYSIS |
+| `gpt_suggest_change` | `suggest_change` | ANALYSIS |
 | `gpt_preview_change` | `prepare_change` | PREPARE |
 | `gpt_commit_change` | `commit_proposal` | ACT |
 
@@ -186,11 +191,20 @@ Semantic differences:
 - `gpt_preview_change` accepts `commit_now=true` as an HTTP shortcut; MCP has
   no commit_now — PREPARE is never ACT. Additive commits still call
   `commit_proposal` explicitly.
-- `gpt_suggest_change`, `gpt_get_slide_preview_png` are Actions-only
-  (legacy auxiliary); they are *not* part of the governed MCP vocabulary.
-  VISTA must not depend on them in MCP-primary mode — the NL→ops
-  materialization role of `gpt_suggest_change` is covered by `get_catalog`
-  capability markers + the generic `prepare_change` envelope.
+- `gpt_suggest_change` is exposed on MCP as `suggest_change` — the shared
+  `PresentationCommandPlannerService` is transport-neutral ANALYSIS
+  (NL → typed ops + clarification; never persists, never authorizes), so both
+  adapters project the same canonical materializer.
+- `gpt_get_slide_preview_png` remains Actions-only — it is an asset fetch
+  helper (`not_exposed_in_mcp` in the canonical `surface_parity` registry);
+  on MCP the equivalent evidence arrives via `get_playlist_context` READ.
+- The MCP catalog projection carries **no** `gpt_*` callable names and no
+  Actions-envelope mechanics (`commit_now`, `confirmation.confirmed`,
+  `additive_single_shot`, `action_surface_budget`): the
+  `agent_directives` MCP projection neutralizes `(Actions: …)` annotations
+  and rewrites residual `gpt_*` tokens through the canonical parity map.
+  `surface_parity.parity_map` ships unchanged as the single non-callable
+  registry of Actions↔neutral names.
 
 ### Coexistence / rollout
 
@@ -212,9 +226,10 @@ rollback: MCP connector → Actions connector — no code change, no data loss
 
 Client-side rules live in `vista_agent_intelligence.json` → `write_flow_mcp`
 (idempotency key stability, unknown outcome, error-is-not-empty). The section
-is canonical-but-not-projected into `agent_directives`: the Actions catalog
-envelope is already at its byte ceiling, so the MCP instructions variant
-carries the envelope skeleton inline.
+is canonical and projected into `agent_directives` for `transport="mcp"`
+(MCP-primary envelope); the Actions projection omits it — the Actions catalog
+envelope is already at its byte ceiling and carries `write_flow` (Actions
+variant) instead.
 
 ### VISTA client migration (MCP3)
 

@@ -9665,3 +9665,96 @@ EVIDENCE (live production, 2026-10-05):
       PRODUCTION_READINESS=NOT_PROVEN.
     PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5 phase-level=NO,
       PRODUCTION_READINESS=NOT_PROVEN.
+## 6.134. VISTA-OWNER-UNIFIED-CAPABILITY-INTELLIGENCE-BOUNDARY-02 — unified owner intelligence/capability boundary (Actions + MCP over one canonical source)
+    STATUS = EVIDENCE_COMPLETE (owner-side implementation + tests;
+      live redeploy pending — controlled deploy not executed in
+      this session)
+    BASE_HEAD = 3993de53b0ebba337ffa7e9d8de42a390128956d
+    BRANCH = main
+    SCOPE = owner-side architecture correction only;
+      DELIA_RUNTIME_CHANGED = NO (no api-delpi/delia diff).
+
+    ROOT-CAUSE FINDINGS REVALIDATED vs BASE_HEAD:
+      F1 PROVEN_CURRENT->FIXED: gpt_suggest_change was Actions-only
+        although PresentationCommandPlannerService.plan ->
+        PresentationSuggestOpsService.materialize is transport-
+        neutral ANALYSIS (no persist, no AuthZ). MCP now exposes
+        suggest_change delegating to the SAME shared dispatch —
+        zero duplicated NL interpretation.
+      F2 PROVEN_CURRENT->FIXED: capability_surface hardcoded gpt_*
+        names for both projections. Refactored to ONE canonical
+        neutral-name model; Actions projection derives names via
+        inverse of surface_parity.parity_map (single registry) +
+        injects commit_now envelope; MCP returns canonical surface.
+      F3 PROVEN_CURRENT->FIXED: MCP projection carried Actions
+        semantics — (Actions: gpt_*) annotations, commit_now
+        narrative, write_flow surface/note/additive/destructive,
+        action_surface_budget. agent_directives MCP projection now
+        drops Actions-envelope keys, strips "(Actions: ...)"
+        parentheticals segment-wise (semantic tails preserved:
+        dateRangePreset=this_month kept), and rewrites residual
+        gpt_* tokens via the parity map.
+      F4 PROVEN_CURRENT->FIXED: branding instructions claimed
+        unconditional "confirmacao explicita obrigatoria" — scoped
+        to confirmationPolicy=confirm/destructive (direct commits
+        without it, canonical policy).
+      F5 PROVEN_CURRENT->FIXED (quality): _slide_bg_color evaluated
+        only ONE gradient endpoint; dark brand theme IS a gradient
+        (#05070a->#0d2840). Detection + safe_contrast_color now
+        evaluate every endpoint worst-ratio; image/unknown
+        backgrounds fail closed; theme colors come from canonical
+        presentation_recipes tokens (no hardcoded palette copy).
+      F6 PROVEN_CURRENT->FIXED (quality): coordinated overlap
+        relayout could be partially applied via allowed_block_ids
+        per-block filtering. Overlap fix is now all-or-nothing
+        under subset scope.
+      STALE/SUPERSEDED: none of the six remained unfixed in the
+        bounded primary scope.
+
+    MCP CONTRACT EVIDENCE (projected):
+      MCP_TOOLS = 10 [list_playlists, get_playlist_context,
+        get_catalog, search_data_routes, inspect_data_model,
+        preview_data_model, preview_data_block, suggest_change,
+        prepare_change, commit_proposal]
+      GPT_TOOL_NAMES_IN_MCP_CALLABLE_CONTRACT = 0
+      COMMIT_NOW_IN_MCP_PREPARE = 0
+      ADDITIVE_SINGLE_SHOT_IN_MCP = 0
+      UNCONDITIONAL_CONFIRMATION_IN_MCP = 0
+      gpt_* residuals: ONLY inside surface_parity.parity_map +
+        not_exposed_in_mcp (canonical non-callable registry).
+      Actions-only exclusion: gpt_get_slide_preview_png
+        (asset fetch helper; equivalent READ evidence via
+        get_playlist_context).
+
+    PARITY TESTS (new, tests/test_vista_unified_boundary.py, 23 tests):
+      ONE-CHANGE: parity map mutation rewrites both projections.
+      KNOWLEDGE-SINGLE-SOURCE: vista_agent_intelligence.json is the
+        sole knowledge root; both transports project agent_directives.
+      CAPABILITY-DERIVE: adding a capability once derives Actions +
+        MCP operation lists.
+      MATERIALIZATION-PARITY: suggest_change on MCP delegates to the
+        same dispatch/planner path as Actions (no second interpreter).
+      QUALITY: gradient all-endpoints, worst-ratio fail-closed,
+        image/unknown fail-closed, canonical theme tokens,
+        overlap all-or-nothing.
+    VALIDATION:
+      tv-dashboard-api full suite = 1706 passed, 0 failed.
+      focused parity/boundary/mcp/actions suites = PASS.
+      Actions catalog envelope < 100KiB budget preserved.
+      git diff --check = clean.
+    DOCS UPDATED: ADR adr-vista-specialist-capability-surfaces.md
+      (new amendment), vista-capability-matrix.md (10 ops/10 tools,
+      parity derivation, taxonomy+inventory MCP column),
+      openai-plugin-mcp.md (surface policy, tools table, parity map,
+      write_flow_mcp projection note).
+    RESIDUALS / PENDING:
+      - Controlled deploy + live MCP tools/list & suggest_change
+        acceptance NOT executed this session (local-only evidence).
+      - Proposal store remains in-process ACCEPT_WITH_RESIDUAL.
+      - bpmn-modeler dirty files belong to a parallel workstream —
+        untouched.
+      VISTA_TO_DELIA_HANDOFF = NOT_READY until live MCP go-live
+        evidence (Keycloak mcp-tv-dashboard provisioning + provider
+        acceptance) is recorded.
+    PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5 phase-level=NO,
+      PRODUCTION_READINESS=NOT_PROVEN.

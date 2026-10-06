@@ -320,6 +320,48 @@ def tool_preview_data_block(
         return handle_tool_error(e, tool="preview_data_block", label="mcp tool")
 
 
+def tool_suggest_change(
+    message: str,
+    host_context: dict | None = None,
+    playlist_id: str | None = None,
+    slide_id: str | None = None,
+    selected_block_id: str | None = None,
+) -> CallToolResult:
+    """ANALYSIS — interpret NL intent into candidate typed ops.
+
+    Delegates to the canonical owner materializer (same service Actions uses).
+    Never persists; candidate ops carry no authorization — AuthZ is enforced
+    by PREPARE/ACT downstream. ``host_context`` is the transport-neutral owner
+    context contract (playlistId/slideId/selectedBlockIds/nativeConfig/...);
+    the scalar convenience args merge into it.
+    """
+    try:
+        if not str(message or "").strip():
+            raise GptActionsError(
+                "message é obrigatória.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            )
+        host: dict[str, Any] = dict(host_context) if isinstance(host_context, dict) else {}
+        if playlist_id:
+            host.setdefault("playlistId", playlist_id)
+        if slide_id:
+            host.setdefault("slideId", slide_id)
+        if selected_block_id:
+            host.setdefault("selectedBlockId", selected_block_id)
+        user, auth = _authed_context()
+        return _ok_result(
+            _dispatch.suggest_change(
+                user=user,
+                message=message,
+                host_context=host,
+                authorization=auth,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="suggest_change", label="mcp tool")
+
+
 # ---------------------------------------------------------------------------
 # MCP2 — governed write envelope (PREPARE → proposal_handle → ACT).
 # Adapter only: ops[] are canonical catalog vocabulary validated by the

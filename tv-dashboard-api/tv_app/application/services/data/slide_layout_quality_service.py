@@ -13,16 +13,16 @@ from tv_app.application.services.data.presentation_recipe_service import (
 # threshold — a single canonical value, never duplicated literals.
 CONTRAST_MIN_RATIO = 2.5
 
-# brandThemeKey → representative background color, mirroring the canonical
-# tv-dashboard-presentation delpiBrandTheme.json contract (dark.bgSolid /
-# light.bgSolid). Used to resolve the effective background when the slide
-# relies on the brand theme instead of an explicit color/gradient.
-_THEME_BG: dict[str, str] = {
-    "delpi-dark": "#05070a",
-    "delpi": "#05070a",
-    "dark": "#05070a",
-    "delpi-light": "#f8fafc",
-    "light": "#f8fafc",
+# brandThemeKey → designTokens.brand.modes key. Only the alias table is local;
+# the colors themselves come from the canonical owner source
+# (PresentationRecipeService.designTokens().brand.modes), which mirrors the
+# tv-dashboard-presentation delpiBrandTheme.json contract.
+_THEME_MODE_ALIASES: dict[str, str] = {
+    "delpi-dark": "dark",
+    "delpi": "dark",
+    "dark": "dark",
+    "delpi-light": "light",
+    "light": "light",
 }
 
 _KPI_TYPES = frozenset({"kpi_view", "data_kpi"})
@@ -107,27 +107,76 @@ def _contrast_ratio(fg: str, bg: str) -> float | None:
     return (lighter + 0.05) / (darker + 0.05)
 
 
-def _slide_bg_color(cfg: Mapping[str, Any]) -> str | None:
+def _theme_bg_colors(theme_key: str) -> list[str]:
+    """Brand theme → canonical background endpoint colors.
+
+    Resolves the mode via ``designTokens.brand.modes`` (owner source mirroring
+    delpiBrandTheme.json). Returns every background endpoint the theme can
+    render (gradient ``from``/``to`` + ``bgSolid``); ``[]`` when the theme is
+    unknown — callers must NOT guess.
+    """
+    from tv_app.application.services.data.presentation_recipe_service import (
+        PresentationRecipeService,
+    )
+
+    mode_key = _THEME_MODE_ALIASES.get(str(theme_key or "").strip().lower())
+    if not mode_key:
+        return []
+    tokens = PresentationRecipeService.document().get("designTokens")
+    modes = tokens.get("brand") if isinstance(tokens, dict) else None
+    modes = modes.get("modes") if isinstance(modes, dict) else None
+    mode = modes.get(mode_key) if isinstance(modes, dict) else None
+    if not isinstance(mode, dict):
+        return []
+    colors: list[str] = []
+    for key in ("bgFrom", "bgTo", "bgSolid"):
+        value = mode.get(key)
+        if isinstance(value, str) and value not in colors:
+            colors.append(value)
+    return colors
+
+
+def _slide_bg_colors(cfg: Mapping[str, Any]) -> list[str]:
+    """All background endpoint colors a slide may render.
+
+    Explicit background wins over brand theme. Gradients yield BOTH endpoints:
+    a contrast check against a single endpoint is unsafe for text overlapping
+    the other end. Image/complex/unknown backgrounds yield ``[]`` — detection
+    and correction must stay fail-closed rather than guess.
+    """
     bg = cfg.get("background")
     if isinstance(bg, dict):
         if bg.get("type") == "color" and isinstance(bg.get("value"), str):
-            return str(bg["value"])
+            return [str(bg["value"])]
         if bg.get("type") == "gradient":
-            for key in ("to", "from"):
-                if isinstance(bg.get(key), str):
-                    return str(bg[key])
-    theme = str(cfg.get("brandThemeKey") or "").strip().lower()
-    return _THEME_BG.get(theme)
+            colors = [
+                str(bg[key])
+                for key in ("from", "to")
+                if isinstance(bg.get(key), str)
+            ]
+            return colors
+        return []
+    return _theme_bg_colors(str(cfg.get("brandThemeKey") or ""))
+
+
+def _slide_bg_color(cfg: Mapping[str, Any]) -> str | None:
+    colors = _slide_bg_colors(cfg)
+    return colors[0] if colors else None
 
 
 def effective_slide_bg(cfg: Mapping[str, Any]) -> str | None:
-    """Effective slide background color for contrast checks.
+    """Representative effective slide background color for contrast checks.
 
     Explicit background (color/gradient) wins; brand theme keys resolve to
-    their canonical solid background. ``None`` means the background cannot
-    be determined safely — callers must NOT guess.
+    their canonical endpoint colors. ``None`` means the background cannot
+    be determined safely — callers must NOT guess. Multi-endpoint
+    backgrounds must use ``_slide_bg_colors`` for the full safety check.
     """
     return _slide_bg_color(cfg)
+
+
+def _parseable_bg_colors(cfg: Mapping[str, Any]) -> list[str]:
+    return [c for c in _slide_bg_colors(cfg) if _parse_hex(c)]
 
 
 def safe_contrast_color(
@@ -137,22 +186,20 @@ def safe_contrast_color(
 
     Picks the ``fg`` of the designTokens.minContrastPairs entry whose ``bg``
     is luminance-closest to the effective background, but only when that fg
-    actually satisfies CONTRAST_MIN_RATIO against the real background.
-    ``None`` when the background is unknown or no owner-approved pair is
-    provably safe — callers must surface the issue instead of guessing.
+    actually satisfies CONTRAST_MIN_RATIO against EVERY background endpoint
+    the slide can render (gradient ``from``/``to`` included). ``None`` when
+    the background is unknown or no owner-approved pair is provably safe —
+    callers must surface the issue instead of guessing.
     """
-    bg = effective_slide_bg(cfg)
-    if not bg:
-        return None
-    bg_rgb = _parse_hex(bg)
-    if not bg_rgb:
+    colors = _parseable_bg_colors(cfg)
+    if not colors:
         return None
     pairs = (tokens or SlideLayoutQualityService.design_tokens()).get(
         "minContrastPairs"
     )
     if not isinstance(pairs, list):
         return None
-    bg_lum = _luminance(bg_rgb)
+    bg_lum = sum(_luminance(_parse_hex(c)) for c in colors) / len(colors)
 
     def _bg_distance(pair: Mapping[str, Any]) -> float:
         rgb = _parse_hex(pair.get("bg"))
@@ -163,10 +210,12 @@ def safe_contrast_color(
         key=_bg_distance,
     )
     for pair in ordered:
-        fg = pair.get("fg")
-        ratio = _contrast_ratio(str(fg or ""), bg)
-        if ratio is not None and ratio >= CONTRAST_MIN_RATIO:
-            return str(fg)
+        fg = str(pair.get("fg") or "")
+        ratios = [_contrast_ratio(fg, bg) for bg in colors]
+        if ratios and all(
+            ratio is not None and ratio >= CONTRAST_MIN_RATIO for ratio in ratios
+        ):
+            return fg
     return None
 
 
@@ -264,9 +313,10 @@ class SlideLayoutQualityService:
             if coverage >= widescreen and len(siblings) == 0:
                 issues.append("widescreen_single_data_visual")
 
-        # Basic contrast: text/heading vs slide background
-        bg = _slide_bg_color(native_config)
-        if bg:
+        # Basic contrast: text/heading vs EVERY slide background endpoint —
+        # a gradient is low-contrast when the fg fails against any endpoint.
+        bg_colors = _slide_bg_colors(native_config)
+        if bg_colors:
             for block in blocks:
                 if not isinstance(block, dict):
                     continue
@@ -275,10 +325,15 @@ class SlideLayoutQualityService:
                 fg = _block_fg(block)
                 if not fg:
                     continue
-                ratio = _contrast_ratio(fg, bg)
-                if ratio is not None and ratio < CONTRAST_MIN_RATIO:
+                ratios = [
+                    _contrast_ratio(fg, bg)
+                    for bg in bg_colors
+                    if _parse_hex(bg)
+                ]
+                worst = min((r for r in ratios if r is not None), default=None)
+                if worst is not None and worst < CONTRAST_MIN_RATIO:
                     issues.append(
-                        f"low_contrast:{block.get('id') or block.get('type')}:{ratio:.1f}"
+                        f"low_contrast:{block.get('id') or block.get('type')}:{worst:.1f}"
                     )
 
         issues.extend(_collect_part_font_issues(blocks, tokens))

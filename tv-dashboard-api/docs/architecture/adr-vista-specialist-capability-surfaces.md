@@ -64,3 +64,40 @@ contract (`X-Delpi-Service-Token`, `TV_MANAGE`). Ownership unchanged:
 Keycloak = AuthN, Core = effective RBAC, TV Dashboard = governed-write policy,
 `PlaylistAccessService` = resource AuthZ, `TvPresentationWriteService` =
 canonical writer. Reads and the shared `delpi_auth` defaults are unchanged.
+
+### VISTA-OWNER-UNIFIED-CAPABILITY-INTELLIGENCE-BOUNDARY-02 — unified owner
+### intelligence/capability boundary (Actions + MCP over one canonical source)
+
+`capability_surface.py` was restructured as a **transport-neutral canonical
+capability model** (neutral names = the MCP tool names, which carry no
+transport prefix). Each adapter projects from it:
+
+- `transport="mcp"` returns the canonical surface; the `agent_directives`
+  projection neutralizes Actions-adapter annotations (`(Actions: …)`
+  parentheticals are dropped, residual `gpt_*` tokens are rewritten through
+  the canonical parity map) and strips the Actions `write_flow` mechanics
+  (`surface`/`note`/`additive`/`destructive`) plus Actions-envelope metadata
+  (`action_surface_budget`). Result: **zero** `gpt_*` callable names, **zero**
+  `commit_now`, **zero** `additive_single_shot` in the MCP contract; the only
+  `gpt_*` occurrences live inside `surface_parity.parity_map`, the canonical
+  non-callable registry of Actions↔neutral names.
+- `transport="actions"` maps every capability name through the inverse of
+  `surface_parity.parity_map` and injects the Actions-only envelope
+  (`commit_now` single-shot) — derived, never hardcoded a second time.
+
+`vista_agent_intelligence.json` remains the single knowledge source; both
+transports project the same `agent_directives` (Actions-compacted for the
+~100 KiB envelope). `gpt_suggest_change` is now exposed on MCP as
+`suggest_change` (ANALYSIS) over the shared
+`PresentationCommandPlannerService`/`PresentationSuggestOpsService`
+materializer — it never persists and never authorizes. MCP surface is now
+**10 tools**; only `gpt_get_slide_preview_png` remains Actions-only
+(asset fetch helper, `not_exposed_in_mcp`).
+
+Owner-side quality corrections were also hardened:
+`SlideLayoutQualityService` now evaluates **every** gradient endpoint of the
+effective slide background (worst-ratio fail-closed, unknown/image
+backgrounds never guessed), theme backgrounds resolve from canonical recipe
+tokens, and `SafeAutoFixService` overlap relayout is **all-or-nothing** under
+subset scope — a coordinated fix is never partially applied through
+per-block filtering. DÉLIA runtime is unchanged.

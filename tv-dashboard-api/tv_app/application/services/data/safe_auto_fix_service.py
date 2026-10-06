@@ -79,7 +79,17 @@ class SafeAutoFixService:
                 for block_id in issue.get("blockIds") or []:
                     _clamp_patch(patches, blocks, str(block_id), margin)
             elif prefix == "block_overlap":
-                _overlap_patches(patches, native_config, blocks)
+                # Coordinated relayout is all-or-nothing under subset scope:
+                # if any block the relayout would move is outside the in-scope
+                # issue set, applying only the in-scope ops would leave a
+                # half-applied layout — discard the coordinated fix entirely.
+                overlap: dict[str, dict[str, Any]] = {}
+                _overlap_patches(overlap, native_config, blocks)
+                touched = set(overlap.keys())
+                if allowed_block_ids is None or touched <= allowed_block_ids:
+                    for block_id, patch in overlap.items():
+                        existing = patches.get(block_id) or {}
+                        patches[block_id] = {**existing, **patch}
             elif prefix == "part_font_below_min":
                 _font_patch(patches, blocks, code)
             elif prefix == "low_contrast":

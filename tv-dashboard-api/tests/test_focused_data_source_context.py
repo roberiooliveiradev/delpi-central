@@ -616,7 +616,7 @@ class TestInspectRuntime:
 
 
 # ---------------------------------------------------------------------------
-# MCP surface — focused mode via get_playlist_context (8 tools, sem 9ª tool)
+# MCP surface — focused mode via get_playlist_context (sem tool standalone)
 # ---------------------------------------------------------------------------
 
 
@@ -630,7 +630,7 @@ class TestMcpSurface:
         assert "inspect_data_source" not in MCP_TOOL_NAMES
         assert "inspect_data_source" not in TOOL_CLASS
         tools = asyncio.run(create_mcp_server().list_tools())
-        assert len(tools) == 9
+        assert len(tools) == 10
         assert "inspect_data_source" not in {t.name for t in tools}
 
     def test_get_playlist_context_schema_has_focused_args(self):

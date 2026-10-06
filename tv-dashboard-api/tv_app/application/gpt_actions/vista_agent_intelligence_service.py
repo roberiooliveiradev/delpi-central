@@ -8,6 +8,7 @@ evolves with API deploy without re-pasting Builder Instructions.
 from __future__ import annotations
 
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,50 @@ _MAX_LIST_ITEMS = 10
 _MAX_ANTI_PATTERNS = 48
 # Keys that are prose duplicates of principle+rules — drop to save Actions budget.
 _DROP_DIRECTIVE_KEYS = frozenset({"summary", "example", "examples", "examplePrompts"})
+
+
+_GPT_NAME_RE = re.compile(r"gpt_[a-z_]+")
+_PAREN_RE = re.compile(r"\(([^()]*)\)")
+
+
+def _strip_actions_annotations(text: str) -> str:
+    """Remove ``Actions:``-labeled segments inside parentheses, preserving any
+    other semantic content in the same group."""
+
+    def _fix(match: re.Match) -> str:
+        parts = [p.strip() for p in match.group(1).split(";")]
+        kept = [p for p in parts if not p.lower().startswith("actions")]
+        return "(" + "; ".join(kept) + ")" if kept else ""
+
+    text = _PAREN_RE.sub(_fix, text)
+    return re.sub(r"\s+([.,;:!?])", r"\1", text)
+
+
+def _neutralize_for_mcp(node: Any, *, _skip_keys: frozenset = frozenset({"surface_parity"})) -> Any:
+    """Neutralize Actions-adapter annotations for the MCP projection.
+
+    ``(Actions: ...)``/``(Actions ...)`` parentheticals name adapter mechanics
+    and are dropped; any residual ``gpt_*`` token is rewritten through the
+    canonical parity map to its neutral name. The ``surface_parity`` registry
+    itself is exempt — its gpt_* keys ARE the canonical Actions-name record.
+    """
+    if isinstance(node, dict):
+        return {
+            k: (v if k in _skip_keys else _neutralize_for_mcp(v))
+            for k, v in node.items()
+        }
+    if isinstance(node, list):
+        return [_neutralize_for_mcp(item) for item in node]
+    if isinstance(node, str):
+        text = _strip_actions_annotations(node)
+        mapping = {
+            actions: neutral
+            for actions, neutral in (
+                VistaAgentIntelligenceService.document().get("surface_parity") or {}
+            ).get("parity_map", {}).items()
+        }
+        return _GPT_NAME_RE.sub(lambda m: mapping.get(m.group(0), m.group(0)), text)
+    return node
 
 
 def _compact_for_actions(node: Any, *, key: str | None = None) -> Any:
@@ -148,4 +193,16 @@ class VistaAgentIntelligenceService:
             if isinstance(write_flow, dict):
                 write_flow.pop("surface", None)
                 write_flow.pop("note", None)
+        else:
+            # MCP never receives Actions-envelope semantics: surface/note/
+            # additive/destructive label or describe gpt_* operations and
+            # commit_now/confirmation.confirmed, which exist only on the
+            # Actions transport. Neutral policy keys (compound, same_turn,
+            # refuse_only_when, forbidden_handles) stay — write_flow_mcp is
+            # the MCP-primary governed envelope.
+            write_flow = raw.get("write_flow")
+            if isinstance(write_flow, dict):
+                for key in ("surface", "note", "additive", "destructive"):
+                    write_flow.pop(key, None)
+            raw = _neutralize_for_mcp(raw)
         return _compact_for_actions(raw)

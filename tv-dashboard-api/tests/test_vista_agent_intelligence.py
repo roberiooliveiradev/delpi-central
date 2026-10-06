@@ -238,7 +238,15 @@ def test_screenshot_parity_maps_print_to_typed_slide():
     pipeline = " ".join(parity["pipeline"])
     assert "upsert_block" in pipeline
     assert "patch_native_config" in pipeline
-    assert "gpt_preview_change" in pipeline
+    # MCP projection is neutralized: adapter names translate to neutral ones.
+    assert "prepare_change" in pipeline
+    assert "gpt_preview_change" not in pipeline
+    actions_pipeline = " ".join(
+        VistaAgentIntelligenceService.agent_directives(transport="actions")[
+            "screenshot_parity"
+        ]["pipeline"]
+    )
+    assert "gpt_preview_change" in actions_pipeline
     forbidden = " ".join(parity["parity_bar"]["forbidden_shortcuts"])
     assert "Image Generation" in forbidden or "imagem" in forbidden.lower()
     assert any("print" in str(item).lower() for item in directives["anti_patterns"])

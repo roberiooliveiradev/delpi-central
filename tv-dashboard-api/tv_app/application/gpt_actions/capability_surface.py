@@ -1,4 +1,4 @@
-"""Capability surface descriptors for VISTA GPT catalog projection.
+"""Capability surface descriptors — transport-neutral canonical model.
 
 Catalog informs; backend authorizes. Descriptors are not AuthZ authority.
 Typed presentation ops remain owned by ``presentation_ops_content.json``
@@ -7,10 +7,23 @@ Typed presentation ops remain owned by ``presentation_ops_content.json``
 Mutable specialist intelligence (object resolution, modes, write heuristics)
 lives in ``vista_agent_intelligence.json`` and is projected as
 ``agent_directives`` so it ships with API deploy — not GPT Builder paste.
+
+Architecture: ONE canonical semantic surface uses transport-neutral capability
+names (the MCP tool names — they carry no transport prefix). Each transport
+gets a derived projection:
+
+- ``transport="mcp"`` returns the canonical surface unchanged.
+- ``transport="actions"`` maps every capability name through the inverse of
+  the canonical ``surface_parity.parity_map`` registry and injects the
+  Actions-only envelope mechanics (``commit_now`` / ``additive_single_shot``).
+
+Changing a canonical name/property once rewrites both projections — there is
+no second capability list to drift.
 """
 
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 from tv_app.application.gpt_actions import GPT_ACTIONS_OPERATION_IDS
@@ -26,13 +39,28 @@ from tv_app.application.services.data.value_expression_service import (
 )
 
 
-def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
-    """Project Action-facing capability taxonomy without a second domain catalog.
+def _parity_map() -> dict[str, str]:
+    """Canonical Actions→neutral transport registry (vista_agent_intelligence)."""
+    doc = VistaAgentIntelligenceService.document()
+    parity = doc.get("surface_parity") or {}
+    mapping = parity.get("parity_map") or {}
+    return {
+        str(k): str(v) for k, v in mapping.items() if isinstance(k, str) and isinstance(v, str)
+    }
 
-    ``transport="actions"`` (default) keeps the Actions byte budget: the
-    MCP-facing directive sections stay out. ``transport="mcp"`` projects the
-    full document for the MCP get_catalog tool.
-    """
+
+def _neutral_to_actions() -> dict[str, str]:
+    """Inverse of the canonical parity map: neutral name → Actions op id."""
+    return {neutral: actions for actions, neutral in _parity_map().items()}
+
+
+def _actions_ops(names: list[str]) -> list[str]:
+    mapping = _neutral_to_actions()
+    return [mapping.get(name, name) for name in names]
+
+
+def _canonical_surface() -> dict[str, Any]:
+    """Single semantic capability surface (transport-neutral names)."""
     ops = PresentationOpsContentService.operations()
     destructive = sorted(
         name
@@ -43,11 +71,6 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
     return {
         "lifecycle": "GOVERNED_PREPARE_COMMIT_V2",
         "mutation_owner": "PresentationMutation",
-        "agent_directives": VistaAgentIntelligenceService.agent_directives(
-            transport=transport
-        ),
-        "designIntelligence": DesignIntelligenceService.catalog_projection(),
-        "expressions": expression_capability(transport=transport),
         "action_surface_budget": {
             "importable_operations": len(GPT_ACTIONS_OPERATION_IDS),
             "platform_prefer_max": 30,
@@ -59,12 +82,12 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                 "kind": "ENTITY",
                 "owner": "tv-dashboard-api",
                 "description": (
-                    "Playlist presentation aggregate (slides, sections, revision). "
-                    "Read via dedicated Actions; writes only through governed workflow."
+                    "Playlist aggregate (slides, sections, revision). "
+                    "Writes only via governed workflow."
                 ),
                 "read_operations": [
-                    "gpt_list_playlists",
-                    "gpt_get_playlist_context",
+                    "list_playlists",
+                    "get_playlist_context",
                 ],
                 "write_operations": [],
                 "filterable_fields": [],
@@ -87,31 +110,24 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                 "owner": "tv-dashboard-api",
                 "description": (
                     "Governed PresentationMutation compound change: PlanCompiler "
-                    "topo-sort + as/*Ref; preview mints opaque proposal; additive "
-                    "commit_now; commit → TvPresentationWriteService + read-back. "
-                    "Resolve existing playlist/slide/block before create (see "
-                    "agent_directives.object_resolution)."
+                    "topo-sort + as/*Ref; PREPARE mints opaque proposal; ACT → "
+                    "TvPresentationWriteService + read-back."
                 ),
-                "read_operations": ["gpt_get_catalog", "gpt_get_playlist_context"],
+                "read_operations": ["get_catalog", "get_playlist_context"],
                 "write_operations": [
-                    "gpt_suggest_change",
-                    "gpt_preview_change",
-                    "gpt_commit_change",
+                    "suggest_change",
+                    "prepare_change",
+                    "commit_proposal",
                 ],
                 "typed_ops_authority": "presentation_ops_content.json",
                 "mutation_engine": "presentation_mutation.PresentationPatchService",
                 "typed_ops_count": len(ops),
                 "destructive_typed_ops": destructive,
                 "prepare_act_policy": {
-                    "prepare": "gpt_preview_change",
-                    "suggest": "gpt_suggest_change",
-                    "commit": "gpt_commit_change",
-                    "commit_input": ["proposal_handle", "confirmation"],
-                    "additive_single_shot": {
-                        "operation": "gpt_preview_change",
-                        "commit_now": True,
-                        "when": "confirmationPolicy=direct",
-                    },
+                    "suggest": "suggest_change",
+                    "prepare": "prepare_change",
+                    "commit": "commit_proposal",
+                    "commit_input": ["proposal_handle", "confirmation", "idempotency_key"],
                     "opaque_proposal": True,
                     "compound_plan": True,
                     "plan_compiler": "topo_sort",
@@ -135,10 +151,8 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                 "kind": "ANALYSIS",
                 "owner": "tv-dashboard-api",
                 "description": "Search allowlisted TV data routes. Read-only.",
-                "read_operations": ["gpt_search_data_routes"],
+                "read_operations": ["search_data_routes"],
                 "write_operations": [],
-                "confirmation_policy": None,
-                "prepare_act_policy": None,
                 "required_permission_metadata": {"read": "tv-dashboard.read"},
             },
             {
@@ -148,11 +162,18 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                 "description": (
                     "Preview data block resolution without persisting. Read-only."
                 ),
-                "read_operations": ["gpt_preview_data_block"],
+                "read_operations": ["preview_data_block"],
                 "write_operations": [],
-                "confirmation_policy": None,
-                "prepare_act_policy": None,
                 "required_permission_metadata": {"read": "tv-dashboard.read"},
+            },
+            {
+                "id": "domain_intent_materialization",
+                "kind": "ANALYSIS",
+                "owner": "tv-dashboard-api",
+                "description": "NL intent → typed ops + clarification. Never persists; never authorizes.",
+                "read_operations": ["suggest_change"],
+                "write_operations": [],
+                "required_permission_metadata": {"read": "tv-dashboard.write"},
             },
             {
                 "id": "data_model_lifecycle",
@@ -164,8 +185,8 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                     "upsert/delete/migrate via governed typed ops."
                 ),
                 "read_operations": [
-                    "gpt_preview_data_model",
-                    "gpt_inspect_data_model",
+                    "preview_data_model",
+                    "inspect_data_model",
                 ],
                 "write_operations": [
                     "upsert_data_model",
@@ -174,8 +195,6 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
                     "migrate_data_sources_to_model",
                     "bind_visual",
                 ],
-                "confirmation_policy": None,
-                "prepare_act_policy": None,
                 "required_permission_metadata": {"read": "tv-dashboard.read"},
             },
         ],
@@ -188,3 +207,59 @@ def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
             "builder_instructions_are_stable_only": True,
         },
     }
+
+
+def _project_for_actions(surface: dict[str, Any]) -> dict[str, Any]:
+    """Derive the Actions wire surface from the canonical neutral model.
+
+    Capability names map through the inverse parity map; the Actions-only
+    envelope mechanics (``commit_now`` single-shot) exist only here — the MCP
+    projection never carries them.
+    """
+    projected = copy.deepcopy(surface)
+    for entity in projected.get("entities") or []:
+        for key in ("read_operations", "write_operations"):
+            if isinstance(entity.get(key), list):
+                entity[key] = _actions_ops(entity[key])
+    for workflow in projected.get("workflows") or []:
+        for key in ("read_operations", "write_operations"):
+            if isinstance(workflow.get(key), list):
+                workflow[key] = _actions_ops(workflow[key])
+        policy = workflow.get("prepare_act_policy")
+        if isinstance(policy, dict):
+            for key in ("suggest", "prepare", "commit"):
+                name = policy.get(key)
+                if isinstance(name, str):
+                    policy[key] = _neutral_to_actions().get(name, name)
+            # Actions envelope single-shot: PREPARE may commit inline when the
+            # confirmation policy is direct — an adapter-level mechanic that
+            # must never appear in the MCP projection.
+            policy["additive_single_shot"] = {
+                "operation": _neutral_to_actions().get("prepare_change", "prepare_change"),
+                "commit_now": True,
+                "when": "confirmationPolicy=direct",
+            }
+    for analysis in projected.get("analyses") or []:
+        for key in ("read_operations", "write_operations"):
+            if isinstance(analysis.get(key), list):
+                analysis[key] = _actions_ops(analysis[key])
+    return projected
+
+
+def build_capability_surface(*, transport: str = "actions") -> dict[str, Any]:
+    """Project the capability taxonomy for the requested transport.
+
+    The canonical model is transport-neutral; each transport receives a
+    derived projection so a single semantic change propagates to both.
+    """
+    surface = _canonical_surface()
+    surface["agent_directives"] = VistaAgentIntelligenceService.agent_directives(
+        transport=transport
+    )
+    surface["designIntelligence"] = DesignIntelligenceService.catalog_projection()
+    surface["expressions"] = expression_capability(transport=transport)
+    if transport == "actions":
+        return _project_for_actions(surface)
+    # Actions-envelope budget metadata is adapter semantics — never on MCP.
+    surface.pop("action_surface_budget", None)
+    return surface

@@ -979,11 +979,11 @@
       "gpt_inspect_data_model": "inspect_data_model",
       "gpt_preview_data_model": "preview_data_model",
       "gpt_preview_data_block": "preview_data_block",
+      "gpt_suggest_change": "suggest_change",
       "gpt_preview_change": "prepare_change",
       "gpt_commit_change": "commit_proposal"
     },
     "not_exposed_in_mcp": [
-      "gpt_suggest_change",
       "gpt_get_slide_preview_png"
     ]
   },

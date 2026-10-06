@@ -30,6 +30,7 @@ from .tool_bridge import (
     tool_preview_data_block,
     tool_preview_data_model,
     tool_search_data_routes,
+    tool_suggest_change,
 )
 
 logger = logging.getLogger(__name__)
@@ -274,6 +275,26 @@ def _register_read_tools(mcp: MCPServer) -> None:
         ),
         annotations=ann_analysis,
         meta=_meta("preview_data_block"),
+    )
+
+    mcp.add_tool(
+        tool_suggest_change,
+        name="suggest_change",
+        title="ANALYSIS — interpretar intenção em ops tipadas",
+        description=(
+            "ANALYSIS do owner sobre uma intenção em linguagem natural — "
+            "nunca persiste e não concede autorização. Interpreta o pedido "
+            "contra o host_context fornecido (playlistId, slideId, "
+            "selectedBlockIds, nativeConfig, dataModels...) e retorna o "
+            "plano discriminado do materializador canônico: status "
+            "(ready/clarification/selection_pending/unsupported/"
+            "not_command), ops[] tipadas candidatas, confirmationPolicy, "
+            "risk, candidates e reason. Use ANTES de prepare_change para "
+            "transformar intenção em ops do catálogo; ops candidatas devem "
+            "seguir para prepare_change — nunca persistem por si."
+        ),
+        annotations=ann_analysis,
+        meta=_meta("suggest_change"),
     )
 
     mcp.add_tool(

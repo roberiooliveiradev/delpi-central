@@ -15,17 +15,35 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 | **TV Dashboard** | Domain authority (playlists, slides, data blocks, PresentationMutation) |
 | **Chat interno (Minha DELPI)** | Handoff only (`tv_dashboard_handoff`) — **não** muta TV; **não** é VISTA nem DÉLIA |
 | **DÉLIA** | App standalone industrial — **≠** Chat; adapter TV = **TARGET** (mesmo contrato PresentationMutation; sem HTTP neste HEAD) |
-| **MCP** | Backend adapter **PROVEN** (`/mcp`, 9 tools sobre o mesmo `GptActionsDispatchService`: 5 READ + 1 DISCOVERY + 1 ANALYSIS `preview_data_block` + PREPARE + ACT); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
+| **MCP** | Backend adapter **PROVEN** (`/mcp`, 10 tools sobre o mesmo `GptActionsDispatchService`: 5 READ + 1 DISCOVERY + 2 ANALYSIS `preview_data_block` + `suggest_change` + PREPARE + ACT); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
 | **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
 
 ```text
-Canonical domain capability (PresentationMutation / TvPresentationPatchV1)
-  → TvPresentationWriteService
-    → HTTP domain API (UI editor)
-    → GPT Action adapter (VISTA)
-    → MCP adapter (PROVEN backend; external provisioning/go-live PENDING)
-    → DÉLIA capability adapter (TARGET — not implemented)
+TV Dashboard domain (PresentationMutation / TvPresentationPatchV1)
+  → canonical domain logic (TvPresentationWriteService)
+    → VISTA specialist intelligence (vista_agent_intelligence.json +
+      transport-neutral owner application boundary)
+      → GptActionsDispatchService (shared, transport-neutral)
+        → capability_surface canonical model (neutral names)
+          → Actions adapter projection (parity_map inverse + envelope mechanics)
+          → MCP adapter projection (neutral names; Actions semantics stripped)
+        → HTTP domain API (UI editor)
+        → GPT Action adapter (VISTA)
+        → MCP adapter (PROVEN backend; external provisioning/go-live PENDING)
+        → DÉLIA capability adapter (TARGET — not implemented)
 ```
+
+**Unified owner boundary (VISTA-OWNER-UNIFIED-CAPABILITY-INTELLIGENCE-BOUNDARY-02):**
+`capability_surface.py` declares the semantic surface **once** with neutral
+capability names. `transport="actions"` derives its projection through the
+inverse of the canonical `surface_parity.parity_map` registry plus the
+Actions-only envelope mechanics (`commit_now`); `transport="mcp"` returns the
+canonical surface with Actions-adapter annotations stripped and residual
+`gpt_*` tokens rewritten to neutral names. A capability/intelligence change is
+made **once** and rewrites both projections — there is no second list to drift.
+`vista_agent_intelligence.json` is the single knowledge source; Actions gets a
+compacted projection (budget), MCP gets the full MCP-primary document minus
+Actions-envelope semantics.
 
 **Rules**
 
@@ -84,7 +102,9 @@ Actions, MCP, CRUD, PresentationMutation, template or builder writes.
 | Write boundary | `TvPresentationWriteService` |
 | Resource AuthZ | `PlaylistAccessService` + Core RBAC |
 | Capability metadata | `capability_surface.py` + catalog projection |
-| Actions surface | `openapi_builder.py` → generated OpenAPI (**8** ops) |
+| Actions surface | `openapi_builder.py` → generated OpenAPI (**10** ops) |
+| MCP surface | `interface/mcp` adapter → shared dispatch (**10** tools) |
+| Neutral↔Actions parity registry | `vista_agent_intelligence.json` → `surface_parity.parity_map` (single source; both projections derive from it) |
 | Proposal store | in-process → **ACCEPT_WITH_RESIDUAL** |
 | GPT Instructions (stable-only) | `docs/gpt-actions/specialist-instructions.md` — **no** feature heuristics |
 | Live agent directives (deploy) | `vista_agent_intelligence.json` → `capability_surface.agent_directives` (**compact** projection; GPT Actions ≤100 KiB) |
@@ -119,23 +139,24 @@ UNDERSTAND → READ CURRENT STATE → PREPARE (gpt_preview_change)
 
 Documented project guardrail: prefer **≤ ~30 importable operations**.
 
-| Metric | Before V2 | After V2 |
-|---|---|---|
-| Paths (Builder-visible) | 8 | **8** |
-| Importable operations | 8 | **8** |
-| Added | opaque proposal + confirmation on commit; `capability_surface` | contract evolution |
-| Removed from Builder | client `ops`/`planDigest` as commit authority | — |
-| Legacy off-schema | `POST /data/copilot/*` → **410 Gone** | yes |
-| Remaining margin vs ≤30 | 22 | **22** |
+| Metric | Before V2 | After V2 | Current |
+|---|---|---|---|
+| Paths (Builder-visible) | 8 | **8** | **10** |
+| Importable operations | 8 | **8** | **10** |
+| Added | opaque proposal + confirmation on commit; `capability_surface` | contract evolution | `gpt_preview_data_model`, `gpt_inspect_data_model` |
+| Removed from Builder | client `ops`/`planDigest` as commit authority | — | — |
+| Legacy off-schema | `POST /data/copilot/*` → **410 Gone** | yes | yes |
+| Remaining margin vs ≤30 | 22 | **22** | **20** |
 
 ## Capability taxonomy
 
-| Kind | Capability | Actions |
-|---|---|---|
-| ENTITY (read) | playlist aggregate | `gpt_list_playlists`, `gpt_get_playlist_context` |
-| WORKFLOW | presentation_change (PresentationMutation) | `gpt_suggest_change`, `gpt_preview_change`, `gpt_commit_change` |
-| ANALYSIS | data_route_search, data_block_preview | `gpt_search_data_routes`, `gpt_preview_data_block` |
-| DISCOVERY | catalog | `gpt_get_catalog` |
+| Kind | Capability | Actions | MCP |
+|---|---|---|---|
+| ENTITY (read) | playlist aggregate | `gpt_list_playlists`, `gpt_get_playlist_context` | `list_playlists`, `get_playlist_context` |
+| WORKFLOW | presentation_change (PresentationMutation) | `gpt_suggest_change`, `gpt_preview_change`, `gpt_commit_change` | `suggest_change` (ANALYSIS), `prepare_change`, `commit_proposal` |
+| ANALYSIS | data_route_search, data_block_preview, domain_intent_materialization | `gpt_search_data_routes`, `gpt_preview_data_block`, `gpt_suggest_change` | `search_data_routes`, `preview_data_block`, `suggest_change` |
+| ANALYSIS | data_model_lifecycle | `gpt_preview_data_model`, `gpt_inspect_data_model` | `preview_data_model`, `inspect_data_model` |
+| DISCOVERY | catalog | `gpt_get_catalog` | `get_catalog` |
 
 **ANALYSIS notes (CURRENT):** search = owner-local discovery over `tv_data_routes.json` (query required; compact DTO + `paramSchema`; miss ≠ absence). Preview prefers `{operationId, params}`. Heuristics: `agent_directives.data_discovery`. MFE `GET /data/routes` is editor-only (not a GPT Action).
 
@@ -189,16 +210,22 @@ Typed vs heuristic:
 
 ## Action inventory
 
-| operationId | Type | Capability |
-|---|---|---|
-| gpt_get_catalog | READ | discovery |
-| gpt_list_playlists | READ | playlist entity |
-| gpt_get_playlist_context | READ | playlist entity + `layoutDigest` + `filterDigest` + `designAudit` + `mediaInventory` + `dataModels[]`/`blockIndex[].modelId`/`focusedBinding` (DataModel addressability, survives budget downgrade); optional `includePreview` → `slidePreview` |
-| gpt_search_data_routes | ANALYSIS | data discovery |
-| gpt_preview_data_block | ANALYSIS | data preview + `semanticDigest` + `visualRecommendation` |
-| gpt_suggest_change | WORKFLOW PREPARE | NL → typed ops |
-| gpt_preview_change | WORKFLOW PREPARE | mint proposal |
-| gpt_commit_change | WORKFLOW ACT | common commit |
+| operationId | Type | Capability | MCP tool |
+|---|---|---|---|
+| gpt_get_catalog | READ/DISCOVERY | discovery | `get_catalog` |
+| gpt_list_playlists | READ | playlist entity | `list_playlists` |
+| gpt_get_playlist_context | READ | playlist entity + `layoutDigest` + `filterDigest` + `designAudit` + `mediaInventory` + `dataModels[]`/`blockIndex[].modelId`/`focusedBinding` (DataModel addressability, survives budget downgrade); optional `includePreview` → `slidePreview` | `get_playlist_context` |
+| gpt_search_data_routes | ANALYSIS | data discovery | `search_data_routes` |
+| gpt_preview_data_block | ANALYSIS | data preview + `semanticDigest` + `visualRecommendation` | `preview_data_block` |
+| gpt_preview_data_model | ANALYSIS | data model preview (never persisted) | `preview_data_model` |
+| gpt_inspect_data_model | ANALYSIS | data model inspection | `inspect_data_model` |
+| gpt_suggest_change | ANALYSIS | NL → typed ops + clarification (never persists/authorizes) | `suggest_change` |
+| gpt_preview_change | WORKFLOW PREPARE | mint proposal | `prepare_change` |
+| gpt_commit_change | WORKFLOW ACT | common commit | `commit_proposal` |
+
+`gpt_get_slide_preview_png` is the single Actions-only exclusion (asset fetch
+helper, recorded in `surface_parity.not_exposed_in_mcp`; equivalent evidence
+on MCP via `get_playlist_context` READ).
 
 ## Action Surface Gate (before new Action)
 
@@ -212,16 +239,17 @@ Typed vs heuristic:
 | Option | Decision |
 |---|---|
 | 9ª Action `gpt_get_slide_preview` | **Rejected** — equivalent READ already via `gpt_get_playlist_context?includePreview=true&slideId=` |
-| Asset GET `/gpt-actions/v1/slide-previews/{token}` | **HTTP only** (signed TTL); **not** Builder-importable; keeps surface at **8** ops |
+| Asset GET `/gpt-actions/v1/slide-previews/{token}` | **HTTP only** (signed TTL); **not** Builder-importable |
 | Vision consumption of `previewUrl` | Validate in GPT Builder smoke (`gpt-builder-go-live.md`); fallback = `layoutDigest` + user attach |
 
-Importable operations remain **8**. Margin vs ≤30 unchanged.
+Importable operations are **10** today (two DataModel ops added after this
+gate decision). Margin vs ≤30 = **20**.
 
 ## MCP / DÉLIA
 
 | Surface | Status |
 |---|---|
-| MCP VISTA | **PROVEN** backend (`/mcp` mount + 8 semantic tools on shared dispatch; service-token rejected at transport). External provisioning (`mcp-tv-dashboard`) / provider go-live = **PENDING** |
+| MCP VISTA | **PROVEN** backend (`/mcp` mount + 10 semantic tools on shared dispatch; service-token rejected at transport; no `gpt_*` names or `commit_now` in the callable contract). External provisioning (`mcp-tv-dashboard`) / provider go-live = **PENDING** |
 | DÉLIA → VISTA Actions | **NONE** — target is capability/core adapter, not Actions HTTP |
 
 ## Proposal store residual

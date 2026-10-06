@@ -51,13 +51,14 @@ def _actions_instructions_block() -> str:
 # ---------------------------------------------------------------------------
 
 
-def test_mcp_surface_exactly_nine_with_analysis():
+def test_mcp_surface_exactly_ten_with_analysis():
     tools = asyncio.run(create_mcp_server().list_tools())
     assert {t.name for t in tools} == set(MCP_TOOL_NAMES)
-    assert len(tools) == 9
+    assert len(tools) == 10
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
+    assert TOOL_CLASS["suggest_change"] == "ANALYSIS"
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +73,7 @@ def test_surface_parity_map_matches_registered_tools():
     mapping = parity["parity_map"]
     # Every MCP name in the map must be a real registered tool.
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
-    assert len(mapping) == 9
+    assert len(mapping) == 10
     # Canonical Actions op names expected on the left side.
     assert set(mapping.keys()) == {
         "gpt_get_catalog",
@@ -82,12 +83,14 @@ def test_surface_parity_map_matches_registered_tools():
         "gpt_inspect_data_model",
         "gpt_preview_data_model",
         "gpt_preview_data_block",
+        "gpt_suggest_change",
         "gpt_preview_change",
         "gpt_commit_change",
     }
-    # Actions-only auxiliaries are explicit non-parity.
+    # Actions-only auxiliaries are explicit non-parity (signed artifact route).
     for op in parity["not_exposed_in_mcp"]:
         assert op not in MCP_TOOL_NAMES
+    assert parity["not_exposed_in_mcp"] == ["gpt_get_slide_preview_png"]
 
 
 def test_write_flow_mcp_semantics():
@@ -216,11 +219,11 @@ def test_mcp_sections_projected_into_agent_directives():
     directives = VistaAgentIntelligenceService.agent_directives()
     assert "write_flow_mcp" in directives
     assert "surface_parity" in directives
-    # Parity map survives compaction intact: 9 Actions↔MCP mappings cover the
-    # registered tool set (analysis surface included, §6.133).
+    # Parity map survives compaction intact: 10 Actions↔MCP mappings cover the
+    # registered tool set (analysis surface included, §6.133 + suggest_change).
     parity = directives["surface_parity"]
     mapping = parity["parity_map"]
-    assert len(mapping) == 9
+    assert len(mapping) == 10
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
     clear_vista_agent_intelligence_cache()
 
@@ -242,6 +245,7 @@ def test_agent_directives_mcp_primary_tool_names():
         "search_data_routes",
         "inspect_data_model",
         "preview_data_model",
+        "suggest_change",
         "prepare_change",
         "commit_proposal",
     ):
@@ -295,10 +299,17 @@ def test_write_flow_actions_variant_labeled():
     )
 
     clear_vista_agent_intelligence_cache()
-    directives = VistaAgentIntelligenceService.agent_directives()
-    write_flow = directives["write_flow"]
-    assert write_flow["surface"] == "gpt_actions"
-    assert "write_flow_mcp" in write_flow["note"]
+    # Canonical document keeps the Actions label; the MCP projection strips
+    # Actions-envelope labeling — surface/note/additive/destructive name
+    # gpt_* mechanics that are not MCP-callable semantics.
+    canonical = VistaAgentIntelligenceService.document()["write_flow"]
+    assert canonical["surface"] == "gpt_actions"
+    assert "write_flow_mcp" in canonical["note"]
+    write_flow = VistaAgentIntelligenceService.agent_directives()["write_flow"]
+    for actions_key in ("surface", "note", "additive", "destructive"):
+        assert actions_key not in write_flow
+    for neutral_key in ("compound", "same_turn", "refuse_only_when", "forbidden_handles"):
+        assert neutral_key in write_flow
     clear_vista_agent_intelligence_cache()
 
 
