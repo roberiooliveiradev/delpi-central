@@ -28,7 +28,7 @@ Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, 
 | Página | Estado | Stop / inventário material |
 |---|---|---|
 | Início | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | H01 favoritos + H02 TaskProjection + H03 active competence + H04 blocker summary; implementação ainda não autorizada |
-| Visão geral | SOURCE_INVENTORY_REQUIRED | inventariar indicadores, owners, fórmulas e sources |
+| Visão geral | DECISION_REQUIRED | inventário técnico dos candidatos concluído; decidir D-OVW-01 conjunto inicial + D-OVW-02 período default + D-OVW-03 unidade default |
 | Sala de interação | CONTRACT_INVENTORY_REQUIRED | inventariar capability/contract/realtime/retention |
 | Minhas tarefas | PROJECTION_CONTRACT_REQUIRED | inventariar producers e estratégia de projeção |
 | Administração | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02 conforme slice |
@@ -38,6 +38,8 @@ A topbar usa somente `controllership-finance.access` e `controllership-finance.m
 
 
 Contrato Home: [32-inicio-home.md](./32-inicio-home.md).
+
+Contrato da Visão geral: [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md). Layout, plugin-ui, filtros, states e candidatos estão documentados; o gate permanece `DECISION_REQUIRED` até D-OVW-01..03.
 
 O Início tem design/UX/RQ/AC fechados, mas mantém inventories conhecidos para persistência de favoritos e projeções dinâmicas. Isso não autoriza implementação durante a fase atual de revisão global.
 
