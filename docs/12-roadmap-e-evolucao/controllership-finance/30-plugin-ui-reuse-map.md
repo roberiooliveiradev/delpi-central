@@ -302,12 +302,34 @@ import {
   TaskItemsTable,
   TaskSearchField,
   TaskEmptyState,
-  TaskEditorFrame,
   buildTaskWorkspaceHighlights,
+  createDashboardPageHero,
+  createDashboardScopeChipBar,
+  StatusBadge,
+  StateBanner,
+  LoadingState,
+  ActionButton,
 } from "@delpi/plugin-ui/index";
 ```
 
-O Portal fornece projeções e actions ligadas aos casos de uso owners; o kit não é owner do workflow.
+Capability existente mas deliberadamente não usada na V1:
+
+```ts
+import {
+  TaskEditorFrame,
+} from "@delpi/plugin-ui/index";
+```
+
+Contrato detalhado:
+- [27-minhas-tarefas.md](./27-minhas-tarefas.md)
+
+A V1 é self-only e projeta trabalho de P2/P4/P5 conditional. A única action genérica é `Abrir`; owner pages executam o negócio.
+
+`buildTaskWorkspaceHighlights` deve ser usado com due buckets desabilitados enquanto não houver SLA/due global.
+
+**DO NOT RECREATE:** workspace, worklist, task table, search, empty, status chrome ou editor frame.
+
+Se as colunas fixas de `TaskItemsTable` forem inadequadas para self-only/no-due, evoluir o `plugin-ui` em vez de criar tabela local.
 
 ## Administração
 
