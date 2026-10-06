@@ -1006,9 +1006,11 @@ Aceite:
 
 Aceite:
 
-- person profile unavailable → PARTIAL;
+- person profile unavailable com Directory confiável → PARTIAL;
 - null real com source disponível → "Não informado";
-- Directory/Core estruturalmente indisponível → ERROR/downstream;
+- EMPTY não é usado para target ausente nem para campos opcionais vazios;
+- Directory/Core obrigatório indisponível → UNAVAILABLE/ERROR;
+- effective permission indisponível → fail-closed;
 - 403 e 404 distintos.
 
 ### RQ-USER-07 — plugin-ui first
@@ -1073,7 +1075,10 @@ Aceite:
 ### UI / experiência
 
 - loading;
+- success;
+- empty semanticamente não-normal;
 - partial;
+- unavailable;
 - error + retry;
 - 403;
 - 404;
