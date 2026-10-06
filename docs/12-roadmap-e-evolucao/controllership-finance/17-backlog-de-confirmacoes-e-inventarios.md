@@ -14,13 +14,24 @@ Não fazer union silencioso de fontes históricas divergentes.
 
 ## E02 — Correção pós-sacramentação
 
-Confirmar:
+**Estado Gate V2:** `DECISION_REQUIRED / DOCUMENTATION_BLOCKER`.
+
+Reclassificação em 06/10/2026:
+- a evidência AS-IS/TÉO atual confirma sacramentação do estoque;
+- a decomposição/process docs consultados não definem reabertura, retificação ou correção depois de `STOCK_CLOSED`;
+- portanto E02 pode alterar lifecycle P3/P5 e não pode permanecer escondido como mero binding de implementação.
+
+Precisa fechar antes de `A10 = READY_FOR_IMPLEMENTATION_BRIEF`:
 - existe reabertura?
 - quem autoriza?
 - quais correções são possíveis?
 - o que precisa revalidar?
 - como fica a competência?
+- impacto em pacote finalizado/enviado;
 - qual evidência/auditoria?
+- se não existir correção/reabertura no Portal V1, formalizar `STOCK_CLOSED` como terminal para o Portal e preservar correções exclusivamente no owner.
+
+Não escolher uma alternativa por preferência arquitetural.
 
 ## E03 — Executor/permissões de sacramentação
 
