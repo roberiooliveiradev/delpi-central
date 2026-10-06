@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / VISUAL_SPEC_DEFINED / READY_FOR_IMPLEMENTATION_INVENTORY**
+**TARGET / VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 
 ## Job
 
@@ -407,6 +407,28 @@ Se a mudança afetar validade:
 
 MANAGE pode autoaprovar a própria solicitação, mantendo request e approval como eventos separados e auditados.
 
+Notificações canônicas da correção estrutural:
+
+```text
+STRUCTURAL_CORRECTION_REQUESTED
+→ notificar MANAGE aplicável
+
+STRUCTURAL_CORRECTION_APPROVED
+→ notificar requester
+
+STRUCTURAL_CORRECTION_REJECTED
+→ notificar requester
+
+STRUCTURAL_CORRECTION_REVALIDATION_REQUIRED
+→ notificar validator resolvido
+```
+
+Canal lógico:
+- Minha DELPI;
+- e-mail conforme configuração existente da plataforma.
+
+Sem SMTP próprio, sem SLA, sem reminder periódico e sem escalonamento temporal inventado.
+
 Visualmente:
 - request aparece como evento/estado contextual;
 - revisão MANAGE não substitui histórico anterior;
@@ -443,6 +465,18 @@ Timeline deve cobrir eventos materiais:
 - notificação relevante.
 
 Notificação anterior não desaparece quando uma decisão é revertida.
+
+Temporalidade:
+
+```text
+FORMAL_SLA = NO
+DUE_DATE = NO
+OVERDUE = NO
+TIME_BASED_ESCALATION = NO
+PENDING_SINCE = YES
+```
+
+`pending_since` é idade factual. A P2 não deriva atraso, prazo ou escalonamento apenas do tempo decorrido.
 
 ---
 
@@ -612,6 +646,124 @@ Competência, item selecionado e contexto relevante sobrevivem a refresh conform
 
 ### VA-P2-14 — Help
 Help contextual explica requirement, ATTACHED vs VALIDATED, rejection/replacement, N/A, validation scope, cancelamento e correção estrutural.
+
+---
+
+## RQ / AC / testes
+
+Rastreabilidade canônica:
+- `RQ-P2-01` — snapshot;
+- `RQ-P2-02` — REQUIRED / CONDITIONAL / N/A;
+- `RQ-P2-03` — ATTACHED != VALIDATED;
+- `RQ-P2-04` — rejeição histórica + motivo estruturado;
+- `RQ-P2-05` — replacement;
+- `RQ-P2-06` — PER_ATTACHMENT / WHOLE_SET;
+- `RQ-P2-07` — item excepcional por competência;
+- `RQ-P2-08` — CANCELLED;
+- `RQ-P2-09` — correção estrutural;
+- `RQ-P2-10` — reversão;
+- `RQ-P2-11` — notificações;
+- `RQ-P2-12` — Help.
+
+Authority executável: [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md).
+
+Proveniência funcional TÉO reconciliada:
+- 31.3–31.4 — validação/rejeição/multi-anexo;
+- 31.5–31.6 — notificações/sem SLA;
+- 31.7–31.8 — reversão e notificação da reversão;
+- 31.9–31.11 — item excepcional/edição/cancelamento;
+- 31.12–31.12.1 — correção estrutural/autoaprovação MANAGE;
+- 31.13 — decisões residuais e notificações da correção.
+
+A numeração histórica de RQs nos documentos TÉO é proveniência; o ledger 23 é o identificador TARGET canônico do handoff GitHub.
+
+### Matriz futura mínima — positive
+- abrir competência com snapshot;
+- upload;
+- validar ACCEPTED;
+- rejeitar com motivo estruturado;
+- replacement e nova validação;
+- PER_ATTACHMENT;
+- WHOLE_SET;
+- N/A somente CONDITIONAL;
+- reversão válida antes de replacement/PACKAGE_SENT;
+- item excepcional;
+- edição pré-execução;
+- cancelamento pré-execução;
+- correction request/review/new revision;
+- autoaprovação MANAGE auditada;
+- notificações de correction/reversal;
+- F5 preservando item/contexto.
+
+### Sibling
+- nova versão mestre não altera competência aberta;
+- rejeição de um anexo não altera sibling quando PER_ATTACHMENT;
+- item excepcional não altera template mestre;
+- correction de um item não reescreve evidência/validação histórica;
+- falha de uma source preserva siblings confiáveis.
+
+### Negative
+- REQUIRED marcado N/A;
+- upload tratado como ACCEPTED;
+- rejeição sem motivo;
+- replacement herdando aceite;
+- reversão quando nova versão já existe;
+- ACCESS alterando mestre;
+- cancelamento após evento material;
+- edição estrutural direta pós-execução;
+- correção sem AuthZ;
+- source indisponível tratado como empty/satisfeito;
+- `pending_since` transformado em SLA/overdue;
+- UI bypassando backend AuthZ.
+
+### Experiência
+- loading;
+- empty;
+- partial;
+- unavailable source;
+- validation error;
+- error;
+- 403;
+- 404;
+- desktop/mobile;
+- light/dark;
+- keyboard/focus;
+- deep link/F5;
+- Help.
+
+## Inventários técnicos remanescentes
+
+- `E05` — seed/obrigatoriedade dos attachment roles;
+- `E06` — seed/cobertura inicial de motivos de rejeição;
+- `T02` — capability física de notificações;
+- `T05` — Core effective permissions/resource ownership;
+- contracts físicos de attachment/storage/validator/people selectors.
+
+As decisões de produto correspondentes estão fechadas. Seed/binding não deve ser promovido silenciosamente a nova regra.
+
+## Gate documental P2
+
+```text
+PRODUCT_RULES_DEFINED       = PASS
+TEO_DECISIONS_RECONCILED    = PASS
+INFORMATION_ARCH_DEFINED    = PASS
+DESKTOP_DEFINED             = PASS
+MOBILE_DEFINED              = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+UX_STATES_DEFINED           = PASS
+AUTHZ_MODEL_DEFINED         = PASS
+NO_SLA_RULE_DEFINED         = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+DEEP_LINK_SEMANTICS_DEFINED = PASS
+HELP_CONTRACT_DEFINED       = PASS
+RQ_ACCEPTANCE_DEFINED       = PASS
+TEST_MATRIX_DEFINED         = PASS
+PHYSICAL_BINDINGS           = TO_INVENTORY
+IMPLEMENTATION_AUTHORIZED   = NO
+```
+
+P2 está documentalmente fechado para o escopo V1. Isso não autoriza runtime enquanto o fechamento documental transversal do Portal não estiver concluído.
 
 ---
 
