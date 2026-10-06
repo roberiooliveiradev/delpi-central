@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -49,6 +61,8 @@ PLUGIN_UI_FIRST     = REQUIRED
 A Sala do Controladoria deve usar a mesma experiência visual dos demais Portais.
 
 O domínio fornece dados, contexto e comandos. O `plugin-ui` controla o canvas de colaboração.
+
+A TopBar pertence ao shell. A Sala é rota de primeiro nível e não exige `PagePath` por padrão; o contexto da sala aparece no header/painel "Neste chat".
 
 ## Full-page canônica
 
@@ -396,6 +410,31 @@ InteractionMessage
 
 Esse é modelo lógico, não schema físico.
 
+## Responsabilidade e non-goals
+
+A Sala owns colaboração contextual e seu estado próprio de comunicação.
+
+Pertence à Sala:
+- room identity por contexto;
+- messages/replies;
+- reactions/pins;
+- read state/unread;
+- attachment metadata de chat;
+- shared-items projection;
+- find-in-chat;
+- audit da colaboração.
+
+Não pertence à Sala:
+- business state P1–P5;
+- evidence formal P2;
+- cutoff/STOCK_CLOSED;
+- validation/approval;
+- classification decision;
+- package finalization/send;
+- task entity/lifecycle;
+- resource permission grant por membership;
+- SMTP/preferences paralelos.
+
 ## Ownership
 
 ### controllership-finance-api
@@ -475,6 +514,52 @@ Room existe, mas contexto não está acessível ao ator:
 - contract físico definirá 403/404 conforme padrão de enumeração da plataforma.
 
 Não retornar cached messages quando o contexto deixou de ser acessível.
+
+
+## Boundary de integração TARGET
+
+O browser fala somente com `controllership-finance-api`:
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → Core effective permissions / Directory / Person Profile
+   → P1–P5 context owners
+   → Minha DELPI notifications
+   → storage/realtime adapters futuros
+```
+
+Proibido:
+- MFE chamar Core diretamente;
+- MFE chamar owner P1–P5/API externa diretamente;
+- room membership substituir resource AuthZ;
+- copiar domain/application de outro bounded context.
+
+### Context registry lógico
+
+Para cada `contextType` a BFF deve conhecer:
+
+```text
+owner
+context resolver
+resource AuthZ adapter
+title/summary mapper
+owner deep link builder
+allowed collaboration behavior
+```
+
+A Sala consulta o owner para provar contexto/acesso, mas não replica seu state como authority.
+
+### Contratos físicos
+
+Todos os paths em "Contract surface lógica" pertencem à base:
+
+```text
+/apps/controllership-finance-api
+```
+
+Storage, realtime, retention e notifications continuam R01–R05 `TO_INVENTORY`.
+
 
 ## Resolve de sala
 
@@ -927,7 +1012,7 @@ Sem ACCESS/context access.
 ### NOT_FOUND
 room/context não existe ou não pode ser resolvido conforme policy de enumeração.
 
-### CONTEXT_UNAVAILABLE
+### UNAVAILABLE / CONTEXT_UNAVAILABLE
 A room pode existir historicamente, mas se o contexto owner não estiver mais acessível:
 - não mostrar conteúdo cached;
 - fail-closed;
@@ -1287,30 +1372,42 @@ Item 5 definiu que TaskProjection deriva dos owners e não é criada pela Sala. 
 
 Nenhum desses inventários é decisão de produto aberta.
 
-## Gate
+## Gate documental V2
 
 ```text
-VISUAL_FAMILY_DEFINED        = PASS
-FULL_PAGE_REUSE_DEFINED      = PASS
-CONTEXT_MODEL_DEFINED        = PASS
-ROOM_CREATION_DEFINED        = PASS
-AUTHZ_DEFINED                = PASS
-MESSAGE_POLICY_DEFINED       = PASS
-ATTACHMENT_BOUNDARY_DEFINED  = PASS
-MENTION_POLICY_DEFINED       = PASS
-REALTIME_BEHAVIOR_DEFINED    = PASS
-NOTIFICATION_POLICY_DEFINED  = PASS
-DEEP_LINK_DEFINED            = PASS
-LIGHT_DARK_DEFINED           = PASS
-MOBILE_DEFINED               = PASS
-RQ_AC_TEST_MATRIX_DEFINED    = PASS
-IMPLEMENTATION               = NOT_AUTHORIZED
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-Estado:
+Inventários técnicos:
+- R01 persistência física;
+- R02 attachment storage;
+- R03 realtime transport;
+- R04 notification integration;
+- R05 retention.
+
+R06 está fechado como boundary: Sala não cria TaskProjection/task genérica.
+
+Resultado:
 
 ```text
-ITEM 4 = READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+A05 SALA DE INTERAÇÃO
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
 ```
 
 ## Resultado esperado
