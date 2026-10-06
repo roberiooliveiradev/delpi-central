@@ -183,7 +183,7 @@ A Visão geral é a superfície analítica financeira do Portal. O padrão visua
 
 ## UI kit
 
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md). Administração segue [28-administracao.md](./28-administracao.md).
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md). Administração segue [28-administracao.md](./28-administracao.md). Administração segue [28-administracao.md](./28-administracao.md).
 
 Import runtime canônico para MFE federado:
 
