@@ -29,10 +29,11 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - TO-BE: **TARGET consolidado**
 - implementação: **NOT_STARTED**
 - ROI: **não calculado**
-- P1/P2/P4: **READY_FOR_IMPLEMENTATION_INVENTORY**
-- P6/Administração: **READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P3: **READY_WITH_STOP_CONDITION_ON_T03**
-- P5 pacote/finalização: **READY_FOR_IMPLEMENTATION_INVENTORY**
+- P1/P2: **VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE_REVIEW_PENDING**
+- P3: **VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE_REVIEW_PENDING / STOP_CONDITION_ON_T03**
+- P4: **DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P5 pacote/finalização: **DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P6/Administração: **DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 - P5 envio real: **BLOCKED_WITH_EVIDENCE**, Q22 depende E04/T04
 - handoff funcional P1–P6: **DOCUMENTED**, sujeito aos inventories E/T da página
 
@@ -74,6 +75,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md) | mapa canônico página → componente → import de `@delpi/plugin-ui` |
 | [31-pagina-do-usuario.md](./31-pagina-do-usuario.md) | perfil de usuário, wireframes, contracts, AuthZ e reuso full-page do `plugin-ui` |
 | [32-inicio-home.md](./32-inicio-home.md) | Home comum do Portal, wireframes, launcher, eventos, busca, recentes e favoritos |
+| [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md) | plano mestre para fechar páginas, regras, RQ/AC, Help e gates antes de runtime |
 
 ## Página do usuário
 
@@ -220,10 +222,14 @@ Isso permite preparar briefs técnicos página por página. A identidade técnic
 
 ## Gate global de revisão
 
+O fechamento documental integral é governado por [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md).
+
 A fase atual é exclusivamente documental/design/contratos:
 
 ```text
 PORTAL_REVIEW_PHASE = ACTIVE
+DOCUMENTATION_CLOSURE_PHASE = ACTIVE
+DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
