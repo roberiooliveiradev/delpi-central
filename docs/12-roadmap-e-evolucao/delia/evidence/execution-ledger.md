@@ -10504,3 +10504,94 @@ EVIDENCE (live production, 2026-10-05):
       MCP = ONE PROVIDER FAMILY — NOT THE ORCHESTRATION ARCHITECTURE
       FUTURE_PROVIDER = implement CapabilityProviderPort + project
         semantic capabilities; no central orchestrator redesign.
+
+## 6.142. ARCH-CLOSEOUT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 — review close-out por cadeia de evidência
+    TASK = ARCH-CLOSEOUT-MCP-FULL-CAPABILITY-ORCHESTRATION-03
+    MODE = DOCUMENTATION / REVIEW CLOSE-OUT (no runtime, no owner
+      internals review, no new architecture, no phase promotion)
+    BASE_HEAD = 6ff2722526994bf395f2a5b675c81a91efc5ffae
+    RUNTIME_DIFF_AFTER_EVALUATED_SHA (ff178a08b2) = NONE
+
+    ORIGINAL_TASK =
+      ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03
+    ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FULL_CAPABILITY_
+      ORCHESTRATION_03 = ACCEPT_WITH_RESIDUAL
+
+    EVIDENCE_CHAIN (superseding proof — no new owner-by-owner
+      review executed or needed):
+      §6.126–§6.129 = DÉLIA MCP orchestrator; specialist owns the
+        capability surface; tools/list = live capability source; no
+        local catalog; PREPARE != ACT; generic governed write
+        lifecycle; argument-projection/nested-args/selection/
+        PREPARE-purity defects corrected.
+      §6.140 = ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-
+        ORCHESTRATION-R1 ACCEPT_WITH_RESIDUAL — ANALYSIS
+        first-class; generic same-owner RESOLVER; ANALYSIS->PREPARE
+        (never direct ACT); structural write policy; opaque
+        proposal handle; prior_turns = semantic context only, never
+        identifier provenance. EVALUATED_SHA = DEPLOYED_DELIA_SHA =
+        ff178a08b2cb90aaafb1480be803037f8db4ff39.
+      §6.141 = ARCH-REVIEW-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-
+        DECOUPLING-01 ACCEPT_WITH_RESIDUAL — 787/787; zero
+        owner/tool branches; live add/remove/reclassify; non-MCP
+        provider; multi-provider; UNKNOWN never invocable.
+
+    PERSISTED_TRUTH =
+      FULL_CAPABILITY_ORCHESTRATION = ACCEPT_WITH_RESIDUAL
+      PROVIDER_NEUTRAL_ORCHESTRATION = PROVEN
+      DELIA_ORCHESTRATION_COUPLING = SEMANTIC_CONTRACT_ONLY
+      OWNER_SPECIFIC_RUNTIME_COUPLING = NONE
+      TOOL_NAME_RUNTIME_COUPLING = NONE
+      MCP_MECHANICS_IN_ORCHESTRATOR = NONE
+      PROVIDER_MECHANICS = ADAPTER_ONLY
+      CAPABILITY_DISCOVERY = LIVE
+      MCP = ONE PROVIDER FAMILY — NOT THE ORCHESTRATION
+        ARCHITECTURE (NON_MCP_PROVIDER_ORCHESTRATION = PASS §6.141)
+      MODEL = SEMANTIC_PROPOSAL_ENGINE — MODEL_PROPOSAL !=
+        AUTHORITY/PERMISSION/FACT; deterministic revalidation.
+
+    ACCEPTED_RESIDUAL =
+      APPROVED_SPECIALIST_REGISTRY_IN_DOMAIN
+      (_SPECIALIST_IDENTITY, domain/specialist_interop/rules.py) =
+      approved specialist identity allowlist — NOT a capability
+      catalog, routing table, tool registry or behavior dispatch.
+      Classification: INTENTIONAL_FAIL_CLOSED_GOVERNANCE_BOUNDARY,
+      NON_BLOCKING, NOT ORCHESTRATION COUPLING. EXISTING_EQUIVALENT
+      = YES; REUSE_DECISION = REUSE; not removed or redesigned here;
+      any future change belongs to a dedicated provider
+      onboarding/governance task (not created now).
+
+    COORDINATION_RULES_PERSISTED =
+      CAPABILITY_EVOLUTION (inside an approved provider):
+        ADD -> live discovery, NO DÉLIA change;
+        REMOVE -> honored by fresh live surface;
+        RECLASSIFY -> new semantic class honored live;
+        TOOL RENAME -> no architecture change;
+        OWNER INTERNAL CHANGE -> no architecture change
+        (implementation/DB/algorithm/refactor/service/quality
+        changes do not trigger DÉLIA review).
+      PROVIDER_ONBOARDING (new provider/specialist):
+        EXPLICIT_GOVERNANCE_REQUIRED — explicit approval,
+        connection configuration, identity/owner ref, credential
+        boundary, CapabilityProviderPort adapter, boundary-appropriate
+        security review. This is FAIL-CLOSED PROVIDER ONBOARDING
+        GOVERNANCE, not capability coupling.
+      VALID_DELIA_REVIEW_TRIGGERS (only):
+        semantic interoperability contract change (operation_class
+        meaning, READ/PREPARE/ACT semantics, PREPARE persisting
+        material state, ACT outcome verification,
+        confirmation_requirement contract, proposal_handle
+        semantics, capability metadata no longer projecting to
+        ProviderCapability);
+        authority boundary change (Core/domain authority chain);
+        security/governance invariant change (tool metadata treated
+        as permission, UNKNOWN invocable, binding no longer opaque);
+        provider adapter contract change (provider can no longer
+        implement CapabilityProviderPort or project
+        ProviderOutcome/Evidence).
+      OWNER_INTERNAL_CHANGE != DELIA_ARCHITECTURE_REVIEW_TRIGGER.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION for next bounded
+      product step.
