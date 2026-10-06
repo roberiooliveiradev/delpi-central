@@ -29,7 +29,8 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - TO-BE: **TARGET consolidado**
 - implementação: **NOT_STARTED**
 - ROI: **não calculado**
-- P1/P2/P4/P6: **READY_FOR_IMPLEMENTATION_INVENTORY**
+- P1/P2/P4: **READY_FOR_IMPLEMENTATION_INVENTORY**
+- P6/Administração: **READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 - P3: **READY_WITH_STOP_CONDITION_ON_T03**
 - P5 pacote/finalização: **READY_FOR_IMPLEMENTATION_INVENTORY**
 - P5 envio real: **BLOCKED_WITH_EVIDENCE**, Q22 depende E04/T04
