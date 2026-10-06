@@ -1,6 +1,6 @@
 {
   "version": "2026.09.04",
-  "count": 117,
+  "count": 118,
   "entries": [
     {
       "file": "app/interface/http/propostas_comerciais_controller.py",
@@ -408,6 +408,19 @@
     {
       "file": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
       "line": 255,
+      "module": "lancamento_notas_fiscais",
+      "param": "page_size",
+      "default": "20",
+      "ge": "1",
+      "le": "100",
+      "defaultResolved": 20,
+      "geResolved": 1,
+      "leResolved": 100,
+      "tierId": "page_20_100"
+    },
+    {
+      "file": "app/interface/http/routes/lancamento_notas_fiscais/lancamento_notas_fiscais_router.py",
+      "line": 573,
       "module": "lancamento_notas_fiscais",
       "param": "page_size",
       "default": "20",

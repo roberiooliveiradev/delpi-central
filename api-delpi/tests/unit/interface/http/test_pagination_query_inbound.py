@@ -45,7 +45,7 @@ def test_inventory_factories_match_defaults() -> None:
             encoding="utf-8"
         )
     )
-    assert inv["count"] == 117
+    assert inv["count"] == 118
     for entry in inv["entries"]:
         query = factories[entry["param"]](entry["tierId"])
         assert query.default == entry["defaultResolved"], entry

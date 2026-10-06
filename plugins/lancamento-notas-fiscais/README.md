@@ -36,7 +36,8 @@ Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
 - Lista por `received_at` decrescente (mais recentes primeiro), filtros e cards no mobile
 - Refresh de conciliação ao abrir a fila (cooldown 45s) — não bloqueia a listagem
 - Conciliação automática SF1: match direto (SA2) e beneficiamento (`F1_TIPO=B` via CNPJ SA1↔SA2)
-- Notificação no sino: pendência atribuída ao responsável; pendência resolvida (retomada) para quem bloqueou; menção `@` em comentário
+- Notificação no sino: pendência atribuída ao responsável; pendência resolvida (retomada) para quem bloqueou; menção `@` em comentário; produtos da NF-e sem código Delpi, para quem tem a permissão de análise
+- Histórico de produtos sem código Delpi: ao cadastrar uma NF-e, cada item sem vínculo reconhecido (sem código ou ambíguo) fica registrado com o fornecedor e o código da nota. A tela Produtos sem código Delpi lista esse histórico e não impede o cadastro. NFS-e, CT-e e inclusão manual não entram, porque não trazem código de produto do fornecedor
 - Em comentários: digite `@` para buscar usuários do Minha Delpi; quem for marcado recebe notificação com link para a solicitação
 - Pendência «falta de pedido de compra»: ao amarrar PC, retoma automática + notificação (mesmo efeito do botão Retomar)
 - Atendimento: iniciar, bloquear (com responsável pela correção + notificação no sino), retomar, comentar, **Já lançada**, consultar e **amarrar Pedidos de compra** (grupos SC7 por PC + data de entrega, com seleção por item/`C7_ITEM`)

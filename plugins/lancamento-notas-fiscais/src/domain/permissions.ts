@@ -5,6 +5,8 @@ export const LNF_VIEW_FILIAL_01 = "lancamento-notas-fiscais.view.filial-01";
 export const LNF_VIEW_FILIAL_02 = "lancamento-notas-fiscais.view.filial-02";
 export const LNF_PROCESS = "lancamento-notas-fiscais.process";
 export const LNF_MANAGE = "lancamento-notas-fiscais.manage";
+export const LNF_REVIEW_UNMAPPED_PRODUCTS =
+  "lancamento-notas-fiscais.review-unmapped-products";
 
 export type LnfPermissionFlags = {
   canAccess: boolean;
@@ -12,6 +14,7 @@ export type LnfPermissionFlags = {
   canView: boolean;
   canProcess: boolean;
   canManage: boolean;
+  canReviewUnmappedProducts: boolean;
   canRead: boolean;
 };
 
@@ -26,6 +29,7 @@ export function resolveLnfPermissions(
       canView: true,
       canProcess: true,
       canManage: true,
+      canReviewUnmappedProducts: true,
       canRead: true,
     };
   }
@@ -34,6 +38,7 @@ export function resolveLnfPermissions(
   const canView = set.has(LNF_VIEW);
   const canProcess = set.has(LNF_PROCESS);
   const canManage = set.has(LNF_MANAGE);
+  const canReviewUnmappedProducts = set.has(LNF_REVIEW_UNMAPPED_PRODUCTS);
   const hasFilialView =
     set.has(LNF_VIEW_FILIAL_01) || set.has(LNF_VIEW_FILIAL_02);
   const canAccess =
@@ -42,13 +47,15 @@ export function resolveLnfPermissions(
     canView ||
     hasFilialView ||
     canProcess ||
-    canManage;
+    canManage ||
+    canReviewUnmappedProducts;
   return {
     canAccess,
     canCreate,
     canView,
     canProcess,
     canManage,
+    canReviewUnmappedProducts,
     canRead: canAccess,
   };
 }

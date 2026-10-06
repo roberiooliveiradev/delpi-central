@@ -1051,6 +1051,104 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             self.rollback()
             raise
 
+    def insert_unmapped_supplier_products(self, rows: list[dict[str, Any]]) -> int:
+        if not rows:
+            return 0
+        params = [
+            (
+                row["request_id"],
+                row["branch_code"],
+                row["supplier_code"],
+                row["supplier_store"],
+                row["supplier_name"],
+                row["supplier_product_code"],
+                row.get("supplier_product_description"),
+                row.get("quantity"),
+                row.get("unit"),
+                row["mapping_status"],
+                row["document_number"],
+                row.get("series") or "",
+            )
+            for row in rows
+        ]
+        with self.db() as connection:
+            with connection.cursor() as cursor:
+                cursor.executemany(
+                    f"""
+                    INSERT INTO {SCHEMA}.invoice_posting_unmapped_products (
+                        request_id, branch_code, supplier_code, supplier_store, supplier_name,
+                        supplier_product_code, supplier_product_description, quantity, unit,
+                        mapping_status, document_number, series
+                    ) VALUES (
+                        %s::uuid, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s
+                    )
+                    """,
+                    params,
+                )
+            connection.commit()
+        return len(rows)
+
+    def list_unmapped_supplier_products(
+        self,
+        *,
+        filters: dict[str, Any],
+        page: int,
+        page_size: int,
+    ) -> dict[str, Any]:
+        where = ["TRUE"]
+        params: list[Any] = []
+        if filters.get("branch"):
+            where.append("branch_code = %s")
+            params.append(filters["branch"])
+        if filters.get("supplier"):
+            where.append("(supplier_code ILIKE %s OR supplier_name ILIKE %s)")
+            pattern = f"%{filters['supplier']}%"
+            params.extend([pattern, pattern])
+        if filters.get("product_code"):
+            where.append("supplier_product_code ILIKE %s")
+            params.append(f"%{filters['product_code']}%")
+        if filters.get("mapping_status"):
+            where.append("mapping_status = %s")
+            params.append(filters["mapping_status"])
+        if filters.get("request_id"):
+            where.append("request_id = %s::uuid")
+            params.append(filters["request_id"])
+
+        where_sql = " AND ".join(where)
+        count_row = self.fetch_one(
+            f"""
+            SELECT COUNT(*) AS total
+              FROM {SCHEMA}.invoice_posting_unmapped_products
+             WHERE {where_sql}
+            """,
+            tuple(params),
+        )
+        total = int(count_row["total"]) if count_row else 0
+        page = max(int(page), 1)
+        page_size = max(1, min(int(page_size), 100))
+        offset = (page - 1) * page_size
+        rows = self.fetch_all(
+            f"""
+            SELECT id, request_id, branch_code, supplier_code, supplier_store, supplier_name,
+                   supplier_product_code, supplier_product_description, quantity, unit,
+                   mapping_status, document_number, series, created_at
+              FROM {SCHEMA}.invoice_posting_unmapped_products
+             WHERE {where_sql}
+             ORDER BY created_at DESC, id DESC
+             LIMIT %s OFFSET %s
+            """,
+            tuple(params + [page_size, offset]),
+        )
+        return {
+            "items": [_serialize_unmapped_product(row) for row in rows],
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": max((total + page_size - 1) // page_size, 1) if total else 0,
+        }
+
     def _insert_history(
         self,
         fields: dict[str, Any],
@@ -1142,6 +1240,18 @@ def _serialize_history(row: dict[str, Any]) -> dict[str, Any]:
     changes = out.get("changes")
     if isinstance(changes, str):
         out["changes"] = json.loads(changes)
+    out["created_at"] = _iso(out.get("created_at"))
+    return out
+
+
+def _serialize_unmapped_product(row: dict[str, Any]) -> dict[str, Any]:
+    out = dict(row)
+    for key in ("id", "request_id"):
+        if isinstance(out.get(key), UUID):
+            out[key] = str(out[key])
+    quantity = out.get("quantity")
+    if isinstance(quantity, Decimal):
+        out["quantity"] = format(quantity, "f")
     out["created_at"] = _iso(out.get("created_at"))
     return out
 

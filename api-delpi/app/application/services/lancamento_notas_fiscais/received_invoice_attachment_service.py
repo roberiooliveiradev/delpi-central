@@ -12,6 +12,9 @@ from app.application.services.lancamento_notas_fiscais.fiscal_attachment_storage
     LancamentoFiscalAttachmentStorage,
     LancamentoFiscalAttachmentStorageError,
 )
+from app.application.services.lancamento_notas_fiscais.unmapped_supplier_product_service import (
+    UnmappedSupplierProductRecorder,
+)
 from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases import (
     Actor,
     CreateInvoicePostingRequestUseCase,
@@ -36,12 +39,14 @@ class ReceivedInvoiceAttachmentService:
         storage: LancamentoDanfeStorage,
         requests: Any,
         fiscal_storage: LancamentoFiscalAttachmentStorage | None = None,
+        unmapped_products: UnmappedSupplierProductRecorder | None = None,
     ) -> None:
         self._create_request = create_request
         self._gateway = gateway
         self._storage = storage
         self._requests = requests
         self._fiscal_storage = fiscal_storage or LancamentoFiscalAttachmentStorage(str(storage.base_dir))
+        self._unmapped_products = unmapped_products
 
     def execute(
         self,
@@ -118,7 +123,59 @@ class ReceivedInvoiceAttachmentService:
             "file_name": filename,
             "size_bytes": len(content),
         }
+        self._observe_unmapped_products(
+            created=created,
+            payload=payload,
+            authorization=authorization,
+            document_id=document_id,
+            provider_entity_id=provider_entity_id or "",
+            access_key=access_key,
+            branch=source_branch,
+        )
         return created
+
+    def _observe_unmapped_products(
+        self,
+        *,
+        created: dict[str, Any],
+        payload: dict[str, Any],
+        authorization: str,
+        document_id: str,
+        provider_entity_id: str,
+        access_key: str,
+        branch: str,
+    ) -> None:
+        recorder = self._unmapped_products
+        request_id = str(created.get("id") or "").strip()
+        if recorder is None or not request_id:
+            return
+        try:
+            recorder.record(
+                authorization=authorization,
+                document_id=document_id,
+                provider_entity_id=provider_entity_id,
+                access_key=access_key,
+                branch=str(created.get("branch_code") or branch or ""),
+                supplier_code=str(
+                    created.get("supplier_code") or payload.get("supplier_code") or ""
+                ),
+                supplier_store=str(
+                    created.get("supplier_store") or payload.get("supplier_store") or ""
+                ),
+                supplier_name=str(
+                    created.get("supplier_name") or payload.get("supplier_name") or ""
+                ),
+                document_number=str(
+                    created.get("document_number") or payload.get("document_number") or ""
+                ),
+                series=str(created.get("series") or payload.get("series") or ""),
+                request_id=request_id,
+            )
+        except Exception:
+            log_error(
+                "Falha ao registrar produtos sem código Delpi "
+                f"na solicitação {request_id}."
+            )
 
     def _attach_questor_nfse(
         self,

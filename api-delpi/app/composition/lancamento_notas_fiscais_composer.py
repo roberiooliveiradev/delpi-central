@@ -10,6 +10,10 @@ from app.application.services.lancamento_notas_fiscais.received_invoice_attachme
 from app.application.services.lancamento_notas_fiscais.received_nfe_item_service import (
     ReceivedNfeItemService,
 )
+from app.application.services.lancamento_notas_fiscais.unmapped_supplier_product_service import (
+    ListUnmappedSupplierProductsUseCase,
+    UnmappedSupplierProductRecorder,
+)
 from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases import (
     AddInvoicePostingCommentUseCase,
     BlockInvoicePostingRequestUseCase,
@@ -84,6 +88,17 @@ def build_received_nfe_item_service() -> ReceivedNfeItemService:
     )
 
 
+def build_unmapped_supplier_product_recorder() -> UnmappedSupplierProductRecorder:
+    return UnmappedSupplierProductRecorder(
+        items=build_received_nfe_item_service(),
+        requests=build_invoice_posting_request_repository(),
+    )
+
+
+def build_list_unmapped_supplier_products_use_case() -> ListUnmappedSupplierProductsUseCase:
+    return ListUnmappedSupplierProductsUseCase(build_invoice_posting_request_repository())
+
+
 def build_received_invoice_attachment_service() -> ReceivedInvoiceAttachmentService:
     repository = build_invoice_posting_request_repository()
     return ReceivedInvoiceAttachmentService(
@@ -95,6 +110,7 @@ def build_received_invoice_attachment_service() -> ReceivedInvoiceAttachmentServ
         gateway=build_financial_received_invoice_gateway(),
         storage=LancamentoDanfeStorage(),
         requests=repository,
+        unmapped_products=build_unmapped_supplier_product_recorder(),
     )
 
 

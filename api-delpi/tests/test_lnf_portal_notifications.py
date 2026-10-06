@@ -12,6 +12,7 @@ from app.application.services.lnf_portal_notification_service import (
     notify_block_assignee,
     notify_block_resolved,
     notify_comment_mentions,
+    notify_unmapped_supplier_products,
     request_portal_route,
     resolve_block_requester_user_id,
     send_lnf_portal_notification,
@@ -313,3 +314,34 @@ def test_notify_comment_mentions_sends_html_payload() -> None:
     assert kwargs["html_content"]
     assert "Segue o combinado" in kwargs["message"]
     assert kwargs["metadata"]["commentId"] == "c-9"
+
+
+def test_notify_unmapped_products_targets_review_permission() -> None:
+    with patch("app.application.services.lnf_portal_notification_service.settings") as settings:
+        settings.LNF_NOTIFICATIONS_ENABLED = True
+        settings.CORE_API_BASE_URL = "http://core-api:8000"
+        settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN = "token"
+        with patch("httpx.Client") as client_cls:
+            client = client_cls.return_value.__enter__.return_value
+            client.post.return_value.status_code = 202
+            client.post.return_value.text = "ok"
+            sent = notify_unmapped_supplier_products(
+                request_id="req-1",
+                branch_code="01",
+                document_number="123",
+                series="1",
+                supplier_name="Tramar",
+                product_count=2,
+            )
+    assert sent is True
+    payload = client.post.call_args.kwargs["json"]
+    assert payload["permissionCodes"] == [
+        "lancamento-notas-fiscais.review-unmapped-products"
+    ]
+    assert "userIds" not in payload
+    assert payload["category"] == "lancamento_notas_fiscais_unmapped_products"
+    assert payload["action"]["target"] == (
+        "/apps/lancamento-notas-fiscais/unmapped-products?requestId=req-1"
+    )
+    assert "2 produtos" in payload["message"]
+    assert payload["metadata"]["dedupeKey"] == "lnf:unmapped_products:req-1"

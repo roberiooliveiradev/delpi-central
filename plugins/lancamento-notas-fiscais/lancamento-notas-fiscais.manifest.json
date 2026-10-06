@@ -51,6 +51,12 @@
       "name": "Administrar Lançamento de Notas Fiscais",
       "description": "Administrar solicitações e executar ações excepcionais.",
       "module": "lancamento-notas-fiscais"
+    },
+    {
+      "code": "lancamento-notas-fiscais.review-unmapped-products",
+      "name": "Analisar produtos sem código Delpi",
+      "description": "Consultar o histórico de produtos da NF-e sem vínculo com o código Delpi.",
+      "module": "lancamento-notas-fiscais"
     }
   ],
   "routes": [
@@ -69,6 +75,15 @@
       "permission": "lancamento-notas-fiscais.view.filial-02",
       "icon": "file-text",
       "order": 31,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    },
+    {
+      "path": "/apps/lancamento-notas-fiscais/unmapped-products",
+      "label": "Produtos sem código Delpi",
+      "permission": "lancamento-notas-fiscais.review-unmapped-products",
+      "icon": "file-text",
+      "order": 32,
       "showInMenu": true,
       "menuGroup": "Financeiro"
     }

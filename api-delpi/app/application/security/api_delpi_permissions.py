@@ -102,6 +102,9 @@ LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_01 = "lancamento-notas-fiscais.view.filial-
 LANCAMENTO_NOTAS_FISCAIS_VIEW_FILIAL_02 = "lancamento-notas-fiscais.view.filial-02"
 LANCAMENTO_NOTAS_FISCAIS_PROCESS = "lancamento-notas-fiscais.process"
 LANCAMENTO_NOTAS_FISCAIS_MANAGE = "lancamento-notas-fiscais.manage"
+LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS = (
+    "lancamento-notas-fiscais.review-unmapped-products"
+)
 
 # --- invoice issuance ---
 INVOICE_ISSUANCE_ACCESS = "invoice-issuance.access"

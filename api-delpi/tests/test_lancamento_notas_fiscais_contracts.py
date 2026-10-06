@@ -9,6 +9,7 @@ OPERATION_IDS = {
     "search_lancamento_notas_fiscais_suppliers",
     "create_lancamento_notas_fiscais_request",
     "list_lancamento_notas_fiscais_requests",
+    "list_lancamento_notas_fiscais_unmapped_products",
     "get_lancamento_notas_fiscais_request",
     "list_lancamento_notas_fiscais_open_purchase_orders",
     "list_lancamento_notas_fiscais_request_purchase_orders",
@@ -30,6 +31,18 @@ def test_permission_constants() -> None:
     assert perms.LANCAMENTO_NOTAS_FISCAIS_VIEW == "lancamento-notas-fiscais.view"
     assert perms.LANCAMENTO_NOTAS_FISCAIS_PROCESS == "lancamento-notas-fiscais.process"
     assert perms.LANCAMENTO_NOTAS_FISCAIS_MANAGE == "lancamento-notas-fiscais.manage"
+    assert (
+        perms.LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
+        == "lancamento-notas-fiscais.review-unmapped-products"
+    )
+    assert (
+        perms.LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
+        not in perms.LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS
+    )
+    assert (
+        perms.LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS
+        not in perms.LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS
+    )
     assert perms.LANCAMENTO_NOTAS_FISCAIS_CREATE in perms.LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS
     assert (
         perms.LANCAMENTO_NOTAS_FISCAIS_PROCESS

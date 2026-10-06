@@ -4,6 +4,7 @@ import { branchFromPathname, type BranchCode } from "./constants/branch";
 import { QueuePage } from "./ui/pages/QueuePage";
 import { RequestDetailPage } from "./ui/pages/RequestDetailPage";
 import { RequestFormPage } from "./ui/pages/RequestFormPage";
+import { UnmappedProductsPage } from "./ui/pages/UnmappedProductsPage";
 import { useCallback, useState } from "react";
 
 export type AppProps = {
@@ -16,6 +17,10 @@ type View =
   | { name: "create" }
   | { name: "detail"; requestId: string }
   | { name: "edit"; requestId: string };
+
+function isUnmappedProductsPath(pathname?: string): boolean {
+  return Boolean(pathname?.includes("/unmapped-products"));
+}
 
 function readRequestIdFromSearch(): string | null {
   if (typeof window === "undefined") return null;
@@ -52,6 +57,16 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   const goQueue = useCallback((highlightId?: string) => {
     setView({ name: "queue", highlightId });
   }, []);
+
+  if (isUnmappedProductsPath(pathname)) {
+    return (
+      <LnfPermissionsProvider>
+        <div className="dashboard-lancamento-notas-fiscais lnf-page">
+          <UnmappedProductsPage />
+        </div>
+      </LnfPermissionsProvider>
+    );
+  }
 
   if (pathname && !routeBranch) {
     return (

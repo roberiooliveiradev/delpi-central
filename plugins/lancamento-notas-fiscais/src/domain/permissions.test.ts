@@ -14,6 +14,15 @@ describe("resolveLnfPermissions", () => {
       resolveLnfPermissions(["lancamento-notas-fiscais.view.filial-01"]).canAccess,
     ).toBe(true);
     expect(resolveLnfPermissions([], true).canManage).toBe(true);
+    expect(
+      resolveLnfPermissions(["lancamento-notas-fiscais.manage"])
+        .canReviewUnmappedProducts,
+    ).toBe(false);
+    expect(
+      resolveLnfPermissions(["lancamento-notas-fiscais.review-unmapped-products"])
+        .canReviewUnmappedProducts,
+    ).toBe(true);
+    expect(resolveLnfPermissions([], true).canReviewUnmappedProducts).toBe(true);
   });
 });
 
