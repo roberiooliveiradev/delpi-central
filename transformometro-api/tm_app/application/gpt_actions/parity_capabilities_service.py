@@ -71,11 +71,29 @@ class GptMeetingMinuteManageAction(str, Enum):
     PENDING_SIGNATURES = "pending_signatures"
     AUDIT = "audit"
     VERSIONS = "versions"
+    PARTICIPANTS = "participants"
+    SIGNERS = "signers"
     RESEND = "resend"
     CREATE_VERSION = "create_version"
     SET_PARTICIPANTS = "set_participants"
     SET_SIGNERS = "set_signers"
     GENERATE_FROM_TRANSCRIPT = "generate_from_transcript"
+
+
+# Canonical meeting_minute_read vocabulary — the domain-side owner of the
+# READ/action taxonomy. Transports (MCP bridge, GPT Actions route) and the
+# governed orchestrator derive their READ sets from this single source.
+MEETING_MINUTE_READ_ACTION_VALUES = frozenset(
+    a.value
+    for a in (
+        GptMeetingMinuteManageAction.PENDING_SIGNATURES,
+        GptMeetingMinuteManageAction.AUDIT,
+        GptMeetingMinuteManageAction.VERSIONS,
+        GptMeetingMinuteManageAction.PARTICIPANTS,
+        GptMeetingMinuteManageAction.SIGNERS,
+        GptMeetingMinuteManageAction.GENERATE_FROM_TRANSCRIPT,
+    )
+)
 
 
 class ParityCapabilitiesService:
@@ -484,6 +502,7 @@ class ParityCapabilitiesService:
         action: str,
         minute_id: str | None = None,
         payload: dict[str, Any] | None = None,
+        read_only: bool = False,
     ) -> dict[str, Any]:
         try:
             manage = GptMeetingMinuteManageAction(str(action or "").strip())
@@ -493,6 +512,14 @@ class ParityCapabilitiesService:
                 f"{[a.value for a in GptMeetingMinuteManageAction]}",
                 400,
             ) from exc
+        if read_only and manage.value not in MEETING_MINUTE_READ_ACTION_VALUES:
+            raise GptActionsError(
+                f"Action '{manage.value}' is not a READ meeting-minute "
+                f"action. Allowed: {sorted(MEETING_MINUTE_READ_ACTION_VALUES)}. "
+                "Writes use prepare_meeting_minute_change (then "
+                "commit_proposal per execution_policy).",
+                400,
+            )
         user = request.state.user
         body = payload or {}
         try:
@@ -517,6 +544,24 @@ class ParityCapabilitiesService:
                         "versions": detail.get("versions") or [],
                         "current_version": detail.get("version"),
                     },
+                }
+
+            if manage == GptMeetingMinuteManageAction.PARTICIPANTS:
+                detail = self._minutes.get_detail(user, mid)
+                return {
+                    "action": manage.value,
+                    "minute_id": mid,
+                    "data": {"participants": detail.get("participants") or []},
+                    "persisted": False,
+                }
+
+            if manage == GptMeetingMinuteManageAction.SIGNERS:
+                detail = self._minutes.get_detail(user, mid)
+                return {
+                    "action": manage.value,
+                    "minute_id": mid,
+                    "data": {"signers": detail.get("signers") or []},
+                    "persisted": False,
                 }
 
             if manage == GptMeetingMinuteManageAction.RESEND:

@@ -786,6 +786,7 @@ def gpt_meeting_minute_read(request: Request, body: GptMeetingMinuteReadBody):
                 action=action_norm,
                 minute_id=body.minute_id,
                 payload=body.data,
+                read_only=True,
             ),
             "Meeting-minute read/analysis.",
         )

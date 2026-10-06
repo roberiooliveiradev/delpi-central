@@ -160,3 +160,52 @@ def test_r8_write_flow_mcp_does_not_require_confirmation_flag() -> None:
     assert "protocol ack" not in commit
     assert "confirmation=true" not in commit
     assert "auto_act" in commit and "confirm_before_act" in commit
+
+
+def test_r9_meeting_minute_read_metadata_matches_canonical_read_set() -> None:
+    """CONTRACT-DRIFT regression: tool description, canonical set and
+    runtime vocabulary must be identical for meeting_minute_read."""
+    from tm_app.application.governed_writes.orchestrator import (
+        MEETING_MINUTE_READ_ACTIONS,
+    )
+
+    desc = _tool_descriptions()["meeting_minute_read"]
+    for action in MEETING_MINUTE_READ_ACTIONS:
+        assert action in desc, f"{action} missing from tool description"
+    for write_action in (
+        "resend",
+        "create_version",
+        "set_participants",
+        "set_signers",
+        "send",
+        "finalize",
+        "cancel",
+    ):
+        assert write_action not in desc, (
+            f"write action {write_action} must not appear in READ metadata"
+        )
+
+
+def test_r10_meeting_minute_read_rejects_write_actions() -> None:
+    """meeting_minute_read must fail-closed on write/unknown actions and
+    never reach the dispatch layer."""
+    from tm_app.interface.mcp import tool_bridge
+
+    with patch.object(tool_bridge._dispatch, "manage_meeting_minute") as disp:
+        for action in (
+            "resend",
+            "create_version",
+            "set_participants",
+            "set_signers",
+            "send",
+            "finalize",
+            "cancel",
+            "bogus",
+        ):
+            result = tool_bridge.tool_meeting_minute_read(
+                action=action, minute_id="m1", data={}
+            )
+            assert result.is_error, f"{action} must be rejected"
+            text = result.content[0].text
+            assert "prepare_meeting_minute_change" in text or "READ" in text
+        disp.assert_not_called()

@@ -1564,9 +1564,14 @@ class GptActionsDispatchService:
         action: str,
         minute_id: str | None = None,
         payload: dict[str, Any] | None = None,
+        read_only: bool = False,
     ) -> dict[str, Any]:
         return self._parity.manage_meeting_minute(
-            request, action=action, minute_id=minute_id, payload=payload
+            request,
+            action=action,
+            minute_id=minute_id,
+            payload=payload,
+            read_only=read_only,
         )
 
     def meeting_minute_workflow(

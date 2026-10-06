@@ -11,6 +11,9 @@ from tm_app.application.gpt_actions.entities import (
     GptEntity,
     GptMeetingMinuteWorkflow,
 )
+from tm_app.application.gpt_actions.parity_capabilities_service import (
+    MEETING_MINUTE_READ_ACTION_VALUES,
+)
 from tm_app.application.methodology.guide import list_method_ids, list_task_ids
 from tm_app.application.gpt_actions.improvement_package_contract import (
     NESTING_RULES,
@@ -1519,14 +1522,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "properties": {
                         "action": {
                             "type": "string",
-                            "enum": [
-                                "pending_signatures",
-                                "audit",
-                                "versions",
-                                "participants",
-                                "signers",
-                                "generate_from_transcript",
-                            ],
+                            # Canonical read vocabulary — single source:
+                            # parity_capabilities_service
+                            # .MEETING_MINUTE_READ_ACTION_VALUES.
+                            "enum": sorted(MEETING_MINUTE_READ_ACTION_VALUES),
                         },
                         "minute_id": {
                             "type": "string",

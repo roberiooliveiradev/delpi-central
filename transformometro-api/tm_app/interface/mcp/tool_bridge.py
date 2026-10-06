@@ -518,6 +518,7 @@ def tool_meeting_minute_read(
                 action=action_norm,
                 minute_id=minute_id,
                 payload=data or {},
+                read_only=True,
             ),
             "Meeting minute read.",
         )

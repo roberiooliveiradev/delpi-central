@@ -554,6 +554,145 @@ def test_meeting_minute_manage_generate_from_transcript_is_no_write():
     assert data["provenance"] == "transcript_derived_draft"
 
 
+# --- meeting_minute_read contract drift (canonical READ action set) ----------
+
+
+def test_meeting_minute_read_action_set_single_canonical_source():
+    """Metadata, catalog, OpenAPI and runtime must share ONE read set."""
+    from tm_app.application.governed_writes.orchestrator import (
+        MEETING_MINUTE_READ_ACTIONS,
+    )
+    from tm_app.application.gpt_actions.capability_descriptors import (
+        build_capability_surface_catalog,
+    )
+    from tm_app.application.gpt_actions.parity_capabilities_service import (
+        MEETING_MINUTE_READ_ACTION_VALUES,
+    )
+
+    canonical = {
+        "pending_signatures",
+        "audit",
+        "versions",
+        "participants",
+        "signers",
+        "generate_from_transcript",
+    }
+    assert set(MEETING_MINUTE_READ_ACTIONS) == canonical
+    assert set(MEETING_MINUTE_READ_ACTION_VALUES) == canonical
+
+    doc = build_gpt_actions_openapi()
+    enum = set(
+        doc["components"]["schemas"]["GptMeetingMinuteReadBody"]["properties"][
+            "action"
+        ]["enum"]
+    )
+    assert enum == canonical
+
+    catalog = build_capability_surface_catalog()
+    minute = next(
+        c
+        for c in catalog["workflows"]
+        if isinstance(c, dict) and c.get("id") == "meeting_minute_manage"
+    )
+    assert set(minute["read_actions"]) == canonical
+
+
+def test_meeting_minute_read_only_rejects_write_actions():
+    """READ dispatch (read_only=True) must never reach a write branch."""
+    svc = GptActionsDispatchService()
+    request = _request()
+    with patch.object(svc._parity, "_minutes") as minutes:
+        for action in (
+            "resend",
+            "create_version",
+            "set_participants",
+            "set_signers",
+            "send",
+            "finalize",
+            "cancel",
+            "unknown_action",
+        ):
+            with pytest.raises(GptActionsError) as exc:
+                svc.manage_meeting_minute(
+                    request,
+                    action=action,
+                    minute_id="m1",
+                    payload={"participants": []},
+                    read_only=True,
+                )
+            assert exc.value.status_code == 400
+            assert "READ" in exc.value.message or "Invalid action" in (
+                exc.value.message
+            )
+        minutes.resend_sign_invites.assert_not_called()
+        minutes.create_version.assert_not_called()
+        minutes.set_participants.assert_not_called()
+        minutes.set_signers.assert_not_called()
+
+
+def test_meeting_minute_read_participants_and_signers_are_reads():
+    """participants/signers project from get_detail — persisted=False."""
+    svc = GptActionsDispatchService()
+    request = _request()
+    with patch.object(svc._parity, "_minutes") as minutes:
+        minutes.get_detail.return_value = {
+            "minute": {"id": "m1"},
+            "participants": [{"name": "Ana"}],
+            "signers": [{"user_id": "u1", "status": "pending"}],
+        }
+        data = svc.manage_meeting_minute(
+            request, action="participants", minute_id="m1", read_only=True
+        )
+        assert data["persisted"] is False
+        assert data["data"]["participants"] == [{"name": "Ana"}]
+        data = svc.manage_meeting_minute(
+            request, action="signers", minute_id="m1", read_only=True
+        )
+        assert data["persisted"] is False
+        assert data["data"]["signers"][0]["user_id"] == "u1"
+        minutes.set_participants.assert_not_called()
+        minutes.set_signers.assert_not_called()
+
+
+def test_meeting_minute_read_only_accepts_declared_read_actions():
+    """Every advertised READ action reaches a real read/analysis branch."""
+    svc = GptActionsDispatchService()
+    request = _request()
+    with (
+        patch.object(svc._parity, "_minutes") as minutes,
+        patch.object(svc._parity, "_kimi") as kimi,
+    ):
+        minutes.pending_signatures.return_value = {"items": []}
+        minutes.audit.return_value = {"events": []}
+        minutes.get_detail.return_value = {
+            "minute": {"id": "m1"},
+            "version": {"id": "v1"},
+            "versions": [{"id": "v1"}],
+            "participants": [],
+            "signers": [],
+        }
+        minutes._assert.return_value = None
+        kimi.generate_from_transcript.return_value = {"agenda_html": "<p>x</p>"}
+
+        assert (
+            svc.manage_meeting_minute(
+                request, action="pending_signatures", read_only=True
+            )["persisted"]
+            is False
+        )
+        for action in ("audit", "versions", "participants", "signers"):
+            svc.manage_meeting_minute(
+                request, action=action, minute_id="m1", read_only=True
+            )
+        transcript = svc.manage_meeting_minute(
+            request,
+            action="generate_from_transcript",
+            read_only=True,
+            payload={"unit_code": "01", "transcript_html": "<p>t</p>"},
+        )
+        assert transcript["persisted"] is False
+
+
 def test_no_generic_proxy_or_binary_payload_in_parity_openapi():
     doc = build_gpt_actions_openapi()
     blob = str(doc).lower()

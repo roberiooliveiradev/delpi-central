@@ -49,6 +49,9 @@ from tm_app.application.gpt_actions.dispatch_service import (
 from tm_app.application.gpt_actions.improvement_package_service import (
     GuidedImprovementPackageService,
 )
+from tm_app.application.gpt_actions.parity_capabilities_service import (
+    MEETING_MINUTE_READ_ACTION_VALUES,
+)
 from tm_app.core.auth_actor import actor_from_request
 
 logger = logging.getLogger(__name__)
@@ -182,25 +185,18 @@ MEETING_MINUTE_ACTION_TO_CAPABILITY = {
     "set_signers": "meeting_minute_manage",
 }
 
-# meeting_minute_manage actions that are READ (no prepare)
-MEETING_MANAGE_READ_ACTIONS = frozenset(
-    {
-        "pending_signatures",
-        "audit",
-        "versions",
-        "participants",
-        "signers",
-    }
-)
-
-# generate_from_transcript = PREPARE-like analysis, no persist
-MEETING_MANAGE_NON_ACT = frozenset({"generate_from_transcript"}) | MEETING_MANAGE_READ_ACTIONS
-
 # Canonical meeting_minute_read surface — READ actions plus the
-# non-persisting transcript analysis. Shared by MCP + GPT Actions.
-MEETING_MINUTE_READ_ACTIONS = MEETING_MANAGE_READ_ACTIONS | frozenset(
-    {"generate_from_transcript"}
-)
+# non-persisting transcript analysis. Single source:
+# parity_capabilities_service.MEETING_MINUTE_READ_ACTION_VALUES
+# (domain vocabulary owner); shared by MCP + GPT Actions.
+MEETING_MINUTE_READ_ACTIONS = MEETING_MINUTE_READ_ACTION_VALUES
+
+# meeting_minute_manage actions that are READ (no prepare) — derived
+# from the canonical set; transcript generation is analysis-only.
+MEETING_MANAGE_READ_ACTIONS = MEETING_MINUTE_READ_ACTIONS - {
+    "generate_from_transcript"
+}
+MEETING_MANAGE_NON_ACT = MEETING_MINUTE_READ_ACTIONS
 
 
 def _actor(request: Request) -> tuple[str, str | None]:

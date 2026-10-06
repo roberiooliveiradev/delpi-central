@@ -37,6 +37,9 @@ from tm_app.application.gpt_actions.entities import (
     ENTITY_DESCRIPTIONS,
     GptEntity,
 )
+from tm_app.application.gpt_actions.parity_capabilities_service import (
+    MEETING_MINUTE_READ_ACTION_VALUES,
+)
 from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
     TeoAgentIntelligenceService,
 )
@@ -255,14 +258,7 @@ def _canonical_catalog() -> dict[str, Any]:
             "read_write": "MIXED",
             "read_operation": "meeting_minute_read",
             "prepare_operation": "prepare_meeting_minute_change",
-            "read_actions": [
-                "pending_signatures",
-                "audit",
-                "versions",
-                "participants",
-                "signers",
-                "generate_from_transcript",
-            ],
+            "read_actions": sorted(MEETING_MINUTE_READ_ACTION_VALUES),
             "actions": [
                 "resend",
                 "create_version",
