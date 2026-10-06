@@ -86,7 +86,10 @@ def _handle_scan(body: dict) -> int:
     return len(hits)
 
 
-def _turn(token: str, text: str, context=None) -> dict:
+def _turn(text: str, context=None) -> dict:
+    # Fresh subject token per turn — multi-step turns can outlive the
+    # short access-token TTL.
+    token, _ = _mint_subject_token()
     payload = {"input": text}
     if context:
         payload["context"] = context
@@ -126,19 +129,16 @@ def main() -> int:
         "subject_token": claims,
         # process-by-name: target needs an owner id the user never gave
         "process_by_name": _turn(
-            token,
             os.getenv("DELIA_EVAL_PROCESS_QUERY")
             or "me explique o contexto do processo Auditoria 5S",
         ),
         # homonym: known ambiguous name -> bounded clarification
         "homonym": _turn(
-            token,
             os.getenv("DELIA_EVAL_HOMONYM_QUERY")
             or "me explique o processo Controle de refeições",
         ),
         # ANALYSIS class: non-material owner analysis (VISTA)
         "vista_analysis": _turn(
-            token,
             os.getenv("DELIA_EVAL_ANALYSIS_QUERY")
             or (
                 "analise um bloco de dados com titulo Vendas e valores "
@@ -147,7 +147,6 @@ def main() -> int:
         ),
         # owner capability evolution: live tools/list is the surface
         "teo_methodology": _turn(
-            token,
             os.getenv("DELIA_EVAL_TEO_QUERY")
             or "qual a metodologia do Transformômetro?",
         ),

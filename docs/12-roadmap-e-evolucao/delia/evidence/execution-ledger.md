@@ -10154,7 +10154,7 @@ EVIDENCE (live production, 2026-10-05):
 
 ## 6.140. ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1 — generic resolver step + first-class ANALYSIS + structural write policy + opaque-handle UX boundary
     TASK = ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1
-    STATUS = IN_EXECUTION
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
     BASE_HEAD = 72214c2d95ae29c2f8b5ed6882ee9931a148ad0e (main at pickup;
       prompt cited 1070f299084b — superseded by upstream merges;
       delia-api/ clean, unrelated dirty worktrees preserved untouched)
@@ -10236,5 +10236,64 @@ EVIDENCE (live production, 2026-10-05):
       owner-name/tool-name orchestration branches; owner ids only in
       approved connection config/registry and comments.
       git diff --check (delia-api) clean.
-    LIVE WSL/SSH acceptance: pending deploy + read acceptance
-      (process-by-name, homonym clarification, ANALYSIS class).
+    FOLLOW-UP (live-driven, same task scope):
+      - `_unproven_identifier_inputs`: deterministic provenance gate
+        on model-proposed identifier args (canon `id`/`*_id` scalars).
+        A value absent from every trusted source (user input,
+        workspace context, prior turns, owner evidence, owner schema
+        enum/const/default literals) is demoted to `missing_inputs`
+        and routed to the generic RESOLVER/clarification path —
+        applied identically to resolver args (an invented resolver id
+        fails closed). Live trigger: model invented `process_id`
+        -> owner PluginsRepositoryError; gate removes the class of
+        failure. Tests: invented-id demoted->resolver->real id on
+        wire; unresolved invented id -> clarification, never invoked.
+      - resolver candidate rendering: identifier fallback to any
+        `*id`-suffixed entity scalar (`processo_id` etc.) and label
+        matching by contained token (`nome_processo`, `codigo_...`) —
+        candidates are always distinguishable id + label.
+      Live suite after fixes: 774/774 PASS.
+    DEPLOYED_DELIA_SHA = e6e3ebbf52baf2dc6e1d0670b8fcd7509007f840
+      (delia-api only; delpi-delia-api healthy; owners untouched).
+    LIVE WSL/SSH acceptance (subject = Portal user `user`,
+    password grant realm delpi, scope openid; UNAUTH=401):
+      - PROCESS_BY_NAME: GROUNDED — "contexto detalhado do processo
+        Auditoria 5S" -> target get_process_context (READ),
+        missing process_id -> RESOLVER search_records (same owner)
+        -> resolved still_missing=0 -> target invoked with
+        owner-returned uuid c5e96a4f (PROC-0056); plan log:
+        step-1:teo.search_records;step-2:teo.get_process_context
+        (corr e9947268, b926d4ad — reproduced twice). No id asked.
+      - HOMONYM_CLARIFICATION: PASS — "contexto agregado do processo
+        Controle de refeições" -> resolver ambiguous candidates=2
+        -> bounded CLARIFICATION_REQUIRED listing
+        "bd84c8b1-... — Controle de refeições" and
+        "0f653d8d-... — Controle de refeições"; no silent pick, no
+        target call (corr 2a02eeab, 70b5b8a5).
+      - ANALYSIS_CLASS_LIVE: PASS — VISTA preview_data_block selected
+        as class=ANALYSIS with DISCOVERY plan
+        (get_catalog -> preview_data_block, corr 03ba5878); owner
+        returned 422 INVALID_CHANGE (data source unavailable) —
+        owner-side error, DÉLIA fail-closed; class preserved live.
+      - TEO_DYNAMIC_CAPABILITY: PASS — get_methodology_guide
+        GROUNDED via live tools/list; zero DÉLIA registration.
+      - SEARCH_AS_TARGET: "explique o processo X" semantically
+        selects search_records itself (name-capable READ) — grounded
+        both matches; resolver is only needed when the target
+        requires an id the user never gave.
+      - HANDLE_LEAK_LIVE: raw_handle_hits=0 on all response surfaces.
+      - LIVE_ANALYSIS_TO_PREPARE = TEST_NOT_RUN (no safe non-mutating
+        owner analysis->write chain exercised; automated E2E covers).
+      - LIVE_ACT = TEST_NOT_RUN (no disposable fixture; automated
+        suite proves governed ACT continuation).
+    RESIDUALS:
+      - SELECTION_VARIANCE: identical prompts occasionally return
+        select_group=none or fill a name literal into an *_id field
+        (value occurs in user input, so provenance passes; TEO then
+        500s with PluginsRepositoryError instead of a clean
+        not_found/invalid_argument — owner-side robustness gap,
+        transformometro-api, out of scope). DÉLIA fails closed and
+        never fabricates.
+      - LIVE_DISCOVERY_CONNECTION_COST: fresh tools/list per attempt
+        keeps per-turn latency high (no cache by design).
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
