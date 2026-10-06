@@ -191,6 +191,7 @@ class HandleInteractiveConversationTurn:
                 session_id=session.session_id,
                 confirmation=request.confirmation,
                 workspace_context=request.workspace_context,
+                prior_turns=prior_turns,
             )
             if self._capability_orchestration is not None
             else None

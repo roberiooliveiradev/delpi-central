@@ -6,7 +6,7 @@ fail-closed boundaries:
 
 1. here: the owner-typed ``delpi/toolClass`` classifies every
    advertised remote capability — every owner-typed known class is
-   governed-invocable (DISCOVERY/READ/ANALYSIS-as-READ/PREPARE/ACT);
+   governed-invocable (DISCOVERY/READ/ANALYSIS/PREPARE/ACT);
    UNKNOWN-class and unadvertised names fail closed;
 2. the adapter re-checks owner class + DÉLIA policy against a fresh
    tools/list before any wire invocation.

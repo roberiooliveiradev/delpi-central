@@ -489,10 +489,11 @@ def test_fake_fourth_owner_orchestrated_by_same_generic_mechanism(
     )
     assert catalog.specialist.owner_ref == "quarto-api"
     projected = _by_name(catalog)
-    # ANALYSIS projects as READ (non-persisting analysis) — invocable.
+    # ANALYSIS is preserved as its own first-class operation class —
+    # non-mutating, invocable, never collapsed into READ (§6.140).
     assert (
         projected["owner_analysis_surface"].operation_class
-        is SpecialistOperationClass.READ
+        is SpecialistOperationClass.ANALYSIS
     )
     assert set(catalog.blocked_remote_names) == {"rogue_untyped"}
     for name in ("owner_analysis_surface", "owner_prepare"):

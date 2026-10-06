@@ -33,15 +33,19 @@ class SpecialistOperationClass(str, Enum):
     """Semantic class of a remote capability.
 
     The class is projected from the owner-typed ``delpi/toolClass``
-    catalog metadata — the specialist owns its catalog. UNKNOWN covers
-    absent/invalid owner typing: the capability is discoverable but
-    never invocable. A class is classification only — invocation still
-    requires the matching DÉLIA governance binding.
+    catalog metadata — the specialist owns its catalog. ANALYSIS is a
+    first-class non-persisting owner-analysis class (never collapsed
+    into READ — an analysis outcome remains OBSERVATION evidence, not
+    a fact and not a write). UNKNOWN covers absent/invalid owner
+    typing: the capability is discoverable but never invocable. A
+    class is classification only — invocation still requires the
+    matching DÉLIA governance binding.
     """
 
     UNKNOWN = "UNKNOWN"
     DISCOVERY = "DISCOVERY"
     READ = "READ"
+    ANALYSIS = "ANALYSIS"
     PREPARE = "PREPARE"
     ACT = "ACT"
 

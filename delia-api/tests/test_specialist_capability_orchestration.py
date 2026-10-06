@@ -167,6 +167,61 @@ READY_PROPOSAL = RemoteToolOutcome(
     },
 )
 
+# Same owner proposal shape, structurally declared non-destructive:
+# explicit_user_confirmation=False is the sole direct-ACT authority.
+DIRECT_PROPOSAL = RemoteToolOutcome(
+    content_text="Proposta pronta.",
+    structured={
+        "data": {
+            "capability": "prepare_change",
+            "proposal_handle": "prop-handle-1",
+            "resource_id": "playlist-1",
+            "exact_change": {"field": "name", "to": "Painel X"},
+            "validation_result": {"ready": True},
+            "ready": True,
+            "expires_at": None,
+            "confirmation_requirement": {
+                "explicit_user_confirmation": False,
+            },
+        }
+    },
+)
+
+# Contradictory structural declaration — owner contract defect.
+CONTRADICTORY_POLICY_PROPOSAL = RemoteToolOutcome(
+    content_text="Proposta pronta.",
+    structured={
+        "data": {
+            "capability": "prepare_change",
+            "proposal_handle": "prop-handle-1",
+            "exact_change": {"field": "name", "to": "Painel X"},
+            "validation_result": {"ready": True},
+            "ready": True,
+            "confirmation_requirement": {
+                "explicit_user_confirmation": True,
+                "required": False,
+            },
+        }
+    },
+)
+
+# Malformed structural declaration — non-boolean policy value.
+MALFORMED_POLICY_PROPOSAL = RemoteToolOutcome(
+    content_text="Proposta pronta.",
+    structured={
+        "data": {
+            "capability": "prepare_change",
+            "proposal_handle": "prop-handle-1",
+            "exact_change": {"field": "name", "to": "Painel X"},
+            "validation_result": {"ready": True},
+            "ready": True,
+            "confirmation_requirement": {
+                "explicit_user_confirmation": "auto",
+            },
+        }
+    },
+)
+
 
 class FakePort:
     """Interop port stub: per-specialist scripted surfaces/outcomes."""
@@ -2270,13 +2325,14 @@ def test_orchestration_runtime_has_no_local_capability_authority():
         assert marker not in src, marker
 
 
-# --- section 6.132: owner-declared confirmation policy (direct vs confirm)
+# --- section 6.132/6.140: owner-declared confirmation policy
+# (direct vs confirm)
 #
 # Product Master decision: explicit user confirmation is required ONLY
-# for destructive operations. The structured owner contract (per-op
-# risk + confirmationPolicy in the owner catalog, or the proposal's
-# confirmation_requirement for non-envelope owners) is the sole
-# authority — never model output, never tool-description prose.
+# for destructive operations. The structural confirmation_requirement
+# sealed inside the owner PREPARE proposal is the sole authority —
+# never model output, never tool-description prose, and never an
+# owner-vocabulary ops/risk catalog read inside DÉLIA.
 
 VISTA_OPS_CATALOG = RemoteToolOutcome(
     content_text="catalogo",
@@ -2319,14 +2375,14 @@ def _vista_ops_prepare(port, ops):
 
 
 def test_direct_policy_executes_act_without_user_confirmation():
-    """Non-destructive + confirmationPolicy=direct: the initiating
+    """Structural explicit_user_confirmation=False: the initiating
     explicit request is the intent record — governed ACT runs in the
     same turn, no confirmation surface, no fake confirmation flag."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
@@ -2375,13 +2431,14 @@ def test_destructive_policy_requires_user_confirmation():
 
 
 def test_compound_direct_plan_executes_all_ops_same_turn():
-    """A single owner proposal carrying two direct ops executes once —
-    compound plans come from owner vocabulary, not DÉLIA hardcode."""
+    """A single owner proposal structurally declared direct executes
+    once — compound plans come from owner vocabulary, not DÉLIA
+    hardcode."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
@@ -2398,14 +2455,14 @@ def test_compound_direct_plan_executes_all_ops_same_turn():
 
 
 def test_contradictory_owner_policy_fails_closed():
-    """risk=destructive + confirmationPolicy=direct is an owner
+    """explicit_user_confirmation=true + required=false is an owner
     contract defect: fail closed — never auto-ACT, never lazy
     confirmation."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": CONTRADICTORY_POLICY_PROPOSAL,
         },
     )
     read = _vista_ops_prepare(port, [{"op": "contradictory_op"}])
@@ -2415,14 +2472,14 @@ def test_contradictory_owner_policy_fails_closed():
     assert "commit_proposal" not in [c[1] for c in port.calls]
 
 
-def test_unknown_op_policy_fails_closed():
-    """An op absent from the owner policy index cannot be classified —
-    fail closed as an owner-contract defect."""
+def test_malformed_policy_fails_closed():
+    """A non-boolean structural confirmation value cannot be
+    classified — fail closed as an owner-contract defect."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": MALFORMED_POLICY_PROPOSAL,
         },
     )
     read = _vista_ops_prepare(port, [{"op": "undeclared_op"}])
@@ -2558,36 +2615,14 @@ def test_undeclared_policy_fails_closed_not_lazy_confirmation():
 
 
 def test_owner_reclassification_flips_confirmation_live():
-    """Metamorphic: the owner reclassifies the same op direct ->
-    destructive between turns; fresh catalog evidence flips the gate
+    """Metamorphic: the owner reclassifies the same proposal direct ->
+    confirm between turns; fresh PREPARE evidence flips the gate
     with zero DÉLIA code/config change."""
-    direct_catalog = RemoteToolOutcome(
-        content_text="c",
-        structured={
-            "operations": {
-                "rotate_banner": {
-                    "risk": "mutation",
-                    "confirmationPolicy": "direct",
-                }
-            }
-        },
-    )
-    destructive_catalog = RemoteToolOutcome(
-        content_text="c",
-        structured={
-            "operations": {
-                "rotate_banner": {
-                    "risk": "destructive",
-                    "confirmationPolicy": "confirm",
-                }
-            }
-        },
-    )
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
-            "get_catalog": direct_catalog,
-            "prepare_change": READY_PROPOSAL,
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
@@ -2596,7 +2631,7 @@ def test_owner_reclassification_flips_confirmation_live():
     assert first.status is GovernedCapabilityStatus.SUCCESS
     assert "commit_proposal" in [c[1] for c in port.calls]
 
-    port._outcomes["get_catalog"] = destructive_catalog
+    port._outcomes["prepare_change"] = READY_PROPOSAL
     port.calls.clear()
     read2 = _vista_ops_prepare(port, [{"op": "rotate_banner"}])
     second = read2.attempt("execute", actor_user_id="u1", session_id="s1")
@@ -2604,33 +2639,16 @@ def test_owner_reclassification_flips_confirmation_live():
     assert "commit_proposal" not in [c[1] for c in port.calls]
 
 
-def test_enveloped_owner_catalog_resolves_policy():
-    """Provider adapters wrap DISCOVERY payloads in a neutral
-    {status, data} envelope — the policy gate must read through it
-    (live wire shape), not just a bare operations map."""
-    enveloped = RemoteToolOutcome(
-        content_text="catalogo",
-        structured={
-            "status": "success",
-            "data": {
-                "operations": {
-                    "add_blank_slide": {
-                        "risk": "additive",
-                        "confirmationPolicy": "direct",
-                    },
-                    "delete_slide": {
-                        "risk": "destructive",
-                        "confirmationPolicy": "confirm",
-                    },
-                }
-            },
-        },
-    )
+def test_enveloped_proposal_resolves_policy():
+    """Provider adapters wrap owner payloads in a neutral
+    {status, data} envelope — the policy gate must read the proposal's
+    structural confirmation_requirement through it (live wire shape),
+    not a bare flat map."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
-            "get_catalog": enveloped,
-            "prepare_change": READY_PROPOSAL,
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
@@ -2646,6 +2664,7 @@ def test_enveloped_owner_catalog_resolves_policy():
     ]
 
     port.calls.clear()
+    port._outcomes["prepare_change"] = READY_PROPOSAL
     read2 = _vista_ops_prepare(port, [{"op": "delete_slide"}])
     pending = read2.attempt(
         "exclua este slide", actor_user_id="u1", session_id="s1"

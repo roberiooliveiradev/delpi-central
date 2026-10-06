@@ -10151,3 +10151,90 @@ EVIDENCE (live production, 2026-10-05):
   destructive guard (delete PREPARE confirm_before_act ->
   commit confirmation=false -> CONFIRMATION_REQUIRED).
   Production deploy/acceptance recorded in the task report.
+
+## 6.140. ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1 — generic resolver step + first-class ANALYSIS + structural write policy + opaque-handle UX boundary
+    TASK = ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1
+    STATUS = IN_EXECUTION
+    BASE_HEAD = 72214c2d95ae29c2f8b5ed6882ee9931a148ad0e (main at pickup;
+      prompt cited 1070f299084b — superseded by upstream merges;
+      delia-api/ clean, unrelated dirty worktrees preserved untouched)
+    MODE = bounded implementation; provider-neutral; owner-neutral;
+      no owner modification; no local MCP capability catalog.
+    DEFECTS IN SCOPE (proven by ARCH-DIAG-DELIA-GENERIC-MCP-RUNTIME-
+    WSL-SSH-01):
+      G1 missing generic RESOLVER step (name -> owner id through a
+        semantically selected non-mutating same-owner capability;
+        ambiguity -> bounded clarification, never silent pick).
+      G2 ANALYSIS collapsed into READ — becomes first-class
+        SpecialistOperationClass.ANALYSIS (still OBSERVATION, never
+        FACT; plan character READ for side-effect validation only).
+      G3 confirmation preview must never surface the raw owner
+        proposal handle — render the deterministic
+        WriteProposalPreview projection only.
+      G4 write policy: structural confirmation_requirement
+        (explicit_user_confirmation) is the sole authority; the
+        ops[]/catalog owner-vocabulary branch is removed (both active
+        owners — VISTA proposal.confirmation_requirement and TEO
+        orchestrator-sealed requirement — emit the structural field;
+        anything else fails closed owner_policy_invalid).
+    BOUNDS: MAX_OPERATIONAL_PLAN_STEPS 2 -> 3; supported shapes
+      DISCOVERY->TARGET | RESOLVER->TARGET | DISCOVERY->RESOLVER->
+      TARGET | ANALYSIS->PREPARE | DISCOVERY->ANALYSIS->PREPARE;
+      same-owner only; backward-only deps; ACT stays governed
+      continuation (never a semantic plan step); no cross-turn plan
+      persistence; no persistent capability cache.
+    NON-GOALS: cross-owner workflows, new owner onboarding
+      mechanics, durable state, watch/memory/C6.
+    PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5=NO,
+      PRODUCTION_READINESS=NOT_PROVEN.
+
+    IMPLEMENTATION EVIDENCE (delia-api only):
+      - domain/specialist_interop: SpecialistOperationClass.ANALYSIS
+        added; _OWNER_CLASS_MAP ANALYSIS->ANALYSIS (was ->READ);
+        INTERACTIVE_INVOCABLE_CLASSES includes ANALYSIS; UNKNOWN
+        remains non-invocable.
+      - orchestration.py: RESOLVER role implemented as bounded
+        same-owner non-mutating step (_resolve_missing_inputs /
+        _select_resolver — eligible classes DISCOVERY|READ|ANALYSIS,
+        never PREPARE/ACT, never candidate/proposal-bound caps);
+        plan revalidated via _build_plan against the live surface
+        (max 3 steps, backward-only deps); ambiguity ->
+        CLARIFICATION_REQUIRED with bounded sanitized candidates
+        (_resolver_entities/_resolver_ambiguous/
+        _candidate_clarification_content); _resolved_values_proven
+        rejects identifiers absent from owner evidence.
+      - ANALYSIS continuation: _analysis_continuation /
+        _select_prepare_continuation — one bounded semantic decision
+        selecting an applicable same-owner PREPARE informed by
+        bounded analysis evidence; never a direct ACT; no applicable
+        PREPARE -> terminal analysis render.
+      - write policy: _effective_confirmation_policy(preview) —
+        structural confirmation_requirement
+        (explicit_user_confirmation / required) is the sole
+        authority; true -> explicit confirmation; false -> governed
+        direct ACT; missing/malformed/contradictory -> WRITE_REJECTED
+        owner_policy_invalid. VISTA ops[]/catalog branch removed;
+        no owner-literal policy vocabulary consulted.
+      - opaque handle: _preview_render renders the deterministic
+        WriteProposalPreview projection only (owner content_text no
+        longer appended); handle remains backend-only for ACT args
+        and digest computation.
+      - prior_turns: bounded request-scoped prior context now
+        forwarded through attempt() -> selection/argument/resolver/
+        continuation proposals (ModelInvocationRequest.prior_context)
+        — transient, untrusted, never persisted.
+      - interaction handler passes validated request.prior_turns.
+    TESTS: delia-api suite 772/772 PASS incl. new
+      tests/test_generic_multistep_orchestration.py — fake fourth
+      owner (neutral vocabulary, zero VISTA/TEO/DAVI coupling):
+      name->id unique resolution, ambiguity->bounded clarification
+      (target/PREPARE/ACT = 0 calls), invented-id rejection,
+      ANALYSIS->PREPARE (ACT=0), ANALYSIS terminal, structural
+      direct write, destructive confirm->ACT once, opaque-handle
+      redaction, unknown policy fail-closed, prior_context
+      propagation. Residual coupling search on app/ runtime: zero
+      owner-name/tool-name orchestration branches; owner ids only in
+      approved connection config/registry and comments.
+      git diff --check (delia-api) clean.
+    LIVE WSL/SSH acceptance: pending deploy + read acceptance
+      (process-by-name, homonym clarification, ANALYSIS class).

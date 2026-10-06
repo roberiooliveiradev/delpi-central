@@ -2475,3 +2475,17 @@ Implementation: `8ea1e4b53835478138452e9004654d99b511b65c` (evidence §6.103; re
 | `git diff --check` | clean |
 
 Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (§6.104); `C4_MCP_GOVERNED_READS_01=APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO` (phase level); `PRODUCTION_READINESS=NOT_PROVEN`; `C4-MCP-GOVERNED-READS-02` executed (§6.105; `IMPLEMENTATION_HEAD=0161c77d260907ca573735c5dbc066776c2c2234`): `CANDIDATE_FOR_ARCHITECTURE_REVIEW` — second governed READ `teo.analyze`/`gpt_analyze` bounded to `view=summary`, shared `governed_read.py` semantic layer (no clone/engine/router), live grounded Transformômetro KPI summary + provenance, DAVI regression PASS, 584/584 suite; `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02=ACCEPT_WITH_RESIDUAL` (§6.106) — `C4_MCP_GOVERNED_READS_02=APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE`; bounded MCP read proof closed, third read NOT authorized; C5 entry verdict `C5_FOUNDATION_SLICE_REQUIRED`; `C5-GOVERNED-WRITE-FOUNDATION-01` executed (§6.108; `IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce`): CANDIDATE_FOR_ARCHITECTURE_REVIEW — 58 new tests, suite 642/642; binding/preview/confirmation/decision-gate/outcome/audit contracts + adversarial coverage; PREPARE/ACT wire gates unchanged (blocked); next=`ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01`.
+
+
+### ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1 — generic multi-step orchestration (evidence §6.140)
+
+| Check | Result |
+|---|---|
+| Targeted suites (`test_generic_multistep_orchestration`, `test_provider_neutral_orchestration`, `test_specialist_capability_orchestration`, `test_specialist_interop_*`) | PASS — resolver name→id unique, ambiguous→bounded CLARIFICATION (target/PREPARE/ACT = 0 calls), invented-id rejection, ANALYSIS→PREPARE (ACT=0), ANALYSIS terminal, structural direct write, structural destructive confirm→ACT once, opaque-handle redaction on every user surface, unknown/malformed/contradictory policy fail-closed `owner_policy_invalid` |
+| Fake fourth owner (neutral vocabulary) | PASS — zero owner-name/tool-name branches exercised |
+| VISTA/TÉO/DAVI regression (fixture suites) | PASS — unchanged semantics; dynamic `tools/list` remains the capability source |
+| Full delia-api suite | 772/772 PASS |
+| Typecheck | TEST_NOT_RUN — no configured tool in this repo (AST/compile verification only) |
+| `git diff --check` (delia-api) | clean |
+| Live WSL/SSH acceptance | PENDING — deploy + read acceptance (process-by-name, homonym, ANALYSIS class) run at task close |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

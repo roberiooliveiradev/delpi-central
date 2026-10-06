@@ -13,7 +13,7 @@ names — this module holds only DÉLIA-owned governance:
 
 ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126): DÉLIA
 is the orchestrator of approved MCP specialists — the full advertised
-surface (DISCOVERY/READ/ANALYSIS-as-READ/PREPARE/ACT) is eligible for
+surface (DISCOVERY/READ/ANALYSIS/PREPARE/ACT) is eligible for
 orchestration under generic write governance. Invocable class is
 orchestration eligibility, never permission: live Core AuthZ,
 specialist/domain authority, schema validation, confirmation when the
@@ -58,12 +58,14 @@ def specialist_ref_or_none(specialist_id: str) -> SpecialistRef | None:
 
 # Provider-neutral mapping from the owner-typed DELPI ToolClass wire
 # vocabulary to the DÉLIA semantic class. ANALYSIS (non-persisting
-# analysis) projects as READ. Anything else -> UNKNOWN (discoverable,
-# never invocable).
+# owner analysis) is first-class — it stays ANALYSIS so a bounded
+# ANALYSIS -> PREPARE continuation is expressible; its outcome remains
+# OBSERVATION evidence, never FACT. Anything else -> UNKNOWN
+# (discoverable, never invocable).
 _OWNER_CLASS_MAP: dict[str, SpecialistOperationClass] = {
     "DISCOVERY": SpecialistOperationClass.DISCOVERY,
     "READ": SpecialistOperationClass.READ,
-    "ANALYSIS": SpecialistOperationClass.READ,
+    "ANALYSIS": SpecialistOperationClass.ANALYSIS,
     "PREPARE": SpecialistOperationClass.PREPARE,
     "ACT": SpecialistOperationClass.ACT,
 }
@@ -103,15 +105,15 @@ def operation_class_from_owner(raw: object) -> SpecialistOperationClass:
 #   * fail-closed unknown-specialist / unadvertised-capability /
 #     UNKNOWN-class checks.
 #
-# GOVERNED_INVOCABLE_CLASSES = DISCOVERY | READ | PREPARE | ACT
-# (ANALYSIS projects as READ via _OWNER_CLASS_MAP). A class is
-# orchestration eligibility — never permission. UNKNOWN (absent or
-# invalid owner class) is never invocable.
+# GOVERNED_INVOCABLE_CLASSES = DISCOVERY | READ | ANALYSIS | PREPARE |
+# ACT. A class is orchestration eligibility — never permission.
+# UNKNOWN (absent or invalid owner class) is never invocable.
 INTERACTIVE_INVOCABLE_CLASSES: frozenset[SpecialistOperationClass] = (
     frozenset(
         {
             SpecialistOperationClass.DISCOVERY,
             SpecialistOperationClass.READ,
+            SpecialistOperationClass.ANALYSIS,
             SpecialistOperationClass.PREPARE,
             SpecialistOperationClass.ACT,
         }
