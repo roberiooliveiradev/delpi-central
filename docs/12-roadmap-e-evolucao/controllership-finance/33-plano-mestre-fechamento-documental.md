@@ -113,9 +113,9 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 
 | Página | Authority principal | Estado atual | Trabalho documental restante |
 |---|---|---|---|
-| P1 — Cockpit da Competência | 08 | VISUAL_SPEC_DEFINED | adicionar gate documental explícito, RQ/AC trace e status de fechamento |
-| P2 — Checklist e Documentos | 09 | VISUAL_SPEC_DEFINED | adicionar gate explícito; reconciliar todas as decisões TÉO 31.3–31.13 com ledger atual |
-| P3 — Estoque, Cutoff e Conciliação | 10 + 15.1 | VISUAL_SPEC_DEFINED / STOP T03 | adicionar gate explícito; manter T03 como stop técnico/owner, sem reabrir paridade |
+| P1 — Cockpit da Competência | 08 | DOCUMENTATION_GATE PASS | fechado; residual somente físico T01/T05 |
+| P2 — Checklist e Documentos | 09 | DOCUMENTATION_GATE PASS | TÉO 31.3–31.13 reconciliado; residual seed/binding E05/E06/T02/T05 |
+| P3 — Estoque, Cutoff e Conciliação | 10 + 15.1 | DOCUMENTATION_GATE BLOCKED_BY_E02 / STOP T03 | E02 exige decisão/evidência de regra pós-STOCK_CLOSED; T03 permanece stop técnico/owner |
 | P4 — Classificações e Pendências | 11 | DOCUMENTATION_GATE PASS | residual cross-check com ledger/Help |
 | P5 — Pacote, Finalização e Envio | 12 | DOCUMENTATION_GATE PASS para package/finalization | residual; envio real continua BLOCKED_WITH_EVIDENCE por E04/T04 |
 | P6 — Administração e Configuração | 13 + 28 | page gate em 28 | alinhar 13 como authority de regra com o contrato completo de 28 |
@@ -471,7 +471,7 @@ A fase documental deve reavaliar os E-items para separar **dado de implantação
 | ID | Tema | Tratamento no fechamento documental |
 |---|---|---|
 | E01 | seed bancário | tentar fechar owner/semântica; valores seed podem permanecer implantação se não alterarem contract |
-| E02 | correção pós-STOCK_CLOSED | **review obrigatório**; se puder mudar lifecycle P3/P5, precisa regra explícita antes do freeze |
+| E02 | correção pós-STOCK_CLOSED | **DECISION_REQUIRED**: evidência AS-IS/TÉO atual não define reabertura/correção após sacramentação; precisa regra explícita antes do freeze |
 | E03 | executor/permissões de sacramentação | provar owner/segregação até o nível necessário para boundary/Help; binding físico pode ficar T03/T05 |
 | E04 | canal real de envio | não inventar; enquanto ausente, envio real permanece slice bloqueado |
 | E05 | attachment roles | semântica já fechada; seed pode ficar implantação |
