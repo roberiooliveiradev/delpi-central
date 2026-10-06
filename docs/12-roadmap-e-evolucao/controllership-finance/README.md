@@ -72,6 +72,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [29-ajuda.md](./29-ajuda.md) | manual e Help contextual |
 | [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md) | mapa canônico página → componente → import de `@delpi/plugin-ui` |
 | [31-pagina-do-usuario.md](./31-pagina-do-usuario.md) | perfil de usuário, wireframes, contracts, AuthZ e reuso full-page do `plugin-ui` |
+| [32-inicio-home.md](./32-inicio-home.md) | Home comum do Portal, wireframes, launcher, eventos, busca, recentes e favoritos |
 
 ## Página do usuário
 
@@ -86,6 +87,12 @@ Decisões congeladas:
 - usar `createDashboardPortalUserProfilePage` como full-page reusable antes de qualquer composição local.
 
 A rota é deep route e **não** adiciona item à topbar.
+
+## Início
+
+O Item 2 — Início está fechado documentalmente em [32-inicio-home.md](./32-inicio-home.md).
+
+A Home segue a família visual comum dos Portais Minha DELPI: saudação/Hero → Eventos e interações → Caminhos e funcionalidades → Últimos acessos/cards. Indicadores financeiros permanecem na Visão geral. Implementação continua não autorizada nesta fase de revisão global.
 
 ## Navegação principal
 
@@ -123,7 +130,7 @@ A Visão geral é a superfície de indicadores financeiros do Portal; o conjunto
 
 ## UI kit
 
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md).
 
 Import runtime canônico para MFE federado:
 
