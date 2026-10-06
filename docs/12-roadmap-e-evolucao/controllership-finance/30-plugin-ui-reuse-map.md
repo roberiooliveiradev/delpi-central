@@ -101,24 +101,52 @@ O Portal fornece catálogo, conteúdo, dados operacionais e AuthZ. O kit owns ch
 
 ## Visão geral
 
+### Família analítica canônica
+
+```text
+PageHero compact
+→ QuickPeriodSelector + Filters
+→ KPI grid
+→ ChartCards
+→ DataTableSection drilldown
+```
+
 ### Import preferencial
 
 ```ts
 import {
+  createDashboardPageHero,
+  createDashboardSectionCard,
   KpiCard,
+  createDashboardKpiCard,
   MetricKpiCard,
   ChartCard,
   QuickPeriodSelector,
+  createDashboardQuickPeriodSelector,
   createDashboardFiltersKit,
+  FilterBarShell,
   LineSeriesChart,
   AreaSeriesChart,
   BarSeriesChart,
   ComparativeAreaChart,
+  MultiTypeSeriesChart,
+  createDashboardChartToolbarKit,
   DataTableSection,
+  EmptyState,
+  StateBox,
+  StateBanner,
+  LoadingState,
+  createDashboardLoadingActivityCard,
+  ActionButton,
 } from "@delpi/plugin-ui/index";
 ```
 
-O contract do indicador decide o componente adequado. Disponibilidade de chart no kit não cria KPI nem regra.
+Contrato detalhado:
+- [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md).
+
+O tipo de KPI/chart depende do contrato do indicador. O Portal não cria visual porque um componente existe.
+
+**DO NOT RECREATE:** PageHero, KPI card, ChartCard, period selector, filter chrome, chart toolbar, chart primitive, DataTableSection ou feedback genérico.
 
 ## Central de Fechamento — Cockpit da Competência
 
