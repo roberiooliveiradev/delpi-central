@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -143,6 +155,30 @@ A Sala pode colaborar, referenciar e navegar ao owner. Ela não cria task genér
 
 Uma evolução futura exige decisão explícita de produto e novo contract de task ownership.
 
+## Responsabilidade, owners e non-goals
+
+Minhas tarefas owns **a projeção de leitura**, não o trabalho de negócio.
+
+| Elemento | Owner |
+|---|---|
+| regra que torna item acionável | P2/P4/P5 correspondente |
+| assignee/responsabilidade | owner do item |
+| lifecycle/state | owner do item |
+| TaskProjection composition | `controllership-finance-api` |
+| effective permissions | Core |
+| deep-link registry | BFF/Portal, validado contra router owner |
+| workspace/chrome | `@delpi/plugin-ui` |
+| filtros/copy/URL | MFE |
+
+Não pertence à página:
+- criar task genérica;
+- editar/concluir/cancelar task localmente;
+- team worklist;
+- due/SLA transversal;
+- histórico de concluídas próprio;
+- assignment implícito por role/menção;
+- persistência paralela de lifecycle.
+
 ## Rota
 
 ```text
@@ -169,6 +205,8 @@ REFERENCE           = Portal Comercial / MyDay family
 ```
 
 A experiência visual permanece comum aos Portais.
+
+A TopBar pertence ao shell. Minhas tarefas é rota de primeiro nível e não exige `PagePath` por padrão; o deep link ocorre da worklist para a página owner.
 
 ## Reuso obrigatório de @delpi/plugin-ui
 
@@ -532,6 +570,48 @@ sourceType
 ```
 
 Não aceitar `deepLink` arbitrário vindo do frontend.
+
+## Boundary de integração TARGET
+
+O browser fala somente com a BFF do Portal:
+
+```text
+plugins/controllership-finance
+→ GET /apps/controllership-finance-api/me/tasks
+→ projection adapters
+→ P2 / P4 / P5 owners autorizados
+```
+
+O MFE nunca:
+- consulta producer externo diretamente;
+- escolhe `assignee_user_id`;
+- recebe deep link arbitrário de source externa;
+- calcula se o item é task;
+- muda state do owner.
+
+### BFF → producers
+
+Cada adapter deve mapear explicitamente:
+
+```text
+sourceType
+owner
+owner contract
+actionable-state predicate owned pelo producer
+assignee field/semantics
+resource AuthZ
+freshness/source health
+deep-link builder
+```
+
+A BFF pode compor on-read ou por read-model no futuro, mas a forma física não altera:
+
+```text
+TaskProjection != business owner
+TaskProjection != task entity
+```
+
+TSK01–TSK04 materializam esses bindings apenas na futura implementação.
 
 ## Contract TARGET
 
@@ -897,8 +977,10 @@ Não usar `Tudo em dia` ou `Sem atrasos`.
 - manter itens conhecidos;
 - count não parece total.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 Identificar source afetada sem virar lista vazia.
+
+`UNAVAILABLE` é o estado da experiência; `UNAVAILABLE_SOURCE` identifica a source/projection adapter afetada.
 
 ### ERROR
 Erro total quando nenhuma projeção confiável pode ser composta.
@@ -1135,34 +1217,42 @@ Se Responsável/Prazo forem redundantes, evoluir `plugin-ui`; não criar tabela 
 
 Nenhum desses itens reabre D-TASK-01..07.
 
-## Gate
+## Gate documental V2
 
 ```text
-VISUAL_FAMILY_DEFINED       = PASS
-PLUGIN_UI_REUSE_DEFINED     = PASS
-TASK_SEMANTICS_DEFINED      = PASS
-FREE_TASK_POLICY_DEFINED    = PASS
-SELF_SCOPE_DEFINED          = PASS
-PRODUCERS_DEFINED           = PASS
-PROJECTION_MODEL_DEFINED    = PASS
-ACTION_POLICY_DEFINED       = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
 AUTHZ_DEFINED               = PASS
-DUE_SLA_POLICY_DEFINED      = PASS
-PARTIAL_COVERAGE_DEFINED    = PASS
-DEEP_LINK_DEFINED           = PASS
-HOME_INTEGRATION_DEFINED    = PASS
-ROOM_INTEGRATION_DEFINED    = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
-MOBILE_DEFINED              = PASS
-RQ_AC_TEST_MATRIX_DEFINED   = PASS
-HELP_CONTRACT_DEFINED       = PASS
-IMPLEMENTATION              = NOT_AUTHORIZED
+A11Y_DEFINED                = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-Estado:
+Inventários técnicos:
+- TSK01 producer contracts físicos;
+- TSK02 strategy on-read/materialized/event/hybrid;
+- TSK03 deep-link registry físico;
+- TSK04 source health/freshness/cache;
+- TSK05 eventual evolução de colunas no `plugin-ui`.
+
+Nenhum deles reabre D-TASK-01..07 sem evidência incompatível.
+
+Resultado:
 
 ```text
-ITEM 5 = READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+A04 MINHAS TAREFAS
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
 ```
 
 ## Resultado esperado
