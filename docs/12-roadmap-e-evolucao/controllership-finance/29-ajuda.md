@@ -120,11 +120,12 @@ Conteúdo a publicar **somente quando a rota estiver implementada**:
 
 - o que é o perfil de usuário do Portal;
 - quais dados vêm do cadastro corporativo/Core;
-- onde editar foto, cargo e contatos no Meu Perfil da Minha DELPI;
+- onde editar foto, cargo e contatos no Meu Perfil do Portal principal Minha DELPI, que usa a Core API como owner desses dados;
 - diferença entre "Não informado" e "temporariamente indisponível";
 - que outro usuário do mesmo Portal pode ser consultado por viewer com ACCESS;
 - que permissions/capabilities de outro usuário não são exibidas;
 - que, no próprio perfil, o Portal pode mostrar label + códigos técnicos `controllership-finance.access` e `controllership-finance.manage`;
+- que a página do Controladoria é somente leitura para identidade/person profile; edição e upload de foto acontecem no Meu Perfil da Minha DELPI;
 - que visualizar perfil não concede poder administrativo;
 - que Administração continua dependente de MANAGE;
 - como retornar ao contexto anterior.
