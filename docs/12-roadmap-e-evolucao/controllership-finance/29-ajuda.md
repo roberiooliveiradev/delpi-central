@@ -871,6 +871,14 @@ Explicar:
 Contrato fonte:
 - [31-pagina-do-usuario.md](./31-pagina-do-usuario.md)
 
+Sincronização A01 / Gate V2:
+- target inexistente/fora do app não é estado vazio;
+- fonte indisponível não significa dado “não informado”;
+- effective permissions indisponíveis falham fechado;
+- Help da página continua runtime-gated e só é publicada quando a rota existir.
+
+Esta sincronização não fecha o gate A07 da própria página Ajuda.
+
 ---
 
 # 10. Perguntas frequentes
