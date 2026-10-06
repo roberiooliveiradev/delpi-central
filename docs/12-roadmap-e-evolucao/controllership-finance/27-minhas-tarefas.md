@@ -1052,7 +1052,7 @@ Aceite: manual acompanha producers reais; não promete team/free task/editor.
 - mention sem owner responsibility;
 - P5 sem assignee individual;
 - criar task livre;
-- editar/concluir/cancelar/adjar/reassign local;
+- editar/concluir/cancelar/adiar/reassign local;
 - source unavailable tratado como empty;
 - partial count como total;
 - pendingSince como overdue;
