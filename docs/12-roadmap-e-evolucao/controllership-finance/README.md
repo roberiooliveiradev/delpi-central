@@ -128,6 +128,25 @@ Decisões congeladas:
 
 Implementação permanece não autorizada durante o review global.
 
+## Administração
+
+O Item 6 — Administração está fechado documentalmente em [28-administracao.md](./28-administracao.md).
+
+Decisões congeladas:
+- uma única permission administrativa: `controllership-finance.manage`;
+- MANAGE não implica ACCESS operacional;
+- subáreas: Painel, Templates, Catálogos e Histórico;
+- catálogos não viram topbar nem permission;
+- template segue DRAFT → REVIEW → PUBLISH → EFFECTIVE_FROM;
+- publicação não altera snapshots de competências abertas;
+- inativação é prospectiva e sem hard delete;
+- responsáveis/validators/destinatários referenciam identidades do Core, sem criar usuário/RBAC;
+- notification targets configuram destinatários lógicos, não infraestrutura SMTP;
+- optimistic concurrency é obrigatório; mecanismo físico fica para inventário;
+- `@delpi/plugin-ui` fornece o chrome administrativo reutilizável.
+
+Implementação permanece não autorizada durante o review global.
+
 ## Navegação principal
 
 A topbar do Portal é:
@@ -164,7 +183,7 @@ A Visão geral é a superfície analítica financeira do Portal. O padrão visua
 
 ## UI kit
 
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md).
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md). Administração segue [28-administracao.md](./28-administracao.md).
 
 Import runtime canônico para MFE federado:
 
