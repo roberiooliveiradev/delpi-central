@@ -120,17 +120,40 @@ Não:
 
 ## Runtime técnico do novo Portal
 
-Ainda é `TO_INVENTORY`:
+Identidade técnica já congelada:
 
-- plugin id;
-- basePath;
-- BFF;
-- storage;
-- manifest;
-- schemas;
-- deployment topology.
+```text
+plugin id     = controllership-finance
+plugin folder = plugins/controllership-finance
+basePath      = /apps/controllership-finance
+BFF/service   = controllership-finance-api
+BFF baseUrl   = /apps/controllership-finance-api
+CSS root      = .portal-controllership-finance
+```
 
-Esses nomes não devem ser derivados de documentação histórica nem do Portal Financeiro P0.
+Continuam `TO_INVENTORY` conforme o slice:
+
+- necessidade real de storage;
+- schemas físicos;
+- migrations;
+- deployment topology;
+- bindings externos;
+- contratos físicos/OpenAPI ainda não implementados.
+
+Essas decisões não devem ser derivadas do Portal Financeiro P0.
+
+### Identidade de usuário
+
+Para a Página do usuário:
+- Core é owner de diretório, person profile, foto e effective permissions;
+- o Portal principal Minha DELPI é a superfície canônica de **autoedição** do person profile e da foto, usando `/core-api/me/person-profile` e `/core-api/me/person-profile/photo`;
+- `controllership-finance-api` compõe e autoriza apenas a leitura necessária ao produto;
+- o MFE de Controladoria apresenta esses dados em modo read-only e redireciona o self para Meu Perfil quando houver intenção de editar;
+- não importar internals de Core nem ler seu banco;
+- não persistir cópia local de identidade/foto;
+- não criar proxy de write, editor de cargo/contatos nem upload de foto dentro do Portal Controladoria & Finanças.
+
+Fonte: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 
 ## Regra de conflito
 

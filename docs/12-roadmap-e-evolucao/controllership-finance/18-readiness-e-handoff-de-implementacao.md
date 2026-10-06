@@ -27,6 +27,21 @@ O pacote funcional de implementação está organizado em:
 
 A topbar usa somente `controllership-finance.access` e `controllership-finance.manage`. Não existe permission code por filial/unidade neste Portal.
 
+
+### Superfícies transversais
+
+| Página | Estado | Stop / inventário material |
+|---|---|---|
+| Página do usuário | READY_FOR_IMPLEMENTATION_BRIEF | foundation do MFE/BFF + revalidação Core Directory/Person Profile/effective permissions + app membership |
+
+Contrato funcional/visual: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
+
+Decisões congeladas:
+- D1=B: viewer com `controllership-finance.access` pode consultar outro usuário com acesso ao mesmo Portal;
+- D2=A: no próprio perfil, exibir label + códigos técnicos `controllership-finance.access/manage`;
+- permissions/capabilities de outro usuário permanecem ocultas;
+- identidade/foto continuam owned pelo Core, sem persistência local no Portal.
+
 ### Central de Fechamento
 
 | Página / slice | Estado | Stop / inventário material |
@@ -62,7 +77,7 @@ Readiness não é autorização global. O Portal evolui uma página/slice por ve
 
 1. obter HEAD e `git status`;
 2. ler authorities oficiais e regras `.cursor` materiais;
-3. ler README + docs 20–23 + documento canônico da página;
+3. ler README + docs 20–23 + documento canônico da página (incluindo 31 para Página do usuário);
 4. abrir E/T aplicáveis;
 5. identificar owner e producer/consumer reais;
 6. provar contracts/bindings no HEAD;
@@ -74,17 +89,27 @@ Readiness não é autorização global. O Portal evolui uma página/slice por ve
 
 ## Arquitetura técnica
 
-Continuam não definidos por esta documentação:
-- plugin id;
-- rota/basePath;
-- BFF/service name;
-- storage;
-- manifest;
+Identidade técnica já congelada:
+
+```text
+plugin id     = controllership-finance
+plugin folder = plugins/controllership-finance
+basePath      = /apps/controllership-finance
+BFF/service   = controllership-finance-api
+BFF baseUrl   = /apps/controllership-finance-api
+CSS root      = .portal-controllership-finance
+```
+
+Continuam dependentes de inventário/contrato do slice:
+
+- necessidade real de storage;
 - schemas físicos;
 - migrations;
-- deployment topology.
+- deployment topology;
+- OpenAPI/DTOs físicos de cada capability;
+- bindings externos e infraestrutura necessária.
 
-Decidir somente após inventário do HEAD, owners e contracts.
+Não criar tabela/migration antecipadamente apenas para "ter a fundação". Persistência nasce de contrato stateful comprovado.
 
 O Portal Financeiro P0 não é template obrigatório do novo Portal.
 

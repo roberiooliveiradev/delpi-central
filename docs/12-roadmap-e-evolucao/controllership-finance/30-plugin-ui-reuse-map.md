@@ -49,6 +49,7 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 | Minhas tarefas | `TaskWorkspacePage`, `TaskWorklistSection`, `TaskItemsTable`, `TaskSearchField`, `TaskEmptyState` | `@delpi/plugin-ui/index` | **workspace reusable** |
 | Administração | PageHero/PagePath, SectionRouteCard, DataTableSection, forms, Modal/Confirm/Notice/Status | `@delpi/plugin-ui/index` | composição reutilizável; sem full page pronta |
 | Ajuda | `createDashboardUserManual`, PageHero/PagePath/SectionCard, help primitives | `@delpi/plugin-ui/index` | **manual kit reusable** |
+| Página do usuário | `createDashboardPortalUserProfilePage`, `portalUserProfileAccessBemClasses`, `StatusBadge`, state/loading primitives | `@delpi/plugin-ui/index` | **full-page reusable** |
 
 ## Início
 
@@ -268,6 +269,44 @@ import {
 ```
 
 O conteúdo em PT-BR permanece no plugin consumidor.
+
+
+## Página do usuário
+
+### Full-page canônica
+
+```ts
+import {
+  createDashboardPortalUserProfilePage,
+  portalUserProfileAccessBemClasses,
+  createDashboardSectionCard,
+  StatusBadge,
+  StateBanner,
+  LoadingState,
+} from "@delpi/plugin-ui/index";
+```
+
+Usar `createDashboardPortalUserProfilePage` antes de compor `PagePath`, `PageHero`, avatar, identidade ou atalhos manualmente.
+
+A full page já owns:
+
+```text
+PagePath
+→ PageHero comfortable
+→ badge Você
+→ CTA self
+→ Identidade | Atalhos
+→ avatar/iniciais
+→ slots de seções
+→ responsive/a11y
+```
+
+O Controladoria fornece dados, copy, navegação, AuthZ e a seção self-only de acesso.
+
+Contrato detalhado:
+- [31-pagina-do-usuario.md](./31-pagina-do-usuario.md)
+
+**DO NOT RECREATE:** shell da página, hero, identidade, avatar, grid Identidade|Atalhos, self badge, self CTA, access chrome ou CSS `.delpi-ui-portal-user-profile*`.
 
 ## Feedback e estados
 

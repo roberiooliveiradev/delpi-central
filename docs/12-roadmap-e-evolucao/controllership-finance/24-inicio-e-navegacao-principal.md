@@ -74,7 +74,7 @@ Uso esperado:
 
 `SectionRouteCard` e `NavigationCard` recebem conteúdo de domínio do Portal; o kit controla chrome, foco e acessibilidade.
 
-**DO NOT RECREATE:** TopBar, underline/nav chrome, launcher-card chrome, recent-access chrome, loading/empty genéricos.
+**DO NOT RECREATE:** TopBar, underline/nav chrome, launcher-card chrome, recent-access chrome, loading/empty genéricos. Para a deep route de usuário, também não recriar o `PortalUserProfilePage` do `@delpi/plugin-ui`.
 
 ## Modelo de permissions
 
@@ -103,6 +103,31 @@ UNIT_SCOPE_PERMISSION_MODEL = NOT_APPLICABLE
 Filial/unidade pode existir como dimensão de dados, filtro ou contexto do processo quando a fonte exigir, mas não como permission code dedicado do Portal.
 
 AuthZ continua server-side e fail-closed.
+
+
+## Página do usuário — deep route transversal
+
+A página de usuário não altera a topbar canônica.
+
+Rota TARGET:
+
+```text
+/apps/controllership-finance/users/{userId}
+```
+
+Fonte detalhada:
+- [31-pagina-do-usuario.md](./31-pagina-do-usuario.md)
+
+Política congelada:
+- viewer com `controllership-finance.access` pode consultar o perfil corporativo básico de outro usuário com acesso ao mesmo Portal;
+- perfil de outro usuário não expõe permissions/capabilities;
+- no próprio perfil, labels + códigos técnicos `controllership-finance.access/manage` podem ser exibidos;
+- identidade/foto pertencem ao Core;
+- a rota não cria permission nova.
+
+A identidade/avatar da topbar pode navegar para o perfil self somente quando a sessão possui ACCESS. Uma sessão apenas MANAGE não recebe ACCESS implicitamente; o avatar pode continuar apontando ao Meu Perfil global da Minha DELPI.
+
+Atalhos dentro do perfil devem refletir **runtime implementado + autorização do viewer**, nunca roadmap futuro isoladamente.
 
 ## Papel do Início
 
