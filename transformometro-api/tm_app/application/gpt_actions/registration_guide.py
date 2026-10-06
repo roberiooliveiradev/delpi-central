@@ -342,6 +342,7 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "fase_melhoria",
                     "data_alvo_go_live",
                     "prioridade",
+                    "contexto",
                 ],
                 "enums": {
                     "fase_melhoria": list(FASE_MELHORIA),
@@ -357,6 +358,11 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 "notes": [
                     "Need filial_id OR todas_filiais_ativas=true.",
                     "setor_ids must have at least one department.",
+                    "contexto (update only): operational context document validated by "
+                    "validate_instancia_contexto_v1 — shape "
+                    "{format: 'instancia_contexto_v1', format_version: 1, "
+                    "node_notes: {<tree_node_id>: <note>}, links: []}. Send via "
+                    "changes.contexto (auto_act).",
                     "Create: prepare_record_change operation=create with changes.processo_id + instance fields.",
                     "Corporate/all-units instance: todas_filiais_ativas=true and omit filial_id "
                     "(use gpt_prepare_record_change entity=instance; improvement package still needs "

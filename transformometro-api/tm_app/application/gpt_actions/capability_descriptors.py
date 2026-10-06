@@ -587,8 +587,8 @@ def _canonical_catalog() -> dict[str, Any]:
                 {
                     "id": "instance.contexto",
                     "via": "READ via get_record(entity=instance); WRITE via "
-                    "prepare_record_change(instance, data.contexto) → "
-                    "commit_proposal (validate_instancia_contexto_v1 + "
+                    "prepare_record_change(entity=instance, operation=update, "
+                    "changes.contexto) → commit_proposal (validate_instancia_contexto_v1 + "
                     "ProcessoInstanciaRepository.update_contexto — same "
                     "canonical path as put_instancia_contexto)",
                     "surfaces": ["portal_http", "gpt_actions", "mcp"],

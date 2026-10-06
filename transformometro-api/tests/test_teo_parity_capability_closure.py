@@ -140,8 +140,24 @@ def test_closed_gap_justifications_reference_real_surface() -> None:
     assert "meeting_minute_workflow" in exposed["meeting_minute.sign_refuse"]
     assert "manage_evidence" in exposed["process_file.metadata_write"]
     assert "prepare_record_change" in exposed["instance.contexto"]
+    assert "changes.contexto" in exposed["instance.contexto"]
+    assert "data.contexto" not in exposed["instance.contexto"]
     assert "update_signature_profile" in exposed["signature_profile"]
     assert "import_diagram_bpmn_xml" in exposed["diagram.bpmn_xml"]
+
+
+def test_instance_contexto_published_in_entity_schema() -> None:
+    from tm_app.application.gpt_actions.registration_guide import (
+        build_registration_guide,
+    )
+
+    for transport in ("gpt_actions", "mcp"):
+        guide = build_registration_guide(transport)
+        schema = guide["entity_schemas"]["instance"]
+        assert "contexto" in schema["optional"]
+        assert any(
+            "instancia_contexto_v1" in note for note in schema["notes"]
+        )
 
 
 # -------------------------------------------------------------- MCP schemas
