@@ -632,6 +632,8 @@ _RESOLVER_LABEL_KEYS = (
     "name",
     "title",
     "label",
+    "nome",
+    "titulo",
     "descricao",
     "description",
     "codigo",
@@ -743,12 +745,13 @@ def _candidate_clarification_content(
     for entity in entities[:MAX_CANDIDATE_ENTRIES]:
         identifier = _entity_identifier(entity, missing_inputs) or ""
         label = ""
-        for key in _RESOLVER_LABEL_KEYS:
+        for token in _RESOLVER_LABEL_KEYS:
             value = next(
                 (
                     v
                     for k, v in entity.items()
-                    if _canonical_key(k) == key
+                    if token in _canonical_key(k)
+                    and _canonical_key(k) != "id"
                 ),
                 None,
             )
