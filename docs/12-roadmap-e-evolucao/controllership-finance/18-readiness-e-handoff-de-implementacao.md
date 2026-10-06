@@ -44,7 +44,7 @@ Estados históricos desta tabela representam maturidade documental acumulada. A 
 |---|---|---|
 | Início | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A02 fechado; H01/H03/H04 e TSK aplicáveis continuam inventário físico; runtime não autorizado |
 | Visão geral | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A03 fechado; O04 físico permanece inventário; O05 é stop condition de source/fórmula |
-| Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task-from-message não incluído na V1 |
+| Sala de interação | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A05 fechado; R01–R05 permanecem inventários físicos; create-task-from-message continua fora da V1 |
 | Minhas tarefas | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A04 fechado; TSK01–TSK05 permanecem inventários físicos/futuros do brief |
 | Administração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | ADM01 persistência + ADM02/E01 bancos + ADM03/E05 attachment roles + ADM04/E06 motivos + ADM05/T02 notifications + ADM06 people selector + ADM07 concurrency |
 | Ajuda | READY_FOR_IMPLEMENTATION_BRIEF | HELP01 route/catalog + HELP02 permission-aware sections + HELP03 hash/focus + HELP04 validator placement; conteúdo continua sincronizado feature-by-feature |
