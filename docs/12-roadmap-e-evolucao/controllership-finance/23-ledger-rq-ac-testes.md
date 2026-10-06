@@ -114,7 +114,16 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-HOME-07 | favoritos sincronizam estrela e TopBar | falha save faz rollback; persistência física somente após H01 | positive + backend failure + stale | H01 | TO_INVENTORY |
 | RQ-HOME-08 | Home preserva light/dark/mobile/a11y | mesmos componentes/tokens; teclado/foco; estado não só por cor | visual/a11y | plugin-ui | TARGET |
 | RQ-HOME-09 | Help explica Home | Home vs Overview, eventos, busca, recentes e favoritos documentados quando runtime existir | help sync | feature-help-sync | TARGET |
-| RQ-OVW-01 | Visão geral apresenta indicadores financeiros governados | nenhum KPI sem owner/source/fórmula/freshness; indisponível != zero | positive + partial + source failure | indicator inventory | SOURCE_INVENTORY_REQUIRED |
+| RQ-OVW-01 | Visão geral usa Overview family comum | Hero compacto + período/filtros + KPI grid + charts | visual/component + mobile/dark | plugin-ui + 25 | TARGET |
+| RQ-OVW-02 | indicador é governado por owner/source/fórmula | nenhum KPI sem metadata mínima; indisponível != zero | positive + source failure | O01/O04 | DECISION_REQUIRED |
+| RQ-OVW-03 | filtros são shareable por URL | F5 reconstrói recorte; unidade é dimensão de dado | URL roundtrip + F5 | O02/O03 | DECISION_REQUIRED |
+| RQ-OVW-04 | blocos degradam isoladamente | source failure de um indicador não derruba siblings | partial + sibling | contracts físicos | TARGET |
+| RQ-OVW-05 | gráfico segue semântica do indicador | sem baseline/fórmula inventada; chart do kit | component + negative | indicator contract | TARGET |
+| RQ-OVW-06 | drilldown é rastreável | preserva filtros e explica o número pelo mesmo owner/source | positive + deep link | route/contract | TARGET |
+| RQ-OVW-07 | strategic scores vêm do owner | IDD/IGD não são recalculados no Portal; partial explícito | contract + negative | D-OVW-01 / strategic-indicators-api | DECISION_REQUIRED |
+| RQ-OVW-08 | AuthZ usa ACCESS/MANAGE sem proliferation | ACCESS necessário; MANAGE não implica ACCESS; sem permission por indicador/unidade | permission negative | Core | TARGET |
+| RQ-OVW-09 | light/dark/mobile/a11y seguem padrão comum | mesma ordem/DOM conceitual, tokens e teclado/foco | visual/a11y | plugin-ui | TARGET |
+| RQ-OVW-10 | Ajuda acompanha indicadores aprovados | significado/fórmula/source/freshness/deep links sincronizados | help sync | feature-help-sync | TARGET |
 | RQ-INT-01 | Sala de interação é contextual e não muda estado de negócio por mensagem | mensagem/comentário não valida, aprova, fecha estoque ou envia pacote | positive + resource negative | interaction contract inventory | CONTRACT_INVENTORY_REQUIRED |
 | RQ-TASK-01 | Minhas tarefas projeta responsabilidades dos owners | concluir tarefa usa o caso de uso owner; source indisponível não vira empty | positive + partial + sibling | producer/projection inventory | PROJECTION_CONTRACT_REQUIRED |
 | RQ-ADM-01 | Administração usa somente MANAGE | usuário apenas ACCESS não altera mestre; MANAGE não implica ACCESS operacional | positive + permission negative | Core effective permissions | TARGET |
