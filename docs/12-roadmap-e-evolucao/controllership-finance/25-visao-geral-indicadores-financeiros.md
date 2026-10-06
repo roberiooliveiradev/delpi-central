@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_REVIEW / DECISION_REQUIRED**
+**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -161,13 +161,13 @@ OWNER = strategic-indicators-api
 
 O novo Portal não deve passar pela `financial-api` para IDD/IGD se o contrato S2S do owner continuar disponível no HEAD futuro.
 
-## Decisão pendente D-OVW-01 — conjunto inicial
+## Decisões congeladas pelo Product Owner
 
-O inventário prova candidatos, mas não autoriza escolher silenciosamente o conjunto da V1.
+### D-OVW-01 — conjunto inicial = C
 
-Opções:
+A Visão geral V1 terá três grupos visualmente separados.
 
-### A — núcleo financeiro enxuto
+#### 1. Desempenho financeiro
 
 ```text
 ROL
@@ -176,103 +176,75 @@ Custo fixo / ROL
 PMR
 ```
 
-Evoluções/tendências apenas desses indicadores quando contract disponível.
+Sources canônicas candidatas já comprovadas:
+- `api-delpi /financial/rol`;
+- `api-delpi /financial/ebitda_pct`;
+- `api-delpi /financial/fixed_cost_pct`;
+- `api-delpi /financial/pmr`.
 
-Impacto:
-- tela mais simples;
-- menor dependência;
-- não traz inadimplência, CC ou strategic score para a Home analítica inicial.
-
-### B — núcleo + contexto operacional financeiro
+#### 2. Contexto operacional financeiro
 
 ```text
-A
-+
 Pontualidade / inadimplência
-Valor/títulos em atraso
+Valor / títulos em atraso
 Despesas por centro de custo
 Top centros de custo
 ```
 
-Impacto:
-- aproxima a cobertura da atual Gestão à Vista do Portal Financeiro;
-- exige mais owners/contracts e maior cuidado com drilldowns;
-- continua sem copiar o P0 visualmente.
+Sources candidatas já comprovadas:
+- `api-delpi /financeiro/inadimplencia/*`;
+- `api-delpi /financeiro/despesas-centro-custo/*`.
 
-### C — núcleo + contexto + strategic scores
+#### 3. Desempenho estratégico
 
 ```text
-B
-+
 IDD Financeiro
 IGD Delpi
-indicadores/meta/realizado do departamento quando aplicável
+Indicadores do departamento
+Meta / realizado / gap / score quando fornecidos pelo owner
 ```
 
-Impacto:
-- visão mais completa;
-- adiciona dependência explícita de `strategic-indicators-api`;
-- exige separar claramente KPI financeiro de score estratégico.
+Owner:
+- `strategic-indicators-api`.
 
-**RECOMMENDATION:** C, desde que os blocos sejam visualmente separados em:
-1. desempenho financeiro;
-2. contexto operacional financeiro;
-3. desempenho estratégico.
+Regras:
+- os três grupos permanecem visual e semanticamente distintos;
+- score estratégico não é apresentado como KPI financeiro;
+- nenhuma fórmula do P0 é copiada para o MFE/BFF;
+- contract físico de cada indicador ainda deve ser revalidado antes da implementação;
+- source/formula conflict continua stop condition.
 
-Não aplicar essa recomendação até decisão do Product Owner.
+### D-OVW-02 — período inicial = A
 
-## Decisão pendente D-OVW-02 — período inicial
+Quando a rota abrir sem filtros válidos na URL:
 
-Opções:
+```text
+start_date = primeiro dia do mês atual
+end_date   = hoje
+```
 
-### A — mês atual
+A competência pode ser derivada quando o contract suportar essa relação.
 
-Ao abrir sem query:
-- início = primeiro dia do mês atual;
-- fim = hoje;
-- competência derivada quando aplicável.
+Regras:
+- URL explícita sempre vence o default;
+- QuickPeriodSelector permanece disponível;
+- F5 preserva o recorte;
+- última seleção do usuário não substitui silenciosamente o default quando não houver query.
 
-É o comportamento mais próximo do P0 e do padrão analítico atual.
+### D-OVW-03 — unidade inicial = A
 
-### B — última competência fechada
+Default:
 
-Depende de contract confiável de competência concluída.
+```text
+Consolidado
+```
 
-Impacto:
-- melhor para análise gerencial pós-fechamento;
-- pior para acompanhamento corrente;
-- cria dependência da Central de Fechamento.
-
-### C — última seleção válida do usuário
-
-URL continua authority do deep link; quando não houver query, pode recuperar preferência/session state.
-
-Impacto:
-- mais conveniente;
-- estado inicial menos previsível;
-- exige policy de persistência.
-
-**RECOMMENDATION:** A, com URL shareable e QuickPeriodSelector.
-
-## Decisão pendente D-OVW-03 — unidade inicial
-
-Unidade é dimensão de dado, não permission code.
-
-Opções:
-
-### A — Consolidado
-
-Default sem filtro de unidade.
-
-### B — primeira unidade disponível
-
-Não recomendado sem regra explícita.
-
-### C — última seleção do usuário
-
-Depende de policy de preferência.
-
-**RECOMMENDATION:** A — Consolidado.
+Regras:
+- unidade continua dimensão de dado;
+- unidade não gera permission code;
+- não selecionar arbitrariamente a primeira filial;
+- URL explícita de unidade vence o default;
+- contract da source precisa suportar consolidado; quando uma source específica não suportar, o bloco deve declarar sua limitação e degradar corretamente, nunca fabricar consolidação.
 
 ## Layout — desktop
 
@@ -322,7 +294,7 @@ Depende de policy de preferência.
 │ filtros herdados + DataTableSection                                         │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-* depende de D-OVW-01 e contracts aprovados.
+* os blocos fazem parte do escopo V1 por D-OVW-01=C; a renderização final depende dos contracts físicos e da disponibilidade comprovada de cada source.
 ```
 
 ## Layout — mobile
@@ -577,7 +549,7 @@ Não criar seletor de gráfico arbitrário só porque o kit suporta múltiplos t
 
 ## Tendências
 
-A primeira tendência só pode ser escolhida depois de D-OVW-01 e source inventory.
+A primeira tendência deve ser escolhida durante o inventário físico dos contracts da V1, respeitando o conjunto já congelado por D-OVW-01=C.
 
 Candidatos PROVEN:
 - evolução de ROL;
@@ -604,7 +576,7 @@ Proibido:
 
 ## Contexto financeiro complementar
 
-Se D-OVW-01 selecionar B/C, blocos podem usar:
+Por D-OVW-01=C, o bloco de contexto operacional financeiro inclui:
 - pontualidade;
 - valor em atraso;
 - títulos em atraso;
@@ -615,7 +587,7 @@ Eles devem aparecer como contexto/drilldown, não competir visualmente com os KP
 
 ## Desempenho estratégico
 
-Se D-OVW-01 selecionar C:
+Por D-OVW-01=C:
 
 Section separada:
 
@@ -1067,26 +1039,26 @@ Os nomes são conceituais; forma/localização devem seguir o padrão de testes 
 ### O01 — conjunto inicial de indicadores
 
 ```text
-DECISION_REQUIRED
+CLOSED / PRODUCT_DECISION
 ```
 
-Depende de D-OVW-01.
+D-OVW-01=C: núcleo financeiro + contexto operacional + desempenho estratégico.
 
 ### O02 — período inicial
 
 ```text
-DECISION_REQUIRED
+CLOSED / PRODUCT_DECISION
 ```
 
-Depende de D-OVW-02.
+D-OVW-02=A: primeiro dia do mês atual até hoje, quando não houver query válida.
 
 ### O03 — unidade inicial
 
 ```text
-DECISION_REQUIRED
+CLOSED / PRODUCT_DECISION
 ```
 
-Depende de D-OVW-03.
+D-OVW-03=A: Consolidado, quando não houver unidade explícita na URL.
 
 ### O04 — contracts físicos do novo BFF
 
@@ -1131,16 +1103,19 @@ RQ_AC_TEST_MATRIX       = PASS
 IMPLEMENTATION          = NOT_AUTHORIZED
 ```
 
-Pendentes:
+Fechados por decisão do Product Owner:
 
 ```text
-D-OVW-01 INDICATOR SET
-D-OVW-02 DEFAULT PERIOD
-D-OVW-03 DEFAULT UNIT
+D-OVW-01 = C
+D-OVW-02 = A
+D-OVW-03 = A
 ```
 
-Até essas decisões:
+Inventários técnicos restantes não reabrem essas decisões:
+- O04 contracts físicos do novo BFF;
+- O05 conflitos de source/fórmula como stop condition.
 
 ```text
-ITEM 3 STATUS = DECISION_REQUIRED
+ITEM 3 STATUS = READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+IMPLEMENTATION = NOT_AUTHORIZED
 ```
