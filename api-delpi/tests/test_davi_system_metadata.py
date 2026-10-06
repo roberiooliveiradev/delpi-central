@@ -37,6 +37,7 @@ from app.application.external_capabilities.dynamic_information.candidate_token i
     mint_candidate_token,
 )
 from app.application.external_capabilities.dynamic_information.catalog_builder import (
+    INVALID_NAME_BINDINGS,
     TechnicalAction,
     build_technical_actions_from_baseline,
 )
@@ -58,6 +59,9 @@ from app.application.external_capabilities.dynamic_information.projection import
 )
 from app.application.external_capabilities.dynamic_information.read_only_intent_guard import (
     clear_read_only_intent_guard_cache,
+)
+from app.application.external_capabilities.dynamic_information.retrieval import (
+    retrieve_eligible_actions,
 )
 from app.domain.ports.davi_catalog_action_executor_port import CatalogActionExecutionResult
 
@@ -1371,3 +1375,168 @@ def test_negative_phrase_is_multiword_only_and_metadata_driven():
         **{**fields, "negative_aliases": ("registros da", "registros de")}
     )
     assert score_action("me mostre os registros da SB1", legit) == 0.0
+
+
+# ---------------------------------------------------------------------------
+# CORRECTIVE-002 — retrieval precision (registros in metadata questions)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "qual tabela guarda registros de produtos?",
+        "qual tabela contém registros de pedidos de compra?",
+    ],
+)
+def test_metadata_positive_with_registros_wording(query, monkeypatch):
+    """"registros de" inside a metadata-discovery question must not suppress
+    the table.search capability."""
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids, query
+    assert ids[0] == "search_tables_by_description", (query, ids)
+
+
+def test_column_positive_with_registro_wording(monkeypatch):
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(
+        query="qual campo representa registro de fornecedor?",
+        top_k=5,
+        actor_id=_ACTOR,
+    )
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids
+    assert ids[0] in {
+        "search_protheus_columns_by_description",
+        "search_protheus_columns_in_table",
+    }, ids
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "mostre os registros da SB1",
+        "traga os registros da SC7",
+        "liste todos os registros da SA1",
+        "traga todos os dados da SC7",
+        "select * from SB1",
+    ],
+)
+def test_row_access_intent_phrases_still_suppressed(query, monkeypatch):
+    """Verb-led row-access intents keep System Metadata out of candidates."""
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert not set(ids) & set(_PROMOTED), (query, ids)
+    assert "execute_readonly_sql" not in ids
+
+
+# ---------------------------------------------------------------------------
+# CORRECTIVE-002 — responseBindings ABSENT/VALID/INVALID (end-to-end config)
+# ---------------------------------------------------------------------------
+
+
+def _catalog_with_response_bindings(
+    value: Any, *, drop: bool = False
+) -> list[TechnicalAction]:
+    """Rebuild the governed catalog with a mutated responseBindings entry."""
+    allowlist = json.loads(json.dumps(load_external_read_allowlist()))
+    for op in allowlist["operations"]:
+        if op.get("operationId") == "search_protheus_columns_by_description":
+            if drop:
+                op.pop("responseBindings", None)
+            else:
+                op["responseBindings"] = value
+    baseline = json.loads(
+        (_API_ROOT / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
+    )
+    return build_technical_actions_from_baseline(baseline, allowlist=allowlist)
+
+
+def _catalog_action(
+    actions: list[TechnicalAction], oid: str = "search_protheus_columns_by_description"
+) -> TechnicalAction:
+    return next(a for a in actions if a.operation_id == oid)
+
+
+def test_rb_cfg01_absent_bindings_normal_behavior():
+    """RB-CFG-01: responseBindings absent -> no translation requested."""
+    action = _catalog_action(_catalog_with_response_bindings(None, drop=True))
+    assert dict(action.response_bindings) == {}
+    assert action.executable
+
+
+def test_rb_cfg02_valid_bindings_translate():
+    """RB-CFG-02: valid binding -> executable and results->data mapping works."""
+    action = _catalog_action(_catalog_with_response_bindings({"data": "results"}))
+    assert action.executable
+    assert dict(action.response_bindings) == {"data": "results"}
+    projected = apply_approved_field_projection(
+        _envelope({"results": [{"table_name": "SC7010"}]}),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=action.response_bindings,
+    )
+    assert "results" not in projected
+    assert projected["data"] == [{"table_name": "SC7010"}]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "data:results",  # RB-CFG-03: invalid type
+        ["data", "results"],
+        {"data": "*"},  # RB-CFG-04: wildcard/invalid source
+        {"*": "results"},  # RB-CFG-05: wildcard/invalid external
+        {"data": "data"},  # RB-CFG-06: source == external
+        {"data": {"source": ""}},
+        {"data": 123},
+        {"data": ["results"]},
+    ],
+)
+def test_rb_cfg03_06_invalid_bindings_fail_closed(value):
+    """Invalid governance metadata never normalizes to 'no binding'."""
+    action = _catalog_action(_catalog_with_response_bindings(value))
+    assert action.response_bindings is INVALID_NAME_BINDINGS
+    assert action.executable is False
+
+
+def test_rb_cfg07_invalid_binding_blocks_owner_data():
+    """RB-CFG-07: invalid binding + owner `data` -> data cannot traverse."""
+    action = _catalog_action(_catalog_with_response_bindings({"data": "*"}))
+    assert action.executable is False
+    # Defense in depth: even if reached, the projection emits nothing.
+    projected = apply_approved_field_projection(
+        _envelope({"data": [{"table_name": "ZZ9010"}]}),
+        approved_fields=_COL_SEARCH_FIELDS,
+        response_bindings=action.response_bindings,
+    )
+    assert projected == {}
+
+
+def test_rb_cfg08_invalid_binding_excludes_discovery_and_execution(monkeypatch):
+    """RB-CFG-08: invalid config removes the action from retrieval/discovery."""
+    actions = _catalog_with_response_bindings({"data": ["results"]})
+    action = _catalog_action(actions)
+    assert action.executable is False
+
+    hits = retrieve_eligible_actions(
+        "qual campo representa referência do fornecedor?", actions, top_k=10
+    )
+    assert "search_protheus_columns_by_description" not in {
+        a.operation_id for a, _ in hits
+    }
+
+    set_actions_for_tests(actions)
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(
+        query="qual campo representa referência do fornecedor?",
+        top_k=10,
+        actor_id=_ACTOR,
+    )
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert "search_protheus_columns_by_description" not in ids
