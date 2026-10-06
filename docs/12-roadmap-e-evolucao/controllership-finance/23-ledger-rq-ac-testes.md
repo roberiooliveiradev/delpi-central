@@ -114,6 +114,19 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-HOME-07 | favoritos sincronizam estrela e TopBar | falha save faz rollback; persistência física somente após H01 | positive + backend failure + stale | H01 | TO_INVENTORY |
 | RQ-HOME-08 | Home preserva light/dark/mobile/a11y | mesmos componentes/tokens; teclado/foco; estado não só por cor | visual/a11y | plugin-ui | TARGET |
 | RQ-HOME-09 | Help explica Home | Home vs Overview, eventos, busca, recentes e favoritos documentados quando runtime existir | help sync | feature-help-sync | TARGET |
+| RQ-ROOM-01 | Sala usa full-page comum | `InteractionRoomPage` como canvas; zero clone local | visual/component + mobile/dark | plugin-ui + 26 | TARGET |
+| RQ-ROOM-02 | Sala é sempre contextual | sem wall/global room/criação livre; somente context registry | positive + invalid context negative | context registry | TARGET |
+| RQ-ROOM-03 | uma sala por contexto | resolve idempotente; concorrência não duplica; título derivado | concurrency + contract | persistence future | TARGET |
+| RQ-ROOM-04 | AuthZ depende do contexto | ACCESS + context access; member/mention não concede acesso | permission/resource negative | Core + owners | TARGET |
+| RQ-ROOM-05 | conversa não muda business state | comment/reaction/pin não validam, aprovam, fecham ou enviam | negative business-state | P1–P5 | TARGET |
+| RQ-ROOM-06 | edit/delete preservam histórico | autor edita própria text; delete é soft; system imutável | positive + negative author | message policy | TARGET |
+| RQ-ROOM-07 | attachment de chat não é evidência P2 | evidence exige ação owner explícita | boundary negative | P2 | TARGET |
+| RQ-ROOM-08 | mentions respeitam acesso | suggestion server-side; target permitido; mention não concede scope | privacy/resource negative | Core directory + context | TARGET |
+| RQ-ROOM-09 | realtime é degradável | transport failure vira banner/partial, não perda total de chat | degraded/reconnect | R03 | TARGET |
+| RQ-ROOM-10 | notifications usam capability canônica | mention notifica; sem SMTP/preferences local | integration negative | R04/T02 | TARGET |
+| RQ-ROOM-11 | criar tarefa aguarda Item 5 | action oculta até task contract; task owner fica fora da Sala | route/action negative | Item 5/R06 | PLANNED |
+| RQ-ROOM-12 | Help sincronizada | contexto, mensagem vs ação, attachments, mentions, edit/delete explicados no runtime | help sync | feature-help-sync | TARGET |
+
 | RQ-OVW-01 | Visão geral usa Overview family comum | Hero compacto + período/filtros + KPI grid + charts | visual/component + mobile/dark | plugin-ui + 25 | TARGET |
 | RQ-OVW-02 | indicador é governado por owner/source/fórmula | nenhum KPI sem metadata mínima; indisponível != zero | positive + source failure | D-OVW-01=C + O04 | TARGET |
 | RQ-OVW-03 | filtros são shareable por URL | F5 reconstrói recorte; unidade é dimensão de dado | URL roundtrip + F5 | D-OVW-02=A + D-OVW-03=A | TARGET |

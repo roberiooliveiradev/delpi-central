@@ -181,7 +181,28 @@ Não publicar no manual um indicador apenas por estar inventariado; publicar som
 
 ### Sala de interação
 
-Explicar contexto da sala, participantes, mensagens, diferença entre conversar e executar ação do processo e visibilidade/segurança.
+Conteúdo a publicar somente quando a rota estiver implementada:
+
+- Sala como colaboração contextual, não chat genérico;
+- como abrir conversa de competência, checklist, pendência/classificação e pacote;
+- Inbox, busca, Não lidas e Menções;
+- mensagem vs ação formal do processo;
+- reply, reaction e pin não equivalem a aprovação;
+- attachments de chat não são evidência formal de P2;
+- menções e limites de acesso;
+- edição da própria mensagem;
+- soft-delete;
+- Arquivos e links;
+- Localizar no chat;
+- painel "Neste chat";
+- participantes não são ACL;
+- realtime degradado;
+- como voltar ao contexto owner;
+- limites da IA;
+- criar tarefa a partir de mensagem somente quando Item 5 estiver implementado.
+
+Contrato fonte:
+- [26-sala-de-interacao.md](./26-sala-de-interacao.md)
 
 ### Minhas tarefas
 
