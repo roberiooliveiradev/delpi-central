@@ -629,7 +629,7 @@ text
 system
 ```
 
-`task_ref` entra somente com Item 5.
+`task_ref` não entra na V1. Uma referência de task só poderá existir em evolução futura com task entity/owner explicitamente aprovados.
 
 System messages são permitidas apenas quando produzidas por evento/owner explícito.
 
@@ -832,28 +832,26 @@ Não criar:
 - notification center paralelo.
 
 Triggers TARGET V1:
-- menção explícita ao usuário;
-- task criada a partir de mensagem quando Item 5 habilitar isso.
+- menção explícita ao usuário.
 
-Não notificar toda mensagem por default.
+Não notificar toda mensagem por default. Não existe trigger de task criada a partir da Sala na V1.
 
 Outros triggers exigem evidência de negócio.
 
 ## "Criar tarefa" a partir de mensagem
 
-UI já suporta `onCreateTask`.
-
-Estado:
+UI já suporta `onCreateTask`, mas a capability não faz parte da V1.
 
 ```text
-WAITING_FOR_ITEM_5_TASK_CONTRACT
+CREATE_TASK_FROM_MESSAGE = NOT_INCLUDED_IN_V1
 ```
 
-Quando habilitado:
-- task owner cria a tarefa;
-- mensagem ganha referência `task_ref`/equivalente;
-- attachment migration/copy policy precisa ser explícita;
-- task não é owned pela Sala.
+Motivo:
+- Item 5 definiu TaskProjection como read-model de ações owned por P2/P4/P5;
+- não existe task entity genérica;
+- mensagem ou menção não cria responsabilidade de negócio automaticamente.
+
+Evolução futura exige decisão explícita de produto, owner/lifecycle de task e contract próprio.
 
 ## Auditoria
 
