@@ -53,6 +53,19 @@ PREPARE purity (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):
   NOT part of the MCP PREPARE surface and cannot be reached through it.
 GPT importable operations = 18
 meta route gpt_get_openapi_schema is not importable
+
+Knowledge/intelligence parity (ARCH-DRIFT-TEO-MCP-EXPERT-KNOWLEDGE-DELIVERY-02):
+- get_catalog serves ONE canonical capability/intelligence source on both
+  transports; per-transport projection happens at the adapter boundary
+  (tm_app/application/intelligence/transport_projection.py).
+- MCP get_catalog: only MCP-callable names (prepare_*/commit_proposal),
+  write_flow_mcp envelope, parity-neutral surface_version
+  (teo-capabilities-v3), zero commit_now / gpt_* — enforced by
+  tests/test_teo_mcp_transport_projection.py.
+- Actions gpt_get_catalog: unchanged gpt_* operationIds + additive
+  commit_now policy + canonical surface_parity.parity_map.
+- Canonical parity record: interface/mcp/constants.py GPT_TO_MCP_TOOLS
+  (single map; projections derive names — no second name registry).
 ```
 
 ## Surface budget

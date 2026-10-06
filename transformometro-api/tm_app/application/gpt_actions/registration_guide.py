@@ -27,8 +27,12 @@ from tm_app.core.catalogs import (
 )
 
 
-def build_registration_guide() -> dict[str, Any]:
-    """Structured guide returned inside gpt_get_catalog."""
+def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
+    """Structured guide returned inside get_catalog.
+
+    ``transport="gpt_actions"`` (default) keeps Actions names (``gpt_*``);
+    ``transport="mcp"`` projects the same guide with MCP-callable names only.
+    """
     package_hints = build_package_hints()
     # Operational policy for inconclusive consequential commit (TÉO regression).
     package_hints["commit_result_unknown"] = {
@@ -55,7 +59,7 @@ def build_registration_guide() -> dict[str, Any]:
         "PERSISTED",
         "VERIFIED",
     ]
-    return {
+    guide = {
         "concepts": {
             "process": (
                 "Master process (processo-mestre): corporate initiative name. "
@@ -150,7 +154,8 @@ def build_registration_guide() -> dict[str, Any]:
                 "Also invalid: inventing entity names like 'mapeamento'/'diagrama'/'ata'/'filial'/'setor'/'documentacao' — "
                 "use decomposition_tree / revision_decomposition_overlay / process_diagram / "
                 "meeting_minute / process_document / branch / department. "
-                "Also invalid: calling gpt_create_record / gpt_update_record as current surface."
+                "Also invalid: calling removed legacy record operations as current surface "
+                "(Actions: gpt_create_record / gpt_update_record)."
             ),
             "before_write": [
                 "Call gpt_get_catalog and read entity_schemas + capability_surface.",
@@ -646,3 +651,10 @@ def build_registration_guide() -> dict[str, Any]:
         },
         "package_hints": package_hints,
     }
+    if transport == "mcp":
+        from tm_app.application.intelligence.transport_projection import (
+            neutralize_for_mcp,
+        )
+
+        return neutralize_for_mcp(guide)
+    return guide

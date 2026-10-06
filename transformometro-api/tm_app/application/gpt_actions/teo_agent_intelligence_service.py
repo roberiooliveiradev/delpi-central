@@ -60,25 +60,69 @@ class TeoAgentIntelligenceService:
         return str(cls.document().get("version") or "").strip()
 
     @classmethod
-    def agent_directives(cls) -> dict[str, Any]:
+    def agent_directives(cls, transport: str = "gpt_actions") -> dict[str, Any]:
+        """Compact directives for the external specialist to obey at runtime.
+
+        ``transport="gpt_actions"`` (default) preserves the Actions contract:
+        ``gpt_*`` names, additive ``commit_now`` write-flow and the canonical
+        ``surface_parity.parity_map``. ``transport="mcp"`` projects the same
+        document for MCP consumers: ``write_flow_mcp`` replaces the Actions
+        write-flow, ``*_actions`` sections are dropped, and every ``gpt_*``
+        name is rewritten through the canonical parity map — zero
+        ``commit_now`` / atomic prepare+commit semantics.
+        """
+        from tm_app.application.intelligence.transport_projection import (
+            actions_to_mcp_primary,
+            neutralize_for_mcp,
+        )
+        from tm_app.interface.mcp.constants import GPT_TO_MCP_TOOLS
+
         doc = cls.document()
-        raw = {
-            "version": cls.version(),
-            "authority": (
+        posture = dict(doc.get("execution_posture") or {})
+        rules_actions = posture.pop("rules_actions", []) or []
+        forbidden_actions = posture.pop("forbidden_actions", []) or []
+        anti_patterns = list(doc.get("anti_patterns") or [])
+        parity = dict(doc.get("surface_parity") or {})
+        if transport == "mcp":
+            authority = (
+                "Obey these directives from live get_catalog. "
+                "They override stale catalog knowledge for mutation behavior."
+            )
+        else:
+            authority = (
                 "Obey these directives from live gpt_get_catalog / get_catalog. "
                 "They override stale Builder Knowledge for mutation behavior."
-            ),
+            )
+            posture["rules"] = list(posture.get("rules") or []) + list(rules_actions)
+            posture["forbidden"] = (
+                list(posture.get("forbidden") or []) + list(forbidden_actions)
+            )
+            anti_patterns += list(doc.get("anti_patterns_actions") or [])
+            # Canonical parity record: gpt operationId → MCP tool names.
+            parity["parity_map"] = {
+                gpt_op: list(tools) for gpt_op, tools in GPT_TO_MCP_TOOLS.items()
+            }
+            parity["parity_map_primary"] = actions_to_mcp_primary()
+        raw = {
+            "version": cls.version(),
+            "authority": authority,
             "actions_runtime": doc.get("actions_runtime") or {},
-            "execution_posture": doc.get("execution_posture") or {},
+            "execution_posture": posture,
             "write_flow": doc.get("write_flow") or {},
+            "write_flow_mcp": doc.get("write_flow_mcp") or {},
             "modes": doc.get("modes") or {},
             "epistemology": doc.get("epistemology") or {},
             "discovery": doc.get("discovery") or {},
             "language": doc.get("language") or {},
-            "surface_parity": doc.get("surface_parity") or {},
-            "anti_patterns": list(doc.get("anti_patterns") or []),
+            "surface_parity": parity,
+            "anti_patterns": anti_patterns,
             "auth_errors": doc.get("auth_errors") or {},
             "not_exposed": doc.get("not_exposed") or {},
             "flows": doc.get("flows") or {},
         }
+        if transport == "mcp":
+            raw.pop("write_flow", None)
+            raw = neutralize_for_mcp(raw)
+        else:
+            raw.pop("write_flow_mcp", None)
         return _compact_for_actions(raw)

@@ -19,6 +19,10 @@ from tm_app.application.gpt_actions.entities import (
 from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
     TeoAgentIntelligenceService,
 )
+from tm_app.application.intelligence.transport_projection import (
+    actions_to_mcp_primary,
+    neutralize_for_mcp,
+)
 
 
 # Fields clients must never set via prepare_record_change changes/data.
@@ -68,8 +72,14 @@ OPERATION_TO_CAPABILITY = {
 }
 
 
-def build_capability_surface_catalog() -> dict[str, Any]:
-    """Rich descriptors projected inside gpt_get_catalog (additive)."""
+def build_capability_surface_catalog(projection: str = "gpt_actions") -> dict[str, Any]:
+    """Rich descriptors projected inside get_catalog (additive).
+
+    ``projection="gpt_actions"`` (default) preserves the Actions contract:
+    ``gpt_*`` operation names + additive ``commit_now`` policy.
+    ``projection="mcp"`` serves MCP-callable names only — ``prepare_*`` /
+    ``commit_proposal``, explicit confirmation, zero ``commit_now``.
+    """
     entities: list[dict[str, Any]] = []
     for entity in GptEntity:
         caps = ENTITY_CAPABILITIES.get(entity, frozenset())
@@ -247,7 +257,7 @@ def build_capability_surface_catalog() -> dict[str, Any]:
         },
     ]
 
-    return {
+    catalog = {
         "surface_version": "teo-gpt-actions-v2",
         "proposal_model": {
             "prepare_then_commit": True,
@@ -267,7 +277,9 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "agent_directives_are_live": True,
             "builder_instructions_are_stable_only": True,
         },
-        "agent_directives": TeoAgentIntelligenceService.agent_directives(),
+        "agent_directives": TeoAgentIntelligenceService.agent_directives(
+            transport=projection
+        ),
         # MCP-native capabilities: discoverable here, but they declare NO
         # gpt_* operation and must not be treated as GPT Actions.
         "mcp_only_capabilities": [
@@ -327,3 +339,49 @@ def build_capability_surface_catalog() -> dict[str, Any]:
             "do_not": "import Transformômetro internals or reimplement business rules",
         },
     }
+    if projection == "mcp":
+        return _project_catalog_for_mcp(catalog)
+    return catalog
+
+
+def _project_catalog_for_mcp(catalog: dict[str, Any]) -> dict[str, Any]:
+    """MCP projection of the Actions-shaped catalog.
+
+    Operation names are rewritten through the canonical parity map
+    (``GPT_TO_MCP_TOOLS``); the proposal model is restated for the pure
+    PREPARE → ``commit_proposal`` contract; residual Actions semantics are
+    neutralized recursively (confirmation labels, Actions-only keys).
+    """
+    mapping = actions_to_mcp_primary()
+    out = dict(catalog)
+    out["surface_version"] = "teo-capabilities-v3"
+    out["proposal_model"] = {
+        "prepare_then_commit": True,
+        "opaque_proposal_handle": True,
+        "commit_operation": "commit_proposal",
+        "ttl_seconds_default": 900,
+        "store": "in_process",
+        "store_residual": "ACCEPTED_WITH_RESIDUAL for multi-replica",
+        "note": (
+            "commit_proposal is NOT a generic proxy: it only executes "
+            "sealed server-side proposals produced by governed PREPARE. "
+            "Every material write requires explicit confirmation and "
+            "backend AuthZ. PREPARE never persists business state."
+        ),
+    }
+    for entity in out.get("entities") or []:
+        if entity.get("write_operations"):
+            entity["prepare_act_policy"] = (
+                "prepare_record_change → commit_proposal "
+                "(explicit confirmation required)"
+            )
+    for workflow in out.get("workflows") or []:
+        for key in ("prepare_operation", "commit_via"):
+            name = workflow.get(key)
+            if name:
+                workflow[key] = mapping.get(name, name)
+    for analysis in out.get("analyses") or []:
+        name = analysis.get("operation")
+        if name:
+            analysis["operation"] = mapping.get(name, name)
+    return neutralize_for_mcp(out)

@@ -1,11 +1,11 @@
 {
   "version": "2026.09.24.1",
   "owner": "transformometro-api",
-  "source": "capability_surface.agent_directives via gpt_get_catalog / get_catalog",
+  "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
     "principle": "TRY_ACTION_BEFORE_CLAIMING_UNAVAILABLE",
     "rules": [
-      "Antes de dizer que não consegue gravar / Actions indisponíveis: TENTAR neste turno gpt_get_catalog (ou get_catalog) e a Action/tool tipada de escrita se o pedido for mutação.",
+      "Antes de dizer que não consegue gravar / Actions indisponíveis: TENTAR neste turno get_catalog (Actions: gpt_get_catalog) e a Action/tool tipada de escrita se o pedido for mutação.",
       "Só declare indisponibilidade depois de falha REAL da ferramenta neste turno (tool error, timeout, 401/403/5xx).",
       "401 → pedir reconectar OAuth. 403 → AuthZ do usuário. Gap de catálogo → gap tipado — nunca fingir indisponibilidade geral."
     ],
@@ -17,12 +17,16 @@
   "execution_posture": {
     "principle": "EXECUTE_TYPED_CHANGE_NOW",
     "rules": [
-      "Pedido tipável (grave/salve/cadastre/aplique) → encadear READ→PREPARE(+commit_now se additive) no mesmo turno.",
-      "Não perguntar 'Posso aplicar?' / 'Confirma?' em write additive com commit_now permitido.",
+      "Pedido tipável (grave/salve/cadastre/aplique) → encadear READ→PREPARE no mesmo turno (Actions: +commit_now se additive).",
       "Destructive (delete/activate/cancel/recalculate/evidence mutate) → uma Confirma? explícita → commit_proposal."
     ],
+    "rules_actions": [
+      "Não perguntar 'Posso aplicar?' / 'Confirma?' em write additive com commit_now permitido."
+    ],
     "forbidden": [
-      "Menu de opções em vez de chamar a Action/tool tipada",
+      "Menu de opções em vez de chamar a Action/tool tipada"
+    ],
+    "forbidden_actions": [
       "Confirma? em create/update/duplicate/package ready com commit_now"
     ]
   },
@@ -31,6 +35,12 @@
     "destructive": "prepare_* sem commit_now → mostrar proposal → uma Confirma? → commit_proposal(proposal_handle, confirmation=true).",
     "same_turn": "Mudança tipável pedida neste turno → tentar catalog + prepare/commit neste turno.",
     "compat_prepare_only": "Sem commit_now → só proposal (persisted=false); commit separado via gpt_commit_proposal / commit_proposal."
+  },
+  "write_flow_mcp": {
+    "prepare": "prepare_* valida e sela a mudança (persisted=false) e retorna proposal_handle opaco — PREPARE nunca persiste estado.",
+    "commit": "commit_proposal(proposal_handle, confirmation=true) é o único caminho ACT — exige Confirma? explícita do usuário + AuthZ backend.",
+    "same_turn": "Mudança tipável pedida neste turno → catalog + prepare neste turno; commit só após proposta mostrada e confirmada.",
+    "verify": "Após commit: read-back autoritativo + VERIFY. 2xx técnico ≠ sucesso de negócio."
   },
   "modes": {
     "QUICK_REGISTRATION": "Cadastrar melhoria já definida (package nested).",
@@ -51,7 +61,7 @@
     "principle": "PROGRESSIVE_SEARCH",
     "rules": [
       "Search miss != proof of absence.",
-      "Atas: search via gpt_search_records / search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_manage para busca.",
+      "Atas: search via gpt_search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_manage para busca.",
       "Processos: progressive keywords → union → list candidates; sem silent selection."
     ]
   },
@@ -60,18 +70,18 @@
     "technical_ids": "EN estáveis nas Actions/tools"
   },
   "surface_parity": {
-    "gpt_actions": 18,
-    "mcp_tools": 20,
-    "note": "Capability parity ≠ transport count. Same GovernedWriteOrchestrator."
+    "note": "Capability parity ≠ transport count. Same GovernedWriteOrchestrator. parity_map is injected from the canonical MCP contract record on the Actions projection only."
   },
   "anti_patterns": [
     "Inventar operationId / tool name (ex.: gpt_meeting_minute_manage para search).",
-    "Perguntar Confirma? em write additive com commit_now permitido.",
     "Alegar Actions/MCP indisponíveis sem tentar neste turno.",
     "Usar manage_evidence / meeting manage para busca de atas.",
     "Inventar proposal_handle (latest/current/null).",
     "Tratar confirmation conversacional como AuthZ.",
     "Duplicar regra de confirmação no paste em vez de obedecer agent_directives."
+  ],
+  "anti_patterns_actions": [
+    "Perguntar Confirma? em write additive com commit_now permitido."
   ],
   "auth_errors": {
     "never_without_attempt": "Não alegue indisponibilidade sem tentativa neste turno.",

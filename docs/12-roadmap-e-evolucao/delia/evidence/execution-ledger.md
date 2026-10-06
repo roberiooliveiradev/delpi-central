@@ -9758,3 +9758,105 @@ EVIDENCE (live production, 2026-10-05):
         acceptance) is recorded.
     PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5 phase-level=NO,
       PRODUCTION_READINESS=NOT_PROVEN.
+
+## 6.135. ARCH-DRIFT-TEO-MCP-EXPERT-KNOWLEDGE-DELIVERY-02 — TÉO unified capability/intelligence boundary (transport projections)
+    STATUS = EVIDENCE_COMPLETE (owner-side implementation + tests;
+      live redeploy pending — controlled deploy not executed in
+      this session)
+    BASE_HEAD = fc980bc9afae201e78af5b39453cd8dd1969b3c2
+    BRANCH = main
+    SCOPE = owner-side architecture correction only;
+      DELIA_RUNTIME_CHANGED = NO (no api-delpi/delia diff).
+    PATTERN = VISTA §6.134 unified boundary (same defect class F2/F3);
+      TÉO adaptation only — no VISTA files copied, no VISTA changes.
+
+    ROOT-CAUSE FINDINGS REVALIDATED vs BASE_HEAD (live prod wire):
+      get_catalog on MCP served the Actions contract verbatim:
+      surface_version=teo-gpt-actions-v2, commit_operation=
+      gpt_commit_proposal, commit_now_parameter=true, 156 gpt_*
+      occurrences, 84 commit_now occurrences, stale mcp_tools:20
+      count, additive "commit_now=true + confirmation=true +
+      Idempotency-Key" write-flow prose — instructing MCP consumers
+      to call a contract that no longer exists post-§6.129 fix.
+      Fail-closed at runtime (injected fields dropped) but
+      epistemically wrong on the self-description surface.
+
+    FINDINGS->FIXED:
+      F1 PROVEN_CURRENT->FIXED: capability_surface built an
+        Actions-shaped catalog for BOTH transports. Now
+        build_capability_surface_catalog(projection=...) — Actions
+        projection unchanged (gpt_* ids, commit_now_parameter=true,
+        teo-gpt-actions-v2); MCP projection renames ops via the
+        canonical parity map, restates proposal_model for pure
+        PREPARE → commit_proposal, surface_version=
+        teo-capabilities-v3.
+      F2 PROVEN_CURRENT->FIXED: agent_directives served Actions
+        write-flow + commit_now narrative to MCP. Now
+        agent_directives(transport=...) — MCP gets write_flow_mcp
+        (pure prepare/commit), *_actions sections dropped,
+        "(Actions: ...)" annotations stripped segment-wise, gpt_*
+        names rewritten via parity map; Actions projection merges
+        the *_actions lists and injects canonical
+        surface_parity.parity_map + parity_map_primary.
+      F3 PROVEN_CURRENT->FIXED: registration_guide + package_hints
+        saturated with gpt_* names. Now
+        build_registration_guide(transport=...) — MCP neutralizes
+        recursively (legacy_removed_from_builder dropped; removed
+        legacy ops render as removed_* tombstones; gpt_governed_parity
+        → governed_parity; search_canonical.gpt key dropped).
+      F4 PROVEN_CURRENT->FIXED: stale surface_parity transport
+        counts (mcp_tools:20 vs live 24) removed; parity is a
+        canonical map, not a prose count.
+      F5 PROVEN_CURRENT->FIXED: pipeline/policy tokens encoding the
+        atomic prepare+commit path (commit_now_*) rewritten on MCP
+        to explicit_confirmation_* semantics.
+
+    CANONICAL OWNERSHIP:
+      - Parity record: interface/mcp/constants.py GPT_TO_MCP_TOOLS
+        (single map; actions_to_mcp_primary() derives it — no
+        second name registry created).
+      - Knowledge root: teo_agent_intelligence.json unchanged as
+        the single intelligence source; per-transport projection
+        lives in tm_app/application/intelligence/transport_projection.py
+        (neutralize_for_mcp).
+      - Domain authority unchanged: GovernedWriteOrchestrator /
+        repositories; no new domain API, DB authority, RBAC or
+        generic proxy.
+      - PREPARE purity unchanged: MCP prepare_* schemas still have
+        no commit_now/confirmation/idempotency_key (§6.129 tests
+        green).
+
+    MCP CONTRACT EVIDENCE (projected, local):
+      gpt_* occurrences in MCP payloads = 0 (directives, catalog
+        surface, registration_guide, package_hints).
+      commit_now occurrences in MCP payloads = 0.
+      All catalog-declared operation names ⊆ MCP_TOOL_NAMES (24).
+      Actions projection byte-contract preserved (teo-gpt-actions-v2,
+      gpt_commit_proposal, commit_now_parameter=true).
+
+    TESTS:
+      NEW tests/test_teo_mcp_transport_projection.py — 8 tests:
+        MCP directives/guide/surface zero gpt_*/commit_now, callable
+        names only, flows mcp_tools ⊆ registered tools, Actions
+        contract preserved, parity map total (keys = GPT_TO_MCP_TOOLS,
+        values ⊆ MCP_TOOL_NAMES, 1→N primary pick).
+      FULL SUITE = 1201 passed, 11 failed — the SAME 11 pre-existing
+        unrelated failures verified on clean HEAD (bootstrap filiais,
+        dashboard live, diagram catalog instructions, validation
+        error context, process instance repo, shared resource scope,
+        invite mail trace). Zero new failures.
+      FOCUSED = 92 passed (projection + agent intelligence +
+        governed surface + registration guide + MCP contract +
+        prepare contract + write governance + commit_now + response
+        compact + builder budget).
+
+    DOCS UPDATED: teo-capability-matrix.md (source-of-truth rows +
+      knowledge parity bullet), teo-mcp-capability-parity.md
+      (knowledge/intelligence parity block), this ledger.
+    RESIDUALS / PENDING:
+      - Controlled deploy + live wire get_catalog MCP acceptance
+        NOT executed this session (local-only evidence).
+      - Proposal store remains in-process ACCEPT_WITH_RESIDUAL.
+      - bpmn-modeler + scratch dirty files belong to parallel
+        workstreams — untouched.
+    PHASE STATUS unchanged: PRODUCTION_READINESS=NOT_PROVEN.

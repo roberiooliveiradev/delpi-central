@@ -138,6 +138,7 @@ def project_catalog(payload: Mapping[str, Any]) -> dict[str, Any]:
                     "version": directives.get("version"),
                     "authority": directives.get("authority"),
                     "write_flow": directives.get("write_flow"),
+                    "write_flow_mcp": directives.get("write_flow_mcp"),
                     "execution_posture": directives.get("execution_posture"),
                     "actions_runtime": directives.get("actions_runtime"),
                     "modes": directives.get("modes"),

@@ -309,7 +309,10 @@ def tool_get_methodology_guide(
 def tool_get_catalog() -> CallToolResult:
     try:
         request = build_mcp_request()
-        return _ok_result(_dispatch.get_catalog(request), "Catálogo do Transformômetro.")
+        return _ok_result(
+            _dispatch.get_catalog(request, transport="mcp"),
+            "Catálogo do Transformômetro.",
+        )
     except Exception as exc:
         return handle_tool_error(exc)
 

@@ -311,7 +311,9 @@ class GptActionsDispatchService:
 
     # --- catalog / analysis ----------------------------------------------
 
-    def get_catalog(self, request: Request) -> dict[str, Any]:
+    def get_catalog(
+        self, request: Request, *, transport: str = "gpt_actions"
+    ) -> dict[str, Any]:
         self._raise_http_err(require_transformometro_view_access(request))
         try:
             filiais = FilialRepository().list_for_options() or []
@@ -324,14 +326,18 @@ class GptActionsDispatchService:
         payload = options_payload(setores, filiais)
         payload["access_scope"] = dict(PORTAL_FILTER_META)
         payload["entities"] = [e.value for e in GptEntity]
-        payload["registration_guide"] = build_registration_guide()
+        payload["registration_guide"] = build_registration_guide(
+            transport=transport
+        )
         # Canonical flowchart_v1 node/edge catalog (same builder as GET /diagrama/catalogo).
         payload["diagram_catalog"] = build_bpmn_catalog_for_api()
         from tm_app.application.gpt_actions.capability_descriptors import (
             build_capability_surface_catalog,
         )
 
-        payload["capability_surface"] = build_capability_surface_catalog()
+        payload["capability_surface"] = build_capability_surface_catalog(
+            projection=transport
+        )
         try:
             repo = ProcessoRepository()
             payload["familias_processo"] = repo.list_distinct_tag_values("familia_processo")
