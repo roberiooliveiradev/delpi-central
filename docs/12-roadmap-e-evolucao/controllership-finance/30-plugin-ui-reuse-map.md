@@ -46,6 +46,7 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 | Central de Fechamento / Checklist e Documentos | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, attachment kit, forms, `Timeline`, modals/notices | `@delpi/plugin-ui/index` | master-detail operacional reutilizável |
 | Central de Fechamento / Estoque e Conciliação | `MetricKpiCard`, `ProgressTracker`, `AlertQueue`, `DetailFieldGrid`, `DataTableSection`, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | mesa de conciliação/readiness reutilizável |
 | Central de Fechamento / Classificações e Pendências | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, filters, `DetailFieldGrid`, forms, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | master-detail operacional com decisão humana |
+| Central de Fechamento / Pacote, Finalização e Envio | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, `ProgressTracker`, `DetailFieldGrid`, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | master-detail por destinatário; envio gated por capability |
 | Sala de interação | `InteractionRoomPage`, `INTERACTION_ROOM_PAGE_LABELS_PT`, `PluginErrorBoundary` | `@delpi/plugin-ui/index` | **full-page reusable** |
 | Minhas tarefas | `TaskWorkspacePage`, `TaskWorklistSection`, `TaskItemsTable`, `TaskSearchField`, `TaskEmptyState` | `@delpi/plugin-ui/index` | **workspace reusable** |
 | Administração | PageHero/PagePath, SectionRouteCard, DataTableSection, forms, Modal/Confirm/Notice/Status | `@delpi/plugin-ui/index` | composição reutilizável; sem full page pronta |
@@ -293,6 +294,46 @@ A sugestão de IA não ganha chrome de decisão concluída: deve permanecer dent
 **DO NOT RECREATE:** master-detail, fila responsiva, filtros, badges, state chrome, detail fields, formulários, modal/confirm, notices, timeline ou HelpTooltip.
 
 P4 continua dono apenas do estado próprio do fechamento; regra upstream/CC, effective permissions e sources permanecem nos owners definidos pelos contracts.
+
+## Central de Fechamento — Pacote, Finalização e Envio
+
+### Import preferencial
+
+```ts
+import {
+  createDashboardPagePath,
+  createDashboardPageHero,
+  createDashboardSectionCard,
+  ResizableColumns,
+  DataTableSection,
+  DataRecordCard,
+  DetailFieldGrid,
+  ReadOnlyField,
+  ProgressTracker,
+  StatusBadge,
+  AlertQueue,
+  Timeline,
+  StateBanner,
+  StateBox,
+  ModalShell,
+  ConfirmModalPanel,
+  FloatingNoticeStack,
+  ActionButton,
+  BackLink,
+  HelpTooltip,
+  EmptyState,
+  LoadingState,
+} from "@delpi/plugin-ui/index";
+```
+
+Contrato visual detalhado:
+- [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md)
+
+Desktop usa master-detail por recipient package; mobile usa lista → detalhe full-width. `ProgressTracker` pode explicar lifecycle, sem colapsar finalização e envio em um único estado.
+
+**DO NOT RECREATE:** master-detail, recipient cards/table, lifecycle/status chrome, detail fields, timeline, modal/confirm, notices ou HelpTooltip.
+
+Enquanto E04/T04 não fecharem, não criar componente/botão/canal local de envio. Package/finalization usa apenas primitives já públicas; delivery UI futura nasce do contract físico comprovado.
 
 ## Sala de interação
 
