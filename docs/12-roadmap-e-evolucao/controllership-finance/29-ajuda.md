@@ -114,6 +114,26 @@ Orientar:
 - Central de Fechamento e páginas internas.
 
 
+### Início
+
+Conteúdo a publicar **somente quando a Home estiver implementada**:
+
+- papel do Início como launcher operacional;
+- Hero e highlights Competência ativa / Minhas tarefas / Blockers;
+- diferença entre Início e Visão geral;
+- Eventos e interações;
+- busca local "Caminhos e funcionalidades";
+- diferença entre busca local e Buscar da TopBar;
+- Últimos acessos;
+- Favoritos e relação com a TopBar;
+- Central de Fechamento como primeira funcionalidade;
+- motivo pelo qual rotas futuras/não autorizadas não aparecem;
+- indisponível != zero;
+- Administração apenas para viewer com MANAGE.
+
+Contrato fonte:
+- [32-inicio-home.md](./32-inicio-home.md)
+
 ### Página do usuário
 
 Conteúdo a publicar **somente quando a rota estiver implementada**:
@@ -186,7 +206,7 @@ Ainda assim, tratar loading quando o conteúdo for carregado dinamicamente, not 
 - identificadores técnicos em inglês;
 - evitar detalhe técnico irrelevante ao usuário;
 - não prometer funcionalidade ainda não implementada;
-- conteúdo futuro deve ser marcado/ocultado até o gate correspondente; a seção Página do usuário não deve aparecer como funcionalidade disponível antes do runtime da rota;
+- conteúdo futuro deve ser marcado/ocultado até o gate correspondente; a seção Início não deve prometer cards/rotas ainda não implementados; a seção Página do usuário não deve aparecer como funcionalidade disponível antes do runtime da rota;
 - exemplos não substituem regra.
 
 ## Critérios de aceite
