@@ -70,7 +70,7 @@ O Início tem design/UX/RQ/AC fechados, mas mantém inventories conhecidos para 
 
 | Página | Estado | Stop / inventário material |
 |---|---|---|
-| Página do usuário | READY_FOR_IMPLEMENTATION_BRIEF | foundation do MFE/BFF + revalidação Core Directory/Person Profile/effective permissions + app membership |
+| Página do usuário | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF | A01 fechado documentalmente; runtime NOT_IMPLEMENTED; bindings físicos/Core adapters serão revalidados apenas no futuro brief |
 
 Contrato funcional/visual: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 
