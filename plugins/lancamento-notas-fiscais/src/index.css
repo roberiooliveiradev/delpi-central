@@ -1127,56 +1127,6 @@
   width: min(920px, 100%);
 }
 
-.lnf-po-step-head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.lnf-po-step-head h2,
-.lnf-po-step-head p {
-  margin: 0;
-}
-
-.lnf-po-context {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  font-size: 13px;
-}
-
-.lnf-po-invoice-products {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.lnf-po-invoice-products li {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  max-width: 100%;
-  padding: 3px 8px;
-  border: 1px solid var(--lnf-border);
-  border-radius: 999px;
-  font-size: 12px;
-  line-height: 1.3;
-}
-
-.lnf-po-product-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
-  font-size: 13px;
-  color: var(--lnf-muted);
-}
-
 .lnf-po-filter {
   margin: 10px 0 12px;
 }

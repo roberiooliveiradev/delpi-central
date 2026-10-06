@@ -110,9 +110,6 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         request_fields: dict[str, Any],
         history_fields: dict[str, Any],
         linked_invoices: list[dict[str, str]] | None = None,
-        linked_purchase_order_rows: list[dict[str, Any]] | None = None,
-        purchase_order_history: dict[str, Any] | None = None,
-        mirror_updates: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         try:
             # Lease único: cada execute(auto_commit=False) sem lease externo
@@ -165,25 +162,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                     linked_invoices or [],
                     auto_commit=False,
                 )
-                persisted = row
-                if linked_purchase_order_rows:
-                    self._insert_linked_purchase_order_rows(
-                        str(row["id"]),
-                        linked_purchase_order_rows,
-                    )
-                    if mirror_updates:
-                        persisted = self._update_linked_po_mirror(
-                            str(row["id"]),
-                            mirror_updates,
-                        )
-                    if purchase_order_history:
-                        self._insert_history(
-                            {**purchase_order_history, "request_id": row["id"]},
-                            auto_commit=False,
-                        )
                 self.commit()
-            if linked_purchase_order_rows:
-                return self._serialize_request_with_links(persisted)
             out = _serialize_request(row)
             out["linked_purchase_orders"] = []
             out["linked_invoices"] = public_linked_invoices(linked_invoices)
@@ -431,78 +410,6 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             snap.pop("id", None)
         return snapshots
 
-    def _insert_linked_purchase_order_rows(
-        self,
-        request_id: str,
-        rows: Sequence[dict[str, Any]],
-    ) -> None:
-        for row in rows:
-            inserted = self.execute_returning_one(
-                f"""
-                INSERT INTO {SCHEMA}.invoice_posting_request_linked_pos (
-                    request_id, order_number, delivery_date, issue_date,
-                    open_value, product_count, linked_at,
-                    linked_by_user_id, linked_by_name
-                ) VALUES (
-                    %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
-                )
-                RETURNING id
-                """,
-                (
-                    request_id,
-                    row["order_number"],
-                    row.get("delivery_date"),
-                    row.get("issue_date"),
-                    row.get("open_value"),
-                    row.get("product_count"),
-                    row.get("linked_at"),
-                    row.get("linked_by_user_id"),
-                    row.get("linked_by_name"),
-                ),
-                auto_commit=False,
-            )
-            linked_po_id = inserted["id"] if inserted else None
-            for line in row.get("lines") or []:
-                order_item = str(line.get("order_item") or "").strip()
-                if not order_item or linked_po_id is None:
-                    continue
-                product_code = str(line.get("product_code") or "").strip() or None
-                self.execute(
-                    f"""
-                    INSERT INTO {SCHEMA}.invoice_posting_request_linked_po_lines (
-                        linked_po_id, order_item, product_code
-                    ) VALUES (%s::uuid, %s, %s)
-                    """,
-                    (linked_po_id, order_item, product_code),
-                    auto_commit=False,
-                )
-
-    def _update_linked_po_mirror(
-        self,
-        request_id: str,
-        mirror_updates: dict[str, Any],
-    ) -> dict[str, Any]:
-        assignments = []
-        params: list[Any] = []
-        for key, value in mirror_updates.items():
-            assignments.append(f"{key} = %s")
-            params.append(value)
-        assignments.append("updated_at = NOW()")
-        params.append(request_id)
-        updated = self.execute_returning_one(
-            f"""
-            UPDATE {SCHEMA}.invoice_posting_requests
-               SET {", ".join(assignments)}
-             WHERE id = %s::uuid
-         RETURNING {_REQUEST_COLUMNS}
-            """,
-            tuple(params),
-            auto_commit=False,
-        )
-        if updated is None:
-            raise LookupError(request_id)
-        return updated
-
     def replace_linked_purchase_orders(
         self,
         *,
@@ -526,8 +433,67 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                     (request_id,),
                     auto_commit=False,
                 )
-                self._insert_linked_purchase_order_rows(request_id, rows)
-                updated = self._update_linked_po_mirror(request_id, mirror_updates)
+                for row in rows:
+                    inserted = self.execute_returning_one(
+                        f"""
+                        INSERT INTO {SCHEMA}.invoice_posting_request_linked_pos (
+                            request_id, order_number, delivery_date, issue_date,
+                            open_value, product_count, linked_at,
+                            linked_by_user_id, linked_by_name
+                        ) VALUES (
+                            %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
+                        )
+                        RETURNING id
+                        """,
+                        (
+                            request_id,
+                            row["order_number"],
+                            row.get("delivery_date"),
+                            row.get("issue_date"),
+                            row.get("open_value"),
+                            row.get("product_count"),
+                            row.get("linked_at"),
+                            row.get("linked_by_user_id"),
+                            row.get("linked_by_name"),
+                        ),
+                        auto_commit=False,
+                    )
+                    linked_po_id = inserted["id"] if inserted else None
+                    for line in row.get("lines") or []:
+                        order_item = str(line.get("order_item") or "").strip()
+                        if not order_item or linked_po_id is None:
+                            continue
+                        product_code = str(line.get("product_code") or "").strip() or None
+                        self.execute(
+                            f"""
+                            INSERT INTO {SCHEMA}.invoice_posting_request_linked_po_lines (
+                                linked_po_id, order_item, product_code
+                            ) VALUES (%s::uuid, %s, %s)
+                            """,
+                            (linked_po_id, order_item, product_code),
+                            auto_commit=False,
+                        )
+
+                assignments = []
+                params: list[Any] = []
+                for key, value in mirror_updates.items():
+                    assignments.append(f"{key} = %s")
+                    params.append(value)
+                assignments.append("updated_at = NOW()")
+                params.append(request_id)
+                updated = self.execute_returning_one(
+                    f"""
+                    UPDATE {SCHEMA}.invoice_posting_requests
+                       SET {", ".join(assignments)}
+                     WHERE id = %s::uuid
+                 RETURNING {_REQUEST_COLUMNS}
+                    """,
+                    tuple(params),
+                    auto_commit=False,
+                )
+                if updated is None:
+                    self.rollback()
+                    raise LookupError(request_id)
 
                 history_fields = {**history_fields, "request_id": updated["id"]}
                 self._insert_history(history_fields, auto_commit=False)

@@ -31,7 +31,6 @@ Plugin: `plugins/lancamento-notas-fiscais` · Roadmap: [docs/12-roadmap-e-evoluc
 |--------|------|---------------|-----------|
 | GET | `/lancamento-notas-fiscais/suppliers` | `search_lancamento_notas_fiscais_suppliers` | `create` |
 | POST | `/lancamento-notas-fiscais/requests` | `create_lancamento_notas_fiscais_request` | `create` |
-| GET | `/lancamento-notas-fiscais/purchase-orders/open` | `list_lancamento_notas_fiscais_open_purchase_orders` | `create` |
 | GET | `/lancamento-notas-fiscais/requests` | `list_lancamento_notas_fiscais_requests` | qualquer read* |
 | GET | `/lancamento-notas-fiscais/requests/{id}/purchase-orders` | `list_lancamento_notas_fiscais_request_purchase_orders` | qualquer read* |
 | POST | `/lancamento-notas-fiscais/requests/{id}/purchase-orders/link` | `link_lancamento_notas_fiscais_request_purchase_order` | process / manage |

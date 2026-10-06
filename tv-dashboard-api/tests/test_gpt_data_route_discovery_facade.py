@@ -229,6 +229,71 @@ def test_preview_valid_empty_dataset_is_success(monkeypatch):
     assert result["persisted"] is False
 
 
+def test_preview_structured_field_descriptors_yield_canonical_names(monkeypatch):
+    """Live defect: structured field descriptors in resolved.fields were
+    str()'d into reprs — every derived surface (fields[].name,
+    categoryCardinality, joinHints.candidateKeys) carried dict dumps."""
+    dispatch = _dispatch()
+
+    def _fake_preview(block, **kwargs):
+        return {
+            "id": block.get("id"),
+            "resolved": {
+                "fields": [
+                    {"name": "total_records", "type": "string", "nullable": True},
+                    {"name": "bucket", "type": "string", "nullable": True},
+                    {"name": "periodo", "type": "string", "nullable": True},
+                    {"name": "value", "type": "number", "nullable": True},
+                ],
+                "rows": [
+                    {"total_records": "4", "bucket": "a", "periodo": "2026-01", "value": 1.5},
+                    {"total_records": "7", "bucket": "b", "periodo": "2026-02", "value": 2.5},
+                ],
+            },
+        }
+
+    monkeypatch.setattr(dispatch._preview, "preview_block", _fake_preview)
+    monkeypatch.setattr(dispatch._validation, "sanitize", lambda cfg: cfg)
+
+    result = dispatch.preview_data_block(
+        user=_user(),
+        body={
+            "block": {"id": "src-a", "type": "data_source"},
+            "nativeConfig": {"version": 1, "blocks": []},
+        },
+        authorization=None,
+    )
+    digest = result["semanticDigest"]
+    names = [f["name"] for f in digest["fields"]]
+    assert names == ["total_records", "bucket", "periodo", "value"]
+
+    # Downstream structures must carry canonical identity, never repr leaks.
+    exposed = names + list(digest.get("categoryCardinality") or {})
+    exposed += list(digest.get("rankingCandidates") or [])
+    exposed += list(digest.get("goalCandidates") or [])
+    exposed += list(digest.get("trendCandidates") or [])
+    exposed += list((result.get("joinHints") or {}).get("candidateKeys") or [])
+    for name in exposed:
+        assert isinstance(name, str)
+        assert not name.startswith("{")
+        assert "'name'" not in name
+        assert "'type'" not in name
+
+
+def test_columns_from_preview_block_descriptor_shapes():
+    """Column extraction: dict descriptors use canonical name/key/field;
+    plain strings pass through; repr of a dict is never a field name."""
+    extract = GptActionsDispatchService._columns_from_preview_block
+
+    assert extract({"resolved": {"fields": [
+        {"name": "a"}, {"key": "b"}, {"field": "c"}, "d",
+    ]}}) == ["a", "b", "c", "d"]
+    assert extract({"resolved": {"schemaColumns": [{"name": "x"}]}}) == ["x"]
+    assert extract({"resolved": {"columns": ["p", {"name": "q"}]}}) == ["p", "q"]
+    assert extract({"resolved": {"rows": [{"r1": 1}]}}) == ["r1"]
+    assert extract({"resolved": {}}) == []
+
+
 def test_preview_legacy_block_sibling(monkeypatch):
     dispatch = _dispatch()
 

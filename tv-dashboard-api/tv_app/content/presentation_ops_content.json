@@ -3741,6 +3741,9 @@
         "adicione texto",
         "inserir texto",
         "insira um texto",
+        "coloque um texto",
+        "colocar texto",
+        "coloque texto",
         "caixa de texto",
         "bloco de texto",
         "texto no slide",
@@ -3763,6 +3766,7 @@
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "upsert_block",
+        "createIfMissing": true,
         "block": {
           "id": "{{newTextBlockId}}",
           "type": "text",

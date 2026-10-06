@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RequestFormPage } from "./RequestFormPage";
 import * as api from "../../data/api/invoicePostingApi";
 import { ApiError } from "../../data/api/httpClient";
@@ -25,35 +25,6 @@ function renderCreate(ui: ReactElement) {
   if (manual) fireEvent.click(manual);
   return view;
 }
-
-function mockOpenPurchaseOrders(groups: unknown[] = []) {
-  vi.mocked(api.listOpenPurchaseOrders).mockResolvedValue({
-    branch_code: "01",
-    supplier_code: "000001",
-    supplier_store: "01",
-    supplier_name: "Alpha",
-    order_count: new Set(
-      groups.map((group) => (group as { order_number: string }).order_number),
-    ).size,
-    group_count: groups.length,
-    item_count: groups.reduce(
-      (total, group) => total + ((group as { items?: unknown[] }).items?.length ?? 0),
-      0,
-    ),
-    groups: groups as never,
-    linked: [],
-  });
-}
-
-async function concludeWithoutPurchaseOrder() {
-  fireEvent.click(screen.getByTestId("btn-continue-request"));
-  const submit = await screen.findByTestId("btn-submit-request");
-  fireEvent.click(submit);
-}
-
-beforeEach(() => {
-  mockOpenPurchaseOrders();
-});
 
 afterEach(() => {
   cleanup();
@@ -117,10 +88,9 @@ describe("RequestFormPage", () => {
     });
     await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
     fireEvent.click(screen.getByText(/000001\/01/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     expect(screen.getByText(/Informe a série/i)).toBeTruthy();
     expect(api.createRequest).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("purchase-order-step")).toBeNull();
   });
 
   it("exige o tipo da nota no cadastro", async () => {
@@ -151,7 +121,7 @@ describe("RequestFormPage", () => {
     });
     await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
     fireEvent.click(screen.getByText(/000001\/01/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     expect(screen.getByText(/NF-e, NFS-e ou CT-e/i)).toBeTruthy();
     expect(api.createRequest).not.toHaveBeenCalled();
   });
@@ -182,13 +152,13 @@ describe("RequestFormPage", () => {
     });
     await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
     fireEvent.click(screen.getByText(/000001\/01/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     expect(screen.getByText(/Informe a série/i)).toBeTruthy();
     expect(api.createRequest).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfse" } });
     expect(screen.getByLabelText("Série").getAttribute("aria-required")).toBe("false");
-    await concludeWithoutPurchaseOrder();
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
     expect(api.createRequest).toHaveBeenCalledWith(
       expect.objectContaining({ fiscal_model: "nfse", series: "", document: "55" }),
@@ -227,8 +197,7 @@ describe("RequestFormPage", () => {
     });
     await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
     fireEvent.click(screen.getByText(/000001\/01/));
-    expect(screen.getByRole("heading", { name: "Transportadora" })).toBeTruthy();
-    await concludeWithoutPurchaseOrder();
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
     expect(api.createRequest).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -240,6 +209,7 @@ describe("RequestFormPage", () => {
         ],
       }),
     );
+    expect(screen.getByRole("heading", { name: "Transportadora" })).toBeTruthy();
   });
 
   it("Enter avança o foco como Tab", () => {
@@ -291,9 +261,6 @@ describe("RequestFormPage", () => {
       expect(screen.getByText(/000001\/01/)).toBeTruthy();
     });
     fireEvent.click(screen.getByText(/000001\/01/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect(api.createRequest).not.toHaveBeenCalled();
-    expect(await screen.findByTestId("purchase-order-step")).toBeTruthy();
     fireEvent.click(screen.getByTestId("btn-submit-request"));
 
     await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
@@ -306,7 +273,6 @@ describe("RequestFormPage", () => {
         supplier_code: "000001",
         supplier_store: "01",
         amount: 10.5,
-        linked_purchase_orders: [],
       }),
     );
     expect(onSuccess).toHaveBeenCalledWith("new-1");
@@ -355,7 +321,7 @@ describe("RequestFormPage", () => {
     });
     await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
     fireEvent.click(screen.getByText(/000001\/01/));
-    await concludeWithoutPurchaseOrder();
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     await waitFor(() => {
       expect(screen.getByTestId("form-submit-error").textContent).toContain("dup-9");
     });
@@ -469,7 +435,7 @@ describe("RequestFormPage", () => {
     render(
       <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
     );
-    expect(screen.getByText(/Inclua a nota manualmente ou busque NF-e/i)).toBeTruthy();
+    expect(screen.getByText(/visualizar o DANFE antes de avançar/i)).toBeTruthy();
     fireEvent.click(screen.getByTestId("btn-select-nfe"));
     fireEvent.change(screen.getByLabelText("CNPJ do fornecedor"), {
       target: { value: "12.345.678/0001-99" },
@@ -490,8 +456,7 @@ describe("RequestFormPage", () => {
     fireEvent.change(screen.getByLabelText("Recebimento físico"), {
       target: { value: "2026-10-01T09:30" },
     });
-    expect((screen.getByLabelText("Filial") as HTMLSelectElement).value).toBe("02");
-    await concludeWithoutPurchaseOrder();
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
     expect(api.createRequest).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -505,6 +470,7 @@ describe("RequestFormPage", () => {
         supplier_code: "000010",
       }),
     );
+    expect((screen.getByLabelText("Filial") as HTMLSelectElement).value).toBe("02");
   });
 
   it("avança NFS-e com número operacional, prestador e XML", async () => {
@@ -590,7 +556,7 @@ describe("RequestFormPage", () => {
     fireEvent.change(screen.getByLabelText("Recebimento físico"), {
       target: { value: "2026-10-01T09:30" },
     });
-    await concludeWithoutPurchaseOrder();
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
     expect(api.createRequest).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -778,7 +744,7 @@ describe("RequestFormPage", () => {
     fireEvent.change(screen.getByLabelText("Recebimento físico"), {
       target: { value: "2026-10-02T11:00" },
     });
-    await concludeWithoutPurchaseOrder();
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
     expect(api.createRequest).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -904,7 +870,7 @@ describe("RequestFormPage", () => {
     fireEvent.change(screen.getByLabelText("Recebimento físico"), {
       target: { value: "2026-10-01T09:30" },
     });
-    await concludeWithoutPurchaseOrder();
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
     await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
     expect(api.createRequest).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -912,89 +878,6 @@ describe("RequestFormPage", () => {
         provider_entity_id: "cccccccccccccccccccccccc",
       }),
     );
-  });
-
-  it("filtra os pedidos pelos códigos Delpi quando a NF-e está toda relacionada", async () => {
-    const accessKey = "3".repeat(44);
-    mockOpenPurchaseOrders([openGroup, openGroupB]);
-    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
-      items: [
-        {
-          documentType: "nfe",
-          documentId: "aabbccddeeff001122334455",
-          providerEntityId: "cccccccccccccccccccccccc",
-          accessKey,
-          invoiceNumber: "22844",
-          series: "1",
-          issuerName: "Fornecedor",
-          issuerCnpj: "12345678000199",
-          emissionAt: "2026-09-30",
-          amount: "108.00",
-          amountFormatted: "R$ 108,00",
-          danfeAvailable: true,
-          branchCode: "01",
-        },
-      ],
-      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
-    });
-    vi.mocked(api.searchSuppliers).mockResolvedValue([
-      {
-        supplier_code: "000010",
-        supplier_store: "01",
-        supplier_name: "Fornecedor",
-        supplier_short_name: null,
-        tax_id: "12345678000199",
-        state: "SC",
-        blocked: false,
-      },
-    ]);
-    vi.mocked(api.fetchReceivedNfeItems).mockResolvedValue({
-      productMapping: { state: "ready" },
-      items: [
-        {
-          itemNumber: "1",
-          supplierProductCode: "00001234",
-          supplierProductDescription: "PARAFUSO",
-          internalProductCode: "10080001",
-          internalProductDescription: "PARAFUSO",
-          quantity: "4",
-          unit: "PC",
-          mappingStatus: "mapped",
-        },
-        {
-          itemNumber: "2",
-          supplierProductCode: "00001235",
-          supplierProductDescription: "PORCA",
-          internalProductCode: "10080002",
-          internalProductDescription: "PORCA",
-          quantity: "1",
-          unit: "PC",
-          mappingStatus: "mapped",
-        },
-      ],
-      summary: { items: 2, mapped: 2, unmapped: 0, ambiguous: 0 },
-    });
-    render(<RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />);
-    fireEvent.click(screen.getByTestId("btn-select-nfe"));
-    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "22844" } });
-    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Avançar" }));
-    expect(await screen.findByText("10080001")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Recebimento físico"), {
-      target: { value: "2026-10-01T09:30" },
-    });
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect(await screen.findByTestId("po-product-filter")).toBeTruthy();
-    expect(screen.getByTestId("po-step-context").textContent).toMatch(/Filial 01 \(SC\)/);
-    expect(screen.getByTestId("po-step-context").textContent).not.toMatch(/Filial Filial/);
-    const products = screen.getByTestId("po-invoice-products").textContent ?? "";
-    expect(products).toMatch(/10080001/);
-    expect(products).toMatch(/00001234/);
-    expect(products).toMatch(/4 PC/);
-    expect(screen.getByText("000123")).toBeTruthy();
-    expect(screen.queryByText("000456")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Ver todos os pedidos" }));
-    expect(await screen.findByText("000456")).toBeTruthy();
   });
 
   it("troca de fornecedor descarta a tradução anterior", async () => {
@@ -1097,313 +980,6 @@ describe("RequestFormPage", () => {
     expect(await screen.findByText("DELPI-NOVO")).toBeTruthy();
     expect(screen.queryByText("DELPI-ANTIGO")).toBeNull();
     expect(screen.getByLabelText("Número da nota")).toBeTruthy();
-  });
-});
-
-const alphaSupplier = {
-  supplier_code: "000001",
-  supplier_store: "01",
-  supplier_name: "Alpha",
-  supplier_short_name: "A",
-  tax_id: "123",
-  state: "SC",
-  blocked: false,
-};
-
-const openGroup = {
-  order_number: "000123",
-  delivery_date: "2026-07-20",
-  issue_date: "2026-07-01",
-  product_count: 2,
-  open_value: 42,
-  item_count: 2,
-  items: [
-    {
-      branch: "01",
-      order_number: "000123",
-      order_item: "0001",
-      product_code: "10080001",
-      product_description: "Parafuso",
-      supplier_part_number: "FORN-P1",
-      open_value: 12,
-    },
-    {
-      branch: "01",
-      order_number: "000123",
-      order_item: "0002",
-      product_code: "10080002",
-      product_description: "Porca",
-      supplier_part_number: "FORN-P2",
-      open_value: 30,
-    },
-  ],
-};
-
-const openGroupB = {
-  ...openGroup,
-  order_number: "000456",
-  delivery_date: "2026-07-25",
-  items: [
-    {
-      ...openGroup.items[0],
-      order_number: "000456",
-      order_item: "0001",
-      product_code: "20080001",
-      product_description: "Arruela",
-      supplier_part_number: "FORN-B2",
-    },
-  ],
-};
-
-async function fillManualSupplier(supplier = alphaSupplier) {
-  vi.mocked(api.searchSuppliers).mockResolvedValue([supplier]);
-  renderCreate(
-    <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
-  );
-  fireEvent.change(screen.getByLabelText("Número da nota"), { target: { value: "123" } });
-  fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
-  fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfe" } });
-  fireEvent.change(screen.getByLabelText("Data de emissão"), { target: { value: "2026-07-01" } });
-  fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "10" } });
-  fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), { target: { value: "Al" } });
-  const label = `${supplier.supplier_code}/${supplier.supplier_store}`;
-  await waitFor(() => expect(screen.getByText(new RegExp(label))).toBeTruthy());
-  fireEvent.click(screen.getByText(new RegExp(label)));
-}
-
-describe("etapa Pedido de compra no cadastro", () => {
-  it("carrega pedidos da filial, fornecedor e loja e conclui sem seleção", async () => {
-    const onSuccess = vi.fn();
-    vi.mocked(api.createRequest).mockResolvedValue({ id: "new-po" } as never);
-    vi.mocked(api.searchSuppliers).mockResolvedValue([alphaSupplier]);
-    renderCreate(
-      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={onSuccess} />,
-    );
-    fireEvent.change(screen.getByLabelText("Número da nota"), { target: { value: "321" } });
-    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
-    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfe" } });
-    fireEvent.change(screen.getByLabelText("Data de emissão"), { target: { value: "2026-07-01" } });
-    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "10" } });
-    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), { target: { value: "Al" } });
-    await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
-    fireEvent.click(screen.getByText(/000001\/01/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect(api.createRequest).not.toHaveBeenCalled();
-    expect(await screen.findByTestId("po-empty")).toBeTruthy();
-    expect(screen.getByText(/Conclua sem pedido e amarre depois/i)).toBeTruthy();
-    expect(api.listOpenPurchaseOrders).toHaveBeenCalledWith(
-      "01",
-      "000001",
-      "01",
-      expect.any(AbortSignal),
-    );
-    expect(screen.getByTestId("btn-submit-request").textContent).toMatch(/sem pedido/i);
-    fireEvent.click(screen.getByRole("button", { name: "Voltar" }));
-    expect(screen.getByDisplayValue("321")).toBeTruthy();
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    fireEvent.click(await screen.findByTestId("btn-submit-request"));
-    await waitFor(() => expect(api.createRequest).toHaveBeenCalledTimes(1));
-    expect(api.createRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ linked_purchase_orders: [], document: "321" }),
-    );
-    expect(onSuccess).toHaveBeenCalledWith("new-po");
-  });
-
-  it("seleciona vários pedidos e linhas e envia o payload", async () => {
-    mockOpenPurchaseOrders([openGroup, openGroupB]);
-    vi.mocked(api.createRequest).mockResolvedValue({ id: "with-po" } as never);
-    await fillManualSupplier();
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect(await screen.findByTestId("po-table")).toBeTruthy();
-    fireEvent.change(screen.getByTestId("po-filter-input"), { target: { value: "porca" } });
-    expect(screen.getByText("Porca")).toBeTruthy();
-    expect(screen.queryByText("Arruela")).toBeNull();
-    fireEvent.change(screen.getByTestId("po-filter-input"), { target: { value: "" } });
-    fireEvent.click(screen.getByLabelText("Selecionar item 0002 do PC 000123"));
-    fireEvent.click(screen.getByLabelText("Selecionar PC 000456"));
-    expect(screen.getByTestId("btn-submit-request").textContent).toMatch(/com pedido/i);
-    fireEvent.click(screen.getByRole("button", { name: "Voltar" }));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect((await screen.findByLabelText("Selecionar item 0002 do PC 000123") as HTMLInputElement).checked).toBe(true);
-    fireEvent.click(screen.getByTestId("btn-submit-request"));
-    await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
-    expect(api.createRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        linked_purchase_orders: [
-          {
-            order_number: "000123",
-            delivery_date: "2026-07-20",
-            lines: [{ order_item: "0002" }],
-          },
-          {
-            order_number: "000456",
-            delivery_date: "2026-07-25",
-            lines: [{ order_item: "0001" }],
-          },
-        ],
-      }),
-    );
-  });
-
-  it("mostra falha do Protheus sem tratar como lista vazia", async () => {
-    vi.mocked(api.listOpenPurchaseOrders).mockRejectedValue(new Error("Falha ao consultar o Protheus."));
-    await fillManualSupplier();
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect((await screen.findByTestId("po-query-error")).textContent).toMatch(/Protheus/i);
-    expect(screen.queryByTestId("po-empty")).toBeNull();
-    expect(screen.getByTestId("btn-submit-request").textContent).toMatch(/sem pedido/i);
-  });
-
-  it("limpa a seleção quando filial, fornecedor ou loja mudam e consulta de novo", async () => {
-    const loja02 = { ...alphaSupplier, supplier_store: "02", supplier_name: "Alpha Loja" };
-    mockOpenPurchaseOrders([openGroup]);
-    vi.mocked(api.searchSuppliers).mockResolvedValue([alphaSupplier, loja02]);
-    renderCreate(
-      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
-    );
-    fireEvent.change(screen.getByLabelText("Número da nota"), { target: { value: "123" } });
-    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
-    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfe" } });
-    fireEvent.change(screen.getByLabelText("Data de emissão"), { target: { value: "2026-07-01" } });
-    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "10" } });
-    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), { target: { value: "Al" } });
-    await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
-    fireEvent.click(screen.getByText(/000001\/01/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    fireEvent.click(await screen.findByLabelText("Selecionar PC 000123"));
-    fireEvent.click(screen.getByRole("button", { name: "Voltar" }));
-    fireEvent.change(screen.getByLabelText("Filial"), { target: { value: "02" } });
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect((await screen.findByLabelText("Selecionar PC 000123") as HTMLInputElement).checked).toBe(false);
-    expect(api.listOpenPurchaseOrders).toHaveBeenLastCalledWith(
-      "02",
-      "000001",
-      "01",
-      expect.any(AbortSignal),
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Voltar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Trocar" }));
-    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), { target: { value: "loja" } });
-    await waitFor(() => expect(screen.getByText(/000001\/02/)).toBeTruthy());
-    fireEvent.click(screen.getByText(/000001\/02/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect(api.listOpenPurchaseOrders).toHaveBeenLastCalledWith(
-      "02",
-      "000001",
-      "02",
-      expect.any(AbortSignal),
-    );
-  });
-
-  it("ignora resposta atrasada de outra chave", async () => {
-    const first = deferred<Awaited<ReturnType<typeof api.listOpenPurchaseOrders>>>();
-    const second = deferred<Awaited<ReturnType<typeof api.listOpenPurchaseOrders>>>();
-    vi.mocked(api.listOpenPurchaseOrders)
-      .mockImplementationOnce(() => first.promise)
-      .mockImplementationOnce(() => second.promise);
-    const loja02 = { ...alphaSupplier, supplier_store: "02", supplier_name: "Alpha Loja" };
-    vi.mocked(api.searchSuppliers).mockResolvedValue([alphaSupplier, loja02]);
-    renderCreate(
-      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
-    );
-    fireEvent.change(screen.getByLabelText("Número da nota"), { target: { value: "123" } });
-    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
-    fireEvent.change(screen.getByLabelText("Tipo da nota"), { target: { value: "nfe" } });
-    fireEvent.change(screen.getByLabelText("Data de emissão"), { target: { value: "2026-07-01" } });
-    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "10" } });
-    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), { target: { value: "Al" } });
-    await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
-    fireEvent.click(screen.getByText(/000001\/01/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    expect(await screen.findByTestId("po-loading")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Voltar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Trocar" }));
-    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), { target: { value: "loja" } });
-    await waitFor(() => expect(screen.getByText(/000001\/02/)).toBeTruthy());
-    fireEvent.click(screen.getByText(/000001\/02/));
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    second.resolve({
-      branch_code: "01",
-      supplier_code: "000001",
-      supplier_store: "02",
-      supplier_name: "Alpha Loja",
-      order_count: 1,
-      group_count: 1,
-      item_count: 1,
-      groups: [{ ...openGroupB, order_number: "999888" }] as never,
-      linked: [],
-    });
-    expect(await screen.findByText("999888")).toBeTruthy();
-    first.resolve({
-      branch_code: "01",
-      supplier_code: "000001",
-      supplier_store: "01",
-      supplier_name: "Alpha",
-      order_count: 1,
-      group_count: 1,
-      item_count: 1,
-      groups: [{ ...openGroup, order_number: "111000" }] as never,
-      linked: [],
-    });
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(screen.queryByText("111000")).toBeNull();
-    expect(screen.getByText("999888")).toBeTruthy();
-  });
-
-  it("não cria duas solicitações no duplo clique", async () => {
-    let resolveCreate: (value: { id: string }) => void = () => undefined;
-    vi.mocked(api.createRequest).mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveCreate = resolve;
-        }),
-    );
-    await fillManualSupplier();
-    fireEvent.click(screen.getByTestId("btn-continue-request"));
-    const submit = await screen.findByTestId("btn-submit-request");
-    fireEvent.click(submit);
-    fireEvent.click(submit);
-    expect(api.createRequest).toHaveBeenCalledTimes(1);
-    resolveCreate({ id: "once" });
-    await waitFor(() => expect(api.createRequest).toHaveBeenCalledTimes(1));
-  });
-
-  it("não abre a etapa no modo de correção", async () => {
-    vi.mocked(api.getRequest).mockResolvedValue({
-      request: {
-        id: "req-edit",
-        branch_code: "01",
-        document_number: "000123",
-        series: "1",
-        fiscal_model: "nfe",
-        supplier_code: "000001",
-        supplier_store: "01",
-        supplier_name: "Alpha",
-        supplier_short_name: "A",
-        issue_date: "2026-07-01",
-        amount: 10,
-        received_at: "2026-07-02T10:00:00",
-        observation: "",
-        linked_invoices: [],
-      },
-    } as never);
-    vi.mocked(api.updateRequest).mockResolvedValue({ id: "req-edit" } as never);
-    render(
-      <RequestFormPage
-        mode="edit"
-        requestId="req-edit"
-        onCancel={() => undefined}
-        onSuccess={() => undefined}
-      />,
-    );
-    expect(await screen.findByTestId("btn-submit-request")).toBeTruthy();
-    expect(screen.queryByTestId("btn-continue-request")).toBeNull();
-    expect(screen.queryByTestId("purchase-order-step")).toBeNull();
-    fireEvent.click(screen.getByTestId("btn-submit-request"));
-    await waitFor(() => expect(api.updateRequest).toHaveBeenCalled());
-    expect(api.createRequest).not.toHaveBeenCalled();
-    expect(api.listOpenPurchaseOrders).not.toHaveBeenCalled();
   });
 });
 

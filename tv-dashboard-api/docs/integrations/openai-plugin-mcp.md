@@ -74,7 +74,7 @@ Tools:
 | `search_data_routes` | READ | `GptActionsDispatchService.search_data_routes` |
 | `inspect_data_model` | READ | `GptActionsDispatchService.inspect_data_model` |
 | `preview_data_model` | READ | `GptActionsDispatchService.preview_data_model` (inline candidate never persisted) |
-| `preview_data_block` | ANALYSIS | `GptActionsDispatchService.preview_data_block` (`semanticDigest` + `visualRecommendation` + `joinHints`/`formatHints`, never persisted) |
+| `preview_data_block` | ANALYSIS | `GptActionsDispatchService.preview_data_block` (`semanticDigest` + `visualRecommendation` + `joinHints`/`formatHints`, never persisted). Targets a persisted `data_source` block (or `operationId`+params); visual blocks such as `chart_view` are not preview targets → 422 |
 | `suggest_change` | ANALYSIS | `GptActionsDispatchService.suggest_change` → `PresentationCommandPlannerService.plan` → `PresentationSuggestOpsService.materialize` (NL → typed ops + clarification/policy; never persists, never authorizes) |
 | `prepare_change` | PREPARE | `GptActionsDispatchService.preview_change` (commit_now=False) |
 | `commit_proposal` | ACT | `GptActionsDispatchService.commit_change` |

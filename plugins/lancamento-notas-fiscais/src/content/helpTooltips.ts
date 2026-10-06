@@ -1,4 +1,4 @@
 export const helpTooltips = {
   newRequest:
-    "Inclua a nota manualmente ou busque NF-e, NFS-e ou CT-e. O pedido de compra é opcional.",
+    "Na nova solicitação dá para incluir a nota manualmente ou selecionar um documento fiscal (NF-e, NFS-e ou CT-e) pelo número ou pelo CNPJ do fornecedor. A busca não ocorre a cada tecla e consulta as duas empresas. Dá para visualizar o DANFE antes de avançar na NF-e. Na NFS-e a tela mostra os dados da nota e permite baixar o XML, porque não há PDF nesse fluxo. No CT-e o DACTE abre quando o portal tem o PDF, e as notas transportadas entram sozinhas a partir do XML. Ao salvar, os dados fiscais seguem no formulário e o arquivo fica na solicitação. Na NF-e do Questor, depois do fornecedor, a tela mostra os itens do XML e o código interno correspondente, quando a relação Produto x Fornecedor existir. A mesma relação continua visível nos detalhes da solicitação. Produto sem relação ou com relação ambígua não impede o cadastro. A consulta não filtra por filial nem pelo nome do fornecedor. O CT-e também pode ser incluído manualmente, com as notas vinculadas pelo número e pela série.",
 } as const;

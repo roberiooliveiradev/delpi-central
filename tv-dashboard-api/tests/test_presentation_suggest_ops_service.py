@@ -54,6 +54,33 @@ def test_suggest_escreva_texto_upsert_block_with_quoted_content():
     assert "upsert_block" in result["matchedCapabilityKeys"]
 
 
+@pytest.mark.parametrize(
+    "message",
+    [
+        "adicione um texto 'X' neste slide",
+        "coloque um texto 'X' neste slide",
+        "insira um texto 'X' neste slide",
+        "crie um texto 'X' neste slide",
+    ],
+)
+def test_suggest_text_creation_verbs_same_intent_family(message):
+    """NL sibling corpus — every canonical creation verb must materialize the
+    same create semantics (live defect: «coloque um texto» was unsupported)."""
+    result = PresentationSuggestOpsService.suggest(
+        message=message,
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["status"] == "ready"
+    upsert = next(op for op in result["ops"] if op.get("op") == "upsert_block")
+    block = upsert.get("block") or {}
+    assert block.get("type") == "text"
+    assert str(block.get("id") or "").startswith("txt_")
+    # Canonical create intent — text blocks are not create-friendly types and
+    # the template has no authored frame, so createIfMissing is required for
+    # the op to enter PREPARE at all.
+    assert upsert.get("createIfMissing") is True
+
+
 def test_suggest_crie_um_slide_add_blank_or_preset():
     result = PresentationSuggestOpsService.suggest(
         message="crie um slide",

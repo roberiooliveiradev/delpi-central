@@ -9860,3 +9860,48 @@ EVIDENCE (live production, 2026-10-05):
       - bpmn-modeler + scratch dirty files belong to parallel
         workstreams — untouched.
     PHASE STATUS unchanged: PRODUCTION_READINESS=NOT_PROVEN.
+
+## 6.136. VISTA-MCP-LIVE-REWORK-ANALYSIS-PREPARE-DATA-DIGEST-01 — bounded rework after live ChatGPT MCP validation
+
+  SCOPE: three proven live defects fixed inside the accepted §6.134
+  architecture. No new boundary/planner/registry/tool. DÉLIA untouched.
+  MCP surface remains 10 tools.
+
+  DEFECT 1 ROOT CAUSE: presentation_ops_content.json upsert_block
+    template emitted a generated txt_* block id WITHOUT
+    "createIfMissing": true, so canonical PREPARE resolved it as an
+    update target -> TARGET_BLOCK_NOT_FOUND. Fix: template now carries
+    createIfMissing: true (canonical mutation language already defined
+    the field; mutation service injects frame/text defaults).
+    Invalid existing-target updates still rejected fail-closed.
+
+  DEFECT 2 ROOT CAUSE: "coloque/coloquei/colocar" existed in the
+    global mutation actionTermSet but was absent from the upsert_block
+    capability contentMarkers, so the phrase never scored a capability
+    -> unsupported. Fix: markers extended in the single canonical
+    content source (Actions + MCP share it). Siblings verified:
+    adicione/coloque/insira/crie -> same upsert_block intent family
+    with createIfMissing: true.
+
+  DEFECT 3 ROOT CAUSE: dispatch_service._columns_from_preview_block
+    ran str(item) over resolved.columns/schemaColumns/fields; when
+    items were structured descriptor dicts the serialized dict
+    ("{name: ...}") became the field name and polluted
+    semanticDigest.fields[].name, categoryCardinality keys and
+    joinHints.candidateKeys. Fix: dict descriptors normalized to
+    name/key first — same pattern already used by
+    _inspect_source_table. No MCP-only layer added.
+
+  PREVIEW VISUAL TARGET: preview_data_block(chart_view) -> 422 is
+    EXPECTED_BEHAVIOR — contract targets data_source blocks (or
+    operationId+params); visual blocks are not preview targets.
+
+  TESTS: +12 regressions (suggest create/verbs, real
+    PresentationPatchService.preview() accept/reject round-trip,
+    descriptor normalization + zero serialized-leak assertions).
+    Focused 89 + related suites 261 PASS. FULL SUITE = 1716/1716.
+    git diff --check clean. 5 files changed, all tv-dashboard-api.
+
+  RESIDUALS: live re-validation against the ChatGPT plugin pending
+    (local code-level evidence only; container serves mounted source
+    after restart). PRODUCTION_READINESS = NOT_PROVEN unchanged.

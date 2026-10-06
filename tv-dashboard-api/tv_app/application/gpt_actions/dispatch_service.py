@@ -998,12 +998,24 @@ class GptActionsDispatchService:
         return response
 
     @staticmethod
-    def _columns_from_preview_block(block: dict[str, Any]) -> list[str]:
+    def _field_name(item: Any) -> str:
+        """Canonical field identity — structured descriptors carry their own
+        name (``name``/``key``/``field``); never stringify the descriptor."""
+        if isinstance(item, dict):
+            for attr in ("name", "key", "field"):
+                value = item.get(attr)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+            return ""
+        return str(item or "").strip()
+
+    @classmethod
+    def _columns_from_preview_block(cls, block: dict[str, Any]) -> list[str]:
         resolved = block.get("resolved") if isinstance(block.get("resolved"), dict) else {}
         for key in ("columns", "schemaColumns", "fields"):
             raw = resolved.get(key) if resolved else None
             if isinstance(raw, list) and raw:
-                return [str(item) for item in raw if str(item).strip()]
+                return [name for item in raw if (name := cls._field_name(item))]
         rows = resolved.get("rows") if resolved else None
         if isinstance(rows, list) and rows and isinstance(rows[0], dict):
             return [str(k) for k in rows[0].keys()]

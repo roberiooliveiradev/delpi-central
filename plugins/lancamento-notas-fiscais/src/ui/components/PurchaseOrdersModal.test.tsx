@@ -67,38 +67,6 @@ const sampleGroupB = {
 };
 
 describe("PurchaseOrdersModal", () => {
-  it("restringe a lista aos produtos Delpi e permite ver todos", async () => {
-    vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
-      request_id: "req-1",
-      branch_code: "01",
-      supplier_code: "000001",
-      supplier_store: "01",
-      supplier_name: "Alpha",
-      order_count: 2,
-      group_count: 2,
-      item_count: 2,
-      groups: [sampleGroup, sampleGroupB],
-      linked: [],
-      can_link: true,
-    });
-    render(
-      <PurchaseOrdersModal
-        open
-        requestId="req-1"
-        supplierName="Alpha"
-        branchCode="01"
-        canLink
-        restrictToProductCodes={["10080001"]}
-        onClose={() => undefined}
-      />,
-    );
-    await waitFor(() => expect(screen.getByTestId("po-product-filter")).toBeTruthy());
-    expect(screen.getByText("000123")).toBeTruthy();
-    expect(screen.queryByText("000456")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Ver todos os pedidos" }));
-    expect(screen.getByText("000456")).toBeTruthy();
-  });
-
   it("lista grupos e permite ver detalhes", async () => {
     vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
       request_id: "req-1",

@@ -278,6 +278,119 @@ def test_patch_target_validation_uses_operation_contract(monkeypatch):
         )
 
 
+def test_suggest_ready_text_ops_enter_prepare_unchanged(monkeypatch):
+    """ANALYSIS → PREPARE contract (live defect): ops materialized by
+    suggest_change must enter the governed preview without the materializer
+    producing a shape PREPARE rejects as update-only."""
+    from unittest.mock import patch as _patch
+
+    from tv_app.application.services.data.presentation_suggest_ops_service import (
+        PresentationSuggestOpsService,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        clear_presentation_ops_content_cache,
+    )
+
+    clear_presentation_ops_content_cache()
+    with _patch.object(
+        PresentationSuggestOpsService, "_rank_via_ai_suggest", return_value=[]
+    ):
+        result = PresentationSuggestOpsService.suggest(
+            message="adicione um texto 'teste MCP atualizado' neste slide",
+            host_context={"slideId": SLIDE_ID, "playlistId": PLAYLIST_ID},
+        )
+    assert result["status"] == "ready"
+    ops = result["ops"]
+    assert ops
+
+    svc = _service(monkeypatch=monkeypatch)
+    preview = svc.preview(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": ops,
+        },
+        user={},
+    )
+    assert preview["persisted"] is False
+    candidate_blocks = (
+        (preview.get("nativeConfig") or {}).get("blocks") or []
+    )
+    new_ids = {
+        str((op.get("block") or {}).get("id"))
+        for op in ops
+        if op.get("op") == "upsert_block"
+    }
+    assert new_ids & {str(b.get("id")) for b in candidate_blocks}
+
+
+def test_suggest_blank_slide_enters_prepare_no_persist(monkeypatch):
+    """Control sibling — «crie um slide em branco» already worked live and
+    must keep preparing without persistence."""
+    from unittest.mock import patch as _patch
+
+    from tv_app.application.services.data.presentation_suggest_ops_service import (
+        PresentationSuggestOpsService,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        clear_presentation_ops_content_cache,
+    )
+
+    clear_presentation_ops_content_cache()
+    with _patch.object(
+        PresentationSuggestOpsService, "_rank_via_ai_suggest", return_value=[]
+    ):
+        result = PresentationSuggestOpsService.suggest(
+            message="crie um slide em branco chamado 'Smoke MCP'",
+            host_context={"playlistId": PLAYLIST_ID},
+        )
+    assert result["status"] == "ready"
+    assert any(op.get("op") == "add_blank_slide" for op in result["ops"])
+
+    svc = _service(monkeypatch=monkeypatch)
+    preview = svc.preview(
+        {"target": {"playlistId": PLAYLIST_ID}, "ops": result["ops"]},
+        user={},
+    )
+    assert preview["persisted"] is False
+
+
+def test_upsert_block_existing_id_still_updates_not_creates():
+    """Sibling: an informed existing block id keeps ALTER_EXISTING semantics
+    — the create fix must not turn updates into duplicates."""
+    svc = PresentationPatchService()
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {"id": "txt-1", "type": "text", "content": "old", "frame": {"x": 1, "y": 1, "w": 10, "h": 5}}
+        ],
+    }
+    svc._op_upsert_block(
+        cfg,
+        {
+            "op": "upsert_block",
+            "createIfMissing": True,
+            "block": {"id": "txt-1", "type": "text", "content": "new"},
+        },
+    )
+    assert len(cfg["blocks"]) == 1
+    assert cfg["blocks"][0]["content"] == "new"
+
+
+def test_upsert_block_fake_target_without_create_intent_still_rejected():
+    """Negative: the create fix must not weaken target validation — a bare
+    upsert against a nonexistent text block still fails closed."""
+    svc = PresentationPatchService()
+    with pytest.raises(PresentationPatchError) as exc:
+        svc._op_upsert_block(
+            {"version": 5, "blocks": []},
+            {
+                "op": "upsert_block",
+                "block": {"id": "blk_nao_existe", "type": "text", "content": "x"},
+            },
+        )
+    assert (exc.value.details or {}).get("reason") == "TARGET_BLOCK_NOT_FOUND"
+
+
 def test_preview_upsert_date_range_inherits_playlist_period(monkeypatch):
     """Regression: playlist dateRangePreset + params {} must not INVALID_CHANGE."""
     repo = _FakeRepo()

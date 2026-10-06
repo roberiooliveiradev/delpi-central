@@ -258,10 +258,9 @@ class SearchSuppliersUseCase:
 
 
 class CreateInvoicePostingRequestUseCase:
-    def __init__(self, requests: Any, suppliers: Any, purchase_orders: Any | None = None) -> None:
+    def __init__(self, requests: Any, suppliers: Any) -> None:
         self._requests = requests
         self._suppliers = suppliers
-        self._purchase_orders = purchase_orders
 
     def execute(self, payload: dict[str, Any], actor: Actor) -> dict[str, Any]:
         try:
@@ -356,21 +355,11 @@ class CreateInvoicePostingRequestUseCase:
             },
             "justification": None,
         }
-        linked_rows, purchase_order_history, mirror_updates = self._optional_purchase_orders(
-            payload.get("linked_purchase_orders", None),
-            actor=actor,
-            branch_code=branch,
-            supplier_code=supplier["supplier_code"],
-            supplier_store=supplier["supplier_store"],
-        )
         try:
             return self._requests.create_request_with_history(
                 request_fields=fields,
                 history_fields=history,
                 linked_invoices=linked_invoices,
-                linked_purchase_order_rows=linked_rows,
-                purchase_order_history=purchase_order_history,
-                mirror_updates=mirror_updates,
             )
         except DuplicateFiscalKeyError:
             existing = self._requests.find_active_by_fiscal_key(
@@ -381,64 +370,6 @@ class CreateInvoicePostingRequestUseCase:
                 series=series,
             )
             _raise_duplicate(existing)
-
-    def _optional_purchase_orders(
-        self,
-        raw: Any,
-        *,
-        actor: Actor,
-        branch_code: str,
-        supplier_code: str,
-        supplier_store: str,
-    ) -> tuple[list[dict[str, Any]] | None, dict[str, Any] | None, dict[str, Any] | None]:
-        if raw is None or raw == []:
-            return None, None, None
-        if not isinstance(raw, list):
-            raise InvoicePostingValidationError(
-                "Campo linked_purchase_orders deve ser uma lista."
-            )
-        if self._purchase_orders is None:
-            raise InvoicePostingValidationError(
-                "Não foi possível validar os pedidos de compra selecionados."
-            )
-        wanted = normalize_wanted_purchase_order_groups(groups=raw)
-        if not wanted:
-            return None, None, None
-        items = self._purchase_orders.list_open_purchase_orders_by_supplier(
-            branch_code=branch_code,
-            supplier_code=supplier_code,
-            supplier_store=supplier_store,
-        )
-        resolved_rows, snapshots = resolve_open_purchase_order_rows(
-            wanted=wanted,
-            open_groups=group_open_purchase_order_lines(items),
-            actor_user_id=actor.user_id,
-            actor_user_name=actor.user_name,
-        )
-        first = resolved_rows[0] if resolved_rows else None
-        mirror = {
-            "linked_po_number": first["order_number"] if first else None,
-            "linked_po_delivery_date": first.get("delivery_date") if first else None,
-            "linked_po_issue_date": first.get("issue_date") if first else None,
-            "linked_po_open_value": first.get("open_value") if first else None,
-            "linked_po_product_count": first.get("product_count") if first else None,
-            "linked_po_linked_at": first.get("linked_at") if first else None,
-            "linked_po_linked_by_user_id": first.get("linked_by_user_id") if first else None,
-            "linked_po_linked_by_name": first.get("linked_by_name") if first else None,
-        }
-        history = {
-            "event_type": "purchase_order_linked",
-            "actor_origin": "user",
-            "actor_user_id": actor.user_id,
-            "actor_name": actor.user_name,
-            "from_status": "pending",
-            "to_status": "pending",
-            "changes": history_changes_json_safe(
-                {"linked_po": {"from": [], "to": snapshots}}
-            ),
-            "justification": f"Pedidos amarrados: {format_linked_po_labels(snapshots)}",
-        }
-        return resolved_rows, history, mirror
 
 
 class ListInvoicePostingRequestsUseCase:
@@ -547,233 +478,6 @@ class ListRequestOpenPurchaseOrdersUseCase:
         }
 
 
-class ListOpenPurchaseOrdersUseCase:
-    """Pedidos abertos antes de existir solicitação. Exige permissão de criação."""
-
-    def __init__(self, purchase_orders: Any, suppliers: Any) -> None:
-        self._purchase_orders = purchase_orders
-        self._suppliers = suppliers
-
-    def execute(
-        self,
-        *,
-        actor: Actor,
-        branch_code: str,
-        supplier_code: str,
-        supplier_store: str,
-    ) -> dict[str, Any]:
-        if not actor.has_create:
-            raise InvoicePostingForbiddenError(
-                "Sem permissão para consultar pedidos de compra no cadastro."
-            )
-        try:
-            branch = normalize_branch(branch_code)
-        except FiscalNormalizationError as exc:
-            raise InvoicePostingValidationError(str(exc)) from exc
-        code = str(supplier_code or "").strip()
-        store = str(supplier_store or "").strip()
-        if not code or not store:
-            raise InvoicePostingValidationError("Informe código e loja do fornecedor.")
-        supplier = self._suppliers.get_supplier(supplier_code=code, supplier_store=store)
-        items = self._purchase_orders.list_open_purchase_orders_by_supplier(
-            branch_code=branch,
-            supplier_code=code,
-            supplier_store=store,
-        )
-        groups = group_open_purchase_order_lines(items)
-        order_numbers = {
-            str(group.get("order_number") or "").strip()
-            for group in groups
-            if group.get("order_number")
-        }
-        return {
-            "branch_code": branch,
-            "supplier_code": code,
-            "supplier_store": store,
-            "supplier_name": None if supplier is None else supplier.get("supplier_name"),
-            "order_count": len(order_numbers),
-            "group_count": len(groups),
-            "item_count": len(items),
-            "groups": groups,
-            "linked": [],
-        }
-
-
-def normalize_wanted_purchase_order_groups(
-    *,
-    groups: list[dict[str, Any]] | None,
-    order_number: str | None = None,
-    delivery_date: str | None = None,
-) -> list[dict[str, Any]]:
-    raw_groups: list[dict[str, Any]]
-    if groups is not None:
-        raw_groups = list(groups)
-    elif order_number is not None:
-        raw_groups = [{"order_number": order_number, "delivery_date": delivery_date}]
-    else:
-        raise InvoicePostingValidationError("Informe os pedidos de compra a amarrar.")
-
-    wanted: list[dict[str, Any]] = []
-    seen_groups: set[tuple[str, str | None]] = set()
-    for item in raw_groups:
-        number = str(item.get("order_number") or "").strip()
-        if not number:
-            raise InvoicePostingValidationError("Informe o número do pedido de compra.")
-        raw_delivery = item.get("delivery_date")
-        if raw_delivery is not None and str(raw_delivery).strip() == "":
-            raw_delivery = None
-        delivery_key: str | None = None
-        if raw_delivery is not None:
-            parsed = _parse_date(raw_delivery, field="Data de entrega do pedido")
-            delivery_key = parsed.isoformat()
-        group_key = (number, delivery_key)
-        if group_key in seen_groups:
-            raise InvoicePostingValidationError("Pedido de compra informado mais de uma vez.")
-        seen_groups.add(group_key)
-
-        order_items: list[str] = []
-        raw_lines = item.get("lines")
-        if raw_lines is not None:
-            if not isinstance(raw_lines, list):
-                raise InvoicePostingValidationError(
-                    "Campo lines deve ser uma lista de itens do pedido."
-                )
-            seen_items: set[str] = set()
-            for line in raw_lines:
-                if isinstance(line, dict):
-                    order_item = normalize_order_item(line.get("order_item"))
-                else:
-                    order_item = normalize_order_item(line)
-                if not order_item:
-                    raise InvoicePostingValidationError(
-                        "Informe o item (order_item) do pedido de compra."
-                    )
-                if order_item in seen_items:
-                    raise InvoicePostingValidationError(
-                        "Item do pedido informado mais de uma vez."
-                    )
-                seen_items.add(order_item)
-                order_items.append(order_item)
-        wanted.append(
-            {
-                "order_number": number,
-                "delivery_date": delivery_key,
-                "order_items": order_items,
-            }
-        )
-    return wanted
-
-
-def resolve_open_purchase_order_rows(
-    *,
-    wanted: list[dict[str, Any]],
-    open_groups: list[dict[str, Any]],
-    actor_user_id: str,
-    actor_user_name: str,
-    linked_at: datetime | None = None,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Valida a seleção contra os grupos abertos do SC7 e monta o snapshot persistível."""
-    resolved_rows: list[dict[str, Any]] = []
-    moment = linked_at or datetime.now(timezone.utc)
-    for item in wanted:
-        group = find_purchase_order_group(
-            open_groups,
-            order_number=item["order_number"],
-            delivery_date=item["delivery_date"],
-        )
-        if group is None:
-            label = format_linked_po_label(
-                order_number=item["order_number"],
-                delivery_date=item["delivery_date"],
-            )
-            raise InvoicePostingValidationError(
-                "Pedido de compra informado não está aberto para este fornecedor: "
-                f"{label}. Revise a etapa Pedido de compra."
-            )
-        wanted_order_items = item.get("order_items") or []
-        selected_items = select_group_items_by_order_items(
-            group, wanted_order_items or None
-        )
-        if wanted_order_items:
-            found = {
-                normalize_order_item(line.get("order_item")) for line in selected_items
-            }
-            missing = [oi for oi in wanted_order_items if oi not in found]
-            if missing:
-                label = format_linked_po_label(
-                    order_number=item["order_number"],
-                    delivery_date=item["delivery_date"],
-                )
-                raise InvoicePostingValidationError(
-                    "Itens do pedido não estão abertos para este fornecedor "
-                    f"({label}): {', '.join(missing)}. Revise a etapa Pedido de compra."
-                )
-            if not selected_items:
-                raise InvoicePostingValidationError(
-                    "Informe ao menos um item válido do pedido de compra."
-                )
-        if wanted_order_items:
-            aggregates = aggregate_purchase_order_items(selected_items)
-            lines_snapshot = linked_lines_from_items(selected_items)
-        else:
-            aggregates = {
-                "open_value": group.get("open_value"),
-                "product_count": group.get("product_count"),
-                "issue_date": group.get("issue_date"),
-            }
-            lines_snapshot = []
-        issue_raw = aggregates.get("issue_date") or group.get("issue_date")
-        issue_date = (
-            _parse_date(issue_raw, field="Data de emissão do pedido") if issue_raw else None
-        )
-        delivery_key = item["delivery_date"]
-        parsed_delivery = (
-            _parse_date(delivery_key, field="Data de entrega do pedido")
-            if delivery_key
-            else None
-        )
-        resolved_rows.append(
-            {
-                "order_number": group["order_number"],
-                "delivery_date": parsed_delivery,
-                "issue_date": issue_date,
-                "open_value": aggregates.get("open_value"),
-                "product_count": aggregates.get("product_count"),
-                "linked_at": moment,
-                "linked_by_user_id": actor_user_id,
-                "linked_by_name": actor_user_name,
-                "lines": lines_snapshot,
-            }
-        )
-    snapshots = [
-        {
-            "order_number": row["order_number"],
-            "delivery_date": (
-                row["delivery_date"].isoformat()
-                if isinstance(row.get("delivery_date"), date)
-                else row.get("delivery_date")
-            ),
-            "issue_date": (
-                row["issue_date"].isoformat()
-                if isinstance(row.get("issue_date"), date)
-                else row.get("issue_date")
-            ),
-            "open_value": row.get("open_value"),
-            "product_count": row.get("product_count"),
-            "linked_at": (
-                row["linked_at"].isoformat()
-                if isinstance(row.get("linked_at"), datetime)
-                else row.get("linked_at")
-            ),
-            "linked_by_user_id": row.get("linked_by_user_id"),
-            "linked_by_name": row.get("linked_by_name"),
-            "lines": list(row.get("lines") or []),
-        }
-        for row in resolved_rows
-    ]
-    return resolved_rows, snapshots
-
-
 class LinkRequestPurchaseOrderUseCase:
     """Substitui o conjunto de grupos de PC amarrados à solicitação."""
 
@@ -802,7 +506,7 @@ class LinkRequestPurchaseOrderUseCase:
                 "Sem permissão para amarrar pedido de compra."
             )
 
-        wanted = normalize_wanted_purchase_order_groups(
+        wanted = self._normalize_wanted_groups(
             groups=groups,
             order_number=order_number,
             delivery_date=delivery_date,
@@ -814,19 +518,125 @@ class LinkRequestPurchaseOrderUseCase:
         supplier_store = str(current.get("supplier_store") or "").strip()
 
         resolved_rows: list[dict[str, Any]] = []
-        to_snapshots: list[dict[str, Any]] = []
         if wanted:
             items = self._purchase_orders.list_open_purchase_orders_by_supplier(
                 branch_code=branch,
                 supplier_code=supplier_code,
                 supplier_store=supplier_store,
             )
-            resolved_rows, to_snapshots = resolve_open_purchase_order_rows(
-                wanted=wanted,
-                open_groups=group_open_purchase_order_lines(items),
-                actor_user_id=actor.user_id,
-                actor_user_name=actor.user_name,
-            )
+            open_groups = group_open_purchase_order_lines(items)
+            linked_at = datetime.now(timezone.utc)
+            seen: set[tuple[str, str | None]] = set()
+            for item in wanted:
+                key = (item["order_number"], item["delivery_date"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                group = find_purchase_order_group(
+                    open_groups,
+                    order_number=item["order_number"],
+                    delivery_date=item["delivery_date"],
+                )
+                if group is None:
+                    label = format_linked_po_label(
+                        order_number=item["order_number"],
+                        delivery_date=item["delivery_date"],
+                    )
+                    raise InvoicePostingValidationError(
+                        f"Pedido de compra informado não está aberto para este fornecedor: {label}."
+                    )
+
+                wanted_order_items = item.get("order_items") or []
+                selected_items = select_group_items_by_order_items(
+                    group, wanted_order_items or None
+                )
+                if wanted_order_items:
+                    found = {
+                        normalize_order_item(line.get("order_item"))
+                        for line in selected_items
+                    }
+                    missing = [
+                        oi for oi in wanted_order_items if oi not in found
+                    ]
+                    if missing:
+                        label = format_linked_po_label(
+                            order_number=item["order_number"],
+                            delivery_date=item["delivery_date"],
+                        )
+                        raise InvoicePostingValidationError(
+                            "Itens do pedido não estão abertos para este fornecedor "
+                            f"({label}): {', '.join(missing)}."
+                        )
+                    if not selected_items:
+                        raise InvoicePostingValidationError(
+                            "Informe ao menos um item válido do pedido de compra."
+                        )
+
+                # Sem lines no body = grupo inteiro (não persiste filhas).
+                # Com lines = subset; persiste order_items e recalcula agregados.
+                if wanted_order_items:
+                    aggregates = aggregate_purchase_order_items(selected_items)
+                    lines_snapshot = linked_lines_from_items(selected_items)
+                else:
+                    aggregates = {
+                        "open_value": group.get("open_value"),
+                        "product_count": group.get("product_count"),
+                        "issue_date": group.get("issue_date"),
+                    }
+                    lines_snapshot = []
+
+                issue_raw = aggregates.get("issue_date") or group.get("issue_date")
+                issue_date = (
+                    _parse_date(issue_raw, field="Data de emissão do pedido")
+                    if issue_raw
+                    else None
+                )
+                delivery_key = item["delivery_date"]
+                parsed_delivery = (
+                    _parse_date(delivery_key, field="Data de entrega do pedido")
+                    if delivery_key
+                    else None
+                )
+                resolved_rows.append(
+                    {
+                        "order_number": group["order_number"],
+                        "delivery_date": parsed_delivery,
+                        "issue_date": issue_date,
+                        "open_value": aggregates.get("open_value"),
+                        "product_count": aggregates.get("product_count"),
+                        "linked_at": linked_at,
+                        "linked_by_user_id": actor.user_id,
+                        "linked_by_name": actor.user_name,
+                        "lines": lines_snapshot,
+                    }
+                )
+
+        to_snapshots = [
+            {
+                "order_number": row["order_number"],
+                "delivery_date": (
+                    row["delivery_date"].isoformat()
+                    if isinstance(row.get("delivery_date"), date)
+                    else row.get("delivery_date")
+                ),
+                "issue_date": (
+                    row["issue_date"].isoformat()
+                    if isinstance(row.get("issue_date"), date)
+                    else row.get("issue_date")
+                ),
+                "open_value": row.get("open_value"),
+                "product_count": row.get("product_count"),
+                "linked_at": (
+                    row["linked_at"].isoformat()
+                    if isinstance(row.get("linked_at"), datetime)
+                    else row.get("linked_at")
+                ),
+                "linked_by_user_id": row.get("linked_by_user_id"),
+                "linked_by_name": row.get("linked_by_name"),
+                "lines": list(row.get("lines") or []),
+            }
+            for row in resolved_rows
+        ]
 
         label_from = format_linked_po_labels(previous)
         label_to = format_linked_po_labels(to_snapshots)
@@ -894,6 +704,73 @@ class LinkRequestPurchaseOrderUseCase:
                 request_id, actor
             )
         return updated
+
+    @staticmethod
+    def _normalize_wanted_groups(
+        *,
+        groups: list[dict[str, Any]] | None,
+        order_number: str | None,
+        delivery_date: str | None,
+    ) -> list[dict[str, Any]]:
+        raw_groups: list[dict[str, Any]]
+        if groups is not None:
+            raw_groups = list(groups)
+        elif order_number is not None:
+            raw_groups = [
+                {"order_number": order_number, "delivery_date": delivery_date}
+            ]
+        else:
+            raise InvoicePostingValidationError(
+                "Informe os pedidos de compra a amarrar."
+            )
+
+        wanted: list[dict[str, Any]] = []
+        for item in raw_groups:
+            number = str(item.get("order_number") or "").strip()
+            if not number:
+                raise InvoicePostingValidationError(
+                    "Informe o número do pedido de compra."
+                )
+            raw_delivery = item.get("delivery_date")
+            if raw_delivery is not None and str(raw_delivery).strip() == "":
+                raw_delivery = None
+            delivery_key: str | None = None
+            if raw_delivery is not None:
+                parsed = _parse_date(
+                    raw_delivery, field="Data de entrega do pedido"
+                )
+                delivery_key = parsed.isoformat()
+
+            order_items: list[str] = []
+            raw_lines = item.get("lines")
+            if raw_lines is not None:
+                if not isinstance(raw_lines, list):
+                    raise InvoicePostingValidationError(
+                        "Campo lines deve ser uma lista de itens do pedido."
+                    )
+                seen_items: set[str] = set()
+                for line in raw_lines:
+                    if isinstance(line, dict):
+                        order_item = normalize_order_item(line.get("order_item"))
+                    else:
+                        order_item = normalize_order_item(line)
+                    if not order_item:
+                        raise InvoicePostingValidationError(
+                            "Informe o item (order_item) do pedido de compra."
+                        )
+                    if order_item in seen_items:
+                        continue
+                    seen_items.add(order_item)
+                    order_items.append(order_item)
+
+            wanted.append(
+                {
+                    "order_number": number,
+                    "delivery_date": delivery_key,
+                    "order_items": order_items,
+                }
+            )
+        return wanted
 
 
 class UpdateInvoicePostingRequestUseCase:
