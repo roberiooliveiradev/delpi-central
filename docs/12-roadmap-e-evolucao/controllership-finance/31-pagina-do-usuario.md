@@ -67,7 +67,7 @@ Owner de:
 - effective permissions;
 - RBAC.
 
-Contratos já existentes que devem ser revalidados no HEAD da implementação:
+Contratos S2S de leitura já existentes que devem ser revalidados no HEAD da implementação:
 
 ```text
 POST /integrations/directory/users/lookup
@@ -75,6 +75,18 @@ GET  /integrations/directory/users/by-app
 GET  /integrations/person-profiles/{userId}
 GET  /integrations/person-profiles/{userId}/photo
 ```
+
+O **Portal principal Minha DELPI** já é a superfície canônica de autoedição do perfil e usa a Core API diretamente para o usuário autenticado:
+
+```text
+GET    /core-api/me/person-profile
+PATCH  /core-api/me/person-profile
+GET    /core-api/me/person-profile/photo
+PUT    /core-api/me/person-profile/photo
+DELETE /core-api/me/person-profile/photo
+```
+
+No runtime atual, essa superfície permite ao próprio usuário editar **cargo e contatos** e adicionar/trocar/remover a própria foto. Nome e e-mail vêm da conta corporativa e permanecem somente leitura nessa tela.
 
 ### controllership-finance-api
 
@@ -151,7 +163,40 @@ PUT    /users/{userId}/profile/photo
 DELETE /users/{userId}/profile/photo
 ```
 
-Edição de identidade continua no Meu Perfil da Minha DELPI.
+Edição de identidade continua no **Meu Perfil da Minha DELPI**, que já escreve na Core API pelos contratos `/core-api/me/person-profile` e `/core-api/me/person-profile/photo`. O Portal Controladoria & Finanças permanece somente leitura para esses dados.
+
+## Fluxo canônico de leitura e edição
+
+A separação de responsabilidades é obrigatória:
+
+```text
+VISUALIZAÇÃO NO PORTAL CONTROLADORIA & FINANÇAS
+plugins/controllership-finance
+→ controllership-finance-api
+→ Core Directory / Person Profile / Effective Permissions
+→ render read-only
+
+EDIÇÃO DO PRÓPRIO PERFIL
+Portal principal Minha DELPI / Meu Perfil
+→ Core API /core-api/me/person-profile
+→ PATCH cargo/contatos
+→ Core persistence
+
+FOTO DO PRÓPRIO PERFIL
+Portal principal Minha DELPI / Meu Perfil
+→ Core API /core-api/me/person-profile/photo
+→ PUT/DELETE foto
+→ Core avatar storage + metadata
+```
+
+Consequências arquiteturais:
+
+- o botão **Editar no Meu Perfil** sempre sai da superfície de Controladoria e navega para a experiência global da Minha DELPI;
+- `plugins/controllership-finance` não renderiza inputs de cargo/telefone/celular/WhatsApp nem upload de foto;
+- `controllership-finance-api` não implementa proxy de write para esses contratos;
+- não duplicar validação E.164, regras de upload, storage ou self-edit policy no produto;
+- após o usuário editar o perfil global e retornar, a página do Controladoria deve recarregar os dados do Core; não manter cópia persistida localmente;
+- a experiência de Controladoria pode exibir dados atualizados, mas não se torna owner deles.
 
 ## AuthZ
 
@@ -778,8 +823,13 @@ Aceite:
 
 Aceite:
 
-- CTA self abre Meu Perfil da Minha DELPI;
-- não existe write de identidade no controllership-finance-api;
+- CTA self abre o Meu Perfil do Portal principal Minha DELPI;
+- cargo/contatos são editados pelo contrato Core `PATCH /core-api/me/person-profile`;
+- foto é adicionada/trocada/removida pelos contratos Core `/core-api/me/person-profile/photo`;
+- nome/e-mail permanecem conforme a conta corporativa e não são editados no Portal Controladoria & Finanças;
+- não existe write de identidade nem proxy de write no `controllership-finance-api`;
+- o MFE de Controladoria não contém form de edição/upload;
+- ao retornar do Meu Perfil, os dados são recarregados do Core;
 - outro usuário não recebe CTA de edição.
 
 ### RQ-USER-06 — estados honestos
@@ -933,7 +983,8 @@ A sequência é um handoff, não authority superior a contracts/runtime do HEAD.
 A página só está pronta quando:
 
 - D1 e D2 implementadas exatamente;
-- Core permanece owner da identidade;
+- Core permanece owner da identidade, person profile e foto;
+- edição ocorre somente no Portal principal Minha DELPI usando a Core API;
 - nenhuma persistência local de perfil foi criada;
 - BFF autoriza server-side e fail-closed;
 - outro usuário não vaza RBAC;
