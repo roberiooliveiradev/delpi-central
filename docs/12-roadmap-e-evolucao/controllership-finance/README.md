@@ -220,6 +220,18 @@ A cobertura Transforma+, boundaries, handoff P1–P6 e ledger de requisitos est�
 
 Isso permite preparar briefs técnicos página por página. A identidade técnica do produto está congelada como `controllership-finance` + `controllership-finance-api`, com base paths `/apps/controllership-finance` e `/apps/controllership-finance-api`. Storage, schemas físicos, migrations e deployment continuam dependentes de inventário do HEAD.
 
+## FASE A — Design / Documentação Completa
+
+Gate vigente:
+
+```text
+DOCUMENTED != IMPLEMENTED
+```
+
+A ordem e o pacote uniforme de fechamento são canônicos em [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md).
+
+Nenhum `DOCUMENTATION_GATE PASS` anterior ao Page Documentation Gate V2 é autorização ou fechamento final da FASE A; cada página será revalidada na ordem A01–A13.
+
 ## Gate global de revisão
 
 O fechamento documental integral é governado por [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md).
@@ -229,6 +241,7 @@ A fase atual é exclusivamente documental/design/contratos:
 ```text
 PORTAL_REVIEW_PHASE = ACTIVE
 DOCUMENTATION_CLOSURE_PHASE = ACTIVE
+PAGE_DOCUMENTATION_GATE = V2
 DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED = NO
 ```
