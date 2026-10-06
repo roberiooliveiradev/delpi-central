@@ -35,6 +35,8 @@ Detalhes, limites e exemplos de composição: [responsabilidades-transversais.md
 
 Ownership e inventário das regras filhas: [inventario-regras-cursor.md](./inventario-regras-cursor.md).
 
+Padrão visual transversal dos Portais: [padrao-visual-portais-minha-delpi.md](./padrao-visual-portais-minha-delpi.md).
+
 ---
 
 ## Documentos
@@ -44,6 +46,7 @@ Ownership e inventário das regras filhas: [inventario-regras-cursor.md](./inven
 | Instruções arquiteturais oficiais | [instrucoes-oficiais-gpt-arquiteto-delpi-central.md](./instrucoes-oficiais-gpt-arquiteto-delpi-central.md) |
 | Responsabilidades transversais | [responsabilidades-transversais.md](./responsabilidades-transversais.md) |
 | Inventário das regras Cursor | [inventario-regras-cursor.md](./inventario-regras-cursor.md) |
+| Padrão visual dos Portais Minha DELPI | [padrao-visual-portais-minha-delpi.md](./padrao-visual-portais-minha-delpi.md) |
 | Rotas HTTP | [padrao-de-rota.md](./padrao-de-rota.md) |
 | Use cases | [padrao-de-use-case.md](./padrao-de-use-case.md) |
 | Repositories / ports | [padrao-de-repository.md](./padrao-de-repository.md) |
