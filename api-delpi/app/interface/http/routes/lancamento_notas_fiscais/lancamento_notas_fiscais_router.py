@@ -46,6 +46,7 @@ from app.composition.lancamento_notas_fiscais_composer import (
     build_invoice_posting_request_repository,
     build_list_invoice_posting_requests_use_case,
     build_link_request_purchase_order_use_case,
+    build_list_open_purchase_orders_use_case,
     build_list_request_open_purchase_orders_use_case,
     build_post_manual_invoice_posting_request_use_case,
     build_financial_received_invoice_gateway,
@@ -89,6 +90,16 @@ class LinkedInvoiceBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class LinkPurchaseOrderLineBody(BaseModel):
+    order_item: str
+
+
+class LinkPurchaseOrderGroupBody(BaseModel):
+    order_number: str
+    delivery_date: str | None = None
+    lines: list[LinkPurchaseOrderLineBody] | None = None
+
+
 class CreateRequestBody(BaseModel):
     branch_code: str = Field(..., alias="branch")
     document_number: str = Field(..., alias="document")
@@ -101,6 +112,7 @@ class CreateRequestBody(BaseModel):
     received_at: str
     observation: str | None = None
     source: str | None = None
+    linked_purchase_orders: list[LinkPurchaseOrderGroupBody] | None = None
     document_id: str | None = None
     access_key: str | None = None
     provider_entity_id: str | None = None
@@ -145,16 +157,6 @@ class CommentBody(BaseModel):
             seen.add(uid)
             unique.append(uid)
         return unique
-
-
-class LinkPurchaseOrderLineBody(BaseModel):
-    order_item: str
-
-
-class LinkPurchaseOrderGroupBody(BaseModel):
-    order_number: str
-    delivery_date: str | None = None
-    lines: list[LinkPurchaseOrderLineBody] | None = None
 
 
 class LinkPurchaseOrderBody(BaseModel):
@@ -742,6 +744,43 @@ def download_request_fiscal_attachment(request_id: UUID, attachment_type: str):
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )
+
+
+@router.get(
+    "/purchase-orders/open",
+    operation_id="list_lancamento_notas_fiscais_open_purchase_orders",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
+def list_open_purchase_orders(
+    branch: str = Query(...),
+    supplier_code: str = Query(...),
+    supplier_store: str = Query(...),
+):
+    try:
+        branch_error = _gate_payload_branch(branch)
+        if branch_error is not None:
+            return branch_error
+        data = build_list_open_purchase_orders_use_case().execute(
+            actor=_actor(),
+            branch_code=branch,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="list_lancamento_notas_fiscais_open_purchase_orders",
+            message="Pedidos de compra carregados.",
+        )
+    except InvoicePostingError as exc:
+        return _handle_domain(exc)
+    except Exception as exc:
+        log_error(f"Erro ao listar pedidos de compra abertos LNF: {exc}")
+        return error_response(
+            "Erro ao consultar pedidos de compra no Protheus.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=True,
+        )
 
 
 @router.get(
