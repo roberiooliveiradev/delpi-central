@@ -11,6 +11,7 @@ export default defineConfig({
   testDir: "./specs",
   timeout: 60_000,
   retries: 0,
+  globalSetup: "./globalSetup.ts",
   use: {
     baseURL: process.env.BPMN_E2E_BASE_URL ?? "http://localhost",
     trace: "retain-on-failure",

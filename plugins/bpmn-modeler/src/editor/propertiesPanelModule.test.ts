@@ -157,3 +157,101 @@ describe("PopupTitlePtBr", () => {
     expect(() => listener.fn({ element: {} })).not.toThrow();
   });
 });
+
+describe("TextPopupProvider", () => {
+  const TextPopupProvider = propertiesPanelModule.textPopupProvider[1] as any;
+
+  it("registra componente para o tipo `text` com translate injetado", () => {
+    const registrations: { type: string; component: any }[] = [];
+    const feelPopup = {
+      registerProvider(type: string, component: any) {
+        registrations.push({ type, component });
+      },
+    };
+    new TextPopupProvider(feelPopup, translate);
+    expect(registrations).toHaveLength(1);
+    expect(registrations[0].type).toBe("text");
+    const vnode = registrations[0].component({ title: "T", value: "" });
+    expect(vnode).toBeTruthy();
+    // o tooltip hardcoded do vendor sai traduzido via prop do provider
+    const title = vnode.props.children[0];
+    expect(title.props.closeButtonTooltip).toBe("Salvar e fechar");
+  });
+});
+
+describe("PanelChromePtBr", () => {
+  const PanelChromePtBr = propertiesPanelModule.panelChromePtBr[1] as any;
+
+  function makeBus() {
+    const listeners: { event: string; fn: (...a: any[]) => void }[] = [];
+    return {
+      listeners,
+      on(event: string, pOrFn: unknown, fn?: (...a: any[]) => void) {
+        listeners.push({ event, fn: (fn ?? pOrFn) as (...a: any[]) => void });
+      },
+    };
+  }
+
+  function fakeEl(title: string) {
+    const attrs = new Map([["title", title]]);
+    return {
+      getAttribute: (k: string) => attrs.get(k) ?? null,
+      setAttribute: (k: string, v: string) => void attrs.set(k, v),
+      textContent: "x",
+    };
+  }
+
+  function fakePanel(container: unknown) {
+    return { _container: container };
+  }
+
+  it("traduz tooltips EN conhecidas dentro do container do painel", () => {
+    const bus = makeBus();
+    const inside = fakeEl("Open pop-up editor");
+    const container = { querySelectorAll: () => [inside] };
+    new PanelChromePtBr(bus, fakePanel(container));
+
+    const rendered = bus.listeners.find(
+      (l) => l.event === "propertiesPanel.rendered",
+    );
+    expect(rendered).toBeTruthy();
+    rendered!.fn();
+    expect(inside.getAttribute("title")).toBe("Abrir editor ampliado");
+  });
+
+  it("usa o domNode do evento feelPopup.opened (popup fora do container)", async () => {
+    const bus = makeBus();
+    new PanelChromePtBr(bus, fakePanel(null));
+    const listener = bus.listeners.find((l) => l.event === "feelPopup.opened");
+    expect(listener).toBeTruthy();
+
+    const close = fakeEl("Save and close");
+    listener!.fn({ domNode: { querySelectorAll: () => [close] } });
+    // domNode do popup já está commitado quando opened dispara — fix síncrono
+    expect(close.getAttribute("title")).toBe("Salvar e fechar");
+  });
+
+  it("feelPopup.opened também normaliza o placeholder in-panel", async () => {
+    const bus = makeBus();
+    const inside = fakeEl("Open pop-up editor");
+    new PanelChromePtBr(bus, fakePanel({ querySelectorAll: () => [inside] }));
+    bus.listeners
+      .find((l) => l.event === "feelPopup.opened")!
+      .fn({ domNode: null });
+    await Promise.resolve();
+    expect(inside.getAttribute("title")).toBe("Abrir editor ampliado");
+  });
+
+  it("defer de updated agenda microtask, não polling", async () => {
+    const bus = makeBus();
+    const inside = fakeEl("Open pop-up editor");
+    new PanelChromePtBr(bus, fakePanel({ querySelectorAll: () => [inside] }));
+    bus.listeners
+      .find((l) => l.event === "propertiesPanel.updated")!
+      .fn();
+    // ainda não aplicado (microtask pendente)
+    expect(inside.getAttribute("title")).toBe("Open pop-up editor");
+    await Promise.resolve();
+    expect(inside.getAttribute("title")).toBe("Abrir editor ampliado");
+  });
+});

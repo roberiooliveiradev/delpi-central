@@ -195,6 +195,38 @@ test.describe("runtime messages PT-BR", () => {
       await openEditor(page, theme);
       const branding = page.locator(".bjs-powered-by");
       await expect(branding).toHaveCount(1);
+      await expect(branding).toBeVisible();
+
+      // R4: watermark não pode sobrepor/collidir com chrome do editor
+      const geo = await page.evaluate(() => {
+        const rect = (sel: string) =>
+          document.querySelector(sel)?.getBoundingClientRect();
+        const logo = rect(".bjs-powered-by")!;
+        const canvas = rect(".bpmnm-canvas")!;
+        const ctl = rect(".bpmnm-viewport-controls");
+        const side = rect(".bpmnm-side");
+        const overlap = (a: DOMRect, b: DOMRect) =>
+          a.left < b.right &&
+          a.right > b.left &&
+          a.top < b.bottom &&
+          a.bottom > b.top;
+        return {
+          insideCanvas:
+            logo.left >= canvas.left &&
+            logo.right <= canvas.right &&
+            logo.top >= canvas.top &&
+            logo.bottom <= canvas.bottom,
+          overlapsControls: ctl ? overlap(logo, ctl) : false,
+          overlapsSidebar: side ? overlap(logo, side) : false,
+          width: logo.width,
+          height: logo.height,
+        };
+      });
+      expect(geo.insideCanvas).toBe(true);
+      expect(geo.overlapsControls).toBe(false);
+      expect(geo.overlapsSidebar).toBe(false);
+      expect(geo.width).toBeGreaterThan(0);
+
       await shot(page, `canvas-${theme}-branding-attribution`);
       if (theme === "dark") {
         await shot(page, "viewport-controls-after-branding");

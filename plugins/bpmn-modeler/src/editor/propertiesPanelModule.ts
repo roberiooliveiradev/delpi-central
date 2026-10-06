@@ -1,6 +1,7 @@
 import { Group } from "@bpmn-io/properties-panel";
 
 import { bpmnTypeLabel, translate } from "./i18n/translate";
+import { TextPopupPtBr } from "./popups/textPopup";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -94,22 +95,53 @@ function PopupTitlePtBr(this: any, eventBus: any) {
 PopupTitlePtBr.$inject = ["eventBus"];
 
 /**
- * Chrome interno do painel (launcher "Open pop-up editor", placeholder
- * "Opened in editor", títulos de toggle/section): bpmn-js-properties-panel
- * 5.65.1 resolve `translate` via useService nos providers, mas NÃO repassa
- * a prop `translate` aos leaf entries (@bpmn-io/properties-panel usa
- * `translateFallback` quando a prop não chega). Não existe extension point
- * para esses strings — JUSTIFIED_VENDOR_OVERRIDE:
+ * Provider de popup "text" (editor ampliado de textarea): recria o
+ * TextPopup do vendor via componentes exportados (Popup/Popup.Title/
+ * Popup.Body) e traduz o `closeButtonTooltip`, que o vendor hardcoda
+ * como "Save and close" sem prop de tradução.
+ * Extension point oficial: `feelPopup.registerProvider('text', ...)`.
+ */
+function TextPopupProvider(this: any, feelPopup: any, translate: any) {
+  feelPopup.registerProvider("text", (props: any) =>
+    TextPopupPtBr({ ...props, translate }),
+  );
+}
+
+TextPopupProvider.$inject = ["feelPopup", "translate"];
+
+/**
+ * JUSTIFIED_VENDOR_WORKAROUND — chrome residual não traduzível.
  *
- * Um passe único e delimitado após `propertiesPanel.rendered`/`openPopup`
- * traduz title/textContent APENAS quando o valor é exatamente um template
- * EN conhecido do dicionário PT-BR (lookup retorna diferente do input).
- * Sem MutationObserver, sem seletores genéricos de texto, escopo restrito
- * ao container do painel.
+ * Gap provado no vendor instalado (bpmn-js-properties-panel@5.65.1 +
+ * @bpmn-io/properties-panel@3.55.0): os componentes intermediários
+ * (ex.: `ElementDocumentationProperty`) resolvem `translate` via
+ * `useService`, mas chamam os leaf entries (`TextAreaEntry` etc.) como
+ * função com lista fixa de props — `translate` nunca é repassado e o
+ * leaf cai em `translateFallback`. O `{...entry}` spread do renderer
+ * não ajuda: o descriptor recebe a prop, mas o intermediário a ignora.
+ *
+ * Strings afetadas (todas hardcoded no leaf, sem extension point):
+ *   - launcher `title="Open pop-up editor"` (OpenPopupButton);
+ *   - placeholder "Opened in editor" (TextAreaEntry/FeelEntry);
+ *   - tooltip "Save and close" do FeelPopup (não exportado — não dá
+ *     para re-renderizá-lo como fazemos com o TextPopup).
+ *
+ * Delimitação do workaround:
+ *   - só roda em eventos oficiais do vendor (rendered/updated/
+ *     popup open-close/feelPopup.opened);
+ *   - escopo = `propertiesPanel._container` ou o `domNode` entregue
+ *     pelo evento — nenhum seletor global, nenhum MutationObserver,
+ *     nenhum polling;
+ *   - só reescreve `title`/`textContent` cujo valor é exatamente um
+ *     template EN conhecido do dicionário (lookup ≠ input);
+ *   - `queueMicrotask` (não setTimeout/interval): o commit do preact
+ *     é microtask — agendar depois dele é ordenado e único, não polling.
+ *
+ * Remover quando o vendor propagar `translate` aos leafs ou expor
+ * config/prop para essas strings.
  */
 function PanelChromePtBr(this: any, eventBus: any, propertiesPanel: any) {
-  const fix = () => {
-    const root = propertiesPanel?._container as HTMLElement | undefined;
+  const fix = (root?: HTMLElement | null) => {
     if (!root) return;
     for (const el of Array.from(
       root.querySelectorAll<HTMLElement>("[title]"),
@@ -121,31 +153,53 @@ function PanelChromePtBr(this: any, eventBus: any, propertiesPanel: any) {
     for (const el of Array.from(
       root.querySelectorAll<HTMLElement>(
         ".bio-properties-panel-textarea__open-popup-placeholder, " +
-          ".bio-properties-panel-feel-editor__open-popup-placeholder",
+          ".bio-properties-panel-feel-editor__open-popup-placeholder, " +
+          ".bio-properties-panel-feelers-editor__popup-placeholder",
       ),
     )) {
       const pt = translate(el.textContent ?? "");
       if (el.textContent !== pt) el.textContent = pt;
     }
   };
-  eventBus.on("propertiesPanel.rendered", fix);
-  eventBus.on("propertiesPanel.updated", fix);
-  // o placeholder "Opened in editor" aparece quando o popup abre —
-  // o fire chega antes do re-render; agenda para depois do commit DOM.
-  const deferred = () => {
-    setTimeout(fix, 0);
-    requestAnimationFrame(fix);
-  };
-  eventBus.on("propertiesPanel.openPopup", deferred);
+
+  const container = () => propertiesPanel?._container as HTMLElement | null;
+  // commit síncrono do render do vendor
+  eventBus.on("propertiesPanel.rendered", () => fix(container()));
+  // updated/openPopup disparam ANTES do commit interno (microtask do
+  // preact) — agenda o fix para depois dele, uma única vez por evento
+  const deferred = () => queueMicrotask(() => fix(container()));
+  eventBus.on("propertiesPanel.updated", deferred);
   eventBus.on("propertiesPanelPopup.open", deferred);
   eventBus.on("propertiesPanelPopup.close", deferred);
+  // popup FEEL renderiza fora do container do painel: o evento oficial
+  // entrega o próprio domNode já commitado (render() do preact é
+  // síncrono) — fix direto. O field in-panel re-renderiza com o
+  // placeholder "Opened in editor" num listener do vendor cuja ordem
+  // de commit não é garantida: rAF single-shot é a única fronteira
+  // determinística pós-commit (frame boundary, não polling nem timer);
+  // microtask é o fallback para ambientes sem rAF (testes node).
+  const afterCommit =
+    typeof requestAnimationFrame === "function"
+      ? requestAnimationFrame
+      : (f: () => void) => queueMicrotask(f);
+  eventBus.on("feelPopup.opened", (context: any) => {
+    fix(context?.domNode as HTMLElement | undefined);
+    afterCommit(() => fix(container()));
+  });
+  eventBus.on("feelPopup.closed", () => afterCommit(() => fix(container())));
 }
 
 PanelChromePtBr.$inject = ["eventBus", "propertiesPanel"];
 
 export const propertiesPanelModule = {
-  __init__: ["advancedIdProvider", "popupTitlePtBr", "panelChromePtBr"],
+  __init__: [
+    "advancedIdProvider",
+    "popupTitlePtBr",
+    "textPopupProvider",
+    "panelChromePtBr",
+  ],
   advancedIdProvider: ["type", AdvancedIdProvider],
   popupTitlePtBr: ["type", PopupTitlePtBr],
+  textPopupProvider: ["type", TextPopupProvider],
   panelChromePtBr: ["type", PanelChromePtBr],
 };

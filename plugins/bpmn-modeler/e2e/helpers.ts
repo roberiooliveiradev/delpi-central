@@ -1,4 +1,13 @@
-import { test as base, expect, request, type Page } from "@playwright/test";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  test as base,
+  expect,
+  request,
+  type Browser,
+  type Page,
+} from "@playwright/test";
 
 /**
  * Actor matrix (P7 §24). Identidades de teste provisionadas no Keycloak/RBAC
@@ -76,11 +85,99 @@ export async function apiToken(actor: Actor): Promise<string> {
   return (await resp.json()).access_token as string;
 }
 
+/**
+ * Session cache (R2 §13–§14): um login real por (worker, actor) gravado
+ * como storageState imutável em `.auth/worker-{idx}-{actor}.json`.
+ * Cada teste recebe contexto novo a partir do snapshot — isolamento de
+ * cookies/storage entre testes, sem login storm no Keycloak.
+ *
+ * Retry: apenas na fronteira externa (login SSO). MAX 2 tentativas com
+ * backoff curto; falha não é cacheada — o próximo teste pode re-tentar.
+ */
+const AUTH_DIR = join(dirname(fileURLToPath(import.meta.url)), ".auth");
+const AUTH_MAX_ATTEMPTS = 2;
+const AUTH_BACKOFF_MS = 1_500;
+const authStates = new Map<Actor, Promise<string>>();
+
+async function captureAuthState(
+  browser: Browser,
+  actor: Actor,
+  file: string,
+): Promise<string> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= AUTH_MAX_ATTEMPTS; attempt++) {
+    const context = await browser.newContext();
+    try {
+      const page = await context.newPage();
+      await loginAs(page, actor);
+      mkdirSync(AUTH_DIR, { recursive: true });
+      await context.storageState({ path: file });
+      return file;
+    } catch (error) {
+      lastError = error;
+      if (attempt < AUTH_MAX_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, AUTH_BACKOFF_MS));
+      }
+    } finally {
+      await context.close();
+    }
+  }
+  throw lastError;
+}
+
+function ensureAuthState(
+  browser: Browser,
+  actor: Actor,
+  workerIndex: number,
+): Promise<string> {
+  const file = join(AUTH_DIR, `worker-${workerIndex}-${actor}.json`);
+  if (existsSync(file)) return Promise.resolve(file);
+  let pending = authStates.get(actor);
+  if (!pending) {
+    pending = captureAuthState(browser, actor, file);
+    authStates.set(actor, pending);
+    // falha transitória não é permanentemente cacheada
+    pending.catch(() => authStates.delete(actor));
+  }
+  return pending;
+}
+
 export const test = base.extend<{ actor: Actor }>({
   actor: ["editor", { option: true }],
-  page: async ({ page, actor }, use) => {
-    await loginAs(page, actor);
+  page: async ({ browser, actor }, use, testInfo) => {
+    if (actor === "none") {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await use(page);
+      await context.close();
+      return;
+    }
+    let state = await ensureAuthState(browser, actor, testInfo.workerIndex);
+    let context = await browser.newContext({ storageState: state });
+    let page = await context.newPage();
+    // warm-up: snapshot começa em about:blank onde localStorage é negado;
+    // navegar ao portal garante origem válida antes do teste
+    await page.goto("/");
+    // self-healing: sessão persistida pode estar stale (IdP restart,
+    // refresh expirado) — o portal redireciona a /login via JS logo após
+    // o boot. Settle curto cobre o redirect; recaptura 1x se cair em login.
+    await page.waitForTimeout(1_200);
+    const landedLogin = page.url().includes("/login");
+    if (landedLogin) {
+      const stale = join(
+        AUTH_DIR,
+        `worker-${testInfo.workerIndex}-${actor}.json`,
+      );
+      authStates.delete(actor);
+      rmSync(stale, { force: true });
+      await context.close();
+      state = await ensureAuthState(browser, actor, testInfo.workerIndex);
+      context = await browser.newContext({ storageState: state });
+      page = await context.newPage();
+      await page.goto("/");
+    }
     await use(page);
+    await context.close();
   },
 });
 
