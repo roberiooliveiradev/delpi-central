@@ -22,6 +22,12 @@ Cobrir package version, finalize, reopen, recipient packages, partial send, clar
 ### P6
 Cobrir draft/publish/effective_from, snapshot immutability, inactivation, catalogs, audit e permission.
 
+### Minhas tarefas
+
+Cobrir `TaskWorkspacePage`, TaskProjection self-only, producers P2/P4 e P5 conditional, ação `Abrir` owner, ausência de task entity livre, ausência de team scope/SLA global, partial coverage, URL/F5, integração com Home/Sala, light/dark/mobile/a11y e Help.
+
+Fonte detalhada: [27-minhas-tarefas.md](./27-minhas-tarefas.md).
+
 ### Sala de interação
 
 Cobrir full-page `InteractionRoomPage`, contexto obrigatório, resolve idempotente, AuthZ por recurso, message policy, attachments, mentions, reply/reactions/pins, realtime degradável, notifications canônicas, deep links, light/dark/mobile/a11y e Help.
@@ -86,7 +92,11 @@ Testar:
 - tentativa de contornar state machine;
 - usuário sem ACCESS consultando perfil;
 - target fora do Portal;
-- exposição de permissions/capabilities de outro usuário.
+- exposição de permissions/capabilities de outro usuário;
+- tentativa de listar tarefas de outro usuário;
+- task projection sem responsabilidade individual;
+- source indisponível interpretada como fila vazia;
+- pendingSince tratado como SLA/overdue.
 
 ## Experiência
 
