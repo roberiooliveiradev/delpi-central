@@ -25,6 +25,17 @@ Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, 
 
 O plano obrigatório de fechamento está em [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md). Antes dos freezes transversais, deve existir `DOCUMENTATION_CLOSURE_COMPLETE = PASS`.
 
+## Interpretação durante a FASE A / Gate V2
+
+A partir do Page Documentation Gate V2:
+
+```text
+DOCUMENTED != IMPLEMENTED
+READY_FOR_IMPLEMENTATION_BRIEF != IMPLEMENTATION_AUTHORIZED
+```
+
+Estados históricos desta tabela representam maturidade documental acumulada. A fila futura só aceita uma página depois de ela ser revalidada no pacote V2 definido no documento 33.
+
 ## Readiness
 
 ### Superfícies da topbar
