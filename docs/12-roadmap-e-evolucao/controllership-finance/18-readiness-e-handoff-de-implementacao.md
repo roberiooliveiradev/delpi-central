@@ -73,9 +73,9 @@ Decisões congeladas:
 
 | Página / slice | Estado | Stop / inventário material |
 |---|---|---|
-| P1 | DOCUMENTATION_GATE_REVIEW_PENDING | visual spec existente; fechar gate explícito/RQ-AC trace antes do freeze |
-| P2 | DOCUMENTATION_GATE_REVIEW_PENDING | visual spec existente; reconciliar TÉO 31.3–31.13 e fechar gate explícito |
-| P3 | DOCUMENTATION_GATE_REVIEW_PENDING / STOP_CONDITION_ON_T03 | visual spec existente; fechar gate explícito mantendo T03 obrigatório para STOCK_CLOSED |
+| P1 | DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-AC/testes documentais fechados; T01/T05 físicos permanecem inventário |
+| P2 | DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | TÉO 31.3–31.13 reconciliado; E05/E06/T02/T05 físicos/seed permanecem inventário |
+| P3 | DOCUMENTATION_GATE BLOCKED_BY_E02 / STOP_CONDITION_ON_T03 | regra pós-STOCK_CLOSED não é suportada pela evidência AS-IS atual; T03 continua obrigatório para owner canônico |
 | P4 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-Ac fechados em 11; T01/T05 permanecem inventários técnicos; não expandir CTL-005 além do fechamento |
 | P5 — pacote/finalização | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-AC fechados em 12; owners/sources e contracts físicos permanecem inventário |
 | P5 — envio real | BLOCKED_WITH_EVIDENCE | Q22 depende E04/T04 |
