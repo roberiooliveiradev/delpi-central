@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -47,6 +59,40 @@ Permitir que um usuário autorizado do Portal:
 4. use canais de contato corporativos disponíveis;
 5. visualize, **somente no próprio perfil**, as capacidades e permission codes efetivos relevantes ao Portal;
 6. edite foto, cargo e contatos pelo **Meu Perfil da Minha DELPI**, sem duplicar ownership no Portal Controladoria & Finanças.
+
+## Família visual canônica
+
+Família:
+
+```text
+PortalUserProfile family
+```
+
+Authority visual:
+- [padrão visual dos Portais Minha DELPI](../11-padroes-de-desenvolvimento/padrao-visual-portais-minha-delpi.md);
+- [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md);
+- full-page pública `createDashboardPortalUserProfilePage`.
+
+Composição:
+
+```text
+TopBar do shell
+→ PagePath
+→ PageHero comfortable
+→ grid Identidade | Atalhos
+→ seção Acesso no Portal (self-only)
+→ estados/feedback
+```
+
+Regras:
+
+- TopBar pertence ao shell/Portal; esta página não recria TopBar;
+- `PagePath` e `PageHero` são owned pela full-page reutilizável;
+- não há filtros, tabela ou master-detail nesta página;
+- claro e escuro usam a mesma árvore e hierarquia;
+- desktop usa grid Identidade | Atalhos; mobile empilha verticalmente;
+- o bloco de acesso é seção de domínio do Portal e só existe no próprio perfil;
+- o perfil observado não altera a navegação/permissions do viewer.
 
 ## Ownership
 
@@ -164,6 +210,80 @@ DELETE /users/{userId}/profile/photo
 ```
 
 Edição de identidade continua no **Meu Perfil da Minha DELPI**, que já escreve na Core API pelos contratos `/core-api/me/person-profile` e `/core-api/me/person-profile/photo`. O Portal Controladoria & Finanças permanece somente leitura para esses dados.
+
+## Contrato de integração TARGET
+
+O contrato da página é **semântico**. Os endpoints do BFF abaixo são TARGET; o BFF ainda não existe em runtime.
+
+### MFE → BFF
+
+```text
+GET /apps/controllership-finance-api/users/{userId}/profile
+GET /apps/controllership-finance-api/users/{userId}/profile/photo
+```
+
+O browser não chama Core nem `api-delpi` diretamente.
+
+### BFF → Core
+
+Bindings físicos hoje PROVEN no Core e que devem ser revalidados no HEAD futuro:
+
+| Necessidade | Owner | Binding atual |
+|---|---|---|
+| effective permissions do viewer | Core / PermissionResolver | `GET /integrations/effective-access/subjects/{keycloakSub}` |
+| confirmar target + membership no app | Core Directory | `POST /integrations/directory/users/lookup` com `app=controllership-finance` |
+| dados complementares do perfil | Core Person Profile | `GET /integrations/person-profiles/{userId}` |
+| foto | Core Person Profile | `GET /integrations/person-profiles/{userId}/photo` |
+
+A resolução de effective access do Core retorna, no contrato atual:
+
+```text
+userId
+keycloakSubject
+permissions
+isSuperadmin
+```
+
+A authority de permissions é o `PermissionResolver`; não há fallback para claims JWT.
+
+### Composição server-side
+
+Fluxo lógico:
+
+```text
+JWT validado
+→ obter subject autenticado
+→ resolver effective access no Core
+→ exigir controllership-finance.access
+→ resolver target no Directory com app membership
+→ carregar Person Profile
+→ compor DTO mínimo do Portal
+→ se self: projetar apenas access/manage do viewer
+→ responder
+```
+
+Regras de degradação:
+
+- effective access indisponível → **fail-closed**, nunca PARTIAL autorizado;
+- target não retornado pelo lookup com app → `404`;
+- Directory necessário à identidade mínima indisponível → `UNAVAILABLE/ERROR`;
+- Directory disponível + Person Profile indisponível → `PARTIAL`;
+- foto ausente com source respondendo → iniciais;
+- foto indisponível por falha downstream → iniciais + degradação não fatal, sem afirmar que foto não existe.
+
+### Erros TARGET do BFF
+
+| Situação | Resultado semântico |
+|---|---|
+| viewer sem ACCESS | 403 |
+| effective permissions não resolvidas | fail-closed / downstream authorization unavailable |
+| target inexistente ou fora do app | 404 |
+| Directory indisponível | UNAVAILABLE/ERROR |
+| Person Profile indisponível com Directory válido | 200 PARTIAL |
+| foto inexistente | fallback de iniciais |
+| foto downstream indisponível | conteúdo principal preservado quando seguro |
+
+Nenhum erro deve vazar token, service token, roles internos, stack, SQL ou detalhes que facilitem enumeração do diretório.
 
 ## Fluxo canônico de leitura e edição
 
@@ -302,7 +422,9 @@ A página deve distinguir:
 ```text
 LOADING
 SUCCESS
+EMPTY
 PARTIAL
+UNAVAILABLE
 ERROR
 FORBIDDEN
 NOT_FOUND
@@ -324,6 +446,16 @@ Campos realmente vazios podem usar:
 Não informado
 ```
 
+### EMPTY
+
+Não é estado normal de um perfil resolvido.
+
+Regras:
+- target não encontrado ou sem membership no app → `NOT_FOUND`, não EMPTY;
+- perfil existente com campos opcionais vazios continua `SUCCESS`;
+- lista vazia não existe nesta página porque ela não é uma listagem/busca de usuários.
+
+
 ### PARTIAL
 
 Exemplo:
@@ -343,6 +475,18 @@ Celular: Não informado
 ```
 
 quando a fonte falhou.
+
+### UNAVAILABLE
+
+Usar quando uma source obrigatória da página não puder produzir conteúdo confiável suficiente.
+
+Casos:
+- Directory/Core indisponível para resolver identidade mínima;
+- authorization dependency indisponível: não renderizar perfil e manter fail-closed;
+- foto isoladamente indisponível **não** torna a página inteira UNAVAILABLE quando identidade mínima permanece confiável.
+
+`UNAVAILABLE != EMPTY != NOT_FOUND`.
+
 
 ### ERROR
 
@@ -396,6 +540,8 @@ import {
   createDashboardSectionCard,
   StatusBadge,
   StateBanner,
+  StateBox,
+  EmptyState,
   LoadingState,
 } from "@delpi/plugin-ui/index";
 ```
@@ -717,12 +863,22 @@ Para outro usuário, remover self chrome e seção de acesso.
 └────────────────────────────────────┘
 ```
 
-## Tema e CSS
+## Light / dark e CSS
 
 Root técnico do Portal:
 
 ```text
 .portal-controllership-finance
+```
+
+Contrato visual:
+
+```text
+SAME DOM
++ SAME COMPONENTS
++ SAME INFORMATION HIERARCHY
++ THEME TOKENS
+= LIGHT / DARK PARITY
 ```
 
 O MFE deve mapear tokens `--delpi-ui-*` no root e manter CSS de componente no kit.
@@ -733,7 +889,21 @@ Não criar override local de:
 .delpi-ui-portal-user-profile*
 ```
 
-Claro/escuro são validados via tokens do Portal, não por duplicação de CSS.
+### Light
+
+- canvas/surfaces conforme tokens do host;
+- PageHero e SectionCards usam chrome do kit;
+- foto/iniciais e badges preservam contraste;
+- links/CTAs usam accent canônico.
+
+### Dark
+
+- mesma árvore e mesma ordem;
+- surfaces/bordas/textos vêm de tokens;
+- nenhum hardcode claro reintroduzido no MFE;
+- foto, fallback de iniciais, `StatusBadge` e banners mantêm contraste.
+
+Não existe CSS alternativo de componente para dark mode dentro do MFE.
 
 ## Acessibilidade
 
@@ -915,6 +1085,63 @@ Aceite:
 - status sem dependência exclusiva de cor;
 - Help sincronizada.
 
+## Scripts e artefatos auxiliares PLANNED
+
+Nenhum item abaixo é implementação da feature. São artefatos planejados para o futuro slice.
+
+### USER-PROFILE-CONTRACT-VALIDATOR
+
+Objetivo futuro:
+- validar o OpenAPI do BFF quando existir;
+- exigir os dois GETs do perfil/foto;
+- reprovar qualquer write de person profile no BFF;
+- validar que o DTO de outro usuário não expõe `permissions`, `capabilities` ou `isSuperadmin`;
+- validar somente os permission codes `controllership-finance.access/manage`.
+
+Estado: `PLANNED / NOT_CREATED`.
+
+### USER-PROFILE-PLUGIN-UI-REUSE-CHECK
+
+Objetivo futuro:
+- verificar import de `createDashboardPortalUserProfilePage`;
+- reprovar clone local de `.delpi-ui-portal-user-profile*`;
+- reprovar CSS de componente do kit no MFE;
+- confirmar imports públicos via `@delpi/plugin-ui/index`.
+
+Estado: `PLANNED / NOT_CREATED`.
+
+### USER-PROFILE-STATE-MATRIX
+
+Casos obrigatórios:
+- LOADING;
+- SUCCESS;
+- EMPTY semanticamente não-normal;
+- PARTIAL;
+- UNAVAILABLE;
+- ERROR;
+- 403;
+- 404;
+- self ACCESS;
+- self ACCESS+MANAGE;
+- outro usuário;
+- foto inexistente;
+- foto indisponível;
+- Person Profile indisponível;
+- effective permission indisponível.
+
+Estado: `PLANNED / DOCUMENTED_IN_THIS_FILE`.
+
+### USER-PROFILE-DEEP-LINK-SMOKE
+
+Objetivo futuro:
+- abrir deep link diretamente;
+- F5;
+- retorno interno seguro;
+- rejeitar open redirect;
+- validar topbar sem item extra.
+
+Estado: `PLANNED / NOT_CREATED`.
+
 ## Evidência exigida na implementação
 
 O report do Cursor deve incluir:
@@ -944,30 +1171,46 @@ NEXT STEP
 
 Smoke federado não executado quando material = `INCONCLUSIVE`, nunca PASS inferido.
 
-## Gate para implementação
-
-Antes do diff runtime:
+## Gate documental V2
 
 ```text
-HEAD reancorado
-AND foundation do MFE/BFF existente ou explicitamente autorizada no mesmo slice
-AND Core contracts revalidados no HEAD
-AND effective permission adapter definido fail-closed
-AND app membership lookup comprovado
-AND plugin-ui full-page export revalidado
-AND RQ-USER-01..09 selecionados
-AND Help incluída no mesmo gate
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-Se qualquer premissa acima mudar materialmente:
+Resultado:
 
 ```text
-EXECUTION_DRIFT
-→ STOP
-→ não adaptar silenciosamente
+A01 PÁGINA DO USUÁRIO
+= READY_FOR_IMPLEMENTATION_BRIEF
+!= IMPLEMENTED
 ```
 
-## Sequência sugerida de implementação
+Inventários físicos que permanecem para o futuro brief:
+- revalidar Core contracts no HEAD futuro;
+- definir adapter efetivo de AuthZ do BFF;
+- materializar OpenAPI;
+- materializar route/component no MFE;
+- executar testes/smokes reais.
+
+Nenhum desses inventories reabre D1/D2 sem evidência incompatível.
+
+## Handoff futuro de implementação — NÃO ATIVO
+
 
 ```text
 UP.S1 — BFF read-only profile composition + AuthZ + contract tests
