@@ -165,6 +165,16 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 - integração obrigatória;
 - experiência central da página.
 
+## Progresso Gate V2
+
+| Etapa | Página | Estado |
+|---|---|---|
+| A01 | Página do usuário | **PASS / READY_FOR_IMPLEMENTATION_BRIEF** |
+| A02 | Início | **IN_REVIEW** |
+| A03–A13 | Demais páginas | PENDING_V2_REVALIDATION |
+
+A01 está apenas na fila futura. Runtime permanece inexistente.
+
 ## Inventário completo de superfícies V1
 
 ### Navegação e superfícies comuns
