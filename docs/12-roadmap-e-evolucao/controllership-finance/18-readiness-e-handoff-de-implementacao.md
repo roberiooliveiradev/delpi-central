@@ -73,7 +73,7 @@ Decisões congeladas:
 | P2 | READY_FOR_IMPLEMENTATION_INVENTORY | E05/E06, T02 e T05 conforme slice |
 | P3 | READY_WITH_STOP_CONDITION_ON_T03 | T01 para bindings; T03 obrigatório para STOCK_CLOSED |
 | P4 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-Ac fechados em 11; T01/T05 permanecem inventários técnicos; não expandir CTL-005 além do fechamento |
-| P5 — pacote/finalização | READY_FOR_IMPLEMENTATION_INVENTORY | owners/sources aplicáveis |
+| P5 — pacote/finalização | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-AC fechados em 12; owners/sources e contracts físicos permanecem inventário |
 | P5 — envio real | BLOCKED_WITH_EVIDENCE | Q22 depende E04/T04 |
 | P6 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | contrato de página em 28; inventories ADM01–ADM07/E01/E05/E06/T02 conforme slice |
 
