@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -52,6 +64,20 @@ Administração **não** é:
 - envio de pacote.
 
 ---
+
+## Owners
+
+| Capability/dado | Owner |
+|---|---|
+| templates/catálogos próprios do produto | `controllership-finance-api` |
+| audit de writes próprios | `controllership-finance-api` |
+| effective permissions | Core |
+| identities / people lookup / app access | Core |
+| notification delivery | capability Minha DELPI |
+| regras operacionais consumidas pelo template | owner funcional correspondente |
+| UI/chrome | MFE + `@delpi/plugin-ui` |
+
+A Administração pode persistir referências estáveis a pessoas e configurações próprias, mas não absorve identidade, RBAC, regra TOTVS ou delivery infrastructure.
 
 ## Permission model
 
@@ -769,6 +795,26 @@ Não usar log comum de infraestrutura como única auditoria de negócio.
 
 ---
 
+## Boundary de integração TARGET
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → Core (effective permissions / people)
+   → Minha DELPI notifications
+   → persistence própria futura do produto
+```
+
+O MFE não chama Core nem notification provider diretamente.
+
+Regras:
+- todo write administrativo passa pela BFF;
+- BFF revalida MANAGE server-side;
+- references de usuário são resolvidas pelo Core;
+- notification target é configuração lógica, não endpoint SMTP;
+- schema de catálogo é server-owned/registry-owned, não enviado livremente pelo frontend;
+- optimistic concurrency será binding físico futuro, mas stale write já é comportamento contratual.
+
 ## Contract surface lógica
 
 Os nomes físicos finais entram no OpenAPI futuro.
@@ -849,6 +895,17 @@ Painel pode degradar por seção:
 - um catálogo auxiliar indisponível.
 
 Writes na capability afetada ficam desabilitados/fail-closed.
+
+### UNAVAILABLE
+
+Usar quando a capability necessária à subárea não está disponível com segurança.
+
+Exemplos:
+- Core people lookup indisponível em um formulário que exige seleção de pessoa;
+- notification capability indisponível para configuração que depende de validação remota;
+- storage/config repository indisponível.
+
+Não converter UNAVAILABLE em lista vazia nem permitir write baseado em opções incompletas.
 
 ### VALIDATION_ERROR
 - campo/regra inválida;
@@ -1206,38 +1263,36 @@ Nenhum desses inventários reabre as decisões de produto deste documento.
 
 ---
 
-## Gate
+## Gate documental V2
 
 ```text
-VISUAL_FAMILY_DEFINED       = PASS
-INFORMATION_ARCHITECTURE    = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
-PERMISSION_MODEL_DEFINED    = PASS
-TEMPLATE_LIFECYCLE_DEFINED  = PASS
-SNAPSHOT_RULE_DEFINED       = PASS
-CATALOG_MODEL_DEFINED       = PASS
-IDENTITY_BOUNDARY_DEFINED   = PASS
-NOTIFICATION_BOUNDARY       = PASS
-EFFECTIVE_DATE_DEFINED      = PASS
-INACTIVATION_DEFINED        = PASS
-CONCURRENCY_BEHAVIOR        = PASS
-AUDIT_DEFINED               = PASS
-DEEP_LINK_DEFINED           = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
-MOBILE_DEFINED              = PASS
 A11Y_DEFINED                = PASS
-RQ_AC_TEST_MATRIX_DEFINED   = PASS
-HELP_CONTRACT_DEFINED       = PASS
-IMPLEMENTATION              = NOT_AUTHORIZED
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-Estado:
+Inventários ADM01–ADM07 permanecem físicos/seed/integration para futuro brief.
+
+Resultado:
 
 ```text
-ITEM 6 = READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+A06 ADMINISTRAÇÃO
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
 ```
-
----
 
 ## Resultado esperado
 
