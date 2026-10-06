@@ -16,10 +16,14 @@ O pacote funcional de implementação está organizado em:
 
 ```text
 PORTAL_REVIEW_PHASE = ACTIVE
+DOCUMENTATION_CLOSURE_PHASE = ACTIVE
+DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
 Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, não autorização de execução. Nenhum diff runtime deve começar antes do fechamento da revisão de todas as páginas e de um `PORTAL_DESIGN_FREEZE = PASS` explícito.
+
+O plano obrigatório de fechamento está em [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md). Antes dos freezes transversais, deve existir `DOCUMENTATION_CLOSURE_COMPLETE = PASS`.
 
 ## Readiness
 
@@ -69,9 +73,9 @@ Decisões congeladas:
 
 | Página / slice | Estado | Stop / inventário material |
 |---|---|---|
-| P1 | READY_FOR_IMPLEMENTATION_INVENTORY | T01 para bindings; T05 para effective permissions/AuthZ |
-| P2 | READY_FOR_IMPLEMENTATION_INVENTORY | E05/E06, T02 e T05 conforme slice |
-| P3 | READY_WITH_STOP_CONDITION_ON_T03 | T01 para bindings; T03 obrigatório para STOCK_CLOSED |
+| P1 | DOCUMENTATION_GATE_REVIEW_PENDING | visual spec existente; fechar gate explícito/RQ-AC trace antes do freeze |
+| P2 | DOCUMENTATION_GATE_REVIEW_PENDING | visual spec existente; reconciliar TÉO 31.3–31.13 e fechar gate explícito |
+| P3 | DOCUMENTATION_GATE_REVIEW_PENDING / STOP_CONDITION_ON_T03 | visual spec existente; fechar gate explícito mantendo T03 obrigatório para STOCK_CLOSED |
 | P4 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-Ac fechados em 11; T01/T05 permanecem inventários técnicos; não expandir CTL-005 além do fechamento |
 | P5 — pacote/finalização | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-AC fechados em 12; owners/sources e contracts físicos permanecem inventário |
 | P5 — envio real | BLOCKED_WITH_EVIDENCE | Q22 depende E04/T04 |
