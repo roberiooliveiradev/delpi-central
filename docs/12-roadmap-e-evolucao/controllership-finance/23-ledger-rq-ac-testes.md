@@ -114,6 +114,19 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-HOME-07 | favoritos sincronizam estrela e TopBar | falha save faz rollback; persistência física somente após H01 | positive + backend failure + stale | H01 | TO_INVENTORY |
 | RQ-HOME-08 | Home preserva light/dark/mobile/a11y | mesmos componentes/tokens; teclado/foco; estado não só por cor | visual/a11y | plugin-ui | TARGET |
 | RQ-HOME-09 | Help explica Home | Home vs Overview, eventos, busca, recentes e favoritos documentados quando runtime existir | help sync | feature-help-sync | TARGET |
+| RQ-TASK-01 | Minhas tarefas usa workspace comum | `TaskWorkspacePage` + task primitives; zero clone/CSS local | visual/component + mobile/dark | plugin-ui + 27 | TARGET |
+| RQ-TASK-02 | TaskProjection não é task entity | sem create/edit/complete/cancel/defer/reassign genérico; owner state não é copiado | architecture + negative | D-TASK-01/02 | TARGET |
+| RQ-TASK-03 | worklist é self-only | `/me/tasks`; sem user selector/team scope; MANAGE não implica team | permission/privacy negative | Core + D-TASK-03 | TARGET |
+| RQ-TASK-04 | producer exige responsabilidade individual | P2/P4 governados; P5 conditional; blocker/mention sozinho não gera task | positive + sibling + negative | TSK01 | TARGET |
+| RQ-TASK-05 | ação V1 abre owner | deep link seguro; owner reautoriza; nenhuma ação de negócio local | navigation + stale item | TSK03 | TARGET |
+| RQ-TASK-06 | sem SLA global | sem Atrasadas/Hoje/Depois; due/overdue só owner-provided; pendingSince factual | negative due/SLA | D-TASK-04 | TARGET |
+| RQ-TASK-07 | partial coverage é honesta | source failure preserva siblings; count não parece total; empty só COMPLETE | partial + source failure | TSK04 | TARGET |
+| RQ-TASK-08 | filtros são shareable | source/competence/q em URL; F5; sem user override/open redirect | URL roundtrip + negative | TSK03 | TARGET |
+| RQ-TASK-09 | Home reusa a mesma projeção | summary/count seguem coverage; nenhuma regra duplicada | contract sibling | Home H02 | TARGET |
+| RQ-TASK-10 | Sala não cria task na V1 | `onCreateTask` oculto; message/mention não geram TaskProjection | interaction negative | D-TASK-07 | TARGET |
+| RQ-TASK-11 | light/dark/mobile/a11y seguem kit | mesmos componentes/tokens; teclado/foco; tabela responsiva | visual/a11y | plugin-ui/TSK05 | TARGET |
+| RQ-TASK-12 | Help sincronizada | explica projection/owner/no-SLA/no-free-task e só producers implementados | help sync | feature-help-sync | TARGET |
+
 | RQ-ROOM-01 | Sala usa full-page comum | `InteractionRoomPage` como canvas; zero clone local | visual/component + mobile/dark | plugin-ui + 26 | TARGET |
 | RQ-ROOM-02 | Sala é sempre contextual | sem wall/global room/criação livre; somente context registry | positive + invalid context negative | context registry | TARGET |
 | RQ-ROOM-03 | uma sala por contexto | resolve idempotente; concorrência não duplica; título derivado | concurrency + contract | persistence future | TARGET |
@@ -124,7 +137,7 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-ROOM-08 | mentions respeitam acesso | suggestion server-side; target permitido; mention não concede scope | privacy/resource negative | Core directory + context | TARGET |
 | RQ-ROOM-09 | realtime é degradável | transport failure vira banner/partial, não perda total de chat | degraded/reconnect | R03 | TARGET |
 | RQ-ROOM-10 | notifications usam capability canônica | mention notifica; sem SMTP/preferences local | integration negative | R04/T02 | TARGET |
-| RQ-ROOM-11 | criar tarefa aguarda Item 5 | action oculta até task contract; task owner fica fora da Sala | route/action negative | Item 5/R06 | PLANNED |
+| RQ-ROOM-11 | criar tarefa não existe na V1 | `onCreateTask` oculto; message/mention não geram TaskProjection | interaction negative | Item 5 / D-TASK-07 | TARGET |
 | RQ-ROOM-12 | Help sincronizada | contexto, mensagem vs ação, attachments, mentions, edit/delete explicados no runtime | help sync | feature-help-sync | TARGET |
 
 | RQ-OVW-01 | Visão geral usa Overview family comum | Hero compacto + período/filtros + KPI grid + charts | visual/component + mobile/dark | plugin-ui + 25 | TARGET |
@@ -138,7 +151,6 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-OVW-09 | light/dark/mobile/a11y seguem padrão comum | mesma ordem/DOM conceitual, tokens e teclado/foco | visual/a11y | plugin-ui | TARGET |
 | RQ-OVW-10 | Ajuda acompanha indicadores aprovados | significado/fórmula/source/freshness/deep links sincronizados | help sync | feature-help-sync | TARGET |
 | RQ-INT-01 | Sala de interação é contextual e não muda estado de negócio por mensagem | mensagem/comentário não valida, aprova, fecha estoque ou envia pacote | positive + resource negative | interaction contract inventory | CONTRACT_INVENTORY_REQUIRED |
-| RQ-TASK-01 | Minhas tarefas projeta responsabilidades dos owners | concluir tarefa usa o caso de uso owner; source indisponível não vira empty | positive + partial + sibling | producer/projection inventory | PROJECTION_CONTRACT_REQUIRED |
 | RQ-ADM-01 | Administração usa somente MANAGE | usuário apenas ACCESS não altera mestre; MANAGE não implica ACCESS operacional | positive + permission negative | Core effective permissions | TARGET |
 | RQ-HELP-01 | Ajuda acompanha toda mudança user-facing | conteúdo/deep links sincronizados no mesmo gate da feature | help sync + link check | feature-help-sync | TARGET |
 | RQ-AUTHZ-01 | permissions do Portal são somente access e manage | nenhum permission code por página, CRUD, filial, unidade ou indicador | manifest/contract review | Core | TARGET |

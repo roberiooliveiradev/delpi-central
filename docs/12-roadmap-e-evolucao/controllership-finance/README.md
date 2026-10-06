@@ -107,7 +107,24 @@ Decisões congeladas:
 - edição própria + soft-delete;
 - chat attachment não vira evidência P2 automaticamente;
 - realtime/storage/retention são inventories técnicos futuros;
-- criar tarefa a partir de mensagem espera Item 5.
+- criar tarefa a partir de mensagem fica fora da V1; evolução futura exige entidade/owner de task explicitamente aprovados.
+
+Implementação permanece não autorizada durante o review global.
+
+## Minhas tarefas
+
+O Item 5 — Minhas tarefas está fechado documentalmente em [27-minhas-tarefas.md](./27-minhas-tarefas.md).
+
+Decisões congeladas:
+- usar `TaskWorkspacePage` e primitives de tasks do `@delpi/plugin-ui`;
+- `TaskProjection` é projeção de trabalho dos owners, não entidade genérica;
+- sem `Nova tarefa`, editor genérico, team scope ou completed bucket na V1;
+- ação V1 é `Abrir` o contexto owner;
+- P2/P4 são producers quando houver responsabilidade individual; P5 é conditional até provar assignee user-centric;
+- sem SLA global; due/overdue só quando o owner fornecer;
+- Home consome a mesma projeção;
+- Sala não cria task genérica na V1;
+- estratégia física de projection permanece inventário técnico.
 
 Implementação permanece não autorizada durante o review global.
 
@@ -147,7 +164,7 @@ A Visão geral é a superfície analítica financeira do Portal. O padrão visua
 
 ## UI kit
 
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md).
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md).
 
 Import runtime canônico para MFE federado:
 

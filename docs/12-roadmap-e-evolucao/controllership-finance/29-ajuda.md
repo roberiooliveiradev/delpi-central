@@ -199,14 +199,34 @@ Conteúdo a publicar somente quando a rota estiver implementada:
 - realtime degradado;
 - como voltar ao contexto owner;
 - limites da IA;
-- criar tarefa a partir de mensagem somente quando Item 5 estiver implementado.
+- criar tarefa a partir de mensagem não existe na V1; eventual evolução exige nova task entity/owner aprovados.
 
 Contrato fonte:
 - [26-sala-de-interacao.md](./26-sala-de-interacao.md)
 
 ### Minhas tarefas
 
-Explicar de onde as tarefas vêm, como navegar ao owner, `pending_since` e ausência de SLA formal.
+Conteúdo a publicar somente quando a rota estiver implementada:
+
+- Minhas tarefas como projeção do trabalho dos owners;
+- diferença entre tarefa, blocker, warning e menção;
+- sources P2/P4 e P5 somente quando seu producer estiver implementado;
+- por que uma responsabilidade aparece para o usuário;
+- busca, filtro por source e competência;
+- `pendingSince` como idade factual, não SLA;
+- prazo/overdue somente quando o owner possuir regra formal;
+- ação `Abrir` e conclusão no contexto owner;
+- ausência de `Nova tarefa`, editor genérico e escopo Equipe na V1;
+- ausência de bucket local `Concluídas`;
+- source unavailable != fila vazia;
+- coverage COMPLETE/PARTIAL;
+- integração com o highlight/preview do Início;
+- Sala de interação não cria task genérica na V1.
+
+Contrato fonte:
+- [27-minhas-tarefas.md](./27-minhas-tarefas.md)
+
+Não publicar capability de producer, team scope ou task entity antes do runtime correspondente.
 
 ### Administração
 
