@@ -150,6 +150,7 @@ def received_fiscal_detail(
     documentType: str = Query("nfse"),
     fileId: str = Query(""),
     accessKey: str = Query(""),
+    providerEntityId: str = Query(""),
 ):
     kind = (documentType or "").strip().lower()
     try:
@@ -169,11 +170,20 @@ def received_fiscal_detail(
                 access_key=accessKey,
             )
             message = "Dados do CT-e carregados."
+        elif kind == "nfe":
+            data = build_received_invoices_service().nfe_detail(
+                resolve_user(request),
+                document_id=document_id,
+                provider_entity_id=providerEntityId,
+                branch_code=branch,
+                access_key=accessKey,
+            )
+            message = "Dados da NF-e carregados."
         else:
             from financial_app.domain.errors import InvalidReceivedInvoiceQuery
 
             return domain_error_response(
-                InvalidReceivedInvoiceQuery("O detalhe estruturado está disponível para NFS-e e CT-e.")
+                InvalidReceivedInvoiceQuery("Tipo de documento fiscal inválido.")
             )
     except Exception as exc:
         mapped = domain_error_response(exc)

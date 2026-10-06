@@ -187,20 +187,31 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         stored_name: str,
         original_name: str,
         size_bytes: int,
+        provider_entity_id: str | None = None,
     ) -> None:
         self.execute(
             f"""
             INSERT INTO {SCHEMA}.invoice_posting_danfe_attachments (
-                request_id, document_id, access_key, stored_name, original_name, size_bytes
-            ) VALUES (%s::uuid, %s, %s, %s, %s, %s)
+                request_id, document_id, access_key, stored_name, original_name, size_bytes,
+                provider_entity_id
+            ) VALUES (%s::uuid, %s, %s, %s, %s, %s, %s)
             """,
-            (request_id, document_id, access_key, stored_name, original_name, size_bytes),
+            (
+                request_id,
+                document_id,
+                access_key,
+                stored_name,
+                original_name,
+                size_bytes,
+                provider_entity_id,
+            ),
         )
 
     def get_danfe_attachment(self, request_id: str) -> dict[str, Any] | None:
         row = self.fetch_one(
             f"""
-            SELECT document_id, access_key, stored_name, original_name, size_bytes
+            SELECT document_id, access_key, stored_name, original_name, size_bytes,
+                   provider_entity_id
               FROM {SCHEMA}.invoice_posting_danfe_attachments
              WHERE request_id = %s::uuid
             """,
@@ -212,6 +223,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             "available": True,
             "document_id": row["document_id"],
             "access_key": row["access_key"],
+            "provider_entity_id": row.get("provider_entity_id"),
             "file_name": row["original_name"],
             "stored_name": row.get("stored_name") or f"{request_id}.pdf",
             "size_bytes": row["size_bytes"],

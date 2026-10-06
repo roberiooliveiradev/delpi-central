@@ -50,6 +50,7 @@ from app.composition.lancamento_notas_fiscais_composer import (
     build_post_manual_invoice_posting_request_use_case,
     build_financial_received_invoice_gateway,
     build_received_invoice_attachment_service,
+    build_received_nfe_item_service,
     build_refresh_invoice_posting_reconciliation_use_case,
     build_resume_invoice_posting_request_use_case,
     build_run_invoice_posting_reconciliation_use_case,
@@ -102,6 +103,7 @@ class CreateRequestBody(BaseModel):
     source: str | None = None
     document_id: str | None = None
     access_key: str | None = None
+    provider_entity_id: str | None = None
     source_branch: str | None = None
     source_document_type: str | None = None
     source_document_id: str | None = None
@@ -191,6 +193,18 @@ def _pdf_response(content: bytes, filename: str, disposition: str) -> Response:
         media_type="application/pdf",
         headers={"Content-Disposition": f'{disposition}; filename="{safe_name}"'},
     )
+
+
+def _nfe_detail_message(data: dict[str, Any]) -> str:
+    state = ""
+    mapping = data.get("productMapping")
+    if isinstance(mapping, dict):
+        state = str(mapping.get("state") or "")
+    if state == "supplier_required":
+        return "Selecione o fornecedor para traduzir os produtos da NF-e."
+    if state == "issuer_mismatch":
+        return "O fornecedor selecionado não corresponde ao emitente da NF-e."
+    return "Itens da NF-e carregados."
 
 
 def _handle_financial(exc: FinancialReceivedInvoiceGatewayError):
@@ -393,6 +407,9 @@ def received_fiscal_detail(
     document_type: str = Query("nfse"),
     file_id: str = Query(""),
     access_key: str = Query(""),
+    provider_entity_id: str = Query(""),
+    supplier_code: str = Query(""),
+    supplier_store: str = Query(""),
 ):
     kind = str(document_type or "").strip().lower()
     gateway = build_financial_received_invoice_gateway()
@@ -414,15 +431,28 @@ def received_fiscal_detail(
                 branch=branch,
             )
             message = "Dados do CT-e carregados."
+        elif kind == "nfe":
+            data = build_received_nfe_item_service().execute(
+                authorization=authorization,
+                document_id=document_id,
+                provider_entity_id=provider_entity_id,
+                access_key=access_key,
+                branch=branch,
+                supplier_code=supplier_code,
+                supplier_store=supplier_store,
+            )
+            message = _nfe_detail_message(data)
         else:
             return error_response(
-                "O detalhe estruturado está disponível para NFS-e e CT-e.",
+                "Tipo de documento fiscal inválido.",
                 status_code=422,
                 code="VALIDATION_ERROR",
                 recoverable=True,
             )
     except FinancialReceivedInvoiceGatewayError as exc:
         return _handle_financial(exc)
+    except InvoicePostingError as exc:
+        return _handle_domain(exc)
     except Exception as exc:
         log_error(f"Erro ao detalhar documento fiscal no lançamento: {type(exc).__name__}")
         return error_response(

@@ -185,6 +185,21 @@ def test_v010_migration_adds_fiscal_attachments_without_touching_danfe() -> None
     assert "DELETE FROM" not in sql.upper()
 
 
+def test_v011_migration_keeps_provider_entity_id_optional() -> None:
+    sql = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "plugins"
+        / PLUGIN_SLUG
+        / "V011__danfe_provider_entity_id.sql"
+    ).read_text(encoding="utf-8")
+    assert "provider_entity_id" in sql
+    assert "ADD COLUMN IF NOT EXISTS provider_entity_id" in sql
+    assert "provider_entity_id IS NULL" in sql
+    assert "DELETE FROM" not in sql.upper()
+    assert "DROP TABLE" not in sql.upper()
+
+
 def test_v008_migration_declares_danfe_attachment() -> None:
     sql = MIGRATION_V008.read_text(encoding="utf-8")
     assert "invoice_posting_danfe_attachments" in sql

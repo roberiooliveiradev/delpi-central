@@ -1,5 +1,5 @@
 import { FilePreviewView, useFilePreviewLoader } from "@delpi/plugin-ui/index";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../../data/api/httpClient";
 import * as api from "../../data/api/invoicePostingApi";
 import type { InvoicePostingDetail } from "../../domain/types";
@@ -12,6 +12,7 @@ import {
 } from "../components/CommentComposer";
 import { CommentMentionText } from "../components/CommentMentionText";
 import { LnfPageHeader } from "../components/LnfPageHeader";
+import { NfeProductMappingPanel, type NfeProductMappingView } from "../components/NfeProductMappingPanel";
 import { ManualPostModal } from "../components/ManualPostModal";
 import { LinkedPurchaseOrderReceipt } from "../components/LinkedPurchaseOrderReceipt";
 import { PurchaseOrdersModal } from "../components/PurchaseOrdersModal";
@@ -48,7 +49,10 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
   const [comment, setComment] = useState("");
   const [commentMentions, setCommentMentions] = useState<MentionSelection[]>([]);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [productMapping, setProductMapping] = useState<NfeProductMappingView>({ status: "loading" });
+  const mappingRequestRef = useRef(0);
   const hasDanfe = Boolean(detail?.danfe);
+  const showNfeItems = detail?.request.fiscal_model === "nfe" && Boolean(detail.danfe?.available);
 
   const danfeSource = useMemo(() => {
     if (!hasDanfe) return null;
@@ -119,6 +123,52 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!showNfeItems || !detail?.danfe) {
+      mappingRequestRef.current += 1;
+      return;
+    }
+    if (!detail.danfe.provider_entity_id) {
+      mappingRequestRef.current += 1;
+      setProductMapping({
+        status: "error",
+        message: "Esta solicitação não guardou o identificador do XML. Os itens ficam disponíveis nas solicitações criadas depois desta atualização.",
+      });
+      return;
+    }
+    const requestSeq = ++mappingRequestRef.current;
+    const controller = new AbortController();
+    setProductMapping({ status: "loading" });
+    api
+      .fetchReceivedNfeItems(
+        detail.danfe.document_id,
+        {
+          providerEntityId: detail.danfe.provider_entity_id,
+          accessKey: detail.danfe.access_key,
+          branch: detail.request.branch_code,
+          supplierCode: detail.request.supplier_code,
+          supplierStore: detail.request.supplier_store,
+        },
+        controller.signal,
+      )
+      .then((nfe) => {
+        if (requestSeq !== mappingRequestRef.current) return;
+        if (nfe.productMapping?.state === "issuer_mismatch") {
+          setProductMapping({ status: "issuer_mismatch", detail: nfe });
+          return;
+        }
+        setProductMapping({ status: "ready", detail: nfe });
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted || requestSeq !== mappingRequestRef.current) return;
+        setProductMapping({
+          status: "error",
+          message: err instanceof Error ? err.message : "Não foi possível traduzir os produtos.",
+        });
+      });
+    return () => controller.abort();
+  }, [showNfeItems, detail]);
 
   async function runAction(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -553,6 +603,8 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
               ) : null}
             </div>
           </section>
+
+          {showNfeItems ? <NfeProductMappingPanel view={productMapping} /> : null}
 
           <LinkedPurchaseOrderReceipt requestId={requestId} request={request} />
         </div>

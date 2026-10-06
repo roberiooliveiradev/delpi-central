@@ -22,6 +22,7 @@ class ReceivedInvoice:
     manifestation_description: str
     danfe_available: bool
     branch_code: str
+    provider_entity_id: str = ""
 
 
 @dataclass(frozen=True)

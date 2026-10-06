@@ -211,6 +211,7 @@ def test_document_id_comes_from_xml_filename_never_from_internal_id() -> None:
 
     assert item.document_id == DOCUMENT_ID
     assert item.document_id != INTERNAL_ID
+    assert item.provider_entity_id == INTERNAL_ID
     assert item.access_key == ACCESS_KEY
     assert item.invoice_number == "22844"
     assert item.series == "1"
@@ -330,7 +331,37 @@ def test_danfe_uses_xml_filename_and_access_key_and_accepts_pdf_magic() -> None:
     assert captured["Id"] == DOCUMENT_ID
     assert captured["Id"] != INTERNAL_ID
     assert captured["chNFe"] == ACCESS_KEY
+    assert "IdEntity" not in captured
     assert payload.startswith(b"%PDF")
+
+
+def test_nfe_xml_download_uses_filename_as_id_and_row_id_as_entity() -> None:
+    auth_calls: list[int] = []
+    captured: dict[str, str] = {}
+    entity_id = "b" * 24
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.startswith("/cliente/transferenciaArquivo/download"):
+            captured["Id"] = request.url.params["Id"]
+            captured["IdEntity"] = request.url.params["IdEntity"]
+            return httpx.Response(
+                200,
+                content=b"<?xml version='1.0'?><nfeProc></nfeProc>",
+                headers={"content-type": "application/xml"},
+            )
+        return _auth_response(request, auth_calls)
+
+    gateway, client = build_gateway(handler)
+    try:
+        payload = gateway.download_nfe_xml(provider_file_id=DOCUMENT_ID, provider_document_id=entity_id)
+    finally:
+        gateway.close()
+        client.close()
+
+    assert captured["Id"] == DOCUMENT_ID
+    assert captured["IdEntity"] == entity_id
+    assert captured["Id"] != captured["IdEntity"]
+    assert payload.startswith(b"<?xml")
 
 
 def test_html_body_is_not_accepted_as_pdf() -> None:

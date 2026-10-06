@@ -32,6 +32,7 @@ class ReceivedFiscalDocument:
     danfe_available: bool = False
     provider_status: str = ""
     provider_file_id: str | None = None
+    provider_entity_id: str = ""
 
 
 @dataclass(frozen=True)

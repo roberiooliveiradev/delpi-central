@@ -7,6 +7,9 @@ from app.application.services.lancamento_notas_fiscais.danfe_storage import (
 from app.application.services.lancamento_notas_fiscais.received_invoice_attachment_service import (
     ReceivedInvoiceAttachmentService,
 )
+from app.application.services.lancamento_notas_fiscais.received_nfe_item_service import (
+    ReceivedNfeItemService,
+)
 from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases import (
     AddInvoicePostingCommentUseCase,
     BlockInvoicePostingRequestUseCase,
@@ -35,6 +38,9 @@ from app.infrastructure.persistence.totvs.invoice_posting_repositories.totvs_inv
 )
 from app.infrastructure.persistence.totvs.invoice_posting_repositories.totvs_invoice_posting_sf1_repository import (
     TotvsInvoicePostingSf1Repository,
+)
+from app.infrastructure.persistence.totvs.invoice_posting_repositories.totvs_supplier_product_mapping_repository import (
+    TotvsSupplierProductMappingRepository,
 )
 from app.infrastructure.persistence.totvs.supplier_repositories.totvs_supplier_repository import (
     TotvsSupplierRepository,
@@ -66,6 +72,14 @@ def build_create_invoice_posting_request_use_case() -> CreateInvoicePostingReque
 
 def build_financial_received_invoice_gateway() -> FinancialReceivedInvoiceGateway:
     return FinancialReceivedInvoiceGateway()
+
+
+def build_received_nfe_item_service() -> ReceivedNfeItemService:
+    return ReceivedNfeItemService(
+        gateway=build_financial_received_invoice_gateway(),
+        suppliers=build_supplier_repository(),
+        mappings=TotvsSupplierProductMappingRepository(),
+    )
 
 
 def build_received_invoice_attachment_service() -> ReceivedInvoiceAttachmentService:
