@@ -84,7 +84,7 @@ Decisões congeladas:
 
 | Página / slice | Estado | Stop / inventário material |
 |---|---|---|
-| P1 | DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-AC/testes documentais fechados; T01/T05 físicos permanecem inventário |
+| P1 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A08 fechado; T01/T05 e contracts físicos de composição permanecem inventário |
 | P2 | DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | TÉO 31.3–31.13 reconciliado; E05/E06/T02/T05 físicos/seed permanecem inventário |
 | P3 | DOCUMENTATION_GATE BLOCKED_BY_E02 / STOP_CONDITION_ON_T03 | regra pós-STOCK_CLOSED não é suportada pela evidência AS-IS atual; T03 continua obrigatório para owner canônico |
 | P4 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-Ac fechados em 11; T01/T05 permanecem inventários técnicos; não expandir CTL-005 além do fechamento |
