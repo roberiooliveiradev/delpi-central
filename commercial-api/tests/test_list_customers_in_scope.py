@@ -216,3 +216,135 @@ def test_use_case_unrestricted_unions_all_portfolios() -> None:
     payload = use_case.execute(scope)
     codes = {item["customer_code"] for item in payload["items"]}
     assert codes == {"1", "2"}
+
+
+_CASSIO_PORTFOLIO_ID = "8b21cee0-b470-4ac6-b900-733580c3ef76"
+
+
+def _cassio_portfolio() -> SellerPortfolio:
+    return SellerPortfolio(
+        id=_CASSIO_PORTFOLIO_ID,
+        user_id="cassio",
+        display_name="Carteira NN - Cassio",
+        active=True,
+        customers=(
+            SellerCustomerAssignment("000198", "1", "FAMAC INDUSTRIA DE MAQUINAS LTDA"),
+            SellerCustomerAssignment("000204", "01", "AHT COOLING SYSTEMS"),
+            SellerCustomerAssignment("000300", "01", "CLIENTE BLOQUEADO"),
+        ),
+    )
+
+
+def _exact_sa1_eligibility():
+    """SA1 casa A1_COD + A1_LOJA por igualdade exata (como o enrichment)."""
+    from commercial_app.domain.ports.customer_eligibility_port import (
+        CustomerEligibility,
+        CustomerEligibilityPort,
+    )
+
+    sa1 = {
+        ("000198", "1"): CustomerEligibility(exists=True, active=True),
+        ("000204", "01"): CustomerEligibility(exists=True, active=True),
+        ("000300", "01"): CustomerEligibility(exists=True, active=False),
+    }
+
+    class _ExactSa1(CustomerEligibilityPort):
+        def __init__(self) -> None:
+            self.requested: list[tuple[str, str]] = []
+
+        def lookup(self, customers):
+            self.requested.extend(customers)
+            return {key: sa1[key] for key in customers if key in sa1}
+
+    return _ExactSa1()
+
+
+def _cassio_use_case(eligibility):
+    repo = MagicMock()
+    repo.list_portfolios.return_value = [_cassio_portfolio()]
+    repo.list_by_user_id.return_value = [_cassio_portfolio()]
+    repo.get_by_id.return_value = _cassio_portfolio()
+    metrics = MagicMock()
+    metrics.list_customer_metrics.return_value = [
+        CustomerOpenOrderMetric("000198", "1", "FAMAC", 120.0, True),
+    ]
+    use_case = ListCustomersInScopeUseCase(
+        repository=repo,
+        open_orders_metrics=metrics,
+        customer_eligibility=eligibility,
+    )
+    return repo, metrics, use_case
+
+
+def _assert_cassio_payload(payload) -> None:
+    pairs = {(item["customer_code"], item["customer_store"]) for item in payload["items"]}
+    assert pairs == {("000198", "1"), ("000204", "01")}
+    famac = next(item for item in payload["items"] if item["customer_code"] == "000198")
+    assert famac["open_value"] == 120.0
+    assert famac["has_overdue"] is True
+
+
+def test_unpadded_totvs_store_stays_in_member_scope() -> None:
+    """Regressão FAMAC: loja SA1 `1` não vira `01` antes do allowlist/SA1."""
+    from commercial_app.application.services.resolve_commercial_customer_scope_service import (
+        ResolveCommercialCustomerScopeService,
+    )
+
+    eligibility = _exact_sa1_eligibility()
+    repo, metrics, use_case = _cassio_use_case(eligibility)
+    scope = ResolveCommercialCustomerScopeService(repo).execute(
+        user_id="cassio",
+        unrestricted=False,
+    )
+
+    _assert_cassio_payload(use_case.execute(scope))
+    assert ("000198", "1") in eligibility.requested
+    assert ("000198", "01") not in eligibility.requested
+    called_keys = metrics.list_customer_metrics.call_args[0][0]
+    assert ("000198", "1") in called_keys
+    assert ("000300", "01") not in called_keys
+
+
+def test_unpadded_totvs_store_stays_with_portfolio_filter() -> None:
+    """seller_id/portfolio_id da carteira (membro e team/manage) mantém `000198/1`."""
+    from commercial_app.application.services.resolve_commercial_customer_scope_service import (
+        ResolveCommercialCustomerScopeService,
+    )
+
+    for unrestricted in (False, True):
+        eligibility = _exact_sa1_eligibility()
+        repo, _metrics, use_case = _cassio_use_case(eligibility)
+        scope = ResolveCommercialCustomerScopeService(repo).execute(
+            user_id="cassio",
+            unrestricted=unrestricted,
+            portfolio_ids=[_CASSIO_PORTFOLIO_ID],
+        )
+        _assert_cassio_payload(use_case.execute(scope))
+        assert ("000198", "01") not in eligibility.requested
+
+
+def test_unpadded_totvs_store_stays_in_unrestricted_union() -> None:
+    eligibility = _exact_sa1_eligibility()
+    _repo, _metrics, use_case = _cassio_use_case(eligibility)
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    _assert_cassio_payload(use_case.execute(scope))
+
+
+def test_service_returns_exact_store_and_matches_metric_by_coverage() -> None:
+    """Saída preserva a loja TOTVS; métrica casa `1`/`01` como cobertura."""
+    service = ListCustomersInScopeService()
+    result = service.build(
+        [
+            SellerCustomerAssignment("000198", "1", "FAMAC"),
+            SellerCustomerAssignment("000269", "01", "KOMGROUP"),
+        ],
+        [
+            CustomerOpenOrderMetric("000198", "1", "FAMAC", 50.0, False),
+            CustomerOpenOrderMetric("000269", "1", "KOMGROUP", 70.0, False),
+        ],
+    )
+    by_code = {item.customer_code: item for item in result.items}
+    assert by_code["000198"].customer_store == "1"
+    assert by_code["000198"].open_value == 50.0
+    assert by_code["000269"].customer_store == "01"
+    assert by_code["000269"].open_value == 70.0

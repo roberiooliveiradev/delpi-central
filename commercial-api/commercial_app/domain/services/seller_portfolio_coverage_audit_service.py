@@ -42,7 +42,13 @@ def normalize_customer_store(store: str) -> str:
 
 
 def customer_coverage_key(code: str, store: str) -> tuple[str, str]:
+    """Equivalência de cobertura (`1` ≡ `01`). Não usar para consultar a SA1."""
     return (_normalize(code), normalize_customer_store(store))
+
+
+def customer_identity_key(code: str, store: str) -> tuple[str, str]:
+    """Identidade exata TOTVS (`A1_COD`, `A1_LOJA`): só trim, sem padding."""
+    return (_normalize(code), _normalize(store))
 
 
 class SellerPortfolioCoverageAuditService:

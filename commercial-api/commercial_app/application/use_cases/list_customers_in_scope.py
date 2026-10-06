@@ -21,7 +21,7 @@ from commercial_app.domain.services.list_customers_in_scope_service import (
     ListCustomersInScopeService,
 )
 from commercial_app.domain.services.seller_portfolio_coverage_audit_service import (
-    customer_coverage_key,
+    customer_identity_key,
 )
 
 logger = logging.getLogger("commercial.customers_in_scope")
@@ -55,7 +55,7 @@ class ListCustomersInScopeUseCase:
             return self._to_payload(result)
 
         keys = [
-            customer_coverage_key(item.customer_code, item.customer_store)
+            customer_identity_key(item.customer_code, item.customer_store)
             for item in assignments
         ]
         metrics_available = True
@@ -93,7 +93,7 @@ class ListCustomersInScopeUseCase:
                     assignment
                     for portfolio in portfolios
                     for assignment in portfolio.customers
-                    if customer_coverage_key(
+                    if customer_identity_key(
                         assignment.customer_code, assignment.customer_store
                     )
                     in scope.allowed_customers
@@ -115,7 +115,7 @@ class ListCustomersInScopeUseCase:
         if self._customer_eligibility is None or not assignments:
             return assignments
         keys = [
-            customer_coverage_key(item.customer_code, item.customer_store)
+            customer_identity_key(item.customer_code, item.customer_store)
             for item in assignments
         ]
         eligibility = dict(self._customer_eligibility.lookup(keys))
@@ -134,7 +134,7 @@ class ListCustomersInScopeUseCase:
         seen: set[tuple[str, str, str]] = set()
         out: list[SellerCustomerAssignment] = []
         for assignment in assignments:
-            key = customer_coverage_key(assignment.customer_code, assignment.customer_store)
+            key = customer_identity_key(assignment.customer_code, assignment.customer_store)
             center = str(assignment.customer_center or "").strip()
             identity = (key[0], key[1], center)
             if not key[0] or not key[1] or identity in seen:
