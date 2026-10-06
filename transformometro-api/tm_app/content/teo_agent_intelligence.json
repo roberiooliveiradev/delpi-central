@@ -38,7 +38,7 @@
   },
   "write_flow_mcp": {
     "prepare": "prepare_* valida e sela a mudança (persisted=false) e retorna proposal_handle opaco — PREPARE nunca persiste estado.",
-    "commit": "commit_proposal(proposal_handle, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança (confirmation=true é protocol ack da intenção já expressa — sem Confirma? adicional). confirm_before_act → uma Confirma? explícita do usuário antes do commit. AuthZ backend sempre revalidada.",
+    "commit": "commit_proposal(proposal_handle, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança, sem Confirma? adicional (a flag confirmation, se presente, é compat de transporte — não define a política de negócio). confirm_before_act → mostrar a mudança exata → uma Confirma? explícita do usuário antes do commit. AuthZ backend sempre revalidada.",
     "same_turn": "Mudança tipável pedida neste turno → catalog + prepare + commit (auto_act) ou prepare + Confirma? + commit (confirm_before_act) neste turno.",
     "verify": "Após commit: read-back autoritativo + VERIFY. 2xx técnico ≠ sucesso de negócio."
   },

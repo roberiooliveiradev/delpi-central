@@ -273,7 +273,8 @@ def create_mcp_server() -> MCPServer:
         title="Meeting minute read",
         description=(
             "READ: pending_signatures|audit|versions|participants|signers. "
-            "Writes use prepare/act_meeting_minute_manage."
+            "Writes use prepare_meeting_minute_manage followed by "
+            "commit_proposal per execution_policy."
         ),
         annotations=_annotations("meeting_minute_read", "Meeting minute read"),
         meta=meta,
@@ -350,8 +351,12 @@ def create_mcp_server() -> MCPServer:
             "proposal_handle + exact sealed change. Do NOT use for "
             "business workflows (revision activation, evidence, meeting "
             "minutes, packages, cost adjustment) — use the specialized "
-            "prepare_* tools instead. Material execution only via "
-            "commit_proposal(proposal_handle) after confirmation."
+            "prepare_* tools instead. Material execution via "
+            "commit_proposal(proposal_handle) follows proposal."
+            "execution_policy: auto_act (create/update/duplicate) commits "
+            "immediately — no extra conversational confirmation; "
+            "confirm_before_act (delete) shows the exact change and "
+            "requires one explicit user confirmation first."
         ),
         annotations=_annotations("prepare_record_change", "Prepare record change"),
         meta=meta,
@@ -435,8 +440,9 @@ def create_mcp_server() -> MCPServer:
             "PREPARE only — never persists business state. Validate package "
             "+ AuthZ + proposal_handle. Incomplete packages: ready=false / "
             "act_allowed=false. activate_scenario/recalculate are PREPARE "
-            "simulation flags only — material execution only via "
-            "commit_proposal(proposal_handle) after confirmation."
+            "simulation flags only — execution_policy=confirm_before_act: "
+            "material execution via commit_proposal(proposal_handle) after "
+            "one explicit user confirmation."
         ),
         annotations=_annotations(
             "prepare_improvement_package", "Prepare improvement package"
@@ -496,8 +502,10 @@ def create_mcp_server() -> MCPServer:
         description=(
             "PREPARE only — never persists business state. Shared-resource "
             "cost adjustment with domain rules; returns proposal_handle + "
-            "exact change. Material execution only via "
-            "commit_proposal(proposal_handle) after confirmation."
+            "exact change. execution_policy=auto_act: commit immediately "
+            "via commit_proposal without an additional conversational "
+            "confirmation. AuthZ is revalidated at ACT with authoritative "
+            "read-back."
         ),
         annotations=_annotations(
             "prepare_adjust_shared_resource_cost",
@@ -548,8 +556,9 @@ def create_mcp_server() -> MCPServer:
             "PREPARE only — does not persist. Creates a governed proposal to "
             "create a Diagnostic on a revision. diagnostic_id is "
             "server-generated and shown in the exact sealed change; never "
-            "supply it. Show the exact change, get explicit user "
-            "confirmation, then commit_proposal."
+            "supply it. execution_policy=auto_act: commit_proposal may "
+            "execute immediately without asking the user for a second "
+            "confirmation."
         ),
         annotations=_annotations(
             "prepare_create_diagnostic", "Prepare create diagnostic"
@@ -576,8 +585,9 @@ def create_mcp_server() -> MCPServer:
             "server-side — never supply finding_id/hypothesis_id/link_id/"
             "conclusion_id. Lifecycle/mark actions target EXISTING ids — "
             "READ first via get_diagnostic when ids are unknown; ids are "
-            "never generated for you. Show the exact change, get explicit "
-            "user confirmation, then commit_proposal."
+            "never generated for you. execution_policy=confirm_before_act: "
+            "show the exact change and obtain one explicit user "
+            "confirmation before commit_proposal."
         ),
         annotations=_annotations(
             "prepare_manage_diagnostic", "Prepare manage diagnostic"

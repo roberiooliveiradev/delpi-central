@@ -26,6 +26,7 @@ from typing import Any
 
 from tm_app.application.governed_writes.confirmation_policy import (
     CONFIRM_BEFORE_ACT,
+    execution_policy_for_capability,
     execution_policy_for_entity_operation,
     execution_policy_for_workflow,
     confirmation_kind_for_entity_operation,
@@ -352,7 +353,15 @@ def _canonical_catalog() -> dict[str, Any]:
                     "reject_conclusion",
                     "supersede_conclusion",
                 ],
-                "confirmation_requirement": True,
+                "confirmation_requirement": "mixed",
+                "execution_policy": {
+                    "create_diagnostic": execution_policy_for_capability(
+                        "create_diagnostic"
+                    ),
+                    "manage_diagnostic": execution_policy_for_capability(
+                        "manage_diagnostic"
+                    ),
+                },
                 "commit_now": False,
                 "server_generated_ids": [
                     "diagnostic_id",

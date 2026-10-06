@@ -241,7 +241,9 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "Diagrams and WBS/decomposition may be persisted via GPT when "
                     "surface_supports allows and manage AuthZ succeeds "
                     "(entity_schemas.decomposition_* / process_diagram / overlays).",
-                    "Always PREPARE → SHOW → CONFIRM → WRITE → VERIFY; manage AuthZ required.",
+                    "PREPARE → POLICY GATE: auto_act commits direto; "
+                    "confirm_before_act → SHOW → uma Confirma? → COMMIT; "
+                    "sempre VERIFY + manage AuthZ required.",
                     "Evidence link/metadata: gpt_list_evidence + gpt_manage_evidence "
                     "(create_link|update_description|delete with confirm_delete). "
                     "Binary evidence upload/download remains UI-only / BLOCKED_BY_PLATFORM.",

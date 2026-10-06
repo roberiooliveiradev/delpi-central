@@ -23,6 +23,7 @@ from delpi_mcp.identity import (
     current_mcp_context,
     require_mcp_context,
 )
+from tm_app.application.governed_writes.confirmation_policy import AUTO_ACT
 from tm_app.application.governed_writes.errors import (
     OUTCOME_VERIFICATION_FAILED,
     PREPARE_PERSISTED_STATE_VIOLATION,
@@ -216,6 +217,22 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
     )
 
 
+def _prepared_message(data: dict[str, Any]) -> str:
+    """Policy-aware PREPARE response copy (payload remains authoritative)."""
+    prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
+    if prop and not prop.get("act_allowed", True):
+        return "Proposal prepared but not ready for commit (see validation_result)."
+    if prop.get("execution_policy") == AUTO_ACT:
+        return (
+            "Governed auto_act proposal prepared. Proceed with "
+            "commit_proposal — no additional user confirmation required."
+        )
+    return (
+        "Governed destructive proposal prepared. One explicit user "
+        "confirmation is required before commit_proposal."
+    )
+
+
 def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
     """Pure MCP PREPARE — never invokes ACT.
 
@@ -239,16 +256,7 @@ def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
                 code=PREPARE_PERSISTED_STATE_VIOLATION,
                 status_code=500,
             )
-        prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
-        if prop and not prop.get("act_allowed", True):
-            return _ok_result(
-                data,
-                "Proposal prepared but not ready for commit (see validation_result).",
-            )
-        return _ok_result(
-            data,
-            "Governed proposal prepared. Confirm with commit_proposal(proposal_handle).",
-        )
+        return _ok_result(data, _prepared_message(data))
     except Exception as exc:
         return handle_tool_error(exc)
 
@@ -451,8 +459,8 @@ def tool_meeting_minute_read(
         if action_norm not in MEETING_MANAGE_READ_ACTIONS:
             return _error_result(
                 f"Action '{action_norm}' is not a READ meeting-minute action. "
-                "Use prepare_meeting_minute_manage / act_meeting_minute_manage, "
-                "or generate_from_transcript.",
+                "Use prepare_meeting_minute_manage (then commit_proposal per "
+                "execution_policy), or generate_from_transcript.",
                 status_code=400,
                 error_code="validation",
             )
@@ -520,16 +528,7 @@ def tool_prepare_record_change(
                 code=PREPARE_PERSISTED_STATE_VIOLATION,
                 status_code=500,
             )
-        prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
-        if prop and not prop.get("act_allowed", True):
-            return _ok_result(
-                data,
-                "Proposal prepared but not ready for commit (see validation_result).",
-            )
-        return _ok_result(
-            data,
-            "Governed proposal prepared. Confirm with commit_proposal(proposal_handle).",
-        )
+        return _ok_result(data, _prepared_message(data))
     except Exception as exc:
         return handle_tool_error(exc)
 
