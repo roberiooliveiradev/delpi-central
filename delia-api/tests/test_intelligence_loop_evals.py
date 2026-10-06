@@ -119,8 +119,15 @@ class FakeProvider:
         self.calls = []
         self._outcomes = dict(outcomes or {})
         self.fail_once: str | None = None
+        self.list_calls = 0
+        self.fail_relist = False
 
     def list_groups(self, *, correlation_id, timeout_seconds=None):
+        self.list_calls += 1
+        if self.fail_relist and self.list_calls > 1:
+            raise CapabilityProviderError(
+                "source_unavailable", "live re-list failed"
+            )
         return ProviderSurface(groups=tuple(self._groups))
 
     def invoke(
@@ -313,19 +320,20 @@ def test_eval1_playlists_grounded_synthesis():
             _select(_KEY, "list_feeds"),
             {
                 SYNTHESIS_INSTRUCTION_ID: {
-                    "answer": (
-                        "Você tem estas playlists:\n"
-                        "- Comercial - Alinhamento Estrategico\n"
-                        "- GR - Jaraguá do Sul/SC"
-                    )
+                    "intro": "Você tem estas playlists:",
+                    "items": [
+                        {"record_index": 0, "fields": ["name"]},
+                        {"record_index": 1, "fields": ["name"]},
+                    ],
                 }
             },
         ],
     )
     attempt = orch.attempt("quais as minhas playlists?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert "Comercial - Alinhamento Estrategico" in attempt.content
-    assert "GR - Jaraguá do Sul/SC" in attempt.content
+    assert "Você tem estas playlists:" in attempt.content
+    assert "- Comercial - Alinhamento Estrategico" in attempt.content
+    assert "- GR - Jaraguá do Sul/SC" in attempt.content
     assert "revision" not in attempt.content
     assert "accessRole" not in attempt.content
     assert "updatedAt" not in attempt.content
@@ -333,8 +341,10 @@ def test_eval1_playlists_grounded_synthesis():
 
 
 def test_eval1_synthesis_rejects_invented_value():
-    """A synthesized answer carrying an identifier/value absent from
-    owner evidence is demoted to the deterministic render."""
+    """BLOCKING (§8): free-text entity invention in the proposal can
+    never reach the user — the model only selects records; an intro
+    carrying "Financeiro Estratégico" (absent from owner evidence) is
+    rejected and the deterministic render ships."""
     provider = _media_provider(
         {
             ("screens", "list_feeds"): _outcome(
@@ -348,19 +358,56 @@ def test_eval1_synthesis_rejects_invented_value():
             _select(_KEY, "list_feeds"),
             {
                 SYNTHESIS_INSTRUCTION_ID: {
-                    "answer": (
-                        "Você tem 3 playlists, incluindo a "
-                        "playlist 42 e o feed 0f6b0c1d."
-                    )
+                    "intro": (
+                        "Você também possui a playlist "
+                        "Financeiro Estratégico."
+                    ),
+                    "items": [
+                        {"record_index": 0, "fields": ["name"]},
+                        {"record_index": 1, "fields": ["name"]},
+                    ],
                 }
             },
         ],
     )
     attempt = orch.attempt("quais as minhas playlists?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    # "42" is invented — synthesized answer rejected, truthful render.
-    assert "42" not in attempt.content
+    # Invented entity — proposal rejected, truthful render ships.
+    assert "Financeiro" not in attempt.content
     assert "Comercial - Alinhamento Estrategico" in attempt.content
+
+
+def test_eval1_synthesis_rejects_invalid_selection():
+    """A selection pointing outside the evidence (invented index or
+    field) is not renderable — deterministic fallback."""
+    provider = _media_provider(
+        {
+            ("screens", "list_feeds"): _outcome(
+                "screens", "list_feeds", "", structured=PLAYLISTS_RESULT
+            ),
+        }
+    )
+    for items in (
+        [{"record_index": 9, "fields": ["name"]}],
+        [{"record_index": 0, "fields": ["secret_field"]}],
+        [{"record_index": 0, "fields": []}],
+    ):
+        orch = _orchestrator(
+            [provider],
+            [
+                _select(_KEY, "list_feeds"),
+                {
+                    SYNTHESIS_INSTRUCTION_ID: {
+                        "intro": "Você tem estas playlists:",
+                        "items": items,
+                    }
+                },
+            ],
+        )
+        attempt = orch.attempt("quais as minhas playlists?")
+        assert attempt.status is GovernedCapabilityStatus.SUCCESS
+        # Fallback render still carries the owner-backed names.
+        assert "Comercial - Alinhamento Estrategico" in attempt.content
 
 
 def test_eval1_synthesis_rejects_technical_leak():
@@ -378,10 +425,12 @@ def test_eval1_synthesis_rejects_technical_leak():
             _select(_KEY, "list_feeds"),
             {
                 SYNTHESIS_INSTRUCTION_ID: {
-                    "answer": (
-                        "Dados obtidos via endpoint "
-                        "https://host/tools com block_id=0f6b0c1d"
-                    )
+                    "intro": (
+                        "Dados obtidos via endpoint https://host/tools"
+                    ),
+                    "items": [
+                        {"record_index": 0, "fields": ["name"]},
+                    ],
                 }
             },
         ],
@@ -389,7 +438,8 @@ def test_eval1_synthesis_rejects_technical_leak():
     attempt = orch.attempt("quais as minhas playlists?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert "endpoint" not in attempt.content.lower()
-    assert "block_id" not in attempt.content
+    assert "https" not in attempt.content
+    assert "Comercial - Alinhamento Estrategico" in attempt.content
 
 
 def test_eval1_synthesis_preserves_limitations():
@@ -410,7 +460,11 @@ def test_eval1_synthesis_preserves_limitations():
             _select(_KEY, "list_feeds"),
             {
                 SYNTHESIS_INSTRUCTION_ID: {
-                    "answer": "Você tem estas playlists."
+                    "intro": "Você tem estas playlists:",
+                    "items": [
+                        {"record_index": 0, "fields": ["name"]},
+                        {"record_index": 1, "fields": ["name"]},
+                    ],
                 }
             },
         ],
@@ -546,7 +600,7 @@ def test_eval4_clarification_is_business_language():
 
 def test_eval4_clarification_wording_gate_rejects_leak():
     """A model wording that echoes the internal field name (or any
-    technical surface) is rejected; the humanized fallback ships."""
+    technical surface) is rejected; the generic fallback ships."""
     provider = _media_provider()
     orch = _orchestrator(
         [provider],
@@ -576,7 +630,55 @@ def test_eval4_clarification_wording_gate_rejects_leak():
         attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     )
     assert "block_id" not in attempt.content
-    assert "block" in attempt.content
+    # §6.144: the deterministic fallback never derives wording from
+    # internal field names — even a humanized label is too leaky.
+    assert "block" not in attempt.content
+
+
+@pytest.mark.parametrize(
+    "missing",
+    [
+        ("source_route", "params"),
+        ("block_id",),
+        ("resource_uuid",),
+        ("owner_vocabulary",),
+    ],
+)
+def test_clarification_fallback_never_uses_field_vocabulary(missing):
+    """Model wording unavailable: the deterministic fallback is a
+    generic business question — no internal name or humanized variant
+    (source_route -> 'source route') can reach the user."""
+    provider = _media_provider()
+    orch = _orchestrator(
+        [provider],
+        [
+            _select(
+                _KEY,
+                "draft_style_change",
+                arg_payload={
+                    "arguments": {},
+                    "missing_inputs": list(missing),
+                },
+                extra={
+                    RESOLVER_SELECTION_INSTRUCTION_ID: {
+                        "applicable": False
+                    },
+                    CLARIFICATION_INSTRUCTION_ID: None,
+                },
+            ),
+        ],
+    )
+    attempt = orch.attempt("altere isso")
+    assert (
+        attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+    lowered = attempt.content.lower()
+    for name in missing:
+        assert name not in attempt.content
+        assert name.replace("_", " ") not in lowered
+    assert "route" not in lowered
+    assert "params" not in lowered
+    assert "uuid" not in lowered
 
 
 # --- EVAL-3: composition asks business clarification --------------------
@@ -744,7 +846,6 @@ def test_repair_reselects_once_when_surface_changed():
                     "remote_name": "new_list",
                 },
                 ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
-                SYNTHESIS_INSTRUCTION_ID: {"answer": "Feeds listados."},
             },
         ],
     )
@@ -752,6 +853,39 @@ def test_repair_reselects_once_when_surface_changed():
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     names = [c[0] for c in provider.calls]
     assert names == ["old_list", "new_list"]
+
+
+def test_repair_fail_closed_when_relist_fails():
+    """BLOCKING (§11): the bounded repair re-reads the live surface —
+    when that re-list itself fails, no exception escapes, no second
+    repair runs, nothing is re-invoked; the original error stands."""
+    provider = FakeProvider(
+        "acme-media",
+        [
+            _group(
+                "acme-media",
+                "screens",
+                [
+                    _cap(
+                        "screens", "acme-media", "old_list",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ]
+    )
+    provider.fail_once = "old_list"
+    provider.fail_relist = True
+    orch = _orchestrator(
+        [provider],
+        [_select(_KEY, "old_list")],
+    )
+    attempt = orch.attempt("liste os feeds")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    # Exactly one failed invocation, exactly one (failed) re-list —
+    # no loop, no retry, no ACT.
+    assert [c[0] for c in provider.calls] == ["old_list"]
+    assert provider.list_calls == 2
 
 
 def test_repair_never_retries_when_reselect_fails():

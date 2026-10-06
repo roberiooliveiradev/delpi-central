@@ -1121,10 +1121,11 @@ def test_adversarial_model_prose_cannot_become_observation():
     # The deterministic bounded render carries the authoritative data.
     assert "TUBO 30X30X1500" in attempt.content
     # Five governed proposals ran: the four plan calls plus the
-    # bounded grounded-synthesis proposal (C3-LOOP-01). The fabricated
-    # "answer" failed the deterministic provenance gate, so the
-    # truthful deterministic render shipped — the synthesis path can
-    # never elevate invented content into the OBSERVATION answer.
+    # bounded grounded-synthesis proposal (C3-LOOP-01/R1). The
+    # fabricated "answer" is outside the evidence-bound synthesis
+    # contract and was rejected outright — the truthful deterministic
+    # render shipped; model prose can never introduce factual leaf
+    # values into the OBSERVATION answer.
     assert len(read._invoke_model._port.requests) == 5
 
 

@@ -2512,3 +2512,24 @@ Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (�
 | Owner/tool/provider branches added | 0 — grep for owner/tool/provider literals in orchestration.py returns only pre-existing comments |
 | Real-model dev eval | TEST_NOT_RUN |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+
+### C3-INTELLIGENCE-LOOP-01R1 — rework: safe fallback + evidence-bound synthesis + relist fail-closed (evidence §6.144)
+
+| Check | Result |
+|---|---|
+| Review verdict closed | `ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01=REWORK` |
+| FIX-1 clarification fallback | PASS — deterministic fallback is a generic business question; `_humanize_missing` removed; parametrized evals over `source_route`/`params`, `block_id`, `resource_uuid`, `owner_vocabulary` → `CLARIFICATION_FALLBACK_TECHNICAL_LEAK=0` |
+| FIX-2 evidence-bound synthesis | PASS — model proposes `{intro, items:[{record_index, fields}]}` only; runtime validates indices/fields and copies leaf values verbatim from sanitized records; `SYNTHESIS_FACT_VALUES_SOURCE=OWNER_EVIDENCE_ONLY` |
+| Free-text entity invention (BLOCKING) | PASS — intro carrying "Financeiro Estratégico" rejected by the non-factual gate; deterministic render ships; invented string never reaches `attempt.content` |
+| Invalid selection (index/field/empty) | PASS — rejected → deterministic fallback |
+| FIX-3 repair relist failure | PASS — `list_groups` raising `source_unavailable` during repair yields bounded classified failure; exactly one repair attempt, one invoke, no loop, no ACT |
+| Repair rounds / material ACT retry | `MAX_REPLAN_ROUNDS=1` / `MATERIAL_ACT_RETRY=0` (unchanged) |
+| Limitations / provenance preserved | PASS — owner `limitations` and provenance carried to the attempt |
+| WorkspaceContext authority | corrected to `UNTRUSTED_CONTEXT_ONLY` wording (workspace-supplied identifier provenance; owner revalidation applies) |
+| USER_GOAL_UNDERSTANDING / DECISION_PATH_RUNTIME | PARTIAL / PARTIAL (classification corrections — non-blocking) |
+| Full delia-api suite | 808/808 PASS |
+| `git diff --check` | clean |
+| Owner/tool/provider branches added | 0 |
+| Real-model eval | TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

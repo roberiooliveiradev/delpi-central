@@ -10716,3 +10716,64 @@ EVIDENCE (live production, 2026-10-05):
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION — architecture review
       required; candidate follow-up C3-INTELLIGENCE-LOOP-02
       (cross-provider semantic composition) is NOT implemented here.
+
+## 6.144. C3-INTELLIGENCE-LOOP-01R1 — point rework over §6.143
+    TASK = C3-INTELLIGENCE-LOOP-01R1
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = 350b17380e0d52d9a9bffea2355bea5afc63e496
+    REVIEW_CLOSED = ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01 = REWORK
+    EXISTING_EQUIVALENT = YES; REUSE_DECISION = EXTEND — no new
+      abstraction; same orchestrator, same _propose pipeline.
+
+    BLOCKERS FIXED:
+      FIX-1 clarification fallback: the deterministic fallback no
+        longer derives wording from internal field names — the
+        previous humanized label still leaked field vocabulary
+        (source_route -> "source route"). Fallback is now a generic
+        business question; _humanize_missing removed. CLARIFICATION_
+        FALLBACK_TECHNICAL_LEAK = 0 (parametrized evals over
+        source_route/params, block_id, resource_uuid,
+        owner_vocabulary).
+      FIX-2 evidence-bound synthesis (§6 of brief): SYNTHESIS_
+        INSTRUCTION is now a selection contract — the model proposes
+        {"intro": <non-factual framing>, "items": [{"record_index",
+        "fields"}]}; the runtime validates indices/fields against the
+        sanitized records (_resolver_entities + _sanitize_renderable)
+        and copies factual leaf values verbatim. MODEL DOES NOT
+        CREATE FACTUAL VALUES. The intro passes the leak gate plus a
+        non-factual gate (any capitalized non-initial word or
+        digit-bearing token must occur verbatim in owner evidence).
+        Invalid index/field/non-scalar or factual intro demote the
+        whole proposal to the deterministic renderer. OBSERVATION
+        stays OBSERVATION; provenance and limitations preserved.
+      FIX-3 repair fail-closed: _repair_once now catches
+        CapabilityProviderError raised by the live re-list inside
+        _fresh_group — the original classified error stands, no
+        exception escapes, no second repair, no write retry.
+
+    LANGUAGE CORRECTION (§12): identifier-provenance docstring now
+      reads "workspace-supplied identifier provenance" — Workspace-
+      Context is untrusted client-supplied targeting context, never
+      authority/permission; owner/domain revalidation still applies.
+
+    CLASSIFICATION CORRECTIONS (non-blocking, §13):
+      USER_GOAL_UNDERSTANDING = PARTIAL (goal remains largely
+        input/staged-proposal based, not a full semantic goal model —
+        task RQ-IL1-01 wording "goal before arg projection" stays
+        satisfied)
+      DECISION_PATH_RUNTIME = PARTIAL (select_decision_path is
+        telemetry after selection, not the central turn router)
+
+    TESTS = 808/808 PASS (6 new evals: free-text entity invention
+      BLOCKING test PASS; invalid record/field selection rejected;
+      generic-fallback vocab parametrized x4; relist-failure fail-
+      closed PASS; governed-write + prior-turn provenance
+      regressions green). RESIDUAL: the non-factual intro gate is
+      token-based (capitalized words, digit runs) — a fabricated
+      all-lowercase prose fragment without entity-like tokens is
+      bounded by instruction only; mitigated because items carry all
+      factual values.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
