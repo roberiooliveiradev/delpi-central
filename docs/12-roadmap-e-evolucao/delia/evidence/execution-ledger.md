@@ -9970,5 +9970,13 @@ EVIDENCE (live production, 2026-10-05):
   gpt_* ids, commit_now additive). OpenAPI unchanged → no Builder
   reimport. MCP tool count/classes unchanged (24 tools, 1 ACT).
 
-  RESIDUAL: live MCP acceptance post-deploy not yet executed —
-  PRODUCTION_READINESS=NOT_PROVEN until deployed-runtime evidence.
+  LIVE ACCEPTANCE (local docker runtime, bind-mounted /app == HEAD):
+  - initialize OK; tools/list = 24 tools, commit_proposal sole ACT,
+    zero commit_now/confirmation/idempotency on PREPARE schemas.
+  - get_catalog: surface_version=teo-capabilities-v3,
+    commit_operation=commit_proposal, 0 gpt_* / 0 commit_now, all
+    catalog op names ⊆ live tools, write_flow_mcp present.
+  - PREPARE negative probe: proposal_ready / persisted=False, no
+    business outcome claimed.
+  PRODUCTION_READINESS=NOT_PROVEN for the public prod host (local
+  runtime evidence only; production deploy is a separate gate).
