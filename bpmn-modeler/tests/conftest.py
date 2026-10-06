@@ -50,9 +50,13 @@ class InMemoryRepository:
     def get_aggregate(self, model_id: str):
         return copy.deepcopy(self.store.get(model_id))
 
-    def list_summaries(self, *, query, archived, sort, direction, offset, limit):
+    def list_summaries(
+        self, *, owner_subject, query, archived, sort, direction, offset, limit
+    ):
         rows = [
-            m for m in self.store.values()
+            m
+            for m in self.store.values()
+            if m.created_by == owner_subject
             if (archived == "all")
             or (archived == "active" and m.archived_at is None)
             or (archived == "archived" and m.archived_at is not None)

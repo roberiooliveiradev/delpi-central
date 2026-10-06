@@ -166,23 +166,47 @@ def test_list_summaries_filters(repo):
     repo.mutate(archived.id, 1, archive)
 
     actives = repo.list_summaries(
-        query=None, archived="active", sort="updated_at",
-        direction="desc", offset=0, limit=200,
+        owner_subject="it-test", query=None, archived="active",
+        sort="updated_at", direction="desc", offset=0, limit=200,
     )
     assert any(m.id == active.id for m in actives)
     assert not any(m.id == archived.id for m in actives)
 
     all_rows = repo.list_summaries(
-        query=None, archived="all", sort="updated_at",
-        direction="desc", offset=0, limit=500,
+        owner_subject="it-test", query=None, archived="all",
+        sort="updated_at", direction="desc", offset=0, limit=500,
     )
     assert any(m.id == archived.id for m in all_rows)
 
     by_name = repo.list_summaries(
-        query=active.display_name, archived="active", sort="updated_at",
+        owner_subject="it-test", query=active.display_name,
+        archived="active", sort="updated_at",
         direction="desc", offset=0, limit=10,
     )
     assert [m.id for m in by_name] == [active.id]
+
+
+def test_list_summaries_owner_scope(repo):
+    """Ownership é enforced no SQL — nunca pós-processamento em Python."""
+    import dataclasses
+
+    mine = dataclasses.replace(_model(), created_by="it-owner")
+    other = dataclasses.replace(_model(), created_by="it-other")
+    repo.create_aggregate(mine)
+    repo.create_aggregate(other)
+
+    scoped = repo.list_summaries(
+        owner_subject="it-owner", query=None, archived="all",
+        sort="updated_at", direction="desc", offset=0, limit=500,
+    )
+    assert any(m.id == mine.id for m in scoped)
+    assert not any(m.id == other.id for m in scoped)
+
+    empty = repo.list_summaries(
+        owner_subject="it-nobody", query=None, archived="all",
+        sort="updated_at", direction="desc", offset=0, limit=500,
+    )
+    assert empty == []
 
 
 def test_schema_isolation(repo):

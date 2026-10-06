@@ -46,9 +46,9 @@ def client(validator):
     return TestClient(app, raise_server_exceptions=False)
 
 
-def authed(permissions=ALL_PERMS):
+def authed(permissions=ALL_PERMS, uid: str = "u1"):
     rbac = {
-        "id": "u1", "email": "u@x.dev", "name": "U", "roles": [],
+        "id": uid, "email": "u@x.dev", "name": "U", "roles": [],
         "groups": [], "permissions": permissions, "is_superadmin": False,
     }
     return (
@@ -316,6 +316,106 @@ def test_not_found_envelope(client):
         resp = client.get(f"/models/{uuid.uuid4()}", headers=H)
         assert resp.status_code == 404
         assert resp.json()["error"]["code"] == "MODEL_NOT_FOUND"
+
+
+def test_ownership_isolation_http(client):
+    """Foreign model_id is indistinguishable from nonexistent: same 404
+    envelope, no existence/owner disclosure. List is owner-scoped."""
+    import uuid
+
+    alice_vt, alice_rbac = authed(uid="alice")
+    with alice_vt, alice_rbac:
+        model_id = client.post(
+            "/models", json={"display_name": "Alice Only"}, headers=H
+        ).json()["data"]["model_id"]
+
+    bob_vt, bob_rbac = authed(uid="bob")
+    with bob_vt, bob_rbac:
+        resp = client.get(f"/models/{model_id}", headers=H)
+        assert resp.status_code == 404
+        foreign_body = resp.json()
+        assert foreign_body["error"]["code"] == "MODEL_NOT_FOUND"
+        assert model_id not in str(foreign_body)
+        assert "alice" not in str(foreign_body).lower()
+
+        missing = client.get(f"/models/{uuid.uuid4()}", headers=H)
+        assert missing.status_code == 404
+        assert missing.json()["error"]["code"] == foreign_body["error"]["code"]
+        assert missing.json()["message"] == foreign_body["message"]
+        assert missing.json()["error"]["details"] == foreign_body["error"]["details"]
+
+        # reads + writes scoped: todas viram MODEL_NOT_FOUND para estranho
+        assert client.get(
+            f"/models/{model_id}/working-copy", headers=H
+        ).status_code == 404
+        assert client.get(
+            f"/models/{model_id}/revisions", headers=H
+        ).status_code == 404
+        assert client.put(
+            f"/models/{model_id}/working-copy",
+            content=b"<x/>",
+            headers={
+                **H,
+                "If-Match": '"v1"',
+                "Content-Type": "application/xml",
+            },
+        ).status_code == 404
+        assert client.get(
+            f"/models/{model_id}/working-copy/export", headers=H
+        ).status_code == 404
+        assert client.post(
+            f"/models/{model_id}/working-copy/validate",
+            content=b"<x/>",
+            headers={**H, "Content-Type": "application/xml"},
+        ).status_code == 404
+        assert client.put(
+            f"/models/{model_id}/working-copy",
+            content=b"<x/>",
+            headers={
+                **H,
+                "If-Match": '"v1"',
+                "Content-Type": "application/xml",
+            },
+        ).status_code == 404
+        assert client.patch(
+            f"/models/{model_id}",
+            json={"display_name": "Bob Rename"},
+            headers={**H, "If-Match": '"v1"'},
+        ).status_code == 404
+        assert client.post(
+            f"/models/{model_id}/archive",
+            headers={**H, "If-Match": '"v1"'},
+        ).status_code == 404
+        assert client.post(
+            f"/models/{model_id}/unarchive",
+            headers={**H, "If-Match": '"v1"'},
+        ).status_code == 404
+        assert client.post(
+            f"/models/{model_id}/duplicate",
+            json={"display_name": "x"}, headers=H,
+        ).status_code == 404
+        assert client.post(
+            f"/models/{model_id}/revisions",
+            json={"name": "x"},
+            headers={**H, "If-Match": '"v1"'},
+        ).status_code == 404
+        assert client.get(
+            f"/models/{model_id}/revisions/1", headers=H
+        ).status_code == 404
+        assert client.get(
+            f"/models/{model_id}/revisions/1/export", headers=H
+        ).status_code == 404
+        assert client.post(
+            f"/models/{model_id}/revisions/1/restore",
+            headers={**H, "If-Match": '"v1"'},
+        ).status_code == 404
+
+        listed = client.get("/models", headers=H).json()["data"]["items"]
+        assert not any(m["id"] == model_id for m in listed)
+
+    # owner segue autorizado no mesmo path
+    with alice_vt, alice_rbac:
+        assert client.get(f"/models/{model_id}", headers=H).status_code == 200
 
 
 def test_rename_extra_field_rejected(client):

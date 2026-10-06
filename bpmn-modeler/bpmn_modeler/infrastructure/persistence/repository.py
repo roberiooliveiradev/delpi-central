@@ -80,6 +80,7 @@ class PostgresModelRepository(ModelRepositoryPort):
     def list_summaries(
         self,
         *,
+        owner_subject: str,
         query: str | None,
         archived: str,
         sort: str,
@@ -89,7 +90,11 @@ class PostgresModelRepository(ModelRepositoryPort):
     ) -> Sequence[ModelSummaryRecord]:
         order_by = _SORT_MAP[(sort, direction)]
         where = _ARCHIVED_MAP[archived]
-        params: dict[str, object] = {"offset": offset, "limit": limit}
+        params: dict[str, object] = {
+            "owner": owner_subject,
+            "offset": offset,
+            "limit": limit,
+        }
 
         query_clause = ""
         if query:
@@ -111,7 +116,7 @@ class PostgresModelRepository(ModelRepositoryPort):
                    (SELECT MAX(r.revision_number) FROM bpmn_modeler.revisions r
                     WHERE r.model_id = m.id) AS latest_revision_number
             FROM bpmn_modeler.models m
-            WHERE {where}{query_clause}
+            WHERE m.created_by = %(owner)s AND {where}{query_clause}
             ORDER BY {order_by}
             OFFSET %(offset)s LIMIT %(limit)s
         """
