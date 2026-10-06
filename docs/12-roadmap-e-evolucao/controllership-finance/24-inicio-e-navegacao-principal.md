@@ -131,27 +131,35 @@ Atalhos dentro do perfil devem refletir **runtime implementado + autorização d
 
 ## Papel do Início
 
-`Início` é a home/root do produto e funciona como hub de funcionalidades.
+`Início` é a Home/root do produto e funciona como launcher operacional.
 
-Estrutura inicial:
+Contrato completo:
+- [32-inicio-home.md](./32-inicio-home.md)
+
+O padrão visual é comum aos Portais:
 
 ```text
-Início
-└── Central de Fechamento
-    ├── Cockpit da Competência
-    ├── Checklist e Documentos
-    ├── Estoque e Conciliação
-    ├── Classificações e Pendências
-    └── Pacote e Envio
+TopBar comum
+→ Hero/saudação
+→ Eventos e interações
+→ Caminhos e funcionalidades
+→ Últimos acessos
+→ cards/seções do Portal
 ```
 
-Novos macroprocessos/funcionalidades entram futuramente no Início sem renomear o Portal.
+A Central de Fechamento permanece a primeira funcionalidade e agrupa P1–P5, mas a Home não duplica o Cockpit.
+
+P1–P5 continuam fora da topbar principal e entram como rotas do launcher somente quando estiverem implementadas no runtime e autorizadas ao viewer.
+
+Favoritos, busca e recentes seguem o contrato de [32-inicio-home.md](./32-inicio-home.md).
+
+Estados dinâmicos degradam de forma independente: erro de tasks/blockers/favoritos não deve inutilizar o catálogo de rotas autorizado.
 
 ## Central de Fechamento
 
 A Central de Fechamento é a primeira funcionalidade do Portal, não uma entrada adicional da topbar.
 
-Ela agrupa P1–P5:
+Ela agrupa:
 
 | Página interna | Documento |
 |---|---|
@@ -162,44 +170,6 @@ Ela agrupa P1–P5:
 | Pacote e Envio | [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md) |
 
 Administração permanece transversal ao Portal e é documentada em [28-administracao.md](./28-administracao.md).
-
-## Composição lógica do Início
-
-```text
-ProductHeader
-→ FunctionalityLauncher
-→ CentralClosingCard
-→ RecentContext
-→ ContextualHelp
-```
-
-Os nomes acima são lógicos, não contrato de componente React.
-
-## CentralClosingCard
-
-Deve apresentar somente informação suficiente para orientar a entrada na funcionalidade, por exemplo: competência corrente quando existir, estado resumido confiável, blockers materiais quando disponíveis e ação de entrada na Central.
-
-Não duplicar o Cockpit inteiro no Início.
-
-Se a fonte necessária estiver indisponível, mostrar estado honesto; ausência/erro não vira zero nem sucesso.
-
-## Estados de experiência
-
-Cobrir `LOADING`, `EMPTY`, `PARTIAL`, `UNAVAILABLE_SOURCE`, `ERROR`, `FORBIDDEN` e `NOT_FOUND`.
-
-## Padrões de UX
-
-- topbar estável entre páginas;
-- item ativo identificável sem depender apenas de cor;
-- navegação por teclado e foco visível;
-- mobile responsivo e claro/escuro;
-- deep link/F5;
-- Help contextual;
-- nenhum botão/ocultação de UI substitui AuthZ backend.
-
-## Não objetivos
-
-O Início não substitui a Visão geral, não vira dashboard analítico completo, não cria workflow próprio e não executa validação, sacramentação ou envio.
 
 ## Critério de aceite documental
 
