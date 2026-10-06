@@ -162,7 +162,7 @@ Referenciar conteúdo de Cockpit, Checklist e Documentos, Estoque e Conciliaçã
 Conteúdo a publicar somente quando a rota estiver implementada:
 
 - objetivo da superfície analítica;
-- indicadores aprovados em D-OVW-01;
+- indicadores aprovados em D-OVW-01=C, organizados em desempenho financeiro, contexto operacional financeiro e desempenho estratégico;
 - significado e fórmula em linguagem de negócio;
 - unidade;
 - período e filtros;
@@ -171,13 +171,13 @@ Conteúdo a publicar somente quando a rota estiver implementada:
 - meta e score somente quando owned;
 - diferença entre zero, vazio e indisponível;
 - drilldowns;
-- eventual IDD/IGD se D-OVW-01 selecionar esse bloco;
+- IDD/IGD e indicadores estratégicos do departamento, mantendo-os separados dos KPIs financeiros;
 - limites da IA.
 
 Contrato fonte:
 - [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md).
 
-Não publicar no manual candidatos ainda não aprovados.
+Não publicar no manual um indicador apenas por estar inventariado; publicar somente quando o respectivo contract estiver implementado e validado no runtime.
 
 ### Sala de interação
 
