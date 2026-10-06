@@ -137,7 +137,7 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-ROOM-08 | mentions respeitam acesso | suggestion server-side; target permitido; mention não concede scope | privacy/resource negative | Core directory + context | TARGET |
 | RQ-ROOM-09 | realtime é degradável | transport failure vira banner/partial, não perda total de chat | degraded/reconnect | R03 | TARGET |
 | RQ-ROOM-10 | notifications usam capability canônica | mention notifica; sem SMTP/preferences local | integration negative | R04/T02 | TARGET |
-| RQ-ROOM-11 | criar tarefa aguarda Item 5 | action oculta até task contract; task owner fica fora da Sala | route/action negative | Item 5/R06 | PLANNED |
+| RQ-ROOM-11 | criar tarefa não existe na V1 | `onCreateTask` oculto; message/mention não geram TaskProjection | interaction negative | Item 5 / D-TASK-07 | TARGET |
 | RQ-ROOM-12 | Help sincronizada | contexto, mensagem vs ação, attachments, mentions, edit/delete explicados no runtime | help sync | feature-help-sync | TARGET |
 
 | RQ-OVW-01 | Visão geral usa Overview family comum | Hero compacto + período/filtros + KPI grid + charts | visual/component + mobile/dark | plugin-ui + 25 | TARGET |
