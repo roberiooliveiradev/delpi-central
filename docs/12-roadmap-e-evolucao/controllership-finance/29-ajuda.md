@@ -155,6 +155,7 @@ Deep link por seção:
 ```text
 /apps/controllership-finance/help#manual-concepts
 /apps/controllership-finance/help#manual-start
+/apps/controllership-finance/help#manual-home
 /apps/controllership-finance/help#manual-overview
 /apps/controllership-finance/help#manual-interaction-room
 /apps/controllership-finance/help#manual-my-tasks
@@ -580,7 +581,7 @@ Contrato fonte:
 Section id:
 
 ```text
-start
+home
 ```
 
 ---
@@ -1089,7 +1090,7 @@ Page / section
 
 | Página | Help target |
 |---|---|
-| Início | `#manual-start` |
+| Início | `#manual-home` |
 | Visão geral | `#manual-overview` |
 | Sala de interação | `#manual-interaction-room` |
 | Minhas tarefas | `#manual-my-tasks` |
@@ -1465,7 +1466,7 @@ Aceite:
 - teclado;
 - foco;
 - TOC;
-- smooth scroll respeitando accessibility;
+- scroll/foco respeitando `prefers-reduced-motion`;
 - FAQ;
 - glossary;
 - contextual deep link;
