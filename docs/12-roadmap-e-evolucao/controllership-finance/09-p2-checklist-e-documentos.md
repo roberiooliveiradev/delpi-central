@@ -2,13 +2,51 @@
 
 ## Estado
 
-**TARGET / VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 ## Job
 
 > Quero saber quais entregáveis são esperados, quais estão satisfeitos, quais dependem de terceiros/validação e o que falta para liberar o pacote.
 
 P2 é a superfície operacional de checklist, evidências, validação e histórico da competência.
+
+
+## Responsabilidade, owners e non-goals
+
+| Capability/dado | Owner |
+|---|---|
+| MonthlyChecklistItem / snapshot da competência | produto / `controllership-finance-api` |
+| template mestre e catálogos | P6/Administração do produto |
+| evidence metadata/versioning | produto, com storage adapter futuro |
+| validação/rejeição/reversão/N.A./cancelamento | P2 business rules |
+| sources internas derivadas | owner canônico da source, integrado via BFF |
+| identities/validator/responsible | Core |
+| notifications delivery | Minha DELPI |
+| chrome visual/attachments UI | `@delpi/plugin-ui` |
+
+Não pertence a P2:
+- editar RBAC/usuário;
+- manter template mestre diretamente fora do fluxo P6;
+- escrever regra TOTVS;
+- considerar upload como validação;
+- hard delete de evidence/histórico;
+- SMTP próprio;
+- SLA/overdue transversal;
+- promoção retroativa do snapshot;
+- browser chamar owner externo diretamente.
+
 
 ---
 
@@ -480,6 +518,67 @@ PENDING_SINCE = YES
 
 ---
 
+## Contratos TARGET — MFE → BFF → owners
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → persistence própria do checklist/evidence state
+   → Core para identity/effective permissions
+   → api-delpi/outro owner somente quando uma source derivada exigir
+   → Minha DELPI notifications
+   → attachment storage adapter futuro
+```
+
+O browser não chama Core, `api-delpi`, notification provider ou storage diretamente.
+
+Operações semânticas necessárias:
+
+| Operação | Semântica |
+|---|---|
+| listChecklistItems | lista do snapshot da competência com filtros |
+| getChecklistItem | regra/estado/evidências/validation/history |
+| attachEvidence | criar nova evidence version/attachment metadata |
+| validateEvidence | aceitar/rejeitar conforme validator/business rule |
+| reverseRejection | reversão governada quando ainda válida |
+| markNotApplicable / revertNotApplicable | somente CONDITIONAL e antes do bloqueio material |
+| createExceptionalItem | item da competência, sem alterar master |
+| updateExceptionalItem | somente campos permitidos antes de evento material |
+| cancelExceptionalItem | pré-execução, com justificativa |
+| requestStructuralCorrection | request explícito pós-execução |
+| reviewStructuralCorrection | MANAGE review / nova revisão |
+| promoteToMaster | navegação/ação administrativa governada por P6 |
+| listItemHistory | timeline material |
+| resolveEligiblePeople | references Core autorizadas |
+
+Os nomes físicos/endpoints entram no OpenAPI futuro; esta lista congela a semântica, não a implementação.
+
+### AuthZ
+
+Base operacional:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND resource_scope / ownership
+AND action_business_rule
+```
+
+Ações de governança estrutural/mestre:
+
+```text
+effective_permission(controllership-finance.manage)
+AND administrative_scope/business_rule
+```
+
+Regras:
+- `MANAGE` não implica `ACCESS`;
+- validator/responsible não cria permission code;
+- UI visibility não autoriza;
+- backend revalida state/version/actor;
+- filial/unidade permanece dado/contexto;
+- falha da resolução Core → fail-closed.
+
 ## Reuso obrigatório de `@delpi/plugin-ui`
 
 Import runtime canônico:
@@ -569,14 +668,24 @@ Se faltar capability visual reutilizável, registrar `PLUGIN_UI_GAP_FOUND` antes
 ### LOADING
 Carregar lista e detalhe sem exibir dados default como reais.
 
+### SUCCESS
+Snapshot/item/evidências carregados de forma coerente para o recorte.
+
+Estado vazio de um campo opcional só significa ausência real quando a source correspondente respondeu validamente.
+
 ### EMPTY
 Somente quando não existirem itens aplicáveis após source/contract válidos.
 
 ### PARTIAL
 Mostrar itens confiáveis e indicar explicitamente source/segmento indisponível.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 Não converter ausência de documento/source em `satisfeito` ou `zero`.
+
+`UNAVAILABLE` é o estado da experiência/capability; `UNAVAILABLE_SOURCE` qualifica a origem afetada.
+
+### VALIDATION_ERROR
+Preservar item/draft/contexto, associar erro ao campo/ação e não produzir optimistic success.
 
 ### ERROR
 Erro contextual por pane quando possível; falha do detalhe não deve necessariamente apagar a lista.
@@ -600,6 +709,27 @@ ACCESS != MANAGE
 ```
 
 Nenhuma permission por botão, item, documento ou CRUD.
+
+## Light / dark, responsividade e acessibilidade
+
+```text
+SAME DOM
++ SAME MASTER_DETAIL
++ SAME ACTIONS
++ SAME STATE ORDER
++ THEME TOKENS
+= LIGHT / DARK PARITY
+```
+
+- TopBar pertence ao shell;
+- P2 é deep page e usa `PagePath`;
+- desktop usa `ResizableColumns`;
+- mobile usa lista → detalhe full-width;
+- status nunca depende apenas de cor;
+- file actions, validation, modals e timeline são keyboard-operable;
+- focus volta ao contexto coerente após modal/action;
+- nenhum CSS de componente do kit é duplicado no MFE.
+
 
 ---
 
@@ -731,6 +861,47 @@ A numeração histórica de RQs nos documentos TÉO é proveniência; o ledger 2
 - deep link/F5;
 - Help.
 
+## Scripts e artefatos auxiliares PLANNED
+
+Não criar durante a FASE A.
+
+```text
+validate-p2-state-machine
+- ATTACHED != VALIDATED
+- replacement/reversal/N.A./CANCELLED transitions
+
+validate-p2-snapshot
+- master publication não altera competence snapshot
+- exceptional item não altera master
+
+validate-p2-evidence-history
+- rejected/replaced versions preservadas
+- no hard delete
+
+validate-p2-authz
+- ACCESS/resource/action rules
+- MANAGE apenas governance
+- fail-closed
+
+validate-p2-attachment-boundary
+- roles/config
+- source unavailable != satisfied
+- storage adapter only through BFF
+
+validate-p2-notifications
+- events/targets coerentes
+- delivery failure não muda business state
+
+validate-p2-help
+- requirement/validation/N.A./replacement/correction sincronizados
+
+validate-p2-plugin-ui
+- master-detail/attachments/forms/modal/timeline reutilizados
+- no local clone
+```
+
+Tecnologia/localização seguem o padrão do HEAD da futura implementação.
+
 ## Inventários técnicos remanescentes
 
 - `E05` — seed/obrigatoriedade dos attachment roles;
@@ -741,31 +912,42 @@ A numeração histórica de RQs nos documentos TÉO é proveniência; o ledger 2
 
 As decisões de produto correspondentes estão fechadas. Seed/binding não deve ser promovido silenciosamente a nova regra.
 
-## Gate documental P2
+## Gate documental V2
 
 ```text
-PRODUCT_RULES_DEFINED       = PASS
-TEO_DECISIONS_RECONCILED    = PASS
-INFORMATION_ARCH_DEFINED    = PASS
-DESKTOP_DEFINED             = PASS
-MOBILE_DEFINED              = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
-UX_STATES_DEFINED           = PASS
-AUTHZ_MODEL_DEFINED         = PASS
-NO_SLA_RULE_DEFINED         = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
 A11Y_DEFINED                = PASS
-DEEP_LINK_SEMANTICS_DEFINED = PASS
-HELP_CONTRACT_DEFINED       = PASS
-RQ_ACCEPTANCE_DEFINED       = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
 TEST_MATRIX_DEFINED         = PASS
-PHYSICAL_BINDINGS           = TO_INVENTORY
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+TEO_DECISIONS_RECONCILED    = PASS
 IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-P2 está documentalmente fechado para o escopo V1. Isso não autoriza runtime enquanto o fechamento documental transversal do Portal não estiver concluído.
+Inventários:
+- E05 seed/obrigatoriedade de attachment roles;
+- E06 seed/cobertura inicial de motivos;
+- T02 notification binding;
+- T05 effective permissions/resource scope;
+- attachment storage/people/contracts físicos.
 
----
+Resultado:
+
+```text
+A09 P2 CHECKLIST E DOCUMENTOS
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
+```
 
 ## Resultado esperado
 
