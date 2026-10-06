@@ -29,7 +29,7 @@ Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, 
 |---|---|---|
 | Início | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | H01 favoritos + H02 TaskProjection + H03 active competence + H04 blocker summary; implementação ainda não autorizada |
 | Visão geral | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | D-OVW-01=C, D-OVW-02=A, D-OVW-03=A; revalidar O04 contracts físicos e O05 conflitos de source/fórmula antes do futuro slice |
-| Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task aguarda Item 5 |
+| Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task-from-message não incluído na V1 |
 | Minhas tarefas | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | TSK01 producer contracts + TSK02 projection strategy + TSK03 deep-link registry + TSK04 source health/cache + TSK05 TaskItemsTable columns |
 | Administração | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02 conforme slice |
 | Ajuda | SYNCHRONIZED_WITH_FEATURES | implementar/sincronizar junto das superfícies liberadas |
