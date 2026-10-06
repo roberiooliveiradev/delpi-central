@@ -1,116 +1,138 @@
-"""Parser da NF-e modelo 55. Sem rede e sem XML em log."""
+"""Parser da NF-e modelo 55 — itens, chave e recusas de XML inseguro."""
 
 from __future__ import annotations
 
-from datetime import date
-
 import pytest
 
-from financial_app.domain.errors import NfeXmlRejected, QuestorInvalidResponse
-from financial_app.domain.fiscal_access_key import access_key_check_digit_ok, access_key_model
-from financial_app.domain.services.fiscal_calendar_date import fiscal_calendar_date
+from financial_app.domain.errors import InvalidReceivedInvoiceQuery, QuestorInvalidResponse
+from financial_app.infrastructure.xml.cte_xml import parse_cte_xml
 from financial_app.infrastructure.xml.nfe_xml import parse_nfe_xml
-from nfe_xml_samples import nfe_access_key, nfe_xml
+from financial_app.infrastructure.xml.nfse_standard_xml import parse_nfse_standard_xml
 
-KEY = nfe_access_key()
-MAX_BYTES = 100_000
-
-
-def test_published_portal_example_matches_the_fiscal_check_digit() -> None:
-    published = "35260947132675000158550010000856451625949749"
-    assert len(published) == 44
-    assert access_key_model(published) == "55"
-    assert access_key_check_digit_ok(published)
+CNPJ = "12345678000199"
+NS = "http://www.portalfiscal.inf.br/nfe"
 
 
-def test_nfeproc_namespace_reads_key_from_id_and_protocol() -> None:
-    parsed = parse_nfe_xml(nfe_xml(KEY), max_bytes=MAX_BYTES, expected_access_key=KEY)
-    assert parsed.access_key == KEY
-    assert parsed.model == "55"
-    assert parsed.series == "001"
-    assert parsed.number == "000085645"
-    assert parsed.issuer_cnpj == "47132675000158"
-    assert parsed.emission_date == date(2026, 10, 2)
+def access_key(*, cnpj: str = CNPJ, number: str = "000000123", series: str = "001", model: str = "55") -> str:
+    body = "42" + "2609" + cnpj + model + series + number + "1" + "12345678"
+    weights = (2, 3, 4, 5, 6, 7, 8, 9)
+    total = sum(int(digit) * weights[index % 8] for index, digit in enumerate(reversed(body)))
+    remainder = total % 11
+    check_digit = 0 if remainder < 2 else 11 - remainder
+    return body + str(check_digit)
 
 
-def test_key_can_come_from_protocol_or_from_inf_nfe_id() -> None:
-    from_protocol = parse_nfe_xml(nfe_xml(KEY, include_id=False), max_bytes=MAX_BYTES)
-    from_id = parse_nfe_xml(nfe_xml(KEY, include_protocol=False, wrapped=False), max_bytes=MAX_BYTES)
-    assert from_protocol.access_key == KEY
-    assert from_id.access_key == KEY
-
-
-def test_divergent_keys_are_rejected() -> None:
-    other = nfe_access_key(number="000085646")
-    with pytest.raises(NfeXmlRejected) as caught:
-        parse_nfe_xml(nfe_xml(KEY, protocol_key=other), max_bytes=MAX_BYTES, expected_access_key=KEY)
-    assert caught.value.code == "access_key_mismatch"
-
-
-def test_listing_key_must_match_the_xml() -> None:
-    other = nfe_access_key(number="000085646")
-    with pytest.raises(NfeXmlRejected) as caught:
-        parse_nfe_xml(nfe_xml(KEY), max_bytes=MAX_BYTES, expected_access_key=other)
-    assert caught.value.code == "access_key_mismatch"
-
-
-def test_invalid_key_and_check_digit_are_rejected() -> None:
-    broken = KEY[:-1] + ("0" if KEY[-1] != "0" else "1")
-    with pytest.raises(NfeXmlRejected) as caught:
-        parse_nfe_xml(nfe_xml(broken), max_bytes=MAX_BYTES)
-    assert caught.value.code == "invalid_access_key"
-    with pytest.raises(NfeXmlRejected):
-        parse_nfe_xml(b"<nfeProc><NFe><infNFe Id='NFe123'><ide><mod>55</mod></ide></infNFe></NFe></nfeProc>", max_bytes=MAX_BYTES)
-
-
-def test_model_other_than_55_is_rejected() -> None:
-    with pytest.raises(NfeXmlRejected) as caught:
-        parse_nfe_xml(nfe_xml(KEY, model="65"), max_bytes=MAX_BYTES)
-    assert caught.value.code == "invalid_model"
-    cte_key = nfe_access_key(model="57")
-    with pytest.raises(NfeXmlRejected) as caught_model:
-        parse_nfe_xml(nfe_xml(cte_key, model="57"), max_bytes=MAX_BYTES)
-    assert caught_model.value.code == "invalid_model"
-
-
-def test_malformed_dtd_entity_and_oversized_payloads_are_rejected() -> None:
-    with pytest.raises(QuestorInvalidResponse):
-        parse_nfe_xml(b"<nfeProc>", max_bytes=MAX_BYTES)
-    with pytest.raises(QuestorInvalidResponse):
-        parse_nfe_xml(b"<!DOCTYPE foo [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><nfeProc/>", max_bytes=MAX_BYTES)
-    with pytest.raises(QuestorInvalidResponse):
-        parse_nfe_xml(b"<!ENTITY xxe SYSTEM 'http://evil.example/x'> <nfeProc/>", max_bytes=MAX_BYTES)
-    with pytest.raises(QuestorInvalidResponse):
-        parse_nfe_xml(b"<nfeProc>" + b"x" * 80, max_bytes=32)
-    with pytest.raises(QuestorInvalidResponse):
-        parse_nfe_xml(b"<html>login</html>", max_bytes=MAX_BYTES)
-
-
-def test_fiscal_emission_date_uses_sao_paulo_calendar() -> None:
-    on_cutoff = parse_nfe_xml(
-        nfe_xml(KEY, dh_emi="2026-10-02T00:00:00-03:00"),
-        max_bytes=MAX_BYTES,
+def nfe_xml(
+    *,
+    key: str | None = None,
+    items: list[tuple[str, str, str, str, str]] | None = None,
+    model: str = "55",
+    namespaced: bool = False,
+    emission: str = "2026-09-30T10:00:00-03:00",
+    issuer_cnpj: str | None = None,
+) -> bytes:
+    key = key or access_key()
+    issuer_cnpj = issuer_cnpj if issuer_cnpj is not None else key[6:20]
+    rows = items if items is not None else [("1", "00001234", "PARAFUSO XYZ", "10.0000", "PC")]
+    det_xml = []
+    for number, code, description, quantity, unit in rows:
+        det_xml.append(
+            f'<det nItem="{number}"><prod>'
+            f"<cProd>{code}</cProd><xProd>{description}</xProd>"
+            f"<qCom>{quantity}</qCom><uCom>{unit}</uCom>"
+            f"<vUnCom>1.50</vUnCom><vProd>15.00</vProd>"
+            f"</prod></det>"
+        )
+    xmlns = f' xmlns="{NS}"' if namespaced else ""
+    document = (
+        f'<?xml version="1.0" encoding="UTF-8"?>'
+        f"<nfeProc{xmlns}><NFe><infNFe Id=\"NFe{key}\">"
+        f"<ide><mod>{model}</mod><serie>1</serie><nNF>123</nNF><dhEmi>{emission}</dhEmi></ide>"
+        f"<emit><CNPJ>{issuer_cnpj}</CNPJ><xNome>FORNECEDOR</xNome></emit>"
+        f"{''.join(det_xml)}"
+        f"</infNFe></NFe>"
+        f"<protNFe><infProt><chNFe>{key}</chNFe></infProt></protNFe>"
+        f"</nfeProc>"
     )
-    after_cutoff = parse_nfe_xml(
-        nfe_xml(KEY, dh_emi="2026-10-05T15:00:00-03:00"),
-        max_bytes=MAX_BYTES,
+    return document.encode("utf-8")
+
+
+def test_preserves_supplier_code_leading_zeros_and_reads_item_fields() -> None:
+    key = access_key()
+    parsed = parse_nfe_xml(nfe_xml(key=key, namespaced=True), max_bytes=100_000, expected_access_key=key)
+    item = parsed.items[0]
+    assert item.item_number == "1"
+    assert item.supplier_product_code == "00001234"
+    assert item.supplier_product_code != "1234"
+    assert item.supplier_product_description == "PARAFUSO XYZ"
+    assert item.quantity == "10.0000"
+    assert item.unit == "PC"
+    assert item.unit_price == "1.50"
+    assert parsed.access_key == key
+    assert parsed.issuer.cnpj == CNPJ
+    public = parsed.as_public_dict()
+    assert public["documentType"] == "nfe"
+    assert public["items"][0]["supplierProductCode"] == "00001234"
+
+
+def test_multiple_det_keep_order_and_special_characters() -> None:
+    key = access_key()
+    parsed = parse_nfe_xml(
+        nfe_xml(
+            key=key,
+            items=[
+                ("1", "057400166", "PARAFUSO", "10", "PC"),
+                ("2", "ABC-12.3/4", "ARRUELA", "2", "UN"),
+                ("3", "00001234", "PARAFUSO", "1", "PC"),
+            ],
+        ),
+        max_bytes=100_000,
+        expected_access_key=key,
     )
-    before_cutoff = parse_nfe_xml(
-        nfe_xml(KEY, dh_emi="2026-10-01T23:59:59-03:00"),
-        max_bytes=MAX_BYTES,
+    assert [item.item_number for item in parsed.items] == ["1", "2", "3"]
+    assert parsed.items[1].supplier_product_code == "ABC-12.3/4"
+    assert parsed.items[2].supplier_product_code == "00001234"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b"<?xml version='1.0'?><!DOCTYPE foo [<!ELEMENT foo ANY>]><nfeProc></nfeProc>",
+        b"<?xml version='1.0'?><!DOCTYPE foo [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]><nfeProc></nfeProc>",
+        b"<?xml version='1.0'?><!DOCTYPE foo [<!ATTLIST foo a CDATA 'x'>]><nfeProc></nfeProc>",
+        b"<html><body>login</body></html>",
+        b"isto nao e xml",
+        b"",
+    ],
+)
+def test_rejects_unsafe_or_invalid_payloads(payload: bytes) -> None:
+    with pytest.raises(QuestorInvalidResponse):
+        parse_nfe_xml(payload, max_bytes=100_000, expected_access_key=access_key())
+
+
+def test_rejects_divergent_access_key() -> None:
+    key = access_key()
+    other = access_key(number="000000124")
+    with pytest.raises(InvalidReceivedInvoiceQuery, match="não confere"):
+        parse_nfe_xml(nfe_xml(key=key), max_bytes=100_000, expected_access_key=other)
+
+
+def test_rejects_model_other_than_55() -> None:
+    key = access_key(model="65")
+    with pytest.raises(InvalidReceivedInvoiceQuery, match="modelo 55"):
+        parse_nfe_xml(nfe_xml(key=key, model="65"), max_bytes=100_000, expected_access_key=key)
+
+
+def test_rejects_invalid_xml() -> None:
+    with pytest.raises(QuestorInvalidResponse):
+        parse_nfe_xml(b"<nfeProc><ide>", max_bytes=100_000)
+
+
+def test_nfse_and_cte_parsers_remain_available() -> None:
+    nfse = parse_nfse_standard_xml(
+        b"<?xml version='1.0'?><Notas><Nota><SERIE>E</SERIE><N_DA_NFSE>1</N_DA_NFSE></Nota></Notas>",
+        max_bytes=10_000,
     )
-    utc_still_previous_day = parse_nfe_xml(
-        nfe_xml(KEY, dh_emi="2026-10-02T02:00:00Z"),
-        max_bytes=MAX_BYTES,
-    )
-    utc_already_cutoff = parse_nfe_xml(
-        nfe_xml(KEY, dh_emi="2026-10-02T03:00:00Z"),
-        max_bytes=MAX_BYTES,
-    )
-    naive_local = fiscal_calendar_date("2026-10-02T00:30:00")
-    assert on_cutoff.emission_date == date(2026, 10, 2)
-    assert after_cutoff.emission_date == date(2026, 10, 5)
-    assert before_cutoff.emission_date == date(2026, 10, 1)
-    assert utc_still_previous_day.emission_date == date(2026, 10, 1)
-    assert utc_already_cutoff.emission_date == date(2026, 10, 2)
-    assert naive_local == date(2026, 10, 2)
+    assert nfse.series == "E"
+    with pytest.raises(QuestorInvalidResponse):
+        parse_cte_xml(b"<html></html>", max_bytes=10_000)

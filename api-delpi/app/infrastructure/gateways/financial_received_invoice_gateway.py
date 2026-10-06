@@ -268,6 +268,43 @@ class FinancialReceivedInvoiceGateway:
             )
         return data
 
+    def get_nfe_detail(
+        self,
+        *,
+        authorization: str,
+        document_id: str,
+        provider_entity_id: str,
+        access_key: str,
+        branch: str,
+    ) -> dict[str, Any]:
+        normalized_id = _document_id(document_id)
+        normalized_entity = _document_id(provider_entity_id)
+        normalized_key = _nfe_access_key(access_key)
+        normalized_branch = _branch(branch)
+        response = self._get(
+            f"/invoices/received/{quote(normalized_id, safe='')}/detail",
+            authorization=authorization,
+            params={
+                "documentType": "nfe",
+                "providerEntityId": normalized_entity,
+                "accessKey": normalized_key,
+                "branch": normalized_branch,
+            },
+        )
+        payload = _json_payload(response)
+        if response.status_code >= 400 or payload.get("success") is False:
+            raise FinancialReceivedInvoiceGatewayError(
+                _safe_message(payload, "Não foi possível carregar os dados da NF-e."),
+                _mapped_status(response.status_code),
+            )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise FinancialReceivedInvoiceGatewayError(
+                "Os dados da NF-e retornaram um formato inválido.",
+                502,
+            )
+        return data
+
     def _get(
         self,
         path: str,
@@ -404,6 +441,13 @@ def _cte_access_key(value: str) -> str:
     normalized = _access_key(value)
     if normalized[20:22] != "57":
         raise FinancialReceivedInvoiceGatewayError("Chave de acesso do CT-e inválida.", 422)
+    return normalized
+
+
+def _nfe_access_key(value: str) -> str:
+    normalized = _access_key(value)
+    if normalized[20:22] != "55":
+        raise FinancialReceivedInvoiceGatewayError("Chave de acesso da NF-e inválida.", 422)
     return normalized
 
 

@@ -449,4 +449,64 @@ describe("RequestDetailPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Comentar" }));
     await waitFor(() => expect(api.addComment).toHaveBeenCalledWith("req-1", "olá", []));
   });
+
+  it("mostra os itens da NF-e nos detalhes quando a solicitação veio do Questor", async () => {
+    const posted = detail(["view"]);
+    posted.request.fiscal_model = "nfe";
+    vi.mocked(api.getRequest).mockResolvedValue({
+      ...posted,
+      danfe: {
+        available: true,
+        document_id: "aabbccddeeff001122334455",
+        provider_entity_id: "cccccccccccccccccccccccc",
+        access_key: "1".repeat(44),
+        file_name: "NFe.pdf",
+        size_bytes: 1000,
+      },
+    });
+    vi.mocked(api.fetchReceivedNfeItems).mockResolvedValue({
+      productMapping: { state: "ready" },
+      items: [
+        {
+          itemNumber: "1",
+          supplierProductCode: "00001234",
+          supplierProductDescription: "PARAFUSO",
+          internalProductCode: "000050",
+          internalProductDescription: "PARAFUSO M6",
+          quantity: "4",
+          unit: "PC",
+          mappingStatus: "mapped",
+        },
+      ],
+      summary: { items: 1, mapped: 1, unmapped: 0, ambiguous: 0 },
+    });
+    render(
+      <RequestDetailPage requestId="req-1" onBack={() => undefined} onEdit={() => undefined} />,
+    );
+    expect(await screen.findByTestId("nfe-product-mapping")).toBeTruthy();
+    expect(await screen.findByText("00001234")).toBeTruthy();
+    expect(screen.getByText("000050")).toBeTruthy();
+    expect(api.fetchReceivedNfeItems).toHaveBeenCalledWith(
+      "aabbccddeeff001122334455",
+      expect.objectContaining({
+        providerEntityId: "cccccccccccccccccccccccc",
+        supplierCode: "000001",
+        supplierStore: "01",
+        branch: "01",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("não mostra itens da NF-e em solicitação manual", async () => {
+    const posted = detail(["view"]);
+    posted.request.fiscal_model = "nfe";
+    vi.mocked(api.getRequest).mockResolvedValue(posted);
+    render(
+      <RequestDetailPage requestId="req-1" onBack={() => undefined} onEdit={() => undefined} />,
+    );
+    await waitFor(() => expect(screen.getByTestId("detail-page")).toBeTruthy());
+    expect(screen.queryByTestId("nfe-product-mapping")).toBeNull();
+    expect(api.fetchReceivedNfeItems).not.toHaveBeenCalled();
+  });
 });

@@ -105,6 +105,7 @@ def test_authorized_list_uses_the_portal_contract(client) -> None:
     assert data["pagination"]["totalItems"] == 1
     item = data["items"][0]
     assert item["documentId"] == DOCUMENT_ID
+    assert item["providerEntityId"] is None
     assert item["accessKey"] == ACCESS_KEY
     assert item["invoiceNumber"] == "22844"
     assert item["branchCode"] == "01"
@@ -739,3 +740,56 @@ def test_cte_cnpj_filter_scans_past_an_empty_local_page(client, monkeypatch: pyt
     assert data["items"][0]["issuerCnpj"] == "78517588000495"
     assert len(gateway.cte_queries) >= 2
     assert all(query.supplier_cnpj is None for query in gateway.cte_queries)
+
+
+def test_nfe_detail_preserves_document_id_and_provider_entity_id(client) -> None:
+    from tests.test_nfe_xml import access_key, nfe_xml
+
+    key = access_key()
+    entity_id = "c" * 24
+    client.invoice_gateway.nfe_xml = nfe_xml(key=key)
+    response = client.get(
+        f"/invoices/received/{DOCUMENT_ID}/detail",
+        params={
+            "documentType": "nfe",
+            "branch": "01",
+            "accessKey": key,
+            "providerEntityId": entity_id,
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["documentType"] == "nfe"
+    assert data["documentId"] == DOCUMENT_ID
+    assert data["providerEntityId"] == entity_id
+    assert data["accessKey"] == key
+    assert data["items"][0]["supplierProductCode"] == "00001234"
+    assert client.invoice_gateway.nfe_downloads == [(DOCUMENT_ID, entity_id)]
+    assert client.invoice_gateway.downloads == []
+
+
+def test_nfe_detail_rejects_divergent_access_key(client) -> None:
+    from tests.test_nfe_xml import access_key, nfe_xml
+
+    client.invoice_gateway.nfe_xml = nfe_xml(key=access_key())
+    response = client.get(
+        f"/invoices/received/{DOCUMENT_ID}/detail",
+        params={
+            "documentType": "nfe",
+            "branch": "01",
+            "accessKey": access_key(number="000000124"),
+            "providerEntityId": "c" * 24,
+        },
+    )
+    assert response.status_code == 422
+    assert client.invoice_gateway.downloads == []
+
+
+def test_nfse_detail_regression(client) -> None:
+    response = client.get(
+        f"/invoices/received/{DOCUMENT_ID}/detail",
+        params={"documentType": "nfse", "branch": "01"},
+    )
+    assert response.status_code == 200
+    assert response.json()["data"]["documentType"] == "nfse"
+    assert response.json()["data"]["documentId"] == DOCUMENT_ID

@@ -81,6 +81,7 @@ class ReceivedInvoiceAttachmentService:
             raise InvoicePostingValidationError("O tipo do documento de origem não confere com a solicitação.")
         document_id = str(payload.get("document_id") or "").strip()
         access_key = str(payload.get("access_key") or "").strip()
+        provider_entity_id = _optional_hex24(payload.get("provider_entity_id"))
         source_branch = _matching_branch(payload)
         content, filename = self._gateway.download_danfe(
             authorization=authorization,
@@ -100,6 +101,7 @@ class ReceivedInvoiceAttachmentService:
                 stored_name=stored_name,
                 original_name=filename,
                 size_bytes=len(content),
+                provider_entity_id=provider_entity_id,
             )
         except (LancamentoDanfeStorageError, FinancialReceivedInvoiceGatewayError, OSError) as exc:
             self._compensate_danfe(request_id, stored_name)
@@ -112,6 +114,7 @@ class ReceivedInvoiceAttachmentService:
             "available": True,
             "document_id": document_id.lower(),
             "access_key": access_key,
+            "provider_entity_id": provider_entity_id,
             "file_name": filename,
             "size_bytes": len(content),
         }
@@ -328,6 +331,15 @@ class ReceivedInvoiceAttachmentService:
             self._requests.delete_request(request_id)
         except Exception as exc:  # noqa: BLE001
             log_error(f"Falha ao desfazer solicitação {request_id} sem anexo: {type(exc).__name__}")
+
+
+def _optional_hex24(value: object) -> str | None:
+    text = str(value or "").strip().lower()
+    if not text:
+        return None
+    if not re.fullmatch(r"[0-9a-f]{24}", text):
+        raise InvoicePostingValidationError("Identificador do XML da NF-e inválido.")
+    return text
 
 
 def _normalized_model(value: object) -> str:

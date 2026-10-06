@@ -7,6 +7,7 @@ import type {
   InvoicePostingRequest,
   CteDetail,
   ListFilters,
+  NfeItemDetail,
   NfseDetail,
   ReceivedInvoiceSearch,
   OpenPurchaseOrdersResponse,
@@ -125,6 +126,31 @@ export function fetchReceivedCteDetail(
   });
   return httpGet<CteDetail>(
     `${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/detail?${params.toString()}`,
+  );
+}
+
+export function fetchReceivedNfeItems(
+  documentId: string,
+  input: {
+    providerEntityId: string;
+    accessKey: string;
+    branch: string;
+    supplierCode: string;
+    supplierStore: string;
+  },
+  signal?: AbortSignal,
+): Promise<NfeItemDetail> {
+  const params = new URLSearchParams({
+    branch: input.branch,
+    document_type: "nfe",
+    provider_entity_id: input.providerEntityId,
+    access_key: input.accessKey,
+    supplier_code: input.supplierCode,
+    supplier_store: input.supplierStore,
+  });
+  return httpGet<NfeItemDetail>(
+    `${API_BASE}/received-invoices/${encodeURIComponent(documentId)}/detail?${params.toString()}`,
+    { signal },
   );
 }
 

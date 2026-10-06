@@ -224,6 +224,7 @@ export type CreateRequestPayload = {
   source?: "manual" | "received_nfe" | "questor";
   document_id?: string;
   access_key?: string;
+  provider_entity_id?: string;
   source_branch?: string;
   source_document_type?: "nfe" | "nfse" | "cte";
   provider_document_number?: string;
@@ -236,6 +237,7 @@ export type ReceivedDocumentType = "nfe" | "nfse" | "cte";
 export type ReceivedInvoiceItem = {
   documentType?: ReceivedDocumentType;
   documentId: string;
+  providerEntityId?: string | null;
   providerFileId?: string | null;
   providerDocumentNumber?: string | null;
   documentNumber?: string | null;
@@ -329,6 +331,41 @@ export type CteDetail = {
   linkedInvoices?: CteLinkedInvoice[];
 };
 
+export type NfeMappingStatus = "mapped" | "unmapped" | "ambiguous";
+
+export type NfeProductMappingState = "supplier_required" | "issuer_mismatch" | "ready";
+
+export type NfeMappedItem = {
+  itemNumber?: string | null;
+  supplierProductCode?: string | null;
+  supplierProductDescription?: string | null;
+  internalProductCode?: string | null;
+  internalProductDescription?: string | null;
+  quantity?: string | null;
+  unit?: string | null;
+  mappingStatus?: NfeMappingStatus | null;
+};
+
+export type NfeItemDetail = {
+  documentType?: "nfe";
+  documentId?: string;
+  providerEntityId?: string;
+  branchCode?: string;
+  accessKey?: string;
+  number?: string | null;
+  series?: string | null;
+  emissionAt?: string | null;
+  issuer?: { name?: string | null; cnpj?: string | null } | null;
+  productMapping?: { state?: NfeProductMappingState | null } | null;
+  items?: NfeMappedItem[];
+  summary?: {
+    items: number;
+    mapped: number;
+    unmapped: number;
+    ambiguous: number;
+  };
+};
+
 export type FiscalAttachment = {
   document_type: string;
   attachment_type: "xml_original" | "xml_standard" | "danfe" | "dacte";
@@ -356,6 +393,7 @@ export type InvoicePostingDanfe = {
   available: boolean;
   document_id: string;
   access_key: string;
+  provider_entity_id?: string | null;
   file_name: string;
   size_bytes: number;
 };

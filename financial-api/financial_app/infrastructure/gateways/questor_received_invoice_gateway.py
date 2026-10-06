@@ -201,6 +201,7 @@ class QuestorReceivedInvoiceGateway:
             manifestation_description=_text(row.get("ManifestationDescription")),
             danfe_available=_flag(row.get("XmlDanfe")),
             branch_code=self._session.branch_code,
+            provider_entity_id=_text(row.get("Id")),
         )
 
     def _map_export_row(self, row: dict[str, Any]) -> QuestorNfeListing:
@@ -313,7 +314,7 @@ def _validate_nfe_xml_payload(status: int, body: bytes, max_bytes: int) -> None:
     if not sample.startswith(b"<"):
         raise QuestorInvalidResponse("O Questor Zen devolveu uma resposta inválida.")
     folded = body.upper()
-    if b"<!DOCTYPE" in folded or b"<!ENTITY" in folded:
+    if b"<!DOCTYPE" in folded or b"<!ENTITY" in folded or b"<!ATTLIST" in folded:
         raise QuestorInvalidResponse("O XML da NF-e foi recusado por segurança.")
 
 

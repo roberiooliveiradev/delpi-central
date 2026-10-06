@@ -105,13 +105,14 @@ Duplicidade em solicitação **não cancelada** → **409** com `existing_reques
 | `received_at` | — | sim (ISO datetime) |
 | `observation` | — | não |
 | `source` | — | não (`received_nfe` na NF-e do Questor; `questor` na NFS-e e no CT-e) |
+| `provider_entity_id` | — | não; na NF-e do Questor, `row.Id` (24 hex) para reler o XML nos detalhes |
 | `provider_file_id` | — | sim no CT-e do Questor (`XmlFilename`, 24 hex) |
 | `source_document_type` | — | sim quando `source=questor` (`nfse` ou `cte`; tem de ser igual a `fiscal_model`) |
 | `source_document_id` | — | sim na NFS-e do Questor |
 | `source_branch` | — | sim na origem Questor; tem de ser igual a `branch` (senão **422**) |
 | `provider_document_number` | — | não; `NumberNfse` original, fora dos 9 dígitos operacionais |
 
-Cria em `pending` com snapshot do fornecedor. NF-e de origem `received_nfe` anexa o DANFE PDF na tabela legada. NFS-e de origem `questor` baixa e grava XML original e XML padronizado em `invoice_posting_fiscal_attachments` (migration `V010`). CT-e de origem `questor` (`source_document_type=cte`) grava o XML original e, se o portal devolver o PDF, o DACTE na mesma tabela (`document_type=cte`, `attachment_type` `xml_original` ou `dacte`). O DACTE não entra na tabela legada de DANFE. As `linked_invoices` do CT-e vêm de `infNFe/chave` no XML baixado pelo backend; a lista enviada pelo browser não é a fonte. Divergência de filial, número, série ou tipo fiscal responde **422**. DACTE 404 permite seguir só com o XML. Falha 5xx, timeout, storage ou metadado desfaz a solicitação e os arquivos já gravados. Mais de 30 NF-e vinculadas é erro; a lista não é truncada.
+Cria em `pending` com snapshot do fornecedor. NF-e de origem `received_nfe` anexa o DANFE PDF na tabela legada e, quando enviado, grava `provider_entity_id` junto desse metadado. Os detalhes da solicitação usam esse identificador para reler os itens da NF-e; a relação Produto x Fornecedor não é copiada para o Postgres. NFS-e de origem `questor` baixa e grava XML original e XML padronizado em `invoice_posting_fiscal_attachments` (migration `V010`). CT-e de origem `questor` (`source_document_type=cte`) grava o XML original e, se o portal devolver o PDF, o DACTE na mesma tabela (`document_type=cte`, `attachment_type` `xml_original` ou `dacte`). O DACTE não entra na tabela legada de DANFE. As `linked_invoices` do CT-e vêm de `infNFe/chave` no XML baixado pelo backend; a lista enviada pelo browser não é a fonte. Divergência de filial, número, série ou tipo fiscal responde **422**. DACTE 404 permite seguir só com o XML. Falha 5xx, timeout, storage ou metadado desfaz a solicitação e os arquivos já gravados. Mais de 30 NF-e vinculadas é erro; a lista não é truncada.
 
 ---
 
@@ -127,7 +128,7 @@ NF-e. Query `access_key` (44) e `branch`. Resposta `application/pdf`.
 
 ### GET `/received-invoices/{document_id}/detail`
 
-NFS-e com `document_type=nfse`. CT-e com `document_type=cte`, `file_id` e `access_key`. JSON normalizado; o CT-e traz emitente, remetente, destinatário, origem, destino, valor e `linkedInvoices`. O frontend não interpreta XML.
+NFS-e com `document_type=nfse`. CT-e com `document_type=cte`, `file_id` e `access_key`. NF-e com `document_type=nfe`, `provider_entity_id` (Id da linha no Questor, distinto do `document_id`/`XmlFilename` usado no DANFE), `access_key`, `branch` e, quando houver, `supplier_code` e `supplier_store`. O JSON da NF-e traz os itens do XML (`cProd` preservado) e a tradução Produto x Fornecedor (`mapped`, `unmapped`, `ambiguous`). A consulta da SA5 usa fornecedor + loja + código do fornecedor e não filtra `A5_FILIAL`. Fornecedor divergente do emitente não devolve código Delpi. O frontend não interpreta XML.
 
 ### GET `/received-invoices/{document_id}/xml/{variant}`
 

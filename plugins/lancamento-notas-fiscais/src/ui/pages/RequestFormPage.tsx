@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type KeyboardEvent,
@@ -19,6 +20,7 @@ import type { CreateRequestPayload, FiscalModel, ReceivedInvoiceItem, Supplier }
 import { ReceivedInvoicePicker } from "../components/ReceivedInvoicePicker";
 import { branchLabel, type BranchCode } from "../../constants/branch";
 import { LnfPageHeader } from "../components/LnfPageHeader";
+import { NfeProductMappingPanel, type NfeProductMappingView } from "../components/NfeProductMappingPanel";
 import { SupplierSearch } from "../components/SupplierSearch";
 
 type Props = {
@@ -136,10 +138,79 @@ export function RequestFormPage({
     branch_code: string;
     provider_document_number?: string;
     provider_file_id?: string;
+    provider_entity_id?: string;
   } | null>(null);
+  const [productMapping, setProductMapping] = useState<NfeProductMappingView>({ status: "supplier_required" });
+  const mappingRequestRef = useRef(0);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [supplierHint, setSupplierHint] = useState<string | null>(null);
   const [linkedInvoices, setLinkedInvoices] = useState<LinkedInvoiceDraft[]>([]);
+
+  useEffect(() => {
+    if (attachment?.document_type !== "nfe") {
+      mappingRequestRef.current += 1;
+      return;
+    }
+    if (!supplier?.supplier_code || !supplier.supplier_store) {
+      mappingRequestRef.current += 1;
+      setProductMapping({ status: "supplier_required" });
+      return;
+    }
+    if (!attachment.provider_entity_id) {
+      mappingRequestRef.current += 1;
+      setProductMapping({
+        status: "error",
+        message: "Esta NF-e não trouxe o identificador necessário para ler os itens.",
+      });
+      return;
+    }
+    const requestId = ++mappingRequestRef.current;
+    const controller = new AbortController();
+    setProductMapping({ status: "loading" });
+    api
+      .fetchReceivedNfeItems(
+        attachment.document_id,
+        {
+          providerEntityId: attachment.provider_entity_id,
+          accessKey: attachment.access_key,
+          branch: attachment.branch_code,
+          supplierCode: supplier.supplier_code,
+          supplierStore: supplier.supplier_store,
+        },
+        controller.signal,
+      )
+      .then((detail) => {
+        if (requestId !== mappingRequestRef.current) return;
+        if (!detail?.items && detail?.productMapping?.state !== "issuer_mismatch") {
+          setProductMapping({
+            status: "error",
+            message: "Não foi possível ler os itens da NF-e.",
+          });
+          return;
+        }
+        if (detail.productMapping?.state === "issuer_mismatch") {
+          setProductMapping({ status: "issuer_mismatch", detail });
+          return;
+        }
+        setProductMapping({ status: "ready", detail });
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted || requestId !== mappingRequestRef.current) return;
+        setProductMapping({
+          status: "error",
+          message: err instanceof Error ? err.message : "Não foi possível traduzir os produtos.",
+        });
+      });
+    return () => controller.abort();
+  }, [
+    attachment?.document_type,
+    attachment?.document_id,
+    attachment?.provider_entity_id,
+    attachment?.access_key,
+    attachment?.branch_code,
+    supplier?.supplier_code,
+    supplier?.supplier_store,
+  ]);
 
   const documentPreview = useMemo(
     () => normalizeDocumentInput(form.document),
@@ -291,6 +362,7 @@ export function RequestFormPage({
       payload.source = "received_nfe";
       payload.document_id = attachment.document_id;
       payload.access_key = attachment.access_key;
+      payload.provider_entity_id = attachment.provider_entity_id;
       payload.source_branch = attachment.branch_code;
     }
 
@@ -392,6 +464,7 @@ export function RequestFormPage({
       branch_code: row.branchCode,
       provider_document_number: row.providerDocumentNumber || undefined,
       provider_file_id: isCte ? row.providerFileId || undefined : undefined,
+      provider_entity_id: !isCte && !isNfse ? row.providerEntityId || undefined : undefined,
     });
     setSupplier(null);
     setSupplierHint(null);
@@ -714,6 +787,8 @@ export function RequestFormPage({
             </div>
           </div>
         </section>
+
+        {attachment?.document_type === "nfe" ? <NfeProductMappingPanel view={productMapping} /> : null}
 
         <section className="lnf-card lnf-form-section">
           <h2>Recebimento</h2>

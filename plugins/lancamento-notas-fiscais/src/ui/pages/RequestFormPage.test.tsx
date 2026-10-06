@@ -551,6 +551,7 @@ describe("RequestFormPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Avançar" }));
     await waitFor(() => expect(screen.getByDisplayValue("000002224")).toBeTruthy());
     expect(screen.getByTestId("nfse-attach-notice").textContent).toMatch(/XML/);
+    expect(screen.queryByTestId("nfe-product-mapping")).toBeNull();
     expect((screen.getByLabelText("Tipo da nota") as HTMLSelectElement).value).toBe("nfse");
     fireEvent.change(screen.getByLabelText("Recebimento físico"), {
       target: { value: "2026-10-01T09:30" },
@@ -738,6 +739,7 @@ describe("RequestFormPage", () => {
     expect(screen.getByDisplayValue("000115449")).toBeTruthy();
     expect(screen.getByDisplayValue("000115450")).toBeTruthy();
     expect(screen.getByTestId("cte-attach-notice").textContent).toMatch(/XML/);
+    expect(screen.queryByTestId("nfe-product-mapping")).toBeNull();
     expect(api.searchSuppliers).toHaveBeenCalledWith("78517588000495");
     fireEvent.change(screen.getByLabelText("Recebimento físico"), {
       target: { value: "2026-10-02T11:00" },
@@ -799,4 +801,192 @@ describe("RequestFormPage", () => {
     expect((await screen.findByRole("alert")).textContent).toMatch(/filial 02/);
     expect(api.fetchReceivedCteDetail).not.toHaveBeenCalled();
   });
+
+  it("não mostra itens da NF-e na inclusão manual, na NFS-e nem no CT-e", async () => {
+    renderCreate(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    expect(screen.queryByTestId("nfe-product-mapping")).toBeNull();
+  });
+
+  it("mostra a tradução da NF-e e permite cadastrar item não relacionado", async () => {
+    const accessKey = "2".repeat(44);
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentType: "nfe",
+          documentId: "aabbccddeeff001122334455",
+          providerEntityId: "cccccccccccccccccccccccc",
+          accessKey,
+          invoiceNumber: "22844",
+          series: "1",
+          issuerName: "Fornecedor",
+          issuerCnpj: "12345678000199",
+          emissionAt: "2026-09-30",
+          amount: "108.00",
+          amountFormatted: "R$ 108,00",
+          danfeAvailable: true,
+          branchCode: "01",
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000010",
+        supplier_store: "01",
+        supplier_name: "Fornecedor",
+        supplier_short_name: null,
+        tax_id: "12345678000199",
+        state: "SC",
+        blocked: false,
+      },
+    ]);
+    vi.mocked(api.fetchReceivedNfeItems).mockResolvedValue({
+      productMapping: { state: "ready" },
+      items: [
+        {
+          itemNumber: "1",
+          supplierProductCode: "00001234",
+          supplierProductDescription: "PARAFUSO",
+          internalProductCode: null,
+          internalProductDescription: null,
+          quantity: "4",
+          unit: "PC",
+          mappingStatus: "unmapped",
+        },
+      ],
+      summary: { items: 1, mapped: 0, unmapped: 1, ambiguous: 0 },
+    });
+    vi.mocked(api.createRequest).mockResolvedValue({ id: "nfe-map" } as never);
+    render(<RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />);
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "22844" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Avançar" }));
+    expect(await screen.findByTestId("nfe-product-mapping")).toBeTruthy();
+    expect(await screen.findByText("00001234")).toBeTruthy();
+    expect(screen.getAllByText("Não relacionado").length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByLabelText("Recebimento físico"), {
+      target: { value: "2026-10-01T09:30" },
+    });
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    await waitFor(() => expect(api.createRequest).toHaveBeenCalled());
+    expect(api.createRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "received_nfe",
+        provider_entity_id: "cccccccccccccccccccccccc",
+      }),
+    );
+  });
+
+  it("troca de fornecedor descarta a tradução anterior", async () => {
+    const accessKey = "2".repeat(44);
+    const first = deferred<Awaited<ReturnType<typeof api.fetchReceivedNfeItems>>>();
+    const second = deferred<Awaited<ReturnType<typeof api.fetchReceivedNfeItems>>>();
+    vi.mocked(api.fetchReceivedNfeItems)
+      .mockImplementationOnce(() => first.promise)
+      .mockImplementationOnce(() => second.promise);
+    vi.mocked(api.searchReceivedInvoices).mockResolvedValue({
+      items: [
+        {
+          documentType: "nfe",
+          documentId: "aabbccddeeff001122334455",
+          providerEntityId: "cccccccccccccccccccccccc",
+          accessKey,
+          invoiceNumber: "22844",
+          series: "1",
+          issuerName: "Fornecedor",
+          issuerCnpj: "12345678000199",
+          emissionAt: "2026-09-30",
+          amount: "108.00",
+          amountFormatted: "R$ 108,00",
+          danfeAvailable: true,
+          branchCode: "01",
+        },
+      ],
+      pagination: { page: 1, pageSize: 25, totalItems: 1, hasNext: false, hasPrevious: false },
+    });
+    vi.mocked(api.searchSuppliers).mockImplementation(async (query: string) => {
+      if (query.replace(/\D/g, "").includes("12345678000199")) {
+        return [
+          {
+            supplier_code: "000010",
+            supplier_store: "01",
+            supplier_name: "Loja 01",
+            supplier_short_name: null,
+            tax_id: "12345678000199",
+            state: "SC",
+            blocked: false,
+          },
+        ];
+      }
+      return [
+        {
+          supplier_code: "000010",
+          supplier_store: "02",
+          supplier_name: "Loja 02",
+          supplier_short_name: null,
+          tax_id: "12345678000199",
+          state: "SC",
+          blocked: false,
+        },
+      ];
+    });
+    render(<RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />);
+    fireEvent.click(screen.getByTestId("btn-select-nfe"));
+    fireEvent.change(screen.getByLabelText("Número da NF"), { target: { value: "22844" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Avançar" }));
+    expect(await screen.findByTestId("nfe-mapping-loading")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Trocar" }));
+    expect(await screen.findByTestId("nfe-mapping-waiting")).toBeTruthy();
+    first.resolve({
+      productMapping: { state: "ready" },
+      items: [
+        {
+          itemNumber: "1",
+          supplierProductCode: "00001234",
+          supplierProductDescription: "ANTIGO",
+          internalProductCode: "DELPI-ANTIGO",
+          internalProductDescription: "ANTIGO",
+          quantity: "1",
+          unit: "PC",
+          mappingStatus: "mapped",
+        },
+      ],
+      summary: { items: 1, mapped: 1, unmapped: 0, ambiguous: 0 },
+    });
+    expect(screen.queryByText("DELPI-ANTIGO")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Fornecedor"), { target: { value: "loja" } });
+    fireEvent.click(await screen.findByRole("button", { name: /Loja 02/ }));
+    expect(await screen.findByTestId("nfe-mapping-loading")).toBeTruthy();
+    second.resolve({
+      productMapping: { state: "ready" },
+      items: [
+        {
+          itemNumber: "1",
+          supplierProductCode: "00001234",
+          supplierProductDescription: "NOVO",
+          internalProductCode: "DELPI-NOVO",
+          internalProductDescription: "NOVO",
+          quantity: "1",
+          unit: "PC",
+          mappingStatus: "mapped",
+        },
+      ],
+      summary: { items: 1, mapped: 1, unmapped: 0, ambiguous: 0 },
+    });
+    expect(await screen.findByText("DELPI-NOVO")).toBeTruthy();
+    expect(screen.queryByText("DELPI-ANTIGO")).toBeNull();
+    expect(screen.getByLabelText("Número da nota")).toBeTruthy();
+  });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}

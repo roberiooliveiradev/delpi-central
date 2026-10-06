@@ -11,6 +11,7 @@ from financial_app.infrastructure.gateways.questor_received_invoice_gateway impo
     QuestorReceivedInvoiceGateway,
 )
 from financial_app.infrastructure.xml.cte_xml import CteXmlDocument, parse_cte_xml
+from financial_app.infrastructure.xml.nfe_xml import NfeXmlDocument, parse_nfe_xml
 from financial_app.infrastructure.xml.nfse_standard_xml import (
     NfseStandardDocument,
     parse_nfse_standard_xml,
@@ -36,6 +37,12 @@ class QuestorBranchFiscalClient:
     def download_danfe(self, *, document_id: str, access_key: str) -> bytes:
         return self.nfe.download_danfe(document_id=document_id, access_key=access_key)
 
+    def download_nfe_xml(self, *, provider_file_id: str, provider_document_id: str) -> bytes:
+        return self.nfe.download_nfe_xml(
+            provider_file_id=provider_file_id,
+            provider_document_id=provider_document_id,
+        )
+
     def download_nfse_xml(self, *, document_id: str, variant: str) -> bytes:
         return self.nfse.download_xml(document_id=document_id, variant=variant)
 
@@ -56,6 +63,23 @@ class QuestorBranchFiscalClient:
             provider_file_id=provider_file_id,
             provider_document_id=provider_document_id,
             access_key=access_key,
+        )
+
+    def read_nfe(
+        self,
+        *,
+        provider_file_id: str,
+        provider_document_id: str,
+        expected_access_key: str | None = None,
+    ) -> NfeXmlDocument:
+        payload = self.download_nfe_xml(
+            provider_file_id=provider_file_id,
+            provider_document_id=provider_document_id,
+        )
+        return parse_nfe_xml(
+            payload,
+            max_bytes=self._session.max_bytes,
+            expected_access_key=expected_access_key,
         )
 
     def read_nfse_standard(self, *, document_id: str) -> NfseStandardDocument:

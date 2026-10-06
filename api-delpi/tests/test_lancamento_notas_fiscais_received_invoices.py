@@ -309,6 +309,7 @@ def test_received_nfe_stores_pdf_and_metadata(tmp_path) -> None:
             "source_branch": "01",
             "document_id": DOCUMENT_ID,
             "access_key": ACCESS_KEY,
+            "provider_entity_id": "CCCCCCCCCCCCCCCCCCCCCCCC",
         },
         _actor(),
         authorization="Bearer user-jwt",
@@ -316,6 +317,8 @@ def test_received_nfe_stores_pdf_and_metadata(tmp_path) -> None:
     assert create.calls == 1
     assert requests.inserted["document_id"] == DOCUMENT_ID
     assert requests.inserted["access_key"] == ACCESS_KEY
+    assert requests.inserted["provider_entity_id"] == "cccccccccccccccccccccccc"
+    assert created["danfe"]["provider_entity_id"] == "cccccccccccccccccccccccc"
     assert (tmp_path / requests.inserted["stored_name"]).read_bytes().startswith(b"%PDF")
     assert created["danfe"]["file_name"] == f"NFe-{ACCESS_KEY}.pdf"
     assert requests.deleted == []

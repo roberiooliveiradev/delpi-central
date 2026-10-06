@@ -27,6 +27,7 @@ from financial_app.domain.received_invoice import ReceivedInvoice, ReceivedInvoi
 from financial_app.domain.services.branch_access_service import BranchAccessService
 from financial_app.domain.fiscal_access_key import access_key_check_digit_ok, access_key_model
 from financial_app.infrastructure.xml.cte_xml import parse_cte_xml
+from financial_app.infrastructure.xml.nfe_xml import parse_nfe_xml
 from financial_app.infrastructure.xml.nfse_standard_xml import parse_nfse_standard_xml
 
 _DOCUMENT_ID = re.compile(r"^[0-9a-fA-F]{24}$")
@@ -205,6 +206,52 @@ class ReceivedInvoicesService:
         data["documentType"] = "cte"
         return data
 
+    def download_nfe_xml(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        provider_entity_id: str,
+        branch_code: str | None,
+    ) -> tuple[bytes, str]:
+        self._authorize(user)
+        branch = _origin_branch(branch_code)
+        normalized_file = _document_id(document_id)
+        normalized_entity = _provider_entity_id(provider_entity_id)
+        payload = self._companies[branch].download_nfe_xml(
+            provider_file_id=normalized_file,
+            provider_document_id=normalized_entity,
+        )
+        return payload, f"NFe-{normalized_file}.xml"
+
+    def nfe_detail(
+        self,
+        user: object | None,
+        *,
+        document_id: str,
+        provider_entity_id: str,
+        branch_code: str | None,
+        access_key: str,
+    ) -> dict[str, Any]:
+        payload, _filename = self.download_nfe_xml(
+            user,
+            document_id=document_id,
+            provider_entity_id=provider_entity_id,
+            branch_code=branch_code,
+        )
+        normalized_key = _nfe_access_key(access_key)
+        parsed = parse_nfe_xml(
+            payload,
+            max_bytes=_XML_MAX_BYTES,
+            expected_access_key=normalized_key,
+        )
+        data = parsed.as_public_dict()
+        data["documentId"] = _document_id(document_id)
+        data["providerEntityId"] = _provider_entity_id(provider_entity_id)
+        data["branchCode"] = _origin_branch(branch_code)
+        data["documentType"] = "nfe"
+        return data
+
     def _authorize(self, user: object | None) -> None:
         if _is_internal_invoice_reader(user):
             return
@@ -298,6 +345,7 @@ def _item(document: ReceivedFiscalDocument) -> dict[str, Any]:
         "xmlStandardAvailable": document.xml_standard_available,
         "providerStatus": document.provider_status or None,
         "providerFileId": document.provider_file_id,
+        "providerEntityId": document.provider_entity_id or None,
         "branchCode": document.branch_code,
     }
 
@@ -404,6 +452,7 @@ def _from_nfe(invoice: ReceivedInvoice, branch_code: str) -> ReceivedFiscalDocum
         manifestation_code=invoice.manifestation_code,
         manifestation_description=invoice.manifestation_description,
         danfe_available=invoice.danfe_available,
+        provider_entity_id=invoice.provider_entity_id,
     )
 
 
@@ -436,6 +485,7 @@ def _with_branch(document: ReceivedFiscalDocument, branch_code: str) -> Received
         danfe_available=document.danfe_available,
         provider_status=document.provider_status,
         provider_file_id=document.provider_file_id,
+        provider_entity_id=document.provider_entity_id,
     )
 
 
@@ -578,4 +628,18 @@ def _file_id(value: str) -> str:
     text = (value or "").strip()
     if not _DOCUMENT_ID.fullmatch(text):
         raise InvalidReceivedInvoiceQuery("Identificador do arquivo do CT-e inválido.")
+    return text
+
+
+def _provider_entity_id(value: str) -> str:
+    text = (value or "").strip()
+    if not _DOCUMENT_ID.fullmatch(text):
+        raise InvalidReceivedInvoiceQuery("Identificador da NF-e inválido.")
+    return text
+
+
+def _nfe_access_key(value: str) -> str:
+    text = _access_key(value)
+    if access_key_model(text) != "55" or not access_key_check_digit_ok(text):
+        raise InvalidReceivedInvoiceQuery("Chave de acesso da NF-e inválida.")
     return text

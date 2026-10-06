@@ -652,6 +652,8 @@ class FakeReceivedInvoiceGateway:
         self.xml_downloads: list[tuple[str, str]] = []
         self.cte_downloads: list[tuple[str, str]] = []
         self.dacte_downloads: list[tuple[str, str, str]] = []
+        self.nfe_downloads: list[tuple[str, str]] = []
+        self.nfe_xml: bytes | None = None
         self.closed = False
         self._items = items
         self._nfse_items = nfse_items
@@ -713,6 +715,10 @@ class FakeReceivedInvoiceGateway:
     def download_danfe(self, *, document_id: str, access_key: str) -> bytes:
         self.downloads.append((document_id, access_key))
         return b"%PDF-1.4\nfake\n"
+
+    def download_nfe_xml(self, *, provider_file_id: str, provider_document_id: str) -> bytes:
+        self.nfe_downloads.append((provider_file_id, provider_document_id))
+        return self.nfe_xml or b"<?xml version='1.0'?><nfeProc></nfeProc>"
 
     def download_nfse_xml(self, *, document_id: str, variant: str) -> bytes:
         self.xml_downloads.append((document_id, variant))

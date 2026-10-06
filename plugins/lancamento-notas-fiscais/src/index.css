@@ -1700,3 +1700,32 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfe-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfe-arrow {
+  color: var(--lnf-muted);
+  text-align: center;
+  width: 1.5rem;
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfe-status {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  border: 1px solid var(--lnf-border);
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfe-status--mapped {
+  color: var(--lnf-title);
+}
+
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfe-status--unmapped,
+.dashboard-lancamento-notas-fiscais.lnf-page .lnf-nfe-status--ambiguous {
+  color: var(--lnf-muted);
+}
