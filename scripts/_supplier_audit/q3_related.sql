@@ -1,0 +1,18 @@
+SET NOCOUNT ON;
+-- Distinct child tables from SX9 where SA2 is dominant, with SX2 description
+WITH rel AS (
+  SELECT DISTINCT X9_CDOM AS alias_ FROM SX9010
+  WHERE D_E_L_E_T_<>'*' AND X9_DOM='SA2'
+  UNION
+  SELECT DISTINCT X9_DOM FROM SX9010 WHERE D_E_L_E_T_<>'*' AND X9_CDOM='SA2'
+)
+SELECT r.alias_, s.X2_NOME, s.X2_ARQUIVO, s.X2_MODO, s.X2_ROTINA
+FROM rel r LEFT JOIN SX2010 s ON s.X2_CHAVE = r.alias_
+ORDER BY r.alias_;
+
+-- Distinct tables containing fields that validate against SA2
+SELECT DISTINCT X3_ARQUIVO AS alias_, s.X2_NOME
+FROM SX3010 x LEFT JOIN SX2010 s ON s.X2_CHAVE = x.X3_ARQUIVO
+WHERE x.D_E_L_E_T_<>'*' AND x.X3_ARQUIVO<>'SA2'
+AND (x.X3_VALID LIKE '%SA2%' OR x.X3_RELACAO LIKE '%SA2%' OR x.X3_CONDSQL LIKE '%SA2%' OR x.X3_F3 IN ('SA2','FOR','FORN','FORNE'))
+ORDER BY X3_ARQUIVO;

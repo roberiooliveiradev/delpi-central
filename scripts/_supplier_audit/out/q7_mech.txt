@@ -1,0 +1,22 @@
+trigger|SA2010|SA2010_STAMP|0
+trigger|SA5010|SA5010_TTATA|0
+trigger|SA5010|SA5010_TTATB|0
+trigger|SA5010|SA5010_TTATC|0
+ttat_cols|TTAT_FIELD
+ttat_cols|TTAT_COLD
+ttat_cols|TTAT_CNEW
+ttat_cols|TTAT_TYPE
+ttat_cols|TTAT_RECNO
+ttat_cols|TTAT_USER
+ttat_cols|TTAT_USERID
+ttat_cols|TTAT_UDB
+ttat_cols|TTAT_HOSTNAM
+ttat_cols|TTAT_PROGRAM
+ttat_cols|TTAT_OPERATI
+ttat_cols|TTAT_DELET
+ttat_cols|TTAT_DTIME
+ttat_cols|TTAT_IDENT
+ttat_cols|TTAT_UNQ
+ttat_count|0
+Msg 208, Level 16, State 1, Server srv-db01, Line 13
+Invalid object name 'SXE010'.

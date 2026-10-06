@@ -1,0 +1,19 @@
+SET NOCOUNT ON;
+-- R1: SX9 relations where SA2 is dominant or child
+SELECT 'SX9' src, X9_DOM, X9_IDENT, X9_CDOM, X9_EXPDOM, X9_EXPCDOM, X9_PROPRI, X9_CHVFOR
+FROM SX9010 WHERE D_E_L_E_T_<>'*' AND (X9_DOM='SA2' OR X9_CDOM='SA2' OR X9_EXPDOM LIKE '%SA2%' OR X9_EXPCDOM LIKE '%SA2%');
+
+-- R2: fields in other tables validating against SA2
+SELECT 'X3VALID' src, X3_ARQUIVO, X3_CAMPO, X3_TITULO, X3_VALID
+FROM SX3010 WHERE D_E_L_E_T_<>'*' AND X3_ARQUIVO<>'SA2'
+AND (X3_VALID LIKE '%SA2%' OR X3_RELACAO LIKE '%SA2%' OR X3_CONDSQL LIKE '%SA2%' OR X3_F3 IN ('SA2','FOR','FORN','FORNE'));
+
+-- R3: fields whose title/description mentions fornecedor (across all tables)
+SELECT 'X3DESC' src, X3_ARQUIVO, X3_CAMPO, X3_TIPO, X3_TAMANHO, X3_TITULO, X3_DESCRIC
+FROM SX3010 WHERE D_E_L_E_T_<>'*' AND (X3_TITULO LIKE '%Fornec%' OR X3_TITULO LIKE '%fornec%'
+  OR X3_DESCRIC LIKE '%fornecedor%' OR X3_DESCRIC LIKE '%Fornecedor%')
+ORDER BY X3_ARQUIVO, X3_CAMPO;
+
+-- R4: tables whose SX2 description mentions fornecedor
+SELECT 'X2DESC' src, X2_CHAVE, X2_ARQUIVO, X2_NOME, X2_MODO, X2_ROTINA
+FROM SX2010 WHERE D_E_L_E_T_<>'*' AND (X2_NOME LIKE '%Fornec%' OR X2_NOME LIKE '%fornec%' OR X2_NOMEENG LIKE '%Supplier%');

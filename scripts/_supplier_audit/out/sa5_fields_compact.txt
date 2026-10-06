@@ -1,0 +1,111 @@
+01|A5_FILIAL |C|2.0|Filial      
+02|A5_FORNECE|C|6.0|Fornecedor  
+03|A5_LOJA   |C|2.0|Loja        
+04|A5_NOMEFOR|C|50.0|Nome        
+05|A5_NOMERED|C|20.0|Nome Reduz. 
+06|A5_PRODUTO|C|15.0|Produto     
+07|A5_NOMPROD|C|120.0|Descricao   
+08|A5_CODPRF |C|50.0|Cod.Prod.For
+09|A5_CODPRCA|C|18.0|Cod.Prod.Cat
+10|A5_SITU   |C|1.0|Situacao    
+11|A5_FABREV |C|1.0|Fab/Rev/Perm
+12|A5_PE     |N|5.0|Entrega     
+13|A5_TIPE   |C|1.0|Tipo Prazo  
+14|A5_EMBAL  |N|5.0|Qtde Embalag
+15|A5_FABRRED|C|20.0|Nome Fabric.
+16|A5_MOE_US |C|3.0|Moeda Utiliz
+17|A5_VLCOTUS|N|15.0|Vlr.Cotaþao 
+18|A5_ULT_ENT|D|8.0|Ult. Entrega
+19|A5_QT_COT |N|13.0|Quant.Cotada
+20|A5_ULT_FOB|N|15.0|Vlr.Ult.FOB 
+21|A5_PARTOPC|C|48.0|Part-Num.Opc
+22|A5_UNID   |C|2.0|Unidade     
+23|A5_SKPLOT |C|2.0|Skip-Lote   
+24|A5_RIAI   |C|8.0|RIAI        
+25|A5_DTRIAI |D|8.0|Data RIAI   
+26|A5_VALRIAI|D|8.0|Valid. RIAI 
+27|A5_CHAVE  |C|8.0|Cod. Ligacao
+28|A5_ATUAL  |C|1.0|Atualiza    
+29|A5_INCOTER|C|8.0|Incoterm    
+30|A5_TR_COST|N|15.0|Transf. Cost
+31|A5_CODGRP |C|4.0|Grupo       
+32|A5_CODITE |C|27.0|Cod. Produto
+33|A5_CODBAR |C|15.0|Cod.Barras  
+34|A5_TIPOCOT|C|1.0|Tipo Cotacao
+35|A5_STATUS |C|1.0|Status      
+36|A5_SKIPLOT|N|4.0|Contr. Lote 
+37|A5_DTCOM02|D|8.0|2a. Data    
+38|A5_DTCOM03|D|8.0|3a. Data    
+39|A5_DTCOM04|D|8.0|4a. Data    
+40|A5_DTCOM05|D|8.0|5a. Data    
+41|A5_DTCOM06|D|8.0|6a. Data    
+42|A5_DTCOM07|D|8.0|7a. Data    
+43|A5_DTCOM08|D|8.0|8a. Data    
+44|A5_DTCOM09|D|8.0|9a. Data    
+45|A5_DTCOM10|D|8.0|10a. Data   
+46|A5_DTCOM11|D|8.0|11a. Data   
+47|A5_DTCOM12|D|8.0|12a. Data   
+48|A5_ENTREGA|N|4.0|Entregas    
+49|A5_FABR   |C|6.0|Fabricante  
+50|A5_FALOJA |C|2.0|Loja Fabric.
+51|A5_QUANT01|N|12.0|1a. Quant.  
+52|A5_QUANT02|N|12.0|2a. Quant.  
+53|A5_QUANT03|N|12.0|3a. Quant.  
+54|A5_QUANT04|N|12.0|4a. Quant.  
+55|A5_QUANT05|N|12.0|5a. Quant.  
+56|A5_QUANT06|N|12.0|6a. Quant.  
+57|A5_QUANT07|N|12.0|7a. Quant.  
+58|A5_QUANT08|N|12.0|8a. Quant.  
+59|A5_QUANT09|N|12.0|9a. Quant.  
+60|A5_QUANT10|N|12.0|10a. Quant. 
+61|A5_QUANT11|N|12.0|11a. Quant. 
+62|A5_QUANT12|N|12.0|12a. Quant. 
+63|A5_PRECO01|N|16.0|1o. Preco   
+64|A5_PRECO02|N|16.0|2o. Preco   
+65|A5_PRECO03|N|16.0|3o. Preco   
+66|A5_LEAD_T |N|5.0|Lead Time   
+67|A5_PRECO04|N|16.0|4o. Preco   
+68|A5_PRECO05|N|16.0|5o. Preco   
+69|A5_TIPATU |C|1.0|Tipo Atualiz
+70|A5_LOTEMIN|N|8.0|MOQ         
+71|A5_LOTEMUL|N|8.0|Embalagem   
+72|A5_PRECO06|N|16.0|6o. Preco   
+73|A5_PRECO07|N|16.0|7o. Preco   
+74|A5_MSBLQL |C|1.0|Bloqueado?  
+75|A5_PRECO08|N|16.0|8o. Preco   
+76|A5_PRECO09|N|16.0|9o. Preco   
+77|A5_PRECO10|N|16.0|10o. Preco  
+78|A5_PRECO11|N|16.0|11o. Preco  
+79|A5_PRECO12|N|16.0|12o. Preco  
+80|A5_PLAM1  |C|2.0|Pl. Amost. a
+81|A5_NIVEL1 |C|2.0|Nivel a     
+82|A5_NQA1   |C|5.0|NQA a       
+83|A5_PLAM2  |C|2.0|Pl. Amost. b
+84|A5_NIVEL2 |C|2.0|Nivel b     
+85|A5_NQA2   |C|5.0|NQA b       
+86|A5_COND01 |C|3.0|1a. Cond.   
+87|A5_COND02 |C|3.0|2a. Cond.   
+88|A5_COND03 |C|3.0|3a. Cond.   
+89|A5_COND04 |C|3.0|4a. Cond.   
+90|A5_COND05 |C|3.0|5a. Cond.   
+91|A5_TEMPLIM|N|2.0|Tempo Limite
+92|A5_NOTA   |N|1.0|Nota        
+93|A5_COND06 |C|3.0|6a. Cond.   
+94|A5_COND07 |C|3.0|7a. Cond.   
+95|A5_COND08 |C|3.0|8a. Cond.   
+96|A5_COND09 |C|3.0|9a. Cond.   
+97|A5_COND10 |C|3.0|10a. Cond.  
+98|A5_COND11 |C|3.0|11a. Cond.  
+99|A5_COND12 |C|3.0|12a. Cond.  
+A0|A5_REFGRD |C|14.0|Ref Grd Cfg 
+A1|A5_DESREF |C|30.0|Desc. Ref Gr
+A2|A5_DTCOM01|D|8.0|1a. Data    
+A3|A5_TEMPTRA|N|3.0|Tempo Transi
+A4|A5_PESO   |N|11.0|Peso Liquido
+A5|A5_ENTSIT |N|2.0|Num.Ent.Sit.
+A6|A5_CCUSTO |C|9.0|C.Custo     
+A7|A5_DIASSIT|N|4.0|Entradas Sit
+A8|A5_TESBP  |C|3.0|TE p/ Bonif.
+A9|A5_CODFIS |C|15.0|Cod.Fis.Forn
+AA|A5_CONV   |N|16.0|Conv Forn NF
+AB|A5_TPCONV |C|1.0|Tipo Convers

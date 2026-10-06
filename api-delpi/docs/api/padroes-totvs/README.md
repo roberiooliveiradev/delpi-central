@@ -25,6 +25,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Unidades de medida | [unidades-medida.md](./unidades-medida.md) | `MI`, BOM — resumo; detalhe no playbook |
 | Cadastro de produto | [cadastro-produto.md](./cadastro-produto.md) | `B1_TPMAT`, `B1_CUSTD`, `B1_REFEREN`, campos SB1 recorrentes |
 | Cadastro de cliente (SA1) | [cadastro-cliente.md](./cadastro-cliente.md) | `A1_NREDUZ` vs `A1_NOME`, bloqueio, loja `1`/`01`, busca carteira |
+| Cadastro de fornecedor (SA2) | [cadastro-fornecedor.md](./cadastro-fornecedor.md) | Chave `COD+LOJA`, `GETSXENUM`, bloqueio `A2_MSBLQL`, SA5 separada; auditoria completa no playbook |
 | Centro do cliente (SA7 / ZC0) | [centro-cliente.md](./centro-cliente.md) | `A7_XCENT` na amarração produto–cliente; mestre `ZC0`; filtro `customer_centers`; classificação em `/commercial/rol/by-customer-center` |
 | CRM TOTVS (SIGATEC) | [crm-sigatec.md](./crm-sigatec.md) | Censo vivo + OV `AD1`, funis 000001/000002/000003, `AIJ`/`ADY`; colunas no playbook |
 | Materiais de terceiros / SB6 | [materiais-terceiros-sb6.md](./materiais-terceiros-sb6.md) | Remessa/retorno `B6_PODER3`, chave sem `B6_TPCF`, saldo atual |
@@ -62,6 +63,7 @@ Pasta: [`playbooks/`](./playbooks/).
 | [playbook-correcao-estoque-supplies-inventario.md](./playbooks/playbook-correcao-estoque-supplies-inventario.md) | Correção estoque supplies × inventário |
 | [playbook-crm-totvs-dicionario.md](./playbooks/playbook-crm-totvs-dicionario.md) | SX3/SIX/SX9; volumes e funis em [crm-sigatec.md](./crm-sigatec.md) |
 | [playbook-carteira-semanal-previsto-realizado.md](./playbooks/playbook-carteira-semanal-previsto-realizado.md) | Previsto SC6 (`C6_ENTREG`) × realizado NF/ROL; SQL + homologação Excel |
+| [playbook-cadastro-fornecedor-sa2.md](./playbooks/playbook-cadastro-fornecedor-sa2.md) | Auditoria SA2 — schema integral, índices, relações SX9, CREATE/UPDATE, de-para p/ ponte Gabriel |
 
 Permanece em `docs/roadmaps/` (fora desta biblioteca): `playbook-api-delpi-console`, `playbook-route-test-coverage-100`, `playbook-contrato-respostas-ia`, `playbook-pac-plan-revisions-jun2026`, `playbook_correcao_lmp_repositorio_settings`.
 

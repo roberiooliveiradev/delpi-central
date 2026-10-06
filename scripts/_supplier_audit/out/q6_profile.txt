@@ -1,0 +1,105 @@
+total_active|3644
+filial_dist|  |3644
+loja_dist|01|3266
+loja_dist|02|167
+loja_dist|03|52
+loja_dist|1 |30
+loja_dist|04|29
+loja_dist|05|24
+loja_dist|00|17
+loja_dist|06|14
+loja_dist|07|9
+loja_dist|09|8
+loja_dist|08|7
+loja_dist|11|5
+loja_dist|10|5
+loja_dist|12|4
+loja_dist|13|3
+loja_dist|14|1
+loja_dist|15|1
+loja_dist| 1|1
+loja_dist|2 |1
+tipo_dist| |1
+tipo_dist|F|53
+tipo_dist|X|29
+tipo_dist|J|3561
+msblql_dist| |158
+msblql_dist|1|104
+msblql_dist|2|3382
+status_dist| |3644
+tpessoa_dist|CI|2
+tpessoa_dist|  |3641
+tpessoa_dist|OS|1
+est_top|SC|1563
+est_top|SP|1058
+est_top|ES|538
+est_top|PR|143
+est_top|RS|131
+est_top|MG|78
+est_top|EX|61
+est_top|RJ|35
+est_top|GO|7
+est_top|PE|5
+est_top|DF|5
+est_top|AM|4
+est_top|BA|4
+est_top|PB|3
+est_top|AL|2
+est_top|CE|2
+est_top|. |1
+est_top|TO|1
+est_top|RN|1
+est_top|SE|1
+est_top|PI|1
+fill|A2_AGENCIA|3644|80
+fill|A2_BAIRRO|3644|3557
+fill|A2_BANCO|3644|44
+fill|A2_CEP|3644|3446
+fill|A2_CGC|3644|3485
+fill|A2_CNAE|3644|1563
+fill|A2_COD|3644|3644
+fill|A2_CODFAV|3644|0
+fill|A2_CODPAIS|3644|3644
+fill|A2_COD_MUN|3644|3636
+fill|A2_COND|3644|639
+fill|A2_CONTA|3644|3643
+fill|A2_CONTATO|3644|1619
+fill|A2_DDD|3644|3201
+fill|A2_EMAIL|3644|2006
+fill|A2_END|3644|3644
+fill|A2_ENDCOMP|3644|4
+fill|A2_EST|3644|3644
+fill|A2_FORMPAG|3644|1105
+fill|A2_GRUPO|3644|0
+fill|A2_INSCR|3644|1823
+fill|A2_INSCRM|3644|228
+fill|A2_LOJA|3644|3644
+fill|A2_MSBLQL|3644|3486
+fill|A2_MUN|3644|3644
+fill|A2_NATUREZ|3644|3643
+fill|A2_NOME|3644|3644
+fill|A2_NREDUZ|3644|3644
+fill|A2_NR_END|3644|0
+fill|A2_NUMCON|3644|82
+fill|A2_PAIS|3644|127
+fill|A2_PFISICA|3644|2
+fill|A2_TEL|3644|3327
+fill|A2_TIPCTA|3644|2619
+fill|A2_TIPO|3644|3643
+fill|A2_YFGEN|3644|6
+fill|A2_YROHS|3644|2459
+fill|A2_ZTABPRC|3644|61
+dup_cgc|32
+dup_cod|143
+dup_cod_loja|0
+dup_nome|106
+cod_max|VIAGF3
+cod_samples|VIAGF3|02
+cod_samples|VIAGF2|01
+cod_samples|VIAGEY|01
+cod_samples|VIAGEM|00
+cod_samples|UNIAO |00
+cod_samples|MUNIC |00
+cod_samples|INPS  |00
+cod_samples|FISCO |00
+multi_loja_suppliers|143
