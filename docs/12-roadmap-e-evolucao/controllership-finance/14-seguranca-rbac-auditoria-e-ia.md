@@ -99,6 +99,28 @@ Regras:
 - source failure não pode ser convertido em empty;
 - due/overdue só existem quando o owner possuir regra formal.
 
+## Administração
+
+Contrato detalhado: [28-administracao.md](./28-administracao.md).
+
+AuthZ:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.manage)
+```
+
+Regras:
+- `MANAGE` é a única permission administrativa do Portal;
+- `ACCESS` sozinho não altera mestre;
+- `MANAGE` não implica `ACCESS` operacional;
+- nenhum permission code adicional por catálogo, template, CRUD, unidade ou ação;
+- responsible/validator/recipient referenciam identidade do Core, mas Administração não cria usuário, role nem permission;
+- writes usam optimistic concurrency e falham em stale version;
+- publicação/inativação/audit ocorrem server-side e fail-closed;
+- published version e histórico não podem ser sobrescritos silenciosamente;
+- hard delete de referência histórica não faz parte da V1.
+
 ## Validator
 
 Validator é papel/responsabilidade operacional, não sinônimo de MANAGE.
@@ -148,7 +170,11 @@ Cobrir:
 - perfil de outro usuário vazando permissions/capabilities;
 - usuário consultando task de outro usuário;
 - MANAGE usado como bypass para team worklist;
-- projection de recurso ao qual o usuário perdeu acesso.
+- projection de recurso ao qual o usuário perdeu acesso;
+- ACCESS alterando template/catálogo;
+- stale admin write sobrescrevendo revisão nova;
+- Administração criando usuário/role/permission no lugar do Core;
+- hard delete de item/versionamento histórico.
 
 ## IA
 
