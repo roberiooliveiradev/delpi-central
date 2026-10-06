@@ -112,6 +112,64 @@ PostgreSQL cluster placement físico = `DEFERRED` (reuse de cluster ≠ ownershi
 | DÉLIA ↔ external providers | provider + DÉLIA adapter | DÉLIA API | outbound/inbound callbacks | provider scopes ≠ Core perms | governed R/W | egress/trust | YES | TARGET |
 | DÉLIA ↔ OT / industrial | OT/safety owner | DÉLIA (adapter only) | never safety control | OT/safety independent | read/prepare bounded | safety airgap | YES | TARGET; Edge deferred |
 
+### 2.2.1 Provider approval source — future target (DEFERRED)
+
+Esta direção é **TARGET / DEFERRED** e não autoriza implementação agora.
+
+Estado factual atual:
+
+```text
+Core app/plugin registry + manifest governance = PROVEN
+Core provider-approval projection contract = TO_INVENTORY
+DÉLIA local approved-specialist identity allowlist = CURRENT / FAIL-CLOSED RESIDUAL
+Keycloak = identity / SSO / token mechanics only
+```
+
+Quando houver necessidade real de escalar onboarding, disable/revoke ou governança operacional de providers, a direção preferida é **reutilizar/estender o Core como fonte canônica da aprovação de providers**, em vez de manter uma lista hardcoded na DÉLIA. Antes de qualquer implementação, executar inventário do app/plugin registry e manifests do Core e provar:
+
+```text
+EXISTING_EQUIVALENT = YES | NO | TO_INVENTORY
+REUSE_DECISION = REUSE | EXTEND | NEW
+```
+
+Target de ownership:
+
+```text
+Keycloak
+  = identidade, autenticação, audiences/scopes e token exchange
+  != catálogo/aprovação operacional de providers
+
+Core
+  = apps/routes/RBAC/governança de plataforma
+  + FUTURE TARGET: projeção governada dos providers aprovados
+  != catálogo de tools/capabilities do provider
+
+Provider / owner
+  = capabilities, nomes, schemas, classes, disponibilidade e execução
+  = live capability surface
+
+DÉLIA
+  = consome provider aprovado + capability surface viva
+  = orquestra por contrato semântico provider-neutral
+  != owner do registry de capabilities
+```
+
+A eventual projeção do Core deve carregar somente metadados de aprovação/conexão necessários ao boundary, por exemplo `provider_id`, `owner_ref`, família/protocolo, estado `approved|enabled|disabled|revoked` e referência de connection/profile quando legitimamente necessária. **Não** deve espelhar nomes de tools, schemas, classes ou catálogo de capabilities; estes continuam owner-owned e live-discovered.
+
+A existência de client/audience/scope no Keycloak **não** prova aprovação operacional do provider e não pode substituir a governança do Core. Inversamente, aprovação no Core não concede Domain AuthZ nem torna metadata do provider autoridade.
+
+Gatilho para implementação futura:
+
+```text
+novo provider onboarding em escala
+ou
+necessidade operacional de disable/revoke/governança central
+ou
+custo/risco comprovado do registry hardcoded atual
+```
+
+Até esse gatilho, manter o mecanismo atual fail-closed. Esta decisão documental não altera fase, runtime, registry atual nem NEXT do plano mestre.
+
 ### 2.3 C0.S2 — Authorities / bounded contexts freeze accepted
 
 ```text
