@@ -46,7 +46,7 @@ Estados históricos desta tabela representam maturidade documental acumulada. A 
 | Visão geral | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A03 fechado; O04 físico permanece inventário; O05 é stop condition de source/fórmula |
 | Sala de interação | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A05 fechado; R01–R05 permanecem inventários físicos; create-task-from-message continua fora da V1 |
 | Minhas tarefas | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A04 fechado; TSK01–TSK05 permanecem inventários físicos/futuros do brief |
-| Administração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | ADM01 persistência + ADM02/E01 bancos + ADM03/E05 attachment roles + ADM04/E06 motivos + ADM05/T02 notifications + ADM06 people selector + ADM07 concurrency |
+| Administração | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A06 fechado; ADM01–ADM07/E01/E05/E06/T02 permanecem inventories físicos/seed |
 | Ajuda | READY_FOR_IMPLEMENTATION_BRIEF | HELP01 route/catalog + HELP02 permission-aware sections + HELP03 hash/focus + HELP04 validator placement; conteúdo continua sincronizado feature-by-feature |
 
 A topbar usa somente `controllership-finance.access` e `controllership-finance.manage`. Não existe permission code por filial/unidade neste Portal.
