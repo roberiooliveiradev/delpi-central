@@ -94,6 +94,23 @@ O Item 2 — Início está fechado documentalmente em [32-inicio-home.md](./32-i
 
 A Home segue a família visual comum dos Portais Minha DELPI: saudação/Hero → Eventos e interações → Caminhos e funcionalidades → Últimos acessos/cards. Indicadores financeiros permanecem na Visão geral. Implementação continua não autorizada nesta fase de revisão global.
 
+## Sala de interação
+
+O Item 4 — Sala de interação está fechado documentalmente em [26-sala-de-interacao.md](./26-sala-de-interacao.md).
+
+Decisões congeladas:
+- usar `InteractionRoomPage` do `@delpi/plugin-ui`;
+- sem chat genérico/global wall na V1;
+- uma sala contextual estável por competência, checklist item, pendência/classificação ou pacote;
+- participants não são ACL;
+- ACCESS + acesso ao contexto;
+- edição própria + soft-delete;
+- chat attachment não vira evidência P2 automaticamente;
+- realtime/storage/retention são inventories técnicos futuros;
+- criar tarefa a partir de mensagem espera Item 5.
+
+Implementação permanece não autorizada durante o review global.
+
 ## Navegação principal
 
 A topbar do Portal é:

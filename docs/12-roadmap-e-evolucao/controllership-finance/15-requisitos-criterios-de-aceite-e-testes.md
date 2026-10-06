@@ -22,6 +22,12 @@ Cobrir package version, finalize, reopen, recipient packages, partial send, clar
 ### P6
 Cobrir draft/publish/effective_from, snapshot immutability, inactivation, catalogs, audit e permission.
 
+### Sala de interação
+
+Cobrir full-page `InteractionRoomPage`, contexto obrigatório, resolve idempotente, AuthZ por recurso, message policy, attachments, mentions, reply/reactions/pins, realtime degradável, notifications canônicas, deep links, light/dark/mobile/a11y e Help.
+
+Fonte detalhada: [26-sala-de-interacao.md](./26-sala-de-interacao.md).
+
 ### Visão geral
 
 Cobrir Overview family comum, indicator governance, filtros URL/F5, partial isolation, charts semânticos, drilldown rastreável, owner strategic quando aplicável, AuthZ ACCESS/MANAGE, light/dark/mobile/a11y e Help.

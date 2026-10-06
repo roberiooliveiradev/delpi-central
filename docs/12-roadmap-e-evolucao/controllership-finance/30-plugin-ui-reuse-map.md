@@ -257,15 +257,39 @@ A divergência é a métrica monetária de maior destaque, mas o estado de readi
 import {
   InteractionRoomPage,
   INTERACTION_ROOM_PAGE_LABELS_PT,
-  PluginErrorBoundary,
+  RoomInboxPanel,
+  RoomInboxList,
+  RoomHeader,
+  RoomContextPanel,
+  RoomSidePanel,
+  RoomMessageFindPanel,
+  RoomSharedItemList,
+  RoomConversationShell,
+  MessageThread,
+  MentionComposer,
+  ReactionBar,
+  ReactionQuickBar,
+  ConversationFileDropLayer,
+  ResizableColumns,
+  StateBanner,
+  EmptyGuidance,
 } from "@delpi/plugin-ui/index";
 ```
 
-Usar `InteractionRoomPage` antes de compor primitives manualmente.
+Contrato detalhado:
+- [26-sala-de-interacao.md](./26-sala-de-interacao.md)
 
-Primitives de colaboração estão disponíveis no mesmo index para extensões comprovadas: `RoomInboxPanel`, `RoomHeader`, `RoomContextPanel`, `RoomConversationShell`, `MessageThread`, `MentionComposer`, `ReactionBar` e correlatos.
+Usar `InteractionRoomPage` como primeira opção. Primitives só entram para extensão comprovada do contrato.
 
-Persistência, AuthZ, realtime adapters e business context continuam responsabilidade dos owners/Portal.
+**DO NOT RECREATE:** inbox, split, header, thread, composer, mention, reaction, shared panel, context panel, find-in-chat, attachment chrome ou CSS do kit.
+
+O Portal fornece:
+- rooms/messages;
+- context mapping;
+- callbacks;
+- AuthZ;
+- profile/mention adapters;
+- attachment/realtime/notification adapters.
 
 ## Minhas tarefas
 
