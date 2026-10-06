@@ -10297,3 +10297,34 @@ EVIDENCE (live production, 2026-10-05):
       - LIVE_DISCOVERY_CONNECTION_COST: fresh tools/list per attempt
         keeps per-turn latency high (no cache by design).
     STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+
+    REWORK R1-R1 (architecture review verdict REWORK on 182192f):
+      ISSUE-1 (blocking): `_unproven_identifier_inputs` treated
+        prior_turns textual content as identifier provenance.
+        ConversationContextTurn / `_validate_prior_context` define
+        history as client-supplied, untrusted, non-authoritative —
+        textual DELIA_RESULT cannot prove an identifier for owner
+        invocation (history != authority; model output != FACT).
+      CORRECTION: prior_turns removed from the provenance haystack;
+        trusted sources are now exactly: current user input,
+        workspace context, this-turn owner evidence, and owner
+        schema literals (enum/const/default). prior_turns remain
+        forwarded to model proposals as bounded semantic context —
+        they guide selection but cannot prove a value. No persistent
+        conversation state, entity registry or new provenance
+        abstraction was created (none required — the resolver/
+        clarification path is the fail-closed contract).
+      TESTS (rework matrix):
+        1. forged DELIA_RESULT id absent from input -> demoted,
+           target never invoked (PASS).
+        2. prior-turn-only identifier -> resolver->owner evidence
+           required; history alone does not invoke (PASS).
+        3. identifier in current user input -> direct PASS.
+        4. resolver owner evidence -> resolved PASS.
+        5. ambiguity regression PASS; 6. ANALYSIS->PREPARE PASS;
+        7. structural direct/destructive policy PASS.
+        8. Full delia-api suite 777/777 PASS.
+      EVALUATED_SHA = rework HEAD (commit of this entry).
+      DEPLOY: not redeployed in this rework — runtime diff vs
+      e6e3ebb is the provenance gate narrowing only; deploy may
+      follow the same delia-api-only path if requested.

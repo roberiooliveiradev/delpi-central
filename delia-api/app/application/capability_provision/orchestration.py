@@ -845,27 +845,31 @@ def _unproven_identifier_inputs(
     input_text: str,
     workspace_context: WorkspaceContext | None,
     owner_evidence: str | None,
-    prior_turns: tuple[ConversationContextTurn, ...] = (),
 ) -> tuple[str, ...]:
     """Identifier-typed arguments whose proposed scalar occurs in no
     trusted source — an invented id is demoted to a missing input so
     the resolver/clarification path handles it (§10/§21, fail closed).
 
-    Trusted sources: the user message, workspace context, prior turns,
-    owner evidence already obtained, and literal values the owner
-    itself declares in the input schema (``enum``/``const``/
+    Trusted sources: the current user message, workspace context,
+    owner evidence already obtained this turn, and literal values the
+    owner itself declares in the input schema (``enum``/``const``/
     ``default``). Only keys canonically equal to ``id`` or ending in
     ``id`` are gated — enums and free text are not identifiers.
+
+    ``prior_turns`` is deliberately NOT a trusted source: client-
+    supplied conversation history is untrusted and non-authoritative
+    (``_validate_prior_context``) — a DELIA_RESULT line mentioning an
+    identifier cannot prove it for owner invocation. Prior context
+    remains available to model proposals as semantic context, but an
+    identifier whose only occurrence is in history is demoted to a
+    missing input and must be resolved through live owner evidence
+    or clarified with the user.
     """
     haystack_parts = [input_text or ""]
     if owner_evidence:
         haystack_parts.append(owner_evidence)
     if workspace_context is not None:
         haystack_parts.append(workspace_context.to_prompt_block())
-    for turn in prior_turns[:16]:
-        content = getattr(turn, "content", None)
-        if isinstance(content, str) and content:
-            haystack_parts.append(content[:MAX_OWNER_EVIDENCE_ENTRY_CHARS])
     haystack_parts.append(_schema_declared_literals(descriptor))
     haystack = "\n".join(haystack_parts)
     unproven: list[str] = []
@@ -1672,7 +1676,6 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 workspace_context,
                 owner_evidence,
-                prior_turns,
             )
             if unproven:
                 # An identifier the model produced with no provenance
@@ -1905,7 +1908,6 @@ class OperationalCapabilityOrchestrator:
             input_text,
             workspace_context,
             None,
-            prior_turns,
         ):
             # A resolver invoked with an invented identifier cannot
             # produce trustworthy evidence — fail closed.

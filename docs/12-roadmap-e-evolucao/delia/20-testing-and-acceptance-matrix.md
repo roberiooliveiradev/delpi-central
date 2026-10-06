@@ -2484,8 +2484,9 @@ Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (�
 | Targeted suites (`test_generic_multistep_orchestration`, `test_provider_neutral_orchestration`, `test_specialist_capability_orchestration`, `test_specialist_interop_*`) | PASS — resolver name→id unique, ambiguous→bounded CLARIFICATION (target/PREPARE/ACT = 0 calls), invented-id rejection, ANALYSIS→PREPARE (ACT=0), ANALYSIS terminal, structural direct write, structural destructive confirm→ACT once, opaque-handle redaction on every user surface, unknown/malformed/contradictory policy fail-closed `owner_policy_invalid` |
 | Fake fourth owner (neutral vocabulary) | PASS — zero owner-name/tool-name branches exercised |
 | VISTA/TÉO/DAVI regression (fixture suites) | PASS — unchanged semantics; dynamic `tools/list` remains the capability source |
-| Full delia-api suite | 772/772 PASS |
+| Full delia-api suite | 777/777 PASS |
 | Typecheck | TEST_NOT_RUN — no configured tool in this repo (AST/compile verification only) |
 | `git diff --check` (delia-api) | clean |
-| Live WSL/SSH acceptance | PENDING — deploy + read acceptance (process-by-name, homonym, ANALYSIS class) run at task close |
+| Live WSL/SSH acceptance (deployed e6e3ebb) | PASS — resolver→target unique name→id (`search_records`→`get_process_context`, GROUNDED ×2); homonym → bounded clarification `bd84c8b1… — Controle de refeições` / `0f653d8d… — Controle de refeições`; VISTA `preview_data_block` selected `class=ANALYSIS` (owner 422, fail-closed); TÉO `get_methodology_guide` GROUNDED live; UNAUTH=401; raw_handle_hits=0 |
+| Identifier-provenance rework (R1-R1) | PASS — `prior_turns` is no longer identifier provenance: forged DELIA_RESULT id → demoted → CLARIFICATION (target not invoked); history-only id → resolver→owner evidence → PASS; id in current input → direct PASS |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
