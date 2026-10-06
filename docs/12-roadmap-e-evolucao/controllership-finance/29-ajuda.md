@@ -110,7 +110,27 @@ Orientar:
 - Minhas tarefas;
 - Administração;
 - Ajuda;
+- Página do usuário quando a rota estiver implementada;
 - Central de Fechamento e páginas internas.
+
+
+### Página do usuário
+
+Conteúdo a publicar **somente quando a rota estiver implementada**:
+
+- o que é o perfil de usuário do Portal;
+- quais dados vêm do cadastro corporativo/Core;
+- onde editar foto, cargo e contatos no Meu Perfil da Minha DELPI;
+- diferença entre "Não informado" e "temporariamente indisponível";
+- que outro usuário do mesmo Portal pode ser consultado por viewer com ACCESS;
+- que permissions/capabilities de outro usuário não são exibidas;
+- que, no próprio perfil, o Portal pode mostrar label + códigos técnicos `controllership-finance.access` e `controllership-finance.manage`;
+- que visualizar perfil não concede poder administrativo;
+- que Administração continua dependente de MANAGE;
+- como retornar ao contexto anterior.
+
+Contrato fonte:
+- [31-pagina-do-usuario.md](./31-pagina-do-usuario.md)
 
 ### Central de Fechamento
 
@@ -165,7 +185,7 @@ Ainda assim, tratar loading quando o conteúdo for carregado dinamicamente, not 
 - identificadores técnicos em inglês;
 - evitar detalhe técnico irrelevante ao usuário;
 - não prometer funcionalidade ainda não implementada;
-- conteúdo futuro deve ser marcado/ocultado até o gate correspondente;
+- conteúdo futuro deve ser marcado/ocultado até o gate correspondente; a seção Página do usuário não deve aparecer como funcionalidade disponível antes do runtime da rota;
 - exemplos não substituem regra.
 
 ## Critérios de aceite

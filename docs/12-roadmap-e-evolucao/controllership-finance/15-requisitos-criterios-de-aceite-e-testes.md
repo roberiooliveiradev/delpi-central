@@ -22,6 +22,11 @@ Cobrir package version, finalize, reopen, recipient packages, partial send, clar
 ### P6
 Cobrir draft/publish/effective_from, snapshot immutability, inactivation, catalogs, audit e permission.
 
+### Página do usuário
+Cobrir deep route sem item de topbar, identidade owned pelo Core, leitura de outro usuário com ACCESS, RBAC self-only, edição via Meu Perfil, estados honestos de source, reuso full-page do `plugin-ui`, atalhos somente para runtime autorizado e Help sincronizada.
+
+Fonte detalhada: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
+
 ## Critérios indispensáveis
 
 - STOCK_CLOSED + REQUIRED pendente → pacote incompleto;
@@ -60,7 +65,10 @@ Testar:
 - MANAGE fora do scope;
 - IA fora do scope;
 - tentativa de delete de histórico;
-- tentativa de contornar state machine.
+- tentativa de contornar state machine;
+- usuário sem ACCESS consultando perfil;
+- target fora do Portal;
+- exposição de permissions/capabilities de outro usuário.
 
 ## Experiência
 

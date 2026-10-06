@@ -111,6 +111,23 @@ Este ledger complementa:
 | RQ-HELP-01 | Ajuda acompanha toda mudança user-facing | conteúdo/deep links sincronizados no mesmo gate da feature | help sync + link check | feature-help-sync | TARGET |
 | RQ-AUTHZ-01 | permissions do Portal são somente access e manage | nenhum permission code por página, CRUD, filial, unidade ou indicador | manifest/contract review | Core | TARGET |
 
+
+## Página do usuário
+
+| RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
+|---|---|---|---|---|---|
+| RQ-USER-01 | perfil é deep route transversal, sem item novo de topbar | `/users/{userId}` funciona em deep link/F5; topbar permanece com 6 itens | navigation + F5 + mobile | foundation/router | TARGET |
+| RQ-USER-02 | identidade corporativa vem do Core | Directory + Person Profile; zero tabela/migration/storage de perfil no Portal | contract + architecture negative | Core directory/person-profile | TARGET |
+| RQ-USER-03 | viewer com ACCESS pode ver outro usuário do mesmo Portal | ACCESS positivo; target sem app access = 404; sem ACCESS = 403; nenhuma permission nova | positive + sibling + permission negative | Core app membership/effective permissions | TARGET |
+| RQ-USER-04 | access/capabilities são self-only e D2 mostra label + código técnico | próprio perfil mostra somente `controllership-finance.access/manage` efetivos; outro perfil não expõe RBAC | positive + privacy negative | Core effective permissions | TARGET |
+| RQ-USER-05 | edição de identidade pertence ao Meu Perfil | self CTA navega ao Meu Perfil; BFF do Portal não cria writes de identidade/foto | navigation + architecture negative | host profile | TARGET |
+| RQ-USER-06 | indisponibilidade de source não vira "Não informado" | Person Profile unavailable = PARTIAL; null real só quando source AVAILABLE; Directory failure = ERROR | partial + downstream negative | Core integrations | TARGET |
+| RQ-USER-07 | perfil reutiliza full-page do `@delpi/plugin-ui` | `createDashboardPortalUserProfilePage`; zero clone/CSS do kit; tema/mobile/teclado | component/build + visual/a11y | plugin-ui | TARGET |
+| RQ-USER-08 | atalhos refletem runtime + acesso do viewer, não roadmap | somente rota implementada e autorizada; Administração apenas com MANAGE | positive + route-not-implemented negative | manifest/router/effective permissions | TARGET |
+| RQ-USER-09 | Ajuda acompanha a página | conteúdo só fica disponível quando a feature estiver implementada; deep links válidos | help sync + link check | feature-help-sync | TARGET |
+
+Fonte detalhada: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
+
 ## Requisitos transversais de segurança
 
 | RQ | Requisito | Aceite mínimo |

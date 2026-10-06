@@ -71,6 +71,21 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [28-administracao.md](./28-administracao.md) | página de Administração / P6 |
 | [29-ajuda.md](./29-ajuda.md) | manual e Help contextual |
 | [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md) | mapa canônico página → componente → import de `@delpi/plugin-ui` |
+| [31-pagina-do-usuario.md](./31-pagina-do-usuario.md) | perfil de usuário, wireframes, contracts, AuthZ e reuso full-page do `plugin-ui` |
+
+## Página do usuário
+
+A página transversal de perfil está especificada em [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
+
+Decisões congeladas:
+
+- usuário com `controllership-finance.access` pode consultar o perfil corporativo básico de outro usuário com acesso ao mesmo Portal;
+- permissions/capabilities de outro usuário não são expostas;
+- no próprio perfil, exibir label amigável + códigos técnicos `controllership-finance.access` / `controllership-finance.manage` quando efetivos;
+- identidade/foto continuam owned pelo Core; não criar persistência local no Portal;
+- usar `createDashboardPortalUserProfilePage` como full-page reusable antes de qualquer composição local.
+
+A rota é deep route e **não** adiciona item à topbar.
 
 ## Navegação principal
 
@@ -108,7 +123,7 @@ A Visão geral é a superfície de indicadores financeiros do Portal; o conjunto
 
 ## UI kit
 
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md).
+Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 
 Import runtime canônico para MFE federado:
 

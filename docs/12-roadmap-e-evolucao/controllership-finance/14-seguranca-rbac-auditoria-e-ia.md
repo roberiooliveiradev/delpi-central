@@ -41,6 +41,40 @@ Não criar permission por botão, tela, endpoint, CRUD, filial ou unidade.
 
 Para este Portal, filial/unidade é dimensão de dados quando aplicável, não permission code dedicado.
 
+
+## Página do usuário
+
+Contrato detalhado: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
+
+Decisões congeladas:
+
+```text
+D1 = viewer com controllership-finance.access
+     pode consultar perfil corporativo básico de outro usuário
+     com acesso ao mesmo Portal.
+
+D2 = permission labels + technical codes
+     aparecem somente no próprio perfil.
+```
+
+AuthZ server-side:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND target_user_has_app_access(controllership-finance)
+```
+
+Regras:
+
+- `MANAGE` sozinho não implica `ACCESS` ao perfil;
+- target sem acesso ao Portal → 404;
+- outro usuário nunca expõe roles, groups, permission codes, superadmin ou capabilities administrativas;
+- self pode exibir somente os permission codes deste Portal;
+- Core continua owner de identidade/person profile/foto/effective permissions;
+- o Portal não cria permission nova, tabela de perfil ou storage de foto;
+- resolução de permission indisponível → fail-closed.
+
 ## Validator
 
 Validator é papel/responsabilidade operacional, não sinônimo de MANAGE.
@@ -85,7 +119,9 @@ Cobrir:
 - MANAGE apagando histórico;
 - troca de validator para contornar rejeição;
 - delete de evidência rejeitada;
-- envio de pacote sem capability.
+- envio de pacote sem capability;
+- usuário sem ACCESS consultando perfil do Portal;
+- perfil de outro usuário vazando permissions/capabilities.
 
 ## IA
 
