@@ -911,7 +911,10 @@ def test_missing_owner_input_yields_clarification():
         attempt.status
         is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     )
-    assert "preset_key" in attempt.content
+    # C3-LOOP-01: internal field names never reach the user surface —
+    # the ask-back carries a humanized business label instead.
+    assert "preset_key" not in attempt.content
+    assert "preset" in attempt.content
     # Nothing was invoked — the turn ended at the ask-back.
     assert provider.calls == []
 

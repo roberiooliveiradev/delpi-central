@@ -10595,3 +10595,124 @@ EVIDENCE (live production, 2026-10-05):
       C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION for next bounded
       product step.
+
+## 6.143. C3-INTELLIGENCE-LOOP-01 — bounded intelligence loop over the provider-neutral orchestrator
+    TASK = C3-INTELLIGENCE-LOOP-01
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = 48747b0c4f3d63971e3dc4a88e1411c0e82b3fe3
+      (brief expected 41bb9ea2; HEAD advanced via TÉO owner-side
+      commit — delia-api untouched, no drift)
+    PRE_DESIGN =
+      EXISTING_EQUIVALENT = YES; EXISTING_OWNER =
+      OperationalCapabilityOrchestrator + CapabilityProviderPort +
+      InvokeModel + WorkspaceContext + PlanCandidate/PlanStep +
+      validate_plan_candidate + select_decision_path;
+      REUSE_DECISION = EXTEND; ABSTRACTION_GATE = PASS — no new
+      planner/engine/registry; two new bounded model stages added as
+      instructions on the existing proposal pipeline.
+
+    IMPLEMENTED (delia-api/app/application/capability_provision/
+    orchestration.py only — zero provider/owner coupling added):
+      - CLARIFICATION_INSTRUCTION: model proposes the missing-input
+        question in business language; deterministic gates reject any
+        wording echoing the internal field names, snake_case tokens,
+        braces/JSON, URLs, endpoints, handles/tokens or provider
+        vocabulary; fallback = humanized deterministic ask-back
+        (identifier suffixes stripped — `block_id` never reaches the
+        user; "block" label instead of the raw name).
+      - SYNTHESIS_INSTRUCTION: bounded grounded synthesis for
+        successful non-mutating outcomes (READ/DISCOVERY/ANALYSIS and
+        resolver-chained reads). Input = sanitized owner evidence
+        (_bound_owner_evidence); proposal revalidated: redaction,
+        technical-leak gate, and every identifier-like token
+        (digit-run >= 2) must occur verbatim in the owner evidence —
+        invented values demote the answer to the deterministic
+        renderer (_success_attempt path unchanged).
+      - owner limitations preserved on the attempt when synthesis
+        supplies content.
+      - Bounded pre-execution repair: on repairable surface errors
+        (capability_not_on_surface / capability_not_live /
+        capability_unknown / unknown_capability) the group is
+        re-read live, one capability is reselected and its arguments
+        rebuilt — MAX_REPLAN_ROUNDS = 1, and only reachable from the
+        non-write branch (PREPARE/ACT returned through their
+        governed paths earlier — material ACT can never be retried).
+      - Decision-path telemetry: select_decision_path invoked with
+        honestly derivable facts (capability orchestration =
+        OPERATIONAL); logged status+path only, never authority.
+      - WorkspaceContext.selected_entity_ref reused as identifier
+        provenance (existing trusted source) — "o texto" resolves to
+        the host-supplied selected entity when present.
+
+    CONTEXT-BEFORE-CLARIFICATION ORDER (already enforced, now
+      verified end-to-end): current user message -> workspace
+      context -> owner evidence (discovery/resolver/analysis) ->
+      prior plan-step outputs -> same-owner RESOLVER -> and only
+      then user clarification. prior_turns remain semantic context
+      only (never provenance) — §6.140 invariant unchanged.
+
+    TESTS = 802/802 PASS (787 baseline + 15 new evals);
+      test_intelligence_loop_evals.py adds:
+      EVAL-1 playlists grounded synthesis PASS; invented-value
+        synthesis demoted PASS; technical-leak synthesis rejected
+        PASS; limitations preserved PASS; deterministic fallback PASS;
+      EVAL-4 metamorphic workspace resolution PASS x4 paraphrases;
+        business-language clarification PASS; wording-leak gate PASS;
+      EVAL-3 business clarification without route/params leak PASS;
+      injected owner description cannot bypass confirmation PASS;
+      bounded repair reselect-once PASS; repair fail-closed PASS.
+      EVAL-2 (create slide) = regression via existing governed-write
+        suite — green.
+      Stale-test reconciliation: test_missing_owner_input_yields_
+        clarification updated to assert field names are NOT exposed;
+        test_adversarial_model_prose_cannot_become_observation updated
+        (5 proposals: +synthesis stage; fabricated answer rejected by
+        the provenance gate, deterministic render shipped).
+
+    RESIDUALS (non-blocking):
+      - Synthesis invented-value gate covers identifier/number-like
+        tokens only; free-text entity invention without digits is
+        bounded by instruction + redaction, not fully provable.
+      - WORKSPACE_SELECTION_CONTEXT: contract PROVEN
+        (selected_entity_ref exists and feeds provenance); whether
+        the VISTA host currently sends block-level selection is a
+        client-side TO_INVENTORY — not a DÉLIA contract gap.
+      - REAL_MODEL_EVAL = TEST_NOT_RUN (dev harness not exercised in
+        this slice).
+      - LIVE_* = TEST_NOT_RUN for new wording stages (no deploy in
+        this task).
+
+    RQ/AC MATRIX:
+      RQ-IL1-01 user goal before provider arg projection  IMPLEMENTED
+        (goal = plan.goal + staged proposals; CP-015/CP-263)
+      RQ-IL1-02 context before clarification              IMPLEMENTED
+        (workspace + owner evidence + resolver precede ask-back;
+        CP-263/CP-264)
+      RQ-IL1-03 internal names never exposed              IMPLEMENTED
+        (leak gate + humanized fallback; CP-264)
+      RQ-IL1-04 grounded synthesis for reads              IMPLEMENTED
+        (CP-015/CP-029 contribution, synthesis runtime now EXISTS —
+        epistemic class unchanged: OBSERVATION stays OBSERVATION)
+      RQ-IL1-05 synthesis preserves provenance/limitations
+        and cannot authorize                             IMPLEMENTED
+        (CP-094/CP-264)
+      RQ-IL1-06 PlanCandidate/PlanStep reused             IMPLEMENTED
+        (existing _build_plan + validate_plan_candidate; no dup)
+      RQ-IL1-07 provider neutrality preserved             IMPLEMENTED
+        (CP-263)
+      RQ-IL1-08 bounded repair, never ACT retry           IMPLEMENTED
+        (MAX_REPLAN_ROUNDS=1, non-write branch only; CP-265)
+      RQ-IL1-09 prior_turns semantic-only                  PRESERVED
+      RQ-IL1-10 governed write lifecycle regression-green  PASS
+        (CP-265)
+      RQ-IL1-11 real scenarios as permanent evals          IMPLEMENTED
+      RQ-IL1-12 paraphrase/generalization evals            IMPLEMENTED
+      TOTAL_RQ=12 APPLICABLE_RQ=12 IMPLEMENTED_RQ=12
+      PARTIAL_RQ=0 BLOCKED_RQ=0 TASK_VERIFIED_COVERAGE_PCT=100
+      CRITICAL_COVERAGE=12/12 TASK_COMPLETENESS=COMPLETE
+
+    PHASE_STATE = C3_STARTED=YES; C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION — architecture review
+      required; candidate follow-up C3-INTELLIGENCE-LOOP-02
+      (cross-provider semantic composition) is NOT implemented here.

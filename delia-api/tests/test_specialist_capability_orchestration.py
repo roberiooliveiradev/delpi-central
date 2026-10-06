@@ -1120,10 +1120,12 @@ def test_adversarial_model_prose_cannot_become_observation():
     assert "900 unidades" not in attempt.content
     # The deterministic bounded render carries the authoritative data.
     assert "TUBO 30X30X1500" in attempt.content
-    # Only the four governed proposals ran (capability, arguments,
-    # candidate resolution, candidate arguments) — no presentation
-    # model call exists in the OBSERVATION path.
-    assert len(read._invoke_model._port.requests) == 4
+    # Five governed proposals ran: the four plan calls plus the
+    # bounded grounded-synthesis proposal (C3-LOOP-01). The fabricated
+    # "answer" failed the deterministic provenance gate, so the
+    # truthful deterministic render shipped — the synthesis path can
+    # never elevate invented content into the OBSERVATION answer.
+    assert len(read._invoke_model._port.requests) == 5
 
 
 # --- R2: generic secret/token redaction --------------------------------

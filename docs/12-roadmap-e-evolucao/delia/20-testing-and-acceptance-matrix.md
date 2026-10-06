@@ -2490,3 +2490,25 @@ Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (�
 | Live WSL/SSH acceptance (deployed e6e3ebb) | PASS — resolver→target unique name→id (`search_records`→`get_process_context`, GROUNDED ×2); homonym → bounded clarification `bd84c8b1… — Controle de refeições` / `0f653d8d… — Controle de refeições`; VISTA `preview_data_block` selected `class=ANALYSIS` (owner 422, fail-closed); TÉO `get_methodology_guide` GROUNDED live; UNAUTH=401; raw_handle_hits=0 |
 | Identifier-provenance rework (R1-R1) | PASS — `prior_turns` is no longer identifier provenance: forged DELIA_RESULT id → demoted → CLARIFICATION (target not invoked); history-only id → resolver→owner evidence → PASS; id in current input → direct PASS |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+
+### C3-INTELLIGENCE-LOOP-01 — bounded intelligence loop over the provider-neutral orchestrator (evidence §6.143)
+
+| Check | Result |
+|---|---|
+| Full delia-api suite | 802/802 PASS (787 baseline + 15 new evals in `test_intelligence_loop_evals.py`) |
+| EVAL-1 playlists grounded synthesis | PASS — natural answer lists names; synthesized content revalidated (redaction + identifier-in-evidence gate + technical-leak gate); invented values demote to deterministic renderer |
+| EVAL-1 limitations preserved | PASS — owner `limitations` stay on the attempt even when synthesis supplies content |
+| EVAL-2 create-slide regression | PASS — existing governed-write suite unchanged and green |
+| EVAL-3 dashboard/Transforma+ business clarification | PASS — internal field names never exposed; humanized ask-back (identifier suffixes stripped) |
+| EVAL-4 black text (metamorphic ×4) | PASS — workspace `selected_entity_ref` resolves "o texto" without asking; 4 paraphrases identical behavior |
+| Bounded pre-execution repair | PASS — repairable surface errors trigger one live re-list + reselect + arg rebuild; `MAX_REPLAN_ROUNDS=1`, non-write branch only — material ACT can never be retried |
+| Owner-description injection cannot bypass confirmation | PASS — negative eval green |
+| Repair fail-closed | PASS — missing capability after reselect → same repairable error, no second repair |
+| Technical-field leak gate | PASS — `blockId`/`route`/`params`/proposal handles/provider vocabulary rejected in clarification wording and synthesis |
+| Decision-path telemetry | PASS — `select_decision_path` invoked with honest facts; status+path logged, never authority |
+| Typecheck | TEST_NOT_RUN — no configured tool in this repo (AST/compile verification only) |
+| `git diff --check` (delia-api) | clean |
+| Owner/tool/provider branches added | 0 — grep for owner/tool/provider literals in orchestration.py returns only pre-existing comments |
+| Real-model dev eval | TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
