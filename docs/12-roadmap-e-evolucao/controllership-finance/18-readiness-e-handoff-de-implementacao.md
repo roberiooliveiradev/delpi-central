@@ -12,13 +12,22 @@ O pacote funcional de implementação está organizado em:
 
 `DOCUMENTATION_GATE` não prova runtime e não substitui o inventário técnico da página.
 
+## Gate global da fase atual
+
+```text
+PORTAL_REVIEW_PHASE = ACTIVE
+IMPLEMENTATION_AUTHORIZED = NO
+```
+
+Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, não autorização de execução. Nenhum diff runtime deve começar antes do fechamento da revisão de todas as páginas e de um `PORTAL_DESIGN_FREEZE = PASS` explícito.
+
 ## Readiness
 
 ### Superfícies da topbar
 
 | Página | Estado | Stop / inventário material |
 |---|---|---|
-| Início | READY_FOR_IMPLEMENTATION_INVENTORY | foundation + contract mínimo da Central |
+| Início | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | H01 favoritos + H02 TaskProjection + H03 active competence + H04 blocker summary; implementação ainda não autorizada |
 | Visão geral | SOURCE_INVENTORY_REQUIRED | inventariar indicadores, owners, fórmulas e sources |
 | Sala de interação | CONTRACT_INVENTORY_REQUIRED | inventariar capability/contract/realtime/retention |
 | Minhas tarefas | PROJECTION_CONTRACT_REQUIRED | inventariar producers e estratégia de projeção |
@@ -27,6 +36,10 @@ O pacote funcional de implementação está organizado em:
 
 A topbar usa somente `controllership-finance.access` e `controllership-finance.manage`. Não existe permission code por filial/unidade neste Portal.
 
+
+Contrato Home: [32-inicio-home.md](./32-inicio-home.md).
+
+O Início tem design/UX/RQ/AC fechados, mas mantém inventories conhecidos para persistência de favoritos e projeções dinâmicas. Isso não autoriza implementação durante a fase atual de revisão global.
 
 ### Superfícies transversais
 
@@ -54,7 +67,7 @@ Decisões congeladas:
 | P5 — envio real | BLOCKED_WITH_EVIDENCE | Q22 depende E04/T04 |
 | P6 | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02/T05 conforme configuração |
 
-Readiness não é autorização global. O Portal evolui uma página/slice por vez.
+Readiness não é autorização global. Depois do freeze transversal, o Portal evoluirá uma página/slice por vez.
 
 ## Interpretação dos estados
 
@@ -77,7 +90,7 @@ Readiness não é autorização global. O Portal evolui uma página/slice por ve
 
 1. obter HEAD e `git status`;
 2. ler authorities oficiais e regras `.cursor` materiais;
-3. ler README + docs 20–23 + documento canônico da página (incluindo 31 para Página do usuário);
+3. ler README + docs 20–23 + documento canônico da página (31 para Página do usuário; 32 para Início);
 4. abrir E/T aplicáveis;
 5. identificar owner e producer/consumer reais;
 6. provar contracts/bindings no HEAD;

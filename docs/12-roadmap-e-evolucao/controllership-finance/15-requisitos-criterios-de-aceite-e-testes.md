@@ -22,6 +22,12 @@ Cobrir package version, finalize, reopen, recipient packages, partial send, clar
 ### P6
 Cobrir draft/publish/effective_from, snapshot immutability, inactivation, catalogs, audit e permission.
 
+### Início
+
+Cobrir Home family comum, Hero operacional, Eventos resilientes, catálogo runtime+AuthZ, busca `?q=`, Últimos acessos, Favoritos, light/dark/mobile/a11y e Help sincronizada.
+
+Fonte detalhada: [32-inicio-home.md](./32-inicio-home.md).
+
 ### Página do usuário
 Cobrir deep route sem item de topbar, identidade owned pelo Core, leitura de outro usuário com ACCESS, RBAC self-only, edição via Meu Perfil, estados honestos de source, reuso full-page do `plugin-ui`, atalhos somente para runtime autorizado e Help sincronizada.
 

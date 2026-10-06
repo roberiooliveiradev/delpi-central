@@ -102,8 +102,18 @@ Este ledger complementa:
 
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
 |---|---|---|---|---|---|
+Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
+
 | RQ-NAV-01 | topbar contém exatamente Início, Visão geral, Sala de interação, Minhas tarefas, Administração e Ajuda | ordem/conjunto canônico sem item de P1–P5 na topbar | navigation + mobile + keyboard | 24 | TARGET |
-| RQ-HOME-01 | Início funciona como hub de funcionalidades | Central de Fechamento é acessível sem duplicar o Cockpit completo | positive + empty/partial | foundation | TARGET |
+| RQ-HOME-01 | Início usa Home family comum dos Portais | TopBar + Hero + Eventos + launcher/recentes; zero redesign local | visual/component + mobile/dark | plugin-ui + 32 | TARGET |
+| RQ-HOME-02 | Hero é operacional, não analítico | Competência ativa + Minhas tarefas + Blockers; indicadores financeiros ficam na Visão geral | positive + source partial | H02/H03/H04 | TARGET |
+| RQ-HOME-03 | Eventos degradam independentemente | tasks/alerts podem falhar sem derrubar catálogo; sem SLA inventado | positive + partial + negative | H02/H04 | TARGET |
+| RQ-HOME-04 | catálogo mostra somente runtime implementado + autorizado | P1–P5 entram page-by-page; Administração só MANAGE; profile fora do launcher | positive + route/permission negative | router/Core | TARGET |
+| RQ-HOME-05 | busca local usa catálogo e deep link ?q= | F5 preserva query; rota sem acesso não aparece | search + F5 + permission negative | router/catalog | TARGET |
+| RQ-HOME-06 | recentes são efêmeros e seguros | máx. 5; stale/unauthorized filtrado; sem dado financeiro/PII | storage + corruption negative | local UI state | TARGET |
+| RQ-HOME-07 | favoritos sincronizam estrela e TopBar | falha save faz rollback; persistência física somente após H01 | positive + backend failure + stale | H01 | TO_INVENTORY |
+| RQ-HOME-08 | Home preserva light/dark/mobile/a11y | mesmos componentes/tokens; teclado/foco; estado não só por cor | visual/a11y | plugin-ui | TARGET |
+| RQ-HOME-09 | Help explica Home | Home vs Overview, eventos, busca, recentes e favoritos documentados quando runtime existir | help sync | feature-help-sync | TARGET |
 | RQ-OVW-01 | Visão geral apresenta indicadores financeiros governados | nenhum KPI sem owner/source/fórmula/freshness; indisponível != zero | positive + partial + source failure | indicator inventory | SOURCE_INVENTORY_REQUIRED |
 | RQ-INT-01 | Sala de interação é contextual e não muda estado de negócio por mensagem | mensagem/comentário não valida, aprova, fecha estoque ou envia pacote | positive + resource negative | interaction contract inventory | CONTRACT_INVENTORY_REQUIRED |
 | RQ-TASK-01 | Minhas tarefas projeta responsabilidades dos owners | concluir tarefa usa o caso de uso owner; source indisponível não vira empty | positive + partial + sibling | producer/projection inventory | PROJECTION_CONTRACT_REQUIRED |
