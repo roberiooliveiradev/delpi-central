@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -38,6 +50,29 @@ A Ajuda é parte do produto.
 Ela não é documentação técnica, changelog, backlog ou roadmap.
 
 ---
+
+## Responsabilidade, owners e non-goals
+
+A Ajuda owns **conteúdo user-facing versionado do Portal**, não estado de negócio nem documentação técnica.
+
+| Elemento | Owner |
+|---|---|
+| conteúdo do manual | MFE / content registry do Portal |
+| chrome/TOC/FAQ/glossário | `@delpi/plugin-ui` |
+| feature/route catalog | MFE/router do Portal |
+| effective permissions | Core; consumidas pelo Portal/BFF/session |
+| regra explicada | documento/owner da feature correspondente |
+| Help contextual target | página/feature + registry do manual |
+
+Não pertence à Ajuda:
+- BFF próprio de Help;
+- DB/CMS/editor;
+- permissão nova;
+- source of truth de regra de negócio;
+- feature flag improvisada;
+- publicação de roadmap como capability;
+- busca própria V1;
+- conteúdo técnico de endpoints/SQL/infra para usuário final.
 
 ## Decisões congeladas
 
@@ -170,6 +205,60 @@ Hash é navegação local segura.
 
 Não colocar conteúdo sensível em query/hash.
 
+
+## Contrato TARGET da Ajuda
+
+O conteúdo base é local/versionado no MFE:
+
+```text
+Portal content registry
+→ createDashboardUserManual
+→ sections filtered by implemented capability + viewer authorization
+```
+
+Não existe contract BFF de conteúdo na V1.
+
+A rota continua sujeita ao guard normal do Portal:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+```
+
+A seção Administração exige, além da rota ACCESS:
+
+```text
+effective_permission(controllership-finance.manage)
+```
+
+### Capability registry
+
+Cada seção/link operacional deve referenciar um destino tipado conhecido pelo Portal:
+
+```text
+sectionId
+source contract/page
+routeId quando aplicável
+runtimeEnabled
+requiredCapability
+contextualHelpTargets[]
+```
+
+Regras:
+- `runtimeEnabled=false` → não publicar instrução executável;
+- rota ausente → não publicar tool link;
+- MANAGE-only → esconder conteúdo operacional para ACCESS-only;
+- conceito geral pode permanecer quando necessário para entendimento, sem expor ação não autorizada;
+- Help não executa fetch/AuthZ paralelo apenas para descobrir permissions se o Portal já possui effective access resolvido;
+- se effective access necessário ao filtering estiver indisponível, fail-closed para conteúdo restrito.
+
+### MFE / BFF boundary
+
+A Ajuda não chama `api-delpi`, Core ou outros owners diretamente para renderizar conteúdo base.
+
+Dados/runtime links eventuais são derivados do catálogo/estado já autorizado do Portal. Nova necessidade de conteúdo dinâmico server-side exige decisão/contract separado; não antecipar API de Help.
+
+
 ---
 
 ## Família visual
@@ -194,6 +283,8 @@ PagePath
 ```
 
 Controladoria deve seguir a mesma família visual.
+
+A TopBar pertence ao shell. A Ajuda usa `PagePath` porque o manual apresenta retorno explícito ao Início e navegação contextual por hash; não recriar breadcrumb local.
 
 ---
 
@@ -1181,6 +1272,20 @@ Não usar PARTIAL para esconder feature ainda não implementada.
 
 Feature ausente simplesmente não entra no manual.
 
+### UNAVAILABLE
+
+Não é estado normal do conteúdo base, porque o manual é versionado no MFE.
+
+Usar apenas quando uma dependência necessária para montar a experiência segura estiver indisponível, por exemplo:
+- effective access necessário para filtrar seção MANAGE não pode ser resolvido;
+- registry/router necessário aos tool links falhou de forma material.
+
+Nesses casos:
+- não expor seção restrita por fallback;
+- não converter indisponibilidade em conteúdo vazio enganoso;
+- conteúdo comum pode permanecer quando a autorização necessária já estiver comprovada e a falha for isolável.
+
+
 ---
 
 ## Light / dark
@@ -1569,37 +1674,42 @@ Nenhum desses itens reabre as decisões D-HELP-01..06.
 
 ---
 
-## Gate
+## Gate documental V2
 
 ```text
-VISUAL_FAMILY_DEFINED       = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
-CONTENT_ARCHITECTURE        = PASS
-RUNTIME_ONLY_POLICY         = PASS
-CAPABILITY_GATING_DEFINED   = PASS
-CONTEXTUAL_HELP_DEFINED     = PASS
-DEEPLINK_HASH_DEFINED       = PASS
-CONCEPTS_DEFINED            = PASS
-GUIDE_TABLE_DEFINED         = PASS
-P1_P5_HELP_MODEL_DEFINED    = PASS
-FAQ_DEFINED                 = PASS
-GLOSSARY_DEFINED            = PASS
-EDITORIAL_GOVERNANCE        = PASS
-HELP_SYNC_POLICY            = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
-MOBILE_DEFINED              = PASS
 A11Y_DEFINED                = PASS
-RQ_AC_TEST_MATRIX_DEFINED   = PASS
-IMPLEMENTATION              = NOT_AUTHORIZED
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-Estado:
+Inventários:
+- HELP01 route/catalog binding;
+- HELP02 permission-aware filtering;
+- HELP03 hash/focus behavior;
+- HELP04 validator placement.
+
+Nenhum deles cria backend/CMS de Help nem reabre D-HELP-01..06.
+
+Resultado:
 
 ```text
-ITEM 7 = READY_FOR_IMPLEMENTATION_BRIEF
+A07 AJUDA
+= READY_FOR_IMPLEMENTATION_BRIEF
+!= IMPLEMENTED
 ```
-
----
 
 ## Resultado esperado
 
