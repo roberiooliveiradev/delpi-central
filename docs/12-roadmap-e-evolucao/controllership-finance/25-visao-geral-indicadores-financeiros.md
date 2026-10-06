@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -37,6 +49,30 @@ Visão geral = análise financeira e gerencial
 Cockpit P1  = estado operacional de uma competência de fechamento
 ```
 
+## Responsabilidade, owners e non-goals
+
+A Visão geral é uma **read model analítica**. Ela compõe indicadores de owners existentes e não se torna source of truth das fórmulas.
+
+| Bloco | Owner | Papel do Portal |
+|---|---|---|
+| ROL / EBITDA / custo fixo / PMR | `api-delpi` / regras canônicas financeiras | consultar e apresentar |
+| inadimplência / atraso | `api-delpi` owner correspondente | contexto/drilldown |
+| despesas/top CC | `api-delpi` owner correspondente | contexto/drilldown |
+| IDD/IGD/metas/scores | `strategic-indicators-api` | apresentar sem recalcular |
+| filtros/URL | Portal/BFF contract | selecionar recorte suportado |
+| visual/charts | MFE + `plugin-ui` | apresentação |
+| AuthZ | Core + BFF | autorizar fail-closed |
+
+Explicitamente não pertence à Visão geral:
+- SQL financeiro;
+- cálculo canônico de ROL/EBITDA/PMR;
+- cálculo de IDD/IGD;
+- storage local de metas/pesos;
+- permission por indicador/unidade;
+- escrita em owner;
+- inferência de consolidado quando a source não suporta;
+- fórmula alternativa para resolver conflito entre sources.
+
 ## Família visual
 
 ```text
@@ -62,6 +98,8 @@ TopBar
 ```
 
 O Portal Controladoria & Finanças não redesenha a família Overview.
+
+A TopBar pertence ao shell. A Visão geral é rota de primeiro nível e não precisa de `PagePath` por padrão; drilldowns profundos podem usar path/contexto conforme o kit.
 
 ## Boundary com Portal Financeiro P0
 
@@ -97,6 +135,75 @@ controllership-finance.manage
 ```
 
 Sem permission code por indicador, filial, gráfico, drilldown ou botão.
+
+
+## Contratos TARGET — MFE → BFF → owners
+
+O browser consome somente `controllership-finance-api`.
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+→ api-delpi / strategic-indicators-api / Core
+```
+
+Proibido:
+
+```text
+MFE → api-delpi
+MFE → strategic-indicators-api
+MFE → financial-api
+MFE → DB de outro contexto
+```
+
+A FASE A congela a semântica, não paths físicos do novo BFF.
+
+### Operações semânticas
+
+| Operação lógica | Owner downstream | Regras |
+|---|---|---|
+| getFinancialKpis | api-delpi | valores/fórmulas canônicos; zero real != unavailable |
+| getFinancialOperationalContext | api-delpi | inadimplência/atraso/CC conforme grain real |
+| getStrategicPerformance | strategic-indicators-api | meta/realizado/gap/score owned pelo SI |
+| getIndicatorSeries | owner do indicador | histórico somente se producer fornecer série compatível |
+| getIndicatorDrilldown | owner canônico | mesmo contexto/fórmula do KPI |
+| resolveViewerAccess | Core | effective permissions; fail-closed |
+
+### Envelope semântico mínimo por indicador
+
+```text
+id
+name
+value
+unit
+period/context
+owner
+source
+status
+freshness/asOf quando real
+goal/comparison quando owner fornecer
+drilldown capability quando real
+```
+
+A BFF pode normalizar shape, erros e provenance, mas não:
+- recalcular fórmula canônica;
+- criar score/meta;
+- somar percentuais indevidamente;
+- trocar owner por conveniência;
+- transformar source failure em zero.
+
+### Filtros
+
+O BFF só propaga para cada owner dimensões suportadas por seu contrato.
+
+Filtro visual uniforme não autoriza enviar `unit`, `costCenter`, `competence` ou qualquer dimensão para uma source que não a suporte.
+
+### O04
+
+Paths, DTOs, paginação, timeout/cache e contratos físicos do novo BFF permanecem `TO_INVENTORY_BEFORE_IMPLEMENTATION`.
+
+Isso não reabre D-OVW-01/02/03.
+
 
 ## Inventário PROVEN — Portal Financeiro P0
 
@@ -689,9 +796,11 @@ IDD          PARTIAL
 
 A página continua útil.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 
 Mostrar bloco indisponível com source afetada e recovery quando aplicável.
+
+`UNAVAILABLE` é o estado de experiência; `UNAVAILABLE_SOURCE` pode qualificar o bloco/source afetado.
 
 ### ERROR
 
@@ -1084,26 +1193,28 @@ EXECUTION_DRIFT
 → não escolher silenciosamente
 ```
 
-## Gate
-
-Já fechados:
+## Gate documental V2
 
 ```text
-VISUAL_FAMILY_DEFINED   = PASS
-WIREFRAME_DESKTOP       = PASS
-WIREFRAME_MOBILE        = PASS
-PLUGIN_UI_REUSE         = PASS
-FILTER_GRAMMAR          = PASS
-URL_F5_PATTERN          = PASS
-STATES                  = PASS
-AUTHZ_MODEL             = PASS
-LIGHT_DARK              = PASS
-A11Y                    = PASS
-RQ_AC_TEST_MATRIX       = PASS
-IMPLEMENTATION          = NOT_AUTHORIZED
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-Fechados por decisão do Product Owner:
+Decisões já congeladas:
 
 ```text
 D-OVW-01 = C
@@ -1111,11 +1222,14 @@ D-OVW-02 = A
 D-OVW-03 = A
 ```
 
-Inventários técnicos restantes não reabrem essas decisões:
-- O04 contracts físicos do novo BFF;
-- O05 conflitos de source/fórmula como stop condition.
+Inventários:
+- O04 contracts físicos do BFF = TO_INVENTORY;
+- O05 source/formula conflict = STOP_CONDITION / EXECUTION_DRIFT se materializado.
+
+Resultado:
 
 ```text
-ITEM 3 STATUS = READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
-IMPLEMENTATION = NOT_AUTHORIZED
+A03 VISÃO GERAL
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
 ```
