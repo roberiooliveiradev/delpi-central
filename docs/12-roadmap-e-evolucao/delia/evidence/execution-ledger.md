@@ -9485,7 +9485,8 @@ EVIDENCE (live production, 2026-10-05):
         proven PASS in production. §6.132 CLOSED.
 
 ## 6.133. ARCH-DRIFT-MCP-OWNER-FULL-CAPABILITY-INTELLIGENCE-SURFACE-01 — owner-owned full capability/intelligence surface (VISTA first reference owner)
-    STATUS = IN_EXECUTION
+    STATUS = EVIDENCE_COMPLETE (see close-out at end of section;
+      independent architecture review still pending)
     BASE_HEAD = 40baf656839a53d4bded87a319a3f72d70d3ede1 (matches expected)
     BRANCH = main
     WORKING_TREE = no tracked modifications; 75 untracked
@@ -9612,11 +9613,55 @@ EVIDENCE (live production, 2026-10-05):
         under 100KiB.
       delia-api: 762 passed (full suite) — incl. new
         test_fake_fourth_owner_orchestrated_by_same_generic_mechanism.
-    STILL_OPEN: commit + controlled deploy + live acceptance
-      (text-block creation on white slide must produce readable,
-      contrast-safe candidate without user-facing white-on-white;
-      designAudit reachable via MCP get_playlist_context;
-      preview_data_block invocable through DÉLIA via live
-      tools/list).
+    COMMIT = b888c0510750caa5961ed86f12fd2965cb77ddd0
+      (23 files; pushed main -> origin/main).
+    DEPLOY (controlled, srv-api operador@192.168.1.237):
+      git pull to b888c0510 + up-prod-sequential --fase api
+      --build tv-dashboard-api; delpi-tv-dashboard-api restarted
+      with new image; delpi-delia-api restarted (healthy).
+
+    LIVE_PROD_ACCEPTANCE (2026-10-06, srv-api deploy b888c0510,
+    subject 'user' via real password grant -> delegated
+    resource-bound credential minted by DÉLIA Keycloak exchange):
+      1. authenticated initialize + tools/list via
+         SpecialistInterop.discover_catalog: 9 tools live;
+         preview_data_block present, owner class ANALYSIS ->
+         DÉLIA projection READ; all 9 invocable, 0 blocked,
+         0 unknown_remote_names; delegated credential same_sub,
+         azp=delpi requester, resource_audience bound,
+         mcp:tools scope.
+      2. ANALYSIS invoke live: preview_data_block(operation_id=
+         get_sales_conversion_rate_series) -> semanticDigest +
+         visualRecommendation + joinHints + formatHints +
+         persisted flag; owner analysis reachable through the
+         generic provider-neutral invoke path (zero VISTA-
+         specific code in DÉLIA). Typed-error path also live:
+         persisted-block preview on non-data block returns
+         owner-typed INVALID_CHANGE/Fonte de dados indisponível;
+         PARAM_REQUIRED propagated for missing route params.
+      3. PREPARE quality loop live: prepare_change(target=
+         playlist fa84e9f7 slide d8c3f666, ops=[upsert_block
+         text color=#ffffff]) -> safeFixesApplied
+         [{slideId, blockId blk_eval_6133, op upsert_block}]
+         (context-aware contrast correction inside the
+         candidate, NOT hardcoded white); canCommit=true,
+         confirmationPolicy=direct, proposal_handle minted,
+         persisted=false — single governed write, no hidden
+         ACT. The original user-reported defect class (white
+         text on white slide) is now corrected owner-side at
+         PREPARE time.
+    NOTE (live acceptance): MCP endpoint rejects portal
+      subject bearer directly (resource-bound credential is
+      required — by design); unauthenticated probe returns 401
+      (fail-closed surface unchanged).
+    STATUS = EVIDENCE_COMPLETE (owner implementation + tests +
+      controlled deploy + live verification recorded for the
+      three required legs: discovery/ANALYSIS/PREPARE-quality).
+      PENDING (not covered by this section): independent
+      architecture review ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_
+      FULL_CAPABILITY_ORCHESTRATION_03; end-user UI turn
+      acceptance by a human operator. Phase status unchanged:
+      C3_EXECUTED=NO, C4/C5_AUTHORIZED=NO at phase level,
+      PRODUCTION_READINESS=NOT_PROVEN.
     PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5 phase-level=NO,
       PRODUCTION_READINESS=NOT_PROVEN.
