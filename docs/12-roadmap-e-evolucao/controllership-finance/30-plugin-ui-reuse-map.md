@@ -396,11 +396,44 @@ import {
   HelpTooltip,
   FieldLabel,
   SectionHintLabel,
+  ActionButton,
+  StateBanner,
+  EmptyState,
 } from "@delpi/plugin-ui/index";
 ```
 
-O conteúdo em PT-BR permanece no plugin consumidor.
+Contrato detalhado:
+- [29-ajuda.md](./29-ajuda.md)
 
+`createDashboardUserManual` fornece:
+
+```text
+Frame
+Eyebrow
+Scope
+Layout / TOC
+Section
+Concepts
+GuideTable
+Faq
+Glossary
+classNames
+```
+
+O Portal fornece:
+- conteúdo PT-BR;
+- section registry;
+- feature/permission gating;
+- tool-link registry;
+- contextual deep links;
+- glossary/FAQ;
+- sync com features.
+
+O conteúdo é versionado no MFE. Não criar BFF/DB/CMS de Help na V1.
+
+**DO NOT RECREATE:** manual frame, TOC, concepts, guide table, FAQ, glossary, tool-link chrome ou HelpTooltip.
+
+Help contextual longo navega para `/help#manual-{sectionId}`; hints curtos usam `HelpTooltip`.
 
 ## Página do usuário
 
