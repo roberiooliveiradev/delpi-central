@@ -21,6 +21,12 @@ import { ReceivedInvoicePicker } from "../components/ReceivedInvoicePicker";
 import { branchLabel, type BranchCode } from "../../constants/branch";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { NfeProductMappingPanel, type NfeProductMappingView } from "../components/NfeProductMappingPanel";
+import { CreateRequestPurchaseOrderStep } from "../components/CreateRequestPurchaseOrderStep";
+import {
+  delpiProductCodesWhenFullyMapped,
+  invoiceProductSummary,
+} from "../components/purchaseOrderProductFilter";
+import type { PurchaseOrderGroupSelection } from "../components/PurchaseOrderSelector";
 import { SupplierSearch } from "../components/SupplierSearch";
 
 type Props = {
@@ -130,7 +136,13 @@ export function RequestFormPage({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(mode === "edit");
-  const [step, setStep] = useState<"choose" | "search" | "form">(mode === "create" ? "choose" : "form");
+  const [step, setStep] = useState<"choose" | "search" | "form" | "purchase_order">(
+    mode === "create" ? "choose" : "form",
+  );
+  const [purchaseOrderSelection, setPurchaseOrderSelection] = useState<PurchaseOrderGroupSelection[]>([]);
+  const purchaseOrderKeyRef = useRef("");
+  const draftRef = useRef<CreateRequestPayload | null>(null);
+  const submittingRef = useRef(false);
   const [attachment, setAttachment] = useState<{
     document_type: "nfe" | "nfse" | "cte";
     document_id: string;
@@ -366,12 +378,20 @@ export function RequestFormPage({
       payload.source_branch = attachment.branch_code;
     }
 
+    if (mode === "create") {
+      const nextKey = `${payload.branch}|${payload.supplier_code}|${payload.supplier_store}`;
+      if (purchaseOrderKeyRef.current && purchaseOrderKeyRef.current !== nextKey) {
+        setPurchaseOrderSelection([]);
+      }
+      purchaseOrderKeyRef.current = nextKey;
+      draftRef.current = payload;
+      setStep("purchase_order");
+      return;
+    }
+
     setBusy(true);
     try {
-      if (mode === "create") {
-        const created = await api.createRequest(payload);
-        onSuccess(created.id);
-      } else if (requestId) {
+      if (requestId) {
         const updated = await api.updateRequest(requestId, payload);
         onSuccess(updated.id);
       }
@@ -387,6 +407,42 @@ export function RequestFormPage({
       setBusy(false);
     }
   }
+
+  async function concludeCreate() {
+    const draft = draftRef.current;
+    if (!draft || submittingRef.current) return;
+    submittingRef.current = true;
+    setBusy(true);
+    setSubmitError(null);
+    try {
+      const created = await api.createRequest({
+        ...draft,
+        linked_purchase_orders: purchaseOrderSelection,
+      });
+      onSuccess(created.id);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setSubmitError(formatDuplicateMessage(err));
+      } else if (err instanceof ApiError && err.status === 403) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError(err instanceof Error ? err.message : "Falha ao salvar.");
+      }
+    } finally {
+      submittingRef.current = false;
+      setBusy(false);
+    }
+  }
+
+  const purchaseOrderScope = `${lockedBranch ?? form.branch}|${supplier?.supplier_code ?? ""}|${supplier?.supplier_store ?? ""}`;
+  useEffect(() => {
+    if (mode !== "create") return;
+    if (!purchaseOrderKeyRef.current) return;
+    if (purchaseOrderKeyRef.current !== purchaseOrderScope) {
+      purchaseOrderKeyRef.current = purchaseOrderScope;
+      setPurchaseOrderSelection([]);
+    }
+  }, [mode, purchaseOrderScope]);
 
   async function applyReceivedInvoice(row: ReceivedInvoiceItem, searchedCnpj: string | null) {
     if (lockedBranch && row.branchCode !== lockedBranch) {
@@ -494,7 +550,7 @@ export function RequestFormPage({
     return <p className="lnf-muted">Carregando formulário…</p>;
   }
 
-  if (mode === "create" && step !== "form") {
+  if (mode === "create" && step !== "form" && step !== "purchase_order") {
     return (
       <ReceivedInvoicePicker
         step={step}
@@ -511,6 +567,34 @@ export function RequestFormPage({
           void applyReceivedInvoice(row, searchedCnpj);
         }}
       />
+    );
+  }
+
+  if (mode === "create" && step === "purchase_order" && supplier) {
+    return (
+      <div className="lnf-stack" data-testid="request-form-page">
+        <LnfPageHeader
+          title="Nova solicitação"
+          subtitle="Pedido de compra opcional."
+        />
+        <CreateRequestPurchaseOrderStep
+          branch={lockedBranch ?? form.branch}
+          supplier={supplier}
+          selection={purchaseOrderSelection}
+          onSelectionChange={setPurchaseOrderSelection}
+          onBack={() => {
+            setSubmitError(null);
+            setStep("form");
+          }}
+          onSubmit={() => {
+            void concludeCreate();
+          }}
+          busy={busy}
+          submitError={submitError}
+          restrictToProductCodes={delpiProductCodesWhenFullyMapped(productMapping)}
+          invoiceProducts={invoiceProductSummary(productMapping)}
+        />
+      </div>
     );
   }
 
@@ -848,9 +932,9 @@ export function RequestFormPage({
             type="submit"
             className="lnf-btn lnf-btn--primary"
             disabled={busy}
-            data-testid="btn-submit-request"
+            data-testid={mode === "create" ? "btn-continue-request" : "btn-submit-request"}
           >
-            {busy ? "Salvando…" : mode === "create" ? "Cadastrar" : "Salvar correção"}
+            {busy ? "Salvando…" : mode === "create" ? "Continuar" : "Salvar correção"}
           </button>
         </div>
       </form>
