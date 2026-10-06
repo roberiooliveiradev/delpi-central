@@ -113,6 +113,15 @@
       "sourceApps": ["lancamento-notas-fiscais"],
       "pluginId": "lancamento-notas-fiscais"
     },
+    "lancamento_notas_fiscais_unmapped_products": {
+      "label": "Lançamento de Notas Fiscais",
+      "notificationLabel": "Produtos de fornecedor sem código Delpi",
+      "icon": "file-text",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["lancamento-notas-fiscais"],
+      "pluginId": "lancamento-notas-fiscais"
+    },
     "invoice_issuance": {
       "label": "Emissão de Notas Fiscais (legado)",
       "notificationLabel": "Solicitações de emissão de NF",

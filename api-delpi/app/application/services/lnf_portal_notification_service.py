@@ -10,16 +10,21 @@ from typing import Any, Sequence
 
 import httpx
 
+from app.application.security.api_delpi_permissions import (
+    LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS,
+)
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 _SOURCE_APP = "lancamento-notas-fiscais"
 _CATEGORY = "lancamento_notas_fiscais"
+_UNMAPPED_CATEGORY = "lancamento_notas_fiscais_unmapped_products"
 _APP_BASE = "/apps/lancamento-notas-fiscais"
 _EVENT_BLOCK_ASSIGNED = "lnf_request_blocked_assigned"
 _EVENT_BLOCK_RESOLVED = "lnf_request_block_resolved"
 _EVENT_COMMENT_MENTION = "lnf_comment_mention"
+_EVENT_UNMAPPED_PRODUCTS = "lnf_unmapped_supplier_products"
 _COMMENT_MESSAGE_MAX = 1200
 
 BLOCK_REASON_LABELS: dict[str, str] = {
@@ -53,6 +58,10 @@ def block_reason_label(reason: str | None) -> str:
 def branch_label(branch_code: str | None) -> str:
     code = str(branch_code or "").strip()
     return BRANCH_LABELS.get(code, f"Filial {code}" if code else "Filial")
+
+
+def unmapped_products_route(*, request_id: str) -> str:
+    return f"{_APP_BASE}/unmapped-products?requestId={request_id}"
 
 
 def request_portal_route(*, branch_code: str | None, request_id: str) -> str:
@@ -263,8 +272,6 @@ def send_lnf_portal_notification(
     if not recipient_user_id or recipient_user_id.strip() in {"", "unknown"}:
         return False
 
-    base_url = settings.CORE_API_BASE_URL.rstrip("/")
-    token = settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN
     payload: dict[str, Any] = {
         "userIds": [recipient_user_id.strip()],
         "title": title,
@@ -288,6 +295,23 @@ def send_lnf_portal_notification(
         payload["presentation"] = "html"
         payload["htmlContent"] = html_content.strip()
 
+    return _post_core_notification(
+        payload,
+        event_type=event_type,
+        recipient_label=recipient_user_id,
+    )
+
+
+def _post_core_notification(
+    payload: dict[str, Any],
+    *,
+    event_type: str,
+    recipient_label: str,
+) -> bool:
+    if not lnf_portal_notifications_enabled():
+        return False
+    base_url = settings.CORE_API_BASE_URL.rstrip("/")
+    token = settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN
     try:
         with httpx.Client(timeout=8.0) as client:
             response = client.post(
@@ -305,17 +329,65 @@ def send_lnf_portal_notification(
             "lnf_portal_notification_rejected status=%s event=%s user=%s body=%s",
             response.status_code,
             event_type,
-            recipient_user_id,
+            recipient_label,
             body_preview,
         )
     except Exception:
         logger.warning(
             "lnf_portal_notification_failed event=%s user=%s",
             event_type,
-            recipient_user_id,
+            recipient_label,
             exc_info=True,
         )
     return False
+
+
+def notify_unmapped_supplier_products(
+    *,
+    request_id: str,
+    branch_code: str,
+    document_number: str,
+    series: str | None,
+    supplier_name: str,
+    product_count: int,
+) -> bool:
+    """Uma notificação por solicitação, para quem analisa o cadastro de produtos."""
+    normalized_request = str(request_id or "").strip()
+    count = int(product_count)
+    if not normalized_request or count < 1:
+        return False
+    noun = "produto" if count == 1 else "produtos"
+    document = _format_document(document_number, series)
+    supplier = str(supplier_name or "").strip() or "o fornecedor"
+    message = (
+        f"A nota {document} de {supplier} tem {count} {noun} "
+        "sem vínculo com o código Delpi."
+    )
+    return _post_core_notification(
+        {
+            "permissionCodes": [LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS],
+            "title": "Produtos sem código Delpi",
+            "message": message,
+            "type": "warning",
+            "category": _UNMAPPED_CATEGORY,
+            "sourceApp": _SOURCE_APP,
+            "action": {
+                "type": "portal_route",
+                "label": "Ver produtos",
+                "target": unmapped_products_route(request_id=normalized_request),
+            },
+            "metadata": {
+                "source": _SOURCE_APP,
+                "event": _EVENT_UNMAPPED_PRODUCTS,
+                "dedupeKey": f"lnf:unmapped_products:{normalized_request}",
+                "requestId": normalized_request,
+                "branchCode": str(branch_code or ""),
+                "productCount": count,
+            },
+        },
+        event_type=_EVENT_UNMAPPED_PRODUCTS,
+        recipient_label=LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS,
+    )
 
 
 def notify_block_assignee(

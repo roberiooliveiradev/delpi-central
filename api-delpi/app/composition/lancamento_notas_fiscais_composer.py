@@ -10,6 +10,10 @@ from app.application.services.lancamento_notas_fiscais.received_invoice_attachme
 from app.application.services.lancamento_notas_fiscais.received_nfe_item_service import (
     ReceivedNfeItemService,
 )
+from app.application.services.lancamento_notas_fiscais.unmapped_supplier_product_service import (
+    ListUnmappedSupplierProductsUseCase,
+    UnmappedSupplierProductRecorder,
+)
 from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases import (
     AddInvoicePostingCommentUseCase,
     BlockInvoicePostingRequestUseCase,
@@ -18,6 +22,7 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
     GetInvoicePostingRequestUseCase,
     LinkRequestPurchaseOrderUseCase,
     ListInvoicePostingRequestsUseCase,
+    ListOpenPurchaseOrdersUseCase,
     ListRequestOpenPurchaseOrdersUseCase,
     PostManualInvoicePostingRequestUseCase,
     RefreshInvoicePostingReconciliationUseCase,
@@ -67,6 +72,7 @@ def build_create_invoice_posting_request_use_case() -> CreateInvoicePostingReque
     return CreateInvoicePostingRequestUseCase(
         build_invoice_posting_request_repository(),
         build_supplier_repository(),
+        build_invoice_posting_sc7_repository(),
     )
 
 
@@ -82,16 +88,29 @@ def build_received_nfe_item_service() -> ReceivedNfeItemService:
     )
 
 
+def build_unmapped_supplier_product_recorder() -> UnmappedSupplierProductRecorder:
+    return UnmappedSupplierProductRecorder(
+        items=build_received_nfe_item_service(),
+        requests=build_invoice_posting_request_repository(),
+    )
+
+
+def build_list_unmapped_supplier_products_use_case() -> ListUnmappedSupplierProductsUseCase:
+    return ListUnmappedSupplierProductsUseCase(build_invoice_posting_request_repository())
+
+
 def build_received_invoice_attachment_service() -> ReceivedInvoiceAttachmentService:
     repository = build_invoice_posting_request_repository()
     return ReceivedInvoiceAttachmentService(
         create_request=CreateInvoicePostingRequestUseCase(
             repository,
             build_supplier_repository(),
+            build_invoice_posting_sc7_repository(),
         ),
         gateway=build_financial_received_invoice_gateway(),
         storage=LancamentoDanfeStorage(),
         requests=repository,
+        unmapped_products=build_unmapped_supplier_product_recorder(),
     )
 
 
@@ -105,6 +124,13 @@ def build_invoice_posting_sc7_repository() -> TotvsInvoicePostingSc7Repository:
 
 def build_get_invoice_posting_request_use_case() -> GetInvoicePostingRequestUseCase:
     return GetInvoicePostingRequestUseCase(build_invoice_posting_request_repository())
+
+
+def build_list_open_purchase_orders_use_case() -> ListOpenPurchaseOrdersUseCase:
+    return ListOpenPurchaseOrdersUseCase(
+        build_invoice_posting_sc7_repository(),
+        build_supplier_repository(),
+    )
 
 
 def build_list_request_open_purchase_orders_use_case() -> (

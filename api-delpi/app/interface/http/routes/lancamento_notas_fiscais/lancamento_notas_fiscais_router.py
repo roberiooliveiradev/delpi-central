@@ -23,6 +23,7 @@ from app.application.security.api_delpi_permissions import (
     LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS,
     LANCAMENTO_NOTAS_FISCAIS_MANAGE,
     LANCAMENTO_NOTAS_FISCAIS_PROCESS,
+    LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS,
     LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS,
     LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS,
     LANCAMENTO_NOTAS_FISCAIS_VIEW,
@@ -46,6 +47,8 @@ from app.composition.lancamento_notas_fiscais_composer import (
     build_invoice_posting_request_repository,
     build_list_invoice_posting_requests_use_case,
     build_link_request_purchase_order_use_case,
+    build_list_open_purchase_orders_use_case,
+    build_list_unmapped_supplier_products_use_case,
     build_list_request_open_purchase_orders_use_case,
     build_post_manual_invoice_posting_request_use_case,
     build_financial_received_invoice_gateway,
@@ -89,6 +92,16 @@ class LinkedInvoiceBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class LinkPurchaseOrderLineBody(BaseModel):
+    order_item: str
+
+
+class LinkPurchaseOrderGroupBody(BaseModel):
+    order_number: str
+    delivery_date: str | None = None
+    lines: list[LinkPurchaseOrderLineBody] | None = None
+
+
 class CreateRequestBody(BaseModel):
     branch_code: str = Field(..., alias="branch")
     document_number: str = Field(..., alias="document")
@@ -101,6 +114,7 @@ class CreateRequestBody(BaseModel):
     received_at: str
     observation: str | None = None
     source: str | None = None
+    linked_purchase_orders: list[LinkPurchaseOrderGroupBody] | None = None
     document_id: str | None = None
     access_key: str | None = None
     provider_entity_id: str | None = None
@@ -145,16 +159,6 @@ class CommentBody(BaseModel):
             seen.add(uid)
             unique.append(uid)
         return unique
-
-
-class LinkPurchaseOrderLineBody(BaseModel):
-    order_item: str
-
-
-class LinkPurchaseOrderGroupBody(BaseModel):
-    order_number: str
-    delivery_date: str | None = None
-    lines: list[LinkPurchaseOrderLineBody] | None = None
 
 
 class LinkPurchaseOrderBody(BaseModel):
@@ -554,6 +558,78 @@ def create_request(body: CreateRequestBody):
         )
 
 
+@router.get(
+    "/unmapped-products",
+    operation_id="list_lancamento_notas_fiscais_unmapped_products",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_REVIEW_UNMAPPED_PRODUCTS)
+def list_unmapped_products(
+    supplier: Optional[str] = Query(None),
+    product_code: Optional[str] = Query(None),
+    branch: Optional[str] = Query(None),
+    mapping_status: Optional[str] = Query(None),
+    request_id: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
+):
+    normalized_branch = ""
+    if branch and str(branch).strip():
+        try:
+            normalized_branch = normalize_branch(branch)
+        except FiscalNormalizationError as exc:
+            return error_response(
+                str(exc),
+                status_code=422,
+                code="VALIDATION_ERROR",
+                recoverable=True,
+            )
+    status = str(mapping_status or "").strip()
+    if status and status not in {"unmapped", "ambiguous"}:
+        return error_response(
+            "Situação de vínculo inválida.",
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    normalized_request = str(request_id or "").strip()
+    if normalized_request:
+        try:
+            normalized_request = str(UUID(normalized_request))
+        except ValueError:
+            return error_response(
+                "Solicitação inválida.",
+                status_code=422,
+                code="VALIDATION_ERROR",
+                recoverable=True,
+            )
+    filters = {
+        "supplier": str(supplier or "").strip(),
+        "product_code": str(product_code or "").strip(),
+        "branch": normalized_branch,
+        "mapping_status": status,
+        "request_id": normalized_request,
+    }
+    try:
+        data = build_list_unmapped_supplier_products_use_case().execute(
+            filters={key: value for key, value in filters.items() if value},
+            page=page,
+            page_size=page_size,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar produtos sem código Delpi: {type(exc).__name__}")
+        return error_response(
+            "Erro ao listar produtos sem código Delpi.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    return api_delpi_success(
+        data,
+        operation_id="list_lancamento_notas_fiscais_unmapped_products",
+        message="Produtos sem código Delpi listados com sucesso.",
+    )
+
+
 @router.get("/requests", operation_id="list_lancamento_notas_fiscais_requests")
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS)
 def list_requests(
@@ -742,6 +818,43 @@ def download_request_fiscal_attachment(request_id: UUID, attachment_type: str):
         media_type=media_type,
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )
+
+
+@router.get(
+    "/purchase-orders/open",
+    operation_id="list_lancamento_notas_fiscais_open_purchase_orders",
+)
+@require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
+def list_open_purchase_orders(
+    branch: str = Query(...),
+    supplier_code: str = Query(...),
+    supplier_store: str = Query(...),
+):
+    try:
+        branch_error = _gate_payload_branch(branch)
+        if branch_error is not None:
+            return branch_error
+        data = build_list_open_purchase_orders_use_case().execute(
+            actor=_actor(),
+            branch_code=branch,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="list_lancamento_notas_fiscais_open_purchase_orders",
+            message="Pedidos de compra carregados.",
+        )
+    except InvoicePostingError as exc:
+        return _handle_domain(exc)
+    except Exception as exc:
+        log_error(f"Erro ao listar pedidos de compra abertos LNF: {exc}")
+        return error_response(
+            "Erro ao consultar pedidos de compra no Protheus.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=True,
+        )
 
 
 @router.get(

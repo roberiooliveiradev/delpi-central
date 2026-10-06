@@ -146,6 +146,43 @@ export type InvoicePostingListResponse = {
   total_pages: number;
 };
 
+export type UnmappedProductMappingStatus = "unmapped" | "ambiguous";
+
+export type UnmappedSupplierProduct = {
+  id: string;
+  request_id: string;
+  branch_code: string;
+  supplier_code: string;
+  supplier_store: string;
+  supplier_name: string;
+  supplier_product_code: string;
+  supplier_product_description?: string | null;
+  quantity?: string | null;
+  unit?: string | null;
+  mapping_status: UnmappedProductMappingStatus;
+  document_number: string;
+  series: string;
+  created_at: string;
+};
+
+export type UnmappedProductFilters = {
+  supplier?: string;
+  product_code?: string;
+  branch?: string;
+  mapping_status?: UnmappedProductMappingStatus | "";
+  request_id?: string;
+  page?: number;
+  page_size?: number;
+};
+
+export type UnmappedProductListResponse = {
+  items: UnmappedSupplierProduct[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+
 export type OpenPurchaseOrderItem = {
   branch: string;
   order_number: string;
@@ -184,7 +221,7 @@ export type OpenPurchaseOrderGroup = {
 };
 
 export type OpenPurchaseOrdersResponse = {
-  request_id: string;
+  request_id?: string;
   branch_code: string;
   supplier_code: string;
   supplier_store: string;
@@ -194,7 +231,7 @@ export type OpenPurchaseOrdersResponse = {
   item_count: number;
   groups: OpenPurchaseOrderGroup[];
   linked: LinkedPurchaseOrderSnapshot[];
-  can_link: boolean;
+  can_link?: boolean;
 };
 
 export type ListFilters = {
@@ -221,6 +258,11 @@ export type CreateRequestPayload = {
   amount: number | string;
   received_at: string;
   observation?: string | null;
+  linked_purchase_orders?: Array<{
+    order_number: string;
+    delivery_date: string | null;
+    lines?: Array<{ order_item: string }>;
+  }>;
   source?: "manual" | "received_nfe" | "questor";
   document_id?: string;
   access_key?: string;

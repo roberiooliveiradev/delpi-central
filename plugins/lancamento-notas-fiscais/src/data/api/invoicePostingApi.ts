@@ -5,6 +5,8 @@ import type {
   InvoicePostingDetail,
   InvoicePostingListResponse,
   InvoicePostingRequest,
+  UnmappedProductFilters,
+  UnmappedProductListResponse,
   CteDetail,
   ListFilters,
   NfeItemDetail,
@@ -17,7 +19,7 @@ import type {
 
 const API_BASE = "/apps/api-delpi/lancamento-notas-fiscais";
 
-function toQuery(filters: ListFilters): string {
+function toQuery(filters: Record<string, string | number | undefined | null>): string {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value === undefined || value === null || value === "") return;
@@ -41,6 +43,16 @@ export async function searchSuppliers(
     { signal },
   );
   return data.items ?? [];
+}
+
+export async function listUnmappedProducts(
+  filters: UnmappedProductFilters,
+  signal?: AbortSignal,
+): Promise<UnmappedProductListResponse> {
+  return httpGet<UnmappedProductListResponse>(
+    `${API_BASE}/unmapped-products${toQuery(filters)}`,
+    { signal },
+  );
 }
 
 export async function listRequests(
@@ -68,6 +80,23 @@ export async function listRequestPurchaseOrders(
 ): Promise<OpenPurchaseOrdersResponse> {
   return httpGet<OpenPurchaseOrdersResponse>(
     `${API_BASE}/requests/${requestId}/purchase-orders`,
+    { signal },
+  );
+}
+
+export async function listOpenPurchaseOrders(
+  branch: string,
+  supplierCode: string,
+  supplierStore: string,
+  signal?: AbortSignal,
+): Promise<OpenPurchaseOrdersResponse> {
+  const params = new URLSearchParams({
+    branch,
+    supplier_code: supplierCode,
+    supplier_store: supplierStore,
+  });
+  return httpGet<OpenPurchaseOrdersResponse>(
+    `${API_BASE}/purchase-orders/open?${params.toString()}`,
     { signal },
   );
 }

@@ -90,4 +90,33 @@ describe("App deep link", () => {
     await waitFor(() => expect(screen.getByTestId("detail-page")).toBeTruthy());
     expect(api.getRequest).toHaveBeenCalledWith("req-deep");
   });
+
+  it("abre o histórico de produtos sem código Delpi", async () => {
+    vi.mocked(meApi.fetchMeProfile).mockResolvedValue({
+      id: "u1",
+      name: "User",
+      email: "user@delpi",
+      permissions: ["lancamento-notas-fiscais.review-unmapped-products"],
+      is_superadmin: false,
+    });
+    vi.mocked(api.listUnmappedProducts).mockResolvedValue({
+      items: [],
+      page: 1,
+      page_size: 20,
+      total: 0,
+      total_pages: 0,
+    });
+
+    render(
+      <App
+        pathname="/apps/lancamento-notas-fiscais/unmapped-products"
+        getAccessToken={() => "t"}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("unmapped-products-page")).toBeTruthy(),
+    );
+    expect(screen.queryByTestId("invalid-route")).toBeNull();
+  });
 });

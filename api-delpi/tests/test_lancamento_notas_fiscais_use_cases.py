@@ -19,6 +19,7 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
     GetInvoicePostingRequestUseCase,
     LinkRequestPurchaseOrderUseCase,
     ListInvoicePostingRequestsUseCase,
+    ListOpenPurchaseOrdersUseCase,
     ListRequestOpenPurchaseOrdersUseCase,
     PostManualInvoicePostingRequestUseCase,
     ResumeInvoicePostingRequestUseCase,
@@ -176,6 +177,9 @@ class FakeRequests:
         request_fields: dict[str, Any],
         history_fields: dict[str, Any],
         linked_invoices: list[dict[str, Any]] | None = None,
+        linked_purchase_order_rows: list[dict[str, Any]] | None = None,
+        purchase_order_history: dict[str, Any] | None = None,
+        mirror_updates: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         if self.find_active_by_fiscal_key(
             branch_code=request_fields["branch_code"],
@@ -219,12 +223,37 @@ class FakeRequests:
         staging = deepcopy(row)
         try:
             self._append_history(request_id, history_fields)
+            if linked_purchase_order_rows:
+                snapshots = []
+                for item in linked_purchase_order_rows:
+                    snap = deepcopy(item)
+                    for key in ("delivery_date", "issue_date", "linked_at"):
+                        value = snap.get(key)
+                        if hasattr(value, "isoformat"):
+                            snap[key] = value.isoformat()
+                    if hasattr(snap.get("open_value"), "quantize"):
+                        snap["open_value"] = float(snap["open_value"])
+                    snapshots.append(snap)
+                self.linked_pos[request_id] = snapshots
+                staging["linked_purchase_orders"] = deepcopy(snapshots)
+                if mirror_updates:
+                    staging.update(deepcopy(mirror_updates))
+                    for key in ("linked_po_delivery_date", "linked_po_issue_date", "linked_po_linked_at"):
+                        value = staging.get(key)
+                        if hasattr(value, "isoformat"):
+                            staging[key] = value.isoformat()
+                if getattr(self, "fail_purchase_order_history", False):
+                    raise RuntimeError("falha ao gravar histórico do pedido")
+                if purchase_order_history:
+                    self._append_history(request_id, purchase_order_history)
             self.rows[request_id] = staging
         except RuntimeError:
             # simula rollback atômico
             self.history.pop(request_id, None)
+            self.linked_pos.pop(request_id, None)
+            self.rows.pop(request_id, None)
             raise
-        return deepcopy(staging)
+        return deepcopy(self.get_request(request_id) or staging)
 
     def get_request(self, request_id: str) -> dict[str, Any] | None:
         row = self.rows.get(request_id)
@@ -1603,3 +1632,300 @@ def test_get_includes_history_comments_actions() -> None:
     assert len(detail["comments"]) == 1
     assert "cancel" in detail["allowed_actions"]
     assert "edit" in detail["allowed_actions"]
+
+
+def _open_line(
+    order_number: str,
+    order_item: str,
+    *,
+    product_code: str = "10080001",
+    delivery: str = "2026-10-10",
+    open_value: float = 100.0,
+    supplier_part_number: str = "FORN-1",
+) -> dict[str, Any]:
+    return {
+        "order_number": order_number,
+        "order_item": order_item,
+        "product_code": product_code,
+        "product_description": "Peça",
+        "supplier_part_number": supplier_part_number,
+        "open_value": open_value,
+        "issue_date": "2026-10-01",
+        "expected_delivery_date": delivery,
+    }
+
+
+class _ScopedOpenOrders:
+    def __init__(self, rows: list[dict[str, Any]] | None = None, *, error: Exception | None = None) -> None:
+        self.rows = rows or []
+        self.error = error
+        self.calls: list[dict[str, Any]] = []
+
+    def list_open_purchase_orders_by_supplier(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.error:
+            raise self.error
+        if (
+            kwargs.get("branch_code") != "01"
+            or kwargs.get("supplier_code") != "000001"
+            or kwargs.get("supplier_store") != "01"
+        ):
+            return []
+        return list(self.rows)
+
+
+def test_list_open_purchase_orders_before_create_requires_create_permission() -> None:
+    with pytest.raises(InvoicePostingForbiddenError):
+        ListOpenPurchaseOrdersUseCase(_ScopedOpenOrders(), FakeSuppliers()).execute(
+            actor=_processor(),
+            branch_code="01",
+            supplier_code="000001",
+            supplier_store="01",
+        )
+
+
+def test_list_open_purchase_orders_before_create_groups_without_request_id() -> None:
+    orders = _ScopedOpenOrders(
+        [
+            _open_line("654321", "0001", open_value=80),
+            _open_line("654321", "0002", product_code="10080002", open_value=20),
+            _open_line("777777", "0001", product_code="10080009", delivery="2026-10-12"),
+        ]
+    )
+    result = ListOpenPurchaseOrdersUseCase(orders, FakeSuppliers()).execute(
+        actor=_creator(),
+        branch_code="01",
+        supplier_code="000001",
+        supplier_store="01",
+    )
+    assert "request_id" not in result
+    assert result["linked"] == []
+    assert result["order_count"] == 2
+    assert result["group_count"] == 2
+    assert result["item_count"] == 3
+    assert result["groups"][0]["items"][0]["supplier_part_number"] == "FORN-1"
+    assert orders.calls[0]["branch_code"] == "01"
+
+
+def test_list_open_purchase_orders_before_create_empty_and_invalid() -> None:
+    empty = ListOpenPurchaseOrdersUseCase(_ScopedOpenOrders(), FakeSuppliers()).execute(
+        actor=_creator(),
+        branch_code="01",
+        supplier_code="000001",
+        supplier_store="01",
+    )
+    assert empty["groups"] == []
+    assert empty["order_count"] == 0
+    with pytest.raises(InvoicePostingValidationError):
+        ListOpenPurchaseOrdersUseCase(_ScopedOpenOrders(), FakeSuppliers()).execute(
+            actor=_creator(),
+            branch_code="01",
+            supplier_code="",
+            supplier_store="01",
+        )
+    with pytest.raises(InvoicePostingValidationError):
+        ListOpenPurchaseOrdersUseCase(_ScopedOpenOrders(), FakeSuppliers()).execute(
+            actor=_creator(),
+            branch_code="99",
+            supplier_code="000001",
+            supplier_store="01",
+        )
+    with pytest.raises(RuntimeError, match="protheus"):
+        ListOpenPurchaseOrdersUseCase(
+            _ScopedOpenOrders(error=RuntimeError("protheus indisponível")),
+            FakeSuppliers(),
+        ).execute(
+            actor=_creator(),
+            branch_code="01",
+            supplier_code="000001",
+            supplier_store="01",
+        )
+
+
+def test_create_without_purchase_order_and_with_empty_list() -> None:
+    repo = FakeRequests()
+    orders = _ScopedOpenOrders([_open_line("654321", "0001")])
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(
+        _payload(), _creator()
+    )
+    assert created["linked_purchase_orders"] == []
+    assert orders.calls == []
+    repo2 = FakeRequests()
+    created_empty = CreateInvoicePostingRequestUseCase(repo2, FakeSuppliers(), orders).execute(
+        {**_payload(document="2"), "linked_purchase_orders": []},
+        _creator(),
+    )
+    assert created_empty["linked_purchase_orders"] == []
+    assert orders.calls == []
+    assert created["id"] != created_empty["id"]
+
+
+def test_create_links_selected_lines_atomically_with_history_and_legacy_mirror() -> None:
+    repo = FakeRequests()
+    orders = _ScopedOpenOrders(
+        [
+            _open_line("654321", "0001", open_value=80),
+            _open_line("654321", "0002", product_code="10080002", open_value=20),
+            _open_line("777777", "0001", product_code="10080009", delivery="2026-10-12", open_value=15),
+        ]
+    )
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(
+        {
+            **_payload(),
+            "linked_purchase_orders": [
+                {
+                    "order_number": "654321",
+                    "delivery_date": "2026-10-10",
+                    "lines": [{"order_item": "0001"}],
+                },
+                {
+                    "order_number": "777777",
+                    "delivery_date": "2026-10-12",
+                    "lines": [{"order_item": "0001"}],
+                },
+            ],
+        },
+        _creator(),
+    )
+    assert created["status"] == "pending"
+    assert created["linked_po_number"] == "654321"
+    assert created["linked_po_open_value"] == 80
+    assert created["linked_po_product_count"] == 1
+    assert created["linked_po_issue_date"] == "2026-10-01"
+    assert str(created["linked_po_delivery_date"]).startswith("2026-10-10")
+    assert created["linked_po_linked_by_user_id"] == "u-create"
+    assert created["linked_po_linked_by_name"] == "Criador"
+    assert created["linked_po_linked_at"]
+    links = created["linked_purchase_orders"]
+    assert [item["order_number"] for item in links] == ["654321", "777777"]
+    assert links[0]["lines"] == [{"order_item": "0001", "product_code": "10080001"}]
+    assert links[0]["linked_by_user_id"] == "u-create"
+    events = [item["event_type"] for item in repo.list_history(created["id"])]
+    assert events == ["created", "purchase_order_linked"]
+    po_event = repo.list_history(created["id"])[1]
+    assert po_event["changes"]["linked_po"]["from"] == []
+    assert len(po_event["changes"]["linked_po"]["to"]) == 2
+    assert orders.calls[0]["supplier_store"] == "01"
+
+
+def test_create_whole_group_when_lines_omitted() -> None:
+    repo = FakeRequests()
+    orders = _ScopedOpenOrders(
+        [
+            _open_line("654321", "0001", open_value=80),
+            _open_line("654321", "0002", product_code="10080002", open_value=20),
+        ]
+    )
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(
+        {
+            **_payload(),
+            "linked_purchase_orders": [
+                {"order_number": "654321", "delivery_date": "2026-10-10"}
+            ],
+        },
+        _creator(),
+    )
+    assert created["linked_po_open_value"] == 100
+    assert created["linked_po_product_count"] == 2
+    assert created["linked_purchase_orders"][0]["lines"] == []
+
+
+def test_create_rejects_purchase_order_outside_supplier_branch_or_closed() -> None:
+    repo = FakeRequests()
+    orders = _ScopedOpenOrders([_open_line("654321", "0001")])
+    payload = {
+        **_payload(),
+        "linked_purchase_orders": [
+            {"order_number": "999999", "delivery_date": "2026-10-10", "lines": [{"order_item": "0001"}]}
+        ],
+    }
+    with pytest.raises(InvoicePostingValidationError, match="não está aberto"):
+        CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(payload, _creator())
+    assert repo.rows == {}
+    other_branch = {
+        **_payload(branch="02"),
+        "linked_purchase_orders": [
+            {"order_number": "654321", "delivery_date": "2026-10-10", "lines": [{"order_item": "0001"}]}
+        ],
+    }
+    with pytest.raises(InvoicePostingValidationError, match="não está aberto"):
+        CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(other_branch, _creator())
+    suppliers = FakeSuppliers()
+    suppliers.suppliers.append(
+        {
+            "supplier_code": "000001",
+            "supplier_store": "02",
+            "supplier_name": "Loja 02",
+            "supplier_short_name": None,
+            "tax_id": "12345678000199",
+            "state": "SC",
+            "blocked": False,
+        }
+    )
+    other_store = {
+        **_payload(supplier_store="02"),
+        "linked_purchase_orders": [
+            {"order_number": "654321", "delivery_date": "2026-10-10", "lines": [{"order_item": "0001"}]}
+        ],
+    }
+    with pytest.raises(InvoicePostingValidationError, match="não está aberto"):
+        CreateInvoicePostingRequestUseCase(repo, suppliers, orders).execute(other_store, _creator())
+    closed_item = {
+        **_payload(),
+        "linked_purchase_orders": [
+            {"order_number": "654321", "delivery_date": "2026-10-10", "lines": [{"order_item": "0099"}]}
+        ],
+    }
+    with pytest.raises(InvoicePostingValidationError, match="Itens do pedido"):
+        CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(closed_item, _creator())
+    assert repo.rows == {}
+
+
+def test_create_rejects_duplicate_purchase_order_and_item() -> None:
+    repo = FakeRequests()
+    orders = _ScopedOpenOrders([_open_line("654321", "0001")])
+    with pytest.raises(InvoicePostingValidationError, match="mais de uma vez"):
+        CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(
+            {
+                **_payload(),
+                "linked_purchase_orders": [
+                    {"order_number": "654321", "delivery_date": "2026-10-10", "lines": [{"order_item": "0001"}]},
+                    {"order_number": "654321", "delivery_date": "2026-10-10", "lines": [{"order_item": "0001"}]},
+                ],
+            },
+            _creator(),
+        )
+    with pytest.raises(InvoicePostingValidationError, match="Item do pedido"):
+        CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(
+            {
+                **_payload(),
+                "linked_purchase_orders": [
+                    {
+                        "order_number": "654321",
+                        "delivery_date": "2026-10-10",
+                        "lines": [{"order_item": "0001"}, {"order_item": "0001"}],
+                    }
+                ],
+            },
+            _creator(),
+        )
+    assert repo.rows == {}
+
+
+def test_create_rolls_back_request_when_purchase_order_history_fails() -> None:
+    repo = FakeRequests()
+    repo.fail_purchase_order_history = True
+    orders = _ScopedOpenOrders([_open_line("654321", "0001")])
+    with pytest.raises(RuntimeError):
+        CreateInvoicePostingRequestUseCase(repo, FakeSuppliers(), orders).execute(
+            {
+                **_payload(),
+                "linked_purchase_orders": [
+                    {"order_number": "654321", "delivery_date": "2026-10-10", "lines": [{"order_item": "0001"}]}
+                ],
+            },
+            _creator(),
+        )
+    assert repo.rows == {}
+    assert repo.history == {}
+    assert repo.linked_pos == {}
