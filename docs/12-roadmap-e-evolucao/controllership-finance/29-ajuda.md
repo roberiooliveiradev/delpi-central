@@ -199,7 +199,7 @@ Conteúdo a publicar somente quando a rota estiver implementada:
 - realtime degradado;
 - como voltar ao contexto owner;
 - limites da IA;
-- criar tarefa a partir de mensagem somente quando Item 5 estiver implementado.
+- criar tarefa a partir de mensagem não existe na V1; eventual evolução exige nova task entity/owner aprovados.
 
 Contrato fonte:
 - [26-sala-de-interacao.md](./26-sala-de-interacao.md)
