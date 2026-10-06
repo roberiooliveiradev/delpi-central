@@ -22,6 +22,12 @@ Cobrir package version, finalize, reopen, recipient packages, partial send, clar
 ### P6
 Cobrir draft/publish/effective_from, snapshot immutability, inactivation, catalogs, audit e permission.
 
+### Visão geral
+
+Cobrir Overview family comum, indicator governance, filtros URL/F5, partial isolation, charts semânticos, drilldown rastreável, owner strategic quando aplicável, AuthZ ACCESS/MANAGE, light/dark/mobile/a11y e Help.
+
+Fonte detalhada: [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md).
+
 ### Início
 
 Cobrir Home family comum, Hero operacional, Eventos resilientes, catálogo runtime+AuthZ, busca `?q=`, Últimos acessos, Favoritos, light/dark/mobile/a11y e Help sincronizada.
