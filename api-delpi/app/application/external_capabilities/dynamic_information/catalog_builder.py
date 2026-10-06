@@ -126,14 +126,18 @@ def _normalize_response_bindings(raw: Any) -> Mapping[str, str] | _InvalidNameBi
 
     Three-state contract:
       ABSENT  — metadata key missing/``None`` → empty mapping, no translation;
-      VALID   — all entries are safe ``external: source`` (or
+      VALID   — a non-empty mapping of safe ``external: source`` (or
                 ``external: {"source": source}``) identifier pairs;
-      INVALID — present but malformed → :data:`INVALID_NAME_BINDINGS`,
-                never downgraded to "no binding".
+      INVALID — present but malformed (non-dict, empty dict, invalid
+                identifier, wildcard, source == external) →
+                :data:`INVALID_NAME_BINDINGS`, never downgraded to
+                "no binding".
     """
     if raw is None:
         return MappingProxyType({})
-    if not isinstance(raw, dict):
+    if not isinstance(raw, dict) or not raw:
+        # Present but not a valid non-empty mapping: an empty ``{}`` is not
+        # "no binding requested" — only a missing/None key is ABSENT.
         return INVALID_NAME_BINDINGS
     out: dict[str, str] = {}
     for external, spec in raw.items():
