@@ -45,6 +45,7 @@ Canonical domain capability
 | Entity contracts | `entities.py` + `registration_guide.entity_schemas` |
 | Capability metadata | `capability_descriptors` + catalog `capability_surface` |
 | Agent intelligence | `teo_agent_intelligence.json` → `TeoAgentIntelligenceService.agent_directives(transport)` |
+| Write execution policy | `application/governed_writes/confirmation_policy.py` `_WRITE_POLICIES` — ONE `WritePolicyRecord` per semantic capability; capability/workflow/entity-op names are aliases onto the same record (TEO-WRITE-POLICY-FINAL-DEDUPLICATION-05) |
 | Transport parity map | `application/intelligence/capability_registry.py` `CAPABILITY_BINDINGS` (canonical; `interface/mcp/constants.py` derives) |
 | Transport projection | `application/intelligence/transport_projection.py` + canonical projections in `capability_descriptors` (`neutralize_for_mcp` only for prose, fail-closed) |
 | Actions surface | `openapi_builder.py` → generated OpenAPI (18 ops) |
@@ -71,6 +72,13 @@ proposal as `execution_policy`) classifies each material-write capability:
   activation/supersession, package commit, recalculate, workflow
   transitions, evidence manage, diagnostic manage): exactly ONE explicit
   user confirmation before ACT.
+
+Each semantic write capability owns exactly ONE `WritePolicyRecord`
+(`semantic_id`, `execution_policy`, `capability`, optional `workflow_id` /
+`entity_operation` aliases). Capability names, workflow ids and entity
+operations are indexes onto the same record — a policy change is a single
+edit that propagates to the orchestrator seal, both catalog projections,
+the Actions `commit_now` compat decision and MCP metadata.
 
 ```text
 UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE → AUTHZ

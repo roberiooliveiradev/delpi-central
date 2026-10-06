@@ -10071,3 +10071,83 @@ EVIDENCE (live production, 2026-10-05):
   DEPLOYMENT / LIVE ACCEPTANCE: pending (local docker transformometro-api
   restart + gateway acceptance planned for this task).
 
+
+## 6.139. TEO-WRITE-POLICY-FINAL-DEDUPLICATION-05 — one semantic write-policy record per capability
+
+  DECISION: ONE semantic write-policy definition per material write
+  capability. The prior three parallel tables
+  (_ENTITY_EXECUTION_POLICY / _CAPABILITY_EXECUTION_POLICY /
+  _WORKFLOW_EXECUTION_POLICY) collapsed into a single
+  _WRITE_POLICIES tuple of frozen WritePolicyRecord(
+  semantic_id, execution_policy, capability, workflow_id?,
+  entity_operation?). Policy VALUES appear exactly once; the
+  capability/workflow/entity-operation names are ALIASES resolved
+  through derived indexes (_BY_CAPABILITY/_BY_WORKFLOW/
+  _BY_ENTITY_OPERATION, alias -> record, never alias -> value).
+  One business decision = one edit = propagation to orchestrator
+  seal, both catalog projections, Actions commit_now compat and
+  MCP metadata.
+
+  SEMANTIC POLICY RECORDS (13):
+  record.create/update/duplicate (AUTO_ACT), record.delete
+  (CONFIRM_BEFORE_ACT), improvement_package.commit (CONFIRM),
+  shared_resource_cost.adjust (AUTO_ACT), revision.activate
+  (CONFIRM), dashboard.recalculate (CONFIRM),
+  meeting_minute.workflow (CONFIRM), evidence.manage (CONFIRM),
+  meeting_minute.manage (CONFIRM), diagnostic.create (AUTO_ACT),
+  diagnostic.manage (CONFIRM). Classification unchanged from
+  6.138 — no behavior change.
+
+  REGISTRY RELATION: capability_registry CapabilityBinding stays a
+  transport-projection binding (prepare/commit granularity —
+  record.change.prepare spans ops with different policies), so no
+  per-binding policy field was added; write_policy_id_for_capability()
+  links orchestrator capability names to semantic policy ids.
+
+  CHANGES:
+  - confirmation_policy.py: _WRITE_POLICIES single semantic table +
+    _build_indexes() derived views; execution_policy_for_*(),
+    allows_commit_now_*(), confirmation_kind_for_*() and
+    requires_user_confirmation() signatures preserved; all accept
+    records= override for propagation testing; fail-closed to
+    confirm_before_act on unknown aliases unchanged;
+    write_policy_records()/policy_record_for_capability()/
+    write_policy_id_for_capability() expose the canonical table.
+  - tests/test_teo_write_execution_policy.py (+3 tests):
+    test_single_semantic_record_flip_propagates_to_catalog — one
+    record edit (revision.activate -> auto_act) flips
+    execution_policy_for_capability/workflow, allows_commit_now_*,
+    and the catalog execution_policy + confirmation_requirement on
+    BOTH transports, without touching any index; the entity-op alias
+    moves with its record (record.create flip -> create + create_record).
+    test_exactly_one_independent_policy_source — structural gate:
+    exactly len(records) WritePolicyRecord constructions, no dict
+    literal binds an alias to a policy constant, all derived indexes
+    hold WritePolicyRecord values only.
+    test_every_exposed_write_alias_resolves_and_no_orphans —
+    WRITE_CAPABILITIES subset of classified aliases; every catalog
+    workflow/entity-op resolves; every record reachable via a live
+    alias (no orphans).
+  - teo-capability-matrix.md: canonical-source table gains the
+    write-policy row; flow section documents the one-record/alias
+    model.
+
+  ACTIONS: commit_now remains the auto_act transport mechanism only;
+  confirmation=true on the atomic Actions path classified as
+  LEGACY_TRANSPORT_COMPATIBILITY_FIELD (protocol assertion of already
+  expressed intent), not a conversational confirmation. No OpenAPI
+  change; no reimport.
+
+  MCP: PREPARE purity preserved; no commit_now, no new tools.
+
+  TESTS: focused TÉO suite + full suite rerun; residual search proves
+  INDEPENDENT_POLICY_VALUE_DEFINITIONS = 1 source.
+
+  ACCEPTANCE (live, local docker stack — bind-mounted /app, restarted):
+  deployed SHA matches pushed HEAD; MCP initialize/tools/list/
+  get_catalog verified execution_policy metadata with zero
+  gpt_*/commit_now leakage; AUTO_ACT end-to-end (branch create
+  PREPARE -> commit confirmation=false -> persisted+verified);
+  destructive guard (delete PREPARE confirm_before_act ->
+  commit confirmation=false -> CONFIRMATION_REQUIRED).
+  Production deploy/acceptance recorded in the task report.
