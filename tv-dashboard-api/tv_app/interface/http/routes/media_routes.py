@@ -23,7 +23,11 @@ from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.core.responses import fail, ok
 from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
 from tv_app.interface.http.media_file_response import build_media_file_response
-from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+from tv_app.interface.http.playlist_access_http import (
+    arequire_playlist_access,
+    is_access_error,
+    require_playlist_access,
+)
 
 router = APIRouter(prefix="/playlists/{playlist_id}/media", tags=["Media"])
 _media_repo = MediaRepository()
@@ -53,7 +57,7 @@ async def _request_body_chunks(request: Request):
 
 @router.post("")
 async def upload_media(request: Request, playlist_id: UUID, file: UploadFile = File(...)):
-    guarded = require_playlist_access(request, playlist_id, need="edit")
+    guarded = await arequire_playlist_access(request, playlist_id, need="edit")
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
@@ -124,7 +128,7 @@ async def put_media_upload_chunk(
     upload_id: str,
     chunk_index: int,
 ):
-    guarded = require_playlist_access(request, playlist_id, need="edit")
+    guarded = await arequire_playlist_access(request, playlist_id, need="edit")
     if is_access_error(guarded):
         return guarded
     try:
@@ -148,7 +152,7 @@ async def complete_media_upload_session(
     playlist_id: UUID,
     upload_id: str,
 ):
-    guarded = require_playlist_access(request, playlist_id, need="edit")
+    guarded = await arequire_playlist_access(request, playlist_id, need="edit")
     if is_access_error(guarded):
         return guarded
     user, _ = guarded

@@ -44,7 +44,35 @@ def require_playlist_access(
             )
         except GovernedWriteAuthzError as exc:
             return fail(str(exc), exc.status_code)
+    return _resolve_playlist_access(user, playlist_id, need)
 
+
+async def arequire_playlist_access(
+    request: Request,
+    playlist_id: UUID,
+    *,
+    need: NeedLevel,
+) -> tuple[Any, PlaylistAccess] | Any:
+    """Async twin of ``require_playlist_access`` for async route handlers."""
+    if need == "read":
+        return require_playlist_access(request, playlist_id, need=need)
+    user = resolve_user(request)
+    try:
+        user = await core_security.arequire_fresh_write_authorization(
+            user,
+            authorization=request.headers.get("Authorization"),
+            permission=TV_WRITE,
+        )
+    except GovernedWriteAuthzError as exc:
+        return fail(str(exc), exc.status_code)
+    return _resolve_playlist_access(user, playlist_id, need)
+
+
+def _resolve_playlist_access(
+    user: Any,
+    playlist_id: UUID,
+    need: NeedLevel,
+) -> tuple[Any, PlaylistAccess] | Any:
     access = _access.resolve(playlist_id, user)
     ok = (
         access.can_read
