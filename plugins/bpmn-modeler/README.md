@@ -23,8 +23,10 @@ Qualquer mudança user-facing deve atualizar essas chaves no mesmo entregável.
 - `src/editor/` — **única** fronteira com vendor BPMN (bpmn-js, bpmn-moddle,
   properties panel). Nenhum import vendor fora deste diretório.
 - `src/layout/` — perfil ELK, grafo, worker e proposta de BPMN-DI
-  (transiente; só persiste após aceite + save).
-- `src/state/` — máquina de save (`SaveMachine`) e capabilities.
+  (transiente; Accept → dirty → autosave persiste; Cancel → zero write).
+- `src/state/` — máquina de save (`SaveMachine`), autosave do working copy
+  (`AutosaveController` — debounce, single-flight, read-back verify) e
+  capabilities. Autosave nunca cria revisão — checkpoint é explícito.
 - `src/data/api/` — cliente HTTP do `bpmn-modeler-api`.
 
 ## Desenvolvimento

@@ -5,6 +5,7 @@
 > **Bounded context:** `bpmn-modeler/` (package `bpmn_modeler`)
 > **Base canônica:** `V1-SCOPE-FREEZE.md` (FROZEN, `1fa64cbe38`), `BACKEND-DOMAIN-SPEC-FREEZE.md` (FROZEN, `ba01d8b43d`)
 > **Natureza:** autoridade única da V1 para BPMN recognition, validation, interoperability, round-trip, extensions, operation policy de conteúdo, validation adapter technology e fixtures. Frontend HOW → Prompt 4; geometry/layout HOW → Prompt 5; limites físicos/security/runtime → Prompt 6; transporte → Prompt 7.
+> **AMENDMENT G0 (out/2026):** freeze histórico. Decisões substituídas após implementação estão marcadas `SUPERSEDED (G0)`. Estado vigente: [`CURRENT-STATE.md`](CURRENT-STATE.md); divergências: [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md). O profile de escopo (seções 6–7 do Prompt 1 e regras deste documento) é **TARGET**, não prova de implementação — inventário capability-by-capability = gate G1.
 
 Vocabulário de decisão: `FROZEN` | `DELEGATED_TO_PROMPT_4/5/6/7`.
 
@@ -29,6 +30,8 @@ Fechar WHAT + HOW técnico de validação/interoperabilidade BPMN da V1: o que �
 | CreateRevision não bloqueado por validation | FROZEN (Prompt 2, seção 11) |
 | Editing profile `CREATE_EDIT`/`RENDER_PRESERVE_ONLY` | FROZEN (Prompt 1, seções 6–7) |
 | Autosave OUT_OF_V1; save explícito | FROZEN |
+
+> **SUPERSEDED (G0):** autosave do working copy foi implementado (`AutosaveController` + `SaveMachine`). O que permanece FROZEN e inalterado: o write path é `PUT working-copy` com validação/policy/read-back — o autosave apenas agenda esse mesmo write; nenhuma regra de validação/interoperabilidade muda por causa do gatilho de save.
 
 ## 3. Normative Sources
 
@@ -273,6 +276,8 @@ Decisões fechadas:
 - Export de model sem DI exporta sem DI (fiel ao canônico).
 - `layout calculation != persisted geometry` — nada geométrico vira canônico sem save.
 - Editor precisa suportar carregar BPMN sem DI (gera layout transitório) — requirement do contrato de frontend (seção 36).
+
+> **SUPERSEDED (G0):** "persistida somente via save explícito" — na implementação vigente a persistência de DI ocorre via autosave do working copy após edições/Accept de layout. O invariante preservado é: nenhum write de geometria sem comando do editor (Accept de layout ou edição de usuário); preview e layout transitório de open **nunca** escrevem. Ver `CURRENT-STATE.md` §7.
 
 ## 14. Blank BPMN Artifact Contract
 

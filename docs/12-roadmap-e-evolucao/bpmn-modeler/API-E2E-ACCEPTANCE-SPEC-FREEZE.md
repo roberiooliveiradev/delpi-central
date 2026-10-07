@@ -3,6 +3,7 @@
 > **Status:** `FROZEN`
 > **Escopo:** transporte HTTP, OpenAPI, DTOs, conditional requests, uploads/downloads, error mapping, paginação, idempotência/retry, health wire, E2E, acceptance e readiness final da V1.
 > **Natureza:** freeze de especificação. **Não autoriza implementação por si só** — autoriza apenas o futuro Master Implementation Prompt.
+> **AMENDMENT G0 (out/2026):** freeze histórico escrito **antes** da implementação — todos os `TEST_NOT_RUN`/`NOT IMPLEMENTED` deste documento são **status de specification-time**, não estado atual. Estado de execução vigente (testes, CI, E2E, runtime acceptance): [`CURRENT-STATE.md`](CURRENT-STATE.md) §11; divergências de contrato (ownership, índice V004, revision body, autosave): [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md) + markers `SUPERSEDED (G0)` inline.
 
 Este é o sétimo e último documento do Specification Freeze. Fecha a única superfície ainda delegada (transporte + provas) e audita a coerência dos seis freezes anteriores. **Não existe Prompt 8.**
 
@@ -270,6 +271,8 @@ PUT working-copy (candidate + If-Match)
 | `POST .../duplicate` | `{ "display_name": "..." }` — novo ID server-side; revision history **não** copiada; target ID do cliente rejeitado |
 | `POST .../archive` / `.../unarchive` | **sem body** + `If-Match`. `DELETE` nunca é usado para archive; hard delete não existe |
 | `POST .../revisions` | **sem body** + `If-Match` — V1 não tem label/note/reason editável; não inventar campos |
+
+> **SUPERSEDED (G0):** revision metadata vigente — `CreateRevisionRequest` aceita body **opcional** `{ "name": ≤120, "description": ≤500 }` (domain `Revision.name/description/created_by_name`, migration V003, `CreateRevisionDialog` no frontend). "Sem body" continua válido; a proibição "não inventar campos" segue — só os campos congelados na emenda existem.
 | `POST .../revisions/{n}/restore` | **sem body** + `If-Match` — snapshot autoritativo lido server-side; cliente nunca envia XML de revision; confirmação é UX (P4), não `confirm=true` |
 
 ## 12. Concurrency — ETag / If-Match contract
@@ -440,6 +443,8 @@ Sort desce ao SQL via allowlist mapping (P6 §5.5) + `id` tie-breaker; `query` p
 ### 18.3 Index impact
 
 `FROZEN`: **no additional pagination index required** — `idx_models_list (archived_at, updated_at DESC)` cobre o default sort; `idx_models_name_lower` cobre sort por nome; `created_at` sort tolera seq scan no volume V1 (catálogo modesto, page_size ≤ 100); `idx_revisions_model` cobre revisions. Autorização P6 §5.4 exercida: nenhum índice novo.
+
+> **SUPERSEDED (G0):** a listagem passou a ser owner-scoped (`WHERE created_by = ?`), tornando `idx_models_list` insuficiente para o filtro dominante. Migration vigente: `V004__owner_scoped_list_index.sql` → `idx_models_owner_list (created_by, archived_at, updated_at DESC, id DESC)`. O rationale acima permanece correto para o schema pré-ownership; a premissa que mudou foi a autorização de listagem (DRIFT-BPMN-001/002).
 
 ## 19. Idempotency & retry contract
 
@@ -811,6 +816,8 @@ TEST_NOT_RUN
 ```
 
 Specification freeze ≠ implementation pass — documentação fechada não implica software pronto.
+
+> **G0 (out/2026):** o bloco acima é o status **de specification-time** (escrito antes da implementação). Estado atual: backend/frontend/persistence/validation/layout/autosave/revisions/ownership implementados com gates de CI ativos; runtime multi-user acceptance executado (P0 CLOSED). Fonte vigente: `CURRENT-STATE.md` §11. Nenhuma linha desta seção é evidência de estado atual.
 
 ## 42. Master Prompt readiness
 
