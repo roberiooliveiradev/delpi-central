@@ -73,6 +73,9 @@ from production_control_app.domain.ports.delivery_map_snapshot_repository import
 from production_control_app.domain.ports.line_feeder_pick_plan_repository import (
     LineFeederPickPlanRepositoryPort,
 )
+from production_control_app.domain.ports.machine_load_publication_repository import (
+    MachineLoadPublicationRepositoryPort,
+)
 from production_control_app.domain.ports.machine_load_snapshot_repository import (
     MachineLoadSnapshotRepositoryPort,
 )
@@ -86,6 +89,9 @@ from production_control_app.infrastructure.persistence.postgres_delivery_map_sna
 )
 from production_control_app.infrastructure.persistence.postgres_line_feeder_pick_plan_repository import (
     PostgresLineFeederPickPlanRepository,
+)
+from production_control_app.infrastructure.persistence.postgres_machine_load_publication_repository import (
+    PostgresMachineLoadPublicationRepository,
 )
 from production_control_app.infrastructure.persistence.postgres_machine_load_snapshot_repository import (
     PostgresMachineLoadSnapshotRepository,
@@ -123,6 +129,10 @@ def build_public_delivery_map_access_service() -> PublicDeliveryMapAccessService
 
 def build_machine_load_snapshot_repository() -> MachineLoadSnapshotRepositoryPort:
     return PostgresMachineLoadSnapshotRepository()
+
+
+def build_machine_load_publication_repository() -> MachineLoadPublicationRepositoryPort:
+    return PostgresMachineLoadPublicationRepository()
 
 
 def build_delivery_map_snapshot_repository() -> DeliveryMapSnapshotRepositoryPort:
@@ -224,6 +234,7 @@ def build_machine_load_service(
     gateway: DelpiProductionGateway | None = None,
     *,
     snapshots: MachineLoadSnapshotRepositoryPort | None = None,
+    publications: MachineLoadPublicationRepositoryPort | None = None,
 ) -> MachineLoadService:
     from production_control_app.infrastructure.persistence.postgres_production_run_repository import (  # noqa: E501
         PostgresProductionRunRepository,
@@ -232,6 +243,7 @@ def build_machine_load_service(
     return MachineLoadService(
         gateway or DelpiProductionGateway(),
         snapshots=snapshots or build_machine_load_snapshot_repository(),
+        publications=publications or build_machine_load_publication_repository(),
         branch_access=build_branch_access_service(),
         change_notifier=notify_machine_load_changed,
         list_open_runs=PostgresProductionRunRepository().list_open_runs_by_branch,

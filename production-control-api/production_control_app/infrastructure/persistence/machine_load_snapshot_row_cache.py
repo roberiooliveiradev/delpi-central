@@ -1,10 +1,17 @@
-"""Cache do snapshot da carga máquina por versão da tupla no Postgres.
+"""Cache de linhas da carga máquina por versão da tupla no Postgres.
 
 A fila da filial passa de 1,8 MB de JSONB e o psycopg já entrega `payload_json`
 desserializado: o custo está em **buscar** a linha (~52 ms medidos), não em
-decodificá-la depois. Como o snapshot só muda em ações explícitas do PCP, vale
-perguntar antes qual é a versão da tupla (`xmin`, ~0,3 ms) e reaproveitar a
-linha já materializada enquanto ela não mudar.
+decodificá-la depois. Como a fila só muda em ações explícitas, vale perguntar
+antes qual é a versão da tupla (`xmin`, ~0,3 ms) e reaproveitar a linha já
+materializada enquanto ela não mudar.
+
+O mesmo mecanismo serve às duas filas E1+:
+- namespace `machine_load_snapshots` → WORKING (fila do PCP)
+- namespace `machine_load_publications` → PUBLISHED (fila das bancadas)
+
+O namespace faz parte da chave: WORKING branch 01 e PUBLISHED branch 01 são
+linhas diferentes e nunca podem compartilhar cache.
 
 O TTL é rede de segurança: `xmin` é reescrito em todo UPDATE, mas `VACUUM
 FREEZE` normaliza tuplas antigas para o mesmo valor, então nenhuma leitura fica
@@ -19,25 +26,37 @@ from typing import Any
 
 DEFAULT_TTL_SECONDS = 300.0
 
+WORKING_NAMESPACE = "machine_load_snapshots"
+PUBLISHED_NAMESPACE = "machine_load_publications"
+
 _lock = threading.Lock()
-# branch → (monotonic_deadline, row_version, row)
-_CACHE: dict[str, tuple[float, str, dict[str, Any]]] = {}
+# (namespace, branch) → (monotonic_deadline, row_version, row)
+_CACHE: dict[tuple[str, str], tuple[float, str, dict[str, Any]]] = {}
 
 
-def clear_snapshot_row_cache(branch: str | None = None) -> None:
-    """Invalida o cache (uma filial ou a plataforma)."""
+def clear_snapshot_row_cache(
+    branch: str | None = None,
+    *,
+    namespace: str = WORKING_NAMESPACE,
+) -> None:
+    """Invalida o cache (uma filial dentro de um namespace, ou a plataforma)."""
     with _lock:
         if branch is None:
             _CACHE.clear()
             return
-        _CACHE.pop(str(branch).strip(), None)
+        _CACHE.pop((namespace, str(branch).strip()), None)
 
 
-def get_snapshot_row_cache(branch: str, *, row_version: str) -> dict[str, Any] | None:
+def get_snapshot_row_cache(
+    branch: str,
+    *,
+    row_version: str,
+    namespace: str = WORKING_NAMESPACE,
+) -> dict[str, Any] | None:
     """Linha já materializada, se a versão da tupla continuar a mesma."""
-    key = str(branch).strip()
+    key = (namespace, str(branch).strip())
     version = str(row_version or "").strip()
-    if not key or not version:
+    if not key[1] or not version:
         return None
     now = time.monotonic()
     with _lock:
@@ -57,14 +76,15 @@ def put_snapshot_row_cache(
     row_version: str | None,
     row: dict[str, Any],
     ttl_seconds: float = DEFAULT_TTL_SECONDS,
+    namespace: str = WORKING_NAMESPACE,
 ) -> None:
-    key = str(branch).strip()
+    key = (namespace, str(branch).strip())
     version = str(row_version or "").strip()
-    if not key:
+    if not key[1]:
         return
     if not version:
         # Sem versão não há como saber se a linha envelheceu.
-        clear_snapshot_row_cache(key)
+        clear_snapshot_row_cache(branch, namespace=namespace)
         return
     deadline = time.monotonic() + max(0.0, float(ttl_seconds))
     with _lock:

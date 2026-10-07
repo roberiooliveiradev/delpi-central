@@ -1,16 +1,23 @@
-"""Repositório Postgres — snapshot da carga máquina (fila WORKING, uma por filial)."""
+"""Repositório Postgres — publicação da carga máquina (fila PUBLISHED por filial).
+
+O cockpit consulta a fila a cada ~15 s por tablet. O payload tem ~1,8 MB, então
+a leitura usa o mesmo probe de `xmin` do snapshot WORKING: versão igual
+reaproveita a linha materializada em memória, versão nova busca o JSONB.
+O namespace do cache é separado — WORKING e PUBLISHED da mesma filial nunca
+compartilham chave.
+"""
 
 from __future__ import annotations
 
 import json
-from contextlib import contextmanager
-from datetime import date
-from typing import Any, Iterator
+from datetime import date, datetime
+from typing import Any
 
-from production_control_app.domain.ports.machine_load_snapshot_repository import (
-    MachineLoadSnapshotRepositoryPort,
+from production_control_app.domain.ports.machine_load_publication_repository import (
+    MachineLoadPublicationRepositoryPort,
 )
 from production_control_app.infrastructure.persistence.machine_load_snapshot_row_cache import (
+    PUBLISHED_NAMESPACE,
     clear_snapshot_row_cache,
     get_snapshot_row_cache,
     put_snapshot_row_cache,
@@ -20,38 +27,55 @@ from production_control_app.infrastructure.persistence.plugins_postgres_connecti
     get_connection,
 )
 
-_TABLE = f"{PC_SCHEMA_NAME}.machine_load_snapshots"
+_TABLE = f"{PC_SCHEMA_NAME}.machine_load_publications"
 
-# `xmin` é a versão da tupla: muda em todo UPDATE, inclusive nos que não tocam
-# `refreshed_at`. É a chave de cache correta para a fila congelada.
 _COLUMNS = """
     id::text AS id,
     branch,
+    generation_id::text AS generation_id,
     start_date,
     end_date,
-    generation_id::text AS generation_id,
     payload_json,
     schema_version,
     source,
-    refreshed_at,
-    refreshed_by,
+    source_refreshed_at,
+    source_refreshed_by,
+    published_at,
+    published_by,
     xmin::text AS row_version
 """
 
 
-class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
-    def get(self, *, branch: str) -> dict[str, Any] | None:
-        """Lê a fila congelada, evitando rebuscar 1,8 MB que não mudaram.
+class PostgresMachineLoadPublicationRepository(MachineLoadPublicationRepositoryPort):
+    def get(self, *, branch: str, conn: Any = None) -> dict[str, Any] | None:
+        """Lê a fila publicada evitando rebuscar ~1,8 MB que não mudaram.
 
-        A versão da tupla é uma consulta barata; a linha inteira só volta do
-        banco quando o PCP realmente reescreveu o snapshot.
+        Com conn a leitura roda dentro da transação chamadora (publicação):
+        sem probe/cache, a linha vem autoritativa do banco.
         """
+        if conn is not None:
+            query = f"""
+                SELECT {_COLUMNS}
+                FROM {_TABLE}
+                WHERE branch = %s
+                LIMIT 1
+            """
+            with conn.cursor() as cursor:
+                cursor.execute(query, (branch,))
+                row = cursor.fetchone()
+            if row is None:
+                clear_snapshot_row_cache(branch, namespace=PUBLISHED_NAMESPACE)
+                return None
+            return self._remember(branch=branch, row=dict(row))
+
         row_version = self._read_row_version(branch=branch)
         if row_version is None:
-            clear_snapshot_row_cache(branch)
+            clear_snapshot_row_cache(branch, namespace=PUBLISHED_NAMESPACE)
             return None
 
-        cached = get_snapshot_row_cache(branch, row_version=row_version)
+        cached = get_snapshot_row_cache(
+            branch, row_version=row_version, namespace=PUBLISHED_NAMESPACE
+        )
         if cached is not None:
             return dict(cached)
 
@@ -66,7 +90,7 @@ class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
                 cursor.execute(query, (branch,))
                 row = cursor.fetchone()
         if row is None:
-            clear_snapshot_row_cache(branch)
+            clear_snapshot_row_cache(branch, namespace=PUBLISHED_NAMESPACE)
             return None
         return self._remember(branch=branch, row=dict(row))
 
@@ -88,95 +112,72 @@ class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
 
     @staticmethod
     def _remember(*, branch: str, row: dict[str, Any]) -> dict[str, Any]:
-        # A versão vem da própria linha lida/escrita: se um write entrou no meio,
-        # o cache guarda a versão do dado que está em mãos, não a do probe.
-        put_snapshot_row_cache(branch, row_version=row.get("row_version"), row=row)
+        put_snapshot_row_cache(
+            branch,
+            row_version=row.get("row_version"),
+            row=row,
+            namespace=PUBLISHED_NAMESPACE,
+        )
         return dict(row)
-
-    def get_for_update(self, *, branch: str, conn: Any) -> dict[str, Any] | None:
-        """SELECT ... FOR UPDATE: publicação e mutações serializam na linha."""
-        query = f"""
-            SELECT {_COLUMNS}
-            FROM {_TABLE}
-            WHERE branch = %s
-            LIMIT 1
-            FOR UPDATE
-        """
-        with conn.cursor() as cursor:
-            cursor.execute(query, (branch,))
-            row = cursor.fetchone()
-        if row is None:
-            clear_snapshot_row_cache(branch)
-            return None
-        return self._remember(branch=branch, row=dict(row))
-
-    @contextmanager
-    def transaction(self) -> Iterator[Any]:
-        """Conexão/transação compartilhada: commit ao sair, rollback em erro.
-
-        Permite que a publicação da fila (WORKING + machine_load_publications)
-        escreva atomicamente — basta passar a conexão via ``conn`` nos métodos.
-        """
-        conn = get_connection()
-        try:
-            yield conn
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
 
     def upsert(
         self,
         *,
         branch: str,
+        generation_id: str,
         start_date: date,
         end_date: date,
         payload: dict[str, Any],
-        generation_id: str,
-        refreshed_by: str | None,
+        source_refreshed_at: datetime,
+        source_refreshed_by: str | None,
+        published_by: str | None,
         schema_version: int = 1,
         source: str = "api-delpi",
         conn: Any = None,
     ) -> dict[str, Any]:
-        # generation_id é obrigatório e vem do fluxo de refresh: nunca reuse da
-        # linha anterior. update_payload, por outro lado, nunca toca a geração.
+        # ``conn`` permite que a publicação entre na mesma transação do WORKING
+        # (snapshot repo expõe transaction()) quando a fila live exigir dual-write.
         query = f"""
             INSERT INTO {_TABLE} (
                 branch,
+                generation_id,
                 start_date,
                 end_date,
-                generation_id,
                 payload_json,
                 schema_version,
                 source,
-                refreshed_at,
-                refreshed_by
+                source_refreshed_at,
+                source_refreshed_by,
+                published_at,
+                published_by
             ) VALUES (
-                %s, %s, %s, %s::uuid, %s::jsonb, %s, %s, NOW(), %s
+                %s, %s::uuid, %s, %s, %s::jsonb, %s, %s, %s, %s, NOW(), %s
             )
             ON CONFLICT (branch) DO UPDATE SET
+                generation_id = EXCLUDED.generation_id,
                 start_date = EXCLUDED.start_date,
                 end_date = EXCLUDED.end_date,
-                generation_id = EXCLUDED.generation_id,
                 payload_json = EXCLUDED.payload_json,
                 schema_version = EXCLUDED.schema_version,
                 source = EXCLUDED.source,
-                refreshed_at = NOW(),
-                refreshed_by = EXCLUDED.refreshed_by
+                source_refreshed_at = EXCLUDED.source_refreshed_at,
+                source_refreshed_by = EXCLUDED.source_refreshed_by,
+                published_at = NOW(),
+                published_by = EXCLUDED.published_by
             RETURNING {_COLUMNS}
         """
         payload_text = json.dumps(payload, ensure_ascii=False, default=str)
         params = (
             branch,
+            generation_id,
             start_date,
             end_date,
-            generation_id,
             payload_text,
             schema_version,
             source,
-            refreshed_by,
+            source_refreshed_at,
+            source_refreshed_by,
+            published_by,
         )
         if conn is not None:
             with conn.cursor() as cursor:
@@ -189,12 +190,13 @@ class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
                     row = cursor.fetchone()
                 connection.commit()
         if row is None:
-            raise RuntimeError("Falha ao gravar snapshot da carga máquina.")
+            raise RuntimeError("Falha ao gravar publicação da carga máquina.")
         return self._remember(branch=branch, row=dict(row))
 
     def update_payload(
         self, *, branch: str, payload: dict[str, Any], conn: Any = None
     ) -> dict[str, Any]:
+        """Dual-write do estado LIVE: só o conteúdo; a publicação é a mesma."""
         query = f"""
             UPDATE {_TABLE}
             SET payload_json = %s::jsonb
@@ -213,5 +215,7 @@ class PostgresMachineLoadSnapshotRepository(MachineLoadSnapshotRepositoryPort):
                     row = cursor.fetchone()
                 connection.commit()
         if row is None:
-            raise RuntimeError("Snapshot da carga máquina não encontrado para atualizar.")
+            raise RuntimeError(
+                "Publicação da carga máquina não encontrada para atualizar."
+            )
         return self._remember(branch=branch, row=dict(row))

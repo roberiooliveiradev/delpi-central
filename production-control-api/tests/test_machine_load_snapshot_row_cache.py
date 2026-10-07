@@ -36,6 +36,7 @@ class FakePostgres:
             "branch": branch,
             "start_date": date(2026, 8, 1),
             "end_date": date(2026, 9, 2),
+            "generation_id": "gen-e1-seed",
             "payload_json": payload,
             "schema_version": 1,
             "source": "api-delpi",
@@ -106,6 +107,7 @@ def test_unchanged_snapshot_is_not_fetched_again(fake_db: FakePostgres) -> None:
 
     assert first is not None and second is not None
     assert second["payload_json"] == first["payload_json"]
+    assert second["generation_id"] == "gen-e1-seed"
     assert fake_db.payload_reads == 1
     assert fake_db.version_probes == 2
 

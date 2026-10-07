@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+
 from datetime import date, datetime, timezone
 from typing import Any
 
@@ -25,6 +27,7 @@ from production_control_app.domain.errors import (
     SnapshotNotFound,
 )
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from tests.test_machine_load import FakePublicationRepo
 
 TODAY = date(2026, 9, 14)
 
@@ -87,6 +90,21 @@ class FakeSnapshotRepo:
 
     def get(self, *, branch: str) -> dict[str, Any] | None:
         return self.rows.get(branch)
+
+
+def _publications(snapshots: FakeSnapshotRepo) -> FakePublicationRepo:
+    """Mundo pós-backfill V015: a filial migra com WORKING == PUBLISHED."""
+    rows = {
+        branch: {
+            **copy.deepcopy(row),
+            "source_refreshed_at": row.get("refreshed_at"),
+            "source_refreshed_by": row.get("refreshed_by"),
+            "published_at": datetime(2026, 9, 14, 10, 0, tzinfo=timezone.utc),
+            "published_by": row.get("refreshed_by"),
+        }
+        for branch, row in snapshots.rows.items()
+    }
+    return FakePublicationRepo(rows)
 
 
 class FakeDelpiGateway:
@@ -279,12 +297,14 @@ class EmptyDelpiGateway(FakeDelpiGateway):
 
 def _service(gateway: FakeDelpiGateway) -> PublicWorkCenterPerformanceService:
     branch_access = BranchAccessService()
+    snapshots = FakeSnapshotRepo()
     return PublicWorkCenterPerformanceService(
         gateway,
         access=PublicCockpitAccessService(),
         machine_load=MachineLoadService(
             gateway,
-            snapshots=FakeSnapshotRepo(),
+            snapshots=snapshots,
+            publications=_publications(snapshots),
             branch_access=branch_access,
         ),
         branch_access=branch_access,
@@ -499,6 +519,7 @@ def test_branch_without_published_queue_is_not_found() -> None:
         machine_load=MachineLoadService(
             gateway,
             snapshots=FakeSnapshotRepo(branches=("02",)),
+            publications=_publications(FakeSnapshotRepo(branches=("02",))),
             branch_access=branch_access,
         ),
         branch_access=branch_access,
