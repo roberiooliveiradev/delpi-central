@@ -189,24 +189,24 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 |---|---|---|---|---|---|
 | EG-1 | Copy/cut/paste mesmo modelo | vendor wired, zero test | 06+03 | P2 | G3 |
 | EG-2 | Multi-select/lasso/bulk ops | vendor wired, zero test | 06+03 | P2 | G3 |
-| EG-3 | Typed tasks + callActivity create/edit/calledElement | replace menu expõe, zero test | 03+02 | **P1** | G2 |
-| EG-4 | Event definitions CE (create/swap/fields) | vendor expõe, zero test | 03+02 | **P1** | G2 |
-| EG-5 | Parallel/Inclusive/EventBased gateway create | vendor expõe, backend valida | 03+02 | **P1** | G2 |
-| EG-6 | Pool/lane create/resize/membership | vendor expõe, layout provado | 03+04 | P1 | G2 |
-| EG-7 | Message flow create entre pools | vendor, fixture backend | 03 | P2 | G2 |
+| EG-3 | Typed tasks + callActivity create/edit | **CLOSED (G2B)** — CE-ACT-02/03: 7 typed tasks + CallActivity via Replace → QName + save/read-back/reload. calledElement = panel gap → EG-14/WAVE E | 03+02 | **P1** | G2 |
+| EG-4 | Event definitions CE (create/swap/fields) | **CLOSED (G2B)** — CE-EVT-01..06: start/catch/throw/boundary/end defs + boundary attach + non-interrupting + timer type/value → XML + read-back + reload | 03+02 | **P1** | G2 |
+| EG-5 | Parallel/Inclusive/EventBased gateway create | **CLOSED (G2B)** — CE-GW-02..05: replace + connect + QName + EventBased append governance (conditional deny) | 03+02 | **P1** | G2 |
+| EG-6 | Pool/lane create/resize/membership | **CLOSED (G2B)** — CE-COL-01/02/05: participant+processRef+laneSet, insert above/below + divide (nested childLaneSet), rename + move task entre lanes | 03+04 | P1 | G2 |
+| EG-7 | Message flow create entre pools | **CLOSED (G2B)** — CE-COL-03: 2 pools + MessageFlow tA→tB cross-process → `<bpmn:messageFlow>` read-back | 03 | P2 | G2 |
 | EG-8 | Per-construct round-trip compare | só byte-exact genérico | 02+06 | P1 | G4 |
 | EG-9 | Resize funcional | resizers visuais testados | 03 | P3 | G3 |
 | EG-10 | Search pad overlay (Ctrl+F funciona?) | vendor wired + traduzido, zero test | 03+06 | P2 | G3 |
-| EG-11 | TextAnnotation/Association/DataAssociation create | vendor expõe | 03 | P2 | G3 |
+| EG-11 | TextAnnotation/Association/DataAssociation create | **CLOSED (G2B)** — CE-ART-02/03: dataOutput+dataInputAssociation + textAnnotation editada + `<bpmn:association>` read-back/reload | 03 | P2 | G3→G2B |
 | EG-12 | Preserve-only render/round-trip por construct | backend fixture único | 02+06 | P1 | G4 |
 | EG-13 | Shortcuts vendor (Del, R, E, S, L, H, C, zoom) | bindings ativos | 03+06 | P2 | G3 |
-| EG-14 | Engine fields no panel (isExecutable/MultiInstance/VersionTag) | bundle tem; exposição runtime TI | 03+02 | P2 | G3 |
+| EG-14 | Engine fields no panel (MultiInstance/VersionTag/demais engine fields) | bundle tem; exposição runtime TI | 03+02 | P2 | G3/WAVE E. NOTA G2A: `isExecutable` **resolvido** — BPMN normativo (não engine-specific); edição intencionalmente não exposta por decisão de produto; preservação de import **PROVEN** (GOV-13). Restante do EG-14 = campos engine/vendor propriamente ditos |
 
 ### TARGET GAPS (scope congelado não inventariado)
 
-- TG-1: prova CREATE por construct para todo o profile `CREATE_EDIT` (EG-3..7 cobrem).
+- TG-1: **CLOSED (G2B)** — todo o profile `CREATE_EDIT` exercitado por specs `e2e/specs/create-edit-{activities,gateways,events,collaboration,artifacts}.spec.ts` (24 testes, save→authoritative read-back→reload→verify QName/DI).
 - TG-2: `RENDER_PRESERVE_ONLY` — fixtures por definition (conditional/multiple/parallel-multiple/cancel/compensation start/catch/throw/end/boundary; DataInput/Output; event-subprocess start events).
-- TG-3: subprocesso/pool collapsed-pool create path.
+- TG-3: **CLOSED (G2B)** — CE-ACT-04 (collapsed SubProcess via replace) + CE-COL-04 (black-box pool via `replace-with-collapsed-pool` → participant sem processRef).
 
 ### G3 gaps (já identificados em G0) — verificação
 
@@ -219,12 +219,12 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 
 ## 8. V1 scope completeness score
 
-- **Activities:** 1 PROVEN (generic Task) · 10 PARTIAL · 3 PARTIAL-preserve · 0 MISSING · 0 TI no target CE.
-- **Events:** ~2 linhas PROVEN (start-none, end-none) · ~6 PARTIAL · ~8 TO_INVENTORY (preserve-only sem fixture).
-- **Gateways:** 1 PROVEN (Exclusive) · 3 PARTIAL · 1 PARTIAL-preserve.
-- **Connecting:** 1 PROVEN (SequenceFlow) · 3 PARTIAL.
-- **Collaboration:** 0 full-PROVEN · 7 PARTIAL (todas com evidência de render/layout/backend, create vendor-only).
-- **Data/Artifacts:** 1 PROVEN (Group — preserve/layout) · 4 PARTIAL · 1 TO_INVENTORY (DataIO).
+- **Activities:** 11 PROVEN (Task + 7 typed + CallActivity + SubProcess expanded/collapsed — CE-ACT-01..04) · 3 PARTIAL-preserve.
+- **Events:** CREATE_EDIT profile PROVEN (start None/Msg/Timer/Signal · catch Msg/Timer/Signal/Link · throw None/Msg/Signal/Esc/Link · boundary Msg/Timer/Error/Signal/Esc + non-interrupting · end None/Msg/Error/Signal/Esc/Terminate — CE-EVT-01..06) · preserve-only defs sem fixture per-construct → TG-2/G4.
+- **Gateways:** 4 PROVEN (Exclusive/Parallel/Inclusive/EventBased — CE-GW-01..05) · 1 PARTIAL-preserve (Complex).
+- **Connecting:** 3 PROVEN (SequenceFlow, MessageFlow, Association) + DataOutput/InputAssociation PROVEN (CE-ART-02).
+- **Collaboration:** PROVEN create path — participant expanded+processRef+laneSet, lanes insert/divide/nested/rename/move, black-box pool, 2 pools + MessageFlow (CE-COL-01..05).
+- **Data/Artifacts:** PROVEN — DataObject, DataStoreReference, TextAnnotation+texto, Group, Association, DataAssociation (CE-ART-01..04).
 - **Productivity:** 6 PROVEN (select-all, Ctrl+S, undo/redo, zoom/pan/fit, direct edit, canvas) · ~10 PARTIAL · ~12 VENDOR_ONLY · 1 MISSING (palette search).
 - **Validation:** PROVEN (47/47 regras) · per-construct semantic PARTIAL.
 - **Round-trip:** artifact-level PROVEN · per-construct PARTIAL.
@@ -233,7 +233,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 ## 9. Candidate next waves (input para 00 — não é decisão)
 
 - **WAVE A — Profile Governance:** provider de restrição palette/context-pad/replace/panel para o profile CE; bloquear/excluir preserve-only+engine constructs da criação. (IG-2, EG-14) — P1, owners 03+02. → **EXECUTED (G2A, PASS)** — parte creation/replacement fechada; exposição residual de engine fields no panel = TO_INVENTORY (EG-14 permanece para WAVE E).
-- **WAVE B — CREATE_EDIT Evidence Closure:** E2E de create/edit/save/read-back por construct CE (typed tasks, gateways P/I/EB, event defs, lanes/pools, messageFlow, artifacts). (EG-3..7, EG-11, TG-1) — P1, owners 03+06.
+- **WAVE B — CREATE_EDIT Evidence Closure:** → **EXECUTED (G2B, PASS)** — 24 testes E2E `create-edit-*.spec.ts` provam create→configure→connect→save→authoritative read-back→reload por construct CE. (EG-3..7, EG-11, TG-1, TG-3 fechados).
 - **WAVE C — Round-trip & Preserve Evidence:** suíte export→reimport→compare por construct + corpus preserve-only. (EG-8, EG-12, TG-2) — P1, owners 02+06.
 - **WAVE D — Productivity:** copy/paste, multi-select/bulk, search pad product QA, palette search impl, shortcuts map, resize funcional. (EG-1,2,9,10,13, IG-1) — P2, owners 03+06.
 - **WAVE E — Properties Evidence:** doc/condition/default/event-fields/calledElement UI tests. — P2, owner 03+06.

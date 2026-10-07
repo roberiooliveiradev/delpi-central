@@ -152,6 +152,20 @@ O profile do `V1-SCOPE-FREEZE.md` §6–7 (`CREATE_EDIT`/`RENDER_PRESERVE_ONLY`)
 
 Status de auditoria G0: `TO_INVENTORY` (a matriz detalhada será produzida no G1; o G0 não reivindica breadth).
 
+### 13a. CREATE_EDIT evidence (G2B — vigente)
+
+O profile `CREATE_EDIT` inteiro está **PROVEN** por execução real: 24 testes E2E em `e2e/specs/create-edit-{activities,gateways,events,collaboration,artifacts}.spec.ts`, cada um percorrendo `create → configure → connect (quando aplicável) → autosave → authoritative read-back (GET working-copy) → reload → verify QName + render`. Helpers compartilhados em `e2e/ce-helpers.ts` (incl. `fetchWorkingCopyXml`, `attachBoundary`, `newShapeId`/`newConnectionId` por diff de DOM).
+
+| Família | Spec | Prova |
+|---|---|---|
+| Activities | CE-ACT-01..04 | Task (rename/delete/undo) + 7 typed tasks via Replace + CallActivity + SubProcess expanded/collapsed |
+| Gateways | CE-GW-01..05 | Exclusive palette + Parallel/Inclusive/EventBased via replace + connect + EventBased append governance (conditional deny — regressão G2A) |
+| Events | CE-EVT-01..06 | start/catch/throw/boundary/end defs, boundary attach em task (interrupting + non-interrupting `cancelActivity="false"`), timer type/value via panel |
+| Collaboration | CE-COL-01..05 | participant expanded (`processRef`+`laneSet`), lanes insert/divide/nested/rename/move (`childLaneSet`+`flowNodeRef`), black-box pool, 2 pools + MessageFlow |
+| Artifacts | CE-ART-01..04 | DataObject, DataStoreReference, TextAnnotation+texto, Group, Association, dataInput+dataOutputAssociation |
+
+Gaps residuais desta wave: `calledElement`, `conditionExpression`, `defaultFlow` **não existem na surface do provider `bpmn` carregado** (vivem nos providers Zeebe/Camunda não instalados) — classificados como exposição pendente em EG-14/WAVE E, não como falha de governance.
+
 ## 14. Produtividade — classificação por evidência (G0)
 
 | Capacidade | Freeze | Implementação atual | Classificação |
@@ -175,6 +189,8 @@ Drift classificado como `IMPLEMENTATION_GAP` (não documentation drift): documen
 G0 — Documentation Drift Reconciliation   OWNER 08   este gate
 G1 — V1 Capability Evidence Inventory     OWNER 02+03+06   COORD 00
 G2 — BPMN Professional Breadth Wave 1     OWNER 02→03→01→06
+      G2A Editing Profile Governance         PASS/CLOSED (34244d8)
+      G2B CREATE_EDIT Evidence Closure       PASS — ver §13a
 G3 — Modeling Productivity                OWNER 03→06
 G4 — Broad Round-trip / Interoperability  OWNER 02+06
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
@@ -187,4 +203,4 @@ G6 — Runtime Provenance / stale-process   OWNER 09
 |---|---|---|
 | RUNTIME_STALE_CODE_PREVENTION — processo uvicorn executava código pré-deploy apesar do bind mount atualizado (foreign read 200 → 404 após `docker restart`); incidente de deploy, não defeito de policy | 09 — DevOps/CI/Runtime | `OPEN`, `NON_BLOCKING` |
 | Diagram search overlay (§34 freeze) | 03 | `IMPLEMENTATION_GAP` → G3 |
-| BPMN profile breadth proof | 02+03+06 | `TO_INVENTORY` → G1 |
+| BPMN profile breadth proof | 02+03+06 | `TO_INVENTORY` → G1 → G2B fechou CREATE_EDIT (§13a); resta G4 per-construct round-trip |
