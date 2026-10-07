@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { MachineLoadLiveStatusPayload, PpcBranch } from "../types";
@@ -10,12 +10,14 @@ import { useMachineLoad } from "./useMachineLoad";
 const api = vi.hoisted(() => ({
   fetchMachineLoad: vi.fn(),
   fetchMachineLoadLiveStatus: vi.fn(),
+  publishMachineLoad: vi.fn(),
   refreshMachineLoad: vi.fn(),
 }));
 
 vi.mock("../api/ppcApi", () => ({
   fetchMachineLoad: api.fetchMachineLoad,
   fetchMachineLoadLiveStatus: api.fetchMachineLoadLiveStatus,
+  publishMachineLoad: api.publishMachineLoad,
   refreshMachineLoad: api.refreshMachineLoad,
 }));
 
@@ -42,6 +44,7 @@ function renderMachineLoad(branch: PpcBranch = "01") {
 beforeEach(() => {
   api.fetchMachineLoad.mockReset();
   api.fetchMachineLoadLiveStatus.mockReset();
+  api.publishMachineLoad.mockReset();
   api.refreshMachineLoad.mockReset();
   api.fetchMachineLoad.mockResolvedValue(makeMachineLoadPayload());
   api.fetchMachineLoadLiveStatus.mockResolvedValue(EMPTY_LIVE_STATUS);
@@ -138,5 +141,110 @@ describe("useMachineLoad", () => {
     await waitFor(() => expect(result.current.error).toBe("Snapshot ausente"));
     expect(result.current.data).toBeNull();
     expect(result.current.loading).toBe(false);
+  });
+
+  it("publish marca a fila como enviada sem rebaixar a carga máquina", async () => {
+    api.fetchMachineLoad.mockResolvedValue(
+      makeMachineLoadPayload({
+        publication: { state: "draft", published_at: "2026-08-19T20:00:00Z", published_by: "pcp" },
+      }),
+    );
+    api.publishMachineLoad.mockResolvedValue({
+      state: "live",
+      generation_id: "gen-x",
+      published_at: "2026-08-20T10:30:00Z",
+      published_by: "Maria",
+      changed: true,
+    });
+
+    const { result } = renderMachineLoad();
+    await waitFor(() => expect(result.current.data).not.toBeNull());
+    expect(result.current.data?.publication?.state).toBe("draft");
+    expect(api.fetchMachineLoad).toHaveBeenCalledTimes(1);
+
+    let publication: Awaited<ReturnType<typeof result.current.publishToMachines>>;
+    await act(async () => {
+      publication = await result.current.publishToMachines();
+    });
+
+    expect(publication?.state).toBe("live");
+    expect(api.publishMachineLoad).toHaveBeenCalledWith({ branch: "01" });
+    expect(result.current.data?.publication).toEqual({
+      state: "live",
+      published_at: "2026-08-20T10:30:00Z",
+      published_by: "Maria",
+    });
+    // Sem GET novo: a fila exibida continua exatamente a mesma.
+    expect(api.fetchMachineLoad).toHaveBeenCalledTimes(1);
+    expect(result.current.data?.selected.items).toHaveLength(2);
+  });
+
+  it("falha no publish mantém o draft e expõe o erro", async () => {
+    api.fetchMachineLoad.mockResolvedValue(
+      makeMachineLoadPayload({
+        publication: { state: "draft", published_at: null, published_by: null },
+      }),
+    );
+    api.publishMachineLoad.mockRejectedValue(
+      new Error("Não foi possível enviar a carga máquina para as máquinas."),
+    );
+
+    const { result } = renderMachineLoad();
+    await waitFor(() => expect(result.current.data).not.toBeNull());
+
+    await act(async () => {
+      await expect(result.current.publishToMachines()).rejects.toThrow();
+    });
+
+    expect(result.current.data?.publication?.state).toBe("draft");
+    expect(result.current.error).toBe(
+      "Não foi possível enviar a carga máquina para as máquinas.",
+    );
+    expect(result.current.publishing).toBe(false);
+  });
+
+  it("refresh troca o estado de publicação que veio do backend", async () => {
+    api.fetchMachineLoad.mockResolvedValue(
+      makeMachineLoadPayload({
+        publication: { state: "live", published_at: "2026-08-19T20:00:00Z", published_by: "pcp" },
+      }),
+    );
+    api.refreshMachineLoad.mockResolvedValue(
+      makeMachineLoadPayload({
+        publication: { state: "draft", published_at: "2026-08-19T20:00:00Z", published_by: "pcp" },
+      }),
+    );
+
+    const { result } = renderMachineLoad();
+    await waitFor(() => expect(result.current.data).not.toBeNull());
+    expect(result.current.data?.publication?.state).toBe("live");
+
+    await act(async () => {
+      await result.current.refreshFromTotvs();
+    });
+
+    expect(result.current.data?.publication?.state).toBe("draft");
+  });
+
+  it("payload de mutação mantém o estado que o backend derivou", async () => {
+    // LIVE → mutação continua LIVE: o publication vem no próprio payload.
+    api.fetchMachineLoad.mockResolvedValue(
+      makeMachineLoadPayload({
+        publication: { state: "live", published_at: "2026-08-19T20:00:00Z", published_by: "pcp" },
+      }),
+    );
+
+    const { result } = renderMachineLoad();
+    await waitFor(() => expect(result.current.data).not.toBeNull());
+
+    act(() => {
+      result.current.applyPayload(
+        makeMachineLoadPayload({
+          publication: { state: "live", published_at: "2026-08-19T20:00:00Z", published_by: "pcp" },
+        }),
+      );
+    });
+
+    expect(result.current.data?.publication?.state).toBe("live");
   });
 });

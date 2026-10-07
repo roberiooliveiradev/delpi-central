@@ -89,11 +89,35 @@ export const copy = {
     refresh: "Atualizar",
     refreshConfirmTitle: "Atualizar carga máquina?",
     refreshConfirmMessage:
-      "A fila congelada e a sequência manual deste período serão substituídas pelos dados atuais do TOTVS.",
+      "Uma nova Carga Máquina será buscada no TOTVS para análise e ajuste do PCP. " +
+      "As máquinas continuarão utilizando a última programação enviada até você clicar em “Enviar para máquinas”. " +
+      "Os ajustes feitos na programação atual serão substituídos pelos dados do TOTVS.",
     refreshConfirmAction: "Atualizar agora",
     refreshCancel: "Cancelar",
     refreshBusy: "Atualizando a partir do TOTVS…",
-    refreshedAt: (when: string) => `Congelada em ${when}`,
+    refreshedAt: (when: string) => `Atualizada do TOTVS em ${when}`,
+    publish: {
+      liveLabel: "Enviado às máquinas",
+      draftLabel: "Em preparação",
+      liveHint: (when: string, by?: string | null) =>
+        by ? `Último envio: ${when} por ${by}` : `Último envio: ${when}`,
+      draftHint:
+        "As máquinas continuam utilizando a última programação enviada.",
+      draftLastSent: (when: string) => `Último envio às máquinas: ${when}`,
+      unpublishedHint: "Esta carga ainda não foi enviada para as máquinas.",
+      action: "Enviar para máquinas",
+      busy: "Enviando...",
+      confirmTitle: "Enviar carga máquina para as máquinas?",
+      confirmMessage:
+        "A programação atual do PCP, incluindo os ajustes realizados, ficará disponível para os operadores nos cockpits das máquinas. " +
+        "Depois do envio, novas alterações feitas pelo PCP serão sincronizadas automaticamente até a próxima atualização da Carga Máquina.",
+      confirmEmptyMessage:
+        "A programação atual não possui operações. Ao enviar, os cockpits não terão operações pendentes nesta carga.",
+      confirmAction: "Enviar para máquinas",
+      cancel: "Cancelar",
+      success: "Carga máquina enviada para as máquinas.",
+      error: "Não foi possível enviar a carga máquina para as máquinas.",
+    },
     sequenceUpdatedAt: (when: string) => `Sequência ajustada em ${when}`,
     sequenceHint: "Arraste as linhas para reordenar · Ctrl+Z desfaz · Ctrl+Shift+Z refaz",
     sequenceSaving: "Salvando sequência…",

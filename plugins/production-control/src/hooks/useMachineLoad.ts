@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { fetchMachineLoad, fetchMachineLoadLiveStatus, refreshMachineLoad } from "../api/ppcApi";
+import { fetchMachineLoad, fetchMachineLoadLiveStatus, publishMachineLoad, refreshMachineLoad } from "../api/ppcApi";
 import { copy } from "../content/copy";
 import type { MachineLoadLiveStatusPayload, MachineLoadPayload, PpcBranch } from "../types";
 import { applyMachineLoadLiveStatus } from "../utils/machineLoadLiveStatus";
@@ -56,6 +56,7 @@ export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMa
   const [liveStatus, setLiveStatus] = useState<MachineLoadLiveStatusPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -102,6 +103,39 @@ export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMa
     },
     [scope],
   );
+
+  /**
+   * Libera a programacao atual para os cockpits. O WORKING nao muda — a resposta
+   * do publish atualiza so o estado de publicacao, sem rebaixar a fila inteira.
+   */
+  const publishToMachines = useCallback(async () => {
+    setPublishing(true);
+    setError(null);
+    try {
+      const publication = await publishMachineLoad({ branch });
+      setSnapshot((current) => {
+        if (!current) return current;
+        const next = {
+          ...current,
+          publication: {
+            state: publication.state,
+            published_at: publication.published_at,
+            published_by: publication.published_by,
+          },
+        };
+        writeQueueCache(scope, next);
+        return next;
+      });
+      return publication;
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : copy.machineLoad.publish.error;
+      setError(message);
+      throw err;
+    } finally {
+      setPublishing(false);
+    }
+  }, [branch, scope]);
 
   const refreshFromTotvs = useCallback(async () => {
     setRefreshing(true);
@@ -176,9 +210,11 @@ export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMa
     data,
     loading,
     refreshing,
+    publishing,
     error,
     reload,
     refreshFromTotvs,
+    publishToMachines,
     applyPayload,
   };
 }

@@ -663,6 +663,35 @@ class MachineLoadService:
         self._notify_change(branch=code, reason="publish")
         return {"publication": self._present_publication(published, changed=True)}
 
+    def _publication_state(
+        self, *, branch: str, working_row: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Estado semantico da programacao para a UI autenticada (E5).
+
+        Derivado — nunca persistido — das geracoes E1-E4:
+
+          sem publicacao                     → unpublished
+          generation WORKING == PUBLISHED    → live
+          generation WORKING <> PUBLISHED    → draft
+
+        O frontend nao compara UUIDs: recebe o significado, nao o mecanismo.
+        """
+        published = self._publications.get(branch=branch)
+        if published is None:
+            return {
+                "state": "unpublished",
+                "published_at": None,
+                "published_by": None,
+            }
+        live = str(published.get("generation_id") or "") == str(
+            working_row.get("generation_id") or ""
+        )
+        return {
+            "state": "live" if live else "draft",
+            "published_at": _iso_timestamp(published.get("published_at")),
+            "published_by": published.get("published_by"),
+        }
+
     @staticmethod
     def _present_publication(row: dict[str, Any], *, changed: bool) -> dict[str, Any]:
         """Recorte enxuto da publicação para a resposta autenticada do PCP."""
@@ -671,6 +700,8 @@ class MachineLoadService:
             "published_at": _iso_timestamp(row.get("published_at")),
             "published_by": row.get("published_by"),
             "changed": changed,
+            # Apos o publish a geracao publicada e sempre a do WORKING → live.
+            "state": "live",
         }
 
     def _persist_queue_change(
@@ -2113,6 +2144,17 @@ class MachineLoadService:
                 "items": entries,
             },
             "work_centers": work_centers,
+            **(
+                {
+                    # Estado semantico da publicacao — so para o PCP autenticado;
+                    # o cockpit conhece apenas a fila publicada.
+                    "publication": self._publication_state(
+                        branch=branch, working_row=row
+                    )
+                }
+                if production_source != "cockpit"
+                else {}
+            ),
             # Fila inteira da filial: o centro ativo é recorte de apresentação, não
             # uma leitura diferente. Quem não precisa dela remove com `strip_all_operations`.
             ALL_OPERATIONS_KEY: operations,

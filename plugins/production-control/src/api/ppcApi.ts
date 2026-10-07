@@ -8,6 +8,7 @@ import type {
   MachineLoadOptimizePayload,
   MachineLoadPayload,
   MachineLoadPrioritizePayload,
+  MachineLoadPublicationResult,
   MachineLoadTransferPayload,
   MachineLoadWithdrawPayload,
   FinishedProductShortagePayload,
@@ -413,6 +414,29 @@ export async function patchMachineLoadSequence(params: {
     { signal: params.signal },
   );
   return unwrapEnvelope(envelope, "Não foi possível salvar a sequência da carga máquina.");
+}
+
+/**
+ * Libera a programacao atual do PCP para os cockpits das maquinas.
+ * Apos o envio, ajustes posteriores sincronizam sozinhos ate o proximo Atualizar.
+ */
+export async function publishMachineLoad(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadPublicationResult> {
+  const search = machineLoadSearch({ branch: params.branch });
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: { publication: MachineLoadPublicationResult };
+  }>(ppcApiUrl("/machine-load/publish?" + search.toString()), undefined, {
+    signal: params.signal,
+  });
+  const data = unwrapEnvelope(
+    envelope,
+    "Não foi possível enviar a carga máquina para as máquinas.",
+  );
+  return data.publication;
 }
 
 /** Leva todas as OPs do conjunto (C2_NUM) ao topo da fila de cada centro de trabalho. */

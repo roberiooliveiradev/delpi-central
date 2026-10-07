@@ -713,6 +713,24 @@ export type MachineLoadWithdrawnSummary = {
   items: MachineLoadWithdrawnEntry[];
 };
 
+/**
+ * Estado semantico da programacao, derivado pelo backend a partir das geracoes
+ * WORKING/PUBLISHED. A UI nunca compara UUIDs — recebe o significado.
+ */
+export type MachineLoadPublicationState = "live" | "draft" | "unpublished";
+
+export type MachineLoadPublicationInfo = {
+  state: MachineLoadPublicationState;
+  published_at: string | null;
+  published_by: string | null;
+};
+
+/** Resposta do POST /machine-load/publish — o generation_id e contrato do comando, nao da UI. */
+export type MachineLoadPublicationResult = MachineLoadPublicationInfo & {
+  generation_id: string;
+  changed: boolean;
+};
+
 export type MachineLoadPayload = {
   branch: string;
   /** Janela por **entrega do PA**: a fila congelada é uma só; «De/até» é lente de leitura. */
@@ -744,6 +762,8 @@ export type MachineLoadPayload = {
     sequence_updated_at?: string | null;
     sequence_updated_by?: string | null;
   };
+  /** Presente no payload autenticado (E5); o cockpit publico nao recebe. */
+  publication?: MachineLoadPublicationInfo;
   withdrawn?: MachineLoadWithdrawnSummary;
   work_centers: MachineLoadWorkCenter[];
   /**

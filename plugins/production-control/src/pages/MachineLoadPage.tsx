@@ -15,7 +15,7 @@ import {
   underlineNavBemClasses,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowDownNarrowWide, CalendarOff, Eye, EyeOff, GripVertical } from "lucide-react";
+import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleDashed, Eye, EyeOff, GripVertical, SendHorizontal } from "lucide-react";
 
 import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
 import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
@@ -56,6 +56,7 @@ import { formatIsoDate, formatIsoDayMonth } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import { machineLoadLocateRowKey } from "../utils/machineLoadLocate";
+import { describeMachineLoadPublication } from "../utils/machineLoadPublication";
 import {
   filterActiveMachineLoadOperations,
   isMachineLoadFinishedOperation,
@@ -111,7 +112,16 @@ export function MachineLoadPage({
   locateQuery = null,
 }: MachineLoadPageProps) {
   const confirm = usePpcConfirm();
-  const { data, loading, refreshing, error, refreshFromTotvs, applyPayload } = useMachineLoad({
+  const {
+    data,
+    loading,
+    refreshing,
+    publishing,
+    error,
+    refreshFromTotvs,
+    publishToMachines,
+    applyPayload,
+  } = useMachineLoad({
     branch,
     workCenter,
     startDate,
@@ -735,6 +745,30 @@ export function MachineLoadPage({
     }
   };
 
+  const publicationView = data ? describeMachineLoadPublication(data.publication) : null;
+
+  const onPublishClick = async () => {
+    if (publishing || !data) return;
+    const empty = data.summary.operation_count === 0;
+    const accepted = await confirm({
+      title: copy.machineLoad.publish.confirmTitle,
+      message: empty
+        ? copy.machineLoad.publish.confirmEmptyMessage
+        : copy.machineLoad.publish.confirmMessage,
+      confirmLabel: copy.machineLoad.publish.confirmAction,
+      cancelLabel: copy.machineLoad.publish.cancel,
+      variant: "default",
+    });
+    if (!accepted) return;
+    try {
+      await publishToMachines();
+      setSequenceNotice(copy.machineLoad.publish.success);
+    } catch {
+      setSequenceNotice(null);
+      // erro já cai no estado da página (publishToMachines preenche error)
+    }
+  };
+
   const tabs = workCenters.map((center) => ({
     id: center.work_center,
     label: center.in_production_count ? (
@@ -790,7 +824,7 @@ export function MachineLoadPage({
         startDate={startDate}
         endDate={endDate}
         onRefresh={onRefreshClick}
-        refreshBusy={refreshing}
+        refreshBusy={refreshing || publishing}
       />
 
       <div className="ppc-filters">
@@ -849,13 +883,43 @@ export function MachineLoadPage({
         />
       </div>
 
+      {data && publicationView ? (
+        <div
+          className={`ppc-load-publish ppc-load-publish--${data.publication?.state ?? "unpublished"}`}
+        >
+          <div className="ppc-load-publish__status">
+            {data.publication?.state === "live" ? (
+              <CheckCircle2 size={16} strokeWidth={1.9} aria-hidden />
+            ) : (
+              <CircleDashed size={16} strokeWidth={1.9} aria-hidden />
+            )}
+            <span className="ppc-load-publish__label">{publicationView.label}</span>
+            <span className="ppc-load-publish__hint">{publicationView.hint}</span>
+          </div>
+          {publicationView.canPublish ? (
+            <button
+              type="button"
+              className="ppc-load-publish__action"
+              onClick={onPublishClick}
+              disabled={publishing || refreshing || sequenceBusy}
+              aria-busy={publishing}
+            >
+              <SendHorizontal size={15} strokeWidth={1.9} aria-hidden />
+              {publishing
+                ? copy.machineLoad.publish.busy
+                : copy.machineLoad.publish.action}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="ppc-period ppc-period--meta">
         <OperatorCockpitLinkButton branch={branch} />
         <button
           type="button"
           className="ppc-period__optimize"
           onClick={optimizeDeliverySequence}
-          disabled={sequenceBusy || !data || data.summary.operation_count === 0}
+          disabled={sequenceBusy || publishing || !data || data.summary.operation_count === 0}
           title={copy.machineLoad.optimizeDelivery.hint}
         >
           <ArrowDownNarrowWide size={15} strokeWidth={1.75} aria-hidden />
