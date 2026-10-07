@@ -3019,6 +3019,14 @@ services:
     ports:
       - "80:80"
 
+    # Detecta upstream estático com IP antigo (502) — Docker não reinicia sozinho em unhealthy.
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/gateway-healthcheck.sh"]
+      interval: 30s
+      timeout: 25s
+      retries: 3
+      start_period: 60s
+
     depends_on:
       - portal
       - core-api

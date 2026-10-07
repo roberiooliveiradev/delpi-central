@@ -24,6 +24,8 @@ REPO_ROOT="$(cd "$COMPOSE_DIR/.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=compose-filter-services.sh
 source "$SCRIPT_DIR/compose-filter-services.sh"
+# shellcheck source=gateway-static-upstreams.sh
+source "$SCRIPT_DIR/gateway-static-upstreams.sh"
 cd "$COMPOSE_DIR"
 
 COMPOSE_BASE=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --env-file .env)
@@ -432,6 +434,8 @@ echo "build=$BUILD fase=$FASE cpu=$USE_CPU heavy=$INCLUDE_HEAVY gpu=$INCLUDE_GPU
 echo "COMPOSE_PARALLEL_LIMIT=$COMPOSE_PARALLEL_LIMIT"
 echo ""
 
+mapfile -t GATEWAY_STATIC_UPSTREAMS < <(gateway_static_upstream_services "$REPO_ROOT/gateway/nginx.dev.conf")
+
 idx=0
 for svc in "${PLAN[@]}"; do
   idx=$((idx + 1))
@@ -443,6 +447,9 @@ for svc in "${PLAN[@]}"; do
     keycloak-db) wait_pg delpi-keycloak-db keycloak keycloak ;;
     postgres-plugins) wait_pg delpi-postgres-plugins plugins_user plugins_hub ;;
   esac
+
+  gateway_reload_for_service "$svc" "$DRY_RUN" "${GATEWAY_STATIC_UPSTREAMS[@]}" \
+    || echo "  Aviso: reload do gateway falhou — se houver 502: docker restart $GATEWAY_CONTAINER" >&2
 
   # Pequena pausa — libera cache de build antes do próximo npm run build.
   if [[ "$BUILD" == true ]]; then
