@@ -67,6 +67,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [bpmn-modeler/API-E2E-ACCEPTANCE-SPEC-FREEZE.md](./bpmn-modeler/API-E2E-ACCEPTANCE-SPEC-FREEZE.md) | Freeze API/E2E/aceite — route map, ETag/If-Match, envelope, paginação, OpenAPI, E2E journeys, DoD da V1 (último freeze) |
 | [bpmn-modeler/CURRENT-STATE.md](./bpmn-modeler/CURRENT-STATE.md) | **Fonte vigente** — estado implementado pós-freeze (ownership, autosave, revisions, layout, residuals, gates G0–G6) |
 | [bpmn-modeler/DOCUMENTATION-DRIFT-LEDGER.md](./bpmn-modeler/DOCUMENTATION-DRIFT-LEDGER.md) | Ledger de drift documentação↔implementação (G0) — claims históricas, evidência atual, classificação, decisão |
+| [bpmn-modeler/V1-CAPABILITY-EVIDENCE-INVENTORY.md](./bpmn-modeler/V1-CAPABILITY-EVIDENCE-INVENTORY.md) | Inventário de evidência por capability (G1) — PROVEN/PARTIAL/VENDOR_ONLY/MISSING por construct, matrizes, gaps, waves |
 
 ### Meus Chamados de TI
 
