@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 19,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
@@ -3975,7 +3975,7 @@
     },
     {
       "operationId": "list_supplies_inventory_adjustments",
-      "reason": "Inventory adjustments (SD3 doc=INVENT from the SB7/MATA270 count processing); nature classified backend-side by CF (RE0=surplus entrance, DE0=shortage exit); SB7 inventory provenance exposed only when the candidate document is unambiguous (fail-closed); raw tm/cf never exposed; DAVI page_size bounded to 50 (owner API contract remains page_size<=500); API_DELPI_ACCESS backend AuthZ",
+      "reason": "Inventory adjustments detail list (SD3 doc=INVENT from the SB7/MATA270 count processing); semantic discovery owns item/product/document/launch/detail language while aggregate value/total/net/gross language belongs to the summary sibling; nature classified backend-side by CF (RE0=surplus entrance, DE0=shortage exit); SB7 inventory provenance exposed only when the candidate document is unambiguous (fail-closed); raw tm/cf never exposed; DAVI page_size bounded to 50 (owner API contract remains page_size<=500); API_DELPI_ACCESS backend AuthZ",
       "executionMode": "catalog_action",
       "approvedInputFields": [
         "start_date",
@@ -4026,7 +4026,23 @@
         "inventory shortage",
         "inventory surplus",
         "inventory count adjustments",
-        "ajuste de estoque por inventário"
+        "ajuste de estoque por inventário",
+        "ajustes de estoque",
+        "itens de ajuste de estoque",
+        "itens de ajustes de inventário",
+        "produtos com ajuste de estoque",
+        "produtos com ajuste de inventário",
+        "documentos de inventário",
+        "documentos de ajuste de estoque",
+        "lançamentos de inventário",
+        "lançamentos de ajuste de estoque",
+        "detalhe de lançamentos de inventário",
+        "detalhamento de ajustes de inventário",
+        "detalhe dos ajustes de estoque",
+        "ajuste de estoque por produto",
+        "ajuste de inventário por produto",
+        "listagem de ajustes de inventário",
+        "lista de ajustes de estoque"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -4062,7 +4078,7 @@
     },
     {
       "operationId": "get_supplies_inventory_adjustments_summary",
-      "reason": "Inventory adjustment summary (totals plus by_month/by_branch/by_nature) over SD3 doc='INVENT'; same governed classification as the list sibling; when nature is omitted, summary.net_value is the primary liquid adjustment and summary.gross_value is only gross movement magnitude; API_DELPI_ACCESS backend AuthZ",
+      "reason": "Inventory adjustment summary (totals plus by_month/by_branch/by_nature) over SD3 doc='INVENT'; same governed classification as the list sibling; semantic discovery owns aggregate inventory-adjustment language (summary/total/value/gross/net, shortage/surplus without detail intent); when nature is omitted, summary.net_value is the primary liquid adjustment and summary.gross_value is only gross movement magnitude; API_DELPI_ACCESS backend AuthZ",
       "executionMode": "catalog_action",
       "approvedInputFields": [
         "start_date",
@@ -4142,7 +4158,31 @@
         "valor líquido de ajuste de inventário",
         "valor liquido de ajuste de inventario",
         "valor bruto de ajuste de inventário",
-        "valor bruto de ajuste de inventario"
+        "valor bruto de ajuste de inventario",
+        "resumo de ajustes de estoque",
+        "total de ajustes de inventário",
+        "total de ajustes de estoque",
+        "valor de ajustes de estoque",
+        "ajustes de estoque",
+        "acerto de estoque",
+        "diferença de estoque",
+        "diferença de inventário",
+        "furo de estoque",
+        "furo de inventário",
+        "sobra de estoque",
+        "sobra de inventário",
+        "sobra menos furo",
+        "saldo de ajustes",
+        "ajuste líquido",
+        "ajuste líquido de inventário",
+        "valor líquido do inventário",
+        "ajuste bruto",
+        "valor bruto de ajustes de estoque",
+        "movimentação bruta de ajustes",
+        "sobra de inventário por filial",
+        "sobra de estoque por filial",
+        "furo de inventário por filial",
+        "furo de estoque por filial"
       ],
       "argumentConstraints": {
         "requireArguments": [

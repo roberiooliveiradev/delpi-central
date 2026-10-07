@@ -205,7 +205,6 @@ class InventoryAdjustmentsRepository(
             SD3.D3_LOCAL AS warehouse,
             RTRIM(LTRIM(SD3.D3_DOC)) AS document,
             SD3.D3_TM AS movement_type,
-            SD3.D3_CF AS cf,
             'inventory_adjustment' AS movement_category,
             {_NATURE} AS inventory_adjustment_nature,
             CASE
