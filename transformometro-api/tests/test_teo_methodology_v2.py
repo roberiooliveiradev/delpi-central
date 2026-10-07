@@ -114,7 +114,8 @@ def test_v1_frozen_surface() -> None:
     assert set(list_task_ids()) == _V1_TASKS
     assert GUIDE_VERSION == "teo-method-playbooks-v1"
     assert WIRE_DEFAULT_GUIDE_VERSION == GUIDE_VERSION_V1
-    assert RECOMMENDED_GUIDE_VERSION == GUIDE_VERSION_V1
+    # Post-acceptance cutover: recommendation is V2; wire default stays V1.
+    assert RECOMMENDED_GUIDE_VERSION == GUIDE_VERSION_V2
 
 
 def test_legacy_call_still_returns_v1() -> None:
@@ -159,7 +160,7 @@ def test_v2_selected_explicitly() -> None:
         data = r.structured_content["data"]
         assert data["guide_version"] == "teo-method-playbooks-v2"
         assert data["wire_default_version"] == "teo-method-playbooks-v1"
-        assert data["recommended_version"] == "teo-method-playbooks-v1"
+        assert data["recommended_version"] == "teo-method-playbooks-v2"
     finally:
         _reset(tokens)
 
@@ -478,7 +479,7 @@ def test_catalog_discovers_v2_without_duplicating_guide() -> None:
         "teo-method-playbooks-v2",
     ]
     assert meta["wire_default_version"] == "teo-method-playbooks-v1"
-    assert meta["recommended_version"] == "teo-method-playbooks-v1"
+    assert meta["recommended_version"] == "teo-method-playbooks-v2"
     assert set(meta["supported_v2_intents"]) == set(INTENT_IDS)
     # Catalog announces versions/intents only — full playbook stays in the guide.
     assert "methods" not in entry
