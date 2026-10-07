@@ -2533,3 +2533,24 @@ Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (�
 | Owner/tool/provider branches added | 0 |
 | Real-model eval | TEST_NOT_RUN |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+
+### C3-INTELLIGENCE-LOOP-01R2 — zero model-authored factual prose (evidence §6.145)
+
+| Check | Result |
+|---|---|
+| Review verdict closed | `ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01R1=REWORK` (residual blocker: synthesis intro channel) |
+| `MODEL_AUTHORED_FACTUAL_PROSE` | NONE — contract is selection-only (`items:[{record_index,fields}]`); `intro` removed from expected_fields/allowed_keys/render; `_intro_facts_in_evidence` + helpers deleted (dead code) |
+| `SYNTHESIS_FACT_VALUES_SOURCE` | OWNER_EVIDENCE_ONLY — runtime copies leaf values verbatim from sanitized records |
+| Lowercase free-text invention (BLOCKING) | PASS — `{"intro": "você também possui financeiro estratégico"}` rejected (key not allowed); string never reaches content |
+| Extra free-text field (BLOCKING) | PASS — `{"items":[...],"summary":"..."}` rejected by allowed_keys |
+| Invalid record_index / field / empty fields / non-scalar | PASS — all demote to deterministic fallback |
+| Provenance / limitations preserved | PASS |
+| Clarification fallback regression | PASS (R1 fix untouched) |
+| Repair relist fail-closed regression | PASS (R1 fix untouched) |
+| Governed write / prior-turn provenance regressions | PASS |
+| Full delia-api suite | 809/809 PASS |
+| `git diff --check` | clean |
+| Owner/tool/provider branches added | 0 |
+| Real-model eval | TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

@@ -10777,3 +10777,46 @@ EVIDENCE (live production, 2026-10-05):
     PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
       C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.145. C3-INTELLIGENCE-LOOP-01R2 — zero model-authored factual prose
+    TASK = C3-INTELLIGENCE-LOOP-01R2
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = 99079cc108e4e22072537347a746049bd73dde7c
+    REVIEW_CLOSED = ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01R1 = REWORK
+      (remaining blocker: FIX_2_EVIDENCE_BOUND_SYNTHESIS = PARTIAL —
+       the model could still author factual prose via "intro";
+       token heuristics cannot prove grounding)
+
+    ARCHITECTURAL_DECISION (persisted):
+      MODEL = SELECTOR / ORGANIZER OF EVIDENCE
+      OWNER = SOURCE OF FACTUAL VALUES
+      DELIA_RUNTIME = DETERMINISTIC FACTUAL RENDERER
+      MODEL OUTPUT != FACT
+
+    CHANGE: the model-authored prose channel is eliminated rather
+      than gated. SYNTHESIS_INSTRUCTION is now selection-only:
+      {"items": [{"record_index", "fields"}]}. `intro` removed from
+      expected_fields, allowed_keys, _render_synthesis and tests;
+      _intro_facts_in_evidence, _CAPITALIZED_WORD_RE and
+      MAX_SYNTHESIS_INTRO_CHARS removed (dead code — no heuristic
+      replaces them). Any extra key (`intro`, `summary`, anything)
+      rejects the whole proposal via allowed_keys; invalid
+      record_index/field/empty-fields/non-scalar value demote to
+      render_specialist_outcome fallback. Owner limitations and
+      provenance preserved unchanged.
+
+    TESTS = 809/809 PASS (7 new/updated evals — blocking lowercase
+      free-text invention via "intro" key = BLOCKED by contract;
+      extra free-text `summary` = BLOCKED; invalid index/field/empty
+      fields = FAIL_CLOSED; valid evidence selection renders
+      owner-backed names only; clarification/repair/write/provenance
+      regressions green).
+
+    RESIDUAL: business-field ranking quality is not proven — if the
+      model selects `revision` over `name` the answer is truthful but
+      suboptimal (quality concern, not hallucination; no hardcoded
+      field lists added). REAL_MODEL_EVAL = TEST_NOT_RUN.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

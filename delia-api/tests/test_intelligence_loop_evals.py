@@ -320,18 +320,16 @@ def test_eval1_playlists_grounded_synthesis():
             _select(_KEY, "list_feeds"),
             {
                 SYNTHESIS_INSTRUCTION_ID: {
-                    "intro": "Você tem estas playlists:",
                     "items": [
                         {"record_index": 0, "fields": ["name"]},
                         {"record_index": 1, "fields": ["name"]},
-                    ],
+                    ]
                 }
             },
         ],
     )
     attempt = orch.attempt("quais as minhas playlists?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert "Você tem estas playlists:" in attempt.content
     assert "- Comercial - Alinhamento Estrategico" in attempt.content
     assert "- GR - Jaraguá do Sul/SC" in attempt.content
     assert "revision" not in attempt.content
@@ -341,10 +339,10 @@ def test_eval1_playlists_grounded_synthesis():
 
 
 def test_eval1_synthesis_rejects_invented_value():
-    """BLOCKING (§8): free-text entity invention in the proposal can
-    never reach the user — the model only selects records; an intro
-    carrying "Financeiro Estratégico" (absent from owner evidence) is
-    rejected and the deterministic render ships."""
+    """BLOCKING (§10 R2): free-text entity invention is impossible —
+    there is no model-authored prose channel. A proposal smuggling
+    "financeiro estratégico" through an extra key is rejected by the
+    contract itself (allowed keys = items only)."""
     provider = _media_provider(
         {
             ("screens", "list_feeds"): _outcome(
@@ -359,8 +357,7 @@ def test_eval1_synthesis_rejects_invented_value():
             {
                 SYNTHESIS_INSTRUCTION_ID: {
                     "intro": (
-                        "Você também possui a playlist "
-                        "Financeiro Estratégico."
+                        "você também possui financeiro estratégico"
                     ),
                     "items": [
                         {"record_index": 0, "fields": ["name"]},
@@ -372,8 +369,43 @@ def test_eval1_synthesis_rejects_invented_value():
     )
     attempt = orch.attempt("quais as minhas playlists?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    # Invented entity — proposal rejected, truthful render ships.
-    assert "Financeiro" not in attempt.content
+    # "intro" is no longer an allowed key — the whole proposal is
+    # rejected; the invented lowercase entity can never ship.
+    lowered = attempt.content.lower()
+    assert "financeiro" not in lowered
+    assert "Comercial - Alinhamento Estrategico" in attempt.content
+
+
+def test_eval1_synthesis_rejects_extra_free_text_field():
+    """SECOND ADVERSARIAL (§11 R2): a `summary` (or any extra key)
+    carrying free text is rejected — the contract exposes no factual
+    prose channel at all."""
+    provider = _media_provider(
+        {
+            ("screens", "list_feeds"): _outcome(
+                "screens", "list_feeds", "", structured=PLAYLISTS_RESULT
+            ),
+        }
+    )
+    orch = _orchestrator(
+        [provider],
+        [
+            _select(_KEY, "list_feeds"),
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["name"]},
+                    ],
+                    "summary": (
+                        "você também possui financeiro estratégico"
+                    ),
+                }
+            },
+        ],
+    )
+    attempt = orch.attempt("quais as minhas playlists?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "financeiro" not in attempt.content.lower()
     assert "Comercial - Alinhamento Estrategico" in attempt.content
 
 
@@ -397,10 +429,7 @@ def test_eval1_synthesis_rejects_invalid_selection():
             [
                 _select(_KEY, "list_feeds"),
                 {
-                    SYNTHESIS_INSTRUCTION_ID: {
-                        "intro": "Você tem estas playlists:",
-                        "items": items,
-                    }
+                    SYNTHESIS_INSTRUCTION_ID: {"items": items},
                 },
             ],
         )
@@ -425,12 +454,12 @@ def test_eval1_synthesis_rejects_technical_leak():
             _select(_KEY, "list_feeds"),
             {
                 SYNTHESIS_INSTRUCTION_ID: {
-                    "intro": (
-                        "Dados obtidos via endpoint https://host/tools"
-                    ),
                     "items": [
                         {"record_index": 0, "fields": ["name"]},
                     ],
+                    "leak": (
+                        "Dados obtidos via endpoint https://host/tools"
+                    ),
                 }
             },
         ],
@@ -460,7 +489,6 @@ def test_eval1_synthesis_preserves_limitations():
             _select(_KEY, "list_feeds"),
             {
                 SYNTHESIS_INSTRUCTION_ID: {
-                    "intro": "Você tem estas playlists:",
                     "items": [
                         {"record_index": 0, "fields": ["name"]},
                         {"record_index": 1, "fields": ["name"]},
