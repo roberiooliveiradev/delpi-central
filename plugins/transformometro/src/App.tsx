@@ -39,6 +39,7 @@ import { buildTransformometroTransitionKey } from "./utils/transitionKey";
 import { PortalChromeProvider, useCanManagePortal } from "./state/portalChrome";
 import { recordPortalRecentAccess } from "./state/portalRecentAccess";
 import { registerTeoContextSiteTool } from "./integrations/teo/teoContextBridge";
+import { useWorkspaceContextPublisher } from "./integrations/teo/useWorkspaceContextPublisher";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -62,6 +63,11 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
     registerTeoContextSiteTool({ signal: controller.signal });
     return () => controller.abort();
   }, []);
+
+  // Canal canônico server-side: publica workspace_context_v1 no Core para
+  // o TÉO resolver "este processo/revisão" sem heurística. Mesma origem da
+  // site tool (resolveTeoPortalContext); falha nunca quebra o Portal.
+  useWorkspaceContextPublisher({ getAccessToken, pathname });
 
   const onNavigate = useGuardedNavigate(navigateTransformometro);
   const canManage = useCanManagePortal();

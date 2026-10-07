@@ -1,7 +1,8 @@
 # TÉO Context Bridge V1
 
-> **Status:** implementado (frontend-only). Aceite ChatGPT depende de
-> ambiente com Site tools (ver limitações abaixo).
+> **Status:** implementado. Canal canônico = server-side Workspace Context
+> (MFE → Core `/me/workspace-context` → TÉO `get_workspace_context`).
+> Site tool e clipboard permanecem como **fallbacks** da mesma origem.
 
 ## O que é
 
@@ -10,12 +11,19 @@ Transforma+, o TÉO (especialista no ChatGPT) pode receber o **contexto
 identificador** daquela tela sem o usuário digitar IDs:
 
 ```text
-Portal Transforma+                ChatGPT                    TÉO MCP
-─────────────────                ────────                   ─────────
-route + hash ──► context bridge ─► site tool / clipboard ──► get_process_context
+Portal Transforma+                     Core                    TÉO MCP
+─────────────────                     ────                    ─────────
+route + hash ──► resolver canônico ──► PUT /me/workspace-context
+       │                                    │                    │
+       │                                    ▼                    ▼
+       │                            workspace_context_v1   get_workspace_context
+       │                            (efêmero, TTL, por         │
+       │                             usuário, multi-tab)      ▼
+       └─► fallbacks: site tool / clipboard          get_process_context
                                                               │
                                                               ▼
                                                        Transformômetro API
+                                                       (leitura autoritativa)
 ```
 
 ## Contexto ≠ autorização ≠ dado de domínio
@@ -84,7 +92,26 @@ Nada é inventado: melhoria/revisão não selecionadas saem `null`. O
 contexto é derivado de `window.location` no momento da chamada — sem
 cache, sem stale, zero requests de domínio extras.
 
-## Site tool (WebMCP)
+## Canal canônico — Workspace Context server-side
+
+O hook `useWorkspaceContextPublisher` (montado no `App`) publica
+`workspace_context_v1` no Core (`PUT /core-api/me/workspace-context`) em
+eventos semânticos: mudança de rota/hash/seleção e foco/visibilidade —
+dedupe por assinatura evita flood. No `pagehide`/unmount a aba remove seu
+contexto (`DELETE`, keepalive). Falha de publicação nunca quebra o Portal.
+
+O Core resolve por usuário autenticado com TTL e desempate multi-tab
+(`client_instance_id` por aba; `focused` como evidência de foreground):
+`active` | `absent` | `stale` | `ambiguous`. `active` = "workspace aberto",
+não "aba focada" — o usuário conversando com o TÉO em outra janela mantém
+o contexto ACTIVE.
+
+O TÉO lê via `get_workspace_context` (MCP) / `gpt_get_workspace_context`
+(GPT Actions) — mesma capability. Referência explícita do usuário sempre
+prevalece sobre o contexto ambiente; `ambiguous` ⇒ uma pergunta
+discriminativa; nunca busca silenciosa por "processo mais provável".
+
+## Site tool (WebMCP) — fallback
 
 `document.modelContext.registerTool` registra:
 
@@ -102,8 +129,10 @@ Suporte oficial (documentação OpenAI "Site tools", ago/2026):
   será descoberta (limitação do navegador).
 - Feature-detect: sem `modelContext` o registro é no-op e o Portal segue
   normal.
+- É projeção do mesmo resolver canônico (`resolveTeoPortalContext`) —
+  útil nos ambientes WebMCP; não é mais o canal primário.
 
-## Fallback portátil
+## Fallback portátil (clipboard)
 
 Fora do ambiente com Site tools, a ação **TÉO** na barra superior
 (visível dentro do workspace de processo) copia um payload curto:
@@ -130,13 +159,18 @@ injetado — nenhuma URL é inventada.
   (`document.modelContext`, fallback `navigator.modelContext` legado);
 - `src/integrations/teo/useTeoPortalContext.ts` — hook reativo a rota,
   hash e seleção;
-- `src/integrations/teo/TeoContextAction.tsx` — ação TÉO no
-  `PortalTopBar`.
+- `src/integrations/teo/workspaceContextPublisher.ts` — payload
+  `workspace_context_v1` + PUT/DELETE no Core;
+- `src/integrations/teo/useWorkspaceContextPublisher.ts` — hook que
+  publica em eventos semânticos e despublica no unmount;
+- `src/integrations/teo/TeoContextAction.tsx` — ação TÉO (fallback
+  clipboard) no `PortalTopBar`.
 
 ## Limites conhecidos
 
-- Nenhum endpoint, permissão, tabela ou MCP tool nova foi criada;
-  `get_process_context(process_id, instance_id, revision_id)` já cobre o
-  handoff.
+- O contexto só localiza: autorização e fatos de domínio continuam
+  `get_process_context(process_id, instance_id, revision_id)`.
+- O store do Core é efêmero (TTL) — contexto expirado resolve `stale`,
+  nunca usado silenciosamente.
 - Navegação reversa (TÉO → "Abrir no Portal") é FUTURE — `canonical_path`
   já está no contrato para isso.
