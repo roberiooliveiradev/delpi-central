@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -44,6 +45,8 @@ from tv_app.core.security import (
     GovernedWriteAuthzError,
     assert_permission,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _typed_ops(ops: list[Any] | None) -> list[dict[str, Any]]:
@@ -575,7 +578,8 @@ class GptActionsDispatchService:
                     code="RESOURCE_NOT_FOUND",
                     status_code=404,
                 )
-            slide_preview = get_slide_preview_render_service().build_preview_payload(
+            preview_svc = get_slide_preview_render_service()
+            slide_preview = preview_svc.build_preview_payload(
                 playlist_id=str(pid),
                 slide_id=str(slide["id"]),
                 revision=revision,
@@ -584,6 +588,23 @@ class GptActionsDispatchService:
                 else {},
                 title=str(slide.get("title") or "") or None,
             )
+            rendered = preview_svc.build_rendered_payload(
+                playlist_id=str(pid),
+                slide_id=str(slide["id"]),
+                revision=revision,
+                renderable=str(slide.get("slideType") or "native") == "native",
+            )
+            if (
+                rendered.get("status") == "unavailable"
+                and rendered.get("failureCode") == "NO_CANONICAL_ARTIFACT"
+            ):
+                rendered = self._ensure_canonical_stage_rendered(
+                    playlist_id=pid,
+                    slide=slide,
+                    revision=revision,
+                    preview_svc=preview_svc,
+                ) or rendered
+            slide_preview["rendered"] = rendered
             out["slidePreview"] = slide_preview
 
         if focused_payload is not None:
@@ -683,6 +704,23 @@ class GptActionsDispatchService:
                 code="PREVIEW_REVISION_STALE",
                 status_code=409,
             )
+        if str(claims.get("artifact") or "") == "canonical_stage":
+            png = get_slide_preview_render_service().read_rendered_png(
+                slide_id=str(slide["id"]),
+                revision=token_rev or current_rev,
+            )
+            if not png:
+                raise GptActionsError(
+                    "Artifact renderizado expirou. Peça gpt_get_playlist_context com includePreview.",
+                    code="PREVIEW_ARTIFACT_EXPIRED",
+                    status_code=404,
+                )
+            return png, {
+                "playlistId": claims["playlistId"],
+                "slideId": claims["slideId"],
+                "revision": current_rev or token_rev,
+                "artifact": "canonical_stage",
+            }
         png = get_slide_preview_render_service().get_or_render(
             slide_id=str(slide["id"]),
             revision=current_rev or token_rev,
@@ -696,6 +734,73 @@ class GptActionsDispatchService:
             "slideId": claims["slideId"],
             "revision": current_rev or token_rev,
         }
+    def _ensure_canonical_stage_rendered(
+        self,
+        *,
+        playlist_id: UUID,
+        slide: dict[str, Any],
+        revision: int,
+        preview_svc: Any,
+    ) -> dict[str, Any] | None:
+        """Lazy canonical_stage fill via the bounded render worker.
+
+        Evidence-only: failures degrade to ``unavailable`` with a truthful
+        failureCode — the context call never breaks on a render outage.
+        """
+        from tv_app.application.services.data.canonical_render_client import (
+            CanonicalRenderError,
+            get_canonical_stage_render_service,
+            render_worker_config,
+        )
+        from tv_app.config import settings
+
+        if not settings.TV_RENDER_WORKER_TRIGGER_ON_CONTEXT:
+            return None
+        if not render_worker_config().enabled:
+            return None
+        if str(slide.get("slideType") or "native") != "native":
+            return None
+        try:
+            meta = get_canonical_stage_render_service().ensure_rendered(
+                playlist_id=playlist_id,
+                slide_id=str(slide["id"]),
+                revision=revision,
+                writes=self._writes,
+                present=self._present,
+                preview_svc=preview_svc,
+            )
+        except CanonicalRenderError as exc:
+            return {
+                "kind": "canonical_stage",
+                "source": "render_worker",
+                "status": "pending" if exc.code == "RENDER_PENDING" else "unavailable",
+                "revision": revision,
+                "failureCode": exc.code,
+            }
+        except Exception:  # noqa: BLE001 — evidence fill must not break context
+            logger.exception(
+                "canonical_render_unexpected playlist=%s slide=%s revision=%s",
+                playlist_id,
+                slide.get("id"),
+                revision,
+            )
+            return {
+                "kind": "canonical_stage",
+                "source": "render_worker",
+                "status": "unavailable",
+                "revision": revision,
+                "failureCode": "RENDER_FAILED",
+            }
+        if not meta:
+            return None
+        rendered = preview_svc.build_rendered_payload(
+            playlist_id=str(playlist_id),
+            slide_id=str(slide["id"]),
+            revision=revision,
+        )
+        rendered["source"] = "render_worker"
+        return rendered
+
     def search_data_routes(
         self,
         *,

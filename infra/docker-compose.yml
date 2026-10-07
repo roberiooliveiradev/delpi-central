@@ -1941,6 +1941,11 @@ services:
       DELIA_OPENAPI_DELPI_BASE_URL: ${DELIA_OPENAPI_DELPI_BASE_URL:-http://delpi-api-delpi:8000}
       DELIA_OPENAPI_DELPI_DECLARATIONS_PATH: ${DELIA_OPENAPI_DELPI_DECLARATIONS_PATH:-/app/config/openapi_declarations.delpi.json}
       DELIA_OPENAPI_TIMEOUT_SECONDS: ${DELIA_OPENAPI_TIMEOUT_SECONDS:-15}
+      # LOOP-03R2A: total wall-clock budget for one interaction turn —
+      # stays >=20s under the ~100s Cloudflare edge timeout so the
+      # application always answers before the edge terminates the
+      # request (524).
+      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-80}
 
     depends_on:
       keycloak:
@@ -2982,6 +2987,10 @@ services:
       TV_OPENAPI_GENERATOR_SCRIPT: ${TV_OPENAPI_GENERATOR_SCRIPT:-/app/tools/generate_tv_data_routes_from_openapi.py}
       MINHA_DELPI_AI_API_URL: ${MINHA_DELPI_AI_API_URL:-http://delpi-minha-delpi-ai-api:8000}
       MINHA_DELPI_AI_API_TIMEOUT_SECONDS: ${MINHA_DELPI_AI_API_TIMEOUT_SECONDS:-20}
+      TV_RENDER_WORKER_URL: ${TV_RENDER_WORKER_URL:-http://tv-dashboard-render-worker:8100}
+      TV_RENDER_WORKER_TIMEOUT_SECONDS: ${TV_RENDER_WORKER_TIMEOUT_SECONDS:-30}
+      # Dedicated worker credential — intentionally NOT API_DELPI_INTERNAL_SERVICE_TOKEN.
+      TV_RENDER_WORKER_SERVICE_TOKEN: ${TV_RENDER_WORKER_SERVICE_TOKEN:-}
 
     volumes:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/tv-dashboard/media:/app/data/tv-dashboard/media
@@ -2998,6 +3007,48 @@ services:
         condition: service_started
       core-api:
         condition: service_started
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
+  # Bounded canonical render execution host — internal only, never routed by
+  # the gateway. Renders the shared presentation package in Chromium and
+  # returns canonical_stage PNG bytes to tv-dashboard-api (which stays the
+  # artifact authority).
+  tv-dashboard-render-worker:
+    build:
+      context: ..
+      dockerfile: tv-dashboard-render-worker/Dockerfile
+
+    container_name: delpi-tv-dashboard-render-worker
+    restart: unless-stopped
+
+    environment:
+      RENDER_WORKER_PORT: "8100"
+      RENDER_WORKER_CONCURRENCY: ${RENDER_WORKER_CONCURRENCY:-2}
+      RENDER_WORKER_TIMEOUT_MS: ${RENDER_WORKER_TIMEOUT_MS:-30000}
+      TV_DASHBOARD_API_INTERNAL_URL: ${TV_DASHBOARD_API_INTERNAL_URL:-http://tv-dashboard-api:8000}
+      TV_DASHBOARD_API_ROOT_PATH: /apps/tv-dashboard-api
+      # Dedicated credential provisioned as a new secret — no reuse of the
+      # platform S2S token. Both sides read the same dedicated value.
+      TV_RENDER_WORKER_SERVICE_TOKEN: ${TV_RENDER_WORKER_SERVICE_TOKEN:-}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+    depends_on:
+      tv-dashboard-api:
+        condition: service_started
+
+    deploy:
+      resources:
+        limits:
+          memory: ${RENDER_WORKER_MEMORY_LIMIT:-2G}
 
     logging:
       driver: "json-file"

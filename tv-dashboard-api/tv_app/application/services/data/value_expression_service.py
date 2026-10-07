@@ -718,13 +718,13 @@ def scope_layer_expressions_to_route(
     *,
     route: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
-    """Scoping de ExpressionSpec em camada compartilhada (tela/programação).
+    """Scoping de ExpressionSpec em camada compartilhada (tela/programação/Filtro).
 
     A expressão da camada aplica-se apenas às rotas que declaram e permitem
     o parâmetro — mesmo scoping que o wire dá a literais fora do schema
-    (``_filter_query_to_route_schema``). Params da fonte/input NÃO passam
-    por aqui: na camada da fonte, expressão em chave não permitida segue
-    sendo erro no resolver.
+    (``_filter_query_to_route_schema``). Params da fonte/input de DataModel
+    NÃO passam por aqui: na camada da fonte, expressão em chave não
+    permitida segue sendo erro no resolver.
     """
     if not isinstance(params, Mapping):
         return {}
@@ -769,35 +769,66 @@ def validate_shared_layer_expressions(
         if not is_expression_value(value):
             continue
         key_s = str(key)
-        declaring = [
-            r
-            for r in route_list
-            if isinstance(r.get("paramSchema"), Mapping)
-            and key_s in r["paramSchema"]
-        ]
-        if not declaring:
-            _fail(
-                "m.expression_param_not_allowed",
-                f"O parâmetro {key_s} não existe nas rotas deste escopo.",
-            )
-        forbidden = [
-            r
-            for r in declaring
-            if str(
-                (r["paramSchema"].get(key_s) or {}).get("in") or ""
-            ).strip().lower()
-            == "path"
-            or (r["paramSchema"].get(key_s) or {}).get("expressionAllowed")
-            is False
-        ]
-        if forbidden:
-            _fail(
-                "m.expression_param_not_allowed",
-                f"O parâmetro {key_s} não aceita expressão em todas as rotas "
-                "que o declaram neste escopo.",
-            )
+        _declaring_routes_allowing_expression(key_s, route_list)
         validate_expression_param_value(
             key_s, value, route=union_route, input_scope=input_scope
+        )
+
+
+def _declaring_routes_allowing_expression(
+    key: str, routes: Sequence[Mapping[str, Any]]
+) -> list[Mapping[str, Any]]:
+    """Rotas que declaram ``key``; falha se nenhuma declara ou se alguma proíbe."""
+    declaring = [
+        r
+        for r in routes
+        if isinstance(r.get("paramSchema"), Mapping) and key in r["paramSchema"]
+    ]
+    if not declaring:
+        _fail(
+            "m.expression_param_not_allowed",
+            f"O parâmetro {key} não existe nas rotas deste escopo.",
+        )
+    forbidden = [
+        r
+        for r in declaring
+        if str((r["paramSchema"].get(key) or {}).get("in") or "").strip().lower()
+        == "path"
+        or (r["paramSchema"].get(key) or {}).get("expressionAllowed") is False
+    ]
+    if forbidden:
+        _fail(
+            "m.expression_param_not_allowed",
+            f"O parâmetro {key} não aceita expressão em todas as rotas "
+            "que o declaram neste escopo.",
+        )
+    return declaring
+
+
+def validate_filter_expression(
+    param_key: str,
+    value: Any,
+    *,
+    routes: Sequence[Mapping[str, Any]],
+    input_scope: InputVariableScope | None = None,
+) -> None:
+    """Validação de escrita do ExpressionSpec no ``defaultValue`` de um Filtro.
+
+    Mesmo escopo de camada compartilhada (``validate_shared_layer_expressions``),
+    mas o AST compila contra CADA rota consumidora que recebe a expressão —
+    contratos incompatíveis entre consumidores falham aqui, não no runtime.
+    """
+    route_list = [r for r in routes if isinstance(r, Mapping)]
+    declaring = _declaring_routes_allowing_expression(param_key, route_list)
+    consumers = [r for r in declaring if param_allows_expression(param_key, r)]
+    if not consumers:
+        _fail(
+            "m.expression_param_not_allowed",
+            f"O parâmetro {param_key} não aceita expressão nas rotas deste Filtro.",
+        )
+    for route in consumers:
+        validate_expression_param_value(
+            param_key, value, route=route, input_scope=input_scope
         )
 
 

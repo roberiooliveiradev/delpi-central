@@ -427,11 +427,18 @@ export function resolvePreviewRefreshSourceIds(params: {
   return [...ids];
 }
 
-function variableInputsFromFingerprint(inputs: unknown): unknown[] {
+/**
+ * Inputs que alcançam DataModels: variáveis `input.*` (ExpressionSpec nos inputs
+ * do modelo) e Filtros de escopo slide (backend aplica `slide_input_contrib`
+ * aos modelos). Filtro «Dado específico» só atinge fontes marcadas.
+ */
+function modelReachingInputsFromFingerprint(inputs: unknown): unknown[] {
   if (!Array.isArray(inputs)) return [];
-  return inputs.filter(
-    (entry) => entry && typeof entry === "object" && "binding" in (entry as Record<string, unknown>),
-  );
+  return inputs.filter((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const record = entry as Record<string, unknown>;
+    return "binding" in record || record.targetScope !== "sources";
+  });
 }
 
 /** Modelos cuja definição persistida mudou entre fingerprints. */
@@ -488,12 +495,11 @@ export function resolvePreviewRefreshModelIds(params: {
   const playlistDefaultsChanged =
     JSON.stringify(prev.playlistDefaults ?? null) !==
     JSON.stringify(next.playlistDefaults ?? null);
-  // Variáveis `input.*` do slide alcançam qualquer DataModel (ExpressionSpec nos inputs).
   if (
     dataFiltersChanged ||
     playlistDefaultsChanged ||
-    JSON.stringify(variableInputsFromFingerprint(prev.inputs)) !==
-      JSON.stringify(variableInputsFromFingerprint(next.inputs))
+    JSON.stringify(modelReachingInputsFromFingerprint(prev.inputs)) !==
+      JSON.stringify(modelReachingInputsFromFingerprint(next.inputs))
   ) {
     return allModelIds;
   }

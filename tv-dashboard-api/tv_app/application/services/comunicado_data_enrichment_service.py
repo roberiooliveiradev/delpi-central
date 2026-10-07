@@ -10,6 +10,7 @@ from tv_app.application.services.branch_policy_service import validate_data_rout
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.application.services.data.value_expression_service import (
     InputVariableScope,
+    ParamExpressionResolution,
     is_expression_value,
     resolve_param_expressions,
     scope_layer_expressions_to_route,
@@ -1216,7 +1217,9 @@ class ComunicadoDataEnrichmentService:
         # Preview isola um data_source em `blocks`, mas inputs vivem no slide (`cfg.blocks`).
         context_blocks = self._filter_context_blocks(blocks, cfg)
         ctx = self._slide_param_context(
-            context_blocks, filter_overrides=filter_overrides
+            context_blocks,
+            filter_overrides=filter_overrides,
+            data_models=cfg.get("dataModels"),
         )
         schema_by_source_id = ctx["schema_by_source_id"]
         slide_schemas = ctx["slide_schemas"]
@@ -1267,20 +1270,15 @@ class ComunicadoDataEnrichmentService:
                 if isinstance(by_source.get(source_id), dict)
                 else {}
             )
-            merged = merge_data_params(
-                playlist_defaults=scope_layer_expressions_to_route(
-                    playlist_defaults, route=route
-                ),
-                slide_filters=scope_layer_expressions_to_route(
-                    slide_filters, route=route
-                ),
-                block_params=block_params,
-                input_overrides=merge_filter_layers(slide_input_contrib, source_contrib),
-            )
             # Expressões resolvem pós-merge e antes de AuthZ/fetch; em erro o
             # bloco falha fechado em _enrich_data_block com trace tipado.
-            expr_resolution = resolve_param_expressions(
-                merged, route=route, input_scope=ctx["input_scope"]
+            expr_resolution = self._resolve_consumer_params(
+                route,
+                block_params,
+                playlist_defaults=playlist_defaults,
+                slide_filters=slide_filters,
+                input_overrides=merge_filter_layers(slide_input_contrib, source_contrib),
+                input_scope=ctx["input_scope"],
             )
             if expr_resolution.error is not None:
                 continue
@@ -1316,6 +1314,7 @@ class ComunicadoDataEnrichmentService:
             or str(block.get("id") or "") not in set(graph.ordered_source_ids)
         ]
         query_tables: dict[str, dict[str, Any]] = {}
+        filter_consumers: dict[str, list[dict[str, Any]]] | None = None
         # Status de cada bloco referenciável como sibling: distingue "não existe"
         # de "existe mas falhou"/"sem tabela"/"não é fonte de dados" para o merge
         # tipificar a causa em vez de m.merge_source_unavailable genérico.
@@ -1386,13 +1385,33 @@ class ComunicadoDataEnrichmentService:
                 enriched.append(dict(block))
                 continue
             if block_type == "input":
-                enriched.append(
-                    self._decorate_input_block(
-                        block,
-                        schema_by_source_id=schema_by_source_id,
-                        slide_schemas=slide_schemas,
-                    )
+                decorated = self._decorate_input_block(
+                    block,
+                    schema_by_source_id=schema_by_source_id,
+                    slide_schemas=slide_schemas,
                 )
+                if self._has_expression_default(decorated):
+                    if filter_consumers is None:
+                        filter_consumers = {
+                            "sources": [
+                                consumer
+                                for consumer in (
+                                    self._route_consumer(item)
+                                    for item in context_blocks
+                                    if str(item.get("type") or "") in DATA_BLOCK_TYPES
+                                )
+                                if consumer is not None
+                            ],
+                            "models": self._data_model_consumers(cfg.get("dataModels")),
+                        }
+                    decorated = self._decorate_filter_resolution(
+                        decorated,
+                        consumers=filter_consumers,
+                        playlist_defaults=playlist_defaults,
+                        slide_filters=slide_filters,
+                        ctx=ctx,
+                    )
+                enriched.append(decorated)
                 continue
             enriched.append(block)
 
@@ -1485,7 +1504,9 @@ class ComunicadoDataEnrichmentService:
                 for block in (cfg.get("blocks") or [])
                 if isinstance(block, dict)
             ]
-            ctx = self._slide_param_context(context_blocks, filter_overrides=None)
+            ctx = self._slide_param_context(
+                context_blocks, filter_overrides=None, data_models=models
+            )
         slide_filters = (
             cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
         )
@@ -1550,20 +1571,15 @@ class ComunicadoDataEnrichmentService:
                 ):
                     denied = (source_id, "Indicador indisponível")
                     break
-                merged = merge_data_params(
-                    playlist_defaults=scope_layer_expressions_to_route(
-                        playlist_defaults, route=route
-                    ),
-                    slide_filters=scope_layer_expressions_to_route(
-                        slide_filters, route=route
-                    ),
-                    block_params=binding.get("params")
+                expr_resolution = self._resolve_consumer_params(
+                    route,
+                    binding.get("params")
                     if isinstance(binding.get("params"), dict)
                     else {},
+                    playlist_defaults=playlist_defaults,
+                    slide_filters=slide_filters,
                     input_overrides=merge_filter_layers(slide_input_contrib, None),
-                )
-                expr_resolution = resolve_param_expressions(
-                    merged, route=route, input_scope=ctx["input_scope"]
+                    input_scope=ctx["input_scope"],
                 )
                 if expr_resolution.error is not None:
                     denied = (
@@ -1685,11 +1701,46 @@ class ComunicadoDataEnrichmentService:
             resolved["dataModelInputId"] = input_id
         return resolved
 
+    def _data_model_consumers(self, data_models: Any) -> list[dict[str, Any]]:
+        """Inputs de DataModel com rota permitida no catálogo (consumidores de param)."""
+        from tv_app.application.services.data.data_model_service import (
+            data_model_source_blocks,
+        )
+
+        consumers: list[dict[str, Any]] = []
+        for model in data_models if isinstance(data_models, list) else []:
+            if not isinstance(model, dict):
+                continue
+            nodes, _primary_id = data_model_source_blocks(model)
+            for node in nodes:
+                consumer = self._route_consumer(node)
+                if consumer is not None:
+                    consumers.append(consumer)
+        return consumers
+
+    def _route_consumer(self, block: dict[str, Any]) -> dict[str, Any] | None:
+        binding = block.get("dataBinding")
+        if not isinstance(binding, dict):
+            return None
+        operation_id = str(binding.get("operationId") or "").strip()
+        if not operation_id or not self._catalog.is_allowed(operation_id):
+            return None
+        route = self._catalog.get_route(operation_id)
+        if not isinstance(route, dict):
+            return None
+        params = binding.get("params")
+        return {
+            "id": str(block.get("id") or ""),
+            "route": route,
+            "params": params if isinstance(params, dict) else {},
+        }
+
     def _slide_param_context(
         self,
         context_blocks: list[dict[str, Any]],
         *,
         filter_overrides: dict[str, Any] | None,
+        data_models: Any = None,
     ) -> dict[str, Any]:
         """Contexto de parâmetros do slide: schemas por fonte + contribuições
         de input controls (slide + por fonte)."""
@@ -1713,6 +1764,13 @@ class ComunicadoDataEnrichmentService:
                 schema_by_source_id[source_id] = schema
             if schema:
                 slide_schemas.append(schema)
+        if not slide_schemas:
+            # Slide só com DataModels: o Filtro de escopo slide alcança os
+            # inputs dos modelos — sem schema aqui a contribuição seria descartada.
+            for consumer in self._data_model_consumers(data_models):
+                schema = consumer["route"].get("paramSchema")
+                if isinstance(schema, dict) and schema:
+                    slide_schemas.append(schema)
 
         contributions = collect_input_filter_contributions(
             context_blocks,
@@ -1840,6 +1898,89 @@ class ComunicadoDataEnrichmentService:
         else:
             input_cfg["paramAvailable"] = False
             input_cfg.pop("resolvedField", None)
+        result["input"] = input_cfg
+        return result
+
+    @staticmethod
+    def _has_expression_default(block: dict[str, Any]) -> bool:
+        input_cfg = block.get("input")
+        return (
+            isinstance(input_cfg, dict)
+            and "binding" not in input_cfg
+            and bool(str(input_cfg.get("paramKey") or "").strip())
+            and is_expression_value(input_cfg.get("defaultValue"))
+        )
+
+    def _decorate_filter_resolution(
+        self,
+        block: dict[str, Any],
+        *,
+        consumers: dict[str, list[dict[str, Any]]],
+        playlist_defaults: dict[str, Any] | None,
+        slide_filters: dict[str, Any] | None,
+        ctx: dict[str, Any],
+    ) -> dict[str, Any]:
+        """``resolvedValue``/``resolvedDiverged`` do Filtro com ExpressionSpec.
+
+        Valor efetivo do ``paramKey`` em cada consumidor que recebe a expressão
+        (mesmo merge + resolver do fetch, sem chamar a rota). Divergência entre
+        consumidores → ``resolvedDiverged``; erro de resolução → sem valor
+        (UI mostra indicador neutro). Decoração de runtime, nunca persistida.
+        """
+        from tv_app.application.services.comunicado_input_filters_service import (
+            resolve_input_target_scope,
+        )
+        from tv_app.application.services.data.value_expression_service import (
+            param_allows_expression,
+        )
+
+        input_cfg = dict(block["input"])
+        input_cfg.pop("resolvedValue", None)
+        input_cfg.pop("resolvedDiverged", None)
+        param_key = str(input_cfg.get("paramKey") or "").strip()
+        slide_input_contrib = ctx["slide_input_contrib"]
+        by_source = ctx["by_source"]
+        if resolve_input_target_scope(input_cfg) == "slide":
+            targets = [(c, True) for c in consumers["sources"]] + [
+                (c, False) for c in consumers["models"]
+            ]
+        else:
+            ids = {
+                str(item).strip()
+                for item in (input_cfg.get("targetSourceIds") or [])
+                if str(item).strip()
+            }
+            targets = [(c, True) for c in consumers["sources"] if c["id"] in ids]
+
+        values: dict[str, Any] = {}
+        for consumer, is_source in targets:
+            route = consumer["route"]
+            if not param_allows_expression(param_key, route):
+                continue
+            source_contrib = by_source.get(consumer["id"]) if is_source else None
+            resolution = self._resolve_consumer_params(
+                route,
+                consumer["params"],
+                playlist_defaults=playlist_defaults,
+                slide_filters=slide_filters,
+                input_overrides=merge_filter_layers(
+                    slide_input_contrib,
+                    source_contrib if isinstance(source_contrib, dict) else None,
+                ),
+                input_scope=ctx["input_scope"],
+            )
+            if resolution.error is not None:
+                values.clear()
+                break
+            value = resolution.params.get(param_key)
+            values[json.dumps(value, sort_keys=True, default=str)] = value
+
+        if len(values) == 1:
+            input_cfg["resolvedValue"] = next(iter(values.values()))
+            input_cfg["resolvedDiverged"] = False
+        elif len(values) > 1:
+            input_cfg["resolvedDiverged"] = True
+        result = dict(block)
         result["input"] = input_cfg
         return result
 
@@ -2105,6 +2246,51 @@ class ComunicadoDataEnrichmentService:
             "kpiMetrics": metrics,
         }
 
+    @staticmethod
+    def _merge_consumer_layers(
+        route: dict[str, Any] | None,
+        block_params: dict[str, Any] | None,
+        *,
+        playlist_defaults: dict[str, Any] | None,
+        slide_filters: dict[str, Any] | None,
+        input_overrides: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Merge canônico de um consumidor (fonte ou input de DataModel).
+
+        Programação, tela e Filtro são camadas compartilhadas: ExpressionSpec
+        delas só alcança rotas que declaram e permitem o parâmetro. A camada
+        da fonte não é escopada — expressão inválida ali falha no resolver.
+        """
+        return merge_data_params(
+            playlist_defaults=scope_layer_expressions_to_route(
+                playlist_defaults, route=route
+            ),
+            slide_filters=scope_layer_expressions_to_route(slide_filters, route=route),
+            block_params=block_params or {},
+            input_overrides=scope_layer_expressions_to_route(
+                input_overrides, route=route
+            ),
+        )
+
+    def _resolve_consumer_params(
+        self,
+        route: dict[str, Any] | None,
+        block_params: dict[str, Any] | None,
+        *,
+        playlist_defaults: dict[str, Any] | None,
+        slide_filters: dict[str, Any] | None,
+        input_overrides: dict[str, Any] | None,
+        input_scope: InputVariableScope | None,
+    ) -> ParamExpressionResolution:
+        merged = self._merge_consumer_layers(
+            route,
+            block_params,
+            playlist_defaults=playlist_defaults,
+            slide_filters=slide_filters,
+            input_overrides=input_overrides,
+        )
+        return resolve_param_expressions(merged, route=route, input_scope=input_scope)
+
     def _enrich_data_block(
         self,
         block: dict[str, Any],
@@ -2137,14 +2323,11 @@ class ComunicadoDataEnrichmentService:
 
         block_params = binding.get("params") if isinstance(binding.get("params"), dict) else {}
         route = self._catalog.get_route(operation_id)
-        merged_params = merge_data_params(
-            playlist_defaults=scope_layer_expressions_to_route(
-                playlist_defaults, route=route
-            ),
-            slide_filters=scope_layer_expressions_to_route(
-                slide_filters, route=route
-            ),
-            block_params=block_params,
+        merged_params = self._merge_consumer_layers(
+            route,
+            block_params,
+            playlist_defaults=playlist_defaults,
+            slide_filters=slide_filters,
             input_overrides=input_overrides,
         )
         merged_params = _apply_incremental_pagination_defaults(merged_params, route)

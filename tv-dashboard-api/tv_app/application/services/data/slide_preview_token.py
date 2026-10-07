@@ -35,8 +35,14 @@ def mint_slide_preview_token(
     revision: int | str | None,
     ttl_sec: int = DEFAULT_TTL_SEC,
     cache_key: str | None = None,
+    artifact: str | None = None,
 ) -> tuple[str, int]:
-    """Return (token, expires_at_unix)."""
+    """Return (token, expires_at_unix).
+
+    ``artifact`` declares which render artifact the token authorizes
+    (e.g. ``canonical_stage`` for a browser-rendered stage PNG). Omitted =
+    schematic_layout (backward compatible).
+    """
     exp = int(time.time()) + max(30, int(ttl_sec))
     payload = {
         "p": str(playlist_id),
@@ -46,6 +52,8 @@ def mint_slide_preview_token(
     }
     if cache_key:
         payload["k"] = str(cache_key)
+    if artifact:
+        payload["a"] = str(artifact)
     body = _b64(json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"))
     mac = _b64(hmac.new(_signing_key(), body.encode("ascii"), hashlib.sha256).digest())
     return f"{body}.{mac}", exp
@@ -81,4 +89,7 @@ def parse_slide_preview_token(token: str) -> dict[str, Any]:
     cache_key = str(payload.get("k") or "").strip()
     if cache_key:
         parsed["cacheKey"] = cache_key
+    artifact = str(payload.get("a") or "").strip()
+    if artifact:
+        parsed["artifact"] = artifact
     return parsed

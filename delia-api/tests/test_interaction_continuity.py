@@ -427,7 +427,7 @@ def test_http_provider_unavailable_bounded_with_context():
 
 
 def _make_adapter(captured: list):
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         captured.append({"url": url, "json": json, "timeout": timeout})
 
         class _Resp:

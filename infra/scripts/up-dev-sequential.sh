@@ -105,6 +105,7 @@ FASE_CORE=(
   portal
   plugin-ui
   tv-dashboard-api
+  tv-dashboard-render-worker
   tv-dashboard
   public-hub
   gateway

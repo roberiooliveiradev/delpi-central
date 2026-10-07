@@ -193,8 +193,13 @@ def test_interaction_application_layer_stays_bounded():
     # ARCH-DRIFT-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-01 (§6.130) moved
     # the central orchestration to application/capability_provision
     # (provider-neutral) and added workspace_context.py — the bounded
-    # untrusted client-supplied workspace hints contract. No engine,
-    # router, registry, repository, or new port is introduced.
+    # untrusted client-supplied workspace hints contract.
+    # C3-INTELLIGENCE-LOOP-03R2A added turn_budget.py — the shared
+    # monotonic turn deadline that clamps every per-stage timeout to
+    # the remaining turn budget (a reduction-only ceiling over the
+    # existing timeout_seconds contract, not a second budget system).
+    # No engine, router, registry, repository, or new port is
+    # introduced.
     assert module_files == [
         "argument_validation.py",
         "capability_attempt.py",
@@ -203,6 +208,7 @@ def test_interaction_application_layer_stays_bounded():
         "handle_interactive_turn.py",
         "instruction.py",
         "pending_proposals.py",
+        "turn_budget.py",
         "workspace_context.py",
     ]
     for package in ("conversation", "session", "chat"):

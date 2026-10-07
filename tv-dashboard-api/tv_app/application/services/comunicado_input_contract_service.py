@@ -352,11 +352,31 @@ def build_input_variable_scope(
     return InputVariableScope(schemas=schemas, values=values, invalid=invalid)
 
 
+def routeparam_filter_param_key(block: Mapping[str, Any]) -> str:
+    """``paramKey`` do Filtro em modo parâmetro de dados (não ``variable``); "" caso contrário."""
+    input_cfg = block.get("input")
+    if not isinstance(input_cfg, Mapping) or is_variable_input(input_cfg):
+        return ""
+    return str(input_cfg.get("paramKey") or "").strip()
+
+
 def iter_config_expression_params(cfg: Mapping[str, Any]) -> Iterable[tuple[str, str, Any, str | None]]:
     """(field, paramKey, value, operationId) de todo param que pode conter ExpressionSpec."""
     blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
     for index, block in enumerate(blocks):
-        if not isinstance(block, Mapping) or str(block.get("type") or "") not in DATA_BLOCK_TYPES:
+        if not isinstance(block, Mapping):
+            continue
+        if str(block.get("type") or "") == "input":
+            param_key = routeparam_filter_param_key(block)
+            if param_key:
+                yield (
+                    f"blocks[{index}].input.defaultValue",
+                    param_key,
+                    block["input"].get("defaultValue"),
+                    None,
+                )
+            continue
+        if str(block.get("type") or "") not in DATA_BLOCK_TYPES:
             continue
         binding = block.get("dataBinding")
         if not isinstance(binding, Mapping) or not isinstance(binding.get("params"), Mapping):

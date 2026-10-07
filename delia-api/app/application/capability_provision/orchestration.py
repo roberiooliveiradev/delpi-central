@@ -79,7 +79,15 @@ from app.application.model_invocation.contracts import (
     ConversationContextTurn,
     ModelInvocationRequest,
 )
-from app.application.model_invocation.errors import ModelInvocationError
+from app.application.interaction.turn_budget import (
+    DEFAULT_TURN_BUDGET_SECONDS,
+    TurnBudgetExhausted,
+    TurnDeadline,
+)
+from app.application.model_invocation.errors import (
+    TIMEOUT,
+    ModelInvocationError,
+)
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
@@ -1056,22 +1064,26 @@ def _clarification_content(missing_inputs: tuple[str, ...]) -> str:
 def _render_synthesis(
     proposal: Mapping[str, Any],
     records: tuple[Mapping[str, Any], ...],
-) -> str | None:
+) -> tuple[str | None, str]:
     """Deterministic render of an evidence-bound synthesis proposal.
 
     The contract is selection-only: there is no model-authored prose
     channel, so no model text can ever introduce a factual leaf value.
     Every rendered value is copied verbatim from the sanitized
     records — invalid indices, unknown fields, empty selections or
-    non-scalar values reject the whole proposal.
+    non-scalar values reject the whole proposal. The bounded rejection
+    reason code is returned for observability (LOOP-03R2A) — never
+    proposal content.
     """
     items = proposal.get("items")
-    if not isinstance(items, (list, tuple)) or not items:
-        return None
+    if not isinstance(items, (list, tuple)):
+        return None, "schema_invalid"
+    if not items:
+        return None, "empty_selection"
     lines: list[str] = []
     for item in list(items)[:MAX_SYNTHESIS_ITEMS]:
         if not isinstance(item, Mapping):
-            return None
+            return None, "schema_invalid"
         index = item.get("record_index")
         fields = item.get("fields")
         if (
@@ -1079,23 +1091,23 @@ def _render_synthesis(
             or isinstance(index, bool)
             or not 0 <= index < len(records)
         ):
-            return None
+            return None, "invalid_record_index"
         if not isinstance(fields, (list, tuple)) or not fields:
-            return None
+            return None, "empty_selection"
         record = records[index]
         values: list[str] = []
         for field_name in list(fields)[:MAX_SYNTHESIS_FIELDS]:
             if not isinstance(field_name, str) or field_name not in record:
-                return None
+                return None, "invalid_field"
             value = record[field_name]
             if isinstance(value, (Mapping, list, tuple)) or value is None:
-                return None
+                return None, "non_scalar_selection"
             rendered_value = _redact_text(str(value).strip())
             if not rendered_value:
-                return None
+                return None, "non_scalar_selection"
             values.append(rendered_value)
         lines.append("- " + " — ".join(values))
-    return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
+    return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
 
 
 # Generic resolver-step helpers (§6.140): a RESOLVER is a role, never
@@ -1999,6 +2011,27 @@ def _preview_render(preview: WriteProposalPreview) -> str:
     return body[:MAX_RENDER_CONTENT_CHARS]
 
 
+# Per-stage model proposal bound (seconds); the turn deadline can only
+# shorten it (LOOP-03R2A).
+MODEL_STAGE_TIMEOUT_SECONDS = 10.0
+
+
+class _StageDeadlineExceeded(Exception):
+    """Internal: a governed stage exceeded its deadline or the turn
+    budget ran out.
+
+    Propagates to the ``attempt`` boundary which renders the canonical
+    deterministic terminal result — a selection/argument/goal stage
+    timeout is never a NOT_APPLICABLE that silently falls through to a
+    general-model answer (LOOP-03R2A).
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        # "model_timeout" | "turn_budget_exhausted"
+        self.reason = reason
+
+
 class OperationalCapabilityOrchestrator:
     """Provider-neutral governed capability orchestration — no local
     catalog authority.
@@ -2025,11 +2058,13 @@ class OperationalCapabilityOrchestrator:
         invoke_model: InvokeModel | None = None,
         model_ref=None,
         pending_writes: PendingWriteStore | None = None,
+        turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         self._invoke_model = invoke_model
         self._model_ref = model_ref
         self._pending_writes = pending_writes or PendingWriteStore()
+        self._turn_budget_seconds = float(turn_budget_seconds)
 
     def attempt(
         self,
@@ -2042,17 +2077,82 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         max_execution_stage: str | None = None,
+        turn_deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
+        """Attempt boundary: one turn deadline governs every stage.
+
+        A model-stage timeout or an exhausted turn budget is a governed
+        orchestration failure — it terminates as SOURCE_UNAVAILABLE
+        (deterministic, HYPOTHESIS-class at the interaction layer) and
+        can NEVER degrade into a general-model answer (LOOP-03R2A).
+        """
         correlation = correlation_id or str(uuid.uuid4())
+        deadline = turn_deadline or TurnDeadline.start(
+            self._turn_budget_seconds
+        )
+        try:
+            return self._attempt(
+                input_text,
+                correlation=correlation,
+                actor_user_id=actor_user_id,
+                session_id=session_id,
+                confirmation=confirmation,
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                max_execution_stage=max_execution_stage,
+                deadline=deadline,
+            )
+        except _StageDeadlineExceeded as exc:
+            _logger.info(
+                "orchestration stage=turn_budget decision=%s "
+                "correlation_id=%s",
+                exc.reason,
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                correlation_id=correlation,
+                error_code=exc.reason,
+            )
+        except TurnBudgetExhausted:
+            _logger.info(
+                "orchestration stage=turn_budget "
+                "decision=turn_budget_exhausted correlation_id=%s",
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                correlation_id=correlation,
+                error_code="turn_budget_exhausted",
+            )
+
+    def _attempt(
+        self,
+        input_text: str,
+        *,
+        correlation: str,
+        actor_user_id: str | None = None,
+        session_id: str | None = None,
+        confirmation: Mapping[str, Any] | None = None,
+        workspace_context: WorkspaceContext | None = None,
+        prior_turns: tuple[ConversationContextTurn, ...] = (),
+        max_execution_stage: str | None = None,
+        deadline: TurnDeadline,
+    ) -> GovernedCapabilityAttempt:
+        correlation = correlation
         # Request-scoped execution ceiling (LOOP-03R1): "prepare" caps
         # the governed chain at PREPARE — it can only reduce authority.
         prepare_only = max_execution_stage == "prepare"
+        # LOOP-03R2A: no stage — not even the live surface listing —
+        # may start once the shared turn budget is exhausted.
+        deadline.check("turn_start")
         if confirmation is not None:
             return self._attempt_confirmation(
                 confirmation,
                 actor_user_id=actor_user_id,
                 correlation=correlation,
                 prepare_only=prepare_only,
+                deadline=deadline,
             )
 
         groups, failures = self._groups(correlation)
@@ -2074,7 +2174,7 @@ class OperationalCapabilityOrchestrator:
             )
 
         selection = self._select_target(
-            input_text, groups, workspace_context, prior_turns
+            input_text, groups, workspace_context, prior_turns, deadline
         )
         if selection is None:
             _logger.info(
@@ -2104,7 +2204,8 @@ class OperationalCapabilityOrchestrator:
         # a comparison intent can never silently collapse into a
         # single-source native success.
         goal = self._understand_goal(
-            input_text, correlation, workspace_context, prior_turns
+            input_text, correlation, workspace_context, prior_turns,
+            deadline,
         )
 
         # Staged semantic path selection (C3-INTELLIGENCE-LOOP-02R1):
@@ -2125,6 +2226,7 @@ class OperationalCapabilityOrchestrator:
                 workspace_context,
                 prior_turns,
                 goal=goal,
+                deadline=deadline,
             )
             non_write_target = descriptor.operation_class not in (
                 SpecialistOperationClass.PREPARE,
@@ -2146,6 +2248,7 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                     workspace_context,
                     prior_turns,
+                    deadline,
                 )
                 if found is None:
                     if path_mode == "enrichment":
@@ -2236,7 +2339,11 @@ class OperationalCapabilityOrchestrator:
         discovery_ran = False
         if discovery is not None:
             discovery_arguments, _ = self._build_arguments(
-                input_text, discovery, workspace_context, prior_turns
+                input_text,
+                discovery,
+                workspace_context,
+                prior_turns,
+                deadline,
             )
             if discovery_arguments is not None:
                 try:
@@ -2245,6 +2352,7 @@ class OperationalCapabilityOrchestrator:
                         discovery.remote_name,
                         discovery_arguments,
                         correlation,
+                        deadline,
                     )
                 except CapabilityProviderError as exc:
                     _logger.info(
@@ -2277,6 +2385,7 @@ class OperationalCapabilityOrchestrator:
                 owner_evidence=owner_evidence,
                 business_subject=goal.business_subject,
                 prior_turns=prior_turns,
+                deadline=deadline,
             )
             if pre_args is not None:
                 # Same canonical rule as the post-foreign check: an
@@ -2305,6 +2414,7 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                     workspace_context,
                     prior_turns,
+                    deadline,
                 )
                 if preflight.attempt is not None:
                     # Resolver ambiguity/error clarifies BEFORE the
@@ -2346,6 +2456,7 @@ class OperationalCapabilityOrchestrator:
                                 tuple(user_required),
                                 descriptor,
                                 correlation,
+                                deadline,
                             ),
                         )
             preliminary_arguments = pre_args
@@ -2369,6 +2480,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 workspace_context,
                 prior_turns,
+                deadline,
             )
             if foreign_result.outcome is None and (
                 path_mode == "enrichment"
@@ -2384,6 +2496,7 @@ class OperationalCapabilityOrchestrator:
                             foreign_result.missing_inputs,
                             foreign_cap,
                             correlation,
+                            deadline,
                         ),
                     )
                 return GovernedCapabilityAttempt(
@@ -2408,6 +2521,7 @@ class OperationalCapabilityOrchestrator:
                 foreign_evidence=foreign_evidence,
                 business_subject=goal.business_subject,
                 prior_turns=prior_turns,
+                deadline=deadline,
             )
         _logger.info(
             "orchestration stage=arguments decision=%s "
@@ -2455,6 +2569,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 workspace_context,
                 prior_turns,
+                deadline,
                 foreign=foreign_cap,
                 foreign_group=foreign_group,
                 foreign_evidence=foreign_evidence,
@@ -2481,7 +2596,11 @@ class OperationalCapabilityOrchestrator:
                     status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
                     correlation_id=correlation,
                     content=self._clarification_question(
-                        input_text, missing_inputs, descriptor, correlation
+                        input_text,
+                        missing_inputs,
+                        descriptor,
+                        correlation,
+                        deadline,
                     ),
                 )
             return GovernedCapabilityAttempt(
@@ -2499,6 +2618,7 @@ class OperationalCapabilityOrchestrator:
                 session_id,
                 correlation,
                 prepare_only=prepare_only,
+                deadline=deadline,
             )
             _logger.info(
                 "orchestration stage=execute decision=%s "
@@ -2518,6 +2638,7 @@ class OperationalCapabilityOrchestrator:
                 session_id,
                 correlation,
                 prepare_only=prepare_only,
+                deadline=deadline,
             )
 
         try:
@@ -2529,6 +2650,7 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 correlation,
                 prior_turns,
+                deadline,
             )
         except CapabilityProviderError as exc:
             if exc.code in _REPAIRABLE_SURFACE_CODES:
@@ -2545,6 +2667,7 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                     workspace_context,
                     prior_turns,
+                    deadline,
                 )
                 if repaired is not None:
                     invoked = repaired
@@ -2584,6 +2707,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 foreign_group=foreign_group,
                 foreign_key=foreign_key,
+                deadline=deadline,
             )
         if (
             descriptor.operation_class
@@ -2609,6 +2733,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
                 workspace_context,
                 prior_turns,
+                deadline,
                 foreign=foreign_cap,
                 foreign_group=foreign_group,
                 foreign_evidence=foreign_evidence,
@@ -2623,7 +2748,7 @@ class OperationalCapabilityOrchestrator:
             outcome,
             correlation,
             content=self._synthesize_content(
-                input_text, outcome, correlation
+                input_text, outcome, correlation, deadline
             ),
         )
 
@@ -2647,6 +2772,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline,
         foreign: ProviderCapability | None = None,
         foreign_group: CapabilityGroup | None = None,
         foreign_evidence: str | None = None,
@@ -2667,6 +2793,8 @@ class OperationalCapabilityOrchestrator:
             group,
             workspace_context,
             prior_turns,
+            correlation,
+            deadline,
         )
         if resolver is None:
             return self._Resolution()
@@ -2696,7 +2824,9 @@ class OperationalCapabilityOrchestrator:
             input_text,
             resolver,
             workspace_context,
+            correlation=correlation,
             prior_turns=prior_turns,
+            deadline=deadline,
         )
         if resolver_arguments is None:
             _logger.info(
@@ -2724,7 +2854,7 @@ class OperationalCapabilityOrchestrator:
         try:
             outcome = self._invoke(
                 group, resolver.remote_name, resolver_arguments,
-                correlation,
+                correlation, deadline,
             )
         except CapabilityProviderError as exc:
             _logger.info(
@@ -2761,7 +2891,9 @@ class OperationalCapabilityOrchestrator:
             workspace_context,
             owner_evidence=evidence,
             foreign_evidence=foreign_evidence,
+            correlation=correlation,
             prior_turns=prior_turns,
+            deadline=deadline,
         )
         if rebuilt is None:
             return self._Resolution(owner_evidence=evidence)
@@ -2795,6 +2927,8 @@ class OperationalCapabilityOrchestrator:
         group: CapabilityGroup,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        correlation: str,
+        deadline: TurnDeadline,
     ) -> ProviderCapability | None:
         """One bounded proposal for a same-owner non-mutating resolver.
 
@@ -2852,6 +2986,8 @@ class OperationalCapabilityOrchestrator:
             ),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if proposal is None:
             return None
@@ -2883,6 +3019,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline,
         foreign: ProviderCapability | None = None,
         foreign_group: CapabilityGroup | None = None,
         foreign_evidence: str | None = None,
@@ -2900,6 +3037,8 @@ class OperationalCapabilityOrchestrator:
             group,
             workspace_context,
             prior_turns,
+            correlation,
+            deadline,
         )
         if prepare_cap is None:
             return None
@@ -2939,7 +3078,9 @@ class OperationalCapabilityOrchestrator:
             workspace_context,
             owner_evidence=combined_evidence,
             foreign_evidence=foreign_evidence,
+            correlation=correlation,
             prior_turns=prior_turns,
+            deadline=deadline,
         )
         _logger.info(
             "orchestration stage=continuation decision=%s "
@@ -2955,7 +3096,11 @@ class OperationalCapabilityOrchestrator:
                     status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
                     correlation_id=correlation,
                     content=self._clarification_question(
-                        input_text, missing_inputs, prepare_cap, correlation
+                        input_text,
+                        missing_inputs,
+                        prepare_cap,
+                        correlation,
+                        deadline,
                     ),
                 )
             return None
@@ -2967,6 +3112,7 @@ class OperationalCapabilityOrchestrator:
             actor_user_id,
             session_id,
             correlation,
+            deadline=deadline,
         )
 
     @dataclasses.dataclass(frozen=True, slots=True)
@@ -2997,6 +3143,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline,
     ) -> "OperationalCapabilityOrchestrator._TurnGoal":
         """One bounded goal-interpretation proposal (LOOP-03R1).
 
@@ -3027,6 +3174,8 @@ class OperationalCapabilityOrchestrator:
             ),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         goal = self._TurnGoal()
         if not isinstance(proposal, Mapping):
@@ -3092,6 +3241,7 @@ class OperationalCapabilityOrchestrator:
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
         goal: "OperationalCapabilityOrchestrator._TurnGoal" | None = None,
+        deadline: TurnDeadline | None = None,
     ) -> str:
         """Stage B/C: native sufficiency assessment (LOOP-02R1).
 
@@ -3138,6 +3288,8 @@ class OperationalCapabilityOrchestrator:
             allowed_keys=frozenset({"status", "limitations"}),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         status = (
             proposal.get("status") if isinstance(proposal, Mapping)
@@ -3167,6 +3319,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline,
     ) -> tuple[str, ProviderCapability] | None:
         """Stage: pick ONE foreign non-mutating capability — only runs
         after the native assessment justified a foreign path. The
@@ -3195,6 +3348,8 @@ class OperationalCapabilityOrchestrator:
             ),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         foreign_id = (
             proposal.get("foreign_capability_id")
@@ -3248,6 +3403,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline,
     ) -> "OperationalCapabilityOrchestrator._ForeignResult":
         """Execute the bounded foreign non-mutating step through the
         SAME owner-defined invocation mechanics as a selected target
@@ -3260,7 +3416,9 @@ class OperationalCapabilityOrchestrator:
             input_text,
             foreign_cap,
             workspace_context,
+            correlation=correlation,
             prior_turns=prior_turns,
+            deadline=deadline,
         )
         if foreign_arguments is None:
             _logger.info(
@@ -3295,6 +3453,7 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 correlation,
                 prior_turns,
+                deadline,
             )
         except CapabilityProviderError as exc:
             _logger.info(
@@ -3334,6 +3493,7 @@ class OperationalCapabilityOrchestrator:
         action_id: str,
         group: CapabilityGroup,
         correlation: str,
+        deadline: TurnDeadline,
         foreign_group: CapabilityGroup | None = None,
         foreign_key: str | None = None,
     ) -> GovernedCapabilityAttempt:
@@ -3389,6 +3549,8 @@ class OperationalCapabilityOrchestrator:
                 allowed_keys=frozenset(
                     {"left", "right", "limitations"}
                 ),
+                correlation=correlation,
+                deadline=deadline,
             )
             compared = _compare_records(
                 left_records, right_records, proposal
@@ -3453,6 +3615,8 @@ class OperationalCapabilityOrchestrator:
         group: CapabilityGroup,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        correlation: str,
+        deadline: TurnDeadline,
     ) -> ProviderCapability | None:
         """Semantic bounded choice of an applicable same-owner PREPARE.
 
@@ -3497,6 +3661,8 @@ class OperationalCapabilityOrchestrator:
             ),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if proposal is None:
             return None
@@ -3526,6 +3692,7 @@ class OperationalCapabilityOrchestrator:
         session_id: str | None,
         correlation: str,
         prepare_only: bool = False,
+        deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
         """Invoke an owner PREPARE capability and project the proposal.
 
@@ -3545,7 +3712,8 @@ class OperationalCapabilityOrchestrator:
         )
         try:
             outcome = self._invoke(
-                group, remote_name, dict(arguments), correlation
+                group, remote_name, dict(arguments), correlation,
+                deadline,
             )
         except CapabilityProviderError as exc:
             _logger.info(
@@ -3706,6 +3874,7 @@ class OperationalCapabilityOrchestrator:
                 execution_mode="direct",
                 actor_user_id=actor_user_id,
                 correlation=correlation,
+                deadline=deadline,
             )
         decision = evaluate_write_continuation(
             capability_live=act_capability is not None,
@@ -3772,6 +3941,7 @@ class OperationalCapabilityOrchestrator:
         session_id: str | None,
         correlation: str,
         prepare_only: bool = False,
+        deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
         """Gate a model-selected ACT capability.
 
@@ -3869,6 +4039,7 @@ class OperationalCapabilityOrchestrator:
         actor_user_id: str | None,
         correlation: str,
         prepare_only: bool = False,
+        deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
         """Bind a structured confirmation to a pending write.
 
@@ -3936,11 +4107,11 @@ class OperationalCapabilityOrchestrator:
         if record.preview is not None:
             return self._confirm_proposal(
                 record, decision, fingerprint, actor_user_id, session_id,
-                correlation,
+                correlation, deadline,
             )
         return self._confirm_intent(
             record, decision, fingerprint, actor_user_id, session_id,
-            correlation,
+            correlation, deadline,
         )
 
     def _confirm_proposal(
@@ -3951,6 +4122,7 @@ class OperationalCapabilityOrchestrator:
         actor_user_id: str | None,
         session_id: str,
         correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
         preview = record.preview
         assert preview is not None
@@ -4012,6 +4184,7 @@ class OperationalCapabilityOrchestrator:
             execution_mode="explicit_user_confirmation",
             actor_user_id=actor_user_id,
             correlation=correlation,
+            deadline=deadline,
         )
 
     def _execute_prepared_act(
@@ -4027,6 +4200,7 @@ class OperationalCapabilityOrchestrator:
         execution_mode: str,
         actor_user_id: str | None,
         correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
         """The single governed ACT execution path.
 
@@ -4113,6 +4287,7 @@ class OperationalCapabilityOrchestrator:
             act_capability.remote_name,
             act_arguments,
             correlation,
+            deadline,
             actor_user_id=actor_user_id,
             capability_ref=(
                 f"{group_key}.{act_capability.remote_name}"
@@ -4128,6 +4303,7 @@ class OperationalCapabilityOrchestrator:
         actor_user_id: str | None,
         session_id: str,
         correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
         expected = hashlib.sha256(
             json.dumps(
@@ -4186,6 +4362,7 @@ class OperationalCapabilityOrchestrator:
             capability.remote_name,
             dict(record.intent_arguments or {}),
             correlation,
+            deadline,
             actor_user_id=actor_user_id,
             capability_ref=record.capability_ref,
         )
@@ -4196,6 +4373,7 @@ class OperationalCapabilityOrchestrator:
         remote_name: str,
         arguments: Mapping[str, Any],
         correlation: str,
+        deadline: TurnDeadline | None = None,
         *,
         actor_user_id: str | None,
         capability_ref: str,
@@ -4220,7 +4398,8 @@ class OperationalCapabilityOrchestrator:
         )
         try:
             outcome = self._invoke(
-                group, remote_name, dict(arguments), correlation
+                group, remote_name, dict(arguments), correlation,
+                deadline,
             )
         except CapabilityProviderError as exc:
             _logger.info(
@@ -4449,6 +4628,8 @@ class OperationalCapabilityOrchestrator:
         groups: Mapping[str, CapabilityGroup],
         workspace_context: WorkspaceContext | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        deadline: TurnDeadline | None = None,
+        correlation: str = "",
     ) -> tuple[str, ProviderCapability] | None:
         """Hierarchical bounded selection, never authority.
 
@@ -4462,7 +4643,12 @@ class OperationalCapabilityOrchestrator:
         if self._invoke_model is None or self._model_ref is None:
             return None
         group_key = self._select_group(
-            input_text, groups, workspace_context, prior_turns
+            input_text,
+            groups,
+            workspace_context,
+            prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if group_key is None or group_key not in groups:
             _logger.info(
@@ -4473,7 +4659,12 @@ class OperationalCapabilityOrchestrator:
             return None
         group = groups[group_key]
         descriptor = self._select_capability(
-            input_text, group, workspace_context, prior_turns
+            input_text,
+            group,
+            workspace_context,
+            prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if descriptor is None:
             _logger.info(
@@ -4595,10 +4786,24 @@ class OperationalCapabilityOrchestrator:
         allowed_keys: frozenset[str],
         workspace_context: WorkspaceContext | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str | None = None,
+        deadline: TurnDeadline | None = None,
     ) -> Mapping[str, Any] | None:
         """One bounded model proposal — structured output only."""
         if self._invoke_model is None or self._model_ref is None:
             return None
+        if deadline is not None:
+            try:
+                deadline.check("model_propose")
+            except TurnBudgetExhausted as exc:
+                raise _StageDeadlineExceeded(
+                    "turn_budget_exhausted"
+                ) from exc
+        stage_timeout = (
+            deadline.stage_timeout(MODEL_STAGE_TIMEOUT_SECONDS)
+            if deadline is not None
+            else MODEL_STAGE_TIMEOUT_SECONDS
+        )
         workspace_block = (
             "\n<workspace_context>\n"
             + workspace_context.to_prompt_block()
@@ -4632,7 +4837,7 @@ class OperationalCapabilityOrchestrator:
                     expected_fields=expected_fields,
                     instruction_lineage=_lineage(instruction_id, instruction),
                     instruction_content=instruction,
-                    timeout_seconds=10.0,
+                    timeout_seconds=stage_timeout,
                     declared_epistemic_class=EpistemicClass.HYPOTHESIS,
                     untrusted_external_metadata={
                         "interaction_surface": "delia-mfe",
@@ -4640,21 +4845,31 @@ class OperationalCapabilityOrchestrator:
                     },
                 )
             )
-        except ModelInvocationError:
+        except ModelInvocationError as exc:
             _logger.info(
                 "orchestration stage=model_propose decision=error "
-                "purpose=%s timing_ms=%d",
+                "purpose=%s error_code=%s timing_ms=%d "
+                "correlation_id=%s",
                 instruction_id,
+                exc.code,
                 int((time.monotonic() - started) * 1000),
+                correlation or "",
             )
+            # LOOP-03R2A: a model-stage TIMEOUT is a governed
+            # orchestration failure — it terminates at the attempt
+            # boundary, never as a NOT_APPLICABLE that degrades into
+            # a general-model answer.
+            if exc.code == TIMEOUT:
+                raise _StageDeadlineExceeded("model_timeout") from exc
             return None
         # LOOP-03R1 (latency): bounded stage timing per proposal
         # purpose — no payload, no user text, no values.
         _logger.info(
             "orchestration stage=model_propose decision=ok "
-            "purpose=%s timing_ms=%d",
+            "purpose=%s timing_ms=%d correlation_id=%s",
             instruction_id,
             int((time.monotonic() - started) * 1000),
+            correlation or "",
         )
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
@@ -4673,6 +4888,7 @@ class OperationalCapabilityOrchestrator:
         missing_inputs: tuple[str, ...],
         descriptor: ProviderCapability,
         correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> str:
         """Missing inputs become a business question, never field names.
 
@@ -4701,6 +4917,8 @@ class OperationalCapabilityOrchestrator:
             expected_fields=("question",),
             input_kind="clarification_wording",
             allowed_keys=frozenset({"question", "limitations"}),
+            correlation=correlation,
+            deadline=deadline,
         )
         question = (
             proposal.get("question") if isinstance(proposal, Mapping) else None
@@ -4735,6 +4953,7 @@ class OperationalCapabilityOrchestrator:
         input_text: str,
         outcome: SpecialistOutcome,
         correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> str | None:
         """Bounded evidence-bound synthesis for a non-mutating outcome.
 
@@ -4765,16 +4984,21 @@ class OperationalCapabilityOrchestrator:
             expected_fields=("items",),
             input_kind="grounded_synthesis",
             allowed_keys=frozenset({"items"}),
+            correlation=correlation,
+            deadline=deadline,
         )
-        rendered = (
+        # LOOP-03R2A (observability): the fallback carries one bounded
+        # deterministic reason code — never proposal content.
+        rendered, reason = (
             _render_synthesis(proposal, records)
             if isinstance(proposal, Mapping)
-            else None
+            else (None, "proposal_absent")
         )
         if rendered is None:
             _logger.info(
                 "orchestration stage=synthesis decision=fallback "
-                "correlation_id=%s",
+                "reason=%s correlation_id=%s",
+                reason,
                 correlation,
             )
             return None
@@ -4793,6 +5017,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str,
         workspace_context: WorkspaceContext | None,
         prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline | None = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """One bounded pre-execution repair round (MAX_REPLAN_ROUNDS=1).
 
@@ -4816,7 +5041,12 @@ class OperationalCapabilityOrchestrator:
         if fresh is None:
             return None
         repick = self._select_capability(
-            input_text, fresh, workspace_context, prior_turns
+            input_text,
+            fresh,
+            workspace_context,
+            prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if repick is None or not invocable_in_interactive_phase(
             repick.operation_class
@@ -4829,7 +5059,9 @@ class OperationalCapabilityOrchestrator:
             input_text,
             repick,
             workspace_context,
+            correlation=correlation,
             prior_turns=prior_turns,
+            deadline=deadline,
         )
         if new_args is None or missing:
             return None
@@ -4848,6 +5080,7 @@ class OperationalCapabilityOrchestrator:
                 input_text,
                 correlation,
                 prior_turns,
+                deadline,
             )
         except CapabilityProviderError:
             return None
@@ -4858,6 +5091,8 @@ class OperationalCapabilityOrchestrator:
         groups: Mapping[str, CapabilityGroup],
         workspace_context: WorkspaceContext | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str = "",
+        deadline: TurnDeadline | None = None,
     ) -> str | None:
         """Stage 1: pick the capability group whose surface matches."""
         eligible = sorted(groups)
@@ -4878,6 +5113,8 @@ class OperationalCapabilityOrchestrator:
             ),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if proposal is None:
             return None
@@ -4900,6 +5137,8 @@ class OperationalCapabilityOrchestrator:
         group: CapabilityGroup,
         workspace_context: WorkspaceContext | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str = "",
+        deadline: TurnDeadline | None = None,
     ) -> ProviderCapability | None:
         """Stage 2: pick a capability from that group's surface."""
         invocable = [
@@ -4922,6 +5161,8 @@ class OperationalCapabilityOrchestrator:
             ),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if proposal is None:
             return None
@@ -4952,6 +5193,8 @@ class OperationalCapabilityOrchestrator:
         foreign_evidence: str | None = None,
         business_subject: str | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str = "",
+        deadline: TurnDeadline | None = None,
     ) -> tuple[dict[str, Any] | None, tuple[str, ...]]:
         """Stage 3: project intent into the live owner inputSchema.
 
@@ -5006,6 +5249,8 @@ class OperationalCapabilityOrchestrator:
             ),
             workspace_context=workspace_context,
             prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if proposal is None:
             return None, ()
@@ -5032,6 +5277,7 @@ class OperationalCapabilityOrchestrator:
         input_text: str,
         correlation: str,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        deadline: TurnDeadline | None = None,
     ) -> tuple[SpecialistOutcome, str, str] | None:
         """Invoke honoring the owner's flow shape.
 
@@ -5051,7 +5297,7 @@ class OperationalCapabilityOrchestrator:
 
         if _is_candidate_bound(selected):
             candidate = self._discover_candidate(
-                group, input_text, correlation
+                group, input_text, correlation, deadline
             )
             if candidate is None:
                 return None
@@ -5061,6 +5307,8 @@ class OperationalCapabilityOrchestrator:
                 inner if isinstance(inner, Mapping) else {},
                 input_text,
                 prior_turns,
+                correlation=correlation,
+                deadline=deadline,
             )
             if merged is None:
                 return None
@@ -5072,6 +5320,7 @@ class OperationalCapabilityOrchestrator:
                     "arguments": merged,
                 },
                 correlation,
+                deadline,
             )
             return (
                 outcome,
@@ -5080,14 +5329,18 @@ class OperationalCapabilityOrchestrator:
             )
 
         outcome = self._invoke(
-            group, remote_name, arguments, correlation
+            group, remote_name, arguments, correlation, deadline
         )
         if selected.operation_class.value == "DISCOVERY":
             # Owner discovery may return candidate(s) for a
             # candidate-bound READ on the same specialist — chain when
             # the owner contracts it.
             candidate = self._resolve_candidate(
-                outcome.structured, input_text, prior_turns
+                outcome.structured,
+                input_text,
+                prior_turns,
+                correlation=correlation,
+                deadline=deadline,
             )
             executors = [
                 cap
@@ -5097,7 +5350,12 @@ class OperationalCapabilityOrchestrator:
             ]
             if candidate is not None and len(executors) == 1:
                 merged = self._candidate_arguments(
-                    candidate, arguments, input_text, prior_turns
+                    candidate,
+                    arguments,
+                    input_text,
+                    prior_turns,
+                    correlation=correlation,
+                    deadline=deadline,
                 )
                 if merged is not None:
                     chained = self._invoke(
@@ -5110,6 +5368,7 @@ class OperationalCapabilityOrchestrator:
                             "arguments": merged,
                         },
                         correlation,
+                        deadline,
                     )
                     return (
                         chained,
@@ -5140,6 +5399,7 @@ class OperationalCapabilityOrchestrator:
         group: CapabilityGroup,
         input_text: str,
         correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> Mapping[str, Any] | None:
         """Owner discovery flow: exactly one DISCOVERY capability must
         exist for the candidate-bound READ to be resolvable."""
@@ -5155,9 +5415,14 @@ class OperationalCapabilityOrchestrator:
             discovery_caps[0].remote_name,
             {"query": input_text[:MAX_DISCOVERY_QUERY_CHARS]},
             correlation,
+            deadline,
         )
         return self._resolve_candidate(
-            outcome.structured, input_text, ()
+            outcome.structured,
+            input_text,
+            (),
+            correlation=correlation,
+            deadline=deadline,
         )
 
     @staticmethod
@@ -5174,6 +5439,8 @@ class OperationalCapabilityOrchestrator:
         structured: Mapping[str, object] | None,
         input_text: str,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str = "",
+        deadline: TurnDeadline | None = None,
     ) -> Mapping[str, Any] | None:
         """Resolve the owner candidate to chain — or none.
 
@@ -5199,7 +5466,11 @@ class OperationalCapabilityOrchestrator:
             return matching[0]
         if len(matching) > 1:
             return self._select_candidate(
-                matching, input_text, prior_turns
+                matching,
+                input_text,
+                prior_turns,
+                correlation=correlation,
+                deadline=deadline,
             )
         return None
 
@@ -5208,6 +5479,8 @@ class OperationalCapabilityOrchestrator:
         candidates: Sequence[Mapping[str, Any]],
         input_text: str,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str = "",
+        deadline: TurnDeadline | None = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model disambiguation of a multi-candidate owner set.
 
@@ -5217,6 +5490,18 @@ class OperationalCapabilityOrchestrator:
         """
         if self._invoke_model is None or self._model_ref is None:
             return None
+        if deadline is not None:
+            try:
+                deadline.check("model_propose")
+            except TurnBudgetExhausted as exc:
+                raise _StageDeadlineExceeded(
+                    "turn_budget_exhausted"
+                ) from exc
+        stage_timeout = (
+            deadline.stage_timeout(MODEL_STAGE_TIMEOUT_SECONDS)
+            if deadline is not None
+            else MODEL_STAGE_TIMEOUT_SECONDS
+        )
         entries = []
         by_action: dict[str, list[Mapping[str, Any]]] = {}
         for candidate in candidates[:MAX_CANDIDATE_ENTRIES]:
@@ -5241,6 +5526,7 @@ class OperationalCapabilityOrchestrator:
         payload = json.dumps(entries, ensure_ascii=False)[
             :MAX_SURFACE_CHARS
         ]
+        started = time.monotonic()
         try:
             result = self._invoke_model.execute(
                 ModelInvocationRequest(
@@ -5260,7 +5546,7 @@ class OperationalCapabilityOrchestrator:
                     expected_fields=("applicable", "action_id"),
                     instruction_lineage=_candidate_selection_lineage(),
                     instruction_content=CANDIDATE_SELECTION_INSTRUCTION,
-                    timeout_seconds=10.0,
+                    timeout_seconds=stage_timeout,
                     declared_epistemic_class=EpistemicClass.HYPOTHESIS,
                     untrusted_external_metadata={
                         "interaction_surface": "delia-mfe",
@@ -5268,8 +5554,26 @@ class OperationalCapabilityOrchestrator:
                     },
                 )
             )
-        except ModelInvocationError:
+        except ModelInvocationError as exc:
+            _logger.info(
+                "orchestration stage=model_propose decision=error "
+                "purpose=%s error_code=%s timing_ms=%d "
+                "correlation_id=%s",
+                CANDIDATE_SELECTION_INSTRUCTION_ID,
+                exc.code,
+                int((time.monotonic() - started) * 1000),
+                correlation,
+            )
+            if exc.code == TIMEOUT:
+                raise _StageDeadlineExceeded("model_timeout") from exc
             return None
+        _logger.info(
+            "orchestration stage=model_propose decision=ok "
+            "purpose=%s timing_ms=%d correlation_id=%s",
+            CANDIDATE_SELECTION_INSTRUCTION_ID,
+            int((time.monotonic() - started) * 1000),
+            correlation,
+        )
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
             return None
@@ -5294,6 +5598,8 @@ class OperationalCapabilityOrchestrator:
         proposed: Mapping[str, Any],
         input_text: str,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str = "",
+        deadline: TurnDeadline | None = None,
     ) -> dict[str, Any] | None:
         """Resolve inner args against the candidate's own schema.
 
@@ -5324,7 +5630,11 @@ class OperationalCapabilityOrchestrator:
         if merged is not None:
             return merged
         second = self._propose_candidate_arguments(
-            input_text, effective_schema, prior_turns
+            input_text,
+            effective_schema,
+            prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
         if second is None:
             return None
@@ -5341,13 +5651,28 @@ class OperationalCapabilityOrchestrator:
         input_text: str,
         schema: Mapping[str, Any] | None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str = "",
+        deadline: TurnDeadline | None = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model proposal of inner arguments, schema-scoped."""
         if self._invoke_model is None or self._model_ref is None:
             return None
+        if deadline is not None:
+            try:
+                deadline.check("model_propose")
+            except TurnBudgetExhausted as exc:
+                raise _StageDeadlineExceeded(
+                    "turn_budget_exhausted"
+                ) from exc
+        stage_timeout = (
+            deadline.stage_timeout(MODEL_STAGE_TIMEOUT_SECONDS)
+            if deadline is not None
+            else MODEL_STAGE_TIMEOUT_SECONDS
+        )
         schema_payload = json.dumps(
             schema or {"type": "object"}, ensure_ascii=False, default=str
         )[:MAX_SURFACE_CHARS]
+        started = time.monotonic()
         try:
             result = self._invoke_model.execute(
                 ModelInvocationRequest(
@@ -5367,7 +5692,7 @@ class OperationalCapabilityOrchestrator:
                     expected_fields=("arguments",),
                     instruction_lineage=_candidate_args_lineage(),
                     instruction_content=CANDIDATE_ARGUMENTS_INSTRUCTION,
-                    timeout_seconds=10.0,
+                    timeout_seconds=stage_timeout,
                     declared_epistemic_class=EpistemicClass.HYPOTHESIS,
                     untrusted_external_metadata={
                         "interaction_surface": "delia-mfe",
@@ -5375,8 +5700,26 @@ class OperationalCapabilityOrchestrator:
                     },
                 )
             )
-        except ModelInvocationError:
+        except ModelInvocationError as exc:
+            _logger.info(
+                "orchestration stage=model_propose decision=error "
+                "purpose=%s error_code=%s timing_ms=%d "
+                "correlation_id=%s",
+                CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
+                exc.code,
+                int((time.monotonic() - started) * 1000),
+                correlation,
+            )
+            if exc.code == TIMEOUT:
+                raise _StageDeadlineExceeded("model_timeout") from exc
             return None
+        _logger.info(
+            "orchestration stage=model_propose decision=ok "
+            "purpose=%s timing_ms=%d correlation_id=%s",
+            CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
+            int((time.monotonic() - started) * 1000),
+            correlation,
+        )
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
             return None
@@ -5395,6 +5738,7 @@ class OperationalCapabilityOrchestrator:
         remote_name: str,
         arguments: Mapping[str, Any],
         correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> SpecialistOutcome:
         """Dispatch one invocation through the owning provider adapter.
 
@@ -5415,6 +5759,8 @@ class OperationalCapabilityOrchestrator:
                 "capability_not_on_surface",
                 "capability is not on the live provider surface",
             )
+        if deadline is not None:
+            deadline.check("provider_invoke")
         provider = self._providers.get(group.provider_id)
         if provider is None:
             raise CapabilityProviderError(

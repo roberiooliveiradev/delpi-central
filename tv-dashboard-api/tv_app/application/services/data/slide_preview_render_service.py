@@ -281,6 +281,10 @@ class SlidePreviewRenderService:
         raw = f"{slide_id}:{revision or ''}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:40]
 
+    def _rendered_cache_key(self, slide_id: str, revision: str | int | None) -> str:
+        raw = f"canonical_stage:{slide_id}:{revision or ''}"
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:40]
+
     def _cache_path(self, key: str) -> Path:
         return self._cache_dir / f"{key}.png"
 
@@ -477,6 +481,7 @@ class SlidePreviewRenderService:
             oldest = files.pop(0)
             try:
                 oldest.unlink(missing_ok=True)
+                (self._cache_dir / f"{oldest.stem}.json").unlink(missing_ok=True)
             except OSError:
                 pass
             self._meta.pop(oldest.stem, None)
@@ -513,11 +518,11 @@ class SlidePreviewRenderService:
             ttl_sec=ttl_sec,
             cache_key=cache_key,
         )
-        base = (public_base_url or settings.PUBLIC_BASE_URL or "http://localhost").rstrip("/")
-        root = (root_path or settings.TV_DASHBOARD_API_ROOT_PATH or "/apps/tv-dashboard-api").rstrip(
-            "/"
+        preview_url = self._preview_url(
+            token,
+            public_base_url=public_base_url,
+            root_path=root_path,
         )
-        preview_url = f"{base}{root}/gpt-actions/v1/slide-previews/{token}"
         from datetime import datetime, timezone
 
         return {
@@ -530,6 +535,134 @@ class SlidePreviewRenderService:
             "height": height,
             "mimeType": "image/png",
             "kind": "schematic_layout",
+        }
+
+    @staticmethod
+    def _preview_url(
+        token: str,
+        *,
+        public_base_url: str | None = None,
+        root_path: str | None = None,
+    ) -> str:
+        base = (public_base_url or settings.PUBLIC_BASE_URL or "http://localhost").rstrip("/")
+        root = (root_path or settings.TV_DASHBOARD_API_ROOT_PATH or "/apps/tv-dashboard-api").rstrip(
+            "/"
+        )
+        return f"{base}{root}/gpt-actions/v1/slide-previews/{token}"
+
+    # ---- canonical_stage artifacts (browser-rendered, revision-bound) ----
+
+    def store_rendered_png(
+        self,
+        *,
+        slide_id: str,
+        revision: str | int,
+        png: bytes,
+        width: int | None = None,
+        height: int | None = None,
+    ) -> dict[str, Any]:
+        """Persist a browser-rendered canonical stage PNG bound to (slide, revision).
+
+        Evidence/cache only — never source of truth. Caller must already have
+        validated PNG magic/dimensions and revision == current.
+        """
+        import json
+
+        key = self._rendered_cache_key(slide_id, revision)
+        path = self._cache_path(key)
+        meta = {
+            "kind": "canonical_stage",
+            "slideId": str(slide_id),
+            "revision": revision,
+            "width": width,
+            "height": height,
+            "uploadedAt": time.time(),
+            "bytes": len(png),
+        }
+        with self._lock:
+            path.write_bytes(png)
+            (self._cache_dir / f"{key}.json").write_text(
+                json.dumps(meta), encoding="utf-8"
+            )
+            self._meta[key] = time.time()
+            self._prune_locked()
+        return meta
+
+    def read_rendered_png(self, *, slide_id: str, revision: str | int) -> bytes | None:
+        key = self._rendered_cache_key(slide_id, revision)
+        path = self._cache_path(key)
+        with self._lock:
+            if not path.is_file():
+                return None
+            self._meta[key] = time.time()
+            return path.read_bytes()
+
+    def rendered_artifact_meta(
+        self, *, slide_id: str, revision: str | int
+    ) -> dict[str, Any] | None:
+        import json
+
+        key = self._rendered_cache_key(slide_id, revision)
+        meta_path = self._cache_dir / f"{key}.json"
+        if not self._cache_path(key).is_file() or not meta_path.is_file():
+            return None
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        return meta if isinstance(meta, dict) else None
+
+    def build_rendered_payload(
+        self,
+        *,
+        playlist_id: str,
+        slide_id: str,
+        revision: str | int | None,
+        renderable: bool = True,
+        public_base_url: str | None = None,
+        root_path: str | None = None,
+        ttl_sec: int = DEFAULT_TTL_SEC,
+    ) -> dict[str, Any]:
+        """Additive ``rendered`` metadata for slidePreview — canonical_stage PNG.
+
+        ``ready`` only when an artifact bound to the CURRENT authoritative
+        revision exists; stale/missing artifacts never present as current.
+        """
+        base: dict[str, Any] = {"kind": "canonical_stage", "source": "editor_stage_capture"}
+        if not renderable:
+            return {
+                **base,
+                "status": "unavailable",
+                "failureCode": "UNSUPPORTED_SLIDE_TYPE",
+            }
+        meta = self.rendered_artifact_meta(slide_id=slide_id, revision=revision)
+        if not meta:
+            return {
+                **base,
+                "status": "unavailable",
+                "revision": revision,
+                "failureCode": "NO_CANONICAL_ARTIFACT",
+            }
+        token, exp = mint_slide_preview_token(
+            playlist_id=playlist_id,
+            slide_id=slide_id,
+            revision=revision,
+            ttl_sec=ttl_sec,
+            artifact="canonical_stage",
+        )
+        from datetime import datetime, timezone
+
+        return {
+            **base,
+            "status": "ready",
+            "revision": revision,
+            "width": meta.get("width"),
+            "height": meta.get("height"),
+            "mimeType": "image/png",
+            "previewUrl": self._preview_url(
+                token, public_base_url=public_base_url, root_path=root_path
+            ),
+            "expiresAt": datetime.fromtimestamp(exp, tz=timezone.utc).isoformat(),
         }
 
 

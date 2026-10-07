@@ -16,6 +16,15 @@ _MAX_OVERRIDE_INPUTS_PER_SLIDE = 64
 _SCALAR_OVERRIDE_TYPES = (str, int, float, bool)
 
 
+def _is_scalar_override(value: Any) -> bool:
+    """Override vindo do browser é sempre escalar — AST/objeto/lista é descartado."""
+    return value is None or isinstance(value, _SCALAR_OVERRIDE_TYPES)
+
+
+def _scalar_params(raw: dict[Any, Any]) -> dict[str, Any]:
+    return {str(key): value for key, value in raw.items() if _is_scalar_override(value)}
+
+
 def _parse_by_slide_id(raw: Any) -> dict[str, dict[str, Any]]:
     """{ slideId: { byInputId: { inputBlockId: escalar|null } } } — só forma, sem confiar em tipo."""
     out: dict[str, dict[str, Any]] = {}
@@ -28,7 +37,7 @@ def _parse_by_slide_id(raw: Any) -> dict[str, dict[str, Any]]:
         values = {
             str(input_id): value
             for input_id, value in list(by_input.items())[:_MAX_OVERRIDE_INPUTS_PER_SLIDE]
-            if value is None or isinstance(value, _SCALAR_OVERRIDE_TYPES)
+            if _is_scalar_override(value)
         }
         if values:
             out[str(slide_id)] = values
@@ -56,22 +65,22 @@ def parse_filter_overrides_query(
             raw = None
         if isinstance(raw, dict):
             if isinstance(raw.get("slide"), dict):
-                slide.update({str(k): v for k, v in raw["slide"].items()})
+                slide.update(_scalar_params(raw["slide"]))
             if isinstance(raw.get("bySourceId"), dict):
                 for sid, params in raw["bySourceId"].items():
                     if isinstance(params, dict):
-                        by_source[str(sid)] = {str(k): v for k, v in params.items()}
+                        by_source[str(sid)] = _scalar_params(params)
             by_slide = _parse_by_slide_id(raw.get(BY_SLIDE_ID_KEY))
             # Atalho: mapa flat no root = slide
             for key, value in raw.items():
                 if key in {"slide", "bySourceId", BY_SLIDE_ID_KEY}:
                     continue
-                if value is not None and value != "" and not isinstance(value, dict):
+                if value is not None and value != "" and _is_scalar_override(value):
                     slide[str(key)] = value
 
     if extra_df_params:
         for key, value in extra_df_params.items():
-            if value is not None and value != "":
+            if value is not None and value != "" and _is_scalar_override(value):
                 slide[str(key)] = value
 
     if not slide and not by_source and not by_slide:

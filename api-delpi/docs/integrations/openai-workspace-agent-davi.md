@@ -382,6 +382,8 @@ If Memory is enabled later, it may hold user/workflow context only when governan
 
 Do not upload Product Master dumps to bypass the MCP/API boundary.
 
+Governed knowledge corpus (content-governance freeze, not runtime ingestion): `docs/integrations/evidence/davi-governed-knowledge-freeze-001.md`.
+
 ## Publishing / sharing gate
 
 Private draft/preview success is **not** production or organization-wide go-live.
@@ -510,3 +512,4 @@ DAVI_AGENT_UNSUPPORTED_DATA_GUARD = PASS (historical search_products-only Instru
 - [OpenAI Plugin + MCP](./openai-plugin-mcp.md)
 - [Keycloak MCP client runbook](./keycloak-mcp-client-runbook.md)
 - [OAuth/MCP evidence](./keycloak-mcp-oauth-evidence.md)
+- [DAVI governed knowledge — first corpus freeze](./evidence/davi-governed-knowledge-freeze-001.md)

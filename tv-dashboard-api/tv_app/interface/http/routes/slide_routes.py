@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
 from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
@@ -21,7 +21,11 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistRepository,
     SlideNotFoundError,
 )
-from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+from tv_app.interface.http.playlist_access_http import (
+    arequire_playlist_access,
+    is_access_error,
+    require_playlist_access,
+)
 from tv_app.interface.http.playlist_revision_http import (
     parse_if_match_revision,
     revision_response_headers,
@@ -248,6 +252,93 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
     except PresentationWriteError as exc:
         return _map_write_error(exc)
     return _ok_with_revision(slide, playlist_id=playlist_id, message="Tela atualizada.")
+
+
+_RENDERED_PREVIEW_MAX_BYTES = 8_000_000
+_RENDERED_PREVIEW_MAX_EDGE_PX = 8192
+
+
+@router.put("/{slide_id}/rendered-preview")
+async def upload_rendered_slide_preview(
+    request: Request,
+    playlist_id: UUID,
+    slide_id: UUID,
+    revision: int = Query(..., ge=0),
+):
+    """Store a browser-rendered canonical-stage PNG bound to the current revision.
+
+    Evidence/cache only — published by the editor/preview AFTER an
+    authoritative write ack. Never mutates playlist state, revision, history,
+    MDD or media library; a stale revision is rejected fail-closed.
+    """
+    from io import BytesIO
+
+    from PIL import Image
+
+    from tv_app.application.services.data.slide_preview_render_service import (
+        get_slide_preview_render_service,
+    )
+
+    guarded = await arequire_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    content_type = (
+        (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    )
+    if content_type != "image/png":
+        return fail("Content-Type deve ser image/png.", 415)
+    declared_len = request.headers.get("content-length") or ""
+    if declared_len.isdigit() and int(declared_len) > _RENDERED_PREVIEW_MAX_BYTES:
+        return fail("Preview renderizado acima do limite.", 413)
+    body = await request.body()
+    if not body or len(body) > _RENDERED_PREVIEW_MAX_BYTES:
+        return fail("Preview renderizado vazio ou acima do limite.", 413)
+    if body[:8] != b"\x89PNG\r\n\x1a\n":
+        return fail("Payload de preview não é PNG.", 422)
+    try:
+        probe = Image.open(BytesIO(body))
+        probe.verify()
+        probe = Image.open(BytesIO(body))
+        width, height = probe.size
+    except Exception:  # noqa: BLE001
+        return fail("PNG inválido.", 422)
+    if (
+        width < 1
+        or height < 1
+        or width > _RENDERED_PREVIEW_MAX_EDGE_PX
+        or height > _RENDERED_PREVIEW_MAX_EDGE_PX
+    ):
+        return fail("Dimensões de preview fora do limite.", 422)
+    try:
+        _writes.get_slide(slide_id, playlist_id=playlist_id)
+    except PresentationWriteError as exc:
+        return _map_write_error(exc)
+    current_revision = _writes.get_revision(playlist_id)
+    if int(revision) != int(current_revision):
+        return fail(
+            "Preview renderizado obsoleto (revision).",
+            409,
+            data={
+                "code": "PREVIEW_REVISION_STALE",
+                "currentRevision": current_revision,
+            },
+        )
+    meta = get_slide_preview_render_service().store_rendered_png(
+        slide_id=str(slide_id),
+        revision=current_revision,
+        png=body,
+        width=width,
+        height=height,
+    )
+    return ok(
+        {
+            "status": "ready",
+            "kind": "canonical_stage",
+            "revision": current_revision,
+            "width": meta.get("width"),
+            "height": meta.get("height"),
+        }
+    )
 
 
 @router.post("/{slide_id}/preview-data-block")

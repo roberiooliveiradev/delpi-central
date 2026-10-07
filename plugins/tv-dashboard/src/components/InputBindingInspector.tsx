@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   intersectParamSchemaKeys,
   isFetchableDataBlockType,
+  isParamExpressionValue,
   listDataSourceBlocks,
+  type ComunicadoDataResolved,
   type ComunicadoInputBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { FormSelectControl, LucideIconField, NativeTextControl } from "@delpi/plugin-ui/index";
@@ -10,8 +12,15 @@ import { FormSelectControl, LucideIconField, NativeTextControl } from "@delpi/pl
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useParamExpressionCapability } from "../hooks/useParamExpressionCapability";
+import type { DataParamUpdateValue } from "../utils/applyDataParamUpdates";
+import { listSlideInputVariableRefs } from "../utils/inputVariableEditor";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { DataParamFields, type DataParamSchema } from "./DataParamFields";
+import {
+  DataParamFields,
+  type DataParamExpressionEditRequest,
+  type DataParamSchema,
+} from "./DataParamFields";
 import { InputVariableBindingFields } from "./InputVariableBindingFields";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -26,6 +35,7 @@ import {
   buildInputValueEditorSchema,
   intersectInputParamKeysWithPresets,
   parseInputFilterValue,
+  resolveFilterExpressionKeys,
 } from "../utils/inputFilterParamSchema";
 import { suggestVariableKey } from "../utils/inputVariableEditor";
 
@@ -57,7 +67,9 @@ function schemasForTargets(
 }
 
 export function InputBindingInspector({ pane = false }: Props) {
-  const { selected, config, patchInputBlock, scheduleInputFilterRefresh } = useComunicadoEditor();
+  const { selected, config, patchInputBlock, scheduleInputFilterRefresh, openExpressionEditor } =
+    useComunicadoEditor();
+  const expressionSupport = useParamExpressionCapability();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
 
   useEffect(() => {
@@ -116,6 +128,39 @@ export function InputBindingInspector({ pane = false }: Props) {
     () => findDateRangeKeys(schemas.flatMap((schema) => Object.keys(schema))),
     [schemas],
   );
+  const ownerParamKey = String(block?.input?.paramKey || "").trim();
+  const targetRoutes = useMemo(
+    () =>
+      operationIds
+        .map((operationId) => routes.find((item) => item.operationId === operationId))
+        .filter((route): route is TvDataRouteCatalogItem => Boolean(route)),
+    [operationIds, routes],
+  );
+  const expressionKeys = useMemo(
+    () => resolveFilterExpressionKeys(ownerParamKey, targetRoutes),
+    [ownerParamKey, targetRoutes],
+  );
+  // Preview/resultado do cartão só com consumidor único (fonte); DataModel ou
+  // várias fontes → sem alvo (o valor efetivo pode divergir por consumidor).
+  const previewTarget = useMemo(() => {
+    if (!ownerParamKey) return null;
+    const declares = (operationId: string | undefined) =>
+      Boolean(
+        (routes.find((item) => item.operationId === operationId)?.paramSchema ?? {})[ownerParamKey],
+      );
+    const sourceConsumers = targetBlocks.filter(
+      (item) => "dataBinding" in item && declares(item.dataBinding?.operationId),
+    );
+    const modelConsumers =
+      targetScope === "slide"
+        ? dataModels.flatMap((model) => model.inputs ?? []).filter((input) => declares(input.operationId))
+        : [];
+    return sourceConsumers.length === 1 && modelConsumers.length === 0 ? sourceConsumers[0] : null;
+  }, [ownerParamKey, routes, targetBlocks, targetScope, dataModels]);
+  const previewResolved =
+    previewTarget && "resolved" in previewTarget && previewTarget.resolved
+      ? (previewTarget.resolved as ComunicadoDataResolved)
+      : null;
 
   if (!block) return null;
 
@@ -185,7 +230,23 @@ export function InputBindingInspector({ pane = false }: Props) {
     }
   };
 
-  const applyFilterUpdates = (updates: Record<string, string>) => {
+  const applyFilterUpdates = (updates: Record<string, DataParamUpdateValue>) => {
+    const ownerKey = String(block.input.paramKey || "").trim();
+    const ownerValue = updates[ownerKey];
+    if (isParamExpressionValue(ownerValue)) {
+      // ExpressionSpec só na camada do Filtro — sem espelho em dataFilters e sem
+      // companheiros de preset (conflito entre camadas é reconciliado no backend).
+      applyInputPatch({ defaultValue: ownerValue });
+      return;
+    }
+    const literal: Record<string, string> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (typeof value === "string") literal[key] = value;
+    }
+    applyLiteralFilterUpdates(literal);
+  };
+
+  const applyLiteralFilterUpdates = (updates: Record<string, string>) => {
     // Preset relativo: um patch atômico (datas/periodDays limpos no mesmo bundle).
     if (DATE_RANGE_PRESET_PARAM in updates) {
       applyFilterFieldChange(DATE_RANGE_PRESET_PARAM, updates[DATE_RANGE_PRESET_PARAM] ?? "");
@@ -288,7 +349,7 @@ export function InputBindingInspector({ pane = false }: Props) {
     <div id="td-input-binding">
       <DeckPropertySection
         pane={pane}
-        title="Campo / Filtro"
+        title="Filtro"
         hint={TV_DASHBOARD_HELP_TOOLTIPS.data.inputFilterPresets}
       >
         <DeckField
@@ -422,8 +483,24 @@ export function InputBindingInspector({ pane = false }: Props) {
             schema={valueSchema}
             values={editorValues}
             idPrefix="td-input-value"
+            expressionSupport={expressionSupport}
+            expressionKeys={expressionKeys}
+            resolved={previewResolved}
+            onEditExpression={(request: DataParamExpressionEditRequest) =>
+              openExpressionEditor({
+                ...request,
+                previewBlockId: previewTarget?.id ?? null,
+                previewInputBlockId: block.id,
+                refInputKeys: listSlideInputVariableRefs(config.blocks),
+              })
+            }
             onChange={applyFilterUpdates}
           />
+        ) : null}
+        {expressionSupport?.enabled && ownerParamKey && expressionKeys.has(ownerParamKey) ? (
+          <p className="td-deck-inspector__hint">
+            {TV_DASHBOARD_HELP_TOOLTIPS.data.inputFilterExpression}
+          </p>
         ) : null}
         </>
         ) : null}

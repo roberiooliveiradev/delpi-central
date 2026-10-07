@@ -38,13 +38,27 @@ from app.domain.model_invocation.model import (
 
 _PROVIDER_TOOL_FIELDS = ("tool_calls", "function_call", "tool_call", "function_calls")
 
+# LOOP-03R2A: ``timeout_seconds`` is the MAXIMUM WALL-CLOCK DURATION of
+# one invocation — not a socket read timeout. ``requests`` applies the
+# read timeout per socket recv, so a server that trickles bytes would
+# keep the call alive forever. The body is therefore streamed and the
+# monotonic deadline re-checked between chunks; the in-flight socket
+# timeout is tightened to the remaining budget so a mid-body stall
+# cannot outlive the deadline by more than one read slice.
+_READ_SLICE_SECONDS = 0.5
+_BODY_CHUNK_BYTES = 65536
+_MAX_BODY_BYTES = 4 * 1024 * 1024
+
 
 class OpenAICompatibleModelInvocationAdapter:
     """POST {base_url}/chat/completions behind ModelInvocationPort.
 
-    No tools, no function calling, no streaming. The API key is only used
-    for the provider Authorization header and is never returned, logged,
-    or embedded in errors.
+    No tools, no function calling. ``stream=True`` is used internally
+    only so the response body can be drained under the total
+    wall-clock deadline — the provider contract stays
+    request/response JSON, not SSE. The API key is only used for the
+    provider Authorization header and is never returned, logged, or
+    embedded in errors.
     """
 
     ADAPTER_KIND = "OPENAI_COMPATIBLE"
@@ -85,6 +99,8 @@ class OpenAICompatibleModelInvocationAdapter:
     def invoke(self, request: ModelInvocationRequest) -> ProviderInvocationPayload:
         timeout = min(float(request.timeout_seconds), float(self._timeout_seconds))
         started = time.monotonic()
+        deadline = started + timeout
+        response = None
         try:
             response = self._http_post(
                 self._endpoint,
@@ -93,8 +109,17 @@ class OpenAICompatibleModelInvocationAdapter:
                     "Content-Type": "application/json",
                 },
                 json=self._request_payload(request),
-                timeout=timeout,
+                # (connect, read): connect is bounded by the whole
+                # remaining invocation budget; the per-recv read slice
+                # bounds how long a single socket read can stall while
+                # the chunked drain enforces the total deadline.
+                timeout=(timeout, min(timeout, _READ_SLICE_SECONDS)),
+                stream=True,
             )
+            self._check_status(response.status_code)
+            body = self._read_body(response, deadline)
+        except ModelInvocationError:
+            raise
         except requests.exceptions.Timeout as exc:
             raise ModelInvocationError(
                 TIMEOUT, "provider request timed out"
@@ -103,9 +128,129 @@ class OpenAICompatibleModelInvocationAdapter:
             raise ModelInvocationError(
                 PROVIDER_UNAVAILABLE, "provider unreachable"
             ) from exc
+        finally:
+            close = getattr(response, "close", None)
+            if callable(close):
+                close()
+        if time.monotonic() >= deadline:
+            raise ModelInvocationError(
+                TIMEOUT, "provider request exceeded its wall-clock deadline"
+            )
         duration_ms = int((time.monotonic() - started) * 1000)
-        self._check_status(response.status_code)
-        return self._map_response(response, duration_ms)
+        return self._map_body(body, duration_ms)
+
+    def _read_body(self, response: Any, deadline: float) -> Any:
+        """Drain the response body under the absolute deadline.
+
+        Returns the decoded JSON body. A mid-stream stall or a
+        never-completing trickle ends in TIMEOUT, never in a call
+        that outlives ``timeout_seconds``.
+        """
+        if time.monotonic() >= deadline:
+            raise ModelInvocationError(
+                TIMEOUT, "provider request timed out"
+            )
+        # ``iter_content`` cannot enforce the deadline: urllib3 fills
+        # the whole requested amt per read, so a trickling server
+        # keeps one ``read(amt)`` alive past the budget. ``read1``
+        # returns after at most one socket recv — the deadline is
+        # re-checked between every read and a stall aborts at the
+        # tightened per-recv socket timeout.
+        raw = getattr(response, "raw", None)
+        read1 = getattr(raw, "read1", None)
+        iter_content = getattr(response, "iter_content", None)
+        if not callable(read1) and not callable(iter_content):
+            # Test stubs materialize the body already — the deadline
+            # check above still bounds the total duration.
+            try:
+                return response.json()
+            except ValueError as exc:
+                raise ModelInvocationError(
+                    INVALID_STRUCTURED_OUTPUT,
+                    "provider response is not valid JSON",
+                ) from exc
+        chunks = bytearray()
+        if callable(read1):
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise ModelInvocationError(
+                        TIMEOUT,
+                        "provider response exceeded its wall-clock "
+                        "deadline",
+                    )
+                self._tighten_socket_timeout(response, remaining)
+                try:
+                    chunk = read1(_BODY_CHUNK_BYTES)
+                except Exception as exc:
+                    # urllib3/http.client mid-body errors surface as
+                    # protocol/socket exceptions, not requests'.
+                    raise (
+                        ModelInvocationError(
+                            TIMEOUT,
+                            "provider response exceeded its "
+                            "wall-clock deadline",
+                        )
+                        if time.monotonic() >= deadline
+                        or isinstance(exc, TimeoutError)
+                        else ModelInvocationError(
+                            PROVIDER_UNAVAILABLE,
+                            "provider response failed mid-body",
+                        )
+                    ) from exc
+                if not chunk:
+                    break
+                chunks += chunk
+                if len(chunks) > _MAX_BODY_BYTES:
+                    raise ModelInvocationError(
+                        PROVIDER_REJECTED,
+                        "provider response exceeds the size limit",
+                    )
+        else:
+            for chunk in iter_content(chunk_size=_BODY_CHUNK_BYTES):
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise ModelInvocationError(
+                        TIMEOUT,
+                        "provider response exceeded its wall-clock "
+                        "deadline",
+                    )
+                self._tighten_socket_timeout(response, remaining)
+                if chunk:
+                    chunks += chunk
+                    if len(chunks) > _MAX_BODY_BYTES:
+                        raise ModelInvocationError(
+                            PROVIDER_REJECTED,
+                            "provider response exceeds the size limit",
+                        )
+        try:
+            return json.loads(bytes(chunks))
+        except ValueError as exc:
+            raise ModelInvocationError(
+                INVALID_STRUCTURED_OUTPUT,
+                "provider response is not valid JSON",
+            ) from exc
+
+    @staticmethod
+    def _tighten_socket_timeout(response: Any, remaining: float) -> None:
+        """Best-effort shrink of the in-flight socket timeout.
+
+        With ``stream=True`` the per-recv timeout was fixed at request
+        time; tightening it to the remaining budget makes a stalled
+        recv abort exactly at the deadline. Guarded because the socket
+        chain is implementation detail of urllib3 — the read slice
+        bound stands regardless.
+        """
+        try:
+            raw = response.raw
+            fp = getattr(getattr(raw, "_fp", None), "fp", None)
+            sock = getattr(getattr(fp, "raw", None), "_sock", None)
+            if sock is None:
+                sock = getattr(fp, "_sock", None)
+            if sock is not None:
+                sock.settimeout(max(0.05, float(remaining)))
+        except (AttributeError, OSError, ValueError):
+            return
 
     def _request_payload(self, request: ModelInvocationRequest) -> dict[str, Any]:
         messages: list[dict[str, str]] = []
@@ -166,13 +311,7 @@ class OpenAICompatibleModelInvocationAdapter:
             f"provider rejected request (HTTP {status_code})",
         )
 
-    def _map_response(self, response: Any, duration_ms: int) -> ProviderInvocationPayload:
-        try:
-            body = response.json()
-        except ValueError as exc:
-            raise ModelInvocationError(
-                INVALID_STRUCTURED_OUTPUT, "provider response is not valid JSON"
-            ) from exc
+    def _map_body(self, body: Any, duration_ms: int) -> ProviderInvocationPayload:
         if not isinstance(body, Mapping):
             raise ModelInvocationError(
                 INVALID_STRUCTURED_OUTPUT, "provider response is not an object"

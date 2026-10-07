@@ -211,11 +211,13 @@ import type {
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
+  DataParamValue,
   ParamExpressionSpec,
   TvDataModel,
   TvDataModelInput,
 } from "./comunicadoTypes";
 import { resolveInputTargetScope } from "./comunicadoInputFilters";
+import { isParamExpressionValue } from "./paramExpressionValue";
 import {
   cloneInputValueSchema,
   normalizeInputBinding,
@@ -434,7 +436,8 @@ export function createInputBlock(options?: {
   iconName?: string;
   targetScope?: "slide" | "sources";
   targetSourceIds?: string[];
-  defaultValue?: string | number | boolean | null;
+  /** ExpressionSpec só no modo parâmetro de dados; variável descarta (escalar). */
+  defaultValue?: DataParamValue;
   binding?: ComunicadoInputBinding;
   valueSchema?: ComunicadoInputValueSchema;
 }): ComunicadoInputBlock {
@@ -456,7 +459,9 @@ export function createInputBlock(options?: {
         label:
           typeof options.label === "string" && options.label.trim() ? options.label.trim() : undefined,
         ...(variableIcon ? { iconName: variableIcon } : {}),
-        defaultValue: options.defaultValue ?? null,
+        defaultValue: isParamExpressionValue(options.defaultValue)
+          ? null
+          : (options.defaultValue ?? null),
       },
     };
   }
@@ -1239,7 +1244,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       ...(input.valueSchema ? { valueSchema: cloneInputValueSchema(input.valueSchema) } : {}),
       ...(input.label ? { label: input.label } : {}),
       ...(input.iconName ? { iconName: input.iconName } : {}),
-      defaultValue: input.defaultValue ?? null,
+      defaultValue: isParamExpressionValue(input.defaultValue) ? null : (input.defaultValue ?? null),
       ...(input.targetScope === "sources" ? { targetScope: "sources" } : {}),
       ...(input.targetSourceIds?.length ? { targetSourceIds: [...input.targetSourceIds] } : {}),
     };
@@ -1741,19 +1746,22 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     const targetSourceIds = Array.isArray(rawInput.targetSourceIds)
       ? rawInput.targetSourceIds.map((id) => String(id ?? "").trim()).filter(Boolean)
       : [];
-    const defaultValue =
+    const binding = normalizeInputBinding(rawInput.binding);
+    // ExpressionSpec só no Filtro de parâmetro de dados; variável fica escalar.
+    const defaultValue: DataParamValue =
       rawInput.defaultValue === null ||
       typeof rawInput.defaultValue === "string" ||
       typeof rawInput.defaultValue === "number" ||
       typeof rawInput.defaultValue === "boolean"
         ? rawInput.defaultValue
-        : null;
+        : !binding && isParamExpressionValue(rawInput.defaultValue)
+          ? rawInput.defaultValue
+          : null;
     const iconName =
       typeof rawInput.iconName === "string" && rawInput.iconName.trim()
         ? rawInput.iconName.trim()
         : undefined;
     const inputParts = normalizeInputPartsForLoad(block.inputParts);
-    const binding = normalizeInputBinding(rawInput.binding);
     const valueSchema = normalizeInputValueSchema(rawInput.valueSchema);
     return attachBlockAnimations(
       {

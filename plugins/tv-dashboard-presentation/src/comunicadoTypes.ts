@@ -670,7 +670,11 @@ export type ComunicadoInputBlock = ComunicadoBlockBase & {
     label?: string;
     /** Nome Lucide opcional (ex.: Building2, Filter). */
     iconName?: string;
-    defaultValue?: string | number | boolean | null;
+    /**
+     * Valor do Filtro. ExpressionSpec só no modo parâmetro de dados (`paramKey`);
+     * `binding.kind === "variable"` permanece escalar (valueSchema).
+     */
+    defaultValue?: DataParamValue;
     /** Padrão: slide. */
     targetScope?: ComunicadoInputTargetScope;
     /** Obrigatório se targetScope === "sources". */

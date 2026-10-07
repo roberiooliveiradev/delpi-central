@@ -39,6 +39,12 @@ PUBLIC_EXACT: frozenset[str] = frozenset(
 )
 _GPT_ACTIONS_PREFIX = "/gpt-actions/v1/"
 _GPT_ACTIONS_OPENAPI = "/gpt-actions/v1/openapi.json"
+# Signed self-authorized read capability: the API mints an HMAC token bound to
+# playlist/slide/revision/artifact; the route validates it fail-closed.
+# Narrowest prefix only — the rest of /gpt-actions/v1 stays JWT-protected.
+_SIGNED_CAPABILITY_PREFIXES: tuple[str, ...] = (
+    "/gpt-actions/v1/slide-previews/",
+)
 
 
 def _strip_root_path(request: Request) -> str:
@@ -53,6 +59,8 @@ def _is_public(path: str) -> bool:
     if normalized in PUBLIC_EXACT:
         return True
     if any(normalized.startswith(prefix) for prefix in PUBLIC_PREFIXES):
+        return True
+    if any(normalized.startswith(prefix) for prefix in _SIGNED_CAPABILITY_PREFIXES):
         return True
     # Defesa: URL absoluta do gateway ainda contendo o prefixo público.
     return "/public/present/" in (path or "")

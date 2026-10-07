@@ -68,9 +68,59 @@ def _authed_context() -> tuple[Any, str]:
     return user, auth
 
 
-def _ok_result(data: dict) -> CallToolResult:
+_MCP_IMAGE_MAX_BYTES = 8_000_000
+
+
+def _canonical_stage_image(data: dict) -> Any | None:
+    """Exact revision-bound canonical_stage bytes as MCP ImageContent.
+
+    Additive projection only — the text/structured payload is unchanged. Any
+    miss (no ready artifact, stale revision, oversized bytes) degrades to the
+    normal text-only result; the model must never receive a schematic PNG
+    presented as canonical pixels.
+    """
+    import base64
+
+    from mcp.types import ImageContent
+
+    preview = data.get("slidePreview")
+    if not isinstance(preview, dict):
+        return None
+    rendered = preview.get("rendered")
+    if not isinstance(rendered, dict):
+        return None
+    if (
+        rendered.get("status") != "ready"
+        or rendered.get("kind") != "canonical_stage"
+        or rendered.get("mimeType") != "image/png"
+    ):
+        return None
+    slide_id = str(preview.get("slideId") or "").strip()
+    revision = rendered.get("revision")
+    if not slide_id or revision is None:
+        return None
+    from tv_app.application.services.data.slide_preview_render_service import (
+        get_slide_preview_render_service,
+    )
+
+    png = get_slide_preview_render_service().read_rendered_png(
+        slide_id=slide_id,
+        revision=revision,
+    )
+    if not png or len(png) > _MCP_IMAGE_MAX_BYTES:
+        return None
+    if png[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+    return ImageContent(
+        type="image",
+        data=base64.b64encode(png).decode("ascii"),
+        mime_type="image/png",
+    )
+
+
+def _ok_result(data: dict, *, images: list[Any] | None = None) -> CallToolResult:
     payload = {"status": "success", "data": data}
-    return mcp_tool_result(payload, is_error=False)
+    return mcp_tool_result(payload, is_error=False, images=images)
 
 
 def _kind_for_status(status: int) -> str:
@@ -191,18 +241,18 @@ def tool_get_playlist_context(
 ) -> CallToolResult:
     try:
         user, auth = _authed_context()
-        return _ok_result(
-            _dispatch.get_playlist_context(
-                user=user,
-                playlist_id=playlist_id,
-                include_preview=include_preview,
-                preview_slide_id=slide_id,
-                scope=scope,
-                data_source_id=data_source_id,
-                include_runtime=include_runtime,
-                authorization=auth,
-            )
+        data = _dispatch.get_playlist_context(
+            user=user,
+            playlist_id=playlist_id,
+            include_preview=include_preview,
+            preview_slide_id=slide_id,
+            scope=scope,
+            data_source_id=data_source_id,
+            include_runtime=include_runtime,
+            authorization=auth,
         )
+        image = _canonical_stage_image(data)
+        return _ok_result(data, images=[image] if image else None)
     except Exception as e:
         return handle_tool_error(e, tool="get_playlist_context", label="mcp tool")
 

@@ -14,9 +14,9 @@ def _strip_runtime_fields(block: dict[str, Any]) -> dict[str, Any]:
     cleaned.pop("resolvedRouteLabel", None)
     if cleaned.get("type") == "input" and isinstance(cleaned.get("input"), dict):
         input_cfg = dict(cleaned["input"])
-        # Decoração do enrich (_decorate_input_block) — nunca persistida.
-        input_cfg.pop("resolvedField", None)
-        input_cfg.pop("paramAvailable", None)
+        # Decoração do enrich (_decorate_input_block / Filtro com expressão) — nunca persistida.
+        for key in ("resolvedField", "paramAvailable", "resolvedValue", "resolvedDiverged"):
+            input_cfg.pop(key, None)
         cleaned["input"] = input_cfg
     if "dataTransform" in cleaned:
         transform = sanitize_data_transform_for_persistence(cleaned.get("dataTransform"))

@@ -651,7 +651,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "schema": {"type": "boolean", "default": False},
                         "description": (
                             "When true, include slidePreview with signed previewUrl "
-                            "(schematic PNG). Prefer over a dedicated preview Action."
+                            "(schematic PNG) plus rendered: canonical_stage artifact "
+                            "metadata (signed URL when status=ready). "
+                            "Prefer over a dedicated preview Action."
                         ),
                     },
                     {
