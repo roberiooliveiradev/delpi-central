@@ -6,7 +6,16 @@
 **auditTaskId:** `DAVI-GOVERNED-KNOWLEDGE-MINIMIZATION-AUDIT-001`
 **evidenceHead:** `34244d81b7c381798247644299ec04f239492555`
 **reviewedMainAtDecision:** `45c1d05df6f28fc5e4dd76f5e384bccc797fa798`
-**persistedAt:** `b02f3d030487767ac494dc905a4e40b31d668797` (origin/main, NON_CAUSAL deltas only: transformometro-api, delia-api, tv-dashboard — zero api-delpi)
+**persistedAt:** `c0cc026a70c5b7343206f86a18f20039ced811e8` (origin/main)
+**correctiveTaskId:** `DAVI-GOVERNED-KNOWLEDGE-FREEZE-DRIFT-CORRECTIVE-001`
+**correction:** document #1 (`supplies-inventory-adjustments.md`) was
+revalidated after the CF direction fix (proven `DE0`=surplus/entrada,
+`RE0`=shortage/saída against the Protheus movements report) and the
+knowledge-minimization corrective: the frozen regression table and
+per-record audit values were removed — they are regression/audit
+evidence, not runtime knowledge — while canonical semantics, formulas,
+fail-closed provenance, owners and AuthZ remain. Result:
+`SAFE_AS_WHOLE_DOCUMENT`.
 
 ## Authority boundary
 
@@ -141,12 +150,14 @@ during the audit are intentionally not reproduced in this artifact.
 ## DAVI runtime context (evidence, unchanged by this freeze)
 
 ```text
-allowlist            = v18 (davi_external_read_allowlist.json)
+allowlist            = v19 (davi_external_read_allowlist.json)
 governed READ ops    = 89
-baseline executable  = 87
 Agent Intelligence   = 2026.10.07.2
 MCP tools            = 2 (discover_delpi_information, execute_delpi_information)
 ```
+
+Contextual evidence only — the knowledge freeze does not authorize or
+alter the operation surface.
 
 ## Related
 
