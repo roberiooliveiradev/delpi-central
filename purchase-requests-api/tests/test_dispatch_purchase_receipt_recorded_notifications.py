@@ -126,7 +126,6 @@ def _use_case(
         dispatched_repository=dispatched,
         preference_service=PurchaseRequestNotificationPreferenceService(
             mapping_repository=_FakeMappingRepo(rows),
-            subscription_repository=SimpleNamespace(),
         ),
         notification_service=notifier,
     )

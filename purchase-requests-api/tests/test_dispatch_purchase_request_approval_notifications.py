@@ -152,14 +152,6 @@ class _FakeMappingRepo:
         return None
 
 
-class _FakeSubscriptionRepo:
-    def __init__(self, rows: list[dict] | None = None) -> None:
-        self.rows = list(rows or [])
-
-    def list_for_user(self, user_id: str) -> list[dict]:
-        return [dict(r) for r in self.rows if r.get("user_id") == user_id]
-
-
 def _notifier(posts: list[dict], status_code: int = 201, text: str = ""):
     def fake_post(url, **kwargs):
         posts.append({"url": url, **kwargs})
@@ -179,7 +171,6 @@ def _use_case(
     states: _FakeStateRepo,
     cursor: _FakeCursorRepo,
     notifier,
-    subscribed_events: list[str] | None = None,
     mapped: bool = True,
 ) -> DispatchPurchaseRequestApprovalNotificationsUseCase:
     mappings = (
@@ -187,23 +178,15 @@ def _use_case(
         if mapped
         else []
     )
-    subs = [
-        {"user_id": "portal-1", "event_key": event, "enabled": True}
-        for event in (subscribed_events or [])
-    ]
     return DispatchPurchaseRequestApprovalNotificationsUseCase(
         gateway=gateway,
         state_repository=states,
         cursor_repository=cursor,
         preference_service=PurchaseRequestNotificationPreferenceService(
             mapping_repository=_FakeMappingRepo(mappings),
-            subscription_repository=_FakeSubscriptionRepo(subs),
         ),
         notification_service=notifier,
     )
-
-
-_SUBSCRIBED_BOTH = ["purchase_request_approved", "purchase_request_rejected"]
 
 
 def test_first_run_builds_baseline_without_notifications() -> None:
@@ -215,7 +198,6 @@ def test_first_run_builds_baseline_without_notifications() -> None:
         states=states,
         cursor=cursor,
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["first_run"] is True
     assert result["baseline"] == 1  # aggregated to SC level
@@ -232,7 +214,6 @@ def test_first_run_does_not_notify_already_approved_requests() -> None:
         states=_FakeStateRepo(),
         cursor=_FakeCursorRepo(initial=None),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["first_run"] is True
     assert posts == []
@@ -253,7 +234,6 @@ def test_blocked_to_approved_dispatches_once() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     )
     result = use_case.execute()
     assert result["first_run"] is False
@@ -297,7 +277,6 @@ def test_blocked_to_rejected_dispatches_once() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["dispatched"] == 1
     assert result["rejected"] == 1
@@ -321,7 +300,6 @@ def test_approved_to_approved_sends_nothing() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["claimed"] == 0
     assert result["dispatched"] == 0
@@ -340,7 +318,6 @@ def test_rejected_to_rejected_sends_nothing() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["dispatched"] == 0
     assert posts == []
@@ -359,7 +336,6 @@ def test_approved_blocked_approved_notifies_again() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=notifier,
-        subscribed_events=_SUBSCRIBED_BOTH,
     )
     use_case._gateway = _FakeGateway({"items": [_item(approval_raw="L", approval_status="approved")]})
     assert use_case.execute()["dispatched"] == 1
@@ -385,7 +361,6 @@ def test_core_outage_keeps_transition_pending_and_retries() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=notifier,
-        subscribed_events=_SUBSCRIBED_BOTH,
     )
     result = use_case.execute()
     assert result["dispatched"] == 0
@@ -412,16 +387,16 @@ def test_unmapped_requester_skips_without_breaking() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
         mapped=False,
     ).execute()
     assert result["dispatched"] == 0
-    assert result["no_subscriber"] == 1
+    assert result["unmapped"] == 1
     assert posts == []
     assert states.rows[("01", "164708")]["notify_pending"] is False
 
 
-def test_preference_disabled_sends_nothing() -> None:
+def test_mapped_requester_dispatches_without_subscription() -> None:
+    """Sem linha de subscription o usuário mapeado recebe — a preferência é da Core."""
     posts: list[dict] = []
     states = _FakeStateRepo()
     states.insert_baseline(
@@ -433,11 +408,10 @@ def test_preference_disabled_sends_nothing() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=["purchase_receipt_recorded"],  # sem o evento approved
     ).execute()
-    assert result["dispatched"] == 0
-    assert result["no_subscriber"] == 1
-    assert posts == []
+    assert result["dispatched"] == 1
+    assert result["unmapped"] == 0
+    assert len(posts) == 1
 
 
 def test_missing_approver_name_keeps_message_natural() -> None:
@@ -453,7 +427,6 @@ def test_missing_approver_name_keeps_message_natural() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     message = posts[0]["json"]["message"]
     assert "foi aprovada por" not in message
@@ -477,7 +450,6 @@ def test_multi_item_request_dispatches_single_notification() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["dispatched"] == 1
     assert len(posts) == 1
@@ -499,7 +471,6 @@ def test_mixed_items_rejected_wins_over_approved() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["rejected"] == 1
     assert posts[0]["json"]["metadata"]["event"] == "purchase_request_rejected"
@@ -513,7 +484,6 @@ def test_new_request_seen_already_approved_notifies() -> None:
         states=_FakeStateRepo(),  # tabela já populada? não — mas cursor marca baseline feita
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     ).execute()
     assert result["dispatched"] == 1
 
@@ -532,14 +502,12 @@ def test_concurrent_claim_only_one_instance_dispatches() -> None:
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     )
     second = _use_case(
         gateway=_FakeGateway(payload),
         states=states,
         cursor=_FakeCursorRepo(initial=1),
         notifier=_notifier(posts),
-        subscribed_events=_SUBSCRIBED_BOTH,
     )
     # Segunda instância "perde" a claim quando a primeira já marcou pending.
     first._states.rows[("01", "164708")]["notify_pending"] = True

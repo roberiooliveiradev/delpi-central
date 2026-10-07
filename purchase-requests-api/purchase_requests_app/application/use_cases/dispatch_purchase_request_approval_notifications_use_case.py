@@ -111,7 +111,7 @@ class DispatchPurchaseRequestApprovalNotificationsUseCase:
             "rejected": 0,
             "dispatched": 0,
             "skipped": 0,
-            "no_subscriber": 0,
+            "unmapped": 0,
             "retry": 0,
             "unchanged": 0,
         }
@@ -148,20 +148,17 @@ class DispatchPurchaseRequestApprovalNotificationsUseCase:
             requester = str(
                 claimed.get("requester_protheus_user_id") or ""
             ).strip()
-            user_ids = self._preferences.portal_users_for_protheus_event(
-                protheus_user_id=requester,
-                event_key=event_key,
-            )
+            user_ids = self._preferences.portal_users_for_mapped_requester(requester)
             if not user_ids:
                 self._states.mark_skipped(
                     branch=branch,
                     request_number=request_number,
                     approval_status=status,
-                    result="no_subscriber",
+                    result="unmapped_requester",
                 )
-                counters["no_subscriber"] += 1
+                counters["unmapped"] += 1
                 logger.info(
-                    "purchase_request_approval_no_subscriber event=%s sc=%s:%s",
+                    "purchase_request_approval_unmapped_requester event=%s sc=%s:%s",
                     event_key,
                     branch,
                     request_number,
@@ -206,13 +203,13 @@ class DispatchPurchaseRequestApprovalNotificationsUseCase:
         if counters["claimed"] or counters["retry"]:
             logger.info(
                 "purchase_request_approval_poll observed=%s claimed=%s approved=%s "
-                "rejected=%s dispatched=%s no_subscriber=%s retry=%s truncated=%s",
+                "rejected=%s dispatched=%s unmapped=%s retry=%s truncated=%s",
                 counters["observed"],
                 counters["claimed"],
                 counters["approved"],
                 counters["rejected"],
                 counters["dispatched"],
-                counters["no_subscriber"],
+                counters["unmapped"],
                 counters["retry"],
                 truncated,
             )

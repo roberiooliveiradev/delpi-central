@@ -86,7 +86,6 @@ def test_mapped_requester_resolves_zero_or_one_user() -> None:
     )
     service = PurchaseRequestNotificationPreferenceService(
         mapping_repository=repo,
-        subscription_repository=SimpleNamespace(),
     )
     assert service.portal_users_for_mapped_requester("000234") == ["portal-1"]
     assert service.portal_users_for_mapped_requester("missing") == []

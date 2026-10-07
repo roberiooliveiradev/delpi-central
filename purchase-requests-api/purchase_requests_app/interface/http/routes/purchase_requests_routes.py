@@ -443,19 +443,21 @@ def list_notification_events_route(user=Depends(_require_admin)):
     return ok({"items": list_notification_events()})
 
 
-@admin_router.get("/notification-subscriptions")
+@admin_router.get("/notification-subscriptions", deprecated=True)
 def list_notification_subscriptions(user=Depends(_require_admin)):
+    """Deprecated: subscriptions não bloqueiam mais a entrega — a preferência
+    efetiva é a categoria na Core API (`/me/notifications/preferences`)."""
     repo = NotificationSubscriptionRepository()
     return ok({"items": repo.list_all()})
 
 
-@admin_router.get("/notification-subscriptions/{user_id}")
+@admin_router.get("/notification-subscriptions/{user_id}", deprecated=True)
 def list_notification_subscriptions_for_user(user_id: str, user=Depends(_require_admin)):
     repo = NotificationSubscriptionRepository()
     return ok({"items": repo.list_for_user(user_id)})
 
 
-@admin_router.put("/notification-subscriptions/{user_id}")
+@admin_router.put("/notification-subscriptions/{user_id}", deprecated=True)
 def replace_notification_subscriptions(
     user_id: str,
     body: ReplaceNotificationSubscriptionsBody,
