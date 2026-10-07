@@ -10973,3 +10973,110 @@ EVIDENCE (live production, 2026-10-05):
     PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
       C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.148. C3-INTELLIGENCE-LOOP-03R1 — bounded turn-goal stage + preflight ordering + write ceiling + reliability hardening
+
+    OBJECTIVE = close the LOOP-03 defect inventory (D01–D09) plus the
+      write-evaluation blocker, token expiry, latency and bounded
+      observability — without a second planner, without owner/tool
+      name branches, without weakening any gate.
+
+    DEFECT_INVENTORY_DISPOSITION:
+      L03-D01 COMPARABILITY      = CLOSED — `_compare_records` now
+        requires every scalar business-context field shared by BOTH
+        records to carry equal values; a differing shared context the
+        model omitted yields INCONCLUSIVE (reason-coded: insufficient
+        vs scope-mismatch). Technical/provenance keys excluded by
+        canonical contract.
+      L03-D02 GOAL_UNDERSTANDING = CLOSED_STRUCTURAL — one bounded
+        `_understand_goal` proposal (goal_class/comparison_requested/
+        output_mode/business_subject/scope_constraints), validated
+        deterministically, reused by native assessment, argument
+        projection and the comparability invariant. A validated
+        `comparison_requested` forces corroborate mode even when the
+        native assessment returns "sufficient" — a comparison goal
+        can never silently collapse to single-source success.
+        Invalid/absent proposals degrade to the neutral default.
+      L03-D03 ARG_PROJECTION     = CLOSED — validated
+        `business_subject` is projected into the argument block
+        (query args anchor on the business concept). Owner-side:
+        VISTA `TvDataRouteDiscoveryService` now filters a bounded
+        host/query stoplist so generic surface words never dilute
+        domain-token ranking.
+      L03-D04 SAME-OWNER PREREQ  = CLOSED — `_resolve_missing_inputs`
+        reused (unchanged contract): bounded same-owner non-mutating
+        resolver, ambiguity -> candidate clarification, resolved
+        values must occur literally in owner evidence; now also runs
+        inside the pre-foreign preflight.
+      L03-D05 TEO_PARAPHRASE     = TELEMETRY_ADDED — root cause
+        unproven remains honest; bounded argument telemetry (declared
+        keys only) + stage timing now emitted for diagnosis.
+      L03-D06 PRESENTATION       = CLOSED — `_business_lines` unwraps
+        nested technical envelopes recursively (data/result/payload/
+        response, depth-bounded), preserving deterministic render and
+        the sanitized generic fallback.
+      L03-D07 RESOLVER FALLBACK  = CLOSED — SOURCE_UNAVAILABLE /
+        AUTHZ_DENIED attempts are deterministic terminal results
+        (truthful unavailability/denial content,
+        delpi_source_unverified limitation, HYPOTHESIS class); the
+        general model no longer narrates an operational failure.
+      L03-D08 MISSING PREFLIGHT  = CLOSED — target preliminary
+        arguments + unproven-identifier demotion + same-owner
+        resolver run BEFORE any foreign call; an id-like or
+        foreign-required missing input clarifies with foreign calls
+        = 0.
+      L03-D09 OPENAPI_CORRELATION= CLOSED — `OpenApiCapabilityProvider
+        .invoke` re-stamps the turn correlation_id into outcome
+        provenance when the invoker returned a foreign/absent one.
+      WRITE_EVAL_BLOCKER         = CLOSED — the owner `direct` path
+        now passes the canonical `evaluate_write_continuation` gate
+        before `_execute_prepared_act` (capability live + proposal
+        ready/non-expired) — owner policy never grants DÉLIA
+        authority.
+      EXECUTION_CEILING          = NEW CONTRACT — request-scoped
+        `max_execution_stage="prepare"` caps the governed chain at
+        PREPARE: direct policy converts to CONFIRMATION_REQUIRED;
+        confirmations and direct ACT selections refuse truthfully
+        (execution_ceiling). It can only reduce authority.
+      TOKEN_EXPIRY               = CLOSED — one bounded same-call
+        re-exchange after invalidate+reconnect for non-mutating
+        classes (DISCOVERY/READ/ANALYSIS) or when no material call
+        occurred; PREPARE/ACT get zero material retries.
+      LATENCY                    = CLOSED — bounded `timing_ms` on
+        provider_invoke and model_propose stage logs.
+      OBSERVABILITY              = CLOSED — logs carry declared
+        argument keys and stage metadata only; never values, tokens
+        or payloads.
+
+    CHANGE (delia-api): `orchestration.py` (+GOAL stage/instruction,
+      `_TurnGoal`, `_assess_native_path(goal=)`, preflight block,
+      `_build_arguments(business_subject=)`, `_compare_records`
+      shared-context gate, `_business_lines` recursive envelope,
+      `attempt(max_execution_stage=)` plumbed to PREPARE/ACT/
+      confirmation paths, `_invoke`/`_propose` timing+key telemetry);
+      `handle_interactive_turn.py` (deterministic terminal result for
+      SOURCE_UNAVAILABLE/AUTHZ_DENIED, clarification epistemic class
+      HYPOTHESIS, `max_execution_stage` plumbing);
+      `contracts.py` (`InteractiveTurnRequest.max_execution_stage`);
+      `openapi_provider.py` (correlation stamping);
+      `mcp/adapter.py` (bounded non-mutating auth retry);
+      `tv-dashboard-api` `tv_data_route_discovery_service.py`
+      (query stoplist — owner-side ranking).
+
+    TESTS = 853/853 delia-api PASS (new: ceiling x3, terminal D07 x2,
+      OpenAPI correlation, auth-retry sibling/negative, goal stage x3,
+      request-contract field set); tv-dashboard-api discovery facade
+      13/13 PASS; owner suite 1757 PASS / 3 FAIL — all three failures
+      reproduce identically WITHOUT this change (pre-existing catalog/
+      budget drift, unrelated).
+
+    RESIDUAL: REAL_MODEL_EVAL = TEST_NOT_RUN;
+      LIVE_COMPOSITION = TEST_NOT_RUN;
+      TEO_PARAPHRASE_ROOT_CAUSE = UNPROVEN (telemetry in place);
+      DYNAMIC_VS_SNAPSHOT_SEMANTICS = PARTIAL;
+      DECISION_PATH_RUNTIME = PARTIAL;
+      INDEPENDENT_CI = NOT_AVAILABLE.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

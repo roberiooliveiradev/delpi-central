@@ -2613,3 +2613,30 @@ Supersedes the §6.146 claims corrected by the external architecture review (`AR
 | `REAL_MODEL_EVAL` / `LIVE_COMPOSITION` | TEST_NOT_RUN / TEST_NOT_RUN |
 | `VISTA_NATIVE_DYNAMIC_PATH` / `DAVI_FOREIGN_STRUCTURAL_WORKFLOW` / `TEO_FOREIGN_STRUCTURAL_WORKFLOW` | PROVEN_IN_REPO / PASS_IN_FIXTURE / PASS_IN_FIXTURE (structural fixtures; no live owner run) |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R1 — bounded turn-goal stage + preflight ordering + write ceiling + reliability hardening (evidence §6.148)
+
+Extends §6.147 (all LOOP-02R1 rows preserved; regression suites re-run). Column values below are the current state.
+
+| Check | Result |
+|---|---|
+| `TURN_GOAL_STAGE` | PASS — one bounded `_understand_goal` proposal validated deterministically (goal_class/comparison_requested/output_mode/business_subject/scope_constraints); invalid or absent proposal degrades to the neutral default; reused by assessment, argument projection and the comparability invariant — no second planner |
+| `COMPARISON_GOAL_SINGLE_SOURCE_SILENT_SUCCESS` | **BLOCKED** — a validated `comparison_requested` forces corroborate mode even when the native assessment returns "sufficient"; comparison can never collapse to single-source native success |
+| `COMPARABILITY_SHARED_CONTEXT` | PASS — differing shared scalar business-context fields now yield INCONCLUSIVE (distinguishing insufficient-vs-scope-mismatch reason); technical/provenance keys excluded by canonical contract |
+| `PRE_FOREIGN_PREFLIGHT` | PASS — target preliminary arguments + unproven-identifier demotion + same-owner resolver run BEFORE any foreign call; id-like or foreign-required missing input → `CLARIFICATION_REQUIRED` with foreign calls = 0; validated args reused when no foreign evidence arrives (no duplicate proposal) |
+| `BUSINESS_SUBJECT_ARG_PROJECTION` | PASS — validated subject is projected into the argument block; bounded model proposal still fills fields deterministically (zero provider/provider-capability names in prompts) |
+| `OWNER_SEARCH_RANKING` | CLOSED — VISTA `TvDataRouteDiscoveryService` filters a bounded host/query stoplist; generic surface tokens no longer dilute domain-token ranking (13/13 discovery tests) |
+| `SAME_OWNER_PREREQ` | PASS — bounded same-owner non-mutating resolver; ambiguity → candidate clarification; resolved value must occur literally in owner evidence (fail-closed) |
+| `DIRECT_ACT_GOVERNANCE` | **CLOSED** — owner `direct` policy now passes the canonical `evaluate_write_continuation` gate before `_execute_prepared_act`; unreachable capability / expired proposal → WRITE_REJECTED (was: owner policy bypassed the DÉLIA gate) |
+| `MAX_EXECUTION_STAGE_PREPARE` | PASS — request-scoped ceiling caps the governed chain at PREPARE: direct policy converts to CONFIRMATION_REQUIRED; confirmations and direct ACT selections refuse truthfully (`execution_ceiling`); ceiling can only reduce authority |
+| `RESOLVER_ERROR_FALLBACK` | CLOSED — `SOURCE_UNAVAILABLE`/`AUTHZ_DENIED` are deterministic terminal results (truthful content + `delpi_source_unverified` limitation + `HYPOTHESIS` class); the general model never narrates an operational failure |
+| `EPISTEMIC_CLASS_CLARIFICATION` | PASS — ungrounded clarification renders as HYPOTHESIS, not CONCLUSION |
+| `NESTED_ENVELOPE_RENDERING` | PASS — `_business_lines` unwraps nested data/result/payload/response envelopes recursively (depth-bounded) with deterministic sanitize + generic fallback |
+| `OPENAPI_CORRELATION_PROPAGATION` | PASS — provider re-stamps the turn correlation_id into outcome provenance when the invoker returned a foreign/absent id |
+| `TOKEN_EXPIRY_RETRY` | BOUNDED — one same-call re-exchange after invalidate+reconnect for non-mutating classes (DISCOVERY/READ/ANALYSIS) or when no material call occurred; PREPARE/ACT = 0 material retries (non-mutating sibling proven; retry-success and mutating-negative tests added) |
+| `STAGE_TIMING_TELEMETRY` | PASS — `timing_ms` on `provider_invoke` and `model_propose`; logs carry declared argument keys only (no values, tokens or payloads) |
+| `TEO_PARAPHRASE_ROOT_CAUSE` | **UNPROVEN** — diagnosis blocked on production data; bounded arg telemetry in place (honest residual) |
+| Full delia-api suite | 853/853 PASS |
+| Owner suites | VISTA discovery facade 13/13 PASS; tv-dashboard-api 1757 PASS / 3 FAIL (failures reproduce without this change — pre-existing catalog/budget drift, unrelated) |
+| `REAL_MODEL_EVAL` / `LIVE_COMPOSITION` | TEST_NOT_RUN / TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
