@@ -125,7 +125,6 @@ _ELIGIBLE = {
 _ALLOWLIST_ONLY_IDS = {
     "list_product_physical_locations",
     "list_product_inventory_blocks",
-    "list_production_order_operation_materials_batch",
 }
 _ALLOWLIST_IDS = _ELIGIBLE | _ALLOWLIST_ONLY_IDS
 

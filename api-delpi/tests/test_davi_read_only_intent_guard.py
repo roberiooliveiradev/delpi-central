@@ -250,7 +250,6 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
         "list_product_inventory_blocks",
         "list_product_physical_locations",
         "list_production_order_operation_materials",
-        "list_production_order_operation_materials_batch",
         "list_protheus_table_columns",
         "list_supplies_inventory_adjustments",
         "list_supplies_purchase_request_lines",

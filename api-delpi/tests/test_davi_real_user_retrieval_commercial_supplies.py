@@ -258,9 +258,16 @@ def test_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
     previous = allow.get("coverageDecision", {}).get("previousDecision") or {}
+    assert previous.get("taskId") == (
+        "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001"
+    )
     grandparent = previous.get("previousDecision") or {}
-    assert grandparent.get("taskId") == "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001"
-    assert (grandparent.get("previousDecision") or {}).get("taskId") == (
+    assert grandparent.get("taskId") == "SYSTEM-METADATA-IMPLEMENTATION-001"
+    great_grandparent = grandparent.get("previousDecision") or {}
+    assert great_grandparent.get("taskId") == (
+        "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001"
+    )
+    assert (great_grandparent.get("previousDecision") or {}).get("taskId") == (
         "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}

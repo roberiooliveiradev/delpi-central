@@ -12,9 +12,14 @@ Comprovado em dados (out/2026):
 - ``D3_CUSTO1`` é o valor do movimento no momento do ajuste (mesma
   interpretação do cálculo histórico SB9+SD3).
 - ``D3_TPMOVAJ`` não é usado no ambiente; SF5 não contém os TM 499/999;
-  F0Q vazio; C5D é cadastro fiscal sem vínculo determinístico.
-- O vínculo SB7↔SD3 é determinístico por
-  filial + produto + armazém + data (4.849/4.852 linhas 2025+).
+  F0Q vazio; C5D é cadastro fiscal sem vínculo comprovado.
+- SB7 é apoio de proveniência, não autoridade: a associação
+  SB7↔SD3 por filial + produto + armazém + data apresentou
+  alta correlação na base investigada (4.849/4.852 linhas 2025+),
+  mas isso não estabelece vínculo um-para-um autoritativo.
+  `inventory_document`/`counted_quantity` só são expostos quando
+  existe exatamente um documento candidato; ausente ou ambíguo
+  → fail-closed (None).
 
 As expressões SQL abaixo são a única fonte da classificação — o mesmo
 padrão de ``ConsumptionRealQuantityService``: o domínio possui a regra
@@ -79,6 +84,28 @@ def normalize_nature(value: str | None) -> str | None:
 
 def nature_label(nature: str | None) -> str:
     return NATURE_LABELS.get(str(nature or "").strip(), "Ajuste de inventário")
+
+
+def resolve_inventory_provenance(
+    candidate_document_count: object,
+    document: object,
+    counted_quantity: object,
+) -> tuple[object, object]:
+    """Proveniência SB7 fail-closed — decisão canônica do ajuste.
+
+    SB7 é apoio de proveniência, não autoridade: o documento de
+    inventário só é exposto quando existe **exatamente um** documento
+    candidato (não nulo, não deletado) para a chave
+    filial+produto+armazém+data. Zero ou múltiplos candidatos
+    → (None, None), nunca TOP 1/MIN/MAX como autoridade.
+    """
+    try:
+        count = int(candidate_document_count or 0)
+    except (TypeError, ValueError):
+        count = 0
+    if count != 1:
+        return None, None
+    return document, counted_quantity
 
 
 INVENTORY_ADJUSTMENT_DOC = INVENTORY_ADJUSTMENT_DOCUMENT

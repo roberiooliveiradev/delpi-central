@@ -2,9 +2,9 @@
   "metadata": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-INVENTORY-001",
     "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
-    "generated_at": "2026-10-07T12:37:22.893391+00:00",
-    "source_head": "17d432bc0ccb928464ba5edd56708f4f62f6b6b7",
-    "origin_main": "be3c63a470fe2c248505f82a2e88b08f7782fdd2",
+    "generated_at": "2026-10-07T13:50:31.456882+00:00",
+    "source_head": "f93a80ab904f416503c5f1581c755e15ac1b3412",
+    "origin_main": "f93a80ab904f416503c5f1581c755e15ac1b3412",
     "openapi_version": "3.0.3",
     "baseline_version": "3",
     "baseline_operation_count": 738,
@@ -120,12 +120,12 @@
       "DESTRUCTIVE_OUT_OF_SCOPE": 17,
       "GENERIC_SQL_FORBIDDEN": 2,
       "LEGACY_UNSAFE": 2,
-      "NEEDS_BOUNDED_EXECUTION": 3,
+      "NEEDS_BOUNDED_EXECUTION": 2,
       "NEEDS_MODEL_SAFE_PROJECTION": 339,
       "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
       "SEMANTICALLY_REDUNDANT": 3,
       "STREAM_BINARY_OUT_OF_SCOPE": 33,
-      "WRITE_OUT_OF_SCOPE": 130
+      "WRITE_OUT_OF_SCOPE": 131
     },
     "GET_DOMAIN_COUNTS": {
       "admin": 29,
@@ -145,7 +145,7 @@
     "ADMIN": 71,
     "SQL": 2,
     "BINARY": 33,
-    "WRITE_OUT_OF_SCOPE": 130,
+    "WRITE_OUT_OF_SCOPE": 131,
     "DESTRUCTIVE": 17,
     "MODEL_SAFE_PROJECTION_BLOCKED": 339,
     "NESTED_PROJECTION_BLOCKED": 51,
@@ -37001,22 +37001,15 @@
       "admin": false,
       "generic_sql": false,
       "sensitive_high_volume": false,
-      "current_davi_disposition": "NEEDS_BOUNDED_EXECUTION",
-      "current_blocker": "NEEDS_BOUNDED_EXECUTION",
-      "current_allowlist_presence": true,
-      "current_projection_support": true,
-      "current_aliases": [
-        "materiais de várias OPs",
-        "materiais de varias ops",
-        "empenhos de várias ordens",
-        "batch operation materials",
-        "materials for multiple orders",
-        "necessidade de material em lote"
-      ],
-      "explicitly_not_approved": false,
+      "current_davi_disposition": "WRITE_OUT_OF_SCOPE",
+      "current_blocker": "WRITE_OUT_OF_SCOPE",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": true,
       "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
-      "notes": null
+      "notes": "Deferred by DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001: not explicitly frozen in the approved DAVI Product/Architecture scope and no proven DAVI consumer need justifies the batch of up to 300 OPs. Owner API route/contract unchanged; single-OP list_production_order_operation_materials remains promoted. Not a security/AuthZ/endpoint defect."
     },
     {
       "operationId": "notify_console_smoke_alerts",

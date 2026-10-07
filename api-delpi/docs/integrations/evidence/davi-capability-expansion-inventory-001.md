@@ -3,10 +3,10 @@
 > Evidence artifact. **Not** runtime authority. **Not** the operational allowlist.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `17d432bc0ccb928464ba5edd56708f4f62f6b6b7`
-- origin/main: `be3c63a470fe2c248505f82a2e88b08f7782fdd2`
+- Source HEAD: `f93a80ab904f416503c5f1581c755e15ac1b3412`
+- origin/main: `f93a80ab904f416503c5f1581c755e15ac1b3412`
 - OpenAPI/baseline: `3.0.3` / v3
-- Generated at: `2026-10-07T12:37:22.893391+00:00`
+- Generated at: `2026-10-07T13:50:31.456882+00:00`
 
 ## Executive summary
 
@@ -121,12 +121,12 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
     "DESTRUCTIVE_OUT_OF_SCOPE": 17,
     "GENERIC_SQL_FORBIDDEN": 2,
     "LEGACY_UNSAFE": 2,
-    "NEEDS_BOUNDED_EXECUTION": 3,
+    "NEEDS_BOUNDED_EXECUTION": 2,
     "NEEDS_MODEL_SAFE_PROJECTION": 339,
     "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
     "SEMANTICALLY_REDUNDANT": 3,
     "STREAM_BINARY_OUT_OF_SCOPE": 33,
-    "WRITE_OUT_OF_SCOPE": 130
+    "WRITE_OUT_OF_SCOPE": 131
   }
 }
 ```

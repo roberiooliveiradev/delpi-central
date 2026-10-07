@@ -1137,7 +1137,7 @@ def test_eligible_set_is_seventy_seven():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
     # The exact frozen set is asserted in test_davi_capability_expansion_inventory;
     # here we keep the cardinality plus a regression subset.
-    assert len(ids) == 90
+    assert len(ids) == 89
     assert {
         "search_products",
         "get_product_stock",

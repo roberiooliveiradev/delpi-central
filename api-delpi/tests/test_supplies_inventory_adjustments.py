@@ -474,7 +474,7 @@ def test_repository_filters_invent_doc_and_estorno() -> None:
     assert "RTRIM(LTRIM(SD3.D3_DOC)) = 'INVENT'" in source
     assert "D3_ESTORNO" in source
     assert "SD3.D_E_L_E_T_ = ''" in source
-    # Proveniência SB7 determinística por filial+cod+local+data.
+    # Proveniência SB7 fail-closed (documento+quantidade só quando inequívoco).
     assert "SB7010" in source
     for key in ("B7_FILIAL", "B7_COD", "B7_LOCAL", "B7_DATA"):
         assert key in source

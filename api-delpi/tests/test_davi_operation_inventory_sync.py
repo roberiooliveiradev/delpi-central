@@ -43,7 +43,6 @@ def test_committed_inventory_eligible_matches_allowlist():
     assert live_only == {
         "list_product_physical_locations",
         "list_product_inventory_blocks",
-        "list_production_order_operation_materials_batch",
     }
     assert runtime_eligible == allow_ids - live_only
     assert len(runtime_eligible) + len(live_only) == len(allow.get("operations") or [])

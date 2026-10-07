@@ -15,6 +15,7 @@ from app.domain.ports.supplies.inventory_adjustments_repository_port import (
 from app.domain.services.supplies.inventory_adjustment_service import (
     InventoryAdjustmentClassification,
     nature_label,
+    resolve_inventory_provenance,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
@@ -30,27 +31,35 @@ _BASE_WHERE = """
     AND RTRIM(LTRIM(SD3.D3_DOC)) = 'INVENT'
 """
 
-# Proveniência determinística SB7 por filial+produto+armazém+data
-# (comprovada em dados; TOP 1 torna o join estável mesmo com doc repetido).
-_INVENTORY_DOC_SUBQUERY = """
-    (SELECT TOP 1 RTRIM(LTRIM(S.B7_DOC))
-       FROM SB7010 S WITH (NOLOCK)
-      WHERE S.D_E_L_E_T_ = ''
-        AND S.B7_FILIAL = SD3.D3_FILIAL
-        AND S.B7_COD = SD3.D3_COD
-        AND S.B7_LOCAL = SD3.D3_LOCAL
-        AND S.B7_DATA = SD3.D3_EMISSAO
-      ORDER BY S.B7_DOC)
-"""
-
-_COUNTED_QTY_SUBQUERY = """
-    (SELECT SUM(S.B7_QUANT)
-       FROM SB7010 S WITH (NOLOCK)
-      WHERE S.D_E_L_E_T_ = ''
-        AND S.B7_FILIAL = SD3.D3_FILIAL
-        AND S.B7_COD = SD3.D3_COD
-        AND S.B7_LOCAL = SD3.D3_LOCAL
-        AND S.B7_DATA = SD3.D3_EMISSAO)
+# Proveniência SB7 fail-closed por filial+produto+armazém+data.
+# Documento candidato = B7_DOC normalizado não vazio; exatamente um
+# documento distinto expõe documento+quantidade contada. Zero ou mais de
+# um documento candidato → NULL/NULL (nunca TOP 1/MIN/MAX como
+# autoridade). Linhas físicas do MESMO B7_DOC agregam na quantidade.
+_PROVENANCE_OUTER_APPLY = """
+    OUTER APPLY (
+        SELECT
+            COUNT(*) AS candidate_document_count,
+            CASE WHEN COUNT(*) = 1
+                 THEN MAX(P.inventory_document)
+            END AS inventory_document,
+            CASE WHEN COUNT(*) = 1
+                 THEN MAX(P.counted_quantity)
+            END AS counted_quantity
+        FROM (
+            SELECT
+                NULLIF(LTRIM(RTRIM(S.B7_DOC)), '') AS inventory_document,
+                SUM(S.B7_QUANT) AS counted_quantity
+            FROM SB7010 S WITH (NOLOCK)
+            WHERE S.D_E_L_E_T_ = ''
+              AND S.B7_FILIAL = SD3.D3_FILIAL
+              AND S.B7_COD = SD3.D3_COD
+              AND S.B7_LOCAL = SD3.D3_LOCAL
+              AND S.B7_DATA = SD3.D3_EMISSAO
+              AND NULLIF(LTRIM(RTRIM(S.B7_DOC)), '') IS NOT NULL
+            GROUP BY NULLIF(LTRIM(RTRIM(S.B7_DOC)), '')
+        ) P
+    ) provenance
 """
 
 
@@ -175,12 +184,14 @@ class InventoryAdjustmentsRepository(
             {_SIGNED_QTY} AS signed_quantity,
             SD3.D3_CUSTO1 AS movement_value,
             {_SIGNED_VAL} AS signed_value,
-            {_INVENTORY_DOC_SUBQUERY} AS inventory_document,
-            {_COUNTED_QTY_SUBQUERY} AS counted_quantity
+            provenance.candidate_document_count AS provenance_candidate_count,
+            provenance.inventory_document AS provenance_document,
+            provenance.counted_quantity AS provenance_counted_quantity
         FROM SD3010 SD3 WITH (NOLOCK)
         LEFT JOIN SB1010 SB1 WITH (NOLOCK)
             ON SB1.B1_COD = SD3.D3_COD
            AND SB1.D_E_L_E_T_ = ''
+        {_PROVENANCE_OUTER_APPLY}
         WHERE {where}
         ORDER BY SD3.D3_EMISSAO DESC, SD3.R_E_C_N_O_ DESC
         OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
@@ -196,6 +207,11 @@ class InventoryAdjustmentsRepository(
         items = []
         for row in rows:
             item_nature = str(row.get("inventory_adjustment_nature") or "")
+            inventory_document, counted_quantity = resolve_inventory_provenance(
+                row.get("provenance_candidate_count"),
+                row.get("provenance_document"),
+                row.get("provenance_counted_quantity"),
+            )
             items.append(
                 {
                     "issue_date": row.get("issue_date"),
@@ -214,10 +230,12 @@ class InventoryAdjustmentsRepository(
                     "signed_quantity": float(row.get("signed_quantity") or 0),
                     "movement_value": float(row.get("movement_value") or 0),
                     "signed_value": float(row.get("signed_value") or 0),
-                    "inventory_document": row.get("inventory_document"),
+                    "inventory_document": (
+                        str(inventory_document) if inventory_document else None
+                    ),
                     "counted_quantity": (
-                        float(row["counted_quantity"])
-                        if row.get("counted_quantity") is not None
+                        float(counted_quantity)
+                        if counted_quantity is not None
                         else None
                     ),
                 }

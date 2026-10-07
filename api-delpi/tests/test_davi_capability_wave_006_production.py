@@ -322,7 +322,7 @@ def test_wave006_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
     assert allow.get("coverageDecision", {}).get("taskId") == (
-        "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001"
+        "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}
     assert len(_PRIOR_FIFTY_THREE) == 53
@@ -879,17 +879,21 @@ def test_wave006_coverage_decision_wording_mentions_machine_load_ops():
     # remain chained, not silently dropped.
     previous = coverage.get("previousDecision") or {}
     assert previous.get("taskId") == (
-        "SYSTEM-METADATA-IMPLEMENTATION-001"
+        "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001"
     )
     grandparent = previous.get("previousDecision") or {}
     assert grandparent.get("taskId") == (
-        "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001"
+        "SYSTEM-METADATA-IMPLEMENTATION-001"
     )
     great_grandparent = grandparent.get("previousDecision") or {}
     assert great_grandparent.get("taskId") == (
+        "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001"
+    )
+    wave6 = great_grandparent.get("previousDecision") or {}
+    assert wave6.get("taskId") == (
         "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ"
     )
-    assert great_grandparent.get("decision") == (
+    assert wave6.get("decision") == (
         "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
     )
     reason = str(coverage.get("reason") or "")

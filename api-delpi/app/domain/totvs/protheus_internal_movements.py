@@ -16,8 +16,12 @@ Classificação canônica domínio-owned dos fatos SD3:
 
 Comprovado em dados (2026-10): todos os movimentos ``INVENT`` usam
 apenas ``TM 999/CF RE0`` (sobra) e ``TM 499/CF DE0`` (furo), sem
-estorno e sem quantidade negativa; o join SB7↔SD3 por
-filial+produto+armazém+data casa 4.849/4.852 linhas 2025+.
+estorno e sem quantidade negativa. SB7 é apoio de proveniência
+(não autoridade): a associação por filial+produto+armazém+data
+apresentou alta correlação na base investigada (4.849/4.852
+linhas 2025+), sem vínculo um-para-um garantido — documento e
+quantidade contada só são expostos quando o documento candidato
+é inequívoco (fail-closed).
 """
 
 from __future__ import annotations

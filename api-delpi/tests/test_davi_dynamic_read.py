@@ -228,11 +228,7 @@ _WAVE7_INVENTORY_MATERIAL_FLOW_OPERATION_IDS = frozenset(
         "get_supplies_safety_stock_consumption_analysis_item_details",
     }
 )
-_WAVE7_SEMANTIC_POST_IDS = frozenset(
-    {
-        "list_production_order_operation_materials_batch",
-    }
-)
+_WAVE7_SEMANTIC_POST_IDS = frozenset()
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
@@ -372,7 +368,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
     assert allow.get("version") == 18
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_INVENTORY_MATERIAL_FLOW_READS"
+        "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(

@@ -406,7 +406,6 @@ _SPECS: dict[str, dict[str, Any]] = {
                 "product_code": "10080055",
                 "product_description": "ORING",
                 "unit": "PC",
-                "movement_type": "RE0",
                 "quantity": 4.0,
                 "production_order": "OP1",
             }
@@ -792,7 +791,7 @@ def test_pos_owned_intent_discovers_candidate(_seeded, query: str, oid: str) -> 
     ]
     assert oid in ranked_ids, (query, ranked_ids)
     discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
-    assert discovered["eligible_action_count"] == 90
+    assert discovered["eligible_action_count"] == 89
     ids = [c["action_id"] for c in discovered["candidates"]]
     assert oid in ids, (query, ids)
     top = discovered["candidates"][0]

@@ -187,7 +187,7 @@ def test_allowlist_v18_and_exactly_five_system_ops_promoted():
     allow = load_external_read_allowlist()
     assert allow["version"] == 18
     ops = {o["operationId"] for o in allow["operations"]}
-    assert len(allow["operations"]) == 90
+    assert len(allow["operations"]) == 89
     assert set(_PROMOTED) <= ops
     for oid in _EXCLUDED_SYSTEM:
         assert oid not in ops

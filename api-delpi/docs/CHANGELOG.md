@@ -12,6 +12,8 @@ Novas rotas `GET /supplies/inventory-adjustments` e `GET /supplies/inventory-adj
 
 Docs: [supplies-inventory-adjustments.md](./api/supplies-inventory-adjustments.md).
 
+**Correção de proveniência (DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001):** `inventory_document`/`counted_quantity` passam a ser fail-closed — expostos somente quando existe **exatamente um** `B7_DOC` candidato (não vazio, não deletado) para filial+produto+armazém+data; zero ou múltiplos documentos → `null`. Removido o `TOP 1` que tratava seleção estável como autoridade. Contrato da API inalterado (`page_size ≤ 500`); a superfície DAVI minimiza `page_size ≤ 50`.
+
 ---
 
 ## 2026-08 — OEE alinhado à eficiência fabril (`HY_TEMPAD`)

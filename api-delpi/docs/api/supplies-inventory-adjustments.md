@@ -49,11 +49,23 @@ signed_value    = +D3_CUSTO1 (RE0) | -D3_CUSTO1 (DE0)
 
 ## Proveniência SB7
 
-O documento de inventário (`B7_DOC`) e a quantidade contada (`B7_QUANT`)
-são correlacionados por `filial + produto + armazém + data de emissão`
-— vínculo determinístico comprovado em dados (4.849/4.852 linhas 2025+
-no período investigado). `TOP 1` torna o join estável mesmo com doc
-repetido.
+SB7 é **apoio** de proveniência, não autoridade. O documento de
+inventário (`B7_DOC`) e a quantidade contada (`B7_QUANT`) são
+correlacionados por `filial + produto + armazém + data de emissão`;
+a base investigada apresentou alta correlação (4.849/4.852 linhas
+2025+), o que **não** estabelece vínculo um-para-um autoritativo.
+
+Contrato fail-closed (set-based, sem `TOP 1`/`MIN`/`MAX` como
+autoridade):
+
+- **exatamente um** documento candidato (`B7_DOC` normalizado não
+  vazio, não deletado) → `inventory_document` = documento e
+  `counted_quantity` = `SUM(B7_QUANT)` das linhas físicas **daquele**
+  documento;
+- **zero** ou **mais de um** documento candidato →
+  `inventory_document` = `null` e `counted_quantity` = `null`;
+- múltiplas linhas físicas do **mesmo** `B7_DOC` não são ambiguidade
+  — agregam na quantidade contada do documento.
 
 ## Tabelas e colunas
 
@@ -75,7 +87,7 @@ Excluídos sempre: `D_E_L_E_T_ <> ''` e `D3_ESTORNO = 'S'`.
 | `product_code` | omitido | Todos os produtos |
 | `warehouse` | omitido | Todos os armazéns (`D3_LOCAL`) |
 | `nature` | omitido | `shortage` (furo) ou `surplus` (sobra); qualquer outro valor → HTTP 400 |
-| `page` / `page_size` | `1` / `50` | Só no endpoint de itens; `page_size` máx. **500** (`page_50_500`) |
+| `page` / `page_size` | `1` / `50` | Só no endpoint de itens; `page_size` máx. **500** (`page_50_500`) no contrato da API; a superfície DAVI minimiza para máx. **50** |
 
 Internamente o período é aplicado como intervalo fechado-aberto
 (`D3_EMISSAO >= start` e `D3_EMISSAO < end + 1 dia`), com todas as
@@ -102,14 +114,22 @@ Paginado (`page`, `page_size`, `total`, `total_pages`). Cada item traz
 `warehouse`, `document`, `movement_category=inventory_adjustment`,
 `movement_direction`, `movement_label`, `inventory_adjustment_nature`,
 `nature_label`, `quantity`, `signed_quantity`, `movement_value`,
-`signed_value`, `inventory_document` (`B7_DOC`) e `counted_quantity`
-(`B7_QUANT`).
+`signed_value`, `inventory_document` (`B7_DOC`, quando a
+proveniência é inequívoca) e `counted_quantity` (`B7_QUANT` agregada
+do documento provado).
 
 ## Governança DAVI
 
 Ambas as operações estão na allowlist `davi_external_read_allowlist.json`
-(v18, `DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001`) com inputs e
-response fields explícitos. A classificação de `kind` em
+(v18, `DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001`, corrigida por
+`DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001`) com inputs e response
+fields explícitos.
+
+Limite de paginação por superfície: **API owner** `page_size` máx.
+**500**; **DAVI** (`list_supplies_inventory_adjustments`) máx. **50**
+— minimização de contexto externo, sem alterar o contrato canônico.
+
+A classificação de `kind` em
 `/products/{code}/internal-movements` aceita `inventory_adjustment`
 como recorte do mesmo predicado canônico — o documento `INVENT`
 **nunca** é classificado como `warehouse_transfer`.
