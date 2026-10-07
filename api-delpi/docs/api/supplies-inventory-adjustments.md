@@ -133,3 +133,12 @@ A classificação de `kind` em
 `/products/{code}/internal-movements` aceita `inventory_adjustment`
 como recorte do mesmo predicado canônico — o documento `INVENT`
 **nunca** é classificado como `warehouse_transfer`.
+
+## Ownership e governança atual
+
+| Item | Estado |
+|------|--------|
+| Technical owner | **api-delpi / Supplies** (`InventoryAdjustmentsRepositoryPort` → `InventoryAdjustmentsRepository` → SD3 + SB7 de apoio) |
+| Business owner | **TO_INVENTORY** — o owner organizacional/de negócio ainda não foi ratificado; **não** deve ser inferido do nome do bounded context Supplies |
+| Permissão backend atual | `api-delpi.access` (`API_DELPI_ACCESS`, `@require_permission`) |
+| AUTHZ intent | **PASS** — `docs/api/00-visao-geral.md` documenta `api-delpi.access` cobrindo Suprimentos/Financeiro; rotas Supplies financeiramente sensíveis comparáveis (`stock-value`, `cpv`, `negotiation-savings`) já aceitam `API_DELPI_ACCESS` na política vigente; nenhuma permissão criada/alterada nesta correção |
