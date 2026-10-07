@@ -58,29 +58,100 @@ QUESTION_KINDS = ("clarifying", "readiness", "evidence", "deepening")
 
 # Closed vocabulary of process-context facts the router may consult.
 # Tri-state/epistemic values — never new domain fields (spec §22).
-CONTEXT_FACTS = (
-    "organization_context",
-    "macroprocess_known",
-    "process_identified",
-    "boundary_known",
-    "as_is_known",
-    "flow_known",
-    "problem_defined",
-    "candidate_cause",
-    "candidates_known",
-    "multiple_cause_families",
-    "causes_open",
-    "waste_symptoms",
-    "operational_cause_focus",
-    "objective_known",
-    "future_state_proposed",
-    "future_defined",
-    "redesign_desired",
-    "measurement_available",
-    "strategic_question",
-    "scope_defined",
-    "horizon_defined",
-)
+# Canonical context-fact vocabulary — single authority for the V2 ``context``
+# contract. ``CONTEXT_FACTS``, ``supported_context_facts`` and every
+# description/schema projection derive from this mapping.
+_TRI = ("yes", "partial", "no", "unknown")
+_BIN = ("yes", "no", "unknown")
+
+CONTEXT_FACT_SCHEMA: dict[str, dict[str, Any]] = {
+    "organization_context": {
+        "description": "High-level org context is known (sector, unit, constraints).",
+        "accepted_values": _TRI,
+    },
+    "macroprocess_known": {
+        "description": "The owning macroprocess/value chain is identified.",
+        "accepted_values": _BIN,
+    },
+    "process_identified": {
+        "description": "A concrete process is identified as the unit of work.",
+        "accepted_values": _BIN,
+    },
+    "boundary_known": {
+        "description": "Process boundary (trigger/outcome, scope edges) is clear.",
+        "accepted_values": _TRI,
+    },
+    "as_is_known": {
+        "description": "Current-state process is sufficiently described.",
+        "accepted_values": _TRI,
+    },
+    "flow_known": {
+        "description": "Current flow of work/steps/handoffs is known.",
+        "accepted_values": _TRI,
+    },
+    "problem_defined": {
+        "description": "A specific problem/effect is defined (not a vague wish to improve).",
+        "accepted_values": _TRI,
+    },
+    "candidate_cause": {
+        "description": "A candidate causal line exists. INFERRED is valid as candidate — never promoted to proven cause.",
+        "accepted_values": ("yes", "inferred", "proposed", "no", "unknown"),
+    },
+    "candidates_known": {
+        "description": "Improvement/method candidates are already identified.",
+        "accepted_values": _BIN,
+    },
+    "multiple_cause_families": {
+        "description": "Several plausible causal families remain open.",
+        "accepted_values": _BIN,
+    },
+    "causes_open": {
+        "description": "Causes are still open/not yet converged.",
+        "accepted_values": _BIN,
+    },
+    "waste_symptoms": {
+        "description": "Flow waste signals present (waiting, rework, handoff loss, bottleneck, overload).",
+        "accepted_values": _BIN,
+    },
+    "operational_cause_focus": {
+        "description": "Question is a purely operational cause chase (delay, rework) — negative signal for strategic analysis.",
+        "accepted_values": _BIN,
+    },
+    "objective_known": {
+        "description": "A measurable objective/outcome/critical factor exists.",
+        "accepted_values": _BIN,
+    },
+    "future_state_proposed": {
+        "description": "A future state is already proposed. Stays PROPOSED — never ACTIVE.",
+        "accepted_values": ("yes", "proposed", "no", "unknown"),
+    },
+    "future_defined": {
+        "description": "Future state is already sufficiently defined.",
+        "accepted_values": _BIN,
+    },
+    "redesign_desired": {
+        "description": "Redesign of the current state is explicitly desired.",
+        "accepted_values": _BIN,
+    },
+    "measurement_available": {
+        "description": "Measurement/data for the objective is available.",
+        "accepted_values": _BIN,
+    },
+    "strategic_question": {
+        "description": "Question is strategic (positioning/options/decision horizon), not operational.",
+        "accepted_values": ("yes", "inferred", "no", "unknown"),
+    },
+    "scope_defined": {
+        "description": "Analysis scope (unit/process/product) is defined.",
+        "accepted_values": _BIN,
+    },
+    "horizon_defined": {
+        "description": "Decision horizon/context window is defined.",
+        "accepted_values": _BIN,
+    },
+}
+
+CONTEXT_FACTS = tuple(CONTEXT_FACT_SCHEMA)
 
 _YES = frozenset({"yes", "true", "present", "known", "observed", "informed", "calculated"})
 _NO = frozenset({"no", "false", "missing", "absent"})
@@ -437,17 +508,16 @@ _IMPROVE_RULES = (
         "note": "Strategic question detected — route to strategic_analysis.",
     },
     {
-        "when": {"problem_defined": ("yes",)},
-        "any_of": (("multiple_cause_families",), ("causes_open",)),
-        "resolves_intent": "diagnose",
-        "candidate_hint": "ishikawa",
-        "note": "Defined problem with open causal families — diagnose via Ishikawa.",
-    },
-    {
         "when": {"problem_defined": ("yes",), "candidate_cause": ("yes", "inferred", "proposed")},
         "resolves_intent": "diagnose",
         "candidate_hint": "five_whys",
         "note": "Defined effect plus one candidate line — diagnose via 5 Whys.",
+    },
+    {
+        "when": {"problem_defined": ("yes",)},
+        "resolves_intent": "diagnose",
+        "candidate_hint": "ishikawa",
+        "note": "Defined problem, causal path not yet established — diagnose via Ishikawa.",
     },
     {
         "when": {"flow_known": ("yes", "partial"), "waste_symptoms": ("yes",)},
@@ -685,6 +755,21 @@ def resolve_guide_version(guide_version: str | None) -> str:
     )
 
 
+def context_fact_schema() -> list[dict[str, Any]]:
+    """Derived projection of the canonical context-fact vocabulary.
+
+    Consumers use this to discover valid ``context`` keys, accepted values
+    and semantics — the only truth is ``CONTEXT_FACT_SCHEMA``."""
+    return [
+        {
+            "id": fact,
+            "description": meta["description"],
+            "accepted_values": list(meta["accepted_values"]),
+        }
+        for fact, meta in CONTEXT_FACT_SCHEMA.items()
+    ]
+
+
 def query_methodology_guide_v2(
     *,
     intent: str | None = None,
@@ -723,6 +808,7 @@ def query_methodology_guide_v2(
         "supported_intents": list(INTENT_IDS),
         "evidence_states": list(EVIDENCE_STATES),
         "invariants": list(INVARIANTS),
+        "supported_context_facts": context_fact_schema(),
     }
     if unknown_facts:
         base["ignored_context_facts"] = unknown_facts

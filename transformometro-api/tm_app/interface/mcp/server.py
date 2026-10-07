@@ -171,7 +171,9 @@ def create_mcp_server() -> MCPServer:
             "teo-method-playbooks-v2 (intent routing, readiness, soft "
             "composition, sufficiency). V2 also accepts intent and an optional "
             "context object of process facts (boundary_known, as_is_known, "
-            "problem_defined, candidate_cause, flow_known, ...). "
+            "problem_defined, candidate_cause, flow_known, ...). V2 responses "
+            "include supported_context_facts — the accepted vocabulary, "
+            "accepted values and semantics. "
             "Guidance is not authorization, not domain truth, and does not write."
         ),
         annotations=_annotations("get_methodology_guide", "Get methodology guide"),

@@ -541,7 +541,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "description": (
                             "V2 optional JSON object of process-context facts "
                             "(e.g. boundary_known, as_is_known, problem_defined, "
-                            "candidate_cause, flow_known, strategic_question)."
+                            "candidate_cause, flow_known, strategic_question). "
+                            "Valid vocabulary, accepted values and semantics: "
+                            "see supported_context_facts in the V2 response."
                         ),
                     },
                 ],

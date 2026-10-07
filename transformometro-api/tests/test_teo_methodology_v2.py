@@ -535,3 +535,123 @@ def test_v2_markdown_is_derived_projection() -> None:
         / "teo-method-playbooks-v2.md"
     )
     assert doc.read_text(encoding="utf-8") == render_v2_markdown()
+
+
+# ------------------------------------------- Hotfix: improve meta-routing
+
+
+def test_improve_problem_defined_alone_resolves_diagnose() -> None:
+    """Hotfix: problem_defined=yes must resolve to diagnose, never map."""
+    r = query_methodology_guide_v2(
+        intent="improve", context={"problem_defined": "yes"}
+    )
+    assert r["resolved_intent"] == "diagnose"
+    assert r["resolved_intent"] != "map"
+    # Semantics: Ishikawa favored/READY; Five Whys PARTIAL until a
+    # candidate cause exists.
+    by_id = {c["method_id"]: c for c in r["candidates"]}
+    assert by_id["ishikawa"]["readiness"] == "READY"
+    assert by_id["ishikawa"]["favored"] is True
+    assert by_id["five_whys"]["readiness"] == "PARTIAL"
+
+
+def test_improve_problem_plus_candidate_cause_favors_five_whys() -> None:
+    r = query_methodology_guide_v2(
+        intent="improve",
+        context={"problem_defined": "yes", "candidate_cause": "inferred"},
+    )
+    assert r["resolved_intent"] == "diagnose"
+    assert r["candidates"][0]["method_id"] == "five_whys"
+    assert r["candidates"][0]["favored"] is True
+
+
+def test_improve_strategic_frame_resolves_strategic_analysis() -> None:
+    r = query_methodology_guide_v2(
+        intent="improve",
+        context={
+            "strategic_question": "yes",
+            "scope_defined": "yes",
+            "horizon_defined": "yes",
+        },
+    )
+    assert r["resolved_intent"] == "strategic_analysis"
+    assert r["candidates"][0]["method_id"] == "swot"
+    assert r["candidates"][0]["favored"] is True
+
+
+def test_improve_as_is_plus_redesign_resolves_redesign_tdr() -> None:
+    r = query_methodology_guide_v2(
+        intent="improve",
+        context={"as_is_known": "yes", "redesign_desired": "yes"},
+    )
+    assert r["resolved_intent"] == "redesign"
+    assert r["candidates"][0]["method_id"] == "tdr"
+
+
+def test_improve_flow_plus_waste_resolves_diagnose_lean() -> None:
+    r = query_methodology_guide_v2(
+        intent="improve",
+        context={"flow_known": "yes", "waste_symptoms": "yes"},
+    )
+    assert r["resolved_intent"] == "diagnose"
+    assert r["candidates"][0]["method_id"] == "lean"
+
+
+def test_improve_indiscriminate_context_yields_clarifying_question() -> None:
+    """Context that matches no routing rule must surface one discriminative
+    question instead of a silent method pick."""
+    # as_is_known=yes alone: no problem, no redesign, no flow waste, no
+    # strategic frame -> no rule matches -> ambiguity, not map.
+    r = query_methodology_guide_v2(
+        intent="improve", context={"as_is_known": "yes"}
+    )
+    assert r.get("resolved_intent") is None
+    questions = [q2 for q2 in r["next_questions"] if q2["kind"] == "clarifying"]
+    assert questions and questions[0]["resolves"]
+
+
+# ------------------------------------- Hotfix: context vocabulary contract
+
+
+def test_context_fact_schema_is_single_authority() -> None:
+    from tm_app.application.methodology.guide_v2 import (
+        CONTEXT_FACT_SCHEMA,
+        context_fact_schema,
+    )
+
+    # CONTEXT_FACTS derives from the schema — no second vocabulary list.
+    assert CONTEXT_FACTS == tuple(CONTEXT_FACT_SCHEMA)
+    projected = context_fact_schema()
+    assert [f["id"] for f in projected] == list(CONTEXT_FACTS)
+    for fact in projected:
+        assert fact["description"]
+        assert "yes" in fact["accepted_values"]
+        assert "unknown" in fact["accepted_values"]
+
+
+def test_v2_payload_advertises_supported_context_facts() -> None:
+    r = query_methodology_guide_v2(intent="map")
+    facts = r["supported_context_facts"]
+    assert [f["id"] for f in facts] == list(CONTEXT_FACTS)
+    ids = {f["id"] for f in facts}
+    assert {"problem_defined", "candidate_cause", "waste_symptoms"} <= ids
+
+
+def test_unknown_fact_ignored_but_vocabulary_discoverable() -> None:
+    r = query_methodology_guide_v2(
+        intent="diagnose",
+        context={
+            "problem_defined": "yes",
+            "foo_bar": "yes",
+            "multiple_causal_families": "yes",
+        },
+    )
+    assert set(r["ignored_context_facts"]) == {
+        "foo_bar",
+        "multiple_causal_families",
+    }
+    # Deterministic discovery of the valid vocabulary in the same payload.
+    assert [f["id"] for f in r["supported_context_facts"]] == list(
+        CONTEXT_FACTS
+    )
+    assert "multiple_cause_families" in CONTEXT_FACTS
