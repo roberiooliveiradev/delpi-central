@@ -30,6 +30,9 @@ from tm_app.application.gpt_actions.user_context_service import (
     AuthenticatedUserContext,
     UserContextService,
 )
+from tm_app.application.gpt_actions.workspace_context_service import (
+    WorkspaceContextService,
+)
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     resolve_gpt_actions_server_url,
@@ -62,6 +65,7 @@ _process_context = ProcessContextService()
 _user_context = UserContextService(
     person_profile_reader=CorePersonProfileGateway()
 )
+_workspace_context = WorkspaceContextService()
 
 # LEGACY_TRANSITIONAL: still mounted for migration, excluded from Builder OpenAPI.
 LEGACY_DIRECT_WRITE_OPERATION_IDS = frozenset(
@@ -292,6 +296,27 @@ def gpt_get_my_context(request: Request):
             request.state.user
         )
         return ok(data, "Contexto pessoal do usuário autenticado.")
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/workspace-context",
+    operation_id="gpt_get_workspace_context",
+    summary="Current Transformômetro workspace refs (navigation hint)",
+)
+def gpt_get_workspace_context(request: Request):
+    try:
+        if getattr(request.state, "user", None) is None:
+            return fail("Usuário não autenticado.", 401, {"error_kind": "authn"})
+        authorization = str(request.headers.get("Authorization") or "").strip()
+        if not authorization:
+            return fail("Usuário não autenticado.", 401, {"error_kind": "authn"})
+        data = _workspace_context.get_workspace_context(authorization)
+        return ok(
+            data,
+            "Contexto de workspace atual (dica de navegação — não é fato de domínio nem autorização).",
+        )
     except Exception as exc:
         return _handle(exc)
 
