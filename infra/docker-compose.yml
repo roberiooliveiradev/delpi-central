@@ -1941,6 +1941,11 @@ services:
       DELIA_OPENAPI_DELPI_BASE_URL: ${DELIA_OPENAPI_DELPI_BASE_URL:-http://delpi-api-delpi:8000}
       DELIA_OPENAPI_DELPI_DECLARATIONS_PATH: ${DELIA_OPENAPI_DELPI_DECLARATIONS_PATH:-/app/config/openapi_declarations.delpi.json}
       DELIA_OPENAPI_TIMEOUT_SECONDS: ${DELIA_OPENAPI_TIMEOUT_SECONDS:-15}
+      # LOOP-03R2A: total wall-clock budget for one interaction turn —
+      # stays >=20s under the ~100s Cloudflare edge timeout so the
+      # application always answers before the edge terminates the
+      # request (524).
+      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-80}
 
     depends_on:
       keycloak:

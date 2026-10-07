@@ -1795,6 +1795,9 @@ services:
       DELIA_MCP_TEO_HOST_HEADER: ${DELIA_MCP_TEO_HOST_HEADER:-}
       DELIA_MCP_VISTA_HOST_HEADER: ${DELIA_MCP_VISTA_HOST_HEADER:-}
       DELIA_MCP_TIMEOUT_SECONDS: ${DELIA_MCP_TIMEOUT_SECONDS:-15}
+      # LOOP-03R2A: total wall-clock budget for one interaction turn —
+      # stays >=20s under the ~100s Cloudflare edge timeout.
+      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-80}
       # C4-MCP-GOVERNED-READS-01/02: bounded read switches — each flag
       # enables exactly its own authorized tuple.
       # DAVI: execute_delpi_information -> search_products only.
