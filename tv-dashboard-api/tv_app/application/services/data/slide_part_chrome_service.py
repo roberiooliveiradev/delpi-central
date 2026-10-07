@@ -1,11 +1,14 @@
 """Apply designTokens.partChrome defaults + hierarchy rebalance on TV slides.
 
 Fills missing / below-min typography and card chrome for KPI, chart, table, input.
-Rebalances internal parts when a primary size (value/title/body/control/frame)
-was scaled without dependents — for every typed component family, including
-composed groupId clusters (shape+heading+text).
+Rebalances internal parts from the primary size (value/title/body/control/frame)
+for every typed component family, including composed groupId clusters
+(shape+heading+text).
 
-Defaults fill still skips INFORMED block ids; hierarchy rebalance always runs.
+Defaults fill still skips INFORMED block ids; hierarchy rebalance always runs,
+but ratio/density targets only drive auto-managed sizes. A size already present
+when chrome starts (persisted, or written by the mutation's ops) is author
+intent: it only receives the token legibility minimum, never a ratio raise.
 """
 
 from __future__ import annotations
@@ -142,6 +145,55 @@ def _bump_to_at_least(container: dict[str, Any], key: str, target: int) -> bool:
     return False
 
 
+_TYPOGRAPHY_SIZE_KEYS = frozenset(
+    {
+        "fontSize",
+        "iconSize",
+        "titleFontSize",
+        "legendFontSize",
+        "axisFontSize",
+        "bodyFontSize",
+        "headerFontSize",
+    }
+)
+
+
+class _AuthoredSizes:
+    """Typography sizes present before automatic chrome runs on a slide."""
+
+    def __init__(self, blocks: list[Any]) -> None:
+        # Keyed by container identity; the container is kept referenced so the
+        # id cannot be recycled while chrome mutates the same slide in place.
+        self._sizes: dict[tuple[int, str], dict[str, Any]] = {}
+        for block in blocks:
+            if isinstance(block, dict):
+                self._collect(block)
+
+    def _collect(self, node: dict[str, Any]) -> None:
+        for key, value in node.items():
+            if isinstance(value, dict):
+                self._collect(value)
+            elif key in _TYPOGRAPHY_SIZE_KEYS and _as_float(value) is not None:
+                self._sizes[(id(node), key)] = node
+
+    def contains(self, container: dict[str, Any], key: str) -> bool:
+        return self._sizes.get((id(container), key)) is container
+
+
+def _raise_size(
+    container: dict[str, Any],
+    key: str,
+    target: int,
+    *,
+    legibility_min: float,
+    authored: _AuthoredSizes,
+) -> bool:
+    """Ratio/density target for auto-managed sizes; authored sizes only get the legibility min."""
+    if authored.contains(container, key):
+        return _bump_to_at_least(container, key, int(legibility_min))
+    return _bump_to_at_least(container, key, target)
+
+
 def _target_from_primary(
     primary: float,
     *,
@@ -177,7 +229,9 @@ def _kpi_value_font_size(block: dict[str, Any]) -> float | None:
     return _as_float(style.get("fontSize"))
 
 
-def _rebalance_kpi_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
+def _rebalance_kpi_hierarchy(
+    block: dict[str, Any], chrome: dict[str, Any], authored: _AuthoredSizes
+) -> bool:
     kpi = chrome.get("kpi") if isinstance(chrome.get("kpi"), dict) else {}
     if not kpi:
         return False
@@ -207,10 +261,13 @@ def _rebalance_kpi_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> b
         36,
     )
 
+    title_min = float(kpi.get("titleMinFontSize") or 18)
+    icon_min = float(kpi.get("iconMinSize") or 32)
+    unit_min = float(kpi.get("unitMinFontSize") or 16)
     target_title = _target_from_primary(
         value_fs,
         ratio=float(kpi.get("titleToValueMinRatio") or 0.35),
-        absolute_min=float(kpi.get("titleMinFontSize") or 18),
+        absolute_min=title_min,
         density_default=title_by_density,
         cap_ratio=0.5,
         frame_scale=fscale,
@@ -218,28 +275,32 @@ def _rebalance_kpi_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> b
     target_icon = _target_from_primary(
         value_fs,
         ratio=float(kpi.get("iconToValueMinRatio") or 0.55),
-        absolute_min=float(kpi.get("iconMinSize") or 32),
+        absolute_min=icon_min,
         density_default=icon_by_density,
         frame_scale=fscale,
     )
     target_unit = _target_from_primary(
         value_fs,
         ratio=float(kpi.get("unitToValueMinRatio") or 0.22),
-        absolute_min=float(kpi.get("unitMinFontSize") or 16),
+        absolute_min=unit_min,
         frame_scale=fscale,
     )
 
     parts = _ensure_dict(block, "kpiParts")
     changed = False
     title_style = _ensure_nested_style(parts, "title")
-    if _bump_to_at_least(title_style, "fontSize", target_title):
+    if _raise_size(
+        title_style, "fontSize", target_title, legibility_min=title_min, authored=authored
+    ):
         changed = True
     if title_style.get("color") in (None, ""):
         title_style["color"] = kpi.get("titleColor") or "#475569"
         changed = True
 
     icon_style = _ensure_nested_style(parts, "icon")
-    if _bump_to_at_least(icon_style, "iconSize", target_icon):
+    if _raise_size(
+        icon_style, "iconSize", target_icon, legibility_min=icon_min, authored=authored
+    ):
         changed = True
     if icon_style.get("color") in (None, ""):
         icon_style["color"] = kpi.get("iconColor") or "#089bdb"
@@ -247,7 +308,9 @@ def _rebalance_kpi_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> b
 
     if isinstance(parts.get("unit"), dict) or "unit" in parts:
         unit_style = _ensure_nested_style(parts, "unit")
-        if _bump_to_at_least(unit_style, "fontSize", target_unit):
+        if _raise_size(
+            unit_style, "fontSize", target_unit, legibility_min=unit_min, authored=authored
+        ):
             changed = True
 
     return changed
@@ -264,7 +327,9 @@ def _chart_title_font_size(block: dict[str, Any]) -> float | None:
     return _as_float(style.get("fontSize"))
 
 
-def _rebalance_chart_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
+def _rebalance_chart_hierarchy(
+    block: dict[str, Any], chrome: dict[str, Any], authored: _AuthoredSizes
+) -> bool:
     chart = chrome.get("chart") if isinstance(chrome.get("chart"), dict) else {}
     if not chart:
         return False
@@ -294,42 +359,48 @@ def _rebalance_chart_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) ->
         density_default=int(axis_min),
         frame_scale=fscale,
     )
+    title_min = float(chart.get("titleMinFontSize") or 18)
     target_title = _target_from_primary(
         title_fs,
         ratio=1.0,
-        absolute_min=float(chart.get("titleMinFontSize") or 18),
+        absolute_min=title_min,
         density_default=int(chart.get("defaultTitleFontSize") or 22),
         frame_scale=fscale,
     )
 
     changed = False
     opts = _ensure_dict(block, "chartOptions")
-    if _bump_to_at_least(opts, "titleFontSize", target_title):
-        changed = True
-    if _bump_to_at_least(opts, "legendFontSize", target_legend):
-        changed = True
-    if _bump_to_at_least(opts, "axisFontSize", target_axis):
-        changed = True
+    for key, target, legibility_min in (
+        ("titleFontSize", target_title, title_min),
+        ("legendFontSize", target_legend, legend_min),
+        ("axisFontSize", target_axis, axis_min),
+    ):
+        if _raise_size(opts, key, target, legibility_min=legibility_min, authored=authored):
+            changed = True
 
     # Keep chartParts.* in sync when present (editor chrome path).
     parts = block.get("chartParts")
     if isinstance(parts, dict):
-        for part_key, target, size_key in (
-            ("title", target_title, "fontSize"),
-            ("legend", target_legend, "fontSize"),
-            ("xAxis", target_axis, "fontSize"),
-            ("yAxis", target_axis, "fontSize"),
+        for part_key, target, legibility_min in (
+            ("title", target_title, title_min),
+            ("legend", target_legend, legend_min),
+            ("xAxis", target_axis, axis_min),
+            ("yAxis", target_axis, axis_min),
         ):
             if part_key not in parts and part_key not in ("title", "legend"):
                 continue
             style = _ensure_nested_style(parts, part_key)
-            if _bump_to_at_least(style, size_key, target):
+            if _raise_size(
+                style, "fontSize", target, legibility_min=legibility_min, authored=authored
+            ):
                 changed = True
 
     return changed
 
 
-def _rebalance_table_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
+def _rebalance_table_hierarchy(
+    block: dict[str, Any], chrome: dict[str, Any], authored: _AuthoredSizes
+) -> bool:
     table = chrome.get("table") if isinstance(chrome.get("table"), dict) else {}
     if not table:
         return False
@@ -351,17 +422,19 @@ def _rebalance_table_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) ->
     body_ratio = float(table.get("bodyToHeaderMinRatio") or 0.85)
     header_ratio = float(table.get("headerToBodyMinRatio") or 1.12)
 
+    body_min = float(table.get("bodyMinFontSize") or 14)
+    header_min = float(table.get("headerMinFontSize") or 16)
     target_body = _target_from_primary(
         primary if primary == header_fs else body_fs,
         ratio=body_ratio if primary == header_fs else 1.0,
-        absolute_min=float(table.get("bodyMinFontSize") or 14),
+        absolute_min=body_min,
         density_default=int(table.get("defaultBodyFontSize") or 16),
         frame_scale=fscale,
     )
     target_header = _target_from_primary(
         primary if primary == body_fs else header_fs,
         ratio=header_ratio if primary == body_fs else 1.0,
-        absolute_min=float(table.get("headerMinFontSize") or 16),
+        absolute_min=header_min,
         density_default=int(table.get("defaultHeaderFontSize") or 18),
         frame_scale=fscale,
     )
@@ -369,28 +442,38 @@ def _rebalance_table_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) ->
     target_header = max(target_header, target_body)
 
     changed = False
-    if _bump_to_at_least(opts, "bodyFontSize", target_body):
+    if _raise_size(opts, "bodyFontSize", target_body, legibility_min=body_min, authored=authored):
         changed = True
-    if _bump_to_at_least(opts, "headerFontSize", target_header):
+    if _raise_size(
+        opts, "headerFontSize", target_header, legibility_min=header_min, authored=authored
+    ):
         changed = True
     if _as_float(opts.get("fontSize")) is not None:
-        if _bump_to_at_least(opts, "fontSize", target_body):
+        if _raise_size(opts, "fontSize", target_body, legibility_min=body_min, authored=authored):
             changed = True
 
     # tableParts header/body text when present
     parts = block.get("tableParts")
     if isinstance(parts, dict):
-        for part_key, target in (("header", target_header), ("body", target_body), ("cell", target_body)):
+        for part_key, target, legibility_min in (
+            ("header", target_header, header_min),
+            ("body", target_body, body_min),
+            ("cell", target_body, body_min),
+        ):
             if part_key not in parts:
                 continue
             style_p = _ensure_nested_style(parts, part_key)
-            if _bump_to_at_least(style_p, "fontSize", target):
+            if _raise_size(
+                style_p, "fontSize", target, legibility_min=legibility_min, authored=authored
+            ):
                 changed = True
 
     return changed
 
 
-def _rebalance_input_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
+def _rebalance_input_hierarchy(
+    block: dict[str, Any], chrome: dict[str, Any], authored: _AuthoredSizes
+) -> bool:
     inp = chrome.get("input") if isinstance(chrome.get("input"), dict) else {}
     if not inp:
         return False
@@ -405,46 +488,59 @@ def _rebalance_input_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) ->
         label_fs = float(inp.get("defaultLabelFontSize") or 16) * fscale
 
     primary = max(control_fs, label_fs)
+    control_min = float(inp.get("controlMinFontSize") or 16)
+    label_min = float(inp.get("labelMinFontSize") or 14)
+    icon_min = float(inp.get("iconMinSize") or 18)
     target_control = _target_from_primary(
         primary,
         ratio=float(inp.get("controlToLabelMinRatio") or 1.1) if primary == label_fs else 1.0,
-        absolute_min=float(inp.get("controlMinFontSize") or 16),
+        absolute_min=control_min,
         density_default=int(inp.get("defaultControlFontSize") or 18),
         frame_scale=fscale,
     )
     target_label = _target_from_primary(
         primary,
         ratio=float(inp.get("labelToControlMinRatio") or 0.85) if primary == control_fs else 1.0,
-        absolute_min=float(inp.get("labelMinFontSize") or 14),
+        absolute_min=label_min,
         density_default=int(inp.get("defaultLabelFontSize") or 16),
         frame_scale=fscale,
     )
     target_icon = _target_from_primary(
         target_control,
         ratio=float(inp.get("iconToControlMinRatio") or 1.15),
-        absolute_min=float(inp.get("iconMinSize") or 18),
+        absolute_min=icon_min,
         density_default=int(inp.get("defaultIconSize") or 22),
         frame_scale=fscale,
     )
 
     changed = False
     control_style = _ensure_nested_style(parts, "control")
-    if _bump_to_at_least(control_style, "fontSize", target_control):
+    if _raise_size(
+        control_style, "fontSize", target_control, legibility_min=control_min, authored=authored
+    ):
         changed = True
     label_style = _ensure_nested_style(parts, "label")
-    if _bump_to_at_least(label_style, "fontSize", target_label):
+    if _raise_size(
+        label_style, "fontSize", target_label, legibility_min=label_min, authored=authored
+    ):
         changed = True
     if isinstance(parts.get("icon"), dict) or "icon" in parts:
         icon_style = _ensure_nested_style(parts, "icon")
-        if _bump_to_at_least(icon_style, "iconSize", target_icon):
+        if _raise_size(
+            icon_style, "iconSize", target_icon, legibility_min=icon_min, authored=authored
+        ):
             changed = True
-        elif _bump_to_at_least(icon_style, "fontSize", target_icon):
+        elif _raise_size(
+            icon_style, "fontSize", target_icon, legibility_min=icon_min, authored=authored
+        ):
             changed = True
 
     return changed
 
 
-def _rebalance_text_bound_hierarchy(block: dict[str, Any], chrome: dict[str, Any]) -> bool:
+def _rebalance_text_bound_hierarchy(
+    block: dict[str, Any], chrome: dict[str, Any], authored: _AuthoredSizes
+) -> bool:
     """heading/text/shape: absolute floor always; density/frame floor when data-bound."""
     text_chrome = chrome.get("textBound") if isinstance(chrome.get("textBound"), dict) else {}
     scale = _type_scale()
@@ -478,7 +574,7 @@ def _rebalance_text_bound_hierarchy(block: dict[str, Any], chrome: dict[str, Any
         base = int(scale.get("body") or text_chrome.get("textMinFontSize") or 22)
     density_boost = {"hero": 1.25, "row": 1.0, "grid": 0.9}.get(density, 1.0)
     target = max(absolute_min, int(round(base * density_boost * max(1.0, fscale))))
-    return _bump_to_at_least(style, "fontSize", target)
+    return _raise_size(style, "fontSize", target, legibility_min=absolute_min, authored=authored)
 
 
 def _block_display_font(block: dict[str, Any]) -> float | None:
@@ -500,8 +596,9 @@ def _block_display_font(block: dict[str, Any]) -> float | None:
 def _rebalance_composed_groups(
     blocks: list[Any],
     chrome: dict[str, Any],
+    authored: _AuthoredSizes,
 ) -> bool:
-    """Within the same groupId, primary font drives sibling heading/text/shape sizes."""
+    """Within the same groupId, primary font drives auto-managed sibling heading/text/shape sizes."""
     composed = chrome.get("composed") if isinstance(chrome.get("composed"), dict) else {}
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for block in blocks:
@@ -550,7 +647,9 @@ def _rebalance_composed_groups(
             if cur is not None and cur + 0.5 >= primary:
                 continue
             style = _ensure_dict(block, "style")
-            if _bump_to_at_least(style, "fontSize", target):
+            if _raise_size(
+                style, "fontSize", target, legibility_min=absolute_min, authored=authored
+            ):
                 changed_any = True
     return changed_any
 
@@ -778,6 +877,7 @@ class SlidePartChromeService:
             return False
         changed_any = False
         tokens = _tokens()
+        authored = _AuthoredSizes(blocks)
         for block in blocks:
             if not isinstance(block, dict):
                 continue
@@ -792,21 +892,23 @@ class SlidePartChromeService:
             if btype in _KPI_TYPES:
                 if not skip_fill:
                     changed_any = _apply_kpi(block, chrome) or changed_any
-                changed_any = _rebalance_kpi_hierarchy(block, chrome) or changed_any
+                changed_any = _rebalance_kpi_hierarchy(block, chrome, authored) or changed_any
             elif btype in _CHART_TYPES:
                 if not skip_fill:
                     changed_any = _apply_chart(block, chrome) or changed_any
-                changed_any = _rebalance_chart_hierarchy(block, chrome) or changed_any
+                changed_any = _rebalance_chart_hierarchy(block, chrome, authored) or changed_any
             elif btype in _TABLE_TYPES:
                 if not skip_fill:
                     changed_any = _apply_table(block, chrome) or changed_any
-                changed_any = _rebalance_table_hierarchy(block, chrome) or changed_any
+                changed_any = _rebalance_table_hierarchy(block, chrome, authored) or changed_any
             elif btype in _INPUT_TYPES:
                 if not skip_fill:
                     changed_any = _apply_input(block, chrome) or changed_any
-                changed_any = _rebalance_input_hierarchy(block, chrome) or changed_any
+                changed_any = _rebalance_input_hierarchy(block, chrome, authored) or changed_any
             elif btype in _TEXT_BOUND_TYPES:
-                changed_any = _rebalance_text_bound_hierarchy(block, chrome) or changed_any
+                changed_any = (
+                    _rebalance_text_bound_hierarchy(block, chrome, authored) or changed_any
+                )
 
-        changed_any = _rebalance_composed_groups(blocks, chrome) or changed_any
+        changed_any = _rebalance_composed_groups(blocks, chrome, authored) or changed_any
         return changed_any
