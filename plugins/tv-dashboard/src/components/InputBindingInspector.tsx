@@ -12,6 +12,7 @@ import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema } from "./DataParamFields";
+import { InputVariableBindingFields } from "./InputVariableBindingFields";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import {
@@ -26,6 +27,7 @@ import {
   intersectInputParamKeysWithPresets,
   parseInputFilterValue,
 } from "../utils/inputFilterParamSchema";
+import { suggestVariableKey } from "../utils/inputVariableEditor";
 
 type Props = {
   pane?: boolean;
@@ -36,7 +38,11 @@ const INPUT_DATA_PATCH_KEYS = new Set([
   "paramKey",
   "targetScope",
   "targetSourceIds",
+  "binding",
+  "valueSchema",
 ]);
+
+type InputBindingMode = "routeParam" | "variable";
 
 function schemasForTargets(
   routes: TvDataRouteCatalogItem[],
@@ -218,6 +224,31 @@ export function InputBindingInspector({ pane = false }: Props) {
     }
   };
 
+  const bindingMode: InputBindingMode =
+    block.input.binding?.kind === "variable" ? "variable" : "routeParam";
+
+  const changeBindingMode = (mode: InputBindingMode) => {
+    if (mode === bindingMode) return;
+    if (mode === "variable") {
+      applyInputPatch({
+        paramKey: "",
+        targetScope: undefined,
+        targetSourceIds: undefined,
+        binding: { kind: "variable", key: suggestVariableKey(config.blocks) },
+        valueSchema: { type: "string" },
+        defaultValue: null,
+      });
+      return;
+    }
+    applyInputPatch({
+      binding: undefined,
+      valueSchema: undefined,
+      paramKey: "",
+      targetScope: "slide",
+      defaultValue: null,
+    });
+  };
+
   const labelByKey = (key: string): string => {
     if (key === DATE_RANGE_PRESET_PARAM) return "Período relativo";
     for (const schema of schemas) {
@@ -227,6 +258,32 @@ export function InputBindingInspector({ pane = false }: Props) {
     return key;
   };
 
+  const labelIconFields = (
+    <>
+      <DeckField id="td-input-label" label="Rótulo (opcional)">
+        <NativeTextControl
+          id="td-input-label"
+          value={block.input.label ?? ""}
+          onChange={(value) => applyInputPatch({ label: value.trim() || undefined })}
+        />
+      </DeckField>
+
+      <DeckField id="td-input-icon" label="Ícone (opcional)">
+        <LucideIconField
+          value={block.input.iconName ?? ""}
+          defaultIcon="Filter"
+          nameFormat="pascal"
+          curatedOnly={false}
+          labels={{ clear: "Sem ícone", close: "Fechar" }}
+          onChange={(name) =>
+            applyInputPatch({ iconName: name?.trim() ? name.trim() : undefined })
+          }
+          ariaLabel="Selecionar ícone do filtro"
+        />
+      </DeckField>
+    </>
+  );
+
   return (
     <div id="td-input-binding">
       <DeckPropertySection
@@ -234,12 +291,44 @@ export function InputBindingInspector({ pane = false }: Props) {
         title="Campo / Filtro"
         hint={TV_DASHBOARD_HELP_TOOLTIPS.data.inputFilterPresets}
       >
-        {!hasDataTargets ? (
+        <DeckField
+          id="td-input-binding-mode"
+          label="Ligação"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.inputBindingMode}
+        >
+          <FormSelectControl
+            id="td-input-binding-mode"
+            ariaLabel="Ligação do campo"
+            portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+            value={bindingMode}
+            onChange={(value) => changeBindingMode(value === "variable" ? "variable" : "routeParam")}
+            options={[
+              { value: "routeParam", label: "Parâmetro de dados" },
+              { value: "variable", label: "Variável reutilizável do slide" },
+            ]}
+          />
+        </DeckField>
+
+        {bindingMode === "variable" ? (
+          <>
+            <InputVariableBindingFields
+              key={block.id}
+              block={block}
+              blocks={config.blocks}
+              onPatch={applyInputPatch}
+            />
+            {labelIconFields}
+          </>
+        ) : null}
+
+        {bindingMode === "routeParam" && !hasDataTargets ? (
           <p className="td-deck-inspector__hint">
             Inclua uma fonte de dados ou modelo no slide antes de configurar o filtro.
           </p>
         ) : null}
 
+        {bindingMode === "routeParam" ? (
+        <>
         <DeckField
           id="td-input-scope"
           label="Alvo"
@@ -326,27 +415,7 @@ export function InputBindingInspector({ pane = false }: Props) {
           />
         </DeckField>
 
-        <DeckField id="td-input-label" label="Rótulo (opcional)">
-          <NativeTextControl
-            id="td-input-label"
-            value={block.input.label ?? ""}
-            onChange={(value) => applyInputPatch({ label: value.trim() || undefined })}
-          />
-        </DeckField>
-
-        <DeckField id="td-input-icon" label="Ícone (opcional)">
-          <LucideIconField
-            value={block.input.iconName ?? ""}
-            defaultIcon="Filter"
-            nameFormat="pascal"
-            curatedOnly={false}
-            labels={{ clear: "Sem ícone", close: "Fechar" }}
-            onChange={(name) =>
-              applyInputPatch({ iconName: name?.trim() ? name.trim() : undefined })
-            }
-            ariaLabel="Selecionar ícone do filtro"
-          />
-        </DeckField>
+        {labelIconFields}
 
         {block.input.paramKey && Object.keys(valueSchema).length > 0 ? (
           <DataParamFields
@@ -355,6 +424,8 @@ export function InputBindingInspector({ pane = false }: Props) {
             idPrefix="td-input-value"
             onChange={applyFilterUpdates}
           />
+        ) : null}
+        </>
         ) : null}
       </DeckPropertySection>
     </div>

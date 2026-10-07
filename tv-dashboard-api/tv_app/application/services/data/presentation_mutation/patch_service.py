@@ -59,6 +59,7 @@ from tv_app.application.services.data.tv_data_binding_hydrate_service import (
     _remap_param_keys,
 )
 from tv_app.application.services.data.value_expression_service import (
+    expression_input_refs,
     is_expression_value,
     params_contain_expressions,
     resolve_param_expressions,
@@ -1746,6 +1747,7 @@ class PresentationPatchService:
                         params,
                         playlist_defaults=playlist_defaults,
                         slide_filters=slide_filters,
+                        slide_blocks=cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else None,
                     )
                     row["params"] = params
                 hydrated_inputs.append(row)
@@ -2514,6 +2516,7 @@ class PresentationPatchService:
             params,
             playlist_defaults=playlist_defaults,
             slide_filters=slide_filters,
+            slide_blocks=cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else None,
         )
         label = op.get("label") or route.get("label") or operation_id
         binding = {
@@ -2708,6 +2711,7 @@ class PresentationPatchService:
                 if isinstance(cfg.get("dataFilters"), dict)
                 else None
             ),
+            slide_blocks=cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else None,
         )
 
         removed = sorted(key for key in current if key not in next_params)
@@ -2725,31 +2729,52 @@ class PresentationPatchService:
         *,
         playlist_defaults: dict[str, Any] | None = None,
         slide_filters: dict[str, Any] | None = None,
+        slide_blocks: list[Any] | None = None,
     ) -> None:
         """ExpressionSpec em params: spec/fase/refs/expressionAllowed + avaliação
-        determinística do tipo de saída (mesmo resolvedor canônico do preview)."""
+        determinística do tipo de saída (mesmo resolvedor canônico do preview).
+
+        ``input.*``: declaradas no estado atual do slide são tipadas; não
+        declaradas ficam para o nativeConfig candidato (sem ordem entre ops).
+        """
         if not params_contain_expressions(params):
             return
+        from tv_app.application.services.comunicado_input_contract_service import (
+            build_input_variable_scope,
+        )
         from tv_app.application.services.data.ready_slide_quality_service import (
             ReadySlideQualityService,
         )
 
+        input_scope = build_input_variable_scope(slide_blocks or [])
+        unbound_refs = False
         for key, value in params.items():
             if not is_expression_value(value):
                 continue
             try:
-                validate_expression_param_value(str(key), value, route=route)
+                validate_expression_param_value(
+                    str(key),
+                    value,
+                    route=route,
+                    input_scope=input_scope,
+                    defer_undeclared_inputs=True,
+                )
             except MExpressionError as exc:
                 raise PresentationPatchError(
                     PresentationOpsContentService.message("paramsInvalid"),
                     code=exc.code,
                 ) from exc
+            if not expression_input_refs(value) <= set(input_scope.values):
+                unbound_refs = True
+        if unbound_refs:
+            # Sem valor determinístico (variável sem default ou ainda não declarada).
+            return
         merged = ReadySlideQualityService.merged_params_for_readiness(
             params,
             playlist_defaults=playlist_defaults,
             slide_filters=slide_filters,
         )
-        resolution = resolve_param_expressions(merged, route=route)
+        resolution = resolve_param_expressions(merged, route=route, input_scope=input_scope)
         if resolution.error:
             raise PresentationPatchError(
                 PresentationOpsContentService.message("paramsInvalid"),

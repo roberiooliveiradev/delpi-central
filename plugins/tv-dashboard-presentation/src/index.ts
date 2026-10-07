@@ -283,7 +283,10 @@ export type {
   ComunicadoBlockStyle,
   ComunicadoCanvasTableBlock,
   ComunicadoInputBlock,
+  ComunicadoInputBinding,
   ComunicadoInputTargetScope,
+  ComunicadoInputValueSchema,
+  ComunicadoInputValueType,
   ComunicadoConfig,
   ComunicadoCustomFontRef,
   ComunicadoContentRun,
@@ -603,10 +606,24 @@ export {
   resolveInputRefreshSourceIds,
   resolveInputTargetScope,
   resolveRemovedInputRefreshSourceIds,
+  inputValueSchemaToParamField,
+  serializeInputFilterOverridesQuery,
   type InputFilterContributions,
   type InputParamSchema,
   type InputParamSchemaField,
+  type InputRuntimeScalar,
+  type InputSlideRuntimeOverrides,
 } from "./comunicadoInputFilters";
+export {
+  INPUT_EXPRESSION_REF_PREFIX,
+  INPUT_VARIABLE_KEY_PATTERN,
+  cloneInputValueSchema,
+  isInputVariableBlock,
+  normalizeInputBinding,
+  normalizeInputValueSchema,
+  resolveInputBindingKey,
+  resolveInputVariableBinding,
+} from "./comunicadoInputBinding";
 export type { DataPresentationOption } from "./comunicadoDataPresentation";
 export {
   blockCssStyle,

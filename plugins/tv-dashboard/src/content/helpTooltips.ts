@@ -522,6 +522,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     },
     inputFilterPresets:
       "Mesmos presets de período da fonte (ex.: Este mês até hoje). O valor alimenta os filtros do slide ou das fontes amarradas.",
+    inputBindingMode:
+      "Parâmetro de dados: o valor vai direto para um parâmetro das fontes (filial, período…). Variável reutilizável do slide: o valor fica disponível como input.<chave> nas expressões dos parâmetros das fontes e modelos deste slide.",
+    inputVariableKey:
+      "Nome usado nas expressões como input.<chave>. Única no slide; não é enviada às APIs de dados.",
   },
   /** Modal Preparar dados (Power Query). */
   dataPrepare: {

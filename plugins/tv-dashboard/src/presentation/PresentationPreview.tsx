@@ -70,8 +70,9 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   const [runtimeOverrides, setRuntimeOverrides] = useState<InputFilterContributions>(() =>
     emptyInputFilterContributions(),
   );
+  /** Valores de sessão por slide → por bloco (mesma key/blockId em outro slide não colide). */
   const [inputRuntimeValues, setInputRuntimeValues] = useState<
-    Record<string, string | number | boolean | null>
+    Record<string, Record<string, string | number | boolean | null>>
   >({});
   const overridesRef = useRef(runtimeOverrides);
   overridesRef.current = runtimeOverrides;
@@ -203,11 +204,14 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       const block = blocksFromNativeData(
         slide?.native?.data as Record<string, unknown> | undefined,
       ).find((item) => item.id === blockId);
-      if (!block || !isComunicadoInputBlock(block)) return;
+      if (!slide || !block || !isComunicadoInputBlock(block)) return;
 
-      setInputRuntimeValues((prev) => ({ ...prev, [blockId]: value }));
+      setInputRuntimeValues((prev) => ({
+        ...prev,
+        [slide.id]: { ...(prev[slide.id] ?? {}), [blockId]: value },
+      }));
       setRuntimeOverrides((prev) => {
-        const next = applyRuntimeInputValue(prev, block, value);
+        const next = applyRuntimeInputValue(prev, block, value, slide.id);
         overridesRef.current = next;
         return next;
       });
@@ -297,7 +301,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
                   native={slide.native}
                   comunicadoFontScale={1}
                   inputsInteractive
-                  inputRuntimeValues={active ? inputRuntimeValues : undefined}
+                  inputRuntimeValues={active ? inputRuntimeValues[slide.id] : undefined}
                   onInputValueChange={active ? handleInputValueChange : undefined}
                 />
               ) : (

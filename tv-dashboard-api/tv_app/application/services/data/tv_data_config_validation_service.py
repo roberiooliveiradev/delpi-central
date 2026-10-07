@@ -6,6 +6,12 @@ from tv_app.application.services.branch_policy_service import (
     validate_data_route_branch,
     validate_native_branch,
 )
+from tv_app.application.services.comunicado_input_contract_service import (
+    build_input_variable_scope,
+    collect_input_variables,
+    iter_config_expression_params,
+    undeclared_input_reference_issues,
+)
 from tv_app.application.services.comunicado_native_config_sanitize import (
     sanitize_comunicado_config,
 )
@@ -24,6 +30,12 @@ from tv_app.application.services.data.tv_data_param_validation_service import (
     validate_data_filters,
 )
 from tv_app.application.services.data.tv_data_presentation_modes_service import suggested_display_modes
+from tv_app.application.services.data.m_query.m_expression_interpreter import MExpressionError
+from tv_app.application.services.data.value_expression_service import (
+    InputVariableScope,
+    expression_input_refs,
+    validate_expression_param_value,
+)
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
     TvDataRouteCatalogService,
@@ -71,6 +83,16 @@ class TvDataConfigValidationService:
         blocks = cfg.get("blocks")
         if not isinstance(blocks, list):
             return {"valid": len(issues) == 0, "issues": issues, "diagnostics": []}
+
+        # Contrato de input + refs input.* sobre o nativeConfig candidato inteiro
+        # (pós-ops): o mesmo lote pode declarar a variável e a expressão.
+        declarations, input_issues = collect_input_variables(blocks)
+        issues.extend(input_issues)
+        issues.extend(
+            undeclared_input_reference_issues(cfg, (item.key for item in declarations))
+        )
+        input_scope = build_input_variable_scope(blocks)
+        issues.extend(self._input_expression_issues(cfg, input_scope))
 
         routes_for_filters: list[dict[str, Any]] = []
         for index, block in enumerate(blocks):
@@ -125,7 +147,9 @@ class TvDataConfigValidationService:
 
         try:
             if isinstance(data_filters, dict) and data_filters and routes_for_filters:
-                validate_data_filters(data_filters, routes=routes_for_filters)
+                validate_data_filters(
+                    data_filters, routes=routes_for_filters, input_scope=input_scope
+                )
         except ValueError as exc:
             issues.append({"field": "dataFilters", "message": str(exc)})
 
@@ -147,6 +171,28 @@ class TvDataConfigValidationService:
             "diagnostics": diagnostics,
             "queryOrder": list(graph.ordered_source_ids),
         }
+
+    def _input_expression_issues(
+        self, cfg: dict[str, Any], input_scope: InputVariableScope
+    ) -> list[dict[str, str]]:
+        """Expressões de fonte/DataModel que usam ``input.*``: refs/tipos com o escopo do slide."""
+        issues: list[dict[str, str]] = []
+        for field_path, param, value, operation_id in iter_config_expression_params(cfg):
+            if operation_id is None:
+                continue
+            refs = expression_input_refs(value)
+            if not refs or not refs <= set(input_scope.schemas):
+                continue
+            route = self._catalog.get_route(operation_id)
+            if not route:
+                continue
+            try:
+                validate_expression_param_value(
+                    param, value, route=route, input_scope=input_scope
+                )
+            except MExpressionError as exc:
+                issues.append({"field": field_path, "message": str(exc), "code": exc.code})
+        return issues
 
     def assert_valid(self, cfg: dict[str, Any] | None, *, user: Any | None = None) -> None:
         result = self.validate(cfg, user=user)

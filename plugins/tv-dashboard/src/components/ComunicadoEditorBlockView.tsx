@@ -45,10 +45,12 @@ import {
   inputPartAllowsMove,
   inputPartAllowsResize,
   materializeMissingInputPartFramesFromRoot,
+  inputValueSchemaToParamField,
   resolveInputParamSchemaField,
   resolveInputPartFrameRoot,
   resolveInputRefreshSourceIds,
   resolveInputTargetScope,
+  resolveInputVariableBinding,
   resolveComunicadoDataPageState,
   resizeTableProjectionColumns,
   selectedTableProjectionColumnKeys,
@@ -1228,6 +1230,26 @@ function EditorInputBlock({
   );
 
   const decorated = useMemo(() => {
+    const variable = resolveInputVariableBinding(block.input);
+    if (variable) {
+      // Variável do slide: campo vem do valueSchema persistido (sem catálogo de rota).
+      const valueSchema = block.input.valueSchema;
+      return {
+        ...block,
+        input: {
+          ...block.input,
+          resolvedField: valueSchema
+            ? inputValueSchemaToParamField(valueSchema, block.input.label || variable.key)
+            : undefined,
+          paramAvailable: Boolean(valueSchema),
+        },
+      } as ComunicadoInputBlock & {
+        input: ComunicadoInputBlock["input"] & {
+          resolvedField?: InputParamSchema[string];
+          paramAvailable?: boolean;
+        };
+      };
+    }
     const scope = resolveInputTargetScope(block.input);
     const fetchable = configBlocks.filter((item) => isFetchableDataBlockType(item.type));
     const targets =

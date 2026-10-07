@@ -27,6 +27,8 @@ export type DataParamSchemaField = {
   default?: string | number | boolean;
   optional?: boolean;
   enum?: Array<string | number | boolean>;
+  /** Rótulo por valor (chave = `String(valor)`); vence o catálogo de rótulos por chave. */
+  enumLabels?: Record<string, string>;
   /** `in: path` — parâmetro de path, nunca editável por expressão. */
   in?: string;
   /** Opt-out do contrato — expressionAllowed=false no paramSchema. */
@@ -76,7 +78,7 @@ export function resolveParamSelectOptions(
 
   return values.map((item) => {
     const value = String(item);
-    return { value, label: enumOptionLabel(key, value) };
+    return { value, label: field.enumLabels?.[value] ?? enumOptionLabel(key, value) };
   });
 }
 

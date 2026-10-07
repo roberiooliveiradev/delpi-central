@@ -5,17 +5,49 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from tv_app.application.services.comunicado_input_contract_service import (
+    SLIDE_INPUT_OVERRIDES_KEY,
+    is_variable_input,
+)
+
+BY_SLIDE_ID_KEY = "bySlideId"
+_MAX_OVERRIDE_SLIDES = 200
+_MAX_OVERRIDE_INPUTS_PER_SLIDE = 64
+_SCALAR_OVERRIDE_TYPES = (str, int, float, bool)
+
+
+def _parse_by_slide_id(raw: Any) -> dict[str, dict[str, Any]]:
+    """{ slideId: { byInputId: { inputBlockId: escalar|null } } } — só forma, sem confiar em tipo."""
+    out: dict[str, dict[str, Any]] = {}
+    if not isinstance(raw, dict):
+        return out
+    for slide_id, bucket in list(raw.items())[:_MAX_OVERRIDE_SLIDES]:
+        by_input = bucket.get(SLIDE_INPUT_OVERRIDES_KEY) if isinstance(bucket, dict) else None
+        if not isinstance(by_input, dict):
+            continue
+        values = {
+            str(input_id): value
+            for input_id, value in list(by_input.items())[:_MAX_OVERRIDE_INPUTS_PER_SLIDE]
+            if value is None or isinstance(value, _SCALAR_OVERRIDE_TYPES)
+        }
+        if values:
+            out[str(slide_id)] = values
+    return out
+
 
 def parse_filter_overrides_query(
     filters_json: str | None,
     extra_df_params: dict[str, str] | None = None,
 ) -> dict[str, Any] | None:
     """
-    Aceita `filters` JSON: { slide?: {}, bySourceId?: { id: {} } }
-    e/ou params `df.<key>` → slide[key].
+    Aceita `filters` JSON: { slide?: {}, bySourceId?: { id: {} },
+    bySlideId?: { slideId: { byInputId: { inputBlockId: valor } } } }
+    e/ou params `df.<key>` → slide[key]. ``bySlideId`` só alimenta inputs
+    ``variable`` do próprio slide (``slide_input_overrides``).
     """
     slide: dict[str, Any] = {}
     by_source: dict[str, dict[str, Any]] = {}
+    by_slide: dict[str, dict[str, Any]] = {}
 
     if filters_json and str(filters_json).strip():
         try:
@@ -29,9 +61,10 @@ def parse_filter_overrides_query(
                 for sid, params in raw["bySourceId"].items():
                     if isinstance(params, dict):
                         by_source[str(sid)] = {str(k): v for k, v in params.items()}
+            by_slide = _parse_by_slide_id(raw.get(BY_SLIDE_ID_KEY))
             # Atalho: mapa flat no root = slide
             for key, value in raw.items():
-                if key in {"slide", "bySourceId"}:
+                if key in {"slide", "bySourceId", BY_SLIDE_ID_KEY}:
                     continue
                 if value is not None and value != "" and not isinstance(value, dict):
                     slide[str(key)] = value
@@ -41,9 +74,39 @@ def parse_filter_overrides_query(
             if value is not None and value != "":
                 slide[str(key)] = value
 
-    if not slide and not by_source:
+    if not slide and not by_source and not by_slide:
         return None
-    return {"slide": slide, "bySourceId": by_source}
+    result: dict[str, Any] = {"slide": slide, "bySourceId": by_source}
+    if by_slide:
+        result[BY_SLIDE_ID_KEY] = by_slide
+    return result
+
+
+def slide_input_overrides(
+    overrides: dict[str, Any] | None,
+    *,
+    slide_id: str,
+    slide_blocks: list[Any],
+) -> dict[str, Any]:
+    """Fatia ``bySlideId[slide_id]`` restrita a inputs ``variable`` DESTE slide.
+
+    O valor é validado depois contra o valueSchema persistido
+    (``build_input_variable_scope``); id de outro slide/bloco não-input é descartado.
+    """
+    if not isinstance(overrides, dict):
+        return {}
+    by_slide = overrides.get(BY_SLIDE_ID_KEY)
+    bucket = by_slide.get(str(slide_id)) if isinstance(by_slide, dict) else None
+    if not isinstance(bucket, dict) or not bucket:
+        return {}
+    variable_ids = {
+        str(block.get("id") or "")
+        for block in slide_blocks
+        if isinstance(block, dict)
+        and str(block.get("type") or "") == "input"
+        and is_variable_input(block.get("input"))
+    }
+    return {input_id: value for input_id, value in bucket.items() if input_id in variable_ids}
 
 
 def allowlist_filter_overrides(

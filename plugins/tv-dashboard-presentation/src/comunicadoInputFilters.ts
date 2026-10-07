@@ -3,8 +3,10 @@ import type {
   ComunicadoDataFilters,
   ComunicadoInputBlock,
   ComunicadoInputTargetScope,
+  ComunicadoInputValueSchema,
 } from "./comunicadoTypes";
 import { isFetchableDataBlockType } from "./comunicadoDataArchitecture";
+import { resolveInputVariableBinding } from "./comunicadoInputBinding";
 
 /** Aliases de filial — vazio marca limpeza no merge (espelho TV API). */
 export const BRANCH_PARAM_KEYS = new Set(["branch", "filial", "branch_code", "filial_id"]);
@@ -16,15 +18,39 @@ export type InputParamSchemaField = {
   default?: string | number | boolean;
   optional?: boolean;
   enum?: Array<string | number | boolean>;
+  enumLabels?: Record<string, string>;
   format?: string;
 };
 
 export type InputParamSchema = Record<string, InputParamSchemaField>;
 
+export type InputRuntimeScalar = string | number | boolean;
+
+/** Overrides de sessão de inputs `variable`, isolados por slide (`byInputId` = id do bloco). */
+export type InputSlideRuntimeOverrides = {
+  byInputId: Record<string, InputRuntimeScalar>;
+};
+
 export type InputFilterContributions = {
   slide: ComunicadoDataFilters;
   bySourceId: Record<string, ComunicadoDataFilters>;
+  /** Só inputs `variable`; o backend entrega a cada slide apenas a própria fatia. */
+  bySlideId?: Record<string, InputSlideRuntimeOverrides>;
 };
+
+/** Campo de renderização a partir do `valueSchema` persistido de um input `variable`. */
+export function inputValueSchemaToParamField(
+  schema: ComunicadoInputValueSchema,
+  label?: string,
+): InputParamSchemaField {
+  return {
+    type: schema.type,
+    ...(label ? { label } : {}),
+    ...(schema.format ? { format: schema.format } : {}),
+    ...(schema.enum?.length ? { enum: [...schema.enum] } : {}),
+    ...(schema.enumLabels ? { enumLabels: { ...schema.enumLabels } } : {}),
+  };
+}
 
 export function isInputBlockType(type: string): type is "input" {
   return type === "input";
@@ -273,25 +299,62 @@ export function emptyInputFilterContributions(): InputFilterContributions {
   return { slide: {}, bySourceId: {} };
 }
 
-/** Atualiza overrides de sessão ao mudar um bloco `input` no kiosk/prévia. */
+function cloneBySlideId(
+  bySlideId: InputFilterContributions["bySlideId"],
+): Record<string, InputSlideRuntimeOverrides> {
+  const next: Record<string, InputSlideRuntimeOverrides> = {};
+  for (const [slideId, bucket] of Object.entries(bySlideId ?? {})) {
+    next[slideId] = { byInputId: { ...(bucket?.byInputId ?? {}) } };
+  }
+  return next;
+}
+
+/** Monta o resultado preservando `bySlideId` somente quando houver override de variável. */
+function withBySlideId(
+  slide: ComunicadoDataFilters,
+  bySourceId: Record<string, ComunicadoDataFilters>,
+  bySlideId: Record<string, InputSlideRuntimeOverrides>,
+): InputFilterContributions {
+  return Object.keys(bySlideId).length > 0 ? { slide, bySourceId, bySlideId } : { slide, bySourceId };
+}
+
+/**
+ * Atualiza overrides de sessão ao mudar um bloco `input` no kiosk/prévia.
+ * Input `variable` exige `slideId`: o override fica em `bySlideId[slideId].byInputId[block.id]`
+ * e valor vazio remove a entrada (volta ao `defaultValue` persistido).
+ */
 export function applyRuntimeInputValue(
   contributions: InputFilterContributions,
   block: ComunicadoInputBlock,
   value: string | number | boolean | null,
+  slideId?: string | null,
 ): InputFilterContributions {
-  const paramKey = String(block.input?.paramKey || "").trim();
-  if (!paramKey) return contributions;
   const clear = value === undefined || value === null || value === "";
   const nextSlide = { ...(contributions.slide ?? {}) };
   const nextBySource: Record<string, ComunicadoDataFilters> = {};
   for (const [sourceId, params] of Object.entries(contributions.bySourceId ?? {})) {
     nextBySource[sourceId] = { ...params };
   }
+  const nextBySlide = cloneBySlideId(contributions.bySlideId);
+
+  if (resolveInputVariableBinding(block.input)) {
+    const sid = String(slideId ?? "").trim();
+    if (!sid) return contributions;
+    const bucket = { ...(nextBySlide[sid]?.byInputId ?? {}) };
+    if (clear) delete bucket[block.id];
+    else bucket[block.id] = value;
+    if (Object.keys(bucket).length === 0) delete nextBySlide[sid];
+    else nextBySlide[sid] = { byInputId: bucket };
+    return withBySlideId(nextSlide, nextBySource, nextBySlide);
+  }
+
+  const paramKey = String(block.input?.paramKey || "").trim();
+  if (!paramKey) return contributions;
 
   if (resolveInputTargetScope(block.input) === "slide") {
     if (clear) delete nextSlide[paramKey];
     else nextSlide[paramKey] = value;
-    return { slide: nextSlide, bySourceId: nextBySource };
+    return withBySlideId(nextSlide, nextBySource, nextBySlide);
   }
 
   for (const sourceId of (block.input?.targetSourceIds ?? [])
@@ -303,15 +366,43 @@ export function applyRuntimeInputValue(
     if (Object.keys(bucket).length === 0) delete nextBySource[sourceId];
     else nextBySource[sourceId] = bucket;
   }
-  return { slide: nextSlide, bySourceId: nextBySource };
+  return withBySlideId(nextSlide, nextBySource, nextBySlide);
 }
 
 export function hasInputFilterContributions(contributions: InputFilterContributions | null | undefined): boolean {
   if (!contributions) return false;
   if (Object.keys(contributions.slide ?? {}).length > 0) return true;
+  if (
+    Object.values(contributions.bySlideId ?? {}).some(
+      (bucket) => bucket && Object.keys(bucket.byInputId ?? {}).length > 0,
+    )
+  ) {
+    return true;
+  }
   return Object.values(contributions.bySourceId ?? {}).some(
     (params) => params && Object.keys(params).length > 0,
   );
+}
+
+/**
+ * Valor do query param `filters` de `/present` e `/preview-payload` (único serializer do envelope).
+ * `null` = sem overrides (não enviar o parâmetro).
+ */
+export function serializeInputFilterOverridesQuery(
+  contributions: InputFilterContributions | null | undefined,
+): string | null {
+  if (!contributions || !hasInputFilterContributions(contributions)) return null;
+  const bySlideId: Record<string, InputSlideRuntimeOverrides> = {};
+  for (const [slideId, bucket] of Object.entries(contributions.bySlideId ?? {})) {
+    if (bucket && Object.keys(bucket.byInputId ?? {}).length > 0) {
+      bySlideId[slideId] = { byInputId: { ...bucket.byInputId } };
+    }
+  }
+  return JSON.stringify({
+    slide: contributions.slide ?? {},
+    bySourceId: contributions.bySourceId ?? {},
+    ...(Object.keys(bySlideId).length > 0 ? { bySlideId } : {}),
+  });
 }
 
 /** Ids fetchable que o input deve refreshar (slide = todos; sources = lista). */
@@ -320,7 +411,8 @@ export function resolveInputRefreshSourceIds(
   blocks: ComunicadoBlock[] | undefined | null,
 ): string[] {
   if (!block || block.type !== "input") return [];
-  if (resolveInputTargetScope(block.input) === "slide") {
+  // Variável do slide alimenta expressões de qualquer fonte (sem alvo por fonte).
+  if (resolveInputVariableBinding(block.input) || resolveInputTargetScope(block.input) === "slide") {
     return listFetchableSourceIds(blocks);
   }
   const fetchable = new Set(listFetchableSourceIds(blocks));

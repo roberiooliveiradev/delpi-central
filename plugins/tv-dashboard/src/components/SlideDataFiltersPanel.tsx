@@ -9,7 +9,8 @@ import {
   mergeRouteParamSchemas,
 } from "../utils/collectPlaylistDataParamSchema";
 import { periodParamFieldKeys } from "../utils/dateRangePresets";
-import { DataParamFields } from "./DataParamFields";
+import { listSlideInputVariableRefs } from "../utils/inputVariableEditor";
+import { DataParamFields, type DataParamExpressionEditRequest } from "./DataParamFields";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { DeckSettingsAccordion } from "./deck/DeckSettingsAccordion";
@@ -65,7 +66,8 @@ export function SlideDataFiltersPanel({
     branchScope,
     filterLayer: "aggregate" as const,
     expressionSupport,
-    onEditExpression: openExpressionEditor,
+    onEditExpression: (request: DataParamExpressionEditRequest) =>
+      openExpressionEditor({ ...request, refInputKeys: listSlideInputVariableRefs(config.blocks) }),
   };
   const periodEntries = periodKeys.size > 0;
   const otherEntries = Object.keys(schema).some((key) => !periodKeys.has(key));

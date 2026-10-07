@@ -11,6 +11,7 @@ from tv_app.application.services.data.tv_data_presentation_modes_service import 
     validate_display_mode,
 )
 from tv_app.application.services.data.value_expression_service import (
+    InputVariableScope,
     is_expression_value,
     validate_shared_layer_expressions,
 )
@@ -299,6 +300,7 @@ def validate_data_filters(
     filters: dict[str, Any] | None,
     *,
     routes: list[dict[str, Any]],
+    input_scope: InputVariableScope | None = None,
 ) -> dict[str, Any]:
     """Camada parcial (tela/programação): tipa/normaliza; não exige obrigatórios.
 
@@ -309,7 +311,7 @@ def validate_data_filters(
     """
     if not isinstance(filters, dict) or not filters:
         return {}
-    validate_shared_layer_expressions(filters, routes=routes)
+    validate_shared_layer_expressions(filters, routes=routes, input_scope=input_scope)
     merged_schema: dict[str, Any] = {}
     for route in routes:
         schema = route.get("paramSchema")

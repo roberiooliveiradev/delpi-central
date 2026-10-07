@@ -117,6 +117,8 @@ export type ExpressionEditRequest = {
   expectedReturnTypes?: ReadonlySet<string> | null;
   /** Refs `param.<key>` sugeridas no seletor de referência. */
   refParamKeys?: Array<{ key: string; label: string }>;
+  /** Variáveis do slide (`input.<key>`); ausente fora do escopo de slide (ex.: programação). */
+  refInputKeys?: Array<{ key: string; label: string }>;
   /** Bloco com `dataBinding` usado no preview backend (quando houver). */
   previewBlockId?: string | null;
   apply: (spec: import("@delpi/tv-dashboard-presentation").ParamExpressionSpec) => void;

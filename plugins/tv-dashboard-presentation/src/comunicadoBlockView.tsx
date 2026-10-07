@@ -27,6 +27,7 @@ import { DataSourceBlockView } from "./dataSourceBlockView";
 import { KpiViewBlockView } from "./kpiViewBlockView";
 import { TableViewBlockView } from "./tableViewBlockView";
 import { ComunicadoInputBlockView } from "./ComunicadoInputBlockView";
+import { resolveInputBindingKey } from "./comunicadoInputBinding";
 import type { ComunicadoInputInteraction } from "./comunicadoInputParts";
 import { TvDataBlockView } from "./tvDataBlockView";
 
@@ -343,7 +344,7 @@ export function ComunicadoBlockView({
         field={resolvedField}
         value={inputRuntimeValue}
         interactive={canEdit}
-        paramAvailable={paramAvailable && Boolean(block.input?.paramKey)}
+        paramAvailable={paramAvailable && Boolean(resolveInputBindingKey(block.input))}
         linkedSourceCount={
           block.input?.targetScope === "sources"
             ? (block.input.targetSourceIds?.length ?? 0)

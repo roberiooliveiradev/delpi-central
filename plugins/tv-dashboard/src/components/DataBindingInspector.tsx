@@ -27,6 +27,7 @@ import {
   type DataParamUpdateValue,
 } from "../utils/applyDataParamUpdates";
 import { previewTvDataRoute } from "../utils/previewTvDataRoute";
+import { listSlideInputVariableRefs } from "../utils/inputVariableEditor";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import {
   RIBBON_INLINE_PARAM_LIMIT,
@@ -257,7 +258,11 @@ export function DataBindingInspector({
 
   /** «Editar expressão» → modal do editor (mesmo canal da ribbon/sidebar). */
   function handleEditExpression(request: DataParamExpressionEditRequest) {
-    openExpressionEditor({ ...request, previewBlockId: targetId || null });
+    openExpressionEditor({
+      ...request,
+      previewBlockId: targetId || null,
+      refInputKeys: listSlideInputVariableRefs(config.blocks),
+    });
   }
 
   function updateDisplayMode(displayMode: ComunicadoDataDisplayMode) {

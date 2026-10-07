@@ -10,6 +10,10 @@ import {
   httpPutBytes,
 } from "./httpClient";
 import { EDGE_SAFE_UPLOAD_CHUNK_BYTES } from "./mediaUploadLimits";
+import {
+  serializeInputFilterOverridesQuery,
+  type InputFilterContributions,
+} from "@delpi/tv-dashboard-presentation";
 import { resolvePreviewPlaylistId } from "../utils/previewPlaylistId";
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
@@ -720,6 +724,7 @@ export async function duplicateSlide(playlistId: string, slideId: string) {
 export type PreviewFilterOverrides = {
   slide?: Record<string, string | number | boolean | null>;
   bySourceId?: Record<string, Record<string, string | number | boolean | null>>;
+  bySlideId?: InputFilterContributions["bySlideId"];
 };
 
 export type PreviewPayloadOptions = {
@@ -743,12 +748,15 @@ export async function getPreviewPayload(
   if (options.parity === "tv") {
     params.set("parity", "tv");
   }
-  if (filters) {
-    const slide = filters.slide ?? {};
-    const bySourceId = filters.bySourceId ?? {};
-    if (Object.keys(slide).length > 0 || Object.keys(bySourceId).length > 0) {
-      params.set("filters", JSON.stringify({ slide, bySourceId }));
-    }
+  const filtersQuery = filters
+    ? serializeInputFilterOverridesQuery({
+        slide: filters.slide ?? {},
+        bySourceId: filters.bySourceId ?? {},
+        bySlideId: filters.bySlideId,
+      })
+    : null;
+  if (filtersQuery) {
+    params.set("filters", filtersQuery);
   }
   const qs = params.toString();
   return unwrap(

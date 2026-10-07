@@ -200,7 +200,9 @@ import type {
   ComunicadoDataResolved,
   ComunicadoEfficiencyPinBands,
   ComunicadoChartType,
+  ComunicadoInputBinding,
   ComunicadoInputBlock,
+  ComunicadoInputValueSchema,
   ComunicadoTablePreset,
   ComunicadoFrame,
   ComunicadoGeometryVertex,
@@ -214,6 +216,11 @@ import type {
   TvDataModelInput,
 } from "./comunicadoTypes";
 import { resolveInputTargetScope } from "./comunicadoInputFilters";
+import {
+  cloneInputValueSchema,
+  normalizeInputBinding,
+  normalizeInputValueSchema,
+} from "./comunicadoInputBinding";
 import { COMUNICADO_FONT_SIZE_MIN } from "./comunicadoTypes";
 import {
   isDataBoundEditorBlockType,
@@ -428,7 +435,31 @@ export function createInputBlock(options?: {
   targetScope?: "slide" | "sources";
   targetSourceIds?: string[];
   defaultValue?: string | number | boolean | null;
+  binding?: ComunicadoInputBinding;
+  valueSchema?: ComunicadoInputValueSchema;
 }): ComunicadoInputBlock {
+  if (options?.binding?.kind === "variable") {
+    const variableIcon =
+      typeof options.iconName === "string" && options.iconName.trim()
+        ? options.iconName.trim()
+        : undefined;
+    return {
+      id: newBlockId(),
+      type: "input",
+      frame: defaultFrame("input"),
+      style: defaultStyle("input"),
+      inputParts: defaultInputPartsMap(),
+      input: {
+        paramKey: "",
+        binding: { kind: "variable", key: options.binding.key.trim() },
+        valueSchema: cloneInputValueSchema(options.valueSchema ?? { type: "string" }),
+        label:
+          typeof options.label === "string" && options.label.trim() ? options.label.trim() : undefined,
+        ...(variableIcon ? { iconName: variableIcon } : {}),
+        defaultValue: options.defaultValue ?? null,
+      },
+    };
+  }
   const paramKey = typeof options?.paramKey === "string" ? options.paramKey.trim() : "";
   const targetScope = options?.targetScope === "sources" ? "sources" : "slide";
   const targetSourceIds =
@@ -1200,6 +1231,19 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.kpiProjection) base.kpiProjection = block.kpiProjection;
     if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
     if (block.kpiParts) base.kpiParts = { ...block.kpiParts };
+  } else if (block.type === "input" && block.input?.binding?.kind === "variable") {
+    const input = block.input;
+    base.input = {
+      ...(input.paramKey ? { paramKey: input.paramKey } : {}),
+      binding: { kind: "variable", key: input.binding?.key ?? "" },
+      ...(input.valueSchema ? { valueSchema: cloneInputValueSchema(input.valueSchema) } : {}),
+      ...(input.label ? { label: input.label } : {}),
+      ...(input.iconName ? { iconName: input.iconName } : {}),
+      defaultValue: input.defaultValue ?? null,
+      ...(input.targetScope === "sources" ? { targetScope: "sources" } : {}),
+      ...(input.targetSourceIds?.length ? { targetSourceIds: [...input.targetSourceIds] } : {}),
+    };
+    if (block.inputParts) base.inputParts = { ...block.inputParts };
   } else if (block.type === "input") {
     const input = block.input;
     base.input = {
@@ -1709,6 +1753,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         ? rawInput.iconName.trim()
         : undefined;
     const inputParts = normalizeInputPartsForLoad(block.inputParts);
+    const binding = normalizeInputBinding(rawInput.binding);
+    const valueSchema = normalizeInputValueSchema(rawInput.valueSchema);
     return attachBlockAnimations(
       {
         id,
@@ -1718,6 +1764,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         groupId,
         input: {
           paramKey,
+          ...(binding ? { binding } : {}),
+          ...(valueSchema ? { valueSchema } : {}),
           label:
             typeof rawInput.label === "string" && rawInput.label.trim()
               ? rawInput.label.trim()

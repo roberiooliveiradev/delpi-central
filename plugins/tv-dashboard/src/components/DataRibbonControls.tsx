@@ -29,6 +29,7 @@ import { useTextProjectionModel } from "../hooks/useTextProjectionModel";
 import { useViewProjectionModel } from "../hooks/useViewProjectionModel";
 import { buildParamValueUpdates } from "../utils/applyDataParamUpdates";
 import { isDateParam, periodParamFieldKeys } from "../utils/dateRangePresets";
+import { listSlideInputVariableRefs } from "../utils/inputVariableEditor";
 import {
   buildExpressionParamValue,
   isParamExpressionValue,
@@ -466,7 +467,7 @@ export function DataRibbonExpressionFlyout({
 }: {
   model: DataRibbonModel;
 }) {
-  const { openExpressionEditor } = useComunicadoEditor();
+  const { config, openExpressionEditor } = useComunicadoEditor();
   const capable = model.expressionParams;
 
   if (!model.bindingTarget && !model.bindingModel) {
@@ -501,6 +502,7 @@ export function DataRibbonExpressionFlyout({
           model.paramSchema[key]?.label,
         ),
       })),
+      refInputKeys: listSlideInputVariableRefs(config.blocks),
       previewBlockId: model.bindingTarget?.id ?? null,
       apply: (nextSpec) =>
         model.updateParams(

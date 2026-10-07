@@ -182,6 +182,7 @@ export function ExpressionEditorModal({
             onChange={setDraft}
             support={support}
             refParamKeys={request.refParamKeys ?? []}
+            refInputKeys={request.refInputKeys ?? []}
             expectedReturnTypes={request.expectedReturnTypes}
             idPrefix="td-expr-editor"
           />
