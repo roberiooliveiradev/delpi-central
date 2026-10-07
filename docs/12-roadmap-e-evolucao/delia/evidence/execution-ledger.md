@@ -10820,3 +10820,66 @@ EVIDENCE (live production, 2026-10-05):
     PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
       C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.146. C3-INTELLIGENCE-LOOP-02 — semantic path selection + bounded multi-capability composition
+    TASK = C3-INTELLIGENCE-LOOP-02
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = da479a85a552866d258eb765af40c6e664c801a4
+    COORDINATION_PREDECESSOR = C3-INTELLIGENCE-LOOP-01R2 =
+      ACCEPT_WITH_RESIDUAL (LOOP-02 authorized)
+
+    ARCHITECTURAL_DECISION (persisted):
+      MINIMUM_SUFFICIENT_PATH = NATIVE_OWNER_FIRST
+      FOREIGN_FANOUT_BOUND = MAX_FOREIGN_GROUPS=1
+      PATH_BOUND = MAX_OPERATIONAL_PLAN_STEPS (=3, shared cap)
+      MODEL = path/selection proposer; RUNTIME = deterministic validator
+      COMPARISON_VERDICT = DETERMINISTIC (agreement|conflict|inconclusive)
+      FOREIGN_EVIDENCE != IDENTIFIER_PROVENANCE
+      UNNECESSARY_FOREIGN_FANOUT = 0 (native degrade, never fan out)
+
+    CHANGE: one bounded path proposal (`semantic_path`) runs after
+      target selection — the model chooses native | enrichment |
+      corroborate plus an optional foreign_capability_id; the runtime
+      revalidates deterministically against the live surface (id must
+      exist, be unambiguous, belong to a different group, and be
+      non-mutating; corroborate never composes a PREPARE/ACT target).
+      Invalid or unusable proposals degrade to native — paths are
+      never invented. The foreign step executes once, non-mutating
+      only; its bounded sanitized evidence reaches the target
+      argument projection as `foreign_evidence` — untrusted business
+      context, structurally EXCLUDED from the identifier-provenance
+      haystack so a foreign id can never prove a target identifier.
+      Plan views union all participating groups;
+      `validate_plan_candidate` still governs (duplicate capability
+      ids, unknown ids, backward-only dependencies, step bound — fail
+      closed). Corroboration terminal: the model selects comparable
+      record/context/value fields; the runtime computes the verdict
+      and renders evidence values verbatim — conflict surfaces as
+      `evidence_conflict`, missing/non-comparable sources as
+      `comparison_inconclusive` (or `comparison_source_unavailable`
+      when the foreign step could not run); evidence is never merged
+      and the model never decides the verdict.
+
+    TESTS = 831/831 PASS (22 new evals in
+      `test_semantic_path_composition_evals.py` — native no-fanout,
+      dynamic binding preserved (no snapshot), cross-group and
+      cross-provider-family enrichment, foreign-failure degrade,
+      agreement/conflict/inconclusive verdicts, foreign identifier
+      BLOCKED, workspace identifier + foreign business value allowed,
+      rename invariance, write-class foreign ineligible,
+      unknown/ambiguous id degrade, plan-level duplicate id
+      fail-closed, provider-metadata injection inert, corroborate
+      never over write target, VISTA-shaped native path unchanged).
+
+    RESIDUAL: REAL_MODEL_EVAL = TEST_NOT_RUN;
+      LIVE_COMPOSITION = TEST_NOT_RUN;
+      VISTA_NATIVE_DYNAMIC_DASHBOARD_PATH = PARTIAL (owner catalog,
+      routes and binding contracts proven in repo; end-to-end live
+      run not executed); path-proposal quality is bounded by
+      instruction + deterministic revalidation, not measured on a
+      real model; USER_GOAL_UNDERSTANDING=PARTIAL;
+      DECISION_PATH_RUNTIME=PARTIAL (unchanged).
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

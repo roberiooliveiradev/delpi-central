@@ -2554,3 +2554,34 @@ Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (�
 | Owner/tool/provider branches added | 0 |
 | Real-model eval | TEST_NOT_RUN |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-02 — semantic path selection + bounded multi-capability composition (evidence §6.146)
+
+| Check | Result |
+|---|---|
+| `GENERIC_SEMANTIC_PATH_SELECTION` | PASS — bounded `semantic_path` proposal revalidated against the live surface; degrade-to-native on any invalid selection |
+| `NATIVE_OWNER_SUFFICIENT_PATH` | PASS — native is the default; foreign step only when proposed AND valid |
+| `UNNECESSARY_FOREIGN_FANOUT` | 0 — native mode never invokes foreign; `MAX_FOREIGN_GROUPS=1` |
+| `DYNAMIC_VS_SNAPSHOT_SEMANTICS` / `DYNAMIC_BINDING_PREFERRED` | PASS — native path invokes the target dynamic-binding contract directly; no snapshot materialization |
+| `GENERIC_MULTI_CAPABILITY_COMPOSITION` | PASS — one bounded foreign non-mutating step cross-group and cross-provider-family |
+| `CROSS_GROUP_ENRICHMENT` | PASS — foreign evidence reaches the target argument block as untrusted `foreign_evidence` |
+| `MAX_FOREIGN_GROUPS` / `MAX_SEMANTIC_PATH_CAPABILITIES` | 1 / 3 (shared `MAX_OPERATIONAL_PLAN_STEPS`) |
+| `DIRECT_SEMANTIC_ACT` | 0 — corroborate over PREPARE/ACT degrades to native; writes stay governed |
+| `FOREIGN_TARGET_IDENTIFIER` | BLOCKED — foreign evidence is outside the identifier-provenance haystack; invented foreign id demotes to clarification |
+| `WORKSPACE_TARGET_IDENTIFIER` | PASS — workspace-selected entity id proven for target args |
+| `BUSINESS_EVIDENCE_HANDOFF` | PASS — sanitized bounded `foreign_evidence` block; provenance/limitations preserved |
+| `GENERIC_CORROBORATION` | PASS — `corroborate` mode + deterministic verdict |
+| `CORROBORATION_AGREEMENT` / `CORROBORATION_CONFLICT` | PASS / PASS — convergent/divergent renders; conflict adds `evidence_conflict` limitation |
+| `NON_COMPARABLE_SOURCES` | INCONCLUSIVE — context mismatch, non-scalar values, invalid selection, or source-unavailable all yield `comparison_inconclusive`/`comparison_source_unavailable` |
+| `PLAN_CANDIDATE_REUSE` / `PLAN_DEPENDENCY_VALIDATION` | PASS / PASS — `validate_plan_candidate` over unioned live views; backward-only deps |
+| `DUPLICATE_CAPABILITY_ID` | FAIL_CLOSED — ambiguous foreign id degrades to native; plan-level dup rejected by the validator |
+| `SAME_PROVIDER_FAMILY_DIFFERENT_GROUPS` / `DIFFERENT_PROVIDER_FAMILIES` | PASS / PASS |
+| `RENAME_INVARIANCE` | PASS — renamed groups/capabilities compose identically |
+| `SOURCE_PROMPT_INJECTION` / `PROVIDER_METADATA_AUTHORITY` | BLOCKED / NONE — injected description text grants no authority; governed write chain unchanged |
+| `MODEL_AUTHORED_FACTUAL_PROSE` | NONE — comparison renders verbatim evidence values; no prose channel |
+| `CLARIFICATION_REGRESSION` / `WRITE_GOVERNANCE_REGRESSION` | PASS / PASS — full suite green |
+| `MATERIAL_ACT_RETRY` | 0 |
+| `PROVIDER_NEUTRALITY` / owner-name / tool-name branches | PASS / 0 / 0 |
+| Full delia-api suite | 831/831 PASS |
+| Real-model eval / live composition | TEST_NOT_RUN / TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
