@@ -90,3 +90,19 @@ class DelpiPurchaseRequestsGateway:
                 "limit": str(limit),
             },
         )
+
+    def list_approval_states(
+        self,
+        *,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        limit: int = 500,
+    ) -> dict[str, Any]:
+        return self._client.get_path(
+            "/supplies/purchase-requests/approval-states",
+            params={
+                "date_from": date_from,
+                "date_to": date_to,
+                "limit": str(limit),
+            },
+        )

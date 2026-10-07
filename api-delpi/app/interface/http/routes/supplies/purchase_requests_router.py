@@ -23,6 +23,7 @@ from app.application.security.api_delpi_permissions import (
 from app.composition.supplies_composer import (
     build_get_purchase_requests_open_coverage_use_case,
     build_get_supplies_purchase_request_lines_use_case,
+    build_list_supplies_purchase_request_approval_states_use_case,
     build_list_supplies_purchase_request_lines_use_case,
     build_list_supplies_purchase_request_recent_linked_orders_use_case,
     build_list_supplies_purchase_request_recent_linked_receipts_use_case,
@@ -47,6 +48,7 @@ from app.interface.http.routes.supplies.purchase_requests_branch_access import (
 from app.interface.http.routes.supplies.safety_stock_branch_access import (
     branch_access_error,
 )
+from app.domain.totvs.protheus_branches import normalize_optional_branch_codes
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -395,6 +397,55 @@ def get_supplies_purchase_request_lines_route(
         log_error(f"Erro ao obter linhas da solicitação de compra: {exc}")
         return error_response(
             "Erro interno ao obter linhas da solicitação de compra.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/approval-states",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_supplies_purchase_request_approval_states",
+        path="/supplies/purchase-requests/approval-states",
+    ),
+)
+@require_auth()
+def list_supplies_purchase_request_approval_states_route(
+    branch: Annotated[list[str] | None, Query()] = None,
+    date_from: str | None = Query(None, alias="date_from"),
+    date_to: str | None = Query(None, alias="date_to"),
+    limit: int = LIMIT_QUERY("limit_500_5000"),
+):
+    try:
+        branches = list(normalize_optional_branch_codes(branch)) or None
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+
+    try:
+        use_case = build_list_supplies_purchase_request_approval_states_use_case()
+        result = use_case.execute(
+            branches=branches,
+            date_from=date_from,
+            date_to=date_to,
+            limit=limit,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="list_supplies_purchase_request_approval_states",
+            message="Estados de aprovação das solicitações de compra carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar estados de aprovação de SC: {exc}")
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError as exc:
+        log_error(f"Banco indisponível ao listar estados de aprovação de SC: {exc}")
+        return error_response(
+            "Não foi possível consultar o TOTVS para os estados de aprovação das SC.",
+            status_code=503,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar estados de aprovação das solicitações de compra: {exc}")
+        return error_response(
+            "Erro interno ao listar estados de aprovação das solicitações de compra.",
             status_code=500,
         )
 

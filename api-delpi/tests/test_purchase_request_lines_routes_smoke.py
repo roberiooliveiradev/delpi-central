@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from app.interface.http.routes.supplies.purchase_requests_router import (
     get_supplies_purchase_request_lines_route,
+    list_supplies_purchase_request_approval_states_route,
     list_supplies_purchase_request_lines_route,
     list_supplies_purchase_request_recent_linked_orders_route,
     list_supplies_purchase_request_recent_linked_receipts_route,
@@ -123,6 +124,30 @@ def test_list_supplies_purchase_request_recent_linked_orders_meta(mock_build) ->
     assert_envelope_meta(
         body_json(response),
         operation_id="list_supplies_purchase_request_recent_linked_orders",
+        shape="list",
+    )
+
+
+@patch(f"{_ROUTER}.build_list_supplies_purchase_request_approval_states_use_case")
+def test_list_supplies_purchase_request_approval_states_meta(mock_build) -> None:
+    mock_build.return_value = MagicMock(
+        execute=MagicMock(
+            return_value={
+                "items": [],
+                "limit": 100,
+                "truncated": False,
+            }
+        )
+    )
+    response = list_supplies_purchase_request_approval_states_route(
+        branch=None,
+        date_from="2026-01-01",
+        date_to=None,
+        limit=100,
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="list_supplies_purchase_request_approval_states",
         shape="list",
     )
 

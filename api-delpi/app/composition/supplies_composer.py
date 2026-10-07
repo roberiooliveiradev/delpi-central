@@ -62,6 +62,9 @@ from app.application.use_cases.supplies.get_supplies_purchase_order_use_case imp
 from app.application.use_cases.supplies.list_supplies_purchase_orders_use_case import (
     ListSuppliesPurchaseOrdersUseCase,
 )
+from app.application.use_cases.supplies.list_supplies_purchase_request_approval_states_use_case import (
+    ListSuppliesPurchaseRequestApprovalStatesUseCase,
+)
 from app.application.use_cases.supplies.list_supplies_purchase_request_lines_use_case import (
     ListSuppliesPurchaseRequestLinesUseCase,
 )
@@ -76,6 +79,9 @@ from app.application.use_cases.supplies.list_supplies_purchase_request_requester
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_list_repository import (
     PurchaseOrdersListRepository,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_approval_states_repository import (
+    PurchaseRequestApprovalStatesRepository,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_repository import (
     PurchaseRequestLinesRepository,
@@ -258,6 +264,14 @@ def build_get_supplies_purchase_request_lines_use_case() -> (
 ):
     return GetSuppliesPurchaseRequestLinesUseCase(
         repository=PurchaseRequestLinesRepository(),
+    )
+
+
+def build_list_supplies_purchase_request_approval_states_use_case() -> (
+    ListSuppliesPurchaseRequestApprovalStatesUseCase
+):
+    return ListSuppliesPurchaseRequestApprovalStatesUseCase(
+        repository=PurchaseRequestApprovalStatesRepository(),
     )
 
 

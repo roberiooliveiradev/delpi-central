@@ -6,6 +6,9 @@ from math import ceil
 from typing import Any
 
 from app.application.services.product.protheus_field_normalizer import protheus_date_to_iso
+from app.domain.totvs.protheus_purchase_request import (
+    map_purchase_request_approval_status,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pagination import paginate
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
@@ -21,17 +24,6 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
     build_purchase_request_requesters_sql,
     build_receipts_for_orders_sql,
 )
-
-
-def _map_approval_status(raw: str | None) -> str:
-    value = (raw or "").strip().upper()
-    if value == "L":
-        return "approved"
-    if value == "R":
-        return "rejected"
-    if value == "B":
-        return "blocked"
-    return "unknown"
 
 
 def _normalize_line_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -55,7 +47,9 @@ def _normalize_line_row(row: dict[str, Any]) -> dict[str, Any]:
         "cost_center_description": row.get("cost_center_description") or None,
         "account_code": row.get("account_code") or None,
         "approval_raw": row.get("approval_raw") or "",
-        "approval_status": _map_approval_status(row.get("approval_raw")),
+        "approval_status": map_purchase_request_approval_status(
+            row.get("approval_raw")
+        ),
         "approver_name": row.get("approver_name") or None,
         "residual": bool(row.get("residual")),
         "suggested_supplier_code": row.get("suggested_supplier_code") or None,
