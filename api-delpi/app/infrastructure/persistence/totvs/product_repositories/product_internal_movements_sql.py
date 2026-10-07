@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from app.domain.totvs.protheus_internal_movements import warehouse_transfer_cfs_for_kind
+from app.domain.totvs.protheus_internal_movements import movement_kind_filters
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
@@ -28,6 +28,22 @@ def bind_internal_movement_filters(
     qb.eq("SD3.D3_LOCAL", location)
     qb.eq("SD3.D3_TM", tm)
     qb.eq("SD3.D3_OP", op)
-    cfs = warehouse_transfer_cfs_for_kind(kind)
-    if cfs:
-        qb.in_list("RTRIM(LTRIM(SD3.D3_CF))", cfs)
+    spec = movement_kind_filters(kind)
+    if spec:
+        cfs = spec.get("cf_in")
+        if cfs:
+            qb.in_list("RTRIM(LTRIM(SD3.D3_CF))", cfs)
+        cf_eq = spec.get("cf_eq")
+        if cf_eq:
+            qb.raw("RTRIM(LTRIM(SD3.D3_CF)) = ?", cf_eq)
+        doc_eq = spec.get("doc_eq")
+        if doc_eq:
+            qb.raw("RTRIM(LTRIM(SD3.D3_DOC)) = ?", doc_eq)
+        doc_ne = spec.get("doc_ne")
+        if doc_ne:
+            qb.raw("RTRIM(LTRIM(SD3.D3_DOC)) <> ?", doc_ne)
+        tm_eq = spec.get("tm_eq")
+        if tm_eq:
+            qb.raw("RTRIM(LTRIM(SD3.D3_TM)) = ?", tm_eq)
+        if spec.get("requires_production_order"):
+            qb.raw("RTRIM(LTRIM(SD3.D3_OP)) <> ''")

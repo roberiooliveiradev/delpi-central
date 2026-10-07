@@ -180,11 +180,14 @@ def _envelope(inner: Any) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def test_allowlist_v17_and_exactly_five_promoted():
+def test_allowlist_v18_and_exactly_five_system_ops_promoted():
+    # Allowlist moved to v18 with
+    # DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001; the five system-metadata
+    # ops remain promoted under the superseding wave.
     allow = load_external_read_allowlist()
-    assert allow["version"] == 17
+    assert allow["version"] == 18
     ops = {o["operationId"] for o in allow["operations"]}
-    assert len(allow["operations"]) == 77
+    assert len(allow["operations"]) == 90
     assert set(_PROMOTED) <= ops
     for oid in _EXCLUDED_SYSTEM:
         assert oid not in ops

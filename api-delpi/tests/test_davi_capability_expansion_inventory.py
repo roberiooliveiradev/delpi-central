@@ -105,6 +105,18 @@ _ELIGIBLE = {
     "search_protheus_columns_in_table",
     "get_protheus_table",
     "list_protheus_table_columns",
+    "list_supplies_inventory_adjustments",
+    "get_supplies_inventory_adjustments_summary",
+    "get_product_raw_material_set_shortages",
+    "get_production_consumption_by_item",
+    "get_production_consumption_top_items",
+    "get_production_allocation_gaps",
+    "get_production_orders_finished_without_consumption",
+    "list_production_order_operation_materials",
+    "get_production_losses_records",
+    "get_production_losses_top_materials",
+    "get_supplies_safety_stock_item_details",
+    "get_supplies_safety_stock_consumption_analysis_item_details",
 }
 
 # Allowlisted governed SEMANTIC_READ_POST entries: the baseline fallback carries
@@ -113,6 +125,7 @@ _ELIGIBLE = {
 _ALLOWLIST_ONLY_IDS = {
     "list_product_physical_locations",
     "list_product_inventory_blocks",
+    "list_production_order_operation_materials_batch",
 }
 _ALLOWLIST_IDS = _ELIGIBLE | _ALLOWLIST_ONLY_IDS
 
@@ -141,7 +154,7 @@ def test_current_eligible_set_matches_allowlist() -> None:
         1 for a in actions if str(a.method).upper() == "GET"
     )
     assert eligible == _ELIGIBLE
-    assert len(eligible) == 75
+    assert len(eligible) == 87
 
 
 def test_mcp_tools_remain_two() -> None:
@@ -189,9 +202,9 @@ def test_inventory_covers_all_gets_and_freezes_wave1(tmp_path: Path) -> None:
         assert cap["projection_mode"] == "nested"
         assert cap["negative_authz_test_required"] == "YES"
 
-    assert doc["wave_1_freeze"]["current_eligible"] == 75
+    assert doc["wave_1_freeze"]["current_eligible"] == 87
     assert doc["wave_1_freeze"]["new_capabilities"] == 3
-    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 78
+    assert doc["wave_1_freeze"]["expected_eligible_after_implementation"] == 90
     assert doc["wave_1_freeze"]["expected_mcp_tools_after_implementation"] == 3
     assert doc["wave_1_freeze"]["agent_instruction_change"] == "NO"
 
@@ -232,5 +245,5 @@ def test_committed_artifacts_are_evidence_not_runtime() -> None:
     assert freeze["artifact_class"] == "EVIDENCE_NOT_RUNTIME_AUTHORITY"
     assert inventory["runtime_invariants"]["eligible_must_remain"] == 7
     assert inventory["runtime_invariants"]["mcp_tools_must_remain"] == 3
-    assert inventory["technical_operation_counts"]["DAVI_ELIGIBLE_READ"] == 7
+    assert inventory["technical_operation_counts"]["DAVI_ELIGIBLE_READ"] == 87
     assert "product.factory.status" in inventory["wave_1_freeze"]["capability_ids"]

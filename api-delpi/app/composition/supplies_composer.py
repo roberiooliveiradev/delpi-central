@@ -92,6 +92,15 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_linked_receipts_repository import (
     PurchaseRequestLinkedReceiptsRepository,
 )
+from app.application.use_cases.supplies.get_inventory_adjustments_summary_use_case import (
+    GetInventoryAdjustmentsSummaryUseCase,
+)
+from app.application.use_cases.supplies.list_inventory_adjustments_use_case import (
+    ListInventoryAdjustmentsUseCase,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustments_repository import (
+    InventoryAdjustmentsRepository,
+)
 from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_item_details_use_case import (
     GetSafetyStockConsumptionAnalysisItemDetailsUseCase,
 )
@@ -340,4 +349,17 @@ def build_get_safety_stock_consumption_analysis_item_details_use_case() -> (
 ):
     return GetSafetyStockConsumptionAnalysisItemDetailsUseCase(
         repository=SafetyStockQueryRepository()
+    )
+
+def build_get_inventory_adjustments_summary_use_case() -> (
+    GetInventoryAdjustmentsSummaryUseCase
+):
+    return GetInventoryAdjustmentsSummaryUseCase(
+        repository=InventoryAdjustmentsRepository()
+    )
+
+
+def build_list_inventory_adjustments_use_case() -> ListInventoryAdjustmentsUseCase:
+    return ListInventoryAdjustmentsUseCase(
+        repository=InventoryAdjustmentsRepository()
     )

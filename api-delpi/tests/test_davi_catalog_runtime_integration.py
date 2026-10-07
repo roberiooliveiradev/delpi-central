@@ -777,6 +777,8 @@ def test_stock_projection_and_branch_filter(monkeypatch: pytest.MonkeyPatch):
             "warehouse": "01",
             "current_quantity": 10.0,
             "available_quantity": 8.0,
+            "committed_quantity": 1.0,
+            "reserved_quantity": 1.0,
         }
     ]
 
@@ -1135,7 +1137,7 @@ def test_eligible_set_is_seventy_seven():
     ids = load_allowlist_operation_ids(load_external_read_allowlist())
     # The exact frozen set is asserted in test_davi_capability_expansion_inventory;
     # here we keep the cardinality plus a regression subset.
-    assert len(ids) == 77
+    assert len(ids) == 90
     assert {
         "search_products",
         "get_product_stock",

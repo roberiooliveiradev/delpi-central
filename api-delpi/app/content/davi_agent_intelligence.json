@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.06.1",
+  "version": "2026.10.07.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -89,7 +89,24 @@
       "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
       "gpt_operations": ["gpt_get_catalog"],
       "pipeline": ["discover", "execute_candidate", "report_or_gap"],
-      "confirmation_policy": "read_only"
+      "confirmation_policy": "read_only",
+      "capabilities": [
+        "product.stock.availability",
+        "product.internal_movements",
+        "supplies.stock.balances",
+        "supplies.stock.value",
+        "supplies.inventory.adjustments",
+        "supplies.safety_stock.item_details",
+        "supplies.safety_stock.consumption_analysis",
+        "product.raw_material.set_shortages",
+        "production.consumption.by_item",
+        "production.consumption.top_items",
+        "production.allocation.gaps",
+        "production.orders.finished_without_consumption",
+        "production.operation.materials",
+        "production.losses"
+      ],
+      "note": "Inventory & Material Flow via discover→execute only. Semântica canônica vem da API DELPI: kind de movimentação interna é enum governado (warehouse_transfer | inventory_adjustment | production_receipt | production_consumption) — nunca classifique por código TM/CF bruto. Ajuste de inventário (furo/sobra) usa as ops dedicadas list_supplies_inventory_adjustments / get_supplies_inventory_adjustments_summary com nature=shortage|surplus; documento INVENT nunca é transferência de armazém. committed_quantity/reserved_quantity em product.stock.availability são empenho/reserva; estimation.* em supplies.stock.value carrega método e fechamento oficial (SB9) — reporte data_quality_warning em vez de escondê-lo. shortages/consumption/commitments são semáforos e extratos calculados no backend; perdas usam loss_type=refugo|scrap|both. Não recalcule furo/sobra, não infira permissão, não peça SQL genérico."
     },
     "structure_bom": {
       "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],

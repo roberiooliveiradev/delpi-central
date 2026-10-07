@@ -128,7 +128,9 @@ def test_wave3a_eligible_count_includes_wave3a_ops():
     assert set(_CURRENT_THIRTEEN) | set(_WAVE3A) <= set(eligible)
     assert {"list_product_drawings", "get_product_drawing"} <= set(eligible)
     allow = load_external_read_allowlist()
-    assert "get_product_raw_material_set_shortages" not in set(eligible)
+    # Deferral lifted: promoted by
+    # DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001 (allowlist v18).
+    assert "get_product_raw_material_set_shortages" in set(eligible)
     blocked = {
         item.get("operationId")
         for item in allow.get("explicitlyNotApproved") or []
@@ -566,12 +568,14 @@ def test_wave3a_execute_projects_without_raw_fallback(monkeypatch):
     assert "secret" not in _dumped(result_p["data"])
 
 
-def test_shortages_not_executable():
+def test_shortages_promoted_by_inventory_material_flow_wave():
+    # Wave-3a deferred shortages; DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001
+    # (allowlist v18) later approved the bounded, projected contract.
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert "get_product_raw_material_set_shortages" not in eligible
+    assert "get_product_raw_material_set_shortages" in eligible
     allow = load_external_read_allowlist()
     ids = {o["operationId"] for o in allow["operations"]}
-    assert "get_product_raw_material_set_shortages" not in ids
+    assert "get_product_raw_material_set_shortages" in ids
 
 
 def test_no_per_operation_executor_or_wave3a_router():

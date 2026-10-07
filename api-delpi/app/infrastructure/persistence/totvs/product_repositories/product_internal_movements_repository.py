@@ -11,6 +11,7 @@ from app.domain.entities.product.internal_movement import InternalMovement
 from app.domain.ports.product.product_internal_movements_repository_port import (
     ProductInternalMovementsRepositoryPort,
 )
+from app.domain.totvs.protheus_internal_movements import classify_internal_movement
 from app.infrastructure.persistence.totvs.product_repositories.product_internal_movements_sql import (
     bind_internal_movement_filters,
 )
@@ -104,10 +105,25 @@ class ProductInternalMovementsRepository(
                 params + (paging["offset"], paging["page_size"])
             )
 
-        items = [
-            InternalMovement(**r)
-            for r in rows
-        ]
+        items = []
+        for row in rows:
+            classification = classify_internal_movement(
+                cf=row.get("cf"),
+                tm=row.get("movement_type"),
+                document=row.get("document"),
+                production_order=row.get("production_order"),
+            )
+            items.append(
+                InternalMovement(
+                    **row,
+                    movement_category=classification.category,
+                    movement_direction=classification.direction,
+                    movement_label=classification.label,
+                    inventory_adjustment_nature=(
+                        classification.inventory_adjustment_nature
+                    ),
+                )
+            )
 
         return Page(
             items=items,

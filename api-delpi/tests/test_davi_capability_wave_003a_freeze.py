@@ -76,7 +76,9 @@ def test_runtime_eligible_after_wave3a_and_drawing() -> None:
     assert set(CURRENT_ELIGIBLE) <= eligible
     for op in ("get_product_guide", "get_product_parents"):
         assert op in eligible
-    assert "get_product_raw_material_set_shortages" not in eligible
+    # Deferral lifted: promoted by
+    # DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001 (allowlist v18).
+    assert "get_product_raw_material_set_shortages" in eligible
     assert "list_product_drawings" in eligible
     assert "get_product_drawing" in eligible
 
@@ -269,8 +271,9 @@ def test_wave3a_operations_are_executable_and_shortages_not() -> None:
     for op in ("get_product_guide", "get_product_parents"):
         assert op in eligible
         assert op in {o["operationId"] for o in allow["operations"]}
-    assert "get_product_raw_material_set_shortages" not in eligible
-    assert "get_product_raw_material_set_shortages" not in {
+    # Wave-3a deferred shortages; v18 later approved the bounded contract.
+    assert "get_product_raw_material_set_shortages" in eligible
+    assert "get_product_raw_material_set_shortages" in {
         o["operationId"] for o in allow["operations"]
     }
 

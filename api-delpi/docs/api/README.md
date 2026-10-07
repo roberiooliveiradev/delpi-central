@@ -54,6 +54,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [estoque-seguranca.md](./estoque-seguranca.md) | Estoque de segurança — filtros, listagem, detalhe com SC7/SD4 e extrato projetado. |
 | [supplies-estoque-historico.md](./supplies-estoque-historico.md) | Valor de estoque (`/supplies/stock-value`) — modos auto/hybrid/estimated × MATR460. |
 | [supplies-stock-balances.md](./supplies-stock-balances.md) | Saldos por armazém (`/supplies/stock-balances`) — qtd produtos + valor QATU×CM1. |
+| [supplies-inventory-adjustments.md](./supplies-inventory-adjustments.md) | Ajustes de inventário (`/supplies/inventory-adjustments`) — furo/sobra SD3 `INVENT` + proveniência SB7. |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [comercial-sales-order-otd.md](./comercial-sales-order-otd.md) | OTD de pedidos de venda. |
 | [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md) | OTD de pedidos de compra (MP). |

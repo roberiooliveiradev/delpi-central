@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-10 — Ajustes de inventário + classificação de movimentações internas
+
+Novas rotas `GET /supplies/inventory-adjustments` e `GET /supplies/inventory-adjustments/summary` (`api-delpi.access`): furos/sobras de inventário a partir de `SD3 D3_DOC='INVENT'` (SB7/MATA270), natureza autoridade do `D3_CF` (`RE0`=sobra, `DE0`=furo), período obrigatório ≤366 dias, paginação `page_50_500`.
+
+`GET /products/{code}/internal-movements` passa a classificar cada item via domínio (`protheus_internal_movements.classify_internal_movement`): novos campos `movement_category`, `movement_direction`, `movement_label`, `inventory_adjustment_nature`, e `kind` vira enum governado (`warehouse_transfer | inventory_adjustment | production_receipt | production_consumption`). Correção de classificação: `warehouse_transfer` **exclui** `D3_DOC='INVENT'` — ajuste de inventário nunca é transferência.
+
+Docs: [supplies-inventory-adjustments.md](./api/supplies-inventory-adjustments.md).
+
+---
+
 ## 2026-08 — OEE alinhado à eficiência fabril (`HY_TEMPAD`)
 
 KPI e listagem/série OEE (`GET /production/overall_equipment_effectiveness_pct`, `/production/oee`, `/production/oee/series`) deixam de usar o `EFICIENCIA_PERCENTUAL` cru da view e passam a recalcular com a mesma fórmula da eficiência fabril:

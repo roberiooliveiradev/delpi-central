@@ -212,6 +212,27 @@ _SYSTEM_METADATA_OPERATION_IDS = frozenset(
         "list_protheus_table_columns",
     }
 )
+_WAVE7_INVENTORY_MATERIAL_FLOW_OPERATION_IDS = frozenset(
+    {
+        "list_supplies_inventory_adjustments",
+        "get_supplies_inventory_adjustments_summary",
+        "get_product_raw_material_set_shortages",
+        "get_production_consumption_by_item",
+        "get_production_consumption_top_items",
+        "get_production_allocation_gaps",
+        "get_production_orders_finished_without_consumption",
+        "list_production_order_operation_materials",
+        "get_production_losses_records",
+        "get_production_losses_top_materials",
+        "get_supplies_safety_stock_item_details",
+        "get_supplies_safety_stock_consumption_analysis_item_details",
+    }
+)
+_WAVE7_SEMANTIC_POST_IDS = frozenset(
+    {
+        "list_production_order_operation_materials_batch",
+    }
+)
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
@@ -223,8 +244,13 @@ _ELIGIBLE_OPERATION_IDS = (
     | _WAVE6_PRODUCTION_OPERATION_IDS
     | _PRODUCT_MASTER_OPERATION_IDS
     | _SYSTEM_METADATA_OPERATION_IDS
+    | _WAVE7_INVENTORY_MATERIAL_FLOW_OPERATION_IDS
 )
-_ALLOWLIST_OPERATION_IDS = _ELIGIBLE_OPERATION_IDS | _PRODUCT_MASTER_SEMANTIC_POST_IDS
+_ALLOWLIST_OPERATION_IDS = (
+    _ELIGIBLE_OPERATION_IDS
+    | _PRODUCT_MASTER_SEMANTIC_POST_IDS
+    | _WAVE7_SEMANTIC_POST_IDS
+)
 
 
 @pytest.fixture(autouse=True)
@@ -344,9 +370,9 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 17
+    assert allow.get("version") == 18
     assert allow.get("coverageDecision", {}).get("decision") == (
-        "PROMOTE_SYSTEM_METADATA_GOVERNED_READS"
+        "PROMOTE_INVENTORY_MATERIAL_FLOW_READS"
     )
     assert allow.get("authzPolicy") == "DAVI-READ-AUTHZ-REBASELINE-001"
     entry = next(
@@ -510,7 +536,7 @@ def test_classify_hard_blocks():
     )
 
 
-def test_inventory_eligible_count_is_seventy_five():
+def test_inventory_eligible_count_is_eighty_seven():
     baseline = json.loads(
         (_api_root() / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
     )
@@ -519,7 +545,7 @@ def test_inventory_eligible_count_is_seventy_five():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 75
+    assert len(eligible) == 87
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -539,7 +565,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 75, query
+        assert discovered["eligible_action_count"] == 87, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1250,7 +1276,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 75
+    assert discovered["eligible_action_count"] == 87
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -2060,8 +2086,8 @@ def test_nested_unknown_fields_dropped_and_bounds():
     assert "secret" not in projected["root"]["components"][0]
 
 
-def test_eligible_count_is_seventy_five():
+def test_eligible_count_is_eighty_seven():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 75
+    assert len(eligible) == 87

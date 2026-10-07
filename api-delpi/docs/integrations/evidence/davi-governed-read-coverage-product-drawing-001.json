@@ -1,42 +1,54 @@
 {
   "source": "openapi_baseline.json",
   "baseline_version": "3",
-  "baseline_operation_count": 726,
-  "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
-  "TOTAL_OPERATIONS": 726,
-  "TOTAL_GET": 525,
+  "baseline_operation_count": 737,
+  "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
+  "TOTAL_OPERATIONS": 737,
+  "TOTAL_GET": 536,
   "TOTAL_WRITE_VERBS": 201,
-  "DAVI_ELIGIBLE_READ": 75,
-  "ELIGIBLE_BEFORE": 70,
-  "ELIGIBLE_AFTER": 75,
+  "DAVI_ELIGIBLE_READ": 87,
+  "ELIGIBLE_BEFORE": 75,
+  "ELIGIBLE_AFTER": 87,
   "NEWLY_ELIGIBLE": [
-    "get_protheus_table",
-    "list_protheus_table_columns",
-    "search_protheus_columns_by_description",
-    "search_protheus_columns_in_table",
-    "search_tables_by_description"
+    "get_product_raw_material_set_shortages",
+    "get_production_allocation_gaps",
+    "get_production_consumption_by_item",
+    "get_production_consumption_top_items",
+    "get_production_losses_records",
+    "get_production_losses_top_materials",
+    "get_production_orders_finished_without_consumption",
+    "get_supplies_inventory_adjustments_summary",
+    "get_supplies_safety_stock_consumption_analysis_item_details",
+    "get_supplies_safety_stock_item_details",
+    "list_production_order_operation_materials",
+    "list_supplies_inventory_adjustments"
   ],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 726,
-    "current_total_operations": 726,
+    "current_total_operations": 737,
     "previous_total_get": 525,
-    "current_total_get": 525,
-    "added_operations": 0,
+    "current_total_get": 536,
+    "added_operations": 11,
     "removed_operations": 0,
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
   "COVERAGE_DECISION": {
-    "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
-    "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
-    "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
+    "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
+    "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
+    "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
     "previousDecision": {
-      "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-      "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-      "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+      "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+      "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+      "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
       "previousDecision": {
-        "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-        "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+        "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+        "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+        "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+        "previousDecision": {
+          "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+          "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+        }
       }
     }
   },
@@ -127,16 +139,6 @@
       "reason": "UI filter options helper, not a primary information capability."
     },
     {
-      "operationId": "get_supplies_safety_stock_item_details",
-      "primaryBlocker": "COMPOSITE_ANALYSIS",
-      "reason": "composite_analysis detail needs separate nested contract review."
-    },
-    {
-      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
-      "primaryBlocker": "COMPOSITE_ANALYSIS",
-      "reason": "Includes calculation_memory and monthly series — defer nested detail wave."
-    },
-    {
       "operationId": "get_supplies_third_party_materials_shipment",
       "primaryBlocker": "SHIPMENT_DETAIL",
       "reason": "Single shipment detail with returns nested — defer after list shipments proves stable."
@@ -177,28 +179,33 @@
       "reason": "Deferred by Architecture; no governed fields or bounded contract approved in this promotion"
     },
     {
-      "operationId": "get_product_raw_material_set_shortages",
-      "primaryBlocker": "DEFER",
-      "reason": "Deferred by Architecture; shortage-set semantics not approved in this promotion"
-    },
-    {
       "operationId": "get_product_purchase_budget_history",
       "primaryBlocker": "DEFER",
       "reason": "Deferred by Architecture; purchase budget history semantics not approved in this promotion"
+    },
+    {
+      "operationId": "get_production_consumption_top_items_by_work_center",
+      "primaryBlocker": "REWORK_REQUIRED",
+      "reason": "Semantics reviewed: the work-center slice counts allocation-side rows, not realized consumption — answers a different question than the top-items consumption family. Needs its own bounded contract before READ promotion."
+    },
+    {
+      "operationId": "get_production_consumption_top_items_validated",
+      "primaryBlocker": "SEMANTICALLY_REDUNDANT",
+      "reason": "Same ranking as get_production_consumption_top_items narrowed to rows whose OP has an appointment — a filter variant of the promoted operation, not a distinct governed capability."
     }
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 71,
-    "DAVI_ELIGIBLE_READ": 75,
+    "DAVI_ELIGIBLE_READ": 87,
     "DESTRUCTIVE_OUT_OF_SCOPE": 17,
     "GENERIC_SQL_FORBIDDEN": 2,
     "LEGACY_UNSAFE": 2,
-    "NEEDS_BOUNDED_EXECUTION": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 329,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 62,
-    "SEMANTICALLY_REDUNDANT": 2,
+    "NEEDS_BOUNDED_EXECUTION": 3,
+    "NEEDS_MODEL_SAFE_PROJECTION": 338,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
+    "SEMANTICALLY_REDUNDANT": 3,
     "STREAM_BINARY_OUT_OF_SCOPE": 33,
-    "WRITE_OUT_OF_SCOPE": 131
+    "WRITE_OUT_OF_SCOPE": 130
   },
   "ELIGIBLE_OPERATION_IDS": [
     "get_commercial_rol_by_branch",
@@ -225,6 +232,7 @@
     "get_product_production_status",
     "get_product_purchase_price_history",
     "get_product_purchases",
+    "get_product_raw_material_set_shortages",
     "get_product_sales_open_orders",
     "get_product_sales_summary",
     "get_product_shipping_status",
@@ -232,12 +240,18 @@
     "get_product_structure",
     "get_product_structure_exclusivity",
     "get_product_suppliers",
+    "get_production_allocation_gaps",
     "get_production_appointments_produced_totals",
     "get_production_appointments_summary",
+    "get_production_consumption_by_item",
+    "get_production_consumption_top_items",
+    "get_production_losses_records",
+    "get_production_losses_top_materials",
     "get_production_machine_load_operations",
     "get_production_machine_load_work_centers",
     "get_production_oee",
     "get_production_oee_series",
+    "get_production_orders_finished_without_consumption",
     "get_production_otd",
     "get_production_otd_series",
     "get_protheus_table",
@@ -250,13 +264,16 @@
     "get_sales_order_otd_series_by_customer",
     "get_sales_order_otd_summary",
     "get_supplies_cpv",
+    "get_supplies_inventory_adjustments_summary",
     "get_supplies_inventory_turnover",
     "get_supplies_negotiation_savings_summary",
     "get_supplies_otd",
     "get_supplies_purchase_order_otd",
     "get_supplies_purchase_order_otd_series",
+    "get_supplies_safety_stock_consumption_analysis_item_details",
     "get_supplies_safety_stock_consumption_analysis_items",
     "get_supplies_safety_stock_consumption_analysis_summary",
+    "get_supplies_safety_stock_item_details",
     "get_supplies_safety_stock_item_suppliers",
     "get_supplies_safety_stock_items",
     "get_supplies_safety_stock_summary",
@@ -269,7 +286,9 @@
     "get_weg_rol_target_pct",
     "list_exclusive_raw_materials_catalog",
     "list_product_drawings",
+    "list_production_order_operation_materials",
     "list_protheus_table_columns",
+    "list_supplies_inventory_adjustments",
     "list_supplies_purchase_request_lines",
     "search_products",
     "search_products_by_supplier_part_number",
