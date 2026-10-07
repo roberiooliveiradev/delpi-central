@@ -4,11 +4,11 @@
 
 - Task: `DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **737**
-- TOTAL GET: **536**
+- TOTAL OPERATIONS: **738**
+- TOTAL GET: **537**
 - WRITE VERBS (POST/PUT/PATCH/DELETE): **201**
-- DAVI_ELIGIBLE_READ (before→after): **75 → 87**
-- NEWLY ELIGIBLE: **12**
+- DAVI_ELIGIBLE_READ (before→after): **87 → 87**
+- NEWLY ELIGIBLE: **0**
 
 ## Coverage decision
 
@@ -38,11 +38,11 @@
 
 ```json
 {
-  "previous_total_operations": 726,
-  "current_total_operations": 737,
-  "previous_total_get": 525,
-  "current_total_get": 536,
-  "added_operations": 11,
+  "previous_total_operations": 737,
+  "current_total_operations": 738,
+  "previous_total_get": 536,
+  "current_total_get": 537,
+  "added_operations": 1,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -58,7 +58,7 @@
 | `GENERIC_SQL_FORBIDDEN` | 2 |
 | `LEGACY_UNSAFE` | 2 |
 | `NEEDS_BOUNDED_EXECUTION` | 3 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 338 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 339 |
 | `NEEDS_NESTED_PROJECTION_SUPPORT` | 51 |
 | `SEMANTICALLY_REDUNDANT` | 3 |
 | `STREAM_BINARY_OUT_OF_SCOPE` | 33 |

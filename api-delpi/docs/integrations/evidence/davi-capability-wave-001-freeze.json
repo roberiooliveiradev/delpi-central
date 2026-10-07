@@ -2,12 +2,12 @@
   "metadata": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-INVENTORY-001",
     "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
-    "generated_at": "2026-10-07T12:30:12.113791+00:00",
-    "source_head": "da479a85a552866d258eb765af40c6e664c801a4",
-    "origin_main": "3efdb7e21d007d20b3bdfda59008a13fd1da7cc2",
+    "generated_at": "2026-10-07T12:37:22.893391+00:00",
+    "source_head": "17d432bc0ccb928464ba5edd56708f4f62f6b6b7",
+    "origin_main": "be3c63a470fe2c248505f82a2e88b08f7782fdd2",
     "openapi_version": "3.0.3",
     "baseline_version": "3",
-    "baseline_operation_count": 737,
+    "baseline_operation_count": 738,
     "budgets": {
       "version": 2,
       "discover_default_top_k": 5,

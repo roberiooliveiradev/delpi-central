@@ -2,12 +2,12 @@
   "metadata": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-INVENTORY-001",
     "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
-    "generated_at": "2026-10-07T12:30:12.113791+00:00",
-    "source_head": "da479a85a552866d258eb765af40c6e664c801a4",
-    "origin_main": "3efdb7e21d007d20b3bdfda59008a13fd1da7cc2",
+    "generated_at": "2026-10-07T12:37:22.893391+00:00",
+    "source_head": "17d432bc0ccb928464ba5edd56708f4f62f6b6b7",
+    "origin_main": "be3c63a470fe2c248505f82a2e88b08f7782fdd2",
     "openapi_version": "3.0.3",
     "baseline_version": "3",
-    "baseline_operation_count": 737,
+    "baseline_operation_count": 738,
     "budgets": {
       "version": 2,
       "discover_default_top_k": 5,
@@ -21,8 +21,8 @@
     }
   },
   "technical_operation_counts": {
-    "TOTAL_OPERATIONS": 737,
-    "TOTAL_GET": 536,
+    "TOTAL_OPERATIONS": 738,
+    "TOTAL_GET": 537,
     "TOTAL_WRITE_VERBS": 201,
     "DAVI_ELIGIBLE_READ": 87,
     "ELIGIBLE_OPERATION_IDS": [
@@ -121,7 +121,7 @@
       "GENERIC_SQL_FORBIDDEN": 2,
       "LEGACY_UNSAFE": 2,
       "NEEDS_BOUNDED_EXECUTION": 3,
-      "NEEDS_MODEL_SAFE_PROJECTION": 338,
+      "NEEDS_MODEL_SAFE_PROJECTION": 339,
       "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
       "SEMANTICALLY_REDUNDANT": 3,
       "STREAM_BINARY_OUT_OF_SCOPE": 33,
@@ -140,14 +140,14 @@
       "quality": 99,
       "reports": 11,
       "scheduling": 6,
-      "supplies": 37
+      "supplies": 38
     },
     "ADMIN": 71,
     "SQL": 2,
     "BINARY": 33,
     "WRITE_OUT_OF_SCOPE": 130,
     "DESTRUCTIVE": 17,
-    "MODEL_SAFE_PROJECTION_BLOCKED": 338,
+    "MODEL_SAFE_PROJECTION_BLOCKED": 339,
     "NESTED_PROJECTION_BLOCKED": 51,
     "SEMANTICALLY_REDUNDANT": 3
   },
@@ -185,7 +185,7 @@
     "quality": 99,
     "reports": 11,
     "scheduling": 6,
-    "supplies": 37
+    "supplies": 38
   },
   "domain_summary": [
     {
@@ -335,7 +335,7 @@
     },
     {
       "domain": "supplies",
-      "get_operations": 37,
+      "get_operations": 38,
       "semantic_capabilities": 4,
       "currently_eligible": 22,
       "freeze_candidates": 0,
@@ -343,7 +343,7 @@
         "STREAM_BINARY_OUT_OF_SCOPE": 3,
         "NEEDS_NESTED_PROJECTION_SUPPORT": 3,
         "DAVI_ELIGIBLE_READ": 22,
-        "NEEDS_MODEL_SAFE_PROJECTION": 9
+        "NEEDS_MODEL_SAFE_PROJECTION": 10
       }
     }
   ],
@@ -31031,6 +31031,52 @@
       "notes": null
     },
     {
+      "operationId": "list_supplies_purchase_request_approval_states",
+      "http_path": "/supplies/purchase-requests/approval-states",
+      "bounded_context": "supplies",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista — Supplies purchase request approval state",
+      "description": "Retorna supplies purchase request approval state via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "branch",
+        "date_from",
+        "date_to",
+        "limit"
+      ],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "list",
+      "response_schema": "supplies_purchase_request_approval_state",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "list_supplies_purchase_request_lines",
       "http_path": "/supplies/purchase-requests/lines",
       "bounded_context": "supplies",
@@ -40851,13 +40897,13 @@
     }
   ],
   "residual_gaps": {
-    "unassigned_get_count": 471,
+    "unassigned_get_count": 472,
     "unassigned_by_status": {
       "ADMIN_OUT_OF_SCOPE": 28,
       "DAVI_ELIGIBLE_READ": 49,
       "GENERIC_SQL_FORBIDDEN": 1,
       "LEGACY_UNSAFE": 2,
-      "NEEDS_MODEL_SAFE_PROJECTION": 319,
+      "NEEDS_MODEL_SAFE_PROJECTION": 320,
       "NEEDS_NESTED_PROJECTION_SUPPORT": 44,
       "SEMANTICALLY_REDUNDANT": 2,
       "STREAM_BINARY_OUT_OF_SCOPE": 26
@@ -43536,6 +43582,12 @@
       {
         "operationId": "list_supplies_purchase_orders",
         "path": "/supplies/purchase-orders",
+        "domain": "supplies",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "list_supplies_purchase_request_approval_states",
+        "path": "/supplies/purchase-requests/approval-states",
         "domain": "supplies",
         "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
       },
