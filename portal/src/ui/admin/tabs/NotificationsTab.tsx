@@ -1,7 +1,7 @@
 // src/ui/admin/tabs/NotificationsTab.tsx
 
 import { useContext, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Bell, Send } from "lucide-react";
+import { Bell, Send, Users } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
@@ -27,6 +27,7 @@ import {
 } from "../../../components/notifications/notificationTemplates";
 import { useNotificationTemplates } from "../../../components/notifications/useNotificationTemplates";
 import { NotificationDispatchHistory } from "../../../components/notifications/NotificationDispatchHistory";
+import { AdminNotificationCategoryAccess } from "../../../components/notifications/AdminNotificationCategoryAccess";
 import {
   snapshotFromDispatchPayload,
   type DispatchFormSnapshot,
@@ -50,7 +51,7 @@ import {
 
 import "./NotificationsTab.css";
 
-type AdminNotificationsView = "send" | "history";
+type AdminNotificationsView = "send" | "history" | "manage";
 
 const PRESENTATION_MODES: {
   value: NotificationPresentation;
@@ -481,8 +482,19 @@ export function NotificationsTab() {
             label: "Histórico",
             icon: <Bell size={16} />,
           },
+          {
+            id: "manage",
+            label: "Gestão",
+            icon: <Users size={16} />,
+          },
         ]}
       />
+
+      {view === "manage" ? (
+        <article className="admin-notifications__panel">
+          <AdminNotificationCategoryAccess coreApi={coreApi} />
+        </article>
+      ) : null}
 
       {view === "history" ? (
         <article className="admin-notifications__panel">

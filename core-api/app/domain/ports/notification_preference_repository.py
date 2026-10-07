@@ -47,3 +47,6 @@ class NotificationPreferenceRepository(Protocol):
 
     def filter_user_ids_accepting_category(self, user_ids: list[str], category: str) -> list[str]:
         ...
+
+    def get_preferences_for_users(self, user_ids: list[str]) -> dict[str, NotificationPreferenceDTO]:
+        ...
