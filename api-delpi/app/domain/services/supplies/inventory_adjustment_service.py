@@ -4,15 +4,25 @@ Comprovado em dados (out/2026):
 
 - O processamento da contagem física (SB7, origem MATA270, B7_STATUS='2')
   grava a diferença em SD3 com ``D3_DOC = 'INVENT'``.
-- Só existem dois pares TM/CF nesse documento: ``TM 999/CF RE0`` =
-  ajuste positivo (sobra) e ``TM 499/CF DE0`` = ajuste negativo (furo).
-- A natureza é autoridade do CF: ``RE0`` = entrada (sobra);
-  ``DE0`` = saída (furo). O TM **não** é autoridade para ajuste —
-  a sobra é gravada com ``TM 999`` (também usado no consumo).
-- ``D3_CUSTO1`` é o valor **total do movimento** na moeda 1 no momento
-  do ajuste, não custo unitário a multiplicar por ``D3_QUANT`` (mesma
+- Só existem dois pares TM/CF nesse documento: ``TM 499/CF DE0`` =
+  ajuste de entrada (sobra) e ``TM 999/CF RE0`` = ajuste de saída
+  (furo) — comprovado contra o relatório Protheus de movimentações
+  de inventário (filial 02, 2026-09): as linhas ``DE0`` somam
+  exatamente a coluna ENTRADAS e as ``RE0`` somam exatamente a
+  coluna SAÍDAS, consistente com o sinal do TM
+  (``TM < 500`` entrada / ``TM >= 500`` saída).
+- A natureza é autoridade do CF: ``DE0`` = entrada (sobra);
+  ``RE0`` = saída (furo).
+- ``D3_CUSTO1`` é o valor **total do movimento** na moeda 1, não
+  custo unitário a multiplicar por ``D3_QUANT`` (mesma
   interpretação do cálculo histórico SB9+SD3, que aplica ``D3_CUSTO1``
-  diretamente ao movimento).
+  diretamente ao movimento). O campo é **mutável**: o recálculo de
+  custo médio (MATA330) regrava ``D3_CUSTO1`` e marca
+  ``D3_SEQCALC``; o valor lido é o estado corrente pós-recálculo —
+  a mesma fonte que o relatório consulta (custo médio do movimento
+  exibido = ``D3_CUSTO1 / D3_QUANT``). Comprovado via auditoria
+  ``SD3010_TTAT_LOG`` (escritas de ``A340INVPRO``/``ACDA030`` no
+  lançamento seguidas de reescrita por ``MATA330``).
 - ``D3_TPMOVAJ`` não é usado no ambiente; SF5 não contém os TM 499/999;
   F0Q vazio; C5D é cadastro fiscal sem vínculo comprovado.
 - SB7 é apoio de proveniência, não autoridade: a associação
@@ -49,11 +59,12 @@ NATURE_LABELS: dict[str, str] = {
 class InventoryAdjustmentClassification:
     """Expressões SQL canônicas do ajuste de inventário (alias SD3)."""
 
-    # Natureza comprovada pelo CF: RE0 = sobra (entrada); DE0 = furo (saída).
+    # Natureza comprovada pelo CF contra o relatório Protheus:
+    # DE0/TM 499 = sobra (entrada); RE0/TM 999 = furo (saída).
     NATURE_SQL_EXPRESSION = f"""
         CASE
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN '{NATURE_SURPLUS}'
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN '{NATURE_SHORTAGE}'
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN '{NATURE_SURPLUS}'
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN '{NATURE_SHORTAGE}'
           ELSE 'other'
         END
     """
@@ -61,15 +72,15 @@ class InventoryAdjustmentClassification:
     # Quantidade/valor assinados: sobra positiva, furo negativa.
     SIGNED_QUANTITY_SQL_EXPRESSION = """
         CASE
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN SD3.D3_QUANT
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN -SD3.D3_QUANT
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_QUANT
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -SD3.D3_QUANT
           ELSE SD3.D3_QUANT
         END
     """
     SIGNED_VALUE_SQL_EXPRESSION = """
         CASE
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN SD3.D3_CUSTO1
-          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN -SD3.D3_CUSTO1
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_CUSTO1
+          WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -SD3.D3_CUSTO1
           ELSE SD3.D3_CUSTO1
         END
     """

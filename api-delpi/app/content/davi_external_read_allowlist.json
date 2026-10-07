@@ -3975,7 +3975,7 @@
     },
     {
       "operationId": "list_supplies_inventory_adjustments",
-      "reason": "Inventory adjustments detail list (SD3 doc=INVENT from the SB7/MATA270 count processing); semantic discovery owns item/product/document/launch/detail language while aggregate value/total/net/gross language belongs to the summary sibling; nature classified backend-side by CF (RE0=surplus entrance, DE0=shortage exit); SB7 inventory provenance exposed only when the candidate document is unambiguous (fail-closed); raw tm/cf never exposed; DAVI page_size bounded to 50 (owner API contract remains page_size<=500); API_DELPI_ACCESS backend AuthZ",
+      "reason": "Inventory adjustments detail list (SD3 doc=INVENT from the SB7/MATA270 count processing); semantic discovery owns item/product/document/launch/detail language while aggregate value/total/net/gross language belongs to the summary sibling; nature classified backend-side by CF (DE0=surplus entrance, RE0=shortage exit — proven against the Protheus inventory movements report); SB7 inventory provenance exposed only when the candidate document is unambiguous (fail-closed); raw tm/cf never exposed; DAVI page_size bounded to 50 (owner API contract remains page_size<=500); API_DELPI_ACCESS backend AuthZ",
       "executionMode": "catalog_action",
       "approvedInputFields": [
         "start_date",

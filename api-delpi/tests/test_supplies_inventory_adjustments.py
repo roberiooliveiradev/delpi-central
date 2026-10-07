@@ -59,9 +59,10 @@ _API_ROOT = Path(__file__).resolve().parents[1]
 # ---------------------------------------------------------------------------
 
 
-def test_inventory_adjustment_surplus_re0_invent() -> None:
+def test_inventory_adjustment_surplus_de0_invent() -> None:
+    """DE0/TM 499 = entrada (sobra) — comprovado contra o relatório."""
     result = classify_internal_movement(
-        cf="RE0", tm="999", document="INVENT", production_order=""
+        cf="DE0", tm="499", document="INVENT", production_order=""
     )
     assert result.category == MOVEMENT_CATEGORY_INVENTORY_ADJUSTMENT
     assert result.direction == "inbound"
@@ -69,22 +70,28 @@ def test_inventory_adjustment_surplus_re0_invent() -> None:
     assert result.label
 
 
-def test_inventory_adjustment_shortage_de0_invent() -> None:
+def test_inventory_adjustment_shortage_re0_invent() -> None:
+    """RE0/TM 999 = saída (furo) — comprovado contra o relatório."""
     result = classify_internal_movement(
-        cf="DE0", tm="499", document="INVENT", production_order=""
+        cf="RE0", tm="999", document="INVENT", production_order=""
     )
     assert result.category == MOVEMENT_CATEGORY_INVENTORY_ADJUSTMENT
     assert result.direction == "outbound"
     assert result.inventory_adjustment_nature == "shortage"
 
 
-def test_inventory_adjustment_tm_is_not_nature_authority() -> None:
-    """TM 999 também aparece no consumo; a natureza vem do CF, não do TM."""
-    result = classify_internal_movement(
+def test_inventory_adjustment_cf_is_consistent_with_tm_sign() -> None:
+    """CF e TM concordam no INVENT: DE0/499 entrada; RE0/999 saída."""
+    surplus = classify_internal_movement(
+        cf="DE0", tm="499", document="INVENT", production_order="000123"
+    )
+    shortage = classify_internal_movement(
         cf="RE0", tm="999", document="INVENT", production_order="000123"
     )
-    assert result.category == MOVEMENT_CATEGORY_INVENTORY_ADJUSTMENT
-    assert result.inventory_adjustment_nature == "surplus"
+    assert surplus.inventory_adjustment_nature == "surplus"
+    assert surplus.direction == movement_direction("499")
+    assert shortage.inventory_adjustment_nature == "shortage"
+    assert shortage.direction == movement_direction("999")
 
 
 def test_invent_doc_with_unknown_cf_stays_adjustment_without_nature() -> None:
@@ -607,14 +614,65 @@ def test_repository_nature_filter_is_bound_as_parameter(nature: str) -> None:
     assert "10080034" in params
 
 
+def test_frozen_scenario_2026_09_semantics() -> None:
+    """Regressão do recorte real: filial 02, 2026-09-04..2026-09-29,
+    armazéns 01+99, doc INVENT — 45 movimentos provados contra o
+    relatório Protheus (colunas ENTRADAS/SAÍDAS).
+
+    Expectativa derivada da regra corrigida (DE0=entrada/sobra,
+    RE0=saída/furo) sobre os totais de quantidade do relatório:
+
+      surplus_quantity  = 28.798,380  (ENTRADAS, 13 linhas TM499/DE0)
+      shortage_quantity = 147.248,364 (SAÍDAS, 32 linhas TM999/RE0)
+      net_quantity      = -118.449,984
+    """
+    repo = _RegressionInventoryAdjustmentsRepository(
+        {
+            "adjustment_count": 45,
+            "shortage_count": 32,
+            "surplus_count": 13,
+            "gross_adjustment_quantity": 176046.744,
+            "net_adjustment_quantity": -118449.984,
+            "gross_adjustment_value": 33336.889,
+            "net_adjustment_value": -28376.193,
+            "shortage_quantity": 147248.364,
+            "shortage_value": 30856.541,
+            "surplus_quantity": 28798.380,
+            "surplus_value": 2480.348,
+        }
+    )
+    result = repo.fetch_adjustment_summary(
+        date_start="20260904",
+        date_end_exclusive="20260930",
+        branch="02",
+        product_code=None,
+        warehouse=None,
+        nature=None,
+    )
+    summary = result["summary"]
+    assert summary["adjustment_count"] == 45
+    assert summary["surplus_count"] == 13
+    assert summary["shortage_count"] == 32
+    assert summary["surplus_quantity"] == pytest.approx(28798.380)
+    assert summary["shortage_quantity"] == pytest.approx(147248.364)
+    assert summary["net_quantity"] == pytest.approx(-118449.984)
+    assert summary["net_value"] == pytest.approx(
+        summary["surplus_value"] - summary["shortage_value"]
+    )
+    assert summary["net_value"] < 0
+
+
 def test_domain_nature_sql_matches_proven_cf_semantics() -> None:
+    """DE0 = sobra/entrada, RE0 = furo/saída (relatório Protheus)."""
     nature = InventoryAdjustmentClassification.NATURE_SQL_EXPRESSION
-    assert "'RE0'" in nature and "surplus" in nature
-    assert "'DE0'" in nature and "shortage" in nature
+    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN 'surplus'" in nature
+    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN 'shortage'" in nature
     signed_qty = InventoryAdjustmentClassification.SIGNED_QUANTITY_SQL_EXPRESSION
-    assert "-SD3.D3_QUANT" in signed_qty
+    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_QUANT" in signed_qty
+    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -SD3.D3_QUANT" in signed_qty
     signed_val = InventoryAdjustmentClassification.SIGNED_VALUE_SQL_EXPRESSION
-    assert "-SD3.D3_CUSTO1" in signed_val
+    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_CUSTO1" in signed_val
+    assert "WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN -SD3.D3_CUSTO1" in signed_val
 
 
 # ---------------------------------------------------------------------------

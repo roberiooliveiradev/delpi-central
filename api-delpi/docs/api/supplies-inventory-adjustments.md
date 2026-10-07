@@ -32,25 +32,38 @@ referencia as expressões — nenhum consumidor reescreve a regra.
 
 | Fato Protheus | Significado |
 |---------------|-------------|
-| `D3_DOC = 'INVENT'` + `D3_CF = 'RE0'` | **Sobra** (ajuste de entrada) — `nature=surplus` |
-| `D3_DOC = 'INVENT'` + `D3_CF = 'DE0'` | **Furo** (ajuste de saída) — `nature=shortage` |
+| `D3_DOC = 'INVENT'` + `D3_CF = 'DE0'` (`TM 499`) | **Sobra** (ajuste de entrada) — `nature=surplus` |
+| `D3_DOC = 'INVENT'` + `D3_CF = 'RE0'` (`TM 999`) | **Furo** (ajuste de saída) — `nature=shortage` |
 
-**O TM não é autoridade para ajuste**: a sobra é gravada com `TM 999`
-(o mesmo TM do consumo de produção) e o furo com `TM 499`. A natureza
-vem exclusivamente do `D3_CF`. `D3_TPMOVAJ` não é usado no ambiente;
-`SF5` não contém os TMs 499/999.
+Mapeamento comprovado contra o relatório Protheus de movimentações de
+inventário (filial 02, 2026-09): as linhas `TM 499/CF DE0` somam
+exatamente a coluna **ENTRADAS** do relatório e as `TM 999/CF RE0`
+somam exatamente **SAÍDAS**. O `D3_CF` é consistente com o sinal do
+`D3_TM` (`TM < 500` = entrada, `TM >= 500` = saída) e com a semântica
+do CF (`DE0` = devolução → entrada; `RE0` = requisição → saída).
+`D3_TPMOVAJ` não é usado no ambiente; `SF5` não contém os TMs 499/999.
 
 ```text
-signed_quantity = +D3_QUANT (RE0) | -D3_QUANT (DE0)
-signed_value    = +D3_CUSTO1 (RE0) | -D3_CUSTO1 (DE0)
+signed_quantity = +D3_QUANT (DE0) | -D3_QUANT (RE0)
+signed_value    = +D3_CUSTO1 (DE0) | -D3_CUSTO1 (RE0)
 ```
 
 `D3_CUSTO1` é tratado nesta capability como **valor total do movimento
 na moeda 1**, não como custo unitário. Portanto o valor histórico do ajuste
 é agregado diretamente de `D3_CUSTO1`; **não** multiplicar
 `D3_QUANT * D3_CUSTO1`. A mesma convenção é usada no cálculo histórico
-SB9+SD3. A validação live da filial 01 no período de regressão abaixo
-reproduz os totais reconciliados usando essa interpretação.
+SB9+SD3 e no relatório Protheus, cuja coluna "custo médio do movimento"
+equivale a `D3_CUSTO1 / D3_QUANT`.
+
+**`D3_CUSTO1` é mutável**: o recálculo de custo médio (`MATA330`)
+regrava o campo e marca `D3_SEQCALC` — comprovado via auditoria
+`SD3010_TTAT_LOG`, que registra a escrita inicial por
+`A340INVPRO`/`ACDA030` seguida da reescrita pelo `MATA330`. A
+capability expõe o **estado corrente (pós-recálculo)**, que é o valor
+contábil vigente e a mesma fonte lida pelo relatório no momento da
+geração. Valores de um relatório gerado **durante** uma execução do
+`MATA330` podem misturar linhas já revalorizadas com linhas ainda no
+valor de lançamento e não são reproduzíveis por consulta posterior.
 
 ## Proveniência SB7
 
@@ -145,15 +158,15 @@ domain-owned e o repositório reutiliza a expressão canônica.
 
 | Indicador | Esperado |
 |---|---:|
-| valor_sobra | 2.082.103,531 |
-| valor_furo | 1.908.939,208 |
-| valor_ajuste_liquido | 173.164,323 |
+| valor_sobra | 1.908.939,208 |
+| valor_furo | 2.082.103,531 |
+| valor_ajuste_liquido | -173.164,323 |
 | valor_ajuste_bruto | 3.991.042,739 |
-| quantidade_sobra | 549.666,291 |
-| quantidade_furo | 489.976,062 |
-| quantidade_liquida | 59.690,229 |
-| movimentos_sobra | 977 |
-| movimentos_furo | 474 |
+| quantidade_sobra | 489.976,062 |
+| quantidade_furo | 549.666,291 |
+| quantidade_liquida | -59.690,229 |
+| movimentos_sobra | 474 |
+| movimentos_furo | 977 |
 | movimentos_totais | 1.451 |
 
 ## Discovery semântico DAVI

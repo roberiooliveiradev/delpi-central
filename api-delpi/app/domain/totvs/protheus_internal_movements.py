@@ -4,8 +4,9 @@ Classificação canônica domínio-owned dos fatos SD3:
 
 - ``D3_DOC = 'INVENT'`` identifica o ajuste de inventário gerado pelo
   processamento da contagem SB7 (MATA270). A natureza vem do CF:
-  ``RE0`` = ajuste de entrada (sobra); ``DE0`` = ajuste de saída
-  (furo). O TM não é autoridade no ajuste — a sobra usa ``TM 999``.
+  ``DE0`` = ajuste de entrada (sobra); ``RE0`` = ajuste de saída
+  (furo). O CF é consistente com o sinal do TM: a sobra usa
+  ``TM 499`` (entrada) e o furo usa ``TM 999`` (saída).
 - ``D3_CF = 'PR0'`` é entrada de produção.
 - ``D3_CF`` ``DE0``/``RE0`` fora do documento ``INVENT`` é transferência
   entre armazéns (sai/entra).
@@ -15,8 +16,14 @@ Classificação canônica domínio-owned dos fatos SD3:
   semântica para códigos desconhecidos.
 
 Comprovado em dados (2026-10): todos os movimentos ``INVENT`` usam
-apenas ``TM 999/CF RE0`` (sobra) e ``TM 499/CF DE0`` (furo), sem
-estorno e sem quantidade negativa. SB7 é apoio de proveniência
+apenas ``TM 499/CF DE0`` (sobra/entrada) e ``TM 999/CF RE0``
+(furo/saída), sem estorno e sem quantidade negativa. A direção foi
+validada contra o relatório Protheus de movimentações de inventário
+(filial 02, 2026-09): as linhas ``TM 499/CF DE0`` somam exatamente a
+coluna ENTRADAS e as ``TM 999/CF RE0`` somam exatamente a coluna
+SAÍDAS — consistente com a regra Protheus ``TM < 500`` entrada /
+``TM >= 500`` saída e com a semântica CF ``DE0``=devolução (entrada) /
+``RE0``=requisição (saída). SB7 é apoio de proveniência
 (não autoridade): a associação por filial+produto+armazém+data
 apresentou alta correlação na base investigada (4.849/4.852
 linhas 2025+), sem vínculo um-para-um garantido — documento e
@@ -99,13 +106,13 @@ def classify_internal_movement(
     direction = movement_direction(tm)
 
     if doc_token == INVENTORY_ADJUSTMENT_DOCUMENT:
-        # Natureza comprovada pelo CF: RE0 = ajuste de entrada (sobra),
-        # DE0 = ajuste de saída (furo). O TM não é autoridade aqui —
-        # DELPI grava TM 999/RE0 para ajuste positivo.
-        if cf_token == WAREHOUSE_TRANSFER_IN_CF:
+        # Natureza comprovada pelo CF contra o relatório Protheus:
+        # DE0/TM 499 = ajuste de entrada (sobra), RE0/TM 999 = ajuste
+        # de saída (furo). O CF é consistente com o sinal do TM.
+        if cf_token == WAREHOUSE_TRANSFER_OUT_CF:
             nature = ADJUSTMENT_NATURE_SURPLUS
             adj_direction = DIRECTION_INBOUND
-        elif cf_token == WAREHOUSE_TRANSFER_OUT_CF:
+        elif cf_token == WAREHOUSE_TRANSFER_IN_CF:
             nature = ADJUSTMENT_NATURE_SHORTAGE
             adj_direction = DIRECTION_OUTBOUND
         else:
