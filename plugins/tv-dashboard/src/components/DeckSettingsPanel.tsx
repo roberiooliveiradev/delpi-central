@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { NativeCheckboxControl, TransitionGallery } from "@delpi/plugin-ui/index";
+import {
+  NativeCheckboxControl,
+  SegmentToggle,
+  TransitionGallery,
+  type SegmentToggleOption,
+} from "@delpi/plugin-ui/index";
 import {
   formatPresentationTransitionLabel,
   PRESENTATION_TRANSITION_STYLES,
@@ -97,6 +102,13 @@ const TRANSITION_OPTIONS = PRESENTATION_TRANSITION_STYLES.map((id) => ({
   description: F.transitionDescriptions[id as PresentationTransitionStyle],
 }));
 
+type PlaybackMode = NonNullable<Playlist["playbackMode"]>;
+
+const PLAYBACK_MODE_OPTIONS: readonly SegmentToggleOption<PlaybackMode>[] = [
+  { value: "presentation", label: "Apresentação" },
+  { value: "meeting", label: "Reunião" },
+];
+
 const SLIDE_TRANSITION_OPTIONS = [
   {
     id: "",
@@ -157,6 +169,7 @@ export function DeckSettingsPanel({
   const [linkCopied, setLinkCopied] = useState(false);
   const [playlistDurationSec, setPlaylistDurationSec] = useState(playlist.defaultDurationSec);
   const [playlistRefreshSec, setPlaylistRefreshSec] = useState(playlist.globalRefreshSec);
+  const playbackMode: PlaybackMode = playlist.playbackMode ?? "presentation";
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
 
@@ -611,36 +624,24 @@ export function DeckSettingsPanel({
 
             <DeckRibbonTilePopover
               icon={Presentation}
-              label="Modo"
+              label={playbackMode === "meeting" ? "Reunião" : "Apresentação"}
               hint={R.playbackMode}
               panelLabel="Modo de reprodução"
               panelClassName="td-deck-ribbon-tile-popover--timing"
             >
-              <div className="td-deck-playback-mode" role="radiogroup" aria-label="Modo de reprodução">
-                <label className="td-deck-playback-mode__option">
-                  <input
-                    type="radio"
-                    name="td-playback-mode"
-                    checked={(playlist.playbackMode ?? "presentation") === "presentation"}
-                    onChange={() => onSavePlaylistSettings("playbackMode", "presentation")}
-                  />
-                  <span>
-                    <strong>Apresentação</strong>
-                    <small>Telas avançam sozinhas pela duração</small>
-                  </span>
-                </label>
-                <label className="td-deck-playback-mode__option">
-                  <input
-                    type="radio"
-                    name="td-playback-mode"
-                    checked={playlist.playbackMode === "meeting"}
-                    onChange={() => onSavePlaylistSettings("playbackMode", "meeting")}
-                  />
-                  <span>
-                    <strong>Reunião</strong>
-                    <small>Avanço manual (setas / botões / Espaço)</small>
-                  </span>
-                </label>
+              <div className="td-deck-playback-toggle">
+                <SegmentToggle
+                  options={PLAYBACK_MODE_OPTIONS}
+                  value={playbackMode}
+                  onChange={(value) => onSavePlaylistSettings("playbackMode", value)}
+                  ariaLabel="Modo de reprodução"
+                  idPrefix="td-playback-mode"
+                  prefix="td"
+                  size="sm"
+                />
+                <p className="td-deck-inspector__hint">
+                  {F.playbackModeDescriptions[playbackMode]}
+                </p>
               </div>
             </DeckRibbonTilePopover>
           </div>

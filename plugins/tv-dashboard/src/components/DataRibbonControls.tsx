@@ -458,7 +458,7 @@ function defaultExpressionAst(isDate: boolean) {
 
 /**
  * Flyout «Expressão» — cartões-resumo por parâmetro + «Nova expressão».
- * A edição acontece só no drawer (draft local até «Aplicar»); este flyout
+ * A edição acontece só no modal (draft local até «Aplicar»); este flyout
  * nunca avalia nem persiste AST diretamente.
  */
 export function DataRibbonExpressionFlyout({

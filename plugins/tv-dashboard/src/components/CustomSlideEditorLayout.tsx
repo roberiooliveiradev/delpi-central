@@ -7,7 +7,7 @@ import { ComunicadoComposerCanvas } from "./ComunicadoComposer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataCatalogModalHost } from "./DataCatalogModalHost";
 import { DeckEditorChrome } from "./DeckEditorChrome";
-import { ExpressionEditorDrawerHost } from "./ExpressionEditorDrawerHost";
+import { ExpressionEditorModalHost } from "./ExpressionEditorModalHost";
 import { DeckWorkspace } from "./DeckWorkspace";
 import { ComunicadoSlideTemplatesPanel } from "./deck/ComunicadoSlideTemplatesPanel";
 import { DeckElementSidePanel } from "./deck";
@@ -121,7 +121,7 @@ export function CustomSlideEditorLayout({
     <>
       <DeckEditorChrome {...chromeWithSlideExtras} />
       <DataCatalogModalHost branchScope={chromeProps.branchScope} />
-      <ExpressionEditorDrawerHost />
+      <ExpressionEditorModalHost />
       <DeckWorkspace
         {...workspaceProps}
         slides={slidesForFilmstrip}

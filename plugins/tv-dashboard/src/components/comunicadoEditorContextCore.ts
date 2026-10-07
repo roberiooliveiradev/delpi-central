@@ -105,14 +105,14 @@ export type OpenDataCatalogOptions = {
 };
 
 /**
- * Pedido de abertura do drawer de expressão tipada (ribbon/sidebar → drawer).
+ * Pedido de abertura do modal de expressão tipada (ribbon/sidebar → modal).
  * `apply` é criado no clique pelo host do param (já embute a regra de
- * conflito preset/expressão); o drawer mantém draft local até «Aplicar».
+ * conflito preset/expressão); o modal mantém draft local até «Aplicar».
  */
 export type ExpressionEditRequest = {
   paramKey: string;
   paramLabel: string;
-  /** Spec atual persistido — draft inicial do drawer. */
+  /** Spec atual persistido — draft inicial do modal. */
   spec: import("@delpi/tv-dashboard-presentation").ParamExpressionSpec;
   expectedReturnTypes?: ReadonlySet<string> | null;
   /** Refs `param.<key>` sugeridas no seletor de referência. */
@@ -318,7 +318,7 @@ export type ComunicadoEditorContextValue = {
   setDataPanelOpen: (open: boolean) => void;
   dataPanelIntent: DataPanelIntent;
   setDataPanelIntent: (intent: DataPanelIntent) => void;
-  /** Pedido ativo do drawer de expressão — sobrevive a troca de aba. */
+  /** Pedido ativo do modal de expressão — sobrevive a troca de aba. */
   expressionEditRequest: ExpressionEditRequest | null;
   openExpressionEditor: (request: ExpressionEditRequest) => void;
   closeExpressionEditor: () => void;

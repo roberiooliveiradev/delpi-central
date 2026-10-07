@@ -1,5 +1,5 @@
 /**
- * Drawer de edição de expressão tipada — entry point único de authoring
+ * Workbench (modal host-contained) de edição de expressão tipada — entry point único de authoring
  * estrutural do AST. O draft é local: «Cancelar»/Escape não tocam no
  * parâmetro persistido; «Aplicar» usa o `apply` do host (mesma regra de
  * conflito preset/expressão de `buildParamValueUpdates`).
@@ -26,9 +26,9 @@ import {
 } from "../utils/paramExpressions";
 import type { ExpressionEditRequest } from "./comunicadoEditorContextCore";
 import { TypedExpressionEditor } from "./TypedExpressionEditor";
-import { HostContainedDrawer } from "./ui/Modal";
+import { HostContainedModal } from "./ui/Modal";
 
-export type ExpressionEditorDrawerProps = {
+export type ExpressionEditorModalProps = {
   open: boolean;
   request: ExpressionEditRequest;
   support: ParamExpressionSupport;
@@ -43,13 +43,13 @@ export type ExpressionEditorDrawerProps = {
   onClose: () => void;
 };
 
-export function ExpressionEditorDrawer({
+export function ExpressionEditorModal({
   open,
   request,
   support,
   onPreview,
   onClose,
-}: ExpressionEditorDrawerProps) {
+}: ExpressionEditorModalProps) {
   const [draft, setDraft] = useState<ParamExpressionSpec>(() => request.spec);
   const [previewing, setPreviewing] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -109,15 +109,14 @@ export function ExpressionEditorDrawer({
   }
 
   return (
-    <HostContainedDrawer
+    <HostContainedModal
       open={open}
       onClose={onClose}
       title={`Expressão — ${request.paramLabel}`}
       description={TV_DASHBOARD_HELP_TOOLTIPS.data.paramExpression}
       closeAriaLabel="Fechar editor de expressão"
-      className="td-drawer--expression"
       footer={
-        <div className="td-expression-drawer__actions">
+        <div className="td-expression-editor__actions">
           {onPreview ? (
             <button
               type="button"
@@ -129,7 +128,7 @@ export function ExpressionEditorDrawer({
               {previewing ? "Pré-visualizando…" : "Pré-visualizar"}
             </button>
           ) : null}
-          <span className="td-expression-drawer__spacer" />
+          <span className="td-expression-editor__spacer" />
           <button
             type="button"
             className="td-btn td-btn--sm td-btn--ghost"
@@ -148,8 +147,8 @@ export function ExpressionEditorDrawer({
         </div>
       }
     >
-      <div className="td-expression-drawer">
-        <div className="td-expression-drawer__summary">
+      <div className="td-expression-editor">
+        <div className="td-expression-editor__summary">
           <p className="td-expression-summary__title">{summary}</p>
           {canonical ? (
             <code className="td-expression-summary__canonical">{canonical}</code>
@@ -158,7 +157,7 @@ export function ExpressionEditorDrawer({
 
         {templates.length > 0 ? (
           <div
-            className="td-expression-drawer__templates"
+            className="td-expression-editor__templates"
             role="group"
             aria-label="Sugestões de expressão"
           >
@@ -184,7 +183,7 @@ export function ExpressionEditorDrawer({
             support={support}
             refParamKeys={request.refParamKeys ?? []}
             expectedReturnTypes={request.expectedReturnTypes}
-            idPrefix="td-expr-drawer"
+            idPrefix="td-expr-editor"
           />
         ) : (
           <p className="td-param-expression__hint" role="status">
@@ -217,14 +216,14 @@ export function ExpressionEditorDrawer({
           )
         ) : null}
 
-        <details className="td-expression-drawer__technical">
+        <details className="td-expression-editor__technical">
           <summary>Detalhes técnicos (AST v1)</summary>
           <pre className="td-param-expression__json">
             {JSON.stringify(draftAst, null, 2)}
           </pre>
         </details>
       </div>
-    </HostContainedDrawer>
+    </HostContainedModal>
   );
 }
 

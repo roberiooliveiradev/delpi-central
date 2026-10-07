@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { dismissActiveExclusiveAnchoredPanel } from "@delpi/plugin-ui/index";
 
 import {
   applyFieldLabelsToResolved,
@@ -253,6 +254,15 @@ export function ComunicadoEditorProvider({
   const [dataCatalogMode, setDataCatalogMode] = useState<"insert" | "replace">("insert");
   const [expressionEditRequest, setExpressionEditRequest] =
     useState<import("./comunicadoEditorContextCore").ExpressionEditRequest | null>(null);
+  const openExpressionEditorCallback = useCallback(
+    (request: import("./comunicadoEditorContextCore").ExpressionEditRequest) => {
+      // Anchored panels sit above the modal layer by design (nested selects
+      // inside modals); the originating popover must close before the modal.
+      dismissActiveExclusiveAnchoredPanel();
+      setExpressionEditRequest(request);
+    },
+    [],
+  );
   const closeExpressionEditorCallback = useCallback(() => {
     setExpressionEditRequest(null);
   }, []);
@@ -1018,7 +1028,7 @@ export function ComunicadoEditorProvider({
     dataPanelIntent,
     setDataPanelIntent,
     expressionEditRequest,
-    openExpressionEditor: setExpressionEditRequest,
+    openExpressionEditor: openExpressionEditorCallback,
     closeExpressionEditor: closeExpressionEditorCallback,
     selectionPanelTab: selection.selectionPanelTab,
     setSelectionPanelTab: selection.setSelectionPanelTab,

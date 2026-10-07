@@ -336,6 +336,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     transitionInheritLabel: "Herdar (seção / programação)",
     transitionSectionInheritLabel: "Herdar programação",
     transitionInheritDescription: "Usa a transição definida na seção ou na programação.",
+    playbackModeDescriptions: {
+      presentation: "Avanço automático pela duração.",
+      meeting: "Avanço manual por teclado ou controles.",
+    },
     transitionDescriptions: {
       fade: "Entrada suave por opacidade.",
       dissolve: "Mistura leve com desfoque.",

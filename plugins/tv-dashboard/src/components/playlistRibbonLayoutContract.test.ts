@@ -29,8 +29,11 @@ describe("playlist ribbon layout contract", () => {
     expect(panel).toContain('groupId="playlist-media"');
     expect(panel).toContain('label="Biblioteca"');
     expect(panel).toContain("openPlaylistMediaLibrary");
-    expect(panel).toContain('label="Modo"');
+    expect(panel).toContain('panelLabel="Modo de reprodução"');
     expect(panel).toContain('onSavePlaylistSettings("playbackMode"');
+    expect(panel).toContain("<SegmentToggle");
+    expect(panel).not.toContain("td-deck-playback-mode");
+    expect(panel).not.toContain('type="radio"');
     expect(panel).not.toContain("td-deck-tabs__grid--playlist-rotation");
     expect(panel).not.toContain("td-deck-playlist-link");
     expect(panel).not.toContain("td-deck-master--compact");

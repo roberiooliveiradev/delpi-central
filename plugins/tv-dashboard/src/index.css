@@ -6503,42 +6503,11 @@ body.td-composer--marqueeing *{
   min-width: min(240px, 72vw);
   max-width: min(300px, 86vw);
 }
-.dashboard-tv-dashboard .td-deck-playback-mode{
+.dashboard-tv-dashboard .td-deck-playback-toggle{
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-.dashboard-tv-dashboard .td-deck-playback-mode__option{
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  margin: 0;
-  padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #334155) 80%, transparent);
-  border-radius: 10px;
-  cursor: pointer;
-}
-.dashboard-tv-dashboard .td-deck-playback-mode__option:has(input:checked){
-  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 55%, transparent);
-  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
-}
-.dashboard-tv-dashboard .td-deck-playback-mode__option input{
-  margin-top: 3px;
-}
-.dashboard-tv-dashboard .td-deck-playback-mode__option span{
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   min-width: 0;
-}
-.dashboard-tv-dashboard .td-deck-playback-mode__option strong{
-  font-size: 13px;
-  font-weight: 650;
-}
-.dashboard-tv-dashboard .td-deck-playback-mode__option small{
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--delpi-ui-muted, var(--td-muted, #9fb0c5));
 }
 .dashboard-tv-dashboard .td-deck-ribbon-tile-popover--master{
   min-width: min(320px, 78vw);
@@ -10280,7 +10249,7 @@ body.td-composer--marqueeing *{
 
 
 /* ==========================================================================
-   Ribbon «Dados» + expressões tipadas — drawer, cartão-resumo e label-aside
+   Ribbon «Dados» + expressões tipadas — modal, cartão-resumo e label-aside
    (redesign UX; apresentação only, tokens --td-* respeitam tema claro/escuro)
    ========================================================================== */
 
@@ -10356,36 +10325,35 @@ body.td-composer--marqueeing *{
   align-self: flex-start;
 }
 
-/* Drawer «Expressão» — docking à direita via delpi-ui-drawer; aqui só largura. */
-.dashboard-tv-dashboard .td-drawer--expression{
-  width: min(460px, 92vw);
-}
-.dashboard-tv-dashboard .td-expression-drawer{
+/* Workbench «Expressão» — geometria vem do HostContainedModal (fill); aqui só o conteúdo. */
+.dashboard-tv-dashboard .td-expression-editor{
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
-.dashboard-tv-dashboard .td-expression-drawer__summary{
+.dashboard-tv-dashboard .td-expression-editor__summary{
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.dashboard-tv-dashboard .td-expression-drawer__templates{
+.dashboard-tv-dashboard .td-expression-editor__templates{
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
-.dashboard-tv-dashboard .td-expression-drawer__technical summary{
+.dashboard-tv-dashboard .td-expression-editor__technical summary{
   cursor: pointer;
   font-size: 12px;
   color: var(--td-muted, #475467);
 }
-.dashboard-tv-dashboard .td-expression-drawer__actions{
+.dashboard-tv-dashboard .td-expression-editor__actions{
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   width: 100%;
 }
-.dashboard-tv-dashboard .td-expression-drawer__spacer{
+.dashboard-tv-dashboard .td-expression-editor__spacer{
   flex: 1 1 auto;
 }

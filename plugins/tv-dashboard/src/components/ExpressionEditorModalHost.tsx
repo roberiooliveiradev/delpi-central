@@ -1,5 +1,5 @@
 /**
- * Host do drawer de expressão — lê `expressionEditRequest` do contexto do
+ * Host do modal de expressão — lê `expressionEditRequest` do contexto do
  * editor e conecta o preview backend (`previewTvDataRoute`) com o draft.
  * Montado ao lado do `DataCatalogModalHost` nas duas superfícies do editor.
  */
@@ -23,9 +23,9 @@ import {
   visibleParamSchema,
   type DataParamSchema,
 } from "../utils/dataParamSchema";
-import { ExpressionEditorDrawer } from "./ExpressionEditorDrawer";
+import { ExpressionEditorModal } from "./ExpressionEditorModal";
 
-export function ExpressionEditorDrawerHost() {
+export function ExpressionEditorModalHost() {
   const {
     expressionEditRequest,
     closeExpressionEditor,
@@ -109,7 +109,7 @@ export function ExpressionEditorDrawerHost() {
   if (!expressionEditRequest) return null;
 
   return (
-    <ExpressionEditorDrawer
+    <ExpressionEditorModal
       key={`${expressionEditRequest.previewBlockId ?? "none"}:${expressionEditRequest.paramKey}`}
       open
       request={expressionEditRequest}

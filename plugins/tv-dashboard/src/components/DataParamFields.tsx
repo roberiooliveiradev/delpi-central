@@ -139,7 +139,7 @@ type Props = {
   /** Params a ocultar (ex.: flyout «Filtros» sem o grupo de período). */
   excludeParams?: ReadonlySet<string>;
   /**
-   * Abre o drawer de expressão — chamado por «Editar expressão» no
+   * Abre o modal de expressão — chamado por «Editar expressão» no
    * cartão-resumo. Ausente → cartão sem ação (somente leitura).
    */
   onEditExpression?: (request: DataParamExpressionEditRequest) => void;
@@ -361,7 +361,7 @@ export function DataParamFields({
 
   function patchParam(key: string, value: DataParamUpdateValue) {
     // Regra de conflito preset/expressão/competence centralizada no builder
-    // compartilhado — drawer de expressão usa o mesmo caminho.
+    // compartilhado — modal de expressão usa o mesmo caminho.
     onChange(
       buildParamValueUpdates(key, value, { schema: schemaForUi, values }),
     );
@@ -531,7 +531,7 @@ export function DataParamFields({
     ) : null;
 
     /**
-     * Expressão ativa → cartão-resumo («Editar expressão» abre o drawer).
+     * Expressão ativa → cartão-resumo («Editar expressão» abre o modal).
      * Literal → controle original com o switch na linha do label.
      * O AST completo é editado só no drawer — aqui não há editor inline.
      */

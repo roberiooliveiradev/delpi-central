@@ -255,7 +255,7 @@ export function DataBindingInspector({
     } as Partial<ComunicadoBlock>);
   }
 
-  /** «Editar expressão» → drawer do editor (mesmo canal da ribbon/sidebar). */
+  /** «Editar expressão» → modal do editor (mesmo canal da ribbon/sidebar). */
   function handleEditExpression(request: DataParamExpressionEditRequest) {
     openExpressionEditor({ ...request, previewBlockId: targetId || null });
   }

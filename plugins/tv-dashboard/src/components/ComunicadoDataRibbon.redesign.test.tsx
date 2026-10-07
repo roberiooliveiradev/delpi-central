@@ -220,7 +220,7 @@ describe("ComunicadoDataRibbon — sincronização (cenário B)", () => {
 });
 
 describe("ComunicadoDataRibbon — expressão (cenários C/D)", () => {
-  it("flyout Expressão lista params elegíveis e abre o drawer request", () => {
+  it("flyout Expressão lista params elegíveis e abre o modal request", () => {
     editorState = freshEditorState();
     render(<ComunicadoDataRibbon />);
     // Abre o tile «Expressão» do grupo (o primeiro é o tile real; demais
@@ -271,7 +271,7 @@ describe("ComunicadoDataRibbon — expressão (cenários C/D)", () => {
       paramKey: string;
       spec: unknown;
     };
-    // AST vai intacto para o drawer — nunca reescrito em label.
+    // AST vai intacto para o modal — nunca reescrito em label.
     expect(request.paramKey).toBe("start_date");
     expect(request.spec).toEqual(expr);
   });
