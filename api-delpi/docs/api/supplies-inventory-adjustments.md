@@ -38,9 +38,10 @@ referencia as expressões — nenhum consumidor reescreve a regra.
 Mapeamento comprovado contra o relatório Protheus de movimentações de
 inventário (filial 02, 2026-09): as linhas `TM 499/CF DE0` somam
 exatamente a coluna **ENTRADAS** do relatório e as `TM 999/CF RE0`
-somam exatamente **SAÍDAS**. O `D3_CF` é consistente com o sinal do
-`D3_TM` (`TM < 500` = entrada, `TM >= 500` = saída) e com a semântica
-do CF (`DE0` = devolução → entrada; `RE0` = requisição → saída).
+somam exatamente **SAÍDAS**. O provado é o par TM/CF do conjunto
+`INVENT` Delpi investigado — **não** uma regra universal de TM para
+outros contextos. A classificação é coerente com a semântica do CF
+(`DE0` = devolução → entrada; `RE0` = requisição → saída).
 `D3_TPMOVAJ` não é usado no ambiente; `SF5` não contém os TMs 499/999.
 
 ```text
@@ -61,9 +62,25 @@ regrava o campo e marca `D3_SEQCALC` — comprovado via auditoria
 `A340INVPRO`/`ACDA030` seguida da reescrita pelo `MATA330`. A
 capability expõe o **estado corrente (pós-recálculo)**, que é o valor
 contábil vigente e a mesma fonte lida pelo relatório no momento da
-geração. Valores de um relatório gerado **durante** uma execução do
-`MATA330` podem misturar linhas já revalorizadas com linhas ainda no
-valor de lançamento e não são reproduzíveis por consulta posterior.
+geração.
+
+Evidência de mutabilidade (auditoria `SD3010_TTAT_LOG`, filial 02,
+2026-09 — `SD3.R_E_C_N_O_` do registro):
+
+| `R_E_C_N_O_` | valor no lançamento | reescrita `MATA330` | valor na planilha de referência |
+|---|---:|---:|---:|
+| 4811840 | 4456.127 | 4456.127 → 4503.745 | 4456.127 (pré-recalc) |
+| 4811839 | 712.123 | 712.123 → 798.301 | 712.123 (pré-recalc) |
+| 4812323 | 0 | 0 → 39.094 | 0 (pré-recalc) |
+
+Consultas executadas **durante** uma execução do `MATA330` observam um
+estado transitório: linhas já revalorizadas ao lado de linhas ainda no
+valor de lançamento — esse estado não é reproduzível por consulta
+posterior e não deve ser usado como golden master. O `TTAT_LOG` é
+evidência de auditoria apenas; **não** é fonte runtime da capability.
+
+**Recomendação operacional**: para números de fechamento, consultar a
+capability **após a conclusão do `MATA330`** do período.
 
 ## Proveniência SB7
 

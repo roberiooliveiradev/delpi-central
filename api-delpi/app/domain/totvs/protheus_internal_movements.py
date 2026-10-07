@@ -21,9 +21,9 @@ apenas ``TM 499/CF DE0`` (sobra/entrada) e ``TM 999/CF RE0``
 validada contra o relatório Protheus de movimentações de inventário
 (filial 02, 2026-09): as linhas ``TM 499/CF DE0`` somam exatamente a
 coluna ENTRADAS e as ``TM 999/CF RE0`` somam exatamente a coluna
-SAÍDAS — consistente com a regra Protheus ``TM < 500`` entrada /
-``TM >= 500`` saída e com a semântica CF ``DE0``=devolução (entrada) /
-``RE0``=requisição (saída). SB7 é apoio de proveniência
+SAÍDAS. O provado é o par TM/CF do conjunto INVENT Delpi — não uma
+regra universal de TM para outros contextos — e é coerente com a
+semântica CF ``DE0``=devolução (entrada) / ``RE0``=requisição (saída). SB7 é apoio de proveniência
 (não autoridade): a associação por filial+produto+armazém+data
 apresentou alta correlação na base investigada (4.849/4.852
 linhas 2025+), sem vínculo um-para-um garantido — documento e

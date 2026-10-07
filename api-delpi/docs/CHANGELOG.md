@@ -14,6 +14,8 @@ Docs: [supplies-inventory-adjustments.md](./api/supplies-inventory-adjustments.m
 
 **Correção de proveniência (DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001):** `inventory_document`/`counted_quantity` passam a ser fail-closed — expostos somente quando existe **exatamente um** `B7_DOC` candidato (não vazio, não deletado) para filial+produto+armazém+data; zero ou múltiplos documentos → `null`. Removido o `TOP 1` que tratava seleção estável como autoridade. Contrato da API inalterado (`page_size ≤ 500`); a superfície DAVI minimiza `page_size ≤ 50`.
 
+**Correção de direção (2026-10, pós PR #60):** o mapeamento de natureza estava invertido — a regra comprovada contra o relatório Protheus de movimentações de inventário é `DE0`/`TM 499` = entrada (**sobra**, `nature=surplus`) e `RE0`/`TM 999` = saída (**furo**, `nature=shortage`). `D3_CUSTO1` permanece o valor total corrente do movimento (regravável pelo `MATA330`, vide `D3_SEQCALC`); consultas durante o recálculo observam estado transitório — para fechamento, consultar após a conclusão do `MATA330`.
+
 ---
 
 ## 2026-08 — OEE alinhado à eficiência fabril (`HY_TEMPAD`)

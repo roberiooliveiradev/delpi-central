@@ -9,8 +9,8 @@ Comprovado em dados (out/2026):
   (furo) — comprovado contra o relatório Protheus de movimentações
   de inventário (filial 02, 2026-09): as linhas ``DE0`` somam
   exatamente a coluna ENTRADAS e as ``RE0`` somam exatamente a
-  coluna SAÍDAS, consistente com o sinal do TM
-  (``TM < 500`` entrada / ``TM >= 500`` saída).
+  coluna SAÍDAS. O provado é o par TM/CF do conjunto INVESTIGADO
+  (INVENT Delpi), não uma regra universal de TM.
 - A natureza é autoridade do CF: ``DE0`` = entrada (sobra);
   ``RE0`` = saída (furo).
 - ``D3_CUSTO1`` é o valor **total do movimento** na moeda 1, não
