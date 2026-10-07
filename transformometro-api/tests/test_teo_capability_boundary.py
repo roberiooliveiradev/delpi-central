@@ -119,11 +119,11 @@ class TestCanonicalSingleSource:
 
     def test_mcp_native_capabilities_have_no_actions_projection(self):
         natives = mcp_native_tool_names()
+        # Tool Surface Rationalization V1: MCP-native diagnostics are the
+        # consolidated family tools.
         assert natives == {
-            "get_diagnostic",
-            "list_diagnostics_by_revision",
-            "prepare_create_diagnostic",
-            "prepare_manage_diagnostic",
+            "diagnostic_read",
+            "prepare_diagnostic_change",
         }
         for name in natives:
             with pytest.raises(ProjectionContractError):
@@ -172,17 +172,20 @@ class TestFailClosedMapping:
 
 class TestExplicitPrimaryMapping:
     def test_one_to_many_primary_is_explicit(self):
+        # Family surface: multiple capabilities may share one family tool,
+        # but every binding still declares its primary explicitly — never
+        # derived by prefix/order.
         binding = next(
             b for b in CAPABILITY_BINDINGS if b.id == "meeting_minute.manage"
         )
         names = {ref.name for ref in binding.mcp_tools}
-        assert names == {
-            "meeting_minute_read",
-            "generate_from_transcript",
-            "prepare_meeting_minute_manage",
-        }
-        # The write-path primary is declared, not derived by prefix/order.
-        assert binding.mcp_primary == "prepare_meeting_minute_manage"
+        assert names == {"prepare_meeting_minute_change"}
+        assert binding.mcp_primary == "prepare_meeting_minute_change"
+        # N capabilities → 1 family tool is now the common shape.
+        shared = next(
+            b for b in CAPABILITY_BINDINGS if b.id == "task.change.prepare"
+        )
+        assert shared.mcp_primary == "prepare_collaboration_change"
 
     def test_every_binding_declares_a_bound_primary(self):
         for binding in CAPABILITY_BINDINGS:

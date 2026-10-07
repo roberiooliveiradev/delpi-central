@@ -27,7 +27,10 @@ import pytest
 from tm_app.application.governed_writes.confirmation_policy import (
     AUTO_ACT,
     CONFIRM_BEFORE_ACT,
+    WritePolicyRecord,
     allows_commit_now_for_capability,
+    allows_commit_now_for_entity_operation,
+    allows_commit_now_for_workflow,
     classified_write_capabilities,
     confirmation_kind_for_entity_operation,
     confirmation_kind_for_workflow,
@@ -35,6 +38,8 @@ from tm_app.application.governed_writes.confirmation_policy import (
     execution_policy_for_entity_operation,
     execution_policy_for_workflow,
     requires_user_confirmation,
+    write_policy_id_for_capability,
+    write_policy_records,
 )
 from tm_app.application.governed_writes.errors import (
     FORBIDDEN,
@@ -406,20 +411,148 @@ def test_mcp_catalog_never_leaks_commit_now():
 
 def test_one_change_policy_flip_updates_all_surfaces():
     """Flipping ONE canonical classification must propagate everywhere."""
-    flipped = {"activate_revision": "auto_act"}
-    assert (
-        execution_policy_for_workflow("activate_revision", policies=flipped)
-        == "auto_act"
+    flipped = tuple(
+        WritePolicyRecord(
+            r.semantic_id,
+            AUTO_ACT,
+            r.capability,
+            r.workflow_id,
+            r.entity_operation,
+        )
+        if r.semantic_id == "revision.activate"
+        else r
+        for r in write_policy_records()
     )
-    # Same canonical source drives entity op checks and commit-now compat.
-    flipped_ops = {"create": "confirm_before_act"}
+    # One semantic edit → every derived view reflects it (same records table).
     assert (
-        execution_policy_for_entity_operation("create", policies=flipped_ops)
-        == "confirm_before_act"
+        execution_policy_for_capability("activate_revision", records=flipped)
+        == AUTO_ACT
+    )
+    assert (
+        execution_policy_for_workflow("activate_revision", records=flipped)
+        == AUTO_ACT
+    )
+    # Entity-operation aliases share the record; flipping record.create
+    # moves both the op and the capability view together.
+    flipped_ops = tuple(
+        WritePolicyRecord(
+            r.semantic_id,
+            CONFIRM_BEFORE_ACT,
+            r.capability,
+            r.workflow_id,
+            r.entity_operation,
+        )
+        if r.semantic_id == "record.create"
+        else r
+        for r in write_policy_records()
+    )
+    assert (
+        execution_policy_for_entity_operation("create", records=flipped_ops)
+        == CONFIRM_BEFORE_ACT
+    )
+    assert (
+        execution_policy_for_capability("create_record", records=flipped_ops)
+        == CONFIRM_BEFORE_ACT
     )
     # Kind renderers consume the same policy — no second registry needed.
     assert confirmation_kind_for_entity_operation("create") == "auto_act"
     assert confirmation_kind_for_workflow("activate_revision") == "confirm_before_act"
+
+
+def test_single_semantic_record_flip_propagates_to_catalog(monkeypatch):
+    """§18 gate: one record edit moves catalog + Actions + MCP views."""
+    import tm_app.application.governed_writes.confirmation_policy as policy
+
+    flipped = tuple(
+        WritePolicyRecord(
+            r.semantic_id,
+            AUTO_ACT,
+            r.capability,
+            r.workflow_id,
+            r.entity_operation,
+        )
+        if r.semantic_id == "revision.activate"
+        else r
+        for r in write_policy_records()
+    )
+    by_cap, by_wf, by_op = policy._build_indexes(flipped)
+    monkeypatch.setattr(policy, "_WRITE_POLICIES", flipped)
+    monkeypatch.setattr(policy, "_BY_CAPABILITY", by_cap)
+    monkeypatch.setattr(policy, "_BY_WORKFLOW", by_wf)
+    monkeypatch.setattr(policy, "_BY_ENTITY_OPERATION", by_op)
+
+    assert execution_policy_for_capability("activate_revision") == AUTO_ACT
+    assert execution_policy_for_workflow("activate_revision") == AUTO_ACT
+    assert allows_commit_now_for_capability("activate_revision") is True
+    assert allows_commit_now_for_workflow("activate_revision") is True
+    for transport in ("gpt_actions", "mcp"):
+        catalog = build_capability_surface_catalog(transport)
+        workflows = {w["id"]: w for w in catalog["workflows"]}
+        assert workflows["activate_revision"]["execution_policy"] == AUTO_ACT
+        assert (
+            workflows["activate_revision"]["confirmation_requirement"] is False
+        )
+
+
+def test_exactly_one_independent_policy_source():
+    """§19: policy values live ONLY inside WritePolicyRecord constructions."""
+    import inspect
+    import re
+
+    import tm_app.application.governed_writes.confirmation_policy as policy
+
+    src = inspect.getsource(policy)
+    records = write_policy_records()
+    # Exactly one WritePolicyRecord construction per semantic capability —
+    # the only place a policy value is bound to an identity.
+    assert len(re.findall(r"\bWritePolicyRecord\(", src)) == len(records)
+    # No dict literal maps an alias directly to a policy constant.
+    assert not re.findall(
+        r"\{[^{}]*(?:AUTO_ACT|CONFIRM_BEFORE_ACT)[^{}]*\}", src
+    )
+    assert not re.findall(r":\s*(?:AUTO_ACT|CONFIRM_BEFORE_ACT)\b", src)
+    # Derived indexes map alias -> record, never alias -> policy value.
+    for index in (
+        policy._BY_CAPABILITY,
+        policy._BY_WORKFLOW,
+        policy._BY_ENTITY_OPERATION,
+    ):
+        assert all(isinstance(v, WritePolicyRecord) for v in index.values())
+
+
+def test_every_exposed_write_alias_resolves_and_no_orphans():
+    """§20: WRITE_CAPABILITIES ⊆ aliases; catalog ids resolve; no orphans."""
+    assert set(WRITE_CAPABILITIES) <= set(classified_write_capabilities())
+    for rec in write_policy_records():
+        # every record is reachable through at least one live alias
+        assert rec.capability in classified_write_capabilities()
+        assert rec.semantic_id == write_policy_id_for_capability(rec.capability)
+        if rec.workflow_id is not None:
+            assert (
+                execution_policy_for_workflow(rec.workflow_id)
+                == rec.execution_policy
+            )
+        if rec.entity_operation is not None:
+            assert (
+                execution_policy_for_entity_operation(rec.entity_operation)
+                == rec.execution_policy
+            )
+    # every workflow the catalog exposes resolves to a canonical policy
+    catalog = build_capability_surface_catalog("mcp")
+    for workflow in catalog["workflows"]:
+        wid = workflow["id"]
+        policy = workflow["execution_policy"]
+        if isinstance(policy, dict):
+            assert set(policy) == set(workflow["capability_execution_policy"])
+            for capability, cap_policy in policy.items():
+                assert cap_policy == execution_policy_for_capability(capability)
+        else:
+            assert policy == execution_policy_for_workflow(wid)
+    for entity in catalog["entities"]:
+        for op in entity.get("write_operations", ()):
+            assert entity["execution_policy"][
+                op
+            ] == execution_policy_for_entity_operation(op)
 
 
 def test_policy_is_transport_independent():

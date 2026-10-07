@@ -3,6 +3,7 @@
 > Documento canônico da V1 para arquitetura de frontend, editor BPMN, ownership de estado, páginas/fluxos de UX e comportamento do editor visual.
 > Status alvo: `FROZEN` — ver seção 53.
 > Sequência: **PROMPT 4/7** — depende de `V1-SCOPE-FREEZE.md`, `BACKEND-DOMAIN-SPEC-FREEZE.md` e `BPMN-INTEROPERABILITY-SPEC-FREEZE.md`; não reabre nenhum deles.
+> **AMENDMENT G0 (out/2026):** freeze histórico. Decisões substituídas após implementação estão marcadas `SUPERSEDED (G0)`; specs vigentes sem entrega são marcadas `IMPLEMENTATION_GAP (G0)`. Estado vigente: [`CURRENT-STATE.md`](CURRENT-STATE.md); divergências: [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md).
 
 ## 1. Purpose
 
@@ -20,6 +21,7 @@ Decisões herdadas que este documento preserva sem reabrir:
 
 - BPMN 2.0 XML = semântica canônica; BPMN-DI no mesmo XML = geometria canônica; **nenhum JSON visual persistido**.
 - `WorkingCopy` = artefato canônico mutável; `Revision` = snapshot imutável; **SAVE ≠ CREATE REVISION**; save explícito; autosave `OUT_OF_V1`.
+  - **SUPERSEDED (G0):** `save explícito; autosave OUT_OF_V1` → a implementação vigente usa **autosave do working copy** (`AutosaveController`: debounce 1,5s, coalescing, single-flight, WRITE→READ-BACK→VERIFY) + `SaveMachine` com `OFFLINE`/`SESSION_EXPIRED`. `SAVE ≠ CREATE REVISION` permanece invariante; `Ctrl+S` = flush manual; guards de navegação/`beforeunload` preservados. Contrato vigente: `CURRENT-STATE.md` §4.
 - `ValidationReport` = evidência; operation policy decide bloqueio.
 - Layout calculado ≠ geometria persistida; backend nunca injeta DI.
 - Constructs preserve-only / extensões desconhecidas / `mustUnderstand` seguem a política do Prompt 3.
@@ -236,6 +238,8 @@ CONFLICT  → Export my local BPMN       → CONFLICT (exporta e permanece; usu�
 
 Não existe autosave; não existe merge.
 
+> **SUPERSEDED (G0):** "não existe autosave" — autosave vigente (ver §2 e `CURRENT-STATE.md` §4). O restante da máquina descrita aqui (dirty branch-aware por tokens, SAVE_REQUEST/VERIFIED, CONFLICT sem merge, SAVE_FAILED com retry, estados de erro) está implementado conforme congelado, **estendido** com `OFFLINE` e `SESSION_EXPIRED` (rede/auth) e com `pendingSaveToken` para edições in-flight durante o write.
+
 ## 13. Dirty State Contract
 
 `FROZEN` — fonte da verdade = **command stack do editor** via **APIs/eventos públicos apenas**, não boolean React, e com **identidade de estado branch-aware** — profundidade numérica não basta (undo→undo→2 novas edições retornaria à mesma posição numérica com estado diferente; isso seria false CLEAN). O adapter mantém um histórico de identidade externo:
@@ -275,6 +279,8 @@ Backend-initiated changes (rename de metadado, archive) não passam pelo command
 ## 14. Save UX
 
 `FROZEN` — fluxo visual exato:
+
+> **SUPERSEDED (G0):** o gatilho primário vigente é o **autosave** — edição → DIRTY → debounce → write → read-back verify → SAVED, sem necessidade de gesto do usuário. `Ctrl/Cmd+S` permanece como flush imediato; "Tentar novamente" existe em SAVE_FAILED/OFFLINE; `CONFLICT`, `VALIDATION_BLOCKED` e `OUTCOME_VERIFICATION_FAILED` seguem os passos abaixo sem alteração de semântica. Passos 3–7 (version token, read-back, verificação, painel de validação, conflito) estão implementados conforme congelado.
 
 1. Usuário aciona `Salvar` (toolbar) ou `Ctrl/Cmd+S`.
 2. `exportXml()` → `saveCandidate`; UI → `SAVING` (indicador "Salvando…", ações de write desabilitadas).
@@ -442,6 +448,7 @@ Rejeição nunca cria modelo; nenhum estado é colapsado em "arquivo inválido" 
 
 - Tecnologia: `bpmn-js-properties-panel` (`@bpmn-io/properties-panel` interno), montado no painel lateral aba **Propriedades** no modo editable.
 - Escopo V1 exposto (do Prompt 1): `name`, `id` (**read-only**, seção "Avançado"), `documentation`, `conditionExpression` (sequenceFlow), `default flow` (gateway/activity source), event configuration (eventDefinition do elemento conforme profile), linkage `participant`↔`process`, `lane` name, task type (via replace menu — seção 31), subprocess collapsed/expanded, `calledElement`.
+  - **SUPERSEDED (G0):** `id` deixou de ser read-only — o entry vendor `id`/`processId` foi realocado para o grupo "Configurações avançadas" (`AdvancedIdProvider`, extension point oficial `registerProvider`) e **é editável** via command stack (refs atualizadas, undo/redo, autosave/read-back). `Model.id` da API permanece separado e imutável. Evidência: `e2e/specs/bpmn-id-governance.spec.ts`.
 - Providers engine-specific (Camunda/Zeebe/etc.) **desabilitados** — nenhuma propriedade de engine na V1.
 - Todas as edições passam pelo command stack do editor (undo/redo cobrem — seção 33).
 
@@ -450,6 +457,7 @@ Rejeição nunca cria modelo; nenhum estado é colapsado em "arquivo inválido" 
 `FROZEN`:
 
 - **Palette** expõe **somente** o profile `CREATE_EDIT`, agrupada: `Eventos` | `Atividades` | `Gateways` | `Dados` | `Colaboração` | `Artefatos` (implementação via palette provider custom). Nenhum `RENDER_PRESERVE_ONLY`, nenhum elemento fora do profile.
+  - **IMPLEMENTATION_GAP (G0):** a implementação atual **não** possui palette provider custom — a palette vendor completa do bpmn-js é exposta (inclui elementos fora do profile `CREATE_EDIT`). Round-trip/preservação cobrem o que for criado, mas a restrição de UX especificada aqui não está entregue. Follow-up: G3. Ledger: DRIFT-BPMN-010.
 - **Context pad** por elemento: `append` (somente targets do profile), `connect`, `replace` (matriz abaixo), `delete` (se permitido pelo tipo). Sem ações para constructs preserve-only/unsupported.
 - **Replace menu — matriz congelada:** `Task ↔` tipos de task do profile; `Gateway ↔` gateways do profile; `Evento ↔` definitions válidas para a mesma posição (start/intermediate/boundary/end conforme contexto); `SubProcess` collapsed ↔ expanded; `Participant` só quando semanticamente válido. **Nunca** oferecer transformação que viole o profile ou a semântica só porque o vendor a lista — regra enforçada no replace provider.
 - Vendor defaults fora do profile são desabilitados explicitamente (seção 95 do contrato: unsupported vendor features off).
@@ -470,7 +478,7 @@ Rejeição nunca cria modelo; nenhum estado é colapsado em "arquivo inválido" 
 | Select all no canvas | `Ctrl+A` \| `Cmd+A` (quando foco no canvas) |
 | Zoom in / out | `+` / `-` (toolbar também expõe) |
 | Fit viewport | `Ctrl+0` \| `Cmd+0` |
-| Search in diagram | `Ctrl+F` \| `Cmd+F` (overlay do produto — intercepta o find do browser enquanto o editor está focado) |
+| Search in diagram | `Ctrl+F` \| `Cmd+F` (overlay do produto — intercepta o find do browser enquanto o editor está focado) — **IMPLEMENTATION_GAP (G0):** `Ctrl+F`/overlay não implementados; `adapter.findElements` existe e é testado em unit (ver §34) |
 | Cancelar tool/seleção | `Esc` |
 | Direct editing (label) | `Enter` ou duplo-clique sobre o elemento |
 
@@ -492,6 +500,8 @@ Atalhos de escopo de canvas não disparam quando o foco está em input/dialog do
 - Resultados em lista com contexto (nome + tipo + pool/lane); `Enter`/next/previous navega; item ativo = `selectElement` (center + highlight).
 - Funciona em read-only; busca opera sobre o element registry do editor — **sem reparse de XML**.
 - **Palette search:** campo de filtro na palette filtrando entradas por nome — `IN_V1` (exigência do Prompt 1 atendida por filtro, não por comando separado).
+
+> **IMPLEMENTATION_GAP (G0):** o overlay de busca do produto (`SearchOverlay`), o botão `[Buscar]` da toolbar e o atalho `Ctrl+F` **não existem** na implementação atual. O que está entregue: `BpmnEditorAdapter.findElements({name?, id?})` sobre o element registry (unit-tested em `canvas-reg.test.ts`), `selectElement` com center/highlight (usado pelo painel de validação) e o search-pad da palette do vendor (`BpmnSearchProvider`). A alternativa a11y "busca por nome/id" da seção 564 está parcialmente coberta por esse caminho de validação — gap completo classificado para G3. Ledger: DRIFT-BPMN-009.
 
 ## 35. Zoom / Pan / Fit / Viewport Contract
 
@@ -601,6 +611,7 @@ Ações de write aparecem apenas conforme capability/estado; nenhuma ação dupl
 
 - **Nenhuma biblioteca nova**: React `useState`/`useReducer` + Context conforme convenção do host. `data/api/bpmnModelerApi.ts` (fetch + `BPMN_MODELER_API_BASE` + `buildAuthHeaders`) para server state — convenção existente dos plugins.
 - Save state machine = `useReducer` explícito (seção 12); **mutations de save/conflict nunca escondidas em cache mágico**.
+  - **AMENDMENT G0:** implementado como `SaveMachine` (classe explícita em `src/state/saveMachine.ts`, não `useReducer`) + `AutosaveController` — a propriedade congelada (máquina explícita, sem cache mágico) está preservada; só a forma do mecanismo mudou.
 - `authoritativeXml`/`saveCandidate`/instância do editor **nunca** em store global serializável — adapter em ref, XML em estado do editor-page não-serializado para persistência.
 
 ## 45. Design System Integration
@@ -738,7 +749,7 @@ Nenhuma questão frontend/editor/UX crítica aberta — host, editor, adapter, o
 - [x] Properties/palette/context pad/replace fechados (profile CREATE_EDIT enforced)
 - [x] Shortcuts fechados (matriz Win/Linux/macOS)
 - [x] Export UX fechado (.bpmn backend; SVG renderer; PNG client-side)
-- [x] Auto-layout UX fechado (preview reversível; accept→DIRTY; sem auto-save)
+- [x] Auto-layout UX fechado (preview reversível; accept→DIRTY; sem auto-save) — **SUPERSEDED (G0):** com o autosave vigente, "sem auto-save" se torna "sem write no preview"; Accept → DIRTY → autosave persiste.
 - [x] Accessibility/device behavior fechado (shell-level garantido; vendor-dependent honesto; tablet read-only por layout)
 - [x] Multiple BPMNDiagrams fechado (seletor; primeiro document order; preservar todos; criar novo = OUT_OF_V1)
 - [x] Fixture compatibility mapeada (§48, 100% das famílias frontend-relevantes)

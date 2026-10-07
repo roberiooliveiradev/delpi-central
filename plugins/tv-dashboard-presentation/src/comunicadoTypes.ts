@@ -632,15 +632,40 @@ export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
 /** Escopo do filtro no palco: slide inteiro ou fontes específicas. */
 export type ComunicadoInputTargetScope = "slide" | "sources";
 
+/** Tipos escalares de uma variável de input — mesmo vocabulário do paramSchema. */
+export type ComunicadoInputValueType = "string" | "integer" | "number" | "boolean";
+
 /**
- * Campo de filtro no palco — alimenta params das fontes via paramSchema da rota.
- * Não é fetchable; opções vêm do catálogo em runtime (não persistem enum/controlKind).
+ * Schema do valor publicado por um input `variable` (shape de paramSchema).
+ * Data = `{ type: "string", format: "date" }`. `enumLabels`: rótulo exibido por valor
+ * (chave = `String(valor)`); não altera o valor publicado.
+ */
+export type ComunicadoInputValueSchema = {
+  type: ComunicadoInputValueType;
+  format?: "date";
+  enum?: Array<string | number>;
+  enumLabels?: Record<string, string>;
+};
+
+/**
+ * Ligação explícita do input. Ausente = legado (`paramKey` → param de rota).
+ * `variable` publica `input.<key>` para ExpressionSpec do mesmo slide; nunca vai ao wire.
+ */
+export type ComunicadoInputBinding = { kind: "variable"; key: string };
+
+/**
+ * Campo de filtro no palco — alimenta params das fontes via paramSchema da rota
+ * (legado `paramKey`) ou publica uma variável tipada do slide (`binding.kind=variable`).
+ * Não é fetchable; opções do legado vêm do catálogo em runtime.
  */
 export type ComunicadoInputBlock = ComunicadoBlockBase & {
   type: "input";
   input: {
-    /** Chave do paramSchema das fontes alvo (interseção). */
+    /** Chave do paramSchema das fontes alvo (interseção). Vazio quando `binding` é variável. */
     paramKey: string;
+    binding?: ComunicadoInputBinding;
+    /** Obrigatório quando `binding.kind === "variable"`. */
+    valueSchema?: ComunicadoInputValueSchema;
     /** Rótulo na UI; vazio = label do schema. */
     label?: string;
     /** Nome Lucide opcional (ex.: Building2, Filter). */

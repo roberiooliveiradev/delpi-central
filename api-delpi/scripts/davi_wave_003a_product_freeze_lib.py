@@ -186,7 +186,10 @@ def validate_source() -> dict[str, Any]:
         and all(op in ops for op in WAVE3A_OPS)
         and "get_product_guide" in eligible_ids
         and "get_product_parents" in eligible_ids
-        and "get_product_raw_material_set_shortages" not in eligible_ids
+        # Wave-3a deferred shortages;
+        # DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001 (allowlist v18)
+        # later approved the bounded contract.
+        and "get_product_raw_material_set_shortages" in eligible_ids
         and guide_authz
         and parents_authz
         and shortages_authz

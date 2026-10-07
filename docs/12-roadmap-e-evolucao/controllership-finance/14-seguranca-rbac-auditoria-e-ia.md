@@ -75,6 +75,65 @@ Regras:
 - o Portal não cria permission nova, tabela de perfil ou storage de foto;
 - resolução de permission indisponível → fail-closed.
 
+## Minhas tarefas
+
+Contrato detalhado: [27-minhas-tarefas.md](./27-minhas-tarefas.md).
+
+AuthZ:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND projection.assignee_user_id = authenticated_user
+AND owner_resource_access
+```
+
+Regras:
+- a worklist é self-only;
+- frontend não escolhe outro `userId`;
+- `MANAGE` não cria visão de equipe;
+- TaskProjection não concede acesso ao recurso;
+- owner reautoriza no deep link;
+- blocker, warning ou mention sem responsabilidade individual não geram task;
+- nenhum permission code novo é criado para source/task/action;
+- source failure não pode ser convertido em empty;
+- due/overdue só existem quando o owner possuir regra formal.
+
+## Administração
+
+Contrato detalhado: [28-administracao.md](./28-administracao.md).
+
+AuthZ:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.manage)
+```
+
+Regras:
+- `MANAGE` é a única permission administrativa do Portal;
+- `ACCESS` sozinho não altera mestre;
+- `MANAGE` não implica `ACCESS` operacional;
+- nenhum permission code adicional por catálogo, template, CRUD, unidade ou ação;
+- responsible/validator/recipient referenciam identidade do Core, mas Administração não cria usuário, role nem permission;
+- writes usam optimistic concurrency e falham em stale version;
+- publicação/inativação/audit ocorrem server-side e fail-closed;
+- published version e histórico não podem ser sobrescritos silenciosamente;
+- hard delete de referência histórica não faz parte da V1.
+
+## Ajuda
+
+Contrato detalhado: [29-ajuda.md](./29-ajuda.md).
+
+Regras:
+- rota `/help` exige `controllership-finance.access`;
+- conteúdo runtime respeita feature availability e effective permissions;
+- seção/links de Administração exigem `controllership-finance.manage`;
+- hash de seção não bypassa AuthZ nem revela conteúdo MANAGE;
+- tool links usam destinos internos tipados; não aceitar URL arbitrária em conteúdo;
+- Ajuda V1 não cria endpoint, DB, CMS ou editor administrativo;
+- ausência de capability futura significa ausência da instrução runtime, não conteúdo disabled que revela comportamento ainda não liberado.
+
 ## Validator
 
 Validator é papel/responsabilidade operacional, não sinônimo de MANAGE.
@@ -121,7 +180,17 @@ Cobrir:
 - delete de evidência rejeitada;
 - envio de pacote sem capability;
 - usuário sem ACCESS consultando perfil do Portal;
-- perfil de outro usuário vazando permissions/capabilities.
+- perfil de outro usuário vazando permissions/capabilities;
+- usuário consultando task de outro usuário;
+- MANAGE usado como bypass para team worklist;
+- projection de recurso ao qual o usuário perdeu acesso;
+- ACCESS alterando template/catálogo;
+- stale admin write sobrescrevendo revisão nova;
+- Administração criando usuário/role/permission no lugar do Core;
+- hard delete de item/versionamento histórico;
+- Help exibindo instrução administrativa para ACCESS-only;
+- deep link de Help revelando seção não autorizada;
+- tool link do manual navegando para URL arbitrária.
 
 ## IA
 

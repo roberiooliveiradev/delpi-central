@@ -180,11 +180,14 @@ def _envelope(inner: Any) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def test_allowlist_v17_and_exactly_five_promoted():
+def test_allowlist_v18_and_exactly_five_system_ops_promoted():
+    # Allowlist moved to v18 with
+    # DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001; the five system-metadata
+    # ops remain promoted under the superseding wave.
     allow = load_external_read_allowlist()
-    assert allow["version"] == 17
+    assert allow["version"] == 18
     ops = {o["operationId"] for o in allow["operations"]}
-    assert len(allow["operations"]) == 77
+    assert len(allow["operations"]) == 89
     assert set(_PROMOTED) <= ops
     for oid in _EXCLUDED_SYSTEM:
         assert oid not in ops
@@ -1347,7 +1350,6 @@ def test_registros_queries_still_reach_business_capabilities(
         "liste clientes da SA1",
         "quero ver os dados da tabela SB1010",
         "linhas da SC5",
-        "conteúdo da tabela SA1",
     ],
 )
 def test_row_intent_negative_phrases_suppress_metadata(query, monkeypatch):
@@ -1419,10 +1421,75 @@ def test_column_positive_with_registro_wording(monkeypatch):
 @pytest.mark.parametrize(
     "query",
     [
+        "qual tabela guarda linhas de pedidos de compra?",
+        "qual tabela contém linhas de pedido de compra?",
+        "qual tabela guarda dados de pedidos de compra?",
+    ],
+)
+def test_metadata_positive_with_linhas_dados_wording(query, monkeypatch):
+    """Nominal row nouns inside metadata-discovery questions must resolve."""
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids, query
+    assert ids[0] == "search_tables_by_description", (query, ids)
+
+
+@pytest.mark.parametrize(
+    ("query", "allowed_top1"),
+    [
+        (
+            "quais campos representam os dados da tabela SC7?",
+            {
+                "search_protheus_columns_in_table",
+                "search_protheus_columns_by_description",
+            },
+        ),
+        (
+            "quais são os campos da tabela SC7?",
+            {
+                "list_protheus_table_columns",
+                "get_protheus_table",
+                "search_protheus_columns_in_table",
+            },
+        ),
+    ],
+)
+def test_metadata_positive_table_nominal_wording(query, allowed_top1, monkeypatch):
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids, query
+    assert ids[0] in allowed_top1, (query, ids)
+
+
+def test_nominal_table_content_question_resolves_to_metadata(monkeypatch):
+    """"conteúdo da tabela X" answers with structure metadata (safe top-1) —
+    never generic SQL."""
+    set_actions_for_tests(_actions())
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(
+        query="conteúdo da tabela SA1", top_k=5, actor_id=_ACTOR
+    )
+    ids = [c["action_id"] for c in discovered["candidates"]]
+    assert ids
+    assert ids[0] in set(_PROMOTED), ids
+    assert "execute_readonly_sql" not in ids
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
         "mostre os registros da SB1",
         "traga os registros da SC7",
         "liste todos os registros da SA1",
+        "mostre todas as linhas da SC7",
+        "traga todas as linhas da SC7",
         "traga todos os dados da SC7",
+        "liste todos os dados da SB1",
+        "execute um SELECT na SC7",
         "select * from SB1",
     ],
 )
@@ -1540,3 +1607,59 @@ def test_rb_cfg08_invalid_binding_excludes_discovery_and_execution(monkeypatch):
     )
     ids = [c["action_id"] for c in discovered["candidates"]]
     assert "search_protheus_columns_by_description" not in ids
+
+
+def test_rb_cfg09_empty_dict_bindings_invalid():
+    """RB-CFG-09: responseBindings = {} is INVALID, not 'no binding'."""
+    action = _catalog_action(_catalog_with_response_bindings({}))
+    assert action.response_bindings is INVALID_NAME_BINDINGS
+    assert action.executable is False
+
+
+def test_rb_cfg10_empty_dict_excluded_from_retrieval():
+    """RB-CFG-10: empty-dict binding removes the action from retrieval."""
+    actions = _catalog_with_response_bindings({})
+    hits = retrieve_eligible_actions(
+        "qual campo representa referência do fornecedor?", actions, top_k=10
+    )
+    assert "search_protheus_columns_by_description" not in {
+        a.operation_id for a, _ in hits
+    }
+
+
+def test_rb_cfg11_empty_dict_absent_from_discovery_and_token(monkeypatch):
+    """RB-CFG-11: empty-dict binding -> no discovery candidate, no token."""
+    actions = _catalog_with_response_bindings({})
+    set_actions_for_tests(actions)
+    _patch_token_secret(monkeypatch)
+    discovered = discover_delpi_information(
+        query="qual campo representa referência do fornecedor?",
+        top_k=10,
+        actor_id=_ACTOR,
+    )
+    candidates = discovered["candidates"]
+    ids = [c["action_id"] for c in candidates]
+    assert "search_protheus_columns_by_description" not in ids
+    for candidate in candidates:
+        if "search_protheus_columns_by_description" in str(candidate):
+            pytest.fail("candidate token leaked for invalid-binding action")
+
+
+def test_rb_cfg12_absent_bindings_keep_normal_execution():
+    """RB-CFG-12: omitted responseBindings on an op that needs no translation
+    keeps normal executable behavior (ABSENT != INVALID)."""
+    # A legitimately translation-free op (describe) has no responseBindings in
+    # the shipped config: it must stay executable and project normally.
+    describe = _catalog_action(
+        _catalog_with_response_bindings(None, drop=True), "get_protheus_table"
+    )
+    assert dict(describe.response_bindings) == {}
+    assert describe.executable
+    fields = tuple(_allowlist_entry("get_protheus_table")["approvedResponseFields"])
+    projected = apply_approved_field_projection(
+        _envelope({"X2_CHAVE": "SB1", "internal": True}),
+        approved_fields=fields,
+        response_bindings=describe.response_bindings,
+    )
+    assert projected.get("X2_CHAVE") == "SB1"
+    assert "internal" not in projected

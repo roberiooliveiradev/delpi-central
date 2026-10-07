@@ -179,6 +179,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_supplies_purchase_requests_open_coverage": RouteContract(
         "supplies_purchase_request_coverage", "list"
     ),
+    "get_supplies_inventory_adjustments_summary": RouteContract(
+        "supplies_inventory_adjustments_summary", "playbook_report"
+    ),
+    "list_supplies_inventory_adjustments": RouteContract(
+        "supplies_inventory_adjustment", "paged_list"
+    ),
     "list_supplies_purchase_orders": RouteContract(
         "supplies_purchase_order_line", "paged_list"
     ),
@@ -196,6 +202,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "get_supplies_purchase_request_lines": RouteContract(
         "supplies_purchase_request_line", "list"
+    ),
+    "list_supplies_purchase_request_approval_states": RouteContract(
+        "supplies_purchase_request_approval_state", "list"
     ),
     "list_supplies_purchase_request_recent_linked_orders": RouteContract(
         "supplies_purchase_request_linked_order", "list"

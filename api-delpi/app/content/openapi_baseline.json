@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 726,
+  "operation_count": 738,
   "operations": [
     {
       "method": "POST",
@@ -40266,6 +40266,671 @@
       "description": "Move a pending request to in progress for billing."
     },
     {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/purchase-orders/open",
+      "operationId": "list_lancamento_notas_fiscais_open_purchase_orders",
+      "summary": "List Open Purchase Orders",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string"
+        },
+        {
+          "name": "supplier_code",
+          "in": "query",
+          "required": true,
+          "description": "Supplier code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "supplier_store",
+          "in": "query",
+          "required": true,
+          "description": "Supplier store query parameter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_posting_purchase_order",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "supplier_code": {
+            "locale": {
+              "en": {
+                "description": "Supplier code query parameter.",
+                "label": "Supplier code"
+              },
+              "pt-BR": {
+                "description": "Código do fornecedor no Protheus.",
+                "label": "Código do fornecedor"
+              }
+            }
+          },
+          "supplier_store": {
+            "locale": {
+              "en": {
+                "description": "Supplier store query parameter.",
+                "label": "Supplier store"
+              },
+              "pt-BR": {
+                "description": "Loja do fornecedor.",
+                "label": "Loja do fornecedor"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices",
+      "operationId": "list_lancamento_notas_fiscais_received_invoices",
+      "summary": "List Received Invoices",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "invoice_number",
+          "in": "query",
+          "required": false,
+          "description": "Invoice number query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "supplier_cnpj",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 25
+        },
+        {
+          "name": "document_type",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "received_invoice",
+        "shape": "paged_list",
+        "params": {
+          "invoice_number": {
+            "locale": {
+              "en": {
+                "description": "Invoice number query parameter.",
+                "label": "Invoice number"
+              },
+              "pt-BR": {
+                "description": "Número da nota fiscal.",
+                "label": "Número da nota"
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/dacte",
+      "operationId": "get_lancamento_notas_fiscais_received_cte_dacte",
+      "summary": "Preview Received Cte Dacte",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "file_id",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "access_key",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string",
+          "default": ""
+        }
+      ],
+      "xDelpi": {
+        "entity": "received_cte_dacte",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/danfe",
+      "operationId": "get_lancamento_notas_fiscais_received_invoice_danfe",
+      "summary": "Preview Received Invoice Danfe",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "access_key",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string",
+          "default": ""
+        }
+      ],
+      "xDelpi": {
+        "entity": "received_invoice_danfe",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/detail",
+      "operationId": "get_lancamento_notas_fiscais_received_nfse_detail",
+      "summary": "Received Fiscal Detail",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "document_type",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": "nfse"
+        },
+        {
+          "name": "file_id",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "access_key",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "provider_entity_id",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "supplier_code",
+          "in": "query",
+          "required": false,
+          "description": "Supplier code query parameter.",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "supplier_store",
+          "in": "query",
+          "required": false,
+          "description": "Supplier store query parameter.",
+          "type": "string",
+          "default": ""
+        }
+      ],
+      "xDelpi": {
+        "entity": "received_nfse_detail",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "supplier_code": {
+            "locale": {
+              "en": {
+                "description": "Supplier code query parameter.",
+                "label": "Supplier code"
+              },
+              "pt-BR": {
+                "description": "Código do fornecedor no Protheus.",
+                "label": "Código do fornecedor"
+              }
+            }
+          },
+          "supplier_store": {
+            "locale": {
+              "en": {
+                "description": "Supplier store query parameter.",
+                "label": "Supplier store"
+              },
+              "pt-BR": {
+                "description": "Loja do fornecedor.",
+                "label": "Loja do fornecedor"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/xml/{variant}",
+      "operationId": "get_lancamento_notas_fiscais_received_nfse_xml",
+      "summary": "Download Received Fiscal Xml",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "variant",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string",
+          "default": ""
+        },
+        {
+          "name": "document_type",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": "nfse"
+        },
+        {
+          "name": "file_id",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": ""
+        }
+      ],
+      "xDelpi": {
+        "entity": "received_nfse_xml",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
       "method": "POST",
       "path": "/lancamento-notas-fiscais/reconciliation/refresh",
       "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
@@ -41023,6 +41688,67 @@
       }
     },
     {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/danfe",
+      "operationId": "get_lancamento_notas_fiscais_request_danfe",
+      "summary": "Download Request Danfe",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "name": "disposition",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "default": "inline"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_posting_danfe",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/fiscal-attachments/{attachment_type}",
+      "operationId": "get_lancamento_notas_fiscais_request_fiscal_attachment",
+      "summary": "Download Request Fiscal Attachment",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "request_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "name": "attachment_type",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_posting_fiscal_attachment",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
       "method": "POST",
       "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
       "operationId": "post_manual_lancamento_notas_fiscais_request",
@@ -41193,6 +41919,176 @@
               "pt-BR": {
                 "description": "Busca livre (código, nome ou CNPJ).",
                 "label": "Busca"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/unmapped-products",
+      "operationId": "list_lancamento_notas_fiscais_unmapped_products",
+      "summary": "List Unmapped Products",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "supplier",
+          "in": "query",
+          "required": false,
+          "description": "Supplier query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Product code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "string"
+        },
+        {
+          "name": "mapping_status",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "request_id",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=20 ge=1 le=100",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_posting_unmapped_product",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "supplier": {
+            "locale": {
+              "en": {
+                "description": "Supplier query parameter.",
+                "label": "Supplier"
+              },
+              "pt-BR": {
+                "description": "Código ou nome do fornecedor.",
+                "label": "Fornecedor"
               }
             }
           }
@@ -41860,6 +42756,14 @@
           "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
+        },
+        {
+          "name": "include_blocked",
+          "in": "query",
+          "required": false,
+          "description": "false = somente elegíveis a carteira (exclui A1_MSBLQL='1').",
+          "type": "boolean",
+          "default": true
         }
       ],
       "xDelpi": {
@@ -59802,6 +60706,14 @@
           "default": false
         },
         {
+          "name": "include_missing_actual_end",
+          "in": "query",
+          "required": false,
+          "description": "When true, an actual-end window keeps orders that have no DT_REAL_FIM. Closed orders outside the window are still excluded.",
+          "type": "boolean",
+          "default": false
+        },
+        {
           "name": "branch",
           "in": "query",
           "required": false,
@@ -60275,6 +61187,18 @@
               }
             }
           },
+          "include_missing_actual_end": {
+            "locale": {
+              "en": {
+                "description": "When true, an actual-end window still includes orders that have no finish date. Closed orders outside the window stay excluded.",
+                "label": "Keep orders without actual end"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, o intervalo de fim real mantém as OPs que ainda não têm data de fim. Encerradas fora do intervalo continuam de fora.",
+                "label": "Manter OPs sem fim real"
+              }
+            }
+          },
           "unbounded_delivery": {
             "locale": {
               "en": {
@@ -60410,6 +61334,14 @@
           "in": "query",
           "required": false,
           "description": "When true, skip the default 12-month DT_ENTREGA window and the 24-month cap. Optional delivery_start/delivery_end still apply.",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "include_missing_actual_end",
+          "in": "query",
+          "required": false,
+          "description": "When true, an actual-end window keeps orders that have no DT_REAL_FIM. Closed orders outside the window are still excluded.",
           "type": "boolean",
           "default": false
         },
@@ -60775,6 +61707,18 @@
               }
             }
           },
+          "include_missing_actual_end": {
+            "locale": {
+              "en": {
+                "description": "When true, an actual-end window still includes orders that have no finish date. Closed orders outside the window stay excluded.",
+                "label": "Keep orders without actual end"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, o intervalo de fim real mantém as OPs que ainda não têm data de fim. Encerradas fora do intervalo continuam de fora.",
+                "label": "Manter OPs sem fim real"
+              }
+            }
+          },
           "unbounded_delivery": {
             "locale": {
               "en": {
@@ -60886,6 +61830,14 @@
           "in": "query",
           "required": false,
           "description": "When true, skip the default 12-month DT_ENTREGA window and the 24-month cap. Optional delivery_start/delivery_end still apply.",
+          "type": "boolean",
+          "default": false
+        },
+        {
+          "name": "include_missing_actual_end",
+          "in": "query",
+          "required": false,
+          "description": "When true, an actual-end window keeps orders that have no DT_REAL_FIM. Closed orders outside the window are still excluded.",
           "type": "boolean",
           "default": false
         },
@@ -61096,6 +62048,18 @@
               "pt-BR": {
                 "description": "Quando verdadeiro, retorna apenas OPs atrasadas.",
                 "label": "Somente atrasadas"
+              }
+            }
+          },
+          "include_missing_actual_end": {
+            "locale": {
+              "en": {
+                "description": "When true, an actual-end window still includes orders that have no finish date. Closed orders outside the window stay excluded.",
+                "label": "Keep orders without actual end"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, o intervalo de fim real mantém as OPs que ainda não têm data de fim. Encerradas fora do intervalo continuam de fora.",
+                "label": "Manter OPs sem fim real"
               }
             }
           },
@@ -67237,7 +68201,7 @@
           "name": "kind",
           "in": "query",
           "required": false,
-          "description": "warehouse_transfer = só movimentação entre armazéns",
+          "description": "Recorte semântico: warehouse_transfer | inventory_adjustment | production_receipt | production_consumption",
           "type": "string"
         },
         {
@@ -95159,6 +96123,540 @@
     },
     {
       "method": "GET",
+      "path": "/supplies/inventory-adjustments",
+      "operationId": "list_supplies_inventory_adjustments",
+      "summary": "Lista paginada — Ajustes de inventário (furos e sobras)",
+      "tags": [
+        "Suprimentos — Ajustes de inventário"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Product code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "warehouse",
+          "in": "query",
+          "required": false,
+          "description": "Warehouse query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "nature",
+          "in": "query",
+          "required": false,
+          "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=500",
+          "type": "integer",
+          "default": 50
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_inventory_adjustment",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "nature": {
+            "locale": {
+              "en": {
+                "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+                "label": "Nature"
+              },
+              "pt-BR": {
+                "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida).",
+                "label": "Natureza"
+              }
+            },
+            "enumLabels": {
+              "order_gross": {
+                "en": {
+                  "label": "Order / NF gross"
+                },
+                "pt-BR": {
+                  "label": "Bruto de pedido / NF"
+                }
+              },
+              "rol": {
+                "en": {
+                  "label": "Net operating revenue (ROL)"
+                },
+                "pt-BR": {
+                  "label": "Receita operacional líquida (ROL)"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "warehouse": {
+            "locale": {
+              "en": {
+                "description": "Warehouse query parameter.",
+                "label": "Warehouse"
+              },
+              "pt-BR": {
+                "description": "Código do armazém/estoque.",
+                "label": "Armazém"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna ajustes de inventário (furos e sobras) via API DELPI. Lista paginada de registros. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/inventory-adjustments/summary",
+      "operationId": "get_supplies_inventory_adjustments_summary",
+      "summary": "Relatório operacional — Resumo de ajustes de inventário (furos e sobras)",
+      "tags": [
+        "Suprimentos — Ajustes de inventário"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Product code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "warehouse",
+          "in": "query",
+          "required": false,
+          "description": "Warehouse query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "nature",
+          "in": "query",
+          "required": false,
+          "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_inventory_adjustments_summary",
+        "shape": "playbook_report",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "nature": {
+            "locale": {
+              "en": {
+                "description": "Realized value nature: order_gross (NF gross) or rol (net operating revenue).",
+                "label": "Nature"
+              },
+              "pt-BR": {
+                "description": "Natureza do realizado: order_gross (bruto de NF) ou rol (receita operacional líquida).",
+                "label": "Natureza"
+              }
+            },
+            "enumLabels": {
+              "order_gross": {
+                "en": {
+                  "label": "Order / NF gross"
+                },
+                "pt-BR": {
+                  "label": "Bruto de pedido / NF"
+                }
+              },
+              "rol": {
+                "en": {
+                  "label": "Net operating revenue (ROL)"
+                },
+                "pt-BR": {
+                  "label": "Receita operacional líquida (ROL)"
+                }
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "warehouse": {
+            "locale": {
+              "en": {
+                "description": "Warehouse query parameter.",
+                "label": "Warehouse"
+              },
+              "pt-BR": {
+                "description": "Código do armazém/estoque.",
+                "label": "Armazém"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna resumo de ajustes de inventário (furos e sobras) via API DELPI. Relatório operacional do playbook (REST, sem SQL). Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
       "path": "/supplies/inventory-turnover",
       "operationId": "get_supplies_inventory_turnover",
       "summary": "Supplies inventory turnover",
@@ -97635,6 +99133,149 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Read-only ficha of one open purchase order (branch + number) with item-level supplier, expected delivery, source purchase request and nested receipts."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/purchase-requests/approval-states",
+      "operationId": "list_supplies_purchase_request_approval_states",
+      "summary": "Lista — Supplies purchase request approval state",
+      "tags": [
+        "Suprimentos — Solicitações de compra"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "type": "array"
+        },
+        {
+          "name": "date_from",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "date_to",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=500 ge=1 le=5000",
+          "type": "integer",
+          "default": 500
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_request_approval_state",
+        "shape": "list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "date_from": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "date_to": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna supplies purchase request approval state via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
     },
     {
       "method": "GET",

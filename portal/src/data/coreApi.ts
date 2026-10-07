@@ -97,6 +97,32 @@ export type NotificationCatalogResponse = {
   legacyCategoryAliases?: Record<string, string>;
 };
 
+export interface NotificationCategoryUserItem {
+  id: string;
+  name: string;
+  email: string;
+  enabled: boolean;
+  important: boolean;
+  emailEnabled: boolean;
+  mutable: boolean;
+}
+
+export interface NotificationCategoryUsersResponse {
+  category: {
+    id: string;
+    label: string;
+    notificationLabel: string;
+    mutable: boolean;
+    kind: string;
+    appId: string | null;
+  };
+  items: NotificationCategoryUserItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  hasMore: boolean;
+}
+
 export type NotificationPresentation = "text" | "html" | "template";
 
 export type NotificationTemplateId = string;
@@ -883,5 +909,44 @@ export class CoreApi {
     return this.client.delete<{ ok: boolean }>(
       `/core-api/admin/notifications/templates/${templateId}`,
     );
+  }
+
+  getNotificationCategoryUsers(params: {
+    category: string;
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  }) {
+    const search = new URLSearchParams();
+    search.set("category", params.category);
+    if (params.q) {
+      search.set("q", params.q);
+    }
+    if (params.page != null) {
+      search.set("page", String(params.page));
+    }
+    if (params.pageSize != null) {
+      search.set("pageSize", String(params.pageSize));
+    }
+    const query = search.toString();
+    return this.client.get<NotificationCategoryUsersResponse>(
+      `/core-api/admin/notifications/category-users${query ? `?${query}` : ""}`,
+    );
+  }
+
+  updateUserNotificationCategoryPreference(
+    userId: string,
+    payload: {
+      category: string;
+      enabled?: boolean;
+      important?: boolean;
+      email?: boolean;
+    },
+  ) {
+    return this.client.patch<{
+      mutedCategories: string[];
+      importantCategories: string[];
+      emailCategories: string[];
+    }>(`/core-api/admin/notifications/user-preferences/${userId}`, payload);
   }
 }

@@ -31,14 +31,14 @@ from tm_app.interface.mcp.tool_bridge import (
 def test_surface_budget_and_taxonomy() -> None:
     assert TEO_MCP_SURFACE == "CAPABILITY_GOVERNED_V2"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
-    assert MCP_SURFACE_BUDGET["after_total"] == 24
-    assert len(MCP_TOOL_NAMES) == 24
+    assert MCP_SURFACE_BUDGET["after_total"] == 19
+    assert len(MCP_TOOL_NAMES) == 19
     assert TOOL_CLASS["prepare_record_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
     assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 11
-    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 1
-    assert sum(1 for v in TOOL_CLASS.values() if v == "PREPARE") == 10
+    assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 0
+    assert sum(1 for v in TOOL_CLASS.values() if v == "PREPARE") == 6
     assert sum(1 for v in TOOL_CLASS.values() if v == "ACT") == 1
     for name in MCP_LEGACY_REMOVED_TOOLS:
         assert name not in TOOL_CLASS
@@ -159,13 +159,11 @@ def test_commit_proposal_rejects_confirmation_false() -> None:
 def test_specialized_prepares_still_registered() -> None:
     names = {t.name for t in asyncio.run(create_mcp_server().list_tools())}
     for required in (
-        "prepare_activate_revision",
-        "prepare_improvement_package",
-        "prepare_manage_evidence",
-        "prepare_meeting_minute_workflow",
-        "prepare_meeting_minute_manage",
-        "prepare_adjust_shared_resource_cost",
-        "prepare_recalculate_dashboard",
+        "prepare_governed_operation",
+        "prepare_evidence_change",
+        "prepare_meeting_minute_change",
+        "prepare_collaboration_change",
+        "prepare_diagnostic_change",
         "search_records",
         "get_record",
         "get_process_context",

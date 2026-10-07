@@ -4,7 +4,7 @@
 Strategy: stable semantic marker -> runtime discovery -> canonical create.
 Acceptance fixtures are Diagnostics whose ``problem_statement`` starts with
 ``[ACCEPTANCE-FIXTURE]``; they are discovered at runtime via the canonical
-``list_diagnostics_by_revision`` route, so no hardcoded UUIDs are needed.
+``GET /transformometro/revisions/{id}/diagnostics`` route, so no hardcoded UUIDs are needed.
 
 Idempotent: a second run finds the markers and creates nothing.
 Cleanup: fixtures are identifiable by the marker prefix; they are read/mutate

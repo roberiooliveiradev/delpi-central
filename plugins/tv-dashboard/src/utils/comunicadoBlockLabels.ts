@@ -1,6 +1,7 @@
 import {
   isDataBlockType,
   isDataSourceBlockType,
+  resolveInputBindingKey,
   resolveVisualBoxDisplayText,
   textBlockHasDataBinding,
   type ComunicadoBlock,
@@ -54,7 +55,7 @@ export function comunicadoBlockSummary(block: ComunicadoBlock): string {
     return block.iconName;
   }
   if (block.type === "input") {
-    return block.input?.label?.trim() || block.input?.paramKey || comunicadoBlockTypeLabel(block.type);
+    return block.input?.label?.trim() || resolveInputBindingKey(block.input) || comunicadoBlockTypeLabel(block.type);
   }
   return comunicadoBlockTypeLabel(block.type);
 }

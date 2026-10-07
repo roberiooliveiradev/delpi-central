@@ -254,6 +254,86 @@ def test_tools_call_401_invalidates_credential():
             timeout_seconds=5.0,
         )
     assert exc.value.code == MCP_AUTHENTICATION_FAILED
+    # LOOP-03R1: a non-mutating call gets ONE bounded same-call retry
+    # after invalidation — each failed attempt invalidates once.
+    assert provider.invalidated == [DAVI_RESOURCE, DAVI_RESOURCE]
+
+
+def test_tools_call_401_retries_once_for_non_mutating():
+    """Sibling: the bounded re-exchange recovers a read whose cached
+    token expired mid-call — exactly one retry, fresh transport."""
+
+    class FlakyTransport(FakeTransport):
+        calls_made = 0
+
+        def list_tools(self):
+            return (_DISCOVERY_TOOL,)
+
+        def call_tool(self, name, arguments):
+            FlakyTransport.calls_made += 1
+            if FlakyTransport.calls_made == 1:
+                raise SpecialistInteropError(
+                    MCP_AUTHENTICATION_FAILED, "401 expired"
+                )
+            return {"content": [{"type": "text", "text": "ok"}]}
+
+    FlakyTransport.calls_made = 0
+    provider = FakeCredentialProvider()
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=provider,
+        transport_factory=lambda p, t: FlakyTransport(p),
+    )
+    outcome = adapter.call_remote_tool(
+        DAVI,
+        "discover_delpi_information",
+        {"query": "q"},
+        correlation_id="c",
+        timeout_seconds=5.0,
+    )
+    assert FlakyTransport.calls_made == 2
+    assert provider.invalidated == [DAVI_RESOURCE]
+    assert outcome.is_error is False
+
+
+def test_tools_call_401_never_retries_mutating():
+    """Negative: a PREPARE-class call gets zero material retries —
+    the 401 invalidates and propagates immediately."""
+
+    class FailingPrepare(FakeTransport):
+        calls_made = 0
+
+        def list_tools(self):
+            return (
+                {
+                    "name": "prepare_change",
+                    "_meta": {"delpi/toolClass": "PREPARE"},
+                },
+            )
+
+        def call_tool(self, name, arguments):
+            FailingPrepare.calls_made += 1
+            raise SpecialistInteropError(
+                MCP_AUTHENTICATION_FAILED, "401"
+            )
+
+    FailingPrepare.calls_made = 0
+    provider = FakeCredentialProvider()
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=provider,
+        transport_factory=lambda p, t: FailingPrepare(p),
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        adapter.call_remote_tool(
+            DAVI,
+            "prepare_change",
+            {"query": "q"},
+            correlation_id="c",
+            timeout_seconds=5.0,
+        )
+    assert exc.value.code == MCP_AUTHENTICATION_FAILED
+    assert FailingPrepare.calls_made == 1
     assert provider.invalidated == [DAVI_RESOURCE]
 
 

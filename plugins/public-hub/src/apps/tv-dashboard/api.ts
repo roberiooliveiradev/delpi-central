@@ -1,3 +1,8 @@
+import {
+  serializeInputFilterOverridesQuery,
+  type InputFilterContributions,
+} from "@delpi/tv-dashboard-presentation";
+
 const API_BASE = "/apps/tv-dashboard-api";
 
 export type PublicSlideNative = {
@@ -47,10 +52,7 @@ export type PublicPresentationPayload = {
   slides: PublicSlide[];
 };
 
-export type PublicFilterOverrides = {
-  slide?: Record<string, string | number | boolean | null>;
-  bySourceId?: Record<string, Record<string, string | number | boolean | null>>;
-};
+export type PublicFilterOverrides = InputFilterContributions;
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
 
@@ -63,14 +65,9 @@ function presentUrl(
     `${API_BASE}/public/present/${encodeURIComponent(token)}`,
     typeof window !== "undefined" ? window.location.origin : "http://localhost",
   );
-  if (filters) {
-    const slide = filters.slide ?? {};
-    const bySourceId = filters.bySourceId ?? {};
-    const hasSlide = Object.keys(slide).length > 0;
-    const hasBySource = Object.keys(bySourceId).length > 0;
-    if (hasSlide || hasBySource) {
-      url.searchParams.set("filters", JSON.stringify({ slide, bySourceId }));
-    }
+  const query = filters ? serializeInputFilterOverridesQuery(filters) : null;
+  if (query) {
+    url.searchParams.set("filters", query);
   }
   if (cacheBust) {
     url.searchParams.set("_rev", cacheBust);

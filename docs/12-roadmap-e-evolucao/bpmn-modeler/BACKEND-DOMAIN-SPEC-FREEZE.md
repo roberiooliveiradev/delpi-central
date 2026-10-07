@@ -5,6 +5,7 @@
 > **Bounded context:** `bpmn-modeler/` (package `bpmn_modeler`)
 > **Base canônica:** `V1-SCOPE-FREEZE.md` (FROZEN, commit `1fa64cbe38`)
 > **Natureza:** contrato funcional de backend (WHAT). Persistência física → Prompt 6; transporte HTTP → Prompt 7; regras BPMN/validação concretas → Prompt 3.
+> **AMENDMENT G0 (out/2026):** freeze histórico. Decisões substituídas após implementação estão marcadas `SUPERSEDED (G0)` com o texto original preservado. Estado vigente: [`CURRENT-STATE.md`](CURRENT-STATE.md); divergências: [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md).
 
 Vocabulário de decisão:
 
@@ -34,6 +35,8 @@ Fechar integralmente o contrato funcional de backend da V1: domain model, use ca
 | Autosave | OUT_OF_V1 (Prompt 1) — save é sempre explícito |
 | Restore append-only; história nunca reescrita | FROZEN (Prompt 1), formalizado na seção 12 |
 
+> **SUPERSEDED (G0):** `Autosave OUT_OF_V1` — a V1 implementada possui autosave do **working copy** (frontend `AutosaveController` → `SaveWorkingCopy` use case + If-Match + read-back verify). Do ponto de vista do backend nada mudou: não existe endpoint de "autosave", o write continua sendo o `PUT working-copy` governado; o que mudou é quem dispara o save (debounce automático além do gesto manual). `AUTOSAVE != REVISION` permanece invariante. Ver `CURRENT-STATE.md` §4.
+
 ## 3. Aggregate Boundary
 
 `FROZEN`:
@@ -56,6 +59,8 @@ Conceitos do domain da V1 (sem fields de infraestrutura):
 | `WorkingCopy` | entity (do agregado) | `artifact: CanonicalBpmnArtifact` |
 | `CanonicalBpmnArtifact` | value object | `content: str` — opaco, sem parsing no Domain |
 | `Revision` | entity (do agregado, imutável) | `revision_id`, `revision_number`, `artifact`, `checksum`, `created_at`, `created_by`, `origin`, `restored_from_revision_id` |
+
+> **SUPERSEDED (G0):** `Revision` ganhou metadata vigente via `V002`/`V003` + implementação: `name` (1–120), `description` (≤500), `created_by_name` (display name sanitizado do autor). Opcionais; append-only/imutabilidade inalteradas. Ver `CURRENT-STATE.md` §5 e `domain/entities/revision.py`.
 
 Campos de auditoria (`created_at`, `created_by`, `updated_at`, `updated_by`) e o token `version` são mantidos pela camada Application/persistência no registro do agregado; **não participam de invariantes de Domain** e não são editáveis por regra de domínio. O Domain só enforça: id não-vazio/imutável, display_name não-vazio, exatamente uma working copy, revisões imutáveis.
 
@@ -92,6 +97,8 @@ Decisões fechadas:
 - `revision indicator` da UI **não** é campo do agregado: `latest_revision` é derivado (maior `revision_number`); `selected_revision` é estado de navegação da UI. Ver seção 10.
 - Nenhum metadado de produto é injetado dentro do XML BPMN.
 
+> **AMENDMENT G0 (out/2026) — resource ownership:** este freeze especificou `created_by` como campo de auditoria; a implementação P0 promoveu `created_by` a **resource owner V1**. Todas as precondições de UC que leem/escrevem um Model existente passam a incluir: `caller.subject == Model.created_by` (além da permissão RBAC context-wide). Foreign resource → `MODEL_NOT_FOUND`/404 (sem leak); listagem exige `owner_subject` (sem caminho global); superadmin recebe as capabilities mas **não** atravessa `created_by`. Contrato vigente: `CURRENT-STATE.md` §3; ledger: DRIFT-BPMN-001.
+
 ## 7. Working Copy Contract
 
 `FROZEN`:
@@ -103,6 +110,7 @@ Decisões fechadas:
 - Não existe save parcial.
 - Não existe API de patch de XML.
 - Não existe autosave.
+  - **SUPERSEDED (G0):** existe autosave do working copy na V1 implementada (frontend orquestra; backend recebe `PUT working-copy` normal). O que permanece verdade: não existe save parcial nem write que crie revisão automaticamente.
 
 ## 8. Save Contract
 
@@ -412,6 +420,8 @@ Nenhuma operação cruza dois agregados numa mesma transação (duplicate/import
 | DuplicateModel | não | não |
 | RenameModel | não | não |
 | CreateRevision | não (snapshot direto) | não |
+
+> **SUPERSEDED (G0):** `SaveWorkingCopy` — na implementação vigente o gesto explícito é substituído pelo autosave do working copy (debounce → `PUT working-copy` → read-back verify); `Ctrl+S` permanece como flush manual. A coluna CONFIRM UX continua correta: nenhuma confirmação modal adicional foi adicionada ao save.
 
 Fluxo geral de writes: `READ CURRENT → PREPARE quando aplicável → VALIDATE → CONFIRM quando aplicável → WRITE → AUTHORITATIVE READ-BACK → VERIFY`.
 

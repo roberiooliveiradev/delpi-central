@@ -244,27 +244,20 @@ def _seed_diagnostic(repo, **kwargs) -> Diagnostic:
 
 class TestSurfaceRegistration:
     def test_exactly_four_new_tools_registered(self):
+        # Tool Surface Rationalization V1: the four pre-family tools are
+        # consolidated into the diagnostic family (2 tools, same actions).
         tools = asyncio.run(create_mcp_server().list_tools())
         names = {t.name for t in tools}
-        assert {
-            "get_diagnostic",
-            "list_diagnostics_by_revision",
-            "prepare_create_diagnostic",
-            "prepare_manage_diagnostic",
-        } <= names
+        assert {"diagnostic_read", "prepare_diagnostic_change"} <= names
 
     def test_tool_classes_correct(self):
-        assert TOOL_CLASS["get_diagnostic"] == "READ"
-        assert TOOL_CLASS["list_diagnostics_by_revision"] == "READ"
-        assert TOOL_CLASS["prepare_create_diagnostic"] == "PREPARE"
-        assert TOOL_CLASS["prepare_manage_diagnostic"] == "PREPARE"
+        assert TOOL_CLASS["diagnostic_read"] == "READ"
+        assert TOOL_CLASS["prepare_diagnostic_change"] == "PREPARE"
 
     def test_mcp_native_flagged_no_gpt_parity(self):
         assert MCP_NATIVE_TOOLS == {
-            "get_diagnostic",
-            "list_diagnostics_by_revision",
-            "prepare_create_diagnostic",
-            "prepare_manage_diagnostic",
+            "diagnostic_read",
+            "prepare_diagnostic_change",
         }
 
     def test_commit_proposal_is_the_only_act(self):
@@ -288,39 +281,48 @@ class TestSurfaceRegistration:
             assert not any("diagnostic" in t for t in tools)
 
     def test_prepare_capability_mapping(self):
+        # Family tool: action selects the exact capability; the map value
+        # is the representative capability.
         assert (
-            PREPARE_TOOL_CAPABILITY["prepare_create_diagnostic"]
-            == "create_diagnostic"
-        )
-        assert (
-            PREPARE_TOOL_CAPABILITY["prepare_manage_diagnostic"]
+            PREPARE_TOOL_CAPABILITY["prepare_diagnostic_change"]
             == "manage_diagnostic"
         )
 
     def test_annotations_read_vs_prepare(self):
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        assert tools["get_diagnostic"].annotations.read_only_hint is True
-        assert tools["list_diagnostics_by_revision"].annotations.read_only_hint is True
-        assert tools["prepare_create_diagnostic"].annotations.read_only_hint is False
-        assert tools["prepare_manage_diagnostic"].annotations.read_only_hint is False
-        assert tools["prepare_manage_diagnostic"].annotations.destructive_hint is False
+        assert tools["diagnostic_read"].annotations.read_only_hint is True
+        assert (
+            tools["prepare_diagnostic_change"].annotations.read_only_hint
+            is False
+        )
+        assert (
+            tools["prepare_diagnostic_change"].annotations.destructive_hint
+            is False
+        )
 
     def test_create_schema_never_requests_diagnostic_id(self):
+        # diagnostic_id is only meaningful for manage actions; for
+        # action=create the id is server-generated — it must never be
+        # *required* on the family schema.
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        props = tools["prepare_create_diagnostic"].input_schema["properties"]
-        assert "diagnostic_id" not in props
+        schema = tools["prepare_diagnostic_change"].input_schema
+        props = schema["properties"]
+        assert "diagnostic_id" not in schema.get("required", [])
+        assert "diagnostic_id" in props  # optional for manage actions
         assert "commit_now" not in props
-        assert set(props) == {"revision_id", "problem_statement", "provenance"}
+        assert "action" in schema.get("required", [])
+        assert {"action", "diagnostic_id", "revision_id", "problem_statement",
+                "provenance", "payload"} == set(props)
 
     def test_manage_schema_action_is_closed_allowlist_of_13(self):
         tools = {t.name: t for t in asyncio.run(create_mcp_server().list_tools())}
-        action_schema = tools["prepare_manage_diagnostic"].input_schema[
+        action_schema = tools["prepare_diagnostic_change"].input_schema[
             "properties"
         ]["action"]
-        assert set(action_schema["enum"]) == set(MANAGE_ACTIONS)
-        assert len(action_schema["enum"]) == 13
+        assert set(action_schema["enum"]) == set(MANAGE_ACTIONS) | {"create"}
+        assert len(action_schema["enum"]) == 14
         # commit_now must not leak into the public schema
-        props = tools["prepare_manage_diagnostic"].input_schema["properties"]
+        props = tools["prepare_diagnostic_change"].input_schema["properties"]
         assert "commit_now" not in props
 
 

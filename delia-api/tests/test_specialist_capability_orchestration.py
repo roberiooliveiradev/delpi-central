@@ -167,6 +167,61 @@ READY_PROPOSAL = RemoteToolOutcome(
     },
 )
 
+# Same owner proposal shape, structurally declared non-destructive:
+# explicit_user_confirmation=False is the sole direct-ACT authority.
+DIRECT_PROPOSAL = RemoteToolOutcome(
+    content_text="Proposta pronta.",
+    structured={
+        "data": {
+            "capability": "prepare_change",
+            "proposal_handle": "prop-handle-1",
+            "resource_id": "playlist-1",
+            "exact_change": {"field": "name", "to": "Painel X"},
+            "validation_result": {"ready": True},
+            "ready": True,
+            "expires_at": None,
+            "confirmation_requirement": {
+                "explicit_user_confirmation": False,
+            },
+        }
+    },
+)
+
+# Contradictory structural declaration — owner contract defect.
+CONTRADICTORY_POLICY_PROPOSAL = RemoteToolOutcome(
+    content_text="Proposta pronta.",
+    structured={
+        "data": {
+            "capability": "prepare_change",
+            "proposal_handle": "prop-handle-1",
+            "exact_change": {"field": "name", "to": "Painel X"},
+            "validation_result": {"ready": True},
+            "ready": True,
+            "confirmation_requirement": {
+                "explicit_user_confirmation": True,
+                "required": False,
+            },
+        }
+    },
+)
+
+# Malformed structural declaration — non-boolean policy value.
+MALFORMED_POLICY_PROPOSAL = RemoteToolOutcome(
+    content_text="Proposta pronta.",
+    structured={
+        "data": {
+            "capability": "prepare_change",
+            "proposal_handle": "prop-handle-1",
+            "exact_change": {"field": "name", "to": "Painel X"},
+            "validation_result": {"ready": True},
+            "ready": True,
+            "confirmation_requirement": {
+                "explicit_user_confirmation": "auto",
+            },
+        }
+    },
+)
+
 
 class FakePort:
     """Interop port stub: per-specialist scripted surfaces/outcomes."""
@@ -205,15 +260,27 @@ def _interop(port=None, **kwargs):
 
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
+    CANDIDATE_SELECTION_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
+    COMPARISON_INSTRUCTION_ID,
+    FOREIGN_SELECTION_INSTRUCTION_ID,
+    GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
+    NATIVE_ASSESSMENT_INSTRUCTION_ID,
 )
 
 _STAGE_IDS = frozenset(
     {
         GROUP_SELECTION_INSTRUCTION_ID,
         CAPABILITY_SELECTION_INSTRUCTION_ID,
+        GOAL_INSTRUCTION_ID,
+        NATIVE_ASSESSMENT_INSTRUCTION_ID,
+        FOREIGN_SELECTION_INSTRUCTION_ID,
         ARGUMENTS_INSTRUCTION_ID,
+        COMPARISON_INSTRUCTION_ID,
+        CANDIDATE_SELECTION_INSTRUCTION_ID,
+        CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
     }
 )
 
@@ -300,6 +367,12 @@ def _select(specialist_id, remote_name, arguments=None):
             "applicable": True,
             "remote_name": remote_name,
         },
+        # LOOP-03R1 stages consume their own purpose-scoped queues —
+        # without explicit entries a bare queue-miss would fall back to
+        # the generic list and steal positional payloads meant for
+        # later stages.
+        GOAL_INSTRUCTION_ID: {"goal_class": "read"},
+        NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
         ARGUMENTS_INSTRUCTION_ID: {"arguments": arguments or {}},
     }
 
@@ -530,7 +603,7 @@ def test_prepare_selection_routes_through_write_governance():
             "vista", "prepare_change", {"record_id": "p1"}
         ),
     )
-    attempt = read.attempt("Altere o nome do painel para Painel X")
+    attempt = read.attempt("Altere o nome do painel p1 para Painel X")
     assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
     assert attempt.confirmation_context["proposal_digest"]
     # The raw owner handle never leaves the backend.
@@ -593,7 +666,7 @@ def test_prepare_enveloped_proposal_reaches_confirmation_gate():
         ),
     )
     attempt = read.attempt(
-        "Altere o nome do painel",
+        "Altere o nome do painel p1",
         actor_user_id="u1",
         session_id="s1",
     )
@@ -642,7 +715,7 @@ def test_prepare_not_ready_envelope_scrubs_handle_from_render():
             "vista", "prepare_change", {"record_id": "p1"}
         ),
     )
-    attempt = read.attempt("Altere o painel")
+    attempt = read.attempt("Altere o painel p1")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
     assert "env-handle-9" not in attempt.content
@@ -1065,10 +1138,13 @@ def test_adversarial_model_prose_cannot_become_observation():
     assert "900 unidades" not in attempt.content
     # The deterministic bounded render carries the authoritative data.
     assert "TUBO 30X30X1500" in attempt.content
-    # Only the four governed proposals ran (capability, arguments,
-    # candidate resolution, candidate arguments) — no presentation
-    # model call exists in the OBSERVATION path.
-    assert len(read._invoke_model._port.requests) == 4
+    # Six governed proposals ran: the plan calls plus the bounded
+    # turn-goal proposal (LOOP-03R1) and the bounded grounded-synthesis
+    # proposal (C3-LOOP-01/R1). The fabricated "answer" is outside the
+    # evidence-bound synthesis contract and was rejected outright —
+    # the truthful deterministic render shipped; model prose can
+    # never introduce factual leaf values into the OBSERVATION answer.
+    assert len(read._invoke_model._port.requests) == 6
 
 
 # --- R2: generic secret/token redaction --------------------------------
@@ -1629,7 +1705,7 @@ def _vista_prepare(port=None):
         ),
     )
     pending = read.attempt(
-        "Altere o nome do painel para Painel X",
+        "Altere o nome do painel p1 para Painel X",
         actor_user_id="u1",
         session_id="s1",
     )
@@ -2270,13 +2346,14 @@ def test_orchestration_runtime_has_no_local_capability_authority():
         assert marker not in src, marker
 
 
-# --- section 6.132: owner-declared confirmation policy (direct vs confirm)
+# --- section 6.132/6.140: owner-declared confirmation policy
+# (direct vs confirm)
 #
 # Product Master decision: explicit user confirmation is required ONLY
-# for destructive operations. The structured owner contract (per-op
-# risk + confirmationPolicy in the owner catalog, or the proposal's
-# confirmation_requirement for non-envelope owners) is the sole
-# authority — never model output, never tool-description prose.
+# for destructive operations. The structural confirmation_requirement
+# sealed inside the owner PREPARE proposal is the sole authority —
+# never model output, never tool-description prose, and never an
+# owner-vocabulary ops/risk catalog read inside DÉLIA.
 
 VISTA_OPS_CATALOG = RemoteToolOutcome(
     content_text="catalogo",
@@ -2319,14 +2396,14 @@ def _vista_ops_prepare(port, ops):
 
 
 def test_direct_policy_executes_act_without_user_confirmation():
-    """Non-destructive + confirmationPolicy=direct: the initiating
+    """Structural explicit_user_confirmation=False: the initiating
     explicit request is the intent record — governed ACT runs in the
     same turn, no confirmation surface, no fake confirmation flag."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
@@ -2375,13 +2452,14 @@ def test_destructive_policy_requires_user_confirmation():
 
 
 def test_compound_direct_plan_executes_all_ops_same_turn():
-    """A single owner proposal carrying two direct ops executes once —
-    compound plans come from owner vocabulary, not DÉLIA hardcode."""
+    """A single owner proposal structurally declared direct executes
+    once — compound plans come from owner vocabulary, not DÉLIA
+    hardcode."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
@@ -2397,36 +2475,121 @@ def test_compound_direct_plan_executes_all_ops_same_turn():
     assert [c[1] for c in port.calls].count("commit_proposal") == 1
 
 
+# --- LOOP-03R1: request-scoped execution ceiling -------------------------
+
+
+def test_prepare_only_ceiling_converts_direct_to_confirmation():
+    """max_execution_stage="prepare" caps the governed chain at
+    PREPARE: an owner-declared direct write still surfaces a
+    confirmation — ACT never runs under the ceiling."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": DIRECT_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+    )
+    read = _vista_ops_prepare(port, [{"op": "add_blank_slide"}])
+    attempt = read.attempt(
+        "crie um slide",
+        actor_user_id="u1",
+        session_id="s1",
+        max_execution_stage="prepare",
+    )
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert attempt.confirmation_context["proposal_digest"]
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+
+
+def test_prepare_only_ceiling_blocks_confirmation_act():
+    """A structured confirmation under the ceiling is refused — the
+    ceiling binds the whole turn, pending write included."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": READY_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+    )
+    read = _vista_ops_prepare(port, [{"op": "delete_slide"}])
+    pending = read.attempt(
+        "exclua este slide",
+        actor_user_id="u1",
+        session_id="s1",
+        max_execution_stage="prepare",
+    )
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+        max_execution_stage="prepare",
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert result.error_code == "execution_ceiling"
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+
+
+def test_prepare_only_ceiling_refuses_direct_act_selection():
+    """A model-selected ACT capability under the ceiling is refused
+    deterministically — zero provider calls."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={"commit_proposal": COMMIT_VERIFIED},
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select(
+            "vista",
+            "commit_proposal",
+            {"proposal_handle": "x", "confirmation": True},
+        ),
+    )
+    attempt = read.attempt(
+        "execute agora",
+        actor_user_id="u1",
+        session_id="s1",
+        max_execution_stage="prepare",
+    )
+    assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert attempt.error_code == "execution_ceiling"
+    assert port.calls == []
+
+
 def test_contradictory_owner_policy_fails_closed():
-    """risk=destructive + confirmationPolicy=direct is an owner
+    """explicit_user_confirmation=true + required=false is an owner
     contract defect: fail closed — never auto-ACT, never lazy
     confirmation."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": CONTRADICTORY_POLICY_PROPOSAL,
         },
     )
     read = _vista_ops_prepare(port, [{"op": "contradictory_op"}])
-    attempt = read.attempt("execute", actor_user_id="u1", session_id="s1")
+    attempt = read.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert attempt.error_code == "owner_policy_invalid"
     assert "commit_proposal" not in [c[1] for c in port.calls]
 
 
-def test_unknown_op_policy_fails_closed():
-    """An op absent from the owner policy index cannot be classified —
-    fail closed as an owner-contract defect."""
+def test_malformed_policy_fails_closed():
+    """A non-boolean structural confirmation value cannot be
+    classified — fail closed as an owner-contract defect."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
             "get_catalog": VISTA_OPS_CATALOG,
-            "prepare_change": READY_PROPOSAL,
+            "prepare_change": MALFORMED_POLICY_PROPOSAL,
         },
     )
     read = _vista_ops_prepare(port, [{"op": "undeclared_op"}])
-    attempt = read.attempt("execute", actor_user_id="u1", session_id="s1")
+    attempt = read.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert attempt.error_code == "owner_policy_invalid"
 
@@ -2516,7 +2679,7 @@ def test_preview_declared_direct_executes_without_ops_catalog():
         ),
     )
     attempt = read.attempt(
-        "Altere o nome do painel", actor_user_id="u1", session_id="s1"
+        "Altere o nome do painel p1", actor_user_id="u1", session_id="s1"
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
@@ -2550,7 +2713,7 @@ def test_undeclared_policy_fails_closed_not_lazy_confirmation():
         ),
     )
     attempt = read.attempt(
-        "Altere o nome", actor_user_id="u1", session_id="s1"
+        "Altere o nome p1", actor_user_id="u1", session_id="s1"
     )
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
     assert attempt.error_code == "owner_policy_invalid"
@@ -2558,79 +2721,40 @@ def test_undeclared_policy_fails_closed_not_lazy_confirmation():
 
 
 def test_owner_reclassification_flips_confirmation_live():
-    """Metamorphic: the owner reclassifies the same op direct ->
-    destructive between turns; fresh catalog evidence flips the gate
+    """Metamorphic: the owner reclassifies the same proposal direct ->
+    confirm between turns; fresh PREPARE evidence flips the gate
     with zero DÉLIA code/config change."""
-    direct_catalog = RemoteToolOutcome(
-        content_text="c",
-        structured={
-            "operations": {
-                "rotate_banner": {
-                    "risk": "mutation",
-                    "confirmationPolicy": "direct",
-                }
-            }
-        },
-    )
-    destructive_catalog = RemoteToolOutcome(
-        content_text="c",
-        structured={
-            "operations": {
-                "rotate_banner": {
-                    "risk": "destructive",
-                    "confirmationPolicy": "confirm",
-                }
-            }
-        },
-    )
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
-            "get_catalog": direct_catalog,
-            "prepare_change": READY_PROPOSAL,
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
     read = _vista_ops_prepare(port, [{"op": "rotate_banner"}])
-    first = read.attempt("execute", actor_user_id="u1", session_id="s1")
+    first = read.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert first.status is GovernedCapabilityStatus.SUCCESS
     assert "commit_proposal" in [c[1] for c in port.calls]
 
-    port._outcomes["get_catalog"] = destructive_catalog
+    port._outcomes["prepare_change"] = READY_PROPOSAL
     port.calls.clear()
     read2 = _vista_ops_prepare(port, [{"op": "rotate_banner"}])
-    second = read2.attempt("execute", actor_user_id="u1", session_id="s1")
+    second = read2.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert second.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
     assert "commit_proposal" not in [c[1] for c in port.calls]
 
 
-def test_enveloped_owner_catalog_resolves_policy():
-    """Provider adapters wrap DISCOVERY payloads in a neutral
-    {status, data} envelope — the policy gate must read through it
-    (live wire shape), not just a bare operations map."""
-    enveloped = RemoteToolOutcome(
-        content_text="catalogo",
-        structured={
-            "status": "success",
-            "data": {
-                "operations": {
-                    "add_blank_slide": {
-                        "risk": "additive",
-                        "confirmationPolicy": "direct",
-                    },
-                    "delete_slide": {
-                        "risk": "destructive",
-                        "confirmationPolicy": "confirm",
-                    },
-                }
-            },
-        },
-    )
+def test_enveloped_proposal_resolves_policy():
+    """Provider adapters wrap owner payloads in a neutral
+    {status, data} envelope — the policy gate must read the proposal's
+    structural confirmation_requirement through it (live wire shape),
+    not a bare flat map."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
-            "get_catalog": enveloped,
-            "prepare_change": READY_PROPOSAL,
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": DIRECT_PROPOSAL,
             "commit_proposal": COMMIT_VERIFIED,
         },
     )
@@ -2646,6 +2770,7 @@ def test_enveloped_owner_catalog_resolves_policy():
     ]
 
     port.calls.clear()
+    port._outcomes["prepare_change"] = READY_PROPOSAL
     read2 = _vista_ops_prepare(port, [{"op": "delete_slide"}])
     pending = read2.attempt(
         "exclua este slide", actor_user_id="u1", session_id="s1"

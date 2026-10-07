@@ -74,7 +74,7 @@ Implementado (§6.94, `IMPLEMENTATION_HEAD=a5512c0b5d18f728f15cf0c652ffb0e8417e8
 
 ## 5. Capability allowlist
 
-**Catalog ownership (decisão §6.109 — ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01):** cada specialist é owner do próprio catálogo/capabilities. `tools/list` é a fonte primária da superfície MCP observada em runtime; a classe semântica da operação é projetada a partir do contrato tipado do owner (`_meta["delpi/toolClass"]`: `DISCOVERY|READ|ANALYSIS|PREPARE|ACT` — `ANALYSIS` projeta como `READ` na DÉLIA). O mirror local completo de nomes de tools (`SPECIALIST_CAPABILITY_CLASSES`) é **SUPERSEDED**: a DÉLIA não precisa mais conhecer nomes remotos para descobrir/projetar a superfície.
+**Catalog ownership (decisão §6.109 — ARCH-DRIFT-MCP-FEDERATION-CATALOG-OWNER-01):** cada specialist é owner do próprio catálogo/capabilities. `tools/list` é a fonte primária da superfície MCP observada em runtime; a classe semântica da operação é projetada a partir do contrato tipado do owner (`_meta["delpi/toolClass"]`: `DISCOVERY|READ|ANALYSIS|PREPARE|ACT` — desde §6.140 `ANALYSIS` é first-class na DÉLIA, non-mutating, nunca colapsado em `READ`; apenas o *plan character* compartilhado o projeta como `READ` para validação de side-effect). O mirror local completo de nomes de tools (`SPECIALIST_CAPABILITY_CLASSES`) é **SUPERSEDED**: a DÉLIA não precisa mais conhecer nomes remotos para descobrir/projetar a superfície.
 
 O registry DÉLIA representa apenas approvals governados e refs dos owners:
 
@@ -89,6 +89,60 @@ status
 
 Classe ausente/inválida/desconhecida no owner ⇒ `UNKNOWN` ⇒ *discoverable, never invocable*. Invocation re-lê a classe do owner via `tools/list` fresco — reclassificação/remoção do owner é honrada sem mirror stale.
 
+### 5.1 Future provider approval source — Core projection, not Keycloak (DEFERRED)
+
+**Status: TARGET / DEFERRED. No implementation is authorized by this section.**
+
+A prova de desacoplamento provider-neutral (§6.141) deixa um residual intencional: a identidade dos especialistas MCP atualmente aprovados ainda é mantida por uma allowlist fail-closed da DÉLIA. Isso **não** é capability coupling, mas pode ser removido futuramente quando houver necessidade operacional de onboarding/revoke em escala.
+
+Direção preferida para essa evolução:
+
+```text
+Core
+→ canonical platform-governance projection of approved providers
+
+DÉLIA
+→ consumes approved provider refs
+→ CapabilityProviderPort
+→ provider live capability surface
+
+Provider
+→ owns capability names / schemas / classes / availability
+
+Keycloak
+→ identity / authentication / token exchange only
+```
+
+Antes de implementar, inventariar o que já existe no Core (app/plugin registry, manifest governance, active/inactive lifecycle e metadata) e provar `EXISTING_EQUIVALENT` / `REUSE_DECISION`. A expectativa arquitetural é **REUSE/EXTEND antes de NEW**, mas documentação não prova que o contrato necessário já exista.
+
+O Core **não** deve se tornar mirror de `tools/list`, tool names, schemas, operation classes ou PREPARE/ACT pairs. Capability add/remove/reclassify continua sendo observada ao vivo no provider sem mudança central da DÉLIA.
+
+Keycloak também **não** é a fonte de aprovação operacional: a presença de client, audience, scope ou token-exchange permission prova apenas configuração de identidade/credencial; `identity != authorization` e `provider scope != Core/domain permission`.
+
+Contrato futuro mínimo, somente quando necessário, deve separar:
+
+```text
+provider approval / lifecycle        → Core governance
+provider credential mechanics        → Keycloak/provider boundary
+provider capability surface          → provider owner, live
+capability orchestration             → DÉLIA
+business authorization/postcondition → Domain/provider authority
+```
+
+Possíveis campos da projeção do Core devem ser definidos contract-first no momento da implementação, sem congelar schema agora. Exemplos conceituais: provider id, owner ref, provider family/protocol, approved/enabled/revoked state e connection/profile ref quando necessário. Esses exemplos **não** são um contrato implementado.
+
+Implementation trigger:
+
+```text
+onboarding of additional providers
+or
+central disable/revoke/governance need
+or
+proven operational risk/cost of the current hardcoded approval registry
+```
+
+Até lá, o registry atual permanece um residual governado e fail-closed; não abrir task de implementação apenas por esta documentação.
+
 **Decision supersession (§6.118 — ARCH-DRIFT-MCP-CAPABILITY-AUTHORITY-02):** per-capability availability state lived in DÉLIA config/code (`DELIA_C4_*_ENABLED`, `GOVERNED_READ_ACTIONS`, `GOVERNED_DISCOVERY_BINDINGS`, `enabled_governed_read_tuples`) — a second local capability authority that made specialist-owned capabilities dependent on DÉLIA-local state. That model is **SUPERSEDED** (historical records preserved):
 
 ```text
@@ -97,8 +151,10 @@ LIVE_CAPABILITY_SOURCE = authenticated tools/list (fresh, per call)
 DELIA_LOCAL_FULL_TOOL_MIRROR = NONE
 PER_CAPABILITY_ENV_ENABLE_FLAGS = SUPERSEDED
 PER_TOOL_NAME_AVAILABILITY_ALLOWLIST = SUPERSEDED
-CURRENT_INTERACTIVE_INVOCABLE_CLASSES = DISCOVERY | READ (ANALYSIS projects READ)
-PREPARE = BLOCKED; ACT = BLOCKED; UNKNOWN = discoverable, never invocable
+CURRENT_INTERACTIVE_INVOCABLE_CLASSES = SUPERSEDED_BY §6.126/§6.140
+  (DISCOVERY | READ | ANALYSIS | PREPARE | ACT governed-invocable
+   for approved MCP specialists; ANALYSIS first-class since §6.140)
+PREPARE/ACT = GOVERNED_INVOKABLE (MCP federation only); UNKNOWN = discoverable, never invocable
 OWNER_REMOVAL / OWNER_RECLASSIFICATION = HONORED_LIVE
 THIRD_MCP_GOVERNED_READ=NOT_AUTHORIZED -> SUPERSEDED_BY AUTHORITY-02
 ```
@@ -112,6 +168,8 @@ Discovery != approval. Metadata != permission. Owner toolClass != permission.
 **Binding extension (§6.126 — ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03, Product Master decision):** DÉLIA is the orchestrator of approved MCP specialists — it discovers, selects, governs, invokes, observes, verifies outcome evidence and presents; it never owns, mirrors, lists, pairs or flags MCP capabilities (`DELIA_LOCAL_MCP_CAPABILITY_CATALOG=FORBIDDEN`). For the approved MCP federation scope `MCP_PREPARE`/`MCP_ACT` are `GOVERNED_INVOKABLE` under generic write governance — capability existence is never permission: live Core AuthZ, specialist/domain authority, schema validation, confirmation when the owner contract requires it, idempotency and owner-authoritative postcondition all apply; `UNKNOWN` remains discoverable, never invocable. `PREPARE=BLOCKED`/`ACT=BLOCKED` still hold for every non-MCP write family. Static local write bindings (`GOVERNED_WRITE_BINDINGS`, `write_binding_for`, `GovernedWriteBinding` capability-name/enabled fields) are SUPERSEDED_AS_TARGET — reusable C5 concepts are preview/confirmation/gate/outcome/audit semantics, not a registry.
 
 **Owner intelligence surface (§6.133 — ARCH-DRIFT-MCP-OWNER-FULL-CAPABILITY-INTELLIGENCE-SURFACE-01):** a superfície do owner não é só ferramentas de escrita — inclui inteligência de domínio e qualidade. VISTA (primeiro reference owner) expõe `preview_data_block` (`toolClass=ANALYSIS`, não-persistente: `semanticDigest`, `visualRecommendation`, `joinHints`, `formatHints`) e o `designAudit` em `get_playlist_context`/PREPARE `candidatePreview`; correções determinísticas seguras rodam dentro do candidato PREPARE (`apply_safe_layout_fixes` como op canônica para correção explícita de todos os issues `safeAutoFix`; correção automática apenas de issues introduzidas pelo plano; issue sem correção provavelmente segura permanece como evidência — nunca correção insegura nem segundo ACT oculto). DÉLIA não implementou mudança central: `ANALYSIS→READ` já projetado e class-gate já genérico — o mecanismo vale para qualquer owner aprovado futuro (prova: fake specialist `quarto` orquestrado pelo mesmo caminho).
+
+**Bounded multi-step orchestration (§6.140 — ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1):** o plano operacional passa a admitir um step RESOLVER genérico — uma capability non-mutating do *mesmo* owner (DISCOVERY|READ|ANALYSIS), selecionada semanticamente e revalidada contra o `tools/list` fresco, que resolve input faltante do target (ex.: nome → id). Resolução ambígua retorna `CLARIFICATION_REQUIRED` com candidatos bounded/sanitizados — nunca escolha silenciosa; id que não conste na evidência do owner é rejeitado (invented-id fail-closed). `ANALYSIS` torna-se `SpecialistOperationClass` first-class: resultado é evidence OBSERVATION (não FACT), pode ser terminal ou alimentar *um* PREPARE semanticamente aplicável do mesmo owner — nunca ACT direto. Formas suportadas (máx. 3 steps): `DISCOVERY→TARGET`, `RESOLVER→TARGET`, `DISCOVERY→RESOLVER→TARGET`, `ANALYSIS→PREPARE`, `DISCOVERY→ANALYSIS→PREPARE`; ACT permanece continuação governada, fora do planejamento semântico. Política de escrita: `confirmation_requirement.explicit_user_confirmation` selado no PREPARE do owner é a **única** autoridade — `true` → confirmação explícita; `false` → continuação direta governada; ausente/malformado/contraditório → `WRITE_REJECTED owner_policy_invalid` (fail-closed); o branch `ops[]`/catálogo VISTA foi removido e nenhum literal de política do owner é exigido. O proposal handle permanece opaco backend-only: a confirmação renderiza apenas a projeção determinística do `WriteProposalPreview` (digest/fingerprint), nunca `content_text` cru do owner. Zero branches por nome de owner/tool no runtime; zero catálogo local de capabilities.
 
 ## 6. Tool poisoning / prompt injection
 

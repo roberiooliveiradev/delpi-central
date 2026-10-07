@@ -17,4 +17,14 @@ declare module "@bpmn-io/properties-panel" {
     entries?: unknown[];
     shouldOpen?: boolean;
   }>;
+
+  /** Popup container do vendor (runtime export `Popup`). */
+  export const Popup: FunctionComponent<Record<string, unknown>> & {
+    Title: FunctionComponent<Record<string, unknown>>;
+    Body: FunctionComponent<Record<string, unknown>>;
+    Footer: FunctionComponent<Record<string, unknown>>;
+  };
+  export const PopupTitle: FunctionComponent<Record<string, unknown>>;
+  export const PopupBody: FunctionComponent<Record<string, unknown>>;
+  export const PopupFooter: FunctionComponent<Record<string, unknown>>;
 }

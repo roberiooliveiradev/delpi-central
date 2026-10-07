@@ -49,6 +49,7 @@ from app.interface.http.routes.supplies import safety_stock_router
 from app.interface.http.routes.supplies import purchase_orders_router
 from app.interface.http.routes.supplies import purchase_requests_router
 from app.interface.http.routes.supplies import protheus_users_router
+from app.interface.http.routes.supplies import inventory_adjustments_router
 from app.interface.http.routes.supplies import stock_balances_router
 from app.interface.http.routes.supplies import third_party_materials_router
 from app.interface.http.routes.commercial import commercial_router
@@ -296,6 +297,7 @@ app.include_router(purchase_orders_router.router)
 app.include_router(purchase_requests_router.router)
 app.include_router(protheus_users_router.router)
 app.include_router(stock_balances_router.router)
+app.include_router(inventory_adjustments_router.router)
 app.include_router(third_party_materials_router.router)
 app.include_router(commercial_router.router)
 app.include_router(production_router.router)

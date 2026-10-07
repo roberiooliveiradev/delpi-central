@@ -18,6 +18,7 @@ proxy: connections come only from approved-specialist configuration.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -36,6 +37,7 @@ from app.application.specialist_interop.errors import (
     SpecialistInteropError,
 )
 from app.domain.specialist_interop.model import (
+    SpecialistOperationClass,
     SpecialistRef,
 )
 from app.domain.specialist_interop.rules import (
@@ -51,6 +53,20 @@ from app.infrastructure.interoperability.delegation import (
 )
 from app.infrastructure.interoperability.mcp.transport import (
     DelpiMcpTransport,
+)
+
+_logger = logging.getLogger(__name__)
+
+
+# LOOP-03R1 (token expiry): one bounded same-call re-exchange is
+# allowed ONLY for non-mutating classes — a read retry is idempotent.
+# PREPARE/ACT never retry materially.
+_NON_MUTATING_CLASSES = frozenset(
+    {
+        SpecialistOperationClass.DISCOVERY,
+        SpecialistOperationClass.READ,
+        SpecialistOperationClass.ANALYSIS,
+    }
 )
 
 
@@ -142,13 +158,66 @@ class McpSpecialistAdapter:
         correlation_id: str,
         timeout_seconds: float,
     ) -> RemoteToolOutcome:
-        profile, transport = self._connect(specialist)
+        return self._call_remote_tool(
+            specialist,
+            remote_name,
+            arguments,
+            correlation_id=correlation_id,
+            timeout_seconds=timeout_seconds,
+            retried=False,
+        )
+
+    def _call_remote_tool(
+        self,
+        specialist: SpecialistRef,
+        remote_name: str,
+        arguments: Mapping[str, object],
+        *,
+        correlation_id: str,
+        timeout_seconds: float,
+        retried: bool,
+    ) -> RemoteToolOutcome:
+        operation_class: SpecialistOperationClass | None = None
+        profile: SpecialistConnectionProfile | None = None
         try:
+            profile, transport = self._connect(specialist)
             tools = transport.list_tools()
-            self._require_invocable(specialist, remote_name, tools)
+            operation_class = self._require_invocable(
+                specialist, remote_name, tools
+            )
             result = transport.call_tool(remote_name, arguments)
         except SpecialistInteropError as exc:
-            self._invalidate_on_auth_failure(profile, exc)
+            if profile is not None:
+                self._invalidate_on_auth_failure(profile, exc)
+            if (
+                not retried
+                and exc.code == MCP_AUTHENTICATION_FAILED
+                and (
+                    operation_class is None
+                    or operation_class in _NON_MUTATING_CLASSES
+                )
+            ):
+                # Token expired/rejected mid-call: the cached credential
+                # was invalidated above — one bounded same-call
+                # re-exchange + reconnect for an idempotent (non-
+                # mutating) operation. The retry re-reads the owner
+                # tools/list and re-checks invocability on the fresh
+                # transport; a second failure propagates.
+                _logger.info(
+                    "mcp_call auth_retry specialist=%s capability=%s "
+                    "correlation_id=%s",
+                    specialist.specialist_id,
+                    remote_name,
+                    correlation_id,
+                )
+                return self._call_remote_tool(
+                    specialist,
+                    remote_name,
+                    arguments,
+                    correlation_id=correlation_id,
+                    timeout_seconds=timeout_seconds,
+                    retried=True,
+                )
             raise
         return self._map_outcome(result)
 
@@ -208,7 +277,7 @@ class McpSpecialistAdapter:
         specialist: SpecialistRef,
         remote_name: str,
         tools: tuple[Mapping[str, Any], ...],
-    ) -> None:
+    ) -> SpecialistOperationClass:
         """Second fail-closed gate on a fresh owner tools/list.
 
         The owner-typed ``delpi/toolClass`` is re-read here — a
@@ -244,6 +313,7 @@ class McpSpecialistAdapter:
                 CAPABILITY_NOT_ALLOWED_IN_PHASE,
                 "capability class is not eligible for orchestration",
             )
+        return operation_class
 
     @staticmethod
     def _map_outcome(result: Mapping[str, Any]) -> RemoteToolOutcome:

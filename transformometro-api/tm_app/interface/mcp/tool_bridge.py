@@ -23,14 +23,22 @@ from delpi_mcp.identity import (
     current_mcp_context,
     require_mcp_context,
 )
+from tm_app.application.governed_writes.confirmation_policy import AUTO_ACT
 from tm_app.application.governed_writes.errors import (
     OUTCOME_VERIFICATION_FAILED,
     PREPARE_PERSISTED_STATE_VIOLATION,
     GovernedWriteError,
 )
 from tm_app.application.governed_writes.orchestrator import (
+    COLLABORATION_ACTION_TO_CAPABILITY,
+    COLLABORATION_READ_ACTIONS,
+    GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
+    INTERACTION_ROOM_ACTION_TO_CAPABILITY,
     MEETING_MANAGE_NON_ACT,
     MEETING_MANAGE_READ_ACTIONS,
+    MEETING_MINUTE_ACTION_TO_CAPABILITY,
+    MEETING_MINUTE_READ_ACTIONS,
+    TASK_ACTION_TO_CAPABILITY,
     GovernedWriteOrchestrator,
 )
 from tm_app.application.governed_writes.diagnostic_capabilities import (
@@ -216,6 +224,22 @@ def handle_tool_error(exc: Exception) -> CallToolResult:
     )
 
 
+def _prepared_message(data: dict[str, Any]) -> str:
+    """Policy-aware PREPARE response copy (payload remains authoritative)."""
+    prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
+    if prop and not prop.get("act_allowed", True):
+        return "Proposal prepared but not ready for commit (see validation_result)."
+    if prop.get("execution_policy") == AUTO_ACT:
+        return (
+            "Governed auto_act proposal prepared. Proceed with "
+            "commit_proposal — no additional user confirmation required."
+        )
+    return (
+        "Governed destructive proposal prepared. One explicit user "
+        "confirmation is required before commit_proposal."
+    )
+
+
 def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
     """Pure MCP PREPARE — never invokes ACT.
 
@@ -239,16 +263,7 @@ def _prepare(capability: str, args: dict[str, Any]) -> CallToolResult:
                 code=PREPARE_PERSISTED_STATE_VIOLATION,
                 status_code=500,
             )
-        prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
-        if prop and not prop.get("act_allowed", True):
-            return _ok_result(
-                data,
-                "Proposal prepared but not ready for commit (see validation_result).",
-            )
-        return _ok_result(
-            data,
-            "Governed proposal prepared. Confirm with commit_proposal(proposal_handle).",
-        )
+        return _ok_result(data, _prepared_message(data))
     except Exception as exc:
         return handle_tool_error(exc)
 
@@ -291,6 +306,7 @@ def tool_get_my_context() -> CallToolResult:
                 authorization=authorization,
             )
         )
+        data["signature_profile"] = _dispatch.my_signature_profile_or_none(user)
         return _ok_result(data, "Contexto pessoal do usuário autenticado.")
     except Exception as exc:
         return handle_tool_error(exc)
@@ -299,6 +315,9 @@ def tool_get_my_context() -> CallToolResult:
 def tool_get_methodology_guide(
     method: str | None = None,
     task: str | None = None,
+    guide_version: str | None = None,
+    intent: str | None = None,
+    context: dict[str, Any] | None = None,
 ) -> CallToolResult:
     """READ-only methodology. Same view gate as other Transformômetro reads.
 
@@ -306,7 +325,14 @@ def tool_get_methodology_guide(
     """
     try:
         request = build_mcp_request()
-        data = _dispatch.get_methodology_guide(request, method=method, task=task)
+        data = _dispatch.get_methodology_guide(
+            request,
+            method=method,
+            task=task,
+            guide_version=guide_version,
+            intent=intent,
+            context=context,
+        )
         return _ok_result(data, "Guia metodológico do TÉO (não é fato nem autorização).")
     except Exception as exc:
         return handle_tool_error(exc)
@@ -347,9 +373,12 @@ def tool_analyze(
     setor_id: str | None = None,
     processo_id: str | None = None,
     revisao_id: str | None = None,
+    instancia_id: str | None = None,
     familia_processo: str | None = None,
+    competencia: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
+    horizonte_meses: int | None = None,
     limit: int | None = None,
 ) -> CallToolResult:
     try:
@@ -361,9 +390,12 @@ def tool_analyze(
             setor_id=setor_id,
             processo_id=processo_id,
             revisao_id=revisao_id,
+            instancia_id=instancia_id,
             familia_processo=familia_processo,
+            competencia=competencia,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
+            horizonte_meses=horizonte_meses,
             limit=limit,
         )
         return _ok_result(data, "Análise do Transformômetro.")
@@ -414,15 +446,48 @@ def tool_get_record(entity: str, id: str) -> CallToolResult:
         return handle_tool_error(exc)
 
 
-def tool_list_evidence(scope: str, parent_id: str) -> CallToolResult:
+def tool_evidence_read(
+    action: str,
+    scope: str | None = None,
+    parent_id: str | None = None,
+) -> CallToolResult:
+    """READ: evidence metadata (action=list). Binary payloads are
+    platform_blocked on this surface."""
     try:
+        action_norm = str(action or "").strip().lower()
+        if action_norm != "list":
+            return _error_result(
+                f"Unknown evidence_read action '{action_norm}'. "
+                "Allowed: ['list'].",
+                status_code=400,
+                error_code="validation",
+            )
+        missing = [
+            field
+            for field, value in (("scope", scope), ("parent_id", parent_id))
+            if not str(value or "").strip()
+        ]
+        if missing:
+            return _error_result(
+                f"Missing required field(s) for action 'list': "
+                f"{', '.join(missing)}.",
+                status_code=400,
+                error_code="validation",
+            )
         request = build_mcp_request()
         return _ok_result(
-            _dispatch.list_evidence(request, scope=scope, parent_id=parent_id),
+            _dispatch.list_evidence(
+                request, scope=str(scope), parent_id=str(parent_id)
+            ),
             "Evidências listadas.",
         )
     except Exception as exc:
         return handle_tool_error(exc)
+
+
+def tool_list_evidence(scope: str, parent_id: str) -> CallToolResult:
+    """LEGACY alias — use evidence_read(action=list)."""
+    return tool_evidence_read("list", scope=scope, parent_id=parent_id)
 
 
 def tool_get_process_timeline(
@@ -440,19 +505,26 @@ def tool_get_process_timeline(
         return handle_tool_error(exc)
 
 
+# meeting_minute family — READ/analyze side. Transcript generation is a
+# non-persisting analysis action on the same tool (never PREPARE/ACT).
+# Canonical action set: MEETING_MINUTE_READ_ACTIONS (orchestrator).
+
+
 def tool_meeting_minute_read(
     action: str,
     minute_id: str | None = None,
     data: dict | None = None,
 ) -> CallToolResult:
-    """READ-only meeting-minute manage actions (no PREPARE/ACT)."""
+    """READ/analysis meeting-minute actions (no PREPARE/ACT persistence)."""
     try:
         action_norm = str(action or "").strip()
-        if action_norm not in MEETING_MANAGE_READ_ACTIONS:
+        if action_norm not in MEETING_MINUTE_READ_ACTIONS:
             return _error_result(
                 f"Action '{action_norm}' is not a READ meeting-minute action. "
-                "Use prepare_meeting_minute_manage / act_meeting_minute_manage, "
-                "or generate_from_transcript.",
+                "Allowed: "
+                f"{sorted(MEETING_MINUTE_READ_ACTIONS)}. Writes use "
+                "prepare_meeting_minute_change (then commit_proposal per "
+                "execution_policy).",
                 status_code=400,
                 error_code="validation",
             )
@@ -463,6 +535,7 @@ def tool_meeting_minute_read(
                 action=action_norm,
                 minute_id=minute_id,
                 payload=data or {},
+                read_only=True,
             ),
             "Meeting minute read.",
         )
@@ -474,20 +547,10 @@ def tool_generate_from_transcript(
     minute_id: str | None = None,
     data: dict | None = None,
 ) -> CallToolResult:
-    """Analysis-only: generate draft from transcript without persistence ACT."""
-    try:
-        request = build_mcp_request()
-        return _ok_result(
-            _dispatch.manage_meeting_minute(
-                request,
-                action="generate_from_transcript",
-                minute_id=minute_id,
-                payload=data or {},
-            ),
-            "Transcript analysis (no persistence).",
-        )
-    except Exception as exc:
-        return handle_tool_error(exc)
+    """LEGACY alias — use meeting_minute_read(action=generate_from_transcript)."""
+    return tool_meeting_minute_read(
+        "generate_from_transcript", minute_id=minute_id, data=data
+    )
 
 
 # --- PREPARE tools --------------------------------------------------------
@@ -520,16 +583,7 @@ def tool_prepare_record_change(
                 code=PREPARE_PERSISTED_STATE_VIOLATION,
                 status_code=500,
             )
-        prop = data.get("proposal") if isinstance(data.get("proposal"), dict) else {}
-        if prop and not prop.get("act_allowed", True):
-            return _ok_result(
-                data,
-                "Proposal prepared but not ready for commit (see validation_result).",
-            )
-        return _ok_result(
-            data,
-            "Governed proposal prepared. Confirm with commit_proposal(proposal_handle).",
-        )
+        return _ok_result(data, _prepared_message(data))
     except Exception as exc:
         return handle_tool_error(exc)
 
@@ -587,8 +641,97 @@ def tool_prepare_duplicate_record(
     )
 
 
+# --- Semantic family: special governed operations ------------------------
+# One-shot domain writes (revision lifecycle, dashboard recompute,
+# improvement package commit, shared-resource cost). Closed action enum;
+# each action resolves to its canonical capability (and its own
+# execution_policy) — the family is a transport grouping, not a proxy.
+
+_GOVERNED_OPERATION_REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
+    "activate_revision": ("id",),
+    "adjust_shared_resource_cost": (
+        "recurso_compartilhado_id",
+        "valor_mensal",
+        "vigente_desde",
+    ),
+    # recalculate_dashboard accepts revisao_id OR processo_id, and
+    # commit_improvement_package completeness is owned by the package
+    # validator — both report missing fields via the ready=false
+    # checklist proposal, not a transport error.
+    "update_signature_profile": ("display_name",),
+    "import_diagram_bpmn_xml": ("processo_id", "xml"),
+}
+
+
+def tool_prepare_governed_operation(
+    action: str,
+    id: str | None = None,
+    revisao_id: str | None = None,
+    processo_id: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
+    recurso_compartilhado_id: str | None = None,
+    valor_mensal: float | None = None,
+    vigente_desde: str | None = None,
+    observacoes: str | None = None,
+    process: dict | None = None,
+    instance: dict | None = None,
+    baseline: dict | None = None,
+    scenario: dict | None = None,
+    activate_scenario: bool = False,
+    recalculate: bool = False,
+    display_name: str | None = None,
+    xml: str | None = None,
+) -> CallToolResult:
+    """PREPARE only — one of the closed special governed operations."""
+    action_norm = str(action or "").strip()
+    capability = GOVERNED_OPERATION_ACTION_TO_CAPABILITY.get(action_norm)
+    if capability is None:
+        return _error_result(
+            f"Unknown governed operation '{action_norm}'. Allowed: "
+            f"{sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY)}.",
+            status_code=400,
+            error_code="validation",
+        )
+    args = {
+        "id": id,
+        "revisao_id": revisao_id,
+        "processo_id": processo_id,
+        "competencia_inicio": competencia_inicio,
+        "competencia_fim": competencia_fim,
+        "recurso_compartilhado_id": recurso_compartilhado_id,
+        "valor_mensal": valor_mensal,
+        "vigente_desde": vigente_desde,
+        "observacoes": observacoes,
+        "process": process or {},
+        "instance": instance or {},
+        "baseline": baseline,
+        "scenario": scenario,
+        "activate_scenario": activate_scenario,
+        "recalculate": recalculate,
+        "display_name": display_name,
+        "xml": xml,
+    }
+    missing = [
+        field
+        for field in _GOVERNED_OPERATION_REQUIRED_FIELDS.get(
+            action_norm, ()
+        )
+        if args.get(field) in (None, "", {})
+    ]
+    if missing:
+        return _error_result(
+            f"Missing required field(s) for '{action_norm}': "
+            f"{', '.join(missing)}.",
+            status_code=400,
+            error_code="validation",
+        )
+    return _prepare(capability, args)
+
+
 def tool_prepare_activate_revision(id: str) -> CallToolResult:
-    return _prepare("activate_revision", {"id": id})
+    """LEGACY alias — use prepare_governed_operation(activate_revision)."""
+    return tool_prepare_governed_operation("activate_revision", id=id)
 
 
 def tool_prepare_recalculate_dashboard(
@@ -597,23 +740,13 @@ def tool_prepare_recalculate_dashboard(
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
 ) -> CallToolResult:
-    return _prepare(
+    """LEGACY alias — use prepare_governed_operation(recalculate_dashboard)."""
+    return tool_prepare_governed_operation(
         "recalculate_dashboard",
-        {
-            "revisao_id": revisao_id,
-            "processo_id": processo_id,
-            "competencia_inicio": competencia_inicio,
-            "competencia_fim": competencia_fim,
-        },
-    )
-
-
-def tool_prepare_meeting_minute_workflow(
-    id: str, action: str, reason: str | None = None
-) -> CallToolResult:
-    return _prepare(
-        "meeting_minute_workflow",
-        {"id": id, "action": action, "reason": reason},
+        revisao_id=revisao_id,
+        processo_id=processo_id,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
     )
 
 
@@ -625,15 +758,80 @@ def tool_prepare_improvement_package(
     activate_scenario: bool = False,
     recalculate: bool = False,
 ) -> CallToolResult:
-    return _prepare(
+    """LEGACY alias — prepare_governed_operation(commit_improvement_package)."""
+    return tool_prepare_governed_operation(
         "commit_improvement_package",
+        process=process,
+        instance=instance,
+        baseline=baseline,
+        scenario=scenario,
+        activate_scenario=activate_scenario,
+        recalculate=recalculate,
+    )
+
+
+def tool_prepare_adjust_shared_resource_cost(
+    recurso_compartilhado_id: str,
+    valor_mensal: float,
+    vigente_desde: str,
+    observacoes: str | None = None,
+) -> CallToolResult:
+    """LEGACY alias — prepare_governed_operation(adjust_shared_resource_cost)."""
+    return tool_prepare_governed_operation(
+        "adjust_shared_resource_cost",
+        recurso_compartilhado_id=recurso_compartilhado_id,
+        valor_mensal=valor_mensal,
+        vigente_desde=vigente_desde,
+        observacoes=observacoes,
+    )
+
+
+# --- Semantic family: evidence (structured metadata only) -----------------
+
+_EVIDENCE_WRITE_ACTIONS = frozenset(
+    {"create_link", "update_description", "delete"}
+)
+
+
+def tool_prepare_evidence_change(
+    action: str,
+    scope: str,
+    parent_id: str,
+    evidence_id: str | None = None,
+    url_externa: str | None = None,
+    descricao: str | None = None,
+    confirm_delete: bool = False,
+) -> CallToolResult:
+    """PREPARE only — evidence create_link|update_description|delete."""
+    action_norm = str(action or "").strip()
+    if action_norm not in _EVIDENCE_WRITE_ACTIONS:
+        return _error_result(
+            f"Unknown evidence action '{action_norm}'. "
+            f"Allowed: {sorted(_EVIDENCE_WRITE_ACTIONS)}.",
+            status_code=400,
+            error_code="validation",
+        )
+    missing = [
+        field
+        for field, value in (("scope", scope), ("parent_id", parent_id))
+        if not str(value or "").strip()
+    ]
+    if missing:
+        return _error_result(
+            f"Missing required field(s): {', '.join(missing)}.",
+            status_code=400,
+            error_code="validation",
+        )
+    return _prepare(
+        "manage_evidence",
         {
-            "process": process or {},
-            "instance": instance or {},
-            "baseline": baseline,
-            "scenario": scenario,
-            "activate_scenario": activate_scenario,
-            "recalculate": recalculate,
+            "scope": scope,
+            "operation": action_norm,
+            "parent_id": parent_id,
+            "evidence_id": evidence_id,
+            "url_externa": url_externa,
+            "descricao": descricao,
+            "confirm_delete": confirm_delete,
         },
     )
 
@@ -647,34 +845,68 @@ def tool_prepare_manage_evidence(
     descricao: str | None = None,
     confirm_delete: bool = False,
 ) -> CallToolResult:
+    """LEGACY alias — use prepare_evidence_change(action=operation)."""
+    return tool_prepare_evidence_change(
+        operation,
+        scope=scope,
+        parent_id=parent_id,
+        evidence_id=evidence_id,
+        url_externa=url_externa,
+        descricao=descricao,
+        confirm_delete=confirm_delete,
+    )
+
+
+# --- Semantic family: meeting minutes --------------------------------------
+# One PREPARE surface for workflow transitions (send|finalize|cancel) and
+# manage writes (resend|create_version|set_participants|set_signers).
+# READ/analyze actions are rejected here with a pointer to
+# meeting_minute_read.
+
+def tool_prepare_meeting_minute_change(
+    action: str,
+    minute_id: str | None = None,
+    reason: str | None = None,
+    data: dict | None = None,
+) -> CallToolResult:
+    """PREPARE only — closed meeting-minute write action enum."""
+    action_norm = str(action or "").strip()
+    capability = MEETING_MINUTE_ACTION_TO_CAPABILITY.get(action_norm)
+    if capability is None:
+        return _error_result(
+            f"Unknown meeting-minute write action '{action_norm}'. Allowed: "
+            f"{sorted(MEETING_MINUTE_ACTION_TO_CAPABILITY)}. READ/analyze "
+            "actions use meeting_minute_read.",
+            status_code=400,
+            error_code="validation",
+        )
+    if not str(minute_id or "").strip():
+        return _error_result(
+            "minute_id is required for meeting-minute writes.",
+            status_code=400,
+            error_code="validation",
+        )
+    if capability == "meeting_minute_workflow":
+        return _prepare(
+            capability,
+            {"id": minute_id, "action": action_norm, "reason": reason},
+        )
     return _prepare(
-        "manage_evidence",
+        capability,
         {
-            "scope": scope,
-            "operation": operation,
-            "parent_id": parent_id,
-            "evidence_id": evidence_id,
-            "url_externa": url_externa,
-            "descricao": descricao,
-            "confirm_delete": confirm_delete,
+            "action": action_norm,
+            "minute_id": minute_id,
+            "data": data or {},
         },
     )
 
 
-def tool_prepare_adjust_shared_resource_cost(
-    recurso_compartilhado_id: str,
-    valor_mensal: float,
-    vigente_desde: str,
-    observacoes: str | None = None,
+def tool_prepare_meeting_minute_workflow(
+    id: str, action: str, reason: str | None = None
 ) -> CallToolResult:
-    return _prepare(
-        "adjust_shared_resource_cost",
-        {
-            "recurso_compartilhado_id": recurso_compartilhado_id,
-            "valor_mensal": valor_mensal,
-            "vigente_desde": vigente_desde,
-            "observacoes": observacoes,
-        },
+    """LEGACY alias — use prepare_meeting_minute_change."""
+    return tool_prepare_meeting_minute_change(
+        action, minute_id=id, reason=reason
     )
 
 
@@ -683,17 +915,292 @@ def tool_prepare_meeting_minute_manage(
     minute_id: str | None = None,
     data: dict | None = None,
 ) -> CallToolResult:
+    """LEGACY alias — use prepare_meeting_minute_change."""
     action_norm = str(action or "").strip()
     if action_norm in MEETING_MANAGE_NON_ACT:
         return _error_result(
             f"Action '{action_norm}' is not an ACT write. "
-            "Use meeting_minute_read or generate_from_transcript.",
+            "Use meeting_minute_read.",
+            status_code=400,
+            error_code="validation",
+        )
+    return tool_prepare_meeting_minute_change(
+        action_norm, minute_id=minute_id, data=data
+    )
+
+
+# --- Semantic family: collaboration -----------------------------------------
+# Transformômetro tasks (TaskCommandUseCases) + interaction rooms/messages
+# (InteractionRoomUseCases) share one governed surface. The ``action``
+# argument selects the semantic capability — and therefore the canonical
+# execution_policy (auto_act vs confirm_before_act) — per action.
+
+_COLLABORATION_READ_ACTIONS = COLLABORATION_READ_ACTIONS
+
+
+def tool_collaboration_read(
+    action: str,
+    task_id: str | None = None,
+    processo_id: str | None = None,
+    status: str = "pending",
+    room_id: str | None = None,
+    inbox_filter: str = "all",
+    limit: int = 50,
+    before_id: str | None = None,
+) -> CallToolResult:
+    """READ: tasks (my_tasks|task|process_tasks) and rooms
+    (rooms|room|messages|attachments metadata)."""
+    try:
+        action_norm = str(action or "").strip().lower()
+        if action_norm not in _COLLABORATION_READ_ACTIONS:
+            return _error_result(
+                f"Unknown collaboration_read action '{action_norm}'. "
+                f"Allowed: {sorted(_COLLABORATION_READ_ACTIONS)}.",
+                status_code=400,
+                error_code="validation",
+            )
+        request = build_mcp_request()
+        if action_norm == "my_tasks":
+            return _ok_result(
+                _dispatch.list_my_tasks(request, status=status),
+                "Tarefas do usuário autenticado.",
+            )
+        if action_norm == "process_tasks":
+            if not str(processo_id or "").strip():
+                return _error_result(
+                    "processo_id is required for action 'process_tasks'.",
+                    status_code=400,
+                    error_code="validation",
+                )
+            return _ok_result(
+                _dispatch.list_process_tasks(request, str(processo_id)),
+                "Tarefas relacionadas ao processo.",
+            )
+        if action_norm == "task":
+            if not str(task_id or "").strip():
+                return _error_result(
+                    "task_id is required for action 'task'.",
+                    status_code=400,
+                    error_code="validation",
+                )
+            return _ok_result(
+                _dispatch.get_task(request, str(task_id)), "Tarefa carregada."
+            )
+        if action_norm == "rooms":
+            return _ok_result(
+                _dispatch.list_rooms(request, inbox_filter=inbox_filter),
+                "Salas de interação.",
+            )
+        if not str(room_id or "").strip():
+            return _error_result(
+                f"room_id is required for action '{action_norm}'.",
+                status_code=400,
+                error_code="validation",
+            )
+        if action_norm == "room":
+            return _ok_result(
+                _dispatch.get_room(request, str(room_id)), "Sala carregada."
+            )
+        if action_norm == "messages":
+            return _ok_result(
+                _dispatch.list_room_messages(
+                    request,
+                    str(room_id),
+                    limit=int(limit),
+                    before_id=before_id,
+                ),
+                "Mensagens da sala.",
+            )
+        return _ok_result(
+            _dispatch.list_room_attachments(request, str(room_id)),
+            "Metadados de anexos da sala.",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_prepare_collaboration_change(
+    action: str,
+    task_id: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    assignee_user_id: str | None = None,
+    due_date: str | None = None,
+    source_interaction_message_id: str | None = None,
+    processo_id: str | None = None,
+    room_id: str | None = None,
+    message_id: str | None = None,
+    content: str | None = None,
+    parent_id: str | None = None,
+    mentions: list | None = None,
+    reaction: str | None = None,
+) -> CallToolResult:
+    """PREPARE only — task + room/message writes via canonical use cases.
+
+    Binary attachment upload/download is NOT exposed on this surface —
+    no file transport exists in MCP/ChatGPT (platform_blocked).
+    """
+    action_norm = str(action or "").strip().lower()
+    capability = COLLABORATION_ACTION_TO_CAPABILITY.get(action_norm)
+    if capability is None:
+        return _error_result(
+            f"Unknown collaboration action '{action_norm}'. Allowed: "
+            f"{sorted(COLLABORATION_ACTION_TO_CAPABILITY)}.",
             status_code=400,
             error_code="validation",
         )
     return _prepare(
-        "meeting_minute_manage",
-        {"action": action_norm, "minute_id": minute_id, "data": data or {}},
+        capability,
+        {
+            "action": action_norm,
+            "task_id": task_id,
+            "title": title,
+            "description": description,
+            "assignee_user_id": assignee_user_id,
+            "due_date": due_date,
+            "source_interaction_message_id": source_interaction_message_id,
+            "processo_id": processo_id,
+            "room_id": room_id,
+            "message_id": message_id,
+            "content": content,
+            "parent_id": parent_id,
+            "mentions": mentions,
+            "reaction": reaction,
+        },
+    )
+
+
+# Legacy transport wrappers — names tombstoned from the tool surface;
+# kept for internal callers/tests. Translate old action vocabularies to
+# the canonical family actions.
+
+_LEGACY_TASK_READ_ACTION = {"mine": "my_tasks", "related": "process_tasks", "get": "task"}
+_LEGACY_ROOM_READ_ACTION = {"list": "rooms", "get": "room"}
+_LEGACY_TASK_WRITE_ACTION = {
+    "create": "create_task",
+    "update": "update_task",
+    "complete": "complete_task",
+    "cancel": "cancel_task",
+}
+_LEGACY_ROOM_WRITE_ACTION = {
+    "open": "open_room",
+    "post_message": "post_message",
+    "edit_message": "edit_message",
+    "delete_message": "delete_message",
+    "reaction": "toggle_reaction",
+    "pin": "pin_message",
+    "unpin": "unpin_message",
+    "mark_read": "mark_room_read",
+}
+
+
+def tool_task_read(
+    action: str,
+    task_id: str | None = None,
+    processo_id: str | None = None,
+    status: str = "pending",
+) -> CallToolResult:
+    """LEGACY alias — use collaboration_read."""
+    action_norm = _LEGACY_TASK_READ_ACTION.get(str(action or "").strip().lower())
+    if action_norm is None:
+        return _error_result(
+            f"Unknown task_read action '{action}'. Allowed: "
+            f"{sorted(_LEGACY_TASK_READ_ACTION)}. This tool is tombstoned — "
+            "use collaboration_read.",
+            status_code=400,
+            error_code="validation",
+        )
+    return tool_collaboration_read(
+        action_norm, task_id=task_id, processo_id=processo_id, status=status
+    )
+
+
+def tool_interaction_room_read(
+    action: str,
+    room_id: str | None = None,
+    inbox_filter: str = "all",
+    limit: int = 50,
+    before_id: str | None = None,
+) -> CallToolResult:
+    """LEGACY alias — use collaboration_read."""
+    raw = str(action or "").strip().lower()
+    action_norm = _LEGACY_ROOM_READ_ACTION.get(raw, raw)
+    if action_norm not in {"rooms", "room", "messages", "attachments"}:
+        return _error_result(
+            f"Unknown interaction_room_read action '{action}'. This tool is "
+            "tombstoned — use collaboration_read.",
+            status_code=400,
+            error_code="validation",
+        )
+    return tool_collaboration_read(
+        action_norm,
+        room_id=room_id,
+        inbox_filter=inbox_filter,
+        limit=limit,
+        before_id=before_id,
+    )
+
+
+def tool_prepare_task(
+    action: str,
+    task_id: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    assignee_user_id: str | None = None,
+    due_date: str | None = None,
+    source_interaction_message_id: str | None = None,
+) -> CallToolResult:
+    """LEGACY alias — use prepare_collaboration_change."""
+    action_norm = _LEGACY_TASK_WRITE_ACTION.get(str(action or "").strip().lower())
+    if action_norm is None:
+        return _error_result(
+            f"Unknown task action '{action}'. Allowed: "
+            f"{sorted(_LEGACY_TASK_WRITE_ACTION)}. This tool is tombstoned — "
+            "use prepare_collaboration_change.",
+            status_code=400,
+            error_code="validation",
+        )
+    return tool_prepare_collaboration_change(
+        action_norm,
+        task_id=task_id,
+        title=title,
+        description=description,
+        assignee_user_id=assignee_user_id,
+        due_date=due_date,
+        source_interaction_message_id=source_interaction_message_id,
+    )
+
+
+def tool_prepare_interaction_room(
+    action: str,
+    processo_id: str | None = None,
+    room_id: str | None = None,
+    message_id: str | None = None,
+    content: str | None = None,
+    parent_id: str | None = None,
+    mentions: list | None = None,
+    reaction: str | None = None,
+) -> CallToolResult:
+    """LEGACY alias — use prepare_collaboration_change."""
+    raw = str(action or "").strip().lower()
+    action_norm = _LEGACY_ROOM_WRITE_ACTION.get(raw)
+    if action_norm is None:
+        return _error_result(
+            f"Unknown interaction-room action '{action}'. Allowed: "
+            f"{sorted(_LEGACY_ROOM_WRITE_ACTION)}. This tool is tombstoned — "
+            "use prepare_collaboration_change.",
+            status_code=400,
+            error_code="validation",
+        )
+    return tool_prepare_collaboration_change(
+        action_norm,
+        processo_id=processo_id,
+        room_id=room_id,
+        message_id=message_id,
+        content=content,
+        parent_id=parent_id,
+        mentions=mentions,
+        reaction=reaction,
     )
 
 
@@ -707,69 +1214,123 @@ _DIAGNOSTIC_ADDITIVE_ID_FIELD = SERVER_GENERATED_ID_FIELD
 # tm_app/interface/diagnostic_projection.py.
 
 
-def tool_get_diagnostic(diagnostic_id: str) -> CallToolResult:
-    """Canonical Diagnostic read — transport projection of GetDiagnostic."""
+_DIAGNOSTIC_READ_ACTIONS = frozenset({"get", "by_revision"})
+
+
+def tool_diagnostic_read(
+    action: str,
+    diagnostic_id: str | None = None,
+    revision_id: str | None = None,
+) -> CallToolResult:
+    """READ: canonical Diagnostic get|by_revision — projections of
+    GetDiagnostic / ListDiagnosticsByRevision."""
     try:
+        action_norm = str(action or "").strip().lower()
         request = build_mcp_request()
         # Same canonical end-user gate as writes: authenticated,
         # principal_type==user, transformometro.access. No local RBAC.
         require_prepare_authz(request)
-        ctx = GetDiagnostic(
-            _diagnostic_stack.diagnostics,
-            _diagnostic_stack.revisions,
-            _diagnostic_stack.evidence,
-        ).execute(str(diagnostic_id))
-        payload = project_read_context(ctx)
-        return _ok_result(payload, "Diagnostic carregado.")
+        if action_norm == "get":
+            if not str(diagnostic_id or "").strip():
+                return _error_result(
+                    "diagnostic_id is required for action 'get'.",
+                    status_code=400,
+                    error_code="validation",
+                )
+            ctx = GetDiagnostic(
+                _diagnostic_stack.diagnostics,
+                _diagnostic_stack.revisions,
+                _diagnostic_stack.evidence,
+            ).execute(str(diagnostic_id))
+            return _ok_result(
+                project_read_context(ctx), "Diagnostic carregado."
+            )
+        if action_norm == "by_revision":
+            if not str(revision_id or "").strip():
+                return _error_result(
+                    "revision_id is required for action 'by_revision'.",
+                    status_code=400,
+                    error_code="validation",
+                )
+            result = ListDiagnosticsByRevision(
+                _diagnostic_stack.diagnostics,
+                _diagnostic_stack.revisions,
+            ).execute(str(revision_id))
+            items = [project_summary(item) for item in result.items]
+            payload = {
+                "revision": project_revision(result.revision),
+                "items": items,
+            }
+            return _ok_result(
+                payload, "Diagnostics da revisão carregados."
+            )
+        return _error_result(
+            f"Unknown diagnostic_read action '{action_norm}'. "
+            f"Allowed: {sorted(_DIAGNOSTIC_READ_ACTIONS)}.",
+            status_code=400,
+            error_code="validation",
+        )
     except Exception as exc:  # noqa: BLE001
         return handle_tool_error(exc)
+
+
+def tool_get_diagnostic(diagnostic_id: str) -> CallToolResult:
+    """LEGACY alias — use diagnostic_read(action=get)."""
+    return tool_diagnostic_read("get", diagnostic_id=diagnostic_id)
 
 
 def tool_list_diagnostics_by_revision(revision_id: str) -> CallToolResult:
-    """Revision-scoped Diagnostic summaries — no evidence fan-out."""
-    try:
-        request = build_mcp_request()
-        require_prepare_authz(request)
-        result = ListDiagnosticsByRevision(
-            _diagnostic_stack.diagnostics,
-            _diagnostic_stack.revisions,
-        ).execute(str(revision_id))
-        items = [project_summary(item) for item in result.items]
-        payload = {
-            "revision": project_revision(result.revision),
-            "items": items,
-        }
-        return _ok_result(payload, "Diagnostics da revisão carregados.")
-    except Exception as exc:  # noqa: BLE001
-        return handle_tool_error(exc)
+    """LEGACY alias — use diagnostic_read(action=by_revision)."""
+    return tool_diagnostic_read("by_revision", revision_id=revision_id)
 
 
-def tool_prepare_create_diagnostic(
-    revision_id: str,
-    problem_statement: str,
-    provenance: dict | None = None,
-) -> CallToolResult:
-    """PREPARE only — generates the diagnostic_id server-side; no write."""
-    args = {
-        "diagnostic_id": str(uuid4()),
-        "revision_id": revision_id,
-        "problem_statement": problem_statement,
-        "provenance": provenance,
-    }
-    return _prepare("create_diagnostic", args)
-
-
-def tool_prepare_manage_diagnostic(
-    diagnostic_id: str,
+def tool_prepare_diagnostic_change(
     action: str,
+    diagnostic_id: str | None = None,
+    revision_id: str | None = None,
+    problem_statement: str | None = None,
+    provenance: dict | None = None,
     payload: dict | None = None,
 ) -> CallToolResult:
-    """PREPARE only — one of the 13 canonical manage actions; no write."""
+    """PREPARE only — action=create or one of the canonical manage actions.
+
+    Entity ids are generated server-side; the caller must never supply
+    them. Policy: create → auto_act; manage actions → confirm_before_act.
+    """
     action_norm = str(action or "").strip()
+    if action_norm == "create":
+        missing = [
+            field
+            for field, value in (
+                ("revision_id", revision_id),
+                ("problem_statement", problem_statement),
+            )
+            if not str(value or "").strip()
+        ]
+        if missing:
+            return _error_result(
+                f"Missing required field(s) for action 'create': "
+                f"{', '.join(missing)}.",
+                status_code=400,
+                error_code="validation",
+            )
+        args = {
+            "diagnostic_id": str(uuid4()),
+            "revision_id": revision_id,
+            "problem_statement": problem_statement,
+            "provenance": provenance,
+        }
+        return _prepare("create_diagnostic", args)
     if action_norm not in MANAGE_ACTIONS:
         return _error_result(
-            f"Unknown Diagnostic action '{action_norm}'. "
-            f"Allowed: {', '.join(MANAGE_ACTIONS)}.",
+            f"Unknown Diagnostic action '{action_norm}'. Allowed: create, "
+            f"{', '.join(sorted(MANAGE_ACTIONS))}.",
+            status_code=400,
+            error_code="validation",
+        )
+    if not str(diagnostic_id or "").strip():
+        return _error_result(
+            f"diagnostic_id is required for action '{action_norm}'.",
             status_code=400,
             error_code="validation",
         )
@@ -791,6 +1352,31 @@ def tool_prepare_manage_diagnostic(
             "action": action_norm,
             "payload": body,
         },
+    )
+
+
+def tool_prepare_create_diagnostic(
+    revision_id: str,
+    problem_statement: str,
+    provenance: dict | None = None,
+) -> CallToolResult:
+    """LEGACY alias — use prepare_diagnostic_change(action=create)."""
+    return tool_prepare_diagnostic_change(
+        "create",
+        revision_id=revision_id,
+        problem_statement=problem_statement,
+        provenance=provenance,
+    )
+
+
+def tool_prepare_manage_diagnostic(
+    diagnostic_id: str,
+    action: str,
+    payload: dict | None = None,
+) -> CallToolResult:
+    """LEGACY alias — use prepare_diagnostic_change(action=<manage action>)."""
+    return tool_prepare_diagnostic_change(
+        action, diagnostic_id=diagnostic_id, payload=payload
     )
 
 

@@ -1368,7 +1368,10 @@ def internal_movements(
     op: Optional[str] = Query(None),
     kind: Optional[str] = Query(
         None,
-        description="warehouse_transfer = só movimentação entre armazéns",
+        description=(
+            "Recorte semântico: warehouse_transfer | inventory_adjustment | "
+            "production_receipt | production_consumption"
+        ),
     ),
 ):
 

@@ -34,6 +34,14 @@ jobs:
           pip install -e ../shared[fastapi]
           pip install -r requirements.txt
 
+      - name: Testes focados DAVI ajustes de inventário
+        run: |
+          PYTHONPATH=. pytest \
+            tests/test_davi_inventory_adjustment_discovery.py \
+            tests/test_davi_agent_intelligence.py \
+            tests/test_supplies_inventory_adjustments.py \
+            -q
+
       - name: Testes Fases 2–5 (observabilidade, contrato e alertas)
         run: |
           PYTHONPATH=. pytest \

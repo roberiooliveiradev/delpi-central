@@ -22,3 +22,8 @@ class InternalMovement:
 
     production_order: Optional[str]
     user_name: Optional[str]
+
+    movement_category: Optional[str] = None
+    movement_direction: Optional[str] = None
+    movement_label: Optional[str] = None
+    inventory_adjustment_nature: Optional[str] = None

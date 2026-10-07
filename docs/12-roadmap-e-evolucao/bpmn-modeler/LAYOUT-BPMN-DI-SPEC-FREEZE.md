@@ -3,6 +3,7 @@
 > Documento canônico da V1 para auto-layout, geração de BPMN-DI, proposta de geometria, roteamento de edges, preview, Accept/Cancel e qualidade de layout.
 > Status alvo: `FROZEN` — ver seção 48.
 > Sequência: **PROMPT 5/7** — depende de `V1-SCOPE-FREEZE.md`, `BACKEND-DOMAIN-SPEC-FREEZE.md`, `BPMN-INTEROPERABILITY-SPEC-FREEZE.md` e `FRONTEND-EDITOR-UX-SPEC-FREEZE.md`; não reabre nenhum deles.
+> **AMENDMENT G0 (out/2026):** freeze histórico. A única decisão substituída é o modo de persistência pós-Accept (autosave — `SUPERSEDED (G0)` abaixo). Estado vigente: [`CURRENT-STATE.md`](CURRENT-STATE.md); divergências: [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md).
 
 ## 1. Purpose
 
@@ -15,9 +16,11 @@ Fechar integralmente o HOW de geometria da V1: engine de layout, local de execu�
 | `V1-SCOPE-FREEZE.md` | auto-layout `IN_V1`; BPMN sem DI = legítimo; desktop edição / tablet read-only |
 | `BACKEND-DOMAIN-SPEC-FREEZE.md` | save explícito; backend não injeta DI; artefato opaco persistido |
 | `BPMN-INTEROPERABILITY-SPEC-FREEZE.md` | BPMN-DI no mesmo XML canônico; DI validation rules (BPMNDI-*); `waypoint ≥ 2`; preservation; blank artifact já contém `BPMNDiagram`+`BPMNPlane` |
-| `FRONTEND-EDITOR-UX-SPEC-FREEZE.md` | `BpmnEditorAdapter`; preview UX (banner Aceitar/Cancelar); `Organizar diagrama`; Accept → DIRTY; `fitViewport`; multi-diagram (seletor, primeiro document order); sem save automático |
+| `FRONTEND-EDITOR-UX-SPEC-FREEZE.md` | `BpmnEditorAdapter`; preview UX (banner Aceitar/Cancelar); `Organizar diagrama`; Accept → DIRTY; `fitViewport`; multi-diagram (seletor, primeiro document order); sem save automático — **SUPERSEDED (G0):** autosave vigente (ver nota abaixo) |
 
 Princípios preservados: BPMN XML = semântica canônica; BPMN-DI = geometria canônica no mesmo artefato; layout calculado ≠ geometria persistida; preview ≠ save; viewport ≠ BPMN-DI; nenhum JSON visual persistido; save explícito; Accept → DIRTY → save explícito.
+
+> **SUPERSEDED (G0):** `Accept → DIRTY → save explícito` → na implementação vigente o persist pós-Accept é feito pelo **autosave do working copy** (`Accept → DIRTY → autosave → read-back verify`). Os invariantes deste documento continuam vigentes e implementados: `CALCULATE != WRITE`, `PREVIEW != WRITE` (preview em `NavigatedViewer` separado), `CANCEL` → zero write, Accept = UM comando lógico undoable (`applyDiLayout`), worker-only sem fallback main thread, timeout/cancel no profile. O gesto explícito obrigatório é **ACCEPT/CANCEL**, não um botão "Salvar" posterior. Ver `CURRENT-STATE.md` §7.
 
 ## 3. Prompt 4 Dirty-State Correction
 

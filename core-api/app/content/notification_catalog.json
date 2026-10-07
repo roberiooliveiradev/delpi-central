@@ -193,6 +193,22 @@
       "sourceApps": ["purchase-requests"],
       "pluginId": "purchase-requests"
     },
+    "purchase_request_approved": {
+      "label": "Solicitações de Compras",
+      "notificationLabel": "Solicitação de compra aprovada",
+      "kind": "app",
+      "mutable": true,
+      "sourceApps": ["purchase-requests"],
+      "pluginId": "purchase-requests"
+    },
+    "purchase_request_rejected": {
+      "label": "Solicitações de Compras",
+      "notificationLabel": "Solicitação de compra rejeitada",
+      "kind": "app",
+      "mutable": true,
+      "sourceApps": ["purchase-requests"],
+      "pluginId": "purchase-requests"
+    },
     "my_requests": {
       "label": "Minhas Solicitações",
       "notificationLabel": "Atualizações das minhas solicitações",

@@ -199,4 +199,39 @@ describe("TypedExpressionEditor — authoring", () => {
     const refTrigger = screen.getByRole("button", { name: "Referência" });
     expect(refTrigger.textContent).toContain("Filial");
   });
+
+  it("refs input.<key> do slide hidratam e podem ser escolhidas", () => {
+    const onChange = vi.fn();
+    render(
+      <TypedExpressionEditor
+        value={buildExpressionParamValue({ kind: "identifier", value: "today" })}
+        onChange={onChange}
+        support={SUPPORT}
+        refInputKeys={[{ key: "meeting_day", label: "Dia da reunião" }]}
+      />,
+    );
+    chooseOption(screen.getByRole("button", { name: "Referência" }), "Variável Dia da reunião");
+    expect(readExpressionAst(onChange.mock.calls.at(-1)![0])).toEqual({
+      kind: "identifier",
+      value: "input.meeting_day",
+    });
+  });
+
+  it("sem refInputKeys (ex.: programação) não oferece variáveis e preserva ref existente", () => {
+    const onChange = vi.fn();
+    render(
+      <TypedExpressionEditor
+        value={buildExpressionParamValue({ kind: "identifier", value: "input.meeting_day" })}
+        onChange={onChange}
+        support={SUPPORT}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Referência" }));
+    const labels = screen
+      .getAllByRole("listbox")
+      .flatMap((list) => Array.from(list.querySelectorAll("button")))
+      .map((button) => button.textContent ?? "");
+    expect(labels.some((label) => label.startsWith("Variável"))).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

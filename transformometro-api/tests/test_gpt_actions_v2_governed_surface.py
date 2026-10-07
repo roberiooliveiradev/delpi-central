@@ -67,7 +67,8 @@ def _doc(**overrides) -> ProcessDocument:
 
 def test_builder_surface_budget_reduced_and_no_legacy_crud():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
+    # Tool Surface Rationalization V1: family ops consolidated 22 → 17.
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 17
     assert count_operations(doc) <= 30
     found = []
     for methods in doc["paths"].values():
@@ -210,7 +211,16 @@ def test_capability_surface_in_catalog_payload_shape():
     assert surface["surface_version"] == "teo-gpt-actions-v2"
     assert any(e["id"] == "process_document" for e in surface["entities"])
     assert surface["proposal_model"]["commit_operation"] == "gpt_commit_proposal"
-    assert "tm_task" in surface["not_exposed_by_design"]
+    # tm_task / interaction_room moved to exposed (Portal parity);
+    # process_workspace is intentionally_not_applicable (UI surface).
+    classification = surface["exposure_classification"]
+    exposed_ids = {item["id"] for item in classification["exposed"]}
+    assert {"tm_task", "interaction_room"} <= exposed_ids
+    nna_ids = {
+        item["id"] for item in classification["intentionally_not_applicable"]
+    }
+    assert "process_workspace" in nna_ids
+    assert "not_exposed_by_design" not in surface
 
 
 def test_search_rejects_disallowed_filter(tm_client):

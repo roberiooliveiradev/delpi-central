@@ -9,7 +9,7 @@ import {
   type ParamExpressionSpec,
 } from "../utils/paramExpressions";
 import type { ExpressionEditRequest } from "./comunicadoEditorContextCore";
-import { ExpressionEditorDrawer } from "./ExpressionEditorDrawer";
+import { ExpressionEditorModal } from "./ExpressionEditorModal";
 
 const SUPPORT: ParamExpressionSupport = {
   enabled: true,
@@ -59,7 +59,7 @@ function freshRequest(overrides: Partial<ExpressionEditRequest> = {}): Expressio
 
 afterEach(() => cleanup());
 
-describe("ExpressionEditorDrawer", () => {
+describe("ExpressionEditorModal", () => {
   it("draft local: «Cancelar» fecha sem chamar apply — expressão preservada", () => {
     const request = freshRequest();
     const onClose = vi.fn();
@@ -69,7 +69,7 @@ describe("ExpressionEditorDrawer", () => {
     render(
       <div className="dashboard-tv-dashboard">
         <ProbeBoundary>
-          <ExpressionEditorDrawer
+          <ExpressionEditorModal
             open
             request={request}
             support={SUPPORT}
@@ -96,7 +96,7 @@ describe("ExpressionEditorDrawer", () => {
     const request = freshRequest();
     render(
       <div className="dashboard-tv-dashboard">
-        <ExpressionEditorDrawer
+        <ExpressionEditorModal
           open
           request={request}
           support={SUPPORT}
@@ -126,7 +126,7 @@ describe("ExpressionEditorDrawer", () => {
     });
     render(
       <div className="dashboard-tv-dashboard">
-        <ExpressionEditorDrawer
+        <ExpressionEditorModal
           open
           request={request}
           support={SUPPORT}
@@ -145,10 +145,50 @@ describe("ExpressionEditorDrawer", () => {
     ).toBeTruthy();
   });
 
+  it("X e Escape fecham sem chamar apply", () => {
+    const request = freshRequest();
+    const onClose = vi.fn();
+    render(
+      <div className="dashboard-tv-dashboard">
+        <ExpressionEditorModal open request={request} support={SUPPORT} onClose={onClose} />
+      </div>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fechar editor de expressão" }));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(2);
+    expect(request.apply).not.toHaveBeenCalled();
+  });
+
+  it("workbench host-contained: dialog no root do MFE, sem drawer nem portal no body", () => {
+    const request = freshRequest();
+    const tree = (open: boolean) => (
+      <div className="dashboard-tv-dashboard">
+        <ExpressionEditorModal open={open} request={request} support={SUPPORT} onClose={vi.fn()} />
+      </div>
+    );
+    // O editor já está montado quando o usuário abre a expressão.
+    const { container, rerender } = render(tree(false));
+    rerender(tree(true));
+    const host = container.querySelector(".dashboard-tv-dashboard")!;
+    const dialog = screen.getByRole("dialog", { name: "Expressão — Início" });
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(dialog.getAttribute("aria-describedby")).toBeTruthy();
+    const portal = dialog.closest('[data-modal-contained="true"]');
+    expect(portal).toBeTruthy();
+    expect(portal!.parentElement).toBe(host);
+    expect(dialog.classList.contains("delpi-ui-modal--host-fill")).toBe(true);
+    expect(document.querySelector(".delpi-ui-drawer")).toBeNull();
+    expect(
+      Array.from(document.body.children).some((child) =>
+        child.matches('[data-modal-contained="true"]'),
+      ),
+    ).toBe(false);
+  });
+
   it("sem callback de preview o botão «Pré-visualizar» não aparece", () => {
     render(
       <div className="dashboard-tv-dashboard">
-        <ExpressionEditorDrawer
+        <ExpressionEditorModal
           open
           request={freshRequest()}
           support={SUPPORT}

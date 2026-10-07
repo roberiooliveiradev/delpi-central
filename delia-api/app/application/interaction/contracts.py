@@ -54,6 +54,11 @@ class InteractiveTurnRequest:
     # Untrusted, bounded client-supplied workspace hints (host app,
     # route, selected entity refs) — never authority (§6.130).
     workspace_context: WorkspaceContext | None = None
+    # Request-scoped execution ceiling (LOOP-03R1): "prepare" caps the
+    # governed chain at PREPARE — ACT is refused regardless of the
+    # owner-declared confirmation policy. It can ONLY reduce execution
+    # authority; it never grants permission and never weakens a gate.
+    max_execution_stage: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,7 +86,12 @@ class GovernedCapabilityProvenance:
     capability_group_id: str | None = None
 
     def to_projection(self) -> dict:
-        """Bounded HTTP-safe projection — no tokens, URLs, wire internals."""
+        """Bounded HTTP-safe projection — no tokens, URLs, wire internals.
+
+        ``source`` keeps the existing consumer contract (first ref);
+        ``sources`` is the additive multi-source projection used by
+        corroborated results (LOOP-02R1).
+        """
         first = self.source_refs[0] if self.source_refs else None
         return {
             "source": (
@@ -93,6 +103,14 @@ class GovernedCapabilityProvenance:
                 if first is not None
                 else None
             ),
+            "sources": [
+                {
+                    "source_id": ref.source_id,
+                    "source_system": ref.source_system,
+                    "observed_at": ref.observed_at,
+                }
+                for ref in self.source_refs
+            ],
             "specialist_id": self.specialist_id,
             "provider_id": self.provider_id,
             "capability_group_id": self.capability_group_id,

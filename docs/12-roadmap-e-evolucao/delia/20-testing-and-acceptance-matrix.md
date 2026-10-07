@@ -2475,3 +2475,168 @@ Implementation: `8ea1e4b53835478138452e9004654d99b511b65c` (evidence §6.103; re
 | `git diff --check` | clean |
 
 Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (§6.104); `C4_MCP_GOVERNED_READS_01=APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO` (phase level); `PRODUCTION_READINESS=NOT_PROVEN`; `C4-MCP-GOVERNED-READS-02` executed (§6.105; `IMPLEMENTATION_HEAD=0161c77d260907ca573735c5dbc066776c2c2234`): `CANDIDATE_FOR_ARCHITECTURE_REVIEW` — second governed READ `teo.analyze`/`gpt_analyze` bounded to `view=summary`, shared `governed_read.py` semantic layer (no clone/engine/router), live grounded Transformômetro KPI summary + provenance, DAVI regression PASS, 584/584 suite; `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_02=ACCEPT_WITH_RESIDUAL` (§6.106) — `C4_MCP_GOVERNED_READS_02=APPROVED_CURRENT_BOUNDED_VERTICAL_SLICE`; bounded MCP read proof closed, third read NOT authorized; C5 entry verdict `C5_FOUNDATION_SLICE_REQUIRED`; `C5-GOVERNED-WRITE-FOUNDATION-01` executed (§6.108; `IMPLEMENTATION_HEAD=c258a839bac117316e1105e9aa15acf8c29892ce`): CANDIDATE_FOR_ARCHITECTURE_REVIEW — 58 new tests, suite 642/642; binding/preview/confirmation/decision-gate/outcome/audit contracts + adversarial coverage; PREPARE/ACT wire gates unchanged (blocked); next=`ARCHITECTURE_REVIEW_C5_GOVERNED_WRITE_FOUNDATION_01`.
+
+
+### ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1 — generic multi-step orchestration (evidence §6.140)
+
+| Check | Result |
+|---|---|
+| Targeted suites (`test_generic_multistep_orchestration`, `test_provider_neutral_orchestration`, `test_specialist_capability_orchestration`, `test_specialist_interop_*`) | PASS — resolver name→id unique, ambiguous→bounded CLARIFICATION (target/PREPARE/ACT = 0 calls), invented-id rejection, ANALYSIS→PREPARE (ACT=0), ANALYSIS terminal, structural direct write, structural destructive confirm→ACT once, opaque-handle redaction on every user surface, unknown/malformed/contradictory policy fail-closed `owner_policy_invalid` |
+| Fake fourth owner (neutral vocabulary) | PASS — zero owner-name/tool-name branches exercised |
+| VISTA/TÉO/DAVI regression (fixture suites) | PASS — unchanged semantics; dynamic `tools/list` remains the capability source |
+| Full delia-api suite | 777/777 PASS |
+| Typecheck | TEST_NOT_RUN — no configured tool in this repo (AST/compile verification only) |
+| `git diff --check` (delia-api) | clean |
+| Live WSL/SSH acceptance (deployed e6e3ebb) | PASS — resolver→target unique name→id (`search_records`→`get_process_context`, GROUNDED ×2); homonym → bounded clarification `bd84c8b1… — Controle de refeições` / `0f653d8d… — Controle de refeições`; VISTA `preview_data_block` selected `class=ANALYSIS` (owner 422, fail-closed); TÉO `get_methodology_guide` GROUNDED live; UNAUTH=401; raw_handle_hits=0 |
+| Identifier-provenance rework (R1-R1) | PASS — `prior_turns` is no longer identifier provenance: forged DELIA_RESULT id → demoted → CLARIFICATION (target not invoked); history-only id → resolver→owner evidence → PASS; id in current input → direct PASS |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+
+### C3-INTELLIGENCE-LOOP-01 — bounded intelligence loop over the provider-neutral orchestrator (evidence §6.143)
+
+| Check | Result |
+|---|---|
+| Full delia-api suite | 802/802 PASS (787 baseline + 15 new evals in `test_intelligence_loop_evals.py`) |
+| EVAL-1 playlists grounded synthesis | PASS — natural answer lists names; synthesized content revalidated (redaction + identifier-in-evidence gate + technical-leak gate); invented values demote to deterministic renderer |
+| EVAL-1 limitations preserved | PASS — owner `limitations` stay on the attempt even when synthesis supplies content |
+| EVAL-2 create-slide regression | PASS — existing governed-write suite unchanged and green |
+| EVAL-3 dashboard/Transforma+ business clarification | PASS — internal field names never exposed; humanized ask-back (identifier suffixes stripped) |
+| EVAL-4 black text (metamorphic ×4) | PASS — workspace `selected_entity_ref` resolves "o texto" without asking; 4 paraphrases identical behavior |
+| Bounded pre-execution repair | PASS — repairable surface errors trigger one live re-list + reselect + arg rebuild; `MAX_REPLAN_ROUNDS=1`, non-write branch only — material ACT can never be retried |
+| Owner-description injection cannot bypass confirmation | PASS — negative eval green |
+| Repair fail-closed | PASS — missing capability after reselect → same repairable error, no second repair |
+| Technical-field leak gate | PASS — `blockId`/`route`/`params`/proposal handles/provider vocabulary rejected in clarification wording and synthesis |
+| Decision-path telemetry | PASS — `select_decision_path` invoked with honest facts; status+path logged, never authority |
+| Typecheck | TEST_NOT_RUN — no configured tool in this repo (AST/compile verification only) |
+| `git diff --check` (delia-api) | clean |
+| Owner/tool/provider branches added | 0 — grep for owner/tool/provider literals in orchestration.py returns only pre-existing comments |
+| Real-model dev eval | TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+
+### C3-INTELLIGENCE-LOOP-01R1 — rework: safe fallback + evidence-bound synthesis + relist fail-closed (evidence §6.144)
+
+| Check | Result |
+|---|---|
+| Review verdict closed | `ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01=REWORK` |
+| FIX-1 clarification fallback | PASS — deterministic fallback is a generic business question; `_humanize_missing` removed; parametrized evals over `source_route`/`params`, `block_id`, `resource_uuid`, `owner_vocabulary` → `CLARIFICATION_FALLBACK_TECHNICAL_LEAK=0` |
+| FIX-2 evidence-bound synthesis | PASS — model proposes `{intro, items:[{record_index, fields}]}` only; runtime validates indices/fields and copies leaf values verbatim from sanitized records; `SYNTHESIS_FACT_VALUES_SOURCE=OWNER_EVIDENCE_ONLY` |
+| Free-text entity invention (BLOCKING) | PASS — intro carrying "Financeiro Estratégico" rejected by the non-factual gate; deterministic render ships; invented string never reaches `attempt.content` |
+| Invalid selection (index/field/empty) | PASS — rejected → deterministic fallback |
+| FIX-3 repair relist failure | PASS — `list_groups` raising `source_unavailable` during repair yields bounded classified failure; exactly one repair attempt, one invoke, no loop, no ACT |
+| Repair rounds / material ACT retry | `MAX_REPLAN_ROUNDS=1` / `MATERIAL_ACT_RETRY=0` (unchanged) |
+| Limitations / provenance preserved | PASS — owner `limitations` and provenance carried to the attempt |
+| WorkspaceContext authority | corrected to `UNTRUSTED_CONTEXT_ONLY` wording (workspace-supplied identifier provenance; owner revalidation applies) |
+| USER_GOAL_UNDERSTANDING / DECISION_PATH_RUNTIME | PARTIAL / PARTIAL (classification corrections — non-blocking) |
+| Full delia-api suite | 808/808 PASS |
+| `git diff --check` | clean |
+| Owner/tool/provider branches added | 0 |
+| Real-model eval | TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+
+### C3-INTELLIGENCE-LOOP-01R2 — zero model-authored factual prose (evidence §6.145)
+
+| Check | Result |
+|---|---|
+| Review verdict closed | `ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01R1=REWORK` (residual blocker: synthesis intro channel) |
+| `MODEL_AUTHORED_FACTUAL_PROSE` | NONE — contract is selection-only (`items:[{record_index,fields}]`); `intro` removed from expected_fields/allowed_keys/render; `_intro_facts_in_evidence` + helpers deleted (dead code) |
+| `SYNTHESIS_FACT_VALUES_SOURCE` | OWNER_EVIDENCE_ONLY — runtime copies leaf values verbatim from sanitized records |
+| Lowercase free-text invention (BLOCKING) | PASS — `{"intro": "você também possui financeiro estratégico"}` rejected (key not allowed); string never reaches content |
+| Extra free-text field (BLOCKING) | PASS — `{"items":[...],"summary":"..."}` rejected by allowed_keys |
+| Invalid record_index / field / empty fields / non-scalar | PASS — all demote to deterministic fallback |
+| Provenance / limitations preserved | PASS |
+| Clarification fallback regression | PASS (R1 fix untouched) |
+| Repair relist fail-closed regression | PASS (R1 fix untouched) |
+| Governed write / prior-turn provenance regressions | PASS |
+| Full delia-api suite | 809/809 PASS |
+| `git diff --check` | clean |
+| Owner/tool/provider branches added | 0 |
+| Real-model eval | TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-02 — semantic path selection + bounded multi-capability composition (evidence §6.146)
+
+| Check | Result |
+|---|---|
+| `GENERIC_SEMANTIC_PATH_SELECTION` | PASS — bounded `semantic_path` proposal revalidated against the live surface; degrade-to-native on any invalid selection |
+| `NATIVE_OWNER_SUFFICIENT_PATH` | PASS — native is the default; foreign step only when proposed AND valid |
+| `UNNECESSARY_FOREIGN_FANOUT` | 0 — native mode never invokes foreign; `MAX_FOREIGN_GROUPS=1` |
+| `DYNAMIC_VS_SNAPSHOT_SEMANTICS` / `DYNAMIC_BINDING_PREFERRED` | PASS — native path invokes the target dynamic-binding contract directly; no snapshot materialization |
+| `GENERIC_MULTI_CAPABILITY_COMPOSITION` | PASS — one bounded foreign non-mutating step cross-group and cross-provider-family |
+| `CROSS_GROUP_ENRICHMENT` | PASS — foreign evidence reaches the target argument block as untrusted `foreign_evidence` |
+| `MAX_FOREIGN_GROUPS` / `MAX_SEMANTIC_PATH_CAPABILITIES` | 1 / 3 (shared `MAX_OPERATIONAL_PLAN_STEPS`) |
+| `DIRECT_SEMANTIC_ACT` | 0 — corroborate over PREPARE/ACT degrades to native; writes stay governed |
+| `FOREIGN_TARGET_IDENTIFIER` | BLOCKED — foreign evidence is outside the identifier-provenance haystack; invented foreign id demotes to clarification |
+| `WORKSPACE_TARGET_IDENTIFIER` | PASS — workspace-selected entity id proven for target args |
+| `BUSINESS_EVIDENCE_HANDOFF` | PASS — sanitized bounded `foreign_evidence` block; provenance/limitations preserved |
+| `GENERIC_CORROBORATION` | PASS — `corroborate` mode + deterministic verdict |
+| `CORROBORATION_AGREEMENT` / `CORROBORATION_CONFLICT` | PASS / PASS — convergent/divergent renders; conflict adds `evidence_conflict` limitation |
+| `NON_COMPARABLE_SOURCES` | INCONCLUSIVE — context mismatch, non-scalar values, invalid selection, or source-unavailable all yield `comparison_inconclusive`/`comparison_source_unavailable` |
+| `PLAN_CANDIDATE_REUSE` / `PLAN_DEPENDENCY_VALIDATION` | PASS / PASS — `validate_plan_candidate` over unioned live views; backward-only deps |
+| `DUPLICATE_CAPABILITY_ID` | FAIL_CLOSED — ambiguous foreign id degrades to native; plan-level dup rejected by the validator |
+| `SAME_PROVIDER_FAMILY_DIFFERENT_GROUPS` / `DIFFERENT_PROVIDER_FAMILIES` | PASS / PASS |
+| `RENAME_INVARIANCE` | PASS — renamed groups/capabilities compose identically |
+| `SOURCE_PROMPT_INJECTION` / `PROVIDER_METADATA_AUTHORITY` | BLOCKED / NONE — injected description text grants no authority; governed write chain unchanged |
+| `MODEL_AUTHORED_FACTUAL_PROSE` | NONE — comparison renders verbatim evidence values; no prose channel |
+| `CLARIFICATION_REGRESSION` / `WRITE_GOVERNANCE_REGRESSION` | PASS / PASS — full suite green |
+| `MATERIAL_ACT_RETRY` | 0 |
+| `PROVIDER_NEUTRALITY` / owner-name / tool-name branches | PASS / 0 / 0 |
+| Full delia-api suite | 831/831 PASS |
+| Real-model eval / live composition | TEST_NOT_RUN / TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-02R1 — native-first runtime staging + owner-workflow parity + multi-source evidence (evidence §6.147)
+
+Supersedes the §6.146 claims corrected by the external architecture review (`ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_02 = REWORK`). Historical rows above are preserved; the column values below are the current state.
+
+| Check | Result |
+|---|---|
+| `NATIVE_OWNER_FIRST` | **RUNTIME_STAGED** — the native assessment sees ONLY the target group surface; foreign candidates are exposed exclusively after `foreign_evidence_required`/`corroboration_requested` (was: model instruction) |
+| `NATIVE_ASSESSMENT_BEFORE_FOREIGN_SELECTION` | PASS — invocation-order trace proven; assessment prompt contains no foreign names |
+| `NATIVE_SUFFICIENT_FOREIGN_SELECTOR_CALLS` | 0 — selector stub would pick the foreign capability and is never consulted |
+| `FOREIGN_OWNER_WORKFLOW_PRESERVED` | PASS — foreign leg delegates to `_invoke_selected`; candidate-bound `DISCOVERY→owner candidate_token→READ` runs identically as primary target or foreign source |
+| `DAVI_STYLE_FOREIGN_FLOW` | PASS_IN_FIXTURE — neutral candidate-bound owner; token owner-issued only, never in prompts/user-facing content |
+| `REQUIRED_ENRICHMENT_*` | FAIL_CLOSED — source failure → `SOURCE_UNAVAILABLE`; missing business input → `CLARIFICATION_REQUIRED`; invalid/ambiguous/mutating proposal → `NOT_APPLICABLE`+`invalid_foreign_selection`; `TARGET_CALLS_AFTER_REQUIRED_SOURCE_FAILURE=0` |
+| `MULTI_SOURCE_PROVENANCE` | PASS — `source_refs` carries primary+foreign (primary first, deduplicated); `to_projection` adds `sources` while keeping `source` (backward-compatible); unavailable source fabricates no ref |
+| `FOREIGN_LIMITATIONS_PRESERVED` | PASS — both owners' limitation sets merge additively, deterministic order |
+| `COMPARABILITY_GATE` | PASS — empty context, mismatched context names, mismatched value-field names → INCONCLUSIVE; matched context → AGREEMENT/CONFLICT; no alias inference |
+| `DIFFERENT_PROVIDER_IMPLEMENTATIONS` | PASS — two independent `CapabilityProviderPort` test implementations compose (was: NOT_PROVEN — same-class instances only) |
+| `DYNAMIC_VS_SNAPSHOT_SEMANTICS` | **PARTIAL** — deterministic path enforcement PASS (native dynamic path never consults a foreign snapshot; explicit static target stays native); model-level semantic quality unmeasured (was: overclaimed PASS) |
+| `DYNAMIC_NATIVE_PATH_ENFORCEMENT` / `STATIC_PATH_REGRESSION` | PASS / PASS |
+| `FOREIGN_TARGET_IDENTIFIER` / `WORKSPACE_TARGET_IDENTIFIER` | BLOCKED / PASS (regression preserved) |
+| `SAME_PROVIDER_DIFFERENT_GROUPS` / `RENAME_INVARIANCE` | PASS / PASS |
+| `MODEL_AUTHORED_FACTUAL_PROSE` / `DIRECT_SEMANTIC_ACT` / `MATERIAL_ACT_RETRY` | NONE / 0 / 0 |
+| `WRITE_GOVERNANCE_REGRESSION` | PASS — governed write suite green; foreign leg never touches PREPARE/ACT authority |
+| `PROVIDER_NEUTRALITY` / owner-name / tool-name branches | PASS / 0 / 0 (owner names appear only in comments) |
+| Full delia-api suite | 842/842 PASS |
+| `REAL_MODEL_EVAL` / `LIVE_COMPOSITION` | TEST_NOT_RUN / TEST_NOT_RUN |
+| `VISTA_NATIVE_DYNAMIC_PATH` / `DAVI_FOREIGN_STRUCTURAL_WORKFLOW` / `TEO_FOREIGN_STRUCTURAL_WORKFLOW` | PROVEN_IN_REPO / PASS_IN_FIXTURE / PASS_IN_FIXTURE (structural fixtures; no live owner run) |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R1 — bounded turn-goal stage + preflight ordering + write ceiling + reliability hardening (evidence §6.148)
+
+Extends §6.147 (all LOOP-02R1 rows preserved; regression suites re-run). Column values below are the current state.
+
+| Check | Result |
+|---|---|
+| `TURN_GOAL_STAGE` | PASS — one bounded `_understand_goal` proposal validated deterministically (goal_class/comparison_requested/output_mode/business_subject/scope_constraints); invalid or absent proposal degrades to the neutral default; reused by assessment, argument projection and the comparability invariant — no second planner |
+| `COMPARISON_GOAL_SINGLE_SOURCE_SILENT_SUCCESS` | **BLOCKED** — a validated `comparison_requested` forces corroborate mode even when the native assessment returns "sufficient"; comparison can never collapse to single-source native success |
+| `COMPARABILITY_SHARED_CONTEXT` | PASS — differing shared scalar business-context fields now yield INCONCLUSIVE (distinguishing insufficient-vs-scope-mismatch reason); technical/provenance keys excluded by canonical contract |
+| `PRE_FOREIGN_PREFLIGHT` | PASS — target preliminary arguments + unproven-identifier demotion + same-owner resolver run BEFORE any foreign call; id-like or foreign-required missing input → `CLARIFICATION_REQUIRED` with foreign calls = 0; validated args reused when no foreign evidence arrives (no duplicate proposal) |
+| `BUSINESS_SUBJECT_ARG_PROJECTION` | PASS — validated subject is projected into the argument block; bounded model proposal still fills fields deterministically (zero provider/provider-capability names in prompts) |
+| `OWNER_SEARCH_RANKING` | CLOSED — VISTA `TvDataRouteDiscoveryService` filters a bounded host/query stoplist; generic surface tokens no longer dilute domain-token ranking (13/13 discovery tests) |
+| `SAME_OWNER_PREREQ` | PASS — bounded same-owner non-mutating resolver; ambiguity → candidate clarification; resolved value must occur literally in owner evidence (fail-closed) |
+| `DIRECT_ACT_GOVERNANCE` | **CLOSED** — owner `direct` policy now passes the canonical `evaluate_write_continuation` gate before `_execute_prepared_act`; unreachable capability / expired proposal → WRITE_REJECTED (was: owner policy bypassed the DÉLIA gate) |
+| `MAX_EXECUTION_STAGE_PREPARE` | PASS — request-scoped ceiling caps the governed chain at PREPARE: direct policy converts to CONFIRMATION_REQUIRED; confirmations and direct ACT selections refuse truthfully (`execution_ceiling`); ceiling can only reduce authority |
+| `RESOLVER_ERROR_FALLBACK` | CLOSED — `SOURCE_UNAVAILABLE`/`AUTHZ_DENIED` are deterministic terminal results (truthful content + `delpi_source_unverified` limitation + `HYPOTHESIS` class); the general model never narrates an operational failure |
+| `EPISTEMIC_CLASS_CLARIFICATION` | PASS — ungrounded clarification renders as HYPOTHESIS, not CONCLUSION |
+| `NESTED_ENVELOPE_RENDERING` | PASS — `_business_lines` unwraps nested data/result/payload/response envelopes recursively (depth-bounded) with deterministic sanitize + generic fallback |
+| `OPENAPI_CORRELATION_PROPAGATION` | PASS — provider re-stamps the turn correlation_id into outcome provenance when the invoker returned a foreign/absent id |
+| `TOKEN_EXPIRY_RETRY` | BOUNDED — one same-call re-exchange after invalidate+reconnect for non-mutating classes (DISCOVERY/READ/ANALYSIS) or when no material call occurred; PREPARE/ACT = 0 material retries (non-mutating sibling proven; retry-success and mutating-negative tests added) |
+| `STAGE_TIMING_TELEMETRY` | PASS — `timing_ms` on `provider_invoke` and `model_propose`; logs carry declared argument keys only (no values, tokens or payloads) |
+| `TEO_PARAPHRASE_ROOT_CAUSE` | **UNPROVEN** — diagnosis blocked on production data; bounded arg telemetry in place (honest residual) |
+| Full delia-api suite | 853/853 PASS |
+| Owner suites | VISTA discovery facade 13/13 PASS; tv-dashboard-api 1757 PASS / 3 FAIL (failures reproduce without this change — pre-existing catalog/budget drift, unrelated) |
+| `REAL_MODEL_EVAL` / `LIVE_COMPOSITION` | TEST_NOT_RUN / TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

@@ -38,7 +38,7 @@
   },
   "write_flow_mcp": {
     "prepare": "prepare_* valida e sela a mudança (persisted=false) e retorna proposal_handle opaco — PREPARE nunca persiste estado.",
-    "commit": "commit_proposal(proposal_handle, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança (confirmation=true é protocol ack da intenção já expressa — sem Confirma? adicional). confirm_before_act → uma Confirma? explícita do usuário antes do commit. AuthZ backend sempre revalidada.",
+    "commit": "commit_proposal(proposal_handle, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança, sem Confirma? adicional (a flag confirmation, se presente, é compat de transporte — não define a política de negócio). confirm_before_act → mostrar a mudança exata → uma Confirma? explícita do usuário antes do commit. AuthZ backend sempre revalidada.",
     "same_turn": "Mudança tipável pedida neste turno → catalog + prepare + commit (auto_act) ou prepare + Confirma? + commit (confirm_before_act) neste turno.",
     "verify": "Após commit: read-back autoritativo + VERIFY. 2xx técnico ≠ sucesso de negócio."
   },
@@ -61,7 +61,7 @@
     "principle": "PROGRESSIVE_SEARCH",
     "rules": [
       "Search miss != proof of absence.",
-      "Atas: search via gpt_search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_manage para busca.",
+      "Atas: search via gpt_search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_read para busca.",
       "Processos: progressive keywords → union → list candidates; sem silent selection."
     ]
   },
@@ -73,9 +73,9 @@
     "note": "Capability parity ≠ transport count. Same GovernedWriteOrchestrator. parity_map is injected from the canonical MCP contract record on the Actions projection only."
   },
   "anti_patterns": [
-    "Inventar operationId / tool name (ex.: gpt_meeting_minute_manage para search).",
+    "Inventar operationId / tool name (ex.: gpt_meeting_minute_read para search).",
     "Alegar Actions/MCP indisponíveis sem tentar neste turno.",
-    "Usar manage_evidence / meeting manage para busca de atas.",
+    "Usar evidence/meeting-minutes prepare ops para busca de atas (search via gpt_search_records entity=meeting_minute).",
     "Inventar proposal_handle (latest/current/null).",
     "Tratar confirmation conversacional como AuthZ.",
     "Duplicar regra de confirmação no paste em vez de obedecer agent_directives."
@@ -88,23 +88,23 @@
     "tool_unavailable_after_attempt": "Após falha real: reportar erro + pedir reconectar OAuth se 401."
   },
   "not_exposed": {
-    "tasks": "NOT_EXPOSED",
-    "interaction_room": "NOT_EXPOSED",
     "binary_upload": "UI-only / BLOCKED_BY_PLATFORM",
+    "interaction_room_attachment_binary": "UI-only / BLOCKED_BY_PLATFORM (metadata via gpt_collaboration_read action=attachments / collaboration_read action=attachments)",
     "generic_proxy": "FORBIDDEN",
-    "signature_pdf": "NOT via GPT/MCP search path"
+    "signature_pdf": "NOT via GPT/MCP search path",
+    "process_workspace": "UI navigation surface — not a business capability (data via context/records/tasks/rooms)"
   },
   "flows": {
     "process_registration": {
       "gpt_operations": [
         "gpt_get_catalog",
-        "gpt_validate_improvement_package",
+        "gpt_prepare_governed_operation",
         "gpt_commit_proposal",
         "gpt_prepare_record_change"
       ],
       "mcp_tools": [
         "get_catalog",
-        "prepare_improvement_package",
+        "prepare_governed_operation",
         "commit_proposal",
         "prepare_record_change"
       ],
@@ -166,17 +166,15 @@
         "gpt_search_records",
         "gpt_get_record",
         "gpt_prepare_record_change",
-        "gpt_meeting_minute_workflow",
-        "gpt_meeting_minute_manage",
+        "gpt_meeting_minute_read",
+        "gpt_prepare_meeting_minute_change",
         "gpt_commit_proposal"
       ],
       "mcp_tools": [
         "commit_proposal",
-        "generate_from_transcript",
         "get_record",
         "meeting_minute_read",
-        "prepare_meeting_minute_manage",
-        "prepare_meeting_minute_workflow",
+        "prepare_meeting_minute_change",
         "prepare_record_change",
         "search_records"
       ],
@@ -193,7 +191,7 @@
         "entity": "meeting_minute"
       },
       "forbidden_search": [
-        "gpt_meeting_minute_manage as search"
+        "gpt_meeting_minute_read as search"
       ]
     },
     "diagram_wbs": {
@@ -238,13 +236,13 @@
     },
     "evidence": {
       "gpt_operations": [
-        "gpt_list_evidence",
-        "gpt_manage_evidence",
+        "gpt_evidence_read",
+        "gpt_prepare_evidence_change",
         "gpt_commit_proposal"
       ],
       "mcp_tools": [
-        "list_evidence",
-        "prepare_manage_evidence",
+        "evidence_read",
+        "prepare_evidence_change",
         "commit_proposal"
       ],
       "pipeline": [
@@ -258,18 +256,16 @@
     },
     "dashboard": {
       "gpt_operations": [
-        "gpt_activate_revision",
+        "gpt_prepare_governed_operation",
         "gpt_analyze",
         "gpt_commit_proposal",
-        "gpt_get_process_timeline",
-        "gpt_recalculate_dashboard"
+        "gpt_get_process_timeline"
       ],
       "mcp_tools": [
         "analyze",
         "commit_proposal",
         "get_process_timeline",
-        "prepare_activate_revision",
-        "prepare_recalculate_dashboard"
+        "prepare_governed_operation"
       ],
       "pipeline": [
         "analyze_read",
@@ -280,13 +276,13 @@
     "shared_resource": {
       "gpt_operations": [
         "gpt_prepare_record_change",
-        "gpt_adjust_shared_resource_cost",
+        "gpt_prepare_governed_operation",
         "gpt_commit_proposal",
         "gpt_search_records"
       ],
       "mcp_tools": [
         "prepare_record_change",
-        "prepare_adjust_shared_resource_cost",
+        "prepare_governed_operation",
         "commit_proposal",
         "search_records"
       ],
@@ -331,29 +327,47 @@
         "gpt_get_catalog",
         "gpt_get_process_context",
         "gpt_get_process_timeline",
-        "gpt_list_evidence"
+        "gpt_evidence_read"
       ],
       "mcp_tools": [
         "get_my_context",
         "get_catalog",
         "get_process_context",
         "get_process_timeline",
-        "list_evidence",
-        "meeting_minute_read",
-        "generate_from_transcript"
+        "evidence_read",
+        "meeting_minute_read"
       ],
       "pipeline": [
         "read_context"
       ],
       "confirmation_policy": "read_only"
     },
+    "collaboration": {
+      "gpt_operations": [
+        "gpt_collaboration_read",
+        "gpt_prepare_collaboration_change",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "collaboration_read",
+        "prepare_collaboration_change",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "read_tasks_or_rooms",
+        "prepare_action",
+        "policy_gate",
+        "commit_proposal",
+        "read_back"
+      ],
+      "confirmation_policy": "mixed",
+      "notes": "Portal parity — tasks via TaskCommandUseCases, rooms/messages via InteractionRoomUseCases. cancel_task|delete_message confirm_before_act; outros auto_act. Binary attachments BLOCKED_BY_PLATFORM."
+    },
     "diagnostic_v1": {
       "gpt_operations": [],
       "mcp_tools": [
-        "get_diagnostic",
-        "list_diagnostics_by_revision",
-        "prepare_create_diagnostic",
-        "prepare_manage_diagnostic",
+        "diagnostic_read",
+        "prepare_diagnostic_change",
         "commit_proposal"
       ],
       "pipeline": [

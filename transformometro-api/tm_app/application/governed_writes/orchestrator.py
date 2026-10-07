@@ -49,6 +49,9 @@ from tm_app.application.gpt_actions.dispatch_service import (
 from tm_app.application.gpt_actions.improvement_package_service import (
     GuidedImprovementPackageService,
 )
+from tm_app.application.gpt_actions.parity_capabilities_service import (
+    MEETING_MINUTE_READ_ACTION_VALUES,
+)
 from tm_app.core.auth_actor import actor_from_request
 
 logger = logging.getLogger(__name__)
@@ -69,22 +72,138 @@ WRITE_CAPABILITIES = frozenset(
         "meeting_minute_manage",
         _DIAG_CREATE,
         _DIAG_MANAGE,
+        # Portal parity — Transformômetro tasks
+        "create_task",
+        "update_task",
+        "complete_task",
+        "cancel_task",
+        # Portal parity — interaction room / messages
+        "open_interaction_room",
+        "post_interaction_message",
+        "edit_interaction_message",
+        "delete_interaction_message",
+        "toggle_interaction_reaction",
+        "pin_interaction_message",
+        "unpin_interaction_message",
+        "mark_interaction_read",
+        # Portal parity — governed special operations (signature profile
+        # metadata; BPMN XML macro-diagram import — text transport).
+        "update_signature_profile",
+        "import_diagram_bpmn_xml",
     }
 )
 
-# meeting_minute_manage actions that are READ (no prepare)
-MEETING_MANAGE_READ_ACTIONS = frozenset(
+# Transformômetro task capabilities (Portal parity — TaskCommandUseCases).
+TASK_CAPABILITIES = frozenset(
+    {"create_task", "update_task", "complete_task", "cancel_task"}
+)
+
+# Interaction room capabilities (Portal parity — InteractionRoomUseCases).
+INTERACTION_ROOM_CAPABILITIES = frozenset(
     {
-        "pending_signatures",
-        "audit",
-        "versions",
-        "participants",
-        "signers",
+        "open_interaction_room",
+        "post_interaction_message",
+        "edit_interaction_message",
+        "delete_interaction_message",
+        "toggle_interaction_reaction",
+        "pin_interaction_message",
+        "unpin_interaction_message",
+        "mark_interaction_read",
     }
 )
 
-# generate_from_transcript = PREPARE-like analysis, no persist
-MEETING_MANAGE_NON_ACT = frozenset({"generate_from_transcript"}) | MEETING_MANAGE_READ_ACTIONS
+# Tool/Actions ``action`` argument → orchestrator capability. The transport
+# passes a coarse action; the semantic capability (which carries the
+# canonical execution_policy) is resolved here — never by transport prose.
+# Semantic family: collaboration (tasks + interaction rooms share the
+# same governed PREPARE family; policy stays per-capability).
+COLLABORATION_ACTION_TO_CAPABILITY = {
+    "create_task": "create_task",
+    "update_task": "update_task",
+    "complete_task": "complete_task",
+    "cancel_task": "cancel_task",
+    "open_room": "open_interaction_room",
+    "post_message": "post_interaction_message",
+    "edit_message": "edit_interaction_message",
+    "delete_message": "delete_interaction_message",
+    "toggle_reaction": "toggle_interaction_reaction",
+    "pin_message": "pin_interaction_message",
+    "unpin_message": "unpin_interaction_message",
+    "mark_room_read": "mark_interaction_read",
+}
+
+# Collaboration READ surface — shared by MCP + GPT Actions projections.
+COLLABORATION_READ_ACTIONS = frozenset(
+    {
+        "my_tasks",
+        "task",
+        "process_tasks",
+        "rooms",
+        "room",
+        "messages",
+        "attachments",
+    }
+)
+
+# Back-compat alias — legacy single-domain transports (task_read /
+# prepare_task, interaction_room_read / prepare_interaction_room) kept
+# for internal callers; resolves to the same canonical capabilities.
+TASK_ACTION_TO_CAPABILITY = {
+    "create": "create_task",
+    "update": "update_task",
+    "complete": "complete_task",
+    "cancel": "cancel_task",
+}
+
+INTERACTION_ROOM_ACTION_TO_CAPABILITY = {
+    "open": "open_interaction_room",
+    "post_message": "post_interaction_message",
+    "edit_message": "edit_interaction_message",
+    "delete_message": "delete_interaction_message",
+    "reaction": "toggle_interaction_reaction",
+    "pin": "pin_interaction_message",
+    "unpin": "unpin_interaction_message",
+    "mark_read": "mark_interaction_read",
+}
+
+# Semantic family: special governed operations — one-shot domain writes
+# that are neither records nor collaboration (revision lifecycle,
+# dashboard recompute, improvement package, shared-resource cost).
+GOVERNED_OPERATION_ACTION_TO_CAPABILITY = {
+    "activate_revision": "activate_revision",
+    "recalculate_dashboard": "recalculate_dashboard",
+    "commit_improvement_package": "commit_improvement_package",
+    "adjust_shared_resource_cost": "adjust_shared_resource_cost",
+    "update_signature_profile": "update_signature_profile",
+    "import_diagram_bpmn_xml": "import_diagram_bpmn_xml",
+}
+
+# Semantic family: meeting minutes — workflow transitions and minute
+# manage writes share one PREPARE surface; READ actions stay on the
+# meeting_minute_read tool. Policy stays per-capability.
+MEETING_MINUTE_ACTION_TO_CAPABILITY = {
+    "send": "meeting_minute_workflow",
+    "finalize": "meeting_minute_workflow",
+    "cancel": "meeting_minute_workflow",
+    "refuse": "meeting_minute_workflow",
+    "resend": "meeting_minute_manage",
+    "create_version": "meeting_minute_manage",
+    "set_participants": "meeting_minute_manage",
+    "set_signers": "meeting_minute_manage",
+}
+
+# Canonical meeting_minute_read surface — READ actions plus the
+# non-persisting transcript analysis. Single source:
+# parity_capabilities_service.MEETING_MINUTE_READ_ACTION_VALUES
+# (domain vocabulary owner); shared by MCP + GPT Actions.
+MEETING_MINUTE_READ_ACTIONS = MEETING_MINUTE_READ_ACTION_VALUES
+
+# meeting_minute_manage actions that are READ (no prepare) — derived
+# from the canonical set; transcript generation is analysis-only.
+MEETING_MANAGE_READ_ACTIONS = MEETING_MINUTE_READ_ACTIONS - {
+    "generate_from_transcript"
+}
+MEETING_MANAGE_NON_ACT = MEETING_MINUTE_READ_ACTIONS
 
 
 def _actor(request: Request) -> tuple[str, str | None]:
@@ -212,6 +331,10 @@ class GovernedWriteOrchestrator:
             return self._prep_evidence(request, args)
         if capability == "adjust_shared_resource_cost":
             return self._prep_cost(request, args)
+        if capability == "update_signature_profile":
+            return self._prep_signature_profile(request, args)
+        if capability == "import_diagram_bpmn_xml":
+            return self._prep_bpmn_import(request, args)
         if capability == "meeting_minute_manage":
             return self._prep_minute_manage(request, args)
         if capability in (_DIAG_CREATE, _DIAG_MANAGE):
@@ -220,6 +343,12 @@ class GovernedWriteOrchestrator:
             if capability == _DIAG_CREATE:
                 return _diag_prepare_create(stack, args)
             return _diag_prepare_manage(stack, args)
+        if capability in TASK_CAPABILITIES:
+            return self._prep_task(request, capability=capability, args=args)
+        if capability in INTERACTION_ROOM_CAPABILITIES:
+            return self._prep_interaction_room(
+                request, capability=capability, args=args
+            )
         raise GovernedWriteError(
             f"Prepare not implemented for '{capability}'.",
             code=VALIDATION,
@@ -234,6 +363,152 @@ class GovernedWriteOrchestrator:
                 status_code=500,
             )
         return self._diagnostic_stack
+
+    # --- Portal parity: tasks / interaction room ---------------------------
+    # PREPARE only reads current state and seals the exact change — the
+    # canonical use cases (TaskCommandUseCases / InteractionRoomUseCases)
+    # execute the write at ACT and re-validate AuthZ + domain rules.
+
+    def _prep_task(
+        self, request: Request, *, capability: str, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        self._dispatch._require_access(request)
+        action = str(args.get("action") or "").strip()
+        task_id = str(args.get("task_id") or "").strip()
+        missing: list[str] = []
+        if capability == "create_task":
+            if not str(args.get("title") or "").strip():
+                missing.append("title")
+            current_fp = fingerprint(
+                {"resource": "transformometro_task", "exists": False}
+            )
+            resource_id = None
+        else:
+            if not task_id:
+                missing.append("task_id")
+                current_fp = fingerprint({"task_id": None})
+                resource_id = None
+            else:
+                current = self._dispatch.get_task(request, task_id)
+                current_fp = fingerprint(current)
+                resource_id = task_id
+        if capability == "update_task" and not str(
+            args.get("title") or ""
+        ).strip():
+            missing.append("title")
+        exact = {
+            "action": action,
+            "task_id": task_id or None,
+            "title": args.get("title"),
+            "description": args.get("description"),
+            "assignee_user_id": args.get("assignee_user_id"),
+            "due_date": args.get("due_date"),
+            "source_interaction_message_id": args.get(
+                "source_interaction_message_id"
+            ),
+        }
+        return {
+            "resource_type": "transformometro_task",
+            "resource_id": resource_id,
+            "current_state_fingerprint": current_fp,
+            "exact_change": exact,
+            "validation_result": {
+                "ready": not missing,
+                "missing": missing,
+                "checks": ["authz_probe", "current_state_read"],
+            },
+            "consequential_impact": {
+                "persists": True,
+                "operation": capability,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "task_state",
+                "action": action,
+                "task_id": resource_id,
+            },
+        }
+
+    def _prep_interaction_room(
+        self, request: Request, *, capability: str, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        self._dispatch._require_access(request)
+        action = str(args.get("action") or "").strip()
+        room_id = str(args.get("room_id") or "").strip()
+        message_id = str(args.get("message_id") or "").strip()
+        missing: list[str] = []
+        resource_id = None
+        if capability == "open_interaction_room":
+            processo_id = str(args.get("processo_id") or "").strip()
+            if not processo_id:
+                missing.append("processo_id")
+            current_fp = fingerprint(
+                {"interaction_room": "get_or_create", "processo_id": processo_id}
+            )
+        elif capability in {"post_interaction_message", "mark_interaction_read"}:
+            if not room_id:
+                missing.append("room_id")
+                current_fp = fingerprint({"room_id": None})
+            else:
+                current_fp = fingerprint(
+                    self._dispatch.get_room(request, room_id)
+                )
+                resource_id = room_id
+            if capability == "post_interaction_message" and not str(
+                args.get("content") or ""
+            ).strip():
+                missing.append("content")
+        else:
+            for field, value in (("room_id", room_id), ("message_id", message_id)):
+                if not value:
+                    missing.append(field)
+            if missing:
+                current_fp = fingerprint({"room_id": room_id or None})
+            else:
+                current_fp = fingerprint(
+                    self._dispatch.get_room_message(request, room_id, message_id)
+                )
+                resource_id = message_id
+            if capability in {
+                "edit_interaction_message",
+            } and not str(args.get("content") or "").strip():
+                missing.append("content")
+            if capability == "toggle_interaction_reaction" and not str(
+                args.get("reaction") or ""
+            ).strip():
+                missing.append("reaction")
+        exact = {
+            "action": action,
+            "processo_id": args.get("processo_id"),
+            "room_id": room_id or None,
+            "message_id": message_id or None,
+            "content": args.get("content"),
+            "parent_id": args.get("parent_id"),
+            "mentions": args.get("mentions"),
+            "reaction": args.get("reaction"),
+        }
+        return {
+            "resource_type": "interaction_room",
+            "resource_id": resource_id,
+            "current_state_fingerprint": current_fp,
+            "exact_change": exact,
+            "validation_result": {
+                "ready": not missing,
+                "missing": missing,
+                "checks": ["authz_probe", "current_state_read"],
+            },
+            "consequential_impact": {
+                "persists": True,
+                "operation": capability,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "interaction_room_state",
+                "action": action,
+                "room_id": room_id or None,
+                "message_id": message_id or None,
+            },
+        }
 
     def _prep_create(self, request: Request, args: dict[str, Any]) -> dict[str, Any]:
         entity = str(args.get("entity") or "").strip()
@@ -289,12 +564,23 @@ class GovernedWriteOrchestrator:
             "vigencia_inicio" in data or "vigencia_fim" in data or "data" in args
         ):
             conf["confirm_vigencia_change_may_be_required"] = True
+        validation: dict[str, Any] = {"ready": True}
+        if entity == "instance" and "contexto" in data:
+            from tm_app.domain.decomposition.decomposition_tree_v1 import (
+                DecompositionValidationError,
+                validate_instancia_contexto_v1,
+            )
+
+            try:
+                validate_instancia_contexto_v1(data["contexto"])
+            except DecompositionValidationError as exc:
+                validation = {"ready": False, "errors": [str(exc)]}
         return {
             "resource_type": entity,
             "resource_id": record_id,
             "current_state_fingerprint": fingerprint(current),
             "exact_change": exact,
-            "validation_result": {"ready": True},
+            "validation_result": validation,
             "consequential_impact": {"persists": True, "operation": "update"},
             "confirmation_requirement": conf,
             "expected_postcondition": {
@@ -415,6 +701,18 @@ class GovernedWriteOrchestrator:
             raise GptActionsError(str(exc), 403) from exc
         except LookupError as exc:
             raise GptActionsError(str(exc), 404) from exc
+        from tm_app.application.gpt_actions.entities import GptMeetingMinuteWorkflow
+
+        try:
+            GptMeetingMinuteWorkflow(action)
+        except ValueError as exc:
+            raise GptActionsError(
+                f"Invalid action '{action}'. Allowed: {[a.value for a in GptMeetingMinuteWorkflow]}",
+                400,
+            ) from exc
+        validation = {"ready": True}
+        if action == GptMeetingMinuteWorkflow.REFUSE.value and not str(reason or "").strip():
+            validation = {"ready": False, "missing": ["reason"]}
         current = self._dispatch.get_record(request, "meeting_minute", minute_id)
         return {
             "resource_type": "meeting_minute",
@@ -425,7 +723,7 @@ class GovernedWriteOrchestrator:
                 "action": action,
                 "reason": reason,
             },
-            "validation_result": {"ready": True},
+            "validation_result": validation,
             "consequential_impact": {
                 "persists": True,
                 "operation": f"meeting_workflow_{action}",
@@ -558,6 +856,67 @@ class GovernedWriteOrchestrator:
             "consequential_impact": {"persists": True, "operation": "adjust_cost"},
             "confirmation_requirement": {},
             "expected_postcondition": {"type": "cost_verified_flag"},
+        }
+
+    def _prep_signature_profile(
+        self, request: Request, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        display_name = str(args.get("display_name") or "").strip()
+        if not display_name:
+            raise GptActionsError("display_name is required.", 400)
+        # AuthZ probe at PREPARE: read current profile as the caller (the
+        # canonical service enforces authentication again at ACT).
+        current = self._dispatch.get_my_signature_profile(request)
+        return {
+            "resource_type": "user_signature_profile",
+            "resource_id": "me",
+            "current_state_fingerprint": fingerprint(current),
+            "exact_change": {"display_name": display_name},
+            "validation_result": {"ready": True},
+            "consequential_impact": {
+                "persists": True,
+                "operation": "update_signature_profile",
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "signature_profile_display_name",
+                "display_name": display_name,
+            },
+        }
+
+    def _prep_bpmn_import(
+        self, request: Request, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        processo_id = str(
+            args.get("processo_id") or args.get("id") or ""
+        ).strip()
+        xml = str(args.get("xml") or "")
+        # PREPARE: manage-scope AuthZ + existence + dry XML parse.
+        validation = self._dispatch.validate_bpmn_import(
+            request, processo_id=processo_id, xml=xml
+        )
+        return {
+            "resource_type": "process_diagram",
+            "resource_id": processo_id,
+            "current_state_fingerprint": fingerprint(
+                validation["current_diagram"]
+            ),
+            "exact_change": {"processo_id": processo_id, "xml": xml},
+            "validation_result": {
+                "ready": True,
+                "parsed_nodes": validation["parsed_nodes"],
+                "parsed_edges": validation["parsed_edges"],
+            },
+            "consequential_impact": {
+                "persists": True,
+                "operation": "import_diagram_bpmn_xml",
+                "overwrites_macro_diagram": True,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "diagram_bpmn_imported",
+                "processo_id": processo_id,
+            },
         }
 
     def _prep_minute_manage(
@@ -736,6 +1095,16 @@ class GovernedWriteOrchestrator:
                     str(change["recurso_compartilhado_id"]),
                 )
             )
+        if cap == "update_signature_profile":
+            return fingerprint(
+                self._dispatch.get_my_signature_profile(request)
+            )
+        if cap == "import_diagram_bpmn_xml":
+            return fingerprint(
+                self._dispatch.read_process_diagram(
+                    request, str(change["processo_id"])
+                )
+            )
         if cap == "meeting_minute_manage":
             mid = change.get("minute_id")
             if mid:
@@ -746,6 +1115,31 @@ class GovernedWriteOrchestrator:
         if cap in (_DIAG_CREATE, _DIAG_MANAGE):
             return _diag_recompute_fingerprint(
                 self._require_diag_stack(), cap, change
+            )
+        if cap == "create_task":
+            return fingerprint(
+                {"resource": "transformometro_task", "exists": False}
+            )
+        if cap in TASK_CAPABILITIES:
+            return fingerprint(
+                self._dispatch.get_task(request, str(change["task_id"]))
+            )
+        if cap == "open_interaction_room":
+            return fingerprint(
+                {
+                    "interaction_room": "get_or_create",
+                    "processo_id": change.get("processo_id"),
+                }
+            )
+        if cap in {"post_interaction_message", "mark_interaction_read"}:
+            return fingerprint(
+                self._dispatch.get_room(request, str(change["room_id"]))
+            )
+        if cap in INTERACTION_ROOM_CAPABILITIES:
+            return fingerprint(
+                self._dispatch.get_room_message(
+                    request, str(change["room_id"]), str(change["message_id"])
+                )
             )
         raise GovernedWriteError(
             "Fingerprint recompute unsupported.",
@@ -822,6 +1216,24 @@ class GovernedWriteOrchestrator:
                 valor_mensal=float(change["valor_mensal"]),
                 vigente_desde=str(change["vigente_desde"]),
                 observacoes=change.get("observacoes"),
+            )
+        if cap == "update_signature_profile":
+            return self._dispatch.update_signature_profile(
+                request, display_name=str(change["display_name"])
+            )
+        if cap == "import_diagram_bpmn_xml":
+            return self._dispatch.import_diagram_bpmn_xml(
+                request,
+                processo_id=str(change["processo_id"]),
+                xml=str(change["xml"]),
+            )
+        if cap in TASK_CAPABILITIES:
+            return self._dispatch.task_write(
+                request, str(change["action"]), change
+            )
+        if cap in INTERACTION_ROOM_CAPABILITIES:
+            return self._dispatch.room_write(
+                request, str(change["action"]), change
             )
         if cap == "meeting_minute_manage":
             return self._dispatch.manage_meeting_minute(
@@ -956,6 +1368,63 @@ class GovernedWriteOrchestrator:
                     data={"write_result": write_result},
                 )
             return write_result
+
+        if cap == "update_signature_profile":
+            read = self._dispatch.get_my_signature_profile(request)
+            expected_name = str(
+                expected.get("display_name") or change.get("display_name") or ""
+            )
+            if str(read.get("display_name") or "") != expected_name:
+                raise GovernedWriteError(
+                    "Signature profile update not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                )
+            return {"signature_profile": read, "write_result": write_result}
+
+        if cap == "import_diagram_bpmn_xml":
+            if not isinstance(write_result, dict) or not write_result.get(
+                "verified"
+            ):
+                raise GovernedWriteError(
+                    "BPMN import not verified by authoritative read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                    data={"write_result": write_result},
+                )
+            read = self._dispatch.read_process_diagram(
+                request, str(change["processo_id"])
+            )
+            return {"diagram": read, "write_result": write_result}
+
+        if cap in TASK_CAPABILITIES:
+            # Use cases already verify read-back; assert the authoritative
+            # state matches the sealed postcondition.
+            tid = str(change.get("task_id") or (write_result or {}).get("id") or "")
+            read = self._dispatch.get_task(request, tid)
+            if cap == "complete_task" and read.get("status") != "completed":
+                raise GovernedWriteError(
+                    "Task completion not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                )
+            if cap == "cancel_task" and read.get("status") != "cancelled":
+                raise GovernedWriteError(
+                    "Task cancellation not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                )
+            return {"task": read, "write_result": write_result}
+
+        if cap in INTERACTION_ROOM_CAPABILITIES:
+            if not isinstance(write_result, dict) or not write_result.get("id"):
+                raise GovernedWriteError(
+                    "Interaction-room write not confirmed by read-back.",
+                    code=OUTCOME_VERIFICATION_FAILED,
+                    status_code=409,
+                    data={"write_result": write_result},
+                )
+            return {"interaction_room": write_result}
 
         if cap == "meeting_minute_manage":
             if isinstance(write_result, dict) and write_result.get("verified") is False:

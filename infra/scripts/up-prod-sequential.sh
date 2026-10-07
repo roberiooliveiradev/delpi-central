@@ -24,6 +24,8 @@ REPO_ROOT="$(cd "$COMPOSE_DIR/.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=compose-filter-services.sh
 source "$SCRIPT_DIR/compose-filter-services.sh"
+# shellcheck source=gateway-static-upstreams.sh
+source "$SCRIPT_DIR/gateway-static-upstreams.sh"
 cd "$COMPOSE_DIR"
 
 BUILD=false
@@ -381,6 +383,10 @@ echo "build=$BUILD fase=$FASE cpu=$USE_CPU heavy=$INCLUDE_HEAVY gpu=$INCLUDE_GPU
 echo "COMPOSE_PARALLEL_LIMIT=$COMPOSE_PARALLEL_LIMIT"
 echo ""
 
+mapfile -t GATEWAY_STATIC_UPSTREAMS < <(gateway_static_upstream_services "$REPO_ROOT/gateway/nginx.conf")
+GATEWAY_RELOADED=false
+GATEWAY_RELOAD_FAILED=false
+
 idx=0
 for svc in "${PLAN[@]}"; do
   idx=$((idx + 1))
@@ -393,10 +399,24 @@ for svc in "${PLAN[@]}"; do
     postgres-plugins) wait_pg delpi-postgres-plugins plugins_user plugins_hub ;;
   esac
 
+  if gateway_is_static_upstream "$svc" "${GATEWAY_STATIC_UPSTREAMS[@]}"; then
+    if gateway_reload_for_service "$svc" "$DRY_RUN" "${GATEWAY_STATIC_UPSTREAMS[@]}"; then
+      GATEWAY_RELOADED=true
+    else
+      GATEWAY_RELOAD_FAILED=true
+    fi
+  fi
+
   if [[ "$BUILD" == true ]]; then
     sleep 2
   fi
 done
+
+if [[ "$GATEWAY_RELOADED" == true ]]; then
+  echo ""
+  echo "=== Verificando upstreams estáticos do gateway ==="
+  gateway_verify_upstreams "$DRY_RUN" || GATEWAY_RELOAD_FAILED=true
+fi
 
 PUBLIC_URL="${PUBLIC_BASE_URL:-https://localhost}"
 if [[ -f .env ]]; then
@@ -417,4 +437,11 @@ docker ps --format 'table {{.Names}}\t{{.Status}}' | grep delpi | head -20 || tr
 total="$(docker ps --filter name=delpi- -q | wc -l)"
 if [[ "$total" -gt 20 ]]; then
   echo "... ($total containers delpi-* no total)"
+fi
+
+if [[ "$GATEWAY_RELOAD_FAILED" == true ]]; then
+  echo "" >&2
+  echo "ERRO: gateway não confirmou os upstreams estáticos (${GATEWAY_STATIC_UPSTREAMS[*]}) — site pode estar em 502." >&2
+  echo "Ver logs: docker logs --tail 50 $GATEWAY_CONTAINER ; recuperação: docker restart $GATEWAY_CONTAINER" >&2
+  exit 1
 fi

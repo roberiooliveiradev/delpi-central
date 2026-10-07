@@ -16,7 +16,8 @@ da rota, que permanece o contrato final no wire.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import StrEnum
 from typing import Any, Mapping, Sequence
@@ -69,6 +70,9 @@ EXPRESSION_SPEC_VERSION = 1
 CONTEXT_TODAY = "today"
 CONTEXT_NOW = "now"
 PARAM_REF_PREFIX = "param."
+# Variáveis de input do slide — namespace separado de ``param.*``; nunca vão ao wire.
+INPUT_REF_PREFIX = "input."
+INPUT_VARIABLE_KEY_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
 
 
 class ExpressionPhase(StrEnum):
@@ -90,6 +94,23 @@ class EvaluationContext:
     now: datetime
     timezone: str
     culture: str
+
+
+@dataclass(frozen=True, slots=True)
+class InputVariableScope:
+    """Variáveis ``input.<key>`` declaradas no slide, já validadas pelo contrato.
+
+    ``schemas``: key → valueSchema; ``values``: key → valor tipado efetivo
+    (override de sessão válido → defaultValue; ausente = sem valor);
+    ``invalid``: key → código do override rejeitado (fail closed em quem referencia).
+    """
+
+    schemas: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    values: Mapping[str, Any] = field(default_factory=dict)
+    invalid: Mapping[str, str] = field(default_factory=dict)
+
+
+EMPTY_INPUT_SCOPE = InputVariableScope()
 
 
 @dataclass(frozen=True, slots=True)
@@ -319,6 +340,98 @@ def _identifier_types(schema: Mapping[str, Any]) -> dict[str, str]:
     return types
 
 
+def _parameter_reference_scope(
+    schema: Mapping[str, Any],
+    input_scope: InputVariableScope | None,
+    *,
+    deferred_input_keys: frozenset[str] = frozenset(),
+) -> tuple[frozenset[str], dict[str, str]]:
+    """Refs permitidas + tipos: contexto, ``param.<schema>`` e ``input.<declarada>``.
+
+    ``deferred_input_keys``: refs ``input.*`` ainda não declaradas no estado
+    parcial de uma op — tipo ANY; a declaração é exigida no nativeConfig candidato.
+    """
+    allowed = set(_allowed_param_identifiers(schema))
+    types = _identifier_types(schema)
+    scope = input_scope or EMPTY_INPUT_SCOPE
+    for key, value_schema in scope.schemas.items():
+        ref = f"{INPUT_REF_PREFIX}{key}"
+        allowed.add(ref)
+        types[ref] = param_spec_expected_mtype(value_schema) or TYPE_ANY
+    for key in deferred_input_keys:
+        ref = f"{INPUT_REF_PREFIX}{key}"
+        if ref not in allowed:
+            allowed.add(ref)
+            types[ref] = TYPE_ANY
+    return frozenset(allowed), types
+
+
+def _input_environment(input_scope: InputVariableScope | None) -> dict[str, Any]:
+    env: dict[str, Any] = {}
+    scope = input_scope or EMPTY_INPUT_SCOPE
+    for key, value in scope.values.items():
+        if param_spec_expected_mtype(scope.schemas.get(key)) == "date" and isinstance(value, str):
+            try:
+                value = date.fromisoformat(value)
+            except ValueError:
+                continue
+        env[f"{INPUT_REF_PREFIX}{key}"] = value
+    return env
+
+
+def _referenced_identifiers(node: CompiledExpression) -> set[str]:
+    found: set[str] = set()
+    stack = [node]
+    while stack:
+        item = stack.pop()
+        if item.kind == "identifier":
+            found.add(str(item.value or ""))
+        stack.extend(item.children)
+    return found
+
+
+def expression_input_refs(raw_value: Any) -> frozenset[str]:
+    """Keys ``input.<key>`` referenciadas por um ExpressionSpec (vazio se malformado)."""
+    if not is_expression_value(raw_value):
+        return frozenset()
+    spec = raw_value.get(EXPRESSION_PARAM_MARKER)
+    try:
+        node = CompiledExpression.from_dict(
+            spec.get("expression") if isinstance(spec, Mapping) else None,
+            max_depth=int(value_expression_setting("maxDepth", 40)),
+            max_nodes=int(value_expression_setting("maxNodes", 256)),
+            max_string_bytes=int(value_expression_setting("maxStringBytes", 512)),
+        )
+    except ExpressionSpecError:
+        return frozenset()
+    return frozenset(
+        name[len(INPUT_REF_PREFIX) :]
+        for name in _referenced_identifiers(node)
+        if name.startswith(INPUT_REF_PREFIX)
+    )
+
+
+def _assert_input_refs_bound(
+    node: CompiledExpression, input_scope: InputVariableScope | None
+) -> None:
+    """Variável referenciada precisa ter valor válido — sem fallback silencioso."""
+    scope = input_scope or EMPTY_INPUT_SCOPE
+    for name in sorted(_referenced_identifiers(node)):
+        if not name.startswith(INPUT_REF_PREFIX):
+            continue
+        key = name[len(INPUT_REF_PREFIX) :]
+        if key in scope.invalid:
+            _fail(
+                "m.input_value_invalid",
+                f'O valor selecionado para a variável "{key}" é inválido.',
+            )
+        if key not in scope.values:
+            _fail(
+                "m.input_value_missing",
+                f'A variável "{key}" não tem valor (sem padrão nem seleção).',
+            )
+
+
 def _consume_preset_for_expression_overrides(
     params: dict[str, Any],
     *,
@@ -431,12 +544,14 @@ def resolve_param_expressions(
     *,
     route: Mapping[str, Any] | None,
     context: EvaluationContext | None = None,
+    input_scope: InputVariableScope | None = None,
 ) -> ParamExpressionResolution:
     """Resolve ExpressionSpecs em params merged → escalares + trace tipado.
 
     Ordem canônica: merge_data_params → esta função → validação de rota/AuthZ
     → preset/defaults → wire. Em erro, ``error`` vem preenchido e o caller não
-    deve chamar a rota (error != empty).
+    deve chamar a rota (error != empty). ``input_scope`` expõe ``input.<key>``
+    só ao ambiente de avaliação — nunca entra em ``params``.
     """
     params = dict(merged_params) if isinstance(merged_params, Mapping) else {}
     trace: list[dict[str, Any]] = []
@@ -460,10 +575,9 @@ def resolve_param_expressions(
         if isinstance(route, Mapping) and isinstance(route.get("paramSchema"), Mapping)
         else {}
     )
-    allowed_ids = _allowed_param_identifiers(schema)
-    id_types = _identifier_types(schema)
+    allowed_ids, id_types = _parameter_reference_scope(schema, input_scope)
     registry = get_function_registry()
-    env = _environment(ctx, params)
+    env = _environment(ctx, params) | _input_environment(input_scope)
     for key in expression_keys:
         raw = params[key]
         entry: dict[str, Any] = {
@@ -489,6 +603,7 @@ def resolve_param_expressions(
                 expected_type=entry["expectedType"],
                 param_name=str(key),
             )
+            _assert_input_refs_bound(node, input_scope)
             value = evaluate_compiled_expression(
                 node,
                 environment=env,
@@ -541,9 +656,16 @@ def validate_expression_param_value(
     raw_value: Any,
     *,
     route: Mapping[str, Any] | None,
+    input_scope: InputVariableScope | None = None,
+    defer_undeclared_inputs: bool = False,
 ) -> None:
     """Validação de escrita: spec + fase + refs (o tipo de saída só é avaliado
-    no runtime — a coerção fica em ``_coerce_result``)."""
+    no runtime — a coerção fica em ``_coerce_result``).
+
+    ``defer_undeclared_inputs``: validação por op (estado parcial) aceita
+    ``input.<key>`` sintaticamente válido ainda não declarado; o nativeConfig
+    candidato (``TvDataConfigValidationService``) exige a declaração.
+    """
     schema = (
         route.get("paramSchema")
         if isinstance(route, Mapping) and isinstance(route.get("paramSchema"), Mapping)
@@ -554,11 +676,23 @@ def validate_expression_param_value(
             "m.expression_param_not_allowed",
             f"O parâmetro {param_name} não aceita expressão nesta rota.",
         )
+    deferred: frozenset[str] = frozenset()
+    if defer_undeclared_inputs:
+        declared = set((input_scope or EMPTY_INPUT_SCOPE).schemas)
+        deferred = frozenset(
+            key
+            for key in expression_input_refs(raw_value)
+            if key not in declared and INPUT_VARIABLE_KEY_PATTERN.match(key)
+        )
+    allowed_ids, id_types = _parameter_reference_scope(
+        schema, input_scope, deferred_input_keys=deferred
+    )
     compile_expression_spec(
         raw_value,
         phase=ExpressionPhase.PARAMETER,
-        allowed_identifiers=_allowed_param_identifiers(schema),
-        identifier_types=_identifier_types(schema),
+        allowed_identifiers=allowed_ids,
+        # Ref adiada ainda não tem tipo: o typecheck completo roda no candidato.
+        identifier_types=None if deferred else id_types,
         expected_type=param_spec_expected_mtype(schema.get(param_name)),
         param_name=param_name,
     )
@@ -608,8 +742,12 @@ def validate_shared_layer_expressions(
     params: Mapping[str, Any] | None,
     *,
     routes: Sequence[Mapping[str, Any]],
+    input_scope: InputVariableScope | None = None,
 ) -> None:
     """Validação de escrita para ExpressionSpec em ``dataFilters``/``dataDefaults``.
+
+    ``input_scope``: variáveis do slide (só ``dataFilters``); ``dataDefaults`` da
+    programação não tem slide, então ``input.*`` segue proibido ali.
 
     Regra do escopo: a chave precisa ser declarada no ``paramSchema`` de ≥1
     rota consumidora e nenhuma rota que a declara pode proibir expressão
@@ -658,7 +796,9 @@ def validate_shared_layer_expressions(
                 f"O parâmetro {key_s} não aceita expressão em todas as rotas "
                 "que o declaram neste escopo.",
             )
-        validate_expression_param_value(key_s, value, route=union_route)
+        validate_expression_param_value(
+            key_s, value, route=union_route, input_scope=input_scope
+        )
 
 
 # Exemplos canônicos de AST — cada um deve passar por CompiledExpression.from_dict

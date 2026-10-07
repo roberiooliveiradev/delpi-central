@@ -181,7 +181,7 @@ describe("DataParamFields — preset × expressão (conflito deliberado)", () =>
     expect(onChange.mock.calls[0][0].start_date).toBe("");
   });
 
-  it("valor fixo→expressão com literal gravado pede confirmação e abre o drawer", () => {
+  it("valor fixo→expressão com literal gravado pede confirmação e abre o modal", () => {
     const onChange = vi.fn();
     const onEditExpression = vi.fn();
     render(
@@ -200,7 +200,7 @@ describe("DataParamFields — preset × expressão (conflito deliberado)", () =>
     expect(onChange).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Trocar para expressão" }));
     expect(onChange).toHaveBeenCalledTimes(1);
-    // Spec inicial «hoje» + drawer aberto para o mesmo param.
+    // Spec inicial «hoje» + modal aberto para o mesmo param.
     expect(onChange.mock.calls[0][0].start_date).toEqual(EXPR);
     expect(onEditExpression).toHaveBeenCalledTimes(1);
     expect(onEditExpression.mock.calls[0][0].paramKey).toBe("start_date");

@@ -39,6 +39,12 @@ from app.application.services.process_pending_notification_dispatches_service im
 from app.application.use_cases.process_birthday_notifications_use_case import (
     ProcessBirthdayNotificationsUseCase,
 )
+from app.application.use_cases.list_notification_category_users_use_case import (
+    ListNotificationCategoryUsersUseCase,
+)
+from app.application.use_cases.update_user_notification_category_preference_use_case import (
+    UpdateUserNotificationCategoryPreferenceUseCase,
+)
 from app.application.use_cases.manage_notification_templates_use_case import (
     CreateNotificationCustomTemplateUseCase,
     DeleteNotificationCustomTemplateUseCase,
@@ -559,3 +565,74 @@ def integrations_dispatch_notifications():
         return api_error("validation_error", str(exc), status=400)
     except Exception as exc:
         return api_error("dispatch_failed", str(exc))
+
+
+@admin_notifications_bp.route("/category-users", methods=["GET"])
+@require_superadmin()
+def list_notification_category_users():
+    category = (request.args.get("category") or "").strip()
+    query = request.args.get("q")
+    try:
+        page = int(request.args.get("page", 1))
+        page_size = int(request.args.get("pageSize", request.args.get("page_size", 50)))
+    except ValueError:
+        return api_error("invalid_pagination", "page and pageSize must be integers", status=400)
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            payload = ListNotificationCategoryUsersUseCase(uow).execute(
+                category=category,
+                q=query,
+                page=page,
+                page_size=page_size,
+            )
+        return jsonify(payload), 200
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception as exc:
+        return api_error("list_category_users_failed", str(exc))
+
+
+@admin_notifications_bp.route(
+    "/user-preferences/<user_id>", methods=["PATCH"]
+)
+@require_superadmin()
+def update_user_notification_category_preference(user_id: str):
+    body = request.get_json(silent=True) or {}
+    category = (body.get("category") or "").strip()
+    flags: dict[str, bool | None] = {}
+    for field in ("enabled", "important", "email"):
+        if field in body:
+            value = body.get(field)
+            if not isinstance(value, bool):
+                return api_error(
+                    "validation_error",
+                    f"{field} must be a boolean",
+                    status=400,
+                )
+            flags[field] = value
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = UpdateUserNotificationCategoryPreferenceUseCase(uow).execute(
+                user_id,
+                category=category,
+                enabled=flags.get("enabled"),
+                important=flags.get("important"),
+                email=flags.get("email"),
+            )
+        return (
+            jsonify(
+                {
+                    "mutedCategories": result.muted_categories,
+                    "importantCategories": result.important_categories,
+                    "emailCategories": result.email_categories,
+                }
+            ),
+            200,
+        )
+    except LookupError as exc:
+        return api_error("not_found", str(exc), status=404)
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=400)
+    except Exception as exc:
+        return api_error("update_user_notification_preference_failed", str(exc))

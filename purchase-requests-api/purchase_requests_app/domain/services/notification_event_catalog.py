@@ -7,6 +7,7 @@ NOTIFICATION_EVENT_KEYS = frozenset(
         "purchase_order_created",
         "purchase_receipt_recorded",
         "purchase_request_approved",
+        "purchase_request_rejected",
         "purchase_delivery_overdue",
     }
 )
@@ -29,6 +30,12 @@ NOTIFICATION_EVENTS: list[dict[str, Any]] = [
         "label": "Solicitação aprovada",
         "description": "Quando a solicitação é liberada no fluxo de aprovação.",
         "sort_order": 30,
+    },
+    {
+        "event_key": "purchase_request_rejected",
+        "label": "Solicitação rejeitada",
+        "description": "Quando a solicitação é rejeitada no fluxo de aprovação.",
+        "sort_order": 35,
     },
     {
         "event_key": "purchase_delivery_overdue",

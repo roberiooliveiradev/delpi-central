@@ -92,7 +92,7 @@ def test_explicit_write_intent_returns_zero_candidates(query, monkeypatch):
     result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
     assert result["candidate_count"] == 0
     assert result["candidates"] == []
-    assert result["eligible_action_count"] == 75
+    assert result["eligible_action_count"] == 87
 
 
 @pytest.mark.parametrize(
@@ -131,7 +131,7 @@ def test_read_queries_still_retrieve(query, action_id, monkeypatch):
     result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
     assert result["candidate_count"] >= 1
     assert result["candidates"][0]["action_id"] == action_id
-    assert result["eligible_action_count"] == 75
+    assert result["eligible_action_count"] == 87
 
 
 def test_bare_product_query_is_ambiguous_but_not_write(monkeypatch):
@@ -193,6 +193,7 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
         "get_product_production_status",
         "get_product_purchase_price_history",
         "get_product_purchases",
+        "get_product_raw_material_set_shortages",
         "get_product_sales_open_orders",
         "get_product_sales_summary",
         "get_product_shipping_status",
@@ -200,12 +201,18 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
         "get_product_structure",
         "get_product_structure_exclusivity",
         "get_product_suppliers",
+        "get_production_allocation_gaps",
         "get_production_appointments_produced_totals",
         "get_production_appointments_summary",
+        "get_production_consumption_by_item",
+        "get_production_consumption_top_items",
+        "get_production_losses_records",
+        "get_production_losses_top_materials",
         "get_production_machine_load_operations",
         "get_production_machine_load_work_centers",
         "get_production_oee",
         "get_production_oee_series",
+        "get_production_orders_finished_without_consumption",
         "get_production_otd",
         "get_production_otd_series",
         "get_protheus_table",
@@ -218,13 +225,16 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
         "get_sales_order_otd_series_by_customer",
         "get_sales_order_otd_summary",
         "get_supplies_cpv",
+        "get_supplies_inventory_adjustments_summary",
         "get_supplies_inventory_turnover",
         "get_supplies_negotiation_savings_summary",
         "get_supplies_otd",
         "get_supplies_purchase_order_otd",
         "get_supplies_purchase_order_otd_series",
+        "get_supplies_safety_stock_consumption_analysis_item_details",
         "get_supplies_safety_stock_consumption_analysis_items",
         "get_supplies_safety_stock_consumption_analysis_summary",
+        "get_supplies_safety_stock_item_details",
         "get_supplies_safety_stock_item_suppliers",
         "get_supplies_safety_stock_items",
         "get_supplies_safety_stock_summary",
@@ -239,7 +249,9 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
         "list_product_drawings",
         "list_product_inventory_blocks",
         "list_product_physical_locations",
+        "list_production_order_operation_materials",
         "list_protheus_table_columns",
+        "list_supplies_inventory_adjustments",
         "list_supplies_purchase_request_lines",
         "search_products",
         "search_products_by_supplier_part_number",

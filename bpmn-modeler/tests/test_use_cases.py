@@ -11,7 +11,7 @@ from bpmn_modeler.application.use_cases import (
 from bpmn_modeler.infrastructure.validation.intake import intake_bytes
 
 from . import fixtures as fx
-from .conftest import clean_input
+from .conftest import ALL_PERMISSIONS, clean_input
 
 VIEWER = CallerIdentity("viewer", frozenset({"bpmn-modeler.view"}))
 EDITOR = CallerIdentity(
@@ -122,15 +122,18 @@ def test_revision_lifecycle(service, caller, model_id):
     assert len(service.list_revisions(model_id, 1, 50, caller).items) == 3
 
 
-def test_revision_metadata(service, caller, model_id):
+def test_revision_metadata(service):
+    # um único owner executa toda a jornada — Revision.created_by é
+    # audit metadata do caller autorizado, nunca authorization scope.
     caller_named = CallerIdentity(
         subject="user-9",
-        permissions=caller.permissions,
+        permissions=ALL_PERMISSIONS,
         display_name="Ana Souza",
     )
-    wc = service.get_working_copy(model_id, caller)
+    model_id = service.create_model("Meta Model", caller_named).model_id
+    wc = service.get_working_copy(model_id, caller_named)
     edited = wc.artifact.content.replace("<bpmn:process", '<bpmn:process name="n"')
-    service.save_working_copy(model_id, clean_input(edited), 1, caller)
+    service.save_working_copy(model_id, clean_input(edited), 1, caller_named)
 
     service.create_revision(
         model_id,
@@ -139,16 +142,16 @@ def test_revision_metadata(service, caller, model_id):
         name="  Versão inicial  ",
         description="Primeira versão aprovada.",
     )
-    rev = service.get_revision(model_id, 1, caller)
+    rev = service.get_revision(model_id, 1, caller_named)
     assert rev.name == "Versão inicial"
     assert rev.description == "Primeira versão aprovada."
     assert rev.created_by_name == "Ana Souza"
     assert rev.created_by == "user-9"
 
     edited2 = edited.replace('name="n"', 'name="n2"')
-    service.save_working_copy(model_id, clean_input(edited2), 3, caller)
-    service.create_revision(model_id, 4, caller)  # sem metadata
-    rev2 = service.get_revision(model_id, 2, caller)
+    service.save_working_copy(model_id, clean_input(edited2), 3, caller_named)
+    service.create_revision(model_id, 4, caller_named)  # sem metadata
+    rev2 = service.get_revision(model_id, 2, caller_named)
     assert rev2.name is None
     assert rev2.description is None
 

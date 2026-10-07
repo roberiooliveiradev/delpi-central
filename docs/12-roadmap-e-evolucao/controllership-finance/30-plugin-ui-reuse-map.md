@@ -302,24 +302,47 @@ import {
   TaskItemsTable,
   TaskSearchField,
   TaskEmptyState,
-  TaskEditorFrame,
   buildTaskWorkspaceHighlights,
+  createDashboardPageHero,
+  createDashboardScopeChipBar,
+  StatusBadge,
+  StateBanner,
+  LoadingState,
+  ActionButton,
 } from "@delpi/plugin-ui/index";
 ```
 
-O Portal fornece projeções e actions ligadas aos casos de uso owners; o kit não é owner do workflow.
+Capability existente mas deliberadamente não usada na V1:
+
+```ts
+import {
+  TaskEditorFrame,
+} from "@delpi/plugin-ui/index";
+```
+
+Contrato detalhado:
+- [27-minhas-tarefas.md](./27-minhas-tarefas.md)
+
+A V1 é self-only e projeta trabalho de P2/P4/P5 conditional. A única action genérica é `Abrir`; owner pages executam o negócio.
+
+`buildTaskWorkspaceHighlights` deve ser usado com due buckets desabilitados enquanto não houver SLA/due global.
+
+**DO NOT RECREATE:** workspace, worklist, task table, search, empty, status chrome ou editor frame.
+
+Se as colunas fixas de `TaskItemsTable` forem inadequadas para self-only/no-due, evoluir o `plugin-ui` em vez de criar tabela local.
 
 ## Administração
 
 Não existe `AdministrationPage` full-page pública no kit.
 
-Compor a página a partir de:
+### Composição canônica
 
 ```ts
 import {
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardSectionRouteCard,
+  createDashboardUnderlineNav,
   DataTableSection,
   createDashboardFiltersKit,
   FormGrid,
@@ -327,14 +350,38 @@ import {
   NativeTextField,
   NativeSelectField,
   NativeTextAreaField,
+  EditableSectionCard,
+  ReadOnlyField,
   ModalShell,
   ConfirmModalPanel,
   FloatingNoticeStack,
   StatusBadge,
+  StateBanner,
+  EmptyState,
+  LoadingState,
+  Timeline,
+  ActionButton,
 } from "@delpi/plugin-ui/index";
 ```
 
-Não criar um novo design-system administrativo dentro do Portal.
+Contrato detalhado:
+- [28-administracao.md](./28-administracao.md)
+
+Arquitetura visual:
+
+```text
+PagePath
+→ UnderlineNav: Painel | Templates | Catálogos | Histórico
+→ PageHero
+→ SectionRouteCard / DataTableSection / forms
+→ Modal/Confirm/Notice/Status
+```
+
+O Portal owns template lifecycle, catalog registry, effective dating, audit e contracts. O kit owns o chrome.
+
+**DO NOT RECREATE:** subnav, hero/path, route cards, DataTableSection, filter chrome, form fields, editable/read-only cards, modal/confirm, notices, badges, timeline ou generic states.
+
+Não criar uma aba/permission/componente visual diferente para cada catálogo.
 
 ## Ajuda
 
@@ -349,11 +396,44 @@ import {
   HelpTooltip,
   FieldLabel,
   SectionHintLabel,
+  ActionButton,
+  StateBanner,
+  EmptyState,
 } from "@delpi/plugin-ui/index";
 ```
 
-O conteúdo em PT-BR permanece no plugin consumidor.
+Contrato detalhado:
+- [29-ajuda.md](./29-ajuda.md)
 
+`createDashboardUserManual` fornece:
+
+```text
+Frame
+Eyebrow
+Scope
+Layout / TOC
+Section
+Concepts
+GuideTable
+Faq
+Glossary
+classNames
+```
+
+O Portal fornece:
+- conteúdo PT-BR;
+- section registry;
+- feature/permission gating;
+- tool-link registry;
+- contextual deep links;
+- glossary/FAQ;
+- sync com features.
+
+O conteúdo é versionado no MFE. Não criar BFF/DB/CMS de Help na V1.
+
+**DO NOT RECREATE:** manual frame, TOC, concepts, guide table, FAQ, glossary, tool-link chrome ou HelpTooltip.
+
+Help contextual longo navega para `/help#manual-{sectionId}`; hints curtos usam `HelpTooltip`.
 
 ## Página do usuário
 

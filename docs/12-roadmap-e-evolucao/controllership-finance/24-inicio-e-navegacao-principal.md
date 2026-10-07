@@ -36,6 +36,8 @@ Seguindo o padrão atual dos Portais Comercial e Suprimentos:
 
 Identifiers técnicos são em inglês; labels de UX permanecem PT-BR.
 
+Contrato detalhado de Ajuda: [29-ajuda.md](./29-ajuda.md). A rota `/help` exige ACCESS; conteúdo administrativo dentro do manual é filtrado por MANAGE e Help contextual usa âncoras `#manual-{sectionId}`.
+
 
 ## Reuso obrigatório de `@delpi/plugin-ui`
 

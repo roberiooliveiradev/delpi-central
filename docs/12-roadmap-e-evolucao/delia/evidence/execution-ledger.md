@@ -10071,3 +10071,1012 @@ EVIDENCE (live production, 2026-10-05):
   DEPLOYMENT / LIVE ACCEPTANCE: pending (local docker transformometro-api
   restart + gateway acceptance planned for this task).
 
+
+## 6.139. TEO-WRITE-POLICY-FINAL-DEDUPLICATION-05 — one semantic write-policy record per capability
+
+  DECISION: ONE semantic write-policy definition per material write
+  capability. The prior three parallel tables
+  (_ENTITY_EXECUTION_POLICY / _CAPABILITY_EXECUTION_POLICY /
+  _WORKFLOW_EXECUTION_POLICY) collapsed into a single
+  _WRITE_POLICIES tuple of frozen WritePolicyRecord(
+  semantic_id, execution_policy, capability, workflow_id?,
+  entity_operation?). Policy VALUES appear exactly once; the
+  capability/workflow/entity-operation names are ALIASES resolved
+  through derived indexes (_BY_CAPABILITY/_BY_WORKFLOW/
+  _BY_ENTITY_OPERATION, alias -> record, never alias -> value).
+  One business decision = one edit = propagation to orchestrator
+  seal, both catalog projections, Actions commit_now compat and
+  MCP metadata.
+
+  SEMANTIC POLICY RECORDS (13):
+  record.create/update/duplicate (AUTO_ACT), record.delete
+  (CONFIRM_BEFORE_ACT), improvement_package.commit (CONFIRM),
+  shared_resource_cost.adjust (AUTO_ACT), revision.activate
+  (CONFIRM), dashboard.recalculate (CONFIRM),
+  meeting_minute.workflow (CONFIRM), evidence.manage (CONFIRM),
+  meeting_minute.manage (CONFIRM), diagnostic.create (AUTO_ACT),
+  diagnostic.manage (CONFIRM). Classification unchanged from
+  6.138 — no behavior change.
+
+  REGISTRY RELATION: capability_registry CapabilityBinding stays a
+  transport-projection binding (prepare/commit granularity —
+  record.change.prepare spans ops with different policies), so no
+  per-binding policy field was added; write_policy_id_for_capability()
+  links orchestrator capability names to semantic policy ids.
+
+  CHANGES:
+  - confirmation_policy.py: _WRITE_POLICIES single semantic table +
+    _build_indexes() derived views; execution_policy_for_*(),
+    allows_commit_now_*(), confirmation_kind_for_*() and
+    requires_user_confirmation() signatures preserved; all accept
+    records= override for propagation testing; fail-closed to
+    confirm_before_act on unknown aliases unchanged;
+    write_policy_records()/policy_record_for_capability()/
+    write_policy_id_for_capability() expose the canonical table.
+  - tests/test_teo_write_execution_policy.py (+3 tests):
+    test_single_semantic_record_flip_propagates_to_catalog — one
+    record edit (revision.activate -> auto_act) flips
+    execution_policy_for_capability/workflow, allows_commit_now_*,
+    and the catalog execution_policy + confirmation_requirement on
+    BOTH transports, without touching any index; the entity-op alias
+    moves with its record (record.create flip -> create + create_record).
+    test_exactly_one_independent_policy_source — structural gate:
+    exactly len(records) WritePolicyRecord constructions, no dict
+    literal binds an alias to a policy constant, all derived indexes
+    hold WritePolicyRecord values only.
+    test_every_exposed_write_alias_resolves_and_no_orphans —
+    WRITE_CAPABILITIES subset of classified aliases; every catalog
+    workflow/entity-op resolves; every record reachable via a live
+    alias (no orphans).
+  - teo-capability-matrix.md: canonical-source table gains the
+    write-policy row; flow section documents the one-record/alias
+    model.
+
+  ACTIONS: commit_now remains the auto_act transport mechanism only;
+  confirmation=true on the atomic Actions path classified as
+  LEGACY_TRANSPORT_COMPATIBILITY_FIELD (protocol assertion of already
+  expressed intent), not a conversational confirmation. No OpenAPI
+  change; no reimport.
+
+  MCP: PREPARE purity preserved; no commit_now, no new tools.
+
+  TESTS: focused TÉO suite + full suite rerun; residual search proves
+  INDEPENDENT_POLICY_VALUE_DEFINITIONS = 1 source.
+
+  ACCEPTANCE (live, local docker stack — bind-mounted /app, restarted):
+  deployed SHA matches pushed HEAD; MCP initialize/tools/list/
+  get_catalog verified execution_policy metadata with zero
+  gpt_*/commit_now leakage; AUTO_ACT end-to-end (branch create
+  PREPARE -> commit confirmation=false -> persisted+verified);
+  destructive guard (delete PREPARE confirm_before_act ->
+  commit confirmation=false -> CONFIRMATION_REQUIRED).
+  Production deploy/acceptance recorded in the task report.
+
+## 6.140. ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1 — generic resolver step + first-class ANALYSIS + structural write policy + opaque-handle UX boundary
+    TASK = ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1
+    STATUS = ACCEPT_WITH_RESIDUAL (architecture review R1-R1 —
+      close-out block below)
+    BASE_HEAD = 72214c2d95ae29c2f8b5ed6882ee9931a148ad0e (main at pickup;
+      prompt cited 1070f299084b — superseded by upstream merges;
+      delia-api/ clean, unrelated dirty worktrees preserved untouched)
+    MODE = bounded implementation; provider-neutral; owner-neutral;
+      no owner modification; no local MCP capability catalog.
+    DEFECTS IN SCOPE (proven by ARCH-DIAG-DELIA-GENERIC-MCP-RUNTIME-
+    WSL-SSH-01):
+      G1 missing generic RESOLVER step (name -> owner id through a
+        semantically selected non-mutating same-owner capability;
+        ambiguity -> bounded clarification, never silent pick).
+      G2 ANALYSIS collapsed into READ — becomes first-class
+        SpecialistOperationClass.ANALYSIS (still OBSERVATION, never
+        FACT; plan character READ for side-effect validation only).
+      G3 confirmation preview must never surface the raw owner
+        proposal handle — render the deterministic
+        WriteProposalPreview projection only.
+      G4 write policy: structural confirmation_requirement
+        (explicit_user_confirmation) is the sole authority; the
+        ops[]/catalog owner-vocabulary branch is removed (both active
+        owners — VISTA proposal.confirmation_requirement and TEO
+        orchestrator-sealed requirement — emit the structural field;
+        anything else fails closed owner_policy_invalid).
+    BOUNDS: MAX_OPERATIONAL_PLAN_STEPS 2 -> 3; supported shapes
+      DISCOVERY->TARGET | RESOLVER->TARGET | DISCOVERY->RESOLVER->
+      TARGET | ANALYSIS->PREPARE | DISCOVERY->ANALYSIS->PREPARE;
+      same-owner only; backward-only deps; ACT stays governed
+      continuation (never a semantic plan step); no cross-turn plan
+      persistence; no persistent capability cache.
+    NON-GOALS: cross-owner workflows, new owner onboarding
+      mechanics, durable state, watch/memory/C6.
+    PHASE STATUS unchanged: C3_EXECUTED=NO, C4/C5=NO,
+      PRODUCTION_READINESS=NOT_PROVEN.
+
+    IMPLEMENTATION EVIDENCE (delia-api only):
+      - domain/specialist_interop: SpecialistOperationClass.ANALYSIS
+        added; _OWNER_CLASS_MAP ANALYSIS->ANALYSIS (was ->READ);
+        INTERACTIVE_INVOCABLE_CLASSES includes ANALYSIS; UNKNOWN
+        remains non-invocable.
+      - orchestration.py: RESOLVER role implemented as bounded
+        same-owner non-mutating step (_resolve_missing_inputs /
+        _select_resolver — eligible classes DISCOVERY|READ|ANALYSIS,
+        never PREPARE/ACT, never candidate/proposal-bound caps);
+        plan revalidated via _build_plan against the live surface
+        (max 3 steps, backward-only deps); ambiguity ->
+        CLARIFICATION_REQUIRED with bounded sanitized candidates
+        (_resolver_entities/_resolver_ambiguous/
+        _candidate_clarification_content); _resolved_values_proven
+        rejects identifiers absent from owner evidence.
+      - ANALYSIS continuation: _analysis_continuation /
+        _select_prepare_continuation — one bounded semantic decision
+        selecting an applicable same-owner PREPARE informed by
+        bounded analysis evidence; never a direct ACT; no applicable
+        PREPARE -> terminal analysis render.
+      - write policy: _effective_confirmation_policy(preview) —
+        structural confirmation_requirement
+        (explicit_user_confirmation / required) is the sole
+        authority; true -> explicit confirmation; false -> governed
+        direct ACT; missing/malformed/contradictory -> WRITE_REJECTED
+        owner_policy_invalid. VISTA ops[]/catalog branch removed;
+        no owner-literal policy vocabulary consulted.
+      - opaque handle: _preview_render renders the deterministic
+        WriteProposalPreview projection only (owner content_text no
+        longer appended); handle remains backend-only for ACT args
+        and digest computation.
+      - prior_turns: bounded request-scoped prior context now
+        forwarded through attempt() -> selection/argument/resolver/
+        continuation proposals (ModelInvocationRequest.prior_context)
+        — transient, untrusted, never persisted.
+      - interaction handler passes validated request.prior_turns.
+    TESTS: delia-api suite 772/772 PASS incl. new
+      tests/test_generic_multistep_orchestration.py — fake fourth
+      owner (neutral vocabulary, zero VISTA/TEO/DAVI coupling):
+      name->id unique resolution, ambiguity->bounded clarification
+      (target/PREPARE/ACT = 0 calls), invented-id rejection,
+      ANALYSIS->PREPARE (ACT=0), ANALYSIS terminal, structural
+      direct write, destructive confirm->ACT once, opaque-handle
+      redaction, unknown policy fail-closed, prior_context
+      propagation. Residual coupling search on app/ runtime: zero
+      owner-name/tool-name orchestration branches; owner ids only in
+      approved connection config/registry and comments.
+      git diff --check (delia-api) clean.
+    FOLLOW-UP (live-driven, same task scope):
+      - `_unproven_identifier_inputs`: deterministic provenance gate
+        on model-proposed identifier args (canon `id`/`*_id` scalars).
+        A value absent from every trusted source (user input,
+        workspace context, prior turns, owner evidence, owner schema
+        enum/const/default literals) is demoted to `missing_inputs`
+        and routed to the generic RESOLVER/clarification path —
+        applied identically to resolver args (an invented resolver id
+        fails closed). Live trigger: model invented `process_id`
+        -> owner PluginsRepositoryError; gate removes the class of
+        failure. Tests: invented-id demoted->resolver->real id on
+        wire; unresolved invented id -> clarification, never invoked.
+      - resolver candidate rendering: identifier fallback to any
+        `*id`-suffixed entity scalar (`processo_id` etc.) and label
+        matching by contained token (`nome_processo`, `codigo_...`) —
+        candidates are always distinguishable id + label.
+      Live suite after fixes: 774/774 PASS.
+    DEPLOYED_DELIA_SHA = e6e3ebbf52baf2dc6e1d0670b8fcd7509007f840
+      (delia-api only; delpi-delia-api healthy; owners untouched).
+    LIVE WSL/SSH acceptance (subject = Portal user `user`,
+    password grant realm delpi, scope openid; UNAUTH=401):
+      - PROCESS_BY_NAME: GROUNDED — "contexto detalhado do processo
+        Auditoria 5S" -> target get_process_context (READ),
+        missing process_id -> RESOLVER search_records (same owner)
+        -> resolved still_missing=0 -> target invoked with
+        owner-returned uuid c5e96a4f (PROC-0056); plan log:
+        step-1:teo.search_records;step-2:teo.get_process_context
+        (corr e9947268, b926d4ad — reproduced twice). No id asked.
+      - HOMONYM_CLARIFICATION: PASS — "contexto agregado do processo
+        Controle de refeições" -> resolver ambiguous candidates=2
+        -> bounded CLARIFICATION_REQUIRED listing
+        "bd84c8b1-... — Controle de refeições" and
+        "0f653d8d-... — Controle de refeições"; no silent pick, no
+        target call (corr 2a02eeab, 70b5b8a5).
+      - ANALYSIS_CLASS_LIVE: PASS — VISTA preview_data_block selected
+        as class=ANALYSIS with DISCOVERY plan
+        (get_catalog -> preview_data_block, corr 03ba5878); owner
+        returned 422 INVALID_CHANGE (data source unavailable) —
+        owner-side error, DÉLIA fail-closed; class preserved live.
+      - TEO_DYNAMIC_CAPABILITY: PASS — get_methodology_guide
+        GROUNDED via live tools/list; zero DÉLIA registration.
+      - SEARCH_AS_TARGET: "explique o processo X" semantically
+        selects search_records itself (name-capable READ) — grounded
+        both matches; resolver is only needed when the target
+        requires an id the user never gave.
+      - HANDLE_LEAK_LIVE: raw_handle_hits=0 on all response surfaces.
+      - LIVE_ANALYSIS_TO_PREPARE = TEST_NOT_RUN (no safe non-mutating
+        owner analysis->write chain exercised; automated E2E covers).
+      - LIVE_ACT = TEST_NOT_RUN (no disposable fixture; automated
+        suite proves governed ACT continuation).
+    RESIDUALS:
+      - SELECTION_VARIANCE: identical prompts occasionally return
+        select_group=none or fill a name literal into an *_id field
+        (value occurs in user input, so provenance passes; TEO then
+        500s with PluginsRepositoryError instead of a clean
+        not_found/invalid_argument — owner-side robustness gap,
+        transformometro-api, out of scope). DÉLIA fails closed and
+        never fabricates.
+      - LIVE_DISCOVERY_CONNECTION_COST: fresh tools/list per attempt
+        keeps per-turn latency high (no cache by design).
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+
+    REWORK R1-R1 (architecture review verdict REWORK on 182192f):
+      ISSUE-1 (blocking): `_unproven_identifier_inputs` treated
+        prior_turns textual content as identifier provenance.
+        ConversationContextTurn / `_validate_prior_context` define
+        history as client-supplied, untrusted, non-authoritative —
+        textual DELIA_RESULT cannot prove an identifier for owner
+        invocation (history != authority; model output != FACT).
+      CORRECTION: prior_turns removed from the provenance haystack;
+        trusted sources are now exactly: current user input,
+        workspace context, this-turn owner evidence, and owner
+        schema literals (enum/const/default). prior_turns remain
+        forwarded to model proposals as bounded semantic context —
+        they guide selection but cannot prove a value. No persistent
+        conversation state, entity registry or new provenance
+        abstraction was created (none required — the resolver/
+        clarification path is the fail-closed contract).
+      TESTS (rework matrix):
+        1. forged DELIA_RESULT id absent from input -> demoted,
+           target never invoked (PASS).
+        2. prior-turn-only identifier -> resolver->owner evidence
+           required; history alone does not invoke (PASS).
+        3. identifier in current user input -> direct PASS.
+        4. resolver owner evidence -> resolved PASS.
+        5. ambiguity regression PASS; 6. ANALYSIS->PREPARE PASS;
+        7. structural direct/destructive policy PASS.
+        8. Full delia-api suite 777/777 PASS.
+      EVALUATED_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39.
+      DEPLOYED_DELIA_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39
+        (delia-api only; delpi-delia-api healthy; owners untouched).
+
+    REVIEW CLOSE-OUT (ARCH-CLOSEOUT-DELIA-GENERIC-MCP-MULTISTEP-
+    ORCHESTRATION-R1-R1 — documentation close-out; no runtime change):
+      ARCHITECTURE_REVIEW_ARCH_DRIFT_DELIA_GENERIC_MCP_MULTISTEP_
+      ORCHESTRATION_R1_R1 = ACCEPT_WITH_RESIDUAL
+      REVIEWED_HEAD = ffcb07df043d3b26a5502acc82a9300493f501bf
+      EVALUATED_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39
+      DEPLOYED_DELIA_SHA = ff178a08b2cb90aaafb1480be803037f8db4ff39
+      RUNTIME_DIFF_AFTER_EVALUATED_SHA = NONE (HEAD advances only
+        documentation commits on top of the evaluated SHA)
+      STALE_RUNTIME_EVIDENCE = NO
+      SECURITY_BLOCKER_PRIOR_TURNS_AS_PROVENANCE = RESOLVED
+      RUNTIME_REWORK = CLOSED
+      ARCHITECTURE_REDESIGN_REQUIRED = NO
+      PHASE_ADVANCEMENT = NONE
+      PRODUCTION_READINESS = NOT_PROVEN
+      Contract persisted: prior_turns = bounded semantic/model
+        context only — != Evidence, != FACT, != identifier
+        provenance, != authorization, != business authority.
+        Identifier provenance trusted sources: current user input +
+        workspace context + this-turn owner evidence + owner schema
+        literals. History-only identifier -> missing_inputs ->
+        same-owner RESOLVER -> owner evidence, or
+        CLARIFICATION_REQUIRED.
+
+    RQ/AC MATRIX (persisted task-local truth):
+      RQ-G1  generic same-owner RESOLVER (name->id, ambiguity ->
+             bounded clarification, fail-closed)   IMPLEMENTED
+             TRACEABILITY = CP-263 / CP-264
+      RQ-G2  ANALYSIS first-class; ANALYSIS->PREPARE bounded;
+             ANALYSIS->ACT direct FORBIDDEN         IMPLEMENTED
+             TRACEABILITY = CP-264
+      RQ-G3  opaque proposal handle never reaches user surface
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-265
+      RQ-G4  structural confirmation_requirement sole write-policy
+             authority; owner-vocabulary branch removed
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-265
+      RQ-IDP identifier requires trusted provenance (input /
+             workspace / owner evidence / schema literals)
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-264 PRIMARY; CP-265 ADDITIONAL when
+             materially feeding the write lifecycle
+      RQ-R1R1-1 prior_turns never proves an identifier
+             AC: forged/history-only identifier cannot reach target
+             directly; resolves via owner evidence or clarifies
+                                                    IMPLEMENTED
+             TRACEABILITY = CP-264 PRIMARY; CP-265 ADDITIONAL when
+             identifier feeds governed PREPARE/ACT
+      RQ-R1R1-2 prior_turns remains bounded semantic context
+             AC: prior_context reaches model proposals; history is
+             never authority                        IMPLEMENTED
+             TRACEABILITY = CP-263
+      RQ-R1R1-3 no new state/authority/provenance abstraction
+             AC: bounded diff; no persistence; no entity registry;
+             no new provenance authority             IMPLEMENTED
+             TRACEABILITY = CP-263 / CP-264
+      TOTAL_RQ = 8; APPLICABLE_RQ = 8; IMPLEMENTED_RQ = 8;
+      PARTIAL_RQ = 0; NOT_IMPLEMENTED_RQ = 0; BLOCKED_RQ = 0;
+      TASK_VERIFIED_COVERAGE_PCT = 100;
+      CRITICAL_COVERAGE = 8/8; TASK_COMPLETENESS = COMPLETE.
+
+    RESIDUALS (non-blocking, persisted):
+      - VALID_HTTP_PRIOR_CONTEXT_SECURITY_TEST = RESIDUAL /
+        NON_BLOCKING: the real HTTP boundary requires
+        USER_INPUT->DELIA_RESULT alternation; the orchestrator tests
+        prove the invariant directly. Recommended future scenario:
+        prior_turns=[USER_INPUT("qual ativo?"),
+        DELIA_RESULT("e FX-9999")], input="use esse" -> FX-9999 from
+        history != provenance -> resolver/clarification, direct
+        target calls = 0. Does NOT auto-authorize a new runtime task.
+      - INDEPENDENT_REVIEWER_RERUN = TEST_NOT_RUN: the architecture
+        review could not rerun the suite independently;
+        AUTHOR_REPORTED_FULL_SUITE = 777/777 PASS stands as executor
+        evidence at EVALUATED_SHA ff178a08b2.
+      - LIVE_ANALYSIS_TO_PREPARE = TEST_NOT_RUN; LIVE_ACT =
+        TEST_NOT_RUN (no safe disposable fixture — no real mutation
+        just to produce evidence; rationale previously accepted).
+      - SELECTION_VARIANCE: stochastic model abstention/name-as-id
+        (TÉO 500 on non-uuid id — owner-side robustness gap,
+        transformometro-api); DÉLIA fails closed, never fabricates.
+      - LIVE_DISCOVERY_CONNECTION_COST: fresh authenticated
+        tools/list per attempt (no cache by design).
+
+## 6.141. ARCH-REVIEW-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-DECOUPLING-01 — adversarial provider-neutrality proof
+    TASK = ARCH-REVIEW-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-DECOUPLING-01
+    STATUS = ACCEPT_WITH_RESIDUAL
+    BASE_HEAD = 83144f9796af766a363d54b2bd15878cdb777300
+    RUNTIME_CHANGE = NONE (test-only additions allowed and used)
+    FLOW_PROVEN =
+      user intent -> OperationalCapabilityOrchestrator ->
+      CapabilityProviderPort.list_groups (fresh per attempt, no
+      cache) -> ProviderSurface/CapabilityGroup/ProviderCapability ->
+      semantic model proposal -> deterministic revalidation against
+      the live projection -> provider.invoke() ->
+      SpecialistOutcome/evidence.
+    STATIC_COUPLING_SEARCH (delia-api/app/**):
+      OWNER_NAME_BRANCHES_RUNTIME = 0
+      TOOL_NAME_BRANCHES_RUNTIME = 0
+      STATIC_PREPARE_ACT_PAIRING = NONE (ACT leg detected
+        structurally via proposal_handle input in owner schema)
+      LOCAL_CAPABILITY_CATALOG = NONE (domain/capability_catalog is
+        a DÉLIA-owned projection model, not a remote tool mirror)
+      PER_TOOL_ENABLE_FLAGS = NONE
+      PROVIDER_MECHANICS_IN_DOMAIN = NO
+      PROVIDER_MECHANICS_IN_APPLICATION_CORE = NO (orchestrator
+        imports only the port + domain contracts; binding never read)
+      ORCHESTRATOR_INTERPRETS_PROVIDER_BINDING = NO (_invoke
+        dispatches by provider_id; binding stays inside the adapter)
+      Owner-name literals (davi/teo/vista) exist only in: approved-
+        specialist identity registry (domain allowlist), adapter/
+        infra config, comments/docstrings — never in a conditional
+        branch of the orchestrator.
+    ADVERSARIAL_PROOFS (tests/test_generic_multistep_orchestration.py,
+      fake owner ACME/foo-corp, capability names alpha..echo —
+      no DELPI vocabulary):
+      A1 no owner-name branches = PASS
+      A2 no tool-name branches = PASS
+      A3 no local capability catalog = PASS
+      A4 no static PREPARE/ACT pairs = PASS
+      A5 no MCP mechanics in core = PASS
+      A6 fake owner works = PASS
+      A7 owner rename invariant = PASS (test_owner_rename_invariance)
+      A8 tool rename invariant = PASS (resolver chain + write
+        governance under alpha..echo names)
+      A9 capability ADD live = PASS (zulu invocable after surface
+        mutation, zero DÉLIA change)
+      A10 capability REMOVE live = PASS (stale model proposal for a
+        removed capability revalidated out — zero provider calls)
+      A11 capability RECLASSIFY live = PASS (READ->PREPARE applies
+        structural confirmation gate immediately)
+      A12 non-MCP fake provider = PASS (provider_id acme-rest,
+        InteropProtocol.HTTP provenance, same orchestrator)
+      A13 resolver generic = PASS (renamed resolver/target same
+        behavior — RESOLVER_ROLE != HARDCODED_TOOL)
+      A14 ANALYSIS generic = PASS (existing ANALYSIS->PREPARE /
+        terminal tests on fake owner)
+      A15 write policy structural = PASS (confirmation_requirement
+        sole authority under renamed owner/tools)
+      A16 binding opaque = PASS (arbitrary binding content ignored
+        by the orchestrator)
+      A17 model proposal revalidated = PASS (removed/unknown
+        proposals never reach provider)
+      A18 UNKNOWN never invocable = PASS (shadow_op never dispatched)
+    MULTI_PROVIDER = PASS (two providers same port; selection over
+      live groups; unselected provider receives zero calls)
+    MODEL_ROLE = PROPOSAL_ONLY (selection/arguments/resolver/
+      continuation proposals deterministically revalidated)
+    PROVIDER_ROLE = ADAPTER_ONLY
+    RESIDUAL (non-blocking, no coupling created):
+      APPROVED_SPECIALIST_REGISTRY_IN_DOMAIN —
+      _SPECIALIST_IDENTITY (domain/specialist_interop/rules.py) is a
+      hardcoded identity allowlist {davi,teo,vista -> display_name,
+      owner_ref}. Approving a NEW MCP specialist requires a registry
+      entry — intentional fail-closed authorization governance
+      (approved-connection boundary), NOT orchestration coupling:
+      the orchestrator never consults it; the MCP adapter filters
+      configured ids through it. Adding a capability INSIDE an
+      approved specialist requires zero DÉLIA change (proven A9-A11).
+    TESTS = 787/787 PASS (777 baseline + 10 adversarial proofs);
+      documentation/runtime untouched outside the test file.
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    CONCLUSION =
+      DELIA_ORCHESTRATION_COUPLING = SEMANTIC_CONTRACT_ONLY
+      OWNER_SPECIFIC_RUNTIME_COUPLING = NONE
+      TOOL_NAME_RUNTIME_COUPLING = NONE
+      MCP_MECHANICS_IN_ORCHESTRATOR = NONE
+      PROVIDER_MECHANICS = ADAPTER_ONLY
+      CAPABILITY_DISCOVERY = LIVE
+      CAPABILITY_ADD_REMOVE_RECLASSIFY =
+        NO_DELIA_RUNTIME_CHANGE_REQUIRED
+      MCP = ONE PROVIDER FAMILY — NOT THE ORCHESTRATION ARCHITECTURE
+      FUTURE_PROVIDER = implement CapabilityProviderPort + project
+        semantic capabilities; no central orchestrator redesign.
+
+## 6.142. ARCH-CLOSEOUT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 — review close-out por cadeia de evidência
+    TASK = ARCH-CLOSEOUT-MCP-FULL-CAPABILITY-ORCHESTRATION-03
+    MODE = DOCUMENTATION / REVIEW CLOSE-OUT (no runtime, no owner
+      internals review, no new architecture, no phase promotion)
+    BASE_HEAD = 6ff2722526994bf395f2a5b675c81a91efc5ffae
+    RUNTIME_DIFF_AFTER_EVALUATED_SHA (ff178a08b2) = NONE
+
+    ORIGINAL_TASK =
+      ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03
+    ARCHITECTURE_REVIEW_ARCH_DRIFT_MCP_FULL_CAPABILITY_
+      ORCHESTRATION_03 = ACCEPT_WITH_RESIDUAL
+
+    EVIDENCE_CHAIN (superseding proof — no new owner-by-owner
+      review executed or needed):
+      §6.126–§6.129 = DÉLIA MCP orchestrator; specialist owns the
+        capability surface; tools/list = live capability source; no
+        local catalog; PREPARE != ACT; generic governed write
+        lifecycle; argument-projection/nested-args/selection/
+        PREPARE-purity defects corrected.
+      §6.140 = ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-
+        ORCHESTRATION-R1 ACCEPT_WITH_RESIDUAL — ANALYSIS
+        first-class; generic same-owner RESOLVER; ANALYSIS->PREPARE
+        (never direct ACT); structural write policy; opaque
+        proposal handle; prior_turns = semantic context only, never
+        identifier provenance. EVALUATED_SHA = DEPLOYED_DELIA_SHA =
+        ff178a08b2cb90aaafb1480be803037f8db4ff39.
+      §6.141 = ARCH-REVIEW-DELIA-PROVIDER-NEUTRAL-ORCHESTRATION-
+        DECOUPLING-01 ACCEPT_WITH_RESIDUAL — 787/787; zero
+        owner/tool branches; live add/remove/reclassify; non-MCP
+        provider; multi-provider; UNKNOWN never invocable.
+
+    PERSISTED_TRUTH =
+      FULL_CAPABILITY_ORCHESTRATION = ACCEPT_WITH_RESIDUAL
+      PROVIDER_NEUTRAL_ORCHESTRATION = PROVEN
+      DELIA_ORCHESTRATION_COUPLING = SEMANTIC_CONTRACT_ONLY
+      OWNER_SPECIFIC_RUNTIME_COUPLING = NONE
+      TOOL_NAME_RUNTIME_COUPLING = NONE
+      MCP_MECHANICS_IN_ORCHESTRATOR = NONE
+      PROVIDER_MECHANICS = ADAPTER_ONLY
+      CAPABILITY_DISCOVERY = LIVE
+      MCP = ONE PROVIDER FAMILY — NOT THE ORCHESTRATION
+        ARCHITECTURE (NON_MCP_PROVIDER_ORCHESTRATION = PASS §6.141)
+      MODEL = SEMANTIC_PROPOSAL_ENGINE — MODEL_PROPOSAL !=
+        AUTHORITY/PERMISSION/FACT; deterministic revalidation.
+
+    ACCEPTED_RESIDUAL =
+      APPROVED_SPECIALIST_REGISTRY_IN_DOMAIN
+      (_SPECIALIST_IDENTITY, domain/specialist_interop/rules.py) =
+      approved specialist identity allowlist — NOT a capability
+      catalog, routing table, tool registry or behavior dispatch.
+      Classification: INTENTIONAL_FAIL_CLOSED_GOVERNANCE_BOUNDARY,
+      NON_BLOCKING, NOT ORCHESTRATION COUPLING. EXISTING_EQUIVALENT
+      = YES; REUSE_DECISION = REUSE; not removed or redesigned here;
+      any future change belongs to a dedicated provider
+      onboarding/governance task (not created now).
+
+    COORDINATION_RULES_PERSISTED =
+      CAPABILITY_EVOLUTION (inside an approved provider):
+        ADD -> live discovery, NO DÉLIA change;
+        REMOVE -> honored by fresh live surface;
+        RECLASSIFY -> new semantic class honored live;
+        TOOL RENAME -> no architecture change;
+        OWNER INTERNAL CHANGE -> no architecture change
+        (implementation/DB/algorithm/refactor/service/quality
+        changes do not trigger DÉLIA review).
+      PROVIDER_ONBOARDING (new provider/specialist):
+        EXPLICIT_GOVERNANCE_REQUIRED — explicit approval,
+        connection configuration, identity/owner ref, credential
+        boundary, CapabilityProviderPort adapter, boundary-appropriate
+        security review. This is FAIL-CLOSED PROVIDER ONBOARDING
+        GOVERNANCE, not capability coupling.
+      VALID_DELIA_REVIEW_TRIGGERS (only):
+        semantic interoperability contract change (operation_class
+        meaning, READ/PREPARE/ACT semantics, PREPARE persisting
+        material state, ACT outcome verification,
+        confirmation_requirement contract, proposal_handle
+        semantics, capability metadata no longer projecting to
+        ProviderCapability);
+        authority boundary change (Core/domain authority chain);
+        security/governance invariant change (tool metadata treated
+        as permission, UNKNOWN invocable, binding no longer opaque);
+        provider adapter contract change (provider can no longer
+        implement CapabilityProviderPort or project
+        ProviderOutcome/Evidence).
+      OWNER_INTERNAL_CHANGE != DELIA_ARCHITECTURE_REVIEW_TRIGGER.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION for next bounded
+      product step.
+
+## 6.143. C3-INTELLIGENCE-LOOP-01 — bounded intelligence loop over the provider-neutral orchestrator
+    TASK = C3-INTELLIGENCE-LOOP-01
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = 48747b0c4f3d63971e3dc4a88e1411c0e82b3fe3
+      (brief expected 41bb9ea2; HEAD advanced via TÉO owner-side
+      commit — delia-api untouched, no drift)
+    PRE_DESIGN =
+      EXISTING_EQUIVALENT = YES; EXISTING_OWNER =
+      OperationalCapabilityOrchestrator + CapabilityProviderPort +
+      InvokeModel + WorkspaceContext + PlanCandidate/PlanStep +
+      validate_plan_candidate + select_decision_path;
+      REUSE_DECISION = EXTEND; ABSTRACTION_GATE = PASS — no new
+      planner/engine/registry; two new bounded model stages added as
+      instructions on the existing proposal pipeline.
+
+    IMPLEMENTED (delia-api/app/application/capability_provision/
+    orchestration.py only — zero provider/owner coupling added):
+      - CLARIFICATION_INSTRUCTION: model proposes the missing-input
+        question in business language; deterministic gates reject any
+        wording echoing the internal field names, snake_case tokens,
+        braces/JSON, URLs, endpoints, handles/tokens or provider
+        vocabulary; fallback = humanized deterministic ask-back
+        (identifier suffixes stripped — `block_id` never reaches the
+        user; "block" label instead of the raw name).
+      - SYNTHESIS_INSTRUCTION: bounded grounded synthesis for
+        successful non-mutating outcomes (READ/DISCOVERY/ANALYSIS and
+        resolver-chained reads). Input = sanitized owner evidence
+        (_bound_owner_evidence); proposal revalidated: redaction,
+        technical-leak gate, and every identifier-like token
+        (digit-run >= 2) must occur verbatim in the owner evidence —
+        invented values demote the answer to the deterministic
+        renderer (_success_attempt path unchanged).
+      - owner limitations preserved on the attempt when synthesis
+        supplies content.
+      - Bounded pre-execution repair: on repairable surface errors
+        (capability_not_on_surface / capability_not_live /
+        capability_unknown / unknown_capability) the group is
+        re-read live, one capability is reselected and its arguments
+        rebuilt — MAX_REPLAN_ROUNDS = 1, and only reachable from the
+        non-write branch (PREPARE/ACT returned through their
+        governed paths earlier — material ACT can never be retried).
+      - Decision-path telemetry: select_decision_path invoked with
+        honestly derivable facts (capability orchestration =
+        OPERATIONAL); logged status+path only, never authority.
+      - WorkspaceContext.selected_entity_ref reused as identifier
+        provenance (existing trusted source) — "o texto" resolves to
+        the host-supplied selected entity when present.
+
+    CONTEXT-BEFORE-CLARIFICATION ORDER (already enforced, now
+      verified end-to-end): current user message -> workspace
+      context -> owner evidence (discovery/resolver/analysis) ->
+      prior plan-step outputs -> same-owner RESOLVER -> and only
+      then user clarification. prior_turns remain semantic context
+      only (never provenance) — §6.140 invariant unchanged.
+
+    TESTS = 802/802 PASS (787 baseline + 15 new evals);
+      test_intelligence_loop_evals.py adds:
+      EVAL-1 playlists grounded synthesis PASS; invented-value
+        synthesis demoted PASS; technical-leak synthesis rejected
+        PASS; limitations preserved PASS; deterministic fallback PASS;
+      EVAL-4 metamorphic workspace resolution PASS x4 paraphrases;
+        business-language clarification PASS; wording-leak gate PASS;
+      EVAL-3 business clarification without route/params leak PASS;
+      injected owner description cannot bypass confirmation PASS;
+      bounded repair reselect-once PASS; repair fail-closed PASS.
+      EVAL-2 (create slide) = regression via existing governed-write
+        suite — green.
+      Stale-test reconciliation: test_missing_owner_input_yields_
+        clarification updated to assert field names are NOT exposed;
+        test_adversarial_model_prose_cannot_become_observation updated
+        (5 proposals: +synthesis stage; fabricated answer rejected by
+        the provenance gate, deterministic render shipped).
+
+    RESIDUALS (non-blocking):
+      - Synthesis invented-value gate covers identifier/number-like
+        tokens only; free-text entity invention without digits is
+        bounded by instruction + redaction, not fully provable.
+      - WORKSPACE_SELECTION_CONTEXT: contract PROVEN
+        (selected_entity_ref exists and feeds provenance); whether
+        the VISTA host currently sends block-level selection is a
+        client-side TO_INVENTORY — not a DÉLIA contract gap.
+      - REAL_MODEL_EVAL = TEST_NOT_RUN (dev harness not exercised in
+        this slice).
+      - LIVE_* = TEST_NOT_RUN for new wording stages (no deploy in
+        this task).
+
+    RQ/AC MATRIX:
+      RQ-IL1-01 user goal before provider arg projection  IMPLEMENTED
+        (goal = plan.goal + staged proposals; CP-015/CP-263)
+      RQ-IL1-02 context before clarification              IMPLEMENTED
+        (workspace + owner evidence + resolver precede ask-back;
+        CP-263/CP-264)
+      RQ-IL1-03 internal names never exposed              IMPLEMENTED
+        (leak gate + humanized fallback; CP-264)
+      RQ-IL1-04 grounded synthesis for reads              IMPLEMENTED
+        (CP-015/CP-029 contribution, synthesis runtime now EXISTS —
+        epistemic class unchanged: OBSERVATION stays OBSERVATION)
+      RQ-IL1-05 synthesis preserves provenance/limitations
+        and cannot authorize                             IMPLEMENTED
+        (CP-094/CP-264)
+      RQ-IL1-06 PlanCandidate/PlanStep reused             IMPLEMENTED
+        (existing _build_plan + validate_plan_candidate; no dup)
+      RQ-IL1-07 provider neutrality preserved             IMPLEMENTED
+        (CP-263)
+      RQ-IL1-08 bounded repair, never ACT retry           IMPLEMENTED
+        (MAX_REPLAN_ROUNDS=1, non-write branch only; CP-265)
+      RQ-IL1-09 prior_turns semantic-only                  PRESERVED
+      RQ-IL1-10 governed write lifecycle regression-green  PASS
+        (CP-265)
+      RQ-IL1-11 real scenarios as permanent evals          IMPLEMENTED
+      RQ-IL1-12 paraphrase/generalization evals            IMPLEMENTED
+      TOTAL_RQ=12 APPLICABLE_RQ=12 IMPLEMENTED_RQ=12
+      PARTIAL_RQ=0 BLOCKED_RQ=0 TASK_VERIFIED_COVERAGE_PCT=100
+      CRITICAL_COVERAGE=12/12 TASK_COMPLETENESS=COMPLETE
+
+    PHASE_STATE = C3_STARTED=YES; C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION — architecture review
+      required; candidate follow-up C3-INTELLIGENCE-LOOP-02
+      (cross-provider semantic composition) is NOT implemented here.
+
+## 6.144. C3-INTELLIGENCE-LOOP-01R1 — point rework over §6.143
+    TASK = C3-INTELLIGENCE-LOOP-01R1
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = 350b17380e0d52d9a9bffea2355bea5afc63e496
+    REVIEW_CLOSED = ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01 = REWORK
+    EXISTING_EQUIVALENT = YES; REUSE_DECISION = EXTEND — no new
+      abstraction; same orchestrator, same _propose pipeline.
+
+    BLOCKERS FIXED:
+      FIX-1 clarification fallback: the deterministic fallback no
+        longer derives wording from internal field names — the
+        previous humanized label still leaked field vocabulary
+        (source_route -> "source route"). Fallback is now a generic
+        business question; _humanize_missing removed. CLARIFICATION_
+        FALLBACK_TECHNICAL_LEAK = 0 (parametrized evals over
+        source_route/params, block_id, resource_uuid,
+        owner_vocabulary).
+      FIX-2 evidence-bound synthesis (§6 of brief): SYNTHESIS_
+        INSTRUCTION is now a selection contract — the model proposes
+        {"intro": <non-factual framing>, "items": [{"record_index",
+        "fields"}]}; the runtime validates indices/fields against the
+        sanitized records (_resolver_entities + _sanitize_renderable)
+        and copies factual leaf values verbatim. MODEL DOES NOT
+        CREATE FACTUAL VALUES. The intro passes the leak gate plus a
+        non-factual gate (any capitalized non-initial word or
+        digit-bearing token must occur verbatim in owner evidence).
+        Invalid index/field/non-scalar or factual intro demote the
+        whole proposal to the deterministic renderer. OBSERVATION
+        stays OBSERVATION; provenance and limitations preserved.
+      FIX-3 repair fail-closed: _repair_once now catches
+        CapabilityProviderError raised by the live re-list inside
+        _fresh_group — the original classified error stands, no
+        exception escapes, no second repair, no write retry.
+
+    LANGUAGE CORRECTION (§12): identifier-provenance docstring now
+      reads "workspace-supplied identifier provenance" — Workspace-
+      Context is untrusted client-supplied targeting context, never
+      authority/permission; owner/domain revalidation still applies.
+
+    CLASSIFICATION CORRECTIONS (non-blocking, §13):
+      USER_GOAL_UNDERSTANDING = PARTIAL (goal remains largely
+        input/staged-proposal based, not a full semantic goal model —
+        task RQ-IL1-01 wording "goal before arg projection" stays
+        satisfied)
+      DECISION_PATH_RUNTIME = PARTIAL (select_decision_path is
+        telemetry after selection, not the central turn router)
+
+    TESTS = 808/808 PASS (6 new evals: free-text entity invention
+      BLOCKING test PASS; invalid record/field selection rejected;
+      generic-fallback vocab parametrized x4; relist-failure fail-
+      closed PASS; governed-write + prior-turn provenance
+      regressions green). RESIDUAL: the non-factual intro gate is
+      token-based (capitalized words, digit runs) — a fabricated
+      all-lowercase prose fragment without entity-like tokens is
+      bounded by instruction only; mitigated because items carry all
+      factual values.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.145. C3-INTELLIGENCE-LOOP-01R2 — zero model-authored factual prose
+    TASK = C3-INTELLIGENCE-LOOP-01R2
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = 99079cc108e4e22072537347a746049bd73dde7c
+    REVIEW_CLOSED = ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_01R1 = REWORK
+      (remaining blocker: FIX_2_EVIDENCE_BOUND_SYNTHESIS = PARTIAL —
+       the model could still author factual prose via "intro";
+       token heuristics cannot prove grounding)
+
+    ARCHITECTURAL_DECISION (persisted):
+      MODEL = SELECTOR / ORGANIZER OF EVIDENCE
+      OWNER = SOURCE OF FACTUAL VALUES
+      DELIA_RUNTIME = DETERMINISTIC FACTUAL RENDERER
+      MODEL OUTPUT != FACT
+
+    CHANGE: the model-authored prose channel is eliminated rather
+      than gated. SYNTHESIS_INSTRUCTION is now selection-only:
+      {"items": [{"record_index", "fields"}]}. `intro` removed from
+      expected_fields, allowed_keys, _render_synthesis and tests;
+      _intro_facts_in_evidence, _CAPITALIZED_WORD_RE and
+      MAX_SYNTHESIS_INTRO_CHARS removed (dead code — no heuristic
+      replaces them). Any extra key (`intro`, `summary`, anything)
+      rejects the whole proposal via allowed_keys; invalid
+      record_index/field/empty-fields/non-scalar value demote to
+      render_specialist_outcome fallback. Owner limitations and
+      provenance preserved unchanged.
+
+    TESTS = 809/809 PASS (7 new/updated evals — blocking lowercase
+      free-text invention via "intro" key = BLOCKED by contract;
+      extra free-text `summary` = BLOCKED; invalid index/field/empty
+      fields = FAIL_CLOSED; valid evidence selection renders
+      owner-backed names only; clarification/repair/write/provenance
+      regressions green).
+
+    RESIDUAL: business-field ranking quality is not proven — if the
+      model selects `revision` over `name` the answer is truthful but
+      suboptimal (quality concern, not hallucination; no hardcoded
+      field lists added). REAL_MODEL_EVAL = TEST_NOT_RUN.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.146. C3-INTELLIGENCE-LOOP-02 — semantic path selection + bounded multi-capability composition
+    TASK = C3-INTELLIGENCE-LOOP-02
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = da479a85a552866d258eb765af40c6e664c801a4
+    COORDINATION_PREDECESSOR = C3-INTELLIGENCE-LOOP-01R2 =
+      ACCEPT_WITH_RESIDUAL (LOOP-02 authorized)
+
+    ARCHITECTURAL_DECISION (persisted):
+      MINIMUM_SUFFICIENT_PATH = NATIVE_OWNER_FIRST
+      FOREIGN_FANOUT_BOUND = MAX_FOREIGN_GROUPS=1
+      PATH_BOUND = MAX_OPERATIONAL_PLAN_STEPS (=3, shared cap)
+      MODEL = path/selection proposer; RUNTIME = deterministic validator
+      COMPARISON_VERDICT = DETERMINISTIC (agreement|conflict|inconclusive)
+      FOREIGN_EVIDENCE != IDENTIFIER_PROVENANCE
+      UNNECESSARY_FOREIGN_FANOUT = 0 (native degrade, never fan out)
+
+    CHANGE: one bounded path proposal (`semantic_path`) runs after
+      target selection — the model chooses native | enrichment |
+      corroborate plus an optional foreign_capability_id; the runtime
+      revalidates deterministically against the live surface (id must
+      exist, be unambiguous, belong to a different group, and be
+      non-mutating; corroborate never composes a PREPARE/ACT target).
+      Invalid or unusable proposals degrade to native — paths are
+      never invented. The foreign step executes once, non-mutating
+      only; its bounded sanitized evidence reaches the target
+      argument projection as `foreign_evidence` — untrusted business
+      context, structurally EXCLUDED from the identifier-provenance
+      haystack so a foreign id can never prove a target identifier.
+      Plan views union all participating groups;
+      `validate_plan_candidate` still governs (duplicate capability
+      ids, unknown ids, backward-only dependencies, step bound — fail
+      closed). Corroboration terminal: the model selects comparable
+      record/context/value fields; the runtime computes the verdict
+      and renders evidence values verbatim — conflict surfaces as
+      `evidence_conflict`, missing/non-comparable sources as
+      `comparison_inconclusive` (or `comparison_source_unavailable`
+      when the foreign step could not run); evidence is never merged
+      and the model never decides the verdict.
+
+    TESTS = 831/831 PASS (22 new evals in
+      `test_semantic_path_composition_evals.py` — native no-fanout,
+      dynamic binding preserved (no snapshot), cross-group and
+      cross-provider-family enrichment, foreign-failure degrade,
+      agreement/conflict/inconclusive verdicts, foreign identifier
+      BLOCKED, workspace identifier + foreign business value allowed,
+      rename invariance, write-class foreign ineligible,
+      unknown/ambiguous id degrade, plan-level duplicate id
+      fail-closed, provider-metadata injection inert, corroborate
+      never over write target, VISTA-shaped native path unchanged).
+
+    RESIDUAL: REAL_MODEL_EVAL = TEST_NOT_RUN;
+      LIVE_COMPOSITION = TEST_NOT_RUN;
+      VISTA_NATIVE_DYNAMIC_DASHBOARD_PATH = PARTIAL (owner catalog,
+      routes and binding contracts proven in repo; end-to-end live
+      run not executed); path-proposal quality is bounded by
+      instruction + deterministic revalidation, not measured on a
+      real model; USER_GOAL_UNDERSTANDING=PARTIAL;
+      DECISION_PATH_RUNTIME=PARTIAL (unchanged).
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.147. C3-INTELLIGENCE-LOOP-02R1 — native-first runtime staging + owner-workflow parity + multi-source provenance
+    TASK = C3-INTELLIGENCE-LOOP-02R1
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = be3c63a470fe2c248505f82a2e88b08f7782fdd2
+    ARCHITECTURE_REVIEW_INPUT =
+      ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_02 = REWORK
+      (B1 foreign owner workflow, B2 native-first not a runtime
+      invariant, B3 required enrichment could degrade to native
+      success, B4 single-source provenance, B5 model-dependent
+      comparability, B6 overclaimed evidence)
+    HEAD_ADVANCE_CLASSIFICATION = UNRELATED_NO_DELIA_DIFF
+      (3efdb7e→be3c63a: no delia-api/** or docs/.../delia/** changes)
+
+    ARCHITECTURAL_DECISION (persisted, supersedes §6.146 where noted):
+      NATIVE_FIRST = RUNTIME_STAGED (assessment sees ONLY the target
+        group surface; foreign candidates exist only after the
+        assessment justifies them — instruction alone is not the
+        invariant)
+      FOREIGN_INVOCATION = _invoke_selected (SAME owner-defined
+        mechanics as a primary target — candidate-bound
+        DISCOVERY->owner candidate_token->READ preserved; no
+        simplified foreign execution path)
+      ENRICHMENT = REQUIRED evidence (never optional/speculative);
+        foreign failure/input-miss/invalid proposal fails CLOSED —
+        target calls after required-source failure = 0
+      PROVENANCE = MULTI_SOURCE (source_refs carries primary first,
+        foreign second, deduplicated; HTTP projection keeps `source`
+        and adds `sources` — additive, backward-compatible)
+      COMPARABILITY = DETERMINISTIC GATE (non-empty context pairs,
+        canonical field-name equivalence, scalar match — otherwise
+        INCONCLUSIVE; no semantic alias inference)
+      UNCHANGED = model proposes / runtime validates; MAX_FOREIGN_
+        GROUPS=1; MAX_OPERATIONAL_PLAN_STEPS=3; no owner/tool/provider
+        name branches; no new planner, engine or registry.
+
+    CHANGE: `_select_semantic_path` split into
+      `_assess_native_path` (target-group-only prompt — staged
+      disclosure is enforced by construction, not by instruction)
+      plus `_select_foreign_capability` (foreign-groups-only prompt,
+      deterministic revalidation). `attempt()` sequences target
+      selection -> native assessment -> foreign selection -> foreign
+      owner workflow -> target argument rebuild -> governed target
+      invocation. `_invoke_foreign_evidence` now delegates to
+      `_invoke_selected` — owner workflow parity between primary and
+      foreign roles. Required-enrichment failures return
+      CLARIFICATION_REQUIRED (missing business input) or
+      SOURCE_UNAVAILABLE, never SUCCESS. `_corroborate_attempt`
+      merges both outcomes' limitations and appends the foreign
+      SourceRef; `_outcome_attempt` accepts `extra_source_refs`.
+      `_compare_records` requires non-empty canonically-matched
+      context fields before any value verdict.
+      `GovernedCapabilityProvenance.to_projection` adds `sources`.
+
+    TESTS = 842/842 PASS (eval file rewritten for the staged
+      contract: native-sufficient never exposes foreign surface —
+      selector calls = 0; assessment prompt contains no foreign
+      names; invocation-order trace; candidate-bound foreign
+      DISCOVERY->token->READ via owner workflow with the token
+      never in prompts; target/foreign workflow parity; required
+      source failure, missing input clarification, invalid/ambiguous/
+      write-class required proposals fail closed; multi-source
+      provenance + projection; both limitation sets merged;
+      source-unavailable corroboration keeps only real provenance;
+      empty/mismatched context and mismatched value-field names all
+      INCONCLUSIVE; matched context yields AGREEMENT/CONFLICT;
+      DISTINCT CapabilityProviderPort implementations compose;
+      same-provider different groups; rename invariance; foreign
+      identifier blocked; workspace id + foreign business value;
+      metadata injection inert; corroborate never targets writes;
+      plan duplicate-id fail-closed; dynamic native path never
+      consults foreign snapshot; explicit static path stays valid).
+
+    RESIDUAL: REAL_MODEL_EVAL = TEST_NOT_RUN;
+      LIVE_COMPOSITION = TEST_NOT_RUN;
+      DYNAMIC_VS_SNAPSHOT_SEMANTICS = PARTIAL (deterministic path
+        enforcement proven; model-level semantic selection not
+        measured on a real model);
+      VISTA_NATIVE_DYNAMIC_PATH = PROVEN_IN_REPO;
+      DAVI/TÉO_FOREIGN_STRUCTURAL_WORKFLOW = PASS_IN_FIXTURE
+        (neutral candidate-bound fixture, no live owner);
+      USER_GOAL_UNDERSTANDING = PARTIAL;
+      DECISION_PATH_RUNTIME = PARTIAL (unchanged).
+      §6.146 claims superseded honestly: foreign workflow bypass
+      closed, enrichment semantics corrected to required-only,
+      comparability now gated deterministically.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.148. C3-INTELLIGENCE-LOOP-03R1 — bounded turn-goal stage + preflight ordering + write ceiling + reliability hardening
+
+    OBJECTIVE = close the LOOP-03 defect inventory (D01–D09) plus the
+      write-evaluation blocker, token expiry, latency and bounded
+      observability — without a second planner, without owner/tool
+      name branches, without weakening any gate.
+
+    DEFECT_INVENTORY_DISPOSITION:
+      L03-D01 COMPARABILITY      = CLOSED — `_compare_records` now
+        requires every scalar business-context field shared by BOTH
+        records to carry equal values; a differing shared context the
+        model omitted yields INCONCLUSIVE (reason-coded: insufficient
+        vs scope-mismatch). Technical/provenance keys excluded by
+        canonical contract.
+      L03-D02 GOAL_UNDERSTANDING = CLOSED_STRUCTURAL — one bounded
+        `_understand_goal` proposal (goal_class/comparison_requested/
+        output_mode/business_subject/scope_constraints), validated
+        deterministically, reused by native assessment, argument
+        projection and the comparability invariant. A validated
+        `comparison_requested` forces corroborate mode even when the
+        native assessment returns "sufficient" — a comparison goal
+        can never silently collapse to single-source success.
+        Invalid/absent proposals degrade to the neutral default.
+      L03-D03 ARG_PROJECTION     = CLOSED — validated
+        `business_subject` is projected into the argument block
+        (query args anchor on the business concept). Owner-side:
+        VISTA `TvDataRouteDiscoveryService` now filters a bounded
+        host/query stoplist so generic surface words never dilute
+        domain-token ranking.
+      L03-D04 SAME-OWNER PREREQ  = CLOSED — `_resolve_missing_inputs`
+        reused (unchanged contract): bounded same-owner non-mutating
+        resolver, ambiguity -> candidate clarification, resolved
+        values must occur literally in owner evidence; now also runs
+        inside the pre-foreign preflight.
+      L03-D05 TEO_PARAPHRASE     = TELEMETRY_ADDED — root cause
+        unproven remains honest; bounded argument telemetry (declared
+        keys only) + stage timing now emitted for diagnosis.
+      L03-D06 PRESENTATION       = CLOSED — `_business_lines` unwraps
+        nested technical envelopes recursively (data/result/payload/
+        response, depth-bounded), preserving deterministic render and
+        the sanitized generic fallback.
+      L03-D07 RESOLVER FALLBACK  = CLOSED — SOURCE_UNAVAILABLE /
+        AUTHZ_DENIED attempts are deterministic terminal results
+        (truthful unavailability/denial content,
+        delpi_source_unverified limitation, HYPOTHESIS class); the
+        general model no longer narrates an operational failure.
+      L03-D08 MISSING PREFLIGHT  = CLOSED — target preliminary
+        arguments + unproven-identifier demotion + same-owner
+        resolver run BEFORE any foreign call; an id-like or
+        foreign-required missing input clarifies with foreign calls
+        = 0.
+      L03-D09 OPENAPI_CORRELATION= CLOSED — `OpenApiCapabilityProvider
+        .invoke` re-stamps the turn correlation_id into outcome
+        provenance when the invoker returned a foreign/absent one.
+      WRITE_EVAL_BLOCKER         = CLOSED — the owner `direct` path
+        now passes the canonical `evaluate_write_continuation` gate
+        before `_execute_prepared_act` (capability live + proposal
+        ready/non-expired) — owner policy never grants DÉLIA
+        authority.
+      EXECUTION_CEILING          = NEW CONTRACT — request-scoped
+        `max_execution_stage="prepare"` caps the governed chain at
+        PREPARE: direct policy converts to CONFIRMATION_REQUIRED;
+        confirmations and direct ACT selections refuse truthfully
+        (execution_ceiling). It can only reduce authority.
+      TOKEN_EXPIRY               = CLOSED — one bounded same-call
+        re-exchange after invalidate+reconnect for non-mutating
+        classes (DISCOVERY/READ/ANALYSIS) or when no material call
+        occurred; PREPARE/ACT get zero material retries.
+      LATENCY                    = CLOSED — bounded `timing_ms` on
+        provider_invoke and model_propose stage logs.
+      OBSERVABILITY              = CLOSED — logs carry declared
+        argument keys and stage metadata only; never values, tokens
+        or payloads.
+
+    CHANGE (delia-api): `orchestration.py` (+GOAL stage/instruction,
+      `_TurnGoal`, `_assess_native_path(goal=)`, preflight block,
+      `_build_arguments(business_subject=)`, `_compare_records`
+      shared-context gate, `_business_lines` recursive envelope,
+      `attempt(max_execution_stage=)` plumbed to PREPARE/ACT/
+      confirmation paths, `_invoke`/`_propose` timing+key telemetry);
+      `handle_interactive_turn.py` (deterministic terminal result for
+      SOURCE_UNAVAILABLE/AUTHZ_DENIED, clarification epistemic class
+      HYPOTHESIS, `max_execution_stage` plumbing);
+      `contracts.py` (`InteractiveTurnRequest.max_execution_stage`);
+      `openapi_provider.py` (correlation stamping);
+      `mcp/adapter.py` (bounded non-mutating auth retry);
+      `tv-dashboard-api` `tv_data_route_discovery_service.py`
+      (query stoplist — owner-side ranking).
+
+    TESTS = 853/853 delia-api PASS (new: ceiling x3, terminal D07 x2,
+      OpenAPI correlation, auth-retry sibling/negative, goal stage x3,
+      request-contract field set); tv-dashboard-api discovery facade
+      13/13 PASS; owner suite 1757 PASS / 3 FAIL — all three failures
+      reproduce identically WITHOUT this change (pre-existing catalog/
+      budget drift, unrelated).
+
+    RESIDUAL: REAL_MODEL_EVAL = TEST_NOT_RUN;
+      LIVE_COMPOSITION = TEST_NOT_RUN;
+      TEO_PARAPHRASE_ROOT_CAUSE = UNPROVEN (telemetry in place);
+      DYNAMIC_VS_SNAPSHOT_SEMANTICS = PARTIAL;
+      DECISION_PATH_RUNTIME = PARTIAL;
+      INDEPENDENT_CI = NOT_AVAILABLE.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

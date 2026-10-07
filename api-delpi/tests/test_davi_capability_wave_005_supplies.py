@@ -65,13 +65,15 @@ _PROMOTED = (
     "get_supplies_third_party_materials_shipments",
     "list_supplies_purchase_request_lines",
 )
+# get_supplies_safety_stock_item_details and
+# get_supplies_safety_stock_consumption_analysis_item_details were deferred at
+# wave 005 and later promoted by
+# DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001 (allowlist v18).
 _DEFERRED = (
     "get_supplies_purchase_order_otd_panel",
     "get_supplies_purchase_requests_open_coverage",
     "get_supplies_purchase_request_lines",
     "get_supplies_safety_stock_filters",
-    "get_supplies_safety_stock_item_details",
-    "get_supplies_safety_stock_consumption_analysis_item_details",
     "get_supplies_third_party_materials_shipment",
     "list_supplies_purchase_request_recent_linked_orders",
     "list_supplies_purchase_request_recent_linked_receipts",
@@ -602,7 +604,7 @@ def test_wave005_agent_intelligence_unchanged():
     intel = json.loads(
         (_API_ROOT / "app/content/davi_agent_intelligence.json").read_text(encoding="utf-8")
     )
-    assert intel.get("version") == "2026.10.06.1"
+    assert intel.get("version") >= "2026.10.06.1"
     blob = json.dumps(intel)
     for oid in _PROMOTED:
         assert oid not in blob

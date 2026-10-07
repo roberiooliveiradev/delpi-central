@@ -6,6 +6,7 @@
 > **Owner:** BPMN Modeler (autoridade do modelo BPMN canônico)
 > **Natureza deste documento:** specification freeze de produto (WHAT). Decisões de implementação (HOW) pertencem aos Prompts 2–7 e estão mapeadas na seção 19.
 > **Base aprovada:** commits `318ac9cb82` (domain foundation) e `5c8e8b6a66` (application validation contract).
+> **AMENDMENT G0 (out/2026):** este arquivo é o **specification freeze histórico** da V1. Onde uma decisão foi substituída após implementação, o texto original foi preservado e marcado `SUPERSEDED (G0)`. Estado vigente e evidências: [`CURRENT-STATE.md`](CURRENT-STATE.md); divergências registradas: [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md).
 
 Vocabulário de decisão usado neste documento:
 
@@ -233,6 +234,8 @@ Decisão de capability, não de implementação React nem de biblioteca (Prompt 
 | Default flow em Gateway | `IN_V1` |
 | Event definition: seleção/troca de tipo dentro do perfil `CREATE_EDIT` | `IN_V1` |
 | Event definition: campos da definição suportada (ex.: name/reference de message/error/signal/escalation; expressão de timer como texto) | `IN_V1` |
+
+> **SUPERSEDED (G0):** `Element id (edição pelo usuário)` foi entregue — o entry `id`/`processId` do properties panel do vendor é realocado para o grupo "Configurações avançadas" e passa pelo command stack (undo/redo/read-back, refs atualizadas). `Model.id` da API permanece autoridade separada e imutável. Ver `CURRENT-STATE.md` §8 e `e2e/specs/bpmn-id-governance.spec.ts`.
 | Participant ↔ Process linkage | `IN_V1` |
 | Lane naming | `IN_V1` |
 | Propriedades específicas dos elementos suportados (task type, collapsed/expanded de SubProcess, called element de Call Activity como referência textual) | `IN_V1` |
@@ -313,6 +316,8 @@ CALCULATE → PREVIEW → ACCEPT / CANCEL → SAVE explícito
 ```
 
 Regra fechada: `layout calculation != persisted geometry`. Nada é persistido sem save explícito. Algoritmo/biblioteca (ELK, yFiles, outro): `DEPENDENT_ON_LATER_SPEC` → Prompt 5.
+
+> **SUPERSEDED (G0):** a V1 implementada usa **autosave do working copy** (`AutosaveController`, debounce + read-back verify). O gesto explícito obrigatório passa a ser **ACCEPT/CANCEL** do preview: ACCEPT → DIRTY → autosave pode persistir; CANCEL → zero write. `layout calculation != persisted geometry` permanece invariante — preview nunca escreve. Engine implementada: ELK em Web Worker (sem fallback main thread). Ver `CURRENT-STATE.md` §4/§7.
 
 ## 13. BPMN-DI Scope
 
@@ -410,6 +415,12 @@ O executor final **não deve** implementar nada abaixo na V1:
 | Diff visual/XML entre revisões | `FUTURE` |
 | Edição em tablet / qualquer uso mobile | `OUT_OF_V1` / `FUTURE` (edição em tablet) |
 | Certificação WCAG formal | `OUT_OF_V1` — baseline de acessibilidade da seção 15 permanece `IN_V1` |
+
+> **SUPERSEDED (G0):** três linhas desta tabela foram substituídas pela implementação aceita:
+> - `Autosave` → **entregue** como autosave do working copy (debounce + write + authoritative read-back + verify); `Ctrl+S` permanece como flush manual. `AUTOSAVE != REVISION`.
+> - `Edição de element id` → **entregue** via grupo "Configurações avançadas" do properties panel (entry vendor, command stack, refs atualizadas).
+> - `Thumbnails na library` → **entregue** (`BpmnModelThumb` renderiza SVG do working copy na biblioteca, cache por `model@version`). Também `FUTURE` na seção 8.
+> Demais linhas permanecem conforme congelado. Detalhes: `CURRENT-STATE.md` §4/§8 e `DOCUMENTATION-DRIFT-LEDGER.md` DRIFT-BPMN-003/006/011.
 | Campos de binding de engine (listeners/delegates/async) | `OUT_OF_V1` |
 | Edição de extension elements e ioSpecification | `OUT_OF_V1` |
 
@@ -446,7 +457,7 @@ Convenção de IDs: `CAP-<AREA>-<NNN>`, estável para rastreabilidade nos Prompt
 | CAP-REV-002 | Open revision read-only + current revision indicator | Auditoria | `IN_V1` | todos / G | n/a | n/a | n/a | BPMN Modeler | 2, 4 | |
 | CAP-REV-003 | Create snapshot/revision | Versionamento explícito | `IN_V1` | Manager / G | n/a | n/a | n/a | BPMN Modeler | 2 | |
 | CAP-REV-004 | Restore revision (append-only) | Recuperação | `IN_V1` | Manager / H | n/a | n/a | histórico nunca reescrito | BPMN Modeler | 2 | |
-| CAP-SAVE-001 | Explicit save com dirty/saving/saved/error/conflict | Confiança de persistência | `IN_V1` | Editor / E | n/a | n/a | n/a | BPMN Modeler | 2, 4, 7 | |
+| CAP-SAVE-001 | Explicit save com dirty/saving/saved/error/conflict | Confiança de persistência | `IN_V1` | Editor / E | n/a | n/a | n/a | BPMN Modeler | 2, 4, 7 | **SUPERSEDED (G0):** entregue como autosave do working copy + flush `Ctrl+S`; estados dirty/saving/saved/error/conflict observáveis conforme especificado |
 | CAP-SAVE-002 | Concurrent update detection | Proteção contra overwrite | `IN_V1` | Editor | n/a | n/a | n/a | BPMN Modeler | 2, 6 | mecanismo → Prompts 2/6 |
 | CAP-LAYOUT-001 | Auto-layout CALCULATE→PREVIEW→ACCEPT/CANCEL→SAVE | Diagrama legível | `IN_V1` | Editor | n/a | n/a | sem persistência sem save | BPMN Modeler | 5 | algoritmo → Prompt 5 |
 | CAP-DI-001 | BPMN-DI read/render/edit/persist/export | Geometria canônica | `IN_V1` | Editor | sim | sim | sim | BPMN Modeler | 5 | sem segunda fonte visual |
@@ -493,6 +504,7 @@ A V1 só pode ser declarada pronta quando **todos** os gates abaixo passarem, co
 
 - [ ] Todas as capabilities `IN_V1` da seção 8 e todos os elementos `CREATE_EDIT` da seção 6 estão operacionais (create/edit/delete/connect/undo/redo/persistir).
 - [ ] Auto-layout executa CALCULATE→PREVIEW→ACCEPT/CANCEL e nada persiste sem save explícito.
+  - **SUPERSEDED (G0):** o persist pós-ACCEPT é feito pelo autosave do working copy (ACCEPT → DIRTY → autosave → read-back verify). O critério de segurança continua sendo: nenhum write canônico sem ACCEPT, e CANCEL nunca escreve.
 
 ### DoD-5 — State
 

@@ -179,6 +179,18 @@ class BpmnModelerService:
             raise ApplicationError(MODEL_NOT_FOUND, "Modelo não encontrado.")
         return model
 
+    def _get_owned_or_404(self, model_id: str, caller: CallerIdentity) -> Model:
+        """Resource authorization boundary: every model-scoped operation
+        resolves through here. Model.created_by is the V1 resource owner
+        (immutable); a foreign id is indistinguishable from a missing one
+        — MODEL_NOT_FOUND, no existence/owner disclosure. Fail-closed:
+        RBAC permission never implies ownership, and service/superadmin
+        principals get no implicit cross-owner access."""
+        model = self._get_or_404(model_id)
+        if model.created_by != caller.subject:
+            raise ApplicationError(MODEL_NOT_FOUND, "Modelo não encontrado.")
+        return model
+
     def _mutate(self, model_id: str, expected_version: int, fn):
         try:
             return self._repo.mutate(model_id, expected_version, fn)
@@ -360,7 +372,7 @@ class BpmnModelerService:
 
     def get_model(self, model_id: str, caller: CallerIdentity) -> Model:
         self._require(caller, PERMISSION_VIEW)
-        return self._get_or_404(model_id)
+        return self._get_owned_or_404(model_id, caller)
 
     def list_models(
         self,
@@ -381,6 +393,7 @@ class BpmnModelerService:
             )
         try:
             rows = self._repo.list_summaries(
+                owner_subject=caller.subject,
                 query=query,
                 archived=archived,
                 sort=sort,
@@ -403,7 +416,7 @@ class BpmnModelerService:
         self, model_id: str, caller: CallerIdentity
     ) -> WorkingCopyRead:
         self._require(caller, PERMISSION_VIEW)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         artifact = model.working_copy.artifact
         return WorkingCopyRead(
             artifact=artifact,
@@ -415,7 +428,7 @@ class BpmnModelerService:
         self, model_id: str, page: int, page_size: int, caller: CallerIdentity
     ) -> PagedRecords:
         self._require(caller, PERMISSION_VIEW)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         ordered = sorted(model.revisions, key=lambda r: r.revision_number, reverse=True)
         start = (page - 1) * page_size
         window = ordered[start : start + page_size + 1]
@@ -430,7 +443,7 @@ class BpmnModelerService:
         self, model_id: str, revision_number: int, caller: CallerIdentity
     ) -> Revision:
         self._require(caller, PERMISSION_VIEW)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         revision = self._find_revision(model, revision_number)
         return revision
 
@@ -465,7 +478,7 @@ class BpmnModelerService:
     ) -> MutationOutcome:
         self._require(caller, PERMISSION_MANAGE)
         name = self._validated_name(display_name)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         if model.archived:
             raise ApplicationError(
                 MODEL_ARCHIVED,
@@ -512,7 +525,7 @@ class BpmnModelerService:
         self._require(caller, PERMISSION_MANAGE)
         self._require(caller, PERMISSION_VIEW)
         name = self._validated_name(display_name)
-        source = self._get_or_404(source_id)
+        source = self._get_owned_or_404(source_id, caller)
         now = self._clock.now()
         artifact = CanonicalBpmnArtifact(source.working_copy.artifact.content)
         model = Model(
@@ -565,7 +578,7 @@ class BpmnModelerService:
         archive: bool,
     ) -> MutationOutcome:
         self._require(caller, PERMISSION_MANAGE)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         if model.version != expected_version:
             raise ApplicationError(
                 CONFLICT,
@@ -615,7 +628,7 @@ class BpmnModelerService:
         caller: CallerIdentity,
     ) -> MutationOutcome:
         self._require(caller, PERMISSION_EDIT)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         if model.archived:
             raise ApplicationError(
                 MODEL_ARCHIVED,
@@ -690,7 +703,7 @@ class BpmnModelerService:
         self, model_id: str, raw: ArtifactInput, caller: CallerIdentity
     ) -> ValidationReport:
         self._require(caller, PERMISSION_VIEW)
-        self._get_or_404(model_id)
+        self._get_owned_or_404(model_id, caller)
         safety_report = self._sorted(self._input_safety.evaluate(raw.evidence))
         if raw.artifact is None or any(
             issue.rule_id.startswith("SEC-") for issue in safety_report.issues
@@ -715,7 +728,7 @@ class BpmnModelerService:
         description: str | None = None,
     ) -> MutationOutcome:
         self._require(caller, PERMISSION_MANAGE)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         if model.archived:
             raise ApplicationError(
                 MODEL_ARCHIVED,
@@ -793,7 +806,7 @@ class BpmnModelerService:
         caller: CallerIdentity,
     ) -> MutationOutcome:
         self._require(caller, PERMISSION_MANAGE)
-        model = self._get_or_404(model_id)
+        model = self._get_owned_or_404(model_id, caller)
         if model.archived:
             raise ApplicationError(
                 MODEL_ARCHIVED,

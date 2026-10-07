@@ -25,6 +25,30 @@ _CATEGORY_ALIASES: dict[str, frozenset[str]] = {
     ),
 }
 
+# Generic host/query tokens carry no domain signal: "painel",
+# "dados", "atualize" etc. match descriptions of nearly every route
+# and dilute the business-subject ranking (LOOP-03R1 D03). Bounded
+# stoplist — nouns/verbs of the host surface, never domain terms.
+_QUERY_STOPWORDS = frozenset(
+    {
+        "a", "o", "e", "de", "da", "do", "das", "dos", "em", "no",
+        "na", "nos", "nas", "um", "uma", "com", "por", "para", "ao",
+        "me", "meu", "minha", "seu", "sua", "este", "esta", "esse",
+        "essa", "isso", "the", "and", "or", "of", "in", "on", "to",
+        "my", "this", "that", "with", "for",
+        "painel", "painel de", "dashboard", "slide", "slides",
+        "quadro", "tela", "bloco", "card", "grafico", "dado", "dados",
+        "valor", "valores", "info", "informacao", "informacoes",
+        "metrica", "metricas", "indicador", "indicadores",
+        "atualize", "atualizar", "crie", "criar", "mostre", "mostrar",
+        "liste", "listar", "busque", "buscar", "consulte", "consultar",
+        "use", "usar", "veja", "ver", "quero", "preciso", "faca",
+        "put", "get", "show", "list", "search", "create", "update",
+        "data", "value", "values", "info", "information", "metric",
+        "metrics", "please", "want", "need",
+    }
+)
+
 
 def _fold(text: str) -> str:
     raw = unicodedata.normalize("NFKD", str(text or ""))
@@ -32,7 +56,12 @@ def _fold(text: str) -> str:
 
 
 def _tokens(text: str) -> list[str]:
-    return [m.group(0).lower() for m in _TOKEN_RE.finditer(_fold(text)) if m.group(0)]
+    """Domain-bearing query tokens — stopwords never enter scoring."""
+    return [
+        m.group(0).lower()
+        for m in _TOKEN_RE.finditer(_fold(text))
+        if m.group(0) and m.group(0).lower() not in _QUERY_STOPWORDS
+    ]
 
 
 class TvDataRouteDiscoveryService:

@@ -4,6 +4,7 @@
 > **Emenda pós-implementação:** a decisão de database dedicado (`bpmn_modeler` DB + roles próprios) foi **revogada pelo owner da plataforma** em favor do padrão canônico dos plugins: database compartilhado `plugins_hub` + schema dedicado `bpmn_modeler` + credenciais `PLUGINS_DB_*` (`plugins_user`) + migrations no startup da API (`BPMN_RUN_MIGRATIONS_ON_STARTUP`). Seções §4, §17, §20, §22–§24 atualizadas nesta emenda.
 > **Escopo:** segurança, autenticação, autorização, persistência física, banco de dados, dependências exatas, runtime, deploy, observabilidade, migrações e CI da V1.
 > **Natureza:** freeze de especificação. **Nenhuma linha de código de produção é autorizada por este documento.**
+> **AMENDMENT G0 (out/2026):** freeze histórico. A decisão "context-wide Core RBAC, sem per-model ACL" (T03, §5.4 rationale de índices, §27/§29) foi **substituída pela ownership P0** — `Model.created_by` = resource owner V1 (ver `CURRENT-STATE.md` §3 e `DOCUMENTATION-DRIFT-LEDGER.md` DRIFT-BPMN-001/002). Texto original preservado com markers `SUPERSEDED (G0)` inline.
 
 Este documento fecha todas as decisões de infraestrutura, segurança e runtime que os Prompts 1–5 declararam como `DELEGATED_TO_PROMPT_6`. Após este freeze, o implementador **não escolhe** stack, versão, schema físico, permissão, limite de segurança, política de deploy ou gate de CI.
 
@@ -278,6 +279,8 @@ all               → sem filtro
 
 `FROZEN`: **mecanismo físico de paginação resolvido por `API-E2E-ACCEPTANCE-SPEC-FREEZE` §18** — offset page-based (`page`/`page_size`, máx. 100, `has_more`). Autorização exercida: **nenhum índice adicional necessário** — `idx_models_list`, `idx_models_name_lower` e `idx_revisions_model` cobrem os sorts/paginação congelados (rationale em API-E2E §18.3). Sem paginação ilimitada — `page_size` sempre bounded.
 
+> **SUPERSEDED (G0):** com a ownership P0, a listagem passou a ser filtrada por `created_by`; migration `V004__owner_scoped_list_index.sql` criou `idx_models_owner_list (created_by, archived_at, updated_at DESC, id DESC)` — vigente e aplicada (Index Only Scan observado em acceptance). O rationale histórico acima era correto **antes** do filtro por owner existir.
+
 ### 5.5 Sort allowlist
 
 `FROZEN` — `ORDER BY` é mapping de allowlist, nunca string do cliente:
@@ -460,6 +463,8 @@ Total: 8 VIEW + 3 EDIT + 5 MANAGE + 1 MANAGE+VIEW = **17/17**. Transversal: toke
 | T16 | dependency compromise | pins exatos + lockfiles + license allowlist + provenance (npm/PyPI) | supply chain | `npm ci` + pip pin check + scan |
 | T17 | artifact corruption | `sha256` por artefato + read-back checksum em todo write | backend | read-back divergence → `OUTCOME_VERIFICATION_FAILED` |
 | T18 | revision tampering | append-only por contrato application/repository + `UNIQUE(model_id, revision_number)` + FK `ON DELETE RESTRICT` + sha256 por artefato. Credencial compartilhada **não** nega UPDATE/DELETE por-role — invariante garantido por ausência de use case/port e por testes | application+DB | static scan (sem UPDATE/DELETE em `revisions`) + constraint test + integration append-only |
+
+> **SUPERSEDED (G0) — T03:** a premissa "V1 authorization scope = catalog/context-wide — sem per-model ACL" foi substituída: a V1 implementada possui **resource ownership** — permissão `bpmn-modeler.*` (gate RBAC, 403) **e** `caller.subject == Model.created_by` (gate ownership, 404 `MODEL_NOT_FOUND` indistinguível de inexistente, incl. archived/foreign). Sem bypass de superadmin/service principal. Verificação vigente: `test_ownership_isolation.py`, migration V004, runtime acceptance multi-user (57+18 checks). Ver `CURRENT-STATE.md` §3.
 
 ---
 
@@ -770,7 +775,7 @@ Nenhum teste depende de rede externa para XSD; nenhum gate existente é enfraque
 | `GRANT ... ON TABLE public.models, public.revisions` | **removido** — modelo de grants dedicados revogado; objetos vivem em `bpmn_modeler.*` e acesso é via `plugins_user` (§4.2) | corrigido (emendado) |
 | `ALTER DEFAULT PRIVILEGES` | **removido** — sem grants default amplos; opt-in por objeto via migration | corrigido |
 | `BPMN_MODELER_DB_ADMIN_*` / `BPMN_MODELER_RUN_MIGRATIONS_ON_STARTUP` no runtime | não existem — credencial `PLUGINS_DB_*` única; `BPMN_RUN_MIGRATIONS_ON_STARTUP=true` executa migrations no startup (§17, §22) | corrigido (emendado) |
-| `horizontal`/`per-model` | T03 corrigido — autorização context-wide; per-model ACL = `OUT_OF_V1` | corrigido |
+| `horizontal`/`per-model` | T03 corrigido — autorização context-wide; per-model ACL = `OUT_OF_V1` | corrigido — **SUPERSEDED (G0):** per-model ownership (created_by) entregue no P0; ver T03/§29 e `CURRENT-STATE.md` §3 |
 | `NON_XML` em malformed XML | T10 corrigido — `MALFORMED_XML` ≠ `NON_XML` (Prompt 3) | corrigido |
 | `schema_migrations` | `bpmn_modeler.schema_migrations` — escrita só pelo runner; readiness verifica compatibilidade via `to_regclass` (§16) | consistente |
 
@@ -800,7 +805,7 @@ FROZEN
 - REVISION UPDATE: **DENIED POR CONTRATO DE APLICAÇÃO** (append-only; nenhuma camada emite UPDATE/DELETE).
 - HARD DELETE: **NOT IN V1**.
 - PRODUCTION MIGRATION EXECUTION: **API STARTUP** (`BPMN_RUN_MIGRATIONS_ON_STARTUP`, padrão `TM_RUN_MIGRATIONS_ON_STARTUP`).
-- PER-MODEL ACL: **NOT IN V1** (context-wide Core RBAC)
+- PER-MODEL ACL: **NOT IN V1** (context-wide Core RBAC) — **SUPERSEDED (G0):** RESOURCE OWNERSHIP V1 = `Model.created_by`; RBAC context-wide + owner check; foreign → 404; P0 CLOSED com runtime acceptance (ver `CURRENT-STATE.md` §3)
 - MALFORMED XML CLASSIFICATION: **MALFORMED_XML** (≠ `NON_XML`)
 - CROSS-CONTEXT BUSINESS DB ACCESS: **NONE**.
 - PEER DEPENDENCY STATUS: **PASS** (conjunto §3.1 resolvido sem `--force`/`--legacy-peer-deps`).

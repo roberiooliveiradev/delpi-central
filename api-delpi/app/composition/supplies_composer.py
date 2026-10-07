@@ -62,6 +62,9 @@ from app.application.use_cases.supplies.get_supplies_purchase_order_use_case imp
 from app.application.use_cases.supplies.list_supplies_purchase_orders_use_case import (
     ListSuppliesPurchaseOrdersUseCase,
 )
+from app.application.use_cases.supplies.list_supplies_purchase_request_approval_states_use_case import (
+    ListSuppliesPurchaseRequestApprovalStatesUseCase,
+)
 from app.application.use_cases.supplies.list_supplies_purchase_request_lines_use_case import (
     ListSuppliesPurchaseRequestLinesUseCase,
 )
@@ -77,6 +80,9 @@ from app.application.use_cases.supplies.list_supplies_purchase_request_requester
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_list_repository import (
     PurchaseOrdersListRepository,
 )
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_approval_states_repository import (
+    PurchaseRequestApprovalStatesRepository,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_repository import (
     PurchaseRequestLinesRepository,
 )
@@ -85,6 +91,15 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_linked_receipts_repository import (
     PurchaseRequestLinkedReceiptsRepository,
+)
+from app.application.use_cases.supplies.get_inventory_adjustments_summary_use_case import (
+    GetInventoryAdjustmentsSummaryUseCase,
+)
+from app.application.use_cases.supplies.list_inventory_adjustments_use_case import (
+    ListInventoryAdjustmentsUseCase,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustments_repository import (
+    InventoryAdjustmentsRepository,
 )
 from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_item_details_use_case import (
     GetSafetyStockConsumptionAnalysisItemDetailsUseCase,
@@ -261,6 +276,14 @@ def build_get_supplies_purchase_request_lines_use_case() -> (
     )
 
 
+def build_list_supplies_purchase_request_approval_states_use_case() -> (
+    ListSuppliesPurchaseRequestApprovalStatesUseCase
+):
+    return ListSuppliesPurchaseRequestApprovalStatesUseCase(
+        repository=PurchaseRequestApprovalStatesRepository(),
+    )
+
+
 def build_list_supplies_purchase_request_recent_linked_orders_use_case() -> (
     ListSuppliesPurchaseRequestRecentLinkedOrdersUseCase
 ):
@@ -326,4 +349,17 @@ def build_get_safety_stock_consumption_analysis_item_details_use_case() -> (
 ):
     return GetSafetyStockConsumptionAnalysisItemDetailsUseCase(
         repository=SafetyStockQueryRepository()
+    )
+
+def build_get_inventory_adjustments_summary_use_case() -> (
+    GetInventoryAdjustmentsSummaryUseCase
+):
+    return GetInventoryAdjustmentsSummaryUseCase(
+        repository=InventoryAdjustmentsRepository()
+    )
+
+
+def build_list_inventory_adjustments_use_case() -> ListInventoryAdjustmentsUseCase:
+    return ListInventoryAdjustmentsUseCase(
+        repository=InventoryAdjustmentsRepository()
     )

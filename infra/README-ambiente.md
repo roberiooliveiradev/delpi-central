@@ -153,6 +153,11 @@ Executar **da raiz do repositório** (`./infra/scripts/...`). O script de produ�
 
 Cada serviço sobe com `up -d --no-deps` (a ordem vem do script, não do `depends_on` do Compose). Com `--build`, roda `compose build <serviço>` **isolado** — evita que `gateway` (que declara `depends_on` em dezenas de MFEs) dispare rebuild de toda a stack.
 
+**Gateway e upstreams estáticos.** Serviços em `proxy_pass` estático no `gateway/nginx.conf` (hoje `portal`, `core-api`, `api-delpi`, `keycloak`) são resolvidos pelo nginx só no start/reload. Recriar um deles muda o IP e o site responde **502** até o gateway recarregar. Os scripts `up-*-sequential.sh` fazem `nginx -t` + `nginx -s reload` no `delpi-gateway` logo após subir esses serviços (lista lida do próprio conf); em produção, ao final, rodam o healthcheck do gateway e saem com erro se algum upstream falhar.
+
+- Recriou fora do script (`docker compose up` manual)? → `docker restart delpi-gateway`.
+- Diagnóstico: `docker ps --filter name=delpi-gateway` mostra `unhealthy` quando um upstream estático não responde (healthcheck em `gateway/healthcheck.sh`); `docker logs --tail 50 delpi-gateway` mostra `connect() failed (111: Connection refused)` com o IP antigo. O Docker **não** reinicia o gateway sozinho em `unhealthy`.
+
 ### Evitar
 
 | Anti-padrão | Risco |

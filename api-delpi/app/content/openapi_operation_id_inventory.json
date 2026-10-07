@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 726,
-  "stableCount": 726,
+  "operationCount": 736,
+  "stableCount": 736,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -1534,6 +1534,48 @@
       "stable": true
     },
     {
+      "operationId": "list_lancamento_notas_fiscais_open_purchase_orders",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/purchase-orders/open",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_received_invoices",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_cte_dacte",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/dacte",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_invoice_danfe",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/danfe",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_nfse_detail",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/detail",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_nfse_xml",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/xml/{variant}",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
       "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/reconciliation/refresh",
@@ -1597,6 +1639,20 @@
       "stable": true
     },
     {
+      "operationId": "get_lancamento_notas_fiscais_request_danfe",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/danfe",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_request_fiscal_attachment",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/fiscal-attachments/{attachment_type}",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
       "operationId": "post_manual_lancamento_notas_fiscais_request",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
@@ -1635,6 +1691,13 @@
       "operationId": "search_lancamento_notas_fiscais_suppliers",
       "method": "GET",
       "path": "/lancamento-notas-fiscais/suppliers",
+      "tag": "Lançamento de Notas Fiscais",
+      "stable": true
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_unmapped_products",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/unmapped-products",
       "tag": "Lançamento de Notas Fiscais",
       "stable": true
     },
@@ -4786,6 +4849,13 @@
       "method": "GET",
       "path": "/supplies/purchase-orders/{branch}/{order_number}",
       "tag": "Suprimentos — Pedidos de compra",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_purchase_request_approval_states",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/approval-states",
+      "tag": "Suprimentos — Solicitações de compra",
       "stable": true
     },
     {

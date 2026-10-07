@@ -67,6 +67,7 @@ class ModelRepositoryPort(Protocol):
     def list_summaries(
         self,
         *,
+        owner_subject: str,
         query: str | None,
         archived: str,
         sort: str,
@@ -74,7 +75,9 @@ class ModelRepositoryPort(Protocol):
         offset: int,
         limit: int,
     ) -> Sequence[ModelSummaryRecord]:
-        """Return up to `limit` records (caller passes page_size + 1)."""
+        """Return up to `limit` records owned by `owner_subject`
+        (caller passes page_size + 1). Required scope — fail-closed by
+        contract: there is no global-collection path."""
         ...
 
     def mutate(

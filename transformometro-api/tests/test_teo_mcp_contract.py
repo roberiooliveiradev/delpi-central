@@ -84,11 +84,11 @@ def test_tool_parity_with_gpt_actions_operation_ids() -> None:
     assert "get_methodology_guide" not in GPT_TO_MCP_TOOLS.get("gpt_get_catalog", ())
     assert GPT_TO_MCP_TOOLS["gpt_get_methodology_guide"] == ("get_methodology_guide",)
     assert TOOL_CLASS["get_methodology_guide"] == "READ"
-    assert TOOL_CLASS["prepare_improvement_package"] == "PREPARE"
+    assert TOOL_CLASS["prepare_governed_operation"] == "PREPARE"
     assert TOOL_CLASS["prepare_record_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
-    assert TOOL_CLASS["generate_from_transcript"] == "ANALYSIS"
+    assert TOOL_CLASS["meeting_minute_read"] == "READ"
     assert any(TOOL_CLASS[n] == "ACT" for n in MCP_TOOL_NAMES)
     assert any(TOOL_CLASS[n] == "PREPARE" for n in MCP_TOOL_NAMES)
     assert "act_create_record" not in TOOL_CLASS
@@ -111,10 +111,10 @@ def test_list_tools_exposes_governed_full_crud_tools() -> None:
     names = [t.name for t in tools]
     assert set(names) == set(MCP_TOOL_NAMES)
     assert "get_methodology_guide" in names
-    assert len(names) == 24
+    assert len(names) == 19
     assert "prepare_record_change" in names
     assert "commit_proposal" in names
-    assert "prepare_improvement_package" in names
+    assert "prepare_governed_operation" in names
     assert "prepare_create_record" not in names
     assert "act_create_record" not in names
     assert "act_commit_improvement_package" not in names
@@ -239,11 +239,11 @@ async def test_oauth_metadata_is_public() -> None:
 def test_manage_evidence_requires_confirm_delete_flag_in_description() -> None:
     mcp = create_mcp_server()
     tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
-    desc = tools["prepare_manage_evidence"].description or ""
+    desc = tools["prepare_evidence_change"].description or ""
     assert "confirm_delete" in desc
     commit = tools["commit_proposal"].description or ""
     assert "proposal_handle" in commit
-    prepare_pkg = tools["prepare_improvement_package"].description or ""
+    prepare_pkg = tools["prepare_governed_operation"].description or ""
     assert "commit_proposal" in prepare_pkg
     assert "prepare_record_change" in tools
     assert "execute_capability" not in tools

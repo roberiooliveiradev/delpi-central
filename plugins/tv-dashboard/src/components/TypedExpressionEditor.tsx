@@ -8,6 +8,7 @@
 
 import { useMemo } from "react";
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { INPUT_EXPRESSION_REF_PREFIX } from "@delpi/tv-dashboard-presentation";
 import type {
   ParamExpressionAst,
   ParamExpressionSpec,
@@ -136,6 +137,8 @@ export type TypedExpressionEditorProps = {
   support: ParamExpressionSupport;
   /** Chaves do paramSchema para refs `param.<key>`. */
   refParamKeys?: Array<{ key: string; label: string }>;
+  /** Variáveis do slide para refs `input.<key>`. */
+  refInputKeys?: Array<{ key: string; label: string }>;
   /** Tipos de retorno compatíveis com o param (ordena funções). */
   expectedReturnTypes?: ReadonlySet<string> | null;
   idPrefix?: string;
@@ -147,6 +150,7 @@ export function TypedExpressionEditor({
   onChange,
   support,
   refParamKeys = [],
+  refInputKeys = [],
   expectedReturnTypes = null,
   idPrefix = "td-expr",
   compact = false,
@@ -199,6 +203,7 @@ export function TypedExpressionEditor({
         depth={1}
         metas={metas}
         refParamKeys={refParamKeys}
+        refInputKeys={refInputKeys}
         expectedReturnTypes={expectedReturnTypes}
         idPrefix={idPrefix}
         compact={compact}
@@ -223,6 +228,7 @@ type NodeEditorProps = {
   depth: number;
   metas: FunctionMeta[];
   refParamKeys: Array<{ key: string; label: string }>;
+  refInputKeys: Array<{ key: string; label: string }>;
   expectedReturnTypes: ReadonlySet<string> | null;
   idPrefix: string;
   compact: boolean;
@@ -296,7 +302,7 @@ type NodeBodyProps = NodeEditorProps & {
 };
 
 function NodeBody(props: NodeBodyProps) {
-  const { node, onChange, metas, refParamKeys, idPrefix, compact, renderChild } =
+  const { node, onChange, metas, refParamKeys, refInputKeys, idPrefix, compact, renderChild } =
     props;
   const selectClass = compact ? "delpi-ui-select--compact" : undefined;
   const nativeClass = compact ? "delpi-ui-native-control--compact" : undefined;
@@ -321,6 +327,10 @@ function NodeBody(props: NodeBodyProps) {
         ...refParamKeys.map((ref) => ({
           value: `${PARAM_REF_PREFIX}${ref.key}`,
           label: `Parâmetro ${ref.label || ref.key}`,
+        })),
+        ...refInputKeys.map((ref) => ({
+          value: `${INPUT_EXPRESSION_REF_PREFIX}${ref.key}`,
+          label: `Variável ${ref.label || ref.key}`,
         })),
       ];
       const current = String(node.value ?? "");

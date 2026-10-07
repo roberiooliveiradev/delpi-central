@@ -90,6 +90,38 @@ MCP_LEGACY_REMOVED_TOOLS: frozenset[str] = frozenset(
         "act_manage_evidence",
         "act_adjust_shared_resource_cost",
         "act_meeting_minute_manage",
+        # Tool Surface Rationalization V1 — pre-family tool names.
+        # Capabilities are unchanged; old names are tombstones that fail
+        # closed. Canonical replacements:
+        #   task_read / interaction_room_read   → collaboration_read
+        #   prepare_task / prepare_interaction_room → prepare_collaboration_change
+        #   list_evidence → evidence_read; prepare_manage_evidence → prepare_evidence_change
+        #   generate_from_transcript → meeting_minute_read(action)
+        #   prepare_meeting_minute_workflow / prepare_meeting_minute_manage
+        #       → prepare_meeting_minute_change
+        #   get_diagnostic / list_diagnostics_by_revision → diagnostic_read
+        #   prepare_create_diagnostic / prepare_manage_diagnostic
+        #       → prepare_diagnostic_change
+        #   prepare_activate_revision / prepare_recalculate_dashboard /
+        #   prepare_improvement_package / prepare_adjust_shared_resource_cost
+        #       → prepare_governed_operation
+        "task_read",
+        "prepare_task",
+        "interaction_room_read",
+        "prepare_interaction_room",
+        "list_evidence",
+        "prepare_manage_evidence",
+        "generate_from_transcript",
+        "prepare_meeting_minute_workflow",
+        "prepare_meeting_minute_manage",
+        "get_diagnostic",
+        "list_diagnostics_by_revision",
+        "prepare_create_diagnostic",
+        "prepare_manage_diagnostic",
+        "prepare_activate_revision",
+        "prepare_recalculate_dashboard",
+        "prepare_improvement_package",
+        "prepare_adjust_shared_resource_cost",
     }
 )
 
@@ -99,14 +131,13 @@ ACT_TOOL_CAPABILITY: dict[str, str] = {
 }
 
 PREPARE_TOOL_CAPABILITY: dict[str, str] = {
+    # Multi-action families: the ``action`` argument selects the exact
+    # semantic capability (and therefore its canonical execution_policy);
+    # the value shown is only the representative/default capability.
     "prepare_record_change": "create_record",  # operation selects exact capability
-    "prepare_activate_revision": "activate_revision",
-    "prepare_recalculate_dashboard": "recalculate_dashboard",
-    "prepare_meeting_minute_workflow": "meeting_minute_workflow",
-    "prepare_improvement_package": "commit_improvement_package",
-    "prepare_manage_evidence": "manage_evidence",
-    "prepare_adjust_shared_resource_cost": "adjust_shared_resource_cost",
-    "prepare_meeting_minute_manage": "meeting_minute_manage",
-    "prepare_create_diagnostic": "create_diagnostic",
-    "prepare_manage_diagnostic": "manage_diagnostic",
+    "prepare_collaboration_change": "create_task",  # action selects exact capability
+    "prepare_evidence_change": "manage_evidence",  # action selects operation
+    "prepare_meeting_minute_change": "meeting_minute_manage",  # action selects
+    "prepare_diagnostic_change": "manage_diagnostic",  # action selects
+    "prepare_governed_operation": "activate_revision",  # action selects
 }

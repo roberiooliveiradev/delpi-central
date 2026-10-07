@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseComunicadoConfig, serializeComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
 import type { Slide } from "../api/tvDashboardApi";
 import {
@@ -6,6 +7,7 @@ import {
   buildSlideThumbnailNative,
   enrichComunicadoConfigForEditor,
   ensureComunicadoEditorMediaUrls,
+  hydrateEditorVideoPosters,
   externalSlideHost,
   resolveEditorMediaUrl,
   serializeComunicadoConfigForThumbnail,
@@ -602,5 +604,66 @@ describe("slideCardPreview", () => {
       "playlist-1",
     );
     expect(enriched.groupTransforms).toEqual({ grp_abc: { rotation: 45 } });
+  });
+});
+
+describe("hidratação efêmera de posterUrl (vídeo, poster opcional)", () => {
+  const PLAYLIST = "playlist-7";
+  const TEO = "8a9c5a28-teo";
+  const LEGACY = "72e3abbd-legacy";
+  const LEGACY_SIBLING = "legacy-sibling";
+  const frame = { x: 0, y: 0, w: 30, h: 20 };
+  const rawSlide = {
+    version: 2,
+    blocks: [
+      { id: "v-teo", type: "video", assetId: TEO, frame },
+      { id: "v-legacy", type: "video", assetId: LEGACY, frame },
+      { id: "v-sibling", type: "video", assetId: LEGACY_SIBLING, frame },
+      { id: "img", type: "image", assetId: TEO, frame },
+    ],
+  };
+  const withPoster: ReadonlySet<string> = new Set([TEO]);
+  const posterOf = (config: { blocks?: unknown[] }, id: string) =>
+    (config.blocks as Array<{ id: string; posterUrl?: string }>).find((b) => b.id === id)?.posterUrl;
+
+  it("hasPoster=true hidrata posterUrl; hasPoster=false e irmão legado ficam sem poster", () => {
+    const enriched = enrichComunicadoConfigForEditor(rawSlide, PLAYLIST, withPoster);
+    expect(posterOf(enriched, "v-teo")).toMatch(new RegExp(`/playlists/${PLAYLIST}/media/${TEO}/poster$`));
+    expect(posterOf(enriched, "v-legacy")).toBeUndefined();
+    expect(posterOf(enriched, "v-sibling")).toBeUndefined();
+    expect(posterOf(enriched, "img")).toBeUndefined();
+  });
+
+  it("metadado desconhecido (null) não sintetiza poster", () => {
+    const enriched = enrichComunicadoConfigForEditor(rawSlide, PLAYLIST);
+    for (const id of ["v-teo", "v-legacy", "v-sibling"]) {
+      expect(posterOf(enriched, id)).toBeUndefined();
+    }
+  });
+
+  it("serialize não persiste posterUrl; re-hidratação restaura do metadado", () => {
+    const enriched = enrichComunicadoConfigForEditor(rawSlide, PLAYLIST, withPoster);
+    const serialized = serializeComunicadoConfig(enriched);
+    expect(JSON.stringify(serialized)).not.toContain("posterUrl");
+    expect(JSON.stringify(serialized)).not.toContain("/poster");
+    const rehydrated = enrichComunicadoConfigForEditor(serialized, PLAYLIST, withPoster);
+    expect(posterOf(rehydrated, "v-teo")).toBe(posterOf(enriched, "v-teo"));
+    expect(posterOf(rehydrated, "v-legacy")).toBeUndefined();
+  });
+
+  it("undo/reconstrução via ensure (snapshot sem url/posterUrl) mantém poster só com hasPoster", () => {
+    const snapshot = parseComunicadoConfig(rawSlide);
+    const ensured = ensureComunicadoEditorMediaUrls(snapshot, PLAYLIST, withPoster);
+    expect(posterOf(ensured, "v-teo")).toMatch(/\/poster$/);
+    expect(posterOf(ensured, "v-legacy")).toBeUndefined();
+    expect(posterOf(ensured, "v-sibling")).toBeUndefined();
+    expect(ensureComunicadoEditorMediaUrls(ensured, PLAYLIST, withPoster)).toBe(ensured);
+  });
+
+  it("asset que perdeu hasPoster tem posterUrl removido; null preserva o valor existente", () => {
+    const stale = ensureComunicadoEditorMediaUrls(parseComunicadoConfig(rawSlide), PLAYLIST, withPoster);
+    const cleared = hydrateEditorVideoPosters(stale, PLAYLIST, new Set());
+    expect(posterOf(cleared, "v-teo")).toBeUndefined();
+    expect(hydrateEditorVideoPosters(stale, PLAYLIST, null)).toBe(stale);
   });
 });

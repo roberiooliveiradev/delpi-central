@@ -11,9 +11,13 @@ from tv_app.application.services.playlist_section_inheritance_service import (
     resolve_slide_duration_sec,
     resolve_slide_transition_style,
 )
+from tv_app.application.services.comunicado_input_contract_service import (
+    SLIDE_INPUT_OVERRIDES_KEY,
+)
 from tv_app.application.services.public_filter_overrides_service import (
     allowlist_filter_overrides,
     collect_allowed_input_keys_from_playlist_slides,
+    slide_input_overrides,
 )
 from tv_app.application.services.tv_dashboard_content_service import (
     heartbeat_interval_sec,
@@ -95,6 +99,23 @@ class PresentationPayloadService:
             user=user,
             filter_overrides=filter_overrides,
         )
+
+    @staticmethod
+    def _slide_filter_overrides(
+        safe_overrides: dict[str, Any] | None,
+        raw_overrides: dict[str, Any] | None,
+        slide: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Overrides legados (allowlist da programação) + só a fatia de variáveis deste slide."""
+        cfg = slide.get("nativeConfig") if isinstance(slide.get("nativeConfig"), dict) else {}
+        blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else []
+        by_input = slide_input_overrides(
+            raw_overrides, slide_id=str(slide.get("id") or ""), slide_blocks=blocks
+        )
+        if not by_input:
+            return safe_overrides
+        base = safe_overrides if isinstance(safe_overrides, dict) else {"slide": {}, "bySourceId": {}}
+        return {**base, SLIDE_INPUT_OVERRIDES_KEY: by_input}
 
     def _assemble_payload(
         self,
@@ -215,7 +236,9 @@ class PresentationPayloadService:
                         public_token=public_token,
                         user=user,
                         playlist_defaults=playlist_defaults,
-                        filter_overrides=safe_overrides,
+                        filter_overrides=self._slide_filter_overrides(
+                            safe_overrides, filter_overrides, slide
+                        ),
                         max_age_seconds=float(global_refresh_sec),
                     ),
                 }

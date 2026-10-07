@@ -911,7 +911,12 @@ def test_missing_owner_input_yields_clarification():
         attempt.status
         is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     )
-    assert "preset_key" in attempt.content
+    # C3-LOOP-01/R1: internal field names never reach the user
+    # surface — the deterministic fallback is a generic business
+    # question that derives nothing from the field name.
+    assert "preset_key" not in attempt.content
+    assert "preset" not in attempt.content
+    assert "Qual item" in attempt.content
     # Nothing was invoked — the turn ended at the ask-back.
     assert provider.calls == []
 
@@ -999,5 +1004,8 @@ def test_empty_arguments_with_missing_inputs_yield_clarification():
         attempt.status
         is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     )
-    assert "ops" in attempt.content
+    # §6.144: the fallback is a generic business question — even a
+    # humanized form of the internal name ("ops") must not appear.
+    assert "ops" not in attempt.content
+    assert "Qual item" in attempt.content
     assert "prepare_change" not in [c[0] for c in provider.calls]

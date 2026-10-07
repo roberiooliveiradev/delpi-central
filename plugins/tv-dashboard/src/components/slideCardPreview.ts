@@ -43,15 +43,56 @@ export function resolveEditorMediaUrl(
 }
 
 /**
+ * Ids de vídeos com poster gerado (`MediaAsset.hasPoster`).
+ * `null` = metadado ainda não carregado: nada é sintetizado nem removido.
+ */
+export type EditorVideoPosterAssets = ReadonlySet<string> | null;
+
+/**
+ * Hidrata `posterUrl` (não persistido) só para vídeos cujo asset tem poster.
+ * Poster é opcional: sem `hasPoster` o bloco fica sem `posterUrl` e nenhum
+ * `/poster` deve ser requisitado.
+ */
+export function hydrateEditorVideoPosters(
+  config: ComunicadoConfig,
+  playlistId: string,
+  posterAssets: EditorVideoPosterAssets,
+): ComunicadoConfig {
+  if (!playlistId || !posterAssets || !config.blocks?.length) return config;
+  let changed = false;
+  const blocks = config.blocks.map((block) => {
+    if (block.type !== "video" || !block.assetId) return block;
+    const posterUrl = posterAssets.has(block.assetId)
+      ? `${adminMediaUrl(playlistId, block.assetId)}/poster`
+      : undefined;
+    if (block.posterUrl === posterUrl) return block;
+    changed = true;
+    return { ...block, posterUrl };
+  });
+  return changed ? { ...config, blocks } : config;
+}
+
+/**
  * Garante `url` de mídia no config em memória do editor (não persistido).
  * Cobre insert/upload, undo via snapshot sem url e eco do pai só com assetId.
  */
 export function ensureComunicadoEditorMediaUrls(
   config: ComunicadoConfig,
   playlistId: string,
+  posterAssets: EditorVideoPosterAssets = null,
 ): ComunicadoConfig {
   if (!playlistId) return config;
+  return hydrateEditorVideoPosters(
+    ensureComunicadoEditorMediaUrlsOnly(config, playlistId),
+    playlistId,
+    posterAssets,
+  );
+}
 
+function ensureComunicadoEditorMediaUrlsOnly(
+  config: ComunicadoConfig,
+  playlistId: string,
+): ComunicadoConfig {
   let changed = false;
 
   let background = config.background;
@@ -389,9 +430,10 @@ export function buildSlideThumbnailNative(
 export function enrichComunicadoConfigForEditor(
   raw: Record<string, unknown>,
   playlistId: string,
+  posterAssets: EditorVideoPosterAssets = null,
 ): ComunicadoConfig {
   const data = buildComunicadoPreviewData(raw, playlistId);
-  return parseComunicadoConfig(data);
+  return hydrateEditorVideoPosters(parseComunicadoConfig(data), playlistId, posterAssets);
 }
 
 function buildComunicadoPreviewData(

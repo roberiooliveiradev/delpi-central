@@ -23,6 +23,17 @@ from tm_app.application.gpt_actions.entities import (
     GptAnalysisView,
     GptEntity,
 )
+from tm_app.application.gpt_actions.parity_capabilities_service import (
+    MEETING_MINUTE_READ_ACTION_VALUES,
+)
+from tm_app.application.governed_writes.orchestrator import (
+    GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
+    MEETING_MINUTE_ACTION_TO_CAPABILITY,
+)
+from tm_app.application.methodology.guide_v2 import (
+    INTENT_IDS,
+    SUPPORTED_GUIDE_VERSIONS,
+)
 from tm_app.interface.mcp.branding import TEO_MCP_INSTRUCTIONS
 from tm_app.interface.mcp.constants import (
     DESTRUCTIVE_ACT_TOOLS,
@@ -42,6 +53,17 @@ logger = logging.getLogger(__name__)
 _EntityParam = Literal[tuple(e.value for e in GptEntity)]
 _AnalysisViewParam = Literal[tuple(v.value for v in GptAnalysisView)]
 _RecordOperationParam = Literal[tuple(sorted(RECORD_OPERATIONS))]
+_MinuteReadActionParam = Literal[
+    tuple(sorted(MEETING_MINUTE_READ_ACTION_VALUES))
+]
+_MinuteChangeActionParam = Literal[
+    tuple(sorted(MEETING_MINUTE_ACTION_TO_CAPABILITY))
+]
+_GovernedOperationParam = Literal[
+    tuple(sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY))
+]
+_GuideVersionParam = Literal[tuple(sorted(SUPPORTED_GUIDE_VERSIONS))]
+_MethodIntentParam = Literal[tuple(sorted(INTENT_IDS))]
 
 
 class _TeoWireTool(MCPTool):
@@ -145,6 +167,13 @@ def create_mcp_server() -> MCPServer:
             "Optional method (macroprocess, key_process, end_to_end, sipoc, lean, "
             "ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or task "
             "(discover, map, diagnose, redesign, measure, prioritize, interview). "
+            "guide_version selects teo-method-playbooks-v1 (default) or "
+            "teo-method-playbooks-v2 (intent routing, readiness, soft "
+            "composition, sufficiency). V2 also accepts intent and an optional "
+            "context object of process facts (boundary_known, as_is_known, "
+            "problem_defined, candidate_cause, flow_known, ...). V2 responses "
+            "include supported_context_facts — the accepted vocabulary, "
+            "accepted values and semantics. "
             "Guidance is not authorization, not domain truth, and does not write."
         ),
         annotations=_annotations("get_methodology_guide", "Get methodology guide"),
@@ -153,8 +182,17 @@ def create_mcp_server() -> MCPServer:
     def get_methodology_guide(
         method: str | None = None,
         task: str | None = None,
+        guide_version: _GuideVersionParam | None = None,
+        intent: _MethodIntentParam | None = None,
+        context: dict[str, Any] | None = None,
     ) -> CallToolResult:
-        return bridge.tool_get_methodology_guide(method=method, task=task)
+        return bridge.tool_get_methodology_guide(
+            method=method,
+            task=task,
+            guide_version=guide_version,
+            intent=intent,
+            context=context,
+        )
 
     @mcp.tool(
         name="get_process_context",
@@ -177,7 +215,20 @@ def create_mcp_server() -> MCPServer:
     @mcp.tool(
         name="analyze",
         title="Analyze dashboard",
-        description="Dashboard KPIs. view=meta|summary|processes|instances|rows.",
+        description=(
+            "Analysis views. Snapshot views: meta|summary|processes|instances|"
+            "rows (filial_id/setor_id/competencia filters). Live dashboard: "
+            "dashboard_summary_live|dashboard_process_ranking|dashboard_alerts|"
+            "dashboard_evolution|dashboard_by_family|dashboard_due_dates|"
+            "dashboard_strategic_indicators|processes_calculated. "
+            "Process-scoped (processo_id): process_revision_comparison|"
+            "decomposition_link_validation|decomposition_draft_suggestion|"
+            "diagram_validation|diagram_bpmn_xml. Revision-scoped "
+            "(revisao_id): revision_allocation_diagnostic|"
+            "revision_diagram_merged|revision_decomposition_merged. "
+            "impact_effort_matrix accepts processo_id|instancia_id|revisao_id "
+            "(competencia/horizonte_meses optional). READ-only — never persists."
+        ),
         annotations=_annotations("analyze", "Analyze dashboard"),
         meta=meta,
     )
@@ -187,9 +238,12 @@ def create_mcp_server() -> MCPServer:
         setor_id: str | None = None,
         processo_id: str | None = None,
         revisao_id: str | None = None,
+        instancia_id: str | None = None,
         familia_processo: str | None = None,
+        competencia: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
+        horizonte_meses: int | None = None,
         limit: int | None = None,
     ) -> CallToolResult:
         return bridge.tool_analyze(
@@ -198,9 +252,12 @@ def create_mcp_server() -> MCPServer:
             setor_id=setor_id,
             processo_id=processo_id,
             revisao_id=revisao_id,
+            instancia_id=instancia_id,
             familia_processo=familia_processo,
+            competencia=competencia,
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
+            horizonte_meses=horizonte_meses,
             limit=limit,
         )
 
@@ -244,15 +301,27 @@ def create_mcp_server() -> MCPServer:
     def get_record(entity: _EntityParam, id: str) -> CallToolResult:
         return bridge.tool_get_record(entity=entity, id=id)
 
+    # --- Semantic family: evidence (structured metadata only) --------------
+
     @mcp.tool(
-        name="list_evidence",
-        title="List evidence",
-        description="READ: list process/revision evidence metadata (no binary).",
-        annotations=_annotations("list_evidence", "List evidence"),
+        name="evidence_read",
+        title="Evidence read",
+        description=(
+            "READ: evidence metadata — action=list (scope=process|revision, "
+            "parent_id required). Binary payloads are not available on this "
+            "transport. Writes use prepare_evidence_change."
+        ),
+        annotations=_annotations("evidence_read", "Evidence read"),
         meta=meta,
     )
-    def list_evidence(scope: str, parent_id: str) -> CallToolResult:
-        return bridge.tool_list_evidence(scope=scope, parent_id=parent_id)
+    def evidence_read(
+        action: Literal["list"],
+        scope: str | None = None,
+        parent_id: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_evidence_read(
+            action=action, scope=scope, parent_id=parent_id
+        )
 
     @mcp.tool(
         name="get_process_timeline",
@@ -268,18 +337,23 @@ def create_mcp_server() -> MCPServer:
             processo_id=processo_id, page=page, page_size=page_size
         )
 
+    # --- Semantic family: meeting minutes -----------------------------------
+
     @mcp.tool(
         name="meeting_minute_read",
         title="Meeting minute read",
         description=(
-            "READ: pending_signatures|audit|versions|participants|signers. "
-            "Writes use prepare/act_meeting_minute_manage."
+            "READ/ANALYSIS: pending_signatures|audit|versions|participants|"
+            "signers|generate_from_transcript (transcript draft is "
+            "analysis-only — never persists). Writes use "
+            "prepare_meeting_minute_change followed by commit_proposal per "
+            "execution_policy."
         ),
         annotations=_annotations("meeting_minute_read", "Meeting minute read"),
         meta=meta,
     )
     def meeting_minute_read(
-        action: str,
+        action: _MinuteReadActionParam,
         minute_id: str | None = None,
         data: dict | None = None,
     ) -> CallToolResult:
@@ -287,58 +361,84 @@ def create_mcp_server() -> MCPServer:
             action=action, minute_id=minute_id, data=data
         )
 
-    @mcp.tool(
-        name="get_diagnostic",
-        title="Get diagnostic",
-        description=(
-            "READ: one Diagnostic V1 with revision context, resolved evidence "
-            "links and data-quality signals. Findings are OBSERVED/CALCULATED; "
-            "hypotheses and conclusions are INFERRED claims (VALIDATED != "
-            "FACT). Unresolved evidence links remain reported. "
-            "Use before prepare_manage_diagnostic when target ids are unknown."
-        ),
-        annotations=_annotations("get_diagnostic", "Get diagnostic"),
-        meta=meta,
-    )
-    def get_diagnostic(diagnostic_id: str) -> CallToolResult:
-        return bridge.tool_get_diagnostic(diagnostic_id=diagnostic_id)
+    # --- Semantic family: collaboration -------------------------------------
+    # Transformômetro tasks + interaction rooms/messages — same canonical
+    # use cases as the Portal (TaskCommandUseCases / InteractionRoomUseCases).
 
     @mcp.tool(
-        name="list_diagnostics_by_revision",
-        title="List diagnostics by revision",
+        name="collaboration_read",
+        title="Collaboration read",
         description=(
-            "READ: Diagnostic V1 summaries for one revision, canonical "
-            "ordering, no evidence fan-out. Use get_diagnostic for detail."
+            "READ: collaboration surface — tasks (action=my_tasks, status "
+            "filter pending|completed|cancelled|all; action=task needs "
+            "task_id; action=process_tasks needs processo_id) and "
+            "interaction rooms (action=rooms, inbox_filter; action=room "
+            "needs room_id; action=messages needs room_id, optional "
+            "limit/before_id; action=attachments returns metadata only — "
+            "binary transfer has no MCP transport). Same canonical use "
+            "cases as the Portal."
         ),
-        annotations=_annotations(
-            "list_diagnostics_by_revision", "List diagnostics by revision"
-        ),
+        annotations=_annotations("collaboration_read", "Collaboration read"),
         meta=meta,
     )
-    def list_diagnostics_by_revision(revision_id: str) -> CallToolResult:
-        return bridge.tool_list_diagnostics_by_revision(
-            revision_id=revision_id
+    def collaboration_read(
+        action: Literal[
+            "my_tasks",
+            "task",
+            "process_tasks",
+            "rooms",
+            "room",
+            "messages",
+            "attachments",
+        ],
+        task_id: str | None = None,
+        processo_id: str | None = None,
+        status: str = "pending",
+        room_id: str | None = None,
+        inbox_filter: str = "all",
+        limit: int = 50,
+        before_id: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_collaboration_read(
+            action=action,
+            task_id=task_id,
+            processo_id=processo_id,
+            status=status,
+            room_id=room_id,
+            inbox_filter=inbox_filter,
+            limit=limit,
+            before_id=before_id,
         )
 
+    # --- Semantic family: diagnostics (MCP-native) --------------------------
+
     @mcp.tool(
-        name="generate_from_transcript",
-        title="Generate from transcript",
+        name="diagnostic_read",
+        title="Diagnostic read",
         description=(
-            "ANALYSIS: draft from transcript without persistence. "
-            "Not an ACT write."
+            "READ: Diagnostic V1 — action=get (diagnostic_id; full detail "
+            "with revision context, resolved evidence links and data-quality "
+            "signals — findings are OBSERVED/CALCULATED, hypotheses and "
+            "conclusions are INFERRED claims, VALIDATED != FACT) or "
+            "action=by_revision (revision_id; canonical-ordered summaries, "
+            "no evidence fan-out). Use before prepare_diagnostic_change "
+            "when target ids are unknown."
         ),
-        annotations=_annotations(
-            "generate_from_transcript", "Generate from transcript"
-        ),
+        annotations=_annotations("diagnostic_read", "Diagnostic read"),
         meta=meta,
     )
-    def generate_from_transcript(
-        minute_id: str | None = None,
-        data: dict | None = None,
+    def diagnostic_read(
+        action: Literal["get", "by_revision"],
+        diagnostic_id: str | None = None,
+        revision_id: str | None = None,
     ) -> CallToolResult:
-        return bridge.tool_generate_from_transcript(minute_id=minute_id, data=data)
+        return bridge.tool_diagnostic_read(
+            action=action,
+            diagnostic_id=diagnostic_id,
+            revision_id=revision_id,
+        )
 
-    # --- PREPARE (generic entity + specialized workflows) -----------------
+    # --- PREPARE (semantic families — action selects capability/policy) ----
 
     @mcp.tool(
         name="prepare_record_change",
@@ -349,9 +449,14 @@ def create_mcp_server() -> MCPServer:
             "entities (e.g. process_document). Returns opaque "
             "proposal_handle + exact sealed change. Do NOT use for "
             "business workflows (revision activation, evidence, meeting "
-            "minutes, packages, cost adjustment) — use the specialized "
-            "prepare_* tools instead. Material execution only via "
-            "commit_proposal(proposal_handle) after confirmation."
+            "minutes, packages, cost adjustment, tasks, rooms, "
+            "diagnostics) — use the family prepare_* tools instead. "
+            "Material execution via commit_proposal(proposal_handle) "
+            "follows proposal.execution_policy: auto_act "
+            "(create/update/duplicate) commits immediately — no extra "
+            "conversational confirmation; confirm_before_act (delete) "
+            "shows the exact change and requires one explicit user "
+            "confirmation first."
         ),
         annotations=_annotations("prepare_record_change", "Prepare record change"),
         meta=meta,
@@ -370,119 +475,101 @@ def create_mcp_server() -> MCPServer:
         )
 
     @mcp.tool(
-        name="prepare_activate_revision",
-        title="Prepare activate revision",
+        name="prepare_governed_operation",
+        title="Prepare governed operation",
         description=(
-            "PREPARE WORKFLOW: activate revision (overwrites current). "
-            "Not a generic entity update. Then commit_proposal."
+            "PREPARE only — never persists business state. Special "
+            "governed operations (NOT generic record CRUD): "
+            "activate_revision (id; overwrites current — "
+            "confirm_before_act), recalculate_dashboard (revisao_id or "
+            "processo_id + optional competencia range — "
+            "confirm_before_act), commit_improvement_package (process + "
+            "instance + optional baseline/scenario; ready=false when "
+            "incomplete — confirm_before_act), adjust_shared_resource_cost "
+            "(recurso_compartilhado_id + valor_mensal + vigente_desde + "
+            "optional observacoes — auto_act), update_signature_profile "
+            "(display_name — auto_act; updates only the display name, "
+            "signature image stays in UI), import_diagram_bpmn_xml "
+            "(processo_id + xml text — replaces the macro diagram — "
+            "confirm_before_act). Then "
+            "commit_proposal per proposal.execution_policy; AuthZ is "
+            "revalidated at ACT with authoritative read-back."
         ),
         annotations=_annotations(
-            "prepare_activate_revision", "Prepare activate revision"
+            "prepare_governed_operation", "Prepare governed operation"
         ),
         meta=meta,
     )
-    def prepare_activate_revision(id: str) -> CallToolResult:
-        return bridge.tool_prepare_activate_revision(id=id)
-
-    @mcp.tool(
-        name="prepare_recalculate_dashboard",
-        title="Prepare recalculate dashboard",
-        description=(
-            "PREPARE WORKFLOW: materialised dashboard cache recalculate. "
-            "Then commit_proposal."
-        ),
-        annotations=_annotations(
-            "prepare_recalculate_dashboard", "Prepare recalculate dashboard"
-        ),
-        meta=meta,
-    )
-    def prepare_recalculate_dashboard(
+    def prepare_governed_operation(
+        action: _GovernedOperationParam,
+        id: str | None = None,
         revisao_id: str | None = None,
         processo_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_recalculate_dashboard(
-            revisao_id=revisao_id,
-            processo_id=processo_id,
-            competencia_inicio=competencia_inicio,
-            competencia_fim=competencia_fim,
-        )
-
-    @mcp.tool(
-        name="prepare_meeting_minute_workflow",
-        title="Prepare meeting minute workflow",
-        description=(
-            "PREPARE WORKFLOW: send|finalize|cancel meeting minute. "
-            "Then commit_proposal."
-        ),
-        annotations=_annotations(
-            "prepare_meeting_minute_workflow", "Prepare meeting minute workflow"
-        ),
-        meta=meta,
-    )
-    def prepare_meeting_minute_workflow(
-        id: str, action: str, reason: str | None = None
-    ) -> CallToolResult:
-        return bridge.tool_prepare_meeting_minute_workflow(
-            id=id, action=action, reason=reason
-        )
-
-    @mcp.tool(
-        name="prepare_improvement_package",
-        title="Prepare improvement package",
-        description=(
-            "PREPARE only — never persists business state. Validate package "
-            "+ AuthZ + proposal_handle. Incomplete packages: ready=false / "
-            "act_allowed=false. activate_scenario/recalculate are PREPARE "
-            "simulation flags only — material execution only via "
-            "commit_proposal(proposal_handle) after confirmation."
-        ),
-        annotations=_annotations(
-            "prepare_improvement_package", "Prepare improvement package"
-        ),
-        meta=meta,
-    )
-    def prepare_improvement_package(
+        recurso_compartilhado_id: str | None = None,
+        valor_mensal: float | None = None,
+        vigente_desde: str | None = None,
+        observacoes: str | None = None,
         process: dict | None = None,
         instance: dict | None = None,
         baseline: dict | None = None,
         scenario: dict | None = None,
         activate_scenario: bool = False,
         recalculate: bool = False,
+        display_name: str | None = None,
+        xml: str | None = None,
     ) -> CallToolResult:
-        return bridge.tool_prepare_improvement_package(
+        return bridge.tool_prepare_governed_operation(
+            action=action,
+            id=id,
+            revisao_id=revisao_id,
+            processo_id=processo_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+            recurso_compartilhado_id=recurso_compartilhado_id,
+            valor_mensal=valor_mensal,
+            vigente_desde=vigente_desde,
+            observacoes=observacoes,
             process=process,
             instance=instance,
             baseline=baseline,
             scenario=scenario,
             activate_scenario=activate_scenario,
             recalculate=recalculate,
+            display_name=display_name,
+            xml=xml,
         )
 
     @mcp.tool(
-        name="prepare_manage_evidence",
-        title="Prepare manage evidence",
+        name="prepare_evidence_change",
+        title="Prepare evidence change",
         description=(
-            "PREPARE WORKFLOW: create_link|update_description|delete evidence. "
-            "Not generic file CRUD. delete needs confirm_delete in prepare. "
-            "Then commit_proposal."
+            "PREPARE only — never persists business state. Evidence "
+            "actions: create_link|update_description|delete (scope="
+            "process|revision + parent_id required; delete needs "
+            "confirm_delete=true). Structured metadata only — not generic "
+            "file CRUD, no binary payloads. execution_policy="
+            "confirm_before_act: show the exact change and obtain one "
+            "explicit user confirmation before commit_proposal."
         ),
-        annotations=_annotations("prepare_manage_evidence", "Prepare manage evidence"),
+        annotations=_annotations(
+            "prepare_evidence_change", "Prepare evidence change"
+        ),
         meta=meta,
     )
-    def prepare_manage_evidence(
+    def prepare_evidence_change(
+        action: Literal["create_link", "update_description", "delete"],
         scope: str,
-        operation: str,
         parent_id: str,
         evidence_id: str | None = None,
         url_externa: str | None = None,
         descricao: str | None = None,
         confirm_delete: bool = False,
     ) -> CallToolResult:
-        return bridge.tool_prepare_manage_evidence(
+        return bridge.tool_prepare_evidence_change(
+            action=action,
             scope=scope,
-            operation=operation,
             parent_id=parent_id,
             evidence_id=evidence_id,
             url_externa=url_externa,
@@ -491,102 +578,135 @@ def create_mcp_server() -> MCPServer:
         )
 
     @mcp.tool(
-        name="prepare_adjust_shared_resource_cost",
-        title="Prepare adjust shared resource cost",
+        name="prepare_meeting_minute_change",
+        title="Prepare meeting minute change",
         description=(
-            "PREPARE only — never persists business state. Shared-resource "
-            "cost adjustment with domain rules; returns proposal_handle + "
-            "exact change. Material execution only via "
-            "commit_proposal(proposal_handle) after confirmation."
+            "PREPARE only — never persists business state. Meeting-minute "
+            "writes: workflow transitions send|finalize|cancel|refuse "
+            "(minute_id + reason; reason required for refuse) and manage "
+            "writes resend|create_version|"
+            "set_participants|set_signers (minute_id + data payload; "
+            "resend requires data.confirm_resend=true). READ/analyze "
+            "actions — pending_signatures|audit|versions|participants|"
+            "signers|generate_from_transcript — use meeting_minute_read. "
+            "execution_policy=confirm_before_act: show the exact change "
+            "and obtain one explicit user confirmation before "
+            "commit_proposal."
         ),
         annotations=_annotations(
-            "prepare_adjust_shared_resource_cost",
-            "Prepare adjust shared resource cost",
+            "prepare_meeting_minute_change", "Prepare meeting minute change"
         ),
         meta=meta,
     )
-    def prepare_adjust_shared_resource_cost(
-        recurso_compartilhado_id: str,
-        valor_mensal: float,
-        vigente_desde: str,
-        observacoes: str | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_adjust_shared_resource_cost(
-            recurso_compartilhado_id=recurso_compartilhado_id,
-            valor_mensal=valor_mensal,
-            vigente_desde=vigente_desde,
-            observacoes=observacoes,
-        )
-
-    @mcp.tool(
-        name="prepare_meeting_minute_manage",
-        title="Prepare meeting minute manage",
-        description=(
-            "PREPARE WORKFLOW: write actions for atas (resend/...). "
-            "resend requires data.confirm_resend=true. "
-            "READ → meeting_minute_read; transcript → generate_from_transcript. "
-            "Then commit_proposal."
-        ),
-        annotations=_annotations(
-            "prepare_meeting_minute_manage", "Prepare meeting minute manage"
-        ),
-        meta=meta,
-    )
-    def prepare_meeting_minute_manage(
-        action: str,
+    def prepare_meeting_minute_change(
+        action: _MinuteChangeActionParam,
         minute_id: str | None = None,
+        reason: str | None = None,
         data: dict | None = None,
     ) -> CallToolResult:
-        return bridge.tool_prepare_meeting_minute_manage(
-            action=action, minute_id=minute_id, data=data
+        return bridge.tool_prepare_meeting_minute_change(
+            action=action, minute_id=minute_id, reason=reason, data=data
         )
 
     @mcp.tool(
-        name="prepare_create_diagnostic",
-        title="Prepare create diagnostic",
+        name="prepare_collaboration_change",
+        title="Prepare collaboration change",
         description=(
-            "PREPARE only — does not persist. Creates a governed proposal to "
-            "create a Diagnostic on a revision. diagnostic_id is "
-            "server-generated and shown in the exact sealed change; never "
-            "supply it. Show the exact change, get explicit user "
-            "confirmation, then commit_proposal."
+            "PREPARE only — never persists business state. Collaboration "
+            "writes via the same canonical use cases as the Portal. Task "
+            "actions: create_task|update_task|complete_task|cancel_task "
+            "(TaskCommandUseCases; create needs title; update/complete/"
+            "cancel need task_id). Room actions: open_room (processo_id)|"
+            "post_message|edit_message|delete_message|toggle_reaction|"
+            "pin_message|unpin_message|mark_room_read "
+            "(InteractionRoomUseCases; message actions need room_id + "
+            "message_id). Then commit_proposal per proposal."
+            "execution_policy — auto_act commits immediately with no "
+            "extra confirmation; confirm_before_act (cancel_task, "
+            "delete_message) requires one explicit user confirmation "
+            "first. Binary attachment upload/download is not available "
+            "on this transport."
         ),
         annotations=_annotations(
-            "prepare_create_diagnostic", "Prepare create diagnostic"
+            "prepare_collaboration_change", "Prepare collaboration change"
         ),
         meta=meta,
     )
-    def prepare_create_diagnostic(
-        revision_id: str,
-        problem_statement: str,
-        provenance: dict | None = None,
-    ) -> CallToolResult:
-        return bridge.tool_prepare_create_diagnostic(
-            revision_id=revision_id,
-            problem_statement=problem_statement,
-            provenance=provenance,
-        )
-
-    @mcp.tool(
-        name="prepare_manage_diagnostic",
-        title="Prepare manage diagnostic",
-        description=(
-            "PREPARE only — does not persist. One governed Diagnostic action "
-            "per call. Additive actions (add_*) generate the new entity id "
-            "server-side — never supply finding_id/hypothesis_id/link_id/"
-            "conclusion_id. Lifecycle/mark actions target EXISTING ids — "
-            "READ first via get_diagnostic when ids are unknown; ids are "
-            "never generated for you. Show the exact change, get explicit "
-            "user confirmation, then commit_proposal."
-        ),
-        annotations=_annotations(
-            "prepare_manage_diagnostic", "Prepare manage diagnostic"
-        ),
-        meta=meta,
-    )
-    def prepare_manage_diagnostic(
-        diagnostic_id: str,
+    def prepare_collaboration_change(
         action: Literal[
+            "create_task",
+            "update_task",
+            "complete_task",
+            "cancel_task",
+            "open_room",
+            "post_message",
+            "edit_message",
+            "delete_message",
+            "toggle_reaction",
+            "pin_message",
+            "unpin_message",
+            "mark_room_read",
+        ],
+        task_id: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        assignee_user_id: str | None = None,
+        due_date: str | None = None,
+        source_interaction_message_id: str | None = None,
+        processo_id: str | None = None,
+        room_id: str | None = None,
+        message_id: str | None = None,
+        content: str | None = None,
+        parent_id: str | None = None,
+        mentions: list | None = None,
+        reaction: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_prepare_collaboration_change(
+            action=action,
+            task_id=task_id,
+            title=title,
+            description=description,
+            assignee_user_id=assignee_user_id,
+            due_date=due_date,
+            source_interaction_message_id=source_interaction_message_id,
+            processo_id=processo_id,
+            room_id=room_id,
+            message_id=message_id,
+            content=content,
+            parent_id=parent_id,
+            mentions=mentions,
+            reaction=reaction,
+        )
+
+    @mcp.tool(
+        name="prepare_diagnostic_change",
+        title="Prepare diagnostic change",
+        description=(
+            "PREPARE only — does not persist. Diagnostic writes: "
+            "action=create (revision_id + problem_statement; "
+            "diagnostic_id is server-generated and shown in the sealed "
+            "change — never supply it; execution_policy=auto_act so "
+            "commit_proposal may execute immediately without a second "
+            "confirmation) or one of the canonical manage actions "
+            "(add_finding|add_hypothesis|add_causal_link|"
+            "add_evidence_link|add_conclusion|validate_hypothesis|"
+            "reject_hypothesis|supersede_hypothesis|"
+            "mark_hypothesis_stale_evidence|"
+            "mark_hypothesis_revalidation_required|validate_conclusion|"
+            "reject_conclusion|supersede_conclusion — diagnostic_id + "
+            "payload; add_* entity ids are server-generated, lifecycle/"
+            "mark actions target EXISTING ids — READ first via "
+            "diagnostic_read; execution_policy=confirm_before_act: one "
+            "explicit user confirmation before commit_proposal)."
+        ),
+        annotations=_annotations(
+            "prepare_diagnostic_change", "Prepare diagnostic change"
+        ),
+        meta=meta,
+    )
+    def prepare_diagnostic_change(
+        action: Literal[
+            "create",
             "add_finding",
             "add_hypothesis",
             "add_causal_link",
@@ -601,11 +721,18 @@ def create_mcp_server() -> MCPServer:
             "reject_conclusion",
             "supersede_conclusion",
         ],
+        diagnostic_id: str | None = None,
+        revision_id: str | None = None,
+        problem_statement: str | None = None,
+        provenance: dict | None = None,
         payload: dict | None = None,
     ) -> CallToolResult:
-        return bridge.tool_prepare_manage_diagnostic(
-            diagnostic_id=diagnostic_id,
+        return bridge.tool_prepare_diagnostic_change(
             action=action,
+            diagnostic_id=diagnostic_id,
+            revision_id=revision_id,
+            problem_statement=problem_statement,
+            provenance=provenance,
             payload=payload,
         )
 

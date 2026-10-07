@@ -40,17 +40,16 @@ _COVERAGE_ANCHORS = (
     "gpt_update_record",
     "gpt_delete_record",
     "gpt_duplicate_record",
-    "gpt_activate_revision",
-    "gpt_recalculate_dashboard",
-    "gpt_meeting_minute_workflow",
+    "gpt_prepare_governed_operation",
     "gpt_commit_improvement_package",
-    "gpt_validate_improvement_package",
     "gpt_get_process_context",
-    "gpt_list_evidence",
-    "gpt_manage_evidence",
+    "gpt_evidence_read",
+    "gpt_prepare_evidence_change",
     "gpt_get_process_timeline",
-    "gpt_adjust_shared_resource_cost",
-    "gpt_meeting_minute_manage",
+    "gpt_meeting_minute_read",
+    "gpt_prepare_meeting_minute_change",
+    "gpt_collaboration_read",
+    "gpt_prepare_collaboration_change",
     "gpt_get_openapi_schema",
 )
 
@@ -67,7 +66,7 @@ def test_openapi_has_at_most_30_operations():
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) <= 30
     assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS)
-    assert count_operations(doc) == 18
+    assert count_operations(doc) == 17
 
 
 def test_openapi_operation_ids_unique_and_stable():
@@ -425,8 +424,8 @@ def test_gpt_meeting_minute_cancel_without_manage_forbidden():
                 "Sem permissão para gerenciar atas."
             )
             response = client.post(
-                "/transformometro/gpt-actions/v1/meeting-minutes/mm1/workflow",
-                json={"action": "cancel", "reason": "teste"},
+                "/transformometro/gpt-actions/v1/meeting-minutes/prepare",
+                json={"action": "cancel", "minute_id": "mm1", "reason": "teste"},
             )
     finally:
         support.TEST_USER.is_superadmin = prev_super
@@ -553,7 +552,10 @@ def test_registration_guide_exposes_entity_schemas():
     assert "processo_id" in tree["required"]
     assert any("decomposition_tree_v1" in n for n in tree["notes"])
     assert guide["package_hints"]["commit_operationId"] == "gpt_commit_proposal"
-    assert guide["package_hints"]["validate_operationId"] == "gpt_validate_improvement_package"
+    assert (
+        guide["package_hints"]["validate_operationId"]
+        == "gpt_prepare_governed_operation"
+    )
 
 
 def test_gpt_catalog_includes_registration_guide(tm_client):
@@ -874,42 +876,42 @@ def test_openapi_includes_improvement_package():
     assert "/transformometro/gpt-actions/v1/proposals/commit" in doc["paths"]
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "/transformometro/gpt-actions/v1/process-context" in doc["paths"]
-    assert "gpt_validate_improvement_package" in GPT_ACTIONS_OPERATION_IDS
+    # Family surface: package PREPARE lives on the governed-operations op.
+    assert "gpt_prepare_governed_operation" in GPT_ACTIONS_OPERATION_IDS
     assert (
-        "/transformometro/gpt-actions/v1/improvement-packages/validate" in doc["paths"]
+        "/transformometro/gpt-actions/v1/governed-operations/prepare"
+        in doc["paths"]
     )
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 17
 
 
 def test_openapi_validate_vs_commit_consequential_flags():
     doc = build_gpt_actions_openapi()
     validate = doc["paths"][
-        "/transformometro/gpt-actions/v1/improvement-packages/validate"
+        "/transformometro/gpt-actions/v1/governed-operations/prepare"
     ]["post"]
     commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
-    assert validate["operationId"] == "gpt_validate_improvement_package"
+    assert validate["operationId"] == "gpt_prepare_governed_operation"
     assert validate["x-openai-isConsequential"] is False
     assert commit["operationId"] == "gpt_commit_proposal"
     assert commit["x-openai-isConsequential"] is True
     assert "PREPARE" in validate["description"] or "proposal" in validate["description"].lower()
     v_schema = validate["requestBody"]["content"]["application/json"]["schema"]["$ref"]
-    assert v_schema.endswith("GptValidateImprovementPackageBody")
-    v_props = doc["components"]["schemas"]["GptValidateImprovementPackageBody"][
+    assert v_schema.endswith("GptGovernedOperationBody")
+    v_props = doc["components"]["schemas"]["GptGovernedOperationBody"][
         "properties"
     ]
-    assert set(v_props) >= {"process", "instance", "baseline", "scenario"}
-    assert set(v_props) <= {
+    assert set(v_props) >= {
+        "action",
         "process",
         "instance",
         "baseline",
         "scenario",
-        "commit_now",
-        "confirmation",
-        "idempotency_key",
     }
+    assert "commit_improvement_package" in (
+        v_props["action"].get("enum") or []
+    )
     assert "dry_run" not in v_props
-    assert "activate_scenario" not in v_props
-    assert "recalculate" not in v_props
 
 
 def test_openapi_documents_nested_improvement_package():
@@ -1212,8 +1214,11 @@ _NESTED_READY_PACKAGE = {
 
 def test_validate_improvement_package_nested_ready(tm_client):
     response = tm_client.post(
-        "/transformometro/gpt-actions/v1/improvement-packages/validate",
-        json=_NESTED_READY_PACKAGE,
+        "/transformometro/gpt-actions/v1/governed-operations/prepare",
+        json={
+            "action": "commit_improvement_package",
+            **_NESTED_READY_PACKAGE,
+        },
     )
     assert response.status_code == 200
     payload = response.json()
@@ -1228,8 +1233,11 @@ def test_validate_improvement_package_nested_ready(tm_client):
 
 def test_validate_improvement_package_incomplete_ready_false(tm_client):
     response = tm_client.post(
-        "/transformometro/gpt-actions/v1/improvement-packages/validate",
-        json={"process": {"nome_processo": "X"}},
+        "/transformometro/gpt-actions/v1/governed-operations/prepare",
+        json={
+            "action": "commit_improvement_package",
+            "process": {"nome_processo": "X"},
+        },
     )
     assert response.status_code == 200
     data = response.json()["data"]
@@ -1240,8 +1248,9 @@ def test_validate_improvement_package_incomplete_ready_false(tm_client):
 
 def test_validate_improvement_package_flat_scenario_not_ready(tm_client):
     response = tm_client.post(
-        "/transformometro/gpt-actions/v1/improvement-packages/validate",
+        "/transformometro/gpt-actions/v1/governed-operations/prepare",
         json={
+            "action": "commit_improvement_package",
             "scenario": {
                 "processo_id": "11111111-1111-1111-1111-111111111111",
                 "instancia_id": "22222222-2222-2222-2222-222222222222",
@@ -1279,8 +1288,9 @@ def test_validate_improvement_package_ignores_malicious_write_flags(tm_client):
     )
     with patch(dispatch_path) as dispatch:
         response = tm_client.post(
-            "/transformometro/gpt-actions/v1/improvement-packages/validate",
+            "/transformometro/gpt-actions/v1/governed-operations/prepare",
             json={
+                "action": "commit_improvement_package",
                 **_NESTED_READY_PACKAGE,
                 "dry_run": False,
                 "activate_scenario": True,
@@ -2002,7 +2012,7 @@ def test_analyze_instances_honors_processo_id():
 
 def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 17
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_analyze" in GPT_ACTIONS_OPERATION_IDS
     analysis = doc["paths"]["/transformometro/gpt-actions/v1/analysis"]["get"]
@@ -2077,19 +2087,25 @@ def test_openapi_all_write_actions_have_typed_examples():
             True,
         ),
         (
-            "/transformometro/gpt-actions/v1/dashboard/recalculate",
+            "/transformometro/gpt-actions/v1/governed-operations/prepare",
             "post",
             False,
             True,
         ),
         (
-            "/transformometro/gpt-actions/v1/meeting-minutes/{id}/workflow",
+            "/transformometro/gpt-actions/v1/meeting-minutes/prepare",
             "post",
             False,
             True,
         ),
         (
-            "/transformometro/gpt-actions/v1/improvement-packages/validate",
+            "/transformometro/gpt-actions/v1/evidence/prepare",
+            "post",
+            False,
+            True,
+        ),
+        (
+            "/transformometro/gpt-actions/v1/collaboration/prepare",
             "post",
             False,
             True,
@@ -2105,18 +2121,16 @@ def test_openapi_all_write_actions_have_typed_examples():
             schema = media["schema"]
             if "$ref" not in schema and schema.get("type") == "object":
                 assert "properties" in schema, path
-    # activate remains PREPARE (non-consequential bodyless) in Builder surface
-    activate = doc["paths"]["/transformometro/gpt-actions/v1/revisions/{id}/activate"]["post"]
-    assert activate["x-openai-isConsequential"] is False
-    assert "requestBody" not in activate
 
     schemas = doc["components"]["schemas"]
     assert "GptPrepareRecordChangeBody" in schemas or "changes" in str(
         doc["paths"]["/transformometro/gpt-actions/v1/records/prepare-change"]
     )
-    assert "GptRecalculateBody" in schemas
-    assert "GptMeetingMinuteWorkflowBody" in schemas
-    assert "action" in schemas["GptMeetingMinuteWorkflowBody"]["properties"]
+    assert "GptGovernedOperationBody" in schemas
+    assert "GptMeetingMinuteChangeBody" in schemas
+    assert "action" in schemas["GptMeetingMinuteChangeBody"]["properties"]
+    assert "action" in schemas["GptCollaborationChangeBody"]["properties"]
+    assert "action" in schemas["GptEvidenceChangeBody"]["properties"]
     prep_media = doc["paths"]["/transformometro/gpt-actions/v1/records/prepare-change"][
         "post"
     ]["requestBody"]["content"]["application/json"]
@@ -2126,12 +2140,12 @@ def test_openapi_all_write_actions_have_typed_examples():
 def test_openapi_validate_non_consequential_commit_consequential():
     """CASO 9–10: validate remains no-write/non-consequential; commit stays consequential."""
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 18
-    validate = doc["paths"]["/transformometro/gpt-actions/v1/improvement-packages/validate"][
-        "post"
-    ]
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 17
+    validate = doc["paths"][
+        "/transformometro/gpt-actions/v1/governed-operations/prepare"
+    ]["post"]
     commit = doc["paths"]["/transformometro/gpt-actions/v1/proposals/commit"]["post"]
-    assert validate["operationId"] == "gpt_validate_improvement_package"
+    assert validate["operationId"] == "gpt_prepare_governed_operation"
     assert commit["operationId"] == "gpt_commit_proposal"
     assert validate["x-openai-isConsequential"] is False
     assert commit["x-openai-isConsequential"] is True

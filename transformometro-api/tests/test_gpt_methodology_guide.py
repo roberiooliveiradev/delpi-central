@@ -24,8 +24,8 @@ from unittest.mock import patch
 
 def test_openapi_lists_methodology_as_21st_importable_operation() -> None:
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 18
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 18
+    assert count_operations(doc) == 17
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 17
     assert "gpt_get_methodology_guide" in GPT_ACTIONS_OPERATION_IDS
     assert GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID not in GPT_ACTIONS_OPERATION_IDS
     op = doc["paths"]["/transformometro/gpt-actions/v1/methodology-guide"]["get"]
@@ -33,10 +33,10 @@ def test_openapi_lists_methodology_as_21st_importable_operation() -> None:
     assert op["x-openai-isConsequential"] is False
     assert len(op["description"]) <= 300
     names = [item["name"] for item in op["parameters"]]
-    assert names == ["method", "task"]
+    assert names == ["method", "task", "guide_version", "intent", "context"]
     assert all(len(item["description"]) <= 700 for item in op["parameters"])
     ids = [item["operationId"] for path in doc["paths"].values() for item in path.values()]
-    assert len(ids) == len(set(ids)) == 18
+    assert len(ids) == len(set(ids)) == 17
 
 
 def test_gpt_methodology_router_and_specific_methods(tm_client) -> None:

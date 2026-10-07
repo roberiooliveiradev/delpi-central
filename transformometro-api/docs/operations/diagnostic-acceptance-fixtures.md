@@ -40,7 +40,7 @@ curl -s "$BASE/apps/transformometro-api/transformometro/revisions/$REV/diagnosti
 - **ZERO Diagnostics:** qualquer revision dev sem Diagnostics (o caso não cria dados).
 - **ONE:** revision dev contendo apenas `baseline`.
 - **MULTIPLE:** revision contendo os dois fixtures (ou mais).
-- **Finding / Hypothesis / causal link / evidence relation / conclusion / RootCauseDesignation / STALE_EVIDENCE / REVALIDATION_REQUIRED / stale proposal / realtime conflict:** criados deterministicamente via `prepare_manage_diagnostic` + `commit_proposal` durante a execução do acceptance (não precisam estar permanentemente seedados).
+- **Finding / Hypothesis / causal link / evidence relation / conclusion / RootCauseDesignation / STALE_EVIDENCE / REVALIDATION_REQUIRED / stale proposal / realtime conflict:** criados deterministicamente via `prepare_diagnostic_change` (manage actions) + `commit_proposal` durante a execução do acceptance (não precisam estar permanentemente seedados).
 
 ## Idempotência
 

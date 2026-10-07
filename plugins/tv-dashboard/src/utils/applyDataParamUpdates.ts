@@ -66,7 +66,7 @@ type ParamPatchContext = {
  * Updates de UM param com a regra de conflito de período:
  * expressão/data explícita no par nunca coexiste com `dateRangePreset`
  * relativo, e `competence` (mês fechado SI) força preset `custom`.
- * Compartilhado por DataParamFields e pelo drawer de expressão — mesma regra.
+ * Compartilhado por DataParamFields e pelo modal de expressão — mesma regra.
  */
 export function buildParamValueUpdates(
   key: string,

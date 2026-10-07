@@ -94,10 +94,11 @@ def test_owner_class_mapping_is_provider_neutral():
     assert (
         operation_class_from_owner("READ") is SpecialistOperationClass.READ
     )
-    # Owner ANALYSIS (non-persisting analysis) projects as READ.
+    # Owner ANALYSIS is preserved as a first-class semantic class
+    # (§6.140) — non-mutating, never collapsed into READ.
     assert (
         operation_class_from_owner("ANALYSIS")
-        is SpecialistOperationClass.READ
+        is SpecialistOperationClass.ANALYSIS
     )
     assert (
         operation_class_from_owner("PREPARE")
@@ -129,6 +130,7 @@ def test_interactive_gate_allows_all_known_owner_classes():
         {
             SpecialistOperationClass.DISCOVERY,
             SpecialistOperationClass.READ,
+            SpecialistOperationClass.ANALYSIS,
             SpecialistOperationClass.PREPARE,
             SpecialistOperationClass.ACT,
         }
@@ -136,6 +138,7 @@ def test_interactive_gate_allows_all_known_owner_classes():
     for cls in (
         SpecialistOperationClass.DISCOVERY,
         SpecialistOperationClass.READ,
+        SpecialistOperationClass.ANALYSIS,
         SpecialistOperationClass.PREPARE,
         SpecialistOperationClass.ACT,
     ):

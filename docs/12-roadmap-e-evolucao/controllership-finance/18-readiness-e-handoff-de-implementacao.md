@@ -29,10 +29,10 @@ Os estados `READY_FOR_IMPLEMENTATION_*` abaixo medem **maturidade documental**, 
 |---|---|---|
 | Início | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | H01 favoritos + H02 TaskProjection + H03 active competence + H04 blocker summary; implementação ainda não autorizada |
 | Visão geral | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | D-OVW-01=C, D-OVW-02=A, D-OVW-03=A; revalidar O04 contracts físicos e O05 conflitos de source/fórmula antes do futuro slice |
-| Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task aguarda Item 5 |
-| Minhas tarefas | PROJECTION_CONTRACT_REQUIRED | inventariar producers e estratégia de projeção |
-| Administração | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02 conforme slice |
-| Ajuda | SYNCHRONIZED_WITH_FEATURES | implementar/sincronizar junto das superfícies liberadas |
+| Sala de interação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | R01 persistência física + R02 attachment storage + R03 realtime + R04 notifications + R05 retention; create-task-from-message não incluído na V1 |
+| Minhas tarefas | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | TSK01 producer contracts + TSK02 projection strategy + TSK03 deep-link registry + TSK04 source health/cache + TSK05 TaskItemsTable columns |
+| Administração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | ADM01 persistência + ADM02/E01 bancos + ADM03/E05 attachment roles + ADM04/E06 motivos + ADM05/T02 notifications + ADM06 people selector + ADM07 concurrency |
+| Ajuda | READY_FOR_IMPLEMENTATION_BRIEF | HELP01 route/catalog + HELP02 permission-aware sections + HELP03 hash/focus + HELP04 validator placement; conteúdo continua sincronizado feature-by-feature |
 
 A topbar usa somente `controllership-finance.access` e `controllership-finance.manage`. Não existe permission code por filial/unidade neste Portal.
 
@@ -41,7 +41,13 @@ Contrato Home: [32-inicio-home.md](./32-inicio-home.md).
 
 Contrato da Visão geral: [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md).
 
-Contrato da Sala de interação: [26-sala-de-interacao.md](./26-sala-de-interacao.md). O modelo de contexto, AuthZ, mensagem, attachment boundary, deep link e full-page reuse estão fechados; transport/storage/retention permanecem inventories técnicos do futuro slice. D-OVW-01=C congela núcleo + contexto operacional + desempenho estratégico; D-OVW-02=A congela mês atual; D-OVW-03=A congela Consolidado. O04/O05 permanecem inventários técnicos para o futuro brief, sem autorização de implementação.
+Contrato da Sala de interação: [26-sala-de-interacao.md](./26-sala-de-interacao.md).
+
+Contrato de Minhas tarefas: [27-minhas-tarefas.md](./27-minhas-tarefas.md).
+
+Contrato de Administração: [28-administracao.md](./28-administracao.md).
+
+Contrato de Ajuda: [29-ajuda.md](./29-ajuda.md). Manual kit, conteúdo versionado no MFE, runtime-only publication, capability gating, contextual deep links e feature-help-sync estão fechados. Arquitetura Painel/Templates/Catálogos/Histórico, lifecycle, snapshot, MANAGE-only, inativação, audit e plugin-ui estão fechados; persistência/seeds/integrations/concurrency permanecem inventories técnicos. O modelo de projection, self-only, producers, action policy, sem SLA global e integração Home/Sala estão fechados; apenas a estratégia física e bindings permanecem inventories técnicos. O modelo de contexto, AuthZ, mensagem, attachment boundary, deep link e full-page reuse estão fechados; transport/storage/retention permanecem inventories técnicos do futuro slice. D-OVW-01=C congela núcleo + contexto operacional + desempenho estratégico; D-OVW-02=A congela mês atual; D-OVW-03=A congela Consolidado. O04/O05 permanecem inventários técnicos para o futuro brief, sem autorização de implementação.
 
 O Início tem design/UX/RQ/AC fechados, mas mantém inventories conhecidos para persistência de favoritos e projeções dinâmicas. Isso não autoriza implementação durante a fase atual de revisão global.
 
@@ -69,7 +75,7 @@ Decisões congeladas:
 | P4 | READY_FOR_IMPLEMENTATION_INVENTORY | T01/T05; não expandir CTL-005 além do fechamento |
 | P5 — pacote/finalização | READY_FOR_IMPLEMENTATION_INVENTORY | owners/sources aplicáveis |
 | P5 — envio real | BLOCKED_WITH_EVIDENCE | Q22 depende E04/T04 |
-| P6 | READY_FOR_IMPLEMENTATION_INVENTORY | E01/E05/E06 e T02/T05 conforme configuração |
+| P6 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | contrato de página em 28; inventories ADM01–ADM07/E01/E05/E06/T02 conforme slice |
 
 Readiness não é autorização global. Depois do freeze transversal, o Portal evoluirá uma página/slice por vez.
 

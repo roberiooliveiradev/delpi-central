@@ -1,0 +1,17 @@
+{
+  "titleTemplate": "Solicitação {request} aprovada",
+  "messageTemplate": "Sua solicitação de compra {request} foi aprovada por {approver} e está liberada para continuidade do processo de compra.",
+  "messageTemplateNoApprover": "Sua solicitação de compra {request} foi aprovada e está liberada para continuidade do processo de compra.",
+  "actionLabel": "Ver solicitação",
+  "type": "success",
+  "deepLinkPath": "/apps/purchase-requests",
+  "emptyValue": "—",
+  "eventType": "purchase_request_approved",
+  "category": "purchase_request_approved",
+  "sourceApp": "purchase-requests",
+  "corePermanentRejectionSubstrings": [
+    "no recipients have access to the source application",
+    "no recipients accept this notification category",
+    "user not found or inactive"
+  ]
+}

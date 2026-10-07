@@ -102,6 +102,7 @@ const PT_BR: Record<string, string> = {
   Create: "Criar",
   "Open documentation": "Abrir documentação",
   "Opened in editor": "Aberto no editor",
+  "Save and close": "Salvar e fechar",
   "Section contains edits": "A seção contém alterações",
   "Section contains an error": "A seção contém um erro",
   "FEEL expression is mandatory": "Expressão FEEL é obrigatória",

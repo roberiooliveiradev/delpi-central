@@ -12,6 +12,7 @@ from commercial_app.domain.entities.seller_portfolio import SellerCustomerAssign
 from commercial_app.domain.ports.open_orders_metrics_port import CustomerOpenOrderMetric
 from commercial_app.domain.services.seller_portfolio_coverage_audit_service import (
     customer_coverage_key,
+    customer_identity_key,
 )
 
 _METRICS_FETCH_FAILED = "open_orders_metrics_fetch_failed"
@@ -39,13 +40,13 @@ class ListCustomersInScopeService:
         seen: set[tuple[str, str, str]] = set()
         items: list[CustomerInScopeItem] = []
         for assignment in assignments:
-            key = customer_coverage_key(assignment.customer_code, assignment.customer_store)
+            key = customer_identity_key(assignment.customer_code, assignment.customer_store)
             center = str(assignment.customer_center or "").strip()
             identity = (key[0], key[1], center)
             if not key[0] or not key[1] or identity in seen:
                 continue
             seen.add(identity)
-            metric = index.get(key) if not center else None
+            metric = index.get(customer_coverage_key(*key)) if not center else None
             open_value = float(metric.open_value) if metric is not None else 0.0
             has_overdue = bool(metric.has_overdue) if metric is not None else False
             name = None

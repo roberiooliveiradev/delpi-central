@@ -40,6 +40,14 @@ Scripts v2 legados ainda executam em dual-read no enrichment até backfill opcio
 > /data/openapi/sync` (S2S administrativo interno, `X-Delpi-Service-Token`,
 > `TV_MANAGE`). Leituras e o comportamento de service principal em
 > leitura/resolução de acesso não foram alterados.
+>
+> **Runtime do gate:** handler `async` usa `arequire_*`; handler/tool síncrono
+> (rota `def`, tool MCP) usa o gate síncrono, que delega a consulta fresca ao
+> event loop da aplicação (`anyio.from_thread.run`). Nunca `asyncio.run`: o
+> `load_user_rbac` compartilhado serializa por token num `asyncio.Lock` preso
+> ao loop, e um loop privado por request quebrava esse lock em escritas
+> concorrentes do mesmo usuário (503 `AUTHZ_UNAVAILABLE` intermitente,
+> 2026-10-07). Fora de worker thread AnyIO o gate falha fechado (503).
 
 | Grupo | Prefixo |
 |---|---|

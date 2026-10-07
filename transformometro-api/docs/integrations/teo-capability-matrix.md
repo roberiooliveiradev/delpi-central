@@ -45,6 +45,7 @@ Canonical domain capability
 | Entity contracts | `entities.py` + `registration_guide.entity_schemas` |
 | Capability metadata | `capability_descriptors` + catalog `capability_surface` |
 | Agent intelligence | `teo_agent_intelligence.json` → `TeoAgentIntelligenceService.agent_directives(transport)` |
+| Write execution policy | `application/governed_writes/confirmation_policy.py` `_WRITE_POLICIES` — ONE `WritePolicyRecord` per semantic capability; capability/workflow/entity-op names are aliases onto the same record (TEO-WRITE-POLICY-FINAL-DEDUPLICATION-05) |
 | Transport parity map | `application/intelligence/capability_registry.py` `CAPABILITY_BINDINGS` (canonical; `interface/mcp/constants.py` derives) |
 | Transport projection | `application/intelligence/transport_projection.py` + canonical projections in `capability_descriptors` (`neutralize_for_mcp` only for prose, fail-closed) |
 | Actions surface | `openapi_builder.py` → generated OpenAPI (18 ops) |
@@ -71,6 +72,13 @@ proposal as `execution_policy`) classifies each material-write capability:
   activation/supersession, package commit, recalculate, workflow
   transitions, evidence manage, diagnostic manage): exactly ONE explicit
   user confirmation before ACT.
+
+Each semantic write capability owns exactly ONE `WritePolicyRecord`
+(`semantic_id`, `execution_policy`, `capability`, optional `workflow_id` /
+`entity_operation` aliases). Capability names, workflow ids and entity
+operations are indexes onto the same record — a policy change is a single
+edit that propagates to the orchestrator seal, both catalog projections,
+the Actions `commit_now` compat decision and MCP metadata.
 
 ```text
 UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE → AUTHZ
@@ -188,17 +196,17 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Process context | TM | R | `get_process_context` | `gpt_get_process_context` | PLANNED | view/process | FULL_PARITY* |
 | Dashboard analyze | TM | R | `analyze` | `gpt_analyze` | PLANNED | dashboard | FULL_PARITY* |
 | Entity CRUD (17 legacy + process_document) | TM | R/W | search/get + prepare_record_change + commit_proposal | gpt_prepare_record_change + gpt_commit_proposal | PLANNED | per entity | FULL_PARITY* |
-| Activate revision | TM | W | prepare_activate_revision → commit_proposal | `gpt_activate_revision` + commit | PLANNED | revisao manage | FULL_PARITY* |
-| Recalculate dashboard | TM | W | prepare_recalculate_dashboard → commit_proposal | `gpt_recalculate_dashboard` + commit | PLANNED | dashboard | FULL_PARITY* |
-| Improvement package | TM | W | prepare_improvement_package → commit_proposal | validate + commit | PLANNED | package AuthZ | FULL_PARITY* |
-| Evidence link/metadata | TM | R/W | list + prepare_manage_evidence → commit_proposal | list + manage + commit | PLANNED | manage + confirm_delete | FULL_PARITY* |
+| Activate revision | TM | W | prepare_governed_operation(activate_revision) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | revisao manage | FULL_PARITY* |
+| Recalculate dashboard | TM | W | prepare_governed_operation(recalculate_dashboard) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | dashboard | FULL_PARITY* |
+| Improvement package | TM | W | prepare_governed_operation(commit_improvement_package) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | package AuthZ | FULL_PARITY* |
+| Evidence link/metadata | TM | R/W | evidence_read(list) + prepare_evidence_change → commit_proposal | `gpt_evidence_read` / `gpt_prepare_evidence_change` + commit | PLANNED | manage + confirm_delete | FULL_PARITY* |
 | Process timeline | TM | R | `get_process_timeline` | `gpt_get_process_timeline` | PLANNED | view | FULL_PARITY* |
-| Shared resource cost adjust | TM | W | prepare_adjust_shared_resource_cost → commit_proposal | `gpt_adjust_shared_resource_cost` + commit | PLANNED | parity | FULL_PARITY* |
-| Meeting minute workflow/manage | TM | R/W | prepare_* + commit_proposal (+ read/analysis) | gpt_meeting_* + commit | PLANNED | minutes svc | FULL_PARITY* |
-| **Diagnostic V1** | TM | R/W | `get_diagnostic` / `list_diagnostics_by_revision` + `prepare_create_diagnostic` / `prepare_manage_diagnostic` → `commit_proposal` | — (MCP-native, no GPT ops) | PLANNED | `transformometro.access` + fresh Core AuthZ on ACT | **MCP_ONLY** |
+| Shared resource cost adjust | TM | W | prepare_governed_operation(adjust_shared_resource_cost) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | parity | FULL_PARITY* |
+| Meeting minute workflow/manage | TM | R/W | meeting_minute_read + prepare_meeting_minute_change → commit_proposal | `gpt_meeting_minute_read` / `gpt_prepare_meeting_minute_change` + commit | PLANNED | minutes svc | FULL_PARITY* |
+| **Diagnostic V1** | TM | R/W | `diagnostic_read`(get\|by_revision) + `prepare_diagnostic_change`(create\|13 manage actions) → `commit_proposal` | — (MCP-native, no GPT ops) | PLANNED | `transformometro.access` + fresh Core AuthZ on ACT | **MCP_ONLY** |
 | **Process documentation** | TM | R/W | via record tools | via record entity | PLANNED | `transformometro.access` | FULL_PARITY* |
-| Tasks | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
-| Interaction room | TM | R/W | — | — | — | access | DOMAIN_ONLY_BY_DESIGN |
+| Tasks | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* |
+| Interaction room | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* (binary attachments platform_blocked) |
 | Process workspace UI | MFE | R | — | — | — | — | NOT_APPLICABLE |
 
 \*FULL_PARITY = Actions + MCP mapped to same application services. DÉLIA consumption = **PLANNED / NOT_PROVEN** (no runtime adapter in `delia-api` at this HEAD).
@@ -222,6 +230,48 @@ Profile/cargo/department/context ≠ AuthZ. Service account must not impersonate
 | create/update/delete/duplicate record (incl. process_document) | MCP `prepare_record_change` | MCP proposal; Actions conversational | MCP/Actions `commit_proposal` | Yes | MCP + Actions |
 | activate / package / evidence / cost / meeting | MCP specialized `prepare_*` | confirm_* where required | MCP/Actions `commit_proposal` | Yes | MCP + Actions |
 | Tasks / Room | N/A | N/A | N/A | N/A | Not exposed |
+
+## Portal × TÉO parity closure (capability accounting wave)
+
+Every Portal capability is accounted in exactly one class via
+`capability_descriptors.build_capability_surface_catalog().exposure_classification`:
+
+```text
+EXPOSED = 10 capability groups
+PLATFORM_BLOCKED = 7 (binary transport: file upload/download, signature
+    image, minute PDF, XLS/CSV/binary exports, .tmbackup.zip package)
+TECHNICAL_ONLY = 4 (websocket/presence/locks/health plumbing)
+PUBLIC_TOKEN_FLOW = 1 (external meeting-minute signer — never impersonated)
+INTENTIONALLY_NOT_APPLICABLE = 4 (UI composition, json_backup bulk
+    portability, other-person profile read, navigation helpers)
+PARITY_GAP = 0 · TO_INVENTORY = 0 · UNCLASSIFIED = 0
+TOTAL = 26 capability groups covering the full Portal route inventory
+```
+
+Newly exposed (no new MCP tools — typed actions/views on existing families):
+
+| Intent | Family | Action/view | Owner | Policy |
+|---|---|---|---|---|
+| Dashboard live views (summary/ranking/alerts/evolution/family/due_dates/strategic/calculated) | `analyze` | 8 views | Dashboard*Service | READ |
+| Revision comparison | `analyze` | `process_revision_comparison` | ProcessRevisionCompareService | READ |
+| Impact/effort matrix | `analyze` | `impact_effort_matrix` | RevisaoImpactEffortMatrixService | READ |
+| Decomposition link validation + draft suggestion | `analyze` | 2 views | DecompositionFlowchartLinkValidator / DecompositionDraftService | READ (no persistence) |
+| Diagram validation + BPMN XML export | `analyze` | `diagram_validation`, `diagram_bpmn_xml` | FlowchartValidationService / FlowchartBpmnXmlService | READ |
+| Revision merged views + rateio diagnostic | `analyze` | 3 views | Revisao*Merge/Diagnostic services | READ |
+| Instance `contexto` | `prepare_record_change` + `get_record` | entity=`instance`, `changes.contexto` | validate_instancia_contexto_v1 + ProcessoInstanciaRepository | auto_act |
+| Meeting-minute refuse | `prepare_meeting_minute_change` | `refuse` (reason required) | MeetingMinutesService.refuse | confirm_before_act |
+| Signature profile | `get_my_context` (read, permission-gated, no binary) + `prepare_governed_operation` | `update_signature_profile` | UserSignatureService | auto_act |
+| BPMN XML import | `prepare_governed_operation` | `import_diagram_bpmn_xml` | FlowchartBpmnXmlService + DiagramWriteService | confirm_before_act |
+| Process-file metadata | `evidence_read`/`prepare_evidence_change` | scope=`process` | ProcessoArquivoRepository | per action |
+
+Reclassified: `process_file.metadata_write` (already covered by
+`manage_evidence(scope=process)` — same repo, manage AuthZ, audit, read-back);
+`bpmn_xml` moved from binary-blocked to text capability (`{xml: str}`);
+`meeting_minute.sign` stays excluded (UploadFile signature image + terms =
+binary attestation; authenticated `sign` never exposed, public token flow
+separate); `json_backup` stays INTENTIONALLY_NOT_APPLICABLE (bulk DB
+portability bundle, not a conversational payload); binary stays
+PLATFORM_BLOCKED.
 
 ## DÉLIA readiness
 

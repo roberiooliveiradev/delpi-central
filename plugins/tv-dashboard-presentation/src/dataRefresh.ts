@@ -321,6 +321,9 @@ export function buildDataPreviewFingerprint(
             defaultValue: block.input?.defaultValue ?? null,
             targetScope: block.input?.targetScope ?? "slide",
             targetSourceIds: block.input?.targetSourceIds ?? [],
+            ...(block.input?.binding
+              ? { binding: block.input.binding, valueSchema: block.input.valueSchema ?? null }
+              : {}),
           }
         : null,
     )
@@ -424,6 +427,13 @@ export function resolvePreviewRefreshSourceIds(params: {
   return [...ids];
 }
 
+function variableInputsFromFingerprint(inputs: unknown): unknown[] {
+  if (!Array.isArray(inputs)) return [];
+  return inputs.filter(
+    (entry) => entry && typeof entry === "object" && "binding" in (entry as Record<string, unknown>),
+  );
+}
+
 /** Modelos cuja definição persistida mudou entre fingerprints. */
 function diffChangedDataModelIds(
   prevModels: unknown,
@@ -478,7 +488,13 @@ export function resolvePreviewRefreshModelIds(params: {
   const playlistDefaultsChanged =
     JSON.stringify(prev.playlistDefaults ?? null) !==
     JSON.stringify(next.playlistDefaults ?? null);
-  if (dataFiltersChanged || playlistDefaultsChanged) {
+  // Variáveis `input.*` do slide alcançam qualquer DataModel (ExpressionSpec nos inputs).
+  if (
+    dataFiltersChanged ||
+    playlistDefaultsChanged ||
+    JSON.stringify(variableInputsFromFingerprint(prev.inputs)) !==
+      JSON.stringify(variableInputsFromFingerprint(next.inputs))
+  ) {
     return allModelIds;
   }
 

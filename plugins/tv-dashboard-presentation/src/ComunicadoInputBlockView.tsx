@@ -11,7 +11,8 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { resolveComunicadoLucideIcon } from "./comunicadoIconView";
-import { resolveInputTargetScope } from "./comunicadoInputFilters";
+import { inputValueSchemaToParamField, resolveInputTargetScope } from "./comunicadoInputFilters";
+import { resolveInputBindingKey, resolveInputVariableBinding } from "./comunicadoInputBinding";
 import {
   INPUT_ICON_DEFAULT_SIZE_PX,
   INPUT_PART_DATA_ATTR,
@@ -43,6 +44,7 @@ export type InputResolvedField = {
   default?: string | number | boolean;
   optional?: boolean;
   enum?: Array<string | number | boolean>;
+  enumLabels?: Record<string, string>;
   format?: string;
 };
 
@@ -74,7 +76,10 @@ function enumOptions(field: InputResolvedField | null | undefined): Array<{ valu
     ];
   }
   const raw = Array.isArray(field.enum) ? field.enum.filter((item) => item != null) : [];
-  return raw.map((item) => ({ value: String(item), label: String(item) }));
+  return raw.map((item) => ({
+    value: String(item),
+    label: field.enumLabels?.[String(item)] ?? String(item),
+  }));
 }
 
 function isDateField(key: string, field: InputResolvedField | null | undefined): boolean {
@@ -130,11 +135,14 @@ export function ComunicadoInputBlockView({
   style,
 }: Props) {
   const parts = block.inputParts;
-  const paramKey = block.input?.paramKey ?? "";
-  /** Sem paramKey = filtro não ligado. Schema ausente no enrich não bloqueia o controle. */
+  const variableBinding = resolveInputVariableBinding(block.input);
+  const variableSchema = variableBinding ? block.input?.valueSchema : undefined;
+  const paramKey = resolveInputBindingKey(block.input);
+  /** Sem chave = filtro não ligado. Schema ausente no enrich não bloqueia o controle. */
   const unavailable = !paramKey.trim();
   const effectiveField: InputResolvedField | null =
     field ??
+    (variableSchema ? inputValueSchemaToParamField(variableSchema) : null) ??
     (!unavailable
       ? {
           type: "string",
@@ -151,8 +159,9 @@ export function ComunicadoInputBlockView({
   const current = value !== undefined ? value : (block.input?.defaultValue ?? null);
   const options = enumOptions(effectiveField);
   const scope = resolveInputTargetScope(block.input);
-  const controlKind = resolveInputControlKind(paramKey, effectiveField);
-  const schemaMissing = Boolean(paramKey.trim()) && !paramAvailable;
+  // Variável: o tipo vem só do valueSchema (sem heurística pelo nome da chave).
+  const controlKind = resolveInputControlKind(variableBinding ? "" : paramKey, effectiveField);
+  const schemaMissing = !variableBinding && Boolean(paramKey.trim()) && !paramAvailable;
   const iconName = block.input?.iconName?.trim();
   const Icon = iconName ? resolveComunicadoLucideIcon(iconName) : null;
   const showIcon = Boolean(Icon) && isInputPartVisible(parts, { kind: "icon" });
@@ -160,8 +169,9 @@ export function ComunicadoInputBlockView({
   const showBadge = isInputPartVisible(parts, { kind: "badge" });
   const showControl = isInputPartVisible(parts, { kind: "control" });
 
-  const scopeBadge =
-    scope === "slide"
+  const scopeBadge = variableBinding
+    ? "Variável do slide"
+    : scope === "slide"
       ? "Dados da página"
       : `${linkedSourceCount ?? block.input?.targetSourceIds?.length ?? 0} fonte${
           (linkedSourceCount ?? block.input?.targetSourceIds?.length ?? 0) === 1 ? "" : "s"
@@ -195,6 +205,12 @@ export function ComunicadoInputBlockView({
   const handleSelectValue = (next: string) => {
     if (effectiveField?.type === "boolean") {
       onChange?.(next === "true");
+      return;
+    }
+    // Variável tipada publica o escalar do valueSchema (enum numérico chega como número).
+    if (variableSchema && next !== "" && (variableSchema.type === "integer" || variableSchema.type === "number")) {
+      const parsed = Number(next);
+      onChange?.(Number.isFinite(parsed) ? parsed : null);
       return;
     }
     onChange?.(next === "" ? null : next);
@@ -282,7 +298,9 @@ export function ComunicadoInputBlockView({
   } else {
     controlNode = (
       <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-value")}>
-        {current === null || current === undefined || current === "" ? "—" : String(current)}
+        {current === null || current === undefined || current === ""
+          ? "—"
+          : (effectiveField?.enumLabels?.[String(current)] ?? String(current))}
       </span>
     );
   }

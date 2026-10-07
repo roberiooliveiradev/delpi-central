@@ -11,7 +11,15 @@ from tm_app.application.gpt_actions.entities import (
     GptEntity,
     GptMeetingMinuteWorkflow,
 )
+from tm_app.application.gpt_actions.parity_capabilities_service import (
+    MEETING_MINUTE_READ_ACTION_VALUES,
+)
+
 from tm_app.application.methodology.guide import list_method_ids, list_task_ids
+from tm_app.application.methodology.guide_v2 import (
+    INTENT_IDS,
+    SUPPORTED_GUIDE_VERSIONS,
+)
 from tm_app.application.gpt_actions.improvement_package_contract import (
     NESTING_RULES,
     openapi_investment_properties,
@@ -46,6 +54,13 @@ def resolve_gpt_actions_server_url(
         return f"{base}{root}"
     return f"{GPT_ACTIONS_PUBLIC_FALLBACK_ORIGIN}{root}"
 
+# Tool Surface Rationalization V1 — family-level operations. Pre-family
+# operationIds were removed from the Builder surface (tombstoned, fail
+# closed in the MCP projection): gpt_activate_revision,
+# gpt_recalculate_dashboard, gpt_meeting_minute_workflow,
+# gpt_validate_improvement_package, gpt_list_evidence, gpt_manage_evidence,
+# gpt_adjust_shared_resource_cost, gpt_meeting_minute_manage, gpt_task_read,
+# gpt_prepare_task, gpt_interaction_room_read, gpt_prepare_interaction_room.
 GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_my_context",
     "gpt_get_catalog",
@@ -55,16 +70,15 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_record",
     "gpt_prepare_record_change",
     "gpt_commit_proposal",
-    "gpt_activate_revision",
-    "gpt_recalculate_dashboard",
-    "gpt_meeting_minute_workflow",
-    "gpt_validate_improvement_package",
+    "gpt_prepare_governed_operation",
     "gpt_get_process_context",
-    "gpt_list_evidence",
-    "gpt_manage_evidence",
+    "gpt_evidence_read",
+    "gpt_prepare_evidence_change",
     "gpt_get_process_timeline",
-    "gpt_adjust_shared_resource_cost",
-    "gpt_meeting_minute_manage",
+    "gpt_meeting_minute_read",
+    "gpt_prepare_meeting_minute_change",
+    "gpt_collaboration_read",
+    "gpt_prepare_collaboration_change",
 )
 
 # Legacy HTTP still mounted (prepare-only shim) — not Builder-importable.
@@ -83,6 +97,15 @@ GPT_ACTIONS_SCHEMA_HTTP_OPERATION_ID = "gpt_get_openapi_schema"
 _ENTITY_ENUM = [e.value for e in GptEntity]
 _VIEW_ENUM = [v.value for v in GptAnalysisView]
 _WORKFLOW_ENUM = [w.value for w in GptMeetingMinuteWorkflow]
+
+
+def _governed_operation_action_values() -> list[str]:
+    # Lazy: orchestrator imports dispatch_service, which imports this package.
+    from tm_app.application.governed_writes.orchestrator import (
+        GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
+    )
+
+    return sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY)
 
 # OpenAI Custom GPT: parameter description ≤700 chars, operation description ≤300.
 _ENTITY_DESCRIPTION = (
@@ -488,6 +511,41 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             + ". Selects the smallest recommended methods."
                         ),
                     },
+                    {
+                        "name": "guide_version",
+                        "in": "query",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "enum": list(SUPPORTED_GUIDE_VERSIONS),
+                        },
+                        "description": (
+                            "Methodology guide version. Omit for "
+                            "teo-method-playbooks-v1 (wire default)."
+                        ),
+                    },
+                    {
+                        "name": "intent",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "enum": list(INTENT_IDS)},
+                        "description": (
+                            "V2 intent: " + ", ".join(INTENT_IDS) + "."
+                        ),
+                    },
+                    {
+                        "name": "context",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "V2 optional JSON object of process-context facts "
+                            "(e.g. boundary_known, as_is_known, problem_defined, "
+                            "candidate_cause, flow_known, strategic_question). "
+                            "Valid vocabulary, accepted values and semantics: "
+                            "see supported_context_facts in the V2 response."
+                        ),
+                    },
                 ],
                 "responses": {
                     "200": _ok_response("Methodology guide payload"),
@@ -535,11 +593,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         f"{GPT_ACTIONS_BASE_PATH}/analysis": {
             "get": {
                 "operationId": "gpt_analyze",
-                "summary": "Analyze dashboard KPIs from snapshot/live cache",
+                "summary": "Analyze dashboard KPIs and process/revision compute views",
                 "description": (
-                    "Read-only analytics. Prefer `summary` for totals, `processes` for ranking, "
-                    "`instances` for operational improvements, `rows` for revision-level detail, "
-                    "`meta` to check cache freshness. Competencies use YYYY-MM."
+                    "Read-only analytics. Views: meta|summary|processes|instances|rows; "
+                    "dashboard_*; processes_calculated; process_revision_comparison; "
+                    "impact_effort_matrix; decomposition_*; diagram_*; revision_*. "
+                    "Scoped views need processo_id|instancia_id|revisao_id."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -585,10 +644,24 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "schema": {"type": "string"},
                     },
                     {
+                        "name": "instancia_id",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Improvement-instance UUID (impact_effort_matrix).",
+                    },
+                    {
                         "name": "familia_processo",
                         "in": "query",
                         "required": False,
                         "schema": {"type": "string"},
+                    },
+                    {
+                        "name": "competencia",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "pattern": "^\\d{4}-\\d{2}$"},
+                        "description": "Single competence month YYYY-MM.",
                     },
                     {
                         "name": "competencia_inicio",
@@ -603,6 +676,13 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "required": False,
                         "schema": {"type": "string", "pattern": "^\\d{4}-\\d{2}$"},
                         "description": "End month YYYY-MM.",
+                    },
+                    {
+                        "name": "horizonte_meses",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "integer", "minimum": 1, "maximum": 120},
+                        "description": "Horizon in months (impact_effort_matrix).",
                     },
                     {
                         "name": "limit",
@@ -814,99 +894,60 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "x-openai-isConsequential": True,
             }
         },
-        f"{GPT_ACTIONS_BASE_PATH}/revisions/{'{id}'}/activate": {
+        f"{GPT_ACTIONS_BASE_PATH}/governed-operations/prepare": {
             "post": {
-                "operationId": "gpt_activate_revision",
-                "summary": "Activate a revision as the operational current version",
+                "operationId": "gpt_prepare_governed_operation",
+                "summary": "PREPARE special governed operations",
                 "description": (
-                    "Path id = revisao_id UUID. No required body. Consequential write."
+                    "Special governed writes — action selects the capability: "
+                    "activate_revision | recalculate_dashboard | "
+                    "commit_improvement_package | adjust_shared_resource_cost. "
+                    "PREPARE only; ACT is gpt_commit_proposal."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
                     {
-                        "name": "id",
-                        "in": "path",
-                        "required": True,
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
                         "schema": {"type": "string"},
-                        "description": "revisao_id to activate.",
-                    },
-                ],
-                "responses": {
-                    "200": _ok_response("Activated revision"),
-                    **_error_responses(),
-                },
-                "x-openai-isConsequential": True,
-            }
-        },
-        f"{GPT_ACTIONS_BASE_PATH}/dashboard/recalculate": {
-            "post": {
-                "operationId": "gpt_recalculate_dashboard",
-                "summary": "Recalculate materialised dashboard cache",
-                "description": (
-                    "Optional filters in JSON body: revisao_id, processo_id, "
-                    "competencia_inicio, competencia_fim."
-                ),
-                "tags": ["Transformômetro GPT"],
-                "security": [{"BearerAuth": []}],
-                "requestBody": {
-                    "required": False,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/GptRecalculateBody"
-                            },
-                            "example": {
-                                "processo_id": "<processo_uuid>",
-                                "revisao_id": "<revisao_uuid>",
-                            },
-                        }
-                    },
-                },
-                "responses": {
-                    "200": _ok_response("Recalculation result"),
-                    **_error_responses(),
-                },
-                "x-openai-isConsequential": True,
-            }
-        },
-        f"{GPT_ACTIONS_BASE_PATH}/meeting-minutes/{'{id}'}/workflow": {
-            "post": {
-                "operationId": "gpt_meeting_minute_workflow",
-                "summary": "Send, finalize, or cancel a meeting minute",
-                "description": (
-                    "Body requires action enum. Handwritten signature stays in UI/magic link."
-                ),
-                "tags": ["Transformômetro GPT"],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": True,
-                        "schema": {"type": "string"},
-                        "description": "meeting_minute id.",
-                    },
+                        "description": "Required when commit_now=true.",
+                    }
                 ],
                 "requestBody": {
                     "required": True,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/GptMeetingMinuteWorkflowBody"
+                                "$ref": "#/components/schemas/GptGovernedOperationBody"
                             },
-                            "example": {"action": "send"},
+                            "example": {
+                                "action": "activate_revision",
+                                "id": "<revisao_uuid>",
+                            },
                             "examples": {
-                                "send": {"summary": "Send", "value": {"action": "send"}},
-                                "finalize": {
-                                    "summary": "Finalize",
-                                    "value": {"action": "finalize"},
-                                },
-                                "cancel": {
-                                    "summary": "Cancel",
+                                "activate_revision": {
+                                    "summary": "Activate revision",
                                     "value": {
-                                        "action": "cancel",
-                                        "reason": "Cancelado no teste GPT",
+                                        "action": "activate_revision",
+                                        "id": "<revisao_uuid>",
+                                    },
+                                },
+                                "recalculate_dashboard": {
+                                    "summary": "Recalculate dashboard",
+                                    "value": {
+                                        "action": "recalculate_dashboard",
+                                        "processo_id": "<processo_uuid>",
+                                    },
+                                },
+                                "adjust_shared_resource_cost": {
+                                    "summary": "Shared-resource cost adjustment",
+                                    "value": {
+                                        "action": "adjust_shared_resource_cost",
+                                        "recurso_compartilhado_id": "<recurso_uuid>",
+                                        "valor_mensal": 1500.0,
+                                        "vigente_desde": "2026-10-01",
                                     },
                                 },
                             },
@@ -914,35 +955,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     },
                 },
                 "responses": {
-                    "200": _ok_response("Workflow result"),
-                    **_error_responses(),
-                },
-                "x-openai-isConsequential": True,
-            }
-        },
-        f"{GPT_ACTIONS_BASE_PATH}/improvement-packages/validate": {
-            "post": {
-                "operationId": "gpt_validate_improvement_package",
-                "summary": "Validate a guided improvement package (no write)",
-                "description": (
-                    "Validates a nested improvement package. Never writes, activates or "
-                    "recalculates. Returns ready/missing/checklist."
-                ),
-                "tags": ["Transformômetro GPT"],
-                "security": [{"BearerAuth": []}],
-                "requestBody": {
-                    "required": True,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/GptValidateImprovementPackageBody"
-                            },
-                            "example": _package_validate_example(),
-                        }
-                    },
-                },
-                "responses": {
-                    "200": _ok_response("Validation checklist (never persists)"),
+                    "200": _ok_response("proposal_ready or persisted commit_now outcome"),
                     **_error_responses(),
                 },
                 "x-openai-isConsequential": False,
@@ -954,7 +967,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "summary": "Commit a guided improvement package",
                 "description": (
                     "Commits an already-reviewed improvement package. This operation may "
-                    "persist data. Prefer gpt_validate_improvement_package first."
+                    "persist data. Prefer gpt_prepare_governed_operation first."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -978,14 +991,25 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         },
         f"{GPT_ACTIONS_BASE_PATH}/evidence": {
             "get": {
-                "operationId": "gpt_list_evidence",
-                "summary": "List process or revision evidence metadata",
+                "operationId": "gpt_evidence_read",
+                "summary": "READ evidence family (list process or revision metadata)",
                 "description": (
-                    "Read-only. scope=process|revision. No binary download."
+                    "Read-only. action=list. scope=process|revision. "
+                    "No binary download."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["list"],
+                            "default": "list",
+                        },
+                    },
                     {
                         "name": "scope",
                         "in": "query",
@@ -1010,26 +1034,36 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "x-openai-isConsequential": False,
             }
         },
-        f"{GPT_ACTIONS_BASE_PATH}/evidence/manage": {
+        f"{GPT_ACTIONS_BASE_PATH}/evidence/prepare": {
             "post": {
-                "operationId": "gpt_manage_evidence",
-                "summary": "Manage external-link evidence metadata",
+                "operationId": "gpt_prepare_evidence_change",
+                "summary": "PREPARE evidence link/description/delete",
                 "description": (
-                    "create_link|update_description|delete. Binary upload blocked. "
-                    "Delete requires confirm_delete=true."
+                    "action=create_link|update_description|delete. PREPARE only "
+                    "— ACT is gpt_commit_proposal. Binary upload/download is "
+                    "BLOCKED_BY_PLATFORM. Delete requires confirm_delete=true."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Required when commit_now=true.",
+                    }
+                ],
                 "requestBody": {
                     "required": True,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/GptEvidenceManageBody"
+                                "$ref": "#/components/schemas/GptEvidenceChangeBody"
                             },
                             "example": {
+                                "action": "create_link",
                                 "scope": "process",
-                                "operation": "create_link",
                                 "parent_id": "<processo_uuid>",
                                 "url_externa": "https://example.com/evidence",
                                 "descricao": "Link de evidência",
@@ -1038,11 +1072,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     },
                 },
                 "responses": {
-                    "200": _ok_response("Evidence write result"),
-                    "201": _ok_response("Evidence created"),
+                    "200": _ok_response("proposal_ready or persisted commit_now outcome"),
                     **_error_responses(),
                 },
-                "x-openai-isConsequential": True,
+                "x-openai-isConsequential": False,
             }
         },
         f"{GPT_ACTIONS_BASE_PATH}/processes/{'{processo_id}'}/timeline": {
@@ -1079,12 +1112,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "x-openai-isConsequential": False,
             }
         },
-        f"{GPT_ACTIONS_BASE_PATH}/shared-resources/adjust-cost": {
+        f"{GPT_ACTIONS_BASE_PATH}/meeting-minutes/read": {
             "post": {
-                "operationId": "gpt_adjust_shared_resource_cost",
-                "summary": "Register shared-resource cost adjustment",
+                "operationId": "gpt_meeting_minute_read",
+                "summary": "READ meeting-minute family",
                 "description": (
-                    "Canonical registrar_reajuste. Not generic resource_cost update."
+                    "action=pending_signatures|audit|versions|participants|"
+                    "signers|generate_from_transcript. Read/analysis only "
+                    "— no PDF/PNG/public sign."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -1093,54 +1128,147 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/GptAdjustSharedResourceCostBody"
-                            },
-                            "example": {
-                                "recurso_compartilhado_id": "<recurso_uuid>",
-                                "valor_mensal": 1500.0,
-                                "vigente_desde": "2026-10-01",
-                                "observacoes": "Reajuste anual",
-                            },
-                        }
-                    },
-                },
-                "responses": {
-                    "201": _ok_response("Cost adjustment"),
-                    **_error_responses(),
-                },
-                "x-openai-isConsequential": True,
-            }
-        },
-        f"{GPT_ACTIONS_BASE_PATH}/meeting-minutes/manage": {
-            "post": {
-                "operationId": "gpt_meeting_minute_manage",
-                "summary": "Meeting-minute extras (not send/finalize/cancel)",
-                "description": (
-                    "pending_signatures|audit|versions|resend|create_version|"
-                    "set_participants|set_signers|generate_from_transcript. "
-                    "No PDF/PNG/public sign."
-                ),
-                "tags": ["Transformômetro GPT"],
-                "security": [{"BearerAuth": []}],
-                "requestBody": {
-                    "required": True,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/GptMeetingMinuteManageBody"
+                                "$ref": "#/components/schemas/GptMeetingMinuteReadBody"
                             },
                             "example": {
                                 "action": "pending_signatures",
                             },
-
                         }
                     },
                 },
                 "responses": {
-                    "200": _ok_response("Meeting minute manage result"),
+                    "200": _ok_response("Meeting minute read result"),
                     **_error_responses(),
                 },
-                "x-openai-isConsequential": True,
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/meeting-minutes/prepare": {
+            "post": {
+                "operationId": "gpt_prepare_meeting_minute_change",
+                "summary": "PREPARE meeting-minute change",
+                "description": (
+                    "action=send|finalize|cancel|resend|create_version|"
+                    "set_participants|set_signers. PREPARE only — ACT is "
+                    "gpt_commit_proposal. Handwritten signature stays in "
+                    "UI/magic link."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Required when commit_now=true.",
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptMeetingMinuteChangeBody"
+                            },
+                            "example": {"action": "send", "minute_id": "<minute_uuid>"},
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("proposal_ready or persisted commit_now outcome"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/collaboration": {
+            "get": {
+                "operationId": "gpt_collaboration_read",
+                "summary": "READ collaboration family (tasks + interaction rooms)",
+                "description": (
+                    "Same canonical use cases as the Portal. "
+                    "action=my_tasks (status filter) | process_tasks "
+                    "(processo_id) | task (task_id) | rooms (inbox_filter) | "
+                    "room | messages | attachments (room_id; metadata only "
+                    "— binary transfer BLOCKED_BY_PLATFORM)."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": True,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "my_tasks",
+                                "task",
+                                "process_tasks",
+                                "rooms",
+                                "room",
+                                "messages",
+                                "attachments",
+                            ],
+                        },
+                    },
+                    {"name": "task_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "processo_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "status", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "room_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "inbox_filter", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer"}},
+                    {"name": "before_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                ],
+                "responses": {
+                    "200": _ok_response("Collaboration data"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/collaboration/prepare": {
+            "post": {
+                "operationId": "gpt_prepare_collaboration_change",
+                "summary": "PREPARE collaboration change (tasks + rooms/messages)",
+                "description": (
+                    "Collaboration writes (tasks + rooms/messages) — action "
+                    "selects the typed change via canonical use cases. PREPARE "
+                    "returns opaque proposal_handle; ACT is gpt_commit_proposal. "
+                    "Policy per action; no binary attachments."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Required when commit_now=true.",
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptCollaborationChangeBody"
+                            },
+                            "example": {
+                                "action": "create_task",
+                                "title": "Follow up with process owner",
+                                "due_date": "2026-12-01",
+                            },
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("proposal_ready or persisted commit_now outcome"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
             }
         },
     }
@@ -1256,70 +1384,89 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         }
                     },
                 },
-                "GptRecalculateBody": {
-                    "type": "object",
-                    "description": "Optional filters for dashboard recalculation.",
-                    "properties": {
-                        "revisao_id": {
-                            "type": "string",
-                            "description": "Limit recalculation to one revision.",
-                        },
-                        "processo_id": {
-                            "type": "string",
-                            "description": "Limit recalculation to one process.",
-                        },
-                        "competencia_inicio": {
-                            "type": "string",
-                            "description": "Optional YYYY-MM start competence.",
-                        },
-                        "competencia_fim": {
-                            "type": "string",
-                            "description": "Optional YYYY-MM end competence.",
-                        },
-                    },
-                    "additionalProperties": False,
-                    "example": {
-                        "processo_id": "<processo_uuid>",
-                        "revisao_id": "<revisao_uuid>",
-                    },
-                },
-                "GptMeetingMinuteWorkflowBody": {
+                "GptGovernedOperationBody": {
                     "type": "object",
                     "required": ["action"],
-                    "description": "Meeting-minute workflow command.",
+                    "description": (
+                        "Special governed operations. action selects the "
+                        "capability; only the fields relevant to the chosen "
+                        "action are consumed."
+                    ),
                     "properties": {
                         "action": {
                             "type": "string",
-                            "enum": _WORKFLOW_ENUM,
-                            "description": "Workflow verb for the ata.",
+                            "enum": sorted(
+                                _governed_operation_action_values()
+                            ),
                         },
-                        "reason": {
+                        "id": {
                             "type": "string",
-                            "description": "Optional cancel reason.",
+                            "description": "revisao_id — required for activate_revision.",
                         },
+                        "revisao_id": {"type": "string"},
+                        "processo_id": {"type": "string"},
+                        "competencia_inicio": {
+                            "type": "string",
+                            "description": "YYYY-MM — recalculate_dashboard filter.",
+                        },
+                        "competencia_fim": {
+                            "type": "string",
+                            "description": "YYYY-MM — recalculate_dashboard filter.",
+                        },
+                        "recurso_compartilhado_id": {
+                            "type": "string",
+                            "description": "Required for adjust_shared_resource_cost.",
+                        },
+                        "valor_mensal": {"type": "number", "minimum": 0},
+                        "vigente_desde": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "YYYY-MM-DD",
+                        },
+                        "observacoes": {"type": "string"},
+                        "process": {"type": "object", "additionalProperties": True},
+                        "instance": {"type": "object", "additionalProperties": True},
+                        "baseline": {"type": "object", "additionalProperties": True},
+                        "scenario": {"type": "object", "additionalProperties": True},
+                        "activate_scenario": {"type": "boolean", "default": False},
+                        "recalculate": {"type": "boolean", "default": False},
+                        "display_name": {
+                            "type": "string",
+                            "description": "Required for update_signature_profile.",
+                        },
+                        "xml": {
+                            "type": "string",
+                            "description": "BPMN XML text — required for import_diagram_bpmn_xml.",
+                        },
+                        "commit_now": {"type": "boolean", "default": False},
+                        "confirmation": {"type": "boolean", "default": False},
+                        "idempotency_key": {"type": "string"},
                     },
                     "additionalProperties": False,
-                    "example": {"action": "send"},
+                    "example": {
+                        "action": "activate_revision",
+                        "id": "<revisao_uuid>",
+                    },
                 },
-                "GptEvidenceManageBody": {
+                "GptEvidenceChangeBody": {
                     "type": "object",
-                    "required": ["scope", "operation", "parent_id"],
+                    "required": ["action", "scope", "parent_id"],
                     "description": (
                         "Link/metadata evidence only. Binary upload/download is "
                         "BLOCKED_BY_PLATFORM for Custom GPT Actions."
                     ),
                     "properties": {
-                        "scope": {
-                            "type": "string",
-                            "enum": ["process", "revision"],
-                        },
-                        "operation": {
+                        "action": {
                             "type": "string",
                             "enum": [
                                 "create_link",
                                 "update_description",
                                 "delete",
                             ],
+                        },
+                        "scope": {
+                            "type": "string",
+                            "enum": ["process", "revision"],
                         },
                         "parent_id": {
                             "type": "string",
@@ -1339,65 +1486,122 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             "default": False,
                             "description": "Must be true for delete",
                         },
+                        "commit_now": {"type": "boolean", "default": False},
+                        "confirmation": {"type": "boolean", "default": False},
+                        "idempotency_key": {"type": "string"},
                     },
                     "additionalProperties": False,
                     "example": {
+                        "action": "create_link",
                         "scope": "process",
-                        "operation": "create_link",
                         "parent_id": "<processo_uuid>",
                         "url_externa": "https://example.com/evidence",
                         "descricao": "Link de evidência",
                     },
                 },
-                "GptAdjustSharedResourceCostBody": {
-                    "type": "object",
-                    "required": [
-                        "recurso_compartilhado_id",
-                        "valor_mensal",
-                        "vigente_desde",
-                    ],
-                    "description": (
-                        "Canonical shared-resource cost adjustment "
-                        "(registrar_reajuste). Not a generic resource_cost CRUD."
-                    ),
-                    "properties": {
-                        "recurso_compartilhado_id": {"type": "string"},
-                        "valor_mensal": {"type": "number", "minimum": 0},
-                        "vigente_desde": {
-                            "type": "string",
-                            "format": "date",
-                            "description": "YYYY-MM-DD",
-                        },
-                        "observacoes": {"type": "string"},
-                    },
-                    "additionalProperties": False,
-                    "example": {
-                        "recurso_compartilhado_id": "<recurso_uuid>",
-                        "valor_mensal": 1500.0,
-                        "vigente_desde": "2026-10-01",
-                        "observacoes": "Reajuste anual",
-                    },
-                },
-                "GptMeetingMinuteManageBody": {
+                "GptCollaborationChangeBody": {
                     "type": "object",
                     "required": ["action"],
                     "description": (
-                        "Meeting-minute extras beyond send/finalize/cancel "
-                        "(use gpt_meeting_minute_workflow for those)."
+                        "Collaboration governed write — tasks via "
+                        "TaskCommandUseCases, rooms/messages via "
+                        "InteractionRoomUseCases (same as the Portal). Binary "
+                        "attachment upload/download is BLOCKED_BY_PLATFORM."
                     ),
                     "properties": {
                         "action": {
                             "type": "string",
                             "enum": [
-                                "pending_signatures",
-                                "audit",
-                                "versions",
-                                "resend",
-                                "create_version",
-                                "set_participants",
-                                "set_signers",
-                                "generate_from_transcript",
+                                "create_task",
+                                "update_task",
+                                "complete_task",
+                                "cancel_task",
+                                "open_room",
+                                "post_message",
+                                "edit_message",
+                                "delete_message",
+                                "toggle_reaction",
+                                "pin_message",
+                                "unpin_message",
+                                "mark_room_read",
                             ],
+                        },
+                        "task_id": {
+                            "type": "string",
+                            "description": "Required for update_task|complete_task|cancel_task",
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "Required for create_task|update_task (1-200 chars)",
+                        },
+                        "description": {"type": "string"},
+                        "assignee_user_id": {"type": "string"},
+                        "due_date": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "YYYY-MM-DD",
+                        },
+                        "source_interaction_message_id": {"type": "string"},
+                        "processo_id": {
+                            "type": "string",
+                            "description": "Required for open_room",
+                        },
+                        "room_id": {
+                            "type": "string",
+                            "description": "Required for message ops + mark_room_read",
+                        },
+                        "message_id": {
+                            "type": "string",
+                            "description": (
+                                "Required for edit_message|delete_message|"
+                                "toggle_reaction|pin_message|unpin_message"
+                            ),
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "Required for post_message|edit_message",
+                        },
+                        "parent_id": {"type": "string"},
+                        "mentions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": True,
+                                "properties": {
+                                    "user_id": {"type": "string"},
+                                    "label": {"type": "string"},
+                                },
+                            },
+                        },
+                        "reaction": {
+                            "type": "string",
+                            "description": "Required for toggle_reaction (emoji code)",
+                        },
+                        "commit_now": {"type": "boolean", "default": False},
+                        "confirmation": {"type": "boolean", "default": False},
+                        "idempotency_key": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "action": "create_task",
+                        "title": "Follow up with process owner",
+                        "due_date": "2026-12-01",
+                    },
+                },
+                "GptMeetingMinuteReadBody": {
+                    "type": "object",
+                    "required": ["action"],
+                    "description": (
+                        "Meeting-minute READ/analysis family. minute_id "
+                        "required except pending_signatures."
+                    ),
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            # Canonical read vocabulary — single source:
+                            # parity_capabilities_service
+                            # .MEETING_MINUTE_READ_ACTION_VALUES.
+                            "enum": sorted(MEETING_MINUTE_READ_ACTION_VALUES),
                         },
                         "minute_id": {
                             "type": "string",
@@ -1407,11 +1611,58 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             "type": "object",
                             "additionalProperties": True,
                             "description": (
-                                "Action-specific payload. For resend: "
-                                "{confirm_resend:true}. For set_participants/"
-                                "set_signers: participants[]/signers[]. For "
+                                "Action-specific payload. For "
                                 "generate_from_transcript: unit_code + "
                                 "transcript_html."
+                            ),
+                            "properties": {
+                                "unit_code": {"type": "string"},
+                                "transcript_html": {"type": "string"},
+                                "meeting_date": {"type": "string"},
+                                "title": {"type": "string"},
+                                "source": {"type": "string"},
+                            },
+                        },
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "action": "pending_signatures",
+                    },
+                },
+                "GptMeetingMinuteChangeBody": {
+                    "type": "object",
+                    "required": ["action"],
+                    "description": (
+                        "Meeting-minute governed write — workflow transitions "
+                        "(send|finalize|cancel|refuse) and manage writes (resend|"
+                        "create_version|set_participants|set_signers)."
+                    ),
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": [
+                                *_WORKFLOW_ENUM,
+                                "resend",
+                                "create_version",
+                                "set_participants",
+                                "set_signers",
+                            ],
+                        },
+                        "minute_id": {
+                            "type": "string",
+                            "description": "Required — target meeting_minute id.",
+                        },
+                        "reason": {
+                            "type": "string",
+                            "description": "Optional cancel reason; required for refuse.",
+                        },
+                        "data": {
+                            "type": "object",
+                            "additionalProperties": True,
+                            "description": (
+                                "Action-specific payload. For resend: "
+                                "{confirm_resend:true}. For set_participants/"
+                                "set_signers: participants[]/signers[]."
                             ),
                             "properties": {
                                 "confirm_resend": {"type": "boolean"},
@@ -1439,17 +1690,16 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                         },
                                     },
                                 },
-                                "unit_code": {"type": "string"},
-                                "transcript_html": {"type": "string"},
-                                "meeting_date": {"type": "string"},
-                                "title": {"type": "string"},
-                                "source": {"type": "string"},
                             },
                         },
+                        "commit_now": {"type": "boolean", "default": False},
+                        "confirmation": {"type": "boolean", "default": False},
+                        "idempotency_key": {"type": "string"},
                     },
                     "additionalProperties": False,
                     "example": {
-                        "action": "pending_signatures",
+                        "action": "send",
+                        "minute_id": "<minute_uuid>",
                     },
                 },
                 "GptImprovementPackageBody": {
@@ -1613,34 +1863,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             },
         },
     }
-    commit_props = doc["components"]["schemas"]["GptImprovementPackageBody"]["properties"]
-    doc["components"]["schemas"]["GptValidateImprovementPackageBody"] = {
-        "type": "object",
-        "description": (
-            "Nested package: process, instance, baseline?, scenario?. "
-            "Optional commit_now when ready. Never persists without commit_now."
-        ),
-        "properties": {
-            **{
-                key: commit_props[key]
-                for key in ("process", "instance", "baseline", "scenario")
-            },
-            "commit_now": {
-                "type": "boolean",
-                "default": False,
-                "description": "Atomic PREPARE+ACT when package ready (policy allow).",
-            },
-            "confirmation": {
-                "type": "boolean",
-                "default": False,
-                "description": "Required true with commit_now.",
-            },
-            "idempotency_key": {
-                "type": "string",
-                "description": "Required with commit_now if header omitted.",
-            },
-        },
-    }
+    # Improvement-package PREPARE now lives under
+    # gpt_prepare_governed_operation (action=commit_improvement_package).
 
     # --- V2 surface: governed prepare/commit + strip legacy CRUD from import ---
     doc["components"]["schemas"]["GptPrepareRecordChangeBody"] = {
@@ -1827,7 +2051,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         }
     }
 
-    # Tighten specialized write descriptions: PREPARE-only.
+    # Tighten family PREPARE descriptions: PREPARE-only, never consequential.
     for methods in paths.values():
         if not isinstance(methods, dict):
             continue
@@ -1836,12 +2060,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 continue
             oid = op.get("operationId")
             if oid in {
-                "gpt_activate_revision",
-                "gpt_recalculate_dashboard",
-                "gpt_meeting_minute_workflow",
-                "gpt_manage_evidence",
-                "gpt_adjust_shared_resource_cost",
-                "gpt_validate_improvement_package",
+                "gpt_prepare_governed_operation",
+                "gpt_prepare_evidence_change",
+                "gpt_prepare_meeting_minute_change",
+                "gpt_prepare_collaboration_change",
             }:
                 desc = str(op.get("description") or "")
                 if "gpt_commit_proposal" not in desc:
@@ -1850,11 +2072,6 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         + " PREPARE only — commit via gpt_commit_proposal."
                     )[:300]
                 op["x-openai-isConsequential"] = False
-            if oid == "gpt_meeting_minute_manage":
-                op["description"] = (
-                    "READ actions return immediately. WRITE actions return a PREPARE "
-                    "proposal; commit via gpt_commit_proposal."
-                )[:300]
 
     _normalize_builder_nullable_types(doc)
     return doc

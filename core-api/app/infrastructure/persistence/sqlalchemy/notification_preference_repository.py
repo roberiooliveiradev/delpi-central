@@ -7,7 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.application.services.notification_catalog_service import NotificationCatalogService
 from app.domain.notifications.notification_preference_policy import is_email_channel_enabled
-from app.domain.ports.notification_preference_repository import NotificationPreferenceRepository
+from app.domain.ports.notification_preference_repository import (
+    NotificationPreferenceDTO,
+    NotificationPreferenceRepository,
+)
 from app.infrastructure.db.models.user_notification_preference import UserNotificationPreference
 
 
@@ -115,6 +118,32 @@ class SqlAlchemyNotificationPreferenceRepository(NotificationPreferenceRepositor
             for user_id in user_ids
             if normalized_category not in muted_by_user.get(user_id, set())
         ]
+
+    def get_preferences_for_users(
+        self, user_ids: list[str]
+    ) -> dict[str, NotificationPreferenceDTO]:
+        valid_ids: list[UUID] = []
+        for raw in user_ids:
+            try:
+                valid_ids.append(UUID(str(raw)))
+            except (TypeError, ValueError):
+                continue
+        if not valid_ids:
+            return {}
+        rows = (
+            self.session.query(UserNotificationPreference)
+            .filter(UserNotificationPreference.user_id.in_(valid_ids))
+            .all()
+        )
+        return {
+            str(row.user_id): NotificationPreferenceDTO(
+                user_id=str(row.user_id),
+                muted_categories=list(row.muted_categories or []),
+                important_categories=list(row.important_categories or []),
+                email_categories=list(row.email_categories or []),
+            )
+            for row in rows
+        }
 
     def _get_row(self, user_id: str) -> UserNotificationPreference | None:
         return self.session.get(UserNotificationPreference, UUID(user_id))

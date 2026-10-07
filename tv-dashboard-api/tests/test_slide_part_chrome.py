@@ -108,7 +108,7 @@ def test_part_chrome_sibling_chart_table_input():
 
 
 def test_part_chrome_negative_skips_informed_fill_but_rebalances_hierarchy():
-    """Informed blocks skip default fill; disproportionate title/icon still rebalance."""
+    """Informed blocks skip default fill; missing title/icon still follow the value."""
     cfg = {
         "version": 5,
         "blocks": [
@@ -132,8 +132,8 @@ def test_part_chrome_negative_skips_informed_fill_but_rebalances_hierarchy():
                 "frame": {"x": 4, "y": 18, "w": 28, "h": 28},
                 "kpiParts": {
                     "value": {"style": {"fontSize": 90}},
-                    "title": {"style": {"fontSize": 16}},
-                    "icon": {"style": {"iconSize": 28}},
+                    "title": {"style": {}},
+                    "icon": {"style": {}},
                 },
             }
         ],
@@ -144,7 +144,26 @@ def test_part_chrome_negative_skips_informed_fill_but_rebalances_hierarchy():
     assert parts["icon"]["style"]["iconSize"] >= 49  # ~90 * 0.55
 
 
-def test_part_chrome_rebalances_kpi_when_value_dwarfs_title_icon():
+def test_part_chrome_rebalances_kpi_auto_managed_parts_from_value():
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "k1",
+                "type": "kpi_view",
+                "frame": {"x": 4, "y": 18, "w": 30, "h": 36},
+                "kpiParts": {"value": {"style": {"fontSize": 80}}},
+            }
+        ],
+    }
+    assert SlidePartChromeService.apply_missing_defaults(cfg) is True
+    parts = cfg["blocks"][0]["kpiParts"]
+    assert parts["title"]["style"]["fontSize"] >= 28
+    assert parts["icon"]["style"]["iconSize"] >= 44
+
+
+def test_part_chrome_keeps_authored_kpi_parts_above_legibility_min():
+    """Authored title/icon are not raised to the value ratio; only token minimums apply."""
     cfg = {
         "version": 5,
         "blocks": [
@@ -154,16 +173,16 @@ def test_part_chrome_rebalances_kpi_when_value_dwarfs_title_icon():
                 "frame": {"x": 4, "y": 18, "w": 30, "h": 36},
                 "kpiParts": {
                     "value": {"style": {"fontSize": 80}},
-                    "title": {"style": {"fontSize": 18}},
-                    "icon": {"style": {"iconSize": 32}},
+                    "title": {"style": {"fontSize": 20}},
+                    "icon": {"style": {"iconSize": 28}},
                 },
             }
         ],
     }
-    assert SlidePartChromeService.apply_missing_defaults(cfg) is True
+    SlidePartChromeService.apply_missing_defaults(cfg, informed_block_ids={"k1"})
     parts = cfg["blocks"][0]["kpiParts"]
-    assert parts["title"]["style"]["fontSize"] >= 28
-    assert parts["icon"]["style"]["iconSize"] >= 44
+    assert parts["title"]["style"]["fontSize"] == 20
+    assert parts["icon"]["style"]["iconSize"] == 32  # partChrome.kpi.iconMinSize
 
 
 def test_part_chrome_negative_balanced_kpi_unchanged():
@@ -196,25 +215,36 @@ def test_part_chrome_negative_balanced_kpi_unchanged():
     assert after_parts["value"]["style"]["fontSize"] == before["value"]
 
 
-def test_part_chrome_rebalances_chart_table_input_and_composed_group():
-    cfg = {
+def _family_hierarchy_cfg(*, authored_dependents: bool) -> dict:
+    """Chart/table/input/composed group whose primaries are large.
+
+    ``authored_dependents`` decides whether the dependent sizes are already
+    persisted (author intent) or absent (auto-managed by part chrome).
+    """
+
+    def dependent(value: int) -> dict:
+        return {"fontSize": value} if authored_dependents else {}
+
+    chart_opts: dict = {"titleFontSize": 32}
+    if authored_dependents:
+        chart_opts.update({"legendFontSize": 12, "axisFontSize": 10})
+    table_opts: dict = {"bodyFontSize": 22}
+    if authored_dependents:
+        table_opts["headerFontSize"] = 14
+    return {
         "version": 5,
         "blocks": [
             {
                 "id": "c1",
                 "type": "chart_view",
                 "frame": {"x": 4, "y": 40, "w": 92, "h": 50},
-                "chartOptions": {
-                    "titleFontSize": 32,
-                    "legendFontSize": 12,
-                    "axisFontSize": 10,
-                },
+                "chartOptions": chart_opts,
             },
             {
                 "id": "t1",
                 "type": "table_view",
                 "frame": {"x": 4, "y": 4, "w": 90, "h": 40},
-                "tableOptions": {"bodyFontSize": 22, "headerFontSize": 14},
+                "tableOptions": table_opts,
             },
             {
                 "id": "i1",
@@ -223,7 +253,7 @@ def test_part_chrome_rebalances_chart_table_input_and_composed_group():
                 "input": {"paramKey": "branch", "targetScope": "slide"},
                 "inputParts": {
                     "control": {"style": {"fontSize": 24}},
-                    "label": {"style": {"fontSize": 12}},
+                    "label": {"style": dependent(12)},
                 },
             },
             {
@@ -231,7 +261,7 @@ def test_part_chrome_rebalances_chart_table_input_and_composed_group():
                 "type": "heading",
                 "groupId": "grp_x",
                 "content": "Label",
-                "style": {"fontSize": 14},
+                "style": dependent(14),
                 "frame": {"x": 10, "y": 10, "w": 30, "h": 8},
             },
             {
@@ -246,6 +276,10 @@ def test_part_chrome_rebalances_chart_table_input_and_composed_group():
             },
         ],
     }
+
+
+def test_part_chrome_rebalances_auto_managed_chart_table_input_and_composed_group():
+    cfg = _family_hierarchy_cfg(authored_dependents=False)
     assert SlidePartChromeService.apply_missing_defaults(cfg) is True
     chart_opts = cfg["blocks"][0]["chartOptions"]
     assert chart_opts["legendFontSize"] >= 22
@@ -257,6 +291,69 @@ def test_part_chrome_rebalances_chart_table_input_and_composed_group():
     assert input_parts["label"]["style"]["fontSize"] >= 20
     heading = cfg["blocks"][3]
     assert heading["style"]["fontSize"] >= 28  # ~64 * 0.45
+    assert cfg["blocks"][4]["style"]["fontSize"] == 64
+
+
+def test_part_chrome_keeps_authored_dependents_at_legibility_min_only():
+    cfg = _family_hierarchy_cfg(authored_dependents=True)
+    all_ids = {b["id"] for b in cfg["blocks"]}
+    SlidePartChromeService.apply_missing_defaults(cfg, informed_block_ids=all_ids)
+    chart_opts = cfg["blocks"][0]["chartOptions"]
+    assert chart_opts["legendFontSize"] == 14  # partChrome.chart.legendMinFontSize
+    assert chart_opts["axisFontSize"] == 12  # partChrome.chart.axisMinFontSize
+    table_opts = cfg["blocks"][1]["tableOptions"]
+    assert table_opts["headerFontSize"] == 16  # partChrome.table.headerMinFontSize
+    assert table_opts["bodyFontSize"] == 22
+    input_parts = cfg["blocks"][2]["inputParts"]
+    assert input_parts["label"]["style"]["fontSize"] == 14  # partChrome.input.labelMinFontSize
+    heading = cfg["blocks"][3]
+    assert heading["style"]["fontSize"] == 16  # composed/textBound absoluteMinFontSize
+
+
+def test_part_chrome_uninformed_authored_dependents_not_raised_to_primary_ratio():
+    """Default fill may still rescue sub-minimum sizes, but never applies primary ratios."""
+    cfg = _family_hierarchy_cfg(authored_dependents=True)
+    SlidePartChromeService.apply_missing_defaults(cfg)
+    chart_opts = cfg["blocks"][0]["chartOptions"]
+    assert chart_opts["legendFontSize"] < 22  # ratio target ~32 * 0.7
+    table_opts = cfg["blocks"][1]["tableOptions"]
+    assert 16 <= table_opts["headerFontSize"] < 24  # ratio target ~22 * 1.12
+    input_parts = cfg["blocks"][2]["inputParts"]
+    assert 14 <= input_parts["label"]["style"]["fontSize"] < 20  # ratio target ~24 * 0.85
+    assert cfg["blocks"][3]["style"]["fontSize"] < 28  # ratio target ~64 * 0.45
+
+
+def test_part_chrome_composed_group_member_without_size_gets_group_default():
+    cfg = {
+        "version": 5,
+        "blocks": [
+            {
+                "id": "p",
+                "type": "text",
+                "groupId": "grp_y",
+                "content": "95,0%",
+                "style": {"fontSize": 76},
+                "frame": {"x": 6, "y": 10, "w": 40, "h": 16},
+            },
+            {
+                "id": "v",
+                "type": "text",
+                "groupId": "grp_y",
+                "content": "",
+                "textProjection": {"field": "reference_goal", "format": "percent"},
+                "style": {},
+                "frame": {"x": 28, "y": 28, "w": 18, "h": 10},
+            },
+        ],
+    }
+    assert SlidePartChromeService.apply_missing_defaults(cfg) is True
+    assert cfg["blocks"][1]["style"]["fontSize"] == 65  # round(76 * valueSiblingMinRatio)
+    assert cfg["blocks"][0]["style"]["fontSize"] == 76
+
+    # Materialized default is persisted state from now on: a later pass keeps it.
+    cfg["blocks"][1]["style"]["fontSize"] = 63
+    SlidePartChromeService.apply_missing_defaults(cfg)
+    assert cfg["blocks"][1]["style"]["fontSize"] == 63
 
 
 def test_part_chrome_negative_static_caption_not_forced_hero():

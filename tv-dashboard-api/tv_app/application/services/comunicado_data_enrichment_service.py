@@ -9,9 +9,16 @@ from tv_app.application.security.authorization_fingerprint import (
 from tv_app.application.services.branch_policy_service import validate_data_route_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.application.services.data.value_expression_service import (
+    InputVariableScope,
     is_expression_value,
     resolve_param_expressions,
     scope_layer_expressions_to_route,
+)
+from tv_app.application.services.comunicado_input_contract_service import (
+    SLIDE_INPUT_OVERRIDES_KEY,
+    build_input_variable_scope,
+    read_input_variable,
+    InputContractError,
 )
 from tv_app.application.services.comunicado_input_filters_service import (
     collect_input_filter_contributions,
@@ -1272,7 +1279,9 @@ class ComunicadoDataEnrichmentService:
             )
             # Expressões resolvem pós-merge e antes de AuthZ/fetch; em erro o
             # bloco falha fechado em _enrich_data_block com trace tipado.
-            expr_resolution = resolve_param_expressions(merged, route=route)
+            expr_resolution = resolve_param_expressions(
+                merged, route=route, input_scope=ctx["input_scope"]
+            )
             if expr_resolution.error is not None:
                 continue
             merged = expr_resolution.params
@@ -1288,6 +1297,7 @@ class ComunicadoDataEnrichmentService:
             "force_refresh": force_refresh,
             "request_memo": request_memo,
             "max_age_seconds": max_age_seconds,
+            "input_scope": ctx["input_scope"],
         }
         enriched: list[dict[str, Any]] = []
         source_blocks = {
@@ -1489,6 +1499,7 @@ class ComunicadoDataEnrichmentService:
             "force_refresh": force_refresh,
             "request_memo": memo,
             "max_age_seconds": max_age_seconds,
+            "input_scope": ctx["input_scope"],
         }
 
         resolved_by_model: dict[str, dict[str, Any]] = {}
@@ -1551,7 +1562,9 @@ class ComunicadoDataEnrichmentService:
                     else {},
                     input_overrides=merge_filter_layers(slide_input_contrib, None),
                 )
-                expr_resolution = resolve_param_expressions(merged, route=route)
+                expr_resolution = resolve_param_expressions(
+                    merged, route=route, input_scope=ctx["input_scope"]
+                )
                 if expr_resolution.error is not None:
                     denied = (
                         source_id,
@@ -1707,7 +1720,19 @@ class ComunicadoDataEnrichmentService:
             schema_by_source_id=schema_by_source_id,
             slide_schemas=slide_schemas,
         )
+        # Variáveis input.* do slide: override de sessão (já restrito a este
+        # slide pelo payload service) → defaultValue persistido.
+        runtime_inputs = (
+            filter_overrides.get(SLIDE_INPUT_OVERRIDES_KEY)
+            if isinstance(filter_overrides, dict)
+            else None
+        )
+        input_scope = build_input_variable_scope(
+            context_blocks,
+            overrides_by_input_id=runtime_inputs if isinstance(runtime_inputs, dict) else None,
+        )
         return {
+            "input_scope": input_scope,
             "schema_by_source_id": schema_by_source_id,
             "slide_schemas": slide_schemas,
             "contributions": contributions,
@@ -1768,6 +1793,21 @@ class ComunicadoDataEnrichmentService:
 
         result = dict(block)
         input_cfg = dict(block.get("input")) if isinstance(block.get("input"), dict) else {}
+        if "binding" in input_cfg:
+            # Variável do slide: o campo vem do valueSchema persistido e validado.
+            try:
+                declaration = read_input_variable(block)
+            except InputContractError:
+                declaration = None
+            if declaration is None:
+                input_cfg["paramAvailable"] = False
+                input_cfg.pop("resolvedField", None)
+            else:
+                label = str(input_cfg.get("label") or "").strip() or declaration.key
+                input_cfg["resolvedField"] = {**declaration.value_schema, "label": label}
+                input_cfg["paramAvailable"] = True
+            result["input"] = input_cfg
+            return result
         param_key = str(input_cfg.get("paramKey") or "").strip()
         scope = resolve_input_target_scope(input_cfg)
         if scope == "slide":
@@ -2082,6 +2122,7 @@ class ComunicadoDataEnrichmentService:
         target_step_name: str | None = None,
         preview_options: dict[str, Any] | None = None,
         max_age_seconds: float | None = None,
+        input_scope: InputVariableScope | None = None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -2121,7 +2162,9 @@ class ComunicadoDataEnrichmentService:
         # O valor resolvido segue o mesmo pipeline de preset/defaults/wire.
         param_expression_trace: list[dict[str, Any]] = []
         if any(is_expression_value(v) for v in merged_params.values()):
-            expr_resolution = resolve_param_expressions(merged_params, route=route)
+            expr_resolution = resolve_param_expressions(
+                merged_params, route=route, input_scope=input_scope
+            )
             merged_params = expr_resolution.params
             param_expression_trace = expr_resolution.trace
             if expr_resolution.error is not None:

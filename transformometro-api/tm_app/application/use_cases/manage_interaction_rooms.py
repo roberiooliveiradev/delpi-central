@@ -186,6 +186,9 @@ class InteractionRoomUseCases:
         room = self.get_room(user, room_id)
         self._repo.mark_read(room_id=room.id, user_id=_actor(user))
 
+    def get_message(self, user: Any, room_id: str, message_id: str) -> InteractionMessage:
+        return self._message_in_room(user, room_id, message_id)
+
     def list_attachments(self, user: Any, room_id: str) -> list[InteractionAttachment]:
         room = self.get_room(user, room_id)
         return self._repo.list_attachments(room.id)

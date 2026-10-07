@@ -3,48 +3,130 @@
 > Evidence artifact. **Not** runtime authority. **Not** the operational allowlist.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `306efc16ec6787972edda827a7f8517e14c7969b`
-- origin/main: `306efc16ec6787972edda827a7f8517e14c7969b`
+- Source HEAD: `f93a80ab904f416503c5f1581c755e15ac1b3412`
+- origin/main: `f93a80ab904f416503c5f1581c755e15ac1b3412`
 - OpenAPI/baseline: `3.0.3` / v3
-- Generated at: `2026-09-17T04:34:27.234896+00:00`
+- Generated at: `2026-10-07T13:50:31.456882+00:00`
 
 ## Executive summary
 
 DAVI remains intelligence/orchestration over API DELPI. This inventory converts GET operations into semantic READ capabilities and freezes Wave 1 without promoting runtime eligibility.
 
-- Technical operations: **703** (GET **506**)
-- Current `DAVI_ELIGIBLE_READ`: **7**
-- Current MCP tools: **3** `['search_products', 'discover_delpi_information', 'execute_delpi_information']`
+- Technical operations: **738** (GET **537**)
+- Current `DAVI_ELIGIBLE_READ`: **87**
+- Current MCP tools: **2** `['discover_delpi_information', 'execute_delpi_information']`
 - Proposed semantic capabilities: **39**
-- Wave 1 frozen: **3** → expected eligible after implementation **10**
-- Unassigned GETs (not capabilities): **441**
+- Wave 1 frozen: **3** → expected eligible after implementation **90**
+- Unassigned GETs (not capabilities): **472**
 
 ## Baseline
 
 ```json
 {
-  "TOTAL_OPERATIONS": 703,
-  "TOTAL_GET": 506,
-  "DAVI_ELIGIBLE_READ": 7,
+  "TOTAL_OPERATIONS": 738,
+  "TOTAL_GET": 537,
+  "DAVI_ELIGIBLE_READ": 87,
   "ELIGIBLE_OPERATION_IDS": [
+    "get_commercial_rol_by_branch",
+    "get_commercial_rol_by_customer",
+    "get_commercial_rol_by_product",
+    "get_commercial_rol_series",
+    "get_commercial_rol_summary",
+    "get_new_business_rol_pct",
+    "get_new_business_rol_target_pct",
+    "get_new_clients_average",
+    "get_new_clients_rol_pct",
+    "get_on_time_delivery_pct",
+    "get_overall_equipment_effectiveness_pct",
     "get_product_customers",
+    "get_product_drawing",
+    "get_product_factory_status",
+    "get_product_guide",
+    "get_product_inbound_invoice_items",
+    "get_product_internal_movements",
+    "get_product_last_purchase",
+    "get_product_outbound_invoice_items",
+    "get_product_parents",
+    "get_product_pricing",
     "get_product_production_status",
+    "get_product_purchase_price_history",
     "get_product_purchases",
+    "get_product_raw_material_set_shortages",
+    "get_product_sales_open_orders",
+    "get_product_sales_summary",
+    "get_product_shipping_status",
     "get_product_stock",
     "get_product_structure",
+    "get_product_structure_exclusivity",
     "get_product_suppliers",
-    "search_products"
+    "get_production_allocation_gaps",
+    "get_production_appointments_produced_totals",
+    "get_production_appointments_summary",
+    "get_production_consumption_by_item",
+    "get_production_consumption_top_items",
+    "get_production_losses_records",
+    "get_production_losses_top_materials",
+    "get_production_machine_load_operations",
+    "get_production_machine_load_work_centers",
+    "get_production_oee",
+    "get_production_oee_series",
+    "get_production_orders_finished_without_consumption",
+    "get_production_otd",
+    "get_production_otd_series",
+    "get_protheus_table",
+    "get_sales_conversion_rate",
+    "get_sales_conversion_rate_series",
+    "get_sales_order_otd",
+    "get_sales_order_otd_by_branch",
+    "get_sales_order_otd_by_customer",
+    "get_sales_order_otd_series",
+    "get_sales_order_otd_series_by_customer",
+    "get_sales_order_otd_summary",
+    "get_supplies_cpv",
+    "get_supplies_inventory_adjustments_summary",
+    "get_supplies_inventory_turnover",
+    "get_supplies_negotiation_savings_summary",
+    "get_supplies_otd",
+    "get_supplies_purchase_order_otd",
+    "get_supplies_purchase_order_otd_series",
+    "get_supplies_safety_stock_consumption_analysis_item_details",
+    "get_supplies_safety_stock_consumption_analysis_items",
+    "get_supplies_safety_stock_consumption_analysis_summary",
+    "get_supplies_safety_stock_item_details",
+    "get_supplies_safety_stock_item_suppliers",
+    "get_supplies_safety_stock_items",
+    "get_supplies_safety_stock_summary",
+    "get_supplies_safety_stock_supplier_purchase_price_history",
+    "get_supplies_stock_balances_items",
+    "get_supplies_stock_balances_summary",
+    "get_supplies_stock_value",
+    "get_supplies_third_party_materials_shipments",
+    "get_supplies_third_party_materials_summary",
+    "get_weg_rol_target_pct",
+    "list_exclusive_raw_materials_catalog",
+    "list_product_drawings",
+    "list_production_order_operation_materials",
+    "list_protheus_table_columns",
+    "list_supplies_inventory_adjustments",
+    "list_supplies_purchase_request_lines",
+    "search_products",
+    "search_products_by_supplier_part_number",
+    "search_protheus_columns_by_description",
+    "search_protheus_columns_in_table",
+    "search_tables_by_description"
   ],
   "STATUS_COUNTS": {
-    "ADMIN_OUT_OF_SCOPE": 76,
-    "DAVI_ELIGIBLE_READ": 7,
-    "DESTRUCTIVE_OUT_OF_SCOPE": 16,
+    "ADMIN_OUT_OF_SCOPE": 71,
+    "DAVI_ELIGIBLE_READ": 87,
+    "DESTRUCTIVE_OUT_OF_SCOPE": 17,
     "GENERIC_SQL_FORBIDDEN": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 372,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 68,
-    "SEMANTICALLY_REDUNDANT": 1,
-    "STREAM_BINARY_OUT_OF_SCOPE": 31,
-    "WRITE_OUT_OF_SCOPE": 130
+    "LEGACY_UNSAFE": 2,
+    "NEEDS_BOUNDED_EXECUTION": 2,
+    "NEEDS_MODEL_SAFE_PROJECTION": 339,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
+    "SEMANTICALLY_REDUNDANT": 3,
+    "STREAM_BINARY_OUT_OF_SCOPE": 33,
+    "WRITE_OUT_OF_SCOPE": 131
   }
 }
 ```
@@ -53,19 +135,19 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
 
 | Domain | GET ops | Semantic capabilities | Currently eligible | Wave 1 freeze | Main technical blockers |
 |---|---:|---:|---:|---:|---|
-| `admin` | 27 | 0 | 0 | 0 | ADMIN_OUT_OF_SCOPE:17, NEEDS_MODEL_SAFE_PROJECTION:9, GENERIC_SQL_FORBIDDEN:1 |
-| `commercial` | 47 | 4 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:35, NEEDS_NESTED_PROJECTION_SUPPORT:11, STREAM_BINARY_OUT_OF_SCOPE:1 |
+| `admin` | 29 | 0 | 5 | 0 | ADMIN_OUT_OF_SCOPE:12, NEEDS_MODEL_SAFE_PROJECTION:9, DAVI_ELIGIBLE_READ:5, LEGACY_UNSAFE:2 |
+| `commercial` | 55 | 4 | 18 | 0 | NEEDS_MODEL_SAFE_PROJECTION:25, DAVI_ELIGIBLE_READ:18, NEEDS_NESTED_PROJECTION_SUPPORT:11, STREAM_BINARY_OUT_OF_SCOPE:1 |
 | `dashboards` | 75 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:73, NEEDS_NESTED_PROJECTION_SUPPORT:2 |
 | `engineering` | 36 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:24, ADMIN_OUT_OF_SCOPE:6, STREAM_BINARY_OUT_OF_SCOPE:4, NEEDS_NESTED_PROJECTION_SUPPORT:2 |
-| `financial` | 64 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:52, ADMIN_OUT_OF_SCOPE:8, STREAM_BINARY_OUT_OF_SCOPE:4 |
+| `financial` | 73 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:61, ADMIN_OUT_OF_SCOPE:8, STREAM_BINARY_OUT_OF_SCOPE:4 |
 | `hr` | 5 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:4, NEEDS_NESTED_PROJECTION_SUPPORT:1 |
-| `inspection` | 20 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:19, NEEDS_NESTED_PROJECTION_SUPPORT:1 |
-| `product` | 36 | 20 | 7 | 3 | NEEDS_MODEL_SAFE_PROJECTION:15, NEEDS_NESTED_PROJECTION_SUPPORT:11, DAVI_ELIGIBLE_READ:7, STREAM_BINARY_OUT_OF_SCOPE:2 |
-| `production` | 49 | 4 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:25, NEEDS_NESTED_PROJECTION_SUPPORT:24 |
+| `inspection` | 21 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:19, NEEDS_NESTED_PROJECTION_SUPPORT:2 |
+| `product` | 36 | 20 | 25 | 3 | DAVI_ELIGIBLE_READ:25, NEEDS_NESTED_PROJECTION_SUPPORT:6, SEMANTICALLY_REDUNDANT:2, STREAM_BINARY_OUT_OF_SCOPE:2 |
+| `production` | 53 | 4 | 17 | 0 | NEEDS_MODEL_SAFE_PROJECTION:21, DAVI_ELIGIBLE_READ:17, NEEDS_NESTED_PROJECTION_SUPPORT:14, SEMANTICALLY_REDUNDANT:1 |
 | `quality` | 99 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:75, STREAM_BINARY_OUT_OF_SCOPE:12, NEEDS_NESTED_PROJECTION_SUPPORT:10, ADMIN_OUT_OF_SCOPE:2 |
 | `reports` | 11 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:11 |
 | `scheduling` | 6 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:6 |
-| `supplies` | 31 | 4 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:24, NEEDS_NESTED_PROJECTION_SUPPORT:6, STREAM_BINARY_OUT_OF_SCOPE:1 |
+| `supplies` | 38 | 4 | 22 | 0 | DAVI_ELIGIBLE_READ:22, NEEDS_MODEL_SAFE_PROJECTION:10, NEEDS_NESTED_PROJECTION_SUPPORT:3, STREAM_BINARY_OUT_OF_SCOPE:3 |
 
 ## Semantic clusters
 
@@ -174,7 +256,7 @@ Normative freeze contract: `davi-capability-wave-001-freeze.md`.
 
 ## Gaps
 
-- Unassigned GET operations: 441
+- Unassigned GET operations: 472
 - Second-user negative AuthZ: `TEST_NOT_RUN`
 - MCP rate policy: TO_INVENTORY — overall rollout decision remains separate
 - HR: REQUIRED before any HR capability promotion

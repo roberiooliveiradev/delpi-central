@@ -6,6 +6,7 @@ import re
 from types import SimpleNamespace
 from typing import Any, Literal, Mapping
 
+import anyio.from_thread
 from delpi_auth.authz_core import has_permission
 from fastapi import Request
 
@@ -207,11 +208,18 @@ def require_fresh_write_authorization(
     principal; callers must use it for resource AuthZ and the write itself.
 
     Internal S2S surfaces are explicit exceptions and never reach this gate.
+
+    Must run in an AnyIO worker thread (FastAPI sync route, MCP sync tool):
+    the lookup is delegated to the app's event loop because
+    ``load_user_rbac`` single-flights through a process-wide, loop-bound
+    ``asyncio.Lock``. A private loop per call (``asyncio.run``) breaks that
+    lock under concurrent writes of the same user. Any other caller fails
+    closed as ``AUTHZ_UNAVAILABLE``.
     """
     _require_human_principal(user)
     token = _require_write_bearer(user, authorization)
     try:
-        rbac = asyncio.run(_fetch_fresh_rbac(token))
+        rbac = anyio.from_thread.run(_fetch_fresh_rbac, token)
     except GovernedWriteAuthzError:
         raise
     except Exception as exc:

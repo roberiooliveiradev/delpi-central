@@ -1,15 +1,13 @@
-"""Preferências de notificação — leitura para futuro dispatcher de eventos.
+"""Resolução de destinatários Minha DELPI a partir de usuários Protheus.
 
-O disparo automático (pedido emitido, recebimento, etc.) deve consultar
-`NotificationSubscriptionRepository` + `UserProtheusMappingRepository`
-antes de enfileirar notificações no canal do portal.
+O dispatcher converte ``C1_USER``/solicitante Protheus em ``user_id`` do
+portal via ``user_protheus_mappings``. Preferências de recebimento
+(mute/destaque/e-mail por categoria) são decididas exclusivamente pela
+Core API no dispatch — este serviço resolve apenas identidade.
 """
 
 from __future__ import annotations
 
-from purchase_requests_app.infrastructure.persistence.repositories.notification_subscription_repository import (
-    NotificationSubscriptionRepository,
-)
 from purchase_requests_app.infrastructure.persistence.repositories.user_protheus_mapping_repository import (
     UserProtheusMappingRepository,
 )
@@ -19,10 +17,8 @@ class PurchaseRequestNotificationPreferenceService:
     def __init__(
         self,
         *,
-        subscription_repository: NotificationSubscriptionRepository | None = None,
         mapping_repository: UserProtheusMappingRepository | None = None,
     ) -> None:
-        self._subscriptions = subscription_repository or NotificationSubscriptionRepository()
         self._mappings = mapping_repository or UserProtheusMappingRepository()
 
     def portal_users_for_mapped_requester(self, protheus_user_id: str) -> list[str]:
@@ -31,27 +27,3 @@ class PurchaseRequestNotificationPreferenceService:
             return []
         user_id = str(mapping.get("user_id") or "").strip()
         return [user_id] if user_id else []
-
-    def portal_users_for_protheus_event(
-        self,
-        *,
-        protheus_user_id: str,
-        event_key: str,
-    ) -> list[str]:
-        normalized_totvs = (protheus_user_id or "").strip()
-        if not normalized_totvs:
-            return []
-        portal_user_ids: list[str] = []
-        for mapping in self._mappings.list_mappings():
-            if (mapping.get("protheus_user_id") or "").strip() != normalized_totvs:
-                continue
-            user_id = str(mapping.get("user_id") or "").strip()
-            if not user_id:
-                continue
-            subs = self._subscriptions.list_for_user(user_id)
-            if any(
-                row.get("event_key") == event_key and bool(row.get("enabled"))
-                for row in subs
-            ):
-                portal_user_ids.append(user_id)
-        return portal_user_ids

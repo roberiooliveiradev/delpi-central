@@ -101,6 +101,15 @@
       "optional": false,
       "description": "limit default=500 ge=1 le=500"
     },
+    "limit_500_5000": {
+      "id": "limit_500_5000",
+      "param": "limit",
+      "default": 500,
+      "ge": 1,
+      "le": 5000,
+      "optional": false,
+      "description": "limit default=500 ge=1 le=5000"
+    },
     "limit_50_200": {
       "id": "limit_50_200",
       "param": "limit",
