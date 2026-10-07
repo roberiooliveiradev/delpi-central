@@ -260,15 +260,27 @@ def _interop(port=None, **kwargs):
 
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
+    CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
+    CANDIDATE_SELECTION_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
+    COMPARISON_INSTRUCTION_ID,
+    FOREIGN_SELECTION_INSTRUCTION_ID,
+    GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
+    NATIVE_ASSESSMENT_INSTRUCTION_ID,
 )
 
 _STAGE_IDS = frozenset(
     {
         GROUP_SELECTION_INSTRUCTION_ID,
         CAPABILITY_SELECTION_INSTRUCTION_ID,
+        GOAL_INSTRUCTION_ID,
+        NATIVE_ASSESSMENT_INSTRUCTION_ID,
+        FOREIGN_SELECTION_INSTRUCTION_ID,
         ARGUMENTS_INSTRUCTION_ID,
+        COMPARISON_INSTRUCTION_ID,
+        CANDIDATE_SELECTION_INSTRUCTION_ID,
+        CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
     }
 )
 
@@ -355,6 +367,12 @@ def _select(specialist_id, remote_name, arguments=None):
             "applicable": True,
             "remote_name": remote_name,
         },
+        # LOOP-03R1 stages consume their own purpose-scoped queues —
+        # without explicit entries a bare queue-miss would fall back to
+        # the generic list and steal positional payloads meant for
+        # later stages.
+        GOAL_INSTRUCTION_ID: {"goal_class": "read"},
+        NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
         ARGUMENTS_INSTRUCTION_ID: {"arguments": arguments or {}},
     }
 
@@ -1120,13 +1138,13 @@ def test_adversarial_model_prose_cannot_become_observation():
     assert "900 unidades" not in attempt.content
     # The deterministic bounded render carries the authoritative data.
     assert "TUBO 30X30X1500" in attempt.content
-    # Five governed proposals ran: the four plan calls plus the
-    # bounded grounded-synthesis proposal (C3-LOOP-01/R1). The
-    # fabricated "answer" is outside the evidence-bound synthesis
-    # contract and was rejected outright — the truthful deterministic
-    # render shipped; model prose can never introduce factual leaf
-    # values into the OBSERVATION answer.
-    assert len(read._invoke_model._port.requests) == 5
+    # Six governed proposals ran: the plan calls plus the bounded
+    # turn-goal proposal (LOOP-03R1) and the bounded grounded-synthesis
+    # proposal (C3-LOOP-01/R1). The fabricated "answer" is outside the
+    # evidence-bound synthesis contract and was rejected outright —
+    # the truthful deterministic render shipped; model prose can
+    # never introduce factual leaf values into the OBSERVATION answer.
+    assert len(read._invoke_model._port.requests) == 6
 
 
 # --- R2: generic secret/token redaction --------------------------------
@@ -2455,6 +2473,91 @@ def test_compound_direct_plan_executes_all_ops_same_turn():
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
     assert [c[1] for c in port.calls].count("commit_proposal") == 1
+
+
+# --- LOOP-03R1: request-scoped execution ceiling -------------------------
+
+
+def test_prepare_only_ceiling_converts_direct_to_confirmation():
+    """max_execution_stage="prepare" caps the governed chain at
+    PREPARE: an owner-declared direct write still surfaces a
+    confirmation — ACT never runs under the ceiling."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": DIRECT_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+    )
+    read = _vista_ops_prepare(port, [{"op": "add_blank_slide"}])
+    attempt = read.attempt(
+        "crie um slide",
+        actor_user_id="u1",
+        session_id="s1",
+        max_execution_stage="prepare",
+    )
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert attempt.confirmation_context["proposal_digest"]
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+
+
+def test_prepare_only_ceiling_blocks_confirmation_act():
+    """A structured confirmation under the ceiling is refused — the
+    ceiling binds the whole turn, pending write included."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": READY_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+    )
+    read = _vista_ops_prepare(port, [{"op": "delete_slide"}])
+    pending = read.attempt(
+        "exclua este slide",
+        actor_user_id="u1",
+        session_id="s1",
+        max_execution_stage="prepare",
+    )
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+        max_execution_stage="prepare",
+    )
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert result.error_code == "execution_ceiling"
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+
+
+def test_prepare_only_ceiling_refuses_direct_act_selection():
+    """A model-selected ACT capability under the ceiling is refused
+    deterministically — zero provider calls."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={"commit_proposal": COMMIT_VERIFIED},
+    )
+    read = _read(
+        _interop(port),
+        specialist_ids=("vista",),
+        proposal=_select(
+            "vista",
+            "commit_proposal",
+            {"proposal_handle": "x", "confirmation": True},
+        ),
+    )
+    attempt = read.attempt(
+        "execute agora",
+        actor_user_id="u1",
+        session_id="s1",
+        max_execution_stage="prepare",
+    )
+    assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert attempt.error_code == "execution_ceiling"
+    assert port.calls == []
 
 
 def test_contradictory_owner_policy_fails_closed():

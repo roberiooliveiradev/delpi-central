@@ -22,7 +22,7 @@ Authority rules:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable, Mapping, Sequence
 
 from app.application.capability_provision.contracts import (
@@ -214,4 +214,16 @@ class OpenApiCapabilityProvider:
                 "unknown_capability_group",
                 "capability does not belong to a known OpenAPI source",
             )
-        return source.invoker(capability, dict(arguments))
+        outcome = source.invoker(capability, dict(arguments))
+        # LOOP-03R1 (D09): the turn correlation id is runtime
+        # authority — the provider-owned invoker may return an outcome
+        # whose provenance carries no/foreign correlation. Stamp the
+        # turn id so every outcome joins the request-scoped trace.
+        if outcome.provenance.correlation_id != correlation_id:
+            outcome = replace(
+                outcome,
+                provenance=replace(
+                    outcome.provenance, correlation_id=correlation_id
+                ),
+            )
+        return outcome

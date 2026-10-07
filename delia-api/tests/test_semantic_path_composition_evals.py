@@ -27,6 +27,7 @@ from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     COMPARISON_INSTRUCTION_ID,
     FOREIGN_SELECTION_INSTRUCTION_ID,
+    GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
@@ -320,6 +321,14 @@ def test_required_invocation_order():
     pb = FakeProvider("pb", [_group("pb", "gB", [foreign])])
     proposals = _select("pa:gA", "update_board", {"title": "p"})
     proposals.update(_enrichment("gB.current_metrics"))
+    # Argument proposals resolve in call order (LOOP-03R1 D08): the
+    # missing-input preflight projects target arguments BEFORE the
+    # foreign call; the final projection rebuilds them with the
+    # foreign evidence in scope.
+    proposals[ARGUMENTS_INSTRUCTION_ID] = [
+        {"arguments": {"title": "p"}},
+        {"arguments": {"title": "p"}},
+    ]
     orch, model = _orchestrator([pa, pb], proposals)
     orch.attempt("atualize com métricas externas")
     purposes = _purposes(model)
@@ -463,6 +472,10 @@ def test_enrichment_foreign_evidence_reaches_target_arguments():
         {"title": "painel", "note": "usando métricas atuais"},
     )
     proposals.update(_enrichment("gB.current_metrics"))
+    proposals[ARGUMENTS_INSTRUCTION_ID] = [
+        {"arguments": {"title": "painel"}},
+        {"arguments": {"title": "painel", "note": "usando métricas atuais"}},
+    ]
     orch, model = _orchestrator([pa, pb], proposals)
     attempt = orch.attempt(
         "atualize o painel com os indicadores atuais"
@@ -541,11 +554,14 @@ def test_foreign_candidate_bound_owner_workflow():
     )
     proposals = _select("pa:gA", "update_board")
     proposals.update(_enrichment("gB.read_entity"))
-    # Argument proposals resolve in call order: the foreign
-    # capability's business args first (inner ``arguments`` object —
+    # Argument proposals resolve in call order (LOOP-03R1 D08): the
+    # target's preflight projection first, then the foreign
+    # capability's business args (inner ``arguments`` object —
     # candidate_token is orchestrator-owned, never model-supplied),
-    # then the target's.
+    # then the target's final projection with the foreign evidence in
+    # scope.
     proposals[ARGUMENTS_INSTRUCTION_ID] = [
+        {"arguments": {"title": "p"}},
         {"arguments": {"arguments": {}}},
         {"arguments": {"title": "p"}},
     ]
@@ -1014,7 +1030,13 @@ def test_workspace_identifier_with_foreign_business_value():
                 "target_entity_id": "TARGET-77",
                 "label": "economia 10M",
             }
-        }
+        },
+        {
+            "arguments": {
+                "target_entity_id": "TARGET-77",
+                "label": "economia 10M",
+            }
+        },
     ]
     ctx = WorkspaceContext(
         host_app_id="vista",
@@ -1222,3 +1244,108 @@ def test_vista_shaped_native_path_discovery_prepare():
     names = [name for name, _ in pa.calls]
     assert "get_catalog" in names
     assert "prepare_change" in names
+
+
+# --- LOOP-03R1: bounded turn-goal stage -----------------------------------
+
+
+def test_goal_comparison_overrides_native_sufficiency():
+    """D02: a validated comparison intent can never silently collapse
+    to a single-source native success — even when the native
+    assessment says "sufficient", corroboration runs and both sources
+    reach provenance."""
+    target = _cap("gA", "pa", "get_metric", READ)
+    foreign = _cap("gB", "pb", "get_metric", READ)
+    pa = FakeProvider(
+        "pa",
+        [_group("pa", "gA", [target])],
+        outcomes={
+            ("gA", "get_metric"): _records_outcome(
+                "gA", "get_metric",
+                [{"value": "10", "period": "2026-01"}],
+            )
+        },
+    )
+    pb = FakeProvider(
+        "pb",
+        [_group("pb", "gB", [foreign])],
+        outcomes={
+            ("gB", "get_metric"): _records_outcome(
+                "gB", "get_metric",
+                [{"value": "10", "period": "2026-01"}],
+            )
+        },
+    )
+    proposals = _select("pa:gA", "get_metric")
+    # Native assessment says "sufficient" — the goal still wins.
+    proposals.update(_sufficient())
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {
+            "goal_class": "compare",
+            "comparison_requested": True,
+            "business_subject": "valor do período",
+        }
+    ]
+    proposals[FOREIGN_SELECTION_INSTRUCTION_ID] = [
+        {"foreign_capability_id": "gB.get_metric"}
+    ]
+    proposals[COMPARISON_INSTRUCTION_ID] = [_MATCHED]
+    orch, _ = _orchestrator([pa, pb], proposals)
+    attempt = orch.attempt("compare os valores das duas fontes")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert pb.calls == [("get_metric", {})]
+    assert pa.calls == [("get_metric", {})]
+    # Multi-source provenance preserved.
+    sources = attempt.provenance.to_projection()["sources"]
+    assert len(sources) == 2
+
+
+def test_goal_business_subject_reaches_argument_projection():
+    """D03: the validated business_subject is projected into the
+    argument block — query-type arguments anchor on the business
+    concept, not on host/context stopwords."""
+    target = _cap(
+        "gA", "pa", "search", READ,
+        schema={
+            "type": "object",
+            "properties": {"query": {"type": "string"}},
+            "required": ["query"],
+        },
+    )
+    foreign = _cap("gB", "pb", "other", READ)
+    pa = FakeProvider("pa", [_group("pa", "gA", [target])])
+    pb = FakeProvider("pb", [_group("pb", "gB", [foreign])])
+    proposals = _select("pa:gA", "search", {"query": "otd comercial"})
+    proposals.update(_sufficient())
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {
+            "goal_class": "read",
+            "comparison_requested": False,
+            "business_subject": "otd comercial",
+        }
+    ]
+    orch, model = _orchestrator([pa, pb], proposals)
+    attempt = orch.attempt("atualize o painel com otd comercial")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    args_requests = model.requests_for(ARGUMENTS_INSTRUCTION_ID)
+    assert args_requests
+    assert "otd comercial" in args_requests[-1].input_text
+
+
+def test_goal_invalid_proposal_degrades_to_native_default():
+    """Negative: a malformed/absent goal proposal degrades to the
+    neutral default — never widens authority, never blocks."""
+    target = _cap("gA", "pa", "get_metric", READ)
+    foreign = _cap("gB", "pb", "get_metric", READ)
+    pa = FakeProvider("pa", [_group("pa", "gA", [target])])
+    pb = FakeProvider("pb", [_group("pb", "gB", [foreign])])
+    proposals = _select("pa:gA", "get_metric")
+    proposals.update(_sufficient())
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "invented_class", "comparison_requested": "yes"}
+    ]
+    orch, _ = _orchestrator([pa, pb], proposals)
+    attempt = orch.attempt("leia a métrica")
+    # Invalid class + non-boolean flag → neutral default → native path.
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert pb.calls == []

@@ -545,3 +545,113 @@ def test_turn_kind_separation_user_input_vs_result():
     # classified output — both recorded on one request-scoped session.
     assert TurnKind.USER_INPUT.value == "USER_INPUT"
     assert TurnKind.DELIA_RESULT.value == "DELIA_RESULT"
+
+
+# --- LOOP-03R1 (D07): governed-path failure is terminal --------------------
+
+
+class _UnavailableOrchestration:
+    """Stub: the governed path selected a source that errored."""
+
+    def __init__(self, status, error_code="mcp_unavailable"):
+        self._status = status
+        self._error_code = error_code
+        self.calls = 0
+
+    def attempt(self, *args, **kwargs):
+        from app.application.interaction.capability_attempt import (
+            GovernedCapabilityAttempt,
+        )
+
+        self.calls += 1
+        return GovernedCapabilityAttempt(
+            status=self._status,
+            correlation_id="c-test",
+            error_code=self._error_code,
+        )
+
+
+class _SpyModel:
+    """Model port stub: records invocations (must stay silent)."""
+
+    adapter_kind = "TEST_ONLY"
+
+    def __init__(self):
+        from app.domain.model_invocation.model import (
+            ProviderExposureClass,
+        )
+
+        self.exposure_class = ProviderExposureClass.TEST_ONLY
+        self.requests = []
+
+    def invoke(self, request):
+        from app.application.model_invocation.contracts import (
+            ProviderInvocationPayload,
+        )
+
+        self.requests.append(request)
+        return ProviderInvocationPayload(
+            structured_output={"answer": "prose"},
+            generated_at="2026-01-01T00:00:00+00:00",
+        )
+
+
+def test_source_unavailable_is_deterministic_terminal_no_model_prose():
+    """D07: a resolver/provider error on the governed path never falls
+    back to general-model operational prose — the answer is the
+    deterministic unavailability statement, HYPOTHESIS-class."""
+    from app.application.interaction.capability_attempt import (
+        GovernedCapabilityStatus,
+    )
+    from app.domain.evidence.model import EpistemicClass
+    from app.domain.interaction.model import GroundingStatus
+
+    model = _SpyModel()
+    orchestration = _UnavailableOrchestration(
+        GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    )
+    handler = HandleInteractiveConversationTurn(
+        InvokeModel(model),
+        capability_orchestration=orchestration,
+    )
+    result = handler.execute(
+        InteractiveTurnRequest(
+            access_context=_context(),
+            input_text="qual o estoque atual do tubo?",
+        )
+    )
+    assert orchestration.calls == 1
+    # The general model NEVER ran — no prose masquerading as data.
+    assert model.requests == []
+    assert result.grounding_status is GroundingStatus.NON_GROUNDED
+    assert result.epistemic_class is EpistemicClass.HYPOTHESIS
+    assert "delpi_source_unverified" in result.limitations
+    assert "não consegui consultar" in result.content.lower()
+
+
+def test_authz_denied_is_deterministic_terminal_no_model_prose():
+    """Sibling: AUTHZ_DENIED also renders deterministically — the
+    model never narrates an operational denial."""
+    from app.application.interaction.capability_attempt import (
+        GovernedCapabilityStatus,
+    )
+    from app.domain.evidence.model import EpistemicClass
+
+    model = _SpyModel()
+    orchestration = _UnavailableOrchestration(
+        GovernedCapabilityStatus.AUTHZ_DENIED,
+        error_code="mcp_authorization_denied",
+    )
+    handler = HandleInteractiveConversationTurn(
+        InvokeModel(model),
+        capability_orchestration=orchestration,
+    )
+    result = handler.execute(
+        InteractiveTurnRequest(
+            access_context=_context(),
+            input_text="exclua o painel",
+        )
+    )
+    assert model.requests == []
+    assert result.epistemic_class is EpistemicClass.HYPOTHESIS
+    assert "negado" in result.content.lower()

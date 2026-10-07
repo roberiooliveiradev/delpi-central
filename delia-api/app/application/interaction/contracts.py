@@ -54,6 +54,11 @@ class InteractiveTurnRequest:
     # Untrusted, bounded client-supplied workspace hints (host app,
     # route, selected entity refs) — never authority (§6.130).
     workspace_context: WorkspaceContext | None = None
+    # Request-scoped execution ceiling (LOOP-03R1): "prepare" caps the
+    # governed chain at PREPARE — ACT is refused regardless of the
+    # owner-declared confirmation policy. It can ONLY reduce execution
+    # authority; it never grants permission and never weakens a gate.
+    max_execution_stage: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

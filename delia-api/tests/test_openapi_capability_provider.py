@@ -313,3 +313,38 @@ def test_missing_bearer_fails_closed():
     with pytest.raises(CapabilityProviderError) as exc:
         provider.invoke(cap, {}, correlation_id="c")
     assert exc.value.code == "mcp_authentication_failed"
+
+
+def test_invoke_stamps_turn_correlation_id():
+    """LOOP-03R1 (D09): the turn correlation id is runtime authority —
+    an invoker outcome carrying a foreign/absent correlation is
+    re-stamped so every outcome joins the request-scoped trace."""
+    from app.domain.specialist_interop.model import (
+        InteropProtocol,
+        SpecialistOutcome,
+        SpecialistResultProvenance,
+        SpecialistResultStatus,
+    )
+
+    def invoker(capability, arguments):
+        return SpecialistOutcome(
+            status=SpecialistResultStatus.COMPLETED,
+            provenance=SpecialistResultProvenance(
+                specialist_id="delpi",
+                remote_name=capability.remote_name,
+                protocol=InteropProtocol.HTTP,
+                correlation_id="foreign-or-absent",
+                observed_at="2026-01-01T00:00:00+00:00",
+            ),
+            content_text="ok",
+            is_complete=True,
+        )
+
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    group = provider.list_groups(correlation_id="turn-1").groups[0]
+    cap = next(
+        c for c in group.capabilities
+        if c.remote_name == "delpi.get_product"
+    )
+    outcome = provider.invoke(cap, {}, correlation_id="turn-1")
+    assert outcome.provenance.correlation_id == "turn-1"

@@ -89,9 +89,19 @@ INTERACTION_TIMEOUT_SECONDS = 30.0
 # answers produced while the authoritative DELPI source could not be
 # consulted. Never lets a model fabricate current DELPI state.
 LIMITATION_DELPI_SOURCE_UNVERIFIED = "delpi_source_unverified"
-DELPI_UNVERIFIED_DISCLOSURE = (
-    "Não consegui consultar a fonte DELPI neste momento. A resposta é "
-    "conhecimento geral e não confirma o dado atual da DELPI."
+
+# LOOP-03R1 (D07): a governed-path failure is terminal and
+# deterministic — the general model NEVER answers operational
+# questions after a selected authoritative source errored or denied
+# access (general prose could masquerade as DELPI-verified data).
+DELPI_SOURCE_UNAVAILABLE_MESSAGE = (
+    "Não consegui consultar a fonte autoritativa da DELPI para esta "
+    "solicitação. Nenhum dado operacional foi verificado — tente "
+    "novamente em instantes ou reformule o pedido."
+)
+DELPI_SOURCE_DENIED_MESSAGE = (
+    "O acesso à fonte autoritativa necessária para esta solicitação "
+    "foi negado. Nenhum dado operacional foi verificado."
 )
 
 DEFAULT_MODEL_REF = ModelRef(
@@ -192,6 +202,7 @@ class HandleInteractiveConversationTurn:
                 confirmation=request.confirmation,
                 workspace_context=request.workspace_context,
                 prior_turns=prior_turns,
+                max_execution_stage=request.max_execution_stage,
             )
             if self._capability_orchestration is not None
             else None
@@ -201,6 +212,18 @@ class HandleInteractiveConversationTurn:
             attempt.status is GovernedCapabilityStatus.SUCCESS
         ):
             return self._grounded_result(session, user_turn, attempt)
+
+        if attempt is not None and attempt.status in (
+            GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+            GovernedCapabilityStatus.AUTHZ_DENIED,
+        ):
+            # LOOP-03R1 (D07): a selected authoritative source that
+            # errored or denied is a deterministic terminal answer —
+            # the general model never narrates an operational failure
+            # as if it were a DELPI-verified answer.
+            return self._source_terminal_result(
+                session, user_turn, attempt
+            )
 
         if attempt is not None and attempt.status in (
             GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
@@ -216,17 +239,6 @@ class HandleInteractiveConversationTurn:
 
         model_result = self._invoke(input_text, prior_turns)
         content, limitations = self._validate_result(model_result)
-        if attempt is not None and attempt.status in (
-            GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
-            GovernedCapabilityStatus.AUTHZ_DENIED,
-        ):
-            # Truthful fallback: the model may answer from general
-            # knowledge but the response must disclose that current
-            # DELPI data was not verified.
-            content = f"{content}\n\n{DELPI_UNVERIFIED_DISCLOSURE}"
-            limitations = limitations + (
-                LIMITATION_DELPI_SOURCE_UNVERIFIED,
-            )
 
         result_turn = InteractionTurn(
             turn_id=str(uuid.uuid4()),
@@ -412,17 +424,28 @@ class HandleInteractiveConversationTurn:
             )
         provenance = attempt.provenance
         grounded = provenance is not None
+        # Epistemic consistency (LOOP-03R1 §46): an ungrounded
+        # clarification ask-back is a bounded HYPOTHESIS — the runtime
+        # proposes a question, it does not conclude a fact. Grounded
+        # write-lifecycle answers stay OBSERVATION; deterministic
+        # refusals stay CONCLUSION.
+        epistemic_class = (
+            EpistemicClass.OBSERVATION
+            if grounded
+            else (
+                EpistemicClass.HYPOTHESIS
+                if attempt.status
+                is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+                else EpistemicClass.CONCLUSION
+            )
+        )
         result_turn = InteractionTurn(
             turn_id=str(uuid.uuid4()),
             session_id=session.session_id,
             kind=TurnKind.DELIA_RESULT,
             content=content,
             occurred_at=_now_utc(),
-            epistemic_class=(
-                EpistemicClass.OBSERVATION
-                if grounded
-                else EpistemicClass.CONCLUSION
-            ),
+            epistemic_class=epistemic_class,
             source_refs=(
                 provenance.source_refs if grounded else ()
             ),
@@ -452,6 +475,57 @@ class HandleInteractiveConversationTurn:
             ),
             provenance=provenance,
             confirmation_request=attempt.confirmation_context,
+        )
+
+    def _source_terminal_result(
+        self,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+        attempt,
+    ) -> InteractiveTurnResult:
+        """Deterministic terminal answer for a governed-path failure.
+
+        SOURCE_UNAVAILABLE and AUTHZ_DENIED are truthful terminal
+        states: the selected authoritative source errored or denied
+        access, so no operational data was verified. The result is
+        HYPOTHESIS-class (ungrounded) and carries the canonical
+        unverified-source limitation — never a general-model answer
+        masquerading as DELPI data.
+        """
+        denied = attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
+        content = (
+            DELPI_SOURCE_DENIED_MESSAGE
+            if denied
+            else DELPI_SOURCE_UNAVAILABLE_MESSAGE
+        )
+        limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)
+        result_turn = InteractionTurn(
+            turn_id=str(uuid.uuid4()),
+            session_id=session.session_id,
+            kind=TurnKind.DELIA_RESULT,
+            content=content,
+            occurred_at=_now_utc(),
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=limitations,
+        )
+        session, result_validation = record_interaction_turn(
+            session, result_turn
+        )
+        if not result_validation.valid:
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "terminal DELIA_RESULT turn rejected by session rules",
+            )
+        return InteractiveTurnResult(
+            session_id=session.session_id,
+            user_turn_id=user_turn.turn_id,
+            result_turn_id=result_turn.turn_id,
+            content=content,
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=limitations,
+            generated_at=_now_utc(),
+            model_invocation_id=None,
+            grounding_status=GroundingStatus.NON_GROUNDED,
         )
 
     def _invoke(

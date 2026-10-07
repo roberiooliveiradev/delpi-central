@@ -115,6 +115,9 @@ def test_instruction_lineage_bound_and_not_user_overridable():
     # ``confirmation`` is a bounded digest-only write payload, never a
     # prompt or authority override (§6.126). ``workspace_context`` is a
     # bounded untrusted client hint (§6.130) — never authority.
+    # ``max_execution_stage`` is a request-scoped execution ceiling
+    # (LOOP-03R1) — it can only reduce execution authority, never grant
+    # or widen it.
     request_fields = {
         f.name for f in contracts.InteractiveTurnRequest.__dataclass_fields__.values()
     }
@@ -124,6 +127,7 @@ def test_instruction_lineage_bound_and_not_user_overridable():
         "prior_turns",
         "confirmation",
         "workspace_context",
+        "max_execution_stage",
     }
 
 
