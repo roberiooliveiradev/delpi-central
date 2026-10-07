@@ -198,10 +198,12 @@ PanelChromePtBr.$inject = ["eventBus", "propertiesPanel"];
 /**
  * Provider de governança do editing profile (G2A): remove grupos e entries
  * fora do profile aprovado da V1 (multiInstance, adHocCompletion,
- * compensation, isExecutable). Extension point oficial `registerProvider`
+ * compensation; entry isExecutable — atributo BPMN normativo cuja edição
+ * é intencionalmente não exposta, ver editingProfile.ts). Extension point
+ * oficial `registerProvider`
  * na mesma prioridade do AdvancedIdProvider — mutação de lista de grupos,
- * nenhum DOM manipulado. Fail-closed: grupo vendor novo/desconhecido cai
- * em deny (ver editingProfile.ts).
+ * nenhum DOM manipulado. Fail-closed: grupo ou entry vendor
+ * novo/desconhecido cai em deny (ver editingProfile.ts).
  */
 function ProfileGovernedPanelProvider(this: any, propertiesPanel: any) {
   propertiesPanel.registerProvider(1, this);

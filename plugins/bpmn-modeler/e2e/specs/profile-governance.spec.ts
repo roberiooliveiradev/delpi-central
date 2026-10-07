@@ -44,6 +44,9 @@ const XML_PRESERVE_ONLY =
   '    <bpmn:boundaryEvent id="B1" attachedToRef="T1" cancelActivity="false">' +
   '      <bpmn:errorEventDefinition id="ED1"/>' +
   "    </bpmn:boundaryEvent>" +
+  '    <bpmn:boundaryEvent id="B2" attachedToRef="T1">' +
+  '      <bpmn:compensateEventDefinition id="CPD1"/>' +
+  "    </bpmn:boundaryEvent>" +
   "  </bpmn:process>" +
   '  <bpmndi:BPMNDiagram id="D1"><bpmndi:BPMNPlane id="PL1" bpmnElement="P1">' +
   '    <bpmndi:BPMNShape id="S1_di" bpmnElement="S1"><dc:Bounds x="40" y="80" width="36" height="36"/></bpmndi:BPMNShape>' +
@@ -54,6 +57,7 @@ const XML_PRESERVE_ONLY =
   '    <bpmndi:BPMNShape id="AH1_di" bpmnElement="AH1"><dc:Bounds x="400" y="220" width="240" height="160"/></bpmndi:BPMNShape>' +
   '    <bpmndi:BPMNShape id="C1_di" bpmnElement="C1"><dc:Bounds x="520" y="60" width="36" height="36"/></bpmndi:BPMNShape>' +
   '    <bpmndi:BPMNShape id="B1_di" bpmnElement="B1"><dc:Bounds x="180" y="122" width="36" height="36"/></bpmndi:BPMNShape>' +
+  '    <bpmndi:BPMNShape id="B2_di" bpmnElement="B2"><dc:Bounds x="245" y="122" width="36" height="36"/></bpmndi:BPMNShape>' +
   "  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>\n" +
   BPMN_TAIL;
 
@@ -138,6 +142,29 @@ test.describe("GOV — context pad governance", () => {
     expect(entries).toContain("append.timer-intermediate-event");
     expect(entries).toContain("append.message-intermediate-event");
   });
+
+  test("GOV-PAD-C3: boundary preserve-only não oferece append.compensation-activity", async ({
+    page,
+  }) => {
+    const modelId = await importModelViaApi(
+      "editor",
+      "GOV ContextPad C3",
+      XML_PRESERVE_ONLY,
+    );
+    await openEditor(page, modelId);
+    await selectElement(page, "B2");
+
+    const pad = page.locator(".djs-context-pad.open");
+    await expect(pad).toBeVisible({ timeout: 10_000 });
+
+    const entries = await page.evaluate(() =>
+      [...document.querySelectorAll(".djs-context-pad.open .entry")].map((e) =>
+        e.getAttribute("data-action"),
+      ),
+    );
+    // preserve-only importado não vira bypass de criação semântica
+    expect(entries).not.toContain("append.compensation-activity");
+  });
 });
 
 test.describe("GOV — replace menu governance", () => {
@@ -181,6 +208,34 @@ test.describe("GOV — replace menu governance", () => {
     expect(entryIds).not.toContain("toggle-parallel-mi");
     expect(entryIds).not.toContain("toggle-sequential-mi");
     expect(entryIds).not.toContain("toggle-loop");
+  });
+
+  test("GOV-RPL-B2: boundary → defs in-profile; none/conditional/compensation deny", async ({
+    page,
+  }) => {
+    const modelId = await importModelViaApi(
+      "editor",
+      "GOV Replace B",
+      XML_PRESERVE_ONLY,
+    );
+    await openEditor(page, modelId);
+    await selectElement(page, "B1");
+
+    await page
+      .locator('.djs-context-pad.open .entry[data-action="replace"]')
+      .click();
+    await expect(page.locator(".djs-popup")).toBeVisible({ timeout: 10_000 });
+
+    const entryIds = await page.evaluate(() =>
+      [...document.querySelectorAll(".djs-popup [data-id]")].map((e) =>
+        e.getAttribute("data-id"),
+      ),
+    );
+    // boundary CREATE_EDIT exige definição aprovada — None não é target
+    expect(entryIds).not.toContain("replace-with-none-boundary-event");
+    expect(entryIds).not.toContain("replace-with-conditional-boundary");
+    expect(entryIds).not.toContain("replace-with-cancel-boundary");
+    expect(entryIds).not.toContain("replace-with-compensation-boundary");
   });
 
   test("GOV-RPL-GW: gateway → parallel/inclusive/event-based; complex deny", async ({
@@ -260,7 +315,7 @@ test.describe("GOV — preserve-only integrity", () => {
     await openEditor(page, modelId);
 
     // preserve-only renderiza e é selecionável/inspecionável
-    for (const id of ["CG1", "TR1", "AH1", "C1", "B1"]) {
+    for (const id of ["CG1", "TR1", "AH1", "C1", "B1", "B2"]) {
       await expect(
         page.locator(`.djs-element[data-element-id="${id}"]`),
       ).toBeVisible();
@@ -280,7 +335,7 @@ test.describe("GOV — preserve-only integrity", () => {
     await expect(page.locator(".bpmnm-canvas .djs-container")).toBeVisible({
       timeout: 20_000,
     });
-    for (const id of ["CG1", "TR1", "AH1", "C1", "B1"]) {
+    for (const id of ["CG1", "TR1", "AH1", "C1", "B1", "B2"]) {
       await expect(
         page.locator(`.djs-element[data-element-id="${id}"]`),
       ).toBeVisible({ timeout: 15_000 });

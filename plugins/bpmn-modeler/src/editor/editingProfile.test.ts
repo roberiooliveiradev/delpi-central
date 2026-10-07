@@ -52,7 +52,6 @@ describe("editingProfile — replace entries (create targets)", () => {
       "signal-boundary", "escalation-boundary",
       "non-interrupting-message-boundary", "non-interrupting-timer-boundary",
       "non-interrupting-signal-boundary", "non-interrupting-escalation-boundary",
-      "none-boundary-event",
       "none-end-event", "message-end", "error-end", "signal-end",
       "escalation-end", "terminate-end",
     ];
@@ -68,6 +67,7 @@ describe("editingProfile — replace entries (create targets)", () => {
       "non-interrupting-escalation-start",
       "conditional-intermediate-catch",
       "compensation-intermediate-throw",
+      "none-boundary-event", // boundary CREATE_EDIT exige definição aprovada
       "conditional-boundary", "cancel-boundary", "compensation-boundary",
       "non-interrupting-conditional-boundary",
       "cancel-end", "compensation-end",
@@ -145,16 +145,16 @@ describe("editingProfile — context pad", () => {
       "append.intermediate-event", "append.receive-task",
       "append.message-intermediate-event", "append.timer-intermediate-event",
       "append.signal-intermediate-event", "append.text-annotation",
-      "append.compensation-activity",
       "connect", "delete", "replace",
       "lane-insert-above", "lane-insert-below",
       "lane-divide-two", "lane-divide-three",
     ]) expect(isContextPadEntryAllowed(key), key).toBe(true);
   });
 
-  it("nega conditional catch append (preserve-only) e desconhecidos", () => {
+  it("nega append fora do profile (conditional/compensation) e desconhecidos", () => {
     for (const key of [
       "append.condition-intermediate-event",
+      "append.compensation-activity", // compensation modeling é preserve-only
       "append.compensation-end-event", "append.future-thing",
     ]) expect(isContextPadEntryAllowed(key), key).toBe(false);
   });
@@ -174,11 +174,31 @@ describe("editingProfile — properties panel", () => {
     ]) expect(isPropertiesGroupAllowed(id), id).toBe(false);
   });
 
-  it("nega isExecutable e permite entries aprovados", () => {
-    expect(isPropertiesEntryAllowed("isExecutable")).toBe(false);
+  it("permite entries aprovados do inventário real da surface vendor", () => {
     for (const id of [
-      "name", "id", "processId", "documentation",
-      "conditionExpression", "defaultFlow", "calledElement",
+      "name", "id", "processId", "processName",
+      "documentation", "processDocumentation",
+      "errorRef", "errorName", "errorCode",
+      "linkName",
+      "messageRef", "messageName",
+      "signalRef", "signalName",
+      "escalationRef", "escalationName", "escalationCode",
+      "timerEventDefinitionType", "timerEventDefinitionValue",
     ]) expect(isPropertiesEntryAllowed(id), id).toBe(true);
+  });
+
+  it("nega isExecutable (normativo, edição intencionalmente oculta — C4)", () => {
+    expect(isPropertiesEntryAllowed("isExecutable")).toBe(false);
+  });
+
+  it("FAIL-CLOSED — entry desconhecida/futura do vendor negada", () => {
+    for (const id of [
+      "future-vendor-field",
+      "versionTag",
+      "jobPriority",
+      "candidateUsers",
+      "calledElementType",
+      "",
+    ]) expect(isPropertiesEntryAllowed(id), id).toBe(false);
   });
 });

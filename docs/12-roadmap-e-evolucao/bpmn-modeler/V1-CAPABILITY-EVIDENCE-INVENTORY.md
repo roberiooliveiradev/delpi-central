@@ -181,7 +181,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 | GAP | Capability | Evidence | Missing | Owner | Severity | Wave |
 |---|---|---|---|---|---|---|
 | IG-1 | Palette search (IN_V1) | vendor não implementa | feature inteira | 03 | P2 | G3 |
-| IG-2 | Profile governance (palette/context-pad/replace/panel) | ~~replace expõe ad-hoc/transaction/eventSubProcess/complex/MultiInstance~~ | provider de restrição | 03+02 | **P1** | G2/G3 → **CLOSED (G2A)** — `editingProfile.ts`+`profileGovernanceModule.ts`+`ProfileGovernedPanelProvider`; fail-closed; evidência `profile-governance.spec.ts` |
+| IG-2 | Profile governance (palette/context-pad/replace/panel) | ~~replace expõe ad-hoc/transaction/eventSubProcess/complex/MultiInstance~~ | provider de restrição | 03+02 | **P1** | G2/G3 → **CLOSED / VERIFIED AFTER CORRECTION PASS** — `editingProfile.ts`+`profileGovernanceModule.ts`+`ProfileGovernedPanelProvider`; fail-closed em todas as surfaces incl. properties entries (allowlist); bypasses corrigidos: `none-boundary-event` (não-criável), `append.compensation-activity` (compensation preserve-only); `isExecutable` classificado BPMN normativo, edição oculta por decisão de produto, valor preservado no round-trip. Evidência `profile-governance.spec.ts` |
 
 ### EVIDENCE GAPS (provavelmente funciona, sem prova de produto)
 

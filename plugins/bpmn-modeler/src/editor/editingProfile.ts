@@ -46,10 +46,12 @@ const ALLOWED_REPLACE_ENTRY_IDS: ReadonlySet<string> = new Set([
   // pools/participants (§6.5) — expanded e collapsed (black-box)
   "expanded-pool",
   "collapsed-pool",
-  // none events
+  // none events — posição top-level/catch/throw/end somente;
+  // "none-boundary-event" é DENY: boundary CREATE_EDIT exige definição
+  // (Message/Timer/Error/Signal/Escalation) — boundary sem definição não é
+  // criável nem replace target (import permanece preserve).
   "none-start-event",
   "none-intermediate-throwing",
-  "none-boundary-event",
   "none-end-event",
   // start event definitions (§6.2): None/Message/Timer/Signal
   "message-start",
@@ -158,7 +160,6 @@ const ALLOWED_CONTEXT_PAD_ENTRY_IDS: ReadonlySet<string> = new Set([
   "append.timer-intermediate-event",
   "append.signal-intermediate-event",
   "append.text-annotation",
-  "append.compensation-activity", // task isForCompensation em boundary importado
   "connect",
   "delete",
   "replace",
@@ -169,9 +170,14 @@ const ALLOWED_CONTEXT_PAD_ENTRY_IDS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * DENIED: "append.condition-intermediate-event" (EventBasedGateway append
- * criaria ConditionalEventDefinition — preserve-only). Qualquer append futuro
- * desconhecido cai em deny.
+ * DENIED:
+ *   "append.condition-intermediate-event" (EventBasedGateway append criaria
+ *     ConditionalEventDefinition — preserve-only);
+ *   "append.compensation-activity" (emitido em BoundaryEvent com
+ *     CompensateEventDefinition — compensation modeling é preserve-only;
+ *     o entry converteria import preserve-only em caminho de criação
+ *     semântica nova, bypass do CREATE GOVERNED).
+ * Qualquer append futuro desconhecido cai em deny.
  */
 
 // ---------------------------------------------------------------------------
@@ -197,8 +203,44 @@ const ALLOWED_PROPERTIES_GROUP_IDS: ReadonlySet<string> = new Set([
  * mecânica de compensação fora do profile).
  */
 
-const DENIED_PROPERTIES_ENTRY_IDS: ReadonlySet<string> = new Set([
-  "isExecutable", // flag semântica de engine; produto modela, não executa
+/**
+ * ALLOWED properties entries — inventário real da surface vendor
+ * (bpmn-js-properties-panel@5.65.1, provider `bpmn` — os providers Zeebe/
+ * CamundaPlatform NÃO são carregados pelo adapter). Fail-closed: entry não
+ * listada → DENY.
+ *
+ * `isExecutable` é atributo BPMN NORMATIVO (BPMN 2.0 `process.isExecutable`),
+ * não campo vendor/engine-specific. Decisão de produto (G2A/C4): a UI de
+ * edição não expõe o entry porque o Meu Modelador modela BPMN mas não
+ * executa/deploya workflows — o blank artifact fixa `isExecutable="false"`
+ * e permitir marcá-lo implicaria semântica de execução que o produto não
+ * possui. O valor importado é PRESERVADO no round-trip (moddle round-trip
+ * do atributo); só a edição via painel é ocultada.
+ */
+const ALLOWED_PROPERTIES_ENTRY_IDS: ReadonlySet<string> = new Set([
+  // general + advanced (AdvancedIdProvider move id/processId p/ "advanced")
+  "name",
+  "id",
+  "processId",
+  "processName",
+  // documentation
+  "documentation",
+  "processDocumentation",
+  // event definition refs/fields aprovados (grupos error/link/message/
+  // signal/escalation/timer)
+  "errorRef",
+  "errorName",
+  "errorCode",
+  "linkName",
+  "messageRef",
+  "messageName",
+  "signalRef",
+  "signalName",
+  "escalationRef",
+  "escalationName",
+  "escalationCode",
+  "timerEventDefinitionType",
+  "timerEventDefinitionValue",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -232,5 +274,5 @@ export function isPropertiesGroupAllowed(groupId: string): boolean {
 }
 
 export function isPropertiesEntryAllowed(entryId: string): boolean {
-  return !DENIED_PROPERTIES_ENTRY_IDS.has(entryId);
+  return ALLOWED_PROPERTIES_ENTRY_IDS.has(entryId);
 }

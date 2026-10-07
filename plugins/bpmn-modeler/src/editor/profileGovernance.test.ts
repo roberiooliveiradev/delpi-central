@@ -15,6 +15,7 @@ import {
   isContextPadEntryAllowed,
   isReplaceEntryAllowed,
   isReplaceHeaderAllowed,
+  isPropertiesEntryAllowed,
 } from "./editingProfile";
 
 const BPMN_HEADER =
@@ -29,7 +30,7 @@ const BPMN_HEADER =
 /** Modelo com constructs in-profile E preserve-only importados. */
 const DI_XML =
   BPMN_HEADER +
-  '  <bpmn:process id="Process_1" isExecutable="false">' +
+  '  <bpmn:process id="Process_1" isExecutable="true">' +
   '    <bpmn:startEvent id="S1"/>' +
   '    <bpmn:task id="T1"/>' +
   '    <bpmn:exclusiveGateway id="G1"/>' +
@@ -39,6 +40,9 @@ const DI_XML =
   '    <bpmn:adHocSubProcess id="AH1"/>' +
   '    <bpmn:boundaryEvent id="B1" attachedToRef="T1">' +
   '      <bpmn:messageEventDefinition id="MED1"/>' +
+  "    </bpmn:boundaryEvent>" +
+  '    <bpmn:boundaryEvent id="B2" attachedToRef="T1">' +
+  '      <bpmn:compensateEventDefinition id="CPD1"/>' +
   "    </bpmn:boundaryEvent>" +
   "  </bpmn:process>" +
   '  <bpmndi:BPMNDiagram id="D1"><bpmndi:BPMNPlane id="PL1" bpmnElement="Process_1">' +
@@ -50,6 +54,7 @@ const DI_XML =
   '    <bpmndi:BPMNShape id="TR1_di" bpmnElement="TR1"><dc:Bounds x="0" y="140" width="200" height="150"/></bpmndi:BPMNShape>' +
   '    <bpmndi:BPMNShape id="AH1_di" bpmnElement="AH1"><dc:Bounds x="240" y="140" width="200" height="150"/></bpmndi:BPMNShape>' +
   '    <bpmndi:BPMNShape id="B1_di" bpmnElement="B1"><dc:Bounds x="80" y="62" width="36" height="36"/></bpmndi:BPMNShape>' +
+  '    <bpmndi:BPMNShape id="B2_di" bpmnElement="B2"><dc:Bounds x="250" y="62" width="36" height="36"/></bpmndi:BPMNShape>' +
   "  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>" +
   "</bpmn:definitions>";
 
@@ -170,7 +175,7 @@ describe("GOV — replace menu governance", () => {
     adapter.destroy();
   });
 
-  it("GOV-05: Boundary event → defs allow; conditional/cancel/compensation deny", async () => {
+  it("GOV-05: Boundary event → defs allow; none/conditional/cancel/compensation deny", async () => {
     const adapter = new BpmnEditorAdapter();
     adapter.mount(container, "edit");
     await adapter.importXml(DI_XML);
@@ -179,6 +184,8 @@ describe("GOV — replace menu governance", () => {
     const boundary = element(adapter, "B1");
     const keys = Object.keys(provider.getPopupMenuEntries(boundary));
 
+    // boundary CREATE_EDIT exige definição aprovada — None não é replace target
+    expect(keys).not.toContain("replace-with-none-boundary-event");
     expect(keys).not.toContain("replace-with-conditional-boundary");
     expect(keys).not.toContain("replace-with-cancel-boundary");
     expect(keys).not.toContain("replace-with-compensation-boundary");
@@ -263,6 +270,24 @@ describe("GOV — context pad governance", () => {
 
     adapter.destroy();
   });
+
+  it("GOV-11: boundary c/ compensate def não vira bypass de criação (C3)", async () => {
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(container, "edit");
+    await adapter.importXml(DI_XML);
+
+    const pad = svc(adapter, "contextPadProvider");
+    const boundary = element(adapter, "B2");
+    const keys = Object.keys(pad.getContextPadEntries(boundary));
+
+    // preserve-only importado não pode virar fonte de criação semântica nova
+    expect(keys).not.toContain("append.compensation-activity");
+    for (const key of keys) {
+      expect(isContextPadEntryAllowed(key), key).toBe(true);
+    }
+
+    adapter.destroy();
+  });
 });
 
 describe("GOV — properties panel governance", () => {
@@ -285,6 +310,48 @@ describe("GOV — properties panel governance", () => {
     expect(groupIds).not.toContain("compensation");
     expect(groupIds).not.toContain("adHocCompletion");
     expect(groupIds).toContain("general");
+
+    adapter.destroy();
+  });
+
+  it("GOV-12: entries do panel são allowlist — aprovados renderizam, isExecutable ausente", async () => {
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(container, "edit");
+    await adapter.importXml(DI_XML);
+    adapter.selectElement("T1");
+
+    await vi.waitFor(() => {
+      expect(panelHost.querySelector(".bio-properties-panel")).toBeTruthy();
+    });
+
+    const entryIds = [
+      ...panelHost.querySelectorAll("[data-entry-id]"),
+    ].map((e) => e.getAttribute("data-entry-id") ?? "");
+
+    // aprovados presentes (name no general; id movido p/ advanced)
+    expect(entryIds).toContain("name");
+    // isExecutable (normativo, edição intencionalmente oculta) ausente
+    expect(entryIds).not.toContain("isExecutable");
+    // toda entry renderizada passa na allowlist central (fail-closed)
+    for (const id of entryIds) {
+      expect(
+        isPropertiesEntryAllowed(id),
+        `entry não classificada exposta: ${id}`,
+      ).toBe(true);
+    }
+
+    adapter.destroy();
+  });
+
+  it("GOV-13: isExecutable normativo importado é preservado no XML (C4)", async () => {
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(container, "edit");
+    await adapter.importXml(DI_XML); // DI_XML usa isExecutable="true"
+
+    const xml = await adapter.exportXml();
+    expect(xml).toContain('isExecutable="true"');
+    // boundary c/ compensate def preserve-only também preservado
+    expect(xml).toContain("compensateEventDefinition");
 
     adapter.destroy();
   });
