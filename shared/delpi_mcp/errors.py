@@ -66,18 +66,24 @@ def mcp_tool_result(
     is_error: bool,
     text: str | None = None,
     meta: Mapping[str, Any] | None = None,
+    images: list[Any] | None = None,
 ) -> CallToolResult:
     """Build a CallToolResult on the canonical mcp 2.x model.
 
     ``payload`` becomes the structured content; the text content defaults to
     its JSON serialization (apps that need a fixed message pass ``text``).
-    ``meta`` is attached as the wire ``_meta`` object.
+    ``meta`` is attached as the wire ``_meta`` object. ``images`` appends
+    ``mcp.types.ImageContent`` blocks after the text content — additive only,
+    never a replacement for the text/structured payload.
     """
     from mcp.types import CallToolResult, TextContent
 
     body = text if text is not None else json_payload_text(payload or {})
+    content: list[Any] = [TextContent(type="text", text=body)]
+    if images:
+        content.extend(images)
     kwargs: dict[str, Any] = {
-        "content": [TextContent(type="text", text=body)],
+        "content": content,
         "is_error": is_error,
     }
     if payload is not None:
