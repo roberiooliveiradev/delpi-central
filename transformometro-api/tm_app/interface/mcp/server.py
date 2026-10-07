@@ -30,6 +30,10 @@ from tm_app.application.governed_writes.orchestrator import (
     GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
     MEETING_MINUTE_ACTION_TO_CAPABILITY,
 )
+from tm_app.application.methodology.guide_v2 import (
+    INTENT_IDS,
+    SUPPORTED_GUIDE_VERSIONS,
+)
 from tm_app.interface.mcp.branding import TEO_MCP_INSTRUCTIONS
 from tm_app.interface.mcp.constants import (
     DESTRUCTIVE_ACT_TOOLS,
@@ -58,6 +62,8 @@ _MinuteChangeActionParam = Literal[
 _GovernedOperationParam = Literal[
     tuple(sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY))
 ]
+_GuideVersionParam = Literal[tuple(sorted(SUPPORTED_GUIDE_VERSIONS))]
+_MethodIntentParam = Literal[tuple(sorted(INTENT_IDS))]
 
 
 class _TeoWireTool(MCPTool):
@@ -161,6 +167,11 @@ def create_mcp_server() -> MCPServer:
             "Optional method (macroprocess, key_process, end_to_end, sipoc, lean, "
             "ishikawa, five_whys, ctp, tdr, kpi, swot, as_is, to_be) and/or task "
             "(discover, map, diagnose, redesign, measure, prioritize, interview). "
+            "guide_version selects teo-method-playbooks-v1 (default) or "
+            "teo-method-playbooks-v2 (intent routing, readiness, soft "
+            "composition, sufficiency). V2 also accepts intent and an optional "
+            "context object of process facts (boundary_known, as_is_known, "
+            "problem_defined, candidate_cause, flow_known, ...). "
             "Guidance is not authorization, not domain truth, and does not write."
         ),
         annotations=_annotations("get_methodology_guide", "Get methodology guide"),
@@ -169,8 +180,17 @@ def create_mcp_server() -> MCPServer:
     def get_methodology_guide(
         method: str | None = None,
         task: str | None = None,
+        guide_version: _GuideVersionParam | None = None,
+        intent: _MethodIntentParam | None = None,
+        context: dict[str, Any] | None = None,
     ) -> CallToolResult:
-        return bridge.tool_get_methodology_guide(method=method, task=task)
+        return bridge.tool_get_methodology_guide(
+            method=method,
+            task=task,
+            guide_version=guide_version,
+            intent=intent,
+            context=context,
+        )
 
     @mcp.tool(
         name="get_process_context",

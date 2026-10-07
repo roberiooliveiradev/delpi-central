@@ -317,9 +317,28 @@ def gpt_get_methodology_guide(
     request: Request,
     method: str | None = Query(default=None, description="Optional methodology method id"),
     task: str | None = Query(default=None, description="Optional methodology task id"),
+    guide_version: str | None = Query(
+        default=None,
+        description="teo-method-playbooks-v1 (default) or teo-method-playbooks-v2",
+    ),
+    intent: str | None = Query(
+        default=None,
+        description="V2 intent: discover|map|diagnose|redesign|measure|prioritize|interview|strategic_analysis|improve",
+    ),
+    context: str | None = Query(
+        default=None,
+        description="V2 optional JSON object of process-context facts",
+    ),
 ):
     try:
-        data = _dispatch.get_methodology_guide(request, method=method, task=task)
+        data = _dispatch.get_methodology_guide(
+            request,
+            method=method,
+            task=task,
+            guide_version=guide_version,
+            intent=intent,
+            context=context,
+        )
         return ok(data, "Guia metodológico do TÉO (não é fato nem autorização).")
     except Exception as exc:
         return _handle(exc)

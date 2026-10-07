@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 
 from fastapi import Request
@@ -17,6 +18,11 @@ from tm_app.application.gpt_actions.entities import (
 )
 from tm_app.application.gpt_actions.registration_guide import build_registration_guide
 from tm_app.application.methodology.guide import query_methodology_guide
+from tm_app.application.methodology.guide_v2 import (
+    GUIDE_VERSION_V1,
+    query_methodology_guide_v2,
+    resolve_guide_version,
+)
 from tm_app.application.services.dashboard_alerts_service import DashboardAlertsService
 from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.application.services.dashboard_recalc_service import DashboardRecalcService
@@ -425,11 +431,34 @@ class GptActionsDispatchService:
         *,
         method: str | None = None,
         task: str | None = None,
+        guide_version: str | None = None,
+        intent: str | None = None,
+        context: Any = None,
     ) -> dict[str, Any]:
-        """READ-only methodology. Same view gate and source as MCP."""
+        """READ-only methodology. Same view gate and source as MCP.
+
+        ``guide_version`` defaults to V1 (wire default); V2 is opt-in and
+        never silently substitutes a legacy call.
+        """
         self._raise_http_err(require_transformometro_view_access(request))
         try:
-            return query_methodology_guide(method=method, task=task)
+            version = resolve_guide_version(guide_version)
+            if version == GUIDE_VERSION_V1:
+                return query_methodology_guide(method=method, task=task)
+            if isinstance(context, str):
+                import json
+
+                try:
+                    context = json.loads(context)
+                except ValueError as exc:
+                    raise ValueError(
+                        "context must be a JSON object of process facts."
+                    ) from exc
+            if context is not None and not isinstance(context, Mapping):
+                raise ValueError("context must be an object of process facts.")
+            return query_methodology_guide_v2(
+                intent=intent, method=method, task=task, context=context
+            )
         except ValueError as exc:
             raise GptActionsError(
                 str(exc),

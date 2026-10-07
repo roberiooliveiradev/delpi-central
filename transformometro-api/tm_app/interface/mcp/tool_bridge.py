@@ -315,6 +315,9 @@ def tool_get_my_context() -> CallToolResult:
 def tool_get_methodology_guide(
     method: str | None = None,
     task: str | None = None,
+    guide_version: str | None = None,
+    intent: str | None = None,
+    context: dict[str, Any] | None = None,
 ) -> CallToolResult:
     """READ-only methodology. Same view gate as other Transformômetro reads.
 
@@ -322,7 +325,14 @@ def tool_get_methodology_guide(
     """
     try:
         request = build_mcp_request()
-        data = _dispatch.get_methodology_guide(request, method=method, task=task)
+        data = _dispatch.get_methodology_guide(
+            request,
+            method=method,
+            task=task,
+            guide_version=guide_version,
+            intent=intent,
+            context=context,
+        )
         return _ok_result(data, "Guia metodológico do TÉO (não é fato nem autorização).")
     except Exception as exc:
         return handle_tool_error(exc)

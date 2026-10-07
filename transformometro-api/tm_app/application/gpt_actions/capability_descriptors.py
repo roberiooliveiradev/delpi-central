@@ -43,6 +43,12 @@ from tm_app.application.gpt_actions.parity_capabilities_service import (
 from tm_app.application.gpt_actions.teo_agent_intelligence_service import (
     TeoAgentIntelligenceService,
 )
+from tm_app.application.methodology.guide_v2 import (
+    INTENT_IDS,
+    RECOMMENDED_GUIDE_VERSION,
+    SUPPORTED_GUIDE_VERSIONS,
+    WIRE_DEFAULT_GUIDE_VERSION,
+)
 from tm_app.application.intelligence.capability_registry import (
     actions_operation_for_neutral,
     confirmation_policy_label,
@@ -405,6 +411,12 @@ def _canonical_catalog() -> dict[str, Any]:
             "description": "Method playbooks (not domain facts / AuthZ / writes).",
             "read_only": True,
             "operation": "get_methodology_guide",
+            "methodology": {
+                "supported_versions": list(SUPPORTED_GUIDE_VERSIONS),
+                "wire_default_version": WIRE_DEFAULT_GUIDE_VERSION,
+                "recommended_version": RECOMMENDED_GUIDE_VERSION,
+                "supported_v2_intents": list(INTENT_IDS),
+            },
         },
         {
             "id": "process_timeline",

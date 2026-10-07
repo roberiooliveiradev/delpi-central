@@ -16,6 +16,10 @@ from tm_app.application.gpt_actions.parity_capabilities_service import (
 )
 
 from tm_app.application.methodology.guide import list_method_ids, list_task_ids
+from tm_app.application.methodology.guide_v2 import (
+    INTENT_IDS,
+    SUPPORTED_GUIDE_VERSIONS,
+)
 from tm_app.application.gpt_actions.improvement_package_contract import (
     NESTING_RULES,
     openapi_investment_properties,
@@ -505,6 +509,39 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             "Optional task: "
                             + ", ".join(list_task_ids())
                             + ". Selects the smallest recommended methods."
+                        ),
+                    },
+                    {
+                        "name": "guide_version",
+                        "in": "query",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "enum": list(SUPPORTED_GUIDE_VERSIONS),
+                        },
+                        "description": (
+                            "Methodology guide version. Omit for "
+                            "teo-method-playbooks-v1 (wire default)."
+                        ),
+                    },
+                    {
+                        "name": "intent",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "enum": list(INTENT_IDS)},
+                        "description": (
+                            "V2 intent: " + ", ".join(INTENT_IDS) + "."
+                        ),
+                    },
+                    {
+                        "name": "context",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "V2 optional JSON object of process-context facts "
+                            "(e.g. boundary_known, as_is_known, problem_defined, "
+                            "candidate_cause, flow_known, strategic_question)."
                         ),
                     },
                 ],

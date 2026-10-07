@@ -33,7 +33,7 @@ def test_openapi_lists_methodology_as_21st_importable_operation() -> None:
     assert op["x-openai-isConsequential"] is False
     assert len(op["description"]) <= 300
     names = [item["name"] for item in op["parameters"]]
-    assert names == ["method", "task"]
+    assert names == ["method", "task", "guide_version", "intent", "context"]
     assert all(len(item["description"]) <= 700 for item in op["parameters"])
     ids = [item["operationId"] for path in doc["paths"].values() for item in path.values()]
     assert len(ids) == len(set(ids)) == 17
