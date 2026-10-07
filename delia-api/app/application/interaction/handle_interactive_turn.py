@@ -55,6 +55,10 @@ from app.application.model_invocation.errors import (
     TIMEOUT,
     ModelInvocationError,
 )
+from app.application.interaction.turn_budget import (
+    DEFAULT_TURN_BUDGET_SECONDS,
+    TurnDeadline,
+)
 from app.application.model_invocation.invoke_model import (
     MAX_INPUT_CHARS,
     InvokeModel,
@@ -148,6 +152,7 @@ class HandleInteractiveConversationTurn:
         instruction_content: str | None = None,
         timeout_seconds: float = INTERACTION_TIMEOUT_SECONDS,
         capability_orchestration: SupportsGovernedCapabilityAttempt | None = None,
+        turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
     ) -> None:
         self._invoke_model = invoke_model
         self._model_ref = model_ref
@@ -163,11 +168,18 @@ class HandleInteractiveConversationTurn:
         # generic governance). When absent the handler behaves exactly
         # like the C3 runtime.
         self._capability_orchestration = capability_orchestration
+        # LOOP-03R2A: one monotonic deadline shared by the whole turn —
+        # orchestration stages and the general model call each receive
+        # at most the remaining budget, so a turn can never outlive
+        # the edge request deadline.
+        self._turn_budget_seconds = float(turn_budget_seconds)
 
     def execute(self, request: InteractiveTurnRequest) -> InteractiveTurnResult:
         self._require_access(request.access_context)
         input_text = self._validate_input(request.input_text)
         prior_turns = self._validate_prior_context(request.prior_turns)
+        self._validate_execution_ceiling(request.max_execution_stage)
+        turn_deadline = TurnDeadline.start(self._turn_budget_seconds)
 
         session = InteractionSession(
             session_id=str(uuid.uuid4()),
@@ -203,6 +215,7 @@ class HandleInteractiveConversationTurn:
                 workspace_context=request.workspace_context,
                 prior_turns=prior_turns,
                 max_execution_stage=request.max_execution_stage,
+                turn_deadline=turn_deadline,
             )
             if self._capability_orchestration is not None
             else None
@@ -237,7 +250,9 @@ class HandleInteractiveConversationTurn:
                 session, user_turn, attempt
             )
 
-        model_result = self._invoke(input_text, prior_turns)
+        model_result = self._invoke(
+            input_text, prior_turns, deadline=turn_deadline
+        )
         content, limitations = self._validate_result(model_result)
 
         result_turn = InteractionTurn(
@@ -528,11 +543,38 @@ class HandleInteractiveConversationTurn:
             grounding_status=GroundingStatus.NON_GROUNDED,
         )
 
+    @staticmethod
+    def _validate_execution_ceiling(max_execution_stage: Any) -> None:
+        """Application-layer defense for the reduction-only ceiling.
+
+        The HTTP boundary already validates the wire shape; this
+        second gate guarantees an internally constructed request
+        (``max_execution_stage="act"``) can never silently behave as
+        unrestricted execution — fail closed at the use-case boundary.
+        """
+        if max_execution_stage is None or max_execution_stage == "prepare":
+            return
+        raise InteractionError(
+            INVALID_REQUEST,
+            "max_execution_stage only accepts 'prepare' — it can "
+            "reduce, never request, execution authority",
+        )
+
     def _invoke(
         self,
         input_text: str,
         prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline | None = None,
     ) -> ModelInvocationResult:
+        if deadline is not None:
+            if deadline.exhausted():
+                raise InteractionError(
+                    MODEL_TIMEOUT,
+                    "interaction turn budget exhausted",
+                )
+            timeout_seconds = deadline.stage_timeout(self._timeout_seconds)
+        else:
+            timeout_seconds = self._timeout_seconds
         invocation_request = ModelInvocationRequest(
             invocation_id=ModelInvocationId(str(uuid.uuid4())),
             model_ref=self._model_ref,
@@ -544,7 +586,7 @@ class HandleInteractiveConversationTurn:
             expected_fields=EXPECTED_FIELDS,
             instruction_lineage=self._instruction_lineage,
             instruction_content=self._instruction_content,
-            timeout_seconds=self._timeout_seconds,
+            timeout_seconds=timeout_seconds,
             declared_epistemic_class=EpistemicClass.HYPOTHESIS,
             # Request-local correlation metadata only; no authority fields
             # and no raw input duplication.

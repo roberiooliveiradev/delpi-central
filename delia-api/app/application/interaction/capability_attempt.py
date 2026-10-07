@@ -30,6 +30,7 @@ from app.application.capability_provision.contracts import (
     CapabilityProviderError,
 )
 from app.application.interaction.contracts import GovernedCapabilityProvenance
+from app.application.interaction.turn_budget import TurnDeadline
 from app.application.interaction.workspace_context import WorkspaceContext
 from app.application.specialist_interop.errors import (
     MCP_AUTHENTICATION_FAILED,
@@ -174,4 +175,6 @@ class SupportsGovernedCapabilityAttempt(Protocol):
         session_id: str | None = None,
         confirmation: Mapping[str, Any] | None = None,
         workspace_context: WorkspaceContext | None = None,
+        max_execution_stage: str | None = None,
+        turn_deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt: ...

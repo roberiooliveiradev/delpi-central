@@ -247,6 +247,7 @@ def _compose_turn_handler(
             providers,
             invoke_model=invoke_model,
             model_ref=model_ref,
+            turn_budget_seconds=settings.turn_budget_seconds,
         )
         if providers
         else None
@@ -255,6 +256,7 @@ def _compose_turn_handler(
         invoke_model,
         model_ref=model_ref,
         capability_orchestration=orchestration,
+        turn_budget_seconds=settings.turn_budget_seconds,
     )
 
 

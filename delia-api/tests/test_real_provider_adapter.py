@@ -129,7 +129,7 @@ def test_adapter_fails_closed_on_incomplete_config():
 def test_posts_to_chat_completions_with_bearer_and_model():
     calls = []
 
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         calls.append({"url": url, "headers": headers, "json": json, "timeout": timeout})
         return _Response(200, _ok_body('{"answer": "ok"}'))
 
@@ -140,13 +140,16 @@ def test_posts_to_chat_completions_with_bearer_and_model():
     assert call["url"] == f"{BASE_URL}/chat/completions"
     assert call["headers"]["Authorization"] == f"Bearer {KEY}"
     assert call["json"]["model"] == MODEL
-    assert call["timeout"] == 25.0
+    # (connect, read) — connect is bounded by the whole invocation
+    # budget; the per-recv read slice is capped at _READ_SLICE_SECONDS
+    # while the chunked drain enforces the total deadline.
+    assert call["timeout"] == (25.0, 0.5)
 
 
 def test_messages_carry_instruction_and_user_input_and_no_tools():
     captured = {}
 
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         captured["json"] = json
         return _Response(200, _ok_body('{"answer": "ok"}'))
 
@@ -166,20 +169,20 @@ def test_messages_carry_instruction_and_user_input_and_no_tools():
 def test_timeout_is_bounded_by_adapter_config():
     captured = {}
 
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         captured["timeout"] = timeout
         return _Response(200, _ok_body('{"answer": "ok"}'))
 
     adapter = _adapter(http_post=fake_post, timeout_seconds=5.0)
     InvokeModel(adapter).execute(_request(timeout_seconds=25.0))
-    assert captured["timeout"] == 5.0
+    assert captured["timeout"] == (5.0, 0.5)
 
 
 # --- C. Response mapping ----------------------------------------------------
 
 
 def test_valid_json_output_maps_to_payload_with_usage():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(
             200,
             _ok_body(
@@ -198,7 +201,7 @@ def test_valid_json_output_maps_to_payload_with_usage():
 
 
 def test_fenced_json_output_is_accepted():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(200, _ok_body('```json\n{"answer": "ok"}\n```'))
 
     result = InvokeModel(_adapter(http_post=fake_post)).execute(_request())
@@ -206,7 +209,7 @@ def test_fenced_json_output_is_accepted():
 
 
 def test_non_json_output_maps_invalid_structured_output():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(200, _ok_body("plain text, no json"))
 
     with pytest.raises(ModelInvocationError) as exc:
@@ -215,7 +218,7 @@ def test_non_json_output_maps_invalid_structured_output():
 
 
 def test_malformed_provider_response_maps_invalid():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(200, {"unexpected": True})
 
     with pytest.raises(ModelInvocationError) as exc:
@@ -224,7 +227,7 @@ def test_malformed_provider_response_maps_invalid():
 
 
 def test_tool_call_in_provider_message_is_rejected():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(
             200,
             {
@@ -247,7 +250,7 @@ def test_tool_call_in_provider_message_is_rejected():
 
 
 def test_tool_like_output_inside_structured_json_is_rejected():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(
             200, _ok_body('{"answer": "x", "tool_calls": [{"name": "act"}]}')
         )
@@ -262,7 +265,7 @@ def test_tool_like_output_inside_structured_json_is_rejected():
 
 def test_http_401_and_403_map_provider_rejected():
     for status in (401, 403):
-        def fake_post(url, headers=None, json=None, timeout=None, s=status):
+        def fake_post(url, headers=None, json=None, timeout=None, stream=None, s=status):
             return _Response(s, {"error": "denied"})
 
         with pytest.raises(ModelInvocationError) as exc:
@@ -272,7 +275,7 @@ def test_http_401_and_403_map_provider_rejected():
 
 
 def test_http_404_maps_unsupported_model():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(404, {"error": "model not found"})
 
     with pytest.raises(ModelInvocationError) as exc:
@@ -282,7 +285,7 @@ def test_http_404_maps_unsupported_model():
 
 def test_http_5xx_and_429_map_provider_unavailable():
     for status in (429, 500, 503):
-        def fake_post(url, headers=None, json=None, timeout=None, s=status):
+        def fake_post(url, headers=None, json=None, timeout=None, stream=None, s=status):
             return _Response(s, {})
 
         with pytest.raises(ModelInvocationError) as exc:
@@ -291,7 +294,7 @@ def test_http_5xx_and_429_map_provider_unavailable():
 
 
 def test_timeout_maps_timeout():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         raise requests.exceptions.Timeout("slow")
 
     with pytest.raises(ModelInvocationError) as exc:
@@ -300,7 +303,7 @@ def test_timeout_maps_timeout():
 
 
 def test_connection_error_maps_provider_unavailable():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         raise requests.exceptions.ConnectionError("dns failed")
 
     with pytest.raises(ModelInvocationError) as exc:
@@ -309,7 +312,7 @@ def test_connection_error_maps_provider_unavailable():
 
 
 def test_secret_never_leaks_into_errors():
-    def fake_post(url, headers=None, json=None, timeout=None):
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
         return _Response(401, {"error": f"invalid key {KEY}"})
 
     with pytest.raises(ModelInvocationError) as exc:

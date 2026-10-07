@@ -40,8 +40,12 @@ from app.domain.interaction.model import TurnKind
 
 
 ALLOWED_BODY_KEYS = frozenset(
-    {"input", "context", "confirmation", "workspace"}
+    {"input", "context", "confirmation", "workspace", "max_execution_stage"}
 )
+# LOOP-03R2A: client-requested REDUCTION of execution authority. Only
+# "prepare" is admissible — escalation vocabulary is rejected at the
+# syntactic boundary before it can reach the contract.
+_ALLOWED_EXECUTION_CEILINGS = frozenset({"prepare"})
 CONTEXT_TURN_KEYS = frozenset({"kind", "content", "epistemic_class"})
 CONFIRMATION_KEYS = frozenset(
     {
@@ -113,6 +117,17 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
         if ws_error is not None:
             return _error(INVALID_REQUEST, ws_error)
 
+        max_execution_stage, ceiling_error = _parse_execution_ceiling(
+            body.get("max_execution_stage")
+        )
+        if ceiling_error is not None:
+            logger.info(
+                "interaction_rejected reason=invalid_execution_ceiling "
+                "request_id=%s",
+                getattr(g, "request_id", None),
+            )
+            return _error(INVALID_REQUEST, ceiling_error)
+
         handler = current_app.config.get("INTERACTION_TURN_HANDLER")
         if handler is None:
             logger.warning("interaction_rejected reason=handler_not_configured")
@@ -124,6 +139,7 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
             prior_turns=prior_turns,
             confirmation=confirmation,
             workspace_context=workspace_context,
+            max_execution_stage=max_execution_stage,
         )
         try:
             result = handler.execute(command)
@@ -228,6 +244,29 @@ def _parse_confirmation(
             "'confirmation' requires 'decision' and 'proposal_digest'"
         )
     return confirmation, None
+
+
+def _parse_execution_ceiling(
+    raw: object,
+) -> tuple[str | None, str | None]:
+    """Syntactic validation of the client-requested execution ceiling.
+
+    ``max_execution_stage`` can only REDUCE execution authority:
+    ``"prepare"`` caps the governed chain at PREPARE. Absent/``null``
+    means no client-requested reduction. Any other value — including
+    escalation vocabulary like "act"/"execute"/"direct" — is a strict
+    INVALID_REQUEST, never coerced or silently widened.
+    """
+    if raw is None:
+        return None, None
+    if not isinstance(raw, str):
+        return None, "'max_execution_stage' must be a string"
+    if raw not in _ALLOWED_EXECUTION_CEILINGS:
+        return None, (
+            "'max_execution_stage' only accepts 'prepare' — it can "
+            "reduce, never request, execution authority"
+        )
+    return raw, None
 
 
 def _log_result(logger: logging.Logger, result: InteractiveTurnResult) -> None:
