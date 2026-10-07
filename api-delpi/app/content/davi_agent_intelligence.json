@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.07.1",
+  "version": "2026.10.07.2",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -106,7 +106,7 @@
         "production.operation.materials",
         "production.losses"
       ],
-      "note": "Inventory & Material Flow via discover→execute only. Semântica canônica vem da API DELPI: kind de movimentação interna é enum governado (warehouse_transfer | inventory_adjustment | production_receipt | production_consumption) — nunca classifique por código TM/CF bruto. Ajuste de inventário (furo/sobra) usa as ops dedicadas list_supplies_inventory_adjustments / get_supplies_inventory_adjustments_summary com nature=shortage|surplus; documento INVENT nunca é transferência de armazém. committed_quantity/reserved_quantity em product.stock.availability são empenho/reserva; estimation.* em supplies.stock.value carrega método e fechamento oficial (SB9) — reporte data_quality_warning em vez de escondê-lo. shortages/consumption/commitments são semáforos e extratos calculados no backend; perdas usam loss_type=refugo|scrap|both. Não recalcule furo/sobra, não infira permissão, não peça SQL genérico."
+      "note": "Inventory & Material Flow via discover→execute only. Semântica canônica vem da API DELPI: kind de movimentação interna é enum governado (warehouse_transfer | inventory_adjustment | production_receipt | production_consumption) — nunca classifique por código TM/CF bruto. Ajuste de inventário/estoque usa get_supplies_inventory_adjustments_summary para o agregado e list_supplies_inventory_adjustments para detalhe. Sem nature explícita, o indicador principal é summary.net_value = surplus_value - shortage_value; reporte também surplus_value, shortage_value, gross_value = surplus_value + shortage_value, surplus_quantity, shortage_quantity, net_quantity, surplus_count e shortage_count. net_value positivo = sobra líquida; negativo = furo líquido; nunca apresente gross_value como líquido. Pedido de furo → nature=shortage; pedido de sobra → nature=surplus. Documento INVENT nunca é transferência de armazém. committed_quantity/reserved_quantity em product.stock.availability são empenho/reserva; estimation.* em supplies.stock.value carrega método e fechamento oficial (SB9) — reporte data_quality_warning em vez de escondê-lo. shortages/consumption/commitments são semáforos e extratos calculados no backend; perdas usam loss_type=refugo|scrap|both. Não recalcule furo/sobra a partir de TM/CF/TPMOVAJ no Agent, não infira permissão, não peça SQL genérico."
     },
     "structure_bom": {
       "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],

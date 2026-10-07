@@ -9,8 +9,10 @@ Comprovado em dados (out/2026):
 - A natureza é autoridade do CF: ``RE0`` = entrada (sobra);
   ``DE0`` = saída (furo). O TM **não** é autoridade para ajuste —
   a sobra é gravada com ``TM 999`` (também usado no consumo).
-- ``D3_CUSTO1`` é o valor do movimento no momento do ajuste (mesma
-  interpretação do cálculo histórico SB9+SD3).
+- ``D3_CUSTO1`` é o valor **total do movimento** na moeda 1 no momento
+  do ajuste, não custo unitário a multiplicar por ``D3_QUANT`` (mesma
+  interpretação do cálculo histórico SB9+SD3, que aplica ``D3_CUSTO1``
+  diretamente ao movimento).
 - ``D3_TPMOVAJ`` não é usado no ambiente; SF5 não contém os TM 499/999;
   F0Q vazio; C5D é cadastro fiscal sem vínculo comprovado.
 - SB7 é apoio de proveniência, não autoridade: a associação

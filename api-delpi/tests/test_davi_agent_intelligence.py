@@ -60,6 +60,16 @@ def test_agent_directives_projection_read_only_and_compact() -> None:
     assert size <= DAVI_AGENT_DIRECTIVES_MAX_BYTES, size
 
 
+def test_inventory_adjustment_directive_defaults_to_net_value() -> None:
+    directives = DaviAgentIntelligenceService.agent_directives()
+    note = directives["flows"]["stock_and_supply"]["note"]
+    assert "summary.net_value = surplus_value - shortage_value" in note
+    assert "gross_value = surplus_value + shortage_value" in note
+    assert "nature=shortage" in note
+    assert "nature=surplus" in note
+    assert "nunca apresente gross_value como líquido" in note
+
+
 def test_gpt_catalog_exposes_same_directives() -> None:
     with patch(
         "app.application.external_capabilities.catalog_service.user_can_search_products",

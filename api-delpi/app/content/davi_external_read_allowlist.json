@@ -4062,7 +4062,7 @@
     },
     {
       "operationId": "get_supplies_inventory_adjustments_summary",
-      "reason": "Inventory adjustment summary (totals plus by_month/by_branch/by_nature buckets) over SD3 doc='INVENT'; same governed classification as the list sibling; API_DELPI_ACCESS backend AuthZ",
+      "reason": "Inventory adjustment summary (totals plus by_month/by_branch/by_nature) over SD3 doc='INVENT'; same governed classification as the list sibling; when nature is omitted, summary.net_value is the primary liquid adjustment and summary.gross_value is only gross movement magnitude; API_DELPI_ACCESS backend AuthZ",
       "executionMode": "catalog_action",
       "approvedInputFields": [
         "start_date",
@@ -4133,7 +4133,16 @@
         "inventory adjustment summary",
         "inventory shortage total",
         "inventory surplus total",
-        "valor de ajustes de inventário"
+        "valor de ajustes de inventário",
+        "ajuste de estoque",
+        "ajuste de inventário",
+        "ajuste de inventario",
+        "ajuste líquido de estoque",
+        "ajuste liquido de estoque",
+        "valor líquido de ajuste de inventário",
+        "valor liquido de ajuste de inventario",
+        "valor bruto de ajuste de inventário",
+        "valor bruto de ajuste de inventario"
       ],
       "argumentConstraints": {
         "requireArguments": [
