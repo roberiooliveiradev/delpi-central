@@ -1,4 +1,5 @@
 fastapi
+anyio>=4,<5
 pydantic
 uvicorn[standard]
 python-dotenv

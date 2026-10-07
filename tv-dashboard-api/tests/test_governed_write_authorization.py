@@ -14,9 +14,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from functools import partial
 from types import SimpleNamespace
 from uuid import uuid4
 
+import anyio
+import anyio.to_thread
 import httpx
 import pytest
 from fastapi.testclient import TestClient
@@ -31,6 +34,14 @@ from tv_app.core.security import (
 )
 
 SERVICE_TOKEN = "repro-internal-service-token"
+
+
+def _sync_gate(user, **kwargs):
+    """Sync gate in its production runtime: an AnyIO worker thread under the
+    app event loop (FastAPI sync route / MCP sync tool)."""
+    return anyio.run(
+        partial(anyio.to_thread.run_sync, partial(_real_sync_gate, user, **kwargs))
+    )
 
 
 @pytest.fixture()
@@ -130,21 +141,21 @@ def _patch_notify(monkeypatch, *route_modules) -> None:
 
 def test_gate_denies_service_principal(monkeypatch):
     with pytest.raises(GovernedWriteAuthzError) as exc:
-        _real_sync_gate(_service_user())
+        _sync_gate(_service_user())
     assert exc.value.status_code == 403
     assert exc.value.code == "PRINCIPAL_TYPE_DENIED"
 
 
 def test_gate_denies_missing_principal():
     with pytest.raises(GovernedWriteAuthzError) as exc:
-        _real_sync_gate(None)
+        _sync_gate(None)
     assert exc.value.status_code == 401
 
 
 def test_gate_denies_missing_bearer():
     user = _human_user(access_token=None)
     with pytest.raises(GovernedWriteAuthzError) as exc:
-        _real_sync_gate(user)
+        _sync_gate(user)
     assert exc.value.status_code == 401
 
 
@@ -156,7 +167,7 @@ def test_gate_fetches_fresh_rbac_with_user_token(monkeypatch):
         return _rbac()
 
     monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
-    fresh = _real_sync_gate(_human_user(), permission=sec.TV_WRITE)
+    fresh = _sync_gate(_human_user(), permission=sec.TV_WRITE)
     assert seen["token"] == "tok-user"
     assert fresh.permissions == ["tv-dashboard.write"]
     assert fresh.principal_type == "user"
@@ -169,7 +180,7 @@ def test_gate_accepts_bearer_from_authorization_header(monkeypatch):
 
     monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
     user = _human_user(access_token=None)
-    fresh = _real_sync_gate(user, authorization="Bearer hdr-tok")
+    fresh = _sync_gate(user, authorization="Bearer hdr-tok")
     assert fresh.id == "user-1"
 
 
@@ -182,7 +193,7 @@ def test_gate_revoked_permission_denies(monkeypatch):
 
     monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
     with pytest.raises(GovernedWriteAuthzError) as exc:
-        _real_sync_gate(_human_user(permissions=["tv-dashboard.write"]))
+        _sync_gate(_human_user(permissions=["tv-dashboard.write"]))
     assert exc.value.status_code == 403
     assert exc.value.code == "PERMISSION_DENIED"
 
@@ -195,7 +206,7 @@ def test_gate_revoked_superadmin_denies(monkeypatch):
 
     monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
     with pytest.raises(GovernedWriteAuthzError):
-        _real_sync_gate(_human_user(is_superadmin=True))
+        _sync_gate(_human_user(is_superadmin=True))
 
 
 def test_gate_core_unavailable_fails_closed(monkeypatch):
@@ -204,7 +215,7 @@ def test_gate_core_unavailable_fails_closed(monkeypatch):
 
     monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
     with pytest.raises(GovernedWriteAuthzError) as exc:
-        _real_sync_gate(_human_user())
+        _sync_gate(_human_user())
     assert exc.value.status_code == 503
     assert exc.value.code == "AUTHZ_UNAVAILABLE"
 
@@ -214,7 +225,7 @@ def test_gate_human_superadmin_fresh_allowed(monkeypatch):
         return _rbac(permissions=[], is_superadmin=True)
 
     monkeypatch.setattr(sec, "_fetch_fresh_rbac", _fake)
-    fresh = _real_sync_gate(_human_user(permissions=[]))
+    fresh = _sync_gate(_human_user(permissions=[]))
     assert fresh.is_superadmin is True
 
 
@@ -527,7 +538,7 @@ def _raising(exc: Exception):
 
 def _call_gate(mode: str, user, **kwargs):
     if mode == "sync":
-        return _real_sync_gate(user, **kwargs)
+        return _sync_gate(user, **kwargs)
     return asyncio.run(_real_async_gate(user, **kwargs))
 
 
@@ -588,10 +599,12 @@ def test_sync_gate_inside_event_loop_is_distinguishable(monkeypatch, caplog):
     for coro in created:
         coro.close()
 
+    assert created == [], "no RBAC lookup outside the app's worker-thread runtime"
     _assert_unavailable_contract(exc.value)
     message = _authz_events(caplog)[0].getMessage()
     assert "mode=sync" in message
-    assert "error_class=RuntimeError" in message
+    assert "error_class=NoEventLoopError" in message
+    assert "error_module=anyio" in message
     assert "event_loop_running=True" in message
 
 
@@ -604,7 +617,7 @@ def test_downstream_core_status_is_distinguishable(monkeypatch, caplog):
     )
 
     with pytest.raises(GovernedWriteAuthzError) as exc:
-        _real_sync_gate(_human_user())
+        _sync_gate(_human_user())
 
     _assert_unavailable_contract(exc.value)
     message = _authz_events(caplog)[0].getMessage()
