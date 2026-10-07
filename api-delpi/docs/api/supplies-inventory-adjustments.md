@@ -64,15 +64,6 @@ capability expõe o **estado corrente (pós-recálculo)**, que é o valor
 contábil vigente e a mesma fonte lida pelo relatório no momento da
 geração.
 
-Evidência de mutabilidade (auditoria `SD3010_TTAT_LOG`, filial 02,
-2026-09 — `SD3.R_E_C_N_O_` do registro):
-
-| `R_E_C_N_O_` | valor no lançamento | reescrita `MATA330` | valor na planilha de referência |
-|---|---:|---:|---:|
-| 4811840 | 4456.127 | 4456.127 → 4503.745 | 4456.127 (pré-recalc) |
-| 4811839 | 712.123 | 712.123 → 798.301 | 712.123 (pré-recalc) |
-| 4812323 | 0 | 0 → 39.094 | 0 (pré-recalc) |
-
 Consultas executadas **durante** uma execução do `MATA330` observam um
 estado transitório: linhas já revalorizadas ao lado de linhas ainda no
 valor de lançamento — esse estado não é reproduzível por consulta
@@ -81,6 +72,12 @@ evidência de auditoria apenas; **não** é fonte runtime da capability.
 
 **Recomendação operacional**: para números de fechamento, consultar a
 capability **após a conclusão do `MATA330`** do período.
+
+A evidência linha a linha da mutabilidade e da investigação do
+relatório está em
+`docs/roadmaps/evidencias/inventory-adjustment-report-investigacao.json`
+e `api-delpi/scripts/investigate_inventory_adjustment_report.py` —
+material de auditoria, não conhecimento de runtime.
 
 ## Proveniência SB7
 
@@ -171,20 +168,10 @@ Pedido explícito de **furo** usa `nature=shortage`; pedido explícito de
 partir de `D3_TM`, `D3_CF` ou `D3_TPMOVAJ`: a classificação continua
 domain-owned e o repositório reutiliza a expressão canônica.
 
-### Regressão congelada — filial 01, 2026-01-01 a 2026-10-07
-
-| Indicador | Esperado |
-|---|---:|
-| valor_sobra | 1.908.939,208 |
-| valor_furo | 2.082.103,531 |
-| valor_ajuste_liquido | -173.164,323 |
-| valor_ajuste_bruto | 3.991.042,739 |
-| quantidade_sobra | 489.976,062 |
-| quantidade_furo | 549.666,291 |
-| quantidade_liquida | -59.690,229 |
-| movimentos_sobra | 474 |
-| movimentos_furo | 977 |
-| movimentos_totais | 1.451 |
+Regressão das fórmulas acima é validada em testes/evidência
+(`tests/test_supplies_inventory_adjustments.py`, incluindo
+`test_frozen_scenario_2026_09_semantics`); valores operacionais
+concretos não fazem parte deste contrato de conhecimento.
 
 ## Discovery semântico DAVI
 
@@ -227,9 +214,9 @@ do documento provado).
 ## Governança DAVI
 
 Ambas as operações estão na allowlist `davi_external_read_allowlist.json`
-(v18, `DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001`, corrigida por
+(`DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001`, corrigida por
 `DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001`) com inputs e response
-fields explícitos.
+fields explícitos — a versão vigente é a do arquivo, não deste texto.
 
 Limite de paginação por superfície: **API owner** `page_size` máx.
 **500**; **DAVI** (`list_supplies_inventory_adjustments`) máx. **50**
