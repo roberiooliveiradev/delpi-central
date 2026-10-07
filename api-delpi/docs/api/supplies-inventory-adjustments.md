@@ -156,6 +156,33 @@ domain-owned e o repositório reutiliza a expressão canônica.
 | movimentos_furo | 474 |
 | movimentos_totais | 1.451 |
 
+## Discovery semântico DAVI
+
+A capability existente é reutilizada; não existe capability paralela para
+"ajuste de estoque".
+
+O discovery separa intenção **agregada** da intenção **detalhada** por
+vocabulário governado na allowlist:
+
+- agregado (`summary`): ajuste/acerto/diferença de estoque ou inventário,
+  furo, sobra, "sobra menos furo", saldo de ajustes, total, valor,
+  bruto e líquido;
+- detalhe (`list`): itens, produtos, documentos, lançamentos, listagem,
+  detalhe ou detalhamento dos ajustes.
+
+Regras de execução permanecem fora do retrieval:
+
+- pedido de **furo** → `nature=shortage`;
+- pedido de **sobra** → `nature=surplus`;
+- pedido genérico de ajuste de estoque/inventário → omitir `nature` e
+  retornar ambas as naturezas;
+- `start_date`, `end_date`, `branch`, `warehouse` e
+  `product_code` continuam filtros do contrato existente.
+
+O discovery não classifica movimentos por `D3_TM`, `D3_CF` ou
+`D3_TPMOVAJ`; esses códigos não se tornam autoridade do Agent. A
+classificação shortage/surplus continua domain/backend-owned.
+
 ## Resposta — items
 
 Paginado (`page`, `page_size`, `total`, `total_pages`). Cada item traz
