@@ -11,7 +11,11 @@ from __future__ import annotations
 
 import json
 import re
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, Iterator
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -44,9 +48,20 @@ from app.application.external_capabilities.dynamic_information.execute_service i
 )
 from app.application.external_capabilities.dynamic_information.candidate_token import (  # noqa: E402
     mint_candidate_token,
+    parse_candidate_token,
 )
 from app.application.external_capabilities.dynamic_information.content_loader import (  # noqa: E402
+    load_dynamic_read_budgets,
     load_external_read_allowlist,
+)
+from app.application.external_capabilities.dynamic_information.action_index import (  # noqa: E402
+    reset_action_index_for_tests,
+)
+from app.application.external_capabilities.dynamic_information.discover_service import (  # noqa: E402
+    discover_delpi_information,
+)
+from app.application.external_capabilities.dynamic_information.retrieval import (  # noqa: E402
+    retrieve_eligible_actions,
 )
 from app.application.external_capabilities.dynamic_information.errors import (  # noqa: E402
     GovernedExecutionError,
@@ -63,6 +78,14 @@ from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjust
 )
 
 _BATCH_ID = "list_production_order_operation_materials_batch"
+_ACTOR = "user-inventory-corrective"
+
+
+@pytest.fixture(autouse=True)
+def _reset_index():
+    reset_action_index_for_tests()
+    load_external_read_allowlist.cache_clear()
+    load_dynamic_read_budgets.cache_clear()
 
 
 def _allow():
@@ -419,6 +442,44 @@ def test_batch03_present_once_in_explicitly_not_approved():
     )
 
 
+def test_batch05_retrieval_never_returns_batch():
+    # Batch intent phrase previously bound to its semanticAliases.
+    hits = retrieve_eligible_actions(
+        "materiais de várias OPs", _actions(), top_k=10
+    )
+    assert all(a.operation_id != _BATCH_ID for a, _ in hits)
+    # Sibling positive: the single-OP operation remains retrievable.
+    single = retrieve_eligible_actions(
+        "empenhos da OP", _actions(), top_k=10
+    )
+    assert any(
+        a.operation_id == "list_production_order_operation_materials"
+        for a, _ in single
+    )
+
+
+def test_batch06_discover_mints_no_candidate_token_for_batch(monkeypatch):
+    set_actions_for_tests(_actions())
+    secret = "sec"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information."
+        "discover_service.candidate_token_secret",
+        lambda: secret,
+    )
+    discovered = discover_delpi_information(
+        query="materiais de várias OPs", top_k=10, actor_id=_ACTOR
+    )
+    candidates = discovered.get("candidates") or []
+    assert all(c["action_id"] != _BATCH_ID for c in candidates)
+    # governed invariant: discovery never mints a token for the batch —
+    # decode every emitted token and pin the bound action.
+    for c in candidates:
+        payload = parse_candidate_token(
+            c["candidate_token"], secret=secret, expected_actor_id=_ACTOR
+        )
+        assert payload["action_id"] != _BATCH_ID
+
+
 def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
     actions = _actions()
     batch = next(a for a in actions if a.operation_id == _BATCH_ID)
@@ -529,3 +590,144 @@ def test_mcp01_tool_count_exactly_two():
         "discover_delpi_information",
         "execute_delpi_information",
     ]
+
+
+# ---------------------------------------------------------------------------
+# AUTHZ-02 — real FastAPI/TestClient runtime evidence (real middleware +
+# require_permission; only identity/RBAC and use cases are faked, per the
+# system-metadata convention in test_davi_system_metadata.py).
+# ---------------------------------------------------------------------------
+
+
+@contextmanager
+def _inventory_route_authz(*, permissions: list[str]) -> Iterator[Any]:
+    """Real app + real auth middleware; non-superadmin user with `permissions`."""
+    from fastapi.testclient import TestClient
+
+    import app.interface.http.routes.supplies.inventory_adjustments_router as inv_router
+
+    claims = {
+        "sub": _ACTOR,
+        "email": "invcorr@example.com",
+        "aud": "delpi-central",
+        "name": "Inventory Corrective Test",
+    }
+    user = SimpleNamespace(is_superadmin=False, permissions=permissions)
+
+    async def _rbac(_token: str) -> dict[str, Any]:
+        return {
+            "id": _ACTOR,
+            "email": "invcorr@example.com",
+            "name": "Inventory Corrective Test",
+            "roles": [],
+            "groups": [],
+            "permissions": permissions,
+            "is_superadmin": False,
+            "rbac_unavailable": False,
+        }
+
+    list_uc = MagicMock()
+    list_uc.execute.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+        "total_pages": 0,
+    }
+    summary_uc = MagicMock()
+    summary_uc.execute.return_value = {
+        "summary": {},
+        "by_month": [],
+        "by_branch": [],
+        "by_nature": [],
+    }
+
+    with ExitStack() as stack:
+        stack.enter_context(
+            patch("delpi_auth.jwt_validator.validate_token", return_value=claims)
+        )
+        stack.enter_context(
+            patch(
+                "delpi_auth.middleware.fastapi_auth.validate_token",
+                return_value=claims,
+            )
+        )
+        stack.enter_context(
+            patch(
+                "app.middleware.auth_middleware.validate_token",
+                return_value=claims,
+            )
+        )
+        stack.enter_context(
+            patch("delpi_auth.authorization.resolve_user_context", return_value=user)
+        )
+        stack.enter_context(
+            patch(
+                "delpi_auth.middleware.fastapi_auth.load_user_rbac",
+                side_effect=_rbac,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                inv_router,
+                "build_list_inventory_adjustments_use_case",
+                return_value=list_uc,
+            )
+        )
+        stack.enter_context(
+            patch.object(
+                inv_router,
+                "build_get_inventory_adjustments_summary_use_case",
+                return_value=summary_uc,
+            )
+        )
+        stack.enter_context(
+            patch(
+                "app.startup.run_plugins_migrations_on_startup.run_plugins_migrations_on_startup",
+                lambda: None,
+            )
+        )
+        stack.enter_context(
+            patch(
+                "app.startup.schedule_openapi_consumer_notify.schedule_openapi_consumer_notify_on_startup",
+                lambda: None,
+            )
+        )
+        from app.main import app
+
+        # No `with`: lifespan re-entry would re-run the MCP session manager
+        # once-only (same convention as the system-metadata authz tests).
+        yield TestClient(app)
+
+
+_INVENTORY_ROUTES = (
+    "/supplies/inventory-adjustments?start_date=2026-01-01&end_date=2026-01-31",
+    "/supplies/inventory-adjustments/summary?start_date=2026-01-01&end_date=2026-01-31",
+)
+
+
+@pytest.mark.parametrize(
+    ("permissions", "expected"),
+    [
+        (["api-delpi.access"], 200),
+        ([], 403),
+        (["dashboard-supplies.view"], 403),
+    ],
+)
+def test_authz02_inventory_adjustment_routes_runtime_matrix(
+    permissions, expected
+):
+    """Real middleware + require_permission: API_DELPI_ACCESS holder → 200;
+    no permission → 403; dashboard-supplies.view alone → 403 (pins that the
+    routes use API_DELPI_ACCESS directly, not KPI_SUPPLIES_ACCESS)."""
+    with _inventory_route_authz(permissions=permissions) as client:
+        for path in _INVENTORY_ROUTES:
+            response = client.get(
+                path,
+                headers={"Authorization": "Bearer end-user-token"},
+            )
+            assert response.status_code == expected, (
+                path,
+                permissions,
+                expected,
+            )
