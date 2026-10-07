@@ -2585,3 +2585,31 @@ Status: `ARCHITECTURE_REVIEW_C4_MCP_GOVERNED_READS_01R1=ACCEPT_WITH_RESIDUAL` (�
 | Full delia-api suite | 831/831 PASS |
 | Real-model eval / live composition | TEST_NOT_RUN / TEST_NOT_RUN |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-02R1 — native-first runtime staging + owner-workflow parity + multi-source evidence (evidence §6.147)
+
+Supersedes the §6.146 claims corrected by the external architecture review (`ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_02 = REWORK`). Historical rows above are preserved; the column values below are the current state.
+
+| Check | Result |
+|---|---|
+| `NATIVE_OWNER_FIRST` | **RUNTIME_STAGED** — the native assessment sees ONLY the target group surface; foreign candidates are exposed exclusively after `foreign_evidence_required`/`corroboration_requested` (was: model instruction) |
+| `NATIVE_ASSESSMENT_BEFORE_FOREIGN_SELECTION` | PASS — invocation-order trace proven; assessment prompt contains no foreign names |
+| `NATIVE_SUFFICIENT_FOREIGN_SELECTOR_CALLS` | 0 — selector stub would pick the foreign capability and is never consulted |
+| `FOREIGN_OWNER_WORKFLOW_PRESERVED` | PASS — foreign leg delegates to `_invoke_selected`; candidate-bound `DISCOVERY→owner candidate_token→READ` runs identically as primary target or foreign source |
+| `DAVI_STYLE_FOREIGN_FLOW` | PASS_IN_FIXTURE — neutral candidate-bound owner; token owner-issued only, never in prompts/user-facing content |
+| `REQUIRED_ENRICHMENT_*` | FAIL_CLOSED — source failure → `SOURCE_UNAVAILABLE`; missing business input → `CLARIFICATION_REQUIRED`; invalid/ambiguous/mutating proposal → `NOT_APPLICABLE`+`invalid_foreign_selection`; `TARGET_CALLS_AFTER_REQUIRED_SOURCE_FAILURE=0` |
+| `MULTI_SOURCE_PROVENANCE` | PASS — `source_refs` carries primary+foreign (primary first, deduplicated); `to_projection` adds `sources` while keeping `source` (backward-compatible); unavailable source fabricates no ref |
+| `FOREIGN_LIMITATIONS_PRESERVED` | PASS — both owners' limitation sets merge additively, deterministic order |
+| `COMPARABILITY_GATE` | PASS — empty context, mismatched context names, mismatched value-field names → INCONCLUSIVE; matched context → AGREEMENT/CONFLICT; no alias inference |
+| `DIFFERENT_PROVIDER_IMPLEMENTATIONS` | PASS — two independent `CapabilityProviderPort` test implementations compose (was: NOT_PROVEN — same-class instances only) |
+| `DYNAMIC_VS_SNAPSHOT_SEMANTICS` | **PARTIAL** — deterministic path enforcement PASS (native dynamic path never consults a foreign snapshot; explicit static target stays native); model-level semantic quality unmeasured (was: overclaimed PASS) |
+| `DYNAMIC_NATIVE_PATH_ENFORCEMENT` / `STATIC_PATH_REGRESSION` | PASS / PASS |
+| `FOREIGN_TARGET_IDENTIFIER` / `WORKSPACE_TARGET_IDENTIFIER` | BLOCKED / PASS (regression preserved) |
+| `SAME_PROVIDER_DIFFERENT_GROUPS` / `RENAME_INVARIANCE` | PASS / PASS |
+| `MODEL_AUTHORED_FACTUAL_PROSE` / `DIRECT_SEMANTIC_ACT` / `MATERIAL_ACT_RETRY` | NONE / 0 / 0 |
+| `WRITE_GOVERNANCE_REGRESSION` | PASS — governed write suite green; foreign leg never touches PREPARE/ACT authority |
+| `PROVIDER_NEUTRALITY` / owner-name / tool-name branches | PASS / 0 / 0 (owner names appear only in comments) |
+| Full delia-api suite | 842/842 PASS |
+| `REAL_MODEL_EVAL` / `LIVE_COMPOSITION` | TEST_NOT_RUN / TEST_NOT_RUN |
+| `VISTA_NATIVE_DYNAMIC_PATH` / `DAVI_FOREIGN_STRUCTURAL_WORKFLOW` / `TEO_FOREIGN_STRUCTURAL_WORKFLOW` | PROVEN_IN_REPO / PASS_IN_FIXTURE / PASS_IN_FIXTURE (structural fixtures; no live owner run) |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

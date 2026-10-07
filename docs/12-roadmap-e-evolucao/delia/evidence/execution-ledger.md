@@ -10883,3 +10883,93 @@ EVIDENCE (live production, 2026-10-05):
     PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
       C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.147. C3-INTELLIGENCE-LOOP-02R1 — native-first runtime staging + owner-workflow parity + multi-source provenance
+    TASK = C3-INTELLIGENCE-LOOP-02R1
+    STATUS = IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+    BASE_HEAD = be3c63a470fe2c248505f82a2e88b08f7782fdd2
+    ARCHITECTURE_REVIEW_INPUT =
+      ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_02 = REWORK
+      (B1 foreign owner workflow, B2 native-first not a runtime
+      invariant, B3 required enrichment could degrade to native
+      success, B4 single-source provenance, B5 model-dependent
+      comparability, B6 overclaimed evidence)
+    HEAD_ADVANCE_CLASSIFICATION = UNRELATED_NO_DELIA_DIFF
+      (3efdb7e→be3c63a: no delia-api/** or docs/.../delia/** changes)
+
+    ARCHITECTURAL_DECISION (persisted, supersedes §6.146 where noted):
+      NATIVE_FIRST = RUNTIME_STAGED (assessment sees ONLY the target
+        group surface; foreign candidates exist only after the
+        assessment justifies them — instruction alone is not the
+        invariant)
+      FOREIGN_INVOCATION = _invoke_selected (SAME owner-defined
+        mechanics as a primary target — candidate-bound
+        DISCOVERY->owner candidate_token->READ preserved; no
+        simplified foreign execution path)
+      ENRICHMENT = REQUIRED evidence (never optional/speculative);
+        foreign failure/input-miss/invalid proposal fails CLOSED —
+        target calls after required-source failure = 0
+      PROVENANCE = MULTI_SOURCE (source_refs carries primary first,
+        foreign second, deduplicated; HTTP projection keeps `source`
+        and adds `sources` — additive, backward-compatible)
+      COMPARABILITY = DETERMINISTIC GATE (non-empty context pairs,
+        canonical field-name equivalence, scalar match — otherwise
+        INCONCLUSIVE; no semantic alias inference)
+      UNCHANGED = model proposes / runtime validates; MAX_FOREIGN_
+        GROUPS=1; MAX_OPERATIONAL_PLAN_STEPS=3; no owner/tool/provider
+        name branches; no new planner, engine or registry.
+
+    CHANGE: `_select_semantic_path` split into
+      `_assess_native_path` (target-group-only prompt — staged
+      disclosure is enforced by construction, not by instruction)
+      plus `_select_foreign_capability` (foreign-groups-only prompt,
+      deterministic revalidation). `attempt()` sequences target
+      selection -> native assessment -> foreign selection -> foreign
+      owner workflow -> target argument rebuild -> governed target
+      invocation. `_invoke_foreign_evidence` now delegates to
+      `_invoke_selected` — owner workflow parity between primary and
+      foreign roles. Required-enrichment failures return
+      CLARIFICATION_REQUIRED (missing business input) or
+      SOURCE_UNAVAILABLE, never SUCCESS. `_corroborate_attempt`
+      merges both outcomes' limitations and appends the foreign
+      SourceRef; `_outcome_attempt` accepts `extra_source_refs`.
+      `_compare_records` requires non-empty canonically-matched
+      context fields before any value verdict.
+      `GovernedCapabilityProvenance.to_projection` adds `sources`.
+
+    TESTS = 842/842 PASS (eval file rewritten for the staged
+      contract: native-sufficient never exposes foreign surface —
+      selector calls = 0; assessment prompt contains no foreign
+      names; invocation-order trace; candidate-bound foreign
+      DISCOVERY->token->READ via owner workflow with the token
+      never in prompts; target/foreign workflow parity; required
+      source failure, missing input clarification, invalid/ambiguous/
+      write-class required proposals fail closed; multi-source
+      provenance + projection; both limitation sets merged;
+      source-unavailable corroboration keeps only real provenance;
+      empty/mismatched context and mismatched value-field names all
+      INCONCLUSIVE; matched context yields AGREEMENT/CONFLICT;
+      DISTINCT CapabilityProviderPort implementations compose;
+      same-provider different groups; rename invariance; foreign
+      identifier blocked; workspace id + foreign business value;
+      metadata injection inert; corroborate never targets writes;
+      plan duplicate-id fail-closed; dynamic native path never
+      consults foreign snapshot; explicit static path stays valid).
+
+    RESIDUAL: REAL_MODEL_EVAL = TEST_NOT_RUN;
+      LIVE_COMPOSITION = TEST_NOT_RUN;
+      DYNAMIC_VS_SNAPSHOT_SEMANTICS = PARTIAL (deterministic path
+        enforcement proven; model-level semantic selection not
+        measured on a real model);
+      VISTA_NATIVE_DYNAMIC_PATH = PROVEN_IN_REPO;
+      DAVI/TÉO_FOREIGN_STRUCTURAL_WORKFLOW = PASS_IN_FIXTURE
+        (neutral candidate-bound fixture, no live owner);
+      USER_GOAL_UNDERSTANDING = PARTIAL;
+      DECISION_PATH_RUNTIME = PARTIAL (unchanged).
+      §6.146 claims superseded honestly: foreign workflow bypass
+      closed, enrichment semantics corrected to required-only,
+      comparability now gated deterministically.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
