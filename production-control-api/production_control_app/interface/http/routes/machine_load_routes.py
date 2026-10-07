@@ -164,6 +164,32 @@ def refresh_machine_load(
     )
 
 
+@router.post("/machine-load/publish")
+def publish_machine_load(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """«Enviar para máquinas»: publica a fila WORKING vigente no cockpit.
+
+    A fila sai sempre do snapshot persistido no backend — o corpo da
+    requisição não é autoridade da publicação.
+    """
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().publish(user, branch=branch)
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    changed = bool((data.get("publication") or {}).get("changed"))
+    return ok(
+        data,
+        message=(
+            "Carga máquina enviada para as máquinas."
+            if changed
+            else "A carga máquina atual já está enviada para as máquinas."
+        ),
+    )
+
+
 @router.patch("/machine-load/sequence")
 def patch_machine_load_sequence(
     request: Request,

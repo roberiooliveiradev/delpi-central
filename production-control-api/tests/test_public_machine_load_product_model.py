@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -18,6 +20,7 @@ from production_control_app.application.services.public_machine_load_product_mod
 from production_control_app.domain.errors import Product3DModelNotFound
 from production_control_app.domain.product_3d_model import Product3DModel
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from tests.test_machine_load import FakePublicationRepo
 
 _OPERATION = {
     "work_center": "CT-02",
@@ -39,6 +42,20 @@ _GLB = b"glTF" + b"\x02\x00\x00\x00" + b"x" * 20
 class FakeSnapshotRepo:
     def __init__(self) -> None:
         self.rows: dict[str, dict[str, Any]] = {}
+        self.published: dict[str, dict[str, Any]] = {}
+
+    def publish(self, branch: str = "01") -> None:
+        """Emula «Enviar para máquinas»: copia o WORKING vigente para o PUBLISHED."""
+        row = self.rows.get(branch)
+        if row is None:
+            raise AssertionError(f"Sem WORKING para publicar na filial {branch}")
+        self.published[branch] = {
+            **copy.deepcopy(row),
+            "source_refreshed_at": row.get("refreshed_at"),
+            "source_refreshed_by": row.get("refreshed_by"),
+            "published_at": datetime(2026, 8, 19, 22, 30, tzinfo=timezone.utc),
+            "published_by": row.get("refreshed_by"),
+        }
 
     def get(self, *, branch: str) -> dict[str, Any] | None:
         return self.rows.get(branch)
@@ -50,6 +67,7 @@ class FakeSnapshotRepo:
             "start_date": kwargs["start_date"],
             "end_date": kwargs["end_date"],
             "payload_json": kwargs["payload"],
+            "generation_id": kwargs.get("generation_id", "gen-test"),
             "schema_version": 1,
             "source": "api-delpi",
             "refreshed_at": datetime(2026, 8, 19, 22, 0, tzinfo=timezone.utc),
@@ -128,6 +146,7 @@ def _machine_load(snapshots: FakeSnapshotRepo) -> MachineLoadService:
     return MachineLoadService(
         FakeGateway(),
         snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
     )
 
@@ -149,6 +168,7 @@ def _seed_queue(
         },
         refreshed_by="planner-1",
     )
+    snapshots.publish("01")
 
 
 def _public_service(

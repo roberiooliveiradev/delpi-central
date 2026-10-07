@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import copy
+
+from contextlib import contextmanager
 from datetime import date, datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -176,15 +179,53 @@ class FakeGateway:
 
 
 class FakeSnapshotRepo:
-    """Uma fila viva por filial — igual ao Postgres depois da V003."""
+    """Uma fila viva por filial (WORKING) — igual ao Postgres depois da V003/V015."""
 
     def __init__(self) -> None:
         self.rows: dict[str, dict[str, Any]] = {}
+        # PUBLISHED: cópia congelada do WORKING no instante da «publicação».
+        # Nada escreve aqui a não ser publish() — refresh nunca toca a fila das bancadas.
+        self.published: dict[str, dict[str, Any]] = {}
         self.upserts = 0
         self.payload_updates = 0
+        self.for_update_reads = 0
 
     def get(self, *, branch: str) -> dict[str, Any] | None:
         return self.rows.get(branch)
+
+    def get_for_update(self, *, branch: str, conn: Any = None) -> dict[str, Any] | None:
+        """Emula SELECT ... FOR UPDATE: leitura autoritativa sob lock da linha."""
+        self.for_update_reads += 1
+        row = self.rows.get(branch)
+        return copy.deepcopy(row) if row is not None else None
+
+    @contextmanager
+    def transaction(self):
+        """Rollback emulado: exceção dentro do bloco restaura WORKING e PUBLISHED."""
+        rows_backup = copy.deepcopy(self.rows)
+        published_backup = copy.deepcopy(self.published)
+        try:
+            yield self
+        except Exception:
+            # restore in-place: FakePublicationRepo segura a referência de published.
+            self.rows.clear()
+            self.rows.update(rows_backup)
+            self.published.clear()
+            self.published.update(published_backup)
+            raise
+
+    def publish(self, branch: str = "01") -> None:
+        """Emula «Enviar para máquinas»: copia o WORKING vigente para o PUBLISHED."""
+        row = self.rows.get(branch)
+        if row is None:
+            raise AssertionError(f"Sem WORKING para publicar na filial {branch}")
+        self.published[branch] = {
+            **copy.deepcopy(row),
+            "source_refreshed_at": row.get("refreshed_at"),
+            "source_refreshed_by": row.get("refreshed_by"),
+            "published_at": datetime(2026, 8, 19, 22, 30, tzinfo=timezone.utc),
+            "published_by": row.get("refreshed_by"),
+        }
 
     def upsert(
         self,
@@ -193,6 +234,7 @@ class FakeSnapshotRepo:
         start_date: date,
         end_date: date,
         payload: dict[str, Any],
+        generation_id: str = "gen-test",
         refreshed_by: str | None,
         schema_version: int = 1,
         source: str = "api-delpi",
@@ -203,6 +245,7 @@ class FakeSnapshotRepo:
             "branch": branch,
             "start_date": start_date,
             "end_date": end_date,
+            "generation_id": generation_id,
             "payload_json": payload,
             "schema_version": schema_version,
             "source": source,
@@ -212,7 +255,9 @@ class FakeSnapshotRepo:
         self.rows[branch] = row
         return row
 
-    def update_payload(self, *, branch: str, payload: dict[str, Any]) -> dict[str, Any]:
+    def update_payload(
+        self, *, branch: str, payload: dict[str, Any], conn: Any = None
+    ) -> dict[str, Any]:
         existing = self.rows.get(branch)
         if existing is None:
             raise RuntimeError("Snapshot da carga máquina não encontrado para atualizar.")
@@ -223,6 +268,47 @@ class FakeSnapshotRepo:
         }
         self.rows[branch] = updated
         return updated
+
+
+class FakePublicationRepo:
+    """Uma publicação vigente por filial — igual ao Postgres depois da V015."""
+
+    def __init__(self, rows: dict[str, dict[str, Any]] | None = None) -> None:
+        self.rows: dict[str, dict[str, Any]] = rows if rows is not None else {}
+        self.upserts = 0
+
+    def get(self, *, branch: str, conn: Any = None) -> dict[str, Any] | None:
+        row = self.rows.get(branch)
+        return copy.deepcopy(row) if row is not None else None
+
+    def upsert(self, conn: Any = None, **kwargs: Any) -> dict[str, Any]:
+        self.upserts += 1
+        branch = kwargs["branch"]
+        row = {
+            "id": f"pub-{branch}",
+            "branch": branch,
+            "generation_id": kwargs["generation_id"],
+            "start_date": kwargs["start_date"],
+            "end_date": kwargs["end_date"],
+            "payload_json": copy.deepcopy(kwargs["payload"]),
+            "schema_version": kwargs.get("schema_version", 1),
+            "source": kwargs.get("source", "api-delpi"),
+            "source_refreshed_at": kwargs.get("source_refreshed_at"),
+            "source_refreshed_by": kwargs.get("source_refreshed_by"),
+            "published_at": datetime(2026, 8, 19, 22, 30, tzinfo=timezone.utc),
+            "published_by": kwargs.get("published_by"),
+        }
+        self.rows[branch] = row
+        return copy.deepcopy(row)
+
+    def update_payload(
+        self, *, branch: str, payload: dict[str, Any], conn: Any = None
+    ) -> dict[str, Any]:
+        row = self.rows.get(branch)
+        if row is None:
+            raise AssertionError(f"Sem publicação na filial {branch} para atualizar.")
+        row["payload_json"] = copy.deepcopy(payload)
+        return copy.deepcopy(row)
 
 
 def _user(*permissions: str):
@@ -238,9 +324,11 @@ FULL_PERMS = (
 
 
 def _service(gateway: FakeGateway, snapshots: FakeSnapshotRepo | None = None) -> MachineLoadService:
+    snapshots = snapshots or FakeSnapshotRepo()
     return MachineLoadService(
         gateway,
-        snapshots=snapshots or FakeSnapshotRepo(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
     )
 
@@ -450,6 +538,7 @@ def test_public_build_applies_live_operation_balance_on_legacy_snapshot() -> Non
         },
         refreshed_by="planner-1",
     )
+    snapshots.publish("02")
 
     payload = _service(gateway, snapshots).build_public(
         branch="02", work_center="CT-01A"
@@ -799,6 +888,7 @@ def _service_with_notifier(
     return MachineLoadService(
         gateway,
         snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
         change_notifier=notifier,
     )
@@ -826,6 +916,7 @@ def _seed_default_window_snapshot(
         },
         refreshed_by="planner-1",
     )
+    snapshots.publish("01")
     return start, end
 
 
@@ -994,6 +1085,7 @@ def _seed_public_balance_snapshot(
         },
         refreshed_by="planner-1",
     )
+    snapshots.publish("01")
 
 
 def _balance_op(
@@ -1176,6 +1268,7 @@ def test_reorder_sequence_notifies_connected_cockpits() -> None:
     notifier = RecordingNotifier()
     service = _service_with_notifier(FakeGateway(), snapshots, notifier)
     start, end = _seed_multi_center_snapshot(snapshots)
+    snapshots.publish("01")
 
     service.reorder_sequence(
         _user(*FULL_PERMS),
@@ -1193,13 +1286,14 @@ def test_reorder_sequence_notifies_connected_cockpits() -> None:
     ]
 
 
-def test_refresh_notifies_connected_cockpits() -> None:
+def test_refresh_does_not_notify_connected_cockpits() -> None:
+    """Atualizar reescreve só o WORKING: cockpit lê PUBLISHED, evento seria ruído."""
     notifier = RecordingNotifier()
     service = _service_with_notifier(FakeGateway(), FakeSnapshotRepo(), notifier)
 
     service.refresh(_user(*FULL_PERMS), branch="01")
 
-    assert notifier.events == [{"branch": "01", "reason": "refresh", "work_center": None}]
+    assert notifier.events == []
 
 
 def test_failed_notification_does_not_break_the_write() -> None:
@@ -1211,6 +1305,7 @@ def test_failed_notification_does_not_break_the_write() -> None:
     service = MachineLoadService(
         FakeGateway(),
         snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
         change_notifier=exploding_notifier,
     )
@@ -1284,6 +1379,7 @@ def _seed_public_queue_with_pa(
         },
         refreshed_by="planner-1",
     )
+    snapshots.publish("01")
 
 
 def test_public_drawing_returns_pdf_when_pa_is_in_queue() -> None:
@@ -1742,6 +1838,7 @@ def test_optimize_delivery_sequence_notifies_connected_cockpits() -> None:
     notifier = RecordingNotifier()
     service = _service_with_notifier(FakeGateway(), snapshots, notifier)
     _seed_optimization_snapshot(snapshots)
+    snapshots.publish("01")
 
     service.optimize_delivery_sequence(_user(*FULL_PERMS), branch="01", work_center="CT-01A")
 
@@ -1911,6 +2008,7 @@ def test_withdraw_conjunto_notifies_connected_cockpits() -> None:
     notifier = RecordingNotifier()
     service = _service_with_notifier(FakeGateway(), snapshots, notifier)
     start, end = _seed_priority_snapshot(snapshots)
+    snapshots.publish("01")
 
     _withdraw(service, start, end)
 
@@ -2147,6 +2245,7 @@ def test_transfer_operation_notifies_connected_cockpits() -> None:
     notifier = RecordingNotifier()
     service = _service_with_notifier(FakeGateway(), snapshots, notifier)
     start, end = _seed_priority_snapshot(snapshots)
+    snapshots.publish("01")
 
     _transfer(service, start, end)
 
@@ -2214,6 +2313,7 @@ def _seed_withdrawal_public_snapshot(
         },
         refreshed_by="planner-1",
     )
+    snapshots.publish("01")
     return start, end
 
 
@@ -2237,7 +2337,8 @@ def test_refresh_keeps_conjunto_out_of_the_schedule() -> None:
     assert payload["summary"]["operation_count"] == 0
 
 
-def test_public_cockpit_does_not_see_withdrawn_conjunto() -> None:
+def test_public_cockpit_sees_withdrawn_queue_when_live() -> None:
+    """LIVE: withdraw já propaga para o PUBLISHED na mesma transação (E4)."""
     snapshots = FakeSnapshotRepo()
     service = _service(FakeGateway(), snapshots)
     start, end = _seed_withdrawal_public_snapshot(service, snapshots)
@@ -2250,7 +2351,6 @@ def test_public_cockpit_does_not_see_withdrawn_conjunto() -> None:
     public_payload = service.build_public(branch="01", work_center="CT-02")
 
     assert public_payload["selected"]["items"] == []
-    assert "withdrawn" not in public_payload
     assert service.public_snapshot_contains_pa(branch="01", pa_code="90262910") is False
 
 
@@ -2348,8 +2448,10 @@ def test_live_status_route_answers_404_without_snapshot(machine_load_routes_modu
 
 
 def test_public_cockpit_never_receives_the_whole_queue() -> None:
-    service = _service(FakeGateway(), FakeSnapshotRepo())
+    snapshots = FakeSnapshotRepo()
+    service = _service(FakeGateway(), snapshots)
     service.build(_user(*FULL_PERMS), branch="01")
+    snapshots.publish("01")
 
     public_payload = service.build_public(branch="01", work_center="CT-02")
 
@@ -2401,6 +2503,7 @@ def _snapshots_with_run_target_operation() -> FakeSnapshotRepo:
         },
         refreshed_by="planner-1",
     )
+    snapshots.publish("01")
     return snapshots
 
 

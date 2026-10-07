@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from collections.abc import Callable
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
@@ -10,6 +11,9 @@ from typing import Any
 
 from production_control_app.core.security import PC_MACHINE_LOAD_VIEW, can
 from production_control_app.domain.errors import DelpiGatewayError, SnapshotNotFound
+from production_control_app.domain.ports.machine_load_publication_repository import (
+    MachineLoadPublicationRepositoryPort,
+)
 from production_control_app.domain.ports.machine_load_snapshot_repository import (
     MachineLoadSnapshotRepositoryPort,
 )
@@ -253,12 +257,14 @@ class MachineLoadService:
         gateway: ProductionOrdersGateway,
         *,
         snapshots: MachineLoadSnapshotRepositoryPort,
+        publications: MachineLoadPublicationRepositoryPort,
         branch_access: BranchAccessService | None = None,
         change_notifier: Callable[..., None] | None = None,
         list_open_runs: Callable[[str], list[dict[str, Any]]] | None = None,
     ) -> None:
         self._gateway = gateway
         self._snapshots = snapshots
+        self._publications = publications
         self._branch_access = branch_access or BranchAccessService()
         self._change_notifier = change_notifier
         self._list_open_runs = list_open_runs
@@ -380,11 +386,7 @@ class MachineLoadService:
         no ERP nem materializar snapshot novo.
         """
         code = self._branch_access.assert_valid_branch(branch)
-        row = self._snapshots.get(branch=code)
-        if row is None:
-            raise SnapshotNotFound(
-                "A fila desta filial ainda não foi publicada pelo PCP."
-            )
+        row = self._publication_as_snapshot_row(self._get_publication(branch=code))
         payload = self._present(
             row,
             work_center=work_center,
@@ -401,11 +403,7 @@ class MachineLoadService:
         wanted = str(pa_code or "").strip()
         if not wanted:
             return False
-        row = self._snapshots.get(branch=code)
-        if row is None:
-            raise SnapshotNotFound(
-                "A fila desta filial ainda não foi publicada pelo PCP."
-            )
+        row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = payload_operations(payload)
         operations = visible_operations(operations, withdrawn_order_numbers(payload))
@@ -528,11 +526,7 @@ class MachineLoadService:
         operation = str(operation_code or "").strip()
         if not order or not operation:
             return None
-        row = self._snapshots.get(branch=code)
-        if row is None:
-            raise SnapshotNotFound(
-                "A fila desta filial ainda não foi publicada pelo PCP."
-            )
+        row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = visible_operations(
             payload_operations(payload), withdrawn_order_numbers(payload)
@@ -554,11 +548,7 @@ class MachineLoadService:
         wanted = str(product_code or "").strip()
         if not wanted:
             return False
-        row = self._snapshots.get(branch=code)
-        if row is None:
-            raise SnapshotNotFound(
-                "A fila desta filial ainda não foi publicada pelo PCP."
-            )
+        row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = visible_operations(
             payload_operations(payload), withdrawn_order_numbers(payload)
@@ -582,11 +572,7 @@ class MachineLoadService:
         wanted = str(work_center or "").strip()
         if not wanted:
             return None
-        row = self._snapshots.get(branch=code)
-        if row is None:
-            raise SnapshotNotFound(
-                "A fila desta filial ainda não foi publicada pelo PCP."
-            )
+        row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = visible_operations(
             payload_operations(payload), withdrawn_order_numbers(payload)
@@ -626,8 +612,114 @@ class MachineLoadService:
             seeded=False,
             branch=branch,
         )
-        self._notify_change(branch=branch, reason="refresh")
+        # Refresh só prepara o WORKING: o cockpit continua lendo a publicação
+        # vigente, então nada é notificado aqui (publicar = E3).
         return presented
+
+    def publish(self, user: object | None, *, branch: str) -> dict[str, Any]:
+        """«Enviar para máquinas»: promove a fila WORKING vigente para a PUBLISHED.
+
+        Transacional: SELECT ... FOR UPDATE no WORKING + upsert da
+        publicação na mesma conexão — mutações concorrentes (reorder,
+        transfer, withdraw) serializam no lock da linha. O cockpit só é
+        avisado depois do commit; republicar a mesma geração é idempotente
+        (sem write, sem broadcast). Publish nunca consulta o TOTVS.
+        """
+        self._assert_can_view(user, branch)
+        code = self._branch_access.assert_valid_branch(branch)
+
+        with self._snapshots.transaction() as conn:
+            working = self._snapshots.get_for_update(branch=code, conn=conn)
+            if working is None:
+                raise SnapshotNotFound(
+                    "Não há carga máquina atualizada para enviar às máquinas."
+                )
+            generation = str(working.get("generation_id") or "")
+            existing = self._publications.get(branch=code, conn=conn)
+            if existing is not None and str(
+                existing.get("generation_id") or ""
+            ) == generation:
+                return {
+                    "publication": self._present_publication(existing, changed=False)
+                }
+            published = self._publications.upsert(
+                branch=code,
+                generation_id=generation,
+                start_date=working["start_date"],
+                end_date=working["end_date"],
+                payload=decode_snapshot_payload(working),
+                source_refreshed_at=working.get("refreshed_at"),
+                source_refreshed_by=working.get("refreshed_by"),
+                published_by=_user_label(user),
+                schema_version=_as_int(
+                    working.get("schema_version"), _SNAPSHOT_SCHEMA_VERSION
+                ),
+                source=str(working.get("source") or "api-delpi"),
+                conn=conn,
+            )
+
+        # Só depois do commit: avisar antes ligaria o cockpit a uma fila que
+        # poderia não ter sido persistida.
+        self._notify_change(branch=code, reason="publish")
+        return {"publication": self._present_publication(published, changed=True)}
+
+    @staticmethod
+    def _present_publication(row: dict[str, Any], *, changed: bool) -> dict[str, Any]:
+        """Recorte enxuto da publicação para a resposta autenticada do PCP."""
+        return {
+            "generation_id": str(row.get("generation_id") or ""),
+            "published_at": _iso_timestamp(row.get("published_at")),
+            "published_by": row.get("published_by"),
+            "changed": changed,
+        }
+
+    def _persist_queue_change(
+        self,
+        *,
+        branch: str,
+        mutate: Any,
+        reason: str,
+        work_center: str | None = None,
+    ) -> tuple[dict[str, Any], Any]:
+        """Persistência única das mutações da fila — WORKING + PUBLISHED quando LIVE.
+
+        mutate(row, payload) recebe a linha WORKING bloqueada
+        (SELECT ... FOR UPDATE) e seu payload decodificado; devolve o
+        resultado da operação ou None quando nada mudou (no-op: sem write,
+        sem broadcast). Se WORKING e PUBLISHED estão na mesma generation_id
+        (LIVE), o mesmo payload vai para machine_load_publications na mesma
+        transação e o cockpit é avisado após o commit. Em DRAFT só o WORKING
+        muda — nenhuma mutação manual atravessa a comporta antes do publish.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        live = False
+        with self._snapshots.transaction() as conn:
+            row = self._snapshots.get_for_update(branch=code, conn=conn)
+            if row is None:
+                raise SnapshotNotFound(
+                    "Não há carga máquina congelada nesta filial. "
+                    "Atualize a partir do TOTVS."
+                )
+            payload = decode_snapshot_payload(row)
+            result = mutate(row, payload)
+            if result is None:
+                return row, None
+            updated = self._snapshots.update_payload(
+                branch=code, payload=payload, conn=conn
+            )
+            published = self._publications.get(branch=code, conn=conn)
+            live = published is not None and str(
+                published.get("generation_id") or ""
+            ) == str(row.get("generation_id") or "")
+            if live:
+                self._publications.update_payload(
+                    branch=code, payload=payload, conn=conn
+                )
+
+        # Broadcast só depois do commit e só quando a bancada realmente muda.
+        if live:
+            self._notify_change(branch=code, reason=reason, work_center=work_center)
+        return updated, result
 
     def reorder_sequence(
         self,
@@ -643,29 +735,31 @@ class MachineLoadService:
         if not center:
             raise ValueError("workCenter é obrigatório para reordenar a sequência.")
 
-        row, payload = self._load_snapshot_payload(branch=branch)
-        operations = payload_operations(payload)
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> list[dict[str, Any]]:
+            reordered = self._apply_center_order(
+                payload_operations(payload),
+                work_center=center,
+                ordered_keys=ordered_keys,
+                withdrawn_keys=withdrawn_order_numbers(payload),
+            )
+            now = datetime.now(timezone.utc).isoformat()
+            payload["operations"] = reordered
+            payload["sequence_updated_at"] = now
+            payload["sequence_updated_by"] = _user_label(user)
+            return reordered
 
-        reordered = self._apply_center_order(
-            operations,
+        updated, _result = self._persist_queue_change(
+            branch=branch,
+            mutate=mutate,
+            reason="sequence",
             work_center=center,
-            ordered_keys=ordered_keys,
-            withdrawn_keys=withdrawn_order_numbers(payload),
         )
-        now = datetime.now(timezone.utc).isoformat()
-        payload["operations"] = reordered
-        payload["sequence_updated_at"] = now
-        payload["sequence_updated_by"] = _user_label(user)
-
-        updated = self._snapshots.update_payload(branch=branch, payload=payload)
-        presented = self._present(
+        return self._present(
             updated,
             work_center=center,
             seeded=False,
             branch=branch,
         )
-        self._notify_change(branch=branch, reason="sequence", work_center=center)
-        return presented
 
     def prioritize_conjunto(
         self,
@@ -699,38 +793,57 @@ class MachineLoadService:
         withdrawn_keys = withdrawn_order_numbers(payload)
         operations = visible_operations(stored_operations, withdrawn_keys)
 
+        template_not_in_queue = str(
+            messages.get("notInQueue")
+            or "Nenhuma operação do conjunto «{conjunto}» está na fila deste período."
+        )
         if not any(
             order_belongs_to_conjunto(item.get("production_order"), conjunto_key)
             for item in operations
         ):
-            template = str(
-                messages.get("notInQueue")
-                or "Nenhuma operação do conjunto «{conjunto}» está na fila deste período."
-            )
-            raise ValueError(template.format(conjunto=conjunto_key))
+            raise ValueError(template_not_in_queue.format(conjunto=conjunto_key))
 
         # O status vivo (HZA) decide quem já começou; o snapshot congelado guarda só a ordem.
+        # Chamada externa fora da transação: o lock do WORKING não pode esperar HTTP.
         started_keys = {
             _operation_key(item)
             for item in self._enrich_live_status(branch=branch, operations=operations)
             if is_started_operation(item)
         }
-        result = prioritize_conjunto_in_queue(
-            operations,
-            conjunto_key=conjunto_key,
-            started_keys=started_keys,
-        )
 
-        target_row = row
-        if result.work_centers:
-            payload["operations"] = self._merge_visible_order(
-                stored_operations,
-                withdrawn_keys=withdrawn_keys,
+        def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
+            stored = payload_operations(locked_payload)
+            withdrawn = withdrawn_order_numbers(locked_payload)
+            visible = visible_operations(stored, withdrawn)
+            if not any(
+                order_belongs_to_conjunto(item.get("production_order"), conjunto_key)
+                for item in visible
+            ):
+                raise ValueError(
+                    template_not_in_queue.format(conjunto=conjunto_key)
+                )
+            result = prioritize_conjunto_in_queue(
+                visible,
+                conjunto_key=conjunto_key,
+                started_keys=started_keys,
+            )
+            visible_keys = [_operation_key(item) for item in visible]
+            if not result.work_centers or [
+                _operation_key(item) for item in result.operations
+            ] == visible_keys:
+                return None
+            locked_payload["operations"] = self._merge_visible_order(
+                stored,
+                withdrawn_keys=withdrawn,
                 reordered_visible=result.operations,
             )
-            payload["sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
-            payload["sequence_updated_by"] = _user_label(user)
-            target_row = self._snapshots.update_payload(branch=branch, payload=payload)
+            locked_payload["sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
+            locked_payload["sequence_updated_by"] = _user_label(user)
+            return result
+
+        target_row, result = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="priority"
+        )
 
         presented = self._present(
             target_row,
@@ -738,7 +851,8 @@ class MachineLoadService:
             seeded=False,
             branch=branch,
         )
-        if result.work_centers:
+        work_centers = result.work_centers if result else []
+        if work_centers:
             template = str(
                 messages.get("applied")
                 or "Conjunto {conjunto} priorizado em {centers} centro(s) de trabalho."
@@ -750,17 +864,15 @@ class MachineLoadService:
             )
         presented["prioritization"] = {
             "order_number": conjunto_key,
-            "work_centers": result.work_centers,
-            "operation_count": result.prioritized_operation_count,
-            "kept_ahead_count": result.kept_ahead_count,
+            "work_centers": work_centers,
+            "operation_count": result.prioritized_operation_count if result else 0,
+            "kept_ahead_count": result.kept_ahead_count if result else 0,
             "message": template.format(
                 conjunto=conjunto_key,
-                centers=len(result.work_centers),
-                operations=result.prioritized_operation_count,
+                centers=len(work_centers),
+                operations=result.prioritized_operation_count if result else 0,
             ),
         }
-        if result.work_centers:
-            self._notify_change(branch=branch, reason="priority")
         return presented
 
     def optimize_delivery_sequence(
@@ -789,32 +901,47 @@ class MachineLoadService:
         # Conjunto fora da programação não participa da fila — nem para otimizar.
         withdrawn_keys = withdrawn_order_numbers(payload)
         operations = visible_operations(stored_operations, withdrawn_keys)
+        template_empty_queue = str(
+            messages.get("emptyQueue")
+            or "Não há operações na fila desta filial para otimizar."
+        )
         if not operations:
-            raise ValueError(
-                str(
-                    messages.get("emptyQueue")
-                    or "Não há operações na fila desta filial para otimizar."
-                )
-            )
+            raise ValueError(template_empty_queue)
 
         # O status vivo (HZA) decide quem já começou; o snapshot guarda só a ordem.
+        # Chamada externa fora da transação: o lock do WORKING não pode esperar HTTP.
         started_keys = {
             _operation_key(item)
             for item in self._enrich_live_status(branch=branch, operations=operations)
             if is_started_operation(item)
         }
-        result = optimize_by_delivery_date(operations, started_keys=started_keys)
 
-        target_row = row
-        if result.work_centers:
-            payload["operations"] = self._merge_visible_order(
-                stored_operations,
-                withdrawn_keys=withdrawn_keys,
+        def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
+            stored = payload_operations(locked_payload)
+            withdrawn = withdrawn_order_numbers(locked_payload)
+            visible = visible_operations(stored, withdrawn)
+            if not visible:
+                raise ValueError(
+                    template_empty_queue
+                )
+            result = optimize_by_delivery_date(visible, started_keys=started_keys)
+            visible_keys = [_operation_key(item) for item in visible]
+            if not result.work_centers or [
+                _operation_key(item) for item in result.operations
+            ] == visible_keys:
+                return None
+            locked_payload["operations"] = self._merge_visible_order(
+                stored,
+                withdrawn_keys=withdrawn,
                 reordered_visible=result.operations,
             )
-            payload["sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
-            payload["sequence_updated_by"] = _user_label(user)
-            target_row = self._snapshots.update_payload(branch=branch, payload=payload)
+            locked_payload["sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
+            locked_payload["sequence_updated_by"] = _user_label(user)
+            return result
+
+        target_row, result = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="delivery_sequence"
+        )
 
         presented = self._present(
             target_row,
@@ -822,7 +949,8 @@ class MachineLoadService:
             seeded=False,
             branch=branch,
         )
-        if result.work_centers:
+        work_centers = result.work_centers if result else []
+        if work_centers:
             template = str(
                 messages.get("applied")
                 or "Fila reordenada por entrega do PA em {centers} centro(s) de trabalho."
@@ -833,19 +961,17 @@ class MachineLoadService:
                 or "A fila já está ordenada pela entrega do PA em todos os centros."
             )
         presented["optimization"] = {
-            "work_centers": result.work_centers,
-            "moved_operation_count": result.moved_operation_count,
-            "kept_ahead_count": result.kept_ahead_count,
-            "missing_due_date_count": result.missing_due_date_count,
+            "work_centers": work_centers,
+            "moved_operation_count": result.moved_operation_count if result else 0,
+            "kept_ahead_count": result.kept_ahead_count if result else 0,
+            "missing_due_date_count": result.missing_due_date_count if result else 0,
             "message": template.format(
-                centers=len(result.work_centers),
-                operations=result.moved_operation_count,
-                kept_ahead=result.kept_ahead_count,
-                missing=result.missing_due_date_count,
+                centers=len(work_centers),
+                operations=result.moved_operation_count if result else 0,
+                kept_ahead=result.kept_ahead_count if result else 0,
+                missing=result.missing_due_date_count if result else 0,
             ),
         }
-        if result.work_centers:
-            self._notify_change(branch=branch, reason="delivery_sequence")
         return presented
 
     def withdraw_conjunto(
@@ -864,43 +990,55 @@ class MachineLoadService:
         self._assert_can_view(user, branch)
         messages = self._withdrawal_messages()
         conjunto_key = self._require_conjunto_key(order_number, messages)
-        row, payload = self._load_snapshot_payload(branch=branch)
 
-        operations = payload_operations(payload)
-        entries = withdrawn_entries(payload)
-        if any(item.get("order_number") == conjunto_key for item in entries):
-            raise ValueError(
-                self._format_withdrawal_message(
-                    messages, "alreadyWithdrawn", conjunto=conjunto_key
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any] | None:
+            operations = payload_operations(payload)
+            entries = withdrawn_entries(payload)
+            if any(item.get("order_number") == conjunto_key for item in entries):
+                raise ValueError(
+                    self._format_withdrawal_message(
+                        messages, "alreadyWithdrawn", conjunto=conjunto_key
+                    )
                 )
+            if not any(
+                order_belongs_to_conjunto(item.get("production_order"), conjunto_key)
+                for item in operations
+            ):
+                raise ValueError(
+                    self._format_withdrawal_message(
+                        messages, "notInQueue", conjunto=conjunto_key
+                    )
+                )
+
+            now = datetime.now(timezone.utc).isoformat()
+            next_entries, changed = withdraw_conjunto_from_queue(
+                entries,
+                order_number=conjunto_key,
+                operations=operations,
+                withdrawn_at=now,
+                withdrawn_by=_user_label(user),
             )
-        if not any(
-            order_belongs_to_conjunto(item.get("production_order"), conjunto_key)
-            for item in operations
-        ):
-            raise ValueError(
-                self._format_withdrawal_message(messages, "notInQueue", conjunto=conjunto_key)
+            if not changed:
+                return None
+            payload[WITHDRAWN_CONJUNTOS_KEY] = next_entries
+            payload["withdrawal_updated_at"] = now
+            payload["withdrawal_updated_by"] = _user_label(user)
+            return next(
+                (
+                    item
+                    for item in next_entries
+                    if item.get("order_number") == conjunto_key
+                ),
+                None,
             )
 
-        now = datetime.now(timezone.utc).isoformat()
-        next_entries, changed = withdraw_conjunto_from_queue(
-            entries,
-            order_number=conjunto_key,
-            operations=operations,
-            withdrawn_at=now,
-            withdrawn_by=_user_label(user),
+        row, entry = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="withdrawal"
         )
-        return self._store_withdrawal(
+        return self._present_withdrawal(
             row,
             branch=branch,
-            payload=payload,
-            entries=next_entries,
-            entry=next(
-                (item for item in next_entries if item.get("order_number") == conjunto_key),
-                None,
-            ),
-            changed=changed,
-            updated_by=_user_label(user),
+            entry=entry,
             work_center=work_center,
             conjunto_key=conjunto_key,
             action="withdrawn",
@@ -920,28 +1058,39 @@ class MachineLoadService:
         self._assert_can_view(user, branch)
         messages = self._withdrawal_messages()
         conjunto_key = self._require_conjunto_key(order_number, messages)
-        row, payload = self._load_snapshot_payload(branch=branch)
 
-        current_entries = withdrawn_entries(payload)
-        removed = next(
-            (item for item in current_entries if item.get("order_number") == conjunto_key), None
-        )
-        next_entries, changed = restore_conjunto_from_queue(
-            current_entries,
-            order_number=conjunto_key,
-        )
-        if not changed:
-            raise ValueError(
-                self._format_withdrawal_message(messages, "notWithdrawn", conjunto=conjunto_key)
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any] | None:
+            current_entries = withdrawn_entries(payload)
+            removed = next(
+                (
+                    item
+                    for item in current_entries
+                    if item.get("order_number") == conjunto_key
+                ),
+                None,
             )
-        return self._store_withdrawal(
+            next_entries, changed = restore_conjunto_from_queue(
+                current_entries,
+                order_number=conjunto_key,
+            )
+            if not changed:
+                raise ValueError(
+                    self._format_withdrawal_message(
+                        messages, "notWithdrawn", conjunto=conjunto_key
+                    )
+                )
+            payload[WITHDRAWN_CONJUNTOS_KEY] = next_entries
+            payload["withdrawal_updated_at"] = datetime.now(timezone.utc).isoformat()
+            payload["withdrawal_updated_by"] = _user_label(user)
+            return removed
+
+        row, entry = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="withdrawal"
+        )
+        return self._present_withdrawal(
             row,
             branch=branch,
-            payload=payload,
-            entries=next_entries,
-            entry=removed,
-            changed=changed,
-            updated_by=_user_label(user),
+            entry=entry,
             work_center=work_center,
             conjunto_key=conjunto_key,
             action="restored",
@@ -974,66 +1123,81 @@ class MachineLoadService:
         if not target:
             raise ValueError(self._format_transfer_message(messages, "targetRequired"))
 
-        row, payload = self._load_snapshot_payload(branch=branch)
-        operations = payload_operations(payload)
-        centers = {
-            str(item.get("work_center") or "").strip(): str(item.get("work_center_name") or "").strip()
-            for item in dict_items(payload.get("work_centers"))
-            if str(item.get("work_center") or "").strip()
-        }
-        if target not in centers:
-            raise ValueError(
-                self._format_transfer_message(messages, "unknownTarget", center=target)
-            )
-
-        current = find_operation(operations, production_order=order, operation_code=operation)
-        if current is None:
-            raise ValueError(
-                self._format_transfer_message(
-                    messages, "notInQueue", order=order, operation=operation
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+            operations = payload_operations(payload)
+            centers = {
+                str(item.get("work_center") or "").strip(): str(
+                    item.get("work_center_name") or ""
+                ).strip()
+                for item in dict_items(payload.get("work_centers"))
+                if str(item.get("work_center") or "").strip()
+            }
+            if target not in centers:
+                raise ValueError(
+                    self._format_transfer_message(messages, "unknownTarget", center=target)
                 )
-            )
-        if is_withdrawn(current, withdrawn_order_numbers(payload)):
-            raise ValueError(self._format_transfer_message(messages, "withdrawn", order=order))
-        source = normalize_work_center(current.get("work_center"))
-        if source == target:
-            raise ValueError(
-                self._format_transfer_message(messages, "sameCenter", center=target)
-            )
 
-        entries = transfer_entries(payload)
-        origin = original_work_center(
-            entries, production_order=order, operation_code=operation, fallback=source
-        )
-        moved = move_operation(
-            operations,
-            production_order=order,
-            operation_code=operation,
-            target_work_center=target,
-            target_work_center_name=centers.get(target) or None,
-            origin_work_center=origin,
-        )
-        if moved is None:
-            raise ValueError(
-                self._format_transfer_message(
-                    messages, "notInQueue", order=order, operation=operation
+            current = find_operation(
+                operations, production_order=order, operation_code=operation
+            )
+            if current is None:
+                raise ValueError(
+                    self._format_transfer_message(
+                        messages, "notInQueue", order=order, operation=operation
+                    )
                 )
-            )
+            if is_withdrawn(current, withdrawn_order_numbers(payload)):
+                raise ValueError(
+                    self._format_transfer_message(messages, "withdrawn", order=order)
+                )
+            source = normalize_work_center(current.get("work_center"))
+            if source == target:
+                raise ValueError(
+                    self._format_transfer_message(messages, "sameCenter", center=target)
+                )
 
-        now = datetime.now(timezone.utc).isoformat()
-        payload["operations"] = moved.operations
-        payload[TRANSFERRED_OPERATIONS_KEY] = register_transfer(
-            entries,
-            production_order=order,
-            operation_code=operation,
-            origin_work_center=origin,
-            target_work_center=target,
-            transferred_at=now,
-            transferred_by=_user_label(user),
+            entries = transfer_entries(payload)
+            origin = original_work_center(
+                entries, production_order=order, operation_code=operation, fallback=source
+            )
+            moved = move_operation(
+                operations,
+                production_order=order,
+                operation_code=operation,
+                target_work_center=target,
+                target_work_center_name=centers.get(target) or None,
+                origin_work_center=origin,
+            )
+            if moved is None:
+                raise ValueError(
+                    self._format_transfer_message(
+                        messages, "notInQueue", order=order, operation=operation
+                    )
+                )
+
+            now = datetime.now(timezone.utc).isoformat()
+            payload["operations"] = moved.operations
+            payload[TRANSFERRED_OPERATIONS_KEY] = register_transfer(
+                entries,
+                production_order=order,
+                operation_code=operation,
+                origin_work_center=origin,
+                target_work_center=target,
+                transferred_at=now,
+                transferred_by=_user_label(user),
+            )
+            payload["sequence_updated_at"] = now
+            payload["sequence_updated_by"] = _user_label(user)
+            return {
+                "source": source,
+                "origin": origin,
+                "centers": centers,
+                "moved_count": 1,
+            }
+
+        updated, info = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="transfer", work_center=target
         )
-        payload["sequence_updated_at"] = now
-        payload["sequence_updated_by"] = _user_label(user)
-        updated = self._snapshots.update_payload(branch=branch, payload=payload)
 
         presented = self._present(
             updated,
@@ -1044,20 +1208,19 @@ class MachineLoadService:
         presented["transfer"] = {
             "production_order": order,
             "operation_code": operation,
-            "source_work_center": source,
+            "source_work_center": info["source"],
             "target_work_center": target,
-            "target_work_center_name": centers.get(target) or None,
-            "returned_to_origin": target == origin,
+            "target_work_center_name": info["centers"].get(target) or None,
+            "returned_to_origin": target == info["origin"],
             "message": self._format_transfer_message(
                 messages,
                 "applied",
                 order=order,
                 operation=operation,
-                source=source,
+                source=info["source"],
                 target=target,
             ),
         }
-        self._notify_change(branch=branch, reason="transfer", work_center=target)
         return presented
 
     def transfer_conjunto(
@@ -1088,71 +1251,77 @@ class MachineLoadService:
                 self._format_transfer_message(messages, "sameCenter", center=target)
             )
 
-        row, payload = self._load_snapshot_payload(branch=branch)
-        operations = payload_operations(payload)
-        withdrawn_keys = withdrawn_order_numbers(payload)
-        if conjunto_key in withdrawn_keys:
-            raise ValueError(
-                self._format_transfer_message(
-                    messages, "withdrawn", order=conjunto_key
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+            operations = payload_operations(payload)
+            withdrawn_keys = withdrawn_order_numbers(payload)
+            if conjunto_key in withdrawn_keys:
+                raise ValueError(
+                    self._format_transfer_message(
+                        messages, "withdrawn", order=conjunto_key
+                    )
                 )
-            )
 
-        centers = {
-            str(item.get("work_center") or "").strip(): str(item.get("work_center_name") or "").strip()
-            for item in dict_items(payload.get("work_centers"))
-            if str(item.get("work_center") or "").strip()
-        }
-        if target not in centers:
-            raise ValueError(
-                self._format_transfer_message(messages, "unknownTarget", center=target)
-            )
-
-        entries = transfer_entries(payload)
-        moved = move_conjunto_at_work_center(
-            operations,
-            conjunto_key=conjunto_key,
-            source_work_center=source,
-            target_work_center=target,
-            target_work_center_name=centers.get(target) or None,
-            transfer_log=entries,
-        )
-        if moved is None:
-            raise ValueError(
-                self._format_transfer_message(
-                    messages,
-                    "conjuntoNotInCenter",
-                    conjunto=conjunto_key,
-                    source=source,
+            centers = {
+                str(item.get("work_center") or "").strip(): str(
+                    item.get("work_center_name") or ""
+                ).strip()
+                for item in dict_items(payload.get("work_centers"))
+                if str(item.get("work_center") or "").strip()
+            }
+            if target not in centers:
+                raise ValueError(
+                    self._format_transfer_message(messages, "unknownTarget", center=target)
                 )
-            )
 
-        now = datetime.now(timezone.utc).isoformat()
-        next_entries = entries
-        for item in moved.moved:
-            order = normalize_order_code(item.get("production_order"))
-            operation = normalize_order_code(item.get("operation_code"))
-            origin = original_work_center(
-                next_entries,
-                production_order=order,
-                operation_code=operation,
-                fallback=source,
-            )
-            next_entries = register_transfer(
-                next_entries,
-                production_order=order,
-                operation_code=operation,
-                origin_work_center=origin,
+            entries = transfer_entries(payload)
+            moved = move_conjunto_at_work_center(
+                operations,
+                conjunto_key=conjunto_key,
+                source_work_center=source,
                 target_work_center=target,
-                transferred_at=now,
-                transferred_by=_user_label(user),
+                target_work_center_name=centers.get(target) or None,
+                transfer_log=entries,
             )
+            if moved is None:
+                raise ValueError(
+                    self._format_transfer_message(
+                        messages,
+                        "conjuntoNotInCenter",
+                        conjunto=conjunto_key,
+                        source=source,
+                    )
+                )
 
-        payload["operations"] = moved.operations
-        payload[TRANSFERRED_OPERATIONS_KEY] = next_entries
-        payload["sequence_updated_at"] = now
-        payload["sequence_updated_by"] = _user_label(user)
-        updated = self._snapshots.update_payload(branch=branch, payload=payload)
+            now = datetime.now(timezone.utc).isoformat()
+            next_entries = entries
+            for item in moved.moved:
+                order = normalize_order_code(item.get("production_order"))
+                operation = normalize_order_code(item.get("operation_code"))
+                origin = original_work_center(
+                    next_entries,
+                    production_order=order,
+                    operation_code=operation,
+                    fallback=source,
+                )
+                next_entries = register_transfer(
+                    next_entries,
+                    production_order=order,
+                    operation_code=operation,
+                    origin_work_center=origin,
+                    target_work_center=target,
+                    transferred_at=now,
+                    transferred_by=_user_label(user),
+                )
+
+            payload["operations"] = moved.operations
+            payload[TRANSFERRED_OPERATIONS_KEY] = next_entries
+            payload["sequence_updated_at"] = now
+            payload["sequence_updated_by"] = _user_label(user)
+            return {"centers": centers, "moved_count": len(moved.moved)}
+
+        updated, info = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="transfer", work_center=target
+        )
 
         presented = self._present(
             updated,
@@ -1164,22 +1333,21 @@ class MachineLoadService:
             "order_number": conjunto_key,
             "production_order": conjunto_key,
             "operation_code": None,
-            "operation_count": len(moved.moved),
+            "operation_count": info["moved_count"],
             "source_work_center": source,
             "target_work_center": target,
-            "target_work_center_name": centers.get(target) or None,
+            "target_work_center_name": info["centers"].get(target) or None,
             "returned_to_origin": False,
             "scope": "conjunto_at_center",
             "message": self._format_transfer_message(
                 messages,
                 "conjuntoApplied",
                 conjunto=conjunto_key,
-                operations=len(moved.moved),
+                operations=info["moved_count"],
                 source=source,
                 target=target,
             ),
         }
-        self._notify_change(branch=branch, reason="transfer", work_center=target)
         return presented
 
     @staticmethod
@@ -1193,31 +1361,20 @@ class MachineLoadService:
         template = str(messages.get(key) or _TRANSFER_FALLBACK_MESSAGES.get(key, ""))
         return template.format(**values)
 
-    def _store_withdrawal(
+    def _present_withdrawal(
         self,
         row: dict[str, Any],
         *,
         branch: str,
-        payload: dict[str, Any],
-        entries: list[dict[str, Any]],
         entry: dict[str, Any] | None,
-        changed: bool,
-        updated_by: str | None,
         work_center: str | None,
         conjunto_key: str,
         action: str,
         message_key: str,
         messages: dict[str, Any],
     ) -> dict[str, Any]:
-        target_row = row
-        if changed:
-            payload[WITHDRAWN_CONJUNTOS_KEY] = entries
-            payload["withdrawal_updated_at"] = datetime.now(timezone.utc).isoformat()
-            payload["withdrawal_updated_by"] = updated_by
-            target_row = self._snapshots.update_payload(branch=branch, payload=payload)
-
         presented = self._present(
-            target_row,
+            row,
             work_center=work_center,
             seeded=False,
             branch=branch,
@@ -1235,8 +1392,6 @@ class MachineLoadService:
                 centers=len((entry or {}).get("work_centers") or []),
             ),
         }
-        if changed:
-            self._notify_change(branch=branch, reason="withdrawal")
         return presented
 
     @staticmethod
@@ -1271,12 +1426,48 @@ class MachineLoadService:
         *,
         branch: str,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Fila WORKING (planejamento do PCP)."""
         row = self._snapshots.get(branch=branch)
         if row is None:
             raise SnapshotNotFound(
                 "Não há carga máquina congelada nesta filial. Atualize a partir do TOTVS."
             )
         return row, decode_snapshot_payload(row)
+
+    def _get_publication(self, *, branch: str) -> dict[str, Any]:
+        """Fila PUBLISHED da filial — única fonte do cockpit/chão de fábrica.
+
+        Nunca faz fallback para o WORKING: sem publicação, a fila simplesmente
+        não existe para o operador.
+        """
+        row = self._publications.get(branch=branch)
+        if row is None:
+            raise SnapshotNotFound(
+                "A fila desta filial ainda não foi enviada pelo PCP."
+            )
+        return row
+
+    def _load_published_payload(
+        self,
+        *,
+        branch: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        row = self._get_publication(branch=branch)
+        return row, decode_snapshot_payload(row)
+
+    @staticmethod
+    def _publication_as_snapshot_row(row: dict[str, Any]) -> dict[str, Any]:
+        """Adapta metadados da publicação para o contrato do ``_present``.
+
+        ``refreshed_*`` na apresentação significa «quando a fila veio do
+        TOTVS» → ``source_refreshed_*``. ``published_at`` é outro fato e não
+        entra no payload público nesta etapa.
+        """
+        return {
+            **row,
+            "refreshed_at": row.get("source_refreshed_at"),
+            "refreshed_by": row.get("source_refreshed_by"),
+        }
 
     @staticmethod
     def _merge_visible_order(
@@ -1678,6 +1869,9 @@ class MachineLoadService:
             start_date=effective_start,
             end_date=end,
             payload=frozen,
+            # Todo refresh abre uma geração nova do WORKING — mesmo com payload
+            # idêntico. A geração marca o ciclo «Atualizar», não o conteúdo.
+            generation_id=str(uuid.uuid4()),
             refreshed_by=_user_label(user),
             schema_version=_SNAPSHOT_SCHEMA_VERSION,
         )
