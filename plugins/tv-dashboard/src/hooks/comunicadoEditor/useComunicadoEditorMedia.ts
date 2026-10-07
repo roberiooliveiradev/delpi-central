@@ -36,6 +36,8 @@ type Options = {
   setSelectedId: (id: string | null) => void;
   canvasRef?: RefObject<HTMLElement | null>;
   canvasWrapRef?: RefObject<HTMLElement | null>;
+  /** Asset aplicado no editor; alimenta o metadado `hasPoster` usado na hidratação de poster. */
+  onMediaAssetApplied?: (asset: MediaAsset) => void;
 };
 
 function fontFamilyFromFilename(filename: string | null | undefined): string {
@@ -56,6 +58,7 @@ export function useComunicadoEditorMedia({
   setSelectedId,
   canvasRef,
   canvasWrapRef,
+  onMediaAssetApplied,
 }: Options) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -72,6 +75,7 @@ export function useComunicadoEditorMedia({
       target?: MediaLibraryTarget,
       options?: { clientX?: number; clientY?: number; cascadeIndex?: number },
     ) => {
+      onMediaAssetApplied?.(asset);
       const resolvedTarget = target ?? mediaLibraryTargetRef.current;
       const url = resolveEditorMediaUrl(playlistId, asset.id) ?? "";
 
@@ -167,7 +171,18 @@ export function useComunicadoEditorMedia({
       );
       updateBlocks(nextBlocks);
     },
-    [canvasRef, canvasWrapRef, commitWithHistory, configRef, playlistId, selected, selectedId, setSelectedId, updateBlocks],
+    [
+      canvasRef,
+      canvasWrapRef,
+      commitWithHistory,
+      configRef,
+      onMediaAssetApplied,
+      playlistId,
+      selected,
+      selectedId,
+      setSelectedId,
+      updateBlocks,
+    ],
   );
 
   const handleUploadFile = useCallback(

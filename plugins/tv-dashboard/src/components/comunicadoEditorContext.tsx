@@ -50,6 +50,7 @@ import { useOptionalDataSourceDuplicateChoice } from "../context/DataSourceDupli
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
 import { useComunicadoEditorSelection } from "../hooks/comunicadoEditor/useComunicadoEditorSelection";
 import { useComunicadoEditorStage } from "../hooks/comunicadoEditor/useComunicadoEditorStage";
+import { useEditorVideoPosterAssets } from "../hooks/comunicadoEditor/useEditorVideoPosterAssets";
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
@@ -69,6 +70,7 @@ import { MediaLibraryModal } from "./MediaLibraryModal";
 import {
   enrichComunicadoConfigForEditor,
   ensureComunicadoEditorMediaUrls,
+  hydrateEditorVideoPosters,
   resolveMasterForPreview,
 } from "./slideCardPreview";
 import {
@@ -234,8 +236,13 @@ export function ComunicadoEditorProvider({
   children,
 }: ProviderProps) {
   const deckHistory = useDeckEditorHistoryContext();
+  const {
+    posterAssets: videoPosterAssets,
+    posterAssetsRef: videoPosterAssetsRef,
+    registerMediaAsset: registerVideoMediaAsset,
+  } = useEditorVideoPosterAssets(playlistId);
   const [config, setConfig] = useState<ComunicadoConfig>(() =>
-    enrichComunicadoConfigForEditor(value, playlistId),
+    enrichComunicadoConfigForEditor(value, playlistId, videoPosterAssets),
   );
   const [appliedSlideId, setAppliedSlideId] = useState(slideId);
   const [lastDataDisplayMode, setLastDataDisplayMode] = useState<ComunicadoDataDisplayMode>("kpi");
@@ -432,7 +439,7 @@ export function ComunicadoEditorProvider({
   // Troca de slide: sincroniza config no mesmo render (evita 1 frame com gráfico do slide anterior).
   if (slideId !== appliedSlideId) {
     setAppliedSlideId(slideId);
-    const enriched = enrichComunicadoConfigForEditor(value, playlistId);
+    const enriched = enrichComunicadoConfigForEditor(value, playlistId, videoPosterAssets);
     setConfig(enriched);
     lastEmittedFingerprintRef.current = fingerprintComunicadoValue(
       serializeComunicadoConfig(enriched),
@@ -453,7 +460,11 @@ export function ComunicadoEditorProvider({
   const applyConfig = useCallback(
     (next: ComunicadoConfig, options?: { persist?: boolean }) => {
       // Serialize omite url; re-injetar no estado local evita placeholder até troca de slide.
-      const withMedia = ensureComunicadoEditorMediaUrls(next, playlistId);
+      const withMedia = ensureComunicadoEditorMediaUrls(
+        next,
+        playlistId,
+        videoPosterAssetsRef.current,
+      );
       // Atualiza o ref no mesmo tick — consumidores encadeados (ex.: input + dataFilters)
       // não devem ler o config prévio e sobrescrever a primeira edição.
       configRef.current = withMedia;
@@ -465,8 +476,20 @@ export function ComunicadoEditorProvider({
       if (options?.persist === false) return;
       onChange(serialized);
     },
-    [deckHistory, onChange, playlistId],
+    [deckHistory, onChange, playlistId, videoPosterAssetsRef],
   );
+
+  // Metadado de poster chegou/mudou: re-hidrata só o estado local (posterUrl não é persistido).
+  useEffect(() => {
+    const hydrated = hydrateEditorVideoPosters(
+      configRef.current,
+      playlistId,
+      videoPosterAssets,
+    );
+    if (hydrated === configRef.current) return;
+    configRef.current = hydrated;
+    setConfig(hydrated);
+  }, [playlistId, videoPosterAssets]);
 
   /* Pins CT legados (w/h≈0): persiste frame redimensionável no modelo — chrome sozinho não basta. */
   useEffect(() => {
@@ -546,7 +569,11 @@ export function ComunicadoEditorProvider({
     const remoteRevisionChanged = remoteRevision !== lastRemoteRevisionRef.current;
     lastRemoteRevisionRef.current = remoteRevision;
 
-    const enriched = enrichComunicadoConfigForEditor(value, playlistId);
+    const enriched = enrichComunicadoConfigForEditor(
+      value,
+      playlistId,
+      videoPosterAssetsRef.current,
+    );
     const incomingFp = fingerprintComunicadoValue(serializeComunicadoConfig(enriched));
     const currentFp = fingerprintComunicadoValue(serializeComunicadoConfig(configRef.current));
 
@@ -566,7 +593,11 @@ export function ComunicadoEditorProvider({
       })
     ) {
       // Eco rejeitado ainda pode ter perdido url no estado local (undo/snapshot).
-      const ensured = ensureComunicadoEditorMediaUrls(configRef.current, playlistId);
+      const ensured = ensureComunicadoEditorMediaUrls(
+        configRef.current,
+        playlistId,
+        videoPosterAssetsRef.current,
+      );
       if (ensured !== configRef.current) {
         configRef.current = ensured;
         setConfig(ensured);
@@ -601,6 +632,7 @@ export function ComunicadoEditorProvider({
     resetLocalHistory,
     clearDragSnapshot,
     deckHistory?.historyEpoch,
+    videoPosterAssetsRef,
   ]);
 
   const chooseDataSourceDuplicatePolicy = useOptionalDataSourceDuplicateChoice();
@@ -849,6 +881,7 @@ export function ComunicadoEditorProvider({
     setSelectedId: selection.setSelectedId,
     canvasRef,
     canvasWrapRef: stage.canvasWrapRef,
+    onMediaAssetApplied: registerVideoMediaAsset,
   });
 
   const resolvedMaster = useMemo(

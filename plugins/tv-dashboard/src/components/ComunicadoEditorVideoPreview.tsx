@@ -50,11 +50,13 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     playlistId && block.assetId
       ? resolveBrowserDisplayMediaUrl(playlistId, block.assetId, publicToken)
       : undefined;
-  const posterSrc =
-    (typeof block.posterUrl === "string" && block.posterUrl.trim()) ||
-    (playlistId && block.assetId
+  // Poster é opcional: só existe quando `posterUrl` foi hidratado de `hasPoster`.
+  const declaredPoster = typeof block.posterUrl === "string" ? block.posterUrl.trim() : "";
+  const posterSrc = !declaredPoster
+    ? undefined
+    : playlistId && block.assetId
       ? resolveBrowserDisplayMediaPosterUrl(playlistId, block.assetId, publicToken)
-      : undefined);
+      : declaredPoster;
   const src = streamSrc;
 
   const videoRef = useRef<HTMLVideoElement>(null);
