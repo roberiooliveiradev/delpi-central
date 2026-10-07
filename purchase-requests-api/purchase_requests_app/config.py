@@ -66,6 +66,21 @@ class Settings:
         _get_env("PURCHASE_REQUESTS_PO_NOTIFICATIONS_INTERVAL_SECONDS", default="120")
         or "120"
     )
+    PURCHASE_REQUESTS_APPROVAL_NOTIFICATIONS_INTERVAL_SECONDS: int = int(
+        _get_env(
+            "PURCHASE_REQUESTS_APPROVAL_NOTIFICATIONS_INTERVAL_SECONDS",
+            default="120",
+        )
+        or "120"
+    )
+    PURCHASE_REQUESTS_APPROVAL_STATES_LOOKBACK_DAYS: int = int(
+        _get_env("PURCHASE_REQUESTS_APPROVAL_STATES_LOOKBACK_DAYS", default="365")
+        or "365"
+    )
+    PURCHASE_REQUESTS_APPROVAL_STATES_FEED_LIMIT: int = int(
+        _get_env("PURCHASE_REQUESTS_APPROVAL_STATES_FEED_LIMIT", default="5000")
+        or "5000"
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")

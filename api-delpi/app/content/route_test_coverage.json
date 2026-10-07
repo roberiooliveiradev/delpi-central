@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-30",
-  "baselineOperationCount": 726,
-  "operationCount": 726,
-  "coveredCount": 653,
-  "gapCount": 72,
+  "generatedAt": "2026-10-07",
+  "baselineOperationCount": 736,
+  "operationCount": 736,
+  "coveredCount": 658,
+  "gapCount": 77,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -104,9 +104,9 @@
       "exempt": 0
     },
     "lancamento-notas-fiscais": {
-      "total": 15,
-      "covered": 15,
-      "gap": 0,
+      "total": 24,
+      "covered": 19,
+      "gap": 5,
       "exempt": 0
     },
     "mural-acessos": {
@@ -206,8 +206,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 34,
-      "covered": 34,
+      "total": 35,
+      "covered": 35,
       "gap": 0,
       "exempt": 0
     },
@@ -2183,6 +2183,60 @@
       "status": "covered"
     },
     {
+      "operationId": "list_lancamento_notas_fiscais_open_purchase_orders",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/purchase-orders/open",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_purchase_order",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_received_invoices",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices",
+      "module": "lancamento-notas-fiscais",
+      "entity": "received_invoice",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_cte_dacte",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/dacte",
+      "module": "lancamento-notas-fiscais",
+      "entity": "received_cte_dacte",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_invoice_danfe",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/danfe",
+      "module": "lancamento-notas-fiscais",
+      "entity": "received_invoice_danfe",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_nfse_detail",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/detail",
+      "module": "lancamento-notas-fiscais",
+      "entity": "received_nfse_detail",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_received_nfse_xml",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/received-invoices/{document_id}/xml/{variant}",
+      "module": "lancamento-notas-fiscais",
+      "entity": "received_nfse_xml",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
       "operationId": "refresh_lancamento_notas_fiscais_reconciliation",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/reconciliation/refresh",
@@ -2264,6 +2318,24 @@
       "status": "covered"
     },
     {
+      "operationId": "get_lancamento_notas_fiscais_request_danfe",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/danfe",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_danfe",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_lancamento_notas_fiscais_request_fiscal_attachment",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/fiscal-attachments/{attachment_type}",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_fiscal_attachment",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
       "operationId": "post_manual_lancamento_notas_fiscais_request",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
@@ -2314,6 +2386,15 @@
       "path": "/lancamento-notas-fiscais/suppliers",
       "module": "lancamento-notas-fiscais",
       "entity": "invoice_posting_supplier",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_unmapped_products",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/unmapped-products",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_unmapped_product",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -6365,6 +6446,15 @@
       "module": "supplies",
       "entity": "supplies_purchase_order",
       "shape": "product_snapshot",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_purchase_request_approval_states",
+      "method": "GET",
+      "path": "/supplies/purchase-requests/approval-states",
+      "module": "supplies",
+      "entity": "supplies_purchase_request_approval_state",
+      "shape": "list",
       "status": "covered"
     },
     {

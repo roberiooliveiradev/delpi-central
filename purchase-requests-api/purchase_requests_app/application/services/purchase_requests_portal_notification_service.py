@@ -15,11 +15,17 @@ from purchase_requests_app.domain.services.purchase_order_linked_notification_co
 from purchase_requests_app.domain.services.purchase_receipt_recorded_notification_content_service import (
     PurchaseReceiptRecordedNotificationContentService as ReceiptContent,
 )
+from purchase_requests_app.domain.services.purchase_request_approval_notification_content_service import (
+    PurchaseRequestApprovedNotificationContentService as ApprovedContent,
+    PurchaseRequestRejectedNotificationContentService as RejectedContent,
+)
 
 logger = logging.getLogger("purchase_requests.portal_notifications")
 
 EVENT_PURCHASE_ORDER_CREATED = "purchase_order_created"
 EVENT_PURCHASE_RECEIPT_RECORDED = "purchase_receipt_recorded"
+EVENT_PURCHASE_REQUEST_APPROVED = "purchase_request_approved"
+EVENT_PURCHASE_REQUEST_REJECTED = "purchase_request_rejected"
 
 
 @dataclass(frozen=True)
@@ -253,6 +259,93 @@ class PurchaseRequestsPortalNotificationService:
                 "orderNumber": order_number,
                 "requestNumber": request_number,
                 "productCode": product_code,
+            },
+        )
+
+    def notify_purchase_request_approved(
+        self,
+        *,
+        user_ids: Sequence[str],
+        branch: str,
+        request_number: str,
+        approval_status: str,
+        approver_name: str | None,
+        requester_protheus_user_id: str | None,
+    ) -> PortalNotifyOutcome:
+        return self._notify_request_decision(
+            content=ApprovedContent,
+            fallback_event=EVENT_PURCHASE_REQUEST_APPROVED,
+            user_ids=user_ids,
+            branch=branch,
+            request_number=request_number,
+            approval_status=approval_status,
+            approver_name=approver_name,
+            requester_protheus_user_id=requester_protheus_user_id,
+        )
+
+    def notify_purchase_request_rejected(
+        self,
+        *,
+        user_ids: Sequence[str],
+        branch: str,
+        request_number: str,
+        approval_status: str,
+        approver_name: str | None,
+        requester_protheus_user_id: str | None,
+    ) -> PortalNotifyOutcome:
+        return self._notify_request_decision(
+            content=RejectedContent,
+            fallback_event=EVENT_PURCHASE_REQUEST_REJECTED,
+            user_ids=user_ids,
+            branch=branch,
+            request_number=request_number,
+            approval_status=approval_status,
+            approver_name=approver_name,
+            requester_protheus_user_id=requester_protheus_user_id,
+        )
+
+    def _notify_request_decision(
+        self,
+        *,
+        content,
+        fallback_event: str,
+        user_ids: Sequence[str],
+        branch: str,
+        request_number: str,
+        approval_status: str,
+        approver_name: str | None,
+        requester_protheus_user_id: str | None,
+    ) -> PortalNotifyOutcome:
+        title = content.format_title(request_number=request_number)
+        message = content.format_message(
+            request_number=request_number,
+            approver_name=approver_name,
+        )
+        action_target = content.build_deep_link_path(
+            branch=branch,
+            request_number=request_number,
+        )
+        event_type = content.event_type() or fallback_event
+        dedupe_key = (
+            f"{content.source_app()}:{event_type}:"
+            f"{branch}:{request_number}:{approval_status}"
+        )
+        return self.send(
+            user_ids=user_ids,
+            title=title,
+            message=message,
+            notification_type=content.notification_type(),
+            action_label=content.action_label(),
+            action_target=action_target,
+            dedupe_key=dedupe_key,
+            event_type=event_type,
+            category=content.category(),
+            metadata={
+                "branch": branch,
+                "requestNumber": request_number,
+                "approvalStatus": approval_status,
+                "approverName": approver_name,
+                "requesterProtheusUserId": requester_protheus_user_id,
             },
         )
 

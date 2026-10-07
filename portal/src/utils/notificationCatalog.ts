@@ -64,6 +64,8 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
     { id: "commercial_tasks", label: "Tarefas", notificationLabel: "Tarefas comerciais", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
     { id: "commercial_collaboration", label: "Sala de interação", notificationLabel: "Menções na sala de interação", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
     { id: "purchase_requests", label: "Solicitações de Compras", notificationLabel: "Atualizações da solicitação de compra", icon: "shopping-cart", mutable: true, kind: "app", sourceApps: ["purchase-requests"], pluginId: "purchase-requests" },
+    { id: "purchase_request_approved", label: "Solicitações de Compras", notificationLabel: "Solicitação de compra aprovada", icon: "shopping-cart", mutable: true, kind: "app", sourceApps: ["purchase-requests"], pluginId: "purchase-requests" },
+    { id: "purchase_request_rejected", label: "Solicitações de Compras", notificationLabel: "Solicitação de compra rejeitada", icon: "shopping-cart", mutable: true, kind: "app", sourceApps: ["purchase-requests"], pluginId: "purchase-requests" },
     { id: "my_requests", label: "Minhas Solicitações", notificationLabel: "Atualizações das minhas solicitações", icon: "clipboard-list", mutable: true, kind: "app", sourceApps: ["my-requests"], pluginId: "my-requests" },
     { id: "portal_rh", label: "Portal RH", notificationLabel: "Avisos do Portal RH", icon: "file-user", mutable: true, kind: "app", sourceApps: ["rhdelpi", "portal-rh"], pluginId: "rhdelpi" },
   ],

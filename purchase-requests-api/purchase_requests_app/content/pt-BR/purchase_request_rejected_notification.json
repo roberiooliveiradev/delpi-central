@@ -1,0 +1,17 @@
+{
+  "titleTemplate": "Solicitação {request} rejeitada",
+  "messageTemplate": "Sua solicitação de compra {request} foi rejeitada por {approver}. Consulte a solicitação para verificar a situação antes de prosseguir.",
+  "messageTemplateNoApprover": "Sua solicitação de compra {request} foi rejeitada. Consulte a solicitação para verificar a situação antes de prosseguir.",
+  "actionLabel": "Ver solicitação",
+  "type": "warning",
+  "deepLinkPath": "/apps/purchase-requests",
+  "emptyValue": "—",
+  "eventType": "purchase_request_rejected",
+  "category": "purchase_request_rejected",
+  "sourceApp": "purchase-requests",
+  "corePermanentRejectionSubstrings": [
+    "no recipients have access to the source application",
+    "no recipients accept this notification category",
+    "user not found or inactive"
+  ]
+}

@@ -60,9 +60,13 @@ async def lifespan(_app: FastAPI):
         from purchase_requests_app.startup.purchase_receipt_recorded_notification_job import (
             run_purchase_receipt_recorded_notification_loop,
         )
+        from purchase_requests_app.startup.purchase_request_approval_notification_job import (
+            run_purchase_request_approval_notification_loop,
+        )
 
         pollers.append(asyncio.create_task(run_purchase_order_linked_notification_loop()))
         pollers.append(asyncio.create_task(run_purchase_receipt_recorded_notification_loop()))
+        pollers.append(asyncio.create_task(run_purchase_request_approval_notification_loop()))
     try:
         yield
     finally:
