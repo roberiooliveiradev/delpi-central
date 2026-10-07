@@ -46,6 +46,10 @@ from app.infrastructure.persistence.totvs.product_repositories.product_internal_
     bind_internal_movement_filters,
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustments_repository import (
+    InventoryAdjustmentsRepository,
+    _summary_select,
+)
 
 _API_ROOT = Path(__file__).resolve().parents[1]
 
@@ -411,6 +415,14 @@ def test_summary_use_case_normalizes_period_dates_to_iso() -> None:
     assert result["summary"]["adjustment_count"] == 2
 
 
+@pytest.mark.parametrize("nature", ["shortage", "surplus"])
+def test_summary_use_case_forwards_nature_filter(nature: str) -> None:
+    repo = _FakeAdjustmentsRepo()
+    GetInventoryAdjustmentsSummaryUseCase(repo).execute(_request(nature=nature))
+    assert repo.summary_call is not None
+    assert repo.summary_call["nature"] == nature
+
+
 # ---------------------------------------------------------------------------
 # Contratos de rota + OpenAPI
 # ---------------------------------------------------------------------------
@@ -463,6 +475,21 @@ def test_repository_uses_domain_sql_expressions_not_adhoc() -> None:
     assert "_NATURE = InventoryAdjustmentClassification" in source
     assert "_SIGNED_QTY = InventoryAdjustmentClassification" in source
     assert "_SIGNED_VAL = InventoryAdjustmentClassification" in source
+    # Aggregate/item presentation must not duplicate the raw CF rule here.
+    # D3_CF belongs only to the canonical domain classifier.
+    assert "D3_CF" not in source
+
+
+def test_summary_sql_enforces_gross_and_net_value_identities() -> None:
+    sql = _summary_select("")
+    assert "ABS(SD3.D3_CUSTO1)" in sql
+    assert "-ABS(SD3.D3_CUSTO1)" in sql
+    assert "AS gross_adjustment_value" in sql
+    assert "AS net_adjustment_value" in sql
+    # The generated SQL contains the canonical domain classifier, not an
+    # independently authored repository mapping.
+    assert "THEN 'surplus'" in sql
+    assert "THEN 'shortage'" in sql
 
 
 def test_repository_filters_invent_doc_and_estorno() -> None:
@@ -495,6 +522,89 @@ def test_repository_binds_all_filters_as_parameters() -> None:
         assert f'SD3." + {field}' not in body
         assert f"% {field}" not in body
         assert f".format({field}" not in body
+
+
+class _RegressionInventoryAdjustmentsRepository(InventoryAdjustmentsRepository):
+    def __init__(self, totals: dict) -> None:
+        super().__init__()
+        self._totals = totals
+        self.calls: list[tuple[str, tuple]] = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return None
+
+    def execute_one(self, query: str, params: tuple = ()) -> dict:
+        self.calls.append((query, params))
+        return dict(self._totals)
+
+    def execute_query(self, query: str, params: tuple = ()) -> list[dict]:
+        self.calls.append((query, params))
+        return []
+
+
+def test_repository_regression_summary_maps_net_gross_and_nature_totals() -> None:
+    repo = _RegressionInventoryAdjustmentsRepository(
+        {
+            "adjustment_count": 1451,
+            "shortage_count": 474,
+            "surplus_count": 977,
+            "gross_adjustment_quantity": 1039642.353,
+            "net_adjustment_quantity": 59690.229,
+            "gross_adjustment_value": 3991042.739,
+            "net_adjustment_value": 173164.323,
+            "shortage_quantity": 489976.062,
+            "shortage_value": 1908939.208,
+            "surplus_quantity": 549666.291,
+            "surplus_value": 2082103.531,
+        }
+    )
+    result = repo.fetch_adjustment_summary(
+        date_start="20260101",
+        date_end_exclusive="20261008",
+        branch="01",
+        product_code=None,
+        warehouse=None,
+        nature=None,
+    )
+    summary = result["summary"]
+    assert summary["adjustment_count"] == 1451
+    assert summary["shortage_count"] == 474
+    assert summary["surplus_count"] == 977
+    assert summary["shortage_quantity"] == pytest.approx(489976.062)
+    assert summary["surplus_quantity"] == pytest.approx(549666.291)
+    assert summary["net_quantity"] == pytest.approx(
+        summary["surplus_quantity"] - summary["shortage_quantity"]
+    )
+    assert summary["shortage_value"] == pytest.approx(1908939.208)
+    assert summary["surplus_value"] == pytest.approx(2082103.531)
+    assert summary["net_value"] == pytest.approx(
+        summary["surplus_value"] - summary["shortage_value"]
+    )
+    assert summary["gross_value"] == pytest.approx(
+        summary["surplus_value"] + summary["shortage_value"]
+    )
+
+
+@pytest.mark.parametrize("nature", ["shortage", "surplus"])
+def test_repository_nature_filter_is_bound_as_parameter(nature: str) -> None:
+    repo = InventoryAdjustmentsRepository()
+    where, params = repo._filter_sql(
+        date_start="20260101",
+        date_end_exclusive="20261008",
+        branch="01",
+        product_code="10080034",
+        warehouse="01",
+        nature=nature,
+    )
+    assert "= ?" in where
+    assert params[-1] == nature
+    assert "20260101" in params
+    assert "20261008" in params
+    assert "01" in params
+    assert "10080034" in params
 
 
 def test_domain_nature_sql_matches_proven_cf_semantics() -> None:

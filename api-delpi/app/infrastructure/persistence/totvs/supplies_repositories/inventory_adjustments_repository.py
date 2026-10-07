@@ -13,6 +13,8 @@ from app.domain.ports.supplies.inventory_adjustments_repository_port import (
     InventoryAdjustmentsRepositoryPort,
 )
 from app.domain.services.supplies.inventory_adjustment_service import (
+    NATURE_SHORTAGE,
+    NATURE_SURPLUS,
     InventoryAdjustmentClassification,
     nature_label,
     resolve_inventory_provenance,
@@ -24,6 +26,14 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 _NATURE = InventoryAdjustmentClassification.NATURE_SQL_EXPRESSION
 _SIGNED_QTY = InventoryAdjustmentClassification.SIGNED_QUANTITY_SQL_EXPRESSION
 _SIGNED_VAL = InventoryAdjustmentClassification.SIGNED_VALUE_SQL_EXPRESSION
+
+# Aggregate classification must reuse the canonical domain expression.  The
+# repository must not independently infer shortage/surplus from TM/CF/TPMOVAJ.
+_SHORTAGE_PREDICATE = f"({_NATURE}) = '{NATURE_SHORTAGE}'"
+_SURPLUS_PREDICATE = f"({_NATURE}) = '{NATURE_SURPLUS}'"
+_RECOGNIZED_NATURE_PREDICATE = (
+    f"({_SHORTAGE_PREDICATE} OR {_SURPLUS_PREDICATE})"
+)
 
 _BASE_WHERE = """
     SD3.D_E_L_E_T_ = ''
@@ -89,21 +99,43 @@ def _summary_select(dim_sql: str) -> str:
         SELECT
             {dim}
             COUNT(*) AS adjustment_count,
-            SUM(CASE WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN 1 ELSE 0 END)
+            SUM(CASE WHEN {_SHORTAGE_PREDICATE} THEN 1 ELSE 0 END)
                 AS shortage_count,
-            SUM(CASE WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN 1 ELSE 0 END)
+            SUM(CASE WHEN {_SURPLUS_PREDICATE} THEN 1 ELSE 0 END)
                 AS surplus_count,
-            SUM(SD3.D3_QUANT) AS gross_adjustment_quantity,
-            SUM({_SIGNED_QTY}) AS net_adjustment_quantity,
-            SUM(ABS(SD3.D3_CUSTO1)) AS gross_adjustment_value,
-            SUM({_SIGNED_VAL}) AS net_adjustment_value,
-            SUM(CASE WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN SD3.D3_QUANT ELSE 0 END)
+            SUM(
+                CASE
+                  WHEN {_RECOGNIZED_NATURE_PREDICATE} THEN SD3.D3_QUANT
+                  ELSE 0
+                END
+            ) AS gross_adjustment_quantity,
+            SUM(
+                CASE
+                  WHEN {_SURPLUS_PREDICATE} THEN SD3.D3_QUANT
+                  WHEN {_SHORTAGE_PREDICATE} THEN -SD3.D3_QUANT
+                  ELSE 0
+                END
+            ) AS net_adjustment_quantity,
+            SUM(
+                CASE
+                  WHEN {_RECOGNIZED_NATURE_PREDICATE} THEN ABS(SD3.D3_CUSTO1)
+                  ELSE 0
+                END
+            ) AS gross_adjustment_value,
+            SUM(
+                CASE
+                  WHEN {_SURPLUS_PREDICATE} THEN ABS(SD3.D3_CUSTO1)
+                  WHEN {_SHORTAGE_PREDICATE} THEN -ABS(SD3.D3_CUSTO1)
+                  ELSE 0
+                END
+            ) AS net_adjustment_value,
+            SUM(CASE WHEN {_SHORTAGE_PREDICATE} THEN SD3.D3_QUANT ELSE 0 END)
                 AS shortage_quantity,
-            SUM(CASE WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN ABS(SD3.D3_CUSTO1) ELSE 0 END)
+            SUM(CASE WHEN {_SHORTAGE_PREDICATE} THEN ABS(SD3.D3_CUSTO1) ELSE 0 END)
                 AS shortage_value,
-            SUM(CASE WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN SD3.D3_QUANT ELSE 0 END)
+            SUM(CASE WHEN {_SURPLUS_PREDICATE} THEN SD3.D3_QUANT ELSE 0 END)
                 AS surplus_quantity,
-            SUM(CASE WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN ABS(SD3.D3_CUSTO1) ELSE 0 END)
+            SUM(CASE WHEN {_SURPLUS_PREDICATE} THEN ABS(SD3.D3_CUSTO1) ELSE 0 END)
                 AS surplus_value
         FROM SD3010 SD3 WITH (NOLOCK)
     """
@@ -177,8 +209,8 @@ class InventoryAdjustmentsRepository(
             'inventory_adjustment' AS movement_category,
             {_NATURE} AS inventory_adjustment_nature,
             CASE
-              WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'RE0' THEN 'inbound'
-              WHEN RTRIM(LTRIM(SD3.D3_CF)) = 'DE0' THEN 'outbound'
+              WHEN {_SURPLUS_PREDICATE} THEN 'inbound'
+              WHEN {_SHORTAGE_PREDICATE} THEN 'outbound'
             END AS movement_direction,
             SD3.D3_QUANT AS quantity,
             {_SIGNED_QTY} AS signed_quantity,

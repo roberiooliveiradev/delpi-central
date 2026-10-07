@@ -45,7 +45,12 @@ signed_quantity = +D3_QUANT (RE0) | -D3_QUANT (DE0)
 signed_value    = +D3_CUSTO1 (RE0) | -D3_CUSTO1 (DE0)
 ```
 
-`D3_CUSTO1` é o valor do movimento no momento do ajuste.
+`D3_CUSTO1` é tratado nesta capability como **valor total do movimento
+na moeda 1**, não como custo unitário. Portanto o valor histórico do ajuste
+é agregado diretamente de `D3_CUSTO1`; **não** multiplicar
+`D3_QUANT * D3_CUSTO1`. A mesma convenção é usada no cálculo histórico
+SB9+SD3. A validação live da filial 01 no período de regressão abaixo
+reproduz os totais reconciliados usando essa interpretação.
 
 ## Proveniência SB7
 
@@ -106,6 +111,50 @@ gross_value / net_value (assinado)
 shortage_quantity / shortage_value
 surplus_quantity / surplus_value
 ```
+
+### Indicador principal e nomenclatura DAVI
+
+Quando o pedido do usuário for **"ajuste de estoque"** ou
+**"ajuste de inventário"** sem natureza, o indicador principal é o
+**ajuste líquido**. O contrato HTTP permanece inalterado; a apresentação
+DAVI usa os campos existentes:
+
+| Semântica user-facing | Campo canônico | Fórmula |
+|---|---|---|
+| `valor_sobra` | `summary.surplus_value` | soma da magnitude dos movimentos `surplus` |
+| `valor_furo` | `summary.shortage_value` | soma da magnitude dos movimentos `shortage` |
+| `valor_ajuste_liquido` | `summary.net_value` | `surplus_value - shortage_value` |
+| `valor_ajuste_bruto` | `summary.gross_value` | `surplus_value + shortage_value` |
+| `quantidade_sobra` | `summary.surplus_quantity` | soma das quantidades `surplus` |
+| `quantidade_furo` | `summary.shortage_quantity` | soma das quantidades `shortage` |
+| `quantidade_liquida` | `summary.net_quantity` | `surplus_quantity - shortage_quantity` |
+| movimentos de sobra | `summary.surplus_count` | contagem `surplus` |
+| movimentos de furo | `summary.shortage_count` | contagem `shortage` |
+| movimentos totais | `summary.adjustment_count` | movimentos `INVENT` válidos no recorte |
+
+`net_value > 0` significa **sobra líquida**; `net_value < 0`
+significa **furo líquido**. `gross_value` mede magnitude movimentada e
+**nunca** deve ser apresentado como ajuste líquido.
+
+Pedido explícito de **furo** usa `nature=shortage`; pedido explícito de
+**sobra** usa `nature=surplus`. O Agent não reclassifica movimentos a
+partir de `D3_TM`, `D3_CF` ou `D3_TPMOVAJ`: a classificação continua
+domain-owned e o repositório reutiliza a expressão canônica.
+
+### Regressão congelada — filial 01, 2026-01-01 a 2026-10-07
+
+| Indicador | Esperado |
+|---|---:|
+| valor_sobra | 2.082.103,531 |
+| valor_furo | 1.908.939,208 |
+| valor_ajuste_liquido | 173.164,323 |
+| valor_ajuste_bruto | 3.991.042,739 |
+| quantidade_sobra | 549.666,291 |
+| quantidade_furo | 489.976,062 |
+| quantidade_liquida | 59.690,229 |
+| movimentos_sobra | 977 |
+| movimentos_furo | 474 |
+| movimentos_totais | 1.451 |
 
 ## Resposta — items
 
