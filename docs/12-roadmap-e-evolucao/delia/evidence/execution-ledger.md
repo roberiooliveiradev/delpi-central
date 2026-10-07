@@ -11080,3 +11080,133 @@ EVIDENCE (live production, 2026-10-05):
     PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
       C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.149. C3-INTELLIGENCE-LOOP-03R2A — execution ceiling HTTP contract + hard model/turn deadlines
+
+    OBJECTIVE = STOP-THE-LINE correction of the production-proved
+      infrastructure blockers: execution ceiling crossing the HTTP
+      boundary, total wall-clock bound on model calls, a shared turn
+      budget below the edge timeout, complete model-call
+      observability, and terminal semantics for model-stage timeouts.
+      No semantic rework of D01/D03/D04/D06 in this task.
+
+    EXTERNAL_REVIEW =
+      ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R1_PROD
+      = EXECUTION_DRIFT — production proved
+      HTTP_EXECUTION_CEILING=NOT_WIRED,
+      MODEL_CALL_WALL_CLOCK_BOUND=FAIL (413s/1347s observed vs
+      10s/30s configured), TURN_EDGE_BUDGET=FAIL (edge 524 ~125s
+      mid-turn), MODEL_CALL_OBSERVABILITY=PARTIAL,
+      SELECTION_TIMEOUT_OPERATIONAL_FALLBACK=FAIL.
+      No material ACT occurred during evaluation.
+
+    SUPERSEDED_CLAIMS (§6.148):
+      WRITE_EVAL_BLOCKER = CLOSED → SUPERSEDED_BY_PRODUCTION_DRIFT —
+        the ceiling existed in application/orchestration but never
+        crossed the HTTP boundary; now an R2A candidate claim only,
+        wired end-to-end and gate-tested.
+      LATENCY = CLOSED → SUPERSEDED — stage timing was logged but the
+        model call itself was never wall-clock bounded; scalar
+        requests timeout = connect + per-read, defeated by a
+        trickling body.
+      OBSERVABILITY = CLOSED → SUPERSEDED → PARTIAL — candidate
+        disambiguation/argument model calls had no timing or
+        correlation; synthesis fallback had no reason code.
+
+    R2A-D01 HTTP_EXECUTION_CEILING = CLOSED — POST /interaction/turns
+      accepts optional max_execution_stage; allowed value set is
+      {prepare} only (absent/null = legacy no-reduction). The field
+      is a client-requested REDUCTION of authority: act/execute/
+      direct/arbitrary strings/numbers/objects/arrays/booleans are
+      strict HTTP 400 INVALID_REQUEST at the syntactic boundary, and
+      the application layer re-validates fail-closed for internally
+      constructed requests (HTTP and application boundaries agree).
+      Chain proven end-to-end: HTTP body → InteractiveTurnRequest
+      .max_execution_stage → HandleInteractiveConversationTurn →
+      orchestrator.attempt(max_execution_stage=) → PREPARE/write
+      continuation — direct owner policy + ceiling yields
+      CONFIRMATION_REQUIRED with zero ACT calls; confirmation under
+      the ceiling refuses with execution_ceiling, ACT calls = 0.
+
+    R2A-D02 MODEL_CALL_WALL_CLOCK = CLOSED — ModelInvocationRequest
+      .timeout_seconds is now defined as MAXIMUM WALL-CLOCK DURATION
+      of the invocation, not a socket read timeout. The OpenAI-
+      compatible adapter streams the body (stream=True) and drains it
+      through response.raw.read1 — one socket recv per read — with
+      the monotonic deadline re-checked between reads and the
+      in-flight socket timeout tightened to the remaining budget.
+      Proven against a deterministic trickle fixture (server emits
+      bytes every 50ms, never completes): ModelInvocationError
+      (TIMEOUT) at ~1.01s for a 1.0s requested budget vs 30s
+      configured. Normal fast-provider contract unchanged
+      (structured output + duration metadata preserved). No new
+      dependency, no thread wrapper, no provider/model branching.
+
+    R2A-D03 TURN_EDGE_BUDGET = CLOSED — TurnDeadline (new
+      application/interaction/turn_budget.py): one monotonic deadline
+      computed once per turn, shared by every expensive stage; each
+      stage gets min(configured stage max, remaining budget) — a
+      reduction-only ceiling over the existing timeout_seconds
+      contract, not a second budget system. No stage may start once
+      the deadline passed. Default 80s via DELIA_TURN_BUDGET_SECONDS
+      (settings/composer/docker-compose/dev compose/env.example).
+      Edge source: Cloudflare 524 observed ~100s; in-repo nginx hop
+      proxy_read_timeout=86400s does not own the edge. Budget margin
+      >=20s below the edge.
+
+    R2A-D04 MODEL_OBSERVABILITY = CLOSED — candidate disambiguation
+      and candidate-argument proposal calls now emit the standard
+      stage=model_propose schema (purpose, decision, timing_ms,
+      correlation_id); synthesis fallback logs one bounded
+      deterministic reason code (proposal_absent | schema_invalid |
+      empty_selection | invalid_record_index | invalid_field |
+      non_scalar_selection). No content, no argument values, no
+      tokens.
+
+    R2A-D05 SELECTION_TIMEOUT_TERMINAL = CLOSED — model-stage TIMEOUT
+      or exhausted budget raises internal _StageDeadlineExceeded
+      which propagates to the attempt() boundary and returns
+      SOURCE_UNAVAILABLE (error_code model_timeout |
+      turn_budget_exhausted) — never NOT_APPLICABLE, never a
+      general-model answer. The general conversational call is itself
+      clamped to the remaining turn budget; an exhausted budget
+      blocks it fail-closed. General fallback preserved only when no
+      governed operational path was attempted.
+
+    FILES_CHANGED (delia-api): orchestration.py (attempt wrapper +
+      _attempt split, deadline plumbing across selection/goal/
+      assessment/foreign/args/resolver/candidate/clarification/
+      synthesis/repair/invoke/PREPARE/ACT/confirm chain, _propose
+      timeout→terminal, candidate stages instrumented,
+      _render_synthesis reason codes); interaction/turn_budget.py
+      (NEW — TurnDeadline/TurnBudgetExhausted);
+      capability_attempt.py (attempt() protocol signature);
+      handle_interactive_turn.py (ceiling validation INVALID_REQUEST,
+      turn deadline creation, general-call clamp);
+      interaction_routes.py (allowlist + _parse_execution_ceiling);
+      openai_compatible_adapter.py (stream + read1 deadline drain);
+      settings.py + root_composer.py + env.example +
+      infra/docker-compose{,.dev}.yml (DELIA_TURN_BUDGET_SECONDS);
+      tests: test_execution_ceiling_turn_budget.py (NEW, 41 tests)
+      plus adapter stub signature updates (stream kwarg) and the
+      bounded-module inventory.
+
+    TESTS = 894/894 delia-api PASS. FOCUSED gates: HTTP ceiling
+      accepted/blocked (positive + 11 invalid variants), application
+      fail-closed (9 invalid variants), direct+ceiling zero ACT,
+      confirmation+ceiling zero ACT, trickle deadline 1.0s→TIMEOUT,
+      normal provider contract preserved, budget exhaustion terminal,
+      select_group/select_capability/argument timeout terminal,
+      zero operational general fallback, general-call budget clamp,
+      exhausted-budget blocks general call, candidate stage timing +
+      correlation, synthesis fallback reason, no arg values/tokens in
+      logs, TurnDeadline contract x4.
+
+    RESIDUAL: D01 comparability scope, D03 query projection, D04
+      prerequisite composition, D05 TÉO paraphrase, D06 presentation
+      — all unchanged, owned by R2B. REAL_MODEL_EVAL = TEST_NOT_RUN;
+      LIVE_PROD_EVAL = TEST_NOT_RUN; INDEPENDENT_CI = NOT_AVAILABLE.
+
+    PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+      C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+    NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

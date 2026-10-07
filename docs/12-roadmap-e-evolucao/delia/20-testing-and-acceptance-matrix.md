@@ -2640,3 +2640,31 @@ Extends §6.147 (all LOOP-02R1 rows preserved; regression suites re-run). Column
 | Owner suites | VISTA discovery facade 13/13 PASS; tv-dashboard-api 1757 PASS / 3 FAIL (failures reproduce without this change — pre-existing catalog/budget drift, unrelated) |
 | `REAL_MODEL_EVAL` / `LIVE_COMPOSITION` | TEST_NOT_RUN / TEST_NOT_RUN |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2A — execution ceiling HTTP contract + hard model/turn deadlines (evidence §6.149)
+
+STOP-THE-LINE correction of production-proved infrastructure blockers. Extends §6.148 (all prior rows preserved; regression suite re-run). No semantic rework of D01/D03/D04/D06 — owned by R2B.
+
+| Check | Result |
+|---|---|
+| `HTTP_PREPARE_CEILING_ACCEPTED` | PASS — `max_execution_stage="prepare"` accepted, reaches `InteractiveTurnRequest`; absent/null = legacy no-reduction |
+| `HTTP_ACT_CEILING_REQUEST` | **BLOCKED** — "act"/"execute"/"direct"/arbitrary strings/numbers/objects/arrays/booleans → HTTP 400 INVALID_REQUEST (11 invalid variants, fail closed) |
+| `APPLICATION_INVALID_CEILING` | FAIL_CLOSED — internally constructed `InteractiveTurnRequest(max_execution_stage=…)` re-validated application-layer; 9 invalid variants raise INVALID_REQUEST; HTTP and application boundaries agree |
+| `DIRECT_POLICY_PREPARE_CEILING_ACT_CALLS` | 0 — owner `direct` + ceiling → CONFIRMATION_REQUIRED; PREPARE ran, commit never invoked |
+| `CONFIRMATION_PREPARE_CEILING_ACT_CALLS` | 0 — structured CONFIRM under the ceiling → WRITE_REJECTED `execution_ceiling`; commit never invoked |
+| `MODEL_TIMEOUT_TOTAL_WALL_CLOCK` | PASS — `timeout_seconds` = maximum wall-clock duration of the invocation (contract frozen); adapter streams body via `raw.read1`, deadline re-checked between reads, per-recv socket timeout tightened to remaining budget; no thread wrapper, no new dependency, provider-neutral |
+| `TRICKLE_SERVER_TIMEOUT` | PASS — deterministic fixture (bytes every 50ms, never completes): `ModelInvocationError(TIMEOUT)` at ~1.01s for 1.0s requested (configured adapter max 30s) — requested timeout + tolerance, not a multiple |
+| `NORMAL_MODEL_INVOCATION` | PASS — fast provider fixture: structured output, usage and duration metadata preserved through the streaming drain |
+| `TURN_TOTAL_BUDGET` | PASS — one `TurnDeadline` per turn shared by every governed stage; each stage gets `min(configured max, remaining)`; no stage starts after exhaustion (fail-fast `turn_start` check + per-stage check) |
+| `TURN_BUDGET_LT_EDGE_TIMEOUT` | PROVEN_FROM_CONFIG — `DELIA_TURN_BUDGET_SECONDS` default 80s; edge = Cloudflare 524 ~100s (observed); in-repo nginx hop `proxy_read_timeout=86400s` does not own the edge; margin ≥20s |
+| `SELECTION_TIMEOUT_GENERAL_FALLBACK` | 0 — `select_group`/`select_capability` model TIMEOUT → `SOURCE_UNAVAILABLE(model_timeout)` terminal; handler emits deterministic bounded failure (HYPOTHESIS + `delpi_source_unverified`); general model port invoked 0 times |
+| `ARGUMENT_TIMEOUT_GENERAL_FALLBACK` | 0 — argument projection TIMEOUT → same terminal semantics |
+| `OPERATIONAL_TIMEOUT_RESPONSE` | DETERMINISTIC — `SOURCE_UNAVAILABLE` bounded error codes (`model_timeout`, `turn_budget_exhausted`); budget exhausted at turn start → SOURCE_UNAVAILABLE without any stage start; exhausted budget also blocks the general model call fail-closed |
+| `ALL_MODEL_CALL_SITES_TIMED` | PASS — every `_propose` call plus `_select_candidate` and `_propose_candidate_arguments` emit `stage=model_propose` with purpose/decision/`timing_ms`/`correlation_id` |
+| `SYNTHESIS_FALLBACK_REASON` | OBSERVABLE — bounded deterministic codes: `proposal_absent`, `schema_invalid`, `empty_selection`, `invalid_record_index`, `invalid_field`, `non_scalar_selection` |
+| `ARG_VALUE_LOG_LEAK` | 0 — arg_keys/candidate tokens/user text/model payloads absent from stage logs (asserted in test) |
+| `PREPARE_ACT_SEPARATION` | PASS — unchanged; ceiling tests prove zero ACT under prepare |
+| `MATERIAL_ACT_IN_TESTS` | 0 |
+| Full delia-api suite | 894/894 PASS (853 + 41 new R2A tests; TurnDeadline contract x4 included) |
+| `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` | TEST_NOT_RUN / TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
