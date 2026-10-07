@@ -10,7 +10,11 @@ from tv_app.application.services.comunicado_input_contract_service import (
     build_input_variable_scope,
     collect_input_variables,
     iter_config_expression_params,
+    routeparam_filter_param_key,
     undeclared_input_reference_issues,
+)
+from tv_app.application.services.comunicado_input_filters_service import (
+    resolve_input_target_scope,
 )
 from tv_app.application.services.comunicado_native_config_sanitize import (
     sanitize_comunicado_config,
@@ -34,7 +38,9 @@ from tv_app.application.services.data.m_query.m_expression_interpreter import ME
 from tv_app.application.services.data.value_expression_service import (
     InputVariableScope,
     expression_input_refs,
+    is_expression_value,
     validate_expression_param_value,
+    validate_filter_expression,
 )
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
@@ -95,6 +101,7 @@ class TvDataConfigValidationService:
         issues.extend(self._input_expression_issues(cfg, input_scope))
 
         routes_for_filters: list[dict[str, Any]] = []
+        route_by_source_id: dict[str, dict[str, Any]] = {}
         for index, block in enumerate(blocks):
             if not isinstance(block, dict):
                 continue
@@ -106,6 +113,7 @@ class TvDataConfigValidationService:
             route = self._catalog.get_route(operation_id)
             if route:
                 routes_for_filters.append(route)
+                route_by_source_id[str(block.get("id") or "")] = route
             prefix = f"blocks[{index}]"
             transform_result = read_data_transform(block.get("dataTransform"))
             # Existing v2 transforms remain valid for dual-read compat while M
@@ -153,6 +161,15 @@ class TvDataConfigValidationService:
         except ValueError as exc:
             issues.append({"field": "dataFilters", "message": str(exc)})
 
+        issues.extend(
+            self._filter_expression_issues(
+                blocks,
+                slide_routes=routes_for_filters,
+                route_by_source_id=route_by_source_id,
+                input_scope=input_scope,
+            )
+        )
+
         graph = MQueryDependencyService().resolve(
             block for block in blocks if isinstance(block, dict)
         )
@@ -171,6 +188,47 @@ class TvDataConfigValidationService:
             "diagnostics": diagnostics,
             "queryOrder": list(graph.ordered_source_ids),
         }
+
+    @staticmethod
+    def _filter_expression_issues(
+        blocks: list[Any],
+        *,
+        slide_routes: list[dict[str, Any]],
+        route_by_source_id: dict[str, dict[str, Any]],
+        input_scope: InputVariableScope,
+    ) -> list[dict[str, str]]:
+        """ExpressionSpec em ``defaultValue`` de Filtro: valida contra todas as
+        rotas consumidoras do alvo (slide = fontes + DataModels; sources = marcadas)."""
+        issues: list[dict[str, str]] = []
+        for index, block in enumerate(blocks):
+            if not isinstance(block, dict) or str(block.get("type") or "") != "input":
+                continue
+            param_key = routeparam_filter_param_key(block)
+            value = block["input"].get("defaultValue") if param_key else None
+            if not is_expression_value(value):
+                continue
+            input_cfg = block["input"]
+            if resolve_input_target_scope(input_cfg) == "slide":
+                routes = slide_routes
+            else:
+                routes = [
+                    route_by_source_id[sid]
+                    for sid in (str(item).strip() for item in input_cfg.get("targetSourceIds") or [])
+                    if sid in route_by_source_id
+                ]
+            try:
+                validate_filter_expression(
+                    param_key, value, routes=routes, input_scope=input_scope
+                )
+            except MExpressionError as exc:
+                issues.append(
+                    {
+                        "field": f"blocks[{index}].input.defaultValue",
+                        "message": str(exc),
+                        "code": exc.code,
+                    }
+                )
+        return issues
 
     def _input_expression_issues(
         self, cfg: dict[str, Any], input_scope: InputVariableScope

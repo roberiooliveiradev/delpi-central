@@ -121,6 +121,11 @@ export type ExpressionEditRequest = {
   refInputKeys?: Array<{ key: string; label: string }>;
   /** Bloco com `dataBinding` usado no preview backend (quando houver). */
   previewBlockId?: string | null;
+  /**
+   * Filtro dono do param: o draft entra no `defaultValue` desse input (camada
+   * do Filtro) em vez de `dataBinding.params` do bloco de preview.
+   */
+  previewInputBlockId?: string | null;
   apply: (spec: import("@delpi/tv-dashboard-presentation").ParamExpressionSpec) => void;
 };
 

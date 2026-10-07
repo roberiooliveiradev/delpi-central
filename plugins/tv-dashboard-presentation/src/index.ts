@@ -614,6 +614,7 @@ export {
   type InputRuntimeScalar,
   type InputSlideRuntimeOverrides,
 } from "./comunicadoInputFilters";
+export { isParamExpressionValue } from "./paramExpressionValue";
 export {
   INPUT_EXPRESSION_REF_PREFIX,
   INPUT_VARIABLE_KEY_PATTERN,

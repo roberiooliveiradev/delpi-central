@@ -139,6 +139,11 @@ type Props = {
   /** Params a ocultar (ex.: flyout «Filtros» sem o grupo de período). */
   excludeParams?: ReadonlySet<string>;
   /**
+   * Params que podem oferecer o modo Expressão (ex.: Filtro só no `paramKey`
+   * dono; campos auxiliares seguem literais). `undefined` = todos elegíveis.
+   */
+  expressionKeys?: ReadonlySet<string>;
+  /**
    * Abre o modal de expressão — chamado por «Editar expressão» no
    * cartão-resumo. Ausente → cartão sem ação (somente leitura).
    */
@@ -285,6 +290,7 @@ export function DataParamFields({
   fixedQueryParams = null,
   onlyParams,
   excludeParams,
+  expressionKeys,
   onEditExpression,
   resolved = null,
   onChange,
@@ -491,11 +497,10 @@ export function DataParamFields({
     // Typed expressions — capability do catálogo + predicate da rota
     // (paramSchema + in:path + expressionAllowed + fixedQueryParams).
     const expressionSpec = isParamExpressionValue(current) ? current : null;
-    const exprAllowed = Boolean(expressionSupport?.enabled) && paramAllowsExpression(
-      key,
-      field,
-      fixedQueryParamKeys,
-    );
+    const exprAllowed =
+      Boolean(expressionSupport?.enabled) &&
+      (expressionKeys == null || expressionKeys.has(key)) &&
+      paramAllowsExpression(key, field, fixedQueryParamKeys);
     const expectedReturnTypes = isDateParam(key, field)
       ? new Set(["date"])
       : (paramFormatToReturnTypes(field.format) ??

@@ -522,6 +522,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     },
     inputFilterPresets:
       "Mesmos presets de período da fonte (ex.: Este mês até hoje). O valor alimenta os filtros do slide ou das fontes amarradas.",
+    inputFilterExpression:
+      "Valor fixo ou Expressão: a expressão é calculada pela API a cada carga (ex.: Date.AddMonths(Hoje,-12)) e vale como valor padrão do Filtro. Na TV, o filtro mostra o valor resolvido ou «Valores diferentes» quando as fontes resolvem valores distintos; quem assiste pode sobrescrever com um valor fixo, e limpar volta à expressão.",
     inputBindingMode:
       "Parâmetro de dados: o valor vai direto para um parâmetro das fontes (filial, período…). Variável reutilizável do slide: o valor fica disponível como input.<chave> nas expressões dos parâmetros das fontes e modelos deste slide.",
     inputVariableKey:

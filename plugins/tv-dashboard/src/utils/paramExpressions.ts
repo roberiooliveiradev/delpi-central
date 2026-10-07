@@ -7,21 +7,13 @@
  * que o wire exige; funções vêm do catálogo (`/data/m/functions`).
  */
 
-import type {
-  ParamExpressionAst,
-  ParamExpressionSpec,
+import {
+  isParamExpressionValue,
+  type ParamExpressionAst,
+  type ParamExpressionSpec,
 } from "@delpi/tv-dashboard-presentation";
 
-/** Marker wire — `params[name] = {expression: {version, expression}}`. */
-export function isParamExpressionValue(
-  value: unknown,
-): value is ParamExpressionSpec {
-  if (value == null || typeof value !== "object" || Array.isArray(value)) {
-    return false;
-  }
-  const inner = (value as Record<string, unknown>).expression;
-  return inner != null && typeof inner === "object" && !Array.isArray(inner);
-}
+export { isParamExpressionValue };
 
 /** Lê o AST raiz de um ExpressionSpec; null se a forma não for canônica. */
 export function readExpressionAst(

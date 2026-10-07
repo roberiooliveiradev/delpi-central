@@ -36,6 +36,7 @@ import {
   type ComunicadoInputPartResizeHandle,
 } from "./comunicadoInputParts";
 import type { ComunicadoInputBlock } from "./comunicadoTypes";
+import { isParamExpressionValue } from "./paramExpressionValue";
 
 export type InputResolvedField = {
   type?: string;
@@ -87,6 +88,47 @@ function isDateField(key: string, field: InputResolvedField | null | undefined):
   const format = String(field.format || "").toLowerCase();
   if (format === "date" || format === "date-time") return true;
   return /date|data|from|to|inicio|fim/i.test(key);
+}
+
+const FILTER_EXPRESSION_LABEL = "Expressão";
+const FILTER_EXPRESSION_DIVERGED_LABEL = "Valores diferentes";
+const FILTER_EXPRESSION_TITLE = "Valor calculado por expressão no servidor";
+
+type InputScalar = string | number | boolean | null;
+
+/** `resolved` = valor único das fontes; `diverged` = fontes com valores distintos; `pending` = sem decoração. */
+export type FilterExpressionDisplayState = "resolved" | "diverged" | "pending";
+
+function isInputScalar(value: unknown): value is string | number | boolean {
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+}
+
+/**
+ * Valor exibido pelo Filtro. Override de sessão não vazio vence; Filtro com
+ * ExpressionSpec mostra a decoração do backend (`resolvedValue`/`resolvedDiverged`)
+ * e nunca serializa o AST. Legado (escalar/variável) mantém `value ?? defaultValue`.
+ */
+export function resolveInputDisplayValue(
+  block: ComunicadoInputBlock,
+  value: InputScalar | undefined,
+  isVariable: boolean,
+): { current: InputScalar; expressionState: FilterExpressionDisplayState | null } {
+  const persisted = block.input?.defaultValue ?? null;
+  if (isVariable || !isParamExpressionValue(persisted)) {
+    const fallback = isInputScalar(persisted) ? persisted : null;
+    return { current: value !== undefined ? value : fallback, expressionState: null };
+  }
+  if (value !== undefined && value !== null && value !== "") {
+    return { current: value, expressionState: null };
+  }
+  const decoration = block.input as { resolvedValue?: unknown; resolvedDiverged?: unknown };
+  if (decoration.resolvedDiverged === true) {
+    return { current: null, expressionState: "diverged" };
+  }
+  if (isInputScalar(decoration.resolvedValue)) {
+    return { current: decoration.resolvedValue, expressionState: "resolved" };
+  }
+  return { current: null, expressionState: "pending" };
 }
 
 /** Tipo de controle no palco — só heurística do paramSchema (sem controlKind persistido). */
@@ -156,7 +198,13 @@ export function ComunicadoInputBlockView({
     effectiveField?.label ||
     paramKey ||
     "Filtro";
-  const current = value !== undefined ? value : (block.input?.defaultValue ?? null);
+  const { current, expressionState } = resolveInputDisplayValue(block, value, Boolean(variableBinding));
+  const expressionHint =
+    expressionState === "diverged"
+      ? FILTER_EXPRESSION_DIVERGED_LABEL
+      : expressionState === "pending" || (expressionState === "resolved" && interaction)
+        ? FILTER_EXPRESSION_LABEL
+        : null;
   const options = enumOptions(effectiveField);
   const scope = resolveInputTargetScope(block.input);
   // Variável: o tipo vem só do valueSchema (sem heurística pelo nome da chave).
@@ -255,7 +303,9 @@ export function ComunicadoInputBlockView({
         Selecione o parâmetro no inspetor
       </span>
     );
-  } else if (interactive) {
+  } else if (interactive && !(interaction && expressionState)) {
+    // Authoring (interaction): Filtro com expressão só muda pelo inspetor — o palco
+    // gravaria `defaultValue` escalar por cima do ExpressionSpec.
     const controlPointerStyle: CSSProperties | undefined = controlValueInteractive
       ? undefined
       : { pointerEvents: "none" };
@@ -272,7 +322,7 @@ export function ComunicadoInputBlockView({
           aria-label={label}
           disabled={dataLoading}
           tabIndex={controlValueInteractive ? undefined : -1}
-          placeholderOption="—"
+          placeholderOption={expressionHint ?? "—"}
           options={options}
         />
       );
@@ -288,7 +338,7 @@ export function ComunicadoInputBlockView({
             event.stopPropagation();
           }}
           aria-label={label}
-          placeholder={effectiveField?.description || paramKey}
+          placeholder={expressionHint ?? (effectiveField?.description || paramKey)}
           disabled={dataLoading}
           readOnly={!controlValueInteractive}
           tabIndex={controlValueInteractive ? undefined : -1}
@@ -299,11 +349,14 @@ export function ComunicadoInputBlockView({
     controlNode = (
       <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-value")}>
         {current === null || current === undefined || current === ""
-          ? "—"
+          ? (expressionHint ?? "—")
           : (effectiveField?.enumLabels?.[String(current)] ?? String(current))}
       </span>
     );
   }
+  // Placeholder já mostra o hint quando vazio — exceto <input type="date">, que o ignora.
+  const showExpressionBadge =
+    Boolean(expressionHint) && (current !== null || (interactive && controlKind === "date"));
 
   const hasAnyPartFrame = ["icon", "label", "badge", "control"].some((kind) =>
     Boolean(resolveInputPartFrame(getInputPartState(parts, { kind } as ComunicadoInputPartRef))),
@@ -478,6 +531,15 @@ export function ComunicadoInputBlockView({
           {...controlBind}
         >
           {controlNode}
+          {showExpressionBadge ? (
+            <span
+              className={ensureComunicadoDualClass("tdp-comunicado__input-block-schema-hint")}
+              title={FILTER_EXPRESSION_TITLE}
+              data-filter-expression={expressionState ?? undefined}
+            >
+              {expressionHint}
+            </span>
+          ) : null}
           {schemaMissing ? (
             <span
               className={ensureComunicadoDualClass("tdp-comunicado__input-block-schema-hint")}

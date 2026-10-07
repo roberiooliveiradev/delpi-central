@@ -1,5 +1,6 @@
 import {
   intersectParamSchemaKeys,
+  isParamExpressionValue,
   resolveInputParamSchemaField,
   unionParamSchemaKeys,
   type ComunicadoDataFilters,
@@ -12,7 +13,54 @@ import {
   DATE_RANGE_PRESET_PARAM,
   PERIOD_DAYS_PARAM,
   findDateRangeKeys,
+  isDateParam,
 } from "./dateRangePresets";
+import {
+  paramAllowsExpression,
+  paramFormatToReturnTypes,
+  paramTypeToReturnTypes,
+} from "./paramExpressions";
+
+type FilterConsumerRoute = {
+  paramSchema?: Record<string, unknown> | null;
+  fixedQueryParams?: Record<string, unknown> | null;
+};
+
+const NO_EXPRESSION_KEYS: ReadonlySet<string> = new Set();
+
+function expectedReturnTypesKey(key: string, field: DataParamSchema[string]): string {
+  const types = isDateParam(key, field)
+    ? new Set(["date"])
+    : (paramFormatToReturnTypes(field.format) ?? paramTypeToReturnTypes(field.type));
+  return types ? [...types].sort().join("|") : "*";
+}
+
+/**
+ * Modo Expressão do Filtro — só no `paramKey` dono (campos auxiliares de
+ * período seguem literais). Espelho de UI de `validate_filter_expression`
+ * (backend decide na escrita): ≥1 rota consumidora declara o param, nenhuma
+ * o proíbe (`in: path` / `expressionAllowed: false`), `fixedQueryParams` só
+ * excluem a rota e tipos de retorno divergentes entre rotas bloqueiam o modo.
+ */
+export function resolveFilterExpressionKeys(
+  paramKey: string,
+  routes: readonly FilterConsumerRoute[],
+): ReadonlySet<string> {
+  const key = paramKey.trim();
+  if (!key) return NO_EXPRESSION_KEYS;
+  const declaring = routes
+    .map((route) => ({
+      field: (route.paramSchema ?? {})[key] as DataParamSchema[string] | undefined,
+      fixed: new Set(Object.keys(route.fixedQueryParams ?? {})),
+    }))
+    .filter((item) => item.field && typeof item.field === "object");
+  if (declaring.length === 0) return NO_EXPRESSION_KEYS;
+  if (declaring.some(({ field }) => !paramAllowsExpression(key, field))) return NO_EXPRESSION_KEYS;
+  const consumers = declaring.filter(({ field, fixed }) => paramAllowsExpression(key, field, fixed));
+  if (consumers.length === 0) return NO_EXPRESSION_KEYS;
+  const returnTypes = new Set(consumers.map(({ field }) => expectedReturnTypesKey(key, field!)));
+  return returnTypes.size === 1 ? new Set([key]) : NO_EXPRESSION_KEYS;
+}
 
 export const INPUT_DATE_PRESET_PARAM = DATE_RANGE_PRESET_PARAM;
 
@@ -94,6 +142,11 @@ export function buildInputEditorValues(
   const paramKey = String(block.input.paramKey || "").trim();
 
   for (const key of Object.keys(schema)) {
+    // ExpressionSpec do Filtro vive só em `defaultValue` (nunca espelhado em dataFilters).
+    if (key === paramKey && isParamExpressionValue(block.input.defaultValue)) {
+      values[key] = block.input.defaultValue;
+      continue;
+    }
     if (scope === "slide" && key in slideFilters) {
       values[key] = slideFilters[key];
       continue;

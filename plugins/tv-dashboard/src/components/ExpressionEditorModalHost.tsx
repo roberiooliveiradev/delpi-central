@@ -75,6 +75,18 @@ export function ExpressionEditorModalHost() {
   const onPreview = useCallback(
     async (spec: ParamExpressionSpec) => {
       if (!expressionEditRequest || !previewBlock || !route) return null;
+      const inputBlockId = expressionEditRequest.previewInputBlockId;
+      if (inputBlockId) {
+        return previewTvDataRoute({
+          route,
+          block: previewBlock,
+          config,
+          playlistId,
+          playlistDefaults,
+          slideFilters: config.dataFilters,
+          inputDraft: { blockId: inputBlockId, defaultValue: spec },
+        });
+      }
       const nextParams = applyDataParamRawUpdates(
         previewBlock.dataBinding.params,
         buildParamValueUpdates(expressionEditRequest.paramKey, spec, {

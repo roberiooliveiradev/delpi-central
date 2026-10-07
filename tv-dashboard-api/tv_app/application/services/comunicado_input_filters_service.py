@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from tv_app.application.services.comunicado_input_contract_service import is_variable_input
+from tv_app.application.services.data.value_expression_service import is_expression_value
+
+_SCALAR_TYPES = (str, int, float, bool)
+
 
 def _is_empty(value: Any) -> bool:
     return value is None or value == ""
@@ -106,12 +111,21 @@ def collect_input_filter_contributions(
         field: dict[str, Any] | None,
         *,
         require_schema: bool,
+        allow_expression: bool = False,
     ) -> None:
         if _is_empty(value):
             # Input Filial vazio = consolidado: marca limpeza para o merge remover
             # branch herdada da fonte/programação (não omitir a chave).
             if param_key in BRANCH_PARAM_KEYS:
                 target[param_key] = ""
+            return
+        if is_expression_value(value):
+            # ExpressionSpec só vem do Filtro persistido (validado na escrita);
+            # resolução/typecheck por rota ocorre depois do merge.
+            if allow_expression and (not require_schema or field):
+                target[param_key] = value
+            return
+        if not isinstance(value, _SCALAR_TYPES):
             return
         if not require_schema:
             target[param_key] = value
@@ -129,6 +143,8 @@ def collect_input_filter_contributions(
             continue
         scope = resolve_input_target_scope(input_cfg)
         value = input_cfg.get("defaultValue")
+        # Default de Filtro `variable` permanece escalar (valueSchema).
+        expression_allowed = not is_variable_input(input_cfg)
 
         if scope == "slide":
             field = (
@@ -136,7 +152,14 @@ def collect_input_filter_contributions(
                 if require_slide
                 else None
             )
-            apply_value(slide, param_key, value, field, require_schema=require_slide)
+            apply_value(
+                slide,
+                param_key,
+                value,
+                field,
+                require_schema=require_slide,
+                allow_expression=expression_allowed,
+            )
             continue
 
         ids = [
@@ -150,7 +173,14 @@ def collect_input_filter_contributions(
             field = (
                 resolve_input_param_schema_field(param_key, [schema]) if schema else None
             )
-            apply_value(bucket, param_key, value, field, require_schema=require_source)
+            apply_value(
+                bucket,
+                param_key,
+                value,
+                field,
+                require_schema=require_source,
+                allow_expression=expression_allowed,
+            )
 
     overrides = runtime_overrides if isinstance(runtime_overrides, dict) else {}
     override_slide = overrides.get("slide")
