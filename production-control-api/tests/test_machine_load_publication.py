@@ -1105,3 +1105,85 @@ def test_published_row_cache_reflects_live_payload_update(
 
     reread = repo.get(branch="01")
     assert reread["payload_json"]["operations"][0]["production_order"] == "10840402001"
+
+
+# ---------------------------------------------------------------------------
+# E5 — estado semântico da publicação no payload autenticado do PCP
+# ---------------------------------------------------------------------------
+
+
+def test_get_payload_exposes_live_state() -> None:
+    service, _snapshots = _e4_setup(live=True)
+
+    data = service.build(_user(*FULL_PERMS), branch="01")
+
+    assert data["publication"]["state"] == "live"
+    assert data["publication"]["published_at"]
+    assert data["publication"]["published_by"] == "seed"
+
+
+def test_get_payload_exposes_draft_state_after_new_generation() -> None:
+    service, _snapshots = _e4_setup(live=False)
+
+    data = service.build(_user(*FULL_PERMS), branch="01")
+
+    assert data["publication"]["state"] == "draft"
+    # O carimbo continua sendo o da última publicação (geração anterior).
+    assert data["publication"]["published_at"]
+    assert data["publication"]["published_by"] == "seed"
+
+
+def test_get_payload_exposes_unpublished_state() -> None:
+    snapshots = FakeSnapshotRepo()
+    _e4_seed(snapshots)
+    service = _publish_service(snapshots)
+
+    data = service.build(_user(*FULL_PERMS), branch="01")
+
+    assert data["publication"] == {
+        "state": "unpublished",
+        "published_at": None,
+        "published_by": None,
+    }
+
+
+def test_refresh_response_returns_draft_state() -> None:
+    service, _snapshots = _e4_setup(live=True)
+
+    data = service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert data["publication"]["state"] == "draft"
+    assert data["publication"]["published_at"]
+
+
+def test_live_mutation_response_keeps_live_state() -> None:
+    service, _snapshots = _e4_setup(live=True)
+
+    data = _e4_mutate(service, "reorder")
+
+    assert data["publication"]["state"] == "live"
+
+
+def test_draft_mutation_response_keeps_draft_state() -> None:
+    service, _snapshots = _e4_setup(live=False)
+
+    data = _e4_mutate(service, "reorder")
+
+    assert data["publication"]["state"] == "draft"
+
+
+def test_public_payload_never_exposes_publication_state() -> None:
+    service, _snapshots = _e4_setup(live=True)
+
+    data = service.build_public(branch="01", work_center="CT-01A")
+
+    assert "publication" not in data
+
+
+def test_publish_response_marks_state_live() -> None:
+    service, _snapshots = _e4_setup(live=False)
+
+    result = service.publish(_user(*FULL_PERMS), branch="01")
+
+    assert result["publication"]["state"] == "live"
+    assert result["publication"]["changed"] is True

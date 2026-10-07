@@ -2499,6 +2499,81 @@
   color: var(--ppc-attention);
 }
 
+/* Estado da publicação da carga máquina (E5): LIVE x preparação. */
+.dashboard-production-control .ppc-load-publish {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--ppc-border);
+  font-size: var(--ppc-font-sm);
+}
+
+.dashboard-production-control .ppc-load-publish__status {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-load-publish__status svg {
+  flex-shrink: 0;
+}
+
+.dashboard-production-control .ppc-load-publish__label {
+  font-weight: 700;
+  color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-load-publish__hint {
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-load-publish--live {
+  border-left: 3px solid var(--ppc-ok);
+}
+
+.dashboard-production-control .ppc-load-publish--live .ppc-load-publish__status svg {
+  color: var(--ppc-ok);
+}
+
+.dashboard-production-control .ppc-load-publish--draft,
+.dashboard-production-control .ppc-load-publish--unpublished {
+  border-left: 3px solid var(--ppc-attention);
+}
+
+.dashboard-production-control .ppc-load-publish--draft .ppc-load-publish__status svg,
+.dashboard-production-control .ppc-load-publish--unpublished .ppc-load-publish__status svg {
+  color: var(--ppc-attention);
+}
+
+.dashboard-production-control .ppc-load-publish__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font: inherit;
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--ppc-accent);
+  color: var(--ppc-on-accent, #ffffff);
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-load-publish__action:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.dashboard-production-control .ppc-load-publish__action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .dashboard-production-control .ppc-load {
   display: flex;
   flex-direction: column;
