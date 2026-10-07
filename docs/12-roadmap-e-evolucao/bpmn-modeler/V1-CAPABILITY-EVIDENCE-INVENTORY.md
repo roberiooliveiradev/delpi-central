@@ -45,16 +45,16 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 | Construct | Import | Render | Preserve | Create | Edit | Props | Validate | Save/rb | Export/Reimport | Round-trip | Undo | Layout | Overall | Evidência |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Task (generic) | P | P | P | P | P | P | P | P | P | P | P | P | **PROVEN** | `create.task`/`append.append-task` E2E-40/modeler-journeys; drag→lane/subprocess E2E-40; delete E2E-07; AUTO-08 rename |
-| User Task | P | P | P | V | V | V | P | P | TI | PARTIAL | V | code | **PARTIAL** | `bpmn:userTask` só em fixture i18n (sidebar-i18n); replace menu vendor |
-| Service Task | P | V | P | V | V | V | P | P | TI | PARTIAL | V | code | **PARTIAL** | diProposal.ts lista tipo; replace vendor |
-| Manual Task | P | V | P | V | V | V | P | P | TI | PARTIAL | V | code | **PARTIAL** | idem |
-| Business Rule Task | P | V | P | V | V | V | P | P | TI | PARTIAL | V | code | **PARTIAL** | translate.test.ts (i18n label) |
-| Script Task | P | V | P | V | V | V | P | P | TI | PARTIAL | V | code | **PARTIAL** | diProposal |
-| Send Task | P | V | P | V | V | V | P | P | TI | PARTIAL | V | code | **PARTIAL** | diProposal |
-| Receive Task | P | V | P | V | V | V | P | P | TI | PARTIAL | V | code | **PARTIAL** | diProposal |
-| Call Activity | P | V | P | V | V | V(calledElement) | P | P | TI | PARTIAL | V | code | **PARTIAL** | layoutProfile `callActivity`; vendor CalledElement |
-| SubProcess expanded | P | P | P | V | V | V | P | P | TI | PARTIAL | P | P | **PARTIAL** | HIER-02 preview, containment unit+E2E; palette `create.subprocess-expanded` vendor |
-| SubProcess collapsed | P | P | P | V | V | V | P | P | TI | PARTIAL | P | P | **PARTIAL** | HIER-04 `isExpanded` preservado; unit diProposal |
+| User Task | P | P | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-02: replace→`bpmn:userTask`→save/rb→reload |
+| Service Task | P | V | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-02: `bpmn:serviceTask` QName |
+| Manual Task | P | V | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-02 |
+| Business Rule Task | P | V | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-02 |
+| Script Task | P | V | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-02 |
+| Send Task | P | V | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-02 |
+| Receive Task | P | V | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-02 |
+| Call Activity | P | V | P | P | P | PARTIAL (calledElement ausente → EG-14/WAVE E) | P | P | TI | PARTIAL(rt→G4) | P | code | **PROVEN (path)** | CE-ACT-03: replace→`bpmn:callActivity`→save/rb→reload |
+| SubProcess expanded | P | P | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | P | **PROVEN (path)** | CE-ACT-04: palette `create.subprocess-expanded`→save/rb→reload; HIER-02 |
+| SubProcess collapsed | P | P | P | P | P | PARTIAL | P | P | TI | PARTIAL(rt→G4) | P | P | **PROVEN (path)** | CE-ACT-04: replace→collapsed; HIER-04 `isExpanded` |
 | Ad-hoc SubProcess (preserve-only) | P | V | P | V(exposto!) | V | V | P | P | TI | PARTIAL | — | code | **PARTIAL** | FX_PRESERVE_001 backend; replace expõe criação (gap) |
 | Transaction (preserve-only) | P | V | P | V(exposto!) | V | V | P | P | TI | PARTIAL | — | code | **PARTIAL** | FX_PRESERVE_001 |
 | Event SubProcess (preserve-only) | P | V | P | V(exposto!) | V | V | P | P | TI | PARTIAL | — | code | **PARTIAL** | FX_PRESERVE_001 |
@@ -64,61 +64,61 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 | Posição | Definition | Target | Create | Edit | Props | Import/Render/Preserve | Round-trip | Status | Evidência |
 |---|---|---|---|---|---|---|---|---|---|
 | Start | None | CE | P | P | P | P | P | **PROVEN** | fixtures+E2E-31 seleção+layout |
-| Start | Message/Timer/Signal | CE | V | V | V | P(XSD) | TI | **PARTIAL** | replace entries vendor |
+| Start | Message/Timer/Signal | CE | P | P | PARTIAL | P(XSD) | TI | **PROVEN (path)** | CE-EVT-01: replace defs→EventDefinition XML→save/rb→reload |
 | Start | Conditional/Multiple/Parallel | preserve | — | — | — | TI | TI | **TO_INVENTORY** | sem fixture |
 | EventSubProcess Start | Error/Escalation/etc | preserve | — | — | — | TI | TI | **TO_INVENTORY** | — |
-| Catch | Message/Timer/Signal | CE | V | V | V | P(XSD) | TI | **PARTIAL** | replace vendor |
-| Catch | Link | CE | V | V | V | P | PARTIAL | **PARTIAL** | FX_LINK_001 backend + fixture E2E modeler-journeys |
+| Catch | Message/Timer/Signal | CE | P | P | PARTIAL | P(XSD) | TI | **PROVEN (path)** | CE-EVT-02: append catch→replace defs→read-back |
+| Catch | Link | CE | P | P | PARTIAL | P | PARTIAL | **PROVEN (path)** | CE-EVT-02 replace link; FX_LINK_001 backend |
 | Catch | Conditional/Multiple/Parallel | preserve | — | — | — | TI | TI | **TO_INVENTORY** | — |
-| Boundary (int/non-int) | Error | CE | V | V | V | P | PARTIAL | **PARTIAL** | FX_BND_001 backend; diProposal code |
-| Boundary | Message/Timer/Signal/Escalation | CE | V | V | V | P(XSD) | TI | **PARTIAL** | replace vendor (message/timer/escalation/signal/error boundary entries) |
+| Boundary (int/non-int) | Error | CE | P | P | PARTIAL | P | PARTIAL | **PROVEN (path)** | CE-EVT-04 attach+replace; FX_BND_001 backend |
+| Boundary | Message/Timer/Signal/Escalation | CE | P | P | PARTIAL | P(XSD) | TI | **PROVEN (path)** | CE-EVT-04: drop on task (`attachedToRef`) + defs + non-int `cancelActivity="false"` |
 | Boundary | Conditional/Cancel/Compensation/Multiple | preserve | — | — | — | TI | TI | **TO_INVENTORY** | replace expõe criação (gap) |
-| Throw | None | CE | V | V | V | P | TI | **PARTIAL** | vendor generic |
-| Throw | Message/Signal/Escalation/Link | CE | V | V | V | P(XSD) | TI | **PARTIAL** | replace vendor |
+| Throw | None | CE | P | P | PARTIAL | P | TI | **PROVEN (path)** | CE-EVT-03 append `append.intermediate-event` |
+| Throw | Message/Signal/Escalation/Link | CE | P | P | PARTIAL | P(XSD) | TI | **PROVEN (path)** | CE-EVT-03 replace defs |
 | Throw | Compensation/Multiple | preserve | — | — | — | TI | TI | **TO_INVENTORY** | — |
 | End | None | CE | P | P | P | P | P | **PROVEN** | fixtures FX_VALID_001 + render E2E |
-| End | Message/Error/Signal/Escalation/Terminate | CE | V | V | V | P(XSD) | TI | **PARTIAL** | replace vendor |
+| End | Message/Error/Signal/Escalation/Terminate | CE | P | P | PARTIAL | P(XSD) | TI | **PROVEN (path)** | CE-EVT-05 replace defs→read-back |
 | End | Compensation/Cancel/Multiple | preserve | — | — | — | TI | TI | **TO_INVENTORY** | — |
 
 ### 2.3 Gateways
 
 | Gateway | Import/Render/Preserve | Create | Edit | Props | Validate | Layout | Round-trip | Status | Evidência |
 |---|---|---|---|---|---|---|---|---|---|
-| Exclusive | P | PARTIAL | P | P(default/cond vendor) | P | P | P | **PROVEN** | usado em >6 specs E2E; FX_GW_002 default+condition; replace popup E2E |
-| Parallel | P | V | V | V | P | code | TI | **PARTIAL** | diProposal list; replace vendor |
-| Inclusive | P | V | V | V | P | code | TI | **PARTIAL** | diProposal list |
-| Event-Based | P | V | V | V | P | code | PARTIAL | **PARTIAL** | FX_GW_001 semantic rule backend |
+| Exclusive | P | PARTIAL | P | PARTIAL(cond/default ausentes da surface → WAVE E) | P | P | P | **PROVEN (path)** | CE-GW-01 + >6 specs E2E; FX_GW_002 default+condition (XML backend); replace popup E2E |
+| Parallel | P | P | P | — | P | code | TI | **PROVEN (path)** | CE-GW-02: replace→connect→`bpmn:parallelGateway`→save/rb |
+| Inclusive | P | P | P | PARTIAL(cond/default ausentes→WAVE E) | P | code | TI | **PROVEN (path)** | CE-GW-03 |
+| Event-Based | P | P | P | — | P | code | PARTIAL | **PROVEN (path)** | CE-GW-04/05: replace+append catch; conditional append DENY |
 | Complex (preserve) | P(backend)+V(render) | V(exposto!) | — | — | P | code | PARTIAL | **PARTIAL** | FX_PRESERVE_001 |
 
 ### 2.4 Connecting objects
 
 | Construct | Create | Edit/Reconnect | Props | Validate | Layout | Round-trip | Status | Evidência |
 |---|---|---|---|---|---|---|---|---|
-| Sequence Flow | P | P(reconnect V) | P(cond/default V-ui) | P | P | P | **PROVEN** | append E2E; FX_GW_002; RTM-04 invalid connect; STRUCT-010..012 |
-| Message Flow | V | V | V | P | P | PARTIAL | **PARTIAL** | FX_VALID_002 backend; layout-hierarchy E2E render |
-| Association | V | V | V | P(STRUCT-017) | code | TI | **PARTIAL** | diProposal/elkGraph code |
-| Data Association | V | V | V | P(STRUCT-018) | code | TI | **PARTIAL** | diProposal code |
+| Sequence Flow | P | P(reconnect V) | PARTIAL(cond/default entries ausentes da surface → WAVE E) | P | P | P | **PROVEN (path)** | append E2E; FX_GW_002 (XML backend); RTM-04 invalid connect; STRUCT-010..012 |
+| Message Flow | P | — | — | P | P | PARTIAL | **PROVEN (path)** | CE-COL-03: tA→tB cross-pool→`<bpmn:messageFlow>`; FX_VALID_002 |
+| Association | P | — | — | P(STRUCT-017) | code | TI | **PROVEN (path)** | CE-ART-03: task→annotation→`<bpmn:association>` |
+| Data Association | P | — | — | P(STRUCT-018) | code | TI | **PROVEN (path)** | CE-ART-02: output+input associations→QName+reload |
 
 ### 2.5 Collaboration
 
 | Construct | Create | Edit | Resize | Props | Layout | Round-trip | Status | Evidência |
 |---|---|---|---|---|---|---|---|---|
-| Participant/Pool | V | P | V | P(processRef IDG-05) | P | PARTIAL | **PARTIAL** | palette `create.participant-expanded` vendor; RTM drop rules E2E; FX_VALID_002 |
-| Lane | V | P | V | V | P | PARTIAL | **PARTIAL** | layout-hierarchy E2E; diProposal unit (flowNodeRef containment) |
-| Multiple pools | — | — | — | — | P | PARTIAL | **PARTIAL** | FX_VALID_002 |
-| Multiple lanes | — | — | — | — | P | PARTIAL | **PARTIAL** | layout-hierarchy E2E |
-| Nested lanes | — | — | — | — | P | PARTIAL | **PARTIAL** | FX_VALID_002 childLaneSet + diProposal unit |
-| Message flow entre pools | V | — | — | — | P | PARTIAL | **PARTIAL** | FX_VALID_002; layout E2E |
-| Black-box pool | V | V | — | — | code | PARTIAL | **PARTIAL** | FX_VALID_002 Pool_B sem processRef reconhecido; `collapsed-pool` replace vendor |
+| Participant/Pool | P | P | — | P(processRef IDG-05) | P | PARTIAL | **PROVEN (path)** | CE-COL-01: palette expanded→`processRef`+`laneSet`+save/rb |
+| Lane | P | P | — | P | P | PARTIAL | **PROVEN (path)** | CE-COL-02/05: insert above/below+divide+rename+move task (`flowNodeRef`) |
+| Multiple pools | P | — | — | — | P | PARTIAL | **PROVEN (path)** | CE-COL-03: 2 participants |
+| Multiple lanes | P | — | — | — | P | PARTIAL | **PROVEN (path)** | CE-COL-02/05 |
+| Nested lanes | P | — | — | — | P | PARTIAL | **PROVEN (path)** | CE-COL-02: divide→`childLaneSet` real |
+| Message flow entre pools | P | — | — | — | P | PARTIAL | **PROVEN (path)** | CE-COL-03 |
+| Black-box pool | P | V | — | — | code | PARTIAL | **PROVEN (path)** | CE-COL-04: `replace-with-collapsed-pool`→participant sem processRef |
 
 ### 2.6 Data / Artifacts
 
 | Construct | Create | Edit | Props | Validate | Layout | Round-trip | Status | Evidência |
 |---|---|---|---|---|---|---|---|---|
-| Data Object / Reference | PARTIAL | V | V | P(FX_REF_003/005) | P | PARTIAL | **PARTIAL** | `create.data-object` E2E-attempt (RTM-03 rejection = palette+governança ativa) |
-| Data Store Reference | V | V | V | P | P | PARTIAL | **PARTIAL** | layout-hierarchy/geometry E2E; diProposal.test |
+| Data Object / Reference | P | P | PARTIAL | P(FX_REF_003/005) | P | PARTIAL | **PROVEN (path)** | CE-ART-01: `create.data-object`→`bpmn:dataObjectReference`→save/rb |
+| Data Store Reference | P | P | PARTIAL | P | P | PARTIAL | **PROVEN (path)** | CE-ART-01: `create.data-store`→`bpmn:dataStoreReference`→save/rb |
 | Data Input/Output (preserve) | — | — | — | TI | code | TI | **TO_INVENTORY** | — |
-| Text Annotation | V | V | V | P | code | TI | **PARTIAL** | layoutProfile/diProposal code |
+| Text Annotation | P | P | P(texto editado) | P | code | TI | **PROVEN (path)** | CE-ART-03: append→rename→`<bpmn:textAnnotation>`+assoc |
 | Group | V | P | P(visual) | P | P | P | **PROVEN(preserve/layout)** | layout-group E2E GROUP-01..07 (vazio, overlap parcial, aninhado, bounds DI); diProposal unit |
 
 ## 3. Properties matrix
@@ -128,14 +128,15 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 | name | IN_V1 | vendor + direct edit + panel | AUTO-08 (rename→autosave), E2E-40 | **PROVEN** |
 | BPMN id (edit) | entregue (G0) | AdvancedIdProvider + vendor stack | IDG-01..05 E2E | **PROVEN** |
 | processId/processRef | IN_V1 | vendor entry realocado | IDG-05 E2E | **PROVEN** |
-| documentation | IN_V1 | vendor entry | — | **VENDOR_ONLY** |
-| conditionExpression | IN_V1 | vendor ConditionProps | FX_GW_002 valida XML, sem UI test | **VENDOR_ONLY** |
-| default flow | IN_V1 | vendor DefaultFlow | idem | **VENDOR_ONLY** |
-| event definition swap/fields | IN_V1 | vendor EventDefinition + Message/Timer/Signal/Error/Escalation/Link/Compensation props | — | **VENDOR_ONLY** |
-| lane name | IN_V1 | vendor (direct edit) | — | **VENDOR_ONLY** |
-| task type | IN_V1 | replace menu vendor | popup abre (E2E-40), ação não exercitada | **VENDOR_ONLY** |
-| subprocess expanded/collapsed | IN_V1 | vendor replace + `isExpanded` | HIER-04 preserva estado | **PARTIAL** |
-| calledElement | IN_V1 | vendor CalledElement | — | **VENDOR_ONLY** |
+| documentation | IN_V1 | vendor entry exposta via allowlist | edit persist sem teste dedicado | **PARTIAL** (WAVE E) |
+| conditionExpression | IN_V1 | **ausente na surface `bpmn` carregada** — provider não emite a entry (vive em providers Zeebe/Camunda não instalados) | — | **IMPLEMENTATION_GAP** (WAVE E, owner 03) |
+| default flow | IN_V1 | **ausente na surface `bpmn` carregada** — idem | — | **IMPLEMENTATION_GAP** (WAVE E, owner 03) |
+| event definition swap | IN_V1 | replace menu | CE-EVT-01..05 (defs por posição) | **PROVEN** |
+| event definition fields | IN_V1 | timer type/value entries | CE-EVT-06 (timer PROVEN); message/error/signal/escalation/link refs expostos sem teste dedicado | **PARTIAL** (refs → WAVE E) |
+| lane name | IN_V1 | direct edit | CE-COL-05 (rename + read-back) | **PROVEN** |
+| task type | IN_V1 | replace menu vendor | CE-ACT-02 (7 typed tasks com QName) | **PROVEN** |
+| subprocess expanded/collapsed | IN_V1 | palette + replace | CE-ACT-04 create path; HIER-04 preserva estado | **PROVEN** |
+| calledElement | IN_V1 | **ausente na surface `bpmn` carregada** — provider não emite a entry | — | **IMPLEMENTATION_GAP** (WAVE E, owner 03) |
 | engine binding fields | OUT_OF_V1 | provider genérico Bpmn (sem camunda); bundle tem MultiInstance/VersionTag/isExecutable | — | **TO_INVENTORY** (exposição exata em runtime) |
 
 ## 4. Productivity matrix
@@ -172,7 +173,7 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 
 ## 6. VENDOR-ONLY capabilities (não promover a produto)
 
-Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/distribute · space-tool · hand-tool · global-connect · keyboard-move · replace-menu actions (todas as morphs) · context-pad append de tipos específicos · palette create entries não-task (subprocess, pool, data-store, group, gateways via append) · typed task create (9) · event definition swap/fields · boundary/intermediate throw create · complex gateway · ad-hoc/transaction/event-subprocess create **(fora do profile, exposto)** · MultiInstanceLoopCharacteristics **(fora do profile, exposto)** · documentation edit · conditionExpression UI · defaultFlow UI · calledElement · Ctrl+F search pad overlay · shortcuts S/L/H/C/E/R · palette search pad (inexistente vendor) · CandidateUsers/engine providers (**TO_INVENTORY** se carregados).
+Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/distribute · space-tool · hand-tool · global-connect · keyboard-move · replace-menu actions (todas as morphs) · context-pad append de tipos específicos · palette create entries não-task (subprocess, pool, data-store, group, gateways via append) · typed task create (9) · event definition swap/fields · boundary/intermediate throw create · complex gateway · ad-hoc/transaction/event-subprocess create **(fora do profile, exposto)** · MultiInstanceLoopCharacteristics **(fora do profile, exposto)** · documentation edit · ~~conditionExpression UI · defaultFlow UI · calledElement~~ (código vendor existe nos providers Zeebe/Camunda **não carregados** — ausentes da surface `bpmn` ativa → IMPLEMENTATION_GAP/WAVE E) · Ctrl+F search pad overlay · shortcuts S/L/H/C/E/R · palette search pad (inexistente vendor) · CandidateUsers/engine providers (**TO_INVENTORY** se carregados).
 
 ## 7. Gaps
 
@@ -200,7 +201,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 | EG-11 | TextAnnotation/Association/DataAssociation create | **CLOSED (G2B)** — CE-ART-02/03: dataOutput+dataInputAssociation + textAnnotation editada + `<bpmn:association>` read-back/reload | 03 | P2 | G3→G2B |
 | EG-12 | Preserve-only render/round-trip por construct | backend fixture único | 02+06 | P1 | G4 |
 | EG-13 | Shortcuts vendor (Del, R, E, S, L, H, C, zoom) | bindings ativos | 03+06 | P2 | G3 |
-| EG-14 | Engine fields no panel (MultiInstance/VersionTag/demais engine fields) | bundle tem; exposição runtime TI | 03+02 | P2 | G3/WAVE E. NOTA G2A: `isExecutable` **resolvido** — BPMN normativo (não engine-specific); edição intencionalmente não exposta por decisão de produto; preservação de import **PROVEN** (GOV-13). Restante do EG-14 = campos engine/vendor propriamente ditos |
+| EG-14 | Engine fields no panel (MultiInstance/VersionTag/demais engine fields) + **panel fields IN_V1 ausentes: `calledElement`/`conditionExpression`/`defaultFlow`** | bundle tem; exposição runtime TI | 03+02 | P2 | G3/WAVE E. NOTA G2A: `isExecutable` **resolvido** — BPMN normativo (não engine-specific); edição intencionalmente não exposta por decisão de produto; preservação de import **PROVEN** (GOV-13). NOTA G2B: `calledElement`/`conditionExpression`/`defaultFlow` reclassificados VENDOR_ONLY→**IMPLEMENTATION_GAP** (provider `bpmn` não emite as entries; código vive em providers Zeebe/Camunda não carregados) |
 
 ### TARGET GAPS (scope congelado não inventariado)
 
@@ -225,6 +226,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 - **Connecting:** 3 PROVEN (SequenceFlow, MessageFlow, Association) + DataOutput/InputAssociation PROVEN (CE-ART-02).
 - **Collaboration:** PROVEN create path — participant expanded+processRef+laneSet, lanes insert/divide/nested/rename/move, black-box pool, 2 pools + MessageFlow (CE-COL-01..05).
 - **Data/Artifacts:** PROVEN — DataObject, DataStoreReference, TextAnnotation+texto, Group, Association, DataAssociation (CE-ART-01..04).
+- **Properties breadth:** PARTIAL — timer type/value, name, lane name, task type, annotation text PROVEN; event refs expostos sem teste dedicado; `calledElement`/`conditionExpression`/`defaultFlow` ausentes da surface `bpmn` carregada → IMPLEMENTATION_GAP (WAVE E).
 - **Productivity:** 6 PROVEN (select-all, Ctrl+S, undo/redo, zoom/pan/fit, direct edit, canvas) · ~10 PARTIAL · ~12 VENDOR_ONLY · 1 MISSING (palette search).
 - **Validation:** PROVEN (47/47 regras) · per-construct semantic PARTIAL.
 - **Round-trip:** artifact-level PROVEN · per-construct PARTIAL.
@@ -233,7 +235,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 ## 9. Candidate next waves (input para 00 — não é decisão)
 
 - **WAVE A — Profile Governance:** provider de restrição palette/context-pad/replace/panel para o profile CE; bloquear/excluir preserve-only+engine constructs da criação. (IG-2, EG-14) — P1, owners 03+02. → **EXECUTED (G2A, PASS)** — parte creation/replacement fechada; exposição residual de engine fields no panel = TO_INVENTORY (EG-14 permanece para WAVE E).
-- **WAVE B — CREATE_EDIT Evidence Closure:** → **EXECUTED (G2B, PASS)** — 24 testes E2E `create-edit-*.spec.ts` provam create→configure→connect→save→authoritative read-back→reload por construct CE. (EG-3..7, EG-11, TG-1, TG-3 fechados).
+- **WAVE B — CREATE_EDIT Evidence Closure:** → **EXECUTED (G2B, PASS)** — 24 testes E2E `create-edit-*.spec.ts` (workers=2, baseline determinístico) provam create→configure→connect→save→authoritative read-back→reload por construct CE. Construct paths = PROVEN; properties breadth = PARTIAL. (EG-3..7, EG-11, TG-1, TG-3 fechados).
 - **WAVE C — Round-trip & Preserve Evidence:** suíte export→reimport→compare por construct + corpus preserve-only. (EG-8, EG-12, TG-2) — P1, owners 02+06.
 - **WAVE D — Productivity:** copy/paste, multi-select/bulk, search pad product QA, palette search impl, shortcuts map, resize funcional. (EG-1,2,9,10,13, IG-1) — P2, owners 03+06.
 - **WAVE E — Properties Evidence:** doc/condition/default/event-fields/calledElement UI tests. — P2, owner 03+06.

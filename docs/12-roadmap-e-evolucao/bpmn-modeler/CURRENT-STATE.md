@@ -154,7 +154,9 @@ Status de auditoria G0: `TO_INVENTORY` (a matriz detalhada será produzida no G1
 
 ### 13a. CREATE_EDIT evidence (G2B — vigente)
 
-O profile `CREATE_EDIT` inteiro está **PROVEN** por execução real: 24 testes E2E em `e2e/specs/create-edit-{activities,gateways,events,collaboration,artifacts}.spec.ts`, cada um percorrendo `create → configure → connect (quando aplicável) → autosave → authoritative read-back (GET working-copy) → reload → verify QName + render`. Helpers compartilhados em `e2e/ce-helpers.ts` (incl. `fetchWorkingCopyXml`, `attachBoundary`, `newShapeId`/`newConnectionId` por diff de DOM).
+Todos os constructs do profile `CREATE_EDIT` têm o **caminho estrutural PROVEN** por execução real: 24 testes E2E em `e2e/specs/create-edit-{activities,gateways,events,collaboration,artifacts}.spec.ts` (executados com `workers=2`, baseline determinístico), cada um percorrendo `create → configure basic shape/type → connect (quando aplicável) → autosave → authoritative read-back (GET working-copy) → reload → verify QName + render`. Helpers compartilhados em `e2e/ce-helpers.ts` (incl. `fetchWorkingCopyXml`, `attachBoundary`, `newShapeId`/`newConnectionId` por diff de DOM).
+
+A **breadth de properties** do profile permanece **PARTIAL**: `timerEventDefinitionType`/`timerEventDefinitionValue` PROVEN (CE-EVT-06); `name`/`lane name`/`task type`/annotation text PROVEN; event refs (`messageRef`/`errorRef`/`signalRef`/`escalationRef`) expostos mas sem evidência dedicada; `calledElement`, `conditionExpression`, `defaultFlow` **ausentes da surface `bpmn` carregada** (IMPLEMENTATION_GAP → WAVE E).
 
 | Família | Spec | Prova |
 |---|---|---|
@@ -164,7 +166,7 @@ O profile `CREATE_EDIT` inteiro está **PROVEN** por execução real: 24 testes 
 | Collaboration | CE-COL-01..05 | participant expanded (`processRef`+`laneSet`), lanes insert/divide/nested/rename/move (`childLaneSet`+`flowNodeRef`), black-box pool, 2 pools + MessageFlow |
 | Artifacts | CE-ART-01..04 | DataObject, DataStoreReference, TextAnnotation+texto, Group, Association, dataInput+dataOutputAssociation |
 
-Gaps residuais desta wave: `calledElement`, `conditionExpression`, `defaultFlow` **não existem na surface do provider `bpmn` carregado** (vivem nos providers Zeebe/Camunda não instalados) — classificados como exposição pendente em EG-14/WAVE E, não como falha de governance.
+Gaps residuais desta wave: `calledElement`, `conditionExpression`, `defaultFlow` **não existem na surface do provider `bpmn` carregado** (vivem nos providers Zeebe/Camunda não instalados) — classificados como `IMPLEMENTATION_GAP` na properties matrix (WAVE E, owner 03), não como falha de governance nem como VENDOR_ONLY.
 
 ## 14. Produtividade — classificação por evidência (G0)
 
