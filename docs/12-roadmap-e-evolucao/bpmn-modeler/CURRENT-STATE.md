@@ -102,7 +102,8 @@ edit (commandStack.changed)
 ## 8. Editor / vendor boundary (vigente)
 
 - `BpmnEditorAdapter` = única superfície React↔vendor (`src/editor/`); vendor leakage gate no CI.
-- `Modeler` (bpmn-js 18.30.1) + `BpmnPropertiesPanelModule`/`BpmnPropertiesProviderModule` + módulos do produto (`ptBrTranslateModule`, `propertiesPanelModule`).
+- `Modeler` (bpmn-js 18.30.1) + `BpmnPropertiesPanelModule`/`BpmnPropertiesProviderModule` + módulos do produto (`ptBrTranslateModule`, `propertiesPanelModule`, `profileGovernanceModule`).
+- **Editing profile governance (G2A, vigente):** `editingProfile.ts` = autoridade central testável do profile V1 (`CREATE_EDIT`/`RENDER_PRESERVE_ONLY`/fora do profile); `profileGovernanceModule.ts` envolve os providers vendor oficiais (`paletteProvider`, `contextPadProvider`, `replaceMenuProvider`) via `injector.instantiate` e filtra entries **fail-closed** (entry vendor não classificada no profile = não exposta). `ProfileGovernedPanelProvider` (mesmo `propertiesPanelModule.ts`) remove grupos/entries fora do profile do properties panel (multiInstance, compensation, adHocCompletion, `isExecutable`). Preserve-only continua importando/renderizando/preservando — governança só atua nas surfaces de create/replace/panel, nunca no canônico. Evidência: `editingProfile.test.ts`, `profileGovernance.test.ts`, `e2e/specs/profile-governance.spec.ts`.
 - Viewer de leitura/preview = `NavigatedViewer` (sem módulos de mutação por construção).
 - Theming via CSS vars da shell (`BPMN_RENDERER_THEME`); DI colors do documento prevalecem.
 - **Edição de BPMN `id`:** vigente — o entry `id`/`processId` do properties panel do vendor é realocado para grupo "Configurações avançadas" (`AdvancedIdProvider`); edição passa pelo command stack vendor (undo/redo/read-back, refs atualizadas). Claim freeze "id read-only/FUTURE" = SUPERSEDED. Evidência: `propertiesPanelModule.ts`, `e2e/specs/bpmn-id-governance.spec.ts`. `Model.id` da API é autoridade separada — nunca alterado por edição BPMN.
@@ -130,9 +131,9 @@ edit (commandStack.changed)
 |---|---|---|
 | Backend unit/contract/journeys | `bpmn-modeler/tests/` — 98 testes em 10 arquivos (`test_use_cases`, `test_domain_model`, `test_api_contract`, `test_validation_*`, `test_ownership_isolation` (14), `test_revision_immutability`, `test_e2e_journeys`, `test_repository_integration`, `test_architecture`) | executados em CI |
 | CI backend | pytest, migrations idempotentes, repository integration sobre plugins_hub real, schema isolation, append-only scan, OpenAPI 20 ops, camadas, XSD checksums | gates verdes |
-| Frontend unit | `vitest` — saveMachine, autosave, diProposal, canvas-reg, propertiesPanelModule, i18n | executados em CI |
+| Frontend unit | `vitest` — saveMachine, autosave, diProposal, canvas-reg, propertiesPanelModule, i18n, editingProfile, profileGovernance | executados em CI |
 | Frontend build | tsc, eslint, vite build, worker chunk, vendor leakage, notices/watermark | gates verdes |
-| Browser E2E | `e2e/specs/` — 17 specs (~5,7k linhas): acceptance-journey, autosave-auth, bpmn-id-governance, i18n, interaction-chrome, layout-*, modeler-journeys, revisions-metadata, runtime-messages, sidebar-*, theme, visual-regression | executados contra stack real local (não rodam no CI remoto) |
+| Browser E2E | `e2e/specs/` — 18 specs: acceptance-journey, autosave-auth, bpmn-id-governance, i18n, interaction-chrome, layout-*, modeler-journeys, profile-governance, revisions-metadata, runtime-messages, sidebar-*, theme, visual-regression | executados contra stack real local (não rodam no CI remoto) |
 | Runtime multi-user | P0 acceptance: 57/57 + closure 18/18 (subjects reais, superadmin real) | PASS |
 
 Nota de execução E2E: baseline suportado `workers=1/2` determinístico; `workers=8` = best-effort (contenção de host).
@@ -161,7 +162,7 @@ Status de auditoria G0: `TO_INVENTORY` (a matriz detalhada será produzida no G1
 | search in diagram (Ctrl+F overlay) | IN_V1 (§34) | `adapter.findElements` implementado + unit-tested; **overlay/produto UI ausente** | `IMPLEMENTATION_GAP` — spec vigente sem entrega |
 | palette search | IN_V1 | `SearchModule`/`BpmnSearchProvider` + search-pad no bundle vendor; UX produto sem evidência dedicada | `TARGET` (TO_INVENTORY) |
 | snap/grid | IN_V1 (vendor) | `SnappingModule` + `GridSnappingModule` no bundle; grid configurável pelo usuário = `FUTURE` (inalterado) | vendor presente; config gap permanece FUTURE |
-| palette restrita ao profile + vendor features off | IN_V1 (§31/§95 do freeze) | **sem palette provider custom** — palette vendor completa exposta; nenhum módulo de restrição | `IMPLEMENTATION_GAP` → G3 |
+| palette restrita ao profile + vendor features off | IN_V1 (§31/§95 do freeze) | **vigente (G2A)** — `editingProfile.ts` central + `profileGovernanceModule.ts` (palette/context-pad/replace fail-closed) + `ProfileGovernedPanelProvider` (panel); preserve-only e MultiInstance não criáveis nem replace targets | `IMPLEMENTED`+`PROVEN` (unit+integration+E2E `profile-governance.spec.ts`); ferramentas não-semânticas (align/distribute/space/hand/global-connect) permanecem `TO_INVENTORY` |
 | thumbnails na library | `FUTURE` no freeze | **entregue** — `BpmnModelThumb` renderiza SVG do working copy (cache `model@version`) | `SUPERSEDED` (DRIFT-BPMN-011) |
 
 Extras do bundle vendor presentes sem UX/evidência de produto dedicada (TO_INVENTORY, não contam como entrega): `AlignElementsModule`, `DistributeElementsModule`, `SpaceTool`, `HandTool`, `AutoPlace`, `GlobalConnect`.

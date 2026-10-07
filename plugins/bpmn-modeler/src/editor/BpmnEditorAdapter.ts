@@ -13,6 +13,7 @@ import {
   BpmnPropertiesProviderModule,
 } from "bpmn-js-properties-panel";
 import { ptBrTranslateModule } from "./i18n/translate";
+import { profileGovernanceModule } from "./profileGovernanceModule";
 import { propertiesPanelModule } from "./propertiesPanelModule";
 
 import { ApplyDiLayoutHandler } from "./layoutApply";
@@ -122,6 +123,7 @@ export class BpmnEditorAdapter {
           ptBrTranslateModule,
           BpmnPropertiesPanelModule,
           BpmnPropertiesProviderModule,
+          profileGovernanceModule,
           propertiesPanelModule,
         ],
       });

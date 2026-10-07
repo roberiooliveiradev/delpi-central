@@ -49,7 +49,7 @@ export function TextPopupPtBr(props: TextPopupPtBrProps) {
     props;
 
   const handleSetReturnFocus = () => {
-    sourceElement && sourceElement.focus();
+    sourceElement?.focus();
   };
 
   return jsxs(Popup, {

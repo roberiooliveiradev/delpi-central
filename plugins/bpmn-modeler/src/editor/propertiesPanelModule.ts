@@ -1,6 +1,10 @@
 import { Group } from "@bpmn-io/properties-panel";
 
 import { bpmnTypeLabel, translate } from "./i18n/translate";
+import {
+  isPropertiesEntryAllowed,
+  isPropertiesGroupAllowed,
+} from "./editingProfile";
 import { TextPopupPtBr } from "./popups/textPopup";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -191,14 +195,45 @@ function PanelChromePtBr(this: any, eventBus: any, propertiesPanel: any) {
 
 PanelChromePtBr.$inject = ["eventBus", "propertiesPanel"];
 
+/**
+ * Provider de governança do editing profile (G2A): remove grupos e entries
+ * fora do profile aprovado da V1 (multiInstance, adHocCompletion,
+ * compensation, isExecutable). Extension point oficial `registerProvider`
+ * na mesma prioridade do AdvancedIdProvider — mutação de lista de grupos,
+ * nenhum DOM manipulado. Fail-closed: grupo vendor novo/desconhecido cai
+ * em deny (ver editingProfile.ts).
+ */
+function ProfileGovernedPanelProvider(this: any, propertiesPanel: any) {
+  propertiesPanel.registerProvider(1, this);
+}
+
+ProfileGovernedPanelProvider.$inject = ["propertiesPanel"];
+
+ProfileGovernedPanelProvider.prototype.getGroups = function () {
+  return (groups: any[]) => {
+    const kept = groups.filter(
+      (g) => g === null || isPropertiesGroupAllowed(g?.id),
+    );
+    for (const group of kept) {
+      if (!Array.isArray(group?.entries)) continue;
+      group.entries = group.entries.filter((e: any) =>
+        isPropertiesEntryAllowed(e?.id),
+      );
+    }
+    return kept;
+  };
+};
+
 export const propertiesPanelModule = {
   __init__: [
     "advancedIdProvider",
+    "profileGovernedPanelProvider",
     "popupTitlePtBr",
     "textPopupProvider",
     "panelChromePtBr",
   ],
   advancedIdProvider: ["type", AdvancedIdProvider],
+  profileGovernedPanelProvider: ["type", ProfileGovernedPanelProvider],
   popupTitlePtBr: ["type", PopupTitlePtBr],
   textPopupProvider: ["type", TextPopupProvider],
   panelChromePtBr: ["type", PanelChromePtBr],

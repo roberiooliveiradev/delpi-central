@@ -181,7 +181,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 | GAP | Capability | Evidence | Missing | Owner | Severity | Wave |
 |---|---|---|---|---|---|---|
 | IG-1 | Palette search (IN_V1) | vendor não implementa | feature inteira | 03 | P2 | G3 |
-| IG-2 | Profile governance (palette/context-pad/replace/panel) | replace expõe ad-hoc/transaction/eventSubProcess/complex/MultiInstance | provider de restrição | 03+02 | **P1** | G2/G3 |
+| IG-2 | Profile governance (palette/context-pad/replace/panel) | ~~replace expõe ad-hoc/transaction/eventSubProcess/complex/MultiInstance~~ | provider de restrição | 03+02 | **P1** | G2/G3 → **CLOSED (G2A)** — `editingProfile.ts`+`profileGovernanceModule.ts`+`ProfileGovernedPanelProvider`; fail-closed; evidência `profile-governance.spec.ts` |
 
 ### EVIDENCE GAPS (provavelmente funciona, sem prova de produto)
 
@@ -211,7 +211,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 ### G3 gaps (já identificados em G0) — verificação
 
 - **Diagram search:** REFINADO — overlay vendor searchPad existe e está bindado (Ctrl+F) + traduzido PT-BR. Gap real = evidência/produto-styling, não ausência. → EG-10.
-- **Palette restriction:** CONFIRMADO — nenhum provider de restrição; vendor completo exposto incl. preserve-only e MultiInstance. → IG-2.
+- **Palette restriction:** ~~CONFIRMADO — nenhum provider de restrição~~ → **CLOSED (G2A)** — palette/context-pad/replace/panel governados pelo profile central (`editingProfile.ts`), fail-closed; preserve-only e MultiInstance não são criáveis nem replace targets. → IG-2 closed.
 - **Copy/paste:** CONFIRMADO vendor-only. → EG-1.
 - **Multi-select:** CONFIRMADO vendor-only (exceto select-all). → EG-2.
 - **Palette search:** CONFIRMADO MISSING (vendor não fornece). → IG-1.
@@ -232,7 +232,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 
 ## 9. Candidate next waves (input para 00 — não é decisão)
 
-- **WAVE A — Profile Governance:** provider de restrição palette/context-pad/replace/panel para o profile CE; bloquear/excluir preserve-only+engine constructs da criação. (IG-2, EG-14) — P1, owners 03+02.
+- **WAVE A — Profile Governance:** provider de restrição palette/context-pad/replace/panel para o profile CE; bloquear/excluir preserve-only+engine constructs da criação. (IG-2, EG-14) — P1, owners 03+02. → **EXECUTED (G2A, PASS)** — parte creation/replacement fechada; exposição residual de engine fields no panel = TO_INVENTORY (EG-14 permanece para WAVE E).
 - **WAVE B — CREATE_EDIT Evidence Closure:** E2E de create/edit/save/read-back por construct CE (typed tasks, gateways P/I/EB, event defs, lanes/pools, messageFlow, artifacts). (EG-3..7, EG-11, TG-1) — P1, owners 03+06.
 - **WAVE C — Round-trip & Preserve Evidence:** suíte export→reimport→compare por construct + corpus preserve-only. (EG-8, EG-12, TG-2) — P1, owners 02+06.
 - **WAVE D — Productivity:** copy/paste, multi-select/bulk, search pad product QA, palette search impl, shortcuts map, resize funcional. (EG-1,2,9,10,13, IG-1) — P2, owners 03+06.
