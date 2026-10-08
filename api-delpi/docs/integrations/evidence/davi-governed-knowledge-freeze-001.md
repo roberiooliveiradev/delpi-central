@@ -159,7 +159,24 @@ MCP tools            = 2 (discover_delpi_information, execute_delpi_information)
 Contextual evidence only — the knowledge freeze does not authorize or
 alter the operation surface.
 
+## Runtime derivation (V1)
+
+The frozen corpus becomes runtime-available through a deterministic derived
+bundle, not by mutating sources:
+
+```text
+freeze artifact (membership authority)
+→ pinned manifest: davi-governed-knowledge-manifest-v1.json
+→ scripts/build_davi_governed_knowledge_bundle.py (fail-closed)
+→ api-delpi/dist/davi-governed-knowledge/v1/ (generated, gitignored)
+→ operator-controlled Workspace Agent Files sync
+```
+
+Provider retrieval acceptance remains `TEST_NOT_RUN`; the bundle does not
+authorize runtime ingestion by itself.
+
 ## Related
 
 - [DAVI integration baseline](../openai-workspace-agent-davi.md)
 - [DAVI read AuthZ policy](./davi-read-authz-policy-rebaseline-001.md)
+- [Pinned corpus manifest](./davi-governed-knowledge-manifest-v1.json)
