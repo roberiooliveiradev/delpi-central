@@ -19,7 +19,7 @@ class SqlValidator:
       -> nomes de CTE NÃO precisam estar na whitelist
 
     Bloqueia:
-    - DDL / DML
+    - DDL / DML (inclui SELECT INTO)
     - EXEC / TRANSACTIONS
     - SETs perigosos
     """
@@ -29,6 +29,7 @@ class SqlValidator:
         "CREATE", "TRUNCATE", "MERGE", "EXEC",
         "GRANT", "REVOKE",
         "BEGIN", "COMMIT", "ROLLBACK",
+        "INTO",
     ]
 
     MAX_SELECTS = 10
@@ -108,6 +109,138 @@ class SqlValidator:
             i += 1
 
         return "".join(result)
+
+    # ------------------------------------------------------------------
+    # 🔹 Extrair nomes de CTEs
+    # ------------------------------------------------------------------
+    # Palavras que encerram a cláusula de fontes de dados (FROM/JOIN...ON)
+    # em um mesmo nível de parênteses. Usado pelo scanner de table sources.
+    _CLAUSE_ENDERS = {
+        "WHERE", "GROUP", "ORDER", "HAVING",
+        "UNION", "INTERSECT", "EXCEPT",
+        "OPTION", "FOR",
+    }
+
+    # ------------------------------------------------------------------
+    # 🔹 Resolução fail-closed de fontes físicas (S0)
+    # ------------------------------------------------------------------
+    # S0 não é um parser T-SQL. A gramática de fonte suportada é mínima:
+    #   FROM/JOIN <token simples>   → validado contra allowlist / CTE / @var
+    #   FROM/JOIN ( <subquery> )    → fontes internas validadas pelo próprio
+    #                                 scan global de FROM/JOIN
+    # Qualquer outra forma (identificador bracketed/quoted, vírgula na
+    # cláusula de fontes, CROSS/OUTER APPLY, qualificação de schema/DB) é
+    # rejeitada até que parsing estrutural exista (S1).
+    def _resolve_single_source(self, sql_up: str, pos: int, cte_names: set[str]) -> None:
+        n = len(sql_up)
+        i = pos
+        while i < n and sql_up[i] in " \t\r\n":
+            i += 1
+        if i >= n:
+            raise PermissionError(
+                "Fonte de dados ausente após FROM/JOIN."
+            )
+
+        ch = sql_up[i]
+
+        if ch == "(":
+            # Derived table / subquery: fontes internas são validadas pelos
+            # próprios matches FROM/JOIN do scan global.
+            return
+
+        if ch in "[\"":
+            raise PermissionError(
+                "Sintaxe de fonte de dados não suportada pelo validador "
+                "read-only (identificador delimitado)."
+            )
+
+        m = re.match(r"[A-Z0-9_@#]+", sql_up[i:])
+        if not m:
+            raise PermissionError(
+                "Sintaxe de fonte de dados não suportada pelo validador "
+                "read-only."
+            )
+
+        name = m.group(0)
+
+        if name.startswith("@"):
+            # Variável de tabela local — já governada pela validação de DECLARE.
+            return
+
+        if name in cte_names:
+            return
+
+        if name not in self.allowed_tables:
+            raise PermissionError(
+                f"Tabela '{name}' não autorizada (fora da whitelist)."
+            )
+
+    def _validate_table_sources(self, sql_up: str, cte_names: set[str]) -> None:
+        """Valida TODAS as fontes físicas — fail closed.
+
+        Regras S0:
+          - toda fonte FROM/JOIN deve resolver para allowlist/CTE/@var;
+          - vírgula dentro de cláusula de fontes (comma join) → rejeita;
+          - identificador bracketed/quoted → rejeita;
+          - CROSS/OUTER APPLY → rejeita (operando não governável sem AST);
+          - sintaxe de fonte não reconhecida → rejeita.
+        """
+        n = len(sql_up)
+        i = 0
+        depth = 0
+        in_string = False
+        from_depths: set[int] = set()
+
+        while i < n:
+            ch = sql_up[i]
+
+            if ch == "'":
+                in_string = not in_string
+                i += 1
+                continue
+
+            if in_string:
+                i += 1
+                continue
+
+            if ch == "(":
+                depth += 1
+                i += 1
+                continue
+
+            if ch == ")":
+                depth = max(0, depth - 1)
+                from_depths = {d for d in from_depths if d <= depth}
+                i += 1
+                continue
+
+            if ch == ";":
+                from_depths.clear()
+                i += 1
+                continue
+
+            if ch == "," and depth in from_depths:
+                raise PermissionError(
+                    "Fontes de dados separadas por vírgula não são "
+                    "permitidas pelo validador read-only."
+                )
+
+            if ch.isalpha():
+                j = i + 1
+                while j < n and (sql_up[j].isalnum() or sql_up[j] == "_"):
+                    j += 1
+                word = sql_up[i:j]
+
+                if word in ("FROM", "JOIN"):
+                    self._resolve_single_source(sql_up, j, cte_names)
+                    from_depths.add(depth)
+                elif word in self._CLAUSE_ENDERS:
+                    from_depths.discard(depth)
+
+                i = j
+                continue
+
+            i += 1
 
     # ------------------------------------------------------------------
     # 🔹 Extrair nomes de CTEs
@@ -225,6 +358,14 @@ class SqlValidator:
                 f"Limite máximo de SELECTs excedido ({self.MAX_SELECTS})."
             )
 
+        # APPLY: operando de fonte não governável sem parsing estrutural.
+        # Deny incondicional — também vigente em DATA_SQL_SKIP_TABLE_WHITELIST.
+        if re.search(r"\b(CROSS|OUTER)\s+APPLY\b", sql_up):
+            raise PermissionError(
+                "CROSS APPLY / OUTER APPLY não são permitidos pelo "
+                "validador read-only."
+            )
+
         # 6️⃣ Validação de tabelas físicas (whitelist)
         if self.skip_table_whitelist():
             log_info(
@@ -235,21 +376,6 @@ class SqlValidator:
 
         cte_names = self._extract_cte_names(sql_up)
 
-        tables = re.findall(r"\bFROM\s+([A-Z0-9_]+)", sql_up)
-        tables += re.findall(r"\bJOIN\s+([A-Z0-9_]+)", sql_up)
-
-        for t in tables:
-            name = t.upper()
-
-            if name in cte_names:
-                continue
-
-            if name.startswith("@"):
-                continue
-
-            if name not in self.allowed_tables:
-                raise PermissionError(
-                    f"Tabela '{t}' não autorizada (fora da whitelist)."
-                )
+        self._validate_table_sources(sql_up, cte_names)
 
         return True
