@@ -29,13 +29,38 @@
     "Tratar descrição de produto como dado autoritativo do processo",
     "Apresentar tour genérico quando o usuário precisa de um passo concreto"
   ],
-  "related_topics": ["interaction_room", "tasks", "process_documents"],
-  "capability_refs": ["process", "instance", "revision", "interaction_room", "manage_task", "process_document"],
-  "contract_refs": ["capability_surface.entities.process", "capability_surface.workflows.interaction_room"],
+  "related_topics": [
+    "process",
+    "instance",
+    "interaction_room",
+    "tasks",
+    "process_documents"
+  ],
+  "capability_refs": [
+    "process",
+    "instance",
+    "revision",
+    "interaction_room",
+    "manage_task",
+    "process_document"
+  ],
+  "contract_refs": [
+    "capability_surface.entities.process",
+    "capability_surface.workflows.interaction_room"
+  ],
   "source_refs": [
-    {"ref": "capability_descriptors — superfícies entities/workflows/analyses", "classification": "PROVEN"},
-    {"ref": "teo_agent_intelligence.json — modos e discovery", "classification": "PROVEN"},
-    {"ref": "Navegação portal: Process > Instance > Revision", "classification": "PROVEN"}
+    {
+      "ref": "capability_descriptors — superfícies entities/workflows/analyses",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "teo_agent_intelligence.json — modos e discovery",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "Navegação portal: Process > Instance > Revision",
+      "classification": "PROVEN"
+    }
   ],
   "agent_guidance": "Use este guia quando o pedido for sobre entender o produto ou se localizar. Para dados reais, siga com a leitura autoritativa (get_process_context)."
 }

@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.08.1",
+  "version": "2026.10.08.2",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {

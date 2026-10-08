@@ -1,0 +1,56 @@
+{
+  "schema": "product_guide_v1",
+  "id": "instance",
+  "title": "Melhoria / Instância operacional",
+  "summary": "A ocorrência operacional do processo: processo × unidade × setor(es). É a entidade que representa a melhoria operacional no produto.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar que 'melhoria' no Portal corresponde à entity instance, quando criá-la e como registrar escopo, fase e responsáveis com qualidade.",
+  "use_when": [
+    "O usuário quer cadastrar uma melhoria concreta numa unidade/setor",
+    "É preciso acompanhar fase, prioridade e responsável local de uma implantação",
+    "O processo-mestre já existe e vai ganhar uma ocorrência operacional"
+  ],
+  "do_not_use_when": [
+    "O usuário quer criar um novo cenário de cálculo — isso é revision, não nova instance",
+    "O pedido é sobre o processo de negócio em geral — isso é process",
+    "Não duplicar uma instance só para criar outra revisão/cenário"
+  ],
+  "how_to_use": [
+    "Exige ao menos um setor; informe filial_id OU marque todas_filiais_ativas para escopo corporativo",
+    "Preencha resumo_melhoria com o que muda e por quê",
+    "Use fase e prioridade conforme os enums do contrato",
+    "responsavel_local e data_alvo_go_live somente quando forem dados reais",
+    "contexto operacional é documento estruturado validado — update apenas, conforme contrato"
+  ],
+  "field_guidance": [
+    {"field": "setor_ids", "guidance": "Obrigatório — ao menos um setor real onde a melhoria opera", "contract_ref": "entity_schemas.instance"},
+    {"field": "filial_id / todas_filiais_ativas", "guidance": "Uma unidade específica OU escopo corporativo; não ambos sem intenção", "contract_ref": "entity_schemas.instance"},
+    {"field": "rotulo_instancia", "guidance": "Rótulo que distingue esta ocorrência das demais do mesmo processo"},
+    {"field": "resumo_melhoria", "guidance": "O que a melhoria faz e o problema que resolve"},
+    {"field": "fase_melhoria", "guidance": "Estágio da implantação conforme enum do contrato", "contract_ref": "entity_schemas.instance"},
+    {"field": "prioridade", "guidance": "Prioridade real conforme enum; padrão do contrato é media", "contract_ref": "entity_schemas.instance"},
+    {"field": "responsavel_local", "guidance": "Somente pessoa real — nunca inferida pelo cargo"},
+    {"field": "data_alvo_go_live", "guidance": "Somente data real acordada — nunca estimada"}
+  ],
+  "quality_rules": [
+    "Escopo correto: unidade e setores onde a melhoria realmente acontece",
+    "Resumo autossuficiente: entende-se a melhoria fora da conversa",
+    "Não inventar responsável, data alvo ou unidade/setor pelo cargo do usuário",
+    "Uma instance por ocorrência operacional — cenários novos são revisions da mesma instance"
+  ],
+  "common_mistakes": [
+    "Criar nova instance quando o pedido era só uma nova revisão/cenário",
+    "Inferir unidade ou setor pelo cargo de quem pediu",
+    "Inventar responsável local ou data alvo para completar o formulário",
+    "Cadastrar a melhoria como processo-mestre em vez de instance"
+  ],
+  "related_topics": ["process", "revision", "baseline"],
+  "capability_refs": ["instance", "process", "improvement_package"],
+  "contract_refs": ["entity_schemas.instance", "capability_surface.entities.instance"],
+  "source_refs": [
+    {"ref": "registration_guide.concepts.instance — 'melhoria' = instance (alias funcional)", "classification": "PROVEN"},
+    {"ref": "entity_schemas.instance — required setor_ids; filial_id XOR todas_filiais_ativas", "classification": "PROVEN"},
+    {"ref": "Portal: melhoriaForm.ts — campos resumo_melhoria/fase/prioridade/data_alvo", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "'melhoria' no pedido do usuário = entity instance. Pedido de nova revisão sobre melhoria existente usa a mesma instancia_id — não cria instance nova."
+}

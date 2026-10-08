@@ -1,0 +1,53 @@
+{
+  "schema": "product_guide_v1",
+  "id": "baseline",
+  "title": "Baseline — estado de referência",
+  "summary": "O cenário 'antes' da melhoria: revisão com cenario_tipo=baseline que registra o estado conhecido para comparação com os cenários futuros.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar para que serve a baseline, por que ela não é cenário operacional ativo e como registrar nela dados confiáveis.",
+  "use_when": [
+    "É preciso fotografar o estado atual antes de propor cenários",
+    "O usuário quer base de comparação para medir ganho da melhoria",
+    "Um pacote de melhoria novo exige baseline com medição"
+  ],
+  "do_not_use_when": [
+    "O usuário quer o cenário futuro/alvo — isso é revision melhoria/automacao/correcao",
+    "Não ativar baseline como revisão operacional vigente",
+    "Não registrar na baseline melhorias que ainda não existem"
+  ],
+  "how_to_use": [
+    "Crie como revision com cenario_tipo=baseline na instance correta",
+    "Baseline nunca tem revisao_referencia_id",
+    "Em pacote novo de melhoria, a medição da baseline é exigida pelo contrato",
+    "Registre o estado real conhecido — volume, tempo, retrabalho, custos atuais",
+    "Nunca ative a baseline; quem vira cenário vigente é a revisão de cenário"
+  ],
+  "field_guidance": [
+    {"field": "cenario_tipo", "guidance": "Sempre 'baseline' neste guide — fixo pelo contrato", "contract_ref": "entity_schemas.revision"},
+    {"field": "revisao_referencia_id", "guidance": "Proibida em baseline — ela é a referência, não tem referência", "contract_ref": "entity_schemas.revision"},
+    {"field": "data_inicio_vigencia", "guidance": "Início do período que a baseline representa", "contract_ref": "entity_schemas.revision"},
+    {"field": "measurement", "guidance": "Medição da baseline é obrigatória em novo pacote (volume + tempo médio)", "contract_ref": "entity_schemas.measurement"}
+  ],
+  "quality_rules": [
+    "Baseline representa estado real conhecido — não meta, não projeção",
+    "UNKNOWN != 0: valor desconhecido não vira zero declarado",
+    "Métricas informadas devem ser qualificadas quando não forem históricas/estatísticas",
+    "Não inventar precisão — estimativa declarada vale mais que número fingido",
+    "Baseline não é cenário operacional ativo"
+  ],
+  "common_mistakes": [
+    "Colocar melhoria futura dentro da baseline",
+    "Tratar zero como valor conhecido quando o dado é desconhecido",
+    "Ativar a baseline como revisão vigente",
+    "Apresentar estimativa como medição histórica comprovada"
+  ],
+  "related_topics": ["revision", "measurement", "instance"],
+  "capability_refs": ["revision", "measurement", "improvement_package"],
+  "contract_refs": ["entity_schemas.revision", "entity_schemas.measurement", "capability_surface.workflows.improvement_package"],
+  "source_refs": [
+    {"ref": "registration_flow step baseline — create cenario_tipo=baseline + upsert measurement", "classification": "PROVEN"},
+    {"ref": "entity_schemas.revision — baseline sem revisao_referencia_id; nunca ativa", "classification": "PROVEN"},
+    {"ref": "package_hints — measurement obrigatória em novo pacote", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Baseline → measurement → cenário futuro → comparação. Pedido 'o que colocar na baseline?' usa este guide + entity_schemas.measurement do catálogo."
+}

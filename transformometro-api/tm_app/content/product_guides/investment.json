@@ -1,0 +1,56 @@
+{
+  "schema": "product_guide_v1",
+  "id": "investment",
+  "title": "Investimento do cenário",
+  "summary": "Linhas de custo — únicas ou recorrentes — associadas a uma revisão de cenário (não-baseline): itens, quantidades, valores e vigência.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando registrar um investimento num cenário e como distinguir esse lançamento de recurso compartilhado e de medição.",
+  "use_when": [
+    "O cenário proposto tem custos de implantação ou operação novos",
+    "O usuário lista itens de investimento: software, treinamento, equipamento, horas",
+    "É preciso distinguir custo único de custo recorrente do cenário"
+  ],
+  "do_not_use_when": [
+    "O custo é de recurso compartilhado rateado — isso é shared_resource/resource_cost",
+    "O pedido é métrica operacional do cenário — isso é measurement",
+    "Não lançar investimento na baseline — baseline é o estado anterior"
+  ],
+  "how_to_use": [
+    "Investimento pertence à revisão de cenário — sempre com revisao_id real de read-back",
+    "Exige tipo_investimento e descricao_item conforme o contrato",
+    "Escolha recorrencia real: unico, mensal ou anual — nunca inventada",
+    "categoria_investimento classifica o item conforme o enum do contrato",
+    "centro_custo e data_investimento somente quando forem dados reais"
+  ],
+  "field_guidance": [
+    {"field": "tipo_investimento", "guidance": "Natureza do custo conforme enum (fixo/variavel/recorrente/unico)", "contract_ref": "entity_schemas.investment"},
+    {"field": "descricao_item", "guidance": "O que está sendo comprado/contratado — rastreável sozinho", "contract_ref": "entity_schemas.investment"},
+    {"field": "quantidade / valor_unitario", "guidance": "Quantidade real e valor por unidade — não inventar valor", "contract_ref": "entity_schemas.investment"},
+    {"field": "recorrencia", "guidance": "unico/mensal/anual conforme enum; padrão unico", "contract_ref": "entity_schemas.investment"},
+    {"field": "categoria_investimento", "guidance": "Classe do investimento conforme enum do contrato", "contract_ref": "entity_schemas.investment"},
+    {"field": "centro_custo", "guidance": "Somente centro de custo real — nunca inferido"},
+    {"field": "meses_vigencia", "guidance": "Meses de vigência do custo recorrente quando aplicável"}
+  ],
+  "quality_rules": [
+    "Granularidade suficiente para rastreabilidade — uma linha por item distinto",
+    "Descrição útil: entende-se o gasto fora da conversa",
+    "Distinguir custo único de recorrente — recorrencia errada distorce o cenário",
+    "Custo desconhecido não vira zero conhecido — registrar como pendência, não como 0",
+    "Não criar linhas duplicadas do mesmo item"
+  ],
+  "common_mistakes": [
+    "Lançar investimento na baseline em vez do cenário",
+    "Confundir investment com shared_resource (recurso rateado) ou resource_cost (histórico mensal)",
+    "Inventar valor, recorrência ou centro de custo para completar o cadastro",
+    "Duplicar o mesmo item em linhas separadas"
+  ],
+  "related_topics": ["revision", "measurement", "baseline"],
+  "capability_refs": ["investment", "revision", "improvement_package", "adjust_shared_resource_cost"],
+  "contract_refs": ["entity_schemas.investment", "entity_schemas.shared_resource", "entity_schemas.resource_cost"],
+  "source_refs": [
+    {"ref": "entity_schemas.investment — required revisao_id+tipo+descricao; anexo ao cenário", "classification": "PROVEN"},
+    {"ref": "registration_guide.concepts.investment — non-baseline revision", "classification": "PROVEN"},
+    {"ref": "entity_schemas.shared_resource/resource_cost — entidades distintas de rateio", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "investment é linha de custo do cenário; recurso compartilhado e seu valor mensal são entities próprias (shared_resource/resource_cost) — não misturar."
+}

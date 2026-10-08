@@ -1,0 +1,55 @@
+{
+  "schema": "product_guide_v1",
+  "id": "process",
+  "title": "Processo-mestre",
+  "summary": "A iniciativa corporativa nomeada — o processo de negócio em si. Só ganha existência operacional numa unidade quando uma instância (melhoria) é criada.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando criar um processo-mestre novo, quando reutilizar um existente e como nomear e escopar corretamente.",
+  "use_when": [
+    "O usuário quer iniciar o acompanhamento de um processo de negócio novo",
+    "Vai nascer a primeira melhoria/instância e ainda não existe processo-mestre",
+    "É preciso agrupar documentos, diagrama macro, tarefas e sala de um mesmo processo"
+  ],
+  "do_not_use_when": [
+    "O usuário quer registrar uma melhoria concreta numa unidade — isso é instance",
+    "Já existe processo-mestre equivalente — busque antes de criar duplicado",
+    "O pedido é sobre um cenário de cálculo — isso é revision"
+  ],
+  "how_to_use": [
+    "Antes de criar, busque processos existentes para evitar duplicados",
+    "Informe nome que represente o processo e descrição com objetivo e escopo",
+    "Informe status conforme o enum do contrato (não invente valores)",
+    "Na criação, filial+setor também criam a primeira instância; sem eles, crie a instância depois",
+    "codigo_processo é gerado automaticamente quando omitido — não invente código"
+  ],
+  "field_guidance": [
+    {"field": "nome_processo", "guidance": "Nome do processo de negócio, não da solução ou da melhoria específica", "contract_ref": "entity_schemas.process"},
+    {"field": "status_processo", "guidance": "Ciclo de vida do processo-mestre; use somente os valores do enum do contrato", "contract_ref": "entity_schemas.process"},
+    {"field": "descricao_processo", "guidance": "O que o processo faz e por que existe — texto útil fora da conversa"},
+    {"field": "objetivo_processo", "guidance": "Resultado esperado do processo, quando conhecido"},
+    {"field": "gestor_responsavel", "guidance": "Somente pessoa real identificada — nunca inventada"},
+    {"field": "codigo_processo", "guidance": "Opcional; omitido gera código automático único", "contract_ref": "entity_schemas.process"},
+    {"field": "filial_id/setor_id", "guidance": "Na criação, escopo inicial que também gera a primeira instância", "contract_ref": "entity_schemas.process"}
+  ],
+  "quality_rules": [
+    "Nome representa o processo de negócio, não uma melhoria ou solução pontual",
+    "Descrição deixa objetivo e escopo claros para quem não participou da conversa",
+    "Um processo-mestre por processo real — duplicado fragmenta documentos, tarefas e cenários",
+    "Escopo organizacional reflete onde o processo existe de fato"
+  ],
+  "common_mistakes": [
+    "Cadastrar uma melhoria específica como processo-mestre",
+    "Criar processo duplicado sem buscar o existente",
+    "Nomear pelo projeto/solução em vez do processo",
+    "Inventar código, gestor ou status fora do contrato"
+  ],
+  "related_topics": ["instance", "process_documents", "tasks", "interaction_room"],
+  "capability_refs": ["process", "process_timeline", "interaction_room", "manage_task"],
+  "contract_refs": ["entity_schemas.process", "capability_surface.entities.process"],
+  "source_refs": [
+    {"ref": "registration_guide.concepts.process + entity_schemas.process (get_catalog)", "classification": "PROVEN"},
+    {"ref": "registration_flow step resolve_scope — buscar antes de criar", "classification": "PROVEN"},
+    {"ref": "Boas práticas de nomenclatura de processos vs soluções", "classification": "PROPOSED"}
+  ],
+  "agent_guidance": "'Este processo' resolve via get_workspace_context → get_process_context; nunca peça o id quando o contexto do workspace já resolve."
+}

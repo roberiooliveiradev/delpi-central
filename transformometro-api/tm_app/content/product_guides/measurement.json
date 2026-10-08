@@ -1,0 +1,56 @@
+{
+  "schema": "product_guide_v1",
+  "id": "measurement",
+  "title": "Medição do cenário",
+  "summary": "As métricas operacionais mensais de uma revisão — volume, tempos, retrabalho, erros e custos — gravadas por upsert sobre o revisao_id.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar a semântica de cada métrica e a regra central: desconhecido não é zero — zero só quando for um valor realmente conhecido.",
+  "use_when": [
+    "É preciso registrar os números de operação de uma baseline ou cenário",
+    "O usuário informa volume, tempo, retrabalho ou custos do processo",
+    "Um pacote de melhoria novo exige medição da baseline e do cenário"
+  ],
+  "do_not_use_when": [
+    "O pedido é sobre custo de item/investimento pontual — isso é investment",
+    "O pedido é sobre custo de recurso compartilhado — isso é shared_resource/resource_cost",
+    "Não usar medição para narrativa textual — isso é documento"
+  ],
+  "how_to_use": [
+    "Medição é upsert por revisao_id — create e update usam o mesmo payload",
+    "Pergunte os números do antes (baseline) e do depois (cenário) separadamente",
+    "Informe apenas valores reais conhecidos; qualifique estimativas em observacoes",
+    "base_referencia_mes registra o período que os números representam",
+    "Nunca apresente referência operacional como média histórica comprovada"
+  ],
+  "field_guidance": [
+    {"field": "volume_mensal", "guidance": "Quantidade de ciclos/unidades do processo no período de referência", "contract_ref": "entity_schemas.measurement"},
+    {"field": "tempo_medio_execucao_min", "guidance": "Tempo operacional médio por ciclo, em minutos", "contract_ref": "entity_schemas.measurement"},
+    {"field": "tempo_retrabalho_min / percentual_retrabalho", "guidance": "Esforço e proporção de retrabalho por ciclo", "contract_ref": "entity_schemas.measurement"},
+    {"field": "percentual_erro / quantidade_erros_mes", "guidance": "Taxa e volume de erros no período", "contract_ref": "entity_schemas.measurement"},
+    {"field": "custo_hora_mao_obra / custo_unitario_*", "guidance": "Custos unitários de mão de obra, erro, retrabalho e desperdícios", "contract_ref": "entity_schemas.measurement"},
+    {"field": "base_referencia_mes", "guidance": "Mês de referência que os números representam"},
+    {"field": "observacoes", "guidance": "Onde qualificar origem do dado: medido, estimado, informado ou calculado"}
+  ],
+  "quality_rules": [
+    "UNKNOWN != 0: zero só quando zero for um valor realmente conhecido",
+    "Distinguir informado, calculado, estimado e medido — qualificar em observacoes",
+    "Números da baseline e do cenário contam histórias diferentes — coletar separado",
+    "Não transformar referência operacional em média histórica comprovada",
+    "Volume e tempo médio são exigidos em novo pacote — não deixar vazio"
+  ],
+  "common_mistakes": [
+    "Registrar zero como valor conhecido quando o dado é desconhecido",
+    "Misturar números do antes e do depois na mesma medição",
+    "Apresentar estimativa como medição auditada",
+    "Usar a medição para registrar custo de investimento — entidade errada"
+  ],
+  "related_topics": ["baseline", "revision", "investment"],
+  "capability_refs": ["measurement", "revision", "improvement_package"],
+  "contract_refs": ["entity_schemas.measurement", "capability_surface.entities.measurement"],
+  "source_refs": [
+    {"ref": "entity_schemas.measurement — campos, upsert por revisao_id, defaults", "classification": "PROVEN"},
+    {"ref": "registration_guide.concepts.measurement — required no pacote (volume+tempo)", "classification": "PROVEN"},
+    {"ref": "registration_flow — coletar as-is e to-be separadamente", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Campo omitido grava zero por default do contrato — qualifique em observacoes quando um número for estimativa em vez de medição."
+}

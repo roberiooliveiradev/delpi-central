@@ -1,0 +1,56 @@
+{
+  "schema": "product_guide_v1",
+  "id": "revision",
+  "title": "Revisão / Cenário versionado",
+  "summary": "O cenário calculável e versionado de uma instância: baseline (antes) ou melhoria/automação/correção (depois), com vigência, medição e custos.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando criar uma nova revisão, o que significa cenário ativo e por que revisão criada não é revisão vigente em produção.",
+  "use_when": [
+    "É preciso versionar um novo cenário calculável da melhoria",
+    "O usuário quer comparar antes (baseline) e depois (cenário)",
+    "Há mudança de vigência, métricas ou investimentos a registrar"
+  ],
+  "do_not_use_when": [
+    "A mudança é de cadastro da melhoria — atualize a instance",
+    "O pedido é sobre o processo de negócio — isso é process",
+    "Não criar revisão para registrar texto — isso é process_document"
+  ],
+  "how_to_use": [
+    "Sempre informe instancia_id nos fluxos guiados",
+    "Escolha cenario_tipo conforme o enum: baseline ou melhoria/automacao/correcao",
+    "Cenário não-baseline exige revisao_referencia_id; baseline nunca a tem",
+    "data_inicio_vigencia é início da vigência do cenário — diferente de data_implantacao",
+    "data_fim_vigencia omitida = vigência aberta; nunca invente data de hoje",
+    "Ativação é operação governada própria (activate) — revisão criada não é ativa"
+  ],
+  "field_guidance": [
+    {"field": "cenario_tipo", "guidance": "baseline = estado anterior; melhoria/automacao/correcao = cenário futuro", "contract_ref": "entity_schemas.revision"},
+    {"field": "versao_revisao", "guidance": "Rótulo da versão (ex.: v1.0) conforme convenção do contrato"},
+    {"field": "data_inicio_vigencia", "guidance": "Início da vigência do cenário — não confundir com data_implantacao", "contract_ref": "entity_schemas.revision"},
+    {"field": "revisao_referencia_id", "guidance": "Obrigatória em não-baseline; proibida em baseline", "contract_ref": "entity_schemas.revision"},
+    {"field": "revisao_ativa", "guidance": "Padrão falso; ativação ocorre por operação governada, não no create", "contract_ref": "entity_schemas.revision"},
+    {"field": "descricao_revisao / motivo_revisao", "guidance": "O que muda neste cenário e por que foi criado"},
+    {"field": "data_fim_vigencia", "guidance": "Omitir = vigência aberta; nunca inventar data", "contract_ref": "entity_schemas.revision"}
+  ],
+  "quality_rules": [
+    "Revisão criada != revisão ativa — ativação é decisão governada separada",
+    "Cenário proposto não é estado de produção até ser ativado",
+    "Baseline e cenário formam par comparável — mesma instance, medidas coerentes",
+    "Vigência reflete o período real pretendido"
+  ],
+  "common_mistakes": [
+    "Confundir data_inicio_vigencia com data_implantacao",
+    "Criar baseline com revisao_referencia_id ou cenário sem ela",
+    "Inventar data_fim_vigencia quando a vigência é aberta",
+    "Duplicar instance para criar cenário novo em vez de criar revision"
+  ],
+  "related_topics": ["instance", "baseline", "measurement", "investment"],
+  "capability_refs": ["revision", "activate_revision", "improvement_package", "measurement", "investment"],
+  "contract_refs": ["entity_schemas.revision", "capability_surface.workflows.activate_revision"],
+  "source_refs": [
+    {"ref": "registration_guide.concepts.revision + entity_schemas.revision", "classification": "PROVEN"},
+    {"ref": "entity_schemas.revision.notes — baseline sem referência; ativação via activate", "classification": "PROVEN"},
+    {"ref": "confirmation_policy — activate_revision é confirm_before_act", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Criar revisão não ativa: commit ocorre no create; torná-la vigente exige activate (confirm_before_act) — confirmação consolidada se houver outras ações destrutivas no plano."
+}

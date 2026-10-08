@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from tm_app.application.product_guide.product_guide_registry import (
@@ -16,7 +18,18 @@ from tm_app.application.product_guide.product_guide_service import (
     ProductGuideService,
 )
 
-SEED_TOPICS = {"portal_overview", "interaction_room", "tasks", "process_documents"}
+SEED_TOPICS = {
+    "portal_overview",
+    "interaction_room",
+    "tasks",
+    "process_documents",
+    "process",
+    "instance",
+    "revision",
+    "baseline",
+    "measurement",
+    "investment",
+}
 
 
 def _service() -> ProductGuideService:
@@ -59,11 +72,11 @@ def test_schema_rejects_missing_and_invalid() -> None:
 # ----------------------------------------------------------------- registry
 
 
-def test_registry_loads_four_seeds_deterministically() -> None:
+def test_registry_loads_ten_seeds_deterministically() -> None:
     reg = ProductGuideRegistry()
     assert set(reg.topic_ids()) == SEED_TOPICS
     assert reg.version == "product-guide-registry-v1"
-    assert len(reg.index()) == 4
+    assert len(reg.index()) == 10
     # Deterministic order.
     assert reg.topic_ids() == sorted(reg.topic_ids())
 
@@ -179,3 +192,57 @@ def test_mcp_and_openapi_projection() -> None:
     assert "get_product_guide" in names
     guide_tool = next(t for t in tools if t.name == "get_product_guide")
     assert guide_tool.annotations.read_only_hint is True
+
+
+# ----------------------------------------------------------- wave 1: semantics
+
+
+def test_all_seeds_keep_guidance_authority_and_classified_sources() -> None:
+    reg = ProductGuideRegistry()
+    for topic in reg.topic_ids():
+        guide = reg.get(topic)
+        assert guide["authority"] == "GUIDANCE_NOT_DOMAIN_TRUTH"
+        assert guide["source_refs"], topic
+        for src in guide["source_refs"]:
+            assert src["classification"] in ("PROVEN", "INFERRED", "PROPOSED")
+
+
+def test_instance_explains_melhoria_alias() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("instance")
+    blob = json.dumps(guide, ensure_ascii=False).lower()
+    assert "melhoria" in blob
+    assert "instância operacional" in guide["title"].lower()
+
+
+def test_revision_created_is_not_active() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("revision")
+    blob = json.dumps(guide, ensure_ascii=False)
+    assert "revisão criada" in blob.lower() or "criada" in blob.lower()
+    assert "ativa" in blob.lower()
+
+
+def test_baseline_is_not_active_scenario_and_unknown_is_not_zero() -> None:
+    reg = ProductGuideRegistry()
+    baseline = json.dumps(reg.get("baseline"), ensure_ascii=False)
+    measurement = json.dumps(reg.get("measurement"), ensure_ascii=False)
+    assert "UNKNOWN != 0" in baseline
+    assert "UNKNOWN != 0" in measurement
+    assert "não é cenário operacional ativo" in baseline.lower() or (
+        "cenário operacional ativo" in baseline.lower()
+    )
+
+
+def test_cross_guide_consistency_process_instance_revision() -> None:
+    reg = ProductGuideRegistry()
+    instance_blob = json.dumps(reg.get("instance"), ensure_ascii=False).lower()
+    process_blob = json.dumps(reg.get("process"), ensure_ascii=False).lower()
+    # Both guides explain the same distinction: process-mestre != instance.
+    assert "processo-mestre" in process_blob
+    assert "instance" in instance_blob
+    assert "revision" in json.dumps(
+        reg.get("instance")["related_topics"]
+    )
+    # New scenario = revision of the same instance, not a new instance.
+    assert "revision" in instance_blob
