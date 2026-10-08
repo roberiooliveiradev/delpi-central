@@ -1804,3 +1804,19 @@ HISTORICAL: minha-delpi-copilot/ docs-only placeholder remains; not runtime
 PLANNED/FROZEN_CANDIDATE: delia-api + plugins/delia + /apps/delia* + delpi-delia* (see 68)
 ≠ runtime proof; ≠ FOUNDATION_FREEZE; ≠ C0.S1 APPROVED
 ```
+
+## 48. Governed DÉLIA provider HTTP — network baseline (§6.154)
+
+```text
+Current DÉLIA provider endpoints are supplied by trusted backend
+configuration (approved-specialist registry); no approved ambient
+proxy contract is currently proven for this governed transport.
+GOVERNED_HTTP_PROXY_POLICY = DIRECT_ONLY_CURRENT_SCOPE —
+trust_env=False; ambient proxy/CA-bundle env is not authority.
+Governed HTTP stack pinned: requests==2.34.2 + urllib3==2.8.0
+(deadline transport depends on internal surfaces — compatibility
+guard in tests; upgrade requires acceptance-suite rerun).
+DNS resolution runs on a bounded process-scoped resolver executor
+(the single authorized detached-work primitive; late results
+discarded, zero connect side effects).
+```

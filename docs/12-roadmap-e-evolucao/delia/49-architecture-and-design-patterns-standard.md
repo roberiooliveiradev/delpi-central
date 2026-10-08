@@ -587,6 +587,24 @@ Special cases:
 - model unavailable/OOD degrades truthfully;
 - RPA timeout after possible side effect is AMBIGUOUS until verified.
 
+Governed DÉLIA outbound provider HTTP (normative, §6.154):
+
+- `GOVERNED_HTTP_PROXY_POLICY = DIRECT_ONLY_CURRENT_SCOPE` — ambient
+  `HTTP(S)_PROXY`/`NO_PROXY`/netrc/`REQUESTS_CA_BUNDLE` env is NOT an
+  authority for governed provider calls (`trust_env=False`); explicit
+  proxy configuration fails closed. Future proxy or custom-CA support
+  requires explicit trusted backend configuration plus deadline and
+  security review — never ambient env.
+- One caller absolute deadline covers DNS (bounded resolver executor —
+  the single authorized detached-work primitive, non-mutating lookup
+  only, late results discarded with zero connect), TCP connect
+  (multi-address shared budget), TLS handshake (deadline-driven
+  non-blocking), redirects, send, status line, headers and body.
+- `requests`/`urllib3` upgrades affecting the governed deadline
+  transport require a rerun of the absolute-deadline acceptance
+  suite; a compatibility guard test fails loudly on internal-surface
+  drift — upgrades are allowed, silent drift is not.
+
 ## 34. Result/Error Model
 
 Canonical families are candidates to stabilize by contract when consumers exist; não criar catálogo especulativo apenas porque o nome aparece aqui.

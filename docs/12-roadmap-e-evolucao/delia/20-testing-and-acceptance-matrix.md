@@ -2655,7 +2655,7 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `MODEL_TIMEOUT_TOTAL_WALL_CLOCK` | PASS — `timeout_seconds` = maximum wall-clock duration of the invocation (contract frozen); adapter streams body via `raw.read1`, deadline re-checked between reads, per-recv socket timeout tightened to remaining budget; no thread wrapper, no new dependency, provider-neutral |
 | `TRICKLE_SERVER_TIMEOUT` | PASS — deterministic fixture (bytes every 50ms, never completes): `ModelInvocationError(TIMEOUT)` at ~1.01s for 1.0s requested (configured adapter max 30s) — requested timeout + tolerance, not a multiple |
 | `NORMAL_MODEL_INVOCATION` | PASS — fast provider fixture: structured output, usage and duration metadata preserved through the streaming drain |
-| `TURN_TOTAL_BUDGET` | PARTIAL (R1 reviewed REWORK — bound reached request legs, not whole operations; R2 reviewed REWORK — bound applied only after `send()` returned; R3 reviewed REWORK — deadline socket installed post-connect, leaving DNS/TCP-connect/TLS/proxy unproven; R4 §6.153 proves TCP-connect/TLS/proxy-disable/redirect/send under one absolute deadline but DNS resolution remains NOT_BOUNDED mid-call pending architecture decision) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries AND composite provider operations; each operation gets `min(configured max, remaining)` with no budget renewal between sublegs, inside pre-body phases or across connect/handshake; no stage starts after exhaustion; an outcome arriving past the deadline is never processed |
+| `TURN_TOTAL_BUDGET` | CLOSED-CANDIDATE (restored by §6.154 R5 evidence — R1/R2/R3/R4 rework chain closed: DNS now runs on a bounded resolver executor so the caller waits at most its own remaining deadline; every phase — DNS, TCP connect, multi-address, TLS handshake, proxy-disable, redirects, send, status line, headers, body — is bounded by ONE caller absolute deadline; final acceptance remains with Architecture Coordination) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries AND composite provider operations; each operation gets `min(configured max, remaining)` with no budget renewal between sublegs, inside pre-body phases, across connect/handshake or during resolution; no stage starts after exhaustion; an outcome arriving past the deadline is never processed |
 | `TURN_BUDGET_LT_EDGE_TIMEOUT` | PROVEN_FROM_CONFIG — `DELIA_TURN_BUDGET_SECONDS` default 80s; edge = Cloudflare 524 ~100s (observed); in-repo nginx hop `proxy_read_timeout=86400s` does not own the edge; margin ≥20s |
 | `SELECTION_TIMEOUT_GENERAL_FALLBACK` | 0 — `select_group`/`select_capability` model TIMEOUT → `SOURCE_UNAVAILABLE(model_timeout)` terminal; handler emits deterministic bounded failure (HYPOTHESIS + `delpi_source_unverified`); general model port invoked 0 times |
 | `ARGUMENT_TIMEOUT_GENERAL_FALLBACK` | 0 — argument projection TIMEOUT → same terminal semantics |
@@ -2774,4 +2774,33 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | Full delia-api suite | **943/943 PASS at `a0a87e1401`** (931 + 12 new R4; focused + full suite re-run ON the persisted SHA) |
 | `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` / `DEPLOYED_SHA` | TEST_NOT_RUN / TEST_NOT_RUN / TO_VERIFY |
 | `CORE_PLATFORM_ACCESS_TOTAL_DEADLINE` | SEPARATE_BOUNDED_FOLLOWUP — unchanged, inactivity-based, outside the governed-provider claim |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2A-R5 — bounded DNS resolution + transport dependency freeze + governed direct-only policy (§6.154)
+
+`ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R4 = ACCEPT_WITH_RESIDUAL` — sole blocker was DNS mid-call; `ARCHITECTURE_DECISION_DNS_DEADLINE = APPROVED` with `BOUNDED_RESOLVER_EXECUTOR`. R5 adds `dns_resolver.py`: a process-scoped `ThreadPoolExecutor` (4 workers) plus an admission semaphore (8 outstanding slots released via done-callback) — the single authorized detached-work primitive, non-mutating lookup only, late results discarded with zero connect. Also freezes `requests==2.34.2`/`urllib3==2.8.0` and persists `DIRECT_ONLY_CURRENT_SCOPE`.
+
+| Claim | Result |
+|---|---|
+| `DNS_CALLER_ABSOLUTE_DEADLINE` | PASS — 1.0s-blocking `getaddrinfo` under a 0.1s budget: caller elapsed <0.6s, never waits for the worker |
+| `DNS_LATE_RESULT_SIDE_EFFECTS` | 0 — caller times out; worker finishes late; `connect_attempts = 0` forever |
+| `DNS_PAST_DEADLINE_RECHECK` | PASS — result arriving just past the bound → zero connect attempts |
+| `DNS_SATURATION_FAIL_CLOSED` | PASS — 8 slots occupied → next admission fails fast, no queue growth |
+| `DNS_TIMEOUT_STORM_BOUND` | PASS — 16+ submissions: pool threads ≤4, beyond-capacity callers fail closed, pool recovers |
+| `DNS_GAIERROR_MAPPING` | PASS — truthful unavailable/timeout, zero connect |
+| `MULTI_ADDRESS_SHARED_BUDGET` | PASS (R4 logic preserved — caller still owns connect ordering) |
+| `EXISTING_EQUIVALENT_DNS_EXECUTOR` | NO → minimal NEW primitive (no pre-existing bounded executor) |
+| `HTTP_TRANSPORT_DEPENDENCIES_PINNED` | PASS — `requests==2.34.2` + `urllib3==2.8.0` in `requirements.txt` (evaluated pair) |
+| `HTTP_TRANSPORT_COMPATIBILITY_GUARD` | PASS — test asserts every internal urllib3 surface the transport uses; upgrade drift fails loudly |
+| `PIP_CHECK` | PASS — no broken requirements (persisted SHA and fresh venv) |
+| `FRESH_INSTALL_REPRODUCIBILITY` | PASS — fresh venv installs the pinned set; focused suite 26/26 on it |
+| `PROXY_DIRECT_ONLY_POLICY` | PASS — `trust_env=False` accepted by coordination; persisted in 49 §33 + 51 §48; `AMBIENT_REQUESTS_CA_BUNDLE = NOT_AUTHORITY` |
+| `R4_REGRESSIONS` | PASS — all 18 deadline tests (TCP/TLS/HTTPS/proxy/redirect/send/recv trickles/MCP mapping) preserved |
+| `TURN_TOTAL_BUDGET` | CLOSED-CANDIDATE — caller-visible governed provider operation bounded end-to-end by one `TurnDeadline`; authorized late DNS worker is side-effect-free by invariant |
+| `TURN_EDGE_BUDGET` | CLOSED-CANDIDATE — same evidence |
+| `GENERAL_MODEL_FALLBACK_AFTER_TIMEOUT` | 0 |
+| `MATERIAL_ACT_IN_TIMEOUT_TESTS` | 0 |
+| Full delia-api suite | **951/951 PASS at `a7287aa112`** (943 + 8 new R5; focused + full suite re-run ON the persisted SHA) |
+| `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` / `DEPLOYED_SHA` | TEST_NOT_RUN / TEST_NOT_RUN / TO_VERIFY |
+| `CORE_PLATFORM_ACCESS_TOTAL_DEADLINE` | SEPARATE_BOUNDED_FOLLOWUP — unchanged |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

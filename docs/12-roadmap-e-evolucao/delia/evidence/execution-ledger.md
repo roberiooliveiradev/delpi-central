@@ -11694,6 +11694,17 @@ EVIDENCE (live production, 2026-10-05):
 
 ## 6.153. C3-INTELLIGENCE-LOOP-03R2A-R4 — pre-connect / TLS / proxy absolute deadline closure
 
+  > **ARCHITECTURE ANNOTATION (§6.154, non-destructive):**
+  > ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R4 =
+  > ACCEPT_WITH_RESIDUAL — everything proven in R4 accepted;
+  > the only remaining blocker was DNS getaddrinfo mid-call.
+  > The coordination resolved the escalated decision:
+  > ARCHITECTURE_DECISION_DNS_DEADLINE = APPROVED with
+  > DNS_STRATEGY = BOUNDED_RESOLVER_EXECUTOR (R5, §6.154).
+  > Historical note preserved: R4 correctly ended at
+  > ARCHITECTURE_DECISION_REQUIRED from the executor side —
+  > the coordination granted the decision afterwards.
+
   DATE = 2026-10-08
   TASK = C3-INTELLIGENCE-LOOP-03R2A-R4
   BASE_HEAD = d09d0b320eb245d9cc423183fb111270aee6dad4
@@ -11833,6 +11844,164 @@ EVIDENCE (live production, 2026-10-05):
     DNS mid-call bound open per above.
     CI residuals ×2 (teo gpt-actions guardrail, openai-* rules
       map) remain CURRENT_HEAD_UNRELATED owner debt.
+    R2B semantics D01/D03/D04/D05/D06 untouched.
+
+  PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+    C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+  NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## 6.154. C3-INTELLIGENCE-LOOP-03R2A-R5 — bounded DNS resolution + transport dependency freeze + governed direct-only network policy
+
+  DATE = 2026-10-08
+  TASK = C3-INTELLIGENCE-LOOP-03R2A-R5
+  BASE_HEAD = 5bbd25d468c1cd4512f60918a868e9fcccbface0
+    (EXPECTED_MAIN_HEAD verified; interim commits touched 0 files
+    in delia-api/** and docs/.../delia/** — CONCURRENT_DRIFT=NO;
+    merge 28f9a80eb2 brought only non-delia commits)
+
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R4 =
+    ACCEPT_WITH_RESIDUAL — R4 evidence accepted; sole remaining
+    blocker = DNS getaddrinfo mid-call.
+  ARCHITECTURE_DECISION_DNS_DEADLINE = APPROVED —
+    DNS_STRATEGY = BOUNDED_RESOLVER_EXECUTOR, owner DÉLIA
+    Infrastructure. The single authorized detached-work exception:
+    a side-effect-free getaddrinfo worker MAY finish after the
+    caller deadline; its result is discarded with ZERO connect /
+    TLS / HTTP / PREPARE / ACT.
+
+  REUSE/ABSTRACTION GATE:
+    EXISTING_EQUIVALENT_DNS_EXECUTOR = NO — the runtime had no
+      bounded executor/pool (only a threading.Lock in delegation).
+      REUSE_DECISION = NEW, minimal infra-only primitive:
+      app/infrastructure/http/dns_resolver.py.
+    EXISTING_EQUIVALENT_DEPENDENCY_LOCK = YES — requirements.txt
+      is the delia-api dependency owner (no constraints/lock file
+      exists). REUSE_DECISION = EXTEND — pin inside the same
+      manifest, no second package manager.
+    ABSTRACTION_GATE = PASS — one minimal class, no generic job
+      engine/scheduler, no new TurnDeadline, no provider branching.
+
+  DNS EXECUTOR DESIGN:
+    BoundedDnsResolver — process-scoped ThreadPoolExecutor
+      (MAX_DNS_RESOLVER_WORKERS=4) + BoundedSemaphore admission
+      gate (MAX_DNS_RESOLVER_OUTSTANDING=8, released via
+      done-callback so running+queued <= cap even after caller
+      timeout). Constants, not config — Abstraction Gate does not
+      justify operational settings for this phase.
+    resolve(host, port, family, socktype, deadline): expired
+      budget fails BEFORE submission; saturated capacity fails
+      fast (DnsResolverSaturatedError → socket.timeout →
+      ConnectTimeoutError → truthful BoundedHttpTimeout); caller
+      waits future.result(timeout=remaining); on expiry
+      future.cancel() best-effort (honest: a running getaddrinfo
+      cannot be killed — it finishes detached and its result is
+      discarded; zero connect possible afterwards).
+    Worker payload = (host, port, family, socktype) ONLY — never
+      tokens/headers/bodies/business identifiers; the worker
+      never connects and never picks an address (R4
+      multi-address shared-budget connect stays in the caller).
+    Lifecycle: lazily-created process singleton; TPE non-daemon
+      threads + interpreter atexit join — shutdown waits for
+      in-flight resolutions bounded by OS resolver behavior,
+      never indefinite; queued futures cancelled at shutdown.
+    Integration: _bounded_connect now routes through
+      dns_resolver().resolve() under deadline scope; gaierror
+      propagates to the existing NameResolutionError mapping;
+      saturation/timeouts map to ConnectTimeoutError →
+      requests Timeout → BoundedHttpTimeout — no new external
+      taxonomy.
+
+  TESTS = 951/951 delia-api PASS at IMPLEMENTATION_SHA
+    a7287aa11224c705bf8f680a03b6cdb135b7483a (943 + 8 new R5;
+    focused file 26/26; fresh-venv repro 26/26 — see freeze).
+    DNS matrix:
+      FAST: normal resolution → request completes unchanged.
+      SLOW: getaddrinfo sleeping 1.0s under 0.1s budget →
+        caller elapsed <0.6s (structural bound 0.1 + CI slack,
+        never ~1.0s worker wait).
+      LATE RESULT: caller times out at ~0.1s; worker finishes
+        at ~0.6s; connect_attempts = 0 forever — late result
+        discarded with zero wire side effects.
+      PAST-DEADLINE RECHECK: result arriving just past the
+        bound → zero connect attempts.
+      SATURATION: 8 outstanding slots occupied by blocked
+        lookups → 9th admission fails fast
+        (DnsResolverSaturatedError); workers <= 4 throughout;
+        no queue growth.
+      TIMEOUT STORM: 16+ submissions against blocked resolver →
+        pool threads stay <= 4, beyond-capacity callers fail
+        closed (saturated/timeout), pool recovers and resolves
+        normally after release.
+      GAIERROR: failing resolution → truthful
+        timeout/unavailable, zero connect.
+      MULTI-ADDRESS (R4 preserved): resolved list still flows
+        through the shared-budget connect loop.
+      COMPATIBILITY GUARD: asserts every internal urllib3
+        surface deadline_transport uses (_match_hostname,
+        _assert_fingerprint, is_ipaddress, create_urllib3_context,
+        resolve_* helpers, ALPN/flags, _set_socket_options,
+        allowed_gai_family, exception classes, _new_conn,
+        instance pool_classes_by_scheme) plus adapter/session
+        wiring and trust_env=False — an upgrade breaking them
+        fails loudly, forcing a rerun of this suite.
+    R4 REGRESSIONS: all 18 deadline tests preserved (TCP
+      multi-address, TLS adversarial, HTTPS fast path, proxy
+      fail-closed, redirect shared deadline, send/sendall
+      expired, status/header/first-byte/body trickle, MCP
+      timeout mapping).
+
+  TRANSPORT DEPENDENCY FREEZE:
+    Evaluated pair (runtime + pip show): requests==2.34.2,
+      urllib3==2.8.0 — matches R4 historical report.
+    requirements.txt now pins both exactly (was requests>=2.31.0
+      with no urllib3 constraint while the transport depends on
+      urllib3 internals).
+    pip check: No broken requirements found (persisted SHA and
+      fresh venv).
+    FRESH_INSTALL_REPRODUCIBILITY = PASS — new venv installed the
+      pinned requirements cleanly and the focused deadline suite
+      ran 26/26 on it.
+    Upgrade policy persisted in 49 (§33): upgrades allowed but
+      require acceptance-suite rerun; silent internal-surface
+      drift fails the compatibility guard.
+
+  GOVERNED DIRECT-ONLY NETWORK POLICY (frozen by coordination):
+    GOVERNED_HTTP_PROXY_POLICY = DIRECT_ONLY_CURRENT_SCOPE —
+      ambient HTTP(S)_PROXY/NO_PROXY/netrc/REQUESTS_CA_BUNDLE env
+      is NOT authority for governed calls (trust_env=False
+      accepted); explicit proxy config fails closed. Persisted
+      normatively in 49 §33 and as baseline fact in 51 §48.
+      AMBIENT_REQUESTS_CA_BUNDLE = NOT_AUTHORITY_FOR_GOVERNED_
+      TRANSPORT — custom CA, if ever needed, comes via explicit
+      trusted backend configuration + review; certificate
+      verification is never disabled.
+
+  CLAIMS (evidence-scoped):
+    DNS_CALLER_ABSOLUTE_DEADLINE = PASS
+    DNS_LATE_RESULT_SIDE_EFFECTS = 0
+    DNS_POOL_WORKERS_BOUNDED = PASS
+    DNS_OUTSTANDING_BOUNDED = PASS
+    DNS_SATURATION_FAIL_CLOSED = PASS
+    TURN_TOTAL_BUDGET = CLOSED-CANDIDATE — every governed
+      provider-operation phase (DNS, TCP connect, multi-address,
+      TLS handshake, proxy-disable, redirect chain, send,
+      status line, headers, body) is now bounded by ONE caller
+      absolute deadline. CLOSED here means the caller-visible
+      operation never outlives the TurnDeadline — the
+      authorized late getaddrinfo worker is side-effect-free
+      by invariant, not a wall-clock breach.
+    TURN_EDGE_BUDGET = CLOSED-CANDIDATE — same evidence.
+    Final acceptance remains with Architecture Coordination.
+
+  RESIDUAL:
+    REAL_MODEL_EVAL/LIVE_PROD_EVAL = TEST_NOT_RUN;
+      DEPLOYED_SHA = TO_VERIFY.
+    CorePlatformAccessAdapter = SEPARATE_BOUNDED_FOLLOWUP
+      (unchanged, out of scope per task).
+    CI residuals ×2 (teo gpt-actions guardrail, openai-* rules
+      map) remain CURRENT_HEAD_UNRELATED owner debt; gh CLI
+      unavailable locally for fresh run check.
     R2B semantics D01/D03/D04/D05/D06 untouched.
 
   PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
