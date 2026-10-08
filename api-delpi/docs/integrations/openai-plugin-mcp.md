@@ -50,8 +50,8 @@ DAVI is branding/orchestration identity — **not** an authorization authority.
 | Resource audience | JWT `aud` must include exact MCP resource **and** `delpi-central` |
 | Keycloak client | `mcp-api-delpi` — predefined/user-defined OAuth client |
 | ChatGPT connection | **PROVEN** |
-| Tool discovery | **PROVEN** for `search_products` (HISTORICAL — dedicated tool removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`); current surface = exactly 2 broker tools — ChatGPT UI re-discovery **PENDING** post-deploy |
-| Live business invocation | **PROVEN** for `search_products` (HISTORICAL — via former dedicated tool); dynamic execute **PROVEN in tests** — live smoke **PENDING** post-deploy |
+| Tool discovery | **PROVEN** for `search_products` (HISTORICAL — dedicated tool removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`); current surface = exactly 2 broker tools — ChatGPT re-discovery **PROVEN** (PROVIDER_CHAT_RUNTIME_OBSERVATION 2026-10-08, `davi-mcp-runtime-rebaseline-001`) |
+| Live business invocation | **PROVEN** for `search_products` (HISTORICAL — via former dedicated tool); dynamic discover→execute **PROVEN live** for representative families (product master, stock, inventory adjustments, pricing; PROVIDER_CHAT_RUNTIME_OBSERVATION 2026-10-08) — full 89-operation live matrix = PARTIAL |
 | MCP hardened contract | **PROVEN in runtime/provider** — bounded input schema + safe validation; typed output proven in runtime |
 | Agent private preview | **PROVEN** for current operator |
 | Negative business AuthZ | **PENDING** — second user without access still required |
@@ -83,7 +83,7 @@ Technical Action Catalog = derived from OpenAPI/baseline + governance allowlist
 Action Catalog != semantic capability authority
 MCP tools advertised to the Agent = discover_delpi_information + execute_delpi_information
   (exactly 2; DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001)
-DAVI_ELIGIBLE_READ (allowlist v15 / Wave 006 Production Operational Intelligence) = 63
+DAVI_ELIGIBLE_READ (allowlist v19 — recomputed at DAVI-MCP-RUNTIME-REBASELINE-001) = 89
 Product Master capability search_products remains allowlisted behind discover→execute
 get_product_drawing_pdf = DEFER (NEEDS_GENERIC_DOCUMENT_BOUNDARY; no PDF/base64 via execute JSON)
 get_product_analyser = NOT_REQUIRED for drawing analysis
@@ -123,7 +123,7 @@ is_complete / truncated = dataset completeness for model-visible response
   — see evidence davi-pagination-completeness-hardening-001.*
 ```
 
-> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). DAVI-CAPABILITY-EXPANSION-WAVE-002 promoted allowlist v7 (`DAVI_ELIGIBLE_READ = 13`). DAVI-CAPABILITY-EXPANSION-WAVE-003A promoted allowlist v8 (`DAVI_ELIGIBLE_READ = 15`). DAVI-PRODUCT-DRAWING-CAPABILITY-001 promoted allowlist v9 (`DAVI_ELIGIBLE_READ = 17`). **Current source authority is allowlist v15** (`DAVI_ELIGIBLE_READ` = 63) after Wave 006 Production Operational Intelligence — `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001` (allowlist v14 / 53 READs at the time) reduced the productive MCP surface to exactly 2 tools without changing eligibility. Allowlist v10 (`DAVI_ELIGIBLE_READ` = 35) was the source authority at `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`. Live deploy of the current allowlist = `TEST_NOT_RUN` until redeploy.
+> **Allowlist history:** DAVI-DYNAMIC-READ-001 briefly claimed 3 eligible ops (obsolete). DAVI-DYNAMIC-READ-002/005 reduced to 1. DAVI-READ-AUTHZ-REBASELINE-001 promoted allowlist v5 (`DAVI_ELIGIBLE_READ = 7`). DAVI-CAPABILITY-EXPANSION-WAVE-001 promoted allowlist v6 (`DAVI_ELIGIBLE_READ = 10`). DAVI-CAPABILITY-EXPANSION-WAVE-002 promoted allowlist v7 (`DAVI_ELIGIBLE_READ = 13`). DAVI-CAPABILITY-EXPANSION-WAVE-003A promoted allowlist v8 (`DAVI_ELIGIBLE_READ = 15`). DAVI-PRODUCT-DRAWING-CAPABILITY-001 promoted allowlist v9 (`DAVI_ELIGIBLE_READ = 17`). **Current source authority is allowlist v19** (`DAVI_ELIGIBLE_READ` = 89, recomputed at `DAVI-MCP-RUNTIME-REBASELINE-001`); v15 / 63 was the authority after Wave 006 Production Operational Intelligence — `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001` (allowlist v14 / 53 READs at the time) reduced the productive MCP surface to exactly 2 tools without changing eligibility. Allowlist v10 (`DAVI_ELIGIBLE_READ` = 35) was the source authority at `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`. Live provider evidence for the v19 surface = `PROVIDER_CHAT_RUNTIME_OBSERVATION` 2026-10-08 (`evidence/davi-mcp-runtime-rebaseline-001`); full 89-operation live matrix = PARTIAL.
 
 ### Live runtime residuals (DAVI-DYNAMIC-READ-004)
 
@@ -132,7 +132,8 @@ After private deploy of the dynamic broker, live ChatGPT evidence proved:
 ```text
 search_products live projection = PROVEN
 dynamic discover/execute basic path = PROVEN
-stock quarantine live = PROVEN (pre-rebaseline; stock eligibility LIVE after rebaseline = TEST_NOT_RUN)
+stock quarantine live = PROVEN (pre-rebaseline)
+stock eligibility LIVE (v19) = PROVEN — PROVIDER_CHAT_RUNTIME_OBSERVATION 2026-10-08
 PT-BR retrieval ("produto", "buscar o produto…") = RESIDUAL FOUND → fixed in source
 candidate schema advertised sort/direction = RESIDUAL FOUND → fixed via approvedInputFields
 discover/execute MCP outputSchema missing = RESIDUAL FOUND → fixed in source
@@ -148,6 +149,8 @@ PROVIDER OUTPUT SCHEMA DISPLAY = TEST_NOT_RUN
 ```
 
 Do not treat code-level outputSchema as provider-display proof until redeploy + tools/list rediscovery.
+
+> **SUPERSEDED as CURRENT state** by `DAVI-MCP-RUNTIME-REBASELINE-001`: 2-tool provider rediscovery and representative discover→execute live calls were observed 2026-10-08 (`evidence/davi-mcp-runtime-rebaseline-001`).
 
 ### Governed READ coverage expansion (DAVI-DYNAMIC-READ-005) — historical
 
@@ -484,6 +487,8 @@ group_category
 
 No stock, pricing, supplier, customer, sales, invoices, finance, SQL, generic proxy, writes, service account, or GPT-local RBAC are part of DAVI V1.
 
+> **HISTORICAL V1 scope.** Later governed waves (allowlist v19 / 89 ops) promoted stock, pricing, supplier/customer context, sales/commercial, production and inventory families behind the same discover→execute broker — see `evidence/davi-mcp-runtime-rebaseline-001`. Still forbidden: SQL, generic proxy, writes, service account, GPT-local RBAC.
+
 ## MCP tool contract — PLUGIN-006 / 006A
 
 > **HISTORICAL (pre-simplification):** this section documents the dedicated `search_products` MCP tool contract removed by `DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`. `search_products` remains a governed capability via discover→execute; the current productive surface is exactly `discover_delpi_information` + `execute_delpi_information`.
@@ -567,7 +572,8 @@ DAVI app attached to agent = PASS
 app auth mode = End-user account
 product 10080022 preview = PASS
 description search preview = PASS
-unsupported stock/price guard = PASS
+unsupported stock/price guard = PASS (HISTORICAL — pre-expansion; stock/pricing
+  are now governed v19 capabilities)
 second-user identity isolation = PENDING
 agent wider publication = PENDING
 ```
@@ -616,7 +622,7 @@ WIDER_PUBLICATION = BLOCKED_BY_PENDING_GATES
 
 **HISTORICAL (SOURCE PROVEN at the time — `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`):** allowlist v10 / `DAVI_ELIGIBLE_READ` = 35; MCP tools = 3; GPT Actions legacy = 2 (`LEGACY_TRANSITIONAL`); commercial analytics family promoted behind discover/execute; live production MCP acceptance = `TEST_NOT_RUN` until deploy. Prior live intelligence contract (`DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001`) remains valid for `capability_surface.agent_directives`. Agent Studio sync remains `PENDING_MANUAL_SYNC` unless newer evidence proves otherwise. New LIVE PASS requires fresh authenticated provider evidence — not inferred from this doc.
 
-**CURRENT (SOURCE PROVEN at this HEAD):** allowlist v15 / `DAVI_ELIGIBLE_READ` = 63 (Wave 006 Production Operational Intelligence); productive MCP tools = **exactly 2** — `discover_delpi_information`, `execute_delpi_information` (`DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`); `search_products` remains a governed capability reachable via discover→execute; agent intelligence = `2026.09.24.3`; GPT Actions legacy unchanged (`LEGACY_TRANSITIONAL`); live production MCP acceptance for current HEAD = `TEST_NOT_RUN` until deploy + provider rediscovery.
+**CURRENT (SOURCE PROVEN + provider observation at `DAVI-MCP-RUNTIME-REBASELINE-001`, SHA `7f2bfab647`):** allowlist **v19** / `DAVI_ELIGIBLE_READ` = **89**; productive MCP tools = **exactly 2** — `discover_delpi_information`, `execute_delpi_information` (`DAVI-MCP-TOOL-SURFACE-SIMPLIFICATION-001`); `search_products` remains a governed capability reachable via discover→execute; agent intelligence = `2026.10.07.2`; GPT Actions legacy unchanged (`LEGACY_TRANSITIONAL`); ChatGPT 2-tool discovery + representative live discover/execute = `PROVEN` (`PROVIDER_CHAT_RUNTIME_OBSERVATION` 2026-10-08); full 89-operation live matrix = `PARTIAL`; residuals: second-user identity PENDING, negative business AuthZ PENDING, `MCP_RATE_POLICY = PENDING_OWNER_DECISION`, discovery top-1 precision RESIDUAL.
 
 ## Rate limit
 

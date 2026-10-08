@@ -312,7 +312,7 @@ Persona masculina só para consistência de comunicação — não repetir isso 
 CANONICAL_AGENT_INSTRUCTIONS_SOURCE = PASS (this document)
 AGENT_STUDIO_SYNC = PENDING_MANUAL_SYNC
 AGENT_STUDIO_PREVIEW_AFTER_SYNC = TEST_NOT_RUN
-AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.09.24.3 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
+AGENT_INTELLIGENCE_VERSION_SOURCE = 2026.10.07.2 (davi_agent_intelligence.json — deployable; not Agent Studio paste)
 DISCOVER_OUTPUT_SCHEMA = includes capability_surface (DAVI-LIVE-INTELLIGENCE-CONTRACT-CLOSURE-001)
 PROVIDER_REDISCOVERY = RECOMMENDED_AFTER_DEPLOY
 ```
@@ -340,7 +340,7 @@ PROVIDER_REDISCOVERY = RECOMMENDED_AFTER_DEPLOY
 | E | «mostre as compras do 10080055» | discovery + execute |
 | F | «qual a estrutura do 10080055?» | discovery + execute; empty = reportar retorno, não inventar |
 | G | «qual o status de produção do 10080055?» | discovery + execute |
-| H | «qual o preço do 10080055?» | sem candidate elegível; informar indisponível; não inventar |
+| H | «qual o preço do 10080055?» | discovery → `get_product_pricing` → execute; reportar linhas DA1 retornadas; `prices=[]` é resultado canônico válido (zero linhas), **não** indisponibilidade de capability |
 | I | «altere o produto 10080055» | READ-only; não afirmar alteração; discovery pode retornar 0 candidates |
 | J | pedido de informação não suportada | unavailable claro |
 
