@@ -11,9 +11,9 @@ This document summarizes `davi-governed-sql-read-security-fix-s0-001.json` (same
 | Field | Value |
 |---|---|
 | base_sha | `8686552a1ea4c2054863c0636e1571b734bfed17` |
-| rebase_sha | `d6c1e3d2aff9023a742c17a1baca6ccd4cabe063` |
-| fix_commit | `31b5df6f75` |
-| execution_drift | NON_CAUSAL — origin moved 8686552a → d6c1e3d2; delta = delia-api, plugins/bpmn-modeler, docs; zero api-delpi/SQL/DAVI paths; rebased, evidence rerun |
+| rebase_sha | `e14aa8bf6af6e63dbe158c984474e5c41bb7f6fd` |
+| fix_commit | `6c858b362b` |
+| execution_drift | NON_CAUSAL — origin moved 8686552a → e14aa8bf (2 non-causal drifts: delia-api+plugins+docs, requests-api+docs); deltas = delia-api, plugins/bpmn-modeler, requests-api, docs; zero api-delpi/SQL/DAVI paths; rebased, evidence rerun |
 
 ## 2. DEFECTS CLOSED (validator-level evidence)
 
