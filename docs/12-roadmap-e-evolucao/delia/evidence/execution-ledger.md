@@ -12558,3 +12558,114 @@ fabrication); `BUSINESS_OUTCOME = VERIFIED` for read scope;
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## 6.159. C3-MODEL-PROVIDER-DEPLOY-VERIFY-01 — authorized deploy + post-deploy verification of the model-provider fix
+
+EXECUTOR: Devin (senior executor / deployment verification).
+TASK = C3-MODEL-PROVIDER-DEPLOY-VERIFY-01 (deploy the approved fix
+`910179b000` + docs `6984bb32bf` into the production service and verify
+live runtime behavior; investigate `TEO_HELP_DESK_ARG_PROJECTION`).
+
+### Reanchor
+
+HEAD at task start = `b57d627ac3` == `origin/main`, including the
+approved implementation + docs commits as ancestors and one concurrent
+non-delia commit (TÉO R4 governed writes). During the task two more
+non-delia commits appeared on either side: local `9ff9e9e14b`
+(bpmn-modeler runtime provenance, unpushed user commit) and remote
+`f09d6c2587` (requests branch_codes fix). Fully disjoint.
+`EXECUTION_DRIFT = NO`; `EXISTING_EQUIVALENT = YES`;
+`REUSE_DECISION = REUSE` (no code change in this task).
+
+### Deployment gate
+
+- `PRODUCTION_SHA_BEFORE` = checkout `05eb997a69`, image
+  `sha256:5cae056406b2...`, container healthy — running pre-fix code.
+- `DEPLOYMENT_REQUIRED = YES`.
+- `DEPLOYMENT_AUTHORIZED = YES` — explicit user authorization
+  ("Autorizo o deploy"), environment srv-api production, runbook =
+  git pull + `docker compose build delia-api && docker compose up -d
+  delia-api`, rollback = previous image digest retained locally /
+  rebuild from prior lineage.
+- `DEPLOYMENT_PERFORMED = YES` — image `infra-delia-api` rebuilt,
+  `delpi-delia-api` recreated and started.
+- `PRODUCTION_SHA_AFTER` = srv-api checkout `f09d6c2587`
+  (== `origin/main`; contains `910179b000` + `6984bb32bf` as ancestors).
+- `IMAGE_DIGEST_AFTER` = `sha256:323c6ddfeb1137cc7c047e5e7c1e87181ecdd
+  68fb2f40c93f898289601066e68`; container `healthy`.
+
+### Runtime verification (post-deploy, in-container)
+
+- `DELIA_LLM_PROVIDER=openai_compatible`, `DELIA_LLM_MODEL=
+  moonshotai/kimi-k3`, `DELIA_LLM_MAX_OUTPUT_TOKENS=2048`,
+  `DELIA_MODEL_STAGE_TIMEOUT_SECONDS=30`, `DELIA_TURN_BUDGET_SECONDS=80`
+  — approved defaults live, no unexpected overrides.
+- Deployed source md5 parity with the fixed implementation:
+  adapter `b35d2c1e...`, orchestration `24121361...`, settings
+  `108f8e04...`.
+- `max_tokens` wire emission proven by focused adapter tests (default
+  2048, explicit override wins, absent = unbounded rejected);
+  stage-timeout live proof: successful model stages ran 21–23.5s,
+  impossible under the previous 10s cap; total turn deadline remains
+  the 80s bound.
+
+### Live production turns — deployed service, real HTTP, authenticated, read-only
+
+`POST /interaction/turns` with subject `user` (realm delpi,
+`scope=openid profile email`):
+
+- DAVI — DELPI information query: HTTP 200, owner-grounded response.
+- TÉO — Transformômetro catalog query: HTTP 200, owner-grounded data.
+- VISTA — TV playlists query: HTTP 200, `OBSERVATION` + `GROUNDED` +
+  provenance (`vista/list_playlists`, source `tv-dashboard-api`,
+  protocol MCP).
+- General out-of-scope question: HTTP 200 `NON_GROUNDED` — no
+  fabricated operational facts.
+- Security — destructive request ("format the server"): HTTP 200
+  explicit refusal, nothing executed.
+
+`DISCOVERY=PASS`; `SEMANTIC_SELECTION=PASS`; `GROUNDING=PASS`;
+`PROVENANCE=PASS`; `BUSINESS_OUTCOME_READ=VERIFIED`;
+`MODEL_TIMEOUT_BEHAVIOR=PASS` (stages >10s now complete inside the 30s
+stage cap; no provider_rejected observed post-deploy).
+`MATERIAL_ACT_CALLS=0`; `MATERIAL_PREPARE_SIDE_EFFECTS=0`;
+no credentials or tokens exposed anywhere in outputs or logs.
+
+### TÉO helpdesk residual — investigated, wire-level evidence
+
+Live wire-capture probe (in-process, read-only) on the deployed code
+for "Liste os chamados abertos do helpdesk":
+
+- Selection: `teo/helpdesk_read` (READ) — correct.
+- Args stage projected `{"action": "tickets", "status": "open", ...}`
+  — the required discriminator WAS projected correctly.
+- Wire call carried `action="tickets"`; the owner rejected with
+  `glpi_link_required` (409, owner BFF precondition — the test
+  identity has no GLPI account linked; the owner returns an
+  `authorize_url`).
+
+Classification: NOT a DÉLIA projection failure and NOT an owner
+contract gap — the owner schema (`action` required + enum) is
+legitimate and now satisfied; the earlier `action Field required`
+observation is not reproducible post-fix (consistent with pre-fix
+stage-timeout artifacts). The live gap is an owner-domain
+precondition (`glpi_link_required`) surfaced truthfully as
+NON_GROUNDED/source-unavailable. Product decision for Coordination:
+whether DÉLIA should surface owner authorization preconditions (e.g.
+the GLPI authorize flow) as actionable user guidance — no code change
+made in this task.
+
+### Residuals
+
+- `TEO_HELP_DESK_ARG_PROJECTION` — superseded by the finding above:
+  projection verified correct post-deploy; `GLPI_LINK_SURFACING`
+  replaces it as the open product question (Coordination decision).
+- `SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED` — unchanged.
+- Tests/CI: implementation suite evidence remains 965/965 PASS on the
+  committed content; known CI failures remain classified
+  `CURRENT_HEAD_UNRELATED` (pre-existing gates, no new regression).
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
