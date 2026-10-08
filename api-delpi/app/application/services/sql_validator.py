@@ -162,6 +162,24 @@ class SqlValidator:
             )
 
         name = m.group(0)
+        i += len(name)
+
+        # S0 não suporta qualificação de objetos (schema/database/servidor
+        # ou delimitadores pendentes). T-SQL permite whitespace em nomes
+        # multipartes, então a continuação é checada após espaços também.
+        if i < n and sql_up[i] in ".[\"":
+            raise PermissionError(
+                "Qualificação de objeto não é suportada pelo validador "
+                "read-only."
+            )
+        j = i
+        while j < n and sql_up[j] in " \t\r\n":
+            j += 1
+        if j < n and sql_up[j] == ".":
+            raise PermissionError(
+                "Qualificação de objeto não é suportada pelo validador "
+                "read-only."
+            )
 
         if name.startswith("@"):
             # Variável de tabela local — já governada pela validação de DECLARE.
@@ -241,6 +259,28 @@ class SqlValidator:
                 continue
 
             i += 1
+
+    # ------------------------------------------------------------------
+    # 🔹 Máscara de literais de string
+    # ------------------------------------------------------------------
+    def _mask_string_literals(self, sql: str) -> str:
+        """
+        Substitui todo o conteúdo de literais '...' por espaços,
+        preservando tamanho/posições. Necessário porque extrações
+        lexicais (ex.: nomes de CTE) nunca podem ser alimentadas por
+        texto dentro de string — literais são dados, não sintaxe.
+        """
+        result = []
+        in_string = False
+        for ch in sql:
+            if ch == "'":
+                in_string = not in_string
+                result.append(" ")
+            elif in_string:
+                result.append(" ")
+            else:
+                result.append(ch)
+        return "".join(result)
 
     # ------------------------------------------------------------------
     # 🔹 Extrair nomes de CTEs
@@ -374,7 +414,9 @@ class SqlValidator:
             )
             return True
 
-        cte_names = self._extract_cte_names(sql_up)
+        # Strings são dados, não sintaxe: nomes de CTE só podem vir de
+        # texto SQL real — mascarar literais antes da extração lexical.
+        cte_names = self._extract_cte_names(self._mask_string_literals(sql_up))
 
         self._validate_table_sources(sql_up, cte_names)
 
