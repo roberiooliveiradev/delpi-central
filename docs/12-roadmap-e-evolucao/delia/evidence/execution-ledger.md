@@ -11220,6 +11220,25 @@ EVIDENCE (live production, 2026-10-05):
 ## 6.150. C3-INTELLIGENCE-LOOP-03R2A-R1 — end-to-end turn deadline propagation
 
   DATE = 2026-07-05
+  DATE_CORRECTION = 2026-07-05 was a clerical error; the correct
+    execution date is 2026-10-08. Recorded explicitly here — no
+    silent overwrite.
+
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R1 = REWORK —
+    independent review confirmed the direction but found the R1
+    bound reached REQUEST legs, not whole OPERATIONS: (a) the
+    delegated credential exchange ran on its own configured timeout
+    before any transport leg saw the caller bound; (b) MCP
+    initialize let the initialized notification renew the bound —
+    rpc + notify could each take the full R; (c) OpenAPI document
+    fetch and capability GET still relied on scalar requests
+    timeout, which is per-recv inactivity semantics — a trickling
+    body could outlive the TurnDeadline. The claims
+    TURN_TOTAL_BUDGET / TURN_EDGE_BUDGET below were downgraded to
+    PARTIAL/REWORK again by that review and are RESTORED as CLOSED
+    only by §6.151 evidence.
+    EXECUTION_DRIFT = NO. ARCHITECTURE_DECISION_REQUIRED = NO.
+
   TASK = C3-INTELLIGENCE-LOOP-03R2A-R1
   BASE_HEAD = 4950d719a70c (reanchor; zero delia-api commits since
     697f5fd2ff — only bpmn-modeler landed on main)
@@ -11314,7 +11333,9 @@ EVIDENCE (live production, 2026-10-05):
       configured 2.0; non-positive → MCP_TIMEOUT with zero POSTs.
     Adapter: init/list/call legs share one shrinking 2.5s budget.
 
-  CLAIMS RESTORED on R1 evidence:
+  CLAIMS RESTORED on R1 evidence (SUPERSEDED — re-downgraded to
+    PARTIAL/REWORK by ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R1;
+    see annotation above; restored CLOSED only by §6.151):
     TURN_TOTAL_BUDGET = CLOSED — every provider consultation and
       invocation is bounded by the remaining TurnDeadline end-to-end
       (orchestration → provider → interop → adapter → wire).
@@ -11329,6 +11350,179 @@ EVIDENCE (live production, 2026-10-05):
     (live-equivalent wire evidence is local socket + real requests;
     no production invocation performed).
     INDEPENDENT_CI = NOT_AVAILABLE.
+
+  PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+    C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+  NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## 6.151. C3-INTELLIGENCE-LOOP-03R2A-R2 — total wall-clock closure for provider infrastructure
+
+  DATE = 2026-10-08
+  TASK = C3-INTELLIGENCE-LOOP-03R2A-R2
+  BASE_HEAD = b1fb377b718091cf14d58848ad9b5db199921f95
+    (reanchor — zero material drift in delia-api since the R1 push;
+    the only newer commit on main was unrelated core workspace
+    context work at f37f2fa720)
+
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R1 = REWORK — the
+    R1 bound reached individual request legs but provider
+    OPERATIONS could still renew or escape it:
+    1. credential_for() had no caller bound — a cache-miss Keycloak
+       token exchange consumed its own configured timeout outside
+       the TurnDeadline;
+    2. DelpiMcpTransport.initialize() issued initialize-rpc AND
+       notifications/initialized under the same scalar — R + R of
+       wall-clock was possible;
+    3. SpecialistInterop._clamp_timeout mapped an explicit
+       non-positive remaining budget to the configured maximum —
+       an exhausted budget silently reopened a fresh window;
+    4. OpenAPI fetch_openapi_document and HttpOpenApiInvoker used
+       scalar requests timeout — per-recv inactivity only, so a
+       trickling body could outlive the deadline (same defect class
+       already proven for the model adapter in §6.149).
+
+  REUSE/ABSTRACTION GATE:
+    TurnDeadline, remaining_budget(), CapabilityProviderPort
+      .timeout_seconds, DelegatedCredentialProvider,
+      McpSpecialistAdapter, DelpiMcpTransport,
+      OpenApiCapabilityProvider, HttpOpenApiInvoker = EXISTING.
+    REUSE_DECISION = EXTEND for every existing seam (the same
+      optional reduction-only timeout_seconds contract).
+    A provider-neutral total wall-clock HTTP primitive had NO
+      existing equivalent (inventory: the only streamed-deadline
+      drain lived inside the OpenAI-compatible model adapter,
+      provider-specific) → REUSE_DECISION = NEW for exactly one
+      minimal infrastructure helper:
+      app/infrastructure/http/bounded_request.py — stream=True +
+      raw.read1 chunked drain + monotonic deadline re-check +
+      per-recv socket timeout tightened to the remaining budget +
+      bounded body size + non-positive fail-fast with zero wire
+      calls. ABSTRACTION_GATE = PASS — infrastructure-only, no
+      application/domain HTTP dependency, no second deadline
+      engine, no thread/multiprocessing wrapper, no
+      provider-specific planner logic.
+
+  FIX = EXTEND:
+    DelegatedCredentialProvider.credential_for(profile, *,
+      timeout_seconds=None) — reduction-only caller bound; cache
+      hit unchanged (zero I/O even under bound=0); cache miss runs
+      the RFC 8693 exchange through bounded_request under
+      min(configured ceiling, caller remaining); expired budget →
+      MCP_TIMEOUT (never a fresh window); transport failure stays
+      MCP_AUTHENTICATION_FAILED; denial/malformed unchanged.
+    McpSpecialistAdapter._connect passes
+      remaining_budget(started, budget_seconds) into
+      credential_for — the auth retry path re-enters the SAME
+      started clock, so invalidate → re-exchange → reconnect →
+      re-list → retry call all share the original bound.
+    DelpiMcpTransport.initialize() treats rpc + notification as
+      ONE operation — the notification receives only
+      remaining_budget(started, timeout_seconds); if the rpc
+      consumed the whole bound the notification fails fast with
+      zero POSTs.
+    DelpiMcpTransport._send routes through bounded_request —
+      every MCP wire leg (initialize, notify, tools/list,
+      tools/call) is now total wall-clock + trickle-bounded, not
+      scalar per-recv.
+    SpecialistInterop._clamp_timeout — explicit non-positive
+      caller bound raises MCP_TIMEOUT (was: silently returned the
+      configured maximum, reopening a fresh window); None/
+      unparseable still falls back to the configured maximum.
+    fetch_openapi_document + HttpOpenApiInvoker.__call__ route
+      through bounded_request — document fetch and capability GET
+      are total wall-clock (connect + headers + body drain +
+      trickle) under min(configured OpenAPI ceiling, caller
+      remaining); explicit <=0 fails fast with zero wire calls.
+    mcp_provider._effective_timeout verified: min(value,
+      configured) passes non-positive through to the fail-fast
+      boundary — no widening clamp remains on the governed path.
+
+  FILES_CHANGED (delia-api code): app/infrastructure/http/
+    bounded_request.py (NEW, infrastructure-only);
+    app/infrastructure/interoperability/delegation.py;
+    app/infrastructure/interoperability/mcp/adapter.py;
+    app/infrastructure/interoperability/mcp/transport.py;
+    app/infrastructure/openapi/http_invoker.py;
+    app/application/specialist_interop/specialist_interop.py.
+    Tests: tests/test_delegated_credentials.py (+4 R2 + fake
+    updates), tests/test_mcp_adapter.py (+6 R2 + tuple-timeout
+    fixture updates), tests/test_openapi_capability_provider.py
+    (+3 R2 + signature updates).
+
+  TESTS = 925/925 delia-api PASS (912 + 13 new R2 tests).
+    A credential cache miss bounded — exchange receives
+      min(caller, configured): bound 0.7 → connect leg 0.7; bound
+      99 → configured 10.0 caps (reduction-only).
+      Live-equivalent: real requests.post to a token endpoint that
+      sleeps 3s, configured exchange timeout 10s, caller bound
+      0.4s → MCP_TIMEOUT, elapsed <2.0s.
+    B cache hit unchanged — primed cache + bound 0.0 → valid
+      token returned, exchange POST count stays 1 (zero new I/O).
+    C auth retry shares the original clock — 401 → invalidate →
+      re-exchange → retry: second credential bound <= first <=
+      2.5s; retry call_timeout <= 2.5s; exactly 2 call attempts.
+    D PREPARE auth failure → zero material retries (existing
+      test_tools_call_401_never_retries_mutating preserved).
+    E initialize shared clock — rpc consumed 0.4s of 0.5s bound →
+      notification bound <0.2s (never a fresh 0.5); rpc overrun
+      → notification POST count = 0, MCP_TIMEOUT.
+    F/G MCP operation totals — adapter list/call legs all receive
+      shrinking remainders under one port bound (credential +
+      initialize + notify + list (+ call) each <= bound).
+    H OpenAPI document trickle (REAL socket + real requests.get):
+      /openapi.json emits 1-byte chunks every 50ms forever, bound
+      0.4s vs configured default → openapi_document_unavailable,
+      elapsed <2.0s.
+    I OpenAPI capability trickle: document fast, capability GET
+      trickles forever → openapi_invocation_failed, elapsed <2.0s.
+    J normal fast-path unchanged (existing projection/invocation
+      tests green).
+    K explicit non-positive: timeout_seconds in {0.0, -1.0, -2.0,
+      -3.0} → fail-fast at DelegatedCredentialProvider (MCP_TIMEOUT,
+      zero posts), DelpiMcpTransport/SpecialistInterop (MCP_TIMEOUT,
+      zero POSTs), adapter end-to-end (zero wire calls), OpenAPI
+      fetch + invoke (CapabilityProviderError, zero wire calls).
+    L turn integration — R1 tests preserved: provider overrun →
+      SOURCE_UNAVAILABLE terminal, general model fallback = 0,
+      material ACT = 0.
+
+  CLAIMS RESTORED on R2 evidence:
+    TURN_TOTAL_BUDGET = CLOSED — for any governed remote path
+      (provider discovery, provider fan-out, credential exchange,
+      MCP initialize/list/call, bounded auth retry, OpenAPI
+      document fetch, OpenAPI invocation) every operation receives
+      min(configured stage ceiling, TurnDeadline remaining) and no
+      composite operation renews its budget between sublegs.
+    TURN_EDGE_BUDGET = CLOSED — same evidence; the 80s default
+      budget now bounds provider infrastructure work below the
+      ~100s Cloudflare edge including body trickle.
+
+  CI_INVESTIGATION (run ids 37765195078 / 37765194994 observed at
+    BASE_HEAD):
+    Architecture Enforcement / "Test GPT Actions OpenAPI guardrails"
+      = CURRENT_HEAD_UNRELATED — reproduced locally at R2 HEAD:
+      GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT findings live in
+      transformometro-api/docs/gpt-actions/openapi-gpt-actions.json,
+      introduced by upstream teo commits faf99a1ef4/a71eb28a63
+      (ancestors of the R1 base; zero overlap with the DÉLIA diff).
+    Cursor Rules Governance / "Audit Cursor rules" =
+      CURRENT_HEAD_UNRELATED — audit fails because
+      openai-plugin-mcp-integration.mdc and
+      openai-workspace-agent-integration.mdc are specialized rules
+      missing from responsibility-map.json; those rules were added
+      by upstream commits 731aba0c32/cc01916e6f/0e88f09f1b —
+      ancestors of the R1 base, outside the DÉLIA diff.
+    Neither failure is caused by R1 or R2; per the bounded-scope
+    mandate they are recorded as residuals, not fixed here.
+
+  RESIDUAL:
+    REAL_MODEL_EVAL = TEST_NOT_RUN; LIVE_PROD_EVAL = TEST_NOT_RUN;
+    DEPLOYED_SHA = TO_VERIFY (deploy is not outcome evidence).
+    The two unrelated CI failures above remain open for their
+    owners (teo gpt-actions contract drift; cursor-rules
+    responsibility-map registration).
+    R2B semantic residuals D01/D03/D04/D05/D06 untouched.
 
   PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
     C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN

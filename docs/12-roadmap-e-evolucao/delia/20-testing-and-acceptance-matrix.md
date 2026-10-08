@@ -2655,7 +2655,7 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `MODEL_TIMEOUT_TOTAL_WALL_CLOCK` | PASS — `timeout_seconds` = maximum wall-clock duration of the invocation (contract frozen); adapter streams body via `raw.read1`, deadline re-checked between reads, per-recv socket timeout tightened to remaining budget; no thread wrapper, no new dependency, provider-neutral |
 | `TRICKLE_SERVER_TIMEOUT` | PASS — deterministic fixture (bytes every 50ms, never completes): `ModelInvocationError(TIMEOUT)` at ~1.01s for 1.0s requested (configured adapter max 30s) — requested timeout + tolerance, not a multiple |
 | `NORMAL_MODEL_INVOCATION` | PASS — fast provider fixture: structured output, usage and duration metadata preserved through the streaming drain |
-| `TURN_TOTAL_BUDGET` | PASS (restored by §6.150 R1 evidence — review found the deadline was checked but never passed into provider ops) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries; each stage gets `min(configured max, remaining)`; no stage starts after exhaustion; an outcome arriving past the deadline is never processed (post-call check) |
+| `TURN_TOTAL_BUDGET` | PASS (restored by §6.151 R2 evidence — R1 was reviewed REWORK because the bound reached request legs, not whole operations: credential exchange, initialize notification and OpenAPI bodies could escape/renew it) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries AND composite provider operations; each operation gets `min(configured max, remaining)` with no budget renewal between sublegs; no stage starts after exhaustion; an outcome arriving past the deadline is never processed |
 | `TURN_BUDGET_LT_EDGE_TIMEOUT` | PROVEN_FROM_CONFIG — `DELIA_TURN_BUDGET_SECONDS` default 80s; edge = Cloudflare 524 ~100s (observed); in-repo nginx hop `proxy_read_timeout=86400s` does not own the edge; margin ≥20s |
 | `SELECTION_TIMEOUT_GENERAL_FALLBACK` | 0 — `select_group`/`select_capability` model TIMEOUT → `SOURCE_UNAVAILABLE(model_timeout)` terminal; handler emits deterministic bounded failure (HYPOTHESIS + `delpi_source_unverified`); general model port invoked 0 times |
 | `ARGUMENT_TIMEOUT_GENERAL_FALLBACK` | 0 — argument projection TIMEOUT → same terminal semantics |
@@ -2695,4 +2695,33 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `NEW_TIMEOUT_MECHANISM` | 0 — no new engine, thread wrapper, planner branch or parallel timeout system; one `TurnDeadline`, one `timeout_seconds` contract |
 | Full delia-api suite | **912/912 PASS** (894 + 18 new R1 tests) |
 | `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` | TEST_NOT_RUN / TEST_NOT_RUN (live-equivalent wire evidence = local socket + real `requests`; no production invocation) |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2A-R2 — total wall-clock closure for provider infrastructure (§6.151)
+
+`ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R1 = REWORK`: the R1 bound reached individual request legs but provider OPERATIONS could still renew or escape it — the delegated credential exchange ran outside the TurnDeadline, the initialize notification renewed the bound, non-positive remainders widened to the configured max, and OpenAPI relied on scalar per-recv timeouts. R2 closes all four through one infrastructure wall-clock primitive.
+
+| Claim | Result |
+|---|---|
+| `DELEGATED_CREDENTIAL_TURN_BOUND` | PASS — `credential_for(profile, *, timeout_seconds)` reduction-only; cache miss exchanges under `min(configured ceiling, caller remaining)` via `bounded_request`; cache hit stays zero-I/O even at bound 0 |
+| `CREDENTIAL_EXCHANGE_SLOW_SERVER` | PASS (live-equivalent, real `requests.post` + real socket) — token endpoint sleeping 3s, caller bound 0.4s vs configured 10s → `MCP_TIMEOUT`, elapsed <2.0s |
+| `MCP_INITIALIZE_SHARED_BUDGET` | PASS — rpc + `notifications/initialized` share one `started` clock; notification gets only `remaining_budget`; rpc exhaustion → notification POST count = 0, `MCP_TIMEOUT` |
+| `MCP_LIST_OPERATION_TOTAL_WALL_CLOCK` | PASS — credential + initialize + notify + tools/list all bounded by one shrinking remainder under the port bound |
+| `MCP_CALL_OPERATION_TOTAL_WALL_CLOCK` | PASS — same chain plus tools/call; every leg receives only the remainder |
+| `MCP_WIRE_TRICKLE_BOUND` | PASS (live-equivalent, real `requests.post` + real socket) — body trickling 1-byte chunks forever → `MCP_TIMEOUT` in <2.0s at bound 0.4s vs configured 30s |
+| `AUTH_RETRY_SHARED_BUDGET` | PASS — 401 → invalidate → re-exchange → reconnect → re-list → retry call all inside the original bound; second credential bound ≤ first; retry call bound ≤ original |
+| `NON_MUTATING_AUTH_RETRY_POLICY` | PASS — unchanged; exactly one bounded retry for READ/DISCOVERY/ANALYSIS classes |
+| `PREPARE_ACT_RETRY_MATERIAL_CALLS` | 0 — unchanged; PREPARE-class 401 invalidates and propagates, zero material retries |
+| `EXPLICIT_NONPOSITIVE_TIMEOUT` | FAIL_FAST — `timeout_seconds <= 0` → `MCP_TIMEOUT`/`openapi_*_unavailable`/`openapi_invocation_failed` with ZERO wire calls at credential, transport, interop, adapter, fetch and invoker seams; never widened to a configured max |
+| `OPENAPI_DOCUMENT_TOTAL_WALL_CLOCK` | PASS — `fetch_openapi_document` routed through `bounded_request` (connect + headers + body drain share one deadline) |
+| `OPENAPI_INVOKE_TOTAL_WALL_CLOCK` | PASS — `HttpOpenApiInvoker` GET routed through `bounded_request` under `min(configured, caller remaining)` |
+| `OPENAPI_TRICKLE_BOUND` | PASS (live-equivalent, real socket) — trickling `/openapi.json` → `openapi_document_unavailable` <2.0s; trickling capability GET → `openapi_invocation_failed` <2.0s, both at bound 0.4s |
+| `OPENAPI_NORMAL_PATH` | PASS — fast server: projection, invocation and provenance unchanged |
+| `TIMEOUT_TO_SOURCE_UNAVAILABLE` | PASS — all exhaustion paths map to `MCP_TIMEOUT`/provider error → terminal `SOURCE_UNAVAILABLE`; never `NOT_APPLICABLE` |
+| `GENERAL_MODEL_FALLBACK_AFTER_PROVIDER_TIMEOUT` | 0 — unchanged (R1 terminal-semantics tests preserved) |
+| `MATERIAL_ACT_IN_TIMEOUT_TESTS` | 0 |
+| `NON_SCALAR_REQUESTS_TIMEOUT_AS_BOUND` | REJECTED — `requests.get/post(timeout=N)` alone proven insufficient (trickle class); all governed remote calls now drain through `bounded_request` |
+| Full delia-api suite | **925/925 PASS** (912 + 13 new R2 tests) |
+| `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` | TEST_NOT_RUN / TEST_NOT_RUN |
+| `CI_RESIDUALS` | CURRENT_HEAD_UNRELATED ×2 — teo gpt-actions opaque-object findings + two unclassified openai-* cursor rules; both reproduced on upstream commits outside the DÉLIA diff (see §6.151) |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
