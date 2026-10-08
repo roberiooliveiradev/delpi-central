@@ -1553,3 +1553,57 @@ def test_assignee_filter_empty_candidates_returns_empty_page():
     page = client.list_tickets("oauth-access", build_ticket_list_query(assignee_id=77))
     assert page.items == ()
     assert page.has_more is False
+
+
+def test_legacy_search_accepts_206_partial_content():
+    """GLPI apirest search returns 206 Partial Content for paginated results;
+    the BFF must parse it, not degrade to a silent empty page."""
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-x"})
+        if path.endswith("/apirest.php/search/Ticket"):
+            return httpx.Response(
+                206,
+                json={"totalcount": 2, "data": [{"2": 501}, {"2": 502}]},
+            )
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        if path.endswith("/api.php/v2.2/Assistance/Ticket"):
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "id": 501,
+                            "name": "Ticket A",
+                            "status": {"id": 1, "name": "Novo"},
+                            "date_mod": "2026-10-03T10:00:00Z",
+                            "team": [{"role": "assigned", "id": 11}],
+                        },
+                        {
+                            "id": 502,
+                            "name": "Ticket B",
+                            "status": {"id": 1, "name": "Novo"},
+                            "date_mod": "2026-10-02T10:00:00Z",
+                            "team": [{"role": "assigned", "id": 11}],
+                        },
+                    ]
+                },
+            )
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    page = client.list_tickets(
+        "oauth-access", build_ticket_list_query(assignee_id=11)
+    )
+    assert [item.id for item in page.items] == [501, 502]

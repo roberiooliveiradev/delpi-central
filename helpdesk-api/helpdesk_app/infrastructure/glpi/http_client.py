@@ -1333,7 +1333,7 @@ class HttpxGlpiClient:
         except httpx.TimeoutException as exc:
             raise GlpiUnavailable("GLPI indisponível.") from exc
         logger.info("glpi_legacy_get path=%s status=%s", path, response.status_code)
-        if response.status_code == 200:
+        if response.status_code in {200, 206}:
             if not response.content:
                 return []
             data = response.json()
