@@ -216,6 +216,28 @@ allowlisted and is reached only via discover → execute
 (no dedicated MCP tool; intentional provider surface contraction).
 ```
 
+CURRENT SOURCE STATE (recomputed at `DAVI-MCP-RUNTIME-REBASELINE-001`,
+SHA `7f2bfab647`):
+
+```text
+allowlist              = v19
+DAVI_ELIGIBLE_READ     = 89 governed ops
+agent intelligence     = 2026.10.07.2
+MCP tools              = exactly 2 (discover_delpi_information,
+                         execute_delpi_information)
+provider live discover = PROVEN (89 eligible; PROVIDER_CHAT_RUNTIME_OBSERVATION
+                         2026-10-08)
+provider live execute  = PROVEN for representative families (product master,
+                         stock, inventory adjustments, pricing)
+FULL 89-OP LIVE MATRIX = PARTIAL
+evidence               = api-delpi/docs/integrations/evidence/
+                         davi-mcp-runtime-rebaseline-001.md
+```
+
+Families now governed behind the same broker: Product Master & item context,
+Commercial/Sales, Supplies/Purchasing/Inventory, Production, System Metadata
+(describe/search only — generic SQL remains FORBIDDEN).
+
 Historical note (superseded for MCP tool count): earlier waves documented
 `search_products` as a specialized MCP fast path with exactly 3 tools.
 That MCP registration was removed; eligible READ count and AuthZ are unchanged.
@@ -245,9 +267,9 @@ branch = query filter (unless backend policy says otherwise)
 backend AuthZ = final authority
 ```
 
-After Wave 004 Commercial Analytics (source `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`): `DAVI_ELIGIBLE_READ` = **35** via allowlist **v10** (18 commercial analytics GETs promoted behind `discover_delpi_information` / `execute_delpi_information`; `get_sales_order_otd_panel` DEFER; proposal/detail family remains NEXT_WAVE). Expansion strategy = progressive governed coverage of API DELPI READ families — **not** one MCP tool per family, **not** generic expose-all. Production MCP remains the single DAVI runtime. MCP tools remain **exactly 3**. Agent Instructions / `davi_agent_intelligence.json` unchanged. Document-transport homolog experiments remain historical. Deploy/live = `TEST_NOT_RUN` until production recreate. Evidence: `api-delpi/docs/integrations/evidence/davi-governed-read-coverage-wave-004-commercial.md`.
+After Wave 004 Commercial Analytics (historical source `DAVI-CAPABILITY-EXPANSION-WAVE-004-COMMERCIAL-READ`): `DAVI_ELIGIBLE_READ` = **35** via allowlist **v10** (18 commercial analytics GETs promoted behind `discover_delpi_information` / `execute_delpi_information`; `get_sales_order_otd_panel` DEFER; proposal/detail family remains NEXT_WAVE). Expansion strategy = progressive governed coverage of API DELPI READ families — **not** one MCP tool per family, **not** generic expose-all. Production MCP remains the single DAVI runtime. MCP tools remain **exactly 3**. Agent Instructions / `davi_agent_intelligence.json` unchanged. Document-transport homolog experiments remain historical. Deploy/live = `TEST_NOT_RUN` until production recreate. Evidence: `api-delpi/docs/integrations/evidence/davi-governed-read-coverage-wave-004-commercial.md`.
 
-After Wave Drawing JSON foundation (source `DAVI-PRODUCT-DRAWING-CAPABILITY-001`): `DAVI_ELIGIBLE_READ` = 17 via allowlist v9 (`product.drawing.catalog` → `list_product_drawings` with required `code`; `product.drawing.metadata` → `get_product_drawing`) plus the previous fifteen. `product.drawing.document` / analysis / compare / batch remain PENDING (generic document transport not proven; no PDF/base64 via `execute_delpi_information`). `get_product_analyser` is NOT promoted for drawing. MCP tools remain **exactly 3**. Agent Instructions unchanged. Deploy/live = `TEST_NOT_RUN`.
+After Wave Drawing JSON foundation (historical source `DAVI-PRODUCT-DRAWING-CAPABILITY-001`): `DAVI_ELIGIBLE_READ` = 17 via allowlist v9 (`product.drawing.catalog` → `list_product_drawings` with required `code`; `product.drawing.metadata` → `get_product_drawing`) plus the previous fifteen. `product.drawing.document` / analysis / compare / batch remain PENDING (generic document transport not proven; no PDF/base64 via `execute_delpi_information`). `get_product_analyser` is NOT promoted for drawing. MCP tools remain **exactly 3**. Agent Instructions unchanged. Deploy/live = `TEST_NOT_RUN`.
 
 Document transport inventory (`DAVI-GENERIC-DOCUMENT-TRANSPORT-INVENTORY-001`): **OUTCOME F / PREFERRED_PATTERN=NOT_FROZEN** — MCP spec+SDK support binary resources, but ChatGPT remote-MCP `application/pdf` model visibility under end-user OAuth is **TO_INVENTORY**; no runtime change; implementation **not** authorized. Evidence: `api-delpi/docs/integrations/evidence/davi-generic-document-transport-inventory-001.md`.
 
@@ -471,15 +493,28 @@ CURRENT PROVEN != TARGET
 ```text
 DAVI dedicated backend/runtime existence
 DAVI semantic capability registry (if ever needed)
-capability IDs beyond V1 search_products evidence
-additional information sources beyond API DELPI Wave 1
-DAVI stock / pricing / BOM / production capabilities (separate inventories)
-DAVI_STOCK_BUSINESS_AUTHZ and related AuthZ contracts
+additional information sources beyond API DELPI
 formal data classification for candidate fields
-MCP_RATE_POLICY owner decision
+MCP_RATE_POLICY owner decision (DAVI-MCP-RATE-POLICY-001)
 second-user identity + negative business AuthZ for wider publication
 other Application → query_cache_composer imports (separate inventory; out of DAVI-ARCH-RUNTIME-001 scope)
 ```
+
+SUPERSEDED by allowlist v19 / 89 (evidence `davi-mcp-runtime-rebaseline-001`):
+
+```text
+capability IDs beyond V1 search_products evidence   = RESOLVED (89 governed ops)
+DAVI stock / pricing / BOM / production capabilities = RESOLVED
+  (get_product_stock, get_product_pricing, get_product_structure,
+   production OEE/OTD/machine-load families all governed)
+DAVI_STOCK_BUSINESS_AUTHZ contract                   = RESOLVED for READ
+  (backend AuthZ final; branch = query filter; second-user/negative
+   AuthZ acceptance still PENDING)
+```
+
+Current MCP residuals (see §6 / rebaseline evidence): DISCOVERY_TOP1_PRECISION
+= RESIDUAL; FULL_89_OPERATION_LIVE_ACCEPTANCE = PARTIAL; SECOND_USER_IDENTITY +
+NEGATIVE_BUSINESS_AUTHZ = PENDING; MCP_RATE_POLICY = PENDING_OWNER_DECISION.
 
 ---
 
