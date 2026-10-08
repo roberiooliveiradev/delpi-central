@@ -1,0 +1,71 @@
+{
+  "corpus_id": "davi-governed-knowledge",
+  "corpus_version": 1,
+  "source_git_sha": "f37f2fa720391256e6da8ea9faae0d1d2b51f6fe",
+  "freeze_artifact": "api-delpi/docs/integrations/evidence/davi-governed-knowledge-freeze-001.md",
+  "freeze_sha": "d9926cc14a8a4edd1b52775b82cf7353aede75b4",
+  "generated_at": "2026-10-08T11:01:11+00:00",
+  "documents": [
+    {
+      "path": "api-delpi/docs/api/supplies-inventory-adjustments.md",
+      "sha256": "3cf68ac475578f4063671da35402e6f0d7b7802b63e07f3cee9bbe2a1b681c2b"
+    },
+    {
+      "path": "api-delpi/docs/api/supplies-stock-balances.md",
+      "sha256": "4d3983a3a10ac2f592f37eb8b76886a6d8716f82d9c5d981b0d91ac92ab08c09"
+    },
+    {
+      "path": "api-delpi/docs/api/supplies-purchase-order-otd.md",
+      "sha256": "971781b496308355c8684eb9719ca1e340f9ecff1f4afe5282360e2fe3e16096"
+    },
+    {
+      "path": "api-delpi/docs/api/comercial-sales-order-otd.md",
+      "sha256": "1d83706d123fb5a23b616dbbdbe79b5c0d5c660b298bd8de7afc4720481bd765"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/armazem-custo.md",
+      "sha256": "ec69f31ca2199e766f72a86d9f9516b18fcfee2052bd7d44cc1980e0996ef11c"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/filiais.md",
+      "sha256": "6b20f150755668ea0d9ff5246002885f3e448f55bd97dc464ac5145b89bb383e"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/unidades-medida.md",
+      "sha256": "83214d163389cf77265c2648c72c0dc0d1b93d258949883936382aaff58de9dd"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/producao-entrada-estoque.md",
+      "sha256": "d36b330aa5c1d1e9c80808273dfea4ec1764f506cba0105a0051b6c3dcb40845"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/apontamento-operacao-hza.md",
+      "sha256": "b09ae5925753b308f40279a28f9595dec054bc6cb2dc4e365d70468dffeab010"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/cadastro-produto.md",
+      "sha256": "f07c6a6a38beeb399804d47f4febf6a81ea6dc9c424c945a756496828c7b60eb"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md",
+      "sha256": "895942dd96117b3df9d0008ad1205e6dbfc23d8a7ed506441f196dd862a52d32"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/materiais-terceiros-sb6.md",
+      "sha256": "4de31d6c8ca81ff814c8d8d7cb3fcb7944050818f017fa589705a4b43449c6d4"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/carteira-semanal-previsto-realizado.md",
+      "sha256": "ec7442f562ea4bcc5c7e9e8aa91a9f7c80308e8ce0ef8ae90a3bfb62d51f022e"
+    },
+    {
+      "path": "api-delpi/docs/api/padroes-totvs/rol-mercado-cfop.md",
+      "sha256": "c56b5e967382a4347a65f994d5e73b2542c8f61d4f34de7d4b2d74884deba619"
+    },
+    {
+      "path": "api-delpi/docs/api/production-machine-load.md",
+      "sha256": "bee7ce7243172a6806cefa2668f596012bb1530f3e785cfbab5b30619d1ae050"
+    }
+  ],
+  "manifest_sha256": "dc646f04243581bd35bb04025ddd7177e04e1c780e3bf5fe64c4a2fd2b9347e2"
+}
