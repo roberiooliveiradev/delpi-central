@@ -53,7 +53,8 @@ Governed actions with positive coverage: 89/89.
 
 | Metric | Value |
 |---|---|
-| top1_accuracy (top1_required cases, n=99) | 0.5351 |
+| top1_accuracy (all positive cases, n=185) | 0.5351 |
+| top1_required_accuracy (top1_required subset, n=90) | 0.6667 |
 | top3_recall (positive, n=185) | 0.7243 |
 | top5_recall | 0.8378 |
 | MRR | 0.6477 |
