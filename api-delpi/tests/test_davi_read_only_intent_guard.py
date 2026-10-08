@@ -81,6 +81,11 @@ def _seed():
         "altere o status fabril do produto",
         "atualize a expedição do produto",
         "cadastre exclusividade de MP",
+        "insira um novo fornecedor",
+        "inserir um novo fornecedor",
+        "insira o item 10080055",
+        "inclua um registro",
+        "incluir um registro",
     ],
 )
 def test_explicit_write_intent_returns_zero_candidates(query, monkeypatch):
@@ -104,10 +109,44 @@ def test_explicit_write_intent_returns_zero_candidates(query, monkeypatch):
         "produto alterado",
         "status de aprovacao",
         "ultima alteracao do produto",
+        "inserção de fornecedor",
+        "insercao de fornecedor",
+        "item inserido recentemente",
+        "produto inserido no cadastro",
+        "inclusão de itens do pedido",
     ],
 )
 def test_noun_participle_does_not_trigger_write_guard(query):
     assert has_explicit_write_intent(query) is False
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "gere o DANFE da nota fiscal 12345",
+        "gerar o relatório mensal",
+        "calcule o ICMS da nota de saída",
+        "calcular o imposto da nota",
+        "monte a escala de férias do time",
+        "montar a escala de produção",
+        "traduza a descrição do produto para inglês",
+        "traduzir a descrição",
+        "emita a nota fiscal 12345",
+        "emitir o relatório de vendas",
+    ],
+)
+def test_non_read_command_verbs_return_zero_candidates(query, monkeypatch):
+    """Imperative commands that produce content (generate/calculate/emit)
+    are outside the read-only broker even though they are not mutations."""
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    assert has_explicit_write_intent(query) is True
+    result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
+    assert result["candidate_count"] == 0
+    assert result["candidates"] == []
+    assert result["eligible_action_count"] == 87
 
 
 @pytest.mark.parametrize(

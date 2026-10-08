@@ -366,7 +366,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 19
+    assert allow.get("version") == 20
     assert allow.get("coverageDecision", {}).get("decision") == (
         "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS"
     )
@@ -1140,6 +1140,82 @@ def test_metamorphic_rename_preserves_retrieval():
     hits2 = retrieve_eligible_actions("buscar produtos", [a2], top_k=3)
     assert hits1 and hits2
     assert hits1[0][0].operation_id != hits2[0][0].operation_id
+
+
+def test_bounded_subsequence_tolerates_single_modifier():
+    """Alias ``estoque do produto`` must match ``estoque atual do produto``:
+    one inserted content token is tolerated, arbitrary skips are not."""
+    from app.application.external_capabilities.dynamic_information.retrieval import (
+        _bounded_subsequence_match,
+    )
+
+    assert _bounded_subsequence_match(
+        ["estoque", "produto"], ["estoque", "atual", "produto", "10080034"]
+    )
+    assert _bounded_subsequence_match(
+        ["estoque", "produto"], ["estoque", "produto"]
+    )
+    # Two intervening content tokens exceed the bounded gap.
+    assert not _bounded_subsequence_match(
+        ["estoque", "produto"], ["estoque", "hoje", "manha", "produto"]
+    )
+    # Order is preserved: reversed needles never match.
+    assert not _bounded_subsequence_match(
+        ["produto", "estoque"], ["estoque", "produto"]
+    )
+
+
+def test_catalog_idf_is_deterministic_and_specific():
+    from app.application.external_capabilities.dynamic_information.retrieval import (
+        _catalog_idf,
+    )
+
+    generic = _action(oid="a_generic", path="/a", summary="produto dados")
+    specific = _action(
+        oid="b_specific",
+        path="/b",
+        summary="otd produto",
+        semantic_aliases=("otd comercial",),
+    )
+    actions = [generic, specific]
+    idf1 = _catalog_idf(actions)
+    idf2 = _catalog_idf(list(reversed(actions)))
+    assert idf1 == idf2  # order-independent, deterministic
+    assert all(0.0 <= v <= 1.0 for v in idf1.values())
+    assert idf1["otd"] > idf1["produto"]
+
+
+def test_weak_generic_overlap_is_suppressed():
+    """Coverage built only on ubiquitous tokens must not admit candidates."""
+    from app.application.external_capabilities.dynamic_information.retrieval import (
+        score_action,
+        _catalog_idf,
+    )
+
+    narrow = _action(
+        oid="get_product_stock",
+        path="/stock",
+        summary="estoque saldo produto",
+        semantic_aliases=("estoque do produto",),
+    )
+    wide = _action(oid="get_product_suppliers", path="/sup", summary="fornecedor")
+    pool = [narrow, wide]
+    idf = _catalog_idf(pool)
+    # Only the ubiquitous token overlaps: below the admission floor.
+    assert score_action("dados do produto", narrow, idf) == 0.0
+
+
+def test_supported_modifier_inside_alias_phrase_ranks():
+    stock = _action(
+        oid="get_product_stock",
+        path="/stock",
+        summary="estoque saldo",
+        semantic_aliases=("estoque do produto", "estoque"),
+    )
+    hits = retrieve_eligible_actions(
+        "estoque atual do produto 10080034", [stock], top_k=3
+    )
+    assert hits and hits[0][0].operation_id == "get_product_stock"
 
 
 def _assert_no_http_transport_in_tree(root: Path) -> None:

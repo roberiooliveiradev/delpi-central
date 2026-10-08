@@ -1,5 +1,5 @@
 {
-  "version": 19,
+  "version": 20,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
@@ -48,10 +48,22 @@
     "brutos",
     "bruto",
     "otd",
-    "select"
+    "select",
+    "funcionario",
+    "funcionarios",
+    "funcionário",
+    "funcionários",
+    "empregado",
+    "empregados",
+    "colaborador",
+    "colaboradores",
+    "previsao",
+    "previsão",
+    "forecast",
+    "weather"
   ],
   "retrievalReadOnlyGuard": {
-    "description": "Semantic READ-only discovery guard for explicit mutation requests. retrieval semantic guard only — NOT AuthZ, NOT business permission, NOT capability grant.",
+    "description": "Semantic READ-only discovery guard for explicit mutation and non-read imperative commands. retrieval semantic guard only — NOT AuthZ, NOT business permission, NOT capability grant.",
     "writeIntentVerbTokens": [
       "alterar",
       "altere",
@@ -84,6 +96,8 @@
       "aplique",
       "adicionar",
       "adicione",
+      "inserir",
+      "insira",
       "incluir",
       "inclua",
       "mudar",
@@ -140,6 +154,18 @@
       "need to update",
       "please delete",
       "please change"
+    ],
+    "nonReadCommandVerbTokens": [
+      "gerar",
+      "gere",
+      "calcular",
+      "calcule",
+      "montar",
+      "monte",
+      "traduzir",
+      "traduza",
+      "emitir",
+      "emita"
     ]
   },
   "explicitProcessingProhibitions": [],
@@ -248,7 +274,10 @@
         "fornecedor do produto",
         "supplier",
         "suppliers",
-        "product suppliers"
+        "product suppliers",
+        "quem fornece",
+        "fornecedores do item",
+        "fornecedor do item"
       ]
     },
     {
@@ -276,7 +305,10 @@
         "cliente do produto",
         "customer",
         "customers",
-        "product customers"
+        "product customers",
+        "clientes que compram o produto",
+        "clientes que compram",
+        "quem compra o produto"
       ]
     },
     {
@@ -304,7 +336,12 @@
         "pedidos de compra",
         "purchases",
         "product purchases",
-        "purchase orders for product"
+        "purchase orders for product",
+        "o que compramos do item",
+        "compras do item",
+        "o que já compramos",
+        "historico de compras do item",
+        "histórico de compras do item"
       ]
     },
     {
@@ -417,7 +454,14 @@
         "ordem de produção",
         "production status",
         "product production status",
-        "production orders"
+        "production orders",
+        "op aberta",
+        "ops abertas",
+        "ordem de produção aberta",
+        "produção do item",
+        "producao do item",
+        "produção do produto",
+        "producao do produto"
       ]
     },
     {
@@ -478,7 +522,11 @@
         "factory status",
         "factory situation",
         "product factory status",
-        "shop-floor status"
+        "shop-floor status",
+        "visão de chão de fábrica",
+        "chão de fábrica",
+        "status fabril do produto",
+        "status fabril do item"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -536,7 +584,14 @@
         "exclusividade de mp",
         "exclusive raw material",
         "bom exclusivity",
-        "exclusive components"
+        "exclusive components",
+        "matérias-primas exclusivas da estrutura",
+        "materias primas exclusivas da estrutura",
+        "mps só do produto",
+        "mps so do produto",
+        "mp só do produto",
+        "materia-prima so do produto",
+        "matéria-prima só do produto"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -585,7 +640,11 @@
         "shipping status",
         "final inspection",
         "released to ship",
-        "shipped quantity"
+        "shipped quantity",
+        "produto embarcado",
+        "embarque do produto",
+        "foi embarcado",
+        "status de expedição do produto"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -666,7 +725,17 @@
         "preço de compra da matéria-prima",
         "purchase price history",
         "buying price history",
-        "raw material purchase price history"
+        "raw material purchase price history",
+        "preço pago",
+        "preços pagos",
+        "quanto pagamos",
+        "preço de compra do produto",
+        "histórico de preços de compra",
+        "preço de compra registrado",
+        "preco de compra registrado",
+        "preço de compra no histórico",
+        "preco de compra no historico",
+        "preço registrado na compra"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -716,7 +785,20 @@
         "última NF de compra",
         "last purchase price",
         "last valid purchase",
-        "latest inbound invoice price"
+        "latest inbound invoice price",
+        "última compra do produto",
+        "ultima compra do produto",
+        "quando foi a última compra",
+        "última vez que compramos",
+        "ultima vez que compramos",
+        "última compra do item",
+        "ultima compra do item",
+        "última vez que compramos o item",
+        "ultima vez que compramos o item",
+        "último preço de compra do produto",
+        "ultimo preco de compra do produto",
+        "último preço de compra do item",
+        "ultimo preco de compra do item"
       ]
     },
     {
@@ -824,7 +906,10 @@
         "where used",
         "parent products",
         "reverse BOM",
-        "products using component"
+        "products using component",
+        "produtos que consomem",
+        "onde é usado na estrutura",
+        "onde e usado na estrutura"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -929,7 +1014,11 @@
         "arquivo PDF do desenho",
         "drawing metadata",
         "product drawing metadata",
-        "server-resolved drawing"
+        "server-resolved drawing",
+        "detalhes do desenho",
+        "desenho técnico do produto",
+        "desenho específico do produto",
+        "desenho especifico do produto"
       ]
     },
     {
@@ -1028,7 +1117,12 @@
         "faturamento por semana",
         "faturamento mês a mês",
         "histórico de faturamento",
-        "como o faturamento evoluiu"
+        "como o faturamento evoluiu",
+        "série do rol comercial",
+        "serie do rol comercial",
+        "série de rol comercial",
+        "serie mensal de rol",
+        "série mensal de rol"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1240,7 +1334,11 @@
         "ROL de novos negócios",
         "new business ROL share",
         "percentual de novos negócios",
-        "novos negócios ROL"
+        "novos negócios ROL",
+        "negócios novos",
+        "negocios novos",
+        "faturamento de negócios novos",
+        "rol de negócios novos"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1279,7 +1377,12 @@
         "meta de novos negócios",
         "meta ROL novos negócios",
         "new business ROL target",
-        "atingimento novos negócios"
+        "atingimento novos negócios",
+        "meta de rol new business",
+        "meta de new business",
+        "rol new business meta",
+        "meta de rol de novos negócios",
+        "realizado versus meta de new business"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1393,7 +1496,15 @@
         "conversão comercial",
         "closing rate",
         "taxa de fechamento",
-        "conversão de propostas"
+        "conversão de propostas",
+        "conversão de orçamentos",
+        "conversao de orcamentos",
+        "orçamento virou pedido",
+        "orçamentos em pedidos",
+        "orcamentos em pedidos",
+        "orçamentos convertidos em pedidos",
+        "orcamentos convertidos em pedidos",
+        "propostas que viraram pedidos"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1489,7 +1600,13 @@
         "OTD de pedidos de venda",
         "on-time delivery comercial",
         "OTD pedidos",
-        "sales order OTD"
+        "sales order OTD",
+        "pedidos comerciais no prazo",
+        "entregas no prazo comercial",
+        "otd dos pedidos de venda",
+        "entregas no prazo dos pedidos",
+        "entregas comerciais no prazo",
+        "pedidos entregues no prazo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1536,7 +1653,11 @@
         "OTD summary",
         "resumo do OTD comercial",
         "OTD realizado e meta",
-        "meta OTD comercial"
+        "meta OTD comercial",
+        "resumo do otd de vendas",
+        "resumo de otd de vendas",
+        "resumo do otd dos pedidos",
+        "resumo do otd de pedidos de venda"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1577,7 +1698,9 @@
       "semanticAliases": [
         "OTD por filial",
         "OTD por unidade",
-        "sales order OTD by branch"
+        "sales order OTD by branch",
+        "otd de vendas por filial",
+        "otd comercial por filial"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1634,7 +1757,10 @@
         "sales order OTD by customer",
         "on-time delivery por cliente",
         "OTD comercial por cliente",
-        "atraso de pedidos por cliente"
+        "atraso de pedidos por cliente",
+        "otd de vendas por cliente",
+        "clientes no prazo",
+        "clientes que receberam no prazo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1691,7 +1817,19 @@
         "OTD comercial por semana",
         "histórico do OTD comercial",
         "OTD comercial evoluiu",
-        "evolução do OTD comercial"
+        "evolução do OTD comercial",
+        "série mensal de otd",
+        "serie mensal de otd",
+        "evolução mensal do otd",
+        "série de otd de vendas",
+        "serie de otd de vendas",
+        "série de otd dos pedidos",
+        "serie do otd de vendas",
+        "série do otd de vendas",
+        "série de otd de pedidos de venda",
+        "serie de otd de pedidos de venda",
+        "série otd pedidos de venda",
+        "serie otd pedidos de venda"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1758,7 +1896,10 @@
       "semanticAliases": [
         "evolução OTD por cliente",
         "série OTD por cliente",
-        "OTD series by customer"
+        "OTD series by customer",
+        "histórico de otd por cliente",
+        "historico de otd por cliente",
+        "otd mensal por cliente"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1811,7 +1952,10 @@
         "faturamento WEG versus meta",
         "atingimento da meta WEG",
         "meta de faturamento da WEG",
-        "atingimento da meta de faturamento da WEG"
+        "atingimento da meta de faturamento da WEG",
+        "rol versus meta da weg",
+        "meta do segmento weg",
+        "rol vs meta weg"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1906,7 +2050,16 @@
         "giro estoque",
         "inventory turnover",
         "turnover de estoque",
-        "giro de estoque suprimentos"
+        "giro de estoque suprimentos",
+        "giro do estoque",
+        "vezes que o estoque gira",
+        "quantas vezes o estoque gira",
+        "estoque girou",
+        "vezes que o estoque girou",
+        "quantas vezes o estoque girou",
+        "rotatividade do estoque",
+        "quantas vezes o estoque gira no período",
+        "quantas vezes o estoque gira no periodo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -1998,7 +2151,13 @@
         "on-time delivery suprimentos",
         "entrega no prazo suprimentos",
         "atrasos de fornecimento agregados",
-        "supplies OTD KPI"
+        "supplies OTD KPI",
+        "fornecedores no prazo",
+        "fornecedor no prazo",
+        "fornecedores que entregam no prazo",
+        "fornecedores entregando no prazo",
+        "fornecedores entregando em dia",
+        "fornecedores entregam no prazo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2049,7 +2208,9 @@
         "OTD das compras",
         "pontualidade das compras",
         "entregas de fornecedores no prazo",
-        "OTD nossos pedidos de compra"
+        "OTD nossos pedidos de compra",
+        "pedidos de compra no prazo",
+        "pedidos de compra entregues no prazo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2090,7 +2251,10 @@
         "evolução do OTD dos fornecedores",
         "OTD de compras por semana",
         "histórico OTD compras",
-        "OTD compras ao longo do tempo"
+        "OTD compras ao longo do tempo",
+        "série de otd de compras",
+        "serie de otd de compras",
+        "série mensal de otd de compras"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2211,7 +2375,9 @@
         "estoque segurança suprimentos",
         "quantos materiais abaixo do estoque de segurança",
         "quantos materiais estão abaixo do estoque de segurança",
-        "situação do estoque de segurança"
+        "situação do estoque de segurança",
+        "quantos itens abaixo do estoque de segurança",
+        "quantos itens abaixo do estoque de seguranca"
       ]
     },
     {
@@ -2254,7 +2420,17 @@
         "quais materiais abaixo do estoque de segurança",
         "liste materiais abaixo do estoque de segurança",
         "materiais abaixo estoque segurança",
-        "itens abaixo do estoque de segurança"
+        "itens abaixo do estoque de segurança",
+        "itens abaixo do estoque mínimo",
+        "itens abaixo do estoque minimo",
+        "estoque de segurança por item",
+        "estoque de seguranca por item",
+        "estoque de segurança sugerido do item",
+        "estoque de seguranca sugerido do item",
+        "itens com estoque de segurança sugerido",
+        "itens com estoque de seguranca sugerido",
+        "estoque de segurança sugerido por item",
+        "estoque de seguranca sugerido por item"
       ]
     },
     {
@@ -2279,7 +2455,15 @@
       "semanticAliases": [
         "fornecedores do item de estoque de segurança",
         "fornecedores estoque de segurança",
-        "safety stock suppliers"
+        "safety stock suppliers",
+        "quem fornece o item de segurança",
+        "fornecedores do item de segurança",
+        "fornecedores do item de seguranca",
+        "quem fornece o item",
+        "quem fornece o item de estoque",
+        "fornecedores do item critico",
+        "fornecedores do item crítico",
+        "fornecedores do item de estoque de seguranca"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -2321,7 +2505,10 @@
       "semanticAliases": [
         "histórico de preço por fornecedor",
         "preço de compra fornecedor estoque de segurança",
-        "supplier purchase price history safety stock"
+        "supplier purchase price history safety stock",
+        "histórico de preços de compra do fornecedor",
+        "historico de precos de compra do fornecedor",
+        "preços pagos ao fornecedor"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -2361,7 +2548,9 @@
         "análise de consumo estoque de segurança",
         "consumo estoque de segurança",
         "safety stock consumption analysis",
-        "estoque de segurança sugerido resumo"
+        "estoque de segurança sugerido resumo",
+        "consumo acima do estoque sugerido",
+        "itens acima do estoque sugerido"
       ]
     },
     {
@@ -2401,7 +2590,10 @@
       "semanticAliases": [
         "itens análise consumo estoque de segurança",
         "materiais abaixo do estoque sugerido",
-        "safety stock consumption items"
+        "safety stock consumption items",
+        "divergência de consumo",
+        "divergencia de consumo",
+        "itens com divergência de consumo"
       ]
     },
     {
@@ -2491,7 +2683,10 @@
         "produtos do depósito",
         "itens do almoxarifado",
         "materiais no depósito",
-        "produtos em estoque no depósito"
+        "produtos em estoque no depósito",
+        "saldos por item",
+        "saldos por item no armazém",
+        "saldos por item no armazem"
       ]
     },
     {
@@ -2521,7 +2716,10 @@
         "materiais de terceiros",
         "materiais em poder de terceiros",
         "third-party materials",
-        "resumo materiais de terceiros"
+        "resumo materiais de terceiros",
+        "material em poder de terceiros",
+        "saldo de material em terceiros",
+        "saldo em poder de terceiros"
       ]
     },
     {
@@ -2566,7 +2764,11 @@
       "semanticAliases": [
         "remessas materiais de terceiros",
         "shipments materiais de terceiros",
-        "lista materiais em poder de terceiros"
+        "lista materiais em poder de terceiros",
+        "enviado para terceiros",
+        "industrialização em terceiros",
+        "industrializacao em terceiros",
+        "envio para terceiros"
       ]
     },
     {
@@ -2671,7 +2873,10 @@
         "resumo do OEE",
         "OEE resumido",
         "sumário de OEE de produção",
-        "OEE com totais de apontamentos"
+        "OEE com totais de apontamentos",
+        "oee com apontamentos",
+        "oee de produção com apontamentos",
+        "detalhe do oee"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2705,7 +2910,10 @@
         "evolução do OEE",
         "série de OEE",
         "série temporal de OEE de produção",
-        "OEE ao longo do tempo"
+        "OEE ao longo do tempo",
+        "série de oee de produção",
+        "serie de oee de producao",
+        "série mensal do oee"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2734,7 +2942,9 @@
         "pontualidade da produção",
         "pontualidade das OPs",
         "OPs no prazo",
-        "OPs atrasadas"
+        "OPs atrasadas",
+        "entregas no prazo",
+        "percentual de entregas no prazo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2766,7 +2976,11 @@
       "semanticAliases": [
         "resumo do OTD de produção",
         "OTD de produção resumido",
-        "sumário pontualidade das OPs"
+        "sumário pontualidade das OPs",
+        "otd de produção",
+        "otd de producao",
+        "otd da produção",
+        "ops entregues no prazo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2800,7 +3014,10 @@
         "evolução do OTD de produção",
         "série de OTD de produção",
         "série OTD das OPs",
-        "OTD de produção ao longo do tempo"
+        "OTD de produção ao longo do tempo",
+        "otd fabril",
+        "evolução do otd fabril",
+        "evolucao do otd fabril"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -2843,7 +3060,10 @@
         "carga por CT",
         "carga por centro de trabalho",
         "fila do CT",
-        "centros de trabalho com carga"
+        "centros de trabalho com carga",
+        "cts sobrecarregados",
+        "ct sobrecarregado",
+        "centros de trabalho sobrecarregados"
       ],
       "argumentConstraints": {
         "dateRanges": [
@@ -2905,7 +3125,10 @@
         "operações alocadas",
         "operações programadas por CT",
         "fila de operações do CT",
-        "carga de máquina detalhada"
+        "carga de máquina detalhada",
+        "carga de máquina por operação",
+        "carga de maquina por operacao",
+        "carga de máquina nas operações"
       ],
       "argumentConstraints": {
         "dateRanges": [
@@ -2972,7 +3195,10 @@
         "resumo dos apontamentos",
         "apontamentos de produção resumidos",
         "quantidade apontada por CT",
-        "resumo de apontamentos de produção"
+        "resumo de apontamentos de produção",
+        "total de apontamentos",
+        "apontamentos do período",
+        "apontamentos do periodo"
       ],
       "argumentConstraints": {
         "dateRange": {
@@ -3047,7 +3273,10 @@
         "physical location",
         "physical locations",
         "product physical location",
-        "pickup location"
+        "pickup location",
+        "onde fica o produto",
+        "localização física",
+        "localizacao fisica"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -3297,7 +3526,10 @@
         "movimentação de produção",
         "production receipt",
         "production consumption",
-        "inventory adjustment movement"
+        "inventory adjustment movement",
+        "transferências internas",
+        "transferencias internas",
+        "requisições internas"
       ],
       "argumentConstraints": {
         "dateRanges": [
@@ -3369,7 +3601,10 @@
         "fatura de entrada do produto",
         "inbound invoice",
         "inbound invoice items",
-        "inbound invoices"
+        "inbound invoices",
+        "nfes de entrada",
+        "notas de entrada do item",
+        "nf de entrada do item"
       ],
       "argumentConstraints": {
         "dateRanges": [
@@ -3433,7 +3668,13 @@
         "fatura de saída do produto",
         "outbound invoice",
         "outbound invoice items",
-        "outbound invoices"
+        "outbound invoices",
+        "notas de saída",
+        "notas de saida",
+        "notas de saída do item",
+        "notas de saida do item",
+        "em quais notas o item saiu",
+        "notas onde o produto saiu"
       ],
       "argumentConstraints": {
         "dateRanges": [
@@ -3485,7 +3726,9 @@
         "total de vendas do produto",
         "sales summary",
         "product sales summary",
-        "aggregate sales history"
+        "aggregate sales history",
+        "vendas do produto",
+        "quanto vendemos do produto"
       ]
     },
     {
@@ -3585,7 +3828,11 @@
         "qual tabela guarda registros",
         "tabela que guarda registros",
         "qual tabela contem registros",
-        "qual tabela contém registros"
+        "qual tabela contém registros",
+        "tabelas relacionadas",
+        "tabela relacionada",
+        "tabelas do sistema",
+        "tabela de clientes"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -3630,7 +3877,12 @@
         "liste todas as linhas",
         "dump da tabela",
         "dump de tabela",
-        "dump de dados"
+        "dump de dados",
+        "registros de pedidos de compra do produto",
+        "registros de pedidos de compra do item",
+        "registros de pedidos do produto",
+        "registros de movimentações internas do produto",
+        "registros de movimentacoes internas do produto"
       ]
     },
     {
@@ -3686,7 +3938,12 @@
         "qual campo representa referencia",
         "qual campo representa referência",
         "campo representa referencia",
-        "campo representa referência"
+        "campo representa referência",
+        "colunas com descrição",
+        "colunas com descricao",
+        "campo de preço",
+        "coluna de preço",
+        "campos do sistema"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -3731,7 +3988,12 @@
         "liste todas as linhas",
         "dump da tabela",
         "dump de tabela",
-        "dump de dados"
+        "dump de dados",
+        "registros de pedidos de compra do produto",
+        "registros de pedidos de compra do item",
+        "registros de pedidos do produto",
+        "registros de movimentações internas do produto",
+        "registros de movimentacoes internas do produto"
       ]
     },
     {
@@ -3779,7 +4041,9 @@
         "quais campos da",
         "campos da tabela tem fornecedor",
         "campos representam",
-        "campos que representam"
+        "campos que representam",
+        "campos que contenham",
+        "campos que contenham na tabela"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -3856,7 +4120,16 @@
         "table description",
         "protheus table info",
         "o que é a sb1",
-        "o que e a sb1"
+        "o que e a sb1",
+        "metadados da tabela",
+        "dados cadastrais da tabela",
+        "dados da tabela",
+        "cadastro da tabela",
+        "estrutura e metadados da tabela",
+        "conteúdo da tabela",
+        "conteudo da tabela",
+        "o que contém a tabela",
+        "o que contem a tabela"
       ],
       "retrievalNegativePhrases": [
         "mostre os registros",
@@ -3889,7 +4162,12 @@
         "liste todas as linhas",
         "dump da tabela",
         "dump de tabela",
-        "dump de dados"
+        "dump de dados",
+        "registros de pedidos de compra do produto",
+        "registros de pedidos de compra do item",
+        "registros de pedidos do produto",
+        "registros de movimentações internas do produto",
+        "registros de movimentacoes internas do produto"
       ]
     },
     {
@@ -3928,7 +4206,9 @@
         "list columns",
         "table columns",
         "table structure",
-        "fields of the table"
+        "fields of the table",
+        "campos da tabela tem",
+        "quais campos a tabela tem"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -3970,7 +4250,12 @@
         "liste todas as linhas",
         "dump da tabela",
         "dump de tabela",
-        "dump de dados"
+        "dump de dados",
+        "registros de pedidos de compra do produto",
+        "registros de pedidos de compra do item",
+        "registros de pedidos do produto",
+        "registros de movimentações internas do produto",
+        "registros de movimentacoes internas do produto"
       ]
     },
     {
@@ -4042,7 +4327,11 @@
         "ajuste de estoque por produto",
         "ajuste de inventário por produto",
         "listagem de ajustes de inventário",
-        "lista de ajustes de estoque"
+        "lista de ajustes de estoque",
+        "furos de inventário",
+        "furos de inventario",
+        "sobras de inventário",
+        "sobras de inventario"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -4182,7 +4471,12 @@
         "sobra de inventário por filial",
         "sobra de estoque por filial",
         "furo de inventário por filial",
-        "furo de estoque por filial"
+        "furo de estoque por filial",
+        "total de furos e sobras",
+        "totais de furos e sobras",
+        "furos e sobras do inventário",
+        "furos e sobras do inventario",
+        "total de furos e sobras de inventário"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -4255,7 +4549,10 @@
         "raw material shortage",
         "material shortage for production",
         "ruptura no conjunto",
-        "falta de insumo"
+        "falta de insumo",
+        "mp em falta",
+        "mps em falta",
+        "falta de mp"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -4309,7 +4606,11 @@
         "consumo real do item",
         "consumption by item",
         "item production consumption",
-        "consumo de MP por produto"
+        "consumo de MP por produto",
+        "consumo de produção por item",
+        "consumo de producao por item",
+        "mp consumida na produção",
+        "consumo de mp na produção"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -4375,7 +4676,10 @@
         "top consumed items",
         "top production consumption",
         "consumo por grupo de produto",
-        "consumo por filial"
+        "consumo por filial",
+        "matérias-primas consumidas",
+        "materias primas consumidas",
+        "matérias primas consumidas"
       ],
       "argumentConstraints": {
         "dateRanges": [
@@ -4441,7 +4745,10 @@
         "allocation gaps",
         "open commitments",
         "open material allocations",
-        "production order commitments"
+        "production order commitments",
+        "empenhado além do disponível",
+        "empenhado alem do disponivel",
+        "itens empenhados"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -4491,7 +4798,12 @@
         "op encerrada sem baixa",
         "finished orders without consumption",
         "missing material consumption",
-        "produção sem baixa de MP"
+        "produção sem baixa de MP",
+        "ops encerradas sem baixa",
+        "ordens encerradas sem baixa",
+        "ops encerradas sem baixa de mp",
+        "ops encerradas sem baixa de materia-prima",
+        "ordens encerradas sem consumo"
       ],
       "argumentConstraints": {
         "argumentLimits": {
@@ -4535,7 +4847,14 @@
         "operation materials",
         "production order materials",
         "order operation commitments",
-        "necessidade de material da operação"
+        "necessidade de material da operação",
+        "mps da operação",
+        "mps da operacao",
+        "mp da operação",
+        "materiais que a operação usa",
+        "componentes da operação da op",
+        "mps da operação da op",
+        "mps da operacao da op"
       ],
       "argumentConstraints": {
         "requireArguments": [
@@ -4651,7 +4970,9 @@
         "ranking de refugo",
         "top loss materials",
         "top production losses",
-        "materiais mais refugados"
+        "materiais mais refugados",
+        "perdas por material",
+        "perdas por materia"
       ],
       "argumentConstraints": {
         "dateRanges": [
@@ -4830,7 +5151,10 @@
         "consumption analysis item",
         "suggested safety stock",
         "item consumption analysis",
-        "cobertura de estoque do item"
+        "cobertura de estoque do item",
+        "série de consumo do item",
+        "serie de consumo do item",
+        "série de consumo do item de estoque de segurança"
       ],
       "argumentConstraints": {
         "requireArguments": [

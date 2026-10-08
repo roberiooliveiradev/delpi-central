@@ -114,6 +114,10 @@ def _tokens_compatible(left: str, right: str) -> bool:
         suffixes = ("mos", "ram", "iu", "ou", "cao", "sao", "mento", "veis")
         if any(left.endswith(suf) or right.endswith(suf) for suf in suffixes):
             return True
+    # Shared 6-char prefix covers gerund/flexion families (entregando/entrega,
+    # consultando/consulta) without uncontrolled stemming on short tokens.
+    if len(left) >= 6 and len(right) >= 6 and left[:6] == right[:6]:
+        return True
     return False
 
 
@@ -166,18 +170,49 @@ def _exact_window_match(needle: list[str], haystack: list[str]) -> bool:
     return False
 
 
+def _bounded_subsequence_match(
+    needle: list[str], haystack: list[str], *, max_gap: int = 1
+) -> bool:
+    """Ordered subsequence match with bounded content-token gaps.
+
+    Every alias token must appear in order; consecutive matches may be
+    separated by at most ``max_gap`` intervening content tokens, covering
+    natural PT-BR modifiers inserted inside a phrase (``estoque atual do
+    produto`` vs alias ``estoque do produto``) without skipping arbitrary
+    content indefinitely.
+    """
+    pos = 0
+    for idx, token in enumerate(needle):
+        limit = (
+            len(haystack) if idx == 0 else min(pos + max_gap + 1, len(haystack))
+        )
+        found = None
+        for j in range(pos, limit):
+            if _tokens_compatible(token, haystack[j]):
+                found = j
+                break
+        if found is None:
+            return False
+        pos = found + 1
+    return True
+
+
 def _filler_tolerant_match(alias_tokens: list[str], query_tokens: list[str]) -> bool:
     """Match alias content tokens in order, allowing PT fillers between them.
 
     Alias and query are reduced to non-filler tokens so articles/prepositions
     inside aliases (``de``, ``dos``) do not block natural paraphrases.
-    Does not skip arbitrary content tokens.
+    A bounded-gap ordered subsequence tolerates at most two intervening
+    content tokens between consecutive alias terms; arbitrary content is
+    never skipped.
     """
     alias_content = [t for t in alias_tokens if t not in _PHRASE_FILLERS]
     query_content = [t for t in query_tokens if t not in _PHRASE_FILLERS]
     if len(alias_content) < 2 or not query_content:
         return False
-    return _exact_window_match(alias_content, query_content)
+    if _exact_window_match(alias_content, query_content):
+        return True
+    return _bounded_subsequence_match(alias_content, query_content)
 
 def _alias_matches_query(alias: str, query: str) -> bool:
     """True when alias appears as an ordered semantic phrase in the query.
@@ -196,7 +231,41 @@ def _alias_matches_query(alias: str, query: str) -> bool:
     return _filler_tolerant_match(alias_tokens, query_tokens)
 
 
-def score_action(query: str, action: TechnicalAction) -> float:
+def _catalog_idf(actions: Sequence[TechnicalAction]) -> dict[str, float]:
+    """Deterministic per-token specificity over the eligible catalog.
+
+    Document frequency counts in how many actions a token appears (searchable
+    text + semantic aliases). Specificity is ``log((N+1)/(df+1))`` normalized
+    to [0, 1]: ubiquitous tokens such as ``produto`` score near 0, rare
+    domain tokens such as ``otd`` near 1. No manual token weights.
+    """
+    import math
+    from collections import Counter
+
+    docs: list[set[str]] = []
+    for action in actions:
+        tokens = tokenize(action.searchable_text)
+        for alias in action.semantic_aliases:
+            tokens |= tokenize(alias)
+        docs.append(tokens)
+    total = max(1, len(docs))
+    df = Counter()
+    for doc in docs:
+        df.update(doc)
+    norm = math.log(total + 1)
+    if norm <= 0:
+        return {}
+    return {
+        token: math.log((total + 1) / (count + 1)) / norm
+        for token, count in df.items()
+    }
+
+
+def score_action(
+    query: str,
+    action: TechnicalAction,
+    token_idf: dict[str, float] | None = None,
+) -> float:
     if _query_has_foreign_quarantine(query, action):
         return 0.0
 
@@ -219,6 +288,9 @@ def score_action(query: str, action: TechnicalAction) -> float:
     if not hay_tokens:
         return 0.0
 
+    idf = token_idf or {}
+    specificity = lambda t: idf.get(t, 0.5)  # noqa: E731 - bounded local use
+
     # Pure filler tokens (da/os/me/mostre/…) appear in almost every haystack.
     # A candidate whose overlap is ONLY filler tokens is lexical noise, not a
     # semantic match, so it is suppressed below without altering the scoring
@@ -230,10 +302,11 @@ def score_action(query: str, action: TechnicalAction) -> float:
     best_multiword_len = 0
     multiword_hits = 0
     best_single_len = 0
+    best_single_spec = 0.0
     single_hits = 0
     for alias in action.semantic_aliases:
         alias_n = normalize_text(alias)
-        if len(alias_n) < 4:
+        if len(alias_n) < 3:
             continue
         if not _alias_matches_query(alias, query):
             continue
@@ -241,6 +314,9 @@ def score_action(query: str, action: TechnicalAction) -> float:
         if alias_tok_count <= 1:
             single_hits += 1
             best_single_len = max(best_single_len, len(alias_n))
+            best_single_spec = max(
+                best_single_spec, max(specificity(t) for t in tokenize(alias))
+            )
         else:
             multiword_hits += 1
             best_multiword_len = max(best_multiword_len, len(alias_n))
@@ -252,27 +328,52 @@ def score_action(query: str, action: TechnicalAction) -> float:
             return 0.0
         text = normalize_text(action.searchable_text)
         partial = sum(1 for t in q_tokens if t in text)
-        if partial == 0:
+        # Substring-level traces alone are noise below half coverage.
+        if float(partial) / float(len(q_tokens)) < 0.5:
             return 0.0
         return min(0.84, float(partial) / float(len(q_tokens)) * 0.5)
 
-    overlap_score = float(len(overlap)) / float(len(q_tokens)) if overlap else 0.0
+    # Specificity-weighted coverage: generic overlap (``produto``, ``dados``)
+    # counts little; rare domain tokens carry the evidence. Unsupported
+    # requests whose coverage is only generic fall below the admission floor.
+    if overlap:
+        # Intent mass comes from durable content tokens only; function words
+        # (liste/os/de) are rare in catalog text, which would inflate the
+        # denominator and wrongly depress real coverage.
+        content_tokens = q_tokens - _PHRASE_FILLERS
+        q_mass = sum(specificity(t) for t in content_tokens)
+        if q_mass <= 0:
+            # Degenerate specificity (tiny/uniform catalog): fall back to
+            # plain coverage instead of dividing by a meaningless mass.
+            denom = float(len(content_tokens) or len(q_tokens))
+            overlap_score = float(len(overlap - _PHRASE_FILLERS)) / denom
+        else:
+            overlap_score = (
+                sum(specificity(t) for t in overlap - _PHRASE_FILLERS) / q_mass
+            )
+    else:
+        overlap_score = 0.0
+
     if multiword_hits:
-        # Prefer the longest matching multiword alias. Hit-count is only a light
-        # tie-breaker so several short overlaps cannot beat one precise phrase.
+        # Prefer the longest matching multiword alias; same-length ties fall
+        # through to the deterministic operation_id ordering.
         return min(
             1.0,
-            0.86
-            + 0.0025 * min(best_multiword_len, 72)
-            + 0.005 * min(multiword_hits, 2),
+            0.86 + 0.0025 * min(best_multiword_len, 72),
         )
     if single_hits:
-        # Cap one-token alias boosts so generic tokens like "estoque"/"produtos"
-        # do not outrank multiword analytic intents on natural questions.
-        return min(
-            0.78,
-            0.70 + 0.002 * min(best_single_len, 24),
-        )
+        # A lone generic alias token with otherwise-uncovered query content is
+        # noise, not intent ("saldo da conta corrente" is not product stock).
+        if overlap_score < 0.25:
+            return 0.0
+        # An action that claims the token via a governed alias must not rank
+        # below one that merely contains the token in searchable text.
+        alias_score = min(0.78, 0.62 + 0.16 * best_single_spec)
+        return max(alias_score, min(0.84, overlap_score))
+    if overlap_score < 0.50:
+        # Weak generic-token noise only: not enough specific evidence to
+        # surface the action as a candidate.
+        return 0.0
     return min(0.84, overlap_score)
 
 
@@ -302,7 +403,8 @@ def retrieve_eligible_actions(
 
     # Governance filter BEFORE ranking (eligible only).
     eligible = [a for a in actions if a.executable]
-    scored = [(a, score_action(query, a)) for a in eligible]
+    token_idf = _catalog_idf(eligible)
+    scored = [(a, score_action(query, a, token_idf)) for a in eligible]
     scored = [(a, s) for a, s in scored if s > 0]
     scored.sort(
         key=lambda pair: (

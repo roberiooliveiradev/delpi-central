@@ -25,6 +25,11 @@ def _guard_config() -> tuple[frozenset[str], tuple[str, ...]]:
     verb_tokens: set[str] = set()
     for token in raw.get("writeIntentVerbTokens") or []:
         verb_tokens |= tokenize(str(token))
+    # Imperative non-READ commands (generate/calculate/translate/emit) are
+    # also outside the read-only broker: they request producing new content
+    # or computation, not governed information retrieval.
+    for token in raw.get("nonReadCommandVerbTokens") or []:
+        verb_tokens |= tokenize(str(token))
     phrases = tuple(
         normalize_text(str(phrase))
         for phrase in (raw.get("writeIntentPhrases") or [])
@@ -38,10 +43,13 @@ def clear_read_only_intent_guard_cache() -> None:
 
 
 def has_explicit_write_intent(query: str) -> bool:
-    """True when the query expresses an explicit mutation command.
+    """True when the query expresses an explicit non-READ command.
 
-    Nouns/participles such as ``atualizacao`` / ``alterado`` / ``aprovacao``
-    are intentionally not treated as imperative write verbs.
+    Covers explicit mutation verbs (``altere``/``insira``/``delete``) and
+    imperative non-READ commands (``gere``/``calcule``/``traduza``): both are
+    outside the read-only broker. Nouns/participles such as ``atualizacao`` /
+    ``alterado`` / ``aprovacao`` / ``insercao`` / ``inserido`` are
+    intentionally not treated as imperative commands.
     """
     text = (query or "").strip()
     if not text:
