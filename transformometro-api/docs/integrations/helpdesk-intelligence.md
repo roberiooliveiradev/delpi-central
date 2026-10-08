@@ -127,6 +127,25 @@ orchestration routes Helpdesk intents to `helpdesk_read` only.
 Runtime: session/capabilities/tickets/ticket/catalogs through the live
 MCP + GPT surfaces; `glpi_link_required` and 403 handled typed.
 
+### Final acceptance evidence — `8686552a1e` (2026-10-08)
+
+| Gate | Result |
+|---|---|
+| MCP `tools/list` (live server) | **22** tools, `helpdesk_read` present, zero fragmented/per-route tools — PASS |
+| GPT Actions OpenAPI (live served) | **20** ops, `gpt_helpdesk_read` present, `action` enum closed — PASS |
+| Capability bindings | `helpdesk.{session,capabilities,ticket.search,ticket.read,catalog}.read` → one `helpdesk_read`/`gpt_helpdesk_read` — PASS |
+| Same-user Bearer forward | `session` → 200 `linked:false` through BFF `require_actor` — PASS |
+| `catalog(urgencies)` | 200, real GLPI projection — PASS |
+| `glpi_link_required` | typed 409 + canonical `authorize_url` on MCP **and** GPT — PASS |
+| Fail-closed validation | `TICKET_ID_REQUIRED`, `INVALID_CATALOG_KIND`, closed action enum (400/422) on both — PASS |
+| Recursive secret scan | all live payloads clean (no token/secret/verifier keys) — PASS |
+| Gateway logging | URL + error only; no Authorization/payload/ticket text — PASS |
+| 403 `helpdesk.access` | TESTED_AUTOMATICALLY (unit suite) — no real user's permission mutated |
+| `tickets`/`ticket` with linked session | **PENDING_MANUAL_GLPI_LINK** — `helpdesk.oauth_sessions` has 0 rows; `GLPI_OAUTH_CLIENT_*` unset locally; `/auth/glpi/start` returns 302 (canonical flow works) but completion needs human browser + configured GLPI OAuth client |
+| Local edge route `/apps/helpdesk-api/*` | INFRA RESIDUAL — `gateway/nginx.dev.conf` lacks a location block (edge serves SPA); TÉO path is container-internal and proven |
+| MCP auth contract suite | 13/13 PASS via project `.venv` (pytest-asyncio declared dep; container lacks it — environmental, not code) |
+| `test_create_shared_resource_validation` | PRE_EXISTING — fails identically on clean pushed HEAD |
+
 ## 15. Security invariants
 
 - `TÉO capability <= authenticated user capability`
