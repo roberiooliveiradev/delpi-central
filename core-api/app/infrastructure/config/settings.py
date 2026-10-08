@@ -75,6 +75,15 @@ class Config:
         minimum=1,
     )
 
+    WORKSPACE_CONTEXT_TTL_SECONDS = _env_int(
+        "WORKSPACE_CONTEXT_TTL_SECONDS",
+        default=300,
+        minimum=15,
+    )
+    WORKSPACE_CONTEXT_STORE = os.getenv(
+        "WORKSPACE_CONTEXT_STORE", "memory"
+    ).strip().lower()
+
     CORE_USER_AVATAR_UPLOAD_DIR = os.getenv(
         "CORE_USER_AVATAR_UPLOAD_DIR",
         "/app/data/core-user-avatars",

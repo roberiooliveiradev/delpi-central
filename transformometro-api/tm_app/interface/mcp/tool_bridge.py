@@ -67,8 +67,14 @@ from tm_app.application.gpt_actions.user_context_service import (
 from tm_app.infrastructure.diagnostic_composition import (
     build_diagnostic_write_stack,
 )
+from tm_app.application.gpt_actions.workspace_context_service import (
+    WorkspaceContextService,
+)
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
+)
+from tm_app.interface.http.branch_access_http import (
+    require_transformometro_view_access,
 )
 from tm_app.interface.diagnostic_projection import (
     project_read_context,
@@ -96,6 +102,7 @@ _orchestrator = GovernedWriteOrchestrator(
 _governed = GovernedActionsFacade(orchestrator=_orchestrator, dispatch=_dispatch)
 _process_context = ProcessContextService()
 _user_context = UserContextService(person_profile_reader=CorePersonProfileGateway())
+_workspace_context = WorkspaceContextService()
 
 _ERROR_KIND_BY_CODE = {
     "unauthenticated": "unauthenticated",
@@ -308,6 +315,28 @@ def tool_get_my_context() -> CallToolResult:
         )
         data["signature_profile"] = _dispatch.my_signature_profile_or_none(user)
         return _ok_result(data, "Contexto pessoal do usuário autenticado.")
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_get_workspace_context() -> CallToolResult:
+    """Current Transformômetro workspace refs — navigation hint only.
+
+    Never domain truth, never authorization. The caller must still run the
+    authoritative domain read (get_process_context) which applies canonical
+    AuthZ per entity.
+    """
+    try:
+        context = require_mcp_context()
+        if not context.authorization:
+            raise PermissionError("Unauthorized")
+        request = build_mcp_request()
+        _dispatch._raise_http_err(require_transformometro_view_access(request))
+        data = _workspace_context.get_workspace_context(context.authorization)
+        return _ok_result(
+            data,
+            "Contexto de workspace atual (dica de navegação — não é fato de domínio nem autorização).",
+        )
     except Exception as exc:
         return handle_tool_error(exc)
 

@@ -189,3 +189,21 @@ Sem context adapter:
 - unauthorized entity ref não vira data access;
 - provider/device/tool metadata não vira permission;
 - Portal context aggregation não substitui source truth.
+
+## 15. Implementation status
+
+**PROVEN (Transformômetro/TÉO):** `workspace_context_v1` implementado
+end-to-end — `core-api` (`PUT/GET/DELETE /me/workspace-context`, store
+efêmero com TTL, `client_instance_id` multi-tab, statuses
+`active|absent|stale|ambiguous`), publisher do MFE Transformômetro
+(`useWorkspaceContextPublisher` sobre o resolver canônico
+`resolveTeoPortalContext`) e capability TÉO `get_workspace_context`
+(MCP) / `gpt_get_workspace_context` (GPT Actions) projetando refs
+bounded. Identidade sempre pelo token; nenhum user_id do payload é
+autoridade. Explicit user reference > ambient context está nas
+diretivas do agente.
+
+**TARGET (este documento):** o contrato conceitual desta página é mais
+amplo (filters, selection, visibleDataRefs, iframe). A implementação
+Transformômetro é um subconjunto governado; convergir campos adicionais
+somente quando outros apps exigirem — sem variantes privadas por app.

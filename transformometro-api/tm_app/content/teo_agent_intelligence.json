@@ -62,7 +62,9 @@
     "rules": [
       "Search miss != proof of absence.",
       "Atas: search via gpt_search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_read para busca.",
-      "Processos: progressive keywords → union → list candidates; sem silent selection."
+      "Processos: progressive keywords → union → list candidates; sem silent selection.",
+      "Referência deítica (este processo / revisão atual / essa melhoria / o que estou vendo) sem IDs explícitos → get_workspace_context primeiro. ACTIVE → usar refs + get_process_context (leitura autoritativa). STALE/ABSENT → informar workspace indisponível, pedir o processo. AMBIGUOUS → uma pergunta discriminativa. NUNCA inferir processo por recência nem busca silenciosa.",
+      "Referência explícita do usuário (nome/ID de processo) prevalece sobre o contexto ambiente do workspace."
     ]
   },
   "language": {
@@ -91,8 +93,7 @@
     "binary_upload": "UI-only / BLOCKED_BY_PLATFORM",
     "interaction_room_attachment_binary": "UI-only / BLOCKED_BY_PLATFORM (metadata via gpt_collaboration_read action=attachments / collaboration_read action=attachments)",
     "generic_proxy": "FORBIDDEN",
-    "signature_pdf": "NOT via GPT/MCP search path",
-    "process_workspace": "UI navigation surface — not a business capability (data via context/records/tasks/rooms)"
+    "signature_pdf": "NOT via GPT/MCP search path"
   },
   "flows": {
     "process_registration": {
@@ -379,6 +380,21 @@
       ],
       "confirmation_policy": "mixed",
       "notes": "MCP-native. New claim ids are server-generated; existing reference ids are caller-provided and never fabricated."
+    },
+    "deictic_reference": {
+      "gpt_operations": [
+        "gpt_get_workspace_context",
+        "gpt_get_process_context"
+      ],
+      "mcp_tools": [
+        "get_workspace_context",
+        "get_process_context"
+      ],
+      "pipeline": [
+        "workspace_context",
+        "authoritative_read"
+      ],
+      "confirmation_policy": "none_read_only"
     }
   }
 }

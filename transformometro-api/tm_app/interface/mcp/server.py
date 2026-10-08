@@ -147,6 +147,23 @@ def create_mcp_server() -> MCPServer:
         return bridge.tool_get_my_context()
 
     @mcp.tool(
+        name="get_workspace_context",
+        title="Get current workspace context",
+        description=(
+            "Current Transformômetro workspace the user is viewing "
+            "(process/instance/revision/area refs). Navigation hint only — "
+            "never domain truth, never authorization. For 'this process', "
+            "'current revision', 'the improvement I'm editing' style "
+            "references: read this first, then call get_process_context with "
+            "the returned refs for authoritative facts."
+        ),
+        annotations=_annotations("get_workspace_context", "Get workspace context"),
+        meta=meta,
+    )
+    def get_workspace_context() -> CallToolResult:
+        return bridge.tool_get_workspace_context()
+
+    @mcp.tool(
         name="get_catalog",
         title="Get catalog",
         description=(

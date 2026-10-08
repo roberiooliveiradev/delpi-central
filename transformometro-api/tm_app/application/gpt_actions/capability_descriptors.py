@@ -639,6 +639,14 @@ def _canonical_catalog() -> dict[str, Any]:
                     "(confirm_before_act — replaces macro diagram)",
                     "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
+                {
+                    "id": "process_workspace",
+                    "via": "get_workspace_context (READ) — current "
+                    "process/instance/revision/area refs from the Core "
+                    "workspace_context_v1 contract; navigation hint only, "
+                    "domain read stays get_process_context",
+                    "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
             ],
             "parity_gap": [],
             "platform_blocked": [
@@ -720,14 +728,6 @@ def _canonical_catalog() -> dict[str, Any]:
                 },
             ],
             "intentionally_not_applicable": [
-                {
-                    "id": "process_workspace",
-                    "justification": (
-                        "UI navigation surface — its domain data is already "
-                        "exposed via context/records/tasks/rooms. Not a "
-                        "business capability."
-                    ),
-                },
                 {
                     "id": "json_backup_import",
                     "justification": (

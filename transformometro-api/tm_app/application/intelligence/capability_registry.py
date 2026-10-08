@@ -98,6 +98,7 @@ def _b(
 # transport projections. Order follows the historical parity contract.
 CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
     _b("context.self.read", "gpt_get_my_context", ("get_my_context", "READ"), primary="get_my_context"),
+    _b("context.workspace.read", "gpt_get_workspace_context", ("get_workspace_context", "READ"), primary="get_workspace_context"),
     _b("catalog.read", "gpt_get_catalog", ("get_catalog", "DISCOVERY"), primary="get_catalog"),
     _b("methodology.read", "gpt_get_methodology_guide", ("get_methodology_guide", "READ"), primary="get_methodology_guide"),
     _b("context.process.read", "gpt_get_process_context", ("get_process_context", "READ"), primary="get_process_context"),

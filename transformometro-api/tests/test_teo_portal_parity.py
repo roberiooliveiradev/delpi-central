@@ -176,9 +176,7 @@ def test_catalog_exposure_classification() -> None:
         catalog = build_capability_surface_catalog(transport)
         ec = catalog["exposure_classification"]
         exposed = {item["id"] for item in ec["exposed"]}
-        assert {"tm_task", "interaction_room"} <= exposed
-        nna = {item["id"] for item in ec["intentionally_not_applicable"]}
-        assert "process_workspace" in nna
+        assert {"tm_task", "interaction_room", "process_workspace"} <= exposed
         blocked = {item["id"] for item in ec["platform_blocked"]}
         assert "interaction_room.attachment_binary" in blocked
         token_flow = {item["id"] for item in ec["public_token_flow"]}

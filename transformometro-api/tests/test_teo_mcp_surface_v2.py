@@ -31,12 +31,12 @@ from tm_app.interface.mcp.tool_bridge import (
 def test_surface_budget_and_taxonomy() -> None:
     assert TEO_MCP_SURFACE == "CAPABILITY_GOVERNED_V2"
     assert MCP_SURFACE_BUDGET["before_total"] == 33
-    assert MCP_SURFACE_BUDGET["after_total"] == 19
-    assert len(MCP_TOOL_NAMES) == 19
+    assert MCP_SURFACE_BUDGET["after_total"] == 20
+    assert len(MCP_TOOL_NAMES) == 20
     assert TOOL_CLASS["prepare_record_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 11
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 12
     assert sum(1 for v in TOOL_CLASS.values() if v == "ANALYSIS") == 0
     assert sum(1 for v in TOOL_CLASS.values() if v == "PREPARE") == 6
     assert sum(1 for v in TOOL_CLASS.values() if v == "ACT") == 1

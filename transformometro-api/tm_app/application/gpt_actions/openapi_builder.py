@@ -63,6 +63,7 @@ def resolve_gpt_actions_server_url(
 # gpt_prepare_task, gpt_interaction_room_read, gpt_prepare_interaction_room.
 GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_my_context",
+    "gpt_get_workspace_context",
     "gpt_get_catalog",
     "gpt_get_methodology_guide",
     "gpt_analyze",
@@ -455,6 +456,27 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "security": [{"BearerAuth": []}],
                 "responses": {
                     "200": _ok_response("Personal context payload"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/workspace-context": {
+            "get": {
+                "operationId": "gpt_get_workspace_context",
+                "summary": "Current Transformômetro workspace refs",
+                "description": (
+                    "Read-only navigation hint: process/instance/revision/"
+                    "area the user is viewing in the Portal "
+                    "(active|absent|stale|ambiguous). CONTEXT != DOMAIN != "
+                    "AUTHORIZATION — authoritative state via "
+                    "gpt_get_process_context. Deictic refs resolve here; "
+                    "never guess by recency."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": _ok_response("Workspace context payload"),
                     **_error_responses(),
                 },
                 "x-openai-isConsequential": False,
