@@ -84,6 +84,27 @@ def has_branch_access(actor: Actor, branch: str | None) -> bool:
     code = (branch or "").strip()
     if not code:
         return True
-    if actor.has_manage or actor.has_view_all or actor.has_process:
+    if actor.has_manage or actor.has_view_all:
         return True
     return code in actor.branch_codes
+
+
+def has_record_branch_access(actor: Actor, request) -> bool:
+    """Escopo de filial por registro: a filial da solicitação precisa estar no
+    escopo do usuário — "process" sozinho não destrava outras filiais.
+
+    O solicitante mantém acesso ao próprio registro (regra vigente), mesmo que
+    a filial não esteja no seu escopo de visualização."""
+    branch = (getattr(request, "branch_code", None) or "").strip()
+    if not branch:
+        return True
+    if str(getattr(request, "created_by_user_id", "") or "") == actor.user_id:
+        return True
+    return has_branch_access(actor, branch)
+
+
+def allowed_branch_codes(actor: Actor) -> frozenset[str] | None:
+    """Filiais que restringem a fila: None = irrestrito (manage/view_all)."""
+    if actor.has_manage or actor.has_view_all:
+        return None
+    return actor.branch_codes

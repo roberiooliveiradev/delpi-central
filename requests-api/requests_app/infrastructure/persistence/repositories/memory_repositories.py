@@ -165,6 +165,7 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         type_codes: list[str] | None = None,
         status: str | None = None,
         branch_code: str | None = None,
+        branch_codes: list[str] | None = None,
         exclude_statuses: list[str] | None = None,
         q: str | None = None,
         completed_by_user_id: str | None = None,
@@ -189,6 +190,12 @@ class InMemoryRequestRepository(RequestRepositoryPort):
             if status and item.status != status:
                 continue
             if branch_code and item.branch_code != branch_code:
+                continue
+            if (
+                branch_codes is not None
+                and item.branch_code
+                and item.branch_code not in branch_codes
+            ):
                 continue
             if item.status in excluded:
                 continue

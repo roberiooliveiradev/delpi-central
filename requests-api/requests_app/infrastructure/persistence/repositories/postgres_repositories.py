@@ -316,6 +316,9 @@ class PostgresRequestRepository(RequestRepositoryPort):
         if branch_code:
             where.append("r.branch_code = %s")
             params.append(branch_code)
+        elif branch_codes is not None:
+            where.append("(r.branch_code IS NULL OR r.branch_code = ANY(%s))")
+            params.append(branch_codes)
         search = normalize_list_search_query(q)
         if search:
             pattern = ilike_contains_pattern(search)
@@ -363,6 +366,7 @@ class PostgresRequestRepository(RequestRepositoryPort):
         type_codes: list[str] | None = None,
         status: str | None = None,
         branch_code: str | None = None,
+        branch_codes: list[str] | None = None,
         exclude_statuses: list[str] | None = None,
         q: str | None = None,
         completed_by_user_id: str | None = None,
@@ -388,6 +392,9 @@ class PostgresRequestRepository(RequestRepositoryPort):
         if branch_code:
             where.append("r.branch_code = %s")
             params.append(branch_code)
+        elif branch_codes is not None:
+            where.append("(r.branch_code IS NULL OR r.branch_code = ANY(%s))")
+            params.append(branch_codes)
         if exclude_statuses:
             where.append("NOT (r.status = ANY(%s))")
             params.append(exclude_statuses)

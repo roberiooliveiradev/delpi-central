@@ -7,7 +7,10 @@ from uuid import uuid4
 from pathlib import Path
 
 from requests_app.application.errors import ApplicationError
-from requests_app.application.security.requests_permissions import actor_for
+from requests_app.application.security.requests_permissions import (
+    actor_for,
+    has_record_branch_access,
+)
 from requests_app.application.services.attachment_storage import (
     AttachmentStorage,
     StorageError,
@@ -88,6 +91,8 @@ class TimelineUseCases:
         actor = actor_for(user, request_type)
         if not _can_view(request=request, actor=actor):
             raise ApplicationError(code="forbidden", status_code=403)
+        if not has_record_branch_access(actor, request):
+            raise ApplicationError(code="branch_forbidden", status_code=403)
         return request, request_type, actor
 
     def _assert_conversation_mutable(self, *, request, request_type) -> None:

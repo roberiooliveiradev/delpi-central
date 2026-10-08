@@ -62,6 +62,12 @@
       "name": "Processar solicitação de MP",
       "description": "Processar solicitações do tipo criação de matéria-prima.",
       "module": "my-requests"
+    },
+    {
+      "code": "my-requests.process-issue.process",
+      "name": "Processar problemas de processo",
+      "description": "Permite receber e tratar solicitações de problemas de processo encaminhadas pelo chão de fábrica.",
+      "module": "my-requests"
     }
   ],
   "routes": [

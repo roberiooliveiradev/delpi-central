@@ -8,7 +8,10 @@ from requests_app.application.errors import ApplicationError
 from requests_app.application.security.requests_permissions import (
     VALID_BRANCHES,
     actor_for,
+    allowed_branch_codes,
     has_branch_access,
+    has_record_branch_access,
+    module_actor,
 )
 from requests_app.application.serializers import allowed_actions_for, serialize_request
 from requests_app.application.services.payload_validator_registry import (
@@ -276,8 +279,6 @@ class ListMyRequestsUseCase:
         actor = actor_for(user)
         if not actor.has_access and not actor.has_view_all and not actor.has_manage:
             # still allow if they have any create somewhere — module access
-            from requests_app.application.security.requests_permissions import module_actor
-
             actor = module_actor(user)
             if not actor.has_access and not actor.has_view_all and not actor.has_manage:
                 raise ApplicationError(code="forbidden", status_code=403)
@@ -356,6 +357,11 @@ class ListWorkQueueRequestsUseCase:
             sample_actor = actor_for(user, active_types[0] if active_types else None)
             if not has_branch_access(sample_actor, branch_code):
                 raise ApplicationError(code="branch_forbidden", status_code=403)
+        visible_branches = (
+            None
+            if branch_code
+            else allowed_branch_codes(module_actor(user))
+        )
 
         scope = str(mine_scope or "").strip().lower()
         if scope and scope not in {"completed_by_me", "assigned_to_me"}:
@@ -374,6 +380,9 @@ class ListWorkQueueRequestsUseCase:
             type_codes=processable,
             status=status,
             branch_code=branch_code,
+            branch_codes=(
+                None if visible_branches is None else sorted(visible_branches)
+            ),
             exclude_statuses=exclude_statuses,
             q=q,
             completed_by_user_id=completed_by_user_id,
@@ -419,9 +428,8 @@ class GetRequestUseCase:
         is_owner = request.created_by_user_id == actor.user_id
         if not (is_owner or actor.has_view_all or actor.has_process or actor.has_manage):
             raise ApplicationError(code="forbidden", status_code=403)
-        if request.branch_code and not has_branch_access(actor, request.branch_code):
-            if not is_owner:
-                raise ApplicationError(code="branch_forbidden", status_code=403)
+        if not has_record_branch_access(actor, request):
+            raise ApplicationError(code="branch_forbidden", status_code=403)
         workflow = request_type.workflow_definition or {}
         artifacts = _artifact_summaries(self._files, request.id)
         actions = allowed_actions_for(
@@ -486,6 +494,8 @@ class UpdateRequestPayloadUseCase:
         if request_type is None:
             raise ApplicationError(code="type_not_found", status_code=404)
         actor = actor_for(user, request_type)
+        if not has_record_branch_access(actor, request):
+            raise ApplicationError(code="branch_forbidden", status_code=403)
         workflow = request_type.workflow_definition or {}
         actions = allowed_actions_for(
             request, actor=actor, workflow=workflow, engine=self._engine
@@ -638,6 +648,8 @@ class TransitionRequestUseCase:
         if request_type is None:
             raise ApplicationError(code="type_not_found", status_code=404)
         actor = actor_for(user, request_type)
+        if not has_record_branch_access(actor, request):
+            raise ApplicationError(code="branch_forbidden", status_code=403)
         workflow = request_type.workflow_definition or {}
         artifacts = _artifact_summaries(self._files, request.id)
         try:

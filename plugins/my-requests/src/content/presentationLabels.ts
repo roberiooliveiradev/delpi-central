@@ -127,6 +127,7 @@ const ARTIFACT_KIND_LABELS: Record<string, string> = {
 const TYPE_NAME_FALLBACKS: Record<string, string> = {
   "invoice-issuance": "Emissão de Notas Fiscais",
   "raw-material-creation": "Criação de matéria-prima",
+  "process-issue": "Problema de Processo",
 };
 
 function humanizeCode(value: string): string {

@@ -1,0 +1,37 @@
+{
+  "initialStatus": "submitted",
+  "terminalStatuses": ["completed"],
+  "computedActions": [
+    {
+      "action": "view",
+      "requires": {"ownershipOr": ["view_all", "process", "manage"]}
+    }
+  ],
+  "transitions": [
+    {
+      "action": "start",
+      "from": ["submitted"],
+      "to": "in_progress",
+      "requires": {"permissionsAny": ["process", "manage"]},
+      "assignSelf": true
+    },
+    {
+      "action": "complete",
+      "from": ["in_progress"],
+      "to": "completed",
+      "requires": {"permissionsAny": ["process", "manage"]}
+    }
+  ],
+  "journey": {
+    "stages": [
+      {"id": "intake", "label": "Solicitação criada"},
+      {"id": "service", "label": "Em atendimento"},
+      {"id": "closure", "label": "Conclusão"}
+    ],
+    "statusMappings": [
+      {"statuses": ["submitted"], "stageId": "intake", "progressPercent": 33, "outcome": "in_progress"},
+      {"statuses": ["in_progress"], "stageId": "service", "progressPercent": 66, "outcome": "in_progress"},
+      {"statuses": ["completed"], "stageId": "closure", "progressPercent": 100, "outcome": "succeeded"}
+    ]
+  }
+}

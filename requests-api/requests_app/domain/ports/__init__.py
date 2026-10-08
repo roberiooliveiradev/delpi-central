@@ -68,6 +68,7 @@ class RequestRepositoryPort(ABC):
         type_codes: list[str] | None = None,
         status: str | None = None,
         branch_code: str | None = None,
+        branch_codes: list[str] | None = None,
         exclude_statuses: list[str] | None = None,
         q: str | None = None,
         completed_by_user_id: str | None = None,
