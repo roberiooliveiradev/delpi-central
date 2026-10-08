@@ -1,0 +1,92 @@
+{
+  "task_id": "DAVI-GOVERNED-SQL-READ-STRUCTURAL-HARDENING-S1-001",
+  "parent_task": "DAVI-GOVERNED-SQL-READ-DIRECT-EXECUTION-S1-S6-001",
+  "phase": "S1_STRUCTURAL_HARDENING",
+  "status": "S1_PASS",
+  "commit": "0c02c6dbeb",
+  "base": "13973e012e4522f3aaaa0ee54e89cf6e6819b2ab",
+  "execution_drift": {
+    "from": "48a188148fcd3273dad42b5a1a6a40347d8f2da4",
+    "to": "13973e012e4522f3aaaa0ee54e89cf6e6819b2ab",
+    "classification": "NON_CAUSAL",
+    "touched_paths": [
+      "delia-api", "docs/12-roadmap-e-evolucao/delia",
+      "plugins/public-hub", "transformometro-api"
+    ]
+  },
+  "parser": {
+    "library": "sqlglot",
+    "version": "30.21.0",
+    "dialect": "tsql",
+    "spike": {
+      "positive_cases": "18/18",
+      "consumer_corpus": "27/27",
+      "adversarial_distinguishable": true
+    }
+  },
+  "policy_profiles": {
+    "legacy_readonly": "default; preserves existing consumer grammar",
+    "davi_governed": "single analytical SELECT/WITH; fail closed"
+  },
+  "physical_source_resolution": "AST recursive (FROM/JOIN/CTE/subquery/UNION/derived); allowlist enforced at any depth; qualified/delimited/unnamed sources denied",
+  "parameterization": "positional '?' bound via pyodbc; max_params=50",
+  "bounded_executor": {
+    "module": "app/infrastructure/persistence/totvs/governed_sql_executor.py",
+    "row_bound": "fetchmany(N+1), discard connection; no fetchall",
+    "limits": {
+      "max_rows": 500,
+      "max_columns": 50,
+      "max_cell_chars": 4000,
+      "max_response_bytes": 262144,
+      "max_params": 50,
+      "statement_chars": 8000,
+      "tables": 8,
+      "joins": 8
+    },
+    "resultset": "single; extra resultsets discarded+flagged",
+    "truncation": "explicit flags: row_limit|column_limit|cell_size|response_bytes|resultset_limit"
+  },
+  "db_readonly_support": {
+    "connection": "GOVERNED_SQL_DB_* dedicated principal, fail closed",
+    "never_falls_back_to": "TOTVS_DB_*",
+    "real_grant": "S2/S6 decision — not yet provisioned"
+  },
+  "denials": [
+    "multi-statement", "DECLARE", "SET", "table_variables",
+    "INSERT", "UPDATE", "DELETE", "MERGE", "CREATE", "ALTER", "DROP",
+    "TRUNCATE", "EXEC", "EXECUTE", "GRANT", "REVOKE",
+    "BEGIN", "COMMIT", "ROLLBACK", "SELECT_INTO",
+    "comma_joins", "APPLY", "qualified_sources", "delimited_identifiers",
+    "unnamed_sources(OPENROWSET/OPENQUERY)", "table_hints", "FOR_XML",
+    "PIVOT", "fake_cte_string_literal", "non_allowlisted_any_depth",
+    "whitelist_bypass_flag_active"
+  ],
+  "tests": {
+    "sql_focused_suite": "194 passed",
+    "broad_selection": "1985 passed, 4 failed NON_CAUSAL",
+    "consumer_corpus": "24/27 (3 pre-existing SET failures, identical to S0 baseline)",
+    "non_causal_failures": [
+      "test_davi_capability_wave_002_freeze (git missing in container)",
+      "test_davi_capability_wave_003a_freeze (git missing in container)",
+      "test_inspecoes_processo_historico_sql (stale source assert, baseline-repro)",
+      "test_inspecoes_processo_operation_inspections (stale source assert, baseline-repro)"
+    ]
+  },
+  "davi_invariants": {
+    "allowlist_version": 21,
+    "governed_operations": 89,
+    "agent_intelligence": "2026.10.07.2",
+    "mcp_tool_count": 2,
+    "allowed_tables_count": 53,
+    "execute_readonly_sql_davi_status": "GENERIC_SQL_FORBIDDEN"
+  },
+  "residual_checks": {
+    "third_mcp_tool": false,
+    "generic_sql_discovery": false,
+    "sql_via_catalog_action_plan": false,
+    "fetchall_in_governed_path": false,
+    "credentials_in_logs": false,
+    "davi_owned_authz": false
+  },
+  "next_gate": "S2 owner/permission ratification — OWNER_RATIFICATION_REQUIRED if unresolved"
+}
