@@ -112,8 +112,9 @@ presentation realtime WS and uploaded through `PUT …/rendered-preview` with
 `source=editor_live` + `clientId` provenance.
 
 - No autonomous renderer exists: the `tv-dashboard-render-worker`
-  (Chromium/Playwright sidecar) was retired; no background browser, no
-  server-side screenshot engine, no second renderer.
+  (Chromium/Playwright sidecar) is **RETIRED — not current runtime**; no
+  background browser, no server-side screenshot engine, no second
+  renderer. The name survives here only as decision history.
 - Editor closed / focus stale → `rendered.status=unavailable`,
   `failureCode=EDITOR_NOT_OPEN`; structure/data/schematic remain available.
 - Visible slide ≠ requested slide → `EDITOR_SLIDE_NOT_OPEN` (the backend never
@@ -129,11 +130,15 @@ Addendum — VISTA-MCP-IMAGE-DELIVERY-004 (host delivery):
   `tools/call` emits `content=[TextContent, ImageContent]` +
   `structuredContent` with `mimeType=image/png`
   (`tests/test_mcp_streamable_http_wire.py`).
-- The current ChatGPT custom-app/connector host does **not** forward
-  `content[]` image blocks to the model — the model sees only
-  `structuredContent` + text (observed in a real VISTA invocation;
-  corroborated by OpenAI Dev Community reports). This is a host platform
-  limitation, not a repo defect — no workaround (base64-as-text, extra
-  tool/action, vision service) is introduced.
+- `CHATGPT_APP_IMAGE_DELIVERY = FAIL_OBSERVED` — in the observed ChatGPT
+  custom-app/connector runtime, `TextContent` + `structuredContent` were
+  delivered but the image block did not reach the model (real VISTA
+  invocation; corroborated by OpenAI Dev Community reports).
+- `OPENAI_MCP_IMAGECONTENT_SUPPORT = INCONCLUSIVE` — current OpenAI docs
+  describe tool-result `content` as model-visible without explicitly
+  declaring `ImageContent` unsupported; the observed gap is a host
+  runtime delivery gap (`HOST_RUNTIME_DELIVERY_GAP`), not a proven
+  official contract. No workaround (base64-as-text, extra tool/action,
+  vision service) is introduced.
 - `VISUAL_RENDER` remains `TEST_NOT_RUN` until a host delivers the image
   block to a multimodal model and the model inspects actual pixels.
