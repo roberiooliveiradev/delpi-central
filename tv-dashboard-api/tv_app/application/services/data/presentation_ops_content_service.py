@@ -722,6 +722,7 @@ class PresentationOpsContentService:
             "excludeMarkers",
             "actionTermSet",
             "clarificationMessageKey",
+            "requiresFilledPlaceholders",
         }
         for item in cls.capabilities():
             if not isinstance(item, dict):

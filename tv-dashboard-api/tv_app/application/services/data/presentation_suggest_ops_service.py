@@ -279,6 +279,30 @@ class PresentationSuggestOpsService:
                         continue
                 ops.append(filled)
 
+        # Absoluto vence relativo: «de 48 para 56» / «para 56» materializam o
+        # patch exato — manter o bump seria uma segunda mutação aproximada
+        # no mesmo alvo.
+        if str(placeholders.get("fontSizeAbsolute") or "").strip():
+            ops = [op for op in ops if op.get("op") != "bump_font_size"]
+
+        # Anti-ghost: com um ALTER_EXISTING já ancorado no alvo selecionado,
+        # um upsert de criação (id gerado + createIfMissing, sem blockId) só
+        # pode nascer de colisão de marcador — nunca de intenção declarada.
+        if any(
+            op.get("op") == "upsert_block"
+            and str(op.get("blockId") or "").strip()
+            for op in ops
+        ):
+            ops = [
+                op
+                for op in ops
+                if not (
+                    op.get("op") == "upsert_block"
+                    and op.get("createIfMissing") is True
+                    and not str(op.get("blockId") or "").strip()
+                )
+            ]
+
         if not ops:
             if clarification_keys:
                 reason = PresentationOpsContentService.message(clarification_keys[0])
@@ -340,6 +364,12 @@ class PresentationSuggestOpsService:
         return " ".join(str(message or "").strip().lower().split())
 
     @classmethod
+    def _unquoted_text(cls, normalized: str) -> str:
+        """Texto normalizado sem literais entre aspas (payload ≠ intenção)."""
+        stripped = _QUOTED_RE.sub(" ", str(normalized or ""))
+        return " ".join(stripped.split())
+
+    @classmethod
     def _extract_quoted(cls, message: str) -> str:
         raw = str(message or "")
         match = _QUOTED_RE.search(raw)
@@ -398,6 +428,27 @@ class PresentationSuggestOpsService:
             return single
         # Host pode enviar só o foco (contrato buildTvDashboardHostContext).
         return str(host.get("focusBlockId") or "").strip()
+
+    @classmethod
+    def _selected_block_type(cls, host: dict[str, Any]) -> str:
+        """Tipo real do bloco selecionado — só de grounding do host
+        (selectedBlockTypes alinhado a selectedBlockIds, ou focusBlockType
+        do focusBlockId). Nunca inferir do substantivo: um type errado
+        sobrescreveria o tipo do bloco no merge."""
+        block_id = cls._first_selected_block_id(host)
+        if not block_id:
+            return ""
+        raw_ids = host.get("selectedBlockIds")
+        raw_types = host.get("selectedBlockTypes")
+        if isinstance(raw_ids, list) and isinstance(raw_types, list):
+            for index, item in enumerate(raw_ids):
+                if str(item or "").strip() == block_id and index < len(raw_types):
+                    value = str(raw_types[index] or "").strip()
+                    if value:
+                        return value
+        if str(host.get("focusBlockId") or "").strip() == block_id:
+            return str(host.get("focusBlockType") or "").strip()
+        return ""
 
     @classmethod
     def _normalize_hex(cls, raw: str) -> str:
@@ -1144,6 +1195,7 @@ class PresentationSuggestOpsService:
             "sourceLabel": cls._extract_source_label(message),
             "textContent": text_content,
             "selectedBlockId": cls._first_selected_block_id(host),
+            "selectedBlockType": cls._selected_block_type(host),
             "selectedVisualId": selected_visual_id,
             "slideId": str(host.get("slideId") or "").strip(),
             "playlistId": str(host.get("playlistId") or "").strip(),
@@ -1176,6 +1228,8 @@ class PresentationSuggestOpsService:
             "zOrderCommand": cls._extract_z_order_command(normalized),
             "textCaseMode": cls._extract_text_case_mode(normalized),
             "fontSizeDelta": cls._extract_font_size_delta(normalized),
+            "fontSizeAbsolute": cls._extract_font_size_absolute(normalized),
+            "fontColor": cls._extract_font_color(message, normalized),
             "blockType": cls._extract_block_type(normalized),
             "newDataSourceId": cls._new_id("ds"),
             "newModelId": cls._new_id("mdl"),
@@ -1245,19 +1299,100 @@ class PresentationSuggestOpsService:
     @classmethod
     def _extract_font_size_delta(cls, normalized: str) -> str:
         increase = (
-            "aumentar fonte", "aumente a fonte", "aumenta a fonte", "fonte maior",
-            "letra maior", "aumentar o tamanho do texto", "aumente o tamanho",
-            "aumentar texto", "aumente o texto",
+            "aumentar fonte", "aumente a fonte", "aumentar a fonte",
+            "aumenta a fonte", "fonte maior", "letra maior",
+            "aumentar o tamanho do texto", "aumente o tamanho",
+            "aumentar o tamanho", "aumentar texto", "aumente o texto",
+            "aumente a letra", "tamanho maior", "maior",
+            "deixe a fonte", "deixar a fonte", "deixe a letra",
+            "deixe o texto", "deixe o tamanho", "deixar o tamanho",
         )
         decrease = (
-            "diminuir fonte", "diminua a fonte", "diminua o texto", "fonte menor",
-            "letra menor", "reduzir fonte", "reduza a fonte", "diminuir o tamanho",
+            "diminuir fonte", "diminua a fonte", "diminuir a fonte",
+            "diminua o texto", "diminuir o texto", "fonte menor",
+            "letra menor", "reduzir fonte", "reduza a fonte",
+            "reduzir a fonte", "diminuir o tamanho", "diminua o tamanho",
+            "tamanho menor", "menor",
         )
-        if any(cls._marker_hit(marker, normalized) for marker in increase):
-            return "1"
+        # Direção primeiro: «deixe a fonte ... menor» não pode virar aumento
+        # só porque «deixe a fonte» é marcador de aumento.
         if any(cls._marker_hit(marker, normalized) for marker in decrease):
             return "-1"
+        if any(cls._marker_hit(marker, normalized) for marker in increase):
+            return "1"
         return ""
+
+    @classmethod
+    def _extract_font_size_absolute(cls, normalized: str) -> str:
+        """Tamanho absoluto de fonte («de 48 para 56», «para 56», «fonte 56»).
+
+        Só com contexto tipográfico — «mude a filial para 02» não é fonte.
+        Valores fora de 8–400 não são tamanho de fonte plausível.
+        """
+        if not any(
+            cls._marker_hit(marker, normalized)
+            for marker in ("fonte", "font", "tamanho", "letra")
+        ):
+            return ""
+        patterns = (
+            r"\bde\s+[\"'«»“”]?\s*\d{1,3}\s*(?:px|pt)?\s*[\"'«»“”]?\s+para\s+[\"'«»“”]?\s*(\d{1,3})\s*(?:px|pt)?\b",
+            r"\bpara\s+[\"'«»“”]?\s*(\d{1,3})\s*(?:px|pt)?\b",
+            r"\b(?:fonte|tamanho|letra)\s+(?:de\s+)?[\"'«»“”]?\s*(\d{1,3})\s*(?:px|pt)?\b",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, normalized)
+            if not match:
+                continue
+            try:
+                value = int(match.group(match.lastindex or 1))
+            except (TypeError, ValueError):
+                continue
+            if 8 <= value <= 400:
+                return str(value)
+        return ""
+
+    @classmethod
+    def _extract_font_color(cls, message: str, normalized: str) -> str:
+        """Cor tipográfica do bloco — nunca o fundo do slide (patch_native_config).
+
+        Exige referência explícita a um bloco («cor do título», «cor do bloco
+        selecionado»); «mude a cor para azul» sem alvo segue no slide.
+        """
+        if any(
+            cls._marker_hit(marker, normalized)
+            for marker in (
+                "fundo", "background", "do slide", "da tela",
+                "da seção", "da secao", "da programação", "da playlist",
+            )
+        ):
+            return ""
+        if not (
+            cls._marker_hit("cor", normalized)
+            or cls._marker_hit("color", normalized)
+        ):
+            return ""
+        if not any(
+            cls._marker_hit(marker, normalized)
+            for marker in (
+                "do título", "do titulo", "do texto", "da fonte",
+                "da letra", "do bloco", "do elemento", "da caixa",
+                "do kpi", "selecionado", "selecionada",
+            )
+        ):
+            return ""
+        return cls._extract_background_color(message, normalized)
+
+    @classmethod
+    def _message_asks_block_text(cls, normalized: str) -> bool:
+        """Pedido referencia o texto/conteúdo do bloco (não cor, tamanho ou geometria)."""
+        return any(
+            cls._marker_hit(marker, normalized)
+            for marker in (
+                "texto", "título", "titulo", "conteúdo", "conteudo",
+                "escreva", "escrever", "diga", "frase", "mensagem",
+                "o nome", "o rótulo", "o rotulo",
+            )
+        )
 
     @classmethod
     def _extract_block_type(cls, normalized: str) -> str:
@@ -1394,6 +1529,19 @@ class PresentationSuggestOpsService:
                 if isinstance(steps, list):
                     op["steps"] = steps
         elif name == "upsert_block":
+            if str(op.get("blockId") or "").strip():
+                # blockId na raiz = template ALTER_EXISTING (update_block):
+                # delta mínimo sobre o bloco existente; o merge canônico do
+                # write layer preserva id/type/content/frame/bindings.
+                return cls._enrich_alter_existing_block_op(
+                    op, placeholders, normalized=normalized
+                )
+            block = op.get("block") if isinstance(op.get("block"), dict) else None
+            if isinstance(block, dict):
+                block_type = str(placeholders.get("blockType") or "").strip()
+                if block_type and str(block.get("type") or "").strip() == "text":
+                    # «crie um novo título» nasce heading, não text.
+                    block["type"] = block_type
             format_raw = str(placeholders.get("formatHintJson") or "").strip()
             if format_raw:
                 try:
@@ -1508,6 +1656,64 @@ class PresentationSuggestOpsService:
         return op
 
     @classmethod
+    def _enrich_alter_existing_block_op(
+        cls,
+        op: dict[str, Any],
+        placeholders: dict[str, str],
+        *,
+        normalized: str = "",
+    ) -> dict[str, Any]:
+        """Monta o delta mínimo do ALTER_EXISTING (upsert_block com blockId).
+
+        Só as propriedades pedidas entram no patch — id/type/content/frame/
+        bindings e demais style sobrevivem pelo merge canônico do write layer.
+        Sem delta suportado o bloco fica vazio → clarificação (fail closed);
+        nunca mintar id novo nem createIfMissing.
+        """
+        target_id = str(op.get("blockId") or "").strip()
+        block = op.get("block") if isinstance(op.get("block"), dict) else {}
+        if target_id and str(block.get("id") or "").strip() != target_id:
+            block["id"] = target_id
+
+        delta: dict[str, Any] = {}
+        block_id = str(block.get("id") or target_id).strip()
+        if block_id:
+            delta["id"] = block_id
+        # inputSchema exige block.type; só entra quando o host o grounda —
+        # merge reafirma o mesmo valor, nunca troca o tipo.
+        block_type = str(placeholders.get("selectedBlockType") or "").strip()
+        if block_type:
+            delta["type"] = block_type
+
+        style: dict[str, Any] = {}
+        size_raw = str(placeholders.get("fontSizeAbsolute") or "").strip()
+        if size_raw:
+            try:
+                style["fontSize"] = int(size_raw)
+            except ValueError:
+                pass
+        font_color = str(placeholders.get("fontColor") or "").strip()
+        if font_color:
+            style["color"] = font_color
+        if style:
+            delta["style"] = style
+
+        text_content = str(placeholders.get("textContent") or "").strip()
+        if (
+            text_content
+            and not style
+            and cls._message_asks_block_text(normalized)
+        ):
+            delta["content"] = text_content
+
+        # «id»/«type» sozinhos não são alteração: a capability tipada correta
+        # já teria emitido a própria op — aqui só resta clarificar (fail
+        # closed), nunca criar bloco novo.
+        has_change = bool(style) or "content" in delta
+        op["block"] = delta if has_change else {}
+        return op
+
+    @classmethod
     def _action_terms_for_capability(cls, cap: dict[str, Any]) -> list[str]:
         raw_terms = cap.get("actionTerms")
         if isinstance(raw_terms, list) and raw_terms:
@@ -1556,8 +1762,11 @@ class PresentationSuggestOpsService:
 
         exclude = cap.get("excludeMarkers")
         if isinstance(exclude, list):
+            # Literais entre aspas são payload, não intenção: «adicione um
+            # texto 'teste atualizado'» não pode ativar a exclusão de edição.
+            unquoted = cls._unquoted_text(normalized)
             for marker in exclude:
-                if cls._marker_hit(str(marker), normalized):
+                if cls._marker_hit(str(marker), unquoted):
                     return 0.0
 
         content_markers = cap.get("contentMarkers")

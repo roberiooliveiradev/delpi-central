@@ -679,3 +679,287 @@ def test_suggest_model_param_patch_uses_explicit_params_only():
     )
     assert not result["ops"]
     assert result.get("clarificationKey")
+
+
+# ---------------------------------------------------------------------------
+# VISTA-SUGGEST-CHANGE-EXISTING-BLOCK-GROUNDING-FIX
+# Pedido de alteração num bloco existente selecionado deve materializar
+# ALTER_EXISTING canônico (upsert_block com blockId + delta parcial),
+# nunca um novo bloco txt_* com createIfMissing:true.
+# ---------------------------------------------------------------------------
+
+_SELECTED_BLOCK_HOST = {
+    "slideId": "slide-1",
+    "playlistId": "pl-1",
+    "selectedBlockId": "vista_knowledge_title",
+    "selectedBlockIds": ["vista_knowledge_title"],
+    "selectedBlockTypes": ["heading"],
+    "focusBlockId": "vista_knowledge_title",
+    "focusBlockType": "heading",
+}
+
+
+def test_suggest_absolute_font_size_targets_selected_block_alter_existing():
+    """Regressão central: «de 48 para 56» no bloco selecionado emite patch
+    parcial canônico (blockId + style.fontSize), nunca ghost txt_*."""
+    result = PresentationSuggestOpsService.suggest(
+        message=(
+            "Aumente o tamanho da fonte do título principal "
+            "de 48 para 56, mantendo o mesmo bloco."
+        ),
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert result["status"] == "ready"
+    assert result["ops"] == [
+        {
+            "op": "upsert_block",
+            "blockId": "vista_knowledge_title",
+            "block": {
+                "id": "vista_knowledge_title",
+                "type": "heading",
+                "style": {"fontSize": 56},
+            },
+        }
+    ]
+    upsert = result["ops"][0]
+    assert upsert.get("createIfMissing") is not True
+    block = upsert["block"]
+    assert not str(block.get("id") or "").startswith("txt_")
+    assert "content" not in block
+    assert block.get("type") == "heading"
+    assert "update_block" in result["matchedCapabilityKeys"]
+
+
+def test_suggest_alter_existing_font_size_patch_preserves_block_on_apply():
+    """O candidato materializado, aplicado via merge canônico, preserva
+    type/content/frame e demais style do bloco existente."""
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    from tv_app.application.services.data.presentation_mutation import (
+        PresentationPatchService,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        PresentationOpsContentService,
+    )
+
+    result = PresentationSuggestOpsService.suggest(
+        message=(
+            "Aumente o tamanho da fonte do título principal "
+            "de 48 para 56, mantendo o mesmo bloco."
+        ),
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert len(result["ops"]) == 1
+    candidate = result["ops"][0]
+
+    playlist_id = str(uuid4())
+    slide_id = str(uuid4())
+
+    class _Repo:
+        def get_by_id(self, pid):
+            return {"id": str(pid), "revision": 3, "dataDefaults": {}}
+
+        def get_slide(self, sid, playlist_id=None):
+            return {
+                "id": str(sid),
+                "nativeConfig": {
+                    "version": 5,
+                    "blocks": [
+                        {
+                            "id": "vista_knowledge_title",
+                            "type": "heading",
+                            "content": "O que a VISTA conhece",
+                            "frame": {"x": 5, "y": 12, "w": 90, "h": 18},
+                            "style": {
+                                "fontSize": 48,
+                                "color": "#ffffff",
+                                "fontWeight": "bold",
+                            },
+                        }
+                    ],
+                },
+            }
+
+    svc = PresentationPatchService(repo=_Repo())
+    applied = svc.preview(
+        {
+            "target": {"playlistId": playlist_id, "slideId": slide_id},
+            "ops": [candidate],
+            "catalogVersion": PresentationOpsContentService.catalog_version(),
+        },
+        user=SimpleNamespace(is_superadmin=True, permissions=[], id="u1"),
+    )
+    blocks = applied["nativeConfig"]["blocks"]
+    assert len(blocks) == 1
+    block = blocks[0]
+    assert block["id"] == "vista_knowledge_title"
+    assert block["type"] == "heading"
+    assert block["content"] == "O que a VISTA conhece"
+    assert block["frame"] == {"x": 5, "y": 12, "w": 90, "h": 18}
+    assert block["style"]["fontSize"] == 56
+    assert block["style"]["color"] == "#ffffff"
+    assert block["style"]["fontWeight"] == "bold"
+
+
+def test_suggest_relative_font_size_bumps_selected_block_no_ghost():
+    """«Aumente a fonte do título» → bump_font_size relativo no alvo —
+    sem upsert_block de criação parasita."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Aumente a fonte do título",
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert result["ops"] == [
+        {
+            "op": "bump_font_size",
+            "blockId": "vista_knowledge_title",
+            "deltaSteps": 1,
+        }
+    ]
+    assert all(op.get("op") != "upsert_block" for op in result["ops"])
+
+
+def test_suggest_muda_texto_do_titulo_altera_bloco_selecionado():
+    """«Mude o texto do título para "Novo título"» → patch de content no
+    bloco existente; o literal entre aspas não pode disparar criação."""
+    result = PresentationSuggestOpsService.suggest(
+        message='Mude o texto do título para "Novo título"',
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert result["ops"] == [
+        {
+            "op": "upsert_block",
+            "blockId": "vista_knowledge_title",
+            "block": {
+                "id": "vista_knowledge_title",
+                "type": "heading",
+                "content": "Novo título",
+            },
+        }
+    ]
+    assert result["ops"][0].get("createIfMissing") is not True
+
+
+def test_suggest_cor_do_titulo_altera_bloco_selecionado_style():
+    """«Altere a cor do título para azul» → style.color no bloco existente;
+    nunca patch de fundo do slide nem ghost."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Altere a cor do título para azul",
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert result["ops"] == [
+        {
+            "op": "upsert_block",
+            "blockId": "vista_knowledge_title",
+            "block": {
+                "id": "vista_knowledge_title",
+                "type": "heading",
+                "style": {"color": "#2563eb"},
+            },
+        }
+    ]
+    assert result["ops"][0].get("createIfMissing") is not True
+
+
+def test_suggest_deixe_fonte_maior_bump_sem_ghost():
+    """«Deixe a fonte do título maior» → bump relativo no alvo selecionado."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Deixe a fonte do título maior",
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert result["ops"] == [
+        {
+            "op": "bump_font_size",
+            "blockId": "vista_knowledge_title",
+            "deltaSteps": 1,
+        }
+    ]
+
+
+def test_suggest_aumente_fonte_para_absoluto_gera_patch_nao_bump():
+    """«para 56» é alvo absoluto — patch exato vence o bump relativo."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Aumente a fonte do título para 56",
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert result["ops"] == [
+        {
+            "op": "upsert_block",
+            "blockId": "vista_knowledge_title",
+            "block": {
+                "id": "vista_knowledge_title",
+                "type": "heading",
+                "style": {"fontSize": 56},
+            },
+        }
+    ]
+    assert all(op.get("op") != "bump_font_size" for op in result["ops"])
+
+
+def test_suggest_crie_novo_bloco_de_texto_continua_criando():
+    """Controle de criação: intenção explícita segue emitindo bloco novo."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Crie um novo bloco de texto",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"]
+    upsert = next(op for op in result["ops"] if op.get("op") == "upsert_block")
+    assert upsert.get("createIfMissing") is True
+    block = upsert.get("block") or {}
+    assert str(block.get("id") or "").startswith("txt_")
+    assert block.get("type") == "text"
+
+
+def test_suggest_criacao_com_bloco_selecionado_nao_vira_update():
+    """«Crie um novo bloco de texto abaixo do título» com seleção → CREATE;
+    a seleção sozinha não força ALTER_EXISTING."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Crie um novo bloco de texto abaixo do título",
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    upserts = [op for op in result["ops"] if op.get("op") == "upsert_block"]
+    assert upserts
+    for op in upserts:
+        block = op.get("block") or {}
+        assert str(block.get("id") or "").startswith("txt_")
+    assert not any(
+        op.get("blockId") == "vista_knowledge_title" for op in result["ops"]
+    )
+
+
+def test_suggest_crie_novo_titulo_cria_heading():
+    """«Crie um novo título» → criação tipada (heading), não text genérico."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Crie um novo título",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    upsert = next(op for op in result["ops"] if op.get("op") == "upsert_block")
+    block = upsert.get("block") or {}
+    assert str(block.get("id") or "").startswith("txt_")
+    assert block.get("type") == "heading"
+    assert upsert.get("createIfMissing") is True
+
+
+def test_suggest_edit_sem_selecao_clarifica_nao_cria_ghost():
+    """«Mude o título para "X"» sem alvo resolvível → clarificação canônica,
+    nunca bloco fantasma criado a partir do substantivo."""
+    result = PresentationSuggestOpsService.suggest(
+        message='Mude o título para "Novo título"',
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == []
+    assert result.get("clarificationKey") == "suggestNeedSelection"
+    assert "update_block" in result["matchedCapabilityKeys"]
+    assert "upsert_block" not in result["matchedCapabilityKeys"]
+
+
+def test_suggest_edit_sem_delta_suportado_clarifica_nao_cria():
+    """«Atualize o título» com seleção mas sem delta reconhecido → clarificação;
+    nunca upsert vazio nem ghost."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Atualize o título",
+        host_context=dict(_SELECTED_BLOCK_HOST),
+    )
+    assert result["ops"] == []
+    assert result.get("clarificationKey")
+    assert "update_block" in result["matchedCapabilityKeys"]
