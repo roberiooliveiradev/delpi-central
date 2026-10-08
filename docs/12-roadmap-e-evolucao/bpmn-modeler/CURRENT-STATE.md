@@ -89,6 +89,8 @@ edit (commandStack.changed)
 - `mustUnderstand=true` não suportado → open/read-only ALLOW, edit DISABLED, save BLOCKED.
 - Preservação: edição/save preservam constructs desconhecidos; falha de preservação bloqueia write destrutivo.
 - Evidência: `test_validation_contract.py`, `test_validation_engine.py`, fixtures FX-*.
+- **Round-trip per-construct (G4, PASS):** import real → read-back byte-exact → validate → open editor → `exportXml()` capturado via ação "Validar" → compare estrutural QName/ns/DI-aware (`e2e/rt-compare.ts`, test-only) → reimport → read-back → idempotência + `incoming`/`outgoing` consistency check. Corpus `e2e/fixtures/roundtrip/` (12 fixtures XSD-validadas), specs `e2e/specs/roundtrip-*.spec.ts` (14 testes) + adapter-level `src/editor/roundtrip-adapter.test.ts` (12 testes). Transforms vendor classificados e allow-listados por caso: drilldown plane de subprocess colapsado (EXTRA `BPMNDiagram`), `isMarkerVisible="true"` em DI de gateway, DI gerado no path no-DI (elk transitório, §7), `BPMNLabel` adicionado em shape renomeado; serializer omite XSD-defaults e `exporter*` (normalizados).
+- **KNOWN_DEFECT (vendor bpmn-moddle, não normalizado, não corrigido em produto):** `definition` de `<bpmn:extension>` é dropado e attr namespaced perde qualificação (`{ns}flag`→`flag`) na serialização — evidência explícita `roundtrip-adapter.test.ts` (ext-false/ext-true) e RT-EXT-01/02. Classificado como defeito de preservação do serializer vendor; impacto = metadados de declaração de extensão e attrs namespaced em `extensionElements`.
 
 ## 7. Layout / BPMN-DI (vigente)
 
@@ -194,7 +196,7 @@ G2 — BPMN Professional Breadth Wave 1     OWNER 02→03→01→06
       G2A Editing Profile Governance         PASS/CLOSED (34244d8)
       G2B CREATE_EDIT Evidence Closure       PASS — ver §13a
 G3 — Modeling Productivity                OWNER 03→06
-G4 — Broad Round-trip / Interoperability  OWNER 02+06
+G4 — Broad Round-trip / Interoperability  OWNER 02+06   PASS — 14/14 E2E roundtrip-* + 12/12 adapter-level; KNOWN_DEFECT ext documentado (§6)
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
 G6 — Runtime Provenance / stale-process   OWNER 09
 ```
@@ -205,4 +207,6 @@ G6 — Runtime Provenance / stale-process   OWNER 09
 |---|---|---|
 | RUNTIME_STALE_CODE_PREVENTION — processo uvicorn executava código pré-deploy apesar do bind mount atualizado (foreign read 200 → 404 após `docker restart`); incidente de deploy, não defeito de policy | 09 — DevOps/CI/Runtime | `OPEN`, `NON_BLOCKING` |
 | Diagram search overlay (§34 freeze) | 03 | `IMPLEMENTATION_GAP` → G3 |
-| BPMN profile breadth proof | 02+03+06 | `TO_INVENTORY` → G1 → G2B fechou CREATE_EDIT (§13a); resta G4 per-construct round-trip |
+| BPMN profile breadth proof | 02+03+06 | `TO_INVENTORY` → G1 → G2B fechou CREATE_EDIT (§13a) → **G4 fechou per-construct round-trip (§6)** |
+| E2E-38b (`visual-regression.spec.ts`) — teste importa modelo como `editor` e abre como `viewer`; falha com HTTP 404 desde a fail-closed ownership (`_get_owned_or_404`). Falha **pré-existente** ao G4 (teste de `7832e1adc6`), incompatível com a política vigente — precisa ser reescrito (modelo criado como `viewer`) ou a política revisada com decisão de produto | 03+02 | `OPEN`, `NON_BLOCKING` |
+| Vendor extension serialization KNOWN_DEFECT — bpmn-moddle dropa `definition` de `<bpmn:extension>` e desqualifica attrs namespaced em `extensionElements` (§6) | 02+06 | `OPEN`, `NON_BLOCKING` — avaliar contribuição upstream ou moddle descriptor de produto |

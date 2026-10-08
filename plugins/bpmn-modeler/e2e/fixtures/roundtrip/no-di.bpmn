@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_NODI" targetNamespace="urn:delpi:g4" exporter="G4Fixture" exporterVersion="1.0">
+  <bpmn:process id="P_NODI" name="Sem DI" isExecutable="false">
+    <bpmn:startEvent id="NS1" name="inicio"/>
+    <bpmn:task id="NT1" name="Task sem DI"/>
+    <bpmn:endEvent id="NE1" name="fim"/>
+    <bpmn:sequenceFlow id="NF1" sourceRef="NS1" targetRef="NT1"/>
+    <bpmn:sequenceFlow id="NF2" sourceRef="NT1" targetRef="NE1"/>
+  </bpmn:process>
+</bpmn:definitions>
