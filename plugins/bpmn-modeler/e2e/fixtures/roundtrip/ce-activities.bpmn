@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_ACT" targetNamespace="urn:delpi:g4" exporter="G4Fixture" exporterVersion="1.0">
+  <bpmn:process id="P_ACT" name="G4 Activities" isExecutable="false">
+    <bpmn:startEvent id="S1" name="inicio"/>
+    <bpmn:task id="T_PLAIN" name="Tarefa"/>
+    <bpmn:userTask id="T_USER" name="User"/>
+    <bpmn:serviceTask id="T_SVC" name="Service"/>
+    <bpmn:manualTask id="T_MAN" name="Manual"/>
+    <bpmn:businessRuleTask id="T_BR" name="Rule"/>
+    <bpmn:scriptTask id="T_SCRIPT" name="Script"/>
+    <bpmn:sendTask id="T_SEND" name="Send"/>
+    <bpmn:receiveTask id="T_RECV" name="Receive"/>
+    <bpmn:callActivity id="T_CALL" name="Chamar" calledElement="P_CALLEE"/>
+    <bpmn:subProcess id="SUB_EXP" name="Expandido">
+      <bpmn:startEvent id="ES1"/>
+      <bpmn:task id="ET1" name="Interna"/>
+      <bpmn:endEvent id="EE1"/>
+      <bpmn:sequenceFlow id="EF1" sourceRef="ES1" targetRef="ET1"/>
+      <bpmn:sequenceFlow id="EF2" sourceRef="ET1" targetRef="EE1"/>
+    </bpmn:subProcess>
+    <bpmn:subProcess id="SUB_COL" name="Colapsado">
+      <bpmn:task id="CT1" name="Oculta"/>
+    </bpmn:subProcess>
+    <bpmn:endEvent id="E1" name="fim"/>
+    <bpmn:sequenceFlow id="F1" sourceRef="S1" targetRef="T_PLAIN"/>
+    <bpmn:sequenceFlow id="F2" sourceRef="T_PLAIN" targetRef="T_USER"/>
+    <bpmn:sequenceFlow id="F3" sourceRef="T_USER" targetRef="T_SVC"/>
+    <bpmn:sequenceFlow id="F4" sourceRef="T_SVC" targetRef="T_MAN"/>
+    <bpmn:sequenceFlow id="F5" sourceRef="T_MAN" targetRef="T_BR"/>
+    <bpmn:sequenceFlow id="F6" sourceRef="T_BR" targetRef="T_SCRIPT"/>
+    <bpmn:sequenceFlow id="F7" sourceRef="T_SCRIPT" targetRef="T_SEND"/>
+    <bpmn:sequenceFlow id="F8" sourceRef="T_SEND" targetRef="T_RECV"/>
+    <bpmn:sequenceFlow id="F9" sourceRef="T_RECV" targetRef="T_CALL"/>
+    <bpmn:sequenceFlow id="F10" sourceRef="T_CALL" targetRef="SUB_EXP"/>
+    <bpmn:sequenceFlow id="F11" sourceRef="SUB_EXP" targetRef="SUB_COL"/>
+    <bpmn:sequenceFlow id="F12" sourceRef="SUB_COL" targetRef="E1"/>
+  </bpmn:process>
+  <bpmn:process id="P_CALLEE" name="Callee">
+    <bpmn:startEvent id="CS"/>
+    <bpmn:task id="CT" name="CalleeTask"/>
+    <bpmn:endEvent id="CE"/>
+    <bpmn:sequenceFlow id="CF1" sourceRef="CS" targetRef="CT"/>
+    <bpmn:sequenceFlow id="CF2" sourceRef="CT" targetRef="CE"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="D_ACT">
+    <bpmndi:BPMNPlane id="PL_ACT" bpmnElement="P_ACT">
+      <bpmndi:BPMNShape id="SH_S1" bpmnElement="S1"><dc:Bounds x="40" y="140" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_PLAIN" bpmnElement="T_PLAIN"><dc:Bounds x="140" y="118" width="100" height="80"/><bpmndi:BPMNLabel><dc:Bounds x="160" y="180" width="60" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_USER" bpmnElement="T_USER"><dc:Bounds x="300" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_SVC" bpmnElement="T_SVC"><dc:Bounds x="460" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_MAN" bpmnElement="T_MAN"><dc:Bounds x="620" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_BR" bpmnElement="T_BR"><dc:Bounds x="780" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_SCRIPT" bpmnElement="T_SCRIPT"><dc:Bounds x="940" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_SEND" bpmnElement="T_SEND"><dc:Bounds x="1100" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_RECV" bpmnElement="T_RECV"><dc:Bounds x="1260" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_CALL" bpmnElement="T_CALL"><dc:Bounds x="1420" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_SUB_EXP" bpmnElement="SUB_EXP" isExpanded="true"><dc:Bounds x="1580" y="80" width="300" height="200"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ES1" bpmnElement="ES1"><dc:Bounds x="1600" y="160" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ET1" bpmnElement="ET1"><dc:Bounds x="1680" y="140" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_EE1" bpmnElement="EE1"><dc:Bounds x="1820" y="160" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_SUB_COL" bpmnElement="SUB_COL" isExpanded="false"><dc:Bounds x="1940" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_E1" bpmnElement="E1"><dc:Bounds x="2100" y="140" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="ED_EF1" bpmnElement="EF1"><di:waypoint x="1636" y="178"/><di:waypoint x="1680" y="180"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_EF2" bpmnElement="EF2"><di:waypoint x="1780" y="180"/><di:waypoint x="1820" y="178"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F1" bpmnElement="F1"><di:waypoint x="76" y="158"/><di:waypoint x="140" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F2" bpmnElement="F2"><di:waypoint x="240" y="158"/><di:waypoint x="300" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F3" bpmnElement="F3"><di:waypoint x="400" y="158"/><di:waypoint x="460" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F4" bpmnElement="F4"><di:waypoint x="560" y="158"/><di:waypoint x="620" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F5" bpmnElement="F5"><di:waypoint x="720" y="158"/><di:waypoint x="780" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F6" bpmnElement="F6"><di:waypoint x="880" y="158"/><di:waypoint x="940" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F7" bpmnElement="F7"><di:waypoint x="1040" y="158"/><di:waypoint x="1100" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F8" bpmnElement="F8"><di:waypoint x="1200" y="158"/><di:waypoint x="1260" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F9" bpmnElement="F9"><di:waypoint x="1360" y="158"/><di:waypoint x="1420" y="158"/><bpmndi:BPMNLabel><dc:Bounds x="1370" y="140" width="40" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F10" bpmnElement="F10"><di:waypoint x="1520" y="158"/><di:waypoint x="1580" y="180"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F11" bpmnElement="F11"><di:waypoint x="1880" y="180"/><di:waypoint x="1940" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F12" bpmnElement="F12"><di:waypoint x="2040" y="158"/><di:waypoint x="2100" y="158"/></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

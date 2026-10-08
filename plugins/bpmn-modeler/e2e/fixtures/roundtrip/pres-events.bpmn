@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_PRES_EVT" targetNamespace="urn:delpi:g4" exporter="G4Fixture" exporterVersion="1.0">
+  <bpmn:message id="MSG_PEV" name="MsgPEV"/>
+  <bpmn:signal id="SIG_PEV" name="SigPEV"/>
+  <bpmn:process id="P_PEV" name="G4 Preserve Events" isExecutable="false">
+    <bpmn:startEvent id="S_COND" name="cond start">
+      <bpmn:conditionalEventDefinition id="CED_S">
+        <bpmn:condition xsi:type="bpmn:tFormalExpression">a &gt; 1</bpmn:condition>
+      </bpmn:conditionalEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:startEvent id="S_MULT" name="multi start">
+      <bpmn:messageEventDefinition id="MLD_S1" messageRef="MSG_PEV"/>
+      <bpmn:signalEventDefinition id="MLD_S2" signalRef="SIG_PEV"/>
+    </bpmn:startEvent>
+    <bpmn:startEvent id="S_PMULT" name="pmulti start" parallelMultiple="true">
+      <bpmn:messageEventDefinition id="PMLD_S1" messageRef="MSG_PEV"/>
+      <bpmn:signalEventDefinition id="PMLD_S2" signalRef="SIG_PEV"/>
+    </bpmn:startEvent>
+    <bpmn:task id="T_HOST2" name="Host2"/>
+    <bpmn:boundaryEvent id="BD_COND" attachedToRef="T_HOST2">
+      <bpmn:conditionalEventDefinition id="CED_B">
+        <bpmn:condition xsi:type="bpmn:tFormalExpression">b == 2</bpmn:condition>
+      </bpmn:conditionalEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="BD_MULT" attachedToRef="T_HOST2">
+      <bpmn:messageEventDefinition id="MLD_B1" messageRef="MSG_PEV"/>
+      <bpmn:signalEventDefinition id="MLD_B2" signalRef="SIG_PEV"/>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="BD_PMULT" attachedToRef="T_HOST2" cancelActivity="false" parallelMultiple="true">
+      <bpmn:messageEventDefinition id="PMLD_B1" messageRef="MSG_PEV"/>
+      <bpmn:signalEventDefinition id="PMLD_B2" signalRef="SIG_PEV"/>
+    </bpmn:boundaryEvent>
+    <bpmn:intermediateCatchEvent id="C_COND" name="c cond">
+      <bpmn:conditionalEventDefinition id="CED_C">
+        <bpmn:condition xsi:type="bpmn:tFormalExpression">c == 3</bpmn:condition>
+      </bpmn:conditionalEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="C_MULT" name="c mult">
+      <bpmn:messageEventDefinition id="MLD_C1" messageRef="MSG_PEV"/>
+      <bpmn:timerEventDefinition id="MLD_C2">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="C_PMULT" name="c pmult" parallelMultiple="true">
+      <bpmn:messageEventDefinition id="PMLD_C1" messageRef="MSG_PEV"/>
+      <bpmn:signalEventDefinition id="PMLD_C2" signalRef="SIG_PEV"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateThrowEvent id="TH_COMP" name="t comp">
+      <bpmn:compensateEventDefinition id="CMP_TH" waitForCompletion="false"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="TH_MULT" name="t mult">
+      <bpmn:messageEventDefinition id="MLD_T1" messageRef="MSG_PEV"/>
+      <bpmn:escalationEventDefinition id="MLD_T2"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="E_COMP" name="end comp">
+      <bpmn:compensateEventDefinition id="CMP_E"/>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="E_MULT" name="end mult">
+      <bpmn:messageEventDefinition id="MLD_E1" messageRef="MSG_PEV"/>
+      <bpmn:signalEventDefinition id="MLD_E2" signalRef="SIG_PEV"/>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="VF1" sourceRef="S_MULT" targetRef="T_HOST2"/>
+    <bpmn:sequenceFlow id="VF2" sourceRef="T_HOST2" targetRef="C_COND"/>
+    <bpmn:sequenceFlow id="VF3" sourceRef="C_COND" targetRef="C_MULT"/>
+    <bpmn:sequenceFlow id="VF4" sourceRef="C_MULT" targetRef="C_PMULT"/>
+    <bpmn:sequenceFlow id="VF5" sourceRef="C_PMULT" targetRef="TH_COMP"/>
+    <bpmn:sequenceFlow id="VF6" sourceRef="TH_COMP" targetRef="TH_MULT"/>
+    <bpmn:sequenceFlow id="VF7" sourceRef="TH_MULT" targetRef="E_COMP"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="D_PEV">
+    <bpmndi:BPMNPlane id="PL_PEV" bpmnElement="P_PEV">
+      <bpmndi:BPMNShape id="SH_S_COND" bpmnElement="S_COND"><dc:Bounds x="40" y="60" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_S_MULT" bpmnElement="S_MULT"><dc:Bounds x="40" y="120" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_S_PMULT" bpmnElement="S_PMULT"><dc:Bounds x="40" y="180" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_HOST2" bpmnElement="T_HOST2"><dc:Bounds x="140" y="100" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_BD_COND" bpmnElement="BD_COND"><dc:Bounds x="156" y="162" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_BD_MULT" bpmnElement="BD_MULT"><dc:Bounds x="206" y="162" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_BD_PMULT" bpmnElement="BD_PMULT"><dc:Bounds x="136" y="118" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_C_COND" bpmnElement="C_COND"><dc:Bounds x="300" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_C_MULT" bpmnElement="C_MULT"><dc:Bounds x="410" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_C_PMULT" bpmnElement="C_PMULT"><dc:Bounds x="520" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_TH_COMP" bpmnElement="TH_COMP"><dc:Bounds x="630" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_TH_MULT" bpmnElement="TH_MULT"><dc:Bounds x="740" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_E_COMP" bpmnElement="E_COMP"><dc:Bounds x="850" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_E_MULT" bpmnElement="E_MULT"><dc:Bounds x="950" y="122" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="ED_VF1" bpmnElement="VF1"><di:waypoint x="76" y="138"/><di:waypoint x="140" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_VF2" bpmnElement="VF2"><di:waypoint x="240" y="140"/><di:waypoint x="300" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_VF3" bpmnElement="VF3"><di:waypoint x="336" y="140"/><di:waypoint x="410" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_VF4" bpmnElement="VF4"><di:waypoint x="446" y="140"/><di:waypoint x="520" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_VF5" bpmnElement="VF5"><di:waypoint x="556" y="140"/><di:waypoint x="630" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_VF6" bpmnElement="VF6"><di:waypoint x="666" y="140"/><di:waypoint x="740" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_VF7" bpmnElement="VF7"><di:waypoint x="776" y="140"/><di:waypoint x="850" y="140"/></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

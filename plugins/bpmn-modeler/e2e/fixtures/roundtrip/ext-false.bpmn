@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vend="http://vendor.example/suite" xmlns:acme="http://acme.example/bpmn-ext" id="Definitions_EXT_F" targetNamespace="urn:delpi:g4" exporter="G4Fixture" exporterVersion="1.0">
+  <bpmn:extension definition="vend:suite" mustUnderstand="false"/>
+  <bpmn:process id="P_EXTF" name="Ext False" isExecutable="false">
+    <bpmn:startEvent id="XS1"/>
+    <bpmn:task id="XT1" name="Com Ext" vend:custom="yes" acme:tracking="t-9">
+      <bpmn:extensionElements>
+        <vend:prop key="alpha" vend:flag="1">valor-texto<vend:nested level="2"/></vend:prop>
+        <acme:score peso="0.5">42</acme:score>
+      </bpmn:extensionElements>
+    </bpmn:task>
+    <bpmn:endEvent id="XE1"/>
+    <bpmn:sequenceFlow id="XF1" sourceRef="XS1" targetRef="XT1" vend:route="fast"/>
+    <bpmn:sequenceFlow id="XF2" sourceRef="XT1" targetRef="XE1"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="D_EXTF">
+    <bpmndi:BPMNPlane id="PL_EXTF" bpmnElement="P_EXTF">
+      <bpmndi:BPMNShape id="SH_XS1" bpmnElement="XS1"><dc:Bounds x="60" y="140" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_XT1" bpmnElement="XT1"><dc:Bounds x="160" y="118" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_XE1" bpmnElement="XE1"><dc:Bounds x="320" y="140" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="ED_XF1" bpmnElement="XF1"><di:waypoint x="96" y="158"/><di:waypoint x="160" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_XF2" bpmnElement="XF2"><di:waypoint x="260" y="158"/><di:waypoint x="320" y="158"/></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

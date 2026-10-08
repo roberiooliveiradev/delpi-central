@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_GW" targetNamespace="urn:delpi:g4" exporter="G4Fixture" exporterVersion="1.0">
+  <bpmn:process id="P_GW" name="G4 Gateways" isExecutable="false">
+    <bpmn:startEvent id="S_GW" name="go"/>
+    <bpmn:exclusiveGateway id="GX" name="X" default="F_XD"/>
+    <bpmn:task id="T_A" name="Caminho A"/>
+    <bpmn:task id="T_B" name="Caminho B"/>
+    <bpmn:parallelGateway id="GP" name="P"/>
+    <bpmn:task id="T_P1" name="P1"/>
+    <bpmn:task id="T_P2" name="P2"/>
+    <bpmn:inclusiveGateway id="GI" name="I"/>
+    <bpmn:eventBasedGateway id="GEB" name="EB" eventGatewayType="Exclusive" instantiate="false"/>
+    <bpmn:intermediateCatchEvent id="ICE_MSG" name="aguarda msg">
+      <bpmn:messageEventDefinition id="MED_ICE" messageRef="MSG_GW"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:receiveTask id="RT_GW" name="recebe"/>
+    <bpmn:endEvent id="E_GW" name="fim"/>
+    <bpmn:sequenceFlow id="F_S" sourceRef="S_GW" targetRef="GX"/>
+    <bpmn:sequenceFlow id="F_XC" name="cond" sourceRef="GX" targetRef="T_A">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">valor &gt; 10</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F_XD" name="default" sourceRef="GX" targetRef="T_B"/>
+    <bpmn:sequenceFlow id="F_A" sourceRef="T_A" targetRef="GP"/>
+    <bpmn:sequenceFlow id="F_B" sourceRef="T_B" targetRef="GP"/>
+    <bpmn:sequenceFlow id="F_P1" sourceRef="GP" targetRef="T_P1"/>
+    <bpmn:sequenceFlow id="F_P2" sourceRef="GP" targetRef="T_P2"/>
+    <bpmn:sequenceFlow id="F_I1" sourceRef="T_P1" targetRef="GI"/>
+    <bpmn:sequenceFlow id="F_I2" sourceRef="T_P2" targetRef="GI"/>
+    <bpmn:sequenceFlow id="F_EB" sourceRef="GI" targetRef="GEB"/>
+    <bpmn:sequenceFlow id="F_EB1" sourceRef="GEB" targetRef="ICE_MSG"/>
+    <bpmn:sequenceFlow id="F_EB2" sourceRef="GEB" targetRef="RT_GW"/>
+    <bpmn:sequenceFlow id="F_E1" sourceRef="ICE_MSG" targetRef="E_GW"/>
+    <bpmn:sequenceFlow id="F_E2" sourceRef="RT_GW" targetRef="E_GW"/>
+  </bpmn:process>
+  <bpmn:message id="MSG_GW" name="PedidoOK"/>
+  <bpmndi:BPMNDiagram id="D_GW">
+    <bpmndi:BPMNPlane id="PL_GW" bpmnElement="P_GW">
+      <bpmndi:BPMNShape id="SH_S_GW" bpmnElement="S_GW"><dc:Bounds x="40" y="140" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_GX" bpmnElement="GX"><dc:Bounds x="140" y="133" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_A" bpmnElement="T_A"><dc:Bounds x="260" y="60" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_B" bpmnElement="T_B"><dc:Bounds x="260" y="200" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_GP" bpmnElement="GP"><dc:Bounds x="430" y="133" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_P1" bpmnElement="T_P1"><dc:Bounds x="550" y="60" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_P2" bpmnElement="T_P2"><dc:Bounds x="550" y="200" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_GI" bpmnElement="GI"><dc:Bounds x="720" y="133" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_GEB" bpmnElement="GEB"><dc:Bounds x="840" y="133" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ICE_MSG" bpmnElement="ICE_MSG"><dc:Bounds x="960" y="82" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_RT_GW" bpmnElement="RT_GW"><dc:Bounds x="930" y="200" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_E_GW" bpmnElement="E_GW"><dc:Bounds x="1100" y="140" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="ED_F_S" bpmnElement="F_S"><di:waypoint x="76" y="158"/><di:waypoint x="140" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_XC" bpmnElement="F_XC"><di:waypoint x="165" y="133"/><di:waypoint x="260" y="100"/><bpmndi:BPMNLabel><dc:Bounds x="180" y="90" width="40" height="14"/></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_XD" bpmnElement="F_XD"><di:waypoint x="165" y="183"/><di:waypoint x="260" y="240"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_A" bpmnElement="F_A"><di:waypoint x="360" y="100"/><di:waypoint x="430" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_B" bpmnElement="F_B"><di:waypoint x="360" y="240"/><di:waypoint x="430" y="175"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_P1" bpmnElement="F_P1"><di:waypoint x="480" y="140"/><di:waypoint x="550" y="100"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_P2" bpmnElement="F_P2"><di:waypoint x="480" y="175"/><di:waypoint x="550" y="240"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_I1" bpmnElement="F_I1"><di:waypoint x="650" y="100"/><di:waypoint x="720" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_I2" bpmnElement="F_I2"><di:waypoint x="650" y="240"/><di:waypoint x="720" y="175"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_EB" bpmnElement="F_EB"><di:waypoint x="770" y="158"/><di:waypoint x="840" y="158"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_EB1" bpmnElement="F_EB1"><di:waypoint x="890" y="145"/><di:waypoint x="960" y="100"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_EB2" bpmnElement="F_EB2"><di:waypoint x="890" y="175"/><di:waypoint x="930" y="240"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_E1" bpmnElement="F_E1"><di:waypoint x="996" y="100"/><di:waypoint x="1100" y="150"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_F_E2" bpmnElement="F_E2"><di:waypoint x="1030" y="240"/><di:waypoint x="1110" y="175"/></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

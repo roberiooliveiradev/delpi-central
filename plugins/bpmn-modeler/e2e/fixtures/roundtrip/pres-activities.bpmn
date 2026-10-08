@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_PRES_ACT" targetNamespace="urn:delpi:g4" exporter="G4Fixture" exporterVersion="1.0">
+  <bpmn:error id="ERR_P" name="ErroP"/>
+  <bpmn:process id="P_PRES" name="G4 Preserve Activities" isExecutable="false">
+    <bpmn:startEvent id="PS1"/>
+    <bpmn:task id="T_NORM" name="Editavel"/>
+    <bpmn:complexGateway id="CG1" name="Complex"/>
+    <bpmn:transaction id="TR1" name="Transacao">
+      <bpmn:startEvent id="TRS1"/>
+      <bpmn:task id="TRT1" name="Trabalho"/>
+      <bpmn:endEvent id="TR_CANCEL_END">
+        <bpmn:cancelEventDefinition id="CXL_END"/>
+      </bpmn:endEvent>
+      <bpmn:endEvent id="TRE1"/>
+      <bpmn:sequenceFlow id="TRF1" sourceRef="TRS1" targetRef="TRT1"/>
+      <bpmn:sequenceFlow id="TRF2" sourceRef="TRT1" targetRef="TRE1"/>
+    </bpmn:transaction>
+    <bpmn:boundaryEvent id="BND_CANCEL" attachedToRef="TR1">
+      <bpmn:cancelEventDefinition id="CXL_BND"/>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="BND_COMP" attachedToRef="TR1">
+      <bpmn:compensateEventDefinition id="CMP_BND"/>
+    </bpmn:boundaryEvent>
+    <bpmn:task id="T_COMP" name="Compensa" isForCompensation="true"/>
+    <bpmn:adHocSubProcess id="AH1" name="AdHoc" ordering="Parallel" cancelRemainingInstances="true">
+      <bpmn:task id="AHT1" name="Livre1"/>
+      <bpmn:task id="AHT2" name="Livre2"/>
+      <bpmn:completionCondition xsi:type="bpmn:tFormalExpression">fim</bpmn:completionCondition>
+    </bpmn:adHocSubProcess>
+    <bpmn:subProcess id="ESP1" name="EventSub" triggeredByEvent="true">
+      <bpmn:startEvent id="ESPS1" isInterrupting="true">
+        <bpmn:errorEventDefinition id="ESP_ED" errorRef="ERR_P"/>
+      </bpmn:startEvent>
+      <bpmn:task id="ESPT1" name="Trata"/>
+      <bpmn:endEvent id="ESPE1"/>
+      <bpmn:sequenceFlow id="ESPF1" sourceRef="ESPS1" targetRef="ESPT1"/>
+      <bpmn:sequenceFlow id="ESPF2" sourceRef="ESPT1" targetRef="ESPE1"/>
+    </bpmn:subProcess>
+    <bpmn:task id="T_MIP" name="MI Paralela">
+      <bpmn:multiInstanceLoopCharacteristics id="MI_P" isSequential="false">
+        <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">4</bpmn:loopCardinality>
+      </bpmn:multiInstanceLoopCharacteristics>
+    </bpmn:task>
+    <bpmn:task id="T_MIS" name="MI Sequencial">
+      <bpmn:multiInstanceLoopCharacteristics id="MI_S" isSequential="true">
+        <bpmn:completionCondition xsi:type="bpmn:tFormalExpression">ok</bpmn:completionCondition>
+      </bpmn:multiInstanceLoopCharacteristics>
+    </bpmn:task>
+    <bpmn:task id="T_LOOP" name="LoopPadrao">
+      <bpmn:standardLoopCharacteristics id="SL_1" testBefore="false" loopMaximum="5"/>
+    </bpmn:task>
+    <bpmn:intermediateThrowEvent id="ITH_COMP" name="compensa">
+      <bpmn:compensateEventDefinition id="CMP_T" waitForCompletion="true" activityRef="TRT1"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="PE1"/>
+    <bpmn:sequenceFlow id="PF1" sourceRef="PS1" targetRef="T_NORM"/>
+    <bpmn:sequenceFlow id="PF2" sourceRef="T_NORM" targetRef="CG1"/>
+    <bpmn:sequenceFlow id="PF3" sourceRef="CG1" targetRef="TR1"/>
+    <bpmn:sequenceFlow id="PF4" sourceRef="CG1" targetRef="AH1"/>
+    <bpmn:sequenceFlow id="PF5" sourceRef="CG1" targetRef="T_MIP"/>
+    <bpmn:sequenceFlow id="PF6" sourceRef="CG1" targetRef="T_MIS"/>
+    <bpmn:sequenceFlow id="PF7" sourceRef="CG1" targetRef="T_LOOP"/>
+    <bpmn:sequenceFlow id="PF8" sourceRef="TR1" targetRef="PE1"/>
+    <bpmn:sequenceFlow id="PF9" sourceRef="BND_CANCEL" targetRef="PE1"/>
+    <bpmn:association id="ASOC_COMP" sourceRef="BND_COMP" targetRef="T_COMP" associationDirection="One"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="D_PRES">
+    <bpmndi:BPMNPlane id="PL_PRES" bpmnElement="P_PRES">
+      <bpmndi:BPMNShape id="SH_PS1" bpmnElement="PS1"><dc:Bounds x="40" y="120" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_NORM" bpmnElement="T_NORM"><dc:Bounds x="130" y="98" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_CG1" bpmnElement="CG1"><dc:Bounds x="290" y="113" width="50" height="50"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_TR1" bpmnElement="TR1" isExpanded="true"><dc:Bounds x="410" y="60" width="340" height="140"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_TRS1" bpmnElement="TRS1"><dc:Bounds x="430" y="110" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_TRT1" bpmnElement="TRT1"><dc:Bounds x="500" y="90" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_TR_CANCEL_END" bpmnElement="TR_CANCEL_END"><dc:Bounds x="640" y="110" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_TRE1" bpmnElement="TRE1"><dc:Bounds x="700" y="110" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_BND_CANCEL" bpmnElement="BND_CANCEL"><dc:Bounds x="426" y="182" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_BND_COMP" bpmnElement="BND_COMP"><dc:Bounds x="560" y="182" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_COMP" bpmnElement="T_COMP"><dc:Bounds x="520" y="260" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_AH1" bpmnElement="AH1" isExpanded="true"><dc:Bounds x="410" y="380" width="280" height="140"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_AHT1" bpmnElement="AHT1"><dc:Bounds x="430" y="410" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_AHT2" bpmnElement="AHT2"><dc:Bounds x="560" y="410" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ESP1" bpmnElement="ESP1" isExpanded="true"><dc:Bounds x="800" y="60" width="320" height="140"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ESPS1" bpmnElement="ESPS1"><dc:Bounds x="820" y="110" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ESPT1" bpmnElement="ESPT1"><dc:Bounds x="890" y="90" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ESPE1" bpmnElement="ESPE1"><dc:Bounds x="1030" y="110" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_MIP" bpmnElement="T_MIP"><dc:Bounds x="800" y="260" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_MIS" bpmnElement="T_MIS"><dc:Bounds x="950" y="260" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_T_LOOP" bpmnElement="T_LOOP"><dc:Bounds x="1100" y="260" width="100" height="80"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_ITH_COMP" bpmnElement="ITH_COMP"><dc:Bounds x="800" y="420" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SH_PE1" bpmnElement="PE1"><dc:Bounds x="1250" y="120" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="ED_TRF1" bpmnElement="TRF1"><di:waypoint x="466" y="128"/><di:waypoint x="500" y="130"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_TRF2" bpmnElement="TRF2"><di:waypoint x="600" y="130"/><di:waypoint x="700" y="128"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_ESPF1" bpmnElement="ESPF1"><di:waypoint x="856" y="128"/><di:waypoint x="890" y="130"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_ESPF2" bpmnElement="ESPF2"><di:waypoint x="990" y="130"/><di:waypoint x="1030" y="128"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_ASOC_COMP" bpmnElement="ASOC_COMP"><di:waypoint x="578" y="218"/><di:waypoint x="570" y="260"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF1" bpmnElement="PF1"><di:waypoint x="76" y="138"/><di:waypoint x="130" y="138"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF2" bpmnElement="PF2"><di:waypoint x="230" y="138"/><di:waypoint x="290" y="138"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF3" bpmnElement="PF3"><di:waypoint x="340" y="130"/><di:waypoint x="410" y="130"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF4" bpmnElement="PF4"><di:waypoint x="315" y="163"/><di:waypoint x="450" y="380"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF5" bpmnElement="PF5"><di:waypoint x="340" y="150"/><di:waypoint x="800" y="300"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF6" bpmnElement="PF6"><di:waypoint x="340" y="150"/><di:waypoint x="950" y="300"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF7" bpmnElement="PF7"><di:waypoint x="340" y="150"/><di:waypoint x="1100" y="300"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF8" bpmnElement="PF8"><di:waypoint x="750" y="130"/><di:waypoint x="1250" y="136"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ED_PF9" bpmnElement="PF9"><di:waypoint x="444" y="218"/><di:waypoint x="444" y="560"/><di:waypoint x="1250" y="140"/></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
