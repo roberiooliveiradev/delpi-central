@@ -224,6 +224,25 @@ Backend em dev usa **bind mount** `../bpmn-modeler:/app` + uvicorn sem `--reload
 
 **Contrato de release (verdade documentada):** BUILD test/lint = AUTOMATED (CI `bpmn-modeler.yml`); IMAGE build/deploy = **MANUAL** local (`docker compose build` com `BPMN_MODELER_BUILD_SHA=$(git rev-parse HEAD)` + `up -d`); `docker cp` **nunca** é release contract — o bundle servido deve bater com a imagem (OCI `revision` + `assets/build-info.json` + `/health`).
 
+### 13e. Transformômetro ↔ BPMN Modeler — referência explícita (G5 — vigente)
+
+Owner do vínculo: **Transformômetro** (`transformometro.processo_bpmn_references`, migration `V052`). Owner do BPMN: **Modeler** (inalterado — zero mudança de backend/DB/frontend no Modeler nesta wave). Contrato completo: `docs/12-roadmap-e-evolucao/engineering/adr/ADR-005-transformometro-bpmn-reference.md`.
+
+- **Granularidade:** `processo_id` — `processo_diagramas.processo_id` é PK (um macro por processo-mestre); instâncias só têm escopo (`instancia_diagrama_escopo`), revisões TM só overlays.
+- **Identidade externa:** `(bpmn_model_id, bpmn_revision_number)` — snapshot imutável; `Model.version` nunca é revision_number; `revision_id` só como metadata resolvida.
+- **Sem persistir:** XML/DI/SVG/PNG/working-copy/display-name/checksum como autoridade — `resolved.*` é DERIVED / REMOTE READ.
+- **Sem FK cross-schema, sem SQL no schema `bpmn_modeler`, sem proxy genérico, sem service token.**
+- **Auth:** TM `transformometro.access` (read+write do vínculo, mesmo gate de edição de processo vigente); BPMN enforcement preservado via bearer do usuário propagado — foreign model → 404 sem leak.
+- **Write fail-closed:** link/replace valida modelo + revisão remotos antes de persistir; Modeler indisponível → 503 `dependency_unavailable`, zero dangling reference.
+- **Read degradado:** referência local preservada quando o Modeler cai; `resolved.state` ∈ `resolved | unavailable | inaccessible_or_missing`.
+- **Sem auto-follow-latest:** `latest_revision_number` é badge read-only na UI; troca exige PUT explícito (provado em runtime: R1 persiste após criação de R2).
+- **API (estreita):** `GET/PUT/DELETE /transformometro/processos/{id}/bpmn-reference`, `GET …/bpmn-reference/candidates`, `GET …/bpmn-reference/candidates/{model_id}/revisions`.
+- **UI:** card "Modelo BPMN" na subseção Mapeamento → Fluxo do processo; estados empty/resolved/unavailable/inaccessible; "Visualizar revisão" → `/apps/bpmn-modeler/models/{id}/revisions/{n}` (read-only), "Abrir no Modelador" → `/apps/bpmn-modeler/models/{id}` (não muda a referência).
+- **Audit:** `audit_logs` entity `processo_bpmn_reference` — create/update/delete com `old_reference`/`new_reference` (sem XML).
+- **Limitação V1:** usuário só resolve modelos que o Modeler lhe permite ver; processo vinculado a modelo alheio mostra `inaccessible_or_missing` com IDs preservados. Sharing/ACL é follow-up.
+
+Evidência runtime (LOCAL INTEGRATION RUNTIME, 2026-10-08): fluxo completo via gateway + Keycloak real — link R1 → read-back → missing revision 404 → foreign model 404 → R2 criada no Modeler sem auto-follow → replace explícito R2 → viewer vê `inaccessible_or_missing` → Modeler down: processo 200, ref preservada `unavailable`, PUT 503 fail-closed → recovery resolved → unlink sem tocar Modeler. Testes: 16/16 `test_process_bpmn_reference.py`, 6/6 structural frontend, 464/464 vitest TM, 33/33 BPMN contract/ownership/immutability.
+
 ## 14. Produtividade — classificação por evidência (G0)
 
 | Capacidade | Freeze | Implementação atual | Classificação |
@@ -270,7 +289,7 @@ G3 — Modeling Productivity                OWNER 03→06   PASS/CLOSED — 41 E
 G4 — Broad Round-trip / Interoperability  OWNER 02+06   PASS/CLOSED — 16/16 E2E roundtrip-* + 14/14 adapter-level + 7/7 extensionPreservation unit; G4-EXT-1 resolvido (§6)
 WAVE E — Properties Breadth              OWNER 03+06   PASS/CLOSED — 14/14 E2E properties-* (workers=2): BpmnCorePropsProvider (calledElement/conditionExpression/defaultFlow, BPMN core only) + doc/event-refs evidence; EG-14 BPMN-core fechado (§13b)
 WAVE F — Vendor Exposure Decision        OWNER 00+03   PASS/CLOSED — §13c + INVENTORY §6a: align/distribute/space-tool/keyboard-move-selection DISABLE (FUTURE/não-frozen — DI value:null + editor actions unregistered); hand/lasso/global-connect KEEP (Pan/multi-select/Connect IN_V1); E/R/Ctrl+D/Ctrl+setas KEEP como aliases governados; engine editable entries = 0; 8/8 E2E VX-* + GOV-14..17 + regressões G2A/G3/Wave E verdes (workers=2)
-G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
+G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06   PASS/CLOSED — §13e + ADR-005: referência explícita (model_id, revision_number) owned pelo TM, granularidade processo_id, user-delegated auth, fail-closed write, read degradado, sem auto-follow-latest, sem XML/FK/proxy/bypass; runtime acceptance LOCAL INTEGRATION RUNTIME (17/18 script + audit DB verificado + Modeler-down provado)
 G6 — Runtime Provenance / stale-process   OWNER 09   PASS/CLOSED — §13d: cadeia source→build→image→container→route→runtime→business read-back provada em **bb447872ee** (LOCAL INTEGRATION RUNTIME — não production acceptance); hardening inicial em 9ff9e9e14b → equivalente rebaseado 511369e2f5 → rebuild/redeploy final em bb447872; provenance gap fechado (OCI revision label + build-info.json + /health git_sha); stale image sanado por rebuild canônico (docker cp aposentado como release mechanism); migrations/checksum, ownership 404, conflict, archive, Wave E/F fingerprints no runtime deployado. Drift de processo: commit de docs G6 incluiu 2 arquivos requests-api pré-staged por workstream paralelo (postgres_repositories.py +3, test_postgres_request_repository.py −85 — sem overlap funcional BPMN, conteúdo preservado no histórico; disciplina: commit isolado/worktree + `git status` do index antes de commitar)
 ```
 

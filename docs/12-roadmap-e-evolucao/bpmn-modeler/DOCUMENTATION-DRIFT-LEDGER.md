@@ -174,6 +174,16 @@
 - **RESIDUAL RISK:** baixo — runtime identifica `bb447872` que é ancestral de `origin/main`
 - **OWNER:** 00/09 — `CLOSED`
 
+### DRIFT-BPMN-014 — G5 baseline moved mid-work + accidental stash (process hygiene)
+
+- **AREA:** processo/execução — baseline tracking + worktree hygiene
+- **EVENT:** baseline registrada em `e1e113e5`; durante a implementação o worktree avançou para `8dbcff7b` (commit TÉO de workstream paralela, sem overlap G5). Um `git stash -- <path>` defensivo reverteu temporariamente a montagem do card em `ProcessDetailPage.tsx`; detectado por teste estrutural e restaurado via `stash pop` — zero perda.
+- **CURRENT EVIDENCE:** implementação G5 final sobre `8dbcff7b`; nenhum arquivo alheio incluído nos commits (pathspec explícito — lição DRIFT-013 aplicada); runtime acceptance reexecutado após restore.
+- **CLASSIFICATION:** `EXECUTION_DRIFT` — `PROCESS / COMMIT HYGIENE` — `RESOLVED`
+- **FILES UPDATED:** este ledger
+- **RESIDUAL RISK:** baixo — baseline real do commit registrada no report final
+- **OWNER:** 00 — `CLOSED`
+
 ## Residual search record (G0)
 
 Busca executada sobre `docs/12-roadmap-e-evolucao/bpmn-modeler/` + `plugins/bpmn-modeler/README.md` por: `autosave`, `OUT_OF_V1`, `explicit save`, `PER-MODEL ACL`, `context-wide`, `sem body`, `read-only` (id), `FUTURE` (element id), `TEST_NOT_RUN`, `NOT IMPLEMENTED`, `no additional pagination index`, `idx_models_list`, `V004`, `save explícito`. Cada ocorrência foi classificada em contexto (historical / superseded / still-valid / gap). Resultado: nenhuma contradição vigente sem classificação remanescente após as emendas deste gate.
