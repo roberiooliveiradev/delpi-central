@@ -2,6 +2,7 @@
 import re
 import json
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 import sqlglot
@@ -12,6 +13,19 @@ from app.utils.logger import log_error, log_info
 # Perfis de política estrutural (S1)
 PROFILE_LEGACY_READONLY = "legacy_readonly"
 PROFILE_DAVI_GOVERNED = "davi_governed"
+
+
+@dataclass(frozen=True)
+class SqlValidationResult:
+    """Resultado estruturado da validação (S1 corrective).
+
+    physical_tables — somente tabelas físicas resolvidas pelo AST
+    (sem aliases, CTEs ou variáveis), deduplicadas e ordenadas.
+    """
+
+    profile: str
+    physical_tables: tuple[str, ...]
+    statement_count: int
 
 
 class SqlValidator:
@@ -307,6 +321,12 @@ class SqlValidator:
     # 🔹 Validação principal
     # ------------------------------------------------------------------
     def validate(self, sql: str, *, profile: str = PROFILE_LEGACY_READONLY) -> bool:
+        self.validate_with_result(sql, profile=profile)
+        return True
+
+    def validate_with_result(
+        self, sql: str, *, profile: str = PROFILE_LEGACY_READONLY
+    ) -> SqlValidationResult:
         if not sql or not isinstance(sql, str):
             raise ValueError("SQL inválido ou vazio.")
 
@@ -411,6 +431,10 @@ class SqlValidator:
                 "validador read-only."
             )
 
+        statement_count = sum(
+            1 for s in parsed if not isinstance(s, exp.Semicolon)
+        )
+
         # 6️⃣ Validação de tabelas físicas (whitelist)
         if self.skip_table_whitelist():
             if governed:
@@ -422,8 +446,16 @@ class SqlValidator:
                 "[SQL_VALIDATOR] DATA_SQL_SKIP_TABLE_WHITELIST ativo — "
                 "allowlist de tabelas ignorada (somente SELECT)."
             )
-            return True
+            return SqlValidationResult(
+                profile=profile,
+                physical_tables=(),
+                statement_count=statement_count,
+            )
 
-        self._validate_ast_policy(parsed, profile)
+        physical_tables = self._validate_ast_policy(parsed, profile)
 
-        return True
+        return SqlValidationResult(
+            profile=profile,
+            physical_tables=tuple(sorted(physical_tables)),
+            statement_count=statement_count,
+        )

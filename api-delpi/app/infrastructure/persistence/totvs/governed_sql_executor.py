@@ -141,7 +141,7 @@ class GovernedSqlExecutor:
         params = tuple(parameters or ())
         qhash = _query_hash(statement, params)
         started = time.perf_counter()
-        tables: set[str] = set()
+        tables: tuple[str, ...] = ()
 
         def _log(outcome: str, **extra):
             logger.info(
@@ -151,7 +151,7 @@ class GovernedSqlExecutor:
                 actor or "-",
                 correlation_id or "-",
                 qhash,
-                sorted(tables),
+                list(tables),
                 (time.perf_counter() - started) * 1000,
                 " ".join(f"{k}={v}" for k, v in extra.items()),
             )
@@ -162,10 +162,15 @@ class GovernedSqlExecutor:
                 RESULT_TOO_LARGE, "Número de parâmetros excede o limite."
             )
         try:
-            self._validator.validate(statement, profile=PROFILE_DAVI_GOVERNED)
+            validation = self._validator.validate_with_result(
+                statement, profile=PROFILE_DAVI_GOVERNED
+            )
         except PermissionError as e:
             _log("validation_failed")
             raise map_permission_error(e)
+
+        # Única resolução semântica — validator é a fonte autoritativa.
+        tables = validation.physical_tables
 
         # ---- execução bounded ----------------------------------------
         connection = None
@@ -276,6 +281,7 @@ class GovernedSqlExecutor:
             truncated=truncated,
             truncation_reasons=reasons,
             query_hash=qhash,
+            tables=list(tables),
             duration_ms=duration_ms,
         )
         _log(

@@ -61,9 +61,26 @@ class FakeConnection:
         self.closed = True
 
 
+class ConnectionProbe:
+    """Factory that records whether a connection was opened."""
+
+    def __init__(self, cursor=None):
+        self.conn = FakeConnection(cursor or FakeCursor())
+        self.calls = 0
+
+    def __call__(self):
+        self.calls += 1
+        return self.conn
+
+
 def _executor(cursor=None, exc=None):
     conn = FakeConnection(cursor or FakeCursor())
     return GovernedSqlExecutor(connection_factory=lambda: conn), conn
+
+
+def _executor_probe(cursor=None):
+    probe = ConnectionProbe(cursor)
+    return GovernedSqlExecutor(connection_factory=probe), probe
 
 
 def _cols(names):
@@ -267,3 +284,121 @@ def test_query_hash_distinct_for_params():
     r1 = ex1.execute("SELECT B1_COD FROM SB1010 WHERE B1_COD = ?", ["1"])
     r2 = ex2.execute("SELECT B1_COD FROM SB1010 WHERE B1_COD = ?", ["2"])
     assert r1.query_hash != r2.query_hash
+
+
+# ---------------------------------------------------------------------
+# S1 CORRECTIVE — table metadata propagation (validator → result → audit)
+# ---------------------------------------------------------------------
+
+from app.application.services.sql_validator import (
+    PROFILE_DAVI_GOVERNED,
+    SqlValidator,
+)
+
+
+def _run(sql, params=None):
+    cursor = FakeCursor(description=_cols(["a"]), batches=[[(1,)]])
+    ex, _ = _executor(cursor)
+    return ex.execute(sql, params)
+
+
+def test_validation_result_shape():
+    r = SqlValidator().validate_with_result(
+        "SELECT B1_COD FROM SB1010", profile=PROFILE_DAVI_GOVERNED
+    )
+    assert r.profile == PROFILE_DAVI_GOVERNED
+    assert r.physical_tables == ("SB1010",)
+    assert r.statement_count == 1
+
+
+def test_validate_backcompat_returns_true():
+    assert SqlValidator().validate("SELECT B1_COD FROM SB1010") is True
+
+
+def test_tables_simple_select():
+    assert _run("SELECT B1_COD FROM SB1010").tables == ["SB1010"]
+
+
+def test_tables_join():
+    result = _run(
+        "SELECT a.B1_COD FROM SB1010 a JOIN SB2010 b ON a.B1_COD = b.B2_PROD"
+    )
+    assert result.tables == ["SB1010", "SB2010"]
+
+
+def test_tables_cte_alias_excluded():
+    result = _run(
+        "WITH cte AS (SELECT B1_COD FROM SB1010) SELECT * FROM cte"
+    )
+    assert result.tables == ["SB1010"]
+
+
+def test_tables_nested_subquery():
+    result = _run(
+        "SELECT B1_COD FROM SB1010 "
+        "WHERE B1_COD IN (SELECT A1_COD FROM SA1010)"
+    )
+    assert result.tables == ["SA1010", "SB1010"]
+
+
+def test_tables_union():
+    result = _run(
+        "SELECT B1_COD FROM SB1010 UNION ALL SELECT A1_COD FROM SA1010"
+    )
+    assert result.tables == ["SA1010", "SB1010"]
+
+
+def test_tables_self_join_dedup():
+    result = _run(
+        "SELECT a.B1_COD FROM SB1010 a JOIN SB1010 b ON a.B1_COD = b.B1_COD"
+    )
+    assert result.tables == ["SB1010"]
+
+
+def test_tables_deterministic_sorting():
+    # SA1010 listed first in SQL; output must be sorted regardless.
+    result = _run(
+        "SELECT * FROM SA1010 a JOIN SB1010 b ON a.A1_COD = b.B1_COD"
+    )
+    assert result.tables == ["SA1010", "SB1010"]
+
+
+def test_unauthorized_table_never_reaches_db():
+    ex, probe = _executor_probe(FakeCursor(description=_cols(["a"])))
+    with pytest.raises(GovernedSqlError) as ei:
+        ex.execute("SELECT * FROM ZZ9999")
+    assert ei.value.category == OBJECT_NOT_ALLOWED
+    assert probe.calls == 0
+
+
+def test_audit_tables_match_result(caplog):
+    import logging
+
+    cursor = FakeCursor(
+        description=_cols(["a"]), batches=[[(1,)]]
+    )
+    ex, _ = _executor(cursor)
+    with caplog.at_level(logging.INFO, logger="totvs.governed_sql.executor"):
+        result = ex.execute(
+            "SELECT a.B1_COD FROM SB1010 a JOIN SB2010 b ON a.B1_COD = b.B2_PROD"
+        )
+    audit = [r for r in caplog.records if "tables=" in r.getMessage()]
+    assert audit
+    expected = str(result.tables)
+    assert all(expected in r.getMessage() for r in audit)
+
+
+def test_no_independent_reparse(monkeypatch):
+    """Executor must not reparse: one structural resolution only."""
+    calls = []
+    real = SqlValidator.validate_with_result
+
+    def spy(self, sql, *, profile):
+        calls.append(sql)
+        return real(self, sql, profile=profile)
+
+    monkeypatch.setattr(SqlValidator, "validate_with_result", spy)
+    cursor = FakeCursor(description=_cols(["a"]), batches=[[(1,)]])
+    ex, _ = _executor(cursor)
+    ex.execute("SELECT B1_COD FROM SB1010")
+    assert len(calls) == 1
