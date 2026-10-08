@@ -519,6 +519,98 @@ def test_eval1_deterministic_fallback_without_synthesis():
     assert "Comercial - Alinhamento Estrategico" in attempt.content
 
 
+NULL_LEAF_RESULT = {
+    "data": {
+        "items": [
+            {
+                "id": "x1",
+                "name": "Feed Operacoes",
+                "description": None,
+                "profile": {"kind": "widescreen"},
+            },
+            {
+                "id": "x2",
+                "name": "Feed Comercial",
+                "description": "avisos internos",
+            },
+        ]
+    }
+}
+
+
+def test_eval1_synthesis_skips_unrenderable_leaf():
+    """C3-QUALITY-01 R1: a null or non-scalar value inside an otherwise
+    valid selection is skipped — one unrenderable leaf never discards
+    the whole selection (observed production failure: a playlist with
+    ``description: None`` demoted the answer to a raw dump)."""
+    provider = _media_provider(
+        {
+            ("screens", "list_feeds"): _outcome(
+                "screens", "list_feeds", "", structured=NULL_LEAF_RESULT
+            ),
+        }
+    )
+    orch = _orchestrator(
+        [provider],
+        [
+            _select(_KEY, "list_feeds"),
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {
+                            "record_index": 0,
+                            "fields": ["name", "description", "profile"],
+                        },
+                        {
+                            "record_index": 1,
+                            "fields": ["name", "description"],
+                        },
+                    ]
+                }
+            },
+        ],
+    )
+    attempt = orch.attempt("quais as minhas playlists?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "- Feed Operacoes" in attempt.content
+    assert "- Feed Comercial — avisos internos" in attempt.content
+    assert "None" not in attempt.content
+    assert "widescreen" not in attempt.content
+    assert attempt.provenance is not None
+
+
+def test_eval1_synthesis_all_unrenderable_falls_back():
+    """A selection whose fields carry no renderable value still
+    demotes to the truthful deterministic render — never an empty
+    SUCCESS answer."""
+    provider = _media_provider(
+        {
+            ("screens", "list_feeds"): _outcome(
+                "screens", "list_feeds", "", structured=NULL_LEAF_RESULT
+            ),
+        }
+    )
+    orch = _orchestrator(
+        [provider],
+        [
+            _select(_KEY, "list_feeds"),
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["profile"]},
+                    ]
+                }
+            },
+        ],
+    )
+    attempt = orch.attempt("quais as minhas playlists?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    # Fallback render still carries owner names, and null leaves no
+    # longer print literal "None" noise.
+    assert "Feed Operacoes" in attempt.content
+    assert "description: None" not in attempt.content
+
+
 # --- EVAL-4: workspace-resolved target + business clarification ----------
 
 

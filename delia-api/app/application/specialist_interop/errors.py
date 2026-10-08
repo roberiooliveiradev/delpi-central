@@ -22,9 +22,17 @@ CAPABILITY_NOT_ALLOWED_IN_PHASE = "capability_not_allowed_in_phase"
 
 
 class SpecialistInteropError(Exception):
-    """Bounded semantic error; never carries secrets or raw wire internals."""
+    """Bounded semantic error; never carries secrets or raw wire internals.
 
-    def __init__(self, code: str, message: str) -> None:
+    ``owner_hint`` carries an optional bounded, owner-declared failure
+    message (verbatim owner vocabulary) so the interaction layer can
+    explain a legitimate owner precondition to the user.
+    """
+
+    def __init__(
+        self, code: str, message: str, owner_hint: str | None = None
+    ) -> None:
         self.code = code
         self.message = message
+        self.owner_hint = owner_hint
         super().__init__(f"{code}: {message}")

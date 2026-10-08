@@ -70,6 +70,33 @@ def _now_utc() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _owner_error_hint(content_text: str) -> str | None:
+    """Bounded owner-declared failure message for user guidance.
+
+    Owners answering with an error envelope
+    (``{"success": false, "message": ..., "data": {...}}``) declare
+    the failed precondition in owner vocabulary; it is surfaced
+    verbatim, printable-only and length-bounded — never a URL, never
+    invented guidance.
+    """
+    try:
+        parsed = json.loads(content_text)
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(parsed, Mapping):
+        return None
+    message = parsed.get("message")
+    if not isinstance(message, str):
+        return None
+    hint = "".join(
+        ch if ch.isprintable() and ch not in "\r\n\t" else " "
+        for ch in message
+    ).strip()[:160]
+    if not hint or "://" in hint:
+        return None
+    return hint
+
+
 class SpecialistInterop:
     """One provider-neutral boundary for approved specialist interaction."""
 
@@ -254,6 +281,7 @@ class SpecialistInterop:
                 MCP_PROTOCOL_ERROR,
                 "specialist reported a remote capability error"
                 + (f": {detail}" if detail else ""),
+                owner_hint=_owner_error_hint(outcome.content_text),
             )
         return SpecialistOutcome(
             status=(

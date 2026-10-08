@@ -513,6 +513,12 @@ class HandleInteractiveConversationTurn:
             if denied
             else DELPI_SOURCE_UNAVAILABLE_MESSAGE
         )
+        # Owner-declared precondition (bounded, verbatim owner
+        # vocabulary — never a URL): tells the user WHAT the source
+        # reported missing, without granting or inventing anything.
+        owner_hint = getattr(attempt, "owner_hint", None)
+        if isinstance(owner_hint, str) and owner_hint:
+            content = content + f" A fonte informou: {owner_hint}"
         limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)
         result_turn = InteractionTurn(
             turn_id=str(uuid.uuid4()),

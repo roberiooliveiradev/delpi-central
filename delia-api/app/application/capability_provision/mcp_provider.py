@@ -146,7 +146,11 @@ class McpCapabilityProvider:
                 )
             )
         except SpecialistInteropError as exc:
-            raise CapabilityProviderError(exc.code, str(exc)) from exc
+            raise CapabilityProviderError(
+                exc.code,
+                str(exc),
+                owner_hint=getattr(exc, "owner_hint", None),
+            ) from exc
 
     @staticmethod
     def _effective_timeout(timeout_seconds: float | None) -> float:

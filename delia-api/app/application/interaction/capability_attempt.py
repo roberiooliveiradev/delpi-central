@@ -77,6 +77,7 @@ class GovernedCapabilityAttempt:
     outcome: SpecialistOutcome | None = None
     provenance: GovernedCapabilityProvenance | None = None
     error_code: str | None = None
+    owner_hint: str | None = None
     content: str | None = None
     limitations: tuple[str, ...] = ()
     confirmation_context: Mapping[str, Any] | None = None
@@ -153,7 +154,10 @@ def _error_attempt(
         else GovernedCapabilityStatus.SOURCE_UNAVAILABLE
     )
     return GovernedCapabilityAttempt(
-        status=status, correlation_id=correlation_id, error_code=exc.code
+        status=status,
+        correlation_id=correlation_id,
+        error_code=exc.code,
+        owner_hint=getattr(exc, "owner_hint", None),
     )
 
 

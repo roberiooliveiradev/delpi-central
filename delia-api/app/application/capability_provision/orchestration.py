@@ -377,6 +377,8 @@ Rules:
 - Prefer user-meaningful fields; do not select technical fields (ids,
   revisions, timestamps, internal roles) unless the user explicitly
   asked for them.
+- Never select a field whose value is null, an object or a list —
+  only scalar, non-empty values can be rendered.
 - Never mention tools, providers, MCP, endpoints, handles, tokens or
   execution internals; never claim an action was executed or
   authorized; never promise future results.
@@ -1100,13 +1102,18 @@ def _render_synthesis(
             if not isinstance(field_name, str) or field_name not in record:
                 return None, "invalid_field"
             value = record[field_name]
+            # An unrenderable leaf (null, object, list or redacted
+            # empty) never fails the whole selection — it is skipped;
+            # only verbatim scalar owner values reach the user.
             if isinstance(value, (Mapping, list, tuple)) or value is None:
-                return None, "non_scalar_selection"
+                continue
             rendered_value = _redact_text(str(value).strip())
-            if not rendered_value:
-                return None, "non_scalar_selection"
-            values.append(rendered_value)
-        lines.append("- " + " — ".join(values))
+            if rendered_value:
+                values.append(rendered_value)
+        if values:
+            lines.append("- " + " — ".join(values))
+    if not lines:
+        return None, "empty_selection"
     return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
 
 
@@ -1738,6 +1745,8 @@ def _format_structured(node: object, depth: int = 0) -> list[str]:
                 else:
                     lines.append(f"{indent}{key}: (vazio)")
             else:
+                if value is None:
+                    continue
                 lines.append(f"{indent}{key}: {value}")
         return lines
     return []
@@ -1750,7 +1759,7 @@ def _format_list(items: list, depth: int) -> list[str]:
         if isinstance(item, Mapping):
             first = True
             for key, value in item.items():
-                if isinstance(value, (Mapping, list, tuple)):
+                if isinstance(value, (Mapping, list, tuple)) or value is None:
                     continue
                 prefix = "- " if first else "  "
                 lines.append(

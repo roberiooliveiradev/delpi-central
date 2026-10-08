@@ -2777,3 +2777,78 @@ def test_enveloped_proposal_resolves_policy():
     )
     assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
     assert "commit_proposal" not in [c[1] for c in port.calls]
+
+
+
+# --- C3-QUALITY-01 R3: owner precondition hint (bounded, verbatim) -------
+
+_TEO_READ_TOOLS = (
+    RemoteToolDescriptor(
+        remote_name="read_boards",
+        operation_class="READ",
+        input_schema={"type": "object", "properties": {}},
+    ),
+)
+
+
+def _teo_hint_outcome(content_text, is_error=True):
+    return RemoteToolOutcome(content_text=content_text, is_error=is_error)
+
+
+def test_owner_error_envelope_surfaces_bounded_hint():
+    """An owner-declared precondition in the DELPI error envelope
+    ({"success": false, "message": ...}) reaches the governed attempt
+    as a bounded owner_hint — the user can be told WHAT the source
+    reported missing without DÉLIA inventing vocabulary."""
+    port = FakePort(
+        tools_by_specialist={"teo": _TEO_READ_TOOLS},
+        outcomes={
+            "read_boards": _teo_hint_outcome(
+                '{"success": false, "message": "Boards BFF error: '
+                'link_required.", "data": {"error_kind": "conflict", '
+                '"error_code": "link_required", "status": 409}}'
+            )
+        },
+    )
+    read = _read(
+        _interop(port), ("teo",), proposal=_select("teo", "read_boards")
+    )
+    attempt = read.attempt("Liste os boards")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "mcp_protocol_error"
+    assert attempt.owner_hint == "Boards BFF error: link_required."
+
+
+def test_owner_error_without_envelope_has_no_hint():
+    """A non-envelope owner failure stays generic — no hint is
+    fabricated from unstructured text."""
+    port = FakePort(
+        tools_by_specialist={"teo": _TEO_READ_TOOLS},
+        outcomes={"read_boards": _teo_hint_outcome("upstream blew up")},
+    )
+    read = _read(
+        _interop(port), ("teo",), proposal=_select("teo", "read_boards")
+    )
+    attempt = read.attempt("Liste os boards")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.owner_hint is None
+
+
+def test_owner_hint_never_carries_url():
+    """An owner message containing a URL is dropped entirely — hints
+    are never rendered as actionable links."""
+    port = FakePort(
+        tools_by_specialist={"teo": _TEO_READ_TOOLS},
+        outcomes={
+            "read_boards": _teo_hint_outcome(
+                '{"success": false, "message": "verify at '
+                'https://evil.example/link now", "data": {}}'
+            )
+        },
+    )
+    read = _read(
+        _interop(port), ("teo",), proposal=_select("teo", "read_boards")
+    )
+    attempt = read.attempt("Liste os boards")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.owner_hint is None

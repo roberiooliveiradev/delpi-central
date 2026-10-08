@@ -45,10 +45,16 @@ class CapabilityProviderError(Exception):
     orchestrator never sees protocol internals.
     """
 
-    def __init__(self, code: str, message: str = "") -> None:
+    def __init__(
+        self,
+        code: str,
+        message: str = "",
+        owner_hint: str | None = None,
+    ) -> None:
         super().__init__(message or code)
         self.code = code
         self.message = message or code
+        self.owner_hint = owner_hint
 
 
 @dataclass(frozen=True, slots=True)
