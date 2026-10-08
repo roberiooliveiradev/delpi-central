@@ -21,3 +21,4 @@ pytest-asyncio
 redis
 bleach==6.1.0
 mcp>=2,<3
+sqlglot==30.21.0

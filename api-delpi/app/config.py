@@ -71,6 +71,15 @@ class Settings:
     TOTVS_DB_DATABASE: str | None = _get_env("TOTVS_DB_DATABASE")
 
     # ==========================
+    # Governed Analytical SQL READ — principal dedicado read-only
+    # ==========================
+    GOVERNED_SQL_DB_HOST: str | None = _get_env("GOVERNED_SQL_DB_HOST")
+    GOVERNED_SQL_DB_PORT: str = _get_env("GOVERNED_SQL_DB_PORT", default="1433")
+    GOVERNED_SQL_DB_USER: str | None = _get_env("GOVERNED_SQL_DB_USER")
+    GOVERNED_SQL_DB_PASSWORD: str | None = _get_env("GOVERNED_SQL_DB_PASSWORD")
+    GOVERNED_SQL_DB_DATABASE: str | None = _get_env("GOVERNED_SQL_DB_DATABASE")
+
+    # ==========================
     # Plugins PostgreSQL
     # ==========================
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
