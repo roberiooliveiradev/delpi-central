@@ -120,6 +120,9 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
     _b("helpdesk.ticket.search", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
     _b("helpdesk.ticket.read", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
     _b("helpdesk.catalog.read", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
+    # R4 Governed Helpdesk Writes — one PREPARE family over the closed
+    # helpdesk action enum; ACT stays on the shared commit_proposal.
+    _b("helpdesk.change.prepare", "gpt_prepare_helpdesk_change", ("prepare_helpdesk_change", "PREPARE"), primary="prepare_helpdesk_change"),
     _b("record.change.prepare", "gpt_prepare_record_change", ("prepare_record_change", "PREPARE"), primary="prepare_record_change"),
     _b("proposal.commit", "gpt_commit_proposal", ("commit_proposal", "ACT"), primary="commit_proposal"),
     _b("process_timeline.read", "gpt_get_process_timeline", ("get_process_timeline", "READ"), primary="get_process_timeline"),

@@ -147,4 +147,5 @@ PREPARE_TOOL_CAPABILITY: dict[str, str] = {
     "prepare_meeting_minute_change": "meeting_minute_manage",  # action selects
     "prepare_diagnostic_change": "manage_diagnostic",  # action selects
     "prepare_governed_operation": "activate_revision",  # action selects
+    "prepare_helpdesk_change": "helpdesk_create_ticket",  # action selects
 }

@@ -37,6 +37,12 @@ from tm_app.application.gpt_actions.workspace_context_service import (
 from tm_app.application.helpdesk.helpdesk_read_service import (
     HelpdeskReadService,
 )
+from tm_app.application.helpdesk.helpdesk_write_capabilities import (
+    HELPDESK_ACTION_TO_CAPABILITY,
+)
+from tm_app.infrastructure.helpdesk_composition import (
+    build_helpdesk_write_stack,
+)
 from tm_app.application.solutions.solution_catalog_service import (
     SolutionCatalogService,
 )
@@ -66,6 +72,7 @@ _orchestrator = GovernedWriteOrchestrator(
     _dispatch,
     _packages,
     diagnostic_stack=build_diagnostic_write_stack(),
+    helpdesk_stack=build_helpdesk_write_stack(),
 )
 _governed = GovernedActionsFacade(_orchestrator, _dispatch)
 _process_context = ProcessContextService()
@@ -126,6 +133,50 @@ class GptGovernedOperationBody(BaseModel):
     recalculate: bool = False
     display_name: str | None = None
     xml: str | None = None
+    commit_now: bool = False
+    confirmation: bool = False
+    idempotency_key: str | None = None
+
+
+# Helpdesk governed writes — action selects the semantic capability.
+
+
+class GptHelpdeskChangeBody(BaseModel):
+    """R4 Helpdesk governed write — action selects the typed change; only
+    the fields relevant to the chosen action are consumed."""
+
+    action: str = Field(
+        ...,
+        description=(
+            "create_ticket | set_assignee | add_followup | create_task | "
+            "add_solution | request_validation | accept_solution | "
+            "reject_solution | submit_satisfaction | accept_validation | "
+            "reject_validation"
+        ),
+    )
+    ticket_id: int | None = None
+    title: str | None = None
+    description: str | None = None
+    category_id: int | None = None
+    urgency_id: int | None = None
+    observer_ids: list[int] | None = None
+    assignee_id: int | None = None
+    user_id: int | None = None
+    content: str | None = None
+    request_type_id: int | None = None
+    solution_type_id: int | None = None
+    approver_type: str | None = None
+    approver_id: int | None = None
+    validation_id: int | None = None
+    satisfaction: int | None = None
+    comment: str | None = None
+    state: int | None = None
+    duration_seconds: int | None = None
+    task_category_id: int | None = None
+    user_tech_id: int | None = None
+    group_tech_id: int | None = None
+    planned_begin: str | None = None
+    planned_end: str | None = None
     commit_now: bool = False
     confirmation: bool = False
     idempotency_key: str | None = None
@@ -491,6 +542,46 @@ def gpt_helpdesk_read(
             "Demanda Helpdesk/GLPI (via Helpdesk BFF — conhecimento, "
             "não autorização nem verdade de processo).",
         )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/helpdesk/prepare",
+    operation_id="gpt_prepare_helpdesk_change",
+    summary="PREPARE governed Helpdesk write (commit via gpt_commit_proposal)",
+)
+def gpt_prepare_helpdesk_change(
+    request: Request, body: GptHelpdeskChangeBody
+):
+    try:
+        action_norm = str(body.action or "").strip().lower()
+        capability = HELPDESK_ACTION_TO_CAPABILITY.get(action_norm)
+        if capability is None:
+            return fail(
+                "Invalid helpdesk action. Allowed: "
+                f"{sorted(HELPDESK_ACTION_TO_CAPABILITY)}.",
+                400,
+            )
+        args = body.model_dump(
+            exclude={"action", "commit_now", "confirmation", "idempotency_key"}
+        )
+        # Transport alias → BFF task field name (see MCP bridge).
+        args["category_id_task"] = args.pop("task_category_id")
+        data = _governed.prepare_capability(
+            request,
+            capability=capability,
+            args=args,
+            operation_label="prepare_helpdesk_change",
+            commit_now=bool(body.commit_now),
+            confirmation=bool(body.confirmation),
+            idempotency_key=_idempotency_key_from_request(
+                request, body.idempotency_key
+            ),
+        )
+        if data.get("persisted"):
+            return ok(data, "Helpdesk write persisted (commit_now).")
+        return ok(data, "Helpdesk proposal ready — then gpt_commit_proposal.")
     except Exception as exc:
         return _handle(exc)
 

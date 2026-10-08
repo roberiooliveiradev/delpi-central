@@ -82,6 +82,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_collaboration_read",
     "gpt_prepare_collaboration_change",
     "gpt_helpdesk_read",
+    "gpt_prepare_helpdesk_change",
 )
 
 # Legacy HTTP still mounted (prepare-only shim) — not Builder-importable.
@@ -770,6 +771,50 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 ],
                 "responses": {
                     "200": _ok_response("Helpdesk read payload"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/helpdesk/prepare": {
+            "post": {
+                "operationId": "gpt_prepare_helpdesk_change",
+                "summary": "PREPARE governed Helpdesk write",
+                "description": (
+                    "Governed Helpdesk/GLPI write via the Helpdesk BFF "
+                    "(same-user Bearer; BFF owns rules and idempotency). "
+                    "Closed action enum; PREPARE never writes — it seals "
+                    "the exact change and returns proposal_handle. ACT is "
+                    "gpt_commit_proposal; read-back verifies the outcome."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Required when commit_now=true.",
+                    }
+                ],
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GptHelpdeskChangeBody"
+                            },
+                            "example": {
+                                "action": "add_followup",
+                                "ticket_id": 123,
+                                "content": "Acompanhamento registrado pelo TÉO.",
+                            },
+                        }
+                    },
+                },
+                "responses": {
+                    "200": _ok_response("proposal_ready or persisted commit_now outcome"),
                     **_error_responses(),
                 },
                 "x-openai-isConsequential": False,
@@ -1806,6 +1851,109 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "action": "create_task",
                         "title": "Follow up with process owner",
                         "due_date": "2026-12-01",
+                    },
+                },
+                "GptHelpdeskChangeBody": {
+                    "type": "object",
+                    "required": ["action"],
+                    "description": (
+                        "R4 Helpdesk governed write — PREPARE the exact "
+                        "change; ACT via gpt_commit_proposal. Read the "
+                        "ticket first via gpt_helpdesk_read(action=ticket). "
+                        "Only fields relevant to the chosen action are "
+                        "consumed."
+                    ),
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": [
+                                "create_ticket",
+                                "set_assignee",
+                                "add_followup",
+                                "create_task",
+                                "add_solution",
+                                "request_validation",
+                                "accept_solution",
+                                "reject_solution",
+                                "submit_satisfaction",
+                                "accept_validation",
+                                "reject_validation",
+                            ],
+                        },
+                        "ticket_id": {
+                            "type": "integer",
+                            "description": "Required for all ticket-scoped actions.",
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "Required for create_ticket",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Required for create_ticket (HTML allowed)",
+                        },
+                        "category_id": {"type": "integer"},
+                        "urgency_id": {"type": "integer"},
+                        "observer_ids": {
+                            "type": "array",
+                            "items": {"type": "integer"},
+                        },
+                        "assignee_id": {
+                            "type": "integer",
+                            "description": "Optional initial assignee on create_ticket",
+                        },
+                        "user_id": {
+                            "type": "integer",
+                            "description": (
+                                "Required for set_assignee — real GLPI user id "
+                                "resolved via gpt_helpdesk_read catalog users "
+                                "purpose=assignee; never inferred."
+                            ),
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": (
+                                "Required for add_followup|add_solution|"
+                                "create_task; optional comment for decisions."
+                            ),
+                        },
+                        "request_type_id": {"type": "integer"},
+                        "solution_type_id": {"type": "integer"},
+                        "approver_type": {
+                            "type": "string",
+                            "enum": ["user", "group"],
+                        },
+                        "approver_id": {
+                            "type": "integer",
+                            "description": "Required for request_validation",
+                        },
+                        "validation_id": {
+                            "type": "integer",
+                            "description": "Required for accept_validation|reject_validation",
+                        },
+                        "satisfaction": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5,
+                            "description": "Required for submit_satisfaction",
+                        },
+                        "comment": {"type": "string"},
+                        "state": {"type": "integer"},
+                        "duration_seconds": {"type": "integer"},
+                        "task_category_id": {"type": "integer"},
+                        "user_tech_id": {"type": "integer"},
+                        "group_tech_id": {"type": "integer"},
+                        "planned_begin": {"type": "string"},
+                        "planned_end": {"type": "string"},
+                        "commit_now": {"type": "boolean", "default": False},
+                        "confirmation": {"type": "boolean", "default": False},
+                        "idempotency_key": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                    "example": {
+                        "action": "add_followup",
+                        "ticket_id": 123,
+                        "content": "Acompanhamento registrado pelo TÉO.",
                     },
                 },
                 "GptMeetingMinuteReadBody": {

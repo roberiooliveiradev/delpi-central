@@ -53,6 +53,7 @@ _COVERAGE_ANCHORS = (
     "gpt_collaboration_read",
     "gpt_prepare_collaboration_change",
     "gpt_helpdesk_read",
+    "gpt_prepare_helpdesk_change",
     "gpt_get_openapi_schema",
 )
 
@@ -69,7 +70,7 @@ def test_openapi_has_at_most_30_operations():
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) <= 30
     assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS)
-    assert count_operations(doc) == 20
+    assert count_operations(doc) == 21
 
 
 def test_openapi_operation_ids_unique_and_stable():
@@ -892,7 +893,7 @@ def test_openapi_includes_improvement_package():
         "/transformometro/gpt-actions/v1/governed-operations/prepare"
         in doc["paths"]
     )
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 20
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
 
 
 def test_openapi_validate_vs_commit_consequential_flags():
@@ -2022,7 +2023,7 @@ def test_analyze_instances_honors_processo_id():
 
 def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 20
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_analyze" in GPT_ACTIONS_OPERATION_IDS
     analysis = doc["paths"]["/transformometro/gpt-actions/v1/analysis"]["get"]
@@ -2150,7 +2151,7 @@ def test_openapi_all_write_actions_have_typed_examples():
 def test_openapi_validate_non_consequential_commit_consequential():
     """CASO 9–10: validate remains no-write/non-consequential; commit stays consequential."""
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 20
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
     validate = doc["paths"][
         "/transformometro/gpt-actions/v1/governed-operations/prepare"
     ]["post"]

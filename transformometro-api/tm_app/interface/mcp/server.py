@@ -30,6 +30,9 @@ from tm_app.application.governed_writes.orchestrator import (
     GOVERNED_OPERATION_ACTION_TO_CAPABILITY,
     MEETING_MINUTE_ACTION_TO_CAPABILITY,
 )
+from tm_app.application.helpdesk.helpdesk_write_capabilities import (
+    HELPDESK_ACTION_TO_CAPABILITY,
+)
 from tm_app.application.methodology.guide_v2 import (
     INTENT_IDS,
     SUPPORTED_GUIDE_VERSIONS,
@@ -61,6 +64,9 @@ _MinuteChangeActionParam = Literal[
 ]
 _GovernedOperationParam = Literal[
     tuple(sorted(GOVERNED_OPERATION_ACTION_TO_CAPABILITY))
+]
+_HelpdeskActionParam = Literal[
+    tuple(sorted(HELPDESK_ACTION_TO_CAPABILITY))
 ]
 _GuideVersionParam = Literal[tuple(sorted(SUPPORTED_GUIDE_VERSIONS))]
 _MethodIntentParam = Literal[tuple(sorted(INTENT_IDS))]
@@ -861,6 +867,93 @@ def create_mcp_server() -> MCPServer:
             problem_statement=problem_statement,
             provenance=provenance,
             payload=payload,
+        )
+
+    @mcp.tool(
+        name="prepare_helpdesk_change",
+        title="Prepare Helpdesk change",
+        description=(
+            "PREPARE only — never persists. Governed Helpdesk/GLPI writes "
+            "via the Helpdesk BFF (same-user Bearer; the BFF owns business "
+            "rules, idempotency and the GLPI side effect). "
+            "action=create_ticket (title, description, category_id, "
+            "urgency_id; optional assignee_id/observer_ids) | "
+            "set_assignee (ticket_id + user_id — resolve the target user "
+            "first via helpdesk_read catalog users purpose=assignee; never "
+            "infer an id) | add_followup (ticket_id + content; optional "
+            "request_type_id) | create_task (ticket_id + content; optional "
+            "state/duration_seconds/task_category_id/user_tech_id/"
+            "group_tech_id/planned_begin/planned_end) | add_solution "
+            "(ticket_id + content; optional solution_type_id) | "
+            "request_validation (ticket_id + approver_id; optional "
+            "approver_type=user|group, content) | accept_solution | "
+            "reject_solution (ticket_id; optional content) | "
+            "submit_satisfaction (ticket_id + satisfaction 1-5; optional "
+            "comment) | accept_validation | reject_validation (ticket_id + "
+            "validation_id; optional content). Read the ticket first via "
+            "helpdesk_read(action=ticket) — PREPARE seals a state "
+            "fingerprint and ACT refuses a stale proposal. Then "
+            "commit_proposal per proposal. execution_policy: create_ticket/"
+            "add_followup/create_task are auto_act; the rest require one "
+            "explicit user confirmation before commit_proposal. Binary "
+            "attachments are not available on this transport."
+        ),
+        annotations=_annotations(
+            "prepare_helpdesk_change", "Prepare Helpdesk change"
+        ),
+        meta=meta,
+    )
+    def prepare_helpdesk_change(
+        action: _HelpdeskActionParam,
+        ticket_id: int | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        category_id: int | None = None,
+        urgency_id: int | None = None,
+        observer_ids: list[int] | None = None,
+        assignee_id: int | None = None,
+        user_id: int | None = None,
+        content: str | None = None,
+        request_type_id: int | None = None,
+        solution_type_id: int | None = None,
+        approver_type: str | None = None,
+        approver_id: int | None = None,
+        validation_id: int | None = None,
+        satisfaction: int | None = None,
+        comment: str | None = None,
+        state: int | None = None,
+        duration_seconds: int | None = None,
+        task_category_id: int | None = None,
+        user_tech_id: int | None = None,
+        group_tech_id: int | None = None,
+        planned_begin: str | None = None,
+        planned_end: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_prepare_helpdesk_change(
+            action=action,
+            ticket_id=ticket_id,
+            title=title,
+            description=description,
+            category_id=category_id,
+            urgency_id=urgency_id,
+            observer_ids=observer_ids,
+            assignee_id=assignee_id,
+            user_id=user_id,
+            content=content,
+            request_type_id=request_type_id,
+            solution_type_id=solution_type_id,
+            approver_type=approver_type,
+            approver_id=approver_id,
+            validation_id=validation_id,
+            satisfaction=satisfaction,
+            comment=comment,
+            state=state,
+            duration_seconds=duration_seconds,
+            task_category_id=task_category_id,
+            user_tech_id=user_tech_id,
+            group_tech_id=group_tech_id,
+            planned_begin=planned_begin,
+            planned_end=planned_end,
         )
 
     # --- COMMON COMMIT (proposal_handle only; not a generic executor) -----

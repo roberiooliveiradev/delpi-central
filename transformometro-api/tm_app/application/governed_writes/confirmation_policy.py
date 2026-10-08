@@ -213,6 +213,61 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         "import_diagram_bpmn_xml",
         workflow_id="import_diagram_bpmn_xml",
     ),
+    # --- Helpdesk governed writes (BFF-owned; same-user Bearer) --------------
+    # Additive ticket creation — the user's request is the intent.
+    WritePolicyRecord(
+        "helpdesk.ticket.create", AUTO_ACT, "helpdesk_create_ticket"
+    ),
+    # Append-only technician note on an existing ticket.
+    WritePolicyRecord(
+        "helpdesk.followup.add", AUTO_ACT, "helpdesk_add_followup"
+    ),
+    # Additive task entry on an existing ticket.
+    WritePolicyRecord(
+        "helpdesk.task.create", AUTO_ACT, "helpdesk_create_task"
+    ),
+    # Reassigns responsibility for the ticket — consequential ownership change.
+    WritePolicyRecord(
+        "helpdesk.ticket.assign", CONFIRM_BEFORE_ACT, "helpdesk_set_assignee"
+    ),
+    # Proposes the ticket solution — lifecycle-relevant content.
+    WritePolicyRecord(
+        "helpdesk.solution.add", CONFIRM_BEFORE_ACT, "helpdesk_add_solution"
+    ),
+    # Requests approval from another actor — notifies external party.
+    WritePolicyRecord(
+        "helpdesk.validation.request",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_request_validation",
+    ),
+    # Requester decision on the offered solution (close/reopen path).
+    WritePolicyRecord(
+        "helpdesk.solution.accept",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_accept_solution",
+    ),
+    WritePolicyRecord(
+        "helpdesk.solution.reject",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_reject_solution",
+    ),
+    # Effectively irreversible single submission on a closed ticket.
+    WritePolicyRecord(
+        "helpdesk.satisfaction.submit",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_submit_satisfaction",
+    ),
+    # Approver decisions on a pending validation.
+    WritePolicyRecord(
+        "helpdesk.validation.accept",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_accept_validation",
+    ),
+    WritePolicyRecord(
+        "helpdesk.validation.reject",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_reject_validation",
+    ),
 )
 
 

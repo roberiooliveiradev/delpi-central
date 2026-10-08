@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.09.5",
+  "version": "2026.10.09.6",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -244,7 +244,8 @@
           "prepare_evidence_change",
           "prepare_meeting_minute_change",
           "prepare_collaboration_change",
-          "prepare_diagnostic_change"
+          "prepare_diagnostic_change",
+          "prepare_helpdesk_change"
         ],
         "rule": "não colapsar famílias apenas para reduzir contagem",
         "authority": "transformometro_domain_write_facade"
@@ -469,6 +470,33 @@
         ],
         "rule": "tickets podem iniciar descoberta de processo; tickets NÃO viram AS-IS canônico",
         "confidence": "marcar associação ticket→processo como inferência com grau alta|média|baixa (nome de processo/sistema explícito em vários tickets + metadados alinhados = alta; só wording genérico = baixa); nunca inferir ID de processo"
+      },
+      "HELPDESK_WRITE": {
+        "examples": [
+          "abra um chamado informando que o dashboard não carrega",
+          "adicione um acompanhamento no chamado 123",
+          "atribua o chamado 123 ao Robério",
+          "aceite a solução do chamado 456",
+          "registre minha satisfação no chamado 789"
+        ],
+        "route": [
+          "HELPDESK_DEMAND_GATE",
+          "helpdesk_read(action=ticket) — estado atual antes de mutar",
+          "catalogs relevantes (users purpose=assignee, categories, ...) — nunca inferir ids",
+          "prepare_helpdesk_change(action=...)",
+          "EXECUTION_CONTRACT_GATE",
+          "commit_proposal — único ACT",
+          "helpdesk_read(action=ticket) — read-back autoritativo",
+          "verify"
+        ],
+        "avoid": [
+          "methodology",
+          "solution_ecosystem",
+          "process_truth",
+          "demand_analysis"
+        ],
+        "rule": "PREPARE != ACT. can_* são orientação, não autorização — a BFF revalida no commit. O resultado só é declarado após read-back; mudança na proposta invalida confirmação anterior.",
+        "stop": "após verify, reportar o outcome exato (ex.: follow-up criado, assignee atualizado) — não continuar para outras writes nem análise sem novo pedido."
       }
     },
     "gates": {
@@ -889,6 +917,28 @@
         "compose with record_read/process/solution only when intent requires"
       ],
       "confirmation_policy": "read_only"
+    },
+    "helpdesk_governed_write": {
+      "gpt_operations": [
+        "gpt_helpdesk_read",
+        "gpt_prepare_helpdesk_change",
+        "gpt_commit_proposal"
+      ],
+      "mcp_tools": [
+        "helpdesk_read",
+        "prepare_helpdesk_change",
+        "commit_proposal"
+      ],
+      "pipeline": [
+        "helpdesk_read(action=ticket) current state before mutation",
+        "helpdesk_read(action=capabilities|catalog) when needed",
+        "prepare_helpdesk_change exact sealed change",
+        "policy gate via canonical confirmation_policy",
+        "commit_proposal sole ACT",
+        "helpdesk_read(action=ticket) authoritative read-back",
+        "verify expected postcondition"
+      ],
+      "confirmation_policy": "canonical_confirmation_policy_source"
     }
   }
 }

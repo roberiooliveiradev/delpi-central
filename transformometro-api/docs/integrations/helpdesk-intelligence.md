@@ -77,8 +77,9 @@ Python exception types are never exposed.
 
 ## 9. Read/write boundary
 
-V1 is read-only. Writes stay PREPARE/ACT candidates for R4 — no
-`prepare_helpdesk_change` exists yet.
+R4 introduces governed writes through the canonical PREPARE/ACT engine:
+`prepare_helpdesk_change` seals an exact change and `commit_proposal` is
+the sole ACT — see §20. No generic write surface exists.
 
 ## 10. Attachment boundary
 
@@ -99,12 +100,14 @@ Binary transport: `PLATFORM_BLOCKED` / out of scope.
 ## 12. Knowledge Orchestration role
 
 `helpdesk_demand` is a live source in `knowledge_orchestration`
-(`teo_agent_intelligence.json`) with `HELPDESK_DEMAND_GATE` and three
+(`teo_agent_intelligence.json`) with `HELPDESK_DEMAND_GATE` and four
 intents: `HELPDESK_DISCOVERY` (helpdesk_read only), `DEMAND_ANALYSIS`
 (helpdesk_read → evidence reasoning → extra sources only if needed),
 `DEMAND_TO_PROCESS` (helpdesk_read → record_read → get_process_context
 → methodology only if analytical work requires it → solution_read when
-digital solution is considered).
+digital solution is considered), and `HELPDESK_WRITE` (helpdesk_read
+current state → catalogs → `prepare_helpdesk_change` → policy gate →
+`commit_proposal` → authoritative read-back → verify).
 
 ## 13. Roadmap
 
@@ -113,7 +116,7 @@ digital solution is considered).
 | R1 Integration Contract V1 | this document | ACCEPT |
 | R2 Read Intelligence V1 | `helpdesk_read` + orchestration | ACCEPT / CLOSED — see §19 |
 | R3 Demand Intelligence V1 | recurrence/discovery composition — zero new tools | ACCEPT / CLOSED — see §19 |
-| R4 Governed Writes V1 | `prepare_helpdesk_change` + `commit_proposal`, idempotency bound to proposal, BFF revalidation, read-back | PLANNED |
+| R4 Governed Writes V1 | `prepare_helpdesk_change` + `commit_proposal`, idempotency bound to proposal, BFF revalidation, read-back | IMPLEMENTED — see §20 (live GLPI-write acceptance pending user OAuth link) |
 | R5 Helpdesk ↔ TM Link | relationship metadata only (source_system=glpi), never ticket copy — Abstraction Gate first | TO_INVENTORY |
 | R6 Backlog Intelligence | only if paginated reads prove inadequate; projection lives in the BFF, never a TÉO cache | TARGET |
 
@@ -333,3 +336,116 @@ R3 closeout does NOT authorize Helpdesk writes (follow-up, assignment,
 task, solution, approval, validation, satisfaction stay in R4 — PLANNED).
 R5 (persistent ticket↔process metadata) stays TO_INVENTORY; R6 (backlog
 aggregation) stays TARGET — no implementation performed for either.
+
+## 20. R4 — Governed Helpdesk Writes V1
+
+Status: **IMPLEMENTED** (contract + unit/integration evidence below; live
+GLPI-write acceptance pending — see Live acceptance gate).
+
+### Architecture
+
+```text
+TÉO
+→ prepare_helpdesk_change   (closed action enum; PREPARE never writes)
+→ GovernedWriteOrchestrator (canonical proposal engine — unchanged)
+→ commit_proposal           (sole ACT choke point — unchanged)
+→ HelpdeskWritePort         (application contract)
+→ HelpdeskBffGateway        (same-user Bearer forward; BFF owns OAuth,
+                             idempotency and the GLPI side effect)
+→ GET /tickets/{id}         (authoritative read-back)
+→ verify expected postcondition
+```
+
+`PREPARE != ACT` · `request != authorization` · `confirmation !=
+authorization` · `2xx != business outcome`.
+
+### Write capability matrix
+
+| Operation | BFF route | can_* | Idempotent | Read-back | Policy | R4 V1 |
+|---|---|---|---|---|---|---|
+| create_ticket | `POST /tickets` | — (can_assign if assignee) | `Idempotency-Key` | `GET /tickets/{id}` | AUTO_ACT | IMPLEMENT |
+| set_assignee | `PUT /tickets/{id}/assignee` | can_assign | yes | `assigned_user_id` | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| add_followup | `POST /tickets/{id}/followups` | can_followup | yes | timeline id+kind | AUTO_ACT | IMPLEMENT |
+| create_task | `POST /tickets/{id}/tasks` | can_create_task | yes | timeline id+kind | AUTO_ACT | IMPLEMENT |
+| add_solution | `POST /tickets/{id}/solutions` | can_create_solution | yes | timeline id+kind | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| request_validation | `POST /tickets/{id}/validations` | can_request_approval | yes | validations[].id | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| accept_solution | `POST /tickets/{id}/solution/accept` | can_accept_solution | yes | status_id | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| reject_solution | `POST /tickets/{id}/solution/reject` | can_reject_solution | yes | status_id | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| submit_satisfaction | `PUT /tickets/{id}/satisfaction` | can_submit_satisfaction | yes | satisfaction | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| accept_validation | `POST /tickets/{id}/validations/{vid}/accept` | can_decide_validation + mine_to_decide | yes | validations[].status | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| reject_validation | `POST /tickets/{id}/validations/{vid}/reject` | can_decide_validation + mine_to_decide | yes | validations[].status | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| attachments | `POST /tickets/{id}/attachments` | — | multipart | — | — | OUT_OF_SCOPE_V1 (binary transport not exposed to TÉO) |
+
+All ticket-scoped operations require `ticket_id`; PREPARE reads the
+current ticket through the BFF first (`current_state_read`) and seals a
+relevant-field fingerprint (`ticket_id`, `status_id`,
+`assigned_user_id`, `updated_at`, + target validation state when
+deciding). `can_*` flags are early UX/validation guidance only — the BFF
+revalidates on commit; `can_*` false makes the proposal `ready=false`,
+never widens authority.
+
+### Idempotency
+
+ACT sends `Idempotency-Key: teo-<proposal_id>` — proposal-bound,
+deterministic. Same proposal + retry reaches the BFF under the same key;
+the BFF's canonical idempotency store dedupes the business effect. The
+key never appears in the public proposal payload or logs. BFF caveat:
+its store dedupes by (subject, operation, key) without payload-hash
+conflict detection — recorded as owner-side behavior, not widened here.
+
+### Read-back / postconditions
+
+- `create_ticket`: `GET /tickets/{returned_id}` must exist — 2xx without
+  read-back is not success.
+- `set_assignee`: `ticket.assigned_user_id == target`.
+- `add_followup`/`create_task`/`add_solution`: returned entry id present
+  in authoritative `timeline[]` with matching `kind`.
+- `request_validation`: returned id present in `validations[]`.
+- `accept/reject_solution`: `ticket.status_id` equals the BFF-returned
+  post-decision status.
+- `submit_satisfaction`: `ticket.satisfaction == submitted score`.
+- `accept/reject_validation`: `validations[].status == 3|4` as returned.
+
+Any read-back mismatch raises `OUTCOME_VERIFICATION_FAILED` — the
+outcome is never reported as done on 2xx alone.
+
+### Security / AuthZ
+
+Same-user Bearer is forwarded unchanged end-to-end (MCP rebuilds the
+request with `context.authorization`; GPT Actions pass the HTTP header).
+No service account, no technical GLPI credentials from the
+Transformômetro side, no direct GLPI client, no ticket mirror/cache, no
+duplicate RBAC. The BFF-internal legacy GLPI paths (solution decision,
+satisfaction) remain BFF-owned exceptions — TÉO only ever sees the BFF
+contract.
+
+### Tool surface
+
+MCP 22 → 23 (`prepare_helpdesk_change`); GPT 20 → 21
+(`gpt_prepare_helpdesk_change`); `commit_proposal` stays the single ACT.
+Registry-derived parity; `HELPDESK_WRITE` added to
+`teo_agent_intelligence.json` (`2026.10.09.6`).
+
+### Evidence
+
+- `tests/test_teo_helpdesk_write.py` — 30 tests: PREPARE never writes,
+  closed action enum, can_* guidance, policy classification
+  (AUTO_ACT/CONFIRM_BEFORE_ACT), confirmation gate, proposal-bound
+  idempotency key, consumed-proposal rejection, stale-state blocking,
+  per-operation read-back verification, `OUTCOME_VERIFICATION_FAILED`
+  on 2xx/read-back mismatch, typed `glpi_link_required` propagation,
+  multi-action chain on authoritative returned id.
+- Surface/parity/orchestration pins updated: MCP 23, GPT 21.
+
+### Live acceptance gate
+
+Pending: the dev Helpdesk BFF points at the production GLPI via OAuth
+(`helpdesk.centraldelpi.com.br`) and the authenticated user currently has
+no linked GLPI session (`linked: false` —
+`glpi_link_required` + `authorize_url` propagated typed end-to-end, which
+itself verified the live Bearer/error path). `GLPI_OAUTH_CLIENT_ID`/
+`SECRET` are empty in the dev env, so the link must be completed
+interactively once credentials are configured. The acceptance script
+(`tmp-teo-write/r4_accept.py` flow: create → follow-up+retry → task →
+confirm-before-act set_assignee) is ready to run the moment a session
+exists.

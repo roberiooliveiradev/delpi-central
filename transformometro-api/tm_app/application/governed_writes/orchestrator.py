@@ -52,6 +52,16 @@ from tm_app.application.gpt_actions.improvement_package_service import (
 from tm_app.application.gpt_actions.parity_capabilities_service import (
     MEETING_MINUTE_READ_ACTION_VALUES,
 )
+from tm_app.application.helpdesk.helpdesk_write_capabilities import (
+    HELPDESK_CAPABILITIES as _HELPDESK_CAPS,
+)
+from tm_app.application.helpdesk.helpdesk_write_capabilities import (
+    prepare as _hd_prepare,
+    recompute_fingerprint as _hd_recompute_fingerprint,
+    execute as _hd_execute,
+    verify as _hd_verify,
+)
+from tm_app.application.helpdesk.helpdesk_write_port import HelpdeskWriteStack
 from tm_app.core.auth_actor import actor_from_request
 
 logger = logging.getLogger(__name__)
@@ -91,6 +101,9 @@ WRITE_CAPABILITIES = frozenset(
         "update_signature_profile",
         "import_diagram_bpmn_xml",
     }
+    # R4 Governed Helpdesk Writes — one capability per BFF write
+    # operation; policy stays per-capability.
+    | _HELPDESK_CAPS
 )
 
 # Transformômetro task capabilities (Portal parity — TaskCommandUseCases).
@@ -243,12 +256,15 @@ class GovernedWriteOrchestrator:
         dispatch: GptActionsDispatchService | None = None,
         packages: GuidedImprovementPackageService | None = None,
         diagnostic_stack: DiagnosticWriteStack | None = None,
+        helpdesk_stack: HelpdeskWriteStack | None = None,
     ) -> None:
         self._dispatch = dispatch or GptActionsDispatchService()
         self._packages = packages or GuidedImprovementPackageService(self._dispatch)
         # Canonical Diagnostic write path — composed at the interface layer
         # (application never instantiates infrastructure).
         self._diagnostic_stack = diagnostic_stack
+        # Canonical Helpdesk BFF write path — composed at the interface layer.
+        self._helpdesk_stack = helpdesk_stack
 
     # ------------------------------------------------------------------ prepare
 
@@ -349,6 +365,13 @@ class GovernedWriteOrchestrator:
             return self._prep_interaction_room(
                 request, capability=capability, args=args
             )
+        if capability in _HELPDESK_CAPS:
+            return _hd_prepare(
+                self._require_helpdesk_stack(),
+                self._bearer(request),
+                capability=capability,
+                args=args,
+            )
         raise GovernedWriteError(
             f"Prepare not implemented for '{capability}'.",
             code=VALIDATION,
@@ -363,6 +386,20 @@ class GovernedWriteOrchestrator:
                 status_code=500,
             )
         return self._diagnostic_stack
+
+    def _require_helpdesk_stack(self) -> HelpdeskWriteStack:
+        if self._helpdesk_stack is None:
+            raise GovernedWriteError(
+                "Helpdesk write stack not configured.",
+                code=INTERNAL,
+                status_code=500,
+            )
+        return self._helpdesk_stack
+
+    @staticmethod
+    def _bearer(request: Request) -> str:
+        """Same-user Bearer forward — never a service/technical token."""
+        return str(request.headers.get("authorization") or "").strip()
 
     # --- Portal parity: tasks / interaction room ---------------------------
     # PREPARE only reads current state and seals the exact change — the
@@ -1141,6 +1178,10 @@ class GovernedWriteOrchestrator:
                     request, str(change["room_id"]), str(change["message_id"])
                 )
             )
+        if cap in _HELPDESK_CAPS:
+            return _hd_recompute_fingerprint(
+                self._require_helpdesk_stack(), self._bearer(request), change
+            )
         raise GovernedWriteError(
             "Fingerprint recompute unsupported.",
             code=VALIDATION,
@@ -1244,6 +1285,10 @@ class GovernedWriteOrchestrator:
             )
         if cap in (_DIAG_CREATE, _DIAG_MANAGE):
             return _diag_execute(self._require_diag_stack(), change)
+        if cap in _HELPDESK_CAPS:
+            return _hd_execute(
+                self._require_helpdesk_stack(), self._bearer(request), proposal
+            )
         raise GovernedWriteError(
             f"ACT not implemented for '{cap}'.",
             code=VALIDATION,
@@ -1449,6 +1494,14 @@ class GovernedWriteOrchestrator:
             # write_result is the authoritative DiagnosticReadView returned
             # by the canonical use case — verify it matches the sealed change.
             return _diag_verify(change, write_result)
+
+        if cap in _HELPDESK_CAPS:
+            return _hd_verify(
+                self._require_helpdesk_stack(),
+                self._bearer(request),
+                proposal,
+                write_result,
+            )
 
         return {"write_result": write_result, "expected": expected}
 

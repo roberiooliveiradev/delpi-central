@@ -73,6 +73,12 @@ from tm_app.application.gpt_actions.workspace_context_service import (
 from tm_app.application.helpdesk.helpdesk_read_service import (
     HelpdeskReadService,
 )
+from tm_app.application.helpdesk.helpdesk_write_capabilities import (
+    HELPDESK_ACTION_TO_CAPABILITY,
+)
+from tm_app.infrastructure.helpdesk_composition import (
+    build_helpdesk_write_stack,
+)
 from tm_app.application.solutions.solution_catalog_service import (
     SolutionCatalogService,
 )
@@ -104,6 +110,7 @@ _orchestrator = GovernedWriteOrchestrator(
     _dispatch,
     _packages,
     diagnostic_stack=_diagnostic_stack,
+    helpdesk_stack=build_helpdesk_write_stack(),
 )
 _governed = GovernedActionsFacade(orchestrator=_orchestrator, dispatch=_dispatch)
 _process_context = ProcessContextService()
@@ -1193,6 +1200,76 @@ def tool_prepare_collaboration_change(
             "parent_id": parent_id,
             "mentions": mentions,
             "reaction": reaction,
+        },
+    )
+
+
+def tool_prepare_helpdesk_change(
+    action: str,
+    ticket_id: int | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    category_id: int | None = None,
+    urgency_id: int | None = None,
+    observer_ids: list[int] | None = None,
+    assignee_id: int | None = None,
+    user_id: int | None = None,
+    content: str | None = None,
+    request_type_id: int | None = None,
+    solution_type_id: int | None = None,
+    approver_type: str | None = None,
+    approver_id: int | None = None,
+    validation_id: int | None = None,
+    satisfaction: int | None = None,
+    comment: str | None = None,
+    state: int | None = None,
+    duration_seconds: int | None = None,
+    task_category_id: int | None = None,
+    user_tech_id: int | None = None,
+    group_tech_id: int | None = None,
+    planned_begin: str | None = None,
+    planned_end: str | None = None,
+) -> CallToolResult:
+    """PREPARE only — Helpdesk writes go through the Helpdesk BFF with the
+    same-user Bearer; ACT stays on commit_proposal. Binary attachments are
+    not exposed on this surface."""
+    action_norm = str(action or "").strip().lower()
+    capability = HELPDESK_ACTION_TO_CAPABILITY.get(action_norm)
+    if capability is None:
+        return _error_result(
+            f"Unknown helpdesk action '{action_norm}'. Allowed: "
+            f"{sorted(HELPDESK_ACTION_TO_CAPABILITY)}.",
+            status_code=400,
+            error_code="validation",
+        )
+    return _prepare(
+        capability,
+        {
+            "ticket_id": ticket_id,
+            "title": title,
+            "description": description,
+            "category_id": category_id,
+            "urgency_id": urgency_id,
+            "observer_ids": observer_ids,
+            "assignee_id": assignee_id,
+            "user_id": user_id,
+            "content": content,
+            "request_type_id": request_type_id,
+            "solution_type_id": solution_type_id,
+            "approver_type": approver_type,
+            "approver_id": approver_id,
+            "validation_id": validation_id,
+            "satisfaction": satisfaction,
+            "comment": comment,
+            "state": state,
+            "duration_seconds": duration_seconds,
+            # Task body uses the BFF's own field names; task_category_id is
+            # the transport alias to avoid ambiguity with ticket category_id.
+            "category_id_task": task_category_id,
+            "user_tech_id": user_tech_id,
+            "group_tech_id": group_tech_id,
+            "planned_begin": planned_begin,
+            "planned_end": planned_end,
         },
     )
 

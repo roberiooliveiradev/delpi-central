@@ -17,6 +17,7 @@ import httpx
 
 from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.application.helpdesk.helpdesk_read_port import HelpdeskReadPort
+from tm_app.application.helpdesk.helpdesk_write_port import HelpdeskWritePort
 from tm_app.infrastructure.gateways.core_workspace_context_gateway import (
     WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
 )
@@ -59,8 +60,13 @@ _ERROR_KIND_BY_HTTP_STATUS = {
 }
 
 
-class HelpdeskBffGateway(HelpdeskReadPort):
-    """Read-only Helpdesk BFF adapter — Bearer forward, bounded timeout."""
+class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort):
+    """Helpdesk BFF adapter — Bearer forward, bounded timeout.
+
+    Writes follow the same contract as reads: the user's own Bearer plus a
+    proposal-bound ``Idempotency-Key``; the BFF owns business validation,
+    idempotency replay and every GLPI side effect.
+    """
 
     def _get(
         self, path: str, authorization: str, params: dict[str, Any] | None = None
@@ -92,7 +98,54 @@ class HelpdeskBffGateway(HelpdeskReadPort):
                 502,
                 {"error_kind": "upstream_unavailable"},
             ) from exc
-        if response.status_code == 200:
+        return self._expect_json(response, ok_statuses=(200,))
+
+    def _write(
+        self,
+        method: str,
+        path: str,
+        authorization: str,
+        *,
+        json_body: dict[str, Any] | None = None,
+        idempotency_key: str,
+    ) -> Any:
+        if not authorization or not str(authorization).strip():
+            raise GptActionsError(
+                "Usuário não autenticado.", 401, {"error_kind": "authn"}
+            )
+        url = f"{HELPDESK_API_URL.rstrip('/')}{path}"
+        timeout = httpx.Timeout(
+            WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+            connect=WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+        )
+        headers = {
+            "Authorization": authorization,
+            # Proposal-bound deterministic key — the BFF replay store owns
+            # duplicate suppression for same-key retries.
+            "Idempotency-Key": idempotency_key,
+        }
+        try:
+            with httpx.Client(timeout=timeout) as client:
+                response = client.request(
+                    method, url, json=json_body or {}, headers=headers
+                )
+        except httpx.RequestError as exc:
+            logger.warning(
+                "helpdesk_bff_unavailable helpdesk_api_url=%s err=%s",
+                HELPDESK_API_URL,
+                exc,
+            )
+            raise GptActionsError(
+                "Helpdesk indisponível.",
+                502,
+                {"error_kind": "upstream_unavailable"},
+            ) from exc
+        return self._expect_json(response, ok_statuses=(200, 201))
+
+    def _expect_json(
+        self, response: httpx.Response, *, ok_statuses: tuple[int, ...]
+    ) -> Any:
+        if response.status_code in ok_statuses:
             return response.json()
         try:
             body = response.json()
@@ -163,3 +216,152 @@ class HelpdeskBffGateway(HelpdeskReadPort):
             if limit is not None:
                 params["limit"] = int(limit)
         return self._get(path, authorization, params=params)
+
+    # --- Governed writes (R4) ------------------------------------------------
+    # Every write forwards the same-user Bearer + the proposal-bound
+    # Idempotency-Key; the BFF enforces business rules, idempotency and the
+    # GLPI side effect. Response carries the stable ids used for read-back.
+
+    def create_ticket(
+        self,
+        authorization: str,
+        body: dict[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "POST", "/tickets", authorization,
+            json_body=body, idempotency_key=idempotency_key,
+        )
+
+    def set_assignee(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        user_id: int,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "PUT", f"/tickets/{int(ticket_id)}/assignee", authorization,
+            json_body={"user_id": int(user_id)}, idempotency_key=idempotency_key,
+        )
+
+    def add_followup(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        content: str,
+        request_type_id: int | None,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {"content": content}
+        if request_type_id is not None:
+            body["request_type_id"] = int(request_type_id)
+        return self._write(
+            "POST", f"/tickets/{int(ticket_id)}/followups", authorization,
+            json_body=body, idempotency_key=idempotency_key,
+        )
+
+    def create_task(
+        self,
+        authorization: str,
+        ticket_id: int,
+        body: dict[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "POST", f"/tickets/{int(ticket_id)}/tasks", authorization,
+            json_body=body, idempotency_key=idempotency_key,
+        )
+
+    def add_solution(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        content: str,
+        solution_type_id: int | None,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {"content": content}
+        if solution_type_id is not None:
+            body["solution_type_id"] = int(solution_type_id)
+        return self._write(
+            "POST", f"/tickets/{int(ticket_id)}/solutions", authorization,
+            json_body=body, idempotency_key=idempotency_key,
+        )
+
+    def request_validation(
+        self,
+        authorization: str,
+        ticket_id: int,
+        body: dict[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "POST", f"/tickets/{int(ticket_id)}/validations", authorization,
+            json_body=body, idempotency_key=idempotency_key,
+        )
+
+    def decide_solution(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        decision: str,
+        content: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        if decision not in ("accept", "reject"):
+            raise GptActionsError(
+                f"solution decision inválida: {decision!r}.",
+                400,
+                {"error_kind": "validation", "error_code": "INVALID_DECISION"},
+            )
+        return self._write(
+            "POST", f"/tickets/{int(ticket_id)}/solution/{decision}",
+            authorization,
+            json_body={"content": content}, idempotency_key=idempotency_key,
+        )
+
+    def submit_satisfaction(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        satisfaction: int,
+        comment: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "PUT", f"/tickets/{int(ticket_id)}/satisfaction", authorization,
+            json_body={"satisfaction": int(satisfaction), "comment": comment},
+            idempotency_key=idempotency_key,
+        )
+
+    def decide_validation(
+        self,
+        authorization: str,
+        ticket_id: int,
+        validation_id: int,
+        *,
+        decision: str,
+        content: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        if decision not in ("accept", "reject"):
+            raise GptActionsError(
+                f"validation decision inválida: {decision!r}.",
+                400,
+                {"error_kind": "validation", "error_code": "INVALID_DECISION"},
+            )
+        return self._write(
+            "POST",
+            f"/tickets/{int(ticket_id)}/validations/{int(validation_id)}/{decision}",
+            authorization,
+            json_body={"content": content}, idempotency_key=idempotency_key,
+        )
