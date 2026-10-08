@@ -413,7 +413,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** bloco projetado em `get_catalog` (ambos transportes), test report.
 - **DEPENDENCIES:** PHASE 0.
 - **STOP CONDITIONS:** se exigir nova tool ou mudança de dispatch → STOP → Architecture.
-- **STATUS:** READY_FOR_EXECUTION — os 6 critérios do readiness gate foram provados em §27.15 (2026-10-08). Implementação exige execution brief dedicado com `ROADMAP_PHASE = PHASE_1_KNOWLEDGE_ORCHESTRATION_V1`.
+- **STATUS:** DONE — implementado e verificado em §28 (2026-10-08); `knowledge_orchestration` vive na autoridade única `vista_agent_intelligence.json`, projeção MCP full / Actions compact, parity PASS, budget PASS, zero tools novas.
 
 ### PHASE 2 — TV PRODUCT GUIDE V1
 
@@ -854,3 +854,40 @@ Nenhum CONTRACT_DRIFT ou EXECUTION_DRIFT encontrado. Escopos distintos não fora
 ### 27.16 Checks executados
 
 `pytest test_vista_unified_boundary test_mcp_platform_conformance test_vista_mcp_read_surface test_vista_mcp_write_surface test_gpt_actions_catalog_budget test_vista_ready_slide_corpus_gate test_vista_builder_instructions_budget test_vista_agent_intelligence` → **126 passed**. Zero mudança de runtime; nenhum teste enfraquecido.
+
+---
+
+
+---
+
+## 28. PHASE 1 — EXECUTION RECORD (Knowledge Orchestration V1, 2026-10-08)
+
+> Executado por `VISTA-KIC-V1-PHASE-1-KNOWLEDGE-ORCHESTRATION`. Mudança bounded de inteligência: declarativa + projeção existente; zero novas tools/ops/autoridades.
+
+### 28.1 Implementação
+
+- **FIX_STRATEGY = BOUNDED_PROJECTION** — `agent_directives()` projeta o documento por chave explícita, então a nova seção exigiu uma linha de projeção (`NEEDS_PROJECTION_ONLY`), não plumbing novo.
+- `vista_agent_intelligence.json` ganhou `knowledge_orchestration` (principle `ROUTE_TO_SMALLEST_SUFFICIENT_TRUTH_SET`): 11 source families, precedence ladder (9 regras), routing de 9 intents com required/conditional/optional/avoid/stop/sequence/branches + referências a famílias de diretivas existentes (zero duplicação de corpos), 8 gates, composition_order, sufficiency, gap_handling (vocabulário UNKNOWN/TO_INVENTORY/PARTIAL/UNAVAILABLE_IN_CURRENT_SURFACE/UNSUPPORTED), epistemology (9 regras `IS_NOT`), forbidden (9 anti-padrões).
+- Version bump: `2026.09.28.3` → `2026.10.08.1`.
+- Projeção: `vista_agent_intelligence_service.py` — `knowledge_orchestration` projetada em ambos transportes; `_compact_orchestration_for_actions` reduz a Actions para `{principle, precedence, routing.required}` por budget (~100 KiB); MCP recebe o bloco completo. Mesma fonte semântica.
+- Formato evitado na fonte: `!=` era destruído pelo neutralizador MCP (espaço antes de `!`) → vocabulário `IS_NOT` adotado nas regras epistêmicas.
+
+### 28.2 Status das famílias gated (honesto por fase)
+
+`product_usage` = PARTIAL (PHASE 2) · `design_methodology` = PARTIAL (PHASE 5) · `solution_ecosystem` = UNAVAILABLE_IN_CURRENT_SURFACE (PHASE 6) · `history` = UNAVAILABLE_IN_CURRENT_SURFACE (PHASE 9).
+
+### 28.3 Evidência
+
+- `tests/test_vista_knowledge_orchestration.py` (novo, 11 testes): seções requeridas, famílias, statuses, precedence, routing matrix (eval fixture — famílias requeridas por intent), resolução de refs de diretivas contra o documento, gates, sufficiency, gap vocabulary, sequência governada da mutação, ausência de `gpt_*` na projeção MCP, não-duplicação de corpos.
+- Gate completo: `pytest test_vista_knowledge_orchestration test_vista_agent_intelligence test_vista_unified_boundary test_mcp_platform_conformance test_vista_mcp_read_surface test_vista_mcp_write_surface test_gpt_actions_catalog_budget test_vista_ready_slide_corpus_gate test_vista_builder_instructions_budget test_presentation_suggest_ops_service` → **206 passed**.
+- Budget: envelope Actions voltou abaixo de 102400 com headroom ≥ 4 KiB via compactação — limite não alterado.
+- Residual search: zero import TÉO runtime, zero tools/ops novas, refs de diretivas válidas.
+
+### 28.4 Residuals
+
+- Actions carrega a forma compacta (required families + precedence); gates/sufficiency/epistemology completas são MCP-primary — mesma fonte, projeção assimétrica já prevista pelo mecanismo existente.
+- Orquestração é guidance declarativa para o especialista; não há enforcement runtime (fora do escopo — PHASE 7 avalia outcome).
+
+### 28.5 Efeito downstream
+
+Dependência P1 satisfeita → P5 (Design Methodology) e P6 (Data+Solution) permanecem READY_FOR_DIAGNOSTIC — requerem diagnóstico próprio antes de execução.

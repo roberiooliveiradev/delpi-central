@@ -79,6 +79,29 @@ def _neutralize_for_mcp(node: Any, *, _skip_keys: frozenset = frozenset({"surfac
     return node
 
 
+def _compact_orchestration_for_actions(node: Any) -> Any:
+    """Actions-budget projection of ``knowledge_orchestration`` (same semantic
+    source; MCP keeps the full block). The ~100 KiB OpenAI envelope leaves
+    room only for the minimal sufficient contract: the routing principle,
+    the precedence ladder, and the required source families per intent.
+    Gates/sufficiency/gap/epistemology prose stays MCP-primary — semantics
+    remain single-sourced in the document, not divergent per transport."""
+    if not isinstance(node, dict):
+        return node
+    routing = node.get("routing")
+    return {
+        "principle": node.get("principle"),
+        "precedence": node.get("precedence") or [],
+        "routing": {
+            intent: {"required": route.get("required") or []}
+            for intent, route in routing.items()
+            if isinstance(route, dict)
+        }
+        if isinstance(routing, dict)
+        else {},
+    }
+
+
 def _compact_for_actions(node: Any, *, key: str | None = None) -> Any:
     """Drop example/summary blobs; keep directive contracts for Actions budget."""
     if isinstance(node, dict):
@@ -139,6 +162,9 @@ class VistaAgentIntelligenceService:
                 "They override stale Builder Knowledge for mutation behavior."
             ),
             "execution_posture": doc.get("execution_posture") or {},
+            # Knowledge Orchestration V1 — routing/gates metadata shared by
+            # both transports (KIC-V1 PHASE 1); declarative, no runtime engine.
+            "knowledge_orchestration": doc.get("knowledge_orchestration") or {},
             "actions_runtime": doc.get("actions_runtime") or {},
             "continuous_review": doc.get("continuous_review") or {},
             "visual_impact": doc.get("visual_impact") or {},
@@ -194,6 +220,9 @@ class VistaAgentIntelligenceService:
             if isinstance(write_flow, dict):
                 write_flow.pop("surface", None)
                 write_flow.pop("note", None)
+            raw["knowledge_orchestration"] = _compact_orchestration_for_actions(
+                raw.get("knowledge_orchestration")
+            )
         else:
             # MCP never receives Actions-envelope semantics: surface/note/
             # additive/destructive label or describe gpt_* operations and

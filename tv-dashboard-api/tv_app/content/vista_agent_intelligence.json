@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.28.3",
+  "version": "2026.10.08.1",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -22,6 +22,212 @@
       "Tratar silêncio do modelo como prova de que a API DELPI está offline",
       "Substituir write tipado por tutorial do editor quando Actions existem",
       "Dizer 'o caminho está definido' / 'quando o conector voltar' em vez de tentar a Action agora"
+    ]
+  },
+  "knowledge_orchestration": {
+    "principle": "ROUTE_TO_SMALLEST_SUFFICIENT_TRUTH_SET",
+    "summary": "Classificar a intenção, resolver apenas as fontes de verdade requeridas, aplicar os gates exigidos e parar quando a evidência for suficiente — nunca misturar todas as diretivas/fontes para toda pergunta.",
+    "sources": {
+      "editor_context": {
+        "purpose": "Onde/o que o usuário está editando ou selecionando agora.",
+        "reads": ["get_playlist_context → editorFocus (selectedIds, focusedBinding, blockIndex)"],
+        "authority": "GROUNDING_CONTEXT",
+        "never": ["authorization", "mutation authority", "prova de que seleção stale é atual"]
+      },
+      "presentation_truth": {
+        "purpose": "Estado real de playlist/slides/blocos/filtros/DataModel.",
+        "reads": ["get_playlist_context", "inspect_data_model"],
+        "authority": "TV Dashboard domain state"
+      },
+      "execution_contract": {
+        "purpose": "Capabilities, typed ops e políticas de confirmação válidas agora.",
+        "reads": ["get_catalog"],
+        "authority": "LIVE_CAPABILITY_CONTRACT — catálogo vivo > instruções lembradas"
+      },
+      "data_contract": {
+        "purpose": "Rotas de dados DELPI aprovadas, params e semântica.",
+        "reads": ["search_data_routes", "catálogo de rotas derivado do OpenAPI"],
+        "authority": "api-delpi / OpenAPI owner contract",
+        "note": "search result IS_NOT universo completo; 0 resultados IS_NOT ausência"
+      },
+      "data_runtime": {
+        "purpose": "O que dados candidatos/persistidos realmente retornam.",
+        "reads": ["preview_data_block", "preview_data_model", "inspect_data_model (runtime)"],
+        "authority": "RUNTIME_EVIDENCE — contract allows IS_NOT runtime returned"
+      },
+      "visual_evidence": {
+        "purpose": "O que pode ser provado visualmente.",
+        "reads": ["canonical_stage (editor vivo)", "layoutDigest", "designAudit"],
+        "authority": "EVIDENCE_LADDER — pixels do canonical_stage > schematic para claims de pixel; schematic prova estrutura, não pixels renderizados; falha de entrega no host = inspeção de pixel NOT RUN"
+      },
+      "mutation": {
+        "purpose": "Proposta tipada + escrita governada.",
+        "reads": ["suggest_change", "prepare_change", "commit_proposal"],
+        "authority": "PresentationMutation boundary"
+      },
+      "product_usage": {
+        "status": "PARTIAL",
+        "purpose": "Como usar o produto (guias dedicados).",
+        "reads": ["diretivas live/estáveis existentes", "execution_contract quando semântica de capability importa"],
+        "note": "Product Guide dedicado = PHASE 2; não fingir que existe"
+      },
+      "design_methodology": {
+        "status": "PARTIAL",
+        "purpose": "Lente de decisão visual/design.",
+        "reads": ["design_intelligence", "visual_selection", "visual_impact", "presentation_recipes", "layout_perception"],
+        "note": "metodologia de readiness = PHASE 5; guidance IS_NOT estado salvo"
+      },
+      "solution_ecosystem": {
+        "status": "UNAVAILABLE_IN_CURRENT_SURFACE",
+        "purpose": "Conhecimento de outras soluções DELPI.",
+        "owner": "Core API",
+        "note": "integração = PHASE 6; ausência no catálogo TV IS_NOT ausência de solução"
+      },
+      "history": {
+        "status": "UNAVAILABLE_IN_CURRENT_SURFACE",
+        "purpose": "Histórico/versões da playlist.",
+        "owner": "PlaylistHistory domain (PROVEN), surface VISTA ausente",
+        "note": "superfície de leitura para o agente = PHASE 9"
+      }
+    },
+    "precedence": [
+      "CURRENT_PRESENTATION_STATE > PRODUCT_GUIDANCE",
+      "LIVE_EXECUTION_CONTRACT > STATIC_INSTRUCTIONS",
+      "API_DELPI_OPENAPI_CONTRACT > DERIVED_TV_DATA_DOCUMENTATION",
+      "RUNTIME_PREVIEW > ASSUMED_DATA_SHAPE",
+      "AUTHORITATIVE_READ_BACK > TECHNICAL_2XX",
+      "CANONICAL_STAGE_PIXELS > SCHEMATIC_PIXEL_CLAIMS",
+      "EDITOR_CONTEXT = GROUNDING_HINT IS_NOT AUTHORIZATION",
+      "DESIGN_GUIDANCE = DECISION_LENS IS_NOT SAVED_STATE",
+      "SEARCH_MISS IS_NOT PROOF_OF_ABSENCE"
+    ],
+    "routing": {
+      "SIMPLE_PRESENTATION_READ": {
+        "examples": ["Qual é o título deste slide?", "Quantos blocos existem?", "Qual filtro está aplicado?"],
+        "required": ["presentation_truth"],
+        "conditional": ["editor_context quando referência deíctica"],
+        "avoid": ["design_methodology", "data_contract", "solution_ecosystem", "mutation"],
+        "stop": "após presentation_truth autoritativa",
+        "directives": ["editor_focus"]
+      },
+      "PRODUCT_USAGE": {
+        "examples": ["Como funcionam os filtros?", "Qual a diferença entre fonte e DataModel?"],
+        "required": ["product_usage"],
+        "optional": ["execution_contract"],
+        "avoid": ["mutation", "data_runtime"],
+        "stop": "após guidance suficiente",
+        "note": "PRODUCT_USAGE_SOURCE = PARTIAL até PHASE 2",
+        "directives": ["modes", "data_model"]
+      },
+      "DESIGN_REVIEW": {
+        "examples": ["Melhore este slide", "Esse gráfico é adequado?", "Deixe mais impactante para TV"],
+        "required": ["presentation_truth", "design_methodology"],
+        "optional": ["data_runtime (quando o visual depende da forma do dado)", "visual_evidence (quando claim é de pixel)", "mutation (só se o usuário pediu aplicar)"],
+        "avoid": ["solution_ecosystem por padrão", "buscar toda fonte"],
+        "directives": ["continuous_review", "visual_selection", "visual_impact", "slide_design", "layout_perception"]
+      },
+      "DATA_DISCOVERY": {
+        "examples": ["Quero mostrar OEE", "Encontre dados de estoque"],
+        "required": ["data_contract"],
+        "optional": ["presentation_truth", "data_runtime (preview quando necessário)"],
+        "avoid": ["mutation até alvo conhecido"],
+        "gap": "0 resultados → NOT_FOUND_IN_APPROVED_TV_SEARCH IS_NOT GLOBAL_ABSENCE",
+        "directives": ["data_discovery", "si_goals"]
+      },
+      "DATA_DIAGNOSIS": {
+        "examples": ["Por que este gráfico está vazio?", "Esses números estão certos?"],
+        "required": ["presentation_truth", "data_runtime"],
+        "optional": ["data_contract"],
+        "avoid": ["design_methodology primeiro — correção de dados precede polimento visual"],
+        "directives": ["data_model", "data_transform", "filter_layering"]
+      },
+      "PRESENTATION_MUTATION": {
+        "examples": ["Troque para gráfico de barras", "Aumente a fonte", "Crie um bloco"],
+        "required": ["presentation_truth", "execution_contract", "mutation"],
+        "conditional": ["editor_context para resolver alvo deíctico"],
+        "optional": ["data_contract", "data_runtime", "design_methodology conforme necessário"],
+        "sequence": ["READ_CURRENT_STATE", "SUGGEST", "PREPARE", "CONFIRMATION_POLICY", "COMMIT", "READ_BACK", "VERIFY"],
+        "directives": ["object_resolution", "write_flow", "write_quality", "modes", "execution_posture"]
+      },
+      "VISUAL_VERIFICATION": {
+        "examples": ["Ficou bom?", "O texto está cortado?", "Tem sobreposição?"],
+        "required": ["presentation_truth", "visual_evidence"],
+        "optional": ["design_methodology"],
+        "gap": "sem canonical_stage → VISUAL_VERIFY = TEST_NOT_RUN; schematic não vira prova de pixel",
+        "directives": ["screenshot_parity", "layout_perception", "continuous_review"]
+      },
+      "AMBIGUOUS_OBJECT_REFERENCE": {
+        "examples": ["mude isso", "melhore esse bloco", "ajuste aqui"],
+        "required": ["editor_context"],
+        "branches": {
+          "active_unique": "continuar",
+          "stale": "cautela conforme object_resolution (preferir IDs da conversa)",
+          "absent": "esclarecer",
+          "ambiguous": "esclarecer"
+        },
+        "avoid": ["mutation antes de resolver"],
+        "directives": ["object_resolution", "editor_focus"]
+      },
+      "DIGITAL_SOLUTION_NEED": {
+        "examples": ["De onde podemos trazer dados de EBITDA?"],
+        "required": ["data_contract"],
+        "optional": ["presentation_truth"],
+        "gap": "solution_ecosystem indisponível → classificar TO_INVENTORY; nunca afirmar ausência global por miss de busca TV",
+        "directives": ["data_discovery", "si_goals"]
+      }
+    },
+    "gates": {
+      "PRESENTATION_TRUTH_GATE": "obrigatório antes de claims sobre playlist/slide/bloco/binding/DataModel/filtro/layout concretos; referência deíctica → resolver editor_context antes",
+      "EXECUTION_CONTRACT_GATE": "obrigatório antes de mutação tipada ou claim de capability/política de confirmação; usar catálogo vivo",
+      "DATA_CONTRACT_GATE": "obrigatório antes de afirmar params/schema/escopo de rota aprovada",
+      "DATA_RUNTIME_GATE": "obrigatório antes de afirmar linhas/valores reais, dataset vazio/não-vazio ou saída de transformação",
+      "VISUAL_EVIDENCE_GATE": "obrigatório antes de statements de pixel; sem canonical_stage entregue, não promover schematic a evidência de pixel",
+      "MUTATION_GATE": "obrigatório antes de escrever: READ_CURRENT_STATE → typed candidate → PREPARE → confirmation policy → COMMIT → read-back → VERIFY",
+      "PRODUCT_USAGE_GATE": "PARTIAL em V1 — rotear para guidance existente; não implicar Product Guide dedicado",
+      "SOLUTION_ECOSYSTEM_GATE": "DEFERRED (PHASE 6) — se a resposta exigir conhecimento de outras soluções DELPI, classificar gap; não inventar"
+    },
+    "composition_order": [
+      "editor_context (grounding)",
+      "presentation_truth",
+      "data_contract / data_runtime (se relevante)",
+      "design_methodology (se relevante)",
+      "execution_contract (se mutação segue)",
+      "mutation",
+      "read_back / verify"
+    ],
+    "sufficiency": [
+      "Leitura factual simples → parar após presentation_truth autoritativa.",
+      "Pergunta de capability → parar após get_catalog se suficiente.",
+      "Pergunta de valor de dado → contrato + runtime preview se necessário.",
+      "Pergunta de design → parar quando presentation_truth + evidência de design/dado relevante bastarem.",
+      "Pedido de escrita → parar de coletar antes da mutação quando alvo + contrato + estado forem suficientes.",
+      "NUNCA chamar toda fonte 'por precaução'."
+    ],
+    "gap_handling": {
+      "vocabulary": ["UNKNOWN", "TO_INVENTORY", "PARTIAL", "UNAVAILABLE_IN_CURRENT_SURFACE", "UNSUPPORTED"],
+      "rule": "Nunca inventar fato quando fonte requerida está indisponível; classificar com o vocabulário e reportar o gap."
+    },
+    "epistemology": [
+      "GUIDANCE IS_NOT DOMAIN_TRUTH",
+      "SUGGESTED IS_NOT SAVED",
+      "PREVIEW IS_NOT COMMITTED",
+      "COMMITTED IS_NOT VERIFIED",
+      "SCHEMATIC IS_NOT PIXEL_INSPECTION",
+      "SEARCH_MISS IS_NOT ABSENCE",
+      "EDITOR_CONTEXT IS_NOT AUTHZ",
+      "CAPABILITY_CATALOG IS_NOT AUTHZ",
+      "MODEL_INFERENCE IS_NOT RUNTIME_FACT"
+    ],
+    "forbidden": [
+      "Chamar toda fonte para toda pergunta.",
+      "Usar design guidance para leitura factual simples.",
+      "Tratar miss de busca de rota como prova de ausência.",
+      "Usar editor focus como permissão.",
+      "Usar product guidance como estado atual.",
+      "Usar schematic preview como prova de pixel.",
+      "Usar comportamento de capability lembrado em vez do catálogo vivo.",
+      "Rodar mutação antes de ler o estado do alvo.",
+      "Afirmar que não existe solução DELPI só porque a busca TV não achou rota (solution_ecosystem indisponível até PHASE 6)."
     ]
   },
   "design_intelligence": {
