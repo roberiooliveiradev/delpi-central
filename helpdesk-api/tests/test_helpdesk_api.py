@@ -963,3 +963,87 @@ def test_ops004_catalogs_and_enriched_task_write():
     )
     assert fu.status_code == 201
     assert glpi.followups[-1][2] == 1
+
+
+def test_delete_ticket_moves_to_trash_idempotent_and_verified():
+    client, glpi = build_client()
+    link(client)
+    headers = {**auth_headers(), "Idempotency-Key": "del-1"}
+    first = client.delete("/tickets/7", headers=headers)
+    assert first.status_code == 200
+    body = first.json()
+    assert body["id"] == 7
+    assert body["deleted"] is True
+    assert body["delete_semantics"] == "trash"
+    assert glpi.delete_calls == 1
+    # post-delete same-user read is canonical not_found (trash semantics)
+    gone = client.get("/tickets/7", headers=auth_headers())
+    assert gone.status_code == 404
+
+    # same proposal key replays the stored response — no second GLPI delete
+    replay = client.delete("/tickets/7", headers=headers)
+    assert replay.status_code == 200
+    assert replay.json() == body
+    assert glpi.delete_calls == 1
+
+
+def test_delete_ticket_requires_idempotency_key_and_auth():
+    client, glpi = build_client()
+    link(client)
+    missing_key = client.delete("/tickets/7", headers=auth_headers())
+    assert missing_key.status_code == 400
+    assert missing_key.json()["error"] == "idempotency_key_required"
+    no_perm = client.delete(
+        "/tickets/7",
+        headers={"x-subject": "user-a", "Idempotency-Key": "k"},
+    )
+    assert no_perm.status_code == 403
+    assert glpi.delete_calls == 0
+
+
+def test_delete_ticket_not_found_is_typed_not_silent_success():
+    """An initial not_found must never be masked as a successful retry."""
+    client, glpi = build_client()
+    link(client)
+    headers = {**auth_headers(), "Idempotency-Key": "del-404"}
+    resp = client.delete("/tickets/99", headers=headers)
+    assert resp.status_code == 404
+    assert resp.json()["error"] == "not_found"
+    assert glpi.delete_calls == 0
+
+
+def test_delete_ticket_forbidden_fails_closed():
+    client, glpi = build_client()
+    link(client)
+    # FakeGlpi: get_ticket(403) → GlpiForbidden — the same-user pre-read
+    # fails closed before any GLPI delete is attempted.
+    headers = {**auth_headers(), "Idempotency-Key": "del-403"}
+    resp = client.delete("/tickets/403", headers=headers)
+    assert resp.status_code == 403
+    assert resp.json()["error"] == "glpi_forbidden"
+    assert glpi.delete_calls == 0
+
+
+def test_delete_ticket_unlinked_session_is_typed():
+    client, glpi = build_client()
+    # never linked → _token() raises LinkRequired → typed 409
+    resp = client.delete(
+        "/tickets/7",
+        headers={**auth_headers(), "Idempotency-Key": "del-nolink"},
+    )
+    assert resp.status_code == 409
+    assert resp.json()["error"] == "glpi_link_required"
+    assert glpi.delete_calls == 0
+
+
+def test_delete_ticket_2xx_without_readback_fails_loudly():
+    """2xx alone is never success — if the ticket is still readable the
+    owner surfaces a typed failure instead of claiming deletion."""
+    client, glpi = build_client()
+    glpi.delete_actually_removes = False
+    link(client)
+    headers = {**auth_headers(), "Idempotency-Key": "del-mismatch"}
+    resp = client.delete("/tickets/7", headers=headers)
+    assert resp.status_code == 502
+    assert resp.json()["error"] == "glpi_unavailable"
+    assert glpi.delete_calls == 1

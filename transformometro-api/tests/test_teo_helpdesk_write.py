@@ -19,6 +19,7 @@ from tm_app.application.governed_writes.confirmation_policy import (
     execution_policy_for_capability,
 )
 from tm_app.application.governed_writes.errors import (
+    NOT_FOUND,
     OUTCOME_VERIFICATION_FAILED,
     PROPOSAL_STALE,
     VALIDATION,
@@ -80,6 +81,11 @@ class _FakeHelpdeskPorts:
         self.write_calls: list[tuple] = []
         self.last_idempotency_key: str | None = None
         self.created_ticket: dict[str, Any] | None = None
+        self.deleted: set[int] = set()
+        self.linked = True
+        # When False, the fake delete returns 2xx but leaves the ticket
+        # readable — simulates a broken upstream for read-back tests.
+        self.delete_actually_removes = True
 
     # read port
     def _state(self, ticket_id: int) -> dict[str, Any]:
@@ -90,7 +96,16 @@ class _FakeHelpdeskPorts:
         return self.ticket_state
 
     def ticket(self, authorization: str, ticket_id: int) -> dict[str, Any]:
+        if int(ticket_id) in self.deleted:
+            raise GptActionsError(
+                "Helpdesk BFF error: not_found.",
+                404,
+                {"error_kind": "not_found", "error_code": "not_found"},
+            )
         return dict(self._state(ticket_id))
+
+    def session(self, authorization: str) -> dict[str, Any]:
+        return {"linked": self.linked}
 
     # write port — records the call, mutates the fake state like the BFF
     def _key(self, kwargs: dict[str, Any]) -> None:
@@ -173,6 +188,23 @@ class _FakeHelpdeskPorts:
             if int(v["id"]) == int(validation_id):
                 v["status"] = 3 if kw["decision"] == "accept" else 4
         return {"id": validation_id, "status": 3 if kw["decision"] == "accept" else 4}
+
+    def delete_ticket(self, authorization, ticket_id, **kw):
+        self.write_calls.append(("delete_ticket", ticket_id))
+        self._key(kw)
+        if self.delete_actually_removes:
+            self.deleted.add(int(ticket_id))
+        return {
+            "id": int(ticket_id),
+            "deleted": True,
+            "delete_semantics": "trash",
+        }
+
+    def unlink_glpi_session(self, authorization, **kw):
+        self.write_calls.append(("unlink_glpi_session",))
+        self._key(kw)
+        self.linked = False
+        return {"linked": False}
 
 
 def _stack() -> tuple[HelpdeskWriteStack, _FakeHelpdeskPorts]:
@@ -346,6 +378,8 @@ def test_policy_auto_act(cap):
         "helpdesk_submit_satisfaction",
         "helpdesk_accept_validation",
         "helpdesk_reject_validation",
+        "helpdesk_delete_ticket",
+        "helpdesk_unlink_glpi_session",
     ],
 )
 def test_policy_confirm_before_act(cap):
@@ -540,3 +574,208 @@ def test_multi_action_chain_uses_read_back_id():
     data = _commit(facade, out, confirmation=False)
     assert data["data"]["ticket"]["id"] == 999
     assert ports.write_calls[-1] == ("add_followup", 999)
+
+
+# --------------------------------------------------------------------------
+# R4.1 — governed ticket deletion (BFF-owned GLPI trash)
+# --------------------------------------------------------------------------
+
+
+def test_prepare_delete_ticket_never_writes_and_shows_exact_ticket():
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    assert ports.write_calls == []
+    proposal = out["proposal"]
+    assert proposal["capability"] == "helpdesk_delete_ticket"
+    assert proposal["ready"] is True
+    # Exact delete preview for the confirmation prompt (never a vague ask).
+    display = proposal["confirmation_requirement"]["display"]
+    assert display["ticket_id"] == 500
+    assert display["title"] == "Painel"
+    assert display["delete_semantics"] == "trash"
+    assert proposal["expected_postcondition"]["type"] == "helpdesk_ticket_deleted"
+    assert proposal["confirmation_requirement"]["explicit_user_confirmation"] is True
+
+
+def test_prepare_delete_ticket_missing_id_not_ready():
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket")
+    assert out["proposal"]["ready"] is False
+    assert "ticket_id" in out["validation_result"]["missing"]
+
+
+def test_delete_commit_without_confirmation_no_write():
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    assert exc.value.data.get("error_code") == "CONFIRMATION_REQUIRED"
+    assert ports.write_calls == []
+    assert ports.deleted == set()
+
+
+def test_delete_confirmed_executes_and_readback_verifies_removal():
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    data = _commit(facade, out, confirmation=True)
+    assert data["persisted"] is True
+    assert ports.write_calls == [("delete_ticket", 500)]
+    assert data["data"]["deleted"] is True
+    assert data["data"]["ticket_id"] == 500
+
+
+def test_delete_proposal_bound_idempotency_key():
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    _commit(facade, out, confirmation=True)
+    proposal_id = out["proposal"]["proposal_id"]
+    assert ports.last_idempotency_key == f"teo-{proposal_id}"
+
+
+def test_delete_consumed_proposal_no_second_effect():
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    handle = _handle_of(out)
+    _commit(facade, out, confirmation=True)
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(
+            _request(), proposal_handle=handle, confirmation=True
+        )
+    assert exc.value.code in {PROPOSAL_STALE, "proposal_not_found"}
+    assert ports.write_calls == [("delete_ticket", 500)]
+
+
+def test_delete_stale_state_blocks_act():
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    # ticket drifts between PREPARE and ACT — never delete blindly
+    ports.ticket_state["status_id"] = 5
+    ports.ticket_state["updated_at"] = "2026-10-09T12:00:00"
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    assert exc.value.code == PROPOSAL_STALE
+    assert ports.write_calls == []
+    assert ports.deleted == set()
+
+
+def test_delete_already_gone_at_commit_blocks():
+    """Ticket removed between PREPARE and ACT → typed failure, no write."""
+    facade, ports = _facade()
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    ports.deleted.add(500)  # deleted by another path before ACT
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    assert exc.value.code == NOT_FOUND
+    assert ports.write_calls == []
+
+
+def test_delete_2xx_but_ticket_still_active_fails_verification():
+    facade, ports = _facade()
+    ports.delete_actually_removes = False
+    out = _prepare(facade, "delete_ticket", ticket_id=500)
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    assert exc.value.code == OUTCOME_VERIFICATION_FAILED
+    assert ports.write_calls == [("delete_ticket", 500)]
+
+
+def test_delete_unlinked_glpi_session_typed_error():
+    """Prepare surfaces the typed BFF error — fail closed, never writes."""
+    facade, ports = _facade()
+
+    def link_required(authorization: str, ticket_id: int) -> dict[str, Any]:
+        raise GptActionsError(
+            "Helpdesk BFF error: glpi_link_required.",
+            409,
+            {"error_kind": "conflict", "error_code": "glpi_link_required",
+             "authorize_url": "/apps/helpdesk-api/auth/glpi/start"},
+        )
+
+    ports.ticket = link_required  # type: ignore[method-assign]
+    with pytest.raises(GovernedWriteError) as exc:
+        _prepare(facade, "delete_ticket", ticket_id=500)
+    assert exc.value.data.get("error_code") == "glpi_link_required"
+    assert ports.write_calls == []
+
+
+# --------------------------------------------------------------------------
+# R4.1 — governed GLPI session unlink
+# --------------------------------------------------------------------------
+
+
+def test_prepare_unlink_session_never_writes():
+    facade, ports = _facade()
+    out = _prepare(facade, "unlink_glpi_session")
+    assert ports.write_calls == []
+    proposal = out["proposal"]
+    assert proposal["capability"] == "helpdesk_unlink_glpi_session"
+    assert proposal["ready"] is True
+    assert proposal["resource_type"] == "helpdesk_glpi_session"
+    assert proposal["expected_postcondition"]["expected"] == {"linked": False}
+    assert proposal["confirmation_requirement"]["explicit_user_confirmation"] is True
+
+
+def test_unlink_session_not_linked_not_ready():
+    facade, ports = _facade()
+    ports.linked = False
+    out = _prepare(facade, "unlink_glpi_session")
+    proposal = out["proposal"]
+    assert proposal["ready"] is False
+    assert "session_not_linked" in out["validation_result"]["blocked"]
+
+
+def test_unlink_commit_without_confirmation_no_write():
+    facade, ports = _facade()
+    out = _prepare(facade, "unlink_glpi_session")
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    assert exc.value.data.get("error_code") == "CONFIRMATION_REQUIRED"
+    assert ports.write_calls == []
+    assert ports.linked is True
+
+
+def test_unlink_confirmed_unlinks_and_verifies():
+    facade, ports = _facade()
+    out = _prepare(facade, "unlink_glpi_session")
+    data = _commit(facade, out, confirmation=True)
+    assert data["persisted"] is True
+    assert ports.write_calls == [("unlink_glpi_session",)]
+    assert data["data"]["session"]["linked"] is False
+
+
+def test_unlink_verify_mismatch_fails():
+    """2xx + session still linked → OUTCOME_VERIFICATION_FAILED."""
+    facade, ports = _facade()
+
+    def no_op_unlink(authorization, **kw):
+        ports.write_calls.append(("unlink_glpi_session",))
+        ports._key(kw)
+        return {"linked": False}
+
+    ports.unlink_glpi_session = no_op_unlink  # type: ignore[method-assign]
+    out = _prepare(facade, "unlink_glpi_session")
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    assert exc.value.code == OUTCOME_VERIFICATION_FAILED
+
+
+def test_unlink_consumed_proposal_no_second_effect():
+    facade, ports = _facade()
+    out = _prepare(facade, "unlink_glpi_session")
+    handle = _handle_of(out)
+    _commit(facade, out, confirmation=True)
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(
+            _request(), proposal_handle=handle, confirmation=True
+        )
+    assert exc.value.code in {PROPOSAL_STALE, "proposal_not_found"}
+    assert ports.write_calls == [("unlink_glpi_session",)]
+
+
+def test_action_enum_covers_new_actions():
+    assert HELPDESK_ACTION_TO_CAPABILITY["delete_ticket"] == (
+        "helpdesk_delete_ticket"
+    )
+    assert HELPDESK_ACTION_TO_CAPABILITY["unlink_glpi_session"] == (
+        "helpdesk_unlink_glpi_session"
+    )

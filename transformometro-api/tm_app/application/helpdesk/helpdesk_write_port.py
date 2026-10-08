@@ -127,6 +127,34 @@ class HelpdeskWritePort(Protocol):
         """POST /tickets/{id}/validations/{vid}/{accept|reject} → ``{"id","status"}``."""
         ...
 
+    def delete_ticket(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """DELETE /tickets/{id} → ``{"id","title","deleted","delete_semantics"}``.
+
+        The BFF owns the GLPI trash operation (soft delete — never force
+        purge) and its own internal read-back; a 2xx here already means
+        the ticket left the same-user active view.
+        """
+        ...
+
+    def unlink_glpi_session(
+        self,
+        authorization: str,
+        *,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """DELETE /auth/glpi/session → ``{"linked": false}``.
+
+        Naturally idempotent at the BFF (unlink of an absent session is a
+        no-op); the proposal-bound key is still forwarded for uniformity.
+        """
+        ...
+
 
 class HelpdeskWriteStack(NamedTuple):
     """Composition bundle: canonical write port + read port for

@@ -268,6 +268,21 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         CONFIRM_BEFORE_ACT,
         "helpdesk_reject_validation",
     ),
+    # Destructive — moves the ticket to the GLPI trash (soft delete).
+    # Irreversible-shaped UX even though GLPI restore exists: always
+    # requires one explicit confirmation showing the exact ticket.
+    WritePolicyRecord(
+        "helpdesk.ticket.delete",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_delete_ticket",
+    ),
+    # Destroys the user's own GLPI OAuth link — relink is a browser
+    # flow, so unlinking requires explicit confirmation.
+    WritePolicyRecord(
+        "helpdesk.glpi_session.unlink",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_unlink_glpi_session",
+    ),
 )
 
 

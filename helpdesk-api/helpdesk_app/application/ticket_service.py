@@ -14,6 +14,7 @@ from helpdesk_app.domain.errors import (
     GlpiForbidden,
     GlpiNotFound,
     GlpiUnauthorized,
+    GlpiUnavailable,
     GlpiValidation,
     LinkRequired,
     MissingIdempotencyKey,
@@ -809,6 +810,50 @@ class TicketService:
         )
         self._idempotency.save(subject, operation, key, stored)
         return stored
+
+    def delete(
+        self,
+        subject: str,
+        ticket_id: int,
+        *,
+        idempotency_key: str | None,
+    ) -> StoredResponse:
+        """Move a ticket to the GLPI trash — same-user, idempotent, verified.
+
+        The pre-read enforces the OAuth link + ACL and captures the ticket
+        identity for the stored response; a missing/already-trashed ticket
+        surfaces canonical ``not_found`` — an initial not-found is never
+        masked as a successful retry of this proposal (the idempotency
+        store owns that distinction via (subject, operation, key)).
+        """
+        key = _require_key(idempotency_key)
+        operation = f"delete_ticket:{ticket_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        token = self._token(subject)
+        detail = self._glpi.get_ticket(token, ticket_id, viewer_email="")
+        self._glpi.delete_ticket(token, ticket_id)
+        # Authoritative read-back inside the owner: 2xx alone is not proof.
+        # The ticket must now be absent from the same-user view — either
+        # GLPI 404 or an ``is_deleted`` payload both surface GlpiNotFound.
+        try:
+            self._glpi.get_ticket(token, ticket_id, viewer_email="")
+        except GlpiNotFound:
+            stored = StoredResponse(
+                status_code=200,
+                body={
+                    "id": detail.id,
+                    "title": detail.title,
+                    "deleted": True,
+                    # GLPI trash semantics — the ticket remains restorable
+                    # inside GLPI; permanent purge is never issued here.
+                    "delete_semantics": "trash",
+                },
+            )
+            self._idempotency.save(subject, operation, key, stored)
+            return stored
+        raise GlpiUnavailable("O GLPI não confirmou a exclusão do chamado.")
 
     def _viewer_is_technician(self, token: str, viewer_email: str) -> bool:
         """True when GLPI session (or email catalog) maps to a technician-profile user.

@@ -117,6 +117,7 @@ current state → catalogs → `prepare_helpdesk_change` → policy gate →
 | R2 Read Intelligence V1 | `helpdesk_read` + orchestration | ACCEPT / CLOSED — see §19 |
 | R3 Demand Intelligence V1 | recurrence/discovery composition — zero new tools | ACCEPT / CLOSED — see §19 |
 | R4 Governed Writes V1 | `prepare_helpdesk_change` + `commit_proposal`, idempotency bound to proposal, BFF revalidation, read-back | IMPLEMENTED — see §20 (live GLPI-write acceptance pending user OAuth link) |
+| R4.1 Full Capability Coverage | 100% route ledger (37 routes, 0 unclassified) + governed ticket delete (GLPI trash) + governed session unlink | IMPLEMENTED — see §21 (live delete acceptance pending user OAuth link) |
 | R5 Helpdesk ↔ TM Link | relationship metadata only (source_system=glpi), never ticket copy — Abstraction Gate first | TO_INVENTORY |
 | R6 Backlog Intelligence | only if paginated reads prove inadequate; projection lives in the BFF, never a TÉO cache | TARGET |
 
@@ -449,3 +450,137 @@ interactively once credentials are configured. The acceptance script
 (`tmp-teo-write/r4_accept.py` flow: create → follow-up+retry → task →
 confirm-before-act set_assignee) is ready to run the moment a session
 exists.
+
+## 21. R4.1 — Full Helpdesk Capability Coverage
+
+Complete route inventory + governed ticket deletion + governed session
+unlink. Route coverage != route proxy: every BFF route is classified,
+agent-facing business routes map to the bounded semantic surface
+(`helpdesk_read` / `prepare_helpdesk_change` → `commit_proposal`), and
+nothing else is exposed. **UNCLASSIFIED ROUTES = 0** — enforced by
+`tests/test_helpdesk_route_coverage.py` (AST scan of the BFF route
+decorators vs the ledger; drift fails CI).
+
+### 21.1 Delete contract (GLPI-verified)
+
+- **GLPI endpoint**: `DELETE /api.php/v2.2/Assistance/Ticket/{id}` —
+  HLAPI v2.2 (`HttpxGlpiClient.delete_ticket`).
+- **Semantics**: soft delete — the ticket is moved to the GLPI trash
+  (`is_deleted=1`). `?force=true` (permanent purge) exists in GLPI as a
+  distinct operation and is **never sent** — purge stays out of scope.
+- **Restore**: possible inside GLPI (trash bin), outside TÉO scope.
+- **Authorization**: same-user OAuth Bearer end-to-end; GLPI enforces
+  `Ticket::canDelete()` on the user profile — 403 fails closed. No
+  `can_delete` flag is projected because GLPI does not expose a reliable
+  per-item flag on this contract; authorization is validated on the
+  write path itself.
+- **BFF route**: `DELETE /tickets/{ticket_id}` +
+  `Idempotency-Key` header → `{"id","title","deleted","delete_semantics":"trash"}`.
+- **BFF idempotency**: `delete_ticket:{ticket_id}` keyed on
+  (subject, operation, key) — same-proposal retry replays the stored
+  response, no second GLPI effect. An initial `not_found` is never
+  masked as a successful retry.
+- **Read-back (two layers)**: the BFF re-reads the ticket after the
+  write and fails with `glpi_unavailable` if it is still readable; TÉO
+  then re-reads through `helpdesk_read(action=ticket)` — canonical
+  `not_found` (GLPI 404 or `is_deleted` payload) is the verified
+  postcondition. A 2xx with the ticket still active →
+  `OUTCOME_VERIFICATION_FAILED`.
+- **PREPARE display**: the proposal carries `confirmation_requirement.
+  display` = `{ticket_id, title, status, assigned_display_name,
+  delete_semantics:"trash"}` — exact ticket shown, never a vague ask.
+- **Stale state**: the standard fingerprint re-read blocks ACT when the
+  ticket drifted or was deleted between PREPARE and commit.
+
+### 21.2 Session unlink contract
+
+- `prepare_helpdesk_change(action=unlink_glpi_session)` →
+  `DELETE /auth/glpi/session` (naturally idempotent at the BFF) →
+  read-back `helpdesk_read(action=session)` must show `linked=false`,
+  else `OUTCOME_VERIFICATION_FAILED`. Relink remains `BROWSER_FLOW`
+  (OAuth start/callback never agent-facing).
+
+### 21.3 Route coverage ledger (37 routes)
+
+| HTTP | Route | Classification | TÉO mapping |
+|---|---|---|---|
+| GET | `/auth/glpi/start` | BROWSER_FLOW | authorize_url guidance only |
+| GET | `/auth/glpi/callback` | BROWSER_FLOW | never agent ACT |
+| GET | `/auth/glpi/session` | EXPOSED_READ | `helpdesk_read(action=session)` |
+| DELETE | `/auth/glpi/session` | EXPOSED_WRITE | `unlink_glpi_session` |
+| GET | `/ticket-categories` | EXPOSED_READ | `catalog=categories` |
+| GET | `/request-types` | EXPOSED_READ | `catalog=request_types` |
+| GET | `/followup-templates` | EXPOSED_READ | `catalog=followup_templates` |
+| GET | `/solution-types` | EXPOSED_READ | `catalog=solution_types` |
+| GET | `/solution-templates` | EXPOSED_READ | `catalog=solution_templates` |
+| GET | `/task-categories` | EXPOSED_READ | `catalog=task_categories` |
+| GET | `/task-templates` | EXPOSED_READ | `catalog=task_templates` |
+| GET | `/task-statuses` | EXPOSED_READ | `catalog=task_statuses` |
+| GET | `/groups` | EXPOSED_READ | `catalog=groups` |
+| GET | `/validation-templates` | EXPOSED_READ | `catalog=validation_templates` |
+| GET | `/approval-steps` | EXPOSED_READ | `catalog=approval_steps` |
+| GET | `/urgencies` | EXPOSED_READ | `catalog=urgencies` |
+| GET | `/users` | EXPOSED_READ | `catalog=users` |
+| GET | `/session/capabilities` | EXPOSED_READ | `helpdesk_read(action=capabilities)` |
+| GET | `/tickets` | EXPOSED_READ | `helpdesk_read(action=tickets)` |
+| GET | `/tickets/{ticket_id}` | EXPOSED_READ | `helpdesk_read(action=ticket)` |
+| GET | `/tickets/{id}/attachments/{doc}` | PLATFORM_BLOCKED_BINARY | metadata only via ticket projection |
+| POST | `/tickets/{id}/attachments` | PLATFORM_BLOCKED_BINARY | no governed binary transport; never base64 |
+| POST | `/tickets` | EXPOSED_WRITE | `create_ticket` |
+| PUT | `/tickets/{id}/assignee` | EXPOSED_WRITE | `set_assignee` |
+| POST | `/tickets/{id}/followups` | EXPOSED_WRITE | `add_followup` |
+| POST | `/tickets/{id}/solutions` | EXPOSED_WRITE | `add_solution` |
+| POST | `/tickets/{id}/tasks` | EXPOSED_WRITE | `create_task` |
+| POST | `/tickets/{id}/validations` | EXPOSED_WRITE | `request_validation` |
+| POST | `/tickets/{id}/solution/accept` | EXPOSED_WRITE | `accept_solution` |
+| POST | `/tickets/{id}/solution/reject` | EXPOSED_WRITE | `reject_solution` |
+| GET | `/tickets/{id}/satisfaction` | COVERED_BY_EXISTING_PROJECTION | `satisfaction`+`can_submit_satisfaction` on `action=ticket` |
+| PUT | `/tickets/{id}/satisfaction` | EXPOSED_WRITE | `submit_satisfaction` |
+| POST | `/tickets/{id}/validations/{vid}/accept` | EXPOSED_WRITE | `accept_validation` |
+| POST | `/tickets/{id}/validations/{vid}/reject` | EXPOSED_WRITE | `reject_validation` |
+| DELETE | `/tickets/{ticket_id}` | EXPOSED_WRITE | `delete_ticket` — GLPI trash |
+| GET | `/person-profiles/{user_id}/photo` | UI_ONLY | avatar binary — Portal UI |
+| GET | `/health` | INFRA_ONLY | observability probe |
+
+Counts: EXPOSED_READ 16 · EXPOSED_WRITE 14 ·
+COVERED_BY_EXISTING_PROJECTION 1 · BROWSER_FLOW 2 · UI_ONLY 1 ·
+INFRA_ONLY 1 · PLATFORM_BLOCKED_BINARY 2 · **UNCLASSIFIED 0**.
+
+### 21.4 Surface after R4.1
+
+- `helpdesk_read` actions: `session | capabilities | tickets | ticket |
+  catalog` — unchanged (all reads already covered).
+- `prepare_helpdesk_change` actions: 11 → **13**
+  (`+delete_ticket`, `+unlink_glpi_session`).
+- `commit_proposal`: unchanged — sole ACT choke point.
+- MCP tools: 23 (unchanged) · GPT operations: 21 (unchanged; the
+  `GptHelpdeskChangeBody.action` enum expanded → **Builder reimport
+  required**).
+- Policy: `helpdesk.ticket.delete` +
+  `helpdesk.glpi_session.unlink` = CONFIRM_BEFORE_ACT (canonical
+  `confirmation_policy.py` only).
+
+### 21.5 Evidence
+
+- BFF: `tests/test_helpdesk_api.py` — delete success+read-back,
+  idempotent replay, missing key, no-permission, not-found never masked,
+  forbidden fail-closed, unlinked-session typed error, 2xx-without-
+  read-back → `glpi_unavailable`.
+- TM: `tests/test_teo_helpdesk_write.py` — 19 new tests covering
+  PREPARE-never-writes, exact-ticket confirmation display, policy
+  classes, confirmation gate, proposal-bound key, consumed-proposal,
+  stale state, already-gone-at-commit, 2xx/still-active →
+  `OUTCOME_VERIFICATION_FAILED`, typed `glpi_link_required`, unlink
+  prepare/commit/verify/retry.
+- `tests/test_helpdesk_route_coverage.py` — inventory parity (37),
+  0 unclassified, no stale entries, no orphan business read/write.
+
+### 21.6 Live acceptance gate
+
+Same blocker as §20: the dev Helpdesk BFF points at production GLPI via
+OAuth and no linked session exists in this env (`GLPI_OAUTH_CLIENT_ID`/
+`SECRET` empty, `helpdesk.oauth_sessions` empty). The disposable-ticket
+delete acceptance (`[TÉO R4.1 DELETE ACCEPTANCE]` create → prepare →
+exists-before-confirm → commit → post-delete not_found) runs the moment
+a user OAuth link exists. Live unlink acceptance is intentionally not
+run against the real session (user friction/re-auth, per spec §34).

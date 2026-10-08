@@ -503,6 +503,22 @@ class HttpxGlpiClient:
             },
         )
 
+    def delete_ticket(self, access_token: str, ticket_id: int) -> None:
+        """Move a ticket to the GLPI trash (``is_deleted=1``) via HLAPI v2.2.
+
+        ``DELETE /api.php/v2.2/Assistance/Ticket/{id}`` is the canonical
+        soft delete — the ticket leaves the active view but stays
+        restorable inside GLPI. ``?force=true`` (permanent purge) is a
+        distinct GLPI operation and is never sent from this client.
+        GLPI enforces ``Ticket::canDelete()`` on the OAuth user profile —
+        a user without delete rights gets 403 (fail closed).
+        """
+        self._json(
+            "DELETE",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}",
+            token=access_token,
+        )
+
     def _viewer_identity(self, access_token: str, viewer_email: str) -> PersonIdentity:
         try:
             session = self._json("GET", "/api.php/v2.2/session", token=access_token)

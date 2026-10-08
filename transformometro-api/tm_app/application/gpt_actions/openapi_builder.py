@@ -1878,6 +1878,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "submit_satisfaction",
                                 "accept_validation",
                                 "reject_validation",
+                                "delete_ticket",
+                                "unlink_glpi_session",
                             ],
                         },
                         "ticket_id": {

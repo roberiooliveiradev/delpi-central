@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.09.6",
+  "version": "2026.10.09.7",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -477,16 +477,18 @@
           "adicione um acompanhamento no chamado 123",
           "atribua o chamado 123 ao Robério",
           "aceite a solução do chamado 456",
-          "registre minha satisfação no chamado 789"
+          "registre minha satisfação no chamado 789",
+          "exclua o chamado 321",
+          "desvincule minha sessão do GLPI"
         ],
         "route": [
           "HELPDESK_DEMAND_GATE",
-          "helpdesk_read(action=ticket) — estado atual antes de mutar",
+          "helpdesk_read(action=ticket) — estado atual antes de mutar; delete_ticket exige ticket resolvido de forma única (nunca apagar por referência vaga)",
           "catalogs relevantes (users purpose=assignee, categories, ...) — nunca inferir ids",
-          "prepare_helpdesk_change(action=...)",
+          "prepare_helpdesk_change(action=...) — delete_ticket|unlink_glpi_session sempre confirm_before_act",
           "EXECUTION_CONTRACT_GATE",
           "commit_proposal — único ACT",
-          "helpdesk_read(action=ticket) — read-back autoritativo",
+          "helpdesk_read(action=ticket|session) — read-back autoritativo",
           "verify"
         ],
         "avoid": [
@@ -495,7 +497,7 @@
           "process_truth",
           "demand_analysis"
         ],
-        "rule": "PREPARE != ACT. can_* são orientação, não autorização — a BFF revalida no commit. O resultado só é declarado após read-back; mudança na proposta invalida confirmação anterior.",
+        "rule": "PREPARE != ACT. can_* são orientação, não autorização — a BFF revalida no commit. O resultado só é declarado após read-back; mudança na proposta invalida confirmação anterior. delete_ticket move o chamado para a lixeira do GLPI (soft delete — nunca dizer apagado permanentemente); pós-condição = ticket ausente da visão ativa (not_found no read-back). unlink_glpi_session desvincula a sessão OAuth do próprio usuário; religar é fluxo browser/OAuth.",
         "stop": "após verify, reportar o outcome exato (ex.: follow-up criado, assignee atualizado) — não continuar para outras writes nem análise sem novo pedido."
       }
     },

@@ -170,6 +170,10 @@ class GlpiGateway(Protocol):
         comment: str = "",
     ) -> None: ...
 
+    def delete_ticket(self, access_token: str, ticket_id: int) -> None:
+        """Move a ticket to the GLPI trash (soft delete — never force purge)."""
+        ...
+
 
 class ProfileSyncWriterPort(Protocol):
     """HELPDESK-IDENTITY-002A — narrow technical-authority write.

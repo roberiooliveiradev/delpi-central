@@ -365,3 +365,30 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort):
             authorization,
             json_body={"content": content}, idempotency_key=idempotency_key,
         )
+
+    def delete_ticket(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "DELETE",
+            f"/tickets/{int(ticket_id)}",
+            authorization,
+            idempotency_key=idempotency_key,
+        )
+
+    def unlink_glpi_session(
+        self,
+        authorization: str,
+        *,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "DELETE",
+            "/auth/glpi/session",
+            authorization,
+            idempotency_key=idempotency_key,
+        )

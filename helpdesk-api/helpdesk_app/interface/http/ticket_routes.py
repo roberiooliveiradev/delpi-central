@@ -403,6 +403,22 @@ def get_ticket(request: Request, ticket_id: int):
     }
 
 
+@router.delete("/tickets/{ticket_id}")
+def delete_ticket(
+    request: Request,
+    ticket_id: int,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).delete(
+            actor.subject, ticket_id, idempotency_key=idempotency_key
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
 @router.get("/tickets/{ticket_id}/attachments/{document_id}")
 def download_attachment(request: Request, ticket_id: int, document_id: int):
     actor = require_actor(request)

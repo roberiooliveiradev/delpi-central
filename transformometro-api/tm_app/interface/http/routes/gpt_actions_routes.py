@@ -151,7 +151,7 @@ class GptHelpdeskChangeBody(BaseModel):
             "create_ticket | set_assignee | add_followup | create_task | "
             "add_solution | request_validation | accept_solution | "
             "reject_solution | submit_satisfaction | accept_validation | "
-            "reject_validation"
+            "reject_validation | delete_ticket | unlink_glpi_session"
         ),
     )
     ticket_id: int | None = None

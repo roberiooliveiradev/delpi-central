@@ -25,6 +25,7 @@ from tm_app.application.governed_writes.errors import (
     VALIDATION,
     GovernedWriteError,
 )
+from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.application.governed_writes.proposal import fingerprint
 from tm_app.application.helpdesk.helpdesk_write_port import HelpdeskWriteStack
 
@@ -43,6 +44,8 @@ HELPDESK_ACTION_TO_CAPABILITY: dict[str, str] = {
     "submit_satisfaction": "helpdesk_submit_satisfaction",
     "accept_validation": "helpdesk_accept_validation",
     "reject_validation": "helpdesk_reject_validation",
+    "delete_ticket": "helpdesk_delete_ticket",
+    "unlink_glpi_session": "helpdesk_unlink_glpi_session",
 }
 
 HELPDESK_CAPABILITIES = frozenset(HELPDESK_ACTION_TO_CAPABILITY.values())
@@ -66,6 +69,8 @@ _REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     "helpdesk_submit_satisfaction": ("satisfaction",),
     "helpdesk_accept_validation": ("validation_id",),
     "helpdesk_reject_validation": ("validation_id",),
+    "helpdesk_delete_ticket": (),
+    "helpdesk_unlink_glpi_session": (),
 }
 
 # can_* flag projected by the BFF — early UX/PREPARE guidance only.
@@ -187,14 +192,35 @@ def _normalize_change(capability: str, args: dict[str, Any]) -> dict[str, Any]:
             int(args["satisfaction"]) if args.get("satisfaction") is not None else None
         )
         change["comment"] = args.get("comment") or ""
-    else:  # accept_validation / reject_validation
+    elif capability in (
+        "helpdesk_accept_validation",
+        "helpdesk_reject_validation",
+    ):
         vid = args.get("validation_id")
         change["validation_id"] = int(vid) if vid is not None else None
         change["content"] = args.get("content") or ""
+    # helpdesk_delete_ticket / helpdesk_unlink_glpi_session seal only the
+    # capability (+ ticket_id for delete) — no extra BFF body fields.
     return change
 
 
 def _expected_postcondition(capability: str, change: dict[str, Any]) -> dict[str, Any]:
+    if capability == "helpdesk_delete_ticket":
+        return {
+            # GLPI trash semantics: the ticket leaves the same-user active
+            # view — authoritative read-back is canonical not_found.
+            "type": "helpdesk_ticket_deleted",
+            "capability": capability,
+            "ticket_id": change.get("ticket_id"),
+            "expected": {"absent_from_active_view": True},
+        }
+    if capability == "helpdesk_unlink_glpi_session":
+        return {
+            "type": "helpdesk_glpi_session",
+            "capability": capability,
+            "ticket_id": None,
+            "expected": {"linked": False},
+        }
     return {
         "type": "helpdesk_ticket_state",
         "capability": capability,
@@ -229,6 +255,8 @@ def prepare(
     change = _normalize_change(capability, args)
     checks: list[str] = []
     blocked: list[str] = []
+    confirmation_req: dict[str, Any] = {}
+    resource_type = "helpdesk_ticket"
 
     if capability == "helpdesk_create_ticket":
         checks.append("create_intent")
@@ -236,6 +264,23 @@ def prepare(
             {"resource": "helpdesk_ticket", "exists": False}
         )
         resource_id = None
+    elif capability == "helpdesk_unlink_glpi_session":
+        checks.append("session_state_read")
+        resource_type = "helpdesk_glpi_session"
+        # Same-user session read — the BFF owns OAuth session truth.
+        session = stack.read.session(authorization)
+        linked = bool(session.get("linked"))
+        if not linked:
+            blocked.append("session_not_linked")
+        current_fp = fingerprint(
+            {"resource": "helpdesk_glpi_session", "linked": linked}
+        )
+        resource_id = None
+        confirmation_req["display"] = {
+            "operation": "unlink_glpi_session",
+            "linked": linked,
+            "effect": "session_unlinked_relink_is_browser_flow",
+        }
     else:
         ticket_id = change.get("ticket_id")
         if ticket_id is None or int(ticket_id or 0) <= 0:
@@ -268,10 +313,23 @@ def prepare(
                 ticket, validation_id=change.get("validation_id")
             )
             resource_id = str(ticket_id)
+            if capability == "helpdesk_delete_ticket":
+                # Exact delete preview for the confirmation prompt — the
+                # user must see id + title + status, never a vague ask.
+                confirmation_req["display"] = {
+                    "ticket_id": int(ticket_id),
+                    "title": ticket.get("title"),
+                    "status": ticket.get("status"),
+                    "assigned_display_name": ticket.get(
+                        "assigned_display_name"
+                    ),
+                    # GLPI move-to-trash — never framed as permanent purge.
+                    "delete_semantics": "trash",
+                }
 
     ready = not missing and not blocked
     return {
-        "resource_type": "helpdesk_ticket",
+        "resource_type": resource_type,
         "resource_id": resource_id,
         "current_state_fingerprint": current_fp,
         "exact_change": change,
@@ -285,7 +343,7 @@ def prepare(
             "persists": True,
             "operation": capability,
         },
-        "confirmation_requirement": {},
+        "confirmation_requirement": confirmation_req,
         "expected_postcondition": _expected_postcondition(capability, change),
     }
 
@@ -296,6 +354,14 @@ def recompute_fingerprint(
     capability = str(change.get("capability") or "")
     if capability == "helpdesk_create_ticket":
         return fingerprint({"resource": "helpdesk_ticket", "exists": False})
+    if capability == "helpdesk_unlink_glpi_session":
+        session = stack.read.session(authorization)
+        return fingerprint(
+            {
+                "resource": "helpdesk_glpi_session",
+                "linked": bool(session.get("linked")),
+            }
+        )
     ticket_id = change.get("ticket_id")
     if ticket_id is None:
         return fingerprint({"ticket_id": None})
@@ -393,6 +459,12 @@ def execute(
             content=str(change.get("content") or ""),
             idempotency_key=key,
         )
+    if capability == "helpdesk_delete_ticket":
+        return w.delete_ticket(
+            authorization, int(ticket_id), idempotency_key=key
+        )
+    if capability == "helpdesk_unlink_glpi_session":
+        return w.unlink_glpi_session(authorization, idempotency_key=key)
     raise GovernedWriteError(
         f"ACT not implemented for '{capability}'.",
         code=VALIDATION,
@@ -426,6 +498,37 @@ def verify(
     change = proposal.exact_change
     capability = proposal.capability
     result = dict(write_result or {})
+
+    if capability == "helpdesk_unlink_glpi_session":
+        session = stack.read.session(authorization)
+        if bool(session.get("linked")):
+            raise _verification_failed(
+                "GLPI session still linked after unlink.",
+                expected=False,
+                actual=session.get("linked"),
+            )
+        return {"session": session, "write_result": result}
+
+    if capability == "helpdesk_delete_ticket":
+        ticket_id = int(change["ticket_id"])
+        try:
+            still_there = stack.read.ticket(authorization, ticket_id)
+        except GptActionsError as exc:
+            data = exc.data if isinstance(exc.data, dict) else {}
+            if exc.status_code == 404 or data.get("error_kind") == "not_found":
+                # Canonical postcondition: trash removal means the ticket
+                # is absent from the same-user active view.
+                return {
+                    "deleted": True,
+                    "ticket_id": ticket_id,
+                    "write_result": result,
+                }
+            raise
+        raise _verification_failed(
+            "Ticket still readable after delete — not removed.",
+            ticket_id=ticket_id,
+            actual_status_id=still_there.get("status_id"),
+        )
 
     if capability == "helpdesk_create_ticket":
         rid = result.get("id")

@@ -95,6 +95,12 @@ class FakeGlpi:
         self.legacy_cycle = True
         # document_id → ticket_id for Document_Item membership (may lag Timeline).
         self.document_links: dict[int, int] = {2: 7, 4: 7}
+        # Tickets moved to GLPI trash (is_deleted) — get_ticket then fails.
+        self.deleted_tickets: set[int] = set()
+        self.delete_calls = 0
+        # When False, delete returns ok but the ticket stays readable —
+        # simulates an upstream that lies about deletion (read-back trap).
+        self.delete_actually_removes = True
         self.calls = 0
         # When False, upload does not appear on ticket.attachments (Timeline lag).
         self.attach_uploads_to_timeline = True
@@ -211,11 +217,19 @@ class FakeGlpi:
 
     def get_ticket(self, access_token: str, ticket_id: int, viewer_email: str = ""):
         self.calls += 1
-        if ticket_id == 99:
+        if ticket_id == 99 or ticket_id in self.deleted_tickets:
             raise GlpiNotFound("ausente")
         if ticket_id == 403:
             raise GlpiForbidden("negado")
         return self.detail
+
+    def delete_ticket(self, access_token: str, ticket_id: int) -> None:
+        self.calls += 1
+        self.delete_calls += 1
+        if ticket_id == 403:
+            raise GlpiForbidden("negado")
+        if self.delete_actually_removes:
+            self.deleted_tickets.add(int(ticket_id))
 
     def create_ticket(self, access_token: str, *, title, description, category_id, urgency_id):
         self.calls += 1
