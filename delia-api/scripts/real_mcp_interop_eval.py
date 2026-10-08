@@ -42,6 +42,7 @@ from app.application.specialist_interop.specialist_interop import (
 )
 from app.domain.specialist_interop.model import SpecialistOperationClass
 from app.composition.root_composer import _bounded_http_get
+from app.infrastructure.http.deadline_transport import deadline_http_post
 from app.infrastructure.auth.core_platform_access import (
     CorePlatformAccessAdapter,
 )
@@ -125,7 +126,10 @@ def _eval_credential_provider(settings: Settings, profiles, subject: str):
         client_id=settings.exchange_client_id,
         client_secret=settings.exchange_client_secret,
         timeout_seconds=settings.exchange_timeout_seconds,
-        http_post=requests.post,
+        # Same binding as the production composer: the provider wraps this
+        # seam in bounded_request internally, so the absolute deadline must
+        # come from the governed deadline transport, not raw requests.
+        http_post=deadline_http_post,
         subject_bearer_getter=lambda: subject,
         token_validator=validate_token,
         cache=InMemoryDelegatedTokenCache(
