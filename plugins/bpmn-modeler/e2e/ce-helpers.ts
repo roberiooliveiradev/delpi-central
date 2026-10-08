@@ -88,6 +88,63 @@ export async function clickEl(
   });
 }
 
+/**
+ * Clique em área vazia dentro do canvas → deseleciona (e foca o svg).
+ * O vendor às vezes não emite element.click no 1º clique pós-create/drag
+ * (drag intent no mousedown engole o up) — retenta até deselecionar.
+ */
+export async function deselect(
+  page: Page,
+  pos = { x: 520, y: 430 },
+) {
+  await expect(async () => {
+    await page
+      .locator(".bpmnm-canvas .djs-container")
+      .click({ position: pos });
+    await page.waitForTimeout(150);
+    expect(await page.locator(".djs-element.selected").count()).toBe(0);
+  }).toPass({ timeout: 6_000, intervals: [300, 600, 1000] });
+}
+
+/**
+ * Seleção via DOM real (dispatch click no grupo visual) — fallback para
+ * elementos pequenos/apertados onde o hit-test por coordenada pega o
+ * vizinho errado (labels, flows cruzando, diagrama reduzido por
+ * fitViewport). Mesmo mecanismo do fallback de `replaceWith`: o click
+ * borbulha ao container e o vendor resolve o djs-element ancestral.
+ * `shift` adiciona à seleção existente (multi-select).
+ */
+export async function selectViaDom(
+  page: Page,
+  elementId: string,
+  shift = false,
+) {
+  const sel = page.locator(
+    `.djs-element.selected[data-element-id="${elementId}"]`,
+  );
+  // idempotente: se já está selecionado (ex.: cut negado deixa a seleção
+  // intacta), um novo click poderia desmarcar
+  if (!shift && (await sel.count()) > 0) return;
+  await page.evaluate(
+    ({ elementId, shift }) => {
+      const g = document.querySelector(
+        `.djs-element[data-element-id="${elementId}"]`,
+      );
+      const target = g?.querySelector("*") ?? g;
+      target?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, shiftKey: shift }),
+      );
+      // o keyboard do vendor é bound ao SVG (tabindex=0) — dispatchEvent
+      // não move foco; sem isto Ctrl+C/X/V nunca alcançam o handler
+      (
+        document.querySelector(".bpmnm-canvas svg") as HTMLElement | null
+      )?.focus();
+    },
+    { elementId, shift },
+  );
+  await expect(sel).toBeAttached({ timeout: 5_000 });
+}
+
 /** Palette create entry → clique no canvas para posicionar. */
 export async function createFromPalette(
   page: Page,
@@ -101,6 +158,42 @@ export async function createFromPalette(
   await page.locator(".bpmnm-canvas .djs-container").click({
     position: { x, y },
   });
+  await closeDirectEditing(page);
+}
+
+/**
+ * Garante foco no <svg> do canvas — o keyboard do vendor é bound a ele
+ * (tabindex=0) e atalhos morrem quando activeElement é body/input do
+ * properties panel. Equivale ao usuário clicando no canvas.
+ */
+export async function focusCanvasSvg(page: Page) {
+  await page.evaluate(() => {
+    (
+      document.querySelector(
+        ".bpmnm-canvas .djs-container > svg",
+      ) as HTMLElement | null
+    )?.focus();
+  });
+  await expect(
+    page.locator(".bpmnm-canvas .djs-container > svg"),
+  ).toBeFocused();
+}
+
+/**
+ * O vendor abre direct editing automaticamente após criar elementos com
+ * label (foco vai para .djs-direct-editing-content — atalhos do canvas
+ * morrem ali). Escape cancela o rename mantendo o elemento criado.
+ * No-op quando o overlay não abriu (ex.: data objects).
+ */
+export async function closeDirectEditing(page: Page) {
+  const de = page.locator(".djs-direct-editing-content");
+  if (await de.isVisible().catch(() => false)) {
+    await page.keyboard.press("Escape");
+    await expect(de).not.toBeVisible();
+    // o vendor agenda canvas.restoreFocus() debounced — o próximo
+    // keystroke do teste pode correr antes; torna o foco determinístico
+    await focusCanvasSvg(page);
+  }
 }
 
 export async function padAction(page: Page, action: string) {

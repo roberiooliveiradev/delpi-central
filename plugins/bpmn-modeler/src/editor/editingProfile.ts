@@ -244,6 +244,168 @@ const ALLOWED_PROPERTIES_ENTRY_IDS: ReadonlySet<string> = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// Clipboard (copy/cut/paste/duplicate) — G3
+// ---------------------------------------------------------------------------
+
+/**
+ * Projeção type-level do profile §6 para o path de criação via clipboard.
+ * As allowlists acima governam entry ids das surfaces vendor; paste/duplicate
+ * criam elementos por outra via (modeling.createElements) — aqui o critério
+ * é o BPMN type + markers do businessObject, mesma decisão CREATE_EDIT.
+ * Fail-closed: tipo/marker não classificado → DENY.
+ *
+ * `RENDER_PRESERVE_ONLY` pode ser importado/selecionado/visualizado —
+ * nunca duplicado (PRESERVE_ONLY != CREATE).
+ */
+
+const CREATABLE_BPMN_TYPES: ReadonlySet<string> = new Set([
+  // activities (§6.1) — SubProcess cobre expanded+collapsed; markers
+  // preserve-only (triggeredByEvent/isForCompensation/loopCharacteristics)
+  // são negados abaixo
+  "bpmn:Task",
+  "bpmn:UserTask",
+  "bpmn:ServiceTask",
+  "bpmn:SendTask",
+  "bpmn:ReceiveTask",
+  "bpmn:ManualTask",
+  "bpmn:BusinessRuleTask",
+  "bpmn:ScriptTask",
+  "bpmn:CallActivity",
+  "bpmn:SubProcess",
+  // gateways (§6.3) — ComplexGateway é preserve-only (ausente = deny)
+  "bpmn:ExclusiveGateway",
+  "bpmn:ParallelGateway",
+  "bpmn:InclusiveGateway",
+  "bpmn:EventBasedGateway",
+  // events — eventDefinitions avaliadas por posição na matriz abaixo
+  "bpmn:StartEvent",
+  "bpmn:IntermediateCatchEvent",
+  "bpmn:IntermediateThrowEvent",
+  "bpmn:BoundaryEvent",
+  "bpmn:EndEvent",
+  // data (§6.6)
+  "bpmn:DataObjectReference",
+  "bpmn:DataStoreReference",
+  // artifacts
+  "bpmn:Group",
+  "bpmn:TextAnnotation",
+  // collaboration
+  "bpmn:Participant",
+  "bpmn:Lane",
+  // connections
+  "bpmn:SequenceFlow",
+  "bpmn:MessageFlow",
+  "bpmn:Association",
+  "bpmn:DataInputAssociation",
+  "bpmn:DataOutputAssociation",
+]);
+
+/** EventDefinitions permitidas por posição (espelha §6.2 — mesma autoridade). */
+const EVENT_DEFS_BY_POSITION: Record<string, ReadonlySet<string>> = {
+  // start: None/Message/Timer/Signal, interrupting only
+  "bpmn:StartEvent": new Set([
+    "bpmn:MessageEventDefinition",
+    "bpmn:TimerEventDefinition",
+    "bpmn:SignalEventDefinition",
+  ]),
+  // intermediate catch: None/Message/Timer/Signal/Link
+  "bpmn:IntermediateCatchEvent": new Set([
+    "bpmn:MessageEventDefinition",
+    "bpmn:TimerEventDefinition",
+    "bpmn:SignalEventDefinition",
+    "bpmn:LinkEventDefinition",
+  ]),
+  // intermediate throw: None/Message/Signal/Escalation/Link
+  "bpmn:IntermediateThrowEvent": new Set([
+    "bpmn:MessageEventDefinition",
+    "bpmn:SignalEventDefinition",
+    "bpmn:EscalationEventDefinition",
+    "bpmn:LinkEventDefinition",
+  ]),
+  // boundary: Message/Timer/Error/Signal/Escalation (interrupting + não)
+  "bpmn:BoundaryEvent": new Set([
+    "bpmn:MessageEventDefinition",
+    "bpmn:TimerEventDefinition",
+    "bpmn:ErrorEventDefinition",
+    "bpmn:SignalEventDefinition",
+    "bpmn:EscalationEventDefinition",
+  ]),
+  // end: None/Message/Error/Signal/Escalation/Terminate
+  "bpmn:EndEvent": new Set([
+    "bpmn:MessageEventDefinition",
+    "bpmn:ErrorEventDefinition",
+    "bpmn:SignalEventDefinition",
+    "bpmn:EscalationEventDefinition",
+    "bpmn:TerminateEventDefinition",
+  ]),
+};
+
+type ClipboardBusinessObject = {
+  $type?: string;
+  eventDefinitions?: Array<{ $type?: string }>;
+  loopCharacteristics?: { $type?: string } | null;
+  isForCompensation?: boolean;
+  triggeredByEvent?: boolean;
+  isInterrupting?: boolean;
+  parallelMultiple?: boolean;
+};
+
+type ClipboardElement = {
+  type?: string;
+  businessObject?: ClipboardBusinessObject | null;
+  // createTree do vendor inclui descendants/attachers no clipboard — se o
+  // filtro só avaliar a seleção, preserve-only filho vira bypass via parent
+  // (ex.: subprocess contendo EventSubProcess, task com boundary cancel).
+  children?: ClipboardElement[] | null;
+  attachers?: ClipboardElement[] | null;
+};
+
+/**
+ * true se o elemento pode ser duplicado/colado sem violar CREATE GOVERNED.
+ * Fail-closed: businessObject ausente, tipo não listado ou marker
+ * preserve-only → DENY. Labels seguem o owner (`type: "label"`).
+ * Descendants e attachers são avaliados recursivamente — um parent
+ * CREATE_EDIT que contenha preserve-only nega o conjunto inteiro (o vendor
+ * não filtra subárvore; o único comportamento seguro é negar o topo).
+ */
+export function isClipboardElementAllowed(element: ClipboardElement): boolean {
+  // labels não carregam businessObject próprio — acompanham o owner,
+  // que já passou pelo filtro quando foi avaliado
+  if (element.type === "label") return true;
+  const bo = element.businessObject;
+  if (!bo?.$type || !CREATABLE_BPMN_TYPES.has(bo.$type)) return false;
+
+  const related = [
+    ...(element.children ?? []),
+    ...(element.attachers ?? []),
+  ];
+  if (!related.every(isClipboardElementAllowed)) return false;
+
+  const defs = bo.eventDefinitions ?? [];
+  if (bo.$type in EVENT_DEFS_BY_POSITION) {
+    const allowed = EVENT_DEFS_BY_POSITION[bo.$type];
+    // >1 eventDefinition = evento múltiplo/paralelo → preserve-only
+    if (defs.length > 1) return false;
+    if (bo.parallelMultiple) return false;
+    if (defs.some((d) => !d.$type || !allowed.has(d.$type))) return false;
+    // boundary exige definição (none-boundary é DENY no profile)
+    if (bo.$type === "bpmn:BoundaryEvent" && defs.length === 0) return false;
+    // start não-interrupting é preserve-only
+    if (bo.$type === "bpmn:StartEvent" && bo.isInterrupting === false) {
+      return false;
+    }
+    return true;
+  }
+
+  // activities/subprocess: markers preserve-only negam
+  if (bo.loopCharacteristics) return false; // MI/standard loop
+  if (bo.isForCompensation) return false; // compensation activity
+  if (bo.$type === "bpmn:SubProcess" && bo.triggeredByEvent) return false; // EventSubProcess
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Predicates (fail-closed)
 // ---------------------------------------------------------------------------
 

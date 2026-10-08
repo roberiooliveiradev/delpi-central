@@ -51,6 +51,7 @@ import { AutosaveController } from "../state/autosave";
 import { BpmnEditorAdapter, type DiagramRef, type ElementSummary } from "../editor/BpmnEditorAdapter";
 import { hasUnpreservableExtensionContent } from "../editor/extensionPreservation";
 import { ElementInspector } from "../editor/inspector/ElementInspector";
+import { PaletteSearch } from "../components/PaletteSearch";
 import { buildElkGraph } from "../layout/elkGraph";
 import { runLayout, type LayoutJob } from "../layout/layoutEngine";
 import { buildDiOps, buildDiXml, hasBpmnDi, injectDiIntoXml, planeElementFor, snapshotFromXml, stripBpmnDi, type DiLayoutOp } from "../layout/diProposal";
@@ -727,6 +728,9 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
             className="bpmnm-canvas"
             aria-label="Canvas do diagrama BPMN"
           />
+          {isEditable && !preview && (
+            <PaletteSearch adapter={adapterInstance} />
+          )}
           {!preview && (
             <div
               className="bpmnm-viewport-controls"

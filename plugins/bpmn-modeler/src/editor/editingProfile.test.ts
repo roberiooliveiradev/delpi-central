@@ -12,6 +12,7 @@ import {
   isContextPadEntryAllowed,
   isPropertiesGroupAllowed,
   isPropertiesEntryAllowed,
+  isClipboardElementAllowed,
 } from "./editingProfile";
 
 const allowedReplace = (id: string) => isReplaceEntryAllowed(`replace-with-${id}`);
@@ -200,5 +201,165 @@ describe("editingProfile — properties panel", () => {
       "calledElementType",
       "",
     ]) expect(isPropertiesEntryAllowed(id), id).toBe(false);
+  });
+});
+
+describe("editingProfile — clipboard (copy/cut/paste/duplicate, G3)", () => {
+  const el = (type: string, bo: object = {}) => ({
+    type,
+    businessObject: { $type: type, ...bo },
+  });
+
+  it("permite tipos CREATE_EDIT (positive)", () => {
+    for (const e of [
+      el("bpmn:Task"),
+      el("bpmn:UserTask"),
+      el("bpmn:ServiceTask"),
+      el("bpmn:SubProcess"),
+      el("bpmn:CallActivity"),
+      el("bpmn:ExclusiveGateway"),
+      el("bpmn:ParallelGateway"),
+      el("bpmn:InclusiveGateway"),
+      el("bpmn:EventBasedGateway"),
+      el("bpmn:StartEvent"),
+      el("bpmn:IntermediateThrowEvent"),
+      el("bpmn:EndEvent"),
+      el("bpmn:DataObjectReference"),
+      el("bpmn:DataStoreReference"),
+      el("bpmn:Group"),
+      el("bpmn:TextAnnotation"),
+      el("bpmn:Participant"),
+      el("bpmn:Lane"),
+      el("bpmn:SequenceFlow"),
+      el("bpmn:MessageFlow"),
+      el("bpmn:Association"),
+    ]) expect(isClipboardElementAllowed(e), e.type).toBe(true);
+  });
+
+  it("permite eventDefinitions dentro da posição CREATE_EDIT", () => {
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:StartEvent", {
+          eventDefinitions: [{ $type: "bpmn:TimerEventDefinition" }],
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:BoundaryEvent", {
+          eventDefinitions: [{ $type: "bpmn:ErrorEventDefinition" }],
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:EndEvent", {
+          eventDefinitions: [{ $type: "bpmn:TerminateEventDefinition" }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("nega tipos PRESERVE_ONLY importados (bypass paste)", () => {
+    for (const type of [
+      "bpmn:ComplexGateway",
+      "bpmn:Transaction",
+      "bpmn:AdHocSubProcess",
+      "bpmn:ItemDefinition",
+      "bpmn:FutureVendorType",
+    ]) expect(isClipboardElementAllowed(el(type)), type).toBe(false);
+  });
+
+  it("nega markers preserve-only em tipos permitidos (sibling)", () => {
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:Task", {
+          loopCharacteristics: {
+            $type: "bpmn:MultiInstanceLoopCharacteristics",
+          },
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isClipboardElementAllowed(el("bpmn:Task", { isForCompensation: true })),
+    ).toBe(false);
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:SubProcess", { triggeredByEvent: true }),
+      ),
+    ).toBe(false);
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:SubProcess", { triggeredByEvent: false }),
+      ),
+    ).toBe(true);
+  });
+
+  it("nega eventDefinitions fora da posição / múltiplas / paralelo", () => {
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:IntermediateCatchEvent", {
+          eventDefinitions: [{ $type: "bpmn:ConditionalEventDefinition" }],
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:StartEvent", {
+          eventDefinitions: [
+            { $type: "bpmn:MessageEventDefinition" },
+            { $type: "bpmn:TimerEventDefinition" },
+          ],
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isClipboardElementAllowed(el("bpmn:StartEvent", { parallelMultiple: true })),
+    ).toBe(false);
+    expect(
+      isClipboardElementAllowed(
+        el("bpmn:StartEvent", { isInterrupting: false }),
+      ),
+    ).toBe(false);
+    expect(isClipboardElementAllowed(el("bpmn:BoundaryEvent"))).toBe(false);
+  });
+
+  it("nega parent CREATE_EDIT que carrega descendant/attacher preserve-only", () => {
+    // subprocess contendo EventSubProcess → conjunto negado (vendor não
+    // filtra subárvore do clipboard)
+    const sub = el("bpmn:SubProcess");
+    (sub as any).children = [
+      el("bpmn:SubProcess", { triggeredByEvent: true }),
+    ];
+    expect(isClipboardElementAllowed(sub)).toBe(false);
+    // mesmo subprocess com filho permitido → copiável
+    (sub as any).children = [el("bpmn:Task")];
+    expect(isClipboardElementAllowed(sub)).toBe(true);
+    // task com boundary preserve-only (cancel) → negada
+    const task = el("bpmn:Task");
+    (task as any).attachers = [
+      el("bpmn:BoundaryEvent", {
+        eventDefinitions: [{ $type: "bpmn:CancelEventDefinition" }],
+      }),
+    ];
+    expect(isClipboardElementAllowed(task)).toBe(false);
+    // task com boundary permitido (timer) → copiável
+    (task as any).attachers = [
+      el("bpmn:BoundaryEvent", {
+        eventDefinitions: [{ $type: "bpmn:TimerEventDefinition" }],
+      }),
+    ];
+    expect(isClipboardElementAllowed(task)).toBe(true);
+  });
+
+  it("FAIL-CLOSED — businessObject ausente/sem $type é negado; label segue owner", () => {
+    expect(isClipboardElementAllowed({ type: "bpmn:Task" })).toBe(false);
+    expect(
+      isClipboardElementAllowed({ type: "bpmn:Task", businessObject: null }),
+    ).toBe(false);
+    expect(
+      isClipboardElementAllowed({ type: "bpmn:Task", businessObject: {} }),
+    ).toBe(false);
+    expect(isClipboardElementAllowed({ type: "label" })).toBe(true);
   });
 });

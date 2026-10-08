@@ -3,6 +3,7 @@ import VendorContextPadProvider from "bpmn-js/lib/features/context-pad/ContextPa
 import VendorReplaceMenuProvider from "bpmn-js/lib/features/popup-menu/ReplaceMenuProvider";
 
 import {
+  isClipboardElementAllowed,
   isContextPadEntryAllowed,
   isPaletteEntryAllowed,
   isReplaceEntryAllowed,
@@ -81,7 +82,28 @@ function GovernedReplaceMenuProvider(this: any, injector: any) {
 
 GovernedReplaceMenuProvider.$inject = ["injector"];
 
+/**
+ * Governança do clipboard (G3) — paste/duplicate são paths de criação que
+ * bypassam palette/context-pad/replace. Extension point oficial do vendor:
+ * `copyPaste.canCopyElements` permite retornar o subconjunto copiável —
+ * elementos preserve-only ficam de fora do clipboard tree (cut também não
+ * os remove, pois o vendor só corta o que foi efetivamente copiado).
+ */
+function ProfileClipboardGovernance(this: any, eventBus: any) {
+  eventBus.on("copyPaste.canCopyElements", (context: any) => {
+    const elements = context?.elements ?? [];
+    const allowed = elements.filter((el: any) =>
+      isClipboardElementAllowed(el),
+    );
+    return allowed.length === elements.length ? undefined : allowed;
+  });
+}
+
+ProfileClipboardGovernance.$inject = ["eventBus"];
+
 export const profileGovernanceModule = {
+  __init__: ["profileClipboardGovernance"],
+  profileClipboardGovernance: ["type", ProfileClipboardGovernance],
   paletteProvider: ["type", GovernedPaletteProvider],
   contextPadProvider: ["type", GovernedContextPadProvider],
   replaceMenuProvider: ["type", GovernedReplaceMenuProvider],

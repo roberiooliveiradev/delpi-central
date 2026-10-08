@@ -174,18 +174,33 @@ Gaps residuais desta wave: `calledElement`, `conditionExpression`, `defaultFlow`
 
 | Capacidade | Freeze | Implementação atual | Classificação |
 |---|---|---|---|
-| copy/cut/paste (mesmo modelo) | IN_V1 | `CopyPasteModule` + `KeyboardModule` no bundle vendor; sem teste produto dedicado | `TARGET` (vendor presente, evidência produto pendente — G3) |
-| multi-select (Shift+click / lasso) | IN_V1 | `SelectionModule`, `LassoToolModule`, `KeyboardMoveSelectionModule` vendor + "Selecionar tudo" do produto (context menu canvas) | `TARGET` parcial — lasso/Ctrl+A vendor sem UX test dedicado |
-| keyboard shortcuts | IN_V1 | vendor bindings (undo/redo/del/copy) + produto `Ctrl+S` flush; `Ctrl+F` **ausente** | `PARTIAL` / `IMPLEMENTATION_GAP` (search shortcut) |
-| search in diagram (Ctrl+F overlay) | IN_V1 (§34) | `adapter.findElements` implementado + unit-tested; **overlay/produto UI ausente** | `IMPLEMENTATION_GAP` — spec vigente sem entrega |
-| palette search | IN_V1 | `SearchModule`/`BpmnSearchProvider` + search-pad no bundle vendor; UX produto sem evidência dedicada | `TARGET` (TO_INVENTORY) |
-| snap/grid | IN_V1 (vendor) | `SnappingModule` + `GridSnappingModule` no bundle; grid configurável pelo usuário = `FUTURE` (inalterado) | vendor presente; config gap permanece FUTURE |
+| copy/cut/paste (mesmo modelo) | IN_V1 | `CopyPasteModule` + `KeyboardModule` vendor + governança `copyPaste.canCopyElements` → `isClipboardElementAllowed` (recursivo: filhos de subprocesso + boundary attachers); paste não cria preserve-only | `PROVEN` — PROD-CLIP-01..07: single/multi/flows, ids novos (paste) e unicidade (cut→paste), refs válidas, undo/redo, autosave/RB/reload; bypass preserve-only negado (§14a) |
+| multi-select (Shift+click / lasso) | IN_V1 | `SelectionModule`, `LassoToolModule`, `KeyboardMoveSelectionModule` vendor | `PROVEN` — PROD-SEL-01..05: Shift+click, lasso (L+drag), Ctrl+A, deselect vazio, bulk move (geometria relativa + DI + undo/redo + RB/reload), bulk delete (flows removidas, refs limpas, undo/redo, RB) |
+| keyboard shortcuts | IN_V1 | vendor bindings (undo/redo/del/copy) + produto `Ctrl+S` flush + `Ctrl+F` searchPad + fix de foco pós-drag (§14a) | `PROVEN` — PROD-KEY-01..06: Ctrl+S, E direct editing, R replace menu, Backspace, context pad governado, replace morph task→userTask |
+| search in diagram (Ctrl+F overlay) | IN_V1 (§34) | vendor `searchPad` + `BpmnSearchProvider` (busca por name/id) | `PROVEN` — PROD-SRCH-01..04: Ctrl+F abre, busca por nome/id, Enter seleciona, ArrowDown navega, Escape fecha, zero mutação |
+| palette search | IN_V1 | componente produto `PaletteSearch` (overlay) — fonte única = `palette.getEntries()` já filtrada pela governança; aliases PT-BR/EN; `/` abre, setas navegam, Enter ativa, Escape fecha | `PROVEN` — PROD-PAL-01..05: a11y (role combobox/aria-label), teclado completo, CREATE_EDIT-only, preserve-only nunca lista, clique posiciona + RB |
+| resize funcional | IN_V1 | `ResizeModule` vendor; `BpmnRules.canResize` — SubProcess(expandido)/Lane/Participant/Group/TextAnnotation(e/w)/labels | `PROVEN` — PROD-RSZ-01..05: resize real via `.djs-resizer-*` drag muda DI, undo/redo, save/RB/reload; task/event/gateway/data-object = `BLOCKED_AS_EXPECTED` (fixed-size vendor) |
+| snap/grid | IN_V1 (vendor) | `SnappingModule` + `GridSnappingModule` (grid 10) no bundle; grid configurável pelo usuário = `FUTURE` (inalterado) | `PROVEN` — PROD-SEL-06: drag livre quantiza bounds DI no grid 10 |
 | palette restrita ao profile + vendor features off | IN_V1 (§31/§95 do freeze) | **vigente (G2A)** — `editingProfile.ts` central + `profileGovernanceModule.ts` (palette/context-pad/replace fail-closed) + `ProfileGovernedPanelProvider` (panel); preserve-only e MultiInstance não criáveis nem replace targets | `IMPLEMENTED`+`PROVEN` (unit+integration+E2E `profile-governance.spec.ts`); ferramentas não-semânticas (align/distribute/space/hand/global-connect) permanecem `TO_INVENTORY` |
 | thumbnails na library | `FUTURE` no freeze | **entregue** — `BpmnModelThumb` renderiza SVG do working copy (cache `model@version`) | `SUPERSEDED` (DRIFT-BPMN-011) |
 
 Extras do bundle vendor presentes sem UX/evidência de produto dedicada (TO_INVENTORY, não contam como entrega): `AlignElementsModule`, `DistributeElementsModule`, `SpaceTool`, `HandTool`, `AutoPlace`, `GlobalConnect`.
 
-Drift classificado como `IMPLEMENTATION_GAP` (não documentation drift): documentação congelou capability `IN_V1` que o produto ainda não prova em UX. Owner: `03 — Frontend & UX` → G3.
+Drift classificado como `IMPLEMENTATION_GAP` (não documentation drift): documentação congelou capability `IN_V1` que o produto ainda não prova em UX. Owner: `03 — Frontend & UX` → G3. **Resolvido em G3 (§14a).**
+
+### 14a. G3 — descobertas e fixes de produtividade
+
+**Defeito de produto corrigido — foco do canvas após drag.** O `Keyboard` vendor é bound ao `<svg>` do canvas (`tabindex=0`). Drags iniciados em overlays HTML sem tabindex (resizers `.djs-resizer-*`) levam `document.activeElement` a `body`, e o mouseup final de qualquer drag é capturado por `trapClickAndEnd` no `document` (capture phase) com `stopPropagation` — listeners DOM no container nunca veem esse evento. Resultado: após resize/move, **todos** os atalhos (Ctrl+Z/Y, Ctrl+C/X/V, Ctrl+A, Del) morriam silenciosamente. Fix no boundary do adapter (`BpmnEditorAdapter`): `eventBus.on('drag.ended')` + `mouseup` no container delegam a `canvas.restoreFocus()` — a API canônica do vendor (debounced, só age quando `activeElement===document.body`, nunca rouba foco de inputs/textareas do direct editing). Evidência: antes `FOCUS_AFTER_DRAG=BODY`/`UNDO_DIFF=80`; depois `svg`/`UNDO_DIFF=0` — regressão coberta por PROD-RSZ-01 (undo/redo pós-resize).
+
+**Governança de clipboard (PRESERVE_ONLY ≠ CREATE).** `copyPaste.canCopyElements` é o extension point oficial que decide o que entra no clipboard — cobre copy, cut, duplicate e paste-as-tree (filhos de subprocesso e boundary events são avaliados recursivamente via `isClipboardElementAllowed`). Preserve-only importado (ex.: `ComplexGateway`, `Transaction`) é excluído do clipboard — `canCopy [Task, ComplexGateway] => [Task]` provado em PROD-CLIP-07; cut só remove o que efetivamente copiou. `UNCONTROLLED OUT-OF-PROFILE CREATE PATHS: 0`.
+
+**Particularidades vendor mapeadas (fixtures determinísticas):**
+- `create.participant-expanded` cria participant **sem lanes**; lanes surgem via context-pad governado `lane-divide-two/three`, `lane-insert-above/below` — renderizadas no plane do root como `.djs-element[data-element-id^="Lane_"]` (não aninhadas no DOM do pool).
+- Create de elemento com label abre direct editing automaticamente (foco em `.djs-direct-editing-content`); Escape cancela mantendo o elemento — `canvas.restoreFocus` devolve o foco ao svg.
+- Resizers só existem após transição real de seleção (`deselect → reselect`); re-click em elemento já selecionado não re-emite `selection.changed`.
+- Entries do context pad são `draggable` — clique real pode não entregar `click` ao delegate (grupos com flyout); specs usam dispatch DOM nos mesmos handlers.
+- SearchPad vendor pesquisa no `keyup` do input (não no `input` event) — specs digitam via `pressSequentially`.
+- Palette vendor ocupa a faixa esquerda do canvas — helpers são layout-aware (`canvasBox`, coordenadas fora da faixa).
 
 ## 15. Gates de implementação (roadmap registrado)
 
@@ -195,7 +210,7 @@ G1 — V1 Capability Evidence Inventory     OWNER 02+03+06   COORD 00
 G2 — BPMN Professional Breadth Wave 1     OWNER 02→03→01→06
       G2A Editing Profile Governance         PASS/CLOSED (34244d8)
       G2B CREATE_EDIT Evidence Closure       PASS — ver §13a
-G3 — Modeling Productivity                OWNER 03→06
+G3 — Modeling Productivity                OWNER 03→06   PASS/CLOSED — 33 E2E `productivity-*.spec.ts` (workers=2, determinístico): clipboard governado, seleção/bulk, searchPad Ctrl+F, palette search (IG-1 implementado), resize funcional + fixed-size blocked, shortcuts; fix de foco pós-drag (§14a)
 G4 — Broad Round-trip / Interoperability  OWNER 02+06   PASS/CLOSED — 16/16 E2E roundtrip-* + 14/14 adapter-level + 7/7 extensionPreservation unit; G4-EXT-1 resolvido (§6)
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
 G6 — Runtime Provenance / stale-process   OWNER 09
@@ -206,7 +221,7 @@ G6 — Runtime Provenance / stale-process   OWNER 09
 | Item | Owner | Status |
 |---|---|---|
 | RUNTIME_STALE_CODE_PREVENTION — processo uvicorn executava código pré-deploy apesar do bind mount atualizado (foreign read 200 → 404 após `docker restart`); incidente de deploy, não defeito de policy | 09 — DevOps/CI/Runtime | `OPEN`, `NON_BLOCKING` |
-| Diagram search overlay (§34 freeze) | 03 | `IMPLEMENTATION_GAP` → G3 |
+| Diagram search overlay (§34 freeze) | 03 | `CLOSED` (G3) — searchPad vendor provado PROD-SRCH-01..04 (Ctrl+F, nome/id, navegação, sem mutação) |
 | BPMN profile breadth proof | 02+03+06 | `TO_INVENTORY` → G1 → G2B fechou CREATE_EDIT (§13a) → **G4 fechou per-construct round-trip (§6)** |
 | E2E-38b (`visual-regression.spec.ts`) — teste importa modelo como `editor` e abre como `viewer`; falha com HTTP 404 desde a fail-closed ownership (`_get_owned_or_404`). Falha **pré-existente** ao G4 (teste de `7832e1adc6`), incompatível com a política vigente — precisa ser reescrito (modelo criado como `viewer`) ou a política revisada com decisão de produto | 03+02 | `OPEN`, `NON_BLOCKING` |
 | G4-EXT-1 — extension serialization: `bpmn:extension/@definition` reparado via referência léxica `{id}` (adapter boundary); attr same-ns em `extensionElements` é irremediável no serializer vendor → gate `UNSUPPORTED_EXTENSION_SERIALIZATION` fail-closed read-only (§6) | 02+06 | `CLOSED` — mitigado em produto; possível contribuição upstream ao `moddle-xml` é follow-up opcional, não-bloqueante |

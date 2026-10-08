@@ -101,6 +101,8 @@ export class BpmnEditorAdapter {
   private stateTokens: string[] = [];
   private cursor = -1;
   private savedToken: string | null = null;
+  private canvasFocusHandler: (() => void) | null = null;
+  private canvasContainer: HTMLElement | null = null;
 
   mount(container: HTMLElement, mode: EditorMode): void {
     this.destroy();
@@ -131,11 +133,27 @@ export class BpmnEditorAdapter {
     } else {
       this.modeler = new NavigatedViewer({ container, bpmnRenderer });
     }
+    // Focus restoration: o Keyboard do vendor é bound ao <svg> do canvas
+    // (tabindex=0). Interações de mouse que terminam em alvos sem tabindex
+    // (resizers do resize, overlays HTML) levam activeElement a
+    // document.body e todos os atalhos do canvas morrem. O vendor expõe
+    // canvas.restoreFocus() — debounced, só age quando o foco está no
+    // body, nunca rouba inputs/textareas do direct editing.
+    this.canvasFocusHandler = () =>
+      this.svc<{ restoreFocus(): void }>("canvas")?.restoreFocus();
+    container.addEventListener("mouseup", this.canvasFocusHandler);
+    this.canvasContainer = container;
+
     this.layoutHandlerRegistered = false;
     this.wireEvents();
   }
 
   destroy(): void {
+    if (this.canvasFocusHandler && this.canvasContainer) {
+      this.canvasContainer.removeEventListener("mouseup", this.canvasFocusHandler);
+    }
+    this.canvasFocusHandler = null;
+    this.canvasContainer = null;
     this.modeler?.destroy();
     this.modeler = null;
     this.layoutHandlerRegistered = false;
@@ -302,6 +320,54 @@ export class BpmnEditorAdapter {
     selection.select(elements);
   }
 
+  /**
+   * Palette search (G3): inventário de entries de criação já GOVERNADAS
+   * (o provider passa pelo filtro fail-closed da editingProfile — o que
+   * aparece aqui é o que a paleta realmente oferece). Somente entries
+   * `create.*` são expostas à busca; tools/separator não são criáveis
+   * via busca. Retorna [] fora do modo edit.
+   */
+  paletteEntries(): Array<{ id: string; title: string }> {
+    if (this.mode !== "edit") return [];
+    const palette = this.svc<{
+      getEntries(): Record<string, { title?: string }>;
+    }>("palette");
+    if (!palette) return [];
+    return Object.entries(palette.getEntries())
+      .filter(
+        ([id, entry]) => id.startsWith("create.") && Boolean(entry.title),
+      )
+      .map(([id, entry]) => ({ id, title: entry.title as string }));
+  }
+
+  /**
+   * Ativa um entry de palette via o mesmo path do clique do usuário
+   * (triggerEntry 'click' → create.start). Modo edit apenas.
+   */
+  activatePaletteEntry(id: string): boolean {
+    if (this.mode !== "edit") return false;
+    const palette = this.svc<{
+      triggerEntry(
+        entryId: string,
+        action: string,
+        event: Event,
+        autoActivate?: boolean,
+      ): unknown;
+    }>("palette");
+    if (!palette) return false;
+    try {
+      palette.triggerEntry(
+        id,
+        "click",
+        new MouseEvent("click", { bubbles: true }),
+        true,
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /** Direct editing vendor (rename inline) — modo edit apenas. */
   directEdit(elementId: string): void {
     if (this.mode !== "edit") return;
@@ -459,6 +525,13 @@ export class BpmnEditorAdapter {
           y: mouse?.clientY ?? 0,
         });
       },
+    );
+    // Drags (resize, move, lasso) terminam via trapClickAndEnd no document
+    // com stopPropagation — o mouseup final nunca alcança o container, logo
+    // o listener DOM de mouseup não basta; o event bus é o ponto canônico.
+    // canvas.restoreFocus é debounced e só age se o foco ficou no body.
+    eventBus.on("drag.ended", () =>
+      this.svc<{ restoreFocus(): void }>("canvas")?.restoreFocus(),
     );
   }
 

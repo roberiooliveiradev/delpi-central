@@ -182,26 +182,26 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 
 | GAP | Capability | Evidence | Missing | Owner | Severity | Wave |
 |---|---|---|---|---|---|---|
-| IG-1 | Palette search (IN_V1) | vendor não implementa | feature inteira | 03 | P2 | G3 |
+| IG-1 | Palette search (IN_V1) | **CLOSED (G3)** — componente `PaletteSearch` implementado: overlay no canvas, fonte única = `palette.getEntries()` (entries já governadas — zero catálogo paralelo), aliases PT-BR/EN, `/` abre, ArrowUp/Down + Enter + Escape, `role=combobox`/aria-label; preserve-only nunca lista (sem entry CREATE_EDIT). Evidência PROD-PAL-01..05 | implementada | 03 | P2 | **G3 EXECUTED** |
 | IG-2 | Profile governance (palette/context-pad/replace/panel) | ~~replace expõe ad-hoc/transaction/eventSubProcess/complex/MultiInstance~~ | provider de restrição | 03+02 | **P1** | G2/G3 → **CLOSED / VERIFIED AFTER CORRECTION PASS** — `editingProfile.ts`+`profileGovernanceModule.ts`+`ProfileGovernedPanelProvider`; fail-closed em todas as surfaces incl. properties entries (allowlist); bypasses corrigidos: `none-boundary-event` (não-criável), `append.compensation-activity` (compensation preserve-only); `isExecutable` classificado BPMN normativo, edição oculta por decisão de produto, valor preservado no round-trip. Evidência `profile-governance.spec.ts` |
 
 ### EVIDENCE GAPS (provavelmente funciona, sem prova de produto)
 
 | GAP | Capability | State | Owner | Severity | Wave |
 |---|---|---|---|---|---|
-| EG-1 | Copy/cut/paste mesmo modelo | vendor wired, zero test | 06+03 | P2 | G3 |
-| EG-2 | Multi-select/lasso/bulk ops | vendor wired, zero test | 06+03 | P2 | G3 |
+| EG-1 | Copy/cut/paste mesmo modelo | **CLOSED (G3)** — PROD-CLIP-01..07: single/multi/flows, ids novos no paste, refs válidas, undo/redo, autosave/RB/reload; governança `copyPaste.canCopyElements` → `isClipboardElementAllowed` recursivo; bypass preserve-only negado (`[Task, ComplexGateway]→[Task]`) | 06+03 | P2 | **G3 EXECUTED** |
+| EG-2 | Multi-select/lasso/bulk ops | **CLOSED (G3)** — PROD-SEL-01..05: Shift+click, lasso (L+drag), Ctrl+A, deselect, bulk move (geom. relativa + DI + undo/redo + RB/reload), bulk delete (flows + refs limpas + undo/redo + RB); snap/grid grid 10 provado (PROD-SEL-06) | 06+03 | P2 | **G3 EXECUTED** |
 | EG-3 | Typed tasks + callActivity create/edit | **CLOSED (G2B)** — CE-ACT-02/03: 7 typed tasks + CallActivity via Replace → QName + save/read-back/reload. calledElement = panel gap → EG-14/WAVE E | 03+02 | **P1** | G2 |
 | EG-4 | Event definitions CE (create/swap/fields) | **CLOSED (G2B)** — CE-EVT-01..06: start/catch/throw/boundary/end defs + boundary attach + non-interrupting + timer type/value → XML + read-back + reload | 03+02 | **P1** | G2 |
 | EG-5 | Parallel/Inclusive/EventBased gateway create | **CLOSED (G2B)** — CE-GW-02..05: replace + connect + QName + EventBased append governance (conditional deny) | 03+02 | **P1** | G2 |
 | EG-6 | Pool/lane create/resize/membership | **CLOSED (G2B)** — CE-COL-01/02/05: participant+processRef+laneSet, insert above/below + divide (nested childLaneSet), rename + move task entre lanes | 03+04 | P1 | G2 |
 | EG-7 | Message flow create entre pools | **CLOSED (G2B)** — CE-COL-03: 2 pools + MessageFlow tA→tB cross-process → `<bpmn:messageFlow>` read-back | 03 | P2 | G2 |
 | EG-8 | Per-construct round-trip compare | **CLOSED (G4)** — 16 testes E2E `roundtrip-*.spec.ts` + 14 adapter-level `roundtrip-adapter.test.ts` + 7 `extensionPreservation.test.ts`: comparador estrutural QName/ns/DI-aware (`e2e/rt-compare.ts`), XSD-default normalization, allow-lists classificadas por transform vendor, extension-loss allowlist 0 (§5) | 02+06 | P1 | G4 |
-| EG-9 | Resize funcional | resizers visuais testados | 03 | P3 | G3 |
-| EG-10 | Search pad overlay (Ctrl+F funciona?) | vendor wired + traduzido, zero test | 03+06 | P2 | G3 |
+| EG-9 | Resize funcional | **CLOSED (G3)** — PROD-RSZ-01..05: drag real em `.djs-resizer-*` muda DI (SubProcess expandido, Participant, Lane, Group) + undo/redo + save/RB/reload; task/event/gateway/data-object = `BLOCKED_AS_EXPECTED` por `BpmnRules.canResize`; fix de foco pós-drag (`drag.ended` → `canvas.restoreFocus`) habilita undo/redo via teclado | 03 | P3 | **G3 EXECUTED** |
+| EG-10 | Search pad overlay (Ctrl+F funciona?) | **CLOSED (G3)** — PROD-SRCH-01..04: Ctrl+F abre, busca por nome e por id (substring, acentos), Enter seleciona, ArrowDown navega matches, Escape fecha, zero mutação | 03+06 | P2 | **G3 EXECUTED** |
 | EG-11 | TextAnnotation/Association/DataAssociation create | **CLOSED (G2B)** — CE-ART-02/03: dataOutput+dataInputAssociation + textAnnotation editada + `<bpmn:association>` read-back/reload | 03 | P2 | G3→G2B |
 | EG-12 | Preserve-only render/round-trip por construct | **CLOSED (G4)** — RT-PRES-01..04: render check (`djs-element` por id) + serialize→reimport→compare por construct (activities/events/data preserve-only) + safe-edit isolation | 02+06 | P1 | G4 |
-| EG-13 | Shortcuts vendor (Del, R, E, S, L, H, C, zoom) | bindings ativos | 03+06 | P2 | G3 |
+| EG-13 | Shortcuts vendor (Del, R, E, S, L, H, C, zoom) | **CLOSED (G3)** — PROD-KEY-01..06: Ctrl+S flush, E direct editing, R replace menu, Backspace/Delete, context pad actions governadas, replace morph; matriz shortcut→efeito executada (§CURRENT-STATE 14a); foco restaurado pós-drag via `canvas.restoreFocus` | 03+06 | P2 | **G3 EXECUTED** |
 | EG-14 | Engine fields no panel (MultiInstance/VersionTag/demais engine fields) + **panel fields IN_V1 ausentes: `calledElement`/`conditionExpression`/`defaultFlow`** | bundle tem; exposição runtime TI | 03+02 | P2 | G3/WAVE E. NOTA G2A: `isExecutable` **resolvido** — BPMN normativo (não engine-specific); edição intencionalmente não exposta por decisão de produto; preservação de import **PROVEN** (GOV-13). NOTA G2B: `calledElement`/`conditionExpression`/`defaultFlow` reclassificados VENDOR_ONLY→**IMPLEMENTATION_GAP** (provider `bpmn` não emite as entries; código vive em providers Zeebe/Camunda não carregados) |
 
 ### TARGET GAPS (scope congelado não inventariado)
@@ -228,7 +228,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 - **Collaboration:** PROVEN create path — participant expanded+processRef+laneSet, lanes insert/divide/nested/rename/move, black-box pool, 2 pools + MessageFlow (CE-COL-01..05).
 - **Data/Artifacts:** PROVEN — DataObject, DataStoreReference, TextAnnotation+texto, Group, Association, DataAssociation (CE-ART-01..04).
 - **Properties breadth:** PARTIAL — timer type/value, name, lane name, task type, annotation text PROVEN; event refs expostos sem teste dedicado; `calledElement`/`conditionExpression`/`defaultFlow` ausentes da surface `bpmn` carregada → IMPLEMENTATION_GAP (WAVE E).
-- **Productivity:** 6 PROVEN (select-all, Ctrl+S, undo/redo, zoom/pan/fit, direct edit, canvas) · ~10 PARTIAL · ~12 VENDOR_ONLY · 1 MISSING (palette search).
+- **Productivity:** PROVEN (G3) — clipboard governado, multi-select/lasso/select-all/deselect, bulk move/delete, Ctrl+F searchPad, palette search implementada (IG-1), resize funcional com fixed-size blocked, shortcuts executados, snap/grid grid 10. Restam `TO_INVENTORY` não-semânticos: align/distribute/space/hand/global-connect (WAVE F).
 - **Validation:** PROVEN (47/47 regras) · per-construct semantic PARTIAL.
 - **Round-trip:** artifact-level PROVEN · per-construct PROVEN (G4 — semântica + BPMN-DI + extensions/unknown por construct; safe-edit isolation; G4-EXT-1 CLOSED — repair + fail-closed gate).
 - **Lifecycle/API/Ownership/Autosave/Revisions:** PROVEN (fora do escopo deste inventário — ver CURRENT-STATE).
@@ -238,7 +238,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 - **WAVE A — Profile Governance:** provider de restrição palette/context-pad/replace/panel para o profile CE; bloquear/excluir preserve-only+engine constructs da criação. (IG-2, EG-14) — P1, owners 03+02. → **EXECUTED (G2A, PASS)** — parte creation/replacement fechada; exposição residual de engine fields no panel = TO_INVENTORY (EG-14 permanece para WAVE E).
 - **WAVE B — CREATE_EDIT Evidence Closure:** → **EXECUTED (G2B, PASS)** — 24 testes E2E `create-edit-*.spec.ts` (workers=2, baseline determinístico) provam create→configure→connect→save→authoritative read-back→reload por construct CE. Construct paths = PROVEN; properties breadth = PARTIAL. (EG-3..7, EG-11, TG-1, TG-3 fechados).
 - **WAVE C — Round-trip & Preserve Evidence:** suíte export→reimport→compare por construct + corpus preserve-only. (EG-8, EG-12, TG-2) — P1, owners 02+06. → **EXECUTED (G4, PASS/CLOSED)** — 16 testes E2E `roundtrip-*.spec.ts` (workers=2, determinístico) + 14 adapter-level `roundtrip-adapter.test.ts` + 7 `extensionPreservation.test.ts`; comparador estrutural `e2e/rt-compare.ts`; corpus `e2e/fixtures/roundtrip/` XSD-validado (13 fixtures); transforms vendor classificados; G4-EXT-1 resolvido sem normalização de perda — `definition` reparado, attr same-ns fail-closed read-only.
-- **WAVE D — Productivity:** copy/paste, multi-select/bulk, search pad product QA, palette search impl, shortcuts map, resize funcional. (EG-1,2,9,10,13, IG-1) — P2, owners 03+06.
+- **WAVE D — Productivity:** → **EXECUTED (G3, PASS/CLOSED)** — 33 testes E2E `productivity-{clipboard,selection,search,resize,shortcuts}.spec.ts` (workers=2, determinístico); palette search implementada derivada do profile governado; defeito de foco pós-drag corrigido no adapter (`drag.ended`/`mouseup` → `canvas.restoreFocus`); UNCONTROLLED OUT-OF-PROFILE CREATE PATHS via paste = 0. (EG-1,2,9,10,13, IG-1 fechados).
 - **WAVE E — Properties Evidence:** doc/condition/default/event-fields/calledElement UI tests. — P2, owner 03+06.
 - **WAVE F — Vendor Exposure Decision:** align/distribute/space/hand/global-connect ativos mas FUTURE — decidir manter/desativar/documentar. — P3, owner 00+03.
 
