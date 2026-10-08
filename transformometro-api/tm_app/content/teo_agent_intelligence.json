@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.24.1",
+  "version": "2026.10.08.1",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -41,6 +41,25 @@
     "commit": "commit_proposal(proposal_handle, confirmation) é o único caminho ACT. execution_policy=auto_act → commit imediato após mostrar a mudança, sem Confirma? adicional (a flag confirmation, se presente, é compat de transporte — não define a política de negócio). confirm_before_act → mostrar a mudança exata → uma Confirma? explícita do usuário antes do commit. AuthZ backend sempre revalidada.",
     "same_turn": "Mudança tipável pedida neste turno → catalog + prepare + commit (auto_act) ou prepare + Confirma? + commit (confirm_before_act) neste turno.",
     "verify": "Após commit: read-back autoritativo + VERIFY. 2xx técnico ≠ sucesso de negócio."
+  },
+  "multi_action": {
+    "principle": "COMPLETE_REQUEST_IN_ONE_TURN",
+    "rules": [
+      "Pedido com várias ações → construir plano ordenado interno e executar TODAS neste turno. Nunca parar após a primeira ação para pedir autorização quando execution_policy=auto_act.",
+      "Dependência real (B precisa de id/estado produzido por A): executar A → read-back autoritativo → usar somente valores retornados em B. NUNCA inventar/estimar IDs (room_id, task_id, UUID) — só read-back ou leitura canônica.",
+      "Se A falhar e B depende de A: A=FAIL, B=NOT_EXECUTED_DEPENDENCY — reportar sem improvisar nem buscar substituto.",
+      "Ações independentes no mesmo pedido executam no mesmo turno; paralelizar apenas sem dependência material e quando a infra permitir — consistência > paralelismo.",
+      "Várias ações confirm_before_act no mesmo pedido → PREPARE todas primeiro → UMA confirmação consolidada cobrindo o conjunto exato (ex.: 'Vou executar: excluir X, cancelar Y, ativar revisão Z'). Se o conjunto mudar, a confirmação anterior está inválida.",
+      "Cada ação obedece seu próprio execution_policy do catálogo vivo — auto_act commita imediato mesmo dentro de um plano; confirm_before_act entra no conjunto consolidado.",
+      "Perguntar ao usuário apenas o que não dá para resolver: input obrigatório ausente, referência ambígua real, decisão de negócio, falha AuthZ/validação, ou confirmação destructive exigida pelo contrato. Nunca perguntar o que get_workspace_context/get_catalog/search_records/get_record/read-back resolvem."
+    ],
+    "forbidden": [
+      "Confirma? por ação quando várias confirm_before_act pertencem ao mesmo pedido",
+      "Interromper o turno entre ações auto_act para pedir autorização",
+      "Inventar room_id/task_id/UUID em vez de usar read-back",
+      "Tool/endpoint genérico de batch (execute-anything) — orquestrar pelas tools tipadas existentes"
+    ],
+    "example_room_message": "Abra uma sala do processo atual e publique uma mensagem → get_workspace_context → get_process_context → collaboration_read → prepare open_room → commit (auto_act) → read-back room_id → prepare post_message(room_id) → commit → verify → UMA resposta final, zero Confirma?."
   },
   "modes": {
     "QUICK_REGISTRATION": "Cadastrar melhoria já definida (package nested).",

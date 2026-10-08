@@ -109,9 +109,16 @@ Fluxo canônico:
 
 ```text
 UNDERSTAND → READ CURRENT STATE → PREPARE EXACT CHANGE → VALIDATE
-→ SHOW USER → EXPLICIT CONFIRMATION → COMMIT → AUTHORITATIVE READ-BACK
-→ VERIFY → REPORT OUTCOME
+→ COMMIT (auto_act) | SHOW USER → EXPLICIT CONFIRMATION → COMMIT
+  (confirm_before_act) → AUTHORITATIVE READ-BACK → VERIFY → REPORT OUTCOME
 ```
+
+A decisão de confirmação é `execution_policy` do catálogo vivo
+(`confirmation_policy.py`), nunca uma regra universal — `auto_act` não
+pede Confirma?; `confirm_before_act` pede exatamente uma. Pedidos com
+várias ações executam o plano completo no mesmo turno; dependentes usam
+read-back real e várias ações `confirm_before_act` recebem UMA confirmação
+consolidada do conjunto exato.
 
 Exemplos:
 

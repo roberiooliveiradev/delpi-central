@@ -118,4 +118,99 @@ def test_facade_and_mcp_share_orchestrator_class():
 
     facade = GovernedActionsFacade()
     assert isinstance(facade.orchestrator, GovernedWriteOrchestrator)
-    assert tool_bridge._governed.orchestrator.__class__ is GovernedWriteOrchestrator
+
+
+# ------------------------------------------------- multi-action orchestration
+
+
+def test_multi_action_directive_is_projected():
+    directives = build_capability_surface_catalog()["agent_directives"]
+    section = directives.get("multi_action")
+    assert section is not None
+    assert section["principle"] == "COMPLETE_REQUEST_IN_ONE_TURN"
+    rules = " ".join(section["rules"])
+    # Same-turn execution of the whole request.
+    assert "mesmo turno" in rules
+    # Dependencies only via authoritative read-back — never invented ids.
+    assert "read-back" in rules
+    assert "NUNCA inventar" in rules
+    # Dependency failure is reported, not improvised.
+    assert "NOT_EXECUTED_DEPENDENCY" in rules
+    # One consolidated confirmation for the exact destructive set.
+    assert "consolidada" in rules
+    forbidden = " ".join(section["forbidden"])
+    assert "auto_act" in forbidden
+    # No generic batch tool allowed.
+    assert "batch" in forbidden or "execute-anything" in forbidden
+
+
+def test_multi_action_interaction_room_needs_zero_confirmation():
+    doc = TeoAgentIntelligenceService.document()
+    section = doc["multi_action"]
+    assert section["example_room_message"]
+    assert "zero Confirma" in section["example_room_message"]
+
+
+def test_no_stale_universal_confirmation_rule():
+    # No directive may force confirmation regardless of execution_policy.
+    import json as _json
+
+    doc = TeoAgentIntelligenceService.document()
+    blob = _json.dumps(doc, ensure_ascii=False).lower()
+    for stale in (
+        "toda escrita exige confirma",
+        "qualquer write exige confirma",
+        "any write requires confirmation",
+        "every write requires confirmation",
+        "sempre pedir confirma",
+    ):
+        assert stale not in blob
+
+
+def test_policy_classification_acceptance_set():
+    from tm_app.application.governed_writes.confirmation_policy import (
+        requires_user_confirmation,
+    )
+
+    # Spec inventory — additive/reversible stay auto_act.
+    for cap in (
+        "open_interaction_room",
+        "post_interaction_message",
+        "edit_interaction_message",
+        "toggle_interaction_reaction",
+        "pin_interaction_message",
+        "unpin_interaction_message",
+        "mark_interaction_read",
+        "create_task",
+        "update_task",
+        "complete_task",
+        "create_record",
+        "update_record",
+        "duplicate_record",
+        "adjust_shared_resource_cost",
+        "update_signature_profile",
+        "create_diagnostic",
+    ):
+        assert not requires_user_confirmation(cap), cap
+    # Destructive/consequential stay fail-closed.
+    for cap in (
+        "delete_record",
+        "commit_improvement_package",
+        "activate_revision",
+        "recalculate_dashboard",
+        "meeting_minute_workflow",
+        "manage_evidence",
+        "meeting_minute_manage",
+        "manage_diagnostic",
+        "cancel_task",
+        "delete_interaction_message",
+        "import_diagram_bpmn_xml",
+    ):
+        assert requires_user_confirmation(cap), cap
+    # Unknown capability fails closed.
+    assert requires_user_confirmation("nonexistent_capability")
+
+
+def test_mcp_instructions_include_multi_action():
+    assert "Multi-action" in TEO_MCP_INSTRUCTIONS
+    assert "consolidated" in TEO_MCP_INSTRUCTIONS

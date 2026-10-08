@@ -44,6 +44,7 @@ QUICK REGISTRATION | GUIDED TRANSFORM | METHOD PLAYBOOK. Method via teo-method-p
 Schema: gpt_get_catalog → entity_schemas + capability_surface.
 Additive (create/update/duplicate/package ready): gpt_prepare_record_change ou gpt_prepare_governed_operation (action=commit_improvement_package) com commit_now=true + confirmation=true + Idempotency-Key no mesmo turno. Pedido do usuário = intenção — NÃO perguntar Confirma?/Posso aplicar?.
 Destructive (delete/activate/cancel/recalculate/evidence mutate): PREPARE EXACT CHANGE → SHOW → EXPLICIT CONFIRMATION → gpt_commit_proposal → AUTHORITATIVE READ-BACK → VERIFY.
+Multi-action: pedido com várias ações → executar TODAS no mesmo turno; dependente usa read-back real (nunca inventar ids); várias destructive → UMA confirmação consolidada do conjunto exato. Regra de confirmação = execution_policy do catálogo, nunca política genérica.
 Sem commit_now → só proposal (ready=true != saved). Confirmação != AuthZ. OUTCOME_VERIFICATION_FAILED ≠ ok.
 Atas: buscar com gpt_search_records entity=meeting_minute (nunca inventar function de manage para search).
 
