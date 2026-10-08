@@ -502,8 +502,9 @@ def test_r2_openapi_document_trickle_bounded():
     the caller bound — truthful unavailable, elapsed near the bound."""
     import time as _time
 
-    import requests as _requests
-
+    from app.infrastructure.http.deadline_transport import (
+        deadline_http_get,
+    )
     from app.infrastructure.openapi.http_invoker import (
         fetch_openapi_document,
     )
@@ -514,7 +515,7 @@ def test_r2_openapi_document_trickle_bounded():
         started = _time.monotonic()
         with pytest.raises(CapabilityProviderError) as exc:
             fetch_openapi_document(
-                base, http_get=_requests.get, timeout_seconds=0.4
+                base, http_get=deadline_http_get, timeout_seconds=0.4
             )
         assert exc.value.code == "openapi_document_unavailable"
         assert _time.monotonic() - started < 2.0
@@ -527,7 +528,9 @@ def test_r2_openapi_invoke_trickle_bounded():
     bound — document fast, capability endpoint trickles forever."""
     import time as _time
 
-    import requests as _requests
+    from app.infrastructure.http.deadline_transport import (
+        deadline_http_get,
+    )
 
     server = _trickle_server(trickle_paths=("/api/products",))
     try:
@@ -536,7 +539,7 @@ def test_r2_openapi_invoke_trickle_bounded():
             base,
             source_id="delpi",
             subject_bearer_getter=lambda: "tok",
-            http_get=_requests.get,
+            http_get=deadline_http_get,
             timeout_seconds=30.0,
         )
         provider = OpenApiCapabilityProvider([_source(invoker)])

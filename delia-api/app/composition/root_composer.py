@@ -21,6 +21,10 @@ from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
 from app.domain.evidence.model import ModelRef
+from app.infrastructure.http.deadline_transport import (
+    deadline_http_get,
+    deadline_http_post,
+)
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.auth.subject_bearer import current_subject_bearer
@@ -162,7 +166,7 @@ def _wire_openapi_provider(settings: Settings):
         source_id="delpi",
         base_url=settings.openapi_delpi_base_url,
         declarations_path=settings.openapi_delpi_declarations_path,
-        http_get=requests.get,
+        http_get=deadline_http_get,
         subject_bearer_getter=current_subject_bearer,
         timeout_seconds=settings.openapi_timeout_seconds,
     )
@@ -191,7 +195,7 @@ def _wire_delegated_credential_provider(settings: Settings, connections):
         client_id=settings.exchange_client_id,
         client_secret=settings.exchange_client_secret,
         timeout_seconds=settings.exchange_timeout_seconds,
-        http_post=requests.post,
+        http_post=deadline_http_post,
         subject_bearer_getter=current_subject_bearer,
         token_validator=validate_token,
         cache=InMemoryDelegatedTokenCache(

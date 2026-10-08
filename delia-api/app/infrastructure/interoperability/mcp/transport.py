@@ -41,6 +41,7 @@ from app.infrastructure.http.bounded_request import (
     BoundedHttpTransportError,
     bounded_request,
 )
+from app.infrastructure.http.deadline_transport import deadline_http_post
 
 
 # Classic initialize/tools/* flow this transport implements. The
@@ -64,7 +65,7 @@ class DelpiMcpTransport:
         *,
         timeout_seconds: float,
         bearer_token: str | None = None,
-        http_post: Callable[..., Any] = requests.post,
+        http_post: Callable[..., Any] = deadline_http_post,
         max_response_bytes: int = MAX_MCP_RESPONSE_BYTES,
         client_name: str = "delia-api",
         client_version: str = "0.0.1",

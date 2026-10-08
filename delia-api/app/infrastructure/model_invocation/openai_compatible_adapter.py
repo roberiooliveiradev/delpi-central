@@ -34,6 +34,10 @@ from app.domain.model_invocation.model import (
     ProviderExposureClass,
     UsageMetadata,
 )
+from app.infrastructure.http.deadline_transport import (
+    deadline_http_post,
+    deadline_scope,
+)
 
 
 _PROVIDER_TOOL_FIELDS = ("tool_calls", "function_call", "tool_call", "function_calls")
@@ -71,7 +75,7 @@ class OpenAICompatibleModelInvocationAdapter:
         api_key: str,
         model: str,
         timeout_seconds: float,
-        http_post: Callable[..., Any] = requests.post,
+        http_post: Callable[..., Any] = deadline_http_post,
     ) -> None:
         for name, value in (
             ("base_url", base_url),
@@ -102,20 +106,28 @@ class OpenAICompatibleModelInvocationAdapter:
         deadline = started + timeout
         response = None
         try:
-            response = self._http_post(
-                self._endpoint,
-                headers={
-                    "Authorization": f"Bearer {self._api_key}",
-                    "Content-Type": "application/json",
-                },
-                json=self._request_payload(request),
-                # (connect, read): connect is bounded by the whole
-                # remaining invocation budget; the per-recv read slice
-                # bounds how long a single socket read can stall while
-                # the chunked drain enforces the total deadline.
-                timeout=(timeout, min(timeout, _READ_SLICE_SECONDS)),
-                stream=True,
-            )
+            # LOOP-03R2A-R3: bind the absolute deadline thread-locally so
+            # deadline-wrapped transports enforce it during status-line
+            # and header parsing too — not only during body drain.
+            with deadline_scope(deadline):
+                response = self._http_post(
+                    self._endpoint,
+                    headers={
+                        "Authorization": f"Bearer {self._api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=self._request_payload(request),
+                    # (connect, read): connect is bounded by the whole
+                    # remaining invocation budget; the per-recv read
+                    # slice bounds how long a single socket read can
+                    # stall while the chunked drain enforces the total
+                    # deadline.
+                    timeout=(
+                        timeout,
+                        min(timeout, _READ_SLICE_SECONDS),
+                    ),
+                    stream=True,
+                )
             self._check_status(response.status_code)
             body = self._read_body(response, deadline)
         except ModelInvocationError:

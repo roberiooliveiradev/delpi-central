@@ -708,9 +708,10 @@ def test_r2_exchange_slow_server_total_wall_clock():
     import http.server
     import threading
 
-    import requests as _requests
-
     from app.application.specialist_interop.errors import MCP_TIMEOUT
+    from app.infrastructure.http.deadline_transport import (
+        deadline_http_post,
+    )
 
     class SlowHandler(http.server.BaseHTTPRequestHandler):
         def do_POST(self):
@@ -737,7 +738,7 @@ def test_r2_exchange_slow_server_total_wall_clock():
             client_id="delia-api",
             client_secret="s",
             timeout_seconds=10.0,
-            http_post=_requests.post,
+            http_post=deadline_http_post,
             subject_bearer_getter=lambda: _subject(),
             token_validator=lambda t: json.loads(
                 base64.urlsafe_b64decode(t.split(".")[1] + "==")

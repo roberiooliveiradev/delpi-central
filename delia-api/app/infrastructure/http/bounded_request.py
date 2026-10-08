@@ -8,6 +8,12 @@ monotonic deadline is re-checked between reads, with the in-flight
 socket timeout tightened to the remaining budget so a mid-body stall
 cannot outlive the deadline by more than one read slice.
 
+LOOP-03R2A-R3: the absolute deadline is also installed via
+``deadline_scope`` so that status-line/header parsing (which happens
+inside ``send``) cannot renew the window — see
+``app/infrastructure/http/deadline_transport.py`` for the socket-level
+enforcement that makes the deadline TRULY absolute pre-body.
+
 Provider-neutral infrastructure only — callers map the bounded
 errors to their own truthful semantics. No secrets, payloads or
 argument values are logged here.
@@ -22,6 +28,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import requests
+
+from app.infrastructure.http.deadline_transport import deadline_scope
 
 # One recv slice bounds how long a single socket read can stall while
 # the chunked drain enforces the total deadline.
@@ -81,13 +89,19 @@ def bounded_request(
     deadline = clock() + timeout
     response = None
     try:
-        response = send(
-            url,
-            timeout=(timeout, min(timeout, _READ_SLICE_SECONDS)),
-            stream=True,
-            **send_kwargs,
-        )
-        body = _drain_body(response, deadline, max_body_bytes, clock)
+        # The absolute deadline is bound thread-locally BEFORE send —
+        # deadline-wrapped sockets then enforce it during connect,
+        # status-line and header parsing, not just body drain.
+        with deadline_scope(deadline):
+            response = send(
+                url,
+                timeout=(timeout, min(timeout, _READ_SLICE_SECONDS)),
+                stream=True,
+                **send_kwargs,
+            )
+            body = _drain_body(
+                response, deadline, max_body_bytes, clock
+            )
     except (
         BoundedHttpTimeout,
         BoundedHttpTransportError,

@@ -1005,7 +1005,9 @@ def test_r2_mcp_trickling_body_bounded():
     import http.server
     import threading
 
-    import requests as _requests
+    from app.infrastructure.http.deadline_transport import (
+        deadline_http_post,
+    )
 
     class TrickleHandler(http.server.BaseHTTPRequestHandler):
         def do_POST(self):
@@ -1034,7 +1036,7 @@ def test_r2_mcp_trickling_body_bounded():
             f"http://127.0.0.1:{server.server_address[1]}/mcp",
             timeout_seconds=30.0,
             bearer_token=TOKEN,
-            http_post=_requests.post,
+            http_post=deadline_http_post,
         )
         started = time.monotonic()
         with pytest.raises(SpecialistInteropError) as exc:
