@@ -11,6 +11,8 @@ import type {
   MachineLoadPublicationResult,
   MachineLoadTransferPayload,
   MachineLoadWithdrawPayload,
+  OperatorFeedbackInboxPayload,
+  PcpOperatorFeedback,
   FinishedProductShortagePayload,
   LineFeederItemStatus,
   LineFeederPickItem,
@@ -834,4 +836,56 @@ export async function closeLineFeederPickPlan(params: {
     { signal: params.signal },
   );
   return unwrapEnvelope(envelope, "Não foi possível fechar a lista de coleta.");
+}
+
+/** Inbox do Operator Feedback — impedimentos ativos da filial inteira (C4).
+ *  Um unico GET por leitura: a associacao com a Carga Maquina e local. */
+export async function fetchOperatorFeedbackInbox(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<OperatorFeedbackInboxPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: OperatorFeedbackInboxPayload;
+  }>(ppcApiUrl(`/operator-feedbacks?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível carregar os impedimentos.");
+}
+
+export async function acknowledgeOperatorFeedback(params: {
+  feedbackId: string;
+  signal?: AbortSignal;
+}): Promise<PcpOperatorFeedback> {
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: PcpOperatorFeedback;
+  }>(
+    ppcApiUrl(
+      `/operator-feedbacks/${encodeURIComponent(params.feedbackId)}/acknowledge`,
+    ),
+    undefined,
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível assumir a tratativa.");
+}
+
+export async function resolveOperatorFeedback(params: {
+  feedbackId: string;
+  resolutionNote?: string | null;
+  signal?: AbortSignal;
+}): Promise<PcpOperatorFeedback> {
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: PcpOperatorFeedback;
+  }>(
+    ppcApiUrl(
+      `/operator-feedbacks/${encodeURIComponent(params.feedbackId)}/resolve`,
+    ),
+    { resolutionNote: params.resolutionNote ?? null },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível resolver o impedimento.");
 }

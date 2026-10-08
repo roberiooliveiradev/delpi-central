@@ -178,6 +178,87 @@ Sem apontamento no turno, a eficiência volta `null`, não `0` — o posto parad
 
 `WS /public/machine-load/{token}/ws?branch=` entra na sala da filial (`MachineLoadRealtimeHub`). Após `PATCH /machine-load/sequence` e `POST /machine-load/refresh`, o serviço publica `{"type": "machine_load_updated", "reason": "sequence|refresh"}` e o cockpit refaz a leitura HTTP — o socket carrega só o aviso, mantendo uma fonte de verdade única. A notificação é best-effort: falha no hub não derruba a escrita já persistida. O gateway precisa dos headers `Upgrade`/`Connection` na location `/apps/production-control-api/` (já configurado em `gateway/nginx.conf` e `nginx.dev.conf`).
 
+### Operator Feedback — impedimentos do chão de fábrica
+
+Canal pelo qual o operador informa ao PCP que uma OP/operação não pode ser
+produzida (tabela operator_feedbacks, V016). **Não é downtime MES**: não altera
+estado de máquina (producing/stopped), não usa motivos de parada, não é
+apontamento e não depende de production_run — run_id é contexto nullable
+(ON DELETE SET NULL). A máquina pode seguir executando outra OP enquanto esta
+tem impedimento aberto.
+
+- **Catálogo (C1)**: tipo cannot_produce, motivo missing_material,
+  lifecycle open -> acknowledged -> resolved (open -> resolved direto é
+  válido; resolved é terminal — sem reabertura). acknowledge e resolve são
+  idempotentes no estado já alcançado e nunca reescrevem a autoria original;
+  extensível por enum em domain/operator_feedback.py, sem migration para
+  novos motivos.
+- **Chave lógica**: branch + production_order + operation_code +
+  feedback_type + reason_code. O índice parcial
+  uq_pc_operator_feedbacks_active garante no banco **um** impedimento ativo
+  (open|acknowledged) por chave — proteção contra duplo clique, retry, duas
+  bancadas e concorrência; resolved libera impedimento novo equivalente.
+- **Independência de snapshot**: sem FK para machine_load_* — o feedback
+  sobrevive a refresh, nova geração, withdraw e transferência. O contexto da
+  OP (produto, PA, entrega, operador, sessão) é congelado no registro;
+  reported_work_center guarda o CT do instante do reporte e não segue
+  transferências futuras.
+- **Camadas**: OperatorFeedbackService (validação de catálogo + lifecycle,
+  sem HTTP) -> OperatorFeedbackRepositoryPort ->
+  PostgresOperatorFeedbackRepository (UPDATEs condicionais atômicos nas
+  transições; UniqueViolation -> OperatorFeedbackConflict). Wiring:
+  build_operator_feedback_service() (C1/C2) e
+  build_pcp_operator_feedback_service() (C4).
+
+**API do cockpit (C2)** — em public_operator_feedback_routes.py:
+
+- POST /public/machine-load/{token}/operator-feedbacks — cockpit token +
+  header X-Delpi-Bench-Session + honeypot website. O operador informa só
+  OP/operação/tipo/motivo/nota; identidade, filial e posto vêm da bench
+  session (resolve_bench_session oficial — sessão inválida/expirada → 401);
+  o contexto da OP é validado e congelado a partir da fila PUBLISHED pelo
+  PublicOperatorFeedbackService — operação ausente ou publicada em outro
+  posto → 404 único, sem virar oráculo de fila.
+- GET /public/machine-load/{token}/operator-feedbacks/active — mesma sessão;
+  lookup por branch + OP + operação (nunca por reported_work_center), então
+  o CT destino continua vendo o impedimento após transferência. Retorna
+  items com open/acknowledged; resolved não entra.
+- run_id é capturado por leitura leve do repositório quando o run ativo do
+  posto é exatamente da mesma OP/operação — sem Pulse, sem telemetria;
+  feedback não exige run.
+- Após persistir, um hint operator_feedback_updated (reason=created) vai
+  pela sala da filial do MachineLoadRealtimeHub — payload mínimo (id, OP,
+  operação, status), best-effort: falha no socket não invalida o registro.
+- Registrar feedback não toca pause/stop/downtime/contagem nem o estado MES.
+
+**API do PCP (C4)** — em operator_feedback_routes.py, prefixo
+/operator-feedbacks, JWT normal (não é /public). Autorização:
+production-control.access + production-control.machine-load.view +
+permissão da filial via BranchAccessService.assert_can_view_branch — o
+branch efetivo do registro (não um parâmetro) decide nos endpoints por id,
+então um analista sem acesso à filial 02 não trata feedback dela por UUID.
+
+- GET /operator-feedbacks?branch=01 — inbox ativa da filial (open +
+  acknowledged; resolved nunca entra). Itens com chave
+  branch+OP+operação (reported_work_center é só contexto histórico,
+  transferência não orfa o impedimento), campos de contexto congelados
+  (produto, PA, entrega, operador) e trilha acknowledged/resolved_*.
+  Ordenação: open primeiro, mais antigos no topo; summary
+  {total, open, acknowledged}.
+- POST /operator-feedbacks/{id}/acknowledge — open -> acknowledged.
+  acknowledged_by vem do JWT (id estável do usuário; body não é aceito).
+  Idempotente no estado já alcançado sem reescrever autoria; transição
+  inválida (ex.: resolved) -> 409.
+- POST /operator-feedbacks/{id}/resolve — open|acknowledged -> resolved
+  com resolutionNote opcional (<=500 chars); resolved é terminal e some
+  da inbox. resolved_by também só do JWT.
+- Após cada transição persistida, um hint operator_feedback_updated
+  (reason=acknowledged|resolved, payload mínimo) vai pela sala da filial —
+  best-effort: falha de socket não invalida a escrita.
+- Nenhuma rota toca fila, MES, Pulse ou downtime — tratar o impedimento é
+  ato administrativo do PCP.
+
+
 ## Demanda — carteira a entregar
 
 `GET /demand` responde o que a fábrica precisa cobrir: linhas de pedido de venda com saldo, já cruzadas com estoque e OPs abertas. Duas leituras TOTVS puras alimentam a área — `GET /pedidos-venda-abertos/totvs-open-orders` (linhas com saldo) e `GET /pedidos-venda-abertos/ops-abertas` (OPs por produto). Nenhuma regra de carteira comercial atravessa: **preço e valor não entram na resposta**, e a api-delpi não conhece o PCP. Linhas com `tipo_entidade = FORNECEDOR` (venda/remessa para fornecedor) são descartadas em `demand_entity_scope` — o PCP só vê demanda de **cliente**.

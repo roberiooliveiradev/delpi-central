@@ -121,6 +121,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   // Run ativo no contador Pulse deste posto — decide o card "Agora nesta bancada".
   const [counterRun, setCounterRun] = useState<ProductionRunSnapshot | null>(null);
   const [runRealtimeEvent, setRunRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
+  const [feedbackUpdatedSignal, setFeedbackUpdatedSignal] = useState(0);
+  const [feedbackRealtimeEvent, setFeedbackRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
@@ -177,6 +179,13 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     token,
     branch,
     onChanged: useCallback((event: MachineLoadRealtimeEvent) => {
+      // Impedimento ao PCP: hint leve — só a OP aberta refaz o GET de feedback;
+      // a fila/carga máquina NÃO recarrega por causa de um aviso.
+      if (event.type === "operator_feedback_updated") {
+        setFeedbackRealtimeEvent(event);
+        setFeedbackUpdatedSignal((value) => value + 1);
+        return;
+      }
       if (event.type === "production_run_updated" && event.reason === "pieces_updated") {
         setRunRealtimeEvent(event);
         return;
@@ -199,6 +208,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     onReconnected: useCallback(() => {
       setRunRealtimeEvent(null);
       setRunUpdatedSignal((value) => value + 1);
+      // Hints perdidos na desconexão: a OP aberta ressincroniza via HTTP.
+      setFeedbackUpdatedSignal((value) => value + 1);
     }, []),
   });
 
@@ -383,6 +394,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           runUpdatedSignal={runUpdatedSignal}
           runRealtimeEvent={runRealtimeEvent}
           realtimeConnected={connected}
+          feedbackUpdatedSignal={feedbackUpdatedSignal}
+          feedbackRealtimeEvent={feedbackRealtimeEvent}
           hasActiveRun={Boolean(counterRun)}
           onOpenPerformance={openPerformance}
           onOpenDowntime={() => setDowntimeOpen(true)}

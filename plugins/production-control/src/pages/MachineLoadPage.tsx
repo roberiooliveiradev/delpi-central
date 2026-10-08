@@ -15,13 +15,14 @@ import {
   underlineNavBemClasses,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleDashed, Eye, EyeOff, GripVertical, SendHorizontal } from "lucide-react";
+import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleAlert, CircleDashed, Eye, EyeOff, GripVertical, MessagesSquare, SendHorizontal } from "lucide-react";
 
 import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
 import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
 import { MachineLoadOptimizationModal } from "../components/MachineLoadOptimizationModal";
 import { MachineLoadRowContextMenu } from "../components/MachineLoadRowContextMenu";
 import { MachineLoadStatusCell } from "../components/MachineLoadStatusCell";
+import { OperatorFeedbackInbox } from "../components/OperatorFeedbackInbox";
 import { MachineLoadTransferModal, type MachineLoadTransferMode } from "../components/MachineLoadTransferModal";
 import { MachineLoadWithdrawnModal } from "../components/MachineLoadWithdrawnModal";
 import { OperatorCockpitLinkButton } from "../components/OperatorCockpitLinkButton";
@@ -40,6 +41,7 @@ import {
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useMachineLoad } from "../hooks/useMachineLoad";
+import { useOperatorFeedbackInbox } from "../hooks/useOperatorFeedbackInbox";
 import { useMachineLoadRowReorder } from "../hooks/useMachineLoadRowReorder";
 import {
   applyKeyOrder,
@@ -57,6 +59,13 @@ import { formatIsoDate, formatIsoDayMonth } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import { machineLoadLocateRowKey } from "../utils/machineLoadLocate";
+import {
+  feedbackForOperation,
+  filterOperationsWithFeedback,
+  countOperationsWithFeedback,
+  findOperationInQueue,
+  indexFeedbackByOperation,
+} from "../utils/operatorFeedback";
 import { describeMachineLoadPublication } from "../utils/machineLoadPublication";
 import {
   filterActiveMachineLoadOperations,
@@ -157,6 +166,10 @@ export function MachineLoadPage({
   const [transferOperation, setTransferOperation] = useState<MachineLoadOperation | null>(null);
   const [transferMode, setTransferMode] = useState<MachineLoadTransferMode>("operation");
   const [hideFinished, setHideFinished] = useState(readHideFinishedPreference);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [onlyFeedback, setOnlyFeedback] = useState(false);
+  // Inbox do PCP: 1 GET por filial; a associacao com as linhas e local (sem N+1).
+  const feedbackInbox = useOperatorFeedbackInbox(branch);
 
   // Sem recorte na URL, «De» mostra a entrega mais antiga que sobrou na fila.
   useEffect(() => {
@@ -179,9 +192,24 @@ export function MachineLoadPage({
     () => rows.filter((item) => isMachineLoadFinishedOperation(item)).length,
     [rows],
   );
-  const displayRows = useMemo(
+  const feedbackMap = useMemo(
+    () => indexFeedbackByOperation(feedbackInbox.items),
+    [feedbackInbox.items],
+  );
+  const baseRows = useMemo(
     () => (hideFinished ? filterActiveMachineLoadOperations(rows) : rows),
     [hideFinished, rows],
+  );
+  const feedbackCount = useMemo(
+    () => countOperationsWithFeedback(baseRows, feedbackMap),
+    [baseRows, feedbackMap],
+  );
+  const displayRows = useMemo(
+    () =>
+      onlyFeedback
+        ? filterOperationsWithFeedback(baseRows, feedbackMap)
+        : baseRows,
+    [baseRows, feedbackMap, onlyFeedback],
   );
 
   const toggleHideFinished = useCallback(() => {
@@ -276,6 +304,25 @@ export function MachineLoadPage({
           subpluginId: "machine-load",
           branch,
           workCenter: stop.work_center,
+          startDate,
+          endDate,
+          locateQuery: (locateResult?.query ?? locateDraft.trim()) || null,
+        }),
+      );
+    },
+    [branch, endDate, locateDraft, locateResult?.query, startDate],
+  );
+
+  const goToFeedback = useCallback(
+    (operation: MachineLoadOperation) => {
+      // O CT atual vem da fila viva — reportedWorkCenter do feedback e historico.
+      setInboxOpen(false);
+      setHighlightKey(machineLoadLocateRowKey(operation));
+      navigatePpc(
+        buildPpcHref({
+          subpluginId: "machine-load",
+          branch,
+          workCenter: operation.work_center,
           startDate,
           endDate,
           locateQuery: (locateResult?.query ?? locateDraft.trim()) || null,
@@ -643,6 +690,30 @@ export function MachineLoadPage({
         render: (row: MachineLoadOperation) => <MachineLoadStatusCell operation={row} />,
       },
       {
+        key: "feedback",
+        header: copy.machineLoad.feedback.columnLabel,
+        render: (row: MachineLoadOperation) => {
+          const feedback = feedbackForOperation(feedbackMap, row);
+          if (!feedback) return "—";
+          const isOpen = feedback.status === "open";
+          return (
+            <span
+              className={
+                isOpen
+                  ? "ppc-load__feedback ppc-load__feedback--open"
+                  : "ppc-load__feedback ppc-load__feedback--ack"
+              }
+              title={copy.machineLoad.feedback.columnLabel}
+            >
+              <CircleAlert size={13} strokeWidth={2} aria-hidden />
+              {isOpen
+                ? copy.machineLoad.feedback.badgeOpen
+                : copy.machineLoad.feedback.badgeAcknowledged}
+            </span>
+          );
+        },
+      },
+      {
         key: "pa_product_code",
         header: copy.machineLoad.columns.paCode,
         render: (row: MachineLoadOperation) => row.pa_product_code || "—",
@@ -707,7 +778,7 @@ export function MachineLoadPage({
         render: (row: MachineLoadOperation) => formatIsoDate(row.pa_due_date),
       },
     ],
-    [displayRows, reorder, sequenceBusy],
+    [displayRows, feedbackMap, reorder, sequenceBusy],
   );
 
   const goTo = (next: {
@@ -940,6 +1011,37 @@ export function MachineLoadPage({
             {copy.machineLoad.withdrawn.openButton(withdrawnEntries.length)}
           </button>
         ) : null}
+        <button
+          type="button"
+          className="ppc-period__feedback"
+          onClick={() => setInboxOpen(true)}
+          aria-label={copy.machineLoad.feedback.modalTitle}
+        >
+          <MessagesSquare size={15} strokeWidth={1.75} aria-hidden />
+          {feedbackInbox.summary.total > 0
+            ? copy.machineLoad.feedback.openButton(feedbackInbox.summary.total)
+            : copy.machineLoad.feedback.openButtonEmpty}
+        </button>
+        {feedbackCount > 0 || onlyFeedback ? (
+          <button
+            type="button"
+            className={
+              onlyFeedback
+                ? "ppc-period__feedback-filter ppc-period__feedback-filter--active"
+                : "ppc-period__feedback-filter"
+            }
+            onClick={() => setOnlyFeedback((prev) => !prev)}
+            aria-pressed={onlyFeedback}
+            title={
+              onlyFeedback
+                ? copy.machineLoad.feedback.filterAriaOff
+                : copy.machineLoad.feedback.filterAriaOn
+            }
+          >
+            <CircleAlert size={15} strokeWidth={1.75} aria-hidden />
+            {copy.machineLoad.feedback.filterButton(feedbackCount)}
+          </button>
+        ) : null}
         {finishedCount > 0 || hideFinished ? (
           <button
             type="button"
@@ -1060,6 +1162,11 @@ export function MachineLoadPage({
               getRowClassName={(row, index) =>
                 [
                   machineLoadRowModifierClass(row),
+                  feedbackForOperation(feedbackMap, row)
+                    ? feedbackForOperation(feedbackMap, row)?.status === "open"
+                      ? "ppc-load__row--feedback-open"
+                      : "ppc-load__row--feedback-ack"
+                    : null,
                   reorder.rowClassName(index),
                   highlightKey === machineLoadLocateRowKey(row)
                     ? "ppc-load__row--locate-hit"
@@ -1080,9 +1187,11 @@ export function MachineLoadPage({
                 },
               })}
               emptyMessage={
-                hideFinished && rows.length > 0
-                  ? copy.machineLoad.hideFinished.empty
-                  : copy.machineLoad.emptyOperations
+                onlyFeedback && rows.length > 0
+                  ? copy.machineLoad.feedback.filterEmpty
+                  : hideFinished && rows.length > 0
+                    ? copy.machineLoad.hideFinished.empty
+                    : copy.machineLoad.emptyOperations
               }
               loading={loading}
               classNames={tableClassNames}
@@ -1148,6 +1257,23 @@ export function MachineLoadPage({
         busy={sequenceBusy}
         onClose={() => setWithdrawnModalOpen(false)}
         onRestore={(orderNumber) => void restoreConjunto(orderNumber)}
+      />
+
+      <OperatorFeedbackInbox
+        open={inboxOpen}
+        items={feedbackInbox.items}
+        summary={feedbackInbox.summary}
+        loading={feedbackInbox.loading}
+        error={feedbackInbox.error}
+        notice={feedbackInbox.notice}
+        actingId={feedbackInbox.actingId}
+        findInQueue={(feedback) =>
+          findOperationInQueue(data?.operations ?? [], feedback)
+        }
+        onAcknowledge={feedbackInbox.acknowledge}
+        onResolve={feedbackInbox.resolve}
+        onGoToQueue={goToFeedback}
+        onClose={() => setInboxOpen(false)}
       />
 
       <MachineLoadLocateModal

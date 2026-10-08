@@ -41,6 +41,20 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
+export class HttpRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "HttpRequestError";
+    this.status = status;
+  }
+}
+
+export function httpErrorStatus(error: unknown): number | null {
+  return error instanceof HttpRequestError ? error.status : null;
+}
+
 function formatApiError(errorBody: unknown, status: number): string {
   if (!errorBody || typeof errorBody !== "object") {
     return `Erro HTTP ${status}`;
@@ -65,7 +79,7 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new HttpRequestError(message, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -86,7 +100,7 @@ export async function httpGetBlob(url: string, options: RequestOptions = {}): Pr
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new HttpRequestError(message, response.status);
   }
   return response.blob();
 }
@@ -112,7 +126,7 @@ export async function httpPost<T>(
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new HttpRequestError(message, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -138,7 +152,7 @@ export async function httpPatch<T>(
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new HttpRequestError(message, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -164,7 +178,7 @@ export async function httpPut<T>(
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new HttpRequestError(message, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -187,7 +201,7 @@ export async function httpPutFormData<T>(
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new HttpRequestError(message, response.status);
   }
   return response.json() as Promise<T>;
 }
@@ -205,7 +219,7 @@ export async function httpDelete<T>(url: string, options: RequestOptions = {}): 
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new HttpRequestError(message, response.status);
   }
   return response.json() as Promise<T>;
 }

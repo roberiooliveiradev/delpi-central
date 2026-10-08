@@ -33,6 +33,12 @@ from production_control_app.interface.http.routes.overview_routes import router 
 from production_control_app.interface.http.routes.public_machine_load_routes import (
     router as public_machine_load_router,
 )
+from production_control_app.interface.http.routes.operator_feedback_routes import (  # noqa: E501
+    router as operator_feedback_router,
+)
+from production_control_app.interface.http.routes.public_operator_feedback_routes import (  # noqa: E501
+    router as public_operator_feedback_router,
+)
 from production_control_app.interface.http.routes.public_delivery_map_routes import (
     router as public_delivery_map_router,
 )
@@ -147,7 +153,9 @@ app.include_router(integration_mes_router)
 app.include_router(subplugin_router)
 app.include_router(overview_router)
 app.include_router(machine_load_router)
+app.include_router(operator_feedback_router)
 app.include_router(public_machine_load_router)
+app.include_router(public_operator_feedback_router)
 app.include_router(public_delivery_map_router)
 app.include_router(problem_analysis_router)
 app.include_router(demand_router)

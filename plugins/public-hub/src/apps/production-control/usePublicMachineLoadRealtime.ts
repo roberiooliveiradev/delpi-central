@@ -5,12 +5,20 @@ const PING_MS = 25_000;
 const RECONNECT_MS = 5_000;
 
 export type MachineLoadRealtimeEvent = {
-  type: "machine_load_updated" | "production_run_updated";
+  type:
+    | "machine_load_updated"
+    | "production_run_updated"
+    | "operator_feedback_updated";
   reason: string;
   branch?: string;
   workCenter?: string;
   runId?: string;
   piecesTotal?: number;
+  /** Presente em operator_feedback_updated (C3): impedimento ao PCP. */
+  feedbackId?: string;
+  productionOrder?: string;
+  operationCode?: string;
+  status?: string;
   /** Presente em `downtime_classified`/`automatic_downtime_*`: parada MES. */
   downtime?: unknown;
   /** Presente em `automatic_downtime_*`: estado operacional após a transição. */
@@ -89,7 +97,11 @@ export function usePublicMachineLoadRealtime({
         } catch {
           return;
         }
-        if (message.type === "machine_load_updated" || message.type === "production_run_updated") {
+        if (
+          message.type === "machine_load_updated" ||
+          message.type === "production_run_updated" ||
+          message.type === "operator_feedback_updated"
+        ) {
           onChangedRef.current({
             ...message,
             type: message.type,

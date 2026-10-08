@@ -588,3 +588,66 @@ def build_mes_downtime_reason_admin_service() -> Any:
     )
 
     return MesDowntimeReasonAdminService(reasons=PostgresDowntimeReasonRepository())
+
+
+def build_operator_feedback_service() -> Any:
+    """Canal de feedback/impedimentos do chão de fábrica (C1 — fundação).
+
+    Sem consumidores HTTP ainda: o builder existe para a C2 ligar o adapter do
+    cockpit e a C3 o adapter do PCP sem redescobrir wiring.
+    """
+    from production_control_app.application.services.operator_feedback_service import (  # noqa: E501
+        OperatorFeedbackService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_operator_feedback_repository import (  # noqa: E501
+        PostgresOperatorFeedbackRepository,
+    )
+
+    return OperatorFeedbackService(feedbacks=PostgresOperatorFeedbackRepository())
+
+
+def build_public_operator_feedback_service() -> Any:
+    """Orquestrador do Operator Feedback no cockpit público (C2).
+
+    Compõe: resolver oficial da bench session, fila PUBLISHED via
+    MachineLoadService, service de domínio da C1, lookup leve de run ativo
+    (repositório direto — sem Pulse) e notifier realtime best-effort.
+    """
+    from production_control_app.application.services.operator_feedback_change_notifier import (  # noqa: E501
+        notify_operator_feedback_changed,
+    )
+    from production_control_app.application.services.public_operator_feedback_service import (  # noqa: E501
+        PublicOperatorFeedbackService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_production_run_repository import (  # noqa: E501
+        PostgresProductionRunRepository,
+    )
+
+    return PublicOperatorFeedbackService(
+        run_service=build_production_run_service(),
+        machine_load=build_machine_load_service(),
+        feedbacks=build_operator_feedback_service(),
+        run_lookup=PostgresProductionRunRepository().get_active_run,
+        notify=notify_operator_feedback_changed,
+    )
+
+
+def build_pcp_operator_feedback_service() -> Any:
+    """Inbox e tratativa do Operator Feedback no Portal PCP (C4).
+
+    Autorizacao reutiliza o gate da Carga Maquina (acesso + filial +
+    machine-load.view); lifecycle permanece no service de dominio da C1;
+    realtime e o notifier best-effort compartilhado.
+    """
+    from production_control_app.application.services.operator_feedback_change_notifier import (  # noqa: E501
+        notify_operator_feedback_changed,
+    )
+    from production_control_app.application.services.pcp_operator_feedback_service import (  # noqa: E501
+        PcpOperatorFeedbackService,
+    )
+
+    return PcpOperatorFeedbackService(
+        branch_access=build_branch_access_service(),
+        feedbacks=build_operator_feedback_service(),
+        notify=notify_operator_feedback_changed,
+    )

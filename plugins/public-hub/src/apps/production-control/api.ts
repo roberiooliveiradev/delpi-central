@@ -945,3 +945,96 @@ export async function stopProductionRun(
   );
   return readEnvelope<ProductionRunSnapshot>(response, "Não foi possível encerrar.");
 }
+
+/* ---------- Operator Feedback (C3) — impedimentos do operador ao PCP ---------- */
+
+export type OperatorFeedbackStatus = "open" | "acknowledged" | "resolved";
+
+export type PublicOperatorFeedback = {
+  id: string;
+  productionOrder: string;
+  operationCode: string;
+  reportedWorkCenter: string;
+  feedbackType: string;
+  reasonCode: string;
+  note: string | null;
+  status: OperatorFeedbackStatus;
+  createdAt: string;
+  acknowledgedAt: string | null;
+  resolvedAt: string | null;
+};
+
+/**
+ * Impedimentos ativos (open|acknowledged) da OP/operação — identidade e posto
+ * vêm da bench session; resolved não entra na coleção.
+ */
+export async function fetchActiveOperatorFeedbacks(
+  token: string,
+  sessionToken: string,
+  productionOrder: string,
+  operationCode: string,
+): Promise<PublicOperatorFeedback[]> {
+  const params = new URLSearchParams({
+    productionOrder,
+    operationCode,
+  });
+  const path =
+    API_BASE +
+    "/public/machine-load/" +
+    encodeURIComponent(token) +
+    "/operator-feedbacks/active?" +
+    params;
+  const response = await fetch(path, {
+    headers: {
+      Accept: "application/json",
+      [BENCH_SESSION_HEADER]: sessionToken,
+    },
+  });
+  const data = await readEnvelope<{ items: PublicOperatorFeedback[] }>(
+    response,
+    "Avisos ao PCP indisponíveis.",
+  );
+  return data.items ?? [];
+}
+
+/**
+ * Registra impedimento ao PCP. O corpo vai só com OP/operação/tipo/motivo/nota:
+ * identidade, filial, posto e contexto da OP são resolvidos no backend (C2).
+ */
+export async function createOperatorFeedback(
+  token: string,
+  sessionToken: string,
+  body: {
+    productionOrder: string;
+    operationCode: string;
+    feedbackType: string;
+    reasonCode: string;
+    note?: string | null;
+  },
+): Promise<PublicOperatorFeedback> {
+  const path =
+    API_BASE +
+    "/public/machine-load/" +
+    encodeURIComponent(token) +
+    "/operator-feedbacks";
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      [BENCH_SESSION_HEADER]: sessionToken,
+    },
+    body: JSON.stringify({
+      productionOrder: body.productionOrder,
+      operationCode: body.operationCode,
+      feedbackType: body.feedbackType,
+      reasonCode: body.reasonCode,
+      note: body.note ?? null,
+      website: "",
+    }),
+  });
+  return readEnvelope<PublicOperatorFeedback>(
+    response,
+    "Não foi possível enviar o aviso ao PCP.",
+  );
+}

@@ -139,3 +139,23 @@ class OperatorInactive(ProductionControlError):
 
 class InvalidOperatorRegistration(ProductionControlError):
     """Matrícula fora do contrato textual (vazia ou > 30 caracteres)."""
+
+
+class InvalidOperatorFeedbackType(ProductionControlError):
+    """Tipo de feedback fora do catálogo suportado pelo domínio."""
+
+
+class InvalidOperatorFeedbackReason(ProductionControlError):
+    """Motivo de feedback fora do catálogo suportado pelo domínio."""
+
+
+class OperatorFeedbackConflict(ProductionControlError):
+    """Já existe impedimento ativo igual para a mesma OP/operação."""
+
+
+class OperatorFeedbackNotFound(ProductionControlError):
+    """Feedback inexistente para o identificador informado."""
+
+
+class OperatorFeedbackStateError(ProductionControlError):
+    """Transição de lifecycle inválida (ex.: reconhecer um resolvido)."""

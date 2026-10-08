@@ -3384,3 +3384,222 @@ button.pcp-pub-timeline__body--action:focus-visible {
   width: 100%;
   min-height: 48px;
 }
+
+/* ---------- Operator Feedback — comunicação com o PCP (C3) ---------- */
+
+.pcp-pub__feedback {
+  margin-top: 18px;
+}
+
+.pcp-pub__feedback .pcp-pub__detail-section {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pcp-pub__feedback-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--pcp-border);
+  background: var(--pcp-surface);
+}
+
+.pcp-pub__feedback-card--cta {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--pcp-accent) 40%, var(--pcp-border));
+}
+
+.pcp-pub__feedback-card--neutral {
+  background: color-mix(in srgb, var(--pcp-muted) 6%, var(--pcp-surface));
+}
+
+.pcp-pub__feedback-card--informed {
+  border-color: color-mix(in srgb, var(--pcp-accent) 45%, var(--pcp-border));
+  background: color-mix(in srgb, var(--pcp-accent) 8%, var(--pcp-surface));
+}
+
+.pcp-pub__feedback-card--treating {
+  border-color: color-mix(in srgb, var(--pcp-running) 45%, var(--pcp-border));
+  background: color-mix(in srgb, var(--pcp-running) 9%, var(--pcp-surface));
+}
+
+.pcp-pub__feedback-muted {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--pcp-muted);
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pcp-pub__feedback-cta {
+  align-self: flex-start;
+}
+
+.pcp-pub__feedback-status-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.pcp-pub__feedback-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 14%, transparent);
+}
+
+.pcp-pub__feedback-card--treating .pcp-pub__feedback-status-icon {
+  color: var(--pcp-running);
+  background: color-mix(in srgb, var(--pcp-running) 16%, transparent);
+}
+
+.pcp-pub__feedback-status-label {
+  margin: 0 0 2px;
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__feedback-status-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+}
+
+.pcp-pub__feedback-status-facts dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__feedback-status-facts dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--pcp-text);
+}
+
+.pcp-pub__feedback-note-view {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: var(--pcp-text);
+  background: color-mix(in srgb, var(--pcp-muted) 8%, transparent);
+}
+
+.pcp-pub__feedback-modal-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.pcp-pub__feedback-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 12%, transparent);
+}
+
+.pcp-pub__feedback-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 0 0 14px;
+}
+
+.pcp-pub__feedback-field dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pcp-faint);
+}
+
+.pcp-pub__feedback-field dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__feedback-note-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__feedback-note-label span {
+  font-weight: 400;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub__feedback-note {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--pcp-border);
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--pcp-text);
+  background: var(--pcp-surface);
+  resize: vertical;
+}
+
+.pcp-pub__feedback-note:focus-visible {
+  outline: 2px solid var(--pcp-accent);
+  outline-offset: 1px;
+}
+
+.pcp-pub__feedback-disclaimer {
+  margin: 12px 0 4px;
+  font-size: 0.82rem;
+  color: var(--pcp-muted);
+}
+
+.pcp-pub-modal__panel--feedback {
+  width: min(560px, 100%);
+}
+
+.pcp-pub__spin {
+  animation: pcp-pub-feedback-spin 0.9s linear infinite;
+}
+
+@keyframes pcp-pub-feedback-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .pcp-pub__feedback-card,
+  .pcp-pub-modal__panel--feedback {
+    padding: 12px;
+  }
+
+  .pcp-pub__feedback-cta {
+    align-self: stretch;
+  }
+}

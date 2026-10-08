@@ -514,6 +514,36 @@ class MachineLoadService:
             "is_manual_operation": bool(item.get("is_manual_operation")),
         }
 
+    def public_operation_feedback_context(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any] | None:
+        """Contexto da operação na fila PUBLISHED para o Operator Feedback.
+
+        Mesma fonte do cockpit (fila congelada), sem enrich live e sem TOTVS:
+        devolve a identidade canônica da OP/operação mais o snapshot de
+        produto/PA/entrega a congelar no registro histórico do impedimento.
+        """
+        item = self._public_operation_item(
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+        )
+        if item is None:
+            return None
+        return {
+            "production_order": str(item.get("production_order") or "").strip(),
+            "operation_code": str(item.get("operation_code") or "").strip(),
+            "work_center": str(item.get("work_center") or "").strip(),
+            "product_code": item.get("product_code"),
+            "product_description": item.get("product_description"),
+            "pa_product_code": item.get("pa_product_code"),
+            "due_date": item.get("pa_due_date"),
+        }
+
     def _public_operation_item(
         self,
         *,

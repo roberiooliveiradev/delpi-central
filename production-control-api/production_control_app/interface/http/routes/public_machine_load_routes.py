@@ -38,6 +38,11 @@ from production_control_app.domain.errors import (
     InvalidOperatorRegistration,
     OperatorDirectoryContractError,
     OperatorDirectoryUnavailable,
+    InvalidOperatorFeedbackReason,
+    InvalidOperatorFeedbackType,
+    OperatorFeedbackConflict,
+    OperatorFeedbackNotFound,
+    OperatorFeedbackStateError,
     OperatorInactive,
     OperatorNotFound,
     Product3DModelNotFound,
@@ -136,6 +141,14 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 422)
     if isinstance(exc, PulseGatewayError):
         return fail(str(exc), 502)
+    if isinstance(exc, (InvalidOperatorFeedbackType, InvalidOperatorFeedbackReason)):
+        return fail(str(exc), 422)
+    if isinstance(exc, OperatorFeedbackConflict):
+        return fail("O PCP já foi informado sobre este impedimento.", 409)
+    if isinstance(exc, OperatorFeedbackNotFound):
+        return fail(str(exc), 404)
+    if isinstance(exc, OperatorFeedbackStateError):
+        return fail(str(exc), 409)
     if isinstance(exc, InvalidOperatorRegistration):
         return fail(str(exc), 422)
     if isinstance(exc, OperatorNotFound):

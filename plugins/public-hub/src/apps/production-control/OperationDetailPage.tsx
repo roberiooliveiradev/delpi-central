@@ -19,6 +19,7 @@ import {
 import { ProductModelViewer } from "./ProductModelViewer";
 import { OperatorSessionChip } from "./OperatorSessionProvider";
 import { ProductionRunControls } from "./ProductionRunControls";
+import { OperatorFeedbackPanel } from "./OperatorFeedbackPanel";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime.ts";
 import {
   usePublicOperationAppointments,
@@ -49,6 +50,8 @@ type Props = {
   runUpdatedSignal: number;
   runRealtimeEvent: MachineLoadRealtimeEvent | null;
   realtimeConnected: boolean;
+  feedbackUpdatedSignal: number;
+  feedbackRealtimeEvent: MachineLoadRealtimeEvent | null;
   onOpenPerformance: () => void;
   onOpenDowntime: () => void;
   hasActiveRun: boolean;
@@ -77,6 +80,8 @@ export function OperationDetailPage({
   runUpdatedSignal,
   runRealtimeEvent,
   realtimeConnected,
+  feedbackUpdatedSignal,
+  feedbackRealtimeEvent,
   onOpenPerformance,
   onOpenDowntime,
   hasActiveRun,
@@ -266,6 +271,15 @@ export function OperationDetailPage({
               runUpdatedSignal={runUpdatedSignal}
               runRealtimeEvent={runRealtimeEvent}
               realtimeConnected={realtimeConnected}
+            />
+
+            <OperatorFeedbackPanel
+              token={token}
+              operation={operation}
+              workCenter={workCenter}
+              realtimeConnected={realtimeConnected}
+              resyncSignal={feedbackUpdatedSignal}
+              feedbackRealtimeEvent={feedbackRealtimeEvent}
             />
 
             <h3 className="pcp-pub__detail-section">Programação e entrega</h3>

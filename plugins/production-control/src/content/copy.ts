@@ -302,6 +302,54 @@ export const copy = {
       operatorPrefix: "Operador",
       inProductionTabAria: (center: string, running: number) =>
         `${center}: ${running} operaç${running === 1 ? "ão" : "ões"} em produção`,
+
+    },
+    feedback: {
+      openButton: (count: number) =>
+        count === 1 ? "Impedimentos (1)" : `Impedimentos (${count})`,
+      openButtonEmpty: "Impedimentos",
+      modalTitle: "Impedimentos informados pelos operadores",
+      lead: "Avisos do chão de fábrica sobre operações que não podem ser produzidas. Resolver aqui não altera a fila nem o apontamento — trate a causa e, se precisar, ajuste a programação pelas ações da Carga Máquina.",
+      empty: "Nenhum impedimento ativo nesta filial.",
+      loading: "Carregando impedimentos…",
+      loadError: "Não foi possível carregar os impedimentos.",
+      typeCannotProduce: "Não será possível produzir",
+      reasonMissingMaterial: "Falta de matéria-prima",
+      statusOpen: "Aguardando tratativa",
+      statusAcknowledged: "Em tratativa",
+      statusResolved: "Resolvido",
+      badgeOpen: "Aguardando PCP",
+      badgeAcknowledged: "Em tratativa",
+      columnLabel: "Impedimento",
+      filterButton: (count: number) =>
+        count === 1 ? "Com impedimento (1)" : `Com impedimento (${count})`,
+      filterAriaOn: "Mostrar apenas operações com impedimento",
+      filterAriaOff: "Mostrar todas as operações",
+      filterEmpty: "Nenhuma operação com impedimento neste centro.",
+      summaryLine: (total: number, open: number, ack: number) =>
+        `${total} impedimento${total === 1 ? "" : "s"} · ${open} aguardando · ${ack} em tratativa`,
+      reportedAt: (when: string) => `Avisado às ${when}`,
+      reportedBy: (name: string | null, code: string) =>
+        name ? `${name} (${code})` : `Operador ${code}`,
+      reportedCenter: (center: string) => `Reportado no ${center}`,
+      outOfQueue: "Fora da fila atual",
+      goToQueue: "Ver na fila",
+      acknowledge: "Assumir tratativa",
+      acknowledgeBusy: "Assumindo…",
+      acknowledgedBy: (who: string | null) =>
+        who ? `Em tratativa por ${who}` : "Em tratativa",
+      conflict: "Este impedimento já foi atualizado por outra pessoa do PCP. A lista foi sincronizada.",
+      resolve: "Resolver",
+      resolveModalTitle: "Resolver impedimento",
+      resolveNoteLabel: "Observação da resolução",
+      resolveNotePlaceholder:
+        "Ex.: material disponibilizado, programação ajustada ou orientação enviada ao operador.",
+      resolveNoteHint: "Opcional — visível no registro do impedimento.",
+      resolveConfirm: "Marcar como resolvido",
+      resolveBusy: "Resolvendo…",
+      cancel: "Cancelar",
+      error: "Não foi possível concluir a ação. Tente novamente.",
+      noteLabel: "Observação do operador",
     },
   },
   kpi: {

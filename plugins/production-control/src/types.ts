@@ -1112,3 +1112,44 @@ export type LineFeederPickPlanListPayload = {
   items: LineFeederPickPlan[];
   item_statuses: Record<string, LineFeederStatusMeta>;
 };
+
+
+/** Operator Feedback — impedimento reportado pelo operador (C4, inbox do PCP). */
+export type OperatorFeedbackStatus = "open" | "acknowledged" | "resolved";
+
+/** DTO autenticado da inbox do PCP — contexto completo para a tratativa. */
+export type PcpOperatorFeedback = {
+  id: string;
+  branch: string;
+  productionOrder: string;
+  operationCode: string;
+  /** CT em que o operador reportou — histórico, nunca chave de associação. */
+  reportedWorkCenter: string;
+  feedbackType: string;
+  reasonCode: string;
+  note: string | null;
+  status: OperatorFeedbackStatus;
+  operatorCode: string;
+  operatorName: string | null;
+  productCode: string | null;
+  productDescription: string | null;
+  paProductCode: string | null;
+  dueDate: string | null;
+  createdAt: string;
+  acknowledgedAt: string | null;
+  acknowledgedBy: string | null;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  resolutionNote?: string | null;
+};
+
+export type OperatorFeedbackInboxSummary = {
+  total: number;
+  open: number;
+  acknowledged: number;
+};
+
+export type OperatorFeedbackInboxPayload = {
+  items: PcpOperatorFeedback[];
+  summary: OperatorFeedbackInboxSummary;
+};
