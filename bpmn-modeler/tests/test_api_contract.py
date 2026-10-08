@@ -68,7 +68,9 @@ H = {"Authorization": "Bearer fake"}
 
 
 def test_health_and_ready_public(client):
-    assert client.get("/health").json() == {"status": "ok"}
+    health = client.get("/health").json()
+    assert health["status"] == "ok"
+    assert set(health) == {"status", "git_sha", "built_at"}
     ready = client.get("/ready")
     assert ready.status_code in (200, 503)
     assert set(ready.json()["checks"]) == {"database", "xsd_bundle", "schema"}
@@ -81,7 +83,7 @@ def test_health_public_under_root_path(client):
     app = client.app
     prefixed = TestClient(app, root_path="/apps/bpmn-modeler-api",
                           raise_server_exceptions=False)
-    assert prefixed.get("/health").json() == {"status": "ok"}
+    assert prefixed.get("/health").json()["status"] == "ok"
     assert prefixed.get("/openapi.json").status_code == 200
     assert prefixed.get("/models").status_code == 401
 

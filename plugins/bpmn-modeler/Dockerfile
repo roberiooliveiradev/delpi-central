@@ -18,7 +18,19 @@ RUN npx vite build
 
 FROM nginx:alpine AS production
 
+ARG BUILD_SHA=unknown
+ARG BUILD_TIME=unknown
+
+LABEL org.opencontainers.image.title="delpi-bpmn-modeler" \
+      org.opencontainers.image.source="delpi-central/plugins/bpmn-modeler" \
+      org.opencontainers.image.revision="${BUILD_SHA}"
+
 COPY --from=builder /app/bpmn-modeler/dist /usr/share/nginx/html
+
+# Provenance do bundle servido — consultavel via /apps/bpmn-modeler/assets/build-info.json.
+RUN printf '{"service":"bpmn-modeler","git_sha":"%s","built_at":"%s"}\n' \
+      "$BUILD_SHA" "$BUILD_TIME" \
+      > /usr/share/nginx/html/assets/build-info.json
 
 EXPOSE 80
 

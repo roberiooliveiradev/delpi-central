@@ -473,6 +473,9 @@ services:
     build:
       context: ../plugins
       dockerfile: bpmn-modeler/Dockerfile
+      args:
+        BUILD_SHA: ${BPMN_MODELER_BUILD_SHA:-unknown}
+        BUILD_TIME: ${BPMN_MODELER_BUILD_TIME:-unknown}
 
     container_name: delpi-bpmn-modeler
     restart: unless-stopped
@@ -1682,6 +1685,9 @@ services:
     build:
       context: ..
       dockerfile: bpmn-modeler/Dockerfile
+      args:
+        BUILD_SHA: ${BPMN_MODELER_BUILD_SHA:-unknown}
+        BUILD_TIME: ${BPMN_MODELER_BUILD_TIME:-unknown}
 
     container_name: delpi-bpmn-modeler-api
     restart: unless-stopped

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import uuid
 from typing import Annotated, Literal
 
@@ -147,7 +148,11 @@ def _xml_response(content: str, headers: dict[str, str]) -> Response:
 
 @router.get("/health", operation_id="health", openapi_extra={"x-required-permission": None})
 async def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "git_sha": os.getenv("BPMN_MODELER_BUILD_SHA", "unknown"),
+        "built_at": os.getenv("BPMN_MODELER_BUILD_TIME", "unknown"),
+    }
 
 
 @router.get("/ready", operation_id="ready", openapi_extra={"x-required-permission": None})
