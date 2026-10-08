@@ -256,6 +256,72 @@ def create_mcp_server() -> MCPServer:
         return bridge.tool_solution_read(action=action, solution_id=solution_id)
 
     @mcp.tool(
+        name="helpdesk_read",
+        title="Helpdesk read",
+        description=(
+            "READ-only Helpdesk/GLPI demand via the Helpdesk BFF — "
+            "knowledge, never authorization and never process truth. "
+            "action=session: GLPI link state (linked/profile_sync). "
+            "action=capabilities: effective Helpdesk capabilities. "
+            "action=tickets: paginated ticket list (q, status, "
+            "urgency_id, category_id, assignee_id, date ranges, sort, "
+            "page/page_size). action=ticket: one ticket detail "
+            "(ticket_id required) — description, timeline, attachments "
+            "metadata, can_* flags (BFF-computed, never inferred). "
+            "action=catalog: catalog_kind = categories|urgencies|"
+            "request_types|users|groups|followup_templates|"
+            "solution_types|solution_templates|task_categories|"
+            "task_templates|task_statuses|validation_templates|"
+            "approval_steps (q/purpose/limit only for users). "
+            "glpi_link_required returns a typed error with the "
+            "canonical authorize_url — ticket reports are INFORMED "
+            "evidence, not proven root cause."
+        ),
+        annotations=_annotations("helpdesk_read", "Helpdesk read"),
+        meta=meta,
+    )
+    def helpdesk_read(
+        action: Literal[
+            "session", "capabilities", "tickets", "ticket", "catalog"
+        ],
+        ticket_id: int | None = None,
+        catalog_kind: str | None = None,
+        q: str | None = None,
+        status: str | None = None,
+        urgency_id: int | None = None,
+        category_id: int | None = None,
+        assignee_id: int | None = None,
+        updated_from: str | None = None,
+        updated_to: str | None = None,
+        created_from: str | None = None,
+        created_to: str | None = None,
+        sort: str | None = None,
+        page: int | None = None,
+        page_size: int | None = None,
+        purpose: str | None = None,
+        limit: int | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_helpdesk_read(
+            action=action,
+            ticket_id=ticket_id,
+            catalog_kind=catalog_kind,
+            q=q,
+            status=status,
+            urgency_id=urgency_id,
+            category_id=category_id,
+            assignee_id=assignee_id,
+            updated_from=updated_from,
+            updated_to=updated_to,
+            created_from=created_from,
+            created_to=created_to,
+            sort=sort,
+            page=page,
+            page_size=page_size,
+            purpose=purpose,
+            limit=limit,
+        )
+
+    @mcp.tool(
         name="get_process_context",
         title="Get process context",
         description="Aggregated read-only process intelligence context.",

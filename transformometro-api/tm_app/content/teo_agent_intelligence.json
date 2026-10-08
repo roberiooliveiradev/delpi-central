@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.09.3",
+  "version": "2026.10.09.4",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -144,6 +144,22 @@
         "authority": "transformometro_domain",
         "tools": [
           "record_read"
+        ]
+      },
+      "helpdesk_demand": {
+        "purpose": "demanda operacional, chamados/incidentes, sintomas reportados, sinais de recorrência, evidência de backlog de TI",
+        "authority": "helpdesk_bff_glpi",
+        "tools": [
+          "helpdesk_read"
+        ],
+        "rule": "TICKET_REPORT_IS_INFORMED_NOT_FACT",
+        "epistemic": [
+          "ticket existence/status/date = OBSERVED",
+          "requester/technician text = INFORMED",
+          "timeline = OBSERVED record of what was registered",
+          "reported cause = INFORMED, not proven causal truth",
+          "similarity/clustering = INFERRED or CALCULATED, never FACT",
+          "ticket != process truth; != validated root cause; != formal improvement"
         ]
       },
       "product_usage": {
@@ -372,6 +388,54 @@
           "process truth se operar sobre processo real",
           "apply method"
         ]
+      },
+      "HELPDESK_DISCOVERY": {
+        "examples": [
+          "quais são meus chamados?",
+          "quais chamados estão pendentes?",
+          "mostre o chamado 152"
+        ],
+        "route": [
+          "helpdesk_read"
+        ],
+        "avoid": [
+          "methodology",
+          "solution_ecosystem",
+          "process_truth"
+        ],
+        "gate": "HELPDESK_DEMAND_GATE"
+      },
+      "DEMAND_ANALYSIS": {
+        "examples": [
+          "esses chamados indicam algum problema recorrente?",
+          "quais chamados podem virar melhoria?",
+          "há demandas repetidas sobre o dashboard?"
+        ],
+        "route": [
+          "helpdesk_read",
+          "analisar evidência dos tickets",
+          "fontes adicionais só se necessário"
+        ],
+        "gate": "HELPDESK_DEMAND_GATE",
+        "rule": "causa reportada em ticket permanece INFORMED/INFERRED até validação"
+      },
+      "DEMAND_TO_PROCESS": {
+        "examples": [
+          "esses chamados estão relacionados a algum processo?",
+          "isso pode ser uma oportunidade de transformação?"
+        ],
+        "route": [
+          "helpdesk_read",
+          "record_read(action=search, entity=process) quando houver candidato",
+          "get_process_context quando o candidato for identificado",
+          "get_methodology_guide só se trabalho analítico exigir",
+          "solution_read quando solução digital estiver em consideração"
+        ],
+        "gates": [
+          "HELPDESK_DEMAND_GATE",
+          "PROCESS_TRUTH_GATE quando processo candidato existir"
+        ],
+        "rule": "tickets podem iniciar descoberta de processo; tickets NÃO viram AS-IS canônico"
       }
     },
     "gates": {
@@ -379,7 +443,8 @@
       "PRODUCT_USAGE_GATE": "Obrigatório quando a intent for como/quando/por que usar, qual feature, como preencher, onde registrar ou diferença entre features → get_product_guide.",
       "DIGITAL_SOLUTION_GATE": "Obrigatório antes de recomendar app/portal/dashboard/workflow/automação/IA/ferramenta digital nova → consultar solution_ecosystem primeiro.",
       "EXECUTION_CONTRACT_GATE": "Obrigatório antes de mutação tipada → get_catalog.",
-      "METHODOLOGY_GATE": "Ativar só quando método agregar valor analítico. NUNCA para leituras simples. SMALLEST_SUFFICIENT_METHOD."
+      "METHODOLOGY_GATE": "Ativar só quando método agregar valor analítico. NUNCA para leituras simples. SMALLEST_SUFFICIENT_METHOD.",
+      "HELPDESK_DEMAND_GATE": "Obrigatório quando a intent envolver chamados, helpdesk, GLPI, ticket, incidente, solicitação de suporte ou backlog/demandas de TI → helpdesk_read primeiro; nunca responder estado atual de chamado por memória."
     },
     "composition": {
       "example": "Como automatizar este processo?",
@@ -391,7 +456,15 @@
         "solution intelligence: o que Minha DELPI já oferece",
         "synthesis: reuse/extend/integrate/new"
       ],
-      "rule": "Nenhuma fonte isolada é autoridade universal."
+      "rule": "Nenhuma fonte isolada é autoridade universal.",
+      "digital_solution_with_demand": [
+        "HELPDESK DEMAND → entender sintoma/demanda",
+        "recorrência vs one-off",
+        "process truth se relacionado a processo",
+        "solution ecosystem",
+        "fit classification",
+        "recommendation — ticket não cria proposta automaticamente"
+      ]
     },
     "sufficiency": [
       "Parar de coletar quando a evidência for suficiente.",
@@ -768,6 +841,20 @@
         "authoritative_read"
       ],
       "confirmation_policy": "none_read_only"
+    },
+    "helpdesk_demand": {
+      "gpt_operations": [
+        "gpt_helpdesk_read"
+      ],
+      "mcp_tools": [
+        "helpdesk_read"
+      ],
+      "pipeline": [
+        "helpdesk_read",
+        "interpret as demand evidence (INFORMED/OBSERVED, never proven cause)",
+        "compose with record_read/process/solution only when intent requires"
+      ],
+      "confirmation_policy": "read_only"
     }
   }
 }

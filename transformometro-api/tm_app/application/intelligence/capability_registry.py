@@ -112,6 +112,14 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
     # `action` selects the exact capability (same owner/AuthZ/posture).
     _b("record.search", "gpt_record_read", ("record_read", "READ"), primary="record_read"),
     _b("record.read", "gpt_record_read", ("record_read", "READ"), primary="record_read"),
+    # Semantic family: Helpdesk read intelligence — one bounded read
+    # tool on the Helpdesk BFF; `action` selects the exact capability.
+    # GLPI stays ticket authority; the BFF owns contract/OAuth/AuthZ.
+    _b("helpdesk.session.read", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
+    _b("helpdesk.capabilities.read", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
+    _b("helpdesk.ticket.search", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
+    _b("helpdesk.ticket.read", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
+    _b("helpdesk.catalog.read", "gpt_helpdesk_read", ("helpdesk_read", "READ"), primary="helpdesk_read"),
     _b("record.change.prepare", "gpt_prepare_record_change", ("prepare_record_change", "PREPARE"), primary="prepare_record_change"),
     _b("proposal.commit", "gpt_commit_proposal", ("commit_proposal", "ACT"), primary="commit_proposal"),
     _b("process_timeline.read", "gpt_get_process_timeline", ("get_process_timeline", "READ"), primary="get_process_timeline"),

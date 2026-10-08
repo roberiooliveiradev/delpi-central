@@ -195,7 +195,7 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Methodology guide | TM | R | `get_methodology_guide` | `gpt_get_methodology_guide` | PLANNED | view | FULL_PARITY* |
 | Process context | TM | R | `get_process_context` | `gpt_get_process_context` | PLANNED | view/process | FULL_PARITY* |
 | Dashboard analyze | TM | R | `analyze` | `gpt_analyze` | PLANNED | dashboard | FULL_PARITY* |
-| Entity CRUD (17 legacy + process_document) | TM | R/W | search/get + prepare_record_change + commit_proposal | gpt_prepare_record_change + gpt_commit_proposal | PLANNED | per entity | FULL_PARITY* |
+| Entity CRUD (17 legacy + process_document) | TM | R/W | record_read + prepare_record_change + commit_proposal | gpt_record_read + gpt_prepare_record_change + gpt_commit_proposal | PLANNED | per entity | FULL_PARITY* |
 | Activate revision | TM | W | prepare_governed_operation(activate_revision) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | revisao manage | FULL_PARITY* |
 | Recalculate dashboard | TM | W | prepare_governed_operation(recalculate_dashboard) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | dashboard | FULL_PARITY* |
 | Improvement package | TM | W | prepare_governed_operation(commit_improvement_package) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | package AuthZ | FULL_PARITY* |
@@ -207,6 +207,7 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | **Process documentation** | TM | R/W | via record tools | via record entity | PLANNED | `transformometro.access` | FULL_PARITY* |
 | Tasks | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* |
 | Interaction room | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* (binary attachments platform_blocked) |
+| Helpdesk/GLPI demand | Helpdesk BFF | R | `helpdesk_read` | `gpt_helpdesk_read` | PLANNED | `helpdesk.access` + GLPI session | FULL_PARITY* (read-only V1; attachments metadata only) |
 | Process workspace UI | MFE | R | — | — | — | — | NOT_APPLICABLE |
 
 \*FULL_PARITY = Actions + MCP mapped to same application services. DÉLIA consumption = **PLANNED / NOT_PROVEN** (no runtime adapter in `delia-api` at this HEAD).
@@ -218,7 +219,7 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Process document | User JWT → use case `require_access` | Same dispatch → use case | Must use user delegation when built | `ProcessDocumentUseCases` |
 | Entity CRUD (other) | Same as GPT services | Same | PLANNED | Domain + branch_access helpers |
 | Writes governed | PREPARE → commit_proposal; confirm flag required only for confirm_before_act | execution_policy gate + backend AuthZ | Must show + human confirm before destructive commit; auto_act direct | Orchestrator / services |
-| MCP tool count | **24** (`CAPABILITY_GOVERNED_V2`) | — | — | constants.MCP_SURFACE_BUDGET |
+| MCP tool count | **22** (`CAPABILITY_GOVERNED_V2`) | — | — | constants.MCP_SURFACE_BUDGET |
 | Explicit confirmation | `commit_proposal` requires `confirmation` only for `confirm_before_act` proposals (auto_act commits without it) | `gpt_commit_proposal` body `confirmation` default `false` (fail-closed for destructive) | Same contract | `GovernedActionsFacade.commit_proposal` policy gate on the sealed `execution_policy` |
 
 Profile/cargo/department/context ≠ AuthZ. Service account must not impersonate user on MCP `/mcp`.

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-10-08",
-  "baselineOperationCount": 206,
-  "operationCount": 206,
-  "coveredCount": 204,
+  "baselineOperationCount": 207,
+  "operationCount": 207,
+  "coveredCount": 205,
   "gapCount": 2,
   "exemptCount": 0,
   "byModule": {
@@ -32,8 +32,8 @@
       "exempt": 0
     },
     "gpt_actions": {
-      "total": 20,
-      "covered": 20,
+      "total": 21,
+      "covered": 21,
       "gap": 0,
       "exempt": 0
     },
@@ -1059,6 +1059,13 @@
       "operationId": "gpt_prepare_governed_operation",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/governed-operations/prepare",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_helpdesk_read",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/helpdesk",
       "module": "gpt_actions",
       "status": "covered"
     },

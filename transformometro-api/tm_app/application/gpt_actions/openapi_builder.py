@@ -81,6 +81,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_prepare_meeting_minute_change",
     "gpt_collaboration_read",
     "gpt_prepare_collaboration_change",
+    "gpt_helpdesk_read",
 )
 
 # Legacy HTTP still mounted (prepare-only shim) — not Builder-importable.
@@ -657,6 +658,118 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 ],
                 "responses": {
                     "200": _ok_response("Solution catalog or context payload"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/helpdesk": {
+            "get": {
+                "operationId": "gpt_helpdesk_read",
+                "summary": "Helpdesk/GLPI demand reads via Helpdesk BFF (knowledge, not authorization)",
+                "description": (
+                    "READ-only Helpdesk/GLPI demand via BFF. "
+                    "action=session|capabilities|tickets (filters+paging)|"
+                    "ticket (ticket_id)|catalog (catalog_kind: "
+                    "categories|urgencies|request_types|users|groups|"
+                    "templates|types|statuses|approval_steps). "
+                    "Knowledge, never AuthZ."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": True,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "session",
+                                "capabilities",
+                                "tickets",
+                                "ticket",
+                                "catalog",
+                            ],
+                        },
+                        "description": "session | capabilities | tickets | ticket | catalog.",
+                    },
+                    {
+                        "name": "ticket_id",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1},
+                        "description": "Ticket id (required when action=ticket).",
+                    },
+                    {
+                        "name": "catalog_kind",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "categories",
+                                "urgencies",
+                                "request_types",
+                                "users",
+                                "groups",
+                                "followup_templates",
+                                "solution_types",
+                                "solution_templates",
+                                "task_categories",
+                                "task_templates",
+                                "task_statuses",
+                                "validation_templates",
+                                "approval_steps",
+                            ],
+                        },
+                        "description": "Catalog kind (required when action=catalog).",
+                    },
+                    {"name": "q", "in": "query", "schema": {"type": "string"}},
+                    {"name": "status", "in": "query", "schema": {"type": "string"}},
+                    {
+                        "name": "urgency_id",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1},
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1},
+                    },
+                    {
+                        "name": "assignee_id",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1},
+                    },
+                    {"name": "updated_from", "in": "query", "schema": {"type": "string"}},
+                    {"name": "updated_to", "in": "query", "schema": {"type": "string"}},
+                    {"name": "created_from", "in": "query", "schema": {"type": "string"}},
+                    {"name": "created_to", "in": "query", "schema": {"type": "string"}},
+                    {"name": "sort", "in": "query", "schema": {"type": "string"}},
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1},
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1, "maximum": 100},
+                    },
+                    {
+                        "name": "purpose",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": "users catalog only (mention|assignee|approver...).",
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1, "maximum": 100},
+                        "description": "users catalog only.",
+                    },
+                ],
+                "responses": {
+                    "200": _ok_response("Helpdesk read payload"),
                     **_error_responses(),
                 },
                 "x-openai-isConsequential": False,

@@ -34,6 +34,9 @@ from tm_app.application.gpt_actions.user_context_service import (
 from tm_app.application.gpt_actions.workspace_context_service import (
     WorkspaceContextService,
 )
+from tm_app.application.helpdesk.helpdesk_read_service import (
+    HelpdeskReadService,
+)
 from tm_app.application.solutions.solution_catalog_service import (
     SolutionCatalogService,
 )
@@ -71,6 +74,7 @@ _user_context = UserContextService(
 )
 _workspace_context = WorkspaceContextService()
 _solution_catalog = SolutionCatalogService()
+_helpdesk = HelpdeskReadService()
 
 # LEGACY_TRANSITIONAL: still mounted for migration, excluded from Builder OpenAPI.
 LEGACY_DIRECT_WRITE_OPERATION_IDS = frozenset(
@@ -426,6 +430,66 @@ def gpt_solution_read(
             data,
             "Inteligência de soluções Minha DELPI (metadados da Core — "
             "conhecimento, não autorização).",
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/helpdesk",
+    operation_id="gpt_helpdesk_read",
+    summary="Helpdesk/GLPI demand reads via Helpdesk BFF (knowledge, not authorization)",
+)
+def gpt_helpdesk_read(
+    request: Request,
+    action: Literal[
+        "session", "capabilities", "tickets", "ticket", "catalog"
+    ],
+    ticket_id: int | None = None,
+    catalog_kind: str | None = None,
+    q: str | None = None,
+    status: str | None = None,
+    urgency_id: int | None = None,
+    category_id: int | None = None,
+    assignee_id: int | None = None,
+    updated_from: str | None = None,
+    updated_to: str | None = None,
+    created_from: str | None = None,
+    created_to: str | None = None,
+    sort: str | None = None,
+    page: int | None = None,
+    page_size: int | None = Query(default=None, ge=1, le=100),
+    purpose: str | None = None,
+    limit: int | None = Query(default=None, ge=1, le=100),
+):
+    try:
+        authorization = _bearer_or_fail(request)
+        if not isinstance(authorization, str):
+            return authorization
+        data = _helpdesk.read_helpdesk(
+            authorization,
+            action=action,
+            ticket_id=ticket_id,
+            catalog_kind=catalog_kind,
+            q=q,
+            status=status,
+            urgency_id=urgency_id,
+            category_id=category_id,
+            assignee_id=assignee_id,
+            updated_from=updated_from,
+            updated_to=updated_to,
+            created_from=created_from,
+            created_to=created_to,
+            sort=sort,
+            page=page,
+            page_size=page_size,
+            purpose=purpose,
+            limit=limit,
+        )
+        return ok(
+            data,
+            "Demanda Helpdesk/GLPI (via Helpdesk BFF — conhecimento, "
+            "não autorização nem verdade de processo).",
         )
     except Exception as exc:
         return _handle(exc)

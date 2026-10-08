@@ -444,6 +444,20 @@ def _canonical_catalog() -> dict[str, Any]:
             "operation": "solution_read",
         },
         {
+            "id": "helpdesk_demand",
+            "kind": "analysis",
+            "owner": "helpdesk-api",
+            "description": (
+                "Helpdesk/GLPI demand reads via Helpdesk BFF — session, "
+                "capabilities, tickets, ticket detail, catalogs. "
+                "OBSERVED/INFORMED evidence; never authorization, never "
+                "process truth, never proven root cause. GLPI OAuth "
+                "stays inside the BFF (glpi_link_required is typed)."
+            ),
+            "read_only": True,
+            "operation": "helpdesk_read",
+        },
+        {
             "id": "process_timeline",
             "kind": "analysis",
             "owner": "transformometro-api",

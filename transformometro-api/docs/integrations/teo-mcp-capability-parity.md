@@ -6,10 +6,10 @@
 Gate (MCP Surface V2 — HEAD capability-driven):
 
 ```text
-CURRENT_CAPABILITIES (GPT Actions importable) = 17 (family operations)
-MCP_COVERED = 17
+CURRENT_CAPABILITIES (GPT Actions importable) = 20 (family operations)
+MCP_COVERED = 20
 MCP_NATIVE = diagnostic_v1 (2 family tools)
-MCP_TOOLS = 19
+MCP_TOOLS = 22
 MISSING = 0
 UNMAPPED GPT = 0
 REGRESSED = 0
@@ -18,9 +18,9 @@ TEO_MCP_SURFACE = CAPABILITY_GOVERNED_V2
 ```
 
 ```text
-17 GPT Actions capabilities (semantic families)
+20 GPT Actions capabilities (semantic families)
 ≠
-19 MCP tools
+22 MCP tools
 ```
 
 Tool Surface Rationalization V1: transports expose **semantic families with
@@ -34,9 +34,9 @@ manage actions) — with no GPT Actions surface.
 Composition:
 
 ```text
-11 READ + 1 DISCOVERY + 6 PREPARE + 1 ACT(commit) = 19
+14 READ + 1 DISCOVERY + 6 PREPARE + 1 ACT(commit) = 22
 READ includes analyze + get_methodology_guide + collaboration_read +
-evidence_read + meeting_minute_read + diagnostic_read
+evidence_read + meeting_minute_read + diagnostic_read + helpdesk_read
 PREPARE = prepare_record_change + 5 family prepares
   (governed_operation / evidence / meeting_minute / collaboration / diagnostic)
 ACT = commit_proposal only (opaque proposal_handle; capability from store)
@@ -58,7 +58,7 @@ PREPARE purity (ARCH-DRIFT-TEO-MCP-PREPARE-ACT-CONTRACT-01):
 - GPT Actions has a DISTINCT additive commit_now contract (policy-allowed
   capabilities, confirmation + Idempotency-Key required) — that contract is
   NOT part of the MCP PREPARE surface and cannot be reached through it.
-GPT importable operations = 17
+GPT importable operations = 20
 meta route gpt_get_openapi_schema is not importable
 
 Knowledge/intelligence parity (ARCH-DRIFT-TEO-MCP-EXPERT-KNOWLEDGE-DELIVERY-02):
@@ -85,12 +85,12 @@ Knowledge/intelligence parity (ARCH-DRIFT-TEO-MCP-EXPERT-KNOWLEDGE-DELIVERY-02):
 
 ## Surface budget
 
-| | Before (V1) | After (V2) | After Rationalization V1 |
-|---|---|---|---|
-| Total | 33 | 20→24→28 | **19** |
-| READ | 10 | 10 | 11 (+1 DISCOVERY-classified `get_catalog`) |
-| PREPARE | 11 | 8 | 6 (family prepares) |
-| ACT | 11 | 1 | 1 |
+| | Before (V1) | After (V2) | After Rationalization V1 | After Helpdesk V1 |
+|---|---|---|---|---|
+| Total | 33 | 20→24→28 | 21 | **22** |
+| READ | 10 | 10 | 13 (+1 DISCOVERY-classified `get_catalog`) | 14 |
+| PREPARE | 11 | 8 | 6 (family prepares) | 6 |
+| ACT | 11 | 1 | 1 | 1 |
 
 Principle: new CRUD entity ⇒ **0** new MCP tools; new capability ⇒ a typed
 `action` in an existing semantic family by default; a new tool only by
@@ -107,6 +107,7 @@ exception with a real business boundary; no automatic new ACT.
 | `gpt_evidence_read` / `gpt_prepare_evidence_change` | READ/PREPARE | `evidence_read` / `prepare_evidence_change` | manage + confirm_delete | yes | OK |
 | `gpt_meeting_minute_read` / `gpt_prepare_meeting_minute_change` | READ/PREPARE | `meeting_minute_read` / `prepare_meeting_minute_change` | minutes svc | yes | OK |
 | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | READ/PREPARE | `collaboration_read` / `prepare_collaboration_change` | tasks/rooms access | yes | OK |
+| `gpt_helpdesk_read` | READ | `helpdesk_read` | `helpdesk.access` + GLPI session (BFF-owned) | n/a | OK |
 | — (MCP-native) | READ | `diagnostic_read` | `transformometro.access` | n/a | OK |
 | — (MCP-native) | PREPARE | `prepare_diagnostic_change` → `commit_proposal` | fresh Core AuthZ on ACT | authoritative | OK |
 

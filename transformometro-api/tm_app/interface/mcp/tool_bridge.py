@@ -70,6 +70,9 @@ from tm_app.infrastructure.diagnostic_composition import (
 from tm_app.application.gpt_actions.workspace_context_service import (
     WorkspaceContextService,
 )
+from tm_app.application.helpdesk.helpdesk_read_service import (
+    HelpdeskReadService,
+)
 from tm_app.application.solutions.solution_catalog_service import (
     SolutionCatalogService,
 )
@@ -107,6 +110,7 @@ _process_context = ProcessContextService()
 _user_context = UserContextService(person_profile_reader=CorePersonProfileGateway())
 _workspace_context = WorkspaceContextService()
 _solution_catalog = SolutionCatalogService()
+_helpdesk = HelpdeskReadService()
 
 _ERROR_KIND_BY_CODE = {
     "unauthenticated": "unauthenticated",
@@ -410,6 +414,60 @@ def tool_solution_read(
             data,
             "Inteligência de soluções Minha DELPI (metadados da Core — "
             "conhecimento, não autorização).",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_helpdesk_read(
+    action: str,
+    ticket_id: int | None = None,
+    catalog_kind: str | None = None,
+    q: str | None = None,
+    status: str | None = None,
+    urgency_id: int | None = None,
+    category_id: int | None = None,
+    assignee_id: int | None = None,
+    updated_from: str | None = None,
+    updated_to: str | None = None,
+    created_from: str | None = None,
+    created_to: str | None = None,
+    sort: str | None = None,
+    page: int | None = None,
+    page_size: int | None = None,
+    purpose: str | None = None,
+    limit: int | None = None,
+) -> CallToolResult:
+    """Helpdesk/GLPI demand reads via Helpdesk BFF — Bearer forward,
+    never service account. Knowledge, not authorization/process truth."""
+    try:
+        context = require_mcp_context()
+        if not context.authorization:
+            raise PermissionError("Unauthorized")
+        data = _helpdesk.read_helpdesk(
+            context.authorization,
+            action=action,
+            ticket_id=ticket_id,
+            catalog_kind=catalog_kind,
+            q=q,
+            status=status,
+            urgency_id=urgency_id,
+            category_id=category_id,
+            assignee_id=assignee_id,
+            updated_from=updated_from,
+            updated_to=updated_to,
+            created_from=created_from,
+            created_to=created_to,
+            sort=sort,
+            page=page,
+            page_size=page_size,
+            purpose=purpose,
+            limit=limit,
+        )
+        return _ok_result(
+            data,
+            "Demanda Helpdesk/GLPI (via Helpdesk BFF — conhecimento, "
+            "não autorização nem verdade de processo).",
         )
     except Exception as exc:
         return handle_tool_error(exc)

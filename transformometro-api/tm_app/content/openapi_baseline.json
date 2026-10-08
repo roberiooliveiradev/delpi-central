@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-10-08",
-  "operation_count": 206,
+  "operation_count": 207,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -847,6 +847,12 @@
       "operationId": "gpt_prepare_governed_operation",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/governed-operations/prepare",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_helpdesk_read",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/helpdesk",
       "module": "gpt_actions"
     },
     {

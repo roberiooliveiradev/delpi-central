@@ -61,6 +61,7 @@ mesma policy por ação, mesmo `commit_proposal` como ACT único.
 | `gpt_prepare_meeting_minute_change` | `POST .../meeting-minutes/prepare` | WORKFLOW PREPARE (action=send\|finalize\|cancel\|resend\|create_version\|set_participants\|set_signers) |
 | `gpt_collaboration_read` | `GET .../collaboration` | READ (action=my_tasks\|task\|process_tasks\|rooms\|room\|messages\|attachments) |
 | `gpt_prepare_collaboration_change` | `POST .../collaboration/prepare` | WORKFLOW PREPARE (action=create_task\|update_task\|complete_task\|cancel_task\|open_room\|post_message\|edit_message\|delete_message\|toggle_reaction\|pin_message\|unpin_message\|mark_room_read) |
+| `gpt_helpdesk_read` | `GET .../helpdesk` | HELPDESK READ (action=session\|capabilities\|tickets\|ticket\|catalog) — GLPI truth via BFF |
 
 ### Legacy (NOT Builder-visible)
 
@@ -86,6 +87,8 @@ mesma policy por ação, mesmo `commit_proposal` como ACT único.
 | Ata: pending/audit/versions/participants/signers/generate_from_transcript | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_read`) |
 | Tasks (my/process/create/update/complete/cancel) | **SUPPORTED_BY_TÉO** (`gpt_collaboration_read` / `gpt_prepare_collaboration_change` → commit) |
 | Interaction rooms/messages/reactions/pins/read-state | **SUPPORTED_BY_TÉO** (mesma família collaboration; anexos binários = platform_blocked) |
+| Helpdesk/GLPI (session/capabilities/tickets/ticket/catalogs) | **SUPPORTED_BY_TÉO** (`gpt_helpdesk_read`, read-only; writes = roadmap R4) |
+| Helpdesk attachment binário / writes | **PLATFORM_BLOCKED** / **PLANNED** |
 | Assinatura PNG / PDF / magic-link público | **NOT_EXPOSED_BY_DESIGN** / **SUPPORTED_BY_UI_ONLY** |
 | Proxy HTTP genérico, locks, websocket, backup JSON, S2S | **NOT_EXPOSED_BY_DESIGN** |
 
