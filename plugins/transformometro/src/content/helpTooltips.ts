@@ -162,6 +162,8 @@ export const TM_HELP_TOOLTIPS = {
     timeline:
       "Histórico auditado de alterações neste processo e entidades vinculadas (mapeamento WBS, diagramas, melhorias, revisões, medições, investimentos e recursos).",
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
+    modeloBpmn:
+      "Referência do processo a uma revisão imutável do Meu Modelador de Processos (BPMN). A revisão vinculada é explícita e estável: novas revisões do modelo não alteram o vínculo até você escolher outra revisão. «Visualizar revisão» abre o snapshot no Modelador; «Abrir no Modelador» abre o modelo para edição sem mudar a referência.",
     diagramaMacro:
       "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões. «Editar diagrama» abre o editor em página dedicada (com trava colaborativa).",
     diagramaComposto:

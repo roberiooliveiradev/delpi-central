@@ -29,6 +29,9 @@ from tm_app.interface.http.routes.decomposition_routes import router as decompos
 from tm_app.interface.http.routes.diagram_routes import router as diagram_router
 from tm_app.interface.http.routes.revision_evidence_routes import router as revision_evidence_router
 from tm_app.interface.http.routes.process_file_routes import router as process_file_router
+from tm_app.interface.http.routes.process_bpmn_reference_routes import (
+    router as process_bpmn_reference_router,
+)
 from tm_app.interface.http.routes.process_document_routes import router as process_document_router
 from tm_app.interface.http.routes.diagnostic_routes import router as diagnostic_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
@@ -178,6 +181,7 @@ app.include_router(json_backup_router)
 app.include_router(revision_evidence_router)
 app.include_router(process_file_router)
 app.include_router(process_document_router)
+app.include_router(process_bpmn_reference_router)
 app.include_router(diagnostic_router)
 app.include_router(diagram_router)
 app.include_router(decomposition_router)

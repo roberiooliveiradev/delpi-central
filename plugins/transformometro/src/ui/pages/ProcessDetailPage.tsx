@@ -71,6 +71,7 @@ import { ProcessoDecompositionSection } from "../../components/decomposition/Pro
 import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
 import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
 import { ProcessoDiagramComposedSection } from "../../components/diagram/sections/ProcessoDiagramComposedSection";
+import { ProcessBpmnReferenceCard } from "../../components/process/ProcessBpmnReferenceCard";
 import { ProcessFilesSection } from "../process/ProcessFilesSection";
 import { ProcessDocumentationSection } from "../processes/ProcessDocumentationSection";
 import { ProcessInteractionRoomSection } from "../processes/ProcessInteractionRoomSection";
@@ -699,6 +700,23 @@ export function ProcessDetailPage({
               ) : null}
               {mapeamentoFocus === "fluxo" ? (
               <div data-subsection="fluxo">
+                <EditableSectionCard
+                  title="Modelo BPMN"
+                  description="Referência explícita a uma revisão imutável do Meu Modelador de Processos. O vínculo nunca segue a revisão mais recente automaticamente."
+                  hint={TM_HELP_TOOLTIPS.processos.modeloBpmn}
+                  isEditing={false}
+                  editable={false}
+                  onEdit={() => undefined}
+                  onCancel={() => undefined}
+                  editContent={null}
+                  readContent={
+                    <ProcessBpmnReferenceCard
+                      processoId={processoId}
+                      getAccessToken={getAccessToken}
+                      onError={setError}
+                    />
+                  }
+                />
                 <div className="tm-processo-composed-card tm-processo-composed-card--first">
                   <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
                   <p className="ds-hint">
