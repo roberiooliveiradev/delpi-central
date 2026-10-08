@@ -896,18 +896,104 @@ def test_suggest_aumente_fonte_para_absoluto_gera_patch_nao_bump():
     assert all(op.get("op") != "bump_font_size" for op in result["ops"])
 
 
-def test_suggest_crie_novo_bloco_de_texto_continua_criando():
-    """Controle de criação: intenção explícita segue emitindo bloco novo."""
+def test_suggest_crie_novo_bloco_de_texto_single_typed_create():
+    """«Crie um novo bloco de texto» → exatamente UMA criação canônica:
+    create_block tipado (typed create), nunca upsert_block txt_* +
+    create_block para a mesma intenção."""
     result = PresentationSuggestOpsService.suggest(
         message="Crie um novo bloco de texto",
         host_context={"slideId": "slide-1", "playlistId": "pl-1"},
     )
-    assert result["ops"]
-    upsert = next(op for op in result["ops"] if op.get("op") == "upsert_block")
-    assert upsert.get("createIfMissing") is True
-    block = upsert.get("block") or {}
-    assert str(block.get("id") or "").startswith("txt_")
-    assert block.get("type") == "text"
+    assert result["ops"] == [{"op": "create_block", "type": "text"}]
+    assert result["matchedCapabilityKeys"] == ["create_block"]
+
+
+def test_suggest_crie_novo_bloco_de_titulo_single_typed_create():
+    """«Crie um novo bloco de título» → uma única criação tipada heading."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Crie um novo bloco de título",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == [{"op": "create_block", "type": "heading"}]
+
+
+def test_suggest_adicione_um_bloco_de_texto_single_typed_create():
+    """«Adicione um bloco de texto» → typed create único (path existente)."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Adicione um bloco de texto",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == [{"op": "create_block", "type": "text"}]
+
+
+def test_suggest_crie_novo_bloco_sem_tipo_clarifica():
+    """«Crie um novo bloco» sem tipo resolvível → clarificação de tipo;
+    nunca default silencioso para text."""
+    result = PresentationSuggestOpsService.suggest(
+        message="Crie um novo bloco",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == []
+    assert result.get("clarificationKey")
+
+
+def test_suggest_crie_novo_bloco_de_texto_continua_criando():
+    """«Crie um novo bloco de texto» aplicado no write layer cria
+    exatamente UM bloco novo (regressão do duplo-create persistido)."""
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    from tv_app.application.services.data.presentation_mutation import (
+        PresentationPatchService,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        PresentationOpsContentService,
+    )
+
+    result = PresentationSuggestOpsService.suggest(
+        message="Crie um novo bloco de texto",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert len(result["ops"]) == 1
+
+    playlist_id = str(uuid4())
+    slide_id = str(uuid4())
+
+    class _Repo:
+        def get_by_id(self, pid):
+            return {"id": str(pid), "revision": 3, "dataDefaults": {}}
+
+        def get_slide(self, sid, playlist_id=None):
+            return {
+                "id": str(sid),
+                "nativeConfig": {
+                    "version": 5,
+                    "blocks": [
+                        {
+                            "id": "vista_knowledge_title",
+                            "type": "heading",
+                            "content": "O que a VISTA conhece",
+                            "frame": {"x": 5, "y": 12, "w": 90, "h": 18},
+                            "style": {"fontSize": 48},
+                        }
+                    ],
+                },
+            }
+
+    svc = PresentationPatchService(repo=_Repo())
+    applied = svc.preview(
+        {
+            "target": {"playlistId": playlist_id, "slideId": slide_id},
+            "ops": result["ops"],
+            "catalogVersion": PresentationOpsContentService.catalog_version(),
+        },
+        user=SimpleNamespace(is_superadmin=True, permissions=[], id="u1"),
+    )
+    blocks = applied["nativeConfig"]["blocks"]
+    assert len(blocks) == 2
+    new_blocks = [b for b in blocks if b.get("id") != "vista_knowledge_title"]
+    assert len(new_blocks) == 1
+    assert new_blocks[0]["type"] == "text"
 
 
 def test_suggest_criacao_com_bloco_selecionado_nao_vira_update():
@@ -917,11 +1003,7 @@ def test_suggest_criacao_com_bloco_selecionado_nao_vira_update():
         message="Crie um novo bloco de texto abaixo do título",
         host_context=dict(_SELECTED_BLOCK_HOST),
     )
-    upserts = [op for op in result["ops"] if op.get("op") == "upsert_block"]
-    assert upserts
-    for op in upserts:
-        block = op.get("block") or {}
-        assert str(block.get("id") or "").startswith("txt_")
+    assert result["ops"] == [{"op": "create_block", "type": "text"}]
     assert not any(
         op.get("blockId") == "vista_knowledge_title" for op in result["ops"]
     )
