@@ -12027,3 +12027,175 @@ EVIDENCE (live production, 2026-10-05):
   PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
     C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
   NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.155. C3-INTELLIGENCE-LOOP-03R2B — semantic + live revalidation and TEO paraphrase root-cause
+
+BASE_HEAD: b60e3aad8e (R5 close-out docs). EXPECTED_MAIN_HEAD
+  9fd77c0bd1 had advanced — owner TEO changed materially
+  (Knowledge Orchestration V1 + Tool Surface Rationalization V1):
+  OWNER_SURFACE_CHANGED = YES, not EXECUTION_DRIFT.
+
+REANCHOR: PASS — status/HEAD/log/diffs inspected; third-party
+  dirty work (tv-dashboard-api, plugins, transformometro-api
+  docs/tests) preserved untouched. Concurrent external commit
+  55cdc2974f (tv-dashboard) observed mid-task; delia-api
+  untouched by it.
+
+CURRENT TEO SURFACE REINVENTORY (live authenticated tools/list
+  inside delpi-delia-api, delegated subject credential):
+  TEO_CURRENT_TOOL_COUNT = 21
+    DISCOVERY (1): get_catalog
+    READ (13): get_my_context, get_workspace_context,
+      get_methodology_guide, get_product_guide, solution_read,
+      get_process_context, analyze, record_read, evidence_read,
+      get_process_timeline, meeting_minute_read,
+      collaboration_read, diagnostic_read
+    PREPARE (6): prepare_record_change, prepare_governed_operation,
+      prepare_evidence_change, prepare_meeting_minute_change,
+      prepare_collaboration_change, prepare_diagnostic_change
+    ACT (1): commit_proposal
+  Old names (search_records, get_record, get_solution_catalog,
+    get_solution_context) ABSENT from live tools/list — DELIA
+    honored removal (no local mirror).
+  OWNER_CATALOG_AUTHORITY_PRESERVED = PASS — DELIA consumed the
+    owner-declared classes verbatim (owner_classes map).
+
+BASELINES:
+  delia-api = 951/951 PASS on b60e3aad8e (pre-change).
+  TEO owner focused suite = 92/92 PASS (mcp_surface_v2,
+    gpt_record_read, solution_catalog, knowledge_orchestration,
+    mcp_contract, mcp_prepare_contract, gpt_parity_capabilities,
+    mcp_transport_projection).
+
+LIVE EVALUATION (dev composition, real configured model
+  openai_compatible/kimi-k3, subject token via Keycloak,
+  read-only turns only — MATERIAL_ACT_CALLS = 0):
+
+  PRE-FIX RESULT: every turn returned the deterministic
+    SOURCE_UNAVAILABLE terminal in ~150ms with zero stage logs —
+    first live symptom. Probe isolated the failure to
+    bounded_request: gzip-encoded response bodies were drained
+    via raw.read1() WITHOUT decode_content (wire bytes returned
+    verbatim) and headers were materialized into a case-sensitive
+    dict while uvicorn serves lowercase field names — the
+    Content-Type lookup missed. Every MCP response surfaced as
+    mcp_invalid_response; the same drain pattern in the
+    OpenAI-compatible model adapter produced
+    invalid_structured_output on every live model call.
+    Classification: DELIA_DEFECT (transport contract bug, latent —
+    masked when servers send canonical-case headers and no
+    content-encoding). NOT a timeout/deadline regression —
+    budgets behave identically.
+
+  MINIMAL FIX (IMPLEMENTATION_SHA = f63f0af955):
+    bounded_request.py — raw.decode_content = True before the
+      read1 drain (guarded for stubs); BoundedHttpResponse.headers
+      is now CaseInsensitiveDict.
+    openai_compatible_adapter.py — same decode_content fix on the
+      read1 body-drain path.
+    Regression tests: real-socket gzip JSON body + lowercase
+      headers through bounded_request; stubbed gzip raw stream on
+      the model adapter. 953/953 delia-api suite PASS.
+    Re-verified live post-fix: discover_catalog OK for all three
+      specialists (teo 21, vista 10, davi 2).
+
+  POST-FIX TEO SCENARIOS (RECONSTRUCTED_EVAL_CASE — the ledger
+    never recorded the historical verbatim input, so
+    HISTORICAL_REPRO_INPUT = INSUFFICIENT):
+
+    TEO-DIRECT "quais registros existem no transformometro?"
+      stages: select_group ok -> select_capability ok ->
+      target_selection = mcp:teo / record_read / READ (NEW
+      consolidated tool selected live — no nominal patch needed)
+      -> goal_understanding interpreted (read, comparison=False,
+      subject=yes) -> native_assessment sufficient -> plan direct
+      -> arguments missing_inputs=1 -> resolver selected
+      get_catalog (DISCOVERY, same-owner) -> provider_invoke ok ->
+      resolver decision=ambiguous (2 candidates) ->
+      CLARIFICATION_REQUIRED with business-language candidates
+      ("01 - Santa Catarina", "02 - Espirito Santo").
+      D03/D04 LIVE-VERIFIED: business subject reached projection;
+      same-owner non-mutating resolver ran before ask-back; no
+      foreign call; no invented identifier.
+
+    TEO-PARA-A "me mostra o que ja esta registrado no
+      transformometro" (paraphrase): identical stage path —
+      record_read selected, same-owner resolver, bounded
+      clarification. PARAPHRASE MISS NOT REPRODUCED.
+
+    TEO-PARA-B "liste as solucoes do catalogo do transformometro":
+      select_capability model_propose -> TIMEOUT at 10s ->
+      turn_budget decision=model_timeout -> SOURCE_UNAVAILABLE
+      deterministic terminal. First divergence = model stage
+      latency (provider), not semantic mis-selection; truthful
+      failure, zero fabrication.
+
+    CONTROL "capital da Franca": select_group none ->
+      NOT_APPLICABLE -> general model plain answer. Correct.
+
+D05 ROOT-CAUSE VERDICT:
+  prior_state = TELEMETRY_ADDED / ROOT_CAUSE_UNPROVEN
+  historical_repro_input = INSUFFICIENT (no verbatim input in
+    evidence)
+  current_reproduction = NOT_REPRODUCED_CURRENT_SURFACE
+  first_divergence_stage = K. NOT_REPRODUCED — every live
+    semantic stage behaved correctly; the only observed failure
+    class was a model-provider stage timeout terminating
+    truthfully (deliberate R2A behavior, not a paraphrase defect)
+  root_cause = OWNER_SURFACE_CHANGED likely superseded the
+    historical symptom (23->21 tool rationalization); historical
+    cause remains UNPROVEN — not asserted as fact
+  owner = NOT_REPRODUCED -> no owner fix required
+  code_change = none for D05 (the transport fix above is a
+    separate proven defect, not the D05 mechanism)
+
+R2B DEFECT REVALIDATION:
+  D01 COMPARABILITY     prior=CLOSED -> REVALIDATED PASS — 135
+    focused evals incl. corroborate agreement/conflict/
+    inconclusive, shared-context gates, provenance; verdicts
+    deterministic. code_change=none.
+  D03 ARG_PROJECTION    prior=CLOSED -> REVALIDATED PASS —
+    business_subject -> declared argument keys; live stage log
+    showed arg_keys telemetry only; no invented identifiers.
+    code_change=none.
+  D04 SAME_OWNER_PREREQ prior=CLOSED -> REVALIDATED PASS — live:
+    missing input -> same-owner DISCOVERY resolver -> ambiguous
+    -> clarification; zero foreign calls. code_change=none.
+  D05 TEO_PARAPHRASE    -> NOT_REPRODUCED_CURRENT_SURFACE (above).
+  D06 PRESENTATION      prior=CLOSED -> REVALIDATED PASS —
+    recursive envelope unwrapping + evidence-bound rendering
+    evals green; live clarification rendered business candidates
+    only. code_change=none.
+
+NEW DEFECT FOUND (R2B): DELIA_TRANSPORT_CONTENT_ENCODING —
+  PROVEN + FIXED (f63f0af955). This is why earlier live turns
+  silently failed — a real regression exposed by R2B live eval.
+
+MATERIAL_ACT_CALLS = 0 — only DISCOVERY/READ paths exercised.
+PROVIDER_NEUTRALITY = PASS — no owner/tool-name branches added;
+  selection stayed model-proposal + deterministic validation.
+RENAME_INVARIANCE = PASS — new tool names adopted via live
+  discovery with zero nominal change.
+GENERALIZATION = PASS — fix is transport-generic (any gzip /
+  lowercase-header HTTP peer), not TEO-specific.
+
+REAL_MODEL_EVAL = RUN — real configured model invoked live
+  (mixed: valid proposals; one stage timeout; pre-fix
+  invalid_structured_output was the gzip defect, now resolved).
+LIVE_COMPOSITION_EVAL = RUN (local dev composition, read-only).
+LIVE_PROD_EVAL = TEST_NOT_RUN.
+DEPLOYED_SHA = dev-container sync of HEAD for eval only; no
+  deploy claim.
+
+CI_ARCHITECTURE_ENFORCEMENT = NOT_OBSERVED (gh CLI unavailable).
+CI_CURSOR_RULES_GOVERNANCE = NOT_OBSERVED (same).
+CI_CAUSALITY = INCONCLUSIVE — no workflow observed at this SHA.
+
+RESIDUAL: owner-side TEO defect = none proven; model stage
+  latency on select_capability observed once (provider-side,
+  truthful terminal); production deploy + production eval still
+  outstanding as separate bounded tasks.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

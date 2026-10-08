@@ -2805,3 +2805,27 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` / `DEPLOYED_SHA` | TEST_NOT_RUN / TEST_NOT_RUN / TO_VERIFY |
 | `CORE_PLATFORM_ACCESS_TOTAL_DEADLINE` | SEPARATE_BOUNDED_FOLLOWUP — unchanged |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2B — semantic + live revalidation, TÉO paraphrase root-cause (§6.155)
+
+Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_read`/`solution_read`, tombstones fail-closed) → revalidation against CURRENT surface, not stale names. Live eval in dev composition with the real configured model exposed and fixed a transport-level DÉLIA defect; semantic stages revalidated.
+
+| Claim | Result |
+|---|---|
+| `CURRENT_TEO_SURFACE_REINVENTORIED` | PASS — live authenticated `tools/list`: 21 tools (DISCOVERY 1 / READ 13 / PREPARE 6 / ACT 1) |
+| `OLD_TEO_TOOL_NAMES_NOT_REQUIRED_BY_DELIA` | PASS — live turn selected the NEW `record_read` via discovery; old names absent and never required |
+| `TEO_OWNER_TESTS` | 92/92 PASS (mcp_surface_v2, record_read, solution_catalog, knowledge_orchestration, mcp_contract, mcp_prepare_contract, parity_capabilities, transport_projection) |
+| `D01_COMPARABILITY` | REVALIDATED PASS — agreement/conflict/inconclusive + shared-context gates deterministic (135 focused evals); code_change=none |
+| `D03_ARG_PROJECTION` | REVALIDATED PASS — business_subject → declared arg keys; live telemetry showed keys only; code_change=none |
+| `D04_SAME_OWNER_PREREQ` | REVALIDATED PASS — live: missing input → same-owner DISCOVERY resolver → ambiguous → CLARIFICATION_REQUIRED; foreign calls=0; code_change=none |
+| `D05_TEO_PARAPHRASE` | NOT_REPRODUCED_CURRENT_SURFACE — HISTORICAL_REPRO_INPUT=INSUFFICIENT; reconstructed paraphrase cases selected `record_read` correctly; only observed failure = model-stage timeout → truthful SOURCE_UNAVAILABLE; historical cause stays UNPROVEN (not asserted); OWNER_SURFACE_CHANGED likely superseded symptom |
+| `D06_PRESENTATION` | REVALIDATED PASS — recursive envelope unwrap + evidence-bound render green; live clarification = business candidates only; code_change=none |
+| `DELIA_TRANSPORT_CONTENT_ENCODING` | **PROVEN_DEFECT → FIXED** (`f63f0af955`) — `raw.read1()` returned gzip wire bytes (no `decode_content`) and case-sensitive header dict missed lowercase `content-type`; every MCP call → `mcp_invalid_response`, every model call → `invalid_structured_output`; fix: `decode_content=True` + `CaseInsensitiveDict` in `bounded_request`, same drain fix in `openai_compatible_adapter`; regression tests on real-socket gzip/lowercase + stubbed raw |
+| `REAL_MODEL_EVAL` | RUN — real configured model invoked live (valid proposals; one select_capability stage timeout → truthful terminal) |
+| `LIVE_COMPOSITION_EVAL` | RUN — dev composition, read-only paths only |
+| `LIVE_PROD_EVAL` / `DEPLOYED_SHA` | TEST_NOT_RUN / dev-container sync only (no deploy claim) |
+| `MATERIAL_ACT_CALLS` | 0 |
+| `PROVIDER_NEUTRALITY` / `RENAME_INVARIANCE` / `GENERALIZATION` | PASS / PASS / PASS — fix is transport-generic, zero owner/tool-name branches |
+| Full delia-api suite | **953/953 PASS at `f63f0af955`** (951 baseline + 2 gzip/case regression tests) |
+| `CI_ARCHITECTURE_ENFORCEMENT` / `CI_CURSOR_RULES_GOVERNANCE` | NOT_OBSERVED / NOT_OBSERVED (gh CLI unavailable locally) |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
