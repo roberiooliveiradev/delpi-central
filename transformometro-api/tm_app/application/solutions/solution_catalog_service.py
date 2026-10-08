@@ -30,6 +30,33 @@ class SolutionCatalogService:
     def __init__(self, gateway: SolutionCatalogPort | None = None) -> None:
         self._gateway = gateway or CoreSolutionCatalogGateway()
 
+    def read_solution(
+        self,
+        authorization: str,
+        *,
+        action: str,
+        solution_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Canonical read surface: action=catalog|context. Fail-closed."""
+        act = str(action or "").strip().lower()
+        if act == "catalog":
+            if str(solution_id or "").strip():
+                raise GptActionsError(
+                    "solution_id não se aplica a action=catalog.",
+                    400,
+                    {"error_kind": "validation"},
+                )
+            return self.get_solution_catalog(authorization)
+        if act == "context":
+            return self.get_solution_context(
+                authorization, solution_id=solution_id
+            )
+        raise GptActionsError(
+            "action deve ser 'catalog' ou 'context'.",
+            400,
+            {"error_kind": "validation", "error_code": "INVALID_ACTION"},
+        )
+
     def get_solution_catalog(self, authorization: str) -> dict[str, Any]:
         solutions = self._gateway.list_solutions(authorization)
         return {

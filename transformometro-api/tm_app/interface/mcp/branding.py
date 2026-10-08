@@ -27,7 +27,7 @@ TEO_MCP_INSTRUCTIONS = (
     "(dependent actions consume the previous read-back — never invent "
     "ids); several confirm_before_act actions get ONE consolidated "
     "confirmation for the exact set. "
-    "Meeting minutes search: search_records entity=meeting_minute (not manage as search). "
+    "Meeting minutes search: record_read action=search entity=meeting_minute (not manage as search). "
     "Diagnostic V1 (MCP): READ via diagnostic_read (action=get|by_revision) first. "
     "Mutations: prepare_diagnostic_change (action=create|manage actions) → show exact "
     "change → execution_policy gate (auto_act commits directly; "

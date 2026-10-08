@@ -420,7 +420,7 @@ def test_unknown_context_facts_ignored_not_fatal() -> None:
 def test_mcp_tool_projects_version_and_intent() -> None:
     mcp = create_mcp_server()
     tools = {t.name: t for t in asyncio.run(mcp.list_tools())}
-    assert len(tools) == 23  # workspace_context + product_guide + 2 solution tools
+    assert len(tools) == 21  # workspace_context + product_guide + solution_read
     guide = tools["get_methodology_guide"]
     props = guide.input_schema["properties"]
     assert "guide_version" in props

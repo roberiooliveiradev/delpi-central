@@ -68,7 +68,7 @@ def _doc(**overrides) -> ProcessDocument:
 def test_builder_surface_budget_reduced_and_no_legacy_crud():
     doc = build_gpt_actions_openapi()
     # Tool Surface Rationalization V1: family ops consolidated 22 → 17.
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 19
     assert count_operations(doc) <= 30
     found = []
     for methods in doc["paths"].values():
@@ -221,8 +221,8 @@ def test_capability_surface_in_catalog_payload_shape():
 
 def test_search_rejects_disallowed_filter(tm_client):
     response = tm_client.get(
-        "/transformometro/gpt-actions/v1/records/branch",
-        params={"q": "nope"},
+        "/transformometro/gpt-actions/v1/records",
+        params={"action": "search", "entity": "branch", "q": "nope"},
     )
     assert response.status_code == 400
     assert response.json()["success"] is False

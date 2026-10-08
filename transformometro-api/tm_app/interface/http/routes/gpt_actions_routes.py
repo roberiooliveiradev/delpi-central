@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Literal
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
@@ -404,39 +405,27 @@ def _bearer_or_fail(request: Request):
 
 @router.get(
     "/solutions",
-    operation_id="gpt_get_solution_catalog",
-    summary="Minha DELPI solution catalog (knowledge, not authorization)",
+    operation_id="gpt_solution_read",
+    summary="Minha DELPI solution intelligence (knowledge, not authorization)",
 )
-def gpt_get_solution_catalog(request: Request):
+def gpt_solution_read(
+    request: Request,
+    action: Literal["catalog", "context"],
+    solution_id: str | None = None,
+):
     try:
         authorization = _bearer_or_fail(request)
         if not isinstance(authorization, str):
             return authorization
-        data = _solution_catalog.get_solution_catalog(authorization)
-        return ok(
-            data,
-            "Catálogo de soluções Minha DELPI (conhecimento — não é autorização).",
-        )
-    except Exception as exc:
-        return _handle(exc)
-
-
-@router.get(
-    "/solutions/{solution_id}",
-    operation_id="gpt_get_solution_context",
-    summary="Detail of one registered Minha DELPI solution",
-)
-def gpt_get_solution_context(request: Request, solution_id: str):
-    try:
-        authorization = _bearer_or_fail(request)
-        if not isinstance(authorization, str):
-            return authorization
-        data = _solution_catalog.get_solution_context(
-            authorization, solution_id=solution_id
+        data = _solution_catalog.read_solution(
+            authorization,
+            action=action,
+            solution_id=solution_id,
         )
         return ok(
             data,
-            "Contexto da solução (metadados da Core — não é dado de domínio nem autorização).",
+            "Inteligência de soluções Minha DELPI (metadados da Core — "
+            "conhecimento, não autorização).",
         )
     except Exception as exc:
         return _handle(exc)
@@ -520,13 +509,15 @@ def gpt_analyze(
 
 
 @router.get(
-    "/records/{entity}",
-    operation_id="gpt_search_records",
-    summary="Search or list records by entity",
+    "/records",
+    operation_id="gpt_record_read",
+    summary="Read records: action=search lists, action=get fetches by id",
 )
-def gpt_search_records(
-    entity: str,
+def gpt_record_read(
     request: Request,
+    action: Literal["search", "get"],
+    entity: str,
+    id: str | None = None,
     parent_id: str | None = None,
     instance_id: str | None = None,
     filial_id: str | None = None,
@@ -537,37 +528,11 @@ def gpt_search_records(
     unit_code: str | None = None,
 ):
     try:
-        parsed = parse_entity(entity)
-        from tm_app.application.gpt_actions.capability_descriptors import (
-            ENTITY_FILTERABLE_FIELDS,
-        )
-
-        filters = {
-            "parent_id": parent_id,
-            "instance_id": instance_id,
-            "filial_id": filial_id,
-            "setor_id": setor_id,
-            "status": status,
-            "familia_processo": familia_processo,
-            "q": q,
-            "unit_code": unit_code,
-        }
-        allowed = ENTITY_FILTERABLE_FIELDS.get(parsed.value, frozenset())
-        provided = {
-            key
-            for key, value in filters.items()
-            if value is not None and str(value).strip() != ""
-        }
-        bad = sorted(provided - allowed)
-        if bad:
-            raise GptActionsError(
-                f"Disallowed filters for entity '{parsed.value}': {', '.join(bad)}.",
-                400,
-                data={"error_code": "INVALID_FIELD", "fields": bad},
-            )
-        data = _dispatch.search_records(
+        data = _dispatch.record_read(
             request,
             entity,
+            action=action,
+            record_id=id,
             parent_id=parent_id,
             instance_id=instance_id,
             filial_id=filial_id,
@@ -577,24 +542,7 @@ def gpt_search_records(
             q=q,
             unit_code=unit_code,
         )
-        return ok(data, "Lista de registros.")
-    except Exception as exc:
-        return _handle(exc)
-
-
-@router.get(
-    "/records/{entity}/{id}",
-    operation_id="gpt_get_record",
-    summary="Get one record by entity and id",
-)
-def gpt_get_record(entity: str, id: str, request: Request):
-    try:
-        from tm_app.application.gpt_actions.response_compact import project_get_record
-
-        return ok(
-            project_get_record(_dispatch.get_record(request, entity, id)),
-            "Registro.",
-        )
+        return ok(data, "Registros." if action == "search" else "Registro.")
     except Exception as exc:
         return _handle(exc)
 

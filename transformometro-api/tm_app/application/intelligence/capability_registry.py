@@ -102,12 +102,16 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
     _b("catalog.read", "gpt_get_catalog", ("get_catalog", "DISCOVERY"), primary="get_catalog"),
     _b("methodology.read", "gpt_get_methodology_guide", ("get_methodology_guide", "READ"), primary="get_methodology_guide"),
     _b("product_guide.read", "gpt_get_product_guide", ("get_product_guide", "READ"), primary="get_product_guide"),
-    _b("solutions.catalog.read", "gpt_get_solution_catalog", ("get_solution_catalog", "READ"), primary="get_solution_catalog"),
-    _b("solutions.context.read", "gpt_get_solution_context", ("get_solution_context", "READ"), primary="get_solution_context"),
+    # Semantic family: solution intelligence — catalog + context share
+    # one read tool; `action` selects the exact capability.
+    _b("solutions.catalog.read", "gpt_solution_read", ("solution_read", "READ"), primary="solution_read"),
+    _b("solutions.context.read", "gpt_solution_read", ("solution_read", "READ"), primary="solution_read"),
     _b("context.process.read", "gpt_get_process_context", ("get_process_context", "READ"), primary="get_process_context"),
     _b("analytics.read", "gpt_analyze", ("analyze", "READ"), primary="analyze"),
-    _b("record.search", "gpt_search_records", ("search_records", "READ"), primary="search_records"),
-    _b("record.read", "gpt_get_record", ("get_record", "READ"), primary="get_record"),
+    # Semantic family: record reads — search + get share one read tool;
+    # `action` selects the exact capability (same owner/AuthZ/posture).
+    _b("record.search", "gpt_record_read", ("record_read", "READ"), primary="record_read"),
+    _b("record.read", "gpt_record_read", ("record_read", "READ"), primary="record_read"),
     _b("record.change.prepare", "gpt_prepare_record_change", ("prepare_record_change", "PREPARE"), primary="prepare_record_change"),
     _b("proposal.commit", "gpt_commit_proposal", ("commit_proposal", "ACT"), primary="commit_proposal"),
     _b("process_timeline.read", "gpt_get_process_timeline", ("get_process_timeline", "READ"), primary="get_process_timeline"),

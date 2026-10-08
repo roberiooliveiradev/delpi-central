@@ -12,7 +12,7 @@ Core API (apps/app_manifests/app_versions/app_routes)
 → safe projection (GET /solutions)
 → CoreSolutionCatalogGateway (Bearer forward, user parity)
 → SolutionCatalogService
-→ get_solution_catalog / get_solution_context (MCP + GPT Actions)
+→ solution_read action=catalog|context (MCP + GPT Actions)
 ```
 
 ## Visibility != Access
@@ -69,7 +69,7 @@ explicit source it is UNKNOWN.
 Agent directive (`teo_agent_intelligence.json → solutions`):
 
 ```text
-UNDERSTAND NEED → get_solution_catalog → get_solution_context
+UNDERSTAND NEED → solution_read(action=catalog) → solution_read(action=context)
 → CLASSIFY FIT → RECOMMEND
 REUSE_EXISTING | EXTEND_EXISTING | INTEGRATE_EXISTING
 | NEW_CAPABILITY_CANDIDATE | TO_INVENTORY
@@ -89,8 +89,8 @@ No TÉO deployment, no parallel registry, no static JSON.
 | Surface | Route/tool |
 |---|---|
 | Core (session-auth) | `GET /solutions`, `GET /solutions/{id}` |
-| GPT Actions | `gpt_get_solution_catalog`, `gpt_get_solution_context` |
-| MCP | `get_solution_catalog`, `get_solution_context` |
+| GPT Actions | `gpt_solution_read` (`action=catalog` \| `action=context`) |
+| MCP | `solution_read` (`action=catalog` \| `action=context`) |
 
 All read-only (`x-openai-isConsequential: false`), Bearer-forwarded —
 never service-account impersonation.

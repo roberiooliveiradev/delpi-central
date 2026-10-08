@@ -171,7 +171,7 @@ Rejected by policy: `gpt_call_any_route`, `gpt_http_proxy`, `gpt_run_sql`, `gpt_
 
 | Capability | Domain | Action mapping | MCP mapping | DÉLIA | Classification |
 |---|---|---|---|---|---|
-| **Process Documentation** | PROVEN CRUD | **C `EXISTING_CATALOG_ENTITY`** `process_document` | `search_records` / `get_record` / `prepare_record_change` / `commit_proposal` | PLANNED | **FULL_PARITY** (Actions+MCP); DÉLIA PLANNED |
+| **Process Documentation** | PROVEN CRUD | **C `EXISTING_CATALOG_ENTITY`** `process_document` | `record_read` / `prepare_record_change` / `commit_proposal` | PLANNED | **FULL_PARITY** (Actions+MCP); DÉLIA PLANNED |
 | **Tasks** (`tm_tasks`) | PROVEN | **NOT_EXPOSED** — lifecycle (complete/cancel/my-tasks) ≠ clean CRUD; avoid signature-projection confusion | NOT_EXPOSED | NOT_APPLICABLE | **DOMAIN_ONLY_BY_DESIGN** |
 | **Interaction Room** | PROVEN | **NOT_EXPOSED** — human collaboration; TÉO is not a room participant | NOT_EXPOSED | NOT_APPLICABLE | **DOMAIN_ONLY_BY_DESIGN** |
 | **Process Workspace** | UI composition | **DOMAIN_COMPOSITION_ONLY** — consume underlying reads | same | same | **NOT_APPLICABLE** |
@@ -258,7 +258,7 @@ Newly exposed (no new MCP tools — typed actions/views on existing families):
 | Decomposition link validation + draft suggestion | `analyze` | 2 views | DecompositionFlowchartLinkValidator / DecompositionDraftService | READ (no persistence) |
 | Diagram validation + BPMN XML export | `analyze` | `diagram_validation`, `diagram_bpmn_xml` | FlowchartValidationService / FlowchartBpmnXmlService | READ |
 | Revision merged views + rateio diagnostic | `analyze` | 3 views | Revisao*Merge/Diagnostic services | READ |
-| Instance `contexto` | `prepare_record_change` + `get_record` | entity=`instance`, `changes.contexto` | validate_instancia_contexto_v1 + ProcessoInstanciaRepository | auto_act |
+| Instance `contexto` | `prepare_record_change` + `record_read` | entity=`instance`, `changes.contexto` | validate_instancia_contexto_v1 + ProcessoInstanciaRepository | auto_act |
 | Meeting-minute refuse | `prepare_meeting_minute_change` | `refuse` (reason required) | MeetingMinutesService.refuse | confirm_before_act |
 | Signature profile | `get_my_context` (read, permission-gated, no binary) + `prepare_governed_operation` | `update_signature_profile` | UserSignatureService | auto_act |
 | BPMN XML import | `prepare_governed_operation` | `import_diagram_bpmn_xml` | FlowchartBpmnXmlService + DiagramWriteService | confirm_before_act |

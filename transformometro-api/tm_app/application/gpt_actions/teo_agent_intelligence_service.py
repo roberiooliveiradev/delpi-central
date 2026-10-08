@@ -115,6 +115,7 @@ class TeoAgentIntelligenceService:
             "multi_action": doc.get("multi_action") or {},
             "product_guide": doc.get("product_guide") or {},
             "solutions": doc.get("solutions") or {},
+            "knowledge_orchestration": doc.get("knowledge_orchestration") or {},
             "modes": doc.get("modes") or {},
             "epistemology": doc.get("epistemology") or {},
             "discovery": doc.get("discovery") or {},

@@ -17,7 +17,7 @@ A decisão de produto é dar ao programa de transformação a experiência **Por
 3. **Não renomear** neste ciclo: `transformometro-api`, schemas, tabelas, packages, MCP, GPT Actions, URLs, OpenAPI, nomes internos de domínio. Renomeação técnica exige ADR próprio.
 4. **Reuso visual ≠ acoplamento de domínio.** O MFE Transformômetro não importa internals do Comercial. O Comercial não vira owner de componente de domínio Transforma+.
 5. Componente genérico já em Core, Portal host ou `@delpi/plugin-ui` pode ser reutilizado. Componente que vive só no Comercial só sai de lá se passar no Abstraction Gate. Duas telas parecidas não bastam.
-6. Página de UI não cria rota HTTP, tool MCP nem GPT Action. Home, overview, «meus processos» e portfólio consomem leituras já existentes (`search_records`, `get_record`, `get_process_context`, `analyze` / dashboard) até um read model com contrato próprio ser justificado.
+6. Página de UI não cria rota HTTP, tool MCP nem GPT Action. Home, overview, «meus processos» e portfólio consomem leituras já existentes (`record_read`, `get_process_context`, `analyze` / dashboard) até um read model com contrato próprio ser justificado.
 7. Menu oculto, perfil, cargo e favorito não autorizam. AuthZ continua no backend. Capability do portal e do TÉO ≤ capability do usuário autenticado.
 
 ## Consequências

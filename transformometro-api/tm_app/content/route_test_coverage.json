@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06",
-  "baselineOperationCount": 202,
-  "operationCount": 202,
-  "coveredCount": 202,
-  "gapCount": 0,
+  "generatedAt": "2026-10-08",
+  "baselineOperationCount": 206,
+  "operationCount": 206,
+  "coveredCount": 204,
+  "gapCount": 2,
   "exemptCount": 0,
   "byModule": {
     "colaboracao": {
@@ -14,9 +14,9 @@
       "exempt": 0
     },
     "crud": {
-      "total": 106,
+      "total": 108,
       "covered": 106,
-      "gap": 0,
+      "gap": 2,
       "exempt": 0
     },
     "dashboard": {
@@ -32,8 +32,8 @@
       "exempt": 0
     },
     "gpt_actions": {
-      "total": 18,
-      "covered": 18,
+      "total": 20,
+      "covered": 20,
       "gap": 0,
       "exempt": 0
     },
@@ -543,6 +543,20 @@
       "path": "/transformometro/processos/{processo_id}/timeline",
       "module": "crud",
       "status": "covered"
+    },
+    {
+      "operationId": "list_product_guide_topics",
+      "method": "GET",
+      "path": "/transformometro/product-guides",
+      "module": "crud",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_product_guide_topic",
+      "method": "GET",
+      "path": "/transformometro/product-guides/{topic}",
+      "module": "crud",
+      "status": "gap"
     },
     {
       "operationId": "delete_recurso_custo",
@@ -1098,9 +1112,23 @@
       "status": "covered"
     },
     {
+      "operationId": "gpt_get_product_guide",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/product-guide",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
       "operationId": "gpt_commit_proposal",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/proposals/commit",
+      "module": "gpt_actions",
+      "status": "covered"
+    },
+    {
+      "operationId": "gpt_record_read",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/records",
       "module": "gpt_actions",
       "status": "covered"
     },
@@ -1112,16 +1140,16 @@
       "status": "covered"
     },
     {
-      "operationId": "gpt_search_records",
+      "operationId": "gpt_solution_read",
       "method": "GET",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}",
+      "path": "/transformometro/gpt-actions/v1/solutions",
       "module": "gpt_actions",
       "status": "covered"
     },
     {
-      "operationId": "gpt_get_record",
+      "operationId": "gpt_get_workspace_context",
       "method": "GET",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+      "path": "/transformometro/gpt-actions/v1/workspace-context",
       "module": "gpt_actions",
       "status": "covered"
     },

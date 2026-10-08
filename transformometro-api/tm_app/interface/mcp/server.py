@@ -233,37 +233,27 @@ def create_mcp_server() -> MCPServer:
         return bridge.tool_get_product_guide(topic=topic, section=section)
 
     @mcp.tool(
-        name="get_solution_catalog",
-        title="Get solution catalog",
+        name="solution_read",
+        title="Solution read",
         description=(
-            "READ-only discovery of Minha DELPI solutions registered in "
-            "Core — id, name, description, category, routes, features, "
-            "permissions, version, accessible flag. The catalog is NOT "
-            "filtered to apps the user can open: accessible=false still "
-            "means the solution EXISTS. Knowledge never grants access — "
-            "domain reads/writes inside a solution require its own AuthZ."
+            "READ-only Minha DELPI solution intelligence (Core metadata). "
+            "action=catalog: discovery of ALL registered active solutions — "
+            "id, name, description, category, routes, features, permissions, "
+            "version, accessible flag; NOT filtered to apps the user can "
+            "open (accessible=false still means the solution EXISTS). "
+            "action=context: detail of one solution — identity, routes, "
+            "features, permissions, dependencies, accessible flag, recent "
+            "versions, CALCULATED structural evolution. Knowledge never "
+            "grants access — domain reads/writes require the plugin's AuthZ."
         ),
-        annotations=_annotations("get_solution_catalog", "Get solution catalog"),
+        annotations=_annotations("solution_read", "Solution read"),
         meta=meta,
     )
-    def get_solution_catalog() -> CallToolResult:
-        return bridge.tool_get_solution_catalog()
-
-    @mcp.tool(
-        name="get_solution_context",
-        title="Get solution context",
-        description=(
-            "READ-only detail of one registered Minha DELPI solution: "
-            "identity, description, routes, features, permissions, "
-            "dependencies, accessible flag, recent versions and "
-            "CALCULATED structural evolution. Core metadata only — never "
-            "plugin domain data."
-        ),
-        annotations=_annotations("get_solution_context", "Get solution context"),
-        meta=meta,
-    )
-    def get_solution_context(solution_id: str) -> CallToolResult:
-        return bridge.tool_get_solution_context(solution_id=solution_id)
+    def solution_read(
+        action: Literal["catalog", "context"],
+        solution_id: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_solution_read(action=action, solution_id=solution_id)
 
     @mcp.tool(
         name="get_process_context",
@@ -333,14 +323,22 @@ def create_mcp_server() -> MCPServer:
         )
 
     @mcp.tool(
-        name="search_records",
-        title="Search records",
-        description="Search/list Transformômetro records by entity slug.",
-        annotations=_annotations("search_records", "Search records"),
+        name="record_read",
+        title="Record read",
+        description=(
+            "READ Transformômetro records by entity. action=search: list "
+            "records (parent_id for children, instance_id preferred for "
+            "revisions, q for process text search). action=get: one record "
+            "by entity + id (for measurement, id is revisao_id; for "
+            "decomposition/diagram entities, id is the parent id)."
+        ),
+        annotations=_annotations("record_read", "Record read"),
         meta=meta,
     )
-    def search_records(
+    def record_read(
+        action: Literal["search", "get"],
         entity: _EntityParam,
+        id: str | None = None,
         parent_id: str | None = None,
         instance_id: str | None = None,
         filial_id: str | None = None,
@@ -350,8 +348,10 @@ def create_mcp_server() -> MCPServer:
         q: str | None = None,
         unit_code: str | None = None,
     ) -> CallToolResult:
-        return bridge.tool_search_records(
+        return bridge.tool_record_read(
+            action=action,
             entity=entity,
+            id=id,
             parent_id=parent_id,
             instance_id=instance_id,
             filial_id=filial_id,
@@ -361,16 +361,6 @@ def create_mcp_server() -> MCPServer:
             q=q,
             unit_code=unit_code,
         )
-
-    @mcp.tool(
-        name="get_record",
-        title="Get record",
-        description="Get one record by entity and id.",
-        annotations=_annotations("get_record", "Get record"),
-        meta=meta,
-    )
-    def get_record(entity: _EntityParam, id: str) -> CallToolResult:
-        return bridge.tool_get_record(entity=entity, id=id)
 
     # --- Semantic family: evidence (structured metadata only) --------------
 

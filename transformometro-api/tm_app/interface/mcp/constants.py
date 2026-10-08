@@ -105,6 +105,9 @@ MCP_LEGACY_REMOVED_TOOLS: frozenset[str] = frozenset(
         #   prepare_activate_revision / prepare_recalculate_dashboard /
         #   prepare_improvement_package / prepare_adjust_shared_resource_cost
         #       → prepare_governed_operation
+        # Knowledge Orchestration V1 — read-family consolidation:
+        #   get_solution_catalog / get_solution_context → solution_read
+        #   search_records / get_record → record_read
         "task_read",
         "prepare_task",
         "interaction_room_read",
@@ -122,6 +125,10 @@ MCP_LEGACY_REMOVED_TOOLS: frozenset[str] = frozenset(
         "prepare_recalculate_dashboard",
         "prepare_improvement_package",
         "prepare_adjust_shared_resource_cost",
+        "get_solution_catalog",
+        "get_solution_context",
+        "search_records",
+        "get_record",
     }
 )
 

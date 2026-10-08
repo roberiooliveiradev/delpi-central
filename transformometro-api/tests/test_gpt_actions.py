@@ -33,11 +33,9 @@ _COVERAGE_ANCHORS = (
     "gpt_get_catalog",
     "gpt_get_methodology_guide",
     "gpt_get_product_guide",
-    "gpt_get_solution_catalog",
-    "gpt_get_solution_context",
+    "gpt_solution_read",
     "gpt_analyze",
-    "gpt_search_records",
-    "gpt_get_record",
+    "gpt_record_read",
     "gpt_prepare_record_change",
     "gpt_commit_proposal",
     "gpt_create_record",
@@ -70,7 +68,7 @@ def test_openapi_has_at_most_30_operations():
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) <= 30
     assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS)
-    assert count_operations(doc) == 21
+    assert count_operations(doc) == 19
 
 
 def test_openapi_operation_ids_unique_and_stable():
@@ -232,7 +230,10 @@ def test_dispatch_create_instance_sibling(tm_client):
 
 
 def test_dispatch_unknown_entity_negative(tm_client):
-    response = tm_client.get("/transformometro/gpt-actions/v1/records/not_an_entity")
+    response = tm_client.get(
+        "/transformometro/gpt-actions/v1/records",
+        params={"action": "search", "entity": "not_an_entity"},
+    )
     assert response.status_code == 400
     assert response.json()["success"] is False
 
@@ -608,8 +609,12 @@ def test_search_revisions_by_instance_id(tm_client):
     ):
         rev_cls.return_value.list_by_instancia.return_value = rows
         response = tm_client.get(
-            "/transformometro/gpt-actions/v1/records/revision",
-            params={"instance_id": instancia_id},
+            "/transformometro/gpt-actions/v1/records",
+            params={
+                "action": "search",
+                "entity": "revision",
+                "instance_id": instancia_id,
+            },
         )
     assert response.status_code == 200
     body = response.json()["data"]
@@ -886,7 +891,7 @@ def test_openapi_includes_improvement_package():
         "/transformometro/gpt-actions/v1/governed-operations/prepare"
         in doc["paths"]
     )
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 19
 
 
 def test_openapi_validate_vs_commit_consequential_flags():
@@ -2016,7 +2021,7 @@ def test_analyze_instances_honors_processo_id():
 
 def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 19
     assert "gpt_get_process_context" in GPT_ACTIONS_OPERATION_IDS
     assert "gpt_analyze" in GPT_ACTIONS_OPERATION_IDS
     analysis = doc["paths"]["/transformometro/gpt-actions/v1/analysis"]["get"]
@@ -2024,7 +2029,7 @@ def test_openapi_setor_id_documents_uuid_or_code_and_stable_surface():
     assert "UUID" in setor["description"]
     assert "codigo_setor" in setor["description"]
     assert any(p["name"] == "processo_id" for p in analysis["parameters"])
-    search = doc["paths"]["/transformometro/gpt-actions/v1/records/{entity}"]["get"]
+    search = doc["paths"]["/transformometro/gpt-actions/v1/records"]["get"]
     search_setor = next(p for p in search["parameters"] if p["name"] == "setor_id")
     assert "UUID" in search_setor["description"]
 
@@ -2144,7 +2149,7 @@ def test_openapi_all_write_actions_have_typed_examples():
 def test_openapi_validate_non_consequential_commit_consequential():
     """CASO 9–10: validate remains no-write/non-consequential; commit stays consequential."""
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 19
     validate = doc["paths"][
         "/transformometro/gpt-actions/v1/governed-operations/prepare"
     ]["post"]

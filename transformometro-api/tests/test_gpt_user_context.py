@@ -97,7 +97,7 @@ def test_application_user_context_has_no_infrastructure_or_framework_imports():
 def test_openapi_includes_gpt_get_my_context():
     doc = build_gpt_actions_openapi()
     assert "gpt_get_my_context" in GPT_ACTIONS_OPERATION_IDS
-    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert count_operations(doc) == len(GPT_ACTIONS_OPERATION_IDS) == 19
     op = doc["paths"]["/transformometro/gpt-actions/v1/me"]["get"]
     assert op["operationId"] == "gpt_get_my_context"
     assert op["x-openai-isConsequential"] is False
@@ -235,8 +235,7 @@ def test_existing_operation_ids_preserved_and_methodology_added():
     current_core = {
         "gpt_get_catalog",
         "gpt_analyze",
-        "gpt_search_records",
-        "gpt_get_record",
+        "gpt_record_read",
         "gpt_prepare_record_change",
         "gpt_commit_proposal",
         "gpt_prepare_governed_operation",
@@ -250,10 +249,9 @@ def test_existing_operation_ids_preserved_and_methodology_added():
         "gpt_get_workspace_context",
         "gpt_get_methodology_guide",
         "gpt_get_product_guide",
-        "gpt_get_solution_catalog",
-        "gpt_get_solution_context",
+        "gpt_solution_read",
         "gpt_collaboration_read",
         "gpt_prepare_collaboration_change",
     }
     assert current_core == set(GPT_ACTIONS_OPERATION_IDS)
-    assert len(GPT_ACTIONS_OPERATION_IDS) == 21
+    assert len(GPT_ACTIONS_OPERATION_IDS) == 19

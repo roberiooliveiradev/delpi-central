@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06",
-  "operation_count": 202,
+  "generatedAt": "2026-10-08",
+  "operation_count": 206,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -403,6 +403,18 @@
       "operationId": "processo_timeline",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/timeline",
+      "module": "crud"
+    },
+    {
+      "operationId": "list_product_guide_topics",
+      "method": "GET",
+      "path": "/transformometro/product-guides",
+      "module": "crud"
+    },
+    {
+      "operationId": "get_product_guide_topic",
+      "method": "GET",
+      "path": "/transformometro/product-guides/{topic}",
       "module": "crud"
     },
     {
@@ -880,9 +892,21 @@
       "module": "gpt_actions"
     },
     {
+      "operationId": "gpt_get_product_guide",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/product-guide",
+      "module": "gpt_actions"
+    },
+    {
       "operationId": "gpt_commit_proposal",
       "method": "POST",
       "path": "/transformometro/gpt-actions/v1/proposals/commit",
+      "module": "gpt_actions"
+    },
+    {
+      "operationId": "gpt_record_read",
+      "method": "GET",
+      "path": "/transformometro/gpt-actions/v1/records",
       "module": "gpt_actions"
     },
     {
@@ -892,15 +916,15 @@
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_search_records",
+      "operationId": "gpt_solution_read",
       "method": "GET",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}",
+      "path": "/transformometro/gpt-actions/v1/solutions",
       "module": "gpt_actions"
     },
     {
-      "operationId": "gpt_get_record",
+      "operationId": "gpt_get_workspace_context",
       "method": "GET",
-      "path": "/transformometro/gpt-actions/v1/records/{entity}/{id}",
+      "path": "/transformometro/gpt-actions/v1/workspace-context",
       "module": "gpt_actions"
     },
     {

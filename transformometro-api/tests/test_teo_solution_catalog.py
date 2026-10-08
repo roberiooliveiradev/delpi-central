@@ -134,3 +134,55 @@ def test_detail_response_has_no_sensitive_keys_recursively() -> None:
     result = svc.get_solution_context("Bearer token", solution_id="transformometro")
     found = set(_all_keys(result))
     assert found.isdisjoint(FORBIDDEN_KEYS), found & FORBIDDEN_KEYS
+
+
+# --- solution_read merged surface (Tool Surface Rationalization V1) ----
+
+
+def test_read_solution_catalog_action() -> None:
+    svc = SolutionCatalogService(gateway=_FakeGateway(SOLUTIONS))
+    result = svc.read_solution("Bearer t", action="catalog")
+    assert result["schema"] == "solution_catalog_v1"
+    assert result["count"] == 2
+
+
+def test_read_solution_context_action() -> None:
+    svc = SolutionCatalogService(gateway=_FakeGateway(SOLUTIONS))
+    result = svc.read_solution(
+        "Bearer t", action="context", solution_id="tv-dashboard"
+    )
+    assert result["solution"]["id"] == "tv-dashboard"
+    assert result["solution"]["accessible"] is False
+
+
+def test_read_solution_context_requires_id() -> None:
+    svc = SolutionCatalogService(gateway=_FakeGateway(SOLUTIONS))
+    with pytest.raises(GptActionsError) as exc_info:
+        svc.read_solution("Bearer t", action="context")
+    assert exc_info.value.status_code == 400
+
+
+def test_read_solution_catalog_rejects_solution_id() -> None:
+    svc = SolutionCatalogService(gateway=_FakeGateway(SOLUTIONS))
+    with pytest.raises(GptActionsError) as exc_info:
+        svc.read_solution(
+            "Bearer t", action="catalog", solution_id="transformometro"
+        )
+    assert exc_info.value.status_code == 400
+
+
+def test_read_solution_unknown_is_typed_not_found() -> None:
+    svc = SolutionCatalogService(gateway=_FakeGateway(SOLUTIONS))
+    with pytest.raises(GptActionsError) as exc_info:
+        svc.read_solution("Bearer t", action="context", solution_id="nope")
+    exc = exc_info.value
+    assert exc.status_code == 404
+    assert exc.data["error_kind"] == "not_found"
+    assert exc.data["error_code"] == "solution_not_found"
+
+
+def test_read_solution_invalid_action_fails_closed() -> None:
+    svc = SolutionCatalogService(gateway=_FakeGateway(SOLUTIONS))
+    with pytest.raises(GptActionsError) as exc_info:
+        svc.read_solution("Bearer t", action="everything")
+    assert exc_info.value.status_code == 400

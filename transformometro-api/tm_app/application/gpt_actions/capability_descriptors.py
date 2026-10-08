@@ -441,7 +441,7 @@ def _canonical_catalog() -> dict[str, Any]:
                 "reports effective access, never grants it."
             ),
             "read_only": True,
-            "operation": "get_solution_catalog",
+            "operation": "solution_read",
         },
         {
             "id": "process_timeline",
@@ -623,7 +623,7 @@ def _canonical_catalog() -> dict[str, Any]:
                 },
                 {
                     "id": "instance.contexto",
-                    "via": "READ via get_record(entity=instance); WRITE via "
+                    "via": "READ via record_read(action=get, entity=instance); WRITE via "
                     "prepare_record_change(entity=instance, operation=update, "
                     "changes.contexto) → commit_proposal (validate_instancia_contexto_v1 + "
                     "ProcessoInstanciaRepository.update_contexto — same "
@@ -681,7 +681,7 @@ def _canonical_catalog() -> dict[str, Any]:
                 },
                 {
                     "id": "solution_catalog",
-                    "via": "get_solution_catalog + get_solution_context "
+                    "via": "solution_read action=catalog|context "
                     "(READ) — Minha DELPI solution discovery via Core "
                     "/solutions safe projection; accessible flag reports "
                     "access, knowledge never grants it",

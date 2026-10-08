@@ -387,37 +387,29 @@ def tool_get_product_guide(
         return handle_tool_error(exc)
 
 
-def tool_get_solution_catalog() -> CallToolResult:
-    """Minha DELPI solution discovery — knowledge, never authorization.
+def tool_solution_read(
+    action: str,
+    solution_id: str | None = None,
+) -> CallToolResult:
+    """Minha DELPI solution intelligence — knowledge, never authorization.
 
-    The catalog is NOT filtered to apps the user can open: a solution
-    with accessible=false still exists and can be recommended for reuse.
+    action=catalog: discovery of ALL registered active solutions (not
+    filtered by user access). action=context: Core metadata detail of one
+    solution. Plugin domain reads/writes still require the app's AuthZ.
     """
     try:
         context = require_mcp_context()
         if not context.authorization:
             raise PermissionError("Unauthorized")
-        data = _solution_catalog.get_solution_catalog(context.authorization)
-        return _ok_result(
-            data,
-            "Catálogo de soluções Minha DELPI (conhecimento — não é autorização).",
-        )
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_get_solution_context(solution_id: str) -> CallToolResult:
-    """Detail of one registered solution — Core metadata only."""
-    try:
-        context = require_mcp_context()
-        if not context.authorization:
-            raise PermissionError("Unauthorized")
-        data = _solution_catalog.get_solution_context(
-            context.authorization, solution_id=solution_id
+        data = _solution_catalog.read_solution(
+            context.authorization,
+            action=action,
+            solution_id=solution_id,
         )
         return _ok_result(
             data,
-            "Contexto da solução (metadados da Core — não é dado de domínio nem autorização).",
+            "Inteligência de soluções Minha DELPI (metadados da Core — "
+            "conhecimento, não autorização).",
         )
     except Exception as exc:
         return handle_tool_error(exc)
@@ -488,8 +480,10 @@ def tool_analyze(
         return handle_tool_error(exc)
 
 
-def tool_search_records(
+def tool_record_read(
+    action: str,
     entity: str,
+    id: str | None = None,
     parent_id: str | None = None,
     instance_id: str | None = None,
     filial_id: str | None = None,
@@ -499,11 +493,14 @@ def tool_search_records(
     q: str | None = None,
     unit_code: str | None = None,
 ) -> CallToolResult:
+    """Canonical record read: action=search lists; action=get fetches by id."""
     try:
         request = build_mcp_request()
-        data = _dispatch.search_records(
+        data = _dispatch.record_read(
             request,
             entity,
+            action=action,
+            record_id=id,
             parent_id=parent_id,
             instance_id=instance_id,
             filial_id=filial_id,
@@ -513,20 +510,7 @@ def tool_search_records(
             q=q,
             unit_code=unit_code,
         )
-        return _ok_result(data, "Lista de registros.")
-    except Exception as exc:
-        return handle_tool_error(exc)
-
-
-def tool_get_record(entity: str, id: str) -> CallToolResult:
-    try:
-        from tm_app.application.gpt_actions.response_compact import project_get_record
-
-        request = build_mcp_request()
-        return _ok_result(
-            project_get_record(_dispatch.get_record(request, entity, id)),
-            "Registro.",
-        )
+        return _ok_result(data, "Registros." if action == "search" else "Registro.")
     except Exception as exc:
         return handle_tool_error(exc)
 

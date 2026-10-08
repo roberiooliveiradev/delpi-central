@@ -189,7 +189,7 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 ],
                 "actions": [
                     "Call gpt_get_catalog and reuse filiais/setores from access_scope.",
-                    "Search process with gpt_search_records entity=process before creating.",
+                    "Search process with gpt_record_read action=search entity=process before creating.",
                 ],
             },
             {
@@ -570,7 +570,7 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "Search: parent_id=processo_id. No dedicated Action/MCP tools.",
                     "Create: gpt_prepare_record_change operation=create "
                     "changes={processo_id, title, content_md?} → gpt_commit_proposal.",
-                    "Get/update/delete: id=document_id (UUID PK) via get_record / "
+                    "Get/update/delete: id=document_id (UUID PK) via record_read action=get / "
                     "prepare_record_change update|delete → commit_proposal.",
                     "Update may send title and/or content_md only under changes.",
                     "AuthZ: transformometro.access (same as domain HTTP).",

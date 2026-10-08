@@ -49,8 +49,8 @@ mesma policy por ação, mesmo `commit_proposal` como ACT único.
 | `gpt_get_methodology_guide` | `GET .../methodology-guide` | READ / methodology |
 | `gpt_get_process_context` | `GET .../process-context` | READ / composition |
 | `gpt_analyze` | `GET .../analysis` | ANALYSIS |
-| `gpt_search_records` | `GET .../records/{entity}` | ENTITY READ |
-| `gpt_get_record` | `GET .../records/{entity}/{id}` | ENTITY READ |
+| `gpt_record_read` | `GET .../records` | ENTITY READ (action=search\|get) |
+| `gpt_solution_read` | `GET .../solutions` | SOLUTION READ (action=catalog\|context) |
 | `gpt_prepare_record_change` | `POST .../records/prepare-change` | ENTITY PREPARE |
 | `gpt_commit_proposal` | `POST .../proposals/commit` | COMMON COMMIT (ACT) |
 | `gpt_prepare_governed_operation` | `POST .../governed-operations/prepare` | WORKFLOW PREPARE (action=activate_revision\|recalculate_dashboard\|commit_improvement_package\|adjust_shared_resource_cost) |

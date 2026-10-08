@@ -115,7 +115,7 @@ NESTING_RULES = [
 
 OPERATIONAL_SEQUENCE = [
     "READ CONTRACT (gpt_get_catalog.registration_guide.package_hints)",
-    "RESOLVE IDs / CONTEXT (gpt_search_records / gpt_get_process_context)",
+    "RESOLVE IDs / CONTEXT (gpt_record_read action=search / gpt_get_process_context)",
     "PREPARE nested package payload",
     "VALIDATE/PREPARE PACKAGE "
     "(gpt_prepare_governed_operation action=commit_improvement_package) = PREPARE WORKFLOW",
@@ -123,7 +123,7 @@ OPERATIONAL_SEQUENCE = [
     "SHOW USER the exact package / proposal",
     "EXPLICIT CONFIRMATION",
     "COMMIT (gpt_commit_proposal) — ACT stage; not gpt_commit_improvement_package",
-    "AUTHORITATIVE READ-BACK / VERIFY (gpt_get_record / gpt_get_process_context)",
+    "AUTHORITATIVE READ-BACK / VERIFY (gpt_record_read action=get / gpt_get_process_context)",
     "OPTIONAL RECALCULATE (recalculate flag bound in proposal; only after successful commit)",
 ]
 

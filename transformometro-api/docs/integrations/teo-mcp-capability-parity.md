@@ -102,7 +102,7 @@ exception with a real business boundary; no automatic new ACT.
 |---|---|---|---|---|---|
 | `gpt_prepare_record_change` | PREPARE ENTITY | `prepare_record_change` | entity manage | on commit | OK |
 | `gpt_commit_proposal` | COMMIT | `commit_proposal` | revalidated | authoritative | OK |
-| `gpt_search_records` / `gpt_get_record` | READ | same names | view + resource | n/a | OK |
+| `gpt_record_read` | READ | `record_read` | view + resource | n/a | OK |
 | `gpt_prepare_governed_operation` | PREPARE WORKFLOW | `prepare_governed_operation` → `commit_proposal` | per capability | yes | OK |
 | `gpt_evidence_read` / `gpt_prepare_evidence_change` | READ/PREPARE | `evidence_read` / `prepare_evidence_change` | manage + confirm_delete | yes | OK |
 | `gpt_meeting_minute_read` / `gpt_prepare_meeting_minute_change` | READ/PREPARE | `meeting_minute_read` / `prepare_meeting_minute_change` | minutes svc | yes | OK |

@@ -67,11 +67,9 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_catalog",
     "gpt_get_methodology_guide",
     "gpt_get_product_guide",
-    "gpt_get_solution_catalog",
-    "gpt_get_solution_context",
+    "gpt_solution_read",
     "gpt_analyze",
-    "gpt_search_records",
-    "gpt_get_record",
+    "gpt_record_read",
     "gpt_prepare_record_change",
     "gpt_commit_proposal",
     "gpt_prepare_governed_operation",
@@ -629,47 +627,36 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
         },
         f"{GPT_ACTIONS_BASE_PATH}/solutions": {
             "get": {
-                "operationId": "gpt_get_solution_catalog",
-                "summary": "Minha DELPI solution catalog",
+                "operationId": "gpt_solution_read",
+                "summary": "Minha DELPI solution intelligence (catalog or one-solution detail)",
                 "description": (
-                    "Read-only discovery of solutions registered in Core "
-                    "(id, name, description, category, routes, features, "
-                    "permissions, version, accessible). NOT filtered to "
-                    "apps the user can open — accessible=false still means "
-                    "the solution exists. Knowledge never grants access."
-                ),
-                "tags": ["Transformômetro GPT"],
-                "security": [{"BearerAuth": []}],
-                "responses": {
-                    "200": _ok_response("Solution catalog payload"),
-                    **_error_responses(),
-                },
-                "x-openai-isConsequential": False,
-            }
-        },
-        f"{GPT_ACTIONS_BASE_PATH}/solutions/{{solution_id}}": {
-            "get": {
-                "operationId": "gpt_get_solution_context",
-                "summary": "Detail of one registered Minha DELPI solution",
-                "description": (
-                    "Read-only Core metadata for a single solution: identity, "
-                    "routes, features, permissions, dependencies, accessible "
-                    "flag, recent versions, CALCULATED structural evolution. "
-                    "Never plugin domain data."
+                    "action=catalog: discovery of ALL active Core-registered "
+                    "solutions — NOT filtered to apps the user can open "
+                    "(accessible=false still means the solution exists). "
+                    "action=context: detail of one solution — routes, "
+                    "features, permissions, version, CALCULATED evolution. "
+                    "Knowledge never grants plugin access."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
                     {
-                        "name": "solution_id",
-                        "in": "path",
+                        "name": "action",
+                        "in": "query",
                         "required": True,
+                        "schema": {"type": "string", "enum": ["catalog", "context"]},
+                        "description": "catalog = discover all; context = detail of one (solution_id required).",
+                    },
+                    {
+                        "name": "solution_id",
+                        "in": "query",
+                        "required": False,
                         "schema": {"type": "string"},
-                        "description": "Registered plugin/solution id (e.g. tv-dashboard).",
-                    }
+                        "description": "Registered plugin/solution id (required when action=context).",
+                    },
                 ],
                 "responses": {
-                    "200": _ok_response("Solution context payload"),
+                    "200": _ok_response("Solution catalog or context payload"),
                     **_error_responses(),
                 },
                 "x-openai-isConsequential": False,
@@ -819,20 +806,35 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 },
             }
         },
-        f"{GPT_ACTIONS_BASE_PATH}/records/{'{entity}'}": {
+        f"{GPT_ACTIONS_BASE_PATH}/records": {
             "get": {
-                "operationId": "gpt_search_records",
-                "summary": "Search or list records by entity",
+                "operationId": "gpt_record_read",
+                "summary": "Read records: action=search lists, action=get fetches one",
                 "description": (
-                    "List records. Use `parent_id` for children "
-                    "(instances/revisions of a process, investments of a revision). "
-                    "For revisions prefer `instance_id` to isolate one melhoria. "
-                    "Use `q` for process text search."
+                    "action=search lists records (parent_id for children — "
+                    "instances/revisions of a process; prefer instance_id for "
+                    "revisions; q for process text search). action=get returns "
+                    "one record — id required (for measurement, id is "
+                    "revisao_id; for decomposition/diagram entities, id is the "
+                    "parent id)."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
                 "parameters": [
-                    _entity_path_param(),
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string", "enum": ["search", "get"]},
+                        "description": "search = list; get = one record (id required).",
+                    },
+                    {
+                        "name": "entity",
+                        "in": "query",
+                        "required": True,
+                        "schema": {"type": "string", "enum": _ENTITY_ENUM},
+                    },
+                    {"name": "id", "in": "query", "schema": {"type": "string"}},
                     {"name": "parent_id", "in": "query", "schema": {"type": "string"}},
                     {
                         "name": "instance_id",
@@ -867,10 +869,12 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     {"name": "unit_code", "in": "query", "schema": {"type": "string"}},
                 ],
                 "responses": {
-                    "200": _ok_response("List of records"),
+                    "200": _ok_response("Record(s)"),
                     **_error_responses(),
                 },
             },
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/records/{'{entity}'}": {
             "post": {
                 "operationId": "gpt_create_record",
                 "summary": "Create a Transformômetro record",
@@ -901,25 +905,6 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
             },
         },
         f"{GPT_ACTIONS_BASE_PATH}/records/{'{entity}'}/{'{id}'}": {
-            "get": {
-                "operationId": "gpt_get_record",
-                "summary": "Get one record by entity and id",
-                "description": (
-                    "For measurement, id is revisao_id. "
-                    "For decomposition/diagram entities, id is the parent "
-                    "(processo_id / instancia_id / revisao_id)."
-                ),
-                "tags": ["Transformômetro GPT"],
-                "security": [{"BearerAuth": []}],
-                "parameters": [
-                    _entity_path_param(),
-                    {"name": "id", "in": "path", "required": True, "schema": {"type": "string"}},
-                ],
-                "responses": {
-                    "200": _ok_response("Record"),
-                    **_error_responses(),
-                },
-            },
             "put": {
                 "operationId": "gpt_update_record",
                 "summary": "Update a Transformômetro record",

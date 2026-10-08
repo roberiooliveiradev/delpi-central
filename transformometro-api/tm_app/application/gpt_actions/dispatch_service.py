@@ -965,6 +965,93 @@ class GptActionsDispatchService:
 
     # --- records CRUD ----------------------------------------------------
 
+    def record_read(
+        self,
+        request: Request,
+        entity_value: str,
+        *,
+        action: str,
+        record_id: str | None = None,
+        parent_id: str | None = None,
+        instance_id: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        status: str | None = None,
+        familia_processo: str | None = None,
+        q: str | None = None,
+        unit_code: str | None = None,
+    ) -> dict[str, Any]:
+        """Canonical read surface: action=search|get over one entity.
+
+        Fail-closed: unknown action → 400; get without id → 400; search
+        carrying id → 400; disallowed filters → 400 (ENTITY_FILTERABLE_FIELDS
+        was previously enforced only on the GPT HTTP route — now both
+        transports share it).
+        """
+        from tm_app.application.gpt_actions.capability_descriptors import (
+            ENTITY_FILTERABLE_FIELDS,
+        )
+        from tm_app.application.gpt_actions.response_compact import (
+            project_get_record,
+        )
+
+        act = str(action or "").strip().lower()
+        if act not in ("search", "get"):
+            raise GptActionsError(
+                "action deve ser 'search' ou 'get'.",
+                400,
+                data={"error_kind": "validation", "error_code": "INVALID_ACTION"},
+            )
+        try:
+            entity = parse_entity(entity_value)
+        except ValueError as exc:
+            raise GptActionsError(
+                str(exc),
+                400,
+                data={"error_kind": "validation", "error_code": "INVALID_ENTITY"},
+            ) from exc
+        rid = str(record_id or "").strip()
+        if act == "get":
+            if not rid:
+                raise GptActionsError(
+                    "id é obrigatório para action=get.",
+                    400,
+                    data={"error_kind": "validation"},
+                )
+            return project_get_record(
+                self.get_record(request, entity.value, rid)
+            )
+        if rid:
+            raise GptActionsError(
+                "id não se aplica a action=search.",
+                400,
+                data={"error_kind": "validation"},
+            )
+        filters = {
+            "parent_id": parent_id,
+            "instance_id": instance_id,
+            "filial_id": filial_id,
+            "setor_id": setor_id,
+            "status": status,
+            "familia_processo": familia_processo,
+            "q": q,
+            "unit_code": unit_code,
+        }
+        allowed = ENTITY_FILTERABLE_FIELDS.get(entity.value, frozenset())
+        provided = {
+            key
+            for key, value in filters.items()
+            if value is not None and str(value).strip() != ""
+        }
+        bad = sorted(provided - allowed)
+        if bad:
+            raise GptActionsError(
+                f"Disallowed filters for entity '{entity.value}': {', '.join(bad)}.",
+                400,
+                data={"error_code": "INVALID_FIELD", "fields": bad},
+            )
+        return self.search_records(request, entity.value, **filters)
+
     def search_records(
         self,
         request: Request,

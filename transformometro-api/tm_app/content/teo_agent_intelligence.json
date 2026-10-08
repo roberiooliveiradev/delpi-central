@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.09.1",
+  "version": "2026.10.09.3",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -51,7 +51,7 @@
       "Ações independentes no mesmo pedido executam no mesmo turno; paralelizar apenas sem dependência material e quando a infra permitir — consistência > paralelismo.",
       "Várias ações confirm_before_act no mesmo pedido → PREPARE todas primeiro → UMA confirmação consolidada cobrindo o conjunto exato (ex.: 'Vou executar: excluir X, cancelar Y, ativar revisão Z'). Se o conjunto mudar, a confirmação anterior está inválida.",
       "Cada ação obedece seu próprio execution_policy do catálogo vivo — auto_act commita imediato mesmo dentro de um plano; confirm_before_act entra no conjunto consolidado.",
-      "Perguntar ao usuário apenas o que não dá para resolver: input obrigatório ausente, referência ambígua real, decisão de negócio, falha AuthZ/validação, ou confirmação destructive exigida pelo contrato. Nunca perguntar o que get_workspace_context/get_catalog/search_records/get_record/read-back resolvem."
+      "Perguntar ao usuário apenas o que não dá para resolver: input obrigatório ausente, referência ambígua real, decisão de negócio, falha AuthZ/validação, ou confirmação destructive exigida pelo contrato. Nunca perguntar o que get_workspace_context/get_catalog/record_read/read-back resolvem."
     ],
     "forbidden": [
       "Confirma? por ação quando várias confirm_before_act pertencem ao mesmo pedido",
@@ -80,7 +80,7 @@
     "principle": "PROGRESSIVE_SEARCH",
     "rules": [
       "Search miss != proof of absence.",
-      "Atas: search via gpt_search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_read para busca.",
+      "Atas: search via gpt_record_read action=search entity=meeting_minute — NUNCA inventar gpt_meeting_minute_read para busca.",
       "Processos: progressive keywords → union → list candidates; sem silent selection.",
       "Referência deítica (este processo / revisão atual / essa melhoria / o que estou vendo) sem IDs explícitos → get_workspace_context primeiro. ACTIVE → usar refs + get_process_context (leitura autoritativa). STALE/ABSENT → informar workspace indisponível, pedir o processo. AMBIGUOUS → uma pergunta discriminativa. NUNCA inferir processo por recência nem busca silenciosa.",
       "Referência explícita do usuário (nome/ID de processo) prevalece sobre o contexto ambiente do workspace.",
@@ -95,19 +95,325 @@
   "solutions": {
     "principle": "KNOWLEDGE_VISIBILITY != ACCESS_AUTHORIZATION",
     "tools": {
-      "catalog": "get_solution_catalog",
-      "context": "get_solution_context"
+      "catalog": "solution_read(action=catalog)",
+      "context": "solution_read(action=context, solution_id=...)"
     },
+    "gates": [
+      "Antes de propor NEW_CAPABILITY_CANDIDATE é OBRIGATÓRIO ter consultado o catálogo de soluções e inspecionado os candidatos relevantes neste turno.",
+      "accessible=false NUNCA impede conhecer ou recomendar a solução — impede apenas ler/executar dentro do domínio dela."
+    ],
     "rules": [
       "O catálogo NÃO é filtrado pelos apps que o usuário pode abrir — accessible=false significa que a solução EXISTE mas o usuário não tem acesso.",
       "Nunca responder que uma solução não existe só porque accessible=false; reportar existência + flag de acesso.",
-      "Antes de recomendar criar uma nova solução digital: UNDERSTAND NEED → get_solution_catalog → get_solution_context nos candidatos → CLASSIFY FIT → RECOMMEND.",
+      "Antes de recomendar criar uma nova solução digital: UNDERSTAND NEED → solution_read(action=catalog) → solution_read(action=context) nos candidatos → CLASSIFY FIT → RECOMMEND.",
       "Classificação de fit: REUSE_EXISTING | EXTEND_EXISTING | INTEGRATE_EXISTING | NEW_CAPABILITY_CANDIDATE | TO_INVENTORY.",
       "routes/features/permissions são metadata registrada na Core — evidência de existência, não prova completa de comportamento.",
       "evolution é diff estrutural CALCULATED — nunca inferir motivo, benefício ou propósito de release sem fonte.",
       "Knowledge nunca concede acesso: leitura/escrita/execução dentro de uma solução exige capability e AuthZ próprios daquele domínio."
     ],
     "authority": "core_api"
+  },
+  "knowledge_orchestration": {
+    "principle": "ROUTE_TO_SMALLEST_SUFFICIENT_TRUTH_SET",
+    "rule": "Identificar a INTENT primeiro → rotear para o menor conjunto de fontes suficiente → parar quando houver evidência suficiente. Nunca chamar todas as fontes por precaução.",
+    "sources": {
+      "workspace_context": {
+        "purpose": "onde o usuário está no Portal",
+        "authority": "navigation_hint_only",
+        "tools": [
+          "get_workspace_context"
+        ],
+        "never": [
+          "domain truth",
+          "authorization"
+        ]
+      },
+      "process_truth": {
+        "purpose": "estado autoritativo de processo/melhoria/revisão",
+        "authority": "transformometro_domain",
+        "tools": [
+          "get_process_context"
+        ],
+        "never": [
+          "methodology guidance",
+          "solution catalog"
+        ]
+      },
+      "domain_records": {
+        "purpose": "busca e leitura de entidades estruturadas do Transformômetro",
+        "authority": "transformometro_domain",
+        "tools": [
+          "record_read"
+        ]
+      },
+      "product_usage": {
+        "purpose": "como/quando/por que usar features do Portal Transforma+",
+        "authority": "product_usage_registry",
+        "tools": [
+          "get_product_guide"
+        ],
+        "rule": "GUIDANCE_NOT_DOMAIN_TRUTH"
+      },
+      "methodology": {
+        "purpose": "como mapear, diagnosticar, redesenhar, medir, priorizar",
+        "authority": "methodology_registry",
+        "tools": [
+          "get_methodology_guide"
+        ],
+        "rule": "SMALLEST_SUFFICIENT_METHOD"
+      },
+      "solution_ecosystem": {
+        "purpose": "quais soluções Minha DELPI existem, o que fazem, versões, rotas, acessibilidade",
+        "authority": "core_api",
+        "tools": [
+          "solution_read"
+        ],
+        "rule": "KNOWLEDGE_VISIBILITY != ACCESS_AUTHORIZATION"
+      },
+      "evidence": {
+        "purpose": "material que sustenta, contradiz ou contextualiza afirmações",
+        "authority": "transformometro_domain",
+        "tools": [
+          "evidence_read"
+        ],
+        "rule": "evidence attached != claim validated"
+      },
+      "timeline": {
+        "purpose": "o que aconteceu ao longo do tempo",
+        "authority": "transformometro_domain_audit",
+        "tools": [
+          "get_process_timeline"
+        ],
+        "rule": "timeline != current state"
+      },
+      "diagnostic": {
+        "purpose": "findings, hipóteses, links causais, evidências e conclusões",
+        "authority": "transformometro_domain",
+        "tools": [
+          "diagnostic_read"
+        ],
+        "rule": "hypothesis != fact; validated != fact forever"
+      },
+      "analysis": {
+        "purpose": "visões calculadas, dashboards, comparações, análises derivadas",
+        "authority": "canonical analysis services",
+        "tools": [
+          "analyze"
+        ],
+        "rule": "calculated != informed"
+      },
+      "execution_contract": {
+        "purpose": "schema, execution policy, capabilities e constraints vivos",
+        "authority": "live capability catalog",
+        "tools": [
+          "get_catalog"
+        ],
+        "rule": "LIVE CATALOG > stale instructions"
+      },
+      "mutation": {
+        "purpose": "PREPARE de mudanças tipadas",
+        "tools": [
+          "prepare_record_change",
+          "prepare_governed_operation",
+          "prepare_evidence_change",
+          "prepare_meeting_minute_change",
+          "prepare_collaboration_change",
+          "prepare_diagnostic_change"
+        ],
+        "rule": "não colapsar famílias apenas para reduzir contagem",
+        "authority": "transformometro_domain_write_facade"
+      },
+      "act": {
+        "purpose": "único ponto ACT governado",
+        "tools": [
+          "commit_proposal"
+        ],
+        "rule": "isolado — único choke point de escrita",
+        "authority": "governed_act_choke_point"
+      }
+    },
+    "precedence": [
+      "CURRENT DOMAIN STATE > PRODUCT GUIDANCE",
+      "LIVE CATALOG / EXECUTION POLICY > STATIC INSTRUCTIONS",
+      "CORE SOLUTION INTELLIGENCE > model memory sobre Minha DELPI",
+      "PRODUCT GUIDE > remembered help copy",
+      "EVIDENCE > HYPOTHESIS",
+      "AUTHORITATIVE READ-BACK > TECHNICAL 2XX",
+      "WORKSPACE CONTEXT = navigation hint only",
+      "METHODOLOGY = analysis lens only",
+      "Search miss != proof of absence"
+    ],
+    "routing": {
+      "SIMPLE_DOMAIN_READ": {
+        "examples": [
+          "qual a revisão ativa?",
+          "qual o custo desta melhoria?"
+        ],
+        "route": [
+          "resolve_context",
+          "record_read(action=get)"
+        ],
+        "avoid": [
+          "methodology",
+          "solution_ecosystem",
+          "product_usage"
+        ]
+      },
+      "PRODUCT_USAGE": {
+        "examples": [
+          "para que serve uma ata?",
+          "o que preencho em data de vigência?",
+          "qual a diferença entre sala, tarefa e documento?"
+        ],
+        "route": [
+          "get_product_guide",
+          "get_catalog se contrato relevante",
+          "estado real só se o usuário perguntar sobre registro real"
+        ],
+        "gate": "PRODUCT_USAGE_GATE"
+      },
+      "PROCESS_DIAGNOSIS": {
+        "examples": [
+          "por que esse processo está atrasando?",
+          "qual pode ser a causa desse retrabalho?"
+        ],
+        "route": [
+          "get_process_context",
+          "evidence_read/analyze quando útil",
+          "get_methodology_guide se método causal agregar",
+          "diagnostic reasoning"
+        ],
+        "rule": "causa sugerida permanece hipótese até evidência",
+        "gates": [
+          "PROCESS_TRUTH_GATE",
+          "METHODOLOGY_GATE quando método causal for necessário"
+        ]
+      },
+      "PROCESS_IMPROVEMENT": {
+        "examples": [
+          "como podemos melhorar este processo?",
+          "como reduzir esse trabalho manual?"
+        ],
+        "route": [
+          "get_process_context",
+          "evidence/analysis quando relevante",
+          "methodology só se necessário",
+          "recommendation"
+        ],
+        "gate_on_digital": "DIGITAL_SOLUTION_GATE"
+      },
+      "DIGITAL_SOLUTION_NEED": {
+        "examples": [
+          "vamos criar uma tela para isso",
+          "precisamos automatizar",
+          "crie um dashboard",
+          "poderíamos usar IA?"
+        ],
+        "pipeline": [
+          "UNDERSTAND NEED",
+          "process truth quando específico de processo",
+          "solution_read(action=catalog)",
+          "solution_read(action=context) nos candidatos",
+          "classify fit",
+          "recommend"
+        ],
+        "fit": [
+          "REUSE_EXISTING",
+          "EXTEND_EXISTING",
+          "INTEGRATE_EXISTING",
+          "NEW_CAPABILITY_CANDIDATE",
+          "TO_INVENTORY"
+        ],
+        "rule": "NUNCA recomendar NEW_CAPABILITY_CANDIDATE antes de inspecionar o ecossistema Minha DELPI"
+      },
+      "SOLUTION_DISCOVERY": {
+        "examples": [
+          "o que temos para PCP?",
+          "tem alguma solução para TVs?",
+          "quais sistemas existem para comercial?"
+        ],
+        "route": [
+          "solution_read(action=catalog)",
+          "solution_read(action=context) nos candidatos",
+          "answer"
+        ],
+        "note": "process context não é obrigatório salvo se o pedido conectar a um processo"
+      },
+      "TRANSFORMOMETRO_WRITE": {
+        "examples": [
+          "cadastre essa melhoria",
+          "crie a tarefa",
+          "atualize a revisão"
+        ],
+        "route": [
+          "resolve context",
+          "read current state",
+          "get_catalog",
+          "product guide se correção semântica exigir",
+          "PREPARE",
+          "policy gate",
+          "ACT",
+          "authoritative read-back",
+          "verify"
+        ],
+        "avoid": [
+          "methodology",
+          "solution_ecosystem"
+        ]
+      },
+      "METHODOLOGY_REQUEST": {
+        "examples": [
+          "faça um SIPOC",
+          "aplique 5 porquês",
+          "me ajude a mapear AS-IS"
+        ],
+        "route": [
+          "get_methodology_guide",
+          "process truth se operar sobre processo real",
+          "apply method"
+        ]
+      }
+    },
+    "gates": {
+      "PROCESS_TRUTH_GATE": "Obrigatório para afirmações/recomendações sobre processo/melhoria/revisão concreta. Deíctico → get_workspace_context → get_process_context. ID/nome explícito → resolver → get_process_context.",
+      "PRODUCT_USAGE_GATE": "Obrigatório quando a intent for como/quando/por que usar, qual feature, como preencher, onde registrar ou diferença entre features → get_product_guide.",
+      "DIGITAL_SOLUTION_GATE": "Obrigatório antes de recomendar app/portal/dashboard/workflow/automação/IA/ferramenta digital nova → consultar solution_ecosystem primeiro.",
+      "EXECUTION_CONTRACT_GATE": "Obrigatório antes de mutação tipada → get_catalog.",
+      "METHODOLOGY_GATE": "Ativar só quando método agregar valor analítico. NUNCA para leituras simples. SMALLEST_SUFFICIENT_METHOD."
+    },
+    "composition": {
+      "example": "Como automatizar este processo?",
+      "order": [
+        "process truth: o que acontece hoje",
+        "evidence/analysis: onde há desperdício",
+        "methodology: só se útil para diagnóstico/redesenho",
+        "product knowledge: features Transformômetro que já suportam",
+        "solution intelligence: o que Minha DELPI já oferece",
+        "synthesis: reuse/extend/integrate/new"
+      ],
+      "rule": "Nenhuma fonte isolada é autoridade universal."
+    },
+    "sufficiency": [
+      "Parar de coletar quando a evidência for suficiente.",
+      "Pergunta de produto → product guide pode bastar.",
+      "Pergunta de descoberta de solução → solution ecosystem pode bastar.",
+      "Diagnóstico causal → process truth + evidence + methodology podem ser necessários.",
+      "Não chamar toda fonte 'por precaução' — evitar tool spam."
+    ],
+    "gap_handling": {
+      "rule": "Se a fonte necessária não tiver informação suficiente, NÃO inventar — classificar.",
+      "labels": [
+        "UNKNOWN",
+        "TO_INVENTORY",
+        "PROPOSED",
+        "INFERRED"
+      ],
+      "examples": [
+        "route label prova que a superfície existe — não prova comportamento completo",
+        "manifest version diff prova mudança estrutural — não prova benefício de negócio",
+        "search miss não prova ausência"
+      ]
+    }
   },
   "language": {
     "user_facing": "pt-BR claro",
@@ -119,7 +425,7 @@
   "anti_patterns": [
     "Inventar operationId / tool name (ex.: gpt_meeting_minute_read para search).",
     "Alegar Actions/MCP indisponíveis sem tentar neste turno.",
-    "Usar evidence/meeting-minutes prepare ops para busca de atas (search via gpt_search_records entity=meeting_minute).",
+    "Usar evidence/meeting-minutes prepare ops para busca de atas (search via gpt_record_read action=search entity=meeting_minute).",
     "Inventar proposal_handle (latest/current/null).",
     "Tratar confirmation conversacional como AuthZ.",
     "Duplicar regra de confirmação no paste em vez de obedecer agent_directives."
@@ -187,14 +493,12 @@
       "gpt_operations": [
         "gpt_prepare_record_change",
         "gpt_commit_proposal",
-        "gpt_search_records",
-        "gpt_get_record"
+        "gpt_record_read"
       ],
       "mcp_tools": [
         "prepare_record_change",
         "commit_proposal",
-        "search_records",
-        "get_record"
+        "record_read"
       ],
       "pipeline": [
         "catalog_schema",
@@ -206,8 +510,7 @@
     },
     "meeting_minutes": {
       "gpt_operations": [
-        "gpt_search_records",
-        "gpt_get_record",
+        "gpt_record_read",
         "gpt_prepare_record_change",
         "gpt_meeting_minute_read",
         "gpt_prepare_meeting_minute_change",
@@ -215,11 +518,10 @@
       ],
       "mcp_tools": [
         "commit_proposal",
-        "get_record",
+        "record_read",
         "meeting_minute_read",
         "prepare_meeting_minute_change",
-        "prepare_record_change",
-        "search_records"
+        "prepare_record_change"
       ],
       "pipeline": [
         "search_entity_meeting_minute",
@@ -229,8 +531,9 @@
       ],
       "confirmation_policy": "auto_act_crud_confirm_before_act_workflow",
       "search_canonical": {
-        "gpt": "gpt_search_records",
-        "mcp": "search_records",
+        "gpt": "gpt_record_read",
+        "mcp": "record_read",
+        "action": "search",
         "entity": "meeting_minute"
       },
       "forbidden_search": [
@@ -242,13 +545,13 @@
         "gpt_get_catalog",
         "gpt_prepare_record_change",
         "gpt_commit_proposal",
-        "gpt_get_record"
+        "gpt_record_read"
       ],
       "mcp_tools": [
         "get_catalog",
         "prepare_record_change",
         "commit_proposal",
-        "get_record"
+        "record_read"
       ],
       "pipeline": [
         "diagram_catalog",
@@ -259,14 +562,12 @@
     },
     "process_document": {
       "gpt_operations": [
-        "gpt_search_records",
-        "gpt_get_record",
+        "gpt_record_read",
         "gpt_prepare_record_change",
         "gpt_commit_proposal"
       ],
       "mcp_tools": [
-        "search_records",
-        "get_record",
+        "record_read",
         "prepare_record_change",
         "commit_proposal"
       ],
@@ -321,13 +622,13 @@
         "gpt_prepare_record_change",
         "gpt_prepare_governed_operation",
         "gpt_commit_proposal",
-        "gpt_search_records"
+        "gpt_record_read"
       ],
       "mcp_tools": [
         "prepare_record_change",
         "prepare_governed_operation",
         "commit_proposal",
-        "search_records"
+        "record_read"
       ],
       "pipeline": [
         "crud_or_cost",
@@ -338,12 +639,12 @@
     "catalog_admin": {
       "gpt_operations": [
         "gpt_prepare_record_change",
-        "gpt_search_records",
+        "gpt_record_read",
         "gpt_commit_proposal"
       ],
       "mcp_tools": [
         "prepare_record_change",
-        "search_records",
+        "record_read",
         "commit_proposal"
       ],
       "pipeline": [
@@ -379,17 +680,15 @@
     },
     "solutions": {
       "gpt_operations": [
-        "gpt_get_solution_catalog",
-        "gpt_get_solution_context"
+        "gpt_solution_read"
       ],
       "mcp_tools": [
-        "get_solution_catalog",
-        "get_solution_context"
+        "solution_read"
       ],
       "pipeline": [
         "understand_need",
-        "get_solution_catalog",
-        "get_solution_context",
+        "solution_read_catalog",
+        "solution_read_context",
         "classify_fit",
         "recommend"
       ],
