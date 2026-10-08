@@ -12448,3 +12448,113 @@ functional success); `BUSINESS_OUTCOME = NOT_PROVEN`;
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.158. C3-MODEL-PROVIDER-LIVE-VALIDATION — provider root cause proven + bounded minimal fix + authenticated live turns PASS
+
+EXECUTOR: Devin (senior executor / integration engineer).
+TASK = C3-MODEL-PROVIDER-LIVE-VALIDATION (close `SEMANTIC_SELECTION=INCONCLUSIVE`
+and `BUSINESS_OUTCOME=NOT_PROVEN` residuals from §6.157).
+
+### Reanchor
+
+HEAD at start = `13973e012e` == `origin/main`. User commits landed
+concurrently during the task (`570aeae2e6` bpmn, `ecaecf4854` VISTA docs,
+`167993446b`/`0842353016`/`122898a948` api-delpi) — all non-delia; the
+fix commit `0eca690681` sits linearly on top. `EXECUTION_DRIFT = NO`.
+
+### Root cause — PROVEN (two distinct defects + one eval artifact)
+
+D1. `provider_rejected` = **HTTP 402 from the gateway**, not model
+unavailability. Reproduced with the exact `select_group` wire payload:
+without `max_tokens` the gateway reserves the model's full output window
+(131072 tokens) against the account balance and rejects when the
+reservation exceeds affordable credit ("You requested up to 131072
+tokens, but can only afford 99312"). Intermittent because balance
+fluctuates. The adapter only sends `max_tokens` when
+`generation_config.max_output_units` is set — orchestration never set it.
+
+D2. `model_timeout` = **`MODEL_STAGE_TIMEOUT_SECONDS` hardcoded 10s <
+provider real latency**. Identical payload: raw POST returns 200 in
+17.3–23.5s; `adapter.invoke` under the 10s stage cap fails with
+"provider response exceeded its wall-clock deadline". The configured
+`DELIA_LLM_TIMEOUT_SECONDS=30` never took effect at the stage boundary —
+the stage cap clamps first.
+
+D3. Eval artifact (not a product defect): the password-grant subject
+token was obtained without `scope=openid`, so the exchange — which
+requests `openid profile email mcp:tools` — could only grant the
+subject's scopes; delegated tokens lacked `openid` and every owner MCP
+endpoint answered 401 `insufficient_scope` (DAVI/TÉO) / `invalid_token`
+(VISTA). Requesting `scope=openid profile email` at subject acquisition
+(as the canonical Portal auth-code flow always does) restored
+`openid email mcp:tools profile` on all three delegated credentials.
+
+### Minimal fix — REUSE, no new abstractions (commit `0eca690681`)
+
+- `DELIA_LLM_MAX_OUTPUT_TOKENS` (compose default 2048) →
+  `settings.llm_max_output_tokens` → adapter `default_max_output_units`;
+  request-level `generation_config.max_output_units` still wins when set.
+- `DELIA_MODEL_STAGE_TIMEOUT_SECONDS` (compose default 30, code default
+  10.0 preserves the previous bound) → `settings.model_stage_timeout_seconds`
+  → `OperationalCapabilityOrchestrator(model_stage_timeout_seconds=...)`;
+  the turn deadline still reduction-clamps every stage.
+
+Files: `settings.py`, `openai_compatible_adapter.py`,
+`orchestration.py`, `root_composer.py`, `infra/docker-compose.yml`,
+`test_config.py`, `test_real_provider_adapter.py`.
+
+Tests: focused 37/37 (adapter + config); **full suite 965/965 PASS**
+on the committed content. New coverage: max_tokens default/override/
+absent, env parsing for both settings.
+
+### Live production-path eval — authenticated, read-only (PROVEN)
+
+Driven inside `delpi-delia-api` (prod host, prod Keycloak, prod MCP
+endpoints, prod provider) via an eval process with env overrides
+`DELIA_MODEL_STAGE_TIMEOUT_SECONDS=30` + `DELIA_LLM_MAX_OUTPUT_TOKENS=2048`
+— container code was synced for the eval process only and restored to the
+deployed files afterwards (md5-verified). Subject = human user `user`
+(realm delpi; token acquired with `scope=openid profile email`).
+
+- Delegated credentials ×3 owners: same_sub, azp=delia-api,
+  resource-audience-bound, `openid email mcp:tools profile`, exp-valid.
+- `tools/list`: DAVI=2, TÉO=22, VISTA=10 — all authenticated PASS.
+- `S_VISTA_READ` "quais playlists de TV existem?" → **SUCCESS** 23.0s —
+  semantic selection `vista/list_playlists`, real playlist data grounded
+  with provenance.
+- `S_DAVI_READ` "o que a DELPI faz?" → **SUCCESS** 21.0s —
+  `davi/discover_delpi_information`, honest empty-candidate result.
+- `S_TEO_CATALOG` → **SUCCESS** 21.3s — `teo/get_catalog`, real catalog
+  data with provenance.
+- `S_UNSUPPORTED` "formate o disco..." → `NOT_APPLICABLE` 2.3s —
+  truthful refusal, zero fabricated facts.
+- `S_TEO_READ` "liste os chamados abertos" → `SOURCE_UNAVAILABLE`
+  `mcp_protocol_error`: model selected `helpdesk_read` but the owner
+  contract requires `action` (field required); DÉLIA invoked without it
+  and the owner rejected. Truthful fail-closed; residual recorded below.
+
+### Verdicts
+
+`PROVIDER_ROOT_CAUSE = PROVEN` (402 max_tokens reservation + 10s stage
+cap + eval-scope artifact); `MODEL_INVOCATION = PASS` (live, bounded);
+`SEMANTIC_SELECTION = PASS` (3/3 owner reads selected correct owner
+tool via live model); `GROUNDING = PASS` (provenance-bound content, no
+fabrication); `BUSINESS_OUTCOME = VERIFIED` for read scope;
+`MATERIAL_ACT_CALLS = 0`; `MATERIAL_PREPARE_SIDE_EFFECTS = 0`.
+
+### Residuals
+
+- `TEO_HELP_DESK_ARG_PROJECTION = PARTIAL` — owner requires `action`
+  on `helpdesk_read`; argument projection left it empty and the owner
+  validation error surfaced as SOURCE_UNAVAILABLE (truthful, but a
+  CLARIFICATION_REQUIRED mapping could be considered by Coordination —
+  no fix without owner-contract decision).
+- `SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED` — unchanged.
+- `DEPLOYMENT_REQUIRED = YES` — fix `0eca690681` exists in repo but the
+  running prod service still loads the previous code (no deploy
+  authorized in this task). Eval evidence came from the eval process on
+  the prod host against the real prod providers.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
