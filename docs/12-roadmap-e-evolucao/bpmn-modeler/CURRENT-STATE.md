@@ -192,21 +192,32 @@ Classificação final (matriz completa: INVENTORY §6a): **DISABLE/FUTURE** — 
 
 Ambiente: **LOCAL INTEGRATION RUNTIME** (`PUBLIC_BASE_URL=http://localhost`, portal Vite dev `portal:5173`, compose project `infra`). Não é production acceptance.
 
-Cadeia provada em `9ff9e9e14b` (hardening de provenance):
+SHA trail honesto (não apagar história): provenance hardening criado em `9ff9e9e14b`; rebase por stream paralela gerou equivalente byte-idêntico `511369e2f5` (6/6 blobs iguais); **final accepted runtime = `bb447872ee12d50435fc64549c51cdb9bfc515eb`**.
+
+Intermediate deploy evidence (primeiro build, substituído pelo final):
 
 ```text
 SOURCE 9ff9e9e14b (worktree limpo)
+→ images 3046d838 / abd3ad3c (OCI revision=9ff9e9e14b)
+→ containers 2026-10-08T20:07Z → build-info + /health = 9ff9e9e14b
+```
+
+FINAL ACCEPTED DEPLOY (cadeia autoritativa de acceptance):
+
+```text
+SOURCE bb447872ee (worktree limpo @ HEAD final)
 → docker compose -p infra -f docker-compose.dev.yml build (args BUILD_SHA/BUILD_TIME)
-→ infra-bpmn-modeler:latest    image 3046d838  OCI revision=9ff9e9e14b
-→ infra-bpmn-modeler-api:latest image abd3ad3c  OCI revision=9ff9e9e14b
-→ containers recriados 2026-10-08T20:07Z (compose up -d)
+→ infra-bpmn-modeler:latest    image f67ba9d4  OCI revision=bb447872ee
+→ infra-bpmn-modeler-api:latest image 28b3e4b0  OCI revision=bb447872ee
+→ containers recriados 2026-10-08T20:23Z (compose up -d)
 → gateway: /apps/bpmn-modeler/assets/* → delpi-bpmn-modeler (remoteEntry no-store)
            /apps/bpmn-modeler-api/*    → bpmn-modeler-api:8000 (rewrite strip prefix)
 → RUNTIME READ-BACK:
-   GET /apps/bpmn-modeler/assets/build-info.json → git_sha=9ff9e9e14b
-   GET /apps/bpmn-modeler-api/health            → git_sha=9ff9e9e14b
+   GET /apps/bpmn-modeler/assets/build-info.json → git_sha=bb447872ee
+   GET /apps/bpmn-modeler-api/health            → git_sha=bb447872ee
    remoteEntry.js servido == arquivo na imagem (sha256 6fdcbbc7...)
    chunks referenciados 200; sem stale-hash mismatch
+→ pós-redeploy: foreign GET 404 + owner read-back persistido + remoteEntry idêntico
 ```
 
 Backend em dev usa **bind mount** `../bpmn-modeler:/app` + uvicorn sem `--reload` → processo carrega o checkout no start; mtimes de fonte anteriores ao start + `/health` expõe `BPMN_MODELER_BUILD_SHA` da imagem. Migrations: `bpmn_modeler.schema_migrations` V001–V004 com checksums sha256 byte-idênticos aos arquivos-fonte (`EXPECTED == APPLIED`). Keycloak funcional via gateway (`iss=http://localhost/auth/realms/delpi`, aud `delpi-central`). Ownership runtime: foreign GET → 404 `MODEL_NOT_FOUND`, list isolation ok; create/edit/save com `If-Match` → read-back autoritativo + reload + export; stale If-Match → `CONFLICT`; archive → `MODEL_ARCHIVED` em write; `manage` separado de `edit` (`UNAUTHORIZED_OPERATION`). Fingerprints E2E no runtime deployado: Wave F 8/8, Wave E PROP-CORE-01, paleta semântica, RT-EXT read-only — 32/32.
@@ -260,7 +271,7 @@ G4 — Broad Round-trip / Interoperability  OWNER 02+06   PASS/CLOSED — 16/16 
 WAVE E — Properties Breadth              OWNER 03+06   PASS/CLOSED — 14/14 E2E properties-* (workers=2): BpmnCorePropsProvider (calledElement/conditionExpression/defaultFlow, BPMN core only) + doc/event-refs evidence; EG-14 BPMN-core fechado (§13b)
 WAVE F — Vendor Exposure Decision        OWNER 00+03   PASS/CLOSED — §13c + INVENTORY §6a: align/distribute/space-tool/keyboard-move-selection DISABLE (FUTURE/não-frozen — DI value:null + editor actions unregistered); hand/lasso/global-connect KEEP (Pan/multi-select/Connect IN_V1); E/R/Ctrl+D/Ctrl+setas KEEP como aliases governados; engine editable entries = 0; 8/8 E2E VX-* + GOV-14..17 + regressões G2A/G3/Wave E verdes (workers=2)
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
-G6 — Runtime Provenance / stale-process   OWNER 09   PASS/CLOSED — §13d: cadeia source→build→image→container→route→runtime→business read-back provada em 9ff9e9e14b; provenance gap fechado (OCI revision label + build-info.json + /health git_sha); stale image sanado por rebuild canônico (docker cp aposentado como deploy); migrations/checksum, ownership 404, conflict, archive, Wave E/F fingerprints no runtime deployado
+G6 — Runtime Provenance / stale-process   OWNER 09   PASS/CLOSED — §13d: cadeia source→build→image→container→route→runtime→business read-back provada em **bb447872ee** (LOCAL INTEGRATION RUNTIME — não production acceptance); hardening inicial em 9ff9e9e14b → equivalente rebaseado 511369e2f5 → rebuild/redeploy final em bb447872; provenance gap fechado (OCI revision label + build-info.json + /health git_sha); stale image sanado por rebuild canônico (docker cp aposentado como release mechanism); migrations/checksum, ownership 404, conflict, archive, Wave E/F fingerprints no runtime deployado. Drift de processo: commit de docs G6 incluiu 2 arquivos requests-api pré-staged por workstream paralelo (postgres_repositories.py +3, test_postgres_request_repository.py −85 — sem overlap funcional BPMN, conteúdo preservado no histórico; disciplina: commit isolado/worktree + `git status` do index antes de commitar)
 ```
 
 ## 16. Open follow-ups

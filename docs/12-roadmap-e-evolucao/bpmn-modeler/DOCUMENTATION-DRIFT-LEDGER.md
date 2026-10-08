@@ -159,7 +159,20 @@
 - **DECISION:** follow-up `RUNTIME_STALE_CODE_PREVENTION` aberto; não misturado ao P0
 - **FILES UPDATED:** `CURRENT-STATE.md` §16
 - **RESIDUAL RISK:** ambiente dev pode servir código velho até restart — mitigação operacional pendente
-- **OWNER:** 09 — DevOps/CI/Runtime — `OPEN`, `NON_BLOCKING`
+- **OWNER:** 09 — DevOps/CI/Runtime — `CLOSED (G6)` — provenance runtime introduzida (OCI `revision` + `assets/build-info.json` + `/health git_sha`); stale process/bundle detectável comparando SHA servido vs target (CURRENT-STATE §13d)
+
+### DRIFT-BPMN-013 — G6 SHA trail + commit contamination (process hygiene)
+
+- **AREA:** processo/execução — commit hygiene + rastreabilidade documental do SHA final
+- **OLD DOCUMENT:** `CURRENT-STATE.md` §13d, `V1-CAPABILITY-EVIDENCE-INVENTORY.md` §9 (versão inicial do G6)
+- **OLD CLAIM:** cadeia de acceptance provada em `9ff9e9e14b`
+- **CURRENT EVIDENCE:** `9ff9e9e14b` = hardening inicial (intermediate deploy, images `3046d838`/`abd3ad3c`); rebase por workstream paralela produziu equivalente byte-idêntico `511369e2f5` (6/6 blobs iguais); **final accepted runtime = `bb447872ee`** — rebuild/redeploy/read-back executados no SHA final (images `f67ba9d4`/`28b3e4b0`, containers 2026-10-08T20:23Z, `build-info.json` + `/health` = `bb447872`)
+- **COMMIT CONTAMINATION:** o commit de docs `bb447872` incluiu 2 arquivos `requests-api` **já staged por workstream paralelo** (`postgres_repositories.py` +3; `test_postgres_request_repository.py` −85). Classificação: `EXECUTION_DRIFT` — `PROCESS / COMMIT HYGIENE` — `NON-BPMN FUNCTIONAL` — `RESOLVED / DISCLOSED`. Sem overlap funcional BPMN; conteúdo permanece no histórico (não revertido — streams posteriores já integraram). Disciplina exigida: `git status` do index antes de commitar; commit isolado ou worktree para docs-only.
+- **CLASSIFICATION:** `EXECUTION_DRIFT` (processo) + `DOCUMENTATION_STALE` corrigido nesta reconciliation
+- **DECISION:** história preservada em §13d (intermediate deploy evidence separada do final accepted deploy); nenhum SHA intermediário permanece como final claim
+- **FILES UPDATED:** `CURRENT-STATE.md` §13d/§15, `V1-CAPABILITY-EVIDENCE-INVENTORY.md` §9, este ledger
+- **RESIDUAL RISK:** baixo — runtime identifica `bb447872` que é ancestral de `origin/main`
+- **OWNER:** 00/09 — `CLOSED`
 
 ## Residual search record (G0)
 
