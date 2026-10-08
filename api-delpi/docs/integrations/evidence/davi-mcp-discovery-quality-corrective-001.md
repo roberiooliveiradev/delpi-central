@@ -2,7 +2,12 @@
 
 TASK_ID: `DAVI-MCP-DISCOVERY-QUALITY-CORRECTIVE-001`
 SCOPE: bounded discovery/retrieval corrective — **no MCP surface, AuthZ, business API, capability, deployment, or provider change.**
-STATUS: `DISCOVERY_QUALITY_CORRECTIVE_PASS`
+STATUS: `DISCOVERY_QUALITY_CORRECTIVE_PASS` — superseded for rollout acceptance by `DAVI-MCP-DISCOVERY-QUALITY-CORRECTIVE-002`
+
+> **Architecture review note (Corrective-002):** the `nonReadCommandVerbTokens` blanket zero-candidate rule added
+> here was found over-broad — orchestration/content verbs (`gere`/`calcule`/`monte`/`traduza`/`emita`) are
+> request-form words, not capability classification. Ranking metrics below remain valid evidence; the command-verb
+> semantics were corrected in `davi-mcp-discovery-quality-corrective-002.{json,md}` (allowlist v21).
 
 This document summarizes `davi-mcp-discovery-quality-corrective-001.json` (same directory), produced by
 `api-delpi/scripts/evaluate_davi_discovery_quality_corrective.py`, which runs the frozen benchmark against the

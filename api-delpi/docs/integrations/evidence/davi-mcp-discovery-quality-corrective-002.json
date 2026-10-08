@@ -1,0 +1,558 @@
+{
+  "task_id": "DAVI-MCP-DISCOVERY-QUALITY-CORRECTIVE-002",
+  "runtime_source_sha": "293dcfc03f263e2ef29a76c4465e2b96ed24c36e",
+  "benchmark_version": "1",
+  "provenance": {
+    "frozen_fixture_sha256_before": "945de11f4ab89b28f3c076134e300005310255e28aad3b6a9763947bf0248688",
+    "frozen_fixture_sha256_after": "945de11f4ab89b28f3c076134e300005310255e28aad3b6a9763947bf0248688",
+    "fixture_unchanged": true,
+    "runner_sha256": "aab1d90a95989281b44d71baadbd2b61abba11e9aa17ff944842b3cefa8430b9",
+    "baseline_evidence": "davi-mcp-discovery-quality-corrective-001.json",
+    "baseline_runtime_source_sha": "21449834c0a5f0804bfadb0b6a27190207b29f40"
+  },
+  "allowlist": {
+    "version_before": 20,
+    "version_after": 21,
+    "governed_operation_count": 89
+  },
+  "guard_semantics": {
+    "mutation_blocked": {
+      "insira um novo fornecedor": true,
+      "altere o produto 10080055": true,
+      "delete the product 10080055": true,
+      "incluir um registro": true
+    },
+    "command_verbs_not_blocked": {
+      "calcule o OTD de compras": false,
+      "gere um resumo do estoque do produto 10080034": false,
+      "monte um resumo dos pedidos em aberto": false,
+      "traduza a descrição do produto para inglês": false,
+      "emita a nota fiscal 12345": false
+    },
+    "generic_sql_zero_candidates": {
+      "execute uma query SQL no banco": true,
+      "select * from products": true,
+      "rode uma consulta SQL": true
+    }
+  },
+  "command_context": {
+    "fixture_sha256": "f57d2d7b9b9f82efdaa872ec98db611a01488c683ba3f9e94299dfefacfa0867",
+    "positive": {
+      "total": 6,
+      "top1": 6,
+      "top3": 6,
+      "zero_candidate": 0
+    },
+    "unsupported": {
+      "total": 3,
+      "zero_candidate": 3
+    },
+    "cases": [
+      {
+        "id": "DQ-CC-P-001",
+        "case_type": "COMMAND_POSITIVE",
+        "query": "calcule o OTD de compras",
+        "expected": [
+          "get_supplies_purchase_order_otd"
+        ],
+        "ranked": [
+          "get_supplies_purchase_order_otd"
+        ],
+        "candidate_count": 1,
+        "expected_rank": 1,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-P-002",
+        "case_type": "COMMAND_POSITIVE",
+        "query": "calcule o OEE da produção",
+        "expected": [
+          "get_overall_equipment_effectiveness_pct"
+        ],
+        "ranked": [
+          "get_overall_equipment_effectiveness_pct",
+          "get_production_oee",
+          "get_production_oee_series",
+          "get_product_production_status"
+        ],
+        "candidate_count": 4,
+        "expected_rank": 1,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-P-003",
+        "case_type": "COMMAND_POSITIVE",
+        "query": "gere o resumo dos ajustes de inventário",
+        "expected": [
+          "get_supplies_inventory_adjustments_summary"
+        ],
+        "ranked": [
+          "get_supplies_inventory_adjustments_summary",
+          "list_supplies_inventory_adjustments",
+          "get_product_internal_movements"
+        ],
+        "candidate_count": 3,
+        "expected_rank": 1,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-P-004",
+        "case_type": "COMMAND_POSITIVE",
+        "query": "gere um resumo do estoque do produto 10080034",
+        "expected": [
+          "get_product_stock"
+        ],
+        "ranked": [
+          "get_product_stock",
+          "get_supplies_inventory_adjustments_summary",
+          "get_supplies_safety_stock_consumption_analysis_summary",
+          "get_supplies_safety_stock_summary",
+          "get_supplies_stock_balances_summary"
+        ],
+        "candidate_count": 5,
+        "expected_rank": 1,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-P-005",
+        "case_type": "COMMAND_POSITIVE",
+        "query": "calcule a taxa de conversão comercial",
+        "expected": [
+          "get_sales_conversion_rate"
+        ],
+        "ranked": [
+          "get_sales_conversion_rate",
+          "get_sales_conversion_rate_series"
+        ],
+        "candidate_count": 2,
+        "expected_rank": 1,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-P-006",
+        "case_type": "COMMAND_POSITIVE",
+        "query": "monte um resumo dos pedidos em aberto",
+        "expected": [
+          "get_product_sales_open_orders"
+        ],
+        "ranked": [
+          "get_product_sales_open_orders",
+          "get_sales_order_otd_summary"
+        ],
+        "candidate_count": 2,
+        "expected_rank": 1,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-N-001",
+        "case_type": "COMMAND_UNSUPPORTED",
+        "query": "calcule o ICMS da nota de saída",
+        "expected": [],
+        "ranked": [],
+        "candidate_count": 0,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-N-002",
+        "case_type": "COMMAND_UNSUPPORTED",
+        "query": "gere o DANFE da nota fiscal 12345",
+        "expected": [],
+        "ranked": [],
+        "candidate_count": 0,
+        "pass": true
+      },
+      {
+        "id": "DQ-CC-N-003",
+        "case_type": "COMMAND_UNSUPPORTED",
+        "query": "monte a escala de férias do time de produção",
+        "expected": [],
+        "ranked": [],
+        "candidate_count": 0,
+        "pass": true
+      }
+    ]
+  },
+  "translation_case": {
+    "id": "DQ-NEG-U-008",
+    "query": "traduza a descrição do produto para inglês",
+    "frozen_classification": "UNSUPPORTED_NEGATIVE",
+    "observed_candidates": [
+      "search_products"
+    ],
+    "semantic_verdict": "MIXED_REQUEST — retrieval leg (product description) is governed via search_products.approvedResponseFields=[description,...]; translation is Agent-side orchestration after authoritative retrieval. Frozen zero-candidate expectation conflicts with the clarified command-intent architecture.",
+    "status": "BENCHMARK_CORRECTION_REQUIRED"
+  },
+  "catalog_parity": {
+    "allowlist_count": 89,
+    "live_openapi_executable_count": 89,
+    "baseline_executable_count": "87 (expected: 2 SEMANTIC_READ_POST ops lack baseline requestBody)",
+    "runtime_observed_eligible_count": 89,
+    "classification": "EXPLAINED_DIFFERENCE"
+  },
+  "dq_stock_001": {
+    "before": {
+      "rank": 1,
+      "score": null,
+      "higher_ranked": []
+    },
+    "after": {
+      "rank": 1
+    }
+  },
+  "metrics_before": {
+    "case_counts": {
+      "total": 217,
+      "positive_precise": 90,
+      "positive_paraphrase": 89,
+      "ambiguous": 10,
+      "write_negative": 8,
+      "generic_sql_negative": 6,
+      "unsupported_negative": 8,
+      "quarantine_conflict": 6
+    },
+    "positive_case_count": 185,
+    "top1_accuracy": 0.9676,
+    "top1_required_accuracy": 0.9889,
+    "top3_recall": 1.0,
+    "top5_recall": 1.0,
+    "mrr": 0.9829,
+    "positive_no_candidate_rate": 0.0,
+    "hard_negative_zero_candidate_rate": 1.0,
+    "unsupported_zero_candidate_rate": 1.0,
+    "ambiguous_top3_coverage": 0.9,
+    "ambiguous_top5_coverage": 0.9,
+    "positive_target_misses": 0,
+    "positive_target_rank_gt5": 0,
+    "hard_negative_leaks": 0,
+    "unrelated_family_top1": 1,
+    "family_metrics": {
+      "commercial": {
+        "cases": 37,
+        "top1": 1.0,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "product_master": {
+        "cases": 56,
+        "top1": 0.9643,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "production": {
+        "cases": 35,
+        "top1": 0.9429,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "supplies": {
+        "cases": 45,
+        "top1": 0.9556,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "system_metadata": {
+        "cases": 12,
+        "top1": 1.0,
+        "top3": 1.0,
+        "top5": 1.0
+      }
+    }
+  },
+  "metrics_after": {
+    "case_counts": {
+      "total": 217,
+      "positive_precise": 90,
+      "positive_paraphrase": 89,
+      "ambiguous": 10,
+      "write_negative": 8,
+      "generic_sql_negative": 6,
+      "unsupported_negative": 8,
+      "quarantine_conflict": 6
+    },
+    "positive_case_count": 185,
+    "top1_accuracy": 0.9676,
+    "top1_required_accuracy": 0.9889,
+    "top3_recall": 1.0,
+    "top5_recall": 1.0,
+    "mrr": 0.9829,
+    "positive_no_candidate_rate": 0.0,
+    "hard_negative_zero_candidate_rate": 1.0,
+    "unsupported_zero_candidate_rate": 0.875,
+    "ambiguous_top3_coverage": 0.9,
+    "ambiguous_top5_coverage": 0.9,
+    "positive_target_misses": 0,
+    "positive_target_rank_gt5": 0,
+    "hard_negative_leaks": 0,
+    "unrelated_family_top1": 1,
+    "family_metrics": {
+      "commercial": {
+        "cases": 37,
+        "top1": 1.0,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "product_master": {
+        "cases": 56,
+        "top1": 0.9643,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "production": {
+        "cases": 35,
+        "top1": 0.9429,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "supplies": {
+        "cases": 45,
+        "top1": 0.9556,
+        "top3": 1.0,
+        "top5": 1.0
+      },
+      "system_metadata": {
+        "cases": 12,
+        "top1": 1.0,
+        "top3": 1.0,
+        "top5": 1.0
+      }
+    }
+  },
+  "metric_deltas": {
+    "top1_accuracy": 0.0,
+    "top1_required_accuracy": 0.0,
+    "top3_recall": 0.0,
+    "top5_recall": 0.0,
+    "mrr": 0.0,
+    "positive_no_candidate_rate": 0,
+    "hard_negative_zero_candidate_rate": 0.0,
+    "unsupported_zero_candidate_rate": -0.125,
+    "ambiguous_top3_coverage": 0.0,
+    "ambiguous_top5_coverage": 0.0,
+    "unrelated_family_top1": 0
+  },
+  "root_cause_after": {
+    "SUMMARY_TOKEN_NOISE": 1,
+    "MULTIWORD_ALIAS_COLLISION": 1,
+    "OTHER": 2,
+    "TIE_BREAK_ARTIFACT": 1,
+    "QUARANTINE_INTERACTION": 1
+  },
+  "known_failures_after": [
+    {
+      "id": "DQ-PM-026",
+      "query": "quando compramos esse item pela última vez?",
+      "family": "product_master",
+      "expected": "get_product_last_purchase",
+      "target_rank": 2,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.9175
+        }
+      ],
+      "expected_aliases": [
+        "último preço de compra",
+        "última compra da matéria-prima",
+        "última NF de compra",
+        "last purchase price",
+        "last valid purchase",
+        "latest inbound invoice price",
+        "última compra do produto",
+        "ultima compra do produto",
+        "quando foi a última compra",
+        "última vez que compramos",
+        "ultima vez que compramos",
+        "última compra do item",
+        "ultima compra do item",
+        "última vez que compramos o item",
+        "ultima vez que compramos o item",
+        "último preço de compra do produto",
+        "ultimo preco de compra do produto",
+        "último preço de compra do item",
+        "ultimo preco de compra do item"
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
+    },
+    {
+      "id": "DQ-PM-054",
+      "query": "quais MPs exclusivas usamos?",
+      "family": "product_master",
+      "expected": "list_exclusive_raw_materials_catalog",
+      "target_rank": 2,
+      "target_score": 0.5598,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.895
+        }
+      ],
+      "expected_aliases": [
+        "matéria-prima exclusiva",
+        "materia-prima exclusiva",
+        "matéria prima exclusiva",
+        "materia prima exclusiva",
+        "matérias-primas exclusivas",
+        "catálogo de matérias-primas exclusivas",
+        "catalogo de materias primas exclusivas",
+        "exclusive raw material",
+        "exclusive raw materials",
+        "exclusive raw materials catalog"
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
+    },
+    {
+      "id": "DQ-SUP-024",
+      "query": "preços pagos ao fornecedor do item de segurança",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "target_rank": 2,
+      "target_score": 0.925,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_item_suppliers",
+          "score": 0.9425
+        }
+      ],
+      "expected_aliases": [
+        "histórico de preço por fornecedor",
+        "preço de compra fornecedor estoque de segurança",
+        "supplier purchase price history safety stock",
+        "histórico de preços de compra do fornecedor",
+        "historico de precos de compra do fornecedor",
+        "preços pagos ao fornecedor"
+      ],
+      "root_cause": "OTHER"
+    },
+    {
+      "id": "DQ-SUP-038",
+      "query": "furos e sobras de inventário de hoje",
+      "family": "supplies",
+      "expected": "list_supplies_inventory_adjustments",
+      "target_rank": 2,
+      "target_score": 0.91,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_inventory_adjustments_summary",
+          "score": 0.93
+        }
+      ],
+      "expected_aliases": [
+        "ajustes de inventário",
+        "ajustes de inventario",
+        "furo de inventário",
+        "furo de inventario",
+        "sobra de inventário",
+        "sobra de inventario",
+        "divergência de inventário",
+        "divergencia de inventario",
+        "inventory adjustments",
+        "inventory shortage",
+        "inventory surplus",
+        "inventory count adjustments",
+        "ajuste de estoque por inventário",
+        "ajustes de estoque",
+        "itens de ajuste de estoque",
+        "itens de ajustes de inventário",
+        "produtos com ajuste de estoque",
+        "produtos com ajuste de inventário",
+        "documentos de inventário",
+        "documentos de ajuste de estoque",
+        "lançamentos de inventário",
+        "lançamentos de ajuste de estoque",
+        "detalhe de lançamentos de inventário",
+        "detalhamento de ajustes de inventário",
+        "detalhe dos ajustes de estoque",
+        "ajuste de estoque por produto",
+        "ajuste de inventário por produto",
+        "listagem de ajustes de inventário",
+        "lista de ajustes de estoque",
+        "furos de inventário",
+        "furos de inventario",
+        "sobras de inventário",
+        "sobras de inventario"
+      ],
+      "root_cause": "OTHER"
+    },
+    {
+      "id": "DQ-PRD-009",
+      "query": "OTD de produção",
+      "family": "production",
+      "expected": "get_production_otd",
+      "target_rank": 2,
+      "target_score": 0.8975,
+      "higher_ranked": [
+        {
+          "action_id": "get_on_time_delivery_pct",
+          "score": 0.8975
+        }
+      ],
+      "expected_aliases": [
+        "resumo do OTD de produção",
+        "OTD de produção resumido",
+        "sumário pontualidade das OPs",
+        "otd de produção",
+        "otd de producao",
+        "otd da produção",
+        "ops entregues no prazo"
+      ],
+      "root_cause": "TIE_BREAK_ARTIFACT"
+    },
+    {
+      "id": "DQ-QUA-006",
+      "query": "consumo de matéria-prima na produção por item",
+      "family": "production",
+      "expected": "get_production_consumption_by_item",
+      "target_rank": 3,
+      "target_score": 0.5948,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.9
+        },
+        {
+          "action_id": "get_production_orders_finished_without_consumption",
+          "score": 0.7338
+        }
+      ],
+      "expected_aliases": [
+        "consumo do item na produção",
+        "consumo do item na producao",
+        "consumo de produção do produto",
+        "consumo de producao do produto",
+        "consumo real do item",
+        "consumption by item",
+        "item production consumption",
+        "consumo de MP por produto",
+        "consumo de produção por item",
+        "consumo de producao por item",
+        "mp consumida na produção",
+        "consumo de mp na produção"
+      ],
+      "root_cause": "QUARANTINE_INTERACTION"
+    }
+  ],
+  "negative_detail": {
+    "hard_negative_leaked": [],
+    "unsupported_spurious": [
+      {
+        "id": "DQ-NEG-U-008",
+        "query": "traduza a descrição do produto para inglês",
+        "returned": [
+          "search_products"
+        ]
+      }
+    ],
+    "ambiguous_zero_candidate": [
+      {
+        "id": "DQ-AMB-005",
+        "query": "OTD do mês"
+      }
+    ]
+  },
+  "discover_contract_checks": {
+    "ran": 54,
+    "shape_ok": 54,
+    "order_matches_retrieval": 54
+  }
+}
