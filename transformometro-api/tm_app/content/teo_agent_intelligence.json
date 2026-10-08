@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.09.4",
+  "version": "2026.10.09.5",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -159,8 +159,18 @@
           "timeline = OBSERVED record of what was registered",
           "reported cause = INFORMED, not proven causal truth",
           "similarity/clustering = INFERRED or CALCULATED, never FACT",
-          "ticket != process truth; != validated root cause; != formal improvement"
-        ]
+          "ticket != process truth; != validated root cause; != formal improvement",
+          "frequency/count/distribution over tickets = CALCULATED",
+          "candidate process/solution association = INFERRED",
+          "improvement/capability idea = PROPOSED, never REGISTERED"
+        ],
+        "analysis": {
+          "window": "declarar sempre a janela analisada (ex.: 'últimos N chamados atualizados' ou período pedido: últimos 7/30 dias, mês); nunca sugerir cobertura histórica total a partir de amostra",
+          "pagination": "recorrência exige paginação limitada do helpdesk_read — não concluir 'sem recorrência' após uma página",
+          "minimization": "summaries primeiro; detalhe/timeline apenas do subconjunto necessário para validar; anexos fora do escopo",
+          "status_scope": "escopo de status segue a intent: 'pendentes' → abertos/em atendimento; 'recorrentes' → não restringir a abertos; distinguir backlog ativo de demanda histórica",
+          "privacy": "agregar por contagens/temas/categorias; expor nomes de pessoas somente quando relevante"
+        }
       },
       "product_usage": {
         "purpose": "como/quando/por que usar features do Portal Transforma+",
@@ -338,7 +348,9 @@
           "EXTEND_EXISTING",
           "INTEGRATE_EXISTING",
           "NEW_CAPABILITY_CANDIDATE",
-          "TO_INVENTORY"
+          "NO_DIGITAL_SOLUTION_NEEDED",
+          "TO_INVENTORY",
+          "UNKNOWN"
         ],
         "rule": "NUNCA recomendar NEW_CAPABILITY_CANDIDATE antes de inspecionar o ecossistema Minha DELPI"
       },
@@ -417,7 +429,27 @@
           "fontes adicionais só se necessário"
         ],
         "gate": "HELPDESK_DEMAND_GATE",
-        "rule": "causa reportada em ticket permanece INFORMED/INFERRED até validação"
+        "rule": "causa reportada em ticket permanece INFORMED/INFERRED até validação",
+        "analysis": {
+          "output_model": [
+            "Demand Theme",
+            "Evidence (ticket ids/titles)",
+            "Frequency (counts CALCULATED)",
+            "Time Window",
+            "Affected Actors/Areas",
+            "Observed Symptoms",
+            "Reported Causes (INFORMED)",
+            "Candidate Process (se aplicável)",
+            "Existing Digital Solution (se aplicável)",
+            "Knowledge Gaps",
+            "Recommendation",
+            "Confidence alta|média|baixa (INFERRED)"
+          ],
+          "grouping": "sinais: mesma categoria, wording semelhante, mesmo recurso/sistema afetado, mesmo sintoma, recorrência temporal; categoria igual != mesmo tema; cluster permanece INFERRED",
+          "counts": "contagens calculadas dos tickets analisados (ex.: '4 de 30'), nunca vagas quando a evidência existe",
+          "root_cause": "nunca promover causa reportada a causa raiz; método (Ishikawa/5 porquês) só se o usuário pedir investigação"
+        },
+        "stop": "responder à pergunta feita e parar — não continuar para processo/solução/causa-raiz sem necessidade"
       },
       "DEMAND_TO_PROCESS": {
         "examples": [
@@ -435,7 +467,8 @@
           "HELPDESK_DEMAND_GATE",
           "PROCESS_TRUTH_GATE quando processo candidato existir"
         ],
-        "rule": "tickets podem iniciar descoberta de processo; tickets NÃO viram AS-IS canônico"
+        "rule": "tickets podem iniciar descoberta de processo; tickets NÃO viram AS-IS canônico",
+        "confidence": "marcar associação ticket→processo como inferência com grau alta|média|baixa (nome de processo/sistema explícito em vários tickets + metadados alinhados = alta; só wording genérico = baixa); nunca inferir ID de processo"
       }
     },
     "gates": {
@@ -471,6 +504,7 @@
       "Pergunta de produto → product guide pode bastar.",
       "Pergunta de descoberta de solução → solution ecosystem pode bastar.",
       "Diagnóstico causal → process truth + evidence + methodology podem ser necessários.",
+      "Análise de demanda de chamados → agrupar evidência e parar; processo/solução/causa só quando a pergunta exigir.",
       "Não chamar toda fonte 'por precaução' — evitar tool spam."
     ],
     "gap_handling": {

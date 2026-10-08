@@ -177,3 +177,79 @@ def test_sufficiency_and_gap_rules():
     assert "NÃO inventar" in gap["rule"]
     for label in ("UNKNOWN", "TO_INVENTORY", "PROPOSED", "INFERRED"):
         assert label in gap["labels"]
+
+
+# ---------------------------------------------------------------------------
+# R3 — Demand Intelligence V1
+# ---------------------------------------------------------------------------
+
+
+def test_r3_helpdesk_source_has_bounded_analysis_contract():
+    source = _ko()["sources"]["helpdesk_demand"]
+    analysis = source["analysis"]
+    for key in ("window", "pagination", "minimization", "status_scope", "privacy"):
+        assert key in analysis, key
+    assert "últimos" in analysis["window"] or "janela" in analysis["window"]
+    assert "pagina" in analysis["pagination"]
+    assert "summaries" in analysis["minimization"]
+    assert "não concluir" in analysis["pagination"].lower()
+    # Epistemic extensions for demand semantics.
+    epistemic = " ".join(source["epistemic"])
+    assert "CALCULATED" in epistemic
+    assert "PROPOSED" in epistemic
+    assert "INFERRED" in epistemic
+
+
+def test_r3_demand_analysis_output_model_and_epistemic_safety():
+    route = _ko()["routing"]["DEMAND_ANALYSIS"]
+    assert route["gate"] == "HELPDESK_DEMAND_GATE"
+    assert route["route"][0] == "helpdesk_read"
+    analysis = route["analysis"]
+    output = " ".join(analysis["output_model"])
+    for field in ("Demand Theme", "Evidence", "Frequency", "Time Window",
+                  "Reported Causes", "Knowledge Gaps", "Recommendation",
+                  "Confidence"):
+        assert field in output, field
+    assert "INFORMED" in output and "INFERRED" in output
+    assert "INFERRED" in analysis["grouping"]
+    assert "CALCULATED" in analysis["output_model"][2]
+    # Root-cause non-promotion: methodology only on explicit request.
+    assert "causa raiz" in analysis["root_cause"]
+    assert "Ishikawa" in analysis["root_cause"] or "porquês" in analysis["root_cause"]
+    # Stop/sufficiency: answer the question, do not spill into process/solution.
+    assert "parar" in route["stop"]
+
+
+def test_r3_demand_to_process_uses_authoritative_search_first():
+    route = _ko()["routing"]["DEMAND_TO_PROCESS"]
+    steps = route["route"]
+    search_idx = next(i for i, s in enumerate(steps) if "record_read" in s)
+    ctx_idx = next(i for i, s in enumerate(steps) if "get_process_context" in s)
+    assert search_idx < ctx_idx  # never infer a process ID
+    assert "PROCESS_TRUTH_GATE" in " ".join(route["gates"])
+    confidence = route["confidence"]
+    for label in ("alta", "média", "baixa"):
+        assert label in confidence
+    assert "inferência" in confidence or "INFERRED" in confidence
+
+
+def test_r3_digital_solution_fit_never_new_first():
+    fit = _ko()["routing"]["DIGITAL_SOLUTION_NEED"]["fit"]
+    for klass in ("REUSE_EXISTING", "EXTEND_EXISTING", "INTEGRATE_EXISTING",
+                  "NEW_CAPABILITY_CANDIDATE", "NO_DIGITAL_SOLUTION_NEEDED",
+                  "UNKNOWN"):
+        assert klass in fit, klass
+
+
+def test_r3_sufficiency_stops_after_demand_grouping():
+    joined = " ".join(_ko()["sufficiency"])
+    assert "demanda" in joined and "parar" in joined
+
+
+def test_r3_no_new_tool_surface_for_demand():
+    from tm_app.interface.mcp.constants import MCP_TOOL_NAMES
+
+    assert len(MCP_TOOL_NAMES) == 22
+    forbidden = {"demand_analysis", "helpdesk_analysis", "cluster_tickets",
+                 "ticket_insights", "find_process_from_ticket"}
+    assert not forbidden.intersection(MCP_TOOL_NAMES)

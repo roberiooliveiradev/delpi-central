@@ -225,3 +225,45 @@ page 1 size 10): `totalcount=15`, ids
 `[1204, 1222, 1153, 1156, 1128, 969, 1042, 1046, 635, 660, 977]` — matches
 the historical control set plus newer assignments; OAuth HLAPI hydration +
 ACL unchanged downstream.
+
+## 18. R3 — Demand Intelligence V1
+
+Objective: TÉO uses real tickets as demand evidence — recurrence, themes,
+candidate processes, solution reuse, governed recommendation — with zero new
+tools, zero persistence, zero ticket mirror.
+
+Contract (orchestration only — `teo_agent_intelligence.json`
+`2026.10.09.4 → .5`):
+
+- `sources.helpdesk_demand.analysis`: explicit analysis window; bounded
+  pagination (never "no recurrence" after one page); summaries-first
+  minimization (detail/timeline only for validated subset; attachments out);
+  status scope follows intent (pending vs recurring, active vs historical);
+  aggregate privacy (counts/themes over names).
+- `sources.helpdesk_demand.epistemic`: frequency/distribution = CALCULATED;
+  candidate process/solution = INFERRED; improvement idea = PROPOSED.
+- `routing.DEMAND_ANALYSIS.analysis`: 12-field conversational output model
+  (theme → evidence → frequency → window → actors → symptoms → reported
+  causes → candidate process → existing solution → gaps → recommendation →
+  confidence); grouping signals enumerated, cluster stays INFERRED; counts
+  must be calculated; root cause never promoted from ticket text (method only
+  on explicit request); explicit stop after answering.
+- `routing.DEMAND_TO_PROCESS.confidence`: ticket→process association marked
+  INFERRED with alta|média|baixa; record_read(search) before
+  get_process_context; never infer process IDs.
+- `DIGITAL_SOLUTION_NEED.fit`: added `NO_DIGITAL_SOLUTION_NEEDED`, `UNKNOWN`.
+- `sufficiency`: added demand stop line.
+
+`analyze` decision (Abstraction Gate): the capability is the Transformômetro
+dashboard/snapshot engine — its contract does not cover ticket-text grouping.
+Conversational reasoning over `helpdesk_read` summaries/details is the
+smallest sufficient path; no call required, no contract change.
+
+Boundaries kept: no new MCP tool (22), no new GPT Action (20), no OpenAPI
+change, no ticket cache/mirror/table, no embeddings/vector/ML clustering, no
+ticket→process link, no writes (R4/R5/R6 untouched). OAuth user ACL remains
+the Helpdesk universe boundary; legacy search remains ids-only discovery.
+
+Tests: `test_teo_knowledge_orchestration.py` +6 (bounded analysis contract,
+output model + epistemic non-promotion, process-discovery ordering,
+fit classes, sufficiency stop, zero new tools) — 19/19 suite green.
