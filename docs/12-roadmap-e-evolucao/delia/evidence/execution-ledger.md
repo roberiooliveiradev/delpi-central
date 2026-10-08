@@ -12345,3 +12345,106 @@ SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED.
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.157. C3-INTELLIGENCE-LOOP-03R2B-FINAL-RESIDUAL-CLOSURE-01 — master-plan NEXT reconciliation + eval-harness transport fidelity + authenticated live prod eval
+
+EXECUTOR: Devin (senior executor / integration engineer).
+TASK = C3-INTELLIGENCE-LOOP-03R2B-FINAL-RESIDUAL-CLOSURE-01.
+
+### Reanchor
+
+HEAD at start = `48a188148f` == `origin/main`. No merge/rebase in
+progress; zero unmerged index entries; AUTO_MERGE leftover present
+(harmless, preserved). Worktree dirty files are exclusively user-owned
+(`plugins/bpmn-modeler/**`, `plugins/tv-dashboard/**` work in progress).
+`git diff ff7bdbddff..HEAD` on `delia-api/**` = ZERO; delia docs = only
+the §6.156 block. `EXECUTION_DRIFT = NO`. Non-delia concurrent commits:
+`05a8e7a966` helpdesk GLPI fix, `124f58e56d` helpdesk 206 accept,
+`7f25905b52` VISTA KIC-V1 PHASE 1 (`knowledge_orchestration` —
+owner-side surface growth, not DÉLIA drift), `48a188148f` helpdesk docs.
+
+### STAGE A — DOCUMENTATION / MASTER PLAN RECONCILIATION = CLOSED
+
+Defect confirmed: `Etapa corrente` = CLOSEOUT-01 with
+`NEXT = RETURN_TO_ARCHITECTURE_COORDINATION`, while `Próxima etapa`
+still pointed at `ARCH-DRIFT-DELIA-GENERIC-MCP-MULTISTEP-ORCHESTRATION-R1`
+already `ACCEPT_WITH_RESIDUAL` (§6.140) — a stale pointer. The stale
+"ff7bdbddff pendente de deploy" remark was also obsolete: production
+checkout on srv-api = `48a188148f` (== current `origin/main`) with
+container file-parity proven (`root_composer.py` md5 == ff7bdbddff
+content `32b9bcb9768d…`), so `CORE_FIX_PRODUCTION_ALIGNMENT = PROVEN`.
+
+Minimal non-destructive fix (commit `c693d5f30e`): `Etapa corrente` now
+names this task; `Próxima etapa` = `RETURN_TO_ARCHITECTURE_COORDINATION`
+(no canonical next-work decision exists — none invented); the full
+canonical-state blob inside the previous pointer is preserved verbatim
+as closed evidence. MASTER_PLAN_NEXT_CONSISTENCY = PASS;
+HISTORICAL_EVIDENCE = PRESERVED; PHASE_ADVANCEMENT = NONE.
+
+### STAGE B — EVAL HARNESS TRANSPORT FIDELITY = CLOSED
+
+Residual proven: `real_mcp_interop_eval.py` bound the delegated
+credential provider with raw `requests.post`, diverging from the
+production composer binding `http_post=deadline_http_post`
+(root_composer L213). Contract check: the provider wraps the seam in
+`bounded_request` internally (delegation.py L301), so the correct eval
+binding is the same governed transport. Fix (commit `0fa158dfd3`):
+`http_post=deadline_http_post` + import — REUSE, no new primitive.
+
+Tests: focused 142/142 (delegated_credentials + http_absolute_deadline
++ platform_access + mcp_adapter + specialist_interop domain/security);
+full suite 958/958 PASS on the committed content (worktree md5 ==
+committed blob `352d3cbb…`). Live functional proof inside dev
+`delpi-delia-api` container: credential exchange same-sub +
+resource-audience-bound for all three specialists and authenticated
+`tools/list` PASS through the new binding.
+EVAL_HARNESS_TRANSPORT_FIDELITY = PASS; PRODUCTION_RUNTIME_BEHAVIOR =
+UNCHANGED (eval harness only); CONTRACT_IMPACT = NONE.
+
+### STAGE C — AUTHENTICATED LIVE PRODUCTION EVAL = PARTIAL
+
+Identity: human user `user` (realm delpi, enabled, id 401b25fa-…)
+provided by Coordination for this verification. Real subject JWT
+obtained for `delpi-central` public client — a real user identity, not
+a service account; note the mechanism was direct grant rather than the
+canonical Portal auth-code+PKCE browser flow (Coordination-provided
+credential; recorded honestly, not claimed as canonical smoke).
+
+Proven on the production runtime (inside `delpi-delia-api`, srv-api,
+checkout `48a188148f`):
+
+- `core_context resolved=True` — Core `/me` bounded path live in prod;
+  real authority: roles=7, effective_permissions=52, superadmin=false.
+- Delegated credentials same-sub / resource-audience-bound / mcp:tools
+  scope / exp-valid for ALL three specialists — no foreign audiences.
+- Authenticated live `tools/list` IN PRODUCTION: DAVI=2 (DISCOVERY,
+  READ), TÉO=22 (incl. `helpdesk_read` — owner surface adopted with
+  zero DÉLIA change), VISTA=10 (DISCOVERY|READ|ANALYSIS|PREPARE|ACT).
+  `DELIA_LOCAL_MCP_CAPABILITY_CATALOG = NONE` holds.
+- Turn executions: model provider (openrouter `moonshotai/kimi-k3`)
+  degraded this window — stage telemetry shows `provider_rejected`
+  (~1.2–2s → `model_unavailable` 503) and one 10s stage `timeout`
+  (`model_timeout` → 504); a write-intent input returned 200
+  NON_GROUNDED/HYPOTHESIS deterministic refusal (zero fabricated
+  facts). Direct provider ping returned 200 → provider-side
+  intermittent rejection, not a DÉLIA defect.
+
+Verdicts: `MODEL_FAIL_CLOSED = PASS`; `SEMANTIC_SELECTION = INCONCLUSIVE`
+(provider latency/rejection — per task rule, controlled failure is not
+functional success); `BUSINESS_OUTCOME = NOT_PROVEN`;
+`MATERIAL_ACT_CALLS = 0`; `MATERIAL_PREPARE_SIDE_EFFECTS = 0`;
+`GROUNDING = PASS` (no fabricated facts; NON_GROUNDED honest).
+
+### Residuals
+
+- `SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED` —
+  `shared/delpi_auth/jwt_validator.py` unchanged (owner: platform auth).
+- `MODEL_PROVIDER_STABILITY = PROVIDER_DEGRADED` — openrouter
+  `kimi-k3` intermittent 4xx/timeouts observed in both dev and prod.
+- `LIVE_PROD_EVAL = PARTIAL` — authenticated discovery + authz +
+  fail-closed proven in prod; semantic selection/business outcome
+  pending provider availability, not blocked on identity anymore.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
