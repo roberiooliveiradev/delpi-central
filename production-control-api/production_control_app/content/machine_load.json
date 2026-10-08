@@ -16,7 +16,8 @@
   "optimizeDelivery": {
     "emptyQueue": "Não há operações na fila desta filial para otimizar.",
     "applied": "Fila reordenada por entrega do PA em {centers} centro(s): {operations} operação(ões) mudaram de posição.",
-    "nothingToDo": "A fila já está ordenada pela entrega do PA em todos os centros."
+    "nothingToDo": "A fila já está otimizada pelos critérios selecionados.",
+    "appliedWithTool": "Fila otimizada por data de entrega e ferramenta em {centers} centro(s): {operations} operação(ões) mudaram de posição."
   },
   "withdrawal": {
     "orderNumberRequired": "Informe o número do conjunto (C2_NUM) com ao menos 6 dígitos.",

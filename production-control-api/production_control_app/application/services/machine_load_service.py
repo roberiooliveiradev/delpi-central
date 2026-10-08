@@ -18,8 +18,9 @@ from production_control_app.domain.ports.machine_load_snapshot_repository import
     MachineLoadSnapshotRepositoryPort,
 )
 from production_control_app.domain.ports.production_orders_gateway import ProductionOrdersGateway
-from production_control_app.domain.services.machine_load_delivery_sequencing import (
-    optimize_by_delivery_date,
+from production_control_app.domain.services.machine_load_optimization import (
+    MachineLoadOptimizationCriteria,
+    optimize_machine_load_queue,
 )
 from production_control_app.domain.services.machine_load_delivery_window import (
     delivery_bounds,
@@ -913,7 +914,23 @@ class MachineLoadService:
         branch: str,
         work_center: str | None = None,
     ) -> dict[str, Any]:
-        """Resequencia a fila de todos os centros pela entrega do PA.
+        """Compatibilidade do endpoint legado: otimização só por entrega do PA."""
+        return self.optimize_sequence(
+            user,
+            branch=branch,
+            criteria=MachineLoadOptimizationCriteria(group_by_tool=False),
+            work_center=work_center,
+        )
+
+    def optimize_sequence(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        criteria: MachineLoadOptimizationCriteria,
+        work_center: str | None = None,
+    ) -> dict[str, Any]:
+        """Resequencia a fila de todos os centros pela entrega do PA (+critérios).
 
         O carga máquina do TOTVS às vezes deixa material de entrega distante à
         frente do que está vencendo. Operações já iniciadas continuam onde estão.
@@ -955,7 +972,9 @@ class MachineLoadService:
                 raise ValueError(
                     template_empty_queue
                 )
-            result = optimize_by_delivery_date(visible, started_keys=started_keys)
+            result = optimize_machine_load_queue(
+                visible, criteria=criteria, started_keys=started_keys
+            )
             visible_keys = [_operation_key(item) for item in visible]
             if not result.work_centers or [
                 _operation_key(item) for item in result.operations
@@ -981,17 +1000,26 @@ class MachineLoadService:
             branch=branch,
         )
         work_centers = result.work_centers if result else []
-        if work_centers:
+        if not work_centers:
+            template = str(
+                messages.get("nothingToDo")
+                or "A fila já está otimizada pelos critérios selecionados."
+            )
+        elif criteria.group_by_tool:
+            template = str(
+                messages.get("appliedWithTool")
+                or "Fila otimizada por data de entrega e ferramenta."
+            )
+        else:
             template = str(
                 messages.get("applied")
                 or "Fila reordenada por entrega do PA em {centers} centro(s) de trabalho."
             )
-        else:
-            template = str(
-                messages.get("nothingToDo")
-                or "A fila já está ordenada pela entrega do PA em todos os centros."
-            )
         presented["optimization"] = {
+            "criteria": {
+                "delivery_date": True,
+                "group_by_tool": criteria.group_by_tool,
+            },
             "work_centers": work_centers,
             "moved_operation_count": result.moved_operation_count if result else 0,
             "kept_ahead_count": result.kept_ahead_count if result else 0,

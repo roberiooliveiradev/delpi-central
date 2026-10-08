@@ -1187,3 +1187,179 @@ def test_publish_response_marks_state_live() -> None:
 
     assert result["publication"]["state"] == "live"
     assert result["publication"]["changed"] is True
+
+
+# ---------------------------------------------------------------------------
+# O2 — optimize_sequence: service genérico por critérios (O1 conectado)
+# ---------------------------------------------------------------------------
+
+from production_control_app.domain.services.machine_load_optimization import (  # noqa: E402
+    MachineLoadOptimizationCriteria,
+)
+
+DATE_ONLY = MachineLoadOptimizationCriteria(group_by_tool=False)
+GROUP_BY_TOOL = MachineLoadOptimizationCriteria(group_by_tool=True)
+
+
+def _o2_queue() -> list[dict[str, Any]]:
+    """Fila canônica O1 num único centro."""
+    return [
+        _op("A", "01", due_date="2026-10-08", tool="MA-01"),
+        _op("B", "02", due_date="2026-10-07", tool="MA-02"),
+        _op("C", "03", due_date="2026-10-08", tool="MA-02"),
+        _op("D", "04", due_date="2026-10-07", tool="MA-01"),
+        _op("E", "05", due_date="2026-10-08", tool="MA-01"),
+        _op("F", "06", due_date="2026-10-07", tool="MA-02"),
+        _op("G", "07", due_date="2026-10-08", tool="MOD"),
+        _op("H", "08", due_date="2026-10-08", tool="MA-02"),
+    ]
+
+
+def _o2_service(
+    operations: list[dict[str, Any]],
+    *,
+    live: bool,
+    notifier: RecordingNotifier | None = None,
+) -> tuple[MachineLoadService, FakeSnapshotRepo]:
+    snapshots = FakeSnapshotRepo()
+    _upsert_working(snapshots, operations)
+    if live:
+        snapshots.publish("01")
+    return _publish_service(snapshots, notifier=notifier), snapshots
+
+
+def _working_orders(snapshots: FakeSnapshotRepo, center: str = "CT-01A") -> list[str]:
+    ops = snapshots.rows["01"]["payload_json"]["operations"]
+    return [i["production_order"] for i in ops if i["work_center"] == center]
+
+
+def test_optimize_sequence_data_only_matches_legacy_order() -> None:
+    legacy, snapshots_a = _o2_service(_o2_queue(), live=False)
+    generic, snapshots_b = _o2_service(_o2_queue(), live=False)
+
+    legacy.optimize_delivery_sequence(_user(*FULL_PERMS), branch="01")
+    generic.optimize_sequence(
+        _user(*FULL_PERMS), branch="01", criteria=DATE_ONLY
+    )
+
+    assert _working_orders(snapshots_a) == _working_orders(snapshots_b)
+
+
+def test_optimize_sequence_groups_tools_inside_each_due_date() -> None:
+    service, snapshots = _o2_service(_o2_queue(), live=False)
+
+    data = service.optimize_sequence(
+        _user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL
+    )
+
+    assert _working_orders(snapshots) == ["B", "F", "D", "A", "E", "C", "H", "G"]
+    assert data["optimization"]["criteria"] == {
+        "delivery_date": True,
+        "group_by_tool": True,
+    }
+    assert data["optimization"]["moved_operation_count"] > 0
+
+
+def test_optimize_sequence_data_only_reports_criteria() -> None:
+    service, _ = _o2_service(
+        [_op("B", "02", due_date="2026-10-08"), _op("A", "01", due_date="2026-10-07")],
+        live=False,
+    )
+
+    data = service.optimize_sequence(_user(*FULL_PERMS), branch="01", criteria=DATE_ONLY)
+
+    assert data["optimization"]["criteria"] == {
+        "delivery_date": True,
+        "group_by_tool": False,
+    }
+
+
+def test_optimize_sequence_keeps_started_operations_pinned() -> None:
+    operations = _o2_queue()
+    operations[1]["production_status"] = "started"  # B (07/10, MA-02) travada
+
+    service, snapshots = _o2_service(operations, live=False)
+    service.optimize_sequence(_user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL)
+
+    orders = _working_orders(snapshots)
+    assert orders[1] == "B"
+    # B travada não comanda o grupo: primeira ocorrência livre de 07/10 é D(MA-01).
+    assert orders[0] == "D" and orders[2] == "F"
+
+
+def test_optimize_sequence_excludes_withdrawn_conjuntos() -> None:
+    operations = _o2_queue() + [
+        _op("10840401001", "09", due_date="2026-10-07", tool="MA-02"),
+    ]
+    service, snapshots = _o2_service(operations, live=False)
+    service.withdraw_conjunto(_user(*FULL_PERMS), branch="01", order_number="108404")
+
+    service.optimize_sequence(_user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL)
+
+    visible = service.build(_user(*FULL_PERMS), branch="01")["operations"]
+    assert "10840401001" not in [i["production_order"] for i in visible]
+
+
+def test_optimize_sequence_noop_writes_and_notifies_nothing() -> None:
+    ordered = [
+        _op("B", "02", due_date="2026-10-07", tool="MA-02"),
+        _op("F", "06", due_date="2026-10-07", tool="MA-02"),
+        _op("D", "04", due_date="2026-10-07", tool="MA-01"),
+        _op("A", "01", due_date="2026-10-08", tool="MA-01"),
+    ]
+    notifier = RecordingNotifier()
+    service, snapshots = _o2_service(ordered, live=True, notifier=notifier)
+    before = copy.deepcopy(snapshots.rows["01"]["payload_json"])
+
+    data = service.optimize_sequence(
+        _user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL
+    )
+
+    assert data["optimization"]["work_centers"] == []
+    assert snapshots.rows["01"]["payload_json"] == before
+    assert notifier.events == []
+
+
+def test_optimize_sequence_draft_writes_only_working() -> None:
+    notifier = RecordingNotifier()
+    snapshots = FakeSnapshotRepo()
+    _upsert_working(snapshots, _o2_queue())
+    snapshots.publish("01")
+    # nova geração WORKING → DRAFT
+    _upsert_working(snapshots, _o2_queue())
+    publications = FakePublicationRepo(snapshots.published)
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=publications,
+        branch_access=BranchAccessService(),
+        change_notifier=notifier,
+    )
+    published_before = copy.deepcopy(snapshots.published["01"]["payload_json"])
+
+    data = service.optimize_sequence(
+        _user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL
+    )
+
+    assert data["publication"]["state"] == "draft"
+    assert _working_orders(snapshots) == ["B", "F", "D", "A", "E", "C", "H", "G"]
+    assert snapshots.published["01"]["payload_json"] == published_before
+    assert notifier.events == []
+
+
+def test_optimize_sequence_live_dual_writes_and_notifies() -> None:
+    notifier = RecordingNotifier()
+    service, snapshots = _o2_service(_o2_queue(), live=True, notifier=notifier)
+
+    data = service.optimize_sequence(
+        _user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL
+    )
+
+    assert data["publication"]["state"] == "live"
+    expected = ["B", "F", "D", "A", "E", "C", "H", "G"]
+    assert _working_orders(snapshots) == expected
+    published_ops = snapshots.published["01"]["payload_json"]["operations"]
+    assert [i["production_order"] for i in published_ops if i["work_center"] == "CT-01A"] == expected
+    assert notifier.events == [
+        {"branch": "01", "reason": "delivery_sequence", "work_center": None}
+    ]

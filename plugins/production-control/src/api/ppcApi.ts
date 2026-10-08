@@ -461,10 +461,11 @@ export async function prioritizeMachineLoadConjunto(params: {
   return unwrapEnvelope(envelope, "Não foi possível priorizar o conjunto.");
 }
 
-/** Reordena a fila de todos os centros pela entrega do PA, sem ultrapassar ops já iniciadas. */
-export async function optimizeMachineLoadDeliverySequence(params: {
+/** Otimiza a fila de todos os centros: entrega do PA sempre ativa + critérios. */
+export async function optimizeMachineLoadSequence(params: {
   branch: string;
   workCenter?: string | null;
+  groupByTool: boolean;
   signal?: AbortSignal;
 }): Promise<MachineLoadOptimizePayload> {
   const search = machineLoadSearch({ branch: params.branch });
@@ -473,10 +474,12 @@ export async function optimizeMachineLoadDeliverySequence(params: {
     success: boolean;
     message?: string;
     data: MachineLoadOptimizePayload;
-  }>(ppcApiUrl(`/machine-load/optimize-delivery?${search.toString()}`), undefined, {
-    signal: params.signal,
-  });
-  return unwrapEnvelope(envelope, "Não foi possível otimizar a fila pela entrega do PA.");
+  }>(
+    ppcApiUrl("/machine-load/optimize?" + search.toString()),
+    { criteria: { group_by_tool: params.groupByTool } },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível otimizar a fila.");
 }
 
 /** Tira o conjunto (C2_NUM) da programação: some da fila de todos os centros e do cockpit. */

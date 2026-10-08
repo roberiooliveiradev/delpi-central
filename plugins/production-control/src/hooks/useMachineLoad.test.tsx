@@ -162,7 +162,7 @@ describe("useMachineLoad", () => {
     expect(result.current.data?.publication?.state).toBe("draft");
     expect(api.fetchMachineLoad).toHaveBeenCalledTimes(1);
 
-    let publication: Awaited<ReturnType<typeof result.current.publishToMachines>>;
+    let publication: Awaited<ReturnType<typeof result.current.publishToMachines>> | undefined;
     await act(async () => {
       publication = await result.current.publishToMachines();
     });

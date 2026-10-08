@@ -10,6 +10,9 @@ from production_control_app.application.services.machine_load_service import (
 )
 from production_control_app.composition.pc_composer import build_machine_load_service
 from production_control_app.core.responses import fail, ok
+from production_control_app.domain.services.machine_load_optimization import (
+    MachineLoadOptimizationCriteria,
+)
 from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
@@ -45,6 +48,17 @@ class SequenceKeyBody(BaseModel):
 
 class SequenceReorderBody(BaseModel):
     ordered_keys: list[SequenceKeyBody] = Field(default_factory=list)
+
+
+class MachineLoadOptimizeCriteriaBody(BaseModel):
+    """Critérios secundários da otimização — a data de entrega é sempre ativa."""
+    group_by_tool: bool = False
+
+
+class MachineLoadOptimizeBody(BaseModel):
+    criteria: MachineLoadOptimizeCriteriaBody = Field(
+        default_factory=MachineLoadOptimizeCriteriaBody
+    )
 
 
 def _query_params(
@@ -268,6 +282,36 @@ def optimize_machine_load_delivery_sequence(
         data = build_machine_load_service().optimize_delivery_sequence(
             user,
             branch=branch,
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("optimization", {}).get("message"),
+    )
+
+
+@router.post("/machine-load/optimize")
+def optimize_machine_load_queue(
+    request: Request,
+    body: MachineLoadOptimizeBody | None = None,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta",
+    ),
+    include_all_centers: bool = _include_all_centers_query(),
+):
+    """Otimização genérica: entrega do PA sempre ativa; critérios extras no body."""
+    user = resolve_user(request)
+    group_by_tool = body.criteria.group_by_tool if body else False
+    try:
+        data = build_machine_load_service().optimize_sequence(
+            user,
+            branch=branch,
+            criteria=MachineLoadOptimizationCriteria(group_by_tool=group_by_tool),
             work_center=work_center,
         )
     except Exception as exc:

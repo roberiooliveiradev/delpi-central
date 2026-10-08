@@ -797,8 +797,15 @@ export type MachineLoadPrioritizePayload = MachineLoadPayload & {
   prioritization: MachineLoadPrioritization;
 };
 
-/** Resultado de reordenar a fila de todos os centros pela entrega do PA. */
-export type MachineLoadDeliveryOptimization = {
+/** Critérios efetivamente aplicados — a data de entrega é sempre ativa. */
+export type MachineLoadOptimizationCriteria = {
+  delivery_date: true;
+  group_by_tool: boolean;
+};
+
+/** Resultado de reordenar a fila de todos os centros pelos critérios escolhidos. */
+export type MachineLoadOptimization = {
+  criteria: MachineLoadOptimizationCriteria;
   work_centers: string[];
   moved_operation_count: number;
   kept_ahead_count: number;
@@ -807,7 +814,7 @@ export type MachineLoadDeliveryOptimization = {
 };
 
 export type MachineLoadOptimizePayload = MachineLoadPayload & {
-  optimization: MachineLoadDeliveryOptimization;
+  optimization: MachineLoadOptimization;
 };
 
 /** Resultado de retirar o conjunto da programação ou devolvê-lo à fila. */

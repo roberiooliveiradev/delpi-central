@@ -140,16 +140,31 @@ export const copy = {
       `Fila puxada por entrega do PA até ${to}, incluindo o que está atrasado. «De/até» filtra o que já está congelado — use Atualizar para puxar outro horizonte do TOTVS.`,
     periodMissingDueDate: (n: number) =>
       `${n} operaç${n === 1 ? "ão" : "ões"} sem data de entrega do PA — verifique o vínculo com a OP mãe no TOTVS.`,
-    optimizeDelivery: {
-      label: "Otimizar por entrega",
-      hint: "Reordena a fila de todos os centros pela data de entrega do PA, sem ultrapassar operação já iniciada.",
-      confirmTitle: "Reordenar a fila pela entrega do PA?",
-      confirmMessage:
-        "Todos os centros de trabalho desta filial são resequenciados da entrega mais próxima para a mais distante. Operações já iniciadas continuam onde estão, e conjuntos fora da programação não voltam à fila.",
-      confirmAction: "Otimizar fila",
+    optimization: {
+      label: "Otimizar fila",
+      hint: "Reordena a fila de todos os centros de trabalho da filial conforme os critérios escolhidos.",
+      modalTitle: "Otimizar fila de produção",
+      lead: "Escolha os critérios usados para organizar a sequência dos centros de trabalho.",
+      priorityLegend: "Prioridade de produção",
+      groupingLegend: "Agrupamento",
+      deliveryDateLabel: "Data de entrega",
+      deliveryDateHint: "As operações com entrega mais próxima ficam primeiro.",
+      requiredBadge: "Obrigatório",
+      toolLabel: "Ferramenta",
+      toolHint:
+        "Dentro da mesma data de entrega, agrupa operações que utilizam o mesmo mini-aplicador, reduzindo trocas de ferramenta.",
+      toolFootnote: "A data de entrega continua sendo a prioridade principal.",
+      noToolNote:
+        "Operações MOD ou sem ferramenta ficam depois dos grupos com mini-aplicador da mesma data.",
+      missingDueNote:
+        "Operações sem data de entrega permanecem no final da fila e mantêm a ordem atual.",
+      startedNote: "Operações já iniciadas permanecem em suas posições.",
+      scopeNote:
+        "A otimização reorganiza as filas de todos os centros de trabalho da filial.",
       cancel: "Cancelar",
-      busy: "Otimizando a fila…",
-      error: "Não foi possível otimizar a fila pela entrega do PA.",
+      confirm: "Otimizar fila",
+      busy: "Otimizando fila…",
+      error: "Não foi possível otimizar a fila.",
     },
     hideFinished: {
       show: "Ocultar finalizadas",

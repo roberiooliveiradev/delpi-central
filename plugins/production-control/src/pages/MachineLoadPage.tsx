@@ -19,6 +19,7 @@ import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleDashed, Eye, EyeO
 
 import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
 import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
+import { MachineLoadOptimizationModal } from "../components/MachineLoadOptimizationModal";
 import { MachineLoadRowContextMenu } from "../components/MachineLoadRowContextMenu";
 import { MachineLoadStatusCell } from "../components/MachineLoadStatusCell";
 import { MachineLoadTransferModal, type MachineLoadTransferMode } from "../components/MachineLoadTransferModal";
@@ -28,7 +29,7 @@ import { usePpcConfirm } from "../components/PpcConfirmDialogProvider";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import {
   fetchMachineLoadLocate,
-  optimizeMachineLoadDeliverySequence,
+  optimizeMachineLoadSequence,
   patchMachineLoadSequence,
   prioritizeMachineLoadConjunto,
   restoreMachineLoadConjunto,
@@ -151,6 +152,8 @@ export function MachineLoadPage({
   const [conjuntoModalError, setConjuntoModalError] = useState<string | null>(null);
   const [conjuntoModalResult, setConjuntoModalResult] = useState<MachineLoadLocatePayload | null>(null);
   const [withdrawnModalOpen, setWithdrawnModalOpen] = useState(false);
+  const [optimizationModalOpen, setOptimizationModalOpen] = useState(false);
+  const [optimizationError, setOptimizationError] = useState<string | null>(null);
   const [transferOperation, setTransferOperation] = useState<MachineLoadOperation | null>(null);
   const [transferMode, setTransferMode] = useState<MachineLoadTransferMode>("operation");
   const [hideFinished, setHideFinished] = useState(readHideFinishedPreference);
@@ -391,35 +394,34 @@ export function MachineLoadPage({
     [applyPayload, branch, confirm, history, selectedCenter, sequenceBusy],
   );
 
-  const optimizeDeliverySequence = useCallback(async () => {
-    if (sequenceBusy) return;
-    const accepted = await confirm({
-      title: copy.machineLoad.optimizeDelivery.confirmTitle,
-      message: copy.machineLoad.optimizeDelivery.confirmMessage,
-      confirmLabel: copy.machineLoad.optimizeDelivery.confirmAction,
-      cancelLabel: copy.machineLoad.optimizeDelivery.cancel,
-      variant: "default",
-    });
-    if (!accepted) return;
-    setSequenceBusy(true);
-    setSequenceNotice(null);
-    try {
-      const payload = await optimizeMachineLoadDeliverySequence({
-        branch,
-        workCenter: selectedCenter,
-      });
-      applyPayload(payload);
-      // A otimização atravessa todos os CTs; o histórico só cobre o CT ativo.
-      history.reset();
-      setSequenceNotice(payload.optimization.message);
-    } catch (err: unknown) {
-      setSequenceNotice(
-        err instanceof Error ? err.message : copy.machineLoad.optimizeDelivery.error,
-      );
-    } finally {
-      setSequenceBusy(false);
-    }
-  }, [applyPayload, branch, confirm, history, selectedCenter, sequenceBusy]);
+  const runOptimization = useCallback(
+    async (groupByTool: boolean) => {
+      if (sequenceBusy) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      setOptimizationError(null);
+      try {
+        const payload = await optimizeMachineLoadSequence({
+          branch,
+          workCenter: selectedCenter,
+          groupByTool,
+        });
+        applyPayload(payload);
+        // A otimização atravessa todos os CTs; o histórico só cobre o CT ativo.
+        history.reset();
+        setSequenceNotice(payload.optimization.message);
+        setOptimizationModalOpen(false);
+      } catch (err: unknown) {
+        // Modal segue aberto com a escolha do usuário preservada.
+        setOptimizationError(
+          err instanceof Error ? err.message : copy.machineLoad.optimization.error,
+        );
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [applyPayload, branch, history, selectedCenter, sequenceBusy],
+  );
 
   const withdrawConjunto = useCallback(
     async (conjuntoKey: string) => {
@@ -918,14 +920,15 @@ export function MachineLoadPage({
         <button
           type="button"
           className="ppc-period__optimize"
-          onClick={optimizeDeliverySequence}
+          onClick={() => {
+            setOptimizationError(null);
+            setOptimizationModalOpen(true);
+          }}
           disabled={sequenceBusy || publishing || !data || data.summary.operation_count === 0}
-          title={copy.machineLoad.optimizeDelivery.hint}
+          title={copy.machineLoad.optimization.hint}
         >
           <ArrowDownNarrowWide size={15} strokeWidth={1.75} aria-hidden />
-          {sequenceBusy
-            ? copy.machineLoad.optimizeDelivery.busy
-            : copy.machineLoad.optimizeDelivery.label}
+          {copy.machineLoad.optimization.label}
         </button>
         {withdrawnEntries.length > 0 ? (
           <button
@@ -1129,6 +1132,14 @@ export function MachineLoadPage({
           }
           void sendOperationToWorkCenter(transferOperation, target);
         }}
+      />
+
+      <MachineLoadOptimizationModal
+        open={optimizationModalOpen}
+        busy={sequenceBusy}
+        error={optimizationError}
+        onClose={() => setOptimizationModalOpen(false)}
+        onConfirm={(groupByTool) => void runOptimization(groupByTool)}
       />
 
       <MachineLoadWithdrawnModal
