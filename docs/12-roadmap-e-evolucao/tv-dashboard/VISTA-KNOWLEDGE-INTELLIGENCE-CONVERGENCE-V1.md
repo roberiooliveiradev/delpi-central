@@ -362,8 +362,8 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 
 | Phase | Entrega | Depende de | Status |
 |---|---|---|---|
-| 0 | Baseline + drift closure | — | READY_FOR_EXECUTION |
-| 1 | Knowledge Orchestration V1 | 0 | READY_FOR_DIAGNOSTIC |
+| 0 | Baseline + drift closure | — | DONE (§27) |
+| 1 | Knowledge Orchestration V1 | 0 | READY_FOR_EXECUTION (§27.15) |
 | 2 | TV Product Guide V1 | 1 | READY_FOR_DIAGNOSTIC |
 | 3 | Help Convergence | 2 | BLOCKED |
 | 4 | Editor Grounding V2 | 0 | READY_FOR_DIAGNOSTIC |
@@ -391,7 +391,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** source map final, drift register, corpus baseline.
 - **DEPENDENCIES:** nenhuma.
 - **STOP CONDITIONS:** descoberta de código/runtime divergente dos docs.
-- **STATUS:** READY_FOR_EXECUTION.
+- **STATUS:** DONE — execução registrada em §27 (2026-10-08).
 
 ### PHASE 1 — KNOWLEDGE ORCHESTRATION V1
 
@@ -413,7 +413,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** bloco projetado em `get_catalog` (ambos transportes), test report.
 - **DEPENDENCIES:** PHASE 0.
 - **STOP CONDITIONS:** se exigir nova tool ou mudança de dispatch → STOP → Architecture.
-- **STATUS:** READY_FOR_DIAGNOSTIC.
+- **STATUS:** READY_FOR_EXECUTION — os 6 critérios do readiness gate foram provados em §27.15 (2026-10-08). Implementação exige execution brief dedicado com `ROADMAP_PHASE = PHASE_1_KNOWLEDGE_ORCHESTRATION_V1`.
 
 ### PHASE 2 — TV PRODUCT GUIDE V1
 
@@ -667,3 +667,190 @@ Toda emenda a este documento registra: WHAT CHANGED / WHY / EVIDENCE / OWNER / I
 ## Status Semantics
 
 `PLANNED` (conceito aprovado, sem diagnostic gate) · `READY_FOR_DIAGNOSTIC` (escopo/owner conhecidos, mecânica atual a provar) · `READY_FOR_EXECUTION` (causa/mecanismo/owner/contratos provados) · `BLOCKED` (dependência não resolvida) · `DONE` (implementado + verificado + documentado).
+
+---
+
+## 27. PHASE 0 — EXECUTION RECORD (baseline freeze, 2026-10-08)
+
+> Executado por `VISTA-KIC-V1-PHASE-0-BASELINE-DRIFT-CLOSURE`. Documentação + evidência somente; zero mudança de runtime/produção. Baseline de análise: HEAD `336d6b0f` (ancestor de `origin/main`; KIC commit `0cb4d437ea` confirmado em origin).
+
+### 27.1 Baseline snapshot
+
+```text
+VISTA KIC-V1 BASELINE
+HEAD             = 336d6b0f (ancestor of origin/main d6c1e3d2)
+CATALOG          = 2026.10.05.presentation-authority.datamodel-patch.lossless
+INTELLIGENCE     = vista_agent_intelligence.json v2026.09.28.3
+RECIPES          = presentation_recipes.json v2026.09.22.10
+DESIGN_INTEL     = design_intelligence.json v2026.09.23
+CORPUS           = vista_ready_slide_corpus.json v2026.09.23 (C15-C31 + G_*)
+FIXTURE PROVENANCE = corpus@b129bfa60c · intelligence@1c545fb934 · catalog@55cdc2974f
+ACTIONS          = 10 operations (+2 support routes)
+MCP              = 10 tools
+PARITY           = PASS (126 tests — unified boundary, MCP conformance,
+                   read/write surfaces, catalog budget, corpus gate,
+                   builder-instructions budget, agent intelligence)
+GROUNDING        = PARTIAL (mecânica PROVEN; estados semânticos ausentes)
+VISUAL EVIDENCE  = ladder §27.8 (wire PROVEN; host delivery FAIL_OBSERVED)
+DISPLAY FORMAT   = PARTIAL (typed op cobre 2 owners)
+HISTORY          = DOMAIN PROVEN / VISTA_SURFACE ABSENT
+PROPOSAL STORE   = SINGLE_PROCESS ACCEPT_WITH_RESIDUAL
+MCP PROVISIONING = ENVIRONMENT_SCOPE_DIFFERENCE (§27.13)
+EVAL BASELINE    = inventário §27.14 (medições NOT_MEASURED por design)
+DRIFTS           = register §27.12 (1 open env-scope, 3 minor residuals)
+```
+
+### 27.2 Source-of-truth map (revalidado em HEAD)
+
+| Concern | Canonical owner | Canonical source | Derived sources | Runtime consumers | Status | Drift |
+|---|---|---|---|---|---|---|
+| Identity | Keycloak | JWT/OIDC | — | todas as superfícies | PROVEN | — |
+| Platform RBAC | Core API | `load_user_rbac` (fresh em governed write) | permission cache (não usado em write) | tv-dashboard-api | PROVEN | — |
+| Playlist/slides/blocks | tv-dashboard-api | Postgres `tv_dashboard` + nativeConfig | `get_playlist_context` projections | MFE, VISTA, TV | PROVEN | — |
+| PresentationMutation | tv-dashboard-api | `presentation_mutation/` + ops catalog | — | `TvPresentationWriteService` | PROVEN | — |
+| Typed ops (32) | ops catalog | `presentation_ops_content.json` `operations` | `inputSchema` projections | suggest/PREPARE | PROVEN | — |
+| Write boundary | `TvPresentationWriteService` | canonical writer | PREPARE→COMMIT facade | governed writes | PROVEN | — |
+| Resource AuthZ | `PlaylistAccessService` | resource scope | — | writes + reads | PROVEN | — |
+| Capability surface | `capability_surface.py` | `_canonical_surface` | Actions/MCP projections | `get_catalog` | PROVEN | — |
+| Agent directives | `vista_agent_intelligence.json` | 35 grupos + metadata | transport projections | `get_catalog` | PROVEN | `visual_verification` slot emite `{}` (intencional) |
+| Actions projection | parity map inversa | `surface_parity.parity_map` | compacted envelope | GPT Actions | PROVEN | — |
+| MCP projection | neutral names | mesmo JSON | neutralized envelope | MCP | PROVEN | — |
+| Data contracts | api-delpi OpenAPI | `openapi.json` + `x-delpi` | `tv_data_routes.json` | `search_data_routes` | PROVEN | `x-delpi.entity` não persistido; `presentationStrategy` extraído sem consumidor (residual) |
+| Route overlays | `tv_data_route_overlays.json` | curadoria owner-local | merged catalog | discovery/suggest | PROVEN | — |
+| DataModel | tv-dashboard-api | `upsert_data_model`/`inspect`/`preview` | — | ops + reads | PROVEN | — |
+| Design intelligence | `design_intelligence.json` | `DesignIntelligenceService` | designAudit/semanticDigest/visualRecommendation | preview + context | PROVEN | — |
+| Recipes | `presentation_recipes.json` | `PresentationRecipeService` | recipe catalog | compound creates | PROVEN | — |
+| Layout intelligence | `LayoutDigestService` + `SlideAutoLayoutService` + `SafeAutoFixService` | digests + fixes | `layoutDigest`, `apply_safe_layout_fixes` | context + ops | PROVEN | — |
+| Filter intelligence | `FilterDigestService` | digests + `re_layer_playlist_filters` | `filterDigest` | context + ops | PROVEN | — |
+| Display formatting | `DisplayFormatHintsService`/`DisplayFormatService` | hints + `set_display_format` | format bindings | preview + ops | PARTIAL (§27.9) | — |
+| Editor focus | `EditorFocusStore` + `PresentationRealtimeHub` | ephemeral focus rows | `editorFocus` projection | reads | PROVEN (mecânica) | — |
+| Visual evidence | editor vivo (canonical_stage) | `slidePreview.rendered` | signed URL + MCP ImageContent | VERIFY | PROVEN wire / host gap | `CHATGPT_APP_IMAGE_DELIVERY=FAIL_OBSERVED` |
+| History | `PlaylistHistoryRepository` + service | migrations V008/V009 + diff service | `/playlists/{id}/history` | admin API | PROVEN domínio / VISTA surface ABSENT | — |
+| Eval corpus | `vista_ready_slide_corpus.json` | C15–C31 + G_* | gate test | CI | PROVEN | — |
+| Proposal storage | `ProposalStore` (in-process) | `proposal.py` + `proposal_store.py` | HMAC opaque handle | PREPARE→COMMIT | ACCEPT_WITH_RESIDUAL | single-process |
+| DÉLIA TV integration | — | TARGET documental | — | — | TARGET | — |
+
+### 27.3 Live surface baseline
+
+| Métrica | Valor | Status |
+|---|---|---|
+| GPT Actions operations | **10**: `gpt_get_catalog`, `gpt_list_playlists`, `gpt_get_playlist_context`, `gpt_search_data_routes`, `gpt_preview_data_block`, `gpt_preview_data_model`, `gpt_inspect_data_model`, `gpt_suggest_change`, `gpt_preview_change`, `gpt_commit_change` (+ `gpt_get_openapi_schema` schema route + `gpt_get_slide_preview_png` Actions-only asset helper) | PROVEN (`__init__.py:10-21`, routes L141-389) |
+| MCP tools | **10**: `list_playlists`, `get_playlist_context`, `get_catalog`, `search_data_routes`, `inspect_data_model`, `preview_data_model`, `preview_data_block`, `suggest_change`, `prepare_change`, `commit_proposal` | PROVEN (`constants.py:28-41` + drift guard `server.py:331-334`) |
+| Capabilities | **40** (`presentation_ops_content.json` L3272+) | PROVEN |
+| Typed ops | **32** (`operations` L883-3271) | PROVEN |
+| Agent directives | **35 grupos** + `actions_runtime` + metadata | PROVEN |
+| catalogVersion | `2026.10.05.presentation-authority.datamodel-patch.lossless` | PROVEN |
+| Parity map | `surface_parity.parity_map` 10 pares; `not_exposed_in_mcp=[gpt_get_slide_preview_png]` | PROVEN |
+
+**SURFACE_PARITY = PASS** — unified boundary + neutralization + MCP manifest guard + budget: 126 testes verdes (§27.16). Nenhum `gpt_*`/`commit_now` no surface MCP; nenhuma semantic MCP-only em Actions; parity map completo e derivado.
+
+### 27.4 Intelligence baseline (por diretiva)
+
+35 grupos em `vista_agent_intelligence.json` — todos PROVEN como conteúdo vivo servido via `agent_directives`; consumers reais e testes cobrem a maioria (`design_intelligence`, `visual_selection`, `filter_layering`, `layout_perception`, `compound_slide`, `write_quality`, `editor_focus`, `object_resolution`, `data_discovery`, `display_format`, `presentation_recipes`, `media_limits`, `published_templates`, `branch_scope`, `si_goals`, `continuous_review`, `playlist_curation`, `slide_craft`, `slide_design`, `data_transform`, `data_model`, `shape_chrome`, `composed_visuals`, `visual_impact`, `execution_posture`, `screenshot_parity`, `param_expressions`, `modes`, `write_flow`, `write_flow_mcp`, `anti_patterns`, `auth_errors`, `mcp_delia`, `surface_parity`, `brand_logo`). PARTIAL conhecido: `visual_verification` (bloco removido intencionalmente; slot de projeção emite `{}` — testado). TARGET: nenhum.
+
+### 27.5 Intelligence services baseline
+
+Todos PROVEN em `tv_app/application/services/`: `VistaAgentIntelligenceService` (projeção de diretivas por transporte), `DesignIntelligenceService` (audit/digest/recommendation), `PresentationRecipeService`, `LayoutDigestService`, `FilterDigestService`, `StoryDigestService`, `JoinPlanService` (joinHints), `DisplayFormatHintsService`/`DisplayFormatService`, `ReadySlideQualityService`, `VisualVerificationService`, `SlidePreviewRenderService` (schematic + signed URL), `SlideAutoLayoutService`, `SafeAutoFixService`, `PresentationOpsContentService` (catálogo autoridade), `PresentationSuggestOpsService` + `PresentationCommandPlannerService` + `PresentationCommandRecognitionService` + `PresentationHttpCommandPlannerService`, `TvDataRouteCatalogService`/`TvDataRouteDiscoveryService`/`TvDataRouteSuggestService`/`TvDataPreviewService`/`TvCatalogSelectionEvidenceService`, `TvDataBuilderService`+`presentation_builder_facade`, `EditorFocusStore`, `PresentationRealtimeHub`, `TvPresentationWriteService`/`TvGptCommitService`, `TvOpenApiCatalogSyncService`, `PlaylistHistoryChangeService`/`PlaylistHistoryRepository`, `BrandLogoMediaService`. Residual de fragilidade (não-drift): gerador OpenAPI vive em `scripts/` raiz e stub vazio em `tv-dashboard-api/tools/` (dual-location resolvido por `TV_OPENAPI_GENERATOR_SCRIPT`).
+
+### 27.6 Editor grounding baseline
+
+`EditorFocusStore`: efêmero por usuário; campos `playlistId`, `slideId`, `clientId`, `selectedIds[]`, `selectedDataSourceId?`, `updatedAt`; TTL 90s + grace `stale`<=180s; heartbeat MFE 30s; `PresentationRealtimeHub.selection_update` → focus; `visual_capture_request` direcionado por `clientId`. `get_playlist_context` projeta `editorFocus` `{slideId, selectedIds, updatedAt, stale, selectedDataSourceId?}` (clientId/playlistId internos não projetados) + `focusedSlide` (nativeConfig completo) + `blockIndex`/`objectMatches`/`focusedBinding`. **GROUNDING_STATUS = PARTIAL** — mecânica PROVEN; estados semânticos `ACTIVE/STALE/ABSENT/AMBIGUOUS` e `selectedObjects` digest **ausentes** (alvo PHASE 4). `selectedBlockIds`/`focusBlockType` não existem — nomes canônicos: `selectedIds`; tipo via `blockIndex`/`focusedBinding`. Baseline que PHASE 4 deve melhorar.
+
+### 27.7 Data intelligence baseline
+
+| Classe | Itens | Owner |
+|---|---|---|
+| SOURCE CONTRACT | api-delpi `openapi.json` + `x-delpi` (entity, shape, category, locale, params, tv, presentationStrategy) | api-delpi |
+| DERIVED METADATA | `tv_data_routes.json` (gerado), `tv_data_route_overlays.json` (curadoria), aliases, `paramSchema` | tv-dashboard-api |
+| RUNTIME EVIDENCE | `preview_data_block`, `preview_data_model`, `inspect_data_model`, `semanticDigest`, `visualRecommendation`, `joinHints`, `displayFormatHints` | tv-dashboard-api |
+
+`SEARCH MISS != ABSENCE` está codificado em Instructions (princípio imutável) e `agent_directives.data_discovery`. `x-delpi.entity` usado só para overlays (não persistido por rota); `presentationStrategy` extraído sem consumidor.
+
+### 27.8 Visual evidence ladder
+
+| Degrau | Status |
+|---|---|
+| schematic layout / `layoutDigest` / `designAudit` | PROVEN |
+| `canonical_stage` (editor-live capture, revision-bound, `source=editor_live`+`clientId`, signed TTL URL) | PROVEN (policy + provenance + E2E stack real) |
+| MCP `ImageContent` serializer | PROVEN (`mcp 2.2.0`, `mimeType` correto) |
+| MCP streamable-HTTP wire (`content=[text,image]` + structuredContent) | PROVEN (`test_mcp_streamable_http_wire.py`) |
+| ChatGPT host image forwarding | **FAIL_OBSERVED** (host runtime delivery gap) |
+| Model pixel inspection | **TEST_NOT_RUN** |
+
+`artifact exists != model inspected pixels` — degrau final permanece aberto por limitação do host, não do backend.
+
+### 27.9 Display format baseline
+
+`set_display_format` typed op: `target.owner ∈ {contentRunDataRef, textProjection}` apenas — **2 owners** endereçáveis pelo op dedicado. Demais owners (`kpiOptions.displayValueFormat`, `kpiProjection.metrics[].displayFormat`, `chartOptions.displayValueFormat`/`displayCategoryFormat`, `tableOptions.displayValueFormat`, `tableProjection.columns[].displayFormat`, canvas table) graváveis só via payloads de bloco (`upsert_block`/`bind_visual`), sem op tipado dedicado. **DISPLAY_FORMAT_COVERAGE = PARTIAL** — carregado no roadmap (fora do escopo P0).
+
+### 27.10 History baseline
+
+`PlaylistHistoryChangeService` (snapshot diff→summaries) + `PlaylistHistoryRepository` + rotas `/playlists/{id}/history` (list/get, até 500 versões) + `POST /{history_id}/restore` + actor snapshot (V009). **DOMAIN_HISTORY = PROVEN. VISTA_HISTORY_SURFACE = ABSENT** (nenhuma tool/Action expõe; correto para P0). Restore é write de domínio — fora de escopo de agente (§18).
+
+### 27.11 Proposal store baseline
+
+`ProposalStore` in-process (`threading.RLock` dict), handle HMAC-SHA256 opaco (`b64(id).b64(mac)`), TTL **900s** (`DEFAULT_TTL_SECONDS`), binding: `actor_id` + `capability` + `catalog_version` + `base_revision`; consume único; `PROPOSAL_NOT_FOUND|EXPIRED|CHANGED`; idempotency no commit path (Idempotency-Key em `commit_now`). **SINGLE_PROCESS_SUITABILITY = ACCEPT_WITH_RESIDUAL** (documentado no docstring). **MULTI_WORKER_SUITABILITY = UNSUITABLE** — review trigger: workers>1, réplicas>1 ou cross-process prepare/commit.
+
+### 27.12 Boundary + drift register
+
+**Boundary:** `CHAT = HANDOFF_ONLY` (sem tool de mutação TV; bundle `tv_dashboard_handoff` → resposta direta); `DELIA_TV_ADAPTER = TARGET` (documental, zero coupling); `VISTA = DOMAIN_SPECIALIST` (TV Dashboard = authority — invariante confirmado).
+
+| DRIFT_ID | TYPE | SOURCE_A | SOURCE_B | Description | Owner | Severity | Status | Action |
+|---|---|---|---|---|---|---|---|---|
+| D-01 | ENVIRONMENT_SCOPE_DIFFERENCE | capability matrix/runbook (`mcp-tv-dashboard` provisioning PENDING) | conector ChatGPT atual invoca tools MCP VISTA | escopos distintos: formal dedicated client+go-live vs connector funcional por caminho OAuth existente (incl. legacy `plugin` client id aceito por `oauth_contract.py:83-89`) | tv-dashboard-api | medium | OPEN (env-scope, não drift de doc) | §27.13 — manter PENDING formal; verificar credencial em uso com operador antes de qualquer emenda |
+| D-02 | STALE_EVIDENCE (menor) | generator script em `scripts/` raiz | stub vazio `tv-dashboard-api/tools/` | dual-location resolvida por env; frágil | tv-dashboard-api | low | OPEN residual | reavaliar em manutenção futura |
+| D-03 | CONTRACT residual | `x-delpi.presentationStrategy` extraído | sem consumidor downstream | dead extraction | tv-dashboard-api | low | OPEN residual | PHASE 6 decide consumir ou remover |
+| D-04 | DOC/intent | `visual_verification` directive slot | bloco removido intencionalmente (emite `{}`) | decisão registrada, não bug | tv-dashboard-api | info | CLOSED | testado (`test_canonical_rendered_preview.py`) |
+
+Nenhum CONTRACT_DRIFT ou EXECUTION_DRIFT encontrado. Escopos distintos não foram classificados como drift automático.
+
+### 27.13 MCP provisioning truth (mandatory closure)
+
+| Item | Evidência em HEAD |
+|---|---|
+| Backend MCP route mounted | PROVEN (`/mcp` mount; streamable-HTTP) |
+| MCP adapter + tool registry | PROVEN (10 tools, `constants.py` + drift guard + conformance) |
+| OAuth/Bearer contract | PROVEN (RFC 9728 metadata, audience = MCP URL exata, scope `mcp:tools`; service principals rejeitados em governed write) |
+| Keycloak client `mcp-tv-dashboard` | **PENDING** — nenhum script de provisioning em `infra/` (só scripts DÉLIA MCP existem); runbook lista requisitos (confidential, Auth Code+PKCE, scope `mcp:tools`, audience mapper) e marca "do not mark live" até evidência |
+| Connector ChatGPT atual | FUNCIONAL em ambiente observado — via caminho OAuth existente (`oauth_contract.py:83-89` aceita `mcp-tv-dashboard` **ou** legacy `plugin` client id); credencial exata em uso não é provável por código |
+| Formal go-live | PENDING (runbook + matrix consistentes) |
+
+**MCP_STATUS = ENVIRONMENT_SCOPE_DIFFERENCE.** Backend PROVEN; AUTH CLIENT formal PENDING; CONNECTOR funcional por escopo alternativo; GO-LIVE formal PENDING. Tool-callable-here != rollout formal — a documentação está correta em escopo; **sem reescrita de PENDING**. Ação: operador confirma qual client id está configurado no conector antes de qualquer atualização do claim.
+
+### 27.14 Eval baseline
+
+**Assets (PROVEN):** `vista-ready-slide-eval-corpus.md` (C1–C31 doc), `vista_ready_slide_corpus.json` v2026.09.23 (C15–C31 + G_* gate cases, fixture@b129bfa60c), `test_vista_ready_slide_corpus_gate.py` (gate vivo), `test_presentation_suggest_ops_service.py` (NL→ops regressões), `test_vista_unified_boundary.py` + MCP read/write surfaces + `test_mcp_platform_conformance.py` + `test_mcp_streamable_http_wire.py` (parity/wire), `test_canonical_rendered_preview.py` (visual evidence), `test_vista_builder_instructions_budget.py` + `test_gpt_actions_catalog_budget.py` (envelopes), suites adjacentes de materialization/merge/patch/planner/contract.
+
+**Baseline matrix (coverage != qualidade do modelo):**
+
+| Dimensão | Coverage atual | Measurement? | Baseline value | Gap |
+|---|---|---|---|---|
+| OBJECT_RESOLUTION | tests + corpus C6/C13/C18 | gate binário | NOT_MEASURED | rubrica/score |
+| CREATE_VS_ALTER | suggest suite (recent fixes) | gate binário | NOT_MEASURED | corpus dedicado |
+| CLARIFICATION | tests (createBlockTypeRequired, suggestNeedSelection…) | gate binário | NOT_MEASURED | corpus dedicado |
+| SINGLE_CREATE | tests (novo bloco family) | gate binário | NOT_MEASURED | corpus dedicado |
+| TYPED_OP_VALIDITY | op contract + catalog audit | gate binário | NOT_MEASURED | — |
+| DATA_ROUTE_DISCOVERY | discovery service tests | gate binário | NOT_MEASURED | retrieval corpus |
+| DATA_PREVIEW | preview tests | gate binário | NOT_MEASURED | — |
+| VISUAL_SELECTION | corpus C27–C31 + hints | gate binário | NOT_MEASURED | rubrica de escolha |
+| LAYOUT_QUALITY | quality service + auto-fix tests | gate binário | NOT_MEASURED | threshold metrics |
+| FILTER_LAYERING | filterDigest/relayer tests | gate binário | NOT_MEASURED | corpus dedicado |
+| DISPLAY_FORMAT | bridge tests + hints | gate binário | NOT_MEASURED | coverage matrix |
+| WRITE_SAFETY | mutation/merge suites | gate binário | NOT_MEASURED | negative corpus |
+| PREPARE_VALIDITY | proposal/commit tests | gate binário | NOT_MEASURED | — |
+| VERIFY_OUTCOME | commit+read-back tests | gate binário | NOT_MEASURED | runtime signals |
+| TRANSPORT_PARITY | unified boundary + conformance | gate binário | PROVEN (PASS) | — |
+
+`MEASURABLE_NOW` (gate→delta binário): parity, typed-op validity, single-create, CREATE_VS_ALTER, clarification, corpus C15–C31. `NEEDS_FIXTURE`: visual selection rubric, route retrieval corpus, filter-layering corpus, display-format coverage. `NEEDS_TELEMETRY`: outcome/VERIFY em runtime (PHASE 7). `NEEDS_HUMAN_RUBRIC`: design review quality (PHASE 5). **Test pass count != quality score** — valores numéricos ficam NOT_MEASURED por design.
+
+### 27.15 Readiness + consistency
+
+**PHASE 1 readiness gate — todos os critérios PROVEN:** (1) authority conhecida (`vista_agent_intelligence.json`→`agent_directives`); (2) fontes inventariadas (§27.2); (3) zero contract drift afetando orquestração; (4) precedência definível sem mover ownership (todas as fontes permanecem nos owners atuais); (5) `agent_directives` é o host correto (padrão TÉO prova orquestração declarativa no mesmo tipo de artefato); (6) zero tool nova exigida. **PHASE_1 = READY_FOR_EXECUTION** (implementation brief dedicado obrigatório).
+
+**Consistency check:** P0 DONE; P1 READY_FOR_EXECUTION; P2–P7 inalterados (READY_FOR_DIAGNOSTIC/BLOCKED); P8 BLOCKED; P9 PLANNED. Nenhum NEEDS_ROADMAP_AMENDMENT.
+
+**PHASE 7 provenance:** HEAD `336d6b0f` · catalog `2026.10.05.presentation-authority.datamodel-patch.lossless` · intelligence `2026.09.28.3` · corpus `2026.09.23` · fixture@`b129bfa60c` · intelligence@`1c545fb934` · catalog@`55cdc2974f`.
+
+### 27.16 Checks executados
+
+`pytest test_vista_unified_boundary test_mcp_platform_conformance test_vista_mcp_read_surface test_vista_mcp_write_surface test_gpt_actions_catalog_budget test_vista_ready_slide_corpus_gate test_vista_builder_instructions_budget test_vista_agent_intelligence` → **126 passed**. Zero mudança de runtime; nenhum teste enfraquecido.
