@@ -98,6 +98,20 @@ def _quarantine_tokens() -> set[str]:
     return tokens
 
 
+def _neutral_verb_tokens() -> set[str]:
+    """Request-form command verbs (``gere``/``calcule``/``monte``/``traduza``/
+    ``emita``) carry no topic evidence: ``calcule o OTD`` asks for a governed
+    READ of an authoritative KPI. They are excluded from query semantic mass
+    and overlap scoring but never suppress candidates by themselves.
+    """
+    payload = load_external_read_allowlist()
+    raw = payload.get("retrievalNeutralVerbTokens") or []
+    tokens: set[str] = set()
+    for item in raw:
+        tokens |= tokenize(str(item))
+    return tokens
+
+
 def _tokens_compatible(left: str, right: str) -> bool:
     """Conservative PT singular/plural and shared-stem compatibility."""
     if left == right:
@@ -206,8 +220,13 @@ def _filler_tolerant_match(alias_tokens: list[str], query_tokens: list[str]) -> 
     content tokens between consecutive alias terms; arbitrary content is
     never skipped.
     """
+    neutral = _neutral_verb_tokens()
     alias_content = [t for t in alias_tokens if t not in _PHRASE_FILLERS]
-    query_content = [t for t in query_tokens if t not in _PHRASE_FILLERS]
+    query_content = [
+        t
+        for t in query_tokens
+        if t not in _PHRASE_FILLERS and t not in neutral
+    ]
     if len(alias_content) < 2 or not query_content:
         return False
     if _exact_window_match(alias_content, query_content):
@@ -288,6 +307,9 @@ def score_action(
     if not hay_tokens:
         return 0.0
 
+    neutral = _neutral_verb_tokens()
+    q_content = q_tokens - _PHRASE_FILLERS - neutral
+
     idf = token_idf or {}
     specificity = lambda t: idf.get(t, 0.5)  # noqa: E731 - bounded local use
 
@@ -322,34 +344,35 @@ def score_action(
             best_multiword_len = max(best_multiword_len, len(alias_n))
 
     overlap = q_tokens & hay_tokens
-    if not (overlap - _PHRASE_FILLERS) and multiword_hits == 0 and single_hits == 0:
+    semantic_overlap = overlap - _PHRASE_FILLERS - neutral
+    if not semantic_overlap and multiword_hits == 0 and single_hits == 0:
         if overlap:
-            # Filler-only overlap: suppress instead of emitting a junk candidate.
+            # Filler/neutral-only overlap: suppress instead of emitting a
+            # junk candidate.
             return 0.0
         text = normalize_text(action.searchable_text)
-        partial = sum(1 for t in q_tokens if t in text)
+        partial = sum(1 for t in q_content if t in text)
         # Substring-level traces alone are noise below half coverage.
-        if float(partial) / float(len(q_tokens)) < 0.5:
+        if not q_content or float(partial) / float(len(q_content)) < 0.5:
             return 0.0
-        return min(0.84, float(partial) / float(len(q_tokens)) * 0.5)
+        return min(0.84, float(partial) / float(len(q_content)) * 0.5)
 
     # Specificity-weighted coverage: generic overlap (``produto``, ``dados``)
     # counts little; rare domain tokens carry the evidence. Unsupported
     # requests whose coverage is only generic fall below the admission floor.
     if overlap:
         # Intent mass comes from durable content tokens only; function words
-        # (liste/os/de) are rare in catalog text, which would inflate the
-        # denominator and wrongly depress real coverage.
-        content_tokens = q_tokens - _PHRASE_FILLERS
-        q_mass = sum(specificity(t) for t in content_tokens)
+        # and request-form command verbs (liste/os/de/gere/calcule) carry no
+        # topic evidence and would inflate the denominator.
+        q_mass = sum(specificity(t) for t in q_content)
         if q_mass <= 0:
             # Degenerate specificity (tiny/uniform catalog): fall back to
             # plain coverage instead of dividing by a meaningless mass.
-            denom = float(len(content_tokens) or len(q_tokens))
-            overlap_score = float(len(overlap - _PHRASE_FILLERS)) / denom
+            denom = float(len(q_content) or len(q_tokens))
+            overlap_score = float(len(semantic_overlap)) / denom
         else:
             overlap_score = (
-                sum(specificity(t) for t in overlap - _PHRASE_FILLERS) / q_mass
+                sum(specificity(t) for t in semantic_overlap) / q_mass
             )
     else:
         overlap_score = 0.0

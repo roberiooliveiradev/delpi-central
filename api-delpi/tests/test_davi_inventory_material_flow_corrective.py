@@ -513,7 +513,7 @@ def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
 
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
-    assert allow["version"] == 20
+    assert allow["version"] == 21
     assert len(allow["operations"]) == 89
     ops = _ops()
     for kept in (

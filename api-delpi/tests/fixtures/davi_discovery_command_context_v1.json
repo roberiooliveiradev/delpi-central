@@ -1,0 +1,101 @@
+{
+  "benchmark_version": "1",
+  "task_id": "DAVI-MCP-DISCOVERY-QUALITY-CORRECTIVE-002",
+  "description": "Adversarial command-context set: imperative/orchestration verbs (gere/calcule/monte/emita/traduza) are request-form words, not capability classification. COMMAND_POSITIVE cases must reach the governed READ capability; COMMAND_UNSUPPORTED cases must return zero candidates because the semantic topic is outside the governed inventory — never because of the verb itself.",
+  "case_types": {
+    "COMMAND_POSITIVE": "command-phrased request whose semantic topic maps to a governed READ capability; expected action must appear (top1 preferred, top3 required)",
+    "COMMAND_UNSUPPORTED": "command-phrased request whose semantic topic has no governed capability; zero candidates required"
+  },
+  "cases": [
+    {
+      "id": "DQ-CC-P-001",
+      "query": "calcule o OTD de compras",
+      "language": "pt-BR",
+      "case_type": "COMMAND_POSITIVE",
+      "family": "supplies",
+      "expected_action_ids": ["get_supplies_purchase_order_otd"],
+      "top1_required": true,
+      "notes": "calculate-phrased read of governed purchasing OTD"
+    },
+    {
+      "id": "DQ-CC-P-002",
+      "query": "calcule o OEE da produção",
+      "language": "pt-BR",
+      "case_type": "COMMAND_POSITIVE",
+      "family": "production",
+      "expected_action_ids": ["get_overall_equipment_effectiveness_pct"],
+      "top1_required": true,
+      "notes": "calculate-phrased read of governed OEE KPI"
+    },
+    {
+      "id": "DQ-CC-P-003",
+      "query": "gere o resumo dos ajustes de inventário",
+      "language": "pt-BR",
+      "case_type": "COMMAND_POSITIVE",
+      "family": "supplies",
+      "expected_action_ids": ["get_supplies_inventory_adjustments_summary"],
+      "top1_required": true,
+      "notes": "generate-summary phrasing over governed inventory adjustment summary"
+    },
+    {
+      "id": "DQ-CC-P-004",
+      "query": "gere um resumo do estoque do produto 10080034",
+      "language": "pt-BR",
+      "case_type": "COMMAND_POSITIVE",
+      "family": "product_master",
+      "expected_action_ids": ["get_product_stock"],
+      "top1_required": true,
+      "notes": "generate-summary phrasing over governed product stock"
+    },
+    {
+      "id": "DQ-CC-P-005",
+      "query": "calcule a taxa de conversão comercial",
+      "language": "pt-BR",
+      "case_type": "COMMAND_POSITIVE",
+      "family": "commercial",
+      "expected_action_ids": ["get_sales_conversion_rate"],
+      "top1_required": true,
+      "notes": "calculate-phrased read of governed commercial conversion rate"
+    },
+    {
+      "id": "DQ-CC-P-006",
+      "query": "monte um resumo dos pedidos em aberto",
+      "language": "pt-BR",
+      "case_type": "COMMAND_POSITIVE",
+      "family": "commercial",
+      "expected_action_ids": ["get_product_sales_open_orders"],
+      "top1_required": true,
+      "notes": "compose-summary phrasing over governed open sales orders"
+    },
+    {
+      "id": "DQ-CC-N-001",
+      "query": "calcule o ICMS da nota de saída",
+      "language": "pt-BR",
+      "case_type": "COMMAND_UNSUPPORTED",
+      "family": "supplies",
+      "expected_action_ids": [],
+      "top1_required": false,
+      "notes": "ICMS tax computation has no governed capability; zero by unsupported topic, not by the verb"
+    },
+    {
+      "id": "DQ-CC-N-002",
+      "query": "gere o DANFE da nota fiscal 12345",
+      "language": "pt-BR",
+      "case_type": "COMMAND_UNSUPPORTED",
+      "family": "supplies",
+      "expected_action_ids": [],
+      "top1_required": false,
+      "notes": "DANFE document emission is an ACT outside the governed READ inventory"
+    },
+    {
+      "id": "DQ-CC-N-003",
+      "query": "monte a escala de férias do time de produção",
+      "language": "pt-BR",
+      "case_type": "COMMAND_UNSUPPORTED",
+      "family": "production",
+      "expected_action_ids": [],
+      "top1_required": false,
+      "notes": "vacation scheduling is an unsupported HR domain (quarantine token férias)"
+    }
+  ]
+}

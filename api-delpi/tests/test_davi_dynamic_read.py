@@ -366,7 +366,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 20
+    assert allow.get("version") == 21
     assert allow.get("coverageDecision", {}).get("decision") == (
         "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS"
     )

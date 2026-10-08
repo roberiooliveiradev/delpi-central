@@ -1,5 +1,5 @@
 {
-  "version": 20,
+  "version": 21,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
@@ -60,10 +60,26 @@
     "previsao",
     "previsão",
     "forecast",
-    "weather"
+    "weather",
+    "icms",
+    "danfe",
+    "imposto",
+    "impostos"
+  ],
+  "retrievalNeutralVerbTokens": [
+    "gerar",
+    "gere",
+    "calcular",
+    "calcule",
+    "montar",
+    "monte",
+    "traduzir",
+    "traduza",
+    "emitir",
+    "emita"
   ],
   "retrievalReadOnlyGuard": {
-    "description": "Semantic READ-only discovery guard for explicit mutation and non-read imperative commands. retrieval semantic guard only — NOT AuthZ, NOT business permission, NOT capability grant.",
+    "description": "Semantic READ-only discovery guard for explicit mutation commands. retrieval semantic guard only — NOT AuthZ, NOT business permission, NOT capability grant. Orchestration/content verbs (retrievalNeutralVerbTokens) are NOT mutations: verb form does not classify capability.",
     "writeIntentVerbTokens": [
       "alterar",
       "altere",
@@ -154,18 +170,6 @@
       "need to update",
       "please delete",
       "please change"
-    ],
-    "nonReadCommandVerbTokens": [
-      "gerar",
-      "gere",
-      "calcular",
-      "calcule",
-      "montar",
-      "monte",
-      "traduzir",
-      "traduza",
-      "emitir",
-      "emita"
     ]
   },
   "explicitProcessingProhibitions": [],

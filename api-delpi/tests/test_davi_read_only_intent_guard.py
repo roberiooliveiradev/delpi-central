@@ -133,20 +133,16 @@ def test_noun_participle_does_not_trigger_write_guard(query):
         "traduzir a descrição",
         "emita a nota fiscal 12345",
         "emitir o relatório de vendas",
+        "calcule o OTD de compras",
+        "gere um resumo do estoque do produto 10080034",
     ],
 )
-def test_non_read_command_verbs_return_zero_candidates(query, monkeypatch):
-    """Imperative commands that produce content (generate/calculate/emit)
-    are outside the read-only broker even though they are not mutations."""
-    monkeypatch.setattr(
-        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
-        lambda: "test-secret-davi",
-    )
-    assert has_explicit_write_intent(query) is True
-    result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
-    assert result["candidate_count"] == 0
-    assert result["candidates"] == []
-    assert result["eligible_action_count"] == 87
+def test_command_verbs_do_not_trigger_write_guard(query):
+    """Orchestration/content verbs are request-form words, not capability
+    classification. ``calcule o OTD`` is still a governed READ of an
+    authoritative KPI, so the mutation guard never fires on verb form alone.
+    Candidate outcomes are decided by semantic retrieval, not by the verb."""
+    assert has_explicit_write_intent(query) is False
 
 
 @pytest.mark.parametrize(
