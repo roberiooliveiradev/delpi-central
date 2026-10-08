@@ -806,3 +806,345 @@ def test_r4_explicit_proxy_fails_closed():
     with deadline_scope(deadline):
         with pytest.raises(ProxyError):
             https_conn.connect()
+
+
+# -------------------------------------------------------------------
+# C3-INTELLIGENCE-LOOP-03R2A-R5 — bounded DNS executor + dep freeze
+# -------------------------------------------------------------------
+
+import threading as _threading  # noqa: E402
+
+from app.infrastructure.http.dns_resolver import (  # noqa: E402
+    BoundedDnsResolver,
+    DnsResolverSaturatedError,
+    MAX_DNS_RESOLVER_OUTSTANDING,
+    MAX_DNS_RESOLVER_WORKERS,
+)
+
+
+def test_r5_dns_fast_path_works():
+    """Normal resolution through the bounded executor — request
+    completes unchanged."""
+    server, stop, _ = _serve(_fast_ok)
+    try:
+        response = bounded_request(
+            deadline_http_get,
+            f"http://localhost:{server.getsockname()[1]}/x",
+            timeout_seconds=3.0,
+        )
+        assert response.status_code == 200
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r5_dns_slow_caller_deadline(monkeypatch):
+    """getaddrinfo sleeping 1.0s under a 0.1s caller budget: the
+    caller returns near its OWN deadline — it never waits for the
+    worker."""
+    real_getaddrinfo = socket.getaddrinfo
+
+    def slow_getaddrinfo(host, port, family, socktype):
+        time.sleep(1.0)
+        return real_getaddrinfo(host, port, family, socktype)
+
+    monkeypatch.setattr(socket, "getaddrinfo", slow_getaddrinfo)
+
+    started = time.monotonic()
+    with pytest.raises(BoundedHttpTimeout):
+        bounded_request(
+            deadline_http_get,
+            "http://localhost:1/x",
+            timeout_seconds=0.1,
+        )
+    elapsed = time.monotonic() - started
+    # Scheduler/CI slack — structural bound is 0.1, worker runs 1.0.
+    assert elapsed < 0.6, f"elapsed {elapsed:.2f}s"
+
+
+def test_r5_dns_late_result_zero_side_effects(monkeypatch):
+    """After the caller times out, the worker's late result is
+    discarded — ZERO TCP connect, even after the worker finishes."""
+    finished = _threading.Event()
+    connect_attempts = []
+    real_getaddrinfo = socket.getaddrinfo
+    real_connect = socket.socket.connect
+
+    def slow_getaddrinfo(host, port, family, socktype):
+        time.sleep(0.6)
+        result = real_getaddrinfo(host, port, family, socktype)
+        finished.set()
+        return result
+
+    def counting_connect(self, sa):
+        connect_attempts.append(sa)
+        return real_connect(self, sa)
+
+    monkeypatch.setattr(socket, "getaddrinfo", slow_getaddrinfo)
+    monkeypatch.setattr(socket.socket, "connect", counting_connect)
+
+    server, stop, _ = _serve(_fast_ok)
+    try:
+        started = time.monotonic()
+        with pytest.raises(BoundedHttpTimeout):
+            bounded_request(
+                deadline_http_get,
+                f"http://localhost:{server.getsockname()[1]}/x",
+                timeout_seconds=0.1,
+            )
+        assert time.monotonic() - started < 0.6
+        # Wait until the worker ACTUALLY finishes — late result must
+        # still have produced zero connects.
+        assert finished.wait(timeout=5.0)
+        time.sleep(0.2)
+        assert connect_attempts == []
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r5_dns_result_past_deadline_zero_connect(monkeypatch):
+    """A result arriving just past the deadline is rejected by the
+    recheck — zero connect attempts even though resolution
+    'succeeded'."""
+    connect_attempts = []
+    real_getaddrinfo = socket.getaddrinfo
+    real_connect = socket.socket.connect
+
+    def near_deadline_getaddrinfo(host, port, family, socktype):
+        time.sleep(0.35)  # returns just past the 0.3s budget
+        return real_getaddrinfo(host, port, family, socktype)
+
+    def counting_connect(self, sa):
+        connect_attempts.append(sa)
+        return real_connect(self, sa)
+
+    monkeypatch.setattr(socket, "getaddrinfo", near_deadline_getaddrinfo)
+    monkeypatch.setattr(socket.socket, "connect", counting_connect)
+
+    server, stop, _ = _serve(_fast_ok)
+    try:
+        with pytest.raises(BoundedHttpTimeout):
+            bounded_request(
+                deadline_http_get,
+                f"http://localhost:{server.getsockname()[1]}/x",
+                timeout_seconds=0.3,
+            )
+        assert connect_attempts == []
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r5_dns_saturation_fails_closed(monkeypatch):
+    """All outstanding slots occupied by slow lookups → a new request
+    fails fast; thread count never exceeds MAX_WORKERS."""
+    release = _threading.Event()
+    real_getaddrinfo = socket.getaddrinfo
+
+    def blocking_getaddrinfo(host, port, family, socktype):
+        release.wait(timeout=10.0)
+        return real_getaddrinfo(host, port, family, socktype)
+
+    monkeypatch.setattr(socket, "getaddrinfo", blocking_getaddrinfo)
+
+    resolver = BoundedDnsResolver(
+        max_workers=MAX_DNS_RESOLVER_WORKERS,
+        max_outstanding=MAX_DNS_RESOLVER_OUTSTANDING,
+    )
+    deadline = time.monotonic() + 30.0
+    workers_before = len(resolver._pool._threads)
+    # Occupy every outstanding slot directly (structural capacity
+    # proof — not request-count dependent).
+    holders = [
+        _threading.Thread(
+            target=lambda i=i: _swallow(
+                resolver.resolve, "h%d" % i, 80, 0, socket.SOCK_STREAM,
+                deadline,
+            ),
+            daemon=True,
+        )
+        for i in range(MAX_DNS_RESOLVER_OUTSTANDING)
+    ]
+    for t in holders:
+        t.start()
+    time.sleep(0.5)  # let submissions land
+    try:
+        # Next admission fails fast — no queue growth, no new worker.
+        with pytest.raises(DnsResolverSaturatedError):
+            resolver.resolve(
+                "blocked.invalid", 80, 0, socket.SOCK_STREAM, deadline
+            )
+        workers_peak = len(resolver._pool._threads)
+        assert workers_before <= workers_peak
+        assert workers_peak <= MAX_DNS_RESOLVER_WORKERS
+        # No TCP connect ever happened — workers only resolved DNS.
+    finally:
+        release.set()
+        resolver._pool.shutdown(wait=True, cancel_futures=True)
+
+
+def _swallow(fn, *args):
+    try:
+        fn(*args)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def test_r5_dns_timeout_storm_bounded(monkeypatch):
+    """Repeated slow DNS submissions beyond capacity: no unbounded
+    thread growth, callers fail closed once saturated, the pool
+    recovers afterwards."""
+    release = _threading.Event()
+    real_getaddrinfo = socket.getaddrinfo
+
+    def blocking_getaddrinfo(host, port, family, socktype):
+        release.wait(timeout=15.0)
+        return real_getaddrinfo(host, port, family, socktype)
+
+    monkeypatch.setattr(socket, "getaddrinfo", blocking_getaddrinfo)
+
+    # Dedicated test instance — same class the singleton uses.
+    resolver = BoundedDnsResolver()
+    deadline = time.monotonic() + 20.0
+
+    results = []
+    storm = [
+        _threading.Thread(
+            target=lambda: results.append(
+                _swallow_or_error(
+                    resolver.resolve, "storm.invalid", 80, 0,
+                    socket.SOCK_STREAM, deadline,
+                )
+            ),
+            daemon=True,
+        )
+        for _ in range(MAX_DNS_RESOLVER_OUTSTANDING * 2)
+    ]
+    for t in storm:
+        t.start()
+    time.sleep(0.5)  # let submissions land while workers block
+
+    try:
+        # Thread count stays at the configured cap.
+        assert len(resolver._pool._threads) <= MAX_DNS_RESOLVER_WORKERS
+        # A late caller while still saturated fails fast.
+        with pytest.raises(
+            (DnsResolverSaturatedError, socket.timeout)
+        ):
+            resolver.resolve(
+                "late.invalid", 80, 0, socket.SOCK_STREAM,
+                time.monotonic() + 5.0,
+            )
+    finally:
+        release.set()
+    for t in storm:
+        t.join(timeout=15.0)
+
+    # Beyond-capacity callers failed closed (saturated or deadline).
+    assert results.count("saturated") + results.count(
+        "timeout"
+    ) > 0
+    # Recovery: capacity frees and a normal resolution succeeds.
+    out = resolver.resolve(
+        "localhost", 80, 0, socket.SOCK_STREAM,
+        time.monotonic() + 5.0,
+    )
+    assert out
+    resolver._pool.shutdown(wait=True, cancel_futures=True)
+
+
+def _swallow_or_error(fn, *args):
+    try:
+        fn(*args)
+        return "resolved"
+    except DnsResolverSaturatedError:
+        return "saturated"
+    except socket.timeout:
+        return "timeout"
+    except Exception as exc:  # noqa: BLE001
+        return type(exc).__name__
+
+
+def test_r5_dns_gaierror_truthful_no_connect(monkeypatch):
+    """Resolution failure maps to a truthful unavailable/timeout —
+    never success, never connect."""
+    connect_attempts = []
+    real_connect = socket.socket.connect
+
+    def failing_getaddrinfo(host, port, family, socktype):
+        raise socket.gaierror(-2, "Name or service not known")
+
+    def counting_connect(self, sa):
+        connect_attempts.append(sa)
+        return real_connect(self, sa)
+
+    monkeypatch.setattr(socket, "getaddrinfo", failing_getaddrinfo)
+    monkeypatch.setattr(socket.socket, "connect", counting_connect)
+
+    with pytest.raises(
+        (BoundedHttpTimeout, BoundedHttpTransportError)
+    ):
+        bounded_request(
+            deadline_http_get,
+            "http://unresolvable.invalid/x",
+            timeout_seconds=1.0,
+        )
+    assert connect_attempts == []
+
+
+def test_r5_transport_compatibility_guard():
+    """Dependency-freeze guard: prove the private/internal urllib3
+    surfaces deadline_transport depends on exist at runtime — an
+    upgrade breaking them must fail LOUDLY here, forcing a rerun of
+    the absolute-deadline acceptance suite."""
+    import urllib3.connection as uc
+    import urllib3.connectionpool as ucp
+    import urllib3.poolmanager as upm
+    import urllib3.util.connection as uconn
+    import urllib3.util.ssl_ as usl
+
+    assert callable(uc._match_hostname)
+    assert callable(uc._assert_fingerprint)
+    assert callable(uc.is_ipaddress)
+    assert callable(usl.create_urllib3_context)
+    assert callable(usl.resolve_cert_reqs)
+    assert callable(usl.resolve_ssl_version)
+    assert isinstance(usl.ALPN_PROTOCOLS, list)
+    assert hasattr(usl, "HAS_NEVER_CHECK_COMMON_NAME")
+    assert hasattr(usl, "IS_PYOPENSSL")
+    assert callable(uconn._set_socket_options)
+    assert callable(uconn.allowed_gai_family)
+    for name in (
+        "ConnectTimeoutError",
+        "LocationParseError",
+        "NameResolutionError",
+        "NewConnectionError",
+        "ProxyError",
+    ):
+        import urllib3.exceptions as uex
+
+        assert hasattr(uex, name), name
+    # Structural surfaces used by the subclasses.
+    assert hasattr(uc.HTTPConnection, "_new_conn")
+    assert hasattr(uc.HTTPSConnection, "connect")
+    assert issubclass(ucp.HTTPSConnectionPool, object)
+    # PoolManager stores scheme->pool class map on the INSTANCE.
+    mgr = upm.PoolManager()
+    assert "http" in mgr.pool_classes_by_scheme
+    # The deadline transport actually wires itself end-to-end.
+    import app.infrastructure.http.deadline_transport as dt
+
+    session = dt._deadline_session()
+    assert session.trust_env is False
+    assert isinstance(
+        session.get_adapter("http://x"), dt._DeadlineHTTPAdapter
+    )
+    assert isinstance(
+        session.get_adapter("https://x"), dt._DeadlineHTTPAdapter
+    )
+    conn = dt._DeadlineHTTPConnection("example.com", 80)
+    assert hasattr(conn, "_bounded_connect")
+    https_conn = dt._DeadlineHTTPSConnection("example.com", 443)
+    assert hasattr(https_conn, "_bounded_connect")
+    assert hasattr(https_conn, "_deadline_connect")

@@ -1,6 +1,7 @@
 Flask==3.1.0
 gunicorn==23.0.0
 pytest==8.3.4
-requests>=2.31.0
+requests==2.34.2
+urllib3==2.8.0
 python-jose[cryptography]>=3.3.0
 cryptography>=42.0.0

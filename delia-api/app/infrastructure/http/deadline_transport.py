@@ -34,16 +34,19 @@ kernel-level op itself expires at the absolute deadline inside the
 caller's own thread — a timed-out request genuinely dies and nothing
 continues detached.
 
-Honest residuals (recorded in §6.153):
-* ``socket.getaddrinfo`` is a single blocking libc call — it cannot
-  be interrupted in-thread without detached workers (forbidden).
-  A deadline check right after resolution guarantees ZERO connect
-  attempts on an expired budget, but the resolver call itself can
-  overshoot (bounded only by OS resolver configuration).
-* Forward proxies are disallowed fail-closed for governed calls:
-  deadline sessions use ``trust_env=False`` and deadline connections
-  raise if a proxy is configured — provider endpoints are
-  direct-only by contract (approved-specialist configuration only).
+DNS: ``socket.getaddrinfo`` cannot be interrupted in-thread — R5
+routes it through ``dns_resolver``, a process-scoped bounded worker
+pool (the one authorized detached-work exception). The caller waits
+at most its remaining deadline; a late lookup result is discarded
+with zero connect/TLS/HTTP side effects, and resolver capacity
+(workers + outstanding) is structurally bounded so saturation fails
+closed instead of queueing forever.
+
+Forward proxies are disallowed fail-closed for governed calls:
+deadline sessions use ``trust_env=False`` and deadline connections
+raise if a proxy is configured — provider endpoints are direct-only
+by contract (approved-specialist configuration only;
+GOVERNED_HTTP_PROXY_POLICY = DIRECT_ONLY_CURRENT_SCOPE).
 """
 
 from __future__ import annotations
@@ -90,6 +93,11 @@ from urllib3.util.ssl_ import (
     create_urllib3_context,
     resolve_cert_reqs,
     resolve_ssl_version,
+)
+
+from app.infrastructure.http.dns_resolver import (
+    DnsResolverSaturatedError,
+    dns_resolver,
 )
 
 # Smallest positive socket timeout — used when the deadline already
@@ -308,15 +316,19 @@ class _BoundedConnectMixin:
                 f"'{host}', label empty or too long"
             ) from None
 
-        # DNS resolution is a single blocking libc call — it cannot be
-        # interrupted in-thread (no detached workers allowed). The
-        # deadline check below guarantees an expired budget produces
-        # ZERO connect attempts; the resolver call itself remains
-        # bounded only by OS resolver configuration (recorded
-        # residual).
-        resolved = socket.getaddrinfo(
-            host, port, family, socket.SOCK_STREAM
-        )
+        # DNS resolution runs on the bounded resolver executor
+        # (dns_resolver.py — the one authorized detached-work
+        # exception): the caller waits at most its remaining deadline;
+        # an expired budget yields ZERO connect attempts and the late
+        # getaddrinfo result is discarded.
+        try:
+            resolved = dns_resolver().resolve(
+                host, port, family, socket.SOCK_STREAM, deadline
+            )
+        except DnsResolverSaturatedError as exc:
+            # Capacity exhausted — truthful timeout/unavailable, never
+            # an unbounded queue.
+            raise socket.timeout("dns resolver saturated") from exc
         _raise_if_expired(deadline)
 
         configured = self.timeout
