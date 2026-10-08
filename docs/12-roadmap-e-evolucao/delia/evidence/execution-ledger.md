@@ -11853,6 +11853,21 @@ EVIDENCE (live production, 2026-10-05):
 
 ## 6.154. C3-INTELLIGENCE-LOOP-03R2A-R5 — bounded DNS resolution + transport dependency freeze + governed direct-only network policy
 
+  > **ARCHITECTURE ANNOTATION (close-out, non-destructive):**
+  > ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R5 =
+  > ACCEPT_WITH_RESIDUAL. TURN_TOTAL_BUDGET = CLOSED and
+  > TURN_EDGE_BUDGET = CLOSED (candidate → accepted);
+  > DNS_CALLER_ABSOLUTE_DEADLINE = PASS;
+  > DNS_LATE_RESULT_SIDE_EFFECTS = 0;
+  > HTTP_TRANSPORT_REPRODUCIBILITY = PASS;
+  > DIRECT_ONLY_NETWORK_POLICY = ACCEPTED.
+  > Residual: DNS_EXECUTOR_PROCESS_SHUTDOWN_BOUND = NOT_PROVEN —
+  > process lifecycle residual, not a caller-visible turn-deadline
+  > breach; the "never indefinite" wording below is corrected.
+  > CI correction: CI_CURSOR_RULES_GOVERNANCE =
+  > FAIL_CURRENT_HEAD_UNRELATED;
+  > CI_ARCHITECTURE_ENFORCEMENT = NOT_OBSERVED_ON_R5_HEAD.
+
   DATE = 2026-10-08
   TASK = C3-INTELLIGENCE-LOOP-03R2A-R5
   BASE_HEAD = 5bbd25d468c1cd4512f60918a868e9fcccbface0
@@ -11903,8 +11918,9 @@ EVIDENCE (live production, 2026-10-05):
       multi-address shared-budget connect stays in the caller).
     Lifecycle: lazily-created process singleton; TPE non-daemon
       threads + interpreter atexit join — shutdown waits for
-      in-flight resolutions bounded by OS resolver behavior,
-      never indefinite; queued futures cancelled at shutdown.
+      in-flight resolutions bounded in practice by OS resolver
+      behavior; absolute process-shutdown bound NOT_PROVEN
+      (recorded residual); queued futures cancelled at shutdown.
     Integration: _bounded_connect now routes through
       dns_resolver().resolve() under deadline scope; gaierror
       propagates to the existing NameResolutionError mapping;
@@ -11983,25 +11999,29 @@ EVIDENCE (live production, 2026-10-05):
     DNS_POOL_WORKERS_BOUNDED = PASS
     DNS_OUTSTANDING_BOUNDED = PASS
     DNS_SATURATION_FAIL_CLOSED = PASS
-    TURN_TOTAL_BUDGET = CLOSED-CANDIDATE — every governed
+    TURN_TOTAL_BUDGET = CLOSED — every governed
       provider-operation phase (DNS, TCP connect, multi-address,
       TLS handshake, proxy-disable, redirect chain, send,
       status line, headers, body) is now bounded by ONE caller
       absolute deadline. CLOSED here means the caller-visible
       operation never outlives the TurnDeadline — the
       authorized late getaddrinfo worker is side-effect-free
-      by invariant, not a wall-clock breach.
-    TURN_EDGE_BUDGET = CLOSED-CANDIDATE — same evidence.
-    Final acceptance remains with Architecture Coordination.
+      by invariant, not a wall-clock breach. (CLOSED-CANDIDATE
+      → CLOSED via review acceptance, see annotation above.)
+    TURN_EDGE_BUDGET = CLOSED — same evidence and acceptance.
 
   RESIDUAL:
     REAL_MODEL_EVAL/LIVE_PROD_EVAL = TEST_NOT_RUN;
       DEPLOYED_SHA = TO_VERIFY.
     CorePlatformAccessAdapter = SEPARATE_BOUNDED_FOLLOWUP
       (unchanged, out of scope per task).
-    CI residuals ×2 (teo gpt-actions guardrail, openai-* rules
-      map) remain CURRENT_HEAD_UNRELATED owner debt; gh CLI
-      unavailable locally for fresh run check.
+    CI: CI_CURSOR_RULES_GOVERNANCE = FAIL_CURRENT_HEAD_UNRELATED;
+      CI_ARCHITECTURE_ENFORCEMENT = NOT_OBSERVED_ON_R5_HEAD
+      (gh CLI unavailable locally — corrected classification).
+      teo gpt-actions guardrail debt remains owner-side.
+    DNS_EXECUTOR_PROCESS_SHUTDOWN_BOUND = NOT_PROVEN —
+      process-lifecycle residual only; does not reopen
+      TURN_TOTAL_BUDGET/TURN_EDGE_BUDGET.
     R2B semantics D01/D03/D04/D05/D06 untouched.
 
   PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;

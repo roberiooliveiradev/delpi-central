@@ -31,8 +31,9 @@ operational config — the Abstraction Gate does not justify a new
 setting for this phase.
 
 Shutdown: ``ThreadPoolExecutor`` registers its own atexit join, so
-process shutdown waits for in-flight resolutions — bounded by the
-OS resolver behavior, never indefinite; queued jobs are cancelled
+process shutdown waits for in-flight resolutions — in practice
+bounded by OS resolver behavior, but an absolute process-shutdown
+bound is NOT_PROVEN (recorded residual); queued jobs are cancelled
 best-effort via ``cancel_futures`` on shutdown. ``future.cancel()``
 only stops jobs that have not started; a running ``getaddrinfo``
 finishes and its result is discarded (real semantics, not
