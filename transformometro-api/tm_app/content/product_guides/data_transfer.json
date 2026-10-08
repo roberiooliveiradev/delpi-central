@@ -1,0 +1,48 @@
+{
+  "schema": "product_guide_v1",
+  "id": "data_transfer",
+  "title": "Exportar / Importar dados",
+  "summary": "Backup, transferência e restauração dos dados do Portal — a importação sempre pede prévia e confirmação na UI.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar para que serve a área de exportação/importação e que ela é operação da UI — não há transporte de arquivo por capability.",
+  "use_when": [
+    "O usuário quer fazer backup dos dados do Transformômetro",
+    "É preciso transferir ou restaurar dados entre ambientes",
+    "O usuário pergunta sobre importação de dados"
+  ],
+  "do_not_use_when": [
+    "O pedido é importar diagrama BPMN — isso é a capability de import no diagrama",
+    "O pedido é registrar registros pontuais — use as capabilities tipadas",
+    "Não prometer export/import por canal de texto — é operação da UI"
+  ],
+  "how_to_use": [
+    "Exportar gera o backup/transferência dos dados na área Exportar/Importar",
+    "Importar sempre apresenta prévia antes de aplicar",
+    "Substituição de dados é operação destrutiva com confirmação explícita na UI",
+    "Esta feature não é exposta por capability tipada — orientar o usuário à UI"
+  ],
+  "field_guidance": [
+    {"field": "export", "guidance": "Backup/transferência gerado pela UI — sem capability tipada"},
+    {"field": "import", "guidance": "Sempre com prévia + confirmação; 'substituir dados' é destrutivo"}
+  ],
+  "quality_rules": [
+    "Importação nunca é cega — prévia antes de aplicar",
+    "Substituir dados é destrutivo — confirmação explícita",
+    "Não confundir transferência de dados com cadastro tipado",
+    "Arquivo de export é artefato de backup — não fonte de verdade viva"
+  ],
+  "common_mistakes": [
+    "Esperar que o assistente execute import/export — recurso só na UI",
+    "Confundir importação de dados com importação de diagrama BPMN",
+    "Importar sem revisar a prévia",
+    "Tratar arquivo exportado como estado autoritativo depois de mudanças"
+  ],
+  "related_topics": ["portal_overview", "diagram", "process"],
+  "capability_refs": [],
+  "contract_refs": ["portal.ui.data_transfer"],
+  "source_refs": [
+    {"ref": "Portal DataTransferPage — Importar/Substituir dados com prévia", "classification": "PROVEN"},
+    {"ref": "Portal user manual — seção 'Exportar / Importar'", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Backup/import é UI-only: orientar o usuário a Exportar/Importar no Portal; nunca prometer executar por capability."
+}

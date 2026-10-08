@@ -1,0 +1,48 @@
+{
+  "schema": "product_guide_v1",
+  "id": "signature_profile",
+  "title": "Minha assinatura",
+  "summary": "O perfil de assinatura do usuário — nome de exibição gerenciável via capability; a imagem da assinatura é capturada na UI.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar o que é o perfil de assinatura, onde ele é usado e o que é possível alterar pelo canal tipado versus pela UI.",
+  "use_when": [
+    "O usuário quer ajustar o nome exibido na assinatura de atas",
+    "É preciso entender onde a assinatura aparece (signatário de ata)",
+    "O usuário pergunta como capturar ou atualizar a assinatura"
+  ],
+  "do_not_use_when": [
+    "O pedido é assinar uma ata específica — isso é o fluxo de atas",
+    "Upload/edição da imagem da assinatura — recurso UI-only",
+    "O pedido é perfil de conta em geral — não é esta feature"
+  ],
+  "how_to_use": [
+    "display_name é o nome exibido na assinatura — atualizável via capability governada",
+    "A imagem manuscrita é capturada em 'Minha assinatura' na UI — sem transporte binário",
+    "Ser signatário de uma ata é definido na ata — não no perfil",
+    "Assinatura pendente de ata aparece em Minhas tarefas, mas se assina na ata"
+  ],
+  "field_guidance": [
+    {"field": "display_name", "guidance": "Nome exibido na assinatura — o único campo governável", "contract_ref": "capability_surface.workflows.update_signature_profile"},
+    {"field": "signature image", "guidance": "Captura manuscrita UI-only — sem transporte por capability"}
+  ],
+  "quality_rules": [
+    "Nome de assinatura é identidade real da pessoa",
+    "Imagem de assinatura não é gerenciável fora da UI",
+    "Perfil de assinatura não define signatários — isso é da ata",
+    "Não prometer upload/edição de imagem por canal que não transporta binário"
+  ],
+  "common_mistakes": [
+    "Tentar enviar imagem de assinatura pelo canal de texto",
+    "Confundir display_name do perfil com signatário de uma ata",
+    "Esperar que assinar a ata seja editar o perfil"
+  ],
+  "related_topics": ["meeting_minutes", "tasks"],
+  "capability_refs": ["update_signature_profile", "meeting_minute_workflow"],
+  "contract_refs": ["capability_surface.workflows.update_signature_profile", "entity_schemas.meeting_minute"],
+  "source_refs": [
+    {"ref": "capability_descriptors.update_signature_profile — metadata only, binary platform_blocked", "classification": "PROVEN"},
+    {"ref": "Portal MySignaturePage — captura de assinatura + display_name", "classification": "PROVEN"},
+    {"ref": "Portal user manual — assinatura pendente em Minhas tarefas, assinar na ata", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Ajuste de nome de assinatura é auto_act (metadata); imagem é UI-only. 'Assinar ata' → workflow da ata, não perfil."
+}

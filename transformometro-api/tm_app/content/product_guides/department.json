@@ -1,0 +1,52 @@
+{
+  "schema": "product_guide_v1",
+  "id": "department",
+  "title": "Departamentos (setores)",
+  "summary": "As áreas/setores ligados a unidades — escopo organizacional da melhoria ao lado da unidade.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar o que é um departamento, sua relação com unidades e melhorias, e quando reutilizar em vez de cadastrar.",
+  "use_when": [
+    "O usuário quer cadastrar ou administrar um setor/departamento",
+    "É preciso definir os setores onde uma melhoria opera",
+    "O usuário pergunta a diferença entre setor e unidade"
+  ],
+  "do_not_use_when": [
+    "O pedido é sobre planta/site — isso é branch (unidade)",
+    "Não criar setor duplicado por variação de nome",
+    "Não inferir setor pelo cargo ou assinatura do usuário"
+  ],
+  "how_to_use": [
+    "Departamentos são cadastro de administração — Configurações → Departamentos",
+    "Cada departamento se vincula a uma ou mais unidades ativas",
+    "Melhoria exige ao menos um setor — use departamentos reais do escopo",
+    "Prefira reutilizar departamentos visíveis no escopo de acesso",
+    "Status segue o enum do contrato"
+  ],
+  "field_guidance": [
+    {"field": "setor_id", "guidance": "Código/identificador do departamento", "contract_ref": "entity_schemas.department"},
+    {"field": "nome_setor", "guidance": "Nome oficial da área", "contract_ref": "entity_schemas.department"},
+    {"field": "filiais", "guidance": "Lista não-vazia de unidades ativas às quais o setor pertence", "contract_ref": "entity_schemas.department"},
+    {"field": "status_setor", "guidance": "ativo/inativo conforme enum", "contract_ref": "entity_schemas.department"}
+  ],
+  "quality_rules": [
+    "Um departamento real, um cadastro — não criar por variação de nome",
+    "Vínculo com unidades reais e ativas",
+    "Setores da melhoria refletem onde ela opera de fato",
+    "Department != branch: setor é área; unidade é planta/site"
+  ],
+  "common_mistakes": [
+    "Duplicar setor com nome levemente diferente",
+    "Vincular a unidade inexistente ou inativa",
+    "Confundir setor (department) com unidade (branch)",
+    "Inferir setor pelo cargo de quem pediu a melhoria"
+  ],
+  "related_topics": ["branch", "instance", "process"],
+  "capability_refs": ["department", "instance"],
+  "contract_refs": ["entity_schemas.department"],
+  "source_refs": [
+    {"ref": "entity_schemas.department — filiais não-vazio, unidades ativas", "classification": "PROVEN"},
+    {"ref": "Portal user manual — Configurações → Departamentos", "classification": "PROVEN"},
+    {"ref": "registration_guide — preferir access_scope setores antes de criar", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "'setor' e 'departamento' = department. Melhoria exige setor_ids reais; cadastro exige admin e vínculo com unidades ativas."
+}

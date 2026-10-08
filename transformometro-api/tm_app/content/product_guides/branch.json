@@ -1,0 +1,51 @@
+{
+  "schema": "product_guide_v1",
+  "id": "branch",
+  "title": "Unidades (filiais)",
+  "summary": "As unidades/filiais da organização no catálogo do Portal — onde melhorias acontecem e como a Visão geral recorta os números.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar o que é uma unidade, quando cadastrar versus reutilizar e por que o escopo da melhoria nunca deve ser inferido pelo usuário.",
+  "use_when": [
+    "O usuário quer cadastrar ou administrar uma unidade/filial",
+    "É preciso entender o escopo de unidade de uma melhoria",
+    "O usuário pergunta qual a diferença entre unidade e departamento"
+  ],
+  "do_not_use_when": [
+    "O pedido é sobre área/equipe interna da unidade — isso é department",
+    "A melhoria cobre a empresa inteira — instance usa todas_filiais_ativas",
+    "Não criar unidade nova quando já existe equivalente no escopo de acesso"
+  ],
+  "how_to_use": [
+    "Unidades são cadastro de administração — Configurações → Unidades",
+    "Prefira reutilizar unidades já visíveis no seu escopo de acesso",
+    "codigo e nome seguem o contrato; status controla ativa/descontinuada",
+    "Unidade define onde a melhoria opera — nunca inferir pelo cargo do usuário",
+    "Processo-mestre não pertence a uma unidade — unidade aparece na melhoria"
+  ],
+  "field_guidance": [
+    {"field": "codigo_filial", "guidance": "Código da unidade — imutável após criar", "contract_ref": "entity_schemas.branch"},
+    {"field": "nome_filial", "guidance": "Nome oficial da unidade/planta", "contract_ref": "entity_schemas.branch"},
+    {"field": "status_filial", "guidance": "ativo/inativo conforme enum do contrato", "contract_ref": "entity_schemas.branch"}
+  ],
+  "quality_rules": [
+    "Uma unidade real, um cadastro — duplicado fragmenta melhorias e filtros",
+    "Nome oficial e consistente",
+    "Escopo da melhoria usa unidades reais — nunca inferidas",
+    "Unidade != departamento: unidade é planta/site; departamento é área ligada a unidades"
+  ],
+  "common_mistakes": [
+    "Cadastrar unidade duplicada por variação de nome",
+    "Inferir a unidade da melhoria pelo usuário que pediu",
+    "Confundir unidade (branch) com departamento (department)",
+    "Criar unidade quando a melhoria era corporativa (todas_filiais_ativas)"
+  ],
+  "related_topics": ["department", "instance", "process", "dashboard"],
+  "capability_refs": ["branch", "instance"],
+  "contract_refs": ["entity_schemas.branch"],
+  "source_refs": [
+    {"ref": "entity_schemas.branch — codigo_filial imutável, admin-only", "classification": "PROVEN"},
+    {"ref": "Portal user manual — Configurações → Unidades; filtro da Visão geral", "classification": "PROVEN"},
+    {"ref": "registration_guide — preferir access_scope filiais antes de criar", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "'filial' e 'unidade' = branch. Cadastro exige admin; uso normal só referencia unidades do access_scope."
+}

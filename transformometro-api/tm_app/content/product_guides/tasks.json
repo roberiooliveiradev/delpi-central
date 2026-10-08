@@ -20,7 +20,8 @@
     "Atribua responsável quando o contrato disponibilizar o campo",
     "Inclua data de vencimento somente quando for um dado real — nunca inventada",
     "Atualize campos pelo update; conclua com complete; cancele apenas quando o trabalho deixou de existir",
-    "cancel_task é descarte (confirm_before_act) — preferir complete quando o trabalho foi feito"
+    "cancel_task é descarte (confirm_before_act) — preferir complete quando o trabalho foi feito",
+    "Assinaturas pendentes de ata aparecem em Minhas tarefas, mas se assinam na ata — não são tarefa editável"
   ],
   "field_guidance": [
     {"field": "title", "guidance": "Verbo + objeto + contexto, ex.: 'Revisar fluxo de aprovação do processo X'", "contract_ref": "workflows.manage_task"},

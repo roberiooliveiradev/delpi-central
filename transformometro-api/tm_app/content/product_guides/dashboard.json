@@ -18,6 +18,8 @@
   "how_to_use": [
     "Dashboard é projeção analítica — os fatos vivem nas reads de domínio",
     "Distinguir análise live de materialized/cache conforme a view",
+    "Metas e nota IDD aparecem no card de Economia bruta quando disponíveis — meta parcial é referência calculada do recorte, não conta da tela",
+    "Consolidado, Unidade e Departamento recortam os números; a meta estratégica do programa permanece referência",
     "Valide período e filtros antes de interpretar um indicador",
     "Ausência de dado não é zero — indicador vazio pode ser filtro ou cálculo",
     "Recálculo é operação governada própria — confirm_before_act"
@@ -46,7 +48,8 @@
   "source_refs": [
     {"ref": "capability_descriptors.analyze — views live e process-scoped", "classification": "PROVEN"},
     {"ref": "capability_descriptors.recalculate_dashboard — materialized, confirm_before_act", "classification": "PROVEN"},
-    {"ref": "registration_flow — gpt_analyze após recalculate", "classification": "PROVEN"}
+    {"ref": "registration_flow — gpt_analyze após recalculate", "classification": "PROVEN"},
+    {"ref": "Portal user manual — Metas e IDD no card Economia bruta", "classification": "PROVEN"}
   ],
   "agent_guidance": "Indicador != verdade de domínio. Se o usuário questiona número stale: explicar projeção → recalculate_dashboard → read-back → analyze."
 }

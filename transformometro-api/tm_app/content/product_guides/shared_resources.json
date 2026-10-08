@@ -19,7 +19,7 @@
     "Busque o recurso existente antes de criar — catálogo é compartilhado",
     "Cadastre com nome, tipo de custo e recorrência conforme o contrato",
     "O valor econômico mensal é lançado em resource_cost — não no recurso",
-    "Vincule o recurso à revisão via resource_link com ids de read-back",
+    "Vincule o recurso à revisão via resource_link — o 'vínculo' ou 'alocação' do recurso, com ids de read-back",
     "Critério de rateio e escopo seguem o enum do contrato"
   ],
   "field_guidance": [

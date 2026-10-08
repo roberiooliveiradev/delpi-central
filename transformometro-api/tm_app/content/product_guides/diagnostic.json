@@ -17,8 +17,10 @@
   ],
   "how_to_use": [
     "Crie o diagnóstico e registre achados (findings) observados",
-    "Formule hipóteses testáveis e ligue-as por elos causais",
-    "Anexe links de evidência às hipóteses que sustentam",
+    "Achados têm natureza (Observado ou Calculado); 'Sintoma' é papel do achado, separado da natureza",
+    "Hipóteses são sempre interpretações (Inferido) — mesmo validadas, não viram fato",
+    "Elos causais registram apenas 'contribui para' — nunca 'causa' ou 'prova'",
+    "Anexe evidências às hipóteses: podem sustentar, contradizer ou contextualizar",
     "Valide, rejeite ou supere hipóteses conforme a investigação evolui",
     "Conclusões têm ciclo próprio de validação — não saem como fato",
     "Evidência que desatualiza marca stale/revalidation — confiança segue o contrato"
@@ -47,6 +49,7 @@
   "contract_refs": ["mcp_only_capabilities.diagnostic_v1"],
   "source_refs": [
     {"ref": "capability_descriptors.mcp_only_capabilities.diagnostic_v1 — actions e política", "classification": "PROVEN"},
+    {"ref": "Portal user manual — diagnóstico da revisão: naturezas, 'contribui para', sustenta/contradiz", "classification": "PROVEN"},
     {"ref": "confirmation_policy — create_diagnostic auto_act, manage confirm_before_act", "classification": "PROVEN"},
     {"ref": "Fronteira Product Guide (feature) vs Methodology Guide (método)", "classification": "PROVEN"}
   ],

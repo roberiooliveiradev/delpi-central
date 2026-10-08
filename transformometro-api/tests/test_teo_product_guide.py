@@ -39,6 +39,10 @@ SEED_TOPICS = {
     "resource_costs",
     "diagnostic",
     "dashboard",
+    "branch",
+    "department",
+    "signature_profile",
+    "data_transfer",
 }
 
 
@@ -82,11 +86,11 @@ def test_schema_rejects_missing_and_invalid() -> None:
 # ----------------------------------------------------------------- registry
 
 
-def test_registry_loads_twenty_seeds_deterministically() -> None:
+def test_registry_loads_all_seeds_deterministically() -> None:
     reg = ProductGuideRegistry()
     assert set(reg.topic_ids()) == SEED_TOPICS
     assert reg.version == "product-guide-registry-v1"
-    assert len(reg.index()) == 20
+    assert len(reg.index()) == len(SEED_TOPICS)
     # Deterministic order.
     assert reg.topic_ids() == sorted(reg.topic_ids())
 
@@ -360,3 +364,49 @@ def test_dashboard_is_not_domain_truth_and_recalc_is_governed() -> None:
     assert "recalculate_dashboard" in blob
     assert "ausência" in blob or "ausencia" in blob
     assert "recalculate_dashboard" in guide["capability_refs"]
+
+
+# ----------------------------------------------------------- wave 4: coverage
+
+
+def test_branch_and_department_are_distinct() -> None:
+    reg = ProductGuideRegistry()
+    branch = json.dumps(reg.get("branch"), ensure_ascii=False).lower()
+    department = json.dumps(reg.get("department"), ensure_ascii=False).lower()
+    assert "filial" in branch and "unidade" in branch
+    assert "setor" in department and "departamento" in department
+    assert "department" in reg.get("branch")["related_topics"]
+    assert "branch" in reg.get("department")["related_topics"]
+
+
+def test_signature_profile_keeps_binary_ui_only() -> None:
+    reg = ProductGuideRegistry()
+    blob = json.dumps(reg.get("signature_profile"), ensure_ascii=False).lower()
+    assert "display_name" in blob
+    assert "ui-only" in blob
+    assert "update_signature_profile" in blob
+
+
+def test_data_transfer_is_ui_only_with_confirm() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("data_transfer")
+    blob = json.dumps(guide, ensure_ascii=False).lower()
+    assert "prévia" in blob or "previa" in blob
+    assert "confirma" in blob
+    assert "ui" in blob
+    # No typed capability for import/export — UI feature only.
+    assert guide["capability_refs"] == []
+
+
+def test_main_semantic_aliases_present() -> None:
+    reg = ProductGuideRegistry()
+    assert "melhoria" in reg.get("instance")["title"].lower()
+    assert "filial" in json.dumps(reg.get("branch"), ensure_ascii=False).lower()
+    assert "setor" in json.dumps(reg.get("department"), ensure_ascii=False).lower()
+    assert "atas" in reg.get("meeting_minutes")["title"].lower()
+
+
+def test_portal_overview_links_only_valid_topics() -> None:
+    reg = ProductGuideRegistry()
+    for topic in reg.get("portal_overview")["related_topics"]:
+        assert reg.get(topic) is not None, topic

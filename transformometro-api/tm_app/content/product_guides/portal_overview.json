@@ -19,7 +19,9 @@
     "Um processo é o objeto central; dentro dele existem instâncias de melhoria e revisões versionadas",
     "O trabalho acontece no workspace do processo: diagrama, decomposição, documentos, evidências, tarefas e sala de interação",
     "Medição e dashboards consolidam o estado dos processos; atas e documentos registram decisões",
-    "Ao conversar com o TÉO, referências como 'este processo' resolvem via contexto de workspace — nunca por adivinhação"
+    "Administração → Configurações guarda unidades, departamentos e o catálogo de recursos compartilhados",
+    "Exportar/Importar cobre backup e transferência; Minha assinatura guarda o perfil de assinatura de atas",
+    "O TÉO recebe o contexto do workspace (processo/melhoria/revisão/seção) — 'este processo' resolve sem adivinhação"
   ],
   "quality_rules": [
     "Explicar conceitos com o vocabulário do produto (processo, melhoria, revisão, medição)",
@@ -32,9 +34,15 @@
   "related_topics": [
     "process",
     "instance",
+    "revision",
+    "dashboard",
     "interaction_room",
     "tasks",
-    "process_documents"
+    "process_documents",
+    "meeting_minutes",
+    "branch",
+    "department",
+    "data_transfer"
   ],
   "capability_refs": [
     "process",
