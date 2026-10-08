@@ -124,13 +124,188 @@ def test_second_tab_overwrites_same_client_not_others() -> None:
     assert out["context"]["client_instance_id"] == "tab-1"
 
 
-def test_ambiguous_when_two_active_unfocused() -> None:
+def test_same_material_context_in_two_tabs_is_not_ambiguous() -> None:
+    # Technical multiplicity != material ambiguity: two tabs publishing the
+    # same app/entity/area context must collapse to one candidate.
     svc = _service()
     svc.publish(user_id="u1", payload=_payload(focused=False))
     svc.publish(user_id="u1", payload=_payload(client_instance_id="tab-2", focused=False))
     out = svc.resolve(user_id="u1")
+    assert out["status"] == "active"
+    assert out["context"]["entity_refs"][0]["entity_id"] == "P"
+
+
+def test_home_never_competes_with_material_process_context() -> None:
+    svc = _service()
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            client_instance_id="tab-home",
+            route_id="home",
+            entity_refs=[],
+            presentation_state={},
+            canonical_path="/apps/transformometro",
+            focused=False,
+        ),
+    )
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            client_instance_id="tab-p",
+            entity_refs=[{"entity_type": "process", "entity_id": "P"}],
+            presentation_state={"area": "visao-geral"},
+            focused=False,
+        ),
+    )
+    out = svc.resolve(user_id="u1")
+    assert out["status"] == "active"
+    assert out["context"]["entity_refs"][0]["entity_id"] == "P"
+
+
+def test_home_is_active_when_it_is_the_only_context() -> None:
+    svc = _service()
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            route_id="home",
+            entity_refs=[],
+            presentation_state={},
+            canonical_path="/apps/transformometro",
+        ),
+    )
+    out = svc.resolve(user_id="u1")
+    assert out["status"] == "active"
+    assert out["context"]["route_id"] == "home"
+
+
+def test_distinct_processes_stay_ambiguous() -> None:
+    svc = _service()
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            entity_refs=[{"entity_type": "process", "entity_id": "P"}],
+            presentation_state={"area": "visao-geral"},
+            focused=False,
+        ),
+    )
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            client_instance_id="tab-2",
+            entity_refs=[{"entity_type": "process", "entity_id": "Q"}],
+            presentation_state={"area": "visao-geral"},
+            focused=False,
+        ),
+    )
+    out = svc.resolve(user_id="u1")
     assert out["status"] == "ambiguous"
     assert len(out["candidates"]) == 2
+
+
+def test_more_specific_context_wins_same_material_chain() -> None:
+    # process P + process P / instance I -> the deeper context wins.
+    svc = _service()
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            entity_refs=[{"entity_type": "process", "entity_id": "P"}],
+            presentation_state={"area": "visao-geral"},
+            focused=False,
+        ),
+    )
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            client_instance_id="tab-2",
+            entity_refs=[
+                {"entity_type": "process", "entity_id": "P"},
+                {"entity_type": "instance", "entity_id": "I"},
+            ],
+            presentation_state={"area": "resultados"},
+            focused=False,
+        ),
+    )
+    out = svc.resolve(user_id="u1")
+    assert out["status"] == "active"
+    assert out["context"]["entity_refs"][1]["entity_id"] == "I"
+
+
+def test_specificity_never_crosses_incompatible_chains() -> None:
+    # P/I vs P/J: same process, different instances -> ambiguous.
+    svc = _service()
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            entity_refs=[
+                {"entity_type": "process", "entity_id": "P"},
+                {"entity_type": "instance", "entity_id": "I"},
+            ],
+            focused=False,
+        ),
+    )
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            client_instance_id="tab-2",
+            entity_refs=[
+                {"entity_type": "process", "entity_id": "P"},
+                {"entity_type": "instance", "entity_id": "J"},
+            ],
+            focused=False,
+        ),
+    )
+    out = svc.resolve(user_id="u1")
+    assert out["status"] == "ambiguous"
+
+
+def test_same_process_different_area_is_materially_distinct() -> None:
+    # Same entity chain but different presentation (area) -> distinct
+    # candidates; without focus evidence this is a real ambiguity.
+    svc = _service()
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            entity_refs=[{"entity_type": "process", "entity_id": "P"}],
+            presentation_state={"area": "visao-geral"},
+            focused=False,
+        ),
+    )
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            client_instance_id="tab-2",
+            entity_refs=[{"entity_type": "process", "entity_id": "P"}],
+            presentation_state={"area": "documentacao"},
+            focused=False,
+        ),
+    )
+    out = svc.resolve(user_id="u1")
+    assert out["status"] == "ambiguous"
+
+
+def test_focused_resolves_material_tiebreak_not_recency() -> None:
+    # Two distinct materials; exactly one focused -> focused wins.
+    svc = _service()
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            entity_refs=[{"entity_type": "process", "entity_id": "P"}],
+            presentation_state={"area": "visao-geral"},
+            focused=False,
+        ),
+    )
+    svc.publish(
+        user_id="u1",
+        payload=_payload(
+            client_instance_id="tab-2",
+            entity_refs=[{"entity_type": "process", "entity_id": "Q"}],
+            presentation_state={"area": "visao-geral"},
+            focused=True,
+        ),
+    )
+    out = svc.resolve(user_id="u1")
+    assert out["status"] == "active"
+    assert out["context"]["entity_refs"][0]["entity_id"] == "Q"
 
 
 def test_stale_when_expired(tmp_path) -> None:
