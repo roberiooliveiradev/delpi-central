@@ -11,6 +11,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from requests_app.config import settings
 from requests_app.core.responses import fail
+from requests_app.interface.http.routes.integrations_routes import (
+    router as integrations_router,
+)
 from requests_app.interface.http.routes.realtime_routes import router as realtime_router
 from requests_app.interface.http.routes.requests_routes import router as requests_router
 from requests_app.middleware.auth_middleware import jwt_middleware
@@ -132,4 +135,5 @@ def health():
 
 
 app.include_router(requests_router)
+app.include_router(integrations_router)
 app.include_router(realtime_router)

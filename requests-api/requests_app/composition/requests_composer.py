@@ -25,6 +25,9 @@ from requests_app.composition.destination_registry import DestinationAdapterRegi
 from requests_app.domain.services.invoice_issuance_payload_validator import (
     InvoiceIssuancePayloadValidator,
 )
+from requests_app.domain.services.process_issue_payload_validator import (
+    ProcessIssuePayloadValidator,
+)
 from requests_app.domain.services.workflow_engine import WorkflowEngine
 from requests_app.infrastructure.gateways.api_delpi_adapter import ApiDelpiAdapter
 from requests_app.infrastructure.persistence.repositories.postgres_file_repository import (
@@ -55,6 +58,7 @@ def build_request_type_repository() -> PostgresRequestTypeRepository:
 def build_payload_validator_registry() -> PayloadValidatorRegistry:
     registry = PayloadValidatorRegistry()
     registry.register(InvoiceIssuancePayloadValidator())
+    registry.register(ProcessIssuePayloadValidator())
     return registry
 
 

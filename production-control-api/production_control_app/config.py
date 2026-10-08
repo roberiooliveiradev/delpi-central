@@ -51,6 +51,16 @@ class Settings:
     )
     CORE_API_TIMEOUT: float = float(_get_env("CORE_API_TIMEOUT", default="5"))
 
+    # Requests API — Problemas de Processo do cockpit (P2; S2S crítico).
+    # Credencial: API_DELPI_INTERNAL_SERVICE_TOKEN compartilhado via
+    # delpi_auth.service_token. Falha aqui = erro amigável ao operador.
+    REQUESTS_API_URL: str = _get_env(
+        "REQUESTS_API_URL", default="http://requests-api:8000"
+    )
+    REQUESTS_API_TIMEOUT: float = float(
+        _get_env("REQUESTS_API_TIMEOUT", default="5")
+    )
+
     # Portal RH — diretório oficial de colaboradores (S2S dedicado; token sem
     # default real; ausência falha só na chamada, não no startup).
     PORTAL_RH_API_URL: str = _get_env("PORTAL_RH_API_URL", default="")

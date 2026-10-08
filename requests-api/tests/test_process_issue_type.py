@@ -75,18 +75,31 @@ def harness():
     return types, requests, idem
 
 
+def _payload(**overrides):
+    """Contrato P2 do snapshot reportado pelo cockpit."""
+    base = {
+        "source": "operator_cockpit",
+        "reportedAt": "2026-10-08T12:00:00+00:00",
+        "issue": {"code": "tool_not_linked", "reportedToolCode": "F12345"},
+        "operator": {"code": "001234", "name": "Maria Silva"},
+        "operation": {
+            "productionOrder": "24640401002",
+            "operationCode": "03",
+            "reportedWorkCenter": "CT-02",
+        },
+        "materialsSnapshotAvailable": True,
+        "materials": [],
+    }
+    base.update(overrides)
+    return base
+
+
 def _create(harness, *, branch: str) -> dict:
     types, requests, idem = harness
     return CreateRequestUseCase(types, requests, idem).execute(
         user=_admin(),
         type_code=PROCESS_ISSUE_TYPE_CODE,
-        payload={
-            "origin": "operator_cockpit",
-            "issueCode": "tool_not_linked",
-            "productionOrder": "24640401002",
-            "operationCode": "03",
-            "snapshot": {"currentTool": None, "operationMaterials": []},
-        },
+        payload=_payload(),
         branch_code=branch,
         idempotency_key=str(uuid4()),
     )
@@ -138,7 +151,7 @@ def test_snapshot_payload_accepts_optional_fields(harness):
     """toolCode/materialCode/note são opcionais — schema permissivo."""
     created = _create(harness, branch="01")
     assert created["status"] == "submitted"
-    assert created["payload"]["issueCode"] == "tool_not_linked"
+    assert created["payload"]["issue"]["code"] == "tool_not_linked"
 
 
 # --- workflow ------------------------------------------------------------------
@@ -301,7 +314,7 @@ def test_owner_keeps_access_to_own_record_any_branch(harness):
     created = CreateRequestUseCase(types, requests, idem).execute(
         user=creator,
         type_code=PROCESS_ISSUE_TYPE_CODE,
-        payload={"issueCode": "other"},
+        payload=_payload(issue={"code": "other"}),
         branch_code="02",
         idempotency_key=str(uuid4()),
     )

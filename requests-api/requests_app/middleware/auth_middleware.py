@@ -20,6 +20,9 @@ def _is_requests_public_path(path: str) -> bool:
     # Token na query; o handler valida JWT + RBAC.
     if normalized.endswith("/v1/realtime/ws"):
         return True
+    # S2S: handlers /integrations/* validam X-Delpi-Service-Token (fail-closed).
+    if "/integrations/" in normalized:
+        return True
     return False
 
 

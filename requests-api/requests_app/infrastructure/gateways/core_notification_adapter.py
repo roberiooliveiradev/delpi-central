@@ -67,6 +67,7 @@ def build_notification_payload(
     actor_name: str,
     recipient_user_ids: list[str] | None = None,
     permission_codes: list[str] | None = None,
+    required_permission_codes: list[str] | None = None,
     excluded_user_ids: list[str] | None = None,
     title: str | None = None,
     message: str | None = None,
@@ -118,6 +119,15 @@ def build_notification_payload(
     ]
     if codes:
         payload["permissionCodes"] = codes
+    # Filtro AND (além do OR de permissionCodes) — ex.: permissão de filial,
+    # para não entregar alerta de uma filial a processadores de outra.
+    required = [
+        str(code).strip()
+        for code in (required_permission_codes or [])
+        if str(code).strip()
+    ]
+    if required:
+        payload["requiredPermissionCodes"] = required
     excluded = [
         str(uid).strip() for uid in (excluded_user_ids or []) if str(uid).strip()
     ]

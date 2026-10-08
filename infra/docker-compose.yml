@@ -2866,6 +2866,10 @@ services:
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
       CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-5}
 
+      # Requests API — Problemas de Processo do cockpit (P2; S2S crítico)
+      REQUESTS_API_URL: ${REQUESTS_API_URL:-http://requests-api:8000}
+      REQUESTS_API_TIMEOUT: ${REQUESTS_API_TIMEOUT:-5}
+
       PC_PRODUCT_3D_MODELS_DIR: ${PC_PRODUCT_3D_MODELS_DIR:-/app/data/product-3d-models}
       PC_PRODUCT_3D_MAX_BYTES: ${PC_PRODUCT_3D_MAX_BYTES:-26214400}
 
@@ -2889,6 +2893,8 @@ services:
       core-api:
         condition: service_started
       api-delpi:
+        condition: service_started
+      requests-api:
         condition: service_started
 
     logging:

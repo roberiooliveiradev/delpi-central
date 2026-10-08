@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from requests_app.domain.services.external_requester import is_external_requester_id
 from requests_app.domain.services.journey_progress_service import resolve_journey_progress
 
 _CREATOR_GATE_OUTCOMES = frozenset(
@@ -26,6 +27,10 @@ def should_notify_creator_on_transition(
     actor = str(actor_user_id or "").strip()
     owner = str(owner_user_id or "").strip()
     if not actor or not owner or actor == owner:
+        return False
+    # Solicitante externo (ex.: operator:02:12345 via cockpit) não possui
+    # conta Minha DELPI — nunca recebe sino de creator/owner.
+    if is_external_requester_id(owner):
         return False
     destination = str(to_status or "").strip()
     if not destination:

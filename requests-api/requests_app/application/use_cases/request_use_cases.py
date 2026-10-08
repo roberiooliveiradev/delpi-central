@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from requests_app.application.errors import ApplicationError
 from requests_app.application.security.requests_permissions import (
+    BRANCH_VIEW_PERMISSIONS,
     VALID_BRANCHES,
     actor_for,
     allowed_branch_codes,
@@ -44,6 +45,7 @@ from requests_app.domain.services.creator_portal_notification_policy import (
     resolve_creator_gate_copy,
     should_notify_creator_on_transition,
 )
+from requests_app.domain.services.external_requester import is_external_requester_id
 from requests_app.infrastructure.gateways.core_notification_adapter import (
     build_notification_payload,
 )
@@ -75,6 +77,13 @@ def _artifact_summaries(
 def _normalize_branch(raw: Any) -> str | None:
     text = str(raw or "").strip()
     return text or None
+
+
+def _require_idempotency_key(idempotency_key: str | None) -> str:
+    key = str(idempotency_key or "").strip()
+    if not key:
+        raise ApplicationError(code="idempotency_required", status_code=422)
+    return key
 
 
 def _validate_branch(
@@ -125,24 +134,18 @@ class CreateRequestUseCase:
         idempotency_key: str | None = None,
         actor_client_id: str | None = None,
     ) -> dict[str, Any]:
-        if not idempotency_key or not str(idempotency_key).strip():
-            raise ApplicationError(code="idempotency_required", status_code=422)
-
+        key = _require_idempotency_key(idempotency_key)
         route = "POST /v1/requests"
         actor_id = str(getattr(user, "id", "") or "unknown")
         cached = self._idempotency.get(
-            key=str(idempotency_key).strip(),
+            key=key,
             route=route,
             actor_user_id=actor_id,
         )
         if cached is not None:
             return cached
 
-        request_type = self._types.get_by_code(type_code)
-        if request_type is None:
-            raise ApplicationError(code="type_not_found", status_code=404)
-        if not request_type.active:
-            raise ApplicationError(code="type_inactive", status_code=409)
+        request_type = self._load_type(type_code)
 
         actor = actor_for(user, request_type)
         if not actor.has_create and not actor.has_manage:
@@ -153,10 +156,99 @@ class CreateRequestUseCase:
             branch_code=_normalize_branch(branch_code),
             branch_scope=request_type.branch_scope,
         )
+        return self._persist(
+            request_type=request_type,
+            actor=actor,
+            branch=branch,
+            payload=payload,
+            priority=priority,
+            idempotency_key=key,
+            route=route,
+            actor_client_id=actor_client_id,
+        )
+
+    def execute_external(
+        self,
+        *,
+        requester_id: str,
+        requester_name: str,
+        type_code: str,
+        payload: dict[str, Any] | None,
+        branch_code: str | None = None,
+        priority: str = "normal",
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Criação S2S (P2): solicitante externo sem conta Minha DELPI.
+
+        O requester externo (ex.: ``operator:02:12345``) não possui RBAC — a
+        autorização da chamada acontece na rota (service token + allowlist de
+        source/type). A filial é validada contra o catálogo oficial e o
+        branch_scope do tipo; quem TRATA a solicitação segue sob a política
+        de filial da P1.
+        """
+        key = _require_idempotency_key(idempotency_key)
+        external_id = str(requester_id or "").strip()
+        if not is_external_requester_id(external_id):
+            raise ApplicationError(code="requester_invalid", status_code=422)
+        route = "POST /integrations/requests"
+        cached = self._idempotency.get(
+            key=key,
+            route=route,
+            actor_user_id=external_id,
+        )
+        if cached is not None:
+            return cached
+
+        request_type = self._load_type(type_code)
+        branch = _normalize_branch(branch_code)
+        scope = (request_type.branch_scope or "optional").strip()
+        if scope == "none":
+            branch = None
+        else:
+            if scope == "required" and not branch:
+                raise ApplicationError(code="branch_required", status_code=422)
+            if branch and branch not in VALID_BRANCHES:
+                raise ApplicationError(code="branch_invalid", status_code=422)
+
+        actor = Actor(
+            user_id=external_id,
+            user_name=str(requester_name or "").strip() or "Solicitante externo",
+        )
+        return self._persist(
+            request_type=request_type,
+            actor=actor,
+            branch=branch,
+            payload=payload,
+            priority=priority,
+            idempotency_key=key,
+            route=route,
+            actor_client_id=None,
+        )
+
+    def _load_type(self, type_code: str):
+        request_type = self._types.get_by_code(type_code)
+        if request_type is None:
+            raise ApplicationError(code="type_not_found", status_code=404)
+        if not request_type.active:
+            raise ApplicationError(code="type_inactive", status_code=409)
+        return request_type
+
+    def _persist(
+        self,
+        *,
+        request_type,
+        actor: Actor,
+        branch: str | None,
+        payload: dict[str, Any] | None,
+        priority: str,
+        idempotency_key: str,
+        route: str,
+        actor_client_id: str | None,
+    ) -> dict[str, Any]:
         if payload is None or not isinstance(payload, dict):
             raise ApplicationError(code="payload_required", status_code=422)
         payload = self._validators.validate(
-            type_code, payload, form_schema=request_type.form_schema
+            request_type.code, payload, form_schema=request_type.form_schema
         )
 
         workflow = request_type.workflow_definition or {}
@@ -193,9 +285,12 @@ class CreateRequestUseCase:
                     payload={"status": stored.status},
                 )
             )
-        # Creator already knows; fan-out to processors via permissionCodes (Core).
+        # Creator already knows; fan-out to processors via permissionCodes (OR)
+        # + requiredPermissionCodes (AND de filial — nenhum alerta vaza entre
+        # filiais em qualquer tipo com branch).
         if self._outbox is not None:
             process_perm = f"{request_type.permission_prefix}.process"
+            branch_perm = BRANCH_VIEW_PERMISSIONS.get(stored.branch_code or "")
             title, message, notif_type = resolve_queue_created_copy(
                 request_number=stored.request_number,
                 type_name=request_type.name,
@@ -215,6 +310,7 @@ class CreateRequestUseCase:
                     status=stored.status,
                     actor_name=actor.user_name,
                     permission_codes=[process_perm],
+                    required_permission_codes=[branch_perm] if branch_perm else None,
                     excluded_user_ids=[stored.created_by_user_id],
                     title=title,
                     message=message,
@@ -246,9 +342,9 @@ class CreateRequestUseCase:
             },
         )
         self._idempotency.save(
-            key=str(idempotency_key).strip(),
+            key=idempotency_key,
             route=route,
-            actor_user_id=actor_id,
+            actor_user_id=actor.user_id,
             response_snapshot=result,
         )
         return result

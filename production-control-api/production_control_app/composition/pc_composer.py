@@ -717,3 +717,37 @@ def build_line_feeder_urgent_requests_service() -> Any:
         snapshots=build_machine_load_snapshot_repository(),
         notify=notify_operator_feedback_changed,
     )
+
+
+def build_requests_api_gateway() -> Any:
+    """Gateway S2S → Requests API /integrations/requests (P2).
+
+    A credencial é o API_DELPI_INTERNAL_SERVICE_TOKEN compartilhado —
+    ausência não derruba o startup; a chamada falha fechado (401 upstream →
+    erro amigável ao operador via _handle_public_errors).
+    """
+    from production_control_app.infrastructure.gateways.requests_api_gateway import (  # noqa: E501
+        RequestsApiGateway,
+    )
+
+    return RequestsApiGateway()
+
+
+def build_public_process_issue_service() -> Any:
+    """Orquestrador do Problema de Processo no cockpit público (P2).
+
+    Compõe: resolver oficial da bench session, snapshot PUBLISHED via
+    MachineLoadService (contexto estendido), materiais SD4 best-effort e o
+    gateway S2S do Requests API — a criação falha fechado se o upstream
+    estiver fora.
+    """
+    from production_control_app.application.services.public_process_issue_service import (  # noqa: E501
+        PublicProcessIssueService,
+    )
+
+    return PublicProcessIssueService(
+        run_service=build_production_run_service(),
+        machine_load=build_machine_load_service(),
+        requests_gateway=build_requests_api_gateway(),
+        operation_materials=build_public_operation_materials_service(),
+    )

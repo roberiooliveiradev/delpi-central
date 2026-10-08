@@ -544,6 +544,55 @@ class MachineLoadService:
             "due_date": item.get("pa_due_date"),
         }
 
+    def public_operation_process_issue_context(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any] | None:
+        """Snapshot completo da operação PUBLISHED para o Problema de Processo.
+
+        Mesma fonte do cockpit (fila congelada + saldo vivo) — nunca WORKING
+        nem TOTVS. Congela produto/PA/ferramenta/programação para o analista
+        de Processos ver exatamente o que a bancada via no momento do reporte.
+        """
+        item = self._public_operation_item(
+            branch=branch,
+            production_order=production_order,
+            operation_code=operation_code,
+            enrich=True,
+        )
+        if item is None:
+            return None
+        return {
+            "production_order": str(item.get("production_order") or "").strip(),
+            "operation_code": str(item.get("operation_code") or "").strip(),
+            "operation_description": str(
+                item.get("operation_description") or ""
+            ).strip(),
+            "work_center": str(item.get("work_center") or "").strip(),
+            "work_center_name": str(item.get("work_center_name") or "").strip(),
+            "product_code": item.get("product_code"),
+            "product_description": item.get("product_description"),
+            "unit": item.get("unit"),
+            "pa_product_code": item.get("pa_product_code"),
+            "pa_product_description": item.get("pa_product_description"),
+            "tool": str(item.get("tool") or "").strip(),
+            "resource": str(item.get("resource") or "").strip() or None,
+            "planned_qty": _optional_float(item.get("planned_qty")),
+            "pending_qty": _optional_float(item.get("pending_qty")),
+            "operation_pending_qty": _optional_float(
+                item.get("operation_pending_qty")
+            ),
+            "scheduled_date": item.get("scheduled_date"),
+            "scheduled_start_time": item.get("scheduled_start_time"),
+            "scheduled_end_date": item.get("scheduled_end_date"),
+            "scheduled_end_time": item.get("scheduled_end_time"),
+            "due_date": item.get("due_date") or item.get("pa_due_date"),
+            "pa_due_date": item.get("pa_due_date"),
+        }
+
     def _public_operation_item(
         self,
         *,

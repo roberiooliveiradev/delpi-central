@@ -191,3 +191,27 @@ class NotificationGatewayContractError(ProductionControlError):
     def __init__(self, message: str, *, status_code: int | None = None) -> None:
         super().__init__(message)
         self.status_code = status_code
+
+
+class RequestsGatewayUnavailable(ProductionControlError):
+    """Requests API indisponível (rede, timeout ou 5xx).
+
+    Diferente das notificações, aqui a criação É o objetivo — o erro chega ao
+    operador como falha amigável (nunca sucesso falso)."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class RequestsGatewayUnauthorized(RequestsGatewayUnavailable):
+    """Credencial S2S recusada pelo Requests API (401/403) — erro de configuração."""
+
+
+class RequestsGatewayRejected(ProductionControlError):
+    """Requests API recusou a criação (4xx) — a mensagem upstream é segura
+    para o operador (validações do domínio são PT e não expõem internals)."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code

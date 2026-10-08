@@ -39,6 +39,9 @@ from production_control_app.interface.http.routes.operator_feedback_routes impor
 from production_control_app.interface.http.routes.public_operator_feedback_routes import (  # noqa: E501
     router as public_operator_feedback_router,
 )
+from production_control_app.interface.http.routes.public_process_issue_routes import (  # noqa: E501
+    router as public_process_issue_router,
+)
 from production_control_app.interface.http.routes.public_delivery_map_routes import (
     router as public_delivery_map_router,
 )
@@ -156,6 +159,7 @@ app.include_router(machine_load_router)
 app.include_router(operator_feedback_router)
 app.include_router(public_machine_load_router)
 app.include_router(public_operator_feedback_router)
+app.include_router(public_process_issue_router)
 app.include_router(public_delivery_map_router)
 app.include_router(problem_analysis_router)
 app.include_router(demand_router)

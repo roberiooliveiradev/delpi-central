@@ -34,6 +34,7 @@ from requests_app.domain.services.attendant_portal_notification_policy import (
     resolve_assignee_comment_copy,
     should_notify_assignee,
 )
+from requests_app.domain.services.external_requester import is_external_requester_id
 from requests_app.infrastructure.gateways.core_notification_adapter import (
     build_notification_payload,
 )
@@ -241,9 +242,11 @@ class TimelineUseCases:
                 ),
             )
         # Creator gets a Portal bell when the attendant comments (not self).
+        # Solicitante externo (operator:…) não tem sino — nunca é destinatário.
         if (
             self._outbox is not None
             and str(request.created_by_user_id or "").strip()
+            and not is_external_requester_id(request.created_by_user_id)
             and str(actor.user_id) != str(request.created_by_user_id)
         ):
             title, message, notif_type = resolve_assignee_comment_copy(

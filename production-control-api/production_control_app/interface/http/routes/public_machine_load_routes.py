@@ -52,6 +52,8 @@ from production_control_app.domain.errors import (
     PublicAccessDenied,
     PulseDeviceUnavailable,
     PulseGatewayError,
+    RequestsGatewayRejected,
+    RequestsGatewayUnavailable,
     SnapshotNotFound,
 )
 from production_control_app.interface.http.drawing_response import drawing_pdf_response
@@ -167,6 +169,16 @@ def _handle_public_errors(exc: Exception):
     # detalhes ficam só nos logs técnicos (nunca token/URL para o browser).
     if isinstance(exc, (OperatorDirectoryUnavailable, OperatorDirectoryContractError)):
         return fail("Não foi possível validar a matrícula no momento.", 503)
+    # P2 — Requests API: rejeição 4xx propaga a mensagem PT do domínio;
+    # indisponibilidade/credencial → 503 amigável (nunca sucesso falso).
+    if isinstance(exc, RequestsGatewayRejected):
+        return fail(str(exc), 422)
+    if isinstance(exc, RequestsGatewayUnavailable):
+        return fail(
+            "Não foi possível enviar a solicitação para Processos. "
+            "Tente novamente.",
+            503,
+        )
     if isinstance(exc, ValueError):
         return fail(str(exc), 422)
     if isinstance(exc, DelpiGatewayError):
