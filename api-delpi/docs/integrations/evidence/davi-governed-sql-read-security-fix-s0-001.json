@@ -1,0 +1,82 @@
+{
+  "task_id": "DAVI-GOVERNED-SQL-READ-SECURITY-FIX-S0-001",
+  "base_sha": "8686552a1ea4c2054863c0636e1571b734bfed17",
+  "rebase_sha": "d6c1e3d2aff9023a742c17a1baca6ccd4cabe063",
+  "fix_commit": "31b5df6f75",
+  "execution_drift": "NON_CAUSAL — origin/main moved 8686552a → d6c1e3d2 during execution; delta touched delia-api, plugins/bpmn-modeler, docs only; zero api-delpi/SQL/DAVI paths; rebased and evidence rerun",
+  "route": "POST /data/sql",
+  "operation_id": "execute_readonly_sql",
+  "validator": "regex/string-based SqlValidator — S0 bounded, NOT AST (S1 scope)",
+  "before": {
+    "select_into": "ALLOWED — validator write-bypass PROVEN (DB mutation NOT_PROVEN/TEST_NOT_RUN)",
+    "comma_join": "GAP — second+ sources evaded allowlist",
+    "bracketed_source": "GAP — [TABLE] not extracted",
+    "quoted_source": "GAP — \"TABLE\" not extracted",
+    "apply_source": "GAP — CROSS/OUTER APPLY operands not extracted"
+  },
+  "after": {
+    "select_into": "DENIED — unconditional INTO keyword rejection",
+    "comma_join": "DENIED — comma-separated FROM sources rejected",
+    "bracketed_source": "DENIED — bracketed table identifiers rejected until S1",
+    "quoted_source": "DENIED — double-quoted identifiers rejected (session-dependent semantics)",
+    "apply_source": "DENIED — CROSS/OUTER APPLY unconditionally rejected"
+  },
+  "side_effect_gates": {
+    "INSERT": "DENY", "UPDATE": "DENY", "DELETE": "DENY", "MERGE": "DENY",
+    "CREATE": "DENY", "ALTER": "DENY", "DROP": "DENY", "TRUNCATE": "DENY",
+    "EXEC": "DENY", "EXECUTE": "DENY", "SELECT_INTO": "DENY",
+    "sp_executesql": "DENY", "transaction": "DENY", "GRANT": "DENY", "REVOKE": "DENY"
+  },
+  "table_policy_gates": {
+    "simple_from": "validated", "simple_join": "validated",
+    "comma_join": "DENY", "bracketed": "DENY", "quoted": "DENY", "apply": "DENY",
+    "cte": "PASS (physical sources inside CTE validated)",
+    "subquery": "validated (nested physical sources resolved)",
+    "union": "PASS (all branches validated)",
+    "qualified_objects": "DENY (schema/database-qualified not governed)"
+  },
+  "unknown_source_policy": "fail-closed: FROM/JOIN source tokens not matching the narrow bare-physical-table grammar are rejected; comma joins, brackets, quotes, APPLY denied even when whitelist bypass flag active",
+  "legacy_compatibility": {
+    "select_into_consumers": "0 via /data/sql route (SELECT INTO in repositories/scripts uses internal batch path, not validator)",
+    "comma_join_consumers": 0,
+    "bracketed_consumers": 0,
+    "quoted_consumers": 0,
+    "apply_consumers": "0 via /data/sql (machine_load_operation_balance_probe uses pyodbc directly)",
+    "breaking_changes": "none to legitimate consumers",
+    "all_27_scripts_sql_files_revalidated": "24 PASS / 3 pre-existing SET rejections (unchanged _validate_set_statement rule, not causal)"
+  },
+  "data_sql_skip_table_whitelist": {
+    "changed": false,
+    "current_behavior": "flag still bypasses table allowlist when set (documented existing behavior)",
+    "s0_status": "NOT FIXED IN S0 — S0 denial classes (comma/bracketed/quoted/APPLY/INTO) apply even when bypass flag is active; future DAVI governed SQL will fail closed if flag is active (S1/S4)"
+  },
+  "davi_invariants": {
+    "allowlist_version": 21,
+    "governed_operations": 89,
+    "agent_intelligence": "2026.10.07.2",
+    "mcp_tool_count": 2,
+    "execute_readonly_sql_davi_status": "GENERIC_SQL_FORBIDDEN (unchanged)",
+    "generic_sql_discovery": "zero candidates (unchanged)"
+  },
+  "authz_change": "NONE",
+  "route_contract_change": "NONE",
+  "mcp_surface_change": "NONE",
+  "davi_promotion": "NONE",
+  "parser_dependency_change": "NONE",
+  "tests": {
+    "focused": "76 passed (test_sql_validator_table_whitelist.py + test_sql_validator_security_hardening.py)",
+    "sql_related": "77 passed, 5087 deselected (-k 'sql_validator or data_sql or readonly_sql')",
+    "davi": "1202 passed, 4 failed (-k davi) — all 4 are git-dependent capability freeze/inventory tests; git binary absent in container, PRE_EXISTING environmental limitation, non-causal; run on host",
+    "edge_probes": "comma distinction verified: SELECT-list/GROUP BY/ORDER BY/IN/VALUES/COALESCE/VALUES-derived commas PASS; FROM-clause comma joins DENY (including comma after derived table and comma before JOIN)"
+  },
+  "files_changed": [
+    "api-delpi/app/application/services/sql_validator.py",
+    "api-delpi/tests/test_sql_validator_security_hardening.py",
+    "api-delpi/docs/integrations/evidence/davi-governed-sql-read-security-fix-s0-001.md",
+    "api-delpi/docs/integrations/evidence/davi-governed-sql-read-security-fix-s0-001.json"
+  ],
+  "deploy": "NOT RUN",
+  "live_database_security_probe": "NOT RUN — all evidence is validator-level per task requirement",
+  "final_status": "SECURITY_FIX_S0_PASS",
+  "next_step": "DAVI-GOVERNED-SQL-READ-STRUCTURAL-HARDENING-S1-001"
+}
