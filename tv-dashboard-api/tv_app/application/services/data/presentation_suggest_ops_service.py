@@ -1528,6 +1528,12 @@ class PresentationSuggestOpsService:
                     steps = None
                 if isinstance(steps, list):
                     op["steps"] = steps
+        elif name == "create_block":
+            # Conteúdo citado explícito → campo content do contrato create_block;
+            # sem conteúdo informado o campo é omitido (nunca "" injetado).
+            text_content = str(placeholders.get("textContent") or "").strip()
+            if text_content:
+                op["content"] = text_content
         elif name == "upsert_block":
             if str(op.get("blockId") or "").strip():
                 # blockId na raiz = template ALTER_EXISTING (update_block):

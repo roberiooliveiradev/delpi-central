@@ -1022,6 +1022,127 @@ def test_suggest_crie_novo_titulo_cria_heading():
     assert upsert.get("createIfMissing") is True
 
 
+@pytest.mark.parametrize(
+    ("message", "expected_content"),
+    [
+        ('Crie um bloco de texto com conteúdo "Teste"', "Teste"),
+        ('Crie um bloco de texto escrito "Teste"', "Teste"),
+        ('Crie um bloco de texto com conteúdo "Olá, mundo!"', "Olá, mundo!"),
+        ('Crie um bloco de texto com conteúdo "123"', "123"),
+    ],
+)
+def test_suggest_crie_bloco_de_texto_com_conteudo_preserva_content(
+    message, expected_content
+):
+    """«Crie um bloco de texto com conteúdo "X"» → typed create único
+    carregando o conteúdo citado verbatim no campo content do contrato."""
+    result = PresentationSuggestOpsService.suggest(
+        message=message,
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert len(result["ops"]) == 1
+    op = result["ops"][0]
+    assert op["op"] == "create_block"
+    assert op["type"] == "text"
+    assert op["content"] == expected_content
+    assert "create_block" in result["matchedCapabilityKeys"]
+
+
+def test_suggest_crie_bloco_de_titulo_com_texto_preserva_content():
+    """Sibling heading: grammar «bloco de título» roteia para create_block
+    e preserva o conteúdo citado."""
+    result = PresentationSuggestOpsService.suggest(
+        message='Crie um bloco de título com texto "Teste"',
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == [
+        {"op": "create_block", "type": "heading", "content": "Teste"}
+    ]
+
+
+@pytest.mark.parametrize(
+    ("message", "expected_type"),
+    [
+        ("Crie uma forma", "shape"),
+        ("Adicione um ícone", "icon"),
+        ("Crie um novo bloco de texto", "text"),
+        ("Crie um novo bloco de título", "heading"),
+    ],
+)
+def test_suggest_create_block_sem_conteudo_nao_inventa_content(
+    message, expected_type
+):
+    """Sem conteúdo citado, o op create_block omite content — nunca
+    injeta "" (neutro para text/heading, mas semântico para icon/shape)."""
+    result = PresentationSuggestOpsService.suggest(
+        message=message,
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == [{"op": "create_block", "type": expected_type}]
+    assert "content" not in result["ops"][0]
+    assert "iconName" not in result["ops"][0]
+
+
+def test_suggest_create_block_com_content_aplica_no_write_layer():
+    """«Crie um bloco de texto com conteúdo "Teste"» aplicado no write
+    layer cria exatamente UM bloco cujo content é "Teste"."""
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    from tv_app.application.services.data.presentation_mutation import (
+        PresentationPatchService,
+    )
+    from tv_app.application.services.data.presentation_ops_content_service import (
+        PresentationOpsContentService,
+    )
+
+    result = PresentationSuggestOpsService.suggest(
+        message='Crie um bloco de texto com conteúdo "Teste"',
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert len(result["ops"]) == 1
+
+    playlist_id = str(uuid4())
+    slide_id = str(uuid4())
+
+    class _Repo:
+        def get_by_id(self, pid):
+            return {"id": str(pid), "revision": 3, "dataDefaults": {}}
+
+        def get_slide(self, sid, playlist_id=None):
+            return {
+                "id": str(sid),
+                "nativeConfig": {
+                    "version": 5,
+                    "blocks": [
+                        {
+                            "id": "vista_knowledge_title",
+                            "type": "heading",
+                            "content": "O que a VISTA conhece",
+                            "frame": {"x": 5, "y": 12, "w": 90, "h": 18},
+                            "style": {"fontSize": 48},
+                        }
+                    ],
+                },
+            }
+
+    svc = PresentationPatchService(repo=_Repo())
+    applied = svc.preview(
+        {
+            "target": {"playlistId": playlist_id, "slideId": slide_id},
+            "ops": result["ops"],
+            "catalogVersion": PresentationOpsContentService.catalog_version(),
+        },
+        user=SimpleNamespace(is_superadmin=True, permissions=[], id="u1"),
+    )
+    blocks = applied["nativeConfig"]["blocks"]
+    assert len(blocks) == 2
+    new_blocks = [b for b in blocks if b.get("id") != "vista_knowledge_title"]
+    assert len(new_blocks) == 1
+    assert new_blocks[0]["type"] == "text"
+    assert new_blocks[0]["content"] == "Teste"
+
+
 def test_suggest_edit_sem_selecao_clarifica_nao_cria_ghost():
     """«Mude o título para "X"» sem alvo resolvível → clarificação canônica,
     nunca bloco fantasma criado a partir do substantivo."""
