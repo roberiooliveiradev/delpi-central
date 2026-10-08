@@ -214,12 +214,12 @@ Promovidos a produto/governados (não mais vendor-only): copy/paste/cut + duplic
 
 ### G3 gaps (já identificados em G0) — verificação
 
-- **Diagram search:** REFINADO — overlay vendor searchPad existe e está bindado (Ctrl+F) + traduzido PT-BR. Gap real = evidência/produto-styling, não ausência. → EG-10.
+- **Diagram search:** REFINADO (G0) — overlay vendor searchPad existe e está bindado (Ctrl+F) + traduzido PT-BR → **CLOSED (G3)** — evidência PROD-SRCH-01..04. → EG-10 closed.
 - **Palette restriction:** ~~CONFIRMADO — nenhum provider de restrição~~ → **CLOSED (G2A)** — palette/context-pad/replace/panel governados pelo profile central (`editingProfile.ts`), fail-closed; preserve-only e MultiInstance não são criáveis nem replace targets. → IG-2 closed.
-- **Copy/paste:** CONFIRMADO vendor-only. → EG-1.
-- **Multi-select:** CONFIRMADO vendor-only (exceto select-all). → EG-2.
-- **Palette search:** ~~CONFIRMADO MISSING~~ → **CLOSED (G3 + G3-PAL-1)** — implementada como projeção semântica CREATE_EDIT do editingProfile (ver IG-1).
-- **Snap/grid:** vendor ativo com config default — não é configuração de produto explícita → PARTIAL.
+- **Copy/paste:** ~~CONFIRMADO vendor-only~~ → **CLOSED (G3)** — PROVEN com governança (`canCopyElements` recursivo nega preserve-only); evidência PROD-CLIP-01..07. → EG-1 closed.
+- **Multi-select:** ~~CONFIRMADO vendor-only (exceto select-all)~~ → **CLOSED (G3)** — PROVEN: Shift+click, lasso, select-all, deselect, bulk move/delete; evidência PROD-SEL-01..06. → EG-2 closed.
+- **Palette search:** ~~CONFIRMADO MISSING~~ → **CLOSED (G3 + G3-PAL-1)** — implementada como projeção semântica CREATE_EDIT do editingProfile (ver IG-1). → IG-1 closed.
+- **Snap/grid:** ~~vendor ativo com config default → PARTIAL~~ → **CLOSED / PROVEN (G3)** — quantização no grid 10 medida em bounds/waypoints DI; evidência PROD-SEL-06.
 
 ## 8. V1 scope completeness score
 
