@@ -35,7 +35,6 @@ from tm_app.application.gpt_actions.workspace_context_service import (
 )
 from tm_app.application.solutions.solution_catalog_service import (
     SolutionCatalogService,
-    SolutionNotFoundError,
 )
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
@@ -439,8 +438,6 @@ def gpt_get_solution_context(request: Request, solution_id: str):
             data,
             "Contexto da solução (metadados da Core — não é dado de domínio nem autorização).",
         )
-    except SolutionNotFoundError as exc:
-        return fail(str(exc.args[0] if exc.args else exc), 404, {"error_kind": "not_found"})
     except Exception as exc:
         return _handle(exc)
 

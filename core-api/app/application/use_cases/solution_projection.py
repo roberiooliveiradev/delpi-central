@@ -81,6 +81,14 @@ def serialize_solution(
     }
 
 
+def serialize_version(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Public version entry — internal persistence fields never leave Core."""
+    return {
+        "version": row.get("version"),
+        "created_at": row.get("created_at"),
+    }
+
+
 def diff_manifests(
     current: Optional[Dict[str, Any]],
     previous: Optional[Dict[str, Any]],

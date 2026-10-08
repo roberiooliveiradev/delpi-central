@@ -141,7 +141,63 @@ class TestGetSolutionUseCase:
         assert result["evolution"]["basis"] == "CALCULATED"
         assert result["evolution"]["versionChanged"] is True
         assert result["evolution"]["descriptionChanged"] is True
-        assert result["recentVersions"] == versions
+        # Public projection: version + created_at only — checksum stays internal.
+        assert result["recentVersions"] == [
+            {"version": "1.3.0", "created_at": None},
+            {"version": "1.2.3", "created_at": None},
+        ]
+
+    def test_recent_versions_never_expose_checksum(self):
+        versions = [
+            {"version": "1.3.0", "checksum": "abc123", "created_at": "2026-01-02"},
+            {"version": "1.2.3", "checksum": "def456", "created_at": "2026-01-01"},
+        ]
+        uow = _FakeUow(
+            [_app_dto("x", "x.access")], {"x": _manifest("x")}, versions
+        )
+        result = GetSolutionUseCase(uow).execute(
+            "x", permissions=[], is_superadmin=False)
+        assert result["recentVersions"] == [
+            {"version": "1.3.0", "created_at": "2026-01-02"},
+            {"version": "1.2.3", "created_at": "2026-01-01"},
+        ]
+
+    def test_detail_has_no_sensitive_keys_recursively(self):
+        forbidden = {
+            "checksum", "backend", "security", "healthcheck",
+            "observability", "entry", "metadata", "created_by",
+            "createdBy", "updated_by", "updatedBy",
+        }
+        versions = [{"version": "1.2.3", "checksum": "abc", "created_at": "t"}]
+        uow = _FakeUow(
+            [_app_dto("x", "x.access")], {"x": _manifest("x")}, versions
+        )
+        result = GetSolutionUseCase(uow).execute(
+            "x", permissions=[], is_superadmin=True)
+
+        def keys(node):
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    yield k
+                    yield from keys(v)
+            elif isinstance(node, list):
+                for item in node:
+                    yield from keys(item)
+
+        found = set(keys(result))
+        assert found.isdisjoint(forbidden), found & forbidden
+
+    def test_detail_accessible_flag_by_identity(self):
+        apps = [_app_dto("x", "x.access")]
+        uow = _FakeUow(apps, {"x": _manifest("x")})
+        uc = GetSolutionUseCase(uow)
+        denied = uc.execute("x", permissions=[], is_superadmin=False)
+        granted = uc.execute(
+            "x", permissions=["x.access"], is_superadmin=False)
+        admin = uc.execute("x", permissions=[], is_superadmin=True)
+        assert denied["accessible"] is False
+        assert granted["accessible"] is True
+        assert admin["accessible"] is True
 
     def test_no_versions_evolution_none(self):
         uow = _FakeUow([_app_dto("x", "x.access")], {"x": _manifest("x")})

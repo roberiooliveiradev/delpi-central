@@ -26,10 +26,6 @@ _NOT_AUTHORITY_NOTE = (
 )
 
 
-class SolutionNotFoundError(KeyError):
-    pass
-
-
 class SolutionCatalogService:
     def __init__(self, gateway: SolutionCatalogPort | None = None) -> None:
         self._gateway = gateway or CoreSolutionCatalogGateway()
@@ -54,8 +50,13 @@ class SolutionCatalogService:
             )
         solution = self._gateway.get_solution(plugin_id, authorization)
         if solution is None:
-            raise SolutionNotFoundError(
-                f"unknown or inactive solution {plugin_id!r}"
+            raise GptActionsError(
+                f"Solução desconhecida ou inativa: {plugin_id!r}.",
+                404,
+                {
+                    "error_kind": "not_found",
+                    "error_code": "solution_not_found",
+                },
             )
         return {
             "schema": "solution_context_v1",

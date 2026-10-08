@@ -37,6 +37,26 @@ Never exposed: backend/security/healthcheck/observability/entry/metadata
 manifest blocks, actor identities, permission UUIDs, checksums, RBAC
 graph, user lists, personal usage.
 
+`recentVersions[]` exposes only `version` + `created_at` — internal
+persistence fields (`checksum`, manifest snapshots, audit metadata)
+remain inside Core and are used only as calculation input for
+`evolution`. INTERNAL CALCULATION INPUT != PUBLIC PROJECTION.
+
+## Error contract
+
+- Unknown or inactive solution → typed absence, never 500:
+  - Core `GET /solutions/{id}` → `404`.
+  - `SolutionCatalogService` → `GptActionsError(404,
+    {error_kind: not_found, error_code: solution_not_found})`.
+  - MCP → `status_code: 404, error_kind: not_found,
+    error_code: solution_not_found`.
+  - GPT Actions HTTP → canonical `not_found` mapping (Custom GPT
+    disables Actions on opaque HTTP 404, so the HTTP status is remapped
+    while `error_kind: not_found` + `error_code: solution_not_found` are
+    preserved in the payload) — same convention as `GovernedWriteError`.
+- Missing `solution_id` → `400` validation.
+- Core unreachable → `502` upstream errors — never masked as 404.
+
 ## Evolution
 
 `evolution` is a structural manifest diff between version snapshots —

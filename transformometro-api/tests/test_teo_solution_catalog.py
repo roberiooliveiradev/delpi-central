@@ -14,7 +14,6 @@ import pytest
 from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.application.solutions.solution_catalog_service import (
     SolutionCatalogService,
-    SolutionNotFoundError,
 )
 
 
@@ -75,8 +74,12 @@ def test_solution_context_detail_and_unknown() -> None:
     ctx = svc.get_solution_context("Bearer token", solution_id="tv-dashboard")
     assert ctx["solution"]["id"] == "tv-dashboard"
     assert ctx["solution"]["accessible"] is False
-    with pytest.raises(SolutionNotFoundError):
+    with pytest.raises(GptActionsError) as exc_info:
         svc.get_solution_context("Bearer token", solution_id="nope")
+    exc = exc_info.value
+    assert exc.status_code == 404
+    assert exc.data["error_kind"] == "not_found"
+    assert exc.data["error_code"] == "solution_not_found"
 
 
 def test_bearer_is_forwarded_verbatim() -> None:
@@ -95,3 +98,39 @@ def test_solution_id_required() -> None:
 def test_note_carries_knowledge_not_authorization() -> None:
     svc = SolutionCatalogService(gateway=_FakeGateway(SOLUTIONS))
     assert "not authorization" in svc.get_solution_catalog("Bearer t")["note"]
+
+
+FORBIDDEN_KEYS = {
+    "checksum",
+    "backend",
+    "security",
+    "healthcheck",
+    "observability",
+    "entry",
+    "metadata",
+    "created_by",
+    "createdBy",
+    "updated_by",
+    "updatedBy",
+}
+
+
+def _all_keys(node):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield key
+            yield from _all_keys(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from _all_keys(item)
+
+
+def test_detail_response_has_no_sensitive_keys_recursively() -> None:
+    """Recursive safe-projection guard — not just top-level fields."""
+    detail = dict(SOLUTIONS[0])
+    detail["recentVersions"] = [{"version": "0.5.5", "created_at": "2026-01-01"}]
+    detail["evolution"] = {"basis": "CALCULATED", "versionChanged": True}
+    svc = SolutionCatalogService(gateway=_FakeGateway([detail]))
+    result = svc.get_solution_context("Bearer token", solution_id="transformometro")
+    found = set(_all_keys(result))
+    assert found.isdisjoint(FORBIDDEN_KEYS), found & FORBIDDEN_KEYS

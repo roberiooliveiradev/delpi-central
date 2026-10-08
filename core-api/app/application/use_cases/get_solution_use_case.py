@@ -9,6 +9,7 @@ from app.application.unit_of_work import UnitOfWork
 from app.application.use_cases.solution_projection import (
     diff_manifests,
     serialize_solution,
+    serialize_version,
 )
 
 RECENT_VERSIONS_LIMIT = 5
@@ -52,7 +53,12 @@ class GetSolutionUseCase:
         )
 
         versions = self._uow.plugin_versions.list_versions(plugin_id)
-        payload["recentVersions"] = versions[:RECENT_VERSIONS_LIMIT]
+        # INTERNAL CALCULATION INPUT != PUBLIC PROJECTION: raw rows keep
+        # checksum/snapshot internals for the evolution diff; the public
+        # recentVersions surface goes through serialize_version.
+        payload["recentVersions"] = [
+            serialize_version(v) for v in versions[:RECENT_VERSIONS_LIMIT]
+        ]
 
         evolution: Optional[Dict[str, Any]] = None
         if versions:
