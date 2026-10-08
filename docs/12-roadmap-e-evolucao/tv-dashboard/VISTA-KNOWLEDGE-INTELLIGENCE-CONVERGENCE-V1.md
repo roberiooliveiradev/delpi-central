@@ -363,8 +363,8 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | Phase | Entrega | Depende de | Status |
 |---|---|---|---|
 | 0 | Baseline + drift closure | — | DONE (§27) |
-| 1 | Knowledge Orchestration V1 | 0 | READY_FOR_EXECUTION (§27.15) |
-| 2 | TV Product Guide V1 | 1 | READY_FOR_DIAGNOSTIC |
+| 1 | Knowledge Orchestration V1 | 0 | DONE (§28) |
+| 2 | TV Product Guide V1 | 1 | READY_FOR_EXECUTION (§29) |
 | 3 | Help Convergence | 2 | BLOCKED |
 | 4 | Editor Grounding V2 | 0 | READY_FOR_DIAGNOSTIC |
 | 5 | Design Methodology V1 | 1, 4 | READY_FOR_DIAGNOSTIC |
@@ -436,7 +436,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** registry, índice, resultado do Action Surface Gate.
 - **DEPENDENCIES:** PHASE 1 (orquestração sabe quando consultar o guide).
 - **STOP CONDITIONS:** guide precisar de mutation authority ou duplicar contrato de domínio → STOP.
-- **STATUS:** READY_FOR_DIAGNOSTIC.
+- **STATUS:** READY_FOR_EXECUTION — diagnostico completo em secao 29 (2026-10-08): owner provado, schema/validacao/versionamento desenhados, Wave-1 = 11 topicos, surface = dedicated read recomendado (gate no execution brief).
 
 ### PHASE 3 — HELP CONVERGENCE
 
@@ -891,3 +891,75 @@ Nenhum CONTRACT_DRIFT ou EXECUTION_DRIFT encontrado. Escopos distintos não fora
 ### 28.5 Efeito downstream
 
 Dependência P1 satisfeita → P5 (Design Methodology) e P6 (Data+Solution) permanecem READY_FOR_DIAGNOSTIC — requerem diagnóstico próprio antes de execução.
+
+---
+
+## 29. PHASE 2 — DIAGNOSTIC RECORD (TV Product Guide V1, 2026-10-08)
+
+> Executado por `VISTA-KIC-V1-PHASE-2-TV-PRODUCT-GUIDE-DIAGNOSTIC`. Diagnóstico/inventário somente — zero código de produção. Baseline: HEAD `48a188148f` == origin/main.
+
+### 29.1 Decisão de owner
+
+`PRODUCT_GUIDE_OWNER = tv-dashboard-api` → content/intelligence layer (mesmo owner de `vista_agent_intelligence.json`, `presentation_ops_content.json`). Autoridade: `GUIDANCE_NOT_DOMAIN_TRUTH` enforced no schema (literal). Nenhum registry existente em `tv_app/content/` é host adequado: `vista_agent_intelligence.json` é policy operacional (não tópicos de uso), `tv_data_route_overlays.json`/`design_intelligence.json`/`presentation_recipes.json` são autoridades por-facet que viram `source_refs`, não o registry. `tv_dashboard_content.json`/`native_screens.json`/`dashboard_slide_presets.json` são labels/catálogos, sem camada semântica. Conclusão: registry novo no bounded context, padrão TÉO adaptado.
+
+### 29.2 Referência TÉO (transformometro-api — não api-delpi)
+
+Padrão PROVEN: `tm_app/application/product_guide/{schema,registry,service}.py` + `tm_app/content/product_guides/*.json` (24 tópicos) + `routes/product_guide_routes.py` (`GET /transformometro/product-guides?view=help`) + `gpt_get_product_guide`/`get_product_guide` (Actions+MCP via capability binding único) + MFE `helpGuideContent.ts` (`HELP_SECTION_TOPICS` + `mergeManualWithGuides` + fallback) + `HelpPage.tsx` via `createDashboardUserManual` (`plugin-ui`).
+
+Classificação dos mecanismos: REUSE_PATTERN — file-per-topic `id==filename`, schema fail-closed bounded, cross-refs validados no load contra catálogo vivo via provider injetável, versão registry+payload, projeção agent-full vs help-whitelist, testes de invariantes semânticos + coverage matrix. ADAPT — `capability_refs` devem validar contra `capability_surface`/ops catalog VISTA (não o catálogo TÉO); parity binding VISTA tem mecanismo próprio (parity_map); `contract_refs` TÉO valida só shape — VISTA deve validar existência de `operation_refs`/`read_refs`/`write_refs` contra registries canônicos. NOT_APPLICABLE/DO_NOT_COPY — conteúdo pt-BR/domínio TÉO, gates TÉO-específicos, acoplamento ao `UserManualSection` do transformometro (o *padrão* de merge transfere, o código não).
+
+### 29.3 Inventário + duplicação (veredito)
+
+SINGLE_SOURCE/AUTHORITY preservados: roadmap README (overview humano), PLAYBOOK-EXCELENCIA (design doctrine dev), PLAYBOOK-POWER-QUERY-M (transform contract), MDD-MINHA-DELPI-DECK (guia MDD), ADRs (decisões), `presentation_ops_content.json` (execution contract + `whenToUse` por capability), `tv_data_route_overlays.json` (semântica por rota), `design_intelligence.json` (semântica por bloco), `native_screens.json`/`dashboard_slide_presets.json`/`slide_templates/` (catálogos de produto), `helpTooltips.ts` (copy UI, MFE-local correto), `data-route-nl-suggest.md`, api README.
+
+UNCONTROLLED_DUPLICATION (drift risk real): **block_types** (5+ vocabulários: `design_intelligence.json` × `*AddElementMenuCatalog.ts`/`chartQuickLayouts.ts` × `helpTooltips` × playbook §6.2b × E1 inventory); **filter_layering** (4 fontes: directive L595 + playbooks §3.2 + helpTooltips + roadmap §18.5.1); **design_quality** (playbook §1/§6 × `visual_impact`/`slide_design`/`layout_perception` × MFE `*StyleRecipes.ts`/`comunicadoSlideThemes.ts` — sem cross-validation). Drift moderado: media limits (settings.json × directive), slide duration/section defaults (help × directives).
+
+**EXISTING_EQUIVALENT = YES** (fontes semânticas fragmentadas existem; nenhum registry canônico unificado). **REUSE_DECISION = EXTEND** — portar o mecanismo TÉO para o bounded context próprio; reusar fontes existentes como `source_refs`, não copiar prosa.
+
+### 29.4 Target schema (adaptado de `product_guide_v1`)
+
+Campos: `schema`("product_guide_v1") · `id`(==filename) · `title` · `summary` · `authority`("GUIDANCE_NOT_DOMAIN_TRUTH") · `purpose` · `use_when[]` · `do_not_use_when[]` · `how_to_use[]` · `field_guidance[]{field,guidance,contract_ref?}` · `quality_rules[]` · `common_mistakes[]` · `related_topics[]` · `capability_refs[]` · `operation_refs[]` · `read_refs[]` · `write_refs[]` · `source_refs[]{ref, PROVEN|INFERRED|PROPOSED}` · `agent_guidance?`. Seções projetáveis: overview/when_to_use/how_to_use/field_guidance/quality/relationships/all.
+
+`ui_refs` **rejeitado em V1**: não existe registry canônico de rotas/seções de UI em tv-dashboard (`routing.ts` é estático, não validável) — incluir criaria ref não-validável; Help MFE mantém navegação local.
+
+Validação fail-closed no load (não no read): schema/authority literals, id==filename, ids únicos, `related_topics ⊆ registry`, `capability_refs ⊆ capability_surface`, `operation_refs ⊆ presentation_ops_content.json operations`, `read_refs`/`write_refs ⊆ tool/op names canônicos, `contract_refs` existência-deep (aprendizado: TÉO valida só shape — VISTA faz melhor). Ref desconhecida → erro de load/teste; tópico desconhecido → 404 tipado; seção desconhecida → 400 tipado; nunca fallback silencioso.
+
+Versioning: `schema` literal por arquivo + `REGISTRY_VERSION` único + payload markers (`product_guide_index_v1`, `product_guide_help_v1`). Sem versão por tópico. Bump de schema só para mudança de contrato de campos; tópico novo/texto alterado = sem bump.
+
+### 29.5 Wave 1 (evidence-based)
+
+| Tópico | Justificativa |
+|---|---|
+| tv_dashboard_overview | âncora de vocabulário (playlist/slide/dados/TV) |
+| playlist | conceito-mãe; 4 fontes AUDIENCE_COPY convergem |
+| slide | inclui native vs custom (confusão real, presets/native_screens existem) |
+| block_types | **maior UNCONTROLLED_DUPLICATION**; `design_intelligence.json` vira source_ref |
+| data_sources | overlays já trazem whenToUse/params |
+| data_models | DataModel vs fonte vs binding = confusão top; directive `data_model` existe |
+| data_bindings | ops `bind_visual` + helpTooltips existentes |
+| filters_and_layering | UNCONTROLLED (4 fontes) — registry vira projeção canônica |
+| display_formats | ADR + directive; PARTIAL conhecido documentável |
+| data_route_discovery | miss≠absence já documentado (data-route-nl-suggest) |
+| visual_verification | ladder §27.8 — guidance estável |
+
+**WAVE_1 = 11 tópicos.** DEFERRED: sections (fold em slide), editor (UI-local, tooltips bastam), published_templates, presentation_recipes, media, sharing_and_kiosk, MDD (doc próprio é autoridade — link via related/source_refs), history (PHASE 9). REJECTED/deferido: **design_quality** movido para WAVE_2 — fronteira com PHASE 5 (metodologia) torna o escopo ambíguo hoje.
+
+### 29.6 Surface decision
+
+`PRODUCT_GUIDE_SURFACE = DEDICATED_READ_TOOL` (recomendado; gate final no execution brief de PHASE 2): consumidor real existe (VISTA PRODUCT_USAGE + Portal Help), payload de tópicos não cabe no catálogo (index ~1.5KB cabe; corpos ~2-4KB/tópico não), owner claro, schema estável, precedente TÉO PROVEN. Índice compacto projetável em `get_catalog` quando a capability existir. `NEW GPT ACTION/MCP TOOL = RECOMMENDED` via capability binding único (parity_map), não como decisão final desta fase.
+
+### 29.7 Budget / projeção
+
+Baseline pós-P1: surface Actions 79,497B de 102,400 (headroom ~22.9KB unicode; envelopeAscii headroom ~4-5KB). Guide **index** cabe em Actions; **corpos de tópicos só on-demand** (tool/HTTP). Projeções derivadas da mesma autoridade: MCP full · Actions index+fetch · Portal `?view=help` whitelist · docs derivados. **ZERO paralelismo de fonte.**
+
+### 29.8 Help convergence readiness
+
+`HELP_CONVERGENCE_FEASIBILITY = PARTIAL→READY`. Blocos prontos: `createDashboardUserManual` (plugin-ui compartilhado), padrão merge+fallback TÉO, convenção `content_routes`/service, `feature-help-sync.mdc` prescreve o padrão commercial (`userManualContent` + `/help`). Gaps reais (PHASE 3, não P2): `routing.ts` sem rota `/help`; sem `userManualContent.ts`; `helpTooltips.ts` é component-scoped (precisa de mapa seção→topic-id); kiosk público precisaria de projeção sem auth (não escopo). `helpTooltips.ts` permanece autoridade local de navegação/labels — não vira fonte semântica.
+
+### 29.9 Implementation boundary (próxima fase)
+
+PHASE 2 runtime files: `tv_app/content/product_guides/*.json` (Wave-1), `tv_app/application/product_guide/{product_guide_schema.py, product_guide_registry.py, product_guide_service.py}`, rota help (novo `product_guide_routes.py` ou `content_routes` existente), capability binding + openapi builder **somente se Action Surface Gate passar**, `tests/test_tv_product_guide.py`, roadmap record. PHASE 3 files (depois): `/help` route + `helpGuideContent` map + api client no MFE tv-dashboard.
+
+### 29.10 Status
+
+**PHASE 2 = READY_FOR_EXECUTION** — owner provado, equivalentes inventariados, schema/validação/versionamento desenhados, Wave-1 evidenciada, surface decidida com gate documentado, zero drift estrutural novo (duplicações registradas para convergência futura, não para correção nesta fase). PHASE 3 permanece BLOCKED até PHASE 2 produzir registry + projeção help.
