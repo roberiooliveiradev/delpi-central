@@ -1,6 +1,6 @@
 {
   "task_id": "DAVI-MCP-DISCOVERY-QUALITY-001",
-  "evaluated_sha": "d77d09b027d3cc0850eca9f927e2f3e0d63f529c",
+  "evaluated_sha": "67f6f84bcc0a41101c8dcdeda9184b43064f98b9",
   "catalog_source": "live app.openapi() (same as runtime seed)",
   "catalog_operation_count": 89,
   "allowlist_version": 19,
@@ -101,7 +101,8 @@
         "reserved quantity",
         "saldo empenhado do produto",
         "saldo reservado do produto"
-      ]
+      ],
+      "root_cause": "OTHER"
     },
     {
       "id": "DQ-PM-006",
@@ -135,7 +136,8 @@
         "supplier",
         "suppliers",
         "product suppliers"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PM-007",
@@ -161,7 +163,8 @@
         "customer",
         "customers",
         "product customers"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PM-012",
@@ -189,7 +192,8 @@
         "product structure",
         "bill of materials",
         "product components"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-PM-014",
@@ -261,7 +265,8 @@
           "materiais abaixo do estoque sugerido",
           "safety stock consumption items"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PM-016",
@@ -290,7 +295,8 @@
         "factory situation",
         "product factory status",
         "shop-floor status"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-PM-017",
@@ -317,7 +323,8 @@
         "exclusive raw material",
         "bom exclusivity",
         "exclusive components"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PM-018",
@@ -352,7 +359,8 @@
         "exclusive raw material",
         "bom exclusivity",
         "exclusive components"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-PM-020",
@@ -433,7 +441,8 @@
           "product description",
           "product group"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PM-024",
@@ -509,7 +518,8 @@
           "quanto vendemos líquido",
           "ROL realizado e meta"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PM-025",
@@ -587,7 +597,8 @@
           "product description",
           "product group"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PM-026",
@@ -617,7 +628,8 @@
         "last purchase price",
         "last valid purchase",
         "latest inbound invoice price"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PM-028",
@@ -642,7 +654,8 @@
         "production routing",
         "operation sequence",
         "product operations"
-      ]
+      ],
+      "root_cause": "OTHER"
     },
     {
       "id": "DQ-PM-029",
@@ -672,7 +685,8 @@
         "parent products",
         "reverse BOM",
         "products using component"
-      ]
+      ],
+      "root_cause": "OTHER"
     },
     {
       "id": "DQ-PM-030",
@@ -756,7 +770,8 @@
           "product description",
           "product group"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PM-033",
@@ -786,7 +801,8 @@
         "drawing metadata",
         "product drawing metadata",
         "server-resolved drawing"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PM-034",
@@ -812,7 +828,8 @@
         "drawing metadata",
         "product drawing metadata",
         "server-resolved drawing"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-PM-035",
@@ -843,7 +860,8 @@
         "physical locations",
         "product physical location",
         "pickup location"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-PM-036",
@@ -929,7 +947,8 @@
           "produtos geraram mais faturamento",
           "ranking de produtos por faturamento"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PM-039",
@@ -964,7 +983,8 @@
         "vendor part number",
         "manufacturer part number",
         "supplier product code"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PM-044",
@@ -994,7 +1014,8 @@
         "inbound invoice",
         "inbound invoice items",
         "inbound invoices"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PM-048",
@@ -1084,7 +1105,8 @@
           "quanto vendemos líquido",
           "ROL realizado e meta"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PM-050",
@@ -1112,7 +1134,8 @@
         "product open orders",
         "open orders for product",
         "sales open orders"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-PM-052",
@@ -1154,7 +1177,8 @@
         "material shortage for production",
         "ruptura no conjunto",
         "falta de insumo"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-PM-054",
@@ -1180,7 +1204,8 @@
         "exclusive raw material",
         "exclusive raw materials",
         "exclusive raw materials catalog"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-COM-003",
@@ -1209,7 +1234,8 @@
         "faturamento mês a mês",
         "histórico de faturamento",
         "como o faturamento evoluiu"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-COM-010",
@@ -1234,7 +1260,8 @@
         "produtos que mais faturaram",
         "produtos geraram mais faturamento",
         "ranking de produtos por faturamento"
-      ]
+      ],
+      "root_cause": "SINGLE_TOKEN_OVERWEIGHT"
     },
     {
       "id": "DQ-COM-012",
@@ -1263,7 +1290,8 @@
         "new business ROL share",
         "percentual de novos negócios",
         "novos negócios ROL"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-COM-013",
@@ -1283,7 +1311,8 @@
         "meta ROL novos negócios",
         "new business ROL target",
         "atingimento novos negócios"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-COM-020",
@@ -1352,7 +1381,8 @@
           "open orders for product",
           "sales open orders"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-COM-024",
@@ -1385,7 +1415,8 @@
         "on-time delivery comercial",
         "OTD pedidos",
         "sales order OTD"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-COM-025",
@@ -1406,7 +1437,8 @@
         "resumo do OTD comercial",
         "OTD realizado e meta",
         "meta OTD comercial"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-COM-027",
@@ -1421,7 +1453,8 @@
         "OTD por unidade",
         "sales order OTD by branch"
       ],
-      "higher_candidate_aliases": {}
+      "higher_candidate_aliases": {},
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-COM-028",
@@ -1449,7 +1482,8 @@
           "OTD pedidos",
           "sales order OTD"
         ]
-      }
+      },
+      "root_cause": "QUARANTINE_INTERACTION"
     },
     {
       "id": "DQ-COM-029",
@@ -1468,7 +1502,8 @@
         "OTD comercial por cliente",
         "atraso de pedidos por cliente"
       ],
-      "higher_candidate_aliases": {}
+      "higher_candidate_aliases": {},
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-COM-030",
@@ -1542,7 +1577,8 @@
           "quantos clientes novos em média",
           "média de novos clientes no período"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-COM-031",
@@ -1570,7 +1606,8 @@
         "histórico do OTD comercial",
         "OTD comercial evoluiu",
         "evolução do OTD comercial"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-COM-032",
@@ -1607,7 +1644,8 @@
           "OTD pedidos",
           "sales order OTD"
         ]
-      }
+      },
+      "root_cause": "QUARANTINE_INTERACTION"
     },
     {
       "id": "DQ-COM-034",
@@ -1637,7 +1675,8 @@
           "OTD comercial por cliente",
           "atraso de pedidos por cliente"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-COM-035",
@@ -1676,7 +1715,8 @@
         "atingimento da meta WEG",
         "meta de faturamento da WEG",
         "atingimento da meta de faturamento da WEG"
-      ]
+      ],
+      "root_cause": "OTHER"
     },
     {
       "id": "DQ-SUP-004",
@@ -1713,7 +1753,8 @@
         "inventory turnover",
         "turnover de estoque",
         "giro de estoque suprimentos"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-008",
@@ -1744,7 +1785,8 @@
         "entrega no prazo suprimentos",
         "atrasos de fornecimento agregados",
         "supplies OTD KPI"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-010",
@@ -1773,7 +1815,8 @@
         "pontualidade das compras",
         "entregas de fornecedores no prazo",
         "OTD nossos pedidos de compra"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-011",
@@ -1827,7 +1870,8 @@
           "OTD pedidos",
           "sales order OTD"
         ]
-      }
+      },
+      "root_cause": "QUARANTINE_INTERACTION"
     },
     {
       "id": "DQ-SUP-016",
@@ -1851,7 +1895,8 @@
         "quantos materiais abaixo do estoque de segurança",
         "quantos materiais estão abaixo do estoque de segurança",
         "situação do estoque de segurança"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-020",
@@ -1886,7 +1931,8 @@
         "item stock projection",
         "estoque mínimo do item",
         "estoque minimo do item"
-      ]
+      ],
+      "root_cause": "SINGLE_TOKEN_OVERWEIGHT"
     },
     {
       "id": "DQ-SUP-021",
@@ -1905,7 +1951,8 @@
         "fornecedores do item de estoque de segurança",
         "fornecedores estoque de segurança",
         "safety stock suppliers"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-022",
@@ -1932,7 +1979,8 @@
         "fornecedores do item de estoque de segurança",
         "fornecedores estoque de segurança",
         "safety stock suppliers"
-      ]
+      ],
+      "root_cause": "SINGLE_TOKEN_OVERWEIGHT"
     },
     {
       "id": "DQ-SUP-023",
@@ -1959,7 +2007,8 @@
         "histórico de preço por fornecedor",
         "preço de compra fornecedor estoque de segurança",
         "supplier purchase price history safety stock"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-024",
@@ -1994,7 +2043,8 @@
         "histórico de preço por fornecedor",
         "preço de compra fornecedor estoque de segurança",
         "supplier purchase price history safety stock"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-025",
@@ -2018,7 +2068,8 @@
         "consumo estoque de segurança",
         "safety stock consumption analysis",
         "estoque de segurança sugerido resumo"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-026",
@@ -2050,7 +2101,8 @@
         "consumo estoque de segurança",
         "safety stock consumption analysis",
         "estoque de segurança sugerido resumo"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-028",
@@ -2081,7 +2133,8 @@
         "itens análise consumo estoque de segurança",
         "materiais abaixo do estoque sugerido",
         "safety stock consumption items"
-      ]
+      ],
+      "root_cause": "SINGLE_TOKEN_OVERWEIGHT"
     },
     {
       "id": "DQ-SUP-030",
@@ -2107,7 +2160,8 @@
         "suggested safety stock",
         "item consumption analysis",
         "cobertura de estoque do item"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-031",
@@ -2137,7 +2191,8 @@
         "stock balances summary",
         "warehouse stock summary",
         "resumo saldos de estoque"
-      ]
+      ],
+      "root_cause": "TIE_BREAK_ARTIFACT"
     },
     {
       "id": "DQ-SUP-034",
@@ -2172,7 +2227,8 @@
         "itens do almoxarifado",
         "materiais no depósito",
         "produtos em estoque no depósito"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-SUP-042",
@@ -2196,7 +2252,8 @@
         "materiais em poder de terceiros",
         "third-party materials",
         "resumo materiais de terceiros"
-      ]
+      ],
+      "root_cause": "SINGLE_TOKEN_OVERWEIGHT"
     },
     {
       "id": "DQ-PRD-001",
@@ -2221,7 +2278,8 @@
         "eficiência geral dos equipamentos",
         "OEE do mês",
         "overall equipment effectiveness"
-      ]
+      ],
+      "root_cause": "TIE_BREAK_ARTIFACT"
     },
     {
       "id": "DQ-PRD-003",
@@ -2245,7 +2303,8 @@
         "OEE resumido",
         "sumário de OEE de produção",
         "OEE com totais de apontamentos"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-004",
@@ -2269,7 +2328,8 @@
         "OEE resumido",
         "sumário de OEE de produção",
         "OEE com totais de apontamentos"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-005",
@@ -2289,7 +2349,8 @@
         "série de OEE",
         "série temporal de OEE de produção",
         "OEE ao longo do tempo"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-007",
@@ -2320,7 +2381,8 @@
         "pontualidade das OPs",
         "OPs no prazo",
         "OPs atrasadas"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-009",
@@ -2350,7 +2412,8 @@
           "OPs no prazo",
           "OPs atrasadas"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PRD-010",
@@ -2385,7 +2448,8 @@
         "resumo do OTD de produção",
         "OTD de produção resumido",
         "sumário pontualidade das OPs"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-011",
@@ -2416,7 +2480,8 @@
           "OPs no prazo",
           "OPs atrasadas"
         ]
-      }
+      },
+      "root_cause": "QUARANTINE_INTERACTION"
     },
     {
       "id": "DQ-PRD-012",
@@ -2432,7 +2497,8 @@
         "série OTD das OPs",
         "OTD de produção ao longo do tempo"
       ],
-      "higher_candidate_aliases": {}
+      "higher_candidate_aliases": {},
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PRD-014",
@@ -2515,7 +2581,8 @@
           "materiais abaixo estoque segurança",
           "itens abaixo do estoque de segurança"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-PRD-015",
@@ -2536,7 +2603,8 @@
         "operações programadas por CT",
         "fila de operações do CT",
         "carga de máquina detalhada"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-016",
@@ -2561,7 +2629,8 @@
         "operações programadas por CT",
         "fila de operações do CT",
         "carga de máquina detalhada"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-018",
@@ -2597,7 +2666,8 @@
         "apontamentos de produção resumidos",
         "quantidade apontada por CT",
         "resumo de apontamentos de produção"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-021",
@@ -2621,7 +2691,8 @@
         "consumption by item",
         "item production consumption",
         "consumo de MP por produto"
-      ]
+      ],
+      "root_cause": "MULTIWORD_ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-022",
@@ -2653,7 +2724,8 @@
         "consumption by item",
         "item production consumption",
         "consumo de MP por produto"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-024",
@@ -2685,7 +2757,8 @@
         "top production consumption",
         "consumo por grupo de produto",
         "consumo por filial"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-026",
@@ -2726,7 +2799,8 @@
         "open commitments",
         "open material allocations",
         "production order commitments"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-028",
@@ -2761,7 +2835,8 @@
         "finished orders without consumption",
         "missing material consumption",
         "produção sem baixa de MP"
-      ]
+      ],
+      "root_cause": "TIE_BREAK_ARTIFACT"
     },
     {
       "id": "DQ-PRD-032",
@@ -2797,7 +2872,8 @@
         "production losses",
         "scrap records",
         "perda de material"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-PRD-034",
@@ -2828,7 +2904,8 @@
         "top loss materials",
         "top production losses",
         "materiais mais refugados"
-      ]
+      ],
+      "root_cause": "TIE_BREAK_ARTIFACT"
     },
     {
       "id": "DQ-MET-001",
@@ -2979,7 +3056,8 @@
           "furo de inventário por filial",
           "furo de estoque por filial"
         ]
-      }
+      },
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-MET-002",
@@ -3034,7 +3112,8 @@
         "tabela que guarda registros",
         "qual tabela contem registros",
         "qual tabela contém registros"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-MET-003",
@@ -3076,7 +3155,8 @@
         "campo representa referencia",
         "campo representa referência"
       ],
-      "higher_candidate_aliases": {}
+      "higher_candidate_aliases": {},
+      "root_cause": "ALIAS_MISSING"
     },
     {
       "id": "DQ-MET-004",
@@ -3138,7 +3218,8 @@
         "qual campo representa referência",
         "campo representa referencia",
         "campo representa referência"
-      ]
+      ],
+      "root_cause": "ALIAS_COLLISION"
     },
     {
       "id": "DQ-MET-006",
@@ -3174,7 +3255,8 @@
         "campos da tabela tem fornecedor",
         "campos representam",
         "campos que representam"
-      ]
+      ],
+      "root_cause": "SINGLE_TOKEN_OVERWEIGHT"
     },
     {
       "id": "DQ-MET-010",
@@ -3203,7 +3285,8 @@
         "table columns",
         "table structure",
         "fields of the table"
-      ]
+      ],
+      "root_cause": "SUMMARY_TOKEN_NOISE"
     },
     {
       "id": "DQ-STOCK-001",
@@ -3245,7 +3328,8 @@
         "reserved quantity",
         "saldo empenhado do produto",
         "saldo reservado do produto"
-      ]
+      ],
+      "root_cause": "TIE_BREAK_ARTIFACT"
     },
     {
       "id": "DQ-QUA-003",
@@ -3333,7 +3417,8 @@
           "saldo empenhado do produto",
           "saldo reservado do produto"
         ]
-      }
+      },
+      "root_cause": "QUARANTINE_INTERACTION"
     },
     {
       "id": "DQ-QUA-004",
@@ -3351,9 +3436,20 @@
         "buying price history",
         "raw material purchase price history"
       ],
-      "higher_candidate_aliases": {}
+      "higher_candidate_aliases": {},
+      "root_cause": "QUARANTINE_INTERACTION"
     }
   ],
+  "root_cause_breakdown": {
+    "OTHER": 4,
+    "ALIAS_COLLISION": 19,
+    "SUMMARY_TOKEN_NOISE": 9,
+    "ALIAS_MISSING": 17,
+    "MULTIWORD_ALIAS_COLLISION": 20,
+    "SINGLE_TOKEN_OVERWEIGHT": 6,
+    "QUARANTINE_INTERACTION": 6,
+    "TIE_BREAK_ARTIFACT": 5
+  },
   "negative_detail": {
     "hard_negative_leaked": [
       {

@@ -96,23 +96,24 @@ Status: `RESIDUAL_REPRODUCED` — matches the live provider observation; no runt
 Write/SQL fail-closed posture is preserved overall, but the single write-negative leak is a security-relevant residual for
 Architecture review.
 
-## 7. ROOT-CAUSE CLUSTERS (diagnostic only)
+## 7. ROOT-CAUSE BREAKDOWN (deterministic classifier, diagnostic only — 86 failures)
 
-- `SINGLE_TOKEN_OVERWEIGHT` / `ALIAS_TOO_GENERIC`: `get_product_production_status` and `search_products` dominate the
-  higher-ranked lists across product_master and adjacent families — generic single-token matches outrank specific
-  multiword intent (this is the DQ-STOCK-001 mechanism).
-- `ALIAS_MISSING`: cases with zero candidates (`[]`) concentrate on monthly/series OTD variants and some quarantine-owner
-  phrasings (e.g. `DQ-COM-027`, `DQ-COM-029`, `DQ-PRD-012`, `DQ-MET-003`, `DQ-QUA-004`).
-- `MULTIWORD_ALIAS_COLLISION` / `ALIAS_COLLISION`: OTD variants (sales vs purchase vs production) and safety-stock vs
-  stock queries cross-rank.
-- `SUMMARY_TOKEN_NOISE` / `DESCRIPTION_TOKEN_NOISE`: unsupported negatives bind to generic summary tokens (`estoque`,
-  `produto`, `fornecedor`, `data de entrega`).
-- `TIE_BREAK_ARTIFACT`: several target-vs-competitor pairs differ by ≤0.002 (e.g. 0.714 vs 0.716) and are decided by the
-  deterministic operation_id tie-break rather than semantic specificity.
-- `QUARANTINE_INTERACTION`: foreign actions gain ownership of quarantine tokens via generic occurrence paths.
+| Category | Count | Evidence pattern |
+|---|---|---|
+| MULTIWORD_ALIAS_COLLISION | 20 | higher-ranked action matched a full multiword alias (e.g. OTD variants, structure vs where-used) |
+| ALIAS_COLLISION | 19 | foreign-family or same-family competitor outranks the covered target |
+| ALIAS_MISSING | 17 | target unreachable — zero candidates or no alias coverage (OTD series/monthly, `DQ-MET-003`, `DQ-QUA-004`) |
+| SUMMARY_TOKEN_NOISE | 9 | target scored only via summary/description tokens |
+| SINGLE_TOKEN_OVERWEIGHT | 6 | foreign-family single-token alias outranked the multiword target |
+| QUARANTINE_INTERACTION | 6 | quarantine-conflict cases; covered-but-suppressed overlaps |
+| TIE_BREAK_ARTIFACT | 5 | score gap ≤0.005 decided by secondary sort keys (incl. DQ-STOCK-001: 0.716 vs 0.714) |
+| OTHER | 4 | none of the above signals |
+| ALIAS_TOO_GENERIC / DESCRIPTION_TOKEN_NOISE / FILLER_MATCH_FALSE_POSITIVE / STEM_COMPATIBILITY_FALSE_POSITIVE / AMBIGUOUS_QUERY / CATALOG_SOURCE_DRIFT / BENCHMARK_EXPECTATION_WRONG | 0 | no evidence in this baseline |
 
-Full per-failure evidence (query, expected, rank, scores, higher-ranked actions, aliases) is in the JSON artifact under
-`known_failures`. Root-cause labels must remain evidence-driven; counts per frozen category are recorded there.
+Dominant higher-ranked actions across clusters: `get_product_production_status` and `search_products` (generic
+single-token matches outranking specific multiword intent — the DQ-STOCK-001 mechanism). Unsupported negatives bind to
+generic summary tokens (`estoque`, `produto`, `fornecedor`, `data de entrega`). Full per-failure evidence (query,
+expected, rank, scores, higher-ranked actions, aliases, `root_cause`) is in the JSON artifact under `known_failures`.
 
 ## 8. INVARIANTS
 

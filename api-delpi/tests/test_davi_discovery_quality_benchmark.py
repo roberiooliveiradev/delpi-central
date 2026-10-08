@@ -115,6 +115,15 @@ def test_known_live_residual_case_present(fixture: dict) -> None:
     assert case["case_type"] == "POSITIVE_PRECISE"
 
 
+def test_runner_root_cause_classification() -> None:
+    report = evaluate()
+    breakdown = report["root_cause_breakdown"]
+    assert isinstance(breakdown, dict) and breakdown
+    assert sum(breakdown.values()) == len(report["known_failures"])
+    for failure in report["known_failures"]:
+        assert failure["root_cause"] in breakdown
+
+
 def test_runner_deterministic() -> None:
     a, b = evaluate(), evaluate()
     assert a["metrics"] == b["metrics"]

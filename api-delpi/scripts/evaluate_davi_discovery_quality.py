@@ -79,6 +79,97 @@ def _discover(query: str, *, top_k: int) -> dict:
     return result
 
 
+def _query_tokens(query: str) -> set:
+    from app.application.external_capabilities.dynamic_information.text_normalize import (
+        normalize_text,
+        tokenize,
+    )
+
+    return set(tokenize(normalize_text(query)))
+
+
+def _alias_match_kind(action_id: str, query_tokens: set, aliases_by_id: dict):
+    """Return 'multiword'/'single' if an alias of the action is fully covered by
+    the query token set, else None. Deterministic diagnostic signal — it does
+    not replicate retrieval scoring, only lexical alias coverage."""
+    from app.application.external_capabilities.dynamic_information.text_normalize import (
+        normalize_text,
+        tokenize,
+    )
+
+    kind = None
+    for alias in aliases_by_id.get(action_id, []):
+        alias_tokens = set(tokenize(normalize_text(str(alias))))
+        if alias_tokens and alias_tokens <= query_tokens:
+            if len(alias_tokens) > 1:
+                return "multiword"
+            kind = "single"
+    return kind
+
+
+def _classify_root_cause(entry, result, case, family_of, aliases_by_id,
+                         quarantine_tokens) -> str:
+    """Deterministic evidence-driven classification. Order matters: each rule
+    fires on observable signals (zero candidates, score gap, matched alias
+    kind, family cross-over, quarantine suppression), not on guesswork."""
+    if case["case_type"] == "QUARANTINE_CONFLICT":
+        return "QUARANTINE_INTERACTION"
+    q_tokens = _query_tokens(case["query"])
+    expected_id = entry["expected"]
+    expected_kind = (
+        _alias_match_kind(expected_id, q_tokens, aliases_by_id)
+        if expected_id
+        else None
+    )
+    if result["target_rank"] is None:
+        if not result["ranked"]:
+            return "ALIAS_MISSING"  # zero candidates: query never reached the action
+        if expected_kind is not None:
+            # alias lexically covered yet action absent — check quarantine token overlap
+            from app.application.external_capabilities.dynamic_information.text_normalize import (
+                normalize_text,
+                tokenize,
+            )
+
+            covered = [
+                a
+                for a in aliases_by_id.get(expected_id, [])
+                if set(tokenize(normalize_text(str(a)))) <= q_tokens
+            ]
+            if any(
+                set(tokenize(normalize_text(str(a)))) & quarantine_tokens
+                for a in covered
+            ):
+                return "QUARANTINE_INTERACTION"
+            return "ALIAS_COLLISION"  # covered but scored to zero
+        return "ALIAS_MISSING"  # other actions matched; expected alias coverage absent
+    gap = entry["higher_ranked"][0]["score"] - (entry["target_score"] or 0.0)
+    if gap <= 0.005:
+        return "TIE_BREAK_ARTIFACT"  # near-tie decided by secondary sort keys
+    higher = [h["action_id"] for h in entry["higher_ranked"]]
+    kinds = [
+        _alias_match_kind(aid, q_tokens, aliases_by_id) for aid in higher
+    ]
+    foreign = [
+        aid for aid in higher
+        if family_of.get(aid) not in (None, entry["family"])
+    ]
+    if foreign and all(
+        _alias_match_kind(aid, q_tokens, aliases_by_id) == "single"
+        for aid in foreign
+    ):
+        return "SINGLE_TOKEN_OVERWEIGHT"
+    if any(k == "multiword" for k in kinds):
+        return "MULTIWORD_ALIAS_COLLISION"
+    if foreign:
+        return "ALIAS_COLLISION"
+    if expected_kind is None:
+        return "SUMMARY_TOKEN_NOISE"  # target scored via summary/description only
+    if expected_kind == "single":
+        return "ALIAS_TOO_GENERIC"
+    return "OTHER"
+
+
 def evaluate(fixture: dict | None = None, *, evaluated_sha: str | None = None) -> dict:
     from app.application.external_capabilities.dynamic_information.content_loader import (
         load_dynamic_read_budgets,
@@ -102,11 +193,15 @@ def evaluate(fixture: dict | None = None, *, evaluated_sha: str | None = None) -
         for o in allowlist.get("operations", [])
     }
 
+    case_by_id = {c["id"]: c for c in cases}
+
     # op -> family map derived from positive fixture coverage
     family_of = {}
     for case in cases:
         for op in case.get("expected_action_ids") or []:
             family_of.setdefault(op, case["family"])
+
+    quarantine_tokens = set(allowlist.get("retrievalQuarantineTokens") or [])
 
     results = []
     for case in cases:
@@ -236,7 +331,17 @@ def evaluate(fixture: dict | None = None, *, evaluated_sha: str | None = None) -
             entry["higher_candidate_aliases"] = {
                 aid: aliases_by_id.get(aid, []) for _, aid in enumerate(r["ranked"][:3])
             }
+        entry["root_cause"] = _classify_root_cause(
+            entry, r, case_by_id[r["id"]], family_of, aliases_by_id,
+            quarantine_tokens,
+        )
         failures.append(entry)
+
+    root_cause_breakdown = {}
+    for f in failures:
+        root_cause_breakdown[f["root_cause"]] = (
+            root_cause_breakdown.get(f["root_cause"], 0) + 1
+        )
 
     negative_detail = {
         "hard_negative_leaked": [
@@ -281,6 +386,7 @@ def evaluate(fixture: dict | None = None, *, evaluated_sha: str | None = None) -
         "benchmark_version": fixture.get("benchmark_version"),
         "metrics": metrics,
         "known_failures": failures,
+        "root_cause_breakdown": root_cause_breakdown,
         "negative_detail": negative_detail,
         "discover_contract_checks": contract_checks,
         "catalog_parity": {
