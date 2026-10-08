@@ -75,6 +75,7 @@ class OpenAICompatibleModelInvocationAdapter:
         api_key: str,
         model: str,
         timeout_seconds: float,
+        default_max_output_units: int | None = None,
         http_post: Callable[..., Any] = deadline_http_post,
     ) -> None:
         for name, value in (
@@ -90,6 +91,7 @@ class OpenAICompatibleModelInvocationAdapter:
         self._api_key = api_key
         self._model = model
         self._timeout_seconds = timeout_seconds
+        self._default_max_output_units = default_max_output_units
         self._http_post = http_post
 
     @property
@@ -293,8 +295,12 @@ class OpenAICompatibleModelInvocationAdapter:
             "messages": messages,
             "stream": False,
         }
-        if request.generation_config.max_output_units:
-            payload["max_tokens"] = int(request.generation_config.max_output_units)
+        max_output_units = (
+            request.generation_config.max_output_units
+            or self._default_max_output_units
+        )
+        if max_output_units:
+            payload["max_tokens"] = int(max_output_units)
         return payload
 
     @staticmethod

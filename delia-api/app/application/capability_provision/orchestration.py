@@ -2013,6 +2013,10 @@ def _preview_render(preview: WriteProposalPreview) -> str:
 
 # Per-stage model proposal bound (seconds); the turn deadline can only
 # shorten it (LOOP-03R2A).
+# Default per model-stage wall-clock cap inside a turn. The composer may
+# override it with the configured provider stage timeout so a slower
+# provider is not killed before it can answer; the turn deadline still
+# reduction-clamps every stage.
 MODEL_STAGE_TIMEOUT_SECONDS = 10.0
 
 
@@ -2059,12 +2063,16 @@ class OperationalCapabilityOrchestrator:
         model_ref=None,
         pending_writes: PendingWriteStore | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
+        model_stage_timeout_seconds: float = MODEL_STAGE_TIMEOUT_SECONDS,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         self._invoke_model = invoke_model
         self._model_ref = model_ref
         self._pending_writes = pending_writes or PendingWriteStore()
         self._turn_budget_seconds = float(turn_budget_seconds)
+        self._model_stage_timeout_seconds = float(
+            model_stage_timeout_seconds
+        )
 
     def attempt(
         self,
@@ -4832,9 +4840,9 @@ class OperationalCapabilityOrchestrator:
                     "turn_budget_exhausted"
                 ) from exc
         stage_timeout = (
-            deadline.stage_timeout(MODEL_STAGE_TIMEOUT_SECONDS)
+            deadline.stage_timeout(self._model_stage_timeout_seconds)
             if deadline is not None
-            else MODEL_STAGE_TIMEOUT_SECONDS
+            else self._model_stage_timeout_seconds
         )
         workspace_block = (
             "\n<workspace_context>\n"
@@ -5530,9 +5538,9 @@ class OperationalCapabilityOrchestrator:
                     "turn_budget_exhausted"
                 ) from exc
         stage_timeout = (
-            deadline.stage_timeout(MODEL_STAGE_TIMEOUT_SECONDS)
+            deadline.stage_timeout(self._model_stage_timeout_seconds)
             if deadline is not None
-            else MODEL_STAGE_TIMEOUT_SECONDS
+            else self._model_stage_timeout_seconds
         )
         entries = []
         by_action: dict[str, list[Mapping[str, Any]]] = {}
@@ -5697,9 +5705,9 @@ class OperationalCapabilityOrchestrator:
                     "turn_budget_exhausted"
                 ) from exc
         stage_timeout = (
-            deadline.stage_timeout(MODEL_STAGE_TIMEOUT_SECONDS)
+            deadline.stage_timeout(self._model_stage_timeout_seconds)
             if deadline is not None
-            else MODEL_STAGE_TIMEOUT_SECONDS
+            else self._model_stage_timeout_seconds
         )
         schema_payload = json.dumps(
             schema or {"type": "object"}, ensure_ascii=False, default=str

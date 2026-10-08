@@ -1904,6 +1904,8 @@ services:
       DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-}
       DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
       DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-30}
+      DELIA_LLM_MAX_OUTPUT_TOKENS: ${DELIA_LLM_MAX_OUTPUT_TOKENS:-2048}
+      DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-30}
 
       # C3-MCP-INTEROP-01R1A: user-delegated credential exchange — single
       # confidential DÉLIA requester client (same contract as DEV; the

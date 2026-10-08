@@ -267,6 +267,7 @@ def _compose_turn_handler(
             invoke_model=invoke_model,
             model_ref=model_ref,
             turn_budget_seconds=settings.turn_budget_seconds,
+            model_stage_timeout_seconds=settings.model_stage_timeout_seconds,
         )
         if providers
         else None
@@ -298,6 +299,7 @@ def _wire_real_provider_handler(settings: Settings, interop, connections):
         api_key=settings.llm_api_key,
         model=settings.llm_model,
         timeout_seconds=settings.llm_timeout_seconds,
+        default_max_output_units=settings.llm_max_output_tokens,
     )
     model_ref = ModelRef(
         model_id=settings.llm_model,

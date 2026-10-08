@@ -41,6 +41,22 @@ class Settings:
         self.llm_timeout_seconds = float(
             os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30.0"
         )
+        # Optional provider-side output cap. Some providers reserve the
+        # model's maximum output against the account balance when
+        # max_tokens is absent, rejecting requests intermittently; a
+        # configured ceiling keeps the reservation bounded.
+        llm_max_output_tokens = (
+            os.getenv("DELIA_LLM_MAX_OUTPUT_TOKENS") or ""
+        ).strip()
+        self.llm_max_output_tokens = (
+            int(llm_max_output_tokens) if llm_max_output_tokens else None
+        )
+        # Per model-stage wall-clock cap inside a turn. Keep it aligned
+        # with the configured provider latency: too small turns a slow
+        # provider into a deterministic timeout before it can answer.
+        self.model_stage_timeout_seconds = float(
+            os.getenv("DELIA_MODEL_STAGE_TIMEOUT_SECONDS") or "10.0"
+        )
         # C3-MCP-INTEROP-01: approved specialist MCP connections (DAVI/TÉO/
         # VISTA only). Static global user tokens were removed in R1A —
         # credentials are per-request delegated tokens, never config.

@@ -27,6 +27,7 @@ from app.application.model_invocation.invoke_model import InvokeModel
 from app.create_app import create_app
 from app.domain.evidence.model import ModelRef
 from app.domain.model_invocation.model import (
+    GenerationConfig,
     InstructionLineage,
     InvocationFinishStatus,
     ModelInvocationId,
@@ -178,6 +179,46 @@ def test_timeout_is_bounded_by_adapter_config():
     adapter = _adapter(http_post=fake_post, timeout_seconds=5.0)
     InvokeModel(adapter).execute(_request(timeout_seconds=25.0))
     assert captured["timeout"] == (5.0, 0.5)
+
+
+def test_max_tokens_omitted_without_configured_default():
+    captured = {}
+
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
+        captured["json"] = json
+        return _Response(200, _ok_body('{"answer": "ok"}'))
+
+    adapter = _adapter(http_post=fake_post)
+    InvokeModel(adapter).execute(_request())
+    assert "max_tokens" not in captured["json"]
+
+
+def test_default_max_output_units_sets_max_tokens():
+    captured = {}
+
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
+        captured["json"] = json
+        return _Response(200, _ok_body('{"answer": "ok"}'))
+
+    adapter = _adapter(http_post=fake_post, default_max_output_units=2048)
+    InvokeModel(adapter).execute(_request())
+    assert captured["json"]["max_tokens"] == 2048
+
+
+def test_request_max_output_units_overrides_adapter_default():
+    captured = {}
+
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
+        captured["json"] = json
+        return _Response(200, _ok_body('{"answer": "ok"}'))
+
+    adapter = _adapter(http_post=fake_post, default_max_output_units=2048)
+    InvokeModel(adapter).execute(
+        _request(
+            generation_config=GenerationConfig(max_output_units=512)
+        )
+    )
+    assert captured["json"]["max_tokens"] == 512
 
 
 # --- C. Response mapping ----------------------------------------------------
