@@ -295,13 +295,13 @@ describe("ModalShell", () => {
       /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--wide\s*\{[^}]*min-width:\s*min\(1100px,\s*100%\)/s,
     );
     expect(modalShellCss).toMatch(
-      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--wide\s*\{[^}]*min-height:\s*min\(92dvh,\s*960px\)/s,
+      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--wide\s*\{[^}]*min-height:\s*min\(92%,\s*960px\)/s,
     );
     expect(modalShellCss).toMatch(
       /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--page\s*\{[^}]*min-width:\s*min\(1180px,\s*100%\)/s,
     );
     expect(modalShellCss).toMatch(
-      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--page\s*\{[^}]*min-height:\s*min\(94dvh,\s*1040px\)/s,
+      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*>\s*\.delpi-ui-modal--page\s*\{[^}]*min-height:\s*min\(94%,\s*1040px\)/s,
     );
     expect(modalShellCss).toMatch(
       /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog[\s\S]*?\.delpi-ui-modal--page\s*\{[^}]*flex-shrink:\s*0/s,

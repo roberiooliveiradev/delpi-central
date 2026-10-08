@@ -143,9 +143,9 @@
   width: min(1100px, 100%);
   max-width: min(1100px, 100%);
   min-width: min(1100px, 100%);
-  height: min(92dvh, 960px);
-  max-height: min(92dvh, 960px);
-  min-height: min(92dvh, 960px);
+  height: min(92%, 960px);
+  max-height: min(92%, 960px);
+  min-height: min(92%, 960px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -156,9 +156,9 @@
   width: min(1180px, 100%);
   max-width: min(1180px, 100%);
   min-width: min(1180px, 100%);
-  height: min(94dvh, 1040px);
-  max-height: min(94dvh, 1040px);
-  min-height: min(94dvh, 1040px);
+  height: min(94%, 1040px);
+  max-height: min(94%, 1040px);
+  min-height: min(94%, 1040px);
   display: flex;
   flex-direction: column;
   overflow: hidden;

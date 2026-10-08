@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any
 
 from fastapi.responses import JSONResponse
@@ -6,6 +7,8 @@ from fastapi.responses import JSONResponse
 def json_safe(value: Any) -> Any:
     if value is None:
         return None
+    if isinstance(value, Decimal):
+        return float(value)
     if isinstance(value, dict):
         return {key: json_safe(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
