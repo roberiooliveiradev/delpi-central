@@ -194,3 +194,34 @@ Live filtered-data re-verification runs in the env where
 `GLPI_LEGACY_UPLOAD_ENABLED=true` (local dev keeps legacy off → typed
 `glpi_feature_disabled`, correct). MCP 22→22; GPT Actions 20→20; no OpenAPI
 change.
+
+## 17. Assignee Filter — Runtime Convergence V1 (second defect)
+
+Post-deploy live re-check (prod `srv-api`, 2026-10-08): with the canonical
+field fix already running (`ASSIGN=5 STATUS=12` imported in-container),
+`assignee_id=11` still returned `items=[]`.
+
+Second root cause (PROVEN, live probe): GLPI `apirest.php/search/Ticket`
+answers **HTTP 206 Partial Content** when the result set is paginated. The
+BFF `_legacy_get_json` only accepted `200` and silently fell through to
+`return []` — so real search rows were discarded. Raw probe (no BFF code):
+`criteria[0][field]=5[equals][11]` → `206`, `totalcount=15`. Through
+`_legacy_get_json` → `[]` (the `[]` responses observed earlier were 404/206
+falls, not true empties; an actually-empty GLPI search returns 200 +
+`totalcount:0`, no `data` key).
+
+Fix: `_legacy_get_json` accepts `{200, 206}` — same owner, one-line scope,
+covers every legacy paginated GET (search/Ticket, search/User, Profile_User
+fallbacks). Test: `test_legacy_search_accepts_206_partial_content`.
+
+Deploy: prod compose `infra` (`docker-compose.yml` +
+`docker-compose.prod.cpu.yml`), repo `/home/operador/projetos/delpi-central`,
+targeted `build` + `up -d --no-deps --force-recreate helpdesk-api` only.
+Transformômetro targets internal `http://helpdesk-api:8000` (env unset →
+default; `getent hosts helpdesk-api` resolves in-container).
+
+Live after fix (prod container, `assignee_id=11`, `sort=updated_at:desc`,
+page 1 size 10): `totalcount=15`, ids
+`[1204, 1222, 1153, 1156, 1128, 969, 1042, 1046, 635, 660, 977]` — matches
+the historical control set plus newer assignments; OAuth HLAPI hydration +
+ACL unchanged downstream.
