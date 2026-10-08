@@ -280,3 +280,529 @@ def test_r3_deadline_socket_mapped_to_consumer_timeout():
     finally:
         stop.set()
         server.close()
+
+
+# -------------------------------------------------------------------
+# C3-INTELLIGENCE-LOOP-03R2A-R4 — pre-connect / TLS / proxy closure
+# -------------------------------------------------------------------
+
+import select  # noqa: E402
+import ssl  # noqa: E402
+
+from app.infrastructure.http.bounded_request import (  # noqa: E402
+    BoundedHttpTransportError,
+)
+from app.infrastructure.http.deadline_transport import (  # noqa: E402
+    _DeadlineSocket,
+    deadline_scope,
+)
+
+_R4_BOUND = 0.4
+_R4_TOLERANCE = 0.35
+# A stalled segment can legitimately overshoot the bound only by
+# scheduler slack — never by a renewed window.
+_R4_ELAPSED_MAX = _R4_BOUND + _R4_TOLERANCE
+
+
+class _CountingStubSocket:
+    """Stub recording every wire op — proves zero work post-expiry."""
+
+    def __init__(self):
+        self.calls = []
+
+    def settimeout(self, value):
+        self.calls.append(("settimeout", value))
+
+    def send(self, data, flags=0):
+        self.calls.append(("send", len(data)))
+        return len(data)
+
+    def sendall(self, data, flags=0):
+        self.calls.append(("sendall", len(data)))
+
+    def recv(self, bufsize, flags=0):
+        self.calls.append(("recv", bufsize))
+        return b""
+
+    def recv_into(self, buffer, nbytes=0, flags=0):
+        self.calls.append(("recv_into", nbytes))
+        return 0
+
+    def close(self):
+        self.calls.append(("close",))
+
+
+def test_r4_send_expired_fails_before_wire():
+    """Expired deadline: send() raises TimeoutError with zero wire ops."""
+    stub = _CountingStubSocket()
+    wrapper = _DeadlineSocket(stub, lambda: time.monotonic() - 1.0)
+    with pytest.raises(TimeoutError):
+        wrapper.send(b"x")
+    assert ("send", 1) not in stub.calls
+    assert [c for c in stub.calls if c[0] == "send"] == []
+
+
+def test_r4_sendall_expired_fails_before_wire():
+    stub = _CountingStubSocket()
+    wrapper = _DeadlineSocket(stub, lambda: time.monotonic() - 1.0)
+    with pytest.raises(TimeoutError):
+        wrapper.sendall(b"xy")
+    assert [c for c in stub.calls if c[0] == "sendall"] == []
+
+
+def test_r4_sendall_live_still_works():
+    stub = _CountingStubSocket()
+    wrapper = _DeadlineSocket(stub, lambda: time.monotonic() + 10.0)
+    wrapper.sendall(b"ok")
+    assert ("sendall", 2) in stub.calls
+
+
+def test_r4_tcp_connect_stall_bounded_or_fails_fast():
+    """TCP connect to a non-routable TEST-NET address must end inside
+    the caller bound (timeout at deadline) or refuse fast — never a
+    renewed per-phase window."""
+    # 192.0.2.1 is RFC 5737 documentation space — connect() stalls
+    # (SYN blackhole) or refuses immediately on hosts without a route.
+    started = time.monotonic()
+    with pytest.raises((BoundedHttpTimeout, BoundedHttpTransportError)):
+        bounded_request(
+            deadline_http_get,
+            "http://192.0.2.1:81/x",
+            timeout_seconds=_R4_BOUND,
+        )
+    elapsed = time.monotonic() - started
+    # Renewal would put connect near the OS-level TCP timeout (75s+)
+    # or the configured connect cap — a bound-honoring abort lands
+    # near 0.4s, a fast refusal near 0.
+    assert elapsed < 2.0, f"elapsed {elapsed:.2f}s"
+
+
+def test_r4_multi_address_shared_budget(monkeypatch):
+    """getaddrinfo returning several stalled addresses: all attempts
+    share ONE remaining budget — attempt timeouts shrink monotonically
+    and the total lands near the bound, not N × bound."""
+    granted_timeouts = []
+
+    def fake_getaddrinfo(host, port, family, socktype):
+        return [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", 81))
+            for _ in range(4)
+        ]
+
+    class StallingSocket:
+        """connect() sleeps its granted timeout then times out — each
+        attempt WOULD consume its full window if renewed."""
+
+        def __init__(self, *args, **kwargs):
+            self._timeout = None
+
+        def settimeout(self, value):
+            self._timeout = value
+
+        def setsockopt(self, *args, **kwargs):
+            pass
+
+        def bind(self, *args, **kwargs):
+            pass
+
+        def connect(self, sa):
+            granted_timeouts.append(self._timeout)
+            if self._timeout:
+                time.sleep(self._timeout)
+            raise socket.timeout("stalled connect")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(socket, "socket", StallingSocket)
+
+    started = time.monotonic()
+    with pytest.raises(
+        (BoundedHttpTimeout, BoundedHttpTransportError)
+    ):
+        bounded_request(
+            deadline_http_get,
+            "http://multi-addr.invalid/x",
+            timeout_seconds=_R4_BOUND,
+        )
+    elapsed = time.monotonic() - started
+    # Shared budget: first attempt gets ~0.4, later attempts get
+    # only the remainder — total ≈ bound, not 4 × bound.
+    assert elapsed < _R4_ELAPSED_MAX, f"elapsed {elapsed:.2f}s"
+    assert granted_timeouts, "no connect attempt recorded"
+    assert all(
+        t <= _R4_BOUND + 0.01 for t in granted_timeouts
+    ), granted_timeouts
+    assert len(granted_timeouts) <= 2 or all(
+        granted_timeouts[i] <= granted_timeouts[0]
+        for i in range(len(granted_timeouts))
+    )
+
+
+def _run_dns_connect_probe(monkeypatch):
+    """Shared helper — returns (elapsed, connect_attempts, error)."""
+    real_getaddrinfo = socket.getaddrinfo
+    real_connect = socket.socket.connect
+    attempts = []
+
+    def slow_getaddrinfo(host, port, family, socktype):
+        time.sleep(0.3)
+        return real_getaddrinfo(host, port, family, socktype)
+
+    def counting_connect(self, sa):
+        attempts.append(sa)
+        return real_connect(self, sa)
+
+    monkeypatch.setattr(socket, "getaddrinfo", slow_getaddrinfo)
+    monkeypatch.setattr(socket.socket, "connect", counting_connect)
+
+    server, stop, _ = _serve(_fast_ok)
+    try:
+        started = time.monotonic()
+        try:
+            bounded_request(
+                deadline_http_get,
+                f"http://localhost:{server.getsockname()[1]}/x",
+                timeout_seconds=0.1,
+            )
+            error = None
+        except Exception as exc:  # noqa: BLE001
+            error = exc
+        elapsed = time.monotonic() - started
+        return elapsed, attempts, error
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r4_dns_zero_connect_after_expiry(monkeypatch):
+    """After an over-budget resolver call the transport issues ZERO
+    connect attempts — the expired budget is fail-closed, and the
+    request truthfully times out."""
+    elapsed, attempts, error = _run_dns_connect_probe(monkeypatch)
+    assert isinstance(error, BoundedHttpTimeout), repr(error)
+    assert attempts == [], f"connect attempts after expiry: {attempts}"
+    assert elapsed < 1.0, f"elapsed {elapsed:.2f}s"
+
+
+def _tls_material(tmp_path):
+    """Generate a test-only CA-less leaf: CN/SAN localhost+127.0.0.1."""
+    import datetime
+
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.x509.oid import NameOID
+
+    key = rsa.generate_private_key(
+        public_exponent=65537, key_size=2048
+    )
+    name = x509.Name(
+        [x509.NameAttribute(NameOID.COMMON_NAME, "localhost")]
+    )
+    now = datetime.datetime.now(datetime.timezone.utc)
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
+        .serial_number(1)
+        .not_valid_before(now - datetime.timedelta(days=1))
+        .not_valid_after(now + datetime.timedelta(days=30))
+        .add_extension(
+            x509.SubjectAlternativeName(
+                [
+                    x509.DNSName("localhost"),
+                    x509.IPAddress(
+                        __import__("ipaddress").IPv4Address("127.0.0.1")
+                    ),
+                ]
+            ),
+            critical=False,
+        )
+        .add_extension(
+            x509.BasicConstraints(ca=True, path_length=None),
+            critical=True,
+        )
+        .sign(key, hashes.SHA256())
+    )
+    cert_path = tmp_path / "test-ca.crt"
+    key_path = tmp_path / "test-key.pem"
+    cert_path.write_bytes(
+        cert.public_bytes(serialization.Encoding.PEM)
+    )
+    key_path.write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.TraditionalOpenSSL,
+            serialization.NoEncryption(),
+        )
+    )
+    return str(cert_path), str(key_path)
+
+
+def _tls_peer(ctx, conn, trickle=False):
+    """Real TLS server via MemoryBIO — bytes emitted by stdlib ssl,
+    optionally dripped so the handshake outlives the client bound."""
+    in_bio = ssl.MemoryBIO()
+    out_bio = ssl.MemoryBIO()
+    engine = ctx.wrap_bio(in_bio, out_bio, server_side=True)
+
+    def flush():
+        while True:
+            chunk = out_bio.read()
+            if not chunk:
+                return
+            if trickle:
+                for i in range(0, len(chunk), 40):
+                    conn.sendall(chunk[i : i + 40])
+                    time.sleep(0.05)
+            else:
+                conn.sendall(chunk)
+
+    try:
+        while True:
+            try:
+                engine.do_handshake()
+                break
+            except ssl.SSLWantReadError:
+                flush()
+                data = conn.recv(4096)
+                if not data:
+                    return None
+                in_bio.write(data)
+            except ssl.SSLWantWriteError:
+                flush()
+        return engine, in_bio, out_bio, flush
+    except (OSError, ssl.SSLError):
+        return None
+
+
+def _tls_serve(cert_path, key_path, writer, trickle_handshake=False):
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.load_cert_chain(certfile=cert_path, keyfile=key_path)
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(("127.0.0.1", 0))
+    server.listen(4)
+    stop = threading.Event()
+    observed = []
+
+    def loop():
+        server.settimeout(0.5)
+        while not stop.is_set():
+            try:
+                conn, _ = server.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            threading.Thread(
+                target=_tls_conn_handler,
+                args=(ctx, conn, writer, trickle_handshake, observed),
+                daemon=True,
+            ).start()
+
+    threading.Thread(target=loop, daemon=True).start()
+    return server, stop, observed
+
+
+def _tls_conn_handler(ctx, conn, writer, trickle, observed):
+    try:
+        tls = _tls_peer(ctx, conn, trickle=trickle)
+        if tls is None:
+            return
+        engine, in_bio, out_bio, flush = tls
+        writer(engine, in_bio, out_bio, flush, conn, observed)
+    except (OSError, ssl.SSLError) as exc:
+        observed.append(type(exc).__name__)
+    finally:
+        conn.close()
+
+
+def _tls_read_request(engine, in_bio, conn, observed):
+    """Read one HTTP request through the TLS engine."""
+    buf = b""
+    while b"\r\n\r\n" not in buf:
+        try:
+            data = engine.read(4096)
+            if not data:
+                return False
+            buf += data
+        except ssl.SSLWantReadError:
+            data = conn.recv(4096)
+            if not data:
+                return False
+            in_bio.write(data)
+    return True
+
+
+def _tls_fast_ok(engine, in_bio, out_bio, flush, conn, observed):
+    if not _tls_read_request(engine, in_bio, conn, observed):
+        return
+    engine.write(
+        b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+        b"Content-Length: 11\r\n\r\n{\"ok\":true}"
+    )
+    flush()
+
+
+def _tls_stall(engine, in_bio, out_bio, flush, conn, observed):
+    """Handshake done — then silence: proves recv-deadline on TLS."""
+    if not _tls_read_request(engine, in_bio, conn, observed):
+        return
+    conn.settimeout(3.0)
+    try:
+        if conn.recv(4096) == b"":
+            observed.append("eof")
+    except OSError as exc:
+        observed.append(type(exc).__name__)
+
+
+def test_r4_https_fast_path(tmp_path):
+    """Normal HTTPS request through the deadline transport: real TLS
+    handshake + cert verification (test cert, explicit trust) + body."""
+    cert_path, key_path = _tls_material(tmp_path)
+    server, stop, _ = _tls_serve(cert_path, key_path, _tls_fast_ok)
+    try:
+        response = bounded_request(
+            deadline_http_get,
+            f"https://localhost:{server.getsockname()[1]}/x",
+            timeout_seconds=3.0,
+            verify=cert_path,
+        )
+        assert response.status_code == 200
+        assert response.json() == {"ok": True}
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r4_tls_handshake_trickle_absolute_deadline(tmp_path):
+    """Adversarial TLS peer trickling real handshake bytes (each byte
+    valid, intervals below any inactivity slice) must abort at the
+    absolute deadline — inactivity renewals are worthless here."""
+    cert_path, key_path = _tls_material(tmp_path)
+    server, stop, observed = _tls_serve(
+        cert_path, key_path, _tls_fast_ok, trickle_handshake=True
+    )
+    try:
+        started = time.monotonic()
+        with pytest.raises(BoundedHttpTimeout):
+            bounded_request(
+                deadline_http_get,
+                f"https://localhost:{server.getsockname()[1]}/x",
+                timeout_seconds=_R4_BOUND,
+                verify=cert_path,
+            )
+        elapsed = time.monotonic() - started
+        # Without the absolute deadline the trickled handshake runs
+        # seconds (40B/0.05s over ~2KB of records ≈ 2.5s+).
+        assert elapsed < _R4_ELAPSED_MAX, f"elapsed {elapsed:.2f}s"
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r4_redirect_chain_shared_deadline():
+    """A redirect must NOT renew the deadline: server A delays most of
+    the budget then 302s to server B, which trickles. Total ≈ bound."""
+    server_b, stop_b, observed_b = _serve(_status_line_trickle)
+    port_b = server_b.getsockname()[1]
+    # Server A: consume ~0.3s of the 0.4 budget, then redirect.
+    def slow_redirect(conn, observed):
+        try:
+            if not _read_request(conn):
+                return
+            time.sleep(0.3)
+            conn.sendall(
+                b"HTTP/1.1 302 Found\r\nLocation: http://127.0.0.1:"
+                + str(port_b).encode()
+                + b"/x\r\nContent-Length: 0\r\n\r\n"
+            )
+        except OSError as exc:
+            observed.append(type(exc).__name__)
+        finally:
+            conn.close()
+
+    server_a, stop_a, _ = _serve(slow_redirect)
+    try:
+        started = time.monotonic()
+        with pytest.raises(
+            (BoundedHttpTimeout, BoundedHttpTransportError)
+        ):
+            bounded_request(
+                deadline_http_get,
+                f"http://127.0.0.1:{server_a.getsockname()[1]}/x",
+                timeout_seconds=_R4_BOUND,
+            )
+        elapsed = time.monotonic() - started
+        # Per-redirect renewal would grant B a fresh 0.4 window →
+        # ≈0.8s+; shared deadline lands ≈0.4s.
+        assert elapsed < _R4_ELAPSED_MAX, f"elapsed {elapsed:.2f}s"
+    finally:
+        stop_a.set()
+        server_a.close()
+        stop_b.set()
+        server_b.close()
+
+
+def test_r4_env_proxy_ignored_fail_closed(monkeypatch):
+    """Governed calls never route through env proxies: a bogus
+    HTTP_PROXY pointing at a dead port must not divert or break a
+    reachable endpoint (trust_env=False on deadline sessions)."""
+    monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:1")
+    monkeypatch.setenv("http_proxy", "http://127.0.0.1:1")
+    monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:1")
+    monkeypatch.setenv("https_proxy", "http://127.0.0.1:1")
+    monkeypatch.delenv("NO_PROXY", raising=False)
+    monkeypatch.delenv("no_proxy", raising=False)
+
+    server, stop, _ = _serve(_fast_ok)
+    try:
+        response = bounded_request(
+            deadline_http_get, _url(server), timeout_seconds=3.0
+        )
+        # Trust-env proxying would hit 127.0.0.1:1 (refused) — success
+        # proves the env proxy never applied.
+        assert response.status_code == 200
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r4_proxies_kwarg_rejected_fail_closed():
+    """An explicit ``proxies=`` argument is rejected before any wire
+    work — a ProxyManager would bypass the deadline pools entirely."""
+    from app.infrastructure.http.deadline_transport import (
+        BoundedHttpTransportPolicyError,
+    )
+
+    server, stop, _ = _serve(_fast_ok)
+    try:
+        with pytest.raises(BoundedHttpTransportPolicyError):
+            deadline_http_get(
+                _url(server), proxies={"http": "http://127.0.0.1:1"}
+            )
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_r4_explicit_proxy_fails_closed():
+    """A pool-level proxy config on the governed transport is rejected
+    loudly — never a silently unbounded path."""
+    from urllib3.exceptions import ProxyError
+
+    from app.infrastructure.http.deadline_transport import (
+        _DeadlineHTTPSConnection,
+    )
+
+    https_conn = _DeadlineHTTPSConnection("example.com", 443)
+    https_conn.proxy = "http://127.0.0.1:3128"
+
+    deadline = time.monotonic() + 5.0
+    with deadline_scope(deadline):
+        with pytest.raises(ProxyError):
+            https_conn.connect()
