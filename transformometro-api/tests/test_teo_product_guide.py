@@ -34,6 +34,11 @@ SEED_TOPICS = {
     "evidence",
     "timeline",
     "impact_effort_matrix",
+    "meeting_minutes",
+    "shared_resources",
+    "resource_costs",
+    "diagnostic",
+    "dashboard",
 }
 
 
@@ -77,11 +82,11 @@ def test_schema_rejects_missing_and_invalid() -> None:
 # ----------------------------------------------------------------- registry
 
 
-def test_registry_loads_fifteen_seeds_deterministically() -> None:
+def test_registry_loads_twenty_seeds_deterministically() -> None:
     reg = ProductGuideRegistry()
     assert set(reg.topic_ids()) == SEED_TOPICS
     assert reg.version == "product-guide-registry-v1"
-    assert len(reg.index()) == 15
+    assert len(reg.index()) == 20
     # Deterministic order.
     assert reg.topic_ids() == sorted(reg.topic_ids())
 
@@ -304,3 +309,54 @@ def test_process_documents_routes_to_specialized_features() -> None:
                   "impact_effort_matrix"):
         assert topic in guide["related_topics"]
         assert topic in " ".join(guide["do_not_use_when"])
+
+
+# ----------------------------------------------------------- wave 3: semantics
+
+
+def test_meeting_minutes_distinct_from_room_and_document() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("meeting_minutes")
+    blob = json.dumps(guide, ensure_ascii=False).lower()
+    assert "sala" in blob
+    assert "process_document" in blob
+    assert "interaction_room" in guide["related_topics"]
+    assert "formal" in blob
+
+
+def test_shared_resources_distinct_from_investment() -> None:
+    reg = ProductGuideRegistry()
+    blob = json.dumps(reg.get("shared_resources"), ensure_ascii=False).lower()
+    assert "investment" in blob
+    assert "resource_cost" in blob
+    assert "resource_costs" in reg.get("shared_resources")["related_topics"]
+
+
+def test_resource_costs_distinct_and_unknown_not_zero() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("resource_costs")
+    blob = json.dumps(guide, ensure_ascii=False)
+    assert "UNKNOWN != 0" in blob
+    assert "investment" in blob.lower()
+    assert "adjust_shared_resource_cost" in blob
+    assert "update genérico" in blob
+
+
+def test_diagnostic_hypothesis_is_not_fact() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("diagnostic")
+    blob = json.dumps(guide, ensure_ascii=False).lower()
+    assert "hypothesis != fact" in blob
+    assert "evidence attached != validated" in blob
+    assert "methodology" in blob
+    assert "stale" in blob
+
+
+def test_dashboard_is_not_domain_truth_and_recalc_is_governed() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("dashboard")
+    blob = json.dumps(guide, ensure_ascii=False).lower()
+    assert "verdade" in blob or "truth" in blob
+    assert "recalculate_dashboard" in blob
+    assert "ausência" in blob or "ausencia" in blob
+    assert "recalculate_dashboard" in guide["capability_refs"]

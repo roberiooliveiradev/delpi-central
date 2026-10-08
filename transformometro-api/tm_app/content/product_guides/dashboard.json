@@ -1,0 +1,52 @@
+{
+  "schema": "product_guide_v1",
+  "id": "dashboard",
+  "title": "Indicadores e Dashboard",
+  "summary": "A visão analítica do Transformômetro — indicadores, ranking, alertas e evolução projetados dos dados; não é a verdade primária do domínio.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar a ler indicadores e quando recalcular — distinguindo projeção analítica de estado de domínio e snapshot de verdade atual.",
+  "use_when": [
+    "O usuário quer indicadores, ranking, alertas ou evolução dos processos",
+    "É preciso comparar processos por família ou ver vencimentos",
+    "O usuário pede para recalcular o dashboard"
+  ],
+  "do_not_use_when": [
+    "A pergunta é estado atual de um processo — leitura de domínio, não dashboard",
+    "O pedido é histórico de eventos — isso é timeline",
+    "Dashboard desatualizado não significa domínio errado — pode precisar recalcular"
+  ],
+  "how_to_use": [
+    "Dashboard é projeção analítica — os fatos vivem nas reads de domínio",
+    "Distinguir análise live de materialized/cache conforme a view",
+    "Valide período e filtros antes de interpretar um indicador",
+    "Ausência de dado não é zero — indicador vazio pode ser filtro ou cálculo",
+    "Recálculo é operação governada própria — confirm_before_act"
+  ],
+  "field_guidance": [
+    {"field": "summary / process_ranking / alerts", "guidance": "Visões agregadas do painel — leitura via analyze", "contract_ref": "capability_surface.analyses.analyze"},
+    {"field": "evolution / by_family / due_dates", "guidance": "Séries e recortes temporais e organizacionais", "contract_ref": "capability_surface.analyses.analyze"},
+    {"field": "processes_calculated", "guidance": "Processos com cálculo materializado — pode estar stale", "contract_ref": "capability_surface.analyses.analyze"}
+  ],
+  "quality_rules": [
+    "Entender a origem do indicador antes de citar",
+    "Não interpretar ausência como zero",
+    "Não misturar snapshot desatualizado com estado atual de domínio",
+    "Recalcular somente pela capability própria — write governado",
+    "Validar período e filtro do que está sendo lido"
+  ],
+  "common_mistakes": [
+    "Citar dashboard materializado como se fosse estado atual de domínio",
+    "Declarar que o domínio está errado quando o cache está desatualizado",
+    "Interpretar zero do indicador como ausência de operação",
+    "Recalcular sem necessidade ou fora do workflow próprio"
+  ],
+  "related_topics": ["process", "measurement", "revision", "timeline"],
+  "capability_refs": ["analyze", "recalculate_dashboard", "process_timeline"],
+  "contract_refs": ["capability_surface.analyses.analyze", "capability_surface.workflows.recalculate_dashboard"],
+  "source_refs": [
+    {"ref": "capability_descriptors.analyze — views live e process-scoped", "classification": "PROVEN"},
+    {"ref": "capability_descriptors.recalculate_dashboard — materialized, confirm_before_act", "classification": "PROVEN"},
+    {"ref": "registration_flow — gpt_analyze após recalculate", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Indicador != verdade de domínio. Se o usuário questiona número stale: explicar projeção → recalculate_dashboard → read-back → analyze."
+}

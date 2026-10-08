@@ -23,9 +23,19 @@
     "Evidência anexada não prova a afirmação — relevância continua avaliada"
   ],
   "field_guidance": [
-    {"field": "link / metadata", "guidance": "Referência identificável ao material (URL/arquivo de origem)", "contract_ref": "capability_surface.workflows.manage_evidence"},
-    {"field": "description", "guidance": "O que a evidência sustenta — sem contexto, o link não serve"},
-    {"field": "binary", "guidance": "Upload/download binário é UI-only (BLOCKED_BY_PLATFORM)"}
+    {
+      "field": "link / metadata",
+      "guidance": "Referência identificável ao material (URL/arquivo de origem)",
+      "contract_ref": "capability_surface.workflows.manage_evidence"
+    },
+    {
+      "field": "description",
+      "guidance": "O que a evidência sustenta — sem contexto, o link não serve"
+    },
+    {
+      "field": "binary",
+      "guidance": "Upload/download binário é UI-only (BLOCKED_BY_PLATFORM)"
+    }
   ],
   "quality_rules": [
     "Descrição deixa claro exatamente o que a evidência sustenta",
@@ -40,13 +50,32 @@
     "Usar evidência onde o correto era documento ou campo estruturado",
     "Tentar upload binário pelo canal que só transporta link/metadado"
   ],
-  "related_topics": ["process_documents", "timeline", "revision"],
-  "capability_refs": ["manage_evidence"],
-  "contract_refs": ["capability_surface.workflows.manage_evidence", "platform_blocked.revision_evidence.binary"],
+  "related_topics": [
+    "process_documents",
+    "timeline",
+    "revision",
+    "diagnostic"
+  ],
+  "capability_refs": [
+    "manage_evidence"
+  ],
+  "contract_refs": [
+    "capability_surface.workflows.manage_evidence",
+    "platform_blocked.revision_evidence.binary"
+  ],
   "source_refs": [
-    {"ref": "capability_descriptors.manage_evidence — link/metadata; binary UI-only", "classification": "PROVEN"},
-    {"ref": "registration_flow — evidence_read list + prepare_evidence_change create_link/update/delete", "classification": "PROVEN"},
-    {"ref": "platform_blocked.revision_evidence.binary — sem transporte de arquivo", "classification": "PROVEN"}
+    {
+      "ref": "capability_descriptors.manage_evidence — link/metadata; binary UI-only",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "registration_flow — evidence_read list + prepare_evidence_change create_link/update/delete",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "platform_blocked.revision_evidence.binary — sem transporte de arquivo",
+      "classification": "PROVEN"
+    }
   ],
   "agent_guidance": "Evidência sustenta, não prova: ao citar evidência, avalie relevância. Delete é confirm_before_act; binário só na UI."
 }

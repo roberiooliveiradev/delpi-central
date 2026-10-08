@@ -23,13 +23,39 @@
     "centro_custo e data_investimento somente quando forem dados reais"
   ],
   "field_guidance": [
-    {"field": "tipo_investimento", "guidance": "Natureza do custo conforme enum (fixo/variavel/recorrente/unico)", "contract_ref": "entity_schemas.investment"},
-    {"field": "descricao_item", "guidance": "O que está sendo comprado/contratado — rastreável sozinho", "contract_ref": "entity_schemas.investment"},
-    {"field": "quantidade / valor_unitario", "guidance": "Quantidade real e valor por unidade — não inventar valor", "contract_ref": "entity_schemas.investment"},
-    {"field": "recorrencia", "guidance": "unico/mensal/anual conforme enum; padrão unico", "contract_ref": "entity_schemas.investment"},
-    {"field": "categoria_investimento", "guidance": "Classe do investimento conforme enum do contrato", "contract_ref": "entity_schemas.investment"},
-    {"field": "centro_custo", "guidance": "Somente centro de custo real — nunca inferido"},
-    {"field": "meses_vigencia", "guidance": "Meses de vigência do custo recorrente quando aplicável"}
+    {
+      "field": "tipo_investimento",
+      "guidance": "Natureza do custo conforme enum (fixo/variavel/recorrente/unico)",
+      "contract_ref": "entity_schemas.investment"
+    },
+    {
+      "field": "descricao_item",
+      "guidance": "O que está sendo comprado/contratado — rastreável sozinho",
+      "contract_ref": "entity_schemas.investment"
+    },
+    {
+      "field": "quantidade / valor_unitario",
+      "guidance": "Quantidade real e valor por unidade — não inventar valor",
+      "contract_ref": "entity_schemas.investment"
+    },
+    {
+      "field": "recorrencia",
+      "guidance": "unico/mensal/anual conforme enum; padrão unico",
+      "contract_ref": "entity_schemas.investment"
+    },
+    {
+      "field": "categoria_investimento",
+      "guidance": "Classe do investimento conforme enum do contrato",
+      "contract_ref": "entity_schemas.investment"
+    },
+    {
+      "field": "centro_custo",
+      "guidance": "Somente centro de custo real — nunca inferido"
+    },
+    {
+      "field": "meses_vigencia",
+      "guidance": "Meses de vigência do custo recorrente quando aplicável"
+    }
   ],
   "quality_rules": [
     "Granularidade suficiente para rastreabilidade — uma linha por item distinto",
@@ -44,13 +70,37 @@
     "Inventar valor, recorrência ou centro de custo para completar o cadastro",
     "Duplicar o mesmo item em linhas separadas"
   ],
-  "related_topics": ["revision", "measurement", "baseline"],
-  "capability_refs": ["investment", "revision", "improvement_package", "adjust_shared_resource_cost"],
-  "contract_refs": ["entity_schemas.investment", "entity_schemas.shared_resource", "entity_schemas.resource_cost"],
+  "related_topics": [
+    "revision",
+    "measurement",
+    "baseline",
+    "shared_resources",
+    "resource_costs"
+  ],
+  "capability_refs": [
+    "investment",
+    "revision",
+    "improvement_package",
+    "adjust_shared_resource_cost"
+  ],
+  "contract_refs": [
+    "entity_schemas.investment",
+    "entity_schemas.shared_resource",
+    "entity_schemas.resource_cost"
+  ],
   "source_refs": [
-    {"ref": "entity_schemas.investment — required revisao_id+tipo+descricao; anexo ao cenário", "classification": "PROVEN"},
-    {"ref": "registration_guide.concepts.investment — non-baseline revision", "classification": "PROVEN"},
-    {"ref": "entity_schemas.shared_resource/resource_cost — entidades distintas de rateio", "classification": "PROVEN"}
+    {
+      "ref": "entity_schemas.investment — required revisao_id+tipo+descricao; anexo ao cenário",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "registration_guide.concepts.investment — non-baseline revision",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "entity_schemas.shared_resource/resource_cost — entidades distintas de rateio",
+      "classification": "PROVEN"
+    }
   ],
   "agent_guidance": "investment é linha de custo do cenário; recurso compartilhado e seu valor mensal são entities próprias (shared_resource/resource_cost) — não misturar."
 }

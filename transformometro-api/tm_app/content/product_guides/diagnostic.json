@@ -1,0 +1,54 @@
+{
+  "schema": "product_guide_v1",
+  "id": "diagnostic",
+  "title": "Diagnóstico do processo",
+  "summary": "A estrutura governada de investigação — achados, hipóteses, elos causais, evidências e conclusões com validação e versionamento.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar como usar a feature Diagnostic: hipótese não é fato, evidência anexada não é validação automática e conclusão precisa de sustentação.",
+  "use_when": [
+    "O usuário quer investigar causa de um problema do processo",
+    "É preciso registrar hipóteses, evidências e conclusões com governança",
+    "Uma conclusão precisa de trilha de sustentação rastreável"
+  ],
+  "do_not_use_when": [
+    "O pedido é brainstorm livre ou nota — isso é sala ou documento",
+    "O pedido é o método de investigação (Ishikawa, 5 Whys) — isso é Methodology Guide",
+    "É registro de reunião — isso é meeting_minute"
+  ],
+  "how_to_use": [
+    "Crie o diagnóstico e registre achados (findings) observados",
+    "Formule hipóteses testáveis e ligue-as por elos causais",
+    "Anexe links de evidência às hipóteses que sustentam",
+    "Valide, rejeite ou supere hipóteses conforme a investigação evolui",
+    "Conclusões têm ciclo próprio de validação — não saem como fato",
+    "Evidência que desatualiza marca stale/revalidation — confiança segue o contrato"
+  ],
+  "field_guidance": [
+    {"field": "findings", "guidance": "Fatos observados — ponto de partida, não conclusão", "contract_ref": "mcp_only_capabilities.diagnostic_v1"},
+    {"field": "hypotheses", "guidance": "Explicações testáveis ligadas por elos causais", "contract_ref": "mcp_only_capabilities.diagnostic_v1"},
+    {"field": "conclusions", "guidance": "Fechamentos que apontam sustentação — validação própria", "contract_ref": "mcp_only_capabilities.diagnostic_v1"}
+  ],
+  "quality_rules": [
+    "Hipótese testável — alguém consegue verificar se é verdade",
+    "Conclusão aponta sustentação — evidência ou cadeia de hipóteses",
+    "Causa raiz não se marca por conveniência",
+    "hypothesis != fact; evidence attached != validated",
+    "validated != eternamente válido — drift de evidência invalida",
+    "Não criar diagnóstico só para registrar opinião"
+  ],
+  "common_mistakes": [
+    "Tratar hipótese com evidência anexada como validada",
+    "Pular achados e ir direto à conclusão",
+    "Usar diagnóstico como nota livre sem estrutura causal",
+    "Ignorar stale_evidence quando a fonte desatualiza"
+  ],
+  "related_topics": ["evidence", "process", "revision", "measurement"],
+  "capability_refs": ["manage_evidence", "analyze"],
+  "contract_refs": ["mcp_only_capabilities.diagnostic_v1"],
+  "source_refs": [
+    {"ref": "capability_descriptors.mcp_only_capabilities.diagnostic_v1 — actions e política", "classification": "PROVEN"},
+    {"ref": "confirmation_policy — create_diagnostic auto_act, manage confirm_before_act", "classification": "PROVEN"},
+    {"ref": "Fronteira Product Guide (feature) vs Methodology Guide (método)", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Diagnostic = feature de investigação; como conduzir (Ishikawa/5 Whys) = get_methodology_guide. Estado real = diagnostic_read; writes via prepare_diagnostic_change."
+}

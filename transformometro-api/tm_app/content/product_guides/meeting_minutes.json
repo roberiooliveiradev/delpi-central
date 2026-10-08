@@ -1,0 +1,55 @@
+{
+  "schema": "product_guide_v1",
+  "id": "meeting_minutes",
+  "title": "Atas de reunião",
+  "summary": "O registro formal e estruturado de reunião — participantes, decisões, pendências, signatários e ciclo de envio/finalização.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando registrar uma ata formal em vez de conversa na sala, e como conduzir o ciclo de vida da ata com qualidade.",
+  "use_when": [
+    "Houve reunião com decisões que precisam de registro formal",
+    "É preciso listar participantes, signatários e pendências",
+    "O usuário pede envio, finalização, cancelamento ou reenvio de ata"
+  ],
+  "do_not_use_when": [
+    "É conversa operacional contínua — use a sala de interação",
+    "É conhecimento textual do processo — isso é process_document",
+    "É material que sustenta uma afirmação — isso é evidence"
+  ],
+  "how_to_use": [
+    "Crie a ata com título, data e unidade conforme o contrato",
+    "Registre participantes, decisões, ações e pendências separadamente",
+    "Envio, finalização, cancelamento, reenvio e versões seguem o workflow próprio",
+    "Geração a partir de transcript existe como leitura quando suportada",
+    "Assinatura manuscrita e binários permanecem na UI — não inventar transporte",
+    "Resend exige confirmação explícita no contrato"
+  ],
+  "field_guidance": [
+    {"field": "title / meeting_date / unit_code", "guidance": "Identidade da reunião — data em formato do contrato", "contract_ref": "entity_schemas.meeting_minute"},
+    {"field": "participants / signers", "guidance": "Pessoas reais — participante != signatário", "contract_ref": "entity_schemas.meeting_minute"},
+    {"field": "decisions / pending", "guidance": "Decisões explícitas e pendências separadas — nunca misturar"},
+    {"field": "agenda / body", "guidance": "Conteúdo estruturado conforme campos do contrato", "contract_ref": "entity_schemas.meeting_minute"}
+  ],
+  "quality_rules": [
+    "Participantes corretos — quem estava, não quem deveria estar",
+    "Decisões explícitas — opinião não vira decisão formal",
+    "Ações com responsável quando conhecido",
+    "Pendências separadas das decisões",
+    "Não duplicar a mesma reunião em múltiplas atas sem razão",
+    "Contexto suficiente para quem não participou entender"
+  ],
+  "common_mistakes": [
+    "Usar ata para conversa informal — sala de interação é o lugar",
+    "Registrar opinião ou hipótese como decisão formal",
+    "Criar ata sem participantes ou decisões",
+    "Confundir ata com documento do processo ou evidência"
+  ],
+  "related_topics": ["interaction_room", "tasks", "evidence", "process_documents"],
+  "capability_refs": ["meeting_minute", "meeting_minute_manage", "meeting_minute_workflow"],
+  "contract_refs": ["entity_schemas.meeting_minute", "capability_surface.workflows.meeting_minute_workflow"],
+  "source_refs": [
+    {"ref": "entity_schemas.meeting_minute — campos, workflow, aliases e limitações", "classification": "PROVEN"},
+    {"ref": "capability_descriptors.meeting_minute_workflow/manage — actions e política", "classification": "PROVEN"},
+    {"ref": "registration_flow — reads e writes governados de ata", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Ata = registro formal; sala = conversa contínua. 'Documente a reunião' → ata; 'converse sobre' → sala. Transições são confirm_before_act."
+}

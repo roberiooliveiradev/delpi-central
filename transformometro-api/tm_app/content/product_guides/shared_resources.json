@@ -1,0 +1,52 @@
+{
+  "schema": "product_guide_v1",
+  "id": "shared_resources",
+  "title": "Recursos compartilhados",
+  "summary": "Recursos reutilizáveis cadastrados no catálogo — usados por processos e revisões via links e rateio; o custo mensal vive em resource_cost.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando cadastrar um recurso compartilhado, quando reutilizar o existente e como o recurso se separa do seu custo e de investimento.",
+  "use_when": [
+    "Um recurso será reutilizado por processos ou revisões",
+    "É preciso cadastrar o recurso antes de lançar seus custos",
+    "O usuário quer vincular recurso a uma revisão para rateio"
+  ],
+  "do_not_use_when": [
+    "O custo é item de investimento do cenário — isso é investment",
+    "O pedido é o valor mensal do recurso — isso é resource_cost",
+    "O pedido é métrica operacional da revisão — isso é measurement"
+  ],
+  "how_to_use": [
+    "Busque o recurso existente antes de criar — catálogo é compartilhado",
+    "Cadastre com nome, tipo de custo e recorrência conforme o contrato",
+    "O valor econômico mensal é lançado em resource_cost — não no recurso",
+    "Vincule o recurso à revisão via resource_link com ids de read-back",
+    "Critério de rateio e escopo seguem o enum do contrato"
+  ],
+  "field_guidance": [
+    {"field": "nome_recurso", "guidance": "Nome consistente e identificável — recurso, não gasto", "contract_ref": "entity_schemas.shared_resource"},
+    {"field": "tipo_custo / recorrencia", "guidance": "Natureza e periodicidade conforme o contrato", "contract_ref": "entity_schemas.shared_resource"},
+    {"field": "criterio_rateio / escopo_recurso", "guidance": "Como o custo é distribuído — conforme enum", "contract_ref": "entity_schemas.shared_resource"},
+    {"field": "centro_custo / fornecedor", "guidance": "Somente dados reais — nunca inferidos"}
+  ],
+  "quality_rules": [
+    "Um recurso, um cadastro — buscar antes de criar duplicado",
+    "Nome consistente para reuso entre processos",
+    "Recurso não é lançamento de custo — valor vive em resource_cost",
+    "Não usar recurso compartilhado para representar item de investimento específico"
+  ],
+  "common_mistakes": [
+    "Criar recurso duplicado por não buscar o existente",
+    "Cadastrar item de investimento como recurso compartilhado",
+    "Lançar valor mensal no recurso em vez de resource_cost",
+    "Inventar centro de custo ou fornecedor"
+  ],
+  "related_topics": ["resource_costs", "investment", "measurement", "revision"],
+  "capability_refs": ["shared_resource", "resource_cost", "resource_link", "adjust_shared_resource_cost"],
+  "contract_refs": ["entity_schemas.shared_resource", "entity_schemas.resource_link"],
+  "source_refs": [
+    {"ref": "entity_schemas.shared_resource — campos e defaults do recurso", "classification": "PROVEN"},
+    {"ref": "entity_schemas.resource_link — vínculo recurso × revisão", "classification": "PROVEN"},
+    {"ref": "registration_guide — recurso de catálogo; custo em resource_cost", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Recurso = cadastro reutilizável; custo = resource_cost; vínculo = resource_link. Nunca confundir com investment do cenário."
+}

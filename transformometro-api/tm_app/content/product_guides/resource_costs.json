@@ -1,0 +1,52 @@
+{
+  "schema": "product_guide_v1",
+  "id": "resource_costs",
+  "title": "Custos de recursos",
+  "summary": "O valor econômico mensal de um recurso compartilhado ao longo do tempo — histórico por vigência, ajuste via workflow governado.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar como registrar e ajustar o custo de um recurso compartilhado sem confundi-lo com investimento ou medição de cenário.",
+  "use_when": [
+    "É preciso lançar ou ajustar o valor mensal de um recurso compartilhado",
+    "O usuário informa vigência ou correção de custo do recurso",
+    "O custo alimenta cálculos e rateios dos processos"
+  ],
+  "do_not_use_when": [
+    "O custo é item de investimento do cenário — isso é investment",
+    "O valor é métrica operacional da revisão — isso é measurement",
+    "O recurso ainda não existe — cadastre shared_resource primeiro"
+  ],
+  "how_to_use": [
+    "Custo exige recurso existente: recurso_compartilhado_id real de read-back",
+    "Informe valor_mensal e data_inicio_vigencia conforme o contrato",
+    "data_fim_vigencia omitida significa vigência aberta",
+    "Ajuste de custo usa a capability específica de ajuste — não update genérico",
+    "Prefira atualizar a linha vigente em vez de criar histórico duplicado"
+  ],
+  "field_guidance": [
+    {"field": "valor_mensal", "guidance": "Valor mensal com fonte — nunca inventado nem zero por desconhecimento", "contract_ref": "entity_schemas.resource_cost"},
+    {"field": "data_inicio_vigencia", "guidance": "Início do período que o valor representa", "contract_ref": "entity_schemas.resource_cost"},
+    {"field": "data_fim_vigencia", "guidance": "Omitir = vigência aberta; não inventar data", "contract_ref": "entity_schemas.resource_cost"}
+  ],
+  "quality_rules": [
+    "Valor tem fonte identificável — custo informado/calculado declarado",
+    "Vigência correta — período que o valor realmente cobre",
+    "UNKNOWN != 0: custo desconhecido não vira zero conhecido",
+    "Não sobrescrever histórico quando a regra for append-only",
+    "Ajuste via workflow próprio (adjust_shared_resource_cost), não update genérico"
+  ],
+  "common_mistakes": [
+    "Confundir custo de recurso com investment de cenário",
+    "Registrar zero quando o custo é simplesmente desconhecido",
+    "Criar linha nova em vez de atualizar a vigente",
+    "Usar update genérico onde existe workflow governado de ajuste"
+  ],
+  "related_topics": ["shared_resources", "investment", "measurement"],
+  "capability_refs": ["resource_cost", "shared_resource", "adjust_shared_resource_cost"],
+  "contract_refs": ["entity_schemas.resource_cost", "capability_surface.workflows.adjust_shared_resource_cost"],
+  "source_refs": [
+    {"ref": "entity_schemas.resource_cost — campos e vigência", "classification": "PROVEN"},
+    {"ref": "capability_descriptors.adjust_shared_resource_cost — workflow próprio", "classification": "PROVEN"},
+    {"ref": "registration_guide — preferir atualizar linha vigente", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Reajuste de custo de recurso usa a capability canonica de ajuste (auto_act) — nunca update genérico de resource_cost."
+}

@@ -22,8 +22,15 @@
     "Marque a sala como lida para manter o painel limpo"
   ],
   "field_guidance": [
-    {"field": "processo_id", "guidance": "Sempre o processo real em contexto — resolva via workspace ou id explícito", "contract_ref": "workflows.interaction_room"},
-    {"field": "message content", "guidance": "Texto claro e autocontido; mensagens são editáveis pelo autor"}
+    {
+      "field": "processo_id",
+      "guidance": "Sempre o processo real em contexto — resolva via workspace ou id explícito",
+      "contract_ref": "workflows.interaction_room"
+    },
+    {
+      "field": "message content",
+      "guidance": "Texto claro e autocontido; mensagens são editáveis pelo autor"
+    }
   ],
   "quality_rules": [
     "Mensagem boa informa o que mudou e o que se espera do leitor",
@@ -35,14 +42,37 @@
     "Prometer anexo de arquivo — não há transporte binário",
     "Apagar mensagem sem necessidade — delete_message é confirm_before_act"
   ],
-  "related_topics": ["tasks", "process_documents", "portal_overview"],
-  "capability_refs": ["interaction_room", "interaction_room_read"],
-  "contract_refs": ["capability_surface.workflows.interaction_room", "confirmation_policy.interaction_room.*"],
+  "related_topics": [
+    "tasks",
+    "process_documents",
+    "portal_overview",
+    "meeting_minutes"
+  ],
+  "capability_refs": [
+    "interaction_room",
+    "interaction_room_read"
+  ],
+  "contract_refs": [
+    "capability_surface.workflows.interaction_room",
+    "confirmation_policy.interaction_room.*"
+  ],
   "source_refs": [
-    {"ref": "capability_descriptors.interaction_room — ações e políticas", "classification": "PROVEN"},
-    {"ref": "confirmation_policy — auto_act vs confirm_before_act da família", "classification": "PROVEN"},
-    {"ref": "Portal: InteractionRoomUseCases (parity)", "classification": "PROVEN"},
-    {"ref": "Boas práticas de redação de mensagens", "classification": "PROPOSED"}
+    {
+      "ref": "capability_descriptors.interaction_room — ações e políticas",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "confirmation_policy — auto_act vs confirm_before_act da família",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "Portal: InteractionRoomUseCases (parity)",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "Boas práticas de redação de mensagens",
+      "classification": "PROPOSED"
+    }
   ],
   "agent_guidance": "Pedido de 'abra uma sala e publique X' é multi-action auto_act: open_room → read-back room_id → post_message — sem Confirma?."
 }
