@@ -439,8 +439,11 @@ KNOWLEDGE_RUNTIME_LIVE = TEST_NOT_RUN (manual sync not performed)
 Not executed yet; provider acceptance is still pending:
 
 1. Verify the current provider draft state (files, instructions, auth mode).
-2. `python scripts/build_davi_governed_knowledge_bundle.py verify` — corpus
-   must match the pinned manifest before any upload.
+2. `python scripts/build_davi_governed_knowledge_bundle.py verify` —
+   authoritative local pre-provider gate. Proves manifest integrity
+   (`manifest_sha256`), pinned freeze membership at `freeze_sha`, document
+   hashes at `source_git_sha`, and current-source reproducibility. It must
+   PASS before any upload.
 3. Upload the 15 derived docs + `manifest.json` from
    `dist/davi-governed-knowledge/v1/` into the agent **Files** section.
 4. Update Agent Instructions from the canonical block in this document.

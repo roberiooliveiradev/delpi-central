@@ -10,7 +10,8 @@ Usage:
 
 emit-manifest writes the pinned manifest (evidence artifact, committed).
 build writes dist/davi-governed-knowledge/v1/ (generated, gitignored).
-verify re-validates sources against the pinned manifest without writing.
+verify proves manifest identity, pinned freeze membership, pinned source
+Git hashes and current-source reproducibility without writing.
 
 No network. No provider calls. No source mutation.
 """
@@ -29,12 +30,11 @@ from davi_governed_knowledge_bundle_lib import (  # noqa: E402
     API_ROOT,
     MANIFEST_REPO_PATH,
     OUTPUT_DIR,
-    REPO_ROOT,
     BundleError,
     build_bundle,
     emit_manifest,
-    frozen_corpus_paths,
     resolve_source_path,
+    verify_manifest,
 )
 
 
@@ -65,23 +65,14 @@ def _build() -> int:
 
 
 def _verify() -> int:
-    # Read-only drift check: sources must still match pinned hashes.
-    from davi_governed_knowledge_bundle_lib import sha256_file
-
-    manifest = _load_manifest()
-    frozen = set(frozen_corpus_paths())
-    paths = {d["path"] for d in manifest["documents"]}
-    if paths != frozen:
-        raise BundleError("manifest membership diverges from freeze artifact")
-    mismatched = [
-        d["path"]
-        for d in manifest["documents"]
-        if not resolve_source_path(d["path"]).is_file()
-        or sha256_file(resolve_source_path(d["path"])) != d["sha256"]
-    ]
-    if mismatched:
-        raise BundleError(f"stale/missing sources vs pinned manifest: {mismatched}")
-    print(f"verify PASS: {len(paths)} corpus docs match pinned manifest")
+    evidence = verify_manifest(_load_manifest())
+    print("verify PASS:")
+    print(f"  corpus={evidence['corpus_id']}")
+    print(f"  version={evidence['corpus_version']}")
+    print(f"  documents={evidence['documents']}")
+    print(f"  freeze_sha={evidence['freeze_sha']}")
+    print(f"  source_git_sha={evidence['source_git_sha']}")
+    print(f"  manifest_sha256={evidence['manifest_sha256']}")
     return 0
 
 
