@@ -11555,6 +11555,16 @@ EVIDENCE (live production, 2026-10-05):
 
 ## 6.152. C3-INTELLIGENCE-LOOP-03R2A-R3 — pre-body / response-header absolute deadline closure
 
+  > **ARCHITECTURE ANNOTATION (§6.153, non-destructive):**
+  > ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R3 = REWORK.
+  > R3 proved absolute deadline from post-connect socket I/O through
+  > status/headers/body, but the deadline-aware socket was installed
+  > only after super().connect(), leaving DNS/TCP/TLS/proxy
+  > semantics not fully proven under the same absolute deadline.
+  > The `TURN_TOTAL_BUDGET = CLOSED` / `TURN_EDGE_BUDGET = CLOSED`
+  > claims below are re-downgraded to PARTIAL/REWORK — they may be
+  > restored CLOSED only by §6.153 evidence.
+
   DATE = 2026-10-08
   TASK = C3-INTELLIGENCE-LOOP-03R2A-R3
   BASE_HEAD = 7f2bfab647fdedd1fdca3298f750b712cb3f5c13
@@ -11647,16 +11657,21 @@ EVIDENCE (live production, 2026-10-05):
       continues detached (no worker thread exists to detach).
 
   CLAIMS RESTORED on R3 evidence (§6.151 R2 restoration
-    superseded; R1 restoration superseded before it):
-    TURN_TOTAL_BUDGET = CLOSED — every governed remote path
+    superseded; R1 restoration superseded before it) —
+    SUPERSEDED BY §6.153 ANNOTATION ABOVE; re-downgraded:
+    TURN_TOTAL_BUDGET = PARTIAL/REWORK — the CLOSED below was
+      premature: absolute deadline proven only from post-connect
+      socket I/O onward; DNS/TCP-connect/TLS-handshake/proxy not
+      yet proven under the same deadline.
+    TURN_EDGE_BUDGET = PARTIAL/REWORK — same reason.
+    (historical text preserved: "every governed remote path
       (credential exchange, MCP initialize/notify/list/call,
       bounded auth retry, OpenAPI document fetch, OpenAPI
       invocation, model invocation) is now absolutely bounded
       across connect → status line → headers → first byte →
-      body, not merely per-phase inactivity.
-    TURN_EDGE_BUDGET = CLOSED — same evidence; the 80s default
-      budget bounds provider infrastructure work below the
-      ~100s Cloudflare edge including pre-body trickle.
+      body, not merely per-phase inactivity" — connect was in
+      fact only inactivity-bounded pre-R4, and TLS handshake not
+      bounded at all.)
 
   RESIDUAL:
     REAL_MODEL_EVAL = TEST_NOT_RUN; LIVE_PROD_EVAL =
@@ -11671,6 +11686,154 @@ EVIDENCE (live production, 2026-10-05):
       guardrail; openai-* cursor-rules responsibility-map
       registration) remain CURRENT_HEAD_UNRELATED owner debt.
     R2B semantic residuals D01/D03/D04/D05/D06 untouched.
+
+  PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+    C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+  NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## 6.153. C3-INTELLIGENCE-LOOP-03R2A-R4 — pre-connect / TLS / proxy absolute deadline closure
+
+  DATE = 2026-10-08
+  TASK = C3-INTELLIGENCE-LOOP-03R2A-R4
+  BASE_HEAD = d09d0b320eb245d9cc423183fb111270aee6dad4
+    (EXPECTED_MAIN_HEAD supplied; reanchor — interim commits
+    20e5b13455/97cb22c4b9/116868da99/67f6f84bcc/ce774461ab/
+    d77d09b027 touch 0 files in delia-api/** and
+    docs/.../delia/**; CONCURRENT_DRIFT=NO)
+
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R3 = REWORK —
+    the R3 deadline socket was installed only after
+    super().connect(); the proven chain was
+    DNS → TCP connect → TLS handshake → _wrap_deadline_socket()
+    → status → headers → body, so connect-phase phases stayed
+    outside the proven absolute deadline.
+
+  REUSE/ABSTRACTION GATE:
+    deadline_transport/bounded_request/deadline_scope/
+      deadline_http_get-post = EXISTING → REUSE_DECISION = EXTEND.
+    Zero new dependencies, zero threads, zero detached work, zero
+    custom HTTP/TLS/DNS protocol code — the correction lives in
+    the same module and the same urllib3 subclass points.
+    ABSTRACTION_GATE = PASS.
+
+  R4 TECHNICAL APPROACH (same file, extended):
+    _BoundedConnectMixin._new_conn replaces urllib3's
+      create_connection only inside a deadline scope: ONE
+      getaddrinfo (post-checked — an expired budget yields ZERO
+      connect attempts), then per-address connect() with
+      settimeout(min(remaining, configured connect_timeout)) —
+      every resolved IP shares the caller's remainder instead of
+      each getting a fresh window (urllib3's create_connection
+      renews the same scalar per address; probed on source).
+    _DeadlineHTTPSConnection._deadline_connect wraps the plain
+      socket via SSLContext.wrap_socket(...,
+      do_handshake_on_connect=False) and drives do_handshake()
+      non-blocking with select.poll(remaining) — a peer trickling
+      REAL TLS handshake bytes gets no inactivity renewal. The
+      SSLContext is built with urllib3's own helpers
+      (create_urllib3_context, resolve_ssl_version,
+      resolve_cert_reqs, load_verify_locations, load_cert_chain,
+      set_alpn_protocols) and verification is preserved verbatim
+      (assert_fingerprint / _match_hostname / CERT_REQUIRED
+      is_verified semantics).
+    _DeadlineSocket.send/sendall now fail fast with TimeoutError
+      BEFORE any wire op when the deadline is expired (symmetric
+      with recv/recv_into) — write-class ops never reopen a
+      window.
+    Forward proxies = FAIL-CLOSED DISABLED: deadline sessions use
+      trust_env=False (HTTP(S)_PROXY/NO_PROXY/netrc/
+      REQUESTS_CA_BUNDLE env cannot silently divert governed
+      calls), explicit `proxies=` kwarg is rejected
+      (BoundedHttpTransportPolicyError), and a pool-level proxy
+      config raises ProxyError — provider endpoints are
+      direct-only by contract (approved-specialist configuration
+      owns addresses; no proxy/CA-bundle env config exists in the
+      platform for these paths).
+    Redirects share the SAME absolute deadline: the contextvar
+      stays bound for the whole requests call, so a 301/302/307/
+      308 chain receives no fresh window (proven below).
+
+  TESTS = 943/943 delia-api PASS at IMPLEMENTATION_SHA
+    a0a87e1401d1079335dd8ff88a2f896ccca497a4 (931 + 12 new R4;
+    focused file 18/18; evidence bound to the persisted SHA).
+    R4 adversarial evidence (real sockets / real TLS where
+      possible):
+      SEND_EXPIRED_FAIL_FAST = PASS — expired deadline →
+        TimeoutError, stub wire-call count = 0.
+      SENDALL_EXPIRED_FAIL_FAST = PASS — same, zero wire ops.
+      TCP_CONNECT = PASS — non-routable TEST-NET target ends
+        inside the bound (timeout at deadline or fast refusal);
+        elapsed 0.4s-scale, never OS TCP timeout (~75s).
+      MULTI_ADDRESS = PASS — patched getaddrinfo returning 4
+        stalled addresses: granted per-attempt timeouts are
+        non-increasing min(remaining, cap); total elapsed < bound
+        + tolerance (≈0.4s, not 4×0.4s).
+      DNS = NOT_BOUNDED mid-call, fail-closed post-check — a
+        resolver call sleeping 0.3s under a 0.1s bound produces
+        elapsed ≈0.3s (honest mid-call overshoot) BUT zero TCP
+        connect attempts and truthful BoundedHttpTimeout.
+        socket.getaddrinfo is one blocking libc call — not
+        interruptible in-thread without detached workers/
+        signals/custom resolver, all forbidden by task bounds.
+      TLS_HANDSHAKE = PASS — adversarial MemoryBIO TLS peer
+        trickling real handshake records (40B/0.05s over ~2KB,
+        ≈2.5s unbounded) aborts at ≈0.4s bound.
+      HTTPS_FAST_PATH = PASS — real TLS handshake + test-cert
+        verification (explicit trust, production verify mode
+        unchanged) + status/headers/JSON body intact.
+      PROXY = PASS — bogus HTTP(S)_PROXY env ignored
+        (request succeeds direct); explicit proxies kwarg and
+        pool-level proxy config both fail closed.
+      REDIRECT = PASS — server A consumes ~0.3s of the 0.4
+        bound then 302s to trickling server B: total ≈ bound,
+        no per-hop renewal.
+      R3 regressions PASS — status-line trickle, header trickle,
+        first-byte stall, body trickle, fast path, MCP_TIMEOUT
+        mapping all preserved (18/18 deadline file).
+    UNDERLYING_REQUEST_ABORT = PROVEN — all aborts raise inside
+      the caller thread's own op; zero detached work exists.
+
+  CLAIMS (evidence-scoped, restored only where proven):
+    TURN_TOTAL_BUDGET = PARTIAL — TCP connect, TLS handshake,
+      proxy-disable, redirect chain, send/sendall, status line,
+      headers, body are now proven under ONE absolute deadline;
+      DNS resolution remains NOT_BOUNDED mid-call (single
+      blocking getaddrinfo; fail-closed post-check only). Restored
+      CLOSED requires an architecture decision on DNS bounding.
+    TURN_EDGE_BUDGET = PARTIAL — same residual; OS resolver
+      ceiling still bounds DNS overshoot in practice, but it is
+      NOT the request deadline.
+
+  ARCHITECTURE_DECISION_REQUIRED (DNS only):
+    CURRENT_STACK_LIMITATION = socket.getaddrinfo cannot be
+      interrupted in-thread; bounding it needs a resolver owning
+      its own execution context (thread pool/process — forbidden
+      primitives here) or an out-of-band resolution contract.
+    OPTIONS_INVENTORIED =
+      (a) accept OS-resolver ceiling as contract — rejected:
+        glibc default (~5s×retries×nameservers) exceeds tight
+        bounds and is environment-dependent;
+      (b) dedicated bounded resolver thread pool owned by DÉLIA
+        infra — viable but introduces the detached-execution
+        primitive the task forbids;
+      (c) frozen contract: governed endpoints resolve via
+        pre-resolved/allowlisted addresses outside request path —
+        changes provider topology contract;
+      (d) async/anyio stack — major runtime change.
+    RECOMMENDED = (b) with strict cap + post-check, or (c) if
+      platform contract allows; NOT decided here.
+
+  RESIDUAL:
+    REAL_MODEL_EVAL/LIVE_PROD_EVAL = TEST_NOT_RUN;
+      DEPLOYED_SHA = TO_VERIFY.
+    CorePlatformAccessAdapter = SEPARATE_BOUNDED_FOLLOWUP
+      (unchanged, inactivity-based timeout; not a
+      bounded_request consumer).
+    DNS mid-call bound open per above.
+    CI residuals ×2 (teo gpt-actions guardrail, openai-* rules
+      map) remain CURRENT_HEAD_UNRELATED owner debt.
+    R2B semantics D01/D03/D04/D05/D06 untouched.
 
   PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
     C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN

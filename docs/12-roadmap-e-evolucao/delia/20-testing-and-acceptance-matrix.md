@@ -2655,7 +2655,7 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `MODEL_TIMEOUT_TOTAL_WALL_CLOCK` | PASS — `timeout_seconds` = maximum wall-clock duration of the invocation (contract frozen); adapter streams body via `raw.read1`, deadline re-checked between reads, per-recv socket timeout tightened to remaining budget; no thread wrapper, no new dependency, provider-neutral |
 | `TRICKLE_SERVER_TIMEOUT` | PASS — deterministic fixture (bytes every 50ms, never completes): `ModelInvocationError(TIMEOUT)` at ~1.01s for 1.0s requested (configured adapter max 30s) — requested timeout + tolerance, not a multiple |
 | `NORMAL_MODEL_INVOCATION` | PASS — fast provider fixture: structured output, usage and duration metadata preserved through the streaming drain |
-| `TURN_TOTAL_BUDGET` | PASS (restored by §6.152 R3 evidence — R1 was reviewed REWORK because the bound reached request legs, not whole operations; R2 was reviewed REWORK because the bound only applied after `send()` returned, leaving status-line/header trickle unbounded; R3 wraps the transport socket with an absolute deadline so connect → status line → headers → first byte → body all share one deadline) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries AND composite provider operations; each operation gets `min(configured max, remaining)` with no budget renewal between sublegs or inside a single request's pre-body phases; no stage starts after exhaustion; an outcome arriving past the deadline is never processed |
+| `TURN_TOTAL_BUDGET` | PARTIAL (R1 reviewed REWORK — bound reached request legs, not whole operations; R2 reviewed REWORK — bound applied only after `send()` returned; R3 reviewed REWORK — deadline socket installed post-connect, leaving DNS/TCP-connect/TLS/proxy unproven; R4 §6.153 proves TCP-connect/TLS/proxy-disable/redirect/send under one absolute deadline but DNS resolution remains NOT_BOUNDED mid-call pending architecture decision) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries AND composite provider operations; each operation gets `min(configured max, remaining)` with no budget renewal between sublegs, inside pre-body phases or across connect/handshake; no stage starts after exhaustion; an outcome arriving past the deadline is never processed |
 | `TURN_BUDGET_LT_EDGE_TIMEOUT` | PROVEN_FROM_CONFIG — `DELIA_TURN_BUDGET_SECONDS` default 80s; edge = Cloudflare 524 ~100s (observed); in-repo nginx hop `proxy_read_timeout=86400s` does not own the edge; margin ≥20s |
 | `SELECTION_TIMEOUT_GENERAL_FALLBACK` | 0 — `select_group`/`select_capability` model TIMEOUT → `SOURCE_UNAVAILABLE(model_timeout)` terminal; handler emits deterministic bounded failure (HYPOTHESIS + `delpi_source_unverified`); general model port invoked 0 times |
 | `ARGUMENT_TIMEOUT_GENERAL_FALLBACK` | 0 — argument projection TIMEOUT → same terminal semantics |
@@ -2740,8 +2740,8 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `FAST_PATH_UNAFFECTED` | PASS — complete status/headers/JSON body parse unchanged through the deadline transport |
 | `PRE_BODY_CONSUMER_MAPPING` | PASS — status-line trickle through the real `DelpiMcpTransport` → truthful `MCP_TIMEOUT`; R2 consumer trickle tests now run the production `deadline_http_get/post` transports |
 | `MODEL_INVOCATION_PRE_BODY` | PASS — `OpenAICompatibleModelInvocationAdapter.invoke` runs inside `deadline_scope(deadline)` with `deadline_http_post` default, closing the same pre-body gap class on the model path |
-| `TURN_TOTAL_BUDGET` | PASS (restored — connect → status line → headers → first byte → body all under one absolute deadline; no pre-body renewal possible) |
-| `TURN_EDGE_BUDGET` | PASS (restored — same evidence; provider infrastructure work is bounded below the ~100s Cloudflare edge including pre-body trickle) |
+| `TURN_TOTAL_BUDGET` | PARTIAL/REWORK (re-downgraded by §6.153 — R3 proven only post-connect; DNS/TCP-connect/TLS-handshake/proxy outside the proven deadline) |
+| `TURN_EDGE_BUDGET` | PARTIAL/REWORK (same reason) |
 | `GENERAL_MODEL_FALLBACK_AFTER_TIMEOUT` | 0 (R1 terminal-semantics tests preserved) |
 | `MATERIAL_ACT_IN_TIMEOUT_TESTS` | 0 |
 | `NEW_TIMEOUT_MECHANISM` | 0 engines — the same single `deadline_scope`/socket-proxy primitive; urllib3, `http.client`, TLS, pooling and certificate verification remain owned by the existing stack |
@@ -2749,4 +2749,29 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` / `DEPLOYED_SHA` | TEST_NOT_RUN / TEST_NOT_RUN / TO_VERIFY |
 | `CI_RESIDUALS` | CURRENT_HEAD_UNRELATED ×2 (same upstream debts as §6.151); R3 adds no new CI failure |
 | `RESIDUAL_NOTED` | `CorePlatformAccessAdapter` (Core auth boundary, non-`bounded_request` consumer) keeps inactivity-based timeout — separate boundary recorded, not silently widened; explicit forward-proxy routed conns are not deadline-wrapped (noted in `deadline_transport` docstring) |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2A-R4 — pre-connect / TLS / proxy absolute deadline closure (§6.153)
+
+`ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R3 = REWORK`: the R3 deadline socket was installed only after `super().connect()`, so DNS resolution, TCP connect, TLS handshake and proxy semantics stayed outside the proven absolute deadline. R4 extends the SAME `deadline_transport.py` — bounded multi-address connect, non-blocking `do_handshake()` driven by `select` against the deadline, fail-closed proxy prohibition (`trust_env=False`, `proxies=` rejected, pool-level proxy → `ProxyError`), redirects sharing the contextvar deadline, and symmetric `send`/`sendall` expired fail-fast. Zero threads, zero detached work, zero new dependencies.
+
+| Claim | Result |
+|---|---|
+| `SEND_EXPIRED_FAIL_FAST` | PASS — expired deadline → `TimeoutError` before any wire op (stub wire-call count = 0) |
+| `SENDALL_EXPIRED_FAIL_FAST` | PASS — same |
+| `TCP_CONNECT_TOTAL_DEADLINE` | PASS — non-routable TEST-NET target ends inside the bound (deadline timeout or fast refusal); multi-address attempts share `min(remaining, connect cap)` instead of fresh windows each |
+| `MULTI_ADDRESS_SHARED_BUDGET` | PASS — 4 stalled addresses, granted timeouts non-increasing, total ≈ bound not 4×bound |
+| `TLS_HANDSHAKE_ABSOLUTE_DEADLINE` | PASS — adversarial MemoryBIO TLS peer trickling real handshake records (40B/0.05s, ~2.5s unbounded) aborts at ≈0.4s bound |
+| `HTTPS_FAST_PATH` | PASS — real TLS handshake + test-cert verification (explicit trust; production verify unchanged) + full response intact |
+| `DNS_ABSOLUTE_DEADLINE` | **NOT_BOUNDED mid-call** — `socket.getaddrinfo` is a single blocking libc call, uninterruptible in-thread without forbidden detached work; fail-closed post-check proven (zero connect attempts on expired budget, truthful timeout). Requires architecture decision for mid-call bounding |
+| `FORWARD_PROXY_DEADLINE` | PROXY_DISABLED_FAIL_CLOSED — env proxies ignored (`trust_env=False`, bogus `HTTP(S)_PROXY` leaves direct request working); explicit `proxies=` kwarg → `BoundedHttpTransportPolicyError`; pool-level proxy config → `ProxyError` |
+| `REDIRECT_TOTAL_DEADLINE` | PASS — slow 302 then trickling target aborts at ≈bound total; the contextvar deadline spans the whole redirect chain, no per-hop renewal |
+| `R3_REGRESSIONS` | PASS — status-line/header/first-byte/body trickle, fast path, `MCP_TIMEOUT` mapping (18/18 deadline file) |
+| `TURN_TOTAL_BUDGET` | PARTIAL — all phases proven under one absolute deadline EXCEPT DNS mid-call (NOT_BOUNDED; OS-resolver-ceiling bounded only) |
+| `TURN_EDGE_BUDGET` | PARTIAL — same DNS residual |
+| `GENERAL_MODEL_FALLBACK_AFTER_TIMEOUT` | 0 |
+| `MATERIAL_ACT_IN_TIMEOUT_TESTS` | 0 |
+| Full delia-api suite | **943/943 PASS at `a0a87e1401`** (931 + 12 new R4; focused + full suite re-run ON the persisted SHA) |
+| `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` / `DEPLOYED_SHA` | TEST_NOT_RUN / TEST_NOT_RUN / TO_VERIFY |
+| `CORE_PLATFORM_ACCESS_TOTAL_DEADLINE` | SEPARATE_BOUNDED_FOLLOWUP — unchanged, inactivity-based, outside the governed-provider claim |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
