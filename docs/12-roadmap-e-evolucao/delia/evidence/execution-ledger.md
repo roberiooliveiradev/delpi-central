@@ -11236,7 +11236,9 @@ EVIDENCE (live production, 2026-10-05):
     body could outlive the TurnDeadline. The claims
     TURN_TOTAL_BUDGET / TURN_EDGE_BUDGET below were downgraded to
     PARTIAL/REWORK again by that review and are RESTORED as CLOSED
-    only by §6.151 evidence.
+    only by §6.152 evidence (§6.151 R2 restored them prematurely —
+    its bound only applied after the HTTP client returned, leaving
+    status-line/header trickle unbounded; see §6.151 annotation).
     EXECUTION_DRIFT = NO. ARCHITECTURE_DECISION_REQUIRED = NO.
 
   TASK = C3-INTELLIGENCE-LOOP-03R2A-R1
@@ -11335,7 +11337,8 @@ EVIDENCE (live production, 2026-10-05):
 
   CLAIMS RESTORED on R1 evidence (SUPERSEDED — re-downgraded to
     PARTIAL/REWORK by ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R1;
-    see annotation above; restored CLOSED only by §6.151):
+    see annotation above; restored CLOSED only by §6.152 after the
+    §6.151 R2 restoration was itself re-downgraded by the R2 review):
     TURN_TOTAL_BUDGET = CLOSED — every provider consultation and
       invocation is bounded by the remaining TurnDeadline end-to-end
       (orchestration → provider → interop → adapter → wire).
@@ -11357,6 +11360,24 @@ EVIDENCE (live production, 2026-10-05):
 
 
 ## 6.151. C3-INTELLIGENCE-LOOP-03R2A-R2 — total wall-clock closure for provider infrastructure
+
+  > **ARCHITECTURE ANNOTATION (§6.152, non-destructive):**
+  > `ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R2 = REWORK`.
+  > Reason: `bounded_request` bounds the body drain only AFTER the
+  > synchronous HTTP client returns; while `requests`/urllib3 is
+  > still receiving/parsing the HTTP status line and response
+  > headers, the per-recv inactivity timeout renews on every
+  > fragment, so a trickling status/header phase could outlive the
+  > caller budget (empirically probed: `Timeout(total=0.4)` and
+  > `(0.4, 0.4)` both took ~3.7s against a 0.1s-fragment status
+  > line). `STATUS/HEADER_TRICKLE` was therefore NOT absolutely
+  > bounded in R2. The `TURN_TOTAL_BUDGET = CLOSED` /
+  > `TURN_EDGE_BUDGET = CLOSED` claims below are re-downgraded to
+  > PARTIAL/REWORK — they are restored CLOSED only by §6.152
+  > evidence. Everything else in this section (credential budget
+  > propagation, initialize shared clock, non-positive fail-closed,
+  > body trickle bound, auth-retry shared clock, composite
+  > remainder propagation) remains accepted PASS direction.
 
   DATE = 2026-10-08
   TASK = C3-INTELLIGENCE-LOOP-03R2A-R2
@@ -11487,7 +11508,11 @@ EVIDENCE (live production, 2026-10-05):
       SOURCE_UNAVAILABLE terminal, general model fallback = 0,
       material ACT = 0.
 
-  CLAIMS RESTORED on R2 evidence:
+  CLAIMS RESTORED on R2 evidence (SUPERSEDED — re-downgraded to
+    PARTIAL/REWORK by ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R2;
+    the R2 bound only applied once `send()` returned, leaving
+    status-line/header trickle unbounded; restored CLOSED only by
+    §6.152):
     TURN_TOTAL_BUDGET = CLOSED — for any governed remote path
       (provider discovery, provider fan-out, credential exchange,
       MCP initialize/list/call, bounded auth retry, OpenAPI
@@ -11522,6 +11547,129 @@ EVIDENCE (live production, 2026-10-05):
     The two unrelated CI failures above remain open for their
     owners (teo gpt-actions contract drift; cursor-rules
     responsibility-map registration).
+    R2B semantic residuals D01/D03/D04/D05/D06 untouched.
+
+  PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+    C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+  NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.152. C3-INTELLIGENCE-LOOP-03R2A-R3 — pre-body / response-header absolute deadline closure
+
+  DATE = 2026-10-08
+  TASK = C3-INTELLIGENCE-LOOP-03R2A-R3
+  BASE_HEAD = 7f2bfab647fdedd1fdca3298f750b712cb3f5c13
+    (reanchor — newer commits than EXPECTED_MAIN_HEAD fa5ec8359c
+    were outside delia-api/** and docs/.../delia/**: gpt-actions +
+    bpmn-modeler work; zero material drift in the task chain)
+
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R2 = REWORK —
+    single blocker PRE_BODY_RESPONSE_HEADER_ABSOLUTE_DEADLINE:
+    bounded_request computed the deadline before send() but the
+    runtime only regained control after requests/urllib3 finished
+    parsing the status line and response headers. Per-recv
+    inactivity timeouts renew on every fragment, so a trickling
+    status line or header block could outlive the caller budget.
+    Empirical inventory on this stack (requests 2.34.2 /
+    urllib3 2.8.0): urllib3.Timeout(total=0.4) → 3.71s and
+    (connect=0.4, read=0.4) → 3.71s against a 0.1s-fragment
+    status-line server — neither bounds pre-body phases.
+
+  REUSE/ABSTRACTION GATE:
+    bounded_request, TurnDeadline, remaining_budget(),
+      timeout_seconds seams = EXISTING → REUSE_DECISION = EXTEND
+      (the primitive is corrected, not replaced).
+    NEW surface, still infrastructure-only and provider-neutral:
+      app/infrastructure/http/deadline_transport.py —
+      a socket proxy (_DeadlineSocket) that re-tightens the real
+      socket timeout to deadline - monotonic() before every
+      blocking op (recv_into/recv/send/sendall), installed by
+      urllib3 HTTP/HTTPS connection subclasses whose pools are
+      mounted through a requests adapter; the per-request absolute
+      deadline travels via a contextvar (deadline_scope) that
+      bounded_request now sets around send()+drain. Zero threads,
+      zero detached work, zero new dependencies, zero custom
+      protocol code — urllib3/http.client/TLS/pooling/certificate
+      verification stay owned by the existing stack; the kernel
+      recv itself expires at the deadline inside the caller's own
+      thread, so a timed-out request genuinely dies (proven:
+      trickle servers observe BrokenPipeError/EOF). The proxy also
+      mirrors socket's _io_refs contract so makefile() readers
+      keep the fd alive across httplib/urllib3 conn-close
+      bookkeeping — same semantics as an unwrapped socket.
+    _DeadlineHTTPAdapter installs the deadline pools only inside
+    per-call deadline sessions (deadline_http_get/post, drop-in
+    for requests.get/post at the existing injection seams).
+    ABSTRACTION_GATE = PASS — one deadline engine, no provider
+    branch, no application/domain transport knowledge.
+    Documented residual: conns routed through an explicit forward
+    proxy use requests' own ProxyManager pools (unwrapped); TLS
+    handshake runs under the connect-phase socket timeout
+    (single-op bound) before the wrapper installs.
+
+  WIRED:
+    DelpiMcpTransport default http_post = deadline_http_post;
+    root_composer wires deadline_http_post into the delegated
+    credential provider and deadline_http_get into the OpenAPI
+    source loader + HttpOpenApiInvoker; OpenAI-compatible model
+    adapter invokes inside deadline_scope(deadline) with
+    deadline_http_post default — the same known-gap class is
+    closed there too (its own body drain already existed).
+    Injection seams unchanged; test fakes need no deadline —
+    the contextvar is a no-op for non-socket transports.
+
+  TESTS = 931/931 delia-api PASS at IMPLEMENTATION_SHA
+    d00729336d2cf75b54afb93e2456bd269b455b3e (925 + 6 new R3;
+    evidence bound to the PERSISTED SHA — focused 174/174 and
+    full suite re-run after commit, fixing the R2 evidence-binding
+    defect where results were reported on an uncommitted worktree).
+    R3 real-socket adversarial (raw socket writers, real
+    deadline_http_get → requests → urllib3 → deadline socket):
+      STATUS_LINE_TRICKLE: bound 0.4s, status emitted 1B/0.1s
+        (full line ~1.7s) → BoundedHttpTimeout, elapsed ~0.40s,
+        server observed BrokenPipeError.
+      HEADER_TRICKLE: status line fast, headers 1B/0.1s, no
+        end_headers before bound → BoundedHttpTimeout at ~bound,
+        abort observed.
+      FIRST_BYTE_STALL: server accepts and emits nothing →
+        BoundedHttpTimeout at ~bound (0.4s vs 3s server delay),
+        EOF observed.
+      BODY_TRICKLE regression: headers fast, body 1B/0.05s
+        forever → BoundedHttpTimeout at ~bound, abort observed.
+      FAST PATH: full response through deadline transport parses
+        status/headers/JSON body unchanged.
+      CONSUMER MAPPING: status-line trickle through the real
+        DelpiMcpTransport surfaces truthful MCP_TIMEOUT < bound;
+        R2 consumer trickle tests now exercise the production
+        deadline transports (deadline_http_get/post).
+    UNDERLYING_REQUEST_ABORT_SEMANTICS = PROVEN — timeout raises
+      inside the caller thread's socket op; trickle servers
+      observe connection death (BrokenPipeError/EOF); nothing
+      continues detached (no worker thread exists to detach).
+
+  CLAIMS RESTORED on R3 evidence (§6.151 R2 restoration
+    superseded; R1 restoration superseded before it):
+    TURN_TOTAL_BUDGET = CLOSED — every governed remote path
+      (credential exchange, MCP initialize/notify/list/call,
+      bounded auth retry, OpenAPI document fetch, OpenAPI
+      invocation, model invocation) is now absolutely bounded
+      across connect → status line → headers → first byte →
+      body, not merely per-phase inactivity.
+    TURN_EDGE_BUDGET = CLOSED — same evidence; the 80s default
+      budget bounds provider infrastructure work below the
+      ~100s Cloudflare edge including pre-body trickle.
+
+  RESIDUAL:
+    REAL_MODEL_EVAL = TEST_NOT_RUN; LIVE_PROD_EVAL =
+      TEST_NOT_RUN; DEPLOYED_SHA = TO_VERIFY.
+    CorePlatformAccessAdapter (Core auth boundary, composer
+      http_get=requests.get) is not a bounded_request consumer —
+      its per-call timeout stays inactivity-based; separate
+      boundary, recorded not silently widened here.
+    Forward-proxy routed connections are not deadline-wrapped
+      (residual noted in deadline_transport docstring).
+    CI residual failures (teo gpt-actions opaque-object
+      guardrail; openai-* cursor-rules responsibility-map
+      registration) remain CURRENT_HEAD_UNRELATED owner debt.
     R2B semantic residuals D01/D03/D04/D05/D06 untouched.
 
   PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;

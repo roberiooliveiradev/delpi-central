@@ -2655,7 +2655,7 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `MODEL_TIMEOUT_TOTAL_WALL_CLOCK` | PASS — `timeout_seconds` = maximum wall-clock duration of the invocation (contract frozen); adapter streams body via `raw.read1`, deadline re-checked between reads, per-recv socket timeout tightened to remaining budget; no thread wrapper, no new dependency, provider-neutral |
 | `TRICKLE_SERVER_TIMEOUT` | PASS — deterministic fixture (bytes every 50ms, never completes): `ModelInvocationError(TIMEOUT)` at ~1.01s for 1.0s requested (configured adapter max 30s) — requested timeout + tolerance, not a multiple |
 | `NORMAL_MODEL_INVOCATION` | PASS — fast provider fixture: structured output, usage and duration metadata preserved through the streaming drain |
-| `TURN_TOTAL_BUDGET` | PASS (restored by §6.151 R2 evidence — R1 was reviewed REWORK because the bound reached request legs, not whole operations: credential exchange, initialize notification and OpenAPI bodies could escape/renew it) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries AND composite provider operations; each operation gets `min(configured max, remaining)` with no budget renewal between sublegs; no stage starts after exhaustion; an outcome arriving past the deadline is never processed |
+| `TURN_TOTAL_BUDGET` | PASS (restored by §6.152 R3 evidence — R1 was reviewed REWORK because the bound reached request legs, not whole operations; R2 was reviewed REWORK because the bound only applied after `send()` returned, leaving status-line/header trickle unbounded; R3 wraps the transport socket with an absolute deadline so connect → status line → headers → first byte → body all share one deadline) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries AND composite provider operations; each operation gets `min(configured max, remaining)` with no budget renewal between sublegs or inside a single request's pre-body phases; no stage starts after exhaustion; an outcome arriving past the deadline is never processed |
 | `TURN_BUDGET_LT_EDGE_TIMEOUT` | PROVEN_FROM_CONFIG — `DELIA_TURN_BUDGET_SECONDS` default 80s; edge = Cloudflare 524 ~100s (observed); in-repo nginx hop `proxy_read_timeout=86400s` does not own the edge; margin ≥20s |
 | `SELECTION_TIMEOUT_GENERAL_FALLBACK` | 0 — `select_group`/`select_capability` model TIMEOUT → `SOURCE_UNAVAILABLE(model_timeout)` terminal; handler emits deterministic bounded failure (HYPOTHESIS + `delpi_source_unverified`); general model port invoked 0 times |
 | `ARGUMENT_TIMEOUT_GENERAL_FALLBACK` | 0 — argument projection TIMEOUT → same terminal semantics |
@@ -2724,4 +2724,29 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | Full delia-api suite | **925/925 PASS** (912 + 13 new R2 tests) |
 | `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` | TEST_NOT_RUN / TEST_NOT_RUN |
 | `CI_RESIDUALS` | CURRENT_HEAD_UNRELATED ×2 — teo gpt-actions opaque-object findings + two unclassified openai-* cursor rules; both reproduced on upstream commits outside the DÉLIA diff (see §6.151) |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2A-R3 — pre-body / response-header absolute deadline closure (§6.152)
+
+`ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A_R2 = REWORK`: `bounded_request` bounded the body drain but could not regain control while the synchronous HTTP client was still receiving/parsing the status line and response headers — per-recv inactivity timeouts renew on every fragment, so a trickling status/header phase could outlive the caller budget (probed on this stack: `urllib3.Timeout(total=0.4)` → 3.71s and `(0.4, 0.4)` → 3.71s). R3 installs an absolute-deadline socket proxy inside the existing requests/urllib3 stack — no threads, no detached work, no new dependencies, no custom protocol code.
+
+| Claim | Result |
+|---|---|
+| `STATUS_LINE_TRICKLE_ABSOLUTE_DEADLINE` | PASS (real socket server trickling the status line 1B/0.1s; requested 0.4s → `BoundedHttpTimeout` elapsed ~0.40s; server observed `BrokenPipeError`) |
+| `HEADER_TRICKLE_ABSOLUTE_DEADLINE` | PASS (status line fast, headers trickled 1B/0.1s, no end-of-headers before bound → abort at ~bound, connection death observed) |
+| `FIRST_RESPONSE_BYTE_STALL_DEADLINE` | PASS (server accepts and emits no byte for 3s → `BoundedHttpTimeout` at ~0.4s, client close observed as EOF) |
+| `BODY_TRICKLE_DEADLINE` | PASS (regression — headers fast, 1B/0.05s body forever → abort at ~bound through the wrapped socket) |
+| `UNDERLYING_REQUEST_ABORT_SEMANTICS` | PROVEN — timeout raises inside the caller thread's own socket op; trickle servers observe connection death; no worker thread exists to detach |
+| `FAST_PATH_UNAFFECTED` | PASS — complete status/headers/JSON body parse unchanged through the deadline transport |
+| `PRE_BODY_CONSUMER_MAPPING` | PASS — status-line trickle through the real `DelpiMcpTransport` → truthful `MCP_TIMEOUT`; R2 consumer trickle tests now run the production `deadline_http_get/post` transports |
+| `MODEL_INVOCATION_PRE_BODY` | PASS — `OpenAICompatibleModelInvocationAdapter.invoke` runs inside `deadline_scope(deadline)` with `deadline_http_post` default, closing the same pre-body gap class on the model path |
+| `TURN_TOTAL_BUDGET` | PASS (restored — connect → status line → headers → first byte → body all under one absolute deadline; no pre-body renewal possible) |
+| `TURN_EDGE_BUDGET` | PASS (restored — same evidence; provider infrastructure work is bounded below the ~100s Cloudflare edge including pre-body trickle) |
+| `GENERAL_MODEL_FALLBACK_AFTER_TIMEOUT` | 0 (R1 terminal-semantics tests preserved) |
+| `MATERIAL_ACT_IN_TIMEOUT_TESTS` | 0 |
+| `NEW_TIMEOUT_MECHANISM` | 0 engines — the same single `deadline_scope`/socket-proxy primitive; urllib3, `http.client`, TLS, pooling and certificate verification remain owned by the existing stack |
+| Full delia-api suite | **931/931 PASS at `d00729336d`** (925 + 6 new R3; focused 174/174 and full suite re-run ON the persisted SHA — fixing the R2 evidence-binding defect) |
+| `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` / `DEPLOYED_SHA` | TEST_NOT_RUN / TEST_NOT_RUN / TO_VERIFY |
+| `CI_RESIDUALS` | CURRENT_HEAD_UNRELATED ×2 (same upstream debts as §6.151); R3 adds no new CI failure |
+| `RESIDUAL_NOTED` | `CorePlatformAccessAdapter` (Core auth boundary, non-`bounded_request` consumer) keeps inactivity-based timeout — separate boundary recorded, not silently widened; explicit forward-proxy routed conns are not deadline-wrapped (noted in `deadline_transport` docstring) |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
