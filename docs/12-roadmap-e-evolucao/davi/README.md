@@ -516,6 +516,13 @@ Current MCP residuals (see §6 / rebaseline evidence): DISCOVERY_TOP1_PRECISION
 = RESIDUAL; FULL_89_OPERATION_LIVE_ACCEPTANCE = PARTIAL; SECOND_USER_IDENTITY +
 NEGATIVE_BUSINESS_AUTHZ = PENDING; MCP_RATE_POLICY = PENDING_OWNER_DECISION.
 
+Discovery quality baseline measured (`DAVI-MCP-DISCOVERY-QUALITY-001`, 217-case
+benchmark over the 89 governed operations): top1 0.5351 / top3 0.7243 /
+top5 0.8378 / MRR 0.6477; hard negatives 7/8 fail-closed (1 write-intent leak);
+unsupported negatives 0/8 zero-candidate. Evidence:
+`api-delpi/docs/integrations/evidence/davi-mcp-discovery-quality-001.{json,md}`.
+Corrective decision = pending Architecture review (no ranking change made).
+
 ---
 
 ## 17. References

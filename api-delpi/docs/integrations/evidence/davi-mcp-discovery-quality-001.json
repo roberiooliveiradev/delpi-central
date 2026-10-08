@@ -1,0 +1,3525 @@
+{
+  "task_id": "DAVI-MCP-DISCOVERY-QUALITY-001",
+  "evaluated_sha": "d77d09b027d3cc0850eca9f927e2f3e0d63f529c",
+  "catalog_source": "live app.openapi() (same as runtime seed)",
+  "catalog_operation_count": 89,
+  "allowlist_version": 19,
+  "benchmark_version": "1",
+  "metrics": {
+    "case_counts": {
+      "total": 217,
+      "positive_precise": 90,
+      "positive_paraphrase": 89,
+      "ambiguous": 10,
+      "write_negative": 8,
+      "generic_sql_negative": 6,
+      "unsupported_negative": 8,
+      "quarantine_conflict": 6
+    },
+    "positive_case_count": 185,
+    "top1_accuracy": 0.5351,
+    "top1_required_accuracy": 0.6667,
+    "top3_recall": 0.7243,
+    "top5_recall": 0.8378,
+    "mrr": 0.6477,
+    "positive_no_candidate_rate": 0.027,
+    "hard_negative_zero_candidate_rate": 0.9286,
+    "unsupported_zero_candidate_rate": 0.0,
+    "ambiguous_top3_coverage": 0.9,
+    "ambiguous_top5_coverage": 0.9,
+    "positive_target_misses": 23,
+    "positive_target_rank_gt5": 7,
+    "hard_negative_leaks": 1,
+    "unrelated_family_top1": 25,
+    "family_metrics": {
+      "commercial": {
+        "cases": 37,
+        "top1": 0.5946,
+        "top3": 0.7297,
+        "top5": 0.8108
+      },
+      "product_master": {
+        "cases": 56,
+        "top1": 0.5179,
+        "top3": 0.75,
+        "top5": 0.8393
+      },
+      "production": {
+        "cases": 35,
+        "top1": 0.4286,
+        "top3": 0.6286,
+        "top5": 0.8
+      },
+      "supplies": {
+        "cases": 45,
+        "top1": 0.6,
+        "top3": 0.7778,
+        "top5": 0.9111
+      },
+      "system_metadata": {
+        "cases": 12,
+        "top1": 0.5,
+        "top3": 0.6667,
+        "top5": 0.75
+      }
+    }
+  },
+  "known_failures": [
+    {
+      "id": "DQ-PM-004",
+      "query": "current stock of product 10080034",
+      "family": "product_master",
+      "expected": "get_product_stock",
+      "target_rank": 2,
+      "target_score": 0.71,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "estoque",
+        "estoque do produto",
+        "saldo",
+        "saldo do produto",
+        "saldo disponivel",
+        "saldo disponível",
+        "estoque por filial",
+        "stock",
+        "product stock",
+        "stock by branch",
+        "available quantity",
+        "saldo por filial do produto",
+        "estoque do código",
+        "estoque do codigo",
+        "saldo empenhado",
+        "saldo comprometido",
+        "empenho do produto",
+        "reserva do produto",
+        "committed quantity",
+        "reserved quantity",
+        "saldo empenhado do produto",
+        "saldo reservado do produto"
+      ]
+    },
+    {
+      "id": "DQ-PM-006",
+      "query": "me liste quem fornece esse item",
+      "family": "product_master",
+      "expected": "get_product_suppliers",
+      "target_rank": 5,
+      "target_score": 0.1667,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_supplier_purchase_price_history",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_product_inbound_invoice_items",
+          "score": 0.1667
+        },
+        {
+          "action_id": "get_product_outbound_invoice_items",
+          "score": 0.1667
+        },
+        {
+          "action_id": "get_product_structure",
+          "score": 0.1667
+        }
+      ],
+      "expected_aliases": [
+        "fornecedor",
+        "fornecedores",
+        "fornecedor do produto",
+        "supplier",
+        "suppliers",
+        "product suppliers"
+      ]
+    },
+    {
+      "id": "DQ-PM-007",
+      "query": "quais clientes compram o produto 10080034?",
+      "family": "product_master",
+      "expected": "get_product_customers",
+      "target_rank": 3,
+      "target_score": 0.716,
+      "higher_ranked": [
+        {
+          "action_id": "get_production_allocation_gaps",
+          "score": 0.93
+        },
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.91
+        }
+      ],
+      "expected_aliases": [
+        "cliente",
+        "clientes",
+        "cliente do produto",
+        "customer",
+        "customers",
+        "product customers"
+      ]
+    },
+    {
+      "id": "DQ-PM-012",
+      "query": "quais componentes compõem esse produto?",
+      "family": "product_master",
+      "expected": "get_product_structure",
+      "target_rank": 3,
+      "target_score": 0.4,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "estrutura",
+        "estrutura do produto",
+        "componentes do produto",
+        "bom",
+        "bom do produto",
+        "product structure",
+        "bill of materials",
+        "product components"
+      ]
+    },
+    {
+      "id": "DQ-PM-014",
+      "query": "tem OP aberta para esse item?",
+      "family": "product_master",
+      "expected": "get_product_production_status",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_inbound_invoice_items",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_product_outbound_invoice_items",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_items",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_supplies_safety_stock_items",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_supplies_safety_stock_supplier_purchase_price_history",
+          "score": 0.3333
+        }
+      ],
+      "expected_aliases": [
+        "producao",
+        "produção",
+        "status de producao",
+        "status de produção",
+        "ordem de producao",
+        "ordem de produção",
+        "production status",
+        "product production status",
+        "production orders"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_inbound_invoice_items": [
+          "nf de entrada",
+          "nfe de entrada",
+          "nota fiscal de entrada",
+          "notas fiscais de entrada",
+          "documento de entrada",
+          "documentos de entrada",
+          "fatura de entrada do produto",
+          "inbound invoice",
+          "inbound invoice items",
+          "inbound invoices"
+        ],
+        "get_product_outbound_invoice_items": [
+          "nf de saída",
+          "nfe de saída",
+          "nota fiscal de saída",
+          "notas fiscais de saída",
+          "documento de saída",
+          "documentos de saída",
+          "fatura de saída do produto",
+          "outbound invoice",
+          "outbound invoice items",
+          "outbound invoices"
+        ],
+        "get_supplies_safety_stock_consumption_analysis_items": [
+          "itens análise consumo estoque de segurança",
+          "materiais abaixo do estoque sugerido",
+          "safety stock consumption items"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PM-016",
+      "query": "visão integrada de chão de fábrica desse produto",
+      "family": "product_master",
+      "expected": "get_product_factory_status",
+      "target_rank": 3,
+      "target_score": 0.5714,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "status fabril",
+        "situação fabril",
+        "status na fábrica",
+        "visão fabril do produto",
+        "situação do produto na fábrica",
+        "factory status",
+        "factory situation",
+        "product factory status",
+        "shop-floor status"
+      ]
+    },
+    {
+      "id": "DQ-PM-017",
+      "query": "matérias-primas exclusivas na estrutura do produto 10080034",
+      "family": "product_master",
+      "expected": "get_product_structure_exclusivity",
+      "target_rank": 2,
+      "target_score": 0.9225,
+      "higher_ranked": [
+        {
+          "action_id": "list_exclusive_raw_materials_catalog",
+          "score": 0.935
+        }
+      ],
+      "expected_aliases": [
+        "exclusividade",
+        "matéria-prima exclusiva",
+        "mp exclusiva",
+        "mps exclusivas",
+        "mp exclusivas",
+        "quais mps são exclusivas",
+        "componentes exclusivos",
+        "exclusividade de mp",
+        "exclusive raw material",
+        "bom exclusivity",
+        "exclusive components"
+      ]
+    },
+    {
+      "id": "DQ-PM-018",
+      "query": "quais MPs só esse produto usa?",
+      "family": "product_master",
+      "expected": "get_product_structure_exclusivity",
+      "target_rank": 4,
+      "target_score": 0.3333,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_product_factory_status",
+          "score": 0.3333
+        }
+      ],
+      "expected_aliases": [
+        "exclusividade",
+        "matéria-prima exclusiva",
+        "mp exclusiva",
+        "mps exclusivas",
+        "mp exclusivas",
+        "quais mps são exclusivas",
+        "componentes exclusivos",
+        "exclusividade de mp",
+        "exclusive raw material",
+        "bom exclusivity",
+        "exclusive components"
+      ]
+    },
+    {
+      "id": "DQ-PM-020",
+      "query": "esse produto já foi embarcado para o cliente?",
+      "family": "product_master",
+      "expected": "get_product_shipping_status",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_customers",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "list_product_inventory_blocks",
+          "score": 0.2857
+        },
+        {
+          "action_id": "get_commercial_rol_by_customer",
+          "score": 0.1429
+        }
+      ],
+      "expected_aliases": [
+        "expedição",
+        "status de expedição",
+        "liberado para expedição",
+        "inspeção final do pa",
+        "quantidade expedida",
+        "shipping status",
+        "final inspection",
+        "released to ship",
+        "shipped quantity"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_customers": [
+          "cliente",
+          "clientes",
+          "cliente do produto",
+          "customer",
+          "customers",
+          "product customers"
+        ],
+        "get_product_production_status": [
+          "producao",
+          "produção",
+          "status de producao",
+          "status de produção",
+          "ordem de producao",
+          "ordem de produção",
+          "production status",
+          "product production status",
+          "production orders"
+        ],
+        "search_products": [
+          "produto",
+          "produtos",
+          "buscar produto",
+          "buscar produtos",
+          "consultar produto",
+          "consultar produtos",
+          "codigo do produto",
+          "código do produto",
+          "descricao do produto",
+          "descrição do produto",
+          "grupo do produto",
+          "categoria do produto",
+          "search products",
+          "product search",
+          "product code",
+          "product description",
+          "product group"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PM-024",
+      "query": "quanto pagamos nesse item nas últimas compras?",
+      "family": "product_master",
+      "expected": "get_product_purchase_price_history",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_supplies_negotiation_savings_summary",
+          "score": 0.2857
+        },
+        {
+          "action_id": "get_commercial_rol_summary",
+          "score": 0.1429
+        },
+        {
+          "action_id": "get_new_clients_rol_pct",
+          "score": 0.1429
+        },
+        {
+          "action_id": "get_product_sales_summary",
+          "score": 0.1429
+        }
+      ],
+      "expected_aliases": [
+        "histórico de preço de compra",
+        "evolução de preço de compra",
+        "preço de compra da matéria-prima",
+        "purchase price history",
+        "buying price history",
+        "raw material purchase price history"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_purchases": [
+          "compras",
+          "compras do produto",
+          "pedidos de compra",
+          "purchases",
+          "product purchases",
+          "purchase orders for product"
+        ],
+        "get_supplies_negotiation_savings_summary": [
+          "savings",
+          "economia de negociação",
+          "savings de negociação",
+          "economia suprimentos",
+          "negotiation savings",
+          "economia nas negociações",
+          "economizamos nas negociações",
+          "economia obtida nas negociações",
+          "economia nas compras",
+          "savings das negociações"
+        ],
+        "get_commercial_rol_summary": [
+          "ROL comercial",
+          "resumo do ROL",
+          "faturamento comercial",
+          "ROL summary",
+          "receita operacional líquida",
+          "meta de ROL",
+          "ROL realizado",
+          "quanto faturamos",
+          "qual foi o faturamento",
+          "faturamento realizado",
+          "faturamento versus meta",
+          "faturamento e meta",
+          "quanto vendemos líquido",
+          "ROL realizado e meta"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PM-025",
+      "query": "qual foi a última compra do produto 10080034?",
+      "family": "product_master",
+      "expected": "get_product_last_purchase",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.91
+        },
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_commercial_rol_summary",
+          "score": 0.4286
+        },
+        {
+          "action_id": "get_product_customers",
+          "score": 0.2857
+        }
+      ],
+      "expected_aliases": [
+        "último preço de compra",
+        "última compra da matéria-prima",
+        "última NF de compra",
+        "last purchase price",
+        "last valid purchase",
+        "latest inbound invoice price"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_purchases": [
+          "compras",
+          "compras do produto",
+          "pedidos de compra",
+          "purchases",
+          "product purchases",
+          "purchase orders for product"
+        ],
+        "get_product_production_status": [
+          "producao",
+          "produção",
+          "status de producao",
+          "status de produção",
+          "ordem de producao",
+          "ordem de produção",
+          "production status",
+          "product production status",
+          "production orders"
+        ],
+        "search_products": [
+          "produto",
+          "produtos",
+          "buscar produto",
+          "buscar produtos",
+          "consultar produto",
+          "consultar produtos",
+          "codigo do produto",
+          "código do produto",
+          "descricao do produto",
+          "descrição do produto",
+          "grupo do produto",
+          "categoria do produto",
+          "search products",
+          "product search",
+          "product code",
+          "product description",
+          "product group"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PM-026",
+      "query": "quando compramos esse item pela última vez?",
+      "family": "product_master",
+      "expected": "get_product_last_purchase",
+      "target_rank": 4,
+      "target_score": 0.1429,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.2857
+        },
+        {
+          "action_id": "get_product_factory_status",
+          "score": 0.1429
+        }
+      ],
+      "expected_aliases": [
+        "último preço de compra",
+        "última compra da matéria-prima",
+        "última NF de compra",
+        "last purchase price",
+        "last valid purchase",
+        "latest inbound invoice price"
+      ]
+    },
+    {
+      "id": "DQ-PM-028",
+      "query": "routing guide for product 10080034",
+      "family": "product_master",
+      "expected": "get_product_guide",
+      "target_rank": 2,
+      "target_score": 0.6,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "roteiro do produto",
+        "roteiro de produção",
+        "operações do produto",
+        "sequência de operações",
+        "centros de trabalho do produto",
+        "product routing",
+        "production routing",
+        "operation sequence",
+        "product operations"
+      ]
+    },
+    {
+      "id": "DQ-PM-029",
+      "query": "onde o produto 10080034 é usado como componente?",
+      "family": "product_master",
+      "expected": "get_product_parents",
+      "target_rank": 3,
+      "target_score": 0.6667,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "onde o produto é usado",
+        "onde a MP é usada",
+        "produtos pai",
+        "produtos que usam este componente",
+        "PAs que usam esta matéria-prima",
+        "BOM reversa",
+        "where used",
+        "parent products",
+        "reverse BOM",
+        "products using component"
+      ]
+    },
+    {
+      "id": "DQ-PM-030",
+      "query": "quais produtos consomem esse item na estrutura?",
+      "family": "product_master",
+      "expected": "get_product_parents",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_structure",
+          "score": 0.718
+        },
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.2857
+        },
+        {
+          "action_id": "get_production_consumption_by_item",
+          "score": 0.2857
+        }
+      ],
+      "expected_aliases": [
+        "onde o produto é usado",
+        "onde a MP é usada",
+        "produtos pai",
+        "produtos que usam este componente",
+        "PAs que usam esta matéria-prima",
+        "BOM reversa",
+        "where used",
+        "parent products",
+        "reverse BOM",
+        "products using component"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_structure": [
+          "estrutura",
+          "estrutura do produto",
+          "componentes do produto",
+          "bom",
+          "bom do produto",
+          "product structure",
+          "bill of materials",
+          "product components"
+        ],
+        "get_product_production_status": [
+          "producao",
+          "produção",
+          "status de producao",
+          "status de produção",
+          "ordem de producao",
+          "ordem de produção",
+          "production status",
+          "product production status",
+          "production orders"
+        ],
+        "search_products": [
+          "produto",
+          "produtos",
+          "buscar produto",
+          "buscar produtos",
+          "consultar produto",
+          "consultar produtos",
+          "codigo do produto",
+          "código do produto",
+          "descricao do produto",
+          "descrição do produto",
+          "grupo do produto",
+          "categoria do produto",
+          "search products",
+          "product search",
+          "product code",
+          "product description",
+          "product group"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PM-033",
+      "query": "detalhes do desenho técnico 0100 do produto 10080034",
+      "family": "product_master",
+      "expected": "get_product_drawing",
+      "target_rank": 4,
+      "target_score": 0.4286,
+      "higher_ranked": [
+        {
+          "action_id": "list_product_drawings",
+          "score": 0.9025
+        },
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "metadados do desenho",
+        "metadata do desenho do produto",
+        "arquivo PDF do desenho",
+        "drawing metadata",
+        "product drawing metadata",
+        "server-resolved drawing"
+      ]
+    },
+    {
+      "id": "DQ-PM-034",
+      "query": "mostre o desenho específico desse produto",
+      "family": "product_master",
+      "expected": "get_product_drawing",
+      "target_rank": 3,
+      "target_score": 0.4,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "metadados do desenho",
+        "metadata do desenho do produto",
+        "arquivo PDF do desenho",
+        "drawing metadata",
+        "product drawing metadata",
+        "server-resolved drawing"
+      ]
+    },
+    {
+      "id": "DQ-PM-035",
+      "query": "endereços físicos de armazenagem do produto 10080034",
+      "family": "product_master",
+      "expected": "list_product_physical_locations",
+      "target_rank": 3,
+      "target_score": 0.5714,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "local físico do produto",
+        "local fisico do produto",
+        "local físico",
+        "posição física do produto",
+        "posicao fisica do produto",
+        "local de armazenagem do produto",
+        "endereçamento físico do produto",
+        "physical location",
+        "physical locations",
+        "product physical location",
+        "pickup location"
+      ]
+    },
+    {
+      "id": "DQ-PM-036",
+      "query": "onde esse produto fica fisicamente no galpão?",
+      "family": "product_master",
+      "expected": "list_product_physical_locations",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_commercial_rol_by_product",
+          "score": 0.2857
+        },
+        {
+          "action_id": "get_product_factory_status",
+          "score": 0.2857
+        },
+        {
+          "action_id": "get_product_guide",
+          "score": 0.2857
+        }
+      ],
+      "expected_aliases": [
+        "local físico do produto",
+        "local fisico do produto",
+        "local físico",
+        "posição física do produto",
+        "posicao fisica do produto",
+        "local de armazenagem do produto",
+        "endereçamento físico do produto",
+        "physical location",
+        "physical locations",
+        "product physical location",
+        "pickup location"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_production_status": [
+          "producao",
+          "produção",
+          "status de producao",
+          "status de produção",
+          "ordem de producao",
+          "ordem de produção",
+          "production status",
+          "product production status",
+          "production orders"
+        ],
+        "search_products": [
+          "produto",
+          "produtos",
+          "buscar produto",
+          "buscar produtos",
+          "consultar produto",
+          "consultar produtos",
+          "codigo do produto",
+          "código do produto",
+          "descricao do produto",
+          "descrição do produto",
+          "grupo do produto",
+          "categoria do produto",
+          "search products",
+          "product search",
+          "product code",
+          "product description",
+          "product group"
+        ],
+        "get_commercial_rol_by_product": [
+          "ROL por produto",
+          "ROL por família",
+          "faturamento por produto",
+          "ranking de produtos ROL",
+          "product ROL ranking",
+          "produtos mais faturaram",
+          "produtos que mais faturaram",
+          "produtos geraram mais faturamento",
+          "ranking de produtos por faturamento"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PM-039",
+      "query": "produto pelo part number ABC123 do fornecedor",
+      "family": "product_master",
+      "expected": "search_products_by_supplier_part_number",
+      "target_rank": 4,
+      "target_score": 0.7143,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_suppliers",
+          "score": 0.72
+        },
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "part number do fornecedor",
+        "código do fornecedor",
+        "codigo do fornecedor",
+        "pn do fornecedor",
+        "referência do fornecedor",
+        "referencia do fornecedor",
+        "código do produto no fornecedor",
+        "supplier part number",
+        "vendor part number",
+        "manufacturer part number",
+        "supplier product code"
+      ]
+    },
+    {
+      "id": "DQ-PM-044",
+      "query": "em quais NFes de entrada esse item apareceu?",
+      "family": "product_master",
+      "expected": "get_product_inbound_invoice_items",
+      "target_rank": 3,
+      "target_score": 0.25,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.375
+        },
+        {
+          "action_id": "get_supplies_stock_balances_items",
+          "score": 0.375
+        }
+      ],
+      "expected_aliases": [
+        "nf de entrada",
+        "nfe de entrada",
+        "nota fiscal de entrada",
+        "notas fiscais de entrada",
+        "documento de entrada",
+        "documentos de entrada",
+        "fatura de entrada do produto",
+        "inbound invoice",
+        "inbound invoice items",
+        "inbound invoices"
+      ]
+    },
+    {
+      "id": "DQ-PM-048",
+      "query": "quanto vendemos desse produto no período?",
+      "family": "product_master",
+      "expected": "get_product_sales_summary",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_commercial_rol_summary",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_production_appointments_produced_totals",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_commercial_rol_by_product",
+          "score": 0.3333
+        }
+      ],
+      "expected_aliases": [
+        "quanto este produto vendeu",
+        "quanto o produto vendeu",
+        "histórico agregado de venda",
+        "historico agregado de venda",
+        "resumo de vendas do produto",
+        "total vendido do produto",
+        "total de vendas do produto",
+        "sales summary",
+        "product sales summary",
+        "aggregate sales history"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_production_status": [
+          "producao",
+          "produção",
+          "status de producao",
+          "status de produção",
+          "ordem de producao",
+          "ordem de produção",
+          "production status",
+          "product production status",
+          "production orders"
+        ],
+        "search_products": [
+          "produto",
+          "produtos",
+          "buscar produto",
+          "buscar produtos",
+          "consultar produto",
+          "consultar produtos",
+          "codigo do produto",
+          "código do produto",
+          "descricao do produto",
+          "descrição do produto",
+          "grupo do produto",
+          "categoria do produto",
+          "search products",
+          "product search",
+          "product code",
+          "product description",
+          "product group"
+        ],
+        "get_commercial_rol_summary": [
+          "ROL comercial",
+          "resumo do ROL",
+          "faturamento comercial",
+          "ROL summary",
+          "receita operacional líquida",
+          "meta de ROL",
+          "ROL realizado",
+          "quanto faturamos",
+          "qual foi o faturamento",
+          "faturamento realizado",
+          "faturamento versus meta",
+          "faturamento e meta",
+          "quanto vendemos líquido",
+          "ROL realizado e meta"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PM-050",
+      "query": "carteira de pedidos abertos desse produto",
+      "family": "product_master",
+      "expected": "get_product_sales_open_orders",
+      "target_rank": 3,
+      "target_score": 0.6667,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "carteira aberta do produto",
+        "pedidos de venda em aberto do produto",
+        "pedidos em aberto do produto",
+        "carteira de pedidos de venda do produto",
+        "open sales orders",
+        "product open orders",
+        "open orders for product",
+        "sales open orders"
+      ]
+    },
+    {
+      "id": "DQ-PM-052",
+      "query": "quais MPs estão em falta para atender os pedidos desse produto?",
+      "family": "product_master",
+      "expected": "get_product_raw_material_set_shortages",
+      "target_rank": 8,
+      "target_score": 0.1818,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_product_factory_status",
+          "score": 0.2727
+        },
+        {
+          "action_id": "get_product_sales_open_orders",
+          "score": 0.2727
+        },
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.2727
+        }
+      ],
+      "expected_aliases": [
+        "falta de matéria-prima",
+        "falta de materia prima",
+        "ruptura de matéria-prima",
+        "ruptura de materia prima",
+        "falta de MP para produção",
+        "falta de mp para producao",
+        "raw material shortage",
+        "material shortage for production",
+        "ruptura no conjunto",
+        "falta de insumo"
+      ]
+    },
+    {
+      "id": "DQ-PM-054",
+      "query": "quais MPs exclusivas usamos?",
+      "family": "product_master",
+      "expected": "list_exclusive_raw_materials_catalog",
+      "target_rank": 2,
+      "target_score": 0.5,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.9
+        }
+      ],
+      "expected_aliases": [
+        "matéria-prima exclusiva",
+        "materia-prima exclusiva",
+        "matéria prima exclusiva",
+        "materia prima exclusiva",
+        "matérias-primas exclusivas",
+        "catálogo de matérias-primas exclusivas",
+        "catalogo de materias primas exclusivas",
+        "exclusive raw material",
+        "exclusive raw materials",
+        "exclusive raw materials catalog"
+      ]
+    },
+    {
+      "id": "DQ-COM-003",
+      "query": "série mensal do ROL comercial",
+      "family": "commercial",
+      "expected": "get_commercial_rol_series",
+      "target_rank": 2,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_commercial_rol_summary",
+          "score": 0.8975
+        }
+      ],
+      "expected_aliases": [
+        "série de ROL",
+        "evolução do ROL",
+        "evolução mensal do ROL",
+        "ROL series",
+        "histórico de ROL comercial",
+        "ROL por mês",
+        "evolução do faturamento",
+        "faturamento evoluiu",
+        "faturamento semana a semana",
+        "faturamento por semana",
+        "faturamento mês a mês",
+        "histórico de faturamento",
+        "como o faturamento evoluiu"
+      ]
+    },
+    {
+      "id": "DQ-COM-010",
+      "query": "faturamento por grupo de produto",
+      "family": "commercial",
+      "expected": "get_commercial_rol_by_product",
+      "target_rank": 2,
+      "target_score": 0.8,
+      "higher_ranked": [
+        {
+          "action_id": "search_products",
+          "score": 0.905
+        }
+      ],
+      "expected_aliases": [
+        "ROL por produto",
+        "ROL por família",
+        "faturamento por produto",
+        "ranking de produtos ROL",
+        "product ROL ranking",
+        "produtos mais faturaram",
+        "produtos que mais faturaram",
+        "produtos geraram mais faturamento",
+        "ranking de produtos por faturamento"
+      ]
+    },
+    {
+      "id": "DQ-COM-012",
+      "query": "quanto do faturamento veio de negócios novos?",
+      "family": "commercial",
+      "expected": "get_new_business_rol_pct",
+      "target_rank": 4,
+      "target_score": 0.4286,
+      "higher_ranked": [
+        {
+          "action_id": "get_commercial_rol_summary",
+          "score": 0.905
+        },
+        {
+          "action_id": "get_new_clients_rol_pct",
+          "score": 0.84
+        },
+        {
+          "action_id": "get_commercial_rol_series",
+          "score": 0.4286
+        }
+      ],
+      "expected_aliases": [
+        "participação de novos negócios",
+        "ROL de novos negócios",
+        "new business ROL share",
+        "percentual de novos negócios",
+        "novos negócios ROL"
+      ]
+    },
+    {
+      "id": "DQ-COM-013",
+      "query": "realizado vs meta de ROL de new business",
+      "family": "commercial",
+      "expected": "get_new_business_rol_target_pct",
+      "target_rank": 2,
+      "target_score": 0.7143,
+      "higher_ranked": [
+        {
+          "action_id": "get_commercial_rol_summary",
+          "score": 0.8925
+        }
+      ],
+      "expected_aliases": [
+        "meta de novos negócios",
+        "meta ROL novos negócios",
+        "new business ROL target",
+        "atingimento novos negócios"
+      ]
+    },
+    {
+      "id": "DQ-COM-020",
+      "query": "quantos orçamentos viraram pedidos?",
+      "family": "commercial",
+      "expected": "get_sales_conversion_rate",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_new_clients_average",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_product_sales_open_orders",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_sales_order_otd",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_sales_order_otd_by_customer",
+          "score": 0.25
+        }
+      ],
+      "expected_aliases": [
+        "taxa de conversão",
+        "conversão comercial",
+        "closing rate",
+        "taxa de fechamento",
+        "conversão de propostas"
+      ],
+      "higher_candidate_aliases": {
+        "get_new_clients_average": [
+          "média de novos clientes",
+          "novos clientes",
+          "average new clients",
+          "quantidade média de clientes novos",
+          "clientes novos em média",
+          "clientes novos tivemos em média",
+          "média mensal de clientes novos",
+          "média de clientes novos",
+          "quantos clientes novos em média",
+          "média de novos clientes no período"
+        ],
+        "get_product_purchases": [
+          "compras",
+          "compras do produto",
+          "pedidos de compra",
+          "purchases",
+          "product purchases",
+          "purchase orders for product"
+        ],
+        "get_product_sales_open_orders": [
+          "carteira aberta do produto",
+          "pedidos de venda em aberto do produto",
+          "pedidos em aberto do produto",
+          "carteira de pedidos de venda do produto",
+          "open sales orders",
+          "product open orders",
+          "open orders for product",
+          "sales open orders"
+        ]
+      }
+    },
+    {
+      "id": "DQ-COM-024",
+      "query": "entregas no prazo dos pedidos comerciais",
+      "family": "commercial",
+      "expected": "get_sales_order_otd",
+      "target_rank": 5,
+      "target_score": 0.3333,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_purchase_order_otd",
+          "score": 0.8333
+        },
+        {
+          "action_id": "get_supplies_purchase_order_otd_series",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_on_time_delivery_pct",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_product_sales_open_orders",
+          "score": 0.3333
+        }
+      ],
+      "expected_aliases": [
+        "OTD comercial",
+        "OTD de pedidos de venda",
+        "on-time delivery comercial",
+        "OTD pedidos",
+        "sales order OTD"
+      ]
+    },
+    {
+      "id": "DQ-COM-025",
+      "query": "resumo do OTD de pedidos de venda",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_summary",
+      "target_rank": 2,
+      "target_score": 0.89,
+      "higher_ranked": [
+        {
+          "action_id": "get_sales_order_otd",
+          "score": 0.9275
+        }
+      ],
+      "expected_aliases": [
+        "resumo OTD",
+        "OTD summary",
+        "resumo do OTD comercial",
+        "OTD realizado e meta",
+        "meta OTD comercial"
+      ]
+    },
+    {
+      "id": "DQ-COM-027",
+      "query": "OTD de vendas por filial",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_by_branch",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [],
+      "expected_aliases": [
+        "OTD por filial",
+        "OTD por unidade",
+        "sales order OTD by branch"
+      ],
+      "higher_candidate_aliases": {}
+    },
+    {
+      "id": "DQ-COM-028",
+      "query": "OTD comercial detalhado por filial",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_by_branch",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_sales_order_otd",
+          "score": 0.8975
+        }
+      ],
+      "expected_aliases": [
+        "OTD por filial",
+        "OTD por unidade",
+        "sales order OTD by branch"
+      ],
+      "higher_candidate_aliases": {
+        "get_sales_order_otd": [
+          "OTD comercial",
+          "OTD de pedidos de venda",
+          "on-time delivery comercial",
+          "OTD pedidos",
+          "sales order OTD"
+        ]
+      }
+    },
+    {
+      "id": "DQ-COM-029",
+      "query": "OTD de vendas por cliente",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_by_customer",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [],
+      "expected_aliases": [
+        "OTD por cliente",
+        "ranking OTD por cliente",
+        "OTD de pedidos por cliente",
+        "sales order OTD by customer",
+        "on-time delivery por cliente",
+        "OTD comercial por cliente",
+        "atraso de pedidos por cliente"
+      ],
+      "higher_candidate_aliases": {}
+    },
+    {
+      "id": "DQ-COM-030",
+      "query": "quais clientes receberam no prazo?",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_by_customer",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_customers",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_commercial_rol_by_customer",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_new_clients_average",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_new_clients_rol_pct",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_on_time_delivery_pct",
+          "score": 0.4
+        }
+      ],
+      "expected_aliases": [
+        "OTD por cliente",
+        "ranking OTD por cliente",
+        "OTD de pedidos por cliente",
+        "sales order OTD by customer",
+        "on-time delivery por cliente",
+        "OTD comercial por cliente",
+        "atraso de pedidos por cliente"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_customers": [
+          "cliente",
+          "clientes",
+          "cliente do produto",
+          "customer",
+          "customers",
+          "product customers"
+        ],
+        "get_commercial_rol_by_customer": [
+          "ROL por cliente",
+          "ranking de ROL por cliente",
+          "faturamento por cliente",
+          "top clientes ROL",
+          "customer ROL ranking",
+          "clientes mais faturaram",
+          "clientes que mais faturaram",
+          "maiores clientes por faturamento",
+          "ranking de clientes por faturamento",
+          "ranking de clientes por receita",
+          "ranking de clientes pelo faturamento"
+        ],
+        "get_new_clients_average": [
+          "média de novos clientes",
+          "novos clientes",
+          "average new clients",
+          "quantidade média de clientes novos",
+          "clientes novos em média",
+          "clientes novos tivemos em média",
+          "média mensal de clientes novos",
+          "média de clientes novos",
+          "quantos clientes novos em média",
+          "média de novos clientes no período"
+        ]
+      }
+    },
+    {
+      "id": "DQ-COM-031",
+      "query": "série do OTD de pedidos de venda",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_series",
+      "target_rank": 2,
+      "target_score": 0.895,
+      "higher_ranked": [
+        {
+          "action_id": "get_sales_order_otd",
+          "score": 0.9275
+        }
+      ],
+      "expected_aliases": [
+        "série de OTD",
+        "evolução do OTD",
+        "OTD por semana",
+        "OTD semanal",
+        "OTD mensal",
+        "sales order OTD series",
+        "evolução OTD comercial",
+        "evolução semanal do OTD comercial",
+        "OTD comercial por semana",
+        "histórico do OTD comercial",
+        "OTD comercial evoluiu",
+        "evolução do OTD comercial"
+      ]
+    },
+    {
+      "id": "DQ-COM-032",
+      "query": "evolução mensal do OTD comercial",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_series",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_sales_order_otd",
+          "score": 0.8975
+        }
+      ],
+      "expected_aliases": [
+        "série de OTD",
+        "evolução do OTD",
+        "OTD por semana",
+        "OTD semanal",
+        "OTD mensal",
+        "sales order OTD series",
+        "evolução OTD comercial",
+        "evolução semanal do OTD comercial",
+        "OTD comercial por semana",
+        "histórico do OTD comercial",
+        "OTD comercial evoluiu",
+        "evolução do OTD comercial"
+      ],
+      "higher_candidate_aliases": {
+        "get_sales_order_otd": [
+          "OTD comercial",
+          "OTD de pedidos de venda",
+          "on-time delivery comercial",
+          "OTD pedidos",
+          "sales order OTD"
+        ]
+      }
+    },
+    {
+      "id": "DQ-COM-034",
+      "query": "histórico mensal de OTD por cliente",
+      "family": "commercial",
+      "expected": "get_sales_order_otd_series_by_customer",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_sales_order_otd_by_customer",
+          "score": 0.9025
+        }
+      ],
+      "expected_aliases": [
+        "evolução OTD por cliente",
+        "série OTD por cliente",
+        "OTD series by customer"
+      ],
+      "higher_candidate_aliases": {
+        "get_sales_order_otd_by_customer": [
+          "OTD por cliente",
+          "ranking OTD por cliente",
+          "OTD de pedidos por cliente",
+          "sales order OTD by customer",
+          "on-time delivery por cliente",
+          "OTD comercial por cliente",
+          "atraso de pedidos por cliente"
+        ]
+      }
+    },
+    {
+      "id": "DQ-COM-035",
+      "query": "ROL vs meta do segmento WEG",
+      "family": "commercial",
+      "expected": "get_weg_rol_target_pct",
+      "target_rank": 5,
+      "target_score": 0.5,
+      "higher_ranked": [
+        {
+          "action_id": "get_commercial_rol_summary",
+          "score": 0.6667
+        },
+        {
+          "action_id": "get_commercial_rol_by_branch",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_commercial_rol_series",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_sales_order_otd_summary",
+          "score": 0.5
+        }
+      ],
+      "expected_aliases": [
+        "meta ROL WEG",
+        "ROL WEG",
+        "WEG ROL target",
+        "atingimento ROL WEG",
+        "participação WEG meta",
+        "ROL da WEG contra a meta",
+        "ROL WEG contra a meta",
+        "faturamento WEG versus meta",
+        "atingimento da meta WEG",
+        "meta de faturamento da WEG",
+        "atingimento da meta de faturamento da WEG"
+      ]
+    },
+    {
+      "id": "DQ-SUP-004",
+      "query": "quantas vezes o estoque girou no período?",
+      "family": "supplies",
+      "expected": "get_supplies_inventory_turnover",
+      "target_rank": 6,
+      "target_score": 0.3333,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_new_clients_average",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_product_internal_movements",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_production_appointments_produced_totals",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_supplies_inventory_adjustments_summary",
+          "score": 0.3333
+        }
+      ],
+      "expected_aliases": [
+        "giro de estoque",
+        "giro estoque",
+        "inventory turnover",
+        "turnover de estoque",
+        "giro de estoque suprimentos"
+      ]
+    },
+    {
+      "id": "DQ-SUP-008",
+      "query": "fornecedores entregando no prazo",
+      "family": "supplies",
+      "expected": "get_supplies_otd",
+      "target_rank": 4,
+      "target_score": 0.5,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_purchase_order_otd",
+          "score": 0.75
+        },
+        {
+          "action_id": "get_product_suppliers",
+          "score": 0.724
+        },
+        {
+          "action_id": "get_on_time_delivery_pct",
+          "score": 0.5
+        }
+      ],
+      "expected_aliases": [
+        "OTD suprimentos",
+        "OTD compras dashboard",
+        "OTD compras SI",
+        "on-time delivery suprimentos",
+        "entrega no prazo suprimentos",
+        "atrasos de fornecimento agregados",
+        "supplies OTD KPI"
+      ]
+    },
+    {
+      "id": "DQ-SUP-010",
+      "query": "pedidos de compra entregues no prazo",
+      "family": "supplies",
+      "expected": "get_supplies_purchase_order_otd",
+      "target_rank": 2,
+      "target_score": 0.8333,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.9075
+        }
+      ],
+      "expected_aliases": [
+        "OTD de compras",
+        "OTD compras",
+        "OTD pedidos de compra",
+        "OTD pedido de compra MP",
+        "OTD fornecedor",
+        "purchase order OTD",
+        "OTD PC",
+        "pontualidade fornecedores",
+        "OTD dos pedidos de compra",
+        "OTD das compras",
+        "pontualidade das compras",
+        "entregas de fornecedores no prazo",
+        "OTD nossos pedidos de compra"
+      ]
+    },
+    {
+      "id": "DQ-SUP-011",
+      "query": "série mensal do OTD de pedidos de compra",
+      "family": "supplies",
+      "expected": "get_supplies_purchase_order_otd_series",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_purchase_order_otd",
+          "score": 0.94
+        },
+        {
+          "action_id": "get_sales_order_otd",
+          "score": 0.8925
+        }
+      ],
+      "expected_aliases": [
+        "série OTD compras",
+        "evolução OTD de compras",
+        "OTD pedidos de compra série",
+        "purchase order OTD series",
+        "evolução OTD PC",
+        "evolução semanal do OTD de compras",
+        "evolução do OTD dos fornecedores",
+        "OTD de compras por semana",
+        "histórico OTD compras",
+        "OTD compras ao longo do tempo"
+      ],
+      "higher_candidate_aliases": {
+        "get_supplies_purchase_order_otd": [
+          "OTD de compras",
+          "OTD compras",
+          "OTD pedidos de compra",
+          "OTD pedido de compra MP",
+          "OTD fornecedor",
+          "purchase order OTD",
+          "OTD PC",
+          "pontualidade fornecedores",
+          "OTD dos pedidos de compra",
+          "OTD das compras",
+          "pontualidade das compras",
+          "entregas de fornecedores no prazo",
+          "OTD nossos pedidos de compra"
+        ],
+        "get_sales_order_otd": [
+          "OTD comercial",
+          "OTD de pedidos de venda",
+          "on-time delivery comercial",
+          "OTD pedidos",
+          "sales order OTD"
+        ]
+      }
+    },
+    {
+      "id": "DQ-SUP-016",
+      "query": "quantos itens estão abaixo do estoque de segurança?",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_summary",
+      "target_rank": 2,
+      "target_score": 0.915,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_items",
+          "score": 0.955
+        }
+      ],
+      "expected_aliases": [
+        "estoque de segurança",
+        "resumo estoque de segurança",
+        "safety stock",
+        "safety stock summary",
+        "estoque segurança suprimentos",
+        "quantos materiais abaixo do estoque de segurança",
+        "quantos materiais estão abaixo do estoque de segurança",
+        "situação do estoque de segurança"
+      ]
+    },
+    {
+      "id": "DQ-SUP-020",
+      "query": "memória de cálculo do estoque de segurança desse item",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_item_details",
+      "target_rank": 4,
+      "target_score": 0.625,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_summary",
+          "score": 0.915
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.84
+        },
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        }
+      ],
+      "expected_aliases": [
+        "estoque de segurança do item",
+        "estoque de seguranca do item",
+        "detalhe de estoque de segurança",
+        "detalhe de estoque de seguranca",
+        "projeção de estoque do item",
+        "projecao de estoque do item",
+        "safety stock item details",
+        "item safety stock",
+        "item stock projection",
+        "estoque mínimo do item",
+        "estoque minimo do item"
+      ]
+    },
+    {
+      "id": "DQ-SUP-021",
+      "query": "fornecedores do item 10080034 no estoque de segurança",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_item_suppliers",
+      "target_rank": 2,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_summary",
+          "score": 0.915
+        }
+      ],
+      "expected_aliases": [
+        "fornecedores do item de estoque de segurança",
+        "fornecedores estoque de segurança",
+        "safety stock suppliers"
+      ]
+    },
+    {
+      "id": "DQ-SUP-022",
+      "query": "quem fornece esse item crítico de estoque?",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_item_suppliers",
+      "target_rank": 4,
+      "target_score": 0.4286,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.4286
+        },
+        {
+          "action_id": "get_supplies_safety_stock_item_details",
+          "score": 0.4286
+        }
+      ],
+      "expected_aliases": [
+        "fornecedores do item de estoque de segurança",
+        "fornecedores estoque de segurança",
+        "safety stock suppliers"
+      ]
+    },
+    {
+      "id": "DQ-SUP-023",
+      "query": "histórico de preços de compra do fornecedor do item de segurança 10080034",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "target_rank": 4,
+      "target_score": 0.5556,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_purchase_price_history",
+          "score": 0.935
+        },
+        {
+          "action_id": "get_product_suppliers",
+          "score": 0.72
+        },
+        {
+          "action_id": "get_product_purchases",
+          "score": 0.714
+        }
+      ],
+      "expected_aliases": [
+        "histórico de preço por fornecedor",
+        "preço de compra fornecedor estoque de segurança",
+        "supplier purchase price history safety stock"
+      ]
+    },
+    {
+      "id": "DQ-SUP-024",
+      "query": "preços pagos ao fornecedor do item de segurança",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "target_rank": 9,
+      "target_score": 0.375,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_suppliers",
+          "score": 0.72
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_supplies_safety_stock_item_details",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_supplies_safety_stock_item_suppliers",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_production_consumption_by_item",
+          "score": 0.375
+        }
+      ],
+      "expected_aliases": [
+        "histórico de preço por fornecedor",
+        "preço de compra fornecedor estoque de segurança",
+        "supplier purchase price history safety stock"
+      ]
+    },
+    {
+      "id": "DQ-SUP-025",
+      "query": "resumo da análise de consumo versus estoque de segurança sugerido",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_consumption_analysis_summary",
+      "target_rank": 3,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.9425
+        },
+        {
+          "action_id": "get_supplies_safety_stock_summary",
+          "score": 0.915
+        }
+      ],
+      "expected_aliases": [
+        "análise de consumo estoque de segurança",
+        "consumo estoque de segurança",
+        "safety stock consumption analysis",
+        "estoque de segurança sugerido resumo"
+      ]
+    },
+    {
+      "id": "DQ-SUP-026",
+      "query": "itens com consumo acima do estoque sugerido",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_consumption_analysis_summary",
+      "target_rank": 5,
+      "target_score": 0.4286,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.7143
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_items",
+          "score": 0.7143
+        },
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_product_internal_movements",
+          "score": 0.4286
+        }
+      ],
+      "expected_aliases": [
+        "análise de consumo estoque de segurança",
+        "consumo estoque de segurança",
+        "safety stock consumption analysis",
+        "estoque de segurança sugerido resumo"
+      ]
+    },
+    {
+      "id": "DQ-SUP-028",
+      "query": "liste itens com divergência de consumo no estoque de segurança",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_consumption_analysis_items",
+      "target_rank": 5,
+      "target_score": 0.6667,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_summary",
+          "score": 0.935
+        },
+        {
+          "action_id": "get_supplies_safety_stock_summary",
+          "score": 0.915
+        },
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.6667
+        }
+      ],
+      "expected_aliases": [
+        "itens análise consumo estoque de segurança",
+        "materiais abaixo do estoque sugerido",
+        "safety stock consumption items"
+      ]
+    },
+    {
+      "id": "DQ-SUP-030",
+      "query": "série mensal de consumo desse item de estoque de segurança",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "target_rank": 2,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_summary",
+          "score": 0.915
+        }
+      ],
+      "expected_aliases": [
+        "análise de consumo do item",
+        "analise de consumo do item",
+        "consumo médio do item",
+        "consumo medio do item",
+        "estoque de segurança sugerido",
+        "estoque de seguranca sugerido",
+        "consumption analysis item",
+        "suggested safety stock",
+        "item consumption analysis",
+        "cobertura de estoque do item"
+      ]
+    },
+    {
+      "id": "DQ-SUP-031",
+      "query": "saldos de estoque por armazém",
+      "family": "supplies",
+      "expected": "get_supplies_stock_balances_summary",
+      "target_rank": 2,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_stock_balances_items",
+          "score": 0.84
+        }
+      ],
+      "expected_aliases": [
+        "saldo de estoque por depósito",
+        "resumo dos saldos de estoque por depósito",
+        "resumo de estoque por depósito",
+        "resumo dos saldos de estoque",
+        "saldos de estoque por depósito",
+        "consolidado de estoque por depósito",
+        "consolidado dos saldos de estoque",
+        "total de estoque por depósito",
+        "totais por depósito",
+        "saldos consolidados por armazém",
+        "saldos por armazém",
+        "stock balances summary",
+        "warehouse stock summary",
+        "resumo saldos de estoque"
+      ]
+    },
+    {
+      "id": "DQ-SUP-034",
+      "query": "liste os saldos por item no armazém 01",
+      "family": "supplies",
+      "expected": "get_supplies_stock_balances_items",
+      "target_rank": 2,
+      "target_score": 0.625,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_stock",
+          "score": 0.71
+        }
+      ],
+      "expected_aliases": [
+        "itens de estoque por depósito",
+        "itens de saldo de estoque",
+        "itens dos saldos de estoque",
+        "produtos em estoque por depósito",
+        "lista de produtos por depósito",
+        "lista de produtos por armazém",
+        "lista de saldos de estoque",
+        "itens dos saldos por armazém",
+        "stock balance items",
+        "itens no depósito",
+        "itens existem no depósito",
+        "quais itens no depósito",
+        "produtos no depósito",
+        "produtos estão no depósito",
+        "quais produtos no depósito",
+        "produtos do depósito",
+        "itens do almoxarifado",
+        "materiais no depósito",
+        "produtos em estoque no depósito"
+      ]
+    },
+    {
+      "id": "DQ-SUP-042",
+      "query": "saldo de material em poder de terceiros",
+      "family": "supplies",
+      "expected": "get_supplies_third_party_materials_summary",
+      "target_rank": 3,
+      "target_score": 0.6667,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_third_party_materials_shipments",
+          "score": 0.8333
+        },
+        {
+          "action_id": "get_product_stock",
+          "score": 0.71
+        }
+      ],
+      "expected_aliases": [
+        "materiais de terceiros",
+        "materiais em poder de terceiros",
+        "third-party materials",
+        "resumo materiais de terceiros"
+      ]
+    },
+    {
+      "id": "DQ-PRD-001",
+      "query": "OEE percentual atual",
+      "family": "production",
+      "expected": "get_overall_equipment_effectiveness_pct",
+      "target_rank": 3,
+      "target_score": 0.3333,
+      "higher_ranked": [
+        {
+          "action_id": "get_new_business_rol_pct",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_new_clients_rol_pct",
+          "score": 0.3333
+        }
+      ],
+      "expected_aliases": [
+        "OEE",
+        "OEE de produção",
+        "eficiência geral dos equipamentos",
+        "OEE do mês",
+        "overall equipment effectiveness"
+      ]
+    },
+    {
+      "id": "DQ-PRD-003",
+      "query": "OEE de produção com resumo e apontamentos",
+      "family": "production",
+      "expected": "get_production_oee",
+      "target_rank": 3,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_production_appointments_summary",
+          "score": 0.9225
+        },
+        {
+          "action_id": "get_overall_equipment_effectiveness_pct",
+          "score": 0.9025
+        }
+      ],
+      "expected_aliases": [
+        "resumo do OEE",
+        "OEE resumido",
+        "sumário de OEE de produção",
+        "OEE com totais de apontamentos"
+      ]
+    },
+    {
+      "id": "DQ-PRD-004",
+      "query": "detalhe do OEE deste mês",
+      "family": "production",
+      "expected": "get_production_oee",
+      "target_rank": 3,
+      "target_score": 0.4,
+      "higher_ranked": [
+        {
+          "action_id": "get_overall_equipment_effectiveness_pct",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_commercial_rol_series",
+          "score": 0.4
+        }
+      ],
+      "expected_aliases": [
+        "resumo do OEE",
+        "OEE resumido",
+        "sumário de OEE de produção",
+        "OEE com totais de apontamentos"
+      ]
+    },
+    {
+      "id": "DQ-PRD-005",
+      "query": "série mensal do OEE de produção",
+      "family": "production",
+      "expected": "get_production_oee_series",
+      "target_rank": 2,
+      "target_score": 0.8333,
+      "higher_ranked": [
+        {
+          "action_id": "get_overall_equipment_effectiveness_pct",
+          "score": 0.9025
+        }
+      ],
+      "expected_aliases": [
+        "evolução do OEE",
+        "série de OEE",
+        "série temporal de OEE de produção",
+        "OEE ao longo do tempo"
+      ]
+    },
+    {
+      "id": "DQ-PRD-007",
+      "query": "percentual de entregas no prazo",
+      "family": "production",
+      "expected": "get_on_time_delivery_pct",
+      "target_rank": 4,
+      "target_score": 0.6,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_purchase_order_otd",
+          "score": 0.8
+        },
+        {
+          "action_id": "get_new_business_rol_pct",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_new_clients_rol_pct",
+          "score": 0.6
+        }
+      ],
+      "expected_aliases": [
+        "OTD de produção",
+        "OTD das OPs",
+        "OTD das ordens de produção",
+        "pontualidade da produção",
+        "pontualidade das OPs",
+        "OPs no prazo",
+        "OPs atrasadas"
+      ]
+    },
+    {
+      "id": "DQ-PRD-009",
+      "query": "OTD de produção",
+      "family": "production",
+      "expected": "get_production_otd",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_on_time_delivery_pct",
+          "score": 0.9025
+        }
+      ],
+      "expected_aliases": [
+        "resumo do OTD de produção",
+        "OTD de produção resumido",
+        "sumário pontualidade das OPs"
+      ],
+      "higher_candidate_aliases": {
+        "get_on_time_delivery_pct": [
+          "OTD de produção",
+          "OTD das OPs",
+          "OTD das ordens de produção",
+          "pontualidade da produção",
+          "pontualidade das OPs",
+          "OPs no prazo",
+          "OPs atrasadas"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PRD-010",
+      "query": "OPs entregues no prazo no período",
+      "family": "production",
+      "expected": "get_production_otd",
+      "target_rank": 7,
+      "target_score": 0.4,
+      "higher_ranked": [
+        {
+          "action_id": "get_on_time_delivery_pct",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_new_clients_average",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_production_appointments_produced_totals",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_production_machine_load_operations",
+          "score": 0.4
+        }
+      ],
+      "expected_aliases": [
+        "resumo do OTD de produção",
+        "OTD de produção resumido",
+        "sumário pontualidade das OPs"
+      ]
+    },
+    {
+      "id": "DQ-PRD-011",
+      "query": "série mensal do OTD de produção",
+      "family": "production",
+      "expected": "get_production_otd_series",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_on_time_delivery_pct",
+          "score": 0.9025
+        }
+      ],
+      "expected_aliases": [
+        "evolução do OTD de produção",
+        "série de OTD de produção",
+        "série OTD das OPs",
+        "OTD de produção ao longo do tempo"
+      ],
+      "higher_candidate_aliases": {
+        "get_on_time_delivery_pct": [
+          "OTD de produção",
+          "OTD das OPs",
+          "OTD das ordens de produção",
+          "pontualidade da produção",
+          "pontualidade das OPs",
+          "OPs no prazo",
+          "OPs atrasadas"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PRD-012",
+      "query": "evolução mensal do OTD fabril",
+      "family": "production",
+      "expected": "get_production_otd_series",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [],
+      "expected_aliases": [
+        "evolução do OTD de produção",
+        "série de OTD de produção",
+        "série OTD das OPs",
+        "OTD de produção ao longo do tempo"
+      ],
+      "higher_candidate_aliases": {}
+    },
+    {
+      "id": "DQ-PRD-014",
+      "query": "quais CTs estão sobrecarregados?",
+      "family": "production",
+      "expected": "get_production_machine_load_work_centers",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_stock_balances_items",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_supplies_safety_stock_items",
+          "score": 0.25
+        },
+        {
+          "action_id": "list_protheus_table_columns",
+          "score": 0.25
+        },
+        {
+          "action_id": "search_protheus_columns_in_table",
+          "score": 0.25
+        }
+      ],
+      "expected_aliases": [
+        "carga de máquina",
+        "carga por CT",
+        "carga por centro de trabalho",
+        "fila do CT",
+        "centros de trabalho com carga"
+      ],
+      "higher_candidate_aliases": {
+        "get_supplies_stock_balances_items": [
+          "itens de estoque por depósito",
+          "itens de saldo de estoque",
+          "itens dos saldos de estoque",
+          "produtos em estoque por depósito",
+          "lista de produtos por depósito",
+          "lista de produtos por armazém",
+          "lista de saldos de estoque",
+          "itens dos saldos por armazém",
+          "stock balance items",
+          "itens no depósito",
+          "itens existem no depósito",
+          "quais itens no depósito",
+          "produtos no depósito",
+          "produtos estão no depósito",
+          "quais produtos no depósito",
+          "produtos do depósito",
+          "itens do almoxarifado",
+          "materiais no depósito",
+          "produtos em estoque no depósito"
+        ],
+        "get_product_structure_exclusivity": [
+          "exclusividade",
+          "matéria-prima exclusiva",
+          "mp exclusiva",
+          "mps exclusivas",
+          "mp exclusivas",
+          "quais mps são exclusivas",
+          "componentes exclusivos",
+          "exclusividade de mp",
+          "exclusive raw material",
+          "bom exclusivity",
+          "exclusive components"
+        ],
+        "get_supplies_safety_stock_items": [
+          "itens de estoque de segurança",
+          "lista estoque de segurança",
+          "safety stock items",
+          "materiais abaixo do estoque de segurança",
+          "quais materiais abaixo do estoque de segurança",
+          "liste materiais abaixo do estoque de segurança",
+          "materiais abaixo estoque segurança",
+          "itens abaixo do estoque de segurança"
+        ]
+      }
+    },
+    {
+      "id": "DQ-PRD-015",
+      "query": "carga de máquina por operação",
+      "family": "production",
+      "expected": "get_production_machine_load_operations",
+      "target_rank": 2,
+      "target_score": 0.8,
+      "higher_ranked": [
+        {
+          "action_id": "get_production_machine_load_work_centers",
+          "score": 0.905
+        }
+      ],
+      "expected_aliases": [
+        "operações programadas",
+        "operações alocadas",
+        "operações programadas por CT",
+        "fila de operações do CT",
+        "carga de máquina detalhada"
+      ]
+    },
+    {
+      "id": "DQ-PRD-016",
+      "query": "carga de máquina nas operações dos centros de trabalho",
+      "family": "production",
+      "expected": "get_production_machine_load_operations",
+      "target_rank": 3,
+      "target_score": 0.5,
+      "higher_ranked": [
+        {
+          "action_id": "get_production_machine_load_work_centers",
+          "score": 0.905
+        },
+        {
+          "action_id": "get_product_guide",
+          "score": 0.5
+        }
+      ],
+      "expected_aliases": [
+        "operações programadas",
+        "operações alocadas",
+        "operações programadas por CT",
+        "fila de operações do CT",
+        "carga de máquina detalhada"
+      ]
+    },
+    {
+      "id": "DQ-PRD-018",
+      "query": "total de apontamentos do período",
+      "family": "production",
+      "expected": "get_production_appointments_summary",
+      "target_rank": 7,
+      "target_score": 0.4,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_sales_summary",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_production_appointments_produced_totals",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_production_oee",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_supplies_inventory_adjustments_summary",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_supplies_stock_value",
+          "score": 0.6
+        }
+      ],
+      "expected_aliases": [
+        "resumo dos apontamentos",
+        "apontamentos de produção resumidos",
+        "quantidade apontada por CT",
+        "resumo de apontamentos de produção"
+      ]
+    },
+    {
+      "id": "DQ-PRD-021",
+      "query": "consumo de produção por item",
+      "family": "production",
+      "expected": "get_production_consumption_by_item",
+      "target_rank": 2,
+      "target_score": 0.84,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_internal_movements",
+          "score": 0.9175
+        }
+      ],
+      "expected_aliases": [
+        "consumo do item na produção",
+        "consumo do item na producao",
+        "consumo de produção do produto",
+        "consumo de producao do produto",
+        "consumo real do item",
+        "consumption by item",
+        "item production consumption",
+        "consumo de MP por produto"
+      ]
+    },
+    {
+      "id": "DQ-PRD-022",
+      "query": "quanto de cada MP foi consumido na produção",
+      "family": "production",
+      "expected": "get_production_consumption_by_item",
+      "target_rank": 4,
+      "target_score": 0.5,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_production_appointments_produced_totals",
+          "score": 0.5
+        }
+      ],
+      "expected_aliases": [
+        "consumo do item na produção",
+        "consumo do item na producao",
+        "consumo de produção do produto",
+        "consumo de producao do produto",
+        "consumo real do item",
+        "consumption by item",
+        "item production consumption",
+        "consumo de MP por produto"
+      ]
+    },
+    {
+      "id": "DQ-PRD-024",
+      "query": "top matérias-primas consumidas",
+      "family": "production",
+      "expected": "get_production_consumption_top_items",
+      "target_rank": 4,
+      "target_score": 0.25,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_structure",
+          "score": 0.5
+        },
+        {
+          "action_id": "list_exclusive_raw_materials_catalog",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_commercial_rol_by_customer",
+          "score": 0.25
+        }
+      ],
+      "expected_aliases": [
+        "itens mais consumidos",
+        "maiores consumos de produção",
+        "maiores consumos de producao",
+        "ranking de consumo",
+        "top consumed items",
+        "top production consumption",
+        "consumo por grupo de produto",
+        "consumo por filial"
+      ]
+    },
+    {
+      "id": "DQ-PRD-026",
+      "query": "itens empenhados além do disponível",
+      "family": "production",
+      "expected": "get_production_allocation_gaps",
+      "target_rank": 7,
+      "target_score": 0.2,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_stock",
+          "score": 0.6
+        },
+        {
+          "action_id": "get_product_internal_movements",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_items",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_supplies_safety_stock_items",
+          "score": 0.4
+        },
+        {
+          "action_id": "get_supplies_stock_balances_items",
+          "score": 0.4
+        }
+      ],
+      "expected_aliases": [
+        "empenhos em aberto",
+        "materiais empenhados",
+        "materiais alocados",
+        "compromissos de produção",
+        "compromissos de producao",
+        "allocation gaps",
+        "open commitments",
+        "open material allocations",
+        "production order commitments"
+      ]
+    },
+    {
+      "id": "DQ-PRD-028",
+      "query": "OPs encerradas sem baixa de matéria-prima",
+      "family": "production",
+      "expected": "get_production_orders_finished_without_consumption",
+      "target_rank": 5,
+      "target_score": 0.4286,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_last_purchase",
+          "score": 0.4286
+        },
+        {
+          "action_id": "get_product_purchase_price_history",
+          "score": 0.4286
+        },
+        {
+          "action_id": "get_product_raw_material_set_shortages",
+          "score": 0.4286
+        },
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.4286
+        }
+      ],
+      "expected_aliases": [
+        "produção finalizada sem consumo",
+        "producao finalizada sem consumo",
+        "OP encerrada sem baixa",
+        "op encerrada sem baixa",
+        "finished orders without consumption",
+        "missing material consumption",
+        "produção sem baixa de MP"
+      ]
+    },
+    {
+      "id": "DQ-PRD-032",
+      "query": "liste as perdas registradas na produção",
+      "family": "production",
+      "expected": "get_production_losses_records",
+      "target_rank": 5,
+      "target_score": 0.3333,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_production_consumption_by_item",
+          "score": 0.3333
+        },
+        {
+          "action_id": "get_production_consumption_top_items",
+          "score": 0.3333
+        }
+      ],
+      "expected_aliases": [
+        "perdas de produção",
+        "perdas de producao",
+        "refugo de produção",
+        "refugo de producao",
+        "registros de perda",
+        "production losses",
+        "scrap records",
+        "perda de material"
+      ]
+    },
+    {
+      "id": "DQ-PRD-034",
+      "query": "top perdas por material",
+      "family": "production",
+      "expected": "get_production_losses_top_materials",
+      "target_rank": 4,
+      "target_score": 0.5,
+      "higher_ranked": [
+        {
+          "action_id": "get_commercial_rol_by_customer",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_production_consumption_top_items",
+          "score": 0.5
+        },
+        {
+          "action_id": "get_production_losses_records",
+          "score": 0.5
+        }
+      ],
+      "expected_aliases": [
+        "materiais com mais perdas",
+        "maiores perdas de produção",
+        "maiores perdas de producao",
+        "ranking de refugo",
+        "top loss materials",
+        "top production losses",
+        "materiais mais refugados"
+      ]
+    },
+    {
+      "id": "DQ-MET-001",
+      "query": "procure tabelas relacionadas a estoque",
+      "family": "system_metadata",
+      "expected": "search_tables_by_description",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_product_internal_movements",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_supplies_inventory_adjustments_summary",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_supplies_inventory_turnover",
+          "score": 0.25
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.25
+        }
+      ],
+      "expected_aliases": [
+        "qual tabela",
+        "qual a tabela",
+        "em qual tabela",
+        "tabela que guarda",
+        "qual tabela guarda",
+        "tabela de produtos",
+        "tabela de pedidos",
+        "buscar tabela",
+        "procurar tabela",
+        "pesquisar tabela",
+        "nome da tabela",
+        "dicionario de tabelas",
+        "dicionário de tabelas",
+        "tabela protheus",
+        "tabela do protheus",
+        "table search",
+        "protheus table",
+        "find table",
+        "which table",
+        "qual tabela contem",
+        "qual tabela contém",
+        "tabela que contem",
+        "tabela que contém",
+        "qual tabela guarda registros",
+        "tabela que guarda registros",
+        "qual tabela contem registros",
+        "qual tabela contém registros"
+      ],
+      "higher_candidate_aliases": {
+        "get_product_stock": [
+          "estoque",
+          "estoque do produto",
+          "saldo",
+          "saldo do produto",
+          "saldo disponivel",
+          "saldo disponível",
+          "estoque por filial",
+          "stock",
+          "product stock",
+          "stock by branch",
+          "available quantity",
+          "saldo por filial do produto",
+          "estoque do código",
+          "estoque do codigo",
+          "saldo empenhado",
+          "saldo comprometido",
+          "empenho do produto",
+          "reserva do produto",
+          "committed quantity",
+          "reserved quantity",
+          "saldo empenhado do produto",
+          "saldo reservado do produto"
+        ],
+        "get_product_internal_movements": [
+          "movimentação interna",
+          "movimentacao interna",
+          "movimentações internas do produto",
+          "movimentacao interna do produto",
+          "transferência de armazém",
+          "transferencia de armazem",
+          "transferência entre armazéns",
+          "internal movements",
+          "warehouse transfer",
+          "internal stock movements",
+          "ajuste de inventário",
+          "ajuste de inventario",
+          "entrada de produção",
+          "entrada de producao",
+          "consumo de produção",
+          "consumo de producao",
+          "movimentação de produção",
+          "production receipt",
+          "production consumption",
+          "inventory adjustment movement"
+        ],
+        "get_supplies_inventory_adjustments_summary": [
+          "resumo de ajustes de inventário",
+          "resumo de ajustes de inventario",
+          "total de furos",
+          "total de sobras",
+          "divergência de inventário resumida",
+          "inventory adjustment summary",
+          "inventory shortage total",
+          "inventory surplus total",
+          "valor de ajustes de inventário",
+          "ajuste de estoque",
+          "ajuste de inventário",
+          "ajuste de inventario",
+          "ajuste líquido de estoque",
+          "ajuste liquido de estoque",
+          "valor líquido de ajuste de inventário",
+          "valor liquido de ajuste de inventario",
+          "valor bruto de ajuste de inventário",
+          "valor bruto de ajuste de inventario",
+          "resumo de ajustes de estoque",
+          "total de ajustes de inventário",
+          "total de ajustes de estoque",
+          "valor de ajustes de estoque",
+          "ajustes de estoque",
+          "acerto de estoque",
+          "diferença de estoque",
+          "diferença de inventário",
+          "furo de estoque",
+          "furo de inventário",
+          "sobra de estoque",
+          "sobra de inventário",
+          "sobra menos furo",
+          "saldo de ajustes",
+          "ajuste líquido",
+          "ajuste líquido de inventário",
+          "valor líquido do inventário",
+          "ajuste bruto",
+          "valor bruto de ajustes de estoque",
+          "movimentação bruta de ajustes",
+          "sobra de inventário por filial",
+          "sobra de estoque por filial",
+          "furo de inventário por filial",
+          "furo de estoque por filial"
+        ]
+      }
+    },
+    {
+      "id": "DQ-MET-002",
+      "query": "quais tabelas do sistema tratam de clientes?",
+      "family": "system_metadata",
+      "expected": "search_tables_by_description",
+      "target_rank": 5,
+      "target_score": 0.4286,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_customers",
+          "score": 0.716
+        },
+        {
+          "action_id": "get_new_clients_rol_pct",
+          "score": 0.4286
+        },
+        {
+          "action_id": "get_supplies_safety_stock_items",
+          "score": 0.4286
+        },
+        {
+          "action_id": "get_supplies_stock_balances_items",
+          "score": 0.4286
+        }
+      ],
+      "expected_aliases": [
+        "qual tabela",
+        "qual a tabela",
+        "em qual tabela",
+        "tabela que guarda",
+        "qual tabela guarda",
+        "tabela de produtos",
+        "tabela de pedidos",
+        "buscar tabela",
+        "procurar tabela",
+        "pesquisar tabela",
+        "nome da tabela",
+        "dicionario de tabelas",
+        "dicionário de tabelas",
+        "tabela protheus",
+        "tabela do protheus",
+        "table search",
+        "protheus table",
+        "find table",
+        "which table",
+        "qual tabela contem",
+        "qual tabela contém",
+        "tabela que contem",
+        "tabela que contém",
+        "qual tabela guarda registros",
+        "tabela que guarda registros",
+        "qual tabela contem registros",
+        "qual tabela contém registros"
+      ]
+    },
+    {
+      "id": "DQ-MET-003",
+      "query": "busque colunas com descrição de preço",
+      "family": "system_metadata",
+      "expected": "search_protheus_columns_by_description",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [],
+      "expected_aliases": [
+        "qual campo",
+        "qual a coluna",
+        "em qual campo",
+        "qual campo representa",
+        "qual coluna representa",
+        "campo que representa",
+        "campo que guarda",
+        "buscar campo",
+        "procurar campo",
+        "pesquisar coluna",
+        "campo protheus",
+        "coluna protheus",
+        "campo por descricao",
+        "campo por descrição",
+        "descricao de campo",
+        "descrição de campo",
+        "dicionario de campos",
+        "dicionário de campos",
+        "find column",
+        "column search",
+        "which field",
+        "protheus field",
+        "qual campo representa",
+        "campo representa",
+        "qual coluna representa",
+        "coluna representa",
+        "qual campo representa referencia",
+        "qual campo representa referência",
+        "campo representa referencia",
+        "campo representa referência"
+      ],
+      "higher_candidate_aliases": {}
+    },
+    {
+      "id": "DQ-MET-004",
+      "query": "quais campos do sistema guardam data de entrega?",
+      "family": "system_metadata",
+      "expected": "search_protheus_columns_by_description",
+      "target_rank": 7,
+      "target_score": 0.25,
+      "higher_ranked": [
+        {
+          "action_id": "search_protheus_columns_in_table",
+          "score": 0.9025
+        },
+        {
+          "action_id": "get_supplies_safety_stock_items",
+          "score": 0.375
+        },
+        {
+          "action_id": "get_supplies_stock_balances_items",
+          "score": 0.375
+        },
+        {
+          "action_id": "list_protheus_table_columns",
+          "score": 0.375
+        },
+        {
+          "action_id": "get_product_structure_exclusivity",
+          "score": 0.25
+        }
+      ],
+      "expected_aliases": [
+        "qual campo",
+        "qual a coluna",
+        "em qual campo",
+        "qual campo representa",
+        "qual coluna representa",
+        "campo que representa",
+        "campo que guarda",
+        "buscar campo",
+        "procurar campo",
+        "pesquisar coluna",
+        "campo protheus",
+        "coluna protheus",
+        "campo por descricao",
+        "campo por descrição",
+        "descricao de campo",
+        "descrição de campo",
+        "dicionario de campos",
+        "dicionário de campos",
+        "find column",
+        "column search",
+        "which field",
+        "protheus field",
+        "qual campo representa",
+        "campo representa",
+        "qual coluna representa",
+        "coluna representa",
+        "qual campo representa referencia",
+        "qual campo representa referência",
+        "campo representa referencia",
+        "campo representa referência"
+      ]
+    },
+    {
+      "id": "DQ-MET-006",
+      "query": "campos que contenham estoque dentro da SB2",
+      "family": "system_metadata",
+      "expected": "search_protheus_columns_in_table",
+      "target_rank": 2,
+      "target_score": 0.5714,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        }
+      ],
+      "expected_aliases": [
+        "campos da tabela que",
+        "campo dentro da tabela",
+        "buscar campo na tabela",
+        "procurar campo na tabela",
+        "campo especifico da tabela",
+        "campo específico da tabela",
+        "tem o campo na tabela",
+        "coluna dentro da tabela",
+        "campos que contem",
+        "campos que contêm",
+        "campos da tabela tem",
+        "campos da tabela têm",
+        "campos da",
+        "campo na tabela",
+        "field in table",
+        "columns in table containing",
+        "quais campos da",
+        "campos da tabela tem fornecedor",
+        "campos representam",
+        "campos que representam"
+      ]
+    },
+    {
+      "id": "DQ-MET-010",
+      "query": "quais campos a tabela SC5 tem?",
+      "family": "system_metadata",
+      "expected": "list_protheus_table_columns",
+      "target_rank": 2,
+      "target_score": 0.905,
+      "higher_ranked": [
+        {
+          "action_id": "search_protheus_columns_in_table",
+          "score": 0.92
+        }
+      ],
+      "expected_aliases": [
+        "quais são os campos da",
+        "quais sao os campos da",
+        "quais são as colunas",
+        "quais sao as colunas",
+        "campos da tabela",
+        "colunas da tabela",
+        "estrutura da tabela",
+        "lista de campos",
+        "listar campos",
+        "list columns",
+        "table columns",
+        "table structure",
+        "fields of the table"
+      ]
+    },
+    {
+      "id": "DQ-STOCK-001",
+      "query": "estoque atual do produto 10080034",
+      "family": "product_master",
+      "expected": "get_product_stock",
+      "target_rank": 3,
+      "target_score": 0.714,
+      "higher_ranked": [
+        {
+          "action_id": "get_product_production_status",
+          "score": 0.716
+        },
+        {
+          "action_id": "search_products",
+          "score": 0.716
+        }
+      ],
+      "expected_aliases": [
+        "estoque",
+        "estoque do produto",
+        "saldo",
+        "saldo do produto",
+        "saldo disponivel",
+        "saldo disponível",
+        "estoque por filial",
+        "stock",
+        "product stock",
+        "stock by branch",
+        "available quantity",
+        "saldo por filial do produto",
+        "estoque do código",
+        "estoque do codigo",
+        "saldo empenhado",
+        "saldo comprometido",
+        "empenho do produto",
+        "reserva do produto",
+        "committed quantity",
+        "reserved quantity",
+        "saldo empenhado do produto",
+        "saldo reservado do produto"
+      ]
+    },
+    {
+      "id": "DQ-QUA-003",
+      "query": "estoque de segurança sugerido por item",
+      "family": "supplies",
+      "expected": "get_supplies_safety_stock_items",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_item_details",
+          "score": 0.9425
+        },
+        {
+          "action_id": "get_supplies_safety_stock_summary",
+          "score": 0.915
+        },
+        {
+          "action_id": "get_product_stock",
+          "score": 0.714
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_items",
+          "score": 0.6667
+        },
+        {
+          "action_id": "get_supplies_safety_stock_consumption_analysis_summary",
+          "score": 0.6667
+        }
+      ],
+      "expected_aliases": [
+        "itens de estoque de segurança",
+        "lista estoque de segurança",
+        "safety stock items",
+        "materiais abaixo do estoque de segurança",
+        "quais materiais abaixo do estoque de segurança",
+        "liste materiais abaixo do estoque de segurança",
+        "materiais abaixo estoque segurança",
+        "itens abaixo do estoque de segurança"
+      ],
+      "higher_candidate_aliases": {
+        "get_supplies_safety_stock_consumption_analysis_item_details": [
+          "análise de consumo do item",
+          "analise de consumo do item",
+          "consumo médio do item",
+          "consumo medio do item",
+          "estoque de segurança sugerido",
+          "estoque de seguranca sugerido",
+          "consumption analysis item",
+          "suggested safety stock",
+          "item consumption analysis",
+          "cobertura de estoque do item"
+        ],
+        "get_supplies_safety_stock_summary": [
+          "estoque de segurança",
+          "resumo estoque de segurança",
+          "safety stock",
+          "safety stock summary",
+          "estoque segurança suprimentos",
+          "quantos materiais abaixo do estoque de segurança",
+          "quantos materiais estão abaixo do estoque de segurança",
+          "situação do estoque de segurança"
+        ],
+        "get_product_stock": [
+          "estoque",
+          "estoque do produto",
+          "saldo",
+          "saldo do produto",
+          "saldo disponivel",
+          "saldo disponível",
+          "estoque por filial",
+          "stock",
+          "product stock",
+          "stock by branch",
+          "available quantity",
+          "saldo por filial do produto",
+          "estoque do código",
+          "estoque do codigo",
+          "saldo empenhado",
+          "saldo comprometido",
+          "empenho do produto",
+          "reserva do produto",
+          "committed quantity",
+          "reserved quantity",
+          "saldo empenhado do produto",
+          "saldo reservado do produto"
+        ]
+      }
+    },
+    {
+      "id": "DQ-QUA-004",
+      "query": "preço de compra registrado no histórico do produto",
+      "family": "product_master",
+      "expected": "get_product_purchase_price_history",
+      "target_rank": null,
+      "target_score": null,
+      "higher_ranked": [],
+      "expected_aliases": [
+        "histórico de preço de compra",
+        "evolução de preço de compra",
+        "preço de compra da matéria-prima",
+        "purchase price history",
+        "buying price history",
+        "raw material purchase price history"
+      ],
+      "higher_candidate_aliases": {}
+    }
+  ],
+  "negative_detail": {
+    "hard_negative_leaked": [
+      {
+        "id": "DQ-NEG-W-007",
+        "query": "insira um novo fornecedor",
+        "leaked": [
+          "get_product_suppliers",
+          "get_supplies_purchase_order_otd",
+          "get_supplies_safety_stock_supplier_purchase_price_history",
+          "search_products_by_supplier_part_number",
+          "search_protheus_columns_in_table",
+          "get_commercial_rol_summary",
+          "get_new_business_rol_pct",
+          "get_new_business_rol_target_pct",
+          "get_new_clients_average",
+          "get_new_clients_rol_pct"
+        ]
+      }
+    ],
+    "unsupported_spurious": [
+      {
+        "id": "DQ-NEG-U-001",
+        "query": "qual a previsão do tempo em Campo Mourão amanhã?",
+        "returned": [
+          "search_protheus_columns_by_description",
+          "search_tables_by_description",
+          "get_commercial_rol_summary",
+          "get_production_oee_series",
+          "get_production_otd_series",
+          "get_supplies_purchase_order_otd_series",
+          "get_commercial_rol_by_customer",
+          "get_commercial_rol_by_product",
+          "get_production_appointments_produced_totals",
+          "get_production_appointments_summary"
+        ]
+      },
+      {
+        "id": "DQ-NEG-U-002",
+        "query": "monte a escala de férias do time de produção",
+        "returned": [
+          "get_product_production_status",
+          "search_products",
+          "get_overall_equipment_effectiveness_pct",
+          "get_production_oee",
+          "get_production_otd_series",
+          "get_on_time_delivery_pct",
+          "get_product_guide",
+          "get_product_internal_movements",
+          "get_production_consumption_by_item",
+          "get_production_machine_load_operations"
+        ]
+      },
+      {
+        "id": "DQ-NEG-U-003",
+        "query": "qual o saldo da conta corrente da empresa?",
+        "returned": [
+          "get_product_stock",
+          "search_tables_by_description",
+          "get_commercial_rol_summary",
+          "get_product_internal_movements",
+          "get_supplies_inventory_adjustments_summary",
+          "get_supplies_stock_balances_items",
+          "get_supplies_stock_balances_summary",
+          "search_protheus_columns_by_description",
+          "get_commercial_rol_by_branch",
+          "get_commercial_rol_by_customer"
+        ]
+      },
+      {
+        "id": "DQ-NEG-U-004",
+        "query": "gere o DANFE da nota fiscal 12345",
+        "returned": [
+          "get_product_inbound_invoice_items",
+          "get_product_outbound_invoice_items",
+          "get_commercial_rol_by_branch",
+          "get_commercial_rol_by_customer",
+          "get_commercial_rol_by_product",
+          "get_commercial_rol_series",
+          "get_commercial_rol_summary",
+          "get_new_business_rol_pct",
+          "get_new_business_rol_target_pct",
+          "get_new_clients_average"
+        ]
+      },
+      {
+        "id": "DQ-NEG-U-005",
+        "query": "quem são os funcionários da filial 01?",
+        "returned": [
+          "get_supplies_safety_stock_consumption_analysis_item_details",
+          "get_supplies_safety_stock_consumption_analysis_items",
+          "get_supplies_safety_stock_consumption_analysis_summary",
+          "list_protheus_table_columns",
+          "get_commercial_rol_by_branch",
+          "get_on_time_delivery_pct",
+          "get_product_last_purchase",
+          "get_product_purchase_price_history",
+          "get_product_stock",
+          "get_production_consumption_top_items"
+        ]
+      },
+      {
+        "id": "DQ-NEG-U-006",
+        "query": "calcule o ICMS da nota de saída",
+        "returned": [
+          "get_product_outbound_invoice_items",
+          "get_product_inbound_invoice_items",
+          "get_commercial_rol_by_branch",
+          "get_product_drawing",
+          "get_product_parents",
+          "get_sales_order_otd_by_branch",
+          "get_sales_order_otd_series_by_customer",
+          "get_sales_order_otd_summary",
+          "get_product_customers",
+          "get_product_suppliers"
+        ]
+      },
+      {
+        "id": "DQ-NEG-U-007",
+        "query": "qual o lead time médio do fornecedor X nos últimos 5 anos?",
+        "returned": [
+          "get_product_suppliers",
+          "get_commercial_rol_summary",
+          "get_overall_equipment_effectiveness_pct",
+          "get_production_oee",
+          "get_production_otd_series",
+          "get_sales_conversion_rate_series",
+          "get_sales_order_otd_summary",
+          "get_supplies_purchase_order_otd",
+          "get_supplies_purchase_order_otd_series",
+          "get_supplies_safety_stock_consumption_analysis_item_details"
+        ]
+      },
+      {
+        "id": "DQ-NEG-U-008",
+        "query": "traduza a descrição do produto para inglês",
+        "returned": [
+          "search_products",
+          "get_product_production_status",
+          "list_product_inventory_blocks",
+          "get_product_customers",
+          "get_product_drawing",
+          "get_product_factory_status",
+          "get_product_guide",
+          "get_product_inbound_invoice_items",
+          "get_product_internal_movements",
+          "get_product_outbound_invoice_items"
+        ]
+      }
+    ],
+    "ambiguous_zero_candidate": [
+      {
+        "id": "DQ-AMB-005",
+        "query": "OTD do mês"
+      }
+    ]
+  },
+  "discover_contract_checks": {
+    "ran": 54,
+    "shape_ok": 54,
+    "order_matches_retrieval": 54
+  },
+  "catalog_parity": {
+    "allowlist_count": 89,
+    "live_openapi_executable_count": 89,
+    "baseline_executable_count": "87 (expected: 2 SEMANTIC_READ_POST ops lack baseline requestBody)",
+    "runtime_observed_eligible_count": 89,
+    "classification": "EXPLAINED_DIFFERENCE"
+  }
+}
