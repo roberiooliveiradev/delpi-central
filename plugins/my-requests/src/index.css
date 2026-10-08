@@ -121,6 +121,124 @@
   padding-left: 1.1rem;
 }
 
+/* Process-issue — painel do analista (P4) */
+.dashboard-my-requests .my-requests-process-issue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--my-requests-section-gap);
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-process-issue__reason {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--my-requests-title);
+}
+
+.dashboard-my-requests .my-requests-process-issue__reason-icon {
+  color: var(--my-requests-accent);
+}
+
+.dashboard-my-requests .my-requests-process-issue__code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.dashboard-my-requests .my-requests-process-issue__note {
+  margin-top: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-left: 3px solid var(--my-requests-accent);
+  background: color-mix(in srgb, var(--my-requests-accent) 7%, transparent);
+  border-radius: 0 8px 8px 0;
+}
+
+.dashboard-my-requests .my-requests-process-issue__note-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--my-requests-text-muted);
+}
+
+.dashboard-my-requests .my-requests-process-issue__note-text {
+  margin: 0;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dashboard-my-requests .my-requests-process-issue__pa {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-process-issue__pa-label {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dashboard-my-requests .my-requests-process-issue__materials-empty {
+  margin: 0;
+  line-height: 1.45;
+  color: var(--my-requests-text-muted);
+}
+
+.dashboard-my-requests .my-requests-process-issue__materials-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.dashboard-my-requests .my-requests-process-issue__materials {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.dashboard-my-requests .my-requests-process-issue__materials th {
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--my-requests-text-muted);
+  padding: 0.35rem 0.75rem 0.35rem 0;
+  border-bottom: 1px solid var(--my-requests-border);
+  white-space: nowrap;
+}
+
+.dashboard-my-requests .my-requests-process-issue__materials td {
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--my-requests-border);
+  vertical-align: top;
+}
+
+.dashboard-my-requests .my-requests-process-issue__materials tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-my-requests .my-requests-process-issue__material-code {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+}
+
+.dashboard-my-requests .my-requests-process-issue__material-desc {
+  display: block;
+  color: var(--my-requests-text-muted);
+  font-size: 0.85em;
+}
+
 /* Wizard — seletor de filial (layout de página; chrome = SegmentToggle do kit) */
 .dashboard-my-requests .my-requests-wizard-branch {
   display: flex;

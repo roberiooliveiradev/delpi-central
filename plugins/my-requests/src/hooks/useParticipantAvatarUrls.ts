@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { downloadParticipantAvatarBlob } from "../api/requestsApi";
+import { isExternalOperatorId } from "../domain/externalIdentity";
 
 /**
  * Resolve Portal avatars (via requests-api BFF → Core) for unique author ids.
@@ -13,7 +14,11 @@ export function useParticipantAvatarUrls(
 
   const key = useMemo(() => {
     const unique = [
-      ...new Set(userIds.map((id) => (id ?? "").trim()).filter(Boolean)),
+      ...new Set(
+        userIds
+          .map((id) => (id ?? "").trim())
+          .filter((id) => Boolean(id) && !isExternalOperatorId(id)),
+      ),
     ];
     unique.sort();
     return unique.join("|");

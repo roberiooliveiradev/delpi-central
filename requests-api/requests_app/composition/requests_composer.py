@@ -118,6 +118,22 @@ def build_get_request_use_case() -> GetRequestUseCase:
     )
 
 
+def build_request_product_drawing_use_case():
+    """P4 — desenho do PA do process-issue via biblioteca oficial (api-delpi)."""
+    from requests_app.application.use_cases.request_drawing_use_case import (
+        GetRequestProductDrawingUseCase,
+    )
+    from requests_app.infrastructure.gateways.api_delpi_product_drawing_gateway import (  # noqa: E501
+        ApiDelpiProductDrawingGateway,
+    )
+
+    return GetRequestProductDrawingUseCase(
+        PostgresRequestTypeRepository(),
+        PostgresRequestRepository(),
+        ApiDelpiProductDrawingGateway(),
+    )
+
+
 def build_update_request_payload_use_case() -> UpdateRequestPayloadUseCase:
     return UpdateRequestPayloadUseCase(
         PostgresRequestTypeRepository(),

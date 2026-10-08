@@ -28,6 +28,7 @@ import {
   statusLabel,
 } from "../content/presentationLabels";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
+import { ProcessIssuePayloadPanel } from "../features/process-issue/ui/ProcessIssuePayloadPanel";
 import {
   myRequestsEditPath,
   navigateMyRequestsPath,
@@ -306,6 +307,13 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
 
               {request.type_code === "invoice-issuance" ? (
                 <InvoiceIssuancePayloadPanel payload={request.payload} />
+              ) : null}
+
+              {request.type_code === "process-issue" ? (
+                <ProcessIssuePayloadPanel
+                  requestId={request.id}
+                  payload={request.payload}
+                />
               ) : null}
 
               <AttachmentsPanel

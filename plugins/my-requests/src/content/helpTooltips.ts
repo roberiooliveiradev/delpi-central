@@ -69,6 +69,14 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
       "Use os botões para avançar o atendimento. Cada ação explica o impacto. Devolver e cancelar pedem um motivo antes de confirmar.",
     invoicePayload:
       "Resumo dos dados da emissão (destinatário, tipo de NF, frete e itens) quando a solicitação é de nota fiscal.",
+    processIssueReport:
+      "O que o operador informou na bancada: o motivo do problema, data/hora, quem registrou e os códigos de ferramenta ou material digitados — mesmo que não existam no cadastro da operação.",
+    processIssueContext:
+      "Fotografia da operação no momento do reporte: ordem, operação, posto, produtos e quantidades. Quando houver produto acabado, «Abrir desenho» mostra o desenho técnico atual da biblioteca oficial.",
+    processIssueSnapshot:
+      "Como a operação estava cadastrada quando o operador informou o problema. Compare a ferramenta vinculada com a ferramenta que o operador digitou — a divergência pode ser exatamente o ponto a corrigir.",
+    processIssueMaterials:
+      "Lista dos materiais vinculados à operação na hora do reporte. Se a consulta não estava disponível naquele momento, a mensagem explica — a ocorrência continua válida.",
     type: "Qual formulário e fluxo esta solicitação segue.",
     status: "Mostra em que etapa sua solicitação está neste momento.",
     branch: "Unidade da empresa relacionada a esta solicitação.",

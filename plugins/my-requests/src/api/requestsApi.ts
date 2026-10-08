@@ -489,6 +489,37 @@ export function attachmentDownloadUrl(attachmentId: string) {
   return `${API_BASE}/attachments/${encodeURIComponent(attachmentId)}/download`;
 }
 
+/** Desenho do PA do process-issue — resolvido pelo backend a partir do payload. */
+export function productDrawingUrl(requestId: string) {
+  return `${API_BASE}/requests/${encodeURIComponent(requestId)}/product-drawing`;
+}
+
+async function readApiErrorMessage(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as { message?: string };
+    const message = (body?.message || "").trim();
+    if (message) return message;
+  } catch {
+    /* resposta não-JSON */
+  }
+  return `Erro HTTP ${response.status}`;
+}
+
+export async function downloadProductDrawingBlob(
+  requestId: string,
+  options?: { signal?: AbortSignal },
+): Promise<Blob> {
+  const response = await fetch(productDrawingUrl(requestId), {
+    method: "GET",
+    headers: clientHeaders(),
+    signal: options?.signal,
+  });
+  if (!response.ok) {
+    throw new Error(await readApiErrorMessage(response));
+  }
+  return response.blob();
+}
+
 export function artifactDownloadUrl(artifactId: string) {
   return `${API_BASE}/artifacts/${encodeURIComponent(artifactId)}/download`;
 }

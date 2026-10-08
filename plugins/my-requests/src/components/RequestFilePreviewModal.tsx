@@ -5,6 +5,7 @@ import {
   downloadArtifactBlob,
   downloadAttachmentBlob,
   downloadCommentAttachmentBlob,
+  downloadProductDrawingBlob,
 } from "../api/requestsApi";
 import { MR_PORTAL_SCOPE } from "../ui/mrUi";
 import { formatBytes } from "../utils/formatBytes";
@@ -37,6 +38,13 @@ export type RequestFilePreviewTarget =
       contentType?: string | null;
       byteSize?: number | null;
     }
+  | {
+      kind: "product_drawing";
+      requestId: string;
+      fileName: string;
+      contentType?: string | null;
+      byteSize?: number | null;
+    }
   | null;
 
 type RequestFilePreviewModalProps = {
@@ -63,6 +71,8 @@ async function resolveTargetBlob(
   if (target.kind === "local") return target.file;
   if (target.kind === "attachment") return downloadAttachmentBlob(target.id);
   if (target.kind === "artifact") return downloadArtifactBlob(target.id);
+  if (target.kind === "product_drawing")
+    return downloadProductDrawingBlob(target.requestId);
   return downloadCommentAttachmentBlob(
     target.requestId,
     target.commentId,

@@ -25,6 +25,7 @@ from requests_app.composition.requests_composer import (
     build_list_my_requests_use_case,
     build_list_request_types_use_case,
     build_list_work_queue_use_case,
+    build_request_product_drawing_use_case,
     build_timeline_use_cases,
     build_transition_request_use_case,
     build_update_request_payload_use_case,
@@ -277,6 +278,32 @@ def get_request(request_id: UUID):
     except ApplicationError as exc:
         return _handle(exc)
     return ok(data)
+
+
+@router.get("/requests/{request_id}/product-drawing")
+def get_request_product_drawing(request_id: UUID):
+    """P4 — PDF do PA congelado no payload do process-issue.
+
+    O código vem do payload persistido (o cliente nunca escolhe o código);
+    a autorização replica a do detalhe (owner ou view-all/process/manage +
+    escopo de filial). O PDF é resolvido em tempo real na api-delpi.
+    """
+    user = _current_user()
+    try:
+        drawing = build_request_product_drawing_use_case().execute(
+            user=user, request_id=str(request_id)
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    safe_name = (drawing.filename or "drawing.pdf").replace('"', "")
+    return Response(
+        content=drawing.content,
+        media_type=drawing.media_type or "application/pdf",
+        headers={
+            "Cache-Control": "no-store",
+            "Content-Disposition": f'inline; filename="{safe_name}"',
+        },
+    )
 
 
 @router.patch("/requests/{request_id}")
