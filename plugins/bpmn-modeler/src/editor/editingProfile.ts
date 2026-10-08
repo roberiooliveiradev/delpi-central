@@ -127,11 +127,11 @@ const ALLOWED_REPLACE_HEADER_IDS: ReadonlySet<string> = new Set([
 // ---------------------------------------------------------------------------
 
 const ALLOWED_PALETTE_ENTRY_IDS: ReadonlySet<string> = new Set([
-  // tools não-semânticas (decisão: manter — inventory G1 §50)
-  "lasso-tool",
-  "hand-tool",
-  "space-tool",
-  "global-connect-tool",
+  // tools não-semânticas — classificação fechada na WAVE F
+  // (V1-CAPABILITY-EVIDENCE-INVENTORY.md, vendor decision matrix):
+  "lasso-tool", // KEEP — implementação de multi-select/box selection (IN_V1 §33)
+  "hand-tool", // KEEP — implementação de Pan (IN_V1 §8/§35), viewport-only
+  "global-connect-tool", // KEEP — alias de Connect (IN_V1 §8), mesmas BpmnRules
   "tool-separator",
   // create entries — todos dentro do profile atual
   "create.start-event",
@@ -145,6 +145,14 @@ const ALLOWED_PALETTE_ENTRY_IDS: ReadonlySet<string> = new Set([
   "create.participant-expanded",
   "create.group",
 ]);
+
+/**
+ * DENIED palette entries (WAVE F):
+ *   "space-tool" — Space Tool (make-space) muta BPMN-DI e não é
+ *     requirement do freeze → DISABLE/FUTURE. O binding `S` é desarmado
+ *     via unregister da editor action (profileGovernanceModule).
+ *   Qualquer tool nova de vendor upgrade cai em deny por default.
+ */
 
 // ---------------------------------------------------------------------------
 // Context pad — chaves getContextPadEntries() do vendor

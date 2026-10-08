@@ -101,10 +101,66 @@ function ProfileClipboardGovernance(this: any, eventBus: any) {
 
 ProfileClipboardGovernance.$inject = ["eventBus"];
 
+/**
+ * WAVE F — Vendor Exposure Decision.
+ *
+ * Editor actions vendor cujo shortcut/API path fica desarmado na V1:
+ *   spaceTool        — `S`, Space Tool (make-space muta BPMN-DI; não é
+ *                      requirement do freeze → DISABLE/FUTURE)
+ *   alignElements    — menu align (FUTURE — V1-SCOPE-FREEZE §8)
+ *   distributeElements — menu distribute (FUTURE — idem)
+ *
+ * `editorActions.init` dispara após o registro das actions default e
+ * ANTES do BpmnKeyboardBindings instalar os listeners (o binding usa
+ * LOW_PRIORITY=500; listener default=1000 roda antes). Unregister aqui
+ * remove UI path + keyboard path de uma vez — sem CSS, sem DOM patch.
+ * Com a action ausente, o binding `S` nunca é instalado e
+ * `editorActions.trigger('spaceTool')` é no-op negado.
+ */
+const DISABLED_EDITOR_ACTIONS = [
+  "spaceTool",
+  "alignElements",
+  "distributeElements",
+] as const;
+
+function VendorExposureGovernance(this: any, eventBus: any) {
+  eventBus.on("editorActions.init", (event: any) => {
+    const editorActions = event.editorActions;
+    for (const action of DISABLED_EDITOR_ACTIONS) {
+      if (editorActions.isRegistered(action)) {
+        editorActions.unregister(action);
+      }
+    }
+  });
+}
+
+VendorExposureGovernance.$inject = ["eventBus"];
+
 export const profileGovernanceModule = {
-  __init__: ["profileClipboardGovernance"],
+  __init__: ["profileClipboardGovernance", "vendorExposureGovernance"],
   profileClipboardGovernance: ["type", ProfileClipboardGovernance],
+  vendorExposureGovernance: ["type", VendorExposureGovernance],
   paletteProvider: ["type", GovernedPaletteProvider],
   contextPadProvider: ["type", GovernedContextPadProvider],
   replaceMenuProvider: ["type", GovernedReplaceMenuProvider],
+  // WAVE F — overrides `['value', null]`: o binding didi devolve null sem
+  // instanciar o type vendor, logo o construtor (que registra o provider
+  // na surface) nunca roda. Módulo permanece presente/preservado; a
+  // surface de produto não é exposta — sem CSS-hide nem DOM patch.
+  //
+  // align/distribute (FUTURE): o context pad entry 'align-elements' e o
+  // popup 'align-elements' (align + distribute) vivem em providers
+  // separados do ContextPadProvider principal — a allowlist do pad não os
+  // alcança, então os providers são desligados na fonte.
+  alignElementsContextPadProvider: ["value", null],
+  alignElementsMenuProvider: ["value", null],
+  distributeElementsMenuProvider: ["value", null],
+  // keyboard-move-selection (setas movem a seleção → muta BPMN-DI e
+  // dirty; fora da shortcut matrix §32): o construtor do vendor instala o
+  // listener de teclado — com null ele nunca é construído e o
+  // editorAction 'moveSelection' não é registrado (guard `injector.get`
+  // falsy no vendor). O módulo de navegação `keyboardMove`
+  // (Ctrl+setas = pan de viewport, sem mutação) NÃO é este serviço e
+  // permanece ativo como conveniência de Pan (IN_V1).
+  keyboardMoveSelection: ["value", null],
 };

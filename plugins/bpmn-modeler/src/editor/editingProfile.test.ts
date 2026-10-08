@@ -128,9 +128,13 @@ describe("editingProfile — palette", () => {
       "create.exclusive-gateway", "create.task", "create.subprocess-expanded",
       "create.data-object", "create.data-store",
       "create.participant-expanded", "create.group",
-      "lasso-tool", "hand-tool", "space-tool",
+      "lasso-tool", "hand-tool",
       "global-connect-tool", "tool-separator",
     ]) expect(isPaletteEntryAllowed(key), key).toBe(true);
+  });
+
+  it("nega space-tool (WAVE F — não-frozen, muta DI → DISABLE/FUTURE)", () => {
+    expect(isPaletteEntryAllowed("space-tool")).toBe(false);
   });
 
   it("FAIL-CLOSED — create entry nova do vendor negada", () => {

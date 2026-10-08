@@ -356,3 +356,93 @@ describe("GOV — properties panel governance", () => {
     adapter.destroy();
   });
 });
+
+describe("GOV — WAVE F vendor exposure", () => {
+  it("GOV-14: palette expõe tools IN_V1 (lasso/hand/global-connect) e nega space-tool", async () => {
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(container, "edit");
+    await adapter.importXml(DI_XML);
+
+    const paletteProvider = svc(adapter, "paletteProvider");
+    const keys = Object.keys(paletteProvider.getPaletteEntries());
+    // KEEP — IN_V1 implementations
+    expect(keys).toContain("lasso-tool");
+    expect(keys).toContain("hand-tool");
+    expect(keys).toContain("global-connect-tool");
+    // DISABLE — FUTURE/não-frozen (WAVE F)
+    expect(keys).not.toContain("space-tool");
+    expect(isPaletteEntryAllowed("space-tool")).toBe(false);
+
+    adapter.destroy();
+  });
+
+  it("GOV-15: editor actions FUTURE/unrequired desregistradas; IN_V1 registradas", async () => {
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(container, "edit");
+    await adapter.importXml(DI_XML);
+
+    const editorActions = svc(adapter, "editorActions");
+    // DISABLE — Space Tool (binding 'S'), Align/Distribute (FUTURE)
+    for (const denied of [
+      "spaceTool",
+      "alignElements",
+      "distributeElements",
+      "moveSelection", // keyboard-move-selection desligado via DI
+    ]) {
+      expect(
+        editorActions.isRegistered(denied),
+        `action ${denied} ainda registrada`,
+      ).toBe(false);
+    }
+    // KEEP — convenience aliases / implementações IN_V1
+    for (const kept of [
+      "lassoTool",
+      "handTool",
+      "globalConnectTool",
+      "directEditing",
+      "replaceElement",
+      "moveCanvas", // Ctrl+arrows = pan (IN_V1)
+    ]) {
+      expect(
+        editorActions.isRegistered(kept),
+        `action ${kept} deveria permanecer`,
+      ).toBe(true);
+    }
+
+    adapter.destroy();
+  });
+
+  it("GOV-16: align/distribute não têm provider — popup 'align-elements' vazio e pad sem entry", async () => {
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(container, "edit");
+    await adapter.importXml(DI_XML);
+
+    // providers desligados na fonte (DI value:null) — nunca registraram
+    const m = modelerOf(adapter);
+    expect(m.get("alignElementsContextPadProvider", false)).toBeNull();
+    expect(m.get("alignElementsMenuProvider", false)).toBeNull();
+    expect(m.get("distributeElementsMenuProvider", false)).toBeNull();
+
+    // menu 'align-elements' fica vazio para multi-select real
+    const popupMenu = svc(adapter, "popupMenu");
+    const registry = svc(adapter, "elementRegistry");
+    const targets = [registry.get("T1"), registry.get("G1")];
+    expect(popupMenu.isEmpty(targets, "align-elements")).toBe(true);
+
+    adapter.destroy();
+  });
+
+  it("GOV-17: keyboard-move-selection desligado; navegação Ctrl+setas (pan) preservada", async () => {
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(container, "edit");
+    await adapter.importXml(DI_XML);
+
+    const m = modelerOf(adapter);
+    // serviço de mover seleção via setas: nunca construído (value:null)
+    expect(m.get("keyboardMoveSelection", false)).toBeNull();
+    // pan por Ctrl+setas é implementação de Pan (IN_V1) — serviço ativo
+    expect(m.get("keyboardMove", false)).toBeTruthy();
+
+    adapter.destroy();
+  });
+});

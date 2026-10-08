@@ -182,6 +182,12 @@ Governança: os novos entry IDs entraram na allowlist do `editingProfile.ts` —
 
 Evidência: 14 testes E2E `e2e/specs/properties-{core,flows,events}.spec.ts` (workers=2) — PROP-CORE-01 (calledElement edit→undo/redo→RB→reload), PROP-FLOW-01..06 (condition set/clear, default set/switch/clear, delete sem ref pendurada, contexto inválido), PROP-DOC-01/02 (documentation task+process), PROP-EVT-01..05 (root `bpmn:message`/`signal`/`error`/`escalation` + refs + `linkName`). Preservação de import/round-trip já era coberta por RT-CE-01/02 (fixtures com calledElement/default/cond). EG-14 BPMN-core: **CLOSED**; engine fields = TO_INVENTORY → WAVE F.
 
+### 13c. Vendor exposure decision (WAVE F — vigente)
+
+Vendor presente **≠** produto suportado. A governança de superfície foi fechada no `profileGovernanceModule.ts` por dois mecanismos oficiais (sem CSS-hide, sem DOM patch): **(a)** DI `value:null` nos providers vendor que se auto-registrariam em surfaces fora do profile (`alignElementsContextPadProvider`/`alignElementsMenuProvider`/`distributeElementsMenuProvider` — menu align/distribute, FUTURE — e `keyboardMoveSelection` — setas movem seleção → muta DI); **(b)** `editorActions.unregister` em `editorActions.init` antes do `BpmnKeyboardBindings` instalar listeners (`spaceTool`, `alignElements`, `distributeElements`) — binding `S` nunca existe. `space-tool` saiu da palette allowlist do `editingProfile.ts`.
+
+Classificação final (matriz completa: INVENTORY §6a): **DISABLE/FUTURE** — align, distribute, space-tool, keyboard-move-selection. **KEEP** — hand-tool (`H`) e Ctrl+setas como implementações de Pan (IN_V1 §8/§35, viewport-only, zero canonical/DI/dirty — VX-04); lasso (`L`) como multi-select IN_V1 §33; global-connect (`C`) como convenience alias de Connect IN_V1 governado pelas mesmas `BpmnRules` (VX-05 positive+undo, VX-06 deny →start); `E`/`R`/Ctrl+D como vendor convenience aliases de direct editing/replace/clipboard (não-canonical UX aliases, não requisitos novos). Engine surface: Camunda/Zeebe providers não carregados; engine editable entries = 0; `MultiInstanceLoopCharacteristics` = BPMN core preserve-only (não engine field); `isExecutable` = BPMN core preservado/edit-hidden (decisão C4 inalterada).
+
 ## 14. Produtividade — classificação por evidência (G0)
 
 | Capacidade | Freeze | Implementação atual | Classificação |
@@ -227,6 +233,7 @@ G2 — BPMN Professional Breadth Wave 1     OWNER 02→03→01→06
 G3 — Modeling Productivity                OWNER 03→06   PASS/CLOSED — 41 E2E `productivity-*.spec.ts` (workers=2, determinístico): clipboard governado, seleção/bulk, searchPad Ctrl+F, palette search semântica (IG-1 + correction G3-PAL-1: SEARCH RESULT LABEL = QName criado), resize funcional + fixed-size blocked, shortcuts; fix de foco pós-drag (§14a)
 G4 — Broad Round-trip / Interoperability  OWNER 02+06   PASS/CLOSED — 16/16 E2E roundtrip-* + 14/14 adapter-level + 7/7 extensionPreservation unit; G4-EXT-1 resolvido (§6)
 WAVE E — Properties Breadth              OWNER 03+06   PASS/CLOSED — 14/14 E2E properties-* (workers=2): BpmnCorePropsProvider (calledElement/conditionExpression/defaultFlow, BPMN core only) + doc/event-refs evidence; EG-14 BPMN-core fechado (§13b)
+WAVE F — Vendor Exposure Decision        OWNER 00+03   PASS/CLOSED — §13c + INVENTORY §6a: align/distribute/space-tool/keyboard-move-selection DISABLE (FUTURE/não-frozen — DI value:null + editor actions unregistered); hand/lasso/global-connect KEEP (Pan/multi-select/Connect IN_V1); E/R/Ctrl+D/Ctrl+setas KEEP como aliases governados; engine editable entries = 0; 8/8 E2E VX-* + GOV-14..17 + regressões G2A/G3/Wave E verdes (workers=2)
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
 G6 — Runtime Provenance / stale-process   OWNER 09
 ```
