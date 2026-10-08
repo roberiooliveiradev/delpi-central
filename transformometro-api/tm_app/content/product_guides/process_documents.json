@@ -13,7 +13,12 @@
   "do_not_use_when": [
     "O dado é estado estruturado de domínio (campos, medições, tarefas) — prose não é autoridade de dados",
     "É uma discussão informal — use a sala de interação",
-    "É decisão formal com trilha — prefira ata"
+    "É decisão formal com trilha — prefira ata",
+    "O conteúdo é fluxo visual — prefira diagram",
+    "O conteúdo é estrutura hierárquica — prefira decomposition",
+    "O material sustenta uma afirmação — isso é evidence",
+    "O pedido é histórico de eventos — isso é timeline",
+    "O pedido é priorização — isso é impact_effort_matrix"
   ],
   "how_to_use": [
     "1. Descobrir documentos existentes do processo antes de criar",
@@ -42,7 +47,7 @@
     "Misturar AS-IS e TO-BE no mesmo texto",
     "Documentar sem verificar o que já existe"
   ],
-  "related_topics": ["portal_overview", "interaction_room"],
+  "related_topics": ["portal_overview", "interaction_room", "diagram", "decomposition", "evidence", "timeline", "impact_effort_matrix"],
   "capability_refs": ["process_document"],
   "contract_refs": ["capability_surface.entities.process_document", "record_write_contract"],
   "source_refs": [

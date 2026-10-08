@@ -1,0 +1,52 @@
+{
+  "schema": "product_guide_v1",
+  "id": "impact_effort_matrix",
+  "title": "Matriz Impacto × Esforço",
+  "summary": "Lente de priorização por revisão — cruza impacto e esforço calculados/informados para apoiar a escolha; não decide sozinha.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar que a matriz é apoio à priorização — posição no quadrante não é autorização nem decisão automática de negócio.",
+  "use_when": [
+    "O usuário quer priorizar ou comparar cenários/melhorias",
+    "É preciso informar inputs manuais ou overrides da matriz",
+    "Revisar a classificação impacto × esforço de uma revisão"
+  ],
+  "do_not_use_when": [
+    "A decisão já está tomada e o pedido é execução — execute o write tipado",
+    "O pedido é métrica bruta — isso é measurement",
+    "Nunca tratar posição na matriz como autorização de execução"
+  ],
+  "how_to_use": [
+    "A matriz é por revisão — leitura via análise, update via entity (update-only)",
+    "Distinguir valores CALCULADOS de INFORMADOS manualmente e de PROPOSTOS",
+    "inputs_manuais e overrides seguem o contrato — não inventar impacto/esforço",
+    "Quando inputs mudam, atualizar a matriz conforme a capability real",
+    "Matriz orienta a conversa de priorização — a decisão continua humana"
+  ],
+  "field_guidance": [
+    {"field": "modo", "guidance": "Modo da matriz conforme o contrato", "contract_ref": "entity_schemas.impact_effort_matrix"},
+    {"field": "inputs_manuais", "guidance": "Inputs informados — rastreáveis, com fonte declarada", "contract_ref": "entity_schemas.impact_effort_matrix"},
+    {"field": "overrides", "guidance": "Sobrescrita manual sobre o calculado — documentar a razão", "contract_ref": "entity_schemas.impact_effort_matrix"}
+  ],
+  "quality_rules": [
+    "Inputs rastreáveis — toda entrada manual tem origem identificável",
+    "Não inventar impacto ou esforço",
+    "Documentar hipótese quando não houver evidência",
+    "CALCULATED != INFORMED != PROPOSED — não misturar as classes",
+    "Matriz é lente de priorização — não decisão automática de negócio"
+  ],
+  "common_mistakes": [
+    "Tratar quadrante alto impacto/baixo esforço como autorização para executar",
+    "Apresentar override manual como valor calculado",
+    "Priorizar sem inputs atualizados quando os dados mudaram",
+    "Usar a matriz para substituir análise metodológica"
+  ],
+  "related_topics": ["revision", "measurement", "process"],
+  "capability_refs": ["impact_effort_matrix", "analyze"],
+  "contract_refs": ["entity_schemas.impact_effort_matrix", "capability_surface.analyses.analyze"],
+  "source_refs": [
+    {"ref": "entity_schemas.impact_effort_matrix — update-only; modo/inputs/overrides", "classification": "PROVEN"},
+    {"ref": "capability_descriptors.analyze — view impact_effort_matrix read-only", "classification": "PROVEN"},
+    {"ref": "Semântica de priorização como lente, não autoridade", "classification": "PROPOSED"}
+  ],
+  "agent_guidance": "'Priorize estas melhorias' → apresentar a matriz com classes de origem (calculado/informado/proposto); a decisão e a execução continuam com o usuário."
+}

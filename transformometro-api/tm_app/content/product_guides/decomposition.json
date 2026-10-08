@@ -1,0 +1,52 @@
+{
+  "schema": "product_guide_v1",
+  "id": "decomposition",
+  "title": "Decomposição / Estrutura do processo",
+  "summary": "A hierarquia do processo (WBS/mapeamento): árvore compartilhada do processo-mestre, escopo por instância e overlays por revisão.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar a diferença entre estrutura hierárquica (decomposição), fluxo visual (diagrama) e texto (documento), e quando usar cada camada.",
+  "use_when": [
+    "O usuário quer decompor o processo em etapas e atividades",
+    "É preciso marcar o que muda numa revisão específica sobre a árvore",
+    "Uma instância opera só parte da árvore do processo"
+  ],
+  "do_not_use_when": [
+    "O conteúdo é fluxo sequencial visual — isso é diagram",
+    "O conteúdo é explicação/procedimento — isso é process_document",
+    "O pedido é métrica do cenário — isso é measurement"
+  ],
+  "how_to_use": [
+    "decomposition_tree é a WBS compartilhada do processo — uma por processo",
+    "Níveis e campos seguem o formato canônico do contrato",
+    "instance_decomposition_scope delimita quais nós a instância usa",
+    "revision_decomposition_overlay registra overrides/extras da revisão — não prosa livre",
+    "Hierarquia é pai/filho; sequência de fluxo é responsabilidade do diagrama"
+  ],
+  "field_guidance": [
+    {"field": "conteudo (tree)", "guidance": "Formato decomposition_tree_v1 com nós hierárquicos", "contract_ref": "entity_schemas.decomposition_tree"},
+    {"field": "node_overrides/extra_nodes (overlay)", "guidance": "Delta da revisão sobre a árvore compartilhada", "contract_ref": "entity_schemas.revision_decomposition_overlay"},
+    {"field": "inherit_all / node_ids (scope)", "guidance": "Escopo da instância sobre a árvore", "contract_ref": "entity_schemas.instance_decomposition_scope"}
+  ],
+  "quality_rules": [
+    "Granularidade consistente entre irmãos do mesmo nível",
+    "Nomes orientados à ação/processo",
+    "Não duplicar a mesma atividade em nós distintos",
+    "Decomposição não é documento textual — prosa vai em process_document",
+    "Não usar o diagrama para substituir a hierarquia quando estrutura é o que importa"
+  ],
+  "common_mistakes": [
+    "Modelar fluxo sequencial na árvore quando o pedido era diagrama",
+    "Escrever narrativa de passos no overlay em vez de overrides estruturados",
+    "Criar árvore por instância — a árvore é compartilhada; instância tem escopo",
+    "Duplicar atividade com nomes levemente diferentes"
+  ],
+  "related_topics": ["diagram", "process", "revision", "process_documents"],
+  "capability_refs": ["decomposition_tree", "instance_decomposition_scope", "revision_decomposition_overlay", "analyze"],
+  "contract_refs": ["entity_schemas.decomposition_tree", "entity_schemas.revision_decomposition_overlay", "entity_schemas.instance_decomposition_scope"],
+  "source_refs": [
+    {"ref": "registration_guide.concepts.decomposition_tree — WBS compartilhada", "classification": "PROVEN"},
+    {"ref": "entity_schemas.revision_decomposition_overlay — overlay por revisão", "classification": "PROVEN"},
+    {"ref": "entity_schemas.instance_decomposition_scope — escopo por instância", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "'Mostre as etapas/estrutura' → decomposition; 'o fluxo' → diagram. Overlay de revisão para diferenças de cenário — nunca duplicar a árvore."
+}

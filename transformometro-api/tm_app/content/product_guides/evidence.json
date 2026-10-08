@@ -1,0 +1,52 @@
+{
+  "schema": "product_guide_v1",
+  "id": "evidence",
+  "title": "Evidências",
+  "summary": "Material que sustenta afirmações e decisões do processo — links e metadados descritos; upload/download binário segue na UI.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar o que é evidência, como registrar link/metadado com qualidade e por que evidência existente não prova a afirmação sozinha.",
+  "use_when": [
+    "O usuário quer anexar/registrar material que sustenta um fato ou decisão",
+    "É preciso registrar referência externa com descrição do que ela sustenta",
+    "Revisão ou decisão precisa de lastro identificável"
+  ],
+  "do_not_use_when": [
+    "O conteúdo é explicação do processo — isso é process_document",
+    "O registro é decisão formal de reunião — isso é meeting_minute",
+    "O dado é estado estruturado — evidência não substitui campos de domínio"
+  ],
+  "how_to_use": [
+    "Evidência = link/metadado + descrição do que ela sustenta",
+    "Crie, atualize descrição ou exclua via capability de evidências — delete exige confirmação",
+    "Upload/download de binário permanece na UI — não inventar transporte binário",
+    "Sempre descreva o que a evidência sustenta e identifique a fonte",
+    "Evidência anexada não prova a afirmação — relevância continua avaliada"
+  ],
+  "field_guidance": [
+    {"field": "link / metadata", "guidance": "Referência identificável ao material (URL/arquivo de origem)", "contract_ref": "capability_surface.workflows.manage_evidence"},
+    {"field": "description", "guidance": "O que a evidência sustenta — sem contexto, o link não serve"},
+    {"field": "binary", "guidance": "Upload/download binário é UI-only (BLOCKED_BY_PLATFORM)"}
+  ],
+  "quality_rules": [
+    "Descrição deixa claro exatamente o que a evidência sustenta",
+    "Fonte identificável — nunca link sem contexto",
+    "Não chamar hipótese de evidência",
+    "Não usar evidência como substituto de estado estruturado de domínio",
+    "evidence exists != claim proven — sustentação ainda é avaliada"
+  ],
+  "common_mistakes": [
+    "Registrar link solto sem dizer o que ele prova",
+    "Tratar evidência anexada como fato automaticamente verificado",
+    "Usar evidência onde o correto era documento ou campo estruturado",
+    "Tentar upload binário pelo canal que só transporta link/metadado"
+  ],
+  "related_topics": ["process_documents", "timeline", "revision"],
+  "capability_refs": ["manage_evidence"],
+  "contract_refs": ["capability_surface.workflows.manage_evidence", "platform_blocked.revision_evidence.binary"],
+  "source_refs": [
+    {"ref": "capability_descriptors.manage_evidence — link/metadata; binary UI-only", "classification": "PROVEN"},
+    {"ref": "registration_flow — evidence_read list + prepare_evidence_change create_link/update/delete", "classification": "PROVEN"},
+    {"ref": "platform_blocked.revision_evidence.binary — sem transporte de arquivo", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Evidência sustenta, não prova: ao citar evidência, avalie relevância. Delete é confirm_before_act; binário só na UI."
+}

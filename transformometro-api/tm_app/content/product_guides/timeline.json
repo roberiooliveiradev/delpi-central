@@ -1,0 +1,47 @@
+{
+  "schema": "product_guide_v1",
+  "id": "timeline",
+  "title": "Histórico / Timeline do processo",
+  "summary": "A trilha de eventos registrados do processo — auditoria e rastreabilidade do que aconteceu; não é fonte do estado atual.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar a usar a timeline para 'o que aconteceu' sem confundi-la com autoridade de estado atual nem com documentação.",
+  "use_when": [
+    "O usuário pergunta o que aconteceu / o que mudou no processo",
+    "É preciso auditar alterações, revisões e workflows registrados",
+    "Rastrear quando e por quem um evento ocorreu"
+  ],
+  "do_not_use_when": [
+    "A pergunta é 'como está agora' — use a leitura de domínio canônica",
+    "O conteúdo é documentação do processo — isso é process_document",
+    "O registro é decisão de reunião — isso é meeting_minute",
+    "O material sustenta um fato — isso é evidence"
+  ],
+  "how_to_use": [
+    "Timeline é histórico derivado de eventos — leitura read-only",
+    "Use para responder 'o que aconteceu' e auditar a sequência",
+    "Estado atual vem das reads de domínio — nunca inferir só pelo último evento",
+    "Cruze com a leitura atual quando o evento mais recente parecer conflitar"
+  ],
+  "field_guidance": [
+    {"field": "eventos", "guidance": "Alterações, revisões e workflows efetivamente expostos — verificar payload real", "contract_ref": "capability_surface.analyses.process_timeline"}
+  ],
+  "quality_rules": [
+    "timeline = histórico de eventos — não documento, não ata, não evidência",
+    "Não inferir estado atual só pelo último evento quando existe read específico",
+    "Evento registrado não prova intenção — apenas que ocorreu",
+    "Para 'como está agora' sempre consultar a leitura canônica de domínio"
+  ],
+  "common_mistakes": [
+    "Responder estado atual citando a timeline em vez da read de domínio",
+    "Tratar evento antigo como condição vigente",
+    "Confundir trilha de auditoria com documentação do processo"
+  ],
+  "related_topics": ["process", "evidence", "process_documents"],
+  "capability_refs": ["process_timeline"],
+  "contract_refs": ["capability_surface.analyses.process_timeline"],
+  "source_refs": [
+    {"ref": "capability_descriptors.process_timeline — audit timeline read-only", "classification": "PROVEN"},
+    {"ref": "registration_flow — gpt_get_process_timeline read-only process-scoped", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "'O que mudou/aconteceu' → timeline; 'como está agora' → get_process_context/reads de domínio. As duas respostas são perguntas diferentes."
+}

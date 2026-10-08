@@ -29,6 +29,11 @@ SEED_TOPICS = {
     "baseline",
     "measurement",
     "investment",
+    "diagram",
+    "decomposition",
+    "evidence",
+    "timeline",
+    "impact_effort_matrix",
 }
 
 
@@ -72,11 +77,11 @@ def test_schema_rejects_missing_and_invalid() -> None:
 # ----------------------------------------------------------------- registry
 
 
-def test_registry_loads_ten_seeds_deterministically() -> None:
+def test_registry_loads_fifteen_seeds_deterministically() -> None:
     reg = ProductGuideRegistry()
     assert set(reg.topic_ids()) == SEED_TOPICS
     assert reg.version == "product-guide-registry-v1"
-    assert len(reg.index()) == 10
+    assert len(reg.index()) == 15
     # Deterministic order.
     assert reg.topic_ids() == sorted(reg.topic_ids())
 
@@ -246,3 +251,56 @@ def test_cross_guide_consistency_process_instance_revision() -> None:
     )
     # New scenario = revision of the same instance, not a new instance.
     assert "revision" in instance_blob
+
+
+# ----------------------------------------------------------- wave 2: semantics
+
+
+def test_diagram_canonical_format_and_mermaid_derived() -> None:
+    reg = ProductGuideRegistry()
+    blob = json.dumps(reg.get("diagram"), ensure_ascii=False).lower()
+    assert "flowchart_v1" in blob
+    assert "mermaid" in blob
+    assert "derivado" in blob or "derived" in blob
+    assert "diagram_catalog" in blob
+
+
+def test_diagram_distinct_from_decomposition() -> None:
+    reg = ProductGuideRegistry()
+    diagram = json.dumps(reg.get("diagram"), ensure_ascii=False).lower()
+    decomposition = json.dumps(reg.get("decomposition"), ensure_ascii=False).lower()
+    assert "decomposition" in diagram
+    assert "diagram" in decomposition
+    assert "hierarqu" in decomposition
+    assert "fluxo" in diagram
+
+
+def test_evidence_is_not_domain_truth() -> None:
+    reg = ProductGuideRegistry()
+    blob = json.dumps(reg.get("evidence"), ensure_ascii=False)
+    assert "evidence exists != claim proven" in blob
+    assert "ui-only" in blob.lower() or "blocked_by_platform" in blob.lower()
+
+
+def test_timeline_is_not_current_state_authority() -> None:
+    reg = ProductGuideRegistry()
+    blob = json.dumps(reg.get("timeline"), ensure_ascii=False).lower()
+    assert "estado atual" in blob
+    assert "o que aconteceu" in blob or "histórico" in blob
+
+
+def test_impact_effort_matrix_does_not_authorize_decision() -> None:
+    reg = ProductGuideRegistry()
+    blob = json.dumps(reg.get("impact_effort_matrix"), ensure_ascii=False).lower()
+    assert "autoriza" in blob
+    assert "calculated" in blob or "calculad" in blob
+    assert "prioriza" in blob
+
+
+def test_process_documents_routes_to_specialized_features() -> None:
+    reg = ProductGuideRegistry()
+    guide = reg.get("process_documents")
+    for topic in ("diagram", "decomposition", "evidence", "timeline",
+                  "impact_effort_matrix"):
+        assert topic in guide["related_topics"]
+        assert topic in " ".join(guide["do_not_use_when"])
