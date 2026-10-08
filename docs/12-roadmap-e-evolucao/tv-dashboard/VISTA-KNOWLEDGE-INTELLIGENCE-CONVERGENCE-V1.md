@@ -365,7 +365,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | 0 | Baseline + drift closure | — | DONE (§27) |
 | 1 | Knowledge Orchestration V1 | 0 | DONE (§28) |
 | 2 | TV Product Guide V1 | 1 | DONE (§30) |
-| 3 | Help Convergence | 2 | READY_FOR_DIAGNOSTIC |
+| 3 | Help Convergence | 2 | READY_FOR_EXECUTION (§31) |
 | 4 | Editor Grounding V2 | 0 | READY_FOR_DIAGNOSTIC |
 | 5 | Design Methodology V1 | 1, 4 | READY_FOR_DIAGNOSTIC |
 | 6 | Data + Solution Intelligence | 1 | READY_FOR_DIAGNOSTIC |
@@ -459,7 +459,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** lista de tópicos convergidos + teste de não-duplicação.
 - **DEPENDENCIES:** PHASE 2.
 - **STOP CONDITIONS:** guide registry indisponível; MFE exigir bundle da autoridade semântica.
-- **STATUS:** READY_FOR_DIAGNOSTIC — dependência satisfeita (§30): registry PROVEN, topic IDs estáveis, help-safe projection PROVEN (`GET /product-guides`, whitelist server-side), contrato de erro tipado (404 desconhecido), campos semânticos estáveis. Próximo passo: diagnostic dedicado do MFE (`/help` route, `helpGuideContent`, mapa seção→tópico) — nenhum frontend implementado em PHASE 2.
+- **STATUS:** READY_FOR_EXECUTION — diagnóstico completo em §31 (2026-10-09): CENTRAL_PAGE, section→topic map coberto pela Wave-1, help projection SUFFICIENT, AUTHENTICATED_HELP, fallback controlado, boundary frontend-only. Evidência histórica da dependência (§30): registry PROVEN, topic IDs estáveis, help-safe projection PROVEN (`GET /product-guides`, whitelist server-side), contrato de erro tipado (404 desconhecido), campos semânticos estáveis. Próximo passo: diagnostic dedicado do MFE (`/help` route, `helpGuideContent`, mapa seção→tópico) — nenhum frontend implementado em PHASE 2.
 
 ### PHASE 4 — EDITOR GROUNDING V2
 
@@ -1019,3 +1019,91 @@ Descoberta: clean HEAD já estava **~193B acima** do limite (envelopeAscii 102,5
 registry PROVEN · topic IDs estáveis (id==filename enforced) · help-safe projection PROVEN (`GET /product-guides`, whitelist) · contrato de erro tipado (404/400) · campos semânticos estáveis (`product_guide_help_v1`). **PHASE 3: BLOCKED→READY_FOR_DIAGNOSTIC.** Residual: `design_quality` Wave-2 (fronteira PHASE 5); kiosk público precisa projeção sem-auth (fora de escopo); `ui_refs` segue adiado até existir registry canônico de UI.
 
 **VERDICT: ACCEPT** — 30/30 acceptance criteria.
+
+## 31. PHASE 3 — DIAGNOSTIC RECORD (Help Convergence, 2026-10-09)
+
+> Executado por `VISTA-KIC-V1-PHASE-3-HELP-CONVERGENCE-DIAGNOSTIC`. DIAGNOSTIC/INVENTORY somente — zero código de produção, zero mudança de schema. Baseline: HEAD `912ac3ba99` == origin/main (pós-PHASE 2 commit).
+
+### 31.1 Current Help architecture (proven)
+
+| Surface | File | Owner | Content type | Consumers | Auth | Fallback | Status |
+|---|---|---|---|---|---|---|---|
+| Contextual tooltips | `src/content/helpTooltips.ts` (728 ln, 14 seções) | MFE | UI labels + hints de controle | 87 arquivos (ribbon, filmstrip, data builder, context menus, inspectors) | sessão (MFE autenticado) | n/a (estático) | PROVEN — correto como copy UI-local |
+| Página Help/manual central | — | — | — | — | — | — | **MISSING** (`routing.ts` tem 8 views; nenhuma `help`) |
+| `userManualContent` | — | — | — | — | — | — | **MISSING** no tv-dashboard (existe em supplies/commercial/transformometro) |
+| Manual shell compartilhado | `plugins/plugin-ui/components/layout/UserManual.tsx` + `createDashboardUserManual` | plugin-ui | shell de apresentação | TÉO/commercial/supplies | — | — | REUSABLE — remote `@delpi/plugin-ui` já configurado no vite.config do tv-dashboard |
+| Backend help projection | `GET /product-guides` (`content_routes.py`) | tv-dashboard-api | `product_guide_help_v1` whitelist (id/title/summary/purpose/use_when/do_not_use_when/how_to_use/field_guidance/quality_rules/common_mistakes/related_topics) | futuro MFE | `tv-dashboard.read` | 404 tipado | PROVEN (PHASE 2) |
+| API client | `src/api/httpClient.ts` + `tvDashboardApi.ts` | MFE | httpGet + envelope unwrap + AbortSignal + HttpRequestError(status) | todo o MFE | Bearer via `configureHttpClient` | throw | REUSABLE — nenhum segundo HTTP layer |
+
+### 31.2 Semantic duplication map
+
+| Content | Atual | Target | Action |
+|---|---|---|---|
+| `data.catalogSearch` (rotas, chips, binding) | helpTooltips | Product Guide `data_route_discovery` | MIXED → tooltip fica UI-local; Help page deriva semântica |
+| `data.sourceConfig` (camada dados sobrescreve tela/programação) | helpTooltips | `filters_and_layering` | MIXED → semântica no guide; tooltip mantém instrução de controle |
+| `data.dateRangePreset` (parágrafo grande de períodos relativos) | helpTooltips | `filters_and_layering` field_guidance | MIXED → candidato a SPLIT: tooltip resume; semântica no guide |
+| `data.paramExpression`, `paramGranularity`, `paramBranch` | helpTooltips | `data_bindings`/`data_sources` | MIXED → tooltip local + help semântico |
+| `ribbon.playlistFilters`, `ribbon.playbackMode`, `ribbon.masterSlide` | helpTooltips | `playlist`/`slide` | MIXED → SPLIT candidato |
+| ~600 tooltips de controle (format, shapes, context menus) | helpTooltips | MFE | KEEP_LOCAL (UI_LABEL_EXPLANATION) |
+| `dataBuilderChatContent` | MFE | MFE | KEEP_LOCAL (microcopy de fluxo) |
+| Semântica de produto em Help page | MISSING | Product Guide | DERIVE_FROM_GUIDE (novo) |
+
+### 31.3 Section → topic map (proposto)
+
+`HELP_SECTION_TOPICS` no futuro `src/content/helpGuideContent.ts` — seção MFE → topic ids:
+
+| Help section | Topics | Local UI content | Status |
+|---|---|---|---|
+| overview | `tv_dashboard_overview` | nav entry, como abrir editor | COVERED |
+| playlists | `playlist` | list/new/share UI | COVERED |
+| slides | `slide` | filmstrip, duração, sections | COVERED |
+| blocks | `block_types` | insert/element controls | COVERED |
+| data-sources | `data_sources` | catalog picker UI | COVERED |
+| data-models | `data_models` | prepare modal, inspector | COVERED |
+| bindings | `data_bindings` | field linking UI | COVERED |
+| filters | `filters_and_layering` | camadas na UI | COVERED |
+| formats | `display_formats` | format ribbon | COVERED (PARTIAL honesto) |
+| data-discovery | `data_route_discovery` | busca de rotas | COVERED (miss≠absence) |
+| visual-review | `visual_verification` | preview vs TV | COVERED (ladder honesta) |
+
+Zero seções sem tópico; zero topics orfãos na Help page. Wave-1 cobre o escopo.
+
+### 31.4 Auth / public decision
+
+`HELP_AUTH_MODEL = AUTHENTICATED_HELP` — `GET /product-guides` exige `tv-dashboard.read`; a Help page vive dentro do MFE autenticado (mesmo `configureHttpClient` Bearer). `PUBLIC_HELP_REQUIREMENT = NO` — public link/preview/kiosk são superfícies de exibição, não de edição; nenhuma journey comprovada exige Help pública. `KIOSK_HELP_REQUIREMENT = NO`. Nenhuma rota pública nova.
+
+### 31.5 Fallback matrix (design)
+
+| Estado | User outcome | Local help | Retry | Telemetria (design) |
+|---|---|---|---|---|
+| loading | seções mostram nota "Carregando conteúdo de ajuda…" | links/nav renderizam | automático (fetch único) | n/a |
+| success | intro/bullets do guide + links locais | merge | — | n/a |
+| 401/403 | nota de sessão; orientar relogin | nav local | re-fetch após login | console warn (sem dados) |
+| 404 topic | seção mostra nota de configuração/drift (id não resolvido) | nav local | manual | warn com topic id — drift detection |
+| 5xx/network | `HELP_UNAVAILABLE_NOTE` em seções mapeadas | nav local + tooltips continuam | botão "Tentar novamente" | warn (sem payload) |
+| empty index | nota indisponível global | nav local | manual | warn |
+| registry version drift | IDs testados contra index no teste do MFE | — | — | gate de teste |
+
+Semântica **nunca** cai para prosa local duplicada — seções mapeadas mostram nota explícita de indisponibilidade (padrão TÉO provado).
+
+### 31.6 Architecture decision
+
+`HELP_ARCHITECTURE = CENTRAL_PAGE`. Evidência: MFE já tem help contextual coberto por 87 consumidores de `helpTooltips` (CONTEXTUAL_ONLY não agrega nada novo); falta exatamente o manual semântico central; TÉO/commercial/supplies provam o padrão `UserManual` shell + merge. Contextual entry points (links de seções) são detalhe de navegação dentro da página, não segunda arquitetura.
+
+`HELP_ROUTE = NEW_REQUIRED` — `view: "help"` em `routing.ts` + `HelpPage.tsx` + nav entry (PlaylistsPage/library shell header é o candidato natural; decisão final no brief de execução).
+
+### 31.7 Implementation boundary (futuro)
+
+ALLOWED: `plugins/tv-dashboard/src/pages/HelpPage.tsx` (novo), `src/content/helpGuideContent.ts` (mapa+merge), `src/content/userManualContent.ts` (nav/links locais), `src/api/tvDashboardApi.ts` (+`fetchProductGuideHelp` usando httpClient existente), `src/routing.ts` (+view `help`), entry de navegação, testes. FORBIDDEN: backend routes/schema/topics, `helpTooltips.ts` semântica, AuthZ, public-hub, KO, tool surface, `PresentationMutation`. **BACKEND CONTRACT IMPACT = NONE.**
+
+### 31.8 TÉO pattern assessment
+
+REUSE_PATTERN: fetch único `?view=help`-equivalente + `indexTopicsById` + `mergeManualWithGuides` (intro/bullets do guide, links locais) + `HELP_UNAVAILABLE_NOTE` explícita + `createDashboardUserManual` shell + `HELP_SECTION_TOPICS` map. ADAPT: fetch por `GET /apps/tv-dashboard-api/product-guides` (help-safe é o default da rota VISTA, sem `?view=`); seções/títulos locais conforme UX tv-dashboard. NOT_APPLICABLE: domínio/conteúdo TÉO. DO_NOT_COPY: `UserManualSection` semantics do portal Transforma+ (padrão estrutural transfere, copy não).
+
+### 31.9 Test strategy (futura)
+
+mapa seção→tópico completo vs index; tópico desconhecido → nota drift; loading/success/unavailable; merge preserva links locais; sem fallback para prosa duplicada; fields internos ausentes; `registry_version` observável para provenance; deep-link `/apps/tv-dashboard/help`; contrato de envelope `ApiEnvelope`.
+
+### 31.10 Status
+
+**PHASE 3 = READY_FOR_EXECUTION** — HELP_PROJECTION=SUFFICIENT (whitelist cobre o contrato), AUTH=AUTHENTICATED_HELP, FALLBACK=controlado sem prosa duplicada, arquitetura=CENTRAL_PAGE com precedente interno provado, boundary pequeno e frontend-only, zero backend change.
