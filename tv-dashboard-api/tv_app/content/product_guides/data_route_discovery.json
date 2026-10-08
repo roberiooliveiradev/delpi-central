@@ -1,0 +1,51 @@
+{
+  "schema": "product_guide_v1",
+  "id": "data_route_discovery",
+  "title": "Descoberta de rotas de dados",
+  "summary": "Busca semântica nas rotas DELPI autorizadas para TV — descoberta, não execução. SEARCH MISS IS_NOT ABSENCE.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar como descobrir rotas de dados aprovadas, interpretar misses e não confundir allowlist com o ecossistema inteiro.",
+  "use_when": [
+    "O usuário quer saber qual rota alimenta um determinado dado",
+    "É preciso explicar que a busca é semântica e limitada ao allowlist de TV",
+    "É preciso explicar por que um miss não prova ausência"
+  ],
+  "do_not_use_when": [
+    "O usuário quer executar a rota — a tool só descobre",
+    "A pergunta é sobre o schema de uma rota específica — contrato api-delpi",
+    "O usuário assume que a lista de rotas cobre toda a DELPI — não cobre"
+  ],
+  "how_to_use": [
+    "search_data_routes busca por intenção de negócio em linguagem natural",
+    "O resultado traz operationId, paramSchema e metadados para uso posterior",
+    "Um resultado vazio significa 'não encontrei neste allowlist' — nunca 'não existe na DELPI'",
+    "Preview do bloco/dado confirma a resolução real antes de qualquer escrita"
+  ],
+  "quality_rules": [
+    "Sempre busque antes de declarar 'não existe' — miss não é prova de ausência",
+    "Use params validados contra paramSchema da rota retornada",
+    "O allowlist de TV é deliberado — não é um bug faltar uma rota não-TV"
+  ],
+  "common_mistakes": [
+    "Declarar 'rota não existe' após uma busca sem resultado",
+    "Inventar operationId ou params fora do resultado da busca",
+    "Tratar o allowlist de TV como o catálogo completo da DELPI",
+    "Pular o preview e commitar baseado só na rota descoberta"
+  ],
+  "related_topics": ["data_sources", "data_models", "filters_and_layering"],
+  "capability_refs": ["data_route_search", "data_block_preview"],
+  "operation_refs": [],
+  "read_refs": ["search_data_routes", "preview_data_block", "get_catalog"],
+  "write_refs": [],
+  "source_refs": [
+    {
+      "ref": "docs/data-route-nl-suggest.md",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/vista_agent_intelligence.json data_discovery",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Preserve a invariante: SEARCH MISS IS_NOT ABSENCE. Nunca apresente o allowlist como o ecossistema DELPI inteiro."
+}

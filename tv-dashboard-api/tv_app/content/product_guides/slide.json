@@ -1,0 +1,67 @@
+{
+  "schema": "product_guide_v1",
+  "id": "slide",
+  "title": "Slide (tela)",
+  "summary": "Unidade de exibição da playlist: tela custom composta por blocos ou tela nativa pré-definida.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar o conceito de slide, a distinção custom vs nativa e a relação com seções, preview e apresentação.",
+  "use_when": [
+    "O usuário pergunta o que é um slide/tela",
+    "É preciso distinguir slide custom (blocos) de slide nativo (tela pronta)",
+    "A dúvida envolve duração, seção ou papel do slide na playlist"
+  ],
+  "do_not_use_when": [
+    "A dúvida é sobre um tipo de bloco — use block_types",
+    "A decisão é de layout estético — metodologia de design não é escopo aqui",
+    "O usuário pede para editar — este guia orienta; a mutação é do envelope governado"
+  ],
+  "how_to_use": [
+    "Slide custom: canvas com blocos posicionados (texto, KPI, gráfico, tabela, imagem)",
+    "Slide nativo: tela pré-definida (ex.: comunicado, relógio) parametrizada via nativeConfig",
+    "Duração controla o tempo em tela durante a apresentação",
+    "Slides vivem dentro de seções da playlist e herdam seu contexto de dados"
+  ],
+  "field_guidance": [
+    {
+      "field": "nativeConfig",
+      "guidance": "Configuração estrutural da tela — blocos, layout e parâmetros do slide.",
+      "contract_ref": "patch_native_config"
+    },
+    {
+      "field": "durationSec",
+      "guidance": "Tempo de exibição na apresentação; herda default quando omitido.",
+      "contract_ref": "update_slide"
+    }
+  ],
+  "quality_rules": [
+    "Um slide, uma mensagem — excesso de blocos concorrentes dilui a leitura",
+    "Contraste e tamanho de fonte devem respeitar a distância de leitura da TV"
+  ],
+  "common_mistakes": [
+    "Tratar slide nativo como coleção de blocos editáveis — seu schema é próprio",
+    "Editar slide quando a intenção era mudar o default da playlist inteira",
+    "Ignorar que o slide carrega contexto de dados herdado (seção/playlist)"
+  ],
+  "related_topics": ["playlist", "block_types", "filters_and_layering", "display_formats"],
+  "capability_refs": ["playlist", "presentation_change"],
+  "operation_refs": [
+    "add_blank_slide",
+    "add_slide_from_preset",
+    "update_slide",
+    "delete_slide",
+    "patch_native_config"
+  ],
+  "read_refs": ["get_playlist_context"],
+  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "docs/12-roadmap-e-evolucao/tv-dashboard/README.md §Telas",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/native_screens.json + dashboard_slide_presets.json",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Nunca descreva o slide atual a partir deste guia — estado vem de get_playlist_context. Este tópico é conceitual."
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "product_guide_v1",
+  "id": "data_models",
+  "title": "DataModels",
+  "summary": "Unidade lógica de dados do slide: um ou mais inputs + transform → output schema consumível por visuais. Não é visual.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar o que é um DataModel, como inputs/transform/output se relacionam e por que ele é a camada de dados preferida.",
+  "use_when": [
+    "O usuário pergunta o que é um DataModel",
+    "É preciso explicar input vs transform vs outputSchema",
+    "É preciso explicar por que o DataModel não é um bloco visual",
+    "A dúvida é sobre migração de fontes legadas para DataModel"
+  ],
+  "do_not_use_when": [
+    "O usuário quer o estado atual de um DataModel — isso é inspect_data_model",
+    "A dúvida é sobre a sintaxe M do transform — contrato api-delpi/M Query",
+    "A pergunta é sobre binding visual — use data_bindings"
+  ],
+  "how_to_use": [
+    "DataModel = { id, label, primaryInputId, inputs[], transform } — unidade lógica dentro do slide",
+    "inputs[] referenciam fontes de dados; transform (M) combina/deriva o resultado",
+    "outputSchema descreve as colunas que o model expõe aos bindings",
+    "Preview/inspect executam o model sem persistir — use antes de qualquer mutação"
+  ],
+  "field_guidance": [
+    {
+      "field": "inputs[]",
+      "guidance": "Fontes que alimentam o model; merge.sourceId referencia input.id.",
+      "contract_ref": "upsert_data_model"
+    },
+    {
+      "field": "transform",
+      "guidance": "Expressão M DELPI que deriva o output; perfil e funções são contrato do backend.",
+      "contract_ref": "patch_data_model"
+    }
+  ],
+  "quality_rules": [
+    "Um DataModel deve responder a uma pergunta de negócio clara",
+    "Transform legível > transform esperto — o debug futuro agradece",
+    "outputSchema deve ser a única superfície que os bindings conhecem"
+  ],
+  "common_mistakes": [
+    "Confundir DataModel (lógica de dados) com bloco (visual)",
+    "Editar o model para corrigir o visual — o problema pode estar no binding",
+    "Declarar transform esperando estado atual — o schema de saída é o contrato",
+    "Usar o guia como estado — o model atual vem de inspect_data_model"
+  ],
+  "related_topics": ["data_sources", "data_bindings", "data_route_discovery", "filters_and_layering"],
+  "capability_refs": ["data_model_lifecycle", "data_block_preview"],
+  "operation_refs": [
+    "upsert_data_model",
+    "patch_data_model",
+    "delete_data_model",
+    "migrate_data_sources_to_model",
+    "set_data_transform"
+  ],
+  "read_refs": ["preview_data_model", "inspect_data_model", "get_playlist_context"],
+  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "tv_app/content/vista_agent_intelligence.json data_model directive",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "capability_surface data_model_lifecycle",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Este guia diz o que É um DataModel. O model DESTA tela vem de inspect_data_model. Nunca confunda conceito com instância."
+}

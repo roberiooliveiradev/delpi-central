@@ -1,0 +1,62 @@
+{
+  "schema": "product_guide_v1",
+  "id": "block_types",
+  "title": "Tipos de bloco",
+  "summary": "Famílias de componentes que compõem um slide custom: texto, KPI, gráfico, tabela, imagem e variações.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar as famílias canônicas de blocos, para que servem e como se relacionam com dados — sem duplicar schemas.",
+  "use_when": [
+    "O usuário pergunta quais tipos de bloco existem",
+    "É preciso explicar a diferença entre KPI, gráfico, tabela e texto",
+    "É preciso explicar quais blocos consomem dados"
+  ],
+  "do_not_use_when": [
+    "A decisão é qual gráfico usar para um dado específico — isso é metodologia de design (PHASE 5)",
+    "O usuário precisa do schema técnico do bloco — o contrato vivo é o catálogo de ops",
+    "A dúvida é sobre tela nativa — veja slide"
+  ],
+  "how_to_use": [
+    "Blocos de texto/título comunicam mensagens estáticas ou com binding",
+    "Bloco KPI resume um número-chave com contexto (meta, variação)",
+    "Bloco gráfico visualiza séries e comparações a partir de dados ligados",
+    "Bloco tabela apresenta dados tabulares com densidade controlada",
+    "A escolha de família depende da pergunta que o dado responde — o contrato dos blocos vem do catálogo vivo"
+  ],
+  "quality_rules": [
+    "Menos é mais: um slide com 1 KPI-herói comunica melhor que 5 KPIs médios",
+    "Gráfico errado para o tipo de comparação confunde mais do que ajuda",
+    "Todo bloco de dados deve ter fonte resolvível — nunca deixe bloco órfão de dados"
+  ],
+  "common_mistakes": [
+    "Criar bloco novo quando um existente já representa o conceito (alterar antes de criar)",
+    "Usar tabela quando a pergunta é tendência — ou gráfico quando a leitura é valor exato",
+    "Assumir schema de bloco por memória — a autoridade é o catálogo de operações"
+  ],
+  "related_topics": ["slide", "data_bindings", "data_sources", "display_formats"],
+  "capability_refs": ["presentation_change"],
+  "operation_refs": [
+    "create_block",
+    "upsert_block",
+    "delete_block",
+    "duplicate_blocks",
+    "align_blocks",
+    "reorder_block_z"
+  ],
+  "read_refs": ["get_catalog", "get_playlist_context", "preview_data_block"],
+  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "tv_app/content/design_intelligence.json componentSpecs",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/presentation_ops_content.json operations",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "plugins/tv-dashboard/src/content/helpTooltips.ts (blocos de dados)",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Para 'qual bloco usar', responda a família conceitual e aponte para o catálogo vivo; a decisão fina por contexto é metodologia de design."
+}

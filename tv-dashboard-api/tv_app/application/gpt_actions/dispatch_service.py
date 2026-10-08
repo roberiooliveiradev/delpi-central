@@ -254,7 +254,39 @@ class GptActionsDispatchService:
             for entry in DisplayFormatService.format_catalog_entries()
         ]
         doc["capability_surface"] = build_capability_surface(transport=transport)
+        if transport != "actions":
+            # Product Guide discovery index — topic bodies stay on-demand via
+            # get_product_guide. MCP-primary projection: the Actions envelope
+            # sits at the OpenAI ~100 KiB ceiling and discovers the capability
+            # through gpt_get_product_guide + capability_surface instead.
+            from tv_app.application.product_guide.product_guide_registry import (
+                get_product_guide_registry,
+            )
+            from tv_app.application.product_guide.product_guide_service import (
+                guide_index_payload,
+            )
+
+            doc["productGuide"] = guide_index_payload(get_product_guide_registry())
         return doc
+
+    def get_product_guide(
+        self,
+        *,
+        user: Any,
+        topic: str | None = None,
+        section: str | None = None,
+    ) -> dict[str, Any]:
+        """Read-only Product Guide surface — GUIDANCE_NOT_DOMAIN_TRUTH.
+
+        Never domain state, never AuthZ: visibility of a capability in the
+        guide does not imply permission to execute it.
+        """
+        assert_permission(user, TV_READ)
+        from tv_app.application.product_guide.product_guide_service import (
+            ProductGuideService,
+        )
+
+        return ProductGuideService().get_product_guide(topic=topic, section=section)
 
     def list_playlists(
         self,

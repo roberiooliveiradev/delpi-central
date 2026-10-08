@@ -54,7 +54,7 @@ def _actions_instructions_block() -> str:
 def test_mcp_surface_exactly_ten_with_analysis():
     tools = asyncio.run(create_mcp_server().list_tools())
     assert {t.name for t in tools} == set(MCP_TOOL_NAMES)
-    assert len(tools) == 10
+    assert len(tools) == 11
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
     assert TOOL_CLASS["preview_data_block"] == "ANALYSIS"
@@ -73,7 +73,7 @@ def test_surface_parity_map_matches_registered_tools():
     mapping = parity["parity_map"]
     # Every MCP name in the map must be a real registered tool.
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
-    assert len(mapping) == 10
+    assert len(mapping) == 11
     # Canonical Actions op names expected on the left side.
     assert set(mapping.keys()) == {
         "gpt_get_catalog",
@@ -83,6 +83,7 @@ def test_surface_parity_map_matches_registered_tools():
         "gpt_inspect_data_model",
         "gpt_preview_data_model",
         "gpt_preview_data_block",
+        "gpt_get_product_guide",
         "gpt_suggest_change",
         "gpt_preview_change",
         "gpt_commit_change",
@@ -219,11 +220,12 @@ def test_mcp_sections_projected_into_agent_directives():
     directives = VistaAgentIntelligenceService.agent_directives()
     assert "write_flow_mcp" in directives
     assert "surface_parity" in directives
-    # Parity map survives compaction intact: 10 Actions↔MCP mappings cover the
-    # registered tool set (analysis surface included, §6.133 + suggest_change).
+    # Parity map survives compaction intact: 11 Actions↔MCP mappings cover the
+    # registered tool set (analysis surface included, §6.133 + suggest_change +
+    # product_guide).
     parity = directives["surface_parity"]
     mapping = parity["parity_map"]
-    assert len(mapping) == 10
+    assert len(mapping) == 11
     assert set(mapping.values()) == set(MCP_TOOL_NAMES)
     clear_vista_agent_intelligence_cache()
 

@@ -364,8 +364,8 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 |---|---|---|---|
 | 0 | Baseline + drift closure | — | DONE (§27) |
 | 1 | Knowledge Orchestration V1 | 0 | DONE (§28) |
-| 2 | TV Product Guide V1 | 1 | READY_FOR_EXECUTION (§29) |
-| 3 | Help Convergence | 2 | BLOCKED |
+| 2 | TV Product Guide V1 | 1 | DONE (§30) |
+| 3 | Help Convergence | 2 | READY_FOR_DIAGNOSTIC |
 | 4 | Editor Grounding V2 | 0 | READY_FOR_DIAGNOSTIC |
 | 5 | Design Methodology V1 | 1, 4 | READY_FOR_DIAGNOSTIC |
 | 6 | Data + Solution Intelligence | 1 | READY_FOR_DIAGNOSTIC |
@@ -436,7 +436,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** registry, índice, resultado do Action Surface Gate.
 - **DEPENDENCIES:** PHASE 1 (orquestração sabe quando consultar o guide).
 - **STOP CONDITIONS:** guide precisar de mutation authority ou duplicar contrato de domínio → STOP.
-- **STATUS:** READY_FOR_EXECUTION — diagnostico completo em secao 29 (2026-10-08): owner provado, schema/validacao/versionamento desenhados, Wave-1 = 11 topicos, surface = dedicated read recomendado (gate no execution brief).
+- **STATUS:** DONE — implementado e verificado em §30 (2026-10-09): registry live com 11 tópicos Wave-1, validação fail-closed contra registries canônicos, `get_product_guide`/`gpt_get_product_guide` com paridade Actions↔MCP, help projection em `GET /product-guides`, `product_usage` PROVEN, budget Actions restaurado sem elevar cap.
 
 ### PHASE 3 — HELP CONVERGENCE
 
@@ -459,7 +459,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** lista de tópicos convergidos + teste de não-duplicação.
 - **DEPENDENCIES:** PHASE 2.
 - **STOP CONDITIONS:** guide registry indisponível; MFE exigir bundle da autoridade semântica.
-- **STATUS:** BLOCKED (dependência).
+- **STATUS:** READY_FOR_DIAGNOSTIC — dependência satisfeita (§30): registry PROVEN, topic IDs estáveis, help-safe projection PROVEN (`GET /product-guides`, whitelist server-side), contrato de erro tipado (404 desconhecido), campos semânticos estáveis. Próximo passo: diagnostic dedicado do MFE (`/help` route, `helpGuideContent`, mapa seção→tópico) — nenhum frontend implementado em PHASE 2.
 
 ### PHASE 4 — EDITOR GROUNDING V2
 
@@ -963,3 +963,59 @@ PHASE 2 runtime files: `tv_app/content/product_guides/*.json` (Wave-1), `tv_app/
 ### 29.10 Status
 
 **PHASE 2 = READY_FOR_EXECUTION** — owner provado, equivalentes inventariados, schema/validação/versionamento desenhados, Wave-1 evidenciada, surface decidida com gate documentado, zero drift estrutural novo (duplicações registradas para convergência futura, não para correção nesta fase). PHASE 3 permanece BLOCKED até PHASE 2 produzir registry + projeção help.
+
+## 30. PHASE 2 — EXECUTION RECORD (TV Product Guide V1, 2026-10-09)
+
+> Executado por `VISTA-KIC-V1-PHASE-2-TV-PRODUCT-GUIDE-EXECUTION`. IMPLEMENTATION + VALIDATION + ACTION SURFACE GATE + TESTS + ROADMAP EVIDENCE. Base efetiva: `122898a948` (origin/main). Sem commit nesta execução (working tree preservado; mudanças estrangeiras de DÉLIA/api-delpi/public-hub intocadas).
+
+### 30.1 Implementação
+
+| Camada | Artefato |
+|---|---|
+| Content registry | `tv_app/content/product_guides/*.json` — 11 tópicos Wave-1 (exatos): `tv_dashboard_overview`, `playlist`, `slide`, `block_types`, `data_sources`, `data_models`, `data_bindings`, `filters_and_layering`, `display_formats`, `data_route_discovery`, `visual_verification` |
+| Application | `tv_app/application/product_guide/{product_guide_schema,product_guide_registry,product_guide_service}.py` + `__init__.py` |
+| Help projection | `GET /product-guides` em `content_routes.py` (whitelist server-side; refs internas nunca saem) |
+| Actions | `GET /gpt-actions/v1/product-guides` (`gpt_get_product_guide`; params bounded `topic`/`section`) |
+| MCP | `get_product_guide` (TOOL_CLASS=READ; via `tool_bridge`→dispatch compartilhado) |
+| Parity | `surface_parity.parity_map["gpt_get_product_guide"]="get_product_guide"` — binding único |
+| OpenAPI | operação compacta em `openapi_builder.py`; artifact `docs/gpt-actions/openapi-gpt-actions.json` regenerado |
+| KO | `vista_agent_intelligence.json`: `product_usage` PARTIAL→PROVEN (reads: `get_product_guide`), `PRODUCT_USAGE_GATE` atualizado, parity entry, version bump |
+| Testes | `tests/test_tv_product_guide.py` (37 testes) + updates de superfície/paridade/budget |
+
+Versões: `SCHEMA_VERSION=product_guide_v1` · `REGISTRY_VERSION=product-guide-registry-v1` · payloads `product_guide_index_v1` / `product_guide_help_v1`.
+
+### 30.2 Validação fail-closed (load-time)
+
+Registry rejeita: schema/authority inválidos, unknown keys, campos unbounded, id≠filename, ids duplicados, registry vazio/ausente, `related_topics`/`capability_refs`/`operation_refs`/`read_refs`/`write_refs` não-resolvidos contra `capability_surface`, `presentation_ops_content.operations` e tool/op names canônicos (providers injetáveis). `ui_refs` rejeitado em V1. Runtime: tópico desconhecido → 404 tipado (`ProductGuideNotFoundError`); seção desconhecida → 400 tipado; sem fallback.
+
+### 30.3 Action Surface Gate — executado
+
+| Opção | Resultado |
+|---|---|
+| A — só `get_catalog` | REJEITADA: envelope Actions já no teto (~100 KiB OpenAI); index mostraria tópicos sem caminho bounded para corpos → `PRODUCT_USAGE` inutilizável |
+| B — `get_product_guide(topic?, section?)` | **SELECIONADA**: consumidores reais (VISTA PRODUCT_USAGE + PHASE 3 Portal Help), schema bounded, read-only, owner claro, paridade via binding único, corpos on-demand |
+| C — sem superfície | REJEITADA: deixaria `product_usage=PARTIAL`, contrariando o objetivo da fase |
+
+`PRODUCT_GUIDE_SURFACE = DEDICATED_READ_TOOL`. UMA capability: Actions 10→11 ops, MCP 10→11 tools, zero tool por tópico, zero mudança em write tools.
+
+### 30.4 Actions budget — remediação sem aumento de cap
+
+Descoberta: clean HEAD já estava **~193B acima** do limite (envelopeAscii 102,593 > 102,400 — regressão pré-existente marginal). Compaction honesta na projeção Actions (mesmo precedente de `fieldVocabulary` MCP-only): índice `operations` Actions mantém apenas o gate contract (`risk`/`confirmationPolicy`/`requiresPlaylist`/`requiresSlide`/`sideEffectHints`); `fields`/`requiredFields` ficam com o OpenAPI `requestBody` oneOf (documentado no serviço); `produces`/`consumes` espelham os flags requires-* → MCP-only; `allowedOps` (derivável de `operations` keys) e a entrada `product_guide` em `analyses` (`transports:["mcp"]`; Actions descobre via operationId) → MCP-only. **Resultado:** envelopeAscii 102,922→**92,544** (unicode 88,354) — headroom ~9.9KB ≥ 4KiB exigido. Cap inalterado (102,400). MCP full projection preservada; zero semântica de diretivas removida.
+
+### 30.5 Invariantes de conteúdo
+
+`authority=GUIDANCE_NOT_DOMAIN_TRUTH` em todos os tópicos; `display_formats` declara cobertura tipada PARTIAL; `data_route_discovery` preserva SEARCH_MISS≠ABSENCE; `visual_verification` preserva a ladder (schematic/layoutDigest≠pixel; canonical_stage=artefato do editor live; ImageContent PROVEN / host forwarding FAIL_OBSERVED / pixel inspection TEST_NOT_RUN); zero refs a surfaces aposentadas (`/data/copilot/*`); zero `ui_refs`; zero conteúdo de domínio/AuthZ/OpenAPI duplicado; semântica normalizada, não bulk-copy de docs.
+
+### 30.6 Testes executados
+
+`test_tv_product_guide.py` 37/37 (schema, authority, bounded fields, unknown-key, id≠filename, duplicados, registry vazio, cross-refs, help projection, KO PROVEN, parity, gate, sem dependência TÉO). Matriz de regressão: budget(8) + facade + MCP conformance + knowledge_orchestration + unified_boundary + client_migration + read/write surface + patch_service + focused_context = **261 PASS**; sweep adicional (agent_intelligence, suggest_ops, ready-slide corpus, content_routes, capabilities_route, streamable_http_wire, data_route facade, display_format) = **121 PASS**. Total **382 verde, 0 falha**.
+
+### 30.7 Fronteiras preservadas
+
+`PresentationMutation`/`TvPresentationWriteService`/`PlaylistAccessService`: intocados. api-delpi/OpenAPI data contracts: intocados. AuthZ: inalterada (guide descreve capability ≠ permissão; backend decide). MFE Help: intocado (PHASE 3). Sem runtime TÉO: zero imports `tm_app`; padrão portado, conteúdo/domínio não. Sem generic knowledge/RAG engine. `DOMAIN STATE > GUIDE · LIVE CONTRACT > GUIDE · OpenAPI > GUIDE · GUIDE > remembered copy` — enforced.
+
+### 30.8 PHASE 3 readiness — gate satisfeito
+
+registry PROVEN · topic IDs estáveis (id==filename enforced) · help-safe projection PROVEN (`GET /product-guides`, whitelist) · contrato de erro tipado (404/400) · campos semânticos estáveis (`product_guide_help_v1`). **PHASE 3: BLOCKED→READY_FOR_DIAGNOSTIC.** Residual: `design_quality` Wave-2 (fronteira PHASE 5); kiosk público precisa projeção sem-auth (fora de escopo); `ui_refs` segue adiado até existir registry canônico de UI.
+
+**VERDICT: ACCEPT** — 30/30 acceptance criteria.

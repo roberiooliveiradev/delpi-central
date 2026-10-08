@@ -15,6 +15,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_preview_data_block",
     "gpt_preview_data_model",
     "gpt_inspect_data_model",
+    "gpt_get_product_guide",
     "gpt_suggest_change",
     "gpt_preview_change",
     "gpt_commit_change",

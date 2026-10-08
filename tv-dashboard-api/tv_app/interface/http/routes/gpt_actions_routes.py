@@ -277,6 +277,30 @@ def search_data_routes(
         return _handle(exc, correlation_id=cid)
 
 
+@router.get("/product-guides")
+def get_product_guide(
+    request: Request,
+    topic: str | None = Query(
+        default=None,
+        description="Guide topic id; omit for the topic index.",
+    ),
+    section: str | None = Query(
+        default=None,
+        description="Optional bounded section: overview|when_to_use|how_to_use|field_guidance|quality|relationships|all.",
+    ),
+):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.get_product_guide(
+            user=resolve_user(request),
+            topic=topic,
+            section=section,
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
 @router.post("/data-preview")
 def preview_data_block(request: Request, body: DataPreviewBody):
     cid = _correlation_id(request)

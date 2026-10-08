@@ -176,6 +176,22 @@ def _canonical_surface() -> dict[str, Any]:
                 "required_permission_metadata": {"read": "tv-dashboard.write"},
             },
             {
+                "id": "product_guide",
+                "kind": "ANALYSIS",
+                "owner": "tv-dashboard-api",
+                "description": (
+                    "Product usage guidance (GUIDANCE_NOT_DOMAIN_TRUTH). "
+                    "Topic index + on-demand bodies; never domain state."
+                ),
+                "read_operations": ["get_product_guide"],
+                "write_operations": [],
+                "required_permission_metadata": {"read": "tv-dashboard.read"},
+                # Actions discovers the capability via the gpt_get_product_guide
+                # operation itself; the taxonomy entry stays MCP-primary so the
+                # ~100 KiB Actions envelope keeps its headroom.
+                "transports": ["mcp"],
+            },
+            {
                 "id": "data_model_lifecycle",
                 "kind": "ANALYSIS",
                 "owner": "tv-dashboard-api",
@@ -239,10 +255,17 @@ def _project_for_actions(surface: dict[str, Any]) -> dict[str, Any]:
                 "commit_now": True,
                 "when": "confirmationPolicy=direct",
             }
-    for analysis in projected.get("analyses") or []:
+    analyses = projected.get("analyses") or []
+    analyses = [
+        analysis
+        for analysis in analyses
+        if "actions" in (analysis.get("transports") or ["actions", "mcp"])
+    ]
+    for analysis in analyses:
         for key in ("read_operations", "write_operations"):
             if isinstance(analysis.get(key), list):
                 analysis[key] = _actions_ops(analysis[key])
+    projected["analyses"] = analyses
     return projected
 
 

@@ -1,0 +1,51 @@
+{
+  "schema": "product_guide_v1",
+  "id": "tv_dashboard_overview",
+  "title": "TV Dashboard — visão geral",
+  "summary": "Produto de sinalização digital: playlists de telas publicadas em TVs/kiosk, com dados DELPI ao vivo.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Orientar sobre o que é o TV Dashboard, a hierarquia playlist → slide → bloco e a separação entre admin/editor e apresentação pública.",
+  "use_when": [
+    "O usuário pergunta o que é o TV Dashboard ou para que serve",
+    "É preciso explicar a relação playlist → slide → bloco",
+    "É preciso distinguir editor admin (autenticado) de apresentação/kiosk pública",
+    "É preciso explicar o papel da VISTA como assistente versus a autoridade do domínio"
+  ],
+  "do_not_use_when": [
+    "O usuário precisa do estado atual de uma playlist específica — isso é leitura de domínio",
+    "A pergunta é sobre contratos de dados — isso pertence a api-delpi/OpenAPI",
+    "A decisão é sobre qual visual usar — isso é metodologia de design"
+  ],
+  "how_to_use": [
+    "Uma programação (playlist) agrega slides ordenados; cada slide tem blocos (texto, KPI, gráfico, tabela, imagem) ou é uma tela nativa",
+    "Slides podem ser custom (blocos livres) ou nativos (telas pré-definidas do catálogo)",
+    "A administração acontece no editor autenticado; a TV consome a apresentação pública via link/token",
+    "Mudanças estruturais passam pelo fluxo governado PREPARE → ACT, nunca por escrita direta",
+    "A VISTA orienta e materializa intenções; o estado canônico sempre vem do backend"
+  ],
+  "quality_rules": [
+    "Um slide de TV deve comunicar em segundos — densidade excessiva prejudica legibilidade",
+    "Playlist coerente: mesmo contexto de dados (filial/período) entre slides relacionados"
+  ],
+  "common_mistakes": [
+    "Tratar a VISTA como fonte de verdade do estado — ela lê do domínio",
+    "Confundir preview do editor com a TV real — a autoridade visual é o palco canônico",
+    "Assumir que toda tela é composta de blocos — telas nativas são estrutura própria"
+  ],
+  "related_topics": ["playlist", "slide", "block_types", "visual_verification"],
+  "capability_refs": ["playlist", "presentation_change"],
+  "operation_refs": ["create_playlist"],
+  "read_refs": ["list_playlists", "get_playlist_context", "get_catalog"],
+  "write_refs": ["prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "docs/12-roadmap-e-evolucao/tv-dashboard/README.md §Visão geral",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "docs/architecture/adr-tv-full-presentation-authority.md",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Use este tópico para perguntas conceituais sobre o produto. Nunca responda estado atual a partir daqui — para isso existe get_playlist_context."
+}

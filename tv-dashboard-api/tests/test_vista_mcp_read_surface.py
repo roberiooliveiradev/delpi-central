@@ -135,11 +135,12 @@ def test_tools_list_exactly_ten_governed_tools():
         "inspect_data_model",
         "preview_data_model",
         "preview_data_block",
+        "get_product_guide",
         "suggest_change",
         "prepare_change",
         "commit_proposal",
     }
-    assert len(tools) == 10
+    assert len(tools) == 11
     assert "inspect_data_source" not in names
 
 
@@ -155,7 +156,8 @@ def test_no_native_op_or_legacy_tools_registered():
 def test_tool_classification_read_prepare_act():
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 5
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
+    assert TOOL_CLASS["get_product_guide"] == "READ"
     assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
     # §6.133: owner ANALYSIS surface — preview_data_block is non-persisting

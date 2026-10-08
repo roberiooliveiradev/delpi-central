@@ -1,0 +1,61 @@
+{
+  "schema": "product_guide_v1",
+  "id": "display_formats",
+  "title": "Formatos de exibição",
+  "summary": "Como valores são formatados para exibição (moeda, percentual, data, número) — sem alterar o dado subjacente.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar o que é display format, quando aplicar e a cobertura tipada atual — declarada honestamente como PARTIAL.",
+  "use_when": [
+    "O usuário pergunta como formatar um número como moeda/percentual",
+    "É preciso explicar formatação vs valor bruto",
+    "A dúvida é sobre qual formato se aplica a um campo"
+  ],
+  "do_not_use_when": [
+    "A pergunta é sobre transform de dado — isso muda o valor, não a exibição",
+    "O usuário precisa do schema do format — o contrato vivo é DisplayFormatService",
+    "É preciso aplicar formato fora da cobertura tipada atual — verificar a limitação"
+  ],
+  "how_to_use": [
+    "Display format é uma camada de apresentação sobre um valor ligado",
+    "formatId seleciona o formato; spec declara parâmetros (casas, prefixo, estilo)",
+    "Aplicação tipada via set_display_format — a cobertura é PARTIAL: nem todo contexto é endereçável",
+    "Quando o formato não é coberto tipado, o ajuste pode exigir editar o bloco/config"
+  ],
+  "field_guidance": [
+    {
+      "field": "formatId",
+      "guidance": "Identificador do formato no catálogo canônico de formatos.",
+      "contract_ref": "set_display_format"
+    },
+    {
+      "field": "spec",
+      "guidance": "Parâmetros do formato (ex.: casas decimais) conforme o contrato."
+    }
+  ],
+  "quality_rules": [
+    "Formato deve combinar com o tipo do valor — moeda em número, data em data",
+    "Consistência dentro do slide: mesma métrica, mesmo formato",
+    "Não confunda precisão visual com precisão do dado"
+  ],
+  "common_mistakes": [
+    "Aplicar formato quando o problema era o dado/errado tipo",
+    "Esperar cobertura tipada em todo destino — a superfície é PARTIAL hoje",
+    "Hardcodar formatação no conteúdo do texto em vez de usar display format"
+  ],
+  "related_topics": ["data_bindings", "block_types", "slide"],
+  "capability_refs": ["presentation_change"],
+  "operation_refs": ["set_display_format"],
+  "read_refs": ["get_catalog", "get_playlist_context"],
+  "write_refs": ["prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "docs/architecture/adr-tv-display-format-ownership.md",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/vista_agent_intelligence.json display_format directive",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Cobertura tipada de display format é PARTIAL — declare isso ao usuário ao invés de sugerir endereçamento que não existe."
+}

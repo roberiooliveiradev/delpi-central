@@ -1,0 +1,67 @@
+{
+  "schema": "product_guide_v1",
+  "id": "filters_and_layering",
+  "title": "Filtros e layering",
+  "summary": "Como filtros se compõem em camadas — playlist → seção/slide → fonte — e a regra most-specific-wins.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar o modelo de camadas de filtros, períodos relativos e a disciplina de não duplicar/hardcodar filtros.",
+  "use_when": [
+    "O usuário pergunta como filtros funcionam ou se acumulam",
+    "É preciso explicar defaults de playlist vs config de slide vs params de fonte",
+    "A dúvida envolve períodos relativos ou escopo de filial"
+  ],
+  "do_not_use_when": [
+    "O usuário precisa do valor efetivo atual — isso é leitura de domínio",
+    "A dúvida é sobre paramSchema de uma rota — contrato OpenAPI",
+    "A pergunta é sobre a sintaxe de expressão — contrato de expressions"
+  ],
+  "how_to_use": [
+    "Playlist dataDefaults definem o contexto base (filial, período, filtro global)",
+    "Seções e slides podem refinar esse contexto para o seu subconjunto",
+    "Parâmetros na fonte completam a resolução — a camada mais específica vence",
+    "Períodos relativos (ex.: este mês) resolvem no runtime — nunca hardcode datas",
+    "re_layer_playlist_filters consolida camadas quando há duplicação"
+  ],
+  "field_guidance": [
+    {
+      "field": "dataDefaults",
+      "guidance": "Contexto herdado por todas as telas; mude aqui para efeito global.",
+      "contract_ref": "patch_playlist_data_defaults"
+    },
+    {
+      "field": "params",
+      "guidance": "Refinamento por fonte; apenas o que a rota realmente parametriza."
+    }
+  ],
+  "quality_rules": [
+    "Filtrar no nível mais alto possível — menos duplicação, mais consistência",
+    "Um filtro deve existir numa única camada, não replicado em três",
+    "Período relativo > data absoluta — TVs reprocessam continuamente"
+  ],
+  "common_mistakes": [
+    "Hardcodar a mesma filial em cada fonte em vez de usar playlist default",
+    "Duplicar filtro em camadas diferentes criando resolução ambígua",
+    "Assumir que o filtro do slide sobrescreve o da playlist — a regra é most-specific-wins",
+    "Fixar período absoluto quando a intenção era relativa"
+  ],
+  "related_topics": ["playlist", "slide", "data_sources", "data_models"],
+  "capability_refs": ["playlist"],
+  "operation_refs": [
+    "patch_playlist_data_defaults",
+    "patch_data_source_params",
+    "re_layer_playlist_filters"
+  ],
+  "read_refs": ["get_playlist_context", "preview_data_block"],
+  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "tv_app/content/vista_agent_intelligence.json filter_layering + branch_scope",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md §18.5.1",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Se o usuário descreve sintoma de 'filtro não pega', primeiro localize em qual camada ele está — layering é o modelo, não um bug."
+}

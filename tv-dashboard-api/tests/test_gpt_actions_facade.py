@@ -123,7 +123,7 @@ def test_openapi_error_envelope_and_success_schemas():
     assert commit["responses"]["200"]["content"]["application/json"]["schema"] == {
         "$ref": "#/components/schemas/GptSuccessEnvelope"
     }
-    assert count_operations(doc) == 10
+    assert count_operations(doc) == 11
     assert list(GPT_ACTIONS_OPERATION_IDS)
 
 
@@ -840,8 +840,8 @@ def test_gpt_get_catalog_fits_actions_response_budget():
         "catalog"
     ]["recipes"]
     assert "TV_KPI_HERO" in recipes
-    assert "re_layer_playlist_filters" in doc["allowedOps"] or "re_layer_playlist_filters" in (
-        doc.get("operations") or {}
+    assert "re_layer_playlist_filters" in (doc.get("allowedOps") or {}) or (
+        "re_layer_playlist_filters" in (doc.get("operations") or {})
     )
 
 
@@ -1168,7 +1168,7 @@ def test_gpt_request_opaque_objects_are_explicit():
 
 def test_openapi_has_exactly_ten_stable_operation_ids():
     doc = build_gpt_actions_openapi()
-    assert count_operations(doc) == 10
+    assert count_operations(doc) == 11
     found = []
     for methods in doc["paths"].values():
         for method, op in methods.items():
@@ -1186,7 +1186,7 @@ def test_openapi_artifact_matches_builder():
     assert artifact.exists()
     on_disk = json.loads(artifact.read_text(encoding="utf-8"))
     assert on_disk == doc
-    assert count_operations(on_disk) == 10
+    assert count_operations(on_disk) == 11
 
 
 def test_dispatch_maps_nested_contract_error_to_invalid_change():
@@ -1350,7 +1350,7 @@ def test_structural_no_generic_proxy_in_gpt_actions():
 def test_action_surface_budget_at_most_30():
     doc = build_gpt_actions_openapi()
     assert count_operations(doc) <= 30
-    assert count_operations(doc) == 10
+    assert count_operations(doc) == 11
 
 
 def test_proposal_changed_on_revision_conflict():

@@ -247,7 +247,11 @@ def test_capability_catalog_document_has_version_and_capabilities():
     doc = PresentationOpsContentService.capability_catalog_document()
     assert doc["catalogVersion"]
     assert isinstance(doc["capabilities"], list) and len(doc["capabilities"]) >= 10
-    assert "delete_block" in doc["allowedOps"]
+    assert "delete_block" in doc["operations"]
+    orchestrator_doc = PresentationOpsContentService.capability_catalog_document(
+        include_field_vocabulary=True
+    )
+    assert "delete_block" in orchestrator_doc["allowedOps"]
     assert "add_blank_slide" in PresentationOpsContentService.allowed_ops()
 
 

@@ -33,6 +33,7 @@ TOOL_CLASS: dict[str, str] = {
     "inspect_data_model": "READ",
     "preview_data_model": "READ",
     "preview_data_block": "ANALYSIS",
+    "get_product_guide": "READ",
     "suggest_change": "ANALYSIS",
     "prepare_change": "PREPARE",
     "commit_proposal": "ACT",

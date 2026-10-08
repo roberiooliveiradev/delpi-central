@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.08.1",
+  "version": "2026.10.09.1",
   "owner": "tv-dashboard-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -66,10 +66,10 @@
         "authority": "PresentationMutation boundary"
       },
       "product_usage": {
-        "status": "PARTIAL",
+        "status": "PROVEN",
         "purpose": "Como usar o produto (guias dedicados).",
-        "reads": ["diretivas live/estáveis existentes", "execution_contract quando semântica de capability importa"],
-        "note": "Product Guide dedicado = PHASE 2; não fingir que existe"
+        "reads": ["get_product_guide (product_guides registry, GUIDANCE_NOT_DOMAIN_TRUTH)"],
+        "note": "Product Guide V1 live (tv_app/content/product_guides); guidance IS_NOT domain truth"
       },
       "design_methodology": {
         "status": "PARTIAL",
@@ -116,7 +116,7 @@
         "optional": ["execution_contract"],
         "avoid": ["mutation", "data_runtime"],
         "stop": "após guidance suficiente",
-        "note": "PRODUCT_USAGE_SOURCE = PARTIAL até PHASE 2",
+        "note": "PRODUCT_USAGE_SOURCE = PROVEN via get_product_guide",
         "directives": ["modes", "data_model"]
       },
       "DESIGN_REVIEW": {
@@ -183,7 +183,7 @@
       "DATA_RUNTIME_GATE": "obrigatório antes de afirmar linhas/valores reais, dataset vazio/não-vazio ou saída de transformação",
       "VISUAL_EVIDENCE_GATE": "obrigatório antes de statements de pixel; sem canonical_stage entregue, não promover schematic a evidência de pixel",
       "MUTATION_GATE": "obrigatório antes de escrever: READ_CURRENT_STATE → typed candidate → PREPARE → confirmation policy → COMMIT → read-back → VERIFY",
-      "PRODUCT_USAGE_GATE": "PARTIAL em V1 — rotear para guidance existente; não implicar Product Guide dedicado",
+      "PRODUCT_USAGE_GATE": "PROVEN em V1 — rotear para get_product_guide; guidance IS_NOT domain truth",
       "SOLUTION_ECOSYSTEM_GATE": "DEFERRED (PHASE 6) — se a resposta exigir conhecimento de outras soluções DELPI, classificar gap; não inventar"
     },
     "composition_order": [
@@ -1183,6 +1183,7 @@
       "gpt_get_playlist_context": "get_playlist_context",
       "gpt_search_data_routes": "search_data_routes",
       "gpt_inspect_data_model": "inspect_data_model",
+      "gpt_get_product_guide": "get_product_guide",
       "gpt_preview_data_model": "preview_data_model",
       "gpt_preview_data_block": "preview_data_block",
       "gpt_suggest_change": "suggest_change",

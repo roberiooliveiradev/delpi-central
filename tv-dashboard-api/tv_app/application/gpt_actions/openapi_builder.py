@@ -846,6 +846,48 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "responses": {"200": _ok_response("DataModel inspect"), **_error_responses()},
             }
         },
+        f"{base}/product-guides": {
+            "get": {
+                "operationId": "gpt_get_product_guide",
+                "summary": "Product usage guidance (GUIDANCE_NOT_DOMAIN_TRUTH)",
+                "description": (
+                    "Read-only TV Dashboard product guide. Omit topic for the "
+                    "topic index; pass topic (+optional section) for one guide. "
+                    "Guidance only — live catalog, domain reads and api-delpi "
+                    "contracts always win. Unknown topic/section fail typed."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "topic",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": "Guide topic id from the index; omit for index.",
+                    },
+                    {
+                        "name": "section",
+                        "in": "query",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "overview",
+                                "when_to_use",
+                                "how_to_use",
+                                "field_guidance",
+                                "quality",
+                                "relationships",
+                                "all",
+                            ],
+                        },
+                        "description": "Optional bounded section projection.",
+                    },
+                ],
+                "responses": {"200": _ok_response("Product guide"), **_error_responses()},
+            }
+        },
         f"{base}/changes/suggest": {
             "post": {
                 "operationId": "gpt_suggest_change",

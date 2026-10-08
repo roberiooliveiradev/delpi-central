@@ -1,0 +1,51 @@
+{
+  "schema": "product_guide_v1",
+  "id": "visual_verification",
+  "title": "Verificação visual",
+  "summary": "Ladder de evidência visual: schematic/digest ≠ pixels; canonical_stage = pixel do editor vivo; host pode não entregar a imagem.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar os níveis de evidência visual e suas limitações — sem superclamar inspeção de pixels.",
+  "use_when": [
+    "O usuário pede para 'ver como ficou' ou revisar visualmente",
+    "É preciso explicar por que uma resposta diz 'verificado' sem pixel",
+    "É preciso distinguir digest esquemático de imagem real"
+  ],
+  "do_not_use_when": [
+    "A dúvida é sobre design quality — metodologia de design não é escopo aqui",
+    "O usuário quer capturar pixels sem editor aberto — não é suportado",
+    "A pergunta é sobre o contrato técnico do render — ver ADRs"
+  ],
+  "how_to_use": [
+    "Schematic/layoutDigest descrevem estrutura — não provam aparência final",
+    "canonical_stage é o artefato de pixel gerado do editor vivo do usuário (revision-bound)",
+    "ImageContent no wire MCP prova entrega no transporte; o host pode não encaminhar a imagem ao modelo",
+    "Se a imagem não chega ao modelo, a inspeção é TEST_NOT_RUN — declare isso, não finja",
+    "Verificação visual exige editor aberto e slide visível — EDITOR_NOT_OPEN/EDITOR_SLIDE_NOT_OPEN são estados tipados"
+  ],
+  "quality_rules": [
+    "Nunca diga 'está correto visualmente' baseado em digest esquemático",
+    "Artefato entregue no wire ≠ modelo inspecionou pixels — ambos precisam ocorrer",
+    "Limitações conhecidas do host são documentadas, não contornadas"
+  ],
+  "common_mistakes": [
+    "Afirmar verificação visual quando só há digest",
+    "Assumir que o modelo viu a imagem porque ela foi emitida",
+    "Acreditar em preview cacheado como se fosse pixel canônico"
+  ],
+  "related_topics": ["slide", "block_types", "tv_dashboard_overview"],
+  "capability_refs": ["playlist"],
+  "operation_refs": [],
+  "read_refs": ["get_playlist_context", "get_catalog"],
+  "write_refs": [],
+  "source_refs": [
+    {
+      "ref": "docs/architecture/adr-tv-full-presentation-authority.md (live editor addendum)",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/vista_agent_intelligence.json screenshot_parity + visual_verification",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Seja explícito sobre o que foi verificado: digest ≠ pixel ≠ inspeção. O host pode falhar em encaminhar — isso é FAIL_OBSERVED, não sucesso."
+}

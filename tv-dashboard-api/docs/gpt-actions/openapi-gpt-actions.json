@@ -991,6 +991,132 @@
         }
       }
     },
+    "/gpt-actions/v1/product-guides": {
+      "get": {
+        "operationId": "gpt_get_product_guide",
+        "summary": "Product usage guidance (GUIDANCE_NOT_DOMAIN_TRUTH)",
+        "description": "Read-only TV Dashboard product guide. Omit topic for the topic index; pass topic (+optional section) for one guide. Guidance only — live catalog, domain reads and api-delpi contracts always win. Unknown topic/section fail typed.",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "topic",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Guide topic id from the index; omit for index."
+          },
+          {
+            "name": "section",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "overview",
+                "when_to_use",
+                "how_to_use",
+                "field_guidance",
+                "quality",
+                "relationships",
+                "all"
+              ]
+            },
+            "description": "Optional bounded section projection."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product guide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gpt-actions/v1/changes/suggest": {
       "post": {
         "operationId": "gpt_suggest_change",

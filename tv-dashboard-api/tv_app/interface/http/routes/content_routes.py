@@ -157,6 +157,30 @@ def branch_scope(request: Request):
     return ok(scope.meta())
 
 
+@router.get("/product-guides")
+def product_guides(request: Request, topic: str | None = None):
+    """Portal-facing Help projection — whitelisted fields only.
+
+    Internal refs (capability_refs/operation_refs/read_refs/write_refs/
+    source_refs/agent_guidance) never leave the backend. Unknown topic is a
+    typed 404 — never a silent fallback to another guide.
+    """
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.product_guide.product_guide_service import (
+        ProductGuideNotFoundError,
+        ProductGuideService,
+    )
+
+    try:
+        return ok(ProductGuideService().get_help_view(topic=topic))
+    except ProductGuideNotFoundError as exc:
+        return fail(str(exc), 404)
+
+
 @router.get("/health/native-cache")
 def native_cache_health():
     return ok(

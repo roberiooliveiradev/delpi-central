@@ -543,11 +543,16 @@ class PresentationOpsContentService:
         server-side ``presentation_ops_content.json`` validator. Duplicating
         schemas here was the main ResponseTooLargeError driver.
 
-        ``include_field_vocabulary`` projects canonical enum/discriminator
-        vocabularies per op — used by the orchestrator-facing MCP surface,
-        which has no attached OpenAPI schemas to discover values from.
+        ``include_field_vocabulary`` projects the orchestrator-facing detail
+        set (MCP ``get_catalog``): canonical enum/discriminator vocabularies
+        per op, full op row metadata (``fields``/``requiredFields``/
+        ``produces``/``consumes``) and the ``allowedOps`` allowlist — the MCP
+        surface has no attached OpenAPI schemas to discover them from. On
+        Actions that detail is derivable from the ``requestBody`` oneOf and
+        the ``operations`` keys, so emitting it would spend budget without
+        adding information to that consumer.
         """
-        return {
+        doc: dict[str, Any] = {
             "catalogVersion": cls.catalog_version(),
             "targetShape": {
                 "fields": ["playlistId", "slideId"],
@@ -561,9 +566,11 @@ class PresentationOpsContentService:
                 include_field_vocabulary=include_field_vocabulary
             ),
             "operationSchemas": "openapi_requestBody_oneOf",
-            "allowedOps": sorted(cls.allowed_ops()),
             "sideEffectHintCatalog": cls.side_effect_hint_catalog(),
         }
+        if include_field_vocabulary:
+            doc["allowedOps"] = sorted(cls.allowed_ops())
+        return doc
 
     @classmethod
     def _strip_schema_examples(cls, node: Any) -> Any:
@@ -583,37 +590,44 @@ class PresentationOpsContentService:
     ) -> dict[str, Any]:
         """Index-only projection — no inputSchema trees (OpenAPI owns those).
 
-        ``fieldVocabulary`` is emitted only on the orchestrator-facing
-        transport (MCP ``get_catalog``): the Actions surface already
-        carries full JSON Schemas via OpenAPI, so duplicating enum
-        vocabularies here would breach the Actions response budget
-        without adding information to that consumer."""
+        On the Actions surface each row keeps the gate contract
+        (``risk``/``confirmationPolicy``/``requiresPlaylist``/
+        ``requiresSlide``/``sideEffectHints``); ``fields``/``requiredFields``
+        are already owned by the OpenAPI ``requestBody`` oneOf and
+        ``produces``/``consumes`` mirror the requires-* scope flags, so they
+        only ship to the orchestrator-facing MCP projection together with
+        ``fieldVocabulary`` — the transport without attached schemas."""
         out: dict[str, Any] = {}
         for name, spec in cls.operations().items():
             if not isinstance(spec, dict):
                 continue
             schema = spec.get("inputSchema") if isinstance(spec.get("inputSchema"), dict) else {}
-            required = schema.get("required") if isinstance(schema.get("required"), list) else []
+            required = schema.get("required") if isinstance(spec.get("required"), list) else []
             row: dict[str, Any] = {
                 "risk": spec.get("risk"),
                 "confirmationPolicy": spec.get("confirmationPolicy"),
                 "requiresPlaylist": bool(spec.get("requiresPlaylist")),
                 "requiresSlide": bool(spec.get("requiresSlide")),
-                "produces": list(spec.get("produces") or [])
-                if isinstance(spec.get("produces"), list)
-                else [],
-                "consumes": list(spec.get("consumes") or [])
-                if isinstance(spec.get("consumes"), list)
-                else [],
                 "sideEffectHints": list(spec.get("sideEffectHints") or [])
                 if isinstance(spec.get("sideEffectHints"), list)
                 else [],
             }
+            if include_field_vocabulary:
+                row["produces"] = (
+                    list(spec.get("produces") or [])
+                    if isinstance(spec.get("produces"), list)
+                    else []
+                )
+                row["consumes"] = (
+                    list(spec.get("consumes") or [])
+                    if isinstance(spec.get("consumes"), list)
+                    else []
+                )
             req = [str(item).strip() for item in required if str(item).strip() and str(item) != "op"]
-            if req:
+            if req and include_field_vocabulary:
                 row["requiredFields"] = req
             properties = schema.get("properties")
-            if isinstance(properties, dict):
+            if isinstance(properties, dict) and include_field_vocabulary:
                 fields = sorted(
                     str(k).strip()
                     for k in properties
@@ -621,7 +635,6 @@ class PresentationOpsContentService:
                 )
                 if fields:
                     row["fields"] = fields
-                if include_field_vocabulary:
                     vocab = cls._field_vocabulary(schema)
                     # The canonical block-type vocabulary fills a declared
                     # discriminator field that carries no enum — never

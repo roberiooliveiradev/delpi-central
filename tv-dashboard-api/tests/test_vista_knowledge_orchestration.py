@@ -138,7 +138,8 @@ def test_source_families_and_statuses():
     sources = _orchestration()["sources"]
     assert _REQUIRED_SOURCE_FAMILIES <= set(sources.keys())
     # PHASE-gated families keep their honest status — no fake authority.
-    assert sources["product_usage"]["status"] == "PARTIAL"
+    # PHASE 2 shipped the Product Guide registry + read surface.
+    assert sources["product_usage"]["status"] == "PROVEN"
     assert sources["design_methodology"]["status"] == "PARTIAL"
     assert sources["solution_ecosystem"]["status"] == "UNAVAILABLE_IN_CURRENT_SURFACE"
     assert sources["history"]["status"] == "UNAVAILABLE_IN_CURRENT_SURFACE"

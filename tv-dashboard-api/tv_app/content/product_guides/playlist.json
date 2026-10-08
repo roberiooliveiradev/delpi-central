@@ -1,0 +1,67 @@
+{
+  "schema": "product_guide_v1",
+  "id": "playlist",
+  "title": "Playlist (programação)",
+  "summary": "Agregado raiz do TV Dashboard: coleção ordenada de slides/seções com defaults de dados, compartilhamento e apresentação pública.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar o papel da programação como fronteira de conteúdo, filtros default e publicação para TVs.",
+  "use_when": [
+    "O usuário quer entender o que é uma programação e o que ela agrega",
+    "É preciso explicar defaults de dados no nível da playlist (filial, período, filtro base)",
+    "A dúvida envolve compartilhamento, link público ou ciclo de vida da programação"
+  ],
+  "do_not_use_when": [
+    "A pergunta é sobre um bloco específico — use block_types",
+    "A pergunta é sobre o estado atual — é leitura de domínio, não guia",
+    "A decisão é sobre layout/desenho de slide — fora do escopo deste tópico"
+  ],
+  "how_to_use": [
+    "A playlist é a unidade compartilhável e publicável; usuários navegam e autorizam por playlist",
+    "dataDefaults na playlist definem contexto de dados herdado por slides e fontes",
+    "Seções agrupam slides dentro da playlist; ordem de apresentação respeita a sequência da playlist",
+    "Alterações seguem o envelope governado: suggest_change → prepare_change → commit_proposal"
+  ],
+  "field_guidance": [
+    {
+      "field": "dataDefaults",
+      "guidance": "Contexto de dados herdado por telas/fontes; alterá-lo afeta a playlist inteira.",
+      "contract_ref": "patch_playlist_data_defaults"
+    },
+    {
+      "field": "sections[]",
+      "guidance": "Agrupamento de slides; herda contexto, pode receber defaults próprios.",
+      "contract_ref": "upsert_section"
+    }
+  ],
+  "quality_rules": [
+    "Defaults no nível playlist evitam repetição de filtro por slide",
+    "Nome da programação deve refletir o público/local da TV"
+  ],
+  "common_mistakes": [
+    "Repetir o mesmo filtro em cada slide em vez de usar dataDefaults",
+    "Editar bloco a bloco quando a mudança é estrutural da programação",
+    "Confundir playlist (programação) com slide (tela individual)"
+  ],
+  "related_topics": ["slide", "filters_and_layering", "tv_dashboard_overview"],
+  "capability_refs": ["playlist", "presentation_change"],
+  "operation_refs": [
+    "create_playlist",
+    "upsert_section",
+    "patch_playlist_data_defaults",
+    "reorder_slides",
+    "re_layer_playlist_filters"
+  ],
+  "read_refs": ["list_playlists", "get_playlist_context"],
+  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "docs/12-roadmap-e-evolucao/tv-dashboard/README.md",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/presentation_ops_content.json capabilities[]",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Estado atual de uma playlist só via get_playlist_context. Este tópico ensina o conceito; nunca invente conteúdo de playlist."
+}

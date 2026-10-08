@@ -1,0 +1,58 @@
+{
+  "schema": "product_guide_v1",
+  "id": "data_bindings",
+  "title": "Bindings de dados",
+  "summary": "Como um visual consome dados: a ligação entre bloco e fonte/DataModel que alimenta campos, métricas e labels.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar o conceito de binding — o contrato entre visual e dados — e sua relação com display formats.",
+  "use_when": [
+    "O usuário pergunta como um bloco 'sabe' o que mostrar",
+    "É preciso explicar field/measure/label binding",
+    "A dúvida é sobre por que um bloco não mostra dados",
+    "É preciso explicar binding vs fonte vs model"
+  ],
+  "do_not_use_when": [
+    "A pergunta é sobre o schema JSON do binding — o contrato vivo é o ops catalog",
+    "A dúvida é sobre qual visual escolher — metodologia de design",
+    "O usuário precisa inspecionar o binding atual — leitura de domínio"
+  ],
+  "how_to_use": [
+    "Binding liga um bloco a uma fonte ou DataModel e declara qual campo vai para qual papel visual",
+    "KPIs ligam um valor/métrica; gráficos ligam eixo + série; tabelas ligam colunas",
+    "Formato de exibição (display format) é aplicado sobre o valor ligado — não muda o dado",
+    "Quebra de binding aparece como erro tipado no preview — nunca como valor inventado"
+  ],
+  "field_guidance": [
+    {
+      "field": "binding",
+      "guidance": "Estrutura do bloco que declara a origem (fonte/model) e os campos por papel.",
+      "contract_ref": "bind_visual"
+    }
+  ],
+  "quality_rules": [
+    "Todo binding aponta para um outputSchema válido — nunca para campo suposto",
+    "Formato declarado no binding deve combinar com o tipo do campo (número, data, moeda)",
+    "Se o preview falha, o binding está errado — não a memória do usuário"
+  ],
+  "common_mistakes": [
+    "Referenciar campo que não existe no outputSchema do model",
+    "Duplicar binding onde o bloco já tem um — verificar antes de criar",
+    "Confundir binding (ligação) com fonte (origem) ou com format (apresentação)"
+  ],
+  "related_topics": ["block_types", "data_sources", "data_models", "display_formats"],
+  "capability_refs": ["data_block_preview", "data_model_lifecycle"],
+  "operation_refs": ["bind_visual", "upsert_block"],
+  "read_refs": ["get_playlist_context", "preview_data_block", "inspect_data_model"],
+  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "tv_app/content/presentation_ops_content.json bind_visual",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "plugins/tv-dashboard/src/content/helpTooltips.ts (binding inspectors)",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Binding é contrato de consumo visual — valide o outputSchema real no preview antes de sugerir campos."
+}

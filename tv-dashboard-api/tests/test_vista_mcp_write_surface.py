@@ -151,15 +151,15 @@ def _clean_proposal_store():
 
 
 # ---------------------------------------------------------------------------
-# Surface exactness (9 tools: 5 READ + 1 DISCOVERY + 1 ANALYSIS + PREPARE + ACT)
+# Surface exactness (11 tools: 6 READ + 1 DISCOVERY + 2 ANALYSIS + PREPARE + ACT)
 # ---------------------------------------------------------------------------
 
 
-def test_surface_has_exactly_ten_tools():
-    assert len(MCP_TOOL_NAMES) == 10
+def test_surface_has_exactly_eleven_tools():
+    assert len(MCP_TOOL_NAMES) == 11
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 5
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
     assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"
     # Owner intelligence surface: ANALYSIS exposes the owner's semantic/

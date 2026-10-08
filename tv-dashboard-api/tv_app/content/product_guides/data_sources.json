@@ -1,0 +1,59 @@
+{
+  "schema": "product_guide_v1",
+  "id": "data_sources",
+  "title": "Fontes de dados",
+  "summary": "Conexão de um slide a uma rota de dados DELPI autorizada — campos, parâmetros e transform disponíveis ao slide.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Explicar o que é uma fonte de dados no TV Dashboard e sua relação com rotas autorizadas e com os visuais.",
+  "use_when": [
+    "O usuário pergunta o que é uma fonte de dados",
+    "É preciso explicar como dados chegam a um slide",
+    "É preciso diferenciar fonte de dados, DataModel e binding"
+  ],
+  "do_not_use_when": [
+    "O usuário quer saber quais campos uma rota expõe — isso é contrato api-delpi/OpenAPI",
+    "A dúvida é sobre transform M — detalhe de contrato, não deste guia",
+    "O usuário quer descobrir uma rota — use data_route_discovery"
+  ],
+  "how_to_use": [
+    "Uma fonte de dados referencia uma rota autorizada do catálogo DELPI e declara parâmetros",
+    "Fontes podem ser insumos de DataModels (com transform) ou alimentar bindings diretamente",
+    "Parâmetros efetivos são resolvidos em camadas — defaults de playlist → slide → fonte",
+    "Preview de dados mostra a resolução real sem persistir nada"
+  ],
+  "field_guidance": [
+    {
+      "field": "operationId",
+      "guidance": "Rota autorizada; só valores descobertos via search_data_routes são válidos."
+    },
+    {
+      "field": "params",
+      "guidance": "Parâmetros validados contra o paramSchema da rota; nunca invente."
+    }
+  ],
+  "quality_rules": [
+    "Nomeie a fonte pelo conceito de negócio, não pela rota técnica",
+    "Prefira defaults herdados a parâmetros hardcoded duplicados"
+  ],
+  "common_mistakes": [
+    "Assumir que a fonte define o dado — quem define é a rota + params",
+    "Confundir fonte de dados com DataModel — fonte é a entrada; DataModel é a unidade lógica",
+    "Criar fonte duplicada em vez de reutilizar a existente com params diferentes"
+  ],
+  "related_topics": ["data_models", "data_bindings", "filters_and_layering", "data_route_discovery"],
+  "capability_refs": ["data_route_search", "data_model_lifecycle"],
+  "operation_refs": ["upsert_data_source", "patch_data_source_params", "set_data_transform"],
+  "read_refs": ["search_data_routes", "preview_data_block", "get_playlist_context"],
+  "write_refs": ["suggest_change", "prepare_change", "commit_proposal"],
+  "source_refs": [
+    {
+      "ref": "docs/data-route-nl-suggest.md",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "tv_app/content/tv_data_route_overlays.json",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "Fonte descreve conexão; o dado real vem da rota + params resolvidos. Preview antes de propor mutação."
+}

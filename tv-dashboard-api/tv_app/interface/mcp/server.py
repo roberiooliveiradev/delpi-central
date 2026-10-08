@@ -24,6 +24,7 @@ from .tool_bridge import (
     tool_commit_proposal,
     tool_get_catalog,
     tool_get_playlist_context,
+    tool_get_product_guide,
     tool_inspect_data_model,
     tool_list_playlists,
     tool_prepare_change,
@@ -275,6 +276,21 @@ def _register_read_tools(mcp: MCPServer) -> None:
         ),
         annotations=ann_analysis,
         meta=_meta("preview_data_block"),
+    )
+
+    mcp.add_tool(
+        tool_get_product_guide,
+        name="get_product_guide",
+        title="Guia de produto (como/quando usar)",
+        description=(
+            "Lê o registro canônico de orientação de produto do TV Dashboard "
+            "(GUIDANCE_NOT_DOMAIN_TRUTH). Sem topic: índice de tópicos. Com "
+            "topic (+section opcional): um guia. Orientação apenas — o "
+            "catálogo vivo, leituras de domínio e contratos api-delpi/OpenAPI "
+            "sempre prevalecem sobre o texto do guia."
+        ),
+        annotations=ann,
+        meta=_meta("get_product_guide"),
     )
 
     mcp.add_tool(

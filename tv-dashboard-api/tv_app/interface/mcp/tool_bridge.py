@@ -373,6 +373,24 @@ def tool_preview_data_block(
         return handle_tool_error(e, tool="preview_data_block", label="mcp tool")
 
 
+def tool_get_product_guide(
+    topic: str | None = None,
+    section: str | None = None,
+) -> CallToolResult:
+    """READ — Product usage guidance registry (GUIDANCE_NOT_DOMAIN_TRUTH).
+
+    Omit topic for the topic index; pass topic (+optional bounded section)
+    for one guide. Guidance only — never domain state, never AuthZ.
+    """
+    try:
+        user, _ = _authed_context()
+        return _ok_result(
+            _dispatch.get_product_guide(user=user, topic=topic, section=section)
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="get_product_guide", label="mcp tool")
+
+
 def tool_suggest_change(
     message: str,
     host_context: dict | None = None,
