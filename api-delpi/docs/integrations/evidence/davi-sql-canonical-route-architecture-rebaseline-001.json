@@ -2,7 +2,8 @@
   "task_id": "DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-IMPLEMENTATION-001",
   "evidence_id": "davi-sql-canonical-route-architecture-rebaseline-001",
   "base_sha": "b57d627ac3d85cc902d2dab4e2e4395b88a6a365",
-  "rebased_onto": "912ac3ba99ba6bfa57fcd7294d46995e2a2070a7",
+  "rebased_onto": "e1e113e53fa51adecba31480dcdcdb1b4e5fee40",
+  "final_sha": "bb793ba64b",
   "drift": {
     "classification": "NON_CAUSAL",
     "detail": "upstream commits touched tv-dashboard, bpmn-modeler, delia docs; none touched api-delpi SQL / DAVI / MCP / AuthZ / allowlist / candidate token / projection"
