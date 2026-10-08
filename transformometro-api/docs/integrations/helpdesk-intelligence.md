@@ -110,9 +110,9 @@ digital solution is considered).
 
 | Stage | Content | Status |
 |---|---|---|
-| R1 Integration Contract V1 | this document | IMPLEMENTED |
-| R2 Read Intelligence V1 | `helpdesk_read` + orchestration | IMPLEMENTED |
-| R3 Demand Intelligence V1 | recurrence/discovery composition — zero new tools unless proven | PLANNED |
+| R1 Integration Contract V1 | this document | ACCEPT |
+| R2 Read Intelligence V1 | `helpdesk_read` + orchestration | ACCEPT / CLOSED — see §19 |
+| R3 Demand Intelligence V1 | recurrence/discovery composition — zero new tools | ACCEPT / CLOSED — see §19 |
 | R4 Governed Writes V1 | `prepare_helpdesk_change` + `commit_proposal`, idempotency bound to proposal, BFF revalidation, read-back | PLANNED |
 | R5 Helpdesk ↔ TM Link | relationship metadata only (source_system=glpi), never ticket copy — Abstraction Gate first | TO_INVENTORY |
 | R6 Backlog Intelligence | only if paginated reads prove inadequate; projection lives in the BFF, never a TÉO cache | TARGET |
@@ -141,7 +141,7 @@ MCP + GPT surfaces; `glpi_link_required` and 403 handled typed.
 | Recursive secret scan | all live payloads clean (no token/secret/verifier keys) — PASS |
 | Gateway logging | URL + error only; no Authorization/payload/ticket text — PASS |
 | 403 `helpdesk.access` | TESTED_AUTOMATICALLY (unit suite) — no real user's permission mutated |
-| `tickets`/`ticket` with linked session | **PENDING_MANUAL_GLPI_LINK** — `helpdesk.oauth_sessions` has 0 rows; `GLPI_OAUTH_CLIENT_*` unset locally; `/auth/glpi/start` returns 302 (canonical flow works) but completion needs human browser + configured GLPI OAuth client |
+| `tickets`/`ticket` with linked session | HISTORICAL — was `PENDING_MANUAL_GLPI_LINK` on the local env at `8686552a1e` (0 oauth_sessions locally, `GLPI_OAUTH_CLIENT_*` unset). **Superseded by §19**: linked session + real ticket list/detail accepted live |
 | Local edge route `/apps/helpdesk-api/*` | INFRA RESIDUAL — `gateway/nginx.dev.conf` lacks a location block (edge serves SPA); TÉO path is container-internal and proven |
 | MCP auth contract suite | 13/13 PASS via project `.venv` (pytest-asyncio declared dep; container lacks it — environmental, not code) |
 | `test_create_shared_resource_validation` | PRE_EXISTING — fails identically on clean pushed HEAD |
@@ -267,3 +267,69 @@ the Helpdesk universe boundary; legacy search remains ids-only discovery.
 Tests: `test_teo_knowledge_orchestration.py` +6 (bounded analysis contract,
 output model + epistemic non-promotion, process-discovery ordering,
 fit classes, sufficiency stop, zero new tools) — 19/19 suite green.
+
+## 19. Final acceptance & closeout — R2 CLOSED / R3 CLOSED (2026-10-08)
+
+Recorded after both assignee-filter correctives (§16, §17) and the R3
+directive contract (§18). Evidence below is point-in-time runtime evidence,
+not permanent fixtures.
+
+### R2 — final live evidence (supersedes §14 residual)
+
+| Gate | Result |
+|---|---|
+| GLPI linked session | PASS |
+| Real ticket list (`helpdesk_read` tickets) | PASS |
+| Ticket detail | PASS |
+| list → detail chaining | PASS |
+| timeline | PASS |
+| dynamic `can_*` flags | PASS |
+| Recursive privacy scan | PASS |
+| ChatGPT MCP discovery | PASS (22 tools) |
+| Assignee resolution (`catalog users purpose=assignee` → Robério Oliveira, GLPI id 11) | PASS |
+| Assignee filter (`assignee_id=<resolved>`, `updated_at:desc`) | PASS — 15 tickets returned after §16+§17 fixes |
+| TÉO "quais os últimos chamados do helpdesk direcionados a mim?" | PASS — get_my_context → catalog assignee resolution → filtered `helpdesk_read`; returned tickets carried `assigned_user_id=11` / `assigned_display_name=Robério Oliveira` (e.g. #1204, #1222, #1153, #1156, #1128 — point-in-time ids) |
+| **R2 final status** | **ACCEPT / CLOSED** |
+
+### R3 — live acceptance (authenticated TÉO session)
+
+Dataset: the 15 tickets assigned to the authenticated user at acceptance
+time (`helpdesk_read tickets assignee_id=<resolved> page_size=50` →
+count=15, `has_more=false`). Explicit bounded window.
+
+- **Scenario A — recurrence** "Quais dos meus últimos chamados parecem
+  recorrentes ou relacionados?": 15 tickets analyzed; strong
+  Painéis/Indicadores theme (TV Dashboard/gráfico/indicador/dashboard),
+  e.g. #1204 Correção Painel de TV, #1222 Dados Do Grafico TV no GR.
+  Grouping stayed INFERRED, counts CALCULATED, no causal claim, no
+  process/solution call → **PASS**
+- **Scenario B — process candidate** "relacionados a algum processo do
+  Transformômetro?": `record_read` search found no direct process for
+  "TV Dashboard"/"Painel de TV"; candidate found for "Gerenciamento de
+  Rotina" → PROC-0067 (collecting/consolidating/monitoring routine
+  indicators via structured information and dashboards). Association
+  ticket→process stays INFERRED; process identity/content = authoritative
+  Transformômetro truth. NOT claimed: all 15 belong to PROC-0067 → **PASS**
+- **Scenario C — digital solution** "já existe solução digital na DELPI?":
+  `solution_read` → `tv-dashboard` "Painéis TV" (active). Fit for the
+  dashboard subset: REUSE_EXISTING / EXTEND_EXISTING before any new
+  capability. Solution metadata = knowledge, not authorization → **PASS**
+- **Scenario D — root cause** "esses chamados comprovam a causa raiz?": NO —
+  symptoms/reports are INFORMED, similarity INFERRED, frequency CALCULATED,
+  root cause UNKNOWN until validated; no automatic method call → **PASS**
+- **Scenario E — improvement opportunity**: recurring dashboard/indicator
+  demand = valid investigation candidate; no invented impact/redesign;
+  candidate improvement != registered improvement → **PASS**
+- **Methodology**: no `get_methodology_guide` call needed across A–E —
+  smallest-sufficient-truth-set validated.
+- **Tool surface**: MCP 22→22, GPT 20→20, zero new operations.
+- **Persistence**: none — computed/conversational intelligence only.
+
+**R3 final status: ACCEPT / CLOSED.**
+
+### Boundaries preserved
+
+R3 closeout does NOT authorize Helpdesk writes (follow-up, assignment,
+task, solution, approval, validation, satisfaction stay in R4 — PLANNED).
+R5 (persistent ticket↔process metadata) stays TO_INVENTORY; R6 (backlog
+aggregation) stays TARGET — no implementation performed for either.
