@@ -6,6 +6,8 @@ const MESSAGES: Record<Exclude<ReadOnlyReason, null>, string> = {
   NO_EDIT_PERMISSION: "Você tem permissão apenas de visualização.",
   UNSUPPORTED_MUST_UNDERSTAND:
     "Este modelo usa uma extensão obrigatória não suportada. Aberto em modo somente leitura para preservar o conteúdo.",
+  UNSUPPORTED_EXTENSION_SERIALIZATION:
+    "Este modelo usa conteúdo de extensão que o editor não consegue regravar sem perda. Aberto em modo somente leitura para preservar o conteúdo.",
   EDITOR_CAPABILITY_FAILURE:
     "O editor não conseguiu carregar o diagrama com segurança. Modo somente leitura; o arquivo original permanece preservado.",
   REVISION_VIEW: "Esta é uma revisão histórica. Somente leitura.",

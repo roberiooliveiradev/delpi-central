@@ -15,6 +15,7 @@ import {
 import { ptBrTranslateModule } from "./i18n/translate";
 import { profileGovernanceModule } from "./profileGovernanceModule";
 import { propertiesPanelModule } from "./propertiesPanelModule";
+import { repairExtensionDeclarations } from "./extensionPreservation";
 
 import { ApplyDiLayoutHandler } from "./layoutApply";
 import type { DiLayoutOp } from "../layout/diProposal";
@@ -154,6 +155,11 @@ export class BpmnEditorAdapter {
     }
     try {
       await this.modeler.importXML(xml);
+      // G4-EXT-1: repara attrs de <bpmn:extension> descartados pelo
+      // descriptor vendor no parse (ex.: definition QName isReference →
+      // referência léxica {id} que o serializer reemite intacta).
+      const definitions = this.modeler.getDefinitions();
+      if (definitions) repairExtensionDeclarations(definitions, xml);
       this.fitViewport();
       this.stateTokens = [newToken()];
       this.cursor = 0;

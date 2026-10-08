@@ -49,6 +49,7 @@ import {
 } from "../data/api/bpmnModelerApi";
 import { AutosaveController } from "../state/autosave";
 import { BpmnEditorAdapter, type DiagramRef, type ElementSummary } from "../editor/BpmnEditorAdapter";
+import { hasUnpreservableExtensionContent } from "../editor/extensionPreservation";
 import { ElementInspector } from "../editor/inspector/ElementInspector";
 import { buildElkGraph } from "../layout/elkGraph";
 import { runLayout, type LayoutJob } from "../layout/layoutEngine";
@@ -227,6 +228,10 @@ export function ModelEditorPage({ modelId, getAccessToken, permissions, navigate
       let reason: ReadOnlyReason = null;
       if (meta.archived_at) reason = "ARCHIVED";
       else if (detectMustUnderstand(wc.xml)) reason = "UNSUPPORTED_MUST_UNDERSTAND";
+      // G4-EXT-1: attr namespaced com URI == ns do elemento não é
+      // reemissível pelo serializer vendor — fail-closed antes de qualquer
+      // write destrutivo (artefato canônico permanece byte-exact).
+      else if (hasUnpreservableExtensionContent(wc.xml)) reason = "UNSUPPORTED_EXTENSION_SERIALIZATION";
       else if (!capabilities.edit) reason = "NO_EDIT_PERMISSION";
       setReadOnlyReason(reason);
 

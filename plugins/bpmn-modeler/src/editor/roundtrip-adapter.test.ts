@@ -7,9 +7,11 @@
  * Cada fixture declara seu inventário EXPECTED de diffs do serializer:
  *  - EXPECTED_VENDOR_TRANSFORM: BPMNDiagram extra = drilldown plane do
  *    subprocess colapsado; isMarkerVisible = enriquecimento DI do vendor.
- *  - KNOWN_DEFECT (ext-*): bpmn-moddle dropa `definition` de <bpmn:extension>
- *    e desqualifica attr namespaced vend:flag → flag. Defeito real de
- *    preservação registrado — NÃO normalizado no comparador.
+ *  - G4-EXT-1 (ext-*): `bpmn:extension/@definition` (QName dropado pelo
+ *    parse isReference) é reparado pelo adapter via $attrs do DOM bruto —
+ *    ext-false/ext-true round-trip sem perda. Attr same-ns em elemento de
+ *    extensão (ext-risky) continua não-reemissível pelo serializer vendor —
+ *    a perda é ASSERTA aqui e o produto fecha read-only no page gate.
  *  - no-di: adapter cru falha com EDITOR_CAPABILITY_FAILURE sem BPMN-DI;
  *    o path no-DI (elk layout → injectDiIntoXml) vive no ModelEditorPage,
  *    coberto pelo E2E RT-DI-02.
@@ -60,16 +62,11 @@ const CASES: Array<{ fixture: string; allowed: Allowed[] }> = [
   { fixture: "pres-activities.bpmn", allowed: [] },
   { fixture: "pres-events.bpmn", allowed: [] },
   { fixture: "pres-data.bpmn", allowed: [] },
-  { fixture: "ext-false.bpmn", allowed: [
-    // KNOWN_DEFECT vendor preservation: definition drop + desqualificação de ns
-    { kind: "ATTR_DIFF", pathIncludes: "MODEL}extension", detailIncludes: "definition" },
-    { kind: "ATTR_DIFF", pathIncludes: "prop", detailIncludes: "flag" },
-    { kind: "ATTR_DIFF", pathIncludes: "prop", detailIncludes: "flag" },
-  ] },
-  { fixture: "ext-true.bpmn", allowed: [
-    // KNOWN_DEFECT vendor preservation: definition drop
-    { kind: "ATTR_DIFF", pathIncludes: "MODEL}extension", detailIncludes: "definition" },
-  ] },
+  // ext-false/ext-true: 0 diffs — G4-EXT-1 repair preserva
+  // `bpmn:extension/@definition` via $attrs; demais conteúdo de extensão
+  // (elementos, nested, texto, attrs namespaced cross-ns) já sobrevivia.
+  { fixture: "ext-false.bpmn", allowed: [] },
+  { fixture: "ext-true.bpmn", allowed: [] },
   { fixture: "multi-diagram.bpmn", allowed: [] },
 ];
 
@@ -110,6 +107,38 @@ describe("G4 — adapter round-trip (importXml→exportXml)", () => {
       }
     });
   }
+
+  it("ext-risky.bpmn — serializer vendor não reemite attr same-ns (evidência do gate)", async () => {
+    // vend:flag em vend:prop (mesma URI) → moddle-xml isLocalNs stripa o
+    // prefixo → `flag`. Provado irremediável por descriptor/modelo — por
+    // isso o produto detecta e fecha read-only (hasUnpreservableExtensionContent).
+    // Este assert documenta a limitação: se o vendor corrigir, o gate pode
+    // ser revisto e este teste vai falhar sinalizando a mudança.
+    const xml = readFileSync(join(DIR, "ext-risky.bpmn"), "utf-8");
+    const host = document.createElement("div");
+    const panel = document.createElement("div");
+    panel.id = "bpmn-properties-panel";
+    document.body.append(host, panel);
+    const adapter = new BpmnEditorAdapter();
+    adapter.mount(host, "edit");
+    const res = await adapter.importXml(xml);
+    expect(res.ok).toBe(true);
+    const out = await adapter.exportXml();
+    adapter.destroy();
+    document.body.innerHTML = "";
+
+    const diffs = compareBpmnXml(xml, out);
+    // definition foi reparada — única perda restante é o attr same-ns
+    // ({ns}flag removido + {}flag adicionado = 2 ATTR_DIFFs)
+    expect(diffs).toHaveLength(2);
+    for (const d of diffs) {
+      expect(d.kind).toBe("ATTR_DIFF");
+      expect(d.detail).toContain("flag");
+    }
+    expect(out).toContain('flag="1"');
+    expect(out).not.toContain("vend:flag");
+    expect(out).toContain('definition="vend:suite"');
+  });
 
   it("no-di.bpmn — adapter cru falha com capability failure (DI injetado no page)", async () => {
     const xml = readFileSync(join(DIR, "no-di.bpmn"), "utf-8");

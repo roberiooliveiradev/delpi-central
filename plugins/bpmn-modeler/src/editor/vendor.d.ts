@@ -1,3 +1,18 @@
+declare module "bpmn-moddle" {
+  /** Superfície mínima usada por testes do boundary (G4-EXT-1). */
+  export class BpmnModdle {
+    constructor(packages?: Record<string, unknown>);
+    fromXML(
+      xml: string,
+      typeName?: string,
+    ): Promise<{ rootElement: Record<string, unknown> }>;
+    toXML(
+      element: Record<string, unknown>,
+      options?: { format?: boolean; preamble?: boolean },
+    ): Promise<{ xml: string }>;
+  }
+}
+
 declare module "bpmn-js-properties-panel" {
   import type { ModuleDeclaration } from "didi";
 
