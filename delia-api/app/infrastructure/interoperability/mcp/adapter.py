@@ -267,7 +267,14 @@ class McpSpecialistAdapter:
                 MCP_AUTHENTICATION_FAILED,
                 "no user-delegated credential provider for specialist",
             )
-        bearer_token = self._credential_provider.credential_for(profile)
+        bearer_token = self._credential_provider.credential_for(
+            profile,
+            timeout_seconds=(
+                remaining_budget(started, budget_seconds)
+                if started is not None
+                else None
+            ),
+        )
         transport = self._transport_factory(profile, bearer_token)
         try:
             transport.initialize(

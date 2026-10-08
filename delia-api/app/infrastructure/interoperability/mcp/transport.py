@@ -18,11 +18,13 @@ from __future__ import annotations
 
 import itertools
 import json
+import time
 from collections.abc import Callable, Mapping
 from typing import Any
 
 import requests
 
+from app.application.interaction.turn_budget import remaining_budget
 from app.application.specialist_interop.errors import (
     MCP_AUTHENTICATION_FAILED,
     MCP_AUTHORIZATION_DENIED,
@@ -32,6 +34,12 @@ from app.application.specialist_interop.errors import (
     MCP_TIMEOUT,
     MCP_UNAVAILABLE,
     SpecialistInteropError,
+)
+from app.infrastructure.http.bounded_request import (
+    BoundedHttpTimeout,
+    BoundedHttpTooLarge,
+    BoundedHttpTransportError,
+    bounded_request,
 )
 
 
@@ -80,7 +88,15 @@ class DelpiMcpTransport:
     def initialize(
         self, timeout_seconds: float | None = None
     ) -> None:
-        """MCP initialize handshake; captures the session id if issued."""
+        """MCP initialize handshake; captures the session id if issued.
+
+        LOOP-03R2A-R2: the initialize request and the initialized
+        notification are ONE operation — the notification receives
+        only the remainder after the RPC, never a fresh window. If
+        the RPC consumed the whole bound the notification fails fast
+        with zero wire calls.
+        """
+        started = time.monotonic()
         result = self._rpc(
             "initialize",
             {
@@ -98,8 +114,13 @@ class DelpiMcpTransport:
                 MCP_INVALID_RESPONSE, "initialize result missing serverInfo"
             )
         self._notify(
-            "notifications/initialized", {},
-            timeout_seconds=timeout_seconds,
+            "notifications/initialized",
+            {},
+            timeout_seconds=(
+                remaining_budget(started, timeout_seconds)
+                if timeout_seconds is not None
+                else None
+            ),
         )
 
     def list_tools(
@@ -227,17 +248,23 @@ class DelpiMcpTransport:
         if self._session_id:
             headers["mcp-session-id"] = self._session_id
         try:
-            return self._http_post(
+            return bounded_request(
+                self._http_post,
                 self._endpoint,
                 headers=headers,
                 data=json.dumps(payload),
-                timeout=self._effective_timeout(timeout_seconds),
+                timeout_seconds=self._effective_timeout(timeout_seconds),
+                max_body_bytes=self._max_response_bytes,
             )
-        except requests.exceptions.Timeout as exc:
+        except BoundedHttpTimeout as exc:
             raise SpecialistInteropError(
                 MCP_TIMEOUT, "mcp request timed out"
             ) from exc
-        except requests.exceptions.RequestException as exc:
+        except BoundedHttpTooLarge as exc:
+            raise SpecialistInteropError(
+                MCP_RESULT_TOO_LARGE, "mcp response exceeds size bound"
+            ) from exc
+        except (BoundedHttpTransportError, requests.exceptions.RequestException) as exc:
             raise SpecialistInteropError(
                 MCP_UNAVAILABLE, "mcp endpoint unreachable"
             ) from exc

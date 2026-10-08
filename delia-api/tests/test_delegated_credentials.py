@@ -86,6 +86,12 @@ class FakeResponse:
     def __init__(self, status: int, body: Any):
         self.status_code = status
         self._body = body
+        self.headers: dict = {}
+        self.content = (
+            b"not-json"
+            if isinstance(body, Exception)
+            else json.dumps(body).encode()
+        )
 
     def json(self):
         if isinstance(self._body, Exception):
@@ -105,7 +111,7 @@ def _provider(
 ):
     recorded = posts if posts is not None else []
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         recorded.append(data)
         return FakeResponse(
             exchange_status,
@@ -401,7 +407,7 @@ def test_requester_azp_binding_enforced():
 def test_cross_user_cache_isolation():
     subjects = [_subject(sub="user-a"), _subject(sub="user-b")]
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         posts.append(data)
         return FakeResponse(200, {"access_token": _exchanged(sub="user-a" if len(posts) == 1 else "user-b")})
 
@@ -429,7 +435,7 @@ def test_cross_user_cache_isolation():
 def test_cross_resource_cache_isolation():
     posts: list = []
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         posts.append(data)
         # bind each exchange to its requested audience
         resource = {
@@ -515,7 +521,7 @@ def test_exchange_failure_never_leaks_subject_token_or_secret():
     subject = _subject()
     secret = "super-secret-value-9f8e"
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         raise RuntimeError(f"boom {subject} {secret}")
 
     provider = KeycloakDelegatedCredentialProvider(
@@ -542,7 +548,7 @@ def test_exchange_uses_configured_host_header_only():
     never from subject token claims or caller input."""
     recorded: list = []
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         recorded.append(dict(headers or {}))
         return FakeResponse(200, {"access_token": _exchanged()})
 
@@ -586,7 +592,7 @@ def test_exchange_audience_comes_from_profile_not_input():
     profile — the subject token cannot steer the target."""
     posted: list = []
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         posted.append(data)
         return FakeResponse(200, {"access_token": _exchanged()})
 
@@ -606,3 +612,143 @@ def test_exchange_audience_comes_from_profile_not_input():
     provider.credential_for(_profile())
     assert posted[0]["audience"] == "mcp-api-delpi"
     assert posted[0]["client_id"] == "delia-api"
+
+
+# --- LOOP-03R2A-R2: caller bound reaches the exchange ------------------------
+
+
+def _r2_provider(posts=None, timeouts=None, http_post=None, subjects=None):
+    recorded_posts = posts if posts is not None else []
+    recorded_timeouts = timeouts if timeouts is not None else []
+    subject_queue = list(subjects) if subjects else [_subject()]
+
+    def default_post(url, headers=None, data=None, timeout=None, stream=None):
+        recorded_posts.append(data)
+        recorded_timeouts.append(timeout)
+        return FakeResponse(200, {"access_token": _exchanged()})
+
+    provider = KeycloakDelegatedCredentialProvider(
+        token_url="http://kc/token",
+        client_id="delia-api",
+        client_secret="s",
+        timeout_seconds=10.0,
+        http_post=http_post or default_post,
+        subject_bearer_getter=lambda: subject_queue.pop(0)
+        if len(subject_queue) > 1
+        else subject_queue[0],
+        token_validator=lambda t: json.loads(
+            base64.urlsafe_b64decode(t.split(".")[1] + "==")
+        ),
+        cache=InMemoryDelegatedTokenCache(max_ttl_seconds=120.0),
+        known_resource_audiences=ALL_RESOURCES,
+    )
+    return provider, recorded_posts, recorded_timeouts
+
+
+def test_r2_exchange_uses_caller_bound_reduction_only():
+    """Cache miss: the wire exchange runs under
+    min(caller remaining, configured ceiling) — reduction-only."""
+    subjects = [_subject(sub="u-a"), _subject(sub="u-b")]
+    tokens = iter(
+        [
+            _exchanged(sub="u-a"),
+            _exchanged(sub="u-b"),
+        ]
+    )
+    posts: list = []
+    timeouts: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
+        posts.append(data)
+        timeouts.append(timeout)
+        return FakeResponse(200, {"access_token": next(tokens)})
+
+    provider, _, _ = _r2_provider(http_post=http_post, subjects=subjects)
+    provider.credential_for(_profile(), timeout_seconds=0.7)
+    provider.credential_for(_profile(), timeout_seconds=99.0)
+    # bounded_request passes (connect, read-slice) tuples — the
+    # connect leg is the total wall-clock bound.
+    assert timeouts[0][0] == 0.7
+    assert timeouts[1][0] == 10.0
+
+
+def test_r2_exchange_explicit_nonpositive_fails_fast():
+    """timeout_seconds <= 0 is an exhausted caller budget — zero wire
+    calls, timeout semantic; never a fresh configured window."""
+    from app.application.specialist_interop.errors import MCP_TIMEOUT
+
+    posts: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
+        posts.append(data)
+        return FakeResponse(200, {"access_token": _exchanged()})
+
+    provider, _, _ = _r2_provider(http_post=http_post)
+    for bound in (0.0, -3.0):
+        with pytest.raises(SpecialistInteropError) as exc:
+            provider.credential_for(_profile(), timeout_seconds=bound)
+        assert exc.value.code == MCP_TIMEOUT
+    assert posts == []
+
+
+def test_r2_cache_hit_needs_no_budget():
+    """A warm cache returns with zero I/O — even a zero bound never
+    blocks a cache hit (cache policy unchanged)."""
+    provider, posts, _ = _r2_provider()
+    provider.credential_for(_profile(), timeout_seconds=5.0)
+    assert len(posts) == 1
+    token = provider.credential_for(_profile(), timeout_seconds=0.0)
+    assert isinstance(token, str) and token
+    assert len(posts) == 1
+
+
+def test_r2_exchange_slow_server_total_wall_clock():
+    """Real-socket evidence: a stalled token endpoint cannot outlive
+    the caller bound — total wall-clock, not per-recv inactivity."""
+    import http.server
+    import threading
+
+    import requests as _requests
+
+    from app.application.specialist_interop.errors import MCP_TIMEOUT
+
+    class SlowHandler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length") or 0)
+            self.rfile.read(length)
+            time.sleep(3.0)
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b"{}")
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), SlowHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        url = f"http://127.0.0.1:{server.server_address[1]}/token"
+        provider = KeycloakDelegatedCredentialProvider(
+            token_url=url,
+            client_id="delia-api",
+            client_secret="s",
+            timeout_seconds=10.0,
+            http_post=_requests.post,
+            subject_bearer_getter=lambda: _subject(),
+            token_validator=lambda t: json.loads(
+                base64.urlsafe_b64decode(t.split(".")[1] + "==")
+            ),
+            cache=InMemoryDelegatedTokenCache(max_ttl_seconds=120.0),
+            known_resource_audiences=ALL_RESOURCES,
+        )
+        started = time.monotonic()
+        with pytest.raises(SpecialistInteropError) as exc:
+            provider.credential_for(_profile(), timeout_seconds=0.4)
+        assert exc.value.code == MCP_TIMEOUT
+        assert time.monotonic() - started < 2.0
+    finally:
+        server.shutdown()

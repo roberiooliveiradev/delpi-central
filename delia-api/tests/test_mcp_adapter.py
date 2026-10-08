@@ -9,6 +9,7 @@ session echo, and bounded outcome mapping. No real network.
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, Mapping
 
 import pytest
@@ -62,10 +63,12 @@ class FakeCredentialProvider:
         self.token = token
         self.error = error
         self.requests: list[str] = []
+        self.credential_timeouts: list[float | None] = []
         self.invalidated: list[str] = []
 
-    def credential_for(self, profile) -> str:
+    def credential_for(self, profile, *, timeout_seconds=None) -> str:
         self.requests.append(profile.resource_audience)
+        self.credential_timeouts.append(timeout_seconds)
         if self.error is not None:
             raise self.error
         return self.token
@@ -529,7 +532,7 @@ def _rpc_result(request_id: int, result: Mapping[str, Any]) -> bytes:
 def _transport(canned):
     posts: list[tuple] = []
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         posts.append((url, dict(headers or {}), data))
         body, headers_, status = canned[len(posts) - 1]
         return FakeResponse(status=status, body=body, headers=headers_)
@@ -692,7 +695,7 @@ def test_transport_sends_host_header_only_when_configured():
 
     posts.clear()
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         posts.append((url, dict(headers or {}), data))
         return FakeResponse(
             status=200,
@@ -766,7 +769,7 @@ def test_r1_transport_per_call_timeout_shortens_never_lengthens():
     ]
     timeouts: list[float] = []
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         timeouts.append(timeout)
         body, headers_, status = canned[len(timeouts) - 1]
         return FakeResponse(status=status, body=body, headers=headers_)
@@ -780,9 +783,15 @@ def test_r1_transport_per_call_timeout_shortens_never_lengthens():
     transport.initialize(timeout_seconds=0.5)
     transport.list_tools(timeout_seconds=0.25)
     transport.list_tools(timeout_seconds=99.0)
-    # initialize rpc + notify both bounded at 0.5; then 0.25; then
+    # bounded_request passes (connect, read-slice) tuples — the
+    # connect leg carries the operation bound: initialize rpc at 0.5,
+    # notify at the REMAINDER (<0.5 after the rpc), then 0.25, then
     # the configured 2.0 max — never the requested 99.
-    assert timeouts == [0.5, 0.5, 0.25, 2.0]
+    connect_timeouts = [t[0] for t in timeouts]
+    assert connect_timeouts[0] == 0.5
+    assert 0 < connect_timeouts[1] <= 0.5
+    assert connect_timeouts[2] == 0.25
+    assert connect_timeouts[3] == 2.0
 
 
 def test_r1_transport_nonpositive_budget_fails_truthfully():
@@ -798,7 +807,7 @@ def test_r1_transport_nonpositive_budget_fails_truthfully():
     ]
     timeouts: list[float] = []
 
-    def http_post(url, headers=None, data=None, timeout=None):
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
         timeouts.append(timeout)
         body, headers_, status = canned[len(timeouts) - 1]
         return FakeResponse(status=status, body=body, headers=headers_)
@@ -838,3 +847,199 @@ def test_r1_adapter_call_timeout_reaches_transport():
     assert 0 < transport.call_timeout <= 2.5
     # legs share one shrinking budget — later legs never get more
     assert transport.call_timeout <= transport.list_timeouts[0]
+
+
+# --- LOOP-03R2A-R2: shared operation clock / total wall-clock -------------
+
+
+def test_r2_credential_bound_reaches_exchange():
+    """R2-01: the port-level bound reaches credential_for — a cache
+    miss may only consume the remaining share of the operation."""
+    FakeTransport.instances.clear()
+    creds = FakeCredentialProvider()
+    adapter = _adapter(credential_provider=creds)
+    adapter.list_remote_tools(DAVI, timeout_seconds=3.0)
+    assert len(creds.credential_timeouts) == 1
+    assert 0 < creds.credential_timeouts[0] <= 3.0
+
+
+def test_r2_initialize_notification_only_gets_remainder():
+    """R2-02: initialize rpc + initialized notification share ONE
+    clock — the notification receives only the remainder."""
+    canned = [
+        (
+            _rpc_result(1, {"serverInfo": {"name": "davi"}}),
+            {"Content-Type": "application/json"},
+            200,
+        ),
+        (b"", {"Content-Type": "application/json"}, 202),
+    ]
+    seen: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
+        seen.append(timeout)
+        time.sleep(0.4)
+        body, headers_, status = canned[len(seen) - 1]
+        return FakeResponse(status=status, body=body, headers=headers_)
+
+    transport = DelpiMcpTransport(
+        "http://svc:8000/mcp",
+        timeout_seconds=30.0,
+        bearer_token=TOKEN,
+        http_post=http_post,
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        transport.initialize(timeout_seconds=0.5)
+    assert exc.value.code == MCP_TIMEOUT
+    # rpc consumed ~0.4 of 0.5 — the notification got only ~0.1,
+    # never a fresh 0.5 window.
+    assert len(seen) == 2
+    assert seen[0][0] == 0.5
+    assert 0 < seen[1][0] < 0.2
+
+
+def test_r2_initialize_rpc_exhaustion_zero_notify_posts():
+    """R2-02 negative: if the rpc leg consumes the whole bound the
+    notification fails fast with zero wire calls."""
+    seen: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
+        seen.append(timeout)
+        time.sleep(0.6)
+        body = _rpc_result(1, {"serverInfo": {"name": "davi"}})
+        return FakeResponse(
+            status=200,
+            body=body,
+            headers={"Content-Type": "application/json"},
+        )
+
+    transport = DelpiMcpTransport(
+        "http://svc:8000/mcp",
+        timeout_seconds=30.0,
+        bearer_token=TOKEN,
+        http_post=http_post,
+    )
+    with pytest.raises(SpecialistInteropError) as exc:
+        transport.initialize(timeout_seconds=0.5)
+    assert exc.value.code == MCP_TIMEOUT
+    assert len(seen) == 1
+
+
+def test_r2_auth_retry_shares_original_clock():
+    """R2: 401 → invalidate → re-exchange → retry — all inside the
+    SAME operation bound; the retry only gets the remainder."""
+
+    class FlakyTransport(FakeTransport):
+        calls_made = 0
+
+        def list_tools(self, timeout_seconds=None):
+            self.list_timeouts = getattr(self, "list_timeouts", [])
+            self.list_timeouts.append(timeout_seconds)
+            return (_DISCOVERY_TOOL,)
+
+        def call_tool(self, name, arguments, timeout_seconds=None):
+            FlakyTransport.calls_made += 1
+            self.call_timeout = timeout_seconds
+            if FlakyTransport.calls_made == 1:
+                raise SpecialistInteropError(
+                    MCP_AUTHENTICATION_FAILED, "401 expired"
+                )
+            return {"content": [{"type": "text", "text": "ok"}]}
+
+    FlakyTransport.calls_made = 0
+    FakeTransport.instances.clear()
+    creds = FakeCredentialProvider()
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=creds,
+        transport_factory=lambda p, t: FlakyTransport(p),
+    )
+    outcome = adapter.call_remote_tool(
+        DAVI,
+        "discover_delpi_information",
+        {"query": "q"},
+        correlation_id="c",
+        timeout_seconds=2.5,
+    )
+    assert outcome.is_error is False
+    assert FlakyTransport.calls_made == 2
+    # re-exchange happened under the same shrinking budget — both
+    # credential bounds fit inside the original 2.5s and shrink.
+    assert len(creds.credential_timeouts) == 2
+    assert 0 < creds.credential_timeouts[1] <= creds.credential_timeouts[0]
+    assert creds.credential_timeouts[0] <= 2.5
+    retry_transport = FakeTransport.instances[-1]
+    assert 0 < retry_transport.call_timeout <= 2.5
+
+
+def test_r2_adapter_zero_budget_zero_wire_calls():
+    """R2-03: an explicit non-positive operation bound fails fast —
+    zero transport posts, MCP_TIMEOUT semantic end-to-end."""
+    posts: list = []
+
+    def http_post(url, headers=None, data=None, timeout=None, stream=None):
+        posts.append((url, timeout))
+        return FakeResponse()
+
+    creds = FakeCredentialProvider()
+    adapter = McpSpecialistAdapter(
+        {"davi": _profile()},
+        credential_provider=creds,
+        transport_factory=lambda p, t: DelpiMcpTransport(
+            "http://svc:8000/mcp",
+            timeout_seconds=2.0,
+            bearer_token=t,
+            http_post=http_post,
+        ),
+    )
+    for bound in (0.0, -1.0):
+        with pytest.raises(SpecialistInteropError) as exc:
+            adapter.list_remote_tools(DAVI, timeout_seconds=bound)
+        assert exc.value.code == MCP_TIMEOUT
+    assert posts == []
+
+
+def test_r2_mcp_trickling_body_bounded():
+    """Real socket + real requests: a server that trickles body bytes
+    forever cannot outlive the operation bound — total wall-clock."""
+    import http.server
+    import threading
+
+    import requests as _requests
+
+    class TrickleHandler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length") or 0)
+            self.rfile.read(length)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            while True:
+                try:
+                    self.wfile.write(b"x")
+                    self.wfile.flush()
+                except (BrokenPipeError, ConnectionResetError):
+                    return
+                time.sleep(0.05)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.ThreadingHTTPServer(
+        ("127.0.0.1", 0), TrickleHandler
+    )
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        transport = DelpiMcpTransport(
+            f"http://127.0.0.1:{server.server_address[1]}/mcp",
+            timeout_seconds=30.0,
+            bearer_token=TOKEN,
+            http_post=_requests.post,
+        )
+        started = time.monotonic()
+        with pytest.raises(SpecialistInteropError) as exc:
+            transport.list_tools(timeout_seconds=0.4)
+        assert exc.value.code == MCP_TIMEOUT
+        assert time.monotonic() - started < 2.0
+    finally:
+        server.shutdown()

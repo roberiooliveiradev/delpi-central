@@ -220,7 +220,7 @@ class FakeResponse:
 def test_invoker_renders_path_and_query():
     calls = []
 
-    def http_get(url, headers=None, timeout=None):
+    def http_get(url, headers=None, timeout=None, stream=None):
         calls.append((url, dict(headers or {})))
         return FakeResponse(200, {"product": "X1"})
 
@@ -251,7 +251,7 @@ def test_invoker_drops_undeclared_arguments():
     """Arguments not declared as OpenAPI inputs never reach the wire."""
     calls = []
 
-    def http_get(url, headers=None, timeout=None):
+    def http_get(url, headers=None, timeout=None, stream=None):
         calls.append(url)
         return FakeResponse()
 
@@ -286,7 +286,7 @@ def test_invoker_refuses_non_get():
 
 
 def test_invoker_denied_maps_authorization():
-    def http_get(url, headers=None, timeout=None):
+    def http_get(url, headers=None, timeout=None, stream=None):
         return FakeResponse(403)
 
     invoker = HttpOpenApiInvoker(
@@ -400,7 +400,7 @@ def test_r1_invoker_shortens_never_lengthens_http_timeout():
     bound never widens it."""
     timeouts = []
 
-    def http_get(url, headers=None, timeout=None):
+    def http_get(url, headers=None, timeout=None, stream=None):
         timeouts.append(timeout)
         return FakeResponse(200, {"product": "X1"})
 
@@ -428,4 +428,171 @@ def test_r1_invoker_shortens_never_lengthens_http_timeout():
         timeout_seconds=99.0,
     )
     provider.invoke(cap, {"product_id": "X1"}, correlation_id="c")
-    assert timeouts == [0.25, 15.0, 15.0]
+    # bounded_request sends (connect, read-slice) — the total bound is
+    # the connect leg; read slices are tightened to the remaining
+    # wall-clock by the drain loop.
+    assert [t[0] for t in timeouts] == [0.25, 15.0, 15.0]
+
+
+# --- LOOP-03R2A-R2: total wall-clock on OpenAPI remote calls --------------
+#
+# requests.get(timeout=N) alone is per-recv inactivity semantics — a
+# server that trickles bytes keeps the call alive forever. R2 routes
+# both the document fetch and the capability GET through the shared
+# infrastructure wall-clock bound; these tests use a REAL local
+# socket + real requests so the trickle cannot be faked.
+
+
+def _trickle_server(trickle_paths=(), chunk_delay=0.05):
+    """HTTP server: trickle paths emit 1-byte chunks forever; other
+    paths answer the canned OpenAPI document immediately."""
+    import http.server
+    import json as _json
+    import threading
+    import time as _time
+
+    document = _document()
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            path = self.path.split("?")[0]
+            if path in trickle_paths or (
+                not trickle_paths and path != "/openapi.json"
+            ):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                while True:
+                    try:
+                        self.wfile.write(b"x")
+                        self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError):
+                        return
+                    _time.sleep(chunk_delay)
+                return
+            if path == "/openapi.json" and "/openapi.json" in trickle_paths:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                while True:
+                    try:
+                        self.wfile.write(b"x")
+                        self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError):
+                        return
+                    _time.sleep(chunk_delay)
+                return
+            body = _json.dumps(document).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
+
+
+def test_r2_openapi_document_trickle_bounded():
+    """R2-04: a document that trickles bytes forever cannot outlive
+    the caller bound — truthful unavailable, elapsed near the bound."""
+    import time as _time
+
+    import requests as _requests
+
+    from app.infrastructure.openapi.http_invoker import (
+        fetch_openapi_document,
+    )
+
+    server = _trickle_server(trickle_paths=("/openapi.json",))
+    try:
+        base = f"http://127.0.0.1:{server.server_address[1]}"
+        started = _time.monotonic()
+        with pytest.raises(CapabilityProviderError) as exc:
+            fetch_openapi_document(
+                base, http_get=_requests.get, timeout_seconds=0.4
+            )
+        assert exc.value.code == "openapi_document_unavailable"
+        assert _time.monotonic() - started < 2.0
+    finally:
+        server.shutdown()
+
+
+def test_r2_openapi_invoke_trickle_bounded():
+    """R2-04: the capability GET shares the same total wall-clock
+    bound — document fast, capability endpoint trickles forever."""
+    import time as _time
+
+    import requests as _requests
+
+    server = _trickle_server(trickle_paths=("/api/products",))
+    try:
+        base = f"http://127.0.0.1:{server.server_address[1]}"
+        invoker = HttpOpenApiInvoker(
+            base,
+            source_id="delpi",
+            subject_bearer_getter=lambda: "tok",
+            http_get=_requests.get,
+            timeout_seconds=30.0,
+        )
+        provider = OpenApiCapabilityProvider([_source(invoker)])
+        cap = next(
+            c
+            for c in provider.list_groups(correlation_id="c").groups[
+                0
+            ].capabilities
+            if c.remote_name == "delpi.list_products"
+        )
+        started = _time.monotonic()
+        with pytest.raises(CapabilityProviderError) as exc:
+            provider.invoke(
+                cap, {}, correlation_id="c", timeout_seconds=0.4
+            )
+        assert exc.value.code == "openapi_invocation_failed"
+        assert _time.monotonic() - started < 2.0
+    finally:
+        server.shutdown()
+
+
+def test_r2_openapi_explicit_nonpositive_fail_fast():
+    """R2-03: timeout_seconds <= 0 fails fast with zero wire calls —
+    never a fresh configured window — on both OpenAPI seams."""
+    calls: list = []
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        calls.append(url)
+        return FakeResponse(200, {"ok": True})
+
+    from app.infrastructure.openapi.http_invoker import (
+        fetch_openapi_document,
+    )
+
+    for bound in (0.0, -2.0):
+        with pytest.raises(CapabilityProviderError) as exc:
+            fetch_openapi_document(
+                "http://h", http_get=http_get, timeout_seconds=bound
+            )
+        assert exc.value.code == "openapi_document_unavailable"
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    cap = next(
+        c
+        for c in provider.list_groups(correlation_id="c").groups[
+            0
+        ].capabilities
+        if c.remote_name == "delpi.list_products"
+    )
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(cap, {}, correlation_id="c", timeout_seconds=0.0)
+    assert exc.value.code == "openapi_invocation_failed"
+    assert calls == []

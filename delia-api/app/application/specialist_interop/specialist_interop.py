@@ -200,12 +200,21 @@ class SpecialistInterop:
 
     @staticmethod
     def _clamp_timeout(timeout_seconds: float) -> float:
+        """Reduction-only ceiling for a caller-supplied bound.
+
+        ``None``/unparseable falls back to the configured maximum; an
+        explicit non-positive value is an exhausted remaining budget —
+        a truthful timeout, never a fresh configured window
+        (LOOP-03R2A-R2).
+        """
         try:
             value = float(timeout_seconds)
         except (TypeError, ValueError):
             value = MAX_INVOCATION_TIMEOUT_SECONDS
         if value <= 0:
-            return MAX_INVOCATION_TIMEOUT_SECONDS
+            raise SpecialistInteropError(
+                MCP_TIMEOUT, "specialist operation budget exhausted"
+            )
         return min(value, MAX_INVOCATION_TIMEOUT_SECONDS)
 
     @staticmethod

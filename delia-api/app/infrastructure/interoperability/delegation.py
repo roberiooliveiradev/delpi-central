@@ -30,7 +30,12 @@ from typing import Any, Protocol
 
 from app.application.specialist_interop.errors import (
     MCP_AUTHENTICATION_FAILED,
+    MCP_TIMEOUT,
     SpecialistInteropError,
+)
+from app.infrastructure.http.bounded_request import (
+    BoundedHttpTimeout,
+    bounded_request,
 )
 from app.infrastructure.interoperability.config import (
     SpecialistConnectionProfile,
@@ -53,8 +58,19 @@ class DelegatedCredentialProvider(Protocol):
     and the profile's approved MCP resource — or fail closed.
     """
 
-    def credential_for(self, profile: SpecialistConnectionProfile) -> str:
-        """Return a delegated bearer for (current subject, resource)."""
+    def credential_for(
+        self,
+        profile: SpecialistConnectionProfile,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> str:
+        """Return a delegated bearer for (current subject, resource).
+
+        ``timeout_seconds`` is an optional reduction-only caller bound
+        on any required exchange — ``None`` keeps the configured
+        exchange ceiling; a non-positive remainder fails fast with a
+        timeout semantic, never a fresh window.
+        """
 
     def invalidate(self, profile: SpecialistConnectionProfile) -> None:
         """Drop any cached credential for (current subject, resource).
@@ -190,7 +206,12 @@ class KeycloakDelegatedCredentialProvider:
         self._token_validator = token_validator
         self._cache = cache
 
-    def credential_for(self, profile: SpecialistConnectionProfile) -> str:
+    def credential_for(
+        self,
+        profile: SpecialistConnectionProfile,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> str:
         subject_token = (self._subject_bearer_getter() or "").strip()
         if not subject_token:
             raise SpecialistInteropError(
@@ -230,7 +251,11 @@ class KeycloakDelegatedCredentialProvider:
                 "delegated credential exchange is not configured",
             )
 
-        raw = self._exchange(subject_token, profile.exchange_audience)
+        raw = self._exchange(
+            subject_token,
+            profile.exchange_audience,
+            timeout_seconds=timeout_seconds,
+        )
         token = self._validated_token(raw, subject_sub, resource)
         exp = _decode_claims(token).get("exp")
         self._cache.put(
@@ -249,10 +274,32 @@ class KeycloakDelegatedCredentialProvider:
             _subject_fingerprint(subject_token), profile.resource_audience
         )
 
-    def _exchange(self, subject_token: str, audience: str) -> Mapping[str, Any]:
+    def _exchange(
+        self,
+        subject_token: str,
+        audience: str,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> Mapping[str, Any]:
+        # LOOP-03R2A-R2: the caller's remaining budget is a
+        # reduction-only ceiling on the whole exchange — connect,
+        # headers and body drain share one wall-clock deadline. An
+        # exhausted remainder fails fast as MCP_TIMEOUT with zero
+        # wire calls; it never widens into a fresh configured window.
+        effective_timeout = (
+            self._timeout_seconds
+            if timeout_seconds is None
+            else min(float(timeout_seconds), self._timeout_seconds)
+        )
+        if effective_timeout <= 0:
+            raise SpecialistInteropError(
+                MCP_TIMEOUT,
+                "delegated credential exchange budget exhausted",
+            )
         headers = {"Host": self._host_header} if self._host_header else None
         try:
-            response = self._http_post(
+            response = bounded_request(
+                self._http_post,
                 self._token_url,
                 headers=headers,
                 data={
@@ -264,8 +311,13 @@ class KeycloakDelegatedCredentialProvider:
                     "audience": audience,
                     "scope": EXCHANGE_SCOPE,
                 },
-                timeout=self._timeout_seconds,
+                timeout_seconds=effective_timeout,
             )
+        except BoundedHttpTimeout as exc:
+            raise SpecialistInteropError(
+                MCP_TIMEOUT,
+                "delegated credential exchange timed out",
+            ) from exc
         except Exception as exc:
             raise SpecialistInteropError(
                 MCP_AUTHENTICATION_FAILED,

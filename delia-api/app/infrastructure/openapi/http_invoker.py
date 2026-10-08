@@ -22,6 +22,7 @@ import re
 from typing import Any, Callable, Mapping
 from urllib.parse import urlencode
 
+from app.infrastructure.http.bounded_request import bounded_request
 from app.application.capability_provision.contracts import (
     CapabilityProviderError,
     ProviderCapability,
@@ -58,7 +59,11 @@ def fetch_openapi_document(
     """
     url = base_url.rstrip("/") + "/openapi.json"
     try:
-        response = http_get(url, timeout=timeout_seconds)
+        response = bounded_request(
+            http_get,
+            url,
+            timeout_seconds=timeout_seconds,
+        )
     except Exception as exc:
         raise CapabilityProviderError(
             "openapi_document_unavailable", str(exc)[:200]
@@ -165,8 +170,11 @@ class HttpOpenApiInvoker:
             "Accept": "application/json",
         }
         try:
-            response = self._http_get(
-                url, headers=headers, timeout=effective_timeout
+            response = bounded_request(
+                self._http_get,
+                url,
+                headers=headers,
+                timeout_seconds=effective_timeout,
             )
         except Exception as exc:
             raise CapabilityProviderError(
