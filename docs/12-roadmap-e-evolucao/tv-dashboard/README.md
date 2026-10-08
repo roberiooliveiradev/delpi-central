@@ -279,6 +279,7 @@ com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serv
 
 ## Referências
 
+- [**VISTA — Knowledge Intelligence Convergence V1** (roadmap canônico de inteligência)](./VISTA-KNOWLEDGE-INTELLIGENCE-CONVERGENCE-V1.md)
 - [MDD — Minha Delpi Deck (exportação de slides)](./MDD-MINHA-DELPI-DECK.md)
 - [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md)
 - [PLAYBOOK-POWER-QUERY-M.md](./PLAYBOOK-POWER-QUERY-M.md)
