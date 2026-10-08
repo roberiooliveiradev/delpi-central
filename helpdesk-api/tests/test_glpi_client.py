@@ -1428,3 +1428,128 @@ def test_list_technician_user_ids_falls_back_to_search_user_when_profile_user_fo
     assert client.list_technician_user_ids("oauth") == {4, 8, 75}
     assert any("search/User" in item for item in paths)
 
+
+
+def test_assignee_filter_legacy_search_then_oauth_hydration():
+    """Assignee filter: legacy search/Ticket only discovers ids (field 5 =
+    assigned technician, field 12 = status); OAuth HLAPI hydration is the
+    ACL gate; final order follows the search result, and ids the OAuth
+    subject cannot read are dropped — never a false empty on missing ids."""
+    from urllib.parse import unquote as _unquote
+
+    searched_paths: list[str] = []
+    hydrate_filters: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/apirest.php/initSession"):
+            assert request.headers.get("App-Token") == "app-token-x"
+            return httpx.Response(200, json={"session_token": "sess-x"})
+        if path.endswith("/apirest.php/search/Ticket"):
+            searched_paths.append(_unquote(str(request.url)))
+            return httpx.Response(
+                200,
+                json={
+                    "totalcount": 3,
+                    "data": [{"2": 305}, {"2": 301}, {"2": 303}],
+                },
+            )
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        if path.endswith("/api.php/v2.2/Assistance/Ticket"):
+            assert request.headers.get("Authorization", "").startswith("Bearer ")
+            hydrate_filters.append(request.url.params.get("filter", ""))
+            rows = [
+                {
+                    "id": 301,
+                    "name": "Older",
+                    "status": {"id": 1, "name": "Novo"},
+                    "date_mod": "2026-10-01T10:00:00Z",
+                    "team": [{"role": "assigned", "id": 11, "display_name": "Robério"}],
+                },
+                {
+                    "id": 303,
+                    "name": "Middle",
+                    "status": {"id": 2, "name": "Em atendimento"},
+                    "date_mod": "2026-10-02T10:00:00Z",
+                    "team": [{"role": "assigned", "id": 11, "display_name": "Robério"}],
+                },
+                {
+                    "id": 305,
+                    "name": "Newest",
+                    "status": {"id": 1, "name": "Novo"},
+                    "date_mod": "2026-10-03T10:00:00Z",
+                    "team": [{"role": "assigned", "id": 11, "display_name": "Robério"}],
+                },
+            ]
+            # Hydration serves id:asc; 303 is deliberately dropped to prove ACL.
+            rows = [row for row in rows if row["id"] != 303]
+            return httpx.Response(200, json={"results": rows})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    page = client.list_tickets(
+        "oauth-access",
+        build_ticket_list_query(assignee_id=11, status="open", sort="updated_at:desc"),
+    )
+    assert searched_paths, "legacy search was not used"
+    url = searched_paths[0]
+    assert "criteria[0][field]=5" in url          # GLPI: 5 = Technician (assigned)
+    assert "criteria[0][value]=11" in url
+    assert "criteria[1][field]=12" in url          # GLPI: 12 = Status
+    assert "sort=19" in url and "order=DESC" in url  # 19 = date_mod
+    assert hydrate_filters == ["is_deleted==false;id=in=(305,301,303)"]
+    assert [item.id for item in page.items] == [305, 301]  # search order kept, 303 dropped
+
+
+def test_assignee_filter_fails_closed_when_legacy_disabled():
+    """Legacy technical search unavailable must surface a typed error —
+    never a silent empty page."""
+    from helpdesk_app.domain.errors import GlpiFeatureDisabled
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(lambda request: httpx.Response(404)),
+    )
+    with pytest.raises(GlpiFeatureDisabled):
+        client.list_tickets("oauth-access", build_ticket_list_query(assignee_id=11))
+
+
+def test_assignee_filter_empty_candidates_returns_empty_page():
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-x"})
+        if path.endswith("/apirest.php/search/Ticket"):
+            return httpx.Response(200, json={"totalcount": 0, "data": []})
+        if path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        if "/Assistance/Ticket" in path:
+            raise AssertionError("hydration must be skipped without candidates")
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    page = client.list_tickets("oauth-access", build_ticket_list_query(assignee_id=77))
+    assert page.items == ()
+    assert page.has_more is False

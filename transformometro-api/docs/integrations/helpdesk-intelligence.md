@@ -153,3 +153,44 @@ MCP + GPT surfaces; `glpi_link_required` and 403 handled typed.
 - bounded timeout, no token logging, no raw payload logging
 - knowledge visibility ≠ access authorization
 - no direct GLPI access, no Helpdesk DB access, no ticket cache
+
+## 16. Assignee Filter Corrective V1 — evidence
+
+Baseline defect (runtime, env with legacy search enabled): identity resolved
+(Robério Oliveira, `inovacao@delpi.com.br`, GLPI assignable id 11); filtered
+`tickets?assignee_id=11&sort=updated_at:desc` → `items=[]`; unfiltered listing
+from the same GLPI returned tickets with `assigned_user_id=11` (e.g. #1204,
+#1222, #1153, #1156, #1128). UNFILTERED TRUTH CONTAINS ASSIGNEE ∧ FILTERED
+QUERY DOES NOT → defect proven, owner = Helpdesk BFF.
+
+Root cause (PROVEN against GLPI 11 canonical source
+`CommonITILObject::getSearchOptionsMain()` / `getSearchOptionsActors()`):
+legacy Ticket search option `12` is `glpi_tickets.status` (Status); option `5`
+is the assigned technician (`glpi_tickets_users` join, `type=ASSIGN`). The BFF
+had the two ids swapped (`_FIELD_STATUS=5`, `_FIELD_ASSIGN=12`), so
+`assignee_id=11` produced `criteria[field=12][equals][11]` = "status equals 11"
+→ always empty.
+
+Fix (smallest diff, owner-side only):
+`helpdesk-api/helpdesk_app/infrastructure/glpi/legacy_ticket_search.py` —
+`_FIELD_STATUS` default `5→12`, `_FIELD_ASSIGN` default `12→5`; env overrides
+`GLPI_LEGACY_TICKET_SEARCH_{STATUS,ASSIGN}_FIELD` kept. Zero Transformômetro
+code change; `assignee_id` public contract unchanged.
+
+Security invariants preserved: legacy search only discovers ids; OAuth HLAPI
+hydration remains the ACL gate (candidate id not readable by the subject is
+dropped); fail-closed — legacy unavailable → typed `glpi_feature_disabled`,
+never false empty; no service-account impersonation; no TÉO-side filtering.
+
+Tests (venv, 146/146 BFF suite): canonical field ids (assign=5, status=12),
+`equals` searchtype, `updated_at:desc` → sort 19 DESC, page/page_size+1
+`has_more`, combined `assignee+status+q`, order preservation after hydration,
+ACL drop of unreadable ids, `GlpiFeatureDisabled` when legacy off, empty
+candidates → empty page without hydration. Transformômetro `test_teo_helpdesk_read`: 35/35.
+
+Runtime after fix: deployed BFF emits
+`criteria[0][field]=5[value=<id>] … sort=19 order=DESC`.
+Live filtered-data re-verification runs in the env where
+`GLPI_LEGACY_UPLOAD_ENABLED=true` (local dev keeps legacy off → typed
+`glpi_feature_disabled`, correct). MCP 22→22; GPT Actions 20→20; no OpenAPI
+change.

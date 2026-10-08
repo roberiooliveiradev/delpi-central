@@ -23,16 +23,29 @@ def test_needs_legacy_when_assignee_or_assigned_sort():
 
 
 def test_build_legacy_search_path_includes_assign_field():
+    # GLPI canonical search option: 5 = Technician (assigned),
+    # glpi_tickets_users join type=ASSIGN (CommonITILObject::getSearchOptionsActors).
     path = build_legacy_ticket_search_path_from_parts(assignee_id=22, page=1, page_size=20)
     assert path.startswith("/apirest.php/search/Ticket?")
-    assert "criteria[0][field]=12" in path or "criteria%5B0%5D%5Bfield%5D=12" in path
+    assert "criteria[0][field]=5" in path or "criteria%5B0%5D%5Bfield%5D=5" in path
+    assert "criteria[0][searchtype]=equals" in path or "criteria%5B0%5D%5Bsearchtype%5D=equals" in path
     assert "22" in path
     assert "forcedisplay" in path
 
 
+def test_build_legacy_search_uses_canonical_status_field():
+    # GLPI canonical search option: 12 = glpi_tickets.status
+    # (CommonITILObject::getSearchOptionsMain).
+    path = build_legacy_ticket_search_path_from_parts(assignee_id=22, status="open")
+    encoded = path.replace("%5B", "[").replace("%5D", "]")
+    assert "criteria[0][field]=5" in encoded  # assignee
+    assert "criteria[1][field]=12" in encoded  # status group first criterion
+    assert "criteria[1][searchtype]=equals" in encoded
+
+
 def test_build_legacy_search_sort_assigned():
     path = build_legacy_ticket_search_path_from_parts(sort="assigned:asc")
-    assert "sort=12" in path or "sort=12" in path.replace("%3D", "=")
+    assert "sort=5" in path or "sort=5" in path.replace("%3D", "=")
     assert "ASC" in path
 
 

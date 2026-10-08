@@ -24,6 +24,7 @@ Defina no ambiente do Compose. Não versione segredo.
 | `GLPI_LEGACY_USER_TOKEN` | User-Token do usuário técnico (`minha-delpi-upload`, perfil Technician) |
 | `GLPI_ASSIGNEE_PROFILE_IDS` | CSV de `profiles_id` GLPI atribuíveis como técnico (default `6` = Technician). Resolução: HLAPI Profile→User → legado Profile_User → `search/User` field 20 (necessário quando o user_token técnico recebe 403 em Profile_User). |
 | `GLPI_LEGACY_MAX_UPLOAD_BYTES` | teto do multipart (default `20971520`) |
+| `GLPI_LEGACY_TICKET_SEARCH_*_FIELD` | overrides dos search-option ids do Search/Ticket clássico. Defaults canônicos GLPI 10/11: assignee `5` (Technician, `glpi_tickets_users` type=ASSIGN), status `12`, categoria `7`, urgência `10`, datas `15/19/17/16`. Só ajustar com `listSearchOptions/Ticket` real como evidência |
 
 Gere a chave de cifra com `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` no host, e coloque o valor só no `.env` da infra.
 

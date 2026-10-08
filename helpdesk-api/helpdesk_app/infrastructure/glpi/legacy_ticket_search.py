@@ -18,12 +18,14 @@ from helpdesk_app.domain.errors import GlpiValidation
 from helpdesk_app.domain.models import TicketListQuery
 
 # Field ids — GLPI 10/11 Ticket search options (override via env if drift).
+# Canonical ids proven against GLPI 11 CommonITILObject::getSearchOptionsMain()
+# and getSearchOptionsActors(): 5=Technician (assigned), 12=Status.
 _FIELD_ID = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_ID_FIELD", "2") or "2")
 _FIELD_NAME = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_NAME_FIELD", "1") or "1")
-_FIELD_STATUS = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_STATUS_FIELD", "5") or "5")
+_FIELD_STATUS = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_STATUS_FIELD", "12") or "12")
 _FIELD_CATEGORY = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_CATEGORY_FIELD", "7") or "7")
 _FIELD_URGENCY = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_URGENCY_FIELD", "10") or "10")
-_FIELD_ASSIGN = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_ASSIGN_FIELD", "12") or "12")
+_FIELD_ASSIGN = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_ASSIGN_FIELD", "5") or "5")
 _FIELD_DATE_OPEN = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_DATE_OPEN_FIELD", "15") or "15")
 _FIELD_DATE_MOD = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_DATE_MOD_FIELD", "19") or "19")
 _FIELD_DATE_SOLVE = int(os.getenv("GLPI_LEGACY_TICKET_SEARCH_DATE_SOLVE_FIELD", "17") or "17")
