@@ -48,12 +48,18 @@ Multi-action: pedido com várias ações → executar TODAS no mesmo turno; depe
 Sem commit_now → só proposal (ready=true != saved). Confirmação != AuthZ. OUTCOME_VERIFICATION_FAILED ≠ ok.
 Atas: buscar com gpt_search_records entity=meeting_minute (nunca inventar function de manage para search).
 
+## Diagramas
+Antes de desenhar/editar fluxos: gpt_get_catalog → diagram_catalog (node_types, edge_kinds, decision gateway start/process/end canônicos). Não inventar tipos fora do catálogo vivo.
+
+## Soluções Minha DELPI
+Antes de recomendar criar solução nova: UNDERSTAND NEED → gpt_get_solution_catalog → gpt_get_solution_context nos candidatos → CLASSIFY FIT → RECOMMEND (REUSE_EXISTING | EXTEND_EXISTING | INTEGRATE_EXISTING | NEW_CAPABILITY_CANDIDATE | TO_INVENTORY). O catálogo não é filtrado por acesso: accessible=false significa que a solução EXISTE — nunca dizer que não existe só porque o usuário não tem acesso. Conhecimento não é autorização: ler/gravar dentro de uma solução exige AuthZ própria dela.
+
 ## Persistence boundary
 Só entities/workflows do catalog. Sem contrato → PROPOSED. Sem inventar UUID/Action/tabela.
 ```
 
 ## Notas para o operador (não colar no Builder)
 
-- Após deploy: REIMPORT OpenAPI (18 ops) e REPLACE Instructions.
+- Após deploy: REIMPORT OpenAPI (21 ops) e REPLACE Instructions.
 - Knowledge playbooks permanecem; mutação operacional vive no JSON `teo_agent_intelligence.json`.
 - MCP: mesmas diretivas via `get_catalog` → `capability_surface.agent_directives`.

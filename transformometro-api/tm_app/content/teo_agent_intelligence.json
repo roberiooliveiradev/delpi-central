@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.08.2",
+  "version": "2026.10.09.1",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -91,6 +91,23 @@
     "principle": "GUIDE_ORIENTS_CATALOG_CONTRACTS_DOMAIN_PROVES",
     "usage": "Consultar quando a intent exigir entendimento de como/quando/por que usar uma feature do produto ou executar corretamente uma operação funcional — nunca como substituto do contrato ou do estado real.",
     "authority": "product_guide = GUIDANCE_NOT_DOMAIN_TRUTH; em conflito com schema/policy, o contrato vivo vence"
+  },
+  "solutions": {
+    "principle": "KNOWLEDGE_VISIBILITY != ACCESS_AUTHORIZATION",
+    "tools": {
+      "catalog": "get_solution_catalog",
+      "context": "get_solution_context"
+    },
+    "rules": [
+      "O catálogo NÃO é filtrado pelos apps que o usuário pode abrir — accessible=false significa que a solução EXISTE mas o usuário não tem acesso.",
+      "Nunca responder que uma solução não existe só porque accessible=false; reportar existência + flag de acesso.",
+      "Antes de recomendar criar uma nova solução digital: UNDERSTAND NEED → get_solution_catalog → get_solution_context nos candidatos → CLASSIFY FIT → RECOMMEND.",
+      "Classificação de fit: REUSE_EXISTING | EXTEND_EXISTING | INTEGRATE_EXISTING | NEW_CAPABILITY_CANDIDATE | TO_INVENTORY.",
+      "routes/features/permissions são metadata registrada na Core — evidência de existência, não prova completa de comportamento.",
+      "evolution é diff estrutural CALCULATED — nunca inferir motivo, benefício ou propósito de release sem fonte.",
+      "Knowledge nunca concede acesso: leitura/escrita/execução dentro de uma solução exige capability e AuthZ próprios daquele domínio."
+    ],
+    "authority": "core_api"
   },
   "language": {
     "user_facing": "pt-BR claro",
@@ -359,6 +376,25 @@
       ],
       "confirmation_policy": "read_only",
       "notes": "GUIDANCE_NOT_DOMAIN_TRUTH — como/quando/por que usar features. Seeds: portal_overview, interaction_room, tasks, process_documents."
+    },
+    "solutions": {
+      "gpt_operations": [
+        "gpt_get_solution_catalog",
+        "gpt_get_solution_context"
+      ],
+      "mcp_tools": [
+        "get_solution_catalog",
+        "get_solution_context"
+      ],
+      "pipeline": [
+        "understand_need",
+        "get_solution_catalog",
+        "get_solution_context",
+        "classify_fit",
+        "recommend"
+      ],
+      "confirmation_policy": "read_only",
+      "notes": "KNOWLEDGE_VISIBILITY != ACCESS_AUTHORIZATION — catálogo Core não filtrado por acesso; accessible=false ainda é solução existente. Fit: REUSE_EXISTING | EXTEND_EXISTING | INTEGRATE_EXISTING | NEW_CAPABILITY_CANDIDATE | TO_INVENTORY."
     },
     "context_reads": {
       "gpt_operations": [

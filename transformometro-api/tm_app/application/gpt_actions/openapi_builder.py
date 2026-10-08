@@ -67,6 +67,8 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_catalog",
     "gpt_get_methodology_guide",
     "gpt_get_product_guide",
+    "gpt_get_solution_catalog",
+    "gpt_get_solution_context",
     "gpt_analyze",
     "gpt_search_records",
     "gpt_get_record",
@@ -623,6 +625,54 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "200": _ok_response("Product guide payload"),
                     **_error_responses(),
                 },
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/solutions": {
+            "get": {
+                "operationId": "gpt_get_solution_catalog",
+                "summary": "Minha DELPI solution catalog",
+                "description": (
+                    "Read-only discovery of solutions registered in Core "
+                    "(id, name, description, category, routes, features, "
+                    "permissions, version, accessible). NOT filtered to "
+                    "apps the user can open — accessible=false still means "
+                    "the solution exists. Knowledge never grants access."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": _ok_response("Solution catalog payload"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/solutions/{{solution_id}}": {
+            "get": {
+                "operationId": "gpt_get_solution_context",
+                "summary": "Detail of one registered Minha DELPI solution",
+                "description": (
+                    "Read-only Core metadata for a single solution: identity, "
+                    "routes, features, permissions, dependencies, accessible "
+                    "flag, recent versions, CALCULATED structural evolution. "
+                    "Never plugin domain data."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "solution_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": "Registered plugin/solution id (e.g. tv-dashboard).",
+                    }
+                ],
+                "responses": {
+                    "200": _ok_response("Solution context payload"),
+                    **_error_responses(),
+                },
+                "x-openai-isConsequential": False,
             }
         },
         f"{GPT_ACTIONS_BASE_PATH}/process-context": {

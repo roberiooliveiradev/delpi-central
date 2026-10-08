@@ -114,6 +114,7 @@ class TeoAgentIntelligenceService:
             "write_flow_mcp": doc.get("write_flow_mcp") or {},
             "multi_action": doc.get("multi_action") or {},
             "product_guide": doc.get("product_guide") or {},
+            "solutions": doc.get("solutions") or {},
             "modes": doc.get("modes") or {},
             "epistemology": doc.get("epistemology") or {},
             "discovery": doc.get("discovery") or {},

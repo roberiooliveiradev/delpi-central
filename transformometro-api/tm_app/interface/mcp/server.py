@@ -233,6 +233,39 @@ def create_mcp_server() -> MCPServer:
         return bridge.tool_get_product_guide(topic=topic, section=section)
 
     @mcp.tool(
+        name="get_solution_catalog",
+        title="Get solution catalog",
+        description=(
+            "READ-only discovery of Minha DELPI solutions registered in "
+            "Core — id, name, description, category, routes, features, "
+            "permissions, version, accessible flag. The catalog is NOT "
+            "filtered to apps the user can open: accessible=false still "
+            "means the solution EXISTS. Knowledge never grants access — "
+            "domain reads/writes inside a solution require its own AuthZ."
+        ),
+        annotations=_annotations("get_solution_catalog", "Get solution catalog"),
+        meta=meta,
+    )
+    def get_solution_catalog() -> CallToolResult:
+        return bridge.tool_get_solution_catalog()
+
+    @mcp.tool(
+        name="get_solution_context",
+        title="Get solution context",
+        description=(
+            "READ-only detail of one registered Minha DELPI solution: "
+            "identity, description, routes, features, permissions, "
+            "dependencies, accessible flag, recent versions and "
+            "CALCULATED structural evolution. Core metadata only — never "
+            "plugin domain data."
+        ),
+        annotations=_annotations("get_solution_context", "Get solution context"),
+        meta=meta,
+    )
+    def get_solution_context(solution_id: str) -> CallToolResult:
+        return bridge.tool_get_solution_context(solution_id=solution_id)
+
+    @mcp.tool(
         name="get_process_context",
         title="Get process context",
         description="Aggregated read-only process intelligence context.",

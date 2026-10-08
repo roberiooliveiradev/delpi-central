@@ -431,6 +431,19 @@ def _canonical_catalog() -> dict[str, Any]:
             "operation": "get_product_guide",
         },
         {
+            "id": "solution_catalog",
+            "kind": "analysis",
+            "owner": "core-api",
+            "description": (
+                "Minha DELPI solution catalog — discovery of registered "
+                "apps/plugins via Core /solutions (safe projection). "
+                "KNOWLEDGE VISIBILITY != ACCESS AUTHORIZATION: accessible "
+                "reports effective access, never grants it."
+            ),
+            "read_only": True,
+            "operation": "get_solution_catalog",
+        },
+        {
             "id": "process_timeline",
             "kind": "analysis",
             "owner": "transformometro-api",
@@ -664,6 +677,14 @@ def _canonical_catalog() -> dict[str, Any]:
                     "via": "get_product_guide (READ) — product usage guidance "
                     "from the versioned product_guide_v1 registry; "
                     "GUIDANCE_NOT_DOMAIN_TRUTH, never AuthZ/policy",
+                    "surfaces": ["gpt_actions", "mcp"],
+                },
+                {
+                    "id": "solution_catalog",
+                    "via": "get_solution_catalog + get_solution_context "
+                    "(READ) — Minha DELPI solution discovery via Core "
+                    "/solutions safe projection; accessible flag reports "
+                    "access, knowledge never grants it",
                     "surfaces": ["gpt_actions", "mcp"],
                 },
             ],

@@ -70,6 +70,9 @@ from tm_app.infrastructure.diagnostic_composition import (
 from tm_app.application.gpt_actions.workspace_context_service import (
     WorkspaceContextService,
 )
+from tm_app.application.solutions.solution_catalog_service import (
+    SolutionCatalogService,
+)
 from tm_app.infrastructure.gateways.core_person_profile_gateway import (
     CorePersonProfileGateway,
 )
@@ -103,6 +106,7 @@ _governed = GovernedActionsFacade(orchestrator=_orchestrator, dispatch=_dispatch
 _process_context = ProcessContextService()
 _user_context = UserContextService(person_profile_reader=CorePersonProfileGateway())
 _workspace_context = WorkspaceContextService()
+_solution_catalog = SolutionCatalogService()
 
 _ERROR_KIND_BY_CODE = {
     "unauthenticated": "unauthenticated",
@@ -378,6 +382,42 @@ def tool_get_product_guide(
         return _ok_result(
             data,
             "Guia de uso do produto (orientação — não é fato de domínio nem autorização).",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_get_solution_catalog() -> CallToolResult:
+    """Minha DELPI solution discovery — knowledge, never authorization.
+
+    The catalog is NOT filtered to apps the user can open: a solution
+    with accessible=false still exists and can be recommended for reuse.
+    """
+    try:
+        context = require_mcp_context()
+        if not context.authorization:
+            raise PermissionError("Unauthorized")
+        data = _solution_catalog.get_solution_catalog(context.authorization)
+        return _ok_result(
+            data,
+            "Catálogo de soluções Minha DELPI (conhecimento — não é autorização).",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
+def tool_get_solution_context(solution_id: str) -> CallToolResult:
+    """Detail of one registered solution — Core metadata only."""
+    try:
+        context = require_mcp_context()
+        if not context.authorization:
+            raise PermissionError("Unauthorized")
+        data = _solution_catalog.get_solution_context(
+            context.authorization, solution_id=solution_id
+        )
+        return _ok_result(
+            data,
+            "Contexto da solução (metadados da Core — não é dado de domínio nem autorização).",
         )
     except Exception as exc:
         return handle_tool_error(exc)

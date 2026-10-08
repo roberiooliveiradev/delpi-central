@@ -33,6 +33,10 @@ from tm_app.application.gpt_actions.user_context_service import (
 from tm_app.application.gpt_actions.workspace_context_service import (
     WorkspaceContextService,
 )
+from tm_app.application.solutions.solution_catalog_service import (
+    SolutionCatalogService,
+    SolutionNotFoundError,
+)
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
     resolve_gpt_actions_server_url,
@@ -66,6 +70,7 @@ _user_context = UserContextService(
     person_profile_reader=CorePersonProfileGateway()
 )
 _workspace_context = WorkspaceContextService()
+_solution_catalog = SolutionCatalogService()
 
 # LEGACY_TRANSITIONAL: still mounted for migration, excluded from Builder OpenAPI.
 LEGACY_DIRECT_WRITE_OPERATION_IDS = frozenset(
@@ -385,6 +390,57 @@ def gpt_get_product_guide(
     try:
         data = _dispatch.get_product_guide(request, topic=topic, section=section)
         return ok(data, "Guia de uso do produto (orientação — não é fato de domínio nem autorização).")
+    except Exception as exc:
+        return _handle(exc)
+
+
+def _bearer_or_fail(request: Request):
+    if getattr(request.state, "user", None) is None:
+        return fail("Usuário não autenticado.", 401, {"error_kind": "authn"})
+    authorization = str(request.headers.get("Authorization") or "").strip()
+    if not authorization:
+        return fail("Usuário não autenticado.", 401, {"error_kind": "authn"})
+    return authorization
+
+
+@router.get(
+    "/solutions",
+    operation_id="gpt_get_solution_catalog",
+    summary="Minha DELPI solution catalog (knowledge, not authorization)",
+)
+def gpt_get_solution_catalog(request: Request):
+    try:
+        authorization = _bearer_or_fail(request)
+        if not isinstance(authorization, str):
+            return authorization
+        data = _solution_catalog.get_solution_catalog(authorization)
+        return ok(
+            data,
+            "Catálogo de soluções Minha DELPI (conhecimento — não é autorização).",
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/solutions/{solution_id}",
+    operation_id="gpt_get_solution_context",
+    summary="Detail of one registered Minha DELPI solution",
+)
+def gpt_get_solution_context(request: Request, solution_id: str):
+    try:
+        authorization = _bearer_or_fail(request)
+        if not isinstance(authorization, str):
+            return authorization
+        data = _solution_catalog.get_solution_context(
+            authorization, solution_id=solution_id
+        )
+        return ok(
+            data,
+            "Contexto da solução (metadados da Core — não é dado de domínio nem autorização).",
+        )
+    except SolutionNotFoundError as exc:
+        return fail(str(exc.args[0] if exc.args else exc), 404, {"error_kind": "not_found"})
     except Exception as exc:
         return _handle(exc)
 

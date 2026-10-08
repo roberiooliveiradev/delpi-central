@@ -18,6 +18,7 @@ from app.interfaces.http.health_controller import health_bp
 from app.interfaces.http.rbac_controller import rbac_bp
 from app.interfaces.http.apps_controller import admin_apps_bp
 from app.interfaces.http.me_controller import me_bp
+from app.interfaces.http.solutions_controller import solutions_bp
 from app.interfaces.http.workspace_context_controller import workspace_context_bp
 from app.interfaces.http.notifications_controller import (
     admin_notifications_bp,
@@ -99,6 +100,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(rbac_bp)
     app.register_blueprint(admin_apps_bp)
     app.register_blueprint(me_bp)
+    app.register_blueprint(solutions_bp)
     app.register_blueprint(workspace_context_bp)
     app.register_blueprint(admin_notifications_bp)
     app.register_blueprint(integrations_notifications_bp)
