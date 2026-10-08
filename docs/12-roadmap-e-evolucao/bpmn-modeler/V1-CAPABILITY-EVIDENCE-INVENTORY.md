@@ -18,7 +18,7 @@
 
 `Modeler` carrega 36 módulos (bundle auditado `node_modules/bpmn-js@18.30.1/lib/Modeler.js`): Palette, ContextPad, Create, Connect, Move, Resize, Snapping, **GridSnapping**, **CopyPaste**, **Search (searchPad + BpmnSearchProvider)**, LabelEditing (direct editing), **AlignElements**, **DistributeElements**, EditorActions, Keyboard (+`BpmnKeyboardBindings`), KeyboardMove(Selection), InteractionEvents, ReplacePreview, Outline, Bendpoints, MoveCanvas, ZoomScroll, LassoTool/SpaceTool/HandTool/GlobalConnect (via interaction modules), AutoPlace, AutoResize, AutoScroll, ModelingFeedback, KeepSelectionVisible.
 
-`additionalModules` do produto: `ptBrTranslateModule`, `BpmnPropertiesPanelModule`, `BpmnPropertiesProviderModule`, `propertiesPanelModule` (AdvancedIdProvider + PanelChromePtBr). **Sem provider custom de palette, context pad ou replace** — toda a superfície vendor está exposta.
+`additionalModules` do produto: `ptBrTranslateModule`, `BpmnPropertiesPanelModule`, `BpmnPropertiesProviderModule`, `propertiesPanelModule` (AdvancedIdProvider + PanelChromePtBr + **BpmnCorePropsProvider** — provider de produto BPMN-core para `calledElement`/`conditionExpression`/`defaultFlow`, command-stack backed — WAVE E). **Sem provider custom de palette, context pad ou replace** — toda a superfície vendor está exposta.
 
 ### Vendor palette (create entries)
 
@@ -52,7 +52,7 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 | Script Task | P | V | P | P | P | PARTIAL | P | P | P | P | P | code | **PROVEN (path)** | CE-ACT-02 |
 | Send Task | P | V | P | P | P | PARTIAL | P | P | P | P | P | code | **PROVEN (path)** | CE-ACT-02 |
 | Receive Task | P | V | P | P | P | PARTIAL | P | P | P | P | P | code | **PROVEN (path)** | CE-ACT-02 |
-| Call Activity | P | V | P | P | P | PARTIAL (calledElement ausente → EG-14/WAVE E) | P | P | P | P | P | code | **PROVEN (path)** | CE-ACT-03: replace→`bpmn:callActivity`→save/rb→reload |
+| Call Activity | P | V | P | P | P | P (calledElement PROVEN — WAVE E, PROP-CORE-01) | P | P | P | P | P | code | **PROVEN (path)** | CE-ACT-03: replace→`bpmn:callActivity`→save/rb→reload |
 | SubProcess expanded | P | P | P | P | P | PARTIAL | P | P | P | P | P | P | **PROVEN (path)** | CE-ACT-04: palette `create.subprocess-expanded`→save/rb→reload; HIER-02 |
 | SubProcess collapsed | P | P | P | P | P | PARTIAL | P | P | P | P | P | P | **PROVEN (path)** | CE-ACT-04: replace→collapsed; HIER-04 `isExpanded` |
 | Ad-hoc SubProcess (preserve-only) | P | V | P | V(exposto!) | V | V | P | P | P | P | — | code | **PROVEN (preserve path)** | FX_PRESERVE_001 + RT-PRES-01 (import→serialize→reimport→compare) backend; replace expõe criação (gap) |
@@ -84,9 +84,9 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 
 | Gateway | Import/Render/Preserve | Create | Edit | Props | Validate | Layout | Round-trip | Status | Evidência |
 |---|---|---|---|---|---|---|---|---|---|
-| Exclusive | P | PARTIAL | P | PARTIAL(cond/default ausentes da surface → WAVE E) | P | P | P | **PROVEN (path)** | CE-GW-01 + >6 specs E2E; FX_GW_002 default+condition (XML backend); replace popup E2E |
+| Exclusive | P | PARTIAL | P | P (cond/default PROVEN — WAVE E, PROP-FLOW-01..06) | P | P | P | **PROVEN (path)** | CE-GW-01 + >6 specs E2E; FX_GW_002 default+condition (XML backend); replace popup E2E |
 | Parallel | P | P | P | — | P | code | P | **PROVEN (path)** | CE-GW-02: replace→connect→`bpmn:parallelGateway`→save/rb |
-| Inclusive | P | P | P | PARTIAL(cond/default ausentes→WAVE E) | P | code | P | **PROVEN (path)** | CE-GW-03 |
+| Inclusive | P | P | P | P (cond/default PROVEN — WAVE E, PROP-FLOW-01..06) | P | code | P | **PROVEN (path)** | CE-GW-03 |
 | Event-Based | P | P | P | — | P | code | P | **PROVEN (path)** | CE-GW-04/05: replace+append catch; conditional append DENY |
 | Complex (preserve) | P(backend)+V(render→P E2E RT-PRES-01) | V(exposto!) | — | — | P | code | P | **PROVEN (preserve path)** | FX_PRESERVE_001 + RT-PRES-01 |
 
@@ -94,7 +94,7 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 
 | Construct | Create | Edit/Reconnect | Props | Validate | Layout | Round-trip | Status | Evidência |
 |---|---|---|---|---|---|---|---|---|
-| Sequence Flow | P | P(reconnect V) | PARTIAL(cond/default entries ausentes da surface → WAVE E) | P | P | P | **PROVEN (path)** | append E2E; FX_GW_002 (XML backend); RTM-04 invalid connect; STRUCT-010..012 |
+| Sequence Flow | P | P(reconnect V) | P (cond/default PROVEN — WAVE E, PROP-FLOW-01..06) | P | P | P | **PROVEN (path)** | append E2E; FX_GW_002 (XML backend); RTM-04 invalid connect; STRUCT-010..012 |
 | Message Flow | P | — | — | P | P | P | **PROVEN (path)** | CE-COL-03: tA→tB cross-pool→`<bpmn:messageFlow>`; FX_VALID_002 |
 | Association | P | — | — | P(STRUCT-017) | code | P | **PROVEN (path)** | CE-ART-03: task→annotation→`<bpmn:association>` |
 | Data Association | P | — | — | P(STRUCT-018) | code | P | **PROVEN (path)** | CE-ART-02: output+input associations→QName+reload |
@@ -128,15 +128,15 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 | name | IN_V1 | vendor + direct edit + panel | AUTO-08 (rename→autosave), E2E-40 | **PROVEN** |
 | BPMN id (edit) | entregue (G0) | AdvancedIdProvider + vendor stack | IDG-01..05 E2E | **PROVEN** |
 | processId/processRef | IN_V1 | vendor entry realocado | IDG-05 E2E | **PROVEN** |
-| documentation | IN_V1 | vendor entry exposta via allowlist | edit persist sem teste dedicado | **PARTIAL** (WAVE E) |
-| conditionExpression | IN_V1 | **ausente na surface `bpmn` carregada** — provider não emite a entry (vive em providers Zeebe/Camunda não instalados) | — | **IMPLEMENTATION_GAP** (WAVE E, owner 03) |
-| default flow | IN_V1 | **ausente na surface `bpmn` carregada** — idem | — | **IMPLEMENTATION_GAP** (WAVE E, owner 03) |
+| documentation | IN_V1 | vendor entry exposta via allowlist | PROP-DOC-01/02 E2E (task+process → save/rb → reload) | **PROVEN** (WAVE E) |
+| conditionExpression | IN_V1 | **BpmnCorePropsProvider** (produto) — `bpmn:FormalExpression` via command stack; somente fonte elegível (Activity/XOR/OR), exclusivo com default | PROP-FLOW-01/03 E2E (set/clear→rb→reload) | **PROVEN** (WAVE E) |
+| default flow | IN_V1 | **BpmnCorePropsProvider** (produto) — `source.default` IDREF; exclusividade por source, exclusivo com condition | PROP-FLOW-02/04/05 E2E (set/switch/clear/delete sem ref pendurada) | **PROVEN** (WAVE E) |
 | event definition swap | IN_V1 | replace menu | CE-EVT-01..05 (defs por posição) | **PROVEN** |
-| event definition fields | IN_V1 | timer type/value entries | CE-EVT-06 (timer PROVEN); message/error/signal/escalation/link refs expostos sem teste dedicado | **PARTIAL** (refs → WAVE E) |
+| event definition fields | IN_V1 | timer type/value + message/signal/error/escalation/link ref entries | CE-EVT-06 (timer) + PROP-EVT-01..05 (root definition + ref → rb → reload) | **PROVEN** (WAVE E) |
 | lane name | IN_V1 | direct edit | CE-COL-05 (rename + read-back) | **PROVEN** |
 | task type | IN_V1 | replace menu vendor | CE-ACT-02 (7 typed tasks com QName) | **PROVEN** |
 | subprocess expanded/collapsed | IN_V1 | palette + replace | CE-ACT-04 create path; HIER-04 preserva estado | **PROVEN** |
-| calledElement | IN_V1 | **ausente na surface `bpmn` carregada** — provider não emite a entry | — | **IMPLEMENTATION_GAP** (WAVE E, owner 03) |
+| calledElement | IN_V1 | **BpmnCorePropsProvider** (produto) — `CallActivity.calledElement`, sem binding/version (engine) | PROP-CORE-01 E2E (edit→undo/redo→rb→reload) | **PROVEN** (WAVE E) |
 | engine binding fields | OUT_OF_V1 | provider genérico Bpmn (sem camunda); bundle tem MultiInstance/VersionTag/isExecutable | — | **TO_INVENTORY** (exposição exata em runtime) |
 
 ## 4. Productivity matrix
@@ -174,7 +174,7 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 
 ## 6. VENDOR-ONLY capabilities (não promover a produto)
 
-Pós-G2A/G3, o vendor-only residual ativo sem governança de produto é apenas: align/distribute · space-tool · hand-tool · global-connect · keyboard-move (WAVE F — decisão de exposição pendente) · documentation edit · CandidateUsers/engine providers (**TO_INVENTORY** se carregados) · ~~conditionExpression UI · defaultFlow UI · calledElement~~ (código vendor existe nos providers Zeebe/Camunda **não carregados** — ausentes da surface `bpmn` ativa → IMPLEMENTATION_GAP/WAVE E).
+Pós-G2A/G3, o vendor-only residual ativo sem governança de produto é apenas: align/distribute · space-tool · hand-tool · global-connect · keyboard-move (WAVE F — decisão de exposição pendente) · CandidateUsers/engine providers (**TO_INVENTORY** se carregados) · ~~conditionExpression UI · defaultFlow UI · calledElement~~ → **CLOSED (WAVE E)** — implementados pelo provider de produto `BpmnCorePropsProvider` (BPMN core only, command stack, allowlist do editingProfile); evidência PROP-CORE-01 + PROP-FLOW-01..06.
 
 Promovidos a produto/governados (não mais vendor-only): copy/paste/cut + duplicate (canCopyElements governado) · multi-select/lasso/bulk ops · replace-menu/context-pad/palette entries (fail-closed pelo editingProfile) · typed task + event def + gateway creates (replace governado) · Ctrl+F searchPad · shortcuts · palette search semântica (projeção do profile). Preserve-only (complex gateway, ad-hoc/transaction/event-subprocess, MultiInstance) permanecem DENY — não são "expostos", são bloqueados pela governança.
 
@@ -204,7 +204,7 @@ Promovidos a produto/governados (não mais vendor-only): copy/paste/cut + duplic
 | EG-11 | TextAnnotation/Association/DataAssociation create | **CLOSED (G2B)** — CE-ART-02/03: dataOutput+dataInputAssociation + textAnnotation editada + `<bpmn:association>` read-back/reload | 03 | P2 | G3→G2B |
 | EG-12 | Preserve-only render/round-trip por construct | **CLOSED (G4)** — RT-PRES-01..04: render check (`djs-element` por id) + serialize→reimport→compare por construct (activities/events/data preserve-only) + safe-edit isolation | 02+06 | P1 | G4 |
 | EG-13 | Shortcuts vendor (Del, R, E, S, L, H, C, zoom) | **CLOSED (G3)** — PROD-KEY-01..06: Ctrl+S flush, E direct editing, R replace menu, Backspace/Delete, context pad actions governadas, replace morph; matriz shortcut→efeito executada (§CURRENT-STATE 14a); foco restaurado pós-drag via `canvas.restoreFocus` | 03+06 | P2 | **G3 EXECUTED** |
-| EG-14 | Engine fields no panel (MultiInstance/VersionTag/demais engine fields) + **panel fields IN_V1 ausentes: `calledElement`/`conditionExpression`/`defaultFlow`** | bundle tem; exposição runtime TI | 03+02 | P2 | G3/WAVE E. NOTA G2A: `isExecutable` **resolvido** — BPMN normativo (não engine-specific); edição intencionalmente não exposta por decisão de produto; preservação de import **PROVEN** (GOV-13). NOTA G2B: `calledElement`/`conditionExpression`/`defaultFlow` reclassificados VENDOR_ONLY→**IMPLEMENTATION_GAP** (provider `bpmn` não emite as entries; código vive em providers Zeebe/Camunda não carregados) |
+| EG-14 | ~~panel fields IN_V1 ausentes: `calledElement`/`conditionExpression`/`defaultFlow`~~ → **CLOSED (WAVE E, BPMN-core)** — `BpmnCorePropsProvider` de produto cobre os 3 (command stack, contexto válido, exclusão mútua cond/default, sem ref pendurada em delete); evidência PROP-CORE-01 + PROP-FLOW-01..06 + PROP-DOC-01/02 + PROP-EVT-01..05 (14 testes E2E, workers=2). NOTA G2A: `isExecutable` **resolvido** — BPMN normativo (não engine-specific); edição intencionalmente não exposta por decisão de produto; preservação de import **PROVEN** (GOV-13). NOTA G2B: `calledElement`/`conditionExpression`/`defaultFlow` reclassificados VENDOR_ONLY→~~IMPLEMENTATION_GAP~~ **PROVEN (WAVE E)**. Residual decomposto: **ENGINE PROPERTY EXPOSURE** (MultiInstance/VersionTag/CandidateUsers/binding-version etc.) = **TO_INVENTORY / WAVE F** — providers Camunda/Zeebe não instalados por decisão de produto | 03+02 | P2 | WAVE E **EXECUTED** |
 
 ### TARGET GAPS (scope congelado não inventariado)
 
@@ -229,7 +229,7 @@ Promovidos a produto/governados (não mais vendor-only): copy/paste/cut + duplic
 - **Connecting:** 3 PROVEN (SequenceFlow, MessageFlow, Association) + DataOutput/InputAssociation PROVEN (CE-ART-02).
 - **Collaboration:** PROVEN create path — participant expanded+processRef+laneSet, lanes insert/divide/nested/rename/move, black-box pool, 2 pools + MessageFlow (CE-COL-01..05).
 - **Data/Artifacts:** PROVEN — DataObject, DataStoreReference, TextAnnotation+texto, Group, Association, DataAssociation (CE-ART-01..04).
-- **Properties breadth:** PARTIAL — timer type/value, name, lane name, task type, annotation text PROVEN; event refs expostos sem teste dedicado; `calledElement`/`conditionExpression`/`defaultFlow` ausentes da surface `bpmn` carregada → IMPLEMENTATION_GAP (WAVE E).
+- **Properties breadth:** PROVEN (WAVE E) — name, id, processId/processRef, lane name, task type, subprocess expanded/collapsed, annotation text, timer type/value, documentation (task+process), calledElement, conditionExpression (set/clear/contexto válido), defaultFlow (exclusividade/clear/delete sem ref pendurada), messageRef+name, signalRef+name, errorRef+name+code, escalationRef+name+code, linkName — evidência `properties-{core,flows,events}.spec.ts` (14 testes E2E, workers=2) + CE-EVT-06.
 - **Productivity:** PROVEN (G3) — clipboard governado, multi-select/lasso/select-all/deselect, bulk move/delete, Ctrl+F searchPad, palette search implementada (IG-1), resize funcional com fixed-size blocked, shortcuts executados, snap/grid grid 10. Restam `TO_INVENTORY` não-semânticos: align/distribute/space/hand/global-connect (WAVE F).
 - **Validation:** PROVEN (47/47 regras) · per-construct semantic PARTIAL.
 - **Round-trip:** artifact-level PROVEN · per-construct PROVEN (G4 — semântica + BPMN-DI + extensions/unknown por construct; safe-edit isolation; G4-EXT-1 CLOSED — repair + fail-closed gate).
@@ -238,10 +238,10 @@ Promovidos a produto/governados (não mais vendor-only): copy/paste/cut + duplic
 ## 9. Candidate next waves (input para 00 — não é decisão)
 
 - **WAVE A — Profile Governance:** provider de restrição palette/context-pad/replace/panel para o profile CE; bloquear/excluir preserve-only+engine constructs da criação. (IG-2, EG-14) — P1, owners 03+02. → **EXECUTED (G2A, PASS)** — parte creation/replacement fechada; exposição residual de engine fields no panel = TO_INVENTORY (EG-14 permanece para WAVE E).
-- **WAVE B — CREATE_EDIT Evidence Closure:** → **EXECUTED (G2B, PASS)** — 24 testes E2E `create-edit-*.spec.ts` (workers=2, baseline determinístico) provam create→configure→connect→save→authoritative read-back→reload por construct CE. Construct paths = PROVEN; properties breadth = PARTIAL. (EG-3..7, EG-11, TG-1, TG-3 fechados).
+- **WAVE B — CREATE_EDIT Evidence Closure:** → **EXECUTED (G2B, PASS)** — 24 testes E2E `create-edit-*.spec.ts` (workers=2, baseline determinístico) provam create→configure→connect→save→authoritative read-back→reload por construct CE. Construct paths = PROVEN; properties breadth = ~~PARTIAL~~ PROVEN (WAVE E). (EG-3..7, EG-11, TG-1, TG-3 fechados).
 - **WAVE C — Round-trip & Preserve Evidence:** suíte export→reimport→compare por construct + corpus preserve-only. (EG-8, EG-12, TG-2) — P1, owners 02+06. → **EXECUTED (G4, PASS/CLOSED)** — 16 testes E2E `roundtrip-*.spec.ts` (workers=2, determinístico) + 14 adapter-level `roundtrip-adapter.test.ts` + 7 `extensionPreservation.test.ts`; comparador estrutural `e2e/rt-compare.ts`; corpus `e2e/fixtures/roundtrip/` XSD-validado (13 fixtures); transforms vendor classificados; G4-EXT-1 resolvido sem normalização de perda — `definition` reparado, attr same-ns fail-closed read-only.
 - **WAVE D — Productivity:** → **EXECUTED (G3, PASS/CLOSED)** — 41 testes E2E `productivity-{clipboard,selection,search,resize,shortcuts}.spec.ts` (workers=2, determinístico); palette search = projeção semântica CREATE_EDIT do editingProfile (G3-PAL-1: semantic routing, misrouting=0); defeito de foco pós-drag corrigido no adapter (`drag.ended`/`mouseup` → `canvas.restoreFocus`); UNCONTROLLED OUT-OF-PROFILE CREATE PATHS via paste = 0. (EG-1,2,9,10,13, IG-1 fechados).
-- **WAVE E — Properties Evidence:** doc/condition/default/event-fields/calledElement UI tests. — P2, owner 03+06.
+- **WAVE E — Properties Breadth:** → **EXECUTED (PASS)** — `BpmnCorePropsProvider` de produto (BPMN core only, sem providers Camunda/Zeebe) cobre `calledElement`/`conditionExpression`/`defaultFlow` via command stack com contexto válido e exclusão mútua; 14 testes E2E `properties-{core,flows,events}.spec.ts` (workers=2) provam UI→command→autosave→canonical XML→read-back→reload; event refs (message/signal/error/escalation/link) + documentation fechados; timer regressão verde (CE-EVT-06). Engine fields (MultiInstance/VersionTag/CandidateUsers/binding) = TO_INVENTORY → WAVE F. (EG-14 BPMN-core fechado).
 - **WAVE F — Vendor Exposure Decision:** align/distribute/space/hand/global-connect ativos mas FUTURE — decidir manter/desativar/documentar. — P3, owner 00+03.
 
 Ordem sugerida: A → B → C → D/E → F. **FINAL PRIORITY OWNER: 00 — Arquitetura & Coordenação.**

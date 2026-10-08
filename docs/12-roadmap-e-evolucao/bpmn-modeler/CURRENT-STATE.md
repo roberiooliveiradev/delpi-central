@@ -158,7 +158,7 @@ Status de auditoria G0: `TO_INVENTORY` (a matriz detalhada será produzida no G1
 
 Todos os constructs do profile `CREATE_EDIT` têm o **caminho estrutural PROVEN** por execução real: 24 testes E2E em `e2e/specs/create-edit-{activities,gateways,events,collaboration,artifacts}.spec.ts` (executados com `workers=2`, baseline determinístico), cada um percorrendo `create → configure basic shape/type → connect (quando aplicável) → autosave → authoritative read-back (GET working-copy) → reload → verify QName + render`. Helpers compartilhados em `e2e/ce-helpers.ts` (incl. `fetchWorkingCopyXml`, `attachBoundary`, `newShapeId`/`newConnectionId` por diff de DOM).
 
-A **breadth de properties** do profile permanece **PARTIAL**: `timerEventDefinitionType`/`timerEventDefinitionValue` PROVEN (CE-EVT-06); `name`/`lane name`/`task type`/annotation text PROVEN; event refs (`messageRef`/`errorRef`/`signalRef`/`escalationRef`) expostos mas sem evidência dedicada; `calledElement`, `conditionExpression`, `defaultFlow` **ausentes da surface `bpmn` carregada** (IMPLEMENTATION_GAP → WAVE E).
+A **breadth de properties** do profile é **PROVEN (WAVE E)**: `timerEventDefinitionType`/`timerEventDefinitionValue` (CE-EVT-06); `name`/`lane name`/`task type`/annotation text; `documentation` task+process (PROP-DOC-01/02); event refs `messageRef`/`signalRef`/`errorRef`/`escalationRef`/`linkName` com root definitions canônicas (PROP-EVT-01..05); `calledElement`, `conditionExpression`, `defaultFlow` implementados pelo provider de produto `BpmnCorePropsProvider` (§13b — PROP-CORE-01, PROP-FLOW-01..06).
 
 | Família | Spec | Prova |
 |---|---|---|
@@ -168,7 +168,19 @@ A **breadth de properties** do profile permanece **PARTIAL**: `timerEventDefinit
 | Collaboration | CE-COL-01..05 | participant expanded (`processRef`+`laneSet`), lanes insert/divide/nested/rename/move (`childLaneSet`+`flowNodeRef`), black-box pool, 2 pools + MessageFlow |
 | Artifacts | CE-ART-01..04 | DataObject, DataStoreReference, TextAnnotation+texto, Group, Association, dataInput+dataOutputAssociation |
 
-Gaps residuais desta wave: `calledElement`, `conditionExpression`, `defaultFlow` **não existem na surface do provider `bpmn` carregado** (vivem nos providers Zeebe/Camunda não instalados) — classificados como `IMPLEMENTATION_GAP` na properties matrix (WAVE E, owner 03), não como falha de governance nem como VENDOR_ONLY.
+~~Gaps residuais desta wave: `calledElement`, `conditionExpression`, `defaultFlow`~~ → **CLOSED (WAVE E, §13b)** — os três passaram de `IMPLEMENTATION_GAP` para `PROVEN` via `BpmnCorePropsProvider` de produto (BPMN core only, sem providers Zeebe/Camunda).
+
+### 13b. Properties breadth (WAVE E — vigente)
+
+O provider genérico `bpmn` (`bpmn-js-properties-panel@5.65.1`) **não emite** entries para `calledElement`, `conditionExpression` e `defaultFlow` na surface ativa — código equivalente vive nos providers Zeebe/Camunda, que o produto **não carrega** por decisão arquitetural (engine-neutral). WAVE E fechou o gap via **`BpmnCorePropsProvider`** (`propertiesPanelModule.ts`) — provider de produto registrado no extension point oficial `propertiesPanel.registerProvider`, BPMN core only:
+
+- **`calledElement`** (`bpmn:CallActivity`) — text entry; write via `modeling.updateProperties` (command stack → undo/redo → autosave → canonical XML). Nenhum campo engine (binding/version/deployment/tenant) é exposto.
+- **`conditionExpression`** (`bpmn:SequenceFlow`) — text entry criando `bpmn:FormalExpression` com `body`; clear remove a propriedade moddle (`null`). Só aparece quando a fonte é elegível (Activity/ExclusiveGateway/InclusiveGateway) e o flow não é default. Sem `xsi:type`/language forçado — o serializer moddle emite o typing canônico.
+- **`defaultFlow`** (`bpmn:SequenceFlow`) — checkbox entry escrevendo `source.default` (IDREF); exclusividade é garantida pelo modelo (atributo único); exclusivo com condition (UI esconde a combinação inválida); delete da flow default é limpo pelo vendor `UnsetDefaultFlowBehavior` (sem ref pendurada, revertido atomicamente no undo).
+
+Governança: os novos entry IDs entraram na allowlist do `editingProfile.ts` — `ProfileGovernedPanelProvider` continua fail-closed (entry desconhecido = removido). Fontes inválidas (ComplexGateway, EventBasedGateway) não expõem o grupo.
+
+Evidência: 14 testes E2E `e2e/specs/properties-{core,flows,events}.spec.ts` (workers=2) — PROP-CORE-01 (calledElement edit→undo/redo→RB→reload), PROP-FLOW-01..06 (condition set/clear, default set/switch/clear, delete sem ref pendurada, contexto inválido), PROP-DOC-01/02 (documentation task+process), PROP-EVT-01..05 (root `bpmn:message`/`signal`/`error`/`escalation` + refs + `linkName`). Preservação de import/round-trip já era coberta por RT-CE-01/02 (fixtures com calledElement/default/cond). EG-14 BPMN-core: **CLOSED**; engine fields = TO_INVENTORY → WAVE F.
 
 ## 14. Produtividade — classificação por evidência (G0)
 
@@ -214,6 +226,7 @@ G2 — BPMN Professional Breadth Wave 1     OWNER 02→03→01→06
       G2B CREATE_EDIT Evidence Closure       PASS — ver §13a
 G3 — Modeling Productivity                OWNER 03→06   PASS/CLOSED — 41 E2E `productivity-*.spec.ts` (workers=2, determinístico): clipboard governado, seleção/bulk, searchPad Ctrl+F, palette search semântica (IG-1 + correction G3-PAL-1: SEARCH RESULT LABEL = QName criado), resize funcional + fixed-size blocked, shortcuts; fix de foco pós-drag (§14a)
 G4 — Broad Round-trip / Interoperability  OWNER 02+06   PASS/CLOSED — 16/16 E2E roundtrip-* + 14/14 adapter-level + 7/7 extensionPreservation unit; G4-EXT-1 resolvido (§6)
+WAVE E — Properties Breadth              OWNER 03+06   PASS/CLOSED — 14/14 E2E properties-* (workers=2): BpmnCorePropsProvider (calledElement/conditionExpression/defaultFlow, BPMN core only) + doc/event-refs evidence; EG-14 BPMN-core fechado (§13b)
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
 G6 — Runtime Provenance / stale-process   OWNER 09
 ```

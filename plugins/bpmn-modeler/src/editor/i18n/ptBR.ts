@@ -57,6 +57,7 @@ const BASE_TYPE_NAMES: Record<string, string> = {
   "Ad Hoc Sub Process": "Subprocesso ad hoc",
   Transaction: "Transação",
   "Call Activity": "Atividade de chamada",
+  "Called element": "Elemento chamado",
 
   "Exclusive Gateway": "Gateway exclusivo",
   "Parallel Gateway": "Gateway paralelo",

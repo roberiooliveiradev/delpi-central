@@ -1,4 +1,14 @@
-import { Group } from "@bpmn-io/properties-panel";
+import {
+  CheckboxEntry,
+  Group,
+  TextFieldEntry,
+  isCheckboxEntryEdited,
+  isTextFieldEntryEdited,
+} from "@bpmn-io/properties-panel";
+// NOTE: os leaf entries do painel normalmente resolvem serviços via hook
+// `useService` do bundle vendor — ele puxa o bpmn-js inteiro na importação.
+// O BpmnCorePropsProvider resolve os mesmos serviços direto do `injector`
+// (didi) e passa por closure: mesmo contrato, boundary explícito, testável.
 
 import { bpmnTypeLabel, translate } from "./i18n/translate";
 import {
@@ -226,16 +236,229 @@ ProfileGovernedPanelProvider.prototype.getGroups = function () {
   };
 };
 
+// ---------------------------------------------------------------------------
+// BPMN core properties ausentes da surface `bpmn` vendor (Wave E)
+// ---------------------------------------------------------------------------
+//
+// `calledElement` (CallActivity), `conditionExpression` (SequenceFlow) e
+// `default` (SequenceFlow via source) são BPMN 2.0 CORE normativo — o
+// provider genérico `bpmn` não os emite (o código equivalente vive nos
+// providers zeebe/camunda-platform, que não são autoridade do produto e
+// carregam semântica de engine). Implementados aqui via mesma extension
+// point (`propertiesPanel.registerProvider` + concat de grupos), entries
+// leaf do vendor e command stack (`modeling.updateProperties` /
+// `modeling.updateModdleProperties`) — nenhuma mutação direta de
+// businessObject, nenhuma semantic de engine (binding/version/etc.).
+//
+// Contextos válidos (BPMN spec + mesmo conjunto do vendor
+// CONDITIONAL_SOURCES): condition/default só existem em SequenceFlow cujo
+// source é Activity, ExclusiveGateway ou InclusiveGateway. Exclusão
+// mútua normativa: flow com conditionExpression não pode ser default (a
+// UI nunca expõe os dois campos simultaneamente).
+
+const FLOW_SEMANTIC_SOURCES = [
+  "bpmn:Activity",
+  "bpmn:ExclusiveGateway",
+  "bpmn:InclusiveGateway",
+];
+
+// helpers moddle locais — equivalentes a `is`/`isAny`/`getBusinessObject`
+// do vendor sem importar módulos internos do bpmn-js (mantém o provider
+// testável no vitest e o boundary vendor explícito).
+const boOf = (element: any): any => element?.businessObject ?? element;
+
+function boIs(element: any, type: string): boolean {
+  const bo = boOf(element);
+  if (!bo) return false;
+  if (typeof bo.$instanceOf === "function") return bo.$instanceOf(type);
+  return bo.$type === type;
+}
+
+function isFlowSemanticSource(element: any): boolean {
+  return FLOW_SEMANTIC_SOURCES.some((t) => boIs(element, t));
+}
+
+/** calledElement — BPMN core `bpmn:CallActivity@calledElement` (QName). */
+function calledElementField(injector: any) {
+  return function CalledElementField(props: any) {
+    const { element } = props;
+    const modeling = injector.get("modeling");
+    const debounce = injector.get("debounceInput");
+    const t = injector.get("translate");
+  return TextFieldEntry({
+    element,
+    id: "calledElement",
+    label: t("Called element"),
+    getValue: () =>
+      boOf(element).get("calledElement") ?? "",
+    setValue: (value: string) =>
+      modeling.updateProperties(element, {
+        calledElement: value?.trim() || null,
+      }),
+    debounce,
+  });
+};
+}
+
+/**
+ * conditionExpression — `bpmn:SequenceFlow.conditionExpression` é child
+ * `bpmn:Expression` serializado via xsi:type; criamos
+ * `bpmn:FormalExpression` (superType da Expression) com `body`.
+ * Clear = moddle property null → remove o child element.
+ */
+function conditionExpressionField(injector: any) {
+  return function ConditionExpressionField(props: any) {
+    const { element } = props;
+    const modeling = injector.get("modeling");
+    const bpmnFactory = injector.get("bpmnFactory");
+    const debounce = injector.get("debounceInput");
+    const t = injector.get("translate");
+    const bo = boOf(element);
+    return TextFieldEntry({
+      element,
+      id: "conditionExpression",
+      label: t("Condition expression"),
+    getValue: () => bo.get("conditionExpression")?.get("body") ?? "",
+    setValue: (value: string) => {
+      const body = value?.trim() ?? "";
+      const existing = bo.get("conditionExpression");
+      if (!body) {
+        if (existing) {
+          modeling.updateModdleProperties(element, bo, {
+            conditionExpression: null,
+          });
+        }
+        return;
+      }
+      if (existing) {
+        modeling.updateModdleProperties(element, existing, { body });
+        return;
+      }
+      const expression = bpmnFactory.create("bpmn:FormalExpression", {
+        body,
+      });
+      expression.$parent = bo;
+      modeling.updateModdleProperties(element, bo, {
+        conditionExpression: expression,
+      });
+    },
+    debounce,
+    });
+  };
+}
+
+/**
+ * default — `bpmn:Activity|ExclusiveGateway|InclusiveGateway@default` é
+ * IDREF para uma SequenceFlow outgoing. Toggle ON escreve no SOURCE
+ * (`default = este flow`, exclusivo por construção do atributo); OFF só
+ * limpa se este flow for o default atual.
+ */
+function defaultFlowField(injector: any) {
+  return function DefaultFlowField(props: any) {
+    const { element } = props;
+    const modeling = injector.get("modeling");
+    const t = injector.get("translate");
+    const bo = boOf(element);
+    const source = element.source;
+    const sourceBo = source && boOf(source);
+    const isDefault = () => !!sourceBo && sourceBo.get("default") === bo;
+    return CheckboxEntry({
+      element,
+      id: "defaultFlow",
+      label: t("Default Flow"),
+      getValue: isDefault,
+      setValue: (checked: boolean) => {
+        if (checked) {
+          modeling.updateProperties(source, { default: bo });
+        } else if (isDefault()) {
+          modeling.updateProperties(source, { default: null });
+        }
+      },
+    });
+  };
+}
+
+function flowCoreEntries(element: any, injector: any): any[] {
+  const bo = boOf(element);
+  const source = element.source;
+  if (!isFlowSemanticSource(source)) return [];
+  const isDefault = !!source && boOf(source).get("default") === bo;
+  const hasCondition = !!bo.get("conditionExpression");
+  const entries: any[] = [];
+  // exclusão mútua: default flow não carrega condition (BPMN); flow com
+  // condition não pode virar default enquanto a condition existir.
+  if (!isDefault) {
+    entries.push({
+      id: "conditionExpression",
+      component: conditionExpressionField(injector),
+      isEdited: isTextFieldEntryEdited,
+    });
+  }
+  if (!hasCondition) {
+    entries.push({
+      id: "defaultFlow",
+      component: defaultFlowField(injector),
+      isEdited: isCheckboxEntryEdited,
+    });
+  }
+  return entries;
+}
+
+function BpmnCorePropsProvider(this: any, propertiesPanel: any, injector: any) {
+  propertiesPanel.registerProvider(this);
+  this._injector = injector;
+}
+
+BpmnCorePropsProvider.$inject = ["propertiesPanel", "injector"];
+
+BpmnCorePropsProvider.prototype.getGroups = function (element: any) {
+  const injector = this._injector;
+  return (groups: any[]) => {
+    const extras: any[] = [];
+
+    if (boIs(element, "bpmn:CallActivity")) {
+      extras.push({
+        id: "callActivity",
+        label: translate("Call Activity"),
+        component: Group,
+        entries: [
+          {
+            id: "calledElement",
+            component: calledElementField(injector),
+            isEdited: isTextFieldEntryEdited,
+          },
+        ],
+      });
+    }
+
+    if (boIs(element, "bpmn:SequenceFlow")) {
+      const entries = flowCoreEntries(element, injector);
+      if (entries.length) {
+        extras.push({
+          id: "flow",
+          label: translate("Sequence Flow"),
+          component: Group,
+          entries,
+        });
+      }
+    }
+
+    return extras.length ? groups.concat(extras) : groups;
+  };
+};
+
 export const propertiesPanelModule = {
   __init__: [
     "advancedIdProvider",
     "profileGovernedPanelProvider",
+    "bpmnCorePropsProvider",
     "popupTitlePtBr",
     "textPopupProvider",
     "panelChromePtBr",
   ],
   advancedIdProvider: ["type", AdvancedIdProvider],
   profileGovernedPanelProvider: ["type", ProfileGovernedPanelProvider],
+  bpmnCorePropsProvider: ["type", BpmnCorePropsProvider],
   popupTitlePtBr: ["type", PopupTitlePtBr],
   textPopupProvider: ["type", TextPopupProvider],
   panelChromePtBr: ["type", PanelChromePtBr],

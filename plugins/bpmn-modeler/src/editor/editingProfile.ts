@@ -194,6 +194,9 @@ const ALLOWED_PROPERTIES_GROUP_IDS: ReadonlySet<string> = new Set([
   "signal",
   "escalation",
   "timer",
+  // grupos produto (BpmnCorePropsProvider, Wave E) — BPMN core normativo
+  "callActivity",
+  "flow",
 ]);
 
 /**
@@ -241,6 +244,12 @@ const ALLOWED_PROPERTIES_ENTRY_IDS: ReadonlySet<string> = new Set([
   "escalationCode",
   "timerEventDefinitionType",
   "timerEventDefinitionValue",
+  // BPMN core entries do produto (BpmnCorePropsProvider, Wave E):
+  // calledElement (bpmn:CallActivity), conditionExpression/default
+  // (bpmn:SequenceFlow — contexts Activity/Exclusive/InclusiveGateway)
+  "calledElement",
+  "conditionExpression",
+  "defaultFlow",
 ]);
 
 // ---------------------------------------------------------------------------

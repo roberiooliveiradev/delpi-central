@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Declarações mínimas da superfície vendor consumida pelo produto —
+// `any` reflete o contrato loose/dinâmico do vendor (moddle objects,
+// injector services) sem gerar ruído de casting em cada call site.
 declare module "bpmn-moddle" {
   /** Superfície mínima usada por testes do boundary (G4-EXT-1). */
   export class BpmnModdle {
@@ -18,6 +22,17 @@ declare module "bpmn-js-properties-panel" {
 
   export const BpmnPropertiesPanelModule: ModuleDeclaration;
   export const BpmnPropertiesProviderModule: ModuleDeclaration;
+  /** hook do properties panel — resolve serviços do injector do modeler. */
+  export function useService(name: string): any;
+}
+
+declare module "bpmn-js/lib/util/ModelUtil" {
+  export function is(element: any, type: string): boolean;
+  export function getBusinessObject(element: any): any;
+}
+
+declare module "bpmn-js/lib/features/modeling/util/ModelingUtil" {
+  export function isAny(element: any, types: string[]): boolean;
 }
 
 declare module "@bpmn-io/properties-panel" {
@@ -32,6 +47,13 @@ declare module "@bpmn-io/properties-panel" {
     entries?: unknown[];
     shouldOpen?: boolean;
   }>;
+
+  /** Entries leaf do vendor — chamados como função (mesmo padrão do
+      renderer `{...entry}`: o descriptor recebe props posicionais). */
+  export const TextFieldEntry: FunctionComponent<Record<string, unknown>>;
+  export const CheckboxEntry: FunctionComponent<Record<string, unknown>>;
+  export function isTextFieldEntryEdited(node: unknown): boolean;
+  export function isCheckboxEntryEdited(node: unknown): boolean;
 
   /** Popup container do vendor (runtime export `Popup`). */
   export const Popup: FunctionComponent<Record<string, unknown>> & {

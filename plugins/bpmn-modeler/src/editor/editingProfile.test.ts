@@ -168,6 +168,7 @@ describe("editingProfile — properties panel", () => {
     for (const id of [
       "general", "advanced", "documentation",
       "error", "link", "message", "signal", "escalation", "timer",
+      "callActivity", "flow",
     ]) expect(isPropertiesGroupAllowed(id), id).toBe(true);
   });
 
@@ -187,6 +188,7 @@ describe("editingProfile — properties panel", () => {
       "signalRef", "signalName",
       "escalationRef", "escalationName", "escalationCode",
       "timerEventDefinitionType", "timerEventDefinitionValue",
+      "calledElement", "conditionExpression", "defaultFlow",
     ]) expect(isPropertiesEntryAllowed(id), id).toBe(true);
   });
 

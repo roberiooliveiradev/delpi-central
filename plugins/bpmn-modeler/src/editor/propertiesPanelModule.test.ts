@@ -7,6 +7,8 @@ import { translate } from "./i18n/translate";
 
 const AdvancedIdProvider = propertiesPanelModule.advancedIdProvider[1] as any;
 const PopupTitlePtBr = propertiesPanelModule.popupTitlePtBr[1] as any;
+const BpmnCorePropsProvider = propertiesPanelModule
+  .bpmnCorePropsProvider[1] as any;
 
 function fakePanel() {
   const registered: { priority: number; provider: any }[] = [];
@@ -253,5 +255,129 @@ describe("PanelChromePtBr", () => {
     expect(inside.getAttribute("title")).toBe("Open pop-up editor");
     await Promise.resolve();
     expect(inside.getAttribute("title")).toBe("Abrir editor ampliado");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BpmnCorePropsProvider — Wave E: calledElement / conditionExpression / default
+// ---------------------------------------------------------------------------
+
+/** businessObject fake com o contrato moddle mínimo usado pelos utils
+    vendor (`$instanceOf`, `get`). */
+function fakeBo(
+  type: string,
+  props: Record<string, any> = {},
+  superTypes: string[] = [],
+): any {
+  return {
+    $type: type,
+    $instanceOf(t: string) {
+      return t === this.$type || superTypes.includes(t);
+    },
+    get(p: string) {
+      return this[p];
+    },
+    ...props,
+  };
+}
+
+function fakeEl(bo: any, source?: any): any {
+  const element: any = { businessObject: bo };
+  if (source) element.source = source;
+  return element;
+}
+
+function groupsFor(provider: any, element: any) {
+  return provider.getGroups(element)([{ id: "general", entries: [] }]);
+}
+
+describe("BpmnCorePropsProvider (Wave E)", () => {
+  it("expõe calledElement apenas para bpmn:CallActivity", () => {
+    const provider = new BpmnCorePropsProvider(fakePanel());
+    const call = groupsFor(provider, fakeEl(fakeBo("bpmn:CallActivity")));
+    const group = call.find((g: any) => g.id === "callActivity");
+    expect(group).toBeTruthy();
+    expect(group.entries.map((e: any) => e.id)).toEqual(["calledElement"]);
+
+    const task = groupsFor(provider, fakeEl(fakeBo("bpmn:Task")));
+    expect(task.find((g: any) => g.id === "callActivity")).toBeUndefined();
+  });
+
+  it("expõe condition+default em SequenceFlow com source elegível", () => {
+    const provider = new BpmnCorePropsProvider(fakePanel());
+    for (const srcType of [
+      "bpmn:Task",
+      "bpmn:ExclusiveGateway",
+      "bpmn:InclusiveGateway",
+    ]) {
+      const flow = fakeEl(
+        fakeBo("bpmn:SequenceFlow"),
+        fakeEl(
+          fakeBo(
+            srcType,
+            {},
+            srcType === "bpmn:Task" ? ["bpmn:Activity"] : [],
+          ),
+        ),
+      );
+      const flowGroup = groupsFor(provider, flow).find(
+        (g: any) => g.id === "flow",
+      );
+      expect(flowGroup, srcType).toBeTruthy();
+      expect(flowGroup.entries.map((e: any) => e.id).sort()).toEqual([
+        "conditionExpression",
+        "defaultFlow",
+      ]);
+    }
+  });
+
+  it("não expõe flow group em contexto inválido (events, parallel, event-based, complex)", () => {
+    const provider = new BpmnCorePropsProvider(fakePanel());
+    for (const srcType of [
+      "bpmn:StartEvent",
+      "bpmn:ParallelGateway",
+      "bpmn:EventBasedGateway",
+      "bpmn:EndEvent",
+      "bpmn:ComplexGateway",
+    ]) {
+      const flow = fakeEl(
+        fakeBo("bpmn:SequenceFlow"),
+        fakeEl(fakeBo(srcType)),
+      );
+      expect(
+        groupsFor(provider, flow).find((g: any) => g.id === "flow"),
+        srcType,
+      ).toBeUndefined();
+    }
+    const task = groupsFor(provider, fakeEl(fakeBo("bpmn:Task")));
+    expect(task.find((g: any) => g.id === "flow")).toBeUndefined();
+  });
+
+  it("exclusão mútua: default flow não mostra condition; flow com condition não mostra default", () => {
+    const provider = new BpmnCorePropsProvider(fakePanel());
+    const sourceBo = fakeBo("bpmn:ExclusiveGateway");
+    const flowBo = fakeBo("bpmn:SequenceFlow");
+    sourceBo.default = flowBo;
+    const defFlow = fakeEl(flowBo, fakeEl(sourceBo));
+    expect(
+      groupsFor(provider, defFlow)
+        .find((g: any) => g.id === "flow")
+        .entries.map((e: any) => e.id),
+    ).toEqual(["defaultFlow"]);
+
+    const condFlowBo = fakeBo("bpmn:SequenceFlow", {
+      conditionExpression: fakeBo("bpmn:FormalExpression", {
+        body: "x > 1",
+      }),
+    });
+    const condFlow = fakeEl(
+      condFlowBo,
+      fakeEl(fakeBo("bpmn:Task", {}, ["bpmn:Activity"])),
+    );
+    expect(
+      groupsFor(provider, condFlow)
+        .find((g: any) => g.id === "flow")
+        .entries.map((e: any) => e.id),
+    ).toEqual(["conditionExpression"]);
   });
 });
