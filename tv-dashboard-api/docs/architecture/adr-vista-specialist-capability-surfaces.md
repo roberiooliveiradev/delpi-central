@@ -122,3 +122,18 @@ presentation realtime WS and uploaded through `PUT …/rendered-preview` with
   `EDITOR_CAPTURE_PENDING` (bounded resend ~8 s; caller retries bounded).
 - MCP `ImageContent` only when `status=ready` **and** `source=editor_live`;
   artifacts without verified live-editor provenance never project as pixels.
+
+Addendum — VISTA-MCP-IMAGE-DELIVERY-004 (host delivery):
+
+- Server-side wire is **PROVEN** spec-compliant: real Streamable-HTTP
+  `tools/call` emits `content=[TextContent, ImageContent]` +
+  `structuredContent` with `mimeType=image/png`
+  (`tests/test_mcp_streamable_http_wire.py`).
+- The current ChatGPT custom-app/connector host does **not** forward
+  `content[]` image blocks to the model — the model sees only
+  `structuredContent` + text (observed in a real VISTA invocation;
+  corroborated by OpenAI Dev Community reports). This is a host platform
+  limitation, not a repo defect — no workaround (base64-as-text, extra
+  tool/action, vision service) is introduced.
+- `VISUAL_RENDER` remains `TEST_NOT_RUN` until a host delivers the image
+  block to a multimodal model and the model inspects actual pixels.
