@@ -2757,10 +2757,6 @@ services:
       TV_OPENAPI_GENERATOR_SCRIPT: ${TV_OPENAPI_GENERATOR_SCRIPT:-/app/tools/generate_tv_data_routes_from_openapi.py}
       MINHA_DELPI_AI_API_URL: ${MINHA_DELPI_AI_API_URL:-http://delpi-minha-delpi-ai-api:8000}
       MINHA_DELPI_AI_API_TIMEOUT_SECONDS: ${MINHA_DELPI_AI_API_TIMEOUT_SECONDS:-20}
-      TV_RENDER_WORKER_URL: ${TV_RENDER_WORKER_URL:-http://tv-dashboard-render-worker:8100}
-      TV_RENDER_WORKER_TIMEOUT_SECONDS: ${TV_RENDER_WORKER_TIMEOUT_SECONDS:-30}
-      # Dedicated worker credential — intentionally NOT API_DELPI_INTERNAL_SERVICE_TOKEN.
-      TV_RENDER_WORKER_SERVICE_TOKEN: ${TV_RENDER_WORKER_SERVICE_TOKEN:-}
 
     volumes:
       - ../tv-dashboard-api:/app
@@ -2774,33 +2770,6 @@ services:
       - postgres-plugins
       - api-delpi
       - core-api
-
-    networks:
-      - delpi-network
-
-  # Bounded canonical render execution host — internal only (no gateway route).
-  # Paints the shared @delpi/tv-dashboard-presentation stage in Chromium and
-  # returns canonical_stage PNG to tv-dashboard-api (the artifact authority).
-  tv-dashboard-render-worker:
-    build:
-      context: ..
-      dockerfile: tv-dashboard-render-worker/Dockerfile
-
-    container_name: delpi-tv-dashboard-render-worker
-    restart: unless-stopped
-
-    environment:
-      RENDER_WORKER_PORT: "8100"
-      RENDER_WORKER_CONCURRENCY: ${RENDER_WORKER_CONCURRENCY:-2}
-      RENDER_WORKER_TIMEOUT_MS: ${RENDER_WORKER_TIMEOUT_MS:-30000}
-      TV_DASHBOARD_API_INTERNAL_URL: ${TV_DASHBOARD_API_INTERNAL_URL:-http://tv-dashboard-api:8000}
-      TV_DASHBOARD_API_ROOT_PATH: /apps/tv-dashboard-api
-      TV_RENDER_WORKER_SERVICE_TOKEN: ${TV_RENDER_WORKER_SERVICE_TOKEN:-}
-      LOG_LEVEL: ${LOG_LEVEL}
-      TZ: ${TZ}
-
-    depends_on:
-      - tv-dashboard-api
 
     networks:
       - delpi-network

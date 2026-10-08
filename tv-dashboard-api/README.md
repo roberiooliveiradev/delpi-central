@@ -276,6 +276,8 @@ Disparado após CRUD de slides, upload de mídia, alterações na programação 
 
 `selection_update` contém `slideId`, `selectedIds`, `clientId`, `displayName` e `updatedAt`. Seleção vazia limpa o chrome remoto; desconexão remove a seleção por meio do `presence_update`. O estado é transitório e não é persistido no slide.
 
+**Verificação visual da VISTA (live editor only):** `get_playlist_context(includePreview=true)` só produz evidência visual `canonical_stage` quando o editor do **próprio usuário** está aberto e com foco fresco no slide pedido. A API envia `visual_capture_request` `{ playlistId, slideId, revision, requestId }` **direcionado** ao `clientId` vivo do editor (nunca broadcast); o editor captura o palco visível real e publica `PUT /playlists/{id}/slides/{id}/rendered-preview` com `source=editor_live`. Sem editor aberto → `rendered.status=unavailable` + `EDITOR_NOT_OPEN` (estrutura/dados/schematic continuam); slide visível diferente → `EDITOR_SLIDE_NOT_OPEN`; artifact ausente → `pending` + `EDITOR_CAPTURE_PENDING`. **Não existe render autônomo** — sem browser/Playwright/Chromium em background; page close invalida a disponibilidade visual mesmo com artifact cacheado.
+
 **Gateway:** `proxy_pass` estático para `tv-dashboard-api:8000` (variável `$upstream` quebra upgrade WebSocket).
 
 ---

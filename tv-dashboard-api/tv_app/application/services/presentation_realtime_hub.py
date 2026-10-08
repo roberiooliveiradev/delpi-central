@@ -44,7 +44,10 @@ class PresentationRealtimeHub:
         self._playback_cursors: dict[str, dict[str, Any]] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
-        self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
+        # target=(user_id, client_id) → entrega direta; None → broadcast da sala.
+        self._queue: asyncio.Queue[
+            tuple[str, dict[str, Any], tuple[str, str] | None]
+        ] | None = None
         self._presence_stale_ttl_seconds = max(15.0, float(presence_stale_ttl_seconds))
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
@@ -55,16 +58,113 @@ class PresentationRealtimeHub:
         if self._queue is None:
             return
         while True:
-            playlist_id, payload = await self._queue.get()
+            playlist_id, payload, target = await self._queue.get()
             try:
-                await self.broadcast_now(playlist_id, payload)
+                if target is None:
+                    await self.broadcast_now(playlist_id, payload)
+                else:
+                    await self.send_to_client_now(
+                        playlist_id, user_id=target[0], client_id=target[1], payload=payload
+                    )
             except Exception:  # noqa: BLE001
                 logger.exception("presentation_realtime_broadcast_failed")
 
     def schedule_broadcast(self, playlist_id: str, payload: dict[str, Any]) -> None:
         if not playlist_id or self._loop is None or self._queue is None:
             return
-        self._loop.call_soon_threadsafe(self._queue.put_nowait, (playlist_id, payload))
+        self._loop.call_soon_threadsafe(
+            self._queue.put_nowait, (playlist_id, payload, None)
+        )
+
+    def _schedule_direct(
+        self,
+        playlist_id: str,
+        payload: dict[str, Any],
+        *,
+        user_id: str,
+        client_id: str,
+    ) -> bool:
+        if not playlist_id or not user_id or not client_id:
+            return False
+        if self._loop is None or self._queue is None:
+            return False
+        self._loop.call_soon_threadsafe(
+            self._queue.put_nowait, (playlist_id, payload, (user_id, client_id))
+        )
+        return True
+
+    def is_editor_client_live(
+        self, playlist_id: str, *, user_id: str, client_id: str
+    ) -> bool:
+        """True se o clientId do editor está conectado e com presença fresca."""
+        meta = self._client_meta.get(playlist_id) or {}
+        cutoff = time.monotonic() - self._presence_stale_ttl_seconds
+        for item in list(meta.values()):
+            if (
+                item.get("clientId") == client_id
+                and item.get("userId") == user_id
+                and bool(item.get("canEdit"))
+                and float(item.get("lastSeen") or 0) >= cutoff
+            ):
+                return True
+        return False
+
+    async def send_to_client_now(
+        self,
+        playlist_id: str,
+        *,
+        user_id: str,
+        client_id: str,
+        payload: dict[str, Any],
+    ) -> bool:
+        """Entrega direta a um único cliente do editor (nunca broadcast)."""
+        async with self._lock:
+            room_meta = self._client_meta.get(playlist_id) or {}
+            target_ws = next(
+                (
+                    ws
+                    for ws, meta in room_meta.items()
+                    if meta.get("clientId") == client_id
+                    and meta.get("userId") == user_id
+                ),
+                None,
+            )
+        if target_ws is None:
+            return False
+        try:
+            await target_ws.send_json(payload)
+            return True
+        except Exception:  # noqa: BLE001
+            await self._remove_connection(target_ws, playlist_id=playlist_id)
+            return False
+
+    def request_visual_capture(
+        self,
+        *,
+        playlist_id: str,
+        user_id: str,
+        client_id: str,
+        slide_id: str,
+        revision: int,
+        request_id: str,
+    ) -> bool:
+        """Fila ``visual_capture_request`` somente para o cliente focado.
+
+        Semântica única: «capture o palco canônico visível deste slide/revisão».
+        Nunca carrega URL/HTML/selector/comando arbitrário.
+        """
+        return self._schedule_direct(
+            str(playlist_id),
+            {
+                "type": "visual_capture_request",
+                "playlistId": str(playlist_id),
+                "slideId": str(slide_id),
+                "revision": int(revision),
+                "requestId": str(request_id),
+            },
+            user_id=str(user_id),
+            client_id=str(client_id),
+        )
 
     async def connect(
         self,

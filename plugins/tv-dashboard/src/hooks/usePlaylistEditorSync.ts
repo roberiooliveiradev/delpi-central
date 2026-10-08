@@ -7,6 +7,7 @@ import {
   type PresentationRealtimeEvent,
   type PresentationSelectionUpdateEvent,
   type PresentationSlideDraftEvent,
+  type PresentationVisualCaptureRequestEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 type RealtimeSend = (payload: Record<string, unknown>) => void;
@@ -20,6 +21,7 @@ type Options = {
   onConnected?: () => void;
   onSlideDraft?: (event: PresentationSlideDraftEvent) => void;
   onSelectionUpdate?: (event: PresentationSelectionUpdateEvent) => void;
+  onVisualCaptureRequest?: (event: PresentationVisualCaptureRequestEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
 };
 
@@ -32,6 +34,7 @@ export function usePlaylistEditorSync({
   onConnected,
   onSlideDraft,
   onSelectionUpdate,
+  onVisualCaptureRequest,
   onPresenceUpdate,
 }: Options) {
   const wsUrl = accessToken ? buildAdminPresentationWsUrl(playlistId, accessToken) : null;
@@ -68,6 +71,8 @@ export function usePlaylistEditorSync({
     onSelectionUpdate: (event) => {
       onSelectionUpdateRef.current?.(event);
     },
+    // usePresentationRealtime já ref-wraps todos os handlers — passthrough direto.
+    onVisualCaptureRequest,
     onPresenceUpdate,
   });
 

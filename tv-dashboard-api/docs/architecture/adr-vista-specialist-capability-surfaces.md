@@ -101,3 +101,24 @@ backgrounds never guessed), theme backgrounds resolve from canonical recipe
 tokens, and `SafeAutoFixService` overlap relayout is **all-or-nothing** under
 subset scope — a coordinated fix is never partially applied through
 per-block filtering. DÉLIA runtime is unchanged.
+
+## Addendum — VISTA-LIVE-EDITOR-VISUAL-VERIFICATION-003
+
+Canonical visual evidence (`slidePreview.rendered`, `canonical_stage`) is produced
+**only** by the authenticated user's live TV Dashboard editor — the visible
+stage DOM (`resolveSlideExportTarget` + `captureSlideElementToPngDataUrl`),
+captured on demand via a targeted `visual_capture_request` over the existing
+presentation realtime WS and uploaded through `PUT …/rendered-preview` with
+`source=editor_live` + `clientId` provenance.
+
+- No autonomous renderer exists: the `tv-dashboard-render-worker`
+  (Chromium/Playwright sidecar) was retired; no background browser, no
+  server-side screenshot engine, no second renderer.
+- Editor closed / focus stale → `rendered.status=unavailable`,
+  `failureCode=EDITOR_NOT_OPEN`; structure/data/schematic remain available.
+- Visible slide ≠ requested slide → `EDITOR_SLIDE_NOT_OPEN` (the backend never
+  switches the user's slide).
+- Missing/stale artifact with a live editor → `pending` /
+  `EDITOR_CAPTURE_PENDING` (bounded resend ~8 s; caller retries bounded).
+- MCP `ImageContent` only when `status=ready` **and** `source=editor_live`;
+  artifacts without verified live-editor provenance never project as pixels.

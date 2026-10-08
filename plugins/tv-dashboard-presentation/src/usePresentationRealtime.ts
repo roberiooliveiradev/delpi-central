@@ -62,6 +62,15 @@ export type PresentationMeetingInkClearEvent = {
   clientId: string;
 };
 
+/** Server→editor: capture o palco visível deste slide/revisão (VISTA live). */
+export type PresentationVisualCaptureRequestEvent = {
+  type: "visual_capture_request";
+  playlistId?: string;
+  slideId: string;
+  revision: number;
+  requestId?: string;
+};
+
 export type PresentationRealtimeEvent = {
   type: string;
   reason?: string;
@@ -95,6 +104,7 @@ type Options = {
   onMeetingLaser?: (event: PresentationMeetingLaserEvent) => void;
   onMeetingInk?: (event: PresentationMeetingInkStrokeEvent) => void;
   onMeetingInkClear?: (event: PresentationMeetingInkClearEvent) => void;
+  onVisualCaptureRequest?: (event: PresentationVisualCaptureRequestEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
   onConnectionChange?: (connected: boolean) => void;
   presence?: PresentationPresencePeer;
@@ -114,7 +124,9 @@ function parseNormPoint(value: unknown): { x: number; y: number } | null {
   return { x: row.x, y: row.y };
 }
 
-export function parsePresentationRealtimeEvent(value: unknown): PresentationRealtimeEvent | null {
+export function parsePresentationRealtimeEvent(
+  value: unknown,
+): PresentationRealtimeEvent | PresentationVisualCaptureRequestEvent | null {
   if (!value || typeof value !== "object") return null;
   const payload = value as Record<string, unknown>;
   if (typeof payload.type !== "string") return null;
@@ -236,6 +248,23 @@ export function parsePresentationRealtimeEvent(value: unknown): PresentationReal
       clientId,
     };
   }
+  if (payload.type === "visual_capture_request") {
+    const { slideId, revision } = payload;
+    if (
+      typeof slideId !== "string" ||
+      typeof revision !== "number" ||
+      !Number.isFinite(revision)
+    ) {
+      return null;
+    }
+    return {
+      type: "visual_capture_request",
+      playlistId: typeof payload.playlistId === "string" ? payload.playlistId : undefined,
+      slideId,
+      revision,
+      requestId: typeof payload.requestId === "string" ? payload.requestId : undefined,
+    };
+  }
   if (payload.type !== "presence_update") return payload as PresentationRealtimeEvent;
   if (!Array.isArray(payload.peers)) return null;
 
@@ -292,6 +321,7 @@ export function usePresentationRealtime({
   onMeetingLaser,
   onMeetingInk,
   onMeetingInkClear,
+  onVisualCaptureRequest,
   onPresenceUpdate,
   onConnectionChange,
   presence,
@@ -315,6 +345,8 @@ export function usePresentationRealtime({
   meetingInkHandlerRef.current = onMeetingInk;
   const meetingInkClearHandlerRef = useRef(onMeetingInkClear);
   meetingInkClearHandlerRef.current = onMeetingInkClear;
+  const visualCaptureHandlerRef = useRef(onVisualCaptureRequest);
+  visualCaptureHandlerRef.current = onVisualCaptureRequest;
   const presenceHandlerRef = useRef(onPresenceUpdate);
   presenceHandlerRef.current = onPresenceUpdate;
   const connectionHandlerRef = useRef(onConnectionChange);
@@ -407,6 +439,9 @@ export function usePresentationRealtime({
           }
           if (payload.type === "meeting_ink_clear") {
             meetingInkClearHandlerRef.current?.(payload as PresentationMeetingInkClearEvent);
+          }
+          if (payload.type === "visual_capture_request") {
+            visualCaptureHandlerRef.current?.(payload as PresentationVisualCaptureRequestEvent);
           }
           if (payload.type === "presence_update") {
             presenceHandlerRef.current?.(payload.peers ?? []);

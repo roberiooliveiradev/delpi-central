@@ -212,6 +212,8 @@ class GptActionsDispatchService:
         self._preview = preview or TvDataPreviewService()
         self._suggest = suggest or TvDataRouteSuggestService(self._catalog)
         self._present = PresentationPayloadService()
+        # (userId, slideId, revision) → last visual_capture_request send (mono).
+        self._capture_request_last: dict[tuple[str, str, str], float] = {}
 
     def _actor(self, user: Any) -> str:
         actor = self._access.actor_id(user)
@@ -594,16 +596,14 @@ class GptActionsDispatchService:
                 revision=revision,
                 renderable=str(slide.get("slideType") or "native") == "native",
             )
-            if (
-                rendered.get("status") == "unavailable"
-                and rendered.get("failureCode") == "NO_CANONICAL_ARTIFACT"
-            ):
-                rendered = self._ensure_canonical_stage_rendered(
-                    playlist_id=pid,
-                    slide=slide,
-                    revision=revision,
-                    preview_svc=preview_svc,
-                ) or rendered
+            rendered = self._apply_live_editor_visual_policy(
+                playlist_id=pid,
+                slide=slide,
+                revision=revision,
+                actor=actor,
+                rendered=rendered,
+                preview_svc=preview_svc,
+            )
             slide_preview["rendered"] = rendered
             out["slidePreview"] = slide_preview
 
@@ -734,72 +734,109 @@ class GptActionsDispatchService:
             "slideId": claims["slideId"],
             "revision": current_rev or token_rev,
         }
-    def _ensure_canonical_stage_rendered(
+
+    # VISTA-LIVE-EDITOR-VISUAL-VERIFICATION-003 — canonical_stage só conta como
+    # evidência visual quando vem do palco visível do editor do próprio usuário.
+    _LIVE_ARTIFACT_MAX_AGE_SECONDS = 300.0
+    _CAPTURE_REQUEST_RESEND_SECONDS = 8.0
+
+    def _apply_live_editor_visual_policy(
         self,
         *,
         playlist_id: UUID,
         slide: dict[str, Any],
         revision: int,
+        actor: str,
+        rendered: dict[str, Any],
         preview_svc: Any,
-    ) -> dict[str, Any] | None:
-        """Lazy canonical_stage fill via the bounded render worker.
+    ) -> dict[str, Any]:
+        """Policy canônica de evidência visual: editor ao vivo ou nada.
 
-        Evidence-only: failures degrade to ``unavailable`` with a truthful
-        failureCode — the context call never breaks on a render outage.
+        Sem editor focado/online do usuário autenticado → ``EDITOR_NOT_OPEN``.
+        Editor vivo com o slide visível + artifact com proveniência válida →
+        ``ready``. Editor vivo sem artifact → pede captura ao palco visível via
+        realtime e responde ``EDITOR_CAPTURE_PENDING`` (retry bounded do caller).
         """
-        from tv_app.application.services.data.canonical_render_client import (
-            CanonicalRenderError,
-            get_canonical_stage_render_service,
-            render_worker_config,
-        )
-        from tv_app.config import settings
+        import time as _time
 
-        if not settings.TV_RENDER_WORKER_TRIGGER_ON_CONTEXT:
-            return None
-        if not render_worker_config().enabled:
-            return None
-        if str(slide.get("slideType") or "native") != "native":
-            return None
-        try:
-            meta = get_canonical_stage_render_service().ensure_rendered(
-                playlist_id=playlist_id,
-                slide_id=str(slide["id"]),
-                revision=revision,
-                writes=self._writes,
-                present=self._present,
-                preview_svc=preview_svc,
-            )
-        except CanonicalRenderError as exc:
-            return {
-                "kind": "canonical_stage",
-                "source": "render_worker",
-                "status": "pending" if exc.code == "RENDER_PENDING" else "unavailable",
-                "revision": revision,
-                "failureCode": exc.code,
-            }
-        except Exception:  # noqa: BLE001 — evidence fill must not break context
-            logger.exception(
-                "canonical_render_unexpected playlist=%s slide=%s revision=%s",
-                playlist_id,
-                slide.get("id"),
-                revision,
-            )
-            return {
-                "kind": "canonical_stage",
-                "source": "render_worker",
-                "status": "unavailable",
-                "revision": revision,
-                "failureCode": "RENDER_FAILED",
-            }
-        if not meta:
-            return None
-        rendered = preview_svc.build_rendered_payload(
-            playlist_id=str(playlist_id),
-            slide_id=str(slide["id"]),
-            revision=revision,
+        from tv_app.application.services.editor_focus_store import editor_focus_store
+        from tv_app.application.services.presentation_realtime_hub import (
+            presentation_realtime_hub,
         )
-        rendered["source"] = "render_worker"
-        return rendered
+
+        slide_id = str(slide.get("id") or "")
+        base = {
+            "kind": "canonical_stage",
+            "source": "editor_live",
+            "revision": revision,
+        }
+        if rendered.get("failureCode") == "UNSUPPORTED_SLIDE_TYPE":
+            return rendered
+
+        focus = (
+            editor_focus_store.get_for_user_playlist(actor, str(playlist_id))
+            if actor
+            else None
+        )
+        client_id = str((focus or {}).get("clientId") or "").strip()
+        live = bool(
+            focus
+            and not focus.get("stale")
+            and client_id
+            and presentation_realtime_hub.is_editor_client_live(
+                str(playlist_id), user_id=actor, client_id=client_id
+            )
+        )
+        if not live:
+            return {
+                **base,
+                "status": "unavailable",
+                "failureCode": "EDITOR_NOT_OPEN",
+            }
+        if str(focus.get("slideId") or "") != slide_id:
+            return {
+                **base,
+                "status": "unavailable",
+                "failureCode": "EDITOR_SLIDE_NOT_OPEN",
+            }
+
+        meta = preview_svc.rendered_artifact_meta(
+            slide_id=slide_id, revision=revision
+        )
+        captured_at = float((meta or {}).get("uploadedAt") or 0)
+        fresh = bool(captured_at) and (
+            _time.time() - captured_at <= self._LIVE_ARTIFACT_MAX_AGE_SECONDS
+        )
+        if (
+            meta
+            and meta.get("source") == "editor_live"
+            and str(meta.get("clientId") or "") == client_id
+            and fresh
+        ):
+            rendered["source"] = "editor_live"
+            rendered["capturedAt"] = captured_at
+            return rendered
+
+        key = (str(actor), slide_id, str(revision))
+        last = self._capture_request_last.get(key) or 0.0
+        if _time.monotonic() - last >= self._CAPTURE_REQUEST_RESEND_SECONDS:
+            from uuid import uuid4
+
+            sent = presentation_realtime_hub.request_visual_capture(
+                playlist_id=str(playlist_id),
+                user_id=actor,
+                client_id=client_id,
+                slide_id=slide_id,
+                revision=revision,
+                request_id=uuid4().hex,
+            )
+            if sent:
+                self._capture_request_last[key] = _time.monotonic()
+        return {
+            **base,
+            "status": "pending",
+            "failureCode": "EDITOR_CAPTURE_PENDING",
+        }
 
     def search_data_routes(
         self,

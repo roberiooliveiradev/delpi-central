@@ -16,6 +16,7 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - Modal **Fontes de dados** = catálogo + draft actions (sem NL no editor; `NL_TURN_RETIRED`).
 - Suggest de rotas = owner-local `POST /data/routes/suggest` (não Chat base).
 - Chat interno Minha DELPI: **handoff** para VISTA (`tv_dashboard_handoff`); zero tool de mutação TV. `/data/copilot/*` → **410 Gone**. Dock Copilot no editor: **retirado**.
+- **Verificação visual da VISTA = palco vivo do editor.** A evidência `canonical_stage` é capturada do DOM/stage que o usuário está vendo (`resolveSlideExportTarget` → `captureSlideElementToPngDataUrl`, chrome de edição filtrado), sob demanda via `visual_capture_request` no WS de apresentação → `PUT rendered-preview` (revision-bound, proveniência `clientId`). Invariantes: nunca troca de slide, nunca renderiza offscreen/background, nunca captura estado otimista pré-ack. Editor fechado → a VISTA declara `EDITOR_NOT_OPEN` e usa só estrutura/dados/schematic.
 
 ### GR de Vendas (backlog Comercial → TV)
 

@@ -36,3 +36,18 @@ Geometry, typography chrome, chart/table/KPI visual options and insert defaults 
 - Ribbon/drag: preview local; commit → mutation → replace canonical config.
 - Paint path publicado não deve inventar `fontSize ?? 16` / palette por índice quando o modelo canônico está ausente — diagnóstico explícito.
 - FE-BE-002 docs devem citar este ADR para LAYOUT/GEOMETRY persistidos.
+
+## Addendum — live editor is the only visual pixel source (VISTA-LIVE-EDITOR-VISUAL-VERIFICATION-003)
+
+`tv-dashboard-api` remains the artifact authority for `canonical_stage`
+evidence (revision-bound PNG, `SlidePreviewRenderService`, signed TTL
+delivery), but the **pixel producer** is exclusively the user's live editor
+page. The backend requests capture over the existing presentation realtime
+WS (`visual_capture_request`, targeted to the caller's live `clientId`);
+the editor captures only the currently visible stage — no hidden slide, no
+offscreen render — and uploads via `PUT …/rendered-preview`. Upload marks
+`source=editor_live` only when the submitted `clientId` matches the
+uploader's own fresh editor focus on that playlist/slide. Page close /
+stale focus makes visual verification `unavailable` (`EDITOR_NOT_OPEN`)
+even when a cached artifact file still exists — availability ≠ file
+existence.

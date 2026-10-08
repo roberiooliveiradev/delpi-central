@@ -93,6 +93,9 @@ def _canonical_stage_image(data: dict) -> Any | None:
         rendered.get("status") != "ready"
         or rendered.get("kind") != "canonical_stage"
         or rendered.get("mimeType") != "image/png"
+        # VISTA visual evidence only comes from the user's live editor stage —
+        # cached/offscreen artifacts never project as canonical pixels.
+        or rendered.get("source") != "editor_live"
     ):
         return None
     slide_id = str(preview.get("slideId") or "").strip()

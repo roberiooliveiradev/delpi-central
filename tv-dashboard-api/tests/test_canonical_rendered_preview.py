@@ -1,8 +1,11 @@
-"""VISTA-CANONICAL-VISUAL-VERIFICATION-001 — signed preview capability +
-canonical_stage rendered artifact (browser-captured, revision-bound).
+"""VISTA-LIVE-EDITOR-VISUAL-VERIFICATION-003 — signed preview capability +
+canonical_stage rendered artifact (live-editor-captured, revision-bound).
 
 Covers the middleware CONTRACT_DRIFT fix (signed token = AuthZ for the
-narrowest prefix only) and the additive ``slidePreview.rendered`` contract.
+narrowest prefix only), the additive ``slidePreview.rendered`` contract and
+the live-editor visual policy: only artifacts produced by the caller's own
+live editor stage (``source=editor_live`` + matching ``clientId``) are visual
+evidence — editor closed means ``EDITOR_NOT_OPEN``, never a silent render.
 """
 
 from __future__ import annotations
@@ -95,6 +98,51 @@ def _writes_for(*, playlist_id, slides, revision):
     writes.list_sections.return_value = []
     writes.get_revision.return_value = revision
     return writes
+
+
+def _live_editor(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    actor: str = "u1",
+    playlist_id,
+    slide_id,
+    client_id: str = "c-live",
+):
+    """Simula editor ao vivo do caller: foco fresco no editorFocusStore +
+    clientId presente/vivo no presentation realtime hub."""
+    from tv_app.application.services import editor_focus_store as efs_mod
+    from tv_app.application.services import presentation_realtime_hub as hub_mod
+    from tv_app.application.services.editor_focus_store import EditorFocusStore
+
+    store = EditorFocusStore()
+    store.record(
+        user_id=actor,
+        playlist_id=str(playlist_id),
+        slide_id=str(slide_id),
+        client_id=client_id,
+    )
+    monkeypatch.setattr(efs_mod, "editor_focus_store", store)
+    hub = SimpleNamespace(
+        is_editor_client_live=lambda *a, **k: True,
+        request_visual_capture=MagicMock(return_value=True),
+    )
+    monkeypatch.setattr(hub_mod, "presentation_realtime_hub", hub)
+    return SimpleNamespace(store=store, hub=hub)
+
+
+def _no_live_editor(monkeypatch: pytest.MonkeyPatch):
+    """Garante isolamento: nenhum foco/nenhum cliente vivo para ninguém."""
+    from tv_app.application.services import editor_focus_store as efs_mod
+    from tv_app.application.services import presentation_realtime_hub as hub_mod
+    from tv_app.application.services.editor_focus_store import EditorFocusStore
+
+    monkeypatch.setattr(efs_mod, "editor_focus_store", EditorFocusStore())
+    hub = SimpleNamespace(
+        is_editor_client_live=lambda *a, **k: False,
+        request_visual_capture=MagicMock(return_value=True),
+    )
+    monkeypatch.setattr(hub_mod, "presentation_realtime_hub", hub)
+    return hub
 
 
 # ------------------------------------------------------------------
@@ -312,11 +360,63 @@ def _context_with_preview(dispatch, *, playlist_id, slide_id):
         )
 
 
-def test_include_preview_rendered_unavailable_without_artifact(
+def test_include_preview_editor_closed_visual_unavailable(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
+    """VISTA_VISUAL_EDITOR_CLOSED — sem editor vivo do caller, a estrutura
+    segue disponível e a evidência visual é unavailable/EDITOR_NOT_OPEN —
+    mesmo com artifact cacheado de uma sessão anterior (page-close)."""
+    svc = _patch_preview_service(monkeypatch, tmp_path)
+    hub = _no_live_editor(monkeypatch)
+    playlist_id, slide_id = uuid4(), uuid4()
+    writes = _writes_for(
+        playlist_id=playlist_id,
+        slides=[
+            {
+                "id": str(slide_id),
+                "title": "S1",
+                "nativeConfig": _sample_native(),
+                "slideType": "native",
+            }
+        ],
+        revision=5,
+    )
+    # Artifact antigo existe, mas não há editor vivo → não é evidência visual.
+    svc.store_rendered_png(
+        slide_id=str(slide_id),
+        revision=5,
+        png=_png(size=(16, 9)),
+        source="editor_live",
+        client_id="c-old-session",
+    )
+    dispatch = GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=MagicMock()
+    )
+    out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
+    preview = out["slidePreview"]
+    assert preview["kind"] == "schematic_layout"  # structural path preserved
+    assert preview["previewUrl"]  # schematic signed URL still emitted
+    assert out["layoutDigest"] is not None or "layoutDigest" in out
+    rendered = preview["rendered"]
+    assert rendered["kind"] == "canonical_stage"
+    assert rendered["status"] == "unavailable"
+    assert rendered["failureCode"] == "EDITOR_NOT_OPEN"
+    assert "previewUrl" not in rendered
+    # Nenhuma captura foi pedida — não existe editor para atendê-la.
+    hub.request_visual_capture.assert_not_called()
+
+
+def test_include_preview_editor_open_capture_pending(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """VISTA_VISUAL_EDITOR_OPEN_CAPTURE_REQUEST — editor vivo + slide visível
+    sem artifact: a API pede captura direcionada ao clientId do caller e
+    responde pending/EDITOR_CAPTURE_PENDING; resend é bounded."""
     _patch_preview_service(monkeypatch, tmp_path)
     playlist_id, slide_id = uuid4(), uuid4()
+    live = _live_editor(
+        monkeypatch, playlist_id=playlist_id, slide_id=slide_id, client_id="c-9"
+    )
     writes = _writes_for(
         playlist_id=playlist_id,
         slides=[
@@ -333,20 +433,106 @@ def test_include_preview_rendered_unavailable_without_artifact(
         repo=MagicMock(), writes=writes, commit=MagicMock()
     )
     out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
-    preview = out["slidePreview"]
-    assert preview["kind"] == "schematic_layout"  # existing field preserved
-    rendered = preview["rendered"]
-    assert rendered["kind"] == "canonical_stage"
-    assert rendered["status"] == "unavailable"
-    assert rendered["failureCode"] == "NO_CANONICAL_ARTIFACT"
-    assert "previewUrl" not in rendered
+    rendered = out["slidePreview"]["rendered"]
+    assert rendered["status"] == "pending"
+    assert rendered["failureCode"] == "EDITOR_CAPTURE_PENDING"
+    live.hub.request_visual_capture.assert_called_once()
+    kwargs = live.hub.request_visual_capture.call_args.kwargs
+    assert kwargs["playlist_id"] == str(playlist_id)
+    assert kwargs["user_id"] == "u1"
+    assert kwargs["client_id"] == "c-9"
+    assert kwargs["slide_id"] == str(slide_id)
+    assert kwargs["revision"] == 5
+    assert kwargs["request_id"]
+
+    # Resend bounded: dentro da janela não reenvia o mesmo pedido.
+    out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
+    assert out["slidePreview"]["rendered"]["status"] == "pending"
+    assert live.hub.request_visual_capture.call_count == 1
 
 
-def test_include_preview_rendered_ready_and_stale(
+def test_include_preview_wrong_slide_not_open(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
+    """Editor ao vivo focado no slide B; pedido de preview do slide A →
+    EDITOR_SLIDE_NOT_OPEN, sem pedido de captura (nunca troca o slide)."""
+    _patch_preview_service(monkeypatch, tmp_path)
+    playlist_id, slide_a, slide_b = uuid4(), uuid4(), uuid4()
+    live = _live_editor(
+        monkeypatch, playlist_id=playlist_id, slide_id=slide_b
+    )
+    writes = _writes_for(
+        playlist_id=playlist_id,
+        slides=[
+            {
+                "id": str(slide_a),
+                "title": "A",
+                "nativeConfig": _sample_native(),
+                "slideType": "native",
+            },
+            {
+                "id": str(slide_b),
+                "title": "B",
+                "nativeConfig": _sample_native(),
+                "slideType": "native",
+            },
+        ],
+        revision=5,
+    )
+    dispatch = GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=MagicMock()
+    )
+    out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_a)
+    rendered = out["slidePreview"]["rendered"]
+    assert rendered["status"] == "unavailable"
+    assert rendered["failureCode"] == "EDITOR_SLIDE_NOT_OPEN"
+    live.hub.request_visual_capture.assert_not_called()
+
+
+def test_include_preview_user_isolation(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """Foco de OUTRO usuário nunca satisfaz a verificação visual do caller."""
+    _patch_preview_service(monkeypatch, tmp_path)
+    playlist_id, slide_id = uuid4(), uuid4()
+    live = _live_editor(
+        monkeypatch,
+        actor="u2-other-user",
+        playlist_id=playlist_id,
+        slide_id=slide_id,
+    )
+    writes = _writes_for(
+        playlist_id=playlist_id,
+        slides=[
+            {
+                "id": str(slide_id),
+                "title": "S1",
+                "nativeConfig": _sample_native(),
+                "slideType": "native",
+            }
+        ],
+        revision=5,
+    )
+    dispatch = GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=MagicMock()
+    )
+    out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
+    rendered = out["slidePreview"]["rendered"]
+    assert rendered["status"] == "unavailable"
+    assert rendered["failureCode"] == "EDITOR_NOT_OPEN"
+    live.hub.request_visual_capture.assert_not_called()
+
+
+def test_include_preview_rendered_ready_requires_editor_live(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """ready somente com artifact editor_live do clientId vivo e fresco.
+    Artifact sem proveniência live → capture pending, não ready."""
     svc = _patch_preview_service(monkeypatch, tmp_path)
     playlist_id, slide_id = uuid4(), uuid4()
+    live = _live_editor(
+        monkeypatch, playlist_id=playlist_id, slide_id=slide_id, client_id="c-9"
+    )
     slide = {
         "id": str(slide_id),
         "title": "S1",
@@ -360,30 +546,138 @@ def test_include_preview_rendered_ready_and_stale(
 
     artifact_png = _png(size=(32, 18))
     svc.store_rendered_png(
-        slide_id=str(slide_id), revision=5, png=artifact_png, width=32, height=18
+        slide_id=str(slide_id),
+        revision=5,
+        png=artifact_png,
+        width=32,
+        height=18,
+        source="editor_live",
+        client_id="c-9",
     )
     out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
     rendered = out["slidePreview"]["rendered"]
     assert rendered["status"] == "ready"
     assert rendered["kind"] == "canonical_stage"
+    assert rendered["source"] == "editor_live"
     assert rendered["revision"] == 5
     assert rendered["width"] == 32
     assert rendered["height"] == 18
     assert rendered["mimeType"] == "image/png"
     assert "slide-previews/" in rendered["previewUrl"]
     assert rendered["expiresAt"]
+    live.hub.request_visual_capture.assert_not_called()  # artifact fresco — sem request
     # The minted URL actually serves the artifact bytes.
     token = rendered["previewUrl"].rsplit("/", 1)[-1]
     claims = parse_slide_preview_token(token)
     assert claims["artifact"] == "canonical_stage"
     assert claims["slideId"] == str(slide_id)
 
-    # Revision bump: artifact bound to rev 5 is no longer READY at rev 6.
+    # Artifact sem proveniência live nunca vira ready — novo pedido de captura.
+    svc2 = _patch_preview_service(monkeypatch, tmp_path / "other")
+    svc2.store_rendered_png(
+        slide_id=str(slide_id), revision=5, png=artifact_png, width=32, height=18
+    )
+    out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
+    rendered = out["slidePreview"]["rendered"]
+    assert rendered["status"] == "pending"
+    assert rendered["failureCode"] == "EDITOR_CAPTURE_PENDING"
+
+    # Revision race: rev bump torna o artifact stale → capture pending (fail-closed).
     writes.get_revision.return_value = 6
     out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
     rendered = out["slidePreview"]["rendered"]
-    assert rendered["status"] == "unavailable"
+    assert rendered["status"] == "pending"
     assert rendered["revision"] == 6
+
+
+def test_include_preview_page_close_invalidates_visual(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """PAGE CLOSE — artifact ready com editor vivo; ao fechar a página o foco
+    morre e o artifact cacheado deixa de ser evidência visual."""
+    svc = _patch_preview_service(monkeypatch, tmp_path)
+    playlist_id, slide_id = uuid4(), uuid4()
+    live = _live_editor(
+        monkeypatch, playlist_id=playlist_id, slide_id=slide_id, client_id="c-9"
+    )
+    writes = _writes_for(
+        playlist_id=playlist_id,
+        slides=[
+            {
+                "id": str(slide_id),
+                "title": "S1",
+                "nativeConfig": _sample_native(),
+                "slideType": "native",
+            }
+        ],
+        revision=5,
+    )
+    svc.store_rendered_png(
+        slide_id=str(slide_id),
+        revision=5,
+        png=_png(size=(16, 9)),
+        source="editor_live",
+        client_id="c-9",
+    )
+    dispatch = GptActionsDispatchService(
+        repo=MagicMock(), writes=writes, commit=MagicMock()
+    )
+    out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
+    assert out["slidePreview"]["rendered"]["status"] == "ready"
+
+    # Page close/socket drop → foco limpo + cliente não está mais vivo.
+    live.store.clear_playlist_for_user("u1", str(playlist_id))
+    live.hub.is_editor_client_live = lambda *a, **k: False
+    out = _context_with_preview(dispatch, playlist_id=playlist_id, slide_id=slide_id)
+    rendered = out["slidePreview"]["rendered"]
+    assert rendered["status"] == "unavailable"
+    assert rendered["failureCode"] == "EDITOR_NOT_OPEN"
+    # O PNG físico continua cacheado, mas não é mais evidência visual.
+    assert svc.read_rendered_png(slide_id=str(slide_id), revision=5) is not None
+
+
+def test_canonical_stage_image_requires_editor_live_source(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """MCP ImageContent — só projeta pixels quando rendered.status=ready E
+    source=editor_live; artifact sem proveniência viva nunca vira imagem."""
+    from tv_app.interface.mcp.tool_bridge import _canonical_stage_image
+
+    svc = _patch_preview_service(monkeypatch, tmp_path)
+    slide_id = str(uuid4())
+    png = _png(size=(16, 9))
+    svc.store_rendered_png(
+        slide_id=slide_id,
+        revision=5,
+        png=png,
+        source="editor_live",
+        client_id="c-9",
+    )
+
+    def _data(source):
+        return {
+            "slidePreview": {
+                "slideId": slide_id,
+                "rendered": {
+                    "kind": "canonical_stage",
+                    "status": "ready",
+                    "revision": 5,
+                    "mimeType": "image/png",
+                    "source": source,
+                },
+            }
+        }
+
+    image = _canonical_stage_image(_data("editor_live"))
+    assert image is not None
+    assert image.mime_type == "image/png"
+
+    assert _canonical_stage_image(_data("editor_stage_capture")) is None
+    assert _canonical_stage_image(_data("render_worker")) is None
+
+    blocked = _data("editor_live")
+    blocked["slidePreview"]["rendered"]["status"] = "unavailable"
+    assert _canonical_stage_image(blocked) is None
 
 
 def test_include_preview_rendered_external_slide_unsupported(
@@ -561,3 +855,80 @@ def test_rendered_preview_upload_read_only_actor_denied(upload_env):
         )
         is None
     )
+
+
+# ------------------------------------------------------------------
+# D2. Proveniência live — source=editor_live só com clientId do foco vivo
+# ------------------------------------------------------------------
+
+
+def _focus_upload_user(
+    monkeypatch, upload_env, *, client_id="c-9", slide_id=None, stale=False
+):
+    """Foca o editor do usuário autenticado do upload_env (sub=user-1)."""
+    from tv_app.application.services import editor_focus_store as efs_mod
+    from tv_app.application.services.editor_focus_store import EditorFocusStore
+
+    store = EditorFocusStore(ttl_seconds=15.0 if stale else 90.0)
+    store.record(
+        user_id="user-1",
+        playlist_id=str(upload_env.playlist_id),
+        slide_id=str(slide_id or upload_env.slide_id),
+        client_id=client_id,
+    )
+    monkeypatch.setattr(efs_mod, "editor_focus_store", store)
+    return store
+
+
+def test_rendered_preview_upload_live_clientid_marks_editor_live(
+    upload_env, monkeypatch
+):
+    _focus_upload_user(monkeypatch, upload_env, client_id="c-9")
+    resp = upload_env.client.put(
+        f"/playlists/{upload_env.playlist_id}/slides/{upload_env.slide_id}"
+        "/rendered-preview?revision=5&clientId=c-9",
+        headers={**AUTH, "Content-Type": "image/png"},
+        content=_UPLOAD_PNG,
+    )
+    assert resp.status_code == 200, resp.json()
+    assert resp.json()["data"]["source"] == "editor_live"
+    meta = upload_env.svc.rendered_artifact_meta(
+        slide_id=str(upload_env.slide_id), revision=5
+    )
+    assert meta["source"] == "editor_live"
+    assert meta["clientId"] == "c-9"
+
+
+def test_rendered_preview_upload_without_focus_not_live(upload_env, monkeypatch):
+    """clientId fornecido sem foco vivo correspondente → artifact guardado,
+    mas proveniência NÃO é editor_live (nunca satisfaz visual da VISTA)."""
+    _focus_upload_user(monkeypatch, upload_env, client_id="c-other")
+    resp = upload_env.client.put(
+        f"/playlists/{upload_env.playlist_id}/slides/{upload_env.slide_id}"
+        "/rendered-preview?revision=5&clientId=c-9",
+        headers={**AUTH, "Content-Type": "image/png"},
+        content=_UPLOAD_PNG,
+    )
+    assert resp.status_code == 200, resp.json()
+    assert resp.json()["data"]["source"] == "editor_stage_capture"
+    meta = upload_env.svc.rendered_artifact_meta(
+        slide_id=str(upload_env.slide_id), revision=5
+    )
+    assert meta["source"] == "editor_stage_capture"
+    assert meta["clientId"] is None
+
+
+def test_rendered_preview_upload_wrong_slide_focus_not_live(
+    upload_env, monkeypatch
+):
+    """Foco vivo em OUTRO slide → upload deste slide não ganha proveniência
+    live (evita artifact do slide escondido mascarar-se como palco visível)."""
+    _focus_upload_user(monkeypatch, upload_env, client_id="c-9", slide_id=uuid4())
+    resp = upload_env.client.put(
+        f"/playlists/{upload_env.playlist_id}/slides/{upload_env.slide_id}"
+        "/rendered-preview?revision=5&clientId=c-9",
+        headers={**AUTH, "Content-Type": "image/png"},
+        content=_UPLOAD_PNG,
+    )
+    assert resp.status_code == 200, resp.json()
+    assert resp.json()["data"]["source"] == "editor_stage_capture"

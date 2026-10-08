@@ -93,25 +93,6 @@ class Settings:
         _get_env("MINHA_DELPI_AI_API_TIMEOUT_SECONDS", default="20") or "20"
     )
 
-    # Bounded canonical render worker (execution host; no domain authority).
-    # Empty URL disables autonomous rendering — MFE/editor capture stays the
-    # only canonical_stage producer.
-    TV_RENDER_WORKER_URL: str = _get_env("TV_RENDER_WORKER_URL", default="") or ""
-    # Dedicated S2S credential for API→worker calls — deliberately NOT
-    # API_DELPI_INTERNAL_SERVICE_TOKEN (no credential reuse across surfaces).
-    TV_RENDER_WORKER_SERVICE_TOKEN: str = (
-        _get_env("TV_RENDER_WORKER_SERVICE_TOKEN", default="") or ""
-    )
-    TV_RENDER_WORKER_TIMEOUT_SECONDS: float = float(
-        _get_env("TV_RENDER_WORKER_TIMEOUT_SECONDS", default="30") or "30"
-    )
-    TV_RENDER_WORKER_TRIGGER_ON_CONTEXT: bool = (
-        str(
-            _get_env("TV_RENDER_WORKER_TRIGGER_ON_CONTEXT", default="true") or "true"
-        ).lower()
-        in {"1", "true", "yes", "on"}
-    )
-
     # MCP transport security (DNS-rebinding / Origin). Comma-separated lists;
     # empty = platform defaults in tv_app/interface/mcp/server.py.
     TV_MCP_ALLOWED_HOSTS: str = _get_env("TV_MCP_ALLOWED_HOSTS", default="") or ""

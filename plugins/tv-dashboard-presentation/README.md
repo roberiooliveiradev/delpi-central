@@ -50,6 +50,7 @@ import {
 | DTOs `DataTransformV1/V2`, diagnósticos e schema M | Espelho de contrato da Fase 1; sem parser ou execução M no browser |
 | `comunicadoImageCropCssProperties` | CSS viewport para recorte de imagem |
 | `native-screens.css` | Layout viewport-fit (`tdp-*`, `tdp-series-chart*`) |
+| `PresentationVisualCaptureRequestEvent` / `onVisualCaptureRequest` | Evento realtime `visual_capture_request` (VISTA live-editor visual verification): o backend pede ao editor do usuário a captura do palco visível — `playlistId`/`slideId`/`revision`/`requestId`, sem payload arbitrário. Consumido por `plugins/tv-dashboard`; o render em si continua sendo o DOM vivo do editor |
 
 ---
 

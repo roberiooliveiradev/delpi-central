@@ -560,11 +560,16 @@ class SlidePreviewRenderService:
         png: bytes,
         width: int | None = None,
         height: int | None = None,
+        source: str = "editor_stage_capture",
+        client_id: str | None = None,
     ) -> dict[str, Any]:
         """Persist a browser-rendered canonical stage PNG bound to (slide, revision).
 
         Evidence/cache only — never source of truth. Caller must already have
-        validated PNG magic/dimensions and revision == current.
+        validated PNG magic/dimensions and revision == current. ``source`` /
+        ``client_id`` record producer provenance: only ``source="editor_live"``
+        artifacts bound to a live editor client are eligible for VISTA visual
+        verification.
         """
         import json
 
@@ -578,6 +583,8 @@ class SlidePreviewRenderService:
             "height": height,
             "uploadedAt": time.time(),
             "bytes": len(png),
+            "source": str(source or "editor_stage_capture"),
+            "clientId": str(client_id or "").strip() or None,
         }
         with self._lock:
             path.write_bytes(png)

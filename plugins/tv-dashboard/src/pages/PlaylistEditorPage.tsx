@@ -4,6 +4,7 @@ import {
   serializeComunicadoConfig,
   type PresentationPresencePeer,
   type PresentationSelectionUpdateEvent,
+  type PresentationVisualCaptureRequestEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 import { rewriteAdminMediaUrlsForBrowser } from "../api/browserSafeMediaUrl";
@@ -130,6 +131,7 @@ import {
   getEditorPresenceClientId,
   resolveEditorDisplayName,
 } from "../utils/editorPresence";
+import { handleVisualCaptureRequest } from "../utils/liveStageVisualCapture";
 import {
   applySlideBatchPatch,
   isCustomMessageSlide,
@@ -703,6 +705,35 @@ export function PlaylistEditorPage({
       applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
     },
     onSelectionUpdate: handleRemoteSelection,
+    onVisualCaptureRequest: (event: PresentationVisualCaptureRequestEvent) => {
+      // VISTA live-editor visual verification: captura SOMENTE o palco visível
+      // atual — nunca troca de slide, nunca renderiza em background.
+      void handleVisualCaptureRequest(event, {
+        playlistId,
+        getSelectedSlideId: () => selectedSlideIdRef.current,
+        getLocalRevision: () => {
+          const current = playlistRef.current;
+          const revision = current?.revision ?? current?.currentRevision;
+          return typeof revision === "number" && Number.isFinite(revision)
+            ? revision
+            : null;
+        },
+        reloadFromServer: () => reloadPlaylistFromServer(),
+        isEditorActive: () => editorActive,
+        getClientId: () => editorPresence?.clientId,
+        hasPendingLocalEdits: () => {
+          const pending = pendingComunicadoSaveRef.current;
+          return (
+            Boolean(pending) ||
+            hasLocalComunicadoEdits({
+              playlistId,
+              slideId: selectedSlideIdRef.current,
+              pendingSlideId: pending?.slide.id ?? null,
+            })
+          );
+        },
+      });
+    },
   });
 
   /**

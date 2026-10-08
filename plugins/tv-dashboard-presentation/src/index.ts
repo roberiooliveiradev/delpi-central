@@ -63,6 +63,7 @@ export type {
   PresentationRealtimeEvent,
   PresentationSelectionUpdateEvent,
   PresentationSlideDraftEvent,
+  PresentationVisualCaptureRequestEvent,
 } from "./usePresentationRealtime";
 export {
   applyPlaybackCursorToIndex,

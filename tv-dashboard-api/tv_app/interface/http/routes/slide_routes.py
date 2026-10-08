@@ -264,12 +264,18 @@ async def upload_rendered_slide_preview(
     playlist_id: UUID,
     slide_id: UUID,
     revision: int = Query(..., ge=0),
+    client_id: str | None = Query(default=None, alias="clientId", max_length=120),
 ):
     """Store a browser-rendered canonical-stage PNG bound to the current revision.
 
     Evidence/cache only — published by the editor/preview AFTER an
     authoritative write ack. Never mutates playlist state, revision, history,
     MDD or media library; a stale revision is rejected fail-closed.
+
+    Provenance: ``source=editor_live`` is only stamped when the uploaded
+    ``clientId`` matches the uploader's own live editor focus — artifacts
+    without a verified live-editor client never satisfy VISTA visual
+    verification.
     """
     from io import BytesIO
 
@@ -278,10 +284,13 @@ async def upload_rendered_slide_preview(
     from tv_app.application.services.data.slide_preview_render_service import (
         get_slide_preview_render_service,
     )
+    from tv_app.application.services.editor_focus_store import editor_focus_store
 
     guarded = await arequire_playlist_access(request, playlist_id, need="edit")
     if is_access_error(guarded):
         return guarded
+    user, _access_result = guarded
+    actor = _actor_id(user)
     content_type = (
         (request.headers.get("content-type") or "").split(";")[0].strip().lower()
     )
@@ -323,12 +332,28 @@ async def upload_rendered_slide_preview(
                 "currentRevision": current_revision,
             },
         )
+    # Proveniência live: o clientId enviado só marca «editor_live» quando é o
+    # clientId do foco de editor FRESCO do próprio uploader nesta playlist.
+    clean_client_id = (client_id or "").strip() or None
+    focus = (
+        editor_focus_store.get_for_user_playlist(actor, str(playlist_id))
+        if actor and clean_client_id
+        else None
+    )
+    live_bound = bool(
+        focus
+        and not focus.get("stale")
+        and str(focus.get("slideId") or "") == str(slide_id)
+        and focus.get("clientId") == clean_client_id
+    )
     meta = get_slide_preview_render_service().store_rendered_png(
         slide_id=str(slide_id),
         revision=current_revision,
         png=body,
         width=width,
         height=height,
+        source="editor_live" if live_bound else "editor_stage_capture",
+        client_id=clean_client_id if live_bound else None,
     )
     return ok(
         {
@@ -337,6 +362,7 @@ async def upload_rendered_slide_preview(
             "revision": current_revision,
             "width": meta.get("width"),
             "height": meta.get("height"),
+            "source": meta.get("source"),
         }
     )
 

@@ -1314,6 +1314,40 @@ export async function updateSlide(
   );
 }
 
+export type SlideRenderedPreviewResult = {
+  status: string;
+  kind?: string;
+  revision?: number;
+  width?: number | null;
+  height?: number | null;
+  source?: string;
+};
+
+/**
+ * Publica o PNG revision-bound do palco canônico (evidence/cache — nunca muta
+ * a programação). `clientId` = editor presence clientId do próprio usuário;
+ * o backend só marca proveniência `editor_live` quando ele casa com o foco
+ * de editor ao vivo do uploader.
+ */
+export async function uploadSlideRenderedPreview(
+  playlistId: string,
+  slideId: string,
+  playlistRevision: number,
+  png: Blob,
+  options?: { clientId?: string | null },
+): Promise<SlideRenderedPreviewResult> {
+  const params = new URLSearchParams({ revision: String(playlistRevision) });
+  const clientId = options?.clientId?.trim();
+  if (clientId) params.set("clientId", clientId);
+  return unwrap(
+    httpPutBytes<ApiEnvelope<SlideRenderedPreviewResult>>(
+      `${API_BASE}/playlists/${playlistId}/slides/${slideId}/rendered-preview?${params.toString()}`,
+      png,
+      { contentType: "image/png" },
+    ),
+  );
+}
+
 export type PresentationMutationOp = {
   op: string;
   [key: string]: unknown;
