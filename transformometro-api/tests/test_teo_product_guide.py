@@ -410,3 +410,60 @@ def test_portal_overview_links_only_valid_topics() -> None:
     reg = ProductGuideRegistry()
     for topic in reg.get("portal_overview")["related_topics"]:
         assert reg.get(topic) is not None, topic
+
+
+# ----------------------------------------------------- coverage acceptance
+
+
+# Wave 4 inventory: every user-facing Portal feature classified.
+# COVERED features must resolve to a guide; the rest carry an explicit
+# non-guide class. Nothing may silently drop off this matrix.
+PORTAL_FEATURE_COVERAGE = {
+    # COVERED — guide-backed
+    "home_overview": "portal_overview",
+    "dashboard_metas_idd": "dashboard",
+    "processes": "process",
+    "improvements": "instance",
+    "revisions": "revision",
+    "baseline": "baseline",
+    "measurement": "measurement",
+    "investment": "investment",
+    "process_documents": "process_documents",
+    "diagram": "diagram",
+    "decomposition": "decomposition",
+    "evidence": "evidence",
+    "diagnostic": "diagnostic",
+    "tasks": "tasks",
+    "interaction_room": "interaction_room",
+    "meeting_minutes": "meeting_minutes",
+    "timeline": "timeline",
+    "impact_effort_matrix": "impact_effort_matrix",
+    "shared_resources": "shared_resources",
+    "resource_costs": "resource_costs",
+    "branches_units": "branch",
+    "departments": "department",
+    "signature_profile": "signature_profile",
+    "data_transfer": "data_transfer",
+    # Non-guide classifications
+    "person_directory": "UI_ONLY",
+    "binary_attachments": "PLATFORM_BLOCKED",
+    "binary_evidence": "PLATFORM_BLOCKED",
+    "handwritten_signature": "PLATFORM_BLOCKED",
+    "improvement_package": "TECHNICAL_INTERNAL",
+}
+
+
+def test_portal_feature_coverage_has_no_orphans() -> None:
+    reg = ProductGuideRegistry()
+    for feature, target in PORTAL_FEATURE_COVERAGE.items():
+        if target in ("UI_ONLY", "TECHNICAL_INTERNAL", "PLATFORM_BLOCKED"):
+            continue
+        assert reg.get(target) is not None, f"{feature} -> {target}"
+
+
+def test_terminology_aliases_present() -> None:
+    reg = ProductGuideRegistry()
+    assert "documento" in reg.get("process_documents")["title"].lower()
+    assert "diagrama" in reg.get("diagram")["title"].lower()
+    assert "melhoria" in reg.get("instance")["title"].lower()
+    assert "ata" in reg.get("meeting_minutes")["title"].lower()

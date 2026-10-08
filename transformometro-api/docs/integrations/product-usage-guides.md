@@ -85,3 +85,92 @@ VERIFY     → get_product_guide(topic=<id>) no MCP/Actions
 ```
 
 Novo tópico = conteúdo + validação; sem código novo.
+
+## Coverage acceptance (Wave 4 inventory)
+
+Todo recurso user-facing do Portal foi inventariado em
+`plugins/transformometro` (rotas, `ui/pages/*`, `userManualContent.ts`,
+`helpTooltips.ts`). Classificação final:
+
+| Portal feature | Guia / destino | Status |
+|---|---|---|
+| Home, Visão geral, Metas/IDD | `portal_overview`, `dashboard` | COVERED |
+| Processos | `process` | COVERED |
+| Melhorias | `instance` (alias melhoria PROVEN) | COVERED |
+| Revisões/cenários + ativação | `revision` | COVERED |
+| Baseline | `baseline` | COVERED |
+| Medições | `measurement` | COVERED |
+| Investimentos | `investment` | COVERED |
+| Documentos | `process_documents` | COVERED |
+| Diagrama + BPMN import + scopes | `diagram` | COVERED |
+| Decomposição + scopes/overlays | `decomposition` | COVERED |
+| Evidências (link/metadata) | `evidence` | COVERED |
+| Diagnóstico | `diagnostic` | COVERED |
+| Tarefas (+ assinatura pendente de ata) | `tasks` | COVERED |
+| Sala de interação | `interaction_room` | COVERED |
+| Atas | `meeting_minutes` | COVERED |
+| Histórico/timeline | `timeline` | COVERED |
+| Indicadores/dashboard | `dashboard` | COVERED |
+| Priorização | `impact_effort_matrix` | COVERED |
+| Recursos/custos | `shared_resources`, `resource_costs` | COVERED |
+| Unidades / Departamentos (Settings) | `branch`, `department` | COVERED |
+| Minha assinatura | `signature_profile` | COVERED |
+| Exportar/Importar | `data_transfer` | COVERED |
+| Diretório de pessoas | pick-list de responsáveis (tasks/minutes) | UI_ONLY |
+| Binary attachments/evidência | anexos no transporte tipado | PLATFORM_BLOCKED |
+| improvement_package | pacote técnico de cadastro composto | TECHNICAL_INTERNAL |
+
+`PRODUCT_KNOWLEDGE_COVERAGE = COMPLETE`.
+
+## Authority review
+
+| Surface | É autoridade de | Nunca é |
+|---|---|---|
+| Product Guide | como/quando/por que usar | fato, AuthZ, policy |
+| `get_catalog` | contrato técnico vivo | orientação de uso |
+| Domain reads | estado real persistido | contrato |
+| Methodology Guide | método de análise | feature usage |
+| AuthZ (backend) | autorização efetiva | — |
+| Portal Help | apresentação de ajuda | authority semântica |
+
+## Definition of Done — product knowledge
+
+Nova feature user-facing do Transformômetro só está completa quando:
+
+- owner/contract definidos;
+- UI implementada;
+- Product Guide criado ou atualizado;
+- `related_topics` revisados;
+- `capability_refs`/`contract_refs` válidos;
+- impacto na Help classificado;
+- testes atualizados;
+- runtime verificado.
+
+Mudança semântica em feature existente exige revisão do guide.
+Mudança puramente interna/técnica não exige tópico novo.
+
+## Contributor workflow
+
+```text
+ADD/CHANGE FEATURE → INVENTORY SEMANTICS → UPDATE PRODUCT GUIDE
+→ VALIDATE SOURCES → TEST REFERENCES → REVIEW HELP IMPACT
+→ DEPLOY → RUNTIME VERIFY
+```
+
+## Help Convergence V1 (plan)
+
+Portal Help hoje: `userManualContent.ts` + `helpTooltips.ts` +
+empty-state copy — HARDCODED/MULTIPLE.
+
+Classificação dos blocos do manual:
+
+| Help content | Product Guide | Classification |
+|---|---|---|
+| Seções de feature (processes, interaction, minutes…) | topic correspondente | DERIVE_FROM_SHARED_GUIDE (futuro) |
+| Copy de navegação (cliques, caminhos, Hero, abas) | — | UI_SPECIFIC |
+| Metas/IDD, diagnóstico semantics | `dashboard`, `diagnostic` | DUPLICATED (convergir) |
+| Tooltips de campo | `field_guidance` do guide | DERIVE (futuro) |
+
+TARGET: `Product Usage Registry` = shared semantic authority →
+Portal Help projeta onde apropriado → TÉO consome via
+`get_product_guide`. Nenhuma migração de UI nesta fase.
