@@ -12199,3 +12199,15 @@ RESIDUAL: owner-side TEO defect = none proven; model stage
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+REVIEW ANNOTATION (§6.156, C3-INTELLIGENCE-LOOP-03R2B-CLOSEOUT-01):
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2B = ACCEPT_WITH_RESIDUAL
+    decided by Architecture Coordination after this section's
+    executor result. Executor state IMPLEMENTATION_EVIDENCE_READY_
+    FOR_REVIEW preserved as historical. Accepted residual:
+    D05_HISTORICAL_ROOT_CAUSE = UNPROVEN (historical input not
+    persisted — irrecoverable; no defect invented to close it).
+  CI correction (independently observed at R2B docs SHA):
+    CI_CURSOR_RULES_GOVERNANCE = FAIL_CURRENT_HEAD_UNRELATED
+      (failed step "Audit Cursor rules" — preexisting upstream debt)
+    CI_ARCHITECTURE_ENFORCEMENT = NOT_OBSERVED_ON_R2B_HEAD

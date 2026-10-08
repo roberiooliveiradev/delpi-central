@@ -2827,5 +2827,6 @@ Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_re
 | `MATERIAL_ACT_CALLS` | 0 |
 | `PROVIDER_NEUTRALITY` / `RENAME_INVARIANCE` / `GENERALIZATION` | PASS / PASS / PASS — fix is transport-generic, zero owner/tool-name branches |
 | Full delia-api suite | **953/953 PASS at `f63f0af955`** (951 baseline + 2 gzip/case regression tests) |
-| `CI_ARCHITECTURE_ENFORCEMENT` / `CI_CURSOR_RULES_GOVERNANCE` | NOT_OBSERVED / NOT_OBSERVED (gh CLI unavailable locally) |
+| `CI_ARCHITECTURE_ENFORCEMENT` / `CI_CURSOR_RULES_GOVERNANCE` | NOT_OBSERVED_ON_R2B_HEAD / FAIL_CURRENT_HEAD_UNRELATED (independently observed at R2B docs SHA — failed step "Audit Cursor rules", preexisting upstream debt) |
+| `ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2B` | **ACCEPT_WITH_RESIDUAL** (§6.156 — historical executor state `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` preserved; accepted residual `D05_HISTORICAL_ROOT_CAUSE=UNPROVEN`, input not persisted/irrecoverable) |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
