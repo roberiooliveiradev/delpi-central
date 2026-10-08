@@ -12669,3 +12669,118 @@ made in this task.
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## 6.160. C3-GROUNDED-RESPONSE-QUALITY-CROSS-OWNER-01 — synthesis tolerance + owner precondition hint + live cross-owner proof
+
+EXECUTOR: Devin (senior executor / integration engineer).
+TASK = C3-GROUNDED-RESPONSE-QUALITY-CROSS-OWNER-01 — diagnose and fix,
+where proven defective, three smoke-test residuals: grounded-synthesis
+fallback (R1), cross-owner correlation (R2), owner precondition
+presentation (R3).
+
+### Reanchor
+
+HEAD at start = `e1e113e53f` == `origin/main` (== Coordination
+baseline). User worktree changes preserved untouched;
+`EXECUTION_DRIFT = NO`. `EXISTING_EQUIVALENT = YES`;
+`REUSE_DECISION = EXTEND` (existing contract plumbing extended with an
+optional bounded field — no new abstraction);
+`EXISTING_OWNER` = orchestration synthesis boundary +
+specialist_interop error boundary; `EXISTING_CONTRACT` =
+`{"items":[{record_index,fields}]}` selection contract (unchanged),
+DELPI owner error envelope `{"success":false,"message","data"}`.
+
+### R1 — grounded synthesis (defect proven, fixed)
+
+Root cause, reproduced from live logs:
+
+- `non_scalar_selection`: `_render_synthesis` rejected the ENTIRE
+  selection when ANY selected field carried a null/object/list value —
+  e.g. VISTA playlist `description: None`. One unrenderable leaf
+  discarded an otherwise valid selection → deterministic raw dump.
+- `proposal_absent`: the model's structured proposal failed the
+  envelope contract — the deterministic fallback is the intended
+  safe behavior (kept).
+
+Fix (bounded, grounding preserved — only verbatim scalar owner values
+can render):
+
+- `_render_synthesis` is now tolerant per leaf: null, non-scalar and
+  redacted-empty values are skipped; items with no renderable value
+  are dropped; only when nothing renders does it demote to
+  `empty_selection` fallback.
+- `SYNTHESIS_INSTRUCTION` explicitly forbids selecting null/object/
+  list fields.
+- `_format_structured`/`_format_list` no longer print literal `None`
+  noise for null leaves (presentation-only, still verbatim).
+
+`MODEL_AUTHORED_FACTUAL_PROSE = NONE` — unchanged; there is still no
+prose channel. `OWNER_FACTS = VERBATIM`, `PROVENANCE = PRESERVED`.
+
+### R2 — cross-owner correlation (live verification PASS)
+
+Controlled live turn on the deployed production code (read-only,
+authenticated subject `user`, scope=openid profile email), input
+explicitly requesting cross-source confirmation
+("Transformômetro é produto da DELPI? compare catálogo × informações"):
+
+- `native_assessment` → `corroboration_requested`; primary owner
+  `openapi:delpi` selected first (`delpi.search_products`, READ).
+- `foreign_selection` → `davi.discover_delpi_information` —
+  exactly ONE foreign group (`MAX_FOREIGN_GROUPS = 1` respected);
+  wire-level capture shows both authorized calls (`davi` delegated
+  credential + `delpi` openapi invocation).
+- `comparison_verdict = inconclusive` → result `GROUNDED`/
+  `OBSERVATION` with BOTH sources in `provenance.sources`
+  (DELPI + api-delpi) and limitation `comparison_inconclusive`;
+  content "Comparação inconclusiva." — the comparability gate did
+  not invent agreement.
+
+`CROSS_OWNER_CORRELATION = PASS` — the machinery (native-first,
+bounded foreign enrichment, comparability gate, dual provenance,
+truthful INCOMPARABLE outcome) verified live. No new federation/graph
+was built.
+
+### R3 — owner precondition presentation (generic mechanism, fixed)
+
+Chain traced: MCP `isError` → `RemoteToolOutcome` →
+`_normalize_outcome` discarded the owner envelope detail →
+`mcp_protocol_error` → `SOURCE_UNAVAILABLE` → fixed generic message.
+
+Fix (provider-neutral, owner vocabulary only):
+
+- `_owner_error_hint` extracts a bounded (160 chars, printable-only,
+  URL-free) `message` from a JSON error envelope when present —
+  never invents guidance, never renders `authorize_url` as actionable.
+- `owner_hint` flows `SpecialistInteropError` → `CapabilityProviderError`
+  → `GovernedCapabilityAttempt` → `_source_terminal_result` appends
+  ` A fonte informou: <hint>` to the deterministic terminal answer.
+
+For `glpi_link_required` the user now sees the owner-declared message
+("Helpdesk BFF error: glpi_link_required.") instead of the bare
+generic sentence. A fully friendly phrasing ("vincule sua conta GLPI")
+requires TÉO to declare a user-facing message field — owner contract
+evolution, not DÉLIA's call.
+
+### Tests
+
+`FOCUSED = 222/222 PASS` (evals + orchestration + budget + interop
+security files); new: 2 synthesis-tolerance + 3 owner_hint cases
+(envelope extraction, no-envelope generic, URL-drop).
+`FULL_SUITE = 970/970 PASS` (28s) on the committed content
+(commit `15f4c0a0ec`).
+
+### Residuals
+
+- `DEPLOYMENT_REQUIRED = YES` — fix lives in repo; running prod
+  service predates it. Live R1/R3 user-facing evidence requires the
+  next authorized deploy.
+- `GLPI_LINK_USER_GUIDANCE = PARTIAL` — generic owner-hint surfacing
+  implemented; friendly phrasing needs a TÉO owner-contract field
+  (`user_message`) — OWNER_FOLLOWUP.
+- `SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED` — unchanged.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
