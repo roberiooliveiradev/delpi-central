@@ -1,0 +1,48 @@
+{
+  "schema": "product_guide_v1",
+  "id": "interaction_room",
+  "title": "Sala de interação do processo",
+  "summary": "Canal de colaboração por processo: mensagens, reações, pin e leitura — sem anexos binários nesta superfície.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando e como usar a sala de interação para discutir um processo sem poluir o registro formal.",
+  "use_when": [
+    "Discutir o estado atual do processo com o time",
+    "Registrar um aviso rápido ligado ao contexto do processo",
+    "Sinalizar algo com reação ou fixar uma mensagem importante"
+  ],
+  "do_not_use_when": [
+    "Conteúdo formal com trilha de decisão — prefira ata ou documento do processo",
+    "Trabalho atribuível e rastreável — crie uma tarefa, não só uma mensagem",
+    "Enviar arquivo binário — anexos binários são BLOCKED_BY_PLATFORM nesta superfície"
+  ],
+  "how_to_use": [
+    "Abra (ou reutilize) a sala do processo — open_room é idempotente",
+    "Publique mensagens com contexto claro; o room_id vem do read-back, nunca inventado",
+    "Use reação para sinalizar sem gerar ruído; use pin para fixar o que importa",
+    "Marque a sala como lida para manter o painel limpo"
+  ],
+  "field_guidance": [
+    {"field": "processo_id", "guidance": "Sempre o processo real em contexto — resolva via workspace ou id explícito", "contract_ref": "workflows.interaction_room"},
+    {"field": "message content", "guidance": "Texto claro e autocontido; mensagens são editáveis pelo autor"}
+  ],
+  "quality_rules": [
+    "Mensagem boa informa o que mudou e o que se espera do leitor",
+    "Não transformar conversa em registro formal — ata e documento são as autoridades",
+    "Não anunciar anexo binário por esta superfície"
+  ],
+  "common_mistakes": [
+    "Usar a sala como substituta de tarefa quando há responsável e prazo",
+    "Prometer anexo de arquivo — não há transporte binário",
+    "Apagar mensagem sem necessidade — delete_message é confirm_before_act"
+  ],
+  "related_topics": ["tasks", "process_documents", "portal_overview"],
+  "capability_refs": ["interaction_room", "interaction_room_read"],
+  "contract_refs": ["capability_surface.workflows.interaction_room", "confirmation_policy.interaction_room.*"],
+  "source_refs": [
+    {"ref": "capability_descriptors.interaction_room — ações e políticas", "classification": "PROVEN"},
+    {"ref": "confirmation_policy — auto_act vs confirm_before_act da família", "classification": "PROVEN"},
+    {"ref": "Portal: InteractionRoomUseCases (parity)", "classification": "PROVEN"},
+    {"ref": "Boas práticas de redação de mensagens", "classification": "PROPOSED"}
+  ],
+  "agent_guidance": "Pedido de 'abra uma sala e publique X' é multi-action auto_act: open_room → read-back room_id → post_message — sem Confirma?."
+}

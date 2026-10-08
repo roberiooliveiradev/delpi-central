@@ -419,6 +419,18 @@ def _canonical_catalog() -> dict[str, Any]:
             },
         },
         {
+            "id": "product_guide",
+            "kind": "analysis",
+            "owner": "transformometro-api",
+            "description": (
+                "Product usage guides (how/when/why to use features "
+                "correctly) — GUIDANCE, never domain truth, AuthZ or "
+                "execution policy. Live contract stays in get_catalog."
+            ),
+            "read_only": True,
+            "operation": "get_product_guide",
+        },
+        {
             "id": "process_timeline",
             "kind": "analysis",
             "owner": "transformometro-api",
@@ -646,6 +658,13 @@ def _canonical_catalog() -> dict[str, Any]:
                     "workspace_context_v1 contract; navigation hint only, "
                     "domain read stays get_process_context",
                     "surfaces": ["portal_http", "gpt_actions", "mcp"],
+                },
+                {
+                    "id": "product_guide",
+                    "via": "get_product_guide (READ) — product usage guidance "
+                    "from the versioned product_guide_v1 registry; "
+                    "GUIDANCE_NOT_DOMAIN_TRUTH, never AuthZ/policy",
+                    "surfaces": ["gpt_actions", "mcp"],
                 },
             ],
             "parity_gap": [],

@@ -101,6 +101,7 @@ CAPABILITY_BINDINGS: tuple[CapabilityBinding, ...] = (
     _b("context.workspace.read", "gpt_get_workspace_context", ("get_workspace_context", "READ"), primary="get_workspace_context"),
     _b("catalog.read", "gpt_get_catalog", ("get_catalog", "DISCOVERY"), primary="get_catalog"),
     _b("methodology.read", "gpt_get_methodology_guide", ("get_methodology_guide", "READ"), primary="get_methodology_guide"),
+    _b("product_guide.read", "gpt_get_product_guide", ("get_product_guide", "READ"), primary="get_product_guide"),
     _b("context.process.read", "gpt_get_process_context", ("get_process_context", "READ"), primary="get_process_context"),
     _b("analytics.read", "gpt_analyze", ("analyze", "READ"), primary="analyze"),
     _b("record.search", "gpt_search_records", ("search_records", "READ"), primary="search_records"),

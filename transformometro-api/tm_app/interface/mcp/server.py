@@ -212,6 +212,27 @@ def create_mcp_server() -> MCPServer:
         )
 
     @mcp.tool(
+        name="get_product_guide",
+        title="Get product usage guide",
+        description=(
+            "READ-only product usage guidance for Portal/Transformômetro "
+            "features — how/when/why to use a capability correctly "
+            "(GUIDANCE, never domain truth, AuthZ or execution policy; "
+            "live contract stays in get_catalog). topic omitted returns "
+            "the topic index. section: overview|when_to_use|how_to_use|"
+            "field_guidance|quality|relationships|all. Unknown topic "
+            "fails typed — never falls back to another guide."
+        ),
+        annotations=_annotations("get_product_guide", "Get product usage guide"),
+        meta=meta,
+    )
+    def get_product_guide(
+        topic: str | None = None,
+        section: str | None = None,
+    ) -> CallToolResult:
+        return bridge.tool_get_product_guide(topic=topic, section=section)
+
+    @mcp.tool(
         name="get_process_context",
         title="Get process context",
         description="Aggregated read-only process intelligence context.",

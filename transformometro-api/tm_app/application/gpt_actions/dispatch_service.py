@@ -466,6 +466,40 @@ class GptActionsDispatchService:
                 {"error_kind": "validation"},
             ) from exc
 
+    def get_product_guide(
+        self,
+        request: Request,
+        *,
+        topic: str | None = None,
+        section: str | None = None,
+    ) -> dict[str, Any]:
+        """READ-only product usage guidance. Same view gate as other reads.
+
+        Guides teach how/when/why to use features — GUIDANCE, never domain
+        truth, AuthZ or execution policy. Unknown topic/section is a typed
+        validation failure, never a silent fallback.
+        """
+        from tm_app.application.product_guide.product_guide_service import (
+            ProductGuideNotFoundError,
+            ProductGuideService,
+        )
+
+        self._raise_http_err(require_transformometro_view_access(request))
+        try:
+            return ProductGuideService().get_product_guide(
+                topic=topic, section=section
+            )
+        except ProductGuideNotFoundError as exc:
+            raise GptActionsError(
+                str(exc.args[0] if exc.args else exc),
+                404,
+                {"error_kind": "not_found"},
+            ) from exc
+        except ValueError as exc:
+            raise GptActionsError(
+                str(exc), 400, {"error_kind": "validation"}
+            ) from exc
+
     def _resolve_setor_codigo(self, setor_ref: str | None) -> str | None:
         """Normalize GPT `setor_id` (UUID or codigo_setor) to business code.
 

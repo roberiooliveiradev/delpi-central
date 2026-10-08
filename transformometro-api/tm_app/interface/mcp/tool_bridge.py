@@ -367,6 +367,22 @@ def tool_get_methodology_guide(
         return handle_tool_error(exc)
 
 
+def tool_get_product_guide(
+    topic: str | None = None,
+    section: str | None = None,
+) -> CallToolResult:
+    """READ-only product usage guides — guidance, never domain truth/AuthZ."""
+    try:
+        request = build_mcp_request()
+        data = _dispatch.get_product_guide(request, topic=topic, section=section)
+        return _ok_result(
+            data,
+            "Guia de uso do produto (orientação — não é fato de domínio nem autorização).",
+        )
+    except Exception as exc:
+        return handle_tool_error(exc)
+
+
 def tool_get_catalog() -> CallToolResult:
     try:
         request = build_mcp_request()

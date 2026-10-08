@@ -370,6 +370,26 @@ def gpt_get_methodology_guide(
 
 
 @router.get(
+    "/product-guide",
+    operation_id="gpt_get_product_guide",
+    summary="Read-only product usage guides (guidance, not domain truth)",
+)
+def gpt_get_product_guide(
+    request: Request,
+    topic: str | None = Query(default=None, description="Guide topic id; omit for the topic index"),
+    section: str | None = Query(
+        default=None,
+        description="overview|when_to_use|how_to_use|field_guidance|quality|relationships|all",
+    ),
+):
+    try:
+        data = _dispatch.get_product_guide(request, topic=topic, section=section)
+        return ok(data, "Guia de uso do produto (orientação — não é fato de domínio nem autorização).")
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
     "/process-context",
     operation_id="gpt_get_process_context",
     summary="Aggregated read-only process intelligence context",

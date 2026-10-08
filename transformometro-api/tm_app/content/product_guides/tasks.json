@@ -1,0 +1,51 @@
+{
+  "schema": "product_guide_v1",
+  "id": "tasks",
+  "title": "Tarefas do processo",
+  "summary": "Itens de trabalho atribuíveis e rastreáveis ligados ao processo — criar, atualizar, concluir e cancelar.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando criar uma tarefa (trabalho com dono) em vez de apenas uma mensagem, e como registrar tarefas com qualidade.",
+  "use_when": [
+    "Há trabalho concreto a ser feito com responsável",
+    "O usuário pede follow-up rastreável dentro do processo",
+    "Uma decisão gera ação que alguém precisa executar"
+  ],
+  "do_not_use_when": [
+    "É só um aviso ou discussão — use a sala de interação",
+    "O pedido é sobre estado do processo — leitura de domínio, não tarefa",
+    "Não inventar SLA ou regra de prazo que o contrato não define"
+  ],
+  "how_to_use": [
+    "Crie com título acionável (verbo + objeto + contexto)",
+    "Atribua responsável quando o contrato disponibilizar o campo",
+    "Inclua data de vencimento somente quando for um dado real — nunca inventada",
+    "Atualize campos pelo update; conclua com complete; cancele apenas quando o trabalho deixou de existir",
+    "cancel_task é descarte (confirm_before_act) — preferir complete quando o trabalho foi feito"
+  ],
+  "field_guidance": [
+    {"field": "title", "guidance": "Verbo + objeto + contexto, ex.: 'Revisar fluxo de aprovação do processo X'", "contract_ref": "workflows.manage_task"},
+    {"field": "assignee", "guidance": "Somente quando o contrato disponibilizar; usar pessoa real identificada"},
+    {"field": "due_date", "guidance": "Somente data real informada ou acordada — nunca estimada"}
+  ],
+  "quality_rules": [
+    "Tarefa acionável: alguém consegue executar e saber que terminou",
+    "Título autossuficiente: entende-se fora da conversa",
+    "Vínculo com o processo correto é obrigatório"
+  ],
+  "common_mistakes": [
+    "Criar tarefa vaga ('ver isso') sem ação executável",
+    "Inventar prazo para parecer completo",
+    "Usar cancel quando o trabalho foi concluído",
+    "Criar tarefa para algo que era só mensagem"
+  ],
+  "related_topics": ["interaction_room", "portal_overview"],
+  "capability_refs": ["manage_task", "task_read"],
+  "contract_refs": ["capability_surface.workflows.manage_task", "confirmation_policy.task.*"],
+  "source_refs": [
+    {"ref": "capability_descriptors.manage_task — ações e execution_policy", "classification": "PROVEN"},
+    {"ref": "confirmation_policy — task.* (cancel é confirm_before_act)", "classification": "PROVEN"},
+    {"ref": "Portal: TaskCommandUseCases (parity)", "classification": "PROVEN"},
+    {"ref": "Boas práticas de redação de tarefas acionáveis", "classification": "PROPOSED"}
+  ],
+  "agent_guidance": "Pedido 'crie uma tarefa X e avise na sala' é multi-action: create_task → read-back → post_message com dados reais da tarefa — tudo no mesmo turno."
+}

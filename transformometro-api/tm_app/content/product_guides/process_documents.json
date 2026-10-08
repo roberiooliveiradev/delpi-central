@@ -1,0 +1,54 @@
+{
+  "schema": "product_guide_v1",
+  "id": "process_documents",
+  "title": "Documentos do processo",
+  "summary": "Documentação viva do processo — coerência antes de quantidade: descobrir, ler, coalescer e só então criar.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Garantir documentação coesa: o conjunto de documentos conta uma história consistente sem autoridade duplicada.",
+  "use_when": [
+    "Registrar decisão, procedimento ou referência textual do processo",
+    "O usuário pede para documentar, organizar ou revisar documentação",
+    "É preciso consolidar conteúdo disperso em um documento autoridade"
+  ],
+  "do_not_use_when": [
+    "O dado é estado estruturado de domínio (campos, medições, tarefas) — prose não é autoridade de dados",
+    "É uma discussão informal — use a sala de interação",
+    "É decisão formal com trilha — prefira ata"
+  ],
+  "how_to_use": [
+    "1. Descobrir documentos existentes do processo antes de criar",
+    "2. Ler a cobertura relevante e detectar overlap",
+    "3. Preferir atualizar/coalescer documento existente quando ele já é a autoridade adequada",
+    "4. Criar novo somente com propósito documental distinto",
+    "5. Manter AS-IS, TO-BE, decisão e procedimento como documentos distintos",
+    "6. Após gravar, fazer read-back autoritativo e confirmar o resultado"
+  ],
+  "field_guidance": [
+    {"field": "title", "guidance": "Escopo claro — o título diz exatamente o que o documento cobre"},
+    {"field": "content", "guidance": "Texto autocontido e rastreável; fatos citados devem apontar para a fonte"}
+  ],
+  "quality_rules": [
+    "DOCUMENTATION_COHERENCE_FIRST — descobrir e ler antes de criar",
+    "CONTENT_COHESION — o conjunto conta uma história consistente",
+    "NO_DUPLICATED_AUTHORITY — um assunto, uma autoridade documental",
+    "CLEAR_SCOPE — cada documento tem propósito declarado",
+    "NO_AS_IS_TO_BE_MIXING — nunca misturar estado atual e proposta no mesmo documento",
+    "TRACEABLE_FACTS — afirmações citáveis, não opinião solta",
+    "USE_EXISTING_DOCUMENT_WHEN_APPROPRIATE — atualizar antes de proliferar"
+  ],
+  "common_mistakes": [
+    "Criar documento novo para tema já coberto — duplica autoridade",
+    "Duplicar estado estruturado (campos/medições) como prosa que desatualiza",
+    "Misturar AS-IS e TO-BE no mesmo texto",
+    "Documentar sem verificar o que já existe"
+  ],
+  "related_topics": ["portal_overview", "interaction_room"],
+  "capability_refs": ["process_document"],
+  "contract_refs": ["capability_surface.entities.process_document", "record_write_contract"],
+  "source_refs": [
+    {"ref": "capability_descriptors.process_document — entity contract", "classification": "PROVEN"},
+    {"ref": "Portal: documentos do processo — listar/ler/criar/atualizar", "classification": "PROVEN"},
+    {"ref": "Regras de coesão documental", "classification": "PROPOSED"}
+  ],
+  "agent_guidance": "Para 'organize a documentação' ou 'documente X': sempre listar documentos existentes primeiro e preferir coalescer — nunca criar documento cego."
+}

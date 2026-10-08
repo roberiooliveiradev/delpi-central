@@ -66,6 +66,7 @@ GPT_ACTIONS_OPERATION_IDS: tuple[str, ...] = (
     "gpt_get_workspace_context",
     "gpt_get_catalog",
     "gpt_get_methodology_guide",
+    "gpt_get_product_guide",
     "gpt_analyze",
     "gpt_search_records",
     "gpt_get_record",
@@ -571,6 +572,55 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 ],
                 "responses": {
                     "200": _ok_response("Methodology guide payload"),
+                    **_error_responses(),
+                },
+            }
+        },
+        f"{GPT_ACTIONS_BASE_PATH}/product-guide": {
+            "get": {
+                "operationId": "gpt_get_product_guide",
+                "summary": "Read-only product usage guides",
+                "description": (
+                    "READ-only product usage guidance (how/when/why to use "
+                    "features). Not domain truth, not authorization. Omit "
+                    "topic for the topic index. Same source as MCP "
+                    "get_product_guide."
+                ),
+                "tags": ["Transformômetro GPT"],
+                "security": [{"BearerAuth": []}],
+                "x-openai-isConsequential": False,
+                "parameters": [
+                    {
+                        "name": "topic",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Guide topic id (e.g. interaction_room). Omit "
+                            "to receive the topic index."
+                        ),
+                    },
+                    {
+                        "name": "section",
+                        "in": "query",
+                        "required": False,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "overview",
+                                "when_to_use",
+                                "how_to_use",
+                                "field_guidance",
+                                "quality",
+                                "relationships",
+                                "all",
+                            ],
+                        },
+                        "description": "Optional section filter.",
+                    },
+                ],
+                "responses": {
+                    "200": _ok_response("Product guide payload"),
                     **_error_responses(),
                 },
             }

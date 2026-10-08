@@ -1,0 +1,41 @@
+{
+  "schema": "product_guide_v1",
+  "id": "portal_overview",
+  "title": "Visão geral do Portal Transforma+",
+  "summary": "Como o Transformômetro organiza processos, melhorias, medição e colaboração — e como navegar conceitualmente.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Orientar o usuário (e o TÉO) sobre o modelo de produto do Transformômetro: o que existe, para que serve e como as peças se relacionam.",
+  "use_when": [
+    "O usuário pergunta para que serve o Transformômetro ou o Portal Transforma+",
+    "O usuário está perdido sobre onde algo fica ou como começar",
+    "É preciso explicar a relação entre processo, melhoria, revisão, medição e colaboração"
+  ],
+  "do_not_use_when": [
+    "O usuário pede dados reais de um processo — use a leitura autoritativa de domínio",
+    "O usuário pede permissão ou escopo de acesso — AuthZ é do backend",
+    "O usuário pede o contrato técnico de uma operação — get_catalog é a fonte"
+  ],
+  "how_to_use": [
+    "Um processo é o objeto central; dentro dele existem instâncias de melhoria e revisões versionadas",
+    "O trabalho acontece no workspace do processo: diagrama, decomposição, documentos, evidências, tarefas e sala de interação",
+    "Medição e dashboards consolidam o estado dos processos; atas e documentos registram decisões",
+    "Ao conversar com o TÉO, referências como 'este processo' resolvem via contexto de workspace — nunca por adivinhação"
+  ],
+  "quality_rules": [
+    "Explicar conceitos com o vocabulário do produto (processo, melhoria, revisão, medição)",
+    "Distinguir orientação de uso de fato de domínio — guia orienta, domínio prova"
+  ],
+  "common_mistakes": [
+    "Tratar descrição de produto como dado autoritativo do processo",
+    "Apresentar tour genérico quando o usuário precisa de um passo concreto"
+  ],
+  "related_topics": ["interaction_room", "tasks", "process_documents"],
+  "capability_refs": ["process", "instance", "revision", "interaction_room", "manage_task", "process_document"],
+  "contract_refs": ["capability_surface.entities.process", "capability_surface.workflows.interaction_room"],
+  "source_refs": [
+    {"ref": "capability_descriptors — superfícies entities/workflows/analyses", "classification": "PROVEN"},
+    {"ref": "teo_agent_intelligence.json — modos e discovery", "classification": "PROVEN"},
+    {"ref": "Navegação portal: Process > Instance > Revision", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "Use este guia quando o pedido for sobre entender o produto ou se localizar. Para dados reais, siga com a leitura autoritativa (get_process_context)."
+}

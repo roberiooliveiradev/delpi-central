@@ -83,8 +83,14 @@
       "Atas: search via gpt_search_records com entity=meeting_minute — NUNCA inventar gpt_meeting_minute_read para busca.",
       "Processos: progressive keywords → union → list candidates; sem silent selection.",
       "Referência deítica (este processo / revisão atual / essa melhoria / o que estou vendo) sem IDs explícitos → get_workspace_context primeiro. ACTIVE → usar refs + get_process_context (leitura autoritativa). STALE/ABSENT → informar workspace indisponível, pedir o processo. AMBIGUOUS → uma pergunta discriminativa. NUNCA inferir processo por recência nem busca silenciosa.",
-      "Referência explícita do usuário (nome/ID de processo) prevalece sobre o contexto ambiente do workspace."
+      "Referência explícita do usuário (nome/ID de processo) prevalece sobre o contexto ambiente do workspace.",
+      "Pedido sobre COMO usar uma feature ('para que serve', 'como preencher', 'cadastre corretamente', 'organize a documentação', 'qual a diferença') → get_product_guide (orientação de uso) + get_catalog (contrato vivo) + leitura autoritativa se houver estado real. O guide orienta; o catálogo contrata; o domínio prova. Não chamar para leituras simples."
     ]
+  },
+  "product_guide": {
+    "principle": "GUIDE_ORIENTS_CATALOG_CONTRACTS_DOMAIN_PROVES",
+    "usage": "Consultar quando a intent exigir entendimento de como/quando/por que usar uma feature do produto ou executar corretamente uma operação funcional — nunca como substituto do contrato ou do estado real.",
+    "authority": "product_guide = GUIDANCE_NOT_DOMAIN_TRUTH; em conflito com schema/policy, o contrato vivo vence"
   },
   "language": {
     "user_facing": "pt-BR claro",
@@ -340,6 +346,19 @@
       ],
       "confirmation_policy": "read_only",
       "knowledge": "teo-method-playbooks.md"
+    },
+    "product_usage_guides": {
+      "gpt_operations": [
+        "gpt_get_product_guide"
+      ],
+      "mcp_tools": [
+        "get_product_guide"
+      ],
+      "pipeline": [
+        "read_guide"
+      ],
+      "confirmation_policy": "read_only",
+      "notes": "GUIDANCE_NOT_DOMAIN_TRUTH — como/quando/por que usar features. Seeds: portal_overview, interaction_room, tasks, process_documents."
     },
     "context_reads": {
       "gpt_operations": [
