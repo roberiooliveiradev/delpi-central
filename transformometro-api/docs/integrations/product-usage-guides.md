@@ -53,10 +53,11 @@ Sections no read: `overview` | `when_to_use` | `how_to_use` |
 
 ## Relação com a Help do Portal
 
-- CURRENT HELP SOURCE: copy espalhada em componentes (tooltips,
-  empty states, `emptyStateUi.ts`) — HARDCODED/MULTIPLE.
-- TARGET SHARED AUTHORITY: este registry → TÉO (hoje) e Portal Help
-  (futuro). MIGRATION REQUIRED: LATER — sem migração de UI nesta fase.
+- HELP SOURCE (Help Convergence V1): seções de feature do manual
+  derivam deste registry via `GET /transformometro/product-guides?view=help`
+  — SHARED AUTHORITY para Portal Help e TÉO.
+- Permanecem locais (UI-specific): copy de navegação/tela, tooltips de
+  campo (`helpTooltips.ts`), empty states, seções não mapeadas.
 
 ## Relação com methodology e catalog
 
@@ -157,20 +158,46 @@ ADD/CHANGE FEATURE → INVENTORY SEMANTICS → UPDATE PRODUCT GUIDE
 → DEPLOY → RUNTIME VERIFY
 ```
 
-## Help Convergence V1 (plan)
+## Help Convergence V1 (implemented)
 
-Portal Help hoje: `userManualContent.ts` + `helpTooltips.ts` +
-empty-state copy — HARDCODED/MULTIPLE.
+Portal Help agora consome a mesma authority do TÉO.
 
-Classificação dos blocos do manual:
+```text
+Product Usage Registry (tm_app/content/product_guides)
+→ ProductGuideService.get_help_view  (projeção pública)
+→ GET /transformometro/product-guides[?view=help|/{topic}]
+→ plugins/transformometro: fetchProductGuideHelp → mergeManualWithGuides
+→ Manual sections (intro/bullets derivados; links/navegação locais)
+```
 
-| Help content | Product Guide | Classification |
-|---|---|---|
-| Seções de feature (processes, interaction, minutes…) | topic correspondente | DERIVE_FROM_SHARED_GUIDE (futuro) |
-| Copy de navegação (cliques, caminhos, Hero, abas) | — | UI_SPECIFIC |
-| Metas/IDD, diagnóstico semantics | `dashboard`, `diagnostic` | DUPLICATED (convergir) |
-| Tooltips de campo | `field_guidance` do guide | DERIVE (futuro) |
+- A rota de domínio é session-auth (`transformometro.access` gate),
+  separada da façade GPT Actions (`gpt_get_product_guide`, OAuth).
+  Mesma registry, nenhuma cópia no bundle do MFE.
+- `to_help_view` expõe só campos user-facing (title/summary/purpose/
+  use_when/do_not_use_when/how_to_use/quality_rules/common_mistakes/
+  related_topics). `capability_refs`/`contract_refs`/`source_refs`/
+  `agent_guidance` não saem do backend.
+- `HELP_SECTION_TOPICS` (helpGuideContent.ts) mapeia seções do manual →
+  topics. Seções mapeadas derivam intro/bullets do guide; bullets locais
+  remanescentes são UI-specific e vão depois dos derivados.
+- Fallback: loading note enquanto carrega; nota de indisponibilidade se
+  a API falhar; links/navegação e seções não mapeadas nunca quebram.
+- UI-specific que permanece local: `links` (want/where/how/path),
+  Hero/busca/Favoritos/últimos acessos (seção home), TÉO no ChatGPT,
+  visibilidade de Administração, tooltips de campo (helpTooltips.ts),
+  empty states.
 
-TARGET: `Product Usage Registry` = shared semantic authority →
-Portal Help projeta onde apropriado → TÉO consome via
-`get_product_guide`. Nenhuma migração de UI nesta fase.
+## Definition of Done — help projection
+
+Feature user-facing nova ou mudança semântica:
+
+```text
+Product Guide (authority) → Help impact classificado →
+se DERIVE: atualizar guide primeiro, Portal projeta →
+se UI_SPECIFIC: copy permanece em userManualContent/tooltips →
+testes (adapter + guide) → runtime verify
+```
+
+Nunca reintroduzir semântica de produto duplicada em copy local:
+seção mapeada não pode manter `intro`/bullets semânticos próprios —
+o teste `userManualContent.test.ts` falha se isso acontecer.

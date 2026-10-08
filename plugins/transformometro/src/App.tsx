@@ -119,7 +119,13 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
       />
     );
   } else if (route.view === "help") {
-    page = <HelpPage pathname={pathname} onNavigate={onNavigate} />;
+    page = (
+      <HelpPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        onNavigate={onNavigate}
+      />
+    );
   } else if (route.view === "administration") {
     page = <AdministrationPage pathname={pathname} onNavigate={onNavigate} />;
   } else if (route.view === "dashboard") {

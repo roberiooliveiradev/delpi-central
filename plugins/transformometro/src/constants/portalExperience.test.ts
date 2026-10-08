@@ -241,7 +241,11 @@ describe("Portal Transforma+ navigation", () => {
     );
     const text = JSON.stringify(USER_MANUAL_CONTENT);
     expect(text).not.toMatch(/Keycloak|MCP|GPT Actions|JWT|plugin-ui|WebSocket/);
-    expect(text).toContain("A sala reúne a conversa de um processo.");
+    // Semântica da sala vive no Product Guide (interaction_room); o manual
+    // mantém a seção + navegação e projeta o conteúdo via helpGuideContent.
+    const interaction = USER_MANUAL_CONTENT.sections.find((section) => section.id === "interaction");
+    expect(interaction?.title).toBe("Sala de interação");
+    expect(interaction?.links?.length).toBeGreaterThan(0);
     expect(text).not.toContain("ainda não faz parte deste portal");
     expect(text).toContain("usuários responsáveis pela administração do Portal");
     for (const section of USER_MANUAL_CONTENT.sections) {

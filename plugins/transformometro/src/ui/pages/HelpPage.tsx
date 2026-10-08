@@ -7,13 +7,19 @@ import {
   sectionCardPacBemClasses,
 } from "@delpi/plugin-ui/index";
 import { BookOpen } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { PORTAL_PAGE_COPY } from "../../constants/portalExperience";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import { indexTopicsById, mergeManualWithGuides } from "../../content/helpGuideContent";
 import { USER_MANUAL_CONTENT, visibleManualLinks } from "../../content/userManualContent";
+import {
+  fetchProductGuideHelp,
+  type ProductGuideHelpTopic,
+} from "../../data/api/transformometroProductGuideApi";
 import { useCanManagePortal } from "../../state/portalChrome";
 
 const SECTION = sectionCardPacBemClasses("ds");
@@ -23,7 +29,7 @@ const SECTION_LABELS = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
 
-type HelpPageProps = Pick<AppProps, "pathname"> & {
+type HelpPageProps = Pick<AppProps, "pathname" | "getAccessToken"> & {
   onNavigate: (path: string) => void;
 };
 
@@ -31,11 +37,37 @@ function scrollToSection(id: string) {
   document.getElementById(`manual-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-export function HelpPage({ pathname, onNavigate }: HelpPageProps) {
+export function HelpPage({ getAccessToken, pathname, onNavigate }: HelpPageProps) {
   const copy = PORTAL_PAGE_COPY.help;
   const manual = USER_MANUAL_CONTENT;
   const canManage = useCanManagePortal();
   const home = TRANSFORMOMETRO_ROUTES.home;
+  const [topicsById, setTopicsById] = useState<Map<string, ProductGuideHelpTopic> | null>(null);
+  const [guidesLoaded, setGuidesLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetchProductGuideHelp(getAccessToken)
+      .then((payload) => {
+        if (active) setTopicsById(indexTopicsById(payload.topics));
+      })
+      .catch(() => {
+        // Fallback controlado: seções mapeadas mostram nota de indisponibilidade;
+        // navegação e copy UI-specific continuam funcionais.
+        if (active) setTopicsById(null);
+      })
+      .finally(() => {
+        if (active) setGuidesLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [getAccessToken]);
+
+  const sections = useMemo(
+    () => mergeManualWithGuides(manual.sections, topicsById, { loading: !guidesLoaded }),
+    [guidesLoaded, manual.sections, topicsById],
+  );
 
   return (
     <TransformometroShell>
@@ -83,7 +115,7 @@ export function HelpPage({ pathname, onNavigate }: HelpPageProps) {
               label: manual.conceptsTitle,
               onSelect: () => scrollToSection("concepts"),
             },
-            ...manual.sections.map((section) => ({
+            ...sections.map((section) => ({
               id: section.id,
               label: section.title,
               onSelect: () => scrollToSection(section.id),
@@ -100,7 +132,7 @@ export function HelpPage({ pathname, onNavigate }: HelpPageProps) {
               />
             </SectionCard>
           </Manual.Section>
-          {manual.sections.map((section) => {
+          {sections.map((section) => {
             const links = visibleManualLinks(section.links, canManage);
             return (
               <Manual.Section key={section.id} id={`manual-${section.id}`}>

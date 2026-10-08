@@ -467,3 +467,57 @@ def test_terminology_aliases_present() -> None:
     assert "diagrama" in reg.get("diagram")["title"].lower()
     assert "melhoria" in reg.get("instance")["title"].lower()
     assert "ata" in reg.get("meeting_minutes")["title"].lower()
+
+
+# --------------------------------------------------- portal help surface
+
+
+def test_help_view_excludes_internal_fields() -> None:
+    svc = ProductGuideService()
+    view = svc.get_help_view(topic="tasks")["topic"]
+    assert view["id"] == "tasks"
+    assert "title" in view and "how_to_use" in view
+    for internal in (
+        "capability_refs",
+        "contract_refs",
+        "source_refs",
+        "agent_guidance",
+        "schema",
+        "authority",
+    ):
+        assert internal not in view
+
+
+def test_help_view_index_and_unknown_topic() -> None:
+    svc = ProductGuideService()
+    all_views = svc.get_help_view()
+    assert all_views["schema"] == "product_guide_help_v1"
+    assert {t["id"] for t in all_views["topics"]} == SEED_TOPICS
+    with pytest.raises(ProductGuideNotFoundError):
+        svc.get_help_view(topic="nope")
+
+
+def test_portal_product_guides_route_serves_help_view() -> None:
+    """Portal domain route shares the registry — Help Convergence V1."""
+    from starlette.testclient import TestClient
+
+    from tests.support.test_app import create_test_app
+
+    client = TestClient(create_test_app())
+    index = client.get("/transformometro/product-guides")
+    assert index.status_code == 200
+    assert {t["id"] for t in index.json()["data"]["topics"]} == SEED_TOPICS
+
+    help_view = client.get("/transformometro/product-guides?view=help")
+    assert help_view.status_code == 200
+    topic = next(
+        t for t in help_view.json()["data"]["topics"] if t["id"] == "tasks"
+    )
+    assert "capability_refs" not in topic
+    assert "how_to_use" in topic
+
+    single = client.get("/transformometro/product-guides/diagram")
+    assert single.status_code == 200
+    assert single.json()["data"]["topic"]["id"] == "diagram"
+    missing = client.get("/transformometro/product-guides/nope")
+    assert missing.status_code == 404

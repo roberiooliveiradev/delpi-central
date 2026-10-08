@@ -70,6 +70,7 @@ from tm_app.interface.http.routes.revision_evidence_routes import router as revi
 from tm_app.interface.http.routes.signature_profile_routes import router as signature_profile_router
 from tm_app.interface.http.routes.task_routes import router as task_router
 from tm_app.interface.http.routes.interaction_room_routes import router as interaction_room_router
+from tm_app.interface.http.routes.product_guide_routes import router as product_guide_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
 
 TEST_USER = SimpleNamespace(
@@ -120,4 +121,5 @@ def create_test_app() -> FastAPI:
     app.include_router(signature_profile_router)
     app.include_router(task_router)
     app.include_router(interaction_room_router)
+    app.include_router(product_guide_router)
     return app

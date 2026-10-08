@@ -19,6 +19,26 @@ from tm_app.application.product_guide.product_guide_schema import (
     project_section,
 )
 
+# Fields safe to render in user-facing help — internal refs
+# (capability_refs/contract_refs/source_refs/agent_guidance/schema)
+# never leave the backend.
+HELP_VIEW_FIELDS = (
+    "id",
+    "title",
+    "summary",
+    "purpose",
+    "use_when",
+    "do_not_use_when",
+    "how_to_use",
+    "quality_rules",
+    "common_mistakes",
+    "related_topics",
+)
+
+
+def to_help_view(guide: dict[str, Any]) -> dict[str, Any]:
+    return {k: guide[k] for k in HELP_VIEW_FIELDS if guide.get(k) not in (None, [], {})}
+
 
 class ProductGuideNotFoundError(KeyError):
     """Unknown topic — consumer must surface it, never silently substitute."""
@@ -52,4 +72,20 @@ class ProductGuideService:
             "schema": "product_guide_v1",
             "section": section or "all",
             "guide": project_section(guide, section),
+        }
+
+    def get_help_view(self, *, topic: str | None = None) -> dict[str, Any]:
+        """Portal Help projection — public fields only, full guide."""
+        if topic:
+            guide = self._registry.get(str(topic).strip())
+            if guide is None:
+                raise ProductGuideNotFoundError(
+                    f"unknown product guide topic {topic!r}; "
+                    f"available: {self._registry.topic_ids()}"
+                )
+            return {"topic": to_help_view(guide)}
+        return {
+            "schema": "product_guide_help_v1",
+            "registry_version": self._registry.version,
+            "topics": [to_help_view(self._registry.get(t)) for t in self._registry.topic_ids()],
         }

@@ -69,14 +69,11 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "home",
       title: "Início e busca",
-      intro:
-        "A barra superior leva às áreas do portal. Buscar, ou Ctrl+K, abre os mesmos caminhos em qualquer tela. A busca do Início filtra os cards daquela tela.",
       bullets: [
+        "A barra superior leva às áreas do portal. Buscar, ou Ctrl+K, abre os mesmos caminhos em qualquer tela. A busca do Início filtra os cards daquela tela.",
         "A saudação do Hero usa Bom dia, Boa tarde ou Boa noite e o primeiro nome da sessão. Sem nome, aparece Bem-vindo ao Portal Transforma+.",
         "As métricas do Hero (economia líquida, horas e soluções) vêm do mesmo resumo da Visão geral no mês corrente.",
-        "Use a estrela de um caminho para fixá-lo em Favoritos.",
-        "Favoritos ficam só ao lado de Buscar, na barra superior.",
-        "Abaixo da busca do Início aparecem os últimos acessos, não uma segunda lista de favoritos.",
+        "Use a estrela de um caminho para fixá-lo em Favoritos. Favoritos ficam ao lado de Buscar, na barra superior; abaixo da busca do Início aparecem os últimos acessos.",
         "Eventos e interações mostram só sinais já existentes, como revisões a vencer.",
       ],
       links: [{ want: "Abrir o hub", where: "Início", how: "Clique em Início na barra.", path: TRANSFORMOMETRO_ROUTES.home }],
@@ -84,14 +81,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "overview",
       title: "Visão geral",
-      intro: "Mostra indicadores e resultados do programa de transformação.",
-      bullets: [
-        "Use Período rápido para escolher intervalos comuns ou selecione Personalizado para informar datas manualmente.",
-        "As visões são Consolidado, Unidade e Departamento. Isso recorta os dados; não muda quem pode abrir o portal.",
-        "Em Consolidado, os cards mostram o contexto de todas as unidades e o período.",
-        "Em Unidade ou Departamento, o rodapé do card identifica o nome canônico escolhido e o período.",
-        "Economia, horas, soluções, investimento e ROI vêm calculados pela API. A tela não soma cards.",
-      ],
       links: [
         {
           want: "Ver indicadores",
@@ -104,16 +93,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "targets-idd",
       title: "Metas e IDD",
-      intro:
-        "A Visão geral mostra a meta e a nota IDD do programa no card de Economia bruta, quando esses dados estão disponíveis.",
-      bullets: [
-        "Economia bruta é o indicador do programa com meta.",
-        "Meta parcial é a referência já calculada para o recorte de datas aberto — não é uma conta feita na tela.",
-        "Meta do período (ou meta do mês) é a referência do intervalo canônico.",
-        "A nota IDD do card e o selo no título da página vêm prontos. Sem dado, o valor operacional continua e a meta some.",
-        "Consolidado, Unidade e Departamento recortam os números do programa. A meta estratégica do programa permanece a referência de Engenharia e é rotulada quando for consolidada.",
-        "Status (dentro, abaixo ou acima da meta) e a direção (quanto maior ou menor, melhor) acompanham a meta da Economia bruta.",
-      ],
       links: [
         {
           want: "Ver metas e IDD",
@@ -126,17 +105,10 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "processes",
       title: "Meus processos",
-      intro:
-        "Lista os processos com filtros e contagem no Hero. Abre o workspace com caminho, Hero e abas: Visão Geral, Mapeamento, Documentação, Melhorias, Resultados, Tarefas, Sala e Histórico.",
       bullets: [
         "No Hero da lista: Processos/Departamentos, busca, status, ordenação, modo de visualização, Atualizar e Novo processo. Abaixo do Hero ficam só os resultados.",
         "Abra um processo para trabalhar no workspace. O caminho, o Hero e as abas horizontais organizam o processo, melhorias e revisões.",
-        "Processo-mestre não pertence a uma única unidade: unidade e departamento aparecem na melhoria.",
-        "Medições, investimentos e recursos compartilhados ficam em cada revisão — não invente pontuação no resumo.",
-        "Documentação do processo guarda textos em Markdown (criar, visualizar, editar e excluir), com tabelas, código e diagramas ilustrativos. Não substitui diagrama, revisão nem dados estruturados.",
-        "Sala de interação abre a conversa canônica daquele processo. Tarefas relacionadas são só as criadas a partir de mensagens da sala.",
         "Atas continuam em Atas; não há vínculo de ata ao processo neste workspace.",
-        "Não há árvore de pastas: a hierarquia Processo → Melhoria → Revisão aparece no caminho e na aba Melhorias.",
       ],
       links: [
         {
@@ -162,17 +134,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "process-documentation",
       title: "Documentação do processo",
-      intro:
-        "Registre o conhecimento textual do processo em documentos Markdown dentro do workspace.",
-      bullets: [
-        "Crie quantos documentos precisar; cada um tem título, conteúdo Markdown, autoria e data de atualização.",
-        "A biblioteca lateral lista os documentos com busca por título; o sumário do documento navega pelos títulos do conteúdo.",
-        "Use Editar / Dividido / Visualizar para escrever e conferir a renderização segura antes de salvar. A barra de ferramentas insere Markdown (negrito, listas, tabelas, código e diagramas Mermaid ilustrativos).",
-        "Se outra pessoa (ou o assistente) alterar o documento enquanto você edita, um aviso aparece e seu rascunho é preservado — escolha recarregar a versão atual ou continuar seu rascunho.",
-        "Documentos atualizados por outras abas ou pelo assistente aparecem automaticamente, sem atualizar a página.",
-        "A documentação descreve o processo — não redefine diagrama, revisão, medição, ata ou evidências. Diagramas no texto são ilustrativos.",
-        "Excluir um documento pede confirmação e remove apenas aquela documentação.",
-      ],
       links: [
         {
           want: "Abrir documentação",
@@ -185,17 +146,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "revision-diagnostic",
       title: "Diagnóstico da revisão",
-      intro:
-        "Cada revisão pode ter diagnósticos: problem statement, achados, hipóteses, relações causais e conclusão — dentro do workspace do processo.",
-      bullets: [
-        "Na página da revisão, a aba Diagnóstico lista os diagnósticos daquela revisão. Com nenhum, use «Iniciar diagnóstico» e descreva o problema.",
-        "Achados são observações («Observado» ou «Calculado»); «Sintoma» é o papel do achado, separado da natureza.",
-        "Hipóteses são sempre interpretações («Inferido») — mesmo validadas, não viram fato. O status (rascunho, validada, rejeitada, substituída) aparece separado.",
-        "A análise causal registra apenas «contribui para» entre hipóteses e achados — nunca causa ou prova.",
-        "Evidências vinculadas vêm da seção Evidências da revisão: podem sustentar, contradizer ou contextualizar. «Contradiz» é sempre exibido.",
-        "Toda alteração é preparada, revisada com a mudança exata e confirmada explicitamente — nada é gravado no envio do formulário.",
-        "Se outra pessoa alterar o diagnóstico enquanto você prepara uma mudança, um aviso aparece e a confirmação é bloqueada até recarregar e revisar.",
-      ],
       links: [
         {
           want: "Abrir o diagnóstico de uma revisão",
@@ -208,15 +158,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "my-tasks",
       title: "Minhas tarefas",
-      intro:
-        "Crie tarefas do portal, atribua um responsável e acompanhe prazos. Assinaturas de ata pendentes também aparecem aqui, sem virar outra tarefa.",
-      bullets: [
-        "Nova tarefa pede título, responsável, prazo opcional e descrição. Revise o resumo e confirme antes de gravar.",
-        "O responsável é um usuário do diretório. O nome é só exibição; a tarefa guarda o identificador.",
-        "Edite ou conclua só a tarefa criada no portal. Concluir tira o item de Pendentes.",
-        "A busca fica na fila e combina com Pendentes, Concluídas e Todas.",
-        "Assinatura pendente de ata não se edita nem se conclui nesta lista: abra a ata e assine lá. Depois que assinar, o item some.",
-      ],
       links: [
         {
           want: "Criar ou acompanhar uma tarefa",
@@ -229,18 +170,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "interaction",
       title: "Sala de interação",
-      intro:
-        "A sala reúne a conversa de um processo. A lista mostra só processos que já têm sala. Abrir um processo cria a sala daquele processo na primeira vez.",
-      bullets: [
-        "Na barra, Sala de interação abre Conversas. A busca filtra pelo nome ou código do processo.",
-        "Todas, Não lidas, Menções e Processos usam a leitura e as menções reais da sala.",
-        "Escreva a mensagem, mencione uma pessoa com @, responda, reaja ou anexe um arquivo e envie. Também dá para colar uma imagem direto no editor. O texto permanece se o envio falhar. As reações ficam na mensagem; para reagir, use as opções da mensagem.",
-        "Na conversa, mensagens seguidas da mesma pessoa ficam agrupadas. Toque na citação de uma resposta para ir até a mensagem original. Anexos aparecem na bolha com prévia; você pode remover o anexo que você mesmo enviou. Menções ficam destacadas e as fotos de perfil aparecem quando disponíveis.",
-        "Use Localizar no chat (ícone de busca no cabeçalho da sala) para achar texto nas mensagens já carregadas.",
-        "Ao editar a própria mensagem, use o mesmo editor rico do envio (formatação e @). Arquivos e links reúne o que foi enviado na sala. O painel da sala mostra o processo, quem falou e as mensagens fixadas.",
-        "Atualizar busca as mensagens de novo. A conversa também é atualizada enquanto a sala está aberta. Use Carregar mensagens anteriores para ver o histórico mais antigo. O botão ao lado da linha divisória recolhe ou mostra a lista de conversas; arraste a linha para mudar a largura.",
-        "A sala não substitui tarefas, atas nem revisões. Cada uma continua no seu lugar.",
-      ],
       links: [
         {
           want: "Abrir as salas",
@@ -279,7 +208,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "minutes",
       title: "Atas",
-      intro: "Reuniões, registros e assinaturas. Assinar depende de ser signatário daquela ata.",
       links: [
         {
           want: "Abrir atas",
@@ -292,7 +220,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "data",
       title: "Exportar / Importar",
-      intro: "Backup, transferência e restauração. A importação pede prévia e confirmação.",
       links: [
         {
           want: "Fazer backup",
@@ -321,12 +248,6 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "settings",
       title: "Configurações",
-      intro: "Unidades, departamentos e o catálogo de recursos compartilhados.",
-      bullets: [
-        "Unidades são as plantas ou sites usados nos processos e no filtro da Visão geral.",
-        "Departamentos são as áreas ligadas às unidades.",
-        "Criar ou alterar o catálogo de recursos é administração. Ligar um recurso a uma revisão faz parte do uso normal do processo.",
-      ],
       links: [
         {
           want: "Cadastrar unidade",
