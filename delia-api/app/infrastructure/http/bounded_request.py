@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import requests
+from requests.structures import CaseInsensitiveDict
 
 from app.infrastructure.http.deadline_transport import deadline_scope
 
@@ -52,7 +53,12 @@ class BoundedHttpTooLarge(Exception):
 
 @dataclass(frozen=True, slots=True)
 class BoundedHttpResponse:
-    """Materialized response: status + bounded body, already drained."""
+    """Materialized response: status + bounded body, already drained.
+
+    ``headers`` is case-insensitive: HTTP/1.1 field names are
+    case-insensitive on the wire and servers legitimately send
+    lowercase names — a plain dict lookup would miss them.
+    """
 
     status_code: int
     content: bytes
@@ -127,7 +133,9 @@ def bounded_request(
     return BoundedHttpResponse(
         status_code=int(getattr(response, "status_code", 0) or 0),
         content=body,
-        headers=dict(getattr(response, "headers", None) or {}),
+        headers=CaseInsensitiveDict(
+            getattr(response, "headers", None) or {}
+        ),
     )
 
 
@@ -153,6 +161,15 @@ def _drain_body(
         if len(body) > max_body_bytes:
             raise BoundedHttpTooLarge("response exceeds the size limit")
         return body
+    # urllib3 only applies Content-Encoding decoding when the raw
+    # response is told to decode — a bare ``read1()`` returns the wire
+    # bytes (e.g. gzip) verbatim. Enable decoding once so the drained
+    # body is the entity the caller expects; guarded because test
+    # stubs need not expose the attribute.
+    try:
+        raw.decode_content = True
+    except AttributeError:
+        pass
     chunks = bytearray()
     while True:
         remaining = deadline - clock()

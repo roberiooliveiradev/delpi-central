@@ -171,6 +171,14 @@ class OpenAICompatibleModelInvocationAdapter:
         raw = getattr(response, "raw", None)
         read1 = getattr(raw, "read1", None)
         iter_content = getattr(response, "iter_content", None)
+        if callable(read1):
+            # urllib3 applies Content-Encoding decoding only when the
+            # raw response is told to decode — a bare ``read1()``
+            # returns wire bytes (e.g. gzip) verbatim.
+            try:
+                raw.decode_content = True
+            except AttributeError:
+                pass
         if not callable(read1) and not callable(iter_content):
             # Test stubs materialize the body already — the deadline
             # check above still bounds the total duration.

@@ -1148,3 +1148,54 @@ def test_r5_transport_compatibility_guard():
     https_conn = dt._DeadlineHTTPSConnection("example.com", 443)
     assert hasattr(https_conn, "_bounded_connect")
     assert hasattr(https_conn, "_deadline_connect")
+
+
+# ------------------------------------------------------------------
+# R2B regression: content-encoding + header-name case
+#
+# Live evaluation on the current surface proved ``bounded_request``
+# returned the raw GZIP stream undecoded (``raw.read1()`` without
+# ``decode_content``) and lost header lookups against lowercase field
+# names (``Content-Type`` absent from a case-sensitive dict). Both
+# made a valid MCP JSON response surface as ``mcp_invalid_response``.
+# ------------------------------------------------------------------
+
+
+def _gzip_json_lowercase_headers(conn, observed):
+    """Real wire: gzipped JSON body, lowercase header names."""
+    import gzip
+
+    try:
+        if not _read_request(conn):
+            return
+        body = gzip.compress(b'{"ok": true, "n": 7}')
+        conn.sendall(
+            b"HTTP/1.1 200 OK\r\n"
+            b"content-type: application/json\r\n"
+            b"content-encoding: gzip\r\n"
+            b"content-length: " + str(len(body)).encode() + b"\r\n"
+            b"\r\n" + body
+        )
+    except OSError:
+        pass
+    finally:
+        conn.close()
+
+
+def test_r2b_gzip_body_decoded_and_headers_case_insensitive():
+    """A gzip-encoded JSON response must surface DECODED content and
+    headers must resolve regardless of wire casing."""
+    server, stop, _ = _serve(_gzip_json_lowercase_headers)
+    try:
+        response = bounded_request(
+            deadline_http_get, _url(server), timeout_seconds=2.0
+        )
+        assert response.status_code == 200
+        assert response.json() == {"ok": True, "n": 7}
+        assert response.headers.get("Content-Type") == "application/json"
+        assert response.headers.get("content-type") == "application/json"
+        assert response.headers.get("CONTENT-ENCODING") == "gzip"
+    finally:
+        stop.set()
+        server.close()
+

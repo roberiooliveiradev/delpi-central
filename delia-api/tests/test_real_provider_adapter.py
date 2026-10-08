@@ -6,6 +6,8 @@ request mapping, response mapping, failure mapping, and secret hygiene.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 import requests
 
@@ -224,6 +226,41 @@ def test_malformed_provider_response_maps_invalid():
     with pytest.raises(ModelInvocationError) as exc:
         InvokeModel(_adapter(http_post=fake_post)).execute(_request())
     assert exc.value.code == INVALID_STRUCTURED_OUTPUT
+
+
+class _GzipRaw:
+    """urllib3-shaped raw stream: read1 honours ``decode_content``."""
+
+    def __init__(self, payload: bytes):
+        import gzip
+        import io
+
+        self.decode_content = False
+        self._wire = io.BytesIO(gzip.compress(payload))
+        self._decoded = io.BytesIO(payload)
+
+    def read1(self, n: int = -1) -> bytes:
+        return (self._decoded if self.decode_content else self._wire).read(n)
+
+
+def test_gzip_encoded_provider_body_is_decoded():
+    """R2B regression: a gzip provider response must parse as JSON —
+    a bare ``read1()`` returns wire bytes and used to surface as
+    INVALID_STRUCTURED_OUTPUT on every live model call."""
+    payload = json.dumps(
+        _ok_body('{"answer": "ok"}')
+    ).encode()
+
+    class _GzipResponse(_Response):
+        def __init__(self):
+            super().__init__(200, None)
+            self.raw = _GzipRaw(payload)
+
+    def fake_post(url, headers=None, json=None, timeout=None, stream=None):
+        return _GzipResponse()
+
+    result = InvokeModel(_adapter(http_post=fake_post)).execute(_request())
+    assert result.structured_output["answer"] == "ok"
 
 
 def test_tool_call_in_provider_message_is_rejected():
