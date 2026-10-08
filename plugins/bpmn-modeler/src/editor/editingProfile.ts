@@ -340,7 +340,7 @@ const EVENT_DEFS_BY_POSITION: Record<string, ReadonlySet<string>> = {
   ]),
 };
 
-type ClipboardBusinessObject = {
+export type ClipboardBusinessObject = {
   $type?: string;
   eventDefinitions?: Array<{ $type?: string }>;
   loopCharacteristics?: { $type?: string } | null;
@@ -350,7 +350,7 @@ type ClipboardBusinessObject = {
   parallelMultiple?: boolean;
 };
 
-type ClipboardElement = {
+export type ClipboardElement = {
   type?: string;
   businessObject?: ClipboardBusinessObject | null;
   // createTree do vendor inclui descendants/attachers no clipboard — se o
@@ -437,4 +437,349 @@ export function isPropertiesGroupAllowed(groupId: string): boolean {
 
 export function isPropertiesEntryAllowed(entryId: string): boolean {
   return ALLOWED_PROPERTIES_ENTRY_IDS.has(entryId);
+}
+
+// ---------------------------------------------------------------------------
+// Palette search — projeção semântica CREATE_EDIT (G3-PAL-1)
+//
+// A busca promete ao usuário "o elemento BPMN que você quer criar": label +
+// aliases devem resultar no QName correspondente. Constructs tipados sem
+// entry direta na palette usam CREATE_THEN_REPLACE — create genérico seguido
+// do replace governado já existente (mesmo popup 'bpmn-replace' filtrado por
+// isReplaceEntryAllowed, via command stack).
+//
+// Autoridade: esta tabela é uma PROJEÇÃO, não uma segunda allowlist — cada
+// ação é emitida somente se a palette entry E a replace entry passarem pelos
+// predicados canônicos acima (fail-closed).
+// ---------------------------------------------------------------------------
+
+export type SearchCreateStrategy =
+  | "DIRECT_PALETTE_CREATE"
+  | "CREATE_THEN_REPLACE";
+
+export interface SearchableCreateAction {
+  /** id estável da ação de busca */
+  id: string;
+  /** label PT-BR exibido no resultado */
+  label: string;
+  /** termos de busca equivalentes ao label (mesmo significado) */
+  aliases: string[];
+  strategy: SearchCreateStrategy;
+  paletteEntryId: string;
+  /** chave completa do popup 'bpmn-replace' (ex.: 'replace-with-user-task') */
+  replaceEntryId?: string;
+}
+
+const SEARCHABLE_CREATE_ACTIONS: readonly SearchableCreateAction[] = [
+  // ---- activities ---------------------------------------------------------
+  {
+    id: "task",
+    label: "Tarefa",
+    aliases: ["task", "atividade", "tarefa"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.task",
+  },
+  {
+    id: "user-task",
+    label: "Tarefa de Usuário",
+    aliases: ["usuario", "usuário", "user task", "tarefa de usuario"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-user-task",
+  },
+  {
+    id: "service-task",
+    label: "Tarefa de Serviço",
+    aliases: ["servico", "serviço", "service task", "tarefa de servico"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-service-task",
+  },
+  {
+    id: "manual-task",
+    label: "Tarefa Manual",
+    aliases: ["manual", "tarefa manual"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-manual-task",
+  },
+  {
+    id: "rule-task",
+    label: "Tarefa de Regra de Negócio",
+    aliases: ["regra", "regra de negocio", "business rule"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-rule-task",
+  },
+  {
+    id: "script-task",
+    label: "Tarefa de Script",
+    aliases: ["script", "tarefa de script"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-script-task",
+  },
+  {
+    id: "send-task",
+    label: "Tarefa de Envio",
+    aliases: ["envio", "send task", "tarefa de envio"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-send-task",
+  },
+  {
+    id: "receive-task",
+    label: "Tarefa de Recebimento",
+    aliases: ["recebimento", "receive task", "tarefa de recebimento"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-receive-task",
+  },
+  {
+    id: "call-activity",
+    label: "Atividade de Chamada",
+    aliases: ["chamada", "call activity", "callactivity"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.task",
+    replaceEntryId: "replace-with-call-activity",
+  },
+  {
+    id: "subprocess-expanded",
+    label: "Subprocesso",
+    aliases: ["subprocesso", "sub processo", "sub-processo"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.subprocess-expanded",
+  },
+  {
+    id: "subprocess-collapsed",
+    label: "Subprocesso Colapsado",
+    aliases: ["subprocesso colapsado", "collapsed subprocess"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.subprocess-expanded",
+    replaceEntryId: "replace-with-collapsed-subprocess",
+  },
+  // ---- gateways -----------------------------------------------------------
+  {
+    id: "exclusive-gateway",
+    label: "Gateway Exclusivo",
+    aliases: ["exclusivo", "xor", "decisao", "decisão"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.exclusive-gateway",
+  },
+  {
+    id: "parallel-gateway",
+    label: "Gateway Paralelo",
+    aliases: ["paralelo", "parallel", "gateway paralelo"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.exclusive-gateway",
+    replaceEntryId: "replace-with-parallel-gateway",
+  },
+  {
+    id: "inclusive-gateway",
+    label: "Gateway Inclusivo",
+    aliases: ["inclusivo", "inclusive", "gateway inclusivo"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.exclusive-gateway",
+    replaceEntryId: "replace-with-inclusive-gateway",
+  },
+  {
+    id: "event-based-gateway",
+    label: "Gateway Baseado em Eventos",
+    aliases: ["baseado em eventos", "event based", "gateway de eventos"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.exclusive-gateway",
+    replaceEntryId: "replace-with-event-based-gateway",
+  },
+  // ---- events: start ------------------------------------------------------
+  {
+    id: "start-event",
+    label: "Evento de Início",
+    aliases: ["inicio", "início", "start event", "evento de inicio"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.start-event",
+  },
+  {
+    id: "message-start",
+    label: "Evento de Início por Mensagem",
+    aliases: ["inicio por mensagem", "message start"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.start-event",
+    replaceEntryId: "replace-with-message-start",
+  },
+  {
+    id: "timer-start",
+    label: "Evento de Início por Timer",
+    aliases: ["inicio por timer", "timer start", "inicio temporizado"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.start-event",
+    replaceEntryId: "replace-with-timer-start",
+  },
+  {
+    id: "signal-start",
+    label: "Evento de Início por Sinal",
+    aliases: ["inicio por sinal", "signal start"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.start-event",
+    replaceEntryId: "replace-with-signal-start",
+  },
+  // ---- events: intermediate (palette cria catch; throw via replace) -------
+  {
+    id: "intermediate-event",
+    label: "Evento Intermediário",
+    aliases: ["intermediario", "intermediário", "intermediate event"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.intermediate-event",
+  },
+  {
+    id: "message-intermediate-catch",
+    label: "Evento Intermediário de Captura por Mensagem",
+    aliases: ["intermediario mensagem", "message catch"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.intermediate-event",
+    replaceEntryId: "replace-with-message-intermediate-catch",
+  },
+  {
+    id: "timer-intermediate-catch",
+    label: "Evento Intermediário de Captura por Timer",
+    aliases: ["intermediario timer", "timer catch", "timer intermediario"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.intermediate-event",
+    replaceEntryId: "replace-with-timer-intermediate-catch",
+  },
+  {
+    id: "signal-intermediate-catch",
+    label: "Evento Intermediário de Captura por Sinal",
+    aliases: ["intermediario sinal", "signal catch"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.intermediate-event",
+    replaceEntryId: "replace-with-signal-intermediate-catch",
+  },
+  {
+    id: "message-intermediate-throw",
+    label: "Evento Intermediário de Lançamento por Mensagem",
+    aliases: ["lancamento mensagem", "lançamento mensagem", "message throw"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.intermediate-event",
+    replaceEntryId: "replace-with-message-intermediate-throw",
+  },
+  {
+    id: "signal-intermediate-throw",
+    label: "Evento Intermediário de Lançamento por Sinal",
+    aliases: ["lancamento sinal", "lançamento sinal", "signal throw"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.intermediate-event",
+    replaceEntryId: "replace-with-signal-intermediate-throw",
+  },
+  {
+    id: "escalation-intermediate-throw",
+    label: "Evento Intermediário de Lançamento por Escalada",
+    aliases: ["lancamento escalada", "lançamento escalada", "escalation throw"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.intermediate-event",
+    replaceEntryId: "replace-with-escalation-intermediate-throw",
+  },
+  // ---- events: end --------------------------------------------------------
+  {
+    id: "end-event",
+    label: "Evento de Fim",
+    aliases: ["fim", "end event", "termino", "término", "evento de fim"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.end-event",
+  },
+  {
+    id: "message-end",
+    label: "Evento de Fim por Mensagem",
+    aliases: ["fim por mensagem", "message end"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.end-event",
+    replaceEntryId: "replace-with-message-end",
+  },
+  {
+    id: "error-end",
+    label: "Evento de Fim por Erro",
+    aliases: ["fim por erro", "error end"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.end-event",
+    replaceEntryId: "replace-with-error-end",
+  },
+  {
+    id: "signal-end",
+    label: "Evento de Fim por Sinal",
+    aliases: ["fim por sinal", "signal end"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.end-event",
+    replaceEntryId: "replace-with-signal-end",
+  },
+  {
+    id: "escalation-end",
+    label: "Evento de Fim por Escalada",
+    aliases: ["fim por escalada", "escalation end"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.end-event",
+    replaceEntryId: "replace-with-escalation-end",
+  },
+  {
+    id: "terminate-end",
+    label: "Evento de Fim de Término",
+    aliases: ["fim de termino", "fim de término", "terminate end"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.end-event",
+    replaceEntryId: "replace-with-terminate-end",
+  },
+  // ---- data / artifacts ---------------------------------------------------
+  {
+    id: "data-object",
+    label: "Objeto de Dados",
+    aliases: ["objeto de dados", "data object", "dado"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.data-object",
+  },
+  {
+    id: "data-store",
+    label: "Repositório de Dados",
+    aliases: ["repositorio", "repositório", "data store"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.data-store",
+  },
+  {
+    id: "group",
+    label: "Grupo",
+    aliases: ["grupo", "agrupamento"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.group",
+  },
+  // ---- collaboration ------------------------------------------------------
+  {
+    id: "participant-expanded",
+    label: "Pool / Participante",
+    aliases: ["pool", "participante", "participant"],
+    strategy: "DIRECT_PALETTE_CREATE",
+    paletteEntryId: "create.participant-expanded",
+  },
+  {
+    id: "participant-collapsed",
+    label: "Pool (caixa-preta)",
+    aliases: ["pool caixa preta", "black box pool", "pool vazio"],
+    strategy: "CREATE_THEN_REPLACE",
+    paletteEntryId: "create.participant-expanded",
+    replaceEntryId: "replace-with-collapsed-pool",
+  },
+];
+
+/**
+ * Constructs contextuais intencionalmente AUSENTES da busca global:
+ * - Lane: criada apenas via context-pad do Participant (lane-divide-*) —
+ *   mapear "raia/lane" → Participant mentiria a semântica.
+ * - BoundaryEvent: exige Activity de attachment — não representável numa
+ *   busca global sem contexto de seleção.
+ * - TextAnnotation/Association: create apenas via context-pad.
+ * - Preserve-only (ComplexGateway, Transaction, AdHoc, MultiInstance,
+ *   Compensation...): sem entries CREATE_EDIT → nunca listados.
+ */
+export function listSearchableCreateActions(): SearchableCreateAction[] {
+  return SEARCHABLE_CREATE_ACTIONS.filter(
+    (a) =>
+      isPaletteEntryAllowed(a.paletteEntryId) &&
+      (!a.replaceEntryId || isReplaceEntryAllowed(a.replaceEntryId)),
+  ).map((a) => ({ ...a }));
 }

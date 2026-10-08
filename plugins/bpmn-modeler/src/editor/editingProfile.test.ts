@@ -13,6 +13,8 @@ import {
   isPropertiesGroupAllowed,
   isPropertiesEntryAllowed,
   isClipboardElementAllowed,
+  listSearchableCreateActions,
+  type ClipboardElement,
 } from "./editingProfile";
 
 const allowedReplace = (id: string) => isReplaceEntryAllowed(`replace-with-${id}`);
@@ -205,7 +207,7 @@ describe("editingProfile — properties panel", () => {
 });
 
 describe("editingProfile — clipboard (copy/cut/paste/duplicate, G3)", () => {
-  const el = (type: string, bo: object = {}) => ({
+  const el = (type: string, bo: object = {}): ClipboardElement => ({
     type,
     businessObject: { $type: type, ...bo },
   });
@@ -328,23 +330,23 @@ describe("editingProfile — clipboard (copy/cut/paste/duplicate, G3)", () => {
     // subprocess contendo EventSubProcess → conjunto negado (vendor não
     // filtra subárvore do clipboard)
     const sub = el("bpmn:SubProcess");
-    (sub as any).children = [
+    sub.children = [
       el("bpmn:SubProcess", { triggeredByEvent: true }),
     ];
     expect(isClipboardElementAllowed(sub)).toBe(false);
     // mesmo subprocess com filho permitido → copiável
-    (sub as any).children = [el("bpmn:Task")];
+    sub.children = [el("bpmn:Task")];
     expect(isClipboardElementAllowed(sub)).toBe(true);
     // task com boundary preserve-only (cancel) → negada
     const task = el("bpmn:Task");
-    (task as any).attachers = [
+    task.attachers = [
       el("bpmn:BoundaryEvent", {
         eventDefinitions: [{ $type: "bpmn:CancelEventDefinition" }],
       }),
     ];
     expect(isClipboardElementAllowed(task)).toBe(false);
     // task com boundary permitido (timer) → copiável
-    (task as any).attachers = [
+    task.attachers = [
       el("bpmn:BoundaryEvent", {
         eventDefinitions: [{ $type: "bpmn:TimerEventDefinition" }],
       }),
@@ -361,5 +363,83 @@ describe("editingProfile — clipboard (copy/cut/paste/duplicate, G3)", () => {
       isClipboardElementAllowed({ type: "bpmn:Task", businessObject: {} }),
     ).toBe(false);
     expect(isClipboardElementAllowed({ type: "label" })).toBe(true);
+  });
+});
+
+describe('editingProfile — searchable create actions (G3-PAL-1)', () => {
+  const actions = listSearchableCreateActions();
+  const byId = new Map(actions.map((a) => [a.id, a]));
+
+  it('toda ação passa pelos predicados canônicos (fail-closed projection)', () => {
+    expect(actions.length).toBeGreaterThan(0);
+    for (const a of actions) {
+      expect(isPaletteEntryAllowed(a.paletteEntryId), a.id).toBe(true);
+      if (a.replaceEntryId) {
+        expect(isReplaceEntryAllowed(a.replaceEntryId), a.id).toBe(true);
+        expect(a.strategy).toBe('CREATE_THEN_REPLACE');
+      } else {
+        expect(a.strategy).toBe('DIRECT_PALETTE_CREATE');
+      }
+    }
+  });
+
+  it('tasks tipados rotam para replace entries corretos', () => {
+    const typed: Array<[string, string]> = [
+      ['user-task', 'replace-with-user-task'],
+      ['service-task', 'replace-with-service-task'],
+      ['manual-task', 'replace-with-manual-task'],
+      ['rule-task', 'replace-with-rule-task'],
+      ['script-task', 'replace-with-script-task'],
+      ['send-task', 'replace-with-send-task'],
+      ['receive-task', 'replace-with-receive-task'],
+      ['call-activity', 'replace-with-call-activity'],
+    ];
+    for (const [id, rep] of typed) {
+      expect(byId.get(id)?.replaceEntryId, id).toBe(rep);
+      expect(byId.get(id)?.paletteEntryId).toBe('create.task');
+    }
+  });
+
+  it('gateways tipados rotam via exclusive-gateway create', () => {
+    for (const [id, rep] of [
+      ['parallel-gateway', 'replace-with-parallel-gateway'],
+      ['inclusive-gateway', 'replace-with-inclusive-gateway'],
+      ['event-based-gateway', 'replace-with-event-based-gateway'],
+    ] as const) {
+      expect(byId.get(id)?.replaceEntryId, id).toBe(rep);
+      expect(byId.get(id)?.paletteEntryId).toBe('create.exclusive-gateway');
+    }
+  });
+
+  it('aliases específicos não existem em ação genérica (anti-misrouting)', () => {
+    const task = byId.get('task')!;
+    for (const term of ['usuario', 'usuário', 'servico', 'serviço', 'manual', 'regra']) {
+      const hay = [task.label, task.id, ...task.aliases].map((s) => s.toLowerCase());
+      expect(hay.some((h) => h.includes(term)), term).toBe(false);
+    }
+    const gw = byId.get('exclusive-gateway')!;
+    for (const term of ['paralelo', 'inclusivo', 'eventos']) {
+      const hay = [gw.label, gw.id, ...gw.aliases].map((s) => s.toLowerCase());
+      expect(hay.some((h) => h.includes(term)), term).toBe(false);
+    }
+  });
+
+  it('eventos tipados apontam para replace entries position-aware', () => {
+    for (const [id, rep] of [
+      ['timer-start', 'replace-with-timer-start'],
+      ['message-start', 'replace-with-message-start'],
+      ['timer-intermediate-catch', 'replace-with-timer-intermediate-catch'],
+      ['message-intermediate-throw', 'replace-with-message-intermediate-throw'],
+      ['terminate-end', 'replace-with-terminate-end'],
+    ] as const) {
+      expect(byId.get(id)?.replaceEntryId, id).toBe(rep);
+    }
+  });
+
+  it('constructs contextuais e preserve-only não são pesquisáveis', () => {
+    for (const a of actions) {
+      expect(a.label.toLowerCase()).not.toMatch(/lane|raia|boundary|borda/);
+    }
+    expect(byId.has('lane')).toBe(false);
   });
 });

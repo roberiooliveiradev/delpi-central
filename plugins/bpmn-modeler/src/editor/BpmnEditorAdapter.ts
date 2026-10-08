@@ -14,6 +14,10 @@ import {
 } from "bpmn-js-properties-panel";
 import { ptBrTranslateModule } from "./i18n/translate";
 import { profileGovernanceModule } from "./profileGovernanceModule";
+import {
+  listSearchableCreateActions,
+  type SearchableCreateAction,
+} from "./editingProfile";
 import { propertiesPanelModule } from "./propertiesPanelModule";
 import { repairExtensionDeclarations } from "./extensionPreservation";
 
@@ -321,23 +325,92 @@ export class BpmnEditorAdapter {
   }
 
   /**
-   * Palette search (G3): inventário de entries de criação já GOVERNADAS
-   * (o provider passa pelo filtro fail-closed da editingProfile — o que
-   * aparece aqui é o que a paleta realmente oferece). Somente entries
-   * `create.*` são expostas à busca; tools/separator não são criáveis
-   * via busca. Retorna [] fora do modo edit.
+   * Palette search (G3-PAL-1): projeção semântica CREATE_EDIT derivada de
+   * `editingProfile.listSearchableCreateActions()` — a mesma autoridade que
+   * governa palette/context-pad/replace/clipboard. Cada ação carrega o
+   * semantic target correto: DIRECT_PALETTE_CREATE usa a entry de palette;
+   * CREATE_THEN_REPLACE encadeia o replace governado após o create.
+   * Retorna [] fora do modo edit.
    */
-  paletteEntries(): Array<{ id: string; title: string }> {
+  searchCreateActions(): SearchableCreateAction[] {
     if (this.mode !== "edit") return [];
-    const palette = this.svc<{
-      getEntries(): Record<string, { title?: string }>;
-    }>("palette");
-    if (!palette) return [];
-    return Object.entries(palette.getEntries())
-      .filter(
-        ([id, entry]) => id.startsWith("create.") && Boolean(entry.title),
-      )
-      .map(([id, entry]) => ({ id, title: entry.title as string }));
+    return listSearchableCreateActions();
+  }
+
+  /**
+   * Ativa uma ação da palette search. Para CREATE_THEN_REPLACE, arma um
+   * listener one-shot em `create.end`/`create.cleanup`: quando o usuário
+   * posicionar o elemento, aplica o replace via entries governadas do
+   * `replaceMenuProvider` (que já passa por `isReplaceEntryAllowed`). Se o
+   * replace estiver indisponível, o create é revertido via commandStack —
+   * nunca entregar QName genérico quando a busca prometeu semântica
+   * específica. Modo edit apenas.
+   */
+  activateSearchCreateAction(actionId: string): boolean {
+    if (this.mode !== "edit") return false;
+    const action = listSearchableCreateActions().find(
+      (a) => a.id === actionId,
+    );
+    if (!action) return false;
+    if (action.replaceEntryId) {
+      this.armPostCreateReplace(action.replaceEntryId);
+    }
+    return this.activatePaletteEntry(action.paletteEntryId);
+  }
+
+  /**
+   * Executa uma entry do popup 'bpmn-replace' no elemento — mesmo path do
+   * clique do usuário (entry.action já chama bpmnReplace.replaceElement via
+   * command stack). As entries vêm do provider governado, então um id fora
+   * do profile simplesmente não existe aqui.
+   */
+  private applyGovernedReplace(
+    element: unknown,
+    replaceEntryId: string,
+  ): boolean {
+    const provider = this.svc<{
+      getPopupMenuEntries(el: unknown): Record<
+        string,
+        { action?: unknown }
+      >;
+    }>("replaceMenuProvider");
+    const entry = provider?.getPopupMenuEntries(element)?.[replaceEntryId];
+    const action = entry?.action;
+    const evt = new MouseEvent("click", { bubbles: true });
+    if (typeof action === "function") {
+      (action as (e: Event, en: unknown) => void)(evt, entry);
+      return true;
+    }
+    const click = (action as Record<string, unknown> | undefined)?.["click"];
+    if (typeof click === "function") {
+      (click as (e: Event, en: unknown) => void)(evt, entry);
+      return true;
+    }
+    return false;
+  }
+
+  private armPostCreateReplace(replaceEntryId: string): void {
+    const eventBus = this.svc<{
+      once(e: string, cb: (ev: unknown) => void): void;
+      off(e: string, cb: (ev: unknown) => void): void;
+    }>("eventBus");
+    if (!eventBus) return;
+    const disarm = () => {
+      eventBus.off("create.end", onCreateEnd);
+      eventBus.off("create.cleanup", disarm);
+    };
+    const onCreateEnd = (ev: unknown) => {
+      const event = ev as {
+        context?: { shape?: unknown };
+        shape?: unknown;
+      };
+      const shape = event?.context?.shape ?? event?.shape;
+      if (shape && !this.applyGovernedReplace(shape, replaceEntryId)) {
+        this.svc<{ undo(): void }>("commandStack")?.undo();
+      }
+    };
+    eventBus.once("create.end", onCreateEnd);
+    eventBus.once("create.cleanup", disarm);
   }
 
   /**

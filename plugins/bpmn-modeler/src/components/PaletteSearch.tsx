@@ -1,50 +1,26 @@
 /**
- * Palette search (G3 / IG-1) — UI de produto sobre a palette vendor.
+ * Palette search (G3 / IG-1; roteamento semântico G3-PAL-1) — UI de produto.
  *
- * GOVERNANÇA: a lista de entries vem de `adapter.paletteEntries()` — o
- * inventário REAL da paleta depois do filtro fail-closed do editingProfile.
- * A busca não carrega catálogo paralelo de capabilities: só pode oferecer
- * o que a paleta já oferece (CREATE_EDIT). Aliases abaixo são metadados de
- * apresentação (termos PT-BR/EN que resolvem para entries existentes) —
- * nunca adicionam capacidade nova.
+ * GOVERNANÇA: os resultados vêm de `adapter.searchCreateActions()` — a
+ * projeção CREATE_EDIT exportada por `editingProfile.ts` (mesma autoridade
+ * que governa palette/context-pad/replace/clipboard). Não há catálogo
+ * paralelo de capabilities.
+ *
+ * ROTEAMENTO SEMÂNTICO: cada resultado promete o QName que cria. Constructs
+ * tipados sem entry direta na palette usam CREATE_THEN_REPLACE — o adapter
+ * aplica o replace governado após o usuário posicionar o elemento. Aliases
+ * apontam apenas para o mesmo significado do resultado: "usuário" →
+ * Tarefa de Usuário (bpmn:UserTask), nunca para Tarefa genérica.
+ *
+ * Constructs contextuais (Lane, BoundaryEvent) e preserve-only não são
+ * listados — não existe create path global governado para eles.
  *
  * Ativação = mesmo path do clique do usuário (`triggerEntry` no adapter):
  * entra na interação de create existente (drag→clique posiciona).
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { BpmnEditorAdapter } from "../editor/BpmnEditorAdapter";
-
-type Entry = { id: string; title: string };
-
-/** Termos de busca por entry id — apresentação, não capability. */
-const SEARCH_ALIASES: Record<string, string[]> = {
-  "create.start-event": ["inicio", "início", "start", "evento de inicio"],
-  "create.intermediate-event": [
-    "intermediario",
-    "timer",
-    "mensagem",
-    "boundary",
-    "borda",
-  ],
-  "create.end-event": ["fim", "end", "termino", "término", "final"],
-  "create.exclusive-gateway": ["gateway", "xor", "exclusivo", "decisao", "decisão"],
-  "create.task": [
-    "tarefa",
-    "task",
-    "atividade",
-    "usuario",
-    "usuário",
-    "servico",
-    "serviço",
-    "manual",
-    "regra",
-  ],
-  "create.subprocess-expanded": ["subprocesso", "sub processo", "sub-processo"],
-  "create.data-object": ["objeto de dados", "data object", "dado"],
-  "create.data-store": ["repositorio", "repositório", "data store"],
-  "create.participant-expanded": ["pool", "raia", "lane", "participante"],
-  "create.group": ["grupo", "agrupamento"],
-};
+import type { SearchableCreateAction } from "../editor/editingProfile";
 
 function normalize(s: string): string {
   return s
@@ -53,12 +29,10 @@ function normalize(s: string): string {
     .replace(/[̀-ͯ]/g, "");
 }
 
-function matches(entry: Entry, term: string): boolean {
+function matches(action: SearchableCreateAction, term: string): boolean {
   const t = normalize(term).trim();
   if (!t) return false;
-  const hay = [entry.title, entry.id, ...(SEARCH_ALIASES[entry.id] ?? [])].map(
-    normalize,
-  );
+  const hay = [action.label, action.id, ...action.aliases].map(normalize);
   return hay.some((h) => h.includes(t));
 }
 
@@ -73,12 +47,12 @@ export function PaletteSearch({
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = "bpmnm-palette-search-list";
 
-  // entries lidas no momento da busca — a paleta só está populada após o
-  // import; chamar a cada render/query mantém o resultado sempre atual.
+  // ações lidas a cada query — o inventário é estável por sessão, mas ler
+  // sob demanda mantém o resultado consistente com o profile vigente.
   const results = useMemo(
     () =>
-      open && adapter
-        ? adapter.paletteEntries().filter((e) => matches(e, query))
+      open && adapter && query.trim()
+        ? adapter.searchCreateActions().filter((a) => matches(a, query))
         : [],
     [adapter, query, open],
   );
@@ -104,8 +78,8 @@ export function PaletteSearch({
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const activate = (entry: Entry) => {
-    adapter?.activatePaletteEntry(entry.id);
+  const activate = (action: SearchableCreateAction) => {
+    adapter?.activateSearchCreateAction(action.id);
     setQuery("");
     setOpen(false);
     inputRef.current?.blur();
@@ -161,9 +135,9 @@ export function PaletteSearch({
           {results.length === 0 ? (
             <li className="bpmnm-palette-search__empty">Nenhum resultado</li>
           ) : (
-            results.map((entry, i) => (
+            results.map((action, i) => (
               <li
-                key={entry.id}
+                key={action.id}
                 id={`${listId}-${i}`}
                 role="option"
                 aria-selected={i === active}
@@ -173,12 +147,13 @@ export function PaletteSearch({
                     : "bpmnm-palette-search__option"
                 }
                 onMouseEnter={() => setActive(i)}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  activate(entry);
-                }}
+                // click (não mousedown): o create-drag do vendor arma em
+                // triggerEntry; ativar durante mousedown faz o mouseup do
+                // próprio clique ser consumido como drop prematuro sobre
+                // o dropdown. click dispara após o mouseup → drag limpo.
+                onClick={() => activate(action)}
               >
-                {entry.title}
+                {action.label}
               </li>
             ))
           )}

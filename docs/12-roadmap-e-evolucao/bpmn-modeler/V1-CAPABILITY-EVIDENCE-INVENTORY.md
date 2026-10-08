@@ -143,22 +143,22 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 
 | Capability | Target | Vendor | Product wiring | UX | Test | Status | Gap owner |
 |---|---|---|---|---|---|---|---|
-| Copy/Paste/Cut (mesmo modelo) | IN_V1 | CopyPasteModule + DOM keybindings | ativo | vendor | — | **VENDOR_ONLY** | 03/06 |
-| Multi-select (Shift/lasso) | IN_V1 | SelectionModule+LassoTool (`L`) | ativo | vendor | — | **VENDOR_ONLY** | 03/06 |
-| Select all | IN_V1 | vendor + `Ctrl+A` | context menu "Selecionar tudo" | product | E2E-34 | **PROVEN** | — |
-| Bulk move | IN_V1 | MoveModule | ativo | vendor | — | **VENDOR_ONLY** | 03/06 |
-| Bulk delete | IN_V1 | modeling | ativo | vendor | — | **VENDOR_ONLY** | 03/06 |
-| Ctrl/Cmd+S | IN_V1 | — | product flush | product | AUTO/UNLOAD specs | **PROVEN** | — |
-| Undo/Redo (Ctrl+Z/Y) | IN_V1 | commandStack+keys | product | product | theme-stability, E2E-06, AUTO-04/05 | **PROVEN** | — |
-| Delete key | IN_V1 | vendor binding | ativo | vendor | delete via menu E2E-07 | **PARTIAL** | 03/06 |
+| Copy/Paste/Cut (mesmo modelo) | IN_V1 | CopyPasteModule + DOM keybindings | ativo + `copyPaste.canCopyElements` → `isClipboardElementAllowed` | vendor + governance | PROD-CLIP-01..07 | **PROVEN** | — |
+| Multi-select (Shift/lasso) | IN_V1 | SelectionModule+LassoTool (`L`) | ativo | vendor | PROD-SEL-01/02 | **PROVEN** | — |
+| Select all | IN_V1 | vendor + `Ctrl+A` | context menu "Selecionar tudo" | product | E2E-34 + PROD-SEL-03 | **PROVEN** | — |
+| Bulk move | IN_V1 | MoveModule | ativo | vendor | PROD-SEL-04 | **PROVEN** | — |
+| Bulk delete | IN_V1 | modeling | ativo | vendor | PROD-SEL-05 | **PROVEN** | — |
+| Ctrl/Cmd+S | IN_V1 | — | product flush | product | AUTO/UNLOAD specs + PROD-KEY-01 | **PROVEN** | — |
+| Undo/Redo (Ctrl+Z/Y) | IN_V1 | commandStack+keys | product + restoreFocus pós-drag | product | theme-stability, E2E-06, AUTO-04/05, PROD-CLIP-04, PROD-SEL-04/05, PROD-RSZ, PROD-PAL-SEM-07 | **PROVEN** | — |
+| Delete/Backspace key | IN_V1 | vendor binding | ativo | vendor | PROD-KEY-03 + E2E-07 | **PROVEN** | — |
 | Zoom/Pan/Fit | IN_V1 | ZoomScroll/MoveCanvas | adapter + floating controls | product | E2E-35/38, CANVAS-REG-04 | **PROVEN** | — |
-| Ctrl/Cmd+F search | IN_V1 | **searchPad+`find` bindado** | módulo ativo + tradução PT-BR da label | vendor | — | **PARTIAL** (evidence gap) | 03/06 |
-| Search by name/id | IN_V1 | searchPad + adapter `findElements` | API existe | vendor | unit adapter | **PARTIAL** | 03 |
-| Palette search | IN_V1 | **não existe vendor** | — | — | — | **MISSING** | 03 (G3) |
-| Snap/Grid fixo | IN_V1 | GridSnapping+Snapping ativos | config vendor default | vendor | — | **PARTIAL** | 03 |
-| Resize | IN_V1 | ResizeModule | resizers visíveis | product theme | E2E-40 (visual) | **PARTIAL** | 03/06 |
-| Direct editing | IN_V1 | LabelEditingModule (`E`, dblclick) | ativo | product theme | E2E-40 | **PROVEN** | — |
-| Replace/context pad | IN_V1 | ContextPad+ReplaceMenu | popup temático | product theme | E2E-32/40 (abre/fecha) | **PARTIAL** | 03/06 |
+| Ctrl/Cmd+F search | IN_V1 | searchPad + `find` bindado | módulo ativo + tradução PT-BR | vendor | PROD-SRCH-01..04 | **PROVEN** | — |
+| Search by name/id | IN_V1 | searchPad + adapter `findElements` | ativo | vendor | PROD-SRCH-01/02 (nome, id, substring, acentos) | **PROVEN** | — |
+| Palette search (semântica) | IN_V1 | não existe vendor | `PaletteSearch` → projeção `listSearchableCreateActions()` do editingProfile (DIRECT_PALETTE_CREATE + CREATE_THEN_REPLACE via replaceMenuProvider governado) | product | PROD-PAL-01..05 + PROD-PAL-SEM-01..08 | **PROVEN** | — |
+| Snap/Grid fixo | IN_V1 | GridSnapping+Snapping ativos | config vendor default | vendor | PROD-SEL-06 (grid 10 quantização medida) | **PROVEN** | — |
+| Resize | IN_V1 | ResizeModule | resizers + restoreFocus | product theme | PROD-RSZ-01..05 (funcional + fixed-size BLOCKED_AS_EXPECTED) | **PROVEN** | — |
+| Direct editing | IN_V1 | LabelEditingModule (`E`, dblclick) | ativo | product theme | E2E-40 + PROD-KEY-02 | **PROVEN** | — |
+| Replace/context pad | IN_V1 | ContextPad+ReplaceMenu governados | popup temático + governança | product theme | E2E-32/40 + GOV-PAD/RPL + PROD-KEY-04..06 | **PROVEN** | — |
 | Mini-map | FUTURE | — | — | — | — | **NOT_APPLICABLE** | — |
 | Align/Distribute | FUTURE | **módulos ATIVOS** | expostos sem governance | vendor | — | **VENDOR_ONLY** (exposição fora do profile) | 00/03 |
 
@@ -174,7 +174,9 @@ Legenda: P=PROVEN · V=VENDOR_ONLY · TI=TO_INVENTORY · M=MISSING · —=NOT_AP
 
 ## 6. VENDOR-ONLY capabilities (não promover a produto)
 
-Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/distribute · space-tool · hand-tool · global-connect · keyboard-move · replace-menu actions (todas as morphs) · context-pad append de tipos específicos · palette create entries não-task (subprocess, pool, data-store, group, gateways via append) · typed task create (9) · event definition swap/fields · boundary/intermediate throw create · complex gateway · ad-hoc/transaction/event-subprocess create **(fora do profile, exposto)** · MultiInstanceLoopCharacteristics **(fora do profile, exposto)** · documentation edit · ~~conditionExpression UI · defaultFlow UI · calledElement~~ (código vendor existe nos providers Zeebe/Camunda **não carregados** — ausentes da surface `bpmn` ativa → IMPLEMENTATION_GAP/WAVE E) · Ctrl+F search pad overlay · shortcuts S/L/H/C/E/R · palette search pad (inexistente vendor) · CandidateUsers/engine providers (**TO_INVENTORY** se carregados).
+Pós-G2A/G3, o vendor-only residual ativo sem governança de produto é apenas: align/distribute · space-tool · hand-tool · global-connect · keyboard-move (WAVE F — decisão de exposição pendente) · documentation edit · CandidateUsers/engine providers (**TO_INVENTORY** se carregados) · ~~conditionExpression UI · defaultFlow UI · calledElement~~ (código vendor existe nos providers Zeebe/Camunda **não carregados** — ausentes da surface `bpmn` ativa → IMPLEMENTATION_GAP/WAVE E).
+
+Promovidos a produto/governados (não mais vendor-only): copy/paste/cut + duplicate (canCopyElements governado) · multi-select/lasso/bulk ops · replace-menu/context-pad/palette entries (fail-closed pelo editingProfile) · typed task + event def + gateway creates (replace governado) · Ctrl+F searchPad · shortcuts · palette search semântica (projeção do profile). Preserve-only (complex gateway, ad-hoc/transaction/event-subprocess, MultiInstance) permanecem DENY — não são "expostos", são bloqueados pela governança.
 
 ## 7. Gaps
 
@@ -182,7 +184,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 
 | GAP | Capability | Evidence | Missing | Owner | Severity | Wave |
 |---|---|---|---|---|---|---|
-| IG-1 | Palette search (IN_V1) | **CLOSED (G3)** — componente `PaletteSearch` implementado: overlay no canvas, fonte única = `palette.getEntries()` (entries já governadas — zero catálogo paralelo), aliases PT-BR/EN, `/` abre, ArrowUp/Down + Enter + Escape, `role=combobox`/aria-label; preserve-only nunca lista (sem entry CREATE_EDIT). Evidência PROD-PAL-01..05 | implementada | 03 | P2 | **G3 EXECUTED** |
+| IG-1 | Palette search (IN_V1) | **CLOSED (G3-PAL-1)** — `PaletteSearch` + projeção `listSearchableCreateActions()` exportada por `editingProfile.ts` (mesma autoridade palette/context-pad/replace/clipboard — zero allowlist paralela). Roteamento semântico: DIRECT_PALETTE_CREATE + CREATE_THEN_REPLACE (replace governado via `replaceMenuProvider` no `create.end`); label/aliases = QName criado ("usuário"→UserTask, "gateway paralelo"→ParallelGateway); fail-closed: replace indisponível reverte o create; Lane/Boundary/preserve-only ausentes da busca global. `/` abre, ArrowUp/Down+Enter+Escape, role=combobox/aria-activedescendant. Evidência PROD-PAL-01..05 + PROD-PAL-SEM-01..08 | implementada | 03 | P2 | **G3 EXECUTED** |
 | IG-2 | Profile governance (palette/context-pad/replace/panel) | ~~replace expõe ad-hoc/transaction/eventSubProcess/complex/MultiInstance~~ | provider de restrição | 03+02 | **P1** | G2/G3 → **CLOSED / VERIFIED AFTER CORRECTION PASS** — `editingProfile.ts`+`profileGovernanceModule.ts`+`ProfileGovernedPanelProvider`; fail-closed em todas as surfaces incl. properties entries (allowlist); bypasses corrigidos: `none-boundary-event` (não-criável), `append.compensation-activity` (compensation preserve-only); `isExecutable` classificado BPMN normativo, edição oculta por decisão de produto, valor preservado no round-trip. Evidência `profile-governance.spec.ts` |
 
 ### EVIDENCE GAPS (provavelmente funciona, sem prova de produto)
@@ -216,7 +218,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 - **Palette restriction:** ~~CONFIRMADO — nenhum provider de restrição~~ → **CLOSED (G2A)** — palette/context-pad/replace/panel governados pelo profile central (`editingProfile.ts`), fail-closed; preserve-only e MultiInstance não são criáveis nem replace targets. → IG-2 closed.
 - **Copy/paste:** CONFIRMADO vendor-only. → EG-1.
 - **Multi-select:** CONFIRMADO vendor-only (exceto select-all). → EG-2.
-- **Palette search:** CONFIRMADO MISSING (vendor não fornece). → IG-1.
+- **Palette search:** ~~CONFIRMADO MISSING~~ → **CLOSED (G3 + G3-PAL-1)** — implementada como projeção semântica CREATE_EDIT do editingProfile (ver IG-1).
 - **Snap/grid:** vendor ativo com config default — não é configuração de produto explícita → PARTIAL.
 
 ## 8. V1 scope completeness score
@@ -238,7 +240,7 @@ Copy/paste/cut · lasso + shift multi-select · bulk move/delete/copy · align/d
 - **WAVE A — Profile Governance:** provider de restrição palette/context-pad/replace/panel para o profile CE; bloquear/excluir preserve-only+engine constructs da criação. (IG-2, EG-14) — P1, owners 03+02. → **EXECUTED (G2A, PASS)** — parte creation/replacement fechada; exposição residual de engine fields no panel = TO_INVENTORY (EG-14 permanece para WAVE E).
 - **WAVE B — CREATE_EDIT Evidence Closure:** → **EXECUTED (G2B, PASS)** — 24 testes E2E `create-edit-*.spec.ts` (workers=2, baseline determinístico) provam create→configure→connect→save→authoritative read-back→reload por construct CE. Construct paths = PROVEN; properties breadth = PARTIAL. (EG-3..7, EG-11, TG-1, TG-3 fechados).
 - **WAVE C — Round-trip & Preserve Evidence:** suíte export→reimport→compare por construct + corpus preserve-only. (EG-8, EG-12, TG-2) — P1, owners 02+06. → **EXECUTED (G4, PASS/CLOSED)** — 16 testes E2E `roundtrip-*.spec.ts` (workers=2, determinístico) + 14 adapter-level `roundtrip-adapter.test.ts` + 7 `extensionPreservation.test.ts`; comparador estrutural `e2e/rt-compare.ts`; corpus `e2e/fixtures/roundtrip/` XSD-validado (13 fixtures); transforms vendor classificados; G4-EXT-1 resolvido sem normalização de perda — `definition` reparado, attr same-ns fail-closed read-only.
-- **WAVE D — Productivity:** → **EXECUTED (G3, PASS/CLOSED)** — 33 testes E2E `productivity-{clipboard,selection,search,resize,shortcuts}.spec.ts` (workers=2, determinístico); palette search implementada derivada do profile governado; defeito de foco pós-drag corrigido no adapter (`drag.ended`/`mouseup` → `canvas.restoreFocus`); UNCONTROLLED OUT-OF-PROFILE CREATE PATHS via paste = 0. (EG-1,2,9,10,13, IG-1 fechados).
+- **WAVE D — Productivity:** → **EXECUTED (G3, PASS/CLOSED)** — 41 testes E2E `productivity-{clipboard,selection,search,resize,shortcuts}.spec.ts` (workers=2, determinístico); palette search = projeção semântica CREATE_EDIT do editingProfile (G3-PAL-1: semantic routing, misrouting=0); defeito de foco pós-drag corrigido no adapter (`drag.ended`/`mouseup` → `canvas.restoreFocus`); UNCONTROLLED OUT-OF-PROFILE CREATE PATHS via paste = 0. (EG-1,2,9,10,13, IG-1 fechados).
 - **WAVE E — Properties Evidence:** doc/condition/default/event-fields/calledElement UI tests. — P2, owner 03+06.
 - **WAVE F — Vendor Exposure Decision:** align/distribute/space/hand/global-connect ativos mas FUTURE — decidir manter/desativar/documentar. — P3, owner 00+03.
 
