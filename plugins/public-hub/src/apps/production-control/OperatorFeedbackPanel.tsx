@@ -21,10 +21,18 @@ type Props = {
   realtimeConnected: boolean;
   resyncSignal: number;
   feedbackRealtimeEvent: MachineLoadRealtimeEvent | null;
+  /**
+   * P3: dentro da central «Solicitações do operador» o card do coordenador
+   * fornece título e o estado de identificação — o painel renderiza só o
+   * conteúdo do fluxo PCP (status, CTA, modal).
+   */
+  embedded?: boolean;
 };
 
 /**
- * Seção «Comunicação com PCP» no detalhe da operação (C3).
+ * Fluxo «Impedimento ao PCP» no detalhe da operação (C3). Sozinho forma a
+ * seção «Comunicação com PCP»; `embedded` o embute como card da central de
+ * solicitações (P3) sem duplicar lógica.
  *
  * Canal de comunicação — não é ação de máquina: o painel nunca chama
  * pause/stop/downtime. Sem sessão válida o envio não acontece; a identidade
@@ -38,6 +46,7 @@ export function OperatorFeedbackPanel({
   realtimeConnected,
   resyncSignal,
   feedbackRealtimeEvent,
+  embedded = false,
 }: Props) {
   const { session, status: sessionStatus, invalidate, openIdentify } =
     useOperatorSession();
@@ -71,24 +80,16 @@ export function OperatorFeedbackPanel({
     return result;
   };
 
-  return (
-    <section
-      className="pcp-pub__feedback"
-      aria-labelledby="pcp-feedback-section-title"
-    >
-      <h3 id="pcp-feedback-section-title" className="pcp-pub__detail-section">
-        <MessageSquareWarning size={18} strokeWidth={2.2} aria-hidden="true" />
-        Comunicação com PCP
-      </h3>
-
-      {state === "restoring" ? (
+  const body = (
+    <>
+      {!embedded && state === "restoring" ? (
         <p className="pcp-pub__feedback-muted" role="status">
           <Loader2 className="pcp-pub__spin" size={16} aria-hidden="true" />
           Verificando identificação do operador…
         </p>
       ) : null}
 
-      {state === "anonymous" ? (
+      {!embedded && state === "anonymous" ? (
         <div className="pcp-pub__feedback-card pcp-pub__feedback-card--neutral">
           <p className="pcp-pub__feedback-muted">
             Identifique-se para comunicar esta operação ao PCP.
@@ -238,6 +239,29 @@ export function OperatorFeedbackPanel({
           setModalError(null);
         }}
       />
+    </>
+  );
+
+  if (embedded) {
+    // A central (P3) fornece seção, título e identificação — o painel entrega
+    // apenas o conteúdo do fluxo PCP dentro do card «Produção / PCP».
+    return (
+      <div className="pcp-pub__feedback pcp-pub__feedback--embedded">
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <section
+      className="pcp-pub__feedback"
+      aria-labelledby="pcp-feedback-section-title"
+    >
+      <h3 id="pcp-feedback-section-title" className="pcp-pub__detail-section">
+        <MessageSquareWarning size={18} strokeWidth={2.2} aria-hidden="true" />
+        Comunicação com PCP
+      </h3>
+      {body}
     </section>
   );
 }

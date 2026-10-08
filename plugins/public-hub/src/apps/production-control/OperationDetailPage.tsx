@@ -19,7 +19,7 @@ import {
 import { ProductModelViewer } from "./ProductModelViewer";
 import { OperatorSessionChip } from "./OperatorSessionProvider";
 import { ProductionRunControls } from "./ProductionRunControls";
-import { OperatorFeedbackPanel } from "./OperatorFeedbackPanel";
+import { OperatorRequestsPanel } from "./OperatorRequestsPanel";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime.ts";
 import {
   usePublicOperationAppointments,
@@ -273,7 +273,7 @@ export function OperationDetailPage({
               realtimeConnected={realtimeConnected}
             />
 
-            <OperatorFeedbackPanel
+            <OperatorRequestsPanel
               token={token}
               branch={branch}
               operation={operation}

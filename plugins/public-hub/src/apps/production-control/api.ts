@@ -1053,3 +1053,62 @@ export async function createOperatorFeedback(
     "Não foi possível enviar o aviso ao PCP.",
   );
 }
+
+/* ---------- Process Issue (P3) — problema de processo → Processos ---------- */
+
+/** Confirmação mínima devolvida pela P2 — sem acompanhamento posterior. */
+export type PublicProcessIssueConfirmation = {
+  requestId: string | null;
+  requestNumber: string | null;
+  status: string | null;
+  message: string | null;
+};
+
+/**
+ * Registra um problema de processo. O corpo vai só com OP/operação/motivo e
+ * os campos livres opcionais — identidade, filial, posto e snapshot da OP são
+ * resolvidos no backend a partir da bench session (P2). A Idempotency-Key do
+ * caller atravessa ponta a ponta até o Requests API (retry seguro).
+ */
+export async function createProcessIssue(
+  token: string,
+  sessionToken: string,
+  idempotencyKey: string,
+  body: {
+    productionOrder: string;
+    operationCode: string;
+    issueCode: string;
+    /** Declarado pelo operador — nunca validado contra SD4/cadastro. */
+    toolCode?: string | null;
+    materialCode?: string | null;
+    note?: string | null;
+  },
+): Promise<PublicProcessIssueConfirmation> {
+  const path =
+    API_BASE +
+    "/public/machine-load/" +
+    encodeURIComponent(token) +
+    "/process-issues";
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      [BENCH_SESSION_HEADER]: sessionToken,
+      "Idempotency-Key": idempotencyKey,
+    },
+    body: JSON.stringify({
+      productionOrder: body.productionOrder,
+      operationCode: body.operationCode,
+      issueCode: body.issueCode,
+      toolCode: body.toolCode ?? null,
+      materialCode: body.materialCode ?? null,
+      note: body.note ?? null,
+      website: "",
+    }),
+  });
+  return readEnvelope<PublicProcessIssueConfirmation>(
+    response,
+    "Não foi possível enviar a solicitação para Processos.",
+  );
+}
