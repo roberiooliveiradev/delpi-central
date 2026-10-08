@@ -1,0 +1,71 @@
+{
+  "task_id": "DAVI-GOVERNED-SQL-READ-SECURITY-FIX-S0-CORRECTIVE-001",
+  "parent_task": "DAVI-GOVERNED-SQL-READ-SECURITY-FIX-S0-001",
+  "parent_verdict": "ACCEPT_WITH_REQUIRED_CORRECTIVE",
+  "base_sha": "05a8e7a9661d9117814a47fd9db28aa1c83ceeaf",
+  "fix_commit": "72bf2041fc",
+  "execution_drift": "NON_CAUSAL (2 drifts) — origin/main moved e05f9fa0 → 05a8e7a9 (helpdesk-api only) during preflight; earlier S0 base drift already recorded in s0-001 evidence; zero api-delpi/SQL/DAVI paths; rebased, evidence rerun",
+  "route": "POST /data/sql",
+  "operation_id": "execute_readonly_sql",
+  "defect_a_fake_cte": {
+    "before": "ALLOWED — _extract_cte_names scanned string-intact text; 'WITH ZZ9999 AS (' inside a literal minted a fake CTE name, masking unauthorized physical source (validator-level PROVEN)",
+    "fix": "_mask_string_literals() replaces literal contents (incl. escaped '' handling via quote toggle) with spaces before CTE-name extraction; literals can no longer feed lexical extraction",
+    "after": "DENY — string contents are data, never syntax"
+  },
+  "defect_b_qualified_source": {
+    "before": "ALLOWED — _resolve_single_source validated only the first [A-Z0-9_@#]+ token; SB1010.ZZ9999 / SB1010..ZZ9999 / SB1010.[ZZ9999] / SB1010.\"ZZ9999\" passed via allowlisted prefix",
+    "fix": "after resolving the bare source token, immediate continuation is checked: adjacent . [ \" denied, and next non-whitespace '.' denied (T-SQL allows whitespace in multipart names)",
+    "after": "DENY for all qualified/trailing object syntax — S1 scope to support"
+  },
+  "security_gates": {
+    "fake_cte_string": "DENY", "real_cte_allowed": "PASS", "real_cte_unauthorized": "DENY",
+    "allowed_prefix_dot": "DENY", "allowed_prefix_double_dot": "DENY",
+    "allowed_prefix_bracket": "DENY", "allowed_prefix_quote": "DENY",
+    "allowed_prefix_spaced_dot": "DENY", "four_part": "DENY", "qualified_join": "DENY",
+    "qualified_in_subquery": "DENY", "cte_name_dot": "DENY", "trailing_dot": "DENY",
+    "normal_alias": "PASS", "as_alias": "PASS", "where": "PASS", "join": "PASS",
+    "nolock_hint": "PASS (policy unchanged)",
+    "select_into": "DENY", "comma_join": "DENY", "bracketed": "DENY",
+    "quoted": "DENY", "apply": "DENY", "dml": "DENY", "ddl": "DENY", "exec": "DENY"
+  },
+  "legacy_compatibility": {
+    "fake_cte_literal_consumers": "0 — no scripts/sql or route consumer contains a CTE-like literal",
+    "qualified_source_consumers": "0 working — refugos_fase0_probe.py contains FROM INFORMATION_SCHEMA.TABLES but that query was ALREADY denied pre-corrective (INFORMATION_SCHEMA not in allowlist); sys.* probes use pyodbc directly, not the route",
+    "breaking_changes": "none",
+    "migration_required": "none"
+  },
+  "data_sql_skip_table_whitelist": {
+    "changed": false,
+    "behavior": "unchanged — flag still bypasses the whole table-source governance block (consistent with S0's treatment of comma/bracket/quoted classes); qualified-source denial lives inside _validate_table_sources, consistent with S0 policy"
+  },
+  "davi_invariants": {
+    "allowlist_version": 21,
+    "governed_operations": 89,
+    "agent_intelligence": "2026.10.07.2",
+    "mcp_tool_count": 2,
+    "allowed_tables_count": 53,
+    "execute_readonly_sql_davi_status": "GENERIC_SQL_FORBIDDEN (unchanged)",
+    "generic_sql_discovery": "zero candidates (unchanged)"
+  },
+  "authz_change": "NONE",
+  "route_contract_change": "NONE",
+  "mcp_surface_change": "NONE",
+  "davi_promotion": "NONE",
+  "parser_dependency_change": "NONE",
+  "tests": {
+    "focused": "116 passed (test_sql_validator_table_whitelist + test_sql_validator_security_hardening + test_sql_validator_s0_corrective_001 — 40 new corrective cases)",
+    "sql_related": "117 passed, 5087 deselected (-k 'sql_validator or data_sql or readonly_sql')",
+    "davi": "1202 passed, 4 failed (-k davi) — same exact git-dependent capability freeze/inventory tests as S0 (git absent in container); PRE_EXISTING environmental, non-causal",
+    "probe": "18/18 adversarial before/after cases correct"
+  },
+  "files_changed": [
+    "api-delpi/app/application/services/sql_validator.py",
+    "api-delpi/tests/test_sql_validator_s0_corrective_001.py",
+    "api-delpi/docs/integrations/evidence/davi-governed-sql-read-security-fix-s0-corrective-001.md",
+    "api-delpi/docs/integrations/evidence/davi-governed-sql-read-security-fix-s0-corrective-001.json"
+  ],
+  "deploy": "NOT RUN",
+  "live_database_security_probe": "NOT RUN",
+  "final_status": "S0_CORRECTIVE_PASS",
+  "next_step": "DAVI-GOVERNED-SQL-READ-STRUCTURAL-HARDENING-S1-001"
+}
