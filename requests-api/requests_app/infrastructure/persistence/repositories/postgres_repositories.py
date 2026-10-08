@@ -316,6 +316,9 @@ class PostgresRequestRepository(RequestRepositoryPort):
         if branch_code:
             where.append("r.branch_code = %s")
             params.append(branch_code)
+        elif branch_codes is not None:
+            where.append("(r.branch_code IS NULL OR r.branch_code = ANY(%s))")
+            params.append(branch_codes)
         search = normalize_list_search_query(q)
         if search:
             pattern = ilike_contains_pattern(search)

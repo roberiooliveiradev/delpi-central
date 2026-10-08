@@ -188,6 +188,31 @@ Vendor presente **≠** produto suportado. A governança de superfície foi fech
 
 Classificação final (matriz completa: INVENTORY §6a): **DISABLE/FUTURE** — align, distribute, space-tool, keyboard-move-selection. **KEEP** — hand-tool (`H`) e Ctrl+setas como implementações de Pan (IN_V1 §8/§35, viewport-only, zero canonical/DI/dirty — VX-04); lasso (`L`) como multi-select IN_V1 §33; global-connect (`C`) como convenience alias de Connect IN_V1 governado pelas mesmas `BpmnRules` (VX-05 positive+undo, VX-06 deny →start); `E`/`R`/Ctrl+D como vendor convenience aliases de direct editing/replace/clipboard (não-canonical UX aliases, não requisitos novos). Engine surface: Camunda/Zeebe providers não carregados; engine editable entries = 0; `MultiInstanceLoopCharacteristics` = BPMN core preserve-only (não engine field); `isExecutable` = BPMN core preservado/edit-hidden (decisão C4 inalterada).
 
+### 13d. Runtime provenance & deployment acceptance (G6 — vigente)
+
+Ambiente: **LOCAL INTEGRATION RUNTIME** (`PUBLIC_BASE_URL=http://localhost`, portal Vite dev `portal:5173`, compose project `infra`). Não é production acceptance.
+
+Cadeia provada em `9ff9e9e14b` (hardening de provenance):
+
+```text
+SOURCE 9ff9e9e14b (worktree limpo)
+→ docker compose -p infra -f docker-compose.dev.yml build (args BUILD_SHA/BUILD_TIME)
+→ infra-bpmn-modeler:latest    image 3046d838  OCI revision=9ff9e9e14b
+→ infra-bpmn-modeler-api:latest image abd3ad3c  OCI revision=9ff9e9e14b
+→ containers recriados 2026-10-08T20:07Z (compose up -d)
+→ gateway: /apps/bpmn-modeler/assets/* → delpi-bpmn-modeler (remoteEntry no-store)
+           /apps/bpmn-modeler-api/*    → bpmn-modeler-api:8000 (rewrite strip prefix)
+→ RUNTIME READ-BACK:
+   GET /apps/bpmn-modeler/assets/build-info.json → git_sha=9ff9e9e14b
+   GET /apps/bpmn-modeler-api/health            → git_sha=9ff9e9e14b
+   remoteEntry.js servido == arquivo na imagem (sha256 6fdcbbc7...)
+   chunks referenciados 200; sem stale-hash mismatch
+```
+
+Backend em dev usa **bind mount** `../bpmn-modeler:/app` + uvicorn sem `--reload` → processo carrega o checkout no start; mtimes de fonte anteriores ao start + `/health` expõe `BPMN_MODELER_BUILD_SHA` da imagem. Migrations: `bpmn_modeler.schema_migrations` V001–V004 com checksums sha256 byte-idênticos aos arquivos-fonte (`EXPECTED == APPLIED`). Keycloak funcional via gateway (`iss=http://localhost/auth/realms/delpi`, aud `delpi-central`). Ownership runtime: foreign GET → 404 `MODEL_NOT_FOUND`, list isolation ok; create/edit/save com `If-Match` → read-back autoritativo + reload + export; stale If-Match → `CONFLICT`; archive → `MODEL_ARCHIVED` em write; `manage` separado de `edit` (`UNAUTHORIZED_OPERATION`). Fingerprints E2E no runtime deployado: Wave F 8/8, Wave E PROP-CORE-01, paleta semântica, RT-EXT read-only — 32/32.
+
+**Contrato de release (verdade documentada):** BUILD test/lint = AUTOMATED (CI `bpmn-modeler.yml`); IMAGE build/deploy = **MANUAL** local (`docker compose build` com `BPMN_MODELER_BUILD_SHA=$(git rev-parse HEAD)` + `up -d`); `docker cp` **nunca** é release contract — o bundle servido deve bater com a imagem (OCI `revision` + `assets/build-info.json` + `/health`).
+
 ## 14. Produtividade — classificação por evidência (G0)
 
 | Capacidade | Freeze | Implementação atual | Classificação |
@@ -235,14 +260,14 @@ G4 — Broad Round-trip / Interoperability  OWNER 02+06   PASS/CLOSED — 16/16 
 WAVE E — Properties Breadth              OWNER 03+06   PASS/CLOSED — 14/14 E2E properties-* (workers=2): BpmnCorePropsProvider (calledElement/conditionExpression/defaultFlow, BPMN core only) + doc/event-refs evidence; EG-14 BPMN-core fechado (§13b)
 WAVE F — Vendor Exposure Decision        OWNER 00+03   PASS/CLOSED — §13c + INVENTORY §6a: align/distribute/space-tool/keyboard-move-selection DISABLE (FUTURE/não-frozen — DI value:null + editor actions unregistered); hand/lasso/global-connect KEEP (Pan/multi-select/Connect IN_V1); E/R/Ctrl+D/Ctrl+setas KEEP como aliases governados; engine editable entries = 0; 8/8 E2E VX-* + GOV-14..17 + regressões G2A/G3/Wave E verdes (workers=2)
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06
-G6 — Runtime Provenance / stale-process   OWNER 09
+G6 — Runtime Provenance / stale-process   OWNER 09   PASS/CLOSED — §13d: cadeia source→build→image→container→route→runtime→business read-back provada em 9ff9e9e14b; provenance gap fechado (OCI revision label + build-info.json + /health git_sha); stale image sanado por rebuild canônico (docker cp aposentado como deploy); migrations/checksum, ownership 404, conflict, archive, Wave E/F fingerprints no runtime deployado
 ```
 
 ## 16. Open follow-ups
 
 | Item | Owner | Status |
 |---|---|---|
-| RUNTIME_STALE_CODE_PREVENTION — processo uvicorn executava código pré-deploy apesar do bind mount atualizado (foreign read 200 → 404 após `docker restart`); incidente de deploy, não defeito de policy | 09 — DevOps/CI/Runtime | `OPEN`, `NON_BLOCKING` |
+| RUNTIME_STALE_CODE_PREVENTION — processo uvicorn executava código pré-deploy apesar do bind mount atualizado (foreign read 200 → 404 após `docker restart`); incidente de deploy, não defeito de policy | 09 — DevOps/CI/Runtime | `CLOSED` (G6) — provenance por OCI revision + `/health git_sha` + `assets/build-info.json`; stale detectável comparando SHA servido vs target (§13d) |
 | Diagram search overlay (§34 freeze) | 03 | `CLOSED` (G3) — searchPad vendor provado PROD-SRCH-01..04 (Ctrl+F, nome/id, navegação, sem mutação) |
 | BPMN profile breadth proof | 02+03+06 | `TO_INVENTORY` → G1 → G2B fechou CREATE_EDIT (§13a) → **G4 fechou per-construct round-trip (§6)** |
 | E2E-38b (`visual-regression.spec.ts`) — teste importa modelo como `editor` e abre como `viewer`; falha com HTTP 404 desde a fail-closed ownership (`_get_owned_or_404`). Falha **pré-existente** ao G4 (teste de `7832e1adc6`), incompatível com a política vigente — precisa ser reescrito (modelo criado como `viewer`) ou a política revisada com decisão de produto | 03+02 | `OPEN`, `NON_BLOCKING` |
