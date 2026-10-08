@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import gzip
+import json
+import time
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -7,8 +10,17 @@ import pytest
 from delpi_auth import jwt_validator
 
 from app.application.platform_access import PlatformAccessContext
+from app.composition.root_composer import _bounded_http_get
 from app.create_app import create_app
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
+from tests.test_http_absolute_deadline import (
+    _await_abort,
+    _body_trickle,
+    _header_trickle,
+    _read_request,
+    _serve,
+    _status_line_trickle,
+)
 from tests.support.jwt_factory import (
     AUDIENCE,
     ISSUER,
@@ -326,3 +338,139 @@ def test_provider_absent_fail_closed_on_protected_route():
     )
     assert response.status_code == 503
     assert response.get_json()["code"] == "authority_unavailable"
+
+
+# LOOP-03R2B-CLOSEOUT-01 — Core /me total wall-clock deadline.
+# The production binding (_bounded_http_get, the same callable the
+# composer wires) puts the whole GET under ONE absolute deadline:
+# DNS, connect, TLS, status line, headers and body. A per-recv
+# scalar would let a trickling Core /me hold the auth path open
+# far past core_timeout_seconds. Real socket servers below prove
+# termination at the configured bound — fail closed, never a JWT
+# fallback.
+
+_CORE_BOUND = 0.4
+_CORE_ELAPSED_MAX = 1.0
+
+_CORE_ME_PAYLOAD = {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "name": "Core Name",
+    "email": "user@example.com",
+    "roles": ["core-role"],
+    "groups": ["core-group"],
+    "permissions": ["real.core.permission"],
+    "is_superadmin": False,
+}
+
+
+def _real_core_adapter(server):
+    return CorePlatformAccessAdapter(
+        core_api_url=f"http://127.0.0.1:{server.getsockname()[1]}",
+        timeout_seconds=_CORE_BOUND,
+        http_get=_bounded_http_get,
+    )
+
+
+def _assert_core_deadline(token, writer):
+    from app.application.ports.platform_access_port import (
+        AuthorityUnavailableError,
+    )
+
+    server, stop, observed = _serve(writer)
+    try:
+        started = time.monotonic()
+        with pytest.raises(AuthorityUnavailableError):
+            _real_core_adapter(server).resolve(token)
+        elapsed = time.monotonic() - started
+        assert elapsed < _CORE_ELAPSED_MAX, f"elapsed {elapsed:.2f}s"
+        _await_abort(observed)
+        assert observed  # server observed the connection die
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_core_me_status_line_trickle_absolute_deadline(private_pem):
+    """A Core /me trickling the status line must abort at the bound —
+    before this fix the scalar timeout renewed per recv."""
+    _assert_core_deadline(
+        mint_token(private_pem), _status_line_trickle
+    )
+
+
+def test_core_me_header_trickle_absolute_deadline(private_pem):
+    """Header bytes trickled below the inactivity slice must abort
+    at the absolute deadline before end-of-headers."""
+    _assert_core_deadline(
+        mint_token(private_pem), _header_trickle
+    )
+
+
+def test_core_me_body_trickle_absolute_deadline(private_pem):
+    """An endless 1-byte-per-50ms /me body must not outlive the
+    configured bound."""
+    _assert_core_deadline(mint_token(private_pem), _body_trickle)
+
+
+def _core_me_gzip_lowercase(conn, observed):
+    """Core /me JSON served gzipped with lowercase header names."""
+    try:
+        if not _read_request(conn):
+            return
+        body = gzip.compress(json.dumps(_CORE_ME_PAYLOAD).encode())
+        conn.sendall(
+            b"HTTP/1.1 200 OK\r\n"
+            b"content-type: application/json\r\n"
+            b"content-encoding: gzip\r\n"
+            b"content-length: " + str(len(body)).encode() + b"\r\n\r\n" + body
+        )
+    except OSError as exc:
+        observed.append(type(exc).__name__)
+    finally:
+        conn.close()
+
+
+def _core_me_fast_json(conn, observed):
+    try:
+        if not _read_request(conn):
+            return
+        body = json.dumps(_CORE_ME_PAYLOAD).encode()
+        conn.sendall(
+            b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+            b"Content-Length: " + str(len(body)).encode() + b"\r\n\r\n" + body
+        )
+    except OSError as exc:
+        observed.append(type(exc).__name__)
+    finally:
+        conn.close()
+
+
+def test_core_me_gzip_lowercase_headers_parsed(private_pem):
+    """Gzipped /me JSON with lowercase headers still parses into the
+    platform access context — decoding happens inside the bounded
+    drain, never as an unbounded second step."""
+    token = mint_token(private_pem)
+    server, stop, _ = _serve(_core_me_gzip_lowercase)
+    try:
+        context = _real_core_adapter(server).resolve(token)
+        assert context.effective_permissions == ("real.core.permission",)
+        assert context.roles == ("core-role",)
+        assert context.source == "CORE"
+    finally:
+        stop.set()
+        server.close()
+
+
+def test_core_me_fast_path_real_transport(private_pem):
+    """A fast complete /me response resolves normally through the
+    bounded production transport."""
+    token = mint_token(private_pem)
+    server, stop, _ = _serve(_core_me_fast_json)
+    try:
+        context = _real_core_adapter(server).resolve(token)
+        assert context.effective_permissions == ("real.core.permission",)
+        assert context.groups == ("core-group",)
+        assert context.is_superadmin is False
+    finally:
+        stop.set()
+        server.close()

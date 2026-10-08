@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import requests
 from flask import Flask
 
 from app.application.capability_provision.mcp_provider import (
@@ -21,6 +20,7 @@ from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
 from app.domain.evidence.model import ModelRef
+from app.infrastructure.http.bounded_request import bounded_request
 from app.infrastructure.http.deadline_transport import (
     deadline_http_get,
     deadline_http_post,
@@ -52,6 +52,21 @@ from app.interfaces.http.interaction_routes import register_interaction_routes
 from app.interfaces.http.request_logging import register_request_logging
 
 
+def _bounded_http_get(url: str, **kwargs):
+    """``requests.get``-shaped GET under ONE absolute wall-clock deadline.
+
+    Keeps the Core /me injection seam identical (callers still see a
+    ``status_code``/``json()`` response) while DNS, connect, TLS,
+    status line, headers and body share the proven bounded transport.
+    """
+    return bounded_request(
+        deadline_http_get,
+        url,
+        headers=kwargs.get("headers"),
+        timeout_seconds=kwargs.get("timeout"),
+    )
+
+
 def create_application(
     *,
     testing: bool = False,
@@ -76,7 +91,7 @@ def create_application(
         provider = CorePlatformAccessAdapter(
             core_api_url=settings.core_api_url,
             timeout_seconds=settings.core_timeout_seconds,
-            http_get=requests.get,
+            http_get=_bounded_http_get,
         )
     else:
         # Fail-closed for protected routes: middleware returns 503 when unset.

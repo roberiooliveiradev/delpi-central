@@ -41,6 +41,7 @@ from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
 from app.domain.specialist_interop.model import SpecialistOperationClass
+from app.composition.root_composer import _bounded_http_get
 from app.infrastructure.auth.core_platform_access import (
     CorePlatformAccessAdapter,
 )
@@ -142,7 +143,7 @@ def _prove_core_context(settings: Settings, subject: str) -> dict:
     adapter = CorePlatformAccessAdapter(
         core_api_url=settings.core_api_url,
         timeout_seconds=settings.core_timeout_seconds,
-        http_get=requests.get,
+        http_get=_bounded_http_get,
     )
     try:
         ctx = adapter.resolve(subject)
