@@ -40,6 +40,10 @@ class ReportOperatorFeedbackBody(BaseModel):
         ..., alias="reasonCode", min_length=1, max_length=40
     )
     note: str | None = Field(default=None, max_length=500)
+    # C5: só códigos — descrição/unidade/quantidade o backend congela da SD4.
+    material_codes: list[str] | None = Field(
+        default=None, alias="materialCodes", max_length=40
+    )
     website: str | None = None  # honeypot
 
 
@@ -62,6 +66,7 @@ def report_operator_feedback(
             feedback_type=body.feedback_type,
             reason_code=body.reason_code,
             note=body.note,
+            material_codes=body.material_codes,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

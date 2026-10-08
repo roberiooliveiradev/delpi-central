@@ -16,6 +16,7 @@ import {
   patchLineFeederPickItem,
 } from "../api/ppcApi";
 import { LineFeederPickPlanPanel } from "../components/LineFeederPickPlanPanel";
+import { LineFeederUrgentRequestsPanel } from "../components/LineFeederUrgentRequestsPanel";
 import { LineFeederProductDetailModal } from "../components/LineFeederProductDetailModal";
 import { LineFeederRequirementCard } from "../components/LineFeederRequirementCard";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
@@ -419,6 +420,8 @@ export function LineFeederPage({
           <span>{creating ? texts.pickPlan.creating : texts.pickPlan.create}</span>
         </button>
       </div>
+
+      <LineFeederUrgentRequestsPanel branch={branch} />
 
       {loading ? <LoadingCard title={texts.loading} description={texts.loadingHint} /> : null}
 

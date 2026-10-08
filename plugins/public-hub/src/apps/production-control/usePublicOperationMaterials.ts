@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   fetchPublicOperationMaterials,
   type PublicOperationMaterials,
@@ -8,6 +8,8 @@ export type PublicOperationMaterialsState = {
   data: PublicOperationMaterials | null;
   loading: boolean;
   error: string | null;
+  /** Nova tentativa após erro (ex.: botão «Tentar novamente»). */
+  reload: () => void;
 };
 
 /** Materiais SD4 da OP+operação — só busca quando `enabled` (modal aberto). */
@@ -21,6 +23,8 @@ export function usePublicOperationMaterials(
   const [data, setData] = useState<PublicOperationMaterials | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
+  const reload = useCallback(() => setReloadTick((tick) => tick + 1), []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -44,7 +48,7 @@ export function usePublicOperationMaterials(
     return () => {
       active = false;
     };
-  }, [token, branch, productionOrder, operationCode, enabled]);
+  }, [token, branch, productionOrder, operationCode, enabled, reloadTick]);
 
-  return { data, loading, error };
+  return { data, loading, error, reload };
 }

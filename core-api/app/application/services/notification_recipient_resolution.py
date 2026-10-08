@@ -7,6 +7,7 @@ from app.application.errors.notification_dispatch_errors import (
     DispatchNotificationsValidationError,
 )
 from app.application.unit_of_work import UnitOfWork
+from app.domain.services.permission_resolver import PermissionResolver
 
 
 def resolve_notification_recipient_ids(
@@ -64,7 +65,44 @@ def resolve_notification_recipient_ids(
     if excluded:
         resolved = [user_id for user_id in resolved if user_id not in excluded]
 
+    required = [
+        str(code).strip()
+        for code in request.required_permission_codes
+        if str(code or "").strip()
+    ]
+    if required:
+        resolved = _filter_by_required_permissions(uow, resolved, required)
+
     return sorted(resolved)
+
+
+def _filter_by_required_permissions(
+    uow: UnitOfWork,
+    user_ids: list[str],
+    required_codes: list[str],
+) -> list[str]:
+    """requiredPermissionCodes: o destinatario precisa possuir TODAS as
+    permissoes efetivas — mesma semantica do PermissionResolver (roles
+    diretas + grupos + overrides; superadmin bypassa com o catalogo
+    completo). permissionCodes continua sendo o seletor OR; este filtro
+    apenas restringe o conjunto ja resolvido."""
+    resolver = PermissionResolver(uow.permission_queries, uow.cache)
+    required_set = set(required_codes)
+    allowed: list[str] = []
+    for user_id in user_ids:
+        try:
+            user_uuid = UUID(str(user_id).strip())
+        except (TypeError, ValueError):
+            continue
+        user = uow.users.get_by_id(user_uuid)
+        if not user or not user.active:
+            continue
+        effective = set(
+            resolver.resolve(user.id, bool(getattr(user, "is_superadmin", False)))
+        )
+        if required_set.issubset(effective):
+            allowed.append(str(user.id))
+    return allowed
 
 
 def resolve_notification_recipient_users(

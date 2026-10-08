@@ -62,8 +62,13 @@ class OperatorFeedbackService:
         product_description: str | None = None,
         pa_product_code: str | None = None,
         due_date: date | str | None = None,
+        materials: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        """Registra impedimento em status open; duplicado ativo e rejeitado no banco."""
+        """Registra impedimento em status open; duplicado ativo e rejeitado no banco.
+
+        materials (C5): snapshots SD4 congelados pelo chamador — o service
+        não conhece o catálogo de materiais, só exige a forma mínima (product_code)
+        e delega o insert atômico ao repositório."""
         type_value = self._validate_type(feedback_type)
         reason_value = self._validate_reason(reason_code)
         return self._feedbacks.create(
@@ -84,6 +89,7 @@ class OperatorFeedbackService:
             product_description=product_description,
             pa_product_code=pa_product_code,
             due_date=due_date,
+            materials=self._validate_materials(materials),
         )
 
     def get(self, feedback_id: str) -> dict[str, Any]:
@@ -166,6 +172,21 @@ class OperatorFeedbackService:
         raise OperatorFeedbackStateError(
             f"Transição inválida: feedback em status {row.get('status')}."
         )
+
+    @staticmethod
+    def _validate_materials(
+        materials: list[dict[str, Any]] | None,
+    ) -> list[dict[str, Any]] | None:
+        """Forma mínima do snapshot: código obrigatório em cada item."""
+        if materials is None:
+            return None
+        validated: list[dict[str, Any]] = []
+        for material in materials:
+            code = str(material.get("product_code") or "").strip()
+            if not code:
+                raise ValueError("Material do feedback sem código de produto.")
+            validated.append({**material, "product_code": code})
+        return validated
 
     @staticmethod
     def _validate_type(value: str) -> str:

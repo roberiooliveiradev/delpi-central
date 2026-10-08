@@ -3,12 +3,17 @@ from __future__ import annotations
 from fastapi import APIRouter, Body, Path, Query, Request
 from pydantic import BaseModel, Field
 
-from production_control_app.composition.pc_composer import build_line_feeder_service
+from production_control_app.composition.pc_composer import (
+    build_line_feeder_service,
+    build_line_feeder_urgent_requests_service,
+)
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
     InvalidBranch,
+    OperatorFeedbackMaterialNotFound,
+    OperatorFeedbackMaterialStateError,
     SnapshotNotFound,
 )
 from production_control_app.interface.http.auth_http import resolve_user
@@ -47,6 +52,10 @@ def _handle_line_feeder_errors(exc: Exception):
         return fail(str(exc), 403)
     if isinstance(exc, SnapshotNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, OperatorFeedbackMaterialNotFound):
+        return fail(str(exc), 404)
+    if isinstance(exc, OperatorFeedbackMaterialStateError):
+        return fail(str(exc), 409)
     if isinstance(exc, LookupError):
         return fail(str(exc), 404)
     if isinstance(exc, ValueError):
@@ -221,6 +230,51 @@ def close_line_feeder_pick_plan(
             user,
             branch=body.branch,
             plan_id=plan_id,
+        )
+    except Exception as exc:
+        return _handle_line_feeder_errors(exc)
+    return ok(data)
+
+
+class UrgentMaterialStatusBody(BaseModel):
+    branch: str = Field(..., min_length=2, max_length=2)
+    status: str = Field(..., min_length=1, max_length=16)
+
+    model_config = {"populate_by_name": True}
+
+
+@router.get("/line-feeder/operator-feedback-requests")
+def list_urgent_feedback_requests(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """Solicitações urgentes das bancadas — materiais faltantes informados
+    pelo operador via Operator Feedback (C5). Fila própria: não são pick
+    plans e não viram lista de coleta automaticamente."""
+    user = resolve_user(request)
+    try:
+        data = build_line_feeder_urgent_requests_service().list_requests(
+            user, branch=branch
+        )
+    except Exception as exc:
+        return _handle_line_feeder_errors(exc)
+    return ok(data)
+
+
+@router.patch("/line-feeder/operator-feedback-materials/{material_id}")
+def update_urgent_feedback_material(
+    request: Request,
+    material_id: str = Path(..., description="Identificador do material"),
+    body: UrgentMaterialStatusBody = Body(...),
+):
+    """pending -> picked -> delivered. A filial autorizada é a do registro —
+    o body.branch é conferido como contexto, mas nunca é autoridade."""
+    user = resolve_user(request)
+    try:
+        data = build_line_feeder_urgent_requests_service().update_material_status(
+            user,
+            material_id=material_id,
+            status=body.status,
         )
     except Exception as exc:
         return _handle_line_feeder_errors(exc)

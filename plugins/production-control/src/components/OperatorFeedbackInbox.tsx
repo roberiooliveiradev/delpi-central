@@ -5,9 +5,11 @@ import { HostContainedDialog, HostContainedWideDialog } from "./PpcConfirmModal"
 import { copy } from "../content/copy";
 import type { MachineLoadOperation, PcpOperatorFeedback } from "../types";
 import {
+  feedbackMaterialStatusLabel,
   feedbackReasonLabel,
   feedbackStatusLabel,
   feedbackTypeLabel,
+  hasUndeliveredMaterials,
 } from "../utils/operatorFeedback";
 import { formatIsoDate } from "../utils/formatIsoDate";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
@@ -100,6 +102,35 @@ function FeedbackItem({
             {item.note}
           </p>
         ) : null}
+        {item.materials && item.materials.length > 0 ? (
+          <div className="ppc-feedback__materials">
+            <p className="ppc-feedback__materials-title">
+              {labels.materialsTitle}
+            </p>
+            <ul className="ppc-feedback__materials-list">
+              {item.materials.map((material) => (
+                <li
+                  key={material.id}
+                  className={
+                    "ppc-feedback__material ppc-feedback__material--" +
+                    material.status
+                  }
+                >
+                  <span className="ppc-feedback__material-body">
+                    <strong>{material.productCode}</strong>
+                    <span className="ppc-feedback__muted">
+                      {material.description}
+                      {material.unit ? " · " + material.unit : ""}
+                    </span>
+                  </span>
+                  <span className="ppc-feedback__material-status">
+                    {feedbackMaterialStatusLabel(material.status)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {item.status === "acknowledged" ? (
           <p className="ppc-feedback__meta">
             <span>{labels.acknowledgedBy(item.acknowledgedBy)}</span>
@@ -174,6 +205,11 @@ function ResolveFeedbackDialog({
           <p className="ppc-feedback__note">
             <strong>{labels.noteLabel}: </strong>
             {item.note}
+          </p>
+        ) : null}
+        {hasUndeliveredMaterials(item) ? (
+          <p className="ppc-feedback-resolve__warning" role="alert">
+            {labels.resolvePendingMaterialsWarning}
           </p>
         ) : null}
         <label className="ppc-feedback-resolve__field">

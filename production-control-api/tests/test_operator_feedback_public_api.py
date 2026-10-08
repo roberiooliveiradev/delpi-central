@@ -94,12 +94,52 @@ class NotifySpy:
         self.calls.append(kwargs)
 
 
+DEFAULT_MATERIAL_CODES = ("10081234",)
+
+
+def _sd4_material(
+    code: str,
+    *,
+    description: str = "TERMINAL FASTON",
+    unit: str = "PC",
+    original_qty: float = 500.0,
+    open_qty: float = 120.0,
+    consumed_qty: float = 380.0,
+    commitment_count: int = 0,
+) -> dict[str, Any]:
+    return {
+        "product_code": code,
+        "description": description,
+        "unit": unit,
+        "original_qty": original_qty,
+        "open_qty": open_qty,
+        "consumed_qty": consumed_qty,
+        "commitment_count": commitment_count,
+    }
+
+
+class FakeOperationMaterials:
+    """Espelha PublicOperationMaterialsService.list_for_feedback (SD4)."""
+
+    def __init__(self, items: list[dict[str, Any]] | None = None) -> None:
+        self.items = items if items is not None else [
+            _sd4_material("10081234"),
+            _sd4_material("10085678", description="FIO RIGIDO"),
+        ]
+        self.calls: list[dict[str, Any]] = []
+
+    def list_for_feedback(self, **kwargs: Any) -> list[dict[str, Any]]:
+        self.calls.append(kwargs)
+        return [dict(item) for item in self.items]
+
+
 def _service(
     *,
     session: dict[str, Any] | None = "default",
     context: dict[str, Any] | None = "default",
     run: dict[str, Any] | None = None,
     notify: Any | None = None,
+    materials: list[dict[str, Any]] | None = None,
 ) -> tuple[PublicOperatorFeedbackService, dict[str, Any]]:
     repo = FakeOperatorFeedbackRepository()
     resolver = FakeSessionResolver(_session() if session == "default" else session)
@@ -110,17 +150,21 @@ def _service(
         run_calls.append(kwargs)
         return run
 
+    operation_materials = FakeOperationMaterials(materials)
     svc = PublicOperatorFeedbackService(
         run_service=resolver,
         machine_load=machine,
         feedbacks=OperatorFeedbackService(feedbacks=repo),
         run_lookup=run_lookup,
         notify=notify if notify is not None else NotifySpy(),
+        operation_materials=operation_materials,
+        feedback_materials=repo,
     )
     return svc, {
         "repo": repo,
         "resolver": resolver,
         "machine": machine,
+        "materials": operation_materials,
         "run_calls": run_calls,
     }
 
@@ -133,6 +177,7 @@ def _report(svc: PublicOperatorFeedbackService, **overrides: Any) -> dict[str, A
         "feedback_type": "cannot_produce",
         "reason_code": "missing_material",
         "note": "Falta terminal 10081234",
+        "material_codes": list(DEFAULT_MATERIAL_CODES),
     }
     kwargs.update(overrides)
     return svc.report(**kwargs)
@@ -432,6 +477,7 @@ def _post(api: TestClient, **overrides: Any):
         "operationCode": "03",
         "feedbackType": "cannot_produce",
         "reasonCode": "missing_material",
+        "materialCodes": ["10081234"],
         "note": "Falta terminal",
         "website": None,
     }

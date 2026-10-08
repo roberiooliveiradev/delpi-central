@@ -53,7 +53,25 @@ def _pcp_actor(user: Any) -> str:
     return "pcp"
 
 
-def _to_pcp_item(row: dict[str, Any]) -> dict[str, Any]:
+def _to_pcp_material(row: dict[str, Any]) -> dict[str, Any]:
+    """Material informado pelo operador (C5) — visível ao PCP com o status
+    operacional do Alimentador; ações de coleta ficam fora desta tela."""
+    return {
+        "id": row.get("id"),
+        "productCode": row.get("product_code"),
+        "description": row.get("description"),
+        "unit": row.get("unit"),
+        "openQty": row.get("open_qty"),
+        "status": row.get("status"),
+        "pickedAt": _iso(row.get("picked_at")),
+        "deliveredAt": _iso(row.get("delivered_at")),
+    }
+
+
+def _to_pcp_item(
+    row: dict[str, Any],
+    materials: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """DTO do PCP: contexto completo para a tratativa — sem session token,
     bench_session_id ou internals de persistência."""
     return {
@@ -78,6 +96,14 @@ def _to_pcp_item(row: dict[str, Any]) -> dict[str, Any]:
         "resolvedAt": _iso(row.get("resolved_at")),
         "resolvedBy": row.get("resolved_by"),
         "resolutionNote": row.get("resolution_note"),
+        "materials": [
+            _to_pcp_material(item)
+            for item in (
+                materials
+                if materials is not None
+                else row.get("materials") or []
+            )
+        ],
     }
 
 
@@ -88,10 +114,13 @@ class PcpOperatorFeedbackService:
         branch_access: BranchAccessService,
         feedbacks: OperatorFeedbackService,
         notify: Callable[..., None] | None = None,
+        materials: Any | None = None,
     ) -> None:
         self._branch_access = branch_access
         self._feedbacks = feedbacks
         self._notify = notify
+        # C5: OperatorFeedbackMaterialService — leitura em lote dos materiais
+        self._materials = materials
 
     def list_inbox(
         self, user: object | None, *, branch: str
@@ -100,6 +129,7 @@ class PcpOperatorFeedbackService:
         não só o CT selecionado: o PCP não caça impedimento centro a centro."""
         self._assert_can_view(user, branch)
         rows = self._feedbacks.list_active(branch=branch)
+        grouped = self._materials_grouped(rows)
         open_count = sum(
             1
             for row in rows
@@ -111,7 +141,10 @@ class PcpOperatorFeedbackService:
             if row.get("status") == OperatorFeedbackStatus.ACKNOWLEDGED.value
         )
         return {
-            "items": [_to_pcp_item(row) for row in rows],
+            "items": [
+                _to_pcp_item(row, grouped.get(row.get("id"), []))
+                for row in rows
+            ],
             "summary": {
                 "total": len(rows),
                 "open": open_count,
@@ -127,7 +160,7 @@ class PcpOperatorFeedbackService:
             row["id"], acknowledged_by=_pcp_actor(user)
         )
         self._notify_change(branch=row["branch"], reason="acknowledged", feedback=updated)
-        return _to_pcp_item(updated)
+        return _to_pcp_item(updated, self._materials_of(updated))
 
     def resolve(
         self,
@@ -146,7 +179,7 @@ class PcpOperatorFeedbackService:
             row["id"], resolved_by=_pcp_actor(user), resolution_note=note
         )
         self._notify_change(branch=row["branch"], reason="resolved", feedback=updated)
-        return _to_pcp_item(updated)
+        return _to_pcp_item(updated, self._materials_of(updated))
 
     def _assert_can_view(self, user: object | None, branch: str) -> str:
         """Mesma autorização da Carga Máquina: acesso + filial + machine-load.view."""
@@ -166,6 +199,19 @@ class PcpOperatorFeedbackService:
             raise OperatorFeedbackNotFound("Feedback inexistente.")
         self._assert_can_view(user, str(row.get("branch") or ""))
         return row
+
+    def _materials_grouped(
+        self, rows: list[dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
+        if self._materials is None or not rows:
+            return {}
+        ids = [str(row["id"]) for row in rows if row.get("id")]
+        return self._materials.list_for_feedbacks(ids)
+
+    def _materials_of(self, row: dict[str, Any]) -> list[dict[str, Any]]:
+        if self._materials is None or not row.get("id"):
+            return []
+        return self._materials.list_for_feedback(str(row["id"]))
 
     def _notify_change(
         self, *, branch: str, reason: str, feedback: dict[str, Any]

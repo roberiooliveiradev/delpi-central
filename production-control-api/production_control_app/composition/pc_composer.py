@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+from production_control_app.config import settings
 from production_control_app.application.services.machine_load_change_notifier import (
     notify_machine_load_changed,
 )
@@ -629,7 +630,30 @@ def build_public_operator_feedback_service() -> Any:
         feedbacks=build_operator_feedback_service(),
         run_lookup=PostgresProductionRunRepository().get_active_run,
         notify=notify_operator_feedback_changed,
+        operation_materials=build_public_operation_materials_service(),
+        feedback_materials=build_operator_feedback_material_service(),
+        notifications=build_operator_feedback_notification_service(),
     )
+
+
+def build_operator_feedback_notification_service() -> Any:
+    """Notificações Minha DELPI do Operator Feedback (C6).
+
+    Sem token configurado o gateway nem é instanciado — o dispatch vira
+    no-op (o impedimento segue sendo criado normalmente).
+    """
+    from production_control_app.application.services.operator_feedback_notification_service import (  # noqa: E501
+        OperatorFeedbackNotificationService,
+    )
+
+    gateway = None
+    if (settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip():
+        from production_control_app.infrastructure.gateways.core_api_notification_gateway import (  # noqa: E501
+            CoreApiNotificationGateway,
+        )
+
+        gateway = CoreApiNotificationGateway()
+    return OperatorFeedbackNotificationService(gateway=gateway)
 
 
 def build_pcp_operator_feedback_service() -> Any:
@@ -649,5 +673,47 @@ def build_pcp_operator_feedback_service() -> Any:
     return PcpOperatorFeedbackService(
         branch_access=build_branch_access_service(),
         feedbacks=build_operator_feedback_service(),
+        notify=notify_operator_feedback_changed,
+        materials=build_operator_feedback_material_service(),
+    )
+
+
+def build_operator_feedback_material_service() -> Any:
+    """Lifecycle dos materiais estruturados do feedback (C5)."""
+    from production_control_app.application.services.operator_feedback_material_service import (  # noqa: E501
+        OperatorFeedbackMaterialService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_operator_feedback_material_repository import (  # noqa: E501
+        PostgresOperatorFeedbackMaterialRepository,
+    )
+
+    return OperatorFeedbackMaterialService(
+        materials=PostgresOperatorFeedbackMaterialRepository()
+    )
+
+
+def build_line_feeder_urgent_requests_service() -> Any:
+    """Fila urgente do Alimentador de Linha — materiais faltantes vindos do
+    Operator Feedback (C5). Separada das pick lists planejadas por corte."""
+    from production_control_app.application.services.line_feeder_urgent_requests_service import (  # noqa: E501
+        LineFeederUrgentRequestsService,
+    )
+    from production_control_app.application.services.operator_feedback_change_notifier import (  # noqa: E501
+        notify_operator_feedback_changed,
+    )
+    from production_control_app.infrastructure.persistence.postgres_operator_feedback_material_repository import (  # noqa: E501
+        PostgresOperatorFeedbackMaterialRepository,
+    )
+
+    materials_repo = PostgresOperatorFeedbackMaterialRepository()
+    from production_control_app.application.services.operator_feedback_material_service import (  # noqa: E501
+        OperatorFeedbackMaterialService,
+    )
+
+    return LineFeederUrgentRequestsService(
+        branch_access=build_branch_access_service(),
+        materials=materials_repo,
+        lifecycle=OperatorFeedbackMaterialService(materials=materials_repo),
+        snapshots=build_machine_load_snapshot_repository(),
         notify=notify_operator_feedback_changed,
     )

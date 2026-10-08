@@ -1,12 +1,14 @@
 # app/tests/test_notifications_controller.py
 
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from flask import g
 
-from app.application.dto.dispatch_notifications_response import DispatchNotificationsResponse
+from app.application.dto.notification_dispatch_response import (
+    NotificationDispatchResponse,
+)
 from app.create_app import create_app
 
 
@@ -42,11 +44,23 @@ def test_integrations_dispatch_requires_service_token(client):
 def test_integrations_dispatch_with_valid_token(client):
     with patch.dict(os.environ, {"CORE_API_INTEGRATIONS_SERVICE_TOKEN": "secret-token"}):
         with patch(
-            "app.interfaces.http.notifications_controller.DispatchNotificationsUseCase"
+            "app.interfaces.http.notifications_controller.build_template_registry"
+        ) as mock_registry, patch(
+            "app.interfaces.http.notifications_controller.SqlAlchemyUnitOfWork"
+        ) as mock_uow, patch(
+            "app.interfaces.http.notifications_controller.CreateNotificationDispatchUseCase"
         ) as mock_use_case:
-            mock_use_case.return_value.execute.return_value = DispatchNotificationsResponse(
-                created_count=1,
-                notification_ids=["nid"],
+            mock_registry.return_value = MagicMock()
+            mock_uow.return_value.__enter__.return_value = MagicMock()
+            mock_use_case.return_value.execute.return_value = (
+                NotificationDispatchResponse(
+                    dispatch_id="disp-1",
+                    status="completed",
+                    scheduled_at=None,
+                    created_count=1,
+                    notification_ids=["nid"],
+                    recipient_count=1,
+                )
             )
 
             response = client.post(

@@ -10,12 +10,14 @@ import {
 import {
   DEFAULT_FEEDBACK_REASON,
   DEFAULT_FEEDBACK_TYPE,
+  MATERIAL_SELECTION_REQUIRED,
   feedbackReasonLabel,
   feedbackStatusPresentation,
   feedbackSubmitErrorMessage,
   feedbackTypeLabel,
   firstActiveFeedback,
   isFeedbackEventForOperation,
+  materialStatusLabel,
   resolveFeedbackPanelState,
 } from "./operatorFeedback.ts";
 import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime.ts";
@@ -294,12 +296,15 @@ describe("operator feedback api", () => {
     const payload = JSON.parse(String(call.init?.body));
     assert.deepEqual(Object.keys(payload).sort(), [
       "feedbackType",
+      "materialCodes",
       "note",
       "operationCode",
       "productionOrder",
       "reasonCode",
       "website",
     ]);
+    // C5: só códigos — nunca snapshots (descrição/unidade/saldo)
+    assert.deepEqual(payload.materialCodes, []);
     assert.equal(payload.feedbackType, "cannot_produce");
     assert.equal(payload.reasonCode, "missing_material");
     // identidade/filial/posto NUNCA saem do frontend
@@ -373,6 +378,124 @@ describe("operator feedback api", () => {
           assert.equal((err as ApiError).status, 409);
         },
       );
+    } finally {
+      restore();
+    }
+  });
+});
+
+
+// --- C5: materiais estruturados ------------------------------------------------
+
+describe("material status label (C5)", () => {
+  it("maps pending to Aguardando separação", () => {
+    assert.equal(materialStatusLabel("pending"), "Aguardando separação");
+  });
+
+  it("maps picked to Em separação", () => {
+    assert.equal(materialStatusLabel("picked"), "Em separação");
+  });
+
+  it("maps delivered to Entregue", () => {
+    assert.equal(materialStatusLabel("delivered"), "Entregue");
+  });
+
+  it("falls back to pending label on unknown status", () => {
+    assert.equal(materialStatusLabel("future_status"), "Aguardando separação");
+    assert.equal(materialStatusLabel(null), "Aguardando separação");
+  });
+
+  it("selection required message is the contract copy", () => {
+    assert.equal(
+      MATERIAL_SELECTION_REQUIRED,
+      "Selecione pelo menos um material que está impedindo a produção.",
+    );
+  });
+});
+
+describe("operator feedback api — materialCodes (C5)", () => {
+  it("POST sends only material codes, never snapshots", async () => {
+    const { calls, restore } = stubFetch(200, {
+      success: true,
+      message: "OK",
+      data: feedback({ materials: [] }),
+    });
+    try {
+      await createOperatorFeedback("cockpit-token", "sess-token", {
+        productionOrder: "24640401002",
+        operationCode: "03",
+        feedbackType: "cannot_produce",
+        reasonCode: "missing_material",
+        materialCodes: ["10081234", "10085678"],
+        note: "Falta terminal",
+      });
+    } finally {
+      restore();
+    }
+    const payload = JSON.parse(String(calls[0].init?.body));
+    assert.deepEqual(payload.materialCodes, ["10081234", "10085678"]);
+    // nenhum campo de snapshot sai do navegador
+    for (const key of [
+      "materials",
+      "description",
+      "unit",
+      "openQty",
+      "open_qty",
+      "workCenter",
+      "branch",
+    ]) {
+      assert.equal(payload[key], undefined, key);
+    }
+  });
+
+  it("GET parses materials with status for the panel", async () => {
+    const { calls, restore } = stubFetch(200, {
+      success: true,
+      message: "OK",
+      data: {
+        items: [
+          feedback({
+            materials: [
+              {
+                productCode: "10081234",
+                description: "TERMINAL FASTON",
+                unit: "PC",
+                status: "picked",
+              },
+            ],
+          }),
+        ],
+      },
+    });
+    try {
+      const items = await fetchActiveOperatorFeedbacks(
+        "cockpit-token",
+        "sess-token",
+        "24640401002",
+        "03",
+      );
+      assert.equal(items[0].materials?.[0].status, "picked");
+      assert.equal(items[0].materials?.[0].productCode, "10081234");
+    } finally {
+      restore();
+    }
+    assert.ok(calls.length === 1);
+  });
+
+  it("legacy feedback without materials keeps materials undefined", async () => {
+    const { restore } = stubFetch(200, {
+      success: true,
+      message: "OK",
+      data: { items: [feedback()] },
+    });
+    try {
+      const items = await fetchActiveOperatorFeedbacks(
+        "cockpit-token",
+        "sess-token",
+        "24640401002",
+        "03",
+      );
+      assert.equal(items[0].materials, undefined);
     } finally {
       restore();
     }

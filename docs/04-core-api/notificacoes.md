@@ -104,7 +104,7 @@ No dispatch (`POST /admin/notifications` e integrações), usuários que silenci
 
 Quando o envio está vinculado a um app do portal (`sourceApp` / `metadata.source` / `action.target` com `portal_route`), destinatários **sem permissão para abrir esse app** (mesma regra de `GET /me/apps`, ex.: `controle-mp.access`) são removidos antes de criar a notificação. Se ninguém restar: erro `no recipients have access to the source application`. Implementação: `notification_app_access_service.py`.
 
-Destinatários adicionais no body: `roleIds` (papel direto + via grupo), `groupIds` (membros do grupo), `permissionCodes` (usuários com a permissão via role direta ou grupo). Use `excludedUserIds` para omitir o solicitante.
+Destinatários adicionais no body: `roleIds` (papel direto + via grupo), `groupIds` (membros do grupo), `permissionCodes` (usuários com a permissão via role direta ou grupo). Use `excludedUserIds` para omitir o solicitante. `requiredPermissionCodes` é um filtro obrigatório **AND** aplicado sobre o conjunto já resolvido: cada destinatário precisa possuir TODAS as permissões informadas em suas permissões efetivas (`PermissionResolver` — roles diretas, grupos, overrides; superadmin bypassa com o catálogo completo). Útil para exigir função **mais** filial sem criar permissões combinadas. Dispatches antigos sem o campo seguem inalterados.
 
 ### Automação (integrações, service token)
 

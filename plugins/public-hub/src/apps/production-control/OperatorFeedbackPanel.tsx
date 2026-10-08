@@ -5,6 +5,7 @@ import { useOperatorSession } from "./OperatorSessionContext.ts";
 import {
   feedbackReasonLabel,
   feedbackStatusPresentation,
+  materialStatusLabel,
   resolveFeedbackPanelState,
 } from "./operatorFeedback.ts";
 import { OperatorFeedbackModal } from "./OperatorFeedbackModal.tsx";
@@ -14,6 +15,7 @@ import { formatTimeHm } from "./runTimeline.ts";
 
 type Props = {
   token: string;
+  branch: string;
   operation: MachineLoadOperation;
   workCenter: string;
   realtimeConnected: boolean;
@@ -30,6 +32,7 @@ type Props = {
  */
 export function OperatorFeedbackPanel({
   token,
+  branch,
   operation,
   workCenter,
   realtimeConnected,
@@ -59,9 +62,9 @@ export function OperatorFeedbackPanel({
   });
   const presentation = feedbackStatusPresentation(feedback.active?.status);
 
-  const submit = async (note: string | null) => {
+  const submit = async (note: string | null, materialCodes: string[]) => {
     setModalError(null);
-    const result = await feedback.submit(note);
+    const result = await feedback.submit(note, materialCodes);
     if (!result.ok && result.message) {
       setModalError(result.message);
     }
@@ -189,6 +192,30 @@ export function OperatorFeedbackPanel({
               </dd>
             </div>
           </dl>
+          {feedback.active?.materials?.length ? (
+            <ul
+              className="pcp-pub__feedback-material-statuses"
+              aria-label="Materiais informados"
+            >
+              {feedback.active.materials.map((material) => (
+                <li
+                  key={material.productCode}
+                  className={
+                    "pcp-pub__feedback-material-status" +
+                    " is-" + material.status
+                  }
+                >
+                  <span className="pcp-pub__feedback-material-status-body">
+                    <strong>{material.productCode}</strong>
+                    <span>{material.description}</span>
+                  </span>
+                  <span className="pcp-pub__feedback-material-badge">
+                    {materialStatusLabel(material.status)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {feedback.active?.note ? (
             <p className="pcp-pub__feedback-note-view">
               “{feedback.active.note}”
@@ -199,6 +226,8 @@ export function OperatorFeedbackPanel({
 
       <OperatorFeedbackModal
         open={modalOpen}
+        token={token}
+        branch={branch}
         operation={operation}
         workCenter={workCenter}
         busy={feedback.submitting}

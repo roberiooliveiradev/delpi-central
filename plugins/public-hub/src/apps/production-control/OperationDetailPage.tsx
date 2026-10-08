@@ -275,6 +275,7 @@ export function OperationDetailPage({
 
             <OperatorFeedbackPanel
               token={token}
+              branch={branch}
               operation={operation}
               workCenter={workCenter}
               realtimeConnected={realtimeConnected}

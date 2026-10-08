@@ -350,6 +350,12 @@ export const copy = {
       cancel: "Cancelar",
       error: "Não foi possível concluir a ação. Tente novamente.",
       noteLabel: "Observação do operador",
+      materialsTitle: "Materiais informados",
+      materialPending: "Aguardando separação",
+      materialPicked: "Em separação",
+      materialDelivered: "Entregue",
+      resolvePendingMaterialsWarning:
+        "Ainda existem materiais não marcados como entregues.",
     },
   },
   kpi: {
@@ -662,6 +668,37 @@ export const copy = {
       updateError: "Não foi possível atualizar o item da coleta.",
       closeError: "Não foi possível fechar a lista de coleta.",
       loadError: "Não foi possível carregar as listas de coleta.",
+    },
+    urgent: {
+      title: "Solicitações urgentes",
+      titleCount: (count: number) =>
+        count === 1
+          ? "Solicitações urgentes (1)"
+          : "Solicitações urgentes (" + count + ")",
+      hint: "Materiais que o operador sinalizou como faltantes na bancada. Separe e entregue direto — não entram na lista de coleta planejada.",
+      empty: "Nenhuma solicitação urgente nesta filial.",
+      loading: "Carregando solicitações urgentes…",
+      loadError: "Não foi possível carregar as solicitações urgentes.",
+      updateError: "Não foi possível atualizar a solicitação.",
+      pendingBadge: "Aguardando separação",
+      pickedBadge: "Em separação",
+      startPicking: "Iniciar separação",
+      startPickingBusy: "Iniciando…",
+      markDelivered: "Marcar como entregue",
+      markDeliveredBusy: "Entregando…",
+      reportedCenter: (center: string) => "Reportado no " + center,
+      currentCenter: (center: string) => "Destino atual " + center,
+      outOfQueue: "OP fora da fila atual",
+      reportedAt: (when: string) => "Avisado às " + when,
+      reportedBy: (name: string | null, code: string) =>
+        name ? name + " (" + code + ")" : "Operador " + code,
+      orderLabel: (order: string, operation: string) =>
+        "OP " + order + " · Op. " + operation,
+      balanceLabel: (qty: number | null, unit: string) =>
+        qty === null
+          ? "Saldo da OP indisponível"
+          : "Saldo da OP: " + qty + " " + unit,
+      noteLabel: "Observação do operador",
     },
     detail: {
       openHint: "Abrir detalhe",

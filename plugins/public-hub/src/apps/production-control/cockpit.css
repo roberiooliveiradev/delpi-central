@@ -3603,3 +3603,162 @@ button.pcp-pub-timeline__body--action:focus-visible {
     align-self: stretch;
   }
 }
+
+/* ---- C5: seleção de materiais no modal + status no painel ---- */
+
+.pcp-pub__feedback-materials {
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.pcp-pub__feedback-materials-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__feedback-materials-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.pcp-pub__feedback-material {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--pcp-muted) 25%, transparent);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.pcp-pub__feedback-material:hover {
+  background: color-mix(in srgb, var(--pcp-accent) 6%, transparent);
+}
+
+.pcp-pub__feedback-material.is-selected {
+  border-color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 10%, transparent);
+}
+
+.pcp-pub__feedback-material.is-empty {
+  opacity: 0.62;
+}
+
+.pcp-pub__feedback-material input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--pcp-accent);
+}
+
+.pcp-pub__feedback-material-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pcp-pub__feedback-material-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pcp-pub__feedback-material-head strong {
+  font-size: 0.9rem;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__feedback-material-qty {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--pcp-muted);
+  white-space: nowrap;
+}
+
+.pcp-pub__feedback-material-desc {
+  font-size: 0.82rem;
+  color: var(--pcp-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcp-pub__feedback-materials-error {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* status dos materiais no card de impedimento ativo */
+.pcp-pub__feedback-material-statuses {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pcp-pub__feedback-material-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--pcp-muted) 7%, transparent);
+}
+
+.pcp-pub__feedback-material-status-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pcp-pub__feedback-material-status-body strong {
+  font-size: 0.86rem;
+  color: var(--pcp-title);
+}
+
+.pcp-pub__feedback-material-status-body span {
+  font-size: 0.78rem;
+  color: var(--pcp-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcp-pub__feedback-material-badge {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--pcp-muted);
+  background: color-mix(in srgb, var(--pcp-muted) 14%, transparent);
+}
+
+.pcp-pub__feedback-material-status.is-picked .pcp-pub__feedback-material-badge {
+  color: var(--pcp-accent);
+  background: color-mix(in srgb, var(--pcp-accent) 16%, transparent);
+}
+
+.pcp-pub__feedback-material-status.is-delivered .pcp-pub__feedback-material-badge {
+  color: var(--pcp-success, #2e9e5b);
+  background: color-mix(in srgb, var(--pcp-success, #2e9e5b) 14%, transparent);
+}

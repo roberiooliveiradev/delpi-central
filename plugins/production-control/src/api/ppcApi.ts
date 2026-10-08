@@ -11,6 +11,8 @@ import type {
   MachineLoadPublicationResult,
   MachineLoadTransferPayload,
   MachineLoadWithdrawPayload,
+  LineFeederUrgentRequest,
+  LineFeederUrgentRequestsPayload,
   OperatorFeedbackInboxPayload,
   PcpOperatorFeedback,
   FinishedProductShortagePayload,
@@ -888,4 +890,46 @@ export async function resolveOperatorFeedback(params: {
     { signal: params.signal },
   );
   return unwrapEnvelope(envelope, "Não foi possível resolver o impedimento.");
+}
+
+/** Fila urgente do Alimentador (C5): materiais faltantes de feedbacks ativos. */
+export async function fetchLineFeederUrgentRequests(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<LineFeederUrgentRequestsPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: LineFeederUrgentRequestsPayload;
+  }>(
+    ppcApiUrl(
+      "/line-feeder/operator-feedback-requests?" + search.toString(),
+    ),
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível carregar as solicitações urgentes.");
+}
+
+/** pending -> picked -> delivered. Autoria vem do JWT; body só carrega status. */
+export async function patchLineFeederUrgentRequest(params: {
+  branch: string;
+  materialId: string;
+  status: "picked" | "delivered";
+  signal?: AbortSignal;
+}): Promise<LineFeederUrgentRequest> {
+  const envelope = await httpPatch<{
+    success: boolean;
+    message?: string;
+    data: { item: LineFeederUrgentRequest };
+  }>(
+    ppcApiUrl(
+      "/line-feeder/operator-feedback-materials/" +
+        encodeURIComponent(params.materialId),
+    ),
+    { branch: params.branch, status: params.status },
+    { signal: params.signal },
+  );
+  const data = unwrapEnvelope(envelope, "Não foi possível atualizar a solicitação.");
+  return data.item;
 }

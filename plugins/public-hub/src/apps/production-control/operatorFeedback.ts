@@ -126,6 +126,25 @@ export function resolveFeedbackPanelState(options: {
   return "none";
 }
 
+/** Status do material na fila urgente do Alimentador (C5). */
+const MATERIAL_STATUS_LABELS: Record<string, string> = {
+  pending: "Aguardando separação",
+  picked: "Em separação",
+  delivered: "Entregue",
+};
+
+export function materialStatusLabel(status: string | null | undefined): string {
+  if (!status) return "Aguardando separação";
+  return MATERIAL_STATUS_LABELS[status] ?? "Aguardando separação";
+}
+
+/** Validação local da seleção — o backend também exige ao menos um código. */
+export const MATERIAL_SELECTION_REQUIRED =
+  "Selecione pelo menos um material que está impedindo a produção.";
+
+export const MATERIALS_LOAD_ERROR =
+  "Não foi possível carregar os materiais desta operação. Tente novamente.";
+
 /** Mensagem amigável para o POST falhar — nunca vaza detalhe interno. */
 export function feedbackSubmitErrorMessage(status: number | null): string {
   if (status === 409) {

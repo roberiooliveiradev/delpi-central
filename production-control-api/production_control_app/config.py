@@ -42,6 +42,15 @@ class Settings:
     DELPI_API_TIMEOUT: float = float(_get_env("DELPI_API_TIMEOUT", default="30"))
     DELPI_API_CALLER_APP: str = _get_env("DELPI_API_CALLER_APP", default="production-control-api")
 
+    # Core API — notificações Minha DELPI (C6; S2S best-effort pós-commit).
+    # O token é a MESMA credencial do header X-Delpi-Service-Token da Core;
+    # ausência desativa o dispatch sem derrubar o feedback.
+    CORE_API_BASE_URL: str = _get_env("CORE_API_BASE_URL", default="http://core-api:8000")
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str = _get_env(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN", default=""
+    )
+    CORE_API_TIMEOUT: float = float(_get_env("CORE_API_TIMEOUT", default="5"))
+
     # Portal RH — diretório oficial de colaboradores (S2S dedicado; token sem
     # default real; ausência falha só na chamada, não no startup).
     PORTAL_RH_API_URL: str = _get_env("PORTAL_RH_API_URL", default="")

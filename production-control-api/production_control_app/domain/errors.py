@@ -159,3 +159,35 @@ class OperatorFeedbackNotFound(ProductionControlError):
 
 class OperatorFeedbackStateError(ProductionControlError):
     """Transição de lifecycle inválida (ex.: reconhecer um resolvido)."""
+
+
+class InvalidOperatorFeedbackMaterials(ProductionControlError):
+    """Seleção de materiais inválida para o impedimento (vazia ou fora da OP)."""
+
+
+class OperatorFeedbackMaterialNotFound(ProductionControlError):
+    """Material de feedback inexistente para o identificador informado."""
+
+
+class OperatorFeedbackMaterialStateError(ProductionControlError):
+    """Transição inválida do material (ex.: picked sobre delivered ou feedback resolved)."""
+
+
+class NotificationGatewayUnavailable(ProductionControlError):
+    """Core API de notificações indisponível (rede, timeout ou 5xx)."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class NotificationGatewayUnauthorized(NotificationGatewayUnavailable):
+    """Credencial S2S recusada pela Core API (401/403) — erro de configuração."""
+
+
+class NotificationGatewayContractError(ProductionControlError):
+    """Resposta da Core API fora do contrato de dispatch de notificações."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code

@@ -89,6 +89,41 @@ class PublicOperationMaterialsService:
             },
         }
 
+    def list_for_feedback(
+        self,
+        *,
+        branch: str,
+        production_order: str,
+        operation_code: str,
+    ) -> list[dict[str, Any]]:
+        """Itens SD4 normalizados para o fluxo de Operator Feedback (C5).
+
+        Sem token aqui: quem chama já autenticou a bench session e validou a
+        OP/operação contra a fila PUBLISHED — este método só consulta a fonte
+        oficial e devolve os itens prontos para seleção/snapshot.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        try:
+            payload = self._gateway.fetch_production_order_operation_materials(
+                branch=code,
+                production_order=str(production_order or "").strip(),
+                operation=str(operation_code or "").strip(),
+            )
+        except DelpiGatewayError as exc:
+            logger.warning("feedback_materials_unavailable: %s", exc)
+            raise
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("feedback_materials_unavailable: %s", exc)
+            raise DelpiGatewayError(
+                "Não foi possível carregar os materiais."
+            ) from exc
+
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(data, dict):
+            data = payload if isinstance(payload, dict) else {}
+        raw_items = data.get("items") if isinstance(data.get("items"), list) else []
+        return [_public_item(row) for row in raw_items if isinstance(row, dict)]
+
 
 def _public_item(row: dict[str, Any]) -> dict[str, Any]:
     return {

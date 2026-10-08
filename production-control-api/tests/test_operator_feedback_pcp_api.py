@@ -10,6 +10,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from production_control_app.application.services.operator_feedback_material_service import (  # noqa: E501
+    OperatorFeedbackMaterialService,
+)
 from production_control_app.application.services.operator_feedback_service import (
     OperatorFeedbackService,
 )
@@ -85,6 +88,7 @@ def _service(
     svc = PcpOperatorFeedbackService(
         branch_access=BranchAccessService(),
         feedbacks=domain,
+        materials=OperatorFeedbackMaterialService(materials=repo),
         notify=notify if notify is not None else NotifySpy(),
     )
     return svc, {"repo": repo, "domain": domain}
@@ -381,7 +385,7 @@ def test_service_has_no_mes_dependencies() -> None:
 
     signature = inspect.signature(PcpOperatorFeedbackService.__init__)
     assert set(signature.parameters) == {
-        "self", "branch_access", "feedbacks", "notify"
+        "self", "branch_access", "feedbacks", "notify", "materials"
     }
 
 

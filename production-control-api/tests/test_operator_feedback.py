@@ -57,11 +57,39 @@ def _base(**overrides: Any) -> dict[str, Any]:
 
 
 class FakeOperatorFeedbackRepository(OperatorFeedbackRepositoryPort):
-    """Mesma regra do índice parcial: um ativo por chave lógica."""
+    """Mesma regra do índice parcial: um ativo por chave lógica.
+
+    C5: também guarda os materiais (port OperatorFeedbackMaterialRepository)
+    — o mesmo fake serve os dois contratos, espelhando o insert atômico."""
 
     def __init__(self) -> None:
         self.rows: dict[str, dict[str, Any]] = {}
+        self.materials: dict[str, dict[str, Any]] = {}
         self._clock = 0
+
+    def _insert_material(self, params: tuple[Any, ...]) -> None:
+        """INSERT da V017 — staging até o commit; unique feedback+produto."""
+        if self.raise_unique or self.fail_on_material_insert:
+            raise UniqueViolation("uq_pc_operator_feedback_materials")
+        keys = (
+            "feedback_id", "product_code", "description", "unit",
+            "original_qty", "open_qty", "consumed_qty", "commitment_count",
+            "status",
+        )
+        row = dict(zip(keys, params))
+        for existing in [*self.material_rows, *self._pending_materials]:
+            if (existing["feedback_id"], existing["product_code"]) == (
+                row["feedback_id"], row["product_code"]
+            ):
+                raise UniqueViolation("uq_pc_operator_feedback_materials")
+        row.update(
+            id=str(uuid.uuid4()),
+            created_at=datetime(2026, 9, 21, 9, tzinfo=timezone.utc),
+            picked_at=None, picked_by=None,
+            delivered_at=None, delivered_by=None,
+        )
+        self._pending_materials.append(row)
+        self._result = copy.deepcopy(row)
 
     def _key(self, row: dict[str, Any]) -> tuple[Any, ...]:
         return (
@@ -86,6 +114,7 @@ class FakeOperatorFeedbackRepository(OperatorFeedbackRepositoryPort):
                 kwargs["reason_code"],
             ):
                 raise OperatorFeedbackConflict("duplicado ativo")
+        materials = kwargs.pop("materials", None) or []
         row = {
             "id": str(uuid.uuid4()),
             **kwargs,
@@ -97,8 +126,34 @@ class FakeOperatorFeedbackRepository(OperatorFeedbackRepositoryPort):
             "resolved_by": None,
             "resolution_note": None,
         }
+        material_rows: list[dict[str, Any]] = []
+        seen_codes: set[str] = set()
+        for material in materials:
+            code = str(material.get("product_code") or "").strip()
+            if not code or code in seen_codes:
+                continue
+            seen_codes.add(code)
+            material_row = {
+                "id": str(uuid.uuid4()),
+                "feedback_id": row["id"],
+                "product_code": code,
+                "description": material.get("description") or "",
+                "unit": material.get("unit") or "",
+                "original_qty": material.get("original_qty") or 0,
+                "open_qty": material.get("open_qty") or 0,
+                "consumed_qty": material.get("consumed_qty") or 0,
+                "commitment_count": int(material.get("commitment_count") or 0),
+                "status": "pending",
+                "created_at": self._stamp(),
+                "picked_at": None,
+                "picked_by": None,
+                "delivered_at": None,
+                "delivered_by": None,
+            }
+            self.materials[material_row["id"]] = material_row
+            material_rows.append(copy.deepcopy(material_row))
         self.rows[row["id"]] = row
-        return copy.deepcopy(row)
+        return {**copy.deepcopy(row), "materials": material_rows}
 
     def get(self, feedback_id: str) -> dict[str, Any] | None:
         row = self.rows.get(feedback_id)
@@ -176,6 +231,113 @@ class FakeOperatorFeedbackRepository(OperatorFeedbackRepositoryPort):
         row["resolved_by"] = resolved_by
         row["resolution_note"] = resolution_note
         return copy.deepcopy(row)
+
+    # --- OperatorFeedbackMaterialRepositoryPort (C5) ----------------------
+
+    def _material_with_feedback(
+        self, row: dict[str, Any]
+    ) -> dict[str, Any]:
+        feedback = self.rows.get(row["feedback_id"], {})
+        merged = copy.deepcopy(row)
+        merged.update(
+            {
+                "feedback_branch": feedback.get("branch"),
+                "feedback_production_order": feedback.get("production_order"),
+                "feedback_operation_code": feedback.get("operation_code"),
+                "feedback_reported_work_center": feedback.get(
+                    "reported_work_center"
+                ),
+                "feedback_status": feedback.get("status"),
+                "feedback_operator_code": feedback.get("operator_code"),
+                "feedback_operator_name": feedback.get("operator_name"),
+                "feedback_note": feedback.get("note"),
+                "feedback_created_at": feedback.get("created_at"),
+            }
+        )
+        return merged
+
+    def list_for_feedbacks(
+        self, feedback_ids: list[str]
+    ) -> dict[str, list[dict[str, Any]]]:
+        wanted = {str(item) for item in feedback_ids}
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for row in sorted(
+            self.materials.values(), key=lambda r: r["product_code"]
+        ):
+            if row["feedback_id"] in wanted:
+                grouped.setdefault(row["feedback_id"], []).append(
+                    copy.deepcopy(row)
+                )
+        return grouped
+
+    def get_material(self, material_id: str) -> dict[str, Any] | None:
+        row = self.materials.get(material_id)
+        return self._material_with_feedback(row) if row else None
+
+    def list_active_requests(self, *, branch: str) -> list[dict[str, Any]]:
+        rank = {"pending": 0, "picked": 1}
+        rows = []
+        for row in self.materials.values():
+            feedback = self.rows.get(row["feedback_id"], {})
+            if (
+                feedback.get("branch") == branch
+                and feedback.get("status") in ACTIVE_STATUSES
+                and row["status"] in ("pending", "picked")
+            ):
+                rows.append(self._material_with_feedback(row))
+        return sorted(
+            rows,
+            key=lambda r: (
+                rank.get(r["status"], 2),
+                r["feedback_created_at"] or r["created_at"],
+                r["product_code"],
+            ),
+        )
+
+    def _material_transition(
+        self,
+        material_id: str,
+        *,
+        from_status: str,
+        to_status: str,
+        actor_field: str,
+        stamp_field: str,
+        actor: str,
+    ) -> dict[str, Any] | None:
+        row = self.materials.get(material_id)
+        if row is None or row["status"] != from_status:
+            return None
+        feedback = self.rows.get(row["feedback_id"], {})
+        if feedback.get("status") not in ACTIVE_STATUSES:
+            return None
+        row["status"] = to_status
+        row[stamp_field] = self._stamp()
+        row[actor_field] = actor
+        return copy.deepcopy(row)
+
+    def mark_picked(
+        self, material_id: str, *, picked_by: str
+    ) -> dict[str, Any] | None:
+        return self._material_transition(
+            material_id,
+            from_status="pending",
+            to_status="picked",
+            actor_field="picked_by",
+            stamp_field="picked_at",
+            actor=picked_by,
+        )
+
+    def mark_delivered(
+        self, material_id: str, *, delivered_by: str
+    ) -> dict[str, Any] | None:
+        return self._material_transition(
+            material_id,
+            from_status="picked",
+            to_status="delivered",
+            actor_field="delivered_by",
+            stamp_field="delivered_at",
+            actor=delivered_by,
+        )
 
 
 @pytest.fixture()
@@ -431,15 +593,37 @@ class FakeFeedbackDb:
 
     def __init__(self) -> None:
         self.rows: list[dict[str, Any]] = []
+        self.material_rows: list[dict[str, Any]] = []
         self.queries: list[str] = []
         self._clock = 0
         self.raise_unique = False
+        self.fail_on_material_insert = False
+        self.commits = 0
+        self._pending_rows: list[dict[str, Any]] = []
+        self._pending_materials: list[dict[str, Any]] = []
         self._result: dict[str, Any] | None = None
         self._result_many: list[dict[str, Any]] = []
 
     @contextmanager
     def connection(self):
-        yield self
+        """Espelha psycopg: commit no fim do with, rollback na exceção."""
+        self._pending_rows = []
+        self._pending_materials = []
+        try:
+            yield self
+        except Exception:
+            self._pending_rows = []
+            self._pending_materials = []
+            raise
+        else:
+            self.commit()
+
+    def commit(self) -> None:
+        self.commits += 1
+        self.rows.extend(self._pending_rows)
+        self.material_rows.extend(self._pending_materials)
+        self._pending_rows = []
+        self._pending_materials = []
 
     def cursor(self):
         return self
@@ -460,6 +644,8 @@ class FakeFeedbackDb:
         self.queries.append(query)
         self._result, self._result_many = None, []
         if "INSERT INTO" in query:
+            if "operator_feedback_materials" in query:
+                return self._insert_material(params)
             if self.raise_unique:
                 raise UniqueViolation("uq_pc_operator_feedbacks_active")
             keys = (
@@ -470,7 +656,7 @@ class FakeFeedbackDb:
                 "pa_product_code", "due_date",
             )
             row = dict(zip(keys, params))
-            for existing in self.rows:
+            for existing in [*self.rows, *self._pending_rows]:
                 if existing["status"] in ACTIVE_STATUSES and                         self._key(existing) == self._key(row):
                     raise UniqueViolation("uq_pc_operator_feedbacks_active")
             self._clock += 1
@@ -481,7 +667,7 @@ class FakeFeedbackDb:
                 acknowledged_at=None, acknowledged_by=None,
                 resolved_at=None, resolved_by=None, resolution_note=None,
             )
-            self.rows.append(row)
+            self._pending_rows.append(row)
             self._result = copy.deepcopy(row)
             return
         if "UPDATE" in query:

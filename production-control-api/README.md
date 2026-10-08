@@ -258,6 +258,43 @@ então um analista sem acesso à filial 02 não trata feedback dela por UUID.
 - Nenhuma rota toca fila, MES, Pulse ou downtime — tratar o impedimento é
   ato administrativo do PCP.
 
+**Materiais faltantes (C5)** — tabela filha
+production_control.operator_feedback_materials (V017): quando o motivo é
+missing_material o operador seleciona materiais REAIS da OP (SD4 via
+PublicOperationMaterialsService); o backend revalida cada código contra a
+operação e congela o snapshot (descrição, unidade, quantidades, empenhos) —
+o navegador envia só materialCodes, nunca é autoridade. Feedback e
+materiais são persistidos na MESMA transação. Lifecycle próprio
+pending -> picked -> delivered, independente do feedback:
+delivered NÃO resolve o impedimento (o PCP decide) e feedback resolved
+tira o material da fila ativa sem apagar histórico. A fila urgente do
+Alimentador (GET/PATCH /line-feeder/operator-feedback-*) usa a RBAC
+existente + filial do registro; pick plans planejados por corte não são
+contaminados — fluxos coexistem.
+
+**Notificações Minha DELPI (C6)** — camada de atenção via sistema oficial
+da Core API (POST /integrations/notifications, X-Delpi-Service-Token;
+NENHUM sino/tabela/socket paralelo no Production Control). Dois gatilhos
+apenas, ambos best-effort e disparados DEPOIS do commit:
+
+- feedback criado -> categoria production_control_operator_feedback para
+  quem tem production-control.machine-load.view AND
+  production-control.view.filial-NN (deep link na OP);
+- missing_material com materiais -> UMA notificação
+  production_control_line_feeder_urgent para quem tem
+  production-control.line-feeder.view AND filial (sem duplicar por item).
+
+Destinatários: permissionCodes = seletor OR (função) +
+requiredPermissionCodes = filtro AND por permissões efetivas
+(PermissionResolver: roles, grupos, overrides, superadmin) — novo campo
+retrocompatível da Core. Preferências, e-mail opcional e acesso ao app
+continuam sendo decisão exclusiva da Core; a Core é mensageira, não
+espelha domínio (metadata carrega só IDs técnicos — nunca nota, operador
+ou token). Core indisponível/401/timeout só gera log: o impedimento e a
+solicitação urgente permanecem salvos e o cockpit recebe sucesso.
+Conflict 409 e honeypot nunca disparam notificação. Env vars:
+CORE_API_BASE_URL / CORE_API_INTEGRATIONS_SERVICE_TOKEN / CORE_API_TIMEOUT.
+
 
 ## Demanda — carteira a entregar
 

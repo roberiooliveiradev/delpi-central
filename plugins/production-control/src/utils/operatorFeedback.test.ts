@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { MachineLoadOperation, PcpOperatorFeedback } from "../types";
 import {
   countOperationsWithFeedback,
+  feedbackMaterialStatusLabel,
+  hasUndeliveredMaterials,
   feedbackForOperation,
   feedbackReasonLabel,
   feedbackStatusLabel,
@@ -156,5 +158,63 @@ describe("findOperationInQueue", () => {
     expect(findOperationInQueue([makeOperation()], makeFeedback({
       productionOrder: "OUTRA",
     }))).toBeNull();
+  });
+});
+
+
+describe("feedbackMaterialStatusLabel", () => {
+  it("mapeia pending/picked/delivered", () => {
+    expect(feedbackMaterialStatusLabel("pending")).toBe("Aguardando separação");
+    expect(feedbackMaterialStatusLabel("picked")).toBe("Em separação");
+    expect(feedbackMaterialStatusLabel("delivered")).toBe("Entregue");
+  });
+
+  it("status desconhecido cai no fallback de pendente", () => {
+    expect(feedbackMaterialStatusLabel("future")).toBe("Aguardando separação");
+  });
+});
+
+describe("hasUndeliveredMaterials", () => {
+  it("false quando não há materiais (legado)", () => {
+    expect(hasUndeliveredMaterials(makeFeedback())).toBe(false);
+    expect(
+      hasUndeliveredMaterials(makeFeedback({ materials: [] })),
+    ).toBe(false);
+  });
+
+  it("true com pending ou picked", () => {
+    const pending = makeFeedback({
+      materials: [
+        {
+          id: "m1",
+          productCode: "10081234",
+          description: "TERMINAL",
+          unit: "PC",
+          openQty: 10,
+          status: "pending",
+          pickedAt: null,
+          deliveredAt: null,
+        },
+      ],
+    });
+    expect(hasUndeliveredMaterials(pending)).toBe(true);
+  });
+
+  it("false quando todos entregues", () => {
+    const done = makeFeedback({
+      materials: [
+        {
+          id: "m1",
+          productCode: "10081234",
+          description: "TERMINAL",
+          unit: "PC",
+          openQty: 10,
+          status: "delivered",
+          pickedAt: "2026-10-01T09:00:00Z",
+          deliveredAt: "2026-10-01T09:30:00Z",
+        },
+      ],
+    });
+    expect(hasUndeliveredMaterials(done)).toBe(false);
   });
 });

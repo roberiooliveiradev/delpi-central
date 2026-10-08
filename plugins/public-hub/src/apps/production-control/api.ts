@@ -950,6 +950,16 @@ export async function stopProductionRun(
 
 export type OperatorFeedbackStatus = "open" | "acknowledged" | "resolved";
 
+export type OperatorFeedbackMaterialStatus = "pending" | "picked" | "delivered";
+
+/** Material informado como faltante (C5) — snapshot congelado no backend. */
+export type PublicOperatorFeedbackMaterial = {
+  productCode: string;
+  description: string;
+  unit: string;
+  status: OperatorFeedbackMaterialStatus;
+};
+
 export type PublicOperatorFeedback = {
   id: string;
   productionOrder: string;
@@ -962,6 +972,8 @@ export type PublicOperatorFeedback = {
   createdAt: string;
   acknowledgedAt: string | null;
   resolvedAt: string | null;
+  /** C5: ausente/vazio em feedbacks antigos (C1–C4). */
+  materials?: PublicOperatorFeedbackMaterial[];
 };
 
 /**
@@ -1009,6 +1021,8 @@ export async function createOperatorFeedback(
     operationCode: string;
     feedbackType: string;
     reasonCode: string;
+    /** C5: apenas códigos — descrição/unidade/saldo são relidos na SD4. */
+    materialCodes?: string[];
     note?: string | null;
   },
 ): Promise<PublicOperatorFeedback> {
@@ -1029,6 +1043,7 @@ export async function createOperatorFeedback(
       operationCode: body.operationCode,
       feedbackType: body.feedbackType,
       reasonCode: body.reasonCode,
+      materialCodes: body.materialCodes ?? [],
       note: body.note ?? null,
       website: "",
     }),

@@ -25,6 +25,7 @@ def request_to_payload_dict(request: DispatchNotificationsRequest) -> dict:
         "roleIds": list(request.role_ids),
         "groupIds": list(request.group_ids),
         "permissionCodes": list(request.permission_codes),
+        "requiredPermissionCodes": list(request.required_permission_codes),
         "excludedUserIds": list(request.excluded_user_ids),
         "sourceApp": request.source_app,
     }
@@ -63,6 +64,15 @@ def payload_dict_to_request(data: dict) -> DispatchNotificationsRequest:
         permission_codes=[
             str(item).strip()
             for item in (data.get("permissionCodes") or data.get("permission_codes") or [])
+            if item
+        ],
+        required_permission_codes=[
+            str(item).strip()
+            for item in (
+                data.get("requiredPermissionCodes")
+                or data.get("required_permission_codes")
+                or []
+            )
             if item
         ],
         excluded_user_ids=[

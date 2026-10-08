@@ -1117,6 +1117,20 @@ export type LineFeederPickPlanListPayload = {
 /** Operator Feedback — impedimento reportado pelo operador (C4, inbox do PCP). */
 export type OperatorFeedbackStatus = "open" | "acknowledged" | "resolved";
 
+/** Material informado como faltante (C5) — status vem do Alimentador. */
+export type OperatorFeedbackMaterialStatus = "pending" | "picked" | "delivered";
+
+export type PcpOperatorFeedbackMaterial = {
+  id: string;
+  productCode: string;
+  description: string;
+  unit: string;
+  openQty: number | null;
+  status: OperatorFeedbackMaterialStatus;
+  pickedAt: string | null;
+  deliveredAt: string | null;
+};
+
 /** DTO autenticado da inbox do PCP — contexto completo para a tratativa. */
 export type PcpOperatorFeedback = {
   id: string;
@@ -1141,6 +1155,37 @@ export type PcpOperatorFeedback = {
   resolvedAt?: string | null;
   resolvedBy?: string | null;
   resolutionNote?: string | null;
+  /** C5: ausente/vazio em feedbacks antigos (C1–C4). */
+  materials?: PcpOperatorFeedbackMaterial[];
+};
+
+/** Solicitação urgente da bancada — material faltante via Operator Feedback
+ *  (C5). Fila própria do Alimentador: não é pick item nem pick plan. */
+export type LineFeederUrgentRequest = {
+  id: string;
+  feedbackId: string;
+  productionOrder: string;
+  operationCode: string;
+  productCode: string;
+  description: string;
+  unit: string;
+  openQty: number | null;
+  status: "pending" | "picked";
+  feedbackStatus: OperatorFeedbackStatus;
+  operatorCode: string;
+  operatorName: string | null;
+  note: string | null;
+  reportedAt: string;
+  reportedWorkCenter: string;
+  currentWorkCenter: string | null;
+  outOfQueue: boolean;
+  pickedAt: string | null;
+  deliveredAt: string | null;
+};
+
+export type LineFeederUrgentRequestsPayload = {
+  items: LineFeederUrgentRequest[];
+  summary: { total: number; pending: number; picked: number };
 };
 
 export type OperatorFeedbackInboxSummary = {

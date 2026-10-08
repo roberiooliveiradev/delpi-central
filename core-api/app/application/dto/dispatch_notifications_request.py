@@ -22,5 +22,10 @@ class DispatchNotificationsRequest:
     role_ids: list[str]
     group_ids: list[str]
     permission_codes: list[str] = field(default_factory=list)
+    # Filtro obrigatório pós-seleção: o destinatário resolvido precisa possuir
+    # TODAS essas permissões efetivas (PermissionResolver). Diferente de
+    # permission_codes (seletor OR), isto restringe — sem mudar semântica
+    # legada quando ausente.
+    required_permission_codes: list[str] = field(default_factory=list)
     excluded_user_ids: list[str] = field(default_factory=list)
     source_app: str | None = None

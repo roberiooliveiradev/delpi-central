@@ -47,7 +47,10 @@ export type OperatorFeedbackState = {
   /** Mensagem amigável transitória (409, 404, sessão expirada). */
   notice: string | null;
   refresh: () => Promise<void>;
-  submit: (note: string | null) => Promise<FeedbackSubmitResult>;
+  submit: (
+    note: string | null,
+    materialCodes: string[],
+  ) => Promise<FeedbackSubmitResult>;
   dismissNotice: () => void;
 };
 
@@ -172,7 +175,10 @@ export function useOperatorFeedback({
   }, [realtimeConnected, sessionToken, refresh]);
 
   const submit = useCallback(
-    async (note: string | null): Promise<FeedbackSubmitResult> => {
+    async (
+      note: string | null,
+      materialCodes: string[],
+    ): Promise<FeedbackSubmitResult> => {
       if (!sessionToken || submitting) {
         return { ok: false, message: null };
       }
@@ -184,6 +190,7 @@ export function useOperatorFeedback({
           operationCode,
           feedbackType: DEFAULT_FEEDBACK_TYPE,
           reasonCode: DEFAULT_FEEDBACK_REASON,
+          materialCodes,
           note,
         });
         setActive(created);

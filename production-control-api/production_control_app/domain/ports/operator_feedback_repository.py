@@ -31,10 +31,15 @@ class OperatorFeedbackRepositoryPort(ABC):
         product_description: str | None = None,
         pa_product_code: str | None = None,
         due_date: date | str | None = None,
+        materials: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Cria feedback open. OperatorFeedbackConflict se já houver
         impedimento ativo igual (mesma chave lógica) — a garantia final é o
-        índice parcial do banco, não um SELECT prévio."""
+        índice parcial do banco, não um SELECT prévio.
+
+        materials (C5): snapshots SD4 já validados pelo chamador —
+        inseridos na MESMA transação do feedback (ou tudo existe, ou nada).
+        O row retornado carrega materials com as linhas gravadas."""
 
     @abstractmethod
     def get(self, feedback_id: str) -> dict[str, Any] | None:

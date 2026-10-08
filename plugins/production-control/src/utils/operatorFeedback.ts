@@ -88,6 +88,26 @@ export function feedbackBadgeTone(status: string): "attention" | "progress" | nu
   return null;
 }
 
+const MATERIAL_STATUS_LABELS: Record<string, string> = {
+  pending: copy.machineLoad.feedback.materialPending,
+  picked: copy.machineLoad.feedback.materialPicked,
+  delivered: copy.machineLoad.feedback.materialDelivered,
+};
+
+/** Status do material na fila urgente do Alimentador (C5). */
+export function feedbackMaterialStatusLabel(status: string): string {
+  return MATERIAL_STATUS_LABELS[status] ?? copy.machineLoad.feedback.materialPending;
+}
+
+/** Materiais ainda não entregues — warning ao resolver, nunca bloqueio. */
+export function hasUndeliveredMaterials(
+  item: Pick<PcpOperatorFeedback, "materials">,
+): boolean {
+  return (item.materials ?? []).some(
+    (material) => material.status !== "delivered",
+  );
+}
+
 /** Localiza a operacao na fila atual da filial (qualquer CT) — serve ao
  *  "Ver na fila" e ao marcador "Fora da fila atual". */
 export function findOperationInQueue(

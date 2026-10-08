@@ -80,6 +80,7 @@ class PostgresOperatorFeedbackRepository(OperatorFeedbackRepositoryPort):
         product_description: str | None = None,
         pa_product_code: str | None = None,
         due_date: date | str | None = None,
+        materials: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         query = f"""
             INSERT INTO {_TABLE} (
@@ -115,11 +116,57 @@ class PostgresOperatorFeedbackRepository(OperatorFeedbackRepositoryPort):
                 with connection.cursor() as cursor:
                     cursor.execute(query, params)
                     row = cursor.fetchone()
+                    stored_materials = self._insert_materials(
+                        cursor, feedback_id=row["id"], materials=materials or []
+                    )
+                connection.commit()
         except UniqueViolation as exc:
             raise OperatorFeedbackConflict(
                 "Já existe impedimento ativo igual para esta operação."
             ) from exc
-        return dict(row)
+        return {**dict(row), "materials": stored_materials}
+
+    @staticmethod
+    def _insert_materials(
+        cursor: Any,
+        *,
+        feedback_id: str,
+        materials: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Filhos do feedback na mesma transação (V017) — snapshots SD4 já
+        validados; UniqueViolation propaga e derruba o feedback junto."""
+        if not materials:
+            return []
+        table = f"{PC_SCHEMA_NAME}.operator_feedback_materials"
+        stored: list[dict[str, Any]] = []
+        insert = f"""
+            INSERT INTO {table} (
+                feedback_id, product_code, description, unit,
+                original_qty, open_qty, consumed_qty, commitment_count, status
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id::text AS id, feedback_id::text AS feedback_id,
+                product_code, description, unit, original_qty, open_qty,
+                consumed_qty, commitment_count, status, created_at,
+                picked_at, picked_by, delivered_at, delivered_by
+        """
+        for material in materials:
+            cursor.execute(
+                insert,
+                (
+                    feedback_id,
+                    material.get("product_code"),
+                    material.get("description") or "",
+                    material.get("unit") or "",
+                    material.get("original_qty") or 0,
+                    material.get("open_qty") or 0,
+                    material.get("consumed_qty") or 0,
+                    int(material.get("commitment_count") or 0),
+                    "pending",
+                ),
+            )
+            stored.append(dict(cursor.fetchone()))
+        return stored
 
     def get(self, feedback_id: str) -> dict[str, Any] | None:
         query = f"""
