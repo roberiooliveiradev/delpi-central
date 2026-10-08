@@ -2655,7 +2655,7 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `MODEL_TIMEOUT_TOTAL_WALL_CLOCK` | PASS — `timeout_seconds` = maximum wall-clock duration of the invocation (contract frozen); adapter streams body via `raw.read1`, deadline re-checked between reads, per-recv socket timeout tightened to remaining budget; no thread wrapper, no new dependency, provider-neutral |
 | `TRICKLE_SERVER_TIMEOUT` | PASS — deterministic fixture (bytes every 50ms, never completes): `ModelInvocationError(TIMEOUT)` at ~1.01s for 1.0s requested (configured adapter max 30s) — requested timeout + tolerance, not a multiple |
 | `NORMAL_MODEL_INVOCATION` | PASS — fast provider fixture: structured output, usage and duration metadata preserved through the streaming drain |
-| `TURN_TOTAL_BUDGET` | PASS — one `TurnDeadline` per turn shared by every governed stage; each stage gets `min(configured max, remaining)`; no stage starts after exhaustion (fail-fast `turn_start` check + per-stage check) |
+| `TURN_TOTAL_BUDGET` | PASS (restored by §6.150 R1 evidence — review found the deadline was checked but never passed into provider ops) — one `TurnDeadline` per turn shared by every governed stage INCLUDING provider boundaries; each stage gets `min(configured max, remaining)`; no stage starts after exhaustion; an outcome arriving past the deadline is never processed (post-call check) |
 | `TURN_BUDGET_LT_EDGE_TIMEOUT` | PROVEN_FROM_CONFIG — `DELIA_TURN_BUDGET_SECONDS` default 80s; edge = Cloudflare 524 ~100s (observed); in-repo nginx hop `proxy_read_timeout=86400s` does not own the edge; margin ≥20s |
 | `SELECTION_TIMEOUT_GENERAL_FALLBACK` | 0 — `select_group`/`select_capability` model TIMEOUT → `SOURCE_UNAVAILABLE(model_timeout)` terminal; handler emits deterministic bounded failure (HYPOTHESIS + `delpi_source_unverified`); general model port invoked 0 times |
 | `ARGUMENT_TIMEOUT_GENERAL_FALLBACK` | 0 — argument projection TIMEOUT → same terminal semantics |
@@ -2667,4 +2667,32 @@ STOP-THE-LINE correction of production-proved infrastructure blockers. Extends �
 | `MATERIAL_ACT_IN_TESTS` | 0 |
 | Full delia-api suite | 894/894 PASS (853 + 41 new R2A tests; TurnDeadline contract x4 included) |
 | `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` | TEST_NOT_RUN / TEST_NOT_RUN |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2A-R1 — end-to-end turn deadline propagation (§6.150)
+
+`ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A = REWORK`: the deadline was checked before provider operations but the remaining budget was never passed into them, and provider/adapter layers dropped `timeout_seconds` on the way to the wire. R1 extends the existing seam end-to-end — no new mechanism.
+
+| Claim | Result |
+|---|---|
+| `PROVIDER_LIST_DEADLINE_BOUND` | PASS — `_groups`/`_fresh_group` check the deadline and pass `deadline.remaining_seconds()` via the existing `timeout_seconds` contract; an over-running surface is discarded by the post-call check → `SOURCE_UNAVAILABLE(turn_budget_exhausted)` |
+| `PROVIDER_INVOKE_DEADLINE_BOUND` | PASS — `_invoke` passes the remaining budget; post-call check rejects late outcomes → `SOURCE_UNAVAILABLE` |
+| `MCP_PROVIDER_TIMEOUT_ENFORCED` | PASS — bounded fan-out (`remaining_budget` splits the bound across specialists); `_effective_timeout` clamps to `DEFAULT_INVOCATION_TIMEOUT_SECONDS` (15s, reduction-only); zero-remainder → `mcp_timeout` failure, never a fresh window |
+| `INTEROP_INVOKE_ONE_BUDGET` | PASS — `SpecialistInterop.invoke` request timeout bounds revalidation-list + call as ONE operation; exhausted remainder → `mcp_timeout`, `call_remote_tool` never invoked |
+| `MCP_ADAPTER_WIRE_TIMEOUT` | PASS — bound reaches `_connect`/`initialize`/`list_tools`/`call_tool`; auth retry shares the same `started` clock |
+| `MCP_TRANSPORT_WIRE_TIMEOUT` | PASS — per-call `timeout_seconds` reaches `requests.post(timeout=…)`; `min(requested, configured)`; non-positive → `mcp_timeout` with zero POSTs |
+| `OPENAPI_PROVIDER_TIMEOUT_ENFORCED` | PASS — projector/invoker closures consume the bound; `projector` clamps to `_OPENAPI_FETCH_TIMEOUT_SECONDS`; `HttpOpenApiInvoker` shortens `0.25→0.25`, caps `99→15.0` configured, `None` = legacy stage max |
+| `PROVIDER_TIMEOUT_TERMINAL` | PASS — provider overrun ends `SOURCE_UNAVAILABLE` (`turn_budget_exhausted`/`mcp_timeout`); never `NOT_APPLICABLE`, never general-model narration, never silent continuation |
+| `SLOW_LIST_SOURCE_UNAVAILABLE` | PASS — fake-clock overrun (200s vs 80s) and real-clock overrun (0.3s sleep vs 0.1s budget, elapsed <1.0s) both terminal |
+| `FRESH_RELIST_SOURCE_UNAVAILABLE` | PASS — ACT-path fresh re-list (list#4) overrun → `SOURCE_UNAVAILABLE`; `commit_proposal` never invoked |
+| `INVOKE_OVERRUN_SOURCE_UNAVAILABLE` | PASS — outcome past deadline discarded at post-call check; recorded call bound ≤15s |
+| `NEXT_STAGE_REMAINDER_ONLY` | PASS — after 79.5s/80s consumed, the revalidation list receives `0.5s` — never the 15s stage max |
+| `EXHAUSTED_PREPARE_NO_WRITE` | PASS — exhausted at `turn_start` → zero provider calls; consumed in discovery → chain stops before PREPARE, calls = `[get_catalog]` |
+| `CONFIRMATION_PREPARE_CEILING_ACT` | 0 — unchanged; `commit_proposal` never invoked |
+| `FAST_PROVIDER_CONTRACT` | PASS — stage max 15.0 preserved, `SUCCESS` unchanged |
+| `WIRE_SLOW_SERVER_BOUNDED` | PASS (live-equivalent, real `requests` + real socket) — stalled server + `0.5s` bound → `mcp_timeout` in <3.0s; configured 30s and 10s stall never reached |
+| `WIRE_NORMAL_PATH` | PASS — fast socket server: `tools/list` completes unchanged through the same bounded seam |
+| `NEW_TIMEOUT_MECHANISM` | 0 — no new engine, thread wrapper, planner branch or parallel timeout system; one `TurnDeadline`, one `timeout_seconds` contract |
+| Full delia-api suite | **912/912 PASS** (894 + 18 new R1 tests) |
+| `REAL_MODEL_EVAL` / `LIVE_PROD_EVAL` | TEST_NOT_RUN / TEST_NOT_RUN (live-equivalent wire evidence = local socket + real `requests`; no production invocation) |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

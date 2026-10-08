@@ -11083,6 +11083,12 @@ EVIDENCE (live production, 2026-10-05):
 
 ## 6.149. C3-INTELLIGENCE-LOOP-03R2A — execution ceiling HTTP contract + hard model/turn deadlines
 
+    ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A = REWORK — the
+      turn deadline was checked before provider operations but never
+      passed into them. TURN_TOTAL_BUDGET and TURN_EDGE_BUDGET claims
+      below were downgraded to PARTIAL/REWORK pending R1; they are
+      RESTORED as CLOSED only by §6.150 evidence.
+
     OBJECTIVE = STOP-THE-LINE correction of the production-proved
       infrastructure blockers: execution ceiling crossing the HTTP
       boundary, total wall-clock bound on model calls, a shared turn
@@ -11210,3 +11216,120 @@ EVIDENCE (live production, 2026-10-05):
     PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
       C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
     NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.150. C3-INTELLIGENCE-LOOP-03R2A-R1 — end-to-end turn deadline propagation
+
+  DATE = 2026-07-05
+  TASK = C3-INTELLIGENCE-LOOP-03R2A-R1
+  BASE_HEAD = 4950d719a70c (reanchor; zero delia-api commits since
+    697f5fd2ff — only bpmn-modeler landed on main)
+  EVALUATED = worktree over 4950d719a70c
+
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2A = REWORK — review
+    found the TurnDeadline was CHECKED before provider operations but
+    the remaining budget was never PASSED into them. §6.149 claims
+    TURN_TOTAL_BUDGET and TURN_EDGE_BUDGET are corrected to
+    PARTIAL/REWORK until this section's R1 evidence; all other §6.149
+    findings (HTTP ceiling, model wall-clock read1 deadline,
+    SOURCE_UNAVAILABLE semantics, observability, reason codes) stand
+    unchanged.
+
+  ROOT_CAUSE (two layers):
+    1. Orchestration: _groups/_fresh_group/_invoke checked the
+       deadline but called provider.list_groups/invoke without
+       timeout_seconds.
+    2. Providers accepted timeout_seconds but dropped it:
+       McpCapabilityProvider never forwarded it to
+       SpecialistCatalog/InvocationRequest; OpenApiCapabilityProvider
+       never passed it to projector/invoker closures;
+       SpecialistInterop.invoke clamped each leg separately (the
+       revalidation list and the call could EACH take the full
+       bound); McpSpecialistAdapter ignored it entirely —
+       DelpiMcpTransport always used the configured profile timeout
+       on the wire.
+
+  FIX = EXTEND the existing seam end-to-end, no new mechanism:
+    orchestration (deadline.check + remaining_seconds() passed via
+    the existing CapabilityProviderPort timeout_seconds contract at
+    EVERY provider call — initial surface list, fresh/revalidation
+    re-list, invoke, candidate/discovery, PREPARE, confirm/ACT
+    continuation, repair; post-call deadline.check so an outcome
+    arriving past the deadline is never processed)
+    → McpCapabilityProvider (bounded fan-out: remaining_budget()
+      splits the bound across specialists; _effective_timeout clamps
+      to DEFAULT_INVOCATION_TIMEOUT_SECONDS=15s — reduction-only)
+    → SpecialistInterop.invoke (request.timeout_seconds now bounds
+      list+call as ONE operation; exhausted remainder fails
+      MCP_TIMEOUT instead of a fresh 30s window)
+    → McpSpecialistAdapter (bound reaches _connect/initialize/
+      list_tools/call_tool; auth retry shares the same started clock)
+    → DelpiMcpTransport (per-call timeout_seconds on initialize/
+      list_tools/call_tool → _rpc/_send → requests.post timeout;
+      _effective_timeout: min(requested, configured max); non-positive
+      remainder → MCP_TIMEOUT, never a fresh window)
+    → OpenApiCapabilityProvider (projector/invoker closures accept
+      timeout_seconds; fan-out across sources bounded)
+    → source_loader.projector + HttpOpenApiInvoker.__call__ (bound
+      shortened into fetch_openapi_document/http_get — never widened).
+
+  ABSTRACTION_GATE = PASS — zero new engine, deadline framework,
+    thread wrapper, provider-specific planner branch or parallel
+    timeout system. One TurnDeadline, one timeout_seconds contract.
+
+  FILES_CHANGED (delia-api): orchestration.py; mcp_provider.py;
+    openapi_provider.py; turn_budget.py (remaining_budget helper);
+    specialist_interop.py; mcp/adapter.py; mcp/transport.py;
+    openapi/source_loader.py; openapi/http_invoker.py;
+    tests/test_execution_ceiling_turn_budget.py (+12 R1),
+    tests/test_mcp_adapter.py (+3 R1),
+    tests/test_openapi_capability_provider.py (+3 R1 + signature
+    updates).
+
+  TESTS = 912/912 delia-api PASS. R1 focused evidence:
+    A initial list_groups overrun → SOURCE_UNAVAILABLE
+      (turn_budget_exhausted), granted bound <= stage max, zero
+      invoke, zero general fallback;
+      real-clock variant: 0.3s server sleep vs 0.1s budget →
+      SOURCE_UNAVAILABLE, elapsed <1.0s.
+    B ACT-path fresh re-list (list#4) overrun → SOURCE_UNAVAILABLE;
+      commit_proposal never invoked.
+    C provider.invoke overrun → post-call check SOURCE_UNAVAILABLE;
+      recorded call timeout <= 15s stage max.
+    D next stage receives only remainder: list#2 timeout 0.5s (<15s
+      stage max) after 79.5s consumption.
+    E exhausted budget at turn_start → SOURCE_UNAVAILABLE, zero
+      provider calls; budget consumed in discovery → chain stops
+      before PREPARE, calls == [get_catalog].
+    F confirmation + prepare ceiling → commit_proposal never called.
+    G fast provider: stage max 15.0 preserved, SUCCESS unchanged.
+    Interop seam: exhausted remainder → MCP_TIMEOUT, call never made.
+    Wire (live-equivalent, real requests + real socket):
+      stalled server + 0.5s bound → MCP_TIMEOUT elapsed <3.0s
+      (configured max 30s, server stall 10s — never reached);
+      fast server normal path unchanged.
+    OpenAPI: projector receives bounded timeout (approx 0.5),
+      None unbounded legacy; invoker shortens 0.25→0.25, caps
+      99→15.0 configured.
+    Transport: per-call 0.5/0.25 reach requests.post; 99 clamps to
+      configured 2.0; non-positive → MCP_TIMEOUT with zero POSTs.
+    Adapter: init/list/call legs share one shrinking 2.5s budget.
+
+  CLAIMS RESTORED on R1 evidence:
+    TURN_TOTAL_BUDGET = CLOSED — every provider consultation and
+      invocation is bounded by the remaining TurnDeadline end-to-end
+      (orchestration → provider → interop → adapter → wire).
+    TURN_EDGE_BUDGET = CLOSED — same evidence; the 80s default
+      budget now genuinely bounds provider work below the ~100s
+      Cloudflare edge.
+    "TurnDeadline clamps every governed stage" = PROVEN incl.
+      provider boundaries.
+
+  RESIDUAL: unchanged — D01/D03/D04/D05/D06 owned by R2B.
+    REAL_MODEL_EVAL = TEST_NOT_RUN; LIVE_PROD_EVAL = TEST_NOT_RUN
+    (live-equivalent wire evidence is local socket + real requests;
+    no production invocation performed).
+    INDEPENDENT_CI = NOT_AVAILABLE.
+
+  PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+    C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+  NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
