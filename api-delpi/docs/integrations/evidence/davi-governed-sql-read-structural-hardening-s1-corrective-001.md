@@ -1,5 +1,12 @@
 # DAVI-GOVERNED-SQL-READ-STRUCTURAL-HARDENING-S1-CORRECTIVE-001
 
+> **PARTIALLY SUPERSEDED / ARCHITECTURE CORRECTED** — ver `davi-sql-canonical-route-architecture-rebaseline-001.md`.
+> STRUCTURAL SQL VALIDATOR HARDENING = RETAINED (sqlglot AST policy da rota `/data/sql` permanece).
+> DIRECT GOVERNED DB EXECUTOR (`GovernedSqlExecutor`, conexão dedicada, `GOVERNED_SQL_DB_*`) = SUPERSEDED/REMOVED — sem consumidor de produção; DAVI usa a rota canônica da API DELPI.
+> DEDICATED GOVERNED_SQL_DB_* PRINCIPAL REQUIREMENT = SUPERSEDED FOR DAVI.
+> `SqlValidationResult`/`validate_with_result`/`PROFILE_DAVI_GOVERNED` foram removidos junto com o caminho abandonado.
+
+
 ## Defeito corrigido
 
 O executor governed declarava `tables: set[str] = set()` e nunca o

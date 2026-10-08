@@ -71,6 +71,7 @@ from app.application.external_capabilities.dynamic_information.execution_plan im
 )
 from app.application.external_capabilities.dynamic_information.projection import (
     apply_approved_field_projection,
+    apply_dynamic_resultset_projection,
     bound_response_payload,
 )
 from app.application.external_capabilities.dynamic_information.retrieval import (
@@ -228,7 +229,7 @@ _WAVE7_INVENTORY_MATERIAL_FLOW_OPERATION_IDS = frozenset(
         "get_supplies_safety_stock_consumption_analysis_item_details",
     }
 )
-_WAVE7_SEMANTIC_POST_IDS = frozenset()
+_WAVE7_SEMANTIC_POST_IDS = frozenset({"execute_readonly_sql"})
 _ELIGIBLE_OPERATION_IDS = (
     _ELIGIBLE_V5_OPERATION_IDS
     | _WAVE1_OPERATION_IDS
@@ -366,7 +367,7 @@ def test_allowlist_v5_multi_ops_rebaseline():
     allow = load_external_read_allowlist()
     ids = load_allowlist_operation_ids(allow)
     assert ids == set(_ALLOWLIST_OPERATION_IDS)
-    assert allow.get("version") == 21
+    assert allow.get("version") == 22
     assert allow.get("coverageDecision", {}).get("decision") == (
         "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS"
     )
@@ -2163,3 +2164,303 @@ def test_eligible_count_is_eighty_seven():
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
     assert len(eligible) == 87
+
+
+# ---------------------------------------------------------------------------
+# DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-001 — canonical POST /data/sql route
+# exposed through the generic discover→execute broker (no third MCP tool,
+# no DAVI-local AuthZ, backend DATA_SQL_ACCESS remains the authority).
+# ---------------------------------------------------------------------------
+
+_SQL_OPERATION_ID = "execute_readonly_sql"
+_SQL_ALIASES = (
+    "consulta sql",
+    "query sql",
+    "select sql",
+    "executar select",
+    "consulta ad hoc",
+    "query ad hoc",
+    "consulta analitica ad hoc",
+    "analise ad hoc",
+    "analise personalizada",
+    "consulta personalizada",
+    "query personalizada",
+    "cruzar dados",
+    "cruzamento de tabelas",
+    "cruzar tabelas",
+    "cruzando dados",
+    "sql somente leitura",
+    "analise que nao possui rota especifica",
+)
+
+
+def _sql_action() -> TechnicalAction:
+    summary = "Execute readonly sql"
+    searchable = (
+        f"{_SQL_OPERATION_ID} {summary} /data/sql data sql_result "
+        f"{' '.join(_SQL_ALIASES)}"
+    ).lower()
+    return TechnicalAction(
+        action_id=_SQL_OPERATION_ID,
+        operation_id=_SQL_OPERATION_ID,
+        method="POST",
+        path="/data/sql",
+        summary=summary,
+        description="Canonical API DELPI read-only SQL route.",
+        tags=("data",),
+        davi_status=STATUS_DAVI_ELIGIBLE_READ,
+        entity="sql_result",
+        shape="paged_list",
+        parameters=(),
+        searchable_text=searchable,
+        execution_mode="catalog_action",
+        approved_response_fields=(),
+        approved_input_fields=("sql",),
+        semantic_aliases=_SQL_ALIASES,
+        argument_constraints={
+            "requireArguments": ["sql"],
+            "argumentLimits": {"sql": {"maxLength": 8000}},
+        },
+        semantic_transport="SEMANTIC_READ_POST",
+        request_body={
+            "properties": {"sql": {"type": "string"}},
+            "required": ("sql",),
+            "supported": True,
+        },
+        response_contract="BOUNDED_DYNAMIC_RESULTSET",
+    )
+
+
+def _sql_discovery_actions() -> list[TechnicalAction]:
+    # Real baseline actions (real aliases/metadata) + the canonical SQL route.
+    return [*_load_baseline_actions(), _sql_action()]
+
+
+def _discover(query: str, monkeypatch, top_k: int = 5):
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information."
+        "discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    return discover_delpi_information(query=query, top_k=top_k, actor_id="u1")
+
+
+# SQL-001/002/003 — the canonical route is a normal READ candidate.
+@pytest.mark.parametrize(
+    "query",
+    [
+        "execute um SELECT na tabela SB1010",
+        "quero fazer uma consulta SQL",
+        "faça uma análise ad hoc cruzando dados de duas tabelas",
+        "rode um select cruzando SB1 e SB2",
+    ],
+)
+def test_sql_route_is_discoverable_read_candidate(query, monkeypatch):
+    set_actions_for_tests(_sql_discovery_actions())
+    result = _discover(query, monkeypatch)
+    ids = [c["action_id"] for c in result["candidates"]]
+    assert _SQL_OPERATION_ID in ids, (query, ids)
+
+
+# SQL-004/005 — canonical semantic routes outrank raw SQL in their domain.
+@pytest.mark.parametrize(
+    ("query", "expected_top1"),
+    [
+        ("qual o estoque do produto 10080034?", "get_product_stock"),
+        ("qual a descrição do produto 10080034?", "search_products"),
+    ],
+)
+def test_canonical_routes_outrank_sql(query, expected_top1, monkeypatch):
+    set_actions_for_tests(_sql_discovery_actions())
+    result = _discover(query, monkeypatch)
+    assert result["candidates"][0]["action_id"] == expected_top1
+
+
+# SQL-006/007/008 — explicit write intent never promotes the READ SQL route.
+@pytest.mark.parametrize(
+    "query",
+    [
+        "delete dados da SB1010",
+        "update SB1010 set B1_DESC = 'x'",
+        "drop table SB1010",
+        "insira um registro na SB1010",
+        "truncate table SB1010",
+    ],
+)
+def test_write_intent_never_offers_sql_route(query, monkeypatch):
+    set_actions_for_tests(_sql_discovery_actions())
+    result = _discover(query, monkeypatch)
+    ids = [c["action_id"] for c in result["candidates"]]
+    assert _SQL_OPERATION_ID not in ids
+
+
+# SQL-009 — route eligibility != statement validity != business AuthZ:
+# discovery may surface the route; the backend decides 401/403/validator deny.
+def test_sql_route_candidate_token_executes_via_catalog_executor(monkeypatch):
+    action = _sql_action()
+    set_actions_for_tests([action])
+    secret = "sec"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information."
+        "execute_service.candidate_token_secret",
+        lambda: secret,
+    )
+    token = mint_candidate_token(
+        action_id=_SQL_OPERATION_ID, actor_id="u1", secret=secret, ttl_seconds=60
+    )
+
+    received: dict[str, Any] = {}
+
+    class RecordingExecutor:
+        def execute(
+            self,
+            *,
+            action_id: str,
+            validated_arguments: dict[str, Any],
+        ) -> CatalogActionExecutionResult:
+            received["action_id"] = action_id
+            received["validated_arguments"] = validated_arguments
+            return CatalogActionExecutionResult(
+                outcome="ok",
+                payload={
+                    "sql": "SELECT TOP 1 B1_COD FROM SB1010",
+                    "total_resultsets": 1,
+                    "resultsets": [
+                        {
+                            "index": 1,
+                            "columns": ["B1_COD", "B1_DESC"],
+                            "total": 1,
+                            "data": [
+                                {
+                                    "B1_COD": "10080034",
+                                    "B1_DESC": "MOTOR",
+                                    "internal_secret": "dropped",
+                                }
+                            ],
+                            "unexpected_meta": "dropped",
+                        }
+                    ],
+                },
+            )
+
+    result = execute_delpi_information(
+        candidate_token=token,
+        arguments={"sql": "SELECT TOP 1 B1_COD, B1_DESC FROM SB1010"},
+        actor_id="u1",
+        catalog_action_executor=RecordingExecutor(),
+    )
+    assert received["action_id"] == _SQL_OPERATION_ID
+    # Generic CatalogActionPlan path — no special SQL branch.
+    assert received["validated_arguments"] == {
+        "sql": "SELECT TOP 1 B1_COD, B1_DESC FROM SB1010"
+    }
+    assert result["status"] == "ok"
+    body = result["data"]
+    # Route-level sql echo is never propagated to the model.
+    assert "sql" not in body
+    assert body["total_resultsets"] == 1
+    rs = body["resultsets"][0]
+    assert set(rs.keys()) <= {"index", "columns", "total", "data"}
+    assert rs["columns"] == ["B1_COD", "B1_DESC"]
+    # Column coherence: only keys declared in resultset.columns survive.
+    assert rs["data"][0] == {"B1_COD": "10080034", "B1_DESC": "MOTOR"}
+
+
+def test_sql_route_backend_forbidden_propagates_403(monkeypatch):
+    action = _sql_action()
+    set_actions_for_tests([action])
+    secret = "sec"
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information."
+        "execute_service.candidate_token_secret",
+        lambda: secret,
+    )
+    token = mint_candidate_token(
+        action_id=_SQL_OPERATION_ID, actor_id="u1", secret=secret, ttl_seconds=60
+    )
+
+    class ForbiddenExecutor:
+        def execute(
+            self,
+            *,
+            action_id: str,
+            validated_arguments: dict[str, Any],
+        ) -> CatalogActionExecutionResult:
+            return CatalogActionExecutionResult(
+                outcome="forbidden", error_message="DATA_SQL_ACCESS denied"
+            )
+
+    with pytest.raises(PermissionError):
+        execute_delpi_information(
+            candidate_token=token,
+            arguments={"sql": "SELECT TOP 1 B1_COD FROM SB1010"},
+            actor_id="u1",
+            catalog_action_executor=ForbiddenExecutor(),
+        )
+
+
+def test_sql_argument_contract_owner_declared_only():
+    sql_action = _sql_action()
+    # Canonical route accepts its owner-declared `sql` body field.
+    ok = validate_arguments(
+        sql_action, {"sql": "SELECT TOP 1 B1_COD FROM SB1010"}
+    )
+    assert ok["sql"] == "SELECT TOP 1 B1_COD FROM SB1010"
+    # required by the allowlist contract
+    with pytest.raises(ArgumentValidationError):
+        validate_arguments(sql_action, {})
+    # bounded by argumentLimits
+    with pytest.raises(ArgumentValidationError):
+        validate_arguments(sql_action, {"sql": "X" * 8001})
+
+    # Non-SQL actions must NOT suddenly accept `sql`.
+    product = _action(oid="search_products", path="/products/search")
+    with pytest.raises(ArgumentValidationError):
+        validate_arguments(product, {"sql": "SELECT 1"})
+    stock = _action(
+        oid="get_product_stock",
+        path="/products/{code}/stock",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+        ),
+        approved_input_fields=("code",),
+    )
+    with pytest.raises(ArgumentValidationError):
+        validate_arguments(stock, {"code": "1", "sql": "SELECT 1"})
+
+    # Transport smuggling stays globally forbidden.
+    for forbidden in ("url", "path", "method", "authorization"):
+        with pytest.raises(ArgumentValidationError):
+            validate_arguments(sql_action, {forbidden: "x", "sql": "SELECT 1"})
+
+
+def test_sql_route_dynamic_resultset_projection_bounds():
+    payload = {
+        "sql": "SELECT 1",
+        "total_resultsets": 12,
+        "resultsets": [
+            {
+                "index": i,
+                "columns": [f"C{j}" for j in range(70)],
+                "total": 60,
+                "data": [
+                    {f"C{j}": j for j in range(70)} | {"rogue": 1}
+                    for _ in range(60)
+                ],
+            }
+            for i in range(12)
+        ],
+    }
+    out = apply_dynamic_resultset_projection(
+        payload, max_resultsets=8, max_columns=64, max_array_items=50
+    )
+    assert "sql" not in out
+    assert out["total_resultsets"] == 12
+    assert len(out["resultsets"]) == 8
+    assert out["truncated"] is True
+    assert out["is_complete"] is False
+    rs = out["resultsets"][0]
+    assert len(rs["columns"]) == 64
+    assert len(rs["data"]) == 50
+    assert all(set(row) <= set(rs["columns"]) for row in rs["data"])
+    assert all("rogue" not in row for row in rs["data"])

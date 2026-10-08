@@ -125,6 +125,9 @@ _ELIGIBLE = {
 _ALLOWLIST_ONLY_IDS = {
     "list_product_physical_locations",
     "list_product_inventory_blocks",
+    # Canonical read-only SQL route: SEMANTIC_READ_POST, executable only via
+    # live OpenAPI requestBody contract (DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION).
+    "execute_readonly_sql",
 }
 _ALLOWLIST_IDS = _ELIGIBLE | _ALLOWLIST_ONLY_IDS
 

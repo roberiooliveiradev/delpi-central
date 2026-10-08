@@ -228,7 +228,6 @@ def test_wave3a_collision_disambiguation(query, expected, forbidden, monkeypatch
         "pricing",
         "custo",
         "cost",
-        "sql",
         "admin",
         "inteligência de preço de matéria-prima",
         "simulação de custo",

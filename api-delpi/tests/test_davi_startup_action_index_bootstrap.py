@@ -145,7 +145,7 @@ def test_real_startup_seeds_live_action_index() -> None:
     }
 
     # Real startup seeds the live OpenAPI contract.
-    assert after["executable"] == 89
+    assert after["executable"] == 90
     assert after["physical_locations"] == {
         "davi_status": STATUS_DAVI_ELIGIBLE_READ,
         "executable": True,
@@ -160,7 +160,7 @@ def test_real_startup_discovery_reaches_semantic_posts() -> None:
     """Post-startup discovery resolves both governed intents with 72 eligible."""
     out = _run_child()
     for key in ("physical_query", "blocks_query"):
-        assert out[key]["eligible_action_count"] == 89, out[key]
+        assert out[key]["eligible_action_count"] == 90, out[key]
         assert out[key]["expected_in_candidates"], out[key]
 
 

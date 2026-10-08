@@ -10,8 +10,10 @@
     "to": "13973e012e4522f3aaaa0ee54e89cf6e6819b2ab",
     "classification": "NON_CAUSAL",
     "touched_paths": [
-      "delia-api", "docs/12-roadmap-e-evolucao/delia",
-      "plugins/public-hub", "transformometro-api"
+      "delia-api",
+      "docs/12-roadmap-e-evolucao/delia",
+      "plugins/public-hub",
+      "transformometro-api"
     ]
   },
   "parser": {
@@ -52,13 +54,36 @@
     "real_grant": "S2/S6 decision — not yet provisioned"
   },
   "denials": [
-    "multi-statement", "DECLARE", "SET", "table_variables",
-    "INSERT", "UPDATE", "DELETE", "MERGE", "CREATE", "ALTER", "DROP",
-    "TRUNCATE", "EXEC", "EXECUTE", "GRANT", "REVOKE",
-    "BEGIN", "COMMIT", "ROLLBACK", "SELECT_INTO",
-    "comma_joins", "APPLY", "qualified_sources", "delimited_identifiers",
-    "unnamed_sources(OPENROWSET/OPENQUERY)", "table_hints", "FOR_XML",
-    "PIVOT", "fake_cte_string_literal", "non_allowlisted_any_depth",
+    "multi-statement",
+    "DECLARE",
+    "SET",
+    "table_variables",
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "MERGE",
+    "CREATE",
+    "ALTER",
+    "DROP",
+    "TRUNCATE",
+    "EXEC",
+    "EXECUTE",
+    "GRANT",
+    "REVOKE",
+    "BEGIN",
+    "COMMIT",
+    "ROLLBACK",
+    "SELECT_INTO",
+    "comma_joins",
+    "APPLY",
+    "qualified_sources",
+    "delimited_identifiers",
+    "unnamed_sources(OPENROWSET/OPENQUERY)",
+    "table_hints",
+    "FOR_XML",
+    "PIVOT",
+    "fake_cte_string_literal",
+    "non_allowlisted_any_depth",
     "whitelist_bypass_flag_active"
   ],
   "tests": {
@@ -88,5 +113,7 @@
     "credentials_in_logs": false,
     "davi_owned_authz": false
   },
-  "next_gate": "S2 owner/permission ratification — OWNER_RATIFICATION_REQUIRED if unresolved"
+  "next_gate": "S2 owner/permission ratification — OWNER_RATIFICATION_REQUIRED if unresolved",
+  "superseded_by": "davi-sql-canonical-route-architecture-rebaseline-001",
+  "supersession_note": "STRUCTURAL SQL VALIDATOR HARDENING = RETAINED. DIRECT GOVERNED DB EXECUTOR + GOVERNED_SQL_DB_* PRINCIPAL = SUPERSEDED/REMOVED (DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-IMPLEMENTATION-001): DAVI uses the canonical POST /data/sql route via the normal discover->execute broker under backend DATA_SQL_ACCESS."
 }

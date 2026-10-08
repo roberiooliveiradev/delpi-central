@@ -72,7 +72,7 @@ def test_search_products_remains_allowlisted_and_eligible():
     allow = load_external_read_allowlist()
     ids = {o["operationId"] for o in allow["operations"]}
     assert SEARCH_PRODUCTS_OPERATION_ID in ids
-    assert len(ids) == 89
+    assert len(ids) == 90
     assert any(a.operation_id == SEARCH_PRODUCTS_OPERATION_ID and a.executable for a in _actions())
 
 

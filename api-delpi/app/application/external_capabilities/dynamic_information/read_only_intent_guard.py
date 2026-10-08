@@ -3,6 +3,8 @@
 This is a semantic retrieval filter, not AuthZ:
 CLEAR EXPLICIT WRITE INTENT → zero READ candidates.
 It does not grant/deny permissions and does not create WRITE capabilities.
+For the canonical SQL route, the backend SqlValidator remains the final
+safety boundary (DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION).
 """
 
 from __future__ import annotations

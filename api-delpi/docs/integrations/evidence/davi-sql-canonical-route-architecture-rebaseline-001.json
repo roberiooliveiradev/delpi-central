@@ -1,0 +1,163 @@
+{
+  "task_id": "DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-IMPLEMENTATION-001",
+  "evidence_id": "davi-sql-canonical-route-architecture-rebaseline-001",
+  "base_sha": "b57d627ac3d85cc902d2dab4e2e4395b88a6a365",
+  "rebased_onto": "912ac3ba99ba6bfa57fcd7294d46995e2a2070a7",
+  "drift": {
+    "classification": "NON_CAUSAL",
+    "detail": "upstream commits touched tv-dashboard, bpmn-modeler, delia docs; none touched api-delpi SQL / DAVI / MCP / AuthZ / allowlist / candidate token / projection"
+  },
+  "architecture_verdict": {
+    "sql_route": "EXISTING_CANONICAL_API_DELPI_ROUTE",
+    "new_sql_route": "NONE",
+    "new_sql_permission": "NONE",
+    "davi_local_authz": "NONE_FORBIDDEN",
+    "mcp_authz": "NONE_FORBIDDEN",
+    "backend_authz": "EXISTING_API_DELPI_DATA_SQL_ACCESS",
+    "core_shared_auth_model": "AUTHORITY_FOR_USER_PERMISSIONS",
+    "sql_validation": "API_DELPI_ROUTE_RESPONSIBILITY",
+    "mcp_role": "DISCOVERY_ORCHESTRATION_BOUNDED_PROJECTION",
+    "direct_db_from_davi": "FORBIDDEN",
+    "mcp_tool_count": 2
+  },
+  "route": {
+    "path": "POST /data/sql",
+    "operation_id": "execute_readonly_sql",
+    "permission": "DATA_SQL_ACCESS",
+    "validator": "SqlValidator (sqlglot T-SQL AST; S0/S1 hardening retained)",
+    "request_contract": "{\"sql\": \"...\"}",
+    "response_contract_changed": false
+  },
+  "abandoned_special_path": {
+    "governed_executor_found": true,
+    "runtime_consumers": 0,
+    "action_taken": "REMOVED",
+    "removed": [
+      "app/infrastructure/persistence/totvs/governed_sql_executor.py",
+      "app/infrastructure/providers/totvs/governed_sql_connection.py",
+      "app/application/services/governed_sql_errors.py",
+      "tests/test_governed_sql_executor.py",
+      "tests/test_sql_governed_profile.py",
+      "PROFILE_DAVI_GOVERNED",
+      "SqlValidationResult/validate_with_result",
+      "GOVERNED_SQL_DB_* settings"
+    ],
+    "governed_db_principal_requirement": "SUPERSEDED_FOR_DAVI"
+  },
+  "davi_allowlist": {
+    "before_version": 21,
+    "after_version": 22,
+    "before_operations": 89,
+    "after_operations": 90,
+    "sql_operation_status": "ALLOWLISTED",
+    "entry": {
+      "executionMode": "catalog_action",
+      "semanticTransport": "SEMANTIC_READ_POST",
+      "canonicalSqlRoute": "CANONICAL_READONLY_SQL_ROUTE",
+      "responseContract": "BOUNDED_DYNAMIC_RESULTSET",
+      "approvedInputFields": ["sql"],
+      "argumentConstraints": {"requireArguments": ["sql"], "argumentLimits": {"sql": {"maxLength": 8000}}}
+    },
+    "quarantine_sql_removed": true,
+    "quarantine_select_removed": true
+  },
+  "argument_contract": {
+    "sql_allowed_for_sql_route": true,
+    "sql_rejected_for_other_routes": true,
+    "transport_forbidden_unchanged": ["url", "host", "path", "method", "operationId", "authorization", "Authorization"]
+  },
+  "execution": {
+    "plan_type": "CatalogActionPlan",
+    "catalog_action_executor": "CatalogActionExecutorPort (ASGI in-process; forwards end-user Authorization)",
+    "special_sql_branch": false,
+    "candidate_token": "actor-bound HMAC, TTL, tamper-reject (unchanged)",
+    "backend_401_403": "propagated as unauthorized/forbidden outcomes"
+  },
+  "projection": {
+    "mode": "BOUNDED_DYNAMIC_RESULTSET",
+    "raw_sql_echo": "STRIPPED",
+    "keeps": ["total_resultsets", "resultsets[].index", "resultsets[].columns", "resultsets[].total", "resultsets[].data"],
+    "column_coherence": "row keys must be present in resultset columns",
+    "budgets": {"execute_max_resultsets": 8, "execute_max_result_columns": 64, "execute_max_items": 50, "execute_max_response_bytes": 65536},
+    "truncation": "explicit truncated/is_complete flags"
+  },
+  "discovery_benchmark": {
+    "fixture": "tests/fixtures/davi_discovery_quality_v1.json",
+    "cases": 223,
+    "sql_positive_cases": 9,
+    "write_negative_sql_cases": 3,
+    "generic_sql_negative_cases": 0,
+    "metrics": {
+      "top1_accuracy": 0.9639,
+      "top1_required_accuracy": 0.9898,
+      "top3_recall": 1.0,
+      "top5_recall": 1.0,
+      "mrr": 0.9811,
+      "positive_no_candidate_rate": 0.0,
+      "hard_negative_zero_candidate_rate": 1.0,
+      "unsupported_zero_candidate_rate": 0.875,
+      "ambiguous_top3_coverage": 0.9,
+      "ambiguous_top5_coverage": 0.9
+    },
+    "known_failures": "6 pre-existing rank-2/3 misses in other families + DQ-SQL-009 rank-2 (get_protheus_table co-ranks for cross-table phrasing — acceptable, candidate discoverable)"
+  },
+  "agent_intelligence": {
+    "before": "2026.10.07.2",
+    "after": "2026.10.08.1",
+    "sql_flow": "ad_hoc_sql_read",
+    "direct_db": "FORBIDDEN",
+    "writes": "NOT_EXPOSED",
+    "generic_proxy": "FORBIDDEN"
+  },
+  "superseded_evidence": [
+    "davi-governed-sql-read-authz-ratification-s2-001.md",
+    "davi-governed-sql-read-owner-ratification-packet-s2-002.md",
+    "davi-governed-sql-read-structural-hardening-s1-001.md (validator retained; executor path removed)",
+    "davi-governed-sql-read-structural-hardening-s1-001.json",
+    "davi-governed-sql-read-structural-hardening-s1-corrective-001.md"
+  ],
+  "docs_updated": [
+    ".cursor/rules/openai-workspace-agent-integration.mdc",
+    ".cursor/rules/openai-plugin-mcp-integration.mdc",
+    "docs/12-roadmap-e-evolucao/davi/README.md",
+    "api-delpi/docs/integrations/openai-workspace-agent-davi.md",
+    "api-delpi/docs/integrations/openai-plugin-mcp.md",
+    "api-delpi/app/interface/mcp/branding.py"
+  ],
+  "tests": {
+    "sql_validator_suites": "116 PASS",
+    "davi_dynamic_read_incl_sql_001_009": "PASS (145)",
+    "read_only_intent_guard": "PASS",
+    "mcp_tool_surface": "PASS (2 tools)",
+    "agent_intelligence_and_instructions": "PASS (32)",
+    "discovery_quality_benchmark": "PASS",
+    "targeted_sql_tests": "15 PASS",
+    "rebaselined_count_asserts": [
+      "test_davi_product_master_extensions",
+      "test_davi_system_metadata",
+      "test_davi_catalog_runtime_integration",
+      "test_davi_inventory_material_flow_corrective",
+      "test_davi_operation_inventory_sync",
+      "test_davi_startup_action_index_bootstrap",
+      "test_davi_capability_wave_003a"
+    ],
+    "rebaselined_count_asserts_suite": "361 PASS",
+    "broad_suite_k_sql_davi_dynamic_mcp": "1931 PASS, 5 FAIL_NON_CAUSAL",
+    "non_causal_failures": {
+      "git_missing_in_container": [
+        "test_davi_capability_expansion_inventory::test_inventory_covers_all_gets_and_freezes_wave1",
+        "test_davi_capability_expansion_inventory::test_generator_does_not_change_runtime_or_historical_hashes",
+        "test_davi_capability_wave_002_freeze::test_generator_validates_source_and_writes_only_wave2_artifacts"
+      ],
+      "upstream_inspecoes_processo_131b0411c7": [
+        "test_inspecoes_processo_historico_sql::test_historico_list_sql_uses_two_step_tela_aggregation",
+        "test_inspecoes_processo_operation_inspections::test_operation_inspections_sql_filters_op_and_operation_without_assay_columns"
+      ],
+      "detail": "inspecoes_processo tests assert historico_tela in repository source; upstream commit 131b0411c7 changed inspecoes_processo_repository.py without updating them — zero inspecoes files in this diff"
+    }
+  },
+  "deploy": "NOT_RUN",
+  "agent_studio_sync": "PENDING_MANUAL_SYNC",
+  "provider_rediscovery": "TEST_NOT_RUN",
+  "live_sql_execution_via_davi": "TEST_NOT_RUN"
+}

@@ -487,7 +487,7 @@ group_category
 
 No stock, pricing, supplier, customer, sales, invoices, finance, SQL, generic proxy, writes, service account, or GPT-local RBAC are part of DAVI V1.
 
-> **HISTORICAL V1 scope.** Later governed waves (allowlist v19 / 89 ops) promoted stock, pricing, supplier/customer context, sales/commercial, production and inventory families behind the same discover→execute broker — see `evidence/davi-mcp-runtime-rebaseline-001`. Still forbidden: SQL, generic proxy, writes, service account, GPT-local RBAC.
+> **HISTORICAL V1 scope.** Later governed waves (allowlist v22 / 90 ops) promoted stock, pricing, supplier/customer context, sales/commercial, production, inventory families and the canonical read-only SQL route behind the same discover→execute broker — see `evidence/davi-mcp-runtime-rebaseline-001` and `evidence/davi-sql-canonical-route-architecture-rebaseline-001`. Still forbidden: generic/arbitrary SQL tool or direct DB access, generic proxy, writes, service account, GPT-local RBAC. `execute_readonly_sql` (POST /data/sql) is a normal API DELPI route under backend `DATA_SQL_ACCESS` — not a DAVI-local SQL engine.
 
 ## MCP tool contract — PLUGIN-006 / 006A
 

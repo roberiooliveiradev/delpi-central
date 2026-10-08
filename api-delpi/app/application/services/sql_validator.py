@@ -2,30 +2,12 @@
 import re
 import json
 import os
-from dataclasses import dataclass
 from pathlib import Path
 
 import sqlglot
 from sqlglot import exp
 
 from app.utils.logger import log_error, log_info
-
-# Perfis de política estrutural (S1)
-PROFILE_LEGACY_READONLY = "legacy_readonly"
-PROFILE_DAVI_GOVERNED = "davi_governed"
-
-
-@dataclass(frozen=True)
-class SqlValidationResult:
-    """Resultado estruturado da validação (S1 corrective).
-
-    physical_tables — somente tabelas físicas resolvidas pelo AST
-    (sem aliases, CTEs ou variáveis), deduplicadas e ordenadas.
-    """
-
-    profile: str
-    physical_tables: tuple[str, ...]
-    statement_count: int
 
 
 class SqlValidator:
@@ -140,12 +122,6 @@ class SqlValidator:
     _LEGACY_ALLOWED_STATEMENTS = (
         exp.Select, exp.Union, exp.Declare, exp.Set, exp.Semicolon,
     )
-    _GOVERNED_ALLOWED_STATEMENTS = (exp.Select, exp.Union)
-
-    # Limites do perfil governado (fallback analítico DAVI)
-    GOVERNED_MAX_STATEMENT_CHARS = 8000
-    GOVERNED_MAX_TABLES = 8
-    GOVERNED_MAX_JOINS = 8
 
     def _declared_table_vars(self, stmt) -> set[str]:
         names: set[str] = set()
@@ -161,15 +137,10 @@ class SqlValidator:
         table: exp.Table,
         cte_names: set[str],
         declared_vars: set[str],
-        governed: bool,
     ) -> str | None:
         """Classifica uma fonte AST. Retorna o nome físico ou None (não-física)."""
-        # @variável de tabela local (DECLARE @T TABLE) — apenas legacy
+        # @variável de tabela local (DECLARE @T TABLE)
         if isinstance(table.this, exp.Parameter):
-            if governed:
-                raise PermissionError(
-                    "Variáveis de tabela não são permitidas no perfil governed."
-                )
             name = table.name.upper()
             if name in declared_vars:
                 return None
@@ -205,11 +176,6 @@ class SqlValidator:
         if name in cte_names:
             return None
 
-        if governed and table.args.get("hints"):
-            raise PermissionError(
-                "Hints de tabela não são permitidas no perfil governed."
-            )
-
         if name not in self.allowed_tables:
             raise PermissionError(
                 f"Tabela '{name}' não autorizada (fora da whitelist)."
@@ -217,18 +183,12 @@ class SqlValidator:
 
         return name
 
-    def _validate_ast_policy(self, statements: list, profile: str) -> set[str]:
+    def _validate_ast_policy(self, statements: list) -> set[str]:
         """Aplica a política estrutural e retorna as fontes físicas
         resolvidas (útil para observabilidade)."""
-        governed = profile == PROFILE_DAVI_GOVERNED
-        allowed_types = (
-            self._GOVERNED_ALLOWED_STATEMENTS
-            if governed
-            else self._LEGACY_ALLOWED_STATEMENTS
-        )
+        allowed_types = self._LEGACY_ALLOWED_STATEMENTS
 
         physical_tables: set[str] = set()
-        join_count = 0
 
         # Variáveis de tabela são batch-scoped (DECLARE no statement N,
         # uso no N+1).
@@ -241,34 +201,20 @@ class SqlValidator:
                 continue
             if not isinstance(stmt, allowed_types):
                 raise PermissionError(
-                    "O perfil governed permite somente um único SELECT/WITH "
-                    "analítico."
-                    if governed
-                    else "Somente instruções DECLARE, SET, SELECT ou WITH são "
+                    "Somente instruções DECLARE, SET, SELECT ou WITH são "
                     "permitidas."
                 )
 
-            # SELECT INTO — deny estrutural em ambos os perfis.
+            # SELECT INTO — deny estrutural.
             for sel in stmt.find_all(exp.Select):
                 if sel.args.get("into") is not None:
                     raise PermissionError("Comando proibido detectado: INTO")
-                if governed and (sel.args.get("for_") or sel.args.get("lock")):
-                    raise PermissionError(
-                        "Cláusulas FOR/LOCK não são permitidas no perfil "
-                        "governed."
-                    )
 
             # CROSS/OUTER APPLY — deny estrutural.
             if stmt.find(exp.Lateral) is not None:
                 raise PermissionError(
                     "CROSS APPLY / OUTER APPLY não são permitidos pelo "
                     "validador read-only."
-                )
-
-            # PIVOT não pertence à gramática governada.
-            if governed and stmt.find(exp.Pivot) is not None:
-                raise PermissionError(
-                    "PIVOT não é permitido no perfil governed."
                 )
 
             # Comma join → sqlglot modela como Join de Table sem
@@ -290,7 +236,6 @@ class SqlValidator:
                         "Fontes de dados separadas por vírgula não são "
                         "permitidas pelo validador read-only."
                     )
-                join_count += 1
 
             cte_names = {
                 cte.alias.upper()
@@ -300,37 +245,19 @@ class SqlValidator:
 
             for table in stmt.find_all(exp.Table):
                 name = self._check_physical_table(
-                    table, cte_names, declared_vars, governed
+                    table, cte_names, declared_vars
                 )
                 if name:
                     physical_tables.add(name)
-
-        if governed:
-            if len(physical_tables) > self.GOVERNED_MAX_TABLES:
-                raise PermissionError(
-                    "Consulta excede o limite de tabelas do perfil governed."
-                )
-            if join_count > self.GOVERNED_MAX_JOINS:
-                raise PermissionError(
-                    "Consulta excede o limite de joins do perfil governed."
-                )
 
         return physical_tables
 
     # ------------------------------------------------------------------
     # 🔹 Validação principal
     # ------------------------------------------------------------------
-    def validate(self, sql: str, *, profile: str = PROFILE_LEGACY_READONLY) -> bool:
-        self.validate_with_result(sql, profile=profile)
-        return True
-
-    def validate_with_result(
-        self, sql: str, *, profile: str = PROFILE_LEGACY_READONLY
-    ) -> SqlValidationResult:
+    def validate(self, sql: str) -> bool:
         if not sql or not isinstance(sql, str):
             raise ValueError("SQL inválido ou vazio.")
-
-        governed = profile == PROFILE_DAVI_GOVERNED
 
         # 1️⃣ Remove comentários ANTES de tudo
         sql_no_comments = self._strip_sql_comments(sql)
@@ -341,11 +268,6 @@ class SqlValidator:
         if not sql_up.startswith(("DECLARE", "SET", "WITH", "SELECT")):
             raise PermissionError(
                 "Somente instruções DECLARE, SET, SELECT ou WITH são permitidas."
-            )
-
-        if governed and len(sql_clean) > self.GOVERNED_MAX_STATEMENT_CHARS:
-            raise PermissionError(
-                "Consulta excede o limite de tamanho do perfil governed."
             )
 
         # 3️⃣ Bloqueio de keywords proibidas
@@ -414,15 +336,6 @@ class SqlValidator:
                 f"Limite máximo de SELECTs excedido ({self.MAX_SELECTS})."
             )
 
-        # Governed: exatamente um statement analítico.
-        if governed:
-            core = [s for s in parsed if not isinstance(s, exp.Semicolon)]
-            if len(core) != 1:
-                raise PermissionError(
-                    "O perfil governed permite somente um único SELECT/WITH "
-                    "analítico."
-                )
-
         # APPLY: deny incondicional — também vigente em
         # DATA_SQL_SKIP_TABLE_WHITELIST.
         if re.search(r"\b(CROSS|OUTER)\s+APPLY\b", sql_up):
@@ -431,31 +344,14 @@ class SqlValidator:
                 "validador read-only."
             )
 
-        statement_count = sum(
-            1 for s in parsed if not isinstance(s, exp.Semicolon)
-        )
-
         # 6️⃣ Validação de tabelas físicas (whitelist)
         if self.skip_table_whitelist():
-            if governed:
-                raise PermissionError(
-                    "Política governed indisponível enquanto "
-                    "DATA_SQL_SKIP_TABLE_WHITELIST estiver ativa."
-                )
             log_info(
                 "[SQL_VALIDATOR] DATA_SQL_SKIP_TABLE_WHITELIST ativo — "
                 "allowlist de tabelas ignorada (somente SELECT)."
             )
-            return SqlValidationResult(
-                profile=profile,
-                physical_tables=(),
-                statement_count=statement_count,
-            )
+            return True
 
-        physical_tables = self._validate_ast_policy(parsed, profile)
+        self._validate_ast_policy(parsed)
 
-        return SqlValidationResult(
-            profile=profile,
-            physical_tables=tuple(sorted(physical_tables)),
-            statement_count=statement_count,
-        )
+        return True

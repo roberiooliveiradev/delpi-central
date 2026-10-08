@@ -1,5 +1,5 @@
 {
-  "version": 21,
+  "version": 22,
   "description": "Governance allowlist for DAVI dynamic READ. DAVI has no independent AuthZ; backend is final authority. Entries define model-safe input/output projection and governed argument constraints only — not business permissions.",
   "authzPolicy": "DAVI-READ-AUTHZ-REBASELINE-001",
   "externalProcessing": "BACKEND_AUTHORIZED_INTERNAL_READ_ALLOWED_UNLESS_EXPLICITLY_PROHIBITED",
@@ -43,12 +43,10 @@
     "hora",
     "resuma",
     "factory",
-    "sql",
     "admin",
     "brutos",
     "bruto",
     "otd",
-    "select",
     "funcionario",
     "funcionarios",
     "funcionário",
@@ -147,7 +145,16 @@
       "release",
       "publish",
       "replace",
-      "rename"
+      "rename",
+      "insert",
+      "update",
+      "drop",
+      "merge",
+      "truncate",
+      "alter",
+      "exec",
+      "grant",
+      "revoke"
     ],
     "writeIntentPhrases": [
       "update the",
@@ -5164,6 +5171,63 @@
         "requireArguments": [
           "code"
         ]
+      }
+    },
+    {
+      "operationId": "execute_readonly_sql",
+      "reason": "Canonical API DELPI read-only SQL route (POST /data/sql). Backend DATA_SQL_ACCESS is the authority — DAVI has no independent AuthZ. Route SqlValidator (structural T-SQL AST) remains the SQL safety boundary; same discover->execute broker; no third MCP tool; BOUNDED_DYNAMIC_RESULTSET projection strips the sql echo.",
+      "executionMode": "catalog_action",
+      "semanticTransport": "SEMANTIC_READ_POST",
+      "canonicalSqlRoute": "CANONICAL_READONLY_SQL_ROUTE",
+      "responseContract": "BOUNDED_DYNAMIC_RESULTSET",
+      "approvedInputFields": [
+        "sql"
+      ],
+      "approvedResponseFields": [
+        "total_resultsets",
+        "resultsets[].index",
+        "resultsets[].columns",
+        "resultsets[].total",
+        "resultsets[].data"
+      ],
+      "semanticAliases": [
+        "consulta sql",
+        "query sql",
+        "select sql",
+        "executar select",
+        "rode um select",
+        "rodar um select",
+        "consulta ad hoc",
+        "query ad hoc",
+        "consulta analítica ad hoc",
+        "consulta analitica ad hoc",
+        "análise ad hoc",
+        "analise ad hoc",
+        "análise personalizada",
+        "analise personalizada",
+        "consulta personalizada",
+        "query personalizada",
+        "cruzar dados",
+        "cruzamento de tabelas",
+        "cruzar tabelas",
+        "consulta sql somente leitura",
+        "sql somente leitura",
+        "análise que não possui rota específica",
+        "analise que nao possui rota especifica",
+        "consulta que não existe nas rotas",
+        "select from",
+        "via sql",
+        "query na tabela"
+      ],
+      "argumentConstraints": {
+        "requireArguments": [
+          "sql"
+        ],
+        "argumentLimits": {
+          "sql": {
+            "maxLength": 8000
+          }
+        }
       }
     }
   ],
