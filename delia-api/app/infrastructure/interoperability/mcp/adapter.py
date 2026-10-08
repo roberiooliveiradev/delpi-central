@@ -19,9 +19,11 @@ proxy: connections come only from approved-specialist configuration.
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from app.application.interaction.turn_budget import remaining_budget
 from app.application.specialist_interop.contracts import (
     RemoteToolDescriptor,
     RemoteToolOutcome,
@@ -100,9 +102,19 @@ class McpSpecialistAdapter:
     def list_remote_tools(
         self, specialist: SpecialistRef, *, timeout_seconds: float
     ) -> tuple[RemoteToolDescriptor, ...]:
-        profile, transport = self._connect(specialist)
+        # LOOP-03R2A-R1: ``timeout_seconds`` bounds the WHOLE port
+        # operation (connect+initialize+list) — each wire leg gets
+        # only the remaining share, never a fresh full timeout.
+        started = time.monotonic()
+        profile, transport = self._connect(
+            specialist, started=started, budget_seconds=timeout_seconds
+        )
         try:
-            tools = transport.list_tools()
+            tools = transport.list_tools(
+                timeout_seconds=remaining_budget(
+                    started, timeout_seconds
+                )
+            )
         except SpecialistInteropError as exc:
             self._invalidate_on_auth_failure(profile, exc)
             raise
@@ -165,6 +177,7 @@ class McpSpecialistAdapter:
             correlation_id=correlation_id,
             timeout_seconds=timeout_seconds,
             retried=False,
+            started=time.monotonic(),
         )
 
     def _call_remote_tool(
@@ -176,16 +189,31 @@ class McpSpecialistAdapter:
         correlation_id: str,
         timeout_seconds: float,
         retried: bool,
+        started: float,
     ) -> RemoteToolOutcome:
         operation_class: SpecialistOperationClass | None = None
         profile: SpecialistConnectionProfile | None = None
         try:
-            profile, transport = self._connect(specialist)
-            tools = transport.list_tools()
+            profile, transport = self._connect(
+                specialist,
+                started=started,
+                budget_seconds=timeout_seconds,
+            )
+            tools = transport.list_tools(
+                timeout_seconds=remaining_budget(
+                    started, timeout_seconds
+                )
+            )
             operation_class = self._require_invocable(
                 specialist, remote_name, tools
             )
-            result = transport.call_tool(remote_name, arguments)
+            result = transport.call_tool(
+                remote_name,
+                arguments,
+                timeout_seconds=remaining_budget(
+                    started, timeout_seconds
+                ),
+            )
         except SpecialistInteropError as exc:
             if profile is not None:
                 self._invalidate_on_auth_failure(profile, exc)
@@ -217,12 +245,17 @@ class McpSpecialistAdapter:
                     correlation_id=correlation_id,
                     timeout_seconds=timeout_seconds,
                     retried=True,
+                    started=started,
                 )
             raise
         return self._map_outcome(result)
 
     def _connect(
-        self, specialist: SpecialistRef
+        self,
+        specialist: SpecialistRef,
+        *,
+        started: float | None = None,
+        budget_seconds: float | None = None,
     ) -> tuple[SpecialistConnectionProfile, Any]:
         profile = self._profile(specialist.specialist_id)
         if self._credential_provider is None:
@@ -237,7 +270,13 @@ class McpSpecialistAdapter:
         bearer_token = self._credential_provider.credential_for(profile)
         transport = self._transport_factory(profile, bearer_token)
         try:
-            transport.initialize()
+            transport.initialize(
+                timeout_seconds=(
+                    remaining_budget(started, budget_seconds)
+                    if started is not None
+                    else None
+                )
+            )
         except SpecialistInteropError as exc:
             self._invalidate_on_auth_failure(profile, exc)
             raise

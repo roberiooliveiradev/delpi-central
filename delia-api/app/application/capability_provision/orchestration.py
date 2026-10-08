@@ -2155,7 +2155,7 @@ class OperationalCapabilityOrchestrator:
                 deadline=deadline,
             )
 
-        groups, failures = self._groups(correlation)
+        groups, failures = self._groups(correlation, deadline)
         surface = _project_surface(groups)
         if not surface:
             # No orchestratable surface observed. When at least one
@@ -4212,7 +4212,7 @@ class OperationalCapabilityOrchestrator:
         skip a gate.
         """
         try:
-            group = self._fresh_group(group_key, correlation)
+            group = self._fresh_group(group_key, correlation, deadline)
         except CapabilityProviderError as exc:
             return _error_attempt(correlation, exc)
         if group is None:
@@ -4334,7 +4334,9 @@ class OperationalCapabilityOrchestrator:
                 content="Operação cancelada — nenhuma escrita foi executada.",
             )
         try:
-            group = self._fresh_group(record.group_key, correlation)
+            group = self._fresh_group(
+                record.group_key, correlation, deadline
+            )
         except CapabilityProviderError as exc:
             return _error_attempt(correlation, exc)
         capability = next(
@@ -4591,33 +4593,63 @@ class OperationalCapabilityOrchestrator:
     # ---------------- internals ----------------
 
     def _groups(
-        self, correlation: str
+        self,
+        correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> tuple[dict[str, CapabilityGroup], list[str]]:
         """Live provider capability groups keyed by group key."""
         groups: dict[str, CapabilityGroup] = {}
         failures: list[str] = []
         for provider_id, provider in self._providers.items():
+            # LOOP-03R2A-R1: each provider consultation is bounded by
+            # the remaining turn budget — never starts exhausted and
+            # never widens the provider's own stage max.
+            if deadline is not None:
+                deadline.check("surface_list")
             try:
                 surface = provider.list_groups(
-                    correlation_id=correlation
+                    correlation_id=correlation,
+                    timeout_seconds=(
+                        deadline.remaining_seconds()
+                        if deadline is not None
+                        else None
+                    ),
                 )
             except CapabilityProviderError as exc:
                 failures.append(exc.code)
                 continue
+            # A provider that overran the remaining budget may not
+            # contribute results to this turn — fail truthfully.
+            if deadline is not None:
+                deadline.check("surface_list")
             failures.extend(surface.failures)
             for group in surface.groups:
                 groups[f"{provider_id}:{group.group_id}"] = group
         return groups, failures
 
     def _fresh_group(
-        self, group_key: str, correlation: str
+        self,
+        group_key: str,
+        correlation: str,
+        deadline: TurnDeadline | None = None,
     ) -> CapabilityGroup | None:
         """Re-resolve one group live — provider-side revalidation."""
         provider_id, _, group_id = group_key.partition(":")
         provider = self._providers.get(provider_id)
         if provider is None or not group_id:
             return None
-        surface = provider.list_groups(correlation_id=correlation)
+        if deadline is not None:
+            deadline.check("surface_relist")
+        surface = provider.list_groups(
+            correlation_id=correlation,
+            timeout_seconds=(
+                deadline.remaining_seconds()
+                if deadline is not None
+                else None
+            ),
+        )
+        if deadline is not None:
+            deadline.check("surface_relist")
         return next(
             (g for g in surface.groups if g.group_id == group_id), None
         )
@@ -5028,7 +5060,7 @@ class OperationalCapabilityOrchestrator:
         Any failure returns None and the original error stands.
         """
         try:
-            fresh = self._fresh_group(group_key, correlation)
+            fresh = self._fresh_group(group_key, correlation, deadline)
         except CapabilityProviderError:
             # The live re-list itself failed — fail closed on the
             # original error; exactly one repair attempt, no loop.
@@ -5776,6 +5808,14 @@ class OperationalCapabilityOrchestrator:
                 capability,
                 arguments,
                 correlation_id=correlation,
+                # LOOP-03R2A-R1: the invocation is bounded by the
+                # remaining turn budget — the provider clamps to its
+                # own stage max underneath.
+                timeout_seconds=(
+                    deadline.remaining_seconds()
+                    if deadline is not None
+                    else None
+                ),
             )
         except CapabilityProviderError:
             # LOOP-03R1 (latency): bounded stage timing — declared keys
@@ -5803,4 +5843,8 @@ class OperationalCapabilityOrchestrator:
             int((time.monotonic() - started) * 1000),
             correlation,
         )
+        # An outcome that arrives after the turn deadline may not be
+        # processed — fail truthfully at the boundary.
+        if deadline is not None:
+            deadline.check("provider_invoke")
         return outcome

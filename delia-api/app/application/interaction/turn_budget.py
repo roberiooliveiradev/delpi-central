@@ -76,3 +76,18 @@ class TurnBudgetExhausted(Exception):
     def __init__(self, stage: str) -> None:
         super().__init__(stage)
         self.stage = stage
+
+
+def remaining_budget(
+    started: float, total_seconds: float | None
+) -> float | None:
+    """Remaining budget for the next bounded call inside a fan-out.
+
+    Providers that fan out to several sources/specialists under one
+    ``timeout_seconds`` split the budget per call so the total cannot
+    exceed the caller's bound. ``None`` means unbounded by the caller
+    (the callee's own configured stage max still applies).
+    """
+    if total_seconds is None:
+        return None
+    return max(0.0, float(total_seconds) - (time.monotonic() - started))

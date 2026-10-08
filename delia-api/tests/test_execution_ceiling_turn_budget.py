@@ -71,8 +71,14 @@ from app.application.model_invocation.errors import (
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.platform_access import PlatformAccessContext
 from app.application.specialist_interop.contracts import (
+    DEFAULT_INVOCATION_TIMEOUT_SECONDS,
     RemoteToolDescriptor,
     RemoteToolOutcome,
+    SpecialistInvocationRequest,
+)
+from app.application.specialist_interop.errors import (
+    MCP_TIMEOUT,
+    SpecialistInteropError,
 )
 from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
@@ -99,6 +105,8 @@ from tests.test_specialist_capability_orchestration import (
     FakePort,
     _confirmation,
     _interop,
+    _read,
+    _select,
     _vista_ops_prepare,
 )
 
@@ -868,3 +876,421 @@ def test_synthesis_fallback_logs_bounded_reason(
         "decision=fallback" in m and "reason=" in m
         for m in synth_logs
     )
+
+
+# --- R1: end-to-end turn deadline across provider boundaries ------------------
+#
+# LOOP-03R2A-R1: the review found the deadline was CHECKED before
+# provider operations but the remaining budget was never PASSED into
+# them. These tests prove the bounded timeout reaches the transport
+# seam and that an overrun — whether the provider reports it or
+# returns stale success — terminates truthfully as SOURCE_UNAVAILABLE
+# with zero general-model fallback.
+
+
+class _DeadlinePort(FakePort):
+    """FakePort that records every ``timeout_seconds`` it receives and
+    can consume a shared fake clock per call (seconds advanced per
+    call index — the last spec value repeats)."""
+
+    def __init__(
+        self,
+        *args,
+        clock=None,
+        list_seconds=0.0,
+        call_seconds=0.0,
+        real_list_sleep=0.0,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._clock = clock
+        self._list_seconds = list_seconds
+        self._call_seconds = call_seconds
+        self._real_list_sleep = real_list_sleep
+        self.list_timeouts: list[float] = []
+        self.call_timeouts: list[float] = []
+
+    @staticmethod
+    def _consume(spec, index):
+        if isinstance(spec, (int, float)):
+            return float(spec)
+        return float(spec[min(index, len(spec) - 1)])
+
+    def list_remote_tools(self, specialist, *, timeout_seconds):
+        self.list_timeouts.append(timeout_seconds)
+        if self._real_list_sleep:
+            time.sleep(self._real_list_sleep)
+        if self._clock is not None:
+            self._clock[0] += self._consume(
+                self._list_seconds, len(self.list_timeouts) - 1
+            )
+        return super().list_remote_tools(
+            specialist, timeout_seconds=timeout_seconds
+        )
+
+    def call_remote_tool(
+        self,
+        specialist,
+        remote_name,
+        arguments,
+        *,
+        correlation_id,
+        timeout_seconds,
+    ):
+        self.call_timeouts.append(timeout_seconds)
+        if self._clock is not None:
+            self._clock[0] += self._consume(
+                self._call_seconds, len(self.call_timeouts) - 1
+            )
+        return super().call_remote_tool(
+            specialist,
+            remote_name,
+            arguments,
+            correlation_id=correlation_id,
+            timeout_seconds=timeout_seconds,
+        )
+
+
+def _deadline(clock, budget_seconds):
+    return TurnDeadline(
+        ends_at=clock[0] + budget_seconds, clock=lambda: clock[0]
+    )
+
+
+def _vista_listing(interop):
+    return _read(
+        interop,
+        specialist_ids=("vista",),
+        proposal=_select("vista", "list_playlists", {}),
+    )
+
+
+# A. initial list_groups bounded by the remaining turn budget
+def test_r1_initial_surface_list_overrun_is_source_unavailable():
+    """A surface consultation that consumes past the turn deadline
+    ends SOURCE_UNAVAILABLE — its late result is never projected."""
+    clock = [1000.0]
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        clock=clock,
+        list_seconds=200.0,
+    )
+    read = _vista_listing(_interop(port))
+    attempt = read.attempt(
+        "liste", turn_deadline=_deadline(clock, 80.0)
+    )
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "turn_budget_exhausted"
+    # The stage max (15s) bounded the granted timeout — never the
+    # full turn budget — and no invocation was reached.
+    assert port.list_timeouts == [
+        DEFAULT_INVOCATION_TIMEOUT_SECONDS
+    ]
+    assert port.calls == []
+
+
+def test_r1_initial_surface_list_real_overrun_bounded_elapsed():
+    """Real-clock variant: a provider that overruns the remaining
+    budget cannot stretch the turn — the boundary check terminates
+    within budget + tolerance."""
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        real_list_sleep=0.30,
+    )
+    read = _vista_listing(_interop(port))
+    started = time.monotonic()
+    attempt = read.attempt(
+        "liste", turn_deadline=TurnDeadline.start(0.10)
+    )
+    elapsed = time.monotonic() - started
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert elapsed < 1.0
+    assert port.calls == []
+
+
+# B. fresh live re-list (write-path revalidation) bounded
+def test_r1_fresh_relist_overrun_is_source_unavailable():
+    """The ACT-path fresh re-list shares the same deadline — an
+    overrun there fails closed before the commit invocation."""
+    clock = [1000.0]
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": DIRECT_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+        clock=clock,
+        # list#1 catalog, list#2+#3 invoke revalidations, list#4
+        # fresh re-list before the write decision — the fourth
+        # blows the deadline.
+        list_seconds=(0.0, 0.0, 0.0, 200.0),
+    )
+    read = _vista_ops_prepare(port, [{"op": "delete_slide"}])
+    attempt = read.attempt(
+        "exclua este slide",
+        actor_user_id="u1",
+        turn_deadline=_deadline(clock, 80.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "turn_budget_exhausted"
+    # Discovery + PREPARE ran inside the budget; the exhausted
+    # re-list stops the chain before any commit.
+    assert [c[1] for c in port.calls] == [
+        "get_catalog",
+        "prepare_change",
+    ]
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+    assert all(
+        t <= DEFAULT_INVOCATION_TIMEOUT_SECONDS
+        for t in port.list_timeouts
+    )
+
+
+# C. provider invoke bounded
+def test_r1_invoke_overrun_is_source_unavailable():
+    """An invocation outcome that arrives after the turn deadline is
+    never processed — post-call boundary check fails truthfully."""
+    clock = [1000.0]
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={"get_catalog": VISTA_OPS_CATALOG},
+        clock=clock,
+        call_seconds=200.0,
+    )
+    read = _vista_ops_prepare(port, [{"op": "add_blank_slide"}])
+    attempt = read.attempt(
+        "crie um slide",
+        actor_user_id="u1",
+        turn_deadline=_deadline(clock, 80.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "turn_budget_exhausted"
+    assert [c[1] for c in port.calls] == ["get_catalog"]
+    assert all(
+        0 < t <= DEFAULT_INVOCATION_TIMEOUT_SECONDS
+        for t in port.call_timeouts
+    )
+
+
+# D. candidate/discovery chain — next stage receives only the remainder
+def test_r1_next_stage_receives_only_remaining_budget():
+    """After the surface list consumed most of the budget, the next
+    provider stages receive the remainder — never the configured
+    stage max."""
+    clock = [1000.0]
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        clock=clock,
+        list_seconds=79.5,
+    )
+    read = _vista_listing(_interop(port))
+    attempt = read.attempt(
+        "liste", turn_deadline=_deadline(clock, 80.0)
+    )
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    # list#1 got the stage max; list#2 (invoke revalidation) got only
+    # the 0.5s remainder — not the full provider timeout again.
+    assert port.list_timeouts[0] == DEFAULT_INVOCATION_TIMEOUT_SECONDS
+    assert 0 < port.list_timeouts[1] <= 0.5 + 0.05
+    assert all(t > 0 for t in port.call_timeouts)
+
+
+# E. PREPARE with exhausted / near-exhausted budget — no ACT
+def test_r1_exhausted_budget_at_turn_start_fails_closed():
+    clock = [1000.0]
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS}, clock=clock
+    )
+    read = _vista_listing(_interop(port))
+    deadline = _deadline(clock, 80.0)
+    clock[0] += 200.0
+    attempt = read.attempt("liste", turn_deadline=deadline)
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "turn_budget_exhausted"
+    # No provider stage may start once the deadline passed.
+    assert port.list_calls == []
+    assert port.calls == []
+
+
+def test_r1_budget_exhausted_before_prepare_no_write():
+    """Budget consumed during discovery: the prepare path never
+    reaches any write capability and ends truthfully."""
+    clock = [1000.0]
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={"get_catalog": VISTA_OPS_CATALOG},
+        clock=clock,
+        # Discovery consumes past the deadline — the post-invoke
+        # boundary check stops the chain before PREPARE.
+        call_seconds=80.5,
+    )
+    read = _vista_ops_prepare(port, [{"op": "delete_slide"}])
+    attempt = read.attempt(
+        "exclua este slide",
+        actor_user_id="u1",
+        turn_deadline=_deadline(clock, 80.0),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert [c[1] for c in port.calls] == ["get_catalog"]
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+
+
+# F. confirmation continuation under prepare ceiling — zero ACT
+def test_r1_confirmation_under_prepare_ceiling_zero_act():
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        outcomes={
+            "get_catalog": VISTA_OPS_CATALOG,
+            "prepare_change": READY_PROPOSAL,
+            "commit_proposal": COMMIT_VERIFIED,
+        },
+    )
+    read = _vista_ops_prepare(port, [{"op": "delete_slide"}])
+    pending = read.attempt("exclua este slide", actor_user_id="u1")
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    result = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+        max_execution_stage="prepare",
+    )
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+    assert result.status is not GovernedCapabilityStatus.SUCCESS
+
+
+# G. fast provider — stage max preserved, success unchanged
+def test_r1_fast_provider_stage_max_and_success_unchanged():
+    clock = [1000.0]
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS}, clock=clock
+    )
+    read = _vista_listing(_interop(port))
+    attempt = read.attempt(
+        "liste", turn_deadline=_deadline(clock, 80.0)
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    # With a large remaining budget the provider's configured stage
+    # max applies unchanged — reduction-only, never widening.
+    assert port.list_timeouts and all(
+        t == DEFAULT_INVOCATION_TIMEOUT_SECONDS
+        for t in port.list_timeouts
+    )
+    assert port.call_timeouts and all(
+        0 < t <= DEFAULT_INVOCATION_TIMEOUT_SECONDS
+        for t in port.call_timeouts
+    )
+
+
+# Interop seam: request timeout bounds list+call as ONE operation
+def test_r1_interop_invoke_second_leg_budget_exhausted():
+    """Inside SpecialistInterop.invoke the call leg receives only what
+    the revalidation list left — an exhausted remainder fails with
+    mcp_timeout instead of a fresh full timeout."""
+    port = _DeadlinePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        real_list_sleep=0.05,
+    )
+    interop = _interop(port)
+    with pytest.raises(SpecialistInteropError) as exc:
+        interop.invoke(
+            SpecialistInvocationRequest(
+                specialist_id="vista",
+                remote_capability="list_playlists",
+                correlation_id="c1",
+                arguments={},
+                timeout_seconds=0.01,
+            )
+        )
+    assert exc.value.code == MCP_TIMEOUT
+    assert port.calls == []
+
+
+# --- R1 live-equivalent: real wire timeout through real requests --------------
+#
+# Production-equivalent non-mutating evidence: a real DelpiMcpTransport
+# issuing real requests.post calls against a real socket server that
+# stalls — the bounded timeout must cut the wire operation at the
+# granted budget, never the configured transport max.
+
+
+def test_r1_mcp_wire_slow_server_bounded_by_call_timeout():
+    """A stalled specialist cannot hold the turn: the per-call bound
+    reaches requests.post and terminates near the granted budget."""
+    from app.infrastructure.interoperability.mcp.transport import (
+        DelpiMcpTransport,
+    )
+
+    serving = threading.Event()
+
+    def stall(conn):
+        try:
+            conn.recv(65536)
+            serving.set()
+            # Never answer — a specialist wedged mid-turn.
+            time.sleep(10)
+        except OSError:
+            pass
+        finally:
+            conn.close()
+
+    port, done = _serve_forever(stall)
+    transport = DelpiMcpTransport(
+        f"http://127.0.0.1:{port}/mcp",
+        timeout_seconds=30.0,
+        bearer_token="t",
+    )
+    started = time.monotonic()
+    with pytest.raises(SpecialistInteropError) as exc:
+        transport.list_tools(timeout_seconds=0.5)
+    elapsed = time.monotonic() - started
+    assert exc.value.code == MCP_TIMEOUT
+    # Near the granted 0.5s — nowhere near the configured 30s or the
+    # server's 10s stall.
+    assert elapsed < 3.0
+    assert serving.is_set()
+    done.wait(timeout=15.0)
+
+
+def test_r1_mcp_wire_normal_path_unchanged():
+    """Non-mutating normal path: a fast specialist still answers
+    through the same bounded seam — contract unchanged."""
+    from app.infrastructure.interoperability.mcp.transport import (
+        DelpiMcpTransport,
+    )
+
+    def fast(conn):
+        try:
+            conn.recv(65536)
+            body = json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "result": {"tools": []},
+                }
+            ).encode()
+            conn.sendall(
+                b"HTTP/1.1 200 OK\r\n"
+                b"Content-Type: application/json\r\n"
+                b"Content-Length: "
+                + str(len(body)).encode()
+                + b"\r\n\r\n"
+                + body
+            )
+        except OSError:
+            pass
+        finally:
+            conn.close()
+
+    port, done = _serve_forever(fast)
+    transport = DelpiMcpTransport(
+        f"http://127.0.0.1:{port}/mcp",
+        timeout_seconds=30.0,
+        bearer_token="t",
+    )
+    started = time.monotonic()
+    tools = transport.list_tools(timeout_seconds=5.0)
+    elapsed = time.monotonic() - started
+    assert tools == ()
+    assert elapsed < 5.0
+    done.wait(timeout=5.0)

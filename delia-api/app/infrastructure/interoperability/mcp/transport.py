@@ -77,7 +77,9 @@ class DelpiMcpTransport:
         self._session_id: str | None = None
         self._ids = itertools.count(1)
 
-    def initialize(self) -> None:
+    def initialize(
+        self, timeout_seconds: float | None = None
+    ) -> None:
         """MCP initialize handshake; captures the session id if issued."""
         result = self._rpc(
             "initialize",
@@ -89,15 +91,23 @@ class DelpiMcpTransport:
                     "version": self._client_version,
                 },
             },
+            timeout_seconds=timeout_seconds,
         )
         if not isinstance(result.get("serverInfo"), Mapping):
             raise SpecialistInteropError(
                 MCP_INVALID_RESPONSE, "initialize result missing serverInfo"
             )
-        self._notify("notifications/initialized", {})
+        self._notify(
+            "notifications/initialized", {},
+            timeout_seconds=timeout_seconds,
+        )
 
-    def list_tools(self) -> tuple[Mapping[str, Any], ...]:
-        result = self._rpc("tools/list", {})
+    def list_tools(
+        self, timeout_seconds: float | None = None
+    ) -> tuple[Mapping[str, Any], ...]:
+        result = self._rpc(
+            "tools/list", {}, timeout_seconds=timeout_seconds
+        )
         tools = result.get("tools")
         if not isinstance(tools, list):
             raise SpecialistInteropError(
@@ -108,10 +118,15 @@ class DelpiMcpTransport:
         )
 
     def call_tool(
-        self, name: str, arguments: Mapping[str, Any]
+        self,
+        name: str,
+        arguments: Mapping[str, Any],
+        timeout_seconds: float | None = None,
     ) -> Mapping[str, Any]:
         result = self._rpc(
-            "tools/call", {"name": name, "arguments": dict(arguments)}
+            "tools/call",
+            {"name": name, "arguments": dict(arguments)},
+            timeout_seconds=timeout_seconds,
         )
         if not isinstance(result, Mapping):
             raise SpecialistInteropError(
@@ -119,14 +134,25 @@ class DelpiMcpTransport:
             )
         return result
 
-    def _notify(self, method: str, params: Mapping[str, Any]) -> None:
+    def _notify(
+        self,
+        method: str,
+        params: Mapping[str, Any],
+        timeout_seconds: float | None = None,
+    ) -> None:
         response = self._send(
-            {"jsonrpc": "2.0", "method": method, "params": dict(params)}
+            {"jsonrpc": "2.0", "method": method, "params": dict(params)},
+            timeout_seconds=timeout_seconds,
         )
         if response is not None and response.status_code >= 400:
             self._raise_for_status(response.status_code)
 
-    def _rpc(self, method: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+    def _rpc(
+        self,
+        method: str,
+        params: Mapping[str, Any],
+        timeout_seconds: float | None = None,
+    ) -> Mapping[str, Any]:
         request_id = next(self._ids)
         response = self._send(
             {
@@ -134,7 +160,8 @@ class DelpiMcpTransport:
                 "id": request_id,
                 "method": method,
                 "params": dict(params),
-            }
+            },
+            timeout_seconds=timeout_seconds,
         )
         assert response is not None  # requests always return for RPC calls
         self._raise_for_status(response.status_code)
@@ -162,7 +189,29 @@ class DelpiMcpTransport:
             )
         return result
 
-    def _send(self, payload: Mapping[str, Any]):
+    def _effective_timeout(
+        self, timeout_seconds: float | None
+    ) -> float:
+        """Caller-bound reduction ceiling (LOOP-03R2A-R1): a per-call
+        bound can only shorten the configured transport max — never
+        lengthen it. A non-positive remainder is a truthful timeout,
+        not a fresh window."""
+        if timeout_seconds is None:
+            return self._timeout_seconds
+        effective = min(
+            float(timeout_seconds), self._timeout_seconds
+        )
+        if effective <= 0:
+            raise SpecialistInteropError(
+                MCP_TIMEOUT, "mcp request budget exhausted"
+            )
+        return effective
+
+    def _send(
+        self,
+        payload: Mapping[str, Any],
+        timeout_seconds: float | None = None,
+    ):
         headers = {
             "Accept": _ACCEPT,
             "Content-Type": "application/json",
@@ -182,7 +231,7 @@ class DelpiMcpTransport:
                 self._endpoint,
                 headers=headers,
                 data=json.dumps(payload),
-                timeout=self._timeout_seconds,
+                timeout=self._effective_timeout(timeout_seconds),
             )
         except requests.exceptions.Timeout as exc:
             raise SpecialistInteropError(

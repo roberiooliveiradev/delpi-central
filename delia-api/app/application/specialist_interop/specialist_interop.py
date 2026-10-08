@@ -27,9 +27,11 @@ anything; a specialist outcome is untrusted OBSERVATION data.
 from __future__ import annotations
 
 import json
+import time
 from datetime import datetime, timezone
 from typing import Mapping
 
+from app.application.interaction.turn_budget import remaining_budget
 from app.application.ports.specialist_interop_port import SpecialistInteropPort
 from app.application.specialist_interop.contracts import (
     MAX_INVOCATION_ARGUMENTS_CHARS,
@@ -43,6 +45,7 @@ from app.application.specialist_interop.errors import (
     CAPABILITY_NOT_ALLOWED_IN_PHASE,
     MCP_INVALID_RESPONSE,
     MCP_PROTOCOL_ERROR,
+    MCP_TIMEOUT,
     UNKNOWN_CAPABILITY,
     UNKNOWN_SPECIALIST,
     SpecialistInteropError,
@@ -128,6 +131,10 @@ class SpecialistInterop:
         """
         specialist = self._require_specialist(request.specialist_id)
         remote_name = str(request.remote_capability or "").strip()
+        # LOOP-03R2A-R1: ``request.timeout_seconds`` bounds the WHOLE
+        # invocation (revalidation list + call) — the second leg
+        # receives only what the first leg left.
+        invoke_started = time.monotonic()
         remote_tools = self._port.list_remote_tools(
             specialist,
             timeout_seconds=self._clamp_timeout(request.timeout_seconds),
@@ -148,12 +155,20 @@ class SpecialistInterop:
                 "capability is not allowed in this phase",
             )
         arguments = self._validate_arguments(request.arguments)
+        remaining = remaining_budget(
+            invoke_started, request.timeout_seconds
+        )
+        if remaining is not None and remaining <= 0:
+            raise SpecialistInteropError(
+                MCP_TIMEOUT,
+                "specialist invocation budget exhausted",
+            )
         outcome = self._port.call_remote_tool(
             specialist,
             remote_name,
             arguments,
             correlation_id=request.correlation_id,
-            timeout_seconds=self._clamp_timeout(request.timeout_seconds),
+            timeout_seconds=self._clamp_timeout(remaining),
         )
         return self._normalize_outcome(
             specialist, remote_name, request.correlation_id, outcome

@@ -88,14 +88,18 @@ class FakeTransport:
         self.calls: list[tuple] = []
         FakeTransport.instances.append(self)
 
-    def initialize(self):
+    def initialize(self, timeout_seconds=None):
         self.initialized = True
+        self.init_timeout = timeout_seconds
 
-    def list_tools(self):
+    def list_tools(self, timeout_seconds=None):
+        self.list_timeouts = getattr(self, 'list_timeouts', [])
+        self.list_timeouts.append(timeout_seconds)
         return self.tools
 
-    def call_tool(self, name, arguments):
+    def call_tool(self, name, arguments, timeout_seconds=None):
         self.calls.append((name, dict(arguments)))
+        self.call_timeout = timeout_seconds
         return self.call_result
 
 
@@ -181,7 +185,7 @@ def test_auth_failure_invalidates_cached_credential():
     FakeTransport.instances.clear()
 
     class FailingTransport(FakeTransport):
-        def initialize(self):
+        def initialize(self, timeout_seconds=None):
             raise SpecialistInteropError(
                 MCP_AUTHENTICATION_FAILED, "rejected"
             )
@@ -212,19 +216,19 @@ def _adapter_with_failing_op(op: str):
     """Transport that raises MCP_AUTHENTICATION_FAILED on `op`."""
 
     class Failing(FakeTransport):
-        def list_tools(self):
+        def list_tools(self, timeout_seconds=None):
             if op == "list_tools":
                 raise SpecialistInteropError(
                     MCP_AUTHENTICATION_FAILED, "401"
                 )
             return (_DISCOVERY_TOOL,)
 
-        def call_tool(self, name, arguments):
+        def call_tool(self, name, arguments, timeout_seconds=None):
             if op == "call_tool":
                 raise SpecialistInteropError(
                     MCP_AUTHENTICATION_FAILED, "401"
                 )
-            return super().call_tool(name, arguments)
+            return super().call_tool(name, arguments, timeout_seconds=timeout_seconds)
 
     provider = FakeCredentialProvider()
     adapter = McpSpecialistAdapter(
@@ -266,10 +270,10 @@ def test_tools_call_401_retries_once_for_non_mutating():
     class FlakyTransport(FakeTransport):
         calls_made = 0
 
-        def list_tools(self):
+        def list_tools(self, timeout_seconds=None):
             return (_DISCOVERY_TOOL,)
 
-        def call_tool(self, name, arguments):
+        def call_tool(self, name, arguments, timeout_seconds=None):
             FlakyTransport.calls_made += 1
             if FlakyTransport.calls_made == 1:
                 raise SpecialistInteropError(
@@ -303,7 +307,7 @@ def test_tools_call_401_never_retries_mutating():
     class FailingPrepare(FakeTransport):
         calls_made = 0
 
-        def list_tools(self):
+        def list_tools(self, timeout_seconds=None):
             return (
                 {
                     "name": "prepare_change",
@@ -311,7 +315,7 @@ def test_tools_call_401_never_retries_mutating():
                 },
             )
 
-        def call_tool(self, name, arguments):
+        def call_tool(self, name, arguments, timeout_seconds=None):
             FailingPrepare.calls_made += 1
             raise SpecialistInteropError(
                 MCP_AUTHENTICATION_FAILED, "401"
@@ -339,7 +343,7 @@ def test_tools_call_401_never_retries_mutating():
 
 def test_non_auth_wire_error_does_not_invalidate():
     class TimeoutTransport(FakeTransport):
-        def list_tools(self):
+        def list_tools(self, timeout_seconds=None):
             raise SpecialistInteropError(MCP_TIMEOUT, "slow")
 
     provider = FakeCredentialProvider()
@@ -733,3 +737,104 @@ def test_arguments_cannot_influence_transport_headers():
     call_headers = posts[2][1]
     assert "Host" not in call_headers
     assert call_headers["Authorization"] == f"Bearer {TOKEN}"
+
+
+# --- R1: per-call bounded timeout reaches the wire -----------------------------
+
+
+def test_r1_transport_per_call_timeout_shortens_never_lengthens():
+    """LOOP-03R2A-R1: the bounded per-call timeout reaches
+    requests.post — a smaller bound wins, a larger bound never
+    widens the configured transport max."""
+    canned = [
+        (
+            _rpc_result(1, {"serverInfo": {"name": "davi"}}),
+            {"Content-Type": "application/json"},
+            200,
+        ),
+        (b"", {"Content-Type": "application/json"}, 202),
+        (
+            _rpc_result(2, {"tools": []}),
+            {"Content-Type": "application/json"},
+            200,
+        ),
+        (
+            _rpc_result(3, {"tools": []}),
+            {"Content-Type": "application/json"},
+            200,
+        ),
+    ]
+    timeouts: list[float] = []
+
+    def http_post(url, headers=None, data=None, timeout=None):
+        timeouts.append(timeout)
+        body, headers_, status = canned[len(timeouts) - 1]
+        return FakeResponse(status=status, body=body, headers=headers_)
+
+    transport = DelpiMcpTransport(
+        "http://svc:8000/mcp",
+        timeout_seconds=2.0,
+        bearer_token=TOKEN,
+        http_post=http_post,
+    )
+    transport.initialize(timeout_seconds=0.5)
+    transport.list_tools(timeout_seconds=0.25)
+    transport.list_tools(timeout_seconds=99.0)
+    # initialize rpc + notify both bounded at 0.5; then 0.25; then
+    # the configured 2.0 max — never the requested 99.
+    assert timeouts == [0.5, 0.5, 0.25, 2.0]
+
+
+def test_r1_transport_nonpositive_budget_fails_truthfully():
+    """A non-positive per-call remainder is a bounded mcp_timeout —
+    never a fresh full window on the wire."""
+    canned = [
+        (
+            _rpc_result(1, {"serverInfo": {"name": "davi"}}),
+            {"Content-Type": "application/json"},
+            200,
+        ),
+        (b"", {"Content-Type": "application/json"}, 202),
+    ]
+    timeouts: list[float] = []
+
+    def http_post(url, headers=None, data=None, timeout=None):
+        timeouts.append(timeout)
+        body, headers_, status = canned[len(timeouts) - 1]
+        return FakeResponse(status=status, body=body, headers=headers_)
+
+    transport = DelpiMcpTransport(
+        "http://svc:8000/mcp",
+        timeout_seconds=2.0,
+        bearer_token=TOKEN,
+        http_post=http_post,
+    )
+    transport.initialize()
+    with pytest.raises(SpecialistInteropError) as exc:
+        transport.list_tools(timeout_seconds=0.0)
+    assert exc.value.code == MCP_TIMEOUT
+    assert len(timeouts) == 2
+
+
+def test_r1_adapter_call_timeout_reaches_transport():
+    """The port-level bound reaches every wire leg — connect,
+    revalidation list and call share one shrinking budget."""
+    FakeTransport.instances.clear()
+    adapter = _adapter(
+        tools=(
+            {
+                'name': 'get_catalog',
+                '_meta': {'delpi/toolClass': 'READ'},
+            },
+        )
+    )
+    adapter.call_remote_tool(
+        DAVI, 'get_catalog', {}, correlation_id='c1',
+        timeout_seconds=2.5,
+    )
+    transport = FakeTransport.instances[-1]
+    assert 0 < transport.init_timeout <= 2.5
+    assert 0 < transport.list_timeouts[0] <= 2.5
+    assert 0 < transport.call_timeout <= 2.5
+    # legs share one shrinking budget — later legs never get more
+    assert transport.call_timeout <= transport.list_timeouts[0]

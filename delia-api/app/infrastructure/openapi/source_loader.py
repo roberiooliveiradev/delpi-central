@@ -29,6 +29,7 @@ from app.infrastructure.openapi.capability_catalog_adapter import (
     project_openapi_document,
 )
 from app.infrastructure.openapi.http_invoker import (
+    _OPENAPI_FETCH_TIMEOUT_SECONDS,
     HttpOpenApiInvoker,
     fetch_openapi_document,
 )
@@ -154,9 +155,18 @@ def build_openapi_source(
         )
         return None
 
-    def projector():
+    def projector(timeout_seconds: float | None = None):
+        # Caller-bound reduction ceiling (LOOP-03R2A-R1): the fetch
+        # stage max is shortened, never lengthened.
+        effective = (
+            _OPENAPI_FETCH_TIMEOUT_SECONDS
+            if timeout_seconds is None
+            else min(
+                float(timeout_seconds), _OPENAPI_FETCH_TIMEOUT_SECONDS
+            )
+        )
         document = fetch_openapi_document(
-            base_url, http_get=http_get
+            base_url, http_get=http_get, timeout_seconds=effective
         )
         return project_openapi_document(
             document,

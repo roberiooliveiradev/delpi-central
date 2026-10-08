@@ -109,7 +109,15 @@ class HttpOpenApiInvoker:
         self,
         capability: ProviderCapability,
         arguments: Mapping[str, object],
+        timeout_seconds: float | None = None,
     ) -> SpecialistOutcome:
+        # Caller-bound reduction ceiling (LOOP-03R2A-R1): the
+        # configured stage max is shortened, never lengthened.
+        effective_timeout = (
+            self._timeout
+            if timeout_seconds is None
+            else min(float(timeout_seconds), self._timeout)
+        )
         binding = capability.binding
         method = str(binding.get("http_method") or "").upper()
         if method != "GET":
@@ -158,7 +166,7 @@ class HttpOpenApiInvoker:
         }
         try:
             response = self._http_get(
-                url, headers=headers, timeout=self._timeout
+                url, headers=headers, timeout=effective_timeout
             )
         except Exception as exc:
             raise CapabilityProviderError(

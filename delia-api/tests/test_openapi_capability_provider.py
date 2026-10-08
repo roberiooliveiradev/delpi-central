@@ -116,7 +116,7 @@ DECLARATIONS = (
 
 
 def _source(invoker):
-    def projector():
+    def projector(timeout_seconds=None):
         return project_openapi_document(
             _document(),
             source_owner="DELPI",
@@ -137,7 +137,7 @@ def _source(invoker):
 
 
 def test_provider_projects_declared_capabilities():
-    provider = OpenApiCapabilityProvider([_source(lambda c, a: None)])
+    provider = OpenApiCapabilityProvider([_source(lambda c, a, t=None: None)])
     surface = provider.list_groups(correlation_id="c")
     assert len(surface.groups) == 1
     group = surface.groups[0]
@@ -154,7 +154,7 @@ def test_provider_projects_declared_capabilities():
 def test_read_capabilities_invocable_writes_unknown():
     """READ projections are invocable; the declared ACT capability is
     discoverable but UNKNOWN — never invocable in this phase."""
-    provider = OpenApiCapabilityProvider([_source(lambda c, a: None)])
+    provider = OpenApiCapabilityProvider([_source(lambda c, a, t=None: None)])
     group = provider.list_groups(correlation_id="c").groups[0]
     by_name = {c.remote_name: c for c in group.capabilities}
     assert (
@@ -182,11 +182,11 @@ def test_projection_requires_declarations():
 
 
 def test_projector_failure_is_truthful():
-    def bad():
+    def bad(timeout_seconds=None):
         raise CapabilityProviderError("openapi_document_unavailable")
 
     provider = OpenApiCapabilityProvider(
-        [_source(lambda c, a: None)]
+        [_source(lambda c, a, t=None: None)]
     )
     source = list(provider._source_by_group.values())[0]
     broken = OpenApiCapabilitySource(
@@ -194,7 +194,7 @@ def test_projector_failure_is_truthful():
         owner_ref="X",
         display_name="X",
         projector=bad,
-        invoker=lambda c, a: None,
+        invoker=lambda c, a, t=None: None,
     )
     provider = OpenApiCapabilityProvider([broken])
     surface = provider.list_groups(correlation_id="c")
@@ -326,7 +326,7 @@ def test_invoke_stamps_turn_correlation_id():
         SpecialistResultStatus,
     )
 
-    def invoker(capability, arguments):
+    def invoker(capability, arguments, timeout_seconds=None):
         return SpecialistOutcome(
             status=SpecialistResultStatus.COMPLETED,
             provenance=SpecialistResultProvenance(
@@ -348,3 +348,84 @@ def test_invoke_stamps_turn_correlation_id():
     )
     outcome = provider.invoke(cap, {}, correlation_id="turn-1")
     assert outcome.provenance.correlation_id == "turn-1"
+
+
+# --- R1: provider-neutral timeout contract ------------------------------------
+
+
+def test_r1_list_groups_forwards_bounded_timeout_to_projector():
+    """LOOP-03R2A-R1: the caller's remaining budget reaches the
+    provider-owned projection closure — reduction-only."""
+    received = []
+
+    def projector(timeout_seconds=None):
+        received.append(timeout_seconds)
+        return ()
+
+    source = OpenApiCapabilitySource(
+        source_id="delpi",
+        owner_ref="DELPI",
+        display_name="DELPI API",
+        projector=projector,
+        invoker=lambda c, a, t=None: None,
+    )
+    provider = OpenApiCapabilityProvider([source])
+    provider.list_groups(correlation_id="c", timeout_seconds=0.5)
+    assert len(received) == 1
+    assert received[0] == pytest.approx(0.5, abs=0.05)
+
+
+def test_r1_list_groups_no_bound_passes_none():
+    """Without a caller bound the projector receives None — its own
+    configured stage max applies (legacy behavior unchanged)."""
+    received = []
+
+    def projector(timeout_seconds=None):
+        received.append(timeout_seconds)
+        return ()
+
+    source = OpenApiCapabilitySource(
+        source_id="delpi",
+        owner_ref="DELPI",
+        display_name="DELPI API",
+        projector=projector,
+        invoker=lambda c, a, t=None: None,
+    )
+    OpenApiCapabilityProvider([source]).list_groups(correlation_id="c")
+    assert received == [None]
+
+
+def test_r1_invoker_shortens_never_lengthens_http_timeout():
+    """The per-turn bound shortens the configured stage max; a larger
+    bound never widens it."""
+    timeouts = []
+
+    def http_get(url, headers=None, timeout=None):
+        timeouts.append(timeout)
+        return FakeResponse(200, {"product": "X1"})
+
+    invoker = HttpOpenApiInvoker(
+        "http://api-delpi:8000",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "tok",
+        http_get=http_get,
+        timeout_seconds=15.0,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    cap = next(
+        c
+        for c in provider.list_groups(correlation_id="c").groups[
+            0
+        ].capabilities
+        if c.remote_name == "delpi.get_product"
+    )
+    provider.invoke(
+        cap, {"product_id": "X1"}, correlation_id="c",
+        timeout_seconds=0.25,
+    )
+    provider.invoke(
+        cap, {"product_id": "X1"}, correlation_id="c",
+        timeout_seconds=99.0,
+    )
+    provider.invoke(cap, {"product_id": "X1"}, correlation_id="c")
+    assert timeouts == [0.25, 15.0, 15.0]

@@ -18,6 +18,7 @@ Invariants preserved:
 
 from __future__ import annotations
 
+import time
 from typing import Mapping, Sequence
 
 from app.application.capability_provision.contracts import (
@@ -26,11 +27,16 @@ from app.application.capability_provision.contracts import (
     ProviderCapability,
     ProviderSurface,
 )
+from app.application.interaction.turn_budget import remaining_budget
 from app.application.specialist_interop.contracts import (
+    DEFAULT_INVOCATION_TIMEOUT_SECONDS,
     SpecialistCatalogRequest,
     SpecialistInvocationRequest,
 )
-from app.application.specialist_interop.errors import SpecialistInteropError
+from app.application.specialist_interop.errors import (
+    MCP_TIMEOUT,
+    SpecialistInteropError,
+)
 from app.application.specialist_interop.specialist_interop import (
     SpecialistInterop,
 )
@@ -62,12 +68,24 @@ class McpCapabilityProvider:
     ) -> ProviderSurface:
         groups: list[CapabilityGroup] = []
         failures: list[str] = []
+        # LOOP-03R2A-R1: ``timeout_seconds`` bounds the WHOLE fan-out —
+        # each specialist consult receives only the remaining budget,
+        # reduction-clamped to the configured stage max, so the
+        # listing can never outlive the caller's bound.
+        started = time.monotonic()
         for specialist_id in self._specialist_ids:
+            remaining = remaining_budget(started, timeout_seconds)
+            if remaining is not None and remaining <= 0:
+                failures.append(MCP_TIMEOUT)
+                break
             try:
                 catalog = self._interop.discover_catalog(
                     SpecialistCatalogRequest(
                         specialist_id=specialist_id,
                         correlation_id=correlation_id,
+                        timeout_seconds=self._effective_timeout(
+                            remaining
+                        ),
                     )
                 )
             except SpecialistInteropError as exc:
@@ -122,7 +140,20 @@ class McpCapabilityProvider:
                     remote_capability=str(binding["remote_name"]),
                     correlation_id=correlation_id,
                     arguments=dict(arguments),
+                    timeout_seconds=self._effective_timeout(
+                        timeout_seconds
+                    ),
                 )
             )
         except SpecialistInteropError as exc:
             raise CapabilityProviderError(exc.code, str(exc)) from exc
+
+    @staticmethod
+    def _effective_timeout(timeout_seconds: float | None) -> float:
+        """Reduction-only clamp: caller bounds shorten — never
+        lengthen — the configured stage max."""
+        if timeout_seconds is None:
+            return DEFAULT_INVOCATION_TIMEOUT_SECONDS
+        return min(
+            float(timeout_seconds), DEFAULT_INVOCATION_TIMEOUT_SECONDS
+        )

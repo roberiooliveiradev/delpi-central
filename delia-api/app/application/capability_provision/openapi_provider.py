@@ -22,6 +22,7 @@ Authority rules:
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass, replace
 from typing import Any, Callable, Mapping, Sequence
 
@@ -36,6 +37,7 @@ from app.domain.capability_catalog.model import (
     OperationCharacter,
 )
 from app.domain.evidence.model import SourceRef
+from app.application.interaction.turn_budget import remaining_budget
 from app.domain.specialist_interop.model import (
     SpecialistOperationClass,
     SpecialistOutcome,
@@ -132,14 +134,21 @@ class OpenApiCapabilitySource:
     is the provider-owned execution closure — it receives the
     capability's opaque binding plus validated arguments and returns a
     normalized SpecialistOutcome.
+
+    ``timeout_seconds`` is a caller-supplied REDUCTION ceiling (LOOP
+    -03R2A-R1): each closure keeps its own configured stage max and
+    may only shorten it — never lengthen.
     """
 
     source_id: str
     owner_ref: str
     display_name: str
-    projector: Callable[[], tuple[CapabilityProjection, ...]]
+    projector: Callable[
+        [float | None], tuple[CapabilityProjection, ...]
+    ]
     invoker: Callable[
-        [ProviderCapability, Mapping[str, object]], SpecialistOutcome
+        [ProviderCapability, Mapping[str, object], float | None],
+        SpecialistOutcome,
     ]
 
     def grants_authorization(self) -> bool:
@@ -164,9 +173,16 @@ class OpenApiCapabilityProvider:
     ) -> ProviderSurface:
         groups: list[CapabilityGroup] = []
         failures: list[str] = []
+        # LOOP-03R2A-R1: ``timeout_seconds`` bounds the WHOLE fan-out —
+        # each source projection receives only the remaining budget.
+        started = time.monotonic()
         for source in self._source_by_group.values():
+            remaining = remaining_budget(started, timeout_seconds)
+            if remaining is not None and remaining <= 0:
+                failures.append("openapi_document_unavailable")
+                break
             try:
-                projections = source.projector()
+                projections = source.projector(remaining)
             except CapabilityProviderError as exc:
                 failures.append(exc.code)
                 continue
@@ -214,7 +230,9 @@ class OpenApiCapabilityProvider:
                 "unknown_capability_group",
                 "capability does not belong to a known OpenAPI source",
             )
-        outcome = source.invoker(capability, dict(arguments))
+        outcome = source.invoker(
+            capability, dict(arguments), timeout_seconds
+        )
         # LOOP-03R1 (D09): the turn correlation id is runtime
         # authority — the provider-owned invoker may return an outcome
         # whose provenance carries no/foreign correlation. Stamp the
