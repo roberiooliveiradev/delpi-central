@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, MessageSquareWarning, PackageSearch } from "lucide-react";
 import type {
   MachineLoadOperation,
@@ -74,6 +74,18 @@ export function OperatorFeedbackModal({
         ? "ready"
         : "idle";
 
+  // Refs frescas para callbacks/props que mudam a cada render do pai —
+  // o tick do contador de peças re-renderiza a árvore inteira e NÃO pode
+  // apagar o que o operador está digitando no modal.
+  const busyRef = useRef(busy);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    busyRef.current = busy;
+    onCloseRef.current = onClose;
+  });
+
+  // Reset somente na abertura (transição false -> true). Depender de
+  // busy/onClose aqui apagaria o formulário a cada re-render do pai.
   useEffect(() => {
     if (!open) return;
     queueMicrotask(() => {
@@ -81,12 +93,16 @@ export function OperatorFeedbackModal({
       setSelected(new Set());
       setSelectionError(false);
     });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) onClose();
+      if (event.key === "Escape" && !busyRef.current) onCloseRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, busy, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
