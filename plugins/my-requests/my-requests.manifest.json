@@ -68,6 +68,18 @@
       "name": "Processar problemas de processo",
       "description": "Permite receber e tratar solicitações de problemas de processo encaminhadas pelo chão de fábrica.",
       "module": "my-requests"
+    },
+    {
+      "code": "my-requests.general-request.create",
+      "name": "Criar solicitação diversa",
+      "description": "Criar solicitações diversas direcionadas ao departamento de Processos pelo portal.",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.general-request.process",
+      "name": "Processar solicitação diversa",
+      "description": "Processar solicitações diversas direcionadas ao departamento de Processos.",
+      "module": "my-requests"
     }
   ],
   "routes": [

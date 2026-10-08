@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useMyRequestsFloatingNotice } from "../app/MyRequestsFloatingNoticeProvider";
 import { useMyRequestsDetailSync } from "../app/MyRequestsRealtimeProvider";
-import { getRequest, transitionRequest } from "../api/requestsApi";
+import { getRequest, getRequestType, transitionRequest } from "../api/requestsApi";
 import { ActionBar } from "../components/ActionBar";
 import { AppShell } from "../components/AppShell";
 import { ArtifactsPanel } from "../components/ArtifactsPanel";
@@ -15,6 +15,7 @@ import {
   type ReasonConfirmKind,
   type ReasonConfirmResult,
 } from "../components/ReasonConfirmModal";
+import { SchemaPayloadCard } from "../components/SchemaPayloadCard";
 import { TimelinePanel } from "../components/TimelinePanel";
 import {
   correctionTargetLabels,
@@ -35,7 +36,7 @@ import {
 } from "../hooks/myRequestsNavigation";
 import { useParticipantAvatarUrls } from "../hooks/useParticipantAvatarUrls";
 import { useViewportMaxWidth } from "../hooks/useViewportMaxWidth";
-import type { RequestDetail } from "../types/requests";
+import type { RequestDetail, RequestTypeSummary } from "../types/requests";
 import {
   DetailFields,
   MyRequestsJourneyProgressBar,
@@ -60,6 +61,7 @@ type RequestDetailPageProps = {
 export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   const { notifyError, notifySuccess, notifyInfo } = useMyRequestsFloatingNotice();
   const [request, setRequest] = useState<RequestDetail | null>(null);
+  const [requestType, setRequestType] = useState<RequestTypeSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [reasonKind, setReasonKind] = useState<ReasonConfirmKind | null>(null);
@@ -82,6 +84,18 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     });
     return () => ac.abort();
   }, [reload]);
+
+  // Metadados do tipo — só para renderizar o formulário schema-driven; falha é
+  // não-bloqueante (o card de payload simplesmente não aparece).
+  useEffect(() => {
+    const code = request?.type_code;
+    if (!code) return;
+    const ac = new AbortController();
+    getRequestType(code, { signal: ac.signal })
+      .then((type) => setRequestType(type))
+      .catch(() => setRequestType(null));
+    return () => ac.abort();
+  }, [request?.type_code]);
 
   const onRealtimeChanged = useCallback(() => {
     void reload().catch((err: Error) => {
@@ -315,6 +329,11 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                   payload={request.payload}
                 />
               ) : null}
+
+              <SchemaPayloadCard
+                requestType={requestType}
+                payload={request.payload}
+              />
 
               <AttachmentsPanel
                 requestId={requestId}

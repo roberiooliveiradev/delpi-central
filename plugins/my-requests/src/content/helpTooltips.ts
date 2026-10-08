@@ -77,6 +77,8 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
       "Como a operação estava cadastrada quando o operador informou o problema. Compare a ferramenta vinculada com a ferramenta que o operador digitou — a divergência pode ser exatamente o ponto a corrigir.",
     processIssueMaterials:
       "Lista dos materiais vinculados à operação na hora do reporte. Se a consulta não estava disponível naquele momento, a mensagem explica — a ocorrência continua válida.",
+    formData:
+      "Campos que foram preenchidos no formulário deste tipo de solicitação (título, descrição e demais dados enviados).",
     type: "Qual formulário e fluxo esta solicitação segue.",
     status: "Mostra em que etapa sua solicitação está neste momento.",
     branch: "Unidade da empresa relacionada a esta solicitação.",

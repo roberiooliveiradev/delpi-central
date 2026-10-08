@@ -128,6 +128,7 @@ const TYPE_NAME_FALLBACKS: Record<string, string> = {
   "invoice-issuance": "Emissão de Notas Fiscais",
   "raw-material-creation": "Criação de matéria-prima",
   "process-issue": "Problema de Processo",
+  "general-request": "Solicitação Diversa",
 };
 
 function humanizeCode(value: string): string {

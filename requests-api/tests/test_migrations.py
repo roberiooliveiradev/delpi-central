@@ -30,6 +30,7 @@ def test_list_migration_files_in_order():
         "V013__invoice_cancel_owner_only_on_awaiting_confirmation.sql",
         "V014__request_completed_by.sql",
         "V015__seed_process_issue_request_type.sql",
+        "V016__seed_general_request_type.sql",
     ]
 
 
@@ -129,3 +130,15 @@ def test_v013_cancel_owner_only_on_awaiting_confirmation():
     assert "invoice-issuance" in sql
     _, name = parse_version_and_name(v013)
     assert name == "invoice_cancel_owner_only_on_awaiting_confirmation"
+
+
+def test_v016_seeds_general_request():
+    v016 = MIGRATIONS_DIR / "V016__seed_general_request_type.sql"
+    sql = v016.read_text(encoding="utf-8")
+    assert "general-request" in sql
+    assert "schema_driven" in sql
+    assert "'none'" in sql
+    assert "my-requests.general-request" in sql
+    assert "needs_information" in sql
+    _, name = parse_version_and_name(v016)
+    assert name == "seed_general_request_type"

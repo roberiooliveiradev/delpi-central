@@ -73,6 +73,14 @@ export async function listRequestTypes(options?: { signal?: AbortSignal }) {
   return data.items || [];
 }
 
+export async function getRequestType(code: string, options?: { signal?: AbortSignal }) {
+  const body = await httpGet<Envelope<RequestTypeSummary>>(
+    `${API_BASE}/request-types/${encodeURIComponent(code)}`,
+    options,
+  );
+  return unwrap(body);
+}
+
 export async function listMyRequests(options?: RequestListQuery) {
   const qs = buildRequestListQueryParams(options);
   const body = await httpGet<Envelope<RequestListResponse>>(
