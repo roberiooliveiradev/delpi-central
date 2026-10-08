@@ -2830,3 +2830,23 @@ Owner surface changed (`9fd77c0bd1`: TÉO 23→21 tools, consolidated `record_re
 | `CI_ARCHITECTURE_ENFORCEMENT` / `CI_CURSOR_RULES_GOVERNANCE` | NOT_OBSERVED_ON_R2B_HEAD / FAIL_CURRENT_HEAD_UNRELATED (independently observed at R2B docs SHA — failed step "Audit Cursor rules", preexisting upstream debt) |
 | `ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2B` | **ACCEPT_WITH_RESIDUAL** (§6.156 — historical executor state `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` preserved; accepted residual `D05_HISTORICAL_ROOT_CAUSE=UNPROVEN`, input not persisted/irrecoverable) |
 | `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |
+
+### C3-INTELLIGENCE-LOOP-03R2B-CLOSEOUT-01 — R2B close-out, Core /me deadline, read-only prod verification (§6.156)
+
+| Claim | Result |
+|---|---|
+| `R2B_DOCUMENTATION_CLOSEOUT` | CLOSED — review + CI correction + NEXT persisted (`969ed1e166`) |
+| `CORE_ME_HTTP_TOTAL_WALL_CLOCK` | **CLOSED** (`ff7bdbddff`) — composer binds `http_get` seam to `bounded_request(deadline_http_get, ...)`; DNS→connect→TLS→status→headers→body under ONE absolute deadline = `core_timeout_seconds`; seam + failure mapping unchanged |
+| Core trickle tests | PASS / PASS / PASS — status-line, header and body trickle abort at the bound (`AuthorityUnavailableError`, real socket servers, server-side death observed) |
+| Core gzip + lowercase headers | PASS — gzipped /me JSON decodes and parses |
+| Core fast path / fail-closed / malformed | PASS / PASS / PASS — real transport fast path; no JWT fallback; malformed → `core_malformed_response` |
+| `SHARED_AUTH_JWKS_RESIDUAL` | **OWNER_FOLLOWUP_REQUIRED** — `shared/delpi_auth/jwt_validator.py` OIDC discovery + JWKS fetch use scalar `timeout=10` + cache-clear retry (owner = shared platform auth; not modified) |
+| `FULL_AUTHENTICATION_PATH_TOTAL_DEADLINE` | NOT_CLOSED — DÉLIA-owned Core leg closed; shared-auth leg open owner-side |
+| `CURRENT_PRODUCTION_DELIA_SHA` | `8686552a1e` PROVEN (server checkout HEAD + container file hash == checkout) — contains `f63f0af955` integrally |
+| `CURRENT_PRODUCTION_TEO_SHA` | `8686552a1e` PROVEN (container hash == checkout; `helpdesk_read` present → 22 tools by construction) |
+| `PRODUCTION_RUNTIME_ALIGNMENT` | PASS for R2B transport fix; `DEPLOYMENT_REQUIRED=YES` for `ff7bdbddff` (not deployed) |
+| `LIVE_PROD_EVAL` | TEST_NOT_RUN — human OIDC subject required; no enabled eval user in prod realm; impersonation/user creation not authorized |
+| `PRODUCTION_CONTENT_ENCODING_PATH` | NOT_OBSERVABLE — no interaction turns in prod logs since recreate |
+| `MATERIAL_ACT_CALLS` / `MATERIAL_PREPARE_SIDE_EFFECTS` | 0 / 0 |
+| Full delia-api suite | **958/958 PASS at `ff7bdbddff`** |
+| `C3_EXECUTED` / `C4_AUTHORIZED` / `C5_AUTHORIZED` / `PRODUCTION_READINESS` | NO / NO / NO / NOT_PROVEN (unchanged) |

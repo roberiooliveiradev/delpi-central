@@ -12211,3 +12211,137 @@ REVIEW ANNOTATION (§6.156, C3-INTELLIGENCE-LOOP-03R2B-CLOSEOUT-01):
     CI_CURSOR_RULES_GOVERNANCE = FAIL_CURRENT_HEAD_UNRELATED
       (failed step "Audit Cursor rules" — preexisting upstream debt)
     CI_ARCHITECTURE_ENFORCEMENT = NOT_OBSERVED_ON_R2B_HEAD
+
+## 6.156. C3-INTELLIGENCE-LOOP-03R2B-CLOSEOUT-01 — R2B close-out + Core /me deadline + read-only prod verification
+
+BASE_HEAD: 8686552a1e (== EXPECTED_MAIN_HEAD). Three independent
+  bounded stages; results not mixed.
+
+REANCHOR: PASS. CONCURRENT_DRIFT: NO (delia-api, delia docs and
+  shared/delpi_auth untouched since 293dcfc03f). OWNER_SURFACE_
+  CHANGED: YES — TÉO Helpdesk Intelligence Foundation V1
+  (8686552a1e): MCP surface 21 -> 22 tools, new capability
+  helpdesk_read. Owner change = input, not drift.
+
+STAGE A — R2B ARCHITECTURE CLOSE-OUT (docs commit 969ed1e166):
+  ARCHITECTURE_REVIEW_C3_INTELLIGENCE_LOOP_03R2B =
+    ACCEPT_WITH_RESIDUAL persisted non-destructively in master
+    plan, matrix, traceability and this ledger (annotation above).
+  Stale master-plan NEXT pointer corrected to this bounded step;
+  NEXT restored to RETURN_TO_ARCHITECTURE_COORDINATION.
+  CI reclassified as above. No runtime change in this stage.
+
+STAGE B — CORE /me TOTAL WALL-CLOCK DEADLINE (impl ff7bdbddff):
+  CORE_ME_HTTP_BEFORE = injected requests.get scalar timeout —
+    per-activity inactivity bound; a trickling Core /me could hold
+    the auth path open far past core_timeout_seconds.
+  RESPONSIBILITY split: B1 Core /me HTTP retrieval = DELIA
+    Infrastructure owner; B2 JWT signature/JWKS/OIDC discovery =
+    shared platform auth (Keycloak boundary) — NOT pulled in.
+  EXISTING_EQUIVALENT_CORE_HTTP = YES (bounded_request,
+    deadline_http_get, BoundedHttpResponse — already proven
+    R3–R5). REUSE_DECISION = REUSE; ABSTRACTION_GATE = PASS —
+    zero new primitive/engine/resolver.
+  IMPLEMENTATION (minimal diff): root_composer binds the existing
+    http_get seam to _bounded_http_get — a requests.get-shaped
+    wrapper over bounded_request(deadline_http_get, ...) — so
+    DNS, TCP connect, TLS, redirect, send, status line, headers
+    and body share ONE absolute deadline =
+    core_timeout_seconds. Same binding applied to the eval
+    script (_prove_core_context). Adapter contract, injection
+    seam and failure mapping untouched: exception ->
+    AuthorityUnavailableError("core_unavailable"); 401/403 ->
+    AuthenticationError("core_rejected_token"); malformed ->
+    AuthorityUnavailableError("core_malformed_response"). No
+    JWT permission ever becomes effective authority.
+  CORE_ME_HTTP_AFTER = total wall-clock bounded by the proven
+    infra. CORE_ME_HTTP_TOTAL_WALL_CLOCK = CLOSED.
+  TESTS (real socket servers, same harness as R3–R5):
+    CORE_STATUS_TRICKLE_TEST = PASS (AuthorityUnavailableError,
+      elapsed < bound+slack, server observed connection death)
+    CORE_HEADER_TRICKLE_TEST = PASS
+    CORE_BODY_TRICKLE_TEST   = PASS
+    CORE_GZIP_LOWERCASE_TEST = PASS (gzipped /me JSON with
+      lowercase headers decodes + parses into context)
+    CORE_FAST_PATH           = PASS (real transport fast /me)
+    CORE_FAIL_CLOSED         = PASS (no JWT fallback ever)
+    CORE_MALFORMED           = PASS (preexisting test preserved)
+  FOCUSED_CORE_PRECOMMIT = 25/25 PASS.
+  FULL_SUITE_PRECOMMIT = 958/958 PASS at ff7bdbddff.
+  FOCUSED_CORE_FINAL_SHA = 25/25 at ff7bdbddff (worktree ==
+    committed content verified by empty diff).
+  FULL_SUITE_FINAL_SHA = 958/958 at ff7bdbddff.
+
+  SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED —
+    shared/delpi_auth/jwt_validator.py performs OIDC discovery
+    (requests.get(DISCOVERY_URL, timeout=10)) and JWKS fetch
+    (requests.get(jwks_url, timeout=10)) with per-activity
+    scalar semantics, and validate_token() clears the cache and
+    retries _decode_token() once — a second unbounded network
+    window inside the auth path. NOT modified: owner = shared
+    platform auth; canonical = shared/delpi_auth; consumers =
+    every service importing delpi_auth (inventory required);
+    recommended direction = platform-owned bounded HTTP
+    primitive applied owner-side, never DÉLIA authority inside
+    shared auth. JWT_VALIDATION_NETWORK_TOTAL_DEADLINE =
+    NOT_BOUNDED (owner followup).
+  Honest claim boundary: DELIA_OWNED_CORE_HTTP_RESIDUAL =
+    CLOSED; FULL_AUTHENTICATION_PATH_TOTAL_DEADLINE = NOT_CLOSED
+    (shared-auth leg).
+
+STAGE C — READ-ONLY PRODUCTION VERIFICATION (srv-api via ssh):
+  CURRENT_PRODUCTION_DELIA_SHA = 8686552a1e — PROVEN: server
+    checkout HEAD + container bounded_request.py sha256 ==
+    checkout sha256 (image baked from this checkout). Contains
+    the R2B transport fix f63f0af955 integrally.
+  CURRENT_PRODUCTION_TEO_SHA = 8686552a1e — PROVEN: TÉO
+    tool_bridge.py container hash == checkout; helpdesk_read
+    code present -> live surface = 22 tools by construction
+    (authenticated tools/list still needs a subject token).
+  DAVI and VISTA MCP server/tool_bridge container hashes ==
+    checkout at the same SHA.
+  PRODUCTION_RUNTIME_ALIGNMENT = PASS for the R2B transport
+    fix. delia-api /health = 200 via public gateway
+    (minhadelpi.com.br/apps/delia-api/health).
+  PRODUCTION_CONTENT_ENCODING_PATH = NOT_OBSERVABLE — the
+    prod delia-api was recreated ~44min before inspection and
+    logs show only /health traffic; no interaction turns exist
+    to observe real provider calls against.
+  PRODUCTION_MCP_JSON_PARSE / PRODUCTION_MODEL_JSON_PARSE =
+    NOT_OBSERVABLE in prod yet (no live turns).
+  LIVE_PROD_EVAL = TEST_NOT_RUN — canonical prod subject
+    requires a human Portal OIDC auth-code session; no enabled
+    eval user exists in realm delpi (63 real users;
+    impersonation and user creation are unauthorized prod
+    mutations). Scenarios 1-5 remain blocked on a human token.
+  TÉO_LIVE_TOOL_COUNT = NOT_OBSERVED_LIVE (22 by deployed code;
+    authenticated tools/list pending subject token).
+  DELIA_LOCAL_MCP_CAPABILITY_CATALOG = NONE (unchanged).
+  DEPLOYMENT_REQUIRED = YES — ff7bdbddff (Core /me bound) is
+    not yet in prod (prod at 8686552a1e).
+  DEPLOYMENT_PERFORMED = NO — deploy is a separately authorized
+    operation; not executed here.
+  MATERIAL_ACT_CALLS = 0. MATERIAL_PREPARE_SIDE_EFFECTS = 0.
+
+EXECUTION NOTE: the worktree carried an unrelated concurrent
+  merge (api-delpi + production-control-api unmerged entries,
+  no MERGE_HEAD — preserved untouched). Commits were produced
+  via git plumbing on a temporary index (read-tree/write-tree/
+  commit-tree/update-ref) so the user's in-flight merge index
+  was never touched; the committed trees contain only this
+  task's files.
+
+CI_ARCHITECTURE_ENFORCEMENT = NOT_OBSERVED (gh CLI unavailable).
+CI_CURSOR_RULES_GOVERNANCE = NOT_OBSERVED (same; last observed
+  state FAIL_CURRENT_HEAD_UNRELATED persisted above).
+CI_CAUSALITY = INCONCLUSIVE.
+
+DNS_EXECUTOR_PROCESS_SHUTDOWN_BOUND = NOT_PROVEN (accepted
+  process-lifecycle residual; does not reopen turn budgets).
+TURN_TOTAL_BUDGET = CLOSED. TURN_EDGE_BUDGET = CLOSED.
+CORE_PLATFORM_ACCESS_HTTP_RESIDUAL = CLOSED (DÉLIA-owned leg).
+SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
