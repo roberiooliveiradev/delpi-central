@@ -70,6 +70,13 @@ def _iso(value: Any) -> Any:
     return value.isoformat() if hasattr(value, "isoformat") else value
 
 
+def _float(value: object) -> float:
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _to_request_item(
     row: dict[str, Any], *, current_work_center: str | None
 ) -> dict[str, Any]:
@@ -81,7 +88,7 @@ def _to_request_item(
         "productCode": row.get("product_code"),
         "description": row.get("description"),
         "unit": row.get("unit"),
-        "openQty": row.get("open_qty"),
+        "openQty": _float(row.get("open_qty")),
         "status": row.get("status"),
         "feedbackStatus": row.get("feedback_status"),
         "operatorCode": row.get("feedback_operator_code"),

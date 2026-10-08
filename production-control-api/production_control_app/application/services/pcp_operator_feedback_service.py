@@ -41,6 +41,13 @@ def _iso(value: Any) -> Any:
     return value.isoformat() if hasattr(value, "isoformat") else value
 
 
+def _float(value: object) -> float:
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _pcp_actor(user: Any) -> str:
     """Identificação estável do analista: id → username → preferred_username → email.
 
@@ -61,7 +68,7 @@ def _to_pcp_material(row: dict[str, Any]) -> dict[str, Any]:
         "productCode": row.get("product_code"),
         "description": row.get("description"),
         "unit": row.get("unit"),
-        "openQty": row.get("open_qty"),
+        "openQty": _float(row.get("open_qty")),
         "status": row.get("status"),
         "pickedAt": _iso(row.get("picked_at")),
         "deliveredAt": _iso(row.get("delivered_at")),

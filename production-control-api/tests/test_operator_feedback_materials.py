@@ -764,3 +764,44 @@ def test_http_create_returns_materials_in_dto() -> None:
     assert data["materials"][0]["status"] == "pending"
     # cockpit não recebe autoria interna
     assert "pickedBy" not in data["materials"][0]
+
+
+# --- regressão: NUMERIC volta como Decimal e json.dumps explodia (500) ---------
+
+
+def test_numeric_open_qty_serializes_in_pcp_and_feeder_payloads() -> None:
+    """open_qty NUMERIC retorna Decimal do Postgres — os DTOs PCP e Alimentador
+    precisam serializar como float, senão ok()/JSONResponse gera 500."""
+    import json
+    from decimal import Decimal
+
+    from production_control_app.core.responses import ok
+
+    svc, repo, _ = _public_parts()
+    item = _report_materials(svc)
+    for row in repo.materials.values():
+        row["open_qty"] = Decimal("2.500000")
+
+    pcp = PcpOperatorFeedbackService(
+        branch_access=BranchAccessService(),
+        feedbacks=svc._feedbacks,
+        materials=OperatorFeedbackMaterialService(materials=repo),
+        notify=NotifySpy(),
+    )
+    user = _user(
+        "production-control.access",
+        "production-control.machine-load.view",
+        "production-control.view.filial-01",
+    )
+    body = json.loads(ok(pcp.list_inbox(user, branch="01")).body)
+    found = next(i for i in body["data"]["items"] if i["id"] == item["id"])
+    assert found["materials"][0]["openQty"] == 2.5
+
+    feeder, _, _ = _feeder_service(repo)
+    body = json.loads(
+        ok(feeder.list_requests(_user(*FEEDER_PERMS), branch="01")).body
+    )
+    request = next(
+        i for i in body["data"]["items"] if i["feedbackId"] == item["id"]
+    )
+    assert request["openQty"] == 2.5
