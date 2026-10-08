@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  helpPath,
   newPlaylistPath,
   parseTvDashboardRoute,
   playlistPath,
@@ -40,5 +41,28 @@ describe("parseTvDashboardRoute", () => {
 
   it("builds canonical paths", () => {
     expect(newPlaylistPath()).toBe("/apps/tv-dashboard/playlists/new");
+  });
+});
+
+describe("help route", () => {
+  it("parses /help como view help (deep link)", () => {
+    expect(parseTvDashboardRoute(helpPath())).toEqual({ view: "help" });
+    expect(parseTvDashboardRoute("/apps/tv-dashboard/help")).toEqual({ view: "help" });
+  });
+
+  it("help não colide com o match legado de playlist id", () => {
+    expect(parseTvDashboardRoute("/apps/tv-dashboard/help")).not.toEqual({
+      view: "edit",
+      id: "help",
+    });
+  });
+
+  it("rotas existentes permanecem intactas", () => {
+    expect(parseTvDashboardRoute("/apps/tv-dashboard")).toEqual({ view: "list" });
+    expect(parseTvDashboardRoute("/apps/tv-dashboard/templates")).toEqual({ view: "templates" });
+    expect(parseTvDashboardRoute("/apps/tv-dashboard/abc-123")).toEqual({
+      view: "edit",
+      id: "abc-123",
+    });
   });
 });

@@ -1471,3 +1471,50 @@ export async function downloadQrPng(playlistId: string) {
   return httpGetBlob(qrDownloadUrl(playlistId));
 }
 
+
+// ---------------------------------------------------------------------------
+// Product Guide — canonical product guidance (GUIDANCE_NOT_DOMAIN_TRUTH).
+// Backend: GET /product-guides (content_routes) → product_guide_help_v1
+// whitelist. Internal refs (capability/operation/source/agent_guidance) are
+// stripped server-side and must never be re-added here.
+// ---------------------------------------------------------------------------
+
+export type ProductGuideHelpFieldGuidance = {
+  field: string;
+  guidance: string;
+  contract_ref?: string;
+};
+
+export type ProductGuideHelpTopic = {
+  id: string;
+  title: string;
+  summary: string;
+  purpose?: string;
+  use_when?: string[];
+  do_not_use_when?: string[];
+  how_to_use?: string[];
+  field_guidance?: ProductGuideHelpFieldGuidance[];
+  quality_rules?: string[];
+  common_mistakes?: string[];
+  related_topics?: string[];
+};
+
+export type ProductGuideHelpResponse = {
+  schema: string;
+  registry_version?: string;
+  topics?: ProductGuideHelpTopic[];
+  topic?: ProductGuideHelpTopic;
+};
+
+/** Full help-safe projection — one fetch per Help surface lifecycle. */
+export async function fetchProductGuideHelp(options?: { signal?: AbortSignal }) {
+  const data = await unwrap(
+    httpGet<ApiEnvelope<ProductGuideHelpResponse>>(`${API_BASE}/product-guides`, {
+      signal: options?.signal,
+    }),
+  );
+  if (data.schema !== "product_guide_help_v1") {
+    throw new Error("Formato inesperado da projeção de ajuda do produto.");
+  }
+  return data;
+}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FixedPanelPoint } from "@delpi/plugin-ui/index";
-import { Plus, Search, Upload, LayoutTemplate } from "lucide-react";
+import { BookOpen, Plus, Search, Upload, LayoutTemplate } from "lucide-react";
 
 import {
   activatePlaylist,
@@ -51,6 +51,7 @@ type Props = {
   onPreview: (id: string) => void;
   onShare: (id: string) => void;
   onOpenTemplates?: () => void;
+  onOpenHelp?: () => void;
   canManageTemplates?: boolean;
 };
 
@@ -84,6 +85,7 @@ export function PlaylistsPage({
   onPreview,
   onShare,
   onOpenTemplates,
+  onOpenHelp,
   canManageTemplates = false,
 }: Props) {
   const confirm = useConfirm();
@@ -303,6 +305,14 @@ export function PlaylistsPage({
                 title="Biblioteca de templates"
                 description="Criar, publicar e importar templates de slide (.mdd) para a organização."
                 onClick={onOpenTemplates}
+              />
+            ) : null}
+            {onOpenHelp ? (
+              <TvNavigationCard
+                icon={<BookOpen size={22} strokeWidth={2} />}
+                title="Ajuda"
+                description="Manual dos Painéis TV: conceitos, dados e verificação."
+                onClick={onOpenHelp}
               />
             ) : null}
           </>

@@ -8,7 +8,8 @@ export type TvDashboardRoute =
   | { view: "share"; id: string }
   | { view: "accept-invite"; id: string; token: string }
   | { view: "templates" }
-  | { view: "template-edit"; id: string };
+  | { view: "template-edit"; id: string }
+  | { view: "help" };
 
 export function normalizeTvDashboardPath(pathname?: string) {
   const raw = pathname ?? (typeof window !== "undefined" ? window.location.pathname : PREFIX);
@@ -19,6 +20,9 @@ export function normalizeTvDashboardPath(pathname?: string) {
 export function parseTvDashboardRoute(path: string, search?: string): TvDashboardRoute {
   const pathOnly = path.split("?")[0] ?? path;
   if (pathOnly === PREFIX) return { view: "list" };
+
+  const helpRoot = `${PREFIX}/help`;
+  if (pathOnly === helpRoot) return { view: "help" };
 
   const templatesRoot = `${PREFIX}/templates`;
   if (pathOnly === templatesRoot) return { view: "templates" };
@@ -52,7 +56,8 @@ export function parseTvDashboardRoute(path: string, search?: string): TvDashboar
     legacyMatch?.[1] &&
     legacyMatch[1] !== "assets" &&
     legacyMatch[1] !== "playlists" &&
-    legacyMatch[1] !== "templates"
+    legacyMatch[1] !== "templates" &&
+    legacyMatch[1] !== "help"
   ) {
     return { view: "edit", id: legacyMatch[1] };
   }
@@ -78,6 +83,10 @@ export function playlistAcceptInvitePath(id: string, token: string) {
 
 export function newPlaylistPath() {
   return `${PREFIX}/playlists/new`;
+}
+
+export function helpPath() {
+  return `${PREFIX}/help`;
 }
 
 export function templatesLibraryPath() {

@@ -459,7 +459,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** lista de tópicos convergidos + teste de não-duplicação.
 - **DEPENDENCIES:** PHASE 2.
 - **STOP CONDITIONS:** guide registry indisponível; MFE exigir bundle da autoridade semântica.
-- **STATUS:** READY_FOR_EXECUTION — diagnóstico completo em §31 (2026-10-09): CENTRAL_PAGE, section→topic map coberto pela Wave-1, help projection SUFFICIENT, AUTHENTICATED_HELP, fallback controlado, boundary frontend-only. Evidência histórica da dependência (§30): registry PROVEN, topic IDs estáveis, help-safe projection PROVEN (`GET /product-guides`, whitelist server-side), contrato de erro tipado (404 desconhecido), campos semânticos estáveis. Próximo passo: diagnostic dedicado do MFE (`/help` route, `helpGuideContent`, mapa seção→tópico) — nenhum frontend implementado em PHASE 2.
+- **STATUS:** DONE — implementado e verificado em §32 (2026-10-09): central Help em `/apps/tv-dashboard/help` (view `help` + nav «Ajuda» na home), `fetchProductGuideHelp` via httpClient existente sobre a projeção help-safe `product_guide_help_v1`, mapa seção→tópico 11×11 exato, merge server-semântica+local-UI, estados loading/401-403/404-422/5xx-network/empty-index/drift distintos sem fallback semântico duplicado, shared `createDashboardUserManual` reutilizado, zero backend/public/security change, testes novos verdes e `vite build` OK. Residual registrado em §32.6/§32.9.
 
 ### PHASE 4 — EDITOR GROUNDING V2
 
@@ -1107,3 +1107,59 @@ mapa seção→tópico completo vs index; tópico desconhecido → nota drift; l
 ### 31.10 Status
 
 **PHASE 3 = READY_FOR_EXECUTION** — HELP_PROJECTION=SUFFICIENT (whitelist cobre o contrato), AUTH=AUTHENTICATED_HELP, FALLBACK=controlado sem prosa duplicada, arquitetura=CENTRAL_PAGE com precedente interno provado, boundary pequeno e frontend-only, zero backend change.
+
+## 32. PHASE 3 — EXECUTION RECORD (Help Convergence, 2026-10-09)
+
+Reanchor: `HEAD == origin/main == 9dd90cdc43`. EXECUTION_DRIFT check: commits posteriores a `da79260925` não tocaram Help arch, API client, federation, routing model nem projeção help-safe → **drift = NONE**.
+
+### 32.1 Implementation
+
+CENTRAL_PAGE implementada conforme §31.6/§31.7 — boundary exato, frontend-only:
+
+| File | Change |
+|---|---|
+| `src/api/tvDashboardApi.ts` | `fetchProductGuideHelp()` + `ProductGuideHelpTopic`/`ProductGuideHelpFieldGuidance`/`ProductGuideHelpResponse` — `httpGet` + envelope `unwrap` + `AbortSignal` via httpClient existente; rejeita `schema !== product_guide_help_v1` |
+| `src/content/userManualContent.ts` | 11 seções locais (nav labels + links want/where/how/path + scopeNote). Zero prosa semântica de produto |
+| `src/content/helpGuideContent.ts` | `HELP_SECTION_TOPICS` (11×11 exato, §31.3), `indexTopicsById`, `missingConfiguredTopics` (drift gate), `sectionIdForTopic`, `relatedSectionsFor`, `mergeManualWithGuides` (intro/bullets do guide, bullets locais anexados, links nunca substituídos), notas explícitas LOADING/UNAVAILABLE/AUTH/CONFIG/DRIFT |
+| `src/pages/HelpPage.tsx` | `TvLibraryPageLayout` + `TvPageHeader` (nav=Voltar) + `createDashboardUserManual({prefix:"td"})` + `TvSectionCard`; fetch único on-mount com `AbortController`; retry; «Veja também» via related_topics |
+| `src/routing.ts` | `view: "help"` + `helpPath()` (`/apps/tv-dashboard/help`); `"help"` adicionado às exclusões do legacy `/:id` match (sem colisão com playlist id) |
+| `src/App.tsx` | `case "help"` + `isLibraryShell` inclui help + `onOpenHelp` → `helpPath()` |
+| `src/pages/PlaylistsPage.tsx` | prop `onOpenHelp` + `TvNavigationCard` «Ajuda» (BookOpen) na actions grid da home |
+
+### 32.2 Route / nav
+
+`HELP_ROUTE = /apps/tv-dashboard/help` (view `help`, deep-link provado em `routing.test.ts`); `NAV_ENTRY = PlaylistsPage.actions «Ajuda»` (mesmo padrão `TvNavigationCard` de «Biblioteca de templates»). Sem rota pública; preview/share/kiosk intocados.
+
+### 32.3 Fetch / cache / merge
+
+`FETCH = single projection GET /apps/tv-dashboard-api/product-guides` (sem `?view=` — help-safe é default da rota) via `fetchProductGuideHelp` → envelope `unwrap`. `CACHE = component lifecycle` (AbortController; fetch único por mount, retry manual) — sem novo cache service. `MERGE = server intro(summary+purpose)/bullets(how_to_use+quality_rules) + bullets locais anexados + links locais intactos`; tópico ausente → `HELP_DRIFT_NOTE` na seção; `related_topics` → navegação «Veja também» entre seções mapeadas.
+
+### 32.4 Error semantics (conforme §31.5)
+
+loading (`HELP_LOADING_NOTE`, links visíveis) · success (merge) · 401/403 (`HELP_AUTH_NOTE`, HttpRequestError.status) · 404/422 (`HELP_CONFIG_NOTE`) · 5xx/network (`HELP_UNAVAILABLE_NOTE` + retry) · empty index (`HELP_CONFIG_NOTE`, não-sucesso) · missing configured topic (`HELP_DRIFT_NOTE` por seção + `missingConfiguredTopics` gate de teste). **Zero stale semantic fallback.**
+
+### 32.5 Tests
+
+| Suite | Result |
+|---|---|
+| `tvDashboardApi.productGuide.test.ts` (7) | PASS — URL/envelope/GET-sem-body, whitelist help-safe, AbortSignal, 401/403/404/5xx/network, schema mismatch |
+| `helpGuideContent.test.ts` (10) | PASS — mapa 11×11 exato, drift detection, loading/unavailable/auth note, merge semântica+local, drift por seção, related→seções |
+| `routing.test.ts` (+3) | PASS — deep-link `/help`, sem colisão legacy, rotas existentes intactas |
+| `HelpPage.test.tsx` (6) | PASS — loading, render merge, 5xx+retry+links locais, 401, 404, empty index |
+| `App.smoke.test.tsx` (2) | PASS — stale-mock repair (`listMFunctions`, `listPlaylistMedia`, `fetchProductGuideHelp`) + label de aba atual («Inserir», «Página inicial» renomeada no refactor do editor) |
+
+### 32.6 Build / typecheck / lint
+
+`vite build` PASS (remote `@delpi/plugin-ui` resolve em build real; UserManual shell provado) · `check:css-scope` PASS · vitest MFE 1379/1386 pass — **7 falhas pré-existentes** em área comunicado/deck WIP do usuário (`applySlideTheme`, `DeckRevisionHistoryPanel`, `deckRibbonCollapseIcons`, `FormatRibbonFrameSection`, `PlaylistPreviewPage.loading`, `comunicadoBlockLabels`, `comunicadoSameSize`), zero relacionadas ao diff · `tsc -p tsconfig.build.json` **baseline RED** (~110 erros pré-existentes `src/utils/*`+`tv-dashboard-presentation`, verificado com os arquivos modificados stashados: falha existe sem o diff; **zero erros nos arquivos do diff**) · eslint nos arquivos do diff: 0 erros novos (baseline já tinha erros em `App.tsx`/`PlaylistsPage.tsx`).
+
+### 32.7 Residual search
+
+Sem prosa do guide no MFE (userManualContent = nav/links apenas) · sem campos internos (`capability_refs`/`operation_refs`/`agent_guidance`/`ui_refs`) · sem import TÉO · sem segundo HTTP/auth client · sem rota pública · sem dependência nova · `helpTooltips.ts` intocado (87 consumers operacionais) · `dataBuilderChatContent` intocado.
+
+### 32.8 Invariants
+
+`DISPLAY_FORMAT PARTIAL`, `SEARCH MISS IS_NOT ABSENCE`, `schematic != pixels`/`ImageContent != inspeção visual` — preservados (semântica vem do guide server-side, não de paráfrase local). Backend/Product Guide schema/registry/topics/rotas: **intocados**. AuthZ/MCP/GPT Actions/KO/`PresentationMutation`/public-hub: **intocados**. Semântica de Design Methodology: não absorvida (PHASE 5). `registry_version` flui no payload (provenance), não renderizado (ruído técnico).
+
+### 32.9 Status
+
+**PHASE 3 = DONE** — CENTRAL HELP = LIVE, PRODUCT GUIDE SEMANTIC SOURCE = PROVEN, SECTION→TOPIC MAP = PROVEN (teste), HELP-SAFE FETCH = PROVEN, LOCAL UI HELP = PRESERVED, STALE SEMANTIC FALLBACK = ABSENT, BACKEND/PUBLIC/SECURITY CHANGES = NONE. Residual: typecheck baseline RED pré-existente (refactor comunicado do usuário em voo — não do escopo); 7 falhas de teste pré-existentes idem; tooltip MIXED splits de §31.2 adiados (rule: central help first, cleanup mínimo/zero).

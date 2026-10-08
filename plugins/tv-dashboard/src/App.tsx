@@ -7,6 +7,7 @@ import { NoticeDialogProvider } from "./context/NoticeDialogProvider";
 import { TvDashboardSessionProvider } from "./context/TvDashboardSessionContext";
 import { useSuppressBrowserContextMenu } from "./hooks/useSuppressBrowserContextMenu";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
+import { HelpPage } from "./pages/HelpPage";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
 import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
 import { PlaylistPreviewPage } from "./pages/PlaylistPreviewPage";
@@ -15,6 +16,7 @@ import { PlaylistsPage } from "./pages/PlaylistsPage";
 import { TemplateEditorPage } from "./pages/TemplateEditorPage";
 import { TemplateLibraryPage } from "./pages/TemplateLibraryPage";
 import {
+  helpPath,
   newPlaylistPath,
   normalizeTvDashboardPath,
   parseTvDashboardRoute,
@@ -79,7 +81,10 @@ export default function App({
   const isDeckEditor = route.view === "edit";
   const isTemplateEditor = route.view === "template-edit";
   const isLibraryShell =
-    route.view === "list" || route.view === "templates" || route.view === "share";
+    route.view === "list" ||
+    route.view === "templates" ||
+    route.view === "share" ||
+    route.view === "help";
   const playlistId =
     route.view === "edit" || route.view === "preview" || route.view === "share"
       ? route.id
@@ -122,12 +127,20 @@ export default function App({
             onOpen={(id) => navigate(playlistPath(id))}
             onCreate={() => navigate(newPlaylistPath())}
             onOpenTemplates={() => navigate(templatesLibraryPath())}
+            onOpenHelp={() => navigate(helpPath())}
             onPreview={(id) => {
               void preparePreviewNavigation(id).then(() => {
                 navigate(playlistPreviewPath(id));
               });
             }}
             onShare={(id) => navigate(playlistSharePath(id))}
+          />
+        );
+      case "help":
+        return (
+          <HelpPage
+            onNavigate={navigate}
+            onBack={() => navigate("/apps/tv-dashboard")}
           />
         );
       case "templates":

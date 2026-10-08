@@ -43,6 +43,9 @@ vi.mock("./api/tvDashboardApi", () => ({
   getPreviewPayload: vi.fn().mockResolvedValue({ slides: [] }),
   getPresentationStatus: vi.fn().mockResolvedValue({ status: "never" }),
   getUiContent: vi.fn().mockResolvedValue({ admin: {} }),
+  fetchProductGuideHelp: vi.fn(),
+  listMFunctions: vi.fn().mockResolvedValue({ items: [] }),
+  listPlaylistMedia: vi.fn().mockResolvedValue({ items: [] }),
   listNativeScreens: vi.fn().mockResolvedValue([]),
   listSlidePresets: vi.fn().mockResolvedValue([]),
   regeneratePlaylistToken: vi.fn(),
@@ -103,7 +106,7 @@ describe("App smoke", () => {
     );
 
     expect(
-      await screen.findByRole("tab", { name: /página inicial/i, timeout: 8000 }),
+      await screen.findByRole("tab", { name: /inserir/i, timeout: 8000 }),
     ).toBeTruthy();
   });
 });
