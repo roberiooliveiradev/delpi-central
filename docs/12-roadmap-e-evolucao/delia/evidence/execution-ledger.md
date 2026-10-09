@@ -13271,3 +13271,73 @@ PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
   (R4 independent reviewer gate; R2 capability-projection
   decision; both separate authorizations)
+
+## §6.166 — DELIA-UX-S2-RECEPTION-CONVERSATION-SHELL-IMPLEMENTATION-01 (published, review pending)
+
+### Task
+
+`DELIA-UX-S2-RECEPTION-CONVERSATION-SHELL-IMPLEMENTATION-01` —
+bounded UX implementation of doc 69 WF-01..WF-03 direction:
+reception, session timeline, single composer, honest loading,
+responsive shell for full page + global dock. Authorized by Product
+Master (incl. commit + push on `main`). No backend change, no
+contract change, no phase advance.
+
+### Implementation
+
+- IMPLEMENTATION_SHA = `7c4e22c13d0ffa6c09ad419f15bdacc5deb3e22a`
+- Files (all under `plugins/delia/src`): `App.tsx` recomposed;
+  `ui/DeliaReception.tsx`, `ui/ConversationTimeline.tsx`,
+  `ui/DeliaComposer.tsx` (new); `ui/deliaUi.ts` (+`DeliaLoadingBadge`);
+  `index.css` shell/timeline/composer/responsive/reduced-motion;
+  `s2.shell.test.tsx` (new, 12 tests).
+- REUSE: `NativeTextAreaControl`, `createDashboardLoadingActivityBadge`,
+  `DelpiLogoMark`, `DeliaPageHeader`, `DeliaStatusBadge` — all
+  `@delpi/plugin-ui`. No parallel UI library, no new abstraction.
+- Reception states only proven facts (transient session, answers
+  depend on available sources/permissions); zero capability cards.
+- Composer: Enter submits, Shift+Enter newline, IME `isComposing`
+  guard, draft preserved on failure, empty submit blocked.
+- Timeline: `role="log"` polite region; user right / DÉLIA left;
+  S1 surfaces (badges, owner hint dedupe, epistemic, provenance,
+  limitations, governed confirmation) preserved unchanged.
+- Loading: indeterminate honest label only ("processando sua
+  solicitação"), no provider/stage claims.
+- Autoscroll only when near bottom or user just sent (doc 69 §10).
+
+### Evidence (executed on base `e433dc88d3`, published `7c4e22c13d`)
+
+- `npm run test` = 87/87 PASS (8 files; 12 new S2 tests + all S1
+  regression intact).
+- `npm run typecheck` = PASS (tsc, no errors).
+- `npm run build` = PASS (vite build 2.2s; federation patch verified
+  by `verify:federation` = OK).
+- GitHub API verified: commit on `main`, exactly the 7 delia files;
+  no other front touched; no deploy workflow triggered by
+  `plugins/delia` path (MFE built into image at deploy time).
+
+### Status (factual)
+
+`IMPLEMENTATION = PUBLISHED`
+`INDEPENDENT_REVIEW = PENDING`
+`DEPLOYMENT = NOT_PERFORMED`
+`LIVE_VERIFICATION = PENDING` (dock/page render + interaction smoke
+require deploy authorization)
+`CONTRACT_IMPACT = NONE` (presentation.v1 adapter untouched; no
+backend/API/manifest change)
+
+### Residuals
+
+- Responsive/dark-mode verified structurally (tokens + media
+  queries), not by rendered-browser matrix — real viewport/dock
+  validation pending deploy.
+- Reception suggestion cards intentionally absent — require
+  authorized capability projection (separate product decision, same
+  gate as §6.165 R2).
+- Dock ↔ page session continuity not implemented (no contract for
+  shared session — TO_INVENTORY per doc 69).
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+  PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+  (independent review of `7c4e22c13d`; deploy decision separate)
