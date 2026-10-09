@@ -44,6 +44,7 @@ from tm_app.application.use_cases.migrate_legacy_diagram_to_bpmn import (
     MigrationExecutionError,
     MigrateLegacyDiagramToBpmnUseCase,
 )
+from tm_app.domain.diagram.flowchart_v1 import FlowchartValidationError
 from tm_app.domain.diagram.legacy_bpmn_migration import (
     STATUS_READY,
     LegacyFlowchartToBpmnMapper,
@@ -69,6 +70,8 @@ MIGRATE_CAPABILITY = "migrate_legacy_diagram_to_native_bpmn"
 LEGACY_EMPTY = "LEGACY_DIAGRAM_EMPTY"
 NATIVE_EXISTS = "NATIVE_BPMN_ALREADY_EXISTS"
 DUAL_MODE = "dual_mode_forbidden"
+COMPOSITION_CONFLICT = "LEGACY_COMPOSITION_CONFLICT"
+COMPOSITION_INVALID = "LEGACY_COMPOSITION_INVALID"
 
 
 class MigrationWriteStack(NamedTuple):
@@ -115,6 +118,16 @@ def _source_fingerprint(
             "legacy": composed.get("flowchart"),
             "applied_revisoes": [
                 r.get("revisao_id") for r in composed.get("applied_revisoes") or []
+            ],
+            # G8-COMP-1 — per-revision contribution hashes keep the seal
+            # sensitive to every contributing overlay, including ones whose
+            # elements were deduplicated as semantically equivalent.
+            "contributions": [
+                {
+                    "revisao_id": c.get("revisao_id"),
+                    "overlay_sha256": c.get("overlay_sha256"),
+                }
+                for c in composed.get("contributions") or []
             ],
             "native_document_present": stack.docs.has_active(processo_id),
             "external_reference_present": stack.refs.get_active(processo_id)
@@ -194,7 +207,59 @@ def prepare(
         "composed_at": composed.get("at"),
         "legacy_nodes": len(flowchart.get("nodes") or []),
         "legacy_edges": len(flowchart.get("edges") or []),
+        "composition_provenance": composed.get("provenance") or {},
+        "contributions": composed.get("contributions") or [],
+        "composition_conflicts": composed.get("conflicts") or [],
+        "composition_notes": composed.get("composition_notes") or [],
     }
+
+    # G8-COMP-1 — divergent same-id contributions across instances are an
+    # explicit composition conflict: block before mapping, report who
+    # contributed and how the variants diverge. Never pick a winner.
+    composition_conflicts = composed.get("conflicts") or []
+    if composition_conflicts:
+        candidate_report = {
+            "status": "BLOCKED",
+            "error_kind": COMPOSITION_CONFLICT,
+            "composition_conflicts": composition_conflicts,
+            "warnings": [
+                "Contribuições legadas com mesmo id e semântica divergente. "
+                "Resolva o conflito nas revisões/overlays legados antes de "
+                "migrar — a migração não escolhe vencedor."
+            ],
+        }
+        return {
+            "resource_type": "process_bpmn_document",
+            "resource_id": processo_id,
+            "current_state_fingerprint": source_fp,
+            "exact_change": {
+                "processo_id": processo_id,
+                "candidate_xml": None,
+                "candidate_sha256": None,
+                "legacy_source_fingerprint": source_fp,
+                "mapping_report": candidate_report,
+                "source_summary": source_summary,
+            },
+            "validation_result": {
+                "ready": False,
+                "migration_report": candidate_report,
+                "bpmn_validation": {"stage": "composition_conflict", "passed": False},
+            },
+            "consequential_impact": {
+                "persists": False,
+                "operation": MIGRATE_CAPABILITY,
+                "blocked_by": COMPOSITION_CONFLICT,
+            },
+            "confirmation_requirement": {},
+            "expected_postcondition": {
+                "type": "native_bpmn_created_from_migration",
+                "processo_id": processo_id,
+            },
+            "meta": {
+                "applied_revisoes": composed.get("applied_revisoes") or [],
+                "base_node_count": composed.get("base_node_count"),
+            },
+        }
 
     if override_xml:
         candidate_xml = override_xml
@@ -209,64 +274,83 @@ def prepare(
         }
         ready = True
     else:
-        candidate = LegacyFlowchartToBpmnMapper().map(
-            flowchart,
-            process_name=processo_name,
-            resolutions=resolutions,
-        )
-        candidate_xml = candidate.bpmn_xml
-        candidate_sha = candidate.checksum_sha256
-        candidate_report = candidate.to_report_dict()
-        ready = candidate.status == STATUS_READY
+        try:
+            candidate = LegacyFlowchartToBpmnMapper().map(
+                flowchart,
+                process_name=processo_name,
+                resolutions=resolutions,
+            )
+        except FlowchartValidationError as exc:
+            # Composed legacy is structurally invalid — governed BLOCKED
+            # instead of a raw validator traceback.
+            candidate_xml = None
+            candidate_sha = None
+            candidate_report = {
+                "status": "BLOCKED",
+                "error_kind": COMPOSITION_INVALID,
+                "warnings": [str(exc)],
+            }
+            ready = False
+        else:
+            candidate_xml = candidate.bpmn_xml
+            candidate_sha = candidate.checksum_sha256
+            candidate_report = candidate.to_report_dict()
+            ready = candidate.status == STATUS_READY
 
     # ---- shared BPMN validation (G7 pipeline) ------------------------------
     # Same canonical intake boundary as manage_process_bpmn_document:
     # intake_bytes → artifact+evidence → validate(artifact, evidence).
     validation_summary: dict[str, Any] = {"stage": "skipped"}
-    try:
-        intake = intake_bytes(candidate_xml.encode("utf-8"))
-        if intake.artifact is None:
+    if candidate_xml is None:
+        validation_summary = {
+            "stage": "composition_invalid",
+            "passed": False,
+        }
+    else:
+        try:
+            intake = intake_bytes(candidate_xml.encode("utf-8"))
+            if intake.artifact is None:
+                validation_summary = {
+                    "stage": "intake",
+                    "passed": False,
+                    "error": "Candidato não é XML BPMN decodificável.",
+                }
+                ready = False
+            else:
+                report = LxmlBpmnValidator().validate(
+                    intake.artifact, evidence=intake.evidence
+                )
+                blocking = [
+                    i
+                    for i in report.issues
+                    if getattr(i.severity, "value", i.severity) == "error"
+                ]
+                validation_summary = {
+                    "evaluated_stages": sorted(
+                        s.value for s in report.evaluated_stages
+                    ),
+                    "issues": [
+                        {
+                            "rule_id": i.rule_id,
+                            "rule_source": i.source.value,
+                            "stage": i.stage.value,
+                            "severity": i.severity.value,
+                            "message": i.message,
+                        }
+                        for i in report.issues
+                    ],
+                    "blocking_issues": len(blocking),
+                    "passed": len(blocking) == 0,
+                }
+                if blocking:
+                    ready = False
+        except Exception as exc:  # validation infra failure → never auto-READY
             validation_summary = {
-                "stage": "intake",
+                "stage": "failed",
                 "passed": False,
-                "error": "Candidato não é XML BPMN decodificável.",
+                "error": str(exc),
             }
             ready = False
-        else:
-            report = LxmlBpmnValidator().validate(
-                intake.artifact, evidence=intake.evidence
-            )
-            blocking = [
-                i
-                for i in report.issues
-                if getattr(i.severity, "value", i.severity) == "error"
-            ]
-            validation_summary = {
-                "evaluated_stages": sorted(
-                    s.value for s in report.evaluated_stages
-                ),
-                "issues": [
-                    {
-                        "rule_id": i.rule_id,
-                        "rule_source": i.source.value,
-                        "stage": i.stage.value,
-                        "severity": i.severity.value,
-                        "message": i.message,
-                    }
-                    for i in report.issues
-                ],
-                "blocking_issues": len(blocking),
-                "passed": len(blocking) == 0,
-            }
-            if blocking:
-                ready = False
-    except Exception as exc:  # validation infra failure → never auto-READY
-        validation_summary = {
-            "stage": "failed",
-            "passed": False,
-            "error": str(exc),
-        }
-        ready = False
 
     return {
         "resource_type": "process_bpmn_document",

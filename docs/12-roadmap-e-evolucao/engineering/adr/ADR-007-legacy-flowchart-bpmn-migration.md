@@ -28,6 +28,19 @@ Nunca: MIGRATION → DELETE HISTORY
   cronológica (a "visão composta" já derivada server-side). Cliente nunca
   fornece o diagrama-fonte; sem overlay vigente, source = macro base
   (reportado em `source_summary.applied_revisoes`).
+- **Composição multi-instância (G8-COMP-1):** identidade ≠ equivalência
+  semântica. Mesmo `id` + mesmo payload semântico (`type/label/lane_id` em
+  nós; `from/to/kind/label` em edges; geometria divergente é reportada em
+  `composition_notes`, não oculta) → um elemento composto + todos os
+  contributors em `provenance` com flag `deduplicated`. Mesmo `id` +
+  semântica divergente → `conflicts[]` explícito (`CompositionConflict`
+  com contributors + variants) e PREPARE retorna `BLOCKED` /
+  `LEGACY_COMPOSITION_CONFLICT` antes do mapper — nunca last-write-wins,
+  nunca skip cego, nunca rename. Mesma regra vale para `node_overrides` /
+  `edge_overrides` equivalentes e remoções repetidas; remove-vs-modify
+  divergente é conflito. O fingerprint sela `contributions` por revisão
+  (`overlay_sha256`) — dedup do output **não** remove fonte do selo: se um
+  overlay deduplicado mudar pós-PREPARE, o proposal fica `proposal_stale`.
 - **Mapper puro:** `tm_app/domain/diagram/legacy_bpmn_migration.py` — sem
   DB/HTTP/TÉO/frontend. Entrada = flowchart_v1 composto normalizado; saída =
   `MigrationCandidate` (BPMN 2.0 XML + BPMN-DI, ID map estável, relatório
