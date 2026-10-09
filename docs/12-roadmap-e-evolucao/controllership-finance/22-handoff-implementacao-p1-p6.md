@@ -279,17 +279,26 @@ Pacotes por destinatário avançam independentemente. PACKAGE_SENT é imutável;
 ### Canal
 A finalização/versionamento está especificada.
 
-O slice de envio permanece bloqueado por:
-- E04 — canal real;
-- T04 — capability corporativa.
+O inventário E04/T04 foi concluído; o slice de envio permanece bloqueado por decisão material.
 
-Não assumir e-mail, pasta, Teams ou mecanismo próprio.
+Authority:
+- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+
+Proven:
+- Graph e-mail + attachments;
+- Message Trace em CIPA/Transformômetro.
+
+Decision required:
+- owner/orchestration;
+- semântica de `PACKAGE_SENT`.
+
+Não implementar a recomendação sem aprovação.
 
 ### Help
 Finalizar vs Enviar, versionamento, envio parcial, imutabilidade, esclarecimentos e critério de conclusão.
 
 ### Dependências / stop
-Q22/E04/T04 bloqueiam implementação do envio real, não a modelagem de pacote/finalização.
+Q22/E04/T04 permanecem DECISION_REQUIRED para o envio real; package/finalization continua fechado.
 
 ## P6 — Administração e Configuração
 
@@ -361,7 +370,7 @@ Não definir route pattern antes do inventário de plugin/basePath. O contrato d
 | P2 | coberto | coberto transversalmente | coberto | coberto | definido acima | produto + sources autorizados | ledger 23 | READY_FOR_IMPLEMENTATION_INVENTORY |
 | P3 | coberto | Gate V2 fechado | coberto | coberto | definido acima + E02 terminal | T01/T03 | ledger 23 + 15.1 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 |
 | P4 | coberto | page-level fechado em 11 | coberto | coberto | definido acima | owner CC + T01/T05 | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
-| P5 | package/finalization fechado; envio condicionado | page-level fechado em 12 | coberto | coberto | definido acima | owners/sources + E04/T04 para envio | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / SEND_BLOCKED_WITH_EVIDENCE |
+| P5 | package/finalization fechado; envio condicionado | page-level fechado em 12 | coberto | coberto | definido acima | owners/sources + E04/T04 para envio | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / SEND_DECISION_REQUIRED |
 | P6 | coberto | coberto transversalmente | coberto | coberto | definido acima | ADM01–ADM07 + E/T aplicáveis | ledger 23 + 28 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 
 ## Regra de execução
