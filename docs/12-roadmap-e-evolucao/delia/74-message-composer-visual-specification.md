@@ -279,3 +279,65 @@ A versão visual pode **prever** a posição de controles futuros, mas a impleme
 - [ ] Docs não são `PASS` de runtime e não mudam fase; implementar requer task bounded autorizada.
 
 **Status desta extensão:** `DESIGN_DOCUMENTED`; implementação dos elementos adicionais `PLANNED/TARGET` conforme contrato, sem presunção de disponibilidade.
+
+## 26. Registro de implementação (v1)
+
+**Task:** `DELIA-UX-MESSAGE-COMPOSER-PLUGIN-UI-FULL-IMPLEMENTATION-01`
+**Commit:** `5eb401f696e38c21b69fa8666d72c5d1cbc34b3f`
+**Status:** `IMPLEMENTADO` (v1) — código publicado na `main`; evidência visual em navegador real pendente de deploy (`TEST_NOT_RUN`).
+
+### Componentes criados em `@delpi/plugin-ui` (`src/components/composer/`)
+
+| Componente | Responsabilidade |
+|---|---|
+| `MessageComposer` | Composição pública: superfície única, faixa de escrita, toolbar, helper/erro fora da superfície, auto-grow, Enter/Shift+Enter/IME, bloqueio de envio vazio |
+| `ComposerSendButton` | Envio primário (wrapper fino sobre `ActionButton` `variant="primary"`): label acessível honesto no sending, sem duplo submit |
+| `ComposerCharacterCounter` | `n/limite` discreto — renderiza somente com `characterLimit` real informado |
+
+### Componentes reutilizados
+
+- `NativeTextAreaControl` — textarea nativa (borda/sombra neutralizadas pela CSS do composer).
+- `ActionButton` (`variant="primary"`) — base do envio (azul institucional via tokens).
+- `IconButton` — primitive oficial para futuras ações secundárias (anexo/voz/ações), quando houver contrato.
+- `MentionComposer` **não** é equivalente: editor rich-text/markdown das salas de interação; `EXISTING_EQUIVALENT=NO`.
+
+### API pública
+
+```ts
+type MessageComposerProps = {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  inputId?: string;
+  inputLabel?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  loadingLabel?: string;
+  helperText?: ReactNode;
+  error?: string | null;
+  secondaryActions?: ReactNode;
+  keyboardHint?: string | null;
+  characterLimit?: number;
+  maxInputHeight?: number;
+  sendLabel?: string;
+  className?: string;
+};
+```
+
+Sem tipos de negócio DÉLIA, sem permissões, sem provider ID, sem persistência própria.
+
+### Integração DÉLIA
+
+`plugins/delia/src/ui/DeliaComposer.tsx` virou wrapper fino: placeholder `Pergunte à DÉLIA…`, `inputLabel="Pergunte à DÉLIA"`, `helperText` de confiança, `characterLimit={INTERACTION_INPUT_CHAR_LIMIT}` (= 16384, espelho do bound real `MAX_INPUT_CHARS` imposto pelo delia-api sobre `input` — backend continua autoridade) e `className="delia-composer"` para ancoragem. Erro de envio permanece na região de alerta do `App` (anterior ao composer), não duplicado.
+
+### Diferenças reais frente ao conceito
+
+- **Contador:** habilitado com limite real `16384` (provado no backend); posição no canto inferior direito da faixa de escrita.
+- **Toolbar:** regiões previstas (ações secundárias à esquerda via `secondaryActions`, hint central, envio à direita). Sem botões de anexo/voz/ações — nenhum contrato existe; nenhum placeholder renderizado.
+- **Dock:** mesma composição; hint e rótulo do botão colapsam via CSS responsivo (`@container` + fallback de viewport), sem componente separado.
+- **Temas:** mesma anatomia claro/escuro via tokens do Portal (`--delpi-ui-*` com fallback `--surface`/`--text`/`--border`/`--primary`).
+
+### Gates preservados
+
+Anexo, voz e ações rápidas permanecem `TARGET — CONTRACT_REQUIRED`; o contador depende de `characterLimit` explícito; nenhuma capability é inferida de provider/metadata.
