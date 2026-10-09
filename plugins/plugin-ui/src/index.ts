@@ -5,6 +5,7 @@
  * Como contribuir: docs/contributing.md
  */
 export * from "./components/actions";
+export * from "./components/composer";
 export * from "./components/help";
 export * from "./components/layout";
 export * from "./components/navigation";

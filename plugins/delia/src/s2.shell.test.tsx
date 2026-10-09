@@ -260,6 +260,39 @@ describe("S2-C composer", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("uses the shared plugin-ui composer surface (two bands)", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response()));
+    const { container } = render(<App getAccessToken={() => "t"} />);
+
+    const composer = container.querySelector(
+      ".delpi-ui-message-composer.delia-composer",
+    );
+    expect(composer).toBeTruthy();
+    expect(
+      composer!.querySelector(".delpi-ui-message-composer__write"),
+    ).toBeTruthy();
+    expect(
+      composer!.querySelector(".delpi-ui-message-composer__toolbar"),
+    ).toBeTruthy();
+  });
+
+  it("shows the real input bound counter and the trust helper", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response()));
+    render(<App getAccessToken={() => "t"} />);
+
+    expect(screen.getByText("0/16384")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "A DÉLIA pode cometer erros. Confirme informações importantes.",
+      ),
+    ).toBeTruthy();
+    // No speculative secondary actions are rendered.
+    const toolbar = document.querySelector(
+      ".delpi-ui-message-composer__toolbar",
+    )!;
+    expect(toolbar.querySelectorAll("button")).toHaveLength(1);
+  });
 });
 
 // --- S2-D — honest loading + errors ----------------------------------

@@ -362,71 +362,11 @@
 
 /* ---------- S2-C — composer */
 
-/* S3 — floating rounded composer anchored at the conversation bottom. */
+/* Visual owned by plugin-ui `.delpi-ui-message-composer`; DÉLIA keeps
+   only layout anchoring at the conversation bottom. */
 .dashboard-delia .delia-composer {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
   flex-shrink: 0;
   margin: 0 var(--delia-card-padding) var(--delia-card-padding);
-  padding: 8px 8px 8px 14px;
-  border: 1px solid var(--delia-border);
-  border-radius: 16px;
-  background: var(--delia-surface);
-  box-shadow: 0 2px 10px color-mix(in srgb, #000 5%, transparent);
-}
-
-.dashboard-delia .delia-composer:focus-within {
-  border-color: var(--delia-focus-ring);
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--delia-focus-ring) 14%, transparent);
-}
-
-.dashboard-delia .delia-composer__input {
-  flex: 1;
-  min-width: 0;
-  min-height: 40px;
-  max-height: 160px;
-  padding: 9px 2px;
-  resize: none;
-  overflow-y: auto;
-  font: inherit;
-  line-height: 1.4;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-.dashboard-delia .delia-composer__input:focus {
-  outline: none;
-}
-
-.dashboard-delia .delia-composer__submit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 40px;
-  font: inherit;
-  font-weight: 600;
-  color: #ffffff;
-  background: var(--delia-accent);
-  border: none;
-  border-radius: 12px;
-  padding: 8px 16px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.dashboard-delia .delia-composer__submit:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.dashboard-delia .delia-composer__submit:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--delia-focus-ring) 35%, transparent);
 }
 
 /* ---------- Governed confirmation (preserved from S1) */
@@ -472,10 +412,6 @@
 
   .dashboard-delia .delia-turn {
     max-width: 96%;
-  }
-
-  .dashboard-delia .delia-composer__submit span {
-    display: none;
   }
 }
 

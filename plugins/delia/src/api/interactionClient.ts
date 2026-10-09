@@ -35,6 +35,14 @@ export type InteractionContextTurn = {
  */
 export const INTERACTION_CONTEXT_CHAR_BUDGET = 16_384;
 
+/**
+ * Per-input bound mirrors the delia-api bound enforced on
+ * `request.input` (MAX_INPUT_CHARS = 16384, fail-closed). The backend
+ * remains the enforcing authority; the client exposes the number only
+ * to render an honest character counter — never to authorize.
+ */
+export const INTERACTION_INPUT_CHAR_LIMIT = 16_384;
+
 export function buildInteractionContext(
   turns: ReadonlyArray<{
     role: "user" | "delia";
