@@ -72,7 +72,7 @@ Bindings físicos/freshness permanecem T01; effective permissions/ownership perm
 Eixos independentes:
 - Estoque: PRELIMINARY → WAITING_FOR_CUTOFF → REVALIDATION_REQUIRED → READY_TO_CLOSE → STOCK_CLOSED;
 - Documentos: derivados de requirement/satisfaction/validation;
-- Pacote: PACKAGE_INCOMPLETE → READY_TO_FINALIZE → PACKAGE_FINALIZED → PACKAGE_SENT → WAITING_FOR_CLARIFICATION → MONTHLY_CLOSING_COMPLETED derivado.
+- Pacote: PACKAGE_INCOMPLETE → READY_TO_FINALIZE → PACKAGE_FINALIZED → PACKAGE_SUBMITTED_FOR_REVIEW → WAITING_FOR_CLARIFICATION → MONTHLY_CLOSING_COMPLETED derivado.
 
 P1 não sacramenta, valida evidência nem envia pacote.
 
@@ -267,38 +267,39 @@ Ações dependem de ACCESS + resource ownership quando aplicável + business rul
 PACKAGE_INCOMPLETE
 → READY_TO_FINALIZE
 → PACKAGE_FINALIZED
-→ PACKAGE_SENT
+→ PACKAGE_SUBMITTED_FOR_REVIEW
 → WAITING_FOR_CLARIFICATION
 → MONTHLY_CLOSING_COMPLETED
 ```
 
 Finalizar != Enviar.
 
-Pacotes por destinatário avançam independentemente. PACKAGE_SENT é imutável; correção pós-envio cria complemento/nova versão ligada ao histórico.
+Pacotes por destinatário avançam independentemente. PACKAGE_SUBMITTED_FOR_REVIEW é imutável; correção pós-envio cria complemento/nova versão ligada ao histórico.
 
 ### Canal
 A finalização/versionamento está especificada.
 
-O inventário E04/T04 foi concluído; o slice de envio permanece bloqueado por decisão material.
+A clarificação do Product Owner invalidou a premissa de delivery externo.
+
+```text
+PACKAGE_FINALIZED
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ reviewer authenticated in Minha DELPI
+→ review lifecycle
+```
+
+- package não vai por e-mail;
+- Core Notifications avisa in-app e pode também enviar e-mail;
+- notification/e-mail não altera business state;
+- reviewer usa ACCESS + resource scope, sem permission nova;
+- P5 passa a ser producer comprovado de TaskProjection para review acionável.
 
 Authority:
-- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
-Proven:
-- Graph e-mail + attachments;
-- Message Trace em CIPA/Transformômetro.
+Residual:
+- `D-P5-REVIEW-COMPLETION`.
 
-Decision required:
-- owner/orchestration;
-- semântica de `PACKAGE_SENT`.
-
-Não implementar a recomendação sem aprovação.
-
-### Help
-Finalizar vs Enviar, versionamento, envio parcial, imutabilidade, esclarecimentos e critério de conclusão.
-
-### Dependências / stop
-Q22/E04/T04 permanecem DECISION_REQUIRED para o envio real; package/finalization continua fechado.
 
 ## P6 — Administração e Configuração
 
@@ -370,7 +371,7 @@ Não definir route pattern antes do inventário de plugin/basePath. O contrato d
 | P2 | coberto | coberto transversalmente | coberto | coberto | definido acima | produto + sources autorizados | ledger 23 | READY_FOR_IMPLEMENTATION_INVENTORY |
 | P3 | coberto | Gate V2 fechado | coberto | coberto | definido acima + E02 terminal | T01/T03 | ledger 23 + 15.1 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 |
 | P4 | coberto | page-level fechado em 11 | coberto | coberto | definido acima | owner CC + T01/T05 | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
-| P5 | package/finalization fechado; envio condicionado | page-level fechado em 12 | coberto | coberto | definido acima | owners/sources + E04/T04 para envio | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / SEND_DECISION_REQUIRED |
+| P5 | package/finalization fechado; envio condicionado | page-level fechado em 12 | coberto | coberto | definido acima | owners/sources + E04/T04 para envio | ledger 23 | PORTAL_SUBMISSION_MODEL_DEFINED / REVIEW_COMPLETION_DECISION_REQUIRED |
 | P6 | coberto | coberto transversalmente | coberto | coberto | definido acima | ADM01–ADM07 + E/T aplicáveis | ledger 23 + 28 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 
 ## Regra de execução
