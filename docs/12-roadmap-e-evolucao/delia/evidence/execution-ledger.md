@@ -13184,3 +13184,90 @@ PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
   PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
   (independent review of `d62e3fd33c`; deploy decision separate)
+
+## §6.165 — DELIA-C3-DISCOVERY-EXPOSURE-FIX-ACCEPTANCE-FORMALIZATION-01 (technical review + residuals)
+
+### Task
+
+`DELIA-C3-DISCOVERY-EXPOSURE-FIX-ACCEPTANCE-FORMALIZATION-01` —
+formal technical review of the published fix, reconciliation of
+production evidence, ledger formalization. Authorized by Product
+Master. No implementation change, no deploy, no phase advance.
+
+### References
+
+- IMPLEMENTATION_SHA = `d62e3fd33c212dcc981a80cb2d00368c4b9879e3`
+- EVIDENCE_SHA (delivery ledger) =
+  `15e470981a4b1860790efe8c47295667f1d3d1e1`
+- REVIEW_BASE_SHA = `97ee26aadce0f1f7ff48f4da7f3cf92dd94469f0`
+- REVIEWER_IDENTITY_OR_ROLE = Devin agent — the SAME agent that
+  implemented `d62e3fd33c`. Per the review protocol:
+  `IMPLEMENTER_SELF_CHECK = YES`,
+  `INDEPENDENT_REVIEW = NOT_PROVEN`. A separate reviewer gate
+  remains open at architecture coordination.
+
+### Review gates (technical re-verification on REVIEW_BASE_SHA)
+
+- ARCHITECTURE: PASS — fix confined to the zero-candidate
+  DISCOVERY terminal in `_invoke_selected`; owner boundary
+  respected (DAVI envelope untouched, owner contract unchanged);
+  no provider-specific branch, no new abstraction, no new
+  authority. Verified via `git show d62e3fd33c` (exactly 2 files,
+  `+8`/`+217`).
+- SECURITY: PASS — `structured=None` prevents the control-plane
+  envelope (`agent_directives`, `capability_surface`, candidate
+  tokens, query telemetry) from reaching `attempt.content`;
+  MCP payload remains treated as untrusted observation; no
+  AuthZ/epistemic change (`OBSERVATION` preserved).
+- CONTRACT: PASS — no HTTP/schema change; `presentation.version`
+  unchanged; PREPARE/ACT and `DISCOVERY→READ` paths untouched.
+- TESTS: PASS — re-executed at `97ee26aadc` (not inherited):
+  `pytest tests/test_specialist_capability_orchestration.py` =
+  98/98 PASS; full `delia-api` suite = 985/985 PASS (~28s).
+- PRODUCTION: PASS (read-only re-verification this session) —
+  server HEAD `97ee26aadc`; container `delpi-delia-api` healthy,
+  0 restarts; running `orchestration.py` sha256
+  `3acfbb29…43f126` byte-identical to the checkout at the same
+  SHA as the reviewed+tested code.
+- EVIDENCE: PASS — real SHAs, hash-proven container identity,
+  authenticated smoke log trail, limitations declared.
+
+### Acceptance scope
+
+The accepted scope is exactly: prevention of discovery
+control-plane metadata crossing into user-facing content at the
+zero-candidate DISCOVERY terminal, for any approved provider
+shape.
+
+`LIVE_EXACT_BRANCH = NOT_OBSERVED` — the zero-candidate terminal
+was not organically triggered in production (provider selection
+is model-driven/nondeterministic). It is covered by deterministic
+tests at the byte-identical deployed SHA. `DETERMINISTIC_TEST =
+PASS`, `DISCOVERY_PATH_LIVE = PASS` (davi.discover invoked on the
+fixed container, safe result observed).
+
+### Residuals
+
+- R1 — zero-candidate live branch not observed organically;
+  deterministic coverage only (declared above).
+- R2 — capability-inquiry semantics ("o que você consegue
+  consultar?") remain a separate product/architecture decision;
+  this fix is disclosure-safety, not a curated capability
+  projection.
+- R3 — provider-neutral generalization proven for tested shapes;
+  not universal certification of unknown future contracts.
+- R4 — review performed by the implementing agent;
+  `INDEPENDENT_REVIEW = NOT_PROVEN` — a distinct reviewer is
+  required to close the acceptance gate.
+
+REVIEW_VERDICT = ACCEPT_WITH_RESIDUAL (technical review;
+formal independent acceptance pending the R4 reviewer gate)
+BUSINESS_OUTCOME = governed business READ proven live
+(`delpi.get_product_summary`, GROUNDED/OBSERVATION);
+capability-inquiry semantics unchanged (R2)
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+  PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+  (R4 independent reviewer gate; R2 capability-projection
+  decision; both separate authorizations)
