@@ -51,7 +51,7 @@ class ProcessBpmnRevision:
     document_id: str
     revision_number: int
     artifact_sha256: str
-    origin: str  # "explicit" | "restore"
+    origin: str  # "explicit" | "restore" | "migration"
     restored_from_revision_id: str | None
     name: str | None
     description: str | None

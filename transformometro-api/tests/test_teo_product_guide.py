@@ -43,6 +43,7 @@ SEED_TOPICS = {
     "department",
     "signature_profile",
     "data_transfer",
+    "legacy_bpmn_migration",
 }
 
 

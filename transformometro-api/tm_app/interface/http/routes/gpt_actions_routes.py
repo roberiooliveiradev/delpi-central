@@ -54,6 +54,9 @@ from tm_app.config import settings
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import public_error_parts
 from tm_app.core.responses import fail, ok
+from tm_app.infrastructure.bpmn_migration_composition import (
+    build_migration_write_stack,
+)
 from tm_app.infrastructure.diagnostic_composition import (
     build_diagnostic_write_stack,
 )
@@ -73,6 +76,7 @@ _orchestrator = GovernedWriteOrchestrator(
     _packages,
     diagnostic_stack=build_diagnostic_write_stack(),
     helpdesk_stack=build_helpdesk_write_stack(),
+    migration_stack=build_migration_write_stack(),
 )
 _governed = GovernedActionsFacade(_orchestrator, _dispatch)
 _process_context = ProcessContextService()
@@ -113,7 +117,8 @@ class GptGovernedOperationBody(BaseModel):
         description=(
             "activate_revision | recalculate_dashboard | "
             "commit_improvement_package | adjust_shared_resource_cost | "
-            "update_signature_profile | import_diagram_bpmn_xml"
+            "update_signature_profile | import_diagram_bpmn_xml | "
+            "migrate_legacy_diagram_to_native_bpmn"
         ),
     )
     id: str | None = None
@@ -133,6 +138,8 @@ class GptGovernedOperationBody(BaseModel):
     recalculate: bool = False
     display_name: str | None = None
     xml: str | None = None
+    resolutions: dict | None = None
+    candidate_xml_override: str | None = None
     commit_now: bool = False
     confirmation: bool = False
     idempotency_key: str | None = None

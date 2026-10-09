@@ -293,6 +293,30 @@ def _canonical_catalog() -> dict[str, Any]:
             "read_back_policy": "authoritative",
         },
         {
+            "id": "migrate_legacy_diagram_to_native_bpmn",
+            "kind": "workflow",
+            "owner": "transformometro-api",
+            "description": (
+                "Migrate the legacy flowchart_v1 mapping (composed current "
+                "state) into the Transformômetro-native BPMN document. "
+                "PREPARE returns a full migration report (mapping "
+                "classification, losses, ambiguities, validation); ACT "
+                "creates the native document + BPMN Revision 1 "
+                "(origin=migration). The legacy diagram is preserved — "
+                "never overwritten or deleted. Resolutions may be passed "
+                "to re-PREPARE after human ambiguity resolution."
+            ),
+            "read_write": "WRITE",
+            "prepare_operation": "prepare_governed_operation",
+            "action": "migrate_legacy_diagram_to_native_bpmn",
+            "commit_via": "commit_proposal",
+            "confirmation_requirement": True,
+            "confirmation_policy": confirmation_kind_for_workflow(
+                "migrate_legacy_diagram_to_native_bpmn"
+            ),
+            "read_back_policy": "authoritative",
+        },
+        {
             "id": "meeting_minute_manage",
             "kind": "workflow",
             "owner": "transformometro-api",

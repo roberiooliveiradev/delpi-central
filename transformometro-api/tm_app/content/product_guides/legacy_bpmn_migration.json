@@ -1,0 +1,60 @@
+{
+  "schema": "product_guide_v1",
+  "id": "legacy_bpmn_migration",
+  "title": "Migração do mapeamento legado para BPMN nativo",
+  "summary": "A migração governada flowchart_v1 → BPMN 2.0 nativo via TÉO: prepara com relatório de perdas e ambiguidades, exige confirmação humana e preserva o legado — nunca sobrescreve nem apaga.",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "purpose": "Ensinar quando e como migrar o diagrama legado para o documento BPMN nativo do processo, sem inventar semântica e sem perder histórico.",
+  "use_when": [
+    "O processo tem diagrama legado (flowchart_v1) e ainda não tem BPMN nativo",
+    "O usuário quer transformar o mapeamento atual em modelo BPMN editável",
+    "É preciso explicar o que será mapeado exatamente, por heurística ou ficará ambíguo"
+  ],
+  "do_not_use_when": [
+    "O processo já possui documento BPMN nativo — migração é bloqueada (NATIVE_BPMN_ALREADY_EXISTS)",
+    "O processo referencia modelo externo do Modelador — migração é bloqueada (dual_mode_forbidden)",
+    "O usuário quer criar um BPMN do zero ou importar um arquivo .bpmn — isso é a superfície de documento, não migração",
+    "O objetivo é sincronizar legado e BPMN — não existe sincronização; após a migração são artefatos independentes"
+  ],
+  "how_to_use": [
+    "A migração sempre começa por PREPARE: leitura do estado legado composto atual + relatório completo — PREPARE nunca grava",
+    "Apresente o relatório ao usuário: classificações EXACT/HEURISTIC/AMBIGUOUS/UNMAPPABLE, perdas e avisos",
+    "Ambiguidades nunca são resolvidas silenciosamente: colete a decisão humana e re-PREPARE com resolutions",
+    "Preview é somente leitura; o candidato permanece selado na proposta até a confirmação",
+    "ACT acontece somente via commit_proposal com confirmação explícita — cria o documento nativo + Revisão BPMN 1 (origin=migration)",
+    "Se o legado mudar entre PREPARE e ACT, a proposta é recusada como stale — prepare novamente",
+    "Após migrar, o BPMN nativo é a autoridade vigente; o legado permanece disponível como artefato histórico somente leitura"
+  ],
+  "field_guidance": [
+    {"field": "processo_id", "guidance": "O processo dono do mapeamento legado — autorização é por processo, não por criador do diagrama", "contract_ref": "capability_surface.workflows.migrate_legacy_diagram_to_native_bpmn"},
+    {"field": "resolutions", "guidance": "Decisões humanas por ambiguity_id (option + values quando exigido) — só valem num novo PREPARE", "contract_ref": "capability_surface.workflows.migrate_legacy_diagram_to_native_bpmn"},
+    {"field": "migration_report", "guidance": "Relatório por objeto legado com classificação, perdas e ambiguidades — evidência obrigatória antes de confirmar", "contract_ref": "entity_schemas.process_bpmn_document"}
+  ],
+  "quality_rules": [
+    "Nunca afirmar equivalência 100% sem evidência — o relatório mostra o que é EXACT e o que não é",
+    "Nunca tratar confiança de heurística como verdade — confidence não é fato",
+    "Legado nunca é sobrescrito, apagado ou sincronizado automaticamente",
+    "Sem start/end claros ou decisão sem condição: reportar, não inventar",
+    "Se a informação for insuficiente: AMBIGUOUS/TO_CONFIRM, nunca chute silencioso"
+  ],
+  "common_mistakes": [
+    "Reusar import_diagram_bpmn_xml para a migração — é a superfície antiga do diagrama macro, não cria o documento nativo",
+    "Confirmar sem ler o relatório de perdas — o usuário precisa ver o que muda de autoridade",
+    "Tentar migrar com referência externa G5 ativa — o XOR bloqueia por design",
+    "Esperar que edições posteriores no legado atualizem o BPMN — são artefatos independentes após o commit"
+  ],
+  "related_topics": ["diagram", "process", "revision"],
+  "capability_refs": ["migrate_legacy_diagram_to_native_bpmn", "process_bpmn_document", "process_diagram", "analyze"],
+  "contract_refs": [
+    "capability_surface.workflows.migrate_legacy_diagram_to_native_bpmn",
+    "entity_schemas.process_bpmn_document",
+    "entity_schemas.process_diagram"
+  ],
+  "source_refs": [
+    {"ref": "capability_descriptors.migrate_legacy_diagram_to_native_bpmn — confirm_before_act, commit via commit_proposal", "classification": "PROVEN"},
+    {"ref": "DiagramaCompositionService.compose_for_processo — fonte = estado legado composto vigente", "classification": "PROVEN"},
+    {"ref": "transformometro.processo_bpmn_migrations — metadados externos; flowchart_v1 nunca mutado", "classification": "PROVEN"},
+    {"ref": "Revisão BPMN R1 com origin=migration (V054)", "classification": "PROVEN"}
+  ],
+  "agent_guidance": "'Migrar o desenho para BPMN' → legacy_bpmn_migration. Fluxo: prepare_governed_operation action=migrate_legacy_diagram_to_native_bpmn → apresentar relatório → resolver ambiguidades com o usuário → re-PREPARE → commit_proposal com confirmação. Nunca escreva XML direto nem use import_diagram_bpmn_xml para isso."
+}

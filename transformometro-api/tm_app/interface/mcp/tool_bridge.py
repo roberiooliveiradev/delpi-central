@@ -64,6 +64,9 @@ from tm_app.application.gpt_actions.user_context_service import (
     AuthenticatedUserContext,
     UserContextService,
 )
+from tm_app.infrastructure.bpmn_migration_composition import (
+    build_migration_write_stack,
+)
 from tm_app.infrastructure.diagnostic_composition import (
     build_diagnostic_write_stack,
 )
@@ -111,6 +114,7 @@ _orchestrator = GovernedWriteOrchestrator(
     _packages,
     diagnostic_stack=_diagnostic_stack,
     helpdesk_stack=build_helpdesk_write_stack(),
+    migration_stack=build_migration_write_stack(),
 )
 _governed = GovernedActionsFacade(orchestrator=_orchestrator, dispatch=_dispatch)
 _process_context = ProcessContextService()
@@ -866,6 +870,9 @@ _GOVERNED_OPERATION_REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     # checklist proposal, not a transport error.
     "update_signature_profile": ("display_name",),
     "import_diagram_bpmn_xml": ("processo_id", "xml"),
+    # G8 — legacy → native BPMN migration. Resolutions/candidate
+    # override are optional re-PREPARE inputs, not required fields.
+    "migrate_legacy_diagram_to_native_bpmn": ("processo_id",),
 }
 
 
@@ -888,6 +895,8 @@ def tool_prepare_governed_operation(
     recalculate: bool = False,
     display_name: str | None = None,
     xml: str | None = None,
+    resolutions: dict | None = None,
+    candidate_xml_override: str | None = None,
 ) -> CallToolResult:
     """PREPARE only — one of the closed special governed operations."""
     action_norm = str(action or "").strip()
@@ -917,6 +926,8 @@ def tool_prepare_governed_operation(
         "recalculate": recalculate,
         "display_name": display_name,
         "xml": xml,
+        "resolutions": resolutions,
+        "candidate_xml_override": candidate_xml_override,
     }
     missing = [
         field

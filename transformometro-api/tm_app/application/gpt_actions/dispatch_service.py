@@ -152,6 +152,12 @@ from tm_app.infrastructure.persistence.repositories.measurement_repository impor
 from tm_app.infrastructure.persistence.repositories.process_decomposition_repository import (
     ProcessoDecomposicaoRepository,
 )
+from tm_app.infrastructure.persistence.repositories.process_bpmn_document_repository import (
+    ProcessBpmnDocumentRepository,
+)
+from tm_app.infrastructure.persistence.repositories.process_bpmn_migration_repository import (
+    ProcessBpmnMigrationRepository,
+)
 from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
     ProcessoDiagramRepository,
 )
@@ -1352,6 +1358,31 @@ class GptActionsDispatchService:
             if not row:
                 raise GptActionsError("Overlay de diagrama não encontrado.", 404)
             return row_to_json(row)
+
+        if entity == GptEntity.PROCESS_BPMN_DOCUMENT:
+            # rid = processo_id — native BPMN (G7): document metadata +
+            # working copy + revision list + latest migration record (G8).
+            # READ only; canonical writes go through the document API and
+            # the governed migration operation, never record_write.
+            self._raise_http_err(check_processo_view_access(request, rid))
+            docs = ProcessBpmnDocumentRepository()
+            doc = docs.get_active(rid)
+            if doc is None:
+                raise GptActionsError(
+                    "Documento BPMN nativo não encontrado.", 404
+                )
+            revisions = docs.list_revisions(doc.id)
+            migration = (
+                ProcessBpmnMigrationRepository().latest_for_processo(rid)
+            )
+            return row_to_json(
+                {
+                    **doc.to_dict(),
+                    "working_copy_xml": doc.working_copy_xml,
+                    "revisions": [rev.to_dict() for rev in revisions],
+                    "migration": migration,
+                }
+            )
 
         if entity == GptEntity.IMPACT_EFFORT_MATRIX:
             data = RevisaoImpactEffortMatrixService().build_for_revisao(rid)

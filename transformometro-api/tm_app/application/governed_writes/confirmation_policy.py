@@ -213,6 +213,14 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         "import_diagram_bpmn_xml",
         workflow_id="import_diagram_bpmn_xml",
     ),
+    # Creates the canonical native BPMN artifact from the legacy mapping —
+    # consequential authority transition; legacy itself is preserved.
+    WritePolicyRecord(
+        "diagram.legacy_bpmn_migration",
+        CONFIRM_BEFORE_ACT,
+        "migrate_legacy_diagram_to_native_bpmn",
+        workflow_id="migrate_legacy_diagram_to_native_bpmn",
+    ),
     # --- Helpdesk governed writes (BFF-owned; same-user Bearer) --------------
     # Additive ticket creation — the user's request is the intent.
     WritePolicyRecord(

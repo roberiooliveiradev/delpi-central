@@ -25,6 +25,7 @@ class GptEntity(str, Enum):
     PROCESS_DIAGRAM = "process_diagram"
     INSTANCE_DIAGRAM_SCOPE = "instance_diagram_scope"
     REVISION_DIAGRAM_OVERLAY = "revision_diagram_overlay"
+    PROCESS_BPMN_DOCUMENT = "process_bpmn_document"
     IMPACT_EFFORT_MATRIX = "impact_effort_matrix"
 
 
@@ -96,6 +97,9 @@ ENTITY_CAPABILITIES: dict[GptEntity, FrozenSet[str]] = {
     GptEntity.PROCESS_DIAGRAM: frozenset({"get", "create", "update"}),
     GptEntity.INSTANCE_DIAGRAM_SCOPE: frozenset({"get", "create", "update"}),
     GptEntity.REVISION_DIAGRAM_OVERLAY: frozenset({"get", "create", "update"}),
+    # Native BPMN (G7/G8): READ only — writes are exclusively the governed
+    # operation migrate_legacy_diagram_to_native_bpmn / canonical document API.
+    GptEntity.PROCESS_BPMN_DOCUMENT: frozenset({"get"}),
     GptEntity.IMPACT_EFFORT_MATRIX: frozenset({"get", "update"}),
 }
 
@@ -121,6 +125,10 @@ ENTITY_DESCRIPTIONS: dict[GptEntity, str] = {
     GptEntity.PROCESS_DIAGRAM: "Process macro flowchart (id = processo_id).",
     GptEntity.INSTANCE_DIAGRAM_SCOPE: "Instance diagram scope (id = instancia_id).",
     GptEntity.REVISION_DIAGRAM_OVERLAY: "Revision diagram overlay (id = revisao_id).",
+    GptEntity.PROCESS_BPMN_DOCUMENT: (
+        "Native BPMN document — working copy, revisions and migration status "
+        "(id = processo_id). Canonical mapping authority after G8 migration."
+    ),
     GptEntity.IMPACT_EFFORT_MATRIX: "Impact×effort matrix for a revision (id = revisao_id).",
 }
 

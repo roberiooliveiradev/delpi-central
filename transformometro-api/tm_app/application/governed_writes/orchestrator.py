@@ -30,6 +30,14 @@ from tm_app.application.governed_writes.errors import (
     VALIDATION,
     GovernedWriteError,
 )
+from tm_app.application.governed_writes.bpmn_migration_capability import (
+    MIGRATE_CAPABILITY as _MIG_CAP,
+    MigrationWriteStack,
+    prepare as _mig_prepare,
+    recompute_fingerprint as _mig_recompute_fingerprint,
+    execute as _mig_execute,
+    verify as _mig_verify,
+)
 from tm_app.application.governed_writes.confirmation_policy import (
     CONFIRM_BEFORE_ACT,
     execution_policy_for_capability,
@@ -100,6 +108,8 @@ WRITE_CAPABILITIES = frozenset(
         # metadata; BPMN XML macro-diagram import — text transport).
         "update_signature_profile",
         "import_diagram_bpmn_xml",
+        # G8 — legacy flowchart_v1 → Transformômetro-native BPMN migration.
+        _MIG_CAP,
     }
     # R4 Governed Helpdesk Writes — one capability per BFF write
     # operation; policy stays per-capability.
@@ -189,6 +199,7 @@ GOVERNED_OPERATION_ACTION_TO_CAPABILITY = {
     "adjust_shared_resource_cost": "adjust_shared_resource_cost",
     "update_signature_profile": "update_signature_profile",
     "import_diagram_bpmn_xml": "import_diagram_bpmn_xml",
+    "migrate_legacy_diagram_to_native_bpmn": _MIG_CAP,
 }
 
 # Semantic family: meeting minutes — workflow transitions and minute
@@ -257,6 +268,7 @@ class GovernedWriteOrchestrator:
         packages: GuidedImprovementPackageService | None = None,
         diagnostic_stack: DiagnosticWriteStack | None = None,
         helpdesk_stack: HelpdeskWriteStack | None = None,
+        migration_stack: MigrationWriteStack | None = None,
     ) -> None:
         self._dispatch = dispatch or GptActionsDispatchService()
         self._packages = packages or GuidedImprovementPackageService(self._dispatch)
@@ -265,6 +277,8 @@ class GovernedWriteOrchestrator:
         self._diagnostic_stack = diagnostic_stack
         # Canonical Helpdesk BFF write path — composed at the interface layer.
         self._helpdesk_stack = helpdesk_stack
+        # G8 migration write path — composed at the interface layer.
+        self._migration_stack = migration_stack
 
     # ------------------------------------------------------------------ prepare
 
@@ -351,6 +365,10 @@ class GovernedWriteOrchestrator:
             return self._prep_signature_profile(request, args)
         if capability == "import_diagram_bpmn_xml":
             return self._prep_bpmn_import(request, args)
+        if capability == _MIG_CAP:
+            return _mig_prepare(
+                self._require_migration_stack(), request, args
+            )
         if capability == "meeting_minute_manage":
             return self._prep_minute_manage(request, args)
         if capability in (_DIAG_CREATE, _DIAG_MANAGE):
@@ -395,6 +413,15 @@ class GovernedWriteOrchestrator:
                 status_code=500,
             )
         return self._helpdesk_stack
+
+    def _require_migration_stack(self) -> MigrationWriteStack:
+        if self._migration_stack is None:
+            raise GovernedWriteError(
+                "Migration write stack not configured.",
+                code=INTERNAL,
+                status_code=500,
+            )
+        return self._migration_stack
 
     @staticmethod
     def _bearer(request: Request) -> str:
@@ -1142,6 +1169,10 @@ class GovernedWriteOrchestrator:
                     request, str(change["processo_id"])
                 )
             )
+        if cap == _MIG_CAP:
+            return _mig_recompute_fingerprint(
+                self._require_migration_stack(), change
+            )
         if cap == "meeting_minute_manage":
             mid = change.get("minute_id")
             if mid:
@@ -1267,6 +1298,10 @@ class GovernedWriteOrchestrator:
                 request,
                 processo_id=str(change["processo_id"]),
                 xml=str(change["xml"]),
+            )
+        if cap == _MIG_CAP:
+            return _mig_execute(
+                self._require_migration_stack(), request, change
             )
         if cap in TASK_CAPABILITIES:
             return self._dispatch.task_write(
@@ -1441,6 +1476,11 @@ class GovernedWriteOrchestrator:
                 request, str(change["processo_id"])
             )
             return {"diagram": read, "write_result": write_result}
+
+        if cap == _MIG_CAP:
+            return _mig_verify(
+                self._require_migration_stack(), change, write_result
+            )
 
         if cap in TASK_CAPABILITIES:
             # Use cases already verify read-back; assert the authoritative

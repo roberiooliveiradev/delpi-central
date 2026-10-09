@@ -2,7 +2,7 @@
   "schema": "product_guide_v1",
   "id": "diagram",
   "title": "Diagrama do processo",
-  "summary": "A representação visual do fluxo macro do processo-mestre — flowchart_v1 é a fonte canônica; Mermaid é derivado pelo servidor.",
+  "summary": "A representação visual do fluxo do processo-mestre — o BPMN nativo é a autoridade canônica quando presente; flowchart_v1 é o mapeamento legado (migrável via TÉO); Mermaid é derivado pelo servidor.",
   "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
   "purpose": "Ensinar quando o fluxo visual é a feature certa, como editar sem perder semântica e como AS-IS/TO-BE se separam por revisão.",
   "use_when": [
@@ -16,17 +16,31 @@
     "O pedido é histórico de mudanças — isso é timeline"
   ],
   "how_to_use": [
-    "flowchart_v1 é o formato canônico — Mermaid é derivado pelo servidor, nunca fonte",
-    "Antes de criar/editar, consulte diagram_catalog no catálogo vivo para tipos de nó/aresta",
+    "flowchart_v1 é o formato do mapeamento legado — quando existe BPMN nativo no processo, ele é a autoridade vigente e o legado é histórico somente leitura",
+    "Mermaid é derivado pelo servidor, nunca fonte canônica",
+    "Antes de criar/editar o legado, consulte diagram_catalog no catálogo vivo para tipos de nó/aresta",
     "Nunca infira tipos por exemplo ou memória — o catálogo é a authority",
     "O diagrama macro é do processo; diferenças por revisão usam overlay de revisão",
     "Escopo por instância usa o scope de instância, não diagrama duplicado",
-    "Importação BPMN substitui o diagrama macro — operação confirm_before_act"
+    "Migrar o legado para BPMN nativo usa migrate_legacy_diagram_to_native_bpmn (TÉO, confirm_before_act) — ver tópico legacy_bpmn_migration",
+    "Importação BPMN substitui o diagrama macro legado — operação confirm_before_act da superfície antiga; não é o caminho de migração G8"
   ],
   "field_guidance": [
-    {"field": "conteudo.format", "guidance": "Sempre flowchart_v1 — fixo pelo contrato", "contract_ref": "entity_schemas.process_diagram"},
-    {"field": "conteudo.nodes / edges", "guidance": "Tipos válidos vêm do diagram_catalog do catálogo vivo", "contract_ref": "entity_schemas.process_diagram"},
-    {"field": "revision overlay", "guidance": "Delta AS-IS→TO-BE por revisão sobre o macro — formato próprio", "contract_ref": "entity_schemas.revision_diagram_overlay"}
+    {
+      "field": "conteudo.format",
+      "guidance": "Sempre flowchart_v1 — fixo pelo contrato",
+      "contract_ref": "entity_schemas.process_diagram"
+    },
+    {
+      "field": "conteudo.nodes / edges",
+      "guidance": "Tipos válidos vêm do diagram_catalog do catálogo vivo",
+      "contract_ref": "entity_schemas.process_diagram"
+    },
+    {
+      "field": "revision overlay",
+      "guidance": "Delta AS-IS→TO-BE por revisão sobre o macro — formato próprio",
+      "contract_ref": "entity_schemas.revision_diagram_overlay"
+    }
   ],
   "quality_rules": [
     "Fluxo compreensível: início/fim coerentes quando aplicável",
@@ -41,13 +55,46 @@
     "Duplicar o diagrama macro para representar um cenário — use overlay",
     "Confundir diagrama (fluxo) com decomposição (hierarquia)"
   ],
-  "related_topics": ["decomposition", "process_documents", "process", "revision"],
-  "capability_refs": ["process_diagram", "revision_diagram_overlay", "instance_diagram_scope", "import_diagram_bpmn_xml", "analyze"],
-  "contract_refs": ["entity_schemas.process_diagram", "entity_schemas.revision_diagram_overlay", "capability_surface.workflows.import_diagram_bpmn_xml"],
-  "source_refs": [
-    {"ref": "entity_schemas.process_diagram — flowchart_v1; Mermaid server-derived", "classification": "PROVEN"},
-    {"ref": "get_catalog.diagram_catalog — tipos canônicos de nó/aresta", "classification": "PROVEN"},
-    {"ref": "capability_descriptors.import_diagram_bpmn_xml — confirm_before_act", "classification": "PROVEN"}
+  "related_topics": [
+    "decomposition",
+    "process_documents",
+    "process",
+    "revision",
+    "legacy_bpmn_migration"
   ],
-  "agent_guidance": "'Desenhe/documente o fluxo' → diagram, não process_document. Para editar: ler diagram_catalog primeiro; overlay de revisão para TO-BE."
+  "capability_refs": [
+    "process_diagram",
+    "revision_diagram_overlay",
+    "instance_diagram_scope",
+    "import_diagram_bpmn_xml",
+    "migrate_legacy_diagram_to_native_bpmn",
+    "process_bpmn_document",
+    "analyze"
+  ],
+  "contract_refs": [
+    "entity_schemas.process_diagram",
+    "entity_schemas.revision_diagram_overlay",
+    "entity_schemas.process_bpmn_document",
+    "capability_surface.workflows.import_diagram_bpmn_xml",
+    "capability_surface.workflows.migrate_legacy_diagram_to_native_bpmn"
+  ],
+  "source_refs": [
+    {
+      "ref": "entity_schemas.process_diagram — flowchart_v1; Mermaid server-derived",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "get_catalog.diagram_catalog — tipos canônicos de nó/aresta",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "capability_descriptors.import_diagram_bpmn_xml — confirm_before_act",
+      "classification": "PROVEN"
+    },
+    {
+      "ref": "G8 — flowchart_v1 reclassificado como LEGACY; BPMN nativo = autoridade vigente após migração",
+      "classification": "PROVEN"
+    }
+  ],
+  "agent_guidance": "'Desenhe/documente o fluxo' → diagram, não process_document. Para editar o legado: ler diagram_catalog primeiro; overlay de revisão para TO-BE. Para converter o legado em BPMN nativo: tópico legacy_bpmn_migration (migrate_legacy_diagram_to_native_bpmn, nunca import_diagram_bpmn_xml)."
 }
