@@ -83,15 +83,36 @@ Não inventar campos físicos.
 
 ## T02 — Notificações Minha DELPI
 
-Mapear:
-- API/event;
-- templates;
-- destinatários;
-- preferences;
-- e-mail;
-- delivery status;
-- retry/failure;
-- deep links.
+**Estado:** `CAPABILITY_PROVEN / PRODUCT_ADAPTER_TO_INVENTORY`.
+
+Rebaseline de 09/10/2026 no Core:
+
+- `POST /integrations/notifications` existe;
+- S2S via service token;
+- rate limit existe;
+- recipients e filtros por effective permissions existem;
+- `sourceApp` e action target existem;
+- inbox/history/preferences do usuário existem.
+
+Não criar capability paralela.
+
+Inventariar por evento do Controladoria:
+- category/template;
+- destinatários/recipient resolution;
+- payload e dados permitidos;
+- `sourceApp=controllership-finance` ou valor canônico aprovado;
+- action target/deep link;
+- required permission filter usando apenas permission codes canônicos;
+- delivery status/retry/failure aplicável ao Core adapter.
+
+Invariantes:
+
+```text
+NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE
+NOTIFICATION_DISPATCHED != PACKAGE_SENT
+```
+
+T02 não fecha E04/T04.
 
 ## T03 — Cutoff / STOCK_CLOSED
 
