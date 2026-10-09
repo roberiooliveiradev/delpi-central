@@ -358,7 +358,7 @@ Exige justificativa e auditoria.
 
 `REQUIRED` nunca apresenta ação `Marcar N/A`.
 
-Pode ser revertido por ACCESS autorizado para PENDING antes de PACKAGE_SENT.
+Pode ser revertido por ACCESS autorizado para PENDING antes de PACKAGE_SUBMITTED_FOR_REVIEW.
 
 Fluxo visual:
 
@@ -816,7 +816,7 @@ A numeração histórica de RQs nos documentos TÉO é proveniência; o ledger 2
 - PER_ATTACHMENT;
 - WHOLE_SET;
 - N/A somente CONDITIONAL;
-- reversão válida antes de replacement/PACKAGE_SENT;
+- reversão válida antes de replacement/PACKAGE_SUBMITTED_FOR_REVIEW;
 - item excepcional;
 - edição pré-execução;
 - cancelamento pré-execução;
