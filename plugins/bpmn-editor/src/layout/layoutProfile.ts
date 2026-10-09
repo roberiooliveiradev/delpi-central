@@ -72,13 +72,15 @@ export const LAYOUT_PROFILE_V1 = {
     subProcess: { width: 350, height: 200 },
   },
 
-  /** Padding interno de containers hierárquicos (elk.padding).
-   *  Lane/participant reservam o header vertical (~30px) à esquerda. */
+  /** Padding interno de containers hierárquicos — FONTE ÚNICA para
+   *  `elk.padding` (input do layout) e para o container-fit pós-ELK
+   *  (diProposal). `header` = reserva do rótulo vertical de lane/pool
+   *  na borda esquerda; children nunca ocupam essa faixa. */
   containerPadding: {
-    participant: "[top=10,left=42,bottom=10,right=12]",
-    lane: "[top=10,left=42,bottom=10,right=12]",
-    subprocess: "[top=20,left=20,bottom=20,right=20]",
-    default: "[top=12,left=12,bottom=12,right=12]",
+    participant: { header: 48, top: 16, right: 20, bottom: 16 },
+    lane: { header: 48, top: 24, right: 36, bottom: 24 },
+    subprocess: { top: 20, left: 20, right: 20, bottom: 20 },
+    default: { top: 12, left: 12, right: 12, bottom: 12 },
   },
 
   /** Padding aplicado ao redor dos membros visuais de um bpmn:group
@@ -97,6 +99,29 @@ export const LAYOUT_PROFILE_V1 = {
 } as const;
 
 export type LayoutProfile = typeof LAYOUT_PROFILE_V1;
+
+export type ContainerKind = "participant" | "lane" | "subprocess" | "default";
+
+/** Padding de conteúdo de um container (coordenadas absolutas DI).
+ *  `left` = header para lane/participant (rótulo vertical à esquerda). */
+export function containerPadFor(
+  kind: ContainerKind,
+): { top: number; right: number; bottom: number; left: number } {
+  const p = LAYOUT_PROFILE_V1.containerPadding[kind];
+  return {
+    top: p.top,
+    right: p.right,
+    bottom: p.bottom,
+    left: "header" in p ? p.header : p.left,
+  };
+}
+
+/** Serialização `elk.padding` derivada da mesma tabela — sem constante
+ *  concorrente entre input ELK e fit pós-layout. */
+export function elkPaddingFor(kind: ContainerKind): string {
+  const p = containerPadFor(kind);
+  return `[top=${p.top},left=${p.left},bottom=${p.bottom},right=${p.right}]`;
+}
 
 export function nodeSizeFor(bpmnType: string): { width: number; height: number } {
   const key = bpmnType.replace(/^bpmn:/, "");

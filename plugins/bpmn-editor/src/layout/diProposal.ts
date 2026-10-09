@@ -8,7 +8,7 @@
 
 import type { ElkNode } from "./elkGraph";
 import type { LayoutSnapshot } from "./elkGraph";
-import { LAYOUT_PROFILE_V1 } from "./layoutProfile";
+import { LAYOUT_PROFILE_V1, containerPadFor } from "./layoutProfile";
 import { fitTextSize, isTextFitNodeType } from "./textFit";
 
 const BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL";
@@ -444,68 +444,194 @@ function computeGeometry(laidOut: ElkNode): LayoutGeometry {
   return { bounds, edgePoints, labels: new Map() };
 }
 
-/** Normaliza stacks de lanes/pools NA ÁRVORE ELK (coords relativas,
- *  antes do flatten): lanes irmãs dividem x/largura e empilham na ordem
- *  de declaração do XML; membros unlaned do participant vão para uma
- *  coluna abaixo da stack; participants na raiz empilham verticalmente.
+/** Translação acumulada por nó durante o container-fit — registra quanto
+ *  cada subtree se moveu para que edges possam decidir entre
+ *  shift-preserving (endpoints moveram juntos) e re-route orthogonal. */
+type NodeShift = { dx: number; dy: number };
+
+/** Container-fit bottom-up (G9-LAYOUT-1 §1): calcula bounds de cada
+ *  container a partir do bounding box REAL dos filhos já posicionados
+ *  pelo ELK + padding governado do profile. Processa do mais profundo
+ *  para o mais raso — lane aninhada antes da lane pai, subprocess antes
+ *  da lane, lanes antes do participant. Nunca encolhe container abaixo
+ *  do `containerMin`; children invadindo a reserva de header são
+ *  transladados (subtree inteira), nunca o legado.
  *
- *  Por quê: `elk.layered` posiciona compound siblings lado a lado —
- *  não produz o lane-stacking vertical do BPMN. A hierarquia/micro-layout
- *  interno de cada lane continua vindo do ELK; isto é composição de
- *  containers, política de geometria do DI proposal. */
-function normalizeLaneStacks(
-  node: ElkNode,
-  byId: Map<string, LayoutSnapshot["nodes"][number]>,
-  docOrder: Map<string, number>,
-): void {
-  const children = node.children ?? [];
-  for (const child of children) normalizeLaneStacks(child, byId, docOrder);
-  if (!children.length) return;
+ *  Composição BPMN aplicada aqui (elk.layered posiciona siblings lado a
+ *  lado, não produz lane-stacking): lanes irmãs empilham flush na ordem
+ *  de declaração do XML e compartilham a largura interna do participant;
+ *  membros unlaned ficam numa região abaixo da stack; participants irmãos
+ *  na raiz empilham verticalmente com `poolGap`.
+ *
+ *  Retorna o mapa de shifts para revalidação de waypoints de edges. */
+function fitContainersToContent(
+  geometry: LayoutGeometry,
+  snapshot: LayoutSnapshot,
+): Map<string, NodeShift> {
+  const bounds = geometry.bounds;
+  const byId = new Map(snapshot.nodes.map((n) => [n.id, n]));
+  const docOrder = new Map(snapshot.nodes.map((n, i) => [n.id, i]));
 
-  const isLaneChild = (c: ElkNode) => byId.get(c.id)?.isLane === true;
-  const isPoolChild = (c: ElkNode) => byId.get(c.id)?.isParticipant === true;
-  const byDoc = (a: ElkNode, b: ElkNode) =>
-    (docOrder.get(a.id) ?? 0) - (docOrder.get(b.id) ?? 0);
+  const childrenOf = new Map<string, string[]>();
+  for (const n of snapshot.nodes) {
+    if (!n.parentId || !bounds.has(n.id)) continue;
+    const list = childrenOf.get(n.parentId) ?? [];
+    list.push(n.id);
+    childrenOf.set(n.parentId, list);
+  }
 
-  const lanes = children.filter(isLaneChild).sort(byDoc);
-  const pools = children.filter(isPoolChild).sort(byDoc);
-  if (!lanes.length && !pools.length) return;
-
-  const minX = Math.min(...children.map((c) => c.x ?? 0));
-  let y = Math.min(...children.map((c) => c.y ?? 0));
-
-  if (lanes.length) {
-    // lanes de um laneSet: mesmo x, mesma largura, flush vertical
-    const w = Math.max(...lanes.map((c) => c.width ?? 0));
-    for (const lane of lanes) {
-      lane.x = minX;
-      lane.y = y;
-      lane.width = w;
-      y += lane.height ?? 0;
+  const shifts = new Map<string, NodeShift>();
+  const shiftNode = (id: string, dx: number, dy: number) => {
+    const b = bounds.get(id);
+    if (b) {
+      b.x += dx;
+      b.y += dy;
     }
-    // PROCESS_LEVEL_UNLANED: membros sem lane ficam numa coluna abaixo
-    const unlaned = children.filter((c) => !isLaneChild(c));
-    for (const c of unlaned) {
-      c.x = minX;
-      c.y = y;
-      y += (c.height ?? 0) + LAYOUT_PROFILE_V1.unlanedGap;
+    const s = shifts.get(id) ?? { dx: 0, dy: 0 };
+    s.dx += dx;
+    s.dy += dy;
+    shifts.set(id, s);
+  };
+  const translateSubtree = (id: string, dx: number, dy: number) => {
+    if (!dx && !dy) return;
+    shiftNode(id, dx, dy);
+    for (const kid of childrenOf.get(id) ?? []) translateSubtree(kid, dx, dy);
+  };
+
+  const depthMemo = new Map<string, number>();
+  const depthOf = (id: string): number => {
+    const memo = depthMemo.get(id);
+    if (memo != null) return memo;
+    let d = 0;
+    let p = byId.get(id)?.parentId;
+    while (p) {
+      d += 1;
+      p = byId.get(p)?.parentId;
     }
-    const right = Math.max(
-      ...children.map((c) => (c.x ?? 0) + (c.width ?? 0)),
+    depthMemo.set(id, d);
+    return d;
+  };
+
+  const isFitContainer = (n: LayoutSnapshot["nodes"][number]) =>
+    bounds.has(n.id) &&
+    (n.isParticipant ||
+      n.isLane ||
+      (SUBPROCESS_FAMILY.has(n.type) && n.isExpanded !== false));
+
+  const padsFor = (n: LayoutSnapshot["nodes"][number]) =>
+    containerPadFor(
+      n.isParticipant
+        ? "participant"
+        : n.isLane
+          ? "lane"
+          : SUBPROCESS_FAMILY.has(n.type)
+            ? "subprocess"
+            : "default",
     );
-    node.width = right + 12;
-    node.height = y - (unlaned.length ? LAYOUT_PROFILE_V1.unlanedGap : 0) + 10;
-    return;
+
+  const containers = snapshot.nodes
+    .filter(isFitContainer)
+    .sort(
+      (a, b) =>
+        depthOf(b.id) - depthOf(a.id) ||
+        (docOrder.get(a.id) ?? 0) - (docOrder.get(b.id) ?? 0),
+    );
+
+  for (const c of containers) {
+    const b = bounds.get(c.id)!;
+    const pads = padsFor(c);
+    const min = containerMinSize(c) ?? { width: 0, height: 0 };
+    const kids = (childrenOf.get(c.id) ?? []).filter((id) => bounds.has(id));
+
+    if (!kids.length) {
+      b.width = Math.max(b.width, min.width);
+      b.height = Math.max(b.height, min.height);
+      continue;
+    }
+
+    const lanes = kids
+      .filter((id) => byId.get(id)?.isLane)
+      .sort((a, b2) => (docOrder.get(a) ?? 0) - (docOrder.get(b2) ?? 0));
+    const others = kids.filter((id) => !byId.get(id)?.isLane);
+
+    const contentX = b.x + pads.left;
+    const contentTop = b.y + pads.top;
+    let cursorY = contentTop;
+
+    // Lane stack: flush vertical na ordem do documento, alinhadas ao
+    // content origin. Filhos da lane movem junto (subtree).
+    for (const laneId of lanes) {
+      const lb = bounds.get(laneId)!;
+      translateSubtree(laneId, contentX - lb.x, cursorY - lb.y);
+      cursorY += lb.height;
+    }
+
+    // Membros não-lane (PROCESS_LEVEL_UNLANED dentro de participant,
+    // ou filhos diretos de subprocess/lane): região abaixo da stack de
+    // lanes (ou content top), nunca sobrepondo a reserva de header.
+    if (others.length) {
+      const minX = Math.min(...others.map((id) => bounds.get(id)!.x));
+      const minY = Math.min(...others.map((id) => bounds.get(id)!.y));
+      const targetY = lanes.length
+        ? cursorY + LAYOUT_PROFILE_V1.unlanedGap
+        : contentTop;
+      const dx = Math.max(0, contentX - minX);
+      const dy = Math.max(0, targetY - minY);
+      for (const id of others) translateSubtree(id, dx, dy);
+    }
+
+    // Fit: container cobre o bounding box real dos filhos + padding.
+    const right = Math.max(
+      ...kids.map((id) => bounds.get(id)!.x + bounds.get(id)!.width),
+    );
+    const bottom = Math.max(
+      ...kids.map((id) => bounds.get(id)!.y + bounds.get(id)!.height),
+    );
+    b.width = Math.max(b.width, min.width, right + pads.right - b.x);
+    b.height = Math.max(b.height, min.height, bottom + pads.bottom - b.y);
+
+    // Lanes irmãs compartilham a largura interna do container pai —
+    // uma lane nunca é mais estreita que suas irmãs (§17).
+    const innerW = b.width - pads.left - pads.right;
+    for (const laneId of lanes) {
+      bounds.get(laneId)!.width = innerW;
+    }
   }
 
-  // Participants irmãos (raiz): stack vertical, mesma largura.
-  const w = Math.max(...pools.map((c) => c.width ?? 0));
-  for (const pool of pools) {
-    pool.x = minX;
-    pool.y = y;
-    pool.width = w;
-    y += (pool.height ?? 0) + LAYOUT_PROFILE_V1.poolGap;
+  // Lanes sem participant (processo sem collaboration): mesmo stack na
+  // raiz — x/largura compartilhados, flush vertical na ordem do documento.
+  const rootLanes = snapshot.nodes
+    .filter((n) => !n.parentId && n.isLane && bounds.has(n.id))
+    .sort((a, b) => (docOrder.get(a.id) ?? 0) - (docOrder.get(b.id) ?? 0));
+  if (rootLanes.length > 0) {
+    const x0 = Math.min(...rootLanes.map((l) => bounds.get(l.id)!.x));
+    const w = Math.max(...rootLanes.map((l) => bounds.get(l.id)!.width));
+    let y = Math.min(...rootLanes.map((l) => bounds.get(l.id)!.y));
+    for (const l of rootLanes) {
+      const lb = bounds.get(l.id)!;
+      translateSubtree(l.id, x0 - lb.x, y - lb.y);
+      lb.width = w;
+      y += lb.height;
+    }
   }
+
+  // Participants irmãos na raiz: mesma x/largura, stack vertical.
+  const pools = snapshot.nodes
+    .filter((n) => !n.parentId && n.isParticipant && bounds.has(n.id))
+    .sort((a, b) => (docOrder.get(a.id) ?? 0) - (docOrder.get(b.id) ?? 0));
+  if (pools.length > 0) {
+    const minX = Math.min(...pools.map((p) => bounds.get(p.id)!.x));
+    const w = Math.max(...pools.map((p) => bounds.get(p.id)!.width));
+    let y = Math.min(...pools.map((p) => bounds.get(p.id)!.y));
+    for (const p of pools) {
+      const pb = bounds.get(p.id)!;
+      translateSubtree(p.id, minX - pb.x, y - pb.y);
+      pb.width = w;
+      y += pb.height + LAYOUT_PROFILE_V1.poolGap;
+    }
+  }
+
+  return shifts;
 }
 
 /** Ancestor de containment mais próximo (lane/participant); o próprio
@@ -553,8 +679,6 @@ function resolveGeometry(
   snapshot: LayoutSnapshot,
 ): LayoutGeometry {
   const byId = new Map(snapshot.nodes.map((n) => [n.id, n]));
-  const docOrder = new Map(snapshot.nodes.map((n, i) => [n.id, i]));
-  normalizeLaneStacks(laidOut, byId, docOrder);
 
   const geometry = computeGeometry(laidOut);
   for (const [id, b] of geometry.bounds) {
@@ -574,6 +698,14 @@ function resolveGeometry(
       b.height = Math.max(b.height, min.height);
     }
   }
+
+  // G9-LAYOUT-1: container-fit bottom-up em coordenadas absolutas —
+  // containers crescem a partir do bounding box REAL dos filhos já
+  // dimensionados (text-fit) e posicionados (ELK), respeitando a reserva
+  // de header e o padding governado. Substitui a normalização na árvore
+  // ELK: lanes empilham/alinham, participants englobam, subprocessos
+  // expandidos ajustam — recursivo por profundidade.
+  const shifts = fitContainersToContent(geometry, snapshot);
 
   // bpmn:group — artifact visual fora do ELK. Re-bounds: bounding box
   // dos visualMembers (enclosure derivado do DI pré-layout) + padding
@@ -628,19 +760,55 @@ function resolveGeometry(
   }
   for (const [, group] of pending) preserveDiBounds(group);
 
-  // Edges cruzando fronteira lane/pool: pontos ELK obsoletos após a
-  // normalização da stack → rota orthogonal entre bounds finais.
+  // Revalidação de waypoints pós-fit (§27): endpoints que transladaram
+  // JUNTOS preservam a rota ELK (shift puro nos pontos); endpoints com
+  // shifts diferentes — ou que cruzam fronteira de container — recebem
+  // rota orthogonal entre os bounds finais.
   for (const edge of snapshot.edges) {
-    if (!geometry.edgePoints.has(edge.id)) continue;
+    const pts = geometry.edgePoints.get(edge.id);
+    if (!pts) continue;
     const a = geometry.bounds.get(edge.sourceId);
     const b = geometry.bounds.get(edge.targetId);
     if (!a || !b) continue;
-    if (
+    const sShift = shifts.get(edge.sourceId);
+    const tShift = shifts.get(edge.targetId);
+    const sameShift =
+      sShift == null && tShift == null
+        ? true
+        : sShift != null &&
+          tShift != null &&
+          sShift.dx === tShift.dx &&
+          sShift.dy === tShift.dy;
+    const crossContainer =
       containerAncestor(edge.sourceId, byId) !==
-      containerAncestor(edge.targetId, byId)
-    ) {
+      containerAncestor(edge.targetId, byId);
+    if (sameShift && !crossContainer) {
+      if (sShift) {
+        for (const p of pts) {
+          p.x += sShift.dx;
+          p.y += sShift.dy;
+        }
+      }
+    } else {
       geometry.edgePoints.set(edge.id, routeOrthogonal(a, b));
     }
+  }
+
+  // Edges fora do grafo ELK (ex.: association → bpmn:group): quando um
+  // endpoint transladou no fit, os waypoints DI originais estão obsoletos
+  // → rota orthogonal entre bounds finais (§27 — inclui associations).
+  for (const edge of snapshot.edges) {
+    if (geometry.edgePoints.has(edge.id)) continue;
+    const sShift = shifts.get(edge.sourceId);
+    const tShift = shifts.get(edge.targetId);
+    const moved =
+      (sShift != null && (sShift.dx !== 0 || sShift.dy !== 0)) ||
+      (tShift != null && (tShift.dx !== 0 || tShift.dy !== 0));
+    if (!moved) continue;
+    const a = geometry.bounds.get(edge.sourceId);
+    const b = geometry.bounds.get(edge.targetId);
+    if (!a || !b) continue;
+    geometry.edgePoints.set(edge.id, routeOrthogonal(a, b));
   }
 
   // Labels externas explícitas acompanham o owner pelo mesmo delta,

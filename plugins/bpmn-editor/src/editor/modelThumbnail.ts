@@ -10,7 +10,7 @@
  */
 import NavigatedViewer from "bpmn-js/lib/NavigatedViewer";
 
-import { BPMN_RENDERER_THEME } from "./BpmnEditorAdapter";
+import { BPMN_RENDERER_THEME } from "./rendererTheme";
 
 const STAGE_W = 480;
 const STAGE_H = 270;

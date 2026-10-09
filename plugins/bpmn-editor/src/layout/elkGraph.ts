@@ -11,7 +11,11 @@
  * — o ELK recebe o containment real, não um flat layout.
  */
 
-import { LAYOUT_PROFILE_V1, nodeSizeFor } from "./layoutProfile";
+import {
+  LAYOUT_PROFILE_V1,
+  elkPaddingFor,
+  nodeSizeFor,
+} from "./layoutProfile";
 
 export type LayoutNode = {
   id: string;
@@ -85,21 +89,21 @@ export type ElkEdge = {
 const COLLAPSED = (n: LayoutNode) => n.isExpanded === false;
 
 /** Padding interno do container ELK conforme a família BPMN — lane/pool
- *  têm header à esquerda (~30px) que não pode receber children. */
+ *  reservam o header vertical à esquerda (`containerPadFor`, fonte única
+ *  compartilhada com o container-fit pós-ELK em diProposal). */
 function containerPadding(node: LayoutNode): string {
-  const p = LAYOUT_PROFILE_V1.containerPadding;
   const type = node.type.replace(/^bpmn:/, "");
-  if (node.isParticipant) return p.participant;
-  if (node.isLane) return p.lane;
+  if (node.isParticipant) return elkPaddingFor("participant");
+  if (node.isLane) return elkPaddingFor("lane");
   if (
     type === "subProcess" ||
     type === "transaction" ||
     type === "adHocSubProcess" ||
     type === "eventSubProcess"
   ) {
-    return p.subprocess;
+    return elkPaddingFor("subprocess");
   }
-  return p.default;
+  return elkPaddingFor("default");
 }
 
 /** Constrói o grafo ELK hierárquico a partir do snapshot. Determinístico.

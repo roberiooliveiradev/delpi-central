@@ -20,6 +20,7 @@ import {
 } from "./editingProfile";
 import { propertiesPanelModule } from "./propertiesPanelModule";
 import { repairExtensionDeclarations } from "./extensionPreservation";
+import { BPMN_RENDERER_THEME } from "./rendererTheme";
 
 import { ApplyDiLayoutHandler } from "./layoutApply";
 import type { DiLayoutOp } from "../layout/diProposal";
@@ -77,17 +78,7 @@ function newToken(): string {
 
 type EditorInstance = Modeler | InstanceType<typeof NavigatedViewer>;
 
-/**
- * Theming canônico do renderer: CSS vars mapeadas no shell (light/dark via
- * `:root[data-theme]`). Fallbacks fixos rendem documento claro quando as vars
- * não existem (ex.: SVG exportado em `<img>` — contexto isolado sem vars).
- * DI colors do documento continuam vencendo (P5).
- */
-export const BPMN_RENDERER_THEME = {
-  defaultFillColor: "var(--delpi-ui-bpmn-element-fill, #ffffff)",
-  defaultStrokeColor: "var(--delpi-ui-bpmn-element-stroke, #22242a)",
-  defaultLabelColor: "var(--delpi-ui-bpmn-label-color, #22242a)",
-} as const;
+export { BPMN_RENDERER_THEME } from "./rendererTheme";
 
 /**
  * Instância única por workspace. Recriação (troca de modo/modelo) =

@@ -17,18 +17,24 @@ const page = readFileSync(
   "utf8",
 );
 
-describe("G9 — prévia read-only do BPMN nativo no card do processo", () => {
-  it("thumbnail deriva do working copy via renderer compartilhado", () => {
+describe("G9-LAYOUT-1 — prévia live read-only do BPMN nativo no card", () => {
+  it("preview é o viewer BPMN real compartilhado — não imagem/snapshot", () => {
     expect(preview).toMatch(/fetchProcessBpmnWorkingCopy\(processoId/);
-    expect(preview).toMatch(/renderBpmnThumbnail/);
+    expect(preview).toMatch(/BpmnReadonlyViewer/);
     expect(preview).toMatch(/@delpi\/bpmn-editor/);
+    // §6/§56: nenhuma imagem estática como experiência primária
+    expect(preview).not.toMatch(/renderBpmnThumbnail|<img|dangerouslySetInnerHTML/);
+    // pan + wheel zoom + controles +/−/fit — mesmo componente nos 3 mounts
+    expect(preview.match(/<BpmnReadonlyViewer[\s>]/g)?.length).toBe(3);
+    expect(preview).toMatch(/controls/);
+    expect(preview).toMatch(/fitOnLoad/);
   });
 
-  it("cobre estados loading / empty / error / svg", () => {
+  it("cobre estados loading / empty / error via status do viewer", () => {
     expect(preview).toMatch(/kind: "loading"/);
-    expect(preview).toMatch(/kind: "empty"/);
     expect(preview).toMatch(/kind: "error"/);
-    expect(preview).toMatch(/Gerando prévia do diagrama/);
+    expect(preview).toMatch(/status === "empty"/);
+    expect(preview).toMatch(/Carregando prévia do diagrama/);
     expect(preview).toMatch(/ainda não tem elementos/);
     expect(preview).toMatch(/Não foi possível renderizar/);
   });
@@ -38,17 +44,18 @@ describe("G9 — prévia read-only do BPMN nativo no card do processo", () => {
     expect(preview).toMatch(/Tela cheia/);
     expect(preview).toMatch(/Editar diagrama/);
     expect(preview).toMatch(/buildProcessoBpmnEditPath\(processoId\)/);
-    // lightbox read-only, dois níveis (wide + page)
+    // lightbox read-only, dois níveis (wide + page) — mesmo viewer
     expect(preview).toMatch(/WideModal/);
     expect(preview).toMatch(/HostContainedPageDialog/);
     expect(preview).toMatch(/Visualização somente leitura/);
   });
 
-  it("metadados: processo, working copy, sha, atualização", () => {
+  it("metadados: processo, working copy, sha em detalhe técnico (§42)", () => {
     expect(preview).toMatch(/processName/);
-    expect(preview).toMatch(/working copy/);
+    expect(preview).toMatch(/Working copy/);
     expect(preview).toMatch(/document\.version/);
-    expect(preview).toMatch(/working_copy_sha256\.slice/);
+    // checksum sai do texto principal → tooltip/title técnico
+    expect(preview).toMatch(/title=\{`Checksum do working copy/);
     expect(preview).toMatch(/updated_at/);
   });
 

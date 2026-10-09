@@ -16,6 +16,11 @@ export type { DiagramRef, ElementSummary } from "./editor/BpmnEditorAdapter";
 export { ElementInspector } from "./editor/inspector/ElementInspector";
 export { hasUnpreservableExtensionContent } from "./editor/extensionPreservation";
 export { renderBpmnThumbnail, type BpmnThumbnailResult } from "./editor/modelThumbnail";
+export {
+  BpmnReadonlyViewer,
+  type BpmnReadonlyViewerProps,
+  type BpmnReadonlyViewerStatus,
+} from "./editor/BpmnReadonlyViewer";
 
 export { editableMode } from "./state/capabilities";
 export type { Capabilities, ReadOnlyReason } from "./state/capabilities";
