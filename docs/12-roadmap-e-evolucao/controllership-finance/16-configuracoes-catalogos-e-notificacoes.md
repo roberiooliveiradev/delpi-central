@@ -110,3 +110,23 @@ Se a plataforma registrar leitura, ela é informativa e não bloqueia.
 ## Auditoria
 
 Registrar triggering event, destinatário resolvido, timestamp, delivery status e correlation quando disponível.
+
+
+## P5 — notifications de review
+
+Após `PACKAGE_SUBMITTED_FOR_REVIEW`, P5 emite evento para Core Notifications.
+
+A plataforma pode entregar:
+- inbox Minha DELPI;
+- e-mail conforme configuração/preferência/capability vigente.
+
+Contrato:
+
+```text
+EMAIL = NOTIFICATION_CHANNEL
+EMAIL != PACKAGE_TRANSPORT
+EMAIL_ATTACHMENT_PACKAGE = NO
+NOTIFICATION_FAILURE != PACKAGE_SUBMISSION_FAILURE
+```
+
+O action target aponta para deep link interno do recipient package. O acesso é reautorizado no Portal/BFF.
