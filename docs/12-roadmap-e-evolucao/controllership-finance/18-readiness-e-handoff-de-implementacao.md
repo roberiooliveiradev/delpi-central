@@ -88,8 +88,8 @@ Decisões congeladas:
 | P2 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A09 fechado; E05/E06/T05 e bindings físicos permanecem inventário; Core notification capability PROVEN, adapter do produto a inventariar |
 | P3 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 | A10 fechado; E02 = STOCK_CLOSED terminal no Portal V1; T03 continua stop técnico para owner canônico |
 | P4 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A11 fechado; T01/T05 e contracts físicos permanecem inventário |
-| P5 — pacote/finalização | PAGE_DOCUMENTATION_GATE_V2 PARTIAL | package/finalization ready; inventário E04/T04 concluído; SEND slice agora é DECISION_REQUIRED |
-| P5 — envio real | BLOCKED_WITH_EVIDENCE / DECISION_REQUIRED | doc 36: Graph+attachments e Message Trace são PROVEN; falta escolher owner/orchestration e outcome de PACKAGE_SENT |
+| P5 — pacote/finalização/review | PAGE_DOCUMENTATION_GATE_V2 PARTIAL | portal-first submission/review model PASS; monthly completion rule DECISION_REQUIRED |
+| P5 — envio para análise | PRODUCT_MODEL_DEFINED / REVIEW_COMPLETION_DECISION_REQUIRED | package stays in Minha DELPI; reviewers authenticated; e-mail notification only; doc 37 |
 | P6 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A13 fechado em 13+28; Core notifications PROVEN; persistência/seeds/people/concurrency e adapter do produto permanecem inventário |
 
 Readiness não é autorização global. Depois do freeze transversal, o Portal evoluirá uma página/slice por vez.
@@ -106,11 +106,13 @@ Readiness não é autorização global. Depois do freeze transversal, o Portal e
 - nenhuma implementação pode fechar `STOCK_CLOSED` por fallback manual silencioso;
 - T03 precisa provar o estado canônico antes do slice dependente.
 
-`BLOCKED_WITH_EVIDENCE` no envio P5:
+P5 após clarificação do Product Owner:
 - package/finalize/versioning não estão bloqueados;
-- inventário E04/T04 terminou;
-- decisão material permanece em [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md);
-- não implementar recomendação sem aprovação.
+- E04/T04 external delivery = CLOSED / NOT_REQUIRED_IN_V1;
+- "Enviar" = submit for review dentro da Minha DELPI;
+- reviewers usam login + ACCESS + resource scope;
+- notifications podem chegar in-app e por e-mail;
+- residual material: `D-P5-REVIEW-COMPLETION` no doc 37.
 
 ## Freeze readiness após A15
 
@@ -119,7 +121,7 @@ PORTAL_DESIGN_FREEZE           = PASS
 FRONTEND_PATTERN_FREEZE        = PASS
 SECURITY_MODEL_FREEZE          = PASS
 TEST_STRATEGY_FREEZE           = PASS
-PRODUCT_CONTRACT_FREEZE        = DECISION_REQUIRED_E04_T04
+PRODUCT_CONTRACT_FREEZE        = DECISION_REQUIRED_P5_REVIEW_COMPLETION
 DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED      = NO
 ```
