@@ -365,11 +365,11 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | 0 | Baseline + drift closure | — | DONE (§27) |
 | 1 | Knowledge Orchestration V1 | 0 | DONE (§28) |
 | 2 | TV Product Guide V1 | 1 | DONE (§30) |
-| 3 | Help Convergence | 2 | READY_FOR_EXECUTION (§31) |
-| 4 | Editor Grounding V2 | 0 | READY_FOR_DIAGNOSTIC |
+| 3 | Help Convergence | 2 | DONE (§32·§33 runtime-verified) |
+| 4 | Editor Grounding V2 | 0 | READY_FOR_EXECUTION (§34) |
 | 5 | Design Methodology V1 | 1, 4 | READY_FOR_DIAGNOSTIC |
 | 6 | Data + Solution Intelligence | 1 | READY_FOR_DIAGNOSTIC |
-| 7 | Eval + Telemetry V2 | 0 | READY_FOR_DIAGNOSTIC |
+| 7 | Eval + Telemetry V2 | 0 | READY_FOR_EXECUTION (§35 diagnostic done — exec requer promoção) |
 | 8 | Semantic Intent Arbitration | 7 (evidência material) + brief dedicado | BLOCKED |
 | 9 | History Intelligence | stories reais + owner inventory | PLANNED |
 
@@ -482,7 +482,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** shape do payload + testes + eval delta.
 - **DEPENDENCIES:** PHASE 0.
 - **STOP CONDITIONS:** precisar de estado novo não efêmero ou cruzar ownership do WS hub.
-- **STATUS:** READY_FOR_DIAGNOSTIC.
+- **STATUS:** READY_FOR_EXECUTION (§34 diagnostic, 2026-10-09).
 
 ### PHASE 5 — DESIGN METHODOLOGY V1
 
@@ -550,7 +550,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** baseline congelada + formato de relatório de delta.
 - **DEPENDENCIES:** PHASE 0.
 - **STOP CONDITIONS:** telemetria exigir dados privados ou novo serviço externo.
-- **STATUS:** READY_FOR_DIAGNOSTIC.
+- **STATUS:** READY_FOR_EXECUTION — diagnostic DONE (§35, 2026-10-09); measurement architecture proven; execução de corpus/telemetry requer promoção explícita.
 
 ### PHASE 8 — SEMANTIC INTENT ARBITRATION
 
@@ -1163,3 +1163,183 @@ Sem prosa do guide no MFE (userManualContent = nav/links apenas) · sem campos i
 ### 32.9 Status
 
 **PHASE 3 = DONE** — CENTRAL HELP = LIVE, PRODUCT GUIDE SEMANTIC SOURCE = PROVEN, SECTION→TOPIC MAP = PROVEN (teste), HELP-SAFE FETCH = PROVEN, LOCAL UI HELP = PRESERVED, STALE SEMANTIC FALLBACK = ABSENT, BACKEND/PUBLIC/SECURITY CHANGES = NONE. Residual: typecheck baseline RED pré-existente (refactor comunicado do usuário em voo — não do escopo); 7 falhas de teste pré-existentes idem; tooltip MIXED splits de §31.2 adiados (rule: central help first, cleanup mínimo/zero).
+
+## 33. PHASE 3 — POST-DEPLOY LIVE SMOKE (2026-10-09)
+
+Reanchor: `HEAD == origin/main == 32661f98dd` (inclui `e5c794e718` P3). Stack dev completo via gateway :80.
+
+### 33.1 Evidence
+
+| Check | Evidence | Result |
+|---|---|---|
+| Endpoint auth | `GET /apps/tv-dashboard-api/product-guides` sem token → `401 {"detail":"Unauthorized"}` | PASS — AUTHENTICATED_HELP enforced |
+| Endpoint autenticado | Bearer dev (`infra/scripts/get-dev-token.sh`) → `product_guide_help_v1`, `registry_version=product-guide-registry-v1` | PASS |
+| Topic coverage live | 11/11 ids == `HELP_SECTION_TOPICS` exatamente (1:1) | PASS |
+| Whitelist help-safe | zero `capability_refs`/`operation_refs`/`read_refs`/`write_refs`/`source_refs`/`agent_guidance`/`ui_refs` no payload live | PASS |
+| Invariants live | display_formats contém «parcial»; data_route_discovery contém miss≠absence; visual_verification contém escala pixel | PASS |
+| MFE delivery | container `delpi-tv-dashboard` rebuilt from HEAD (`vite build`); bundle contém `tv-dashboard/help` | PASS — DELIVERY real |
+| remoteEntry | `GET /apps/tv-dashboard/remoteEntry.js` → 200 via gateway | PASS — federation remote live |
+| Deep link | `GET /apps/tv-dashboard/help` → 200 (Portal SPA shell → MFE remote) | PASS |
+| Manifest | rota única `/apps/tv-dashboard` + `tv-dashboard.read`; help é subrota interna do MFE (sem rota pública nova) | PASS |
+| Tooltips | `helpTooltips.ts` intocado; suites existentes verdes (§32.6) | PASS |
+| Fallback auth path | standalone MFE sem `getAccessToken` → fetch 401 → `HELP_AUTH_NOTE` (design + teste; browser aberto para confirmação visual) | PASS (headless) / PENDING captura |
+| Browser DOM | browser_preview aberto em `/apps/tv-dashboard` e `/apps/tv-dashboard/help` — captura do usuário pendente | PENDING |
+
+### 33.2 Status
+
+`PHASE 3 = DONE + RUNTIME VERIFIED (headless)` — API auth/projection/topic-coverage/whitelist/invariants PROVEN live; delivery e remoteEntry PROVEN; DOM autenticado render = evidência visual pendente da captura do usuário (preview aberto). Nenhum defect reproduzido; zero patch nesta etapa.
+
+## 34. PHASE 4 — EDITOR GROUNDING V2 DIAGNOSTIC (2026-10-09)
+
+Mode: DIAGNOSTIC only. Revalidado em `32661f98dd`.
+
+### 34.1 Current context contract (PROVEN)
+
+```
+MFE editor ──WS selection_update (canEdit + clientId match)──▶
+EditorFocusStore.record(user_id, playlist_id, slide_id,
+                        selected_ids≤100 dedup, client_id)
+  row = {playlistId, slideId, selectedIds, clientId, updatedAt, _mono}
+  TTL: ≤90s fresh · ≤180s stale=true · >180s evicted (lazy)
+```
+
+Consumers:
+- `list_playlists` → `editorFocus` prepend (continuous_review / «esta programação»)
+- `get_playlist_context` (MCP + Actions — mesmo dispatch, paridade automática) → `editorFocus{slideId, selectedIds, updatedAt, stale, selectedDataSourceId?}` + `focusedBinding` (single-selection only: `{blockId, modelId, dataSourceId, bindingField}`) + `blockIndex{slideId, revision, items[], cursor}` + `objectMatches`
+- `blockIndex` item = `project_block_index_item`: `{id,type,frame,zIndex,role,groupId,contentPreview,label,dataSourceId,modelId,bindingField,hasDataBinding,formatBindings[]}` — persisted state only, nunca id inventado
+- rendered-preview upload → provenance `editor_live` binds fresh focus + clientId
+
+### 34.2 Object resolution pipeline (PROVEN gap)
+
+`suggest_change` resolve alvos **somente** de `host_context` do caller (`selectedBlockIds`, `selectedBlockId`, `focusBlockId`, `focusBlockType`, `selectedDataSourceId`, `focusedBinding`, `focusedModel`, `blockIndex`, `dataSources`, `dataModels`, `nativeConfig`). O server-side `EditorFocusStore` **não é consultado** no suggest — VISTA externa precisa ler `editorFocus.selectedIds` do context e re-ferry os ids manualmente.
+
+### 34.3 Stale/fresh semantics (today)
+
+`stale: bool` binário — sem vocabulário tipado. Seleção de bloco deletado → `focusedBinding` retorna `None` silenciosamente; multi-seleção → `focusedBinding` `None` silenciosamente; `selectedIds` são strings nuas (VISTA faz join manual com blockIndex).
+
+### 34.4 Gap map
+
+| Gap | Hoje | Target |
+|---|---|---|
+| selectedIds bare | strings sem tipo/summary | `selectedObjects[]` compact rows (reuse `project_block_index_item`) |
+| estado | `stale` bool | `selectionState`: ACTIVE/STALE/ABSENT/AMBIGUOUS |
+| bloco deletado | silent | `exists:false` + `missingIds[]` |
+| multi-seleção | `focusedBinding=None` silent | AMBIGUOUS unless op multi-target (`blockIds`) |
+| suggest grounding | host_context only | fallback merge do focus fresco do servidor |
+| slideId drift | focus.slideId pode divergir de detail | resolve vs detail_slide authoritative |
+
+### 34.5 Target state vocabulary
+
+```
+ACTIVE     = focus fresco (≤TTL) ∧ ≥1 selectedId resolvido em bloco persistido
+STALE      = focus existe mas age>TTL (window grace) → RE-RESOLVE antes de usar
+ABSENT     = sem focus, sem selectedIds, ou ids todos fora do slide focado
+AMBIGUOUS  = >1 selectedId resolvido ∧ op não multi-target declarada
+```
+
+Regras determinísticas — derivadas de (stale flag, resolução vs blocos persistidos, cardinalidade). Nenhum estado improvisado.
+
+### 34.6 Selected object projection
+
+`editorFocus.selectedObjects[]` = para cada `selectedId`, `project_block_index_item`-equivalente **resolvido do `nativeConfig` persistido do detail_slide** + `exists: bool`. Fields: `id, type, contentPreview?, frame?, role?, dataSourceId?, modelId?, bindingField?, formatBindings?` — mesmo shape do blockIndex item (nenhum field novo inventado). Deletados → `missingIds[]` explícito para clareza.
+
+### 34.7 Payload analysis
+
+Seleções reais ≪ 100; compact rows ≈ 200–400 B cada → orçamento compatível com Actions 100 KiB (`fit_editor_focus_block_index` já existe como pattern de shrink se necessário). Sem duplicação de block state completo — projection compacta compartilhada com blockIndex.
+
+### 34.8 Domain read relationship
+
+`editor_context` = grounding/navegação (hint + resolved compact). Nunca autoridade: mutação sempre re-lê estado canônico via domain read; AuthZ inalterada (focus nunca concede capacidade). `preview != commit` preservado.
+
+### 34.9 Ambiguity rules
+
+- 1 selectedId resolvido → target claro.
+- N>1 resolvidos + op com `blockIds` (ex.: duplicar/alinhar) → multi-target explícito.
+- N>1 + op single-target → AMBIGUOUS → clarification (não escolher arbitrariamente).
+- ids ausentes do slide → `missingIds` + se nenhum resolve → ABSENT.
+- slideId do focus ≠ slideId do detail → re-resolve contra detail_slide (persistido vence).
+
+### 34.10 CREATE vs ALTER benefit
+
+«aumente esse título» → `editorFocus.selectedObjects` fornece `{id,type:heading}` → suggest recebe `selectedBlockId` resolvido → ALTER_EXISTING ancorado, eliminando ghost-create e ferry manual de ids. Anti-ghost rule ganha alvo confiável.
+
+### 34.11 Knowledge orchestration relationship
+
+Nenhuma fonte nova de conhecimento — `editor_context` já é family de orquestração; a extensão enriquece a mesma projeção. KO inalterada.
+
+### 34.12 Security
+
+Focus é do próprio `user_id` autenticado (store key), alimentado apenas por WS `canEdit` com clientId match — sem leak cross-user. `selectedObjects` revela dados do slide que o usuário já pode ler (mesma `tv-dashboard.read`). Nenhum permission broadening.
+
+### 34.13 Test plan
+
+ACTIVE/STALE/ABSENT/AMBIGUOUS estados · deleted block → missingIds · slide changed → re-resolve · heading/text/chart/table/DataModel-bound selection · multi-target op com blockIds · single-target com multi-selection → clarification · focus merge em suggest_change quando host_context omite seleção · host_context explícito prevalece sobre focus · stale focus não autoriza · payload budget · paridade MCP↔Actions automática.
+
+### 34.14 Eval plan (link §35)
+
+Fixtures determinísticas: single-selected heading/text/chart/table, stale focus, deleted block, multi-selection compatible/incompatible, slide drift. Dimensões: OBJECT_GROUNDING, TARGET_RESOLUTION, CREATE_VS_ALTER, CLARIFICATION_CORRECTNESS. Baseline: NOT_MEASURED (nova métrica).
+
+### 34.15 Implementation boundary
+
+ALLOWED: `response_compact.py` (+`selectedObjects`/`selectionState`/`missingIds` em `editorFocus`), `dispatch_service.get_playlist_context` (resolver vs detail_slide), `dispatch_service.suggest_change` ou planner (merge fallback focus→host_context), testes. FORBIDDEN: novo store, novo endpoint/tool/action, AuthZ, `PresentationMutation`, duplicar block state completo, frontend como autoridade.
+
+`EXISTING_EQUIVALENT = YES` · `REUSE_DECISION = EXTEND` (mesma projeção, mesmo store, item shape reutilizado).
+
+**PHASE 4 = READY_FOR_EXECUTION** — extensão bounded provada: projection + merge fallback, ambos transports automáticos, zero authority nova.
+
+## 35. PHASE 7 — EVAL + TELEMETRY V2 DIAGNOSTIC (2026-10-09)
+
+Mode: DIAGNOSTIC/measurement design only. Nenhuma implementação de telemetria nesta etapa.
+
+### 35.1 Current measurement inventory
+
+- `presentation_mutation_telemetry.py`: contadores in-process (`preview_ok/rejected`, `apply_ok/rejected`, `op_rejected`) + deque 500 eventos — **internal only**, sem rota de exposição (única rota `/copilot/telemetry` é retired stub).
+- Corpus precedent: `test_vista_ready_slide_corpus_gate.py` — fixture gate já existe.
+- 156 arquivos de teste = contract/regression coverage PROVEN.
+- Cognitive quality metrics = NOT_MEASURED (confirmado — nenhum scorer/eval de qualidade existe).
+
+### 35.2 Metric catalog (classificação)
+
+| Dimensão | Classificação | Instrumento |
+|---|---|---|
+| OBJECT_GROUNDING | NEEDS_FIXTURE | corpus §35.3 + assertion em selectionState |
+| CREATE_VS_ALTER | NEEDS_FIXTURE | corpus com intent anotado |
+| CLARIFICATION_CORRECTNESS | NEEDS_FIXTURE | corpus + clarificationKey esperado |
+| TARGET_RESOLUTION | NEEDS_FIXTURE | corpus single/multi/stale/absent |
+| DATA_ROUTE_RETRIEVAL | MEASURABLE_NOW (parcial) | testes discovery + fixture top-k |
+| DATA_DIAGNOSIS | NEEDS_FIXTURE | corpus data-bound |
+| VISUAL_SELECTION | NEEDS_HUMAN_RUBRIC | rubric + fixtures |
+| FILTER_LAYERING | MEASURABLE_NOW (parcial) | testes existentes + fixture |
+| DISPLAY_FORMAT_SELECTION | MEASURABLE_NOW (parcial) | corpus format |
+| TYPED_OP_VALIDITY | MEASURABLE_NOW | schema validation já testada |
+| PROPOSAL_VALIDITY | MEASURABLE_NOW | prepare/act tests |
+| WRITE_SAFETY | MEASURABLE_NOW | governed write tests |
+| VERIFY_OUTCOME | NEEDS_TELEMETRY | evento OUTCOME_NOT_VERIFIED |
+| USER_CORRECTION | NEEDS_TELEMETRY | correction event (definir) |
+| TRANSPORT_PARITY | MEASURABLE_NOW | parity suite existente |
+
+### 35.3 Corpus plan
+
+Fixtures determinísticas (mesmo padrão ready-slide gate): `tests/eval/grounding/*.json` + runner — intents: create-vs-alter, seleção ambígua/stale/multi/ausente, heading/text/chart/table/DataModel-bound, route miss, route ambiguity, filter layering, visual recommendation, display format, verify outcome. Frozen baseline corpus antes de medir deltas.
+
+### 35.4 Telemetry event model (design)
+
+Estender o padrão `presentation_mutation_telemetry` (in-process counters + bounded deque) — nunca generic telemetry service. Campos seguros: `intentFamily`, `matchedCapabilityKeys[]`, `resolutionStatus` (ACTIVE/STALE/ABSENT/AMBIGUOUS), `clarificationKey`, `candidateCount`, `selectedObjectType`, `prepareRejectionFamily`, `outcomeNotVerified`, `correctionKind`, `visualEvidenceState`. FORBIDDEN: JWT, secrets, prompt raw, business payload, private rows.
+
+### 35.5 Privacy / sampling / retention
+
+In-memory only (deque maxlen, mesmo padrão mutation telemetry); sem persistência, sem rota pública; opt-in debug snapshot interno se necessário. Retention = process lifetime. Sem dados de usuário identificável além de enums/keys.
+
+### 35.6 Dashboard/report plan
+
+Sprint-report manual via snapshot + corpus runner output; nenhum dashboard novo nesta fase.
+
+### 35.7 Per-phase measurement plans
+
+P4: corpus grounding + `resolutionStatus` telemetry field. P5: rubric visual_choice + corpus design intents. P6: route top-k + false-absence + owner classification fixtures.
+
+### 35.8 Implementation boundary
+
+Diagnostic only. Execução de telemetry/corpus requer promotion explícita do P7 para execution com boundary próprio.
+
+**PHASE 7 diagnostic = DONE (measurement architecture proven).** BASELINE = NOT_MEASURED — nenhuma métrica cognitiva existia; nada foi inventado como score.
