@@ -87,8 +87,8 @@ mesma policy por ação, mesmo `commit_proposal` como ACT único.
 | Ata: pending/audit/versions/participants/signers/generate_from_transcript | **SUPPORTED_BY_TÉO** (`gpt_meeting_minute_read`) |
 | Tasks (my/process/create/update/complete/cancel) | **SUPPORTED_BY_TÉO** (`gpt_collaboration_read` / `gpt_prepare_collaboration_change` → commit) |
 | Interaction rooms/messages/reactions/pins/read-state | **SUPPORTED_BY_TÉO** (mesma família collaboration; anexos binários = platform_blocked) |
-| Helpdesk/GLPI (session/capabilities/tickets/ticket/catalogs) | **SUPPORTED_BY_TÉO** (`gpt_helpdesk_read`, read-only; writes = roadmap R4) |
-| Helpdesk attachment binário / writes | **PLATFORM_BLOCKED** / **PLANNED** |
+| Helpdesk/GLPI (session/capabilities/tickets/ticket/catalogs + attachment metadata) | **SUPPORTED_BY_TÉO** (`gpt_helpdesk_read`; writes governadas via `gpt_prepare_helpdesk_change` → commit, incl. `upload_attachment` com objeto file) |
+| Helpdesk attachment conteúdo binário | **MCP-only** — `helpdesk_read(action=attachment)` entrega ImageContent/EmbeddedResource no MCP; GPT Actions retorna metadata (`content_delivery=metadata_only`). Upload via `upload_attachment` + objeto file (R4.2, live-proven) |
 | Assinatura PNG / PDF / magic-link público | **NOT_EXPOSED_BY_DESIGN** / **SUPPORTED_BY_UI_ONLY** |
 | Proxy HTTP genérico, locks, websocket, backup JSON, S2S | **NOT_EXPOSED_BY_DESIGN** |
 

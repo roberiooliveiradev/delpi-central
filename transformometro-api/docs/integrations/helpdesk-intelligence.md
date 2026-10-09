@@ -83,8 +83,14 @@ the sole ACT — see §20. No generic write surface exists.
 
 ## 10. Attachment boundary
 
-Attachments are metadata only (`document_id`, `filename`, `mime`).
-Binary transport: `PLATFORM_BLOCKED` / out of scope.
+Attachment inventory is always metadata first: `attachments[]`
+(`document_id`, `filename`, `mime`) plus `attachment_refs` — the
+deduplicated document universe including inline `<img>` refs in
+description/timeline HTML (R4.2). Binary content is delivered on demand
+via `helpdesk_read(action=attachment)` as MCP `ImageContent` /
+`EmbeddedResource` blocks, and user files upload via governed
+`upload_attachment` — see §22. (HISTORICAL: classified
+`PLATFORM_BLOCKED` until R4.2 proved canonical transports.)
 
 ## 11. Epistemic rules
 
@@ -116,8 +122,9 @@ current state → catalogs → `prepare_helpdesk_change` → policy gate →
 | R1 Integration Contract V1 | this document | ACCEPT |
 | R2 Read Intelligence V1 | `helpdesk_read` + orchestration | ACCEPT / CLOSED — see §19 |
 | R3 Demand Intelligence V1 | recurrence/discovery composition — zero new tools | ACCEPT / CLOSED — see §19 |
-| R4 Governed Writes V1 | `prepare_helpdesk_change` + `commit_proposal`, idempotency bound to proposal, BFF revalidation, read-back | IMPLEMENTED — see §20 (live GLPI-write acceptance pending user OAuth link) |
-| R4.1 Full Capability Coverage | 100% route ledger (37 routes, 0 unclassified) + governed ticket delete (GLPI trash) + governed session unlink | IMPLEMENTED — see §21 (live delete acceptance pending user OAuth link) |
+| R4 Governed Writes V1 | `prepare_helpdesk_change` + `commit_proposal`, idempotency bound to proposal, BFF revalidation, read-back | ACCEPT / CLOSED — see §20 |
+| R4.1 Full Capability Coverage | 100% route ledger (37 routes, 0 unclassified) + governed ticket delete (GLPI trash) + governed session unlink | ACCEPT / CLOSED — see §21 |
+| R4.2 Full Ticket Context & Binary Attachments | `action=attachment` (ImageContent/EmbeddedResource) + governed `upload_attachment` via `openai/fileParams` + `attachment_refs` dedup | ACCEPT / CLOSED — see §22–23 (live upload/vision proven; C1+C2 host corrective closed) |
 | R5 Helpdesk ↔ TM Link | relationship metadata only (source_system=glpi), never ticket copy — Abstraction Gate first | TO_INVENTORY |
 | R6 Backlog Intelligence | only if paginated reads prove inadequate; projection lives in the BFF, never a TÉO cache | TARGET |
 
@@ -340,8 +347,10 @@ aggregation) stays TARGET — no implementation performed for either.
 
 ## 20. R4 — Governed Helpdesk Writes V1
 
-Status: **IMPLEMENTED** (contract + unit/integration evidence below; live
-GLPI-write acceptance pending — see Live acceptance gate).
+Status: **ACCEPT / CLOSED** — live governed writes proven in §22.2
+(`set_assignee` on #1299, `upload_attachment` + `delete_ticket` on #1300:
+PREPARE → policy → commit_proposal → BFF → GLPI → authoritative
+read-back → verify).
 
 ### Architecture
 
@@ -438,18 +447,13 @@ Registry-derived parity; `HELPDESK_WRITE` added to
   multi-action chain on authoritative returned id.
 - Surface/parity/orchestration pins updated: MCP 23, GPT 21.
 
-### Live acceptance gate
+### Live acceptance gate — SUPERSEDED by §22.2
 
-Pending: the dev Helpdesk BFF points at the production GLPI via OAuth
-(`helpdesk.centraldelpi.com.br`) and the authenticated user currently has
-no linked GLPI session (`linked: false` —
-`glpi_link_required` + `authorize_url` propagated typed end-to-end, which
-itself verified the live Bearer/error path). `GLPI_OAUTH_CLIENT_ID`/
-`SECRET` are empty in the dev env, so the link must be completed
-interactively once credentials are configured. The acceptance script
-(`tmp-teo-write/r4_accept.py` flow: create → follow-up+retry → task →
-confirm-before-act set_assignee) is ready to run the moment a session
-exists.
+HISTORICAL: at R4 time the dev env had no linked GLPI session and no
+`GLPI_OAUTH_CLIENT_*`, so live write acceptance was pending. The linked
+session now exists and live governed writes passed (§22.2:
+assignment/upload/delete with read-back and consumed-proposal
+idempotency).
 
 ## 21. R4.1 — Full Helpdesk Capability Coverage
 
@@ -575,14 +579,13 @@ INFRA_ONLY 1 · EXPOSED_READ_BINARY 1 · **UNCLASSIFIED 0**. (R4.1 classified th
 - `tests/test_helpdesk_route_coverage.py` — inventory parity (37),
   0 unclassified, no stale entries, no orphan business read/write.
 
-### 21.6 Live acceptance gate
+### 21.6 Live acceptance gate — SUPERSEDED by §22.2
 
-Same blocker as §20: the dev Helpdesk BFF points at production GLPI via
-OAuth and no linked session exists in this env (`GLPI_OAUTH_CLIENT_ID`/
-`SECRET` empty, `helpdesk.oauth_sessions` empty). The disposable-ticket
-delete acceptance (`[TÉO R4.1 DELETE ACCEPTANCE]` create → prepare →
-exists-before-confirm → commit → post-delete not_found) runs the moment
-a user OAuth link exists. Live unlink acceptance is intentionally not
+HISTORICAL blocker: same as §20 (no linked session in dev env). Governed
+`delete_ticket` was subsequently executed live on the disposable
+acceptance ticket #1300 — confirm_before_act → commit → GLPI trash →
+authoritative read-back 404 `not_found` (§22.2). Live unlink acceptance
+is intentionally not
 run against the real session (user friction/re-auth, per spec §34).
 
 ## 22. R4.2 — Full Ticket Context & Binary Attachments V1
@@ -678,15 +681,13 @@ delete route; not invented at GLPI (ledger stays accurate).
 - Route ledger (`tests/test_helpdesk_route_coverage.py`): 37 routes,
   0 unclassified, attachment rows reclassified.
 
-### Live acceptance gate
+### Live acceptance gate — SUPERSEDED by §22.2
 
-Same OAuth precondition as §20/§21.6: dev BFF → production GLPI needs a
-linked user session (`helpdesk.oauth_sessions` empty in this env).
-Pending live gates: real `fileParams` upload on ChatGPT, image bytes →
-model vision (community reports show inconsistent `ImageContent`
-handling on ChatGPT connectors — protocol PROVEN, client behavior
-PENDING_RUNTIME_ACCEPTANCE), compound assignment+upload, disposable
-ticket cleanup.
+HISTORICAL: at implementation time the dev env had no linked GLPI OAuth
+session and ChatGPT `ImageContent` delivery was
+PENDING_RUNTIME_ACCEPTANCE. All gates subsequently passed live —
+see §22.2 (image read on #1299, real fileParams upload on #1300,
+binary read-back, vision, idempotency, governed cleanup).
 
 ### 22.1 R4.2-C1 — fileParams download-host corrective
 
@@ -708,8 +709,91 @@ ticket cleanup.
   only — no signed URL/SAS query.
 - **Deploy**: `delpi-transformometro-api` recreated only (env change);
   no BFF/Keycloak/Postgres restart.
-- **Remaining live gates**: real `fileParams` upload retry on ticket
-  #1300 (`[TÉO R4.2 ATTACHMENT ACCEPTANCE]`) → GLPI read-back →
-  `action=attachment` binary read → vision evidence. Image read on
-  #1299 (document 1344) already PASS. Builder reimport still pending
-  (unchanged by this corrective).
+- **Status**: ACCEPT / CLOSED — the retry passed live (§22.2).
+- **Remaining**: GPT Builder OpenAPI reimport = PENDING_MANUAL
+  (admin residual, does not invalidate MCP/runtime acceptance).
+
+### 22.2 R4.2 — live acceptance evidence (point-in-time)
+
+**Session/surface**: TÉO MCP 23 tools; Helpdesk session linked;
+`helpdesk_read` includes `attachment`; `prepare_helpdesk_change`
+includes `upload_attachment`.
+
+**Image read (real ticket)** — #1299 `[Minha DELPI] Erro 500 ao carregar
+Minhas Solicitações`, attachment `document_id=1344`
+`image_paste5958027.png` (image/png):
+
+- attachment metadata read: PASS
+- binary/image content delivered to the model: PASS
+- visual understanding: PASS — model described pixel-only evidence
+  (Minha DELPI → Minhas solicitações screen, browser DevTools Network
+  showing a request returning HTTP 500, "Internal server error" in the
+  response detail).
+- epistemic: HTTP 500 visible in screenshot = OBSERVED; root cause =
+  UNKNOWN (not claimed).
+
+**User file upload (disposable ticket)** — #1300 `[TÉO R4.2 ATTACHMENT
+ACCEPTANCE] Teste de mídia binária`, initial `attachments=[]`,
+`attachment_refs=[]`. User image bound via canonical `openai/fileParams`
+(`image(20261008-215054).png`, image/png):
+
+- PREPARE `upload_attachment`: PASS
+- `commit_proposal` → `OpenAIFileGateway` (allowlisted signed URL) →
+  BFF multipart → GLPI: PASS
+- authoritative read-back: `document_id=1345` present on ticket,
+  `postcondition.verified=true`: PASS
+- USER FILE BINDING / GOVERNED UPLOAD / GLPI READ-BACK: PASS
+
+**Binary read-back + vision**: `helpdesk_read(action=attachment,
+ticket_id=1300, document_id=1345)` → `helpdesk_attachment_v1`,
+`content_delivery=inline`, content blocks = text + image (image_count
+1). Model received pixels and described pixel-only evidence ("Chamado
+#1299 atribuído a Michael Marotto!", row "Imagem anexada — Pendente").
+
+**Idempotency**: second `commit_proposal` on the same proposal →
+`proposal_not_found` (consumed); ticket read-back showed exactly one
+attachment `document_id=1345`. NO DUPLICATE BUSINESS EFFECT: PASS.
+
+**Cleanup**: #1300 removed via governed `delete_ticket`
+(confirm_before_act, explicit confirmation) → GLPI trash semantics,
+read-back 404 `not_found`. Moved to GLPI trash / absent from active
+view — not claimed as permanently purged. ACCEPTANCE CLEANUP: PASS.
+
+**Fail-closed**: the pre-C1 attempt failed `FILE_URL_NOT_ALLOWED` and
+left zero side effects (`attachments=[]` on read-back): PASS.
+
+### 22.3 R4.2-C2 — production configuration evidence
+
+WSL → SSH `operador@srv-api` → prod repo
+`/home/operador/projetos/delpi-central`, runtime SHA `a91a053b96`.
+Env source `infra/.env`; BEFORE: `OPENAI_FILE_DOWNLOAD_HOSTS` unset;
+AFTER: `files.oaiusercontent.com,oaisdmntprbrazilsouth.blob.core.windows.net`.
+Backup `.env.backup-20261009-102555`. Targeted recreate of
+`delpi-transformometro-api` only (helpdesk-api/core/Keycloak/Postgres
+untouched); container env verified; `_host_allowed()` policy verified
+live; MCP surface 23 tools with `attachment`/`upload_attachment`.
+Subsequent ChatGPT live upload succeeded (§22.2). Runtime evidence,
+not source-code evidence. Status: ACCEPT / CLOSED.
+
+## 23. R4.2 — final closeout
+
+| Gate | Verdict |
+|---|---|
+| Full ticket context (description/timeline/validations/satisfaction/attachments+attachment_refs) | PASS |
+| Attachment metadata | PASS |
+| Attachment download (BFF → bytes → MCP blocks) | PASS |
+| Image content delivery | PASS |
+| Model vision (pixel-only evidence, #1299 + #1300) | PASS |
+| User file binding (`openai/fileParams`) | PASS |
+| Upload attachment (PREPARE → ACT → BFF → GLPI) | PASS |
+| Authoritative read-back / no false success | PASS |
+| Idempotency / no duplication | PASS |
+| Fail-closed (`FILE_URL_NOT_ALLOWED` left no side effect) | PASS |
+| Production fileParams host config (C1+C2) | PASS |
+| Cleanup (governed delete → GLPI trash) | PASS |
+
+**R4.2 = ACCEPT / CLOSED** (backend + MCP runtime).
+
+**Builder parity residual**: the R4.2 OpenAPI change (`GptFileParam`,
+`upload_attachment` enum) requires GPT Builder reimport —
+**PENDING_MANUAL** (admin step; does not invalidate MCP acceptance).
