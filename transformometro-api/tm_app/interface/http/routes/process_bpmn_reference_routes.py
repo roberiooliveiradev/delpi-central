@@ -13,11 +13,15 @@ from pydantic import BaseModel, Field
 from tm_app.application.security.authorization_policy import AuthorizationDenied
 from tm_app.application.use_cases.manage_process_bpmn_reference import (
     BpmnDependencyUnavailable,
+    DualModeConflict,
     ProcessBpmnReferenceUseCases,
 )
 from tm_app.core.responses import fail, ok
 from tm_app.infrastructure.gateways.bpmn_modeler_gateway import (
     BpmnModelerGateway,
+)
+from tm_app.infrastructure.persistence.repositories.process_bpmn_document_repository import (
+    ProcessBpmnDocumentRepository,
 )
 from tm_app.infrastructure.persistence.repositories.process_bpmn_reference_repository import (
     ProcessBpmnReferenceRepository,
@@ -28,7 +32,9 @@ router = APIRouter(
     prefix="/transformometro", tags=["Transformômetro — referência BPMN"]
 )
 _use_cases = ProcessBpmnReferenceUseCases(
-    ProcessBpmnReferenceRepository(), BpmnModelerGateway()
+    ProcessBpmnReferenceRepository(),
+    BpmnModelerGateway(),
+    docs=ProcessBpmnDocumentRepository(),
 )
 
 
@@ -44,6 +50,8 @@ def _handle(exc: Exception):
         return fail(str(exc), 403)
     if isinstance(exc, LookupError):
         return fail(str(exc), 404)
+    if isinstance(exc, DualModeConflict):
+        return fail(str(exc), 409, {"error_kind": "dual_mode_forbidden"})
     if isinstance(exc, BpmnDependencyUnavailable):
         return fail(
             str(exc),

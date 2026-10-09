@@ -34,6 +34,12 @@ class BpmnDependencyUnavailable(RuntimeError):
     status_code = 503
 
 
+class DualModeConflict(RuntimeError):
+    """XOR violation (G7/ADR-006) — o processo já possui documento nativo."""
+
+    status_code = 409
+
+
 def _data(payload: Any) -> dict[str, Any]:
     """Unwrap the shared ``{success, data}`` envelope when present."""
     if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
@@ -69,9 +75,11 @@ class ProcessBpmnReferenceUseCases:
         repo: ProcessBpmnReferenceRepositoryPort,
         bpmn: BpmnModelerPort,
         policy: TransformometroAuthorizationPolicy | None = None,
+        docs: Any | None = None,
     ) -> None:
         self._repo = repo
         self._bpmn = bpmn
+        self._docs = docs
         self._policy = policy or TransformometroAuthorizationPolicy()
 
     # -- reads -----------------------------------------------------------
@@ -151,6 +159,11 @@ class ProcessBpmnReferenceUseCases:
     ) -> dict[str, Any]:
         self._policy.require_access(user)
         pid = self._require_processo(processo_id)
+        if self._docs is not None and self._docs.has_active(pid):
+            raise DualModeConflict(
+                "O processo já possui um documento BPMN nativo; "
+                "remova-o antes de vincular um modelo externo."
+            )
         mid = _normalize_uuid(model_id, "model_id")
         rev_no = self._normalize_revision_number(revision_number)
         actor = str(getattr(user, "id", "") or getattr(user, "sub", "") or "")

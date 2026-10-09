@@ -71,6 +71,9 @@ _SKIP_PREFIXES: tuple[str, ...] = (
     # G5 BPMN reference — superfície EN-nativa sem contraparte PT; o sufixo
     # /candidates/{model_id}/revisions seria reescrito para /revisoes (404).
     "/bpmn-reference",
+    # G7 BPMN nativo — mesma classe de bug: /bpmn-document/revisions seria
+    # reescrito para /bpmn-document/revisoes (404).
+    "/bpmn-document",
     "/health",
 )
 
