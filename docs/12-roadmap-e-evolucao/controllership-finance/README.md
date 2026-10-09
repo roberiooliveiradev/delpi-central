@@ -28,12 +28,20 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - baseline: **1 fechamento/mês; 960 min INFORMED**
 - TO-BE: **TARGET consolidado**
 - implementação: **NOT_STARTED**
+- A14 revisão transversal: **PASS**
+- A15 contracts/regras/scripts/test matrix: **PASS_WITH_RESIDUAL_E04_T04**
+- `PORTAL_DESIGN_FREEZE`: **PASS**
+- `FRONTEND_PATTERN_FREEZE`: **PASS**
+- `SECURITY_MODEL_FREEZE`: **PASS**
+- `TEST_STRATEGY_FREEZE`: **PASS**
+- `PRODUCT_CONTRACT_FREEZE`: **PENDING_E04_T04**
+- `DOCUMENTATION_CLOSURE_COMPLETE`: **NO**
 - ROI: **não calculado**
-- P1/P2: **DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P3: **DOCUMENTATION_GATE BLOCKED_BY_E02 / STOP_CONDITION_ON_T03**
-- P4: **DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P5 pacote/finalização: **DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P6/Administração: **DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P1/P2: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P3: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03**
+- P4: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P5 pacote/finalização: **PAGE_DOCUMENTATION_GATE_V2 PACKAGE_FINALIZATION_READY**
+- P6/Administração: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 - P5 envio real: **BLOCKED_WITH_EVIDENCE**, Q22 depende E04/T04
 - handoff funcional P1–P6: **DOCUMENTED**, sujeito aos inventories E/T da página
 
@@ -76,6 +84,8 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [31-pagina-do-usuario.md](./31-pagina-do-usuario.md) | perfil de usuário, wireframes, contracts, AuthZ e reuso full-page do `plugin-ui` |
 | [32-inicio-home.md](./32-inicio-home.md) | Home comum do Portal, wireframes, launcher, eventos, busca, recentes e favoritos |
 | [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md) | plano mestre para fechar páginas, regras, RQ/AC, Help e gates antes de runtime |
+| [34-revisao-transversal-gate-v2.md](./34-revisao-transversal-gate-v2.md) | revisão transversal de naming, owners, security, routes, plugin-ui, states, Help e contracts |
+| [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md) | consolidação A15 de contracts, regras, validators/scripts e test matrix |
 
 ## Página do usuário
 
