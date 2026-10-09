@@ -278,3 +278,85 @@ Os **wireframes textuais WF-01 a WF-05 são a especificação visual legível ve
 7. Branding DÉLIA novo requer gate próprio, sem substituir logo Minha DELPI.
 
 **Handoff:** chat `4. DÉLIA — Frontend / MFE / UX` → `10. DÉLIA — Integration / Acceptance Review` → `1. DÉLIA — Architecture / Coordination`. Implementation por Devin somente após reanchor, autorização de fase e contrato.
+
+
+
+## 14. Microinterações e motion design — direção de UX aprovada (2026-10-09)
+
+**Status:** \`APPROVED_VISUAL_DIRECTION\` por Product Master na conversa; \`IMPLEMENTATION=PENDING\`. As durações são alvos de design para validação, não fatos do runtime nem autorização para criar novos serviços ou fluxos de backend.
+
+### 14.1. Princípios de movimento
+
+1. Movimento deve comunicar estado, transição e resposta à ação do usuário, não apenas ornamentar a interface.
+2. Identidade visual: marca DÉLIA discreta, azul institucional \`var(--primary)\`, superfícies e contraste herdados do tema Minha DELPI. Não criar avatar antropomórfico nem personagem animado.
+3. Animação deve ser curta, suave, interrompível, consistente nas superfícies página completa e dock.
+4. Estado técnico da orquestração não pode ser inferido de timers ou animações: sem eventos observáveis backend, somente \`A DÉLIA está trabalhando...\`/aguardando resposta. Nunca afirmar \`Consultando TÉO/MCP\`, \`Pesquisando na internet\`, \`Comparando dados\` ou \`Preparando resposta\` sem evidência real da atividade.
+5. Após a resposta, mostrar resumo discreto e recolhido de fontes/atividade **somente quando houver evidência pública permitida**. Não expor chain-of-thought, prompts, tools arguments, tokens/segredos ou metadados não governados.
+6. Respeitar \`prefers-reduced-motion\`, teclado, foco, contraste, screen readers, dispositivos de menor desempenho e economia de energia.
+
+### 14.2. Componente de atividade: símbolo + status + detalhes
+
+**Direção visual selecionada:** ícone/símbolo da DÉLIA com pulsação luminosa **muito sutil** e frase curta de status; detalhes colapsados por padrão e expansíveis sob demanda. Três pontos animados podem ser avaliados como fallback visual em inventário, não como outro componente paralelo. Não usar spinner e pulsação em competição visual.
+
+\`\`\`text
+[marca DÉLIA + pulse sutil] A DÉLIA está trabalhando...  [Detalhes ▾]
+  Somente se backend oferecer eventos/estados verificados:
+  ✓ Solicitação recebida
+  ✓ Fonte autorizada selecionada: TÉO
+  ◌ Consultando chamados
+  · Organizando evidências
+[Após receber resposta] ✓ Resposta disponível  [Como foi obtida ▾]
+\`\`\`
+
+**Estado inicial factualmente permitido hoje:** \`POST /interaction/turns\` é request/response JSON, sem progress streaming; mostrar apenas \`Aguardando resposta da DÉLIA\` enquanto HTTP estiver pendente. O status \`source\` no protótipo é **futuro e condicionado a evento de backend**, não timer nem simulação. Se source unavailable, auth denied ou precondition, renderizar o \`presentation.v1\` do backend em vez de inventar sucesso.
+
+### 14.3. Composer único
+
+- Textarea multiline de altura adaptativa com expansão suave, token de foco \`--focus-ring\`, placeholder discreto e controles compartilhados do \`plugin-ui\` após inventário.
+- Envio indica \`loading\`, bloqueia submissão duplicada e oferece cancelamento apenas se o transporte/abort realmente o suportar; cancelar espera UI não equivale a cancelar execução remota.
+- Entrada por teclado e tecnologias assistivas; sem atalhos não documentados. Ícones de anexo, voz, câmera, ferramentas e pesquisa web só quando houver capability contratada/autorizada; não renderizar como affordances falsas.
+- Mesmo componente tanto no dock quanto na página completa.
+
+### 14.4. Transição recepção → conversa
+
+- Depois da primeira mensagem, a saudação/cartões iniciais deixam o foco; timeline ocupa região central; composer permanece visualmente consistente e se ancora no rodapé.
+- Preferir animação curta de opacidade/posição sem reload e sem pular foco. Não criar histórico persistente por implicação visual.
+- Se reduced-motion ativado, alternar layout sem deslocamentos animados.
+
+### 14.5. Timeline e mensagens
+
+- Entrada de turno com fade + deslocamento vertical leve, sem token-by-token fake streaming; revelar somente blocos já recebidos e permitidos por \`presentation.v1\`.
+- Componentes ricos (list/table/metric/chart etc.) são **future contract**, não renderizar até backend suportar schema permitido.
+- Estados materiais (precondition, auth denied, confirmation) devem ser visualmente claros, mas não usar animação persuasiva em confirmações governadas. Ações somente pelo protocolo confirmado \`confirmation_request\`; \`allowed_interactions\` não concede autorização.
+- Autoscroll só se usuário estiver próximo do fim. Respeitar leitura/scroll e anúncio de mensagens para screen readers.
+
+### 14.6. Sidebar DÉLIA e dock Portal
+
+- Sidebar da DÉLIA abre/recolhe suavemente, com preservação de scroll/foco, separada da sidebar do Portal.
+- Dock global abre/oculta sem tomar controle de outros MFEs. Estado de sessão compartilhada entre dock e página só após contrato realmente comprovado; não inventar sincronização.
+- Adaptar comportamento desktop, tablet e mobile usando contratos/componentes compartilhados do \`plugin-ui\` e host Portal.
+
+### 14.7. Tabela de motion tokens propostos
+
+| Interação | Intervalo inicial para avaliação |
+| --- | --- |
+| Hover/foco de botão | 120–160 ms |
+| Entrada de mensagem | 180–240 ms |
+| Troca de status/aviso | 180–250 ms |
+| Expandir/recolher detalhes | 200–280 ms |
+| Abrir/recolher sidebar | 220–300 ms |
+| Recepção → conversa | 250–350 ms |
+
+**Não congelar valores em hex/CSS local.** Mapear para motion tokens canônicos existentes no \`plugin-ui\`/Portal se houver. \`EXISTING_EQUIVALENT=TO_INVENTORY\` para animações, loading, status, drawer, timeline e composer. \`REUSE_DECISION=TO_DECIDE\` por componente. Se não existir mecanismo legítimo, propor extensão compartilhada mínima e justificar Abstraction Gate antes de implementar.
+
+### 14.8. Testes e critérios de aceite do motion
+
+- Sem indicadores de estágio não observados; loading genérico honesto com HTTP JSON atual.
+- Mesma experiência e semântica em página completa e dock compacto.
+- \`prefers-reduced-motion\` elimina movimento não essencial; foco visível/não perdido; suporte teclado e leitor de tela.
+- Nenhuma animação dispara ações ou altera confirmação/autorização; sem dupla submissão; loading e erro refletem resposta real.
+- Sem regressão de layout shift, scroll inesperado, renderização ou performance em mobile.
+- Reutilização demonstrada por inventário de componentes \`plugin-ui\`, com testes de integração e outcome no SHA avaliado.
+- O desenho visual não autoriza criação de engine de activity, persistência, SSE, nova tool ou mudanças de fase.
+
+**Handoff futuro ao Devin:** primeiro inventariar componentes/motion tokens reais e contrato backend; depois implementar o menor conjunto de componentes autorizados; somente então validar UX e acessibilidade com evidências.
