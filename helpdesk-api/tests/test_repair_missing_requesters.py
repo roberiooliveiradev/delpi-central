@@ -148,3 +148,13 @@ def test_requester_present_but_recipient_missing_is_conflict():
     assert report.findings[0].classification == CONFLICT
     apply_repairs(gw, "tok", report)
     assert gw.writes == []
+
+
+def test_trashed_ticket_is_out_of_scope():
+    row = _row(13, recipient_id=12)
+    row["is_deleted"] = True
+    gw = FakeBackfillGateway([row])
+    report = scan(gw, "tok", from_iso="a", to_iso="b")
+    assert report.findings[0].classification == "OUT_OF_SCOPE"
+    apply_repairs(gw, "tok", report)
+    assert gw.writes == []

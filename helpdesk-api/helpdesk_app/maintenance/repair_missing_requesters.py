@@ -89,7 +89,11 @@ def classify_ticket(gateway, token: str, row: dict) -> TicketFinding:
         or recipient.get("display_name")
         or f"{recipient.get('first_name') or ''} {recipient.get('last_name') or ''}".strip()
     )
-    if actual is not None:
+    detail = ""
+    if row.get("is_deleted") or row.get("isDeleted"):
+        classification = OUT_OF_SCOPE
+        detail = "in GLPI trash"
+    elif actual is not None:
         if recipient_id is not None and actual == recipient_id:
             classification = ALREADY_CORRECT
         else:
@@ -108,6 +112,7 @@ def classify_ticket(gateway, token: str, row: dict) -> TicketFinding:
         recipient_id=recipient_id,
         recipient_name=recipient_name,
         classification=classification,
+        detail=detail,
     )
 
 
