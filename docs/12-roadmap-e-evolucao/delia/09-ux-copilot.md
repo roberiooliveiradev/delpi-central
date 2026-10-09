@@ -8,6 +8,8 @@
 
 **Fila por conversa e Meus Trabalhos:** [`71-conversation-queue-and-my-work-ux-specification.md`](./71-conversation-queue-and-my-work-ux-specification.md) — decisão de UX, não autorização de runtime.
 
+**Revisão integrada de UI/UX:** [`72-ui-ux-documentation-review-2026-10-09.md`](./72-ui-ux-documentation-review-2026-10-09.md) — aceite documental com pendências, sem autorização de fase.
+
 ## 1. Princípio
 
 A DÉLIA deve parecer parte do trabalho real, não uma janela de chat. Conversa, dados, processos, análises, automações, artefatos, modelos e contexto industrial convergem para uma experiência única com provenance, estado e governança visíveis quando materiais.
