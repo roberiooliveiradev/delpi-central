@@ -29,7 +29,7 @@ Authorities detalhadas continuam nos documentos de cada página; este arquivo é
 | A09 | P2 Checklist e Documentos | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 | A10 | P3 Estoque e Conciliação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03 |
 | A11 | P4 Classificações e Pendências | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
-| A12 | P5 Pacote, Finalização e Envio | PACKAGE_FINALIZATION_READY / SEND_PENDING_E04_T04 |
+| A12 | P5 Pacote, Finalização e Envio | PACKAGE_FINALIZATION_READY / SEND_DECISION_REQUIRED_E04_T04 |
 | A13 | P6 Administração / Configuração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 
 A12 é o único residual material que impede o `PRODUCT_CONTRACT_FREEZE = PASS`; o inventário está concluído e a pendência agora é uma decisão explícita documentada em `36-e04-t04-package-delivery-decision-packet.md`.
