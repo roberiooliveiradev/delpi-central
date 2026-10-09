@@ -46,7 +46,7 @@ Estados históricos desta tabela representam maturidade documental acumulada. A 
 | Visão geral | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A03 fechado; O04 físico permanece inventário; O05 é stop condition de source/fórmula |
 | Sala de interação | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A05 fechado; R01–R05 permanecem inventários físicos; create-task-from-message continua fora da V1 |
 | Minhas tarefas | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A04 fechado; TSK01–TSK05 permanecem inventários físicos/futuros do brief |
-| Administração | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A06 fechado; ADM01–ADM07/E01/E05/E06/T02 permanecem inventories físicos/seed |
+| Administração | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A06 fechado; ADM01–ADM07/E01/E05/E06 permanecem inventories; Core notification capability PROVEN, adapter do produto permanece inventário |
 | Ajuda | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF | A07 fechado; HELP01–HELP04 permanecem inventories físicos; conteúdo runtime continua capability-gated e feature-by-feature |
 
 A topbar usa somente `controllership-finance.access` e `controllership-finance.manage`. Não existe permission code por filial/unidade neste Portal.
@@ -85,12 +85,12 @@ Decisões congeladas:
 | Página / slice | Estado | Stop / inventário material |
 |---|---|---|
 | P1 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A08 fechado; T01/T05 e contracts físicos de composição permanecem inventário |
-| P2 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A09 fechado; E05/E06/T02/T05 e bindings físicos permanecem inventário |
+| P2 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A09 fechado; E05/E06/T05 e bindings físicos permanecem inventário; Core notification capability PROVEN, adapter do produto a inventariar |
 | P3 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 | A10 fechado; E02 = STOCK_CLOSED terminal no Portal V1; T03 continua stop técnico para owner canônico |
 | P4 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A11 fechado; T01/T05 e contracts físicos permanecem inventário |
 | P5 — pacote/finalização | PAGE_DOCUMENTATION_GATE_V2 PARTIAL | package/finalization ready; SEND slice permanece PENDING E04/T04; Core notifications PROVEN != package delivery |
 | P5 — envio real | BLOCKED_WITH_EVIDENCE / GATE_V2 PENDING | E04/T04: owner/channel/proof/idempotency/retry de delivery ainda não provados; não confundir com Core notifications |
-| P6 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | contrato de página em 28; inventories ADM01–ADM07/E01/E05/E06/T02 conforme slice |
+| P6 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A13 fechado em 13+28; Core notifications PROVEN; persistência/seeds/people/concurrency e adapter do produto permanecem inventário |
 
 Readiness não é autorização global. Depois do freeze transversal, o Portal evoluirá uma página/slice por vez.
 
@@ -110,6 +110,22 @@ Readiness não é autorização global. Depois do freeze transversal, o Portal e
 - package/finalize/versioning não estão bloqueados;
 - enviar por canal real continua bloqueado até E04/T04;
 - não assumir e-mail, Teams, pasta ou serviço novo.
+
+## Freeze readiness após A15
+
+```text
+PORTAL_DESIGN_FREEZE           = PASS
+FRONTEND_PATTERN_FREEZE        = PASS
+SECURITY_MODEL_FREEZE          = PASS
+TEST_STRATEGY_FREEZE           = PASS
+PRODUCT_CONTRACT_FREEZE        = PENDING_E04_T04
+DOCUMENTATION_CLOSURE_COMPLETE = NO
+IMPLEMENTATION_AUTHORIZED      = NO
+```
+
+Authority de consolidação:
+- [34-revisao-transversal-gate-v2.md](./34-revisao-transversal-gate-v2.md);
+- [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md).
 
 ## Antes de qualquer diff técnico
 
