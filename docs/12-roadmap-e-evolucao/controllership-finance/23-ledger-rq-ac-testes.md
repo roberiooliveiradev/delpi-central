@@ -77,7 +77,7 @@ Este ledger complementa:
 | RQ-P5-02 | Finalizar cria versão/snapshot e não envia | PACKAGE_FINALIZED sem PACKAGE_SENT | positive | — | TARGET |
 | RQ-P5-03 | reabrir antes do envio preserva versão anterior | V1 histórica + working copy + V2 | positive + audit | — | TARGET |
 | RQ-P5-04 | pacotes são por destinatário dentro da mesma competência | enviar um destinatário não avança sibling | positive + sibling | recipients config | TARGET |
-| RQ-P5-05 | envio real usa capability corporativa comprovada | nenhum canal é assumido antes do inventário | contract/integration | E04/T04 | PENDING_IMPLEMENTATION |
+| RQ-P5-05 | envio real usa owner/canal/outcome explicitamente aprovados | Graph/Trace inventory sustenta decisão; nenhuma recomendação vira runtime sem aprovação | contract + architecture + integration | E04/T04 + doc 36 | DECISION_REQUIRED |
 | RQ-P5-06 | PACKAGE_SENT é imutável | tentativa de editar pacote enviado é rejeitada | negative | — | TARGET |
 | RQ-P5-07 | correção pós-envio cria complemento/nova versão ligada à anterior | histórico de entrega preservado | positive + audit | — | TARGET |
 | RQ-P5-08 | conclusão exige todos pacotes aplicáveis enviados e nenhum esclarecimento aberto | sem botão de force completion | positive + negative | send capability | TARGET |
