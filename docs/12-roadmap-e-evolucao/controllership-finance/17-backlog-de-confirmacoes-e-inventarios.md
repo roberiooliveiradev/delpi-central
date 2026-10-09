@@ -46,32 +46,46 @@ Confirmar roles, scopes, rotina owner e segregações.
 
 ## E04 — Canal real de envio
 
-**Estado:** `DECISION_REQUIRED / INVENTORY_COMPLETE_FOR_DECISION`.
+**Estado:** `CLOSED / PRODUCT_CLARIFICATION`.
 
-Inventário documentado em:
-- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+Decisão/clarificação:
+- package permanece dentro da Minha DELPI;
+- "Enviar" = submeter/disponibilizar para reviewers autenticados;
+- e-mail é somente notification channel;
+- nenhum package attachment é enviado por e-mail na V1.
 
-Proven:
-- necessidade de encaminhar package por recipient no processo;
-- Microsoft Graph e-mail + file attachments no runtime;
-- Message Trace `delivered/bounced/unknown` em CIPA/Transformômetro;
-- Core Notifications existe, mas `NOTIFICATION_DISPATCHED != PACKAGE_SENT`;
-- Delpi Reports envia relatórios por e-mail, mas não é generic package-delivery contract.
+Authority:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
-Não provado:
-- canal AS-IS atual;
-- owner corporativo único de package delivery;
-- generic delivery service reutilizável;
-- semântica aprovada de `PACKAGE_SENT` entre Graph accepted vs Message Trace delivered.
+```text
+EXTERNAL_PACKAGE_DELIVERY = NOT_REQUIRED_IN_V1
+```
 
-Decisões abertas:
-- `D-P5-DELIVERY-OWNER`;
-- `D-P5-PACKAGE-SENT-OUTCOME`.
+## D-P5-REVIEW-COMPLETION — regra de conclusão mensal
 
-Recomendação ainda **não aplicada**:
-- owner/orchestration em P5/BFF;
-- Graph + Message Trace como adapters;
-- `PACKAGE_SENT` somente após `DELIVERED`.
+**Estado:** `DECISION_REQUIRED / PRODUCT_RULE`.
+
+Opções:
+
+```text
+C1
+ALL_APPLICABLE_PACKAGES_SUBMITTED_FOR_REVIEW
+AND NO_OPEN_CLARIFICATION
+→ MONTHLY_CLOSING_COMPLETED
+
+C2
+ALL_APPLICABLE_REVIEWS_ACCEPTED
+AND NO_OPEN_CLARIFICATION
+→ MONTHLY_CLOSING_COMPLETED
+
+C3
+completion policy configurável por recipient/package type
+```
+
+Recomendação: C2 se a avaliação externa fizer parte formal do processo de fechamento; C1 se for controle posterior ao fechamento.
+
+Authority:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## E05 — Attachment roles reais
 
@@ -139,20 +153,14 @@ Se não existir/for incompatível → EXECUTION_DRIFT.
 
 ## T04 — Capability corporativa de envio
 
-**Estado:** `INVENTORY_COMPLETE_FOR_DECISION`.
+**Estado:** `CLOSED / NOT_REQUIRED_IN_V1`.
 
-Resultado:
-- transport Graph com attachments = PROVEN;
-- retry de transport = PROVEN;
-- Message Trace = PROVEN em bounded contexts reais;
-- generic package delivery owner/service = NOT_PROVEN;
-- Delpi Reports generic delivery = NOT_PROVEN;
-- Core Notifications como package-delivery owner = NOT_PROVEN.
+A investigação de Graph/Reports/Message Trace permanece como evidence histórica no documento 36, mas não é requisito P5.
 
-T04 deixa de ser busca aberta e passa a sustentar a decisão E04.
-
-Authority:
-- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+O capability relevante à V1 é T02:
+- Core Notifications;
+- inbox Minha DELPI;
+- e-mail de notification quando habilitado.
 
 ## T05 — Core RBAC
 
