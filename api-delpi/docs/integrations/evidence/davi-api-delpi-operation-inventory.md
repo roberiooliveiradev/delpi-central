@@ -4,8 +4,8 @@
 
 - Task: `DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **738**
-- TOTAL GET: **537**
+- TOTAL OPERATIONS: **742**
+- TOTAL GET: **541**
 - WRITE VERBS (POST/PUT/PATCH/DELETE): **201**
 - DAVI_ELIGIBLE_READ (before→after): **87 → 87**
 - NEWLY ELIGIBLE: **0**
@@ -44,10 +44,10 @@
 ```json
 {
   "previous_total_operations": 738,
-  "current_total_operations": 738,
+  "current_total_operations": 742,
   "previous_total_get": 537,
-  "current_total_get": 537,
-  "added_operations": 0,
+  "current_total_get": 541,
+  "added_operations": 4,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -63,8 +63,8 @@
 | `GENERIC_SQL_FORBIDDEN` | 2 |
 | `LEGACY_UNSAFE` | 2 |
 | `NEEDS_BOUNDED_EXECUTION` | 2 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 339 |
-| `NEEDS_NESTED_PROJECTION_SUPPORT` | 51 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 341 |
+| `NEEDS_NESTED_PROJECTION_SUPPORT` | 53 |
 | `SEMANTICALLY_REDUNDANT` | 3 |
 | `STREAM_BINARY_OUT_OF_SCOPE` | 33 |
 | `WRITE_OUT_OF_SCOPE` | 131 |

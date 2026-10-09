@@ -146,6 +146,18 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_supplies_inventory_turnover": RouteContract(
         "supplies_inventory_turnover", "scalar"
     ),
+    "get_supplies_non_moving_stock_summary": RouteContract(
+        "supplies_non_moving_stock_summary", "playbook_report"
+    ),
+    "get_supplies_non_moving_stock_items": RouteContract(
+        "supplies_non_moving_stock_item", "paged_list"
+    ),
+    "get_supplies_inventory_accuracy_summary": RouteContract(
+        "supplies_inventory_accuracy_summary", "playbook_report"
+    ),
+    "get_supplies_inventory_accuracy_items": RouteContract(
+        "supplies_inventory_accuracy_item", "paged_list"
+    ),
     "get_supplies_negotiation_savings_summary": RouteContract(
         "supplies_negotiation_savings", "scalar"
     ),

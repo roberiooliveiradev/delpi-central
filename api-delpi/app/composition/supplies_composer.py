@@ -98,6 +98,24 @@ from app.application.use_cases.supplies.get_inventory_adjustments_summary_use_ca
 from app.application.use_cases.supplies.list_inventory_adjustments_use_case import (
     ListInventoryAdjustmentsUseCase,
 )
+from app.application.use_cases.supplies.get_non_moving_stock_items_use_case import (
+    GetNonMovingStockItemsUseCase,
+)
+from app.application.use_cases.supplies.get_non_moving_stock_summary_use_case import (
+    GetNonMovingStockSummaryUseCase,
+)
+from app.application.use_cases.supplies.get_inventory_accuracy_items_use_case import (
+    GetInventoryAccuracyItemsUseCase,
+)
+from app.application.use_cases.supplies.get_inventory_accuracy_summary_use_case import (
+    GetInventoryAccuracySummaryUseCase,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.non_moving_stock_query_repository import (
+    NonMovingStockQueryRepository,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.inventory_accuracy_repository import (
+    InventoryAccuracyRepository,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.inventory_adjustments_repository import (
     InventoryAdjustmentsRepository,
 )
@@ -225,6 +243,38 @@ def build_get_inventory_turnover_use_case() -> GetInventoryTurnoverUseCase:
     return GetInventoryTurnoverUseCase(
         repository=InventoryTurnoverQueryRepository(),
         stock_repository=StockValueQueryRepository(),
+    )
+
+
+def build_get_non_moving_stock_summary_use_case() -> (
+    GetNonMovingStockSummaryUseCase
+):
+    return GetNonMovingStockSummaryUseCase(
+        repository=NonMovingStockQueryRepository()
+    )
+
+
+def build_get_non_moving_stock_items_use_case() -> (
+    GetNonMovingStockItemsUseCase
+):
+    return GetNonMovingStockItemsUseCase(
+        repository=NonMovingStockQueryRepository()
+    )
+
+
+def build_get_inventory_accuracy_summary_use_case() -> (
+    GetInventoryAccuracySummaryUseCase
+):
+    return GetInventoryAccuracySummaryUseCase(
+        repository=InventoryAccuracyRepository()
+    )
+
+
+def build_get_inventory_accuracy_items_use_case() -> (
+    GetInventoryAccuracyItemsUseCase
+):
+    return GetInventoryAccuracyItemsUseCase(
+        repository=InventoryAccuracyRepository()
     )
 
 

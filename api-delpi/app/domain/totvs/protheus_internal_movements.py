@@ -165,6 +165,47 @@ class MovementClassification:
     inventory_adjustment_nature: str | None
 
 
+# --- Utilização efetiva para giro de estoque (GLPI #1197 / R-01) ---
+#
+# Regra canônica ratificada: um fato SD3 reinicia o prazo sem giro quando
+# representa utilização efetiva do material — consumo de produção (TM 999
+# com OP) ou outra saída de utilização (requisições diretas/indiretas,
+# baixas e saídas valorizadas; na base, TM >= '500' é sempre tipo SF5 'R').
+# Transferências internas NÃO reiniciam: se distinguem pelo espelho —
+# a mesma chave (filial+documento+produto+data) aparece com entrada
+# equivalente (TM < '500'). Requisições parcialmente devolvidas líquidas
+# positivas continuam sendo utilização. Ajustes de inventário (doc INVENT)
+# e estornos nunca são utilização.
+#
+# Implementação: agrupar por (D3_FILIAL, D3_COD, D3_DOC, D3_EMISSAO) e
+# manter grupos cujo saldo líquido de saída é positivo.
+
+MOVEMENT_TYPE_INBOUND_THRESHOLD = "500"
+
+EFFECTIVE_UTILIZATION_NET_QUANTITY_SQL = (
+    "CASE WHEN {alias}.D3_TM >= '"
+    + MOVEMENT_TYPE_INBOUND_THRESHOLD
+    + "' THEN {alias}.D3_QUANT ELSE -{alias}.D3_QUANT END"
+)
+
+
+def effective_utilization_base_predicates(alias: str = "D3") -> list[str]:
+    """Predicados de elegibilidade das linhas SD3 do grupo doc de utilização.
+
+    Exclui linhas logicamente deletadas, estornos e ajustes de inventário
+    (doc INVENT) — esses fatos nunca compõem utilização efetiva.
+    """
+    return [
+        f"{alias}.D_E_L_E_T_ = ''",
+        f"RTRIM(ISNULL({alias}.D3_ESTORNO, '')) <> 'S'",
+        f"RTRIM(LTRIM({alias}.D3_DOC)) <> '{INVENTORY_ADJUSTMENT_DOCUMENT}'",
+    ]
+
+
+def effective_utilization_net_quantity_sql(alias: str = "D3") -> str:
+    return EFFECTIVE_UTILIZATION_NET_QUANTITY_SQL.format(alias=alias)
+
+
 def movement_kind_filters(kind: str | None) -> dict[str, object] | None:
     """Predicados do recorte `kind` — espec declarativa consumida pelo SQL.
 

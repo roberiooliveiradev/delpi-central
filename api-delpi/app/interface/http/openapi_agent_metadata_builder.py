@@ -143,6 +143,18 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_safety_stock_filters": "filtros de estoque de segurança",
     "supplies_stock_balances_summary": "resumo de saldos de estoque por armazém",
     "supplies_stock_balances_item": "itens de saldo de estoque por armazém",
+    "supplies_non_moving_stock_summary": (
+        "resumo de matérias-primas sem giro"
+    ),
+    "supplies_non_moving_stock_item": (
+        "itens de matérias-primas sem giro"
+    ),
+    "supplies_inventory_accuracy_summary": (
+        "resumo de acuracidade do inventário físico"
+    ),
+    "supplies_inventory_accuracy_item": (
+        "eventos de acuracidade do inventário físico"
+    ),
     "supplies_inventory_adjustments_summary": (
         "resumo de ajustes de inventário (furos e sobras)"
     ),

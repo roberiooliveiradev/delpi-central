@@ -380,3 +380,131 @@ DECISION: ACCEPT_WITH_RESIDUAL
 *Evidência gerada em 2026-10-09 contra `DELPI` (SQL Server, read-only) e
 HEAD `16af285e38`. Consultas disponíveis nos probes temporários da sessão
 (não versionados por conter credenciais de ambiente).*
+
+---
+
+# PARTE II — Ratificação e implementação (DAVI-SUPPLIES-GLPI1197-IMPLEMENTATION-001)
+
+*Acrescentado em 2026-10-09. A Parte I permanece como registro histórico da
+auditoria — nada abaixo reescreve evidência passada como se tivesse sido
+provada no SHA anterior.*
+
+## M. Ratificações de Suprimentos (aprovador: Yuri Barbeito, GLPI #1197)
+
+| ID | Decisão aprovada | Implementação |
+|---|---|---|
+| R-01 | **Consumo efetivo reinicia o giro.** Saídas com nota fiscal ou de utilização efetiva reiniciam; transferências internas e ajustes de inventário não reiniciam; estornos não constituem utilização. Classificação no domínio canônico, nunca em heurística de frontend. | Spec canônica `effective_utilization_*` em `app/domain/totvs/protheus_internal_movements.py`: grupo `(D3_FILIAL, D3_COD, D3_DOC, D3_EMISSAO)` com saída líquida > 0 = utilização. Espelho transferência (mesma chave doc com TM < 500) anula o grupo; devolução parcial mantém utilização líquida. `D3_ESTORNO='S'` e `D3_DOC='INVENT'` excluídos por predicado. |
+| R-02 | **Bloqueados no universo, segregados financeiramente.** `B1_MSBLQL='1'` = bloqueado; visíveis separadamente, valor preservado, sem duplicação multi-armazém (flag no item + agregados por DISTINCT produto×filial). | Campo `blocked` em `eligible` (SB1) + `blocked_stock_value`, `blocked_no_consumption_stock_value`, `blocked_product_count` no summary + filtro `blocked` nos items. |
+| R-03 | **12 meses móveis até hoje como padrão; filtros existentes podem alterar.** Não confundir janela de consumo com referência de valoração (SB2 snapshot atual). | `resolve_consumption_window()` no domínio: default `rolling_12m` (hoje−12m → hoje, limites inclusivos); `start_date`+`end_date` → `custom_period` com status semântico próprio (`NO_CONSUMPTION_IN_PERIOD`, não `NO_CONSUMPTION_12M`). Resposta expõe `consumption_window_*` e `valuation_reference: sb2_current_snapshot` separadamente. |
+
+Acuracidade mantém padrão **último mês calendário fechado** (via `MAX(SB9.B9_DATA)`), com `month`/`start_date`+`end_date` como overrides e `period_closed` explícito no contrato.
+
+## N. Matriz fiscal — saídas sem OP (GATE 4.1)
+
+Fonte autoritativa de natureza: **SF5** (`F5_CODIGO`/`F5_TIPO`/`F5_TEXTO`), não o dígito do CF. Evidência real 12m MP.
+
+| TM/CF | SF5 (F5_TEXTO / F5_TIPO) | Semântica real | Espelho inbound mesmo doc? | Reinicia giro | Homologação |
+|---|---|---|---|---|---|
+| 999/RE0 c/ OP | requisição (R) | consumo efetivo de produção | não | **SIM** | PROVEN (canônico prévio) |
+| 502/RE3 s/ OP | `REQUISICAO INDIRETA` (R) | utilização efetiva (requisição de MP por usuário do almoxarifado; sem `D3_NFORP`/`D3_NUMSA`/SD2 — **não** é remessa fiscal de venda) | não (31k linhas, 0 espelhos na amostra) | **SIM** | PROVEN (SF5 + ausência de espelho/NF) |
+| 503/RE0 | `BAIXA PRODUTO IND` (R) | baixa/utilização indireta | não | **SIM** | PROVEN (mesma regra de grupo) |
+| xxx/RE0 ↔ yyy/DE0 | transferência (T) | transferência entre armazéns | **sim** — par exato mesmo doc+filial+produto+data | **NÃO** | PROVEN (espelho anula grupo) |
+| INVENT (499/DE0, 999/RE0) | ajuste MATA270 | correção de inventário | n/a (excluído por predicado) | **NÃO** | PROVEN (predicado `D3_DOC<>'INVENT'`) |
+| estorno `D3_ESTORNO='S'` | reversão | cancelamento de fato | n/a | **NÃO** | PROVEN (predicado) |
+| saída com devolução parcial | requisição + devolução | utilização líquida | parcial | **SIM** se líquido > 0 | PROVEN (HAVING net>0) |
+| 999/REA, 501/RE3, 600/601/RE6 | R (SF5) | saídas residuais | cauda longa — agrupadas pela mesma regra | conforme saldo líquido do grupo | PROVEN pela regra geral |
+
+**Regra implementada:** não é "TM ≥ 500 reinicia" — é **saldo líquido positivo do grupo doc**, que unifica todos os casos acima sem tabela de exceções por código.
+
+## O. Semântica de acuracidade homologada (GATE 4.2)
+
+- Evento oficial = `(B7_FILIAL, B7_COD, B7_LOCAL, B7_DATA)`; linhas físicas
+  agregam por `SUM(B7_QUANT)` (42.554 linhas → 41.967 eventos prova que
+  agrupar é obrigatório).
+- `B7_STATUS='2'` = veredito oficial MATA270 → **avaliável**; `'1'`/`''` =
+  pendente → **excluído** (`pending_processing`, auditável); linhas
+  deletadas = canceladas → excluídas (`cancelled`).
+- Correta = processada **sem** ajuste INVENT; divergente = **com** ajuste.
+  Fundamento: o próprio Protheus já computou teórico×contado — a decisão
+  oficial é a fonte; "sem ajuste ≠ igualdade física provada", e sim
+  **veredito oficial de não-divergência** (`comparison_source:
+  protheus_mata270_adjustment_decision`). Tolerância = zero conforme aprovado.
+- Saldo teórico exibido por evento = `contado + furo − sobra` (derivado da
+  decisão oficial); reconstrução SB9+SD3 permanece como fonte de
+  `stock-balances` histórico, não da acuracidade.
+- Os 309 DIFFs de reconciliação da Parte I (janela intradiária/lote) não
+  afetam o denominador — não há evento sem veredito oficial.
+- Resultado real set/2026: 311 válidas → 309 avaliáveis → 5 corretas /
+  304 divergentes = **1,62%**; excluídas 2 pendentes; furos R$1.740.517,
+  sobras R$1.653.360. Regime de contagem seletivo — reportar como dado
+  (R-07).
+
+## P. Contratos publicados
+
+| Rota | operationId | Entidade/shape | AuthZ |
+|---|---|---|---|
+| GET /supplies/non-moving-stock/summary | `get_supplies_non_moving_stock_summary` | `supplies_non_moving_stock_summary` / playbook_report | `KPI_SUPPLIES_ACCESS` + trusted supplies-api BFF |
+| GET /supplies/non-moving-stock/items | `get_supplies_non_moving_stock_items` | `supplies_non_moving_stock_item` / paged_list | idem |
+| GET /supplies/inventory-accuracy/summary | `get_supplies_inventory_accuracy_summary` | `supplies_inventory_accuracy_summary` / playbook_report | idem |
+| GET /supplies/inventory-accuracy/items | `get_supplies_inventory_accuracy_items` | `supplies_inventory_accuracy_item` / paged_list | idem |
+
+- Escopo: filiais 01/02 (param `branch`), armazéns 01/99 (param `warehouse`,
+  rejeita fora do escopo), `B1_TIPO='MP'`, `B2_QATU>0`, `B2_QATU×B2_CM1`
+  do próprio armazém.
+- Paginação/ordenação no backend (`OFFSET/FETCH`, `page_size` máx 500).
+- **DAVI:** operationIds presentes no baseline mas **fora** da allowlist →
+  não elegíveis, não executáveis (fail-closed). Expansão requer gate
+  separado.
+- **BFF supplies-api:** o dashboard consome api-delpi diretamente
+  (padrão vigente, `X-Delpi-Caller-App: dashboard-supplies`); nenhum
+  adaptador novo foi necessário — BFF permanece como trusted caller
+  opcional já aceito pelo `require_any_permission_or_supplies_bff`.
+
+## Q. Evidência de runtime (queries reais, read-only, 2026-10-09)
+
+| Query | Runtime | Resultado |
+|---|---|---|
+| non-moving summary (ambas filiais, 12m móvel) | ~6,9–7,1 s | elegível R$13.288.908 (2.554 produtos×filial); sem giro R$1.180.010 (1.041 produtos); INSUFFICIENT_HISTORY R$30.035 (30); bloqueados R$17.725 (4, todos sem giro); filial 01 R$3,42M + 02 R$9,87M reconcilia |
+| non-moving items paginado | ~10,4 s | amostras coerentes (última utilização pregressa 2023–2025; INSUFFICIENT_HISTORY com 1ª evidência dentro da janela) |
+| accuracy summary set/2026 | ~74 ms | 311 válidas / 309 avaliáveis / 5 corretas / 304 divergentes / 1,62% / 2 pendentes |
+| accuracy items paginado | ~51 ms | eventos com documento, teórico, outcome |
+
+Correção pós-evidência: ordenação da classificação ajustada para
+`WITH_CONSUMPTION` antes de `INSUFFICIENT_HISTORY` — produto com utilização
+comprovada na janela é fato observado e não depende de cobertura
+(139 produtos reclassificados após primeira medição; ~R$387k).
+
+Custo: a varredura de utilização é restrita a produtos elegíveis
+(join `eligible_keys`, seek por `D3_FILIAL+D3_COD`); ~7 s é aceitável para
+KPI analítico sob `NOLOCK` — leitura eventual, documentada; consistência
+financeira garantida pela unicidade de chave SB2 e pela agregação por
+produto×filial (não por locking).
+
+## R. Arquivos da implementação
+
+- Domínio: `app/domain/services/supplies/non_moving_stock_service.py`,
+  `app/domain/services/supplies/inventory_accuracy_service.py`,
+  extensão de `app/domain/totvs/protheus_internal_movements.py`.
+- Infra: `non_moving_stock_sql.py`, `non_moving_stock_query_repository.py`,
+  `inventory_accuracy_sql.py`, `inventory_accuracy_repository.py` em
+  `app/infrastructure/persistence/totvs/supplies_repositories/`.
+- App: DTOs `non_moving_stock_request.py`, `inventory_accuracy_request.py`;
+  4 use cases em `app/application/use_cases/supplies/`.
+- Interface: `non_moving_stock_router.py`, `inventory_accuracy_router.py`;
+  wiring em `app/main.py`, `supplies_composer.py`,
+  `route_contract_registry.py`, `openapi_agent_metadata_builder.py`;
+  baseline OpenAPI + inventário DAVI regenerados.
+- Testes: `tests/test_supplies_non_moving_stock.py`,
+  `tests/test_supplies_inventory_accuracy.py` — domínio, SQL, contrato,
+  denominadores, fail-closed.
+
+## S. Residual ledger pós-implementação
+
+| ID | Status | Nota |
+|---|---|---|
+| R-06 | aberto | estornos vivos SD3 (~402) — margem pequena; reconciliar na ponte SB9+SD3 em trabalho futuro |
+| R-07 | aberto | regime de contagem seletivo (1,6% vs 39%) — volatilidade é o dado; comunicar a Suprimentos |
+| R-08 | aberto | ~R$215k de MP em locais 50/98 fora do escopo aprovado — exclusão confirmada pelo escopo R-02 (armazéns 01/99) |
+| R-09 | aberto | recontagem `B7_CONTAGE>1` sem ocorrência na base — regra reservada |
+| R-11 | novo | runtime do summary sem giro ~7 s — aceitável p/ KPI; avaliar cache/materialização se uso crescer |
+| R-12 | novo | `B7_DOC` de evento exposto quando único; proveniência ambígua permanece NULL (fail-closed, idem ajustes) |

@@ -1,10 +1,10 @@
 {
   "source": "openapi_baseline.json",
   "baseline_version": "3",
-  "baseline_operation_count": 738,
+  "baseline_operation_count": 742,
   "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
-  "TOTAL_OPERATIONS": 738,
-  "TOTAL_GET": 537,
+  "TOTAL_OPERATIONS": 742,
+  "TOTAL_GET": 541,
   "TOTAL_WRITE_VERBS": 201,
   "DAVI_ELIGIBLE_READ": 87,
   "ELIGIBLE_BEFORE": 87,
@@ -13,10 +13,10 @@
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
     "previous_total_operations": 738,
-    "current_total_operations": 738,
+    "current_total_operations": 742,
     "previous_total_get": 537,
-    "current_total_get": 537,
-    "added_operations": 0,
+    "current_total_get": 541,
+    "added_operations": 4,
     "removed_operations": 0,
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
@@ -198,8 +198,8 @@
     "GENERIC_SQL_FORBIDDEN": 2,
     "LEGACY_UNSAFE": 2,
     "NEEDS_BOUNDED_EXECUTION": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 339,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
+    "NEEDS_MODEL_SAFE_PROJECTION": 341,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 53,
     "SEMANTICALLY_REDUNDANT": 3,
     "STREAM_BINARY_OUT_OF_SCOPE": 33,
     "WRITE_OUT_OF_SCOPE": 131
@@ -4295,6 +4295,26 @@
       "executable": false
     },
     {
+      "operationId": "get_supplies_inventory_accuracy_items",
+      "method": "GET",
+      "path": "/supplies/inventory-accuracy/items",
+      "summary": "Lista paginada — Eventos de acuracidade do inventário físico",
+      "entity": "supplies_inventory_accuracy_item",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_non_moving_stock_items",
+      "method": "GET",
+      "path": "/supplies/non-moving-stock/items",
+      "summary": "Lista paginada — Itens de matérias-primas sem giro",
+      "entity": "supplies_non_moving_stock_item",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
       "operationId": "get_supplies_protheus_user_by_email",
       "method": "GET",
       "path": "/supplies/protheus-users/by-email",
@@ -5880,6 +5900,26 @@
       "path": "/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
       "summary": "Sales order otd line detail",
       "entity": "sales_order_otd_line",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_inventory_accuracy_summary",
+      "method": "GET",
+      "path": "/supplies/inventory-accuracy/summary",
+      "summary": "Relatório operacional — Resumo de acuracidade do inventário físico",
+      "entity": "supplies_inventory_accuracy_summary",
+      "shape": "playbook_report",
+      "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "executable": false
+    },
+    {
+      "operationId": "get_supplies_non_moving_stock_summary",
+      "method": "GET",
+      "path": "/supplies/non-moving-stock/summary",
+      "summary": "Relatório operacional — Resumo de matérias-primas sem giro",
+      "entity": "supplies_non_moving_stock_summary",
       "shape": "playbook_report",
       "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT",
       "executable": false
