@@ -700,3 +700,94 @@ produto×filial (não por locking).
 | R-12 | aberto | `B7_DOC` ambíguo permanece NULL |
 | R-13 | novo | browser E2E autenticado TEST_NOT_RUN — homologação visual pendente |
 | R-14 | novo | `tsc -b` upstream quebrado (bootstrap/vitest/plugin-ui types) — owner: frontend/platform |
+
+
+---
+
+# PARTE IV — TABLE UX & ADVANCED DATA GRID (TASK DAVI-SUPPLIES-GLPI1197-TABLE-UX-002)
+
+## X1. Inventário de capacidades plugin-ui (auditoria pré-implementação)
+
+| Capacidade | Classificação | Local |
+|---|---|---|
+| Toolbar + busca principal | AVAILABLE | DataTableSection (serverSearch) |
+| Paginação server-side | AVAILABLE | useServerTable + Pagination |
+| Ordenação global com indicador | AVAILABLE | DataTable emite column.key |
+| Visibilidade de colunas + menu | AVAILABLE | columnPreferencesKey + TableColumnVisibilityMenu (mostrar/ocultar, selecionar todas, restaurar padrão, persistência por página) |
+| Reordenação de colunas | AVAILABLE | enableColumnReorder |
+| Redimensionamento | NEEDS_EXTENSION→implementado | DataTable suportava columnWidths/onColumnWidthsChange/resizableColumns; DataTableSection não repassava → passthrough aditivo |
+| Seleção de linhas | NEEDS_EXTENSION→implementado | DataTable suportava selection/onSelectionChange (individual + página); DataTableSection não repassava → passthrough aditivo |
+| Exportação tabular | AVAILABLE | TabularExportButtons/SuppliesExportButtons (CSV/XLSX/PDF, mesmos filtros do request) |
+| Layout cards mobile | AVAILABLE | viewLayoutPreferencesKey + DataRecordCard |
+| Font-size persistente | AVAILABLE | fontSizePreferencesKey |
+| Seleção global (todas as páginas) | NOT_SUPPORTED — não oferecida (sem contrato backend) |
+
+Extensão em plugin-ui: estritamente aditiva em DataTableSection
+(passthrough de props já existentes no DataTable interno).
+Sem nova lib de data grid; sem mudança de API existente.
+
+## X2. Mudanças de layout de filtro
+
+- toolbarFilters movido para FiltersRow dedicada (segunda linha), aria-label
+  por página.
+- SelectField/DataRecordCard locais viraram wrappers finos das factories
+  canônicas (createDashboardSelectField/createDashboardDataRecordCard) —
+  labels acima dos controles, alturas/larguras do design system.
+- Ação Limpar filtros + indicador de filtros ativos (ds-filter-count) via
+  trailing da FiltersRow.
+- Busca principal na toolbar da DataTableSection (serverSearch debounced).
+
+## X3. Configurações iniciais por página
+
+- NonMovingStockPage: columnPreferencesKey supplies.non-moving-stock.columns
+  (visibilidade inicial distinta), fontSizePreferencesKey,
+  viewLayoutPreferencesKey e columnWidths persistidos por hook
+  useTableColumnWidths (storage key própria da página).
+- InventoryAccuracyPage: chaves equivalentes com namespace
+  supplies.inventory-accuracy.*. Preferências isoladas entre páginas.
+
+## X4. Comportamento de seleção
+
+- Seleção por índice de página (DataTableSelection), individual e selecionar
+  página; limpeza explícita via UI.
+- Seleção é limpa em qualquer mudança de query (busca/filtros/sort/página/
+  page-size) via handlers de evento — não via effect — porque os índices são
+  relativos à página renderizada.
+- Sem selecionar tudo global: backend não possui contrato/semântica para o
+  conjunto completo — intencionalmente não oferecido.
+
+## X5. Exportação
+
+- SuppliesExportButtons (CSV/XLSX/PDF) recebe resolvePayload com os mesmos
+  parâmetros efetivos do request da tabela (período/filiais/armazém/status/
+  blocked/search/sort) — exportação respeita filtros e ordenação, não apenas
+  a página carregada.
+- Campos exportados limitados às colunas/allowlist do endpoint.
+
+## X6. Responsividade
+
+- viewLayoutPreferencesKey + renderCard (DataRecordCard) com fallback
+  automático abaixo de viewLayoutMobileMaxWidthPx.
+- Overflow horizontal controlado via resizableColumns + min-widths;
+  números à direita com tabular-nums; status com selo textual (não apenas cor).
+
+## X7. Evidências
+
+- LINT: PASS — eslint 0 erros nos 5 arquivos tocados (warnings de
+  setState-in-effect resolvidos: limpeza de seleção orientada a evento).
+- TYPECHECK: PASS filtrado — 0 erros nos arquivos deste diff; tsc -b upstream
+  segue com falhas pré-existentes (R-14).
+- BUILD: PASS — vite build dashboard-supplies; plugin-ui build +
+  verify-host-exports OK.
+- BACKEND: PASS — 107 testes supplies/adjustments/branch/bff verdes (sem
+  mudança backend neste ciclo; contrato inalterado).
+- BROWSER_E2E / SCREENSHOTS: TEST_NOT_RUN — sem acesso autenticado ao
+  ambiente nesta sessão; homologação visual permanece pendente (R-13).
+- REGRESSÃO: passthrough aditivo; consumidores existentes de DataTableSection
+  sem mudança de comportamento (props opcionais).
+
+## X8. Residual ledger (incremento)
+
+| ID | Status | Nota |
+|---|---|---|
+| R-15 | novo | exportação cobre o conjunto filtrado via re-request com os mesmos parâmetros; volume governado pelo limite do endpoint |

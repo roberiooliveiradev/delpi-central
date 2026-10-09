@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PackageX, Percent, ShieldAlert, TrendingDown } from "lucide-react";
-import { ToolbarSelectField } from "@delpi/plugin-ui/index";
+import type { DataTableSelection } from "@delpi/plugin-ui/index";
 
 import {
   getNonMovingStockItems,
@@ -9,16 +9,27 @@ import {
 } from "../api/suppliesApi";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
+import {
+  DataRecordCard,
+  type DataRecordCardField,
+} from "../components/DataRecordCard";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import { SelectField } from "../components/SelectField";
+import { FiltersRow } from "../components/dashboardFiltersUi";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
 import { SUPPLIES_ROUTES } from "../constants/routes";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { exportAlert } from "../export/exportUtils";
+import { SuppliesExportButtons } from "../export/SuppliesExportButtons";
+import type { TableExportPayload } from "../export/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useServerTable } from "../hooks/useServerTable";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
+import { useTableColumnWidths } from "../hooks/useTableColumnWidths";
 import type { NonMovingStockItem } from "../types/supplies";
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import {
   formatDisplayDate,
@@ -36,6 +47,12 @@ import {
 type NonMovingStockPageProps = { pathname?: string };
 
 const APPROVED_WAREHOUSES = new Set(["01", "99"]);
+const EXPORT_MAX_ROWS = 5000;
+
+const COLUMN_PREFERENCES_KEY = "supplies.non-moving-stock.columns";
+const COLUMN_WIDTHS_KEY = "supplies.non-moving-stock.columnWidths";
+const FONT_SIZE_KEY = "supplies.non-moving-stock.fontSize";
+const VIEW_LAYOUT_KEY = "supplies.non-moving-stock.viewLayout";
 
 const STATUS_LABELS: Record<string, string> = {
   WITH_CONSUMPTION: "Com consumo",
@@ -49,21 +66,42 @@ const STATUS_OPTIONS = [
   { value: "NO_CONSUMPTION_IN_PERIOD", label: "Sem giro no período" },
   { value: "WITH_CONSUMPTION", label: "Com consumo" },
   { value: "INSUFFICIENT_HISTORY", label: "Histórico insuficiente" },
-] as const;
+];
 
 const BLOCKED_OPTIONS = [
   { value: "true", label: "Bloqueados" },
   { value: "false", label: "Não bloqueados" },
-] as const;
+];
 
 const WAREHOUSE_OPTIONS = [
   { value: "01", label: "Armazém 01" },
   { value: "99", label: "Armazém 99" },
-] as const;
+];
 
 function statusLabel(status: string | null | undefined): string {
   if (!status) return "—";
   return STATUS_LABELS[status] ?? status;
+}
+
+function itemToExportRecord(row: NonMovingStockItem) {
+  return {
+    product_code: row.product_code,
+    description: row.description ?? "",
+    branch: row.branch,
+    warehouse: row.warehouse,
+    quantity: row.quantity,
+    stock_value: row.stock_value,
+    blocked: row.blocked ? "Sim" : "Não",
+    turnover_status: statusLabel(row.turnover_status),
+    last_utilization: formatDisplayDate(row.last_effective_utilization),
+  };
+}
+
+function selectionCount(selection: DataTableSelection | null): number {
+  if (!selection) return 0;
+  if (selection.kind === "row") return selection.indices.length;
+  if (selection.kind === "column") return selection.keys.length;
+  return selection.cells.length;
 }
 
 export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
@@ -92,6 +130,10 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
   const [blockedFilter, setBlockedFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 400);
+  const [selection, setSelection] = useState<DataTableSelection | null>(null);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>([]);
+  const { columnWidths, onColumnWidthsChange } =
+    useTableColumnWidths(COLUMN_WIDTHS_KEY);
 
   const serverTable = useServerTable({
     defaultSortKey: "stock_value",
@@ -184,7 +226,12 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
       {
         key: "description",
         header: "Descrição",
-        render: (row) => row.description ?? "—",
+        render: (row) =>
+          row.description ? (
+            <span title={row.description}>{row.description}</span>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "branch",
@@ -234,6 +281,89 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     []
   );
 
+  const selectedCount = selectionCount(selection);
+  const activeFilterCount =
+    (statusFilter ? 1 : 0) +
+    (blockedFilter ? 1 : 0) +
+    (warehouse ? 1 : 0) +
+    (debouncedSearch ? 1 : 0);
+
+  const handleTableChange = useCallback(
+    <T,>(apply: (v: T) => void) =>
+      (v: T) => {
+        setSelection(null);
+        apply(v);
+      },
+    []
+  );
+
+  const handleSortChange = useCallback(
+    (key: string) => {
+      setSelection(null);
+      serverTable.handleSortChange(key);
+    },
+    [serverTable]
+  );
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setSelection(null);
+      serverTable.setPageSize(size);
+    },
+    [serverTable]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setSelection(null);
+      serverTable.setPage(page);
+    },
+    [serverTable]
+  );
+
+  const clearTableFilters = useCallback(() => {
+    setStatusFilter("");
+    setBlockedFilter("");
+    setSearchInput("");
+    if (warehouse) setLocation("");
+  }, [warehouse, setLocation]);
+
+  const resolveExportPayload =
+    useCallback(async (): Promise<TableExportPayload> => {
+      const all: NonMovingStockItem[] = [];
+      const pageSize = 500;
+      let page = 1;
+      let total = Number.MAX_SAFE_INTEGER;
+      while (all.length < total && all.length < EXPORT_MAX_ROWS) {
+        const res = await getNonMovingStockItems({
+          ...itemsParams,
+          page,
+          page_size: pageSize,
+        });
+        all.push(...res.items);
+        total = res.total;
+        if (res.items.length < pageSize) break;
+        page += 1;
+      }
+      if (total > all.length) {
+        exportAlert(
+          `Exportação limitada aos primeiros ${all.length} de ${total} registros do filtro atual.`
+        );
+      }
+      const exportColumns = columns
+        .filter((column) =>
+          visibleColumnKeys.length
+            ? visibleColumnKeys.includes(column.key)
+            : true
+        )
+        .map((column) => ({ key: column.key, label: column.header }));
+      return {
+        title: "Matérias-primas sem giro",
+        columns: exportColumns,
+        rows: all.map(itemToExportRecord),
+      };
+    }, [itemsParams, columns, visibleColumnKeys]);
+
   return (
     <div className="dashboard-supplies dashboard-page">
       <FilterBar
@@ -251,7 +381,7 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}
-        onLocationChange={setLocation}
+        onLocationChange={handleTableChange(setLocation)}
         onRefresh={reload}
         refreshing={refreshing}
       />
@@ -347,46 +477,136 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         refreshing={items.refreshing}
         searchPlaceholder="Buscar por código ou descrição…"
         searchHint={SUPPLIES_HELP_TOOLTIPS.filters.tableSearch}
-        serverSearch={{ value: searchInput, onChange: setSearchInput }}
+        serverSearch={{ value: searchInput, onChange: handleTableChange(setSearchInput) }}
         serverPagination={{
           page: items.data?.page ?? serverTable.query.page,
           pageSize: items.data?.page_size ?? serverTable.query.pageSize,
           total: items.data?.total ?? 0,
-          onPageChange: serverTable.setPage,
-          onPageSizeChange: serverTable.setPageSize,
+          onPageChange: handlePageChange,
+          onPageSizeChange: handlePageSizeChange,
         }}
         serverSort={{
           sortKey: serverTable.query.sortKey,
           sortDirection: serverTable.query.sortDirection,
-          onSortChange: serverTable.handleSortChange,
+          onSortChange: handleSortChange,
         }}
-        toolbarFilters={
+        selection={selection}
+        onSelectionChange={setSelection}
+        columnWidths={columnWidths}
+        onColumnWidthsChange={onColumnWidthsChange}
+        resizableColumns
+        columnPreferencesKey={COLUMN_PREFERENCES_KEY}
+        onVisibleColumnKeysChange={setVisibleColumnKeys}
+        fontSizePreferencesKey={FONT_SIZE_KEY}
+        viewLayoutPreferencesKey={VIEW_LAYOUT_KEY}
+        viewLayoutMobileMaxWidthPx={768}
+        renderCard={(row) => {
+          const cardFields: DataRecordCardField[] = [
+            {
+              id: "quantity",
+              label: "Quantidade",
+              value: `${formatInteger(row.quantity)} ${
+                row.unit_of_measure ?? ""
+              }`.trim(),
+            },
+            {
+              id: "stock_value",
+              label: "Valor",
+              value: formatCurrency(row.stock_value),
+            },
+            {
+              id: "branch",
+              label: "Filial",
+              value: row.branch,
+            },
+            {
+              id: "warehouse",
+              label: "Armazém",
+              value: row.warehouse,
+            },
+            {
+              id: "last_utilization",
+              label: "Última utilização",
+              value: formatDisplayDate(row.last_effective_utilization),
+            },
+          ];
+          return (
+            <DataRecordCard
+              title={row.product_code}
+              subtitle={row.description ?? "—"}
+              status={statusLabel(row.turnover_status)}
+              fields={cardFields}
+              context={row.blocked ? "Bloqueado" : undefined}
+            />
+          );
+        }}
+        toolbarExtra={
           <>
-            <ToolbarSelectField
-              label="Status de giro"
-              title={SUPPLIES_HELP_TOOLTIPS.filters.turnoverStatus}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={STATUS_OPTIONS}
-              placeholderOption="Todos"
-            />
-            <ToolbarSelectField
-              label="Bloqueio"
-              title={SUPPLIES_HELP_TOOLTIPS.filters.blockedFilter}
-              value={blockedFilter}
-              onChange={setBlockedFilter}
-              options={BLOCKED_OPTIONS}
-              placeholderOption="Todos"
-            />
-            <ToolbarSelectField
-              label="Armazém"
-              title={SUPPLIES_HELP_TOOLTIPS.filters.warehouse}
-              value={warehouse}
-              onChange={setLocation}
-              options={WAREHOUSE_OPTIONS}
-              placeholderOption="Todos"
+            {selectedCount > 0 ? (
+              <button
+                type="button"
+                className="delpi-ui-table-toolbar-action"
+                onClick={() => setSelection(null)}
+              >
+                {selectedCount} selecionada(s) nesta página · limpar
+              </button>
+            ) : null}
+            <SuppliesExportButtons
+              variant="table"
+              payload={{ title: "Matérias-primas sem giro", columns: [], rows: [] }}
+              resolvePayload={resolveExportPayload}
             />
           </>
+        }
+        toolbarFilters={
+          <FiltersRow
+            ariaLabel="Filtros do detalhamento"
+            trailing={
+              <>
+                {activeFilterCount > 0 ? (
+                  <span className="ds-filter-count" role="status">
+                    {activeFilterCount} filtro(s) ativo(s)
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className={GHOST_BTN}
+                  onClick={clearTableFilters}
+                  disabled={activeFilterCount === 0}
+                >
+                  Limpar filtros
+                </button>
+              </>
+            }
+          >
+            <SelectField
+              label="Status de giro"
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.turnoverStatus}
+              value={statusFilter}
+              onChange={handleTableChange(setStatusFilter)}
+              options={STATUS_OPTIONS}
+              allowEmpty
+              emptyLabel="Todos"
+            />
+            <SelectField
+              label="Bloqueio"
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.blockedFilter}
+              value={blockedFilter}
+              onChange={handleTableChange(setBlockedFilter)}
+              options={BLOCKED_OPTIONS}
+              allowEmpty
+              emptyLabel="Todos"
+            />
+            <SelectField
+              label="Armazém"
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.warehouse}
+              value={warehouse}
+              onChange={handleTableChange(setLocation)}
+              options={WAREHOUSE_OPTIONS}
+              allowEmpty
+              emptyLabel="Todos"
+            />
+          </FiltersRow>
         }
       />
 

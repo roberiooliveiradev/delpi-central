@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -6,7 +6,7 @@ import {
   ClipboardCheck,
   XCircle,
 } from "lucide-react";
-import { ToolbarSelectField } from "@delpi/plugin-ui/index";
+import type { DataTableSelection } from "@delpi/plugin-ui/index";
 
 import {
   getInventoryAccuracyItems,
@@ -15,16 +15,27 @@ import {
 } from "../api/suppliesApi";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
+import {
+  DataRecordCard,
+  type DataRecordCardField,
+} from "../components/DataRecordCard";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import { SelectField } from "../components/SelectField";
+import { FiltersRow } from "../components/dashboardFiltersUi";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
 import { SUPPLIES_ROUTES } from "../constants/routes";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { exportAlert } from "../export/exportUtils";
+import { SuppliesExportButtons } from "../export/SuppliesExportButtons";
+import type { TableExportPayload } from "../export/types";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useServerTable } from "../hooks/useServerTable";
 import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
+import { useTableColumnWidths } from "../hooks/useTableColumnWidths";
 import type { InventoryAccuracyItem } from "../types/supplies";
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import {
   formatDisplayDate,
@@ -43,6 +54,12 @@ import {
 type InventoryAccuracyPageProps = { pathname?: string };
 
 const COMPETENCE_PATTERN = /^\d{4}-\d{2}$/;
+const EXPORT_MAX_ROWS = 5000;
+
+const COLUMN_PREFERENCES_KEY = "supplies.inventory-accuracy.columns";
+const COLUMN_WIDTHS_KEY = "supplies.inventory-accuracy.columnWidths";
+const FONT_SIZE_KEY = "supplies.inventory-accuracy.fontSize";
+const VIEW_LAYOUT_KEY = "supplies.inventory-accuracy.viewLayout";
 
 const OUTCOME_LABELS: Record<string, string> = {
   accurate: "Correta",
@@ -54,11 +71,33 @@ const OUTCOME_OPTIONS = [
   { value: "accurate", label: "Corretas" },
   { value: "divergent", label: "Divergentes" },
   { value: "excluded", label: "Excluídas" },
-] as const;
+];
 
 function outcomeLabel(outcome: string | null | undefined): string {
   if (!outcome) return "—";
   return OUTCOME_LABELS[outcome] ?? outcome;
+}
+
+function itemToExportRecord(row: InventoryAccuracyItem) {
+  return {
+    count_date: formatDisplayDate(row.count_date),
+    product_code: row.product_code,
+    description: row.description ?? "",
+    branch: row.branch,
+    warehouse: row.warehouse,
+    counted: row.counted_quantity,
+    theoretical: row.theoretical_quantity,
+    divergence: row.divergence_quantity,
+    outcome: outcomeLabel(row.outcome),
+    document: row.inventory_document ?? "",
+  };
+}
+
+function selectionCount(selection: DataTableSelection | null): number {
+  if (!selection) return 0;
+  if (selection.kind === "row") return selection.indices.length;
+  if (selection.kind === "column") return selection.keys.length;
+  return selection.cells.length;
 }
 
 export function InventoryAccuracyPage({
@@ -82,6 +121,10 @@ export function InventoryAccuracyPage({
   const [outcomeFilter, setOutcomeFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 400);
+  const [selection, setSelection] = useState<DataTableSelection | null>(null);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>([]);
+  const { columnWidths, onColumnWidthsChange } =
+    useTableColumnWidths(COLUMN_WIDTHS_KEY);
 
   const serverTable = useServerTable({
     defaultSortKey: "count_date",
@@ -161,7 +204,12 @@ export function InventoryAccuracyPage({
       {
         key: "description",
         header: "Descrição",
-        render: (row) => row.description ?? "—",
+        render: (row) =>
+          row.description ? (
+            <span title={row.description}>{row.description}</span>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "branch",
@@ -210,6 +258,84 @@ export function InventoryAccuracyPage({
     ],
     []
   );
+
+  const selectedCount = selectionCount(selection);
+  const activeFilterCount =
+    (outcomeFilter ? 1 : 0) + (debouncedSearch ? 1 : 0);
+
+  const handleTableChange = useCallback(
+    <T,>(apply: (v: T) => void) =>
+      (v: T) => {
+        setSelection(null);
+        apply(v);
+      },
+    []
+  );
+
+  const handleSortChange = useCallback(
+    (key: string) => {
+      setSelection(null);
+      serverTable.handleSortChange(key);
+    },
+    [serverTable]
+  );
+
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setSelection(null);
+      serverTable.setPageSize(size);
+    },
+    [serverTable]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setSelection(null);
+      serverTable.setPage(page);
+    },
+    [serverTable]
+  );
+
+  const clearTableFilters = useCallback(() => {
+    setOutcomeFilter("");
+    setSearchInput("");
+  }, []);
+
+  const resolveExportPayload =
+    useCallback(async (): Promise<TableExportPayload> => {
+      const all: InventoryAccuracyItem[] = [];
+      const pageSize = 500;
+      let page = 1;
+      let total = Number.MAX_SAFE_INTEGER;
+      while (all.length < total && all.length < EXPORT_MAX_ROWS) {
+        const res = await getInventoryAccuracyItems({
+          ...itemsParams,
+          page,
+          page_size: pageSize,
+        });
+        all.push(...res.items);
+        total = res.total;
+        if (res.items.length < pageSize) break;
+        page += 1;
+      }
+      if (total > all.length) {
+        exportAlert(
+          `Exportação limitada aos primeiros ${all.length} de ${total} registros do filtro atual.`
+        );
+      }
+      const exportColumns = columns
+        .filter((column) =>
+          visibleColumnKeys.length
+            ? visibleColumnKeys.includes(column.key)
+            : true
+        )
+        .map((column) => ({ key: column.key, label: column.header }));
+      return {
+        title: "Acuracidade do inventário",
+        columns: exportColumns,
+        rows: all.map(itemToExportRecord),
+      };
+    }, [itemsParams, columns, visibleColumnKeys]);
 
   return (
     <div className="dashboard-supplies dashboard-page">
@@ -339,28 +465,133 @@ export function InventoryAccuracyPage({
         refreshing={items.refreshing}
         searchPlaceholder="Buscar por código ou descrição…"
         searchHint={SUPPLIES_HELP_TOOLTIPS.filters.tableSearch}
-        serverSearch={{ value: searchInput, onChange: setSearchInput }}
+        serverSearch={{ value: searchInput, onChange: handleTableChange(setSearchInput) }}
         serverPagination={{
           page: items.data?.page ?? serverTable.query.page,
           pageSize: items.data?.page_size ?? serverTable.query.pageSize,
           total: items.data?.total ?? 0,
-          onPageChange: serverTable.setPage,
-          onPageSizeChange: serverTable.setPageSize,
+          onPageChange: handlePageChange,
+          onPageSizeChange: handlePageSizeChange,
         }}
         serverSort={{
           sortKey: serverTable.query.sortKey,
           sortDirection: serverTable.query.sortDirection,
-          onSortChange: serverTable.handleSortChange,
+          onSortChange: handleSortChange,
         }}
+        selection={selection}
+        onSelectionChange={setSelection}
+        columnWidths={columnWidths}
+        onColumnWidthsChange={onColumnWidthsChange}
+        resizableColumns
+        columnPreferencesKey={COLUMN_PREFERENCES_KEY}
+        onVisibleColumnKeysChange={setVisibleColumnKeys}
+        fontSizePreferencesKey={FONT_SIZE_KEY}
+        viewLayoutPreferencesKey={VIEW_LAYOUT_KEY}
+        viewLayoutMobileMaxWidthPx={768}
+        renderCard={(row) => {
+          const cardFields: DataRecordCardField[] = [
+            {
+              id: "count_date",
+              label: "Data",
+              value: formatDisplayDate(row.count_date),
+            },
+            {
+              id: "counted",
+              label: "Contado",
+              value: `${formatDecimal(row.counted_quantity)} ${
+                row.unit_of_measure ?? ""
+              }`.trim(),
+            },
+            {
+              id: "theoretical",
+              label: "Teórico",
+              value: `${formatDecimal(row.theoretical_quantity)} ${
+                row.unit_of_measure ?? ""
+              }`.trim(),
+            },
+            {
+              id: "divergence",
+              label: "Divergência",
+              value: formatDecimal(row.divergence_quantity),
+            },
+            {
+              id: "branch",
+              label: "Filial",
+              value: row.branch,
+            },
+            {
+              id: "warehouse",
+              label: "Armazém",
+              value: row.warehouse,
+            },
+            {
+              id: "document",
+              label: "Ajuste",
+              value: row.inventory_document ?? "—",
+            },
+          ];
+          return (
+            <DataRecordCard
+              title={row.product_code}
+              subtitle={row.description ?? "—"}
+              status={outcomeLabel(row.outcome)}
+              fields={cardFields}
+            />
+          );
+        }}
+        toolbarExtra={
+          <>
+            {selectedCount > 0 ? (
+              <button
+                type="button"
+                className="delpi-ui-table-toolbar-action"
+                onClick={() => setSelection(null)}
+              >
+                {selectedCount} selecionada(s) nesta página · limpar
+              </button>
+            ) : null}
+            <SuppliesExportButtons
+              variant="table"
+              payload={{
+                title: "Acuracidade do inventário",
+                columns: [],
+                rows: [],
+              }}
+              resolvePayload={resolveExportPayload}
+            />
+          </>
+        }
         toolbarFilters={
-          <ToolbarSelectField
-            label="Resultado"
-            title={SUPPLIES_HELP_TOOLTIPS.filters.accuracyOutcome}
-            value={outcomeFilter}
-            onChange={setOutcomeFilter}
-            options={OUTCOME_OPTIONS}
-            placeholderOption="Todos"
-          />
+          <FiltersRow
+            ariaLabel="Filtros do detalhamento"
+            trailing={
+              <>
+                {activeFilterCount > 0 ? (
+                  <span className="ds-filter-count" role="status">
+                    {activeFilterCount} filtro(s) ativo(s)
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className={GHOST_BTN}
+                  onClick={clearTableFilters}
+                  disabled={activeFilterCount === 0}
+                >
+                  Limpar filtros
+                </button>
+              </>
+            }
+          >
+            <SelectField
+              label="Resultado"
+              hint={SUPPLIES_HELP_TOOLTIPS.filters.accuracyOutcome}
+              value={outcomeFilter}
+              onChange={handleTableChange(setOutcomeFilter)}
+              options={OUTCOME_OPTIONS}
+              allowEmpty
+              emptyLabel="Todos"
+            />
+          </FiltersRow>
         }
       />
 

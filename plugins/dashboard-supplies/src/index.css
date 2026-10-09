@@ -866,3 +866,24 @@
   flex-shrink: 0;
 }
 
+
+/* GLPI-1197 — filtros de detalhamento: indicador de filtros ativos */
+.dashboard-supplies .ds-filter-count{
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ds-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--ds-accent) 10%, transparent);
+  color: var(--ds-title);
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.dashboard-supplies .ds-footnote{
+  margin: 8px 4px 0;
+  font-size: var(--ds-font-xs);
+  color: var(--ds-muted);
+  line-height: 1.5;
+}
