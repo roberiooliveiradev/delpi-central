@@ -217,6 +217,45 @@
   flex: 1;
 }
 
+.dashboard-delia .delia-turn__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Secondary action on a response — real behavior only (copy). */
+.dashboard-delia .delia-turn__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--delia-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.dashboard-delia .delia-turn:hover .delia-turn__action,
+.dashboard-delia .delia-turn__action:focus-visible {
+  opacity: 1;
+}
+
+.dashboard-delia .delia-turn__action:hover {
+  background: var(--delia-surface-2);
+  color: var(--delia-text);
+}
+
+.dashboard-delia .delia-turn__action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--delia-focus-ring) 40%, transparent);
+}
+
 /* User turns right + soft bubble, DÉLIA turns left + open text (WF-02). */
 .dashboard-delia .delia-turn--user {
   align-self: flex-end;
@@ -258,9 +297,26 @@
   overflow-wrap: anywhere;
 }
 
+/* Semantic state row: contextual icon + canonical badge (doc 73 §5). */
 .dashboard-delia .delia-turn__state {
-  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 2px;
+  color: var(--delia-text-muted);
+  flex-wrap: wrap;
+}
+
+.dashboard-delia .delia-turn__state--info {
+  color: color-mix(in srgb, var(--delia-accent) 80%, var(--delia-text));
+}
+
+.dashboard-delia .delia-turn__state--warning {
+  color: color-mix(in srgb, var(--warning, #b45309) 85%, var(--delia-text));
+}
+
+.dashboard-delia .delia-turn__state--danger {
+  color: color-mix(in srgb, var(--danger, #dc2626) 85%, var(--delia-text));
 }
 
 .dashboard-delia .delia-turn__notice {
@@ -273,9 +329,20 @@
   overflow-wrap: anywhere;
 }
 
+/* Subordinate metadata row — source · classification · limitations. */
 .dashboard-delia .delia-turn__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in srgb, var(--delia-border) 65%, transparent);
   font-size: 0.75rem;
   color: var(--delia-text-muted);
+}
+
+.dashboard-delia .delia-turn__meta-item {
+  overflow-wrap: anywhere;
 }
 
 /* ---------- S2-D — loading + error */
