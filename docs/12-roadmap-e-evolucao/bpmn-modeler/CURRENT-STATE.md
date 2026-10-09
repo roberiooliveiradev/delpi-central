@@ -249,6 +249,8 @@ Evidência runtime (LOCAL INTEGRATION RUNTIME, 2026-10-08/09): fluxo completo vi
 
 **Fix de runtime revelado pelo browser E2E:** `path_alias_middleware` reescrevia `/revisions`→`/revisoes` e tornava `…/bpmn-reference/candidates/{id}/revisions` 404 real (o harness de testes não monta o middleware — cobertura adicionada em `test_path_alias_middleware.py`, sibling negativo incluso). Solução canônica: skip-prefix `/bpmn-reference` — superfície EN-nativa sem contraparte PT (precedente: `/diagnostics`, `/governed-proposals`).
 
+**G5-ACC-2 (test hardening, test-only):** o spec publicado em G5-ACC-1 tinha defeito de harness — `gotoProcesso` não recebia `actor` e o fallback SSO reautenticava sempre `manager`; a chamada `gotoProcesso(pageB, pid, "viewer")` era ignorada em runtime (esbuild do Playwright não typechecka; `e2e/` fora do `tsconfig` de produto e do eslint). Corrigido: fallback usa o actor solicitado, detecção de login determinística (race card×SSO), E2E-08 passa a exercitar o próprio fallback em contexto frio (sem pré-login) + fingerprint de identidade efetiva (GET direto do modelo alheio como viewer → 404 `MODEL_NOT_FOUND`). Gap de tooling fechado: `tsconfig.e2e.json` + `npm run typecheck:e2e` (e2e inteiro limpo; o arg-extra seria TS2554). Revalidado: **8/8 cross-app E2E**, zero mudança de produto.
+
 Testes: 27/27 (`test_process_bpmn_reference` + `test_path_alias_middleware`), 6/6 structural frontend, vitest TM 464/464, BPMN contract/ownership/immutability 138, cross-app E2E 8/8.
 
 ## 14. Produtividade — classificação por evidência (G0)

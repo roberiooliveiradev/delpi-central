@@ -151,16 +151,31 @@ const processoUrl = (pid: string) => `/apps/transformometro/processes/${pid}#dia
 const card = (page: import("@playwright/test").Page) =>
   page.getByTestId("bpmn-reference-card");
 
-/** storageState pode capturar cookies KC antes do portal reidratar a sessão —
- *  se cair na tela de login, refaz o fluxo SSO real uma vez. */
+/** storageState/contexto pode cair na tela de login — refaz o fluxo SSO real
+ *  UMA vez preservando o actor solicitado (G5-ACC-2: o fallback NÃO pode
+ *  reautenticar como manager um contexto que pediu viewer — isso anularia a
+ *  prova de isolamento cross-owner). A detecção faz race card×botão-SSO:
+ *  no contexto autenticado o card vence rápido; no contexto frio o redirect
+ *  /login do portal é aguardado de forma determinística. */
 async function gotoProcesso(
   page: import("@playwright/test").Page,
   pid: string,
+  actor: Actor = "manager",
 ) {
   await page.goto(processoUrl(pid));
   const sso = page.getByRole("button", { name: /Entrar com DELPI SSO/ });
-  if (await sso.isVisible().catch(() => false)) {
-    await loginAs(page, "manager");
+  const outcome = await Promise.race([
+    card(page)
+      .waitFor({ state: "visible", timeout: 20_000 })
+      .then(() => "card" as const)
+      .catch(() => null),
+    sso
+      .waitFor({ state: "visible", timeout: 20_000 })
+      .then(() => "login" as const)
+      .catch(() => null),
+  ]);
+  if (outcome === "login") {
+    await loginAs(page, actor);
     await page.goto(processoUrl(pid));
   }
 }
@@ -181,7 +196,7 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
   });
 
   test("E2E-01 empty → link → authoritative read-back", async ({ page }) => {
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toBeVisible({ timeout: 60_000 });
     await expect(card(page)).toContainText("Nenhum modelo BPMN vinculado");
 
@@ -205,7 +220,7 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
   });
 
   test("E2E-02 visualizar revisão abre historical revision read-only", async ({ page }) => {
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toContainText("revisão vinculada: R1", { timeout: 60_000 });
 
     const [revPage] = await Promise.all([
@@ -221,7 +236,7 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
   });
 
   test("E2E-03 abrir no Modelador não altera a revisão vinculada", async ({ page }) => {
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toContainText("revisão vinculada: R1", { timeout: 60_000 });
 
     const [editorPage] = await Promise.all([
@@ -240,7 +255,7 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
     await saveWorkingCopy("manager", modelA, WC_XML("a2"));
     await createRevision("manager", modelA, "R2 acceptance");
 
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toContainText("revisão vinculada: R1", { timeout: 60_000 });
     await expect(page.getByTestId("bpmn-newer-revision")).toContainText("R2");
 
@@ -250,7 +265,7 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
   });
 
   test("E2E-05 atualização explícita de revisão R1 → R2 + audit", async ({ page }) => {
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toContainText("revisão vinculada: R1", { timeout: 60_000 });
 
     await card(page).getByRole("button", { name: /Alterar vínculo/ }).click();
@@ -271,7 +286,7 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
   });
 
   test("E2E-06 troca de modelo A/R2 → B/R1 + audit old/new", async ({ page }) => {
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toContainText("revisão vinculada: R2", { timeout: 60_000 });
 
     await card(page).getByRole("button", { name: /Alterar vínculo/ }).click();
@@ -295,7 +310,7 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
   });
 
   test("E2E-07 unlink não exclui o modelo BPMN", async ({ page }) => {
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toContainText("revisão vinculada: R1", { timeout: 60_000 });
 
     await card(page).getByRole("button", { name: "Desvincular" }).click();
@@ -322,20 +337,28 @@ test.describe("G5 — Transformômetro ↔ BPMN Modeler (cross-app, runtime real
     });
     expect(put.status).toBe(200);
 
-    await gotoProcesso(page, processoId);
+    await gotoProcesso(page, processoId, "manager");
     await expect(card(page)).toContainText(MODEL_A, { timeout: 60_000 });
     await page.close();
 
-    // User B (viewer): tem transformometro.access, não é owner do modelo A
+    // User B (viewer): tem transformometro.access, não é owner do modelo A.
+    // Contexto FRIO de propósito (G5-ACC-2): o próprio fallback do
+    // gotoProcesso precisa autenticar o actor solicitado — se autenticasse
+    // manager, o card resolveria o display_name e os asserts falhariam.
     const ctxB = await browser.newContext();
     const pageB = await ctxB.newPage();
-    await loginAs(pageB, "viewer");
     await gotoProcesso(pageB, processoId, "viewer");
     await expect(card(pageB)).toBeVisible({ timeout: 60_000 });
     await expect(card(pageB)).toContainText("sem acesso ou não encontrada");
     await expect(card(pageB)).toContainText(modelA);
     await expect(card(pageB)).not.toContainText(MODEL_A);
     await ctxB.close();
+
+    // Fingerprint da identidade efetiva: GET direto do modelo alheio como
+    // viewer → 404 MODEL_NOT_FOUND (prova requested actor = effective actor).
+    const foreign = await apiJson("viewer", "GET", `${BPMN_API}/models/${modelA}`);
+    expect(foreign.status).toBe(404);
+    expect(foreign.json?.error?.code).toBe("MODEL_NOT_FOUND");
 
     const refB = await tmReference("viewer", processoId);
     expect(refB.reference?.model_id).toBe(modelA);
