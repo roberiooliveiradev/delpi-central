@@ -46,15 +46,32 @@ Confirmar roles, scopes, rotina owner e segregações.
 
 ## E04 — Canal real de envio
 
-Necessário para Q22.
+**Estado:** `DECISION_REQUIRED / INVENTORY_COMPLETE_FOR_DECISION`.
 
-Confirmar:
-- canal;
-- formato;
-- comprovante;
-- aceite;
-- segurança;
-- capability disponível.
+Inventário documentado em:
+- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+
+Proven:
+- necessidade de encaminhar package por recipient no processo;
+- Microsoft Graph e-mail + file attachments no runtime;
+- Message Trace `delivered/bounced/unknown` em CIPA/Transformômetro;
+- Core Notifications existe, mas `NOTIFICATION_DISPATCHED != PACKAGE_SENT`;
+- Delpi Reports envia relatórios por e-mail, mas não é generic package-delivery contract.
+
+Não provado:
+- canal AS-IS atual;
+- owner corporativo único de package delivery;
+- generic delivery service reutilizável;
+- semântica aprovada de `PACKAGE_SENT` entre Graph accepted vs Message Trace delivered.
+
+Decisões abertas:
+- `D-P5-DELIVERY-OWNER`;
+- `D-P5-PACKAGE-SENT-OUTCOME`.
+
+Recomendação ainda **não aplicada**:
+- owner/orchestration em P5/BFF;
+- Graph + Message Trace como adapters;
+- `PACKAGE_SENT` somente após `DELIVERED`.
 
 ## E05 — Attachment roles reais
 
@@ -122,12 +139,20 @@ Se não existir/for incompatível → EXECUTION_DRIFT.
 
 ## T04 — Capability corporativa de envio
 
-Inventariar serviços para:
-- documentos;
-- e-mail;
-- tracking;
-- retry;
-- proof of delivery.
+**Estado:** `INVENTORY_COMPLETE_FOR_DECISION`.
+
+Resultado:
+- transport Graph com attachments = PROVEN;
+- retry de transport = PROVEN;
+- Message Trace = PROVEN em bounded contexts reais;
+- generic package delivery owner/service = NOT_PROVEN;
+- Delpi Reports generic delivery = NOT_PROVEN;
+- Core Notifications como package-delivery owner = NOT_PROVEN.
+
+T04 deixa de ser busca aberta e passa a sustentar a decisão E04.
+
+Authority:
+- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
 
 ## T05 — Core RBAC
 
