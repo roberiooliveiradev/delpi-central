@@ -12953,3 +12953,164 @@ PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_INTEGRATION_ACCEPTANCE_REVIEW /
        RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.163. DELIA-UX-S1-ACCEPTANCE-FORMALIZATION-01 — S1 presentation adapter acceptance + isolated commit
+
+EXECUTOR: Devin (senior frontend/release/documentation executor).
+TASK = DELIA-UX-S1-ACCEPTANCE-FORMALIZATION-01 — consolidate S1
+(Presentation Adapter + Semantic States) with independent-review
+evidence, an isolated commit, and honest authorization history.
+
+### Reanchor
+
+HEAD == `origin/main` == `c9d2a0ced7` at start; 0 ahead / 0 behind.
+Worktree carried 41 entries including user-owned BPMN/my-requests
+work — preserved untouched; no reset/stash/merge/pull performed.
+
+### Diff revalidation
+
+Identical to the independently reviewed state: 5 modified + 2 new
+files, all under `plugins/delia`; stat unchanged (299 insertions/
+4 deletions in tracked files + 338 lines in new files).
+`STALE_EVIDENCE = NO`.
+
+### Authorization history (preserved, not rewritten)
+
+- S1 was implemented under `DELIA-UX-S1-PRESENTATION-ADAPTER-01` with
+  PHASE_GATE justified by the coordination-issued bounded-task
+  convention, the approved C3 interaction-MFE precedent
+  (C3-INTERACTION-RUNTIME-01 render surface), and the deployed,
+  review-accepted `presentation.v1` contract (§6.162).
+- No frozen canonical authorization entry for `DELIA-UX-S1` existed
+  in the master plan or ledger at implementation time; the
+  architectural caveat that precedent-and-prompt alone is not a
+  canonical gate is preserved here, not resolved retroactively.
+- `CURRENT_COORDINATION_DECISION`: the Product Master ordered this
+  formalization AFTER receiving that caveat. This decision authorizes
+  the isolated commit and this registration; it is NOT retroactive
+  authorization and does not alter the meaning of any prior decision.
+- `REVIEW_VERDICT = ACCEPT_WITH_RESIDUAL`
+  (DELIA-UX-S1-INDEPENDENT-REVIEW-AND-AUTHORIZATION-01 — independent
+  execution of vitest/typecheck/build + full diff inspection).
+
+### Isolated commit
+
+`S1_COMMIT_SHA = 2c9bbfa205cd421ce29a76f230ddf715027cc3f7`
+`feat(delia): consume presentation v1 and render semantic interaction states`
+Exactly the 7 reviewed files, staged by explicit path
+(`git diff --cached --name-only` + `--check` verified pre-commit).
+No `git add .`; no other fronts
+
+## 6.163. DELIA-UX-S1-ACCEPTANCE-FORMALIZATION-01 — S1 presentation adapter acceptance + isolated commit
+
+EXECUTOR: Devin (senior frontend/release/documentation executor).
+TASK = DELIA-UX-S1-ACCEPTANCE-FORMALIZATION-01 — consolidate S1
+(Presentation Adapter + Semantic States) with independent-review
+evidence, an isolated commit, and honest authorization history.
+
+### Reanchor
+
+HEAD == `origin/main` == `c9d2a0ced7` at start; 0 ahead / 0 behind.
+Worktree carried 41 entries including user-owned BPMN/my-requests
+work — preserved untouched; no reset/stash/merge/pull performed.
+
+### Diff revalidation
+
+Identical to the independently reviewed state: 5 modified + 2 new
+files, all under `plugins/delia`; stat unchanged (299 insertions/
+4 deletions in tracked files + 338 lines in new files).
+`STALE_EVIDENCE = NO`.
+
+### Authorization history (preserved, not rewritten)
+
+- S1 was implemented under `DELIA-UX-S1-PRESENTATION-ADAPTER-01` with
+  PHASE_GATE justified by the coordination-issued bounded-task
+  convention, the approved C3 interaction-MFE precedent
+  (C3-INTERACTION-RUNTIME-01 render surface), and the deployed,
+  review-accepted `presentation.v1` contract (§6.162).
+- No frozen canonical authorization entry for `DELIA-UX-S1` existed
+  in the master plan or ledger at implementation time; the
+  architectural caveat that precedent-and-prompt alone is not a
+  canonical gate is preserved here, not resolved retroactively.
+- `CURRENT_COORDINATION_DECISION`: the Product Master ordered this
+  formalization AFTER receiving that caveat. This decision authorizes
+  the isolated commit and this registration; it is NOT retroactive
+  authorization and does not alter the meaning of any prior decision.
+- `REVIEW_VERDICT = ACCEPT_WITH_RESIDUAL`
+  (DELIA-UX-S1-INDEPENDENT-REVIEW-AND-AUTHORIZATION-01 — independent
+  execution of vitest/typecheck/build + full diff inspection).
+
+### Isolated commit
+
+`S1_COMMIT_SHA = 2c9bbfa205cd421ce29a76f230ddf715027cc3f7`
+`feat(delia): consume presentation v1 and render semantic interaction states`
+Exactly the 7 reviewed files, staged by explicit path
+(`git diff --cached --name-only` + `--check` verified pre-commit).
+No `git add .`; no other front's files included. No push performed.
+
+### Implementation summary
+
+- `plugins/delia/src/api/presentation.ts` (new): parse-only adapter —
+  strict `version="1"` check, closed allowlists for the 7 canonical
+  message kinds, `{text, notice(role=owner_hint)}` blocks, and
+  `{reply,confirm,reject}` interactions; defensive bounds (8 blocks,
+  16_384 chars) mirroring backend emit bounds; unknown kinds/blocks/
+  roles/versions degrade to neutral or null — never privileged.
+- `interactionClient.ts`: additive `presentation` field parsed
+  defensively; request payload and error contract untouched.
+- `App.tsx`: semantic `StatusBadge` per message_kind (RESULT neutral);
+  owner-hint notice rendered exactly once via exact legacy-suffix
+  dedup; governed confirmation flow unchanged.
+- `deliaUi.ts`: `DeliaStatusBadge` factory (plugin-ui reuse).
+- `index.css`: two token-based classes, no hardcoded brand colors.
+
+### Tests (re-executed on this worktree — not inherited)
+
+`npx vitest run` = 75/75 PASS (7 files; 24 adapter + 32 interaction
+incl. 8 new semantic cases + 43 regression). `npm run typecheck` =
+PASS. `npm run build` = PASS (pre-existing >500kB lucide chunk
+warning, unrelated).
+
+### Security
+
+Unknown message_kind → `messageKind=null` → neutral render (no false
+success, no badge, no action). Closed block/role/interaction
+allowlists; extra block fields stripped. Hostile text stays inert
+(`<img>`/`<script>` literal — dedicated test). Confirmation remains
+digest-echo (`decision`/`proposal_digest`/`preview_fingerprint`/
+`session_id` verbatim); `allowed_interactions` is descriptive only —
+`confirmation_request` remains the authorized element. No new
+authority, endpoint, token handling, or provider metadata usage.
+
+### Status
+
+`CONTRACT_IMPACT = NONE` (additive consumption of deployed
+`presentation.v1`; no request/response change).
+`LIVE_CONTRACT_VERIFIED = INCONCLUSIVE` — no authenticated end-to-end
+smoke (no legitimate credential in environment; auth boundary 401
+proven). Backend `presentation.v1` deployed (md5 parity, prior
+session). Frontend bundle NOT deployed — grep of deployed
+`delpi-delia` assets = `NOT_DEPLOYED`.
+`DEPLOYMENT_STATUS = NOT_STARTED` (commit != deploy; MFE deploy
+requires separate authorization).
+`BUSINESS_OUTCOME = NOT_PROVEN`.
+
+### Residuals
+
+- R1: owner_hint dedup depends on the backend ` A fonte informou: `
+  suffix (implementation detail, not a frozen contract). Failure mode
+  is benign visual duplication, never information loss. Smallest
+  correct evolution: contract/document the suffix or stop embedding —
+  deferred, not silently fixed.
+- R2: `LIVE_CONTRACT_VERIFIED = INCONCLUSIVE` — authenticated smoke
+  pending legitimate credentials/post-deploy.
+- R3: frontend not deployed (natural workflow gate).
+- R4: historical authorization caveat preserved — see
+  Authorization history above.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+  PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+  (candidate next bounded task: DELIA-UX-S2-RECEPTION-AND-
+  CONVERSATION-SHELL-01 — NOT_AUTHORIZED, not started; MFE deploy
+  decision is separate)
