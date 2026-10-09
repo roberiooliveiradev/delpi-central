@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / A15 CONSOLIDATION PASS_WITH_RESIDUAL_E04_T04**
+**TARGET / A15 CONSOLIDATION PASS_WITH_DECISION_REQUIRED_E04_T04**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -32,7 +32,7 @@ Authorities detalhadas continuam nos documentos de cada página; este arquivo é
 | A12 | P5 Pacote, Finalização e Envio | PACKAGE_FINALIZATION_READY / SEND_PENDING_E04_T04 |
 | A13 | P6 Administração / Configuração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 
-A12 é o único residual material que impede o `PRODUCT_CONTRACT_FREEZE = PASS`.
+A12 é o único residual material que impede o `PRODUCT_CONTRACT_FREEZE = PASS`; o inventário está concluído e a pendência agora é uma decisão explícita documentada em `36-e04-t04-package-delivery-decision-packet.md`.
 
 ## 2. Contrato arquitetural transversal
 
@@ -249,7 +249,7 @@ Pendente:
 ```text
 sendPackage
 → owner/channel/proof/idempotency/retry
-= E04/T04
+= DECISION_REQUIRED_E04_T04
 ```
 
 Não congelar endpoint físico de envio antes disso.
@@ -574,21 +574,27 @@ Se a evidence invalidar owner/semântica:
 
 ```text
 E04 / T04
-= PACKAGE DELIVERY CONTRACT
+= INVENTORY_COMPLETE_FOR_DECISION
+= DECISION_REQUIRED
 ```
 
-Falta provar:
-- owner;
-- channel/protocol;
-- package/document transfer;
-- recipient semantics;
-- proof of delivery;
-- idempotency;
-- retry;
-- failure/reconciliation;
-- security.
+Authority:
+- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
 
-Core Notifications **não** fecha esse residual.
+Proven:
+- Graph e-mail + attachments;
+- retry de transport;
+- Message Trace delivered/bounced/unknown em contexts reais;
+- Core Notifications separado de package delivery.
+
+Decisão ainda necessária:
+- owner/orchestration do delivery;
+- semântica de `PACKAGE_SENT`.
+
+Recomendação documentada, não aplicada:
+- P5/BFF owns orchestration;
+- Graph + Message Trace adapters;
+- `PACKAGE_SENT` após `DELIVERED`.
 
 ## 13. Freeze readiness após A15
 
@@ -597,7 +603,7 @@ PORTAL_DESIGN_FREEZE          = PASS
 FRONTEND_PATTERN_FREEZE       = PASS
 SECURITY_MODEL_FREEZE         = PASS
 TEST_STRATEGY_FREEZE          = PASS
-PRODUCT_CONTRACT_FREEZE       = PENDING_E04_T04
+PRODUCT_CONTRACT_FREEZE       = DECISION_REQUIRED_E04_T04
 
 DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED      = NO
