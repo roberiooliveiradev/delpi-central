@@ -354,3 +354,54 @@ A expansão pode agrupar fontes por owner e deduplicar referências **sem perder
 - [ ] Testes e revisão no SHA/config reais; `TEST_NOT_RUN` para navegador ausente.
 
 **Status documental desta seção:** `DESIGN_DETAIL_PROPOSED`, preservando a direção já aprovada no documento 70. A posição exata linha-acima-vs-dentro do corpo da resposta e a habilitação do inspector permanecem **decisões de coordenação pendentes**. Nenhuma implementação, contrato, commit de código, deploy ou avanço de fase é produzido por esta especificação.
+
+## 14. Registro de implementação — DELIA-UX-ACTIVITY-PLUGIN-UI-FULL-IMPLEMENTATION-01
+
+Implementação efetiva do componente de atividade. Evidência factual; não altera gates nem avança fase.
+
+### 14.1 Peças implementadas
+
+| Peça | Local | Estado |
+| --- | --- | --- |
+| `ActivityViewer` (summary expansível + steps + sources + outcome) | `plugins/plugin-ui/src/components/activity/ActivityViewer.tsx` | PROVEN |
+| Estilos do componente | `plugins/plugin-ui/src/styles/activity-viewer.css` | PROVEN |
+| Adapter DÉLIA→view | `plugins/delia/src/activity/activityView.ts` | PROVEN |
+| Integração no turno | `plugins/delia/src/ui/DeliaAssistantMessage.tsx` (acima do conteúdo) | PROVEN |
+| Resumo pending real | `plugins/delia/src/App.tsx` (substitui badge genérico; mantém `role=status` e texto honesto) | PROVEN |
+| Fixture de atividade demo | `plugins/delia/src/demo/demoMode.ts` cenário `?delia-demo=activity` | PROVEN |
+| ActivityInspector (painel lateral) | — | TARGET — CONTRACT_REQUIRED (não implementado) |
+| Etapas progressivas ao vivo (SSE/streaming) | — | TO_INVENTORY (POST atual não prova) |
+
+### 14.2 API pública (provider-neutral)
+
+`ActivityViewerProps`: `title`, `state` (`pending|running|completed|partial|blocked|denied|failed|cancelled|no_data`), `steps?: ActivityStepView[]`, `sources?: ActivitySourceView[]`, `outcome?` (com `persistent` para avisos que permanecem recolhidos), `durationLabel?`, `summaryDetail?`, `expandable?`, `defaultExpanded?`, `children`, `className`. Sem `Record<string,unknown>`; campos MCP arbitrários nunca viram props.
+
+### 14.3 Campos reais consumidos pelo adapter
+
+Somente `presentation.messageKind`, `groundingStatus`, `provenance` (`specialist_id`, `remote_capability`, `protocol`, `source.{source_id,source_system,observed_at}`, `is_complete`, `observed_at`) e `activityView` (override explícito de fixture demo). Etapas mínimas honestas: `Solicitação recebida` + `Resposta elaborada/registrada`; `Capacidade acionada`/`Fonte consultada` somente com provenance real. Nenhum timestamp/duração inventado.
+
+### 14.4 Reuso
+
+| Responsabilidade | Decisão |
+| --- | --- |
+| Disclosure inline | NEW (nenhum Disclosure/Accordion no kit) — implementado dentro do ActivityViewer |
+| Steps/timeline | NEW (o `Timeline` de data é log de eventos; semântica divergente) |
+| Ícones/estado | REUSE lucide-react + tokens `--delpi-ui-*`/`--surface`/`--text` |
+| Badge de loading | REUSE via substituição: pending agora é `ActivityViewer state=running` |
+| StatusBadge | não usado por etapa (ícone+título bastam); outcome usa o mesmo vocabulário de tons |
+
+### 14.5 Modo demo vs real
+
+Real: adapter deriva do contrato; pending não revela provider/ferramenta. Demo (`?delia-demo=activity`): fixture com múltiplos especialistas fictícios e outcome persistente `SIMULAÇÃO — nenhuma ferramenta real executada.` Nunca ativada por erro 402/503; gate `import.meta.env.DEV || VITE_DELIA_DEMO=1`.
+
+### 14.6 Evidência
+
+- plugin-ui: `ActivityViewer.test.tsx` 21/21 PASS (estados, disclosure, teclado, sources, outcome persistente, markup hostil inerte).
+- DÉLIA: 141/141 PASS (adapter 9 testes + integração demo + regressão S1–S3/composer).
+- Build plugin-ui PASS + `verify:host-exports` OK; build delia PASS + `verify:federation` OK.
+- Typecheck: residual externo conhecido (`TaskDetailCard.tsx`, `visualComponents.ts`) — fora do escopo.
+- `BROWSER_VISUAL_EVIDENCE = TEST_NOT_RUN` (navegador real pendente).
+
+### 14.7 Gaps contratuais preservados
+
+Etapas progressivas reais, durações medidas, inspector lateral e sequência multi-etapa legítima continuam TO_INVENTORY/TARGET — exigem projeção/contrato novos do backend. Este registro não reclassifica TARGET como implementado.
