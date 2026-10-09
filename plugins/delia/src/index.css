@@ -54,14 +54,6 @@
   min-height: 0;
 }
 
-.dashboard-delia .delia-host-meta {
-  margin: 0;
-  color: var(--delia-text-muted);
-  font-size: 0.75rem;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
 .dashboard-delia .delia-visually-hidden {
   position: absolute;
   width: 1px;
@@ -74,7 +66,7 @@
   border: 0;
 }
 
-/* ---------- Interaction shell (S2): reception → timeline → composer */
+/* ---------- Interaction shell: full-height workspace, anchored composer */
 
 .dashboard-delia .delia-interaction {
   display: flex;
@@ -84,19 +76,41 @@
   gap: 0;
   background: transparent;
   width: 100%;
-  max-width: 760px;
-  margin-inline: auto;
+  max-width: none;
 }
 
+/* Scroll viewport — full width so the scrollbar lives at the edge. */
 .dashboard-delia .delia-interaction__body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: var(--delia-card-padding);
   scroll-behavior: smooth;
+}
+
+/* Reading column — grows to fill the viewport when content is short
+   (centers the reception) and lets the viewport scroll when tall. */
+.dashboard-delia .delia-interaction__column {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  padding: var(--delia-card-padding);
+  box-sizing: border-box;
+}
+
+/* Composer region — same column width, never scrolls away. */
+.dashboard-delia .delia-interaction__footer {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  padding: 0 var(--delia-card-padding) var(--delia-card-padding);
+  box-sizing: border-box;
 }
 
 /* ---------- S2-A + S3 — reception (chat-first, light) */
@@ -352,7 +366,7 @@
 }
 
 .dashboard-delia .delia-interaction__error {
-  margin: 0 var(--delia-card-padding) 0;
+  margin: 0 0 10px;
   color: var(--delia-text);
   background: color-mix(in srgb, #dc2626 12%, transparent);
   border: 1px solid color-mix(in srgb, #dc2626 45%, transparent);
@@ -362,11 +376,10 @@
 
 /* ---------- S2-C — composer */
 
-/* Visual owned by plugin-ui `.delpi-ui-message-composer`; DÉLIA keeps
-   only layout anchoring at the conversation bottom. */
+/* Visual owned by plugin-ui `.delpi-ui-message-composer`; the footer
+   region supplies column width and anchoring. */
 .dashboard-delia .delia-composer {
-  flex-shrink: 0;
-  margin: 0 var(--delia-card-padding) var(--delia-card-padding);
+  margin: 0;
 }
 
 /* ---------- Governed confirmation (preserved from S1) */

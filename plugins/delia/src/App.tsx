@@ -57,9 +57,6 @@ const NEAR_BOTTOM_THRESHOLD_PX = 96;
  * container width — no parallel runtime, no fake capabilities.
  */
 export default function App({
-  pathname,
-  basePath,
-  routeLabel,
   getAccessToken,
   getWorkspaceContext,
   permissions: _permissions,
@@ -67,8 +64,6 @@ export default function App({
 }: AppProps) {
   void _permissions;
   void _isSuperadmin;
-
-  const hostPath = pathname || basePath || "/apps/delia";
 
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
@@ -219,44 +214,43 @@ export default function App({
             ref={scrollRegionRef}
             onScroll={handleTimelineScroll}
           >
-            {turns.length > 0 ? (
-              <ConversationTimeline
-                turns={turns}
-                loading={loading}
-                onConfirmation={handleConfirmation}
-              />
-            ) : (
-              <DeliaReception />
-            )}
-            {loading ? (
-              <DeliaLoadingBadge
-                className="delia-interaction__loading"
-                tone="info"
-                label="A DÉLIA está processando sua solicitação…"
-              />
-            ) : null}
-            <div ref={turnsEndRef} aria-hidden="true" />
+            <div className="delia-interaction__column">
+              {turns.length > 0 ? (
+                <ConversationTimeline
+                  turns={turns}
+                  loading={loading}
+                  onConfirmation={handleConfirmation}
+                />
+              ) : (
+                <DeliaReception />
+              )}
+              {loading ? (
+                <DeliaLoadingBadge
+                  className="delia-interaction__loading"
+                  tone="info"
+                  label="A DÉLIA está processando sua solicitação…"
+                />
+              ) : null}
+              <div ref={turnsEndRef} aria-hidden="true" />
+            </div>
           </div>
 
-          {error ? (
-            <p className="delia-interaction__error" role="alert">
-              {error}
-            </p>
-          ) : null}
+          <div className="delia-interaction__footer">
+            {error ? (
+              <p className="delia-interaction__error" role="alert">
+                {error}
+              </p>
+            ) : null}
 
-          <DeliaComposer
-            inputId="delia-interaction-input"
-            value={input}
-            onChange={setInput}
-            onSubmit={handleSubmit}
-            loading={loading}
-          />
+            <DeliaComposer
+              inputId="delia-interaction-input"
+              value={input}
+              onChange={setInput}
+              onSubmit={handleSubmit}
+              loading={loading}
+            />
+          </div>
         </section>
-
-        <p className="delia-host-meta">
-          {routeLabel ? `${routeLabel} · ` : null}
-          Contexto de host: <span>{hostPath}</span>
-        </p>
       </main>
     </div>
   );

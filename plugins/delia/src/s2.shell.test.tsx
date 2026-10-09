@@ -379,3 +379,72 @@ describe("S2-D loading and error states", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
+
+// --- Workspace layout (DELIA-UX-CONVERSATION-WORKSPACE-LAYOUT-01) ----
+
+describe("conversation workspace layout", () => {
+  it("shell splits into scrollable viewport column + anchored footer", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response()));
+    const { container } = render(<App getAccessToken={() => "t"} />);
+
+    const interaction = container.querySelector(".delia-interaction")!;
+    const body = interaction.querySelector(".delia-interaction__body")!;
+    const column = body.querySelector(".delia-interaction__column")!;
+    const footer = interaction.querySelector(".delia-interaction__footer")!;
+
+    // Viewport scrolls independently; footer (composer region) is a
+    // sibling outside the scroll area — the composer never scrolls away.
+    expect(column.querySelector(".delia-reception")).toBeTruthy();
+    expect(footer.querySelector(".delia-composer")).toBeTruthy();
+    expect(body.contains(footer)).toBe(false);
+    expect(interaction.lastElementChild).toBe(footer);
+  });
+
+  it("timeline replaces reception inside the reading column", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(successPayload(1)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    const { container } = render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("olá");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy(),
+    );
+
+    const column = container.querySelector(".delia-interaction__column")!;
+    expect(column.querySelector(".delia-timeline")).toBeTruthy();
+    expect(column.querySelector(".delia-reception")).toBeNull();
+  });
+
+  it("no host-context debug line in the conversation UI", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response()));
+    const { container } = render(
+      <App getAccessToken={() => "t"} pathname="/apps/delia" />,
+    );
+    expect(container.querySelector(".delia-host-meta")).toBeNull();
+    expect(container.textContent).not.toContain("Contexto de host");
+  });
+
+  it("error alert stays in the anchored footer, draft preserved", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("network down")),
+    );
+    const { container } = render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("pergunta");
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+
+    const footer = container.querySelector(".delia-interaction__footer")!;
+    expect(footer.querySelector(".delia-interaction__error")).toBeTruthy();
+    expect(
+      footer.querySelector(".delpi-ui-message-composer"),
+    ).toBeTruthy();
+  });
+});

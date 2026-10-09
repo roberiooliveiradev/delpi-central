@@ -36,26 +36,24 @@ describe("App shell", () => {
     expect(container.querySelector("[data-permission-gate]")).toBeNull();
   });
 
-  it("refreshes host route presentation and starts clean after unmount", () => {
+  it("accepts host route props without rendering technical context, and starts clean after unmount", () => {
     const first = render(
       <App pathname="/apps/delia" routeLabel="Sessão A" search="" />,
     );
-    expect(screen.getByText(/Sessão A/)).toBeTruthy();
-    expect(screen.getByText("/apps/delia")).toBeTruthy();
+    // Host context stays out of the conversational UI (doc 73 §48).
+    expect(screen.queryByText(/Contexto de host/)).toBeNull();
 
     first.rerender(
       <App pathname="/apps/delia/panel" routeLabel="Sessão B" search="?view=host" />,
     );
-    expect(screen.queryByText(/Sessão A/)).toBeNull();
-    expect(screen.getByText(/Sessão B/)).toBeTruthy();
-    expect(screen.getByText("/apps/delia/panel")).toBeTruthy();
+    expect(screen.queryByText(/Contexto de host/)).toBeNull();
 
     first.unmount();
 
-    render(<App pathname="/apps/delia" />);
-    expect(screen.queryByText(/Sessão A/)).toBeNull();
-    expect(screen.queryByText(/Sessão B/)).toBeNull();
-    expect(screen.getByText("/apps/delia")).toBeTruthy();
+    const { container } = render(<App pathname="/apps/delia" />);
+    // Remount starts at the reception — no stale conversation state.
+    expect(container.querySelector(".delia-reception")).toBeTruthy();
+    expect(container.querySelector(".delia-timeline")).toBeNull();
   });
 
   it("uses container-friendly responsive foundation classes", () => {
