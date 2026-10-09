@@ -12854,3 +12854,102 @@ PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_INTEGRATION_ACCEPTANCE_REVIEW /
        RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.162. C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01 — Interaction Presentation Contract foundation
+
+EXECUTOR: Devin (senior backend/domain/application executor).
+TASK = C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01 — establish the
+central, provider-neutral backend foundation for composing user-facing
+interaction presentations.
+
+### Reanchor
+
+HEAD == `origin/main` == `a91a053b96` at start (3 concurrent
+non-delia commits since `28a43f7616` — disjoint). User worktree
+changes preserved; `EXECUTION_DRIFT = NO`.
+
+### Stage A — Inventory (existing equivalent found)
+
+EXISTING_ENTRY_POINTS = `POST /interaction/turns` — the single
+user-facing channel (no SSE; plain bounded JSON via `jsonify`).
+EXISTING_COMPOSERS = `serialize_result` — ONE serialization edge; all
+internal paths funnel into `InteractiveTurnResult` first:
+`_grounded_result` (grounded reads), `_write_lifecycle_result`
+(CONFIRMATION_REQUIRED/WRITE_REJECTED/CLARIFICATION_REQUIRED),
+`_source_terminal_result` (SOURCE_UNAVAILABLE/AUTHZ_DENIED +
+owner_hint), model path (general NON_GROUNDED answer).
+EXISTING_RENDERERS = synthesis selection renderer
+(`_render_synthesis`), deterministic fallback (`_format_structured`),
+terminal/ask-back deterministic texts.
+EXISTING_RESPONSE_CONTRACTS = `InteractiveTurnResult` →
+`serialize_result` projection (content, epistemic_class,
+grounding_status, provenance, limitations, confirmation_request).
+EXISTING_UI_COMPONENT_CONTRACTS = NONE (flat `content` only).
+CURRENT_GAPS = no declared message kind (denied vs unavailable only
+distinguishable in prose); owner_hint embedded in `content` text, not
+structurally addressable; no structured content blocks.
+LEGITIMATE_OWNER = `application/interaction` boundary (serialization
+edge). `EXISTING_EQUIVALENT = YES` (partial); `REUSE_DECISION = EXTEND`
+— additive field + one pure composition module; no new engine,
+service, registry, or second delivery channel.
+
+### Implementation (minimal, additive)
+
+- `application/interaction/presentation.py` (new, pure):
+  `PRESENTATION_CONTRACT_VERSION = "1"`,
+  `compose_presentation(result)` → `{version, message_kind,
+  semantic_status, grounding_status, blocks, allowed_interactions}`.
+  Closed block allowlist: `text` + `notice` only (proven needs);
+  `notice` carries role=`owner_hint` verbatim bounded owner vocabulary.
+  Kinds reuse GovernedCapabilityStatus vocabulary; unknown/injected
+  kinds fail closed to deterministic derivation. Block text bounded
+  (16_384 chars), block count bounded (8). No HTML/JS/layout channels
+  exist.
+- `contracts.py`: `InteractiveTurnResult` gains optional
+  `message_kind` + `owner_hint` (additive, backward-compatible).
+- `handle_interactive_turn.py`: producers declare the kind at
+  construction (never guessed from prose): write-lifecycle statuses
+  map to CLARIFICATION_REQUIRED/CONFIRMATION_REQUIRED/WRITE_REJECTED;
+  terminal path maps AUTHZ_DENIED / SOURCE_UNAVAILABLE /
+  PRECONDITION_REQUIRED (hint present); `owner_hint` carried as a
+  field while the legacy `content` suffix is preserved for existing
+  consumers.
+- `serialize_result`: appends `"presentation": compose_presentation(
+  result)` — all other top-level keys unchanged.
+
+`allowed_interactions`: `CONFIRMATION_REQUIRED` →
+`[reply, confirm, reject]` (existing ConfirmationDecision CONFIRM/
+REJECT); all other kinds → `[reply]`. The list describes existing
+gates only — it authorizes nothing.
+
+### Tests
+
+`tests/test_interaction_presentation.py` (new): 11 cases — shape and
+defaults, confirmation derivation + interaction vocabulary, owner-hint
+PRECONDITION_REQUIRED + verbatim notice block, declared-kind
+precedence, injected kind fails closed, bounded payload, top-level
+backward compatibility, and handler wiring for SOURCE_UNAVAILABLE /
+AUTHZ_DENIED / owner precondition / write lifecycle kinds.
+Architecture gate `test_interaction_application_layer_stays_bounded`
+updated to register `presentation.py` (bounded-module provenance);
+canonical response-contract test registers the additive
+`presentation` key.
+`FULL_SUITE = 981/981 PASS` on committed content `ed498f80b4`.
+
+### Residuals
+
+- `PRECONDITION_PHRASING = PARTIAL` — unchanged: friendly wording
+  still requires a TÉO owner-declared `user_message` field
+  (OWNER_FOLLOWUP; contract evolution, not DÉLIA-owned).
+- Future block kinds (list/table/metric/chart/artifact) intentionally
+  NOT implemented — contract is versioned for additive extension.
+- Structured grounded records are rendered to `text` upstream; richer
+  typed blocks would require carrying record structure into the
+  result — deferred to a future bounded task.
+- `DEPLOYMENT_REQUIRED = YES` — repo-only; live verification needs an
+  authorized deploy.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_INTEGRATION_ACCEPTANCE_REVIEW /
+       RETURN_TO_ARCHITECTURE_COORDINATION
