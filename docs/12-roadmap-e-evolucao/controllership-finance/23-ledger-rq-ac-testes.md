@@ -197,25 +197,25 @@ Fonte detalhada: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 
 ## Requisitos transversais de segurança
 
-| RQ | Requisito | Aceite mínimo |
-|---|---|---|
-| RQ-SEC-01 | backend autoriza fail-closed | UI ocultar ação não concede autorização |
-| RQ-SEC-02 | effective permissions vêm do Core | JWT sozinho não é authority final |
-| RQ-SEC-03 | resource ownership/context access sempre aplicados quando houver recurso restrito | URL direta para recurso não autorizado é rejeitada |
-| RQ-SEC-04 | MANAGE não apaga histórico | delete/overwrite material rejeitado |
-| RQ-SEC-05 | IA respeita acesso/ownership e não muda estado | tool/prompt não contorna business rule |
-| RQ-SEC-06 | secrets/tokens não entram em frontend state/logs/prompts comuns | scanner/review sem exposição |
+| RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
+|---|---|---|---|---|---|
+| RQ-SEC-01 | backend autoriza fail-closed | UI ocultar ação não concede autorização | negative: chamada direta sem capability/scope + Core unavailable | Core + BFF AuthZ | TARGET |
+| RQ-SEC-02 | effective permissions vêm do Core | JWT sozinho não é authority final | contract/integration: JWT válido sem effective access não autoriza | Core PermissionResolver | TARGET |
+| RQ-SEC-03 | resource ownership/context access sempre aplicados quando houver recurso restrito | URL direta para recurso não autorizado é rejeitada | sibling + negative: resource A/B + direct URL | owner adapter | TARGET |
+| RQ-SEC-04 | MANAGE não apaga histórico | delete/overwrite material rejeitado | negative: hard delete/overwrite histórico | audit/version rules | TARGET |
+| RQ-SEC-05 | IA respeita acesso/ownership e não muda estado | tool/prompt não contorna business rule | AI negative + permission negative | governed AI adapter | TARGET |
+| RQ-SEC-06 | secrets/tokens não entram em frontend state/logs/prompts comuns | scanner/review sem exposição | secret/log/frontend-state scan | platform security | TARGET |
 
 ## Requisitos transversais de experiência
 
-| RQ | Requisito | Aceite mínimo |
-|---|---|---|
-| RQ-UX-01 | estados LOADING/EMPTY/PARTIAL/UNAVAILABLE_SOURCE/ERROR/403/404 | página não colapsa estados distintos em erro genérico |
-| RQ-UX-02 | desktop/mobile e claro/escuro | conteúdo e ações materiais permanecem utilizáveis |
-| RQ-UX-03 | teclado/foco | fluxo principal operável por teclado com foco visível |
-| RQ-UX-04 | deep link/F5 | contexto aplicável é preservado/reconstruído sem bypass de auth |
-| RQ-UX-05 | status não depende apenas de cor | labels/texto acessíveis |
-| RQ-UX-06 | Help sincronizada | mudança user-facing material atualiza ajuda antes do aceite |
+| RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
+|---|---|---|---|---|---|
+| RQ-UX-01 | estados LOADING/SUCCESS/EMPTY/PARTIAL/UNAVAILABLE/ERROR/403/404 | página não colapsa estados distintos em erro genérico | state matrix + source unavailable negative | page contracts | TARGET |
+| RQ-UX-02 | desktop/mobile e claro/escuro | conteúdo e ações materiais permanecem utilizáveis | visual/responsive: desktop + mobile + light + dark | plugin-ui/theme | TARGET |
+| RQ-UX-03 | teclado/foco | fluxo principal operável por teclado com foco visível | keyboard-only + focus order/modal trap | plugin-ui/a11y | TARGET |
+| RQ-UX-04 | deep link/F5 | contexto aplicável é preservado/reconstruído sem bypass de auth | deep-link roundtrip + F5 + unauthorized URL negative | router/BFF | TARGET |
+| RQ-UX-05 | status não depende apenas de cor | labels/texto acessíveis | a11y/status semantics | plugin-ui | TARGET |
+| RQ-UX-06 | Help sincronizada | mudança user-facing material atualiza ajuda antes do aceite | structural Help link/section + capability gating | 29/help registry | TARGET |
 
 ## Regra de evidência para implementação
 
