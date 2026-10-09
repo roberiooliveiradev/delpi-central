@@ -1452,7 +1452,9 @@
   border-radius: 12px;
   border-block-start: 3px solid var(--helpdesk-action-accent);
   background: color-mix(in srgb, var(--helpdesk-action-accent) 7%, var(--helpdesk-surface));
-  overflow: hidden;
+  /* Body rola primeiro; quando header+footer sozinhos excedem a caixa
+     (mobile com CTAs full-width), o próprio card rola em vez de clipar. */
+  overflow: hidden auto;
 }
 
 .dashboard-helpdesk .helpdesk-action-card__header {

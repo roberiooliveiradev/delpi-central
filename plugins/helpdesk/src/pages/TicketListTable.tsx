@@ -2,6 +2,7 @@ import type { MouseEvent, ReactNode } from "react";
 
 import { absoluteDateTimeLabel, relativeTimeLabel, statusBadgeVariant } from "../presentation/ticketView";
 import {
+  cellTextForColumn,
   resolveVisibleColumns,
   type TicketListColumnDefinition,
   type TicketListColumnPreference,
@@ -136,8 +137,6 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
       return row.urgency;
     case "assigned":
       return row.assigned_display_name;
-    case "requester":
-      return (row.requester_display_name ?? "").trim();
     case "created_at":
       return <DateCell value={row.created_at} />;
     case "updated_at":
@@ -146,10 +145,8 @@ function renderColumn(key: TicketListColumnDefinition["key"], row: TicketSummary
       return <DateCell value={row.solved_at ?? ""} />;
     case "closed_at":
       return <DateCell value={row.closed_at ?? ""} />;
-    case "entity":
-    case "last_editor":
-      return "";
     default:
-      return "";
+      // Plain-text cells share the canonical formatter (requester/entity/last_editor…).
+      return cellTextForColumn(row, key);
   }
 }

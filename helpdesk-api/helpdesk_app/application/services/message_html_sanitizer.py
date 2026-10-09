@@ -112,15 +112,38 @@ def attachment_public_path(ticket_id: int, document_id: int) -> str:
     return f"{_API_PREFIX}/tickets/{int(ticket_id)}/attachments/{int(document_id)}"
 
 
+_HTML_MARKUP_RE = re.compile(r"</?[a-zA-Z][^>]*>")
+
+
+def _plain_text_to_html(text: str) -> str:
+    """GLPI stores some bodies as entity-encoded plain text (no markup).
+
+    Decode stored entities once, re-escape to neutralize any literal `<…>`
+    sequences, then rebuild block structure: blank lines split paragraphs,
+    single newlines become <br/> so the UI keeps the GLPI line breaks.
+    """
+    plain = html_lib.unescape(text).replace("\r\n", "\n").replace("\r", "\n")
+    escaped = html_lib.escape(plain, quote=False)
+    paragraphs = [p for p in re.split(r"\n\s*\n", escaped) if p.strip()]
+    if not paragraphs:
+        return f"<p>{escaped}</p>" if escaped.strip() else ""
+    return "".join(
+        f"<p>{chunk.strip().replace(chr(10), '<br/>')}</p>" for chunk in paragraphs
+    )
+
+
 def sanitize_message_html(
     raw_html: str | None,
     *,
     ticket_id: int,
     allowed_document_ids: Collection[int],
+    structure_plain_text: bool = True,
 ) -> str:
     text = str(raw_html or "")
     if not text.strip():
         return ""
+    if structure_plain_text and not _HTML_MARKUP_RE.search(text):
+        text = _plain_text_to_html(text)
     allowed = {int(item) for item in allowed_document_ids}
     text = _DANGEROUS_BLOCK_RE.sub("", text)
     text = _DANGEROUS_SELF_CLOSING_RE.sub("", text)
@@ -200,6 +223,8 @@ def prepare_outbound_message_html(
         text,
         ticket_id=int(ticket_id),
         allowed_document_ids=allowed_document_ids if ticket_id > 0 else (),
+        # Outbound keeps the user's raw plain text — structure is for display only.
+        structure_plain_text=False,
     )
     if not message_html_has_visible_text(cleaned):
         return ""

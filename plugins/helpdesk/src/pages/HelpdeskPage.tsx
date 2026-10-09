@@ -50,6 +50,7 @@ import {
   parseTicketSort,
   ticketListSearch,
   ticketRecordFields,
+  unassignedTicketAttachments,
   TICKET_STATUS_FILTERS,
   type TicketListFilters,
   viewForTicketLoad,
@@ -670,7 +671,6 @@ function TicketListPage() {
           showCards ? (
             <TicketListCards
               items={items}
-              showRequester={canAssign === true}
               onOpen={(ticketId) => navigateHelpdesk(`/apps/helpdesk/tickets/${ticketId}`)}
             />
           ) : (
@@ -1444,6 +1444,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         conversationMessageVisible(message.kind, timelineVisibility),
       )
     : [];
+  const unassignedDocs = useMemo(
+    () =>
+      ticket
+        ? unassignedTicketAttachments(ticket, conversationMessages(ticket, new Date()))
+        : [],
+    [ticket],
+  );
   const ticketTasks = ticket ? ticketTasksFromTimeline(ticket.timeline) : [];
 
   return (
@@ -1575,25 +1582,27 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                         <p className="helpdesk-lifecycle-cue__hint">
                           Aceite ou recuse a solução abaixo, ou use o seletor de ação.
                         </p>
-                        {ticket.can_accept_solution ? (
-                          <ActionButton
-                            variant="primary"
-                            type="button"
-                            disabled={cycleSaving}
-                            onClick={() => selectWorkspaceAction("accept_solution")}
-                          >
-                            Aceitar solução
-                          </ActionButton>
-                        ) : null}
-                        {ticket.can_reject_solution ? (
-                          <ActionButton
-                            type="button"
-                            disabled={cycleSaving}
-                            onClick={() => selectWorkspaceAction("reject_solution")}
-                          >
-                            Recusar / reabrir
-                          </ActionButton>
-                        ) : null}
+                        <div className="helpdesk-lifecycle-actions__buttons">
+                          {ticket.can_accept_solution ? (
+                            <ActionButton
+                              variant="primary"
+                              type="button"
+                              disabled={cycleSaving}
+                              onClick={() => selectWorkspaceAction("accept_solution")}
+                            >
+                              Aceitar solução
+                            </ActionButton>
+                          ) : null}
+                          {ticket.can_reject_solution ? (
+                            <ActionButton
+                              type="button"
+                              disabled={cycleSaving}
+                              onClick={() => selectWorkspaceAction("reject_solution")}
+                            >
+                              Recusar / reabrir
+                            </ActionButton>
+                          ) : null}
+                        </div>
                       </div>
                     ) : null}
                     {cue.showValidationActions ? (
@@ -1845,10 +1854,10 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                         }))}
                       />
                       {(timelineVisibility.documents || timelineVisibility.approvals) &&
-                      ((timelineVisibility.documents && ticket.attachments.length > 0) ||
+                      ((timelineVisibility.documents && unassignedDocs.length > 0) ||
                         (timelineVisibility.approvals && (ticket.validations?.length ?? 0) > 0)) ? (
                         <div className="helpdesk-timeline-extras">
-                          {timelineVisibility.documents && ticket.attachments.length > 0 ? (
+                          {timelineVisibility.documents && unassignedDocs.length > 0 ? (
                             <section
                               className="helpdesk-timeline-extras__block"
                               data-action-variant="attachment"
@@ -1857,7 +1866,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               <h3 className="helpdesk-timeline-extras__title">Documentos</h3>
                               <TicketAttachmentPreview
                                 ticketId={ticketId}
-                                attachments={ticket.attachments}
+                                attachments={unassignedDocs}
                                 onError={(text) => setErrorText(text)}
                               />
                             </section>

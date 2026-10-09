@@ -487,6 +487,42 @@ def test_mapping_document_uses_own_id_when_documents_id_absent():
     )
     assert [item.document_id for item in detail.attachments] == [1177, 1178]
 
+
+def test_mapping_attachment_carries_document_item_owner():
+    detail = parse_ticket_detail(
+        {"id": 660, "name": "Kaizen", "content": "x", "status": {"name": "Novo"}, "urgency": 1},
+        [
+            {
+                "type": "Document_Item",
+                "item": {
+                    "id": 9,
+                    "documents_id": 1320,
+                    "itemtype": "ITILFollowup",
+                    "items_id": 636,
+                    "name": "log.png",
+                    "mime": "image/png",
+                },
+            },
+            {
+                "type": "Document_Item",
+                "item": {
+                    "id": 10,
+                    "documents_id": 1321,
+                    "itemtype": "Ticket",
+                    "items_id": 660,
+                    "name": "doc.pdf",
+                    "mime": "application/pdf",
+                },
+            },
+        ],
+    )
+    assert detail.attachments[0].document_id == 1320
+    assert detail.attachments[0].itemtype == "ITILFollowup"
+    assert detail.attachments[0].items_id == 636
+    assert detail.attachments[1].itemtype == "Ticket"
+    assert detail.attachments[1].items_id == 660
+
+
 def test_mapping_publishes_requester_and_hides_private_followup():
     detail = parse_ticket_detail(
         {
@@ -796,6 +832,51 @@ def test_mapping_list_publishes_solved_and_closed_instants():
     )
     assert listed[0].solved_at == "2026-09-20T18:00:00Z"
     assert listed[0].closed_at == "2026-09-21T09:00:00Z"
+
+
+def test_mapping_list_publishes_entity_last_editor_and_requester_id():
+    listed = parse_ticket_list(
+        [
+            {
+                "id": 1299,
+                "name": "Erro 500",
+                "status": {"id": 5, "name": "Solucionado"},
+                "urgency": 5,
+                "entity": {"id": 0, "name": "Entidade raiz", "completename": "Entidade raiz"},
+                "user_editor": {"id": 11, "firstname": "Robério", "realname": "Teixeira"},
+                "user_recipient": {"id": 42},
+                "team": [{"role": "requester", "id": 42, "display_name": "Maria Silva"}],
+            },
+            {
+                "id": 1300,
+                "name": "Sem extras",
+                "status": {"id": 1, "name": "Novo"},
+                "urgency": 2,
+            },
+        ]
+    )
+    assert listed[0].entity == "Entidade raiz"
+    assert listed[0].last_editor == "Robério Teixeira"
+    assert listed[0].requester_id == 42
+    assert listed[1].entity == ""
+    assert listed[1].last_editor == ""
+    assert listed[1].requester_id is None
+
+
+def test_mapping_list_requester_id_falls_back_to_user_recipient():
+    listed = parse_ticket_list(
+        [
+            {
+                "id": 7,
+                "name": "Sem team",
+                "status": {"id": 1, "name": "Novo"},
+                "urgency": 2,
+                "user_recipient": {"id": 77, "firstname": "Lia"},
+                "team": [{"role": "assigned", "id": 8}],
+            }
+        ]
+    )
+    assert listed[0].requester_id == 77
 
 
 def test_mapping_list_drops_deleted_and_detail_hides_them():

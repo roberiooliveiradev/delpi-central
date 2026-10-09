@@ -724,6 +724,11 @@ def _summary(row: dict) -> TicketSummary:
         sla_ttr=_named(row.get("sla_ttr")),
         sla_tto=_named(row.get("sla_tto")),
         assigned_user_id=_team_user_id(row, "assigned"),
+        requester_id=_requester_id(row),
+        entity=_named(row.get("entity")),
+        last_editor=_person_name(row.get("user_editor"))
+        if isinstance(row.get("user_editor"), dict)
+        else "",
     )
 
 
@@ -847,10 +852,17 @@ def _attachment(row: dict) -> Attachment | None:
             document_id = document_id.get("id")
     if document_id in (None, ""):
         return None
+    items_id = payload.get("items_id")
+    try:
+        items_id = int(items_id)
+    except (TypeError, ValueError):
+        items_id = None
     return Attachment(
         document_id=int(document_id),
         filename=display_text(payload.get("filename") or payload.get("name")),
         mime=str(payload.get("mime") or ""),
+        itemtype=str(payload.get("itemtype") or ""),
+        items_id=items_id,
     )
 
 
@@ -992,6 +1004,17 @@ def _requester_name(row: dict) -> str:
     if isinstance(recipient, dict):
         return _person_name(recipient)
     return ""
+
+
+def _requester_id(row: dict) -> int | None:
+    """GLPI requester user id — team member `requester` first, `user_recipient` fallback."""
+    team_id = _team_user_id(row, "requester")
+    if team_id:
+        return team_id
+    recipient = row.get("user_recipient")
+    if isinstance(recipient, dict):
+        return _person_id(recipient)
+    return None
 
 
 def _requester_identity(row: dict) -> PersonIdentity:

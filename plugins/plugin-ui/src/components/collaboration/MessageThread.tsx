@@ -300,7 +300,18 @@ function defaultMessageBody(
         const target = event.target as HTMLElement | null;
         const img = target?.closest?.("img[data-attachment-id]") as HTMLElement | null;
         const id = img?.getAttribute("data-attachment-id")?.trim();
-        if (id) onAttachmentImageClick(id);
+        if (id) {
+          onAttachmentImageClick(id);
+          return;
+        }
+        // Anchors to authenticated BFF attachments must not navigate raw —
+        // the Bearer flow lives in the consumer's preview/download handler.
+        const anchor = target?.closest?.("a[href*='/attachments/']") as HTMLAnchorElement | null;
+        const hrefId = anchor?.getAttribute("href")?.match(/attachments\/(\d+)/)?.[1];
+        if (hrefId) {
+          event.preventDefault();
+          onAttachmentImageClick(hrefId);
+        }
       }}
     />
   );
@@ -343,7 +354,18 @@ function htmlMessageBody(
         const target = event.target as HTMLElement | null;
         const img = target?.closest?.("img[data-attachment-id]") as HTMLElement | null;
         const id = img?.getAttribute("data-attachment-id")?.trim();
-        if (id) onAttachmentImageClick(id);
+        if (id) {
+          onAttachmentImageClick(id);
+          return;
+        }
+        // Anchors to authenticated BFF attachments must not navigate raw —
+        // the Bearer flow lives in the consumer's preview/download handler.
+        const anchor = target?.closest?.("a[href*='/attachments/']") as HTMLAnchorElement | null;
+        const hrefId = anchor?.getAttribute("href")?.match(/attachments\/(\d+)/)?.[1];
+        if (hrefId) {
+          event.preventDefault();
+          onAttachmentImageClick(hrefId);
+        }
       }}
     />
   );

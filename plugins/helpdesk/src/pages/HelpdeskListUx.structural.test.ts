@@ -57,7 +57,8 @@ describe("Helpdesk list UX structural", () => {
     expect(cards).toContain("HelpdeskRecordCard");
     expect(cards).toContain("ticketDetailPath");
     expect(cards).toContain("relativeTimeLabel");
-    expect(cards).toContain("showRequester");
+    expect(cards).toContain('id: "requester"');
+    expect(cards).not.toContain("showRequester");
     expect(css).toContain("helpdesk-record-list .delpi-ui-data-record-card__fields");
     expect(css).toMatch(/helpdesk-record-list[\s\S]*grid-template-columns:\s*1fr/);
     // Anti-overlap: grid content-sized, não comprimido no flex do list-shell.

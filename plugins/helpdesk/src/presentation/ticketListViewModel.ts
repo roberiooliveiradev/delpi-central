@@ -127,9 +127,9 @@ export const TICKET_LIST_COLUMN_CATALOG: readonly TicketListColumnDefinition[] =
   { key: "updated_at", header: "Atualizado", fixed: false, sortable: true, solicitante: true, defaultVisible: true },
   { key: "solved_at", header: "Resolvido", fixed: false, sortable: true, solicitante: true, defaultVisible: false },
   { key: "closed_at", header: "Fechado", fixed: false, sortable: true, solicitante: true, defaultVisible: false },
-  { key: "requester", header: "Requerente", fixed: false, sortable: false, solicitante: true, defaultVisible: false },
-  { key: "entity", header: "Entidade", fixed: false, sortable: false, solicitante: false, defaultVisible: false },
-  { key: "last_editor", header: "Última edição por", fixed: false, sortable: false, solicitante: false, defaultVisible: false },
+  { key: "requester", header: "Requerente", fixed: false, sortable: false, solicitante: true, defaultVisible: true },
+  { key: "entity", header: "Entidade", fixed: false, sortable: false, solicitante: true, defaultVisible: false },
+  { key: "last_editor", header: "Última edição por", fixed: false, sortable: false, solicitante: true, defaultVisible: false },
 ] as const;
 
 const COLUMN_BY_KEY = new Map(TICKET_LIST_COLUMN_CATALOG.map((column) => [column.key, column]));
@@ -250,8 +250,11 @@ export function cellTextForColumn(row: TicketSummary, key: TicketListColumnKey):
       return row.urgency;
     case "assigned":
       return row.assigned_display_name ?? "";
-    case "requester":
-      return (row.requester_display_name ?? "").trim();
+    case "requester": {
+      const name = (row.requester_display_name ?? "").trim();
+      const id = row.requester_id;
+      return id ? `${name} (#${id})` : name;
+    }
     case "created_at":
       return absoluteDateTimeLabel(row.created_at);
     case "updated_at":
@@ -261,8 +264,9 @@ export function cellTextForColumn(row: TicketSummary, key: TicketListColumnKey):
     case "closed_at":
       return absoluteDateTimeLabel(row.closed_at ?? "");
     case "entity":
+      return (row.entity ?? "").trim();
     case "last_editor":
-      return "";
+      return (row.last_editor ?? "").trim();
     default:
       return "";
   }

@@ -7,6 +7,7 @@ import {
 import {
   cellTextForColumn,
   defaultTicketListColumnPreferences,
+  TICKET_LIST_COLUMN_CATALOG,
   formatTicketSortLevels,
   parseTicketSortLevels,
   resolveVisibleColumns,
@@ -143,5 +144,41 @@ describe("cellTextForColumn", () => {
   it("não inventa nome quando o BFF omite o campo", () => {
     const withoutRequester = { ...row, requester_display_name: undefined };
     expect(cellTextForColumn(withoutRequester, "requester")).toBe("");
+  });
+
+  it("publica código GLPI do requerente quando o BFF entrega o id", () => {
+    const withId = { ...row, requester_id: 11 };
+    expect(cellTextForColumn(withId, "requester")).toBe("Robério Teixeira (#11)");
+  });
+
+  it("publica entidade e última edição vindas do GLPI", () => {
+    const full = { ...row, entity: "Entidade raiz", last_editor: "Ana Silva" };
+    expect(cellTextForColumn(full, "entity")).toBe("Entidade raiz");
+    expect(cellTextForColumn(full, "last_editor")).toBe("Ana Silva");
+    const without = { ...row };
+    expect(cellTextForColumn(without, "entity")).toBe("");
+    expect(cellTextForColumn(without, "last_editor")).toBe("");
+  });
+});
+
+describe("TICKET_LIST_COLUMN_CATALOG", () => {
+  it("requerente visível por padrão para qualquer solicitante", () => {
+    const requester = TICKET_LIST_COLUMN_CATALOG.find((column) => column.key === "requester");
+    expect(requester?.solicitante).toBe(true);
+    expect(requester?.defaultVisible).toBe(true);
+  });
+
+  it("entidade e última edição entram no seletor do solicitante", () => {
+    const entity = TICKET_LIST_COLUMN_CATALOG.find((column) => column.key === "entity");
+    const editor = TICKET_LIST_COLUMN_CATALOG.find((column) => column.key === "last_editor");
+    expect(entity?.solicitante).toBe(true);
+    expect(editor?.solicitante).toBe(true);
+    expect(entity?.defaultVisible).toBe(false);
+    expect(editor?.defaultVisible).toBe(false);
+  });
+
+  it("resolveVisibleColumns inclui requerente por padrão", () => {
+    const keys = resolveVisibleColumns().map((column) => column.key);
+    expect(keys).toContain("requester");
   });
 });

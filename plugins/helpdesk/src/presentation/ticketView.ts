@@ -1,3 +1,5 @@
+import type { TicketAttachment } from "../api/helpdeskApi";
+
 export type TicketListView =
   | "loading"
   | "forbidden"
@@ -315,7 +317,7 @@ export type ConversationSource = {
     solution_type_name?: string;
     solution_status?: number | null;
   }[];
-  attachments: { document_id: number }[];
+  attachments: TicketAttachment[];
 };
 
 export type ConversationMessage = {
@@ -493,7 +495,78 @@ export function conversationAuthorSrc(mine: boolean, photoUrl: string | null | u
   return src || undefined;
 }
 
+/** GLPI Document_Item itemtypes that own a document, per message kind. */
+const ITEMTYPE_BY_KIND: Record<string, readonly string[]> = {
+  opening: ["Ticket"],
+  followup: ["ITILFollowup", "Followup"],
+  solution: ["ITILSolution", "Solution"],
+  task: ["TicketTask", "Task"],
+};
+
+type ListedAttachment = ConversationSource["attachments"][number];
+
+/** Dedup by canonical document_id; keep the most specific owner (message > ticket). */
+export function dedupeTicketAttachments(
+  attachments: readonly ListedAttachment[],
+): ListedAttachment[] {
+  const byId = new Map<number, ListedAttachment>();
+  for (const item of attachments) {
+    const current = byId.get(item.document_id);
+    if (!current) {
+      byId.set(item.document_id, item);
+      continue;
+    }
+    const currentTicketLevel = (current.itemtype ?? "") === "Ticket";
+    const nextTicketLevel = (item.itemtype ?? "") === "Ticket";
+    if (currentTicketLevel && !nextTicketLevel) {
+      byId.set(item.document_id, item);
+    }
+  }
+  return [...byId.values()];
+}
+
+/** Documents linked to a timeline entry, minus the ones already inline in its body. */
+function entryAttachmentIds(
+  kind: ConversationMessage["kind"],
+  entryId: number,
+  bodyHtml: string,
+  attachments: readonly ListedAttachment[],
+): number[] {
+  const wanted = ITEMTYPE_BY_KIND[kind] ?? [];
+  if (wanted.length === 0) return [];
+  const inline = new Set(listHelpdeskAttachmentIdsInHtml(bodyHtml));
+  return attachments
+    .filter(
+      (file) =>
+        wanted.includes(file.itemtype ?? "") &&
+        (kind === "opening" || file.items_id === entryId) &&
+        !inline.has(file.document_id),
+    )
+    .map((file) => file.document_id);
+}
+
+/**
+ * Documents with no known owner and not embedded in any message — consolidated
+ * "Documentos do chamado" area (spec: never invent a message association).
+ */
+export function unassignedTicketAttachments(
+  ticket: ConversationSource,
+  messages: readonly ConversationMessage[],
+): ListedAttachment[] {
+  const claimed = new Set(messages.flatMap((message) => message.attachmentIds));
+  const inline = new Set<number>([
+    ...listHelpdeskAttachmentIdsInHtml(ticket.description_html || ""),
+    ...ticket.timeline.flatMap((entry) =>
+      listHelpdeskAttachmentIdsInHtml(entry.content_html || ""),
+    ),
+  ]);
+  return dedupeTicketAttachments(ticket.attachments).filter(
+    (file) => !claimed.has(file.document_id) && !inline.has(file.document_id),
+  );
+}
+
 export function conversationMessages(ticket: ConversationSource, now: Date): ConversationMessage[] {
+  const attachments = dedupeTicketAttachments(ticket.attachments);
   const requester = ticket.requester_display_name.trim();
   const openingHtml = stampHelpdeskAttachmentIds(ticket.description_html || "");
   const opening: ConversationMessage = {
@@ -505,7 +578,12 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
     createdAtLabel: openingTimeLabel(ticket.created_at, requester, now),
     authorName: requester,
     mine: ticket.requester_mine === true,
-    attachmentIds: ticket.attachments.map((file) => file.document_id),
+    attachmentIds: entryAttachmentIds(
+      "opening",
+      0,
+      ticket.description_html || "",
+      attachments,
+    ),
   };
   const replies = ticket.timeline
     .filter(
@@ -525,7 +603,7 @@ export function conversationMessages(ticket: ConversationSource, now: Date): Con
         createdAtLabel: relativeTimeLabel(entry.created_at, now),
         authorName: entry.author_display_name.trim(),
         mine: entry.mine === true,
-        attachmentIds: [],
+        attachmentIds: entryAttachmentIds(kind, entry.id, entry.content_html || "", attachments),
       };
     });
   return [opening, ...replies];

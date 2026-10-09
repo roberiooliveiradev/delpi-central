@@ -17,6 +17,7 @@ import {
   statusBadgeVariant,
   ticketListSearch,
   ticketRecordFields,
+  unassignedTicketAttachments,
   viewForTicketLoad,
 } from "./ticketView";
 
@@ -138,7 +139,10 @@ describe("conversationMessages", () => {
         created_at: "2026-09-21T10:00:00Z",
         requester_display_name: "William Ricardo Jacomini",
         timeline: [],
-        attachments: [{ document_id: 2 }, { document_id: 4 }],
+        attachments: [
+          { document_id: 2, itemtype: "Ticket", items_id: 1100 },
+          { document_id: 4, itemtype: "Ticket", items_id: 1100 },
+        ],
       },
       now,
     );
@@ -240,7 +244,7 @@ describe("conversationMessages", () => {
             author_display_name: "Ana",
           },
         ],
-        attachments: [{ document_id: 2 }],
+        attachments: [{ document_id: 2, itemtype: "Ticket", items_id: 1100 }],
       },
       now,
     );
@@ -404,6 +408,81 @@ describe("conversationMessages", () => {
     expect(messages[0]?.mine).toBe(false);
     expect(messages[1]?.mine).toBe(true);
     expect(conversationAuthorSrc(messages[1].mine, "blob:me")).toBe("blob:me");
+  });
+
+  it("vincula documentos ao followup dono via itemtype/items_id, sem duplicar", () => {
+    const source = {
+      title: "Kaizen",
+      description: "desc",
+      created_at: "2026-09-21T10:00:00Z",
+      requester_display_name: "Ana",
+      timeline: [
+        {
+          id: 636,
+          kind: "followup",
+          content: "Com log",
+          created_at: "2026-09-21T11:00:00Z",
+          author_display_name: "Tec",
+        },
+      ],
+      attachments: [
+        { document_id: 100, itemtype: "Ticket", items_id: 660 },
+        { document_id: 200, itemtype: "ITILFollowup", items_id: 636 },
+        { document_id: 300, itemtype: "", items_id: null },
+      ],
+    };
+    const messages = conversationMessages(source, now);
+    expect(messages[0]?.attachmentIds).toEqual([100]);
+    expect(messages[1]?.attachmentIds).toEqual([200]);
+    const orphan = unassignedTicketAttachments(source, messages);
+    expect(orphan.map((item) => item.document_id)).toEqual([300]);
+  });
+
+  it("não repete como anexo a imagem já incorporada no corpo da mensagem", () => {
+    const source = {
+      title: "Foto",
+      description: "placa",
+      description_html:
+        '<p><img src="/apps/helpdesk-api/tickets/660/attachments/391" alt="placa" /></p>',
+      created_at: "2026-09-21T10:00:00Z",
+      requester_display_name: "Ana",
+      timeline: [],
+      attachments: [
+        { document_id: 391, itemtype: "Ticket", items_id: 660 },
+        { document_id: 392, itemtype: "Ticket", items_id: 660 },
+      ],
+    };
+    const messages = conversationMessages(source, now);
+    expect(messages[0]?.attachmentIds).toEqual([392]);
+    expect(
+      unassignedTicketAttachments(source, messages).map((item) => item.document_id),
+    ).toEqual([]);
+  });
+
+  it("deduplica document_id mantendo o vínculo mais específico", () => {
+    const source = {
+      title: "Kaizen",
+      description: "desc",
+      created_at: "2026-09-21T10:00:00Z",
+      requester_display_name: "Ana",
+      timeline: [
+        {
+          id: 636,
+          kind: "followup",
+          content: "x",
+          created_at: "2026-09-21T11:00:00Z",
+          author_display_name: "Tec",
+        },
+      ],
+      attachments: [
+        { document_id: 200, itemtype: "Ticket", items_id: 660 },
+        { document_id: 200, itemtype: "ITILFollowup", items_id: 636 },
+      ],
+    };
+    const messages = conversationMessages(source, now);
+    expect(messages[0]?.attachmentIds).toEqual([]);
+    expect(messages[1]?.attachmentIds).toEqual([200]);
+    expect(unassignedTicketAttachments(source, messages)).toEqual([]);
   });
 });
 

@@ -332,6 +332,9 @@ def list_tickets(
                 "assigned_display_name": row.assigned_display_name,
                 "assigned_user_id": row.assigned_user_id,
                 "requester_display_name": row.requester_display_name,
+                "requester_id": row.requester_id,
+                "entity": row.entity,
+                "last_editor": row.last_editor,
             }
             for row in listed.items
         ],
@@ -417,6 +420,8 @@ def get_ticket(request: Request, ticket_id: int):
                 "document_id": item.document_id,
                 "filename": item.filename,
                 "mime": item.mime,
+                "itemtype": item.itemtype,
+                "items_id": item.items_id,
             }
             for item in ticket.attachments
         ],

@@ -57,6 +57,9 @@ describe("HELPDESK-MFE-UX-007 composer height ownership", () => {
     const card = cssRule(css, ".dashboard-helpdesk .helpdesk-action-card {");
     expect(card).toContain("min-height: 0");
     expect(card).toContain("max-height: 100%");
+    // Quando header+footer sozinhos excedem a caixa (CTAs full-width em mobile),
+    // o card inteiro rola — footer nunca pode ficar clipado e inalcançável.
+    expect(card).toMatch(/overflow:\s*hidden\s+auto/);
     const body = cssRule(css, ".helpdesk-action-card__body {");
     expect(body).toContain("overflow-y: auto");
     expect(body).toContain("min-height: 0");

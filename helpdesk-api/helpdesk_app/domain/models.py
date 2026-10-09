@@ -77,6 +77,9 @@ class TicketSummary:
     sla_ttr: str = ""
     sla_tto: str = ""
     assigned_user_id: int | None = None
+    requester_id: int | None = None
+    entity: str = ""
+    last_editor: str = ""
 
 
 @dataclass(frozen=True)
@@ -151,6 +154,11 @@ class Attachment:
     document_id: int
     filename: str
     mime: str
+    # Document_Item ownership (HLAPI Timeline): which item the document was
+    # attached to — `Ticket` (opening) or ITILFollowup/ITILSolution/TicketTask
+    # + its items_id. Empty = association unknown (consolidated area).
+    itemtype: str = ""
+    items_id: int | None = None
 
 
 @dataclass(frozen=True)

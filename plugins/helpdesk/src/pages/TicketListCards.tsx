@@ -19,12 +19,9 @@ import {
 export function TicketListCards({
   items,
   onOpen,
-  showRequester = false,
 }: {
   items: TicketSummary[];
   onOpen: (ticketId: number) => void;
-  /** Progressive disclosure when session can_assign. */
-  showRequester?: boolean;
 }) {
   const now = new Date();
   return (
@@ -66,7 +63,7 @@ export function TicketListCards({
                 id: "requester",
                 label: "Solicitante",
                 value: requester,
-                present: showRequester && Boolean(requester),
+                present: Boolean(requester),
               },
               {
                 id: "assigned",

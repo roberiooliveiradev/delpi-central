@@ -68,6 +68,9 @@ export type TicketSummary = {
   sla_tto?: string;
   assigned_display_name: string;
   requester_display_name?: string;
+  requester_id?: number | null;
+  entity?: string;
+  last_editor?: string;
 };
 
 export type TicketListQuery = {
@@ -149,6 +152,10 @@ export type TicketAttachment = {
   document_id: number;
   filename: string;
   mime: string;
+  /** GLPI Document_Item owner (`Ticket`, `ITILFollowup`, `ITILSolution`, `TicketTask`). */
+  itemtype?: string;
+  /** Owning item id (timeline entry id or ticket id); null/empty = unassociated. */
+  items_id?: number | null;
 };
 
 export function listTickets(query: TicketListQuery = {}, signal?: AbortSignal) {
@@ -477,12 +484,24 @@ export function rejectTicketValidation(
   );
 }
 
-export async function fetchTicketAttachmentBlob(ticketId: string, documentId: number): Promise<Blob> {
-  const response = await fetch(`${BASE}/tickets/${ticketId}/attachments/${documentId}`, {
+const inFlightAttachmentFetches = new Map<string, Promise<Blob>>();
+
+export function fetchTicketAttachmentBlob(ticketId: string, documentId: number): Promise<Blob> {
+  const key = `${ticketId}:${documentId}`;
+  const pending = inFlightAttachmentFetches.get(key);
+  if (pending) return pending;
+  const request = fetch(`${BASE}/tickets/${ticketId}/attachments/${documentId}`, {
     headers: headers(),
-  });
-  if (!response.ok) throw await readError(response);
-  return response.blob();
+  })
+    .then(async (response) => {
+      if (!response.ok) throw await readError(response);
+      return response.blob();
+    })
+    .finally(() => {
+      inFlightAttachmentFetches.delete(key);
+    });
+  inFlightAttachmentFetches.set(key, request);
+  return request;
 }
 
 export async function downloadTicketAttachment(ticketId: string, documentId: number, filename: string) {
