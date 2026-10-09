@@ -1,3 +1,5 @@
+import type { ActivityViewerProps } from "@delpi/plugin-ui/index";
+
 import type { ConversationDisplayTurn } from "../ui/ConversationTimeline";
 import type { DeliaPresentation } from "../api/presentation";
 
@@ -24,7 +26,8 @@ export type DeliaDemoScenario =
   | "precondition"
   | "confirmation"
   | "error"
-  | "loading";
+  | "loading"
+  | "activity";
 
 export const DELIA_DEMO_BANNER = "Modo demonstração — dados simulados";
 
@@ -97,6 +100,58 @@ function deliaTurn(
     ...extra,
   };
 }
+
+/** Fictitious multi-step/multi-specialist activity — every element is
+ *  explicitly marked as simulation; no real tool ever ran. */
+const DEMO_ACTIVITY_VIEW: ActivityViewerProps = {
+  title: "Atividade concluída (simulação)",
+  state: "completed",
+  steps: [
+    { id: "demo-1", label: "Solicitação recebida", state: "completed" },
+    {
+      id: "demo-2",
+      label: "Capacidade acionada (simulação)",
+      state: "completed",
+      capabilityLabel: "Consultar indicador operacional",
+      sourceLabel: "especialista-demo-a",
+    },
+    {
+      id: "demo-3",
+      label: "Fonte consultada (simulação)",
+      state: "completed",
+      sourceLabel: "especialista-demo-b",
+      timestampLabel: "simulado",
+    },
+    {
+      id: "demo-4",
+      label: "Etapa com falha (simulação)",
+      state: "failed",
+      description: "Falha fictícia para exercitar o estado visual.",
+    },
+    {
+      id: "demo-5",
+      label: "Etapa aguardando (simulação)",
+      state: "pending",
+    },
+  ],
+  sources: [
+    {
+      id: "demo-src-1",
+      label: "fonte-demo-erp",
+      statusLabel: "consultada (simulação)",
+    },
+    {
+      id: "demo-src-2",
+      label: "fonte-demo-indicadores",
+      statusLabel: "sem dados (simulação)",
+    },
+  ],
+  outcome: {
+    label: "SIMULAÇÃO — nenhuma ferramenta real executada.",
+    tone: "warning",
+    persistent: true,
+  },
+};
 
 const SCENARIO_OUTCOMES: Record<DeliaDemoScenario, DemoTurnOutcome> = {
   simple: {
@@ -172,6 +227,15 @@ const SCENARIO_OUTCOMES: Record<DeliaDemoScenario, DemoTurnOutcome> = {
           preview_fingerprint: "demo_fingerprint_not_authoritative",
         },
       },
+    ),
+  },
+  activity: {
+    delayMs: DEMO_LATENCY_MS,
+    deliaTurn: deliaTurn(
+      DEFAULT_TEXT +
+        " (cenário de atividade simulada — expanda a linha de atividade)",
+      demoPresentation("RESULT", [{ kind: "text", text: DEFAULT_TEXT }]),
+      { activityView: DEMO_ACTIVITY_VIEW },
     ),
   },
   error: {

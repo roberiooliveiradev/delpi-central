@@ -77,6 +77,7 @@
 @import "./styles/mention-composer.css";
 @import "./styles/collaboration-rich-prose.css";
 @import "./styles/emoji-insert-menu.css";
+@import "./styles/activity-viewer.css";
 @import "./styles/message-composer.css";
 @import "./styles/message-thread.css";
 @import "./styles/entity-unfurl.css";

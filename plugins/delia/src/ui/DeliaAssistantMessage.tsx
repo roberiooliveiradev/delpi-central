@@ -18,7 +18,9 @@ import {
   presentationOwnerHint,
 } from "../api/presentation";
 import type { DeliaMessageKind } from "../api/presentation";
+import { ActivityViewer } from "@delpi/plugin-ui/index";
 import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
+import { buildDeliaActivityView } from "../activity/activityView";
 
 import { DeliaStatusBadge } from "./deliaUi";
 import type { ConversationDisplayTurn } from "./ConversationTimeline";
@@ -104,6 +106,7 @@ export function DeliaAssistantMessage({
         ]
       : undefined;
   const StateIcon = semanticState?.icon;
+  const activityView = buildDeliaActivityView(turn);
   const hasMeta =
     Boolean(turn.epistemicClass) ||
     (turn.groundingStatus === "GROUNDED" && Boolean(turn.provenance?.source)) ||
@@ -144,6 +147,13 @@ export function DeliaAssistantMessage({
             {copied ? <Check size={13} /> : <Copy size={13} />}
           </button>
         </div>
+
+        {activityView ? (
+          <ActivityViewer
+            {...activityView}
+            className="delia-turn__activity"
+          />
+        ) : null}
 
         {semanticState ? (
           <div className={`delia-turn__state delia-turn__state--${semanticState.variant}`}>

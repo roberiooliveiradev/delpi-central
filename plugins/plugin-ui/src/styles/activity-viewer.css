@@ -1,0 +1,311 @@
+/* ActivityViewer — compact expandable activity line.
+   Tokens resolve to --delpi-ui-* kit vars with Portal fallbacks; no
+   DÉLIA-specific palette. */
+
+.delpi-ui-activity-viewer {
+  --_text: var(--delpi-ui-text, var(--text, #1f2933));
+  --_muted: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  --_border: var(--delpi-ui-border, var(--border, #d4dbe5));
+  --_accent: var(--delpi-ui-accent, var(--primary, #2563eb));
+  --_success: var(--delpi-ui-success, var(--success, #15803d));
+  --_warning: var(--delpi-ui-warning, var(--warning, #b45309));
+  --_danger: var(--delpi-ui-danger, var(--danger, #dc2626));
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--_text);
+}
+
+/* ---------- summary line ---------- */
+
+.delpi-ui-activity-viewer__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  margin: 0 -8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.delpi-ui-activity-viewer__summary--static {
+  cursor: default;
+  margin: 0;
+  padding-inline: 0;
+}
+
+.delpi-ui-activity-viewer__summary:not(.delpi-ui-activity-viewer__summary--static):hover {
+  background: color-mix(in srgb, var(--_text) 5%, transparent);
+}
+
+.delpi-ui-activity-viewer__summary:focus-visible {
+  outline: 2px solid var(--_accent);
+  outline-offset: 1px;
+}
+
+.delpi-ui-activity-viewer__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--_muted);
+}
+
+.delpi-ui-activity-viewer__icon--info {
+  color: var(--_accent);
+}
+
+.delpi-ui-activity-viewer__icon--info svg {
+  animation: delpi-ui-activity-spin 1s linear infinite;
+}
+
+.delpi-ui-activity-viewer__icon--success {
+  color: var(--_success);
+}
+
+.delpi-ui-activity-viewer__icon--warning {
+  color: var(--_warning);
+}
+
+.delpi-ui-activity-viewer__icon--danger {
+  color: var(--_danger);
+}
+
+@keyframes delpi-ui-activity-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.delpi-ui-activity-viewer__title {
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-activity-viewer__summary-detail {
+  color: var(--_muted);
+  opacity: 0.8;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-activity-viewer__duration {
+  color: var(--_muted);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.delpi-ui-activity-viewer__chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--_muted);
+  transition: transform 140ms ease;
+}
+
+.delpi-ui-activity-viewer__summary[aria-expanded="true"]
+  .delpi-ui-activity-viewer__chevron {
+  transform: rotate(180deg);
+}
+
+/* summary-detail + duration share trailing space when no chevron */
+.delpi-ui-activity-viewer__summary-detail + .delpi-ui-activity-viewer__chevron,
+.delpi-ui-activity-viewer__duration + .delpi-ui-activity-viewer__chevron {
+  margin-left: 0;
+}
+
+/* ---------- detail region ---------- */
+
+.delpi-ui-activity-viewer__detail {
+  padding: 6px 8px 2px 23px; /* aligns content under the title */
+}
+
+.delpi-ui-activity-viewer__detail[hidden] {
+  display: none;
+}
+
+/* ---------- steps ---------- */
+
+.delpi-ui-activity-viewer__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.delpi-ui-activity-viewer__step {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+/* vertical connector between step markers */
+.delpi-ui-activity-viewer__step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 22px;
+  bottom: -4px;
+  width: 1px;
+  background: color-mix(in srgb, var(--_border) 80%, transparent);
+}
+
+.delpi-ui-activity-viewer__step-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--_muted);
+}
+
+.delpi-ui-activity-viewer__step-icon--info {
+  color: var(--_accent);
+}
+
+.delpi-ui-activity-viewer__step-icon--info svg {
+  animation: delpi-ui-activity-spin 1s linear infinite;
+}
+
+.delpi-ui-activity-viewer__step-icon--success {
+  color: var(--_success);
+}
+
+.delpi-ui-activity-viewer__step-icon--warning {
+  color: var(--_warning);
+}
+
+.delpi-ui-activity-viewer__step-icon--danger {
+  color: var(--_danger);
+}
+
+.delpi-ui-activity-viewer__step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.delpi-ui-activity-viewer__step-label {
+  color: var(--_text);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-activity-viewer__step-description {
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-activity-viewer__step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: var(--_muted);
+  font-size: 11.5px;
+}
+
+.delpi-ui-activity-viewer__step-meta span + span::before {
+  content: "·";
+  margin-right: 10px;
+  margin-left: -10px;
+  display: none; /* separators handled by flex gap */
+}
+
+/* ---------- sources ---------- */
+
+.delpi-ui-activity-viewer__sources {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delpi-ui-activity-viewer__source {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.delpi-ui-activity-viewer__source-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--_muted);
+}
+
+.delpi-ui-activity-viewer__source-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.delpi-ui-activity-viewer__source-label {
+  color: var(--_text);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-activity-viewer__source-link {
+  color: var(--_accent);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-activity-viewer__source-link:hover {
+  text-decoration: underline;
+}
+
+.delpi-ui-activity-viewer__source-link:focus-visible {
+  outline: 2px solid var(--_accent);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.delpi-ui-activity-viewer__source-status {
+  color: var(--_muted);
+}
+
+.delpi-ui-activity-viewer__source-detail {
+  color: var(--_muted);
+  opacity: 0.85;
+  font-size: 11.5px;
+}
+
+/* ---------- outcome ---------- */
+
+.delpi-ui-activity-viewer__outcome {
+  margin: 4px 0 0;
+  padding-left: 23px;
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-activity-viewer__outcome--info {
+  color: var(--_accent);
+}
+
+.delpi-ui-activity-viewer__outcome--success {
+  color: var(--_success);
+}
+
+.delpi-ui-activity-viewer__outcome--warning {
+  color: var(--_warning);
+}
+
+.delpi-ui-activity-viewer__outcome--danger {
+  color: var(--_danger);
+}
+
+/* ---------- accessibility ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-activity-viewer__icon--info svg,
+  .delpi-ui-activity-viewer__step-icon--info svg {
+    animation: none;
+  }
+
+  .delpi-ui-activity-viewer__chevron {
+    transition: none;
+  }
+}

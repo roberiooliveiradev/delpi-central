@@ -258,7 +258,13 @@ describe("DeliaAssistantMessage — copy action", () => {
     for (const label of labels) {
       expect(label).not.toMatch(/avaliar|compartilhar|fonte|detalhe/i);
     }
-    // Exactly one secondary action — copy.
-    expect(container.querySelectorAll("button")).toHaveLength(1);
+    // Exactly one secondary action — copy. The activity disclosure
+    // trigger is a presentation control, not an invented action.
+    expect(
+      Array.from(container.querySelectorAll("button")).filter(
+        (b) =>
+          !b.classList.contains("delpi-ui-activity-viewer__summary"),
+      ),
+    ).toHaveLength(1);
   });
 });

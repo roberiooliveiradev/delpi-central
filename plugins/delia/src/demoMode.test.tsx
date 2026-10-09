@@ -51,6 +51,7 @@ describe("resolveDemoScenario", () => {
       "confirmation",
       "error",
       "loading",
+      "activity",
     ]) {
       expect(resolveDemoScenario(`/?delia-demo=${scenario}`)).toBe(
         scenario,
@@ -176,8 +177,9 @@ describe("demo mode ON", () => {
     submitTurn("pergunta");
     await waitFor(() =>
       expect(
-        screen.getByText(/fonte necessária .* indisponível/),
-      ).toBeTruthy(),
+        screen.getAllByText(/fonte necessária .* indisponível/)
+          .length,
+      ).toBeGreaterThan(0),
     );
   });
 
@@ -236,6 +238,21 @@ describe("demo mode ON", () => {
         ).toBeTruthy(),
       { timeout: 3000 },
     );
+  });
+
+  it("activity scenario renders simulated steps clearly marked", async () => {
+    setDemoLocation("activity");
+    render(<App />);
+    submitTurn("pergunta");
+    const trigger = await screen.findByRole("button", {
+      name: /Atividade concluída \(simulação\)/,
+    });
+    expect(
+      screen.getByText(/SIMULAÇÃO — nenhuma ferramenta real executada/),
+    ).toBeTruthy();
+    fireEvent.click(trigger);
+    expect(screen.getByText("especialista-demo-a")).toBeTruthy();
+    expect(screen.getByText(/Etapa com falha \(simulação\)/)).toBeTruthy();
   });
 
   it("confirmation demo is visual-only — no network, honest ack", async () => {

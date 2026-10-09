@@ -1,5 +1,7 @@
 import { User } from "lucide-react";
 
+import type { ActivityViewerProps } from "@delpi/plugin-ui/index";
+
 import type {
   DeliaConfirmationRequest,
   DeliaInteractionProvenance,
@@ -23,6 +25,9 @@ export type ConversationDisplayTurn = {
   confirmationAnswered?: boolean;
   /** presentation.v1 projection — semantic state surface only. */
   presentation?: DeliaPresentation | null;
+  /** Explicit activity projection override — demo fixtures only;
+   *  real turns derive it via `buildDeliaActivityView`. */
+  activityView?: ActivityViewerProps;
 };
 
 export type ConversationTimelineProps = {

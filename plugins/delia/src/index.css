@@ -393,6 +393,12 @@
   align-self: flex-start;
 }
 
+/* Activity line inside the assistant bubble — visually subordinate,
+   sits between the DÉLIA label and the response content. */
+.dashboard-delia .delia-turn__activity {
+  margin: 2px 0 6px;
+}
+
 .dashboard-delia .delia-interaction__error {
   margin: 0 0 10px;
   color: var(--delia-text);

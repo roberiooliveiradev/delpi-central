@@ -15,7 +15,10 @@ import type {
   DeliaConfirmationRequest,
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
-import { DeliaLoadingBadge } from "./ui/deliaUi";
+import { ActivityViewer } from "@delpi/plugin-ui/index";
+import {
+  DELIA_ACTIVITY_PENDING_VIEW,
+} from "./activity/activityView";
 import {
   DELIA_DEMO_BANNER,
   demoConfirmationAck,
@@ -289,10 +292,9 @@ export default function App({
                 <DeliaReception />
               )}
               {loading ? (
-                <DeliaLoadingBadge
+                <ActivityViewer
+                  {...DELIA_ACTIVITY_PENDING_VIEW}
                   className="delia-interaction__loading"
-                  tone="info"
-                  label="A DÉLIA está processando sua solicitação…"
                 />
               ) : null}
               <div ref={turnsEndRef} aria-hidden="true" />
