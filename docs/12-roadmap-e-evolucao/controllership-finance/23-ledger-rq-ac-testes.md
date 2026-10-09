@@ -74,15 +74,17 @@ Este ledger complementa:
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
 |---|---|---|---|---|---|
 | RQ-P5-01 | PACKAGE_INCOMPLETE só avança quando requisitos aplicáveis permitirem | blockers impedem READY_TO_FINALIZE | positive + negative | P2/P3 | TARGET |
-| RQ-P5-02 | Finalizar cria versão/snapshot e não envia | PACKAGE_FINALIZED sem PACKAGE_SENT | positive | — | TARGET |
-| RQ-P5-03 | reabrir antes do envio preserva versão anterior | V1 histórica + working copy + V2 | positive + audit | — | TARGET |
-| RQ-P5-04 | pacotes são por destinatário dentro da mesma competência | enviar um destinatário não avança sibling | positive + sibling | recipients config | TARGET |
-| RQ-P5-05 | envio real usa owner/canal/outcome explicitamente aprovados | Graph/Trace inventory sustenta decisão; nenhuma recomendação vira runtime sem aprovação | contract + architecture + integration | E04/T04 + doc 36 | DECISION_REQUIRED |
-| RQ-P5-06 | PACKAGE_SENT é imutável | tentativa de editar pacote enviado é rejeitada | negative | — | TARGET |
-| RQ-P5-07 | correção pós-envio cria complemento/nova versão ligada à anterior | histórico de entrega preservado | positive + audit | — | TARGET |
-| RQ-P5-08 | conclusão exige todos pacotes aplicáveis enviados e nenhum esclarecimento aberto | sem botão de force completion | positive + negative | send capability | TARGET |
-| RQ-P5-09 | ack/read do destinatário não bloqueia V1 | ausência de ack não impede conclusão se demais regras satisfeitas | sibling/negative | — | TARGET |
-| RQ-P5-10 | Help explica finalizar, enviar, versões e esclarecimentos | conteúdo contextual disponível | UI/help check | feature help | TARGET |
+| RQ-P5-02 | Finalizar cria versão/snapshot e não submete | PACKAGE_FINALIZED sem reviewer access/task | positive | — | TARGET |
+| RQ-P5-03 | reabrir antes da submissão preserva versão anterior | V1 histórica + working copy + V2 | positive + audit | — | TARGET |
+| RQ-P5-04 | pacotes são por destinatário dentro da mesma competência | submit/review de um destinatário não avança sibling | positive + sibling | recipients config | TARGET |
+| RQ-P5-05 | Enviar significa submeter dentro da Minha DELPI | PACKAGE_SUBMITTED_FOR_REVIEW; nenhum package attachment por e-mail | positive + architecture negative | doc 37 | TARGET |
+| RQ-P5-06 | reviewer é usuário autenticado | ACCESS + reviewer assignment/resource scope; MANAGE não requerido | authz positive + negative | Core/T05 | TARGET |
+| RQ-P5-07 | notifications não são business state | in-app + e-mail opcional; falha de e-mail não reverte submission | integration + sibling | T02/Core | TARGET |
+| RQ-P5-08 | reviewer work pode projetar em Minhas tarefas | self-only projection; deep link abre P5 owner | projection + authz | TSK | TARGET |
+| RQ-P5-09 | versão submetida/histórico de review são imutáveis | nova versão não apaga review anterior | positive + audit | — | TARGET |
+| RQ-P5-10 | clarification/correction preserva history | request/response/version ficam auditáveis | positive + sibling | — | TARGET |
+| RQ-P5-11 | Help explica finalize/submit/notify/review | conteúdo contextual coerente | UI/help check | feature help | TARGET |
+| RQ-P5-12 | monthly completion usa regra explícita de review | C1/C2/C3 precisa decisão antes do freeze | product decision test | D-P5-REVIEW-COMPLETION | DECISION_REQUIRED |
 
 ## P6 — Administração e Configuração
 
