@@ -23,6 +23,8 @@ export type LayoutNode = {
   isParticipant?: boolean;
   /** BPMNShape.isExpanded vigente (subProcess expandido=true / collapsed=false). */
   isExpanded?: boolean;
+  /** Texto do elemento (attr name semântico) — insumo do text-fit G9. */
+  label?: string;
   /** Bounds DI atuais — auto-layout preserva o tamanho de não-containers. */
   x?: number;
   y?: number;

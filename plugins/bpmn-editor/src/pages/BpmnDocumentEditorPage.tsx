@@ -46,7 +46,7 @@ import { ElementInspector } from "../editor/inspector/ElementInspector";
 import { PaletteSearch } from "../components/PaletteSearch";
 import { buildElkGraph } from "../layout/elkGraph";
 import { runLayout, type LayoutJob } from "../layout/layoutEngine";
-import { buildDiOps, buildDiXml, hasBpmnDi, injectDiIntoXml, planeElementFor, snapshotFromXml, stripBpmnDi, type DiLayoutOp } from "../layout/diProposal";
+import { applyTextFitSizing, buildDiOps, buildDiXml, hasBpmnDi, injectDiIntoXml, planeElementFor, snapshotFromXml, stripBpmnDi, type DiLayoutOp } from "../layout/diProposal";
 import { editableMode, type Capabilities, type ReadOnlyReason } from "../state/capabilities";
 import { SaveMachine, type SaveState } from "../state/saveMachine";
 import { ConflictDialog } from "../components/ConflictDialog";
@@ -285,7 +285,7 @@ export function BpmnDocumentEditorPage({
       // Sem DI → layout transitório calculado e injetado antes do import (P5 §15).
       if (!hasBpmnDi(xml)) {
         try {
-          const snapshot = snapshotFromXml(xml);
+          const snapshot = applyTextFitSizing(snapshotFromXml(xml));
           const graph = buildElkGraph(snapshot);
           const job = runLayout(graph);
           const outcome = await job.promise;
@@ -487,7 +487,8 @@ export function BpmnDocumentEditorPage({
     setLayoutBusy(true);
     try {
       const xml = await adapter.exportXml();
-      const snapshot = snapshotFromXml(xml);
+      // G9 — elementos crescem p/ caber o rótulo ANTES do ELK posicionar.
+      const snapshot = applyTextFitSizing(snapshotFromXml(xml));
       const graph = buildElkGraph(snapshot);
       const job = runLayout(graph);
       layoutJobRef.current = job;

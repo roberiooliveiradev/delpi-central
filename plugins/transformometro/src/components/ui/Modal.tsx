@@ -20,6 +20,14 @@ export const HostContainedWideDialog = createHostContainedModalShell({
   variant: "wide",
 });
 
+/** Pré-visualizações amplas (ex.: diagrama BPMN quase fullscreen). */
+export const HostContainedPageDialog = createHostContainedModalShell({
+  prefix: "ds",
+  portalScopeClassName: TM_ROOT_CLASS,
+  containedLayout: "dialog",
+  variant: "page",
+});
+
 /** Alias estável — sempre host-contained. */
 export const Modal = HostContainedDialog;
 

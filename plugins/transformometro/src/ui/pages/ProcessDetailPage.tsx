@@ -715,6 +715,7 @@ export function ProcessDetailPage({
                   readContent={
                     <ProcessBpmnCard
                       processoId={processoId}
+                      processName={processo.nome_processo}
                       getAccessToken={getAccessToken}
                       onNavigate={onNavigate}
                       onError={setError}

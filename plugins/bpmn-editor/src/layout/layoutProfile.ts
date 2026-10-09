@@ -20,27 +20,57 @@ export const LAYOUT_PROFILE_V1 = {
     default: { width: 100, height: 80 },
   },
 
-  /** Spacing categories (P5 §34). */
+  /** Spacing categories (P5 §34; G9 — legibilidade: respiro horizontal/
+   *  vertical suficiente para rótulos e rotas orthogonais não colarem). */
   spacing: {
-    nodeNodeSpacing: 30,
-    nodeEdgeSpacing: 15,
+    nodeNodeSpacing: 45,
+    nodeEdgeSpacing: 20,
     lanePadding: 30,
     poolPadding: 12,
     subprocessPadding: 20,
-    rankSpacing: 50,
+    rankSpacing: 80,
+  },
+
+  /** Text-fit (G9): métrica determinística da label para sizing
+   *  width-first dos elementos antes do ELK. Valores calibrados para
+   *  Arial 12px (fonte padrão do renderer bpmn-js). */
+  textFit: {
+    fontSize: 12,
+    lineHeight: 15.6,
+    padX: 14,
+    padY: 12,
+    minWidth: 140,
+    maxWidth: 300,
+    minHeight: 68,
+    maxHeight: 170,
+    maxLines: 3,
   },
 
   /** ELK layered options (P5: orthogonal routing, seed fixo).
    *  INCLUDE_CHILDREN: layout hierárquico real — filhos de pool/lane/
    *  subProcess são posicionados DENTRO dos bounds do container
-   *  (default INHERIT deixaria níveis aninhados como grupos soltos). */
+   *  (default INHERIT deixaria níveis aninhados como grupos soltos).
+   *  spacing.* mapeia a tabela `spacing` desta profile — única fonte. */
   elk: {
     algorithm: "layered",
     "elk.edgeRouting": "ORTHOGONAL",
     "elk.direction": "RIGHT",
     "elk.randomSeed": "1",
     "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+    "elk.spacing.nodeNode": "45",
+    "elk.spacing.nodeNodeBetweenLayers": "80",
+    "elk.spacing.edgeNode": "20",
+    "elk.spacing.edgeEdge": "12",
+    "elk.layered.spacing.nodeNodeBetweenLayers": "80",
   } as Record<string, string>,
+
+  /** Piso de dimensão para containers RESIZABLE (G9 §3 — lane/pool
+   *  nunca menores que o mínimo legível, mesmo com conteúdo pequeno). */
+  containerMin: {
+    lane: { width: 570, height: 135 },
+    participant: { width: 600, height: 250 },
+    subProcess: { width: 350, height: 200 },
+  },
 
   /** Padding interno de containers hierárquicos (elk.padding).
    *  Lane/participant reservam o header vertical (~30px) à esquerda. */

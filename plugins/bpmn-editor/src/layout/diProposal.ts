@@ -9,6 +9,7 @@
 import type { ElkNode } from "./elkGraph";
 import type { LayoutSnapshot } from "./elkGraph";
 import { LAYOUT_PROFILE_V1 } from "./layoutProfile";
+import { fitTextSize, isTextFitNodeType } from "./textFit";
 
 const BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL";
 const BPMNDI_NS = "http://www.omg.org/spec/BPMN/20100524/DI";
@@ -65,6 +66,37 @@ function mayResize(node: LayoutSnapshot["nodes"][number]): boolean {
   if (!RESIZABLE_CONTAINERS.has(node.type.replace(/^bpmn:/, ""))) return false;
   // collapsed subProcess não tem children visíveis → SIZE_PRESERVED.
   return node.isExpanded !== false;
+}
+
+/** G9 — text-fit: cresce bounds de elementos com label interna ANTES do
+ *  ELK, para que espaçamento/posições já considerem o tamanho final.
+ *  Grow-only: nunca encolhe bounds DI existentes maiores que o fit
+ *  (sizing manual do usuário é respeitado). Containers com filhos
+ *  (participant/lane/subProcess EXPANDIDO) ficam a cargo do ELK — só o
+ *  subProcess COLLAPSED (label interna) entra no fit. Retorna o mesmo
+ *  snapshot mutado — é um artefato efêmero por definição. */
+export function applyTextFitSizing(snapshot: LayoutSnapshot): LayoutSnapshot {
+  const cfg = LAYOUT_PROFILE_V1.textFit;
+  for (const node of snapshot.nodes) {
+    if (!isTextFitNodeType(node.type)) continue;
+    if (SUBPROCESS_FAMILY.has(node.type) && node.isExpanded !== false) continue;
+    const fit = fitTextSize(node.label ?? "");
+    node.width = Math.max(node.width ?? cfg.minWidth, fit.width);
+    node.height = Math.max(node.height ?? cfg.minHeight, fit.height);
+  }
+  return snapshot;
+}
+
+/** Piso de dimensão para containers RESIZABLE — ELK pode devolver menos
+ *  que o mínimo legível quando o conteúdo é pequeno (G9 §3 lanes). */
+function containerMinSize(
+  node: LayoutSnapshot["nodes"][number],
+): { width: number; height: number } | undefined {
+  const min = LAYOUT_PROFILE_V1.containerMin;
+  if (node.isParticipant) return min.participant;
+  if (node.isLane) return min.lane;
+  if (SUBPROCESS_FAMILY.has(node.type)) return min.subProcess;
+  return undefined;
 }
 
 /** Extrai o snapshot de layout de um BPMN XML (sem DI necessário).
@@ -208,6 +240,7 @@ export function snapshotFromXml(xml: string): LayoutSnapshot {
         nodes.push({
           id,
           type: `bpmn:${name}`,
+          label: child.getAttribute("name") ?? undefined,
           parentId,
           x: size ? size.x : undefined,
           y: size ? size.y : undefined,
@@ -526,10 +559,19 @@ function resolveGeometry(
   const geometry = computeGeometry(laidOut);
   for (const [id, b] of geometry.bounds) {
     const node = byId.get(id);
-    if (!node || mayResize(node)) continue;
-    if (node.width != null && node.height != null) {
-      b.width = node.width;
-      b.height = node.height;
+    if (!node) continue;
+    if (!mayResize(node)) {
+      if (node.width != null && node.height != null) {
+        b.width = node.width;
+        b.height = node.height;
+      }
+      continue;
+    }
+    // Container resizable: piso legível — nunca abaixo do containerMin.
+    const min = containerMinSize(node);
+    if (min) {
+      b.width = Math.max(b.width, min.width);
+      b.height = Math.max(b.height, min.height);
     }
   }
 

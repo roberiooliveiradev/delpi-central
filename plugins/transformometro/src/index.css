@@ -5039,3 +5039,48 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* G9 — prévia read-only do BPMN nativo no card do processo */
+.tm-bpmn-preview__meta {
+  margin-bottom: 8px;
+}
+.tm-bpmn-preview__stage {
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  max-height: 260px;
+  border: 1px solid var(--delpi-ui-border, #2a3340);
+  border-radius: 8px;
+  background: var(--delpi-ui-surface-muted, #14181f);
+  overflow: hidden;
+  padding: 0;
+  cursor: zoom-in;
+  text-align: center;
+}
+.tm-bpmn-preview__stage svg {
+  width: 100%;
+  height: auto;
+  max-height: 260px;
+  display: block;
+}
+.tm-bpmn-preview__stage--loading,
+.tm-bpmn-preview__stage--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+.tm-bpmn-preview__lightbox {
+  width: 100%;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--delpi-ui-surface-muted, #14181f);
+}
+.tm-bpmn-preview__lightbox svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.tm-bpmn-preview__lightbox--full {
+  min-height: 60vh;
+}

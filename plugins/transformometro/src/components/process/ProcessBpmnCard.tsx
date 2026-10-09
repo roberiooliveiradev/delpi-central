@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   FilePlus2,
   FileUp,
-  GitBranch,
-  Pencil,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -21,10 +19,12 @@ import { buildProcessoBpmnEditPath } from "../../utils/routeParser";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { DS_GHOST_BTN } from "../ghostChrome";
 import { BpmnMigrationWizard } from "./BpmnMigrationWizard";
+import { ProcessBpmnPreview } from "./ProcessBpmnPreview";
 import { ProcessBpmnReferenceCard } from "./ProcessBpmnReferenceCard";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
+  processName?: string;
   onNavigate: (path: string) => void;
   onError?: (message: string | null) => void;
   /** Estado nativo carregado — a página reconcilia a seção legada (G8H). */
@@ -43,6 +43,7 @@ function describeError(err: unknown, fallback: string): string {
  */
 export function ProcessBpmnCard({
   processoId,
+  processName,
   getAccessToken,
   onNavigate,
   onError,
@@ -140,19 +141,14 @@ export function ProcessBpmnCard({
 
       {document ? (
         <div>
-          <p className="ds-hint">
-            <GitBranch size={14} aria-hidden /> Documento BPMN nativo — working
-            copy <strong>v{document.version}</strong>. Edições são governadas
-            com salvamento automático e revisões explícitas.
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              className={DS_GHOST_BTN}
-              onClick={() => onNavigate(buildProcessoBpmnEditPath(processoId))}
-            >
-              <Pencil size={14} aria-hidden /> Editar diagrama
-            </button>
+          <ProcessBpmnPreview
+            processoId={processoId}
+            processName={processName}
+            document={document}
+            getAccessToken={getAccessToken}
+            onNavigate={onNavigate}
+          />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <button
               type="button"
               className={DS_GHOST_BTN}
