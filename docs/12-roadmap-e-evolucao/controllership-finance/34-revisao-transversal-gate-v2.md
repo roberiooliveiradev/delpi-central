@@ -64,7 +64,7 @@ Nomes canônicos:
 - Administração / Configuração.
 
 Residual corrigido durante A14:
-- referências abreviadas `Pacote e Envio` foram normalizadas para `Pacote, Finalização e Envio` nas authorities de navegação/Home/P1.
+- referências abreviadas `Pacote, Finalização e Envio` foram normalizadas para `Pacote, Finalização e Envio` nas authorities de navegação/Home/P1.
 
 Labels compactos podem ser abreviados visualmente apenas quando o accessible name/contexto preservar o conceito canônico.
 
