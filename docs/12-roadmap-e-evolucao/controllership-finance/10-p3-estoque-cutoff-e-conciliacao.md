@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / PAGE_DOCUMENTATION_GATE_V2 PENDING_DECISION_E02 / STOP_CONDITION_ON_T03**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -15,7 +15,7 @@ PLUGIN_UI_REUSE_DEFINED  = PASS
 STATES_DEFINED           = PASS
 TEST_MATRIX_DEFINED      = PASS
 
-POST_STOCK_CLOSED_RULE   = DECISION_REQUIRED
+POST_STOCK_CLOSED_RULE   = TERMINAL_IN_PORTAL_V1
 ```
 
 ## Job
@@ -46,7 +46,7 @@ Não pertence a P3 V1:
 - transformar source offline em zero;
 - definir fórmula SQL/TOTVS localmente;
 - criar permission por rotina/unidade;
-- decidir silenciosamente o que acontece após `STOCK_CLOSED`.
+- reabrir, retificar ou criar workflow pós-`STOCK_CLOSED` dentro do Portal V1.
 
 
 ---
@@ -404,6 +404,38 @@ Sem fallback manual silencioso.
 
 Se T03 provar ausência/incompatibilidade, registrar `EXECUTION_DRIFT`.
 
+### Regra pós-sacramentação — decisão E02
+
+Decisão aprovada pelo Product Owner em 09/10/2026:
+
+```text
+STOCK_CLOSED
+= terminal no lifecycle P3 do Portal V1
+```
+
+Consequências:
+
+- P3 não oferece ação `Reabrir estoque`;
+- P3 não oferece `Desfazer sacramentação`;
+- P3 não executa nova revalidação operacional sobre a mesma versão fechada para alterar o fechamento histórico;
+- P3 não cria estado local de `REOPENED`, `RECTIFIED` ou equivalente;
+- qualquer correção/retificação posterior pertence ao owner canônico/ERP;
+- o Portal preserva o histórico observado e pode refletir futuramente um novo estado/artefato fornecido pelo owner, sem reescrever o fechamento anterior;
+- se o processo real passar a exigir reabertura/correção suportada pelo Portal, isso exige novo gate de produto/contract e revisão explícita de P3 + P5.
+
+### Impacto em P5
+
+A decisão E02 não autoriza invalidar silenciosamente pacote finalizado/enviado.
+
+```text
+STOCK_CLOSED historical fact
+→ P5 consumes the closed-state fact
+→ later owner-side correction does not mutate package history silently
+```
+
+Qualquer correção pós-envio continua sujeita ao lifecycle versionado/complementar próprio de P5.
+
+
 ---
 
 ## Histórico
@@ -706,23 +738,13 @@ Tecnologia/localização seguem o HEAD da futura implementação.
 
 ## Pendências de implementação preservadas
 
-- **E02 correção pós-sacramentação — DOCUMENTATION BLOCKER / DECISION_REQUIRED**;
+- E02 correção pós-sacramentação — **CLOSED / PRODUCT_DECISION: STOCK_CLOSED terminal no Portal V1**;
 - E03 executor/permissões — inventory do owner da sacramentação, sem write Portal V1;
 - T01 bindings — TO_INVENTORY;
 - T03 estado canônico — STOP_CONDITION / TO_INVENTORY.
 
-E02 é diferente dos demais: pode alterar lifecycle, revalidação, auditoria e impacto em P5. A evidência AS-IS/TÉO atual comprova sacramentação e pós-envio, mas não define reabertura/retificação/correção após `STOCK_CLOSED`.
+E02 foi fechado por decisão explícita do Product Owner. O Portal V1 trata `STOCK_CLOSED` como terminal e não cria workflow pós-sacramentação. Correções posteriores permanecem no owner canônico; futura expansão exige novo gate de produto.
 
-Antes do PASS de A10, é necessário decidir/provar:
-- se `STOCK_CLOSED` é terminal para o Portal V1;
-- se existe reabertura controlada;
-- ou se existe correção/versionamento canônico no owner sem reabrir o fechamento histórico;
-- quem autoriza;
-- quais inputs são revalidados;
-- efeito sobre package finalizado/enviado;
-- audit trail obrigatório.
-
-Não inferir a resposta.
 
 ---
 
@@ -745,7 +767,7 @@ RQ_AC_DEFINED                = PASS
 TEST_MATRIX_DEFINED          = PASS
 SCRIPTS_ARTIFACTS_PLANNED    = PASS
 MONETARY_PARITY_DEFINED      = PASS
-POST_STOCK_CLOSED_RULE       = DECISION_REQUIRED
+POST_STOCK_CLOSED_RULE       = PASS / TERMINAL_IN_PORTAL_V1
 IMPLEMENTATION_AUTHORIZED    = NO
 ```
 
@@ -753,8 +775,7 @@ Resultado:
 
 ```text
 A10 P3 ESTOQUE E CONCILIAÇÃO
-= PENDING_DECISION_E02
-!= READY_FOR_IMPLEMENTATION_BRIEF
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
 != IMPLEMENTED
 ```
 
