@@ -886,6 +886,8 @@ Explicar:
 - divergência;
 - READY_TO_CLOSE;
 - STOCK_CLOSED;
+- `STOCK_CLOSED` é terminal no lifecycle P3 do Portal V1;
+- correções pós-sacramentação pertencem ao owner canônico/ERP e não reabrem P3;
 - source unavailable;
 - V1 sem write ERP.
 
