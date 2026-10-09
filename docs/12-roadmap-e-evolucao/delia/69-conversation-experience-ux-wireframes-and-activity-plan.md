@@ -283,22 +283,22 @@ Os **wireframes textuais WF-01 a WF-05 são a especificação visual legível ve
 
 ## 14. Microinterações e motion design — direção de UX aprovada (2026-10-09)
 
-**Status:** \`APPROVED_VISUAL_DIRECTION\` por Product Master na conversa; \`IMPLEMENTATION=PENDING\`. As durações são alvos de design para validação, não fatos do runtime nem autorização para criar novos serviços ou fluxos de backend.
+**Status:** `APPROVED_VISUAL_DIRECTION` por Product Master na conversa; `IMPLEMENTATION=PENDING`. As durações são alvos de design para validação, não fatos do runtime nem autorização para criar novos serviços ou fluxos de backend.
 
 ### 14.1. Princípios de movimento
 
 1. Movimento deve comunicar estado, transição e resposta à ação do usuário, não apenas ornamentar a interface.
-2. Identidade visual: marca DÉLIA discreta, azul institucional \`var(--primary)\`, superfícies e contraste herdados do tema Minha DELPI. Não criar avatar antropomórfico nem personagem animado.
+2. Identidade visual: marca DÉLIA discreta, azul institucional `var(--primary)`, superfícies e contraste herdados do tema Minha DELPI. Não criar avatar antropomórfico nem personagem animado.
 3. Animação deve ser curta, suave, interrompível, consistente nas superfícies página completa e dock.
-4. Estado técnico da orquestração não pode ser inferido de timers ou animações: sem eventos observáveis backend, somente \`A DÉLIA está trabalhando...\`/aguardando resposta. Nunca afirmar \`Consultando TÉO/MCP\`, \`Pesquisando na internet\`, \`Comparando dados\` ou \`Preparando resposta\` sem evidência real da atividade.
+4. Estado técnico da orquestração não pode ser inferido de timers ou animações: sem eventos observáveis backend, somente `A DÉLIA está trabalhando...`/aguardando resposta. Nunca afirmar `Consultando TÉO/MCP`, `Pesquisando na internet`, `Comparando dados` ou `Preparando resposta` sem evidência real da atividade.
 5. Após a resposta, mostrar resumo discreto e recolhido de fontes/atividade **somente quando houver evidência pública permitida**. Não expor chain-of-thought, prompts, tools arguments, tokens/segredos ou metadados não governados.
-6. Respeitar \`prefers-reduced-motion\`, teclado, foco, contraste, screen readers, dispositivos de menor desempenho e economia de energia.
+6. Respeitar `prefers-reduced-motion`, teclado, foco, contraste, screen readers, dispositivos de menor desempenho e economia de energia.
 
 ### 14.2. Componente de atividade: símbolo + status + detalhes
 
 **Direção visual selecionada:** ícone/símbolo da DÉLIA com pulsação luminosa **muito sutil** e frase curta de status; detalhes colapsados por padrão e expansíveis sob demanda. Três pontos animados podem ser avaliados como fallback visual em inventário, não como outro componente paralelo. Não usar spinner e pulsação em competição visual.
 
-\`\`\`text
+```text
 [marca DÉLIA + pulse sutil] A DÉLIA está trabalhando...  [Detalhes ▾]
   Somente se backend oferecer eventos/estados verificados:
   ✓ Solicitação recebida
@@ -306,14 +306,14 @@ Os **wireframes textuais WF-01 a WF-05 são a especificação visual legível ve
   ◌ Consultando chamados
   · Organizando evidências
 [Após receber resposta] ✓ Resposta disponível  [Como foi obtida ▾]
-\`\`\`
+```
 
-**Estado inicial factualmente permitido hoje:** \`POST /interaction/turns\` é request/response JSON, sem progress streaming; mostrar apenas \`Aguardando resposta da DÉLIA\` enquanto HTTP estiver pendente. O status \`source\` no protótipo é **futuro e condicionado a evento de backend**, não timer nem simulação. Se source unavailable, auth denied ou precondition, renderizar o \`presentation.v1\` do backend em vez de inventar sucesso.
+**Estado inicial factualmente permitido hoje:** `POST /interaction/turns` é request/response JSON, sem progress streaming; mostrar apenas `Aguardando resposta da DÉLIA` enquanto HTTP estiver pendente. O status `source` no protótipo é **futuro e condicionado a evento de backend**, não timer nem simulação. Se source unavailable, auth denied ou precondition, renderizar o `presentation.v1` do backend em vez de inventar sucesso.
 
 ### 14.3. Composer único
 
-- Textarea multiline de altura adaptativa com expansão suave, token de foco \`--focus-ring\`, placeholder discreto e controles compartilhados do \`plugin-ui\` após inventário.
-- Envio indica \`loading\`, bloqueia submissão duplicada e oferece cancelamento apenas se o transporte/abort realmente o suportar; cancelar espera UI não equivale a cancelar execução remota.
+- Textarea multiline de altura adaptativa com expansão suave, token de foco `--focus-ring`, placeholder discreto e controles compartilhados do `plugin-ui` após inventário.
+- Envio indica `loading`, bloqueia submissão duplicada e oferece cancelamento apenas se o transporte/abort realmente o suportar; cancelar espera UI não equivale a cancelar execução remota.
 - Entrada por teclado e tecnologias assistivas; sem atalhos não documentados. Ícones de anexo, voz, câmera, ferramentas e pesquisa web só quando houver capability contratada/autorizada; não renderizar como affordances falsas.
 - Mesmo componente tanto no dock quanto na página completa.
 
@@ -325,16 +325,16 @@ Os **wireframes textuais WF-01 a WF-05 são a especificação visual legível ve
 
 ### 14.5. Timeline e mensagens
 
-- Entrada de turno com fade + deslocamento vertical leve, sem token-by-token fake streaming; revelar somente blocos já recebidos e permitidos por \`presentation.v1\`.
+- Entrada de turno com fade + deslocamento vertical leve, sem token-by-token fake streaming; revelar somente blocos já recebidos e permitidos por `presentation.v1`.
 - Componentes ricos (list/table/metric/chart etc.) são **future contract**, não renderizar até backend suportar schema permitido.
-- Estados materiais (precondition, auth denied, confirmation) devem ser visualmente claros, mas não usar animação persuasiva em confirmações governadas. Ações somente pelo protocolo confirmado \`confirmation_request\`; \`allowed_interactions\` não concede autorização.
+- Estados materiais (precondition, auth denied, confirmation) devem ser visualmente claros, mas não usar animação persuasiva em confirmações governadas. Ações somente pelo protocolo confirmado `confirmation_request`; `allowed_interactions` não concede autorização.
 - Autoscroll só se usuário estiver próximo do fim. Respeitar leitura/scroll e anúncio de mensagens para screen readers.
 
 ### 14.6. Sidebar DÉLIA e dock Portal
 
 - Sidebar da DÉLIA abre/recolhe suavemente, com preservação de scroll/foco, separada da sidebar do Portal.
 - Dock global abre/oculta sem tomar controle de outros MFEs. Estado de sessão compartilhada entre dock e página só após contrato realmente comprovado; não inventar sincronização.
-- Adaptar comportamento desktop, tablet e mobile usando contratos/componentes compartilhados do \`plugin-ui\` e host Portal.
+- Adaptar comportamento desktop, tablet e mobile usando contratos/componentes compartilhados do `plugin-ui` e host Portal.
 
 ### 14.7. Tabela de motion tokens propostos
 
@@ -347,23 +347,23 @@ Os **wireframes textuais WF-01 a WF-05 são a especificação visual legível ve
 | Abrir/recolher sidebar | 220–300 ms |
 | Recepção → conversa | 250–350 ms |
 
-**Não congelar valores em hex/CSS local.** Mapear para motion tokens canônicos existentes no \`plugin-ui\`/Portal se houver. \`EXISTING_EQUIVALENT=TO_INVENTORY\` para animações, loading, status, drawer, timeline e composer. \`REUSE_DECISION=TO_DECIDE\` por componente. Se não existir mecanismo legítimo, propor extensão compartilhada mínima e justificar Abstraction Gate antes de implementar.
+**Não congelar valores em hex/CSS local.** Mapear para motion tokens canônicos existentes no `plugin-ui`/Portal se houver. `EXISTING_EQUIVALENT=TO_INVENTORY` para animações, loading, status, drawer, timeline e composer. `REUSE_DECISION=TO_DECIDE` por componente. Se não existir mecanismo legítimo, propor extensão compartilhada mínima e justificar Abstraction Gate antes de implementar.
 
 ### 14.8. Testes e critérios de aceite do motion
 
 - Sem indicadores de estágio não observados; loading genérico honesto com HTTP JSON atual.
 - Mesma experiência e semântica em página completa e dock compacto.
-- \`prefers-reduced-motion\` elimina movimento não essencial; foco visível/não perdido; suporte teclado e leitor de tela.
+- `prefers-reduced-motion` elimina movimento não essencial; foco visível/não perdido; suporte teclado e leitor de tela.
 - Nenhuma animação dispara ações ou altera confirmação/autorização; sem dupla submissão; loading e erro refletem resposta real.
 - Sem regressão de layout shift, scroll inesperado, renderização ou performance em mobile.
-- Reutilização demonstrada por inventário de componentes \`plugin-ui\`, com testes de integração e outcome no SHA avaliado.
+- Reutilização demonstrada por inventário de componentes `plugin-ui`, com testes de integração e outcome no SHA avaliado.
 - O desenho visual não autoriza criação de engine de activity, persistência, SSE, nova tool ou mudanças de fase.
 
 **Handoff futuro ao Devin:** primeiro inventariar componentes/motion tokens reais e contrato backend; depois implementar o menor conjunto de componentes autorizados; somente então validar UX e acessibilidade com evidências.
 
 ## 15. Experiência multimodal — voz, áudio, imagem, câmera e vídeo (decisão visual, 2026-10-09)
 
-**Status:** direção UX de produto aprovada para planejamento; capacidades \`TARGET\` / implementação \`NOT_PROVEN\`, não autorizada por este documento. Autoridades: [53](./53-multimodal-meeting-frontline-and-industrial-copilot.md), [30](./30-multimodal-expertise-and-drawing-analysis.md), [54](./54-biometric-identity-and-human-observation-governance.md), [55](./55-internet-research-and-external-connectors.md), [09](./09-ux-copilot.md), [16](./16-execution-master-plan.md) e demais autoridades superiores.
+**Status:** direção UX de produto aprovada para planejamento; capacidades `TARGET` / implementação `NOT_PROVEN`, não autorizada por este documento. Autoridades: [53](./53-multimodal-meeting-frontline-and-industrial-copilot.md), [30](./30-multimodal-expertise-and-drawing-analysis.md), [54](./54-biometric-identity-and-human-observation-governance.md), [55](./55-internet-research-and-external-connectors.md), [09](./09-ux-copilot.md), [16](./16-execution-master-plan.md) e demais autoridades superiores.
 
 ### 15.1. Direção de produto e superfícies
 
@@ -373,7 +373,7 @@ DÉLIA mantém **uma única timeline, um único composer conceitual e uma única
 
 **Modo A — Ditado para o composer:** comando de microfone solicita permissão explícita, indica captura ativa, grava trecho limitado segundo policy, transcreve, mostra resultado editável no composer e **requer revisão/envio explícito pelo usuário na primeira versão**. Útil para nomes, códigos e medidas que podem ser reconhecidos incorretamente. Uma transcrição não é FACT nem autorização de ação.
 
-\`\`\`text
+```text
 [Composer] Pergunte à DÉLIA...
 [+ Mídia]                   [Microfone] [Voz] [Enviar]
 
@@ -381,11 +381,11 @@ DÉLIA mantém **uma única timeline, um único composer conceitual e uma única
     → [Transcrição editável] Pergunta reconhecida...
     → [Revisar / Enviar]
     → POST interaction/turns pelo mesmo caminho governado de texto
-\`\`\`
+```
 
-**Modo B — Conversa por voz:** sessão explícita com indicadores \`pronta\`, \`ouvindo\`, \`processando\`, \`reproduzindo resposta\`, \`pausada/microfone desligado\`, \`erro\`, \`encerrada\`; legendas/transcrição textual coexistem. Identidade visual sugerida: marca DÉLIA em círculo com animação orgânica discreta ao ouvir/falar (não implica raciocínio interno ou stage não confirmado). Controles mínimos: iniciar/encerrar, silenciar microfone, legendas e retorno à timeline textual. TTS/STT, turn-taking, barging/interrupção, tratamento de latência e realtime dependem de provedores/ports/contratos realmente inventariados. **Não foi decidido ainda** se o modo principal futuro será chamada contínua ou push-to-talk; ambos permanecem alternativas de avaliação. Não pressupor suporte de áudio live apenas porque há ícone no protótipo.
+**Modo B — Conversa por voz:** sessão explícita com indicadores `pronta`, `ouvindo`, `processando`, `reproduzindo resposta`, `pausada/microfone desligado`, `erro`, `encerrada`; legendas/transcrição textual coexistem. Identidade visual sugerida: marca DÉLIA em círculo com animação orgânica discreta ao ouvir/falar (não implica raciocínio interno ou stage não confirmado). Controles mínimos: iniciar/encerrar, silenciar microfone, legendas e retorno à timeline textual. TTS/STT, turn-taking, barging/interrupção, tratamento de latência e realtime dependem de provedores/ports/contratos realmente inventariados. **Não foi decidido ainda** se o modo principal futuro será chamada contínua ou push-to-talk; ambos permanecem alternativas de avaliação. Não pressupor suporte de áudio live apenas porque há ícone no protótipo.
 
-\`\`\`text
+```text
 +---------------- DÉLIA | Conversa por voz ----------------+
 | microfone e reprodução: explicitamente sinalizados        |
 |                  [Marca DÉLIA]                           |
@@ -393,49 +393,49 @@ DÉLIA mantém **uma única timeline, um único composer conceitual e uma única
 |      [Silenciar] [Legendas] [Encerrar sessão]             |
 | Transcrição / resposta textual acessível na timeline      |
 +----------------------------------------------------------+
-\`\`\`
+```
 
 ### 15.3. Imagem e câmera
 
 Entrada de imagem por anexo/captura pontual para tarefas autorizadas como examinar peça, equipamento, desenho, documento ou ocorrência. O usuário seleciona mídia, visualiza preview, remove/cancela, digita pergunta e confirma envio. O backend valida formato, tamanho, tipo efetivo, malware/content-safety conforme contrato, metadados, privacidade e regras de retenção. Extração/percepção é adapter provider-neutral: preservar proveniência, limitações, versão do método/modelo e grau de incerteza quando cabível. Imagem não prova defeito, identidade nem condição de máquina por si só; comparação com desenho/revisão exige consulta à Domain API autoritativa.
 
-\`\`\`text
+```text
 [+ Mídia > Imagem | Câmera]
 [Preview da imagem selecionada]  [Remover]
 [Pergunta: "Compare esta peça com o desenho aprovado"] [Enviar]
 → mídia autorizada / MediaRef (se contrato existir)
 → perception → Evidence → decisão/orquestração → resposta
-\`\`\`
+```
 
 ### 15.4. Vídeo assistido e compartilhamento de tela
 
-Escalonamento de produto alinhado à spec \`53\`:
+Escalonamento de produto alinhado à spec `53`:
 - **V1** imagem/frame pontual (primeiro alvo).
 - **V2** vídeo curto sob demanda, bounded em duração/tamanho/propósito.
 - **V3** amostragem temporal de sessão assistida, autorizada com captura visível.
 - **V4** assistência audiovisual contínua somente se tecnologia, rede, latência, custo, retenção, safety e Policy justificarem.
 
-Wireframe: painel de preview de câmera com estado \`Nenhuma captura ativa\`; botões de \`Capturar imagem\`, \`Gravar trecho\` e \`Parar\` apenas quando capacidades reais estão disponíveis; pergunta contextual e timeline com resultado/evidências. Compartilhamento de tela em Meeting/Workspace requer consentimento específico, seleção de superfície, indicador persistente, redaction quando cabível e encerramento inequívoco. Screen share e câmera não concedem AuthZ adicional; não fazem DOM automation nem comandos industriais livres. Não armazenar/transmitir vídeo contínuo indiscriminadamente, nem manter tracking oculto de pessoas.
+Wireframe: painel de preview de câmera com estado `Nenhuma captura ativa`; botões de `Capturar imagem`, `Gravar trecho` e `Parar` apenas quando capacidades reais estão disponíveis; pergunta contextual e timeline com resultado/evidências. Compartilhamento de tela em Meeting/Workspace requer consentimento específico, seleção de superfície, indicador persistente, redaction quando cabível e encerramento inequívoco. Screen share e câmera não concedem AuthZ adicional; não fazem DOM automation nem comandos industriais livres. Não armazenar/transmitir vídeo contínuo indiscriminadamente, nem manter tracking oculto de pessoas.
 
-\`\`\`text
+```text
 +----------------- Assistência visual ---------------------+
 | [Prévia câmera — captura INATIVA]                        |
 | [Capturar imagem]   [Gravar trecho]   [Encerrar]         |
 | Pergunte: "O que pode explicar esta ocorrência?"         |
 | [Imagem/vídeo selecionado] [Remover] [Enviar]            |
 +---------------------------------------------------------+
-\`\`\`
+```
 
 ### 15.5. Composer multimodal unificado — sem prometer funcionalidades falsas
 
-\`\`\`text
+```text
 +---------------------------------------------------------+
 | Pergunte ou mostre algo à DÉLIA...                       |
 | [Anexo/preview se selecionado]                            |
 | [+ Mídia ▾]                         [Ditado] [Voz] [Enviar]|
 +---------------------------------------------------------+
 Menu FUTURO: imagem; documento; vídeo curto; câmera; tela.
-\`\`\`
+```
 
 **Aparência final depende da capability disponível**: um item TARGET pode existir no wireframe, mas não deve virar botão habilitado na produção sem contrato/owner/dispositivo/policy. Upload de mídia não autoriza a persistência, nem deve usar storage ou runtime do Minha DELPI Chat.
 
@@ -443,10 +443,10 @@ Menu FUTURO: imagem; documento; vídeo curto; câmera; tela.
 
 - Indicadores visíveis para microfone, câmera, tela, transcrição e gravação persistente. Diferenciar captura transitória de retenção.
 - Estados UX de permissão recusada, dispositivo ausente, captura interrompida, transcrição incerta, limite excedido, mídia rejeitada, rede indisponível, envio cancelado, source denied e capability indisponível.
-- UI de voz nunca oculta o texto/legendas; não depender exclusivamente de cores, som, pulse, vibração ou gestos. Permitir teclado, touch, screen reader, \`prefers-reduced-motion\`, foco claro e microfone desligado.
-- Preview seguro com opção \`remover\` antes do envio. Ao encerrar uma sessão, cessar efetivamente captura e liberar device; nunca afirmar que storage remoto foi excluído sem postcondition.
+- UI de voz nunca oculta o texto/legendas; não depender exclusivamente de cores, som, pulse, vibração ou gestos. Permitir teclado, touch, screen reader, `prefers-reduced-motion`, foco claro e microfone desligado.
+- Preview seguro com opção `remover` antes do envio. Ao encerrar uma sessão, cessar efetivamente captura e liberar device; nunca afirmar que storage remoto foi excluído sem postcondition.
 - Conservar provenance separada de saída gerada; capability multimodal não promove hipótese de visão/fala a FACT.
-- Ações materiais extraídas de áudio/vídeo seguem Core AuthZ, Domain authority, Policy/Decision, confirmação, idempotência, audit e Outcome. \`voz != autorização\`; \`biometric match != AuthN\`; \`visual detection != industrial safety\`.
+- Ações materiais extraídas de áudio/vídeo seguem Core AuthZ, Domain authority, Policy/Decision, confirmação, idempotência, audit e Outcome. `voz != autorização`; `biometric match != AuthN`; `visual detection != industrial safety`.
 
 ### 15.7. Dados e segurança
 
@@ -454,7 +454,7 @@ Definir contrato **antes** de runtime para: purpose, consent, captura, processam
 
 ### 15.8. Reuso e contratualização antes do Devin
 
-\`EXISTING_EQUIVALENT=TO_INVENTORY\` para Web Media API/device capture, upload/preview, player, transcript captions, síntese/ditado, backend ingestion, MediaRef, media storage, event/session transport e componentes \`plugin-ui\`. \`REUSE_DECISION=TO_DECIDE\` por item. Candidatos \`SpeechToTextPort\`, \`TextToSpeechPort\`, \`MediaIngestPort\`, \`VisionAnalysisPort\`, \`RealtimeMediaSessionPort\`, \`MediaStoragePort\` no doc \`53\` **não são contratos aprovados nem demanda para criar todos**. Portal controla host; DÉLIA contract/orchestration/evidence; providers sob adapters; Domain APIs continuam authoritative; Safety separada.
+`EXISTING_EQUIVALENT=TO_INVENTORY` para Web Media API/device capture, upload/preview, player, transcript captions, síntese/ditado, backend ingestion, MediaRef, media storage, event/session transport e componentes `plugin-ui`. `REUSE_DECISION=TO_DECIDE` por item. Candidatos `SpeechToTextPort`, `TextToSpeechPort`, `MediaIngestPort`, `VisionAnalysisPort`, `RealtimeMediaSessionPort`, `MediaStoragePort` no doc `53` **não são contratos aprovados nem demanda para criar todos**. Portal controla host; DÉLIA contract/orchestration/evidence; providers sob adapters; Domain APIs continuam authoritative; Safety separada.
 
 Ordem candidata: inventário e decisão de contrato → ditado revisável → saída de áudio com legendas → foto/anexo de imagem → vídeo curto → vídeo assistido/real-time mediante gates específicos. Fase e NEXT vêm do Plano Mestre e ledger, não desta sequência ilustrativa.
 
@@ -467,7 +467,7 @@ Ordem candidata: inventário e decisão de contrato → ditado revisável → sa
 - Privacidade, retenção e exclusão testadas segundo contrato, inclusive device compartilhado.
 - Provider-neutral, sem credenciais ou conteúdo de mídia em prompt/log comum indevido.
 - Loading, cancelamento, retries e consentimento mostram consequências verdadeiras.
-- Testes/evals de generalização, segurança e resultado no SHA e config avaliados; sem provas, \`PENDING/INCONCLUSIVE\`.
+- Testes/evals de generalização, segurança e resultado no SHA e config avaliados; sem provas, `PENDING/INCONCLUSIVE`.
 
 
 ## 16. Decisão de produto — Ditado Inteligente primeiro; Voz Live posterior (2026-10-09)
@@ -476,9 +476,9 @@ Ordem candidata: inventário e decisão de contrato → ditado revisável → sa
 
 ### 16.1. Caso A — ditado inteligente com transcrição e ajuste por IA
 
-**Objetivo:** o usuário fala uma pergunta para a DÉLIA no composer existente, em experiência semelhante a ditado de assistentes modernos. A captura gera uma transcrição; uma etapa IA **opcional/contratada e conservadora** melhora legibilidade, pontuação, ortografia e construção frasal; o usuário **revê e edita** o texto; ao clicar Enviar, esse texto percorre o **mesmo** caminho atual de interação \`POST /interaction/turns\`, sujeito aos mesmos gates.
+**Objetivo:** o usuário fala uma pergunta para a DÉLIA no composer existente, em experiência semelhante a ditado de assistentes modernos. A captura gera uma transcrição; uma etapa IA **opcional/contratada e conservadora** melhora legibilidade, pontuação, ortografia e construção frasal; o usuário **revê e edita** o texto; ao clicar Enviar, esse texto percorre o **mesmo** caminho atual de interação `POST /interaction/turns`, sujeito aos mesmos gates.
 
-\`\`\`text
+```text
 Composer existente
   └── [Microfone — iniciar captura consentida]
           └── [Capturando | indicador real + Parar + Cancelar]
@@ -488,13 +488,13 @@ Composer existente
                                       └── [Texto ajustado, totalmente editável]
                                              └── [Revisar / Enviar]
                                                     └── interação DÉLIA normal
-\`\`\`
+```
 
 **Não enviar automaticamente na primeira entrega.** O simples ato de gravar/transcrever/ajustar não dispara MCP, Domain API, pesquisa externa ou ação material. Ajuste IA é preparação de INPUT, não Evidence/FACT, planejamento operacional, autorização ou decisão de negócio. O texto final enviado é a versão confirmada pelo usuário.
 
 #### Wireframe textual WF-06
 
-\`\`\`text
+```text
 +---------------- COMPOSER DÉLIA ------------------------------+
 | Pergunte à DÉLIA...                                         |
 |                                                              |
@@ -510,9 +510,9 @@ Estado: [Ajustando texto...]                          [Cancelar]
 | "DÉLIA, mostre os indicadores de produção..."                 |
 |                                      [Editar] [Enviar]        |
 +--------------------------------------------------------------+
-\`\`\`
+```
 
-**Observação visual:** indicadores de captura refletem estado real de microfone, não animação simulada; \`prefers-reduced-motion\`, teclado e leitor de tela suportados. Nunca exibir opção ainda não implementada como habilitada.
+**Observação visual:** indicadores de captura refletem estado real de microfone, não animação simulada; `prefers-reduced-motion`, teclado e leitor de tela suportados. Nunca exibir opção ainda não implementada como habilitada.
 
 ### 16.2. Limites do ajuste por IA
 
@@ -529,19 +529,19 @@ O revisor de linguagem pode: corrigir erros de fala/transcrição evidentes, pon
 
 **Visão alvo:** sessão explícita de voz bidirecional, na qual usuário pergunta e DÉLIA responde por áudio com transcrição/legendas; possibilidade futura de turn-taking, interrupção, retomada e interações com especialistas/conectores autorizados. Precisa de sessão de mídia, áudio/STT/TTS/realtime, latência, observabilidade, gestão de dispositivos, autorização e controle de custos. Não misturar sua implementação com o ditado.
 
-\`\`\`text
+```text
 [Iniciar Live] → [Microfone ativo / Ouvindo] ↔ [DÉLIA respondendo]
         ↘ [Legendas/texto na mesma timeline]
         ↘ [Silenciar] [Encerrar] [Retomar quando permitido]
-\`\`\`
+```
 
 Interações por voz não fornecem Identity/AuthZ; toda material write mantém live Core AuthZ, Domain authority, Policy/Decision e Outcome. **Live continua TARGET e não pertence à primeira entrega de ditado.**
 
 ### 16.4. Reuso, contratos e escopo do futuro Devin
 
-\`EXISTING_EQUIVALENT=TO_INVENTORY\`, \`REUSE_DECISION=TO_DECIDE\` para componentes de composer/captura/preview, STT, revisão linguística e componentes de feedback. Antes de propor \`SpeechToTextPort\` ou revisão-model-service, buscar capacidades existentes, Domain API, MCP/A2A, adapters, shared UI e contratos; escolher o menor boundary correto. Não acoplar frontend diretamente a SDK do provider sem contrato e segurança. Não reutilizar o runtime/tabelas/frontend Minha DELPI Chat.
+`EXISTING_EQUIVALENT=TO_INVENTORY`, `REUSE_DECISION=TO_DECIDE` para componentes de composer/captura/preview, STT, revisão linguística e componentes de feedback. Antes de propor `SpeechToTextPort` ou revisão-model-service, buscar capacidades existentes, Domain API, MCP/A2A, adapters, shared UI e contratos; escolher o menor boundary correto. Não acoplar frontend diretamente a SDK do provider sem contrato e segurança. Não reutilizar o runtime/tabelas/frontend Minha DELPI Chat.
 
-**Gates prévios:** dono da captura e pipeline, AuthN/AuthZ/policy, consentimento, acesso à mídia, MIME/limites/duração, retenção/transient deletion, tratamento de falhas, provedores e external processing, request/response e erros, observabilidade com minimização, idempotência/retry, e critérios de aceitação. Em áudio de usuários/terceiros, capturar apenas com autorização informada. Classificar \`STT=TO_INVENTORY\`; \`AI_TEXT_ADJUSTMENT=PLANNED\`; \`LIVE=TARGET\`; \`RUNTIME_PROOF=PENDING\`. Documentação não libera C4/C5 nem autoriza Devin a implementar.
+**Gates prévios:** dono da captura e pipeline, AuthN/AuthZ/policy, consentimento, acesso à mídia, MIME/limites/duração, retenção/transient deletion, tratamento de falhas, provedores e external processing, request/response e erros, observabilidade com minimização, idempotência/retry, e critérios de aceitação. Em áudio de usuários/terceiros, capturar apenas com autorização informada. Classificar `STT=TO_INVENTORY`; `AI_TEXT_ADJUSTMENT=PLANNED`; `LIVE=TARGET`; `RUNTIME_PROOF=PENDING`. Documentação não libera C4/C5 nem autoriza Devin a implementar.
 
 ### 16.5. Aceitação funcional futura
 
