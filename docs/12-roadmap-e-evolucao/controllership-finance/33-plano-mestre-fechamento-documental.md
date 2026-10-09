@@ -178,8 +178,9 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 | A07 | Ajuda | **PASS / READY_FOR_IMPLEMENTATION_BRIEF** |
 | A08 | P1 Cockpit da Competência | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 | A09 | P2 Checklist e Documentos | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
-| A10 | P3 Estoque e Conciliação | **PENDING_DECISION_E02 / DECISION_REQUIRED** |
-| A11–A13 | Demais páginas | PENDING_V2_REVALIDATION |
+| A10 | P3 Estoque e Conciliação | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03** |
+| A11 | P4 Classificações e Pendências | **IN_REVIEW** |
+| A12–A13 | Demais páginas | PENDING_V2_REVALIDATION |
 
 A01 está apenas na fila futura. Runtime permanece inexistente.
 
@@ -205,7 +206,7 @@ A01 está apenas na fila futura. Runtime permanece inexistente.
 |---|---|---|---|
 | P1 — Cockpit da Competência | 08 | DOCUMENTATION_GATE PASS | fechado; residual somente físico T01/T05 |
 | P2 — Checklist e Documentos | 09 | DOCUMENTATION_GATE PASS | TÉO 31.3–31.13 reconciliado; residual seed/binding E05/E06/T02/T05 |
-| P3 — Estoque, Cutoff e Conciliação | 10 + 15.1 | DOCUMENTATION_GATE BLOCKED_BY_E02 / STOP T03 | E02 exige decisão/evidência de regra pós-STOCK_CLOSED; T03 permanece stop técnico/owner |
+| P3 — Estoque, Cutoff e Conciliação | 10 + 15.1 | PAGE_DOCUMENTATION_GATE_V2 PASS / STOP T03 | E02 fechado: STOCK_CLOSED terminal no Portal V1; T03 permanece stop técnico/owner |
 | P4 — Classificações e Pendências | 11 | DOCUMENTATION_GATE PASS | residual cross-check com ledger/Help |
 | P5 — Pacote, Finalização e Envio | 12 | DOCUMENTATION_GATE PASS para package/finalization | residual; envio real continua BLOCKED_WITH_EVIDENCE por E04/T04 |
 | P6 — Administração e Configuração | 13 + 28 | page gate em 28 | alinhar 13 como authority de regra com o contrato completo de 28 |
@@ -561,7 +562,7 @@ A fase documental deve reavaliar os E-items para separar **dado de implantação
 | ID | Tema | Tratamento no fechamento documental |
 |---|---|---|
 | E01 | seed bancário | tentar fechar owner/semântica; valores seed podem permanecer implantação se não alterarem contract |
-| E02 | correção pós-STOCK_CLOSED | **DECISION_REQUIRED**: evidência AS-IS/TÉO atual não define reabertura/correção após sacramentação; precisa regra explícita antes do freeze |
+| E02 | correção pós-STOCK_CLOSED | **CLOSED / PRODUCT_DECISION**: STOCK_CLOSED terminal no Portal V1; correção posterior fica no owner canônico; futura expansão exige novo gate |
 | E03 | executor/permissões de sacramentação | provar owner/segregação até o nível necessário para boundary/Help; binding físico pode ficar T03/T05 |
 | E04 | canal real de envio | não inventar; enquanto ausente, envio real permanece slice bloqueado |
 | E05 | attachment roles | semântica já fechada; seed pode ficar implantação |
