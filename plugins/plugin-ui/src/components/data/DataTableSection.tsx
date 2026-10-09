@@ -18,6 +18,8 @@ import {
   type DataTableColumn,
   type DataTableLabels,
   type DashboardDataTableProps,
+  type DataTableColumnWidths,
+  type DataTableSelection,
 } from "./DataTable";
 import {
   createDashboardDataCardsGrid,
@@ -199,6 +201,16 @@ export type DataTableSectionProps<T> = {
   uiPrefix?: string;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
+  /**
+   * Seleção estrutural controlada (linha/coluna/célula) repassada ao DataTable.
+   * Índices de linha referem-se às linhas exibidas (página atual em server-side).
+   */
+  selection?: DataTableSelection | null;
+  onSelectionChange?: (selection: DataTableSelection | null) => void;
+  /** Larguras em px por chave de coluna — com `resizableColumns`, ativa o handle de resize. */
+  columnWidths?: DataTableColumnWidths;
+  onColumnWidthsChange?: (widths: DataTableColumnWidths) => void;
+  resizableColumns?: boolean;
   headerActions?: ReactNode;
   footer?: ReactNode;
   embedded?: boolean;
@@ -340,6 +352,11 @@ export function DataTableSection<T>({
   uiPrefix = "ds",
   onRowClick,
   getRowClassName,
+  selection,
+  onSelectionChange,
+  columnWidths,
+  onColumnWidthsChange,
+  resizableColumns,
   headerActions,
   footer,
   embedded = false,
@@ -744,6 +761,11 @@ export function DataTableSection<T>({
               emptyMessage={resolvedEmpty}
               onRowClick={onRowClick}
               getRowClassName={getRowClassName}
+              selection={selection}
+              onSelectionChange={onSelectionChange}
+              columnWidths={columnWidths}
+              onColumnWidthsChange={onColumnWidthsChange}
+              resizableColumns={resizableColumns}
               sortKey={effectiveSortKey}
               sortDirection={effectiveSortDirection}
               onSortChange={
