@@ -181,9 +181,21 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 | A10 | P3 Estoque e Conciliação | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03** |
 | A11 | P4 Classificações e Pendências | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 | A12 | P5 Pacote, Finalização e Envio | **PARTIAL / PACKAGE_FINALIZATION_READY / SEND_PENDING_E04_T04** |
-| A13 | P6 Administração / Configuração | **IN_REVIEW** |
+| A13 | P6 Administração / Configuração | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 
 A01 está apenas na fila futura. Runtime permanece inexistente.
+
+## Revisão transversal A14 — status
+
+```text
+A14 = ACTIVE
+RUNTIME_CHANGES = NONE
+```
+
+A14 verifica naming, owners, permissions, rotas, plugin-ui, visual families, themes, mobile, Help, states e contracts após A01–A13.
+
+Residual já conhecido:
+- A12 envio real permanece `PENDING_E04_T04` e impede freeze global completo até o contrato de delivery ser provado.
 
 ## Inventário completo de superfícies V1
 
@@ -206,11 +218,11 @@ A01 está apenas na fila futura. Runtime permanece inexistente.
 | Página | Authority principal | Estado atual | Trabalho documental restante |
 |---|---|---|---|
 | P1 — Cockpit da Competência | 08 | DOCUMENTATION_GATE PASS | fechado; residual somente físico T01/T05 |
-| P2 — Checklist e Documentos | 09 | DOCUMENTATION_GATE PASS | TÉO 31.3–31.13 reconciliado; residual seed/binding E05/E06/T02/T05 |
+| P2 — Checklist e Documentos | 09 | PAGE_DOCUMENTATION_GATE_V2 PASS | TÉO 31.3–31.13 reconciliado; E05/E06 seeds, Core notification adapter e T05 físicos permanecem inventário |
 | P3 — Estoque, Cutoff e Conciliação | 10 + 15.1 | PAGE_DOCUMENTATION_GATE_V2 PASS / STOP T03 | E02 fechado: STOCK_CLOSED terminal no Portal V1; T03 permanece stop técnico/owner |
-| P4 — Classificações e Pendências | 11 | DOCUMENTATION_GATE PASS | residual cross-check com ledger/Help |
-| P5 — Pacote, Finalização e Envio | 12 | DOCUMENTATION_GATE PASS para package/finalization | residual; envio real continua BLOCKED_WITH_EVIDENCE por E04/T04 |
-| P6 — Administração e Configuração | 13 + 28 | page gate em 28 | alinhar 13 como authority de regra com o contrato completo de 28 |
+| P4 — Classificações e Pendências | 11 | PAGE_DOCUMENTATION_GATE_V2 PASS | residual transversal somente |
+| P5 — Pacote, Finalização e Envio | 12 | PAGE_DOCUMENTATION_GATE_V2 PARTIAL | package/finalization fechado; envio real continua BLOCKED/PENDING por E04/T04 |
+| P6 — Administração e Configuração | 13 + 28 | PAGE_DOCUMENTATION_GATE_V2 PASS | 13 rules authority alinhada ao page contract completo de 28 |
 
 Não criar nova página V1 apenas para eliminar backlog histórico.
 
@@ -590,7 +602,7 @@ DOCUMENTATION BLOCKER
 T01–T05 permanecem inventários técnicos **quando** não alterarem o contrato de negócio.
 
 - T01 — bindings DAVI/api-delpi;
-- T02 — notificações Minha DELPI;
+- T02 — capability Core PROVEN; adapter/configuração do produto TO_INVENTORY;
 - T03 — owner/canonical STOCK_CLOSED;
 - T04 — capability corporativa de envio;
 - T05 — Core effective permissions/scopes.
