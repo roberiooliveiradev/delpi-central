@@ -12,7 +12,9 @@ describe("MyTasksPage", () => {
     expect(source).toMatch(/TaskSearchField/);
     expect(source).toMatch(/TaskEmptyState/);
     expect(source).toMatch(/TaskEditorFrame/);
-    expect(source).toMatch(/TaskItemsTable/);
+    expect(source).toMatch(/TaskDetailCard/);
+    expect(source).toMatch(/TaskCardList/);
+    expect(source).not.toMatch(/TaskItemsTable/);
     expect(source).toMatch(/Buscar tarefas/);
     expect(source).toMatch(/Nenhuma tarefa pendente no momento/);
     expect(source).not.toMatch(/Buscar na lista/);

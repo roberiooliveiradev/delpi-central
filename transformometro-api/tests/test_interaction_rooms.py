@@ -321,3 +321,40 @@ def test_http_capabilities_keep_authz():
     assert forbidden.status_code == 403
     assert anonymous.status_code == 401
     assert json.loads(unread.body)["data"]["items"][0]["id"] == room_id
+
+
+def test_delete_room_requires_manage_and_hides_room():
+    cases, repo = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    cases.post_message(_user(), room.id, "histórico")
+    with pytest.raises(AuthorizationDenied) as denied:
+        cases.delete_room(_user(), room.id)
+    assert denied.value.status_code == 403
+
+    manager = _user(permissions=[ACCESS_PERMISSION, MANAGE_PERMISSION])
+    deleted = cases.delete_room(manager, room.id)
+    assert deleted.deleted_at is not None
+    with pytest.raises(LookupError):
+        cases.get_room(manager, room.id)
+    assert all(item.id != room.id for item in cases.list_rooms(manager))
+
+
+def test_delete_room_allows_fresh_room_for_same_process():
+    cases, repo = _cases()
+    manager = _user(permissions=[ACCESS_PERMISSION, MANAGE_PERMISSION])
+    first = cases.open_for_process(manager, PROCESS)
+    cases.post_message(manager, first.id, "persiste")
+    cases.delete_room(manager, first.id)
+
+    second = cases.open_for_process(_user(), PROCESS)
+    assert second.id != first.id
+    # history persists — old room still stored, just inactive
+    assert repo.rooms[first.id].deleted_at is not None
+    assert cases.list_messages(manager, second.id, limit=10)["items"] == []
+
+
+def test_delete_room_unknown_is_404():
+    cases, _repo = _cases()
+    manager = _user(permissions=[ACCESS_PERMISSION, MANAGE_PERMISSION])
+    with pytest.raises(LookupError):
+        cases.delete_room(manager, "55555555-5555-5555-5555-555555555555")

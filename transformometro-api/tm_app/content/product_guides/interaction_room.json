@@ -19,7 +19,8 @@
     "Abra (ou reutilize) a sala do processo — open_room é idempotente",
     "Publique mensagens com contexto claro; o room_id vem do read-back, nunca inventado",
     "Use reação para sinalizar sem gerar ruído; use pin para fixar o que importa",
-    "Marque a sala como lida para manter o painel limpo"
+    "Marque a sala como lida para manter o painel limpo",
+    "Para excluir a sala (permissão transformometro.manage), use o menu «…» da topbar: a exclusão é lógica — a sala sai da lista, o histórico permanece, o processo não é excluído e uma nova sala pode ser aberta depois."
   ],
   "field_guidance": [
     {
@@ -40,7 +41,8 @@
   "common_mistakes": [
     "Usar a sala como substituta de tarefa quando há responsável e prazo",
     "Prometer anexo de arquivo — não há transporte binário",
-    "Apagar mensagem sem necessidade — delete_message é confirm_before_act"
+    "Apagar mensagem sem necessidade — delete_message é confirm_before_act",
+    "Excluir a sala achando que exclui o processo — o processo e seu histórico de conversas permanecem; só a sala ativa é removida."
   ],
   "related_topics": [
     "tasks",

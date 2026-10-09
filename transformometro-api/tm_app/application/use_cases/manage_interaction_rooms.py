@@ -65,6 +65,20 @@ class InteractionRoomUseCases:
             raise LookupError("Sala não encontrada.")
         return room
 
+    def delete_room(self, user: Any, room_id: str) -> InteractionRoom:
+        """Soft delete — history persists; a new room can be opened later.
+        Destructive capability → manage permission, never mere access."""
+        self._policy.require_manage(user)
+        room = self._repo.get(normalize_uuid(room_id, label="A sala"))
+        if room is None:
+            raise LookupError("Sala não encontrada.")
+        deleted = self._repo.soft_delete(room.id)
+        if deleted is None or deleted.deleted_at is None:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        if self._repo.get(room.id) is not None:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        return deleted
+
     def list_rooms(self, user: Any, *, inbox_filter: str = "all") -> list[InteractionRoom]:
         self._policy.require_access(user)
         return self._repo.list_rooms(

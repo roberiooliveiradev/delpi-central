@@ -1,6 +1,6 @@
 import {
   ActionButton,
-  StatusBadge,
+  TaskDetailCard as SharedTaskDetailCard,
   attachmentIdsInMarkdown,
   type MentionTextItem,
 } from "@delpi/plugin-ui/index";
@@ -12,12 +12,7 @@ import type {
   TaskSourceMessageMentionDto,
 } from "../../api/worklistApi";
 import { CM_HELP } from "../../content/helpTooltips";
-import {
-  cmStatusBadgeClassNames,
-  CommercialDetailCard,
-  CommercialDetailFieldGrid,
-  CommercialMessageBodyReadonly,
-} from "../../app/commercialUi";
+import { CommercialMessageBodyReadonly } from "../../app/commercialUi";
 import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
 import {
   TaskAttachmentPreviewModal,
@@ -223,18 +218,19 @@ export function TaskDetailCard({
 
   return (
     <>
-      <CommercialDetailCard
-        title={task.title}
-        hint={hintParts.join(" · ")}
+      <SharedTaskDetailCard
+        item={{
+          id: task.id,
+          title: task.title,
+          statusLabel: badge.label,
+          statusTone: badge.variant,
+        }}
+        classNamePrefix="cm"
+        className={`cm-task-detail-card--${tone}`}
         titleHint={CM_HELP.myDay.worklist}
-        className={`cm-task-detail-card cm-task-detail-card--${tone}`}
-        icon={
-          <StatusBadge
-            classNames={cmStatusBadgeClassNames}
-            label={badge.label}
-            variant={badge.variant}
-          />
-        }
+        hint={hintParts.join(" · ")}
+        includeDefaultFields={false}
+        fields={fields}
         headerActions={
           <div className="cm-task-detail-card__actions">
             {!readOnly && canEdit ? (
@@ -264,9 +260,8 @@ export function TaskDetailCard({
             ) : null}
           </div>
         }
-      >
-        <div className="cm-task-detail-card__body">
-          {note ? (
+        description={
+          note ? (
             <div className="cm-task-detail-card__prose">
               <CommercialMessageBodyReadonly
                 markdown={note}
@@ -285,20 +280,20 @@ export function TaskDetailCard({
                 }}
               />
             </div>
-          ) : null}
-          <CommercialDetailFieldGrid fields={fields} valueFallback="—" wrapLabels />
-          <TaskAttachmentsBlock
-            taskId={task.id}
-            initialCount={clipAttachmentCount}
-            mode="preview"
-            embedded
-            excludeAttachmentIds={inlineAttachmentIds}
-            onChanged={onAttachmentsChanged}
-            notifyError={notifyError}
-            notifySuccess={notifySuccess}
-          />
-        </div>
-      </CommercialDetailCard>
+          ) : null
+        }
+      >
+        <TaskAttachmentsBlock
+          taskId={task.id}
+          initialCount={clipAttachmentCount}
+          mode="preview"
+          embedded
+          excludeAttachmentIds={inlineAttachmentIds}
+          onChanged={onAttachmentsChanged}
+          notifyError={notifyError}
+          notifySuccess={notifySuccess}
+        />
+      </SharedTaskDetailCard>
       {inlinePreview ? (
         <TaskAttachmentPreviewModal
           target={inlinePreview}

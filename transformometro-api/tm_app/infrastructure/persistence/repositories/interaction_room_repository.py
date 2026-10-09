@@ -41,6 +41,7 @@ def _room(row: dict[str, Any]) -> InteractionRoom:
         created_by_user_id=str(row["created_by_user_id"]),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
+        deleted_at=row.get("deleted_at"),
         last_message_preview=_preview(row.get("last_content")),
         last_message_at=row.get("last_message_at"),
         unread_count=int(row.get("unread_count") or 0),
@@ -89,6 +90,7 @@ def _attachment(row: dict[str, Any]) -> InteractionAttachment:
 
 _ROOM_SELECT = f"""
 SELECT r.id, r.processo_id, r.created_by_user_id, r.created_at, r.updated_at,
+       r.deleted_at,
        p.codigo_processo, p.nome_processo,
        m.content AS last_content, m.created_at AS last_message_at
 FROM {_S}.tm_interaction_rooms r
@@ -112,7 +114,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
                     SELECT 1 FROM {_S}.processos
                     WHERE processo_id = %s::uuid AND deletado = FALSE
                 )
-                ON CONFLICT (processo_id) DO UPDATE
+                ON CONFLICT (processo_id) WHERE deleted_at IS NULL DO UPDATE
                     SET updated_at = room.updated_at
                 RETURNING id""",
             (processo_id, created_by_user_id, processo_id),
@@ -122,8 +124,25 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         return self.get(str(row["id"]))
 
     def get(self, room_id: str) -> InteractionRoom | None:
-        row = self.fetch_one(f"{_ROOM_SELECT} WHERE r.id = %s::uuid", (room_id,))
+        """Active room only — soft-deleted rooms are invisible to reads."""
+        row = self.fetch_one(
+            f"{_ROOM_SELECT} WHERE r.id = %s::uuid AND r.deleted_at IS NULL",
+            (room_id,),
+        )
         return _room(row) if row else None
+
+    def soft_delete(self, room_id: str) -> InteractionRoom | None:
+        row = self.execute_returning_one(
+            f"""UPDATE {_S}.tm_interaction_rooms
+                SET deleted_at = NOW(), updated_at = NOW()
+                WHERE id = %s::uuid AND deleted_at IS NULL
+                RETURNING id""",
+            (room_id,),
+        )
+        if row is None:
+            return None
+        full = self.fetch_one(f"{_ROOM_SELECT} WHERE r.id = %s::uuid", (room_id,))
+        return _room(full) if full else None
 
     def list_rooms(
         self,
@@ -163,6 +182,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
                       )
                     LIMIT 1
                 ) mentioned ON TRUE
+                WHERE base.deleted_at IS NULL
                 ORDER BY COALESCE(base.last_message_at, base.updated_at) DESC, base.id DESC""",
             (viewer, viewer, viewer, viewer),
         )
@@ -456,7 +476,9 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
             return None
         existing = self.by_process.get(processo_id)
         if existing:
-            return self.rooms[existing]
+            room = self.rooms[existing]
+            if room.deleted_at is None:
+                return room
         now = datetime.now(timezone.utc)
         room = InteractionRoom(
             id=str(uuid4()),
@@ -472,7 +494,22 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         return room
 
     def get(self, room_id: str) -> InteractionRoom | None:
-        return self.rooms.get(room_id)
+        room = self.rooms.get(room_id)
+        if room is None or room.deleted_at is not None:
+            return None
+        return room
+
+    def soft_delete(self, room_id: str) -> InteractionRoom | None:
+        room = self.rooms.get(room_id)
+        if room is None or room.deleted_at is not None:
+            return None
+        deleted = replace(
+            room,
+            deleted_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        self.rooms[room_id] = deleted
+        return deleted
 
     def list_rooms(
         self,
@@ -480,7 +517,11 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         viewer_user_id: str | None = None,
         inbox_filter: str = "all",
     ) -> list[InteractionRoom]:
-        rooms = sorted(self.rooms.values(), key=lambda room: room.updated_at or datetime.min, reverse=True)
+        rooms = sorted(
+            (room for room in self.rooms.values() if room.deleted_at is None),
+            key=lambda room: room.updated_at or datetime.min,
+            reverse=True,
+        )
         visible: list[InteractionRoom] = []
         for room in rooms:
             unread, mentioned = self._signals(room.id, viewer_user_id)

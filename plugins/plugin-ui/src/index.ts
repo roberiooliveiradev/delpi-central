@@ -98,6 +98,8 @@ export {
 } from "./components/feedback/PluginErrorBoundary";
 /** Hosts consomem chrome de tarefas sem persistência no kit. */
 export {
+  TaskCardList,
+  TaskDetailCard,
   TaskEditorFrame,
   TaskEmptyState,
   TaskItemsTable,
@@ -107,6 +109,9 @@ export {
   buildTaskWorkspaceHighlights,
 } from "./components/tasks";
 export type {
+  TaskCardListProps,
+  TaskDetailCardProps,
+  TaskDetailField,
   TaskItemActionFlags,
   TaskItemPresentation,
   TaskWorkspaceHighlight,

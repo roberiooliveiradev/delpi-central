@@ -1,3 +1,5 @@
+export { TaskCardList, type TaskCardListProps } from "./TaskCardList";
+export { TaskDetailCard, type TaskDetailCardProps, type TaskDetailField } from "./TaskDetailCard";
 export { TaskEditorFrame, type TaskEditorFrameProps, type TaskEditorReviewRow } from "./TaskEditorFrame";
 export { TaskEmptyState, type TaskEmptyStateProps } from "./TaskEmptyState";
 export { TaskItemsTable, type TaskItemsTableProps } from "./TaskItemsTable";

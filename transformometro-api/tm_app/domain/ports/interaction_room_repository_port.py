@@ -14,6 +14,8 @@ class InteractionRoomRepositoryPort(Protocol):
 
     def get(self, room_id: str) -> InteractionRoom | None: ...
 
+    def soft_delete(self, room_id: str) -> InteractionRoom | None: ...
+
     def list_rooms(
         self,
         *,

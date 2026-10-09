@@ -18,14 +18,22 @@ describe("Process experience parity wiring", () => {
     expect(shell).toMatch(/tm-processo-workspace--flat/);
   });
 
-  it("lista move filtros primários e presentation controls para o Hero", () => {
+  it("lista mantém Hero compacto e controles na região do browser", () => {
     const page = readFileSync(join(root, "ui/pages/ProcessesPage.tsx"), "utf8");
-    expect(page).toMatch(/highlights=\{heroHighlights\}/);
-    expect(page).toMatch(/tm-processo-list-hero-controls/);
-    expect(page).toMatch(/hideBrowseToggle/);
-    expect(page).toMatch(/hideRecordCount/);
-    expect(page).toMatch(/hideListToolbar/);
-    expect(page).toMatch(/ProcessListPresentationControls/);
+    const browser = readFileSync(join(root, "ui/processes/ProcessFolderBrowser.tsx"), "utf8");
+    // Hero compacto: sem bloco de controles nem tile de contagem.
+    expect(page).not.toMatch(/tm-processo-list-hero-controls/);
+    expect(page).not.toMatch(/heroHighlights/);
+    // Controles pertencem ao browser: toggle, filtros, toolbar e contagem únicos.
+    expect(page).not.toMatch(/hideBrowseToggle/);
+    expect(page).not.toMatch(/hideListToolbar/);
+    expect(page).not.toMatch(/hideRecordCount/);
+    expect(page).toMatch(/filters=\{/);
+    expect(browser).toMatch(/ProcessListPresentationControls/);
+    expect(browser).toMatch(/tm-processo-browser__count/);
+    // PageHeader não recebe mais children de controles.
+    const headerBlock = page.slice(page.indexOf("<PageHeader"), page.indexOf("<StatusAlerts"));
+    expect(headerBlock).not.toMatch(/SegmentToggle|SelectField|NativeTextControl/);
   });
 
   it("workspace overflow usa menu canônico e highlights factuais do chrome", () => {

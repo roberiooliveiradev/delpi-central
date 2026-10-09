@@ -32,10 +32,13 @@ import {
   transformometroUserLinkTitle,
 } from "../../utils/userProfileLinks";
 import { searchDirectoryUsers } from "../../data/api/transformometroMeetingMinutesApi";
+import { usePortalSessionAccess } from "../../state/portalChrome";
+import { InteractionRoomMoreMenu } from "../../components/interaction-rooms/InteractionRoomMoreMenu";
 import {
   INTERACTION_MESSAGE_MAX_LENGTH,
   deleteInteractionAttachment,
   deleteInteractionMessage,
+  deleteInteractionRoom,
   downloadInteractionAttachment,
   editInteractionMessage,
   getInteractionRoom,
@@ -136,6 +139,8 @@ type PreviewTarget = {
 
 export function InteractionRoomsPage({ getAccessToken, roomId, onNavigate }: Props) {
   const confirm = useConfirm();
+  const { canManage } = usePortalSessionAccess();
+  const [deletingRoom, setDeletingRoom] = useState(false);
   const mentionsRef = useRef<InteractionMentionDto[]>([]);
   const [rooms, setRooms] = useState<InteractionRoomDto[] | null>(null);
   const [roomsError, setRoomsError] = useState<string | null>(null);
@@ -626,6 +631,32 @@ export function InteractionRoomsPage({ getAccessToken, roomId, onNavigate }: Pro
     }
   }
 
+  async function onDeleteRoom() {
+    const id = roomId?.trim();
+    if (!canManage || !id || deletingRoom) return;
+    const confirmed = await confirm({
+      title: "Excluir sala de interação",
+      message:
+        "A sala sairá da sua lista de conversas. O processo não é excluído e uma nova sala pode ser aberta depois.",
+      confirmLabel: "Excluir sala",
+      cancelLabel: "Cancelar",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+    setDeletingRoom(true);
+    try {
+      await deleteInteractionRoom(id, getAccessToken);
+      setRoom(null);
+      setMessages(null);
+      onNavigate(TRANSFORMOMETRO_ROUTES.interactionRooms);
+      void loadRooms();
+    } catch (reason) {
+      setActionError(errorText(reason, "Não foi possível excluir a sala."));
+    } finally {
+      setDeletingRoom(false);
+    }
+  }
+
   function openCreateTaskFromMessage(message: InteractionRoomMessage) {
     const source = (messages ?? []).find((item) => item.id === message.id);
     if (!source || source.deleted_at) return;
@@ -986,6 +1017,15 @@ export function InteractionRoomsPage({ getAccessToken, roomId, onNavigate }: Pro
           clearInlinePending();
         }}
         portalScopeClassName={TM_PORTAL_SCOPE}
+        headerMenu={
+          roomId && canManage ? (
+            <InteractionRoomMoreMenu
+              portalScopeClassName={TM_PORTAL_SCOPE}
+              deleteDisabled={deletingRoom}
+              onDelete={() => void onDeleteRoom()}
+            />
+          ) : undefined
+        }
         draft={draft}
         onDraftChange={setDraft}
         onSubmit={(markdown) =>

@@ -43,4 +43,23 @@ describe("InteractionRoomsPage", () => {
     expect(source).not.toMatch(/WebSocket|commercial\.interaction|commercial\.access/);
     expect(source).not.toMatch(/Renomear conversa|Excluir conversa/);
   });
+
+  it("expõe excluir sala no menu da topbar, gated por canManage e com confirmação", () => {
+    expect(source).toMatch(/InteractionRoomMoreMenu/);
+    expect(source).toMatch(/headerMenu=/);
+    expect(source).toMatch(/canManage/);
+    expect(source).toMatch(/deleteInteractionRoom/);
+    expect(source).toMatch(/Excluir sala de interação/);
+    // Confirmação destrutiva via provider, nunca window.confirm.
+    expect(source).not.toMatch(/window\.confirm/);
+    // Menu só renderiza quando canManage.
+    expect(source).toMatch(/roomId && canManage \? \(/);
+    const menu = readFileSync(
+      join(dir, "../../components/interaction-rooms/InteractionRoomMoreMenu.tsx"),
+      "utf8",
+    );
+    expect(menu).toMatch(/aria-haspopup="menu"/);
+    expect(menu).toMatch(/destructive/);
+    expect(menu).toMatch(/Excluir sala/);
+  });
 });

@@ -4,7 +4,8 @@ import {
   ScopeChipBar,
   TaskEditorFrame,
   TaskEmptyState,
-  TaskItemsTable,
+  TaskCardList,
+  TaskDetailCard,
   TaskSearchField,
   TaskWorkspacePage,
   UserDirectoryPicker,
@@ -354,14 +355,19 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
             ) : null}
           </TaskEmptyState>
         ) : (
-          <TaskItemsTable
-            items={rows}
-            refreshing={refreshing}
-            onOpen={onOpen}
-            onEdit={openEdit}
-            onComplete={(item) => void onComplete(item)}
-            onCancel={(item) => void onCancel(item)}
-          />
+          <TaskCardList ariaBusy={refreshing}>
+            {rows.map((item) => (
+              <TaskDetailCard
+                key={item.id}
+                item={item}
+                readOnly={item.statusTone === "success"}
+                onOpen={onOpen}
+                onEdit={openEdit}
+                onComplete={(row) => void onComplete(row)}
+                onCancel={(row) => void onCancel(row)}
+              />
+            ))}
+          </TaskCardList>
         )}
       </TaskWorkspacePage>
     </TransformometroShell>

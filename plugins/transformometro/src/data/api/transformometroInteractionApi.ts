@@ -98,6 +98,12 @@ export function getInteractionRoom(roomId: string, getAccessToken?: () => string
   return request<InteractionRoomDto>(`/interaction-rooms/${roomId}`, getAccessToken);
 }
 
+export function deleteInteractionRoom(roomId: string, getAccessToken?: () => string | undefined) {
+  return request<InteractionRoomDto>(`/interaction-rooms/${roomId}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
 export function listInteractionMessages(
   roomId: string,
   getAccessToken?: () => string | undefined,

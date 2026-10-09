@@ -86,6 +86,18 @@ def open_interaction_room(request: Request, body: OpenInteractionRoomBody):
         return _handle(exc)
 
 
+@router.delete(
+    "/interaction-rooms/{room_id}",
+    operation_id="delete_transformometro_interaction_room",
+)
+def delete_interaction_room(request: Request, room_id: str):
+    try:
+        room = _rooms.delete_room(request.state.user, room_id)
+        return ok(room.to_dict())
+    except Exception as exc:
+        return _handle(exc)
+
+
 @router.get("/interaction-rooms/{room_id}", operation_id="get_transformometro_interaction_room")
 def get_interaction_room(request: Request, room_id: str):
     try:
