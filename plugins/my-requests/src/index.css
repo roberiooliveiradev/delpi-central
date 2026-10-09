@@ -326,10 +326,11 @@
 
 .dashboard-my-requests .my-requests-detail-phase-title {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  color: var(--delpi-ui-fg, inherit);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--my-requests-text-muted, var(--delpi-ui-fg, inherit));
 }
 
 .dashboard-my-requests .my-requests-detail-reason .my-requests-state-banner,
@@ -390,6 +391,103 @@
   gap: 0.75rem;
   min-width: 0;
   width: 100%;
+}
+
+/* Meta da solicitação — faixa sutil inline (tipo · filial · solicitante · data) */
+.dashboard-my-requests .my-requests-detail-meta {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--my-requests-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--my-requests-surface) 88%, var(--my-requests-accent) 4%);
+}
+
+.dashboard-my-requests .my-requests-detail-meta .delpi-ui-detail-grid,
+.dashboard-my-requests .my-requests-detail-meta .my-requests-detail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.6rem;
+}
+
+.dashboard-my-requests .my-requests-detail-meta .delpi-ui-detail-grid__item,
+.dashboard-my-requests .my-requests-detail-meta .my-requests-detail-grid__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-detail-meta .delpi-ui-detail-grid__item--wide,
+.dashboard-my-requests .my-requests-detail-meta .my-requests-detail-grid__item--wide {
+  grid-column: auto;
+}
+
+.dashboard-my-requests .my-requests-detail-meta dt,
+.dashboard-my-requests .my-requests-detail-meta .delpi-ui-detail-grid__label,
+.dashboard-my-requests .my-requests-detail-meta .my-requests-detail-grid__label {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--my-requests-text-muted);
+  white-space: nowrap;
+}
+
+.dashboard-my-requests .my-requests-detail-meta dd,
+.dashboard-my-requests .my-requests-detail-meta .delpi-ui-detail-grid dd {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--my-requests-text);
+}
+
+/* Toolbar de ações — junto ao chamado, sem card */
+.dashboard-my-requests .my-requests-detail-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--my-requests-border) 85%, var(--my-requests-accent) 22%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--my-requests-surface) 92%, var(--my-requests-accent) 5%);
+}
+
+.dashboard-my-requests .my-requests-detail-actions__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--my-requests-text-muted);
+  margin-right: 0.25rem;
+}
+
+.dashboard-my-requests .my-requests-detail-actions .delpi-ui-form-actions {
+  margin-block-start: 0;
+  gap: 0.5rem;
+  column-gap: 0.5rem;
+}
+
+.dashboard-my-requests .my-requests-detail-actions .delpi-ui-empty-state,
+.dashboard-my-requests .my-requests-detail-actions [class*="empty-state"] {
+  padding: 0.15rem 0;
+  margin: 0;
+}
+
+/* Conversa + documentos lado a lado logo abaixo do chamado */
+.dashboard-my-requests .my-requests-detail-comms {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--my-requests-section-gap);
+  align-items: start;
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-detail-comms__docs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--my-requests-section-gap);
+  min-width: 0;
 }
 
 /*
@@ -479,6 +577,12 @@
 .dashboard-my-requests .my-requests-comment-attachments {
   margin-top: 0.35rem;
   min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .dashboard-my-requests .my-requests-detail-comms {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {

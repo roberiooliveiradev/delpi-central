@@ -58,11 +58,13 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   detail: {
     section:
-      "Resumo do que foi pedido: tipo, status, filial e solicitante. Os dados específicos do tipo e os documentos do pedido ficam nesta mesma fase.",
+      "Faixa discreta logo abaixo do conteúdo do chamado com tipo, status, filial, solicitante e data de abertura.",
     requestPhase:
-      "Tudo o que foi informado ao abrir a solicitação — dados gerais, formulário do tipo e documentos anexados ao pedido.",
+      "Conteúdo do chamado: o que foi pedido (título, descrição ou formulário do tipo), a faixa de dados da solicitação e a barra de ações.",
+    commsPhase:
+      "Conversa com quem atende e os documentos ligados à solicitação, lado a lado logo abaixo do chamado.",
     servicePhase:
-      "Área de atendimento: progresso, ações disponíveis, conversa sobre a solicitação e documentos gerados na execução.",
+      "Progresso do atendimento: etapas da jornada e percentual de andamento.",
     historyPhase:
       "Registro cronológico do que aconteceu na solicitação. A linha do tempo só observa fatos; não é o lugar para conversar.",
     actions:

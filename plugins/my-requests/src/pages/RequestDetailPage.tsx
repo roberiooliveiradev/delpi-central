@@ -1,4 +1,4 @@
-import { ActionButton, PluginErrorBoundary } from "@delpi/plugin-ui/index";
+import { ActionButton, HelpTooltip, PluginErrorBoundary } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useMyRequestsFloatingNotice } from "../app/MyRequestsFloatingNoticeProvider";
@@ -280,9 +280,27 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 <GeneralRequestPayloadPanel payload={request.payload} />
               ) : null}
 
-              <MyRequestsSectionCard
-                title="Dados da solicitação"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.section}
+
+
+              {request.type_code === "invoice-issuance" ? (
+                <InvoiceIssuancePayloadPanel payload={request.payload} />
+              ) : null}
+
+              {request.type_code === "process-issue" ? (
+                <ProcessIssuePayloadPanel
+                  requestId={request.id}
+                  payload={request.payload}
+                />
+              ) : null}
+
+              <SchemaPayloadCard
+                requestType={requestType}
+                payload={request.payload}
+              />
+
+              <div
+                className="my-requests-detail-meta"
+                aria-label="Dados da solicitação"
               >
                 <DetailFields
                   fields={[
@@ -322,29 +340,81 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                     },
                   ]}
                 />
-              </MyRequestsSectionCard>
+              </div>
 
-              {request.type_code === "invoice-issuance" ? (
-                <InvoiceIssuancePayloadPanel payload={request.payload} />
-              ) : null}
-
-              {request.type_code === "process-issue" ? (
-                <ProcessIssuePayloadPanel
-                  requestId={request.id}
-                  payload={request.payload}
+              <div
+                className="my-requests-detail-actions"
+                data-help="detail-actions"
+              >
+                <HelpTooltip
+                  content={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}
+                  ariaLabel="Ajuda: ações da solicitação"
+                  wrap
+                  placement="bottom"
+                >
+                  <span
+                    className="my-requests-detail-actions__label"
+                    tabIndex={0}
+                  >
+                    Ações
+                  </span>
+                </HelpTooltip>
+                <ActionBar
+                  actions={request.allowed_actions || []}
+                  busy={busy}
+                  onAction={onAction}
                 />
-              ) : null}
+              </div>
 
-              <SchemaPayloadCard
-                requestType={requestType}
-                payload={request.payload}
-              />
+            </section>
 
-              <AttachmentsPanel
-                requestId={requestId}
-                canUpload={capabilities?.can_upload_attachment ?? false}
-                refreshKey={timelineEpoch}
-              />
+            <section
+              className="my-requests-detail-phase"
+              aria-labelledby="my-requests-phase-comms"
+            >
+              <h2
+                id="my-requests-phase-comms"
+                className="my-requests-detail-phase-title"
+              >
+                Conversa e documentos
+              </h2>
+              <div className="my-requests-detail-comms">
+                <PluginErrorBoundary
+                  prefix="mr"
+                  resetKey={requestId}
+                  labels={{
+                    title: "Não foi possível carregar os comentários",
+                    message:
+                      "A conversa encontrou um erro inesperado. Tente de novo ou recarregue a página.",
+                    retry: "Tentar de novo",
+                  }}
+                  onError={(error) =>
+                    console.error("[my-requests] comentários", error)
+                  }
+                >
+                  <CommentsPanel
+                    requestId={requestId}
+                    canComment={capabilities?.can_comment ?? false}
+                    conversationFrozen={Boolean(capabilities?.conversation_frozen)}
+                    refreshKey={timelineEpoch}
+                  />
+                </PluginErrorBoundary>
+                <div className="my-requests-detail-comms__docs">
+                  <AttachmentsPanel
+                    requestId={requestId}
+                    canUpload={capabilities?.can_upload_attachment ?? false}
+                    refreshKey={timelineEpoch}
+                  />
+                  <ArtifactsPanel
+                    requestId={requestId}
+                    canUpload={capabilities?.can_upload_artifact ?? false}
+                    refreshKey={timelineEpoch}
+                    defaultArtifactKind={
+                      request.type_code === "invoice-issuance" ? "invoice_pdf" : "generic"
+                    }
+                  />
+                </div>
+              </div>
             </section>
 
             <section
@@ -383,46 +453,6 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 </MyRequestsSectionCard>
               ) : null}
 
-              <MyRequestsSectionCard
-                title="Ações disponíveis"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}
-              >
-                <ActionBar
-                  actions={request.allowed_actions || []}
-                  busy={busy}
-                  onAction={onAction}
-                />
-              </MyRequestsSectionCard>
-
-              <PluginErrorBoundary
-                prefix="mr"
-                resetKey={requestId}
-                labels={{
-                  title: "Não foi possível carregar os comentários",
-                  message:
-                    "A conversa encontrou um erro inesperado. Tente de novo ou recarregue a página.",
-                  retry: "Tentar de novo",
-                }}
-                onError={(error) =>
-                  console.error("[my-requests] comentários", error)
-                }
-              >
-                <CommentsPanel
-                  requestId={requestId}
-                  canComment={capabilities?.can_comment ?? false}
-                  conversationFrozen={Boolean(capabilities?.conversation_frozen)}
-                  refreshKey={timelineEpoch}
-                />
-              </PluginErrorBoundary>
-
-              <ArtifactsPanel
-                requestId={requestId}
-                canUpload={capabilities?.can_upload_artifact ?? false}
-                refreshKey={timelineEpoch}
-                defaultArtifactKind={
-                  request.type_code === "invoice-issuance" ? "invoice_pdf" : "generic"
-                }
-              />
             </section>
 
             <section

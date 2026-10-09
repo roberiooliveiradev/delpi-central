@@ -63,7 +63,7 @@ describe("RequestDetailPage — montagem do chamado", () => {
     expect(src).toContain('request.type_code === "general-request"');
     expect(src).toContain("GeneralRequestPayloadPanel");
     const idxPanel = src.indexOf('request.type_code === "general-request"');
-    const idxMeta = src.indexOf('title="Dados da solicitação"');
+    const idxMeta = src.indexOf('aria-label="Dados da solicitação"');
     expect(idxPanel).toBeGreaterThan(-1);
     expect(idxMeta).toBeGreaterThan(idxPanel);
   });

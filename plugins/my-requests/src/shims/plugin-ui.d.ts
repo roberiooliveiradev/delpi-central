@@ -657,6 +657,20 @@ declare module "@delpi/plugin-ui/index" {
 
   export function HintAction(props: HintActionProps): ReactNode;
 
+  export type HelpTooltipPlacement = "top" | "bottom";
+  export type HelpTooltipTrigger = "label" | "icon";
+  export type HelpTooltipProps = {
+    content: string;
+    ariaLabel?: string;
+    className?: string;
+    wrap?: boolean;
+    placement?: HelpTooltipPlacement;
+    trigger?: HelpTooltipTrigger;
+    suppressed?: boolean;
+    children?: ReactNode;
+  };
+  export function HelpTooltip(props: HelpTooltipProps): ReactNode;
+
   export type MessageThreadItem = {
     id: string;
     kind: string;

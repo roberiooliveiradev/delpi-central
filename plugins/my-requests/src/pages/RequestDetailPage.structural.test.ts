@@ -38,7 +38,7 @@ describe("RequestDetailPage structural", () => {
     expect(page).toMatch(/allowed_actions/);
   });
 
-  it("organiza DOM por fases Solicitação → Atendimento → Histórico", () => {
+  it("organiza o detalhe como chamado → conversa/documentos → atendimento → histórico", () => {
     const page = read("pages/RequestDetailPage.tsx");
     const css = read("index.css");
     const attachments = read("components/AttachmentsPanel.tsx");
@@ -47,31 +47,37 @@ describe("RequestDetailPage structural", () => {
     expect(page).toMatch(/my-requests-detail-phase/);
     expect(page).not.toMatch(/my-requests-detail-service-grid/);
     expect(page).toMatch(/O que foi solicitado/);
+    expect(page).toMatch(/Conversa e documentos/);
     expect(page).toMatch(/Atendimento/);
     expect(page).toMatch(/Histórico/);
     expect(page).not.toMatch(/my-requests-detail-split/);
     expect(page).not.toMatch(/my-requests-detail-history/);
-    expect(page).not.toMatch(/my-requests-detail-docs/);
     expect(css).toMatch(/my-requests-detail-phase/);
-    expect(css).not.toMatch(/my-requests-detail-service-grid/);
+    expect(css).toMatch(/my-requests-detail-meta/);
+    expect(css).toMatch(/my-requests-detail-actions/);
+    expect(css).toMatch(/my-requests-detail-comms/);
     expect(css).toMatch(/my-requests-detail-conversation/);
     expect(css).not.toMatch(/my-requests-detail-split/);
 
     const requestPhase = indexOfOrFail(page, "my-requests-phase-request");
-    const attachmentsIdx = indexOfOrFail(page, "<AttachmentsPanel");
-    const servicePhase = indexOfOrFail(page, "my-requests-phase-service");
+    const metaIdx = indexOfOrFail(page, "my-requests-detail-meta");
     const actionBarIdx = indexOfOrFail(page, "<ActionBar");
+    const commsPhase = indexOfOrFail(page, "my-requests-phase-comms");
     const commentsIdx = indexOfOrFail(page, "<CommentsPanel");
+    const attachmentsIdx = indexOfOrFail(page, "<AttachmentsPanel");
     const artifactsIdx = indexOfOrFail(page, "<ArtifactsPanel");
+    const servicePhase = indexOfOrFail(page, "my-requests-phase-service");
     const historyPhase = indexOfOrFail(page, "my-requests-phase-history");
     const timelineIdx = indexOfOrFail(page, "<TimelinePanel");
 
-    expect(requestPhase).toBeLessThan(attachmentsIdx);
-    expect(attachmentsIdx).toBeLessThan(servicePhase);
-    expect(servicePhase).toBeLessThan(actionBarIdx);
-    expect(actionBarIdx).toBeLessThan(commentsIdx);
-    expect(commentsIdx).toBeLessThan(artifactsIdx);
-    expect(artifactsIdx).toBeLessThan(historyPhase);
+    // chamado + meta + ações juntos; conversa/documentos logo abaixo
+    expect(requestPhase).toBeLessThan(metaIdx);
+    expect(metaIdx).toBeLessThan(actionBarIdx);
+    expect(actionBarIdx).toBeLessThan(commsPhase);
+    expect(commentsIdx).toBeLessThan(attachmentsIdx);
+    expect(attachmentsIdx).toBeLessThan(artifactsIdx);
+    expect(artifactsIdx).toBeLessThan(servicePhase);
+    expect(servicePhase).toBeLessThan(historyPhase);
     expect(historyPhase).toBeLessThan(timelineIdx);
 
     expect(attachments).toMatch(/Documentos da solicitação/);
