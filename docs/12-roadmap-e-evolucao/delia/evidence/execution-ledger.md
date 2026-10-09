@@ -12784,3 +12784,73 @@ security files); new: 2 synthesis-tolerance + 3 owner_hint cases
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
   C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 6.161. C3-GROUNDED-SYNTHESIS-DEPLOY-VERIFY-01 — deploy gate + live smoke verification of R1/R3 (+R2 regression)
+
+EXECUTOR: Devin (senior executor / deployment verification).
+TASK = C3-GROUNDED-SYNTHESIS-DEPLOY-VERIFY-01 — implantar e validar
+em produção o fix `15f4c0a0ec` (R1 synthesis tolerance, R3 owner
+precondition hint) e confirmar a regressão mínima de R2.
+
+### Reanchor + deployment gate
+
+HEAD == `origin/main` == `32661f98dd` (== LAST_KNOWN_HEAD). Worktree
+dirty with unrelated user work — preserved; `EXECUTION_DRIFT = NO`.
+
+srv-api checkout = `32661f98dd` == origin/main. Running container
+`delpi-delia-api` (healthy) on image `sha256:ac8de5d57bef`. Source
+parity proven by md5 — `orchestration.py`, `specialist_interop.py`,
+`handle_interactive_turn.py` inside the container are byte-identical
+to the checkout containing `15f4c0a0ec`.
+
+`DEPLOYMENT_REQUIRED = NO` — the fix is already integrated in the
+running image (a concurrent rebuild/deployed checkout superseded
+`323c6ddfeb11`). No rebuild/restart performed.
+`DEPLOYMENT_PERFORMED = NO` (not needed);
+`ROLLBACK_READY = N/A` (no mutation).
+
+### Live smoke (in-process eval on deployed runtime, real providers)
+
+- SA_VISTA_NULL (R1): `Quais playlists de TV existem atualmente?`
+  → `synthesis decision=synthesized` — `description: None` skipped,
+  selection rendered "- teste — True — 1080p"; GROUNDED + OBSERVATION
+  + provenance `tv-dashboard-api`. TECHNICAL_DUMP = AVOIDED.
+  VALID_SCALAR_FIELDS = RENDERED; NULL_FIELDS = SKIPPED. `PASS`.
+- SB_FALLBACK (R1, controlled harness): synthesis stage poisoned to
+  return invalid output → `synthesis decision=fallback
+  reason=proposal_absent` → deterministic verbatim render, no
+  literal `None` noise, GROUNDED + provenance preserved.
+  SAFE_DETERMINISTIC_FALLBACK = PASS; no fabricated values.
+- SC_GLPI (R3): `Liste meus chamados abertos no helpdesk.` →
+  `teo.helpdesk_read args={"action":"tickets","status":"open"}` →
+  owner `glpi_link_required` (409) → user-facing:
+  "A fonte informou: Helpdesk BFF error: glpi_link_required."
+  Non-verbose hint, URL-free, verbatim owner message.
+  OWNER_HINT_PROPAGATION = PASS; OWNER_PRECONDITION_HANDLING = PASS;
+  no auto-link, no authz bypass.
+- SD_XOWNER (R2 regression): cross-owner comparison →
+  `native_assessment=sufficient` then `foreign_selection` selected
+  `davi.discover_delpi_information` (mode=corroborate,
+  MAX_FOREIGN_GROUPS=1); native `delpi.search_products` invoked;
+  provenance sources = [DELPI, api-delpi];
+  `comparison_verdict=inconclusive` → honest "Comparação
+  inconclusiva." NATIVE_OWNER_FIRST = PASS; PROVENANCE = PRESERVED;
+  NO_FABRICATED_CORRELATION = PASS.
+
+MATERIAL_ACT_CALLS = 0; MATERIAL_SIDE_EFFECTS = 0. Real subject token
+(scope=openid profile email); no credentials printed. Container
+remains `healthy`; probe script removed.
+
+### Residuals
+
+- `GLPI_LINK_USER_GUIDANCE = PARTIAL` — unchanged: friendly phrasing
+  still requires a TÉO owner-contract `user_message` field
+  (OWNER_FOLLOWUP, contract evolution — not DÉLIA-owned).
+- `proposal_absent` remains the intended safe fallback; optional
+  bounded retry is a future product decision.
+- `SHARED_AUTH_JWKS_RESIDUAL = OWNER_FOLLOWUP_REQUIRED` — unchanged.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO;
+  C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_INTEGRATION_ACCEPTANCE_REVIEW /
+       RETURN_TO_ARCHITECTURE_COORDINATION
