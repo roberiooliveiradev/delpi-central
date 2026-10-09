@@ -193,13 +193,13 @@ A Visão geral é a superfície analítica financeira do Portal. O padrão visua
 
 ## Invariantes
 
-1. `STOCK_CLOSED != PACKAGE_SENT != MONTHLY_CLOSING_COMPLETED`
+1. `STOCK_CLOSED != PACKAGE_SUBMITTED_FOR_REVIEW != REVIEW_ACCEPTED != MONTHLY_CLOSING_COMPLETED`
 2. `ATTACHED != VALIDATED`
 3. ausência/erro de source != zero
 4. pre-cutoff dependente != final
 5. último upload != auto-send
 6. Finalizar != Enviar
-7. PACKAGE_SENT é imutável
+7. PackageVersion submetida para análise não é alterada in-place
 8. mudança mestre não altera snapshot
 9. listas operacionais são configuráveis
 10. IA sugere/explica; humano decide
