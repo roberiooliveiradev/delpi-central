@@ -1,6 +1,19 @@
 # 12 — P5 — Pacote, Finalização e Envio
 
-**TARGET / VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PARTIAL / PACKAGE_FINALIZATION_READY / SEND_PENDING_E04_T04**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED          = PASS
+PACKAGE_CONTRACT_DEFINED     = PASS
+SEND_CONTRACT_DEFINED        = PENDING_E04_T04
+AUTHZ_DEFINED                = PASS
+PLUGIN_UI_REUSE_DEFINED      = PASS
+STATES_DEFINED               = PASS
+TEST_MATRIX_DEFINED          = PASS
+```
 
 > Este documento fecha P5 no nível de produto, experiência, arquitetura de informação, estados, AuthZ visual, reuso do `@delpi/plugin-ui`, Help e aceite visual. Não autoriza runtime. O slice de envio real permanece bloqueado por E04/T04.
 
@@ -45,6 +58,35 @@ UI_VISIBILITY != AUTHORIZATION
 - Read/ack do destinatário não bloqueia a V1.
 - Canal de envio não pode ser assumido.
 - Se envio real não estiver implementado, a UI não apresenta ação/canal fictício.
+
+
+## Responsabilidade, owners e non-goals
+
+| Capability/dado | Owner |
+|---|---|
+| recipient package / version / finalization | P5 / `controllership-finance-api` |
+| blockers/readiness inputs | P2/P3/P4 owners, compostos por P5 |
+| esclarecimentos do pacote | P5 |
+| histórico/versionamento do pacote | P5 |
+| effective permissions | Core |
+| user-facing notifications | Core Notifications / Minha DELPI capability |
+| entrega real do pacote | **owner/capability ainda não provado — E04/T04** |
+| chrome visual | `@delpi/plugin-ui` |
+
+Não pertence a P5:
+- sacramentar estoque;
+- reabrir P3 após `STOCK_CLOSED`;
+- transformar notification inbox em proof of delivery;
+- inventar e-mail/Teams/pasta/download como canal;
+- criar permission por destinatário/envio;
+- alterar pacote enviado in-place;
+- force completion.
+
+Decisão E02 aplicada:
+- `STOCK_CLOSED` é terminal no lifecycle P3 do Portal V1;
+- uma correção posterior do owner não reabre P3;
+- P5 preserva histórico e usa complemento/nova versão quando seu próprio lifecycle exigir correção pós-envio.
+
 
 ## Lifecycle do pacote
 
@@ -294,8 +336,33 @@ A UI não edita silenciosamente uma versão finalizada.
 
 ```text
 Q22 = PENDING_IMPLEMENTATION
-E04 = PENDING_IMPLEMENTATION_CONFIRMATION
-T04 = TO_INVENTORY_BEFORE_IMPLEMENTATION
+E04 = DOCUMENTATION/INTEGRATION PENDING
+T04 = TO_INVENTORY
+CORE_NOTIFICATION_CAPABILITY = PROVEN
+PACKAGE_DELIVERY_CAPABILITY = NOT_PROVEN
+```
+
+Rebaseline de 09/10/2026 no HEAD da plataforma:
+
+- Core possui `POST /integrations/notifications`;
+- endpoint é S2S protegido por service token e rate limit;
+- suporta recipients, categorias, action target, sourceApp e filtros por effective permissions;
+- Core mantém inbox/histórico/preferências do usuário.
+
+Isso prova a **capability de notificação da Minha DELPI**, mas não prova:
+- transporte do documento/pacote;
+- canal formal de entrega;
+- proof of delivery;
+- destinatário externo/corporativo do package;
+- retry idempotente de entrega documental;
+- aceite/comprovante;
+- tracking necessário a `PACKAGE_SENT`.
+
+Invariante:
+
+```text
+NOTIFICATION_DISPATCHED
+!= PACKAGE_SENT
 ```
 
 Antes de capability comprovada:
@@ -341,6 +408,77 @@ Eventos mínimos:
 Usar timeline auditável.
 
 Pacote enviado e versões antigas permanecem read-only.
+
+## Contratos TARGET — MFE → BFF → owners
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → P2/P3/P4 read contracts
+   → Core effective permissions
+   → Core Notifications para comunicação user-facing quando aplicável
+   → PACKAGE DELIVERY OWNER = PENDING E04/T04
+```
+
+Operações semânticas já fechadas:
+
+| Operação | Estado |
+|---|---|
+| listRecipientPackages | DEFINED |
+| getRecipientPackage | DEFINED |
+| finalizePackage | DEFINED |
+| reopenFinalizedPackageBeforeSend | DEFINED |
+| createComplementOrNewVersion | DEFINED |
+| listClarifications | DEFINED |
+| resolveClarification | DEFINED |
+| getPackageHistory | DEFINED |
+| deriveMonthlyClosingCompletion | DEFINED |
+| notifyUserAboutPackageEvent | DEFINED at capability level via Core Notifications |
+| sendPackage | **PENDING OWNER/CHANNEL/PROOF E04/T04** |
+
+### Finalization contract
+
+`finalizePackage`:
+- exige READY_TO_FINALIZE;
+- cria snapshot/version imutável;
+- registra actor/timestamp;
+- não chama delivery;
+- não produz PACKAGE_SENT.
+
+### Send contract — boundary congelada, binding pendente
+
+Já é canônico:
+
+```text
+PACKAGE_FINALIZED
+→ proven delivery capability
+→ delivery outcome/proof
+→ PACKAGE_SENT
+```
+
+Mas ainda não é canônico:
+- owner do delivery;
+- protocol/channel;
+- payload/attachment transfer;
+- idempotency key;
+- retry semantics;
+- proof structure;
+- failure/reconciliation behavior.
+
+Portanto nenhum endpoint físico `/send` deve ser congelado antes de E04/T04.
+
+### AuthZ
+
+Toda leitura/ação exige:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND resource_scope / ownership
+AND business_rule
+```
+
+A futura operação de envio também deverá revalidar actor + package state + recipient + capability de delivery no backend.
 
 ## Reuso obrigatório de `@delpi/plugin-ui`
 
@@ -431,7 +569,7 @@ Quando uma source/recipient falhar:
 - não elevar competência para completa;
 - não converter pacote desconhecido em “não aplicável”.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 
 - não transformar source indisponível em blocker resolvido;
 - não produzir READY_TO_FINALIZE por ausência de dados;
@@ -651,6 +789,49 @@ Aceite:
 - keyboard/focus;
 - Help.
 
+## Scripts e artefatos auxiliares PLANNED
+
+Não criar durante a FASE A.
+
+```text
+validate-p5-package-lifecycle
+- FINALIZE != SEND
+- PACKAGE_SENT immutable
+- recipient siblings independent
+- no force completion
+
+validate-p5-versioning
+- reopen before send creates new working/version
+- post-send correction creates complement/new version
+- history preserved
+
+validate-p5-completion-rule
+- all applicable packages sent
+- no open clarification
+- ack not required in V1
+
+validate-p5-notification-boundary
+- Core notification may communicate event
+- notification outcome never marks PACKAGE_SENT
+
+validate-p5-delivery-contract
+- BLOCK until E04/T04
+- owner/channel/proof/idempotency/retry required before send slice
+
+validate-p5-authz
+- ACCESS + scope/ownership + business rule
+- no permission by recipient/send
+
+validate-p5-help
+- blocked send not published as available capability
+
+validate-p5-plugin-ui
+- master-detail/lifecycle/timeline/modal reused
+- no delivery chrome invented before contract
+```
+
+Tecnologia/localização seguem o HEAD da futura implementação.
+
 ## Inventários técnicos remanescentes
 
 ### Owners/sources de package
@@ -679,25 +860,36 @@ Endpoints, DTOs, version identifiers, recipient ids, delivery result, clarificat
 
 Se evidence futura provar ausência/incompatibilidade de capability de envio, manter slice bloqueado e classificar conforme stop condition; não contornar com canal ad hoc.
 
-## Gate documental P5
+## Gate documental V2
 
 ```text
-PRODUCT_RULES_DEFINED       = PASS
-INFORMATION_ARCH_DEFINED    = PASS
-DESKTOP_DEFINED             = PASS
-MOBILE_DEFINED              = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PARTIAL / DELIVERY OWNER PENDING
+VISUAL_SPEC_DEFINED         = PASS
+PACKAGE_CONTRACT_DEFINED    = PASS
+SEND_CONTRACT_DEFINED       = PENDING_E04_T04
+AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
-UX_STATES_DEFINED           = PASS
-AUTHZ_MODEL_DEFINED         = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
 A11Y_DEFINED                = PASS
-DEEP_LINK_SEMANTICS_DEFINED = PASS
-HELP_CONTRACT_DEFINED       = PASS
-RQ_ACCEPTANCE_DEFINED       = PASS
-PACKAGE_FINALIZATION_DESIGN = PASS
-SEND_RUNTIME_CAPABILITY     = BLOCKED_WITH_EVIDENCE
-PHYSICAL_BINDINGS           = TO_INVENTORY
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
 IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-P5 package/finalization está documentalmente pronto para brief técnico futuro com inventário. O slice de envio real continua bloqueado até E04/T04.
+Resultado:
+
+```text
+A12 P5 PACOTE, FINALIZAÇÃO E ENVIO
+= PACKAGE_FINALIZATION_READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
++ SEND_SLICE_PENDING_E04_T04
+!= FULL_PAGE_READY_FOR_IMPLEMENTATION_BRIEF
+!= IMPLEMENTED
+```
+
+A12 pode avançar documentalmente para revisão de A13, mas continua sendo residual bloqueador do freeze global enquanto E04/T04 não fecharem o contrato de envio real.
