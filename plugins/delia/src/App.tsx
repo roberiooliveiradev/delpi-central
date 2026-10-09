@@ -16,6 +16,12 @@ import type {
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
 import { DeliaLoadingBadge } from "./ui/deliaUi";
+import {
+  DELIA_DEMO_BANNER,
+  demoConfirmationAck,
+  demoTurnOutcome,
+  resolveDemoScenario,
+} from "./demo/demoMode";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -65,11 +71,17 @@ export default function App({
   void _permissions;
   void _isSuperadmin;
 
+  // Demo mode is resolved once at mount — it is a dev/preview harness,
+  // not a runtime state. Gated off in production builds.
+  const [demoScenario] = useState(() =>
+    resolveDemoScenario(window.location.search),
+  );
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const demoSeqRef = useRef(0);
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
   const turnsEndRef = useRef<HTMLDivElement | null>(null);
   const nearBottomRef = useRef(true);
@@ -110,6 +122,10 @@ export default function App({
       session_id: string;
     },
   ) {
+    if (demoScenario) {
+      void sendDemoTurn(value);
+      return;
+    }
     if (!getAccessToken || !getAccessToken()) {
       setError(TOKEN_UNAVAILABLE_MESSAGE);
       return;
@@ -169,6 +185,34 @@ export default function App({
     }
   }
 
+  /**
+   * Demo-mode turn: appends the user turn and a clearly-marked
+   * simulated response after a short honest delay. Never touches the
+   * network, the backend, or any provider.
+   */
+  async function sendDemoTurn(value: string) {
+    const seq = demoSeqRef.current++;
+    const outcome = demoTurnOutcome(demoScenario!);
+    setTurns((previous) => [
+      ...previous,
+      { id: `demo-user-${seq}`, role: "user", content: value },
+    ]);
+    setLoading(true);
+    setError(null);
+    await new Promise((resolve) => setTimeout(resolve, outcome.delayMs));
+    setLoading(false);
+    if (outcome.error) {
+      // Draft stays in the composer — mirrors the real error path.
+      setError(outcome.error);
+      return;
+    }
+    setTurns((previous) => [
+      ...previous,
+      { id: `demo-delia-${seq}`, ...outcome.deliaTurn! },
+    ]);
+    setInput("");
+  }
+
   function handleSubmit() {
     const value = input.trim();
     if (!value || loading) return;
@@ -185,6 +229,21 @@ export default function App({
     decision: "CONFIRM" | "REJECT",
   ) {
     if (loading) return;
+    if (demoScenario) {
+      // Visual-only: resolve the pending card and acknowledge locally.
+      // No ACT, no confirmation echo, no backend call — the fixture
+      // digests are non-authoritative demo values.
+      const seq = demoSeqRef.current++;
+      setTurns((previous) => [
+        ...previous.map((turn) =>
+          turn.confirmationRequest
+            ? { ...turn, confirmationAnswered: true }
+            : turn,
+        ),
+        { id: `demo-ack-${seq}`, ...demoConfirmationAck(decision) },
+      ]);
+      return;
+    }
     const label =
       decision === "CONFIRM"
         ? "Confirmação da operação solicitada."
@@ -209,6 +268,11 @@ export default function App({
           className="delia-interaction"
           aria-label="Interação com a DÉLIA"
         >
+          {demoScenario ? (
+            <div className="delia-demo-banner" role="note">
+              {DELIA_DEMO_BANNER}
+            </div>
+          ) : null}
           <div
             className="delia-interaction__body"
             ref={scrollRegionRef}

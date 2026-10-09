@@ -113,6 +113,34 @@
   box-sizing: border-box;
 }
 
+/* Demo-mode banner — persistent, above the scroll viewport, always
+   visible; warning tone so simulated data can never be mistaken for
+   a real operational response. Dev/preview only. */
+.dashboard-delia .delia-demo-banner {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 var(--delia-card-padding);
+  box-sizing: border-box;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: var(--warning, #b45309);
+}
+
+.dashboard-delia .delia-demo-banner::before,
+.dashboard-delia .delia-demo-banner::after {
+  content: "";
+  display: inline-block;
+  vertical-align: middle;
+  width: 48px;
+  height: 1px;
+  margin: 0 8px;
+  background: color-mix(in srgb, var(--warning, #b45309) 40%, transparent);
+}
+
 /* ---------- S2-A + S3 — reception (chat-first, light) */
 
 .dashboard-delia .delia-reception {

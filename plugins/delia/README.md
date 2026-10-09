@@ -41,3 +41,19 @@ npm run verify:federation
 ```
 
 Dev standalone: `npm run dev` (requer plugin-ui remoto conforme convenção da plataforma).
+
+## Modo demonstração (dev/preview apenas)
+
+Fixtures locais permitem exercitar a interface conversacional sem chamadas ao backend ou ao modelo. O modo é **OFF por padrão** e só existe quando o bundle roda em `import.meta.env.DEV` (`npm run dev`) ou foi deliberadamente buildado com `VITE_DELIA_DEMO=1` (decisão de ambiente/preview). Produção normal nunca entra nesse caminho.
+
+Ativação explícita por query param:
+
+```text
+/apps/delia?delia-demo=<cenário>
+```
+
+Cenários: `simple` (default) · `long` · `clarification` · `source_unavailable` · `authz_denied` · `precondition` · `confirmation` (visual-only, sem ACT) · `error` · `loading`.
+
+Garantias: zero chamadas de rede (`/interaction/turns` nunca é invocado), banner persistente `Modo demonstração — dados simulados`, respostas marcadas como simulação (`NON_GROUNDED`, sem provenance), nada persistido. Para desativar, remova o query param — não há estado ou toggle persistente.
+
+Fonte: [`src/demo/demoMode.ts`](./src/demo/demoMode.ts) · testes: [`src/demoMode.test.tsx`](./src/demoMode.test.tsx)
