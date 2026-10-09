@@ -76,6 +76,7 @@ class GetNonMovingStockSummaryUseCase:
                     "insufficient_history_count"
                 ],
                 "blocked_products": totals["blocked_product_count"],
+                "zero_cost_items": totals["zero_cost_item_count"],
             },
             "by_status": data["by_status"],
             "by_branch": data["by_branch"],

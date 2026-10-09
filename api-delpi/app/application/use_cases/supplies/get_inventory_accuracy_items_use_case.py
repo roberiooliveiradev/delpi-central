@@ -33,12 +33,14 @@ class GetInventoryAccuracyItemsUseCase:
             period_start=period.period_start,
             period_end_exclusive=period.period_end_exclusive,
             outcome=request.outcome,
+            search=request.search,
         )
         items = self._repository.fetch_items(
             branches=request.branches,
             period_start=period.period_start,
             period_end_exclusive=period.period_end_exclusive,
             outcome=request.outcome,
+            search=request.search,
             sort=request.sort,
             offset=request.offset,
             page_size=request.page_size,

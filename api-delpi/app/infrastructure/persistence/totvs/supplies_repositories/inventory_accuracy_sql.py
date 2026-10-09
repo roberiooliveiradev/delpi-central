@@ -16,13 +16,15 @@ from app.domain.totvs.protheus_internal_movements import (
     MOVEMENT_TYPE_INBOUND_THRESHOLD,
 )
 
+_TIEBREAKER = "branch ASC, product_code ASC, warehouse ASC, count_date ASC"
+
 _SORT_MAP = {
-    "count_date_desc": "count_date DESC, product_code ASC",
-    "count_date_asc": "count_date ASC, product_code ASC",
-    "product_code_asc": "product_code ASC",
-    "product_code_desc": "product_code DESC",
+    "count_date_desc": f"count_date DESC, {_TIEBREAKER}",
+    "count_date_asc": f"count_date ASC, {_TIEBREAKER}",
+    "product_code_asc": f"product_code ASC, {_TIEBREAKER}",
+    "product_code_desc": f"product_code DESC, {_TIEBREAKER}",
     "divergence_value_desc": (
-        "(shortage_value + surplus_value) DESC, product_code ASC"
+        f"(shortage_value + surplus_value) DESC, {_TIEBREAKER}"
     ),
 }
 DEFAULT_SORT = "count_date_desc"
@@ -183,10 +185,30 @@ DROP TABLE #evaluated;
     return combined, params
 
 
-def _items_where(outcome: str | None) -> tuple[str, list[Any]]:
+def _like_escape(term: str) -> str:
+    """Escapa curingas LIKE — busca sempre literal."""
+    return (
+        term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    )
+
+
+def _items_where(
+    outcome: str | None, search: str | None
+) -> tuple[str, list[Any]]:
+    where: list[str] = []
+    params: list[Any] = []
     if outcome:
-        return "WHERE outcome = ?", [outcome]
-    return "", []
+        where.append("outcome = ?")
+        params.append(outcome)
+    if search:
+        where.append(
+            "(product_code LIKE ? ESCAPE '\\' "
+            "OR description LIKE ? ESCAPE '\\')"
+        )
+        pattern = f"%{_like_escape(search)}%"
+        params.extend([pattern, pattern])
+    clause = f"WHERE {' AND '.join(where)}" if where else ""
+    return clause, params
 
 
 def build_count_query(
@@ -195,13 +217,14 @@ def build_count_query(
     period_start: str,
     period_end_exclusive: str,
     outcome: str | None,
+    search: str | None,
 ) -> tuple[str, list[Any]]:
     cte, params = build_events_cte(
         branches=branches,
         period_start=period_start,
         period_end_exclusive=period_end_exclusive,
     )
-    where, where_params = _items_where(outcome)
+    where, where_params = _items_where(outcome, search)
     return (
         cte + f"SELECT COUNT(*) AS total FROM evaluated {where};",
         [*params, *where_params],
@@ -214,6 +237,7 @@ def build_items_query(
     period_start: str,
     period_end_exclusive: str,
     outcome: str | None,
+    search: str | None,
     sort: str,
     offset: int,
     page_size: int,
@@ -223,7 +247,7 @@ def build_items_query(
         period_start=period_start,
         period_end_exclusive=period_end_exclusive,
     )
-    where, where_params = _items_where(outcome)
+    where, where_params = _items_where(outcome, search)
     order = _SORT_MAP.get(sort, _SORT_MAP[DEFAULT_SORT])
     sql = cte + f"""
 SELECT branch, product_code, description, unit_of_measure, blocked,

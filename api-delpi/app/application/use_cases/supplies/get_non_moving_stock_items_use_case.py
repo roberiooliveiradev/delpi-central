@@ -32,6 +32,7 @@ class GetNonMovingStockItemsUseCase:
             product_codes=request.product_codes,
             turnover_status=request.turnover_status,
             blocked=request.blocked,
+            search=request.search,
         )
         items = self._repository.fetch_items(
             branches=request.branches,
@@ -42,6 +43,7 @@ class GetNonMovingStockItemsUseCase:
             product_codes=request.product_codes,
             turnover_status=request.turnover_status,
             blocked=request.blocked,
+            search=request.search,
             sort=request.sort,
             offset=request.offset,
             page_size=request.page_size,

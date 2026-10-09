@@ -199,6 +199,14 @@ def get_supplies_non_moving_stock_items(
         default=None,
         description="Product code filter (B2_COD). Repeatable or CSV.",
     ),
+    search: str | None = Query(
+        default=None,
+        max_length=120,
+        description=(
+            "Partial match on product code or description (literal, "
+            "LIKE-escaped). Detail-only; the summary is unaffected."
+        ),
+    ),
     page: int = Query(default=1, ge=1),
     page_size: int = PAGE_SIZE_QUERY(
         "page_50_500", description="Rows per page (max 500)."
@@ -218,6 +226,7 @@ def get_supplies_non_moving_stock_items(
             turnover_status=turnover_status,
             blocked=blocked,
             product_codes=product_codes,
+            search=search,
             page=page,
             page_size=page_size,
             sort=sort,

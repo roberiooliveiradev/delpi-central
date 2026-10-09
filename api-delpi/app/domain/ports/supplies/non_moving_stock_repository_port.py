@@ -32,6 +32,7 @@ class NonMovingStockRepositoryPort(ABC):
         product_codes: Sequence[str] | None = None,
         turnover_status: str | None = None,
         blocked: bool | None = None,
+        search: str | None = None,
     ) -> int:
         ...
 
@@ -47,6 +48,7 @@ class NonMovingStockRepositoryPort(ABC):
         product_codes: Sequence[str] | None = None,
         turnover_status: str | None = None,
         blocked: bool | None = None,
+        search: str | None = None,
         sort: str,
         offset: int,
         page_size: int,

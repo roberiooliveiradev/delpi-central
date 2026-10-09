@@ -78,6 +78,9 @@ class NonMovingStockQueryRepository(BaseRepository, NonMovingStockRepositoryPort
                 "blocked_product_count": _i(
                     totals.get("blocked_product_count")
                 ),
+                "zero_cost_item_count": _i(
+                    totals.get("zero_cost_item_count")
+                ),
                 "with_consumption_count": _i(
                     totals.get("with_consumption_count")
                 ),
@@ -131,6 +134,7 @@ class NonMovingStockQueryRepository(BaseRepository, NonMovingStockRepositoryPort
         product_codes: Sequence[str] | None = None,
         turnover_status: str | None = None,
         blocked: bool | None = None,
+        search: str | None = None,
     ) -> int:
         query, params = sql.build_count_query(
             branches=branches,
@@ -141,6 +145,7 @@ class NonMovingStockQueryRepository(BaseRepository, NonMovingStockRepositoryPort
             product_codes=product_codes,
             turnover_status=turnover_status,
             blocked=blocked,
+            search=search,
         )
         with self as repo:
             row = repo.execute_one(query, tuple(params))
@@ -157,6 +162,7 @@ class NonMovingStockQueryRepository(BaseRepository, NonMovingStockRepositoryPort
         product_codes: Sequence[str] | None = None,
         turnover_status: str | None = None,
         blocked: bool | None = None,
+        search: str | None = None,
         sort: str,
         offset: int,
         page_size: int,
@@ -170,6 +176,7 @@ class NonMovingStockQueryRepository(BaseRepository, NonMovingStockRepositoryPort
             product_codes=product_codes,
             turnover_status=turnover_status,
             blocked=blocked,
+            search=search,
             sort=sort,
             offset=offset,
             page_size=page_size,

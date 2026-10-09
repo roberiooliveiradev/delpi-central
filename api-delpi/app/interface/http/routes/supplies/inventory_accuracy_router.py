@@ -175,6 +175,14 @@ def get_supplies_inventory_accuracy_items(
         description="Outcome filter.",
         enum=list(_OUTCOME_VALUES),
     ),
+    search: str | None = Query(
+        default=None,
+        max_length=120,
+        description=(
+            "Partial match on product code or description (literal, "
+            "LIKE-escaped). Detail-only; the summary is unaffected."
+        ),
+    ),
     page: int = Query(default=1, ge=1),
     page_size: int = PAGE_SIZE_QUERY(
         "page_50_500", description="Rows per page (max 500)."
@@ -192,6 +200,7 @@ def get_supplies_inventory_accuracy_items(
             start_date=start_date,
             end_date=end_date,
             outcome=outcome,
+            search=search,
             page=page,
             page_size=page_size,
             sort=sort,

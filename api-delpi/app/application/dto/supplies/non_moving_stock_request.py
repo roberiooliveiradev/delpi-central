@@ -71,6 +71,19 @@ class NonMovingStockQueryRequest:
         self.end_date = _normalize_ymd(self.end_date)
 
 
+def _normalize_search(value: str | None, max_length: int = 120) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if len(text) > max_length:
+        raise ValueError(
+            f"search exceeds the {max_length}-character limit"
+        )
+    return text
+
+
 @dataclass
 class NonMovingStockItemsRequest(NonMovingStockQueryRequest):
     page: int = 1
@@ -79,6 +92,7 @@ class NonMovingStockItemsRequest(NonMovingStockQueryRequest):
     product_codes: tuple[str, ...] | list[str] | str | None = None
     turnover_status: str | None = None
     blocked: bool | None = None
+    search: str | None = None
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -86,6 +100,7 @@ class NonMovingStockItemsRequest(NonMovingStockQueryRequest):
         self.page_size = min(500, max(1, int(self.page_size or 50)))
         self.sort = (self.sort or "stock_value_desc").strip().lower()
         self.product_codes = normalize_product_codes(self.product_codes)
+        self.search = _normalize_search(self.search)
         if self.turnover_status:
             status = str(self.turnover_status).strip().upper()
             if status not in _VALID_STATUSES:

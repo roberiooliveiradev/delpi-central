@@ -285,3 +285,101 @@ def test_summary_use_case_real_shape() -> None:
     assert result["reference"]["period_closed"] is True
     assert result["exclusions"]["pending_processing"] == 11
     assert result["exclusions"]["cancelled"] == 3
+
+
+# --- corrective audit (GLPI-1197): search + stable sort ---
+
+
+def test_items_request_search_normalization() -> None:
+    from app.application.dto.supplies.inventory_accuracy_request import (
+        InventoryAccuracyItemsRequest,
+    )
+
+    req = InventoryAccuracyItemsRequest(search=" 1001 ")
+    assert req.search == "1001"
+    assert InventoryAccuracyItemsRequest(search="  ").search is None
+    with pytest.raises(ValueError):
+        InventoryAccuracyItemsRequest(search="x" * 121)
+
+
+def test_sql_items_search_filters_code_and_description() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories import (
+        inventory_accuracy_sql as sql,
+    )
+
+    query, params = sql.build_items_query(
+        branches=("01",),
+        period_start="20260901",
+        period_end_exclusive="20261001",
+        outcome=None,
+        search="1008",
+        sort="count_date_desc",
+        offset=0,
+        page_size=50,
+    )
+    assert "product_code LIKE ? ESCAPE" in query
+    assert "description LIKE ? ESCAPE" in query
+    assert params[-2:] == ["%1008%", "%1008%"]
+
+
+def test_sql_items_search_escapes_wildcards_and_combines_outcome() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories import (
+        inventory_accuracy_sql as sql,
+    )
+
+    query, params = sql.build_items_query(
+        branches=("01",),
+        period_start="20260901",
+        period_end_exclusive="20261001",
+        outcome="divergent",
+        search="a%b",
+        sort="count_date_desc",
+        offset=0,
+        page_size=50,
+    )
+    assert "outcome = ?" in query
+    assert params[-3:] == ["divergent", r"%a\%b%", r"%a\%b%"]
+
+
+def test_sql_count_search_consistency() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories import (
+        inventory_accuracy_sql as sql,
+    )
+
+    count_q, count_p = sql.build_count_query(
+        branches=("01",),
+        period_start="20260901",
+        period_end_exclusive="20261001",
+        outcome=None,
+        search="xyz",
+    )
+    assert "product_code LIKE ?" in count_q
+    assert count_p[-2:] == ["%xyz%", "%xyz%"]
+
+
+def test_sql_sort_tiebreaker_stable() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories import (
+        inventory_accuracy_sql as sql,
+    )
+
+    for sort_key in (
+        "count_date_desc",
+        "count_date_asc",
+        "product_code_asc",
+        "product_code_desc",
+        "divergence_value_desc",
+    ):
+        query, _ = sql.build_items_query(
+            branches=("01",),
+            period_start="20260901",
+            period_end_exclusive="20261001",
+            outcome=None,
+            search=None,
+            sort=sort_key,
+            offset=0,
+            page_size=50,
+        )
+        order_by = query.split("ORDER BY", 1)[1]
+        assert "branch ASC" in order_by
+        assert "warehouse ASC" in order_by
+        assert "count_date ASC" in order_by

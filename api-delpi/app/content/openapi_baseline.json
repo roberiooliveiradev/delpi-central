@@ -96174,6 +96174,13 @@
           "type": "string"
         },
         {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "Partial match on product code or description (literal, LIKE-escaped). Detail-only; the summary is unaffected.",
+          "type": "string"
+        },
+        {
           "name": "page",
           "in": "query",
           "required": false,
@@ -96296,6 +96303,18 @@
               "pt-BR": {
                 "description": "Quantidade de linhas por página.",
                 "label": "Tamanho da página"
+              }
+            }
+          },
+          "search": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca.",
+                "label": "Busca"
               }
             }
           },
@@ -97616,6 +97635,13 @@
           "type": "array"
         },
         {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "Partial match on product code or description (literal, LIKE-escaped). Detail-only; the summary is unaffected.",
+          "type": "string"
+        },
+        {
           "name": "page",
           "in": "query",
           "required": false,
@@ -97754,6 +97780,18 @@
               "pt-BR": {
                 "description": "Lista CSV ou repetida de códigos de produto (SB1.B1_COD, SB2.B2_COD ou D2_COD conforme a rota).",
                 "label": "Códigos de produtos"
+              }
+            }
+          },
+          "search": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca.",
+                "label": "Busca"
               }
             }
           },

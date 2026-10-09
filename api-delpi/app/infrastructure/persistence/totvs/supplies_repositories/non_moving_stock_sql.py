@@ -15,18 +15,23 @@ from app.domain.totvs.protheus_internal_movements import (
     effective_utilization_net_quantity_sql,
 )
 
+_TIEBREAKER = "branch ASC, product_code ASC, warehouse ASC"
+
 _SORT_MAP = {
-    "stock_value_desc": "stock_value DESC, product_code ASC",
-    "stock_value_asc": "stock_value ASC, product_code ASC",
-    "quantity_desc": "quantity DESC, product_code ASC",
-    "quantity_asc": "quantity ASC, product_code ASC",
-    "product_code_asc": "product_code ASC",
-    "product_code_desc": "product_code DESC",
+    "stock_value_desc": f"stock_value DESC, {_TIEBREAKER}",
+    "stock_value_asc": f"stock_value ASC, {_TIEBREAKER}",
+    "quantity_desc": f"quantity DESC, {_TIEBREAKER}",
+    "quantity_asc": f"quantity ASC, {_TIEBREAKER}",
+    "product_code_asc": f"product_code ASC, {_TIEBREAKER}",
+    "product_code_desc": f"product_code DESC, {_TIEBREAKER}",
     "last_utilization_asc": (
         "CASE WHEN last_effective_utilization IS NULL THEN 1 ELSE 0 END, "
-        "last_effective_utilization ASC"
+        f"last_effective_utilization ASC, {_TIEBREAKER}"
     ),
-    "last_utilization_desc": "last_effective_utilization DESC",
+    "last_utilization_desc": (
+        "CASE WHEN last_effective_utilization IS NULL THEN 1 ELSE 0 END, "
+        f"last_effective_utilization DESC, {_TIEBREAKER}"
+    ),
 }
 DEFAULT_SORT = "stock_value_desc"
 
@@ -224,7 +229,10 @@ SELECT
              THEN branch + '|' + product_code END) AS no_consumption_count,
     COUNT(DISTINCT CASE WHEN turnover_status = 'INSUFFICIENT_HISTORY'
              THEN branch + '|' + product_code END)
-        AS insufficient_history_count
+        AS insufficient_history_count,
+    COUNT(DISTINCT CASE WHEN unit_cost = 0
+             THEN branch + '|' + product_code + '|' + warehouse END)
+        AS zero_cost_item_count
 FROM #classified;
 
 SELECT turnover_status,
@@ -253,10 +261,18 @@ DROP TABLE #classified;
     return combined, params
 
 
+def _like_escape(term: str) -> str:
+    """Escapa curingas LIKE — busca sempre literal."""
+    return (
+        term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    )
+
+
 def build_items_where(
     *,
     turnover_status: str | None,
     blocked: bool | None,
+    search: str | None,
 ) -> tuple[str, list[Any]]:
     where: list[str] = []
     params: list[Any] = []
@@ -266,6 +282,13 @@ def build_items_where(
     if blocked is not None:
         where.append("blocked = ?")
         params.append(1 if blocked else 0)
+    if search:
+        where.append(
+            "(product_code LIKE ? ESCAPE '\\' "
+            "OR description LIKE ? ESCAPE '\\')"
+        )
+        pattern = f"%{_like_escape(search)}%"
+        params.extend([pattern, pattern])
     clause = f"WHERE {' AND '.join(where)}" if where else ""
     return clause, params
 
@@ -280,6 +303,7 @@ def build_count_query(
     product_codes: Sequence[str] | None,
     turnover_status: str | None,
     blocked: bool | None,
+    search: str | None,
 ) -> tuple[str, list[Any]]:
     cte, params = build_classified_cte(
         branches=branches,
@@ -290,7 +314,7 @@ def build_count_query(
         product_codes=product_codes,
     )
     where, where_params = build_items_where(
-        turnover_status=turnover_status, blocked=blocked
+        turnover_status=turnover_status, blocked=blocked, search=search
     )
     sql = (
         cte
@@ -309,6 +333,7 @@ def build_items_query(
     product_codes: Sequence[str] | None,
     turnover_status: str | None,
     blocked: bool | None,
+    search: str | None,
     sort: str,
     offset: int,
     page_size: int,
@@ -322,7 +347,7 @@ def build_items_query(
         product_codes=product_codes,
     )
     where, where_params = build_items_where(
-        turnover_status=turnover_status, blocked=blocked
+        turnover_status=turnover_status, blocked=blocked, search=search
     )
     order = _SORT_MAP.get(sort, _SORT_MAP[DEFAULT_SORT])
     sql = (

@@ -294,6 +294,7 @@ def test_sql_items_filters_and_pagination() -> None:
         product_codes=None,
         turnover_status="NO_CONSUMPTION_12M",
         blocked=True,
+        search=None,
         sort="stock_value_desc",
         offset=0,
         page_size=50,
@@ -321,6 +322,7 @@ class _StubRepo:
                 "blocked_stock_value": 100.0,
                 "blocked_no_consumption_stock_value": 50.0,
                 "blocked_product_count": 1,
+                "zero_cost_item_count": 1,
                 "with_consumption_count": 1,
                 "no_consumption_count": 1,
                 "insufficient_history_count": 1,
@@ -377,3 +379,143 @@ def test_summary_use_case_unavailable_when_empty() -> None:
         "no_eligible_stock"
     )
     assert result["summary"]["non_moving_percentage"] is None
+
+
+# --- corrective audit (GLPI-1197): search, blocked=false, stable sort ---
+
+
+def test_items_request_search_normalization() -> None:
+    req = NonMovingStockItemsRequest(search="  1008 ")
+    assert req.search == "1008"
+    assert NonMovingStockItemsRequest(search="   ").search is None
+    assert NonMovingStockItemsRequest(search=None).search is None
+    with pytest.raises(ValueError):
+        NonMovingStockItemsRequest(search="x" * 121)
+
+
+def test_sql_items_search_filters_code_and_description() -> None:
+    query, params = sql.build_items_query(
+        branches=("01",),
+        warehouses=("01", "99"),
+        window_start="20251009",
+        window_end="20261009",
+        no_consumption_status="NO_CONSUMPTION_12M",
+        product_codes=None,
+        turnover_status=None,
+        blocked=None,
+        search="1008",
+        sort="stock_value_desc",
+        offset=0,
+        page_size=50,
+    )
+    assert "product_code LIKE ? ESCAPE" in query
+    assert "description LIKE ? ESCAPE" in query
+    assert params[-2:] == ["%1008%", "%1008%"]
+
+
+def test_sql_items_search_escapes_like_wildcards() -> None:
+    _, params = sql.build_items_query(
+        branches=("01",),
+        warehouses=("01", "99"),
+        window_start="20251009",
+        window_end="20261009",
+        no_consumption_status="NO_CONSUMPTION_12M",
+        product_codes=None,
+        turnover_status=None,
+        blocked=None,
+        search="50%_x",
+        sort="stock_value_desc",
+        offset=0,
+        page_size=50,
+    )
+    assert params[-1] == r"%50\%\_x%"
+
+
+def test_sql_items_blocked_false_filters_unblocked() -> None:
+    query, params = sql.build_items_query(
+        branches=("01",),
+        warehouses=("01", "99"),
+        window_start="20251009",
+        window_end="20261009",
+        no_consumption_status="NO_CONSUMPTION_12M",
+        product_codes=None,
+        turnover_status=None,
+        blocked=False,
+        search=None,
+        sort="stock_value_desc",
+        offset=0,
+        page_size=50,
+    )
+    assert "blocked = ?" in query
+    assert params[-1] == 0
+
+
+def test_sql_items_count_search_consistency() -> None:
+    count_q, count_p = sql.build_count_query(
+        branches=("01",),
+        warehouses=("01", "99"),
+        window_start="20251009",
+        window_end="20261009",
+        no_consumption_status="NO_CONSUMPTION_12M",
+        product_codes=None,
+        turnover_status=None,
+        blocked=None,
+        search="abc",
+    )
+    items_q, _ = sql.build_items_query(
+        branches=("01",),
+        warehouses=("01", "99"),
+        window_start="20251009",
+        window_end="20261009",
+        no_consumption_status="NO_CONSUMPTION_12M",
+        product_codes=None,
+        turnover_status=None,
+        blocked=None,
+        search="abc",
+        sort="stock_value_desc",
+        offset=0,
+        page_size=50,
+    )
+    assert "product_code LIKE ?" in count_q
+    assert "product_code LIKE ?" in items_q
+    assert count_p[-2:] == ["%abc%", "%abc%"]
+
+
+def test_sql_sort_tiebreaker_makes_pagination_stable() -> None:
+    for sort_key in (
+        "stock_value_desc",
+        "stock_value_asc",
+        "quantity_desc",
+        "product_code_asc",
+        "product_code_desc",
+        "last_utilization_desc",
+    ):
+        query, _ = sql.build_items_query(
+            branches=("01",),
+            warehouses=("01", "99"),
+            window_start="20251009",
+            window_end="20261009",
+            no_consumption_status="NO_CONSUMPTION_12M",
+            product_codes=None,
+            turnover_status=None,
+            blocked=None,
+            search=None,
+            sort=sort_key,
+            offset=0,
+            page_size=50,
+        )
+        order_by = query.split("ORDER BY", 1)[1]
+        assert "branch ASC" in order_by
+        assert "warehouse ASC" in order_by
+
+
+def test_summary_sql_counts_zero_cost_items() -> None:
+    query, _ = sql.build_summary_queries(
+        branches=("01",),
+        warehouses=("01", "99"),
+        window_start="20251009",
+        window_end="20261009",
+        no_consumption_status="NO_CONSUMPTION_12M",
+    )
+    assert "zero_cost_item_count" in query
+    assert "unit_cost = 0" in query

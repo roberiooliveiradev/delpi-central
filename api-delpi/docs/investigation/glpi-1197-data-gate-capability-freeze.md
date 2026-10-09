@@ -508,3 +508,195 @@ produto×filial (não por locking).
 | R-09 | aberto | recontagem `B7_CONTAGE>1` sem ocorrência na base — regra reservada |
 | R-11 | novo | runtime do summary sem giro ~7 s — aceitável p/ KPI; avaliar cache/materialização se uso crescer |
 | R-12 | novo | `B7_DOC` de evento exposto quando único; proveniência ambígua permanece NULL (fail-closed, idem ajustes) |
+
+
+---
+
+# PARTE III — POST-DEPLOY CORRECTIVE AUDIT
+
+> Auditoria corretiva integral pós-deploy (DAVI-SUPPLIES-GLPI1197-CORRECTIVE-E2E-001).
+> BASE_HEAD: f1737dbab0 → revalidado contra d3f1693a0e e reconciliado FF sobre
+> origin/main 0aac103068 (drift upstream: 2 commits delia-only, zero overlap).
+
+## T. Inventário de defeitos (issues)
+
+### ISSUE-01 — Busca da tabela inerte
+
+- SEVERITY: P0
+- OBSERVED_BEHAVIOR: pesquisar "1008" não filtrava — linhas sem correspondência
+  permaneciam exibidas.
+- EXPECTED_BEHAVIOR: busca server-side sobre código (parcial/exato) e descrição,
+  no conjunto global, com paginação/ordenação consistentes.
+- ROOT_CAUSE: `DataTableSection` renderiza a caixa de busca por padrão, mas sob
+  `serverPagination` o filtro client-side é ignorado; sem `serverSearch` a caixa
+  era inerte (filtro aplicado só sobre as linhas carregadas, sem reenvio ao
+  backend). Não havia parâmetro `search` no contrato de itens.
+- CORRECTION: parâmetro `search` aditivo no contrato (DTO + router + use case +
+  SQL LIKE escapado `ESCAPE '\'` sobre `product_code`/`description`, limite
+  120 chars); frontend com `serverSearch` + debounce 400ms
+  (`useDebouncedValue`); reset de página ao alterar termo.
+- TEST_EVIDENCE: testes de escape `%`/`_`/`\`, filtro por código parcial e
+  descrição, paginação com busca — suíte supplies 48 PASS.
+- STATUS: PROVEN (código+testes) / browser E2E TEST_NOT_RUN.
+
+### ISSUE-02 — Checkbox "Somente bloqueados" fora do padrão + sem evidência de efeito
+
+- SEVERITY: P0
+- OBSERVED_BEHAVIOR: checkbox nativo marcado com linhas não bloqueadas visíveis;
+  controle HTML nativo fora do design system.
+- EXPECTED_BEHAVIOR: filtro tri-estado padronizado; `blocked=true` → todas as
+  linhas bloqueadas; `blocked=false` → todas não bloqueadas; resumo não filtrado
+  pelo detalhe.
+- ROOT_CAUSE: `blocked` já era enviado e aplicado no SQL (`blocked = ?`), mas o
+  controle era `<input type=checkbox>` nativo e não havia estado "não
+  bloqueados"; a percepção de ineficácia também decorria da busca inerte
+  (ISSUE-01) e da ausência de `refreshing` na tabela (linhas antigas visíveis
+  durante a nova consulta).
+- CORRECTION: `ToolbarSelectField` (plugin-ui) com Todos/Bloqueados/Não
+  bloqueados → `blocked` booleano preservado no contrato; `refreshing` passado
+  ao `DataTableSection` (estado "mantendo dados enquanto atualiza").
+- TEST_EVIDENCE: `blocked=false` coberto no SQL builder (`blocked = 0`).
+- STATUS: PROVEN (código+testes) / browser E2E TEST_NOT_RUN.
+
+### ISSUE-03 — Ordenação por coluna inválida (422) / instável
+
+- SEVERITY: P0
+- OBSERVED_BEHAVIOR: clicar em "Última utilização" não ordenava.
+- EXPECTED_BEHAVIOR: ordenação global, direção alternada, desempate estável,
+  página reiniciada, conjunto completo.
+- ROOT_CAUSE: `DataTable.onSortChange` emite `column.key`; a coluna usava key
+  `last_effective_utilization`, stem inexistente no `_SORT_MAP` do backend
+  (422/sem efeito). Ordenações também não tinham desempate.
+- CORRECTION: keys das colunas alinhadas aos stems do `_SORT_MAP`
+  (`product_code`, `quantity`, `stock_value`, `last_utilization`,
+  `count_date`); `_TIEBREAKER` `branch+product_code+warehouse` (+`count_date`
+  na acuracidade) em todas as ordenações.
+- TEST_EVIDENCE: testes de sort estável e mapeamento — suíte verde.
+- STATUS: PROVEN (código+testes) / browser E2E TEST_NOT_RUN.
+
+### ISSUE-04 — Multi-select de filiais reduzido a consolidado
+
+- SEVERITY: P0
+- OBSERVED_BEHAVIOR: seleção ["01","02"] não filtrava exatamente 01+02 —
+  `resolveApiBranch` reduzia múltiplas seleções a consolidado.
+- EXPECTED_BEHAVIOR: [] → consolidado autorizado; [01] → 01; [02] → 02;
+  [01,02] → exatamente 01+02.
+- ROOT_CAUSE: contrato de branch da página usava `branch` singular
+  (`resolveApiBranch`); o endpoint aceita `branch` repetível.
+- CORRECTION: `apiBranches` exposto por `useSuppliesFilters`; `buildQuery`
+  serializa `branches[]` como `branch` repetível (fallback para `branch`
+  singular quando `branches` ausente — compatibilidade retroativa).
+- STATUS: PROVEN (código+testes) / browser E2E TEST_NOT_RUN.
+
+### ISSUE-05 — Período/competência divergindo da requisição
+
+- SEVERITY: P0
+- OBSERVED_BEHAVIOR: URL com `start_date=2025-10-09&end_date=2026-10-09`
+  exibia `competence=2026-09` / "01/09/2026 a 30/09/2026".
+- EXPECTED_BEHAVIOR: URL, controles e requisição coerentes; sem override
+  silencioso.
+- ROOT_CAUSE: estado de filtro compartilhado entre páginas (sessionStorage)
+  carregava recorte de outra página; as novas páginas não declaravam default
+  próprio e o `resolveLinkedDateFilters` define competência como prioridade
+  quando presente — a divergência observada era o estado persistido, não um
+  recompute errado. Em acuracidade, `competence` governa `month` — correto
+  por contrato.
+- CORRECTION: `useSuppliesFilters({defaultPeriod})` — sem giro default 12m
+  móvel; acuracidade default último mês fechado. Convenção preservada: estado
+  persistido vence o default (recorte compartilhado entre páginas).
+  Footnote explicita janela de consumo vs. valoração.
+- STATUS: PROVEN (código) / browser E2E TEST_NOT_RUN.
+
+### ISSUE-06 — Armazém em texto livre fora do domínio aprovado
+
+- SEVERITY: P1
+- OBSERVED_BEHAVIOR: campo livre de localização sem restrição ao escopo 01/99.
+- CORRECTION: `ToolbarSelectField` com Armazém 01/99/Todos; valor compartilhado
+  fora do escopo é ignorado (fail-closed para o contrato).
+- STATUS: PROVEN.
+
+### ISSUE-07 — "% sem giro" interpretável como % de produtos
+
+- SEVERITY: P1
+- OBSERVED_BEHAVIOR: card "% sem giro: 8,90% — 1.041 de 2.554 produtos"
+  induzia leitura de percentual por contagem.
+- CORRECTION: card renomeado "% sem giro (financeiro)" com subtítulo
+  `R$ sem giro de R$ avaliável · N produtos`; fórmula inalterada
+  (denominador financeiro correto).
+- STATUS: PROVEN.
+
+### ISSUE-08 — Acuracidade sem contexto/unidade/sinal
+
+- SEVERITY: P1
+- OBSERVED_BEHAVIOR: 1,62% podia ser lido como acuracidade geral do estoque;
+  divergência sem unidade nem convenção de sinal; contagens excluídas não
+  reconciliadas na tela.
+- CORRECTION: subtítulo "universo: contagens oficiais"; unidade de medida em
+  Contado/Teórico; footnote declara `divergência = teórico − contado`
+  (positivo=falta, negativo=sobra) e reconcilia válidas×avaliáveis×excluídas;
+  pendentes+canceladas fora das válidas declaradas.
+- STATUS: PROVEN.
+
+### ISSUE-09 — Produtos sem custo invisíveis
+
+- SEVERITY: P1
+- OBSERVED_BEHAVIOR: itens com `B2_CM1=0` somavam R$0 sem sinalização.
+- CORRECTION: `zero_cost_items` no resumo (contagem produto×filial×armazém);
+  footnote e célula de valor marcam "sem custo"; nenhum custo alternativo
+  inventado.
+- STATUS: PROVEN (testes de contagem de custo-zero).
+
+### ISSUE-10 — Linhas antigas durante refresh (risco de stale visual)
+
+- SEVERITY: P1
+- CORRECTION: `refreshing` conectado às tabelas; `useSuppliesResource` já
+  aborta requisições anteriores via `AbortController` (resposta mais recente
+  prevalece — race mitigada por contrato do hook).
+- STATUS: PROVEN (código) / browser E2E TEST_NOT_RUN.
+
+## U. Matriz antes/depois
+
+| Issue | Antes | Depois | Evidência | Status |
+|---|---|---|---|---|
+| Busca 1008 | caixa inerte, só filtrava linhas carregadas | `search` server-side escapado, global | testes SQL/API | PROVEN |
+| Bloqueados | checkbox nativo sem tri-estado | select plugin-ui, `blocked` booleano | teste `blocked=0` | PROVEN |
+| Ordenação | key inválida → 422/sem efeito | keys = stems do `_SORT_MAP` + tiebreaker | testes sort | PROVEN |
+| Filiais | multi-seleção → consolidado | `branch` repetível exato | contrato + testes | PROVEN |
+| Período | divergência estado persistido×controles | defaults por página + convenção documentada | código | PROVEN |
+| Armazém | texto livre | select 01/99/Todos fail-closed | código | PROVEN |
+| % sem giro | ambíguo (produtos×valor) | financeiro explícito, denominador visível | revisão | PROVEN |
+| Acuracidade | sem universo/sinal/unidade | contexto+convenção+unidade declaradas | revisão | PROVEN |
+| Sem custo | R$0 silencioso | `zero_cost_items` + sinalização | testes | PROVEN |
+| Refresh | linhas antigas sem estado | `refreshing` + abort implícito | código | PROVEN |
+
+## V. Verificações
+
+- BACKEND: PASS — 48 testes supplies focados + 59 testes
+  adjustments/branch/bff (107 verdes).
+- FRONTEND: PASS — eslint 0 erros nos arquivos tocados; `vite build` PASS;
+  `tsc -b` mantém FAIL pré-existente upstream (bootstrap.tsx `Root|undefined`,
+  `vitest` ausente, plugin-ui React ref types) — sem regressão nos arquivos
+  deste diff (0 erros filtrados).
+- CONTRACTS: PASS — `search` aditivo, `branch` repetível já existente;
+  baseline OpenAPI regenerado (667 paths); novas rotas seguem fora da
+  allowlist DAVI (fail-closed).
+- AUTHZ: PASS — backend AuthZ canônico inalterado; `branches` segue sujeito ao
+  escopo autorizado do usuário no backend.
+- BROWSER_E2E: TEST_NOT_RUN — sem acesso autenticado ao ambiente nesta sessão;
+  evidência de rede/browser pendente de homologação.
+- REGRESSÃO: `useSuppliesFilters` retrocompatível (options opcional);
+  `readSuppliesFilters`/`buildQuery` retrocompatíveis; páginas irmãs intactas
+  (diff restrito a supplies GLPI-1197 + hook compartilhado aditivo).
+
+## W. Residual ledger (atualizado)
+
+| ID | Status | Nota |
+|---|---|---|
+| R-06 | aberto | estornos vivos SD3 (~402) |
+| R-07 | aberto | regime de contagem seletivo — comunicar a Suprimentos |
+| R-08 | aberto | ~R$215k MP em locais 50/98 fora do escopo |
+| R-09 | aberto | recontagem `B7_CONTAGE>1` sem ocorrência |
+| R-11 | aberto | summary ~7 s — avaliar cache se uso crescer |
+| R-12 | aberto | `B7_DOC` ambíguo permanece NULL |
+| R-13 | novo | browser E2E autenticado TEST_NOT_RUN — homologação visual pendente |
+| R-14 | novo | `tsc -b` upstream quebrado (bootstrap/vitest/plugin-ui types) — owner: frontend/platform |

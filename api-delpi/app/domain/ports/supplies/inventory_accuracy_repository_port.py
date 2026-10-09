@@ -44,6 +44,7 @@ class InventoryAccuracyRepositoryPort(ABC):
         period_start: str,
         period_end_exclusive: str,
         outcome: str | None = None,
+        search: str | None = None,
     ) -> int:
         ...
 
@@ -55,6 +56,7 @@ class InventoryAccuracyRepositoryPort(ABC):
         period_start: str,
         period_end_exclusive: str,
         outcome: str | None = None,
+        search: str | None = None,
         sort: str,
         offset: int,
         page_size: int,

@@ -124,12 +124,14 @@ class InventoryAccuracyRepository(BaseRepository, InventoryAccuracyRepositoryPor
         period_start: str,
         period_end_exclusive: str,
         outcome: str | None = None,
+        search: str | None = None,
     ) -> int:
         query, params = sql.build_count_query(
             branches=branches,
             period_start=period_start,
             period_end_exclusive=period_end_exclusive,
             outcome=outcome,
+            search=search,
         )
         with self as repo:
             row = repo.execute_one(query, tuple(params))
@@ -142,6 +144,7 @@ class InventoryAccuracyRepository(BaseRepository, InventoryAccuracyRepositoryPor
         period_start: str,
         period_end_exclusive: str,
         outcome: str | None = None,
+        search: str | None = None,
         sort: str,
         offset: int,
         page_size: int,
@@ -151,6 +154,7 @@ class InventoryAccuracyRepository(BaseRepository, InventoryAccuracyRepositoryPor
             period_start=period_start,
             period_end_exclusive=period_end_exclusive,
             outcome=outcome,
+            search=search,
             sort=sort,
             offset=offset,
             page_size=page_size,
