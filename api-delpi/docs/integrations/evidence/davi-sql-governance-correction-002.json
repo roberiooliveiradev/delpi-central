@@ -1,0 +1,64 @@
+{
+  "task_id": "DAVI-SQL-CANONICAL-ROUTE-GOVERNANCE-CORRECTION-002",
+  "evidence_id": "davi-sql-governance-correction-002",
+  "nature": "fail-closed architectural correction after Architecture/Coordination review",
+  "architecture_decision": "existing canonical API route + existing backend permission + route validator != approved DAVI semantic capability",
+  "result": {
+    "POST /data/sql": "PRESERVED",
+    "execute_readonly_sql_api": "PRESERVED",
+    "DATA_SQL_ACCESS": "PRESERVED",
+    "SqlValidator": "PRESERVED",
+    "DAVI_SQL_CAPABILITY": "TO_INVENTORY",
+    "DAVI_SQL_DISCOVERY": "DISABLED_FAIL_CLOSED",
+    "DAVI_SQL_EXECUTION": "DISABLED_FAIL_CLOSED",
+    "ad_hoc_sql_read": "REMOVED_INACTIVE",
+    "DAVI_LOCAL_AUTHZ": "NONE",
+    "DIRECT_DB_FROM_DAVI": "FORBIDDEN",
+    "MCP_TOOL_COUNT": 2
+  },
+  "capability_gates_unratified": [
+    "business need",
+    "business/domain owner",
+    "semantic capability",
+    "data classification",
+    "output allowlist",
+    "external-processing approval",
+    "consumer approval"
+  ],
+  "allowlist": {
+    "before": {"version": 22, "operations": 90},
+    "after": {"version": 21, "operations": 89},
+    "sql_entry": "REMOVED",
+    "quarantine_tokens": "sql/select restored"
+  },
+  "surface_changes": {
+    "eligibility": "canonicalSqlRoute opt-in removed; SQL markers unconditionally STATUS_GENERIC_SQL_FORBIDDEN",
+    "argument_validator": "sql restored to global _TRANSPORT_FORBIDDEN",
+    "catalog_builder": "response_contract field removed (zero consumers)",
+    "execute_service": "BOUNDED_DYNAMIC_RESULTSET branch removed",
+    "projection": "apply_dynamic_resultset_projection removed (Abstraction Gate)",
+    "budgets": "execute_max_resultsets/execute_max_result_columns removed",
+    "agent_intelligence": "restored 2026.10.07.2; ad_hoc_sql_read absent",
+    "branding": "MCP instructions restored (never invent SQL)",
+    "cursor_rules": "self-ratifying boundary clarification removed; generic SQL tool forbidden restored"
+  },
+  "kept_removed_abandoned_path": [
+    "GovernedSqlExecutor",
+    "GovernedSqlConnection",
+    "governed_sql_errors.py",
+    "PROFILE_DAVI_GOVERNED",
+    "GOVERNED_SQL_DB_*",
+    "SqlValidationResult/validate_with_result"
+  ],
+  "tests_new": [
+    "test_canonical_sql_route_not_davi_eligible",
+    "test_sql_intent_queries_never_surface_sql_candidate (6 queries)",
+    "test_candidate_token_cannot_authorize_sql_route",
+    "test_sql_argument_rejected_on_other_operations"
+  ],
+  "superseded_evidence": "davi-sql-canonical-route-architecture-rebaseline-001 (IMPLEMENTATION=SUPERSEDED_BY_GOVERNANCE_CORRECTION; ARCHITECTURE_ACCEPTANCE=REJECTED — retained as execution history)",
+  "deploy": "NOT_RUN",
+  "agent_studio_sync": "PENDING",
+  "provider_rediscovery": "TEST_NOT_RUN",
+  "live_acceptance": "TEST_NOT_RUN"
+}

@@ -114,6 +114,6 @@
     "davi_owned_authz": false
   },
   "next_gate": "S2 owner/permission ratification — OWNER_RATIFICATION_REQUIRED if unresolved",
-  "superseded_by": "davi-sql-canonical-route-architecture-rebaseline-001",
-  "supersession_note": "STRUCTURAL SQL VALIDATOR HARDENING = RETAINED. DIRECT GOVERNED DB EXECUTOR + GOVERNED_SQL_DB_* PRINCIPAL = SUPERSEDED/REMOVED (DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-IMPLEMENTATION-001): DAVI uses the canonical POST /data/sql route via the normal discover->execute broker under backend DATA_SQL_ACCESS."
+  "superseded_by": "davi-sql-canonical-route-architecture-rebaseline-001 (itself SUPERSEDED by davi-sql-governance-correction-002)",
+  "supersession_note": "STRUCTURAL SQL VALIDATOR HARDENING = RETAINED (canonical POST /data/sql route preserved). DIRECT GOVERNED DB EXECUTOR + GOVERNED_SQL_DB_* PRINCIPAL = SUPERSEDED/REMOVED. DAVI exposure of execute_readonly_sql was subsequently REJECTED (DAVI-SQL-CANONICAL-ROUTE-GOVERNANCE-CORRECTION-002): canonical API route != approved DAVI capability; DAVI SQL CAPABILITY = TO_INVENTORY."
 }

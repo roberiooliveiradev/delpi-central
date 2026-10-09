@@ -1,5 +1,8 @@
 # DAVI-SQL-CANONICAL-ROUTE-ARCHITECTURE-REBASELINE-001
 
+> **IMPLEMENTATION = SUPERSEDED_BY_GOVERNANCE_CORRECTION** — ver `davi-sql-governance-correction-002.md` (`DAVI-SQL-CANONICAL-ROUTE-GOVERNANCE-CORRECTION-002`).
+> **ARCHITECTURE_ACCEPTANCE = REJECTED / EXECUTION_DRIFT.** A rota canônica da API DELPI `POST /data/sql` permanece válida e preservada (backend `DATA_SQL_ACCESS` + `SqlValidator`), mas uma rota canônica **não é** automaticamente uma capability DAVI aprovada. Os gates de capability (business need, owner, semantic capability, data classification, output allowlist, external-processing e consumer approval) nunca foram ratificados. `DAVI SQL CAPABILITY = TO_INVENTORY`; a exposição via discover→execute foi retirada (fail-closed). A remoção do caminho abandonado GovernedSqlExecutor/conexão/config permanece válida.
+
 > **Task:** `DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-IMPLEMENTATION-001`
 > **Base SHA:** `b57d627ac3d85cc902d2dab4e2e4395b88a6a365` (handoff baseline)
 > **Rebased onto:** `912ac3ba99ba6bfa57fcd7294d46995e2a2070a7` (`origin/main`)

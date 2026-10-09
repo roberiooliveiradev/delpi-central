@@ -1,8 +1,8 @@
 # DAVI-GOVERNED-SQL-READ-AUTHZ-RATIFICATION-S2-001
 
-> **SUPERSEDED / ARCHITECTURE CORRECTED** — ver `davi-sql-canonical-route-architecture-rebaseline-001.md` (`DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-IMPLEMENTATION-001`).
-> O modelo «governed SQL dedicado com executor/principal próprio e gate de AuthZ DAVI-específico» foi corrigido: `execute_readonly_sql` (POST /data/sql) é uma rota canônica normal da API DELPI, exposta pelo mesmo broker discover→execute sob `DATA_SQL_ACCESS` do backend.
-> Não há permissão SQL dedicada, executor DAVI direto ao banco, BranchAccessGate MCP, política de coluna MCP ou gate de business owner para a rota SQL.
+> **SUPERSEDED / ARCHITECTURE CORRECTED** — ver `davi-sql-canonical-route-architecture-rebaseline-001.md` (itself SUPERSEDED) e `davi-sql-governance-correction-002.md` (`DAVI-SQL-CANONICAL-ROUTE-GOVERNANCE-CORRECTION-002`).
+> O modelo «governed SQL dedicado com executor/principal próprio e gate de AuthZ DAVI-específico» foi corrigido, e a exposição subsequente da rota canônica como capability DAVI foi **rejeitada** pelo review de Architecture/Coordination: canonical API route ≠ approved DAVI capability. `POST /data/sql` permanece rota canônica válida da API DELPI sob `DATA_SQL_ACCESS` do backend.
+> Não há permissão SQL dedicada, executor DAVI direto ao banco, BranchAccessGate MCP, política de coluna MCP ou gate de business owner para a rota SQL. `DAVI SQL CAPABILITY = TO_INVENTORY`.
 
 
 ## Status

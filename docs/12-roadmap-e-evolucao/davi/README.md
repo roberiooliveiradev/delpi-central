@@ -220,27 +220,34 @@ CURRENT SOURCE STATE (recomputed at `DAVI-MCP-RUNTIME-REBASELINE-001`,
 SHA `7f2bfab647`):
 
 ```text
-allowlist              = v19
+allowlist              = v21
 DAVI_ELIGIBLE_READ     = 89 governed ops
-agent intelligence     = 2026.10.08.1
+agent intelligence     = 2026.10.07.2
 MCP tools              = exactly 2 (discover_delpi_information,
                          execute_delpi_information)
 provider live discover = PROVEN (89 eligible; PROVIDER_CHAT_RUNTIME_OBSERVATION
-                         2026-10-08) — allowlist v22/90 ops inclui a rota SQL
-                         canônica em SOURCE; provider rediscovery = TEST_NOT_RUN
+                         2026-10-08)
 provider live execute  = PROVEN for representative families (product master,
                          stock, inventory adjustments, pricing)
-FULL 90-OP LIVE MATRIX = PARTIAL
+FULL 89-OP LIVE MATRIX = PARTIAL
 evidence               = api-delpi/docs/integrations/evidence/
                          davi-mcp-runtime-rebaseline-001.md
 ```
 
 Families now governed behind the same broker: Product Master & item context,
 Commercial/Sales, Supplies/Purchasing/Inventory, Production, System Metadata
-(describe/search), and the canonical API DELPI read-only SQL route
-(`execute_readonly_sql`, POST /data/sql) under backend `DATA_SQL_ACCESS` —
-generic SQL tools and direct DB access remain FORBIDDEN
-(DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-001).
+(describe/search only — generic SQL remains FORBIDDEN).
+
+Canonical API route ≠ DAVI capability: `POST /data/sql`
+(`execute_readonly_sql`) remains a valid, preserved API DELPI route under
+backend `DATA_SQL_ACCESS` + `SqlValidator`, but it is **not** an approved DAVI
+capability. Earlier exposure (evidence
+`davi-sql-canonical-route-architecture-rebaseline-001`) was rejected by
+Architecture/Coordination review — capability gates (business need, owner,
+semantic capability, data classification, output allowlist,
+external-processing and consumer approval) were never ratified.
+`DAVI SQL CAPABILITY = TO_INVENTORY`; discovery/execution fail-closed
+(`DAVI-SQL-CANONICAL-ROUTE-GOVERNANCE-CORRECTION-002`).
 
 Historical note (superseded for MCP tool count): earlier waves documented
 `search_products` as a specialized MCP fast path with exactly 3 tools.
@@ -397,23 +404,15 @@ Nova information source exige gate explícito de owner / source / contract / Aut
 Forbidden by default:
 
 ```text
-generic SQL tool (MCP-level SQL surface)
+generic SQL
 generic HTTP
 arbitrary endpoint/method
 arbitrary field selector
 generic CRUD
 expose-all
 mechanical one-tool-per-route mapping
-query_delpi_generic / execute_sql / call_api (generic tools)
-DAVI/Agent direct database connectivity
+query_delpi_generic / execute_sql / call_api
 ```
-
-Allowed distinction (DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-001): the
-**canonical API DELPI route** `execute_readonly_sql` (POST /data/sql), whose
-owner contract declares `sql` as input, may be exposed through the same
-discover→execute broker when explicitly allowlisted. It runs under the
-existing backend permission (`DATA_SQL_ACCESS`) and the route's SqlValidator.
-This is NOT a generic SQL tool, NOT a DAVI-local engine, NOT a third MCP tool.
 
 ---
 
@@ -462,8 +461,7 @@ rollback/revoke existe quando aplicável?
 | MCP tool = business capability authority | forbidden |
 | MCP = business / AuthZ authority | forbidden |
 | OAuth scope = business permission | forbidden |
-| DAVI direct SQL / TOTVS bypass (Agent/MCP→DB) | forbidden |
-| canonical `/data/sql` route via allowlisted discover→execute | allowed (backend `DATA_SQL_ACCESS` decides) |
+| DAVI direct SQL / TOTVS bypass | forbidden |
 | generic query / generic API tool | forbidden |
 | expose-all / one tool per route | forbidden |
 | DAVI imports sibling domain/application | forbidden by default |

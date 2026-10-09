@@ -84,20 +84,13 @@ Tools devem representar capabilities semânticas pequenas e governadas.
 
 Proibido por default:
 
-- tool SQL genérica (superfície MCP de SQL, acesso direto a banco, ou SQL que
-  burle a API dona do domínio);
+- tool SQL genérica;
 - proxy HTTP genérico;
 - arbitrary path/method;
 - CRUD integral mecânico;
 - field selector genérico que burle allowlist;
 - expansão automática de todos os endpoints internos;
 - service account como substituto de identidade do usuário quando user parity é requisito.
-
-Esclarecimento de boundary: uma rota canônica da API cujo contrato declarado
-aceita `sql` (ex.: `execute_readonly_sql`, POST /data/sql) pode ser exposta
-via o broker discover→execute quando explicitamente allowlisted — a permissão
-de backend e o validador da rota permanecem autoritativos. Isso não é uma
-tool SQL genérica.
 
 ## OAuth / OIDC — separação obrigatória
 

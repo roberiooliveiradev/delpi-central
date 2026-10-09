@@ -231,20 +231,13 @@ If one gate is missing, status is `PENDING` / `INCONCLUSIVE`, not `PASS`.
 
 Forbidden shortcuts:
 
-- generic SQL tool (MCP-level SQL surface, direct DB access, or SQL bypassing
-  the owning API);
+- SQL tool;
 - arbitrary HTTP path/method tool;
 - arbitrary entity/field selector;
 - expose-all OpenAPI/MCP conversion;
 - generic CRUD;
 - prompt-only allowlist;
 - frontend-only authorization.
-
-Boundary clarification: a canonical API route whose owner contract declares
-`sql` as input (e.g. API DELPI `execute_readonly_sql`, POST /data/sql) may be
-exposed through the governed discover→execute broker when explicitly
-allowlisted — backend permission and route validation remain authoritative.
-This is not a generic SQL tool.
 
 ## READ / PREPARE / ACT
 

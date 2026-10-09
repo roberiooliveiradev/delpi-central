@@ -1,14 +1,13 @@
 {
   "benchmark_version": "1",
   "task_id": "DAVI-MCP-DISCOVERY-QUALITY-001",
-  "description": "Governed discovery-quality benchmark for the 90-operation DAVI READ surface. Queries authored from business/contract semantics, not copied from semanticAliases.",
+  "description": "Governed discovery-quality benchmark for the 89-operation DAVI READ surface. Queries authored from business/contract semantics, not copied from semanticAliases.",
   "families": {
     "product_master": "Product Master & item context",
     "commercial": "Commercial / Sales",
     "supplies": "Supplies / Purchasing / Inventory",
     "production": "Production",
-    "system_metadata": "System Metadata",
-    "sql_route": "Canonical read-only SQL route (POST /data/sql)"
+    "system_metadata": "System Metadata"
   },
   "cases": [
     {"id":"DQ-PM-001","query":"qual a descrição do produto 10080034?","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"product_master","expected_action_ids":["search_products"],"top1_required":true,"notes":"product lookup by code"},
@@ -65,6 +64,7 @@
     {"id":"DQ-PM-052","query":"quais MPs estão em falta para atender os pedidos desse produto?","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"product_master","expected_action_ids":["get_product_raw_material_set_shortages"],"top1_required":false,"notes":""},
     {"id":"DQ-PM-053","query":"catálogo de matérias-primas exclusivas","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"product_master","expected_action_ids":["list_exclusive_raw_materials_catalog"],"top1_required":true,"notes":""},
     {"id":"DQ-PM-054","query":"quais MPs exclusivas usamos?","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"product_master","expected_action_ids":["list_exclusive_raw_materials_catalog"],"top1_required":false,"notes":""},
+
     {"id":"DQ-COM-001","query":"resumo do faturamento ROL comercial do mês","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"commercial","expected_action_ids":["get_commercial_rol_summary"],"top1_required":true,"notes":""},
     {"id":"DQ-COM-002","query":"realizado e meta de faturamento comercial","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"commercial","expected_action_ids":["get_commercial_rol_summary"],"top1_required":false,"notes":""},
     {"id":"DQ-COM-003","query":"série mensal do ROL comercial","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"commercial","expected_action_ids":["get_commercial_rol_series"],"top1_required":true,"notes":""},
@@ -101,6 +101,7 @@
     {"id":"DQ-COM-034","query":"histórico mensal de OTD por cliente","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"commercial","expected_action_ids":["get_sales_order_otd_series_by_customer"],"top1_required":false,"notes":""},
     {"id":"DQ-COM-035","query":"ROL vs meta do segmento WEG","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"commercial","expected_action_ids":["get_weg_rol_target_pct"],"top1_required":true,"notes":""},
     {"id":"DQ-COM-036","query":"percentual da meta de faturamento WEG","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"commercial","expected_action_ids":["get_weg_rol_target_pct"],"top1_required":false,"notes":""},
+
     {"id":"DQ-SUP-001","query":"CPV de suprimentos do mês","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"supplies","expected_action_ids":["get_supplies_cpv"],"top1_required":true,"notes":""},
     {"id":"DQ-SUP-002","query":"custo dos produtos vendidos em relação ao faturamento","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"supplies","expected_action_ids":["get_supplies_cpv"],"top1_required":false,"notes":""},
     {"id":"DQ-SUP-003","query":"giro de estoque de suprimentos","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"supplies","expected_action_ids":["get_supplies_inventory_turnover"],"top1_required":true,"notes":""},
@@ -145,6 +146,7 @@
     {"id":"DQ-SUP-042","query":"saldo de material em poder de terceiros","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"supplies","expected_action_ids":["get_supplies_third_party_materials_summary"],"top1_required":false,"notes":""},
     {"id":"DQ-SUP-043","query":"remessas de materiais para terceiros","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"supplies","expected_action_ids":["get_supplies_third_party_materials_shipments"],"top1_required":true,"notes":""},
     {"id":"DQ-SUP-044","query":"o que foi enviado para industrialização em terceiros?","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"supplies","expected_action_ids":["get_supplies_third_party_materials_shipments"],"top1_required":false,"notes":""},
+
     {"id":"DQ-PRD-001","query":"OEE percentual atual","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"production","expected_action_ids":["get_overall_equipment_effectiveness_pct"],"top1_required":true,"notes":""},
     {"id":"DQ-PRD-002","query":"eficiência global dos equipamentos em percentual","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"production","expected_action_ids":["get_overall_equipment_effectiveness_pct"],"top1_required":false,"notes":""},
     {"id":"DQ-PRD-003","query":"OEE de produção com resumo e apontamentos","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"production","expected_action_ids":["get_production_oee"],"top1_required":true,"notes":"confusion vs pct/series"},
@@ -179,6 +181,7 @@
     {"id":"DQ-PRD-032","query":"liste as perdas registradas na produção","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"production","expected_action_ids":["get_production_losses_records"],"top1_required":false,"notes":""},
     {"id":"DQ-PRD-033","query":"materiais com mais perdas na produção","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"production","expected_action_ids":["get_production_losses_top_materials"],"top1_required":true,"notes":""},
     {"id":"DQ-PRD-034","query":"top perdas por material","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"production","expected_action_ids":["get_production_losses_top_materials"],"top1_required":false,"notes":""},
+
     {"id":"DQ-MET-001","query":"procure tabelas relacionadas a estoque","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"system_metadata","expected_action_ids":["search_tables_by_description"],"top1_required":true,"notes":"confusion set"},
     {"id":"DQ-MET-002","query":"quais tabelas do sistema tratam de clientes?","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"system_metadata","expected_action_ids":["search_tables_by_description"],"top1_required":false,"notes":""},
     {"id":"DQ-MET-003","query":"busque colunas com descrição de preço","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"system_metadata","expected_action_ids":["search_protheus_columns_by_description"],"top1_required":true,"notes":""},
@@ -189,7 +192,9 @@
     {"id":"DQ-MET-008","query":"metadados da tabela SB1010","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"system_metadata","expected_action_ids":["get_protheus_table"],"top1_required":false,"notes":""},
     {"id":"DQ-MET-009","query":"liste as colunas da tabela SB1","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"system_metadata","expected_action_ids":["list_protheus_table_columns"],"top1_required":true,"notes":""},
     {"id":"DQ-MET-010","query":"quais campos a tabela SC5 tem?","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"system_metadata","expected_action_ids":["list_protheus_table_columns"],"top1_required":false,"notes":""},
+
     {"id":"DQ-STOCK-001","query":"estoque atual do produto 10080034","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"product_master","expected_action_ids":["get_product_stock"],"top1_required":true,"notes":"KNOWN LIVE RESIDUAL — stock not top-1 in provider observation 2026-10-08"},
+
     {"id":"DQ-AMB-001","query":"movimentações do produto","language":"pt-BR","case_type":"AMBIGUOUS","family":"product_master","expected_action_ids":["get_product_internal_movements","list_supplies_inventory_adjustments","get_product_inbound_invoice_items","get_product_outbound_invoice_items"],"top1_required":false,"notes":"internal movements vs adjustments vs invoices"},
     {"id":"DQ-AMB-002","query":"compras do produto","language":"pt-BR","case_type":"AMBIGUOUS","family":"product_master","expected_action_ids":["get_product_purchases","get_product_last_purchase","get_product_purchase_price_history","get_product_inbound_invoice_items"],"top1_required":false,"notes":""},
     {"id":"DQ-AMB-003","query":"produção do item 10080034","language":"pt-BR","case_type":"AMBIGUOUS","family":"product_master","expected_action_ids":["get_product_production_status","get_product_factory_status","get_product_guide"],"top1_required":false,"notes":""},
@@ -200,6 +205,7 @@
     {"id":"DQ-AMB-008","query":"perdas","language":"pt-BR","case_type":"AMBIGUOUS","family":"production","expected_action_ids":["get_production_losses_records","get_production_losses_top_materials"],"top1_required":false,"notes":""},
     {"id":"DQ-AMB-009","query":"clientes novos","language":"pt-BR","case_type":"AMBIGUOUS","family":"commercial","expected_action_ids":["get_new_clients_average","get_new_clients_rol_pct","get_new_business_rol_pct"],"top1_required":false,"notes":""},
     {"id":"DQ-AMB-010","query":"ajustes de inventário","language":"pt-BR","case_type":"AMBIGUOUS","family":"supplies","expected_action_ids":["list_supplies_inventory_adjustments","get_supplies_inventory_adjustments_summary"],"top1_required":false,"notes":""},
+
     {"id":"DQ-NEG-W-001","query":"altere o produto 10080034","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"product_master","expected_action_ids":[],"top1_required":false,"notes":"live-proven write intent"},
     {"id":"DQ-NEG-W-002","query":"exclua o cadastro do produto 10080034","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"product_master","expected_action_ids":[],"top1_required":false,"notes":""},
     {"id":"DQ-NEG-W-003","query":"aprove o pedido de compra 12345","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"supplies","expected_action_ids":[],"top1_required":false,"notes":""},
@@ -208,12 +214,14 @@
     {"id":"DQ-NEG-W-006","query":"atualize o preço do produto 10080034 para 99,90","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"product_master","expected_action_ids":[],"top1_required":false,"notes":"pricing-adjacent write"},
     {"id":"DQ-NEG-W-007","query":"insira um novo fornecedor","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"product_master","expected_action_ids":[],"top1_required":false,"notes":""},
     {"id":"DQ-NEG-W-008","query":"delete a ordem de produção 123","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"production","expected_action_ids":[],"top1_required":false,"notes":"EN-flavored write"},
-    {"id":"DQ-SQL-001","query":"rode um SELECT * FROM SB1010","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"canonical read-only SQL route (was GENERIC_SQL_NEGATIVE pre-normalization)"},
-    {"id":"DQ-SQL-002","query":"execute SQL: SELECT top 10 * from SC5","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"canonical read-only SQL route (was GENERIC_SQL_NEGATIVE pre-normalization)"},
-    {"id":"DQ-SQL-003","query":"rode uma query SQL na tabela SD3","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"canonical read-only SQL route (was GENERIC_SQL_NEGATIVE pre-normalization)"},
-    {"id":"DQ-SQL-004","query":"faça uma consulta SQL arbitrária no banco","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"canonical read-only SQL route (was GENERIC_SQL_NEGATIVE pre-normalization)"},
-    {"id":"DQ-SQL-005","query":"select * from SB2010","language":"en","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"canonical read-only SQL route (was GENERIC_SQL_NEGATIVE pre-normalization)"},
-    {"id":"DQ-SQL-006","query":"liste todos os registros da tabela SB1 via SQL","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"canonical read-only SQL route (was GENERIC_SQL_NEGATIVE pre-normalization)"},
+
+    {"id":"DQ-NEG-S-001","query":"rode um SELECT * FROM SB1010","language":"pt-BR","case_type":"GENERIC_SQL_NEGATIVE","family":"system_metadata","expected_action_ids":[],"top1_required":false,"notes":"live-proven SQL guard"},
+    {"id":"DQ-NEG-S-002","query":"execute SQL: SELECT top 10 * from SC5","language":"pt-BR","case_type":"GENERIC_SQL_NEGATIVE","family":"system_metadata","expected_action_ids":[],"top1_required":false,"notes":""},
+    {"id":"DQ-NEG-S-003","query":"rode uma query SQL na tabela SD3","language":"pt-BR","case_type":"GENERIC_SQL_NEGATIVE","family":"system_metadata","expected_action_ids":[],"top1_required":false,"notes":""},
+    {"id":"DQ-NEG-S-004","query":"faça uma consulta SQL arbitrária no banco","language":"pt-BR","case_type":"GENERIC_SQL_NEGATIVE","family":"system_metadata","expected_action_ids":[],"top1_required":false,"notes":""},
+    {"id":"DQ-NEG-S-005","query":"select * from SB2010","language":"en","case_type":"GENERIC_SQL_NEGATIVE","family":"system_metadata","expected_action_ids":[],"top1_required":false,"notes":""},
+    {"id":"DQ-NEG-S-006","query":"liste todos os registros da tabela SB1 via SQL","language":"pt-BR","case_type":"GENERIC_SQL_NEGATIVE","family":"system_metadata","expected_action_ids":[],"top1_required":false,"notes":"row dump vs metadata describe"},
+
     {"id":"DQ-NEG-U-001","query":"qual a previsão do tempo em Campo Mourão amanhã?","language":"pt-BR","case_type":"UNSUPPORTED_NEGATIVE","family":"unsupported","expected_action_ids":[],"top1_required":false,"notes":""},
     {"id":"DQ-NEG-U-002","query":"monte a escala de férias do time de produção","language":"pt-BR","case_type":"UNSUPPORTED_NEGATIVE","family":"unsupported","expected_action_ids":[],"top1_required":false,"notes":""},
     {"id":"DQ-NEG-U-003","query":"qual o saldo da conta corrente da empresa?","language":"pt-BR","case_type":"UNSUPPORTED_NEGATIVE","family":"unsupported","expected_action_ids":[],"top1_required":false,"notes":"finance not governed"},
@@ -222,17 +230,12 @@
     {"id":"DQ-NEG-U-006","query":"calcule o ICMS da nota de saída","language":"pt-BR","case_type":"UNSUPPORTED_NEGATIVE","family":"unsupported","expected_action_ids":[],"top1_required":false,"notes":""},
     {"id":"DQ-NEG-U-007","query":"qual o lead time médio do fornecedor X nos últimos 5 anos?","language":"pt-BR","case_type":"UNSUPPORTED_NEGATIVE","family":"unsupported","expected_action_ids":[],"top1_required":false,"notes":"plausible but ungoverned metric"},
     {"id":"DQ-NEG-U-008","query":"traduza a descrição do produto para inglês","language":"pt-BR","case_type":"UNSUPPORTED_NEGATIVE","family":"unsupported","expected_action_ids":[],"top1_required":false,"notes":""},
+
     {"id":"DQ-QUA-001","query":"quais colunas a tabela SB1 possui?","language":"pt-BR","case_type":"QUARANTINE_CONFLICT","family":"system_metadata","expected_action_ids":["list_protheus_table_columns"],"top1_required":false,"notes":"metadata owner must still win precise intent"},
     {"id":"DQ-QUA-002","query":"dados cadastrais da tabela SB1010","language":"pt-BR","case_type":"QUARANTINE_CONFLICT","family":"system_metadata","expected_action_ids":["get_protheus_table"],"top1_required":false,"notes":"describe table, not rows"},
     {"id":"DQ-QUA-003","query":"estoque de segurança sugerido por item","language":"pt-BR","case_type":"QUARANTINE_CONFLICT","family":"supplies","expected_action_ids":["get_supplies_safety_stock_items","get_supplies_safety_stock_summary"],"top1_required":false,"notes":"safety-stock family vs generic stock"},
     {"id":"DQ-QUA-004","query":"preço de compra registrado no histórico do produto","language":"pt-BR","case_type":"QUARANTINE_CONFLICT","family":"product_master","expected_action_ids":["get_product_purchase_price_history"],"top1_required":false,"notes":"purchase price vs sale price boundary"},
     {"id":"DQ-QUA-005","query":"OTD comercial por cliente e série","language":"pt-BR","case_type":"QUARANTINE_CONFLICT","family":"commercial","expected_action_ids":["get_sales_order_otd_by_customer","get_sales_order_otd_series_by_customer"],"top1_required":false,"notes":"OTD quarantine boundary"},
-    {"id":"DQ-QUA-006","query":"consumo de matéria-prima na produção por item","language":"pt-BR","case_type":"QUARANTINE_CONFLICT","family":"production","expected_action_ids":["get_production_consumption_by_item"],"top1_required":false,"notes":"consumption vs losses vs allocation"},
-    {"id":"DQ-SQL-007","query":"quero fazer uma consulta SQL","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"explicit SQL read intent"},
-    {"id":"DQ-SQL-008","query":"execute um SELECT na tabela SB1010","language":"pt-BR","case_type":"POSITIVE_PRECISE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":true,"notes":"explicit SELECT on a known table"},
-    {"id":"DQ-SQL-009","query":"faça uma análise ad hoc cruzando dados de duas tabelas","language":"pt-BR","case_type":"POSITIVE_PARAPHRASE","family":"sql_route","expected_action_ids":["execute_readonly_sql"],"top1_required":false,"notes":"ad-hoc cross-table analysis; metadata actions may co-rank"},
-    {"id":"DQ-SQL-010","query":"delete dados da tabela SB1010 via sql","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"sql_route","expected_action_ids":[],"top1_required":false,"notes":"write intent never promotes the READ SQL route (mutation guard, not AuthZ)"},
-    {"id":"DQ-SQL-011","query":"update SB1010 set B1_DESC = 'x'","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"sql_route","expected_action_ids":[],"top1_required":false,"notes":"write intent never promotes the READ SQL route"},
-    {"id":"DQ-SQL-012","query":"drop table SB1010","language":"pt-BR","case_type":"WRITE_NEGATIVE","family":"sql_route","expected_action_ids":[],"top1_required":false,"notes":"DDL intent never promotes the READ SQL route"}
+    {"id":"DQ-QUA-006","query":"consumo de matéria-prima na produção por item","language":"pt-BR","case_type":"QUARANTINE_CONFLICT","family":"production","expected_action_ids":["get_production_consumption_by_item"],"top1_required":false,"notes":"consumption vs losses vs allocation"}
   ]
 }

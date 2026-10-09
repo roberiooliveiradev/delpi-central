@@ -7,7 +7,5 @@
   "default_page_size": 50,
   "max_page_size": 50,
   "projection_max_depth": 8,
-  "candidate_token_ttl_seconds": 300,
-  "execute_max_resultsets": 8,
-  "execute_max_result_columns": 64
+  "candidate_token_ttl_seconds": 300
 }

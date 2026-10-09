@@ -204,7 +204,6 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
     guard = allow.get("retrievalReadOnlyGuard") or {}
     assert "NOT AuthZ" in str(guard.get("description") or "")
     assert load_allowlist_operation_ids(allow) == {
-        "execute_readonly_sql",
         "get_commercial_rol_by_branch",
         "get_commercial_rol_by_customer",
         "get_commercial_rol_by_product",

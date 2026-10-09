@@ -28,10 +28,6 @@ def _pagination_limits() -> tuple[int, int]:
     max_size = max(default_size, max_size)
     return default_size, max_size
 
-# Transport names are forbidden globally. ``sql`` is intentionally NOT here:
-# it is a legitimate owner-declared requestBody field of the canonical
-# read-only SQL route — safety comes from trusted OpenAPI ∩
-# approvedInputFields ∩ additionalProperties=false ∩ route validation.
 _TRANSPORT_FORBIDDEN = frozenset(
     {
         "url",
@@ -39,6 +35,7 @@ _TRANSPORT_FORBIDDEN = frozenset(
         "path",
         "method",
         "operationId",
+        "sql",
         "authorization",
         "Authorization",
     }

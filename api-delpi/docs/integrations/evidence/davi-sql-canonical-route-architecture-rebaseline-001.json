@@ -1,6 +1,9 @@
 {
   "task_id": "DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-IMPLEMENTATION-001",
   "evidence_id": "davi-sql-canonical-route-architecture-rebaseline-001",
+  "status": "IMPLEMENTATION=SUPERSEDED_BY_GOVERNANCE_CORRECTION; ARCHITECTURE_ACCEPTANCE=REJECTED/EXECUTION_DRIFT",
+  "superseded_by": "davi-sql-governance-correction-002 (DAVI-SQL-CANONICAL-ROUTE-GOVERNANCE-CORRECTION-002)",
+  "governance_note": "canonical API route != approved DAVI capability; DAVI SQL CAPABILITY=TO_INVENTORY; abandoned-path removal remains valid",
   "base_sha": "b57d627ac3d85cc902d2dab4e2e4395b88a6a365",
   "rebased_onto": "e1e113e53fa51adecba31480dcdcdb1b4e5fee40",
   "final_sha": "bb793ba64b",

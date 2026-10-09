@@ -102,7 +102,7 @@ Raw OpenAPI ≠ Agent capability catalog
 | MCP tool surface (protocolo) | `discover_delpi_information`, `execute_delpi_information` | Sim — tools reais do contrato Agent↔App |
 | Business information capabilities | Product Master (`search_products` operationId), stock, suppliers, customers, purchases, structure, commercial/supplies KPIs, … | Não como tools MCP; só via discovery/execute quando elegíveis |
 
-O Agent **não** precisa conhecer operationIds dinâmicos, paths HTTP, hosts, headers ou o catálogo bruto OpenAPI. SQL é formulado somente quando o discovery identifica a capability canônica `execute_readonly_sql` (rota read-only da API DELPI) — ver seção «Descoberta e execução».
+O Agent **não** precisa conhecer operationIds dinâmicos, paths HTTP, hosts, headers, SQL, tabelas ou o catálogo bruto OpenAPI.
 
 ## CURRENT PROVEN V1
 
@@ -269,18 +269,8 @@ Não mantenha um catálogo próprio de capabilities de negócio.
 discover_delpi_information → execute_delpi_information com candidate_token atual.
 Product Master e demais READs elegíveis usam o mesmo fluxo (sem MCP tool dedicada).
 
-Nunca invente URL, path, método, operationId, headers, credenciais ou
+Nunca invente URL, path, método, operationId, SQL, headers, credenciais ou
 candidate_token.
-
-SQL é permitido somente quando o discovery identifica a rota canônica read-only
-da API DELPI (`execute_readonly_sql`, POST /data/sql): formule apenas SELECT
-read-only, use as capabilities de metadata (search_tables_by_description,
-get_protheus_table, list_protheus_table_columns) quando tabela/coluna for
-incerta, prefira campos explícitos a SELECT *, nunca use SQL para contornar
-permissão ou substituir uma rota semântica canônica que responde ao pedido.
-403 do backend = usuário não autorizado; rejeição do SqlValidator = query
-inválida — nunca tente enfraquecer restrições após uma rejeição. Acesso direto
-a banco/TOTVS permanece proibido.
 
 ## Dados retornados
 
@@ -570,7 +560,7 @@ Requires Agent Instruction / security / UX review when material change in:
   user-facing behavior contract
 ```
 
-No generic SQL tool, arbitrary HTTP proxy, arbitrary entity/field selector or mechanical CRUD exposure. The canonical API DELPI read-only SQL route (`execute_readonly_sql`, POST /data/sql) is allowed **as an allowlisted capability** behind the same discover→execute broker — it is not a generic SQL tool and adds no third MCP tool (DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-001).
+No generic SQL, arbitrary HTTP proxy, arbitrary entity/field selector or mechanical CRUD exposure. A canonical API route is **not** automatically a DAVI capability: `POST /data/sql` (`execute_readonly_sql`) remains a preserved API DELPI route under backend `DATA_SQL_ACCESS` + `SqlValidator`, but exposing it via discover→execute was rejected by Architecture review — `DAVI SQL CAPABILITY = TO_INVENTORY` until the capability gates (business need, owner, semantic capability, data classification, output allowlist, external-processing and consumer approval) are ratified (`DAVI-SQL-CANONICAL-ROUTE-GOVERNANCE-CORRECTION-002`).
 
 Do not add pricing, factory, finance or writes just because DAVI can reason about them. Each requires its own owner/source/classification/contract/security decision. Inventory of currently eligible READs lives in governance/runtime evidence — **not** in Agent Instructions.
 

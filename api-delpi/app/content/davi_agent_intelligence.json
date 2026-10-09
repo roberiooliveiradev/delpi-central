@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.08.1",
+  "version": "2026.10.07.2",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -22,7 +22,7 @@
       "Execute somente candidate_token retornado pelo discovery atual via execute_delpi_information.",
       "Product Master (código/descrição/grupo) também entra via discover→execute — não há MCP tool dedicada.",
       "Search miss / zero candidates != prova de ausência no ERP — reporte o retorno tipado.",
-      "Nunca invente URL, path, operationId ou candidate_token. SQL somente quando o discovery identificar a rota canônica read-only da API DELPI (execute_readonly_sql) — read-only SELECT, backend decide 401/403."
+      "Nunca invente URL, path, operationId, SQL ou candidate_token."
     ]
   },
   "execution_posture": {
@@ -72,10 +72,8 @@
   },
   "not_exposed": {
     "writes": "NOT_EXPOSED — superfície externa READ-only",
-    "sql_arbitrary": "FORBIDDEN — SQL arbitrário/fora da rota canônica, tool MCP de SQL genérica e acesso direto a banco permanecem proibidos",
-    "sql_canonical_route": "ALLOWED — execute_readonly_sql (POST /data/sql) via discover→execute com DATA_SQL_ACCESS do backend; SqlValidator da rota é a fronteira final",
+    "sql_arbitrary": "FORBIDDEN",
     "generic_proxy": "FORBIDDEN",
-    "direct_db": "FORBIDDEN",
     "prepare_act": "NOT on DAVI external surface (cost simulation remains DEFER)",
     "commit_now": "N/A — no write path"
   },
@@ -108,13 +106,7 @@
         "production.operation.materials",
         "production.losses"
       ],
-      "note": "Inventory & Material Flow via discover→execute only. Semântica canônica vem da API DELPI: kind de movimentação interna é enum governado (warehouse_transfer | inventory_adjustment | production_receipt | production_consumption) — nunca classifique por código TM/CF bruto. Ajuste de inventário/estoque usa get_supplies_inventory_adjustments_summary para o agregado e list_supplies_inventory_adjustments para detalhe. Sem nature explícita, o indicador principal é summary.net_value = surplus_value - shortage_value; reporte também surplus_value, shortage_value, gross_value = surplus_value + shortage_value, surplus_quantity, shortage_quantity, net_quantity, surplus_count e shortage_count. net_value positivo = sobra líquida; negativo = furo líquido; nunca apresente gross_value como líquido. Pedido de furo → nature=shortage; pedido de sobra → nature=surplus. Documento INVENT nunca é transferência de armazém. committed_quantity/reserved_quantity em product.stock.availability são empenho/reserva; estimation.* em supplies.stock.value carrega método e fechamento oficial (SB9) — reporte data_quality_warning em vez de escondê-lo. shortages/consumption/commitments são semáforos e extratos calculados no backend; perdas usam loss_type=refugo|scrap|both. Não recalcule furo/sobra a partir de TM/CF/TPMOVAJ no Agent, não infira permissão. SQL ad hoc somente pela rota canônica execute_readonly_sql quando nenhuma capability semântica responder."
-    },
-    "ad_hoc_sql_read": {
-      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
-      "pipeline": ["discover_schema_metadata_if_needed", "discover_sql_capability", "formulate_readonly_select", "execute_candidate", "report_only_returned_data"],
-      "confirmation_policy": "read_only",
-      "note": "SQL somente via a rota canônica execute_readonly_sql (POST /data/sql) da API DELPI: SELECT read-only, sem bypass de permissão, backend 403 é decisão final. Prefira campos explícitos a SELECT *, use metadata (search_tables_by_description, get_protheus_table, list_protheus_table_columns) quando tabela/coluna for incerta, e não use SQL para contornar uma rota semântica canônica que responde ao pedido. Nunca tente enfraquecer restrições do validador após rejeição."
+      "note": "Inventory & Material Flow via discover→execute only. Semântica canônica vem da API DELPI: kind de movimentação interna é enum governado (warehouse_transfer | inventory_adjustment | production_receipt | production_consumption) — nunca classifique por código TM/CF bruto. Ajuste de inventário/estoque usa get_supplies_inventory_adjustments_summary para o agregado e list_supplies_inventory_adjustments para detalhe. Sem nature explícita, o indicador principal é summary.net_value = surplus_value - shortage_value; reporte também surplus_value, shortage_value, gross_value = surplus_value + shortage_value, surplus_quantity, shortage_quantity, net_quantity, surplus_count e shortage_count. net_value positivo = sobra líquida; negativo = furo líquido; nunca apresente gross_value como líquido. Pedido de furo → nature=shortage; pedido de sobra → nature=surplus. Documento INVENT nunca é transferência de armazém. committed_quantity/reserved_quantity em product.stock.availability são empenho/reserva; estimation.* em supplies.stock.value carrega método e fechamento oficial (SB9) — reporte data_quality_warning em vez de escondê-lo. shortages/consumption/commitments são semáforos e extratos calculados no backend; perdas usam loss_type=refugo|scrap|both. Não recalcule furo/sobra a partir de TM/CF/TPMOVAJ no Agent, não infira permissão, não peça SQL genérico."
     },
     "structure_bom": {
       "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],

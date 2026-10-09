@@ -14,7 +14,6 @@ from __future__ import annotations
 from typing import Any
 
 from app.application.external_capabilities.dynamic_information.constants import (
-    CANONICAL_READONLY_SQL_ROUTE,
     RESTRICTED_PATH_BOUNDED_METADATA_READ,
     SEMANTIC_TRANSPORT_READ_POST,
     STATUS_ADMIN_OUT_OF_SCOPE,
@@ -165,19 +164,7 @@ def classify_operation(
         return STATUS_NOT_RELEVANT
 
     if any(m in path_l or m in oid.lower() for m in _SQL_MARKERS):
-        # Governed opt-in: only the canonical API-owned read-only SQL route may
-        # proceed, and only when the DAVI allowlist explicitly marks it. Any
-        # other SQL-looking operation stays fail-closed.
-        sql_entry = _allowlist_operation_entry(allowlist, oid) if oid else None
-        canonical_sql_opt_in = (
-            bool(oid)
-            and oid in allowlisted_operation_ids
-            and sql_entry is not None
-            and (sql_entry.get("canonicalSqlRoute") or "").strip()
-            == CANONICAL_READONLY_SQL_ROUTE
-        )
-        if not canonical_sql_opt_in:
-            return STATUS_GENERIC_SQL_FORBIDDEN
+        return STATUS_GENERIC_SQL_FORBIDDEN
 
     if any(m in path_l for m in _ADMIN_MARKERS) or "gpt_actions" in path_l or path_l.startswith(
         "/gpt-actions"

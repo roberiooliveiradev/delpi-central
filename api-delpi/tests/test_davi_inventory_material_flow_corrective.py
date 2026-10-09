@@ -513,8 +513,8 @@ def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
 
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
-    assert allow["version"] == 22
-    assert len(allow["operations"]) == 90
+    assert allow["version"] == 21
+    assert len(allow["operations"]) == 89
     ops = _ops()
     for kept in (
         "list_supplies_inventory_adjustments",
@@ -546,7 +546,7 @@ def test_count02_baseline_and_live_counts_recomputed():
     }
     assert len(baseline_eligible) == 87
     live_eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(live_eligible) == 90
+    assert len(live_eligible) == 89
 
 
 def test_coverage_decision_chain_records_corrective():
@@ -573,25 +573,11 @@ def test_authz01_routes_keep_api_delpi_access():
     assert source.count("require_permission(API_DELPI_ACCESS)") == 2
 
 
-def test_sql01_only_canonical_sql_route_promoted():
-    """Generic SQL stays forbidden; only the canonical API-owned read-only
-    route (execute_readonly_sql, POST /data/sql) is promoted via
-    DAVI-SQL-CANONICAL-ROUTE-NORMALIZATION-001."""
+def test_sql01_generic_sql_not_promoted():
     ops = _ops()
-    assert "execute_readonly_sql" in ops
-    entry = next(
-        o
-        for o in _allow()["operations"]
-        if o.get("operationId") == "execute_readonly_sql"
-    )
-    assert entry["canonicalSqlRoute"] == "CANONICAL_READONLY_SQL_ROUTE"
-    assert entry["executionMode"] == "catalog_action"
-    assert entry["semanticTransport"] == "SEMANTIC_READ_POST"
-    assert entry["approvedInputFields"] == ["sql"]
     for oid in ops:
-        if oid != "execute_readonly_sql":
-            assert "sql" not in oid.lower()
-            assert "data/sql" not in oid
+        assert oid != "execute_readonly_sql"
+        assert "data/sql" not in oid
 
 
 def test_mcp01_tool_count_exactly_two():

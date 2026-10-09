@@ -28,9 +28,7 @@ from app.application.external_capabilities.dynamic_information.execution_plan im
     build_execution_plan,
 )
 from app.application.external_capabilities.dynamic_information.projection import (
-    RESPONSE_CONTRACT_BOUNDED_DYNAMIC_RESULTSET,
     apply_approved_field_projection,
-    apply_dynamic_resultset_projection,
     bound_response_payload,
     unwrap_api_payload,
 )
@@ -104,25 +102,14 @@ def execute_delpi_information(
             raise GovernedExecutionError(
                 result.error_message or "Catalog action execution failed"
             )
-        if (
-            action.response_contract
-            == RESPONSE_CONTRACT_BOUNDED_DYNAMIC_RESULTSET
-        ):
-            body = apply_dynamic_resultset_projection(
-                unwrap_api_payload(result.payload),
-                max_resultsets=int(budgets.get("execute_max_resultsets") or 8),
-                max_columns=int(budgets.get("execute_max_result_columns") or 64),
-                max_array_items=int(budgets.get("execute_max_items") or 50),
-            )
-        else:
-            body = apply_approved_field_projection(
-                unwrap_api_payload(result.payload),
-                approved_fields=action.approved_response_fields,
-                list_key="items",
-                max_depth=int(budgets.get("projection_max_depth") or 8),
-                max_array_items=int(budgets.get("execute_max_items") or 50),
-                response_bindings=action.response_bindings,
-            )
+        body = apply_approved_field_projection(
+            unwrap_api_payload(result.payload),
+            approved_fields=action.approved_response_fields,
+            list_key="items",
+            max_depth=int(budgets.get("projection_max_depth") or 8),
+            max_array_items=int(budgets.get("execute_max_items") or 50),
+            response_bindings=action.response_bindings,
+        )
     else:
         raise GovernedExecutionError("Unsupported execution plan")
 
