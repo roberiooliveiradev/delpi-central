@@ -578,29 +578,36 @@ Se a evidence invalidar owner/semântica:
 
 ## 12. Residual que bloqueia o freeze global
 
+A premissa de external package delivery foi superseded.
+
 ```text
-E04 / T04
-= INVENTORY_COMPLETE_FOR_DECISION
+E04_EXTERNAL_DELIVERY = CLOSED / NOT_REQUIRED_IN_V1
+T04_EXTERNAL_DELIVERY_CAPABILITY = CLOSED / NOT_REQUIRED_IN_V1
+```
+
+Contrato vigente:
+
+```text
+PACKAGE_FINALIZED
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ authenticated reviewer in Minha DELPI
+→ review lifecycle
+```
+
+Residual:
+
+```text
+D-P5-REVIEW-COMPLETION
 = DECISION_REQUIRED
 ```
 
+Opções:
+- C1 submission suficiente;
+- C2 review accepted obrigatório;
+- C3 política configurável.
+
 Authority:
-- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
-
-Proven:
-- Graph e-mail + attachments;
-- retry de transport;
-- Message Trace delivered/bounced/unknown em contexts reais;
-- Core Notifications separado de package delivery.
-
-Decisão ainda necessária:
-- owner/orchestration do delivery;
-- semântica de `PACKAGE_SENT`.
-
-Recomendação documentada, não aplicada:
-- P5/BFF owns orchestration;
-- Graph + Message Trace adapters;
-- `PACKAGE_SENT` após `DELIVERED`.
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## 13. Freeze readiness após A15
 
@@ -616,6 +623,6 @@ IMPLEMENTATION_AUTHORIZED      = NO
 ```
 
 Próximo passo:
-- fechar E04/T04 por evidence/owner;
+- decidir `D-P5-REVIEW-COMPLETION`;
 - reexecutar residual search;
-- somente então declarar `DOCUMENTATION_CLOSURE_COMPLETE = PASS`.
+- somente então avaliar `PRODUCT_CONTRACT_FREEZE = PASS` e `DOCUMENTATION_CLOSURE_COMPLETE = PASS`.
