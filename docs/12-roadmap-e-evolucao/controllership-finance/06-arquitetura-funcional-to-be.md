@@ -203,7 +203,7 @@ Correções posteriores permanecem no owner/ERP.
 
 ```text
 PACKAGE_FINALIZED
-→ [delivery owner/capability PENDING E04/T04]
+→ [delivery owner/outcome DECISION_REQUIRED E04/T04]
 → PACKAGE_SENT
 ```
 
