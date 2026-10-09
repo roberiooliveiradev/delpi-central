@@ -63,7 +63,7 @@ Além de rejeição/reversão:
 - REVALIDATION_REQUIRED;
 - WAITING_FOR_THIRD_PARTY;
 - PACKAGE_READY;
-- PACKAGE_SENT.
+- PACKAGE_SUBMITTED_FOR_REVIEW.
 
 `READY_TO_FINALIZE` é estado do pacote. `PACKAGE_READY` é evento de notificação emitido quando esse estado é alcançado; não é um segundo estado.
 
@@ -76,7 +76,7 @@ Não apagar a notificação anterior.
 ## Falha de entrega
 
 ```text
-NOTIFICATION_DISPATCHED != PACKAGE_SENT
+NOTIFICATION_DISPATCHED != PACKAGE_SUBMITTED_FOR_REVIEW
 NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE
 ```
 
