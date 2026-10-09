@@ -179,6 +179,27 @@ Não pertence à página:
 - assignment implícito por role/menção;
 - persistência paralela de lifecycle.
 
+## P5 reviewer projection
+
+A clarificação P5 prova um caso de responsabilidade individual:
+
+```text
+PACKAGE_SUBMITTED_FOR_REVIEW
+AND reviewer_assignment = authenticated_user
+AND review actionable
+→ TaskProjection em Minhas tarefas
+```
+
+Regras:
+- source = P5;
+- owner = P5;
+- self-only;
+- ação = abrir recipient package;
+- reviewer assignment não cria permission;
+- ACCESS + resource scope continuam necessários;
+- quando review deixa de exigir ação, projection desaparece;
+- notification/e-mail não cria task por si só; o owner state é a authority.
+
 ## Rota
 
 ```text
