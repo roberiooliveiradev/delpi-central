@@ -52,6 +52,7 @@ Este ledger complementa:
 | RQ-P3-06 | input alterado após revalidação invalida prontidão aplicável | estado volta a requerer revalidação | positive + sibling | source version/freshness | TARGET |
 | RQ-P3-07 | V1 não grava sacramentação no ERP | nenhuma action de escrita ERP é criada | architecture negative | E03/T03 | TARGET |
 | RQ-P3-08 | STOCK_CLOSED usa estado canônico do owner se existir | sem fallback manual silencioso | integration/contract | T03 | TARGET / STOP_CONDITION |
+| RQ-P3-08A | STOCK_CLOSED é terminal no lifecycle P3 do Portal V1 | sem reabrir/desfazer/retificar localmente; correção posterior pertence ao owner e não reescreve histórico | negative + lifecycle + P5 sibling | E02 CLOSED | TARGET / PRODUCT_DECISION |
 | RQ-P3-09 | freshness/proveniência acompanham resultado | source/time/competência/unidade/finality/rule version disponíveis | contract/UI | T01 | TARGET |
 | RQ-P3-10 | Help explica cutoff, revalidação, paridade e estado canônico | conteúdo contextual disponível | UI/help check | feature help | TARGET |
 
