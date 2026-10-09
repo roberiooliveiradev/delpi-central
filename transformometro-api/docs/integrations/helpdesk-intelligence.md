@@ -687,3 +687,29 @@ model vision (community reports show inconsistent `ImageContent`
 handling on ChatGPT connectors — protocol PROVEN, client behavior
 PENDING_RUNTIME_ACCEPTANCE), compound assignment+upload, disposable
 ticket cleanup.
+
+### 22.1 R4.2-C1 — fileParams download-host corrective
+
+- **Failure**: live upload ACT failed `FILE_URL_NOT_ALLOWED` — ChatGPT
+  delivered the signed file URL on
+  `oaisdmntprbrazilsouth.blob.core.windows.net` while the gateway
+  allowlist defaulted to `files.oaiusercontent.com` only.
+- **Corrective (config-only)**: `OPENAI_FILE_DOWNLOAD_HOSTS` (pre-existing
+  env, comma-separated exact/suffix hosts) now set to
+  `files.oaiusercontent.com,oaisdmntprbrazilsouth.blob.core.windows.net`
+  in `infra/.env` and documented in `.env.dev.example`/`.env.prod.example`.
+  No code change — the allowlist mechanism was already correct.
+- **Security preserved**: no `*.blob.core.windows.net` wildcard, no
+  generic Azure trust. `evilcorp.blob.core.windows.net`, bare
+  `blob.core.windows.net`, `example.com`, suffix-confusion
+  (`attacker-oaisd…`) and subdomain tricks (`.attacker.example`) all
+  remain denied (proven in `test_openai_file_gateway.py`, 14 tests).
+  `file_id` is context, never networking AuthZ. Gateway logs hostname
+  only — no signed URL/SAS query.
+- **Deploy**: `delpi-transformometro-api` recreated only (env change);
+  no BFF/Keycloak/Postgres restart.
+- **Remaining live gates**: real `fileParams` upload retry on ticket
+  #1300 (`[TÉO R4.2 ATTACHMENT ACCEPTANCE]`) → GLPI read-back →
+  `action=attachment` binary read → vision evidence. Image read on
+  #1299 (document 1344) already PASS. Builder reimport still pending
+  (unchanged by this corrective).

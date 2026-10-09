@@ -150,3 +150,60 @@ def test_sanitize_upload_filename():
     assert sanitize_upload_filename('bad\r\n"name.png') == "badname.png"
     assert sanitize_upload_filename("") == "arquivo"
     assert sanitize_upload_filename("...") == "arquivo"
+
+
+# --------------------------------------------------------------------------
+# R4.2-C1 — observed fileParams delivery host via env allowlist
+# --------------------------------------------------------------------------
+
+_OBSERVED_HOST = "oaisdmntprbrazilsouth.blob.core.windows.net"
+
+
+def test_env_override_parses_csv_hosts(monkeypatch):
+    monkeypatch.setenv(
+        "OPENAI_FILE_DOWNLOAD_HOSTS",
+        f" files.oaiusercontent.com , {_OBSERVED_HOST.upper()} ,, ",
+    )
+    hosts = mod._allowed_hosts()
+    assert hosts == ("files.oaiusercontent.com", _OBSERVED_HOST)
+    # Empty segments never become a wildcard entry.
+    assert "" not in hosts
+
+
+def test_observed_fileparams_host_allowed_when_configured(monkeypatch):
+    monkeypatch.setenv(
+        "OPENAI_FILE_DOWNLOAD_HOSTS",
+        f"files.oaiusercontent.com,{_OBSERVED_HOST}",
+    )
+    assert mod._host_allowed(_OBSERVED_HOST) is True
+    assert mod._host_allowed("files.oaiusercontent.com") is True
+
+
+def test_observed_host_denied_without_config(monkeypatch):
+    monkeypatch.delenv("OPENAI_FILE_DOWNLOAD_HOSTS", raising=False)
+    # Only the default OpenAI host survives — a configured deployment is
+    # what unlocks the observed delivery account, never a wildcard.
+    assert mod._host_allowed(_OBSERVED_HOST) is False
+
+
+def test_random_azure_blob_host_denied(monkeypatch):
+    monkeypatch.setenv(
+        "OPENAI_FILE_DOWNLOAD_HOSTS",
+        f"files.oaiusercontent.com,{_OBSERVED_HOST}",
+    )
+    for host in (
+        "evilcorp.blob.core.windows.net",
+        "blob.core.windows.net",
+        "example.com",
+        # Suffix confusion: attacker-owned account sharing the string.
+        f"attacker-{_OBSERVED_HOST}",
+        # Subdomain trick: observed host as a label under attacker zone.
+        f"{_OBSERVED_HOST}.attacker.example",
+    ):
+        assert mod._host_allowed(host) is False, host
+
+
+def test_generic_azure_wildcard_not_present():
+    # The default allowlist must never resolve arbitrary Azure storage.
+    assert "blob.core.windows.net" not in mod._allowed_hosts()
+    assert "*.blob.core.windows.net" not in mod._allowed_hosts()
