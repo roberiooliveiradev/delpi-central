@@ -494,7 +494,7 @@ Consolidar:
 ```text
 READY_TO_FINALIZE
 != PACKAGE_FINALIZED
-!= PACKAGE_SENT
+!= PACKAGE_SUBMITTED_FOR_REVIEW
 != MONTHLY_CLOSING_COMPLETED
 ```
 
@@ -502,7 +502,7 @@ Mais:
 - versões;
 - reabertura antes do envio;
 - recipient packages independentes;
-- PACKAGE_SENT imutável;
+- PACKAGE_SUBMITTED_FOR_REVIEW imutável;
 - complemento/nova versão pós-envio;
 - esclarecimentos;
 - conclusão somente com todos pacotes aplicáveis enviados e zero esclarecimento aberto;
