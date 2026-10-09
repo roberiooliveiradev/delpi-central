@@ -237,3 +237,156 @@ export type InventoryTurnoverData = {
   };
   stock_estimation?: StockValueEstimation;
 };
+
+export type NonMovingTurnoverStatus =
+  | "WITH_CONSUMPTION"
+  | "NO_CONSUMPTION_12M"
+  | "NO_CONSUMPTION_IN_PERIOD"
+  | "INSUFFICIENT_HISTORY";
+
+export type NonMovingStockReference = {
+  consumption_window_start: string;
+  consumption_window_end: string;
+  window_kind: "rolling_12m" | "custom_period";
+  valuation_reference: string;
+  product_type: string;
+  branches: string[];
+  warehouses: string[];
+};
+
+export type NonMovingStockStatusBreakdown = {
+  turnover_status: NonMovingTurnoverStatus | string;
+  product_count: number;
+  stock_value: number;
+  blocked_stock_value: number;
+};
+
+export type NonMovingStockBranchBreakdown = {
+  branch: string;
+  product_count: number;
+  eligible_stock_value: number;
+  no_consumption_stock_value: number;
+  insufficient_history_stock_value: number;
+  blocked_stock_value: number;
+};
+
+export type NonMovingStockSummaryData = {
+  reference: NonMovingStockReference;
+  summary: {
+    eligible_stock_value: number;
+    evaluable_stock_value: number;
+    no_consumption_stock_value: number;
+    with_consumption_stock_value: number;
+    insufficient_history_stock_value: number;
+    non_moving_percentage: number | null;
+    coverage_percentage: number | null;
+    blocked_stock_value: number;
+    blocked_no_consumption_stock_value: number;
+    status: string;
+    unavailable_reason: string | null;
+  };
+  counts: {
+    eligible_products: number;
+    with_consumption: number;
+    no_consumption: number;
+    insufficient_history: number;
+    blocked_products: number;
+  };
+  by_status: NonMovingStockStatusBreakdown[];
+  by_branch: NonMovingStockBranchBreakdown[];
+};
+
+export type NonMovingStockItem = {
+  branch: string;
+  product_code: string;
+  description: string | null;
+  unit_of_measure: string | null;
+  warehouse: string;
+  quantity: number;
+  unit_cost: number;
+  stock_value: number;
+  blocked: boolean;
+  turnover_status: NonMovingTurnoverStatus | string;
+  last_effective_utilization: string | null;
+  last_utilization_in_window: string | null;
+};
+
+export type InventoryAccuracyReference = {
+  reference_month: string | null;
+  period_start: string;
+  period_end_exclusive: string;
+  period_kind: "last_closed_month" | "month" | "custom_period";
+  period_closed: boolean;
+  branches: string[];
+};
+
+export type InventoryAccuracyBranchBreakdown = {
+  branch: string;
+  valid_count_total: number;
+  evaluable_count_total: number;
+  accurate_count: number;
+  divergent_count: number;
+  excluded_count: number;
+  shortage_value_total: number;
+  surplus_value_total: number;
+};
+
+export type InventoryAccuracySummaryData = {
+  reference: InventoryAccuracyReference;
+  summary: {
+    valid_count_total: number;
+    evaluable_count_total: number;
+    accurate_count: number;
+    divergent_count: number;
+    accuracy_percentage: number | null;
+    coverage_percentage: number | null;
+    shortage_value_total: number;
+    surplus_value_total: number;
+    comparison_source: string;
+    status: string;
+    unavailable_reason: string | null;
+  };
+  exclusions: {
+    pending_processing: number;
+    cancelled: number;
+  };
+  by_branch: InventoryAccuracyBranchBreakdown[];
+};
+
+export type InventoryAccuracyOutcome =
+  | "accurate"
+  | "divergent"
+  | "excluded";
+
+export type InventoryAccuracyItem = {
+  branch: string;
+  product_code: string;
+  description: string | null;
+  unit_of_measure: string | null;
+  blocked: boolean;
+  warehouse: string;
+  count_date: string | null;
+  counted_quantity: number;
+  theoretical_quantity: number;
+  divergence_quantity: number;
+  shortage_quantity: number;
+  surplus_quantity: number;
+  shortage_value: number;
+  surplus_value: number;
+  adjustment_rows: number;
+  physical_lines: number;
+  inventory_document: string | null;
+  count_status: string;
+  outcome: InventoryAccuracyOutcome | string;
+  exclusion_reason: string | null;
+};
+
+export type SuppliesPagedResponse<T> = {
+  items: T[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+  sort?: string;
+  reference?: Record<string, unknown>;
+};

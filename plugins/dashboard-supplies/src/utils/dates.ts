@@ -11,6 +11,34 @@ export function getTodayInputValue(): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getRollingMonthsAgoInputValue(
+  months: number,
+  reference = new Date()
+): string {
+  const target = new Date(
+    reference.getFullYear(),
+    reference.getMonth() - months,
+    Math.min(reference.getDate(), 28)
+  );
+  const lastDay = new Date(
+    target.getFullYear(),
+    target.getMonth() + 1,
+    0
+  ).getDate();
+  target.setDate(Math.min(reference.getDate(), lastDay));
+  const year = target.getFullYear();
+  const month = String(target.getMonth() + 1).padStart(2, "0");
+  const day = String(target.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function getPreviousCompetenceValue(reference = new Date()): string {
+  const target = new Date(reference.getFullYear(), reference.getMonth() - 1, 1);
+  const year = target.getFullYear();
+  const month = String(target.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
 export function getFirstDayOfMonthInputValue(reference = new Date()): string {
   const year = reference.getFullYear();
   const month = String(reference.getMonth() + 1).padStart(2, "0");

@@ -45,6 +45,26 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     savingsTotal: "Soma da economia em negociações no período e unidade selecionados.",
     savingsEntries: "Quantidade de lançamentos na planilha IDD no recorte.",
     savingsPeriod: "Economia acumulada no intervalo de datas filtrado.",
+    nonMovingStockValue:
+      "Valor do estoque de matérias-primas sem utilização efetiva (consumo de produção ou outras saídas de utilização) na janela de análise. Transferências entre armazéns e ajustes de inventário não reiniciam o prazo.",
+    nonMovingPercentage:
+      "Percentual do valor sem giro sobre o estoque avaliável (produtos com cobertura histórica suficiente para a janela).",
+    nonMovingCoverage:
+      "Percentual do estoque elegível com histórico suficiente para avaliar o giro na janela. O restante fica classificado como histórico insuficiente.",
+    blockedStockValue:
+      "Valor financeiro de materiais bloqueados (B1_MSBLQL) mantidos no universo, exibidos separadamente.",
+    inventoryAccuracy:
+      "Percentual de contagens oficiais do inventário avaliadas como corretas pelo processamento Protheus (MATA270) no mês fechado de referência.",
+    accuracyAccurate:
+      "Contagens processadas sem ajuste de inventário — veredito oficial de não-divergência.",
+    accuracyDivergent:
+      "Contagens processadas que geraram ajuste de inventário (furo ou sobra).",
+    accuracyCoverage:
+      "Contagens avaliáveis sobre o total de contagens válidas do período; pendentes de processamento e canceladas ficam fora do denominador.",
+    accuracyShortage:
+      "Valor financeiro dos ajustes de furo (saídas RE0) do período.",
+    accuracySurplus:
+      "Valor financeiro dos ajustes de sobra (entradas DE0) do período.",
   },
   charts: {
     cpvByCfop: "Distribuição do CPV por código fiscal de operação (CFOP).",
