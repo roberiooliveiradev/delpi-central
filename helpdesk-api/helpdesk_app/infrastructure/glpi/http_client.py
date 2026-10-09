@@ -668,6 +668,45 @@ class HttpxGlpiClient:
         )
         return parse_ticket_requester_user_id(payload)
 
+    def ticket_row(self, access_token: str, ticket_id: int) -> dict:
+        """Raw ticket row — maintenance/backfill only; not a domain projection."""
+        return self._json(
+            "GET",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}",
+            token=access_token,
+        )
+
+    def list_ticket_rows(
+        self,
+        access_token: str,
+        *,
+        created_from: str,
+        created_to: str,
+    ) -> list[dict]:
+        """All ticket rows created in [from, to] — backfill window scan."""
+        rows: list[dict] = []
+        start = 0
+        while True:
+            payload = self._json(
+                "GET",
+                "/api.php/v2.2/Assistance/Ticket",
+                token=access_token,
+                params={
+                    "start": start,
+                    "limit": 200,
+                    "sort": "date_creation:asc",
+                    "filter": f"date_creation=ge={created_from};date_creation=le={created_to}",
+                },
+            )
+            batch = payload.get("results") or payload.get("data") or []
+            if not isinstance(batch, list) or not batch:
+                break
+            rows.extend(r for r in batch if isinstance(r, dict))
+            if len(batch) < 200:
+                break
+            start += len(batch)
+        return rows
+
     def add_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
         body = team_member_assigned_body(user_id)
         try:
