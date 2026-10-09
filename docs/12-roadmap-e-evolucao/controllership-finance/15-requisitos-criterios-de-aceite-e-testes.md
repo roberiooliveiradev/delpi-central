@@ -66,7 +66,7 @@ Fonte detalhada: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 - último documento satisfeito → não auto-send;
 - pre-cut zero → não final;
 - source indisponível → não zero;
-- PACKAGE_SENT + clarification → não complete;
+- PACKAGE_SUBMITTED_FOR_REVIEW + clarification → não complete;
 - mudança mestre → snapshot intacto;
 - rejected evidence → preservada;
 - replacement → nova validação;
@@ -75,7 +75,7 @@ Fonte detalhada: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 - nova versão após rejeição → reversal antiga bloqueada;
 - correction request stale → sem auto-apply;
 - CANCELLED → sem delete/reativação;
-- PACKAGE_SENT → imutável.
+- PACKAGE_SUBMITTED_FOR_REVIEW → imutável.
 
 ## Matriz de testes
 
