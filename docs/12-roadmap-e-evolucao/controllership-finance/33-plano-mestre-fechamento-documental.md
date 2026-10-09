@@ -188,14 +188,29 @@ A01 está apenas na fila futura. Runtime permanece inexistente.
 ## Revisão transversal A14 — status
 
 ```text
-A14 = ACTIVE
+A14 = PASS
 RUNTIME_CHANGES = NONE
 ```
 
-A14 verifica naming, owners, permissions, rotas, plugin-ui, visual families, themes, mobile, Help, states e contracts após A01–A13.
+A14 fechou naming, owners, permissions, rotas, plugin-ui, visual families, themes, mobile, Help, states e contracts após A01–A13. Authority: [34-revisao-transversal-gate-v2.md](./34-revisao-transversal-gate-v2.md).
 
 Residual já conhecido:
 - A12 envio real permanece `PENDING_E04_T04` e impede freeze global completo até o contrato de delivery ser provado.
+
+## Consolidação A15 — status
+
+```text
+A15 = PASS_WITH_RESIDUAL_E04_T04
+PORTAL_DESIGN_FREEZE = PASS
+FRONTEND_PATTERN_FREEZE = PASS
+SECURITY_MODEL_FREEZE = PASS
+TEST_STRATEGY_FREEZE = PASS
+PRODUCT_CONTRACT_FREEZE = PENDING_E04_T04
+DOCUMENTATION_CLOSURE_COMPLETE = NO
+IMPLEMENTATION_AUTHORIZED = NO
+```
+
+Authority: [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md).
 
 ## Inventário completo de superfícies V1
 
