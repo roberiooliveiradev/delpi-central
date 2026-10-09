@@ -347,6 +347,7 @@ class GptActionsDispatchService:
         from tv_app.application.gpt_actions.response_compact import (
             exceeds_actions_budget,
             focused_binding_from_blocks,
+            classify_selection_state,
             iter_block_index_items,
             pick_focus_slide_id,
             project_block_index,
@@ -356,6 +357,7 @@ class GptActionsDispatchService:
             project_media_inventory,
             project_object_matches,
             project_playlist_summary,
+            project_selected_objects,
             project_slide_detail,
             project_slide_index_row,
             resolve_selected_data_source_id,
@@ -480,6 +482,23 @@ class GptActionsDispatchService:
             native_for_index.get("blocks"),
             (editor_focus or {}).get("selectedIds"),
         )
+        if editor_focus is not None:
+            # Grounding projection: resolve selectedIds against the persisted
+            # detail slide (authoritative) — focus ids are hints, not state.
+            selected_objects, missing_ids = project_selected_objects(
+                native_for_index,
+                editor_focus.get("selectedIds"),
+            )
+            editor_focus = {
+                **editor_focus,
+                "selectionState": classify_selection_state(
+                    had_selection=bool(editor_focus.get("selectedIds")),
+                    resolved_count=len(selected_objects),
+                    stale=bool(editor_focus.get("stale")),
+                ),
+                "selectedObjects": selected_objects,
+                "missingIds": missing_ids,
+            }
 
         # Inspeção focada de data_source legado: bounded à fonte + deps dela.
         # Sem data_source_id o comportamento do contexto é inalterado;
@@ -1262,6 +1281,72 @@ class GptActionsDispatchService:
             out.append(row)
         return out
 
+    # Explicit selection carriers — presence (even empty) disables fallback.
+    _EXPLICIT_SELECTION_CARRIERS = (
+        "selectedBlockIds",
+        "selectedBlockId",
+        "focusBlockId",
+    )
+
+    def _merge_editor_focus_selection(
+        self,
+        host: dict[str, Any],
+        *,
+        user: Any,
+    ) -> dict[str, Any]:
+        """Bounded editor-focus fallback for suggest_change grounding.
+
+        Explicit host_context selection always wins; a carrier key present
+        but empty is still explicit (OMITTED != EMPTY). The fallback only
+        enriches a missing selection — it never retargets an explicit slide
+        scope, never invents ids, and authorizes nothing (AuthZ remains with
+        PREPARE/ACT; access.can_read gates even the merge).
+        """
+        if any(key in host for key in self._EXPLICIT_SELECTION_CARRIERS):
+            return host
+        playlist_id = str(host.get("playlistId") or "").strip()
+        if not playlist_id:
+            return host
+        actor = self._access.actor_id(user)
+        if not actor:
+            return host
+        from tv_app.application.services.editor_focus_store import (
+            editor_focus_store,
+        )
+
+        focus = editor_focus_store.get_for_user_playlist(actor, playlist_id)
+        if not focus:
+            return host
+        focus_slide = str(focus.get("slideId") or "").strip()
+        explicit_slide = str(host.get("slideId") or "").strip()
+        if not focus_slide or (explicit_slide and explicit_slide != focus_slide):
+            return host
+        try:
+            pid = UUID(playlist_id)
+        except ValueError:
+            return host
+        access = self._access.resolve(pid, user)
+        if not getattr(access, "can_read", False):
+            return host
+        try:
+            slide = self._writes.get_slide(UUID(focus_slide), playlist_id=pid)
+        except Exception:
+            return host
+        native = slide.get("nativeConfig") if isinstance(slide, dict) else None
+        from tv_app.application.gpt_actions.response_compact import (
+            project_selected_objects,
+        )
+
+        objects, _missing = project_selected_objects(native, focus.get("selectedIds"))
+        if not objects:
+            return host
+        enriched = dict(host)
+        enriched["selectedBlockIds"] = [str(o.get("id")) for o in objects]
+        enriched["selectedBlockTypes"] = [str(o.get("type") or "") for o in objects]
+        if not explicit_slide:
+            enriched["slideId"] = focus_slide
+        return enriched
+
     def suggest_change(
         self,
         *,
@@ -1271,9 +1356,11 @@ class GptActionsDispatchService:
         authorization: str | None,
     ) -> dict[str, Any]:
         assert_permission(user, TV_WRITE)
+        host = host_context if isinstance(host_context, dict) else {}
+        host = self._merge_editor_focus_selection(host, user=user)
         plan = PresentationCommandPlannerService.plan(
             message=message,
-            host_context=host_context if isinstance(host_context, dict) else {},
+            host_context=host,
             user=user,
             authorization=authorization,
         )

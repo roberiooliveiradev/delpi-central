@@ -366,7 +366,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | 1 | Knowledge Orchestration V1 | 0 | DONE (§28) |
 | 2 | TV Product Guide V1 | 1 | DONE (§30) |
 | 3 | Help Convergence | 2 | DONE (§32·§33 runtime-verified) |
-| 4 | Editor Grounding V2 | 0 | READY_FOR_EXECUTION (§34) |
+| 4 | Editor Grounding V2 | 0 | DONE (§34 diagnostic · §36 execution) |
 | 5 | Design Methodology V1 | 1, 4 | READY_FOR_DIAGNOSTIC |
 | 6 | Data + Solution Intelligence | 1 | READY_FOR_DIAGNOSTIC |
 | 7 | Eval + Telemetry V2 | 0 | READY_FOR_EXECUTION (§35 diagnostic done — exec requer promoção) |
@@ -482,7 +482,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** shape do payload + testes + eval delta.
 - **DEPENDENCIES:** PHASE 0.
 - **STOP CONDITIONS:** precisar de estado novo não efêmero ou cruzar ownership do WS hub.
-- **STATUS:** READY_FOR_EXECUTION (§34 diagnostic, 2026-10-09).
+- **STATUS:** DONE (§36 execution, 2026-10-09).
 
 ### PHASE 5 — DESIGN METHODOLOGY V1
 
@@ -1343,3 +1343,58 @@ P4: corpus grounding + `resolutionStatus` telemetry field. P5: rubric visual_cho
 Diagnostic only. Execução de telemetry/corpus requer promotion explícita do P7 para execution com boundary próprio.
 
 **PHASE 7 diagnostic = DONE (measurement architecture proven).** BASELINE = NOT_MEASURED — nenhuma métrica cognitiva existia; nada foi inventado como score.
+
+## 36. PHASE 4 — EDITOR GROUNDING V2 EXECUTION RECORD (2026-10-09)
+
+`STAGE_4 · MODE=IMPLEMENTATION` · base `ce721f6e78` · §34 diagnostic vinculado · §35 measurement input.
+
+### 36.1 Files
+
+Changed: `tv_app/application/gpt_actions/response_compact.py` (+`project_selected_objects`, +`classify_selection_state`, note enrichment) · `tv_app/application/gpt_actions/dispatch_service.py` (+`editorFocus` enrichment em `get_playlist_context`, +`_merge_editor_focus_selection`, +fallback em `suggest_change`). New: `tests/test_editor_focus_grounding.py` (26 tests). Forbidden-scope files: **intocados**.
+
+### 36.2 Selection-state truth table (implemented)
+
+```text
+no focus row | selectedIds vazio | 0 resolvidos  → ABSENT
+stale ∧ ≥1 resolvido                          → STALE
+fresh ∧ 1 resolvido                            → ACTIVE
+fresh ∧ ≥2 resolvidos                          → AMBIGUOUS
+```
+
+### 36.3 Contract
+
+`editorFocus` ganhou (additive, backward-compatible): `selectionState`, `selectedObjects[]` (shape = `project_block_index_item`, resolvido do `nativeConfig` persistido do detail_slide — nunca do focus row), `missingIds[]`. Resolução sempre contra `detail_slide` — slide drift → persisted wins (preview_slide_id testado). `clientId`/`playlistId` continuam não projetados.
+
+### 36.4 Suggest fallback (`_merge_editor_focus_selection`)
+
+Carriers explícitos: `selectedBlockIds`/`selectedBlockId`/`focusBlockId` — key present (mesmo vazio) → sem fallback. Exige `playlistId` explícito; `slideId` explícito divergente do focus → sem retarget. Gates: `get_for_user_playlist` (isolamento usuário+playlist) → `access.resolve.can_read` → `get_slide` persisted → `project_selected_objects` re-resolution (stale sobrevive só se objeto existir; deletado → sem fallback, clarification). Injeta `selectedBlockIds`+`selectedBlockTypes` (alinhados) + `slideId` se omitido. Explicit > server focus; OMITTED ≠ EMPTY; CREATE ≠ forçado ALTER (paridade total com input explícito — verificado).
+
+### 36.5 Tests
+
+26/26 novos verdes: ACTIVE/STALE/ABSENT/AMBIGUOUS · deleted→missingIds · partial-missing· slide drift · chart/kpi/table/data-bound · compact-ness (sem content/style/nativeConfig) · cross-playlist · explicit-wins · empty≠omitted · fallback · no-focus · create-preserved · alter-same-id · stale-reresolve · deleted-no-target · no-retarget · user isolation · can_read gate · multi-inject · no-playlist-scope.
+Adjacentes: focus-store + response_compact + focused_ds + suggest_ops + unified_boundary + facade + mcp read/write/migration/conformance/wire + catalog_budget + corpus_gate + route_suggest = 282 verdes. Suite completa: **1997 passed / 2 failed — ambos PRÉ-EXISTENTES em `ce721f6e78` limpo** (catalog sync drift: `test_catalog_file_matches_generator_check`, `test_baseline_catalog_covers_every_allowlisted_get_operation` — api-delpi baseline vs routes JSON, trabalho fora do escopo).
+
+### 36.6 Comparative eval (dims §35: OBJECT_GROUNDING, TARGET_RESOLUTION, CREATE_VS_ALTER, CLARIFICATION_CORRECTNESS)
+
+| Case | Baseline (sem focus) | Candidate (focus) |
+|---|---|---|
+| ALTER heading | clarify need-selection | `ready` upsert_block `blk-head` ✓ |
+| DELETE single | clarify | `ready` delete `blk-head` ✓ |
+| CREATE text | clarify need-slide | `ready` create_block text ✓ (preservado) |
+| ALTER stale resolved | clarify | `ready` ALTER mesmo id ✓ |
+| DELETE deleted target | clarify | clarify (sem guess) ✓ |
+| DELETE multi | clarify | delete first-id — paridade com explicit ✓ |
+
+### 36.7 Payload
+
+editorFocus delta: no-selection +69B · 1 text +191B · 1 data-visual +233B · multi-3 +493B — bounded, compacto, sem duplicação de payload de domínio.
+
+### 36.8 Runtime verification
+
+Container `delpi-tv-dashboard-api` rebuilt + live smoke in-process (real dispatch + real DB, playlist real `49cf8e1d…`): ACTIVE+selectedObjects com `modelId` real · missingIds parcial · suggest fallback→delete_block `kpi1` · create_block preservado · empty-selection sem ressurreição · isolamento cross-user. **HTTP/JWT boundary + WS selection_update = NOT exercised** — dev Keycloak re-seeded (invalid_user_credentials pós-restart); verificação autenticada fim-a-fim pendente da sessão do usuário.
+
+### 36.9 Security / parity / contract
+
+AuthZ inalterada (`assert_permission` TV_WRITE + `access.can_read` gate no merge); focus por `user_id`+playlist (isolamento testado); zero endpoint/tool/action novo; MCP+Actions parity automática (mesmo dispatch); `PresentationMutation`/prepare/commit intocados; P7 telemetry não implementada.
+
+`PHASE 4 = DONE` (implementation+tests+eval+in-container runtime proven; authenticated live wire = residual pendente). PHASE 5 dependency P4 = SATISFIED — mas STAGE 5 é DIAGNOSTIC primeiro.

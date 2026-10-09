@@ -220,6 +220,9 @@ def project_editor_focus_context(
         "inputCount/hasTransform/consumerBlockIds) — inspect_data_model carries "
         "the full definition after id discovery. "
         "blockIndex = persisted visual/object addressability (id/type/frame/preview/formatBindings/modelId). "
+        "editorFocus.selectionState is ACTIVE|STALE|ABSENT|AMBIGUOUS; "
+        "selectedObjects resolves selectedIds to persisted compact rows and "
+        "missingIds lists unresolved ids. "
         "editorFocus.selectedIds are hints, not required to resolve blockIds. "
         "Never invent UUID. Use scope=full only when nativeConfig is required."
     )
@@ -510,6 +513,56 @@ def project_block_index(
         "offset": offset,
         "items": page,
     }
+
+
+def project_selected_objects(
+    native_config: Mapping[str, Any] | None,
+    selected_ids: Any,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Resolve focus selectedIds against persisted slide blocks.
+
+    Returns (selected_objects, missing_ids). Each object reuses the
+    ``project_block_index_item`` shape — the persisted slide is the only
+    authoritative source; focus rows are hints, never domain truth.
+    """
+    items_by_id = {
+        str(item.get("id")): item
+        for item in iter_block_index_items(native_config)
+        if str(item.get("id") or "").strip()
+    }
+    objects: list[dict[str, Any]] = []
+    missing: list[str] = []
+    raw = selected_ids if isinstance(selected_ids, (list, tuple)) else []
+    for entry in raw:
+        sid = str(entry or "").strip()
+        if not sid:
+            continue
+        row = items_by_id.get(sid)
+        if row is not None:
+            objects.append(row)
+        else:
+            missing.append(sid)
+    return objects, missing
+
+
+def classify_selection_state(
+    *,
+    had_selection: bool,
+    resolved_count: int,
+    stale: bool,
+) -> str:
+    """Closed vocabulary (§34.5): ACTIVE|STALE|ABSENT|AMBIGUOUS.
+
+    Deterministic facts only — the op-level question of whether a
+    multi-selection is valid belongs to the suggest/op contract.
+    """
+    if not had_selection or resolved_count <= 0:
+        return "ABSENT"
+    if stale:
+        return "STALE"
+    if resolved_count > 1:
+        return "AMBIGUOUS"
+    return "ACTIVE"
 
 
 def fit_editor_focus_block_index(payload: dict[str, Any]) -> dict[str, Any]:
