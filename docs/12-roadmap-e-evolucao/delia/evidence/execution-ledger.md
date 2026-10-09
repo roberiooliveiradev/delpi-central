@@ -13114,3 +13114,73 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
   (candidate next bounded task: DELIA-UX-S2-RECEPTION-AND-
   CONVERSATION-SHELL-01 — NOT_AUTHORIZED, not started; MFE deploy
   decision is separate)
+
+## §6.164 — DELIA-C3-DISCOVERY-CONTROL-PLANE-EXPOSURE-FIX-R1-DELIVERY (published, review pending)
+
+### Task / scope
+
+`DELIA-C3-DISCOVERY-CONTROL-PLANE-EXPOSURE-FIX-R1-DELIVERY` —
+delivery of the bounded remediation for the production observation
+where a zero-candidate DISCOVERY terminal outcome exposed the owner
+control-plane envelope (`capability_surface`, `agent_directives`,
+`query`, `top_k`, `candidate_count`, `eligible_action_count`) as
+user-facing content. Root cause was proven in
+`DELIA-C3-DISCOVERY-RESULT-EXPOSURE-DIAG-R1`: the truthful terminal
+`dataclasses.replace` preserved `outcome.structured`, and the generic
+unknown-shape fallback of `render_specialist_outcome()` serialized
+it as `Resultado do especialista:` text.
+
+### Implementation (published)
+
+Commit `d62e3fd33c212dcc981a80cb2d00368c4b9879e3`
+(`fix(delia): prevent discovery control-plane exposure in user
+responses`), pushed to `main` on top of `36550be85d`. Exactly two
+files:
+
+- `delia-api/app/application/capability_provision/orchestration.py`
+  (+8): the zero-candidate DISCOVERY terminal outcome now carries
+  `structured=None` — the truthful statement reaches the user; the
+  control-plane envelope stays inside orchestration
+  (`_bound_owner_evidence`, audit) and never enters the renderable
+  result. Generic DISCOVERY branch — no provider-specific code.
+- `delia-api/tests/test_specialist_capability_orchestration.py`
+  (+217): reproduction fixture matching the owner
+  `DiscoverDelpiInformationOutput` shape (sanitized markers), a
+  provider-neutral variant (VISTA), a foreign-vocabulary fixture
+  (renamed tool/keys, nested/truncated values), a `presentation.v1`
+  serialization check, plus provenance/epistemic assertions.
+
+### Evidence (executed on base `36550be85d`)
+
+- `pytest tests/test_specialist_capability_orchestration.py` =
+  98/98 PASS.
+- Full `delia-api` suite = 985/985 PASS (~29s).
+- Before/after proven: reproduction tests FAIL on pre-fix code
+  (control-plane fields present in `attempt.content`), PASS after.
+- Remote verified via GitHub API: `origin/main` =
+  `d62e3fd33c`, exactly the two authorized files; no deploy
+  workflow references `delia-api` paths (no deployment triggered).
+
+### Status (factual)
+
+`IMPLEMENTATION = PUBLISHED`
+`INDEPENDENT_REVIEW = PENDING`
+`DEPLOYMENT = NOT_PERFORMED` (commit/push != deploy)
+`LIVE_VERIFICATION = PENDING` (authenticated replay of the incident
+query requires deploy authorization)
+`CONTRACT_IMPACT = NONE` (internal outcome projection only)
+
+### Residuals
+
+- Semantic adequacy of capability-inquiry turns ("o que você
+  consegue consultar?") — truthful no-match statement is honest but
+  weak; a curated user-facing capability projection requires a
+  separate product/contract decision (ARCHITECTURE_DECISION).
+- `outcome.structured` on non-DISCOVERY classes intentionally
+  preserved — generic render fallback still protects legitimate
+  unknown-shape business payloads.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+  PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+  (independent review of `d62e3fd33c`; deploy decision separate)
