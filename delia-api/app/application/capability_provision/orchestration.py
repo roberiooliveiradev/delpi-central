@@ -5433,12 +5433,20 @@ class OperationalCapabilityOrchestrator:
             # statement is that the source held no matching action.
             if self._candidates_present(outcome.structured):
                 return None
+            # The discovery envelope is control-plane data for the
+            # orchestrator (candidate tokens, capability surface,
+            # owner agent directives, query telemetry) — never
+            # user-facing business evidence. The terminal outcome
+            # carries only the truthful statement; keeping ``structured``
+            # would let the generic outcome renderer publish the
+            # owner's operational metadata to the user.
             truthful = dataclasses.replace(
                 outcome,
                 content_text=(
                     "Consulta concluída na fonte: nenhuma ação "
                     "correspondente foi encontrada para este pedido."
                 ),
+                structured=None,
             )
             return truthful, remote_name, remote_name
         return outcome, remote_name, remote_name
