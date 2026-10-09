@@ -585,7 +585,7 @@ Pendência não significa automaticamente atraso/SLA.
 ### Finalizar vs Enviar
 
 ```text
-PACKAGE_FINALIZED != PACKAGE_SENT
+PACKAGE_FINALIZED != PACKAGE_SUBMITTED_FOR_REVIEW
 ```
 
 Finalizar cria/congela uma versão do pacote.
