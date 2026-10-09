@@ -1648,3 +1648,99 @@ P6/P7: not implemented. TÉO: pattern-only, zero runtime dependency.
 
 PHASE 5 = DONE — implementation + frozen-corpus eval + regressions + in-container runtime proof (§38.8).
 PHASE 6 next = DIAGNOSTIC mode (Data + Solution Intelligence).
+
+---
+
+## 39. PHASE 6 — DATA + SOLUTION INTELLIGENCE DIAGNOSTIC RECORD
+
+HEAD = 59346500f8a05059cc229b3f863396c930566ed6 (== origin/main).
+Ancestor a08da7ed4d (P5) confirmed. Zero tv-dashboard-api drift.
+
+### 39.1 ECOSYSTEM MAP
+
+| SOURCE | OWNER | ENTITY | CONTRACT | AUTH | CONSUMER | STATUS |
+|---|---|---|---|---|---|---|
+| `App`/`AppRoute` + plugin manifests | core-api | solution = registered ACTIVE app | `GET /solutions`, `GET /solutions/<id>` — `solution_projection.serialize_solution` | `@require_auth` user JWT; safe projection only | Portal, TÉO | PROVEN_CANONICAL |
+| `accessible` flag | core-api | per-user effective access on the same record | `AppAuthorizationService.filter_app_ids` | computed server-side per user | solutions consumers | PROVEN_CANONICAL |
+| Manifest fields | plugin manifests + DB | category, features, permissions (code/name/desc), dependencies, routes, version | solutions projection (strips backend/security/internals) | authenticated-safe | TÉO solution_read | PROVEN_CANONICAL |
+| api-delpi ops | api-delpi | `xDelpi.{entity,shape,category,locale,tv,params}` | `openapi_baseline.json` (738 ops) | TV allowlist generation input | tv-dashboard generator | PROVEN_CANONICAL |
+| TV route catalog | tv-dashboard-api | generated route record (operationId, category, paramSchema, overlays) | `tv_data_routes.json` + overlays | TV allowlist = execution authority | search_data_routes/preview | PROVEN_CANONICAL |
+| TÉO solution_read | transformometro-api | `solution_catalog_v1` / `solution_context_v1` projection | `SolutionCatalogService` + `CoreSolutionCatalogGateway` | Bearer-forwarded user token (user-parity) | TÉO MCP tool + GPT capability | PROVEN pattern, NOT VISTA backend |
+| TV→Core link | tv-dashboard-api | `CORE_API_BASE_URL` + service token (notifications only) | `tv_dashboard_portal_notification_service` | service token, integrations scope | portal notifications | EXISTS (different auth posture) |
+
+### 39.2 CANONICAL OWNER / ENTITY / EQUIVALENT / REUSE
+
+- CANONICAL_SOLUTION_OWNER = **core-api** (`/solutions` safe projection; visibility != authorization is an explicit Core-owned invariant).
+- CANONICAL_SOLUTION_ENTITY = **registered ACTIVE app (plugin)** — `serialize_solution` fields: id, name, description, icon, type, category, version, basePath, routes[], features, permissions[] (code/name/desc), dependencies, accessible, updatedAt.
+- EXISTING_EQUIVALENT = **YES** — distributed canonical set: Core solutions registry + api-delpi xDelpi metadata + TV generated catalog. No `SolutionRecord`, no `tv_route_to_solution.json`, no TV-maintained enterprise catalog.
+- REUSE_DECISION = **INTEGRATE_EXISTING** — Bearer-forwarded Core `/solutions` read (TÉO pattern) + additive route-miss escalation semantics.
+
+### 39.3 ROUTE↔SOLUTION LINEAGE
+
+ROUTE_SOLUTION_LINK = **PARTIAL**.
+- PROVEN: route → business **domain** via `xDelpi.category` (commercial/financial/quality/production/products/supplies/...) — 555/738 ops carry it; overlays preserve it.
+- PARTIAL: domain → specific solution app is **not canonical**: api-delpi has no `sourceAppId`/`x-delpi.sourceApp`; Core manifests have sparse `category`; plugin ids (`commercial`, `dashboard-financial`, `api-delpi-console`) share vocabulary but no declared join key.
+- Decision: P6 must not build a manual crosswalk. Exact per-operation source mapping = candidate **api-delpi-owned OpenAPI extension** (e.g. `x-delpi.sourceSolution`) or stays DERIVABLE at domain granularity, honestly labelled INFERRED.
+
+### 39.4 LINEAGE FIELD MAP
+
+| FIELD | OWNER | STATUS | SOURCE |
+|---|---|---|---|
+| routeOperationId | api-delpi→TV | PROVEN_CANONICAL | operationId |
+| sourceSolutionId | — | ABSENT (candidate api-delpi xDelpi ext) | none today |
+| businessDomain | api-delpi | PROVEN_CANONICAL | xDelpi.category |
+| businessMeaning | api-delpi + TV overlay | PROVEN_CANONICAL | xDelpi.locale + overlay whenToUse/description |
+| grain | — | DERIVABLE at runtime | preview/semanticDigest; not contract |
+| metricUnit | api-delpi/overlay field meta | PARTIAL | projectableFields/unit/mixed_units; != displayFormat |
+| freshness | — | ABSENT as contract; runtime-only | none canonical |
+| timeDimension | api-delpi | PROVEN_CANONICAL | param schema/seriesField/shape |
+| dimensionHints | api-delpi/overlay | PROVEN_CANONICAL | projectableFields semanticType |
+| relatedRoutes | TV catalog | DERIVABLE | same category/entity family |
+| owner/team | Core manifest | PARTIAL | manifest category/features; no explicit team field |
+
+### 39.5 GAP CLASSIFICATION CONTRACT (proposed, bounded)
+
+TV_ROUTE_FOUND · SOLUTION_FOUND_NO_TV_ROUTE · SOLUTION_FOUND_ACCESS_RESTRICTED · NO_SOLUTION_EVIDENCE · AMBIGUOUS_SOLUTIONS · CONTRACT_GAP (upstream failure).
+Epistemic reuse: registry fact = FACT; domain-level route↔solution = INFERRED; integration recommendation = RECOMMENDED; miss = UNKNOWN — never "does not exist".
+
+### 39.6 FIT CLASSIFICATION
+
+Canonical set already exists in TÉO intelligence: `REUSE_EXISTING | EXTEND_EXISTING | INTEGRATE_EXISTING | NEW_CAPABILITY_CANDIDATE | TO_INVENTORY`. Reuse verbatim — proven platform vocabulary, zero new enum.
+
+### 39.7 SECURITY / VISIBILITY
+
+| DATA | MAY KNOW | MAY EXECUTE | MAY MUTATE |
+|---|---|---|---|
+| solution identity/metadata | any authenticated user (Core safe projection) | n/a | Core admin flows only |
+| accessible flag | self (per-user computed) | n/a | Core RBAC |
+| route existence/contract | authenticated (catalog is knowledge) | TV allowlist + backend AuthZ | api-delpi owner |
+| runtime data | — | route AuthZ + PlaylistAccessService | governed writers |
+Core visibility contract = unambiguous: projection explicitly "safe metadata for all authenticated"; `accessible` never grants. NOT fail-closed-blocked.
+
+### 39.8 TÉO ASSESSMENT
+
+- REUSE_PATTERN: Bearer-forwarded `CoreSolutionCatalogGateway` (user-parity, fail-closed GptActionsError), `SolutionCatalogPort`, catalog|context split, `accessible` semantics, knowledge-not-authorization note.
+- ADAPT: same gateway shape inside tv-dashboard-api (its own port; no TÉO import).
+- NOT_APPLICABLE: TÉO methodology/guide content.
+- DO_NOT_COPY: TÉO as VISTA backend — forbidden.
+- Key answer: **TÉO reads Core-owned truth** → VISTA integrates the same owner directly.
+
+### 39.9 DECISIONS
+
+- SOLUTION_INTELLIGENCE_IMPLEMENTATION = **DIRECT_CORE_READ** — bounded Bearer-forwarded gateway into existing `/solutions` (Option A; TÉO proves viability and user-parity posture). No copied projection, no new registry.
+- MODEL_SURFACE = **COMPACT_CATALOG_PLUS_EXISTING_READ** — compact `solutionEcosystem` status/handling metadata on `get_catalog` (bytes-level) + typed `gapClassification` in `search_data_routes` MISS envelope, resolved at dispatch (miss → ONE bounded Core catalog lookup; hit → zero extra calls). If detail exceeds budget at runtime, dedicated bounded read becomes the fallback — GATE_REQUIRED.
+- NEW_GPT_ACTION = GATE_REQUIRED (preferred: NO — enrichment inside `search_data_routes` miss path). NEW_MCP_TOOL = same gate.
+- GPT ACTION COUNT: unchanged pending gate. MCP TOOL COUNT: 11, unchanged pending gate.
+- ACTIONS BUDGET now: envelopeAscii **95,656B / 102,400B** — headroom **6,744B**. Compact catalog metadata target <= ~1.5KB; full solution list NOT embedded (on-demand read after miss only).
+
+### 39.10 ROUTE MISS BEHAVIOR (designed)
+
+`search_data_routes` keeps `searchMissDoesNotProveAbsence`; on miss, dispatch may do ONE bounded Core solutions lookup (Bearer-forwarded; fail-closed → CONTRACT_GAP) and return typed `gapClassification` + solution candidates (id/name/category/accessible only). Route hit → no ecosystem call. No allowlist bypass ever.
+
+### 39.11 BOUNDARIES
+
+P5 owns design decisions — P6 may later feed `businessDomain`/`businessMeaning` FACTs into the methodology fact model (additive). Product Guide: static explanation only, no dynamic catalog (Wave-2 candidate). KO: `solution_ecosystem` stays UNAVAILABLE_IN_CURRENT_SURFACE until a live consumer lands; promotion criterion = runtime consumption proven. P7: eval design only — metrics FALSE_ABSENCE / CORRECT_OWNER / ROUTE_VS_SOLUTION / UNAUTHORIZED_LEAKS(=0) / AMBIGUITY surfaced.
+
+### 39.12 READINESS
+
+PHASE 6 = **READY_FOR_EXECUTION** — canonical owner proven, existing equivalent proven, integration pattern proven in-repo (TÉO), security contract explicit, option selected, bounded gap/fit vocabulary defined. Open exec item: decide per-operation `sourceSolution` (api-delpi extension vs domain-level INFERRED lineage) during implementation planning.
