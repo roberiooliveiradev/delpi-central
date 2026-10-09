@@ -8,6 +8,10 @@ import {
 } from "./useProcessIssue.ts";
 import type { ProcessIssueDraft } from "./processIssue.ts";
 
+type SubmitApi = NonNullable<
+  Parameters<typeof useProcessIssue>[0]["submitApi"]
+>;
+
 const DRAFT: ProcessIssueDraft = {
   issueCode: "tool_not_linked",
   toolCode: "F12345",

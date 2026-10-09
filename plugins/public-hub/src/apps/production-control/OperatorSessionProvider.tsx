@@ -154,7 +154,7 @@ export function OperatorSessionProvider({
 
   return (
     <OperatorSessionContext.Provider
-      value={{ session, status, identify, logout, invalidate, openIdentify }}
+      value={{ session, status, identify, logout, invalidate, openIdentify, identifyOpen }}
     >
       {children}
       {identifyOpen && status !== "identified" ? (

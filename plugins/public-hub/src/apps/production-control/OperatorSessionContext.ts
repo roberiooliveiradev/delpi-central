@@ -17,6 +17,8 @@ export type OperatorSessionContextValue = {
   /** 401 em qualquer operação → descarta a sessão local. */
   invalidate: () => void;
   openIdentify: () => void;
+  /** Modal «Identificar operador» aberto — overlays suspendem o próprio close. */
+  identifyOpen: boolean;
 };
 
 const defaultValue: OperatorSessionContextValue = {
@@ -26,6 +28,7 @@ const defaultValue: OperatorSessionContextValue = {
   logout: () => Promise.resolve(),
   invalidate: () => undefined,
   openIdentify: () => undefined,
+  identifyOpen: false,
 };
 
 export const OperatorSessionContext =
