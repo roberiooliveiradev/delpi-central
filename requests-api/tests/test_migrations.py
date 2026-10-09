@@ -31,6 +31,7 @@ def test_list_migration_files_in_order():
         "V014__request_completed_by.sql",
         "V015__seed_process_issue_request_type.sql",
         "V016__seed_general_request_type.sql",
+        "V017__rename_general_request_type.sql",
     ]
 
 
@@ -142,3 +143,13 @@ def test_v016_seeds_general_request():
     assert "needs_information" in sql
     _, name = parse_version_and_name(v016)
     assert name == "seed_general_request_type"
+
+
+def test_v017_renames_general_request():
+    v017 = MIGRATIONS_DIR / "V017__rename_general_request_type.sql"
+    sql = v017.read_text(encoding="utf-8")
+    assert "general-request" in sql
+    assert "Processos" in sql
+    assert "UPDATE my_requests.request_types" in sql
+    _, name = parse_version_and_name(v017)
+    assert name == "rename_general_request_type"

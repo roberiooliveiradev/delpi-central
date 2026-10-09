@@ -11,12 +11,12 @@ import type { RequestTypeSummary } from "../types/requests";
 
 const GENERAL_REQUEST_TYPE: RequestTypeSummary = {
   id: "type-1",
-  code: "general-request",
-  name: "Solicitação Diversa",
+  code: "raw-material-creation",
+  name: "Criação de Matéria-prima",
   active: true,
   presentation_mode: "schema_driven",
-  branch_scope: "none",
-  permission_prefix: "my-requests.general-request",
+  branch_scope: "optional",
+  permission_prefix: "my-requests.raw-material-creation",
   form_schema: {
     type: "object",
     required: ["title", "description"],
@@ -59,7 +59,8 @@ describe("schemaPayloadFields", () => {
 
   it("retorna vazio para tipos com painel dedicado ou modo especializado", () => {
     expect(hasDedicatedPayloadPanel("process-issue")).toBe(true);
-    expect(hasDedicatedPayloadPanel("general-request")).toBe(false);
+    expect(hasDedicatedPayloadPanel("general-request")).toBe(true);
+    expect(hasDedicatedPayloadPanel("raw-material-creation")).toBe(false);
     expect(
       schemaPayloadFields(
         { ...GENERAL_REQUEST_TYPE, code: "process-issue" },

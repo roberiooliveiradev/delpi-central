@@ -79,6 +79,8 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
       "Lista dos materiais vinculados à operação na hora do reporte. Se a consulta não estava disponível naquele momento, a mensagem explica — a ocorrência continua válida.",
     formData:
       "Campos que foram preenchidos no formulário deste tipo de solicitação (título, descrição e demais dados enviados).",
+    generalRequest:
+      "O que o solicitante pediu ao departamento de Processos: o assunto do chamado e a descrição completa da demanda.",
     type: "Qual formulário e fluxo esta solicitação segue.",
     status: "Mostra em que etapa sua solicitação está neste momento.",
     branch: "Unidade da empresa relacionada a esta solicitação.",

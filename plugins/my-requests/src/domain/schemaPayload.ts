@@ -6,7 +6,11 @@ import {
 import type { RequestTypeSummary } from "../types/requests";
 
 /** Tipos com painel de payload dedicado — o genérico não deve duplicá-los. */
-const DEDICATED_PAYLOAD_TYPES = new Set(["invoice-issuance", "process-issue"]);
+const DEDICATED_PAYLOAD_TYPES = new Set([
+  "invoice-issuance",
+  "process-issue",
+  "general-request",
+]);
 
 export function hasDedicatedPayloadPanel(
   typeCode: string | null | undefined,

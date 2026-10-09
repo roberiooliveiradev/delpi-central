@@ -28,6 +28,7 @@ import {
   requestTypeLabel,
   statusLabel,
 } from "../content/presentationLabels";
+import { GeneralRequestPayloadPanel } from "../features/general-request/ui/GeneralRequestPayloadPanel";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
 import { ProcessIssuePayloadPanel } from "../features/process-issue/ui/ProcessIssuePayloadPanel";
 import {
@@ -274,6 +275,10 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
               >
                 O que foi solicitado
               </h2>
+
+              {request.type_code === "general-request" ? (
+                <GeneralRequestPayloadPanel payload={request.payload} />
+              ) : null}
 
               <MyRequestsSectionCard
                 title="Dados da solicitação"

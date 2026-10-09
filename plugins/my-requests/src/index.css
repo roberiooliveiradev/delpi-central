@@ -492,3 +492,26 @@
     max-height: clamp(18rem, 58vh, 32rem);
   }
 }
+
+/* General-request — chamado helpdesk (título em destaque + descrição em bloco) */
+.dashboard-my-requests .my-requests-general-request__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--my-requests-title);
+  word-break: break-word;
+}
+
+.dashboard-my-requests .my-requests-general-request__description {
+  margin: 0.75rem 0 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--my-requests-text, inherit);
+}
+
+.dashboard-my-requests .my-requests-general-request__description--empty {
+  color: var(--my-requests-text-muted);
+  font-style: italic;
+}

@@ -71,14 +71,14 @@
     },
     {
       "code": "my-requests.general-request.create",
-      "name": "Criar solicitação diversa",
-      "description": "Criar solicitações diversas direcionadas ao departamento de Processos pelo portal.",
+      "name": "Abrir chamado para Processos",
+      "description": "Criar chamados e solicitações diversas direcionadas ao departamento de Processos pelo portal.",
       "module": "my-requests"
     },
     {
       "code": "my-requests.general-request.process",
-      "name": "Processar solicitação diversa",
-      "description": "Processar solicitações diversas direcionadas ao departamento de Processos.",
+      "name": "Atender chamados de Processos",
+      "description": "Processar chamados e demandas diversas direcionadas ao departamento de Processos.",
       "module": "my-requests"
     }
   ],
