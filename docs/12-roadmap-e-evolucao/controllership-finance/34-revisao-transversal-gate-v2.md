@@ -288,7 +288,7 @@ PRODUCT_ADAPTER_TO_INVENTORY
 Invariante:
 
 ```text
-NOTIFICATION_DISPATCHED != PACKAGE_SENT
+NOTIFICATION_DISPATCHED != PACKAGE_SUBMITTED_FOR_REVIEW
 ```
 
 ## 12. P3 pós-STOCK_CLOSED
@@ -309,31 +309,42 @@ Correção posterior permanece no owner canônico e não reescreve histórico.
 
 T03 continua stop condition para provar o owner/state canônico.
 
-## 13. P5 delivery — residual material
+## 13. P5 portal-first — targeted rebaseline
 
-Package/finalization está fechado.
+A premissa de delivery externo foi invalidada por clarificação explícita do Product Owner.
 
-O inventário posterior a A14 fechou a evidência técnica necessária para decidir:
+Contrato vigente:
 
-- Graph mail + file attachments = PROVEN;
-- transport retry = PROVEN;
-- Message Trace delivered/bounced/unknown = PROVEN em CIPA/Transformômetro;
-- Core Notifications continua separado de package delivery;
-- generic package-delivery owner = NOT_PROVEN.
+```text
+PACKAGE_FINALIZED
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ reviewer authenticated in Minha DELPI
+→ review lifecycle
+```
 
-Authority atual: [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
-
-Resta uma decisão material de owner/orchestration e outcome de `PACKAGE_SENT`.
+Regras:
+- package permanece na Minha DELPI;
+- reviewer possui login/app access;
+- reviewer usa `controllership-finance.access` + resource scope/assignment;
+- Core Notifications avisa in-app e pode também enviar e-mail;
+- e-mail não transporta package;
+- package não vai como attachment;
+- P5 é producer válido de TaskProjection para review acionável.
 
 Classificação:
 
 ```text
-A12_PACKAGE_FINALIZATION = PASS
-A12_SEND = DECISION_REQUIRED_E04_T04
+E04_EXTERNAL_DELIVERY = CLOSED / NOT_REQUIRED_IN_V1
+T04_EXTERNAL_DELIVERY_CAPABILITY = CLOSED / NOT_REQUIRED_IN_V1
+DOC_36 = SUPERSEDED_HISTORY
+P5_PORTAL_SUBMISSION_MODEL = PASS
+P5_REVIEW_MODEL = PASS
+D-P5-REVIEW-COMPLETION = DECISION_REQUIRED
 GLOBAL_PRODUCT_CONTRACT_FREEZE = BLOCKED_BY_DECISION
 ```
 
-Não criar endpoint/button/channel de envio enquanto o residual estiver aberto.
+Authority atual:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## 14. RQ/AC/test matrix
 
