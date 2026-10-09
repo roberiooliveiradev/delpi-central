@@ -921,22 +921,24 @@ Fonte:
 
 ## Pacote, Finalização e Envio — P5
 
-Explicar apenas capacidades realmente liberadas:
+Explicar apenas capacidades runtime liberadas:
 - pacote;
 - versão;
-- finalizar != enviar;
-- recipient package;
-- package sent imutável;
-- complemento/correção;
-- esclarecimento;
-- conclusão mensal.
-
-Se envio real continuar bloqueado:
-- não instruir botão/canal inexistente;
-- explicar apenas finalização/versionamento implementados.
+- finalizar != enviar para análise;
+- "Enviar para análise" disponibiliza a versão dentro da Minha DELPI;
+- reviewer externo possui login/app access;
+- reviewer usa ACCESS + resource scope;
+- package não é anexado por e-mail;
+- Minha DELPI notifica in-app e pode também enviar e-mail;
+- e-mail é aviso/deep link;
+- review pending/in progress/changes requested/accepted;
+- esclarecimento/correção;
+- histórico/versionamento;
+- regra de conclusão mensal conforme D-P5-REVIEW-COMPLETION.
 
 Fonte:
 - [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md)
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md)
 
 ---
 
