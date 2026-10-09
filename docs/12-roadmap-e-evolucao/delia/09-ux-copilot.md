@@ -4,6 +4,8 @@
 **Specs temáticas:** `53–66`
 **Plano visual detalhado (wireframes e atividade):** [`69-conversation-experience-ux-wireframes-and-activity-plan.md`](./69-conversation-experience-ux-wireframes-and-activity-plan.md) — design direction, não autorização de implementação.
 
+**Transparência de ferramentas e fontes:** [`70-tool-activity-and-source-transparency-ux-specification.md`](./70-tool-activity-and-source-transparency-ux-specification.md) — especificação visual; não é autorização de implementação.
+
 ## 1. Princípio
 
 A DÉLIA deve parecer parte do trabalho real, não uma janela de chat. Conversa, dados, processos, análises, automações, artefatos, modelos e contexto industrial convergem para uma experiência única com provenance, estado e governança visíveis quando materiais.
