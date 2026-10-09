@@ -367,7 +367,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | 2 | TV Product Guide V1 | 1 | DONE (§30) |
 | 3 | Help Convergence | 2 | DONE (§32·§33 runtime-verified) |
 | 4 | Editor Grounding V2 | 0 | DONE (§34 diagnostic · §36 execution) |
-| 5 | Design Methodology V1 | 1, 4 | READY_FOR_DIAGNOSTIC |
+| 5 | Design Methodology V1 | 1, 4 | READY_FOR_EXECUTION (§37 diagnostic done) |
 | 6 | Data + Solution Intelligence | 1 | READY_FOR_DIAGNOSTIC |
 | 7 | Eval + Telemetry V2 | 0 | READY_FOR_EXECUTION (§35 diagnostic done — exec requer promoção) |
 | 8 | Semantic Intent Arbitration | 7 (evidência material) + brief dedicado | BLOCKED |
@@ -504,7 +504,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** modelo + testes + eval.
 - **DEPENDENCIES:** PHASE 1, PHASE 4.
 - **STOP CONDITIONS:** exigir mutação fora de PresentationMutation ou segundo renderer.
-- **STATUS:** READY_FOR_DIAGNOSTIC.
+- **STATUS:** READY_FOR_EXECUTION (§37 diagnostic, 2026-10-09).
 
 ### PHASE 6 — DATA + SOLUTION INTELLIGENCE
 
@@ -890,7 +890,7 @@ Nenhum CONTRACT_DRIFT ou EXECUTION_DRIFT encontrado. Escopos distintos não fora
 
 ### 28.5 Efeito downstream
 
-Dependência P1 satisfeita → P5 (Design Methodology) e P6 (Data+Solution) permanecem READY_FOR_DIAGNOSTIC — requerem diagnóstico próprio antes de execução.
+Dependência P1 satisfeita → P5 diagnosticada (§37, READY_FOR_EXECUTION); P6 (Data+Solution) permanece READY_FOR_DIAGNOSTIC — requer diagnóstico próprio antes de execução.
 
 ---
 
@@ -1398,3 +1398,139 @@ Container `delpi-tv-dashboard-api` rebuilt + live smoke in-process (real dispatc
 AuthZ inalterada (`assert_permission` TV_WRITE + `access.can_read` gate no merge); focus por `user_id`+playlist (isolamento testado); zero endpoint/tool/action novo; MCP+Actions parity automática (mesmo dispatch); `PresentationMutation`/prepare/commit intocados; P7 telemetry não implementada.
 
 `PHASE 4 = DONE` (implementation+tests+eval+in-container runtime proven; authenticated live wire = residual pendente). PHASE 5 dependency P4 = SATISFIED — mas STAGE 5 é DIAGNOSTIC primeiro.
+
+
+## SECTION 37 — PHASE 5 DESIGN METHODOLOGY DIAGNOSTIC RECORD
+
+Recorded at HEAD 8764efc701 (origin/main 06dd1346c0, delia-docs only upstream delta).
+
+### 37.1 CURRENT DESIGN INTELLIGENCE MAP
+
+| NAME | OWNER FILE | INPUT | OUTPUT | CONSUMER |
+|---|---|---|---|---|
+| semanticDigest | DesignIntelligenceService | preview rows/columns | field roles, cardinality, temporal/ranking/goal/composition candidates | preview_data_block response |
+| visualRecommendation | DesignIntelligenceService | semanticDigest + dominant visual family | recommendedType + alternatives + rejected + reasons | preview_data_block response |
+| designAudit | DesignIntelligenceService (delegates SlideLayoutQualityService) | nativeConfig | issues[] w/ severity/category/recommendation/safeAutoFix/recommendedRecipe | get_playlist_context, commit visualVerification |
+| componentSpecs | design_intelligence.json (declarative) | static | purpose/avoidFor/variants per 13 component types | get_catalog designIntelligence |
+| layoutDigest | LayoutDigestService | nativeConfig | frames, zIndex, overlap/density signals | get_playlist_context |
+| storyDigest | StoryDigestService | slides | dominant visual family | preview_data_block, context |
+| filterDigest | (digest service) | filters | filter layering summary | get_playlist_context |
+| ReadySlideQualityService | services/data | params/route/defaults | param-readiness gates (closed date_range, branch) | commit VERIFY |
+| SafeAutoFixService | services/data | message + nativeConfig | safe corrective ops | apply_safe_layout_fixes path |
+| PresentationRecipeService | services/data + presentation_recipes.json | recipe ids | typed layout blueprints (slim) | catalog/mutation |
+| VisualVerificationService | services/data | persisted + before/after native | persisted/rendered/layoutGatePassed + issue diffs | commit VERIFY |
+| directive families | vista_agent_intelligence.json | declarative | visual_selection decision_table, slide_design, visual_impact, composed_visuals, continuous_review, layout_perception, screenshot_parity, slide_craft, si_goals, display_format | get_catalog agent_directives |
+| knowledge_orchestration | vista_agent_intelligence.json | declarative | sources/routing/precedence incl. design_methodology source (PARTIAL) + DESIGN_REVIEW intent | get_catalog |
+
+### 37.2 METHODOLOGY GAP MAP
+
+| CONCERN | STATUS |
+|---|---|
+| intent recognition | PARTIAL — DESIGN_REVIEW routes to design_methodology (PARTIAL) but no structured in-methodology intents |
+| fact collection | PARTIAL — facts exist scattered (semanticDigest/layoutDigest/designAudit/selectedObjects) but not named as methodology facts |
+| readiness | PARTIAL — suggest clarification keys exist (suggestNeed*); no design-readiness vocabulary |
+| sufficiency | PARTIAL — orchestration has stop-when-sufficient prose; no deterministic sufficiency contract |
+| missing info | ABSENT — no read-vs-ask contract |
+| visual selection | EXISTS — deterministic _recommend + decision_table; only inside preview_data_block |
+| layout review | EXISTS — designAudit + layoutDigest (structural); pixel separation already in evidence ladder |
+| evidence requirements | PARTIAL — EVIDENCE_LADDER prose; not bound per-decision |
+| next question | ABSENT — no nextQuestion contract |
+| next action | PARTIAL — continuous_review pipeline prose |
+| structured epistemic labels | PARTIAL — directive prose uses INFORMED/INFERRED; no output-level provenance |
+| uncalibrated confidence | GAP — visual_recommendation emits numeric confidence (0.86/0.8/0.82/0.7/0.55) with no calibration evidence |
+
+### 37.3 DECISION
+
+OWNER = tv-dashboard-api (DesignIntelligenceService + vista_agent_intelligence.json).
+EXISTING_EQUIVALENT = YES. REUSE_DECISION = EXTEND (hybrid: declarative methodology block + bounded deterministic evaluator inside DesignIntelligenceService).
+METHODOLOGY_IMPLEMENTATION = HYBRID — no new service; no new tool; no new action.
+
+### 37.4 DESIGN INTENT TAXONOMY (evidence-backed)
+
+REVIEW_SLIDE — maps to DESIGN_REVIEW routing + designAudit + layoutDigest.
+CHOOSE_VISUAL — maps to visual_selection + semanticDigest + visualRecommendation.
+IMPROVE_EXISTING — maps to continuous_review + layout_perception + upsert ops.
+COMPOSE_SLIDE — maps to presentation_recipes + visual_impact + slide_design.
+FIX_LAYOUT — maps to SafeAutoFixService + apply_safe_layout_fixes (may bypass full methodology).
+DIAGNOSE_DATA = CROSS_BOUNDARY — DATA_DIAGNOSIS routing already owns it (P6-leaning, keep out).
+PREPARE_KIOSK = CROSS_BOUNDARY — mix of quality gates + deployment; not a pure design intent.
+
+### 37.5 FACT MODEL (bounded)
+
+slide_purpose (presentation_truth, PARTIAL), data_shape (data_runtime semanticDigest, YES),
+primary_metric (digest metric fields, PARTIAL), time_series (digest temporal, YES),
+category_count (digest cardinality, YES), comparison_goal (digest, PARTIAL),
+existing_visual_type (domain read block type, YES), visual_evidence_available
+(visual_evidence ladder, YES), editor_selection (P4 selectionState/selectedObjects, YES),
+target_object (P4 grounding, YES), layout_density (layoutDigest, YES),
+dominant_family (storyDigest, YES), display_context (display_format domain, PARTIAL).
+
+### 37.6 READINESS / SUFFICIENCY CONTRACT (proposed)
+
+Readiness vocabulary (closed): READY | PARTIAL | MISSING_INFORMATION | BLOCKED.
+Truth logic (deterministic): all requiredFacts known → READY; some resolvable-by-read missing → PARTIAL;
+required facts missing and readable → MISSING_INFORMATION + nextAction=READ(capability);
+required facts missing and not readable → MISSING_INFORMATION + nextQuestion; hard failure
+(preview error, missing target, no authority) → BLOCKED. Sufficiency = readiness==READY AND
+evidence_level >= decision minimum. No numeric confidence in methodology outputs.
+
+### 37.7 RECOMMENDATION CONTRACT (candidate schema)
+
+{designIntent, readiness, facts{}, missingFacts[], strategy{visualFamily,reasons,alternatives,rejected},
+recommendations[], evidence{level, sources}, nextAction?, nextQuestion?} — every field maps to a
+current consumer (preview/context/directives) or eval fixture; no unbound fields approved.
+
+### 37.8 READ-BEFORE-ASK POLICY
+
+MISSING fact + readable via existing tool → READ (preview_data_block/get_playlist_context/
+inspect_data_model/search_data_routes) BEFORE ASK. Only user-unknowable intent
+(purpose, comparison goal when undetectable) may ask directly.
+
+### 37.9 EVIDENCE MATRIX
+
+chart family → data_runtime digest (semanticDigest); layout overlap/density → layoutDigest structural;
+pixel/aesthetic claim → canonical stage image + human rubric; display-format correctness → binding +
+format spec; target-object change → P4 grounding + domain read; fixture emptiness → preview rows.
+
+### 37.10 TÉO PATTERN ASSESSMENT
+
+REUSE_PATTERN: per-source epistemic lists; sufficiency stop-when-evidence-sufficient;
+METHODOLOGY_GATE (activate only when method adds value).
+ADAPT: epistemology vocabulary INFORMED/INFERRED/PROPOSED/UNKNOWN → VISTA FACT/INFERRED/RECOMMENDED/UNKNOWN.
+NOT_APPLICABLE: get_methodology_guide content-retrieval pattern (TEO methodology = playbook; VISTA = decision contract).
+DO_NOT_COPY: TEO domain semantics.
+
+### 37.11 SURFACE + BUDGET
+
+NEW_GPT_ACTION = NO. NEW_MCP_TOOL = NO.
+Actions catalog envelope = 92,517B ascii / 102,400B cap → headroom 9,883B (min guard 4,096B).
+Methodology projection must fit under ~9 KiB on Actions; MCP keeps full block; one semantic source.
+
+### 37.12 EVAL PLAN
+
+Machine corpus (deterministic, tests/eval): time-series to line/area strategy; single metric to kpi/gauge;
+high-cardinality rejects unreadable pie; many rows to table/summary; missing shape means READ before ASK;
+preview failure means BLOCKED not fabricated; structural issue means structural evidence sufficient;
+aesthetic claim means pixel/human required; selected object reuses P4 grounding; no target means no guess;
+explicit user choice preserved. Human rubric (separate): visual appropriateness, hierarchy,
+executive readability, density. Telemetry needs (P7, metadata-only): design_intent, readiness,
+missing_fact_count, read_before_ask, recommended_visual_family, evidence_level, user_correction.
+Baseline = current advisory behavior (visual_recommendation only reachable via preview_data_block);
+deterministic baseline runs at implementation time.
+
+### 37.13 IMPLEMENTATION BOUNDARY
+
+ALLOWED: vista_agent_intelligence.json (design_methodology block), DesignIntelligenceService
+(readiness/sufficiency evaluator + epistemic labels; deprecate uncalibrated confidence in
+methodology outputs), dispatch/response projection of methodology where a consumer exists,
+focused tests + catalog budget tests, roadmap.
+FORBIDDEN: PresentationMutation semantics, new renderer, public-hub, MFE engine, api-delpi,
+new Product Guide runtime owner, new planner/agent engine, new RAG layer, new tools/actions/endpoints.
+PRODUCT_GUIDE design_quality = DEFER (methodology contract stabilizes first; if added later,
+split = methodology owns decision contract, guide owns explanatory guidance — one semantic source).
+
+### 37.14 READINESS
+
+PHASE 5 = READY_FOR_EXECUTION. P4 residual (authenticated WS+JWT wire smoke pending
+dev-Keycloak creds) recorded accurately; does not block P5 diagnostic nor P5 implementation
+planning. Stop conditions not triggered.
