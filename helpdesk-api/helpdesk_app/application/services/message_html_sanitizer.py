@@ -177,6 +177,41 @@ def _filter_bff_images(html: str, *, ticket_id: int, allowed_document_ids: set[i
     return _BFF_IMG_RE.sub(_repl, html)
 
 _TAG_RE = re.compile(r"<[^>]+>")
+
+_BLOCK_END_RE = re.compile(
+    r"(?is)</\s*(p|div|h[1-6]|blockquote|pre|table|thead|tbody|tfoot|tr|ul|ol)\s*>"
+)
+_BR_RE = re.compile(r"(?is)<\s*br[^>]*/?\s*>")
+_HR_RE = re.compile(r"(?is)<\s*hr[^>]*/?\s*>")
+_LI_OPEN_RE = re.compile(r"(?is)<\s*li[^>]*>")
+_LI_END_RE = re.compile(r"(?is)</\s*li\s*>")
+
+
+def message_html_to_plain_text(raw_html: str | None) -> str:
+    """HTML → plain text preserving paragraphs/line breaks.
+
+    GLPI destinations that store plain text (validation comments, satisfaction
+    survey comment) must never receive markup. Input without tags is returned
+    untouched (backward compatible with plain-text clients).
+    """
+    text = str(raw_html or "")
+    if not text.strip():
+        return ""
+    if not _HTML_MARKUP_RE.search(text):
+        return text.strip()
+    text = _BR_RE.sub("\n", text)
+    text = _HR_RE.sub("\n\n", text)
+    text = _LI_END_RE.sub("\n", text)
+    text = _LI_OPEN_RE.sub("- ", text)
+    text = _BLOCK_END_RE.sub("\n\n", text)
+    text = _TAG_RE.sub("", text)
+    text = html_lib.unescape(text).replace("\xa0", " ")
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
+    text = "\n".join(lines)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 _BFF_ATTACHMENT_RE = re.compile(
     rf"""(?ix)
     {_API_PREFIX}/tickets/(\d+)/attachments/(\d+)

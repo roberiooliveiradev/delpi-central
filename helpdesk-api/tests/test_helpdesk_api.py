@@ -1227,3 +1227,101 @@ def test_requester_id_still_rejected_in_create_body():
     assert resp.status_code == 422
     assert glpi.created == []
     assert glpi.requesters == []
+
+
+def test_cycle_comments_rich_text_contract():
+    """UNIFIED-RICH-TEXT-COMPOSER-V1 — cycle comments accept sanitized HTML
+    for HTML destinations and are converted to plain text where GLPI
+    stores TEXT (validation decision, satisfaction)."""
+    from dataclasses import replace
+
+    from helpdesk_app.domain.models import TicketValidation
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(
+        glpi.detail,
+        status_id=5,
+        status="Solucionado",
+        requester_mine=True,
+        validations=(
+            TicketValidation(
+                id=9,
+                status=2,
+                submission_comment="pode?",
+                requested_approver_id=1,
+                mine_to_decide=True,
+            ),
+        ),
+        can_decide_validation=True,
+    )
+    headers = auth_headers()
+
+    # Accept with rich HTML → ITILFollowup receives sanitized HTML.
+    accepted = client.post(
+        "/tickets/7/solution/accept",
+        json={"content": "<p>Aprovado <strong>com ressalva</strong></p><script>x</script>"},
+        headers={**headers, "Idempotency-Key": "cycle-acc-html"},
+    )
+    assert accepted.status_code == 200
+    sent = glpi.accepted_solutions[-1]
+    assert sent[0] == 7
+    assert "<strong>com ressalva</strong>" in sent[1]
+    assert "script" not in sent[1].lower()
+
+    # Empty markup → default message (no <p></p> leak).
+    glpi.detail = replace(glpi.detail, status_id=5, status="Solucionado", requester_mine=True)
+    empty = client.post(
+        "/tickets/7/solution/accept",
+        json={"content": "<p></p><br>"},
+        headers={**headers, "Idempotency-Key": "cycle-acc-empty"},
+    )
+    assert empty.status_code == 200
+    assert glpi.accepted_solutions[-1] == (7, "Solução aceita.")
+
+    # Reject with paragraphs/list keeps structure in the followup.
+    glpi.detail = replace(glpi.detail, status_id=5, status="Solucionado", requester_mine=True)
+    rejected = client.post(
+        "/tickets/7/solution/reject",
+        json={"content": "<p>Falta item A</p><ul><li>critério 1</li></ul>"},
+        headers={**headers, "Idempotency-Key": "cycle-rej-html"},
+    )
+    assert rejected.status_code == 200
+    assert "<li>critério 1</li>" in glpi.rejected_solutions[-1][1]
+
+    # Validation decision → approval_comment is TEXT in GLPI: HTML → text.
+    decided = client.post(
+        "/tickets/7/validations/9/accept",
+        json={"content": "<p>Ok pela <em>regra</em></p><p>segunda linha</p>"},
+        headers={**headers, "Idempotency-Key": "cycle-val-html"},
+    )
+    assert decided.status_code == 200
+    decision_comment = glpi.validation_decisions[-1][3]
+    assert "<" not in decision_comment
+    assert "Ok pela regra" in decision_comment
+    assert "segunda linha" in decision_comment
+
+    # Satisfaction → comment is TEXT: also receives plain text.
+    glpi.detail = replace(glpi.detail, status_id=6, status="Fechado", requester_mine=True, can_followup=False)
+    sat = client.put(
+        "/tickets/7/satisfaction",
+        json={"satisfaction": 4, "comment": "<p>muito <b>bom</b></p>"},
+        headers={**headers, "Idempotency-Key": "cycle-sat-html"},
+    )
+    assert sat.status_code == 201
+    assert sat.json()["comment"] == "muito bom"
+
+    # Comment above 2000 visible chars → rejected.
+    glpi.detail = replace(
+        glpi.detail,
+        status_id=5,
+        status="Solucionado",
+        requester_mine=True,
+        can_followup=True,
+    )
+    too_long = client.post(
+        "/tickets/7/solution/accept",
+        json={"content": "<p>" + "x" * 2100 + "</p>"},
+        headers={**headers, "Idempotency-Key": "cycle-acc-long"},
+    )
+    assert too_long.status_code == 422

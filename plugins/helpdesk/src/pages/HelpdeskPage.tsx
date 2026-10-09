@@ -176,6 +176,7 @@ import {
   HelpdeskSelect,
   HelpdeskStateBanner,
   HelpdeskStatusBadge,
+  HelpdeskTextArea,
   HelpdeskTextField,
   usePersistedViewLayout,
 } from "../ui/helpdeskUi";
@@ -1612,16 +1613,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                             {item.submission_comment ? (
                               <p className="helpdesk-lifecycle-cue__text">{item.submission_comment}</p>
                             ) : null}
-                            <label className="helpdesk-lifecycle-note">
-                              <span>Comentário (opcional)</span>
-                              <input
-                                type="text"
-                                value={cycleNote}
-                                onChange={(event) => setCycleNote(event.target.value)}
-                                disabled={cycleSaving}
-                                maxLength={2000}
-                              />
-                            </label>
+                            <HelpdeskRichTextField
+                              label="Comentário (opcional)"
+                              value={cycleNote}
+                              onChange={setCycleNote}
+                              disabled={cycleSaving}
+                              minHeight={96}
+                            />
                             <div className="helpdesk-lifecycle-actions__buttons">
                               <HintAction
                                 hint={helpTooltips.detailUi.acceptValidation}
@@ -1689,16 +1687,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                         </div>
                         <div className="helpdesk-satisfaction__aside">
                           {showSatisfactionComment ? (
-                            <label className="helpdesk-lifecycle-note helpdesk-satisfaction__comment">
-                              <span>Comentário (opcional)</span>
-                              <input
-                                type="text"
-                                value={satisfactionComment}
-                                onChange={(event) => setSatisfactionComment(event.target.value)}
-                                disabled={cycleSaving}
-                                maxLength={2000}
-                              />
-                            </label>
+                            <HelpdeskTextArea
+                              className="helpdesk-satisfaction__comment"
+                              label="Comentário (opcional)"
+                              value={satisfactionComment}
+                              onChange={setSatisfactionComment}
+                              disabled={cycleSaving}
+                              maxLength={2000}
+                              rows={2}
+                            />
                           ) : (
                             <button
                               type="button"
@@ -2151,16 +2148,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 </HelpdeskFormActions>
                               }
                             >
-                              <label className="helpdesk-lifecycle-note">
-                                <span>Comentário (opcional)</span>
-                                <input
-                                  type="text"
-                                  value={cycleNote}
-                                  onChange={(event) => setCycleNote(event.target.value)}
-                                  disabled={cycleSaving}
-                                  maxLength={2000}
-                                />
-                              </label>
+                              <HelpdeskRichTextField
+                                label="Comentário (opcional)"
+                                value={cycleNote}
+                                onChange={setCycleNote}
+                                disabled={cycleSaving}
+                                minHeight={120}
+                              />
                             </TicketActionCard>
                           ) : null}
                           {activeAction === "create_solution" ? (

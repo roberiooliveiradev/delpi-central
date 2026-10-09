@@ -19,6 +19,7 @@ export type TextAreaFieldProps = {
   rows?: number;
   disabled?: boolean;
   required?: boolean;
+  maxLength?: number;
   className?: string;
   fullWidth?: boolean;
   icon?: ReactNode;
@@ -45,6 +46,7 @@ export function TextAreaField({
   rows = 4,
   disabled = false,
   required = false,
+  maxLength,
   className,
   fullWidth = false,
   icon,
@@ -74,6 +76,7 @@ export function TextAreaField({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
+        maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
       />
     </div>

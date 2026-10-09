@@ -2,6 +2,7 @@
 
 from helpdesk_app.application.services.message_html_sanitizer import (
     message_html_has_visible_text,
+    message_html_to_plain_text,
     sanitize_message_html,
 )
 
@@ -50,3 +51,33 @@ def test_html_with_dangerous_block_still_stripped():
     cleaned = sanitize_message_html(raw, ticket_id=1, allowed_document_ids=set())
     assert "script" not in cleaned.lower()
     assert "ok" in cleaned
+
+
+def test_message_html_to_plain_text_paragraphs_and_breaks():
+    raw = "<p>Primeiro parágrafo</p><p>Segundo<br>linha dois</p>"
+    assert message_html_to_plain_text(raw) == "Primeiro parágrafo\n\nSegundo\nlinha dois"
+
+
+def test_message_html_to_plain_text_lists_and_links():
+    raw = '<ul><li>Um</li><li>Dois</li></ul><p>Veja <a href="https://x.dev">link</a></p>'
+    plain = message_html_to_plain_text(raw)
+    assert "- Um" in plain
+    assert "- Dois" in plain
+    assert "Veja link" in plain
+    assert "<" not in plain and ">" not in plain
+
+
+def test_message_html_to_plain_text_entities_and_nbsp():
+    assert message_html_to_plain_text("<p>a &amp; b&nbsp;c</p>") == "a & b c"
+
+
+def test_message_html_to_plain_text_empty_markup_is_empty():
+    assert message_html_to_plain_text("<p></p>") == ""
+    assert message_html_to_plain_text("<br>") == ""
+    assert message_html_to_plain_text("   ") == ""
+
+
+def test_message_html_to_plain_text_plain_passthrough():
+    """Input without markup is returned untouched (plain-text clients)."""
+    raw = "Linha 1\nLinha 2 com < e > literais"
+    assert message_html_to_plain_text(raw) == raw

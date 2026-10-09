@@ -7,6 +7,7 @@ from helpdesk_app.application.ports import GlpiGateway, IdempotencyStore
 from helpdesk_app.application.services.message_html_sanitizer import (
     MAX_MESSAGE_HTML_CHARS,
     extract_bff_attachment_refs,
+    message_html_to_plain_text,
     prepare_outbound_message_html,
 )
 from helpdesk_app.domain.errors import (
@@ -638,9 +639,8 @@ class TicketService:
             groups = self._glpi.list_groups(token)
             if not any(int(getattr(group, "id", 0) or 0) == target_id for group in groups):
                 raise GlpiValidation("Grupo aprovador inválido ou inacessível.")
-        comment = (content or "").strip()
-        if comment:
-            comment = _prepare_message_html(comment, "content", ticket_id=ticket_id)
+        # comment_submission é TEXT no GLPI — enviar HTML gravaria tags literais.
+        comment = _prepare_plain_comment_text(content, "content")
         validation_id = self._glpi.create_ticket_validation(
             token,
             ticket_id,
@@ -691,7 +691,7 @@ class TicketService:
             raise GlpiForbidden("Só o solicitante pode aceitar a solução.")
         if detail.status_id != 5:
             raise GlpiValidation("Só é possível aceitar solução em chamado solucionado.")
-        message = (content or "").strip() or "Solução aceita."
+        message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução aceita."
         self._glpi.accept_ticket_solution(token, ticket_id, message)
         refreshed = self._with_cycle_flags(
             token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
@@ -723,7 +723,7 @@ class TicketService:
             raise GlpiForbidden("Só o solicitante pode recusar a solução.")
         if detail.status_id not in {5, 6}:
             raise GlpiValidation("Só é possível recusar/reabrir em solucionado ou fechado.")
-        message = (content or "").strip() or "Solução recusada."
+        message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução recusada."
         self._glpi.reject_ticket_solution(token, ticket_id, message)
         refreshed = self._with_cycle_flags(
             token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
@@ -772,15 +772,16 @@ class TicketService:
         existing_sat = self._glpi.get_ticket_satisfaction(token, ticket_id)
         if existing_sat is not None:
             raise GlpiValidation("Pesquisa de satisfação já registrada.")
+        comment_text = _prepare_cycle_comment_text(comment, "comment")
         self._glpi.submit_ticket_satisfaction(
             token,
             ticket_id,
             satisfaction=satisfaction,
-            comment=(comment or "").strip(),
+            comment=comment_text,
         )
         stored = StoredResponse(
             status_code=201,
-            body={"satisfaction": satisfaction, "comment": (comment or "").strip()},
+            body={"satisfaction": satisfaction, "comment": comment_text},
         )
         self._idempotency.save(subject, operation, key, stored)
         return stored
@@ -814,7 +815,7 @@ class TicketService:
             ticket_id,
             validation_id,
             accept=accept,
-            comment=(comment or "").strip(),
+            comment=_prepare_cycle_comment_text(comment, "content"),
         )
         refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         stored = StoredResponse(
@@ -1029,3 +1030,46 @@ def _prepare_message_html(
     if not cleaned:
         raise GlpiValidation(f"{field} é obrigatório.")
     return cleaned
+
+
+# Limite dos comentários de ciclo de vida (aceite/recusa de solução, decisão de
+# aprovação, pesquisa de satisfação) — mesmo teto que a UI aplicava (2000).
+MAX_CYCLE_COMMENT_CHARS = 2000
+
+
+def _prepare_cycle_comment_html(value: str, field: str, *, ticket_id: int) -> str:
+    """Optional comment destined to an HTML-capable GLPI field (ITILFollowup).
+
+    Empty/blank markup yields "" so callers keep their default message;
+    the 2000-char cap is enforced on visible text, not markup.
+    """
+    text = str(value or "")
+    if not text.strip():
+        return ""
+    if len(text) > MAX_MESSAGE_HTML_CHARS:
+        raise GlpiValidation(f"{field} excede o tamanho máximo permitido.")
+    cleaned = prepare_outbound_message_html(text, ticket_id=ticket_id)
+    if not cleaned:
+        return ""
+    if len(message_html_to_plain_text(cleaned)) > MAX_CYCLE_COMMENT_CHARS:
+        raise GlpiValidation(f"{field} excede o limite de {MAX_CYCLE_COMMENT_CHARS} caracteres.")
+    return cleaned
+
+
+def _prepare_cycle_comment_text(value: str, field: str) -> str:
+    plain = _prepare_plain_comment_text(value, field)
+    if len(plain) > MAX_CYCLE_COMMENT_CHARS:
+        raise GlpiValidation(f"{field} excede o limite de {MAX_CYCLE_COMMENT_CHARS} caracteres.")
+    return plain
+
+
+def _prepare_plain_comment_text(value: str, field: str) -> str:
+    """Optional comment destined to a plain-text GLPI field (validation
+    comments, TicketSatisfaction.comment). Rich input is converted
+    explicitly — markup is never sent as literal text to GLPI."""
+    text = str(value or "")
+    if not text.strip():
+        return ""
+    if len(text) > MAX_MESSAGE_HTML_CHARS:
+        raise GlpiValidation(f"{field} excede o tamanho máximo permitido.")
+    return message_html_to_plain_text(text)

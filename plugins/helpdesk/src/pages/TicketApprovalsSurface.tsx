@@ -3,6 +3,7 @@ import { ActionButton, FieldLabel, HintAction } from "@delpi/plugin-ui/index";
 import type { TicketDetail, TicketValidation } from "../api/helpdeskApi";
 import { helpTooltips } from "../content/helpTooltips";
 import { validationStatusLabel } from "../presentation/ticketValidationView";
+import { HelpdeskRichTextField } from "../ui/helpdeskUi";
 
 function ValidationRow({
   item,
@@ -52,16 +53,13 @@ function ValidationRow({
       ) : null}
       {canDecide ? (
         <div className="helpdesk-ticket-approvals__decide">
-          <label className="helpdesk-lifecycle-note">
-            <span>Comentário (opcional)</span>
-            <input
-              type="text"
-              value={cycleNote}
-              onChange={(event) => onCycleNoteChange(event.target.value)}
-              disabled={cycleSaving}
-              maxLength={2000}
-            />
-          </label>
+          <HelpdeskRichTextField
+            label="Comentário (opcional)"
+            value={cycleNote}
+            onChange={onCycleNoteChange}
+            disabled={cycleSaving}
+            minHeight={96}
+          />
           <div className="helpdesk-lifecycle-actions__buttons">
             <HintAction hint={helpTooltips.detailUi.acceptValidation} ariaLabel="Ajuda: Aceitar aprovação">
               <ActionButton

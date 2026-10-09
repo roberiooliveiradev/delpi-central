@@ -292,3 +292,61 @@ describe("HELPDESK-MFE-UX-002 ticket workspace", () => {
     expect(actions).not.toContain('"add_document"');
   });
 });
+
+describe("HELPDESK-UNIFIED-RICH-TEXT-COMPOSER-V1 canonical editor", () => {
+  it("accept/reject solution uses HelpdeskRichTextField, not a single-line input", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const start = detail.indexOf(
+      '{activeAction === "accept_solution" ||',
+    );
+    const end = detail.indexOf('activeAction === "create_solution" ? (');
+    const block = detail.slice(start, end > start ? end : undefined);
+    expect(block).toContain("HelpdeskRichTextField");
+    expect(block).toContain("value={cycleNote}");
+    expect(block).not.toContain("<input");
+    expect(detail).toContain("hasVisibleRichText(cycleNote)");
+  });
+
+  it("validation decision comments share the canonical editor", () => {
+    const page = read("HelpdeskPage.tsx");
+    const surface = read("TicketApprovalsSurface.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const cue = detail.slice(
+      detail.indexOf("helpdesk-lifecycle-validation"),
+      detail.indexOf("helpdesk-satisfaction"),
+    );
+    expect(cue).toContain("HelpdeskRichTextField");
+    expect(cue).not.toContain("<input");
+    expect(surface).toContain("HelpdeskRichTextField");
+    expect(surface).toContain("value={cycleNote}");
+    expect(surface).not.toContain("<input");
+  });
+
+  it("satisfaction comment stays plain text (GLPI field is TEXT) but multiline", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    expect(detail).toContain("HelpdeskTextArea");
+    const sat = detail.slice(
+      detail.indexOf("showSatisfactionComment ? ("),
+      detail.indexOf("helpdesk-satisfaction__comment-toggle"),
+    );
+    expect(sat).toContain("HelpdeskTextArea");
+    expect(sat).toContain("value={satisfactionComment}");
+    expect(sat).toContain("maxLength={2000}");
+    expect(sat).not.toContain("HelpdeskRichTextField");
+    expect(sat).not.toContain("<input");
+  });
+
+  it("structured inputs stay structured; no free-text field uses ad-hoc editors", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    // Attachment title is short metadata — plain input is correct.
+    expect(detail).toContain("value={documentTitle}");
+    // No second editor implementation may appear.
+    expect(detail).not.toContain("contentEditable");
+    expect(detail).not.toContain("draft-js");
+    expect(detail).not.toContain("react-quill");
+    expect(detail).not.toContain("@tinymce");
+  });
+});

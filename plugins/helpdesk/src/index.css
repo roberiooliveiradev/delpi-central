@@ -1972,19 +1972,6 @@
   gap: 0.5rem 0.75rem;
 }
 
-.dashboard-helpdesk .helpdesk-lifecycle-note {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-}
-
-.dashboard-helpdesk .helpdesk-lifecycle-note input,
-.dashboard-helpdesk .helpdesk-lifecycle-note select {
-  min-height: 2.1rem;
-  padding: 0.3rem 0.55rem;
-}
-
 .dashboard-helpdesk .helpdesk-satisfaction {
   display: flex;
   flex-wrap: wrap;
