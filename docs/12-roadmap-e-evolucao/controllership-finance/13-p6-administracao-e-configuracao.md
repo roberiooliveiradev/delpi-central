@@ -117,7 +117,7 @@ MANAGE não concede acesso operacional às demais páginas.
 - checklist items;
 - requirement;
 - origin;
-- recipients;
+- recipients/reviewer targets;
 - operational responsible;
 - validator;
 - satisfaction rule;
@@ -149,7 +149,7 @@ Seed não reabre a arquitetura do catálogo; conflito real de owner/source conti
 ## Pessoas e identidade
 
 ```text
-RESPONSIBLE / VALIDATOR / RECIPIENT
+RESPONSIBLE / VALIDATOR / RECIPIENT / REVIEWER
 = CORE REFERENCE
 != LOCAL USER
 ```
@@ -184,6 +184,17 @@ Catálogo reutilizável.
 Anexo genérico continua permitido quando business rule não exigir role formal.
 
 E05 define seed e obrigatoriedade real.
+
+### Reviewer targets
+
+P5 recipients/reviewers são referências a identidades Core com app access.
+
+P6 pode configurar targets/eligibility, mas:
+- não concede `controllership-finance.access`;
+- não cria usuário;
+- não cria permission de reviewer;
+- não usa e-mail como identity authority;
+- reviewer assignment/resource scope é materializado no P5 por competência/package.
 
 ## Notification targets
 
