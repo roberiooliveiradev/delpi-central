@@ -34,7 +34,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - `FRONTEND_PATTERN_FREEZE`: **PASS**
 - `SECURITY_MODEL_FREEZE`: **PASS**
 - `TEST_STRATEGY_FREEZE`: **PASS**
-- `PRODUCT_CONTRACT_FREEZE`: **DECISION_REQUIRED_E04_T04**
+- `PRODUCT_CONTRACT_FREEZE`: **DECISION_REQUIRED_P5_REVIEW_COMPLETION**
 - `DOCUMENTATION_CLOSURE_COMPLETE`: **NO**
 - ROI: **não calculado**
 - P1/P2: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
@@ -42,7 +42,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - P4: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 - P5 pacote/finalização: **PAGE_DOCUMENTATION_GATE_V2 PACKAGE_FINALIZATION_READY**
 - P6/Administração: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P5 envio real: **BLOCKED_WITH_EVIDENCE / DECISION_REQUIRED**; inventário E04/T04 concluído, decisão registrada no doc 36
+- P5 envio para análise: **PORTAL-FIRST MODEL DEFINED**; package fica na Minha DELPI; residual é a regra de monthly completion após review
 - handoff funcional P1–P6: **DOCUMENTED**, sujeito aos inventories E/T da página
 
 ## Documentação
@@ -86,7 +86,8 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md) | plano mestre para fechar páginas, regras, RQ/AC, Help e gates antes de runtime |
 | [34-revisao-transversal-gate-v2.md](./34-revisao-transversal-gate-v2.md) | revisão transversal de naming, owners, security, routes, plugin-ui, states, Help e contracts |
 | [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md) | consolidação A15 de contracts, regras, validators/scripts e test matrix |
-| [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md) | inventário de package delivery e decisão pendente de owner/outcome para P5 |
+| [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md) | histórico superseded do inventário de delivery externo; premissa invalidada |
+| [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md) | contrato TARGET de submit/review in-portal, reviewers autenticados e notifications |
 
 ## Página do usuário
 
