@@ -155,6 +155,16 @@ class InteractiveTurnResult:
     grounding_status: GroundingStatus = GroundingStatus.NON_GROUNDED
     provenance: GovernedCapabilityProvenance | None = None
     confirmation_request: Mapping[str, Any] | None = None
+    # C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01: additive semantic
+    # hints consumed by the presentation projection. ``message_kind``
+    # is the producer-declared canonical kind (RESULT/CLARIFICATION_*/
+    # CONFIRMATION_*/WRITE_REJECTED/AUTHZ_DENIED/SOURCE_UNAVAILABLE/
+    # PRECONDITION_REQUIRED); when absent the projection derives it
+    # from structural signals only. ``owner_hint`` is the bounded,
+    # URL-free verbatim owner vocabulary already proven safe at the
+    # interop boundary — never a URL, credential, or raw payload.
+    message_kind: str | None = None
+    owner_hint: str | None = None
 
     def is_fact(self) -> bool:
         return False

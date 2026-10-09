@@ -412,6 +412,10 @@ def test_full_vertical_http_path_returns_bounded_result():
         # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: bounded
         # confirmation surface (digests only, null when none pending).
         "confirmation_request",
+        # C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01: additive,
+        # versioned presentation projection — the provider-neutral
+        # contract a future MFE consumes.
+        "presentation",
     }
     assert body["epistemic_class"] == "HYPOTHESIS"
     assert body["grounding_status"] == "NON_GROUNDED"

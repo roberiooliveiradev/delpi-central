@@ -198,6 +198,11 @@ def test_interaction_application_layer_stays_bounded():
     # monotonic turn deadline that clamps every per-stage timeout to
     # the remaining turn budget (a reduction-only ceiling over the
     # existing timeout_seconds contract, not a second budget system).
+    # C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01 added
+    # presentation.py — the deterministic, versioned, provider-neutral
+    # presentation projection composed at the serialization edge from
+    # already-governed result fields (no engine, no second composer,
+    # no new port).
     # No engine, router, registry, repository, or new port is
     # introduced.
     assert module_files == [
@@ -208,6 +213,7 @@ def test_interaction_application_layer_stays_bounded():
         "handle_interactive_turn.py",
         "instruction.py",
         "pending_proposals.py",
+        "presentation.py",
         "turn_budget.py",
         "workspace_context.py",
     ]

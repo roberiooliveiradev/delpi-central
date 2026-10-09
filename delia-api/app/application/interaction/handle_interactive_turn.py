@@ -45,6 +45,15 @@ from app.application.interaction.instruction import (
     DELIA_INTERACTION_INSTRUCTION,
     interaction_instruction_lineage,
 )
+from app.application.interaction.presentation import (
+    MESSAGE_KIND_AUTHZ_DENIED,
+    MESSAGE_KIND_CLARIFICATION_REQUIRED,
+    MESSAGE_KIND_CONFIRMATION_REQUIRED,
+    MESSAGE_KIND_PRECONDITION_REQUIRED,
+    MESSAGE_KIND_SOURCE_UNAVAILABLE,
+    MESSAGE_KIND_WRITE_REJECTED,
+    compose_presentation,
+)
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
     ModelInvocationRequest,
@@ -107,6 +116,19 @@ DELPI_SOURCE_DENIED_MESSAGE = (
     "O acesso à fonte autoritativa necessária para esta solicitação "
     "foi negado. Nenhum dado operacional foi verificado."
 )
+
+# C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01: producer-declared
+# semantic kind per write-lifecycle status — the presentation
+# projection never guesses the kind from prose.
+_WRITE_LIFECYCLE_MESSAGE_KINDS = {
+    GovernedCapabilityStatus.CLARIFICATION_REQUIRED: (
+        MESSAGE_KIND_CLARIFICATION_REQUIRED
+    ),
+    GovernedCapabilityStatus.CONFIRMATION_REQUIRED: (
+        MESSAGE_KIND_CONFIRMATION_REQUIRED
+    ),
+    GovernedCapabilityStatus.WRITE_REJECTED: MESSAGE_KIND_WRITE_REJECTED,
+}
 
 DEFAULT_MODEL_REF = ModelRef(
     model_id="delia-deterministic-interaction",
@@ -490,6 +512,7 @@ class HandleInteractiveConversationTurn:
             ),
             provenance=provenance,
             confirmation_request=attempt.confirmation_context,
+            message_kind=_WRITE_LIFECYCLE_MESSAGE_KINDS.get(attempt.status),
         )
 
     def _source_terminal_result(
@@ -517,8 +540,21 @@ class HandleInteractiveConversationTurn:
         # vocabulary — never a URL): tells the user WHAT the source
         # reported missing, without granting or inventing anything.
         owner_hint = getattr(attempt, "owner_hint", None)
-        if isinstance(owner_hint, str) and owner_hint:
+        has_hint = isinstance(owner_hint, str) and bool(owner_hint)
+        if has_hint:
             content = content + f" A fonte informou: {owner_hint}"
+        # An owner-declared precondition is presented distinctly from a
+        # bare source failure — PRECONDITION_REQUIRED signals the source
+        # declared a user-actionable requirement (bounded, verbatim).
+        message_kind = (
+            MESSAGE_KIND_AUTHZ_DENIED
+            if denied
+            else (
+                MESSAGE_KIND_PRECONDITION_REQUIRED
+                if has_hint
+                else MESSAGE_KIND_SOURCE_UNAVAILABLE
+            )
+        )
         limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)
         result_turn = InteractionTurn(
             turn_id=str(uuid.uuid4()),
@@ -547,6 +583,8 @@ class HandleInteractiveConversationTurn:
             generated_at=_now_utc(),
             model_invocation_id=None,
             grounding_status=GroundingStatus.NON_GROUNDED,
+            message_kind=message_kind,
+            owner_hint=owner_hint if has_hint else None,
         )
 
     @staticmethod
@@ -683,4 +721,9 @@ def serialize_result(result: InteractiveTurnResult) -> Mapping[str, Any]:
             if result.confirmation_request is not None
             else None
         ),
+        # C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01: additive,
+        # versioned presentation projection — the single provider-
+        # neutral contract a future MFE consumes. Legacy top-level
+        # fields remain unchanged for backward compatibility.
+        "presentation": compose_presentation(result),
     }
