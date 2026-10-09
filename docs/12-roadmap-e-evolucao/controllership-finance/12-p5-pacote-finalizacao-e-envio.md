@@ -212,7 +212,7 @@ PACKAGE_FINALIZED
 → PACKAGE_SENT
 ```
 
-Enquanto E04/T04 não fecharem:
+Enquanto a decisão E04/T04 não for aprovada:
 
 ```text
 SEND_ACTION = NOT_IMPLEMENTED
@@ -335,11 +335,13 @@ A UI não edita silenciosamente uma versão finalizada.
 ### Estado atual
 
 ```text
-Q22 = PENDING_IMPLEMENTATION
-E04 = DOCUMENTATION/INTEGRATION PENDING
-T04 = TO_INVENTORY
+Q22 = DECISION_REQUIRED
+E04 = INVENTORY_COMPLETE_FOR_DECISION
+T04 = INVENTORY_COMPLETE_FOR_DECISION
 CORE_NOTIFICATION_CAPABILITY = PROVEN
-PACKAGE_DELIVERY_CAPABILITY = NOT_PROVEN
+GRAPH_MAIL_WITH_ATTACHMENTS = PROVEN
+MESSAGE_TRACE = PROVEN_IN_EXISTING_CONTEXTS
+GENERIC_PACKAGE_DELIVERY_OWNER = NOT_PROVEN
 ```
 
 Rebaseline de 09/10/2026 no HEAD da plataforma:
@@ -417,7 +419,7 @@ plugins/controllership-finance
    → P2/P3/P4 read contracts
    → Core effective permissions
    → Core Notifications para comunicação user-facing quando aplicável
-   → PACKAGE DELIVERY OWNER = PENDING E04/T04
+   → PACKAGE DELIVERY OWNER/OUTCOME = DECISION_REQUIRED E04/T04
 ```
 
 Operações semânticas já fechadas:
@@ -434,7 +436,7 @@ Operações semânticas já fechadas:
 | getPackageHistory | DEFINED |
 | deriveMonthlyClosingCompletion | DEFINED |
 | notifyUserAboutPackageEvent | DEFINED at capability level via Core Notifications |
-| sendPackage | **PENDING OWNER/CHANNEL/PROOF E04/T04** |
+| sendPackage | **DECISION_REQUIRED — owner/orchestration + PACKAGE_SENT outcome; doc 36** |
 
 ### Finalization contract
 
@@ -445,7 +447,7 @@ Operações semânticas já fechadas:
 - não chama delivery;
 - não produz PACKAGE_SENT.
 
-### Send contract — boundary congelada, binding pendente
+### Send contract — boundary conhecida, decisão material pendente
 
 Já é canônico:
 
@@ -456,16 +458,13 @@ PACKAGE_FINALIZED
 → PACKAGE_SENT
 ```
 
-Mas ainda não é canônico:
-- owner do delivery;
-- protocol/channel;
-- payload/attachment transfer;
-- idempotency key;
-- retry semantics;
-- proof structure;
-- failure/reconciliation behavior.
+O inventário provou Graph e-mail/attachments e Message Trace, mas ainda não é canônico:
+- quem owns a orchestration;
+- se o canal aprovado será Graph e-mail;
+- se `PACKAGE_SENT` significa Graph accepted ou Exchange delivered;
+- como correlation/idempotency serão materializadas.
 
-Portanto nenhum endpoint físico `/send` deve ser congelado antes de E04/T04.
+As opções e recomendação estão no documento 36. Portanto nenhum endpoint físico `/send` deve ser congelado antes da decisão.
 
 ### AuthZ
 
@@ -533,7 +532,7 @@ Uso esperado:
 
 **DO NOT RECREATE:** master-detail, recipient table/cards, state chrome, lifecycle chrome, detail fields, timeline, modal/confirm, notices ou HelpTooltip.
 
-Nenhum componente de “delivery/send” específico deve ser criado antes de T04 provar a necessidade real. Se o capability precisar de chrome reutilizável inexistente, avaliar contribuição ao `plugin-ui` após o contract físico.
+Nenhum componente de “delivery/send” específico deve ser criado antes da decisão E04/T04 fechar owner/outcome e o futuro contract provar a necessidade real. Se o capability precisar de chrome reutilizável inexistente, avaliar contribuição ao `plugin-ui` após o contract físico.
 
 ## Estados de experiência
 
@@ -862,15 +861,16 @@ Provar producer/consumer e source de cada dado material do package.
 
 ### E04 — canal real
 
-`PENDING_IMPLEMENTATION_CONFIRMATION`
+`DECISION_REQUIRED / INVENTORY_COMPLETE_FOR_DECISION`
 
-Confirmar canal, formato, comprovante, aceite, segurança e capability disponível.
+Authority:
+- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
 
 ### T04 — capability corporativa de envio
 
-`TO_INVENTORY_BEFORE_IMPLEMENTATION`
+`INVENTORY_COMPLETE_FOR_DECISION`
 
-Inventariar serviço de documentos/e-mail/tracking/retry/proof of delivery.
+Graph mail/attachments e Message Trace estão provados; generic package-delivery owner não está.
 
 ### Contract físico
 
@@ -912,4 +912,4 @@ A12 P5 PACOTE, FINALIZAÇÃO E ENVIO
 != IMPLEMENTED
 ```
 
-A12 pode avançar documentalmente para revisão de A13, mas continua sendo residual bloqueador do freeze global enquanto E04/T04 não fecharem o contrato de envio real.
+A12 continua bloqueando o freeze global até a decisão E04/T04 ser aprovada. O inventário técnico necessário para decidir está concluído no documento 36.
