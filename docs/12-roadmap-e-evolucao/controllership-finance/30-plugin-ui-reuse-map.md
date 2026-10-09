@@ -46,7 +46,7 @@ Não bundlar/copy local do `plugin-ui` como implementação nova.
 | Central de Fechamento / Checklist e Documentos | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, attachment kit, forms, `Timeline`, modals/notices | `@delpi/plugin-ui/index` | master-detail operacional reutilizável |
 | Central de Fechamento / Estoque e Conciliação | `MetricKpiCard`, `ProgressTracker`, `AlertQueue`, `DetailFieldGrid`, `DataTableSection`, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | mesa de conciliação/readiness reutilizável |
 | Central de Fechamento / Classificações e Pendências | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, filters, `DetailFieldGrid`, forms, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | master-detail operacional com decisão humana |
-| Central de Fechamento / Pacote, Finalização e Envio | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, `ProgressTracker`, `DetailFieldGrid`, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | master-detail por destinatário; envio gated por capability |
+| Central de Fechamento / Pacote, Finalização e Envio | `ResizableColumns`, `DataTableSection`, `DataRecordCard`, `ProgressTracker`, `DetailFieldGrid`, `Timeline`, state/confirm feedback | `@delpi/plugin-ui/index` | master-detail por destinatário; submit/review in-portal |
 | Sala de interação | `InteractionRoomPage`, `INTERACTION_ROOM_PAGE_LABELS_PT`, `PluginErrorBoundary` | `@delpi/plugin-ui/index` | **full-page reusable** |
 | Minhas tarefas | `TaskWorkspacePage`, `TaskWorklistSection`, `TaskItemsTable`, `TaskSearchField`, `TaskEmptyState` | `@delpi/plugin-ui/index` | **workspace reusable** |
 | Administração | PageHero/PagePath, SectionRouteCard, DataTableSection, forms, Modal/Confirm/Notice/Status | `@delpi/plugin-ui/index` | composição reutilizável; sem full page pronta |
@@ -329,11 +329,11 @@ import {
 Contrato visual detalhado:
 - [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md)
 
-Desktop usa master-detail por recipient package; mobile usa lista → detalhe full-width. `ProgressTracker` pode explicar lifecycle, sem colapsar finalização e envio em um único estado.
+Desktop usa master-detail por recipient package; mobile usa lista → detalhe full-width. `ProgressTracker` pode explicar finalize → submit for review → review, sem colapsar estados.
 
 **DO NOT RECREATE:** master-detail, recipient cards/table, lifecycle/status chrome, detail fields, timeline, modal/confirm, notices ou HelpTooltip.
 
-Enquanto E04/T04 não fecharem, não criar componente/botão/canal local de envio. Package/finalization usa apenas primitives já públicas; delivery UI futura nasce do contract físico comprovado.
+Não criar delivery UI externo. `Enviar para análise` e review states usam primitives já públicas; se o reviewer workflow provar gap real, contribuir primeiro no `plugin-ui`.
 
 ## Sala de interação
 
