@@ -253,6 +253,23 @@ Evidência runtime (LOCAL INTEGRATION RUNTIME, 2026-10-08/09): fluxo completo vi
 
 Testes: 27/27 (`test_process_bpmn_reference` + `test_path_alias_middleware`), 6/6 structural frontend, vitest TM 464/464, BPMN contract/ownership/immutability 138, cross-app E2E 8/8.
 
+### 13f. Migração governada `flowchart_v1` → BPMN nativo TM (G8 — vigente)
+
+Owner da migração: **Transformômetro** — legado (`processo_diagramas`, `instancia_diagrama_escopo`, `revisao_diagrama_overlays`) e destino (`processo_bpmn_documents`, `processo_bpmn_revisions`, `processo_bpmn_migrations` — V054) estão no mesmo bounded context; zero escrita em `bpmn_modeler.*`. Contrato completo: `docs/12-roadmap-e-evolucao/engineering/adr/ADR-007-legacy-flowchart-bpmn-migration.md`.
+
+- **Source:** `DiagramaCompositionService.compose_for_processo` (macro + overlays vigentes, server-side). Cliente nunca fornece o diagrama-fonte.
+- **Mapper puro** `tm_app/domain/diagram/legacy_bpmn_migration.py`: classificação por objeto `EXACT | HEURISTIC | AMBIGUOUS | UNMAPPABLE | IGNORED_METADATA`; emite BPMN 2.0 XML + BPMN-DI com geometria preservada quando compatível; sem vendor extensions; metadata legada nunca entra no XML.
+- **Ambiguidades nunca resolvidas silenciosamente:** `ambiguity_id` + opções explícitas; resolução via `resolutions` em novo PREPARE (proposal nunca é mutado).
+- **Governança TÉO:** capability `migrate_legacy_diagram_to_native_bpmn` — PREPARE read-only sela XML+checksum+`legacy_source_fingerprint` (`confirm_before_act`); ACT só via `commit_proposal`, revalida AuthZ+fingerprint+XOR+checksum, cria doc + revisão 1 `origin='migration'` + linha `processo_bpmn_migrations`, read-back autoritativo, compensação fail-closed.
+- **Bloqueios provados:** `NATIVE_BPMN_ALREADY_EXISTS`, `dual_mode_forbidden`, `LEGACY_DIAGRAM_EMPTY`, `proposal_stale`, candidato `AMBIGUOUS`/`BLOCKED`, BPMN inválido (`shared/bpmn_validation`).
+- **`import_diagram_bpmn_xml` não foi reutilizado** — continua escrevendo no legado macro; a capability nova é a única via TÉO para BPMN nativo a partir do legado.
+- **UI:** CTA "Migrar legado para BPMN nativo" só com `legacy && !native && !external`; wizard read-only (editor compartilhado NÃO é o preview); pós-migração o nativo é a autoridade vigente e o legado vira seção colapsada read-only — nunca "visão vigente". Mermaid permanece derivado legado.
+- **READ:** `record_read(entity=process_bpmn_document)` inclui `revisions` (origin=migration na R1) + `migration` (fingerprint, checksum, ator, source_summary).
+
+Evidência runtime (LOCAL INTEGRATION RUNTIME, 2026-10-09): PREPARE real PROC-0034 → `READY` (9 EXACT, 6 IGNORED_METADATA) → COMMIT → doc v1 + R1 `origin='migration'` + migration row + read-back verificado; stale recusado com diff de fingerprints; legado intacto (row + overlay preservados); `bpmn_modeler.*` 0 rows. Testes: 38 focados backend + suítes adjacentes 113 + 141 + guia 74, frontend 7/7 (464/464 total).
+
+**Residual G8:** view-vs-manage por processo compartilham `transformometro.access` (gate vigente do TM, não regressão — separação dedicada é follow-up ADR-005); transação atômica doc+rev+migration é follow-up (compensação fail-closed vigente).
+
 ## 14. Produtividade — classificação por evidência (G0)
 
 | Capacidade | Freeze | Implementação atual | Classificação |

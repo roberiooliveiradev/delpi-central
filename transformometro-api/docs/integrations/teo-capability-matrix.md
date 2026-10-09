@@ -208,6 +208,7 @@ Justification: list/get/create/update/delete fit governed allowlisted CRUD with 
 | Tasks | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* |
 | Interaction room | TM | R/W | collaboration_read + prepare_collaboration_change → commit_proposal | `gpt_collaboration_read` / `gpt_prepare_collaboration_change` | PLANNED | access | FULL_PARITY* (binary attachments platform_blocked) |
 | Helpdesk/GLPI demand | Helpdesk BFF | R/W | `helpdesk_read` (incl. `attachment` binary blocks) + `prepare_helpdesk_change` → `commit_proposal` | `gpt_helpdesk_read` / `gpt_prepare_helpdesk_change` + commit | PLANNED | `helpdesk.access` + GLPI session | FULL_PARITY* (R4.2: attachment read/upload proven live; GPT Actions = metadata + file object) |
+| Legacy diagram → native BPMN migration | TM | W | prepare_governed_operation(migrate_legacy_diagram_to_native_bpmn) → commit_proposal | `gpt_prepare_governed_operation` + commit | PLANNED | processo manage | FULL_PARITY* |
 | Process workspace UI | MFE | R | — | — | — | — | NOT_APPLICABLE |
 
 \*FULL_PARITY = Actions + MCP mapped to same application services. DÉLIA consumption = **PLANNED / NOT_PROVEN** (no runtime adapter in `delia-api` at this HEAD).
