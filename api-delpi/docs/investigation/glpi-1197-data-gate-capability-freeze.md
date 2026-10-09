@@ -791,3 +791,69 @@ Sem nova lib de data grid; sem mudança de API existente.
 | ID | Status | Nota |
 |---|---|---|
 | R-15 | novo | exportação cobre o conjunto filtrado via re-request com os mesmos parâmetros; volume governado pelo limite do endpoint |
+
+---
+
+# PARTE V — P0 FILTER-STATE (TASK DAVI-SUPPLIES-GLPI1197-FILTER-STATE-P0-003)
+
+## Y1. Causa raiz (confirmada por contrato + código)
+
+Cenário reportado: período personalizado 01/09/2025–30/09/2026, armazém 01,
+consolidado — resumo com 993 produtos sem giro (~R$ 1,1 mi) e detalhe com
+0 registros ao filtrar "Sem giro (12m)".
+
+- `resolve_consumption_window` classifica a janela: sem datas = rolling_12m
+  → `NO_CONSUMPTION_12M`; com start+end = custom_period →
+  `NO_CONSUMPTION_IN_PERIOD`. Cada produto recebe exatamente UM dos dois
+  status por consulta.
+- O dropdown do detalhe oferecia os dois valores brutos; selecionar
+  "Sem giro (12m)" sob janela custom gerava `turnover_status =
+  'NO_CONSUMPTION_12M'` — predicado válido mas semanticamente impossível na
+  resposta → 0 itens. O resumo seguia contando IN_PERIOD → divergência.
+
+Correção (frontend, sem mudança de contrato): as duas opções foram
+unificadas em "Sem giro" (token `NON_MOVING`), resolvido para o status da
+janela vigente na construção do request — `isDefaultWindow` é exatamente a
+mesma condição que o backend usa para `rolling_12m`. Seleção inválida por
+mudança de período deixa de ser possível por construção. O rótulo por linha
+continua mostrando o status concreto retornado (12m vs período).
+
+## Y2. Auto-refresh — auditoria da cadeia
+
+Cadeia já reativa: filtro → estado → params memoizados → `useSuppliesResource`
+(deps) → AbortController (resposta antiga descartada, nunca sobrescreve a
+nova) → `refreshing` → tabela ocupada. Verificado filtro a filtro:
+competência, datas, filiais, armazém, status, bloqueio, resultado, busca
+(debounce 400 ms), ordenação, página e page-size — todos disparam consulta
+sem depender do botão Atualizar (que permanece como refresh explícito).
+
+Gaps corrigidos neste ciclo:
+
+- Seleção de linhas agora é invalidada também nas mudanças vindas do
+  FilterBar global (competência/datas/filiais) — antes só os filtros de
+  detalhe limpavam a seleção.
+- Footnote das duas páginas declara explicitamente o escopo: filtros de
+  status/bloqueio/busca/ordenação afetam apenas a listagem; KPIs refletem
+  o universo do recorte (resumo × detalhe compartilham start/end/branches/
+  warehouse via `baseParams`).
+
+## Y3. Backend como autoridade
+
+Sem filtragem local de registros: busca, predicados, ordenação, total,
+paginação, classificação de giro, bloqueio, período, filial, armazém e
+resultado de contagem são 100% backend. Frontend resolve apenas o token de
+UI "Sem giro" para o status da janela — resolução determinística da mesma
+regra de classificação, não inferência de dados.
+
+## Y4. Evidências
+
+- BACKEND: PASS — 29 testes non-moving (incl. 2 novos: use case encaminha o
+  status da janela p/ resumo e itens em ambas as janelas; SQL aceita
+  NO_CONSUMPTION_IN_PERIOD como irmão do predicado 12M).
+- LINT/TYPECHECK: PASS filtrado — 0 erros nos arquivos do diff.
+- BUILD: PASS — vite build dashboard-supplies.
+- TESTES FRONTEND AUTOMATIZADOS: TEST_NOT_RUN — projeto não possui runner
+  de testes (vitest ausente, pré-existente); invariantes de auto-refresh
+  validados por auditoria de código + testes backend.
+- BROWSER_E2E / SCREENSHOTS: TEST_NOT_RUN — sem acesso autenticado;
+  homologação visual permanece pendente (R-13).

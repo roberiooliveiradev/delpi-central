@@ -519,3 +519,68 @@ def test_summary_sql_counts_zero_cost_items() -> None:
     )
     assert "zero_cost_item_count" in query
     assert "unit_cost = 0" in query
+
+
+# --- P0-003: coerência janela ↔ status entre resumo e itens ---
+
+
+def test_items_use_case_forwards_window_status() -> None:
+    """Resumo e itens compartilham a mesma classificação da janela.
+
+    Regressão GLPI-1197 P0-003: com período personalizado o status sem
+    consumo é NO_CONSUMPTION_IN_PERIOD; filtrar por NO_CONSUMPTION_12M
+    nessa janela esvazia o detalhe enquanto o resumo permanece > 0.
+    O frontend resolve a família "Sem giro" para o status da janela;
+    aqui garantimos que resumo e itens derivam o mesmo status.
+    """
+    from app.application.use_cases.supplies.get_non_moving_stock_items_use_case import (
+        GetNonMovingStockItemsUseCase,
+    )
+
+    class _ItemsRepo:
+        def count_items(self, **kwargs):
+            self.kwargs = kwargs
+            return 0
+
+        def fetch_items(self, **kwargs):
+            return []
+
+    repo = _ItemsRepo()
+    result = GetNonMovingStockItemsUseCase(repo).execute(
+        NonMovingStockItemsRequest(
+            start_date="2025-09-01", end_date="2026-09-30"
+        )
+    )
+    assert repo.kwargs["no_consumption_status"] == (
+        svc.STATUS_NO_CONSUMPTION_IN_PERIOD
+    )
+    assert result["reference"]["window_kind"] == svc.WINDOW_KIND_CUSTOM
+
+    repo = _ItemsRepo()
+    result = GetNonMovingStockItemsUseCase(repo).execute(
+        NonMovingStockItemsRequest()
+    )
+    assert repo.kwargs["no_consumption_status"] == (
+        svc.STATUS_NO_CONSUMPTION_12M
+    )
+    assert result["reference"]["window_kind"] == svc.WINDOW_KIND_ROLLING_12M
+
+
+def test_sql_items_accepts_in_period_status() -> None:
+    """Irmão do filtro NO_CONSUMPTION_12M — mesmo predicado parametrizado."""
+    query, params = sql.build_items_query(
+        branches=("01",),
+        warehouses=("01", "99"),
+        window_start="20250901",
+        window_end="20260930",
+        no_consumption_status="NO_CONSUMPTION_IN_PERIOD",
+        product_codes=None,
+        turnover_status="NO_CONSUMPTION_IN_PERIOD",
+        blocked=None,
+        search=None,
+        sort="stock_value_desc",
+        offset=0,
+        page_size=50,
+    )
+    assert "turnover_status = ?" in query
+    assert "NO_CONSUMPTION_IN_PERIOD" in params

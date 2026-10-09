@@ -18,7 +18,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     tableSearch:
       "Filtra os registros no servidor por código (parcial ou exato) ou descrição do produto — vale para todo o conjunto, não apenas a página exibida.",
     turnoverStatus:
-      "Situação de giro do produto na janela de consumo: com consumo, sem giro ou histórico insuficiente.",
+      "Situação de giro do produto na janela de consumo: com consumo, sem giro ou histórico insuficiente. 'Sem giro' acompanha a janela vigente — na janela padrão equivale a 'sem giro (12m)'; em período personalizado, a 'sem giro no período'.",
     blockedFilter:
       "Bloqueio cadastral do produto (B1_MSBLQL): Todos, Somente bloqueados ou Somente não bloqueados.",
     accuracyOutcome:

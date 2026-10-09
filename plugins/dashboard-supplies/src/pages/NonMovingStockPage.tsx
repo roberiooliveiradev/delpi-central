@@ -61,9 +61,17 @@ const STATUS_LABELS: Record<string, string> = {
   INSUFFICIENT_HISTORY: "Histórico insuficiente",
 };
 
+/**
+ * Token de UI para a família "sem giro": o backend classifica cada produto
+ * em exatamente UM status sem consumo por janela (NO_CONSUMPTION_12M na
+ * janela móvel padrão, NO_CONSUMPTION_IN_PERIOD em período personalizado).
+ * Oferecer os dois valores brutos permitia selecionar um estado inexistente
+ * na janela vigente → 0 registros com resumo divergente.
+ */
+const NON_MOVING_FILTER = "NON_MOVING";
+
 const STATUS_OPTIONS = [
-  { value: "NO_CONSUMPTION_12M", label: "Sem giro (12m)" },
-  { value: "NO_CONSUMPTION_IN_PERIOD", label: "Sem giro no período" },
+  { value: NON_MOVING_FILTER, label: "Sem giro" },
   { value: "WITH_CONSUMPTION", label: "Com consumo" },
   { value: "INSUFFICIENT_HISTORY", label: "Histórico insuficiente" },
 ];
@@ -179,10 +187,17 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
       [baseParams]
     );
 
+  const effectiveTurnoverStatus =
+    statusFilter === NON_MOVING_FILTER
+      ? isDefaultWindow
+        ? "NO_CONSUMPTION_12M"
+        : "NO_CONSUMPTION_IN_PERIOD"
+      : statusFilter || undefined;
+
   const itemsParams = useMemo<NonMovingStockParams>(
     () => ({
       ...baseParams,
-      turnover_status: statusFilter || undefined,
+      turnover_status: effectiveTurnoverStatus,
       blocked:
         blockedFilter === "" ? undefined : blockedFilter === "true",
       search: debouncedSearch || undefined,
@@ -194,7 +209,7 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     }),
     [
       baseParams,
-      statusFilter,
+      effectiveTurnoverStatus,
       blockedFilter,
       debouncedSearch,
       serverTable.query,
@@ -377,10 +392,10 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         branches={branches}
         location={location}
         showLocationFilter={false}
-        onCompetenceChange={setCompetence}
-        onDateStartChange={setDateStart}
-        onDateEndChange={setDateEnd}
-        onBranchesChange={setBranches}
+        onCompetenceChange={handleTableChange(setCompetence)}
+        onDateStartChange={handleTableChange(setDateStart)}
+        onDateEndChange={handleTableChange(setDateEnd)}
+        onBranchesChange={handleTableChange(setBranches)}
         onLocationChange={handleTableChange(setLocation)}
         onRefresh={reload}
         refreshing={refreshing}
@@ -616,7 +631,9 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
           {formatDisplayDate(data.reference.consumption_window_start)} a{" "}
           {formatDisplayDate(data.reference.consumption_window_end)} ·
           Valoração: estoque atual (SB2) · Produto × filial para giro,
-          produto × filial × armazém para valor
+          produto × filial × armazém para valor · Filtros de status,
+          bloqueio, busca e ordenação afetam apenas a listagem — os KPIs
+          refletem o universo do recorte
           {data.counts.zero_cost_items > 0
             ? ` · ${formatInteger(
                 data.counts.zero_cost_items

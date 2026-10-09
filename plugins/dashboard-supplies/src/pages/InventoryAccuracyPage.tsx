@@ -350,10 +350,10 @@ export function InventoryAccuracyPage({
         branches={branches}
         location=""
         showLocationFilter={false}
-        onCompetenceChange={setCompetence}
-        onDateStartChange={setDateStart}
-        onDateEndChange={setDateEnd}
-        onBranchesChange={setBranches}
+        onCompetenceChange={handleTableChange(setCompetence)}
+        onDateStartChange={handleTableChange(setDateStart)}
+        onDateEndChange={handleTableChange(setDateEnd)}
+        onBranchesChange={handleTableChange(setBranches)}
         onLocationChange={() => {}}
         onRefresh={reload}
         refreshing={refreshing}
@@ -599,7 +599,9 @@ export function InventoryAccuracyPage({
         <p className="ds-footnote">
           Divergência = teórico − contado (positivo = falta, negativo =
           sobra) · Acuracidade mede apenas o universo contado oficialmente
-          no período, não o estoque total
+          no período, não o estoque total · Filtros de resultado, busca e
+          ordenação afetam apenas a listagem — os KPIs refletem o universo
+          do recorte
           {data.exclusions.pending_processing > 0 ||
           data.exclusions.cancelled > 0
             ? ` · ${formatInteger(
