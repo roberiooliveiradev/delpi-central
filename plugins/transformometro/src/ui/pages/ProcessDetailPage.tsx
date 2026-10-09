@@ -130,6 +130,9 @@ export function ProcessDetailPage({
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // G8H — quando o BPMN nativo existe, o legado deixa de ser "vigente":
+  // seções flowchart_v1 viram artefato histórico collapsed/read-only.
+  const [hasNativeBpmn, setHasNativeBpmn] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   /** Incrementado a cada load — invalida matriz keep-alive do processo. */
   const [dataEpoch, setDataEpoch] = useState(0);
@@ -715,9 +718,57 @@ export function ProcessDetailPage({
                       getAccessToken={getAccessToken}
                       onNavigate={onNavigate}
                       onError={setError}
+                      onDocumentChange={(doc) => setHasNativeBpmn(doc != null)}
                     />
                   }
                 />
+                {hasNativeBpmn ? (
+                  <details
+                    className="tm-processo-composed-card tm-processo-composed-card--first tm-legacy-mapping"
+                    data-testid="legacy-mapping"
+                  >
+                    <summary className="tm-legacy-mapping-summary">
+                      <h3 className="ds-subsection-title">Mapeamento legado</h3>
+                      <p className="ds-hint">
+                        Migração concluída — flowchart_v1 preservado para
+                        auditoria, somente leitura. Alterações no legado NÃO
+                        atualizam o BPMN vigente.
+                      </p>
+                    </summary>
+                    <ProcessoDiagramComposedSection
+                      embeddedInCard
+                      processoId={processoId}
+                      getAccessToken={getAccessToken}
+                      onError={setError}
+                      resyncVersion={panelResyncVersion}
+                    />
+                    <EditableSectionCard
+                      title="Macro base legado"
+                      description="Fonte histórica do mapeamento legado — edição desabilitada após a migração para BPMN nativo."
+                      hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
+                      isEditing={false}
+                      editable={false}
+                      editLabel="Editar diagrama"
+                      onEdit={() => undefined}
+                      onCancel={() => undefined}
+                      readContent={
+                        <ProcessoDiagramSection
+                          embeddedInCard
+                          readOnly
+                          processoId={processoId}
+                          getAccessToken={getAccessToken}
+                          onError={setError}
+                          resyncVersion={panelResyncVersion}
+                          onEntityChanged={() => {
+                            if (timelineLoaded) void loadTimeline();
+                          }}
+                        />
+                      }
+                      editContent={null}
+                    />
+                  </details>
+                ) : (
+                <>
                 <div className="tm-processo-composed-card tm-processo-composed-card--first">
                   <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
                   <p className="ds-hint">
@@ -762,6 +813,8 @@ export function ProcessDetailPage({
                   }
                   editContent={null}
                 />
+                </>
+                )}
               </div>
               ) : null}
             </div>

@@ -4,6 +4,7 @@ import {
   FileUp,
   GitBranch,
   Pencil,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 
@@ -15,15 +16,19 @@ import {
   type ProcessBpmnDocument,
 } from "../../data/api/bpmnDocumentApi";
 import { fetchProcessBpmnReference } from "../../data/api/bpmnReferenceApi";
+import { fetchProcessoDiagramaComposed } from "../../data/api/transformometroDiagramApi";
 import { buildProcessoBpmnEditPath } from "../../utils/routeParser";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { DS_GHOST_BTN } from "../ghostChrome";
+import { BpmnMigrationWizard } from "./BpmnMigrationWizard";
 import { ProcessBpmnReferenceCard } from "./ProcessBpmnReferenceCard";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
   onNavigate: (path: string) => void;
   onError?: (message: string | null) => void;
+  /** Estado nativo carregado — a página reconcilia a seção legada (G8H). */
+  onDocumentChange?: (document: ProcessBpmnDocument | null) => void;
 };
 
 function describeError(err: unknown, fallback: string): string {
@@ -41,11 +46,14 @@ export function ProcessBpmnCard({
   getAccessToken,
   onNavigate,
   onError,
+  onDocumentChange,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [document, setDocument] = useState<ProcessBpmnDocument | null>(null);
   const [hasExternalRef, setHasExternalRef] = useState(false);
   const [refLoaded, setRefLoaded] = useState(false);
+  const [hasLegacy, setHasLegacy] = useState(false);
+  const [migrationOpen, setMigrationOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -55,16 +63,23 @@ export function ProcessBpmnCard({
     let cancelled = false;
     void Promise.resolve().then(async () => {
       try {
-        const [docPayload, refPayload] = await Promise.all([
+        const [docPayload, refPayload, composedPayload] = await Promise.all([
           fetchProcessBpmnDocument(processoId, getAccessToken),
           fetchProcessBpmnReference(processoId, getAccessToken).catch(
+            () => null,
+          ),
+          fetchProcessoDiagramaComposed(processoId, getAccessToken).catch(
             () => null,
           ),
         ]);
         if (cancelled) return;
         setDocument(docPayload?.document ?? null);
+        onDocumentChange?.(docPayload?.document ?? null);
         setHasExternalRef(refPayload?.reference != null);
         setRefLoaded(true);
+        setHasLegacy(
+          (composedPayload?.flowchart?.nodes ?? []).length > 0,
+        );
       } catch (err) {
         if (cancelled) return;
         const message = describeError(
@@ -80,7 +95,7 @@ export function ProcessBpmnCard({
     return () => {
       cancelled = true;
     };
-  }, [processoId, getAccessToken, onError]);
+  }, [processoId, getAccessToken, onError, onDocumentChange]);
 
   async function handleCreate(xml: string | null) {
     setBusy(true);
@@ -156,8 +171,21 @@ export function ProcessBpmnCard({
                 Crie o diagrama BPMN nativo deste processo — editável aqui
                 mesmo, com histórico de revisões — ou vincule um modelo
                 externo do Modelador abaixo.
+                {hasLegacy
+                  ? " Este processo possui um mapeamento legado que pode ser migrado pelo TÉO."
+                  : ""}
               </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {hasLegacy ? (
+                  <button
+                    type="button"
+                    className={DS_GHOST_BTN}
+                    onClick={() => setMigrationOpen(true)}
+                  >
+                    <Sparkles size={14} aria-hidden /> Migrar para BPMN com
+                    TÉO
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   className={DS_GHOST_BTN}
@@ -195,6 +223,17 @@ export function ProcessBpmnCard({
           />
         </div>
       )}
+
+      <BpmnMigrationWizard
+        processoId={processoId}
+        getAccessToken={getAccessToken}
+        open={migrationOpen}
+        onClose={() => setMigrationOpen(false)}
+        onMigrated={() => {
+          setMigrationOpen(false);
+          onNavigate(buildProcessoBpmnEditPath(processoId));
+        }}
+      />
 
       <ConfirmModal
         open={deleteOpen}
