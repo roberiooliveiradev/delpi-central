@@ -1,12 +1,17 @@
 /**
  * BpmnReadonlyViewer — viewer BPMN live, somente navegação
- * (G9-LAYOUT-1 §4–§10, §41).
+ * (G9-LAYOUT-1 §4–§10, §41; hardening G9-LOAD-1 §7).
  *
  * O MESMO renderer do vendor que o editor usa (NavigatedViewer), montado
  * num container real do host — não é imagem nem snapshot raster: o DOM/SVG
  * do bpmn-js é interativo para pan e wheel zoom. O modo NavigatedViewer
  * não registra modeling/contextPad/palette/directEditing — não existe
  * caminho de edição a partir desta superfície (prova: readonlyViewer.test).
+ *
+ * Toda inicialização alcança estado terminal: constructor ou import
+ * falhando/travando → "error" (o host decide retry/remount); fit-viewport
+ * falhando → "ready" degradado (o conteúdo já está renderizado e
+ * navegável — fit é cosmético, decisão explícita G9-LOAD-1 §11).
  *
  * Vendor leakage: bpmn-js só pode ser importado dentro de `src/editor/`.
  */
@@ -36,7 +41,23 @@ export type BpmnReadonlyViewerProps = {
   className?: string;
   /** Callback de status — o host decide empty/loading/error UI. */
   onStatusChange?: (status: BpmnReadonlyViewerStatus) => void;
+  /** Override do budget do import (default BPMN_VIEWER_IMPORT_TIMEOUT_MS) —
+   *  injetável em teste. */
+  importTimeoutMs?: number;
 };
+
+/**
+ * Budget do import: parse+render é CPU-bound e normalmente < 1s; um
+ * importXML que nunca resolve (vendor travado) não pode segurar o card
+ * em loading infinito (G9-LOAD-1 §7/§10).
+ */
+export const BPMN_VIEWER_IMPORT_TIMEOUT_MS = 15_000;
+
+function loadLog(stage: string, extra?: Record<string, unknown>): void {
+  // Observabilidade segura: apenas estágio + classe/mensagem de erro.
+  // Nunca token, XML ou payload sensível (G9-LOAD-1 §9).
+  console.debug("[BPMN_LOAD]", { stage, ...extra });
+}
 
 type ViewerSvc = {
   get<T>(name: string): T;
@@ -59,12 +80,20 @@ function hasRenderableElements(viewer: ViewerSvc): boolean {
   );
 }
 
+function errorMeta(err: unknown): Record<string, unknown> {
+  return {
+    errorClass: err instanceof Error ? err.name : typeof err,
+    errorMessage: err instanceof Error ? err.message : String(err),
+  };
+}
+
 export function BpmnReadonlyViewer({
   xml,
   controls = true,
   fitOnLoad = true,
   className,
   onStatusChange,
+  importTimeoutMs = BPMN_VIEWER_IMPORT_TIMEOUT_MS,
 }: BpmnReadonlyViewerProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<InstanceType<typeof NavigatedViewer> | null>(null);
@@ -80,33 +109,88 @@ export function BpmnReadonlyViewer({
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const viewer = new NavigatedViewer({
-      container: host,
-      bpmnRenderer: { ...BPMN_RENDERER_THEME },
-    });
-    viewerRef.current = viewer;
     let cancelled = false;
     emit("loading");
-    viewer
-      .importXML(xml)
+    loadLog("viewer-create");
+
+    // Constructor failure → estado terminal "error" (nunca crash do
+    // subtree nem parent preso em loading).
+    let viewer: InstanceType<typeof NavigatedViewer>;
+    try {
+      viewer = new NavigatedViewer({
+        container: host,
+        bpmnRenderer: { ...BPMN_RENDERER_THEME },
+      });
+    } catch (err) {
+      loadLog("error", { stage: "viewer-create", ...errorMeta(err) });
+      if (!cancelled) emit("error");
+      return;
+    }
+    viewerRef.current = viewer;
+
+    // Timeout do import: Promise.race garante estado terminal mesmo se a
+    // promise do vendor nunca resolver.
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      rejectTimeout(new Error("import excedeu o tempo limite"));
+    }, importTimeoutMs);
+    let rejectTimeout: (err: Error) => void = () => undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      rejectTimeout = reject;
+    });
+
+    loadLog("import-xml");
+    Promise.race([viewer.importXML(xml), timeout])
       .then(() => {
+        clearTimeout(timer);
         if (cancelled) return;
         const next = hasRenderableElements(viewer) ? "ready" : "empty";
         if (next === "ready" && fitOnLoad) {
-          viewer.get<{ zoom(s: string, p?: string): void }>("canvas").zoom(
-            "fit-viewport",
-            "auto",
-          );
+          loadLog("fit-viewport");
+          try {
+            // Contrato verificado contra diagram-js/bpmn-js 18.x:
+            // zoom('fit-viewport', center) — string truthy ("auto") pede
+            // centralização do fit (Canvas.prototype._fitViewport).
+            viewer.get<{ zoom(s: string, p?: string): void }>("canvas").zoom(
+              "fit-viewport",
+              "auto",
+            );
+          } catch (err) {
+            // ready degradado: conteúdo renderizado e navegável, fit falhou
+            loadLog("fit-viewport-failed", errorMeta(err));
+          }
         }
         emit(next);
+        if (next === "ready") loadLog("ready");
       })
-      .catch(() => {
-        if (!cancelled) emit("error");
+      .catch((err) => {
+        clearTimeout(timer);
+        if (cancelled) return;
+        loadLog("error", {
+          stage: timedOut ? "import-xml-timeout" : "import-xml",
+          ...errorMeta(err),
+        });
+        if (timedOut) {
+          // viewer travado no import — libera a instância imediatamente
+          try {
+            viewer.destroy();
+          } catch {
+            /* noop */
+          }
+          if (viewerRef.current === viewer) viewerRef.current = null;
+        }
+        emit("error");
       });
     return () => {
       cancelled = true;
-      viewer.destroy();
-      viewerRef.current = null;
+      clearTimeout(timer);
+      try {
+        viewer.destroy();
+      } catch {
+        /* noop */
+      }
+      if (viewerRef.current === viewer) viewerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xml]);
@@ -115,10 +199,15 @@ export function BpmnReadonlyViewer({
     viewerRef.current
       ?.get<{ stepZoom(d: number): void }>("zoomScroll")
       ?.stepZoom(delta);
-  const fitViewport = () =>
-    viewerRef.current
-      ?.get<{ zoom(s: string, p?: string): void }>("canvas")
-      ?.zoom("fit-viewport", "auto");
+  const fitViewport = () => {
+    try {
+      viewerRef.current
+        ?.get<{ zoom(s: string, p?: string): void }>("canvas")
+        ?.zoom("fit-viewport", "auto");
+    } catch (err) {
+      loadLog("fit-viewport-failed", errorMeta(err));
+    }
+  };
 
   return (
     <div

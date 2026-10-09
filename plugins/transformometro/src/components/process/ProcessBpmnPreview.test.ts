@@ -79,4 +79,16 @@ describe("G9-LAYOUT-1 — prévia live read-only do BPMN nativo no card", () => 
   it("página passa o nome do processo como metadado", () => {
     expect(page).toMatch(/processName=\{processo\.nome_processo\}/);
   });
+
+  it("G9-LOAD-1: fetch pendurado termina em erro + retry; token por ref", () => {
+    // §10: erro terminal com "Tentar novamente" (reloadKey refaz o fetch e
+    // remonta o viewer via key) — nunca "Carregando prévia" infinito.
+    expect(preview).toMatch(/reloadKey/);
+    expect(preview).toMatch(/Tentar novamente/);
+    expect(preview).toMatch(/key=\{reloadKey\}/);
+    // §3: getAccessToken fora do dep array — identidade instável não
+    // pode provocar refetch a cada render do parent.
+    expect(preview).toMatch(/tokenRef\.current = getAccessToken/);
+    expect(preview).toMatch(/\[\s*processoId, document\.working_copy_sha256, reloadKey\s*\]/);
+  });
 });

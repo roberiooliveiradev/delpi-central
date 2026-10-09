@@ -93,6 +93,11 @@ type Props = {
 
 type SideTab = "properties" | "validation" | "history";
 
+/** Budget do load completo do documento (metadados + working copy) —
+ *  G9-LOAD-1 §5. Independe do timeout do transporte do host: cobre
+ *  também hosts que ainda não implementam abort próprio. */
+export const LOAD_MODEL_TIMEOUT_MS = 25_000;
+
 function detectMustUnderstand(xml: string): boolean {
   try {
     const doc = new DOMParser().parseFromString(xml, "application/xml");
@@ -227,14 +232,48 @@ export function BpmnDocumentEditorPage({
   }, [autosave]);
 
   // ---------- load ----------
+  // G9-LOAD-1 §4: toda execução recebe uma geração; somente o load mais
+  // novo pode mutar model/state/error — completion de load antigo é
+  // ignorada (cobre host recreation, retry e navigation race).
+  const loadGenerationRef = useRef(0);
   const loadModel = useCallback(async () => {
+    const generation = ++loadGenerationRef.current;
+    const isCurrent = () => generation === loadGenerationRef.current;
     setState("LOADING");
     setPageError(null);
+    console.debug("[BPMN_LOAD] stage=document generation=%d", generation);
     try {
-      const [meta, wc] = await Promise.all([
-        host.loadDocument(),
-        host.loadWorkingCopy(),
-      ]);
+      // §5/§6: nenhuma leitura fica pendente para sempre — race com budget
+      // governado garante estado terminal mesmo num host que trava.
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              new BpmnDocumentError(
+                408,
+                {
+                  success: false,
+                  error: {
+                    code: "REQUEST_TIMEOUT",
+                    message:
+                      "O carregamento do documento excedeu o tempo limite.",
+                  },
+                },
+                "O carregamento do documento excedeu o tempo limite.",
+              ),
+            ),
+          LOAD_MODEL_TIMEOUT_MS,
+        );
+      });
+      const [meta, wc] = await Promise.race([
+        Promise.all([host.loadDocument(), host.loadWorkingCopy()]),
+        timeout,
+      ]).finally(() => {
+        if (timer) clearTimeout(timer);
+      });
+      if (!isCurrent()) return;
+      console.debug("[BPMN_LOAD] stage=working-copy generation=%d", generation);
       const v = meta.version;
       setModel(meta);
       applyVersion(v);
@@ -279,6 +318,7 @@ export function BpmnDocumentEditorPage({
       });
 
       const editable = capabilities.edit && !meta.archived_at && reason === null && !isTablet;
+      console.debug("[BPMN_LOAD] stage=viewer-create generation=%d", generation);
       adapter.mount(canvasRef.current!, editable ? "edit" : "viewer");
 
       let xml = wc.xml;
@@ -289,7 +329,7 @@ export function BpmnDocumentEditorPage({
           const graph = buildElkGraph(snapshot);
           const job = runLayout(graph);
           const outcome = await job.promise;
-          if (outcome.ok) {
+          if (outcome.ok && isCurrent()) {
             const planeElement = planeElementFor(xml);
             if (planeElement) {
               xml = injectDiIntoXml(xml, buildDiXml(outcome.graph, snapshot, planeElement));
@@ -299,8 +339,11 @@ export function BpmnDocumentEditorPage({
           // sem DI e sem layout → import direto; vendor mostra o que conseguir
         }
       }
+      if (!isCurrent()) return;
 
       const imported = await adapter.importXml(xml);
+      if (!isCurrent()) return;
+      console.debug("[BPMN_LOAD] stage=import-xml generation=%d ok=%s", generation, imported.ok);
       setDiagrams(adapter.listDiagrams());
       const m = machineRef.current;
       if (imported.ok) {
@@ -310,7 +353,15 @@ export function BpmnDocumentEditorPage({
         setReadOnlyReason("EDITOR_CAPABILITY_FAILURE");
       }
       setState(m.state);
+      console.debug("[BPMN_LOAD] stage=ready generation=%d state=%s", generation, m.state);
     } catch (err) {
+      if (!isCurrent()) return;
+      console.debug(
+        "[BPMN_LOAD] stage=error generation=%d class=%s message=%s",
+        generation,
+        err instanceof Error ? err.name : typeof err,
+        err instanceof Error ? err.message : String(err),
+      );
       setPageError(
         err instanceof BpmnDocumentError ? err.message : "Falha ao carregar o modelo.",
       );
@@ -320,6 +371,8 @@ export function BpmnDocumentEditorPage({
   useEffect(() => {
     void Promise.resolve().then(loadModel);
     return () => {
+      // invalida completions pendentes (unmount ou reload por dep change)
+      loadGenerationRef.current += 1;
       layoutJobRef.current?.cancel();
       previewAdapterRef.current?.destroy();
       previewAdapterRef.current = null;

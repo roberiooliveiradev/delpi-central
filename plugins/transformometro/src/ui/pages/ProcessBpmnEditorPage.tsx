@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BpmnDocumentEditorPage, type Capabilities } from "@delpi/bpmn-editor";
 import "@delpi/bpmn-editor/styles.css";
@@ -26,10 +26,12 @@ export function ProcessBpmnEditorPage({
 }: Props) {
   const { isSuperadmin, permissions } = usePortalSessionAccess();
   const [title, setTitle] = useState("Documento BPMN");
+  const tokenRef = useRef(getAccessToken);
+  tokenRef.current = getAccessToken;
 
   useEffect(() => {
     let cancelled = false;
-    void fetchProcesso(processoId, getAccessToken)
+    void fetchProcesso(processoId, () => tokenRef.current?.())
       .then((processo) => {
         if (cancelled) return;
         const label = [processo?.codigo_processo, processo?.nome_processo]
@@ -41,11 +43,23 @@ export function ProcessBpmnEditorPage({
     return () => {
       cancelled = true;
     };
-  }, [processoId, getAccessToken]);
+  }, [processoId]);
 
+  // Host estável por processo (G9-LOAD-1 §3): title/token entram como
+  // getters vivos — o host lê o valor mais recente no momento de cada
+  // chamada e NUNCA é recriado por mudança de identidade de callback ou
+  // pela chegada assíncrona do título (que causava um segundo loadModel
+  // e a duplicação de requests document+working-copy).
+  const titleRef = useRef(title);
+  titleRef.current = title;
   const host = useMemo(
-    () => new TmProcessDocumentHost(processoId, title, getAccessToken),
-    [processoId, title, getAccessToken],
+    () =>
+      new TmProcessDocumentHost(
+        processoId,
+        () => titleRef.current,
+        () => tokenRef.current?.(),
+      ),
+    [processoId],
   );
 
   const capabilities: Capabilities = useMemo(() => {

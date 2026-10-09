@@ -1,6 +1,6 @@
 import {
-  TRANSFORMOMETRO_API_BASE,
   buildAuthHeaders,
+  tmRequest,
 } from "./transformometroApiBase";
 import { parseApiEnvelope } from "./transformometroHttp";
 
@@ -63,15 +63,18 @@ async function request<T>(
   getAccessToken: GetToken,
   init?: RequestInit
 ): Promise<T> {
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...buildAuthHeaders(getAccessToken),
-      ...(init?.headers ?? {}),
+  return tmRequest(
+    path,
+    {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...buildAuthHeaders(getAccessToken),
+        ...(init?.headers ?? {}),
+      },
     },
-  });
-  return parseApiEnvelope<T>(response);
+    (response) => parseApiEnvelope<T>(response),
+  );
 }
 
 export function fetchProcessBpmnReference(

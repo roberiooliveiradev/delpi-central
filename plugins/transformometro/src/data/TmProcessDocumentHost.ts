@@ -32,12 +32,23 @@ type GetToken = (() => string | undefined) | undefined;
  */
 export class TmProcessDocumentHost implements BpmnDocumentHost {
   private readonly processoId: string;
-  private readonly title: string;
+  private readonly getTitle: () => string;
   private readonly getAccessToken: GetToken;
 
-  constructor(processoId: string, title: string, getAccessToken?: GetToken) {
+  /**
+   * `title` e `getAccessToken` são resolvidos no momento do uso — nunca
+   * congelados na construção (G9-LOAD-1 §3). O consumidor mantém identidade
+   * de host estável por processo passando getters vivos; assim uma nova
+   * identidade de callback de token ou a chegada assíncrona do título do
+   * processo NÃO recriam o host nem disparam reload do editor.
+   */
+  constructor(
+    processoId: string,
+    title: string | (() => string),
+    getAccessToken?: GetToken,
+  ) {
     this.processoId = processoId;
-    this.title = title;
+    this.getTitle = typeof title === "function" ? title : () => title;
     this.getAccessToken = getAccessToken;
   }
 
@@ -55,7 +66,7 @@ export class TmProcessDocumentHost implements BpmnDocumentHost {
     );
     return {
       id: payload.document.document_id,
-      title: this.title,
+      title: this.getTitle(),
       version: payload.version,
       archived_at: null,
       latest_revision_number:

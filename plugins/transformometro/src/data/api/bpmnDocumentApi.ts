@@ -1,8 +1,9 @@
 import { BpmnDocumentError } from "@delpi/bpmn-editor";
 
 import {
-  TRANSFORMOMETRO_API_BASE,
+  TmRequestTimeoutError,
   buildAuthHeaders,
+  tmRequest,
 } from "./transformometroApiBase";
 
 type GetToken = (() => string | undefined) | undefined;
@@ -70,38 +71,59 @@ function toDocumentError(
   }, fallback);
 }
 
+function toTimeoutError(): BpmnDocumentError {
+  return new BpmnDocumentError(
+    408,
+    {
+      success: false,
+      error: {
+        code: "REQUEST_TIMEOUT",
+        message: "A leitura do documento BPMN excedeu o tempo limite.",
+      },
+    },
+    "A leitura do documento BPMN excedeu o tempo limite.",
+  );
+}
+
 async function docRequest<T>(
   path: string,
   getAccessToken: GetToken,
   init?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(
-    `${TRANSFORMOMETRO_API_BASE}${path}`,
-    {
-      ...init,
-      headers: {
-        ...buildAuthHeaders(getAccessToken),
-        ...(init?.headers ?? {}),
+  try {
+    return await tmRequest(
+      path,
+      {
+        ...init,
+        headers: {
+          ...buildAuthHeaders(getAccessToken),
+          ...(init?.headers ?? {}),
+        },
       },
-    },
-  );
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    const text = await response.text();
-    if (!response.ok) {
-      throw toDocumentError(response.status, null, `HTTP ${response.status}`);
-    }
-    return text as T;
-  }
-  const body = (await response.json()) as EnvelopeFail & { data?: T };
-  if (!response.ok || body.success === false) {
-    throw toDocumentError(
-      response.status,
-      body,
-      `HTTP ${response.status}`,
+      async (response) => {
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          const text = await response.text();
+          if (!response.ok) {
+            throw toDocumentError(response.status, null, `HTTP ${response.status}`);
+          }
+          return text as T;
+        }
+        const body = (await response.json()) as EnvelopeFail & { data?: T };
+        if (!response.ok || body.success === false) {
+          throw toDocumentError(
+            response.status,
+            body,
+            `HTTP ${response.status}`,
+          );
+        }
+        return body.data as T;
+      },
     );
+  } catch (err) {
+    if (err instanceof TmRequestTimeoutError) throw toTimeoutError();
+    throw err;
   }
-  return body.data as T;
 }
 
 const docBase = (processoId: string) =>

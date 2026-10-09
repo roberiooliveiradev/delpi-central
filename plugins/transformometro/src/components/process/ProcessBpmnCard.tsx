@@ -60,22 +60,31 @@ export function ProcessBpmnCard({
   const [localError, setLocalError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Callbacks/token vivos por ref (G9-LOAD-1 §3): identidade nova por
+  // render do parent não pode re-disparar o fetch do card a cada render.
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+  const onDocumentChangeRef = useRef(onDocumentChange);
+  onDocumentChangeRef.current = onDocumentChange;
+  const tokenRef = useRef(getAccessToken);
+  tokenRef.current = getAccessToken;
+
   useEffect(() => {
     let cancelled = false;
     void Promise.resolve().then(async () => {
       try {
         const [docPayload, refPayload, composedPayload] = await Promise.all([
-          fetchProcessBpmnDocument(processoId, getAccessToken),
-          fetchProcessBpmnReference(processoId, getAccessToken).catch(
+          fetchProcessBpmnDocument(processoId, () => tokenRef.current?.()),
+          fetchProcessBpmnReference(processoId, () => tokenRef.current?.()).catch(
             () => null,
           ),
-          fetchProcessoDiagramaComposed(processoId, getAccessToken).catch(
+          fetchProcessoDiagramaComposed(processoId, () => tokenRef.current?.()).catch(
             () => null,
           ),
         ]);
         if (cancelled) return;
         setDocument(docPayload?.document ?? null);
-        onDocumentChange?.(docPayload?.document ?? null);
+        onDocumentChangeRef.current?.(docPayload?.document ?? null);
         setHasExternalRef(refPayload?.reference != null);
         setRefLoaded(true);
         setHasLegacy(
@@ -88,7 +97,7 @@ export function ProcessBpmnCard({
           "Falha ao carregar o BPMN do processo.",
         );
         setLocalError(message);
-        onError?.(message);
+        onErrorRef.current?.(message);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -96,7 +105,7 @@ export function ProcessBpmnCard({
     return () => {
       cancelled = true;
     };
-  }, [processoId, getAccessToken, onError, onDocumentChange]);
+  }, [processoId]);
 
   async function handleCreate(xml: string | null) {
     setBusy(true);

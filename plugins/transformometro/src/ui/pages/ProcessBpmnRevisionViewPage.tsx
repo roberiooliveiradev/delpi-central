@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import { BpmnRevisionViewPage } from "@delpi/bpmn-editor";
 import "@delpi/bpmn-editor/styles.css";
@@ -23,9 +23,18 @@ export function ProcessBpmnRevisionViewPage({
   getAccessToken,
   onNavigate,
 }: Props) {
+  // Host estável por processo (G9-LOAD-1 §3): token via getter vivo —
+  // identidade de callback nunca recria o host.
+  const tokenRef = useRef(getAccessToken);
+  tokenRef.current = getAccessToken;
   const host = useMemo(
-    () => new TmProcessDocumentHost(processoId, "Documento BPMN", getAccessToken),
-    [processoId, getAccessToken],
+    () =>
+      new TmProcessDocumentHost(
+        processoId,
+        "Documento BPMN",
+        () => tokenRef.current?.(),
+      ),
+    [processoId],
   );
 
   return (

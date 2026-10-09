@@ -1,4 +1,4 @@
-import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "./transformometroApiBase";
+import { buildAuthHeaders, tmRequest } from "./transformometroApiBase";
 import { parseApiEnvelope } from "./transformometroHttp";
 import type {
   FlowchartEscopo,
@@ -46,15 +46,18 @@ async function request<T>(
   getAccessToken?: () => string | undefined,
   init?: RequestInit
 ): Promise<T> {
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...buildAuthHeaders(getAccessToken),
-      ...(init?.headers ?? {}),
+  return tmRequest(
+    path,
+    {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...buildAuthHeaders(getAccessToken),
+        ...(init?.headers ?? {}),
+      },
     },
-  });
-  return parseEnvelope<T>(response);
+    (response) => parseEnvelope<T>(response),
+  );
 }
 
 export async function fetchProcessoDiagrama(

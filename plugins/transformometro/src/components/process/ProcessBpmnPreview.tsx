@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BpmnReadonlyViewer } from "@delpi/bpmn-editor";
 import type { BpmnReadonlyViewerStatus } from "@delpi/bpmn-editor";
 import "@delpi/bpmn-editor/styles.css";
@@ -43,22 +43,32 @@ export function ProcessBpmnPreview({
   const [fetch, setFetch] = useState<FetchState>({ kind: "loading" });
   const [status, setStatus] = useState<BpmnReadonlyViewerStatus>("loading");
   const [lightbox, setLightbox] = useState<"wide" | "page" | null>(null);
+  // retry: bump de reloadKey re-executa o fetch (G9-LOAD-1 §10)
+  const [reloadKey, setReloadKey] = useState(0);
+  // token vivo por ref — identidade nova não re-dispara o fetch (G9-LOAD-1 §3)
+  const tokenRef = useRef(getAccessToken);
+  tokenRef.current = getAccessToken;
 
   useEffect(() => {
     let cancelled = false;
     setFetch({ kind: "loading" });
     setStatus("loading");
-    void fetchProcessBpmnWorkingCopy(processoId, getAccessToken)
+    console.debug("[BPMN_LOAD] stage=working-copy surface=preview");
+    void fetchProcessBpmnWorkingCopy(processoId, () => tokenRef.current?.())
       .then((wc) => {
         if (!cancelled) setFetch({ kind: "xml", xml: wc.xml });
       })
-      .catch(() => {
+      .catch((err) => {
+        console.debug("[BPMN_LOAD] stage=error surface=preview", {
+          errorClass: err instanceof Error ? err.name : typeof err,
+          errorMessage: err instanceof Error ? err.message : String(err),
+        });
         if (!cancelled) setFetch({ kind: "error" });
       });
     return () => {
       cancelled = true;
     };
-  }, [processoId, document.working_copy_sha256, getAccessToken]);
+  }, [processoId, document.working_copy_sha256, reloadKey]);
 
   const xml = fetch.kind === "xml" ? fetch.xml : null;
   const viewable = xml != null && status !== "error" && status !== "empty";
@@ -73,8 +83,15 @@ export function ProcessBpmnPreview({
     if (!xml || status === "error") {
       return (
         <p className="ds-hint">
-          Não foi possível renderizar a prévia — abra o editor para ver o
-          diagrama.
+          Não foi possível renderizar a prévia —{" "}
+          <button
+            type="button"
+            className={DS_GHOST_BTN}
+            onClick={() => setReloadKey((k) => k + 1)}
+          >
+            Tentar novamente
+          </button>{" "}
+          ou abra o editor para ver o diagrama.
         </p>
       );
     }
@@ -113,6 +130,7 @@ export function ProcessBpmnPreview({
       >
         {xml ? (
           <BpmnReadonlyViewer
+            key={reloadKey}
             xml={xml}
             controls
             fitOnLoad
