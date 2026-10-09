@@ -33,6 +33,17 @@ Selecionáveis dentre opções autorizadas.
 
 Superfície canônica: **Minha DELPI**.
 
+Rebaseline de plataforma em 09/10/2026:
+
+```text
+CORE_NOTIFICATION_CAPABILITY = PROVEN
+```
+
+O Core atual expõe integração S2S `POST /integrations/notifications`, protegida por service token e rate limit, com recipients, `sourceApp`, action target e filtros por effective permissions.
+
+Isso fecha a existência da capability de notificação. Ainda é necessário, por evento do produto, definir adapter/payload/template/category/deep-link e recipient resolution.
+
+
 O Portal gera o evento/notificação de negócio.
 
 O e-mail reutiliza a configuração existente da plataforma.
@@ -63,6 +74,11 @@ A notificação de reversão usa os mesmos destinatários efetivos da rejeição
 Não apagar a notificação anterior.
 
 ## Falha de entrega
+
+```text
+NOTIFICATION_DISPATCHED != PACKAGE_SENT
+NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE
+```
 
 Falha de e-mail/notificação:
 - não altera estado de negócio;
