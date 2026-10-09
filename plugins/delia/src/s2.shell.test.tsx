@@ -108,6 +108,41 @@ describe("S2-A reception surface", () => {
   });
 });
 
+// --- S3 — chat-first identity -----------------------------------------
+
+describe("S3 chat-first visual identity", () => {
+  it("reception shows the DÉLIA glyph — never the DELPI wordmark", () => {
+    const { container } = render(<App />);
+    const mark = container.querySelector(".delia-reception__mark");
+    expect(mark).toBeTruthy();
+    // Lucide Sparkles glyph — an icon, not the DELPI logo image.
+    expect(mark!.querySelector("svg")).toBeTruthy();
+    expect(mark!.querySelector("[role='img']")).toBeNull();
+    expect(mark!.textContent).not.toContain("DELPI");
+  });
+
+  it("each timeline turn carries its role avatar", async () => {
+    vi.stubGlobal("fetch", mockFetchSequence([successPayload(1)]));
+    const { container } = render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("pergunta");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy(),
+    );
+
+    const avatars = container.querySelectorAll(".delia-turn__avatar");
+    expect(avatars).toHaveLength(2);
+    // User avatar first (own message), DÉLIA avatar second.
+    expect(
+      avatars[0].closest(".delia-turn")!.className,
+    ).toContain("delia-turn--user");
+    expect(
+      avatars[1].closest(".delia-turn")!.className,
+    ).toContain("delia-turn--delia");
+    expect(avatars[0].getAttribute("aria-hidden")).toBe("true");
+  });
+});
+
 // --- S2-B — Conversation timeline ------------------------------------
 
 describe("S2-B conversation timeline", () => {

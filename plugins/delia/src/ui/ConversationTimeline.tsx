@@ -10,6 +10,7 @@ import type {
   DeliaMessageKind,
   DeliaPresentation,
 } from "../api/presentation";
+import { Sparkles, User } from "lucide-react";
 import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 
 import { DeliaStatusBadge } from "./deliaUi";
@@ -103,6 +104,18 @@ export function ConversationTimeline({
             key={turn.id}
             className={`delia-turn delia-turn--${turn.role}`}
           >
+            <span
+              className="delia-turn__avatar"
+              aria-hidden="true"
+              title={turn.role === "user" ? "Você" : "DÉLIA"}
+            >
+              {turn.role === "user" ? (
+                <User size={14} />
+              ) : (
+                <Sparkles size={14} />
+              )}
+            </span>
+            <div className="delia-turn__bubble">
             <span className="delia-turn__label">
               {turn.role === "user" ? "Você" : "DÉLIA"}
             </span>
@@ -172,6 +185,7 @@ export function ConversationTimeline({
                 </button>
               </div>
             ) : null}
+            </div>
           </li>
         );
       })}

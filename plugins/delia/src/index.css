@@ -82,13 +82,10 @@
   flex: 1;
   min-height: 0;
   gap: 0;
-  background: var(--delia-surface);
-  border: 1px solid var(--delia-border);
-  border-radius: 12px;
+  background: transparent;
   width: 100%;
   max-width: 760px;
   margin-inline: auto;
-  overflow: hidden;
 }
 
 .dashboard-delia .delia-interaction__body {
@@ -97,12 +94,12 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   padding: var(--delia-card-padding);
   scroll-behavior: smooth;
 }
 
-/* ---------- S2-A — reception */
+/* ---------- S2-A + S3 — reception (chat-first, light) */
 
 .dashboard-delia .delia-reception {
   margin: auto;
@@ -112,17 +109,25 @@
   text-align: center;
   gap: 10px;
   padding: clamp(16px, 4vw, 32px);
-  max-width: 480px;
+  max-width: 460px;
 }
 
+/* DÉLIA identity glyph — accent circle, never the DELPI wordmark. */
 .dashboard-delia .delia-reception__mark {
-  font-size: 0;
-  color: var(--delia-accent);
-}
-
-.dashboard-delia .delia-reception__mark svg {
-  width: 56px;
-  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--delia-accent),
+    color-mix(in srgb, var(--delia-accent) 62%, var(--secundary, #003866))
+  );
+  box-shadow: 0 4px 14px
+    color-mix(in srgb, var(--delia-accent) 32%, transparent);
 }
 
 .dashboard-delia .delia-reception__title {
@@ -150,19 +155,16 @@
 .dashboard-delia .delia-timeline {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* S3 — chat-first message row: avatar + bubble, no heavy card. */
 .dashboard-delia .delia-turn {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border: 1px solid var(--delia-border);
-  border-radius: 12px;
-  padding: 10px 14px;
+  gap: 10px;
   max-width: 88%;
   overflow-wrap: anywhere;
   animation: delia-turn-in 220ms ease-out;
@@ -179,18 +181,66 @@
   }
 }
 
-/* User turns right, DÉLIA turns left (WF-02). */
+.dashboard-delia .delia-turn__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+/* DÉLIA avatar — accent circle glyph (same identity as reception). */
+.dashboard-delia .delia-turn--delia .delia-turn__avatar {
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    var(--delia-accent),
+    color-mix(in srgb, var(--delia-accent) 62%, var(--secundary, #003866))
+  );
+}
+
+/* User avatar — neutral muted circle. */
+.dashboard-delia .delia-turn--user .delia-turn__avatar {
+  color: var(--delia-text-muted);
+  background: var(--delia-surface-2);
+  border: 1px solid var(--delia-border);
+}
+
+.dashboard-delia .delia-turn__bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* User turns right + soft bubble, DÉLIA turns left + open text (WF-02). */
 .dashboard-delia .delia-turn--user {
   align-self: flex-end;
-  border-left-width: 1px;
-  border-right: 3px solid var(--delia-text-muted);
-  background: color-mix(in srgb, var(--delia-text-muted) 7%, var(--delia-surface));
+  flex-direction: row-reverse;
+}
+
+.dashboard-delia .delia-turn--user .delia-turn__bubble {
+  align-items: flex-end;
+  background: var(--delia-surface-2);
+  border: 1px solid var(--delia-border);
+  border-radius: 14px 14px 4px 14px;
+  padding: 8px 12px;
+}
+
+.dashboard-delia .delia-turn--user .delia-turn__label {
+  align-self: flex-end;
 }
 
 .dashboard-delia .delia-turn--delia {
   align-self: flex-start;
-  border-left: 3px solid var(--delia-accent);
-  background: var(--delia-surface);
+}
+
+.dashboard-delia .delia-turn--delia .delia-turn__bubble {
+  padding: 2px 0;
 }
 
 .dashboard-delia .delia-turn__label {
@@ -245,14 +295,24 @@
 
 /* ---------- S2-C — composer */
 
+/* S3 — floating rounded composer anchored at the conversation bottom. */
 .dashboard-delia .delia-composer {
   display: flex;
   align-items: flex-end;
   gap: 8px;
   flex-shrink: 0;
-  padding: 10px var(--delia-card-padding);
-  border-top: 1px solid var(--delia-border);
+  margin: 0 var(--delia-card-padding) var(--delia-card-padding);
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--delia-border);
+  border-radius: 16px;
   background: var(--delia-surface);
+  box-shadow: 0 2px 10px color-mix(in srgb, #000 5%, transparent);
+}
+
+.dashboard-delia .delia-composer:focus-within {
+  border-color: var(--delia-focus-ring);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--delia-focus-ring) 14%, transparent);
 }
 
 .dashboard-delia .delia-composer__input {
@@ -260,16 +320,24 @@
   min-width: 0;
   min-height: 40px;
   max-height: 160px;
-  padding: 10px 12px;
+  padding: 9px 2px;
   resize: none;
   overflow-y: auto;
   font: inherit;
   line-height: 1.4;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dashboard-delia .delia-composer__input:focus {
+  outline: none;
 }
 
 .dashboard-delia .delia-composer__submit {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   min-height: 40px;
   font: inherit;
@@ -277,7 +345,7 @@
   color: #ffffff;
   background: var(--delia-accent);
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 8px 16px;
   cursor: pointer;
   flex-shrink: 0;
