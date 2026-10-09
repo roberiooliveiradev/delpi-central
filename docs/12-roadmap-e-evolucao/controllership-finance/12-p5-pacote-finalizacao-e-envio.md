@@ -1,6 +1,6 @@
 # 12 — P5 — Pacote, Finalização e Envio
 
-**TARGET / PAGE_DOCUMENTATION_GATE_V2 PARTIAL / PACKAGE_FINALIZATION_READY / SEND_DECISION_REQUIRED_E04_T04**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PARTIAL / PORTAL_SUBMISSION_MODEL_PASS / MONTHLY_COMPLETION_DECISION_REQUIRED**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -8,14 +8,16 @@ IMPLEMENTATION_AUTHORIZED = NO
 
 VISUAL_SPEC_DEFINED          = PASS
 PACKAGE_CONTRACT_DEFINED     = PASS
-SEND_CONTRACT_DEFINED        = DECISION_REQUIRED_E04_T04
+SUBMISSION_CONTRACT_DEFINED  = PASS
+REVIEW_CONTRACT_DEFINED      = PASS
+MONTHLY_COMPLETION_RULE      = DECISION_REQUIRED
 AUTHZ_DEFINED                = PASS
 PLUGIN_UI_REUSE_DEFINED      = PASS
 STATES_DEFINED               = PASS
 TEST_MATRIX_DEFINED          = PASS
 ```
 
-> Este documento fecha P5 no nível de package/finalization, experiência, AuthZ, plugin-ui, Help e aceite visual. Não autoriza runtime. O inventário E04/T04 foi concluído e o slice de envio real permanece bloqueado por decisão material registrada no documento 36.
+> Este documento fecha P5 no nível de package/finalization/submissão in-portal/revisão, experiência, AuthZ, plugin-ui, Help e aceite visual. Não autoriza runtime. A premissa de delivery externo do documento 36 foi invalidada; o contrato vigente é o documento 37.
 
 ## Objetivo da página
 
@@ -24,7 +26,8 @@ Versionar o pacote do fechamento, permitir finalização controlada, acompanhar 
 ```text
 READY_TO_FINALIZE
 != PACKAGE_FINALIZED
-!= PACKAGE_SENT
+!= PACKAGE_SUBMITTED_FOR_REVIEW
+!= REVIEW_ACCEPTED
 != MONTHLY_CLOSING_COMPLETED
 ```
 
@@ -42,22 +45,22 @@ A página deve responder, em ordem:
 
 ```text
 FINALIZE != SEND
-PACKAGE_FINALIZED != PACKAGE_SENT
-PACKAGE_SENT = IMMUTABLE
+PACKAGE_FINALIZED != PACKAGE_SUBMITTED_FOR_REVIEW
+PACKAGE_SUBMITTED_FOR_REVIEW = IMMUTABLE
 RECIPIENT_PACKAGE_A != RECIPIENT_PACKAGE_B
-SEND_CAPABILITY_UNKNOWN != SEND_AVAILABLE
+SUBMISSION != NOTIFICATION
 NO_OPEN_CLARIFICATION is required for monthly completion
 UI_VISIBILITY != AUTHORIZATION
 ```
 
 - Finalizar cria snapshot/versão; não envia.
 - Um destinatário avança independentemente dos demais.
-- Pacote enviado é histórico imutável.
-- Correção pós-envio cria complemento/nova versão ligada à anterior.
+- Versão submetida para análise é histórica e não é alterada in-place.
+- Correção após submissão cria complemento/nova versão ligada à anterior.
 - Não existe botão de force completion.
-- Read/ack do destinatário não bloqueia a V1.
-- Canal de envio não pode ser assumido.
-- Se envio real não estiver implementado, a UI não apresenta ação/canal fictício.
+- A conclusão mensal depende da decisão pendente sobre o outcome da revisão; leitura de notificação/e-mail nunca é critério de negócio.
+- O package permanece na Minha DELPI; e-mail é apenas notification channel.
+- A UI apresenta `Enviar para análise` somente quando o package está finalizado e os reviewers/resource scopes aplicáveis estão resolvidos.
 
 
 ## Responsabilidade, owners e non-goals
@@ -70,16 +73,17 @@ UI_VISIBILITY != AUTHORIZATION
 | histórico/versionamento do pacote | P5 |
 | effective permissions | Core |
 | user-facing notifications | Core Notifications / Minha DELPI capability |
-| entrega real do pacote | **DECISION_REQUIRED — opções/impactos no documento 36** |
+| submissão para análise / reviewer state | P5 / `controllership-finance-api` |
+| notifications in-app/e-mail | Core Notifications / Minha DELPI |
 | chrome visual | `@delpi/plugin-ui` |
 
 Não pertence a P5:
 - sacramentar estoque;
 - reabrir P3 após `STOCK_CLOSED`;
-- transformar notification inbox em proof of delivery;
-- inventar e-mail/Teams/pasta/download como canal;
-- criar permission por destinatário/envio;
-- alterar pacote enviado in-place;
+- transformar e-mail/notificação em estado de negócio;
+- transportar o package como attachment de e-mail na V1;
+- criar permission por destinatário/reviewer;
+- alterar versão submetida in-place;
 - force completion.
 
 Decisão E02 aplicada:
@@ -111,35 +115,39 @@ FINALIZED_V1
 
 A versão anterior permanece histórica.
 
-### Envio
-
-Somente após a decisão E04/T04 escolher owner/outcome e o futuro runtime provar a capability correspondente:
+### Envio para análise — submissão in-portal
 
 ```text
 PACKAGE_FINALIZED
-→ SEND THROUGH PROVEN CORPORATE CAPABILITY
-→ PACKAGE_SENT
+→ SUBMIT_FOR_REVIEW
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ REVIEW_PENDING
 ```
 
-O nome do canal, payload, proof of delivery e retry pertencem ao inventário técnico.
+A ação "Enviar para análise":
+- não envia attachment por e-mail;
+- disponibiliza a versão finalizada aos reviewers autorizados dentro da Minha DELPI;
+- registra actor/timestamp/version/reviewer scope;
+- emite evento de notification;
+- mantém a PackageVersion read-only.
 
 ### Esclarecimentos
 
 Por destinatário:
 
 ```text
-PACKAGE_SENT
+PACKAGE_SUBMITTED_FOR_REVIEW
 → WAITING_FOR_CLARIFICATION
 → CLARIFICATION_RESOLVED
 ```
 
-### Correção pós-envio
+### Correção após submissão
 
 ```text
-PACKAGE_SENT_V1
+PACKAGE_SUBMITTED_FOR_REVIEW_V1
 → COMPLEMENT_OR_NEW_VERSION
 → LINK_TO_V1
-→ NEW_DELIVERY
+→ NEW_SUBMISSION_FOR_REVIEW
 ```
 
 Motivo obrigatório; V1 permanece imutável.
@@ -166,9 +174,9 @@ PagePath
    → resumo/status
    → itens/versão
    → finalização/reabertura quando autorizadas
-   → delivery status somente quando capability existir
+   → review status / reviewer assignment
    → esclarecimentos
-   → histórico de versões/entregas
+   → histórico de versões/submissões/reviews
 → Help contextual
 ```
 
@@ -201,26 +209,21 @@ PACKAGE_FINALIZED
 → finalizar nova versão
 ```
 
-## Jornada de envio — somente quando liberada
+## Jornada de envio para análise
 
 ```text
 PACKAGE_FINALIZED
-→ capability corporativa comprovada
-→ usuário autorizado aciona envio
-→ backend revalida AuthZ/business rule
-→ delivery result/proof
-→ PACKAGE_SENT
+→ usuário autorizado escolhe "Enviar para análise"
+→ backend revalida ACCESS + resource_scope + business_rule
+→ resolve reviewers Core identities/resource scope
+→ grava submission audit
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ REVIEW_PENDING
+→ emite Core Notification
+→ reviewer acessa Minha DELPI pelo deep link autorizado
 ```
 
-Enquanto a decisão E04/T04 não for aprovada:
-
-```text
-SEND_ACTION = NOT_IMPLEMENTED
-SEND_CHANNEL = NOT_ASSUMED
-PACKAGE_FINALIZATION = STILL_VALID
-```
-
-A ausência de capability de envio não deve bloquear o fechamento documental da página de package/finalization.
+A falha do e-mail de notification não reverte a submission. O package não é anexado ao e-mail.
 
 ## Wireframe — desktop
 
@@ -241,7 +244,7 @@ A ausência de capability de envio não deve bloquear o fechamento documental da
 │ versão • estado               │                                              │
 │                               │ Ações: finalizar/reabrir quando autorizadas   │
 │ ...                           │                                              │
-│                               │ Delivery status quando capability existir     │
+│                               │ Review status / reviewers     │
 │                               │                                              │
 │                               │ Esclarecimentos                               │
 │                               │                                              │
@@ -266,7 +269,7 @@ PagePath
    → status/versão
    → itens
    → ações autorizadas
-   → delivery status se implementado
+   → review status / reviewers
    → esclarecimentos
    → histórico
 ```
@@ -277,7 +280,7 @@ No mobile:
 - destinatários aparecem como cards;
 - retorno preserva competência e seleção/filtros;
 - finalizar/reabrir fica próximo ao contexto correspondente;
-- envio não aparece enquanto não houver capability runtime comprovada;
+- `Enviar para análise` aparece somente após FINALIZED e reviewers resolvidos;
 - histórico não perde legibilidade por largura.
 
 ## Recipient package
@@ -289,14 +292,14 @@ Cada pacote deve expor, quando disponível:
 - versão corrente;
 - blockers;
 - `finalizedAt` / ator quando aplicável;
-- `sentAt` / delivery state somente quando capability real existir;
+- `submittedAt` / review state / submittedAt quando aplicável;
 - esclarecimentos abertos;
 - relação com versões anteriores/complementos.
 
 Não derivar:
 - envio concluído a partir de finalização;
 - conclusão mensal a partir de um único destinatário;
-- delivery success por HTTP 200 isolado;
+- notification/e-mail success tratado como business completion;
 - ack obrigatório se contract não exigir.
 
 ## Finalização
@@ -330,56 +333,46 @@ Quando autorizada:
 
 A UI não edita silenciosamente uma versão finalizada.
 
-## Envio real
+## Submissão para análise e notifications
 
-### Estado atual
-
-```text
-Q22 = DECISION_REQUIRED
-E04 = INVENTORY_COMPLETE_FOR_DECISION
-T04 = INVENTORY_COMPLETE_FOR_DECISION
-CORE_NOTIFICATION_CAPABILITY = PROVEN
-GRAPH_MAIL_WITH_ATTACHMENTS = PROVEN
-MESSAGE_TRACE = PROVEN_IN_EXISTING_CONTEXTS
-GENERIC_PACKAGE_DELIVERY_OWNER = NOT_PROVEN
-```
-
-Rebaseline de 09/10/2026 no HEAD da plataforma:
-
-- Core possui `POST /integrations/notifications`;
-- endpoint é S2S protegido por service token e rate limit;
-- suporta recipients, categorias, action target, sourceApp e filtros por effective permissions;
-- Core mantém inbox/histórico/preferências do usuário.
-
-Isso prova a **capability de notificação da Minha DELPI**, mas não prova:
-- transporte do documento/pacote;
-- canal formal de entrega;
-- proof of delivery;
-- destinatário externo/corporativo do package;
-- retry idempotente de entrega documental;
-- aceite/comprovante;
-- tracking necessário a `PACKAGE_SENT`.
-
-Invariante:
+Contrato vigente:
 
 ```text
-NOTIFICATION_DISPATCHED
-!= PACKAGE_SENT
+PACKAGE_TRANSPORT_BY_EMAIL = NO
+PACKAGE_STAYS_IN_MINHA_DELPI = YES
+EXTERNAL_REVIEWER_LOGIN_REQUIRED = YES
+EMAIL_AS_NOTIFICATION_ONLY = YES
 ```
 
-Antes de capability comprovada:
+Reviewers externos da Controladoria são usuários autenticados da Minha DELPI.
 
-- não renderizar botão “Enviar” operacional;
-- não escolher e-mail/Teams/pasta/download manual como fallback;
-- não inventar proof of delivery;
-- não inventar retry;
-- Help não ensina ação inexistente.
+AuthZ mínima:
 
-Quando a capability existir, o slice de envio deve ser gated separadamente por contract físico + AuthZ + testes.
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND reviewer_assignment/resource_scope
+AND package_business_rule
+```
+
+Após submit:
+- package fica acessível somente aos reviewers autorizados;
+- P5 emite notification event;
+- Core Notifications registra in-app notification;
+- a plataforma pode também enviar e-mail conforme configuração/preferência;
+- o e-mail contém aviso/link para a Minha DELPI, não o package.
+
+```text
+NOTIFICATION_FAILURE != PACKAGE_SUBMISSION_FAILURE
+EMAIL_SENT != PACKAGE_SUBMITTED_FOR_REVIEW
+```
+
+Authority:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## Esclarecimentos
 
-Após `PACKAGE_SENT`, um recipient package pode entrar em `WAITING_FOR_CLARIFICATION`.
+Após `PACKAGE_SUBMITTED_FOR_REVIEW`, o reviewer pode iniciar análise e, quando necessário, abrir esclarecimento.
 
 A UI deve exibir:
 
@@ -401,7 +394,10 @@ Eventos mínimos:
 - `PACKAGE_VERSION_CREATED`
 - `PACKAGE_FINALIZED`
 - `PACKAGE_REOPENED`
-- `PACKAGE_SENT`
+- `PACKAGE_SUBMITTED_FOR_REVIEW`
+- `PACKAGE_REVIEW_STARTED`
+- `PACKAGE_REVIEW_CHANGES_REQUESTED`
+- `PACKAGE_REVIEW_ACCEPTED`
 - `CLARIFICATION_OPENED`
 - `CLARIFICATION_RESOLVED`
 - `PACKAGE_COMPLEMENT_CREATED`
@@ -418,8 +414,8 @@ plugins/controllership-finance
 → controllership-finance-api
    → P2/P3/P4 read contracts
    → Core effective permissions
-   → Core Notifications para comunicação user-facing quando aplicável
-   → PACKAGE DELIVERY OWNER/OUTCOME = DECISION_REQUIRED E04/T04
+   → Core Notifications para comunicação user-facing
+   → Core identities/effective permissions para reviewers
 ```
 
 Operações semânticas já fechadas:
@@ -436,7 +432,8 @@ Operações semânticas já fechadas:
 | getPackageHistory | DEFINED |
 | deriveMonthlyClosingCompletion | DEFINED |
 | notifyUserAboutPackageEvent | DEFINED at capability level via Core Notifications |
-| sendPackage | **DECISION_REQUIRED — owner/orchestration + PACKAGE_SENT outcome; doc 36** |
+| submitPackageForReview | DEFINED — in-portal submission; doc 37 |
+| getReviewerPackage / startReview / requestChanges / acceptReview | DEFINED at semantic level; exact DTOs/routes TO_INVENTORY |
 
 ### Finalization contract
 
@@ -445,26 +442,26 @@ Operações semânticas já fechadas:
 - cria snapshot/version imutável;
 - registra actor/timestamp;
 - não chama delivery;
-- não produz PACKAGE_SENT.
+- não produz PACKAGE_SUBMITTED_FOR_REVIEW.
 
-### Send contract — boundary conhecida, decisão material pendente
-
-Já é canônico:
+### Submission/review contract
 
 ```text
 PACKAGE_FINALIZED
-→ proven delivery capability
-→ delivery outcome/proof
-→ PACKAGE_SENT
+→ submitPackageForReview
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ REVIEW_PENDING
 ```
 
-O inventário provou Graph e-mail/attachments e Message Trace, mas ainda não é canônico:
-- quem owns a orchestration;
-- se o canal aprovado será Graph e-mail;
-- se `PACKAGE_SENT` significa Graph accepted ou Exchange delivered;
-- como correlation/idempotency serão materializadas.
+Regras:
+- package permanece armazenado/consultado na Minha DELPI;
+- reviewer é Core identity com app access;
+- reviewer assignment/resource scope limita o acesso;
+- submit não depende de transport externo;
+- Core notification/e-mail são side effects de comunicação;
+- falha de notification não altera o business state.
 
-As opções e recomendação estão no documento 36. Portanto nenhum endpoint físico `/send` deve ser congelado antes da decisão.
+A semântica de monthly completion permanece pendente no documento 37.
 
 ### AuthZ
 
@@ -477,7 +474,7 @@ AND resource_scope / ownership
 AND business_rule
 ```
 
-A futura operação de envio também deverá revalidar actor + package state + recipient + capability de delivery no backend.
+A operação de submit/review revalida actor + package state + reviewer assignment/resource scope + business rule no backend.
 
 ## Reuso obrigatório de `@delpi/plugin-ui`
 
@@ -532,7 +529,7 @@ Uso esperado:
 
 **DO NOT RECREATE:** master-detail, recipient table/cards, state chrome, lifecycle chrome, detail fields, timeline, modal/confirm, notices ou HelpTooltip.
 
-Nenhum componente de “delivery/send” específico deve ser criado antes da decisão E04/T04 fechar owner/outcome e o futuro contract provar a necessidade real. Se o capability precisar de chrome reutilizável inexistente, avaliar contribuição ao `plugin-ui` após o contract físico.
+Não criar componente de delivery externo. A UX deve reutilizar primitives existentes para submit/review/status/history. Se a implementação provar gap real de reviewer workflow no kit, avaliar contribuição ao `plugin-ui`.
 
 ## Estados de experiência
 
@@ -639,146 +636,130 @@ Mesma árvore conceitual.
 
 - tokens do Portal/`plugin-ui`;
 - status não depende apenas de cor;
-- PACKAGE_FINALIZED e PACKAGE_SENT precisam de labels inequívocos;
+- `PACKAGE_FINALIZED`, `PACKAGE_SUBMITTED_FOR_REVIEW` e review states têm labels inequívocos;
 - nenhum CSS de componente do kit no MFE.
 
 ## Acessibilidade
 
 Obrigatório:
-
 - headings semânticos;
 - status textual;
 - lista/detalhe navegáveis por teclado;
 - foco visível;
 - modal com focus trap;
-- confirmação com texto inequívoco;
+- confirmação "Enviar para análise" com texto inequívoco;
 - mudança de recipient package preserva lógica de foco;
-- eventos de histórico legíveis por leitor de tela;
-- ação bloqueada por ausência de capability não é exposta como botão enganoso.
+- review actions e histórico legíveis por leitor de tela;
+- notification não substitui estado visível na página.
 
 ## Help
 
 Help contextual deve explicar:
-
-- finalizar != enviar;
+- finalizar != enviar para análise;
+- enviar para análise = disponibilizar dentro da Minha DELPI;
+- reviewer acessa com login e `controllership-finance.access` + resource scope;
+- e-mail é apenas notificação e leva ao Portal;
+- package não vai anexado por e-mail;
 - versionamento;
 - recipient packages independentes;
-- reabertura antes do envio;
-- PACKAGE_SENT imutável;
-- complemento/correção pós-envio;
-- esclarecimentos;
-- regra de conclusão mensal;
-- envio real somente quando capability estiver implementada.
+- review/clarification/correction;
+- regra de conclusão mensal após decisão pendente.
 
-Fonte canônica: [29-ajuda.md](./29-ajuda.md), seção da Central de Fechamento.
-
-Se envio real continuar bloqueado, o manual não instrui canal/botão inexistente.
+Fonte canônica:
+- [29-ajuda.md](./29-ajuda.md);
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## RQ / aceite visual
 
 ### RQ-P5-01 — blockers impedem finalização
-
-Aceite:
 - READY_TO_FINALIZE só aparece quando rules aplicáveis permitem;
-- blocker/source failure permanece visível;
-- botão de finalizar não mascara blocker.
+- blocker/source failure permanece visível.
 
-### RQ-P5-02 — finalizar cria versão, não envia
-
-Aceite:
-- ação rotulada “Finalizar pacote”;
-- sucesso resulta em PACKAGE_FINALIZED;
-- nenhuma delivery confirmation é mostrada como efeito da finalização.
+### RQ-P5-02 — finalizar cria versão
+- "Finalizar pacote";
+- sucesso → `PACKAGE_FINALIZED`;
+- não submete e não notifica reviewers ainda.
 
 ### RQ-P5-03 — reabertura preserva versão
-
-Aceite:
 - motivo obrigatório;
 - versão anterior read-only;
-- working copy/nova versão distinta.
+- nova working/version distinta.
 
-### RQ-P5-04 — pacotes independentes por destinatário
+### RQ-P5-04 — recipient packages independentes
+- ação/status de A não altera B.
 
-Aceite:
-- ação/status de um destinatário não altera sibling;
-- cada package possui versão/estado próprios.
+### RQ-P5-05 — enviar para análise é in-portal
+- exige FINALIZED;
+- sucesso → `PACKAGE_SUBMITTED_FOR_REVIEW`;
+- package permanece na Minha DELPI;
+- não existe attachment delivery por e-mail.
 
-### RQ-P5-05 — envio só com capability comprovada
+### RQ-P5-06 — reviewer authenticated
+- reviewer possui login Minha DELPI;
+- exige `controllership-finance.access`;
+- exige reviewer assignment/resource scope;
+- MANAGE não é necessário.
 
-Aceite:
-- sem E04/T04 fechados não existe ação operacional de envio;
-- nenhum canal é assumido;
-- implementação futura exige contract/integration test.
+### RQ-P5-07 — notification side effect
+- submit gera notification in-app;
+- e-mail pode ser enviado pela capability Core;
+- falha de e-mail não reverte submission;
+- notification contém deep link, não package attachment.
 
-### RQ-P5-06 — PACKAGE_SENT imutável
+### RQ-P5-08 — review history
+- reviewer/action/outcome/version/timestamps auditáveis;
+- versão submetida não é editada in-place.
 
-Aceite:
-- edição direta rejeitada/indisponível;
-- correção navega para complemento/nova versão.
-
-### RQ-P5-07 — correção pós-envio preserva histórico
-
-Aceite:
-- nova entrega referencia a anterior;
-- V1 permanece visível/read-only.
-
-### RQ-P5-08 — conclusão mensal derivada
-
-Aceite:
-- todos recipient packages aplicáveis enviados;
-- nenhum esclarecimento aberto;
-- sem force completion.
-
-### RQ-P5-09 — ack não bloqueia V1
-
-Aceite:
-- ausência de read/ack não impede conclusão quando demais regras passam;
-- UI não inventa requisito de aceite.
+### RQ-P5-09 — clarification/correction
+- reviewer pode solicitar esclarecimento/correção;
+- nova versão/complemento preserva histórico.
 
 ### RQ-P5-10 — Help
+- manual explica finalize vs submit vs notify vs review;
+- nenhuma instrução de attachment delivery por e-mail.
 
-Aceite:
-- manual explica os invariantes;
-- capacidade bloqueada não aparece como ação disponível.
+### RQ-P5-11 — monthly completion
+- **DECISION_REQUIRED**: submission suficiente vs review accepted obrigatório vs regra configurável.
 
 ## Testes futuros mínimos
 
 ### Positive
-- pacote READY_TO_FINALIZE;
-- finalizar e criar versão;
-- reabrir com motivo antes do envio;
-- novo finalize cria V2;
-- siblings por destinatário independentes;
-- esclarecer após envio quando capability estiver implementada;
-- conclusão derivada somente com condições completas;
-- F5 preserva recipient/version context.
+- READY_TO_FINALIZE → finalize;
+- FINALIZED → submit for review;
+- reviewer autorizado vê package;
+- notification in-app;
+- e-mail notification habilitado;
+- deep link autenticado;
+- start review;
+- clarification roundtrip;
+- review outcome auditado.
 
 ### Sibling
-- finalizar Fiscal não finaliza Contábil;
-- enviar um destinatário não envia outro;
-- esclarecimento de um pacote não muda sibling;
-- reabrir um pacote não altera versão de outro.
+- submit recipient A não submete B;
+- reviewer A não vê B;
+- falha de e-mail não altera submission;
+- clarification A não altera sibling;
+- nova versão não apaga review anterior.
 
 ### Negative
 - sem ACCESS;
 - MANAGE sem ACCESS;
-- resource fora do scope;
-- finalizar com blocker;
-- editar versão finalizada sem reabertura;
-- reabrir sem motivo;
-- editar PACKAGE_SENT;
+- reviewer sem assignment/resource scope;
+- submit antes de FINALIZED;
+- reviewer editando PackageVersion;
+- package anexado por e-mail;
+- deep link bypassando AuthZ;
+- notification enviada a usuário sem app access;
 - force completion;
-- source unavailable interpretada como pronta;
-- enviar sem capability E04/T04;
-- canal fictício/fallback manual;
 - open redirect.
 
 ### Experiência
 - loading;
 - refreshing;
+- success;
 - empty;
 - partial;
-- unavailable source;
+- unavailable;
 - validation error;
 - error;
 - 403;
@@ -790,104 +771,76 @@ Aceite:
 
 ## Scripts e artefatos auxiliares PLANNED
 
-Não criar durante a FASE A.
-
 ```text
 validate-p5-package-lifecycle
-- FINALIZE != SEND
-- PACKAGE_SENT immutable
+- FINALIZE != SUBMIT_FOR_REVIEW
+- submitted version immutable
 - recipient siblings independent
-- no force completion
 
-validate-p5-versioning
-- reopen before send creates new working/version
-- post-send correction creates complement/new version
-- history preserved
-
-validate-p5-completion-rule
-- all applicable packages sent
-- no open clarification
-- ack not required in V1
+validate-p5-review-authz
+- ACCESS + reviewer assignment/resource scope
+- no reviewer permission code
+- MANAGE does not bypass ACCESS
 
 validate-p5-notification-boundary
-- Core notification may communicate event
-- notification outcome never marks PACKAGE_SENT
+- submit emits notification event
+- e-mail is notification only
+- notification failure != submission failure
+- no package attachment
 
-validate-p5-delivery-contract
-- BLOCK until E04/T04
-- owner/channel/proof/idempotency/retry required before send slice
+validate-p5-review-lifecycle
+- pending/in-progress/changes-requested/accepted
+- history/version preserved
 
-validate-p5-authz
-- ACCESS + scope/ownership + business rule
-- no permission by recipient/send
+validate-p5-task-projection
+- actionable reviewer work appears self-only
+- owner remains P5
+
+validate-p5-completion-rule
+- BLOCK until D-P5-REVIEW-COMPLETION is decided
 
 validate-p5-help
-- blocked send not published as available capability
+- finalize/submit/notify/review terminology synchronized
 
 validate-p5-plugin-ui
 - master-detail/lifecycle/timeline/modal reused
-- no delivery chrome invented before contract
+- no local clone
 ```
 
-Tecnologia/localização seguem o HEAD da futura implementação.
+Não criar durante a FASE A.
 
-## Decision packet E04/T04
+## E04/T04 — reclassificação
 
-Authority:
-- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+A premissa "delivery externo do package" foi invalidada pelo Product Owner.
 
-Inventário concluído:
-- Graph e-mail + attachments = PROVEN;
-- Graph 202 = accepted, não delivery proof;
-- Message Trace = PROVEN em CIPA/Transformômetro;
-- generic delivery owner = NOT_PROVEN.
+```text
+E04_EXTERNAL_DELIVERY = NOT_REQUIRED_IN_V1
+T04_EXTERNAL_DELIVERY_CAPABILITY = NOT_REQUIRED_IN_V1
+```
 
-Decisão pendente:
-- owner/orchestration;
-- semântica de `PACKAGE_SENT`.
+O documento 36 permanece como inventário histórico superseded.
 
-Recomendação documentada, não aplicada:
-- P5/BFF owns orchestration;
-- Graph + Message Trace adapters;
-- `PACKAGE_SENT` após trace `DELIVERED`.
+Authority TARGET:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
-## Inventários técnicos remanescentes
-
-### Owners/sources de package
-
-`TO_INVENTORY_BEFORE_IMPLEMENTATION`
-
-Provar producer/consumer e source de cada dado material do package.
-
-### E04 — canal real
-
-`DECISION_REQUIRED / INVENTORY_COMPLETE_FOR_DECISION`
-
-Authority:
-- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
-
-### T04 — capability corporativa de envio
-
-`INVENTORY_COMPLETE_FOR_DECISION`
-
-Graph mail/attachments e Message Trace estão provados; generic package-delivery owner não está.
-
-### Contract físico
-
-`TO_INVENTORY_BEFORE_IMPLEMENTATION`
-
-Endpoints, DTOs, version identifiers, recipient ids, delivery result, clarification contract e deep-link params entram no OpenAPI/router futuro.
-
-Se evidence futura provar ausência/incompatibilidade de capability de envio, manter slice bloqueado e classificar conforme stop condition; não contornar com canal ad hoc.
+Inventários físicos futuros:
+- reviewer assignment storage/binding;
+- Core identity lookup/effective access;
+- notification category/template/action target;
+- exact review DTOs/routes;
+- TaskProjection adapter;
+- deep-link params.
 
 ## Gate documental V2
 
 ```text
 OBJECTIVE_BOUNDARY_DEFINED  = PASS
-OWNERS_DEFINED              = PARTIAL / DELIVERY OWNER PENDING
+OWNERS_DEFINED              = PASS
 VISUAL_SPEC_DEFINED         = PASS
 PACKAGE_CONTRACT_DEFINED    = PASS
-SEND_CONTRACT_DEFINED       = DECISION_REQUIRED_E04_T04
+SUBMISSION_CONTRACT_DEFINED = PASS
+REVIEW_CONTRACT_DEFINED     = PASS
+NOTIFICATION_MODEL_DEFINED  = PASS
 AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
 STATES_DEFINED              = PASS
@@ -899,6 +852,7 @@ HELP_SYNC_DEFINED           = PASS
 RQ_AC_DEFINED               = PASS
 TEST_MATRIX_DEFINED         = PASS
 SCRIPTS_ARTIFACTS_PLANNED   = PASS
+MONTHLY_COMPLETION_RULE     = DECISION_REQUIRED
 IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
@@ -906,10 +860,9 @@ Resultado:
 
 ```text
 A12 P5 PACOTE, FINALIZAÇÃO E ENVIO
-= PACKAGE_FINALIZATION_READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
-+ SEND_SLICE_DECISION_REQUIRED_E04_T04
+= PORTAL_SUBMISSION_MODEL_DEFINED
++ REVIEW_MODEL_DEFINED
++ MONTHLY_COMPLETION_DECISION_REQUIRED
 != FULL_PAGE_READY_FOR_IMPLEMENTATION_BRIEF
 != IMPLEMENTED
 ```
-
-A12 continua bloqueando o freeze global até a decisão E04/T04 ser aprovada. O inventário técnico necessário para decidir está concluído no documento 36.
