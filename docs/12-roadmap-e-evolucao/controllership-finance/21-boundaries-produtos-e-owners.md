@@ -17,7 +17,7 @@ Este documento complementa [01-visao-produto-naming-e-escopo.md](./01-visao-prod
 | Portal Suprimentos / owners de Suprimentos | contexto distinto | custos/importações e demais regras próprias; CTL-007 não autoriza duplicação de fonte |
 | Planejamento Orçamentário | contexto distinto | orçamento, aprovações e capacidades próprias; não é fechamento mensal da Controladoria |
 | Lançamento de NF | contexto distinto | fluxo próprio de notas; não é automaticamente parte interna da Central de Fechamento |
-| Minha DELPI — notificações | capability de plataforma | superfície/canal canônico de notificação conforme binding T02 |
+| Minha DELPI — notificações | capability de plataforma | notification in-app + e-mail conforme configuração/preferência; não transporta package P5 |
 | demais contextos | owners próprios | regras de domínio permanecem no contexto que as possui |
 
 ## Produto novo ≠ Portal Financeiro P0
@@ -154,6 +154,20 @@ Para [27-minhas-tarefas.md](./27-minhas-tarefas.md):
 - não persistir lifecycle paralelo apenas para montar worklist;
 - a estratégia física da projection pode ser on-read/materialized/event-driven, mas deve preservar owner/source e partial coverage;
 - a ação V1 navega ao owner; business writes continuam no contexto owner.
+
+### P5 / reviewers externos
+
+Para [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md):
+
+- package/version/finalization/submission/review state permanecem owned por `controllership-finance-api`;
+- package permanece na Minha DELPI;
+- reviewer externo é Core identity com app access;
+- reviewer usa `controllership-finance.access` + resource scope/assignment;
+- não criar permission `.review`;
+- Core Notifications owns notification delivery in-app/e-mail;
+- e-mail é aviso/deep link, não transport do package;
+- TaskProjection pode projetar review acionável, mas P5 permanece owner;
+- reviewer não recebe MANAGE por ser destinatário.
 
 ### Administração / master data
 
