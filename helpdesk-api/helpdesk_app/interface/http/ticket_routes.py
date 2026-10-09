@@ -6,11 +6,31 @@ from fastapi import APIRouter, File, Form, Header, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from helpdesk_app.application.services.message_html_sanitizer import (
+    extract_bff_attachment_refs,
+)
 from helpdesk_app.domain.errors import HelpdeskError, GlpiValidation
 from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename, build_ticket_list_query
 from helpdesk_app.interface.http.actor import require_actor
 
 router = APIRouter(tags=["Helpdesk Tickets"])
+
+
+def _attachment_refs(ticket) -> list[dict[str, int]]:
+    """Deduplicated {document_id} universe: Document_Item attachments ∪
+    inline refs embedded in description/timeline HTML (R4.2)."""
+    refs = {item.document_id for item in ticket.attachments}
+    html_sources = [ticket.description_html] + [
+        entry.content_html for entry in ticket.timeline
+    ]
+    for html in html_sources:
+        for ref_ticket, doc_id in extract_bff_attachment_refs(html):
+            if ref_ticket == ticket.id:
+                refs.add(doc_id)
+    return [
+        {"document_id": doc_id}
+        for doc_id in sorted(refs)
+    ]
 
 
 class CreateTicketBody(BaseModel):
@@ -400,6 +420,10 @@ def get_ticket(request: Request, ticket_id: int):
             }
             for item in ticket.attachments
         ],
+        # Canonical document universe: attachments[] plus inline <img> refs
+        # embedded in description/timeline HTML — deduplicated by
+        # document_id so consumers never miss or double-fetch evidence.
+        "attachment_refs": _attachment_refs(ticket),
     }
 
 

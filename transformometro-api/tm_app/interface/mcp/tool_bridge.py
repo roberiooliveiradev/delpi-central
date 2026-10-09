@@ -429,6 +429,7 @@ def tool_solution_read(
 def tool_helpdesk_read(
     action: str,
     ticket_id: int | None = None,
+    document_id: int | None = None,
     catalog_kind: str | None = None,
     q: str | None = None,
     status: str | None = None,
@@ -455,6 +456,8 @@ def tool_helpdesk_read(
             context.authorization,
             action=action,
             ticket_id=ticket_id,
+            document_id=document_id,
+            include_content=True,
             catalog_kind=catalog_kind,
             q=q,
             status=status,
@@ -471,6 +474,8 @@ def tool_helpdesk_read(
             purpose=purpose,
             limit=limit,
         )
+        if str(action or "").strip().lower() == "attachment":
+            return _attachment_result(data)
         return _ok_result(
             data,
             "Demanda Helpdesk/GLPI (via Helpdesk BFF — conhecimento, "
@@ -478,6 +483,73 @@ def tool_helpdesk_read(
         )
     except Exception as exc:
         return handle_tool_error(exc)
+
+
+_ATTACHMENT_IMAGE_MIMES = frozenset(
+    {"image/png", "image/jpeg", "image/webp", "image/gif"}
+)
+# Binary content rides MCP content blocks (ImageContent for images,
+# EmbeddedResource for other files) — never text base64 inside the JSON
+# payload. Payloads beyond this cap stay metadata-only.
+_ATTACHMENT_INLINE_MAX_BYTES = 8 * 1024 * 1024
+
+
+def _attachment_result(data: dict[str, Any]) -> CallToolResult:
+    """Attachment payload → MCP-rich content blocks (R4.2).
+
+    structured_content carries document metadata only; bytes travel as
+    canonical content blocks so clients with vision/file support receive
+    the real content.
+    """
+    content = data.pop("content", None)
+    document = dict(data.get("document") or {})
+    mime = str(document.get("mime") or "application/octet-stream")
+    if not content:
+        data["content_delivery"] = "metadata_only"
+        return _ok_result(data, "Anexo do chamado (metadata).")
+    if len(content) > _ATTACHMENT_INLINE_MAX_BYTES:
+        data["content_delivery"] = "too_large"
+        return _ok_result(
+            data,
+            "Anexo excede o limite para entrega inline — metadata only.",
+        )
+    import base64
+
+    from mcp.types import (
+        BlobResourceContents,
+        EmbeddedResource,
+        ImageContent,
+    )
+
+    encoded = base64.b64encode(content).decode("ascii")
+    if mime in _ATTACHMENT_IMAGE_MIMES:
+        blocks: list[Any] = [
+            ImageContent(type="image", data=encoded, mime_type=mime)
+        ]
+    else:
+        blocks = [
+            EmbeddedResource(
+                type="resource",
+                resource=BlobResourceContents(
+                    blob=encoded,
+                    mime_type=mime,
+                    uri=(
+                        f"helpdesk://tickets/{data.get('ticket_id')}"
+                        f"/attachments/{document.get('document_id')}"
+                    ),
+                ),
+            )
+        ]
+    return mcp_tool_result(
+        data,
+        is_error=False,
+        text=(
+            f"Anexo {document.get('filename') or document.get('document_id')} "
+            f"({mime}, {len(content)} bytes) — conteúdo entregue como "
+            f"bloco {'image' if mime in _ATTACHMENT_IMAGE_MIMES else 'resource'}."
+        ),
+        images=blocks,
+    )
 
 
 def tool_get_catalog() -> CallToolResult:
@@ -1229,10 +1301,12 @@ def tool_prepare_helpdesk_change(
     group_tech_id: int | None = None,
     planned_begin: str | None = None,
     planned_end: str | None = None,
+    file: dict[str, Any] | None = None,
 ) -> CallToolResult:
     """PREPARE only — Helpdesk writes go through the Helpdesk BFF with the
-    same-user Bearer; ACT stays on commit_proposal. Binary attachments are
-    not exposed on this surface."""
+    same-user Bearer; ACT stays on commit_proposal. ``file`` is the
+    canonical ChatGPT fileParams object bound by the host for
+    upload_attachment — never an arbitrary URL or local path."""
     action_norm = str(action or "").strip().lower()
     capability = HELPDESK_ACTION_TO_CAPABILITY.get(action_norm)
     if capability is None:
@@ -1270,6 +1344,7 @@ def tool_prepare_helpdesk_change(
             "group_tech_id": group_tech_id,
             "planned_begin": planned_begin,
             "planned_end": planned_end,
+            "file": file,
         },
     )
 

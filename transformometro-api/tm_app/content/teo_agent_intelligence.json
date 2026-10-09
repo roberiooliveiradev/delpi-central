@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.09.7",
+  "version": "2026.10.09.8",
   "owner": "transformometro-api",
   "source": "capability_surface.agent_directives via get_catalog (Actions: gpt_get_catalog)",
   "actions_runtime": {
@@ -162,14 +162,18 @@
           "ticket != process truth; != validated root cause; != formal improvement",
           "frequency/count/distribution over tickets = CALCULATED",
           "candidate process/solution association = INFERRED",
-          "improvement/capability idea = PROPOSED, never REGISTERED"
+          "improvement/capability idea = PROPOSED, never REGISTERED",
+          "image content visibly observed by the model = OBSERVED",
+          "model interpretation of a screenshot = OBSERVED + interpreted statement",
+          "root cause inferred from a screenshot = INFERRED"
         ],
         "analysis": {
           "window": "declarar sempre a janela analisada (ex.: 'últimos N chamados atualizados' ou período pedido: últimos 7/30 dias, mês); nunca sugerir cobertura histórica total a partir de amostra",
           "pagination": "recorrência exige paginação limitada do helpdesk_read — não concluir 'sem recorrência' após uma página",
-          "minimization": "summaries primeiro; detalhe/timeline apenas do subconjunto necessário para validar; anexos fora do escopo",
+          "minimization": "summaries primeiro; detalhe/timeline apenas do subconjunto necessario para validar; anexos: metadata via action=ticket (attachments + attachment_refs), conteudo via action=attachment somente para itens materiais a pergunta - nunca baixar todos",
           "status_scope": "escopo de status segue a intent: 'pendentes' → abertos/em atendimento; 'recorrentes' → não restringir a abertos; distinguir backlog ativo de demanda histórica",
-          "privacy": "agregar por contagens/temas/categorias; expor nomes de pessoas somente quando relevante"
+          "privacy": "agregar por contagens/temas/categorias; expor nomes de pessoas somente quando relevante",
+          "attachment_evidence": "para analise o chamado, veja o erro, o que aparece na imagem: helpdesk_read(action=ticket) - attachment inventory (attachments + attachment_refs, dedup por document_id) - helpdesk_read(action=attachment, ticket_id, document_id) apenas dos anexos relevantes - imagens chegam como bloco image; outros arquivos como resource. Nunca dizer nao consigo visualizar quando o conteudo foi entregue; nunca afirmar evidencia a partir de metadata apenas."
         }
       },
       "product_usage": {
@@ -479,13 +483,15 @@
           "aceite a solução do chamado 456",
           "registre minha satisfação no chamado 789",
           "exclua o chamado 321",
-          "desvincule minha sessão do GLPI"
+          "desvincule minha sessão do GLPI",
+          "anexe esta imagem ao chamado 123",
+          "atribua ao Michael e anexe a imagem ao chamado"
         ],
         "route": [
           "HELPDESK_DEMAND_GATE",
           "helpdesk_read(action=ticket) — estado atual antes de mutar; delete_ticket exige ticket resolvido de forma única (nunca apagar por referência vaga)",
           "catalogs relevantes (users purpose=assignee, categories, ...) — nunca inferir ids",
-          "prepare_helpdesk_change(action=...) — delete_ticket|unlink_glpi_session sempre confirm_before_act",
+          "prepare_helpdesk_change(action=...) - delete_ticket|unlink_glpi_session sempre confirm_before_act; upload_attachment usa o file entregue pelo host (fileParams) - nunca URL/path arbitrario",
           "EXECUTION_CONTRACT_GATE",
           "commit_proposal — único ACT",
           "helpdesk_read(action=ticket|session) — read-back autoritativo",
@@ -497,7 +503,7 @@
           "process_truth",
           "demand_analysis"
         ],
-        "rule": "PREPARE != ACT. can_* são orientação, não autorização — a BFF revalida no commit. O resultado só é declarado após read-back; mudança na proposta invalida confirmação anterior. delete_ticket move o chamado para a lixeira do GLPI (soft delete — nunca dizer apagado permanentemente); pós-condição = ticket ausente da visão ativa (not_found no read-back). unlink_glpi_session desvincula a sessão OAuth do próprio usuário; religar é fluxo browser/OAuth.",
+        "rule": "PREPARE != ACT. can_* são orientação, não autorização — a BFF revalida no commit. O resultado só é declarado após read-back; mudança na proposta invalida confirmação anterior. delete_ticket move o chamado para a lixeira do GLPI (soft delete — nunca dizer apagado permanentemente); pós-condição = ticket ausente da visão ativa (not_found no read-back). unlink_glpi_session desvincula a sessão OAuth do próprio usuário; religar é fluxo browser/OAuth. upload_attachment anexa o arquivo que o usuario enviou na conversa (auto_act): PREPARE mostra file_name/mime_type; commit faz download do file_id autorizado pela plataforma - BFF - GLPI - read-back do document_id no ticket; 2xx sem document_id no inventory = OUTCOME_VERIFICATION_FAILED. Pedidos compostos (ex.: atribuir + anexar) reportam outcome por acao - sucesso parcial explicito.",
         "stop": "após verify, reportar o outcome exato (ex.: follow-up criado, assignee atualizado) — não continuar para outras writes nem análise sem novo pedido."
       }
     },

@@ -14,7 +14,7 @@ from delpi_mcp.tool_metadata import (
 )
 from delpi_mcp.transport import mcp_transport_security_settings
 from mcp.types import CallToolResult, Tool as MCPTool, ToolAnnotations
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 from tm_app.application.gpt_actions.capability_descriptors import (
     RECORD_OPERATIONS,
@@ -70,6 +70,21 @@ _HelpdeskActionParam = Literal[
 ]
 _GuideVersionParam = Literal[tuple(sorted(SUPPORTED_GUIDE_VERSIONS))]
 _MethodIntentParam = Literal[tuple(sorted(INTENT_IDS))]
+
+
+class _ChatGptFileParam(BaseModel):
+    """Canonical ``openai/fileParams`` file object (R4.2).
+
+    The ChatGPT host binds user uploads to fields listed in the tool
+    descriptor ``_meta["openai/fileParams"]`` — each value is this closed
+    object. ``download_url``/``file_id`` are required by the host
+    contract; ``mime_type``/``file_name`` are optional but declared.
+    """
+
+    download_url: str
+    file_id: str
+    mime_type: str | None = None
+    file_name: str | None = None
 
 
 class _TeoWireTool(MCPTool):
@@ -273,7 +288,11 @@ def create_mcp_server() -> MCPServer:
             "urgency_id, category_id, assignee_id, date ranges, sort, "
             "page/page_size). action=ticket: one ticket detail "
             "(ticket_id required) — description, timeline, attachments "
-            "metadata, can_* flags (BFF-computed, never inferred). "
+            "metadata + attachment_refs, can_* flags (BFF-computed, "
+            "never inferred). action=attachment: one attachment of a "
+            "ticket (ticket_id + document_id required) — the actual "
+            "file content is returned as an image/resource content "
+            "block, with document metadata in structuredContent. "
             "action=catalog: catalog_kind = categories|urgencies|"
             "request_types|users|groups|followup_templates|"
             "solution_types|solution_templates|task_categories|"
@@ -288,9 +307,11 @@ def create_mcp_server() -> MCPServer:
     )
     def helpdesk_read(
         action: Literal[
-            "session", "capabilities", "tickets", "ticket", "catalog"
+            "session", "capabilities", "tickets", "ticket",
+            "attachment", "catalog"
         ],
         ticket_id: int | None = None,
+        document_id: int | None = None,
         catalog_kind: str | None = None,
         q: str | None = None,
         status: str | None = None,
@@ -310,6 +331,7 @@ def create_mcp_server() -> MCPServer:
         return bridge.tool_helpdesk_read(
             action=action,
             ticket_id=ticket_id,
+            document_id=document_id,
             catalog_kind=catalog_kind,
             q=q,
             status=status,
@@ -508,7 +530,7 @@ def create_mcp_server() -> MCPServer:
             "interaction rooms (action=rooms, inbox_filter; action=room "
             "needs room_id; action=messages needs room_id, optional "
             "limit/before_id; action=attachments returns metadata only — "
-            "binary transfer has no MCP transport). Same canonical use "
+            "room attachments have no byte route in the BFF). Same canonical use "
             "cases as the Portal."
         ),
         annotations=_annotations("collaboration_read", "Collaboration read"),
@@ -893,23 +915,26 @@ def create_mcp_server() -> MCPServer:
             "validation_id; optional content) | delete_ticket (ticket_id — "
             "moves the ticket to the GLPI trash; always confirm_before_act) | "
             "unlink_glpi_session (unlinks the user's own GLPI OAuth session; "
-            "relink is a browser flow). Read the ticket first via "
-            "helpdesk_read(action=ticket) — PREPARE seals a state "
-            "fingerprint and ACT refuses a stale proposal. Then "
+            "relink is a browser flow) | upload_attachment (ticket_id + "
+            "file — the file the user attached to this conversation, bound "
+            "by the host as a fileParams object; optional title). Read the "
+            "ticket first via helpdesk_read(action=ticket) — PREPARE seals "
+            "a state fingerprint and ACT refuses a stale proposal. Then "
             "commit_proposal per proposal. execution_policy: create_ticket/"
-            "add_followup/create_task are auto_act; the rest require one "
-            "explicit user confirmation before commit_proposal. Binary "
-            "attachments are not available on this transport."
+            "add_followup/create_task/upload_attachment are auto_act; the "
+            "rest require one explicit user confirmation before "
+            "commit_proposal."
         ),
         annotations=_annotations(
             "prepare_helpdesk_change", "Prepare Helpdesk change"
         ),
-        meta=meta,
+        meta={**meta, "openai/fileParams": ["file"]},
     )
     def prepare_helpdesk_change(
         action: _HelpdeskActionParam,
         ticket_id: int | None = None,
         title: str | None = None,
+        file: _ChatGptFileParam | None = None,
         description: str | None = None,
         category_id: int | None = None,
         urgency_id: int | None = None,
@@ -957,6 +982,7 @@ def create_mcp_server() -> MCPServer:
             group_tech_id=group_tech_id,
             planned_begin=planned_begin,
             planned_end=planned_end,
+            file=file.model_dump(exclude_none=True) if file else None,
         )
 
     # --- COMMON COMMIT (proposal_handle only; not a generic executor) -----

@@ -14,6 +14,7 @@ import os
 from typing import Any
 
 import httpx
+from urllib.parse import unquote
 
 from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.application.helpdesk.helpdesk_read_port import HelpdeskReadPort
@@ -169,6 +170,93 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort):
             data,
         )
 
+    def _request_binary(
+        self, path: str, authorization: str
+    ) -> httpx.Response:
+        """Binary GET — used by attachment download (R4.2). Same-user
+        Bearer forward; the BFF enforces document-belongs-to-ticket."""
+        if not authorization or not str(authorization).strip():
+            raise GptActionsError(
+                "Usuário não autenticado.", 401, {"error_kind": "authn"}
+            )
+        url = f"{HELPDESK_API_URL.rstrip('/')}{path}"
+        timeout = httpx.Timeout(
+            WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+            connect=WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+        )
+        try:
+            with httpx.Client(timeout=timeout) as client:
+                response = client.get(
+                    url, headers={"Authorization": authorization}
+                )
+        except httpx.RequestError as exc:
+            logger.warning(
+                "helpdesk_bff_unavailable helpdesk_api_url=%s err=%s",
+                HELPDESK_API_URL,
+                exc,
+            )
+            raise GptActionsError(
+                "Helpdesk indisponível.",
+                502,
+                {"error_kind": "upstream_unavailable"},
+            ) from exc
+        return response
+
+    def _expect_binary(self, response: httpx.Response) -> dict[str, Any]:
+        if response.status_code == 200:
+            mime = (
+                response.headers.get("content-type", "")
+                .split(";")[0]
+                .strip()
+                or "application/octet-stream"
+            )
+            filename = self._content_disposition_filename(
+                response.headers.get("content-disposition", "")
+            )
+            return {
+                "content": response.content,
+                "mime": mime,
+                "filename": filename,
+            }
+        try:
+            body = response.json()
+        except ValueError:
+            body = {}
+        code = str(body.get("error") or "")
+        data: dict[str, Any] = {
+            "error_kind": _ERROR_KIND_BY_HTTP_STATUS.get(
+                response.status_code, "upstream_error"
+            ),
+            "error_code": code or None,
+            "status": response.status_code,
+        }
+        if code == "glpi_link_required" and body.get("authorize_url"):
+            data["authorize_url"] = body["authorize_url"]
+        raise GptActionsError(
+            f"Helpdesk BFF error: {code or response.status_code}.",
+            response.status_code,
+            data,
+        )
+
+    @staticmethod
+    def _content_disposition_filename(header: str) -> str:
+        """RFC 5987 filename* preferred; plain filename= fallback."""
+        for part in str(header or "").split(";"):
+            part = part.strip()
+            if part.lower().startswith("filename*="):
+                value = part.split("=", 1)[1].strip().strip('"')
+                if "''" in value:
+                    _, value = value.split("''", 1)
+                try:
+                    return unquote(value)
+                except Exception:
+                    return value
+        for part in str(header or "").split(";"):
+            part = part.strip()
+            if part.lower().startswith("filename="):
+                return part.split("=", 1)[1].strip().strip('"')
+        return ""
+
     def session(self, authorization: str) -> dict[str, Any]:
         return self._get("/auth/glpi/session", authorization)
 
@@ -187,6 +275,15 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort):
 
     def ticket(self, authorization: str, ticket_id: int) -> dict[str, Any]:
         return self._get(f"/tickets/{int(ticket_id)}", authorization)
+
+    def attachment(
+        self, authorization: str, ticket_id: int, document_id: int
+    ) -> dict[str, Any]:
+        response = self._request_binary(
+            f"/tickets/{int(ticket_id)}/attachments/{int(document_id)}",
+            authorization,
+        )
+        return self._expect_binary(response)
 
     def catalog(
         self,
@@ -392,3 +489,53 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort):
             authorization,
             idempotency_key=idempotency_key,
         )
+
+    def upload_attachment(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        filename: str,
+        content: bytes,
+        mime: str,
+        title: str | None,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """POST /tickets/{id}/attachments (multipart) → ``{"document_id",
+        "filename","mime"}``. The BFF owns GLPI Document creation,
+        belongs-to-ticket validation and idempotency replay."""
+        if not authorization or not str(authorization).strip():
+            raise GptActionsError(
+                "Usuário não autenticado.", 401, {"error_kind": "authn"}
+            )
+        url = (
+            f"{HELPDESK_API_URL.rstrip('/')}"
+            f"/tickets/{int(ticket_id)}/attachments"
+        )
+        timeout = httpx.Timeout(
+            WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+            connect=WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
+        )
+        headers = {
+            "Authorization": authorization,
+            "Idempotency-Key": idempotency_key,
+        }
+        files = {"file": (filename or "anexo", content, mime)}
+        data = {"title": title} if title else {}
+        try:
+            with httpx.Client(timeout=timeout) as client:
+                response = client.post(
+                    url, files=files, data=data, headers=headers
+                )
+        except httpx.RequestError as exc:
+            logger.warning(
+                "helpdesk_bff_unavailable helpdesk_api_url=%s err=%s",
+                HELPDESK_API_URL,
+                exc,
+            )
+            raise GptActionsError(
+                "Helpdesk indisponível.",
+                502,
+                {"error_kind": "upstream_unavailable"},
+            ) from exc
+        return self._expect_json(response, ok_statuses=(200, 201))

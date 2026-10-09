@@ -15,6 +15,7 @@ HELPDESK_READ_ACTIONS: tuple[str, ...] = (
     "capabilities",
     "tickets",
     "ticket",
+    "attachment",
     "catalog",
 )
 
@@ -73,6 +74,14 @@ class HelpdeskReadPort(Protocol):
 
     def ticket(self, authorization: str, ticket_id: int) -> dict[str, Any]:
         """Ticket detail incl. timeline, attachments metadata, can_* flags."""
+        ...
+
+    def attachment(
+        self, authorization: str, ticket_id: int, document_id: int
+    ) -> dict[str, Any]:
+        """Binary content of one ticket attachment — ``content`` bytes,
+        ``mime`` and ``filename``. The BFF enforces document-belongs-to-
+        ticket under the same-user OAuth session."""
         ...
 
     def catalog(

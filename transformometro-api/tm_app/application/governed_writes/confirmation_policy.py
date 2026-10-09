@@ -283,6 +283,14 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         CONFIRM_BEFORE_ACT,
         "helpdesk_unlink_glpi_session",
     ),
+    # Append-only document on an existing ticket — the file itself was
+    # handed by the user for this purpose; same blast-radius class as
+    # add_followup/create_task (AUTO_ACT, read-back verified).
+    WritePolicyRecord(
+        "helpdesk.attachment.upload",
+        AUTO_ACT,
+        "helpdesk_upload_attachment",
+    ),
 )
 
 

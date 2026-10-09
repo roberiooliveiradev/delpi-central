@@ -68,9 +68,30 @@ def _ticket(**over) -> dict[str, Any]:
         "satisfaction": None,
         "validations": [],
         "timeline": [],
+        "attachments": [],
+        "attachment_refs": [],
     }
     base.update(over)
     return base
+
+
+class _FakeFileSource:
+    """HelpdeskFileSourcePort fake — records URLs, returns canned bytes."""
+
+    def __init__(self) -> None:
+        self.fetched: list[str] = []
+        self.payload: dict[str, Any] = {
+            "content": b"\x89PNG-fake-bytes",
+            "mime": "image/png",
+            "filename": "screenshot.png",
+        }
+        self.error: Exception | None = None
+
+    def fetch(self, download_url: str) -> dict[str, Any]:
+        self.fetched.append(download_url)
+        if self.error is not None:
+            raise self.error
+        return dict(self.payload)
 
 
 class _FakeHelpdeskPorts:
@@ -86,6 +107,11 @@ class _FakeHelpdeskPorts:
         # When False, the fake delete returns 2xx but leaves the ticket
         # readable — simulates a broken upstream for read-back tests.
         self.delete_actually_removes = True
+        # document_id → stored attachment; upload_actually_appears=False
+        # simulates a 2xx write that never materializes on read-back.
+        self.attachments: dict[int, dict[str, Any]] = {}
+        self.upload_actually_appears = True
+        self.file_source = _FakeFileSource()
 
     # read port
     def _state(self, ticket_id: int) -> dict[str, Any]:
@@ -206,10 +232,54 @@ class _FakeHelpdeskPorts:
         self.linked = False
         return {"linked": False}
 
+    def attachment(self, authorization, ticket_id, document_id):
+        doc = self.attachments.get(int(document_id))
+        if doc is None or doc["ticket_id"] != int(ticket_id):
+            raise GptActionsError(
+                "Helpdesk BFF error: not_found.",
+                404,
+                {"error_kind": "not_found", "error_code": "not_found"},
+            )
+        return {
+            "content": doc["content"],
+            "mime": doc["mime"],
+            "filename": doc["filename"],
+        }
+
+    def upload_attachment(self, authorization, ticket_id, **kw):
+        self.write_calls.append(
+            ("upload_attachment", ticket_id, kw.get("filename"))
+        )
+        self._key(kw)
+        document_id = 700 + len(self.attachments)
+        if self.upload_actually_appears:
+            self.attachments[document_id] = {
+                "ticket_id": int(ticket_id),
+                "content": kw.get("content") or b"",
+                "mime": kw.get("mime") or "application/octet-stream",
+                "filename": kw.get("filename") or "anexo",
+            }
+            state = self._state(ticket_id)
+            state["attachments"] = [
+                *(state.get("attachments") or []),
+                {
+                    "document_id": document_id,
+                    "filename": kw.get("filename") or "anexo",
+                    "mime": kw.get("mime"),
+                },
+            ]
+        return {
+            "document_id": document_id,
+            "filename": kw.get("filename"),
+            "mime": kw.get("mime"),
+        }
+
 
 def _stack() -> tuple[HelpdeskWriteStack, _FakeHelpdeskPorts]:
     ports = _FakeHelpdeskPorts()
-    return HelpdeskWriteStack(read=ports, write=ports), ports
+    return HelpdeskWriteStack(
+        read=ports, write=ports, files=ports.file_source
+    ), ports
 
 
 def _auth_user():
@@ -778,4 +848,182 @@ def test_action_enum_covers_new_actions():
     )
     assert HELPDESK_ACTION_TO_CAPABILITY["unlink_glpi_session"] == (
         "helpdesk_unlink_glpi_session"
+    )
+
+
+# --------------------------------------------------------------------------
+# R4.2 — Governed attachment upload (fileParams → BFF multipart)
+# --------------------------------------------------------------------------
+
+_FILE_OK = {
+    "download_url": "https://files.oaiusercontent.com/file-abc?sig=x",
+    "file_id": "file_123",
+    "mime_type": "image/png",
+    "file_name": "erro.png",
+}
+
+
+def test_prepare_upload_attachment_never_writes_nor_fetches():
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    assert ports.write_calls == []
+    assert ports.file_source.fetched == []
+    proposal = out["proposal"]
+    assert proposal["ready"] is True
+    display = proposal["confirmation_requirement"]["display"]
+    assert display["file_name"] == "erro.png"
+    assert display["mime_type"] == "image/png"
+    assert display["ticket_id"] == 500
+
+
+def test_upload_missing_file_not_ready():
+    facade, _ = _facade()
+    out = _prepare(facade, "upload_attachment", ticket_id=500)
+    assert out["proposal"]["ready"] is False
+    assert "file" in out["validation_result"]["missing"]
+
+
+def test_upload_invalid_file_shape_blocked():
+    facade, _ = _facade()
+    out = _prepare(
+        facade,
+        "upload_attachment",
+        ticket_id=500,
+        file={"file_id": "file_x"},
+    )
+    assert out["proposal"]["ready"] is False
+    assert "invalid_file.download_url" in out["validation_result"]["blocked"]
+
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file="https://evil"
+    )
+    assert "invalid_file" in out["validation_result"]["blocked"]
+
+
+def test_file_field_rejected_on_other_actions():
+    facade, _ = _facade()
+    out = _prepare(
+        facade,
+        "add_followup",
+        ticket_id=500,
+        content="ok",
+        file=_FILE_OK,
+    )
+    assert out["proposal"]["ready"] is False
+    assert "file_not_applicable" in out["validation_result"]["blocked"]
+
+
+def test_upload_auto_act_commits_and_verifies_document():
+    facade, ports = _facade()
+    out = _prepare(
+        facade,
+        "upload_attachment",
+        ticket_id=500,
+        file=_FILE_OK,
+        title="Erro do painel",
+    )
+    assert out["proposal"]["execution_policy"] == "auto_act"
+    data = _commit(facade, out, confirmation=False)
+    assert data["persisted"] is True
+    assert ports.file_source.fetched == [_FILE_OK["download_url"]]
+    call = ports.write_calls[0]
+    assert call[0] == "upload_attachment" and call[1] == 500
+    # file_name from the host object wins over the fetched disposition.
+    stored = next(iter(ports.attachments.values()))
+    assert stored["filename"] == "erro.png"
+    assert stored["mime"] == "image/png"
+    assert stored["content"] == b"\x89PNG-fake-bytes"
+    document_id = data["data"]["write_result"]["document_id"]
+    assert document_id in ports.attachments
+
+
+def test_upload_proposal_bound_idempotency_key():
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    _commit(facade, out, confirmation=False)
+    assert ports.last_idempotency_key is not None
+    assert ports.last_idempotency_key.startswith("teo-")
+
+
+def test_upload_consumed_proposal_no_second_effect():
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    handle = _handle_of(out)
+    _commit(facade, out, confirmation=False)
+    with pytest.raises(GovernedWriteError) as exc:
+        facade.commit_proposal(
+            _request(), proposal_handle=handle, confirmation=False
+        )
+    assert exc.value.code in {PROPOSAL_STALE, "proposal_not_found"}
+    assert len(ports.write_calls) == 1
+    assert len(ports.file_source.fetched) == 1
+
+
+def test_upload_2xx_but_attachment_absent_fails_verification():
+    facade, ports = _facade()
+    ports.upload_actually_appears = False
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    assert exc.value.code == OUTCOME_VERIFICATION_FAILED
+
+
+def test_upload_fetch_failure_blocks_before_write():
+    facade, ports = _facade()
+    ports.file_source.error = GptActionsError(
+        "download_url fora do allowlist.",
+        400,
+        {"error_kind": "validation", "error_code": "FILE_URL_NOT_ALLOWED"},
+    )
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    assert exc.value.status_code == 400
+    assert exc.value.data["error_code"] == "FILE_URL_NOT_ALLOWED"
+    assert ports.write_calls == []
+
+
+def test_upload_attachment_via_attachment_refs_when_inventory_lags():
+    """Read-back accepts the doc in attachment_refs even when the
+    attachments[] inventory has not caught up (H12 timeline lag)."""
+    facade, ports = _facade()
+
+    def refs_only_ticket(authorization, ticket_id):
+        base = dict(ports.ticket_state)
+        base["attachments"] = []
+        base["attachment_refs"] = [
+            {"document_id": next(iter(ports.attachments), -1)}
+        ]
+        return base
+
+    out = _prepare(
+        facade, "upload_attachment", ticket_id=500, file=_FILE_OK
+    )
+    original = ports.ticket
+    calls = {"n": 0}
+
+    def patched(authorization, ticket_id):
+        calls["n"] += 1
+        if calls["n"] >= 3:  # prepare read + fingerprint re-read use state
+            return refs_only_ticket(authorization, ticket_id)
+        return original(authorization, ticket_id)
+
+    ports.ticket = patched  # type: ignore[method-assign]
+    data = _commit(facade, out, confirmation=False)
+    assert data["persisted"] is True
+
+
+def test_action_enum_covers_upload_attachment():
+    assert HELPDESK_ACTION_TO_CAPABILITY["upload_attachment"] == (
+        "helpdesk_upload_attachment"
     )

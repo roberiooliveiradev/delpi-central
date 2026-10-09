@@ -63,14 +63,16 @@ class HelpdeskReadService:
         page_size: int | None = None,
         purpose: str | None = None,
         limit: int | None = None,
+        document_id: int | None = None,
+        include_content: bool = False,
     ) -> dict[str, Any]:
         """Canonical read surface: action=session|capabilities|tickets|
-        ticket|catalog. Fail-closed on contradictory input."""
+        ticket|attachment|catalog. Fail-closed on contradictory input."""
         act = str(action or "").strip().lower()
         if act not in HELPDESK_READ_ACTIONS:
             raise _validation(
                 "action deve ser 'session', 'capabilities', 'tickets', "
-                "'ticket' ou 'catalog'.",
+                "'ticket', 'attachment' ou 'catalog'.",
                 "INVALID_ACTION",
             )
         filters = {
@@ -97,9 +99,10 @@ class HelpdeskReadService:
                     "ticket_id é obrigatório para action=ticket.",
                     "TICKET_ID_REQUIRED",
                 )
-            if catalog_kind or provided or purpose or limit is not None:
+            if catalog_kind or provided or purpose or limit is not None or document_id is not None:
                 raise _validation(
-                    "catalog_kind/filtros não se aplicam a action=ticket.",
+                    "catalog_kind/filtros/document_id não se aplicam a "
+                    "action=ticket.",
                     "INVALID_FIELD",
                 )
             return {
@@ -109,11 +112,52 @@ class HelpdeskReadService:
                 "ticket": self._gateway.ticket(authorization, int(ticket_id)),
             }
 
-        if act == "catalog":
-            if ticket_id is not None or provided - {"q"}:
+        if act == "attachment":
+            if ticket_id is None or int(ticket_id) <= 0:
                 raise _validation(
-                    "ticket_id/filtros de ticket não se aplicam a "
-                    "action=catalog.",
+                    "ticket_id é obrigatório para action=attachment.",
+                    "TICKET_ID_REQUIRED",
+                )
+            if document_id is None or int(document_id) <= 0:
+                raise _validation(
+                    "document_id é obrigatório para action=attachment.",
+                    "DOCUMENT_ID_REQUIRED",
+                )
+            if catalog_kind or provided or purpose or limit is not None:
+                raise _validation(
+                    "catalog_kind/filtros não se aplicam a action=attachment.",
+                    "INVALID_FIELD",
+                )
+            doc = self._gateway.attachment(
+                authorization, int(ticket_id), int(document_id)
+            )
+            content = doc.get("content") or b""
+            result = {
+                "schema": "helpdesk_attachment_v1",
+                "authority": _AUTHORITY,
+                "note": _NOTE,
+                "ticket_id": int(ticket_id),
+                "document": {
+                    "document_id": int(document_id),
+                    "filename": doc.get("filename"),
+                    "mime": doc.get("mime"),
+                    "byte_size": len(content),
+                },
+            }
+            if include_content:
+                # Bytes ride MCP content blocks — never inside the JSON
+                # payload itself. The transport converts/omits them.
+                result["content"] = content
+                result["content_delivery"] = "inline"
+            else:
+                result["content_delivery"] = "metadata_only"
+            return result
+
+        if act == "catalog":
+            if ticket_id is not None or document_id is not None or provided - {"q"}:
+                raise _validation(
+                    "ticket_id/document_id/filtros de ticket não se "
+                    "aplicam a action=catalog.",
                     "INVALID_FIELD",
                 )
             kind = str(catalog_kind or "").strip()
@@ -142,9 +186,10 @@ class HelpdeskReadService:
             }
 
         if act == "tickets":
-            if ticket_id is not None:
+            if ticket_id is not None or document_id is not None:
                 raise _validation(
-                    "ticket_id não se aplica a action=tickets.",
+                    "ticket_id/document_id não se aplicam a "
+                    "action=tickets.",
                     "INVALID_FIELD",
                 )
             if catalog_kind or purpose or limit is not None:
@@ -163,6 +208,7 @@ class HelpdeskReadService:
         # session / capabilities — no parameters allowed
         if (
             ticket_id is not None
+            or document_id is not None
             or catalog_kind
             or provided
             or purpose

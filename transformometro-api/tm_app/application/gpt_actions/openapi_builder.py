@@ -671,7 +671,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "READ-only Helpdesk/GLPI demand via BFF. "
                     "action=session|capabilities|tickets (filters+paging)|"
-                    "ticket (ticket_id)|catalog (catalog_kind: "
+                    "ticket (ticket_id)|attachment (ticket_id + "
+                    "document_id — this transport returns document "
+                    "metadata; binary content is delivered on the MCP "
+                    "surface)|catalog (catalog_kind: "
                     "categories|urgencies|request_types|users|groups|"
                     "templates|types|statuses|approval_steps). "
                     "Knowledge, never AuthZ."
@@ -690,16 +693,26 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "capabilities",
                                 "tickets",
                                 "ticket",
+                                "attachment",
                                 "catalog",
                             ],
                         },
-                        "description": "session | capabilities | tickets | ticket | catalog.",
+                        "description": (
+                            "session | capabilities | tickets | ticket | "
+                            "attachment | catalog."
+                        ),
                     },
                     {
                         "name": "ticket_id",
                         "in": "query",
                         "schema": {"type": "integer", "minimum": 1},
-                        "description": "Ticket id (required when action=ticket).",
+                        "description": "Ticket id (required when action=ticket|attachment).",
+                    },
+                    {
+                        "name": "document_id",
+                        "in": "query",
+                        "schema": {"type": "integer", "minimum": 1},
+                        "description": "Attachment document id (required when action=attachment).",
                     },
                     {
                         "name": "catalog_kind",
@@ -1880,6 +1893,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "reject_validation",
                                 "delete_ticket",
                                 "unlink_glpi_session",
+                                "upload_attachment",
                             ],
                         },
                         "ticket_id": {
@@ -1947,6 +1961,22 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "group_tech_id": {"type": "integer"},
                         "planned_begin": {"type": "string"},
                         "planned_end": {"type": "string"},
+                        "file": {
+                            "type": "object",
+                            "description": (
+                                "upload_attachment only — the file the user "
+                                "attached to this conversation, bound by the "
+                                "host as an openai/fileParams object. Never "
+                                "an arbitrary URL or local path."
+                            ),
+                            "properties": {
+                                "download_url": {"type": "string"},
+                                "file_id": {"type": "string"},
+                                "mime_type": {"type": "string"},
+                                "file_name": {"type": "string"},
+                            },
+                            "required": ["download_url", "file_id"],
+                        },
                         "commit_now": {"type": "boolean", "default": False},
                         "confirmation": {"type": "boolean", "default": False},
                         "idempotency_key": {"type": "string"},

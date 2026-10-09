@@ -155,6 +155,40 @@ class HelpdeskWritePort(Protocol):
         """
         ...
 
+    def upload_attachment(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        filename: str,
+        content: bytes,
+        mime: str,
+        title: str | None,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """POST /tickets/{id}/attachments (multipart) → ``{"document_id",
+        "filename","mime"}``.
+
+        The BFF owns GLPI Document creation, belongs-to-ticket validation,
+        upload limits and idempotency replay; TÉO forwards bytes fetched
+        from a platform-authorized file source — never an arbitrary URL.
+        """
+        ...
+
+
+class HelpdeskFileSourcePort(Protocol):
+    """Fetches bytes from a platform-authorized file reference (e.g. the
+    ChatGPT ``openai/fileParams`` ``download_url``).
+
+    Implementations enforce the host allowlist, HTTPS, redirect control
+    and a byte cap — arbitrary model-supplied URLs fail closed.
+    """
+
+    def fetch(self, download_url: str) -> dict[str, Any]:
+        """Return ``{"content": bytes, "mime": str, "filename": str}``
+        or raise a typed error (validation/upstream)."""
+        ...
+
 
 class HelpdeskWriteStack(NamedTuple):
     """Composition bundle: canonical write port + read port for
@@ -162,3 +196,4 @@ class HelpdeskWriteStack(NamedTuple):
 
     read: HelpdeskReadPort
     write: HelpdeskWritePort
+    files: HelpdeskFileSourcePort | None = None

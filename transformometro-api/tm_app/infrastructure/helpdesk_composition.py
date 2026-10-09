@@ -11,8 +11,13 @@ from tm_app.application.helpdesk.helpdesk_write_port import HelpdeskWriteStack
 from tm_app.infrastructure.gateways.helpdesk_bff_gateway import (
     HelpdeskBffGateway,
 )
+from tm_app.infrastructure.gateways.openai_file_gateway import (
+    OpenAIFileGateway,
+)
 
 
 def build_helpdesk_write_stack() -> HelpdeskWriteStack:
     gateway = HelpdeskBffGateway()
-    return HelpdeskWriteStack(read=gateway, write=gateway)
+    return HelpdeskWriteStack(
+        read=gateway, write=gateway, files=OpenAIFileGateway()
+    )

@@ -61,6 +61,22 @@ class _FakeGateway:
         self.calls.append(("catalog", authorization, catalog_kind, q, purpose, limit))
         return {"items": [{"id": 1, "name": "Rede"}]}
 
+    def attachment(
+        self, authorization: str, ticket_id: int, document_id: int
+    ) -> dict[str, Any]:
+        self.calls.append(("attachment", authorization, ticket_id, document_id))
+        if int(document_id) != 77:
+            raise GptActionsError(
+                "Helpdesk BFF error: not_found.",
+                404,
+                {"error_kind": "not_found", "error_code": "not_found"},
+            )
+        return {
+            "content": b"\x89PNG-screenshot-bytes",
+            "mime": "image/png",
+            "filename": "erro.png",
+        }
+
 
 def _svc() -> tuple[HelpdeskReadService, _FakeGateway]:
     gw = _FakeGateway()
@@ -445,3 +461,177 @@ def test_scenario_d_demand_to_process_chain():
     assert "record_read" in blob
     assert "get_process_context" in blob
     assert "NÃO viram AS-IS" in d2p["rule"]
+
+
+# --------------------------------------------------------------------------
+# R4.2 — attachment action (binary read)
+# --------------------------------------------------------------------------
+
+
+def test_attachment_action_returns_content():
+    svc, gw = _svc()
+    out = svc.read_helpdesk(
+        "Bearer t", action="attachment", ticket_id=152, document_id=77,
+        include_content=True,
+    )
+    assert out["schema"] == "helpdesk_attachment_v1"
+    assert out["ticket_id"] == 152
+    assert out["document"]["document_id"] == 77
+    assert out["document"]["filename"] == "erro.png"
+    assert out["document"]["mime"] == "image/png"
+    assert out["document"]["byte_size"] == len(b"\x89PNG-screenshot-bytes")
+    assert out["content"] == b"\x89PNG-screenshot-bytes"
+    assert out["content_delivery"] == "inline"
+    assert gw.calls == [("attachment", "Bearer t", 152, 77)]
+
+
+def test_attachment_action_metadata_only_without_include_content():
+    svc, _ = _svc()
+    out = svc.read_helpdesk(
+        "Bearer t", action="attachment", ticket_id=152, document_id=77,
+    )
+    assert "content" not in out
+    assert out["content_delivery"] == "metadata_only"
+    assert out["document"]["byte_size"] > 0
+
+
+def test_attachment_requires_ticket_and_document():
+    svc, _ = _svc()
+    with pytest.raises(GptActionsError) as exc:
+        svc.read_helpdesk("Bearer t", action="attachment", document_id=77)
+    assert exc.value.data["error_code"] == "TICKET_ID_REQUIRED"
+    with pytest.raises(GptActionsError) as exc:
+        svc.read_helpdesk("Bearer t", action="attachment", ticket_id=152)
+    assert exc.value.data["error_code"] == "DOCUMENT_ID_REQUIRED"
+
+
+def test_attachment_rejects_filters():
+    svc, _ = _svc()
+    with pytest.raises(GptActionsError):
+        svc.read_helpdesk(
+            "Bearer t", action="attachment", ticket_id=1, document_id=2,
+            status="open",
+        )
+    with pytest.raises(GptActionsError):
+        svc.read_helpdesk(
+            "Bearer t", action="attachment", ticket_id=1, document_id=2,
+            catalog_kind="users",
+        )
+
+
+def test_attachment_bff_error_typed():
+    svc, _ = _svc()
+    with pytest.raises(GptActionsError) as exc:
+        svc.read_helpdesk(
+            "Bearer t", action="attachment", ticket_id=152, document_id=999,
+            include_content=True,
+        )
+    assert exc.value.status_code == 404
+    assert exc.value.data["error_kind"] == "not_found"
+
+
+def test_session_rejects_document_id():
+    svc, _ = _svc()
+    with pytest.raises(GptActionsError):
+        svc.read_helpdesk("Bearer t", action="session", document_id=7)
+
+
+def test_attachment_response_has_no_sensitive_keys():
+    svc, _ = _svc()
+    out = svc.read_helpdesk(
+        "Bearer t", action="attachment", ticket_id=152, document_id=77,
+        include_content=True,
+    )
+    found = _all_keys(out)
+    assert found.isdisjoint(FORBIDDEN), found & FORBIDDEN
+
+
+# --------------------------------------------------------------------------
+# R4.2 — MCP content blocks (bridge-level rich result)
+# --------------------------------------------------------------------------
+
+
+def _attachment_result(data: dict):
+    from tm_app.interface.mcp.tool_bridge import _attachment_result as fn
+
+    return fn(data)
+
+
+def _service_payload(content: bytes, mime: str) -> dict:
+    return {
+        "schema": "helpdesk_attachment_v1",
+        "authority": "helpdesk_bff_glpi",
+        "note": "x",
+        "ticket_id": 152,
+        "document": {
+            "document_id": 77,
+            "filename": "shot.png",
+            "mime": mime,
+            "byte_size": len(content),
+        },
+        "content": content,
+        "content_delivery": "inline",
+    }
+
+
+def test_attachment_image_becomes_image_content_block():
+    from mcp.types import ImageContent
+
+    result = _attachment_result(
+        _service_payload(b"fakepng", "image/png")
+    )
+    assert result.is_error is False
+    kinds = [type(block) for block in result.content]
+    assert ImageContent in kinds
+    image = next(b for b in result.content if isinstance(b, ImageContent))
+    assert image.mime_type == "image/png"
+    assert image.data  # base64 payload in the canonical block
+    # Bytes are only in the content block — never inside structured JSON.
+    import json
+
+    blob = json.dumps(result.structured_content or {})
+    assert "fakepng" not in blob
+
+
+def test_attachment_pdf_becomes_embedded_resource():
+    from mcp.types import EmbeddedResource, ImageContent
+
+    result = _attachment_result(
+        _service_payload(b"%PDF-fake", "application/pdf")
+    )
+    blocks = result.content
+    assert not any(isinstance(b, ImageContent) for b in blocks)
+    resource = next(
+        b for b in blocks if isinstance(b, EmbeddedResource)
+    )
+    assert resource.resource.mime_type == "application/pdf"
+    assert resource.resource.blob
+
+
+def test_attachment_too_large_stays_metadata_only():
+    from mcp.types import ImageContent, EmbeddedResource
+
+    oversized = b"x" * (8 * 1024 * 1024 + 1)
+    result = _attachment_result(
+        _service_payload(oversized, "image/png")
+    )
+    assert result.structured_content["data"]["content_delivery"] == "too_large"
+    assert not any(
+        isinstance(b, (ImageContent, EmbeddedResource))
+        for b in result.content
+    )
+
+
+def test_attachment_without_content_is_metadata_only():
+    data = _service_payload(b"", "image/png")
+    result = _attachment_result(data)
+    assert result.structured_content["data"]["content_delivery"] == "metadata_only"
+
+
+def test_mcp_surface_declares_attachment_action():
+    """Transport enum derives from the same canonical action list."""
+    from tm_app.application.helpdesk.helpdesk_read_port import (
+        HELPDESK_READ_ACTIONS,
+    )
+
+    assert "attachment" in HELPDESK_READ_ACTIONS

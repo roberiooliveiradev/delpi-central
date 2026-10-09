@@ -46,6 +46,7 @@ HELPDESK_ACTION_TO_CAPABILITY: dict[str, str] = {
     "reject_validation": "helpdesk_reject_validation",
     "delete_ticket": "helpdesk_delete_ticket",
     "unlink_glpi_session": "helpdesk_unlink_glpi_session",
+    "upload_attachment": "helpdesk_upload_attachment",
 }
 
 HELPDESK_CAPABILITIES = frozenset(HELPDESK_ACTION_TO_CAPABILITY.values())
@@ -71,6 +72,7 @@ _REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     "helpdesk_reject_validation": ("validation_id",),
     "helpdesk_delete_ticket": (),
     "helpdesk_unlink_glpi_session": (),
+    "helpdesk_upload_attachment": ("file",),
 }
 
 # can_* flag projected by the BFF — early UX/PREPARE guidance only.
@@ -111,6 +113,12 @@ _CREATE_TASK_BODY_KEYS = (
 
 _REQUEST_VALIDATION_BODY_KEYS = ("approver_type", "approver_id", "content")
 
+# Canonical OpenAI fileParams object — the ChatGPT host binds user uploads
+# to fields listed in the tool descriptor ``_meta["openai/fileParams"]``.
+# download_url/file_id are required by the host contract; mime_type and
+# file_name are optional but declared. Never an arbitrary URL/path.
+_FILE_OBJECT_KEYS = ("download_url", "file_id", "mime_type", "file_name")
+
 
 def _missing_fields(capability: str, args: dict[str, Any]) -> list[str]:
     missing: list[str] = []
@@ -119,6 +127,19 @@ def _missing_fields(capability: str, args: dict[str, Any]) -> list[str]:
         if value is None or (isinstance(value, str) and not value.strip()):
             missing.append(field)
     return missing
+
+
+def _file_object_errors(file_arg: Any) -> list[str]:
+    """Shape validation for the platform file reference — fail closed on
+    anything that is not the canonical fileParams object."""
+    if not isinstance(file_arg, dict):
+        return ["file"]
+    missing = [
+        key
+        for key in ("download_url", "file_id")
+        if not str(file_arg.get(key) or "").strip()
+    ]
+    return [f"file.{key}" for key in missing]
 
 
 def _validation_status(ticket: dict[str, Any], validation_id: int) -> int | None:
@@ -199,6 +220,18 @@ def _normalize_change(capability: str, args: dict[str, Any]) -> dict[str, Any]:
         vid = args.get("validation_id")
         change["validation_id"] = int(vid) if vid is not None else None
         change["content"] = args.get("content") or ""
+    elif capability == "helpdesk_upload_attachment":
+        file_arg = args.get("file")
+        change["file"] = (
+            {
+                key: file_arg.get(key)
+                for key in _FILE_OBJECT_KEYS
+                if file_arg.get(key) is not None
+            }
+            if isinstance(file_arg, dict)
+            else file_arg
+        )
+        change["title"] = args.get("title")
     # helpdesk_delete_ticket / helpdesk_unlink_glpi_session seal only the
     # capability (+ ticket_id for delete) — no extra BFF body fields.
     return change
@@ -220,6 +253,19 @@ def _expected_postcondition(capability: str, change: dict[str, Any]) -> dict[str
             "capability": capability,
             "ticket_id": None,
             "expected": {"linked": False},
+        }
+    if capability == "helpdesk_upload_attachment":
+        file_arg = change.get("file") if isinstance(change.get("file"), dict) else {}
+        return {
+            "type": "helpdesk_ticket_attachment",
+            "capability": capability,
+            "ticket_id": change.get("ticket_id"),
+            "expected": {
+                # document_id is only known after the BFF write — VERIFY
+                # binds the returned id to the authoritative inventory.
+                "attachment_present": True,
+                "file_name": file_arg.get("file_name"),
+            },
         }
     return {
         "type": "helpdesk_ticket_state",
@@ -257,6 +303,8 @@ def prepare(
     blocked: list[str] = []
     confirmation_req: dict[str, Any] = {}
     resource_type = "helpdesk_ticket"
+    if capability != "helpdesk_upload_attachment" and args.get("file") is not None:
+        blocked.append("file_not_applicable")
 
     if capability == "helpdesk_create_ticket":
         checks.append("create_intent")
@@ -313,6 +361,22 @@ def prepare(
                 ticket, validation_id=change.get("validation_id")
             )
             resource_id = str(ticket_id)
+            if capability == "helpdesk_upload_attachment":
+                checks.append("file_reference_validated")
+                for field in _file_object_errors(args.get("file")):
+                    blocked.append(f"invalid_{field}")
+                file_arg = (
+                    change.get("file")
+                    if isinstance(change.get("file"), dict)
+                    else {}
+                )
+                confirmation_req["display"] = {
+                    "operation": "upload_attachment",
+                    "ticket_id": int(ticket_id),
+                    "title": ticket.get("title"),
+                    "file_name": file_arg.get("file_name"),
+                    "mime_type": file_arg.get("mime_type"),
+                }
             if capability == "helpdesk_delete_ticket":
                 # Exact delete preview for the confirmation prompt — the
                 # user must see id + title + status, never a vague ask.
@@ -465,6 +529,41 @@ def execute(
         )
     if capability == "helpdesk_unlink_glpi_session":
         return w.unlink_glpi_session(authorization, idempotency_key=key)
+    if capability == "helpdesk_upload_attachment":
+        if stack.files is None:
+            raise GovernedWriteError(
+                "File source not configured.",
+                code=VALIDATION,
+                status_code=500,
+            )
+        file_arg = change.get("file") if isinstance(change.get("file"), dict) else {}
+        errors = _file_object_errors(file_arg)
+        if errors:
+            raise GovernedWriteError(
+                f"Invalid file reference: {errors}.",
+                code=VALIDATION,
+                status_code=400,
+            )
+        fetched = stack.files.fetch(str(file_arg["download_url"]))
+        filename = (
+            str(file_arg.get("file_name") or "").strip()
+            or str(fetched.get("filename") or "").strip()
+            or "arquivo"
+        )
+        mime = (
+            str(file_arg.get("mime_type") or "").strip()
+            or str(fetched.get("mime") or "").strip()
+            or "application/octet-stream"
+        )
+        return w.upload_attachment(
+            authorization,
+            int(ticket_id),
+            filename=filename,
+            content=fetched["content"],
+            mime=mime,
+            title=change.get("title") or None,
+            idempotency_key=key,
+        )
     raise GovernedWriteError(
         f"ACT not implemented for '{capability}'.",
         code=VALIDATION,
@@ -541,6 +640,26 @@ def verify(
 
     ticket_id = int(change["ticket_id"])
     ticket = stack.read.ticket(authorization, ticket_id)
+
+    if capability == "helpdesk_upload_attachment":
+        document_id = result.get("document_id")
+        known_ids = {
+            int(item.get("document_id"))
+            for item in ticket.get("attachments") or []
+            if item.get("document_id") is not None
+        }
+        known_ids.update(
+            int(ref.get("document_id"))
+            for ref in ticket.get("attachment_refs") or []
+            if ref.get("document_id") is not None
+        )
+        if not document_id or int(document_id) not in known_ids:
+            raise _verification_failed(
+                "Uploaded attachment not found in authoritative ticket "
+                "attachment inventory.",
+                expected_document_id=document_id,
+            )
+        return {"ticket": ticket, "write_result": result}
 
     if capability == "helpdesk_set_assignee":
         if int(ticket.get("assigned_user_id") or -1) != int(change["user_id"]):

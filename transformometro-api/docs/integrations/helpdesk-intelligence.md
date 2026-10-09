@@ -524,8 +524,8 @@ decorators vs the ledger; drift fails CI).
 | GET | `/session/capabilities` | EXPOSED_READ | `helpdesk_read(action=capabilities)` |
 | GET | `/tickets` | EXPOSED_READ | `helpdesk_read(action=tickets)` |
 | GET | `/tickets/{ticket_id}` | EXPOSED_READ | `helpdesk_read(action=ticket)` |
-| GET | `/tickets/{id}/attachments/{doc}` | PLATFORM_BLOCKED_BINARY | metadata only via ticket projection |
-| POST | `/tickets/{id}/attachments` | PLATFORM_BLOCKED_BINARY | no governed binary transport; never base64 |
+| GET | `/tickets/{id}/attachments/{doc}` | EXPOSED_READ_BINARY | `helpdesk_read(action=attachment)` — MCP `ImageContent`/`EmbeddedResource` (R4.2) |
+| POST | `/tickets/{id}/attachments` | EXPOSED_WRITE | `upload_attachment` via `prepare_helpdesk_change` → `commit_proposal` (R4.2) |
 | POST | `/tickets` | EXPOSED_WRITE | `create_ticket` |
 | PUT | `/tickets/{id}/assignee` | EXPOSED_WRITE | `set_assignee` |
 | POST | `/tickets/{id}/followups` | EXPOSED_WRITE | `add_followup` |
@@ -544,7 +544,7 @@ decorators vs the ledger; drift fails CI).
 
 Counts: EXPOSED_READ 16 · EXPOSED_WRITE 14 ·
 COVERED_BY_EXISTING_PROJECTION 1 · BROWSER_FLOW 2 · UI_ONLY 1 ·
-INFRA_ONLY 1 · PLATFORM_BLOCKED_BINARY 2 · **UNCLASSIFIED 0**.
+INFRA_ONLY 1 · EXPOSED_READ_BINARY 1 · **UNCLASSIFIED 0**. (R4.1 classified the two attachment rows PLATFORM_BLOCKED_BINARY; R4.2 reclassified them once canonical MCP/OpenAI transports were proven — see §22.)
 
 ### 21.4 Surface after R4.1
 
@@ -584,3 +584,106 @@ delete acceptance (`[TÉO R4.1 DELETE ACCEPTANCE]` create → prepare →
 exists-before-confirm → commit → post-delete not_found) runs the moment
 a user OAuth link exists. Live unlink acceptance is intentionally not
 run against the real session (user friction/re-auth, per spec §34).
+
+## 22. R4.2 — Full Ticket Context & Binary Attachments V1
+
+### Binary transport selected
+
+- **Read (BFF → TÉO)**: canonical MCP 2.2.0 rich content blocks.
+  `image/png|jpeg|webp|gif` → `ImageContent`; any other supported file →
+  `EmbeddedResource` + `BlobResourceContents` (`helpdesk://tickets/{id}/
+  attachments/{doc}` URI). Text + structured metadata always accompany the
+  binary block — the client that cannot render binary still receives the
+  full document contract. Inline cap: 8 MiB per attachment; larger files
+  return `content_delivery=too_large` (metadata only). BFF hard limit for
+  upload/download remains 20 MiB.
+- **Write (ChatGPT → TÉO)**: canonical `_meta["openai/fileParams"]` —
+  the host binds the user-uploaded file to the `file` tool argument as
+  `{download_url, file_id, mime_type?, file_name?}`. The backend resolves
+  the platform-authorized `download_url` through `OpenAIFileGateway`
+  (HTTPS only, host allowlist `OPENAI_FILE_DOWNLOAD_HOSTS` default
+  `files.oaiusercontent.com`, no redirects, ≤20 MiB streamed cap,
+  no filesystem paths, no model-supplied URLs).
+- **No base64-in-JSON**, no generic URL fetcher, no local path, no
+  ticket/attachment mirror, no service account.
+
+### Architecture
+
+```text
+READ:  TÉO helpdesk_read(action=attachment, ticket_id, document_id)
+       → same-user Bearer → HelpdeskBffGateway.download_ticket_attachment
+       → BFF GET /tickets/{t}/attachments/{d} (belongs-to-ticket + AuthZ)
+       → bytes → ImageContent|EmbeddedResource + structured metadata
+WRITE: user file → openai/fileParams {file_id, download_url}
+       → prepare_helpdesk_change(action=upload_attachment) [AUTO_ACT]
+       → commit_proposal → OpenAIFileGateway.fetch(guarded)
+       → HelpdeskBffGateway.upload_ticket_document (multipart +
+         proposal-bound Idempotency-Key)
+       → BFF POST /tickets/{t}/attachments → GLPI
+       → authoritative read-back: document_id ∈ attachment_refs/attachments
+```
+
+### Full-ticket contract
+
+`GET /tickets/{id}` now also projects **`attachment_refs`**: the
+deduplicated document universe = `attachments[]` ∪ inline `<img>` refs
+extracted from `description_html` and every `timeline[].content_html`
+(`extract_bff_attachment_refs`, same-ticket only). TÉO never misses an
+inline screenshot and never double-fetches the same `document_id`.
+
+All previously projected fields unchanged (identity, lifecycle,
+classification, people, SLA, description(+html), can_* flags,
+validations, satisfaction, full timeline).
+
+### Policy
+
+`upload_attachment` → **AUTO_ACT** (`confirmation_policy.py`), same
+class as `add_followup`/`create_task`: user-supplied file, append-only,
+per-ticket. Still requires PREPARE → `commit_proposal` (sole ACT choke
+point) and read-back. 2xx without the returned `document_id` present in
+the authoritative inventory → `OUTCOME_VERIFICATION_FAILED`. GLPI
+timeline lag is tolerated via `attachment_refs`/`Document_Item`
+ownership, never by skipping the check.
+
+`delete_attachment`: **NOT_AVAILABLE** — the BFF exposes no attachment
+delete route; not invented at GLPI (ledger stays accurate).
+
+### GPT Actions vs MCP parity
+
+- **MCP**: full parity — image/resource blocks deliver real bytes;
+  `fileParams` `_meta` binds user uploads to `prepare_helpdesk_change`.
+- **GPT Actions** (JSON-only): `action=attachment` returns
+  `content_delivery=metadata_only` (never raw bytes in JSON);
+  `upload_attachment` accepts the same `file` object contract — usable
+  where the client supplies the authorized reference. OpenAPI enum/schema
+  changed → **Builder reimport required**.
+
+### Evidence
+
+- BFF (`helpdesk-api/tests/test_helpdesk_api.py`): attachment download
+  success/sibling/foreign-404/no-leak, timeline-lag download via
+  `Document_Item`, `attachment_refs` dedup incl. inline `<img>` refs.
+- TM read (`tests/test_teo_helpdesk_read.py`): attachment action
+  validation, image → `ImageContent`, PDF → `EmbeddedResource`,
+  too-large → metadata_only, cross-field rejection, wire serialization
+  (`image`/`resource` blocks, `mimeType` wire alias).
+- TM write (`tests/test_teo_helpdesk_write.py`): PREPARE-never-fetches,
+  exact file in proposal display, AUTO_ACT commit + verify, proposal-
+  bound idempotency key, consumed/stale proposal, fetch failure →
+  typed error before any write, `file` field rejected on non-upload
+  actions, read-back via `attachment_refs` on timeline lag.
+- File gateway (`tests/test_openai_file_gateway.py`): non-HTTPS denied,
+  non-allowlisted host denied (SSRF), redirect denied, oversized stream
+  denied, filename sanitization, `file_id` echoed back.
+- Route ledger (`tests/test_helpdesk_route_coverage.py`): 37 routes,
+  0 unclassified, attachment rows reclassified.
+
+### Live acceptance gate
+
+Same OAuth precondition as §20/§21.6: dev BFF → production GLPI needs a
+linked user session (`helpdesk.oauth_sessions` empty in this env).
+Pending live gates: real `fileParams` upload on ChatGPT, image bytes →
+model vision (community reports show inconsistent `ImageContent`
+handling on ChatGPT connectors — protocol PROVEN, client behavior
+PENDING_RUNTIME_ACCEPTANCE), compound assignment+upload, disposable
+ticket cleanup.

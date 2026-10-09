@@ -6,7 +6,7 @@ import logging
 from typing import Literal
 
 from fastapi import APIRouter, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from tm_app.application.gpt_actions.dispatch_service import (
     GptActionsDispatchService,
@@ -141,6 +141,19 @@ class GptGovernedOperationBody(BaseModel):
 # Helpdesk governed writes — action selects the semantic capability.
 
 
+class GptFileParam(BaseModel):
+    """Canonical openai/fileParams file object — populated by the host
+    when a user-uploaded file is bound to a tool argument. Fabricated
+    URLs fail closed at the platform-host allowlist."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    download_url: str
+    file_id: str
+    mime_type: str | None = None
+    file_name: str | None = None
+
+
 class GptHelpdeskChangeBody(BaseModel):
     """R4 Helpdesk governed write — action selects the typed change; only
     the fields relevant to the chosen action are consumed."""
@@ -151,11 +164,21 @@ class GptHelpdeskChangeBody(BaseModel):
             "create_ticket | set_assignee | add_followup | create_task | "
             "add_solution | request_validation | accept_solution | "
             "reject_solution | submit_satisfaction | accept_validation | "
-            "reject_validation | delete_ticket | unlink_glpi_session"
+            "reject_validation | delete_ticket | unlink_glpi_session | "
+            "upload_attachment"
         ),
     )
     ticket_id: int | None = None
     title: str | None = None
+    file: GptFileParam | None = Field(
+        default=None,
+        description=(
+            "upload_attachment only — the file the user attached to this "
+            "conversation, bound by the host as a fileParams object "
+            "(download_url + file_id; mime_type/file_name optional). "
+            "Never an arbitrary URL or local path."
+        ),
+    )
     description: str | None = None
     category_id: int | None = None
     urgency_id: int | None = None
@@ -494,9 +517,11 @@ def gpt_solution_read(
 def gpt_helpdesk_read(
     request: Request,
     action: Literal[
-        "session", "capabilities", "tickets", "ticket", "catalog"
+        "session", "capabilities", "tickets", "ticket",
+        "attachment", "catalog"
     ],
     ticket_id: int | None = None,
+    document_id: int | None = None,
     catalog_kind: str | None = None,
     q: str | None = None,
     status: str | None = None,
@@ -521,6 +546,7 @@ def gpt_helpdesk_read(
             authorization,
             action=action,
             ticket_id=ticket_id,
+            document_id=document_id,
             catalog_kind=catalog_kind,
             q=q,
             status=status,

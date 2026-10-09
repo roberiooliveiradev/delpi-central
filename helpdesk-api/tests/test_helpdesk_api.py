@@ -1047,3 +1047,24 @@ def test_delete_ticket_2xx_without_readback_fails_loudly():
     assert resp.status_code == 502
     assert resp.json()["error"] == "glpi_unavailable"
     assert glpi.delete_calls == 1
+
+def test_ticket_detail_projects_attachment_refs_including_inline():
+    """R4.2: attachment_refs = attachments[] + inline img refs, deduped."""
+    from dataclasses import replace
+
+    client, glpi = build_client()
+    link(client)
+    img_9 = "/apps/helpdesk-api/tickets/7/attachments/9"
+    img_2 = "/apps/helpdesk-api/tickets/7/attachments/2"
+    glpi.detail = replace(
+        glpi.detail,
+        description_html=(
+            "<p>Erro</p>"
+            "<img src=\"" + img_9 + "\">"
+            "<img src=\"" + img_2 + "\">"
+        ),
+    )
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.status_code == 200
+    refs = {item["document_id"] for item in detail.json()["attachment_refs"]}
+    assert refs == {2, 4, 9}

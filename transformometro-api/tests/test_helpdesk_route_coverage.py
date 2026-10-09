@@ -137,15 +137,16 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
         "EXPOSED_READ",
         "helpdesk_read(action=ticket)",
     ),
-    # --- Attachments (binary transport) --------------------------------------
+    # --- Attachments (R4.2 — canonical binary transport) ---------------------
     ("GET", "/tickets/{ticket_id}/attachments/{document_id}"): (
-        "PLATFORM_BLOCKED_BINARY",
-        "no canonical binary/file transport on MCP/GPT — metadata only "
-        "via helpdesk_read(action=ticket).attachments",
+        "EXPOSED_READ",
+        "helpdesk_read(action=attachment, ticket_id, document_id) — "
+        "MCP ImageContent/EmbeddedResource; GPT metadata_only",
     ),
     ("POST", "/tickets/{ticket_id}/attachments"): (
-        "PLATFORM_BLOCKED_BINARY",
-        "multipart upload — no governed binary transport; never base64",
+        "EXPOSED_WRITE",
+        "prepare_helpdesk_change(action=upload_attachment, file= "
+        "openai/fileParams object bound by the host)",
     ),
     # --- Governed writes ------------------------------------------------------
     ("POST", "/tickets"): (
