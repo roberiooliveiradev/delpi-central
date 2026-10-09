@@ -180,6 +180,15 @@ Qualquer valor não zero bloqueia READY_TO_CLOSE.
 ### Estados/interações
 PRELIMINARY → WAITING_FOR_CUTOFF → REVALIDATION_REQUIRED → READY_TO_CLOSE → STOCK_CLOSED.
 
+Regra pós-sacramentação aprovada:
+
+```text
+STOCK_CLOSED
+= terminal no lifecycle P3 do Portal V1
+```
+
+P3 não reabre, desfaz ou retifica localmente o fechamento. Correções posteriores pertencem ao owner canônico/ERP e não reescrevem histórico do Portal. Evolução futura exige novo gate de produto e revisão P3/P5.
+
 Zero pré-cutoff continua preliminar. Alteração de input após revalidação deve invalidar a prontidão aplicável.
 
 ### Freshness/proveniência
@@ -350,7 +359,7 @@ Não definir route pattern antes do inventário de plugin/basePath. O contrato d
 |---|---|---|---|---|---|---|---|---|
 | P1 | coberto | coberto transversalmente | coberto | histórico coberto | definido acima | composição + T01/T05 | ledger 23 | READY_FOR_IMPLEMENTATION_INVENTORY |
 | P2 | coberto | coberto transversalmente | coberto | coberto | definido acima | produto + sources autorizados | ledger 23 | READY_FOR_IMPLEMENTATION_INVENTORY |
-| P3 | coberto | coberto transversalmente | coberto | coberto | definido acima | T01/T03 | ledger 23 + 15.1 | READY_WITH_STOP_CONDITION_ON_T03 |
+| P3 | coberto | Gate V2 fechado | coberto | coberto | definido acima + E02 terminal | T01/T03 | ledger 23 + 15.1 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 |
 | P4 | coberto | page-level fechado em 11 | coberto | coberto | definido acima | owner CC + T01/T05 | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 | P5 | package/finalization fechado; envio condicionado | page-level fechado em 12 | coberto | coberto | definido acima | owners/sources + E04/T04 para envio | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / SEND_BLOCKED_WITH_EVIDENCE |
 | P6 | coberto | coberto transversalmente | coberto | coberto | definido acima | ADM01–ADM07 + E/T aplicáveis | ledger 23 + 28 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
