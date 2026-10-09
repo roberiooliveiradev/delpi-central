@@ -14,24 +14,31 @@ Não fazer union silencioso de fontes históricas divergentes.
 
 ## E02 — Correção pós-sacramentação
 
-**Estado Gate V2:** `DECISION_REQUIRED / DOCUMENTATION_BLOCKER`.
+**Estado Gate V2:** `CLOSED / PRODUCT_DECISION`.
 
-Reclassificação em 06/10/2026:
-- a evidência AS-IS/TÉO atual confirma sacramentação do estoque;
-- a decomposição/process docs consultados não definem reabertura, retificação ou correção depois de `STOCK_CLOSED`;
-- portanto E02 pode alterar lifecycle P3/P5 e não pode permanecer escondido como mero binding de implementação.
+Decisão aprovada em 09/10/2026:
 
-Precisa fechar antes de `A10 = READY_FOR_IMPLEMENTATION_BRIEF`:
-- existe reabertura?
-- quem autoriza?
-- quais correções são possíveis?
-- o que precisa revalidar?
-- como fica a competência?
-- impacto em pacote finalizado/enviado;
-- qual evidência/auditoria?
-- se não existir correção/reabertura no Portal V1, formalizar `STOCK_CLOSED` como terminal para o Portal e preservar correções exclusivamente no owner.
+```text
+STOCK_CLOSED
+= terminal no lifecycle P3 do Portal V1
+```
 
-Não escolher uma alternativa por preferência arquitetural.
+Contrato:
+- Portal V1 não reabre estoque após `STOCK_CLOSED`;
+- Portal V1 não desfaz sacramentação;
+- Portal V1 não cria workflow local de retificação pós-fechamento;
+- qualquer correção posterior pertence ao owner canônico/ERP;
+- histórico do fechamento original permanece imutável no Portal;
+- eventual novo estado/artefato posterior só pode ser refletido quando fornecido pelo owner;
+- suporte futuro a reabertura/retificação exige novo gate de produto e revisão P3/P5.
+
+Classificação:
+
+```text
+OPEN_PRODUCT_DESIGN = NO
+IMPLEMENTATION_INVENTORY = NO
+FUTURE_EXPANSION = NEW_GATE_IF_REQUIRED
+```
 
 ## E03 — Executor/permissões de sacramentação
 
