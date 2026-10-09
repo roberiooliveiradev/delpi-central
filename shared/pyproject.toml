@@ -11,7 +11,8 @@ authors = [
 
 dependencies = [
   "python-jose[cryptography]>=3.3.0",
-  "requests>=2.31.0"
+  "requests>=2.31.0",
+  "lxml>=4.9"
 ]
 
 [project.optional-dependencies]
@@ -43,6 +44,7 @@ include = [
   "delpi_mcp*",
   "strategic_indicators_client*",
   "transformometro_client*",
+  "bpmn_validation*",
 ]
 
 [tool.setuptools]

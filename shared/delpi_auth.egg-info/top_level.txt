@@ -1,3 +1,4 @@
+bpmn_validation
 delpi_api_client
 delpi_auth
 delpi_mcp

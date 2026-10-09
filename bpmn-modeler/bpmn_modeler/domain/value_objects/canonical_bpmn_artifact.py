@@ -1,14 +1,6 @@
-from __future__ import annotations
+"""Re-export compat — o value object canônico vive em
+``shared/bpmn_validation`` (G7)."""
 
-from dataclasses import dataclass
+from bpmn_validation.artifact import CanonicalBpmnArtifact
 
-
-@dataclass(frozen=True, slots=True)
-class CanonicalBpmnArtifact:
-    """Opaque BPMN XML payload owned by the BPMN Modeler.
-
-    Construction does not parse or establish XML, BPMN, or BPMN-DI validity.
-    Validation belongs to the dedicated validation boundary.
-    """
-
-    content: str
+__all__ = ["CanonicalBpmnArtifact"]
