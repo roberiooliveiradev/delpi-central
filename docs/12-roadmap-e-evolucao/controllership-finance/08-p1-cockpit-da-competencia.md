@@ -259,7 +259,7 @@ Conteúdo visual mínimo:
 - resumo por destinatário quando aplicável;
 - blockers de readiness;
 - versão atual, quando existir;
-- CTA `Abrir Pacote e Envio`.
+- CTA `Abrir Pacote, Finalização e Envio`.
 
 Regras:
 - Finalizar != Enviar;
@@ -514,7 +514,7 @@ P1 pode navegar para:
 - P2 Checklist e Documentos;
 - P3 Estoque e Conciliação;
 - P4 Classificações e Pendências;
-- P5 Pacote e Envio;
+- P5 Pacote, Finalização e Envio;
 - Help contextual.
 
 P1 não executa:
