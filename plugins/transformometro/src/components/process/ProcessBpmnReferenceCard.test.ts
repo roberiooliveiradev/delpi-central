@@ -59,9 +59,16 @@ describe("G5 — referência explícita processo ↔ BPMN Modeler", () => {
 
   it("página de processo monta o card na subseção Fluxo", () => {
     const page = readFileSync(join(root, "ui/pages/ProcessDetailPage.tsx"), "utf8");
-    expect(page).toMatch(/ProcessBpmnReferenceCard/);
+    expect(page).toMatch(/ProcessBpmnCard/);
     const fluxo = page.indexOf('data-subsection="fluxo"');
-    const cardIdx = page.indexOf("ProcessBpmnReferenceCard", fluxo);
+    const cardIdx = page.indexOf("ProcessBpmnCard", fluxo);
     expect(cardIdx).toBeGreaterThan(fluxo);
+    // G7: o card dual-mode preserva a referência explícita G5 quando não
+    // há documento nativo.
+    const card = readFileSync(
+      join(root, "components/process/ProcessBpmnCard.tsx"),
+      "utf8"
+    );
+    expect(card).toMatch(/ProcessBpmnReferenceCard/);
   });
 });

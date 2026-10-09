@@ -12,6 +12,14 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY transformometro-meeting-minutes-presentation ./transformometro-meeting-minutes-presentation
 
+# Editor BPMN compartilhado (G7) — resolve via alias ../bpmn-editor/src;
+# deps próprias (bpmn-js, elkjs) precisam estar instaladas.
+COPY bpmn-editor/package*.json ./bpmn-editor/
+RUN --mount=type=cache,target=/root/.npm \
+    cd bpmn-editor && npm install --omit=peer --legacy-peer-deps
+
+COPY bpmn-editor ./bpmn-editor
+
 COPY transformometro/package*.json ./transformometro/
 RUN --mount=type=cache,target=/root/.npm \
     cd transformometro && npm install

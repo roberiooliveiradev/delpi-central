@@ -20,6 +20,8 @@ export type TransformometroView =
   | "processos"
   | "processo"
   | "processoDiagramaEdit"
+  | "processoBpmnEdit"
+  | "processoBpmnRevision"
   | "instancia"
   | "instanciaDiagramaEdit"
   | "revisao"
@@ -38,6 +40,7 @@ export type ParsedTransformometroRoute = {
   processoId?: string;
   instanciaId?: string;
   revisaoId?: string;
+  bpmnRevisionNumber?: number;
   filialId?: string;
   setorId?: string;
   recursoId?: string;
@@ -160,6 +163,27 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
     return {
       view: "processoDiagramaEdit",
       processoId: processoDiagramaEditMatch[1],
+    };
+  }
+
+  const processoBpmnRevisionMatch = path.match(
+    /^\/apps\/transformometro\/(?:processes|processos)\/([^/]+)\/bpmn\/revisions\/(\d+)$/,
+  );
+  if (processoBpmnRevisionMatch) {
+    return {
+      view: "processoBpmnRevision",
+      processoId: processoBpmnRevisionMatch[1],
+      bpmnRevisionNumber: Number(processoBpmnRevisionMatch[2]),
+    };
+  }
+
+  const processoBpmnEditMatch = path.match(
+    /^\/apps\/transformometro\/(?:processes|processos)\/([^/]+)\/bpmn$/,
+  );
+  if (processoBpmnEditMatch) {
+    return {
+      view: "processoBpmnEdit",
+      processoId: processoBpmnEditMatch[1],
     };
   }
 
@@ -330,6 +354,18 @@ export function buildProcessoPath(
 
 export function buildProcessoDiagramaEditPath(processoId: string): string {
   return `${buildProcessoPath(processoId)}/diagram/edit`;
+}
+
+/** Editor BPMN nativo do processo (documento governado pelo Transformômetro). */
+export function buildProcessoBpmnEditPath(processoId: string): string {
+  return `${buildProcessoPath(processoId)}/bpmn`;
+}
+
+export function buildProcessoBpmnRevisionPath(
+  processoId: string,
+  revisionNumber: number,
+): string {
+  return `${buildProcessoPath(processoId)}/bpmn/revisions/${revisionNumber}`;
 }
 
 /**

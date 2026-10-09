@@ -48,6 +48,14 @@ export default defineConfig(({ mode }) => {
           find,
           replacement,
         })),
+        {
+          find: /^@delpi\/bpmn-editor\/(.*)$/,
+          replacement: path.resolve(__dirname, "../bpmn-editor/src") + "/$1",
+        },
+        {
+          find: /^@delpi\/bpmn-editor$/,
+          replacement: path.resolve(__dirname, "../bpmn-editor/src/index.ts"),
+        },
       ],
       dedupe: ["react", "react-dom", "@xyflow/react"],
     },

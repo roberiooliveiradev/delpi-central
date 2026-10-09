@@ -71,7 +71,7 @@ import { ProcessoDecompositionSection } from "../../components/decomposition/Pro
 import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
 import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
 import { ProcessoDiagramComposedSection } from "../../components/diagram/sections/ProcessoDiagramComposedSection";
-import { ProcessBpmnReferenceCard } from "../../components/process/ProcessBpmnReferenceCard";
+import { ProcessBpmnCard } from "../../components/process/ProcessBpmnCard";
 import { ProcessFilesSection } from "../process/ProcessFilesSection";
 import { ProcessDocumentationSection } from "../processes/ProcessDocumentationSection";
 import { ProcessInteractionRoomSection } from "../processes/ProcessInteractionRoomSection";
@@ -702,7 +702,7 @@ export function ProcessDetailPage({
               <div data-subsection="fluxo">
                 <EditableSectionCard
                   title="Modelo BPMN"
-                  description="Referência explícita a uma revisão imutável do Meu Modelador de Processos. O vínculo nunca segue a revisão mais recente automaticamente."
+                  description="Diagrama BPMN nativo deste processo ou referência explícita a uma revisão imutável do Meu Modelador de Processos — nunca ambos."
                   hint={TM_HELP_TOOLTIPS.processos.modeloBpmn}
                   isEditing={false}
                   editable={false}
@@ -710,9 +710,10 @@ export function ProcessDetailPage({
                   onCancel={() => undefined}
                   editContent={null}
                   readContent={
-                    <ProcessBpmnReferenceCard
+                    <ProcessBpmnCard
                       processoId={processoId}
                       getAccessToken={getAccessToken}
+                      onNavigate={onNavigate}
                       onError={setError}
                     />
                   }

@@ -28,8 +28,10 @@
       "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"],
       "@delpi/transformometro-meeting-minutes-presentation": [
         "../transformometro-meeting-minutes-presentation/src/index.ts"
-      ]
+      ],
+      "@delpi/bpmn-editor": ["../bpmn-editor/src/index.ts"],
+      "@delpi/bpmn-editor/*": ["../bpmn-editor/src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "../bpmn-editor/src/**/*.d.ts"]
 }

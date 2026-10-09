@@ -30,6 +30,8 @@ import { InteractionRoomsPage } from "./ui/pages/InteractionRoomsPage";
 import { PersonDirectoryPage } from "./ui/pages/PersonDirectoryPage";
 import { MySignaturePage } from "./ui/pages/MySignaturePage";
 import { DiagramEditorPage } from "./ui/pages/DiagramEditorPage";
+import { ProcessBpmnEditorPage } from "./ui/pages/ProcessBpmnEditorPage";
+import { ProcessBpmnRevisionViewPage } from "./ui/pages/ProcessBpmnRevisionViewPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
 import { useTransformometroRouterPath } from "./hooks/useTransformometroRouterPath";
 import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
@@ -163,6 +165,27 @@ function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
     page = <MeetingMinutesPendingPage getAccessToken={getAccessToken} onNavigate={onNavigate} />;
   } else if (route.view === "minhaAssinatura") {
     page = <MySignaturePage getAccessToken={getAccessToken} onNavigate={onNavigate} />;
+  } else if (
+    route.view === "processoBpmnRevision" &&
+    route.processoId &&
+    route.bpmnRevisionNumber != null
+  ) {
+    page = (
+      <ProcessBpmnRevisionViewPage
+        processoId={route.processoId}
+        revisionNumber={route.bpmnRevisionNumber}
+        getAccessToken={getAccessToken}
+        onNavigate={onNavigate}
+      />
+    );
+  } else if (route.view === "processoBpmnEdit" && route.processoId) {
+    page = (
+      <ProcessBpmnEditorPage
+        processoId={route.processoId}
+        getAccessToken={getAccessToken}
+        onNavigate={onNavigate}
+      />
+    );
   } else if (route.view === "processoDiagramaEdit" && route.processoId) {
     page = (
       <DiagramEditorPage
