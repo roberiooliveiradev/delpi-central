@@ -192,3 +192,227 @@ Conta aplicável sem movimento ainda requer extrato.
 Inclui Alimentação, Amostra MP, Assistência Médica, Ativo, Combustível, Consumo Geral, Embalagem, EPI, Frete, Informática, Insumo, Limpeza, Manutenção, Material de Expediente, MP, Segurança/Vigilância.
 
 Não inferir campo físico do Protheus a partir desse vocabulário.
+
+
+## Regras TARGET transversais — Gate V2
+
+As regras GAP-RULE acima preservam evidência específica de relatórios/fontes. As regras abaixo consolidam o comportamento TARGET do produto e não substituem a provenance original.
+
+### RULE-T01 — Competência e snapshot
+
+```text
+COMPETENCE OPEN
+→ SNAPSHOT(template version + effective configuration)
+```
+
+Nova publicação não altera competência já aberta.
+
+### RULE-T02 — Requirement / satisfaction
+
+```text
+REQUIRED
+CONDITIONAL
+OPTIONAL
+```
+
+- REQUIRED nunca vira N/A;
+- CONDITIONAL pode N/A somente quando regra permitir, com justificativa;
+- OPTIONAL ausente não bloqueia;
+- `ATTACHED != VALIDATED`;
+- `NO_MOVEMENT != NOT_APPLICABLE`.
+
+### RULE-T03 — Evidência e validação
+
+- versões históricas não são sobrescritas;
+- PER_ATTACHMENT valida cada arquivo;
+- WHOLE_SET valida o conjunto;
+- rejeição preserva motivo/histórico;
+- replacement não herda aceite automaticamente;
+- reversão é governada e bloqueada quando nova versão já existe.
+
+### RULE-T04 — Item excepcional / correção estrutural
+
+- item excepcional pertence à competência, não altera mestre;
+- pré-execução permite edição governada;
+- cancelamento é `CANCELLED`, não delete;
+- pós-execução usa request → MANAGE review → nova revisão;
+- MANAGE pode autoaprovar mantendo request/approval auditados separadamente;
+- promoção ao mestre é prospectiva.
+
+### RULE-T05 — Source / completeness
+
+```text
+SOURCE_UNAVAILABLE != ZERO
+SOURCE_UNAVAILABLE != EMPTY
+PRELIMINARY != FINAL
+```
+
+Source/freshness/proveniência devem permanecer visíveis quando materiais.
+
+### RULE-T06 — Cutoff / paridade / STOCK_CLOSED
+
+```text
+PRELIMINARY
+→ WAITING_FOR_CUTOFF
+→ REVALIDATION_REQUIRED
+→ READY_TO_CLOSE
+→ STOCK_CLOSED
+```
+
+```text
+DIVERGENCIA = ENTRADAS_SAIDAS - P7 - H02
+PARIDADE_OK <=> DIVERGENCIA = R$ 0,00
+TOLERANCIA_MONETARIA = NONE
+```
+
+Decisão E02 aprovada em 09/10/2026:
+
+```text
+STOCK_CLOSED
+= terminal no lifecycle P3 do Portal V1
+```
+
+O Portal V1:
+- não reabre;
+- não desfaz sacramentação;
+- não retifica localmente `STOCK_CLOSED`;
+- preserva histórico;
+- deixa correções posteriores no owner canônico/ERP.
+
+T03 continua necessário para provar o owner/state canônico.
+
+### RULE-T07 — Classificação e pendências
+
+```text
+AI_SUGGESTION != HUMAN_DECISION
+PENDING_SINCE != SLA
+DISMISSED != NOT_APPLICABLE
+```
+
+Estados:
+- OPEN;
+- IN_ANALYSIS;
+- WAITING_EXTERNAL;
+- RESOLVED;
+- DISMISSED.
+
+IA explica/sugere; humano autorizado confirma. V1 não grava correção ERP.
+
+### RULE-T08 — Pacote / finalização / envio
+
+```text
+READY_TO_FINALIZE
+!= PACKAGE_FINALIZED
+!= PACKAGE_SENT
+!= MONTHLY_CLOSING_COMPLETED
+```
+
+- finalizar cria versão/snapshot; não envia;
+- recipient packages avançam independentemente;
+- reabertura antes de envio cria nova working/version;
+- PACKAGE_SENT é imutável;
+- correção pós-envio cria complemento/nova versão;
+- conclusão mensal exige todos os packages aplicáveis enviados + zero clarification aberta;
+- ack/read não bloqueia V1.
+
+Envio real:
+
+```text
+PACKAGE_DELIVERY_CONTRACT = PENDING_E04_T04
+NOTIFICATION_DISPATCHED != PACKAGE_SENT
+```
+
+### RULE-T09 — Administração / configuração
+
+```text
+DRAFT
+→ REVIEW
+→ PUBLISH
+→ EFFECTIVE_FROM
+```
+
+- save != publish;
+- um MANAGE pode publicar com auditoria;
+- no hard delete;
+- effective dating prospectivo;
+- catálogos tipados;
+- identities permanecem Core references.
+
+### RULE-T10 — Notifications
+
+Core Notification capability é PROVEN no HEAD revalidado em 09/10/2026.
+
+```text
+POST /integrations/notifications
+= platform notification capability
+
+NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE
+NOTIFICATION_DISPATCHED != PACKAGE_SENT
+```
+
+O produto ainda define adapters/event payloads/recipients; não cria SMTP/preferences paralelos.
+
+### RULE-T11 — AuthZ
+
+```text
+JWT = identity/context
+Core PermissionResolver = effective permission authority
+
+ALLOW
+= capability
+AND resource_scope / ownership
+AND business_rule
+```
+
+Permission codes do produto:
+- `controllership-finance.access`;
+- `controllership-finance.manage`.
+
+`ACCESS != MANAGE`.
+
+Unidade/filial é dimensão de dado/contexto, não permission code.
+
+### RULE-T12 — Colaboração / tarefas
+
+```text
+MESSAGE != BUSINESS_DECISION
+ROOM_MEMBER != AUTHORIZATION_GRANT
+CHAT_ATTACHMENT != P2_EVIDENCE
+TASK_PROJECTION != TASK_ENTITY
+BLOCKER != MY_TASK
+MENTION != MY_TASK
+```
+
+Minhas tarefas é self-only e abre o owner. A Sala não cria task genérica na V1.
+
+### RULE-T13 — Temporalidade
+
+```text
+FORMAL_SLA = NO
+DUE_DATE = NO
+OVERDUE = NO
+SLA_BREACH = NO
+TIME_BASED_ESCALATION = NO
+PENDING_SINCE = YES
+```
+
+Exceção: prazo só existe quando owner específico possuir due formal real.
+
+### RULE-T14 — Help
+
+```text
+USER_FACING_CHANGE
+→ HELP_SYNC
+→ FEATURE ACCEPTANCE
+```
+
+Help runtime só publica capability implementada/autorizada.
+
+### RULE-T15 — Documented vs implemented
+
+```text
+DOCUMENTED != IMPLEMENTED
+READY_FOR_IMPLEMENTATION_BRIEF != IMPLEMENTATION_AUTHORIZED
+```
+
+FASE A não cria runtime.
