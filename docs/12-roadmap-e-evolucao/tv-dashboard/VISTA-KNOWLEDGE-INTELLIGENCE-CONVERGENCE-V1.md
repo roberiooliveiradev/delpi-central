@@ -1838,3 +1838,117 @@ catalog-sync test failures are foreign scope (api-delpi route generator
 regeneration); (c) P7 telemetry runtime remains deferred.
 NEXT = PHASE 7 Eval + Telemetry V2 execution (diagnostic already DONE
 in §35).
+
+
+## 41. PHASE 7 — EVAL + TELEMETRY V2 EXECUTION RECORD
+
+### 41.1 IMPLEMENTATION
+
+- `tv_app/application/services/data/vista_quality_telemetry.py` — bounded
+  in-process quality telemetry: same ownership pattern as
+  `presentation_mutation_telemetry` (threading.Lock + deque(500) +
+  snapshot/reset). Per-family field allowlist (fail-closed privacy),
+  low-cardinality buckets (0/1/2/3+), scalar-only values, recorder never
+  raises into product flow (fail-open). SCHEMA = `vista-quality-v1`.
+- Hooks wired at the smallest proven points, no second owner:
+  - P4 grounding: `get_playlist_context` — selectionState +
+    resolved/missing buckets (no object ids).
+  - P5 methodology: `suggest_change` + `preview_data_block` —
+    designIntent/readiness/sufficiency enums (no payload).
+  - P6 route search: `search_data_routes` — tvRouteHit,
+    solutionLookupUsed (false when fail-closed before gateway:
+    not_configured/authn), gapClassification, candidateBucket.
+  - VERIFY: `commit_service` records the FINAL outcome after visual
+    verification folds in — VERIFIED / OUTCOME_NOT_VERIFIED / reason.
+    Commit outcome stays owned by `presentation_mutation_telemetry`;
+    no duplicate commit/proposal events emitted.
+- `tests/vista_metric_catalog.py` — machine-readable catalog (test/eval
+  code only): every dimension declares purpose, measurementSource,
+  numerator/denominator semantics, exclusions, evidence, status.
+  EVAL_CORPUS_VERSION = `vista-quality-v1`.
+- `tests/run_vista_eval.py` — single entry point over the FROZEN P5/P6
+  corpora (reused, not copied) + suite-native dims delegated to named
+  pytest files. Raw counts only — no composite score.
+- `tests/test_vista_eval_telemetry.py` — 13 tests: catalog completeness,
+  corpus coverage (no silent dimension), privacy forbidden-keys/values,
+  cardinality, fail-open, non-semantic product output, snapshot/reset.
+
+### 41.2 TELEMETRY MODEL
+
+Families: `grounding` · `design` · `route_search` · `verify` — closed
+allowlist, unknown families/fields dropped. Forbidden keys never
+recorded (JWT/token/prompt/content/nativeConfig/rows/ids — asserted in
+tests). TELEMETRY_SCOPE = PROCESS_LOCAL; CLUSTER_AGGREGATION =
+NOT_IMPLEMENTED. No HTTP route, no GPT Action, no MCP tool, no
+persistence — internal snapshot only.
+
+### 41.3 METRIC CATALOG (status per §35)
+
+MEASURABLE_NOW (corpus): VISUAL_SELECTION, DATA_SHAPE_AWARENESS,
+CLARIFICATION_CORRECTNESS, TARGET_RESOLUTION, VISUAL_EVIDENCE_
+CORRECTNESS, UNSUPPORTED_CLAIM, DATA_ROUTE_RETRIEVAL, FALSE_ABSENCE,
+SOLUTION_OWNER_RESOLUTION, ROUTE_VS_SOLUTION_DISTINCTION,
+AMBIGUITY_HANDLING, UNAUTHORIZED_SOLUTION_LEAK.
+MEASURABLE_NOW (suite): OBJECT_GROUNDING, CREATE_VS_ALTER,
+FILTER_LAYERING, DISPLAY_FORMAT_SELECTION, TYPED_OP_VALIDITY,
+PROPOSAL_VALIDITY, WRITE_SAFETY, TRANSPORT_PARITY.
+MEASURABLE_NOW (telemetry): VERIFY_OUTCOME (process-local).
+NEEDS_FIXTURE: DATA_DIAGNOSIS (partial — preview suites exist).
+NEEDS_TELEMETRY: USER_CORRECTION — no deterministic correction signal
+exists; not fabricated.
+
+### 41.4 BASELINE / CANDIDATE (corpus-native)
+
+Baseline = current accepted system at pre-P7 HEAD (P4/P5/P6 semantics);
+instrumentation is proven non-semantic (identical output with recorder
+failing). Corpus results on candidate = baseline-identical:
+
+P5 corpus (22 cases): VISUAL_SELECTION 7/7 · DATA_SHAPE_AWARENESS 19/19 ·
+CLARIFICATION_CORRECTNESS 2/2 · VISUAL_EVIDENCE_CORRECTNESS 3/3 ·
+UNSUPPORTED_CLAIM fabricated=0 · TARGET_RESOLUTION via corpus keys.
+P6 corpus (12): ROUTE_VS_SOLUTION_DISTINCTION 12/12 ·
+DATA_ROUTE_RETRIEVAL 3/3 · FALSE_ABSENCE 9/9 · AMBIGUITY_HANDLING 2/2 ·
+SOLUTION_OWNER_RESOLUTION candidates exact · UNAUTHORIZED_SOLUTION_LEAK
+0 leaks.
+
+### 41.5 RUNTIME VALIDATION (in-container, real product paths)
+
+- `get_playlist_context` scope=editorFocus → grounding event
+  ACTIVE/resolved=1/missing=0 — no ids recorded.
+- `suggest_change` "melhore isso" → design event
+  IMPROVE_EXISTING/READY/RECOMMEND_NOW.
+- `search_data_routes` miss → route_search CONTRACT_GAP,
+  solutionLookupUsed=False; hit → TV_ROUTE_FOUND, tvRouteHit=True.
+- Snapshot N→N+1 per family; only allowlisted bounded labels observed.
+- MUTATION WRITE LIVE TEST = NOT_RUN_BY_DESIGN (commit is a governed
+  write; not triggered for telemetry).
+
+### 41.6 TESTS / REGRESSIONS / BUDGET
+
+- New: 13 P7 eval/telemetry tests.
+- Focused regressions: 82 P4/P5/P6 corpus suites + 212
+  mutation/governed-write/filter/display-format + 128
+  Actions/MCP/parity/catalog — all green.
+- Actions budget: envelopeAscii 95,712B / 102,400B — delta 0 vs P6;
+  headroom 6,688B. No model-facing metadata added.
+- New GPT Actions / MCP tools / HTTP routes: 0.
+- Full suite: see run log — same 2 pre-existing catalog-sync failures
+  expected (foreign api-delpi drift).
+
+### 41.7 P8 DECISION GATE
+
+P8_EVIDENCE = INSUFFICIENT — corpus-native dims pass at 100% and suite
+dims are green; no recurring material errors attributable to marker
+scoring/fan-out arbitration are measurable from frozen corpora.
+USER_CORRECTION remains unmeasured (no canonical correction signal).
+P8 arbitration work is NOT justified by current evidence; keep gate
+closed until runtime telemetry accrues or a material failure is proven.
+
+### 41.8 STATUS
+
+PHASE 7 = **DONE** — deterministic eval layer + safe structured
+telemetry landed; measurement architecture proven end-to-end;
+no semantic change to product behavior.
+Residuals: (a) DATA_DIAGNOSIS NEEDS_FIXTURE; (b) USER_CORRECTION
+NEEDS_TELEMETRY (no canonical signal); (c) telemetry PROCESS_LOCAL —
+no cluster aggregation; (d) 2 foreign catalog-sync failures unchanged.

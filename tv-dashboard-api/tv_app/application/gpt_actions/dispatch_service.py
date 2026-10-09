@@ -501,6 +501,15 @@ class GptActionsDispatchService:
                 "selectedObjects": selected_objects,
                 "missingIds": missing_ids,
             }
+            from tv_app.application.services.data.vista_quality_telemetry import (
+                record_grounding,
+            )
+
+            record_grounding(
+                selection_state=editor_focus["selectionState"],
+                resolved=len(selected_objects),
+                missing=len(missing_ids),
+            )
 
         # Inspeção focada de data_source legado: bounded à fonte + deps dela.
         # Sem data_source_id o comportamento do contexto é inalterado;
@@ -991,6 +1000,23 @@ class GptActionsDispatchService:
             response["solutionIntelligence"] = (
                 SolutionIntelligenceService.route_found()
             )
+        # P7 — bounded quality signal: route hit/miss + ecosystem outcome.
+        # Enums and buckets only; no query text or solution ids recorded.
+        from tv_app.application.services.data.vista_quality_telemetry import (
+            record_route_search,
+        )
+
+        intel = response.get("solutionIntelligence") or {}
+        lookup_used = bool(intel) and not items
+        if intel.get("reason") in {"not_configured", "authn"}:
+            # Fail-closed before the gateway was ever invoked — not a lookup.
+            lookup_used = False
+        record_route_search(
+            tv_route_hit=bool(items),
+            solution_lookup_used=lookup_used,
+            gap_classification=intel.get("gapClassification"),
+            candidates=len(intel.get("candidates") or []),
+        )
         return response
 
     @staticmethod
@@ -1258,6 +1284,16 @@ class GptActionsDispatchService:
         )
         methodology.pop("_fabricated", None)
         response["designMethodology"] = methodology
+        # P7 — bounded quality signal: intent/readiness/sufficiency enums.
+        from tv_app.application.services.data.vista_quality_telemetry import (
+            record_design_methodology,
+        )
+
+        record_design_methodology(
+            design_intent="CHOOSE_VISUAL",
+            readiness=methodology.get("readiness"),
+            sufficiency=methodology.get("sufficiency"),
+        )
         return response
 
     @staticmethod
@@ -1442,6 +1478,16 @@ class GptActionsDispatchService:
             methodology = self._design_methodology_for_suggest(intent=intent, host=host)
             methodology.pop("_fabricated", None)
             payload["designMethodology"] = methodology
+            # P7 — bounded quality signal: intent/readiness/sufficiency enums.
+            from tv_app.application.services.data.vista_quality_telemetry import (
+                record_design_methodology,
+            )
+
+            record_design_methodology(
+                design_intent=intent,
+                readiness=methodology.get("readiness"),
+                sufficiency=methodology.get("sufficiency"),
+            )
         return payload
 
     def _design_methodology_for_suggest(

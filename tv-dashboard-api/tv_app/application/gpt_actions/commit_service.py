@@ -1133,6 +1133,7 @@ class TvGptCommitService:
             user=user,
             authorization=authorization,
         )
+
         from tv_app.application.services.data.visual_verification_service import (
             VisualVerificationService,
         )
@@ -1148,6 +1149,18 @@ class TvGptCommitService:
             persisted=True,
             before_native=before_native_for_verify,
             after_native=after_for_visual,
+        )
+
+        # P7 — bounded quality signal: commit verification outcome. VERIFY is
+        # recorded separately from COMMIT because commit != verified outcome.
+        from tv_app.application.services.data.vista_quality_telemetry import (
+            record_verify_outcome,
+        )
+
+        record_verify_outcome(
+            outcome="VERIFIED"
+            if verified and VisualVerificationService.is_verified(visual_verification)
+            else str(verify_details.get("reason") or "OUTCOME_NOT_VERIFIED")
         )
         if not verified or not VisualVerificationService.is_verified(visual_verification):
             verify_details = dict(verify_details)
