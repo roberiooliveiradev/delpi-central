@@ -1300,11 +1300,17 @@
   min-width: 0;
 }
 
-/* Com um action card aberto, o composer vira região limitada:
-   o trigger fica pinado e o card é quem encolhe/rola. */
+/* Com um action card aberto, o composer reivindica primeiro o espaço que o
+   conteúdo precisa (a thread cede por flex:1 + min-height:0 e os extras
+   encolhem por flex:0 1). flex:0 0 evita a faixa estreita causada pelo
+   shrink proporcional ao basis da thread. O teto desconta o offset real
+   do composer dentro da inner (2 gaps de 0.35rem + margin-block dos extras
+   de 1.1rem): sem isso, o composer mede 100% da inner mas inicia ~1.8rem
+   abaixo do topo e o rodapé é clipado pelo overflow:hidden da inner. */
 .dashboard-helpdesk .helpdesk-ticket-workspace__composer:has(> .helpdesk-action-card) {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
+  max-height: calc(100% - 1.8rem);
   overflow: hidden;
 }
 
@@ -1405,6 +1411,13 @@
   flex: 0 0 auto;
   max-height: min(18rem, 45%);
   overflow-y: auto;
+}
+
+/* Com o action card aberto, os extras cedem espaço antes do card (rolam
+   internamente); sem isso, extras + composer inflexíveis clipam o rodapé. */
+.dashboard-helpdesk .helpdesk-detail__conversation-inner:has(> .helpdesk-ticket-workspace__composer > .helpdesk-action-card) > .helpdesk-timeline-extras {
+  flex: 0 1 auto;
+  min-height: 0;
 }
 
 .dashboard-helpdesk .helpdesk-timeline-extras__block {

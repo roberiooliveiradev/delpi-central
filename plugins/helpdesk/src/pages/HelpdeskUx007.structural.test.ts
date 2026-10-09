@@ -42,8 +42,13 @@ describe("HELPDESK-MFE-UX-007 composer height ownership", () => {
       css,
       ".helpdesk-ticket-workspace__composer:has(> .helpdesk-action-card) {",
     );
-    expect(open).toContain("flex: 0 1 auto");
+    // flex:0 0 — o card reivindica o espaço do conteúdo ANTES da thread
+    // (shrink proporcional ao basis reduziria o card a uma faixa estreita).
+    expect(open).toContain("flex: 0 0 auto");
     expect(open).toContain("min-height: 0");
+    // O teto desconta o offset do composer na inner (gaps + margin dos
+    // extras): 100% puro clipa o rodapé pelo overflow:hidden da inner.
+    expect(open).toMatch(/max-height:\s*calc\(100% - 1\.8rem\)/);
     expect(open).toContain("overflow: hidden");
     const card = cssRule(
       css,
@@ -78,11 +83,17 @@ describe("HELPDESK-MFE-UX-007 composer height ownership", () => {
     expect(footerIdx).toBeGreaterThan(bodyIdx);
   });
 
-  it("timeline extras are bounded and scroll — never collapse to a sliver", () => {
+  it("timeline extras are bounded, scroll internally and yield space only to the open action card", () => {
     const rule = cssRule(css, ".helpdesk-timeline-extras {");
     expect(rule).toContain("flex: 0 0 auto");
     expect(rule).toContain("max-height:");
     expect(rule).toContain("overflow-y: auto");
+    const yielding = cssRule(
+      css,
+      ".helpdesk-detail__conversation-inner:has(> .helpdesk-ticket-workspace__composer > .helpdesk-action-card) > .helpdesk-timeline-extras {",
+    );
+    expect(yielding).toContain("flex: 0 1 auto");
+    expect(yielding).toContain("min-height: 0");
   });
 
   it("workspace main keeps min-width: 0 so aside never causes horizontal overflow", () => {
