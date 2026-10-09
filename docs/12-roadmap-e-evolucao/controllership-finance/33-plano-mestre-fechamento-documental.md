@@ -180,7 +180,7 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 | A09 | P2 Checklist e Documentos | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 | A10 | P3 Estoque e Conciliação | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03** |
 | A11 | P4 Classificações e Pendências | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
-| A12 | P5 Pacote, Finalização e Envio | **PARTIAL / PACKAGE_FINALIZATION_READY / SEND_DECISION_REQUIRED_E04_T04** |
+| A12 | P5 Pacote, Finalização e Envio | **PARTIAL / PORTAL_SUBMISSION_MODEL_PASS / REVIEW_COMPLETION_DECISION_REQUIRED** |
 | A13 | P6 Administração / Configuração | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 
 A01 está apenas na fila futura. Runtime permanece inexistente.
@@ -194,25 +194,13 @@ RUNTIME_CHANGES = NONE
 
 A14 fechou naming, owners, permissions, rotas, plugin-ui, visual families, themes, mobile, Help, states e contracts após A01–A13. Authority: [34-revisao-transversal-gate-v2.md](./34-revisao-transversal-gate-v2.md).
 
-Residual já conhecido:
-- A12 envio real permanece bloqueado por `DECISION_REQUIRED_E04_T04`;
-- inventário técnico foi concluído no documento 36;
-- falta decisão sobre owner/orchestration e semântica de `PACKAGE_SENT`.
+Residual atual:
+- E04/T04 external package delivery = CLOSED / NOT_REQUIRED_IN_V1;
+- P5 usa portal-first submission/review;
+- residual material único: `D-P5-REVIEW-COMPLETION` — decidir se review accepted é requisito de monthly completion.
 
-## Consolidação A15 — status
-
-```text
-A15 = PASS_WITH_RESIDUAL_E04_T04
-PORTAL_DESIGN_FREEZE = PASS
-FRONTEND_PATTERN_FREEZE = PASS
-SECURITY_MODEL_FREEZE = PASS
-TEST_STRATEGY_FREEZE = PASS
-PRODUCT_CONTRACT_FREEZE = DECISION_REQUIRED_E04_T04
-DOCUMENTATION_CLOSURE_COMPLETE = NO
-IMPLEMENTATION_AUTHORIZED = NO
-```
-
-Authority: [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md).
+Authority:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## Inventário completo de superfícies V1
 
