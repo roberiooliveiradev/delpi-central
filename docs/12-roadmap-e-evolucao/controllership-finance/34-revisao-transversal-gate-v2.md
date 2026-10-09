@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / A14 REVIEW PASS / GLOBAL FREEZE PENDING A12 SEND CONTRACT**
+**TARGET / A14 REVIEW PASS / GLOBAL FREEZE BLOCKED_BY_A12_DELIVERY_DECISION**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -39,7 +39,7 @@ STATE_MODEL_COVERAGE          = PASS
 MFE_BFF_BOUNDARY              = PASS
 CORE_AUTHORITY                = PASS
 NOTIFICATION_BOUNDARY         = PASS
-PACKAGE_DELIVERY_CONTRACT     = PENDING_E04_T04
+PACKAGE_DELIVERY_CONTRACT     = DECISION_REQUIRED_E04_T04
 IMPLEMENTATION_AUTHORIZED     = NO
 ```
 
@@ -87,7 +87,7 @@ Confirmados:
 | collaboration state | Sala/BFF |
 | TaskProjection | composição read-only dos owners |
 | Help content | MFE/content registry |
-| package delivery real | **PENDING E04/T04** |
+| package delivery real | **DECISION_REQUIRED E04/T04 — inventory closed in doc 36** |
 
 Nenhum owner foi transferido apenas para criar experiência unificada.
 
@@ -311,25 +311,24 @@ T03 continua stop condition para provar o owner/state canônico.
 
 Package/finalization está fechado.
 
-Envio real ainda não possui evidência suficiente para congelar:
+O inventário posterior a A14 fechou a evidência técnica necessária para decidir:
 
-- owner;
-- channel/protocol;
-- transfer do package/document;
-- proof of delivery;
-- idempotency;
-- retry;
-- failure/reconciliation;
-- recipient delivery semantics.
+- Graph mail + file attachments = PROVEN;
+- transport retry = PROVEN;
+- Message Trace delivered/bounced/unknown = PROVEN em CIPA/Transformômetro;
+- Core Notifications continua separado de package delivery;
+- generic package-delivery owner = NOT_PROVEN.
 
-Core Notifications não satisfaz esses requisitos por si só.
+Authority atual: [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+
+Resta uma decisão material de owner/orchestration e outcome de `PACKAGE_SENT`.
 
 Classificação:
 
 ```text
 A12_PACKAGE_FINALIZATION = PASS
-A12_SEND = PENDING_E04_T04
-GLOBAL_PRODUCT_CONTRACT_FREEZE = PENDING
+A12_SEND = DECISION_REQUIRED_E04_T04
+GLOBAL_PRODUCT_CONTRACT_FREEZE = BLOCKED_BY_DECISION
 ```
 
 Não criar endpoint/button/channel de envio enquanto o residual estiver aberto.
@@ -352,11 +351,11 @@ FRONTEND_PATTERN_CONSISTENCY = PASS
 SECURITY_CONSISTENCY         = PASS
 HELP_CONSISTENCY             = PASS
 STATE_CONSISTENCY            = PASS
-CONTRACT_CONSISTENCY         = PASS_WITH_RESIDUAL_E04_T04
+CONTRACT_CONSISTENCY         = PASS_WITH_DECISION_REQUIRED_E04_T04
 IMPLEMENTATION_AUTHORIZED    = NO
 ```
 
 Próximo passo documental:
 - A15 — consolidar contracts + regras + scripts + test matrix;
-- manter E04/T04 explícito como blocker de contract freeze;
+- manter E04/T04 explícito como DECISION_REQUIRED de contract freeze;
 - não iniciar runtime.
