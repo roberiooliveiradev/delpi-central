@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / A14 REVIEW PASS / GLOBAL FREEZE BLOCKED_BY_A12_DELIVERY_DECISION**
+**TARGET / A14 REVIEW PASS / TARGETED_REBASELINE_AFTER_P5_CLARIFICATION / GLOBAL_FREEZE_BLOCKED_BY_REVIEW_COMPLETION_DECISION**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -39,7 +39,9 @@ STATE_MODEL_COVERAGE          = PASS
 MFE_BFF_BOUNDARY              = PASS
 CORE_AUTHORITY                = PASS
 NOTIFICATION_BOUNDARY         = PASS
-PACKAGE_DELIVERY_CONTRACT     = DECISION_REQUIRED_E04_T04
+PACKAGE_DELIVERY_CONTRACT     = NOT_REQUIRED_IN_V1
+P5_PORTAL_SUBMISSION_MODEL    = PASS
+P5_REVIEW_COMPLETION_RULE     = DECISION_REQUIRED
 IMPLEMENTATION_AUTHORIZED     = NO
 ```
 
@@ -351,7 +353,7 @@ FRONTEND_PATTERN_CONSISTENCY = PASS
 SECURITY_CONSISTENCY         = PASS
 HELP_CONSISTENCY             = PASS
 STATE_CONSISTENCY            = PASS
-CONTRACT_CONSISTENCY         = PASS_WITH_DECISION_REQUIRED_E04_T04
+CONTRACT_CONSISTENCY         = PASS_WITH_DECISION_REQUIRED_P5_REVIEW_COMPLETION
 IMPLEMENTATION_AUTHORIZED    = NO
 ```
 
@@ -359,3 +361,38 @@ Próximo passo documental:
 - A15 — consolidar contracts + regras + scripts + test matrix;
 - manter E04/T04 explícito como DECISION_REQUIRED de contract freeze;
 - não iniciar runtime.
+
+
+## Addendum — P5 portal-first
+
+Clarificação do Product Owner invalidou a premissa de delivery externo analisada inicialmente em E04/T04.
+
+Novo contrato:
+
+```text
+PACKAGE_FINALIZED
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ authorized reviewer logs into Minha DELPI
+→ review lifecycle
+```
+
+- package permanece no Portal;
+- Core Notifications avisa in-app e pode também enviar e-mail;
+- e-mail não transporta package;
+- reviewer exige ACCESS + resource scope/assignment;
+- nenhuma permission nova;
+- P5 é producer válido de TaskProjection para review acionável.
+
+Classificação da premissa anterior:
+
+```text
+EXECUTION_DRIFT = INVALIDATED_PRODUCT_PREMISE
+doc 36 = SUPERSEDED
+E04/T04 external delivery = CLOSED / NOT_REQUIRED_IN_V1
+```
+
+Residual novo:
+- `D-P5-REVIEW-COMPLETION`.
+
+Authority:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
