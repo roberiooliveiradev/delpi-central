@@ -199,12 +199,35 @@ STOCK_CLOSED
 
 Correções posteriores permanecem no owner/ERP.
 
-## P5 delivery boundary
+## P5 submission/review boundary
 
 ```text
 PACKAGE_FINALIZED
-→ [delivery owner/outcome DECISION_REQUIRED E04/T04]
-→ PACKAGE_SENT
+→ submit for review inside Minha DELPI
+→ PACKAGE_SUBMITTED_FOR_REVIEW
+→ authorized reviewer accesses Portal
+→ review lifecycle
 ```
 
-Não criar endpoint/canal/proof por preferência.
+O package não é transportado por e-mail.
+
+Notifications:
+
+```text
+P5 business event
+→ controllership-finance-api adapter
+→ Core /integrations/notifications
+→ Minha DELPI inbox
+→ optional platform e-mail notification
+```
+
+E-mail contém aviso/deep link, não package attachment.
+
+Reviewers externos da Controladoria são Core identities com:
+- app access;
+- `controllership-finance.access`;
+- reviewer assignment/resource scope no P5.
+
+Não criar permission code de reviewer.
+
+O único residual de produto é `D-P5-REVIEW-COMPLETION`: submission suficiente vs review accepted obrigatório vs política configurável.
