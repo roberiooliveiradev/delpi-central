@@ -13,6 +13,8 @@ def test_build_nc_where_clause_returns_tuple_params() -> None:
 
     assert isinstance(params, tuple)
     assert "QI2_OCORRE" in where
+    assert "QI2_OBSOL <> 'S'" in where
+    assert "D_E_L_E_T_ = ' '" in where
 
     prod_params = ["20260601", "20260610"]
     merged = tuple(list(params) + prod_params)

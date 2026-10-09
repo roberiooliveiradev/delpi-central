@@ -1,6 +1,13 @@
 """Fragmentos SQL compartilhados para enriquecimento de registros QI2010."""
 
 
+# Revisão vigente da FNC (QI2_OBSOL): 'S' = revisão obsoleta; qualquer outro
+# valor ('N' ou legado em branco) é a revisão corrente de (QI2_FILIAL, QI2_FNC).
+# Registros legados de 2004 possuem QI2_OBSOL em branco e são a única revisão
+# da sua FNC — excluí-los esconderia NCs válidas da listagem operacional.
+QI2_CURRENT_REVISION_SQL = "QI2_OBSOL <> 'S'"
+
+
 def qi2_from_with_customer(*, table_alias: str = "nc") -> str:
     return f"""
         FROM QI2010 {table_alias} WITH (NOLOCK)

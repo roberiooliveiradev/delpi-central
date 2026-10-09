@@ -7,6 +7,9 @@ from app.domain.services.quality.nonconformity_query_filter_service import (
 )
 from app.domain.totvs.protheus_branches import is_all_branches, normalize_branch_scope
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.quality.qi2_record_sql import (
+    QI2_CURRENT_REVISION_SQL,
+)
 
 _OCCURRENCE_DATE_SQL = (
     "TRY_CONVERT(date, NULLIF(LTRIM(RTRIM(QI2_OCORRE)), ''), 112)"
@@ -22,6 +25,7 @@ def build_occurrence_dates_query(
     """Lista datas distintas de ``QI2_OCORRE`` (mesmo recorte da listagem/série de NC)."""
     qb = QueryBuilder()
     qb.raw("D_E_L_E_T_ = ''")
+    qb.raw(QI2_CURRENT_REVISION_SQL)
 
     type_codes = qi2_tipo_codes_for_filter(filter_type)
     if type_codes:

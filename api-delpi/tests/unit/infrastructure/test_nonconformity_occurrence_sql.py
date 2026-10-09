@@ -12,6 +12,7 @@ def test_occurrence_dates_sql_filters_customer_without_all_branch() -> None:
 
     assert "FROM QI2010 WITH (NOLOCK)" in sql
     assert "D_E_L_E_T_ = ''" in sql
+    assert "QI2_OBSOL <> 'S'" in sql
     assert "QI2_TIPO IN (?)" in sql
     assert "QI2_FILIAL" not in sql
     assert params == ("2",)

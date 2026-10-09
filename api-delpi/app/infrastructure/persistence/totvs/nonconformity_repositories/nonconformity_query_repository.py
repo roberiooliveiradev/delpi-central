@@ -5,6 +5,7 @@ from datetime import date
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.quality.qi2_record_sql import (
+    QI2_CURRENT_REVISION_SQL,
     qi2_detailed_description_sql,
     qi2_from_with_customer,
     qi2_prefix_where_clause,
@@ -81,6 +82,7 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
         qb = QueryBuilder()
 
         qb.raw("D_E_L_E_T_ = ''")
+        qb.raw(QI2_CURRENT_REVISION_SQL)
         qb.eq("QI2_FILIAL", request.branch)
         apply_nonconformity_text_filters(
             qb,
@@ -198,6 +200,7 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
         qb = QueryBuilder()
 
         qb.raw("D_E_L_E_T_ = ''")
+        qb.raw(QI2_CURRENT_REVISION_SQL)
         qb.eq("QI2_FILIAL", request.branch)
         apply_nonconformity_text_filters(
             qb,

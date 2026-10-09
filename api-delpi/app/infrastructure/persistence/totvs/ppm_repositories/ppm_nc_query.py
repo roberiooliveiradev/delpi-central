@@ -1,6 +1,9 @@
 """Helpers de query para não conformidades (numerador PPM)."""
 
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
+from app.infrastructure.persistence.totvs.quality.qi2_record_sql import (
+    QI2_CURRENT_REVISION_SQL,
+)
 
 
 def build_nc_where_clause(
@@ -20,6 +23,7 @@ def build_nc_where_clause(
 
     qb = QueryBuilder()
     qb.raw("D_E_L_E_T_ = ' '")
+    qb.raw(QI2_CURRENT_REVISION_SQL)
 
     if branch:
         qb.eq("QI2_FILIAL", branch)
