@@ -1607,3 +1607,80 @@ def test_legacy_search_accepts_206_partial_content():
         "oauth-access", build_ticket_list_query(assignee_id=11)
     )
     assert [item.id for item in page.items] == [501, 502]
+
+
+# --------------------------------------------------------------------------
+# Requester read-back — production runtime shapes (C1 corrective)
+# --------------------------------------------------------------------------
+
+
+def _requester_client(handler) -> HttpxGlpiClient:
+    return HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        transport=httpx.MockTransport(handler),
+    )
+
+
+def test_ticket_requester_parses_wrapped_list_shape():
+    """Production: raw JSON array → _json wraps as {"results": [...]};
+    members carry role/id WITHOUT a "type" field."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json=[{"role": "requester", "id": 11, "name": "Roberio"}],
+        )
+
+    client = _requester_client(handler)
+    assert client.ticket_requester("oauth-access", 1305) == 11
+
+
+def test_ticket_requester_parses_member_map_shape():
+    """Production: {"1": {member}} — dict keyed by member index."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={"1": {"role": "requester", "id": 15, "name": "Yuri"}},
+        )
+
+    client = _requester_client(handler)
+    assert client.ticket_requester("oauth-access", 1218) == 15
+
+
+def test_ticket_requester_parses_direct_member_object():
+    """Direct member object shape {"type": "User", "role": "requester", ...}."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={"type": "User", "role": "requester", "id": 7},
+        )
+
+    client = _requester_client(handler)
+    assert client.ticket_requester("oauth-access", 42) == 7
+
+
+def test_ticket_requester_ignores_non_user_member():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json=[
+                {"type": "Group", "role": "requester", "id": 99},
+                {"type": "User", "role": "requester", "id": 12},
+            ],
+        )
+
+    client = _requester_client(handler)
+    assert client.ticket_requester("oauth-access", 42) == 12
+
+
+def test_ticket_requester_returns_none_when_absent():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=[])
+
+    client = _requester_client(handler)
+    assert client.ticket_requester("oauth-access", 42) is None

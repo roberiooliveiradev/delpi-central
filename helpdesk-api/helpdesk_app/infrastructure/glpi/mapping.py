@@ -427,23 +427,42 @@ def team_member_requester_body(user_id: int) -> dict:
 
 
 def parse_ticket_requester_user_id(payload) -> int | None:
-    """GET TeamMember/requester → the User member's GLPI id, if present."""
+    """GET TeamMember/requester → the User member's GLPI id, if present.
+
+    Runtime-proven GLPI shapes: a bare member list, {"results": [...]} /
+    {"data": [...]}, a member map keyed by index ({"1": {...}}), or a
+    direct member object. Member dicts may omit "type" — the endpoint is
+    already role-filtered, so "type" is only enforced when present and
+    "role" is only enforced when present.
+    """
     if isinstance(payload, list):
         members = payload
     elif isinstance(payload, dict):
-        members = payload.get("data") or payload.get("results") or []
+        if "id" in payload and ("role" in payload or "type" in payload):
+            members = [payload]
+        else:
+            members = payload.get("data") or payload.get("results")
+            if not isinstance(members, list):
+                members = [
+                    v
+                    for v in payload.values()
+                    if isinstance(v, dict) and ("role" in v or "id" in v)
+                ]
     else:
         members = []
     for member in members:
         if not isinstance(member, dict):
             continue
-        if str(member.get("type") or "") != "User":
+        if str(member.get("type") or "User") != "User":
+            continue
+        if str(member.get("role") or "requester") != "requester":
             continue
         try:
             user_id = int(member.get("id"))
         except (TypeError, ValueError):
-            return None
-        return user_id if user_id > 0 else None
+            continue
+        if user_id > 0:
+            return user_id
     return None
 
 
