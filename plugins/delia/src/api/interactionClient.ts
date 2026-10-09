@@ -7,6 +7,9 @@
  * logged. No business-domain API is exposed here.
  */
 
+import { parsePresentation } from "./presentation";
+import type { DeliaPresentation } from "./presentation";
+
 export const DELIA_API_BASE = "/apps/delia-api";
 export const DELIA_INTERACTION_TURNS_PATH = "/interaction/turns";
 
@@ -116,6 +119,9 @@ export type DeliaInteractionResult = {
   grounding_status: "GROUNDED" | "NON_GROUNDED" | null;
   provenance: DeliaInteractionProvenance | null;
   confirmation_request: DeliaConfirmationRequest | null;
+  /** Additive presentation.v1 projection — null for legacy/malformed/
+   *  unknown-version payloads; never authority. */
+  presentation: DeliaPresentation | null;
 };
 
 export class DeliaInteractionError extends Error {
@@ -275,6 +281,7 @@ export async function submitInteractionTurn(
     confirmation_request: parseConfirmationRequest(
       payload.confirmation_request,
     ),
+    presentation: parsePresentation(payload.presentation),
   };
 }
 

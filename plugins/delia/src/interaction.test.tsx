@@ -628,3 +628,199 @@ describe("DÉLIA governed-write confirmation surface", () => {
     );
   });
 });
+
+function presentationPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    ...successPayload(9),
+    presentation: {
+      version: "1",
+      message_kind: "RESULT",
+      semantic_status: "OBSERVATION",
+      grounding_status: "NON_GROUNDED",
+      blocks: [{ kind: "text", text: "Resposta 9 da DÉLIA." }],
+      allowed_interactions: ["reply"],
+      ...overrides,
+    },
+  };
+}
+
+describe("DÉLIA presentation.v1 semantic states", () => {
+  it("PRECONDITION_REQUIRED renders badge + deduped owner hint", async () => {
+    // Legacy content still carries the embedded suffix; the notice
+    // block must render the hint exactly once.
+    const payload = presentationPayload({
+      message_kind: "PRECONDITION_REQUIRED",
+      blocks: [
+        { kind: "text", text: "Não foi possível concluir a consulta." },
+        {
+          kind: "notice",
+          role: "owner_hint",
+          text: "glpi_link_required.",
+        },
+      ],
+    });
+    payload.content =
+      "Não foi possível concluir a consulta. A fonte informou: glpi_link_required.";
+    vi.stubGlobal("fetch", mockFetchSequence([payload]));
+
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("liste meus chamados");
+
+    await waitFor(() =>
+      expect(screen.getByText("Pré-condição pendente")).toBeTruthy(),
+    );
+    expect(
+      screen.getByText("Não foi possível concluir a consulta."),
+    ).toBeTruthy();
+    const hintOccurrences = screen.getAllByText(/glpi_link_required/);
+    expect(hintOccurrences).toHaveLength(1);
+  });
+
+  it("AUTHZ_DENIED renders the denial badge distinctly", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSequence([
+        presentationPayload({ message_kind: "AUTHZ_DENIED" }),
+      ]),
+    );
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("delete tudo");
+
+    await waitFor(() =>
+      expect(screen.getByText("Acesso não autorizado")).toBeTruthy(),
+    );
+    expect(screen.queryByText("Fonte indisponível")).toBeNull();
+  });
+
+  it("SOURCE_UNAVAILABLE renders the availability badge distinctly", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSequence([
+        presentationPayload({ message_kind: "SOURCE_UNAVAILABLE" }),
+      ]),
+    );
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("consulte o quadro");
+
+    await waitFor(() =>
+      expect(screen.getByText("Fonte indisponível")).toBeTruthy(),
+    );
+    expect(screen.queryByText("Acesso não autorizado")).toBeNull();
+  });
+
+  it("CLARIFICATION_REQUIRED renders the clarification badge", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSequence([
+        presentationPayload({ message_kind: "CLARIFICATION_REQUIRED" }),
+      ]),
+    );
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("faça");
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Esclarecimento necessário"),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("CONFIRMATION_REQUIRED keeps the governed confirmation flow", async () => {
+    const payload = confirmationPayload(3) as Record<string, unknown>;
+    payload.presentation = {
+      version: "1",
+      message_kind: "CONFIRMATION_REQUIRED",
+      semantic_status: null,
+      grounding_status: "NON_GROUNDED",
+      blocks: [{ kind: "text", text: "Confirme a alteração?" }],
+      allowed_interactions: ["reply", "confirm", "reject"],
+    };
+    const fetchMock = mockFetchSequence([payload, successPayload(4)]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("altere o nome");
+    await waitFor(() =>
+      expect(screen.getByText("Confirmação pendente")).toBeTruthy(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(body.confirmation).toEqual({
+      decision: "CONFIRM",
+      proposal_digest: "a".repeat(64),
+      preview_fingerprint: "b".repeat(64),
+      session_id: "s-1",
+    });
+  });
+
+  it("legacy response without presentation renders unchanged", async () => {
+    vi.stubGlobal("fetch", mockFetchSequence([successPayload(5)]));
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("olá");
+
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 5 da DÉLIA.")).toBeTruthy(),
+    );
+    expect(
+      document.querySelector(".delpi-ui-status-badge"),
+    ).toBeNull();
+  });
+
+  it("unknown message_kind renders neutral content, never a badge", async () => {
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSequence([
+        presentationPayload({ message_kind: "INTERNAL_FUTURE_KIND" }),
+      ]),
+    );
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("olá");
+
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 9 da DÉLIA.")).toBeTruthy(),
+    );
+    expect(
+      document.querySelector(".delpi-ui-status-badge"),
+    ).toBeNull();
+  });
+
+  it("hostile block text stays inert — no element injection", async () => {
+    const hostile = '<img src=x onerror="alert(1)">';
+    vi.stubGlobal(
+      "fetch",
+      mockFetchSequence([
+        {
+          ...successPayload(6),
+          content: hostile,
+          presentation: {
+            version: "1",
+            message_kind: "PRECONDITION_REQUIRED",
+            semantic_status: null,
+            grounding_status: "NON_GROUNDED",
+            blocks: [
+              { kind: "text", text: hostile },
+              {
+                kind: "notice",
+                role: "owner_hint",
+                text: '<script>alert(2)</script>',
+              },
+            ],
+            allowed_interactions: ["reply"],
+          },
+        },
+      ]),
+    );
+    render(<App getAccessToken={() => "t"} />);
+    submitTurn("olá");
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("A fonte informou: <script>alert(2)</script>"),
+      ).toBeTruthy(),
+    );
+    expect(document.querySelector("img")).toBeNull();
+    expect(document.querySelector("script")).toBeNull();
+  });
+});

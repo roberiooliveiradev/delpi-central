@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
-import { DELIA_ROOT_CLASS, DeliaPageHeader } from "./ui/deliaUi";
+import {
+  DELIA_ROOT_CLASS,
+  DeliaPageHeader,
+  DeliaStatusBadge,
+} from "./ui/deliaUi";
 import {
   DeliaInteractionError,
   buildInteractionContext,
@@ -11,6 +15,15 @@ import type {
   DeliaInteractionProvenance,
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
+import {
+  dedupeOwnerHintContent,
+  presentationOwnerHint,
+} from "./api/presentation";
+import type {
+  DeliaMessageKind,
+  DeliaPresentation,
+} from "./api/presentation";
+import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -43,6 +56,32 @@ type DisplayTurn = {
   confirmationRequest?: DeliaConfirmationRequest | null;
   /** The structured decision was already submitted for this request. */
   confirmationAnswered?: boolean;
+  /** presentation.v1 projection — semantic state surface only. */
+  presentation?: DeliaPresentation | null;
+};
+
+/** Semantic state badge per canonical message_kind (RESULT renders
+ *  neutral — no badge). Presentation only; never derives state from
+ *  prose and never widens authority. */
+const MESSAGE_KIND_BADGE: Record<
+  Exclude<DeliaMessageKind, "RESULT">,
+  { label: string; variant: StatusBadgeVariant }
+> = {
+  CLARIFICATION_REQUIRED: {
+    label: "Esclarecimento necessário",
+    variant: "info",
+  },
+  CONFIRMATION_REQUIRED: {
+    label: "Confirmação pendente",
+    variant: "warning",
+  },
+  WRITE_REJECTED: { label: "Operação recusada", variant: "danger" },
+  AUTHZ_DENIED: { label: "Acesso não autorizado", variant: "danger" },
+  SOURCE_UNAVAILABLE: { label: "Fonte indisponível", variant: "warning" },
+  PRECONDITION_REQUIRED: {
+    label: "Pré-condição pendente",
+    variant: "warning",
+  },
 };
 
 const TOKEN_UNAVAILABLE_MESSAGE =
@@ -137,6 +176,7 @@ export default function App({
           groundingStatus: result.grounding_status,
           provenance: result.provenance,
           confirmationRequest: result.confirmation_request,
+          presentation: result.presentation,
         },
       ]);
       setInput("");
@@ -199,7 +239,26 @@ export default function App({
         >
           {turns.length > 0 ? (
             <ul className="delia-turns" aria-label="Respostas">
-              {turns.map((turn, index) => (
+              {turns.map((turn, index) => {
+                const ownerHint =
+                  turn.role === "delia"
+                    ? presentationOwnerHint(turn.presentation ?? null)
+                    : null;
+                const displayContent = dedupeOwnerHintContent(
+                  turn.content,
+                  ownerHint,
+                );
+                const stateBadge =
+                  turn.presentation?.messageKind &&
+                  turn.presentation.messageKind !== "RESULT"
+                    ? MESSAGE_KIND_BADGE[
+                        turn.presentation.messageKind as Exclude<
+                          DeliaMessageKind,
+                          "RESULT"
+                        >
+                      ]
+                    : undefined;
+                return (
                 <li
                   key={turn.id}
                   ref={
@@ -210,7 +269,19 @@ export default function App({
                   <span className="delia-turn__label">
                     {turn.role === "user" ? "Você" : "DÉLIA"}
                   </span>
-                  <p className="delia-turn__content">{turn.content}</p>
+                  {stateBadge ? (
+                    <DeliaStatusBadge
+                      label={stateBadge.label}
+                      variant={stateBadge.variant}
+                      className="delia-turn__state"
+                    />
+                  ) : null}
+                  <p className="delia-turn__content">{displayContent}</p>
+                  {ownerHint ? (
+                    <p className="delia-turn__notice">
+                      A fonte informou: {ownerHint}
+                    </p>
+                  ) : null}
                   {turn.epistemicClass ? (
                     <span className="delia-turn__meta">
                       classificação: {turn.epistemicClass}
@@ -266,7 +337,8 @@ export default function App({
                     </div>
                   ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           ) : null}
 

@@ -1,6 +1,7 @@
 import {
   createDashboardEmptyState,
   createDashboardPageHeader,
+  createDashboardStatusBadge,
   emptyStatePanelBemClasses,
   pageHeaderTitleRowBemClasses,
 } from "@delpi/plugin-ui/index";
@@ -22,4 +23,8 @@ export const DeliaEmptyState = createDashboardEmptyState({
   defaultTitle: "Fundação operacional pronta",
   defaultMessage:
     "Shell standalone da DÉLIA. Capacidades de negócio entram em tarefas posteriores.",
+});
+
+export const DeliaStatusBadge = createDashboardStatusBadge({
+  prefix: DELIA_PREFIX,
 });
