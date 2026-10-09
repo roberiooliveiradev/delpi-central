@@ -249,7 +249,7 @@ Estados:
 PACKAGE_INCOMPLETE
 → READY_TO_FINALIZE
 → PACKAGE_FINALIZED
-→ PACKAGE_SENT
+→ PACKAGE_SUBMITTED_FOR_REVIEW
 → WAITING_FOR_CLARIFICATION
 → MONTHLY_CLOSING_COMPLETED
 ```
@@ -263,7 +263,7 @@ Conteúdo visual mínimo:
 
 Regras:
 - Finalizar != Enviar;
-- PACKAGE_SENT é histórico imutável;
+- PACKAGE_SUBMITTED_FOR_REVIEW é histórico imutável;
 - envio de um destinatário não avança sibling;
 - clarification aberta impede conclusão quando aplicável.
 
@@ -557,7 +557,7 @@ Todos os CTAs e navegação são operáveis por teclado com foco visível.
 A competência/contexto permanece após refresh sem bypass de AuthZ.
 
 ### VA-P1-10 — Help
-Help contextual explica eixos, freshness, blockers, preliminary/final e diferença entre estoque fechado, pacote enviado e fechamento concluído.
+Help contextual explica eixos, freshness, blockers, preliminary/final e diferença entre estoque fechado, pacote submetido para análise, review e fechamento concluído.
 
 ---
 
@@ -569,7 +569,7 @@ Help contextual explica eixos, freshness, blockers, preliminary/final e diferen�
 - paridade monetária exige divergência exatamente R$ 0,00;
 - qualquer valor monetário não zero continua divergência e bloqueia READY_TO_CLOSE;
 - H02 indisponível → não zero;
-- PACKAGE_SENT + clarification → não complete;
+- PACKAGE_SUBMITTED_FOR_REVIEW + clarification → não complete;
 - source parcial → PARTIAL;
 - FORBIDDEN → sem exposição.
 
@@ -611,7 +611,7 @@ Matriz futura mínima:
 - P1 tentando validar evidência;
 - P1 tentando sacramentar;
 - P1 tentando finalizar/enviar;
-- PACKAGE_SENT tratado como conclusão quando existe clarification.
+- PACKAGE_SUBMITTED_FOR_REVIEW tratado como conclusão quando existe clarification.
 
 ### Experiência
 - loading;
