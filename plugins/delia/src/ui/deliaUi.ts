@@ -1,5 +1,6 @@
 import {
   createDashboardEmptyState,
+  createDashboardLoadingActivityBadge,
   createDashboardPageHeader,
   createDashboardStatusBadge,
   emptyStatePanelBemClasses,
@@ -26,5 +27,11 @@ export const DeliaEmptyState = createDashboardEmptyState({
 });
 
 export const DeliaStatusBadge = createDashboardStatusBadge({
+  prefix: DELIA_PREFIX,
+});
+
+/** Indeterminate in-flight indicator — honest about only the pending
+ *  POST; never claims which provider/stage is running (doc 69 §12). */
+export const DeliaLoadingBadge = createDashboardLoadingActivityBadge({
   prefix: DELIA_PREFIX,
 });

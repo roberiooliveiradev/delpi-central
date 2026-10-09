@@ -1,9 +1,11 @@
 .dashboard-delia {
   --delia-accent: var(--primary, #089bdb);
   --delia-surface: var(--surface, #ffffff);
+  --delia-surface-2: var(--surface-2, #f0f2f5);
   --delia-text: var(--text, #111111);
   --delia-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
   --delia-border: var(--border, #e5e7eb);
+  --delia-focus-ring: var(--focus-ring, var(--primary, #089bdb));
   --delia-card-padding: 20px;
   --delia-section-gap: 20px;
   --delpi-ui-accent: var(--delia-accent);
@@ -17,10 +19,15 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 :root[data-theme="dark"] .dashboard-delia {
   --delia-surface: var(--surface, #1b2030);
+  --delia-surface-2: var(--surface-2, #232a3d);
   --delia-text: rgba(255, 255, 255, 0.9);
   --delia-text-muted: rgba(255, 255, 255, 0.68);
   --delia-border: rgba(255, 255, 255, 0.12);
@@ -39,32 +46,108 @@
   display: flex;
   flex-direction: column;
   gap: var(--delia-section-gap);
-  padding: clamp(16px, 3vw, 24px);
+  padding: clamp(12px, 3vw, 24px);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
 }
 
 .dashboard-delia .delia-host-meta {
   margin: 0;
   color: var(--delia-text-muted);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
+.dashboard-delia .delia-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Interaction shell (S2): reception → timeline → composer */
+
 .dashboard-delia .delia-interaction {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
   background: var(--delia-surface);
   border: 1px solid var(--delia-border);
   border-radius: 12px;
-  padding: var(--delia-card-padding);
-  max-width: 720px;
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  overflow: hidden;
 }
 
-.dashboard-delia .delia-turns {
+.dashboard-delia .delia-interaction__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: var(--delia-card-padding);
+  scroll-behavior: smooth;
+}
+
+/* ---------- S2-A — reception */
+
+.dashboard-delia .delia-reception {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: clamp(16px, 4vw, 32px);
+  max-width: 480px;
+}
+
+.dashboard-delia .delia-reception__mark {
+  font-size: 0;
+  color: var(--delia-accent);
+}
+
+.dashboard-delia .delia-reception__mark svg {
+  width: 56px;
+  height: 56px;
+}
+
+.dashboard-delia .delia-reception__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--delia-text);
+}
+
+.dashboard-delia .delia-reception__subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--delia-text-muted);
+}
+
+.dashboard-delia .delia-reception__note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--delia-text-muted);
+}
+
+/* ---------- S2-B — conversation timeline */
+
+.dashboard-delia .delia-timeline {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -78,16 +161,36 @@
   flex-direction: column;
   gap: 4px;
   border: 1px solid var(--delia-border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 10px 14px;
+  max-width: 88%;
+  overflow-wrap: anywhere;
+  animation: delia-turn-in 220ms ease-out;
 }
 
+@keyframes delia-turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* User turns right, DÉLIA turns left (WF-02). */
 .dashboard-delia .delia-turn--user {
-  border-left: 3px solid var(--delia-text-muted);
+  align-self: flex-end;
+  border-left-width: 1px;
+  border-right: 3px solid var(--delia-text-muted);
+  background: color-mix(in srgb, var(--delia-text-muted) 7%, var(--delia-surface));
 }
 
 .dashboard-delia .delia-turn--delia {
+  align-self: flex-start;
   border-left: 3px solid var(--delia-accent);
+  background: var(--delia-surface);
 }
 
 .dashboard-delia .delia-turn__label {
@@ -125,48 +228,14 @@
   color: var(--delia-text-muted);
 }
 
-.dashboard-delia .delia-interaction__form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+/* ---------- S2-D — loading + error */
 
-.dashboard-delia .delia-interaction__form label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--delia-text);
-}
-
-.dashboard-delia .delia-interaction__form textarea {
-  font: inherit;
-  color: var(--delia-text);
-  background: transparent;
-  border: 1px solid var(--delia-border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  resize: vertical;
-  min-height: 72px;
-}
-
-.dashboard-delia .delia-interaction__form button {
+.dashboard-delia .delia-interaction__loading {
   align-self: flex-start;
-  font: inherit;
-  font-weight: 600;
-  color: #ffffff;
-  background: var(--delia-accent);
-  border: none;
-  border-radius: 8px;
-  padding: 8px 20px;
-  cursor: pointer;
-}
-
-.dashboard-delia .delia-interaction__form button:disabled {
-  opacity: 0.55;
-  cursor: default;
 }
 
 .dashboard-delia .delia-interaction__error {
-  margin: 0;
+  margin: 0 var(--delia-card-padding) 0;
   color: var(--delia-text);
   background: color-mix(in srgb, #dc2626 12%, transparent);
   border: 1px solid color-mix(in srgb, #dc2626 45%, transparent);
@@ -174,8 +243,62 @@
   padding: 8px 12px;
 }
 
+/* ---------- S2-C — composer */
+
+.dashboard-delia .delia-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 10px var(--delia-card-padding);
+  border-top: 1px solid var(--delia-border);
+  background: var(--delia-surface);
+}
+
+.dashboard-delia .delia-composer__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  max-height: 160px;
+  padding: 10px 12px;
+  resize: none;
+  overflow-y: auto;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.dashboard-delia .delia-composer__submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  font: inherit;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--delia-accent);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dashboard-delia .delia-composer__submit:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.dashboard-delia .delia-composer__submit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--delia-focus-ring) 35%, transparent);
+}
+
+/* ---------- Governed confirmation (preserved from S1) */
+
 .dashboard-delia .delia-confirmation {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
 }
@@ -203,4 +326,32 @@
 .dashboard-delia .delia-confirmation button:disabled {
   opacity: 0.55;
   cursor: default;
+}
+
+/* ---------- Responsive (narrow dock / mobile) */
+
+@media (max-width: 640px) {
+  .dashboard-delia .delia-interaction {
+    max-width: 100%;
+  }
+
+  .dashboard-delia .delia-turn {
+    max-width: 96%;
+  }
+
+  .dashboard-delia .delia-composer__submit span {
+    display: none;
+  }
+}
+
+/* ---------- Reduced motion (doc 69 §14.4) */
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-delia .delia-turn {
+    animation: none;
+  }
+
+  .dashboard-delia .delia-interaction__body {
+    scroll-behavior: auto;
+  }
 }

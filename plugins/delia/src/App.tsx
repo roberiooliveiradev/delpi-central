@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import type { UIEvent as ReactUIEvent } from "react";
 
-import {
-  DELIA_ROOT_CLASS,
-  DeliaPageHeader,
-  DeliaStatusBadge,
-} from "./ui/deliaUi";
+import { DELIA_ROOT_CLASS, DeliaPageHeader } from "./ui/deliaUi";
+import { DeliaReception } from "./ui/DeliaReception";
+import { DeliaComposer } from "./ui/DeliaComposer";
+import { ConversationTimeline } from "./ui/ConversationTimeline";
+import type { ConversationDisplayTurn } from "./ui/ConversationTimeline";
 import {
   DeliaInteractionError,
   buildInteractionContext,
@@ -12,18 +13,9 @@ import {
 } from "./api/interactionClient";
 import type {
   DeliaConfirmationRequest,
-  DeliaInteractionProvenance,
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
-import {
-  dedupeOwnerHintContent,
-  presentationOwnerHint,
-} from "./api/presentation";
-import type {
-  DeliaMessageKind,
-  DeliaPresentation,
-} from "./api/presentation";
-import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
+import { DeliaLoadingBadge } from "./ui/deliaUi";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -43,58 +35,26 @@ export type AppProps = {
   getWorkspaceContext?: () => DeliaWorkspaceContext | null;
 };
 
-/** Transient UI display state only — not session persistence or memory. */
-type DisplayTurn = {
-  id: string;
-  role: "user" | "delia";
-  content: string;
-  epistemicClass?: string | null;
-  limitations?: string[];
-  groundingStatus?: "GROUNDED" | "NON_GROUNDED" | null;
-  provenance?: DeliaInteractionProvenance | null;
-  /** Bounded pending-write confirmation surface (digests only). */
-  confirmationRequest?: DeliaConfirmationRequest | null;
-  /** The structured decision was already submitted for this request. */
-  confirmationAnswered?: boolean;
-  /** presentation.v1 projection — semantic state surface only. */
-  presentation?: DeliaPresentation | null;
-};
-
-/** Semantic state badge per canonical message_kind (RESULT renders
- *  neutral — no badge). Presentation only; never derives state from
- *  prose and never widens authority. */
-const MESSAGE_KIND_BADGE: Record<
-  Exclude<DeliaMessageKind, "RESULT">,
-  { label: string; variant: StatusBadgeVariant }
-> = {
-  CLARIFICATION_REQUIRED: {
-    label: "Esclarecimento necessário",
-    variant: "info",
-  },
-  CONFIRMATION_REQUIRED: {
-    label: "Confirmação pendente",
-    variant: "warning",
-  },
-  WRITE_REJECTED: { label: "Operação recusada", variant: "danger" },
-  AUTHZ_DENIED: { label: "Acesso não autorizado", variant: "danger" },
-  SOURCE_UNAVAILABLE: { label: "Fonte indisponível", variant: "warning" },
-  PRECONDITION_REQUIRED: {
-    label: "Pré-condição pendente",
-    variant: "warning",
-  },
-};
-
 const TOKEN_UNAVAILABLE_MESSAGE =
   "Token de acesso indisponível. Recarregue pelo Portal.";
 
+/** Autoscroll engagement threshold — only follow new turns when the
+ *  reader is already near the end (doc 69 §10). */
+const NEAR_BOTTOM_THRESHOLD_PX = 96;
+
 /**
- * C3-INTERACTION-RUNTIME-01 + C3-INTERACTION-CONTINUITY-01.
+ * C3-INTERACTION-RUNTIME-01 + C3-INTERACTION-CONTINUITY-01 +
+ * DELIA-UX-S2-RECEPTION-CONVERSATION-SHELL-01.
  *
  * Bounded transient multi-turn interaction: rendered turns are kept in
  * React memory only and resent as untrusted prior context on each new
  * turn. No browser storage and no backend persistence — a reload
  * resets the conversation. permissions / isSuperadmin remain host
  * presentation hints and are never sent as backend authority.
+ *
+ * The same component serves the full page and the global dock: a
+ * single shell (reception → timeline → composer) adapts to the
+ * container width — no parallel runtime, no fake capabilities.
  */
 export default function App({
   pathname,
@@ -111,18 +71,26 @@ export default function App({
   const hostPath = pathname || basePath || "/apps/delia";
 
   const [input, setInput] = useState("");
-  const [turns, setTurns] = useState<DisplayTurn[]>([]);
+  const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const turnsEndRef = useRef<HTMLLIElement | null>(null);
+  const scrollRegionRef = useRef<HTMLDivElement | null>(null);
+  const turnsEndRef = useRef<HTMLDivElement | null>(null);
+  const nearBottomRef = useRef(true);
 
   useEffect(() => {
     const end = turnsEndRef.current;
-    if (end && typeof end.scrollIntoView === "function") {
+    const last = turns[turns.length - 1];
+    // Follow the log only when the user just sent a turn or was
+    // already reading near the end — never hijack scroll position.
+    if (!end || !(nearBottomRef.current || last?.role === "user")) {
+      return;
+    }
+    if (typeof end.scrollIntoView === "function") {
       end.scrollIntoView({ block: "end" });
     }
-  }, [turns.length, loading]);
+  }, [turns, loading]);
 
   useEffect(
     () => () => {
@@ -130,6 +98,13 @@ export default function App({
     },
     [],
   );
+
+  function handleTimelineScroll(event: ReactUIEvent<HTMLDivElement>) {
+    const el = event.currentTarget;
+    nearBottomRef.current =
+      el.scrollHeight - el.scrollTop - el.clientHeight <
+      NEAR_BOTTOM_THRESHOLD_PX;
+  }
 
   async function sendTurn(
     value: string,
@@ -187,6 +162,8 @@ export default function App({
       ) {
         return;
       }
+      // The draft stays in the composer — a failed send never loses
+      // what the user typed.
       setError(
         submitError instanceof DeliaInteractionError
           ? submitError.message
@@ -197,10 +174,10 @@ export default function App({
     }
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     const value = input.trim();
     if (!value || loading) return;
-    await sendTurn(value);
+    void sendTurn(value);
   }
 
   /**
@@ -208,7 +185,7 @@ export default function App({
    * bounded digests back verbatim — it never sees the raw owner
    * handle and never makes any authorization decision.
    */
-  async function handleConfirmation(
+  function handleConfirmation(
     request: DeliaConfirmationRequest,
     decision: "CONFIRM" | "REJECT",
   ) {
@@ -217,7 +194,7 @@ export default function App({
       decision === "CONFIRM"
         ? "Confirmação da operação solicitada."
         : "Cancelamento da operação solicitada.";
-    await sendTurn(label, {
+    void sendTurn(label, {
       decision,
       proposal_digest: request.proposal_digest,
       preview_fingerprint: request.preview_fingerprint,
@@ -237,110 +214,29 @@ export default function App({
           className="delia-interaction"
           aria-label="Interação com a DÉLIA"
         >
-          {turns.length > 0 ? (
-            <ul className="delia-turns" aria-label="Respostas">
-              {turns.map((turn, index) => {
-                const ownerHint =
-                  turn.role === "delia"
-                    ? presentationOwnerHint(turn.presentation ?? null)
-                    : null;
-                const displayContent = dedupeOwnerHintContent(
-                  turn.content,
-                  ownerHint,
-                );
-                const stateBadge =
-                  turn.presentation?.messageKind &&
-                  turn.presentation.messageKind !== "RESULT"
-                    ? MESSAGE_KIND_BADGE[
-                        turn.presentation.messageKind as Exclude<
-                          DeliaMessageKind,
-                          "RESULT"
-                        >
-                      ]
-                    : undefined;
-                return (
-                <li
-                  key={turn.id}
-                  ref={
-                    index === turns.length - 1 ? turnsEndRef : undefined
-                  }
-                  className={`delia-turn delia-turn--${turn.role}`}
-                >
-                  <span className="delia-turn__label">
-                    {turn.role === "user" ? "Você" : "DÉLIA"}
-                  </span>
-                  {stateBadge ? (
-                    <DeliaStatusBadge
-                      label={stateBadge.label}
-                      variant={stateBadge.variant}
-                      className="delia-turn__state"
-                    />
-                  ) : null}
-                  <p className="delia-turn__content">{displayContent}</p>
-                  {ownerHint ? (
-                    <p className="delia-turn__notice">
-                      A fonte informou: {ownerHint}
-                    </p>
-                  ) : null}
-                  {turn.epistemicClass ? (
-                    <span className="delia-turn__meta">
-                      classificação: {turn.epistemicClass}
-                    </span>
-                  ) : null}
-                  {turn.groundingStatus === "GROUNDED" &&
-                  turn.provenance?.source ? (
-                    <span className="delia-turn__meta">
-                      fonte: Cadastro de Produtos DELPI ·{" "}
-                      {turn.provenance.specialist_id ?? "especialista"}/
-                      {turn.provenance.protocol ?? "MCP"} ·{" "}
-                      {turn.provenance.observed_at ?? ""}
-                    </span>
-                  ) : null}
-                  {turn.limitations && turn.limitations.length > 0 ? (
-                    <span className="delia-turn__meta">
-                      limitações: {turn.limitations.join(", ")}
-                    </span>
-                  ) : null}
-                  {turn.confirmationRequest &&
-                  !turn.confirmationAnswered ? (
-                    <div
-                      className="delia-confirmation"
-                      role="group"
-                      aria-label="Confirmação pendente"
-                    >
-                      <button
-                        type="button"
-                        className="delia-confirmation__confirm"
-                        disabled={loading}
-                        onClick={() =>
-                          void handleConfirmation(
-                            turn.confirmationRequest as DeliaConfirmationRequest,
-                            "CONFIRM",
-                          )
-                        }
-                      >
-                        Confirmar
-                      </button>
-                      <button
-                        type="button"
-                        className="delia-confirmation__cancel"
-                        disabled={loading}
-                        onClick={() =>
-                          void handleConfirmation(
-                            turn.confirmationRequest as DeliaConfirmationRequest,
-                            "REJECT",
-                          )
-                        }
-                      >
-                        Cancelar
-                      </button>
-                    </div>
-                  ) : null}
-                </li>
-                );
-              })}
-            </ul>
-          ) : null}
+          <div
+            className="delia-interaction__body"
+            ref={scrollRegionRef}
+            onScroll={handleTimelineScroll}
+          >
+            {turns.length > 0 ? (
+              <ConversationTimeline
+                turns={turns}
+                loading={loading}
+                onConfirmation={handleConfirmation}
+              />
+            ) : (
+              <DeliaReception />
+            )}
+            {loading ? (
+              <DeliaLoadingBadge
+                className="delia-interaction__loading"
+                tone="info"
+                label="A DÉLIA está processando sua solicitação…"
+              />
+            ) : null}
+            <div ref={turnsEndRef} aria-hidden="true" />
+          </div>
 
           {error ? (
             <p className="delia-interaction__error" role="alert">
@@ -348,31 +244,13 @@ export default function App({
             </p>
           ) : null}
 
-          <form
-            className="delia-interaction__form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleSubmit();
-            }}
-          >
-            <label htmlFor="delia-interaction-input">
-              Pergunte à DÉLIA
-            </label>
-            <textarea
-              id="delia-interaction-input"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Digite sua pergunta…"
-              rows={3}
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={loading || !input.trim()}
-            >
-              {loading ? "Enviando…" : "Enviar"}
-            </button>
-          </form>
+          <DeliaComposer
+            inputId="delia-interaction-input"
+            value={input}
+            onChange={setInput}
+            onSubmit={handleSubmit}
+            loading={loading}
+          />
         </section>
 
         <p className="delia-host-meta">
