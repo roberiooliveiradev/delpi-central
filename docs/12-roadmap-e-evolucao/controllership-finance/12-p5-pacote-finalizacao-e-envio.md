@@ -1,6 +1,6 @@
 # 12 — P5 — Pacote, Finalização e Envio
 
-**TARGET / PAGE_DOCUMENTATION_GATE_V2 PARTIAL / PACKAGE_FINALIZATION_READY / SEND_PENDING_E04_T04**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PARTIAL / PACKAGE_FINALIZATION_READY / SEND_DECISION_REQUIRED_E04_T04**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -8,14 +8,14 @@ IMPLEMENTATION_AUTHORIZED = NO
 
 VISUAL_SPEC_DEFINED          = PASS
 PACKAGE_CONTRACT_DEFINED     = PASS
-SEND_CONTRACT_DEFINED        = PENDING_E04_T04
+SEND_CONTRACT_DEFINED        = DECISION_REQUIRED_E04_T04
 AUTHZ_DEFINED                = PASS
 PLUGIN_UI_REUSE_DEFINED      = PASS
 STATES_DEFINED               = PASS
 TEST_MATRIX_DEFINED          = PASS
 ```
 
-> Este documento fecha P5 no nível de produto, experiência, arquitetura de informação, estados, AuthZ visual, reuso do `@delpi/plugin-ui`, Help e aceite visual. Não autoriza runtime. O slice de envio real permanece bloqueado por E04/T04.
+> Este documento fecha P5 no nível de package/finalization, experiência, AuthZ, plugin-ui, Help e aceite visual. Não autoriza runtime. O inventário E04/T04 foi concluído e o slice de envio real permanece bloqueado por decisão material registrada no documento 36.
 
 ## Objetivo da página
 
@@ -70,7 +70,7 @@ UI_VISIBILITY != AUTHORIZATION
 | histórico/versionamento do pacote | P5 |
 | effective permissions | Core |
 | user-facing notifications | Core Notifications / Minha DELPI capability |
-| entrega real do pacote | **owner/capability ainda não provado — E04/T04** |
+| entrega real do pacote | **DECISION_REQUIRED — opções/impactos no documento 36** |
 | chrome visual | `@delpi/plugin-ui` |
 
 Não pertence a P5:
@@ -113,7 +113,7 @@ A versão anterior permanece histórica.
 
 ### Envio
 
-Somente quando E04/T04 provarem capability corporativa real:
+Somente após a decisão E04/T04 escolher owner/outcome e o futuro runtime provar a capability correspondente:
 
 ```text
 PACKAGE_FINALIZED
@@ -832,6 +832,26 @@ validate-p5-plugin-ui
 
 Tecnologia/localização seguem o HEAD da futura implementação.
 
+## Decision packet E04/T04
+
+Authority:
+- [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md).
+
+Inventário concluído:
+- Graph e-mail + attachments = PROVEN;
+- Graph 202 = accepted, não delivery proof;
+- Message Trace = PROVEN em CIPA/Transformômetro;
+- generic delivery owner = NOT_PROVEN.
+
+Decisão pendente:
+- owner/orchestration;
+- semântica de `PACKAGE_SENT`.
+
+Recomendação documentada, não aplicada:
+- P5/BFF owns orchestration;
+- Graph + Message Trace adapters;
+- `PACKAGE_SENT` após trace `DELIVERED`.
+
 ## Inventários técnicos remanescentes
 
 ### Owners/sources de package
@@ -867,7 +887,7 @@ OBJECTIVE_BOUNDARY_DEFINED  = PASS
 OWNERS_DEFINED              = PARTIAL / DELIVERY OWNER PENDING
 VISUAL_SPEC_DEFINED         = PASS
 PACKAGE_CONTRACT_DEFINED    = PASS
-SEND_CONTRACT_DEFINED       = PENDING_E04_T04
+SEND_CONTRACT_DEFINED       = DECISION_REQUIRED_E04_T04
 AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
 STATES_DEFINED              = PASS
@@ -887,7 +907,7 @@ Resultado:
 ```text
 A12 P5 PACOTE, FINALIZAÇÃO E ENVIO
 = PACKAGE_FINALIZATION_READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
-+ SEND_SLICE_PENDING_E04_T04
++ SEND_SLICE_DECISION_REQUIRED_E04_T04
 != FULL_PAGE_READY_FOR_IMPLEMENTATION_BRIEF
 != IMPLEMENTED
 ```
