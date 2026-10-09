@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from tv_app.application.services.data.slide_layout_quality_service import (
     SlideLayoutQualityService,
@@ -60,7 +60,326 @@ class DesignIntelligenceService:
                 "storyDigest",
                 "candidatePreview",
                 "visualVerification",
+                "designMethodology",
             ],
+            "designMethodology": cls._methodology_catalog_projection(),
+        }
+
+    @classmethod
+    def _methodology_contract(cls) -> dict[str, Any]:
+        doc = _document()
+        contract = doc.get("designMethodology")
+        return contract if isinstance(contract, dict) else {}
+
+    @classmethod
+    def _methodology_catalog_projection(cls) -> dict[str, Any]:
+        """Compact contract projection — vocabulary + rules, no prose blobs."""
+        contract = cls._methodology_contract()
+        return {
+            "version": contract.get("version"),
+            "intents": contract.get("intents") or [],
+            "readinessStates": contract.get("readinessStates") or [],
+            "epistemicStates": contract.get("epistemicStates") or [],
+            "sufficiencyOutcomes": contract.get("sufficiencyOutcomes") or [],
+            "evidenceLevels": contract.get("evidenceLevels") or [],
+            "factRequirements": contract.get("factRequirements") or {},
+            "readBeforeAsk": contract.get("readBeforeAsk") or {},
+            "forbiddenClaims": contract.get("forbiddenClaims") or [],
+            "confidencePolicy": contract.get("confidencePolicy"),
+        }
+
+    # -- PHASE 5 methodology evaluator --------------------------------------
+    # Deterministic readiness/sufficiency evaluation over facts the caller
+    # already assembled (digests, P4 grounding, audits). No I/O here — dispatch
+    # owns reads; the evaluator only classifies known/unknown/readable.
+
+    _FACTS_DERIVED_FROM_DIGEST = ("primary_metric", "time_series", "category_count")
+
+    # Bounded sub-intent detector for high-level design requests. This is the
+    # methodology's own vocabulary — Knowledge Orchestration remains the outer
+    # router; direct typed commands must return None so ops flow ungated.
+    _DESIGN_INTENT_PATTERNS = (
+        ("CHOOSE_VISUAL", ("qual grafico", "que grafico", "qual visual", "grafico devo", "qual tipo de grafico")),
+        ("FIX_LAYOUT", ("sobrepo", "sobrepost", "fora do slide", "apertad", "organiz", "layout quebrad")),
+        ("REVIEW_SLIDE", ("esta bom", "ta bom", "revise", "avalie", "como esta", "bonit")),
+        ("COMPOSE_SLIDE", ("executiv", "monte", "componha", "crie um slide", "novo slide")),
+        ("IMPROVE_EXISTING", ("melhore", "melhorar", "destaque", "destacar", "deixe melhor", "polir")),
+    )
+
+    @classmethod
+    def design_intent_for_message(cls, message: str | None) -> str | None:
+        import unicodedata
+
+        text = " ".join(str(message or "").lower().split())
+        text = "".join(
+            c for c in unicodedata.normalize("NFD", text)
+            if unicodedata.category(c) != "Mn"
+        )
+        if not text:
+            return None
+        for intent, markers in cls._DESIGN_INTENT_PATTERNS:
+            if any(marker in text for marker in markers):
+                return intent
+        return None
+
+    @classmethod
+    def evaluate_methodology(
+        cls,
+        *,
+        intent: str,
+        digest: Mapping[str, Any] | None = None,
+        design_audit: Mapping[str, Any] | None = None,
+        selected_objects: Sequence[Mapping[str, Any]] | None = None,
+        missing_ids: Sequence[str] | None = None,
+        selection_state: str | None = None,
+        canonical_pixels: Any = None,
+        has_data_source: bool = False,
+        explicit_user_choice: str | None = None,
+        dominant_family: str | None = None,
+        preview_error: Any = None,
+        slide_known: bool = True,
+        extra_missing_readable: Sequence[str] | None = None,
+        extra_missing_user: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        contract = cls._methodology_contract()
+        intents = contract.get("intents") or []
+        if intent not in intents:
+            intent = intents[0] if intents else "REVIEW_SLIDE"
+        requirements = (contract.get("factRequirements") or {}).get(intent) or {}
+        fact_sources = contract.get("factSources") or {}
+
+        facts: dict[str, Any] = {}
+        missing: list[dict[str, Any]] = []
+
+        def _known(name: str, value: Any, epistemic: str) -> None:
+            facts[name] = {"value": value, "epistemic": epistemic}
+
+        def _miss(name: str, *, reason: str | None = None) -> None:
+            source = fact_sources.get(name) or {}
+            entry: dict[str, Any] = {"fact": name, "epistemic": "UNKNOWN"}
+            if reason:
+                entry["reason"] = reason
+            if isinstance(source.get("read"), str) or isinstance(source.get("derived"), str):
+                entry["readableVia"] = source.get("read") or source.get("derived")
+                entry["userRequired"] = False
+            else:
+                entry["userRequired"] = True
+            missing.append(entry)
+
+        # --- assemble facts from current materials --------------------------
+        if isinstance(digest, Mapping):
+            rows = int(digest.get("rowCount") or 0)
+            if rows > 0:
+                _known("data_shape", {
+                    "rowCount": rows,
+                    "fields": [f.get("name") for f in digest.get("fields") or []],
+                }, "FACT")
+                metrics = [
+                    f.get("name") for f in digest.get("fields") or []
+                    if isinstance(f, Mapping) and f.get("role") == "metric"
+                ]
+                if metrics:
+                    _known("primary_metric", metrics[0], "INFERRED")
+                temporal = digest.get("temporal") if isinstance(digest.get("temporal"), Mapping) else {}
+                _known("time_series", bool(temporal.get("detected")), "FACT")
+                cardinality = digest.get("categoryCardinality") if isinstance(digest.get("categoryCardinality"), Mapping) else {}
+                if cardinality:
+                    _known("category_count", max(cardinality.values()), "FACT")
+                if metrics and cardinality:
+                    _known("comparison_goal", "category_comparison", "INFERRED")
+
+        objects = [o for o in (selected_objects or []) if isinstance(o, Mapping)]
+        if selection_state == "AMBIGUOUS" or len(objects) > 1:
+            facts["target_object"] = {
+                "value": None,
+                "epistemic": "UNKNOWN",
+                "note": "AMBIGUOUS_SELECTION",
+            }
+            missing.append(
+                {"fact": "target_object", "epistemic": "UNKNOWN",
+                 "reason": "ambiguous_selection", "userRequired": True}
+            )
+        elif len(objects) == 1:
+            _known("target_object", objects[0].get("id"), "FACT")
+            block_type = objects[0].get("type")
+            if block_type:
+                _known("existing_visual_type", str(block_type), "FACT")
+        if missing_ids:
+            _known("unresolved_selection", list(missing_ids), "FACT")
+
+        if isinstance(design_audit, Mapping):
+            issues = [i for i in design_audit.get("issues") or [] if isinstance(i, dict)]
+            _known("layout_audit", {"issueCount": len(issues), "issues": [i.get("id") for i in issues]}, "FACT")
+            _known("layout_density", "issues" if issues else "clean", "INFERRED")
+        if dominant_family:
+            _known("dominant_family", str(dominant_family), "FACT")
+        if slide_known:
+            _known("target_scope", "focused_slide", "FACT")
+        if canonical_pixels:
+            _known("visual_evidence_available", "canonical_stage", "FACT")
+
+        for name in extra_missing_readable or ():
+            _miss(str(name))
+        for name in extra_missing_user or ():
+            entry = {"fact": str(name), "epistemic": "UNKNOWN", "userRequired": True}
+            if all(m.get("fact") != name for m in missing):
+                missing.append(entry)
+
+        for name in requirements.get("required") or []:
+            if name not in facts and all(m.get("fact") != name for m in missing):
+                if name == "data_shape" and digest is None and not has_data_source:
+                    _miss(name)
+                else:
+                    _miss(name)
+            elif name in facts and facts[name].get("epistemic") == "UNKNOWN":
+                pass
+
+        # --- readiness -------------------------------------------------------
+        missing_required = [
+            m for m in missing
+            if m.get("fact") in (requirements.get("required") or [])
+        ]
+        missing_optional_known = [
+            m for m in missing
+            if m.get("fact") in (requirements.get("optional") or [])
+        ]
+        if preview_error:
+            readiness = "BLOCKED"
+        elif missing_ids and not objects and intent in {"IMPROVE_EXISTING", "FIX_LAYOUT"}:
+            readiness = "MISSING_INFORMATION"
+        elif missing_required:
+            readiness = "MISSING_INFORMATION"
+        elif missing_optional_known or missing:
+            readiness = "PARTIAL"
+        else:
+            readiness = "READY"
+
+        # --- sufficiency -----------------------------------------------------
+        readable_missing = [m for m in missing if not m.get("userRequired")]
+        if readiness == "BLOCKED":
+            sufficiency = "NO_SAFE_RECOMMENDATION"
+        elif any(m in missing_required for m in readable_missing):
+            sufficiency = "READ_MORE_STATE"
+        elif any(m.get("userRequired") for m in missing_required):
+            sufficiency = "ASK_USER"
+        elif readable_missing:
+            sufficiency = "READ_MORE_STATE"
+        elif any(m.get("userRequired") for m in missing):
+            sufficiency = "ASK_USER"
+        else:
+            sufficiency = "RECOMMEND_NOW"
+
+        # --- evidence ---------------------------------------------------------
+        if canonical_pixels:
+            level = "CANONICAL_PIXELS"
+        elif isinstance(design_audit, Mapping):
+            level = "STRUCTURAL"
+        elif facts:
+            level = "DOMAIN_STATE"
+        else:
+            level = "NONE"
+        evidence = {
+            "level": level,
+            "sources": [
+                s for s, ok in (
+                    ("semanticDigest", isinstance(digest, Mapping)),
+                    ("designAudit", isinstance(design_audit, Mapping)),
+                    ("editorFocus", bool(objects) or bool(missing_ids)),
+                    ("canonical_stage", bool(canonical_pixels)),
+                ) if ok
+            ],
+        }
+
+        # --- strategy / recommendations --------------------------------------
+        strategy: dict[str, Any] | None = None
+        recommendations: list[dict[str, Any]] = []
+        fabricated = False
+        if intent == "CHOOSE_VISUAL" and readiness in {"READY", "PARTIAL"}:
+            if isinstance(digest, Mapping) and int(digest.get("rowCount") or 0) > 0:
+                rec = cls._recommend(digest)
+                reasons = [f"{key}={facts[key]['value']}" for key in (
+                    "time_series", "category_count", "primary_metric", "comparison_goal"
+                ) if key in facts]
+                strategy = {
+                    "visualFamily": rec.get("recommendedType"),
+                    "epistemic": "RECOMMENDED",
+                    "reasons": reasons or list(rec.get("reasons") or []),
+                    "alternatives": [
+                        {**{k: v for k, v in alt.items() if k != "confidence"},
+                         "epistemic": "RECOMMENDED"}
+                        for alt in rec.get("alternatives") or []
+                        if isinstance(alt, dict)
+                    ],
+                    "rejected": rec.get("rejected") or [],
+                }
+                if explicit_user_choice:
+                    strategy["explicitUserChoice"] = {
+                        "visualFamily": str(explicit_user_choice),
+                        "respected": True,
+                        "epistemic": "FACT",
+                        "note": "user intent preserved; recommendation is advisory",
+                    }
+            else:
+                fabricated = strategy is not None
+        if isinstance(design_audit, Mapping):
+            for issue in design_audit.get("issues") or []:
+                if isinstance(issue, dict) and issue.get("recommendation"):
+                    recommendations.append(
+                        {
+                            "id": issue.get("id"),
+                            "category": issue.get("category"),
+                            "recommendation": issue.get("recommendation"),
+                            "safeAutoFix": bool(issue.get("safeAutoFix")),
+                            "epistemic": "RECOMMENDED",
+                        }
+                    )
+
+        # Aesthetic/pixel claims are gated by the evidence ladder — structural
+        # or domain evidence never authorizes a beauty verdict.
+        aesthetic_gate = None
+        if intent == "REVIEW_SLIDE":
+            aesthetic_gate = (
+                "PIXELS_AVAILABLE"
+                if canonical_pixels
+                else "PIXELS_REQUIRED_FOR_AESTHETIC_CLAIMS"
+            )
+
+        next_action = None
+        next_question = None
+        if sufficiency == "READ_MORE_STATE" and readable_missing:
+            first = readable_missing[0]
+            next_action = {
+                "kind": "READ",
+                "capability": first.get("readableVia") or "get_playlist_context",
+                "fact": first.get("fact"),
+            }
+        elif sufficiency == "ASK_USER":
+            target = next(
+                (m for m in missing if m.get("userRequired")), None
+            )
+            if target:
+                next_question = {
+                    "fact": target.get("fact"),
+                    "prompt": _next_question_prompt(str(target.get("fact"))),
+                }
+                next_action = {"kind": "ASK_USER", "fact": target.get("fact")}
+        elif sufficiency == "NO_SAFE_RECOMMENDATION":
+            next_action = {"kind": "STOP", "reason": "evidence_or_read_failure"}
+
+        return {
+            "version": contract.get("version"),
+            "designIntent": intent,
+            "readiness": readiness,
+            "sufficiency": sufficiency,
+            "facts": facts,
+            "missingFacts": missing,
+            "strategy": strategy,
+            "recommendations": recommendations,
+            "evidence": evidence,
+            "nextAction": next_action,
+            "nextQuestion": next_question,
+            "aestheticGate": aesthetic_gate,
+            "_fabricated": fabricated,
         }
 
     @classmethod
@@ -132,7 +451,12 @@ class DesignIntelligenceService:
         )
         rejected: list[dict[str, str]] = []
         alternatives: list[dict[str, str]] = []
-        if temporal.get("detected"):
+        metrics = [
+            field
+            for field in digest.get("fields") or []
+            if isinstance(field, dict) and field.get("role") == "metric"
+        ]
+        if temporal.get("detected") and metrics:
             rejected.append({"type": "pie", "reason": "temporal series is not a composition"})
             rejected.append({"type": "doughnut", "reason": "temporal series is not a composition"})
             return {
@@ -142,7 +466,7 @@ class DesignIntelligenceService:
                 "alternatives": [{"type": "area", "reason": "same trend, filled"}],
                 "rejected": rejected,
             }
-        if goals:
+        if goals and metrics:
             return {
                 "recommendedType": "gauge",
                 "confidence": 0.8,
@@ -150,7 +474,7 @@ class DesignIntelligenceService:
                 "alternatives": [{"type": "kpi_view", "reason": "hero KPI with progress"}],
                 "rejected": [{"type": "pie", "reason": "goal progress is not a composition"}],
             }
-        if ranking:
+        if ranking and metrics:
             return {
                 "recommendedType": "horizontal_bar",
                 "confidence": 0.82,
@@ -158,7 +482,7 @@ class DesignIntelligenceService:
                 "alternatives": [{"type": "table_view", "reason": "exact values"}],
                 "rejected": [{"type": "pie", "reason": "too many categories"}],
             }
-        if composition:
+        if composition and metrics:
             return {
                 "recommendedType": "doughnut",
                 "confidence": 0.7,
@@ -166,12 +490,21 @@ class DesignIntelligenceService:
                 "alternatives": [{"type": "bar", "reason": "safer comparison"}],
                 "rejected": [],
             }
-        alternatives.append({"type": "kpi_view", "reason": "single snapshot"})
+        if metrics and not ranking and not composition:
+            return {
+                "recommendedType": "kpi_view",
+                "confidence": 0.6,
+                "reasons": ["single metric snapshot"],
+                "alternatives": [{"type": "bar", "reason": "if a category emerges"}],
+                "rejected": [],
+            }
+        # No metric evidence: an exact listing is the honest family — never a
+        # fabricated categorical chart on shapeless string data.
         return {
-            "recommendedType": "bar",
-            "confidence": 0.55,
-            "reasons": ["default category comparison"],
-            "alternatives": alternatives,
+            "recommendedType": "table_view",
+            "confidence": 0.4,
+            "reasons": ["no metric detected — exact listing is safe"],
+            "alternatives": [{"type": "kpi_view", "reason": "if a metric is bound"}],
             "rejected": [],
         }
 
@@ -193,6 +526,9 @@ class DesignIntelligenceService:
         dominant_visual_family: str | None = None,
     ) -> dict[str, Any]:
         rec = cls._recommend(digest)
+        # Legacy heuristic score kept for wire compat; methodology decisions
+        # never depend on it (PHASE 5 — evidence/readiness are the contract).
+        rec["confidenceStatus"] = "LEGACY_UNCALIBRATED"
         family = str(dominant_visual_family or "").strip()
         if not family:
             return rec
@@ -221,6 +557,18 @@ class DesignIntelligenceService:
             "reasons": reasons,
             "alternatives": alternatives,
         }
+
+
+_QUESTION_PROMPTS: dict[str, str] = {
+    "comparison_goal": "Você quer comparar as categorias entre si ou mostrar a evolução ao longo do tempo?",
+    "slide_purpose": "Qual é o objetivo principal deste slide para o público da TV?",
+    "display_context": "Este slide será exibido em modo kiosk (TV) ou usado em detalhe?",
+    "target_object": "Qual bloco você quer que eu altere? Selecione no editor ou indique o alvo.",
+}
+
+
+def _next_question_prompt(fact: str) -> str:
+    return _QUESTION_PROMPTS.get(fact) or f"Falta um fato para decidir: {fact}."
 
 
 _ISSUE_PROFILES: dict[str, dict[str, Any]] = {

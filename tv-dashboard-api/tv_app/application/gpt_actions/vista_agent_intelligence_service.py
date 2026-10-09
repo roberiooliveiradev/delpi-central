@@ -181,6 +181,10 @@ class VistaAgentIntelligenceService:
             "si_goals": doc.get("si_goals") or {},
             "write_quality": doc.get("write_quality") or {},
             "slide_design": doc.get("slide_design") or {},
+            # PHASE 5 — design methodology contract pointer + bounded rules;
+            # structured contract lives in design_intelligence.json
+            # (catalog field designIntelligence.designMethodology).
+            "design_methodology": doc.get("design_methodology") or {},
             "screenshot_parity": doc.get("screenshot_parity") or {},
             "layout_perception": doc.get("layout_perception") or {},
             "visual_verification": doc.get("visual_verification") or {},

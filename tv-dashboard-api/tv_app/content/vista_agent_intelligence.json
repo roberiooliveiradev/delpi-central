@@ -72,10 +72,10 @@
         "note": "Product Guide V1 live (tv_app/content/product_guides); guidance IS_NOT domain truth"
       },
       "design_methodology": {
-        "status": "PARTIAL",
+        "status": "PROVEN",
         "purpose": "Lente de decisão visual/design.",
-        "reads": ["design_intelligence", "visual_selection", "visual_impact", "presentation_recipes", "layout_perception"],
-        "note": "metodologia de readiness = PHASE 5; guidance IS_NOT estado salvo"
+        "reads": ["design_intelligence", "designMethodology (get_catalog + eval em preview_data_block/suggest_change)", "visual_selection", "visual_impact", "presentation_recipes", "layout_perception"],
+        "note": "metodologia de readiness PROVEN (PHASE 5 §37/§38); guidance IS_NOT estado salvo"
       },
       "solution_ecosystem": {
         "status": "UNAVAILABLE_IN_CURRENT_SURFACE",
@@ -1173,6 +1173,20 @@
       "Recusar textProjection em heading/text/shape quando o pedido pede dado em texto/forma",
       "KPI/chart/table/input com primary grande e dependentes no mínimo absoluto (desproporção interna)",
       "Escalar só um campo tipográfico sem hierarquia de partes do mesmo componente"
+    ]
+  },
+  "design_methodology": {
+    "principle": "READ_FACTS_BEFORE_ASKING",
+    "contract": "design_intelligence.json → designMethodology (get_catalog → designIntelligence.designMethodology; respostas → designMethodology eval em preview_data_block/suggest_change)",
+    "summary": "Metodologia de decisão de design: ground do alvo (P4), fatos legíveis lidos antes de perguntar, readiness READY|PARTIAL|MISSING_INFORMATION|BLOCKED, evidência mínima por decisão, nunca claim de pixel sem pixels canônicos.",
+    "rules": [
+      "Intent de design de alto nível (melhore/organize/qual gráfico/executivo) → avaliar designMethodology; comando tipado direto (alinhe, aumente fonte, crie texto) → ops tipadas sem metodologia.",
+      "Fato faltante legível (data_shape, target, layout) → READ primeiro (preview_data_block/get_playlist_context); perguntar só fato user-only (propósito, objetivo não inferível).",
+      "Evidência: família de gráfico exige data_shape do preview; claims estruturais bastam layoutDigest/designAudit; claim estético/pixel exige canonical_stage inspecionado ou rubrica humana.",
+      "Seleção AMBIGUOUS ou missingIds ≠ alvo — nunca adivinhar o primeiro objeto; explicit host_context > focus fallback (P4).",
+      "Escolha explícita do usuário de visual suportado é preservada; metodologia recomenda, não sobrescreve.",
+      "Sem score numérico: decisão = readiness + evidence + reasons; confidence legado = LEGACY_UNCALIBRATED.",
+      "DIAGNOSE_DATA / PREPARE_KIOSK são cross-boundary — não absorver no P5."
     ]
   },
   "surface_parity": {

@@ -91,5 +91,115 @@
       "recommendedFor": ["branch", "period"],
       "avoidFor": ["primary visualization"]
     }
+  },
+  "designMethodology": {
+    "version": "design-methodology-v1",
+    "principle": "GROUND_OBJECT > READ_FACT > CHECK_SUFFICIENCY > USE_RIGHT_EVIDENCE > RECOMMEND_ONLY_SUPPORTED > ASK_ONLY_UNREADABLE",
+    "intents": [
+      "REVIEW_SLIDE",
+      "CHOOSE_VISUAL",
+      "IMPROVE_EXISTING",
+      "COMPOSE_SLIDE",
+      "FIX_LAYOUT"
+    ],
+    "epistemicStates": ["FACT", "INFERRED", "RECOMMENDED", "UNKNOWN"],
+    "readinessStates": ["READY", "PARTIAL", "MISSING_INFORMATION", "BLOCKED"],
+    "sufficiencyOutcomes": [
+      "RECOMMEND_NOW",
+      "READ_MORE_STATE",
+      "ASK_USER",
+      "NO_SAFE_RECOMMENDATION"
+    ],
+    "evidenceLevels": [
+      "DOMAIN_STATE",
+      "STRUCTURAL",
+      "CANONICAL_PIXELS",
+      "PIXELS_INSPECTED",
+      "HUMAN_JUDGMENT"
+    ],
+    "factRequirements": {
+      "CHOOSE_VISUAL": {
+        "required": ["data_shape"],
+        "optional": [
+          "primary_metric",
+          "time_series",
+          "category_count",
+          "comparison_goal",
+          "existing_visual_type",
+          "dominant_family"
+        ]
+      },
+      "REVIEW_SLIDE": {
+        "required": ["target_scope"],
+        "optional": [
+          "layout_density",
+          "visual_evidence_available",
+          "dominant_family",
+          "existing_visual_type"
+        ]
+      },
+      "IMPROVE_EXISTING": {
+        "required": ["target_object"],
+        "optional": ["existing_visual_type", "data_shape", "layout_density"]
+      },
+      "COMPOSE_SLIDE": {
+        "required": [],
+        "optional": ["slide_purpose", "data_shape", "display_context", "dominant_family"]
+      },
+      "FIX_LAYOUT": {
+        "required": ["target_scope"],
+        "optional": ["layout_density"]
+      }
+    },
+    "factSources": {
+      "data_shape": {"read": "preview_data_block", "alt": "inspect_data_model"},
+      "primary_metric": {"derived": "semanticDigest.fields[role=metric]"},
+      "time_series": {"derived": "semanticDigest.temporal.detected"},
+      "category_count": {"derived": "semanticDigest.categoryCardinality"},
+      "existing_visual_type": {"read": "get_playlist_context", "via": "blockIndex/selectedObjects"},
+      "target_object": {"read": "get_playlist_context", "via": "editorFocus.selectedObjects"},
+      "target_scope": {"read": "get_playlist_context"},
+      "layout_density": {"read": "get_playlist_context", "via": "layoutDigest"},
+      "dominant_family": {"read": "get_playlist_context", "via": "storyDigest"},
+      "visual_evidence_available": {"read": "get_playlist_context", "via": "canonical_stage"},
+      "slide_purpose": {"user": true},
+      "comparison_goal": {"user": true, "note": "ask only when not inferable from digest"},
+      "display_context": {"user": true, "note": "kiosk vs detail context"}
+    },
+    "readinessRules": {
+      "BLOCKED": "hard read/evidence failure (preview error, missing persisted target)",
+      "MISSING_INFORMATION": "a required fact is absent (readable → READ_MORE_STATE; user-only → ASK_USER)",
+      "PARTIAL": "required facts present but known optional facts absent",
+      "READY": "all required facts present and minimum evidence for the decision available"
+    },
+    "sufficiencyRules": {
+      "NO_SAFE_RECOMMENDATION": "readiness==BLOCKED",
+      "READ_MORE_STATE": "required fact missing AND factSources[fact].read resolves",
+      "ASK_USER": "required fact missing AND factSources[fact].user only",
+      "RECOMMEND_NOW": "readiness in {READY, PARTIAL} AND evidence >= evidenceRequirements[decision]"
+    },
+    "evidenceRequirements": {
+      "visual_family": "DOMAIN_STATE + semanticDigest",
+      "structural_layout": "STRUCTURAL",
+      "aesthetic_pixel": "PIXELS_INSPECTED | HUMAN_JUDGMENT",
+      "target_change": "DOMAIN_STATE + editorFocus grounding"
+    },
+    "readBeforeAsk": {
+      "rule": "missing fact resolvable via factSources.read → READ first; ask only user-only facts",
+      "capabilities": [
+        "get_playlist_context",
+        "preview_data_block",
+        "inspect_data_model",
+        "preview_data_model"
+      ]
+    },
+    "forbiddenClaims": [
+      "pixel-quality claim without PIXELS_INSPECTED or HUMAN_JUDGMENT evidence",
+      "data absence after route/search miss",
+      "visual family claim without data_shape",
+      "layout fixed before authoritative read-back",
+      "authorization/capability claims from methodology"
+    ],
+    "confidencePolicy": "no numeric confidence; evidence level + readiness + reasons only"
   }
 }

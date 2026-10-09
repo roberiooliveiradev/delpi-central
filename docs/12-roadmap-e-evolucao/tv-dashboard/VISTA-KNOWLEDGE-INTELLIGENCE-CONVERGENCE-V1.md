@@ -367,7 +367,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | 2 | TV Product Guide V1 | 1 | DONE (§30) |
 | 3 | Help Convergence | 2 | DONE (§32·§33 runtime-verified) |
 | 4 | Editor Grounding V2 | 0 | DONE (§34 diagnostic · §36 execution) |
-| 5 | Design Methodology V1 | 1, 4 | READY_FOR_EXECUTION (§37 diagnostic done) |
+| 5 | Design Methodology V1 | 1, 4 | DONE (§38) |
 | 6 | Data + Solution Intelligence | 1 | READY_FOR_DIAGNOSTIC |
 | 7 | Eval + Telemetry V2 | 0 | READY_FOR_EXECUTION (§35 diagnostic done — exec requer promoção) |
 | 8 | Semantic Intent Arbitration | 7 (evidência material) + brief dedicado | BLOCKED |
@@ -504,7 +504,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** modelo + testes + eval.
 - **DEPENDENCIES:** PHASE 1, PHASE 4.
 - **STOP CONDITIONS:** exigir mutação fora de PresentationMutation ou segundo renderer.
-- **STATUS:** READY_FOR_EXECUTION (§37 diagnostic, 2026-10-09).
+- **STATUS:** DONE (§38 execution, 2026-10-09).
 
 ### PHASE 6 — DATA + SOLUTION INTELLIGENCE
 
@@ -1531,6 +1531,120 @@ split = methodology owns decision contract, guide owns explanatory guidance — 
 
 ### 37.14 READINESS
 
-PHASE 5 = READY_FOR_EXECUTION. P4 residual (authenticated WS+JWT wire smoke pending
+PHASE 5 diagnostic concluded READY_FOR_EXECUTION (execution in §38). P4 residual (authenticated WS+JWT wire smoke pending
 dev-Keycloak creds) recorded accurately; does not block P5 diagnostic nor P5 implementation
 planning. Stop conditions not triggered.
+
+
+## SECTION 38 — PHASE 5 DESIGN METHODOLOGY EXECUTION RECORD
+
+Base HEAD 16af285e38 · final HEAD recorded at commit. Drift gate: PASS (zero
+tv-dashboard-api changes between §37 and implementation start).
+
+### 38.1 FILES
+
+- `tv_app/content/design_intelligence.json` — `designMethodology` structured
+  contract (version design-methodology-v1; intents, vocabularies,
+  factRequirements, factSources, readinessRules, sufficiencyRules,
+  evidenceRequirements, readBeforeAsk, forbiddenClaims, confidencePolicy).
+- `tv_app/application/services/data/design_intelligence_service.py` —
+  `_methodology_contract`, `_methodology_catalog_projection`,
+  `design_intent_for_message` (bounded sub-intent vocabulary, accent-safe),
+  `evaluate_methodology` (deterministic evaluator; no I/O), `_recommend`
+  honesty guards (metric required for chart families; no-metric → table_view;
+  single metric → kpi_view), `confidenceStatus: LEGACY_UNCALIBRATED` on
+  visualRecommendation.
+- `tv_app/content/vista_agent_intelligence.json` — `design_methodology`
+  directive block (READ_FACTS_BEFORE_ASKING); KO source
+  `design_methodology` PARTIAL → PROVEN.
+- `tv_app/application/gpt_actions/vista_agent_intelligence_service.py` —
+  `design_methodology` projected in agent_directives.
+- `tv_app/application/gpt_actions/dispatch_service.py` —
+  `preview_data_block` emits `designMethodology` eval (BLOCKED on
+  preview/transform failure); `suggest_change` attaches advisory only when
+  `design_intent_for_message` matches; direct typed commands bypass.
+- `tests/design_methodology_corpus.py` — frozen corpus (22 cases) +
+  `tests/run_design_methodology_eval.py` runner +
+  `tests/test_design_methodology.py` (35 tests).
+
+### 38.2 CONTRACT SUMMARY
+
+READINESS (closed): READY | PARTIAL | MISSING_INFORMATION | BLOCKED.
+EPISTEMIC (closed): FACT | INFERRED | RECOMMENDED | UNKNOWN.
+SUFFICIENCY: RECOMMEND_NOW | READ_MORE_STATE | ASK_USER | NO_SAFE_RECOMMENDATION.
+EVIDENCE LEVELS: DOMAIN_STATE | STRUCTURAL | CANONICAL_PIXELS | PIXELS_INSPECTED | HUMAN_JUDGMENT.
+INTENTS (§37-frozen): REVIEW_SLIDE | CHOOSE_VISUAL | IMPROVE_EXISTING | COMPOSE_SLIDE | FIX_LAYOUT.
+DIAGNOSE_DATA / PREPARE_KIOSK = cross-boundary, not implemented.
+
+### 38.3 READ-BEFORE-ASK (proven)
+
+data_shape missing + readable → sufficiency=READ_MORE_STATE +
+nextAction{kind:READ, capability:preview_data_block}. User-only fact
+(comparison_goal when not inferable) → ASK_USER + specific nextQuestion.
+preview_error → BLOCKED + NO_SAFE_RECOMMENDATION (no fabricated strategy).
+AMBIGUOUS selection → ASK_USER, never first-object guess. missingIds →
+target_object UNKNOWN + unresolved_selection FACT.
+
+### 38.4 CONFIDENCE MIGRATION
+
+`visualRecommendation.confidence` — zero code consumers (grep-proven);
+kept on the wire for compat, annotated `confidenceStatus:
+LEGACY_UNCALIBRATED`; methodology output contains no numeric confidence.
+
+### 38.5 BUDGET + PROJECTION
+
+Actions envelope: 92,517B → 95,629B (+3,112B); headroom 6,771B
+(min guard 4,096B) — PASS. designMethodology catalog block = 1,741B.
+One semantic source (design_intelligence.json); MCP full + Actions compact
+via existing `_compact_for_actions` (summary dropped).
+
+### 38.6 EVAL DELTA (frozen corpus, raw counts)
+
+| metric | baseline | candidate |
+|---|---|---|
+| readiness/emitted contract | 0/22 | 22/22 |
+| read_before_ask correct | 0/3 | 3/3 |
+| visual_selection family correct | 5/8 | 8/8 |
+| fabricated recommendation | 1 (empty→line) | 0 |
+| uncalibrated confidence emitted | 9/9 digest cases | 0 in methodology |
+| unsupported pixel claims | n/a | 0 (aestheticGate enforced) |
+
+Baseline corrections unlocked by methodology guards: kpi_single_metric
+bar→kpi_view; many_rows line→horizontal_bar; ambiguous doughnut→table_view;
+empty_dataset line→MISSING_INFORMATION+READ.
+
+### 38.7 TESTS
+
+35 P5 tests + corpus; adjacent suites green (design intelligence,
+P4 grounding, catalog budget, suggest ops, facade, layout/preview,
+MCP surfaces). Full suite result recorded at report time.
+
+### 38.8 RUNTIME VALIDATION
+
+In-container smoke on rebuilt `delpi-tv-dashboard-api` (real dispatch +
+real DB, playlist 49cf8e1d…, same pattern as P4):
+
+- `suggest_change "melhore isso"` + real seeded focus → advisory
+  `designMethodology` present, intent=IMPROVE_EXISTING, READY,
+  target_object=kpi1 via P4 fallback — PASS.
+- `suggest_change "Delete este bloco"` → no methodology key — bypass PASS.
+- `get_catalog` surface → `designIntelligence.designMethodology` projected,
+  version design-methodology-v1, 5 intents, 1,741B — PASS.
+- Empty-data evaluator → MISSING_INFORMATION + READ_MORE_STATE, no
+  strategy — PASS.
+- `preview_data_block` on persisted block → "Fonte de dados indisponível":
+  dev route catalog is empty (same foreign catalog-sync drift as Stage 4;
+  api-delpi healthy). Preview-level eval wiring proven by unit tests;
+  real-data preview = PARTIALLY_PROVEN (environmental).
+- HTTP/JWT wire smoke: pending dev-Keycloak creds (same residual as P4).
+
+### 38.9 BOUNDARIES
+
+Mutation contract: unchanged. AuthZ: unchanged. New actions/tools/
+endpoints/services: 0. Product Guide: untouched (design_quality DEFERRED).
+P6/P7: not implemented. TÉO: pattern-only, zero runtime dependency.
+
+### 38.10 STATUS
+
+PHASE 5 = DONE — implementation + frozen-corpus eval + regressions + in-container runtime proof (§38.8).
+PHASE 6 next = DIAGNOSTIC mode (Data + Solution Intelligence).

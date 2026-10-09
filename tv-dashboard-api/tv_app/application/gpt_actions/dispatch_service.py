@@ -1169,25 +1169,39 @@ class GptActionsDispatchService:
         }
         # Transform/binding failure nunca é dataset vazio: erro tipado no topo do
         # payload para o caller não tratar preview quebrado como sucesso.
+        preview_error: dict[str, Any] | None = None
         resolved = block.get("resolved") if isinstance(block, dict) else None
         if isinstance(resolved, dict):
             transform_error = resolved.get("transformError")
             if isinstance(transform_error, dict):
-                response["ok"] = False
-                response["error"] = {
+                preview_error = {
                     "code": transform_error.get("code") or "m.execution_error",
                     "message": str(resolved.get("error") or transform_error.get("message") or ""),
                     "blockId": str(block.get("id") or "") or None,
                     "stage": "transform",
                 }
             elif resolved.get("error"):
-                response["ok"] = False
-                response["error"] = {
+                preview_error = {
                     "code": "DATA_RESOLUTION_FAILED",
                     "message": str(resolved.get("error")),
                     "blockId": str(block.get("id") or "") or None,
                     "stage": "resolution",
                 }
+        if preview_error:
+            response["ok"] = False
+            response["error"] = preview_error
+        # PHASE 5 methodology eval — readiness/evidence contract over the same
+        # digest; never blocks preview and never fabricates a strategy on
+        # failure (preview_error → BLOCKED / NO_SAFE_RECOMMENDATION).
+        methodology = DesignIntelligenceService.evaluate_methodology(
+            intent="CHOOSE_VISUAL",
+            digest=digest,
+            dominant_family=dominant,
+            has_data_source=bool(operation_id or route),
+            preview_error=preview_error,
+        )
+        methodology.pop("_fabricated", None)
+        response["designMethodology"] = methodology
         return response
 
     @staticmethod
@@ -1364,7 +1378,57 @@ class GptActionsDispatchService:
             user=user,
             authorization=authorization,
         )
-        return PresentationCommandPlannerService.to_suggest_payload(plan)
+        payload = PresentationCommandPlannerService.to_suggest_payload(plan)
+        # PHASE 5 — bounded methodology advisory for high-level design intents
+        # only. Direct typed commands bypass it; ops/policy stay canonical.
+        intent = DesignIntelligenceService.design_intent_for_message(message)
+        if intent:
+            methodology = self._design_methodology_for_suggest(intent=intent, host=host)
+            methodology.pop("_fabricated", None)
+            payload["designMethodology"] = methodology
+        return payload
+
+    def _design_methodology_for_suggest(
+        self,
+        *,
+        intent: str,
+        host: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Assemble already-known facts from host_context (post P4 merge) and
+        evaluate. Advisory only — no hidden I/O: facts the caller did not
+        supply surface as missingFacts + nextAction READ instead of guesses."""
+        ids = [
+            str(item) for item in (host.get("selectedBlockIds") or [])
+            if str(item or "").strip()
+        ]
+        types = host.get("selectedBlockTypes") or []
+        selected = [
+            {"id": bid, "type": str(types[i]) if i < len(types) else None}
+            for i, bid in enumerate(ids)
+        ]
+        single = str(host.get("selectedBlockId") or host.get("focusBlockId") or "").strip()
+        if single and not selected:
+            selected = [
+                {
+                    "id": single,
+                    "type": str(host.get("focusBlockType") or "") or None,
+                }
+            ]
+        selection_state = (
+            "AMBIGUOUS" if len(selected) > 1 else "ACTIVE" if selected else None
+        )
+        audit = None
+        native = host.get("nativeConfig")
+        if isinstance(native, dict):
+            audit = DesignIntelligenceService.design_audit(native)
+        return DesignIntelligenceService.evaluate_methodology(
+            intent=intent,
+            design_audit=audit,
+            selected_objects=selected,
+            selection_state=selection_state,
+            has_data_source=bool(host.get("selectedDataSourceId")),
+            slide_known=bool(host.get("slideId") or host.get("playlistId")),
+        )
 
     def _candidate_preview(
         self,
