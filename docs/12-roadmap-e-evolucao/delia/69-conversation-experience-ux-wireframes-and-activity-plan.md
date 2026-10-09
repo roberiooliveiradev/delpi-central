@@ -468,3 +468,92 @@ Ordem candidata: inventário e decisão de contrato → ditado revisável → sa
 - Provider-neutral, sem credenciais ou conteúdo de mídia em prompt/log comum indevido.
 - Loading, cancelamento, retries e consentimento mostram consequências verdadeiras.
 - Testes/evals de generalização, segurança e resultado no SHA e config avaliados; sem provas, \`PENDING/INCONCLUSIVE\`.
+
+
+## 16. Decisão de produto — Ditado Inteligente primeiro; Voz Live posterior (2026-10-09)
+
+**Decisão do Product Master:** há **duas experiências de voz independentes do ponto de vista de UX**, mas reutilizando a mesma identidade DÉLIA e o mesmo fluxo governado de interação. **(A) Ditado inteligente** é a primeira entrega multimodal candidata. **(B) Live/voz conversacional bidirecional** é uma entrega posterior. Esta decisão substitui a indefinição de prioridade apontada na §15.2; a escolha de push-to-talk versus chamada contínua é relevante apenas para desenhar a experiência Live futura. **Não autoriza iniciar fase ou implementar provider, storage, ports, endpoints ou UI sem gates do Plano Mestre.**
+
+### 16.1. Caso A — ditado inteligente com transcrição e ajuste por IA
+
+**Objetivo:** o usuário fala uma pergunta para a DÉLIA no composer existente, em experiência semelhante a ditado de assistentes modernos. A captura gera uma transcrição; uma etapa IA **opcional/contratada e conservadora** melhora legibilidade, pontuação, ortografia e construção frasal; o usuário **revê e edita** o texto; ao clicar Enviar, esse texto percorre o **mesmo** caminho atual de interação \`POST /interaction/turns\`, sujeito aos mesmos gates.
+
+\`\`\`text
+Composer existente
+  └── [Microfone — iniciar captura consentida]
+          └── [Capturando | indicador real + Parar + Cancelar]
+                 └── [Transcrição em processamento]
+                        └── [Texto reconhecido: original disponível]
+                               └── [Ajuste conservador IA, se autorizado]
+                                      └── [Texto ajustado, totalmente editável]
+                                             └── [Revisar / Enviar]
+                                                    └── interação DÉLIA normal
+\`\`\`
+
+**Não enviar automaticamente na primeira entrega.** O simples ato de gravar/transcrever/ajustar não dispara MCP, Domain API, pesquisa externa ou ação material. Ajuste IA é preparação de INPUT, não Evidence/FACT, planejamento operacional, autorização ou decisão de negócio. O texto final enviado é a versão confirmada pelo usuário.
+
+#### Wireframe textual WF-06
+
+\`\`\`text
++---------------- COMPOSER DÉLIA ------------------------------+
+| Pergunte à DÉLIA...                                         |
+|                                                              |
+| [+ Mídia]                            [🎙 Ditado] [Enviar]     |
++--------------------------------------------------------------+
+
+Estado: [🎙 Microfone ativo] [ondas visuais suaves]   [Parar] [Cancelar]
+Estado: [Transcrevendo áudio...]                      [Cancelar]
+Estado: [Ajustando texto...]                          [Cancelar]
++--------------------------------------------------------------+
+| Transcrição original                        [Ver original]   |
+| Texto ajustado pela IA — editável                             |
+| "DÉLIA, mostre os indicadores de produção..."                 |
+|                                      [Editar] [Enviar]        |
++--------------------------------------------------------------+
+\`\`\`
+
+**Observação visual:** indicadores de captura refletem estado real de microfone, não animação simulada; \`prefers-reduced-motion\`, teclado e leitor de tela suportados. Nunca exibir opção ainda não implementada como habilitada.
+
+### 16.2. Limites do ajuste por IA
+
+O revisor de linguagem pode: corrigir erros de fala/transcrição evidentes, pontuação, grafia, concordância, segmentação e organização, mantendo o propósito original. **Não pode**: acrescentar intenção, transformar pedido consultivo em comando, substituir números/decimais/unidades, códigos de produto, OPs, nomes próprios, IDs, períodos, unidades fabris, quantidades ou negações sem validação explícita. Termos técnicos ambíguos devem permanecer como falados/transcritos e/ou ser sinalizados ao usuário, não silenciosamente corrigidos pelo modelo. Prompt injection contido no áudio/transcrito é dado não confiável.
+
+**UX de confiança:** manter transcrição original acessível, deixar o texto final editável, sinalizar alterações relevantes e dar escolha de usar original quando possível. Falha do ajuste IA não deve impedir usar transcrição bruta revisada; falha STT deve apresentar erro e possibilidade de digitar. Não inventar texto quando o áudio é incompreensível. Evitar envio silencioso a terceiros; qualquer processamento externo depende de policy/consent e contrato.
+
+**Exemplo ilustrativo:**
+- Original: “delia me mostra os indicador de produção da unidade de santa catarina de ontem e compara com semana passada”.
+- Ajustado: “DÉLIA, mostre os indicadores de produção da unidade de Santa Catarina de ontem e compare com os da semana passada.”
+- O modelo não presume que números, semanas ou métricas ficaram inequívocos nem transforma a frase em autorização para executar ações.
+
+### 16.3. Caso B — Live em entrega posterior
+
+**Visão alvo:** sessão explícita de voz bidirecional, na qual usuário pergunta e DÉLIA responde por áudio com transcrição/legendas; possibilidade futura de turn-taking, interrupção, retomada e interações com especialistas/conectores autorizados. Precisa de sessão de mídia, áudio/STT/TTS/realtime, latência, observabilidade, gestão de dispositivos, autorização e controle de custos. Não misturar sua implementação com o ditado.
+
+\`\`\`text
+[Iniciar Live] → [Microfone ativo / Ouvindo] ↔ [DÉLIA respondendo]
+        ↘ [Legendas/texto na mesma timeline]
+        ↘ [Silenciar] [Encerrar] [Retomar quando permitido]
+\`\`\`
+
+Interações por voz não fornecem Identity/AuthZ; toda material write mantém live Core AuthZ, Domain authority, Policy/Decision e Outcome. **Live continua TARGET e não pertence à primeira entrega de ditado.**
+
+### 16.4. Reuso, contratos e escopo do futuro Devin
+
+\`EXISTING_EQUIVALENT=TO_INVENTORY\`, \`REUSE_DECISION=TO_DECIDE\` para componentes de composer/captura/preview, STT, revisão linguística e componentes de feedback. Antes de propor \`SpeechToTextPort\` ou revisão-model-service, buscar capacidades existentes, Domain API, MCP/A2A, adapters, shared UI e contratos; escolher o menor boundary correto. Não acoplar frontend diretamente a SDK do provider sem contrato e segurança. Não reutilizar o runtime/tabelas/frontend Minha DELPI Chat.
+
+**Gates prévios:** dono da captura e pipeline, AuthN/AuthZ/policy, consentimento, acesso à mídia, MIME/limites/duração, retenção/transient deletion, tratamento de falhas, provedores e external processing, request/response e erros, observabilidade com minimização, idempotência/retry, e critérios de aceitação. Em áudio de usuários/terceiros, capturar apenas com autorização informada. Classificar \`STT=TO_INVENTORY\`; \`AI_TEXT_ADJUSTMENT=PLANNED\`; \`LIVE=TARGET\`; \`RUNTIME_PROOF=PENDING\`. Documentação não libera C4/C5 nem autoriza Devin a implementar.
+
+### 16.5. Aceitação funcional futura
+
+1. Microfone só inicia após ação do usuário, permissão e indicador visível; Parar/Cancelar encerram captura efetiva.
+2. STT fornece texto passível de revisão, sem enviar automaticamente.
+3. Ajuste melhora redação **sem alterar significado, negadores, números, unidades ou identificadores** nos conjuntos de avaliação, inclusive casos ambíguos e adversariais.
+4. Original e texto ajustado podem ser conferidos; usuário pode editar o final antes de enviar.
+5. Apenas o texto confirmado segue via contrato atual da DÉLIA; revisão linguística não aciona ferramentas.
+6. Falhas STT/IA e permissões negadas têm fallback seguro; sem mensagens enganosas de sucesso.
+7. Retenção/exclusão de áudio e transcrições e disclosure de processamento externo obedecem políticas aprovadas.
+8. Mesma UX funcional em página completa e dock, respeitando dimensões e acessibilidade.
+9. Live não é incluído inadvertidamente no escopo/PR da primeira entrega.
+10. Testar generalização, precisão em termos DELPI, segurança/privacidade, outcome, e registrar evidência no SHA/config avaliado.
+
+**Encaminhamento:** quando o Plano Mestre autorizar, Devin começa por inventário + contrato do ditado, depois UX e implementação mínima governada. A conversa Live deve ser planejada em tarefa/aceite posterior.
