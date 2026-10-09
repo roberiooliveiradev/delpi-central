@@ -980,6 +980,11 @@ Retenção é governance técnico/legal, não permission code.
 - manter conteúdo existente;
 - indicar atualização.
 
+### SUCCESS
+- inbox/thread refletem o contexto autorizado atual;
+- mensagens/read state/pins/reactions exibidos conforme contrato;
+- perda isolada de realtime não descaracteriza SUCCESS dos dados já carregados; nesse caso usar `CONNECTION_DEGRADED` adicional.
+
 ### EMPTY — inbox
 ```text
 Nenhuma conversa ainda.
