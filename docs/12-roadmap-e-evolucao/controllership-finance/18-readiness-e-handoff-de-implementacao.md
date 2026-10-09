@@ -87,7 +87,7 @@ Decisões congeladas:
 | P1 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A08 fechado; T01/T05 e contracts físicos de composição permanecem inventário |
 | P2 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A09 fechado; E05/E06/T02/T05 e bindings físicos permanecem inventário |
 | P3 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 | A10 fechado; E02 = STOCK_CLOSED terminal no Portal V1; T03 continua stop técnico para owner canônico |
-| P4 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-Ac fechados em 11; T01/T05 permanecem inventários técnicos; não expandir CTL-005 além do fechamento |
+| P4 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A11 fechado; T01/T05 e contracts físicos permanecem inventário |
 | P5 — pacote/finalização | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | design/UX/plugin-ui/Help/RQ-AC fechados em 12; owners/sources e contracts físicos permanecem inventário |
 | P5 — envio real | BLOCKED_WITH_EVIDENCE | Q22 depende E04/T04 |
 | P6 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | contrato de página em 28; inventories ADM01–ADM07/E01/E05/E06/T02 conforme slice |
