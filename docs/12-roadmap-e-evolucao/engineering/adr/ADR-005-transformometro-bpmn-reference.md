@@ -60,9 +60,38 @@ Processo vinculado ao modelo de outro owner mostra `inaccessible_or_missing`
 com IDs preservados — sem vazamento, sem bypass privilegiado.
 Sharing/ACL entre equipes é follow-up separado, fora do G5.
 
+## AuthZ — precisão do contrato vigente
+
+- Read e write do vínculo usam o gate vigente `transformometro.access`
+  (`check_processo_view_access` / `check_processo_manage_access`).
+- **Separação read-vs-write por processo NÃO existe no contrato TM atual** —
+  quem tem `transformometro.access` lê e altera o vínculo. Isso não bloqueia
+  o G5 (o gate segue a policy vigente); separação dedicada é follow-up.
+- O `404` retornado ao tentar vincular modelo alheio prova ownership do
+  Modeler / ausência de leak — **não** prova separação read/write do TM.
+
+## Evidência de acceptance (G5-ACC-1)
+
+- Runtime harness `transformometro-api/scripts/g5_bpmn_reference_runtime_acceptance.sh`:
+  20/20 — replace expõe apenas a referência nova no response; o valor anterior
+  é autoritativo em `audit_logs` (`old_reference`/`new_reference`), verificado
+  por read-back em DB.
+- Cross-app browser E2E `plugins/bpmn-modeler/e2e/specs/transformometro-bpmn-reference.spec.ts`:
+  8/8 no LOCAL INTEGRATION RUNTIME (portal + MFEs + APIs + Keycloak + DBs
+  reais, zero mock): empty→link, visualizar revisão (rota histórica
+  read-only), abrir no Modelador sem mutar a referência, no auto-follow
+  (badge R2 + vínculo R1), update explícito R1→R2 com audit, troca de modelo
+  A→B com audit, unlink sem tocar o Modeler, leitura degradada cross-owner.
+- Correção de runtime descoberta pelo browser E2E: `path_alias_middleware`
+  reescrevia `/revisions`→`/revisoes` e quebrava
+  `…/bpmn-reference/candidates/{id}/revisions` (404 real, testes de rota não
+  cobriam); skip-prefix `/bpmn-reference` adicionado — superfície EN-nativa
+  sem contraparte PT (mesmo precedente de `/diagnostics`).
+
 ## Follow-ups explícitos (não iniciados)
 
 - BPMN sharing / team ownership / cross-owner ACL;
+- separação read-vs-write dedicada do processo Transformômetro;
 - preview BPMN embutido no Transformômetro;
 - migração de `flowchart_v1` legado (intocado nesta wave);
 - consumo da referência por TÉO/MCP.

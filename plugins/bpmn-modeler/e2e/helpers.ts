@@ -47,20 +47,28 @@ export async function loginAs(page: Page, actor: Actor): Promise<void> {
     await page.waitForURL(/\/login/, { timeout: 30_000 });
   }
   await page.getByRole("button", { name: /Entrar com DELPI SSO/ }).click();
-  await page.waitForURL(/\/auth\/realms\//, { timeout: 30_000 });
-  // tema keycloak delpi-energy: labels acessíveis, ids variam por tema
-  await page
+  // Com sessão KC viva o IdP pode redirecionar direto (silent SSO) sem exibir
+  // o formulário — só preencher credenciais quando o campo aparecer.
+  const userField = page
     .getByRole("textbox", { name: /usuário|username|email/i })
-    .first()
-    .fill(creds.user);
-  await page
-    .getByRole("textbox", { name: /senha|password/i })
-    .first()
-    .fill(creds.pass);
-  await page.getByRole("button", { name: /entrar|sign in|log in/i }).click();
-  await page.waitForURL((url) => !url.pathname.startsWith("/auth/"), {
-    timeout: 30_000,
-  });
+    .first();
+  const formShown = await userField
+    .waitFor({ state: "visible", timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (formShown) {
+    // tema keycloak delpi-energy: labels acessíveis, ids variam por tema
+    await userField.fill(creds.user);
+    await page
+      .getByRole("textbox", { name: /senha|password/i })
+      .first()
+      .fill(creds.pass);
+    await page.getByRole("button", { name: /entrar|sign in|log in/i }).click();
+  }
+  await page.waitForURL(
+    (url) => !url.pathname.startsWith("/auth/") && !url.pathname.endsWith("/login"),
+    { timeout: 30_000 },
+  );
 }
 
 /** Access token por password-grant — somente para SETUP via API

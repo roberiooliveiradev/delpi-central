@@ -68,6 +68,9 @@ _SKIP_PREFIXES: tuple[str, ...] = (
     "/diagnostics",
     # Commit governado — mesma superfície EN-nativa do Diagnostic PREPARE/COMMIT.
     "/transformometro/governed-proposals",
+    # G5 BPMN reference — superfície EN-nativa sem contraparte PT; o sufixo
+    # /candidates/{model_id}/revisions seria reescrito para /revisoes (404).
+    "/bpmn-reference",
     "/health",
 )
 

@@ -121,3 +121,24 @@ def test_rewrite_still_maps_legacy_revision_siblings():
     # /diagnostico-rateio (PT) não é o token /diagnostics — não pode casar.
     pt = "/transformometro/revisoes/r1/diagnostico-rateio"
     assert rewrite_en_path_to_legacy_pt(pt) == pt
+
+
+def test_rewrite_skips_bpmn_reference_en_native_surface():
+    """G5 — /bpmn-reference é EN-nativo; /revisions no sufixo não pode virar
+    /revisoes: não existe rota PT registrada para candidates/{id}/revisions."""
+    base = "/transformometro/processos/p1/bpmn-reference"
+    assert rewrite_en_path_to_legacy_pt(base) == base
+    assert rewrite_en_path_to_legacy_pt(f"{base}/candidates") == f"{base}/candidates"
+    revisions = f"{base}/candidates/163b288f-2911-4080-9466-8ff8c402d5a1/revisions"
+    assert rewrite_en_path_to_legacy_pt(revisions) == revisions
+    # gateway path com prefixo /apps/... também preservado
+    gw = f"/apps/transformometro-api{revisions}"
+    assert rewrite_en_path_to_legacy_pt(gw) == gw
+
+
+def test_rewrite_bpmn_reference_skip_does_not_leak_to_revisions():
+    """Sibling negativo: /revisions legado fora de /bpmn-reference segue reescrito."""
+    assert (
+        rewrite_en_path_to_legacy_pt("/transformometro/processes/p1/revisions/r1")
+        == "/transformometro/processos/p1/revisoes/r1"
+    )
