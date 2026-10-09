@@ -180,8 +180,8 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 | A09 | P2 Checklist e Documentos | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 | A10 | P3 Estoque e Conciliação | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03** |
 | A11 | P4 Classificações e Pendências | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
-| A12 | P5 Pacote, Finalização e Envio | **IN_REVIEW** |
-| A13 | P6 Administração / Configuração | PENDING_V2_REVALIDATION |
+| A12 | P5 Pacote, Finalização e Envio | **PARTIAL / PACKAGE_FINALIZATION_READY / SEND_PENDING_E04_T04** |
+| A13 | P6 Administração / Configuração | **IN_REVIEW** |
 
 A01 está apenas na fila futura. Runtime permanece inexistente.
 
