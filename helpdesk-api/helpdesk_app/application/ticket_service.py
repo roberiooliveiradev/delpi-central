@@ -376,6 +376,13 @@ class TicketService:
         if existing is not None:
             return existing
         token = self._token(subject)
+        # Requester = the authenticated GLPI OAuth session user — resolved
+        # server-side BEFORE any side effect; never supplied by the caller.
+        requester_user_id = self._glpi.session_user_id(token)
+        if requester_user_id is None:
+            raise LinkRequired(
+                "Não foi possível identificar o usuário GLPI da sessão."
+            )
         ticket_id = self._glpi.create_ticket(
             token,
             title=title.strip(),
@@ -383,6 +390,16 @@ class TicketService:
             category_id=category_id,
             urgency_id=urgency_id,
         )
+        try:
+            self._glpi.add_ticket_requester(token, ticket_id, requester_user_id)
+            actual = self._glpi.ticket_requester(token, ticket_id)
+            if actual != requester_user_id:
+                raise GlpiUnavailable(
+                    "Falha na verificação do requerente do chamado."
+                )
+        except Exception:
+            self._trash_orphan_ticket(token, ticket_id)
+            raise
         for user_id in observers:
             self._glpi.add_ticket_observer(token, ticket_id, user_id)
         if assignee is not None:
@@ -964,6 +981,16 @@ class TicketService:
             satisfaction=score,
             satisfaction_comment=comment,
         )
+
+    def _trash_orphan_ticket(self, token: str, ticket_id: int) -> None:
+        """Best-effort GLPI-trash of a ticket whose mandatory requester
+        association failed — soft delete only; failure only logs."""
+        try:
+            self._glpi.delete_ticket(token, ticket_id)
+        except Exception:
+            logger.warning(
+                "requester_orphan_cleanup_failed ticket_id=%s", ticket_id
+            )
 
     def _token(self, subject: str) -> str:
         try:

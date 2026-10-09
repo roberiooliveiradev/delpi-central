@@ -148,6 +148,7 @@ def test_list_filters_by_assignee_id():
 def test_create_ticket_and_followup_are_idempotent():
     client, glpi = build_client()
     link(client)
+    glpi.session_uid = 12
     payload = {
         "title": "Impressora",
         "description": "Não imprime",
@@ -182,6 +183,7 @@ def test_create_ticket_and_followup_are_idempotent():
 def test_create_attaches_observers_without_requester_or_entity():
     client, glpi = build_client()
     link(client)
+    glpi.session_uid = 12
     created = client.post(
         "/tickets",
         json={
@@ -213,6 +215,7 @@ def test_create_attaches_observers_without_requester_or_entity():
 def test_create_attaches_assignee_hd011_safe():
     client, glpi = build_client()
     link(client)
+    glpi.session_uid = 12
     created = client.post(
         "/tickets",
         json={
@@ -409,6 +412,7 @@ def test_list_users_keeps_glpi_results_when_delpi_email_does_not_map():
 def test_create_and_followup_sanitize_html_and_keep_plain_text():
     client, glpi = build_client()
     link(client)
+    glpi.session_uid = 12
     rich = client.post(
         "/tickets",
         json={
@@ -1068,3 +1072,154 @@ def test_ticket_detail_projects_attachment_refs_including_inline():
     assert detail.status_code == 200
     refs = {item["document_id"] for item in detail.json()["attachment_refs"]}
     assert refs == {2, 4, 9}
+
+
+# --------------------------------------------------------------------------
+# Requester corrective — authenticated session user becomes GLPI requester
+# --------------------------------------------------------------------------
+
+
+def test_create_registers_session_user_as_requester():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 12
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "Sem impressão",
+            "description": "Não imprime",
+            "category_id": 3,
+            "urgency_id": 3,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-req-1"},
+    )
+    assert created.status_code == 201
+    assert glpi.requesters == [(42, 12, "access-a")]
+
+
+def test_create_without_session_identity_never_creates():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = None
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "X",
+            "description": "Y",
+            "category_id": 3,
+            "urgency_id": 3,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-req-no-session"},
+    )
+    assert created.status_code == 409
+    assert created.json()["error"] == "glpi_link_required"
+    assert glpi.created == []
+    assert glpi.requesters == []
+
+
+def test_create_requester_tracks_distinct_sessions():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 44
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "T",
+            "description": "D",
+            "category_id": 3,
+            "urgency_id": 3,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-req-44"},
+    )
+    assert created.status_code == 201
+    assert glpi.requesters == [(42, 44, "access-a")]
+
+
+def test_create_requester_distinct_from_assignee_and_observers():
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 12
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "T",
+            "description": "D",
+            "category_id": 3,
+            "urgency_id": 3,
+            "assignee_id": 15,
+            "observer_ids": [22],
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-req-roles"},
+    )
+    assert created.status_code == 201
+    assert glpi.requesters == [(42, 12, "access-a")]
+    assert glpi.assignees == [(42, 15, "access-a")]
+    assert glpi.observers == [(42, 22, "access-a")]
+
+
+def test_create_requester_association_failure_trashes_orphan():
+    """Requester write fails → no success reported; the created ticket is
+    best-effort trashed (GLPI trash semantics) instead of orphaned."""
+    from helpdesk_app.domain.errors import GlpiForbidden
+
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 12
+    glpi.requester_error = GlpiForbidden("negado")
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "T",
+            "description": "D",
+            "category_id": 3,
+            "urgency_id": 3,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-req-fail"},
+    )
+    assert created.status_code != 201
+    assert len(glpi.created) == 1
+    assert glpi.delete_calls == 1
+    assert 42 in glpi.deleted_tickets
+
+
+def test_create_requester_readback_mismatch_trashes_orphan():
+    """2xx TeamMember write but read-back shows a different/absent requester
+    → typed failure + orphan compensation, never silent success."""
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 12
+    glpi.requester_readback = 99
+    created = client.post(
+        "/tickets",
+        json={
+            "title": "T",
+            "description": "D",
+            "category_id": 3,
+            "urgency_id": 3,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-req-mismatch"},
+    )
+    assert created.status_code != 201
+    assert glpi.requesters == [(42, 12, "access-a")]
+    assert glpi.delete_calls == 1
+
+
+def test_requester_id_still_rejected_in_create_body():
+    """Security invariant: caller-supplied requester stays forbidden."""
+    client, glpi = build_client()
+    link(client)
+    glpi.session_uid = 12
+    resp = client.post(
+        "/tickets",
+        json={
+            "title": "T",
+            "description": "D",
+            "category_id": 3,
+            "urgency_id": 3,
+            "requester_id": 9,
+        },
+        headers={**auth_headers(), "Idempotency-Key": "intent-req-forbid"},
+    )
+    assert resp.status_code == 422
+    assert glpi.created == []
+    assert glpi.requesters == []

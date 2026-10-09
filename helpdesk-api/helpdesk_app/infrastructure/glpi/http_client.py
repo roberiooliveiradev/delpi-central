@@ -51,8 +51,10 @@ from helpdesk_app.infrastructure.glpi.mapping import (
     parse_ticket_validations,
     parse_token_set,
     parse_viewer_identity,
+    parse_ticket_requester_user_id,
     team_member_assigned_body,
     team_member_observer_body,
+    team_member_requester_body,
 )
 
 logger = logging.getLogger("helpdesk.glpi")
@@ -648,6 +650,23 @@ class HttpxGlpiClient:
             token=access_token,
             json_body=body,
         )
+
+    def add_ticket_requester(self, access_token: str, ticket_id: int, user_id: int) -> None:
+        body = team_member_requester_body(user_id)
+        self._json(
+            "POST",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember",
+            token=access_token,
+            json_body=body,
+        )
+
+    def ticket_requester(self, access_token: str, ticket_id: int) -> int | None:
+        payload = self._json(
+            "GET",
+            f"/api.php/v2.2/Assistance/Ticket/{int(ticket_id)}/TeamMember/requester",
+            token=access_token,
+        )
+        return parse_ticket_requester_user_id(payload)
 
     def add_ticket_assignee(self, access_token: str, ticket_id: int, user_id: int) -> None:
         body = team_member_assigned_body(user_id)

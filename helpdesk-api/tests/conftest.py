@@ -87,6 +87,9 @@ class FakeGlpi:
         self.can_assign = True
         # GLPI OAuth session user id (None = unknown / not linked in tests).
         self.session_uid: int | None = None
+        self.requesters = []
+        self.requester_error = None
+        self.requester_readback = None
         self.uploads = []
         self.accepted_solutions: list[tuple[int, str]] = []
         self.rejected_solutions: list[tuple[int, str]] = []
@@ -236,6 +239,24 @@ class FakeGlpi:
         assert "requester" not in title
         self.created.append((title, description, category_id, urgency_id, access_token))
         return 42
+
+    def add_ticket_requester(self, access_token: str, ticket_id: int, user_id: int):
+        self.calls += 1
+        assert access_token
+        assert "entity" not in str(user_id)
+        if self.requester_error is not None:
+            raise self.requester_error
+        self.requesters.append((ticket_id, user_id, access_token))
+
+    def ticket_requester(self, access_token: str, ticket_id: int):
+        self.calls += 1
+        assert access_token
+        if self.requester_readback is not None:
+            return self.requester_readback
+        for tid, uid, _ in self.requesters:
+            if tid == ticket_id:
+                return uid
+        return None
 
     def add_ticket_observer(self, access_token: str, ticket_id: int, user_id: int):
         self.calls += 1

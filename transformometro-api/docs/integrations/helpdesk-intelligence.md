@@ -797,3 +797,52 @@ not source-code evidence. Status: ACCEPT / CLOSED.
 **Builder parity residual**: the R4.2 OpenAPI change (`GptFileParam`,
 `upload_attachment` enum) requires GPT Builder reimport —
 **PENDING_MANUAL** (admin step; does not invalidate MCP acceptance).
+
+## 24. Requester identity corrective — authenticated session user = GLPI requester
+
+**Defect (evidence: GLPI #1303)**: tickets created via `POST /tickets`
+were persisted with `writer` = the authenticated user but **no Requester
+team actor** — the BFF never wrote the requester relation.
+`requester_display_name`/`requester_mine` looked correct because
+`_requester_name()`/`_requester_identity()` fall back to
+`user_recipient` when `team` has no `requester` member — masking the
+missing actor.
+
+**GLPI contract (runtime `doc.json`, v2.2)**: `POST /Assistance/Ticket`
+`team[].id` is read-only — atomic requester on create is not a
+documented write path. Canonical: `POST
+/Assistance/Ticket/{id}/TeamMember` `{type: User, role: requester, id}`
+(same proven path as observer/assignee); read-back via `GET
+…/TeamMember/requester`.
+
+**Fix (BFF owner, Option B)** — `TicketService.create()`:
+
+1. `session_user_id(token)` resolved BEFORE create → fail closed
+   (`glpi_link_required`) when the OAuth session identity cannot be
+   resolved — zero business side effect.
+2. `create_ticket` → `add_ticket_requester` →
+   `ticket_requester` read-back must equal the session user id;
+   mismatch → `GlpiUnavailable` + best-effort GLPI-trash of the orphan
+   (soft delete only — never silent success with a requester-less
+   ticket).
+3. observers/assignee unchanged — requester is never derived from or
+   replaced by them.
+
+**Security invariant preserved**: `requester_id` is still forbidden in
+`CreateTicketBody` (`extra="forbid"` → 422), absent from TÉO and the
+Helpdesk UI payload — the requester is always the authenticated session
+user, never caller/model/frontend-selected, never a service account.
+
+**Consumers**: TÉO `create_ticket` and the Helpdesk plugin create flow
+both inherit the fix through the same BFF route — zero client changes,
+zero OpenAPI/MCP surface changes.
+
+**Projection note**: the `user_recipient` fallback is retained for
+historical tickets created before this corrective (e.g. #1303) — new
+tickets always carry a real `role=requester` team member.
+
+**Evidence**: `test_helpdesk_api.py` — session user → `role=requester`;
+missing session identity → 409 `glpi_link_required` before any create;
+distinct sessions → distinct requesters; assignee/observer role
+separation; requester write failure → orphan trashed + typed error;
+read-back mismatch → same; `requester_id` → 422. 48 tests.

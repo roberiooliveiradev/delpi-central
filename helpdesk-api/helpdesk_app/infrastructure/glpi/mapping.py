@@ -419,6 +419,34 @@ def team_member_assigned_body(user_id: int) -> dict:
     return {"type": "User", "role": "assigned", "id": int(user_id)}
 
 
+def team_member_requester_body(user_id: int) -> dict:
+    """Only the authenticated session user — role fixed to requester."""
+    if user_id <= 0:
+        raise GlpiValidation("requester_user_id inválido.")
+    return {"type": "User", "role": "requester", "id": int(user_id)}
+
+
+def parse_ticket_requester_user_id(payload) -> int | None:
+    """GET TeamMember/requester → the User member's GLPI id, if present."""
+    if isinstance(payload, list):
+        members = payload
+    elif isinstance(payload, dict):
+        members = payload.get("data") or payload.get("results") or []
+    else:
+        members = []
+    for member in members:
+        if not isinstance(member, dict):
+            continue
+        if str(member.get("type") or "") != "User":
+            continue
+        try:
+            user_id = int(member.get("id"))
+        except (TypeError, ValueError):
+            return None
+        return user_id if user_id > 0 else None
+    return None
+
+
 def normalize_assignee_id(raw) -> int | None:
     if raw is None or raw == "":
         return None
