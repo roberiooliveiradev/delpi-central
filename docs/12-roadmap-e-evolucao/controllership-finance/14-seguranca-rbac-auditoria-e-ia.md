@@ -142,6 +142,29 @@ Validator é papel/responsabilidade operacional, não sinônimo de MANAGE.
 MANAGE_APPROVAL != EVIDENCE_VALIDATION
 ```
 
+## Reviewer externo / P5
+
+Reviewer externo da Controladoria é usuário autenticado da Minha DELPI, não acesso público.
+
+AuthZ:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND reviewer_assignment/resource_scope
+AND package_business_rule
+```
+
+Regras:
+- não existe `controllership-finance.review`;
+- reviewer não recebe MANAGE por ser reviewer;
+- assignment não concede app access global;
+- deep link de notification é reautorizado no BFF;
+- package não é anexado ao e-mail;
+- e-mail/notificação não constitui prova de autorização nem de review;
+- package fora do scope é rejeitado server-side;
+- reviewer não edita PackageVersion finalizada/submetida.
+
 ## Auditoria
 
 Eventos materiais devem registrar, conforme aplicável:
@@ -178,7 +201,7 @@ Cobrir:
 - MANAGE apagando histórico;
 - troca de validator para contornar rejeição;
 - delete de evidência rejeitada;
-- envio de pacote sem capability;
+- submissão de package para reviewer sem ACCESS/scope/business rule;
 - usuário sem ACCESS consultando perfil do Portal;
 - perfil de outro usuário vazando permissions/capabilities;
 - usuário consultando task de outro usuário;
