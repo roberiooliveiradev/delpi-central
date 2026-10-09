@@ -303,23 +303,28 @@ IA explica/sugere; humano autorizado confirma. V1 não grava correção ERP.
 ```text
 READY_TO_FINALIZE
 != PACKAGE_FINALIZED
-!= PACKAGE_SENT
+!= PACKAGE_SUBMITTED_FOR_REVIEW
+!= REVIEW_ACCEPTED
 != MONTHLY_CLOSING_COMPLETED
 ```
 
-- finalizar cria versão/snapshot; não envia;
+- finalizar cria versão/snapshot e não submete;
 - recipient packages avançam independentemente;
-- reabertura antes de envio cria nova working/version;
-- PACKAGE_SENT é imutável;
-- correção pós-envio cria complemento/nova versão;
-- conclusão mensal exige todos os packages aplicáveis enviados + zero clarification aberta;
-- ack/read não bloqueia V1.
+- reabertura antes da submissão cria nova working/version;
+- PACKAGE_SUBMITTED_FOR_REVIEW é histórico e não é editado in-place;
+- correção após submissão cria complemento/nova versão;
+- reviewer autenticado continua o processo dentro da Minha DELPI;
+- e-mail é notification side effect, nunca transport do package;
+- monthly completion depende de D-P5-REVIEW-COMPLETION.
 
-Envio real:
+Envio para análise:
 
 ```text
-PACKAGE_DELIVERY_CONTRACT = DECISION_REQUIRED_E04_T04
-NOTIFICATION_DISPATCHED != PACKAGE_SENT
+PACKAGE_STAYS_IN_MINHA_DELPI = YES
+PACKAGE_TRANSPORT_BY_EMAIL = NO
+PACKAGE_SUBMITTED_FOR_REVIEW = BUSINESS_STATE
+NOTIFICATION_DISPATCHED != PACKAGE_SUBMITTED_FOR_REVIEW
+EMAIL_SENT != PACKAGE_SUBMITTED_FOR_REVIEW
 ```
 
 ### RULE-T09 — Administração / configuração
@@ -347,7 +352,8 @@ POST /integrations/notifications
 = platform notification capability
 
 NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE
-NOTIFICATION_DISPATCHED != PACKAGE_SENT
+NOTIFICATION_DISPATCHED != PACKAGE_SUBMITTED_FOR_REVIEW
+EMAIL_SENT != PACKAGE_SUBMITTED_FOR_REVIEW
 ```
 
 O produto ainda define adapters/event payloads/recipients; não cria SMTP/preferences paralelos.
