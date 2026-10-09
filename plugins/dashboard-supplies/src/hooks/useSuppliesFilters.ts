@@ -7,11 +7,24 @@ import {
   readSuppliesFilters,
   subscribeFilterRouteSync,
   writeFiltersToUrl,
+  type SuppliesFilterDefaults,
   type SuppliesFilterUrlState,
 } from "../utils/filterUrl";
 
-export function useSuppliesFilters() {
-  const initial = readSuppliesFilters();
+export type SuppliesFiltersOptions = {
+  /**
+   * Período inicial da página, usado somente quando a URL/sessão não
+   * traz filtros. Convenção compartilhada: estado persistido vence o
+   * default (o usuário carrega o recorte entre páginas).
+   */
+  defaultPeriod?: SuppliesFilterDefaults;
+};
+
+export function useSuppliesFilters(options?: SuppliesFiltersOptions) {
+  // Capturado uma única vez: o default de período define apenas o estado
+  // inicial e o fallback de re-sync — não é reativo.
+  const [defaultPeriod] = useState(options?.defaultPeriod);
+  const initial = readSuppliesFilters(undefined, defaultPeriod);
   const {
     dateStart,
     dateEnd,
@@ -30,14 +43,19 @@ export function useSuppliesFilters() {
 
   useEffect(() => {
     return subscribeFilterRouteSync(() => {
-      const next = readSuppliesFilters();
+      const next = readSuppliesFilters(undefined, defaultPeriod);
       replaceAll(next);
       setBranchesState(next.branches);
       setLocationState(next.location);
     });
-  }, [replaceAll]);
+  }, [replaceAll, defaultPeriod]);
 
   const resolvedBranch = resolveApiBranch(branches);
+  /**
+   * Seleção exata de filiais para contratos multivalorados
+   * (`branch` repetível): [] = consolidado autorizado.
+   */
+  const apiBranches = branches;
 
   const periodParams: SuppliesFilterParams = {
     start_date: inputDateToApi(dateStart),
@@ -72,6 +90,7 @@ export function useSuppliesFilters() {
     setCompetence,
     setBranches: useCallback((v: string[]) => setBranchesState(v), []),
     setLocation: useCallback((v: string) => setLocationState(v), []),
+    apiBranches,
     periodParams,
     stockParams,
     filterState,

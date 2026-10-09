@@ -16,16 +16,34 @@ export type SuppliesFilterUrlState = {
   location: string;
 };
 
+/**
+ * Per-page initial period used only when no URL/session filter exists.
+ * `competence` takes precedence over the dates (same rule as
+ * `resolveLinkedDateFilters`).
+ */
+export type SuppliesFilterDefaults = {
+  dateStart?: string;
+  dateEnd?: string;
+  competence?: string;
+};
+
 const SESSION_STORAGE_KEY = "delpi.dashboard-supplies.filters";
 
 function isValidIsoDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function defaultFilterState(): SuppliesFilterUrlState {
+function defaultFilterState(
+  periodDefaults?: SuppliesFilterDefaults
+): SuppliesFilterUrlState {
   const defaults = resolveLinkedDateFilters({
-    defaultDateStart: getFirstDayOfMonthInputValue(),
-    defaultDateEnd: getTodayInputValue(),
+    dateStart: periodDefaults?.dateStart,
+    dateEnd: periodDefaults?.dateEnd,
+    competence: periodDefaults?.competence,
+    defaultDateStart:
+      periodDefaults?.dateStart ?? getFirstDayOfMonthInputValue(),
+    defaultDateEnd:
+      periodDefaults?.dateEnd ?? getTodayInputValue(),
   });
 
   return {
@@ -52,7 +70,8 @@ function parseStoredBranches(data: Record<string, unknown>): string[] {
 }
 
 function parseFilterParams(
-  params: URLSearchParams
+  params: URLSearchParams,
+  periodDefaults?: SuppliesFilterDefaults
 ): SuppliesFilterUrlState | null {
   const dateStartParam = params.get("start_date") ?? "";
   const dateEndParam = params.get("end_date") ?? "";
@@ -68,7 +87,7 @@ function parseFilterParams(
 
   if (!hasAny) return null;
 
-  const defaults = defaultFilterState();
+  const defaults = defaultFilterState(periodDefaults);
   const dates = resolveLinkedDateFilters({
     dateStart: isValidIsoDate(dateStartParam)
       ? dateStartParam
@@ -87,9 +106,13 @@ function parseFilterParams(
 }
 
 export function readSuppliesFilters(
-  search = typeof window !== "undefined" ? window.location.search : ""
+  search = typeof window !== "undefined" ? window.location.search : "",
+  periodDefaults?: SuppliesFilterDefaults
 ): SuppliesFilterUrlState {
-  const fromUrl = parseFilterParams(new URLSearchParams(search));
+  const fromUrl = parseFilterParams(
+    new URLSearchParams(search),
+    periodDefaults
+  );
   if (fromUrl) return fromUrl;
 
   if (typeof window !== "undefined") {
@@ -97,7 +120,7 @@ export function readSuppliesFilters(
       const raw = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (raw) {
         const data = JSON.parse(raw) as Record<string, unknown>;
-        const defaults = defaultFilterState();
+        const defaults = defaultFilterState(periodDefaults);
         const dates = resolveLinkedDateFilters({
           dateStart:
             typeof data.dateStart === "string" && isValidIsoDate(data.dateStart)
@@ -126,7 +149,7 @@ export function readSuppliesFilters(
     }
   }
 
-  return defaultFilterState();
+  return defaultFilterState(periodDefaults);
 }
 
 export function buildFilterSearchParams(state: SuppliesFilterUrlState): string {

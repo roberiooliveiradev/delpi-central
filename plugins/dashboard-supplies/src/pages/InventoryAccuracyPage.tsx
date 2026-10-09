@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { ClipboardCheck, Percent, Scale, TriangleAlert } from "lucide-react";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  CheckCircle2,
+  ClipboardCheck,
+  XCircle,
+} from "lucide-react";
+import { ToolbarSelectField } from "@delpi/plugin-ui/index";
 
 import {
   getInventoryAccuracyItems,
@@ -13,20 +20,15 @@ import { KpiCard } from "../components/KpiCard";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
 import { SUPPLIES_ROUTES } from "../constants/routes";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useServerTable } from "../hooks/useServerTable";
+import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import type { InventoryAccuracyItem } from "../types/supplies";
-import {
-  formatBranchFilterLabel,
-  resolveApiBranch,
-} from "../utils/branchClientFilters";
-import {
-  competenceToDateRange,
-  isValidCompetence,
-} from "../utils/competenceFilters";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import {
   formatDisplayDate,
+  formatPeriodLabel,
   getPreviousCompetenceValue,
   inputDateToApi,
   monthKeyToLabel,
@@ -37,9 +39,10 @@ import {
   formatInteger,
   formatPercent,
 } from "../utils/format";
-import { readSuppliesFilters } from "../utils/filterUrl";
 
 type InventoryAccuracyPageProps = { pathname?: string };
+
+const COMPETENCE_PATTERN = /^\d{4}-\d{2}$/;
 
 const OUTCOME_LABELS: Record<string, string> = {
   accurate: "Correta",
@@ -48,15 +51,10 @@ const OUTCOME_LABELS: Record<string, string> = {
 };
 
 const OUTCOME_OPTIONS = [
-  { value: "", label: "Todos os resultados" },
   { value: "accurate", label: "Corretas" },
   { value: "divergent", label: "Divergentes" },
   { value: "excluded", label: "Excluídas" },
 ] as const;
-
-const EXCLUSION_LABELS: Record<string, string> = {
-  pending_processing: "Pendente de processamento",
-};
 
 function outcomeLabel(outcome: string | null | undefined): string {
   if (!outcome) return "—";
@@ -66,31 +64,24 @@ function outcomeLabel(outcome: string | null | undefined): string {
 export function InventoryAccuracyPage({
   pathname,
 }: InventoryAccuracyPageProps) {
-  const initialCompetence = useMemo(
-    () => getPreviousCompetenceValue(),
-    []
-  );
-  const initialRange = useMemo(
-    () => competenceToDateRange(initialCompetence),
-    [initialCompetence]
-  );
-
   const {
     dateStart,
     dateEnd,
     competence,
+    branches,
+    apiBranches,
     setDateStart,
     setDateEnd,
     setCompetence,
-  } = useCompetenceLinkedDates({
-    dateStart: initialRange.dateStart,
-    dateEnd: initialRange.dateEnd,
-    competence: initialCompetence,
+    setBranches,
+    filterState,
+  } = useSuppliesFilters({
+    defaultPeriod: { competence: getPreviousCompetenceValue() },
   });
-  const [branches, setBranches] = useState(
-    () => readSuppliesFilters().branches
-  );
+
   const [outcomeFilter, setOutcomeFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput.trim(), 400);
 
   const serverTable = useServerTable({
     defaultSortKey: "count_date",
@@ -100,19 +91,25 @@ export function InventoryAccuracyPage({
   useEffect(() => {
     serverTable.resetPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outcomeFilter, dateStart, dateEnd, competence, branches]);
+  }, [debouncedSearch, outcomeFilter, dateStart, dateEnd, competence, branches]);
 
-  const baseParams = useMemo<InventoryAccuracyParams>(() => {
-    const branch = resolveApiBranch(branches);
-    if (competence && isValidCompetence(competence)) {
-      return { month: competence, branch };
-    }
-    return {
-      start_date: inputDateToApi(dateStart),
-      end_date: inputDateToApi(dateEnd),
-      branch,
-    };
-  }, [competence, dateStart, dateEnd, branches]);
+  // `competence` é a competência canônica: quando preenchida, governa o
+  // período enviado (o FilterBar deriva as datas do mês selecionado).
+  const competenceParam = COMPETENCE_PATTERN.test(competence)
+    ? competence
+    : undefined;
+
+  const baseParams = useMemo<InventoryAccuracyParams>(
+    () =>
+      competenceParam
+        ? { month: competenceParam, branches: apiBranches }
+        : {
+            start_date: inputDateToApi(dateStart),
+            end_date: inputDateToApi(dateEnd),
+            branches: apiBranches,
+          },
+    [competenceParam, dateStart, dateEnd, apiBranches]
+  );
 
   const { data, loading, refreshing, requestProgress, error, reload } =
     useSuppliesResource(
@@ -124,13 +121,14 @@ export function InventoryAccuracyPage({
     () => ({
       ...baseParams,
       outcome: outcomeFilter || undefined,
+      search: debouncedSearch || undefined,
       page: serverTable.query.page,
       page_size: serverTable.query.pageSize,
       sort: serverTable.query.sortKey
         ? `${serverTable.query.sortKey}_${serverTable.query.sortDirection}`
         : "count_date_desc",
     }),
-    [baseParams, outcomeFilter, serverTable.query]
+    [baseParams, outcomeFilter, debouncedSearch, serverTable.query]
   );
 
   const items = useSuppliesResource(
@@ -138,14 +136,10 @@ export function InventoryAccuracyPage({
     [itemsParams]
   );
 
+  const periodLabel = competenceParam
+    ? monthKeyToLabel(competenceParam)
+    : formatPeriodLabel(dateStart, dateEnd);
   const branchLabel = formatBranchFilterLabel(branches);
-  const periodLabel = data?.reference.reference_month
-    ? `Competência ${monthKeyToLabel(data.reference.reference_month)}`
-    : data
-      ? `${formatDisplayDate(data.reference.period_start)} a ${formatDisplayDate(
-          data.reference.period_end_exclusive
-        )} (exclusivo)`
-      : "Último mês fechado";
 
   const isBusy = loading || refreshing;
   const unavailable = data?.summary.status === "unavailable";
@@ -156,14 +150,12 @@ export function InventoryAccuracyPage({
         key: "count_date",
         header: "Data",
         sortable: true,
-        sortKey: "count_date",
         render: (row) => formatDisplayDate(row.count_date),
       },
       {
         key: "product_code",
         header: "Produto",
         sortable: true,
-        sortKey: "product_code",
         render: (row) => row.product_code,
       },
       {
@@ -182,40 +174,37 @@ export function InventoryAccuracyPage({
         render: (row) => row.warehouse,
       },
       {
-        key: "counted_quantity",
+        key: "counted",
         header: "Contado",
         className: "ds-table__col--numeric",
         render: (row) =>
-          `${formatDecimal(row.counted_quantity, 3)} ${
+          `${formatDecimal(row.counted_quantity)} ${
             row.unit_of_measure ?? ""
           }`.trim(),
       },
       {
-        key: "theoretical_quantity",
+        key: "theoretical",
         header: "Teórico",
         className: "ds-table__col--numeric",
-        render: (row) => formatDecimal(row.theoretical_quantity, 3),
+        render: (row) =>
+          `${formatDecimal(row.theoretical_quantity)} ${
+            row.unit_of_measure ?? ""
+          }`.trim(),
       },
       {
-        key: "divergence_quantity",
+        key: "divergence",
         header: "Divergência",
         className: "ds-table__col--numeric",
-        render: (row) => formatDecimal(row.divergence_quantity, 3),
+        render: (row) => formatDecimal(row.divergence_quantity),
       },
       {
         key: "outcome",
         header: "Resultado",
-        render: (row) =>
-          row.outcome === "excluded" && row.exclusion_reason
-            ? `${outcomeLabel(row.outcome)} · ${
-                EXCLUSION_LABELS[row.exclusion_reason] ??
-                row.exclusion_reason
-              }`
-            : outcomeLabel(row.outcome),
+        render: (row) => outcomeLabel(row.outcome),
       },
       {
-        key: "inventory_document",
-        header: "Doc. inventário",
+        key: "document",
+        header: "Ajuste",
         render: (row) => row.inventory_document ?? "—",
       },
     ],
@@ -226,15 +215,9 @@ export function InventoryAccuracyPage({
     <div className="dashboard-supplies dashboard-page">
       <FilterBar
         title="Acuracidade do inventário"
-        subtitle="Contagens oficiais avaliadas pelo processamento Protheus (MATA270)"
+        subtitle="Contagens oficiais avaliadas pelo processamento do inventário"
         currentPath={pathname ?? SUPPLIES_ROUTES.inventoryAccuracy}
-        filterState={{
-          dateStart,
-          dateEnd,
-          competence,
-          branches,
-          location: "",
-        }}
+        filterState={filterState}
         competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
@@ -245,7 +228,7 @@ export function InventoryAccuracyPage({
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchesChange={setBranches}
-        onLocationChange={() => undefined}
+        onLocationChange={() => {}}
         onRefresh={reload}
         refreshing={refreshing}
       />
@@ -256,7 +239,7 @@ export function InventoryAccuracyPage({
         hasData={data !== null}
         requestProgress={requestProgress}
         onRetry={reload}
-        refreshTitle="Atualizando acuracidade de inventário"
+        refreshTitle="Atualizando acuracidade"
       />
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
@@ -264,7 +247,7 @@ export function InventoryAccuracyPage({
           title="Acuracidade"
           titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.inventoryAccuracy}
           value={formatPercent(data?.summary.accuracy_percentage)}
-          subtitle={`${branchLabel} · ${periodLabel}`}
+          subtitle={`${periodLabel} · ${branchLabel} · universo: contagens oficiais`}
           icon={<ClipboardCheck size={22} />}
           loading={isBusy}
         />
@@ -274,10 +257,12 @@ export function InventoryAccuracyPage({
           value={formatInteger(data?.summary.accurate_count)}
           subtitle={
             data
-              ? `${formatInteger(data.summary.evaluable_count_total)} avaliáveis`
-              : "Contagens processadas sem ajuste"
+              ? `de ${formatInteger(
+                  data.summary.evaluable_count_total
+                )} avaliáveis`
+              : "Processadas sem ajuste"
           }
-          icon={<Percent size={22} />}
+          icon={<CheckCircle2 size={22} />}
           loading={isBusy}
         />
         <KpiCard
@@ -286,26 +271,47 @@ export function InventoryAccuracyPage({
           value={formatInteger(data?.summary.divergent_count)}
           subtitle={
             data
-              ? `${formatInteger(data.exclusions.pending_processing)} pendentes · ${formatInteger(
-                  data.exclusions.cancelled
-                )} canceladas`
-              : "Contagens com ajuste INVENT"
+              ? `${formatInteger(
+                  data.summary.valid_count_total
+                )} válidas · ${formatInteger(
+                  data.summary.valid_count_total -
+                    data.summary.evaluable_count_total
+                )} excluídas do denominador`
+              : "Processadas com ajuste"
           }
-          icon={<TriangleAlert size={22} />}
+          icon={<XCircle size={22} />}
           loading={isBusy}
         />
         <KpiCard
-          title="Faltas × sobras"
-          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.accuracyShortage}
-          value={
+          title="Cobertura avaliável"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.accuracyCoverage}
+          value={formatPercent(data?.summary.coverage_percentage)}
+          subtitle={
             data
-              ? `${formatCurrency(data.summary.shortage_value_total)} · ${formatCurrency(
-                  data.summary.surplus_value_total
-                )}`
-              : "—"
+              ? `${formatInteger(
+                  data.summary.evaluable_count_total
+                )} de ${formatInteger(
+                  data.summary.valid_count_total
+                )} contagens válidas`
+              : "Avaliáveis ÷ válidas"
           }
-          subtitle="Ajustes RE0 (furos) e DE0 (sobras) do período"
-          icon={<Scale size={22} />}
+          icon={<ClipboardCheck size={22} />}
+          loading={isBusy}
+        />
+        <KpiCard
+          title="Ajustes de furo"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.accuracyShortage}
+          value={formatCurrency(data?.summary.shortage_value_total)}
+          subtitle="Saídas de inventário (RE0)"
+          icon={<ArrowDownCircle size={22} />}
+          loading={isBusy}
+        />
+        <KpiCard
+          title="Ajustes de sobra"
+          titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.accuracySurplus}
+          value={formatCurrency(data?.summary.surplus_value_total)}
+          subtitle="Entradas de inventário (DE0)"
+          icon={<ArrowUpCircle size={22} />}
           loading={isBusy}
         />
       </section>
@@ -323,13 +329,17 @@ export function InventoryAccuracyPage({
       ) : null}
 
       <DataTableSection
-        title="Eventos de contagem do período"
+        title="Detalhamento das contagens"
         columns={columns}
         rows={items.data?.items ?? []}
         rowKey={(row) =>
-          `${row.branch}-${row.product_code}-${row.warehouse}-${row.count_date}`
+          `${row.branch}-${row.product_code}-${row.warehouse}-${row.count_date}-${row.counted_quantity}`
         }
         loading={items.loading}
+        refreshing={items.refreshing}
+        searchPlaceholder="Buscar por código ou descrição…"
+        searchHint={SUPPLIES_HELP_TOOLTIPS.filters.tableSearch}
+        serverSearch={{ value: searchInput, onChange: setSearchInput }}
         serverPagination={{
           page: items.data?.page ?? serverTable.query.page,
           pageSize: items.data?.page_size ?? serverTable.query.pageSize,
@@ -342,31 +352,32 @@ export function InventoryAccuracyPage({
           sortDirection: serverTable.query.sortDirection,
           onSortChange: serverTable.handleSortChange,
         }}
-        headerActions={
-          <select
-            aria-label="Filtrar por resultado da contagem"
+        toolbarFilters={
+          <ToolbarSelectField
+            label="Resultado"
+            title={SUPPLIES_HELP_TOOLTIPS.filters.accuracyOutcome}
             value={outcomeFilter}
-            onChange={(event) => setOutcomeFilter(event.target.value)}
-          >
-            {OUTCOME_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onChange={setOutcomeFilter}
+            options={OUTCOME_OPTIONS}
+            placeholderOption="Todos"
+          />
         }
       />
 
       {data ? (
         <p className="ds-footnote">
-          Período: {formatDisplayDate(data.reference.period_start)} a{" "}
-          {formatDisplayDate(data.reference.period_end_exclusive)} (exclusivo)
-          {data.reference.period_closed
-            ? " · mês fechado"
-            : " · período ainda aberto"}
-          {" · "}
-          {formatPercent(data.summary.coverage_percentage)} de cobertura ·
-          Fonte: veredito oficial MATA270 (tolerância zero).
+          Divergência = teórico − contado (positivo = falta, negativo =
+          sobra) · Acuracidade mede apenas o universo contado oficialmente
+          no período, não o estoque total
+          {data.exclusions.pending_processing > 0 ||
+          data.exclusions.cancelled > 0
+            ? ` · ${formatInteger(
+                data.exclusions.pending_processing
+              )} pendentes de processamento e ${formatInteger(
+                data.exclusions.cancelled
+              )} canceladas ficam fora das válidas`
+            : ""}
+          .
         </p>
       ) : null}
     </div>

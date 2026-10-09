@@ -291,6 +291,8 @@ export type NonMovingStockSummaryData = {
     no_consumption: number;
     insufficient_history: number;
     blocked_products: number;
+    /** Itens (produto×filial×armazém) com custo médio zero — valor não mensurável. */
+    zero_cost_items: number;
   };
   by_status: NonMovingStockStatusBreakdown[];
   by_branch: NonMovingStockBranchBreakdown[];

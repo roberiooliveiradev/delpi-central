@@ -15,6 +15,16 @@ export const SUPPLIES_HELP_TOOLTIPS = {
       "Unidade TOTVS para CPV, OTD, estoque e economia. Vazio = consolidado: realizado e meta SI agregam as filiais; múltiplas unidades comparam o recorte. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
     location:
       "Código de localização de estoque (armazém). Vazio = todas as localizações no recorte de unidade.",
+    tableSearch:
+      "Filtra os registros no servidor por código (parcial ou exato) ou descrição do produto — vale para todo o conjunto, não apenas a página exibida.",
+    turnoverStatus:
+      "Situação de giro do produto na janela de consumo: com consumo, sem giro ou histórico insuficiente.",
+    blockedFilter:
+      "Bloqueio cadastral do produto (B1_MSBLQL): Todos, Somente bloqueados ou Somente não bloqueados.",
+    accuracyOutcome:
+      "Resultado da contagem oficial: correta (processada sem ajuste), divergente (com ajuste) ou excluída (pendente de processamento).",
+    warehouse:
+      "Armazém TOTVS do escopo aprovado do indicador (01 ou 99). Vazio = ambos.",
   },
   kpis: {
     cpvTotal:

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { PackageX, Percent, ShieldAlert, TrendingDown } from "lucide-react";
+import { ToolbarSelectField } from "@delpi/plugin-ui/index";
 
 import {
   getNonMovingStockItems,
@@ -13,14 +14,12 @@ import { KpiCard } from "../components/KpiCard";
 import { SuppliesStatusAlerts } from "../components/SuppliesStatusAlerts";
 import { SUPPLIES_ROUTES } from "../constants/routes";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useServerTable } from "../hooks/useServerTable";
+import { useSuppliesFilters } from "../hooks/useSuppliesFilters";
 import { useSuppliesResource } from "../hooks/useSuppliesResource";
 import type { NonMovingStockItem } from "../types/supplies";
-import {
-  formatBranchFilterLabel,
-  resolveApiBranch,
-} from "../utils/branchClientFilters";
+import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import {
   formatDisplayDate,
   formatPeriodLabel,
@@ -33,9 +32,10 @@ import {
   formatInteger,
   formatPercent,
 } from "../utils/format";
-import { readSuppliesFilters } from "../utils/filterUrl";
 
 type NonMovingStockPageProps = { pathname?: string };
+
+const APPROVED_WAREHOUSES = new Set(["01", "99"]);
 
 const STATUS_LABELS: Record<string, string> = {
   WITH_CONSUMPTION: "Com consumo",
@@ -45,11 +45,20 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_OPTIONS = [
-  { value: "", label: "Todos os status" },
   { value: "NO_CONSUMPTION_12M", label: "Sem giro (12m)" },
   { value: "NO_CONSUMPTION_IN_PERIOD", label: "Sem giro no período" },
   { value: "WITH_CONSUMPTION", label: "Com consumo" },
   { value: "INSUFFICIENT_HISTORY", label: "Histórico insuficiente" },
+] as const;
+
+const BLOCKED_OPTIONS = [
+  { value: "true", label: "Bloqueados" },
+  { value: "false", label: "Não bloqueados" },
+] as const;
+
+const WAREHOUSE_OPTIONS = [
+  { value: "01", label: "Armazém 01" },
+  { value: "99", label: "Armazém 99" },
 ] as const;
 
 function statusLabel(status: string | null | undefined): string {
@@ -58,34 +67,31 @@ function statusLabel(status: string | null | undefined): string {
 }
 
 export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
-  const defaultWindow = useMemo(
-    () => ({
-      start: getRollingMonthsAgoInputValue(12),
-      end: getTodayInputValue(),
-    }),
-    []
-  );
-
   const {
     dateStart,
     dateEnd,
     competence,
+    branches,
+    location,
+    apiBranches,
     setDateStart,
     setDateEnd,
     setCompetence,
-  } = useCompetenceLinkedDates({
-    dateStart: defaultWindow.start,
-    dateEnd: defaultWindow.end,
-    competence: "",
+    setBranches,
+    setLocation,
+    filterState,
+  } = useSuppliesFilters({
+    defaultPeriod: {
+      dateStart: getRollingMonthsAgoInputValue(12),
+      dateEnd: getTodayInputValue(),
+      competence: "",
+    },
   });
-  const [branches, setBranches] = useState(
-    () => readSuppliesFilters().branches
-  );
-  const [location, setLocation] = useState(
-    () => readSuppliesFilters().location
-  );
+
   const [statusFilter, setStatusFilter] = useState("");
-  const [blockedOnly, setBlockedOnly] = useState(false);
+  const [blockedFilter, setBlockedFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput.trim(), 400);
 
   const serverTable = useServerTable({
     defaultSortKey: "stock_value",
@@ -95,10 +101,21 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
   useEffect(() => {
     serverTable.resetPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, blockedOnly, dateStart, dateEnd, branches, location]);
+  }, [
+    debouncedSearch,
+    statusFilter,
+    blockedFilter,
+    dateStart,
+    dateEnd,
+    branches,
+    location,
+  ]);
 
   const isDefaultWindow =
-    dateStart === defaultWindow.start && dateEnd === defaultWindow.end;
+    dateStart === getRollingMonthsAgoInputValue(12) &&
+    dateEnd === getTodayInputValue();
+
+  const warehouse = APPROVED_WAREHOUSES.has(location) ? location : "";
 
   const baseParams = useMemo<NonMovingStockParams>(
     () => ({
@@ -108,10 +125,10 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
             start_date: inputDateToApi(dateStart),
             end_date: inputDateToApi(dateEnd),
           }),
-      branch: resolveApiBranch(branches),
-      warehouse: location || undefined,
+      branches: apiBranches,
+      warehouse: warehouse || undefined,
     }),
-    [isDefaultWindow, dateStart, dateEnd, branches, location]
+    [isDefaultWindow, dateStart, dateEnd, apiBranches, warehouse]
   );
 
   const { data, loading, refreshing, requestProgress, error, reload } =
@@ -124,14 +141,22 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     () => ({
       ...baseParams,
       turnover_status: statusFilter || undefined,
-      blocked: blockedOnly ? true : undefined,
+      blocked:
+        blockedFilter === "" ? undefined : blockedFilter === "true",
+      search: debouncedSearch || undefined,
       page: serverTable.query.page,
       page_size: serverTable.query.pageSize,
       sort: serverTable.query.sortKey
         ? `${serverTable.query.sortKey}_${serverTable.query.sortDirection}`
         : "stock_value_desc",
     }),
-    [baseParams, statusFilter, blockedOnly, serverTable.query]
+    [
+      baseParams,
+      statusFilter,
+      blockedFilter,
+      debouncedSearch,
+      serverTable.query,
+    ]
   );
 
   const items = useSuppliesResource(
@@ -143,7 +168,7 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     ? "Últimos 12 meses"
     : formatPeriodLabel(dateStart, dateEnd);
   const branchLabel = formatBranchFilterLabel(branches);
-  const locationLabel = location ? `Local ${location}` : "01 + 99";
+  const locationLabel = warehouse ? `Armazém ${warehouse}` : "01 + 99";
 
   const isBusy = loading || refreshing;
   const unavailable = data?.summary.status === "unavailable";
@@ -154,7 +179,6 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         key: "product_code",
         header: "Produto",
         sortable: true,
-        sortKey: "product_code",
         render: (row) => row.product_code,
       },
       {
@@ -177,7 +201,6 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         header: "Quantidade",
         className: "ds-table__col--numeric",
         sortable: true,
-        sortKey: "quantity",
         render: (row) =>
           `${formatInteger(row.quantity)} ${row.unit_of_measure ?? ""}`.trim(),
       },
@@ -186,8 +209,10 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         header: "Valor (R$)",
         className: "ds-table__col--numeric",
         sortable: true,
-        sortKey: "stock_value",
-        render: (row) => formatCurrency(row.stock_value),
+        render: (row) =>
+          row.unit_cost === 0
+            ? `${formatCurrency(row.stock_value)} · sem custo`
+            : formatCurrency(row.stock_value),
       },
       {
         key: "blocked",
@@ -200,10 +225,9 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         render: (row) => statusLabel(row.turnover_status),
       },
       {
-        key: "last_effective_utilization",
+        key: "last_utilization",
         header: "Última utilização",
         sortable: true,
-        sortKey: "last_utilization",
         render: (row) => formatDisplayDate(row.last_effective_utilization),
       },
     ],
@@ -216,18 +240,13 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         title="Matérias-primas sem giro"
         subtitle="Estoque de MP sem utilização efetiva na janela de consumo"
         currentPath={pathname ?? SUPPLIES_ROUTES.nonMovingStock}
-        filterState={{
-          dateStart,
-          dateEnd,
-          competence,
-          branches,
-          location,
-        }}
+        filterState={filterState}
         competence={competence}
         dateStart={dateStart}
         dateEnd={dateEnd}
         branches={branches}
         location={location}
+        showLocationFilter={false}
         onCompetenceChange={setCompetence}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
@@ -256,15 +275,19 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
           loading={isBusy}
         />
         <KpiCard
-          title="% sem giro"
+          title="% sem giro (financeiro)"
           titleHint={SUPPLIES_HELP_TOOLTIPS.kpis.nonMovingPercentage}
           value={formatPercent(data?.summary.non_moving_percentage)}
           subtitle={
             data
-              ? `${formatInteger(data.counts.no_consumption)} de ${formatInteger(
-                  data.counts.eligible_products
+              ? `${formatCurrency(
+                  data.summary.no_consumption_stock_value
+                )} de ${formatCurrency(
+                  data.summary.evaluable_stock_value
+                )} avaliável · ${formatInteger(
+                  data.counts.no_consumption
                 )} produtos`
-              : "Sobre o estoque avaliável"
+              : "Valor sem giro ÷ valor avaliável"
           }
           icon={<TrendingDown size={22} />}
           loading={isBusy}
@@ -321,6 +344,10 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
           `${row.branch}-${row.product_code}-${row.warehouse}`
         }
         loading={items.loading}
+        refreshing={items.refreshing}
+        searchPlaceholder="Buscar por código ou descrição…"
+        searchHint={SUPPLIES_HELP_TOOLTIPS.filters.tableSearch}
+        serverSearch={{ value: searchInput, onChange: setSearchInput }}
         serverPagination={{
           page: items.data?.page ?? serverTable.query.page,
           pageSize: items.data?.page_size ?? serverTable.query.pageSize,
@@ -333,28 +360,33 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
           sortDirection: serverTable.query.sortDirection,
           onSortChange: serverTable.handleSortChange,
         }}
-        headerActions={
-          <div className="ds-filter-actions">
-            <select
-              aria-label="Filtrar por status de giro"
+        toolbarFilters={
+          <>
+            <ToolbarSelectField
+              label="Status de giro"
+              title={SUPPLIES_HELP_TOOLTIPS.filters.turnoverStatus}
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <label>
-              <input
-                type="checkbox"
-                checked={blockedOnly}
-                onChange={(event) => setBlockedOnly(event.target.checked)}
-              />
-              Somente bloqueados
-            </label>
-          </div>
+              onChange={setStatusFilter}
+              options={STATUS_OPTIONS}
+              placeholderOption="Todos"
+            />
+            <ToolbarSelectField
+              label="Bloqueio"
+              title={SUPPLIES_HELP_TOOLTIPS.filters.blockedFilter}
+              value={blockedFilter}
+              onChange={setBlockedFilter}
+              options={BLOCKED_OPTIONS}
+              placeholderOption="Todos"
+            />
+            <ToolbarSelectField
+              label="Armazém"
+              title={SUPPLIES_HELP_TOOLTIPS.filters.warehouse}
+              value={warehouse}
+              onChange={setLocation}
+              options={WAREHOUSE_OPTIONS}
+              placeholderOption="Todos"
+            />
+          </>
         }
       />
 
@@ -364,7 +396,13 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
           {formatDisplayDate(data.reference.consumption_window_start)} a{" "}
           {formatDisplayDate(data.reference.consumption_window_end)} ·
           Valoração: estoque atual (SB2) · Produto × filial para giro,
-          produto × filial × armazém para valor.
+          produto × filial × armazém para valor
+          {data.counts.zero_cost_items > 0
+            ? ` · ${formatInteger(
+                data.counts.zero_cost_items
+              )} itens com custo médio zero (valor não mensurável)`
+            : ""}
+          .
         </p>
       ) : null}
     </div>

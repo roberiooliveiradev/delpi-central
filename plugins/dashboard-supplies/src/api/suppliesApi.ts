@@ -24,6 +24,9 @@ type SuppliesQueryParams = SuppliesFilterParams & {
   turnover_status?: string;
   blocked?: boolean;
   outcome?: string;
+  search?: string;
+  /** Seleção exata de filiais — `branch` repetível no contrato. */
+  branches?: string[];
   page?: number;
   page_size?: number;
   sort?: string;
@@ -34,7 +37,13 @@ function buildQuery(params: SuppliesQueryParams = {}): string {
 
   if (params.start_date) searchParams.set("start_date", params.start_date);
   if (params.end_date) searchParams.set("end_date", params.end_date);
-  if (params.branch) searchParams.set("branch", params.branch);
+  if (params.branches?.length) {
+    for (const value of params.branches) {
+      searchParams.append("branch", value);
+    }
+  } else if (params.branch) {
+    searchParams.set("branch", params.branch);
+  }
   if (params.location) searchParams.set("location", params.location);
   if (params.warehouse) searchParams.set("warehouse", params.warehouse);
   if (params.month) searchParams.set("month", params.month);
@@ -45,6 +54,7 @@ function buildQuery(params: SuppliesQueryParams = {}): string {
     searchParams.set("blocked", String(params.blocked));
   }
   if (params.outcome) searchParams.set("outcome", params.outcome);
+  if (params.search) searchParams.set("search", params.search);
   if (params.page != null) searchParams.set("page", String(params.page));
   if (params.page_size != null) {
     searchParams.set("page_size", String(params.page_size));
@@ -146,6 +156,8 @@ export type NonMovingStockParams = SuppliesFilterParams & {
   warehouse?: string;
   turnover_status?: string;
   blocked?: boolean;
+  search?: string;
+  branches?: string[];
   page?: number;
   page_size?: number;
   sort?: string;
@@ -176,6 +188,8 @@ export function getNonMovingStockItems(
 export type InventoryAccuracyParams = SuppliesFilterParams & {
   month?: string;
   outcome?: string;
+  search?: string;
+  branches?: string[];
   page?: number;
   page_size?: number;
   sort?: string;
