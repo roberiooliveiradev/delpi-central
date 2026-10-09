@@ -101,6 +101,21 @@ def test_create_enqueues_processor_permission_fanout():
     assert created["id"] == row.request_id
 
 
+def test_create_notification_body_names_requester_and_title():
+    types, requests, idem, outbox, _files = _stack()
+    CreateRequestUseCase(types, requests, idem, outbox=outbox).execute(
+        user=_user(),
+        type_code="invoice-issuance",
+        payload={"title": "NF do fornecedor X"},
+        branch_code="01",
+        idempotency_key=str(uuid4()),
+    )
+    row = outbox.list_pending()[0]
+    assert row.event_type == "request.created"
+    assert "Criador" in row.payload["message"]
+    assert "NF do fornecedor X" in row.payload["message"]
+
+
 def test_comment_from_owner_notifies_assignee_not_self(tmp_path):
     types, requests, idem, outbox, files = _stack()
     created = CreateRequestUseCase(

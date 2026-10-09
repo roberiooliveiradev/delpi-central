@@ -294,6 +294,11 @@ class CreateRequestUseCase:
             title, message, notif_type = resolve_queue_created_copy(
                 request_number=stored.request_number,
                 type_name=request_type.name,
+                requester_name=actor.user_name,
+                request_title=str(
+                    (stored.payload or {}).get("title") or ""
+                ).strip()
+                or None,
             )
             self._outbox.enqueue(
                 event_type="request.created",

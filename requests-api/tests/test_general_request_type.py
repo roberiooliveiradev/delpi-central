@@ -270,3 +270,29 @@ def test_queue_notification_targets_process_permission(seed):
     )
     assert "fila" in title
     assert "REQ-1" in message and "Solicitação Diversa" in message
+
+
+def test_queue_created_copy_includes_requester_and_ticket_title():
+    """O corpo do alerta de fila deve dizer quem abriu e qual o assunto."""
+    title, message, _kind = resolve_queue_created_copy(
+        type_name="Processos — Abertura de Chamado",
+        request_number="REQ-2026-000004",
+        requester_name="Michael Marotto",
+        request_title="Impressão de gabarito",
+    )
+    assert "fila" in title
+    assert "Michael Marotto" in message
+    assert "Impressão de gabarito" in message
+    assert "REQ-2026-000004" in message
+
+
+def test_queue_created_copy_requester_without_ticket_title():
+    """Tipos sem campo title no payload mantêm o formato anterior."""
+    _title, message, _kind = resolve_queue_created_copy(
+        type_name="Solicitação Diversa",
+        request_number="REQ-2",
+        requester_name="Ana",
+    )
+    assert message.startswith("Ana abriu")
+    assert "REQ-2 (Solicitação Diversa)" in message
+    assert "aguarda atendimento" in message

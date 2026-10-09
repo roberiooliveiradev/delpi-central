@@ -78,9 +78,32 @@ def resolve_assignee_transition_copy(
     return "Solicitação atualizada", f"{number} atualizada por {actor}.", "info"
 
 
-def resolve_queue_created_copy(*, request_number: str, type_name: str | None = None) -> tuple[str, str, str]:
+def resolve_queue_created_copy(
+    *,
+    request_number: str,
+    type_name: str | None = None,
+    requester_name: str | None = None,
+    request_title: str | None = None,
+) -> tuple[str, str, str]:
+    """Copy do alerta de nova solicitação na fila (sino dos processadores).
+
+    Quando o solicitante e/ou o título do chamado estão disponíveis, o corpo
+    os inclui — o analista vê quem pediu e sobre o que é sem abrir o detalhe.
+    """
     number = (request_number or "").strip() or "Solicitação"
     label = (type_name or "").strip()
-    if label:
-        return "Nova solicitação na fila", f"{number} ({label}) aguarda atendimento.", "info"
-    return "Nova solicitação na fila", f"{number} aguarda atendimento.", "info"
+    requester = (requester_name or "").strip()
+    ticket = (request_title or "").strip()
+    if ticket:
+        subject = f"{number} — «{ticket}»"
+    elif label:
+        subject = f"{number} ({label})"
+    else:
+        subject = number
+    if requester:
+        return (
+            "Nova solicitação na fila",
+            f"{requester} abriu {subject} e aguarda atendimento.",
+            "info",
+        )
+    return "Nova solicitação na fila", f"{subject} aguarda atendimento.", "info"
