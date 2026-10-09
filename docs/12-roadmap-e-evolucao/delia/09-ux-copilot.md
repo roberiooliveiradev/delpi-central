@@ -2,6 +2,7 @@
 
 **Order authority:** [`16-execution-master-plan.md`](./16-execution-master-plan.md)  
 **Specs temáticas:** `53–66`
+**Plano visual detalhado (wireframes e atividade):** [`69-conversation-experience-ux-wireframes-and-activity-plan.md`](./69-conversation-experience-ux-wireframes-and-activity-plan.md) — design direction, não autorização de implementação.
 
 ## 1. Princípio
 
