@@ -1,6 +1,18 @@
 # 11 — P4 — Classificações e Pendências
 
-**TARGET / VISUAL_SPEC_DEFINED / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 > Este documento fecha P4 no nível de produto, experiência, arquitetura de informação, estados, AuthZ visual, reuso do `@delpi/plugin-ui`, Help e aceite visual. Não autoriza runtime. Bindings físicos permanecem T01/T05.
 
@@ -36,6 +48,31 @@ UI_VISIBILITY != AUTHORIZATION
 - `pending_since` é dado factual; não derivar atraso, SLA ou prazo.
 - P4 do fechamento não absorve despesas por centro de custo do Portal Financeiro P0.
 - A página não cria permission code, user, role ou RBAC local.
+
+
+## Responsabilidade, owners e non-goals
+
+| Capability/dado | Owner |
+|---|---|
+| pendência/state machine do fechamento | P4 / `controllership-finance-api` |
+| classificação confirmada no contexto P4 | P4, com decisão humana autorizada |
+| regra upstream/CC/fatos canônicos | owner da source/regra correspondente |
+| identity/effective permissions | Core / PermissionResolver |
+| people references / assignee | Core Directory + references do produto |
+| sugestão explicativa de IA | adapter governado, nunca authority |
+| write ERP | **fora do Portal V1** |
+| chrome visual | `@delpi/plugin-ui` |
+
+Não pertence a P4:
+- redefinir regra de centro de custo;
+- absorver o Portal Financeiro P0;
+- criar permission por fila/unidade;
+- calcular SLA/overdue;
+- confirmar classificação por IA;
+- gravar correção no ERP;
+- transformar `DISMISSED` em `NOT_APPLICABLE`;
+- conceder acesso via claim/reassign.
+
 
 ## Classificação / CC
 
@@ -290,6 +327,64 @@ Usar timeline auditável para eventos relevantes:
 
 Histórico preserva actor/timestamp e contexto disponível. Não apagar evento anterior ao reassignment/resolução.
 
+## Contratos TARGET — MFE → BFF → owners
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → Core effective permissions / Directory
+   → source/owner adapters autorizados
+   → IA governada quando aplicável
+```
+
+O browser não chama Core, `api-delpi`, IA provider ou qualquer owner externo diretamente.
+
+Operações semânticas:
+
+| Operação | Semântica |
+|---|---|
+| listPendencies | fila autorizada, filtros, coverage/source status |
+| getPendency | detalhe, facts, source, owner, history |
+| claimPendency | assumir responsabilidade conforme business rule |
+| reassignPendency | mudar responsável preservando histórico |
+| startAnalysis | OPEN → IN_ANALYSIS quando permitido |
+| waitExternal | transição para WAITING_EXTERNAL quando permitida |
+| resolvePendency | resolução governada |
+| dismissPendency | DISMISSED com justificativa |
+| getClassificationSuggestion | sugestão + rationale/provenance, sem decisão |
+| confirmClassification | decisão humana auditada |
+| listPendencyHistory | ownership + state + classification events |
+
+Os paths/DTOs físicos entram no OpenAPI futuro.
+
+### AuthZ
+
+Authority runtime revalidada no HEAD atual:
+
+```text
+Core PermissionResolver
+→ effective permissions
+→ no JWT permission fallback
+```
+
+Base P4:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND resource_scope / ownership
+AND business_rule
+```
+
+Claim/reassign não concedem acesso ao recurso; apenas alteram responsabilidade dentro de um contexto já autorizado.
+
+A BFF:
+- resolve effective access no Core;
+- valida resource/context access;
+- valida transition/action flags;
+- falha fechado quando authorization estiver indisponível;
+- não aceita owner/assignee arbitrário do frontend sem resolver eligibility.
+
 ## Reuso obrigatório de `@delpi/plugin-ui`
 
 Import preferencial:
@@ -383,7 +478,7 @@ Quando uma source falhar e outras permanecerem válidas:
 - não apresentar count parcial como total definitivo;
 - ações dependentes da source indisponível ficam indisponíveis pelo contract, não por inferência local.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 
 Source obrigatório indisponível:
 - não converter em empty;
@@ -596,6 +691,47 @@ Aceite:
 - keyboard/focus;
 - Help.
 
+## Scripts e artefatos auxiliares PLANNED
+
+Não criar durante a FASE A.
+
+```text
+validate-p4-state-machine
+- apenas OPEN / IN_ANALYSIS / WAITING_EXTERNAL / RESOLVED / DISMISSED
+- transition inválida rejeitada
+
+validate-p4-human-decision
+- AI suggestion != confirmation
+- actor/evidence/provenance auditados
+
+validate-p4-ownership
+- claim/reassign preserva history
+- assignee não concede resource access
+
+validate-p4-source-boundary
+- P0 não vira authority automática
+- unavailable != empty
+- no ERP write
+
+validate-p4-authz
+- ACCESS + scope/ownership + business rule
+- Core fail-closed
+- no permission proliferation
+
+validate-p4-deep-links
+- competence/filters/selected item/F5
+- safe return context
+
+validate-p4-help
+- states/AI/dismiss/no-SLA/source semantics sincronizados
+
+validate-p4-plugin-ui
+- master-detail/table/cards/forms/timeline/modal reused
+- no local clone
+```
+
+Tecnologia/localização seguem o padrão do HEAD da futura implementação.
+
 ## Inventários técnicos remanescentes
 
 ### T01 — source/bindings
@@ -618,23 +754,37 @@ Nomes físicos de endpoints, DTOs, action flags, filtros, paginação, ordenaç�
 
 Esses inventories não reabrem produto quando apenas materializam o contrato lógico já fechado. Se a evidence provar owner/comportamento incompatível, parar como `EXECUTION_DRIFT`.
 
-## Gate documental P4
+## Gate documental V2
 
 ```text
-PRODUCT_RULES_DEFINED       = PASS
-INFORMATION_ARCH_DEFINED    = PASS
-DESKTOP_DEFINED             = PASS
-MOBILE_DEFINED              = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
-UX_STATES_DEFINED           = PASS
-AUTHZ_MODEL_DEFINED         = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
 A11Y_DEFINED                = PASS
-DEEP_LINK_SEMANTICS_DEFINED = PASS
-HELP_CONTRACT_DEFINED       = PASS
-RQ_ACCEPTANCE_DEFINED       = PASS
-PHYSICAL_BINDINGS           = TO_INVENTORY
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
 IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-P4 está documentalmente pronto para um brief técnico futuro com inventário, mas nenhum diff runtime pode começar antes do gate transversal do Portal.
+Inventários:
+- T01 source/bindings;
+- T05 resource scope/ownership bindings;
+- DTOs/action flags/paginação/deep-link params físicos.
+
+Resultado:
+
+```text
+A11 P4 CLASSIFICAÇÕES E PENDÊNCIAS
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
+```
+
