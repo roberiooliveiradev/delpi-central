@@ -207,7 +207,7 @@ A Home é a rota raiz do Portal e, por padrão, **não usa PagePath**. `PagePath
 │ │ Checklist               ☆  │ └────────────────────────────┘                │
 │ │ Estoque e conciliação   ☆  │                                               │
 │ │ Classificações          ☆  │ ┌────────────────────────────┐                │
-│ │ Pacote e envio          ☆  │ │ COLABORAÇÃO                │                │
+│ │ Pacote, Finalização e Envio          ☆  │ │ COLABORAÇÃO                │                │
 │ └────────────────────────────┘ │ Sala de interação       ☆  │                │
 │                                │ Minhas tarefas          ☆  │                │
 │ ┌────────────────────────────┐ └────────────────────────────┘                │
@@ -516,7 +516,7 @@ Rotas candidatas, exibidas somente quando implementadas:
 - Checklist e Documentos;
 - Estoque e Conciliação;
 - Classificações e Pendências;
-- Pacote e Envio.
+- Pacote, Finalização e Envio.
 
 A seção pode existir parcialmente conforme o rollout page-by-page.
 
