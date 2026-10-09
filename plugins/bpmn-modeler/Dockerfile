@@ -5,6 +5,14 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Editor BPMN compartilhado (G7) — resolve via alias ../bpmn-editor/src;
+# deps próprias (bpmn-js, elkjs) precisam estar instaladas.
+COPY bpmn-editor/package*.json ./bpmn-editor/
+RUN --mount=type=cache,target=/root/.npm \
+    cd bpmn-editor && npm install --omit=peer --legacy-peer-deps
+
+COPY bpmn-editor ./bpmn-editor
+
 COPY bpmn-modeler/package*.json ./bpmn-modeler/
 RUN --mount=type=cache,target=/root/.npm \
     cd bpmn-modeler && npm install
