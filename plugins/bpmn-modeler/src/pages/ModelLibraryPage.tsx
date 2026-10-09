@@ -32,11 +32,11 @@ import {
   type ModelListPage,
   type ModelSummary,
 } from "../data/api/bpmnModelerApi";
-import type { Capabilities } from "../state/capabilities";
+import type { Capabilities } from "@delpi/bpmn-editor";
 import { BpmnModelThumb } from "../components/BpmnModelThumb";
 import { CreateModelDialog } from "../components/CreateModelDialog";
 import { ImportDialog } from "../components/ImportDialog";
-import { HELP_TOOLTIPS } from "../content/helpTooltips";
+import { HELP_TOOLTIPS } from "@delpi/bpmn-editor";
 import {
   BPMNM_ROOT_CLASS,
   BpmnmEmptyState,
@@ -50,7 +50,7 @@ import {
   BpmnmStateBanner,
   BpmnmStatusBadge,
   BpmnmTextField,
-} from "../ui/kit";
+} from "@delpi/bpmn-editor";
 
 type Props = {
   getAccessToken?: () => string | undefined;

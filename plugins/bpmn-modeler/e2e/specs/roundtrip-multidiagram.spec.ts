@@ -12,7 +12,7 @@ import {
   roundTripNoEdit,
   serializeViaValidate,
 } from "../rt-helpers";
-import { compareBpmnXml } from "../rt-compare";
+import { compareBpmnXml } from "../../../bpmn-editor/src/testing/rtCompare";
 
 const MULTI = readFixture("multi-diagram.bpmn");
 const NODI = readFixture("no-di.bpmn");

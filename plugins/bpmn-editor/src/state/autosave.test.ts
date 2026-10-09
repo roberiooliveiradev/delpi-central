@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AutosaveController } from "./autosave";
 import { SaveMachine, type SaveState } from "./saveMachine";
-import { BpmnModelerApiError } from "../data/api/bpmnModelerApi";
+import { BpmnDocumentError } from "../host/types";
 
-function apiError(status: number, code = "X"): BpmnModelerApiError {
-  return new BpmnModelerApiError(status, {
+function apiError(status: number, code = "X"): BpmnDocumentError {
+  return new BpmnDocumentError(status, {
     success: false,
     error: { code, message: code },
     meta: { request_id: "t" },

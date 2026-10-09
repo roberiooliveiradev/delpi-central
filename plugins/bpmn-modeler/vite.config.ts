@@ -36,6 +36,14 @@ export default defineConfig(({ mode }) => {
   ],
   resolve: {
     alias: [
+      {
+        find: /^@delpi\/bpmn-editor\/(.*)$/,
+        replacement: path.resolve(__dirname, "../bpmn-editor/src") + "/$1",
+      },
+      {
+        find: /^@delpi\/bpmn-editor$/,
+        replacement: path.resolve(__dirname, "../bpmn-editor/src/index.ts"),
+      },
       ...(isVitest
         ? [
             {

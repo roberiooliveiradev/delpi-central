@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { ModelLibraryPage } from "./pages/ModelLibraryPage";
 import { ModelEditorPage } from "./pages/ModelEditorPage";
 import { RevisionViewPage } from "./pages/RevisionViewPage";
-import { capabilitiesFromPermissions } from "./state/capabilities";
+import { capabilitiesFromPermissions } from "./state/modelerCapabilities";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;

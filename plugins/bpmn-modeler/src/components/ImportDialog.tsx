@@ -13,7 +13,7 @@ import {
   BpmnmStateBanner,
   BpmnmTextField,
   bpmnmFileDropzoneClasses,
-} from "../ui/kit";
+} from "@delpi/bpmn-editor";
 
 type Props = {
   open: boolean;

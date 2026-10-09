@@ -26,7 +26,7 @@ import {
   compareBpmnXml,
   formatDiffs,
   type Diff,
-} from "./rt-compare";
+} from "../../bpmn-editor/src/testing/rtCompare";
 
 const BASE = process.env.BPMN_E2E_BASE_URL ?? "http://localhost";
 const FIXTURE_DIR = join(

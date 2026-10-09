@@ -9,17 +9,6 @@ export type Capabilities = {
   manage: boolean;
 };
 
-export function capabilitiesFromPermissions(
-  permissions: readonly string[] | undefined,
-): Capabilities {
-  const set = new Set(permissions ?? []);
-  return {
-    view: set.has("bpmn-modeler.view") || set.has("bpmn-modeler.edit") || set.has("bpmn-modeler.manage"),
-    edit: set.has("bpmn-modeler.edit") || set.has("bpmn-modeler.manage"),
-    manage: set.has("bpmn-modeler.manage"),
-  };
-}
-
 export type ReadOnlyReason =
   | "ARCHIVED"
   | "NO_EDIT_PERMISSION"

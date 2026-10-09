@@ -6,7 +6,7 @@ import { getWorkingCopy } from "../data/api/bpmnModelerApi";
 import {
   renderBpmnThumbnail,
   type BpmnThumbnailResult,
-} from "../editor/modelThumbnail";
+} from "@delpi/bpmn-editor";
 
 type GetToken = (() => string | undefined) | undefined;
 

@@ -26,9 +26,9 @@ import {
   checkIncomingOutgoingConsistency,
   formatDiffs,
   type Diff,
-} from "../../e2e/rt-compare";
+} from "../testing/rtCompare";
 
-const DIR = join(__dirname, "../../e2e/fixtures/roundtrip");
+const DIR = join(__dirname, "../testing/fixtures/roundtrip");
 
 type Allowed = Pick<Diff, "kind"> & {
   pathIncludes?: string;

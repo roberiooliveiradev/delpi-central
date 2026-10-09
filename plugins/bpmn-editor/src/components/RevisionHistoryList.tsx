@@ -1,7 +1,7 @@
 import { ActionButton } from "@delpi/plugin-ui/index";
 import { Eye, Plus, RotateCcw } from "lucide-react";
 
-import type { RevisionSummary } from "../data/api/bpmnModelerApi";
+import type { RevisionSummary } from "../host/types";
 import { HELP_TOOLTIPS } from "../content/helpTooltips";
 import { BpmnmEmptyState } from "../ui/kit";
 

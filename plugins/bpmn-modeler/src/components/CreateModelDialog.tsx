@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { ActionButton } from "@delpi/plugin-ui/index";
-import { BpmnmModal, BpmnmTextField } from "../ui/kit";
+import { BpmnmModal, BpmnmTextField } from "@delpi/bpmn-editor";
 
 type Props = {
   open: boolean;

@@ -13,7 +13,7 @@
  *   CONFLICT (409/412) → CONFLICT, nunca last-write-wins silencioso.
  */
 
-import { BpmnModelerApiError } from "../data/api/bpmnModelerApi";
+import { BpmnDocumentError } from "../host/types";
 import type { SaveMachine, SaveState } from "./saveMachine";
 
 export const AUTOSAVE_DEBOUNCE_MS = 1500;
@@ -30,7 +30,7 @@ export type AutosaveDeps = {
   /** Pede refresh ao host (portal AppHost → DELPI_REFRESH_REQUEST). */
   requestTokenRefresh: () => Promise<boolean>;
   emit: (state: SaveState) => void;
-  onValidationBlocked?: (err: BpmnModelerApiError) => void;
+  onValidationBlocked?: (err: BpmnDocumentError) => void;
   onVerificationFailed?: () => void;
   debounceMs?: number;
 };
@@ -166,7 +166,7 @@ export class AutosaveController {
     try {
       return await this.deps.write(xml, this.deps.getVersion());
     } catch (err) {
-      if (err instanceof BpmnModelerApiError && err.status === 401) {
+      if (err instanceof BpmnDocumentError && err.status === 401) {
         await this.deps.requestTokenRefresh();
         return await this.deps.write(xml, this.deps.getVersion());
       }
@@ -176,7 +176,7 @@ export class AutosaveController {
 
   private classify(err: unknown): void {
     const m = this.deps.machine;
-    if (err instanceof BpmnModelerApiError) {
+    if (err instanceof BpmnDocumentError) {
       if (err.code === "VALIDATION_BLOCKED") {
         this.deps.onValidationBlocked?.(err);
         m.dispatch({ type: "VALIDATION_BLOCKED" });

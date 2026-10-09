@@ -1,6 +1,6 @@
 import { ActionButton } from "@delpi/plugin-ui/index";
 
-import type { ValidationReport } from "../data/api/bpmnModelerApi";
+import type { ValidationReport } from "../host/types";
 import { BpmnmEmptyState, BpmnmStatusBadge } from "../ui/kit";
 
 type Props = {

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "typecheck:e2e": "tsc -p tsconfig.e2e.json",
     "preview": "vite preview"

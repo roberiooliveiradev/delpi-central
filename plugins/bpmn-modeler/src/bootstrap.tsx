@@ -1,4 +1,4 @@
-import "./index.css";
+import "@delpi/bpmn-editor/styles.css";
 
 import {
   getReactDomClient,

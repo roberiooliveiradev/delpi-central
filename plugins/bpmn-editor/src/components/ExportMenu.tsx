@@ -1,9 +1,6 @@
 import { useState } from "react";
 
 import type { BpmnEditorAdapter } from "../editor/BpmnEditorAdapter";
-import { exportWorkingCopy } from "../data/api/bpmnModelerApi";
-
-type TokenGetter = () => string | undefined;
 
 function download(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
@@ -36,16 +33,16 @@ export type ExportActions = {
  * biblioteca — nunca reimplementar download paralelo.
  */
 export function useExportActions(
-  modelId: string,
   adapter: BpmnEditorAdapter | null,
-  getAccessToken?: TokenGetter,
+  /** Export server-side do artefato canônico — fornecido pelo DocumentHost. */
+  exportBpmnXml: () => Promise<string>,
 ): ExportActions {
   const [busy, setBusy] = useState(false);
 
   const exportBpmn = async () => {
     setBusy(true);
     try {
-      const xml = await exportWorkingCopy(modelId, { getAccessToken });
+      const xml = await exportBpmnXml();
       download("modelo.bpmn", xml, "application/xml");
     } finally {
       setBusy(false);

@@ -5,12 +5,16 @@ on:
     paths:
       - "bpmn-modeler/**"
       - "plugins/bpmn-modeler/**"
+      - "plugins/bpmn-editor/**"
+      - "plugins/vite/**"
       - "shared/delpi_auth/**"
       - ".github/workflows/bpmn-modeler.yml"
   pull_request:
     paths:
       - "bpmn-modeler/**"
       - "plugins/bpmn-modeler/**"
+      - "plugins/bpmn-editor/**"
+      - "plugins/vite/**"
       - "shared/delpi_auth/**"
       - ".github/workflows/bpmn-modeler.yml"
 
@@ -143,6 +147,10 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Instalar dependências (@delpi/bpmn-editor — editor compartilhado G7)
+        working-directory: plugins/bpmn-editor
+        run: npm ci --legacy-peer-deps
+
       - name: Dependency freeze — pins exatos congelados
         run: |
           node - <<'JS'
@@ -169,12 +177,20 @@ jobs:
       - name: Lint
         run: npx eslint .
 
-      - name: Testes unitários + CANVAS-REG-01..10 (canvas regression gate)
+      - name: Testes unitários + CANVAS-REG-01..10 (@delpi/bpmn-editor)
+        working-directory: plugins/bpmn-editor
         run: npx vitest run
+
+      - name: Testes unitários (bpmn-modeler — camada fina do host)
+        run: npx vitest run --passWithNoTests
+
+      - name: Typecheck (@delpi/bpmn-editor)
+        working-directory: plugins/bpmn-editor
+        run: npx tsc -p tsconfig.json
 
       - name: ELK — sem fallback main thread (worker-only)
         run: |
-          ! grep -n "new ELK(" src/layout/layoutEngine.ts \
+          ! grep -n "new ELK(" ../bpmn-editor/src/layout/layoutEngine.ts \
             && echo "worker-only OK"
 
       - name: Build (remoteEntry)
@@ -190,12 +206,12 @@ jobs:
           test -f THIRD_PARTY_NOTICES.md \
             && grep -qi "bpmn.io" THIRD_PARTY_NOTICES.md \
             && echo "notices OK"
-          ! grep -rn -i "removeLogo\|hide.*watermark\|watermark.*none" src/ \
+          ! grep -rn -i "removeLogo\|hide.*watermark\|watermark.*none" src/ ../bpmn-editor/src/ \
             && echo "watermark preserved"
 
-      - name: Vendor leakage — vendor só em src/editor/
+      - name: Vendor leakage — vendor só no núcleo do editor compartilhado
         run: |
           ! grep -rln -E "from \"(bpmn-js|diagram-js|bpmn-moddle)|modeler\.get\(|eventBus|commandStack\._|elementRegistry" \
-            src --include='*.ts' --include='*.tsx' \
-            | grep -v "src/editor/" \
+            src ../bpmn-editor/src --include='*.ts' --include='*.tsx' \
+            | grep -v "bpmn-editor/src/editor/" \
             && echo "vendor boundary OK"
