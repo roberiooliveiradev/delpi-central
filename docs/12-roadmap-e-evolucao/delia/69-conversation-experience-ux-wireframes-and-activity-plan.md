@@ -557,3 +557,6 @@ Interações por voz não fornecem Identity/AuthZ; toda material write mantém l
 10. Testar generalização, precisão em termos DELPI, segurança/privacidade, outcome, e registrar evidência no SHA/config avaliado.
 
 **Encaminhamento:** quando o Plano Mestre autorizar, Devin começa por inventário + contrato do ditado, depois UX e implementação mínima governada. A conversa Live deve ser planejada em tarefa/aceite posterior.
+
+
+**Complemento especializado:** [70 — Atividade de Ferramentas, Fontes e Transparência Operacional](./70-tool-activity-and-source-transparency-ux-specification.md). Define WF-T01–WF-T06 e a distinção entre consultas, ações e outcomes sem duplicar a autoridade desta especificação geral.
