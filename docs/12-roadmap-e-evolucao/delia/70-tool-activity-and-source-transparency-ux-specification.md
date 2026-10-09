@@ -228,3 +228,129 @@ Tokens de cor oficiais: `--primary` ciano DELPI (`#089BDB` atual), `--surface`, 
 **TEST_NOT_RUN:** nenhuma implementação/teste executado nesta tarefa documental.
 
 Este documento complementa a [69](./69-conversation-experience-ux-wireframes-and-activity-plan.md) e não altera o Plano Mestre, a fase, o ledger de execução ou o estado do produto. Handoff para chat de Frontend/UX → Integration Review → Coordination antes de autorização ao Devin.
+
+
+---
+
+## 13. Especificação visual detalhada — DÉLIA Activity (decisão de produto em elaboração)
+
+**Registro:** 2026-10-09. Esta seção detalha os exemplos visuais compartilhados pelo Product Master (atividade expansível, etapas, indicação de especialista, ferramentas e painel de fontes). **Não** representa aprovação de novo contrato, implementação, transmissão progressiva ou permissão. A direção vigente do próprio documento — linha imediata, detalhes expansíveis e resumo final — permanece preservada.
+
+### 13.1 Componentes e ownership
+
+| Parte | Responsabilidade visual | Origem legítima dos dados |
+| --- | --- | --- |
+| `ActivitySummary` | Uma linha curta por turno, com status, texto e affordance de expansão | Estado local de requisição ou projeção de atividade do backend |
+| `ActivitySteps` | Linha do tempo vertical de passos comprovados | Eventos/snapshot de execução autorizado |
+| `ActivityToolDetail` | Capability/ferramenta efetivamente acionada, com rótulo semântico público | Projeção backend, jamais envelopes MCP brutos |
+| `ActivitySources` | Fontes consultadas, resultados disponíveis e provenance | Contrato de Evidence/provenance com disclosure aprovado |
+| `ActivityOutcome` | Distinção entre consulta técnica, dados utilizáveis e postcondition autoritativa | Outcome/Evidence e autoridade de domínio |
+| `ActivityInspector` | Região detalhada opcional para atividade extensa | Mesma projeção sanitizada; **TARGET** quando houver volume/contrato real |
+
+**Abstraction Gate:** estes nomes são responsabilidades de design, **não instrução para criar seis arquivos/componentes**. Inventariar `plugins/plugin-ui` e os componentes DÉLIA antes de decidir `EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY`, `REUSE_DECISION=REUSE|EXTEND|NEW`. UI genérica compartilhável pode ficar no plugin-ui; adaptação de Evidence/Policy e orquestração pertence à DÉLIA.
+
+### 13.2 Posicionamento e hierarquia
+
+**Opção recomendada, ainda sujeita a decisão final:** linha de atividade **acima do corpo da resposta**, dentro do mesmo turno da timeline, não como card de dashboard ou mensagem separada. Durante a requisição, permanece alinhada à posição futura da resposta; depois pode ser aberta novamente. O dock usa o mesmo modelo responsivo, sem outro runtime.
+
+```text
+[Você] Qual a descrição do item 10080055?
+
+[ícone DÉLIA] DÉLIA
+   ◌ Aguardando resposta da DÉLIA…             [⌄]
+   ├─ (se e somente se observado) Capacidade selecionada
+   ├─ (se e somente se observado) Fonte consultada
+   └─ (se e somente se observado) Etapa concluída/pendente
+
+   [Resposta real ou aviso governado — quando disponível]
+   Fonte / provenance / limitações
+```
+
+**Visual:** resumo leve sem fundo card obrigatório; ícone de status + frase de uma linha que quebra naturalmente + chevron; hover/focus visíveis. Expansão inline por clique, Enter ou Space. Estado inicial colapsado; caso de bloqueio/negação/falha material, alerta permanece visível **fora** da parte recolhida. Não forçar abertura de inspector nem rolagem quando o usuário está lendo outra mensagem.
+
+### 13.3 Estados e microcopy: fonte de verdade
+
+| Estado visual | Resumo permitido | Critério mínimo |
+| --- | --- | --- |
+| `PENDING_REQUEST` | “A DÉLIA está processando sua solicitação…” | POST pendente no frontend, sem alegar provider |
+| `WAITING` | “Aguardando resposta…” | Apenas se espera de fonte/etapa vier de evento real; caso contrário usar `PENDING_REQUEST` |
+| `CAPABILITY_SELECTED` | “Preparando consulta de produtos” | Selection comprovada em projeção, sem sugerir autorização |
+| `TOOL_RUNNING` | “Consultando informações de produtos” | Invocação efetiva e autorizada, status real |
+| `TOOL_COMPLETED` | “Consulta à fonte concluída” | Completion técnica comprovada; não inferir dados |
+| `NO_DATA` | “Consulta concluída sem dados utilizáveis” | Projeção pós-validação, não apenas `0 results` de search |
+| `COMPLETED` | “Atividade concluída” | Turno finalizado; tempo somente medido |
+| `PARTIAL` | “Algumas fontes não responderam” | Evidência explícita de execução parcial |
+| `BLOCKED` | “Uma etapa adicional é necessária” | `PRECONDITION_REQUIRED` real |
+| `DENIED` | “Solicitação não autorizada” | `AUTHZ_DENIED` real |
+| `FAILED` | “Não foi possível concluir a consulta” | Falha observada; não generalizar indisponibilidade |
+| `CANCELLED` | “Interação interrompida” | Cancelamento confirmado, jamais presumido a partir de fechamento de UI |
+
+Evitar **“Pensou por 14s”** ou `chain-of-thought`. Quando duração for mensurada, preferir “Atividade concluída em 14s”; nunca representar investigação, uso de MCP ou pesquisa web por timer animado. Idioma user-facing PT-BR; identificadores técnicos só em detalhes autorizados.
+
+### 13.4 Anatomia da expansão inline
+
+Para cada passo comprovado:
+1. **Ícone** (pendente/ativo/concluído/bloqueado/falhou), com redundância textual.
+2. **Título semântico:** “Consultar descrição do produto”, não nome de endpoint.
+3. **Especialista/owner:** DAVI, TÉO ou VISTA **apenas se de fato selecionado/invocado e exposto por contrato**.
+4. **Recurso:** capability semântica + categoria `MCP`, `A2A`, `Domain API`, `Web` quando provada; protocolo nunca tratado como autoridade.
+5. **Fonte:** sistema/data owner identificado; distinguindo invocação, payload utilizável e grounding.
+6. **Tempo:** início/fim/duração quando existem timestamps de confiança e granularidade autorizada.
+7. **Resultado:** `concluída`, `sem dados`, `parcial`, `falhou`, `negada`; sucesso HTTP não é sucesso de negócio.
+
+Não permitir que conteúdo remoto determine ícone de autorização, estado de policy, link ou comportamento. Não renderizar argumentos de chamada, query completa, SQL, JSON de MCP, instruções de agente, identificadores internos sensíveis, credenciais, prompt ou conteúdo privado da reflexão do modelo. Rótulos vindos de metadata devem passar pelo contrato aprovado/sanitização no backend.
+
+### 13.5 Fontes, evidência e outcome
+
+A UI deve distinguir quatro fatos:
+
+- **Fonte contatada:** pedido enviado a um owner; ainda sem prova de dados úteis.
+- **Dados recebidos:** conteúdo retornado, não necessariamente validado.
+- **Informação fundamentada:** provenance e critérios de grounding do contrato DÉLIA satisfeitos.
+- **Resultado confirmado:** Domain authority/postcondition verificou resultado material.
+
+A expansão pode agrupar fontes por owner e deduplicar referências **sem perder atribuições ou misturar evidência de turnos diferentes**. Para fonte externa/web, marcar origem externa e não promover resultado de pesquisa a FACT. Se existir autorização explícita para abrir fonte, link deve ser real, seguro e checado por contrato; não construir URL ou botão a partir de strings de tool.
+
+### 13.6 Inspector lateral (evolução condicionada)
+
+**TARGET/CONTRACT_REQUIRED**, não parte da primeira entrega só porque aparece na arte. Quando permitido, exibir título “Atividade”, resumo do turno, sequência de etapas, fontes, limitações e outcome; conservar a timeline e composer em largura utilizável. Em dock estreito, priorizar o painel inline; inspector lateral não deve reduzir a conversa a largura impraticável nem esconder confirmações críticas. Abertura e fechamento por controles com foco/restauração apropriados. Sem logs de transporte nem `debug dump` de payload.
+
+### 13.7 Comportamento e acessibilidade
+
+- Um disclosure `button` por atividade, com `aria-expanded` e `aria-controls`; foco visível, Enter/Space, leitura linear por leitor de tela.
+- Atualizações dinâmicas pontuais com `role=status` e sem anúncios repetitivos de cada etapa. Falhas materiais por `role=alert`; feedback não só por cor.
+- Animação discreta apenas quando execução real pendente; `prefers-reduced-motion` respeitado. Nunca spinner eterno após término da requisição.
+- Scroll automático somente quando o usuário está próximo do fim; expansão preserva posição de leitura. Timeline longa precisa de wrapping, truncamento honesto e navegação por teclado.
+- Light/dark via tokens Portal/plugin-ui; no dock linhas quebram sem overflow, ícones/chevrons alvos de toque adequados.
+- Persistência **por turno na sessão atual** somente na medida em que os dados reais estejam disponíveis; não inventar histórico durável, multi-tab ou replays de ferramentas.
+- **Modo demo:** fixtures explicitamente rotuladas `Simulação` e isoladas de produção real; etapas fictícias não devem ser confundidas com execução de DAVI/MCP.
+
+### 13.8 Matriz de gates e fases de entrega
+
+| Capacidade | Evidência atual | Gate |
+| --- | --- | --- |
+| Loading simples durante `POST /interaction/turns` | Frontend observa pending real | Pode reutilizar UI atual |
+| Expandir resumo final de provenance/limitações | `presentation.v1` final JSON, se disponível | Inventário de campos/consumers; decisão bounded UI |
+| Nome real de especialista/capability | Possível somente se projeção permitir | Owner/disclosure + contrato comprovado |
+| Etapas progressivas e ferramentas ao vivo | **TO_INVENTORY**; POST atual não prova SSE | Novo contrato/projeção + autorização de fase |
+| Durations por etapa | **TO_INVENTORY** | Instrumentação real e schema |
+| Inspector lateral rico | **TARGET** | Evidências suficientes + design e contrato |
+| Transcript de pensamento / `chain-of-thought` | Proibido | **FORBIDDEN** |
+| Console MCP bruto / tool-call arguments / secrets | Proibido | **FORBIDDEN** |
+
+**Ordem de realização:** inventário de componentes/contratos/eventos existentes → review owner/privacy/security → menor UI fiel com informação final real → decisão independente para atividade progressiva → testes de regressão, generalização, a11y, page/dock → verificação visual real → ledger. Nenhum contrato ou mecanismo de transporte pode ser escolhido só para imitar a animação dos prints.
+
+### 13.9 Critérios adicionais de aceite visual
+
+- [ ] Linha curta integrada ao turno; não ocupar card pesado na conversa.
+- [ ] Expansão inline possível, fechada por padrão, com teclado e leitor de tela.
+- [ ] Pending sem eventos não inventa consulta, especialista ou ferramentas.
+- [ ] Nome/protocolo/fonte somente quando projeção aprovada traz evidência real.
+- [ ] Erro, precondição e AuthZ deny materiais continuam visíveis mesmo recolhidos.
+- [ ] Tool completion, dados utilizáveis, GROUNDED e Domain outcome têm rótulos distintos.
+- [ ] Nenhum texto de chain-of-thought, prompt interno, token, argumentos brutos ou metadados de discovery expostos.
+- [ ] Contexto visual consistente em página/dock, light/dark, 200% zoom, mobile e reduced-motion.
+- [ ] Em modo demo, toda etapa é claramente marcada como simulação e não causa side effects.
+- [ ] Testes e revisão no SHA/config reais; `TEST_NOT_RUN` para navegador ausente.
+
+**Status documental desta seção:** `DESIGN_DETAIL_PROPOSED`, preservando a direção já aprovada no documento 70. A posição exata linha-acima-vs-dentro do corpo da resposta e a habilitação do inspector permanecem **decisões de coordenação pendentes**. Nenhuma implementação, contrato, commit de código, deploy ou avanço de fase é produzido por esta especificação.
