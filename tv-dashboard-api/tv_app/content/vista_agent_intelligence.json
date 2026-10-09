@@ -78,10 +78,21 @@
         "note": "metodologia de readiness PROVEN (PHASE 5 §37/§38); guidance IS_NOT estado salvo"
       },
       "solution_ecosystem": {
-        "status": "UNAVAILABLE_IN_CURRENT_SURFACE",
+        "status": "PROVEN",
         "purpose": "Conhecimento de outras soluções DELPI.",
         "owner": "Core API",
-        "note": "integração = PHASE 6; ausência no catálogo TV IS_NOT ausência de solução"
+        "authority": "core_solution_registry",
+        "lookupTrigger": "TV_ROUTE_MISS",
+        "executionAuthority": "tv_data_route_allowlist",
+        "gapClassifications": [
+          "TV_ROUTE_FOUND",
+          "SOLUTION_FOUND_NO_TV_ROUTE",
+          "SOLUTION_FOUND_ACCESS_RESTRICTED",
+          "NO_SOLUTION_EVIDENCE",
+          "AMBIGUOUS_SOLUTIONS",
+          "CONTRACT_GAP"
+        ],
+        "note": "ausência no catálogo TV IS_NOT ausência de solução; knowledge != authorization; lookup user-parity no miss"
       },
       "history": {
         "status": "UNAVAILABLE_IN_CURRENT_SURFACE",

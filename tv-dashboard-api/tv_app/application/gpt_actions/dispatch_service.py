@@ -201,6 +201,7 @@ class GptActionsDispatchService:
         validation: TvDataConfigValidationService | None = None,
         preview: TvDataPreviewService | None = None,
         suggest: TvDataRouteSuggestService | None = None,
+        solutions: Any | None = None,
     ) -> None:
         self._repo = repo
         self._writes = writes
@@ -211,6 +212,7 @@ class GptActionsDispatchService:
         self._validation = validation or TvDataConfigValidationService()
         self._preview = preview or TvDataPreviewService()
         self._suggest = suggest or TvDataRouteSuggestService(self._catalog)
+        self._solutions = solutions
         self._present = PresentationPayloadService()
         # (userId, slideId, revision) → last visual_capture_request send (mono).
         self._capture_request_last: dict[tuple[str, str, str], float] = {}
@@ -889,6 +891,44 @@ class GptActionsDispatchService:
             "failureCode": "EDITOR_CAPTURE_PENDING",
         }
 
+    def _solution_intelligence_on_miss(
+        self, query: str, authorization: str | None
+    ) -> dict[str, Any]:
+        """Bounded Core solution-catalog lookup for a TV route miss.
+
+        Called ONLY when the allowlist search returned nothing. User-parity:
+        forwards the caller's Bearer — no service token, no elevation.
+        Fail-closed: any gateway/contract/auth failure becomes CONTRACT_GAP,
+        never a fabricated answer or a false-absence claim.
+        """
+        from tv_app.application.services.solution_intelligence_service import (
+            SolutionIntelligenceService,
+        )
+
+        try:
+            gateway = self._solutions
+            if gateway is None:
+                raise GptActionsError(
+                    "Integração de soluções não configurada.",
+                    code="SOLUTION_CATALOG_UNAVAILABLE",
+                    status_code=503,
+                    details={"error_kind": "not_configured"},
+                )
+            if not (authorization or "").strip():
+                raise GptActionsError(
+                    "Usuário não autenticado.",
+                    code="UNAUTHENTICATED",
+                    status_code=401,
+                    details={"error_kind": "authn"},
+                )
+            solutions = gateway.list_solutions(authorization)
+        except GptActionsError as exc:
+            details = getattr(exc, "details", None) or {}
+            return SolutionIntelligenceService.contract_gap(
+                details.get("error_kind")
+            )
+        return SolutionIntelligenceService().classify(query, solutions)
+
     def search_data_routes(
         self,
         *,
@@ -896,6 +936,7 @@ class GptActionsDispatchService:
         query: str | None = None,
         limit: int = 8,
         category: str | None = None,
+        authorization: str | None = None,
     ) -> dict[str, Any]:
         from tv_app.application.gpt_actions.data_route_gpt_support import project_route_for_gpt
 
@@ -922,7 +963,7 @@ class GptActionsDispatchService:
             for item in raw_items
             if isinstance(item, dict)
         ]
-        return {
+        response: dict[str, Any] = {
             "items": items,
             "query": q,
             "category": str(category or "").strip() or None,
@@ -936,6 +977,21 @@ class GptActionsDispatchService:
             if not items
             else [],
         }
+        if not items:
+            response["solutionIntelligence"] = (
+                self._solution_intelligence_on_miss(q, authorization)
+            )
+        else:
+            # Typed outcome resolved before any ecosystem escalation —
+            # a route hit never triggers a Core lookup.
+            from tv_app.application.services.solution_intelligence_service import (
+                SolutionIntelligenceService,
+            )
+
+            response["solutionIntelligence"] = (
+                SolutionIntelligenceService.route_found()
+            )
+        return response
 
     @staticmethod
     def _preview_context_config(

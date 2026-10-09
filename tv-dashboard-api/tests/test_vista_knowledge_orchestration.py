@@ -139,10 +139,12 @@ def test_source_families_and_statuses():
     assert _REQUIRED_SOURCE_FAMILIES <= set(sources.keys())
     # PHASE-gated families keep their honest status — no fake authority.
     # PHASE 2 shipped the Product Guide registry + read surface; PHASE 5
-    # shipped the design-methodology contract + evaluator + live consumers.
+    # shipped the design-methodology contract + evaluator + live consumers;
+    # PHASE 6 shipped the Core solution-catalog miss enrichment with
+    # user-parity runtime proof.
     assert sources["product_usage"]["status"] == "PROVEN"
     assert sources["design_methodology"]["status"] == "PROVEN"
-    assert sources["solution_ecosystem"]["status"] == "UNAVAILABLE_IN_CURRENT_SURFACE"
+    assert sources["solution_ecosystem"]["status"] == "PROVEN"
     assert sources["history"]["status"] == "UNAVAILABLE_IN_CURRENT_SURFACE"
     # editor_context must never become an authority source.
     never = " ".join(sources["editor_context"]["never"]).lower()

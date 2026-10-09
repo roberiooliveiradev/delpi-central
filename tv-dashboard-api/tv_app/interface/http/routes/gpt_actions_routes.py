@@ -22,6 +22,9 @@ from tv_app.core.responses import ok
 from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
     PostgresIdempotencyRepository,
 )
+from tv_app.infrastructure.gateways.core_solution_catalog_gateway import (
+    CoreSolutionCatalogGateway,
+)
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 from tv_app.interface.http.auth_http import resolve_user
 from tv_app.interface.http.gpt_actions_response import (
@@ -36,7 +39,10 @@ _repo = PlaylistRepository()
 _writes = TvPresentationWriteService(repo=_repo)
 _idempotency = PostgresIdempotencyRepository()
 _commit = TvGptCommitService(writes=_writes, idempotency=_idempotency)
-_dispatch = GptActionsDispatchService(repo=_repo, writes=_writes, commit=_commit)
+_solutions = CoreSolutionCatalogGateway()
+_dispatch = GptActionsDispatchService(
+    repo=_repo, writes=_writes, commit=_commit, solutions=_solutions
+)
 
 
 class SuggestBody(BaseModel):
@@ -271,6 +277,7 @@ def search_data_routes(
             query=query,
             limit=limit,
             category=category,
+            authorization=request.headers.get("Authorization"),
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001

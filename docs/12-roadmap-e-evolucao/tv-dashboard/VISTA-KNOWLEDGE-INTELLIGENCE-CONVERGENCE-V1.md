@@ -1744,3 +1744,97 @@ P5 owns design decisions — P6 may later feed `businessDomain`/`businessMeaning
 ### 39.12 READINESS
 
 PHASE 6 = **READY_FOR_EXECUTION** — canonical owner proven, existing equivalent proven, integration pattern proven in-repo (TÉO), security contract explicit, option selected, bounded gap/fit vocabulary defined. Open exec item: decide per-operation `sourceSolution` (api-delpi extension vs domain-level INFERRED lineage) during implementation planning.
+
+---
+
+## 40. PHASE 6 — DATA + SOLUTION INTELLIGENCE EXECUTION RECORD
+
+BASE = 32220b0142 · FINAL = this commit. Diagnostic §39 valid — zero drift
+on Core /solutions contract, TV search envelope, auth propagation,
+api-delpi xDelpi (no `sourceSolution` field appeared; GLPI-1197 routes
+added to baseline but tv_data_routes.json not regenerated — same
+pre-existing catalog-sync drift, foreign scope).
+
+### 40.1 IMPLEMENTATION
+
+- `tv_app/infrastructure/gateways/core_solution_catalog_gateway.py` —
+  Bearer-forwarded GET `/solutions` (user-parity; never service token,
+  never logged/cached), 5s timeout, fail-closed on transport/401/403/5xx/
+  invalid JSON/invalid item shape. Bounded projection: id, name,
+  description, category, accessible — all other Core fields dropped.
+- `tv_app/application/services/solution_intelligence_service.py` —
+  deterministic gap classifier: normalized accent-free token overlap over
+  safe fields (id/name/description/category), deterministic ordering
+  (score desc, id asc), ≤5 candidates, closed vocabulary
+  `GAP_CLASSIFICATIONS`. `route_found()` / `contract_gap()` factories.
+- `GptActionsDispatchService.search_data_routes` — additive
+  `authorization` param; `solutions` gateway injected via constructor
+  (composition root = interface layer; `gpt_actions/` keeps the no-infra
+  boundary). Hit → `solutionIntelligence.gapClassification=TV_ROUTE_FOUND`
+  with ZERO Core calls. Miss → ONE bounded lookup → typed
+  `solutionIntelligence` envelope; Core failure → CONTRACT_GAP while
+  `searchMissDoesNotProveAbsence` stays true.
+- Transports: HTTP route forwards `Authorization` header; MCP tool_bridge
+  forwards `context.authorization`. Same dispatch → transport parity free.
+- `vista_agent_intelligence.json` — `solution_ecosystem` gained
+  authority/lookupTrigger/executionAuthority/gapClassifications +
+  status UNAVAILABLE_IN_CURRENT_SURFACE → **PROVEN** (runtime proof §40.4).
+
+### 40.2 GAP CONTRACT / MATCHING / LINEAGE
+
+Contract: TV_ROUTE_FOUND · SOLUTION_FOUND_NO_TV_ROUTE ·
+SOLUTION_FOUND_ACCESS_RESTRICTED · NO_SOLUTION_EVIDENCE ·
+AMBIGUOUS_SOLUTIONS · CONTRACT_GAP — closed set, implemented once in the
+service. Matching = deterministic token overlap; association =
+INFERRED; registry facts = FACT; accessible = Core-computed, never
+reinterpreted as executability. Candidates carry only
+{id,name,category,accessible,epistemic} — never operationId/URL/routes/
+permissions/internals. ROUTE_SOLUTION_LINK stays PARTIAL:
+sourceSolutionId = UNKNOWN (no canonical join; no manual crosswalk
+created; api-delpi extension left as future owner-bound request).
+
+### 40.3 EVAL — FROZEN CORPUS
+
+`tests/solution_intelligence_corpus.py` (12 cases) frozen before
+implementation; `tests/run_solution_intelligence_eval.py` same corpus
+both modes. Baseline: gap=None, core_calls=0 on every case (no owner
+resolution existed). Candidate: hits 0 calls + TV_ROUTE_FOUND; one-match
+misses → SOLUTION_FOUND_NO_TV_ROUTE; multi → AMBIGUOUS_SOLUTIONS;
+restricted-only → SOLUTION_FOUND_ACCESS_RESTRICTED; healthy-no-match →
+NO_SOLUTION_EVIDENCE; timeout/invalid/no-auth → CONTRACT_GAP; Bearer
+forwarded verbatim on every lookup; zero forbidden candidate fields.
+
+### 40.4 RUNTIME VALIDATION (real dev stack)
+
+- Core `/solutions` with real user JWT → 200 (12 dev solutions).
+- In-container real dispatch + real Bearer: miss "transformometro" →
+  SOLUTION_FOUND_NO_TV_ROUTE [transformometro]; "bpmn" → bpmn-modeler;
+  "indicadores estrategicos" → AMBIGUOUS_SOLUTIONS [strategic-indicators,
+  transformometro]; "chat" → minha-delpi-chat; hit → TV_ROUTE_FOUND,
+  zero Core calls; no Bearer → CONTRACT_GAP(authn). User-parity wire
+  smoke = PASS (dev Keycloak creds recovered since the P4 residual).
+
+### 40.5 TESTS / REGRESSIONS / BUDGET
+
+- New: 21 P6 tests (corpus-driven + projection/boundary/vocabulary).
+- Adjacent + focused suites: 96 green (orchestration, facade incl.
+  application-layer boundary, route discovery, catalog budget).
+- Full suite: 2053 passed, 2 failed — same pre-existing catalog-sync
+  failures (generator check + phase0 baseline; foreign api-delpi drift,
+  owner-side regeneration pending, not P6 scope).
+- Actions budget: envelopeAscii 95,656→95,712B (+56B), headroom 6,688B
+  (≥ 4,096 guard). Actions compaction keeps KO source detail MCP-primary;
+  no solution bodies embedded.
+- New GPT Actions / MCP tools / endpoints / services(except the bounded
+  gateway+classifier inside existing owners): 0.
+
+### 40.6 STATUS
+
+PHASE 6 = **DONE** — DIRECT_CORE_READ landed, user-parity proven at the
+wire, all 48 applicable acceptance criteria pass.
+Residuals: (a) ROUTE_SOLUTION_LINK PARTIAL — `x-delpi.sourceSolution`
+remains a separate api-delpi-owner contract request; (b) the 2
+catalog-sync test failures are foreign scope (api-delpi route generator
+regeneration); (c) P7 telemetry runtime remains deferred.
+NEXT = PHASE 7 Eval + Telemetry V2 execution (diagnostic already DONE
+in §35).

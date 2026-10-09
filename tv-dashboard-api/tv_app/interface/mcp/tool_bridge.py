@@ -31,6 +31,9 @@ from tv_app.application.services.tv_presentation_write_service import (
 from tv_app.infrastructure.persistence.repositories.idempotency_repository import (
     PostgresIdempotencyRepository,
 )
+from tv_app.infrastructure.gateways.core_solution_catalog_gateway import (
+    CoreSolutionCatalogGateway,
+)
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 
 from .oauth_contract import build_www_authenticate_challenge
@@ -40,7 +43,10 @@ logger = logging.getLogger(__name__)
 _repo = PlaylistRepository()
 _writes = TvPresentationWriteService(repo=_repo)
 _commit = TvGptCommitService(writes=_writes, idempotency=PostgresIdempotencyRepository())
-_dispatch = GptActionsDispatchService(repo=_repo, writes=_writes, commit=_commit)
+_solutions = CoreSolutionCatalogGateway()
+_dispatch = GptActionsDispatchService(
+    repo=_repo, writes=_writes, commit=_commit, solutions=_solutions
+)
 
 
 def build_mcp_request() -> tuple[Request, Any, str]:
@@ -274,10 +280,14 @@ def tool_search_data_routes(
     category: str | None = None,
 ) -> CallToolResult:
     try:
-        user, _ = _authed_context()
+        user, auth = _authed_context()
         return _ok_result(
             _dispatch.search_data_routes(
-                user=user, query=query, limit=limit, category=category
+                user=user,
+                query=query,
+                limit=limit,
+                category=category,
+                authorization=auth,
             )
         )
     except Exception as e:
