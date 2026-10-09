@@ -1,4 +1,32 @@
-# 36 — E04/T04 — Package Delivery Capability Decision Packet
+# SUPERSEDED — premissa de delivery externo invalidada
+
+**EXECUTION_DRIFT / SUPERSEDED_BY_PRODUCT_CLARIFICATION**
+
+Decisão/clarificação do Product Owner em 09/10/2026:
+
+- o package **não é entregue por e-mail**;
+- o package permanece na Minha DELPI;
+- revisores externos da Controladoria possuem login/acesso na Minha DELPI;
+- o ato de "Enviar" em P5 significa submeter/disponibilizar a versão finalizada para análise dentro do Portal;
+- Core Notifications notifica os usuários na Minha DELPI e pode também enviar e-mail conforme a capability/preferência da plataforma;
+- e-mail é **notificação com link para a Minha DELPI**, não transport do package.
+
+Consequência:
+
+```text
+EXTERNAL_PACKAGE_DELIVERY_PREMISE = INVALIDATED
+GRAPH_ATTACHMENT_DELIVERY = NOT_A_P5_REQUIREMENT
+MESSAGE_TRACE = NOT_A_P5_COMPLETION_REQUIREMENT
+```
+
+O inventário técnico abaixo permanece válido apenas como evidência das capabilities existentes da plataforma. Ele **não** define o TARGET do P5.
+
+Authority substituta:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
+
+---
+
+# 36 — E04/T04 — Package Delivery Capability Decision Packet — histórico superseded
 
 ## Estado
 
