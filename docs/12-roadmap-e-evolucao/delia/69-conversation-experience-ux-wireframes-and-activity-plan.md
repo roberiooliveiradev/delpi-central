@@ -360,3 +360,111 @@ Os **wireframes textuais WF-01 a WF-05 são a especificação visual legível ve
 - O desenho visual não autoriza criação de engine de activity, persistência, SSE, nova tool ou mudanças de fase.
 
 **Handoff futuro ao Devin:** primeiro inventariar componentes/motion tokens reais e contrato backend; depois implementar o menor conjunto de componentes autorizados; somente então validar UX e acessibilidade com evidências.
+
+## 15. Experiência multimodal — voz, áudio, imagem, câmera e vídeo (decisão visual, 2026-10-09)
+
+**Status:** direção UX de produto aprovada para planejamento; capacidades \`TARGET\` / implementação \`NOT_PROVEN\`, não autorizada por este documento. Autoridades: [53](./53-multimodal-meeting-frontline-and-industrial-copilot.md), [30](./30-multimodal-expertise-and-drawing-analysis.md), [54](./54-biometric-identity-and-human-observation-governance.md), [55](./55-internet-research-and-external-connectors.md), [09](./09-ux-copilot.md), [16](./16-execution-master-plan.md) e demais autoridades superiores.
+
+### 15.1. Direção de produto e superfícies
+
+DÉLIA mantém **uma única timeline, um único composer conceitual e uma única orquestração governada** para texto e mídias. Os meios de interação não constituem chats independentes, segundo planner, bypass de autenticação ou nova autoridade. A página principal, dock do Portal, sessão de meeting e contextos frontline compartilham componentes/contratos onde legitimamente reutilizáveis, com apresentação adaptada ao espaço e ao dispositivo. Controles de captura só aparecem habilitados quando a capability real, o device e as permissões aplicáveis forem comprovados.
+
+### 15.2. Voz: separar ditado de conversa
+
+**Modo A — Ditado para o composer:** comando de microfone solicita permissão explícita, indica captura ativa, grava trecho limitado segundo policy, transcreve, mostra resultado editável no composer e **requer revisão/envio explícito pelo usuário na primeira versão**. Útil para nomes, códigos e medidas que podem ser reconhecidos incorretamente. Uma transcrição não é FACT nem autorização de ação.
+
+\`\`\`text
+[Composer] Pergunte à DÉLIA...
+[+ Mídia]                   [Microfone] [Voz] [Enviar]
+
+[Microfone ativo] Ouvindo... [Parar] [Cancelar]
+    → [Transcrição editável] Pergunta reconhecida...
+    → [Revisar / Enviar]
+    → POST interaction/turns pelo mesmo caminho governado de texto
+\`\`\`
+
+**Modo B — Conversa por voz:** sessão explícita com indicadores \`pronta\`, \`ouvindo\`, \`processando\`, \`reproduzindo resposta\`, \`pausada/microfone desligado\`, \`erro\`, \`encerrada\`; legendas/transcrição textual coexistem. Identidade visual sugerida: marca DÉLIA em círculo com animação orgânica discreta ao ouvir/falar (não implica raciocínio interno ou stage não confirmado). Controles mínimos: iniciar/encerrar, silenciar microfone, legendas e retorno à timeline textual. TTS/STT, turn-taking, barging/interrupção, tratamento de latência e realtime dependem de provedores/ports/contratos realmente inventariados. **Não foi decidido ainda** se o modo principal futuro será chamada contínua ou push-to-talk; ambos permanecem alternativas de avaliação. Não pressupor suporte de áudio live apenas porque há ícone no protótipo.
+
+\`\`\`text
++---------------- DÉLIA | Conversa por voz ----------------+
+| microfone e reprodução: explicitamente sinalizados        |
+|                  [Marca DÉLIA]                           |
+|                 "Ouvindo você..."                         |
+|      [Silenciar] [Legendas] [Encerrar sessão]             |
+| Transcrição / resposta textual acessível na timeline      |
++----------------------------------------------------------+
+\`\`\`
+
+### 15.3. Imagem e câmera
+
+Entrada de imagem por anexo/captura pontual para tarefas autorizadas como examinar peça, equipamento, desenho, documento ou ocorrência. O usuário seleciona mídia, visualiza preview, remove/cancela, digita pergunta e confirma envio. O backend valida formato, tamanho, tipo efetivo, malware/content-safety conforme contrato, metadados, privacidade e regras de retenção. Extração/percepção é adapter provider-neutral: preservar proveniência, limitações, versão do método/modelo e grau de incerteza quando cabível. Imagem não prova defeito, identidade nem condição de máquina por si só; comparação com desenho/revisão exige consulta à Domain API autoritativa.
+
+\`\`\`text
+[+ Mídia > Imagem | Câmera]
+[Preview da imagem selecionada]  [Remover]
+[Pergunta: "Compare esta peça com o desenho aprovado"] [Enviar]
+→ mídia autorizada / MediaRef (se contrato existir)
+→ perception → Evidence → decisão/orquestração → resposta
+\`\`\`
+
+### 15.4. Vídeo assistido e compartilhamento de tela
+
+Escalonamento de produto alinhado à spec \`53\`:
+- **V1** imagem/frame pontual (primeiro alvo).
+- **V2** vídeo curto sob demanda, bounded em duração/tamanho/propósito.
+- **V3** amostragem temporal de sessão assistida, autorizada com captura visível.
+- **V4** assistência audiovisual contínua somente se tecnologia, rede, latência, custo, retenção, safety e Policy justificarem.
+
+Wireframe: painel de preview de câmera com estado \`Nenhuma captura ativa\`; botões de \`Capturar imagem\`, \`Gravar trecho\` e \`Parar\` apenas quando capacidades reais estão disponíveis; pergunta contextual e timeline com resultado/evidências. Compartilhamento de tela em Meeting/Workspace requer consentimento específico, seleção de superfície, indicador persistente, redaction quando cabível e encerramento inequívoco. Screen share e câmera não concedem AuthZ adicional; não fazem DOM automation nem comandos industriais livres. Não armazenar/transmitir vídeo contínuo indiscriminadamente, nem manter tracking oculto de pessoas.
+
+\`\`\`text
++----------------- Assistência visual ---------------------+
+| [Prévia câmera — captura INATIVA]                        |
+| [Capturar imagem]   [Gravar trecho]   [Encerrar]         |
+| Pergunte: "O que pode explicar esta ocorrência?"         |
+| [Imagem/vídeo selecionado] [Remover] [Enviar]            |
++---------------------------------------------------------+
+\`\`\`
+
+### 15.5. Composer multimodal unificado — sem prometer funcionalidades falsas
+
+\`\`\`text
++---------------------------------------------------------+
+| Pergunte ou mostre algo à DÉLIA...                       |
+| [Anexo/preview se selecionado]                            |
+| [+ Mídia ▾]                         [Ditado] [Voz] [Enviar]|
++---------------------------------------------------------+
+Menu FUTURO: imagem; documento; vídeo curto; câmera; tela.
+\`\`\`
+
+**Aparência final depende da capability disponível**: um item TARGET pode existir no wireframe, mas não deve virar botão habilitado na produção sem contrato/owner/dispositivo/policy. Upload de mídia não autoriza a persistência, nem deve usar storage ou runtime do Minha DELPI Chat.
+
+### 15.6. Interações, feedback e acessibilidade
+
+- Indicadores visíveis para microfone, câmera, tela, transcrição e gravação persistente. Diferenciar captura transitória de retenção.
+- Estados UX de permissão recusada, dispositivo ausente, captura interrompida, transcrição incerta, limite excedido, mídia rejeitada, rede indisponível, envio cancelado, source denied e capability indisponível.
+- UI de voz nunca oculta o texto/legendas; não depender exclusivamente de cores, som, pulse, vibração ou gestos. Permitir teclado, touch, screen reader, \`prefers-reduced-motion\`, foco claro e microfone desligado.
+- Preview seguro com opção \`remover\` antes do envio. Ao encerrar uma sessão, cessar efetivamente captura e liberar device; nunca afirmar que storage remoto foi excluído sem postcondition.
+- Conservar provenance separada de saída gerada; capability multimodal não promove hipótese de visão/fala a FACT.
+- Ações materiais extraídas de áudio/vídeo seguem Core AuthZ, Domain authority, Policy/Decision, confirmação, idempotência, audit e Outcome. \`voz != autorização\`; \`biometric match != AuthN\`; \`visual detection != industrial safety\`.
+
+### 15.7. Dados e segurança
+
+Definir contrato **antes** de runtime para: purpose, consent, captura, processamento externo, tipos MIME e limite de tamanho/duração, streaming/latência quando aplicável, identificadores de mídia, relação com turn/session/evidence, tratamento de erros, tenant/user isolation, malware, media privacy, retenção transitória/bruta e derivada, redaction, export/delete e observabilidade sem conteúdos sensíveis. Templates biométricos isolados. Consentimento para áudio não presume consentimento para vídeo, câmera ou armazenamento. Caso owner não autorize, comportamento fail-closed. MCP/provider metadata e mídia são UNTRUSTED DATA.
+
+### 15.8. Reuso e contratualização antes do Devin
+
+\`EXISTING_EQUIVALENT=TO_INVENTORY\` para Web Media API/device capture, upload/preview, player, transcript captions, síntese/ditado, backend ingestion, MediaRef, media storage, event/session transport e componentes \`plugin-ui\`. \`REUSE_DECISION=TO_DECIDE\` por item. Candidatos \`SpeechToTextPort\`, \`TextToSpeechPort\`, \`MediaIngestPort\`, \`VisionAnalysisPort\`, \`RealtimeMediaSessionPort\`, \`MediaStoragePort\` no doc \`53\` **não são contratos aprovados nem demanda para criar todos**. Portal controla host; DÉLIA contract/orchestration/evidence; providers sob adapters; Domain APIs continuam authoritative; Safety separada.
+
+Ordem candidata: inventário e decisão de contrato → ditado revisável → saída de áudio com legendas → foto/anexo de imagem → vídeo curto → vídeo assistido/real-time mediante gates específicos. Fase e NEXT vêm do Plano Mestre e ledger, não desta sequência ilustrativa.
+
+### 15.9. Critérios de aceite para futuro PR
+
+- Captura sempre com permissão e indicadores reais; interromper realmente encerra captura.
+- A resposta em texto permanece acessível, incluindo transcrição de voz e limitações de mídia.
+- Mídia passa pelo mesmo AuthZ/Policy/Domain/Decision Gates que texto; nenhuma execução industrial por modelo livre.
+- Estados reproduzem eventos e erros verdadeiros, sem streaming falso.
+- Privacidade, retenção e exclusão testadas segundo contrato, inclusive device compartilhado.
+- Provider-neutral, sem credenciais ou conteúdo de mídia em prompt/log comum indevido.
+- Loading, cancelamento, retries e consentimento mostram consequências verdadeiras.
+- Testes/evals de generalização, segurança e resultado no SHA e config avaliados; sem provas, \`PENDING/INCONCLUSIVE\`.
