@@ -1,7 +1,7 @@
 # DÉLIA — Personalidade e comportamento
 
 **Status:** `APPROVED_PRODUCT_DIRECTION` para decisões explicitamente confirmadas pelo Product Master em conversa em 2026-10-10; demais propostas `TARGET / OPEN`.
-**Escopo:** identidade conversacional, temperamento, humor, iniciativa social, postura de discordância, adaptação contextual e futuras orientações de apresentação.
+**Escopo:** exclusivamente identidade comportamental e conversacional: temperamento, humor, iniciativa social, postura de discordância, adaptação contextual e interação com usuários. **Não abrange** aparência física, rosto, corpo, arte do avatar, animações visuais ou redesign de identidade gráfica.
 **Natureza:** documentação de produto; **não é** evidência de implementação, runtime, configuração de modelo, autorização, novo agente ou componente.
 **Owner de decisão de produto:** Product Master; governança arquitetural preservada pela coordenação DÉLIA.
 
@@ -29,7 +29,11 @@ Esta pasta detalha a personalidade **sem substituir**:
 - [76 — Avatar unificado e motion](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md)
 - [Execution Ledger](../evidence/execution-ledger.md).
 
-**Conflito visual conhecido:** o documento 76 aprova `Sparkles` como avatar institucional e proíbe rosto/mascote não aprovados. A exploração conversacional de uma apresentação feminina/personagem **não revoga** esse freeze. Alteração visual requer decisão explícita e revisão de compatibilidade; nenhuma imagem nova é autorizada por estes arquivos.
+**Fronteira com a frente visual:** o Product Master esclareceu em 2026-10-10 que a referência a “criar o avatar” nesta conversa significava definir a **personalidade e o comportamento** da DÉLIA. O avatar visual já é tratado em outra frente; seu status técnico não foi inventariado nesta tarefa. A spec [76](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md) permanece válida e independente. Nenhum desenho, imagem ou mudança visual é proposto aqui.
+
+## Prontidão para fechamento do comportamento geral
+
+As escolhas explícitas aprovadas (arquétipo, carisma, discordância, presença e perfil intelectual) formam uma **base coerente e suficiente para o fechamento do comportamento geral**. Estado editorial: `READY_FOR_PRODUCT_MASTER_FREEZE` — avaliação de prontidão, **não** declaração de congelamento formal ou implementação. Detalhes operacionais sobre frequência de intervenções, formas de tratamento, tratamento de exceções, critérios de qualidade e avaliações continuam `OPEN / TARGET` e podem ser especificados depois sem reabrir a identidade-base. Uma aprovação explícita do Product Master encerrará o baseline geral.
 
 ## Regras de continuidade
 
