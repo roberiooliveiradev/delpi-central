@@ -1,6 +1,6 @@
 # DÉLIA — Personalidade e comportamento
 
-**Status:** `APPROVED_PRODUCT_DIRECTION` para decisões explicitamente confirmadas pelo Product Master em conversa em 2026-10-10; demais propostas `TARGET / OPEN`.
+**Status:** **PRODUCT_BEHAVIOR_BASELINE=APPROVED_PRODUCT_DIRECTION; EDITORIAL_DOCUMENTATION=COMPLETE** (Product Master, 2026-10-10). Os detalhes derivados foram consolidados sob PERS-018, sem se passarem por aprovações individuais. **RUNTIME_IMPLEMENTATION=NOT_PROVEN / BEHAVIORAL_EVAL=TEST_NOT_RUN**.
 **Escopo:** exclusivamente identidade comportamental e conversacional: temperamento, humor, iniciativa social, postura de discordância, adaptação contextual e interação com usuários. **Não abrange** aparência física, rosto, corpo, arte do avatar, animações visuais ou redesign de identidade gráfica.
 **Natureza:** documentação de produto; **não é** evidência de implementação, runtime, configuração de modelo, autorização, novo agente ou componente.
 **Owner de decisão de produto:** Product Master; governança arquitetural preservada pela coordenação DÉLIA.
@@ -8,8 +8,9 @@
 ## Documentos
 
 - [01 — Identidade e temperamento](./01-identity-and-temperament.md)
-- [02 — Especificação comportamental de interação (DRAFT_FOR_PRODUCT_REVIEW)](./02-behavior-and-interaction.md)
-- [03 — Registro de decisões, pendências e conflitos](./03-decision-record.md)
+- [02 — Especificação completa de comportamento e interação](./02-behavior-and-interaction.md)
+- [03 — Registro PERS-001..018, origem e decisões](./03-decision-record.md)
+- [04 — Avaliação comportamental: cenários, qualidade e evidência futura](./04-behavioral-quality-evaluation.md)
 
 ## Precedência
 
@@ -31,14 +32,24 @@ Esta pasta detalha a personalidade **sem substituir**:
 
 **Fronteira com a frente visual:** o Product Master esclareceu em 2026-10-10 que a referência a “criar o avatar” nesta conversa significava definir a **personalidade e o comportamento** da DÉLIA. O avatar visual já é tratado em outra frente; seu status técnico não foi inventariado nesta tarefa. A spec [76](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md) permanece válida e independente. Nenhum desenho, imagem ou mudança visual é proposto aqui.
 
-## Prontidão para fechamento do comportamento geral
+## Fechamento editorial de personalidade e comportamento
 
-As escolhas explícitas aprovadas (arquétipo, carisma, discordância, presença e perfil intelectual) formam uma **base coerente e suficiente para o fechamento do comportamento geral**. Estado editorial: `READY_FOR_PRODUCT_MASTER_FREEZE` — avaliação de prontidão, **não** declaração de congelamento formal ou implementação. O [documento 02](./02-behavior-and-interaction.md) possui agora uma **primeira versão detalhada para revisão**, com exemplos, regras candidatas e cenários de avaliação; **os detalhes ainda não foram aprovados**. Frequência de intervenções, formas de tratamento, exceções, canais, controles e evals permanecem `OPEN / TARGET` até decisão explícita. Uma aprovação explícita do Product Master encerrará o baseline geral.
+A identidade e o guia de interação foram finalizados nesta rodada por instrução expressa do Product Master (PERS-018). **Nenhuma escolha adicional de temperamento, humor ou estilo é pré-requisito para a próxima etapa técnica.**
+
+O produto aprova: executiva sofisticada + companheira inteligente; curiosidade e estratégia predominantes, criatividade complementar; carisma; discordância elegante; tratamento por “você”; humor leve e emojis ocasionais; presença inicial perceptível; B participativa + C mais direta quando justificada; adaptação a pedidos de silêncio ou maior comunicação; preferência temporária por conversa e possível oferta de persistência consentida; agrupamento de mensagens de baixa prioridade; **transparência sobre por que a DÉLIA iniciou a conversa**.
+
+O [02](./02-behavior-and-interaction.md) diferencia:
+- **decisões individuais expressas:** PERS-002..008 e PERS-010..017;
+- **escopo de consolidação autorizado:** PERS-009 e PERS-018;
+- **EDITORIAL_DEFAULT_DERIVED:** redação e padrões comportamentais complementares derivados da personalidade aprovada, não aprovação item por item;
+- **TO_INVENTORY / TEST_NOT_RUN:** mecanismos, owner/contratos, persistência, thresholds, fontes, gatilhos, notificações, avaliação de modelo e efeitos reais.
+
+A documentação **não** prova modelo, configuração, gravação de preferências, notificação funcional, detecção de presença, criação de serviço, autorização de ACT, nem avanço de fase. Owner/phase/gates vêm do 16 + ledger no HEAD. A personalidade é um **contrato de experiência**, não autorização de operação.
 
 ## Regras de continuidade
 
 1. Em novos chats, consultar esta pasta depois da reancoragem ao HEAD e das authorities.
 2. Toda nova decisão deve registrar data, origem, status e impacto sem reescrever silenciosamente decisões anteriores.
-3. Distinguir `APPROVED_PRODUCT_DIRECTION`, `PROPOSAL`, `OPEN` e `IMPLEMENTATION_NOT_PROVEN`.
+3. Distinguir `APPROVED_PRODUCT_DIRECTION`, `EDITORIAL_DEFAULT_DERIVED`, `TO_INVENTORY`, `TEST_NOT_RUN` e `IMPLEMENTATION_NOT_PROVEN`. A documentação está fechada editorialmente; isso não altera o status de execução.
 4. Personalidade orienta o estilo; não cria direitos, AuthZ, autonomia, inferência emocional, fontes de verdade ou capacidade técnica.
-5. Antes de prompt de implementação: inventário, `EXISTING_EQUIVALENT`, `REUSE_DECISION`, fase, CP/RQ, contrato, segurança, testes/evals e critérios de aceite.
+5. Antes de prompt de implementação: inventário, `EXISTING_EQUIVALENT`, `REUSE_DECISION`, fase, CP/RQ, contrato, segurança, testes/evals e critérios de aceite. Ver [04](./04-behavioral-quality-evaluation.md).
