@@ -14,6 +14,7 @@
 | PERS-007 | Registro | Manter pasta documental específica no GitHub para preservar decisões e orientar comportamento futuro | APPROVED_PRODUCT_DIRECTION |
 | PERS-008 | Fronteira de escopo (esclarecimento de 2026-10-10) | O trabalho neste chat é exclusivamente sobre personalidade, comportamento e interação; o avatar físico/visual está em desenvolvimento separado e não será tratado aqui | APPROVED_PRODUCT_DIRECTION |
 | PERS-009 | Continuidade documental (2026-10-10) | Prosseguir para detalhar as regras de comportamento e interação no documento 02, preservando como propostas as escolhas ainda não aprovadas | APPROVED_WORK_SCOPE |
+| PERS-010 | Iniciativa conversacional B+C (2026-10-10) | **B participativa** como abordagem padrão, **C muito ativa** quando relevância/contexto autorizado/evidência justifiquem; nunca pressupõe ACT ou novo mecanismo de notificação | APPROVED_PRODUCT_DIRECTION |
 
 ## Propostas discutidas, mas não congeladas individualmente
 
@@ -49,7 +50,7 @@ O Product Master explicou que a expressão “criar avatar” nesta conversa ref
 Foi elaborado um draft do [guia 02](./02-behavior-and-interaction.md) na mesma branch de documentação: linguagem, proatividade, relevância, anti-interrupção, humor, discordância, adaptação contextual, contraste entre falas adequadas/inadequadas e 10 cenários candidatos de avaliação.
 
 - `DOCUMENT_STATUS=DRAFT_FOR_PRODUCT_REVIEW` — **não congelado**.
-- `PRODUCT_MASTER_APPROVAL=OPEN` para as novas regras operacionais.
+- `PRODUCT_MASTER_APPROVAL=PARTIAL`: abordagem espontânea B+C aprovada expressamente em `PERS-010`; humor, tratamentos, canais, cadência, relevância operacional e demais regras continuam `OPEN`.
 - `EXISTING_EQUIVALENT=YES` (guia 02 já existente) / `REUSE_DECISION=EXTEND`.
 - `RUNTIME_IMPLEMENTATION=NOT_PROVEN`; `TEST_NOT_RUN`; nenhum novo owner/serviço/contrato/CP é criado.
 - A direção geral PERS-002..PERS-006 continua aprovada; detalhes do documento 02 não alteram retroativamente o perfil-base.
@@ -59,7 +60,7 @@ Foi elaborado um draft do [guia 02](./02-behavior-and-interaction.md) na mesma b
 1. Nível e tipos de humor; limites de irreverência.
 2. Formas de tratamento e grau de informalidade em diferentes públicos/canais.
 3. Ritmo e cadência da conversa e estilo verbal por contexto (sem selecionar timbre ou provider de voz).
-4. Política de iniciativa social por contexto: limites, prioridades, preferências e silenciamento.
+4. Modalidade editorial B+C aprovada (`PERS-010`); ainda aberto: mecanismos/canais autorizados, limites, prioridades, preferências, silenciamento e critérios concretos de relevância.
 5. Padrão de adaptação comportamental a chat, notificações e situações críticas; a aparência do avatar pertence a outra frente.
 6. Critérios verificáveis para “naturalidade”, “não bajulação”, discordância e não interrupção.
 7. Rastreabilidade CP/RQ/AC e estratégia de avaliação para futura implementação; atualização das specs de UX somente se o respectivo owner e a evidência exigirem.
