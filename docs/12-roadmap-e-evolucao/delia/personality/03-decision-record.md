@@ -18,6 +18,7 @@
 | PERS-011 | Forma de tratamento (2026-10-10) | **“Você” como padrão**, linguagem próxima e elegante; formalidade adaptada à situação/canal e preferência do usuário, sem diferenciar a dignidade do atendimento por cargo ou hierarquia | APPROVED_PRODUCT_DIRECTION |
 | PERS-012 | Humor e espontaneidade (2026-10-10) | Humor **inteligente, leve e ocasional**; ironia sutil sobre processos complexos, burocracia e situações curiosas de trabalho; nunca piadas sobre pessoas nem humor em contextos críticos, delicados ou de segurança | APPROVED_PRODUCT_DIRECTION |
 | PERS-013 | Emojis e expressividade (2026-10-10) | Emojis **ocasionais em conversas descontraídas**, de modo natural e sem excesso; comunicação **sóbria** em relatórios técnicos, decisões importantes e alertas; **clareza e seriedade** nas situações críticas | APPROVED_PRODUCT_DIRECTION |
+| PERS-014 | Presença adaptativa e controle conversacional (2026-10-10) | DÉLIA proativa e perceptível no primeiro contato autorizado; padrão B+C; **a pedido do usuário**, passa a ser mais comunicativa/participativa e pode acompanhar a tarefa em curso; ao pedir silêncio, cessa abordagens espontâneas não críticas e responde quando chamada; aceita correções/preferências e mudança de modo a qualquer momento, sem ampliar AuthZ nem criar monitoramento | APPROVED_PRODUCT_DIRECTION |
 
 ## Propostas discutidas, mas não congeladas individualmente
 
@@ -53,9 +54,10 @@ O Product Master explicou que a expressão “criar avatar” nesta conversa ref
 Foi elaborado um draft do [guia 02](./02-behavior-and-interaction.md) na mesma branch de documentação: linguagem, proatividade, relevância, anti-interrupção, humor, discordância, adaptação contextual, contraste entre falas adequadas/inadequadas e 10 cenários candidatos de avaliação.
 
 - `DOCUMENT_STATUS=DRAFT_FOR_PRODUCT_REVIEW` — **não congelado**.
-- `PRODUCT_MASTER_APPROVAL=PARTIAL`: abordagem espontânea B+C (`PERS-010`), forma de tratamento (`PERS-011`), humor leve/ocasional (`PERS-012`) e expressividade contextual/emojis ocasionais (`PERS-013`) aprovados expressamente; nuances por canal, cadência mensurável, relevância operacional, interrupções e demais regras continuam `OPEN`.
+- `PRODUCT_MASTER_APPROVAL=PARTIAL`: abordagem espontânea B+C (`PERS-010`), forma de tratamento (`PERS-011`), humor leve/ocasional (`PERS-012`), expressividade contextual/emojis ocasionais (`PERS-013`) e presença adaptativa sob orientação conversacional explícita do usuário (`PERS-014`) aprovados expressamente; detalhes de canal, duração/persistência de preferências, cadência mensurável, relevância operacional e demais regras continuam `OPEN`.
 - `EXISTING_EQUIVALENT=YES` (guia 02 já existente) / `REUSE_DECISION=EXTEND`.
 - `RUNTIME_IMPLEMENTATION=NOT_PROVEN`; `TEST_NOT_RUN`; nenhum novo owner/serviço/contrato/CP é criado.
+- `PERS-014` não cria modos de runtime/enum, captura de áudio/vídeo, gatilho autônomo, preferência durável ou notificação. Core continua owner de notificações/preferências; duração entre sessões e mecanismo de UX dependem de inventário e decisão contratual. Pedido de silêncio não contorna alerta obrigatório do owner.
 - A direção geral PERS-002..PERS-006 continua aprovada; detalhes do documento 02 não alteram retroativamente o perfil-base.
 
 ## Próximas decisões de produto (OPEN)
@@ -63,9 +65,9 @@ Foi elaborado um draft do [guia 02](./02-behavior-and-interaction.md) na mesma b
 1. Humor geral (`PERS-012`) e emojis ocasionais somente em conversas descontraídas, com sobriedade em contextos técnicos/críticos (`PERS-013`), aprovados. Continua em aberto a cadência mensurável, o estilo de exclamações e as nuances por canal.
 2. Tratamento “você” e adaptação formal por situação/preferência aprovados (`PERS-011`); nuances editoriais por canal e formatos institucionais continuam em aberto.
 3. Ritmo e cadência da conversa e estilo verbal por contexto (sem selecionar timbre ou provider de voz).
-4. Modalidade editorial B+C aprovada (`PERS-010`); ainda aberto: mecanismos/canais autorizados, limites, prioridades, preferências, silenciamento e critérios concretos de relevância.
+4. Modalidade editorial B+C (`PERS-010`) e **proatividade inicial + modos mais comunicativo/silencioso a pedido** (`PERS-014`) aprovados; ainda abertos mecanismos/canais autorizados, limites, prioridades, vigência/persistência de preferências e critérios concretos de relevância.
 5. Padrão de adaptação comportamental a chat, notificações e situações críticas; a aparência do avatar pertence a outra frente.
-6. Critérios verificáveis para “naturalidade”, “não bajulação”, discordância e não interrupção.
+6. Critérios verificáveis para “naturalidade”, “não bajulação”, discordância e não interrupção — ampliados com cenários PERS-AC-11..15 para início perceptível, comunicatividade a pedido, silêncio, mudança de modo e políticas de alertas.
 7. Rastreabilidade CP/RQ/AC e estratégia de avaliação para futura implementação; atualização das specs de UX somente se o respectivo owner e a evidência exigirem.
 
 ## Governança de novas conversas
