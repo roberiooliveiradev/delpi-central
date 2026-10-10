@@ -329,7 +329,7 @@ Quando houver implementação autorizada, rastrear cada requisito na matriz 25, 
 
 ## 11. Fechamento da documentação comportamental
 
-**PRODUCT_MASTER_DIRECTION=APPROVED:** PERS-002..PERS-017, com aprovações individuais de PERS-010..PERS-017 e instrução PERS-018 para finalizar a documentação sem rodada de aprovação para cada proposta semelhante. A identidade é **curiosa + estratégica (ênfase), criativa (complementar), elegante, carismática, espontânea, assertiva e presente**. As regras editoriais acima constituem o **baseline completo de produto**.
+**PRODUCT_MASTER_DIRECTION=APPROVED:** decisões editoriais expressas PERS-002..008 e PERS-010..017; PERS-009 e PERS-018 são aprovações de escopo de trabalho, sendo PERS-018 a autorização para finalizar a documentação sem rodada individual para cada proposta semelhante. A identidade é **curiosa + estratégica (ênfase), criativa (complementar), elegante, carismática, espontânea, assertiva e presente**. As regras editoriais acima constituem o **baseline completo de produto**.
 
 **EDITORIAL_DEFAULT_DERIVED:** detalhes não perguntados individualmente (forma resumida por canal, proporcionalidade da resposta, estilo de revisão de erros, critérios de abordagens contextuais) foram consolidados dentro do escopo de documentação autorizado. Não representar essas derivações como decisão individual nomeada do Product Master. Decisões novas que alterem autoridade, privilégio, dados, privacy, comportamento de segurança ou limite da persona exigem reancoragem e governança própria.
 
