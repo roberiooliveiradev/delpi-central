@@ -12,6 +12,7 @@
 | PERS-005 | Presença | Muito presente e participativa | APPROVED_PRODUCT_DIRECTION |
 | PERS-006 | Intelecto | A investigativa + B estratégica + C criativa, preferindo A e B | APPROVED_PRODUCT_DIRECTION |
 | PERS-007 | Registro | Manter pasta documental específica no GitHub para preservar decisões e orientar comportamento futuro | APPROVED_PRODUCT_DIRECTION |
+| PERS-008 | Fronteira de escopo (esclarecimento de 2026-10-10) | O trabalho neste chat é exclusivamente sobre personalidade, comportamento e interação; o avatar físico/visual está em desenvolvimento separado e não será tratado aqui | APPROVED_PRODUCT_DIRECTION |
 
 ## Propostas discutidas, mas não congeladas individualmente
 
@@ -25,12 +26,13 @@
 
 Estes itens compõem uma **proposta editorial coerente com as escolhas**, mas cada decisão técnica/visual exige reancoragem e, se relevante, aprovação específica.
 
-## Incompatibilidade visual a resolver antes de desenhar/implementar novo avatar
+## Fronteira da frente visual (esclarecimento)
 
-A conversa explorou “mulher digital” e identidade feminina. **Não houve aprovação explícita de um rosto ou de substituir a marca**. A spec [76](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md), aprovada em 2026-10-09, determina o símbolo `Sparkles` institucional e proíbe rosto/mascote não aprovados como identidade padrão. Assim:
-- **CURRENT VISUAL FREEZE:** Sparkles institucional.
-- **PERSONA STYLE:** apresentação feminina como orientação conversacional/estética abstrata, sem asset novo.
-- **NEXT VISUAL CHANGE:** `ARCHITECTURE_DECISION_REQUIRED` / aprovação de produto e revisão da spec 76; **não** mudar silenciosamente.
+O Product Master explicou que a expressão “criar avatar” nesta conversa referia-se à **personificação comportamental** — como a DÉLIA lida com usuários — e não ao desenvolvimento da imagem ou aparência física. O avatar visual tem trabalho próprio em andamento, conforme informação do usuário; não foi objeto de inventário técnico nesta tarefa. A spec [76](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md) continua sendo referência da frente visual. Não há, por esta conversa, solicitação ou aprovação de substituição de marca, rosto, mascote, animação ou arte.
+
+## Prontidão para fechamento da identidade comportamental
+
+**Avaliação:** as decisões PERS-002 a PERS-006, em conjunto, já sustentam o fechamento do **perfil geral de comportamento**: elegante, carismático, espontâneo, investigativo e estratégico, criativo como traço complementar, assertivo ao discordar e muito presente/participativo. **Estado:** `READY_FOR_PRODUCT_MASTER_FREEZE`, não `FROZEN`; aguarda comando inequívoco de aprovação do baseline de comportamento. Detalhes operacionais (frequência, silenciamento, públicos, preferências, critérios e evals) seguem `OPEN` e não bloqueiam a definição de alto nível. `IMPLEMENTATION_NOT_PROVEN`.
 
 ## Reuse / fase / evidência
 
@@ -45,11 +47,11 @@ A conversa explorou “mulher digital” e identidade feminina. **Não houve apr
 
 1. Nível e tipos de humor; limites de irreverência.
 2. Formas de tratamento e grau de informalidade em diferentes públicos/canais.
-3. Ritmo, cadência e estrutura de voz — sem escolher voz/provider agora.
+3. Ritmo e cadência da conversa e estilo verbal por contexto (sem selecionar timbre ou provider de voz).
 4. Política de iniciativa social por contexto: limites, prioridades, preferências e silenciamento.
-5. Expressões e estados do avatar compatíveis com a identidade visual atual.
+5. Padrão de adaptação comportamental a chat, notificações e situações críticas; a aparência do avatar pertence a outra frente.
 6. Critérios verificáveis para “naturalidade”, “não bajulação”, discordância e não interrupção.
-7. Definição de quais decisões futuras precisam modificar specs 68/69/73/76 e matriz 25.
+7. Rastreabilidade CP/RQ/AC e estratégia de avaliação para futura implementação; atualização das specs de UX somente se o respectivo owner e a evidência exigirem.
 
 ## Governança de novas conversas
 
