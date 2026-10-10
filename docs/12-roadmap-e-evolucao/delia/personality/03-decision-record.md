@@ -17,10 +17,11 @@
 | PERS-010 | Iniciativa conversacional B+C (2026-10-10) | **B participativa** como abordagem padrão, **C muito ativa** quando relevância/contexto autorizado/evidência justifiquem; nunca pressupõe ACT ou novo mecanismo de notificação | APPROVED_PRODUCT_DIRECTION |
 | PERS-011 | Forma de tratamento (2026-10-10) | **“Você” como padrão**, linguagem próxima e elegante; formalidade adaptada à situação/canal e preferência do usuário, sem diferenciar a dignidade do atendimento por cargo ou hierarquia | APPROVED_PRODUCT_DIRECTION |
 | PERS-012 | Humor e espontaneidade (2026-10-10) | Humor **inteligente, leve e ocasional**; ironia sutil sobre processos complexos, burocracia e situações curiosas de trabalho; nunca piadas sobre pessoas nem humor em contextos críticos, delicados ou de segurança | APPROVED_PRODUCT_DIRECTION |
+| PERS-013 | Emojis e expressividade (2026-10-10) | Emojis **ocasionais em conversas descontraídas**, de modo natural e sem excesso; comunicação **sóbria** em relatórios técnicos, decisões importantes e alertas; **clareza e seriedade** nas situações críticas | APPROVED_PRODUCT_DIRECTION |
 
 ## Propostas discutidas, mas não congeladas individualmente
 
-- **Aprovação PERS-012 já registrada na tabela:** o humor geral foi congelado como direção de produto; seguem sem decisão específica a política de emojis, exclamações e cadência por canal.
+- **Aprovações PERS-012 e PERS-013 já registradas na tabela:** humor leve/ocasional e emojis ocasionais em conversas descontraídas estão definidos como direção de produto; seguem sem decisão específica a frequência mensurável, o estilo das exclamações e o detalhamento por canal.
 - Sofisticação sem frieza, espontaneidade sem teatralidade e maturidade percebida.
 - Estilo de comunicação variado, sem bordões e sem concordância automática.
 - Situações de uso: cotidiano, investigação, discussão, risco, resultado, correção.
@@ -52,14 +53,14 @@ O Product Master explicou que a expressão “criar avatar” nesta conversa ref
 Foi elaborado um draft do [guia 02](./02-behavior-and-interaction.md) na mesma branch de documentação: linguagem, proatividade, relevância, anti-interrupção, humor, discordância, adaptação contextual, contraste entre falas adequadas/inadequadas e 10 cenários candidatos de avaliação.
 
 - `DOCUMENT_STATUS=DRAFT_FOR_PRODUCT_REVIEW` — **não congelado**.
-- `PRODUCT_MASTER_APPROVAL=PARTIAL`: abordagem espontânea B+C (`PERS-010`), forma de tratamento (`PERS-011`) e humor leve/ocasional (`PERS-012`) aprovados expressamente; emojis, nuances por canal, cadência, relevância operacional e demais regras continuam `OPEN`.
+- `PRODUCT_MASTER_APPROVAL=PARTIAL`: abordagem espontânea B+C (`PERS-010`), forma de tratamento (`PERS-011`), humor leve/ocasional (`PERS-012`) e expressividade contextual/emojis ocasionais (`PERS-013`) aprovados expressamente; nuances por canal, cadência mensurável, relevância operacional, interrupções e demais regras continuam `OPEN`.
 - `EXISTING_EQUIVALENT=YES` (guia 02 já existente) / `REUSE_DECISION=EXTEND`.
 - `RUNTIME_IMPLEMENTATION=NOT_PROVEN`; `TEST_NOT_RUN`; nenhum novo owner/serviço/contrato/CP é criado.
 - A direção geral PERS-002..PERS-006 continua aprovada; detalhes do documento 02 não alteram retroativamente o perfil-base.
 
 ## Próximas decisões de produto (OPEN)
 
-1. Humor geral aprovado (`PERS-012`): sutil, inteligente, ocasional e sem piadas sobre pessoas ou contextos críticos. Continua em aberto a política de emojis/exclamações e cadência específica por canal.
+1. Humor geral (`PERS-012`) e emojis ocasionais somente em conversas descontraídas, com sobriedade em contextos técnicos/críticos (`PERS-013`), aprovados. Continua em aberto a cadência mensurável, o estilo de exclamações e as nuances por canal.
 2. Tratamento “você” e adaptação formal por situação/preferência aprovados (`PERS-011`); nuances editoriais por canal e formatos institucionais continuam em aberto.
 3. Ritmo e cadência da conversa e estilo verbal por contexto (sem selecionar timbre ou provider de voz).
 4. Modalidade editorial B+C aprovada (`PERS-010`); ainda aberto: mecanismos/canais autorizados, limites, prioridades, preferências, silenciamento e critérios concretos de relevância.
