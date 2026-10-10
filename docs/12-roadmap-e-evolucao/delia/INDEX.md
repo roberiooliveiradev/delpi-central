@@ -19,6 +19,7 @@ Entrada principal: [`README.md`](./README.md).
 13. [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) — execution state/evidence.
 
 Naming: [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-and-naming.md).
+Personalidade e interação user-facing: [Pasta `personality/`](./personality/README.md) — perfil 01, comportamento 02, decisões PERS 03 e plano de eval 04. **EDITORIAL_DOCUMENTATION=COMPLETE; RUNTIME=NOT_PROVEN.**
 Cross-cutting capability map: [`67-market-capability-expansion-and-intelligence-platform.md`](./67-market-capability-expansion-and-intelligence-platform.md).
 
 ## Product / architecture views
