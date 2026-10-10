@@ -229,6 +229,8 @@ Cross-cutting views:
 68 DÉLIA Product Identity / Naming Authority
 ```
 
+**Personalidade e comportamento (documentação de produto):** [Pasta `personality/` — identidade, interação, histórico de decisões e avaliação](./personality/README.md). **Status:** baseline editorial concluído/aprovado como direção de produto; runtime e testes não demonstrados. A pasta não altera a autoridade de naming da 68, a UX da 69/73/76 ou a ordem do 16.
+
 ## 13. Current execution state
 
 ```text
