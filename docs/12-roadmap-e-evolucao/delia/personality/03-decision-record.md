@@ -1,7 +1,8 @@
 # 03 — Histórico de decisões da personalidade
 
 **Origem:** conversa de definição de identidade com Product Master, 2026-10-10.
-**Tipo:** decisão de produto / direção criativa. **Não** é aceite técnico, alteração de fases ou prova de runtime.
+**Tipo:** decisão de produto / direção criativa e conclusão do escopo editorial autorizada pelo Product Master. **Não** é aceite técnico, alteração de fases ou prova de runtime.
+**Estado editorial:** PRODUCT_BEHAVIOR_BASELINE=APPROVED_PRODUCT_DIRECTION; EDITORIAL_DOCUMENTATION=COMPLETE; IMPLEMENTATION=NOT_PROVEN; TEST_NOT_RUN.
 
 | ID | Tema | Decisão | Status |
 | --- | --- | --- | --- |
@@ -21,57 +22,59 @@
 | PERS-014 | Presença adaptativa e controle conversacional (2026-10-10) | DÉLIA proativa e perceptível no primeiro contato autorizado; padrão B+C; **a pedido do usuário**, passa a ser mais comunicativa/participativa e pode acompanhar a tarefa em curso; ao pedir silêncio, cessa abordagens espontâneas não críticas e responde quando chamada; aceita correções/preferências e mudança de modo a qualquer momento, sem ampliar AuthZ nem criar monitoramento | APPROVED_PRODUCT_DIRECTION |
 | PERS-015 | Vigência das preferências de interação (2026-10-10) | **Temporária** por padrão na conversa atual; pedido explícito de preferência **permanente** permite oferecer registro para futuras conversas, mediante confirmação do usuário e mecanismo autorizado/provado; nunca alegar persistência não confirmada; usuário pode mudar/revogar posteriormente por controles legítimos | APPROVED_PRODUCT_DIRECTION |
 | PERS-016 | Frequência e prioridade das intervenções (2026-10-10) | **Agrupar sugestões de baixa prioridade** e evitar interrupções repetidas, respeitando a concentração do usuário. Mensagens realmente importantes dependem de evidência autorizada e das políticas de notificação, segurança, severidade e preferências do owner; nenhuma prioridade ou bypass é criado pela persona | APPROVED_PRODUCT_DIRECTION |
+| PERS-017 | Transparência das iniciativas (2026-10-10) | Ao iniciar contato espontaneamente, a DÉLIA explica de modo breve e natural a razão útil da sugestão e a evidência acessível; distingue fato, hipótese e indisponibilidade; não finge monitoramento nem revela fonte protegida | APPROVED_PRODUCT_DIRECTION |
+| PERS-018 | Encerramento do detalhamento documental (2026-10-10) | Product Master autorizou consolidar todas as próximas diretrizes editoriais planejadas, sem nova pergunta a cada proposta, e **fechar a documentação comportamental**; não autoriza mecanismos técnicos, contratos, fases, ACT ou implementação | APPROVED_WORK_SCOPE |
 
-## Propostas discutidas, mas não congeladas individualmente
+## Proveniência e níveis de aprovação
 
-- **Aprovações PERS-012 e PERS-013 já registradas na tabela:** humor leve/ocasional e emojis ocasionais em conversas descontraídas estão definidos como direção de produto; seguem sem decisão específica a frequência mensurável, o estilo das exclamações e o detalhamento por canal.
-- Sofisticação sem frieza, espontaneidade sem teatralidade e maturidade percebida.
-- Estilo de comunicação variado, sem bordões e sem concordância automática.
-- Situações de uso: cotidiano, investigação, discussão, risco, resultado, correção.
-- Presença em níveis silencioso/participativo/proativo/prioritário, com preferências e controles.
-- Eventuais animações, voz e expressões visuais futuras que representem estados reais.
-- Percentuais de traços usados na conversa são meras referências, não thresholds técnicos.
+**Aprovação específica do Product Master:** PERS-002..008 e PERS-010..017. A última aprovação específica é PERS-017 (justificativa transparente da iniciativa). PERS-001 registra o contexto inicial, refinado pelo esclarecimento explícito de PERS-008. PERS-009 e PERS-018 são **aprovações de escopo de trabalho**, não requisitos técnicos.
 
-Estes itens compõem uma **proposta editorial coerente com as escolhas**, mas cada decisão técnica/visual exige reancoragem e, se relevante, aprovação específica.
+**Autorização editorial ampla PERS-018:** a solicitação “as próximas que você está planejando me trazer já pode documentar tudo” permite **completar e fechar o baseline documental** com escolhas editoriais coerentes, sem mais rodadas de perguntas. Essa instrução **não** transforma cada detalhe não apresentado individualmente em aprovação literal do Product Master.
 
-## Fronteira da frente visual (esclarecimento)
+**EDITORIAL_DEFAULT_DERIVED:** no documento [02](./02-behavior-and-interaction.md), diretrizes derivadas foram consolidadas para formalidade por canal, brevidade, reparação de erro, tolerância à ambiguidade, economia de atenção, exemplos contrastivos, uso proporcional de emojis e contenção de alegações. São o baseline editorial completo, **derivado das decisões acima**, não decisões independentes registradas fraudulentamente como fatos de diálogo.
 
-O Product Master explicou que a expressão “criar avatar” nesta conversa referia-se à **personificação comportamental** — como a DÉLIA lida com usuários — e não ao desenvolvimento da imagem ou aparência física. O avatar visual tem trabalho próprio em andamento, conforme informação do usuário; não foi objeto de inventário técnico nesta tarefa. A spec [76](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md) continua sendo referência da frente visual. Não há, por esta conversa, solicitação ou aprovação de substituição de marca, rosto, mascote, animação ou arte.
+Não congelar percentuais ilustrativos de traços, cadências numéricas arbitrárias, gatilhos técnicos, sessões de voz, política de canais ou mecanismo de Personal Memory a partir da fala do usuário. Essas escolhas dependem de evidência de runtime, owner legítimo, contratos e fase.
 
-## Prontidão para fechamento da identidade comportamental
+## Fronteira de escopo: comportamento, não avatar
 
-**Avaliação:** as decisões PERS-002 a PERS-006, em conjunto, já sustentam o fechamento do **perfil geral de comportamento**: elegante, carismático, espontâneo, investigativo e estratégico, criativo como traço complementar, assertivo ao discordar e muito presente/participativo. **Estado:** `READY_FOR_PRODUCT_MASTER_FREEZE`, não `FROZEN`; aguarda comando inequívoco de aprovação do baseline de comportamento. Detalhes operacionais (frequência, silenciamento, públicos, preferências, critérios e evals) seguem `OPEN` e não bloqueiam a definição de alto nível. `IMPLEMENTATION_NOT_PROVEN`.
+O Product Master esclareceu em PERS-008 que “criar avatar” nesta conversa significava definir a **personalidade e a interação**, não aparência física. Existe desenvolvimento visual em frente separada, conforme informação do usuário; seu estado técnico não foi inventariado aqui. A [spec 76](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md) continua governando avatar/motion. Esta pasta não altera símbolo, rosto, branding, animações ou voz.
 
-## Reuse / fase / evidência
+## Resultado documental — 2026-10-10
 
-- `EXISTING_EQUIVALENT=YES` para a **documentação-base de persona e identidade** em 68 e avatar em 76; esta pasta **EXTEND** a cobertura editorial sem duplicar autoridade.
-- `REUSE_DECISION=EXTEND` para documentação especializada.
-- `RUNTIME_DIFF=NONE` para esta mudança; nenhum prompt, modelo, serviço, componente ou avatar é implementado.
-- `PHASE_CHANGE=NONE`; estado do programa e próximo passo permanecem no 16 + ledger no HEAD, não neste registro.
-- `REQUIREMENT_TRACEABILITY`: mapear futuramente CP/RQ/AC específicos antes de implementação do comportamento.
-- `TEST_NOT_RUN`: alteração apenas documental; verificar conteúdo, links e compatibilidade com authorities durante revisão.
+| Artefato | Resultado | Status |
+| --- | --- | --- |
+| [01 — Identidade e temperamento](./01-identity-and-temperament.md) | Arquétipo, traços intelectuais A+B com C complementar, limites e assinatura de presença | APPROVED_PRODUCT_DIRECTION |
+| [02 — Comportamento e interação](./02-behavior-and-interaction.md) | Voz textual, iniciativa B+C, transparência PERS-017, preferência temporária/durável condicionada, humor, discordância, adaptação e casos PERS-AC-01..31 | PRODUCT_BEHAVIOR_BASELINE_COMPLETE |
+| Este documento 03 | Histórico PERS-001..018, origem, proveniência, scope freeze e gaps | DECISIONS_DOCUMENTED |
+| [04 — Qualidade e avaliação](./04-behavioral-quality-evaluation.md) | Plano de avaliação, métricas candidatas e gates de evidência; não cria runtime de testes | EDITORIAL_EVAL_PLAN_COMPLETE / TEST_NOT_RUN |
 
-## Documento 02 — especificação comportamental detalhada (em revisão)
+**Fechamento declarado:** não há pendência de **escolha de personalidade ou tom** que impeça a futura especificação de implementação. A equipe poderá reabrir um ponto de estilo se houver nova evidência, avaliação adversarial ou mudança explícita de produto, com histórico versionado. A documentação não aprova mecanismos que dependem de contratos ainda não provados.
 
-Foi elaborado um draft do [guia 02](./02-behavior-and-interaction.md) na mesma branch de documentação: linguagem, proatividade, relevância, anti-interrupção, humor, discordância, adaptação contextual, contraste entre falas adequadas/inadequadas e cenários candidatos de avaliação PERS-AC-01..23, sem alegar teste executado.
+## Reuso, ownership, segurança e estado de execução
 
-- `DOCUMENT_STATUS=DRAFT_FOR_PRODUCT_REVIEW` — **não congelado**.
-- `PRODUCT_MASTER_APPROVAL=PARTIAL`: abordagem espontânea B+C (`PERS-010`), tratamento (`PERS-011`), humor (`PERS-012`), emojis contextuais (`PERS-013`), presença adaptativa (`PERS-014`), **preferência temporária por conversa vs intenção permanente** (`PERS-015`) e **agrupamento de sugestões de baixa prioridade / respeito à concentração** (`PERS-016`) aprovados expressamente. Detalhes de canal, owner/contrato da persistência, cadência mensurável, regras técnicas de deduplicação, relevância operacional e demais aspectos continuam `OPEN`.
-- `EXISTING_EQUIVALENT=YES` (guia 02 já existente) / `REUSE_DECISION=EXTEND`.
-- `RUNTIME_IMPLEMENTATION=NOT_PROVEN`; `TEST_NOT_RUN`; nenhum novo owner/serviço/contrato/CP é criado.
-- `PERS-014` não cria modos de runtime/enum, captura de áudio/vídeo, gatilho autônomo ou notificação. `PERS-015` define a **direção de produto** para preferência temporária na conversa e futura preferência durável com consentimento explícito, **sem provar nem autorizar nova persistência**. Core continua owner das notificações/preferências sob seu contrato; Personal Memory e eventual persistência de preferência de estilo dependem de inventário, boundary, consentimento, postcondition e controles. Pedido de silêncio não contorna alerta obrigatório do owner.
-- A direção geral PERS-002..PERS-006 continua aprovada; detalhes do documento 02 não alteram retroativamente o perfil-base.
+- **Documentation-first:** EXISTING_EQUIVALENT=YES para o baseline de persona da 68 e o guia 02; REUSE_DECISION=EXTEND o guia e referenciar authorities. O documento 04 especializa testes editoriais, sem duplicar a matriz 20.
+- **RUNTIME_DIFF=NONE / PHASE_CHANGE=NONE:** nenhuma alteração de prompts ativos, provider, frontend, backend, banco, migrations, API, scheduler, watcher, Avatar, autoridade ou permissão decorre desta PR documental.
+- **Phase/NEXT:** 16 + ledger no HEAD; documentação não avança fase nem autoaceita uma implementação.
+- **Segurança:** Keycloak identifica, Core autoriza efetivamente e Domain APIs governam dados/regras. DÉLIA não é safety controller; estilo não é permission; recomendação não é ACT.
+- **Intervenções:** PERS-010/014/016/017 não criam notificações; Core/Notification Catalog/Watch e fontes legítimas determinam severidade, destino, autorização e momento.
+- **Personalização:** PERS-015 autoriza **direção** de preferências temporárias e futura persistência consentida, não prova mecanismo de escrita. Personal Memory/contratos de classe, revogação e isolamento continuam owner-scoped.
+- **Qualidade:** os cenários PERS-AC-01..31 são **candidatos**, não testes executados. Resultado de runtime = TEST_NOT_RUN/INCONCLUSIVE até avaliação no SHA/config/modelo/policy/dataset real.
+- **Boundary:** nenhuma dependência do runtime Chat para comportamento DÉLIA.
 
-## Próximas decisões de produto (OPEN)
+## Residual de implementação — TO_INVENTORY, não decisões editoriais pendentes
 
-1. Humor geral (`PERS-012`) e emojis ocasionais somente em conversas descontraídas, com sobriedade em contextos técnicos/críticos (`PERS-013`), aprovados. Continua em aberto a cadência mensurável, o estilo de exclamações e as nuances por canal.
-2. Tratamento “você” e adaptação formal por situação/preferência aprovados (`PERS-011`); nuances editoriais por canal e formatos institucionais continuam em aberto.
-3. Ritmo e cadência da conversa e estilo verbal por contexto (sem selecionar timbre ou provider de voz).
-4. Modalidade editorial B+C (`PERS-010`), modos a pedido (`PERS-014`), preferência temporária/permanente (`PERS-015`) e **agrupamento de sugestões de baixa prioridade, evitando interrupção repetitiva** (`PERS-016`) aprovados; ainda abertos mecanismos/canais autorizados, limiares numéricos, tratamento efetivo de severidade/alertas por owner, owner/contrato de persistência e critérios concretos de relevância.
-5. Padrão de adaptação comportamental a chat, notificações e situações críticas; a aparência do avatar pertence a outra frente.
-6. Critérios verificáveis para “naturalidade”, “não bajulação”, discordância e não interrupção — ampliados com PERS-AC-11..23 para presença inicial, participação a pedido, silêncio, preferências temporárias/permanentes, agrupamento, não insistência e alertas governados.
-7. Rastreabilidade CP/RQ/AC e estratégia de avaliação para futura implementação; atualização das specs de UX somente se o respectivo owner e a evidência exigirem.
+| Tema | Exige descobrir/decidir no owner real antes de implementar |
+| --- | --- |
+| Gatilhos/relevância | Origem de sinais, source/provenance, autorização por usuário/canal e política de severidade |
+| Frequência/prioridade | Limiares mensuráveis, dedupe/agrupamento e restrições de foco com dados/contrato legítimos |
+| Presença inicial | Portal host, dock e MFE; não inferir auto-open ou eventos de navegação |
+| Mudança de preferência | Escopo, sessão, privacy, persistência, revogação, cache/rehydration e postcondition |
+| Transparência | Source refs divulgáveis, frescor, classificação epistêmica, falhas e contextualização |
+| Canais | Canal real, autorização, catálogo Core e observabilidade sem duplicar mecanismos |
+| Evals | Critérios quantificáveis e CP/RQ/AC referidos à 20/25 após fase autorizada |
 
-## Governança de novas conversas
+**Conclusão de documentação ≠ autorização de implementação.** Se evidência material invalidar um fundamento, STOP / EXECUTION_DRIFT ou ARCHITECTURE_DECISION_REQUIRED; nunca redesenhar silenciosamente.
 
-Toda nova decisão: `data → frase aprovada → escopo → status → authorities → impacto → gaps`. Registrar no GitHub depois da aprovação, sem transformar comentários exploratórios em requisito vinculante.
+## Governança de próximas atualizações
+
+Cada decisão futura deve ter **data, origem, frase/escopo aprovado, status, owner, impacto, authorities, evidência e lacunas**. Revisões documentais nunca são prova de sucesso de modelo, de acesso ao usuário, nem de resultado de negócio. Novos chats devem reancorar no HEAD canônico e consultar esta pasta; não depender de memória textual ou resumo de chat.
