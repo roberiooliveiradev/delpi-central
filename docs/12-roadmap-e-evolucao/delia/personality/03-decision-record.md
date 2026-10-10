@@ -13,6 +13,7 @@
 | PERS-006 | Intelecto | A investigativa + B estratégica + C criativa, preferindo A e B | APPROVED_PRODUCT_DIRECTION |
 | PERS-007 | Registro | Manter pasta documental específica no GitHub para preservar decisões e orientar comportamento futuro | APPROVED_PRODUCT_DIRECTION |
 | PERS-008 | Fronteira de escopo (esclarecimento de 2026-10-10) | O trabalho neste chat é exclusivamente sobre personalidade, comportamento e interação; o avatar físico/visual está em desenvolvimento separado e não será tratado aqui | APPROVED_PRODUCT_DIRECTION |
+| PERS-009 | Continuidade documental (2026-10-10) | Prosseguir para detalhar as regras de comportamento e interação no documento 02, preservando como propostas as escolhas ainda não aprovadas | APPROVED_WORK_SCOPE |
 
 ## Propostas discutidas, mas não congeladas individualmente
 
@@ -42,6 +43,16 @@ O Product Master explicou que a expressão “criar avatar” nesta conversa ref
 - `PHASE_CHANGE=NONE`; estado do programa e próximo passo permanecem no 16 + ledger no HEAD, não neste registro.
 - `REQUIREMENT_TRACEABILITY`: mapear futuramente CP/RQ/AC específicos antes de implementação do comportamento.
 - `TEST_NOT_RUN`: alteração apenas documental; verificar conteúdo, links e compatibilidade com authorities durante revisão.
+
+## Documento 02 — especificação comportamental detalhada (em revisão)
+
+Foi elaborado um draft do [guia 02](./02-behavior-and-interaction.md) na mesma branch de documentação: linguagem, proatividade, relevância, anti-interrupção, humor, discordância, adaptação contextual, contraste entre falas adequadas/inadequadas e 10 cenários candidatos de avaliação.
+
+- `DOCUMENT_STATUS=DRAFT_FOR_PRODUCT_REVIEW` — **não congelado**.
+- `PRODUCT_MASTER_APPROVAL=OPEN` para as novas regras operacionais.
+- `EXISTING_EQUIVALENT=YES` (guia 02 já existente) / `REUSE_DECISION=EXTEND`.
+- `RUNTIME_IMPLEMENTATION=NOT_PROVEN`; `TEST_NOT_RUN`; nenhum novo owner/serviço/contrato/CP é criado.
+- A direção geral PERS-002..PERS-006 continua aprovada; detalhes do documento 02 não alteram retroativamente o perfil-base.
 
 ## Próximas decisões de produto (OPEN)
 
