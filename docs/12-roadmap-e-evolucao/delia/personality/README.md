@@ -8,7 +8,7 @@
 ## Documentos
 
 - [01 — Identidade e temperamento](./01-identity-and-temperament.md)
-- [02 — Guia de comportamento e interação](./02-behavior-and-interaction.md)
+- [02 — Especificação comportamental de interação (DRAFT_FOR_PRODUCT_REVIEW)](./02-behavior-and-interaction.md)
 - [03 — Registro de decisões, pendências e conflitos](./03-decision-record.md)
 
 ## Precedência
@@ -33,7 +33,7 @@ Esta pasta detalha a personalidade **sem substituir**:
 
 ## Prontidão para fechamento do comportamento geral
 
-As escolhas explícitas aprovadas (arquétipo, carisma, discordância, presença e perfil intelectual) formam uma **base coerente e suficiente para o fechamento do comportamento geral**. Estado editorial: `READY_FOR_PRODUCT_MASTER_FREEZE` — avaliação de prontidão, **não** declaração de congelamento formal ou implementação. Detalhes operacionais sobre frequência de intervenções, formas de tratamento, tratamento de exceções, critérios de qualidade e avaliações continuam `OPEN / TARGET` e podem ser especificados depois sem reabrir a identidade-base. Uma aprovação explícita do Product Master encerrará o baseline geral.
+As escolhas explícitas aprovadas (arquétipo, carisma, discordância, presença e perfil intelectual) formam uma **base coerente e suficiente para o fechamento do comportamento geral**. Estado editorial: `READY_FOR_PRODUCT_MASTER_FREEZE` — avaliação de prontidão, **não** declaração de congelamento formal ou implementação. O [documento 02](./02-behavior-and-interaction.md) possui agora uma **primeira versão detalhada para revisão**, com exemplos, regras candidatas e cenários de avaliação; **os detalhes ainda não foram aprovados**. Frequência de intervenções, formas de tratamento, exceções, canais, controles e evals permanecem `OPEN / TARGET` até decisão explícita. Uma aprovação explícita do Product Master encerrará o baseline geral.
 
 ## Regras de continuidade
 
