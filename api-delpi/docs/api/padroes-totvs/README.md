@@ -20,6 +20,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Seção | Arquivo | Quando consultar |
 |-------|---------|------------------|
 | Armazém e custo unitário | [armazem-custo.md](./armazem-custo.md) | Valoração em R$ (`B2_CM1`), locais `01`/`99`/`98`/`50` |
+| Escoamento de lotes — FIFO, Best Fit e FEFO | [criterios-escoamento-lotes-fifo-best-fit.md](./criterios-escoamento-lotes-fifo-best-fit.md) | Critérios, desempates, configuração TOTVS e homologação DELPI |
 | Filiais | [filiais.md](./filiais.md) | SC/ES, RBAC por filial, não confundir com armazém |
 | Princípios SQL Protheus | [principios-sql.md](./principios-sql.md) | `D_E_L_E_T_`, NOLOCK, `*010`, bind, joins |
 | Unidades de medida | [unidades-medida.md](./unidades-medida.md) | `MI`, BOM — resumo; detalhe no playbook |
