@@ -1,0 +1,95 @@
+{
+  "schema_version": "davi-core-solution-ratification-proposal-v1",
+  "state": "TO_INVENTORY",
+  "implementation_authorized": false,
+  "governance_owner": "DAVI Architecture / Coordination",
+  "source": {
+    "technical_owner": "core-api",
+    "business_owner_status": "TO_INVENTORY",
+    "authoritative_endpoints": [
+      "GET /solutions",
+      "GET /solutions/<plugin_id>"
+    ],
+    "source_contract": "core-api/app/application/use_cases/solution_projection.py",
+    "visibility_rule": "ALL_ACTIVE_SOLUTIONS_SAFE_METADATA_FOR_AUTHENTICATED_USER",
+    "accessible_rule": "EFFECTIVE_ACCESS_FLAG_NOT_AUTHORIZATION",
+    "exposed_fields_as_proven": [
+      "id",
+      "name",
+      "description",
+      "icon",
+      "type",
+      "category",
+      "version",
+      "active",
+      "basePath",
+      "routes",
+      "features",
+      "permissions",
+      "dependencies",
+      "accessible",
+      "updatedAt"
+    ]
+  },
+  "consumer": {
+    "name": "DAVI — Especialista em Dados e Informações DELPI",
+    "role": "KNOWLEDGE_ONLY_NOT_AUTHORITY",
+    "status": "NOT_CONNECTED"
+  },
+  "identity": {
+    "mode": "END_USER_ONLY",
+    "current_mcp_resource": "https://minhadelpi.com.br/apps/api-delpi/mcp",
+    "current_mcp_audiences": [
+      "delpi-central",
+      "https://minhadelpi.com.br/apps/api-delpi/mcp"
+    ],
+    "core_audience_compatibility": "TO_INVENTORY",
+    "new_service_account": false
+  },
+  "capability": {
+    "proposed_name": "discover_corporate_solutions",
+    "phase": "READ_PROPOSED_NOT_EXECUTABLE",
+    "input_minimization": [
+      "query"
+    ],
+    "candidate_limit": 5,
+    "proposed_output_allowlist": [
+      "id",
+      "name",
+      "description",
+      "category",
+      "accessible"
+    ],
+    "epistemology": {
+      "core_identity": "PROVEN_AFTER_AUTHORIZED_CORE_READ",
+      "textual_match": "INFERRED",
+      "solution_access": "ONLY_REPORTED_BY_CORE_ACCESSIBLE_FLAG"
+    },
+    "not_in_scope": [
+      "solution_deep_links",
+      "arbitrary_core_paths",
+      "user_rbac_graph",
+      "permission_grant",
+      "domain_dataset_read",
+      "writes",
+      "generic_proxy",
+      "provider_tool_registration"
+    ],
+    "same_source_lookup": "ONLY_AFTER_AUTHENTICATED_APPROVED_CROSS_CONTEXT_CONTRACT",
+    "on_denial": "FAIL_CLOSED",
+    "on_timeout": "CONTRACT_GAP_NOT_NO_SOLUTION",
+    "on_no_match": "NO_MATCH_EVIDENCE_NOT_PROOF_OF_ABSENCE"
+  },
+  "release_gates": {
+    "business_owner_ratification": "PENDING",
+    "core_contract_owner_ratification": "PENDING",
+    "consumer_owner_ratification": "PENDING",
+    "identity_and_token_audience_review": "PENDING",
+    "core_field_projection_security_review": "PENDING",
+    "privacy_and_rate_policy": "PENDING",
+    "positive_contract_test": "TEST_NOT_RUN",
+    "negative_business_authz": "PENDING",
+    "provider_tool_discovery": "TEST_NOT_RUN",
+    "rollout_approval": "PENDING"
+  }
+}
