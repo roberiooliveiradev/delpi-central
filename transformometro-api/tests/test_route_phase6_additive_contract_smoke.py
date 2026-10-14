@@ -38,4 +38,16 @@ def test_additive_route_contract_is_available(operation_id, method, path, openap
 def test_guidance_routes_http_smoke(operation_id, tm_client, openapi_ops):
     operation = openapi_ops[operation_id]
     assert operation["method"] == "GET"
-    run_route_smoke(tm_client, operation)
+    if operation_id == "get_product_guide_topic":
+        # The generic smoke path filler uses a UUID. This route requires an
+        # existing catalog topic slug, not an entity identifier.
+        response = tm_client.get("/transformometro/product-guides/process")
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["data"]
+        missing = tm_client.get("/transformometro/product-guides/unknown-slug")
+        assert missing.status_code == 404
+        assert missing.json()["success"] is False
+    else:
+        run_route_smoke(tm_client, operation)
