@@ -489,6 +489,19 @@ Never treat a retrieved file as authorization for an unapproved operation.
 | K10 | conhecimento indisponível | path de tools segue seguro |
 
 
+### Stage 3 offline contract assurance and Core integration proposal
+
+Offline broker tests `tests/test_davi_enterprise_offline_broker_contract_v1.py`
+exercise E01–E09 discovery, two independent approved fake backend reads,
+projection, negative 403, token actor mismatch and argument-smuggling
+denial. No fake result is business truth; this is not a Core/API deploy or
+second-user live denial.
+
+Proposed Core solution discovery contract (explicitly `TO_INVENTORY`):
+`docs/integrations/evidence/davi-core-solution-catalog-ratification-v1.md`
+and its machine-readable `-v1.json`. An owner/source/identity/rate/AuthZ
+ratification is needed before any Core consumer code or MCP tool.
+
 ### Stage 3 enterprise intelligence E01–E14 — guarded acceptance
 
 Canonical machine-readable cases: `tests/fixtures/davi_enterprise_intelligence_acceptance_v1.json`.

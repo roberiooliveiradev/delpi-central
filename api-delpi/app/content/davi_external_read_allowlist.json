@@ -207,7 +207,11 @@
         "product search",
         "product code",
         "product description",
-        "product group"
+        "product group",
+        "descricao do item",
+        "descrição do item",
+        "qual a descricao do item",
+        "qual a descrição do item"
       ]
     },
     {
@@ -4567,7 +4571,13 @@
         "falta de insumo",
         "mp em falta",
         "mps em falta",
-        "falta de mp"
+        "falta de mp",
+        "mps faltam nos conjuntos de producao",
+        "mps faltam nos conjuntos de produção",
+        "materias primas faltam nos conjuntos de producao",
+        "matérias-primas faltam nos conjuntos de produção",
+        "quais mps faltam nos conjuntos de producao",
+        "quais mps faltam nos conjuntos de produção"
       ],
       "argumentConstraints": {
         "requireArguments": [
