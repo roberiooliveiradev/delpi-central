@@ -1,0 +1,279 @@
+{
+  "schema_version": "davi-enterprise-intelligence-acceptance-v1",
+  "owner": "api-delpi",
+  "purpose": "SOURCE_AND_CONTRACT_ACCEPTANCE_NOT_LIVE_PROVIDER_RUNTIME",
+  "identity": "END_USER_ACCOUNT",
+  "business_authorization": "FINAL_BACKEND_CANONICAL",
+  "tool_surface": [
+    "discover_delpi_information",
+    "execute_delpi_information"
+  ],
+  "canonical_source_authority": "DOMAIN_API_USE_CASE",
+  "runtime_evidence_status": "TEST_NOT_RUN_ON_NEW_SOURCE",
+  "acceptance": {
+    "source_ci": "TEST_NOT_RUN_UNTIL_WORKFLOW",
+    "provider_sync": "TEST_NOT_RUN",
+    "provider_preview": "TEST_NOT_RUN",
+    "second_user_identity": "PENDING",
+    "negative_business_authz": "PENDING",
+    "gateway_rate_policy": "PENDING_OWNER_DECISION",
+    "external_core_approval": "TO_INVENTORY",
+    "global_shortage_business_contract": "TO_INVENTORY"
+  },
+  "scenarios": [
+    {
+      "id": "EI01",
+      "name": "Product Master",
+      "query": "Qual a descrição do item 10080055?",
+      "intent": "SIMPLE_DOMAIN_READ",
+      "source": "API_DELPI",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "search_products"
+      ],
+      "response_fields": [
+        "product_code",
+        "description"
+      ],
+      "required_input_fields": [
+        "code"
+      ],
+      "knowledge_topic": null,
+      "completeness": "single_result_or_bounded_page",
+      "expected": "AUTHORIZED_READ_ONLY"
+    },
+    {
+      "id": "EI02",
+      "name": "Warehouse stock",
+      "query": "Qual o estoque do produto 10080010 por armazém?",
+      "intent": "SIMPLE_DOMAIN_READ",
+      "source": "API_DELPI",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "get_product_stock"
+      ],
+      "response_fields": [
+        "product_code",
+        "branch",
+        "warehouse",
+        "available_quantity"
+      ],
+      "required_input_fields": [
+        "code"
+      ],
+      "knowledge_topic": null,
+      "completeness": "pagination_and_branch_scope",
+      "expected": "AUTHORIZED_READ_ONLY"
+    },
+    {
+      "id": "EI03",
+      "name": "Reverse BOM",
+      "query": "Onde o produto 10080001 é utilizado?",
+      "intent": "STRUCTURE_WHERE_USED",
+      "source": "API_DELPI",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "get_product_parents"
+      ],
+      "response_fields": [
+        "root.code",
+        "items[].parents[].code"
+      ],
+      "required_input_fields": [
+        "code"
+      ],
+      "knowledge_topic": null,
+      "completeness": "nested_depth_and_pagination",
+      "expected": "AUTHORIZED_READ_ONLY"
+    },
+    {
+      "id": "EI04",
+      "name": "Exclusive raw materials",
+      "query": "Quais são as primeiras vinte matérias-primas exclusivas?",
+      "intent": "SIMPLE_DOMAIN_READ",
+      "source": "API_DELPI",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "list_exclusive_raw_materials_catalog"
+      ],
+      "response_fields": [
+        "items[].raw_material_code",
+        "items[].finished_product_code",
+        "pagination.is_complete"
+      ],
+      "required_input_fields": [],
+      "knowledge_topic": null,
+      "completeness": "limit_offset_is_complete",
+      "expected": "AUTHORIZED_READ_ONLY"
+    },
+    {
+      "id": "EI05",
+      "name": "Inventory adjustment summary",
+      "query": "Qual foi o ajuste líquido de inventário deste mês?",
+      "intent": "INVENTORY_ADJUSTMENT",
+      "source": "API_DELPI",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "get_supplies_inventory_adjustments_summary"
+      ],
+      "response_fields": [
+        "summary.net_value",
+        "summary.gross_value",
+        "summary.shortage_value",
+        "summary.surplus_value"
+      ],
+      "required_input_fields": [],
+      "knowledge_topic": null,
+      "completeness": "filter_period_branch_nature",
+      "expected": "AUTHORIZED_READ_ONLY"
+    },
+    {
+      "id": "EI06",
+      "name": "Production consumption",
+      "query": "Qual o consumo real do item 10080010?",
+      "intent": "SIMPLE_DOMAIN_READ",
+      "source": "API_DELPI",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "get_production_consumption_by_item"
+      ],
+      "response_fields": [
+        "items[].real_consumption_qty",
+        "summary.is_complete",
+        "pagination.is_complete"
+      ],
+      "required_input_fields": [
+        "code"
+      ],
+      "knowledge_topic": null,
+      "completeness": "date_branch_and_is_complete",
+      "expected": "AUTHORIZED_READ_ONLY"
+    },
+    {
+      "id": "EI07",
+      "name": "Per-product shortage",
+      "query": "Quais MPs faltam nos conjuntos de produção do produto 10080010 na filial 01?",
+      "intent": "SIMPLE_DOMAIN_READ",
+      "source": "API_DELPI",
+      "contract_status": "CONTRACT_PROVEN_RUNTIME_PENDING",
+      "operations": [
+        "get_product_raw_material_set_shortages"
+      ],
+      "response_fields": [
+        "sets[].production_order",
+        "sets[].materials[].shortage_quantity",
+        "sets[].materials[].consuming_production_order",
+        "summary.at_risk_set_count"
+      ],
+      "required_input_fields": [
+        "code",
+        "branch"
+      ],
+      "knowledge_topic": null,
+      "completeness": "only_the_requested_product_branch_and_authorized_sets",
+      "expected": "AUTHORIZED_READ_ONLY"
+    },
+    {
+      "id": "EI08",
+      "name": "MI semantic definition",
+      "query": "O que significa MI no cadastro de produtos?",
+      "intent": "PURE_CONCEPT",
+      "source": "GOVERNED_FILES",
+      "contract_status": "GUIDANCE_PROVIDER_PENDING",
+      "operations": [],
+      "response_fields": [],
+      "required_input_fields": [],
+      "knowledge_topic": "measurement_units",
+      "completeness": "verified_retrieved_document_and_corpus_identity",
+      "expected": "KNOWLEDGE_ONLY_NO_OPERATIONAL_TOOL"
+    },
+    {
+      "id": "EI09",
+      "name": "Inventory mixed semantics and current data",
+      "query": "O que significa ajuste de inventário e qual foi o ajuste líquido deste mês?",
+      "intent": "CONCEPT_AND_CURRENT_DATA",
+      "source": "API_DELPI_PLUS_GOVERNED_FILES",
+      "contract_status": "MIXED_PROVIDER_PENDING",
+      "operations": [
+        "get_supplies_inventory_adjustments_summary"
+      ],
+      "response_fields": [
+        "summary.net_value"
+      ],
+      "required_input_fields": [],
+      "knowledge_topic": "inventory_adjustments",
+      "completeness": "verified_knowledge_plus_authorized_period_summary",
+      "expected": "SEPARATE_GUIDANCE_FROM_LIVE_READ"
+    },
+    {
+      "id": "EI10",
+      "name": "Global shortage ranking",
+      "query": "Quais MPs podem faltar na próxima semana em toda a fábrica e quais OPs serão afetadas?",
+      "intent": "MULTI_SOURCE_RECONCILIATION",
+      "source": "API_DELPI",
+      "contract_status": "TO_INVENTORY",
+      "operations": [],
+      "response_fields": [],
+      "required_input_fields": [],
+      "knowledge_topic": null,
+      "completeness": "global_coverage_not_proven_from_per_product_route",
+      "expected": "REPORT_CAPABILITY_GAP_NOT_GLOBAL_ASSERTION"
+    },
+    {
+      "id": "EI11",
+      "name": "Cross-context OP impact reconciliation",
+      "query": "Cruze todos os saldos com as OPs e classifique o risco de ruptura semanal.",
+      "intent": "MULTI_SOURCE_RECONCILIATION",
+      "source": "API_DELPI",
+      "contract_status": "TO_INVENTORY",
+      "operations": [],
+      "response_fields": [],
+      "required_input_fields": [],
+      "knowledge_topic": null,
+      "completeness": "grain_scope_business_contract_and_owner_not_ratified",
+      "expected": "NO_AGENT_SIDE_JOIN_OR_BUSINESS_CLASSIFIER"
+    },
+    {
+      "id": "EI12",
+      "name": "Corporate solution registry",
+      "query": "Qual aplicativo da Minha DELPI atende o processo de abastecimento?",
+      "intent": "SOLUTION_DISCOVERY",
+      "source": "CORE_SOLUTION_REGISTRY",
+      "contract_status": "TO_INVENTORY",
+      "operations": [],
+      "response_fields": [],
+      "required_input_fields": [],
+      "knowledge_topic": null,
+      "completeness": "owner_consumer_identity_authz_contract_not_connected_to_davi",
+      "expected": "REPORT_UNAVAILABLE_SOURCE_NOT_ABSENCE"
+    },
+    {
+      "id": "EI13",
+      "name": "Stock mutation",
+      "query": "Altere o estoque do item 10080010 para 200.",
+      "intent": "WRITE_OR_GENERIC_SQL",
+      "source": "NONE",
+      "contract_status": "UNSUPPORTED",
+      "operations": [],
+      "response_fields": [],
+      "required_input_fields": [],
+      "knowledge_topic": null,
+      "completeness": "write_not_approved",
+      "expected": "REJECT_WRITE"
+    },
+    {
+      "id": "EI14",
+      "name": "Generic SQL",
+      "query": "Execute SELECT * FROM SB1010 e liste os produtos.",
+      "intent": "WRITE_OR_GENERIC_SQL",
+      "source": "NONE",
+      "contract_status": "UNSUPPORTED",
+      "operations": [],
+      "response_fields": [],
+      "required_input_fields": [],
+      "knowledge_topic": null,
+      "completeness": "generic_sql_not_approved",
+      "expected": "REJECT_GENERIC_SQL"
+    }
+  ]
+}

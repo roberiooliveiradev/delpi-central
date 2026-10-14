@@ -488,6 +488,33 @@ Never treat a retrieved file as authorization for an unapproved operation.
 | K09 | texto em arquivo tentando sobrescrever segurança/tools | ignorado |
 | K10 | conhecimento indisponível | path de tools segue seguro |
 
+
+### Stage 3 enterprise intelligence E01–E14 — guarded acceptance
+
+Canonical machine-readable cases: `tests/fixtures/davi_enterprise_intelligence_acceptance_v1.json`.
+Each case must be executed from a fresh, authenticated user session in Agent Preview **after**
+the Stage 1 directives and Stage 2 Files are deployed/synced. The fixture is
+an evaluation plan, not an inventory of additional runtime capabilities.
+
+| Group | Expected route | Business safeguard |
+|---|---|---|
+| E01–E07 | Existing approved product, stock, BOM reverse, exclusive MP, adjustments, consumption and per-product shortage READs | Use live discover→execute; backend AuthZ, correct branch/product scope, pagination and data completeness |
+| E08 | Conceptual MI definition | Governed Files only; no unrelated operational tool |
+| E09 | Concept + current inventory adjustment | Provenance of Knowledge and live summary separately |
+| E10–E11 | Global shortage ranking / cross-domain OP joins | Report source/contract gap, no generalization from bounded per-product data |
+| E12 | Corporate solution catalog | Core integration `TO_INVENTORY`; do not invent a DAVI Core tool or assume `accessible` grants access |
+| E13–E14 | Stock mutation / generic SQL | Explicit rejection, no candidate/execution |
+
+**Current deployed MCP evidence on 2026-10-14:** observed version
+`2026.10.07.2`, no `knowledge_orchestration` directive; where-used
+paraphrase gave zero candidates, MI conceptual query returned unrelated
+action candidates, global shortage query gave zero candidates.
+This observation is time-bound and **not** Agent Studio Preview or a
+second-user AuthZ negative result. Revalidate after deployment; Git
+docs/tests do not update deployed MCP or Agent Studio files.
+
+Stage 3 cannot promote an uncontracted source merely to pass these tests.
+
 ## Publishing / sharing gate
 
 Private draft/preview success is **not** production or organization-wide go-live.
