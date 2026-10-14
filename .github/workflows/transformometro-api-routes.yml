@@ -36,6 +36,9 @@ jobs:
       - name: Baseline OpenAPI sincronizado
         run: PYTHONPATH=.:../shared python scripts/sync_openapi_baseline.py --check
 
+      - name: GPT Actions typed import schemas and artifact parity
+        run: PYTHONPATH=.:../shared python -m pytest tests/test_gpt_actions_schema_contract_corrective.py -q
+
       - name: Smokes Nível A (todas as rotas HTTP)
         run: PYTHONPATH=.:../shared python -m pytest tests/test_route_phase*.py -q
 
