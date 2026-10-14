@@ -92,69 +92,6 @@
   0%,100% { transform: scale(1); }
   50% { transform: scale(1.025); }
 }
-button.delpi-ui-unified-avatar__trigger {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
-  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
-  background: var(--delpi-ui-surface-2, var(--surface-2, #f0f2f5));
-  color: var(--delpi-ui-muted, var(--text-muted, #4b5563));
-  cursor: pointer;
-}
-button.delpi-ui-unified-avatar__trigger:hover {
-  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
-}
-button.delpi-ui-unified-avatar__trigger:focus-visible,
-.delpi-ui-unified-avatar__close:focus-visible,
-.delpi-ui-unified-avatar__profile-link:focus-visible {
-  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
-  outline-offset: 2px;
-}
-.delpi-ui-unified-avatar__popover {
-  box-sizing: border-box;
-  width: min(300px, calc(100vw - 20px));
-  padding: 14px;
-  color: var(--delpi-ui-text, var(--text, #111));
-  background: var(--delpi-ui-surface, var(--surface, #fff));
-  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
-  border-radius: 12px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.12);
-}
-.delpi-ui-unified-avatar__profile {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 5px;
-  overflow-wrap: anywhere;
-}
-.delpi-ui-unified-avatar__profile-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  gap: 10px;
-}
-.delpi-ui-unified-avatar__profile-name { font-size: 14px; }
-.delpi-ui-unified-avatar__detail {
-  color: var(--delpi-ui-muted, var(--text-muted, #4b5563));
-  font-size: 13px;
-}
-button.delpi-ui-unified-avatar__close {
-  display: grid;
-  place-items: center;
-  padding: 4px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-.delpi-ui-unified-avatar__profile-link {
-  align-self: start;
-  margin-top: 8px;
-  color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: underline;
-}
 @media (prefers-reduced-motion: reduce) {
   .delpi-ui-unified-avatar,
   .delpi-ui-unified-avatar *,

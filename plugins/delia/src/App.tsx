@@ -15,7 +15,7 @@ import type {
   DeliaConfirmationRequest,
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
-import { ActivityViewer, UnifiedAvatar } from "@delpi/plugin-ui/index";
+import { ActivityViewer } from "@delpi/plugin-ui/index";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
 } from "./activity/activityView";
@@ -308,15 +308,10 @@ export default function App({
                 <DeliaReception />
               )}
               {loading ? (
-                <div className="delia-interaction__pending">
-                  <span aria-hidden="true">
-                    <UnifiedAvatar kind="assistant" label="DÉLIA" size="sm" motionState="processing" />
-                  </span>
-                  <ActivityViewer
-                    {...DELIA_ACTIVITY_PENDING_VIEW}
-                    className="delia-interaction__loading"
-                  />
-                </div>
+                <ActivityViewer
+                  {...DELIA_ACTIVITY_PENDING_VIEW}
+                  className="delia-interaction__loading"
+                />
               ) : null}
               <div ref={turnsEndRef} aria-hidden="true" />
             </div>

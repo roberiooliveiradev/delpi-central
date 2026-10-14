@@ -354,13 +354,6 @@
 
 /* ---------- S2-D — loading + error */
 
-.dashboard-delia .delia-interaction__pending {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-}
-
 .dashboard-delia .delia-interaction__loading {
   align-self: flex-start;
 }

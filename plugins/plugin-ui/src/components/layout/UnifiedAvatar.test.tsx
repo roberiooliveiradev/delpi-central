@@ -20,7 +20,7 @@ describe("UnifiedAvatar", () => {
     expect(container.querySelector('[data-motion="processing"]')).toBeNull();
   });
 
-  it("uses a neutral person fallback when no profile is published", () => {
+  it("uses a neutral person fallback when no published identity is provided", () => {
     const { container } = render(<UnifiedAvatar kind="person" label="Você" />);
     expect(screen.getByRole("img", { name: "Você" })).toBeTruthy();
     expect(container.querySelector("svg")).toBeTruthy();
@@ -39,28 +39,12 @@ describe("UnifiedAvatar", () => {
     expect(container.querySelector("img")?.getAttribute("src")).toBe("/photos/2");
   });
 
-  it("rejects executable image URLs and suppresses unbound profile", () => {
+  it("rejects executable image URLs", () => {
     expect(isSafeAvatarImageUrl("javascript:alert(1)")).toBe(false);
     expect(isSafeAvatarImageUrl("data:image/svg+xml,hello")).toBe(false);
     expect(isSafeAvatarImageUrl("//example.test/photo")).toBe(false);
     expect(isSafeAvatarImageUrl("/photo")).toBe(true);
     const { container } = render(<UnifiedAvatar kind="person" label="Você" imageUrl="javascript:alert(1)" />);
     expect(container.querySelector("img")).toBeNull();
-    expect(container.querySelector("button")).toBeNull();
-  });
-
-  it("renders a bounded future-ready profile popover only when provided", () => {
-    render(
-      <UnifiedAvatar kind="person" label="Você"
-        profile={{ displayName: "Ana Silva", jobTitle: "Engenheira", profileHref: "/profile" }}
-      />,
-    );
-    const trigger = screen.getByRole("button", { name: "Ver perfil de Ana Silva" });
-    fireEvent.click(trigger);
-    expect(screen.getByRole("dialog", { name: "Perfil de Ana Silva" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Abrir meu perfil" }).getAttribute("href")).toBe("/profile");
-    fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(document.activeElement).toBe(trigger);
   });
 });
