@@ -7,6 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from app.application.external_capabilities.constants import (
     EXTERNAL_INTERNAL_ERROR_MESSAGE,
@@ -84,11 +85,7 @@ def gpt_search_products(
     description: Optional[str] = Query(None),
     group_code: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(
-        GPT_PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-        ge=1,
-        le=GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE,
-    ),
+    page_size: int = PAGE_SIZE_QUERY("page_50_50_gpt_legacy"),
 ):
     try:
         data = _dispatch.search_products(

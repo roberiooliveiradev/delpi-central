@@ -293,7 +293,7 @@ def list_received_invoices(
     invoice_number: str | None = Query(None),
     supplier_cnpj: str | None = Query(None),
     page: int = Query(1),
-    page_size: int = Query(25),
+    page_size: int = PAGE_SIZE_QUERY("page_25_100_received_invoices"),
     document_type: str | None = Query(None),
 ):
     number = str(invoice_number or "").strip()
