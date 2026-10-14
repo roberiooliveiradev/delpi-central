@@ -33,6 +33,8 @@ from davi_governed_knowledge_bundle_lib import (  # noqa: E402
     BundleError,
     build_bundle,
     emit_manifest,
+    load_topic_index,
+    verify_topic_index,
     resolve_source_path,
     verify_manifest,
 )
@@ -60,12 +62,17 @@ def _load_manifest() -> dict:
 def _build() -> int:
     written = build_bundle(_load_manifest(), output_dir=OUTPUT_DIR)
     rel = OUTPUT_DIR.relative_to(API_ROOT)
-    print(f"bundle written: api-delpi/{rel} ({len(written) - 1} docs + manifest.json)")
+    print(
+        f"bundle written: api-delpi/{rel} "
+        f"({len(written) - 2} frozen docs + derived topic index + manifest.json)"
+    )
     return 0
 
 
 def _verify() -> int:
-    evidence = verify_manifest(_load_manifest())
+    manifest = _load_manifest()
+    evidence = verify_manifest(manifest)
+    topic_evidence = verify_topic_index(load_topic_index(), manifest)
     print("verify PASS:")
     print(f"  corpus={evidence['corpus_id']}")
     print(f"  version={evidence['corpus_version']}")
@@ -73,6 +80,10 @@ def _verify() -> int:
     print(f"  freeze_sha={evidence['freeze_sha']}")
     print(f"  source_git_sha={evidence['source_git_sha']}")
     print(f"  manifest_sha256={evidence['manifest_sha256']}")
+    print(
+        f"  topics={topic_evidence['topics']}, "
+        f"deferred={topic_evidence['deferred_sources']}"
+    )
     return 0
 
 

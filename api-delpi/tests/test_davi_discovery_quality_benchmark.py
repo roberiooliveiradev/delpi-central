@@ -44,6 +44,19 @@ _ALLOWED_TYPES = {
 }
 
 
+@pytest.fixture(autouse=True)
+def _offline_benchmark_candidate_secret(monkeypatch):
+    """Use a deterministic test-only HMAC secret; never require production secrets in CI.
+
+    The evaluation exercises discovery candidate shape and strips tokens from
+    reports. This fixture does not change production secret resolution or AuthZ.
+    """
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "unit-test-only-davi-discovery-benchmark",
+    )
+
+
 @pytest.fixture(scope="module")
 def fixture() -> dict:
     return _load_fixture()

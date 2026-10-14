@@ -115,8 +115,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Baseline ausente: {args.baseline}", file=sys.stderr)
             return 1
         stored = json.loads(args.baseline.read_text(encoding="utf-8"))
-        if _fingerprint(stored) != _fingerprint(baseline):
-            print("Drift no OpenAPI baseline — rode --write.", file=sys.stderr)
+        expected = set(_fingerprint(stored))
+        observed = set(_fingerprint(baseline))
+        if expected != observed:
+            missing = sorted(expected - observed)
+            added = sorted(observed - expected)
+            print(
+                "Drift no OpenAPI baseline: "
+                f"stored={len(expected)} runtime={len(observed)} "
+                f"removed={len(missing)} added={len(added)}.",
+                file=sys.stderr,
+            )
+            for entry in missing[:40]:
+                print(f"  REMOVED_OR_RENAMED: {entry}", file=sys.stderr)
+            for entry in added[:40]:
+                print(f"  ADDED_OR_RENAMED: {entry}", file=sys.stderr)
+            print("Corrija a fonte canônica e sincronize o baseline apenas após revisar o diff.", file=sys.stderr)
             return 1
         print(f"OK — baseline sincronizado (ops={baseline['operation_count']})")
         return 0
