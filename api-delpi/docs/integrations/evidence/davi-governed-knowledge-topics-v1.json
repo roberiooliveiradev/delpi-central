@@ -1,0 +1,222 @@
+{
+  "schema_version": "davi-governed-knowledge-topics-v1",
+  "corpus_id": "davi-governed-knowledge",
+  "corpus_version": 1,
+  "freeze_sha": "d9926cc14a8a4edd1b52775b82cf7353aede75b4",
+  "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
+  "topics": [
+    {
+      "id": "inventory_adjustments",
+      "title": "Ajustes de inventário — furo, sobra, RE0 e DE0",
+      "source_path": "api-delpi/docs/api/supplies-inventory-adjustments.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "ajustes de inventário",
+        "furo de inventário",
+        "sobra de inventário",
+        "RE0",
+        "DE0",
+        "valor líquido dos ajustes"
+      ]
+    },
+    {
+      "id": "warehouse_stock_balances",
+      "title": "Saldos de estoque por armazém",
+      "source_path": "api-delpi/docs/api/supplies-stock-balances.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "saldo de estoque",
+        "armazém 01 e 99",
+        "estoque físico",
+        "estoque reservado",
+        "estoque por depósito"
+      ]
+    },
+    {
+      "id": "purchase_order_otd",
+      "title": "OTD de pedidos de compra",
+      "source_path": "api-delpi/docs/api/supplies-purchase-order-otd.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "OTD compras",
+        "entrega no prazo compras",
+        "prazo de fornecimento",
+        "pedidos de compra"
+      ]
+    },
+    {
+      "id": "sales_order_otd",
+      "title": "OTD de pedidos de venda",
+      "source_path": "api-delpi/docs/api/comercial-sales-order-otd.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "OTD vendas",
+        "entrega no prazo comercial",
+        "entrega no prazo",
+        "pedidos de venda"
+      ]
+    },
+    {
+      "id": "warehouse_cost_model",
+      "title": "Armazéns e custos no Protheus",
+      "source_path": "api-delpi/docs/api/padroes-totvs/armazem-custo.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "custo por armazém",
+        "custo unitário",
+        "custo médio",
+        "armazém 99"
+      ]
+    },
+    {
+      "id": "branch_semantics",
+      "title": "Filiais Protheus",
+      "source_path": "api-delpi/docs/api/padroes-totvs/filiais.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "filiais DELPI",
+        "filial 01",
+        "filial 02",
+        "escopo da filial",
+        "permissões por filial"
+      ]
+    },
+    {
+      "id": "measurement_units",
+      "title": "Unidades de medida e conversões",
+      "source_path": "api-delpi/docs/api/padroes-totvs/unidades-medida.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "unidade de medida",
+        "MI",
+        "PC",
+        "MT",
+        "conversão de unidade"
+      ]
+    },
+    {
+      "id": "production_stock_entry",
+      "title": "Produção e entrada em estoque",
+      "source_path": "api-delpi/docs/api/padroes-totvs/producao-entrada-estoque.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "entrada de produção",
+        "quantidade produzida",
+        "entrada de produto acabado",
+        "última operação"
+      ]
+    },
+    {
+      "id": "operation_reporting_hza",
+      "title": "Apontamento de operação HZA",
+      "source_path": "api-delpi/docs/api/padroes-totvs/apontamento-operacao-hza.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "HZA010",
+        "apontamento de produção",
+        "operador SYS_USR",
+        "produção em andamento"
+      ]
+    },
+    {
+      "id": "product_master_sb1",
+      "title": "Cadastro de produtos SB1",
+      "source_path": "api-delpi/docs/api/padroes-totvs/cadastro-produto.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "SB1",
+        "cadastro produto",
+        "descrição de produto",
+        "grupo de produto",
+        "unidade do produto"
+      ]
+    },
+    {
+      "id": "production_order_key",
+      "title": "Chave da ordem de produção",
+      "source_path": "api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "SC2",
+        "SH8",
+        "ordem de produção",
+        "chave da OP",
+        "alocação de operação"
+      ]
+    },
+    {
+      "id": "third_party_materials",
+      "title": "Materiais de terceiros SB6",
+      "source_path": "api-delpi/docs/api/padroes-totvs/materiais-terceiros-sb6.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "SB6",
+        "beneficiamento",
+        "materiais de terceiros",
+        "terceirização industrial"
+      ]
+    },
+    {
+      "id": "weekly_portfolio",
+      "title": "Carteira semanal — previsto e realizado",
+      "source_path": "api-delpi/docs/api/padroes-totvs/carteira-semanal-previsto-realizado.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "carteira semanal",
+        "previsto versus realizado",
+        "último período fechado",
+        "semana comercial"
+      ]
+    },
+    {
+      "id": "market_rol_cfop",
+      "title": "Receita operacional líquida por mercado",
+      "source_path": "api-delpi/docs/api/padroes-totvs/rol-mercado-cfop.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "ROL",
+        "CFOP",
+        "mercado interno",
+        "mercado externo",
+        "classificação comercial"
+      ]
+    },
+    {
+      "id": "machine_load",
+      "title": "Carga máquina e centros de trabalho",
+      "source_path": "api-delpi/docs/api/production-machine-load.md",
+      "status": "FROZEN_V1",
+      "intent": "CONCEPTUAL_GUIDANCE_ONLY",
+      "aliases": [
+        "carga máquina",
+        "centro de trabalho",
+        "SH8010",
+        "operação alocada",
+        "capacidade de máquina"
+      ]
+    }
+  ],
+  "deferred_sources": [
+    {
+      "id": "lot_selection_fifo_best_fit_fefo",
+      "source_path": "api-delpi/docs/api/padroes-totvs/criterios-escoamento-lotes-fifo-best-fit.md",
+      "status": "TO_INVENTORY",
+      "authority": "EXTERNAL_VENDOR_REFERENCE_NOT_HOMOLOGATED_AT_DELPI",
+      "note": "Referência TOTVS; não integra o corpus congelado nem comprova configuração operacional DELPI."
+    }
+  ]
+}
