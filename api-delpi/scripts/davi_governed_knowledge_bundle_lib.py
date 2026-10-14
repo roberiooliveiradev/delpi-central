@@ -456,6 +456,19 @@ def build_bundle(
     outputs.append(
         (output_dir / TOPIC_INDEX_FILENAME, render_topic_index(topic_index, manifest))
     )
+    # Refuse stale or symlinked generated files; never silently publish
+    # an old/deferred source from a previous local Files build.
+    expected_names = {path.name for path, _ in outputs} | {"manifest.json"}
+    if output_dir.is_symlink():
+        raise BundleError("unsafe symlinked bundle directory")
+    if output_dir.exists():
+        if not output_dir.is_dir():
+            raise BundleError("bundle output path is not a directory")
+        unexpected = {path.name for path in output_dir.iterdir()} - expected_names
+        if unexpected:
+            raise BundleError(f"unexpected files in bundle output: {sorted(unexpected)}")
+        if any((output_dir / name).is_symlink() for name in expected_names):
+            raise BundleError("unsafe symlink in bundle output")
     output_dir.mkdir(parents=True, exist_ok=True)
     written = [path for path, content in outputs if _write(path, content)]
     manifest_out = output_dir / "manifest.json"
@@ -464,6 +477,8 @@ def build_bundle(
         (json.dumps(manifest, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
     )
     written.append(manifest_out)
+    if {path.name for path in output_dir.iterdir()} != expected_names:
+        raise BundleError("generated bundle membership mismatch")
     return written
 
 
