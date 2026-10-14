@@ -39,6 +39,8 @@ jobs:
           PYTHONPATH=. pytest \
             tests/test_davi_inventory_adjustment_discovery.py \
             tests/test_davi_agent_intelligence.py \
+            tests/test_davi_knowledge_orchestration.py \
+            tests/test_davi_discovery_quality_benchmark.py \
             tests/test_supplies_inventory_adjustments.py \
             -q
 

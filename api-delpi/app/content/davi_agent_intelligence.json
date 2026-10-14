@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.07.2",
+  "version": "2026.10.13.1",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -76,6 +76,266 @@
     "generic_proxy": "FORBIDDEN",
     "prepare_act": "NOT on DAVI external surface (cost simulation remains DEFER)",
     "commit_now": "N/A — no write path"
+  },
+  "knowledge_orchestration": {
+    "principle": "ROUTE_TO_SMALLEST_SUFFICIENT_TRUTH_SET",
+    "scope": "READ_ONLY_AGENT_ROUTING_NOT_AUTHORIZATION",
+    "sources": {
+      "live_capability_catalog": {
+        "owner": "api-delpi dynamic READ broker",
+        "authority": "ELIGIBILITY_AND_ARGUMENT_SCHEMA_NOT_BUSINESS_AUTHZ",
+        "status": "PROVEN",
+        "tools": [
+          "discover_delpi_information"
+        ]
+      },
+      "domain_runtime": {
+        "owner": "api-delpi canonical use cases",
+        "authority": "AUTHORITATIVE_ONLY_AFTER_BACKEND_AUTHZ_AND_SUCCESSFUL_READ",
+        "status": "PROVEN",
+        "tools": [
+          "execute_delpi_information"
+        ]
+      },
+      "governed_knowledge": {
+        "owner": "api-delpi governed Git corpus / Agent Studio operator",
+        "authority": "DOCUMENT_GUIDANCE_NOT_LIVE_DOMAIN_STATE",
+        "status": "PROVEN",
+        "provider_status": "TEST_NOT_RUN",
+        "tools": [],
+        "note": "15 documentos congelados com manifesto Git; provider-native Files e K01-K10 não homologados."
+      },
+      "domain_contracts": {
+        "owner": "api-delpi domain owners",
+        "authority": "CANONICAL_SEMANTICS_NOT_LIVE_BUSINESS_DATA",
+        "status": "PROVEN",
+        "provider_status": "TEST_NOT_RUN",
+        "tools": []
+      },
+      "solution_ecosystem": {
+        "owner": "Minha DELPI Core solution registry",
+        "authority": "SOLUTION_METADATA_NOT_USER_PERMISSION",
+        "status": "TO_INVENTORY",
+        "access": "NOT_CONNECTED_TO_DAVI",
+        "tools": []
+      },
+      "conversation_context": {
+        "owner": "user/session",
+        "authority": "GROUNDING_HINT_ONLY_NOT_DOMAIN_TRUTH_OR_AUTHZ",
+        "status": "PROVEN",
+        "tools": []
+      }
+    },
+    "precedence": [
+      "LIVE_AUTHORIZED_DOMAIN_READ > AGENT_MEMORY_FOR_CURRENT_STATE",
+      "CANONICAL_DOMAIN_CONTRACT > DOCUMENT_GUIDANCE_FOR_SEMANTICS",
+      "LIVE_CAPABILITY_CATALOG > STATIC_AGENT_INSTRUCTIONS_FOR_SCOPE",
+      "EVIDENCE > INFERRED > PROPOSED; MODEL_INFERENCE IS_NOT RUNTIME_FACT",
+      "SEARCH_MISS IS_NOT PROOF_OF_ABSENCE",
+      "DOCUMENT_GUIDANCE IS_NOT BUSINESS_AUTHZ"
+    ],
+    "routing": {
+      "PURE_CONCEPT": {
+        "required": [
+          "governed_knowledge"
+        ],
+        "optional": [
+          "domain_contracts"
+        ],
+        "avoid": [
+          "domain_runtime",
+          "solution_ecosystem"
+        ],
+        "gates": [
+          "KNOWLEDGE_GATE"
+        ],
+        "directives": [
+          "execution_posture"
+        ],
+        "rule": "Conceito puro (MI, estoque físico/reservado): recuperar documento; não descobrir uma action por coincidência lexical. Sem Files verificados, informar gap."
+      },
+      "SIMPLE_DOMAIN_READ": {
+        "required": [
+          "live_capability_catalog",
+          "domain_runtime"
+        ],
+        "avoid": [
+          "governed_knowledge",
+          "solution_ecosystem"
+        ],
+        "gates": [
+          "DOMAIN_READ_GATE"
+        ],
+        "directives": [
+          "discovery",
+          "execution_posture"
+        ],
+        "rule": "discover→execute; usar apenas retorno autorizado e completude."
+      },
+      "CONCEPT_AND_CURRENT_DATA": {
+        "required": [
+          "governed_knowledge",
+          "live_capability_catalog",
+          "domain_runtime"
+        ],
+        "optional": [
+          "domain_contracts"
+        ],
+        "avoid": [
+          "solution_ecosystem"
+        ],
+        "gates": [
+          "KNOWLEDGE_GATE",
+          "DOMAIN_READ_GATE",
+          "COMPOSITION_GATE"
+        ],
+        "directives": [
+          "discovery",
+          "execution_posture"
+        ],
+        "rule": "Separar conceito comprovado de valor live; nunca inferir saldo de documento."
+      },
+      "STRUCTURE_WHERE_USED": {
+        "required": [
+          "live_capability_catalog",
+          "domain_runtime"
+        ],
+        "gates": [
+          "DOMAIN_READ_GATE"
+        ],
+        "directives": [
+          "discovery",
+          "execution_posture"
+        ],
+        "rule": "BOM reversa = pais consumidores, não estrutura direta; truncamento implica PARTIAL."
+      },
+      "INVENTORY_ADJUSTMENT": {
+        "required": [
+          "live_capability_catalog",
+          "domain_runtime"
+        ],
+        "optional": [
+          "governed_knowledge"
+        ],
+        "gates": [
+          "DOMAIN_READ_GATE"
+        ],
+        "directives": [
+          "flows",
+          "execution_posture"
+        ],
+        "rule": "Usar summary canônico; nature do backend; net_value ≠ gross_value."
+      },
+      "MULTI_SOURCE_RECONCILIATION": {
+        "required": [
+          "live_capability_catalog",
+          "domain_runtime"
+        ],
+        "optional": [
+          "governed_knowledge",
+          "domain_contracts"
+        ],
+        "gates": [
+          "DOMAIN_READ_GATE",
+          "COMPOSITION_GATE"
+        ],
+        "directives": [
+          "modes",
+          "execution_posture"
+        ],
+        "rule": "Preservar filial, armazém, período, unidade, autorização e completude; sem joins inéditos."
+      },
+      "SYSTEM_METADATA": {
+        "required": [
+          "live_capability_catalog",
+          "domain_runtime"
+        ],
+        "gates": [
+          "DOMAIN_READ_GATE",
+          "METADATA_GATE"
+        ],
+        "directives": [
+          "flows",
+          "execution_posture"
+        ],
+        "rule": "Metadados de tabelas não autorizam leitura de registros."
+      },
+      "SOLUTION_DISCOVERY": {
+        "required": [
+          "solution_ecosystem"
+        ],
+        "gates": [
+          "SOLUTION_GATE"
+        ],
+        "directives": [
+          "execution_posture"
+        ],
+        "rule": "Core ainda não conectado ao DAVI: gap TO_INVENTORY, não executar proxy."
+      },
+      "WRITE_OR_GENERIC_SQL": {
+        "required": [],
+        "avoid": [
+          "domain_runtime",
+          "solution_ecosystem"
+        ],
+        "gates": [
+          "READ_ONLY_GATE"
+        ],
+        "directives": [
+          "not_exposed"
+        ],
+        "rule": "Sem writes ou SELECT/SQL genérico; reportar limite."
+      }
+    },
+    "gates": {
+      "DOMAIN_READ_GATE": "candidate_token vigente, End-user identity, AuthZ final do backend, paginação/completude explícitas.",
+      "KNOWLEDGE_GATE": "Comprovar trecho e versão recuperados. Git docs != sync no Agent Studio.",
+      "COMPOSITION_GATE": "Filial, unidade, armazém, janela e granularidade compatíveis; não inventar correlação.",
+      "METADATA_GATE": "SYSTEM_METADATA_ACCESS no backend; tabela identificada != acesso às linhas.",
+      "SOLUTION_GATE": "Contrato Core ainda TO_INVENTORY; sem tool DAVI aprovada, não usar.",
+      "READ_ONLY_GATE": "Mutação, SQL arbitrário, proxy genérico e service account para user parity proibidos."
+    },
+    "composition_order": [
+      "Classificar intenção e selecionar menor conjunto required.",
+      "Verificar fonte, contrato, identidade e AuthZ; Knowledge apenas se recuperado.",
+      "Executar READs autorizados e preservar proveniência/completude.",
+      "Compor fatos sem alterar regra de negócio; rotular inferências.",
+      "Parar ao atingir suficiência ou reportar gap tipado."
+    ],
+    "sufficiency": [
+      "READ autoritativo completo e no escopo = suficiente; parar.",
+      "Conceito puro: evidência documental recuperada basta; sem tool spam.",
+      "Não consultar fontes opcionais por precaução.",
+      "Página parcial, 403 ou falta de Knowledge != prova de resultado completo."
+    ],
+    "gap_handling": {
+      "vocabulary": [
+        "UNKNOWN",
+        "TO_INVENTORY",
+        "PARTIAL",
+        "UNAVAILABLE_IN_CURRENT_SURFACE",
+        "UNSUPPORTED"
+      ],
+      "rule": "Não inventar dado, guia, tool, capability nem permissão. Search miss != ausência."
+    },
+    "epistemology": [
+      "OBSERVED",
+      "CALCULATED",
+      "INFERRED",
+      "PROPOSED",
+      "UNKNOWN",
+      "GUIDANCE IS_NOT DOMAIN_TRUTH",
+      "CATALOG IS_NOT AUTHZ",
+      "MODEL_INFERENCE IS_NOT RUNTIME_FACT"
+    ],
+    "forbidden": [
+      "New MCP tool as knowledge shortcut",
+      "Generic SQL / arbitrary HTTP proxy",
+      "Agent-side RBAC or domain rules",
+      "Claim Agent Studio sync from Git docs",
+      "Present partial pages as complete",
+      "Present planned Core source as available"
+    ]
   },
   "flows": {
     "product_master_search": {
