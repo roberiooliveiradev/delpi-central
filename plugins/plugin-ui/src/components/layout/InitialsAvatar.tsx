@@ -23,6 +23,8 @@ type InitialsAvatarChromeProps = {
   size?: InitialsAvatarSize;
   classNames: InitialsAvatarClassNames;
   className?: string;
+  /** Optional neutral icon when no owner-published initials are available. */
+  fallbackNode?: ReactNode;
   /** Sobrescreve o estilo de fundo (só no modo iniciais). */
   style?: CSSProperties;
   /**
@@ -104,6 +106,7 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
     classNames,
     className,
     style,
+    fallbackNode,
     previewable,
     previewTitle,
     previewAriaLabel,
@@ -113,6 +116,9 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
     onPreviewOpenChange,
   } = props;
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  // A failed URL stays suppressed until the owner publishes a different URL.
+  const resolvedSrc = src && failedSrc !== src ? src : null;
   const rootClass = [withBemModifier(classNames.root, size), className].filter(Boolean).join(" ");
   const initials = initialsFromName(name);
   const hue = hueFromKey(colorKey ?? name);
@@ -137,7 +143,7 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
         href={safeHref}
         title={linkTitle}
         aria-label={aria || undefined}
-        style={src ? undefined : initialStyle}
+        style={resolvedSrc ? undefined : initialStyle}
         onClick={(event) => {
           if (!shouldHandleInlineNavClick(event)) {
             return;
@@ -151,16 +157,16 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
           props.onNavigate(event);
         }}
       >
-        {src ? (
-          <img className="delpi-ui-avatar__media" src={src} alt="" />
+        {resolvedSrc ? (
+          <img className="delpi-ui-avatar__media" src={resolvedSrc} alt="" onError={() => setFailedSrc(resolvedSrc)} />
         ) : (
-          initials
+          fallbackNode ?? initials
         )}
       </a>
     );
   }
 
-  const canPreview = Boolean(src) && previewable !== false;
+  const canPreview = Boolean(resolvedSrc) && previewable !== false;
   const resolvedPreviewTitle = (previewTitle ?? name).trim() || "Foto";
   const resolvedPreviewAria =
     (previewAriaLabel ?? "").trim() || `Ampliar foto de ${name.trim() || "contato"}`;
@@ -170,7 +176,7 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
     onPreviewOpenChange?.(open);
   };
 
-  if (src && canPreview) {
+  if (resolvedSrc && canPreview) {
     return (
       <>
         <button
@@ -185,7 +191,7 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
             setOpen(true);
           }}
         >
-          <img className="delpi-ui-avatar__media" src={src} alt="" />
+          <img className="delpi-ui-avatar__media" src={resolvedSrc} alt="" onError={() => setFailedSrc(resolvedSrc)} />
         </button>
         <ImageLightboxModal
           open={previewOpen}
@@ -200,8 +206,8 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
     );
   }
 
-  if (src) {
-    return <img className={rootClass} src={src} alt={alt} />;
+  if (resolvedSrc) {
+    return <img className={rootClass} src={resolvedSrc} alt={alt} onError={() => setFailedSrc(resolvedSrc)} />;
   }
 
   return (
@@ -212,7 +218,7 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
       role={alt ? "img" : undefined}
       aria-label={alt || undefined}
     >
-      {initials}
+      {fallbackNode ?? initials}
     </span>
   );
 }

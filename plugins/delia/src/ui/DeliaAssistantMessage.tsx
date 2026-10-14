@@ -8,7 +8,6 @@ import {
   ListChecks,
   Lock,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -18,7 +17,7 @@ import {
   presentationOwnerHint,
 } from "../api/presentation";
 import type { DeliaMessageKind } from "../api/presentation";
-import { ActivityViewer } from "@delpi/plugin-ui/index";
+import { ActivityViewer, UnifiedAvatar } from "@delpi/plugin-ui/index";
 import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 import { buildDeliaActivityView } from "../activity/activityView";
 
@@ -67,6 +66,8 @@ const SEMANTIC_STATE: Record<
 export type DeliaAssistantMessageProps = {
   turn: ConversationDisplayTurn;
   loading: boolean;
+  responding?: boolean;
+  onResponseMotionComplete?: () => void;
   onConfirmation: (
     request: DeliaConfirmationRequest,
     decision: "CONFIRM" | "REJECT",
@@ -89,6 +90,8 @@ export type DeliaAssistantMessageProps = {
 export function DeliaAssistantMessage({
   turn,
   loading,
+  responding = false,
+  onResponseMotionComplete,
   onConfirmation,
 }: DeliaAssistantMessageProps) {
   const [copied, setCopied] = useState(false);
@@ -131,7 +134,13 @@ export function DeliaAssistantMessage({
   return (
     <>
       <span className="delia-turn__avatar" aria-hidden="true">
-        <Sparkles size={14} />
+        <UnifiedAvatar
+          kind="assistant"
+          label="DÉLIA"
+          size="sm"
+          motionState={semanticState ? "attention" : responding ? "responding" : "idle"}
+          onMotionComplete={onResponseMotionComplete}
+        />
       </span>
       <div className="delia-turn__bubble">
         <div className="delia-turn__head">

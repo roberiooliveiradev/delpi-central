@@ -24,6 +24,7 @@ const REQUIRED_HOST_EXPORTS = [
   "createDashboardTopBarFavoritesStrip",
   "createDashboardTopBarUtilityCluster",
   "createDashboardTopBarUserIdentity",
+  "UnifiedAvatar",
   "createDashboardUserManual",
   "createDashboardEntityAvatarLabel",
   "createDashboardEventsSection",

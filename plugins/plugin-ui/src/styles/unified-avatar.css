@@ -1,0 +1,166 @@
+/* Unified Avatar: shared visual ownership in plugin-ui. */
+.delpi-ui-unified-avatar {
+  --delpi-ui-unified-size: 38px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: 0 0 auto;
+  vertical-align: middle;
+  width: var(--delpi-ui-unified-size);
+  height: var(--delpi-ui-unified-size);
+  border-radius: 50%;
+  isolation: isolate;
+}
+.delpi-ui-unified-avatar--xs { --delpi-ui-unified-size: 24px; }
+.delpi-ui-unified-avatar--sm { --delpi-ui-unified-size: 32px; }
+.delpi-ui-unified-avatar--md { --delpi-ui-unified-size: 38px; }
+.delpi-ui-unified-avatar--lg { --delpi-ui-unified-size: 52px; }
+.delpi-ui-unified-avatar--xl { --delpi-ui-unified-size: 64px; }
+.delpi-ui-unified-avatar--assistant {
+  color: #fff;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+.delpi-ui-unified-avatar--assistant .delpi-ui-unified-avatar__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.delpi-ui-unified-avatar--assistant svg { width: 55%; height: 55%; }
+.delpi-ui-unified-avatar--person {
+  color: var(--delpi-ui-muted, var(--text-muted, #4b5563));
+  background: var(--delpi-ui-surface-2, var(--surface-2, #f0f2f5));
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+}
+.delpi-ui-unified-avatar--person .delpi-ui-unified-avatar__visual {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.delpi-ui-unified-avatar--person .delpi-ui-avatar {
+  width: 100%;
+  height: 100%;
+  flex: 0 0 auto;
+  transition: none;
+  transform: none;
+}
+.delpi-ui-unified-avatar--person .delpi-ui-avatar:hover { transform: none; }
+.delpi-ui-unified-avatar--person .delpi-ui-avatar svg { width: 55%; height: 55%; }
+.delpi-ui-unified-avatar--assistant[data-motion="processing"]::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  pointer-events: none;
+  animation: delpi-ui-unified-processing 1900ms ease-out infinite;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="receiving"] .delpi-ui-unified-avatar__visual {
+  animation: delpi-ui-unified-receive 380ms ease-out 1;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="responding"] .delpi-ui-unified-avatar__visual {
+  animation: delpi-ui-unified-respond 340ms ease-out 1;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="attention"] {
+  box-shadow: 0 0 0 2px var(--delpi-ui-warning, var(--warning, #b45309));
+  animation: delpi-ui-unified-attention 280ms ease-out 1;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="disabled"] {
+  color: var(--delpi-ui-muted, var(--text-muted, #6b7280));
+  background: var(--delpi-ui-surface-2, var(--surface-2, #eceef2));
+}
+@keyframes delpi-ui-unified-receive {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes delpi-ui-unified-processing {
+  0% { transform: scale(1); opacity: .35; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+@keyframes delpi-ui-unified-respond {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.025); opacity: .82; }
+}
+@keyframes delpi-ui-unified-attention {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+button.delpi-ui-unified-avatar__trigger {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  background: var(--delpi-ui-surface-2, var(--surface-2, #f0f2f5));
+  color: var(--delpi-ui-muted, var(--text-muted, #4b5563));
+  cursor: pointer;
+}
+button.delpi-ui-unified-avatar__trigger:hover {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+button.delpi-ui-unified-avatar__trigger:focus-visible,
+.delpi-ui-unified-avatar__close:focus-visible,
+.delpi-ui-unified-avatar__profile-link:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+.delpi-ui-unified-avatar__popover {
+  box-sizing: border-box;
+  width: min(300px, calc(100vw - 20px));
+  padding: 14px;
+  color: var(--delpi-ui-text, var(--text, #111));
+  background: var(--delpi-ui-surface, var(--surface, #fff));
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+}
+.delpi-ui-unified-avatar__profile {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+.delpi-ui-unified-avatar__profile-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 10px;
+}
+.delpi-ui-unified-avatar__profile-name { font-size: 14px; }
+.delpi-ui-unified-avatar__detail {
+  color: var(--delpi-ui-muted, var(--text-muted, #4b5563));
+  font-size: 13px;
+}
+button.delpi-ui-unified-avatar__close {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.delpi-ui-unified-avatar__profile-link {
+  align-self: start;
+  margin-top: 8px;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-unified-avatar,
+  .delpi-ui-unified-avatar *,
+  .delpi-ui-unified-avatar::before,
+  .delpi-ui-unified-avatar::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

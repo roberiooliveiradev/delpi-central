@@ -9,6 +9,8 @@ export * from "./components/activity";
 export * from "./components/composer";
 export * from "./components/help";
 export * from "./components/layout";
+/** Host-only export: protected from remote federation tree-shake. */
+export { UnifiedAvatar } from "./components/layout/UnifiedAvatar";
 export * from "./components/navigation";
 export * from "./components/feedback";
 export * from "./components/data";

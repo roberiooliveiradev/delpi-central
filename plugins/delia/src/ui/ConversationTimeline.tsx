@@ -1,4 +1,4 @@
-import { User } from "lucide-react";
+import { UnifiedAvatar } from "@delpi/plugin-ui/index";
 
 import type { ActivityViewerProps } from "@delpi/plugin-ui/index";
 
@@ -33,6 +33,8 @@ export type ConversationDisplayTurn = {
 export type ConversationTimelineProps = {
   turns: ConversationDisplayTurn[];
   loading: boolean;
+  respondingTurnId?: string | null;
+  onResponseMotionComplete?: () => void;
   onConfirmation: (
     request: DeliaConfirmationRequest,
     decision: "CONFIRM" | "REJECT",
@@ -50,6 +52,8 @@ export type ConversationTimelineProps = {
 export function ConversationTimeline({
   turns,
   loading,
+  respondingTurnId,
+  onResponseMotionComplete,
   onConfirmation,
 }: ConversationTimelineProps) {
   return (
@@ -63,12 +67,14 @@ export function ConversationTimeline({
             <DeliaAssistantMessage
               turn={turn}
               loading={loading}
+              responding={turn.id === respondingTurnId}
+              onResponseMotionComplete={onResponseMotionComplete}
               onConfirmation={onConfirmation}
             />
           ) : (
             <>
               <span className="delia-turn__avatar" aria-hidden="true">
-                <User size={14} />
+                <UnifiedAvatar kind="person" label="Você" size="sm" />
               </span>
               <div className="delia-turn__bubble">
                 <span className="delia-turn__label">Você</span>

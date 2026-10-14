@@ -154,23 +154,8 @@
   max-width: 460px;
 }
 
-/* DÉLIA identity glyph — accent circle, never the DELPI wordmark. */
-.dashboard-delia .delia-reception__mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  color: #ffffff;
-  background: linear-gradient(
-    135deg,
-    var(--delia-accent),
-    color-mix(in srgb, var(--delia-accent) 62%, var(--secundary, #003866))
-  );
-  box-shadow: 0 4px 14px
-    color-mix(in srgb, var(--delia-accent) 32%, transparent);
-}
+/* Reception mark is layout only; the shared kit owns avatar chrome. */
+.dashboard-delia .delia-reception__mark { display: inline-flex; }
 
 .dashboard-delia .delia-reception__title {
   margin: 0;
@@ -223,32 +208,12 @@
   }
 }
 
+/* Layout only; visual rendering belongs to plugin-ui UnifiedAvatar. */
 .dashboard-delia .delia-turn__avatar {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
   margin-top: 2px;
-}
-
-/* DÉLIA avatar — accent circle glyph (same identity as reception). */
-.dashboard-delia .delia-turn--delia .delia-turn__avatar {
-  color: #ffffff;
-  background: linear-gradient(
-    135deg,
-    var(--delia-accent),
-    color-mix(in srgb, var(--delia-accent) 62%, var(--secundary, #003866))
-  );
-}
-
-/* User avatar — neutral muted circle. */
-.dashboard-delia .delia-turn--user .delia-turn__avatar {
-  color: var(--delia-text-muted);
-  background: var(--delia-surface-2);
-  border: 1px solid var(--delia-border);
 }
 
 .dashboard-delia .delia-turn__bubble {
@@ -388,6 +353,13 @@
 }
 
 /* ---------- S2-D — loading + error */
+
+.dashboard-delia .delia-interaction__pending {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
 
 .dashboard-delia .delia-interaction__loading {
   align-self: flex-start;

@@ -15,7 +15,7 @@ import type {
   DeliaConfirmationRequest,
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
-import { ActivityViewer } from "@delpi/plugin-ui/index";
+import { ActivityViewer, UnifiedAvatar } from "@delpi/plugin-ui/index";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
 } from "./activity/activityView";
@@ -82,6 +82,7 @@ export default function App({
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
+  const [respondingTurnId, setRespondingTurnId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const demoSeqRef = useRef(0);
@@ -134,6 +135,7 @@ export default function App({
       return;
     }
 
+    setRespondingTurnId(null);
     setLoading(true);
     setError(null);
     const controller = new AbortController();
@@ -168,6 +170,11 @@ export default function App({
           presentation: result.presentation,
         },
       ]);
+      setRespondingTurnId(
+        result.presentation?.messageKind && result.presentation.messageKind !== "RESULT"
+          ? null
+          : result.result_turn_id,
+      );
       setInput("");
     } catch (submitError) {
       if (
@@ -200,6 +207,7 @@ export default function App({
       ...previous,
       { id: `demo-user-${seq}`, role: "user", content: value },
     ]);
+    setRespondingTurnId(null);
     setLoading(true);
     setError(null);
     await new Promise((resolve) => setTimeout(resolve, outcome.delayMs));
@@ -213,6 +221,12 @@ export default function App({
       ...previous,
       { id: `demo-delia-${seq}`, ...outcome.deliaTurn! },
     ]);
+    setRespondingTurnId(
+      outcome.deliaTurn?.presentation?.messageKind &&
+      outcome.deliaTurn.presentation.messageKind !== "RESULT"
+        ? null
+        : `demo-delia-${seq}`,
+    );
     setInput("");
   }
 
@@ -286,16 +300,23 @@ export default function App({
                 <ConversationTimeline
                   turns={turns}
                   loading={loading}
+                  respondingTurnId={respondingTurnId}
+                  onResponseMotionComplete={() => setRespondingTurnId(null)}
                   onConfirmation={handleConfirmation}
                 />
               ) : (
                 <DeliaReception />
               )}
               {loading ? (
-                <ActivityViewer
-                  {...DELIA_ACTIVITY_PENDING_VIEW}
-                  className="delia-interaction__loading"
-                />
+                <div className="delia-interaction__pending">
+                  <span aria-hidden="true">
+                    <UnifiedAvatar kind="assistant" label="DÉLIA" size="sm" motionState="processing" />
+                  </span>
+                  <ActivityViewer
+                    {...DELIA_ACTIVITY_PENDING_VIEW}
+                    className="delia-interaction__loading"
+                  />
+                </div>
               ) : null}
               <div ref={turnsEndRef} aria-hidden="true" />
             </div>

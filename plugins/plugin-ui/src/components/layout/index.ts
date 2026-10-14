@@ -268,6 +268,14 @@ export {
   type InitialsAvatarSize,
 } from "./InitialsAvatar";
 export {
+  UnifiedAvatar,
+  isSafeAvatarImageUrl,
+  type AvatarSize,
+  type AssistantMotionState,
+  type PublishedAvatarProfile,
+  type UnifiedAvatarProps,
+} from "./UnifiedAvatar";
+export {
   AvatarStack,
   avatarStackBemClasses,
   createDashboardAvatarStack,
