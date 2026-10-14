@@ -115,9 +115,9 @@ def test_b01_emits_exactly_fifteen_approved_documents(tmp_path: Path) -> None:
     written = _build(_manifest(), out)
     emitted = sorted(p.name for p in out.glob("*.md"))
     expected = sorted(Path(p).name for p in frozen_corpus_paths())
-    assert len(written) == _CORPUS_COUNT + 1  # 15 docs + manifest.json
-    assert emitted == expected
-    assert len(emitted) == _CORPUS_COUNT
+    assert len(written) == _CORPUS_COUNT + 2  # 15 docs + index + manifest
+    assert emitted == sorted(expected + ["DAVI-topic-index.md"])
+    assert len(emitted) == _CORPUS_COUNT + 1
 
 
 def test_b02_no_secondary_or_non_corpus_document_emitted(tmp_path: Path) -> None:
@@ -126,7 +126,8 @@ def test_b02_no_secondary_or_non_corpus_document_emitted(tmp_path: Path) -> None
     names = {p.name for p in out.iterdir()}
     assert "commercial-billing-portfolio.md" not in names
     assert names == {Path(p).name for p in frozen_corpus_paths()} | {
-        "manifest.json"
+        "DAVI-topic-index.md",
+        "manifest.json",
     }
 
 

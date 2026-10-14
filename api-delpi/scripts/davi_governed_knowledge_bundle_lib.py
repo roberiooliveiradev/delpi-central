@@ -31,6 +31,11 @@ MANIFEST_REPO_PATH = (
     "api-delpi/docs/integrations/evidence/davi-governed-knowledge-manifest-v1.json"
 )
 OUTPUT_DIR = API_ROOT / "dist" / "davi-governed-knowledge" / "v1"
+TOPIC_INDEX_REPO_PATH = (
+    "api-delpi/docs/integrations/evidence/davi-governed-knowledge-topics-v1.json"
+)
+TOPIC_INDEX_FILENAME = "DAVI-topic-index.md"
+TOPIC_INDEX_SCHEMA = "davi-governed-knowledge-topics-v1"
 
 _DOC_PREFIX = "api-delpi/"
 _CORPUS_SECTION = "## FROZEN_FIRST_CORPUS"
@@ -282,6 +287,144 @@ def verify_manifest(
     }
 
 
+
+def load_topic_index(repo_root: Path = REPO_ROOT) -> dict[str, Any]:
+    """Load curated source pointers; this catalog is not domain authority."""
+    path = resolve_source_path(TOPIC_INDEX_REPO_PATH, repo_root)
+    if not path.is_file():
+        raise BundleError(f"topic index missing: {TOPIC_INDEX_REPO_PATH}")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as exc:
+        raise BundleError("topic index invalid JSON") from exc
+    if not isinstance(value, dict):
+        raise BundleError("topic index must be an object")
+    return value
+
+
+def verify_topic_index(
+    topic_index: dict[str, Any], manifest: dict[str, Any], *,
+    repo_root: Path = REPO_ROOT,
+) -> dict[str, Any]:
+    """Reject undocumented source promotion, alias injection, and stale freezes."""
+    if topic_index.get("schema_version") != TOPIC_INDEX_SCHEMA:
+        raise BundleError("topic index schema mismatch")
+    if topic_index.get("corpus_id") != manifest.get("corpus_id"):
+        raise BundleError("topic index corpus_id mismatch")
+    if topic_index.get("corpus_version") != manifest.get("corpus_version"):
+        raise BundleError("topic index corpus_version mismatch")
+    if topic_index.get("freeze_sha") != manifest.get("freeze_sha"):
+        raise BundleError("topic index freeze_sha mismatch")
+    if topic_index.get("authority") != "GUIDANCE_NOT_DOMAIN_TRUTH":
+        raise BundleError("topic index cannot claim business/domain authority")
+    approved = {doc["path"] for doc in _manifest_schema(manifest)}
+    topics = topic_index.get("topics")
+    if not isinstance(topics, list) or len(topics) != len(approved):
+        raise BundleError("topic index membership/cardinality mismatch")
+    seen_paths: set[str] = set()
+    seen_ids: set[str] = set()
+    for topic in topics:
+        if not isinstance(topic, dict):
+            raise BundleError("topic entry must be an object")
+        identity = topic.get("id")
+        path = topic.get("source_path")
+        if not isinstance(identity, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", identity):
+            raise BundleError("invalid topic id")
+        if identity in seen_ids or path in seen_paths:
+            raise BundleError("duplicate knowledge topic id/source")
+        seen_ids.add(identity)
+        seen_paths.add(path)
+        if topic.get("status") != "FROZEN_V1":
+            raise BundleError("unapproved topic status")
+        if topic.get("intent") != "CONCEPTUAL_GUIDANCE_ONLY":
+            raise BundleError("knowledge topic cannot authorize live data")
+        title, aliases = topic.get("title"), topic.get("aliases")
+        if not isinstance(title, str) or not title.strip():
+            raise BundleError("topic title missing")
+        if not isinstance(aliases, list) or not (1 <= len(aliases) <= 12):
+            raise BundleError("topic aliases missing/out of bounds")
+        if any(
+            not isinstance(value, str)
+            or not value.strip()
+            or len(value) > 120
+            or any(c in value for c in ("\n", "\r", "|", "<", ">"))
+            for value in [title, *aliases]
+        ):
+            raise BundleError("unsafe topic title/alias")
+        if len({value.casefold().strip() for value in aliases}) != len(aliases):
+            raise BundleError("duplicate aliases in topic")
+        if path not in approved:
+            raise BundleError(f"unapproved topic source: {path}")
+    if seen_paths != approved:
+        raise BundleError("topic index missing frozen sources")
+    deferred = topic_index.get("deferred_sources")
+    if not isinstance(deferred, list):
+        raise BundleError("topic index deferred_sources missing")
+    deferred_ids: set[str] = set()
+    for candidate in deferred:
+        if not isinstance(candidate, dict):
+            raise BundleError("invalid deferred source")
+        identity, path = candidate.get("id"), candidate.get("source_path")
+        if not isinstance(identity, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", identity):
+            raise BundleError("invalid deferred source id")
+        if identity in deferred_ids or identity in seen_ids:
+            raise BundleError("duplicate deferred source id")
+        deferred_ids.add(identity)
+        if not isinstance(path, str) or not path.startswith("api-delpi/docs/api/"):
+            raise BundleError("invalid deferred source path")
+        if path in approved or path in seen_paths:
+            raise BundleError("deferred source cannot be promoted silently")
+        if candidate.get("status") != "TO_INVENTORY":
+            raise BundleError("deferred source is not approved")
+        if candidate.get("authority") != "EXTERNAL_VENDOR_REFERENCE_NOT_HOMOLOGATED_AT_DELPI":
+            raise BundleError("deferred source authority mismatch")
+        if not resolve_source_path(path, repo_root).is_file():
+            raise BundleError(f"deferred source missing: {path}")
+    return {"topics": len(topics), "deferred_sources": len(deferred)}
+
+
+def render_topic_index(topic_index: dict[str, Any], manifest: dict[str, Any]) -> bytes:
+    """Only approved source metadata; excludes every deferred title and path."""
+    hashes = {doc["path"]: doc["sha256"] for doc in manifest["documents"]}
+    lines = [
+        "# DAVI — Índice de conhecimento governado (derivado)",
+        "",
+        "> Índice de localização do corpus aprovado, NÃO fonte de dados operacionais.",
+        "> Arquivos não aprovados não são carregados. Nenhum item autoriza negócio.",
+        "> Para valores atuais, usar READ autenticado sujeito à AuthZ do backend.",
+        "",
+        f"corpus_id: {manifest['corpus_id']}",
+        f"corpus_version: {manifest['corpus_version']}",
+        f"freeze_sha: {manifest['freeze_sha']}",
+        f"source_git_sha: {manifest['source_git_sha']}",
+        f"manifest_sha256: {manifest['manifest_sha256']}",
+        "",
+        "## Tópicos e origens aprovados",
+        "",
+    ]
+    for topic in topic_index["topics"]:
+        path = topic["source_path"]
+        lines.extend([
+            f"### {topic['title']}",
+            f"topic_id: {topic['id']}",
+            f"source_path: {path}",
+            f"source_sha256: {hashes[path]}",
+            f"sinônimos: {', '.join(topic['aliases'])}",
+            "status: FROZEN_V1 / CONCEPTUAL_GUIDANCE_ONLY",
+            "",
+        ])
+    lines.extend([
+        "## Limites",
+        "",
+        "- Conferir trecho no documento original antes de responder conceitos.",
+        "- Não usar conhecimento estático como dados operacionais atuais.",
+        "- Não ampliar tools, campos, contas nem permissões por este índice.",
+        "- Fontes pendentes não fazem parte desta versão distribuível.",
+        "",
+    ])
+    return "\n".join(lines).encode("utf-8")
+
+
 def build_bundle(
     manifest: dict[str, Any],
     *,
@@ -301,12 +444,18 @@ def build_bundle(
         blob_reader=blob_reader,
         ref_resolver=ref_resolver,
     )
+    topic_index = load_topic_index(repo_root)
+    verify_topic_index(topic_index, manifest, repo_root=repo_root)
     outputs: list[tuple[Path, bytes]] = []
     for doc in manifest["documents"]:
         rel = doc["path"]
         src = resolve_source_path(rel, repo_root)
         content = _provenance_header(doc, manifest).encode("utf-8") + src.read_bytes()
         outputs.append((output_dir / Path(rel).name, content))
+    # Derived search metadata, not a new source document.
+    outputs.append(
+        (output_dir / TOPIC_INDEX_FILENAME, render_topic_index(topic_index, manifest))
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     written = [path for path, content in outputs if _write(path, content)]
     manifest_out = output_dir / "manifest.json"
