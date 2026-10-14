@@ -8,14 +8,12 @@ from typing import Optional
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
+
 from app.application.external_capabilities.constants import (
     EXTERNAL_INTERNAL_ERROR_MESSAGE,
 )
-from app.application.gpt_actions.constants import (
-    GPT_ACTIONS_BASE_PATH,
-    GPT_PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-    GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE,
-)
+from app.application.gpt_actions.constants import GPT_ACTIONS_BASE_PATH
 from app.application.gpt_actions.dispatch_service import GptActionsDispatchService
 from app.application.gpt_actions.openapi_builder import build_gpt_actions_openapi
 from app.application.security.api_delpi_permissions import ENGINEERING_LMP_ACCESS
@@ -84,11 +82,7 @@ def gpt_search_products(
     description: Optional[str] = Query(None),
     group_code: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(
-        GPT_PRODUCT_SEARCH_DEFAULT_PAGE_SIZE,
-        ge=1,
-        le=GPT_PRODUCT_SEARCH_MAX_PAGE_SIZE,
-    ),
+    page_size: int = PAGE_SIZE_QUERY("page_50_50"),
 ):
     try:
         data = _dispatch.search_products(

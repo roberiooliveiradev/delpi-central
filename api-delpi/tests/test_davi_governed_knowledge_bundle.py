@@ -115,9 +115,9 @@ def test_b01_emits_exactly_fifteen_approved_documents(tmp_path: Path) -> None:
     written = _build(_manifest(), out)
     emitted = sorted(p.name for p in out.glob("*.md"))
     expected = sorted(Path(p).name for p in frozen_corpus_paths())
-    assert len(written) == _CORPUS_COUNT + 1  # 15 docs + manifest.json
-    assert emitted == expected
-    assert len(emitted) == _CORPUS_COUNT
+    assert len(written) == _CORPUS_COUNT + 2  # 15 docs + index + manifest
+    assert emitted == sorted(expected + ["DAVI-topic-index.md"])
+    assert len(emitted) == _CORPUS_COUNT + 1
 
 
 def test_b02_no_secondary_or_non_corpus_document_emitted(tmp_path: Path) -> None:
@@ -126,7 +126,8 @@ def test_b02_no_secondary_or_non_corpus_document_emitted(tmp_path: Path) -> None
     names = {p.name for p in out.iterdir()}
     assert "commercial-billing-portfolio.md" not in names
     assert names == {Path(p).name for p in frozen_corpus_paths()} | {
-        "manifest.json"
+        "DAVI-topic-index.md",
+        "manifest.json",
     }
 
 
@@ -339,3 +340,32 @@ def test_corpus_membership_comes_from_freeze_artifact() -> None:
     paths = frozen_corpus_paths()
     assert len(paths) == _CORPUS_COUNT
     assert all(p.startswith("api-delpi/docs/api/") for p in paths)
+
+def test_b11_stale_generated_file_blocks_build(tmp_path: Path) -> None:
+    out = tmp_path / "bundle"
+    out.mkdir()
+    stale = out / "unapproved-fifo.md"
+    stale.write_text("not approved", encoding="utf-8")
+    with pytest.raises(BundleError, match="unexpected files"):
+        _build(_manifest(), out)
+    assert stale.read_text(encoding="utf-8") == "not approved"
+    assert not (out / "manifest.json").exists()
+
+
+def test_b12_symlink_output_blocks_build(tmp_path: Path) -> None:
+    out = tmp_path / "bundle"
+    out.mkdir()
+    outside = tmp_path / "outside-source.md"
+    outside.write_text("unchanged", encoding="utf-8")
+    (out / "DAVI-topic-index.md").symlink_to(outside)
+    with pytest.raises(BundleError, match="symlink"):
+        _build(_manifest(), out)
+    assert outside.read_text(encoding="utf-8") == "unchanged"
+
+
+def test_b13_rebuild_approved_directory_is_deterministic(tmp_path: Path) -> None:
+    out = tmp_path / "bundle"
+    first = _build(_manifest(), out)
+    original = {p.name: p.read_bytes() for p in first}
+    second = _build(_manifest(), out)
+    assert {p.name: p.read_bytes() for p in second} == original
