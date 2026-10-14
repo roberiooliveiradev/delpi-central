@@ -340,3 +340,32 @@ def test_corpus_membership_comes_from_freeze_artifact() -> None:
     paths = frozen_corpus_paths()
     assert len(paths) == _CORPUS_COUNT
     assert all(p.startswith("api-delpi/docs/api/") for p in paths)
+
+def test_b11_stale_generated_file_blocks_build(tmp_path: Path) -> None:
+    out = tmp_path / "bundle"
+    out.mkdir()
+    stale = out / "unapproved-fifo.md"
+    stale.write_text("not approved", encoding="utf-8")
+    with pytest.raises(BundleError, match="unexpected files"):
+        _build(_manifest(), out)
+    assert stale.read_text(encoding="utf-8") == "not approved"
+    assert not (out / "manifest.json").exists()
+
+
+def test_b12_symlink_output_blocks_build(tmp_path: Path) -> None:
+    out = tmp_path / "bundle"
+    out.mkdir()
+    outside = tmp_path / "outside-source.md"
+    outside.write_text("unchanged", encoding="utf-8")
+    (out / "DAVI-topic-index.md").symlink_to(outside)
+    with pytest.raises(BundleError, match="symlink"):
+        _build(_manifest(), out)
+    assert outside.read_text(encoding="utf-8") == "unchanged"
+
+
+def test_b13_rebuild_approved_directory_is_deterministic(tmp_path: Path) -> None:
+    out = tmp_path / "bundle"
+    first = _build(_manifest(), out)
+    original = {p.name: p.read_bytes() for p in first}
+    second = _build(_manifest(), out)
+    assert {p.name: p.read_bytes() for p in second} == original

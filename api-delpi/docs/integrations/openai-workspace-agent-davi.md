@@ -454,7 +454,10 @@ Not executed yet; provider acceptance is still pending:
 3. Upload the 15 frozen derived docs + `DAVI-topic-index.md` +
    `manifest.json` (17 generated files total) from
    `dist/davi-governed-knowledge/v1/` into the Agent **Files** section
-   **only after successful local `verify`**. Do not upload the unratified
+   **only after successful local `verify`**. The build now rejects any
+   unexpected/stale or symlinked output file: operator should review and
+   clear stale generated artifacts, then re-run `verify` and `build`.
+   Upload only the 17 expected files. Do not upload the unratified
    FIFO/Best Fit/FEFO vendor reference as part of the V1 frozen corpus.
 4. Update Agent Instructions from the canonical block in this document.
 5. Keep **End-user account**; keep the MCP attachment unchanged.
