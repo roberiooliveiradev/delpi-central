@@ -111,6 +111,9 @@ def openapi_record_data_properties() -> dict[str, Any]:
     "contexto": {
         "type": "object",
         "additionalProperties": True,
+        # Versioned instancia_contexto_v1: structure validated by the canonical
+        # domain validator. Explicit opaque import exception is NOT AuthZ.
+        "x-delpi-gpt-opaque-object": True,
         "description": (
             "entity=instance only — operational context doc "
             "(instancia_contexto_v1: node_notes/links). Validated by the "
