@@ -269,7 +269,6 @@ export {
 } from "./InitialsAvatar";
 export {
   UnifiedAvatar,
-  isSafeAvatarImageUrl,
   type AvatarSize,
   type AssistantMotionState,
   type PublishedAvatarProfile,

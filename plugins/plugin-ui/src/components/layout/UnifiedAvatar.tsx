@@ -39,7 +39,7 @@ const initialsClasses = initialsAvatarBemClasses("unified");
  * Syntax/scheme validation only. This does not approve the image origin:
  * owner-published profile contracts remain responsible for origin authorization.
  */
-export function isSafeAvatarImageUrl(value: string): boolean {
+function isSupportedAvatarImageUrl(value: string): boolean {
   const url = value.trim();
   if (!url || /[\u0000-\u001f\\]/.test(url)) return false;
   if (url.startsWith("/") && !url.startsWith("//")) return true;
@@ -121,7 +121,7 @@ function PersonAvatar({
 }: Extract<UnifiedAvatarProps, { kind: "person" }>) {
   const initialsName = fallbackText?.trim() || null;
   const imageCandidate = imageUrl?.trim() ?? "";
-  const safeImageUrl = isSafeAvatarImageUrl(imageCandidate) ? imageCandidate : null;
+  const safeImageUrl = isSupportedAvatarImageUrl(imageCandidate) ? imageCandidate : null;
   const classes = avatarClassName(size, className) + " delpi-ui-unified-avatar--person";
 
   return (

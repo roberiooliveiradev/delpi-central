@@ -13,11 +13,11 @@
   border-radius: 50%;
   isolation: isolate;
 }
-.delpi-ui-unified-avatar--xs { --delpi-ui-unified-size: 24px; }
-.delpi-ui-unified-avatar--sm { --delpi-ui-unified-size: 32px; }
-.delpi-ui-unified-avatar--md { --delpi-ui-unified-size: 38px; }
-.delpi-ui-unified-avatar--lg { --delpi-ui-unified-size: 52px; }
-.delpi-ui-unified-avatar--xl { --delpi-ui-unified-size: 64px; }
+.delpi-ui-unified-avatar--xs { --delpi-ui-unified-size: 24px; --delpi-ui-unified-font-size: 9px; }
+.delpi-ui-unified-avatar--sm { --delpi-ui-unified-size: 32px; --delpi-ui-unified-font-size: 11px; }
+.delpi-ui-unified-avatar--md { --delpi-ui-unified-size: 38px; --delpi-ui-unified-font-size: 12px; }
+.delpi-ui-unified-avatar--lg { --delpi-ui-unified-size: 52px; --delpi-ui-unified-font-size: 16px; }
+.delpi-ui-unified-avatar--xl { --delpi-ui-unified-size: 64px; --delpi-ui-unified-font-size: 19px; }
 .delpi-ui-unified-avatar--assistant {
   color: #fff;
   background: var(--delpi-ui-accent, var(--primary, #089bdb));
@@ -48,6 +48,7 @@
   width: 100%;
   height: 100%;
   flex: 0 0 auto;
+  font-size: var(--delpi-ui-unified-font-size, 12px);
   transition: none;
   transform: none;
 }

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { UnifiedAvatar, isSafeAvatarImageUrl } from "./UnifiedAvatar";
+import { UnifiedAvatar } from "./UnifiedAvatar";
 
 afterEach(cleanup);
 
@@ -39,12 +39,19 @@ describe("UnifiedAvatar", () => {
     expect(container.querySelector("img")?.getAttribute("src")).toBe("/photos/2");
   });
 
-  it("rejects executable image URLs", () => {
-    expect(isSafeAvatarImageUrl("javascript:alert(1)")).toBe(false);
-    expect(isSafeAvatarImageUrl("data:image/svg+xml,hello")).toBe(false);
-    expect(isSafeAvatarImageUrl("//example.test/photo")).toBe(false);
-    expect(isSafeAvatarImageUrl("/photo")).toBe(true);
-    const { container } = render(<UnifiedAvatar kind="person" label="Você" imageUrl="javascript:alert(1)" />);
+  it("rejects unsupported image URL schemes through the component boundary", () => {
+    const { container, rerender } = render(
+      <UnifiedAvatar kind="person" label="Você" imageUrl="javascript:alert(1)" />,
+    );
     expect(container.querySelector("img")).toBeNull();
+
+    rerender(<UnifiedAvatar kind="person" label="Você" imageUrl="data:image/svg+xml,hello" />);
+    expect(container.querySelector("img")).toBeNull();
+
+    rerender(<UnifiedAvatar kind="person" label="Você" imageUrl="//example.test/photo" />);
+    expect(container.querySelector("img")).toBeNull();
+
+    rerender(<UnifiedAvatar kind="person" label="Você" imageUrl="/photo" />);
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("/photo");
   });
 });
