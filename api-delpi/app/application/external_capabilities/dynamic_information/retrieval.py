@@ -10,6 +10,9 @@ from app.application.external_capabilities.dynamic_information.catalog_builder i
 from app.application.external_capabilities.dynamic_information.content_loader import (
     load_external_read_allowlist,
 )
+from app.application.external_capabilities.dynamic_information.concept_intent_guard import (
+    is_pure_concept_intent,
+)
 from app.application.external_capabilities.dynamic_information.read_only_intent_guard import (
     has_explicit_write_intent,
 )
@@ -422,6 +425,10 @@ def retrieve_eligible_actions(
     # Explicit mutation intent is semantically outside the READ broker.
     # This is not AuthZ — backend authorization remains authoritative.
     if has_explicit_write_intent(query):
+        return []
+    # Pure concept questions belong to the governed Knowledge source.
+    # A search miss does not prove absence of data or document knowledge.
+    if is_pure_concept_intent(query):
         return []
 
     # Governance filter BEFORE ranking (eligible only).
