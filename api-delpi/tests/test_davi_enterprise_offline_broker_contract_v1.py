@@ -248,7 +248,8 @@ def test_s04_two_real_broker_reads_remain_separate_and_allowlisted(
 
     assert seen == [
         (stock_id, {"code": "10080010", "branch": "01"}),
-        (shortage_id, {"code": "10080010", "branch": "01"}),
+        # The owner-governed optional default is added by argument validation.
+        (shortage_id, {"code": "10080010", "branch": "01", "max_depth": 8}),
     ]
     assert stock["status"] == shortage["status"] == "ok"
     assert stock["action_id"] == stock_id
