@@ -92,6 +92,40 @@ def test_s01_approved_intents_are_semantically_discoverable(
     )
 
 
+def test_s01_siblings_keep_description_vs_dictionary_and_shortage_vs_status(
+    cases: dict[str, dict]
+) -> None:
+    actions = get_technical_actions()
+    scenarios = [
+        (
+            cases["EI01"]["query"],
+            "search_products",
+            "search_protheus_columns_by_description",
+        ),
+        (
+            cases["EI07"]["query"],
+            "get_product_raw_material_set_shortages",
+            "get_product_production_status",
+        ),
+    ]
+    for query, expected, competing in scenarios:
+        ranked = retrieve_eligible_actions(query, actions, top_k=10)
+        returned = [action.operation_id for action, _ in ranked]
+        assert returned and returned[0] == expected, (query, returned)
+        assert returned[0] != competing
+
+    # Semantic siblings: a Protheus column and normal production-status
+    # question must remain different intents, not stolen by the new aliases.
+    for query, expected in [
+        ("Qual coluna do Protheus armazena a descrição do produto?", "search_protheus_columns_by_description"),
+        ("Qual o status de produção do produto 10080010?", "get_product_production_status"),
+    ]:
+        ranked = retrieve_eligible_actions(query, actions, top_k=10)
+        returned = [action.operation_id for action, _ in ranked]
+        assert expected in returned[:5], (query, returned)
+
+
+
 def test_s02_pure_concept_does_not_mint_operational_candidate(
     offline_tokens, cases: dict[str, dict]
 ) -> None:
@@ -102,7 +136,13 @@ def test_s02_pure_concept_does_not_mint_operational_candidate(
     )
     assert discovered["candidate_count"] == 0
     assert discovered["candidates"] == []
-    assert discovered["eligible_action_count"] == 89
+    # Approved metadata inventory can exceed dynamically executable OpenAPI
+    # entries (e.g. a missing baseline path or malformed response binding).
+    # Compare the actual broker's availability, never a hardcoded allowlist size.
+    assert discovered["eligible_action_count"] == sum(
+        1 for action in get_technical_actions() if action.executable
+    )
+    assert discovered["eligible_action_count"] > 0
     # No Knowledge answer implied: provider-native Files remain untested.
 
 

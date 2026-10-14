@@ -22,3 +22,11 @@ Base: `91e7eb921c98491cfed693550bd47c3af7474377` (PR #71), current Stage 3 fixtu
 | Deployment/runtime, rate decision, publication | PENDING |
 
 No merge/deploy or authorization change.
+
+## CI root-cause correction after first integration failure
+
+GitHub Actions at integration `1f48a08a65556fd667b0464f805ec8c0d46ccb3a` produced 9 FAIL / 141 PASS. Six of the failures shared a single cause: the approved `get_product_raw_material_set_shortages` action was invisible for E07's natural-language paraphrase, whereas the wrong `get_product_production_status` appeared. E01 item-description query returned metadata-column search instead of `search_products`. A third failure incorrectly equated allowlist entries (89) with runtime baseline eligible actions (87); those inventories represent different contracts.
+
+Fix in the `api-delpi` semantic allowlist owner: add explicit item-description and per-product production-set shortage synonyms; no change to operation set, input/output projections, endpoints, RBAC, or runtime executor. Fix the test to measure real broker eligible actions rather than a hardcoded allowlist count. Add positive and semantic sibling tests: metadata-column and normal production-status queries must remain discoverable.
+
+All owner/runtime tests must be re-executed on the new commit. No weakening of hard-negative, actor binding, input protection or provider gates.
