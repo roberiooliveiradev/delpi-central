@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-08",
-  "operation_count": 207,
+  "generatedAt": "2026-10-14",
+  "operation_count": 214,
   "operations": [
     {
       "operationId": "post_liberar",
@@ -253,6 +253,36 @@
       "operationId": "download_processo_arquivo",
       "method": "GET",
       "path": "/transformometro/processos/{processo_id}/arquivos/{arquivo_id}/arquivo",
+      "module": "crud"
+    },
+    {
+      "method": "DELETE",
+      "path": "/transformometro/processos/{processo_id}/bpmn-reference",
+      "operationId": "remove_process_bpmn_reference",
+      "module": "crud"
+    },
+    {
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/bpmn-reference",
+      "operationId": "get_process_bpmn_reference",
+      "module": "crud"
+    },
+    {
+      "method": "PUT",
+      "path": "/transformometro/processos/{processo_id}/bpmn-reference",
+      "operationId": "set_process_bpmn_reference",
+      "module": "crud"
+    },
+    {
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/bpmn-reference/candidates",
+      "operationId": "list_process_bpmn_model_candidates",
+      "module": "crud"
+    },
+    {
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/bpmn-reference/candidates/{model_id}/revisions",
+      "operationId": "list_process_bpmn_model_revisions",
       "module": "crud"
     },
     {
@@ -856,6 +886,12 @@
       "module": "gpt_actions"
     },
     {
+      "method": "POST",
+      "path": "/transformometro/gpt-actions/v1/helpdesk/prepare",
+      "operationId": "gpt_prepare_helpdesk_change",
+      "module": "gpt_actions"
+    },
+    {
       "operationId": "gpt_get_my_context",
       "method": "GET",
       "path": "/transformometro/gpt-actions/v1/me",
@@ -961,6 +997,12 @@
       "operationId": "open_transformometro_interaction_room",
       "method": "POST",
       "path": "/transformometro/interaction-rooms",
+      "module": "interaction_rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/transformometro/interaction-rooms/{room_id}",
+      "operationId": "delete_transformometro_interaction_room",
       "module": "interaction_rooms"
     },
     {

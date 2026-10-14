@@ -414,6 +414,11 @@
         "product structure",
         "bill of materials",
         "product components"
+      ],
+      "retrievalNegativePhrases": [
+        "BOM reversa",
+        "estrutura reversa",
+        "reverse BOM"
       ]
     },
     {
@@ -913,7 +918,13 @@
         "products using component",
         "produtos que consomem",
         "onde é usado na estrutura",
-        "onde e usado na estrutura"
+        "onde e usado na estrutura",
+        "onde o produto é utilizado",
+        "onde o componente é utilizado",
+        "em quais produtos é utilizado",
+        "produtos que utilizam este componente",
+        "BOM reversa do produto",
+        "estrutura reversa do produto"
       ],
       "argumentConstraints": {
         "argumentLimits": {

@@ -298,6 +298,24 @@
       "le": 500,
       "optional": false,
       "description": "page_size default=100 ge=1 le=500 (machine load)"
+    },
+    "page_50_50": {
+      "id": "page_50_50",
+      "param": "page_size",
+      "default": 50,
+      "ge": 1,
+      "le": 50,
+      "optional": false,
+      "description": "page_size default=50 ge=1 le=50 (legacy GPT product search)"
+    },
+    "page_25_100": {
+      "id": "page_25_100",
+      "param": "page_size",
+      "default": 25,
+      "ge": 1,
+      "le": 100,
+      "optional": false,
+      "description": "page_size default=25 ge=1 le=100 (LNF received invoices)"
     }
   }
 }

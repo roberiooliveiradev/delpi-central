@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -2472,6 +2473,13 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         + " PREPARE only — commit via gpt_commit_proposal."
                     )[:300]
                 op["x-openai-isConsequential"] = False
+
+    # Governed PREPARE consumes the same nested package shapes as the owner
+    # schema. Avoid untyped duplicates that the GPT Builder cannot construct.
+    package_fields = doc["components"]["schemas"]["GptImprovementPackageBody"]["properties"]
+    governed_fields = doc["components"]["schemas"]["GptGovernedOperationBody"]["properties"]
+    for field_name in ("process", "instance", "baseline", "scenario"):
+        governed_fields[field_name] = deepcopy(package_fields[field_name])
 
     _normalize_builder_nullable_types(doc)
     return doc
