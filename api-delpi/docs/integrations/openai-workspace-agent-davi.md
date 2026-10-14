@@ -409,7 +409,7 @@ Governed knowledge corpus (content-governance freeze, not runtime ingestion): `d
 
 ```text
 Git frozen corpus (15 docs, freeze artifact)
-→ deterministic derived bundle (provenance header + manifest)
+→ deterministic derived bundle (15 pinned docs + derived topic index + manifest)
 → Workspace Agent Files (provider-managed, per-agent)
 → provider-native retrieval
 ```
@@ -421,6 +421,13 @@ Git frozen corpus (15 docs, freeze artifact)
   (`emit-manifest` | `build` | `verify`).
 - Derived output: `api-delpi/dist/davi-governed-knowledge/v1/` —
   generated artifact, gitignored; ready for operator-controlled sync only.
+- Topic registry (versioned metadata, NOT domain authority):
+  `docs/integrations/evidence/davi-governed-knowledge-topics-v1.json`.
+  Exactly 15 approved topic→source pointers, validated against the pinned manifest.
+- Generated `DAVI-topic-index.md` adds search aliases and provenance pointers;
+  it is **not** a 16th source document and adds no data-operational authority.
+- TOTVS FIFO/Best Fit/FEFO is `TO_INVENTORY` external knowledge not
+  homologated in DELPI, so it is intentionally excluded from V1 Agent Files.
 - No RAG backend, vector DB, embeddings, knowledge endpoint, third MCP tool
   or document-level RBAC. Corpus is common to the DAVI agent audience.
 
@@ -444,8 +451,11 @@ Not executed yet; provider acceptance is still pending:
    (`manifest_sha256`), pinned freeze membership at `freeze_sha`, document
    hashes at `source_git_sha`, and current-source reproducibility. It must
    PASS before any upload.
-3. Upload the 15 derived docs + `manifest.json` from
-   `dist/davi-governed-knowledge/v1/` into the agent **Files** section.
+3. Upload the 15 frozen derived docs + `DAVI-topic-index.md` +
+   `manifest.json` (17 generated files total) from
+   `dist/davi-governed-knowledge/v1/` into the Agent **Files** section
+   **only after successful local `verify`**. Do not upload the unratified
+   FIFO/Best Fit/FEFO vendor reference as part of the V1 frozen corpus.
 4. Update Agent Instructions from the canonical block in this document.
 5. Keep **End-user account**; keep the MCP attachment unchanged.
 6. Do **not** publish widely (gates unchanged).
@@ -454,6 +464,11 @@ Not executed yet; provider acceptance is still pending:
 
 File replace/delete on an existing agent requires Agent Studio UI (the Codex
 plugin uploads new files but cannot overwrite existing paths).
+
+Topic-index generation in Git/CI does not demonstrate native Files retrieval.
+The operator must record provider-side corpus/manifest version and K01–K10
+preview evidence; until then **PROVIDER_NATIVE_RETRIEVAL = TEST_NOT_RUN**.
+Never treat a retrieved file as authorization for an unapproved operation.
 
 ### K01–K10 provider acceptance set
 

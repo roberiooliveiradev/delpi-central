@@ -22,6 +22,9 @@ jobs:
         working-directory: api-delpi
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Frozen Knowledge validates SHA objects pinned before this PR.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -33,6 +36,12 @@ jobs:
         run: |
           pip install -e ../shared[fastapi]
           pip install -r requirements.txt
+
+      - name: DAVI Knowledge — frozen manifest and topic index
+        run: |
+          PYTHONPATH=. python scripts/build_davi_governed_knowledge_bundle.py verify
+          PYTHONPATH=. pytest tests/test_davi_governed_knowledge_bundle.py tests/test_davi_governed_knowledge_topic_index.py -q
+          PYTHONPATH=. python scripts/build_davi_governed_knowledge_bundle.py build
 
       - name: Testes focados DAVI ajustes de inventário
         run: |
