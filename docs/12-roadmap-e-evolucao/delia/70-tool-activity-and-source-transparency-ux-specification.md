@@ -521,7 +521,7 @@ Transições são fatos observados — não há obrigação de percorrer todas a
 
 ### 16.5 Transporte (Opção A implementada)
 
-- Mesma rota `POST /interaction/turns`; opt-in por `Accept: application/x-ndjson` (quality > 0). Ausente/outro Accept → JSON legado byte-equivalente.
+- Mesma rota `POST /interaction/turns`; opt-in somente por **media-range explícito** `Accept: application/x-ndjson` com `q > 0`. Wildcards (`*/*`), ausência do header, `application/json` ou `application/x-ndjson;q=0` mantêm JSON legado — wildcard nunca autoriza stream.
 - Execução do use case roda em **um worker thread por request** drenando um `queue.Queue` — necessário e seguro: `execute()` é síncrono e não pode intercalar yields na mesma thread (worker gunicorn sync, `--threads 4`); sem thread só existiria streaming cosmético. Thread daemon, request-scoped, sem fila externa, sem novo endpoint.
 - Headers do stream: `X-Accel-Buffering: no`, `Cache-Control: no-cache, no-store`. Sem mudança de gateway.
 - O primeiro evento (`REQUEST_RECEIVED`) chega ao cliente antes da conclusão — verificado por teste de timing com latência determinística.
@@ -533,3 +533,14 @@ Transições são fatos observados — não há obrigação de percorrer todas a
 - Frontend: `Accept` enviado; se o servidor responder JSON legado, o cliente faz parse do caminho existente (fallback automático, sem segunda request).
 - Limites client-side: tamanho de linha, número de eventos, sequência/dedup, terminal obrigatório.
 - Proibições herdadas (§7/§13): sem chain-of-thought, prompts, tool args, raw payload MCP, `agent_directives`, candidate tokens, secrets, headers, SQL, hosts privados.
+
+
+### 16.7 Hardening localizado do transporte — `DELIA-C3-NDJSON-TRANSPORT-HARDENING-R1`
+
+**Implementação:** `d2390a401080c16e4f6555db5c6fa9cc18c96302` (`main`, 2026-10-15). **Escopo:** `delia-api/app/interfaces/http/interaction_routes.py` + `delia-api/tests/test_activity_streaming.py`. Não altera `ActivityEvent.v1`, `presentation.v1`, AuthZ, Domain authority, `ActivityViewer`, nem a semântica de `turn_result` / `turn_error`.
+
+- **Opt-in explícito:** iteração pelos media-ranges declarados em `request.accept_mimetypes`, sem usar resolução por wildcard. Um cabeçalho genérico `*/*` não recebe NDJSON; media-range explícito com qualidade positiva recebe NDJSON.
+- **Fila limitada:** `queue.Queue(maxsize=66)` por request, com no máximo **60** observações intermediárias, **4** observações terminais e **2** slots para resultado autoritativo/erro e sentinela. A publicação usa `put_nowait` e nunca bloqueia a thread por ausência de consumo da resposta.
+- **Sob saturação:** observações intermediárias além do limite são omitidas (sem inventar eventos), preservando a capacidade para eventos terminais reais e `turn_result`/`turn_error` obrigatório. O histórico progressivo é uma projeção bounded, não um log completo nem uma fonte de autoridade.
+- **Verificação:** testes adicionados para wildcard, `q=0`, opt-in positivo e 500 emissões com resultado/erro; **execução integral dos testes ainda = `TEST_NOT_RUN` neste ambiente** (sem checkout executável/dependências). Simulação isolada da invariância da fila = `PASS`, insuficiente para aceite de integração. `INDEPENDENT_REVIEW=PENDING`; live no SHA corrigido = `TEST_NOT_RUN`.
+- **Gates preservados:** `C3_EXECUTED=NO`, `C4/C5_AUTHORIZED=NO`; `NEXT=RETURN_TO_ARCHITECTURE_COORDINATION`. Nenhum deploy incluído neste hardening.

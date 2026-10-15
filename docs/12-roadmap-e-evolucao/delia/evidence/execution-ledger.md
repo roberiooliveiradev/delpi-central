@@ -13597,3 +13597,23 @@ PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
   (independent review of `6f407819b3`; deploy + live streaming
   verification require separate authorization)
+
+
+## §6.169 — DELIA-C3-NDJSON-TRANSPORT-HARDENING-R1 (commit publicado; testes de integração pendentes)
+
+**Task:** correção localizada pós-inspeção independente do streaming progressivo `ActivityEvent.v1`; fixar opt-in do media-range NDJSON e memória bounded do transporte, sem evolução funcional ou de fase.
+
+- **BASE_HEAD:** `78324b181cb3d7192f26fd88cf60dfa62d46fad3` (`main`); commit de implementação: `d2390a401080c16e4f6555db5c6fa9cc18c96302` (2 arquivos `delia-api`: HTTP boundary + testes); publicado por atualização fast-forward da referência `main` com expected SHA.
+- **REANCHOR:** Project Instructions/`.cursor` → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → doc 70 → ledger. C3 mantém `CURRENT_NEXT=RETURN_TO_ARCHITECTURE_COORDINATION`.
+- **RESPONSIBILITY / OWNER:** transporte HTTP request-scoped `delia-api/interfaces/http`; `Application` permanece dona de eventos semânticos. Frontend `plugins/delia` permanece consumer. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` — corrigir o adapter existente; nenhum novo engine/port/registry.
+- **RQ-H1 (CRITICAL):** seleção NDJSON somente por `Accept: application/x-ndjson` explícito com qualidade positiva; `*/*` sozinho e `application/x-ndjson;q=0, */*` retornam JSON legado. Código e testes de regressão adicionados; integração `TEST_NOT_RUN`.
+- **RQ-H2 (CRITICAL):** buffer `Queue(maxsize=66)` por request; máximo de 60 eventos intermediários + 4 terminais + resultado/erro obrigatório + sentinel, `put_nowait`, sem bloqueio da thread quando consumidor desconecta. Código/testes adicionados; simulação de invariância de contagem `PASS`, integração `TEST_NOT_RUN`.
+- **RQ-H3 (CRITICAL):** `turn_result`/`turn_error`, AuthZ, modelo/policy, digests, `presentation.v1` e frontend `ActivityViewer` inalterados; teste de 500 eventos+sucesso/falha adicionado; testes de regressão `TEST_NOT_RUN`.
+- **SCOPE:** somente `delia-api/app/interfaces/http/interaction_routes.py`, `delia-api/tests/test_activity_streaming.py`; doc temático §16.7 + ledger §6.169 em commit documental separado. Nenhum deploy, thread pool global, schema/contrato HTTP novo ou executor externo.
+- **TESTS:** execução real da suíte `delia-api` `TEST_NOT_RUN` (ambiente da coordenação sem checkout executável e dependências). Simulação stdlib do orçamento da fila com 0/1/60/61/500/100000 eventos = `PASS` **como teste de raciocínio isolado**, não evidência de framework/integração. Regressão visual/browser real = `TEST_NOT_RUN`.
+- **SECURITY:** nenhum payload adicional divulgado; ainda depende de execução dos testes de Autorização e redaction no SHA final. `BUSINESS_OUTCOME=NOT_PROVEN` neste hardening; screenshots anteriores não verificam o código corrigido.
+- **RESIDUALS:** executar `.venv/bin/python -m pytest tests/test_activity_streaming.py` e suíte integral em `delia-api`; validar negociação Accept + fila sob consumidor lento/desconectado no nginx/gunicorn; revisão independente do diff; validar progressão autenticada e resultado final autoritativo em ambiente liberado. Não declarar `PASS` ou aceite final sem essas evidências.
+- **STATUS:** `IMPLEMENTATION_PUBLISHED_WITH_TEST_RESIDUAL`; `INDEPENDENT_REVIEW=PENDING`; `DEPLOYMENT=NOT_PERFORMED_BY_TASK`; `LIVE_STREAMING_VERIFIED_ON_FIX_SHA=TEST_NOT_RUN`.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
