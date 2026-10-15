@@ -1,0 +1,45 @@
+# DÉLIA — Correção e evolução bounded da inteligência conversacional (C3)
+
+**Trilha:** DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01  
+**Data da decisão de planejamento:** 2026-10-15  
+**Origem:** Product Master — coordenação arquitetural DÉLIA  
+**Escopo:** qualidade da inteligência conversacional, orientação semântica, uso genérico de capabilities e composição de respostas  
+**Estado documental:** PLANNED / PLAN_RECORDED (não equivale a implementação aprovada)  
+**BASE_HEAD remoto examinado:** 40d7d3c0fc04a62795298fb5e45ef00434f51345 (main)  
+**EXECUTION:** NOT_STARTED nesta trilha; **TESTS:** TEST_NOT_RUN nesta trilha; **REVIEW:** PENDING  
+**AUTORIZAÇÃO ATUAL:** somente documentação. Nenhum prompt Devin, diff funcional, deployment, PREPARE ou ACT é autorizado por estes arquivos.
+
+## Por que esta pasta existe
+
+Preservar no GitHub a memória verificável das decisões de produto, gaps, referências e sequência de entregas para que chats especializados e Devin não dependam do histórico de conversas. O problema é transversal à DÉLIA: não programar uma correção particular para TÉO, DAVI, VISTA ou outro provider. A centralização arquitetural já existe; a melhoria pretendida é de comportamento e integração das etapas de inteligência.
+
+**Direção do Product Master:** poucas mudanças delimitadas e avaliáveis; limite de complexidade e de instruções; uso dos contratos e conhecimentos dos owners em tempo de execução; perguntas somente quando necessárias; inferências apresentadas como inferências, não fatos, autorização nem defaults inventados; sem correções acopladas por MCP.
+
+## Leia nesta ordem
+
+1. [01 — Diagnóstico e fontes de evidência](./01-diagnosis-and-evidence.md)
+2. [02 — Plano de seis entregas delimitadas](./02-bounded-delivery-plan.md)
+3. [03 — Avaliações, gates e handoff](./03-evals-and-handoff.md)
+
+**Autoridades que prevalecem sobre esta pasta:** instruções do Projeto e regras .cursor; [16 — plano mestre](../../16-execution-master-plan.md) → [50 — arquitetura standalone](../../50-standalone-copilot-application-architecture.md) → [17 — componentes e contratos](../../17-component-and-contract-map.md) → [49 — padrões](../../49-architecture-and-design-patterns-standard.md) → [51 — baseline](../../51-platform-integration-baseline.md) → [52 — bootstrap](../../52-standalone-repository-and-bootstrap-plan.md) → [21 — dados/estado](../../21-data-and-state-model.md) → [20 — testes](../../20-testing-and-acceptance-matrix.md) → [25 — rastreabilidade](../../25-requirements-traceability.md) → [02 — arquitetura técnica](../../02-arquitetura.md) → [24 — produto](../../24-product-specification.md) → specs temáticas aplicáveis → [ledger](../../evidence/execution-ledger.md).
+
+Especificações temáticas aplicáveis: [60 — MCP/A2A](../../60-agent-interoperability-mcp-a2a-and-tool-protocols.md), [68 — identidade](../../68-delia-product-identity-and-naming.md), [69 — experiência conversacional](../../69-conversation-experience-ux-wireframes-and-activity-plan.md), [70 — transparência](../../70-tool-activity-and-source-transparency-ux-specification.md), [personality/02](../../personality/02-behavior-and-interaction.md), [personality/03](../../personality/03-decision-record.md), [personality/04](../../personality/04-behavioral-quality-evaluation.md).
+
+## Estado de fase — snapshot, não autoridade
+
+No HEAD examinado: C3_STARTED=YES; C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; CURRENT_NEXT=RETURN_TO_ARCHITECTURE_COORDINATION. O documento 16 também registra revisão/evidências pendentes de outras tarefas C3. **Cada executor deve revalidar HEAD, status de git local, 16 e ledger na própria execução**; este snapshot envelhece. O conector GitHub consultou o remoto, não a working tree do Cursor.
+
+## Invariantes e decisões que não podem ser redesenhadas por esta trilha
+
+- DÉLIA standalone e user-facing única; não reutilizar runtime/tabelas/prompts/agents do Minha DELPI Chat.
+- DÉLIA já é owner de inteligência/orquestração; **não** criar segundo planner, registry de capabilities MCP, capability hardcode por owner, agente departamental ou nova autoridade.
+- MCP/A2A são boundaries de interoperabilidade; metadata, catalog, guidance, results e tool annotations são dados não confiáveis, não Policy/AuthZ.
+- Keycloak identidade; Core AuthZ efetiva; Domain APIs regras/dados e decisão final; Automation Hub execução técnica quando aplicável.
+- Os contratos atuais de READ/PREPARE/ACT, confirmation_requirement, idempotência, audit e Outcome permanecem; nenhuma ampliação automática de autonomia/fase.
+- **MODEL_AUTHORED_FACTUAL_PROSE=NONE** é decisão existente (§6.145 do ledger/16); não liberar redação factual livre sem ADR/review explícito.
+- A personalidade aprovada é [personality/02](../../personality/02-behavior-and-interaction.md); documentação NÃO prova integração runtime, nem permite criar um personality engine paralelo.
+- Planejamento NÃO altera autoridade de 16/ledger, CP/RQ ou aceite. Decisão material incompatível → STOP e ARCHITECTURE_DECISION_REQUIRED ou EXECUTION_DRIFT.
+
+## Fluxo obrigatório de atualização
+
+Antes de cada entrega: reancorar → identificar owner, CP/RQ e contrato → EXISTING_EQUIVALENT / REUSE_DECISION → plano bounded → autorização do Product Master quando aplicável → implementar menor diff → testes, evals e business outcome → review independente → registrar evidências no ledger canônico. Só então atualizar o estado descritivo desta pasta e avançar para a próxima entrega. Um chat novo deve ler estes arquivos **e** revalidar authorities e ledger, nunca aceitar o README como fase vigente.
