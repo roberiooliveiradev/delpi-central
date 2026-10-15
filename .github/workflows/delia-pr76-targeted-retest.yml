@@ -1,0 +1,35 @@
+name: DELIA PR76 Targeted Retest
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "plugins/delia/**"
+      - ".github/workflows/delia-pr76-targeted-retest.yml"
+permissions:
+  contents: read
+jobs:
+  delia-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install plugin-ui
+        working-directory: plugins/plugin-ui
+        run: npm ci
+      - name: Install delia
+        working-directory: plugins/delia
+        run: npm ci
+      - name: Targeted tests
+        working-directory: plugins/delia
+        run: npx vitest run src/s2.shell.test.tsx src/demoMode.test.tsx src/ui/ConversationTimeline.test.tsx src/identity/currentUser.test.tsx
+      - name: DÉLIA complete suite
+        if: success() || failure()
+        working-directory: plugins/delia
+        run: npm test
+      - name: Build and federation
+        if: success() || failure()
+        working-directory: plugins/delia
+        run: npm run build && npm run verify:federation
