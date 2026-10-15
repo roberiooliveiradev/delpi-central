@@ -649,6 +649,71 @@ def test_ndjson_q_zero_stays_json():
     assert response.content_type.startswith("application/json")
 
 
+@pytest.mark.parametrize("accept", (
+    "*/*",
+    "application/json, */*",
+    "application/x-ndjson;q=0",
+    "application/x-ndjson;q=0, */*;q=1",
+    "text/plain",
+))
+def test_ndjson_requires_explicit_positive_opt_in(accept):
+    client = _client(handler=_handler())
+    response = client.post(
+        PATH,
+        json={"input": "oi"},
+        headers={"Authorization": "Bearer t", "Accept": accept},
+    )
+    assert response.status_code == 200
+    assert response.content_type.startswith("application/json")
+
+
+@pytest.mark.parametrize("accept", (
+    "application/x-ndjson",
+    "application/json, application/x-ndjson",
+    "application/x-ndjson;q=0.4, application/json;q=0.8",
+))
+def test_ndjson_explicit_positive_opt_in(accept):
+    client = _client(handler=_handler())
+    response = _stream(client, headers={"Accept": accept})
+    assert response.status_code == 200
+    assert response.content_type.startswith(NDJSON)
+    assert _records(response.response)[-1]["type"] == "turn_result"
+
+
+@pytest.mark.parametrize("fail", (False, True))
+def test_stream_queue_saturation_keeps_authoritative_terminal(fail):
+    """More activity than the UI limit cannot block or lose the result.
+
+    The test client waits before consuming, exercising a slow reader.
+    """
+    class _Burst:
+        def execute(self, command, *, activity_channel=None):
+            sink = ActivityEventSink(
+                activity_channel, session_id="s", turn_id="t"
+            )
+            for _ in range(500):
+                sink.emit(phase=ActivityPhase.CONTEXTUALIZING)
+            sink.emit(
+                phase=(ActivityPhase.FAILED if fail
+                       else ActivityPhase.COMPLETED)
+            )
+            if fail:
+                raise InteractionError(MODEL_TIMEOUT, "timeout")
+            return _handler().execute(command)
+
+    response = _stream(_client(handler=_Burst()))
+    records = _records(response.response)
+    events = [r for r in records if r["type"] == "activity_event"]
+    assert len(events) == 61  # 60 intermediary + terminal observation
+    assert events[-1]["phase"] == ("FAILED" if fail else "COMPLETED")
+    assert [e["sequence"] for e in events] == list(range(1, 61)) + [501]
+    assert records[-1]["type"] == ("turn_error" if fail else "turn_result")
+    if fail:
+        assert records[-1]["code"] == MODEL_TIMEOUT
+    else:
+        assert records[-1]["result"]["content"]
+
+
 def test_ndjson_stream_events_and_terminal_result():
     client = _client(handler=_handler(orch=_orchestrator()))
     response = _stream(client)

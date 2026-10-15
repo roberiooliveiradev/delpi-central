@@ -25,6 +25,7 @@ from flask import (
 
 from app.application.interaction.activity import (
     ACTIVITY_EVENT_VERSION,
+    ActivityPhase,
     TURN_ERROR_RECORD_TYPE,
     TURN_RESULT_RECORD_TYPE,
 )
@@ -193,15 +194,28 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
 
 _NDJSON_MIME = "application/x-ndjson"
 
+# At most 64 observable steps per turn, matching the MFE parser budget.
+# Keep room for terminal observations even if the provider emits many steps.
+_MAX_INTERMEDIATE_EVENTS = 60
+_MAX_TERMINAL_ACTIVITY_EVENTS = 4
+_MAX_QUEUED_ITEMS = _MAX_INTERMEDIATE_EVENTS + _MAX_TERMINAL_ACTIVITY_EVENTS + 2
+_TERMINAL_ACTIVITY_PHASES = frozenset({
+    ActivityPhase.WAITING_CONFIRMATION,
+    ActivityPhase.COMPLETED,
+    ActivityPhase.PARTIAL,
+    ActivityPhase.BLOCKED,
+    ActivityPhase.FAILED,
+    ActivityPhase.CANCELLED,
+})
+
 
 def _wants_ndjson() -> bool:
-    try:
-        quality = request.accept_mimetypes.quality(_NDJSON_MIME)
-    except Exception:
-        quality = None
-    if quality is not None:
-        return quality > 0
-    return _NDJSON_MIME in (request.headers.get("Accept") or "")
+    # Opt-in must be explicit. MIMEAccept.quality() resolves */* and
+    # would otherwise stream to legacy clients that never requested it.
+    return any(
+        mimetype.lower() == _NDJSON_MIME and quality > 0
+        for mimetype, quality in request.accept_mimetypes
+    )
 
 
 def _stream_interaction_turn(handler, command, logger):
@@ -213,30 +227,51 @@ def _stream_interaction_turn(handler, command, logger):
     its HTTP status — headers are never committed early for cases that
     must preserve their codes.
     """
-    items: queue.Queue[tuple[str, object]] = queue.Queue()
+    # This is a per-request transport buffer, NOT an execution queue.
+    # Two slots are reserved for the authoritative terminal + sentinel.
+    # All producer writes are non-blocking, including after disconnect.
+    items: queue.Queue[tuple[str, object]] = queue.Queue(
+        maxsize=_MAX_QUEUED_ITEMS
+    )
 
     def run() -> None:
+        intermediate_events = 0
+        terminal_events = 0
+
+        def publish_activity(event) -> None:
+            nonlocal intermediate_events, terminal_events
+            if event.phase in _TERMINAL_ACTIVITY_PHASES:
+                if terminal_events >= _MAX_TERMINAL_ACTIVITY_EVENTS:
+                    return
+                terminal_events += 1
+            else:
+                if intermediate_events >= _MAX_INTERMEDIATE_EVENTS:
+                    return
+                intermediate_events += 1
+            # Guaranteed capacity: at most 64 events + terminal + done.
+            # Excess intermediate observations are omitted, not invented;
+            # the final turn_result/turn_error is never dropped.
+            items.put_nowait(("event", event))
+
         try:
             result = handler.execute(
                 command,
-                activity_channel=lambda event: items.put(
-                    ("event", event)
-                ),
+                activity_channel=publish_activity,
             )
         except InteractionError as exc:
-            items.put(("error", exc))
+            items.put_nowait(("error", exc))
         except Exception:
             logger.exception("interaction_stream_failed")
-            items.put(
+            items.put_nowait(
                 (
                     "error",
                     InteractionError(INTERNAL_ERROR, "internal error"),
                 )
             )
         else:
-            items.put(("result", result))
+            items.put_nowait(("result", result))
         finally:
-            items.put(("done", None))
+            items.put_nowait(("done", None))
 
     worker = threading.Thread(
         target=run, name="delia-interaction-turn", daemon=True
