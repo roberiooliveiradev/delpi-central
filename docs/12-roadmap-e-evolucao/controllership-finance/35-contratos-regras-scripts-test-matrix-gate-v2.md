@@ -479,7 +479,7 @@ Nenhum script abaixo deve ser criado na FASE A.
 - `validate-p5-versioning`
 - `validate-p5-completion-rule`
 - `validate-p5-notification-boundary`
-- `validate-p5-delivery-contract` — must remain blocked until E04/T04
+- `validate-p5-submission-review-contract` — cobre submissão in-portal, unanimidade, versionamento e falhas de AuthZ
 - `validate-p5-authz`
 - `validate-p5-help`
 - `validate-p5-plugin-ui`
@@ -626,3 +626,28 @@ Próximo passo:
 - decidir `D-P5-REVIEW-COMPLETION`;
 - reexecutar residual search;
 - somente então avaliar `PRODUCT_CONTRACT_FREEZE = PASS` e `DOCUMENTATION_CLOSURE_COMPLETE = PASS`.
+
+
+## Adendo de governança — decisões PO C2 e D-P5-01 a D-P5-05 (15/10/2026)
+
+**TARGET / DECIDED_BY_PRODUCT_OWNER / DOCUMENTATION_REBASELINE_PENDING**. Registro de decisão, não evidência de runtime nem aprovação de freeze. Este adendo prevalece sobre referências anteriores a C1/C2/C3 como decisão aberta; semânticas derivadas ainda pendentes não devem ser inferidas.
+
+- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as revisões obrigatórias aceitas e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
+- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todos os reviewers obrigatórios** precisam aceitar. Aceite parcial não atende ao quorum.
+- **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
+- **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
+- **D-P5-04:** ao perder ACCESS efetivo, reviewer perde a capacidade de agir; atribuição e histórico são preservados; substituição exige reatribuição autorizada, auditável e validada pela BFF/Core (fail-closed).
+- **D-P5-05:** solicitação de alterações (CHANGES_REQUESTED) e rejeição terminal (REVIEW_REJECTED) são outcomes distintos; não usar um como alias do outro.
+
+Regra alvo:
+
+```text
+ALL_APPLICABLE_PACKAGES_SUBMITTED
+AND ALL_REQUIRED_REVIEWS = REVIEW_ACCEPTED
+AND NO_OPEN_CLARIFICATION
+=> MONTHLY_CLOSING_COMPLETED
+```
+
+**DECISION_REQUIRED / NO CHANGE TO BEHAVIOR:** definir escopo da terminalidade de REVIEW_REJECTED (submissão vs pacote), regra de substituição/aceite anterior, congelamento ou alteração auditada do conjunto de reviewers obrigatórios, necessidade de novo quorum por versão e tratamento da competência quando houver rejeição terminal. Nenhum endpoint, migration, scaffold ou permission adicional está autorizado.
+
+**Evidência pendente:** rebase do main, .cursor aplicável, ledger RQ/AC, Core effective permissions, test matrix positive/sibling/negative, Help, postcondition. `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`.
