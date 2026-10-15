@@ -405,3 +405,58 @@ Real: adapter deriva do contrato; pending não revela provider/ferramenta. Demo 
 ### 14.7 Gaps contratuais preservados
 
 Etapas progressivas reais, durações medidas, inspector lateral e sequência multi-etapa legítima continuam TO_INVENTORY/TARGET — exigem projeção/contrato novos do backend. Este registro não reclassifica TARGET como implementado.
+
+## 15. Inventário de atividade progressiva — DELIA-UX-PROGRESSIVE-ACTIVITY-RUNTIME-01
+
+**Registro:** inventário + REUSE GATE + proposta de contrato. **Não** há implementação — o transporte/contrato exigem autorização arquitetural explícita (ver §13.8/D4 e doc 69 §"Modelo de UX progressivo": "requer ADR/contrato e não é autorizado por este plano"; doc 50: "SSE, WebSocket e callbacks detalhados ficam para passos posteriores de contrato").
+
+### 15.1 REUSE GATE
+
+```
+RESPONSIBILITY      = publish bounded real-time operational activity
+                      for an in-flight DÉLIA interaction
+EXISTING_EQUIVALENT = NO (para canal DÉLIA-consumível)
+REUSE_DECISION      = PENDING (aguarda decisão de transporte/contrato)
+```
+
+| Candidato | Evidência | Veredito |
+| --- | --- | --- |
+| delia-api SSE/WS/progress | Flask 3.1 + gunicorn sync (`--workers 1 --threads 4`); rotas = `POST /interaction/turns` + health; zero eventos/ports de progresso; sem deps WS/SSE | `NO` |
+| Portal `socket.io` (`portal/src/hooks/useSocket.ts`) | Canal Portal-owned (notifications/presence/app_usage/admin.changed) — não é event bus de MFE | `NOT_REUSABLE` (boundary) |
+| requests-api `RequestsRealtimeHub` + `realtime_routes.py` | FastAPI WS com salas `user:{id}`/`request:{uuid}` — padrão provado atrás do gateway (upgrade + `proxy_buffering off`), porém pertence ao bounded context de requests | `NOT_REUSABLE` como consumo; `PROVEN_PATTERN` como referência |
+| Automation Hub progress events | sem consumer/contrato DÉLIA-consumível inventariado | `TO_INVENTORY` |
+| ActivityViewer progress props | `state=running` + `steps[]` existem; suporta updates incrementais por props, sem mudança | `YES` (frontend) |
+| Observability/event bus compartilhado | não encontrado canal genérico | `NO` |
+
+### 15.2 Milestones reais observáveis (delia-api)
+
+`handle_interactive_turn.execute()` já percorre estados honestos e discretos: validação de acesso/input (`REQUEST_RECEIVED`), `capability_orchestration.attempt()` (`CONTEXTUALIZING`/`CAPABILITY_SELECTED`/`SOURCE_QUERY_*` conforme provenance), ramos terminais governados (`WAITING_CONFIRMATION`, `AUTHZ_DENIED`/`BLOCKED` via `GovernedCapabilityStatus`), modelo (`OUTCOME_PREPARING`), resultado final (`COMPLETED`/`FAILED`). `session_id`/`turn_id`/`correlation_id` já existem — nenhum ID novo de autoridade necessário.
+
+### 15.3 Comparação de transporte
+
+| Opção | Infra | Auth | Correlação | Riscos | Veredito |
+| --- | --- | --- | --- | --- | --- |
+| A — **Stream no próprio `POST /interaction/turns`** (opt-in `Accept: application/x-ndjson`; eventos `ActivityEvent` + evento final `turn_result` com payload v1 idêntico) | zero endpoint novo; mesmo thread; `X-Accel-Buffering: no` no response evita mudança de gateway | bearer middleware existente | mesma request — `turn_id`/`session_id` já no escopo | exige response streaming no Flask (generator); sem reconnect (request morre → fallback já existente) | **RECOMENDADO** |
+| B — `GET /turns/{id}/activity` SSE/EventSource | endpoint novo | EventSource sem header `Authorization` → token em query (vazamento em logs) ou fetch-reader | turn_id é gerado no backend — frontend não o conhece cedo | mais superfície, correlação mais fraca | rejeitado |
+| C — Polling `?after_seq=` | zero infra | bearer normal | ok | buffer in-memory depende de `--workers 1`, que o Dockerfile declara temporário até store durável | rejeitado (frágil) |
+| D — WebSocket | Flask sem WS nativo → flask-sock+gevent (novas deps, worker class) | token handshake | ok | maior custo para canal unidirecional | rejeitado |
+
+### 15.4 Contrato candidato (provider-neutral, versionado)
+
+```
+ActivityEvent.v1 {version, event_id, sequence, timestamp,
+                  session_id, turn_id, correlation_id?,
+                  phase, state, label_code,
+                  capability_ref?, source_ref?, owner_ref?, outcome_ref?}
+phase ∈ REQUEST_RECEIVED|CONTEXTUALIZING|CAPABILITY_SELECTED|
+          SOURCE_QUERY_STARTED|SOURCE_QUERY_COMPLETED|
+          OUTCOME_PREPARING|WAITING_CONFIRMATION|COMPLETED|
+          PARTIAL|BLOCKED|FAILED|CANCELLED
+state ∈ RUNNING|<phase terminal>
+```
+
+Backend emite `phase`/`state` semânticos; labels PT-BR são mapeados no adapter do MFE (apresentação é render-only). `capability_ref`/`source_ref` só vêm de provenance/projeção disclosure-safe — nunca args de tool, prompt, provider internals, host/path. Emissor = `ActivityEventPort` (application → port → infrastructure adapter que escreve no stream); o resultado final do POST permanece autoritativo e sobrescreve projeções progressivas.
+
+### 15.5 Status
+
+`ARCHITECTURE_DECISION_REQUIRED` — decisão pendente: aprovar transporte A + `ActivityEvent.v1` + owner delia-api, antes de qualquer implementação. Fase preservada: `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`; `NEXT = RETURN_TO_ARCHITECTURE_COORDINATION`. Nenhum arquivo de código alterado.
