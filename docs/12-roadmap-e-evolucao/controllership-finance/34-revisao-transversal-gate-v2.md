@@ -45,7 +45,7 @@ P5_REVIEW_COMPLETION_RULE     = DECISION_REQUIRED
 IMPLEMENTATION_AUTHORIZED     = NO
 ```
 
-O único blocker material conhecido ao freeze global é o contrato de delivery real de P5.
+O único blocker material conhecido ao freeze global é `D-P5-REVIEW-COMPLETION`: definir se a conclusão mensal exige apenas submissão ou review aceito.
 
 ## 1. Naming
 
