@@ -43,7 +43,7 @@ describe("ticketWorkspaceActions", () => {
     ]);
   });
 
-  it("keeps selector without accept/reject lifecycle actions", () => {
+  it("pins pending accept/reject decisions at the top of the selector", () => {
     const actions = ticketWorkspaceActions({
       can_followup: true,
       can_create_solution: true,
@@ -51,10 +51,23 @@ describe("ticketWorkspaceActions", () => {
       can_reject_solution: true,
     });
     expect(ticketWorkspaceSelectorActions(actions).map((item) => item.id)).toEqual([
+      "accept_solution",
+      "reject_solution",
       "reply",
       "create_solution",
       "attach_file",
     ]);
+  });
+
+  it("omits accept/reject from selector when capabilities are false", () => {
+    const actions = ticketWorkspaceActions({
+      can_followup: true,
+      can_accept_solution: false,
+      can_reject_solution: false,
+    });
+    const ids = ticketWorkspaceSelectorActions(actions).map((item) => item.id);
+    expect(ids).not.toContain("accept_solution");
+    expect(ids).not.toContain("reject_solution");
   });
 
   it("omits technician ops when capabilities are false", () => {

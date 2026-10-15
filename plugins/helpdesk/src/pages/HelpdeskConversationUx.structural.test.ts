@@ -350,3 +350,42 @@ describe("HELPDESK-UNIFIED-RICH-TEXT-COMPOSER-V1 canonical editor", () => {
     expect(detail).not.toContain("@tinymce");
   });
 });
+
+describe("HELPDESK-UNIFIED-ACTION-MENU-V1 single action menu", () => {
+  it("accept/reject live in the selector menu, pinned first when pending", () => {
+    const presentation = read("../presentation/ticketActionPresentation.ts");
+    const actions = read("../presentation/ticketWorkspaceActions.ts");
+    expect(presentation).toMatch(
+      /SELECTOR_ACTION_IDS[\s\S]*?"accept_solution"[\s\S]*?"reject_solution"[\s\S]*?"reply"/,
+    );
+    expect(presentation).toContain("PENDING_DECISION_ACTION_IDS");
+    expect(actions).toContain("ticketWorkspaceSelectorActions");
+  });
+
+  it("pending decision gets visual highlight and a discrete trigger indicator", () => {
+    const menu = read("TicketActionMenu.tsx");
+    const css = read("../index.css");
+    expect(menu).toContain("PENDING_DECISION_ACTION_IDS.includes");
+    expect(menu).toContain('data-pending-decision={isPendingDecision ? "true" : undefined}');
+    expect(menu).toContain("helpdesk-action-menu__item--pending");
+    expect(menu).toContain("helpdesk-action-menu__pending-dot");
+    expect(menu).toContain("solução aguardando sua decisão");
+    expect(css).toContain(".helpdesk-action-menu__item--pending");
+    expect(css).toContain(".helpdesk-action-menu__pending-dot");
+    expect(css).toContain('.helpdesk-action-menu__trigger[data-pending-decision="true"]');
+  });
+
+  it("no redundant accept/reject buttons outside the menu", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const cueBlock = detail.slice(
+      detail.indexOf("cue.showNativeActions"),
+      detail.indexOf("cue.showValidationActions"),
+    );
+    expect(cueBlock).not.toContain("selectWorkspaceAction(");
+    expect(cueBlock).not.toContain("<ActionButton");
+    // The menu is the single entry point.
+    expect(detail.match(/TicketActionMenu/g)?.length ?? 0).toBe(1);
+    expect(detail).toContain('idleLabel="Ações do chamado"');
+  });
+});

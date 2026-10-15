@@ -2,7 +2,10 @@ import { useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 
-import { ticketActionPresentation } from "../presentation/ticketActionPresentation";
+import {
+  PENDING_DECISION_ACTION_IDS,
+  ticketActionPresentation,
+} from "../presentation/ticketActionPresentation";
 import type { TicketWorkspaceAction, TicketWorkspaceActionId } from "../presentation/ticketWorkspaceActions";
 
 const HELPDESK_PORTAL_SCOPE = "dashboard-helpdesk";
@@ -12,7 +15,7 @@ export function TicketActionMenu({
   activeId,
   onChange,
   disabled,
-  idleLabel = "Responder",
+  idleLabel = "Ações do chamado",
 }: {
   actions: readonly TicketWorkspaceAction[];
   activeId: TicketWorkspaceActionId | null;
@@ -32,6 +35,9 @@ export function TicketActionMenu({
       : null;
   const TriggerIcon = triggerPresentation?.icon;
   const triggerLabel = selected?.label ?? idleLabel;
+  const pendingDecision = actions.some((item) =>
+    PENDING_DECISION_ACTION_IDS.includes(item.id),
+  );
 
   if (actions.length === 0) return null;
 
@@ -44,11 +50,18 @@ export function TicketActionMenu({
       <button
         type="button"
         className="helpdesk-action-menu__trigger"
-        aria-label={selected ? `Ação ativa: ${selected.label}` : "Escolher ação do chamado"}
+        aria-label={
+          selected
+            ? `Ação ativa: ${selected.label}`
+            : pendingDecision
+              ? "Escolher ação do chamado — solução aguardando sua decisão"
+              : "Escolher ação do chamado"
+        }
         aria-expanded={open}
         aria-haspopup="menu"
         disabled={disabled}
         data-action-variant={triggerPresentation?.variant}
+        data-pending-decision={pendingDecision ? "true" : undefined}
         onClick={() => setOpen((current) => !current)}
       >
         {TriggerIcon ? (
@@ -57,6 +70,9 @@ export function TicketActionMenu({
           </span>
         ) : null}
         <span>{triggerLabel}</span>
+        {pendingDecision ? (
+          <span className="helpdesk-action-menu__pending-dot" aria-hidden />
+        ) : null}
         <ChevronDown size={16} aria-hidden />
       </button>
       <AnchoredPanelPortal
@@ -76,6 +92,7 @@ export function TicketActionMenu({
         {actions.map((action) => {
           const presentation = ticketActionPresentation(action.id);
           const Icon = presentation.icon;
+          const isPendingDecision = PENDING_DECISION_ACTION_IDS.includes(action.id);
           return (
             <button
               key={action.id}
@@ -84,10 +101,12 @@ export function TicketActionMenu({
               className={[
                 "helpdesk-action-menu__item",
                 action.id === activeId ? "helpdesk-action-menu__item--active" : null,
+                isPendingDecision ? "helpdesk-action-menu__item--pending" : null,
               ]
                 .filter(Boolean)
                 .join(" ")}
               data-action-variant={presentation.variant}
+              data-pending-decision={isPendingDecision ? "true" : undefined}
               onClick={() => {
                 onChange(action.id);
                 setOpen(false);

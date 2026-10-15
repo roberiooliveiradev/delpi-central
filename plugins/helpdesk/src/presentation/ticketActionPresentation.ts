@@ -118,11 +118,22 @@ export function ticketActionPresentation(
   return PRESENTATION[id];
 }
 
-/** Actions shown in the bottom selector (not contextual lifecycle). */
+/**
+ * Selector order — pending lifecycle decisions first so the requester sees
+ * accept/reject at the top of the single action menu.
+ */
 export const SELECTOR_ACTION_IDS: readonly TicketWorkspaceActionId[] = [
+  "accept_solution",
+  "reject_solution",
   "reply",
   "create_solution",
   "create_task",
   "attach_file",
   "request_approval",
+] as const;
+
+/** Action ids that represent a pending requester decision. */
+export const PENDING_DECISION_ACTION_IDS: readonly TicketWorkspaceActionId[] = [
+  "accept_solution",
+  "reject_solution",
 ] as const;

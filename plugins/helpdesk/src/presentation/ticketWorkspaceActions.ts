@@ -42,9 +42,6 @@ export const TICKET_WORKSPACE_SURFACES: { id: TicketWorkspaceSurfaceId; label: s
 /**
  * Build action menu from ticket capabilities only.
  * Frontend disclosure ≠ AuthZ — backend remains authoritative.
- * Accept/reject solution stay capability-driven but open as contextual cards
- * (also reachable from lifecycle cue); still listed when capability is true so
- * keyboard users can select them if no cue is visible.
  */
 export function ticketWorkspaceActions(ticket: Pick<
   TicketDetail,
@@ -71,12 +68,19 @@ export function ticketWorkspaceActions(ticket: Pick<
   return actions;
 }
 
-/** Selector-primary actions (idle menu). Lifecycle accept/reject remain available via full list. */
+/**
+ * Selector actions ordered by SELECTOR_ACTION_IDS — pending lifecycle
+ * decisions (accept/reject) surface first when capabilities allow them.
+ */
 export function ticketWorkspaceSelectorActions(
   actions: readonly TicketWorkspaceAction[],
 ): TicketWorkspaceAction[] {
-  const allowed = new Set<string>(SELECTOR_ACTION_IDS);
-  return actions.filter((item) => allowed.has(item.id));
+  const order = new Map<string, number>(
+    SELECTOR_ACTION_IDS.map((id, index) => [id, index]),
+  );
+  return actions
+    .filter((item) => order.has(item.id))
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 }
 
 /** Idle default: no composer open. */

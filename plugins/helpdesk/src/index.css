@@ -1735,6 +1735,40 @@
   background: color-mix(in srgb, var(--helpdesk-accent) 14%, transparent);
 }
 
+/* Pending lifecycle decision (accept/reject): accent-driven highlight. */
+.dashboard-helpdesk .helpdesk-action-menu__item--pending {
+  border-inline-start: 3px solid var(--helpdesk-action-accent, var(--helpdesk-accent));
+  background: color-mix(
+    in srgb,
+    var(--helpdesk-action-accent, var(--helpdesk-accent)) 9%,
+    transparent
+  );
+  font-weight: 650;
+}
+
+.dashboard-helpdesk .helpdesk-action-menu__item--pending:hover,
+.dashboard-helpdesk .helpdesk-action-menu__item--pending.helpdesk-action-menu__item--active {
+  background: color-mix(
+    in srgb,
+    var(--helpdesk-action-accent, var(--helpdesk-accent)) 16%,
+    transparent
+  );
+}
+
+/* Discrete pending indicator on the trigger. */
+.dashboard-helpdesk .helpdesk-action-menu__pending-dot {
+  inline-size: 0.45rem;
+  block-size: 0.45rem;
+  margin-inline-start: 0.1rem;
+  border-radius: 999px;
+  background: var(--helpdesk-danger, #b42318);
+  flex: none;
+}
+
+.dashboard-helpdesk .helpdesk-action-menu__trigger[data-pending-decision="true"] {
+  border-color: color-mix(in srgb, var(--helpdesk-danger, #b42318) 45%, var(--helpdesk-border));
+}
+
 .dashboard-helpdesk .helpdesk-ticket-workspace__decision,
 .dashboard-helpdesk .helpdesk-ticket-workspace__document {
   display: flex;

@@ -20,7 +20,7 @@ describe("solicitanteLifecycleCue", () => {
     expect(cue?.showValidationActions).toBe(true);
   });
 
-  it("capacidade nativa → ações no MFE", () => {
+  it("capacidade nativa → decisão pendente sinalizada (ação vive no menu)", () => {
     const cue = solicitanteLifecycleCue({
       statusId: 5,
       hasSolution: true,

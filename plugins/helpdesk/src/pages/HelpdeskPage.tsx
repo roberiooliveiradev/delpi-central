@@ -1579,32 +1579,9 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       ) : null}
                     </div>
                     {cue.showNativeActions ? (
-                      <div className="helpdesk-lifecycle-actions">
-                        <p className="helpdesk-lifecycle-cue__hint">
-                          Aceite ou recuse a solução abaixo, ou use o seletor de ação.
-                        </p>
-                        <div className="helpdesk-lifecycle-actions__buttons">
-                          {ticket.can_accept_solution ? (
-                            <ActionButton
-                              variant="primary"
-                              type="button"
-                              disabled={cycleSaving}
-                              onClick={() => selectWorkspaceAction("accept_solution")}
-                            >
-                              Aceitar solução
-                            </ActionButton>
-                          ) : null}
-                          {ticket.can_reject_solution ? (
-                            <ActionButton
-                              type="button"
-                              disabled={cycleSaving}
-                              onClick={() => selectWorkspaceAction("reject_solution")}
-                            >
-                              Recusar / reabrir
-                            </ActionButton>
-                          ) : null}
-                        </div>
-                      </div>
+                      <p className="helpdesk-lifecycle-cue__hint">
+                        Use o menu de ações abaixo para aceitar ou recusar a solução.
+                      </p>
                     ) : null}
                     {cue.showValidationActions ? (
                       <div className="helpdesk-lifecycle-actions">
@@ -1902,7 +1879,7 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               activeId={activeAction}
                               disabled={saving || cycleSaving}
                               onChange={selectWorkspaceAction}
-                              idleLabel="Responder"
+                              idleLabel="Ações do chamado"
                             />
                           </HintAction>
                           {activeAction === "reply" && draftFilesReady ? (
