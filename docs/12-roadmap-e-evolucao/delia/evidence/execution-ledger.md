@@ -13341,3 +13341,126 @@ PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
   PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
   (independent review of `7c4e22c13d`; deploy decision separate)
+
+## §6.167 — DELIA-C3-CONTEXTUAL-GROUNDED-ANSWER-PRESENTATION-R1 (published, review pending)
+
+### Task
+
+`DELIA-C3-CONTEXTUAL-GROUNDED-ANSWER-PRESENTATION-R1` — bounded
+evolution of grounded conversational answer presentation under the
+approved alternative A (LLM interprets intent and selects evidence;
+the runtime composes the factual response deterministically from
+authoritative owner data). Authorized by Product Master incl.
+commit + push on `main`. No phase advance, no deploy.
+
+### Root cause (proven by red tests at base `97673aea`)
+
+- `RC-1` — `_synthesize_content` extracted synthesis evidence only via
+  `_resolver_entities`, which finds collections of mappings. A READ
+  result shaped as a single object under an envelope
+  (`{"data": {"product": {...}}}`) produced zero records, the stage
+  returned `None`, and `render_specialist_outcome` →
+  `_format_structured` shipped the raw cadastro dump
+  (`product:\n  group_code: 1008\n  code: ...`). Reproduced by
+  `test_eval5_single_record_answers_naturally` and
+  `test_davi_single_record_answers_naturally` (DAVI
+  discover→candidate→execute shape).
+- `RC-2` — even when a selection was valid, `_render_synthesis`
+  emitted the terse `- code — description` bullet, not a natural
+  answer (`- 10090056 — CONECTOR RETO 3 VIAS NU MACHO`).
+
+### REUSE GATE
+
+`EXISTING_EQUIVALENT = YES` — the selection-only synthesis contract,
+sanitization, redaction, envelope unwrapping and deterministic
+fallback renderers already existed in
+`capability_provision/orchestration.py`.
+`REUSE_DECISION = EXTEND` — no second planner, no parallel composer,
+no per-provider branch, no free factual prose channel.
+
+### Implementation (SHA `07c3fa4bef7deb2b7a636e034912b9f438fef87c`)
+
+- `orchestration.py` only (+2 test files; no other runtime file).
+- `_synthesis_records`: extends entity extraction — collections
+  first, then a single business record (flat scalar object nested
+  under exactly one non-control key, or a flat scalar payload);
+  `data`/`result`/`payload`/`response` envelopes unwrapped
+  structurally; `agent_directives`/`capability_surface` excluded via
+  `_CONTROL_PLANE_KEYS`; multiple record containers never picked
+  silently.
+- Synthesis contract: optional closed `presentation` vocabulary
+  (`answer|list|detail`) — validated hint, never prose; invalid
+  values derive safely.
+- `_render_synthesis` composes deterministic grounded output: single
+  selected record → focused pt-BR sentence with the record's own
+  identifier anchoring the subject and verbatim values in bounded
+  clauses (`A descrição cadastrada do registro 10080022 é:
+  CONECTOR RETO 3 VIAS NU MACHO.`); multiple records → introduced
+  bounded list (`Encontrei N registros:`); `detail` → organized field
+  projection. Coded values (`S`, `PC`, `MP`) are copied verbatim —
+  never translated or expanded without owner semantic authority.
+- `_format_structured`/`_format_list` filter control-plane keys —
+  orchestration metadata never reaches the user projection.
+- `_synthesize_content` now forwards bounded transient context
+  (`prior_turns`) and the validated `business_subject` to the
+  selection proposal — the model may reuse the field intent of a
+  valid earlier thread, never the earlier data.
+- Token efficiency: a single record with exactly one renderable
+  scalar answers deterministically without a model call.
+
+### Evidence (factual, this session)
+
+- Baseline `97673aea` (task base `b18be75`, plus concurrent
+  `97673aea` — disjoint `plugins/delia` paths, preserved).
+- `pytest tests/test_intelligence_loop_evals.py` = 49/49 PASS
+  (21 new EVAL-5 cases incl. parametrized envelope shapes).
+- `pytest tests/test_specialist_capability_orchestration.py
+  tests/test_generic_multistep_orchestration.py
+  tests/test_provider_neutral_orchestration.py` = 148/148 PASS.
+- Full `delia-api` suite = 1011 collected, PASS (exit 0).
+- One pre-existing assertion updated:
+  `test_adversarial_model_prose_cannot_become_observation` counted 6
+  governed proposals → now 5; the single-scalar fixture answers
+  deterministically and the fabricated `{"answer": ...}` payload is
+  never even consumed by a stage (stronger guarantee, same security
+  property).
+- `MODEL_AUTHORED_FACTUAL_PROSE = NONE` — preserved; values verbatim
+  from sanitized owner evidence only.
+- `presentation.v1`, provenance, epistemic class, limitations,
+  PREPARE/ACT, confirmation governance: untouched.
+- `MODEL_CALL_COUNT`: measurable reduction proven for the
+  single-scalar shape (synthesis proposal skipped);
+  `TOKEN_METRICS = TEST_NOT_RUN`; `LATENCY = TEST_NOT_RUN`;
+  `REAL_MODEL_EVAL = TEST_NOT_RUN` (fake-proposal harness only).
+
+### Status (factual)
+
+`IMPLEMENTATION = PUBLISHED` (`07c3fa4bef` on `main`, remote
+verified)
+`INDEPENDENT_REVIEW = PENDING`
+`DEPLOYMENT = NOT_PERFORMED`
+`LIVE_VERIFICATION = TEST_NOT_RUN`
+
+### Residuals
+
+- R1 — real-model selection quality for multi-field single records
+  remains `TEST_NOT_RUN` (deterministic harness proves the contract;
+  live model behavior is eval-pending).
+- R2 — clause labels are a bounded presentation vocabulary; fields
+  outside it render via `o campo "<field>"` — honest, not curated.
+- R3 — single-scalar records skip the model selection entirely by
+  design; multi-field single records still run exactly one bounded
+  synthesis proposal.
+- R4 — provider-neutral generalization proven for tested shapes
+  (fake provider, DAVI-shaped discover→execute, renamed keys,
+  multiple envelopes); not universal certification of unknown
+  future contracts.
+- R5 — review performed by the implementing agent;
+  `INDEPENDENT_REVIEW = NOT_PROVEN` — a distinct reviewer is
+  required to close the acceptance gate.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+  PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+  (independent review of `07c3fa4bef`; real-model eval + deploy
+  decisions separate)
