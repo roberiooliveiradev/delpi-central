@@ -186,6 +186,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Avatar chrome: foto ou iniciais com cor determinística (sem HTTP).",
   }),
+  vc("layout", "UnifiedAvatar", {
+    addedAt: "2026-10-14",
+    description:
+      "Avatar visual compartilhado para DÉLIA e pessoa; sem fetch, identidade, AuthZ ou perfil.",
+  }),
   vc("layout", "EntityAvatarLabel", {
     addedAt: "2026-09-18",
     description:

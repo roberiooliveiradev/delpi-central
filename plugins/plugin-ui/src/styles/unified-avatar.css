@@ -1,0 +1,104 @@
+/* Unified Avatar: shared visual ownership in plugin-ui. */
+.delpi-ui-unified-avatar {
+  --delpi-ui-unified-size: 38px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: 0 0 auto;
+  vertical-align: middle;
+  width: var(--delpi-ui-unified-size);
+  height: var(--delpi-ui-unified-size);
+  border-radius: 50%;
+  isolation: isolate;
+}
+.delpi-ui-unified-avatar--xs { --delpi-ui-unified-size: 24px; --delpi-ui-unified-font-size: 9px; }
+.delpi-ui-unified-avatar--sm { --delpi-ui-unified-size: 32px; --delpi-ui-unified-font-size: 11px; }
+.delpi-ui-unified-avatar--md { --delpi-ui-unified-size: 38px; --delpi-ui-unified-font-size: 12px; }
+.delpi-ui-unified-avatar--lg { --delpi-ui-unified-size: 52px; --delpi-ui-unified-font-size: 16px; }
+.delpi-ui-unified-avatar--xl { --delpi-ui-unified-size: 64px; --delpi-ui-unified-font-size: 19px; }
+.delpi-ui-unified-avatar--assistant {
+  color: #fff;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+.delpi-ui-unified-avatar--assistant .delpi-ui-unified-avatar__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.delpi-ui-unified-avatar--assistant svg { width: 55%; height: 55%; }
+.delpi-ui-unified-avatar--person {
+  color: var(--delpi-ui-muted, var(--text-muted, #4b5563));
+  background: var(--delpi-ui-surface-2, var(--surface-2, #f0f2f5));
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+}
+.delpi-ui-unified-avatar--person .delpi-ui-unified-avatar__visual {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.delpi-ui-unified-avatar--person .delpi-ui-avatar {
+  width: 100%;
+  height: 100%;
+  flex: 0 0 auto;
+  font-size: var(--delpi-ui-unified-font-size, 12px);
+  transition: none;
+  transform: none;
+}
+.delpi-ui-unified-avatar--person .delpi-ui-avatar:hover { transform: none; }
+.delpi-ui-unified-avatar--person .delpi-ui-avatar svg { width: 55%; height: 55%; }
+.delpi-ui-unified-avatar--assistant[data-motion="processing"]::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  pointer-events: none;
+  animation: delpi-ui-unified-processing 1900ms ease-out infinite;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="receiving"] .delpi-ui-unified-avatar__visual {
+  animation: delpi-ui-unified-receive 380ms ease-out 1;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="responding"] .delpi-ui-unified-avatar__visual {
+  animation: delpi-ui-unified-respond 340ms ease-out 1;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="attention"] {
+  box-shadow: 0 0 0 2px var(--delpi-ui-warning, var(--warning, #b45309));
+  animation: delpi-ui-unified-attention 280ms ease-out 1;
+}
+.delpi-ui-unified-avatar--assistant[data-motion="disabled"] {
+  color: var(--delpi-ui-muted, var(--text-muted, #6b7280));
+  background: var(--delpi-ui-surface-2, var(--surface-2, #eceef2));
+}
+@keyframes delpi-ui-unified-receive {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes delpi-ui-unified-processing {
+  0% { transform: scale(1); opacity: .35; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+@keyframes delpi-ui-unified-respond {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.025); opacity: .82; }
+}
+@keyframes delpi-ui-unified-attention {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.025); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-unified-avatar,
+  .delpi-ui-unified-avatar *,
+  .delpi-ui-unified-avatar::before,
+  .delpi-ui-unified-avatar::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

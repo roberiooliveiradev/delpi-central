@@ -25,6 +25,7 @@ import {
   demoTurnOutcome,
   resolveDemoScenario,
 } from "./demo/demoMode";
+import { useCurrentUserIdentity } from "./identity/currentUser";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -79,9 +80,11 @@ export default function App({
   const [demoScenario] = useState(() =>
     resolveDemoScenario(window.location.search),
   );
+  const userIdentity = useCurrentUserIdentity(getAccessToken);
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
+  const [respondingTurnId, setRespondingTurnId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const demoSeqRef = useRef(0);
@@ -134,6 +137,7 @@ export default function App({
       return;
     }
 
+    setRespondingTurnId(null);
     setLoading(true);
     setError(null);
     const controller = new AbortController();
@@ -168,6 +172,11 @@ export default function App({
           presentation: result.presentation,
         },
       ]);
+      setRespondingTurnId(
+        result.presentation?.messageKind && result.presentation.messageKind !== "RESULT"
+          ? null
+          : result.result_turn_id,
+      );
       setInput("");
     } catch (submitError) {
       if (
@@ -200,6 +209,7 @@ export default function App({
       ...previous,
       { id: `demo-user-${seq}`, role: "user", content: value },
     ]);
+    setRespondingTurnId(null);
     setLoading(true);
     setError(null);
     await new Promise((resolve) => setTimeout(resolve, outcome.delayMs));
@@ -213,6 +223,12 @@ export default function App({
       ...previous,
       { id: `demo-delia-${seq}`, ...outcome.deliaTurn! },
     ]);
+    setRespondingTurnId(
+      outcome.deliaTurn?.presentation?.messageKind &&
+      outcome.deliaTurn.presentation.messageKind !== "RESULT"
+        ? null
+        : `demo-delia-${seq}`,
+    );
     setInput("");
   }
 
@@ -286,6 +302,9 @@ export default function App({
                 <ConversationTimeline
                   turns={turns}
                   loading={loading}
+                  respondingTurnId={respondingTurnId}
+                  onResponseMotionComplete={() => setRespondingTurnId(null)}
+                  userIdentity={userIdentity}
                   onConfirmation={handleConfirmation}
                 />
               ) : (

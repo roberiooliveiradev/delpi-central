@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { UnifiedAvatar } from "@delpi/plugin-ui/index";
 
 /**
  * S2-A + S3 — reception surface for a session with no turns yet.
@@ -13,7 +13,7 @@ export function DeliaReception() {
   return (
     <section className="delia-reception" aria-label="Boas-vindas da DÉLIA">
       <span className="delia-reception__mark" aria-hidden="true">
-        <Sparkles size={26} />
+        <UnifiedAvatar kind="assistant" label="DÉLIA" size="lg" motionState="idle" />
       </span>
       <h2 className="delia-reception__title">Como posso ajudar você hoje?</h2>
       <p className="delia-reception__subtitle">

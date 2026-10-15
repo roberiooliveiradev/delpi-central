@@ -90,6 +90,7 @@ Demos: `src/catalog/demos/`. Tabela estilo LMPS: entradas **DataTable** / **Data
 | `ShapeFillMenu` / `ShapeOutlineMenu` | Menus de cor estilo PowerPoint (ribbon) |
 | `ColorDialog` / `ColorPickerPopover` | Paleta tema + «Mais cores» + conta-gotas; FillPicker Cor\|Gradiente só com `onFillChange` |
 | `ShapeStyleMenu` / `ShapeStyleRibbonStrip` / `ShapeEffectsMenu` | Estilos de tema (galeria Abc ou faixa) e efeitos de forma |
+| `UnifiedAvatar` | Avatar visual compartilhado DÉLIA/pessoa; sem fetch, perfil ou AuthZ |
 | `ChartCard` | Cartão de gráfico (layout headless + `classNames` BEM) |
 | `chartCardBemClasses` | Helper para mapa BEM `{prefix}-chart-card__*` |
 | `KpiCard` | Cartão KPI departamental (meta, badges IDD, ícone) |

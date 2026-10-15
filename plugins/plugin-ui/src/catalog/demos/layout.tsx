@@ -42,6 +42,7 @@ import {
   metricKpiCardBemClasses,
   InitialsAvatar,
   initialsAvatarBemClasses,
+  UnifiedAvatar,
   EntityAvatarLabel,
   entityAvatarLabelBemClasses,
   NavigationCard,
@@ -743,6 +744,59 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
               previewTitle="Com foto"
               portalScopeClassName="dashboard-plugin-ui-catalog"
             />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.UnifiedAvatar",
+    family: "layout",
+    exportName: "UnifiedAvatar",
+    title: "UnifiedAvatar",
+    description:
+      "Avatar visual compartilhado: DÉLIA institucional e pessoa com foto/iniciais/fallback publicados.",
+    propsSummary: ["kind", "label", "size", "motionState", "imageUrl", "fallbackText"],
+    demos: [
+      {
+        id: "assistant-sizes",
+        label: "DÉLIA — tamanhos",
+        render: () => (
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+              <UnifiedAvatar key={size} kind="assistant" label="DÉLIA" size={size} />
+            ))}
+          </div>
+        ),
+      },
+      {
+        id: "assistant-states",
+        label: "DÉLIA — estados",
+        render: () => (
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            {(["idle", "receiving", "processing", "responding", "attention", "disabled"] as const).map(
+              (motionState) => (
+                <UnifiedAvatar
+                  key={motionState}
+                  kind="assistant"
+                  label={"DÉLIA — " + motionState}
+                  size="lg"
+                  motionState={motionState}
+                />
+              ),
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "person-fallbacks",
+        label: "Pessoa — fallback e iniciais",
+        render: () => (
+          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            <UnifiedAvatar kind="person" label="Você" size="sm" />
+            <UnifiedAvatar kind="person" label="Ana Silva" fallbackText="Ana Silva" size="md" />
+            <UnifiedAvatar kind="person" label="Ana Silva" fallbackText="Ana Silva" size="lg" />
+            <UnifiedAvatar kind="person" label="Ana Silva" fallbackText="Ana Silva" size="xl" />
           </div>
         ),
       },

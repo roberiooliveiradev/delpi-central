@@ -32,6 +32,40 @@ import { HelpTooltip, FieldLabel, TabHintCell } from "@delpi/plugin-ui";
 
 ---
 
+## `UnifiedAvatar`
+
+Composição visual compartilhada para a identidade da DÉLIA e para avatares de pessoa.
+O kit **não busca perfil**, não lê JWT, não autoriza origem de imagem e não executa
+navegação. Dados de pessoa são aceitos apenas como props já publicados pelo owner legítimo.
+
+```tsx
+<UnifiedAvatar kind="assistant" label="DÉLIA" size="lg" motionState="idle" />
+
+<UnifiedAvatar kind="person" label="Você" />
+
+<UnifiedAvatar
+  kind="person"
+  label="Ana Silva"
+  fallbackText="Ana Silva"
+  imageUrl="/profile/photo"
+/>
+```
+
+Props principais: `kind` (`assistant` | `person`), `label`, `size`
+(`xs` | `sm` | `md` | `lg` | `xl`). Na variante assistant:
+`motionState` (`idle`, `receiving`, `processing`, `responding`,
+`attention`, `disabled`) e `onMotionComplete`. Na variante person:
+`imageUrl` e `fallbackText`.
+
+`imageUrl` passa apenas por validação defensiva de formato/esquema dentro do
+componente. Isso **não** significa autorização da origem; a origem continua sendo
+responsabilidade do contrato owner-published. Perfil, popover, cargo, unidade e rota
+não pertencem ao contrato atual.
+
+CSS: `styles/unified-avatar.css`. Respeita `prefers-reduced-motion`.
+
+---
+
 ## `ActionButton`, `BackLink`, `IconButton` e `ClearFiltersButton`
 
 Controles canônicos para ações e navegação de retorno. O MFE deve mapear apenas tokens
