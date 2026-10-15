@@ -886,6 +886,8 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   flex: 1 1 280px;
   min-width: 0;
   white-space: nowrap;
+  /* O "?" de ajuda fica colado ao campo — nunca quebra para a linha de baixo. */
+  flex-wrap: nowrap;
 }
 
 .delpi-ui-table-toolbar__extra {
@@ -968,7 +970,10 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  width: min(100%, 420px);
+  /* flex dentro do search-group: cresce até 420px e encolhe sem empurrar o "?" */
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 420px;
   min-width: min(240px, 100%);
   min-height: var(--delpi-ui-control-height, 42px);
   box-sizing: border-box;
@@ -1015,6 +1020,8 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  /* label + controle + "?" permanecem na mesma linha, sempre */
+  flex-wrap: nowrap;
   white-space: nowrap;
   font-size: 13px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));

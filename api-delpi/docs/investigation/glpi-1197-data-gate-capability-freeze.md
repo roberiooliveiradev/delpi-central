@@ -783,6 +783,78 @@ Sem nova lib de data grid; sem mudança de API existente.
   mudança backend neste ciclo; contrato inalterado).
 - BROWSER_E2E / SCREENSHOTS: TEST_NOT_RUN — sem acesso autenticado ao
   ambiente nesta sessão; homologação visual permanece pendente (R-13).
+
+---
+
+# PARTE VI — TOOLBAR HELP ALIGNMENT (TASK GLPI-1197 UI-FIX CLOSURE)
+
+## Z1. Causa raiz (reproduzida com medição de layout)
+
+`.delpi-ui-table-toolbar__search-group` herdava `flex-wrap: wrap` da regra
+compartilhada com `toolbar__extra`, enquanto `.delpi-ui-table-search`
+ocupava `width: min(100%, 420px)` — 100% do grupo quando este media menos
+de ~452px. O `?` (HelpTooltip) era o único item restante do flex-wrap e
+caía na segunda linha visual.
+
+Medição headless (Chromium 151, markup idêntico ao da seção):
+
+| viewport | antes (search ?) | depois |
+|---|---|---|
+| 900px | top=87 vs campo top=37 → 2ª linha | top=47, mesma linha |
+| 620px | top=177 vs 127 → 2ª linha | top=137, mesma linha |
+| 480px | 2ª linha | mesma linha |
+
+O label "Itens por página" já era `inline-flex` nowrap — `?` não podia
+separar-se internamente; o desalinhamento percebido vinha do wrap do grupo
+inteiro de toolbar, endurecido com `flex-wrap: nowrap` explícito.
+
+## Z2. Correção (CSS canônico, sem CSS global novo)
+
+`plugins/plugin-ui/src/styles/data-table.css`:
+
+- `.delpi-ui-table-toolbar__search-group`: `flex-wrap: nowrap` — o `?`
+  permanece colado ao campo de busca.
+- `.delpi-ui-table-search`: `flex: 1 1 auto; width: auto; max-width: 420px`
+  (substitui `width: min(100%, 420px)`) — o campo cresce até 420px e encolhe
+  dentro do grupo sem empurrar o `?`.
+- `.delpi-ui-table-page-size`: `flex-wrap: nowrap` explícito — label,
+  controle e `?` na mesma linha em qualquer largura.
+
+Escopo: somente classes canônicas `delpi-ui-*` já existentes; nenhum
+consumidor adiciona CSS próprio para essa área (helpdesk usa a mesma classe
+em wrapper próprio e já ocultava o `?` — sem regressão).
+
+## Z3. Evidências
+
+- Screenshots antes/depois capturados em harness com o CSS canônico
+  (`before_900.png`, `after_900.png`, `before_620.png`, `after_620.png`) —
+  não versionados: `api-delpi/.gitignore` bloqueia `*.png`; evidência
+  preservada fora do repo e reproduzível via harness de toolbar.
+- Medição de coordenadas via headless Chromium nas larguras
+  1280/1100/900/760/620/480 (tabela em Z1).
+- `plugin-ui` build + `verify-host-exports`: PASS.
+- Acessibilidade: markup/tooltip/teclado inalterados; `?` não foi ocultado.
+- BROWSER_E2E nas páginas reais: TEST_NOT_RUN — sem acesso autenticado;
+  homologação visual Suprimentos segue pendente (R-13).
+
+## Z4. Matriz solicitado × entregue (GLPI #1197 — revisão de aceite)
+
+| Requisito | Status | Evidência |
+|---|---|---|
+| Estoque de MP sem giro | PASS | rotas /supplies/non-moving-stock + página |
+| Acuracidade do inventário | PASS | rotas /supplies/inventory-accuracy + página |
+| Períodos e filiais | PASS | janela rolling_12m/custom + `branch` repetível |
+| Armazéns 01/99 | PASS | escopo aprovado fail-closed |
+| Classificação de utilização efetiva | PASS | SD3 D3_TM efetivos, estorno anula grupo |
+| Valoração financeira | PASS | SB2 QATU×CM1, custo-zero sinalizado |
+| Segregação de bloqueados | PASS | B1_MSBLQL + blocked_no_consumption |
+| Busca/filtros/ordenação/paginação | PASS | server-side, LIKE escapado, sort estável |
+| Tabelas avançadas e exportação | PASS | seleção/colunas/resize/reorder/export |
+| Autorização | PASS | AuthZ canônico backend, sem RBAC local |
+| Integridade dos dados | PASS | 107 testes backend, reconciliação financeira |
+| Correção P0 status×janela | PASS | PARTE V — "Sem giro" resolve pela janela |
+| Ícones `?` da toolbar | PASS | PARTE VI — nowrap + flex do campo |
+| Deploy/homologação em produção | PENDING | push ≠ deploy; R-13 aguarda Suprimentos |
 - REGRESSÃO: passthrough aditivo; consumidores existentes de DataTableSection
   sem mudança de comportamento (props opcionais).
 
