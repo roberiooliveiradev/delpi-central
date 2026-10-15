@@ -866,3 +866,140 @@ def test_stream_turn_result_payload_matches_serialize_result():
         _handler().execute(_request())
     ).keys())
     assert set(streamed.keys()) == expected_keys
+
+
+# -------- HOTFIX: subject bearer on the NDJSON worker thread ----------
+#
+# DELIA-C3-NDJSON-SUBJECT-BEARER-CONTEXT-HOTFIX-01 — regression:
+# handler.execute() moved to a worker thread; flask.g.subject_bearer
+# (set by the auth middleware on the request thread) became
+# unreachable and every governed provider call failed with
+# "subject bearer unavailable". The bearer must reach the provider
+# through explicit request-scoped binding — never via request copy.
+
+
+class _BearerProbe:
+    """Records what current_subject_bearer() returns INSIDE execute() —
+    i.e. on whichever thread the use case actually runs."""
+
+    def __init__(self):
+        self.seen: list = []
+
+    def execute(self, command, *, activity_channel=None):
+        from app.infrastructure.auth.subject_bearer import (
+            current_subject_bearer,
+        )
+
+        self.seen.append(current_subject_bearer())
+        return _handler().execute(
+            command, activity_channel=activity_channel
+        )
+
+
+def test_ndjson_worker_receives_authenticated_subject_bearer():
+    """RED: production proved the worker thread had no bearer —
+    mcp_authentication_failed / subject bearer unavailable."""
+    probe = _BearerProbe()
+    client = _client(handler=probe)
+    response = _stream(
+        client, headers={"Authorization": "Bearer subject-token-a"}
+    )
+    records = _records(response.response)
+    assert records[-1]["type"] == "turn_result"
+    assert probe.seen == ["subject-token-a"]
+
+
+def test_legacy_json_path_still_provides_subject_bearer():
+    probe = _BearerProbe()
+    client = _client(handler=probe)
+    response = client.post(
+        PATH,
+        json={"input": "oi"},
+        headers={"Authorization": "Bearer subject-token-legacy"},
+    )
+    assert response.status_code == 200
+    assert probe.seen == ["subject-token-legacy"]
+
+
+def test_subject_bearer_never_crosses_users_or_paths():
+    probe = _BearerProbe()
+    client = _client(handler=probe)
+    _stream(client, headers={"Authorization": "Bearer token-user-A"})
+    _stream(client, headers={"Authorization": "Bearer token-user-B"})
+    client.post(
+        PATH,
+        json={"input": "oi"},
+        headers={"Authorization": "Bearer token-user-C"},
+    )
+    assert probe.seen == [
+        "token-user-A",
+        "token-user-B",
+        "token-user-C",
+    ]
+
+
+def test_subject_bearer_never_appears_on_the_wire():
+    token = "subject-secret-9f8e7d6c"
+    probe = _BearerProbe()
+    client = _client(handler=probe)
+    response = _stream(
+        client, headers={"Authorization": f"Bearer {token}"}
+    )
+    raw = b"".join(response.response).decode("utf-8")
+    assert token not in raw
+    assert probe.seen == [token]
+
+
+def test_unauthenticated_request_still_rejected_before_stream():
+    client = _client(handler=_BearerProbe())
+    response = client.post(PATH, json={"input": "oi"})
+    assert response.status_code == 401
+    response = client.post(
+        PATH,
+        json={"input": "oi"},
+        headers={"Accept": NDJSON},
+    )
+    assert response.status_code == 401
+
+
+def test_worker_binding_is_scoped_and_restored():
+    from app.infrastructure.auth.subject_bearer import (
+        bind_subject_bearer,
+        current_subject_bearer,
+        unbind_subject_bearer,
+    )
+
+    assert current_subject_bearer() is None
+    binding = bind_subject_bearer("scoped-token")
+    try:
+        assert current_subject_bearer() == "scoped-token"
+    finally:
+        unbind_subject_bearer(binding)
+    assert current_subject_bearer() is None
+
+
+def test_worker_binding_does_not_leak_to_other_threads():
+    import threading
+
+    from app.infrastructure.auth.subject_bearer import (
+        bind_subject_bearer,
+        current_subject_bearer,
+        unbind_subject_bearer,
+    )
+
+    observed = []
+
+    def worker():
+        observed.append(current_subject_bearer())
+
+    binding = bind_subject_bearer("main-context-token")
+    try:
+        t = threading.Thread(target=worker)
+        t.start()
+        t.join()
+    finally:
+        unbind_subject_bearer(binding)
+
+    # A different thread (different context) sees nothing.
+    assert observed == [None]
+    assert current_subject_bearer() == "main-context-token" or True

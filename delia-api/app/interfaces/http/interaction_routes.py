@@ -29,6 +29,11 @@ from app.application.interaction.activity import (
     TURN_ERROR_RECORD_TYPE,
     TURN_RESULT_RECORD_TYPE,
 )
+from app.infrastructure.auth.subject_bearer import (
+    bind_subject_bearer,
+    current_subject_bearer,
+    unbind_subject_bearer,
+)
 from app.application.interaction.contracts import (
     InteractiveTurnRequest,
     InteractiveTurnResult,
@@ -234,9 +239,24 @@ def _stream_interaction_turn(handler, command, logger):
         maxsize=_MAX_QUEUED_ITEMS
     )
 
+    # DELIA-C3-NDJSON-SUBJECT-BEARER-CONTEXT-HOTFIX-01: the bearer must
+    # be captured HERE, on the request thread — inside the worker there
+    # is no Flask request context, so flask.g.subject_bearer is
+    # unreachable (production regression: mcp_authentication_failed /
+    # "subject bearer unavailable"). The worker binds the already-
+    # authenticated token to its own ContextVar — never copied into the
+    # command, events, logs, or the response.
+    subject_bearer = current_subject_bearer()
+
     def run() -> None:
         intermediate_events = 0
         terminal_events = 0
+
+        binding = (
+            bind_subject_bearer(subject_bearer)
+            if subject_bearer
+            else None
+        )
 
         def publish_activity(event) -> None:
             nonlocal intermediate_events, terminal_events
@@ -271,6 +291,10 @@ def _stream_interaction_turn(handler, command, logger):
         else:
             items.put_nowait(("result", result))
         finally:
+            # Bearer never outlives the execution context — restored
+            # before the sentinel so the worker leaves no credential.
+            if binding is not None:
+                unbind_subject_bearer(binding)
             items.put_nowait(("done", None))
 
     worker = threading.Thread(
