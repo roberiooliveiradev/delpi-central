@@ -1,0 +1,74 @@
+name: DÉLIA PR 76 UI tests (temporary)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "plugins/plugin-ui/**"
+      - "plugins/delia/**"
+      - ".github/workflows/delia-user-message-pr-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  plugin-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: plugins/plugin-ui/package-lock.json
+      - name: Install plugin-ui dependencies
+        working-directory: plugins/plugin-ui
+        run: npm ci
+      - name: Targeted ConversationUserMessage tests
+        working-directory: plugins/plugin-ui
+        run: npx vitest run src/components/conversation/ConversationUserMessage.test.tsx
+      - name: Full plugin-ui Vitest suite
+        if: success() || failure()
+        working-directory: plugins/plugin-ui
+        run: npm test
+      - name: plugin-ui typecheck
+        if: success() || failure()
+        working-directory: plugins/plugin-ui
+        run: npx tsc --noEmit
+      - name: plugin-ui build and host exports
+        if: success() || failure()
+        working-directory: plugins/plugin-ui
+        run: npm run build
+  delia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            plugins/plugin-ui/package-lock.json
+            plugins/delia/package-lock.json
+      - name: Install plugin-ui dependencies (TypeScript resolution)
+        working-directory: plugins/plugin-ui
+        run: npm ci
+      - name: Install DÉLIA dependencies
+        working-directory: plugins/delia
+        run: npm ci
+      - name: Targeted ConversationTimeline and currentUser tests
+        working-directory: plugins/delia
+        run: npx vitest run src/ui/ConversationTimeline.test.tsx src/identity/currentUser.test.tsx
+      - name: Full DÉLIA Vitest suite
+        if: success() || failure()
+        working-directory: plugins/delia
+        run: npm test
+      - name: DÉLIA typecheck
+        if: success() || failure()
+        working-directory: plugins/delia
+        run: npm run typecheck
+      - name: DÉLIA build and federation
+        if: success() || failure()
+        working-directory: plugins/delia
+        run: npm run build && npm run verify:federation
