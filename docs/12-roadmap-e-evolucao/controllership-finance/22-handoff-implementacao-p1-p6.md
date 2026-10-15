@@ -371,7 +371,7 @@ Não definir route pattern antes do inventário de plugin/basePath. O contrato d
 | P2 | coberto | coberto transversalmente | coberto | coberto | definido acima | produto + sources autorizados | ledger 23 | READY_FOR_IMPLEMENTATION_INVENTORY |
 | P3 | coberto | Gate V2 fechado | coberto | coberto | definido acima + E02 terminal | T01/T03 | ledger 23 + 15.1 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 |
 | P4 | coberto | page-level fechado em 11 | coberto | coberto | definido acima | owner CC + T01/T05 | ledger 23 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
-| P5 | package/finalization fechado; envio condicionado | page-level fechado em 12 | coberto | coberto | definido acima | owners/sources + E04/T04 para envio | ledger 23 | PORTAL_SUBMISSION_MODEL_DEFINED / REVIEW_COMPLETION_DECISION_REQUIRED |
+| P5 | package/finalization + submit/review in-portal definidos | page-level em 12 + contract 37 | coberto | coberto | definido acima | reviewer scope/Core notifications + D-P5-REVIEW-COMPLETION | ledger 23 | PORTAL_SUBMISSION_MODEL_DEFINED / REVIEW_COMPLETION_DECISION_REQUIRED |
 | P6 | coberto | coberto transversalmente | coberto | coberto | definido acima | ADM01–ADM07 + E/T aplicáveis | ledger 23 + 28 | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 
 ## Regra de execução
