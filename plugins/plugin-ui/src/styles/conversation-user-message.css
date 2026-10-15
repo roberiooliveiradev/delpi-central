@@ -1,0 +1,101 @@
+/* ConversationUserMessage — visual chrome only.
+   Identity, author and literal turn content are consumer-owned.
+   Layout is responsive to the workspace container (dock and full page). */
+
+.delpi-ui-conversation-user-message {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 10px;
+  width: fit-content;
+  max-width: 88%;
+  min-width: 0;
+  margin-inline-start: auto;
+  box-sizing: border-box;
+  animation: delpi-ui-conversation-user-message-in 220ms ease-out;
+}
+
+.delpi-ui-conversation-user-message__avatar {
+  display: inline-flex;
+  align-items: flex-start;
+  flex: 0 0 auto;
+  margin-block-start: 2px;
+}
+
+.delpi-ui-conversation-user-message__bubble {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--delpi-ui-border, var(--border));
+  border-radius: 14px 14px 4px 14px;
+  background: var(
+    --delpi-ui-surface-muted,
+    var(--surface-2, var(--delpi-ui-surface, var(--surface)))
+  );
+}
+
+.delpi-ui-conversation-user-message__author {
+  max-width: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, var(--text-muted)));
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-conversation-user-message__content {
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.6;
+  text-align: start;
+  color: var(--delpi-ui-text, var(--text));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-conversation-user-message--compact {
+  gap: 8px;
+}
+
+.delpi-ui-conversation-user-message--compact
+  .delpi-ui-conversation-user-message__bubble {
+  gap: 3px;
+  padding: 6px 10px;
+}
+
+@container (max-width: 560px) {
+  .delpi-ui-conversation-user-message {
+    max-width: 96%;
+  }
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-conversation-user-message {
+    max-width: 96%;
+  }
+}
+
+@keyframes delpi-ui-conversation-user-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-user-message {
+    animation: none;
+  }
+}

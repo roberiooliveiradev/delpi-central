@@ -8,6 +8,11 @@ export {
   type ConversationHeaderProps,
 } from "./ConversationHeader";
 export {
+  ConversationUserMessage,
+  type ConversationUserMessageDensity,
+  type ConversationUserMessageProps,
+} from "./ConversationUserMessage";
+export {
   ConversationStatus,
   type ConversationStatusDensity,
   type ConversationStatusProps,

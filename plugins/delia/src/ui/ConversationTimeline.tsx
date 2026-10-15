@@ -1,4 +1,4 @@
-import { UnifiedAvatar } from "@delpi/plugin-ui/index";
+import { ConversationUserMessage, UnifiedAvatar } from "@delpi/plugin-ui/index";
 
 import type { ActivityViewerProps } from "@delpi/plugin-ui/index";
 
@@ -66,7 +66,7 @@ export function ConversationTimeline({
       {turns.map((turn) => (
         <li
           key={turn.id}
-          className={`delia-turn delia-turn--${turn.role} delpi-ui-message-action-scope`}
+          className={turn.role === "delia" ? "delia-turn delia-turn--delia delpi-ui-message-action-scope" : undefined}
         >
           {turn.role === "delia" ? (
             <DeliaAssistantMessage
@@ -77,8 +77,9 @@ export function ConversationTimeline({
               onConfirmation={onConfirmation}
             />
           ) : (
-            <>
-              <span className="delia-turn__avatar" aria-hidden="true">
+            <ConversationUserMessage
+              authorLabel="Você"
+              avatar={
                 <UnifiedAvatar
                   kind="person"
                   label="Você"
@@ -86,12 +87,10 @@ export function ConversationTimeline({
                   imageUrl={userIdentity?.imageUrl ?? null}
                   fallbackText={userIdentity?.displayName ?? null}
                 />
-              </span>
-              <div className="delia-turn__bubble">
-                <span className="delia-turn__label">Você</span>
-                <p className="delia-turn__content">{turn.content}</p>
-              </div>
-            </>
+              }
+            >
+              {turn.content}
+            </ConversationUserMessage>
           )}
         </li>
       ))}

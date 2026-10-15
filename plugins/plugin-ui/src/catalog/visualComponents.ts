@@ -606,6 +606,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Chrome conversacional leve (título/subtítulo/leading/actions) — não é PageHeader administrativo.",
   }),
+  vc("collaboration", "ConversationUserMessage", {
+    addedAt: "2026-10-15",
+    description:
+      "Mensagem do usuário à direita: avatar/autor/conteúdo são slots; o kit cuida apenas de bolha, densidade, quebra de linha e acessibilidade.",
+  }),
   vc("collaboration", "ConversationStatus", {
     addedAt: "2026-10-15",
     description:
