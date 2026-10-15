@@ -606,6 +606,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Chrome conversacional leve (título/subtítulo/leading/actions) — não é PageHeader administrativo.",
   }),
+  vc("collaboration", "ConversationStatus", {
+    addedAt: "2026-10-15",
+    description:
+      "Estado semântico inline de mensagem (ícone + StatusBadge). OWNS chrome subordinado. DOES NOT OWN enums, mapping de estado, auth nem quando aparecer — o consumidor resolve label/tone.",
+  }),
   vc("collaboration", "MessageActionBar", {
     addedAt: "2026-10-15",
     description:

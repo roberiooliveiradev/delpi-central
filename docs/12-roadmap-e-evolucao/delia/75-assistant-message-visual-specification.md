@@ -49,7 +49,7 @@ O componente é a unidade de resposta da conversa. A `ConversationTimeline` perm
 | Rótulo "DÉLIA" | sim | head row acima do conteúdo |
 | Ação "Copiar resposta" | sim | `MessageActionBar` + `IconButton` do plugin-ui; `aria-label` dinâmico ("Copiar resposta" → "Resposta copiada"); somente conteúdo visível; degrada se clipboard indisponível |
 | Corpo textual | sim | `white-space: pre-line`; texto verbatim, nunca reinterpretado |
-| Linha de estado semântico | condicional | ícone contextual + `StatusBadge`; **ausente em RESULT** |
+| Linha de estado semântico | condicional | `ConversationStatus` do plugin-ui (ícone decorativo + `StatusBadge` canônico); **ausente em RESULT** |
 | Owner hint | condicional | parágrafo discreto; deduplicado do conteúdo via `dedupeOwnerHintContent` |
 | Meta row | condicional | `aria-label="Detalhes da resposta"`; provenance + classificação epistêmica + limitações |
 | Confirmação governada | condicional | Confirmar (primary)/Cancelar (secondary) em `role="group"` |
@@ -68,6 +68,8 @@ O componente é a unidade de resposta da conversa. A `ConversationTimeline` perm
 | desconhecido | nenhum | — | fallback neutro, conteúdo renderizado |
 
 Regras: o estado deriva **somente** do `presentation` validado pelo adapter — nunca do texto. `RESULT` nunca recebe badge de sucesso fictício. Ícones restritos aos exports confirmados do lucide-react instalado.
+
+O chrome genérico da linha de estado é do Design System: `ConversationStatus` (`plugins/plugin-ui/src/components/conversation/ConversationStatus.tsx`) compõe o `StatusBadge` canônico — nenhum badge novo. O componente OWNS somente layout inline, slot de ícone decorativo (`aria-hidden`), tom, densidade (`comfortable`/`compact`), wrap e acessibilidade; **não conhece** `message_kind`, enums, auth ou quando aparecer — a DÉLIA OWNS o mapeamento (`SEMANTIC_STATE`) e a decisão de exibir. Distinções preservadas: estado semântico ≠ `ActivityViewer` (atividade operacional), ≠ confirmação governada (Confirmar/Cancelar são superfície própria), ≠ banner de erro (conteúdo estático, sem `role=alert`/`status`, sem animação). Tons seguem os mesmos tokens do `StatusBadge` (light/dark); `success` existe no kit mas nunca é usado para `RESULT`.
 
 ## Provenance
 

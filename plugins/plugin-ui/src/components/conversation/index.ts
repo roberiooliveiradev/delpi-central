@@ -8,6 +8,12 @@ export {
   type ConversationHeaderProps,
 } from "./ConversationHeader";
 export {
+  ConversationStatus,
+  type ConversationStatusDensity,
+  type ConversationStatusProps,
+  type ConversationStatusTone,
+} from "./ConversationStatus";
+export {
   MessageActionBar,
   type MessageActionBarAlign,
   type MessageActionBarDensity,

@@ -222,28 +222,6 @@
   line-height: 1.6;
 }
 
-/* Semantic state row: contextual icon + canonical badge (doc 73 §5). */
-.dashboard-delia .delia-turn__state {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-  color: var(--delia-text-muted);
-  flex-wrap: wrap;
-}
-
-.dashboard-delia .delia-turn__state--info {
-  color: color-mix(in srgb, var(--delia-accent) 80%, var(--delia-text));
-}
-
-.dashboard-delia .delia-turn__state--warning {
-  color: color-mix(in srgb, var(--warning, #b45309) 85%, var(--delia-text));
-}
-
-.dashboard-delia .delia-turn__state--danger {
-  color: color-mix(in srgb, var(--danger, #dc2626) 85%, var(--delia-text));
-}
-
 .dashboard-delia .delia-turn__notice {
   margin: 0;
   font-size: 0.875rem;

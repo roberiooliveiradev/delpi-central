@@ -105,11 +105,42 @@ describe("DeliaAssistantMessage — semantic states", () => {
         }),
       );
       expect(screen.getByText(label)).toBeTruthy();
-      const state = container.querySelector(".delia-turn__state");
+      const state = container.querySelector(
+        ".delpi-ui-conversation-status",
+      );
       expect(state).toBeTruthy();
       expect(state!.querySelector("svg")).toBeTruthy();
+      expect(
+        state!.querySelector(".delpi-ui-status-badge"),
+      ).toBeTruthy();
     });
   }
+
+  it("RESULT renders no ConversationStatus", () => {
+    const { container } = renderMessage(
+      makeTurn({
+        presentation: {
+          messageKind: "RESULT",
+          semanticStatus: null,
+          groundingStatus: null,
+          blocks: [],
+          allowedInteractions: [],
+        },
+      }),
+    );
+    expect(
+      container.querySelector(".delpi-ui-conversation-status"),
+    ).toBeNull();
+  });
+
+  it("prose containing state words does not create a status", () => {
+    const { container } = renderMessage(
+      makeTurn({ content: "Acesso negado, erro e fonte indisponível." }),
+    );
+    expect(
+      container.querySelector(".delpi-ui-conversation-status"),
+    ).toBeNull();
+  });
 
   it("unknown message_kind renders neutral content, no badge", () => {
     const { container } = renderMessage(

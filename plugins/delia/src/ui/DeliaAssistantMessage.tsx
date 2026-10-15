@@ -19,6 +19,7 @@ import {
 import type { DeliaMessageKind } from "../api/presentation";
 import {
   ActivityViewer,
+  ConversationStatus,
   IconButton,
   MessageActionBar,
   UnifiedAvatar,
@@ -26,7 +27,6 @@ import {
 import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 import { buildDeliaActivityView } from "../activity/activityView";
 
-import { DeliaStatusBadge } from "./deliaUi";
 import type { ConversationDisplayTurn } from "./ConversationTimeline";
 
 /** Semantic state presentation per canonical message_kind — the icon
@@ -177,15 +177,11 @@ export function DeliaAssistantMessage({
         ) : null}
 
         {semanticState ? (
-          <div className={`delia-turn__state delia-turn__state--${semanticState.variant}`}>
-            {StateIcon ? (
-              <StateIcon size={13} />
-            ) : null}
-            <DeliaStatusBadge
-              label={semanticState.label}
-              variant={semanticState.variant}
-            />
-          </div>
+          <ConversationStatus
+            label={semanticState.label}
+            tone={semanticState.variant}
+            icon={StateIcon ? <StateIcon size={13} /> : undefined}
+          />
         ) : null}
 
         <p className="delia-turn__content">{displayContent}</p>

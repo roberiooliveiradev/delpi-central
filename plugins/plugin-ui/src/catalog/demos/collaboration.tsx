@@ -22,6 +22,7 @@ import {
 import { IconButton } from "../../components/actions";
 import {
   ConversationHeader,
+  ConversationStatus,
   ConversationWorkspace,
   MessageActionBar,
 } from "../../components/conversation";
@@ -376,6 +377,58 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
             <ConversationHeader title="DÉLIA" subtitle="Inteligência operacional DELPI" compact />
           </div>
         ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ConversationStatus",
+    family: "collaboration",
+    exportName: "ConversationStatus",
+    title: "ConversationStatus",
+    description:
+      "Estado semântico inline de mensagem: ícone decorativo + StatusBadge. Apresentação pura — o consumidor resolve label/tone.",
+    propsSummary: [
+      "label",
+      "tone",
+      "icon",
+      "description",
+      "density",
+      "aria-label",
+      "className",
+    ],
+    demos: [
+      {
+        id: "tones",
+        label: "Tons (info/warning/danger/neutral)",
+        render: () => (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+            <ConversationStatus tone="info" label="Esclarecimento necessário"
+              icon={<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>} />
+            <ConversationStatus tone="warning" label="Confirmação pendente"
+              icon={<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>} />
+            <ConversationStatus tone="danger" label="Acesso não autorizado"
+              icon={<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>} />
+            <ConversationStatus tone="neutral" label="Estado neutro" />
+          </div>
+        ),
+      },
+      {
+        id: "compact-long",
+        label: "Compacto + label longa",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ConversationStatus
+              tone="warning"
+              density="compact"
+              label="Pré-condição pendente — a fonte pediu uma informação adicional antes de continuar"
+            />
+          </div>
+        ),
+      },
+      {
+        id: "no-icon",
+        label: "Sem ícone",
+        render: () => <ConversationStatus tone="info" label="Estado informativo" />,
       },
     ],
   },
