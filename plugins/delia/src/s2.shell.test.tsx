@@ -425,6 +425,17 @@ describe("conversation workspace layout", () => {
     expect(interaction.lastElementChild).toBe(footer);
   });
 
+  it("root publishes the portal fill contract so the workspace owns the host height", () => {
+    // `dashboard-page--fill` is the existing Portal contract that lets an
+    // MFE fill .content and keep the scroll inside the app surface
+    // (same class used by sibling immersive MFEs). Without it the host
+    // shrinks to content height and the composer scrolls away.
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response()));
+    const { container } = render(<App getAccessToken={() => "t"} />);
+    const root = container.firstElementChild!;
+    expect(root.classList.contains("dashboard-page--fill")).toBe(true);
+  });
+
   it("timeline replaces reception inside the reading column", async () => {
     vi.stubGlobal(
       "fetch",

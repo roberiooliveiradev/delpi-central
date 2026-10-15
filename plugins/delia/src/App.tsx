@@ -280,7 +280,7 @@ export default function App({
   }
 
   return (
-    <div className={`${DELIA_ROOT_CLASS} dashboard-page`}>
+    <div className={`${DELIA_ROOT_CLASS} dashboard-page dashboard-page--fill`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
         <ConversationWorkspace
           className="delia-interaction"

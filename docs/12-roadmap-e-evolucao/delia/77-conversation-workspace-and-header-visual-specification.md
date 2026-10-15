@@ -106,8 +106,19 @@ Nenhuma mudança em `getAccessToken`, permissões, contrato de interação, payl
 ## 10. Evidência de implementação
 
 - Testes plugin-ui conversation: 10/10 (slots, ref de viewport, densidade, heading levels, regiões opcionais).
-- Suite DÉLIA: 149/149 (reception, timeline, composer ancorado, erro, pending, autoscroll, identidade — sem mudança de contrato).
+- Suite DÉLIA: 150/150 (reception, timeline, composer ancorado, erro, pending, autoscroll, identidade, contrato `dashboard-page--fill` — sem mudança de contrato).
 - Builds: `plugin-ui` e `delia` PASS; `verify-federation` PASS; `verify-host-exports` PASS com os dois símbolos novos.
 - Typecheck: DÉLIA clean; plugin-ui mantém apenas erros pré-existentes de `visualComponents.ts` (entradas legadas sem `addedAt`, fora deste diff).
 - Residuals pré-existentes no suite plugin-ui: `componentRegistry`, `MentionComposer`, `ModalShell` (3), `SignatureCapturePanel`, `SignaturePad` — não relacionados.
-- Visual QA em browser: `TEST_NOT_RUN` nesta execução (ambiente sem preview); jsdom não substitui evidência visual — reagendar QA de página completa/dock/light/dark/narrow/zoom/reduced-motion.
+
+### 10.1 Correção de geometria comprovada em browser (DELIA-UX-CONVERSATION-RUNTIME-REWORK-02)
+
+**Causa raiz provada:** a raiz `.dashboard-delia` publicava `dashboard-page` **sem** `dashboard-page--fill`. Sem o modificador, o contrato do Portal (`.content > .app-host-federated:has(.dashboard-page:not(--fill))` → `flex: 0 0 auto; height: auto`) faz o mount encolher para o conteúdo — o workspace crescia com a timeline, a página rolava e o composer era empurrado para o fim do conteúdo. Corrigido adicionando `dashboard-page--fill` na raiz — contrato existente já usado por MFEs irmãos (helpdesk, commercial, production-pulse, transformometro, bpmn-editor). Nenhuma mudança no Portal.
+
+**Evidência de browser real** (Chrome headless, 1440×900, stack dev local): cadeia `html → body → #root → .app-shell → .global-delia-workspace → .main-area → .content → .app-host-federated → __mount → .dashboard-delia → .delia-page-stack → .delpi-ui-conversation-workspace` com `height: 900px` em todos os níveis; `.content` `overflow-y: hidden`; body do workspace `scrollH 7324 / clientH 672` com `overflow-y: auto`; `docScrollH == clientH` (documento não rola); footer `top 737 / bottom 900 / inViewport true` nos estados vazio, pós-turno, conversa longa e longa-rolada-ao-topo. Narrow 420px: `docScrollW == winW` (sem scroll horizontal), footer visível. Dark mode renderiza contraste correto.
+
+### 10.2 Hierarquia de metadados da resposta
+
+`DeliaAssistantMessage` agora separa camada primária legível ("Fonte · <nome da fonte>", "Consultado em dd/mm/aaaa hh:mm" quando `observed_at` válido — via `Intl.DateTimeFormat pt-BR`, nunca timestamp inventado) de evidência técnica em `<details class="delia-turn__evidence">` (classificação epistêmica, especialista/protocolo, limitações — verbatim). `NON_GROUNDED` continua honesto ("sem fonte vinculada"). Conteúdo da resposta permanece verbatim com `pre-wrap` + `line-height: 1.6`; nenhuma estrutura é inferida por parsing do texto.
+
+**CONTRACT_REQUIRED registrado:** o dump `campo: valor` vem de `_format_structured` em `delia-api/app/application/capability_provision/orchestration.py`, que projeta resultado estruturado do owner para texto plano em `content`. `presentation.v1` emite apenas `text`/`notice` (doc 70 §15 prevê tipos futuros `list/table/metric`). Renderização estruturada (key_value/table) exige extensão de contrato `presentation` — fora do escopo frontend desta task; a tipografia foi melhorada sem reinterpretar o texto.

@@ -63,6 +63,19 @@ const SEMANTIC_STATE: Record<
   },
 };
 
+/** Formats an observed_at timestamp for presentation; returns null for
+ *  absent/invalid values so the caller shows nothing rather than raw
+ *  ISO. Presentation-only — never invents a timestamp. */
+function formatObservedAt(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
+}
+
 export type DeliaAssistantMessageProps = {
   turn: ConversationDisplayTurn;
   loading: boolean;
@@ -114,6 +127,10 @@ export function DeliaAssistantMessage({
     Boolean(turn.epistemicClass) ||
     (turn.groundingStatus === "GROUNDED" && Boolean(turn.provenance?.source)) ||
     turn.groundingStatus === "NON_GROUNDED" ||
+    (turn.limitations?.length ?? 0) > 0;
+  const hasEvidenceDetails =
+    Boolean(turn.epistemicClass) ||
+    (turn.groundingStatus === "GROUNDED" && Boolean(turn.provenance?.source)) ||
     (turn.limitations?.length ?? 0) > 0;
 
   function handleCopy() {
@@ -221,29 +238,47 @@ export function DeliaAssistantMessage({
 
         {hasMeta ? (
           <div className="delia-turn__meta" aria-label="Detalhes da resposta">
-            {turn.epistemicClass ? (
-              <span className="delia-turn__meta-item">
-                classificação: {turn.epistemicClass}
-              </span>
-            ) : null}
             {turn.groundingStatus === "GROUNDED" &&
             turn.provenance?.source ? (
-              <span className="delia-turn__meta-item">
-                fonte: Cadastro de Produtos DELPI ·{" "}
-                {turn.provenance.specialist_id ?? "especialista"}/
-                {turn.provenance.protocol ?? "MCP"} ·{" "}
-                {turn.provenance.observed_at ?? ""}
-              </span>
+              <p className="delia-turn__source">
+                Fonte · Cadastro de Produtos DELPI
+                {formatObservedAt(turn.provenance.observed_at) ? (
+                  <span className="delia-turn__source-when">
+                    {" "}
+                    · Consultado em{" "}
+                    {formatObservedAt(turn.provenance.observed_at)}
+                  </span>
+                ) : null}
+              </p>
             ) : null}
             {turn.groundingStatus === "NON_GROUNDED" ? (
               <span className="delia-turn__meta-item">
                 sem fonte vinculada
               </span>
             ) : null}
-            {turn.limitations && turn.limitations.length > 0 ? (
-              <span className="delia-turn__meta-item">
-                limitações: {turn.limitations.join(", ")}
-              </span>
+            {hasEvidenceDetails ? (
+              <details className="delia-turn__evidence">
+                <summary>Detalhes da evidência</summary>
+                {turn.epistemicClass ? (
+                  <span className="delia-turn__meta-item">
+                    classificação: {turn.epistemicClass}
+                  </span>
+                ) : null}
+                {turn.groundingStatus === "GROUNDED" &&
+                turn.provenance?.source ? (
+                  <span className="delia-turn__meta-item">
+                    fonte: Cadastro de Produtos DELPI ·{" "}
+                    {turn.provenance.specialist_id ?? "especialista"}/
+                    {turn.provenance.protocol ?? "MCP"} ·{" "}
+                    {turn.provenance.observed_at ?? ""}
+                  </span>
+                ) : null}
+                {turn.limitations && turn.limitations.length > 0 ? (
+                  <span className="delia-turn__meta-item">
+                    limitações: {turn.limitations.join(", ")}
+                  </span>
+                ) : null}
+              </details>
             ) : null}
           </div>
         ) : null}
