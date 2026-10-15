@@ -25,6 +25,7 @@ import {
   demoTurnOutcome,
   resolveDemoScenario,
 } from "./demo/demoMode";
+import { useCurrentUserIdentity } from "./identity/currentUser";
 
 /** Host props from Portal AppHost — presentation/transport only. */
 export type AppProps = {
@@ -79,6 +80,7 @@ export default function App({
   const [demoScenario] = useState(() =>
     resolveDemoScenario(window.location.search),
   );
+  const userIdentity = useCurrentUserIdentity(getAccessToken);
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
@@ -302,6 +304,7 @@ export default function App({
                   loading={loading}
                   respondingTurnId={respondingTurnId}
                   onResponseMotionComplete={() => setRespondingTurnId(null)}
+                  userIdentity={userIdentity}
                   onConfirmation={handleConfirmation}
                 />
               ) : (

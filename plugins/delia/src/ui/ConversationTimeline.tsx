@@ -9,6 +9,7 @@ import type {
 import type { DeliaPresentation } from "../api/presentation";
 
 import { DeliaAssistantMessage } from "./DeliaAssistantMessage";
+import type { DeliaCurrentUserIdentity } from "../identity/currentUser";
 
 /** Transient UI display state only — not session persistence or memory. */
 export type ConversationDisplayTurn = {
@@ -35,6 +36,9 @@ export type ConversationTimelineProps = {
   loading: boolean;
   respondingTurnId?: string | null;
   onResponseMotionComplete?: () => void;
+  /** Real user identity published by the platform — presentation only;
+   *  absent → neutral person fallback. */
+  userIdentity?: DeliaCurrentUserIdentity;
   onConfirmation: (
     request: DeliaConfirmationRequest,
     decision: "CONFIRM" | "REJECT",
@@ -54,6 +58,7 @@ export function ConversationTimeline({
   loading,
   respondingTurnId,
   onResponseMotionComplete,
+  userIdentity,
   onConfirmation,
 }: ConversationTimelineProps) {
   return (
@@ -74,7 +79,13 @@ export function ConversationTimeline({
           ) : (
             <>
               <span className="delia-turn__avatar" aria-hidden="true">
-                <UnifiedAvatar kind="person" label="Você" size="sm" />
+                <UnifiedAvatar
+                  kind="person"
+                  label="Você"
+                  size="sm"
+                  imageUrl={userIdentity?.imageUrl ?? null}
+                  fallbackText={userIdentity?.displayName ?? null}
+                />
               </span>
               <div className="delia-turn__bubble">
                 <span className="delia-turn__label">Você</span>

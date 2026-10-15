@@ -34,6 +34,14 @@ afterEach(() => {
 
 // --- resolver unit tests -------------------------------------------
 
+/** Interaction assertions scope to the delia-api boundary — the app may
+ *  legitimately read /core-api/me* for the user avatar identity. */
+function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
+  return fetchMock.mock.calls.filter(([u]) =>
+    String(u).startsWith("/apps/delia-api"),
+  );
+}
+
 describe("resolveDemoScenario", () => {
   it("returns null when the query param is absent", () => {
     expect(resolveDemoScenario("/")).toBeNull();
@@ -94,7 +102,7 @@ describe("demo mode OFF", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<App getAccessToken={() => "t"} />);
     submitTurn("pergunta real");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     expect(screen.queryByText(DELIA_DEMO_BANNER)).toBeNull();
   });
 });
@@ -120,7 +128,7 @@ describe("demo mode ON", () => {
       ).toBeTruthy(),
     );
     expect(screen.getByText("pergunta de teste")).toBeTruthy();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
   });
 
   it("marks simulated responses as simulated, never grounded", async () => {
@@ -148,7 +156,7 @@ describe("demo mode ON", () => {
     await waitFor(() =>
       expect(container.querySelectorAll(".delia-turn").length).toBe(4),
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
   });
 
   it("long scenario renders the extended response", async () => {
@@ -221,7 +229,7 @@ describe("demo mode ON", () => {
       (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement)
         .value,
     ).toBe("minha pergunta importante");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
   });
 
   it("loading scenario shows the processing badge before responding", async () => {
@@ -270,7 +278,7 @@ describe("demo mode ON", () => {
         screen.getByText(/confirmada apenas visualmente/),
       ).toBeTruthy(),
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
     // The pending card is resolved — buttons are gone.
     expect(
       screen.queryByRole("button", { name: "Confirmar" }),

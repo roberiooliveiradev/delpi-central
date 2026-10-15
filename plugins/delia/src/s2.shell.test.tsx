@@ -22,9 +22,25 @@ function successPayload(n: number, content?: string) {
   };
 }
 
+/** Interaction assertions scope to the delia-api boundary — the app may
+ *  legitimately read /core-api/me* for the user avatar identity. */
+function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
+  return fetchMock.mock.calls.filter(([u]) =>
+    String(u).startsWith("/apps/delia-api"),
+  );
+}
+
 function mockFetchSequence(payloads: object[]) {
   let call = 0;
-  return vi.fn().mockImplementation(() => {
+  return vi.fn().mockImplementation((input: unknown) => {
+    if (String(input).startsWith("/core-api/")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ name: null, has_photo: false }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
     const body = payloads[Math.min(call, payloads.length - 1)];
     call += 1;
     return Promise.resolve(
@@ -117,7 +133,8 @@ describe("S3 chat-first visual identity", () => {
     expect(mark).toBeTruthy();
     // Lucide Sparkles glyph — an icon, not the DELPI logo image.
     expect(mark!.querySelector("svg")).toBeTruthy();
-    expect(mark!.querySelector("[role='img']")).toBeNull();
+    // The DÉLIA mark is the UnifiedAvatar glyph; no raster/logo image.
+    expect(mark!.querySelector("img")).toBeNull();
     expect(mark!.textContent).not.toContain("DELPI");
   });
 
@@ -199,9 +216,9 @@ describe("S2-C composer", () => {
     fireEvent.change(input, { target: { value: "via teclado" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     expect(
-      JSON.parse(fetchMock.mock.calls[0][1].body as string).input,
+      JSON.parse(deliaApiCalls(fetchMock)[0][1].body as string).input,
     ).toBe("via teclado");
   });
 
@@ -217,7 +234,7 @@ describe("S2-C composer", () => {
     fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
 
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
     expect(input.value).toBe("linha um");
   });
 
@@ -231,7 +248,7 @@ describe("S2-C composer", () => {
     fireEvent.keyDown(input, { key: "Enter", isComposing: true });
 
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
   });
 
   it("draft is preserved after a failed request", async () => {
@@ -258,7 +275,7 @@ describe("S2-C composer", () => {
       key: "Enter",
     });
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
   });
 
   it("uses the shared plugin-ui composer surface (two bands)", () => {
@@ -347,7 +364,15 @@ describe("S2-D loading and error states", () => {
     let call = 0;
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockImplementation(() => {
+vi.fn().mockImplementation((input: unknown) => {
+        if (String(input).startsWith("/core-api/")) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ name: null, has_photo: false }),
+              { status: 200, headers: { "Content-Type": "application/json" } },
+            ),
+          );
+        }
         call += 1;
         if (call === 1) {
           return Promise.resolve(

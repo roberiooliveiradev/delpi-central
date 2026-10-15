@@ -21,11 +21,29 @@ const SUCCESS_PAYLOAD = {
 };
 
 function mockFetchOk() {
-  return vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(SUCCESS_PAYLOAD), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }),
+  return vi.fn().mockImplementation((input: unknown) => {
+    if (String(input).startsWith("/core-api/")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ name: null, has_photo: false }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    return Promise.resolve(
+      new Response(JSON.stringify(SUCCESS_PAYLOAD), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  });
+}
+
+/** Interaction assertions scope to the delia-api boundary — the app may
+ *  legitimately read /core-api/me* for the user avatar identity. */
+function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
+  return fetchMock.mock.calls.filter(([u]) =>
+    String(u).startsWith("/apps/delia-api"),
   );
 }
 
@@ -68,8 +86,8 @@ describe("DÉLIA interaction surface", () => {
     render(<App getAccessToken={getAccessToken} />);
     submitTurn("olá");
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
+    const [url, init] = deliaApiCalls(fetchMock)[0] as [string, RequestInit];
     expect(url).toBe("/apps/delia-api/interaction/turns");
     expect(init.method).toBe("POST");
     expect((init.headers as Record<string, string>).Authorization).toBe(
@@ -125,7 +143,7 @@ describe("DÉLIA interaction surface", () => {
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     fireEvent.click(button);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
   });
 
   it("fails safely when no host token is available", async () => {
@@ -135,7 +153,7 @@ describe("DÉLIA interaction surface", () => {
 
     submitTurn("oi");
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(deliaApiCalls(fetchMock)).toHaveLength(0);
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
     expect(screen.getByRole("alert").textContent).toContain(
       "Token de acesso indisponível",
@@ -205,8 +223,8 @@ describe("DÉLIA interaction surface", () => {
 
     submitTurn("oi");
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
+    const init = deliaApiCalls(fetchMock)[0][1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
     expect(Object.keys(body)).toEqual(["input"]);
     const headers = init.headers as Record<string, string>;
@@ -232,7 +250,15 @@ function successPayload(n: number) {
 
 function mockFetchSequence(payloads: object[]) {
   let call = 0;
-  return vi.fn().mockImplementation(() => {
+  return vi.fn().mockImplementation((input: unknown) => {
+    if (String(input).startsWith("/core-api/")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ name: null, has_photo: false }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
     const body = payloads[Math.min(call, payloads.length - 1)];
     call += 1;
     return Promise.resolve(
@@ -274,14 +300,14 @@ describe("DÉLIA transient multi-turn continuity", () => {
     render(<App getAccessToken={() => "t"} />);
 
     submitTurn("primeira pergunta");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     expect(
-      JSON.parse(fetchMock.mock.calls[0][1].body as string),
+      JSON.parse(deliaApiCalls(fetchMock)[0][1].body as string),
     ).toEqual({ input: "primeira pergunta" });
 
     submitTurn("segunda pergunta");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
+    const body = JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string);
     expect(body.input).toBe("segunda pergunta");
     expect(body.context).toEqual([
       { kind: "USER_INPUT", content: "primeira pergunta" },
@@ -303,13 +329,13 @@ describe("DÉLIA transient multi-turn continuity", () => {
     render(<App getAccessToken={() => "t"} />);
 
     submitTurn("p1");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     submitTurn("p2");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
     submitTurn("p3");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(3));
 
-    const body = JSON.parse(fetchMock.mock.calls[2][1].body as string);
+    const body = JSON.parse(deliaApiCalls(fetchMock)[2][1].body as string);
     expect(
       body.context.map((t: { kind: string }) => t.kind),
     ).toEqual([
@@ -337,12 +363,12 @@ describe("DÉLIA transient multi-turn continuity", () => {
     );
 
     submitTurn("p1");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     submitTurn("p2");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
 
     const serialized = JSON.stringify(
-      JSON.parse(fetchMock.mock.calls[1][1].body as string),
+      JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string),
     ).toLowerCase();
     for (const forbidden of [
       "permission",
@@ -376,7 +402,15 @@ describe("DÉLIA transient multi-turn continuity", () => {
     let call = 0;
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockImplementation(() => {
+vi.fn().mockImplementation((input: unknown) => {
+        if (String(input).startsWith("/core-api/")) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ name: null, has_photo: false }),
+              { status: 200, headers: { "Content-Type": "application/json" } },
+            ),
+          );
+        }
         call += 1;
         if (call === 1) {
           return Promise.resolve(
@@ -450,9 +484,9 @@ describe("DÉLIA workspace context propagation", () => {
     );
     submitTurn("descreva este slide");
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     const body = JSON.parse(
-      fetchMock.mock.calls[0][1].body as string,
+      deliaApiCalls(fetchMock)[0][1].body as string,
     ) as Record<string, unknown>;
     expect(getWorkspaceContext).toHaveBeenCalled();
     expect(body.workspace).toEqual({
@@ -477,9 +511,9 @@ describe("DÉLIA workspace context propagation", () => {
     );
 
     submitTurn("olá");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     const body = JSON.parse(
-      fetchMock.mock.calls[0][1].body as string,
+      deliaApiCalls(fetchMock)[0][1].body as string,
     ) as Record<string, unknown>;
     expect(body.workspace).toBeUndefined();
   });
@@ -498,9 +532,9 @@ describe("DÉLIA workspace context propagation", () => {
     );
 
     submitTurn("olá");
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     const serialized = JSON.stringify(
-      fetchMock.mock.calls[0][1].body as string,
+      deliaApiCalls(fetchMock)[0][1].body as string,
     ).toLowerCase();
     for (const forbidden of [
       "permission",
@@ -571,8 +605,8 @@ describe("DÉLIA governed-write confirmation surface", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
+    const body = JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string);
     expect(body.confirmation).toEqual({
       decision: "CONFIRM",
       proposal_digest: "a".repeat(64),
@@ -599,8 +633,8 @@ describe("DÉLIA governed-write confirmation surface", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
+    const body = JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string);
     expect(body.confirmation.decision).toBe("REJECT");
   });
 
@@ -619,7 +653,7 @@ describe("DÉLIA governed-write confirmation surface", () => {
       ).toBeTruthy(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
 
     await waitFor(() =>
       expect(
@@ -745,8 +779,8 @@ describe("DÉLIA presentation.v1 semantic states", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
+    const body = JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string);
     expect(body.confirmation).toEqual({
       decision: "CONFIRM",
       proposal_digest: "a".repeat(64),
