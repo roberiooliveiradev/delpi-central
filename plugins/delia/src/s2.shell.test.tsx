@@ -147,16 +147,22 @@ describe("S3 chat-first visual identity", () => {
       expect(screen.getByText("Resposta 1 da DÉLIA.")).toBeTruthy(),
     );
 
-    const avatars = container.querySelectorAll(".delia-turn__avatar");
-    expect(avatars).toHaveLength(2);
-    // User avatar first (own message), DÉLIA avatar second.
-    expect(
-      avatars[0].closest(".delia-turn")!.className,
-    ).toContain("delia-turn--user");
-    expect(
-      avatars[1].closest(".delia-turn")!.className,
-    ).toContain("delia-turn--delia");
-    expect(avatars[0].getAttribute("aria-hidden")).toBe("true");
+    const items = Array.from(
+      screen.getByRole("log", { name: "Conversa atual" }).children,
+    );
+    expect(items).toHaveLength(2);
+    // The user avatar now lives in shared ConversationUserMessage chrome.
+    const userAvatar = items[0].querySelector(
+      ".delpi-ui-conversation-user-message__avatar",
+    );
+    const deliaAvatar = items[1].querySelector(".delia-turn__avatar");
+    expect(userAvatar).toBeTruthy();
+    expect(userAvatar?.querySelector(".delpi-ui-unified-avatar--person")).toBeTruthy();
+    expect(deliaAvatar?.querySelector(".delpi-ui-unified-avatar--assistant")).toBeTruthy();
+    expect(items[0].querySelector(".delpi-ui-conversation-user-message")).toBeTruthy();
+    expect(items[1].classList.contains("delia-turn--delia")).toBe(true);
+    expect(userAvatar?.getAttribute("aria-hidden")).toBe("true");
+    expect(deliaAvatar?.getAttribute("aria-hidden")).toBe("true");
   });
 });
 
@@ -180,17 +186,28 @@ describe("S2-B conversation timeline", () => {
     );
 
     const items = Array.from(
-      container.querySelectorAll(".delia-timeline .delia-turn"),
+      screen.getByRole("log", { name: "Conversa atual" }).children,
     );
     expect(items).toHaveLength(4);
-    expect(items.map((el) => el.className)).toEqual([
-      "delia-turn delia-turn--user delpi-ui-message-action-scope",
-      "delia-turn delia-turn--delia delpi-ui-message-action-scope",
-      "delia-turn delia-turn--user delpi-ui-message-action-scope",
-      "delia-turn delia-turn--delia delpi-ui-message-action-scope",
-    ]);
-    expect(items[0].textContent).toContain("pergunta um");
-    expect(items[3].textContent).toContain("Resposta 2 da DÉLIA.");
+    // Turn order is the timeline's contract; visual message chrome is
+    // owned by plugin-ui only for user turns, not by local BEM classes.
+    expect(
+      items.map((item) =>
+        item.querySelector(".delpi-ui-conversation-user-message")
+          ? "user"
+          : item.classList.contains("delia-turn--delia")
+            ? "delia"
+            : "unknown",
+      ),
+    ).toEqual(["user", "delia", "user", "delia"]);
+    expect(items[0].querySelector(".delpi-ui-conversation-user-message__content")?.textContent)
+      .toBe("pergunta um");
+    expect(items[2].querySelector(".delpi-ui-conversation-user-message__content")?.textContent)
+      .toBe("pergunta dois");
+    expect(items[1].querySelector(".delia-turn__content")?.textContent)
+      .toBe("Resposta 1 da DÉLIA.");
+    expect(items[3].querySelector(".delia-turn__content")?.textContent)
+      .toBe("Resposta 2 da DÉLIA.");
   });
 
   it("timeline is a polite log region for assistive tech", async () => {
