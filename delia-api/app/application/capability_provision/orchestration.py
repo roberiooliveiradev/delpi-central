@@ -369,6 +369,11 @@ Respond with JSON containing exactly the field:
 - "items": an array of {"record_index": <int>, "fields": [<field
   names>]} — record_index points at a record inside <records>; field
   names must be copied verbatim from that record's keys.
+You MAY also include "presentation": one of "answer" | "list" |
+"detail" — a bounded hint of how the evidence answers the user
+("answer" = a focused response; "list" = several records; "detail" =
+the full selected field set of one record). The runtime validates it
+and may ignore it; it never becomes user-facing text.
 
 Rules:
 - Never invent, infer or write any entity, name, number, identifier,
@@ -376,12 +381,16 @@ Rules:
   and fields to present.
 - Prefer user-meaningful fields; do not select technical fields (ids,
   revisions, timestamps, internal roles) unless the user explicitly
-  asked for them.
+  asked for them — an identifier field is still useful to anchor the
+  subject of a focused answer.
 - Never select a field whose value is null, an object or a list —
   only scalar, non-empty values can be rendered.
 - Never mention tools, providers, MCP, endpoints, handles, tokens or
   execution internals; never claim an action was executed or
   authorized; never promise future results.
+- A bare identifier in the user message may continue a valid earlier
+  thread from the bounded prior context — reuse the field intent of
+  that thread, never the earlier data.
 - When the records cannot answer the user's question, respond with
   {"items": []}.
 """
@@ -1076,13 +1085,21 @@ def _render_synthesis(
     non-scalar values reject the whole proposal. The bounded rejection
     reason code is returned for observability (LOOP-03R2A) — never
     proposal content.
+
+    The optional ``presentation`` field carries a closed vocabulary
+    hint (``answer`` | ``list`` | ``detail``); anything outside it is
+    ignored and the runtime derives a safe projection — a single
+    selected record composes a focused grounded sentence, several
+    records compose a bounded introduced list.
     """
     items = proposal.get("items")
     if not isinstance(items, (list, tuple)):
         return None, "schema_invalid"
     if not items:
         return None, "empty_selection"
-    lines: list[str] = []
+    selections: list[
+        tuple[Mapping[str, Any], list[tuple[str, str]]]
+    ] = []
     for item in list(items)[:MAX_SYNTHESIS_ITEMS]:
         if not isinstance(item, Mapping):
             return None, "schema_invalid"
@@ -1097,7 +1114,7 @@ def _render_synthesis(
         if not isinstance(fields, (list, tuple)) or not fields:
             return None, "empty_selection"
         record = records[index]
-        values: list[str] = []
+        values: list[tuple[str, str]] = []
         for field_name in list(fields)[:MAX_SYNTHESIS_FIELDS]:
             if not isinstance(field_name, str) or field_name not in record:
                 return None, "invalid_field"
@@ -1109,12 +1126,167 @@ def _render_synthesis(
                 continue
             rendered_value = _redact_text(str(value).strip())
             if rendered_value:
-                values.append(rendered_value)
+                values.append((field_name, rendered_value))
         if values:
-            lines.append("- " + " — ".join(values))
-    if not lines:
+            selections.append((record, values))
+    if not selections:
         return None, "empty_selection"
-    return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
+    mode = proposal.get("presentation")
+    if mode not in _PRESENTATION_INTENTS:
+        mode = "answer" if len(selections) == 1 else "list"
+    if mode == "detail":
+        lines: list[str] = []
+        for record, values in selections:
+            lines.append(_detail_header(record))
+            lines.extend(_detail_lines(values))
+        return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
+    if mode == "list" or len(selections) > 1:
+        lines = [_list_header(len(selections))]
+        for record, values in selections:
+            lines.append("- " + " — ".join(v for _, v in values))
+        return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
+    record, values = selections[0]
+    return (
+        _compose_answer(record, values)[:MAX_RENDER_CONTENT_CHARS],
+        "rendered",
+    )
+
+
+# Closed presentation vocabulary for the synthesis contract — a
+# bounded hint, never prose; anything outside it is derived
+# deterministically by the runtime.
+_PRESENTATION_INTENTS = frozenset({"answer", "list", "detail"})
+
+# Canonical owner-field -> bounded pt-BR clause label for grounded
+# composition. This is presentation vocabulary only — values are
+# always copied verbatim and never translated, normalized or
+# expanded; a field absent from the map renders through the bounded
+# generic clause ``o campo "<field>"``.
+_FIELD_CLAUSE_LABELS: dict[str, tuple[str, str, str]] = {
+    "description": ("a", "descrição", "cadastrada"),
+    "descricao": ("a", "descrição", "cadastrada"),
+    "name": ("o", "nome", "cadastrado"),
+    "nome": ("o", "nome", "cadastrado"),
+    "title": ("o", "título", "cadastrado"),
+    "titulo": ("o", "título", "cadastrado"),
+    "code": ("o", "código", "cadastrado"),
+    "codigo": ("o", "código", "cadastrado"),
+    "unit": ("a", "unidade", "cadastrada"),
+    "unidade": ("a", "unidade", "cadastrada"),
+    "price": ("o", "preço", "cadastrado"),
+    "preco": ("o", "preço", "cadastrado"),
+    "quantity": ("a", "quantidade", "informada"),
+    "quantidade": ("a", "quantidade", "informada"),
+    "total": ("o", "total", "informado"),
+    "status": ("o", "status", "informado"),
+    "type": ("o", "tipo", "cadastrado"),
+    "tipo": ("o", "tipo", "cadastrado"),
+    "value": ("o", "valor", "informado"),
+    "valor": ("o", "valor", "informado"),
+    "date": ("a", "data", "informada"),
+}
+
+_IDENTIFIER_KEYS = frozenset(
+    {
+        "id",
+        "code",
+        "codigo",
+        "sku",
+        "ref",
+        "reference",
+        "referencia",
+        "numero",
+        "number",
+        "ean",
+        "gtin",
+    }
+)
+
+
+def _record_identifier(
+    record: Mapping[str, Any],
+) -> tuple[str, str] | None:
+    """The record's own identifier field — verbatim evidence used only
+    to anchor the subject of a focused answer, never rendered as a
+    clause of its own unless it is the selected field itself."""
+    scalars = [
+        (key, str(value).strip())
+        for key, value in record.items()
+        if isinstance(value, (str, int, float))
+        and not isinstance(value, bool)
+        and str(value).strip()
+    ]
+    for key, text in scalars:
+        if _canonical_key(key) in _IDENTIFIER_KEYS:
+            return str(key), _redact_text(text)
+    for key, text in scalars:
+        canon = _canonical_key(key)
+        if canon not in _IDENTIFIER_KEYS and (
+            canon.endswith("id") or canon.endswith("code")
+        ):
+            return str(key), _redact_text(text)
+    return None
+
+
+def _clause_prefix(field_name: str) -> str:
+    """Bounded pt-BR subject for one selected field — the runtime
+    supplies only article/label vocabulary; the value slot always
+    receives the verbatim owner leaf."""
+    labeled = _FIELD_CLAUSE_LABELS.get(_canonical_key(field_name))
+    if labeled is not None:
+        article, label, participle = labeled
+        return f"{article} {label} {participle}"
+    return f'o campo "{field_name}"'
+
+
+def _compose_answer(
+    record: Mapping[str, Any],
+    values: list[tuple[str, str]],
+) -> str:
+    """One focused grounded sentence for a single selected record.
+
+    The record's own identifier anchors the subject (``do registro
+    <id>``) — copied verbatim, never invented; when the identifier
+    field itself is the selected field it renders as the clause
+    instead of the subject.
+    """
+    identifier = _record_identifier(record)
+    id_field, id_value = identifier if identifier else (None, None)
+    subject = f" do registro {id_value}" if id_value else ""
+    clauses = [(f, v) for f, v in values if f != id_field]
+    if not clauses:
+        clauses = list(values)
+        subject = ""
+    parts = [
+        f"{_clause_prefix(field_name)} é: {value}"
+        for field_name, value in clauses
+    ]
+    first, *rest = parts
+    sentence = first.replace(" é:", subject + " é:", 1)
+    if rest:
+        sentence += "; " + "; ".join(rest)
+    return sentence[:1].upper() + sentence[1:] + "."
+
+
+def _detail_header(record: Mapping[str, Any]) -> str:
+    identifier = _record_identifier(record)
+    if identifier:
+        return f"Detalhes do registro {identifier[1]}:"
+    return "Detalhes do registro:"
+
+
+def _detail_lines(values: list[tuple[str, str]]) -> list[str]:
+    lines = []
+    for field_name, value in values:
+        labeled = _FIELD_CLAUSE_LABELS.get(_canonical_key(field_name))
+        label = labeled[1].capitalize() if labeled else field_name
+        lines.append(f"- {label}: {value}")
+    return lines
+
+
+def _list_header(count: int) -> str:
+    noun = "registros" if count != 1 else "registro"
+    return f"Encontrei {count} {noun}:"
 
 
 # Generic resolver-step helpers (§6.140): a RESOLVER is a role, never
@@ -1194,6 +1366,67 @@ def _resolver_entities(structured: object) -> tuple[Mapping[str, Any], ...]:
                 entities = _mappings(value.get(key))
                 if entities:
                     return entities
+    return ()
+
+
+# Owner control-plane metadata — orchestration data, never business
+# evidence: structurally excluded from synthesis records and from the
+# deterministic user-facing projection.
+_CONTROL_PLANE_KEYS = frozenset(
+    {"agentdirectives", "capabilitysurface"}
+)
+
+
+def _synthesis_records(
+    structured: object,
+) -> tuple[Mapping[str, Any], ...]:
+    """Bounded business records available to grounded synthesis.
+
+    Extends the resolver entity extraction: preferred collection keys
+    and lists of mappings first, then a single business record — a
+    flat scalar object nested under exactly one non-control key
+    (``{"data": {"product": {...}}}``) or a flat scalar object as the
+    whole payload (``{"code": ..., "description": ...}``). Transport
+    envelopes are unwrapped structurally; control-plane siblings
+    (``agent_directives``, ``capability_surface``) and payloads with
+    multiple candidate record containers are never promoted to
+    records.
+    """
+    entities = _resolver_entities(structured)
+    if entities:
+        return entities
+    doc = _unwrap_owner_payload(structured)
+    if not isinstance(doc, Mapping):
+        return ()
+    containers = [
+        value
+        for key, value in doc.items()
+        if isinstance(value, Mapping)
+        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
+    ]
+    if len(containers) == 1:
+        candidate = containers[0]
+        if any(
+            not isinstance(value, (Mapping, list, tuple))
+            and value is not None
+            for value in candidate.values()
+        ):
+            return (candidate,)
+        return ()
+    if containers:
+        # Ambiguous shape — several candidate records; never pick
+        # silently, the deterministic projection renders the payload.
+        return ()
+    if any(
+        isinstance(value, (Mapping, list, tuple))
+        for value in doc.values()
+    ):
+        return ()
+    if any(
+        value is not None and str(value).strip()
+        for value in doc.values()
+    ):
+        return (doc,)
     return ()
 
 
@@ -1733,6 +1966,11 @@ def _format_structured(node: object, depth: int = 0) -> list[str]:
         lines: list[str] = []
         for key, value in node.items():
             key = str(key)
+            # Owner control-plane metadata (agent directives, the
+            # capability surface) is orchestration data — never
+            # projected into the user-facing answer.
+            if _canonical_key(key) in _CONTROL_PLANE_KEYS:
+                continue
             if isinstance(value, Mapping):
                 sub = _format_structured(value, depth + 1)
                 lines.append(f"{indent}{key}:")
@@ -1759,6 +1997,8 @@ def _format_list(items: list, depth: int) -> list[str]:
         if isinstance(item, Mapping):
             first = True
             for key, value in item.items():
+                if _canonical_key(key) in _CONTROL_PLANE_KEYS:
+                    continue
                 if isinstance(value, (Mapping, list, tuple)) or value is None:
                     continue
                 prefix = "- " if first else "  "
@@ -2765,7 +3005,12 @@ class OperationalCapabilityOrchestrator:
             outcome,
             correlation,
             content=self._synthesize_content(
-                input_text, outcome, correlation, deadline
+                input_text,
+                outcome,
+                correlation,
+                deadline,
+                prior_turns=prior_turns,
+                business_subject=goal.business_subject,
             ),
         )
 
@@ -5003,28 +5248,55 @@ class OperationalCapabilityOrchestrator:
         outcome: SpecialistOutcome,
         correlation: str,
         deadline: TurnDeadline | None = None,
+        prior_turns: tuple[ConversationContextTurn, ...] = (),
+        business_subject: str | None = None,
     ) -> str | None:
         """Bounded evidence-bound synthesis for a non-mutating outcome.
 
         The model may only SELECT and ORGANIZE owner evidence — it
-        proposes which records/fields matter; there is no model-
-        authored prose channel, so no model text can introduce a
-        factual leaf value (§6.144/§6.145). Deterministic runtime
-        copies values verbatim from the sanitized records; any invalid
-        selection or failure demotes to the deterministic renderer.
-        The outcome and its epistemic class are never altered.
+        proposes which records/fields matter (plus an optional closed
+        presentation hint); there is no model-authored prose channel,
+        so no model text can introduce a factual leaf value
+        (§6.144/§6.145). Deterministic runtime copies values verbatim
+        from the sanitized records and composes the natural answer;
+        any invalid selection or failure demotes to the deterministic
+        renderer. Bounded transient context is forwarded to the
+        selection proposal only — prior data is never replayed as
+        current evidence. The outcome and its epistemic class are
+        never altered.
         """
         records = tuple(
             _sanitize_renderable(entity)
-            for entity in _resolver_entities(outcome.structured)
+            for entity in _synthesis_records(outcome.structured)
         )
         if not records:
             return None
+        if len(records) == 1:
+            # Token efficiency: a single record carrying exactly one
+            # renderable leaf needs no selection proposal — the
+            # deterministic composer answers directly.
+            single = records[0]
+            renderable = [
+                (str(field), _redact_text(str(value).strip()))
+                for field, value in single.items()
+                if not isinstance(value, (Mapping, list, tuple))
+                and value is not None
+                and _redact_text(str(value).strip())
+            ]
+            if len(renderable) == 1:
+                return _compose_answer(single, renderable)[
+                    :MAX_RENDER_CONTENT_CHARS
+                ]
+        block: dict[str, Any] = {"records": [dict(r) for r in records]}
+        if business_subject is not None:
+            # Bounded semantic subject from the validated turn goal —
+            # untrusted selection context, never a factual value.
+            block["business_subject"] = business_subject
         proposal = self._propose(
             input_text,
             block_tag="records",
             block_payload=json.dumps(
-                {"records": [dict(r) for r in records]},
+                block,
                 ensure_ascii=False,
                 default=str,
             )[:MAX_SURFACE_CHARS],
@@ -5032,7 +5304,8 @@ class OperationalCapabilityOrchestrator:
             instruction=SYNTHESIS_INSTRUCTION,
             expected_fields=("items",),
             input_kind="grounded_synthesis",
-            allowed_keys=frozenset({"items"}),
+            allowed_keys=frozenset({"items", "presentation"}),
+            prior_turns=prior_turns,
             correlation=correlation,
             deadline=deadline,
         )

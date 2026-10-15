@@ -268,6 +268,7 @@ from app.application.capability_provision.orchestration import (
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
+    SYNTHESIS_INSTRUCTION_ID,
 )
 
 _STAGE_IDS = frozenset(
@@ -281,6 +282,7 @@ _STAGE_IDS = frozenset(
         COMPARISON_INSTRUCTION_ID,
         CANDIDATE_SELECTION_INSTRUCTION_ID,
         CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
+        SYNTHESIS_INSTRUCTION_ID,
     }
 )
 
@@ -1355,13 +1357,14 @@ def test_adversarial_model_prose_cannot_become_observation():
     assert "900 unidades" not in attempt.content
     # The deterministic bounded render carries the authoritative data.
     assert "TUBO 30X30X1500" in attempt.content
-    # Six governed proposals ran: the plan calls plus the bounded
-    # turn-goal proposal (LOOP-03R1) and the bounded grounded-synthesis
-    # proposal (C3-LOOP-01/R1). The fabricated "answer" is outside the
-    # evidence-bound synthesis contract and was rejected outright —
-    # the truthful deterministic render shipped; model prose can
+    # Five governed proposals ran: the plan calls plus the bounded
+    # turn-goal proposal (LOOP-03R1). The owner result is a single
+    # record with exactly one renderable scalar — the deterministic
+    # grounded composer answers directly and the synthesis proposal
+    # is skipped (R1 token efficiency), so the fabricated "answer"
+    # payload was never even consumed by a stage; model prose can
     # never introduce factual leaf values into the OBSERVATION answer.
-    assert len(read._invoke_model._port.requests) == 6
+    assert len(read._invoke_model._port.requests) == 5
 
 
 # --- R2: generic secret/token redaction --------------------------------
@@ -3069,3 +3072,74 @@ def test_owner_hint_never_carries_url():
     attempt = read.attempt("Liste os boards")
     assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
     assert attempt.owner_hint is None
+
+
+# --- DELIA-C3-CONTEXTUAL-GROUNDED-ANSWER-PRESENTATION-R1 ------------------
+
+
+def test_davi_single_record_answers_naturally():
+    """Reported defect (DAVI execute -> data.product single record):
+    the cadastro dump is replaced by a focused grounded sentence."""
+    product_result = RemoteToolOutcome(
+        content_text="Execution completed.",
+        structured={
+            "action_id": "get_product",
+            "data": {
+                "product": {
+                    "group_code": 1008,
+                    "code": "10080022",
+                    "description": "CONECTOR RETO 3 VIAS NU MACHO",
+                    "type": "MP",
+                    "active": "S",
+                    "unit": "PC",
+                }
+            },
+        },
+    )
+    read, port = _davi_read(
+        [
+            _select(
+                "davi",
+                "discover_delpi_information",
+                {"query": "10080022"},
+            ),
+            {"arguments": {"code": "10080022"}},
+            {
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["description"]}
+                    ]
+                }
+            },
+        ],
+        outcomes={
+            "discover_delpi_information": RemoteToolOutcome(
+                content_text="{}",
+                structured={
+                    "candidates": [
+                        {
+                            "action_id": "get_product",
+                            "candidate_token": "tok-product",
+                            "description": "Consulta um produto",
+                            "argument_schema": {
+                                "type": "object",
+                                "properties": {
+                                    "code": {"type": "string"}
+                                },
+                            },
+                            "required_arguments": ["code"],
+                        }
+                    ]
+                },
+            ),
+            "execute_delpi_information": product_result,
+        },
+    )
+    attempt = read.attempt("descrição 10080022")
+    _assert_success(attempt, "davi", "execute_delpi_information")
+    assert attempt.content == (
+        "A descrição cadastrada do registro 10080022 é: "
+        "CONECTOR RETO 3 VIAS NU MACHO."
+    )
+    for noise in ("group_code", "MP", "product:", "action_id"):
+        assert noise not in attempt.content
