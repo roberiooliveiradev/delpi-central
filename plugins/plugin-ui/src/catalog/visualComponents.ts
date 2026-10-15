@@ -596,4 +596,14 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-08-19",
     description: "Overlay de drop de arquivo sobre a coluna da conversa.",
   }),
+  vc("collaboration", "ConversationWorkspace", {
+    addedAt: "2026-10-15",
+    description:
+      "Shell chat-first: header leve + corpo rolável com coluna de leitura centrada + rodapé ancorado. Sem estado de conversa.",
+  }),
+  vc("collaboration", "ConversationHeader", {
+    addedAt: "2026-10-15",
+    description:
+      "Chrome conversacional leve (título/subtítulo/leading/actions) — não é PageHeader administrativo.",
+  }),
 ];

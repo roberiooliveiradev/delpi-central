@@ -19,6 +19,10 @@ import {
   RoomInboxList,
   roomInboxListBemClasses,
 } from "../../components/collaboration";
+import {
+  ConversationHeader,
+  ConversationWorkspace,
+} from "../../components/conversation";
 import type { CatalogEntryDraft } from "../types";
 
 const mentionTextCn = mentionTextBemClasses(PUC_PREFIX);
@@ -282,6 +286,93 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
               { id: "2", name: "Bruno Costa" },
             ]}
           />
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ConversationWorkspace",
+    family: "collaboration",
+    exportName: "ConversationWorkspace",
+    title: "ConversationWorkspace",
+    description:
+      "Shell chat-first: header leve + corpo rolável com coluna centrada + rodapé ancorado.",
+    propsSummary: [
+      "header",
+      "banner",
+      "children",
+      "footer",
+      "density",
+      "bodyRef",
+      "onBodyScroll",
+      "aria-label",
+    ],
+    demos: [
+      {
+        id: "empty",
+        label: "Recepção (vazio)",
+        render: () => (
+          <div style={{ height: 320, border: "1px dashed var(--delpi-ui-border, #e6e6e6)" }}>
+            <ConversationWorkspace
+              aria-label="Conversa"
+              header={<ConversationHeader title="DÉLIA" subtitle="Inteligência operacional DELPI" />}
+              footer={<div style={{ padding: "8px 0", borderTop: "1px solid var(--delpi-ui-border, #e6e6e6)", textAlign: "center", fontSize: 12 }}>composer (slot)</div>}
+            >
+              <div style={{ margin: "auto", textAlign: "center" }}>
+                Recepção / estado vazio
+              </div>
+            </ConversationWorkspace>
+          </div>
+        ),
+      },
+      {
+        id: "active-long",
+        label: "Conversa ativa + longa",
+        render: () => (
+          <div style={{ height: 320, border: "1px dashed var(--delpi-ui-border, #e6e6e6)" }}>
+            <ConversationWorkspace
+              aria-label="Conversa"
+              header={<ConversationHeader title="DÉLIA" compact />}
+              footer={<div style={{ padding: "8px 0", borderTop: "1px solid var(--delpi-ui-border, #e6e6e6)", textAlign: "center", fontSize: 12 }}>composer (slot)</div>}
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <p key={i} style={{ margin: 0, padding: "6px 10px", borderRadius: 8, background: "var(--delpi-ui-surface-muted, #f1f5f9)", fontSize: 13 }}>
+                  Turno {i + 1} da conversa
+                </p>
+              ))}
+            </ConversationWorkspace>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ConversationHeader",
+    family: "collaboration",
+    exportName: "ConversationHeader",
+    title: "ConversationHeader",
+    description:
+      "Chrome conversacional leve: título + subtítulo + leading + actions.",
+    propsSummary: ["title", "subtitle", "leading", "actions", "compact", "titleAs"],
+    demos: [
+      {
+        id: "full",
+        label: "Completo",
+        render: () => (
+          <ConversationHeader
+            title="DÉLIA"
+            subtitle="Inteligência operacional DELPI"
+            actions={<button type="button">Ação</button>}
+          />
+        ),
+      },
+      {
+        id: "compact",
+        label: "Compacto (dock)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ConversationHeader title="DÉLIA" subtitle="Inteligência operacional DELPI" compact />
+          </div>
         ),
       },
     ],

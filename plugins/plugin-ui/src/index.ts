@@ -6,6 +6,7 @@
  */
 export * from "./components/actions";
 export * from "./components/activity";
+export * from "./components/conversation";
 export * from "./components/composer";
 export * from "./components/help";
 export * from "./components/layout";
