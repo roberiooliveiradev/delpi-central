@@ -607,7 +607,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
       "Chrome conversacional leve (título/subtítulo/leading/actions) — não é PageHeader administrativo.",
   }),
   vc("collaboration", "MessageActionBar", {
-    addedAt: "2026-11-05",
+    addedAt: "2026-10-15",
     description:
       "Barra de ações secundárias de uma mensagem (compõe IconButton). OWNS chrome/visibilidade subordinada. DOES NOT OWN quais ações existem nem seu comportamento — clipboard, auth e negócio ficam no consumidor.",
   }),
