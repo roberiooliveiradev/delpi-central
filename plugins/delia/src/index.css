@@ -45,14 +45,16 @@
 .dashboard-delia .delia-page-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--delia-section-gap);
-  padding: clamp(12px, 3vw, 24px);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   flex: 1;
   min-height: 0;
 }
+
+/* The workspace shell (header/body/footer, reading column, padding) is
+   owned by plugin-ui `.delpi-ui-conversation-workspace`; `delia-interaction`
+   stays only as a product hook for DÉLIA-specific content styles. */
 
 .dashboard-delia .delia-visually-hidden {
   position: absolute;
@@ -66,62 +68,10 @@
   border: 0;
 }
 
-/* ---------- Interaction shell: full-height workspace, anchored composer */
-
-.dashboard-delia .delia-interaction {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  gap: 0;
-  background: transparent;
-  width: 100%;
-  max-width: none;
-}
-
-/* Scroll viewport — full width so the scrollbar lives at the edge. */
-.dashboard-delia .delia-interaction__body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  scroll-behavior: smooth;
-}
-
-/* Reading column — grows to fill the viewport when content is short
-   (centers the reception) and lets the viewport scroll when tall. */
-.dashboard-delia .delia-interaction__column {
-  flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 760px;
-  margin-inline: auto;
-  padding: var(--delia-card-padding);
-  box-sizing: border-box;
-}
-
-/* Composer region — same column width, never scrolls away. */
-.dashboard-delia .delia-interaction__footer {
-  flex-shrink: 0;
-  width: 100%;
-  max-width: 760px;
-  margin-inline: auto;
-  padding: 0 var(--delia-card-padding) var(--delia-card-padding);
-  box-sizing: border-box;
-}
-
 /* Demo-mode banner — persistent, above the scroll viewport, always
    visible; warning tone so simulated data can never be mistaken for
    a real operational response. Dev/preview only. */
 .dashboard-delia .delia-demo-banner {
-  flex-shrink: 0;
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 0 var(--delia-card-padding);
   box-sizing: border-box;
   font-size: 12px;
   font-weight: 600;
@@ -415,13 +365,10 @@
   cursor: default;
 }
 
-/* ---------- Responsive (narrow dock / mobile) */
+/* ---------- Responsive (narrow dock / mobile) — workspace container
+   queries own the shell; only the product turn bubble adapts. */
 
 @media (max-width: 640px) {
-  .dashboard-delia .delia-interaction {
-    max-width: 100%;
-  }
-
   .dashboard-delia .delia-turn {
     max-width: 96%;
   }
@@ -434,7 +381,4 @@
     animation: none;
   }
 
-  .dashboard-delia .delia-interaction__body {
-    scroll-behavior: auto;
-  }
 }

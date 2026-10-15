@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { UIEvent as ReactUIEvent } from "react";
 
-import { DELIA_ROOT_CLASS, DeliaPageHeader } from "./ui/deliaUi";
+import { DELIA_ROOT_CLASS } from "./ui/deliaUi";
 import { DeliaReception } from "./ui/DeliaReception";
 import { DeliaComposer } from "./ui/DeliaComposer";
 import { ConversationTimeline } from "./ui/ConversationTimeline";
@@ -15,7 +15,11 @@ import type {
   DeliaConfirmationRequest,
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
-import { ActivityViewer } from "@delpi/plugin-ui/index";
+import {
+  ActivityViewer,
+  ConversationHeader,
+  ConversationWorkspace,
+} from "@delpi/plugin-ui/index";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
 } from "./activity/activityView";
@@ -278,64 +282,62 @@ export default function App({
   return (
     <div className={`${DELIA_ROOT_CLASS} dashboard-page`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
-        <DeliaPageHeader
-          title="DÉLIA"
-          subtitle="Converse com a inteligência operacional da DELPI. A conversa é mantida apenas nesta tela e não é salva."
-        />
-
-        <section
+        <ConversationWorkspace
           className="delia-interaction"
           aria-label="Interação com a DÉLIA"
-        >
-          {demoScenario ? (
-            <div className="delia-demo-banner" role="note">
-              {DELIA_DEMO_BANNER}
-            </div>
-          ) : null}
-          <div
-            className="delia-interaction__body"
-            ref={scrollRegionRef}
-            onScroll={handleTimelineScroll}
-          >
-            <div className="delia-interaction__column">
-              {turns.length > 0 ? (
-                <ConversationTimeline
-                  turns={turns}
-                  loading={loading}
-                  respondingTurnId={respondingTurnId}
-                  onResponseMotionComplete={() => setRespondingTurnId(null)}
-                  userIdentity={userIdentity}
-                  onConfirmation={handleConfirmation}
-                />
-              ) : (
-                <DeliaReception />
-              )}
-              {loading ? (
-                <ActivityViewer
-                  {...DELIA_ACTIVITY_PENDING_VIEW}
-                  className="delia-interaction__loading"
-                />
-              ) : null}
-              <div ref={turnsEndRef} aria-hidden="true" />
-            </div>
-          </div>
-
-          <div className="delia-interaction__footer">
-            {error ? (
-              <p className="delia-interaction__error" role="alert">
-                {error}
-              </p>
-            ) : null}
-
-            <DeliaComposer
-              inputId="delia-interaction-input"
-              value={input}
-              onChange={setInput}
-              onSubmit={handleSubmit}
-              loading={loading}
+          bodyRef={scrollRegionRef}
+          onBodyScroll={handleTimelineScroll}
+          header={
+            <ConversationHeader
+              title="DÉLIA"
+              subtitle="Inteligência operacional DELPI"
             />
-          </div>
-        </section>
+          }
+          banner={
+            demoScenario ? (
+              <div className="delia-demo-banner" role="note">
+                {DELIA_DEMO_BANNER}
+              </div>
+            ) : null
+          }
+          footer={
+            <>
+              {error ? (
+                <p className="delia-interaction__error" role="alert">
+                  {error}
+                </p>
+              ) : null}
+
+              <DeliaComposer
+                inputId="delia-interaction-input"
+                value={input}
+                onChange={setInput}
+                onSubmit={handleSubmit}
+                loading={loading}
+              />
+            </>
+          }
+        >
+          {turns.length > 0 ? (
+            <ConversationTimeline
+              turns={turns}
+              loading={loading}
+              respondingTurnId={respondingTurnId}
+              onResponseMotionComplete={() => setRespondingTurnId(null)}
+              userIdentity={userIdentity}
+              onConfirmation={handleConfirmation}
+            />
+          ) : (
+            <DeliaReception />
+          )}
+          {loading ? (
+            <ActivityViewer
+              {...DELIA_ACTIVITY_PENDING_VIEW}
+              className="delia-interaction__loading"
+            />
+          ) : null}
+          <div ref={turnsEndRef} aria-hidden="true" />
+        </ConversationWorkspace>
       </main>
     </div>
   );
