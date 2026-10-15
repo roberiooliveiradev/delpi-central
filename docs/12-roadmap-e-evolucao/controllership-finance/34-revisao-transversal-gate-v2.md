@@ -89,7 +89,7 @@ Confirmados:
 | collaboration state | Sala/BFF |
 | TaskProjection | composição read-only dos owners |
 | Help content | MFE/content registry |
-| package delivery real | **DECISION_REQUIRED E04/T04 — inventory closed in doc 36** |
+| submissão/revisão P5 | **PORTAL-FIRST PASS / REVIEW_COMPLETION DECISION_REQUIRED — doc 37** |
 
 Nenhum owner foi transferido apenas para criar experiência unificada.
 
