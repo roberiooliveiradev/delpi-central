@@ -303,6 +303,13 @@
   overflow-wrap: anywhere;
 }
 
+/* Secondary message actions live after the response/evidence so they remain
+   visually tied to the content instead of floating in the author row.
+   Chrome/reveal remains owned by plugin-ui MessageActionBar. */
+.dashboard-delia .delia-turn__message-actions {
+  margin-top: 2px;
+}
+
 /* ---------- S2-D — loading + error */
 
 .dashboard-delia .delia-interaction__loading {

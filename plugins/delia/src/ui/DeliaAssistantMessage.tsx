@@ -167,16 +167,6 @@ export function DeliaAssistantMessage({
       <div className="delia-turn__bubble">
         <div className="delia-turn__head">
           <span className="delia-turn__label">DÉLIA</span>
-          <MessageActionBar aria-label="Ações da resposta">
-            <IconButton
-              aria-label={
-                copied ? "Resposta copiada" : "Copiar resposta"
-              }
-              onClick={handleCopy}
-            >
-              {copied ? <Check size={13} /> : <Copy size={13} />}
-            </IconButton>
-          </MessageActionBar>
         </div>
 
         {activityView ? (
@@ -287,6 +277,21 @@ export function DeliaAssistantMessage({
             ) : null}
           </div>
         ) : null}
+
+        <MessageActionBar
+          className="delia-turn__message-actions"
+          align="start"
+          aria-label="Ações da resposta"
+        >
+          <IconButton
+            aria-label={
+              copied ? "Resposta copiada" : "Copiar resposta"
+            }
+            onClick={handleCopy}
+          >
+            {copied ? <Check size={13} /> : <Copy size={13} />}
+          </IconButton>
+        </MessageActionBar>
       </div>
     </>
   );

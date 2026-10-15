@@ -27,7 +27,7 @@ O componente é a unidade de resposta da conversa. A `ConversationTimeline` perm
 ## Anatomia implementada
 
 ```text
-[Sparkles]  DÉLIA            [copy — visível no hover/focus]
+[Sparkles]  DÉLIA
 
             Conteúdo da resposta em texto legível
             (parágrafos e quebras preservados verbatim)
@@ -39,6 +39,8 @@ O componente é a unidade de resposta da conversa. A `ConversationTimeline` perm
             fonte: DELPI/HTTP · classificação: OBSERVATION · limitações: …
 
             [Confirmar] [Cancelar]  ← apenas com confirmation_request válido
+
+            [copy — visível no hover/focus]
 ```
 
 | Elemento | Obrigatório | Notas |
@@ -77,7 +79,7 @@ Valores reais de `limitations[]` são exibidos verbatim após `limitações:`, n
 
 ## Ações da mensagem (MessageActionBar)
 
-O chrome de ações secundárias é do Design System: `MessageActionBar` (`plugins/plugin-ui/src/components/conversation/MessageActionBar.tsx`) compõe `IconButton` existente — nenhum primitivo de botão duplicado. A barra OWNS apenas apresentação: composição horizontal, densidade, alinhamento e revelação subordinada (`visibility="hover-focus"` por padrão, via ancestral `.delpi-ui-message-action-scope` + `:focus-within`; sempre visível em `@media (hover: none)/(pointer: coarse)`). A DÉLIA OWNS seleção e comportamento: quais ações existem, o que executam e o estado `copied` (1,5s) permanecem no consumidor.
+O chrome de ações secundárias é do Design System e fica ao final da anatomia da resposta, após conteúdo/evidência, alinhado ao início da coluna para permanecer visualmente associado ao turno: `MessageActionBar` (`plugins/plugin-ui/src/components/conversation/MessageActionBar.tsx`) compõe `IconButton` existente — nenhum primitivo de botão duplicado. A barra OWNS apenas apresentação: composição horizontal, densidade, alinhamento e revelação subordinada (`visibility="hover-focus"` por padrão, via ancestral `.delpi-ui-message-action-scope` + `:focus-within`; sempre visível em `@media (hover: none)/(pointer: coarse)`). A DÉLIA OWNS seleção e comportamento: quais ações existem, o que executam e o estado `copied` (1,5s) permanecem no consumidor.
 
 Regras:
 
