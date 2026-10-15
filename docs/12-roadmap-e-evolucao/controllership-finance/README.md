@@ -29,7 +29,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - TO-BE: **TARGET consolidado**
 - implementação: **NOT_STARTED**
 - A14 revisão transversal: **PASS**
-- A15 contracts/regras/scripts/test matrix: **PASS_WITH_RESIDUAL_E04_T04**
+- A15 contracts/regras/scripts/test matrix: **PASS_WITH_DECISION_REQUIRED_P5_REVIEW_COMPLETION**
 - `PORTAL_DESIGN_FREEZE`: **PASS**
 - `FRONTEND_PATTERN_FREEZE`: **PASS**
 - `SECURITY_MODEL_FREEZE`: **PASS**
