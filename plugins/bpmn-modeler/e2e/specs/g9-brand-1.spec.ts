@@ -1,5 +1,5 @@
 import { request } from "@playwright/test";
-import { test, expect, apiToken, loginAs } from "../helpers";
+import { test, expect, apiToken, loginAs, importModelViaApi } from "../helpers";
 
 /**
  * G9-BRAND-1 — marca bpmn.io não pode interceptar os controles do canvas.
@@ -122,12 +122,26 @@ test.describe("G9-BRAND-1 — colisão powered-by × controles", () => {
     const badge = v.locator("a.bjs-powered-by");
     await expect(badge, `${label}: selo deve permanecer visível`).toBeVisible();
 
-    // (b) bounding boxes selo × controles não se intersectam
+    // (b) selo no canto inferior ESQUERDO da superfície (padronização)
+    const vb = await v.boundingBox();
+    const bb = await badge.boundingBox();
+    expect(bb, `${label}: sem boundingBox do selo`).not.toBeNull();
+    expect(vb, `${label}: sem boundingBox do viewer`).not.toBeNull();
+    const leftOffset = bb!.x - vb!.x;
+    const bottomGap = vb!.y + vb!.height - (bb!.y + bb!.height);
+    expect(
+      leftOffset,
+      `${label}: selo a ${leftOffset.toFixed(0)}px da borda esquerda`,
+    ).toBeLessThan(40);
+    expect(
+      bottomGap,
+      `${label}: selo a ${bottomGap.toFixed(0)}px da borda inferior`,
+    ).toBeLessThan(40);
+
+    // (c) bounding boxes selo × controles não se intersectam
     const controls = v.locator(".bpmnm-readonly-viewer__controls");
     await expect(controls).toBeVisible();
-    const bb = await badge.boundingBox();
     const cb = await controls.boundingBox();
-    expect(bb, `${label}: sem boundingBox do selo`).not.toBeNull();
     expect(cb, `${label}: sem boundingBox dos controles`).not.toBeNull();
     const overlap =
       bb!.x < cb!.x + cb!.width &&
@@ -206,6 +220,61 @@ test.describe("G9-BRAND-1 — colisão powered-by × controles", () => {
     }
   });
 
+  test("BPMN Modeler — editor principal com selo bottom-left sem overlap", async ({
+    page,
+  }) => {
+    const modelId = await importModelViaApi("manager", `G9-BRAND-1 ${RUN}`, XML);
+    await gotoPage(page, `/apps/bpmn-modeler/models/${modelId}`);
+    const canvas = page.getByLabel("Canvas do diagrama BPMN");
+    await canvas.waitFor({ state: "visible", timeout: 60_000 });
+    await page
+      .locator(".bpmnm-canvas .djs-element")
+      .first()
+      .waitFor({ state: "visible", timeout: 30_000 });
+
+    const badge = page.locator(".bpmnm-page a.bjs-powered-by").first();
+    await expect(badge, "modeler: selo deve permanecer visível").toBeVisible();
+
+    // posição: canto inferior esquerdo da página do editor
+    const page0 = page.locator(".bpmnm-page").first();
+    const pb = await page0.boundingBox();
+    const bb = await badge.boundingBox();
+    expect(bb).not.toBeNull();
+    expect(pb).not.toBeNull();
+    expect(
+      bb!.x - pb!.x,
+      `modeler: selo a ${(bb!.x - pb!.x).toFixed(0)}px da esquerda`,
+    ).toBeLessThan(40);
+    expect(
+      pb!.y + pb!.height - (bb!.y + bb!.height),
+      "modeler: selo deve estar na faixa inferior",
+    ).toBeLessThan(60);
+
+    const controls = page.locator(".bpmnm-viewport-controls");
+    if (await controls.count()) {
+      const cb = await controls.first().boundingBox();
+      if (cb) {
+        const overlap =
+          bb!.x < cb.x + cb.width &&
+          bb!.x + bb!.width > cb.x &&
+          bb!.y < cb.y + cb.height &&
+          bb!.y + bb!.height > cb.y;
+        expect(overlap, "modeler: selo sobrepõe controles").toBe(false);
+      }
+      const urlBefore = page.url();
+      let popups = 0;
+      page.context().on("page", () => (popups += 1));
+      for (const btn of await controls.first().locator("button").all()) {
+        await btn.click();
+        await page.waitForTimeout(120);
+      }
+      expect(await page.locator(".bjs-powered-by-lightbox").count()).toBe(0);
+      expect(page.url()).toBe(urlBefore);
+      expect(popups).toBe(0);
+    }
+    console.log("    [brand] modeler-editor: bottom-left, sem overlap, clicks seguros");
+  });
+
   test("editor — selo fora da área dos controles de viewport", async ({
     page,
   }) => {
@@ -220,9 +289,22 @@ test.describe("G9-BRAND-1 — colisão powered-by × controles", () => {
     const badge = page.locator(".bpmnm-page a.bjs-powered-by").first();
     await expect(badge, "editor: selo deve permanecer visível").toBeVisible();
 
+    const page0 = page.locator(".bpmnm-page").first();
+    const pb = await page0.boundingBox();
+    const bb = await badge.boundingBox();
+    expect(bb).not.toBeNull();
+    expect(pb).not.toBeNull();
+    expect(
+      bb!.x - pb!.x,
+      `editor: selo a ${(bb!.x - pb!.x).toFixed(0)}px da esquerda`,
+    ).toBeLessThan(40);
+    expect(
+      pb!.y + pb!.height - (bb!.y + bb!.height),
+      "editor: selo deve estar na faixa inferior",
+    ).toBeLessThan(60);
+
     const controls = page.locator(".bpmnm-viewport-controls");
     if (await controls.count()) {
-      const bb = await badge.boundingBox();
       const cb = await controls.first().boundingBox();
       if (bb && cb) {
         const overlap =
