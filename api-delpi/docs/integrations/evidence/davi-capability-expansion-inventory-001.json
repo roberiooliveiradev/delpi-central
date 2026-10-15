@@ -2,12 +2,12 @@
   "metadata": {
     "taskId": "DAVI-CAPABILITY-EXPANSION-INVENTORY-001",
     "artifact_class": "EVIDENCE_NOT_RUNTIME_AUTHORITY",
-    "generated_at": "2026-10-07T13:50:31.456882+00:00",
-    "source_head": "f93a80ab904f416503c5f1581c755e15ac1b3412",
-    "origin_main": "f93a80ab904f416503c5f1581c755e15ac1b3412",
+    "generated_at": "2026-10-15T19:43:29.618166+00:00",
+    "source_head": "c15c82cf3e58fb18f3c14d24b3a156f59dd32419",
+    "origin_main": "c15c82cf3e58fb18f3c14d24b3a156f59dd32419",
     "openapi_version": "3.0.3",
     "baseline_version": "3",
-    "baseline_operation_count": 738,
+    "baseline_operation_count": 743,
     "budgets": {
       "version": 2,
       "discover_default_top_k": 5,
@@ -21,10 +21,10 @@
     }
   },
   "technical_operation_counts": {
-    "TOTAL_OPERATIONS": 738,
-    "TOTAL_GET": 537,
+    "TOTAL_OPERATIONS": 743,
+    "TOTAL_GET": 542,
     "TOTAL_WRITE_VERBS": 201,
-    "DAVI_ELIGIBLE_READ": 87,
+    "DAVI_ELIGIBLE_READ": 88,
     "ELIGIBLE_OPERATION_IDS": [
       "get_commercial_rol_by_branch",
       "get_commercial_rol_by_customer",
@@ -51,6 +51,7 @@
       "get_product_purchase_price_history",
       "get_product_purchases",
       "get_product_raw_material_set_shortages",
+      "get_product_safety_stock",
       "get_product_sales_open_orders",
       "get_product_sales_summary",
       "get_product_shipping_status",
@@ -116,13 +117,13 @@
     ],
     "STATUS_COUNTS": {
       "ADMIN_OUT_OF_SCOPE": 71,
-      "DAVI_ELIGIBLE_READ": 87,
+      "DAVI_ELIGIBLE_READ": 88,
       "DESTRUCTIVE_OUT_OF_SCOPE": 17,
       "GENERIC_SQL_FORBIDDEN": 2,
       "LEGACY_UNSAFE": 2,
       "NEEDS_BOUNDED_EXECUTION": 2,
-      "NEEDS_MODEL_SAFE_PROJECTION": 339,
-      "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
+      "NEEDS_MODEL_SAFE_PROJECTION": 341,
+      "NEEDS_NESTED_PROJECTION_SUPPORT": 53,
       "SEMANTICALLY_REDUNDANT": 3,
       "STREAM_BINARY_OUT_OF_SCOPE": 33,
       "WRITE_OUT_OF_SCOPE": 131
@@ -135,20 +136,20 @@
       "financial": 73,
       "hr": 5,
       "inspection": 21,
-      "product": 36,
+      "product": 37,
       "production": 53,
       "quality": 99,
       "reports": 11,
       "scheduling": 6,
-      "supplies": 38
+      "supplies": 42
     },
     "ADMIN": 71,
     "SQL": 2,
     "BINARY": 33,
     "WRITE_OUT_OF_SCOPE": 131,
     "DESTRUCTIVE": 17,
-    "MODEL_SAFE_PROJECTION_BLOCKED": 339,
-    "NESTED_PROJECTION_BLOCKED": 51,
+    "MODEL_SAFE_PROJECTION_BLOCKED": 341,
+    "NESTED_PROJECTION_BLOCKED": 53,
     "SEMANTICALLY_REDUNDANT": 3
   },
   "mcp_tools": [
@@ -180,12 +181,12 @@
     "financial": 73,
     "hr": 5,
     "inspection": 21,
-    "product": 36,
+    "product": 37,
     "production": 53,
     "quality": 99,
     "reports": 11,
     "scheduling": 6,
-    "supplies": 38
+    "supplies": 42
   },
   "domain_summary": [
     {
@@ -275,13 +276,13 @@
     },
     {
       "domain": "product",
-      "get_operations": 36,
+      "get_operations": 37,
       "semantic_capabilities": 20,
-      "currently_eligible": 25,
+      "currently_eligible": 26,
       "freeze_candidates": 3,
       "main_blockers": {
         "NEEDS_NESTED_PROJECTION_SUPPORT": 6,
-        "DAVI_ELIGIBLE_READ": 25,
+        "DAVI_ELIGIBLE_READ": 26,
         "SEMANTICALLY_REDUNDANT": 2,
         "STREAM_BINARY_OUT_OF_SCOPE": 2,
         "NEEDS_MODEL_SAFE_PROJECTION": 1
@@ -335,15 +336,15 @@
     },
     {
       "domain": "supplies",
-      "get_operations": 38,
+      "get_operations": 42,
       "semantic_capabilities": 4,
       "currently_eligible": 22,
       "freeze_candidates": 0,
       "main_blockers": {
         "STREAM_BINARY_OUT_OF_SCOPE": 3,
-        "NEEDS_NESTED_PROJECTION_SUPPORT": 3,
+        "NEEDS_NESTED_PROJECTION_SUPPORT": 5,
         "DAVI_ELIGIBLE_READ": 22,
-        "NEEDS_MODEL_SAFE_PROJECTION": 10
+        "NEEDS_MODEL_SAFE_PROJECTION": 12
       }
     }
   ],
@@ -526,9 +527,9 @@
       "product.shipping.status"
     ],
     "count": 3,
-    "current_eligible": 87,
+    "current_eligible": 88,
     "new_capabilities": 3,
-    "expected_eligible_after_implementation": 90,
+    "expected_eligible_after_implementation": 91,
     "expected_mcp_tools_after_implementation": 3,
     "agent_instruction_change": "NO",
     "capabilities": [
@@ -7313,7 +7314,12 @@
         "faturamento por semana",
         "faturamento mês a mês",
         "histórico de faturamento",
-        "como o faturamento evoluiu"
+        "como o faturamento evoluiu",
+        "série do rol comercial",
+        "serie do rol comercial",
+        "série de rol comercial",
+        "serie mensal de rol",
+        "série mensal de rol"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "commercial.rol.summary",
@@ -11502,7 +11508,11 @@
         "ROL de novos negócios",
         "new business ROL share",
         "percentual de novos negócios",
-        "novos negócios ROL"
+        "novos negócios ROL",
+        "negócios novos",
+        "negocios novos",
+        "faturamento de negócios novos",
+        "rol de negócios novos"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -11552,7 +11562,12 @@
         "meta de novos negócios",
         "meta ROL novos negócios",
         "new business ROL target",
-        "atingimento novos negócios"
+        "atingimento novos negócios",
+        "meta de rol new business",
+        "meta de new business",
+        "rol new business meta",
+        "meta de rol de novos negócios",
+        "realizado versus meta de new business"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -11864,7 +11879,9 @@
         "pontualidade da produção",
         "pontualidade das OPs",
         "OPs no prazo",
-        "OPs atrasadas"
+        "OPs atrasadas",
+        "entregas no prazo",
+        "percentual de entregas no prazo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "production.otd",
@@ -13209,7 +13226,10 @@
         "cliente do produto",
         "customer",
         "customers",
-        "product customers"
+        "product customers",
+        "clientes que compram o produto",
+        "clientes que compram",
+        "quem compra o produto"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.customer.relationship",
@@ -13361,7 +13381,11 @@
         "arquivo PDF do desenho",
         "drawing metadata",
         "product drawing metadata",
-        "server-resolved drawing"
+        "server-resolved drawing",
+        "detalhes do desenho",
+        "desenho técnico do produto",
+        "desenho específico do produto",
+        "desenho especifico do produto"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -13473,7 +13497,11 @@
         "factory status",
         "factory situation",
         "product factory status",
-        "shop-floor status"
+        "shop-floor status",
+        "visão de chão de fábrica",
+        "chão de fábrica",
+        "status fabril do produto",
+        "status fabril do item"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.factory.status",
@@ -13598,7 +13626,10 @@
         "fatura de entrada do produto",
         "inbound invoice",
         "inbound invoice items",
-        "inbound invoices"
+        "inbound invoices",
+        "nfes de entrada",
+        "notas de entrada do item",
+        "nf de entrada do item"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -13727,7 +13758,10 @@
         "movimentação de produção",
         "production receipt",
         "production consumption",
-        "inventory adjustment movement"
+        "inventory adjustment movement",
+        "transferências internas",
+        "transferencias internas",
+        "requisições internas"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -13782,7 +13816,20 @@
         "última NF de compra",
         "last purchase price",
         "last valid purchase",
-        "latest inbound invoice price"
+        "latest inbound invoice price",
+        "última compra do produto",
+        "ultima compra do produto",
+        "quando foi a última compra",
+        "última vez que compramos",
+        "ultima vez que compramos",
+        "última compra do item",
+        "ultima compra do item",
+        "última vez que compramos o item",
+        "ultima vez que compramos o item",
+        "último preço de compra do produto",
+        "ultimo preco de compra do produto",
+        "último preço de compra do item",
+        "ultimo preco de compra do item"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -13846,7 +13893,13 @@
         "fatura de saída do produto",
         "outbound invoice",
         "outbound invoice items",
-        "outbound invoices"
+        "outbound invoices",
+        "notas de saída",
+        "notas de saida",
+        "notas de saída do item",
+        "notas de saida do item",
+        "em quais notas o item saiu",
+        "notas onde o produto saiu"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -13907,7 +13960,16 @@
         "where used",
         "parent products",
         "reverse BOM",
-        "products using component"
+        "products using component",
+        "produtos que consomem",
+        "onde é usado na estrutura",
+        "onde e usado na estrutura",
+        "onde o produto é utilizado",
+        "onde o componente é utilizado",
+        "em quais produtos é utilizado",
+        "produtos que utilizam este componente",
+        "BOM reversa do produto",
+        "estrutura reversa do produto"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.where_used",
@@ -14023,7 +14085,14 @@
         "ordem de produção",
         "production status",
         "product production status",
-        "production orders"
+        "production orders",
+        "op aberta",
+        "ops abertas",
+        "ordem de produção aberta",
+        "produção do item",
+        "producao do item",
+        "produção do produto",
+        "producao do produto"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.production.status",
@@ -14135,7 +14204,17 @@
         "preço de compra da matéria-prima",
         "purchase price history",
         "buying price history",
-        "raw material purchase price history"
+        "raw material purchase price history",
+        "preço pago",
+        "preços pagos",
+        "quanto pagamos",
+        "preço de compra do produto",
+        "histórico de preços de compra",
+        "preço de compra registrado",
+        "preco de compra registrado",
+        "preço de compra no histórico",
+        "preco de compra no historico",
+        "preço registrado na compra"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.purchase.price_history",
@@ -14191,7 +14270,12 @@
         "pedidos de compra",
         "purchases",
         "product purchases",
-        "purchase orders for product"
+        "purchase orders for product",
+        "o que compramos do item",
+        "compras do item",
+        "o que já compramos",
+        "historico de compras do item",
+        "histórico de compras do item"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.purchasing.history",
@@ -14305,10 +14389,78 @@
         "raw material shortage",
         "material shortage for production",
         "ruptura no conjunto",
-        "falta de insumo"
+        "falta de insumo",
+        "mp em falta",
+        "mps em falta",
+        "falta de mp",
+        "mps faltam nos conjuntos de producao",
+        "mps faltam nos conjuntos de produção",
+        "materias primas faltam nos conjuntos de producao",
+        "matérias-primas faltam nos conjuntos de produção",
+        "quais mps faltam nos conjuntos de producao",
+        "quais mps faltam nos conjuntos de produção"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.raw_material.set_shortages",
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_product_safety_stock",
+      "http_path": "/products/{code}/safety-stock",
+      "bounded_context": "product",
+      "route_module": "app/interface/http/routes/product_routes.py",
+      "handler": "safety_stock",
+      "method": "GET",
+      "summary": "Estoque de segurança cadastrado do produto por filial",
+      "description": "Retorna o estoque de segurança cadastrado (SBZ010.BZ_ESTSEG) de um produto por filial, para qualquer tipo de produto (B1_TIPO) — não apenas matéria-prima. Distingue valor zero, ausência de registro SBZ (safety_stock_data_state=missing) e produto inexistente (404). Use para «estoque de segurança do produto», «estoque mínimo», «safety stock». Não confundir com a análise de estoque de segurança de Suprimentos (/supplies/safety-stock/*), que é restrita a matéria-prima e agrega consumo/cobertura.",
+      "tags": [
+        "products"
+      ],
+      "owner": "api-delpi.product",
+      "owner_evidence": "PROVEN",
+      "canonical_use_case": "safety_stock",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [
+        "API_DELPI_ACCESS"
+      ],
+      "backend_authz": "PROVEN",
+      "authz_mechanism": "route_decorator",
+      "branch_semantics": "optional_consolidated: all | 01 | 02",
+      "parameters": [
+        "code",
+        "product_type",
+        "branch"
+      ],
+      "required_parameters": [
+        "code"
+      ],
+      "pagination_model": "none",
+      "response_shape": "nested_object",
+      "response_schema": "product_safety_stock",
+      "estimated_payload_risk": "low",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "DAVI_ELIGIBLE_READ",
+      "current_blocker": null,
+      "current_allowlist_presence": true,
+      "current_projection_support": true,
+      "current_aliases": [
+        "estoque de segurança",
+        "estoque de seguranca",
+        "estoque de segurança do produto",
+        "estoque de seguranca do produto",
+        "estoque mínimo",
+        "estoque minimo",
+        "safety stock",
+        "estoque de segurança por filial",
+        "BZ_ESTSEG"
+      ],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
       "existing_tests": "TO_INVENTORY",
       "notes": null
     },
@@ -14469,7 +14621,9 @@
         "total de vendas do produto",
         "sales summary",
         "product sales summary",
-        "aggregate sales history"
+        "aggregate sales history",
+        "vendas do produto",
+        "quanto vendemos do produto"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -14533,7 +14687,11 @@
         "shipping status",
         "final inspection",
         "released to ship",
-        "shipped quantity"
+        "shipped quantity",
+        "produto embarcado",
+        "embarque do produto",
+        "foi embarcado",
+        "status de expedição do produto"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.shipping.status",
@@ -14777,7 +14935,14 @@
         "exclusividade de mp",
         "exclusive raw material",
         "bom exclusivity",
-        "exclusive components"
+        "exclusive components",
+        "matérias-primas exclusivas da estrutura",
+        "materias primas exclusivas da estrutura",
+        "mps só do produto",
+        "mps so do produto",
+        "mp só do produto",
+        "materia-prima so do produto",
+        "matéria-prima só do produto"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.structure.exclusivity",
@@ -14880,7 +15045,10 @@
         "fornecedor do produto",
         "supplier",
         "suppliers",
-        "product suppliers"
+        "product suppliers",
+        "quem fornece",
+        "fornecedores do item",
+        "fornecedor do item"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.supplier.relationship",
@@ -14938,7 +15106,10 @@
         "allocation gaps",
         "open commitments",
         "open material allocations",
-        "production order commitments"
+        "production order commitments",
+        "empenhado além do disponível",
+        "empenhado alem do disponivel",
+        "itens empenhados"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -15152,7 +15323,10 @@
         "resumo dos apontamentos",
         "apontamentos de produção resumidos",
         "quantidade apontada por CT",
-        "resumo de apontamentos de produção"
+        "resumo de apontamentos de produção",
+        "total de apontamentos",
+        "apontamentos do período",
+        "apontamentos do periodo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "production.appointments.summary",
@@ -15215,7 +15389,11 @@
         "consumo real do item",
         "consumption by item",
         "item production consumption",
-        "consumo de MP por produto"
+        "consumo de MP por produto",
+        "consumo de produção por item",
+        "consumo de producao por item",
+        "mp consumida na produção",
+        "consumo de mp na produção"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -15275,7 +15453,10 @@
         "top consumed items",
         "top production consumption",
         "consumo por grupo de produto",
-        "consumo por filial"
+        "consumo por filial",
+        "matérias-primas consumidas",
+        "materias primas consumidas",
+        "matérias primas consumidas"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -15583,7 +15764,9 @@
         "ranking de refugo",
         "top loss materials",
         "top production losses",
-        "materiais mais refugados"
+        "materiais mais refugados",
+        "perdas por material",
+        "perdas por materia"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -15645,7 +15828,10 @@
         "operações alocadas",
         "operações programadas por CT",
         "fila de operações do CT",
-        "carga de máquina detalhada"
+        "carga de máquina detalhada",
+        "carga de máquina por operação",
+        "carga de maquina por operacao",
+        "carga de máquina nas operações"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "production.machine_load",
@@ -15704,7 +15890,10 @@
         "carga por CT",
         "carga por centro de trabalho",
         "fila do CT",
-        "centros de trabalho com carga"
+        "centros de trabalho com carga",
+        "cts sobrecarregados",
+        "ct sobrecarregado",
+        "centros de trabalho sobrecarregados"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "production.machine_load",
@@ -15766,7 +15955,10 @@
         "resumo do OEE",
         "OEE resumido",
         "sumário de OEE de produção",
-        "OEE com totais de apontamentos"
+        "OEE com totais de apontamentos",
+        "oee com apontamentos",
+        "oee de produção com apontamentos",
+        "detalhe do oee"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "production.oee",
@@ -15867,7 +16059,10 @@
         "evolução do OEE",
         "série de OEE",
         "série temporal de OEE de produção",
-        "OEE ao longo do tempo"
+        "OEE ao longo do tempo",
+        "série de oee de produção",
+        "serie de oee de producao",
+        "série mensal do oee"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "production.oee",
@@ -16163,7 +16358,12 @@
         "op encerrada sem baixa",
         "finished orders without consumption",
         "missing material consumption",
-        "produção sem baixa de MP"
+        "produção sem baixa de MP",
+        "ops encerradas sem baixa",
+        "ordens encerradas sem baixa",
+        "ops encerradas sem baixa de mp",
+        "ops encerradas sem baixa de materia-prima",
+        "ordens encerradas sem consumo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -16267,7 +16467,11 @@
       "current_aliases": [
         "resumo do OTD de produção",
         "OTD de produção resumido",
-        "sumário pontualidade das OPs"
+        "sumário pontualidade das OPs",
+        "otd de produção",
+        "otd de producao",
+        "otd da produção",
+        "ops entregues no prazo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -16320,7 +16524,10 @@
         "evolução do OTD de produção",
         "série de OTD de produção",
         "série OTD das OPs",
-        "OTD de produção ao longo do tempo"
+        "OTD de produção ao longo do tempo",
+        "otd fabril",
+        "evolução do otd fabril",
+        "evolucao do otd fabril"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -17052,7 +17259,16 @@
         "table description",
         "protheus table info",
         "o que é a sb1",
-        "o que e a sb1"
+        "o que e a sb1",
+        "metadados da tabela",
+        "dados cadastrais da tabela",
+        "dados da tabela",
+        "cadastro da tabela",
+        "estrutura e metadados da tabela",
+        "conteúdo da tabela",
+        "conteudo da tabela",
+        "o que contém a tabela",
+        "o que contem a tabela"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -19278,7 +19494,15 @@
         "conversão comercial",
         "closing rate",
         "taxa de fechamento",
-        "conversão de propostas"
+        "conversão de propostas",
+        "conversão de orçamentos",
+        "conversao de orcamentos",
+        "orçamento virou pedido",
+        "orçamentos em pedidos",
+        "orcamentos em pedidos",
+        "orçamentos convertidos em pedidos",
+        "orcamentos convertidos em pedidos",
+        "propostas que viraram pedidos"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "commercial.conversion.rate",
@@ -19399,7 +19623,13 @@
         "OTD de pedidos de venda",
         "on-time delivery comercial",
         "OTD pedidos",
-        "sales order OTD"
+        "sales order OTD",
+        "pedidos comerciais no prazo",
+        "entregas no prazo comercial",
+        "otd dos pedidos de venda",
+        "entregas no prazo dos pedidos",
+        "entregas comerciais no prazo",
+        "pedidos entregues no prazo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "commercial.sales_order.otd",
@@ -19454,7 +19684,9 @@
       "current_aliases": [
         "OTD por filial",
         "OTD por unidade",
-        "sales order OTD by branch"
+        "sales order OTD by branch",
+        "otd de vendas por filial",
+        "otd comercial por filial"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -19516,7 +19748,10 @@
         "sales order OTD by customer",
         "on-time delivery por cliente",
         "OTD comercial por cliente",
-        "atraso de pedidos por cliente"
+        "atraso de pedidos por cliente",
+        "otd de vendas por cliente",
+        "clientes no prazo",
+        "clientes que receberam no prazo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -19697,7 +19932,19 @@
         "OTD comercial por semana",
         "histórico do OTD comercial",
         "OTD comercial evoluiu",
-        "evolução do OTD comercial"
+        "evolução do OTD comercial",
+        "série mensal de otd",
+        "serie mensal de otd",
+        "evolução mensal do otd",
+        "série de otd de vendas",
+        "serie de otd de vendas",
+        "série de otd dos pedidos",
+        "serie do otd de vendas",
+        "série do otd de vendas",
+        "série de otd de pedidos de venda",
+        "serie de otd de pedidos de venda",
+        "série otd pedidos de venda",
+        "serie otd pedidos de venda"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -19757,7 +20004,10 @@
       "current_aliases": [
         "evolução OTD por cliente",
         "série OTD por cliente",
-        "OTD series by customer"
+        "OTD series by customer",
+        "histórico de otd por cliente",
+        "historico de otd por cliente",
+        "otd mensal por cliente"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -19815,7 +20065,11 @@
         "OTD summary",
         "resumo do OTD comercial",
         "OTD realizado e meta",
-        "meta OTD comercial"
+        "meta OTD comercial",
+        "resumo do otd de vendas",
+        "resumo de otd de vendas",
+        "resumo do otd dos pedidos",
+        "resumo do otd de pedidos de venda"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "commercial.sales_order.otd",
@@ -23322,6 +23576,103 @@
       "notes": null
     },
     {
+      "operationId": "get_supplies_inventory_accuracy_items",
+      "http_path": "/supplies/inventory-accuracy/items",
+      "bounded_context": "supplies",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Eventos de acuracidade do inventário físico",
+      "description": "Retorna eventos de acuracidade do inventário físico via API DELPI. Lista paginada de registros. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Suprimentos — Acuracidade de inventário"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "branch",
+        "month",
+        "start_date",
+        "end_date",
+        "outcome",
+        "search",
+        "page",
+        "page_size",
+        "sort"
+      ],
+      "required_parameters": [],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "supplies_inventory_accuracy_item",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_supplies_inventory_accuracy_summary",
+      "http_path": "/supplies/inventory-accuracy/summary",
+      "bounded_context": "supplies",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Relatório operacional — Resumo de acuracidade do inventário físico",
+      "description": "Retorna resumo de acuracidade do inventário físico via API DELPI. Relatório operacional do playbook (REST, sem SQL). Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Suprimentos — Acuracidade de inventário"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "branch",
+        "month",
+        "start_date",
+        "end_date"
+      ],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "playbook_report",
+      "response_schema": "supplies_inventory_accuracy_summary",
+      "estimated_payload_risk": "high",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_blocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "get_supplies_inventory_adjustments_summary",
       "http_path": "/supplies/inventory-adjustments/summary",
       "bounded_context": "supplies",
@@ -23374,7 +23725,45 @@
         "inventory adjustment summary",
         "inventory shortage total",
         "inventory surplus total",
-        "valor de ajustes de inventário"
+        "valor de ajustes de inventário",
+        "ajuste de estoque",
+        "ajuste de inventário",
+        "ajuste de inventario",
+        "ajuste líquido de estoque",
+        "ajuste liquido de estoque",
+        "valor líquido de ajuste de inventário",
+        "valor liquido de ajuste de inventario",
+        "valor bruto de ajuste de inventário",
+        "valor bruto de ajuste de inventario",
+        "resumo de ajustes de estoque",
+        "total de ajustes de inventário",
+        "total de ajustes de estoque",
+        "valor de ajustes de estoque",
+        "ajustes de estoque",
+        "acerto de estoque",
+        "diferença de estoque",
+        "diferença de inventário",
+        "furo de estoque",
+        "furo de inventário",
+        "sobra de estoque",
+        "sobra de inventário",
+        "sobra menos furo",
+        "saldo de ajustes",
+        "ajuste líquido",
+        "ajuste líquido de inventário",
+        "valor líquido do inventário",
+        "ajuste bruto",
+        "valor bruto de ajustes de estoque",
+        "movimentação bruta de ajustes",
+        "sobra de inventário por filial",
+        "sobra de estoque por filial",
+        "furo de inventário por filial",
+        "furo de estoque por filial",
+        "total de furos e sobras",
+        "totais de furos e sobras",
+        "furos e sobras do inventário",
+        "furos e sobras do inventario",
+        "total de furos e sobras de inventário"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -23427,7 +23816,16 @@
         "giro estoque",
         "inventory turnover",
         "turnover de estoque",
-        "giro de estoque suprimentos"
+        "giro de estoque suprimentos",
+        "giro do estoque",
+        "vezes que o estoque gira",
+        "quantas vezes o estoque gira",
+        "estoque girou",
+        "vezes que o estoque girou",
+        "quantas vezes o estoque girou",
+        "rotatividade do estoque",
+        "quantas vezes o estoque gira no período",
+        "quantas vezes o estoque gira no periodo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -23491,6 +23889,105 @@
       "notes": null
     },
     {
+      "operationId": "get_supplies_non_moving_stock_items",
+      "http_path": "/supplies/non-moving-stock/items",
+      "bounded_context": "supplies",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Lista paginada — Itens de matérias-primas sem giro",
+      "description": "Retorna itens de matérias-primas sem giro via API DELPI. Lista paginada de registros. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "tags": [
+        "Suprimentos — Estoque sem giro"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "branch",
+        "warehouse",
+        "start_date",
+        "end_date",
+        "turnover_status",
+        "blocked",
+        "product_codes",
+        "search",
+        "page",
+        "page_size",
+        "sort"
+      ],
+      "required_parameters": [],
+      "pagination_model": "page/page_size",
+      "response_shape": "paged_list",
+      "response_schema": "supplies_non_moving_stock_item",
+      "estimated_payload_risk": "medium",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": false,
+      "current_davi_disposition": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_blocker": "NEEDS_MODEL_SAFE_PROJECTION",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
+      "operationId": "get_supplies_non_moving_stock_summary",
+      "http_path": "/supplies/non-moving-stock/summary",
+      "bounded_context": "supplies",
+      "route_module": "TO_INVENTORY",
+      "handler": "TO_INVENTORY",
+      "method": "GET",
+      "summary": "Relatório operacional — Resumo de matérias-primas sem giro",
+      "description": "Retorna resumo de matérias-primas sem giro via API DELPI. Relatório operacional do playbook (REST, sem SQL). Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "tags": [
+        "Suprimentos — Estoque sem giro"
+      ],
+      "owner": "api-delpi.supplies",
+      "owner_evidence": "TO_INVENTORY",
+      "canonical_use_case": "TO_INVENTORY",
+      "repository_downstream_source": "TO_INVENTORY",
+      "backend_permission_symbols": [],
+      "backend_authz": "TO_INVENTORY",
+      "authz_mechanism": "TO_INVENTORY",
+      "branch_semantics": "optional_filter",
+      "parameters": [
+        "branch",
+        "warehouse",
+        "start_date",
+        "end_date"
+      ],
+      "required_parameters": [],
+      "pagination_model": "none",
+      "response_shape": "playbook_report",
+      "response_schema": "supplies_non_moving_stock_summary",
+      "estimated_payload_risk": "high",
+      "binary": false,
+      "stream": false,
+      "admin": false,
+      "generic_sql": false,
+      "sensitive_high_volume": true,
+      "current_davi_disposition": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_blocker": "NEEDS_NESTED_PROJECTION_SUPPORT",
+      "current_allowlist_presence": false,
+      "current_projection_support": false,
+      "current_aliases": [],
+      "explicitly_not_approved": false,
+      "semantic_capability_id": null,
+      "existing_tests": "TO_INVENTORY",
+      "notes": null
+    },
+    {
       "operationId": "get_supplies_otd",
       "http_path": "/supplies/otd",
       "bounded_context": "supplies",
@@ -23538,7 +24035,13 @@
         "on-time delivery suprimentos",
         "entrega no prazo suprimentos",
         "atrasos de fornecimento agregados",
-        "supplies OTD KPI"
+        "supplies OTD KPI",
+        "fornecedores no prazo",
+        "fornecedor no prazo",
+        "fornecedores que entregam no prazo",
+        "fornecedores entregando no prazo",
+        "fornecedores entregando em dia",
+        "fornecedores entregam no prazo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "supplies.purchase_order.otd",
@@ -23689,7 +24192,9 @@
         "OTD das compras",
         "pontualidade das compras",
         "entregas de fornecedores no prazo",
-        "OTD nossos pedidos de compra"
+        "OTD nossos pedidos de compra",
+        "pedidos de compra no prazo",
+        "pedidos de compra entregues no prazo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "supplies.purchase_order.otd",
@@ -23796,7 +24301,10 @@
         "evolução do OTD dos fornecedores",
         "OTD de compras por semana",
         "histórico OTD compras",
-        "OTD compras ao longo do tempo"
+        "OTD compras ao longo do tempo",
+        "série de otd de compras",
+        "serie de otd de compras",
+        "série mensal de otd de compras"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "supplies.purchase_order.otd",
@@ -23948,7 +24456,10 @@
         "consumption analysis item",
         "suggested safety stock",
         "item consumption analysis",
-        "cobertura de estoque do item"
+        "cobertura de estoque do item",
+        "série de consumo do item",
+        "serie de consumo do item",
+        "série de consumo do item de estoque de segurança"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -24004,7 +24515,10 @@
       "current_aliases": [
         "itens análise consumo estoque de segurança",
         "materiais abaixo do estoque sugerido",
-        "safety stock consumption items"
+        "safety stock consumption items",
+        "divergência de consumo",
+        "divergencia de consumo",
+        "itens com divergência de consumo"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -24057,7 +24571,9 @@
         "análise de consumo estoque de segurança",
         "consumo estoque de segurança",
         "safety stock consumption analysis",
-        "estoque de segurança sugerido resumo"
+        "estoque de segurança sugerido resumo",
+        "consumo acima do estoque sugerido",
+        "itens acima do estoque sugerido"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -24209,7 +24725,15 @@
       "current_aliases": [
         "fornecedores do item de estoque de segurança",
         "fornecedores estoque de segurança",
-        "safety stock suppliers"
+        "safety stock suppliers",
+        "quem fornece o item de segurança",
+        "fornecedores do item de segurança",
+        "fornecedores do item de seguranca",
+        "quem fornece o item",
+        "quem fornece o item de estoque",
+        "fornecedores do item critico",
+        "fornecedores do item crítico",
+        "fornecedores do item de estoque de seguranca"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -24271,7 +24795,17 @@
         "quais materiais abaixo do estoque de segurança",
         "liste materiais abaixo do estoque de segurança",
         "materiais abaixo estoque segurança",
-        "itens abaixo do estoque de segurança"
+        "itens abaixo do estoque de segurança",
+        "itens abaixo do estoque mínimo",
+        "itens abaixo do estoque minimo",
+        "estoque de segurança por item",
+        "estoque de seguranca por item",
+        "estoque de segurança sugerido do item",
+        "estoque de seguranca sugerido do item",
+        "itens com estoque de segurança sugerido",
+        "itens com estoque de seguranca sugerido",
+        "estoque de segurança sugerido por item",
+        "estoque de seguranca sugerido por item"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "supplies.safety_stock.summary",
@@ -24329,7 +24863,9 @@
         "estoque segurança suprimentos",
         "quantos materiais abaixo do estoque de segurança",
         "quantos materiais estão abaixo do estoque de segurança",
-        "situação do estoque de segurança"
+        "situação do estoque de segurança",
+        "quantos itens abaixo do estoque de segurança",
+        "quantos itens abaixo do estoque de seguranca"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "supplies.safety_stock.summary",
@@ -24383,7 +24919,10 @@
       "current_aliases": [
         "histórico de preço por fornecedor",
         "preço de compra fornecedor estoque de segurança",
-        "supplier purchase price history safety stock"
+        "supplier purchase price history safety stock",
+        "histórico de preços de compra do fornecedor",
+        "historico de precos de compra do fornecedor",
+        "preços pagos ao fornecedor"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -24452,7 +24991,10 @@
         "produtos do depósito",
         "itens do almoxarifado",
         "materiais no depósito",
-        "produtos em estoque no depósito"
+        "produtos em estoque no depósito",
+        "saldos por item",
+        "saldos por item no armazém",
+        "saldos por item no armazem"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "supplies.stock.balances",
@@ -24691,7 +25233,11 @@
       "current_aliases": [
         "remessas materiais de terceiros",
         "shipments materiais de terceiros",
-        "lista materiais em poder de terceiros"
+        "lista materiais em poder de terceiros",
+        "enviado para terceiros",
+        "industrialização em terceiros",
+        "industrializacao em terceiros",
+        "envio para terceiros"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -24752,7 +25298,10 @@
         "materiais de terceiros",
         "materiais em poder de terceiros",
         "third-party materials",
-        "resumo materiais de terceiros"
+        "resumo materiais de terceiros",
+        "material em poder de terceiros",
+        "saldo de material em terceiros",
+        "saldo em poder de terceiros"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -24955,7 +25504,10 @@
         "faturamento WEG versus meta",
         "atingimento da meta WEG",
         "meta de faturamento da WEG",
-        "atingimento da meta de faturamento da WEG"
+        "atingimento da meta de faturamento da WEG",
+        "rol versus meta da weg",
+        "meta do segmento weg",
+        "rol vs meta weg"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -29520,7 +30072,14 @@
         "operation materials",
         "production order materials",
         "order operation commitments",
-        "necessidade de material da operação"
+        "necessidade de material da operação",
+        "mps da operação",
+        "mps da operacao",
+        "mp da operação",
+        "materiais que a operação usa",
+        "componentes da operação da op",
+        "mps da operação da op",
+        "mps da operacao da op"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -29626,7 +30185,9 @@
         "list columns",
         "table columns",
         "table structure",
-        "fields of the table"
+        "fields of the table",
+        "campos da tabela tem",
+        "quais campos a tabela tem"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -30968,7 +31529,27 @@
         "inventory shortage",
         "inventory surplus",
         "inventory count adjustments",
-        "ajuste de estoque por inventário"
+        "ajuste de estoque por inventário",
+        "ajustes de estoque",
+        "itens de ajuste de estoque",
+        "itens de ajustes de inventário",
+        "produtos com ajuste de estoque",
+        "produtos com ajuste de inventário",
+        "documentos de inventário",
+        "documentos de ajuste de estoque",
+        "lançamentos de inventário",
+        "lançamentos de ajuste de estoque",
+        "detalhe de lançamentos de inventário",
+        "detalhamento de ajustes de inventário",
+        "detalhe dos ajustes de estoque",
+        "ajuste de estoque por produto",
+        "ajuste de inventário por produto",
+        "listagem de ajustes de inventário",
+        "lista de ajustes de estoque",
+        "furos de inventário",
+        "furos de inventario",
+        "sobras de inventário",
+        "sobras de inventario"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -31876,7 +32457,11 @@
         "product search",
         "product code",
         "product description",
-        "product group"
+        "product group",
+        "descricao do item",
+        "descrição do item",
+        "qual a descricao do item",
+        "qual a descrição do item"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": "product.master.search",
@@ -32018,7 +32603,12 @@
         "qual campo representa referencia",
         "qual campo representa referência",
         "campo representa referencia",
-        "campo representa referência"
+        "campo representa referência",
+        "colunas com descrição",
+        "colunas com descricao",
+        "campo de preço",
+        "coluna de preço",
+        "campos do sistema"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -32088,7 +32678,9 @@
         "quais campos da",
         "campos da tabela tem fornecedor",
         "campos representam",
-        "campos que representam"
+        "campos que representam",
+        "campos que contenham",
+        "campos que contenham na tabela"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -32413,7 +33005,11 @@
         "qual tabela guarda registros",
         "tabela que guarda registros",
         "qual tabela contem registros",
-        "qual tabela contém registros"
+        "qual tabela contém registros",
+        "tabelas relacionadas",
+        "tabela relacionada",
+        "tabelas do sistema",
+        "tabela de clientes"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -36963,7 +37559,10 @@
         "physical location",
         "physical locations",
         "product physical location",
-        "pickup location"
+        "pickup location",
+        "onde fica o produto",
+        "localização física",
+        "localizacao fisica"
       ],
       "explicitly_not_approved": false,
       "semantic_capability_id": null,
@@ -40890,14 +41489,14 @@
     }
   ],
   "residual_gaps": {
-    "unassigned_get_count": 472,
+    "unassigned_get_count": 477,
     "unassigned_by_status": {
       "ADMIN_OUT_OF_SCOPE": 28,
-      "DAVI_ELIGIBLE_READ": 49,
+      "DAVI_ELIGIBLE_READ": 50,
       "GENERIC_SQL_FORBIDDEN": 1,
       "LEGACY_UNSAFE": 2,
-      "NEEDS_MODEL_SAFE_PROJECTION": 320,
-      "NEEDS_NESTED_PROJECTION_SUPPORT": 44,
+      "NEEDS_MODEL_SAFE_PROJECTION": 322,
+      "NEEDS_NESTED_PROJECTION_SUPPORT": 46,
       "SEMANTICALLY_REDUNDANT": 2,
       "STREAM_BINARY_OUT_OF_SCOPE": 26
     },
@@ -41765,6 +42364,12 @@
         "path": "/products/{code}/purchase-budget-history",
         "domain": "product",
         "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT"
+      },
+      {
+        "operationId": "get_product_safety_stock",
+        "path": "/products/{code}/safety-stock",
+        "domain": "product",
+        "davi_status": "DAVI_ELIGIBLE_READ"
       },
       {
         "operationId": "get_product_sales_billing",
@@ -42751,6 +43356,18 @@
         "davi_status": "DAVI_ELIGIBLE_READ"
       },
       {
+        "operationId": "get_supplies_inventory_accuracy_items",
+        "path": "/supplies/inventory-accuracy/items",
+        "domain": "supplies",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_supplies_inventory_accuracy_summary",
+        "path": "/supplies/inventory-accuracy/summary",
+        "domain": "supplies",
+        "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT"
+      },
+      {
         "operationId": "get_supplies_inventory_adjustments_summary",
         "path": "/supplies/inventory-adjustments/summary",
         "domain": "supplies",
@@ -42767,6 +43384,18 @@
         "path": "/supplies/negotiation-savings/summary",
         "domain": "supplies",
         "davi_status": "DAVI_ELIGIBLE_READ"
+      },
+      {
+        "operationId": "get_supplies_non_moving_stock_items",
+        "path": "/supplies/non-moving-stock/items",
+        "domain": "supplies",
+        "davi_status": "NEEDS_MODEL_SAFE_PROJECTION"
+      },
+      {
+        "operationId": "get_supplies_non_moving_stock_summary",
+        "path": "/supplies/non-moving-stock/summary",
+        "domain": "supplies",
+        "davi_status": "NEEDS_NESTED_PROJECTION_SUPPORT"
       },
       {
         "operationId": "get_supplies_protheus_user_by_email",

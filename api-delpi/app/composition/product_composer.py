@@ -131,6 +131,14 @@ def build_list_product_stock_use_case():
     return ListProductStockUseCase(repository=repo, cache=cache)
 
 
+def build_get_product_safety_stock_use_case():
+    from app.application.use_cases.product.get_product_safety_stock_use_case import (
+        GetProductSafetyStockUseCase,
+    )
+
+    return GetProductSafetyStockUseCase(repository=ProductStockRepository())
+
+
 def build_list_product_physical_locations_use_case():
     from app.application.use_cases.product.list_product_physical_locations_use_case import (
         ListProductPhysicalLocationsUseCase,

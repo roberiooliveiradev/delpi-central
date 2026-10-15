@@ -36,6 +36,41 @@ PRODUCT_STOCK_EXAMPLE = {
     },
 }
 
+PRODUCT_SAFETY_STOCK_EXAMPLE = {
+    "success": True,
+    "message": "Estoque de segurança do produto carregado com sucesso.",
+    "data": {
+        "product_code": "20060063",
+        "description": "LAMPADA LED BIVOLT T8 G13 18W TUBULAR",
+        "product_type": "MC",
+        "unit": "PC",
+        "blocked": False,
+        "branches": [
+            {
+                "branch": "01",
+                "safety_stock": 6.0,
+                "safety_stock_data_state": "registered",
+            },
+            {
+                "branch": "02",
+                "safety_stock": 0.0,
+                "safety_stock_data_state": "registered",
+            },
+        ],
+    },
+    "error": None,
+    "meta": {
+        "dataVersion": "2026-07",
+        "operationId": "get_product_safety_stock",
+        "entity": "product_safety_stock",
+        "shape": "nested_object",
+        "fields": {
+            "safety_stock": "Estoque de segurança SBZ010.BZ_ESTSEG na filial",
+            "safety_stock_data_state": "registered (registro SBZ existe, valor pode ser 0) | missing (sem registro SBZ na filial)",
+        },
+    },
+}
+
 PRODUCT_STRUCTURE_EXAMPLE = {
     "success": True,
     "message": "Estrutura do produto carregada com sucesso.",

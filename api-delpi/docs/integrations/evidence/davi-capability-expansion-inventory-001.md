@@ -3,29 +3,29 @@
 > Evidence artifact. **Not** runtime authority. **Not** the operational allowlist.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `f93a80ab904f416503c5f1581c755e15ac1b3412`
-- origin/main: `f93a80ab904f416503c5f1581c755e15ac1b3412`
+- Source HEAD: `c15c82cf3e58fb18f3c14d24b3a156f59dd32419`
+- origin/main: `c15c82cf3e58fb18f3c14d24b3a156f59dd32419`
 - OpenAPI/baseline: `3.0.3` / v3
-- Generated at: `2026-10-07T13:50:31.456882+00:00`
+- Generated at: `2026-10-15T19:43:29.618166+00:00`
 
 ## Executive summary
 
 DAVI remains intelligence/orchestration over API DELPI. This inventory converts GET operations into semantic READ capabilities and freezes Wave 1 without promoting runtime eligibility.
 
-- Technical operations: **738** (GET **537**)
-- Current `DAVI_ELIGIBLE_READ`: **87**
+- Technical operations: **743** (GET **542**)
+- Current `DAVI_ELIGIBLE_READ`: **88**
 - Current MCP tools: **2** `['discover_delpi_information', 'execute_delpi_information']`
 - Proposed semantic capabilities: **39**
-- Wave 1 frozen: **3** → expected eligible after implementation **90**
-- Unassigned GETs (not capabilities): **472**
+- Wave 1 frozen: **3** → expected eligible after implementation **91**
+- Unassigned GETs (not capabilities): **477**
 
 ## Baseline
 
 ```json
 {
-  "TOTAL_OPERATIONS": 738,
-  "TOTAL_GET": 537,
-  "DAVI_ELIGIBLE_READ": 87,
+  "TOTAL_OPERATIONS": 743,
+  "TOTAL_GET": 542,
+  "DAVI_ELIGIBLE_READ": 88,
   "ELIGIBLE_OPERATION_IDS": [
     "get_commercial_rol_by_branch",
     "get_commercial_rol_by_customer",
@@ -52,6 +52,7 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
     "get_product_purchase_price_history",
     "get_product_purchases",
     "get_product_raw_material_set_shortages",
+    "get_product_safety_stock",
     "get_product_sales_open_orders",
     "get_product_sales_summary",
     "get_product_shipping_status",
@@ -117,13 +118,13 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
   ],
   "STATUS_COUNTS": {
     "ADMIN_OUT_OF_SCOPE": 71,
-    "DAVI_ELIGIBLE_READ": 87,
+    "DAVI_ELIGIBLE_READ": 88,
     "DESTRUCTIVE_OUT_OF_SCOPE": 17,
     "GENERIC_SQL_FORBIDDEN": 2,
     "LEGACY_UNSAFE": 2,
     "NEEDS_BOUNDED_EXECUTION": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 339,
-    "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
+    "NEEDS_MODEL_SAFE_PROJECTION": 341,
+    "NEEDS_NESTED_PROJECTION_SUPPORT": 53,
     "SEMANTICALLY_REDUNDANT": 3,
     "STREAM_BINARY_OUT_OF_SCOPE": 33,
     "WRITE_OUT_OF_SCOPE": 131
@@ -142,12 +143,12 @@ DAVI remains intelligence/orchestration over API DELPI. This inventory converts 
 | `financial` | 73 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:61, ADMIN_OUT_OF_SCOPE:8, STREAM_BINARY_OUT_OF_SCOPE:4 |
 | `hr` | 5 | 1 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:4, NEEDS_NESTED_PROJECTION_SUPPORT:1 |
 | `inspection` | 21 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:19, NEEDS_NESTED_PROJECTION_SUPPORT:2 |
-| `product` | 36 | 20 | 25 | 3 | DAVI_ELIGIBLE_READ:25, NEEDS_NESTED_PROJECTION_SUPPORT:6, SEMANTICALLY_REDUNDANT:2, STREAM_BINARY_OUT_OF_SCOPE:2 |
+| `product` | 37 | 20 | 26 | 3 | DAVI_ELIGIBLE_READ:26, NEEDS_NESTED_PROJECTION_SUPPORT:6, SEMANTICALLY_REDUNDANT:2, STREAM_BINARY_OUT_OF_SCOPE:2 |
 | `production` | 53 | 4 | 17 | 0 | NEEDS_MODEL_SAFE_PROJECTION:21, DAVI_ELIGIBLE_READ:17, NEEDS_NESTED_PROJECTION_SUPPORT:14, SEMANTICALLY_REDUNDANT:1 |
 | `quality` | 99 | 2 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:75, STREAM_BINARY_OUT_OF_SCOPE:12, NEEDS_NESTED_PROJECTION_SUPPORT:10, ADMIN_OUT_OF_SCOPE:2 |
 | `reports` | 11 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:11 |
 | `scheduling` | 6 | 0 | 0 | 0 | NEEDS_MODEL_SAFE_PROJECTION:6 |
-| `supplies` | 38 | 4 | 22 | 0 | DAVI_ELIGIBLE_READ:22, NEEDS_MODEL_SAFE_PROJECTION:10, NEEDS_NESTED_PROJECTION_SUPPORT:3, STREAM_BINARY_OUT_OF_SCOPE:3 |
+| `supplies` | 42 | 4 | 22 | 0 | DAVI_ELIGIBLE_READ:22, NEEDS_MODEL_SAFE_PROJECTION:12, NEEDS_NESTED_PROJECTION_SUPPORT:5, STREAM_BINARY_OUT_OF_SCOPE:3 |
 
 ## Semantic clusters
 
@@ -256,7 +257,7 @@ Normative freeze contract: `davi-capability-wave-001-freeze.md`.
 
 ## Gaps
 
-- Unassigned GET operations: 472
+- Unassigned GET operations: 477
 - Second-user negative AuthZ: `TEST_NOT_RUN`
 - MCP rate policy: TO_INVENTORY — overall rollout decision remains separate
 - HR: REQUIRED before any HR capability promotion

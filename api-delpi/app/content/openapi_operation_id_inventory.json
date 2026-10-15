@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 736,
-  "stableCount": 736,
+  "operationCount": 743,
+  "stableCount": 743,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -3200,6 +3200,13 @@
       "stable": true
     },
     {
+      "operationId": "get_product_safety_stock",
+      "method": "GET",
+      "path": "/products/{code}/safety-stock",
+      "tag": "products",
+      "stable": true
+    },
+    {
       "operationId": "get_product_sales_summary",
       "method": "GET",
       "path": "/products/{code}/sales",
@@ -4782,6 +4789,34 @@
       "stable": true
     },
     {
+      "operationId": "get_supplies_inventory_accuracy_items",
+      "method": "GET",
+      "path": "/supplies/inventory-accuracy/items",
+      "tag": "Suprimentos — Acuracidade de inventário",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_inventory_accuracy_summary",
+      "method": "GET",
+      "path": "/supplies/inventory-accuracy/summary",
+      "tag": "Suprimentos — Acuracidade de inventário",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_inventory_adjustments",
+      "method": "GET",
+      "path": "/supplies/inventory-adjustments",
+      "tag": "Suprimentos — Ajustes de inventário",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_inventory_adjustments_summary",
+      "method": "GET",
+      "path": "/supplies/inventory-adjustments/summary",
+      "tag": "Suprimentos — Ajustes de inventário",
+      "stable": true
+    },
+    {
       "operationId": "get_supplies_inventory_turnover",
       "method": "GET",
       "path": "/supplies/inventory-turnover",
@@ -4793,6 +4828,20 @@
       "method": "GET",
       "path": "/supplies/negotiation-savings/summary",
       "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_non_moving_stock_items",
+      "method": "GET",
+      "path": "/supplies/non-moving-stock/items",
+      "tag": "Suprimentos — Estoque sem giro",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_non_moving_stock_summary",
+      "method": "GET",
+      "path": "/supplies/non-moving-stock/summary",
+      "tag": "Suprimentos — Estoque sem giro",
       "stable": true
     },
     {

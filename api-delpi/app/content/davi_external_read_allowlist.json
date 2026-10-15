@@ -259,6 +259,45 @@
       ]
     },
     {
+      "operationId": "get_product_safety_stock",
+      "reason": "General safety-stock READ (SBZ010.BZ_ESTSEG) for any B1_TIPO — separate from MP-only supplies analysis; API_DELPI_ACCESS backend AuthZ; branch is query filter; nested per-branch projection distinguishes registered (incl. zero) vs missing SBZ record; PRODUCT_NOT_FOUND vs PRODUCT_TYPE_MISMATCH vs 403 distinguishable; no supplies calculations exposed",
+      "executionMode": "catalog_action",
+      "approvedInputFields": [
+        "code",
+        "branch",
+        "product_type"
+      ],
+      "approvedResponseFields": [
+        "product_code",
+        "description",
+        "product_type",
+        "unit",
+        "blocked",
+        "branches[].branch",
+        "branches[].safety_stock",
+        "branches[].safety_stock_data_state"
+      ],
+      "semanticAliases": [
+        "estoque de segurança do produto",
+        "estoque de seguranca do produto",
+        "estoque mínimo do produto",
+        "estoque minimo do produto",
+        "safety stock do produto",
+        "estoque de segurança por filial",
+        "estoque de seguranca por filial",
+        "BZ_ESTSEG"
+      ],
+      "retrievalNegativePhrases": [
+        "análise de estoque de segurança",
+        "analise de estoque de seguranca",
+        "cobertura de compras",
+        "déficit de estoque de segurança",
+        "deficit de estoque de seguranca",
+        "matéria-prima sem cobertura",
+        "materia-prima sem cobertura"
+      ]
+    },
+    {
       "operationId": "get_product_suppliers",
       "reason": "Supplier relational READ minimized; API_DELPI_ACCESS; prices excluded from projection",
       "executionMode": "catalog_action",
