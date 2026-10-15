@@ -79,6 +79,30 @@ describe("useCurrentUserIdentity", () => {
     expect(result.current.imageUrl).toBe("blob:photo");
   });
 
+
+  it("revokes the previous photo URL when the host publishes a replacement", async () => {
+    vi.stubGlobal("fetch", stubIdentityFetch({ name: "Ana Lima", hasPhoto: true }));
+    const urlStatic = URL as unknown as Record<string, unknown>;
+    const createObjectURL = vi
+      .fn()
+      .mockReturnValueOnce("blob:photo-1")
+      .mockReturnValueOnce("blob:photo-2");
+    const revokeObjectURL = vi.fn();
+    urlStatic.createObjectURL = createObjectURL;
+    urlStatic.revokeObjectURL = revokeObjectURL;
+
+    const { result } = renderHook(() =>
+      useCurrentUserIdentity(() => "t"),
+    );
+    await waitFor(() => expect(result.current.imageUrl).toBe("blob:photo-1"));
+
+    window.dispatchEvent(new Event("DELPI_PERSON_PROFILE_CHANGED"));
+
+    await waitFor(() => expect(result.current.imageUrl).toBe("blob:photo-2"));
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:photo-1");
+  });
+
+
   it("keeps imageUrl null when the profile has no photo", async () => {
     const fetchMock = stubIdentityFetch({ name: "Ana Lima", hasPhoto: false });
     vi.stubGlobal("fetch", fetchMock);

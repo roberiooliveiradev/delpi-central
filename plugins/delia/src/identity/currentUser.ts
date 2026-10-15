@@ -68,10 +68,14 @@ export function useCurrentUserIdentity(
     if (!tokenAvailable) return;
     const controller = new AbortController();
     let objectUrl: string | null = null;
+    let loadVersion = 0;
 
     async function load() {
+      const version = ++loadVersion;
       const getter = getterRef.current;
       if (!getter) return;
+
+      let nextObjectUrl: string | null = null;
       try {
         const me = (await (
           await authedGet(getter, ME_PATH, controller.signal)
@@ -98,15 +102,25 @@ export function useCurrentUserIdentity(
                 controller.signal,
               )
             ).blob();
-            objectUrl = URL.createObjectURL(blob);
-            imageUrl = objectUrl;
+            nextObjectUrl = URL.createObjectURL(blob);
+            imageUrl = nextObjectUrl;
           }
         } catch {
           // Photo unavailable — initials fallback is honest.
         }
-        if (controller.signal.aborted) return;
+
+        if (controller.signal.aborted || version !== loadVersion) {
+          if (nextObjectUrl) URL.revokeObjectURL(nextObjectUrl);
+          return;
+        }
+
+        if (objectUrl && objectUrl !== nextObjectUrl) {
+          URL.revokeObjectURL(objectUrl);
+        }
+        objectUrl = nextObjectUrl;
         setIdentity({ displayName, imageUrl });
       } catch {
+        if (nextObjectUrl) URL.revokeObjectURL(nextObjectUrl);
         // Name unavailable — neutral avatar fallback is honest.
       }
     }
