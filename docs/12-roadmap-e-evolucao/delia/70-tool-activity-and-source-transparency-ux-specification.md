@@ -459,4 +459,77 @@ Backend emite `phase`/`state` semânticos; labels PT-BR são mapeados no adapter
 
 ### 15.5 Status
 
-`ARCHITECTURE_DECISION_REQUIRED` — decisão pendente: aprovar transporte A + `ActivityEvent.v1` + owner delia-api, antes de qualquer implementação. Fase preservada: `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`; `NEXT = RETURN_TO_ARCHITECTURE_COORDINATION`. Nenhum arquivo de código alterado.
+`DECIDED` — o Product Master aprovou explicitamente, para a implementação bounded `DELIA-C3-PROGRESSIVE-ACTIVITY-NDJSON-END-TO-END-IMPLEMENTATION-01`: transporte **Opção A** (NDJSON opt-in no `POST /interaction/turns` existente), contrato `ActivityEvent.v1` (owner `delia-api`, consumer principal `plugins/delia`, componente `@delpi/plugin-ui/ActivityViewer`), preservação integral do JSON legado, e reuso do `ActivityViewer` sem novo componente. A decisão é registrada aqui no momento da aprovação — nenhuma aprovação histórica foi inventada. Fase preservada: `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`; `NEXT = RETURN_TO_ARCHITECTURE_COORDINATION`.
+
+## 16. Contract freeze — ActivityEvent.v1 (decisão aprovada)
+
+**OWNER:** `delia-api` (Application emite observações semânticas; `interfaces/http` transporta NDJSON). **CONSUMERS:** `plugins/delia` (adapter + `@delpi/plugin-ui/ActivityViewer` render-only).
+
+### 16.1 Registros no stream
+
+O corpo NDJSON (`Content-Type: application/x-ndjson`) é uma sequência de objetos JSON por linha:
+
+| `type` | Papel |
+| --- | --- |
+| `activity_event` | Observação semântica de uma fronteira de execução realmente alcançada. Zero ou mais por turno. |
+| `turn_result` | Registro terminal de sucesso. `result` = payload de `serialize_result` — **idêntico** ao corpo JSON legado (`presentation.v1`, provenance, confirmation_request, digests preservados). Exatamente um, sempre último. |
+| `turn_error` | Registro terminal de falha após o stream iniciar. `code`/`message` são os mesmos do corpo de erro legado — HTTP status não é mais alterável após o primeiro chunk; este registro é o terminal seguro. Exatamente um, sempre último. |
+
+Todo registro carrega `version: "1"`. Todo stream termina com exatamente um `turn_result` **ou** um `turn_error` — nunca ambos, nunca ausente.
+
+### 16.2 `ActivityEvent.v1` — campos
+
+| Campo | Origem | Regra de divulgação |
+| --- | --- | --- |
+| `type` | constante `"activity_event"` | sempre |
+| `version` | `"1"` | sempre |
+| `event_id` | `uuid4` por evento | chave de deduplicação; não é autoridade |
+| `sequence` | inteiro ≥1, estritamente crescente por request | ordenação; ausência de lacuna não é garantida nem exigida — apenas monotonicidade |
+| `timestamp` | UTC ISO-8601 no momento da observação | sempre |
+| `session_id` | `InteractionSession.session_id` — criado em `execute()` antes do primeiro evento | sempre |
+| `turn_id` | `InteractionTurn` do usuário — criado antes do primeiro evento | sempre |
+| `correlation_id` | correlação da orquestração de capabilities | **opcional** — ausente até a orquestração iniciar; nunca inventado |
+| `phase` | enum fechado (§16.3) | sempre |
+| `state` | enum fechado (§16.3) | sempre |
+| `label_code` | código semântico fechado; backend emite código, frontend mapeia pt-BR | sempre; nunca texto livre de provider |
+| `capability_ref` | `{remote_name, protocol?, operation_class?}` da capability realmente selecionada/invocada | somente após seleção/invocação observada; `protocol` somente quando provenance do outcome o comprova; nunca `binding`, argumentos, tokens ou internals de provider |
+| `source_ref` | `{source_id, source_system}` do `SourceRef` declarado do grupo | mesma projeção já divulgável de `provenance.to_projection()`; nunca URL/endpoint |
+| `owner_ref` | `{display_name, owner_ref}` do `CapabilityGroup` | identidade aprovada do especialista; somente quando efetivamente selecionado |
+| `outcome_ref` | `{status, record_count?}` | `status ∈ returned_data\|completed_no_data\|partial\|error`; `record_count` só de contagem real extraída — nunca inferido de HTTP 200 |
+
+**IDs:** `session_id`/`turn_id` existem antes do primeiro evento; `correlation_id` é opcional até existir na orquestração. Nenhum ID novo de autoridade é criado.
+
+### 16.3 Vocabulário fechado
+
+```
+phase ∈ REQUEST_RECEIVED | CONTEXTUALIZING | CAPABILITY_SELECTED |
+          SOURCE_QUERY_STARTED | SOURCE_QUERY_COMPLETED |
+          OUTCOME_PREPARING | WAITING_CONFIRMATION | COMPLETED |
+          PARTIAL | BLOCKED | FAILED | CANCELLED
+state ∈ running | completed | partial | failed | blocked |
+        denied | cancelled | waiting | no_data
+```
+
+Transições são fatos observados — não há obrigação de percorrer todas as fases. `SOURCE_QUERY_STARTED` só emite quando `provider.invoke` vai ser chamado; `SOURCE_QUERY_COMPLETED` carrega `outcome_ref` honesto (`error` em `CapabilityProviderError`). Sucesso técnico de transporte ≠ sucesso de negócio.
+
+### 16.4 Semântica de erro e terminação
+
+- Erros de validação/AuthN/AuthZ **antes do primeiro evento** respondem o JSON de erro legado com o HTTP status atual — headers nunca são comprometidos para esses casos (preflight: o primeiro item do canal é lido antes de retornar o Response de stream).
+- Falha após o primeiro evento → evento `FAILED` (quando observável na Application) + registro terminal `turn_error`; nunca `turn_result` bem-sucedido, nunca `COMPLETED`.
+- Desconexão do cliente aborta o consumo do gerador; a execução no worker termina pelo deadline do turno — cancelamento não duplica execução (o frontend nunca reenvia a mesma request).
+- `CANCELLED`/`PARTIAL` só são emitidos com observação real; V1 não inventa cancelamento.
+
+### 16.5 Transporte (Opção A implementada)
+
+- Mesma rota `POST /interaction/turns`; opt-in por `Accept: application/x-ndjson` (quality > 0). Ausente/outro Accept → JSON legado byte-equivalente.
+- Execução do use case roda em **um worker thread por request** drenando um `queue.Queue` — necessário e seguro: `execute()` é síncrono e não pode intercalar yields na mesma thread (worker gunicorn sync, `--threads 4`); sem thread só existiria streaming cosmético. Thread daemon, request-scoped, sem fila externa, sem novo endpoint.
+- Headers do stream: `X-Accel-Buffering: no`, `Cache-Control: no-cache, no-store`. Sem mudança de gateway.
+- O primeiro evento (`REQUEST_RECEIVED`) chega ao cliente antes da conclusão — verificado por teste de timing com latência determinística.
+
+### 16.6 Limites e compatibilidade
+
+- `presentation.v1`: inalterado — viaja dentro de `turn_result.result`.
+- AuthZ/AuthN/PREPARE/ACT/confirmação/digests: inalterados; eventos nunca autorizam nada.
+- Frontend: `Accept` enviado; se o servidor responder JSON legado, o cliente faz parse do caminho existente (fallback automático, sem segunda request).
+- Limites client-side: tamanho de linha, número de eventos, sequência/dedup, terminal obrigatório.
+- Proibições herdadas (§7/§13): sem chain-of-thought, prompts, tool args, raw payload MCP, `agent_directives`, candidate tokens, secrets, headers, SQL, hosts privados.

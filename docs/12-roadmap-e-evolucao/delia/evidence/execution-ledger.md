@@ -13464,3 +13464,136 @@ PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
   (independent review of `07c3fa4bef`; real-model eval + deploy
   decisions separate)
+
+## §6.168 — DELIA-C3-PROGRESSIVE-ACTIVITY-NDJSON-END-TO-END-IMPLEMENTATION-01 (published, review pending)
+
+### Task
+
+`DELIA-C3-PROGRESSIVE-ACTIVITY-NDJSON-END-TO-END-IMPLEMENTATION-01` —
+bounded end-to-end implementation of real progressive activity: the
+frozen `ActivityEvent.v1` contract streamed as opt-in NDJSON on the
+existing `POST /interaction/turns` (doc 70 §15 Option A, approved by
+the Product Master), rendered by the existing `@delpi/plugin-ui`
+`ActivityViewer` in `plugins/delia`. Commit + push on `main`
+authorized. No phase advance, no deploy.
+
+### Contract freeze (doc 70 §16)
+
+- `OWNER = delia-api`; `CONSUMER = plugins/delia`; presentation
+  component `ActivityViewer` (reused, render-only).
+- Wire records: `activity_event` (zero or more) + exactly one
+  terminal `turn_result` (`serialize_result` payload — identical to
+  the legacy JSON body incl. `presentation.v1`) or `turn_error`
+  (same `code`/`message` as the legacy error body).
+- Closed vocabularies: 12 `phase` values, 9 `state` values, 4
+  `outcome_ref.status` values. `sequence` strictly increasing,
+  `event_id` dedup key, `session_id`/`turn_id` bound to real turn
+  identity, `correlation_id` optional until observed.
+- Disclosure: `capability_ref`/`owner_ref`/`source_ref`/
+  `outcome_ref` emitted only after the corresponding real
+  observation; `protocol` only from observed outcome provenance;
+  `record_count` only from actually extracted records — never from
+  HTTP 200.
+
+### Implementation
+
+Backend (`delia-api`):
+- `app/application/interaction/activity.py` (new) — contract module:
+  closed enums, bounded ref builders, `ActivityEventSink`
+  (sequence/timestamp/event-ID stamping, 200-char text bound).
+- `handle_interactive_turn.py` — `activity_channel` kwarg; sink bound
+  after real session/turn creation; `REQUEST_RECEIVED` first;
+  terminal `COMPLETED`/`BLOCKED(denied)`/`WAITING_CONFIRMATION`/
+  `FAILED` emitted at the existing result branches only — result
+  assembly precedes terminal emission.
+- `capability_provision/orchestration.py` — sink propagated via
+  `contextvars` (shared orchestrator instance, threaded WSGI);
+  `CONTEXTUALIZING`, `CAPABILITY_SELECTED`,
+  `SOURCE_QUERY_STARTED`/`COMPLETED` at the single `_invoke`
+  provider-dispatch boundary, `OUTCOME_PREPARING` at synthesis.
+- `interfaces/http/interaction_routes.py` — opt-in detection
+  (`Accept` quality > 0), one request-scoped worker thread +
+  `queue.Queue` (required: synchronous `execute()` cannot interleave
+  yields on the sync gunicorn worker), preflight first-item read
+  preserves legacy error HTTP codes for pre-stream failures,
+  `turn_error` for post-stream failures, `X-Accel-Buffering: no`,
+  `Cache-Control: no-cache, no-store`. Same route, same bearer,
+  same governed flow.
+
+Frontend (`plugins/delia`):
+- `api/interactionClient.ts` — `Accept: application/x-ndjson,
+  application/json`; incremental parser tolerant of arbitrary UTF-8
+  chunk splits; allowlisted field projection; sequence/dedup;
+  `ACTIVITY_STREAM_MAX_EVENTS=64`,
+  `ACTIVITY_STREAM_MAX_LINE_CHARS=32768`; mandatory terminal record
+  (truncated stream = `invalid_response`, never success);
+  legacy-JSON fallback on the same request, never re-sent.
+- `activity/activityView.ts` — `buildLiveActivityView` reducer maps
+  the closed backend vocabulary to pt-BR `ActivityViewerProps`;
+  started query steps resolve in place on completion; terminal
+  phases map to truthful overall states.
+- `App.tsx` — request-scoped `liveEvents` state feeds the pending
+  `ActivityViewer` while in-flight; the final turn keeps the real
+  observed step list; events cleared on settle; draft preserved.
+
+### Evidence (factual, this session)
+
+- `delia-api`: `pytest` full suite = 1037 PASS at implementation
+  time (incl. 26 new `tests/test_activity_streaming.py` cases:
+  contract shape, ordering/dedup, correlation, pre-stream vs
+  post-stream error semantics, provider-neutrality via fictional
+  provider port, disclosure bounds, first-event-before-completion
+  timing with deterministic fake latency). Touched-area re-run =
+  130 PASS (streaming + architecture + specialist orchestration).
+- `plugins/delia`: `vitest` = 172 PASS (incl. 20 new:
+  `interactionClient.ndjson.test.ts` 13 — incremental chunks, UTF-8
+  boundaries, dedup/out-of-order, malformed lines, missing terminal,
+  `turn_error` → error, allowlist sanitization, event bound,
+  legacy fallback, no auto-resend; `activityView.live.test.ts` 7 —
+  reducer honesty per phase).
+- `plugins/delia` `npm run build` = PASS. `npm run typecheck` = 14
+  pre-existing errors in untouched files (`interaction.test.tsx`,
+  `s2.shell.test.tsx`, `plugins/plugin-ui`) — residual not
+  introduced by this diff (files unmodified, verified via `git
+  diff`).
+- Timing: the first `activity_event` is dequeued by the HTTP
+  generator before `execute()` returns (preflight read precedes
+  Response creation); test asserts the event arrives while the
+  fake provider still sleeps.
+- JSON legado: byte-equivalent path preserved (`Accept` without
+  ndjson → identical handler path, untouched code).
+- `presentation.v1`, provenance, confirmation digests, PREPARE/ACT,
+  AuthN/AuthZ: unchanged code paths.
+
+### Status (factual)
+
+`IMPLEMENTATION = PUBLISHED` (`6f407819b3` on `main`, remote
+verified)
+`INDEPENDENT_REVIEW = PENDING`
+`DEPLOYMENT = NOT_PERFORMED`
+`LIVE_STREAMING_VERIFIED = TEST_NOT_RUN` (gunicorn/nginx/gateway path
+exercised only at the Flask adapter boundary; real infra progressive
+delivery unverified until an authorized environment)
+
+### Residuals
+
+- R1 — `LIVE_STREAMING_VERIFIED = TEST_NOT_RUN`: gateway/proxy
+  buffering behavior in the deployed topology is unproven;
+  `X-Accel-Buffering: no` covers nginx only.
+- R2 — `CANCELLED` phase is contract-frozen but has no real
+  observation source in V1 (aborts surface as truncated stream or
+  silent disconnect); not emitted artificially.
+- R3 — multi-capability turns emit one started/completed pair per
+  invocation; parallel fan-out ordering is sequence-guaranteed but
+  untested beyond the fake-provider harness.
+- R4 — 14 pre-existing typecheck errors outside this diff remain
+  open (owning workstreams).
+- R5 — review performed by the implementing agent;
+  `INDEPENDENT_REVIEW = NOT_PROVEN` — a distinct reviewer is
+  required to close the acceptance gate.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO;
+  PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+  (independent review of `6f407819b3`; deploy + live streaming
+  verification require separate authorization)
