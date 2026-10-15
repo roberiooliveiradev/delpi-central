@@ -37,9 +37,9 @@ A página deve responder, em ordem:
 2. quais destinatários possuem pacote aplicável;
 3. quais blockers impedem finalização;
 4. qual versão está em trabalho/finalizada;
-5. quais pacotes já foram enviados por capability comprovada;
+5. quais pacotes já foram submetidos para análise e qual o estado de review;
 6. quais esclarecimentos permanecem abertos;
-7. qual histórico de versão/entrega existe.
+7. qual histórico de versões, submissões, reviews e esclarecimentos existe.
 
 ## Invariantes
 
@@ -154,12 +154,15 @@ Motivo obrigatório; V1 permanece imutável.
 
 ### Conclusão mensal
 
+A submissão in-portal está fechada, mas o completion gate permanece decisão material:
+
 ```text
-ALL_APPLICABLE_RECIPIENT_PACKAGES_SENT
-AND
-NO_OPEN_CLARIFICATION
-→ MONTHLY_CLOSING_COMPLETED
+D-P5-REVIEW-COMPLETION = DECISION_REQUIRED
 ```
+
+Opções canônicas e recomendação estão em [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
+
+Nenhuma implementação deve derivar `MONTHLY_CLOSING_COMPLETED` apenas de submit/notification enquanto essa decisão não for fechada.
 
 Sem ação independente para “forçar conclusão”.
 
@@ -248,7 +251,7 @@ A falha do e-mail de notification não reverte a submission. O package não é a
 │                               │                                              │
 │                               │ Esclarecimentos                               │
 │                               │                                              │
-│                               │ Histórico de versões/entregas                 │
+│                               │ Histórico de versões/submissões/reviews       │
 └───────────────────────────────┴──────────────────────────────────────────────┘
 ```
 
@@ -383,7 +386,7 @@ A UI deve exibir:
 - resolution state;
 - histórico.
 
-Resolver esclarecimento não reabre automaticamente pacote enviado.
+Resolver esclarecimento não reabre automaticamente a PackageVersion submetida.
 
 Se uma correção de conteúdo for necessária, aplicar o fluxo de complemento/nova versão.
 
@@ -405,7 +408,7 @@ Eventos mínimos:
 
 Usar timeline auditável.
 
-Pacote enviado e versões antigas permanecem read-only.
+PackageVersion submetida e versões históricas permanecem read-only.
 
 ## Contratos TARGET — MFE → BFF → owners
 
@@ -441,7 +444,8 @@ Operações semânticas já fechadas:
 - exige READY_TO_FINALIZE;
 - cria snapshot/version imutável;
 - registra actor/timestamp;
-- não chama delivery;
+- não submete para review;
+- não dispara notification;
 - não produz PACKAGE_SUBMITTED_FOR_REVIEW.
 
 ### Submission/review contract
