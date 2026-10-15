@@ -522,6 +522,22 @@
   background: transparent;
 }
 
+/* G9-BRAND-1 — watermark "powered by bpmn.io" (bpmn-js LICENSE: o selo
+   DEVE permanecer visível e sem sobreposição; removê-lo é proibido).
+   O vendor injeta inline bottom:15px;right:15px;z-index:100 — exatamente
+   sob os controles flutuantes, interceptando o clique do fit. Solução
+   governada: reposicionar o selo para bottom-LEFT (continua visível,
+   clicável e sem overlap) e dar cor legível sobre o canvas dark. */
+.dashboard-bpmn-modeler .bjs-powered-by {
+  right: auto !important;
+  left: 15px !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.dashboard-bpmn-modeler .bjs-powered-by:hover {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
 .bpmnm-editor__body {
   display: flex;
   flex: 1 1 auto;
