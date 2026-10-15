@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / A15 CONSOLIDATION PASS_WITH_DECISION_REQUIRED_P5_REVIEW_COMPLETION**
+**TARGET / A15 CONSOLIDATION PASS_WITH_BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -29,10 +29,10 @@ Authorities detalhadas continuam nos documentos de cada página; este arquivo é
 | A09 | P2 Checklist e Documentos | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 | A10 | P3 Estoque e Conciliação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03 |
 | A11 | P4 Classificações e Pendências | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
-| A12 | P5 Pacote, Finalização e Envio | PORTAL_SUBMISSION_MODEL_PASS / REVIEW_COMPLETION_DECISION_REQUIRED |
+| A12 | P5 Pacote, Finalização e Envio | PORTAL_SUBMISSION_MODEL_PASS / P5_DERIVED_REVIEW_CONTRACT_PENDING |
 | A13 | P6 Administração / Configuração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 
-A12 é o único residual material antes do contract freeze. A premissa de delivery externo foi invalidada; o residual atual é exclusivamente `D-P5-REVIEW-COMPLETION`.
+A12 permanece com contrato derivado pendente. C2 e D-P5-01 a D-P5-05 foram aprovados pelo Product Owner; ainda faltam as semânticas de rejeição terminal, substituição, quorum versionado e ressubmissão.
 
 ## 2. Contrato arquitetural transversal
 
@@ -616,7 +616,7 @@ PORTAL_DESIGN_FREEZE          = PASS
 FRONTEND_PATTERN_FREEZE       = PASS
 SECURITY_MODEL_FREEZE         = PASS
 TEST_STRATEGY_FREEZE          = PASS
-PRODUCT_CONTRACT_FREEZE       = DECISION_REQUIRED_P5_REVIEW_COMPLETION
+PRODUCT_CONTRACT_FREEZE       = BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT
 
 DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED      = NO
