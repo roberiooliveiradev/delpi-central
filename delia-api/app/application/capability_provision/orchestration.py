@@ -43,6 +43,7 @@ revalidation still gate every ACT call.
 
 from __future__ import annotations
 
+import contextvars
 import dataclasses
 import hashlib
 import json
@@ -52,6 +53,16 @@ import time
 import uuid
 from typing import Any, Mapping, Sequence
 
+from app.application.interaction.activity import (
+    ActivityEventSink,
+    ActivityOutcomeStatus,
+    ActivityPhase,
+    ActivityState,
+    capability_ref as _activity_capability_ref,
+    outcome_ref as _activity_outcome_ref,
+    owner_ref as _activity_owner_ref,
+    source_ref as _activity_source_ref,
+)
 from app.application.interaction.argument_validation import (
     ORCHESTRATED_FIELDS,
     normalize_arguments,
@@ -131,6 +142,7 @@ from app.application.interaction.workspace_context import (
 from app.domain.specialist_interop.model import (
     SpecialistOperationClass,
     SpecialistOutcome,
+    SpecialistResultStatus,
 )
 from app.domain.specialist_interop.rules import (
     invocable_in_interactive_phase,
@@ -2269,6 +2281,78 @@ def _preview_render(preview: WriteProposalPreview) -> str:
 MODEL_STAGE_TIMEOUT_SECONDS = 10.0
 
 
+# ------------- progressive activity observation (doc 70 §16) -------------
+#
+# The request-scoped sink is propagated inside the calling context: the
+# orchestrator instance is shared across requests (composition root),
+# so per-turn state can NEVER live on `self` — threaded WSGI workers
+# run concurrent turns. `attempt` binds the sink once; real
+# instrumentation points read it. When no sink is bound (legacy JSON
+# mode) every emission is a no-op.
+_ACTIVITY_SINK: contextvars.ContextVar[ActivityEventSink | None] = (
+    contextvars.ContextVar("delia_activity_sink", default=None)
+)
+
+
+def _emit_activity(
+    *,
+    phase: ActivityPhase,
+    correlation: str | None = None,
+    **kwargs: Any,
+) -> None:
+    sink = _ACTIVITY_SINK.get()
+    if sink is None:
+        return
+    sink.emit(phase=phase, correlation_id=correlation, **kwargs)
+
+
+def _group_activity_refs(group: CapabilityGroup) -> dict[str, Any]:
+    """Disclosure-safe group projection — the approved specialist
+    identity and declared business source only. Never bindings,
+    endpoints, or provider internals."""
+    return {
+        "owner_ref": _activity_owner_ref(
+            display_name=group.display_name,
+            owner_ref=group.owner_ref,
+        ),
+        "source_ref": (
+            _activity_source_ref(
+                source_system=group.source.source_system,
+                source_id=group.source.source_id,
+            )
+            if group.source is not None
+            else None
+        ),
+    }
+
+
+def _activity_outcome_summary(
+    outcome: SpecialistOutcome,
+) -> dict[str, Any] | None:
+    """Safe result projection: a truthful classification plus a record
+    count only when records were actually extracted from the outcome.
+    Never infers data from transport success; never carries payload."""
+    if outcome.status is SpecialistResultStatus.PARTIAL:
+        return _activity_outcome_ref(status=ActivityOutcomeStatus.PARTIAL)
+    records = _synthesis_records(outcome.structured)
+    if records:
+        return _activity_outcome_ref(
+            status=ActivityOutcomeStatus.RETURNED_DATA,
+            record_count=len(records),
+        )
+    has_content = (
+        isinstance(outcome.content_text, str)
+        and bool(outcome.content_text.strip())
+    ) or bool(outcome.structured)
+    return _activity_outcome_ref(
+        status=(
+            ActivityOutcomeStatus.RETURNED_DATA
+            if has_content
+            else ActivityOutcomeStatus.COMPLETED_NO_DATA
+        )
+    )
+
+
 class _StageDeadlineExceeded(Exception):
     """Internal: a governed stage exceeded its deadline or the turn
     budget ran out.
@@ -2335,6 +2419,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         max_execution_stage: str | None = None,
         turn_deadline: TurnDeadline | None = None,
+        activity_sink: ActivityEventSink | None = None,
     ) -> GovernedCapabilityAttempt:
         """Attempt boundary: one turn deadline governs every stage.
 
@@ -2347,41 +2432,47 @@ class OperationalCapabilityOrchestrator:
         deadline = turn_deadline or TurnDeadline.start(
             self._turn_budget_seconds
         )
+        # Bind the request-scoped activity sink for this call's context
+        # only — the instance is shared across concurrent turns.
+        sink_token = _ACTIVITY_SINK.set(activity_sink)
         try:
-            return self._attempt(
-                input_text,
-                correlation=correlation,
-                actor_user_id=actor_user_id,
-                session_id=session_id,
-                confirmation=confirmation,
-                workspace_context=workspace_context,
-                prior_turns=prior_turns,
-                max_execution_stage=max_execution_stage,
-                deadline=deadline,
-            )
-        except _StageDeadlineExceeded as exc:
-            _logger.info(
-                "orchestration stage=turn_budget decision=%s "
-                "correlation_id=%s",
-                exc.reason,
-                correlation,
-            )
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
-                correlation_id=correlation,
-                error_code=exc.reason,
-            )
-        except TurnBudgetExhausted:
-            _logger.info(
-                "orchestration stage=turn_budget "
-                "decision=turn_budget_exhausted correlation_id=%s",
-                correlation,
-            )
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
-                correlation_id=correlation,
-                error_code="turn_budget_exhausted",
-            )
+            try:
+                return self._attempt(
+                    input_text,
+                    correlation=correlation,
+                    actor_user_id=actor_user_id,
+                    session_id=session_id,
+                    confirmation=confirmation,
+                    workspace_context=workspace_context,
+                    prior_turns=prior_turns,
+                    max_execution_stage=max_execution_stage,
+                    deadline=deadline,
+                )
+            except _StageDeadlineExceeded as exc:
+                _logger.info(
+                    "orchestration stage=turn_budget decision=%s "
+                    "correlation_id=%s",
+                    exc.reason,
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                    correlation_id=correlation,
+                    error_code=exc.reason,
+                )
+            except TurnBudgetExhausted:
+                _logger.info(
+                    "orchestration stage=turn_budget "
+                    "decision=turn_budget_exhausted correlation_id=%s",
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                    correlation_id=correlation,
+                    error_code="turn_budget_exhausted",
+                )
+        finally:
+            _ACTIVITY_SINK.reset(sink_token)
 
     def _attempt(
         self,
@@ -2403,6 +2494,7 @@ class OperationalCapabilityOrchestrator:
         # LOOP-03R2A: no stage — not even the live surface listing —
         # may start once the shared turn budget is exhausted.
         deadline.check("turn_start")
+        _emit_activity(phase=ActivityPhase.CONTEXTUALIZING, correlation=correlation)
         if confirmation is not None:
             return self._attempt_confirmation(
                 confirmation,
@@ -2453,6 +2545,15 @@ class OperationalCapabilityOrchestrator:
             remote_name,
             descriptor.operation_class.value,
             correlation,
+        )
+        _emit_activity(
+            phase=ActivityPhase.CAPABILITY_SELECTED,
+            correlation=correlation,
+            capability_ref=_activity_capability_ref(
+                remote_name=remote_name,
+                operation_class=descriptor.operation_class.value,
+            ),
+            **_group_activity_refs(group),
         )
 
         # Bounded turn-goal interpretation (C3-INTELLIGENCE-LOOP-03R1):
@@ -5265,6 +5366,9 @@ class OperationalCapabilityOrchestrator:
         current evidence. The outcome and its epistemic class are
         never altered.
         """
+        _emit_activity(
+            phase=ActivityPhase.OUTCOME_PREPARING, correlation=correlation
+        )
         records = tuple(
             _sanitize_renderable(entity)
             for entity in _synthesis_records(outcome.structured)
@@ -6101,6 +6205,17 @@ class OperationalCapabilityOrchestrator:
         # LOOP-03R1 (observability): declared argument KEYS only —
         # never values, tokens, or payload content.
         arg_keys = ",".join(sorted(str(k) for k in arguments))[:200]
+        # Real observation: the invocation is about to happen — emit the
+        # semantic started event only at this boundary, never earlier.
+        _emit_activity(
+            phase=ActivityPhase.SOURCE_QUERY_STARTED,
+            correlation=correlation,
+            capability_ref=_activity_capability_ref(
+                remote_name=remote_name,
+                operation_class=capability.operation_class.value,
+            ),
+            **_group_activity_refs(group),
+        )
         try:
             outcome = provider.invoke(
                 capability,
@@ -6129,6 +6244,19 @@ class OperationalCapabilityOrchestrator:
                 int((time.monotonic() - started) * 1000),
                 correlation,
             )
+            _emit_activity(
+                phase=ActivityPhase.SOURCE_QUERY_COMPLETED,
+                state=ActivityState.FAILED,
+                correlation=correlation,
+                capability_ref=_activity_capability_ref(
+                    remote_name=remote_name,
+                    operation_class=capability.operation_class.value,
+                ),
+                outcome_ref=_activity_outcome_ref(
+                    status=ActivityOutcomeStatus.ERROR
+                ),
+                **_group_activity_refs(group),
+            )
             raise
         _logger.info(
             "orchestration stage=provider_invoke decision=ok "
@@ -6140,6 +6268,24 @@ class OperationalCapabilityOrchestrator:
             arg_keys,
             int((time.monotonic() - started) * 1000),
             correlation,
+        )
+        # The outcome provenance is the only legitimate protocol
+        # evidence — it was actually observed on this invocation.
+        _emit_activity(
+            phase=ActivityPhase.SOURCE_QUERY_COMPLETED,
+            state=(
+                ActivityState.PARTIAL
+                if outcome.status is SpecialistResultStatus.PARTIAL
+                else ActivityState.COMPLETED
+            ),
+            correlation=correlation,
+            capability_ref=_activity_capability_ref(
+                remote_name=remote_name,
+                protocol=outcome.provenance.protocol.value,
+                operation_class=capability.operation_class.value,
+            ),
+            outcome_ref=_activity_outcome_summary(outcome),
+            **_group_activity_refs(group),
         )
         # An outcome that arrives after the turn deadline may not be
         # processed — fail truthfully at the boundary.

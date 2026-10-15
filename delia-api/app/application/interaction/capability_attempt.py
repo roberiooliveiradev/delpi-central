@@ -181,4 +181,6 @@ class SupportsGovernedCapabilityAttempt(Protocol):
         workspace_context: WorkspaceContext | None = None,
         max_execution_stage: str | None = None,
         turn_deadline: TurnDeadline | None = None,
+        prior_turns: tuple = (),
+        activity_sink: Any | None = None,
     ) -> GovernedCapabilityAttempt: ...

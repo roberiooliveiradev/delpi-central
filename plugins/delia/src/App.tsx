@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { UIEvent as ReactUIEvent } from "react";
 
 import { DELIA_ROOT_CLASS } from "./ui/deliaUi";
@@ -22,7 +22,9 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
+  buildLiveActivityView,
 } from "./activity/activityView";
+import type { DeliaActivityEvent } from "./api/interactionClient";
 import {
   DELIA_DEMO_BANNER,
   demoConfirmationAck,
@@ -88,6 +90,13 @@ export default function App({
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
+  // Progressive activity (doc 70 §16): observed events for the
+  // in-flight turn only — transient, request-scoped, never persisted.
+  const [liveEvents, setLiveEvents] = useState<DeliaActivityEvent[]>([]);
+  const liveActivityView = useMemo(
+    () => buildLiveActivityView(liveEvents),
+    [liveEvents],
+  );
   const [respondingTurnId, setRespondingTurnId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -144,8 +153,14 @@ export default function App({
     setRespondingTurnId(null);
     setLoading(true);
     setError(null);
+    setLiveEvents([]);
     const controller = new AbortController();
     abortRef.current = controller;
+
+    // Events observed during this request only — collected locally so
+    // the final turn keeps the real step list even after the pending
+    // viewer unmounts.
+    const observed: DeliaActivityEvent[] = [];
 
     try {
       const result = await submitInteractionTurn(value, {
@@ -154,6 +169,10 @@ export default function App({
         context: buildInteractionContext(turns),
         workspace: getWorkspaceContext?.() ?? undefined,
         confirmation,
+        onActivityEvent: (event) => {
+          observed.push(event);
+          setLiveEvents([...observed]);
+        },
       });
       setTurns((previous) => [
         // A submitted decision consumes the earlier pending card —
@@ -174,6 +193,9 @@ export default function App({
           provenance: result.provenance,
           confirmationRequest: result.confirmation_request,
           presentation: result.presentation,
+          // The authoritative result reconciles the observed steps —
+          // the live view carries only events that actually arrived.
+          activityView: buildLiveActivityView(observed) ?? undefined,
         },
       ]);
       setRespondingTurnId(
@@ -198,6 +220,7 @@ export default function App({
       );
     } finally {
       setLoading(false);
+      setLiveEvents([]);
     }
   }
 
@@ -332,7 +355,7 @@ export default function App({
           )}
           {loading ? (
             <ActivityViewer
-              {...DELIA_ACTIVITY_PENDING_VIEW}
+              {...(liveActivityView ?? DELIA_ACTIVITY_PENDING_VIEW)}
               className="delia-interaction__loading"
             />
           ) : null}

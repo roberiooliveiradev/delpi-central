@@ -5,6 +5,7 @@ import type {
   ActivityViewerProps,
 } from "@delpi/plugin-ui/index";
 
+import type { DeliaActivityEvent } from "../api/interactionClient";
 import type { ConversationDisplayTurn } from "../ui/ConversationTimeline";
 
 /**
@@ -88,6 +89,246 @@ function formatObservedAt(value: string | undefined | null): string | undefined 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return undefined;
   return date.toLocaleString("pt-BR");
+}
+
+// ---------------------------------------------------------------------
+// Progressive activity (ActivityEvent.v1 → ActivityViewerProps, doc 70
+// §16). Every step below is a real observed event — the adapter only
+// translates the closed backend vocabulary into pt-BR labels and never
+// fabricates steps, durations or provider claims.
+// ---------------------------------------------------------------------
+
+/** Backend event state → render-only ActivityViewer state. */
+const LIVE_STATE: Record<string, ActivityState> = {
+  running: "running",
+  completed: "completed",
+  partial: "partial",
+  failed: "failed",
+  blocked: "blocked",
+  denied: "denied",
+  cancelled: "cancelled",
+  waiting: "pending",
+  no_data: "no_data",
+};
+
+const LIVE_STEP_LABEL: Record<string, string> = {
+  REQUEST_RECEIVED: "Solicitação recebida",
+  CONTEXTUALIZING: "Entendendo a solicitação",
+  CAPABILITY_SELECTED: "Capacidade selecionada",
+  SOURCE_QUERY_STARTED: "Consultando especialista",
+  SOURCE_QUERY_COMPLETED: "Consulta finalizada",
+  OUTCOME_PREPARING: "Organizando a resposta",
+  WAITING_CONFIRMATION: "Aguardando decisão",
+  COMPLETED: "Atividade concluída",
+  PARTIAL: "Atividade parcialmente concluída",
+  BLOCKED: "Atividade bloqueada",
+  FAILED: "Não foi possível concluir a consulta",
+  CANCELLED: "Interação interrompida",
+};
+
+const LIVE_TITLE: Record<string, string> = {
+  REQUEST_RECEIVED: "Solicitação recebida",
+  CONTEXTUALIZING: "Entendendo sua solicitação…",
+  CAPABILITY_SELECTED: "Capacidade selecionada",
+  SOURCE_QUERY_STARTED: "Consultando fonte autorizada…",
+  SOURCE_QUERY_COMPLETED: "Consulta finalizada",
+  OUTCOME_PREPARING: "Organizando a resposta…",
+  WAITING_CONFIRMATION: "Aguardando uma decisão governada",
+  COMPLETED: "Atividade concluída",
+  PARTIAL: "Atividade parcialmente concluída",
+  BLOCKED: "Atividade bloqueada",
+  FAILED: "Atividade não concluída",
+  CANCELLED: "Atividade cancelada",
+};
+
+function liveOutcomeLabel(event: DeliaActivityEvent): string | undefined {
+  const outcome = event.outcome_ref;
+  if (!outcome) return undefined;
+  switch (outcome.status) {
+    case "returned_data":
+      return typeof outcome.record_count === "number"
+        ? `${outcome.record_count} registro(s) localizado(s)`
+        : "dados retornados pela fonte";
+    case "completed_no_data":
+      return "consulta concluída sem dados";
+    case "partial":
+      return "resultado parcial";
+    case "error":
+      return "consulta falhou";
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Reduces the observed ActivityEvent.v1 sequence into the render-only
+ * ActivityViewer projection. Returns null when there is nothing real
+ * to show — the generic pending label stays as the honest fallback.
+ */
+export function buildLiveActivityView(
+  events: readonly DeliaActivityEvent[],
+): ActivityViewerProps | null {
+  if (!events.length) return null;
+
+  const steps: ActivityStepView[] = [];
+  const sources: ActivitySourceView[] = [];
+  const seenSources = new Set<string>();
+  let lastTerminal: DeliaActivityEvent | null = null;
+  let openQueryIndex = -1;
+
+  const closeRunningSteps = () => {
+    for (const step of steps) {
+      if (step.state === "running") step.state = "completed";
+    }
+    openQueryIndex = -1;
+  };
+
+  for (const event of events) {
+    const state = LIVE_STATE[event.state] ?? "running";
+    const label = LIVE_STEP_LABEL[event.phase] ?? event.phase;
+    switch (event.phase) {
+      case "REQUEST_RECEIVED":
+        steps.push({ id: `ev-${event.sequence}`, label, state });
+        break;
+      case "CONTEXTUALIZING":
+      case "OUTCOME_PREPARING": {
+        closeRunningSteps();
+        steps.push({ id: `ev-${event.sequence}`, label, state });
+        break;
+      }
+      case "CAPABILITY_SELECTED": {
+        closeRunningSteps();
+        steps.push({
+          id: `ev-${event.sequence}`,
+          label,
+          state,
+          capabilityLabel: event.capability_ref?.remote_name,
+          sourceLabel: event.owner_ref?.display_name,
+        });
+        break;
+      }
+      case "SOURCE_QUERY_STARTED": {
+        closeRunningSteps();
+        steps.push({
+          id: `ev-${event.sequence}`,
+          label,
+          state: "running",
+          capabilityLabel: event.capability_ref?.remote_name,
+          sourceLabel: event.owner_ref?.display_name,
+        });
+        openQueryIndex = steps.length - 1;
+        break;
+      }
+      case "SOURCE_QUERY_COMPLETED": {
+        const outcomeLabel = liveOutcomeLabel(event);
+        const step: ActivityStepView = {
+          id: `ev-${event.sequence}`,
+          label,
+          state,
+          capabilityLabel: event.capability_ref?.remote_name,
+          sourceLabel:
+            event.source_ref?.source_system ??
+            event.owner_ref?.display_name,
+          description: outcomeLabel,
+        };
+        if (openQueryIndex >= 0) {
+          // Completion resolves its own query step in place — the
+          // started step becomes the observed finished step.
+          const started = steps[openQueryIndex];
+          steps[openQueryIndex] = {
+            ...started,
+            label,
+            state,
+            description: outcomeLabel,
+            sourceLabel:
+              event.source_ref?.source_system ?? started.sourceLabel,
+            capabilityLabel:
+              event.capability_ref?.remote_name ??
+              started.capabilityLabel,
+          };
+          openQueryIndex = -1;
+        } else {
+          steps.push(step);
+        }
+        if (event.source_ref && !seenSources.has(event.source_ref.source_id ?? event.source_ref.source_system ?? "")) {
+          const key =
+            event.source_ref.source_id ??
+            event.source_ref.source_system ??
+            `src-${sources.length}`;
+          seenSources.add(key);
+          sources.push({
+            id: key,
+            label:
+              event.source_ref.source_system ??
+              event.source_ref.source_id ??
+              "fonte",
+            statusLabel: outcomeLabel,
+            detail: event.capability_ref?.protocol
+              ? `protocolo ${event.capability_ref.protocol}`
+              : undefined,
+          });
+        }
+        break;
+      }
+      case "WAITING_CONFIRMATION":
+      case "COMPLETED":
+      case "PARTIAL":
+      case "BLOCKED":
+      case "FAILED":
+      case "CANCELLED": {
+        closeRunningSteps();
+        steps.push({ id: `ev-${event.sequence}`, label, state });
+        lastTerminal = event;
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  const state: ActivityState = lastTerminal
+    ? (LIVE_STATE[lastTerminal.state] ?? "completed")
+    : "running";
+
+  const lastEvent = events[events.length - 1];
+  const title =
+    (lastTerminal
+      ? LIVE_TITLE[lastTerminal.phase]
+      : LIVE_TITLE[lastEvent.phase]) ?? TITLE_BY_STATE[state];
+
+  const outcomeEvent = lastTerminal ?? lastEvent;
+  const outcomeLabel =
+    outcomeEvent.phase === "BLOCKED" && outcomeEvent.state === "denied"
+      ? "Operação não autorizada ou recusada."
+      : outcomeEvent.phase === "FAILED"
+        ? "Não foi possível concluir a solicitação."
+        : outcomeEvent.phase === "PARTIAL"
+          ? "Parte da consulta não respondeu."
+          : liveOutcomeLabel(outcomeEvent);
+
+  return {
+    title,
+    state,
+    steps: steps.length ? steps : undefined,
+    sources: sources.length ? sources : undefined,
+    outcome: outcomeLabel
+      ? {
+          label: outcomeLabel,
+          tone:
+            state === "denied" || state === "failed"
+              ? "danger"
+              : state === "blocked" || state === "partial"
+                ? "warning"
+                : state === "completed"
+                  ? "success"
+                  : "neutral",
+          persistent:
+            state === "denied" ||
+            state === "failed" ||
+            state === "blocked",
+        }
+      : undefined,
+  };
 }
 
 /**

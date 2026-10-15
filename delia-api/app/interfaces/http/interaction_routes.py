@@ -8,10 +8,26 @@ PlatformAccessContext. This module performs syntactic validation only.
 
 from __future__ import annotations
 
+import json
 import logging
+import queue
+import threading
 
-from flask import Blueprint, Flask, current_app, g, jsonify, request
+from flask import (
+    Blueprint,
+    Flask,
+    Response,
+    current_app,
+    g,
+    jsonify,
+    request,
+)
 
+from app.application.interaction.activity import (
+    ACTIVITY_EVENT_VERSION,
+    TURN_ERROR_RECORD_TYPE,
+    TURN_RESULT_RECORD_TYPE,
+)
 from app.application.interaction.contracts import (
     InteractiveTurnRequest,
     InteractiveTurnResult,
@@ -141,6 +157,10 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
             workspace_context=workspace_context,
             max_execution_stage=max_execution_stage,
         )
+        if _wants_ndjson():
+            return _stream_interaction_turn(
+                handler, command, logger
+            )
         try:
             result = handler.execute(command)
         except InteractionError as exc:
@@ -158,6 +178,144 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
         return jsonify(serialize_result(result)), 200
 
     app.register_blueprint(bp)
+
+
+# ---------------- progressive NDJSON transport (doc 70 §16) ----------------
+#
+# Opt-in streaming mode of the SAME route (Option A): when the client
+# accepts `application/x-ndjson`, the use case runs on one bounded
+# worker thread while this request thread drains an in-memory queue —
+# the ONLY way a synchronous `execute()` can interleave real events
+# with an open response body (gunicorn sync worker). Without it there
+# is no progressive boundary — only cosmetic buffering, which the
+# contract forbids. Legacy `Accept: application/json` responses are
+# untouched.
+
+_NDJSON_MIME = "application/x-ndjson"
+
+
+def _wants_ndjson() -> bool:
+    try:
+        quality = request.accept_mimetypes.quality(_NDJSON_MIME)
+    except Exception:
+        quality = None
+    if quality is not None:
+        return quality > 0
+    return _NDJSON_MIME in (request.headers.get("Accept") or "")
+
+
+def _stream_interaction_turn(handler, command, logger):
+    """ActivityEvent.v1 NDJSON stream — real progressive observation.
+
+    Preflight: the first queue item is awaited BEFORE the streaming
+    Response is returned. An InteractionError raised before any event
+    (AuthN/AuthZ/validation) still answers the legacy JSON error with
+    its HTTP status — headers are never committed early for cases that
+    must preserve their codes.
+    """
+    items: queue.Queue[tuple[str, object]] = queue.Queue()
+
+    def run() -> None:
+        try:
+            result = handler.execute(
+                command,
+                activity_channel=lambda event: items.put(
+                    ("event", event)
+                ),
+            )
+        except InteractionError as exc:
+            items.put(("error", exc))
+        except Exception:
+            logger.exception("interaction_stream_failed")
+            items.put(
+                (
+                    "error",
+                    InteractionError(INTERNAL_ERROR, "internal error"),
+                )
+            )
+        else:
+            items.put(("result", result))
+        finally:
+            items.put(("done", None))
+
+    worker = threading.Thread(
+        target=run, name="delia-interaction-turn", daemon=True
+    )
+    worker.start()
+
+    kind, payload = items.get()
+    if kind == "error" and isinstance(payload, InteractionError):
+        # Pre-stream failure: legacy error semantics fully preserved.
+        logger.info(
+            "interaction_failed error_code=%s request_id=%s",
+            payload.code,
+            getattr(g, "request_id", None),
+        )
+        return _error(payload.code, payload.message)
+
+    def generate():
+        first = (kind, payload)
+        pending = [first]
+        try:
+            while True:
+                item_kind, item_payload = (
+                    pending.pop() if pending else items.get()
+                )
+                if item_kind == "event":
+                    yield _activity_line(item_payload)
+                elif item_kind == "result":
+                    yield _terminal_line(
+                        TURN_RESULT_RECORD_TYPE,
+                        {"result": serialize_result(item_payload)},
+                    )
+                    break
+                elif item_kind == "error":
+                    exc = item_payload
+                    yield _terminal_line(
+                        TURN_ERROR_RECORD_TYPE,
+                        {
+                            "code": getattr(exc, "code", INTERNAL_ERROR),
+                            "message": getattr(
+                                exc, "message", "internal error"
+                            ),
+                        },
+                    )
+                    break
+                else:  # "done" — stream ended without a terminal record
+                    break
+        except GeneratorExit:
+            # Client disconnected: stop consuming; the worker finishes
+            # bounded by the turn deadline — never re-executed.
+            raise
+        finally:
+            worker.join(timeout=1.0)
+
+    response = Response(
+        generate(),
+        status=200,
+        content_type=_NDJSON_MIME,
+    )
+    # Progressive delivery guarantees at this boundary only — no
+    # gateway change, no other service's buffering is touched.
+    response.headers["X-Accel-Buffering"] = "no"
+    response.headers["Cache-Control"] = "no-cache, no-store"
+    return response
+
+
+def _activity_line(event) -> str:
+    return (
+        json.dumps(event.to_record(), ensure_ascii=False, default=str)
+        + "\n"
+    )
+
+
+def _terminal_line(record_type: str, payload: dict) -> str:
+    record = {
+        "type": record_type,
+        "version": ACTIVITY_EVENT_VERSION,
+        **payload,
+    }
+    return json.dumps(record, ensure_ascii=False, default=str) + "\n"
 
 
 def _parse_context(

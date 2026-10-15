@@ -203,9 +203,15 @@ def test_interaction_application_layer_stays_bounded():
     # presentation projection composed at the serialization edge from
     # already-governed result fields (no engine, no second composer,
     # no new port).
+    # DELIA-C3-PROGRESSIVE-ACTIVITY-NDJSON-END-TO-END-IMPLEMENTATION-01
+    # added activity.py — the ActivityEvent.v1 semantic contract and
+    # the request-scoped sink bound to real session/turn identity (a
+    # channel callable is the only transport seam — no port, no
+    # framework dependency, no second orchestration path).
     # No engine, router, registry, repository, or new port is
     # introduced.
     assert module_files == [
+        "activity.py",
         "argument_validation.py",
         "capability_attempt.py",
         "contracts.py",

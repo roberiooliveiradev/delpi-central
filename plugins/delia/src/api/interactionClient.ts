@@ -14,6 +14,72 @@ export const DELIA_API_BASE = "/apps/delia-api";
 export const DELIA_INTERACTION_TURNS_PATH = "/interaction/turns";
 
 /**
+ * ActivityEvent.v1 — bounded semantic observation of an in-flight
+ * turn (doc 70 §16). Presentation only: an event is an observation,
+ * never authority — it cannot grant access, authorize writes, or
+ * override the final `turn_result`.
+ */
+export type DeliaActivityEvent = {
+  version: "1";
+  event_id: string;
+  sequence: number;
+  timestamp: string;
+  session_id: string;
+  turn_id: string;
+  phase: string;
+  state: string;
+  label_code: string;
+  correlation_id?: string;
+  capability_ref?: {
+    remote_name?: string;
+    protocol?: string;
+    operation_class?: string;
+  };
+  source_ref?: { source_id?: string; source_system?: string };
+  owner_ref?: { display_name?: string; owner_ref?: string };
+  outcome_ref?: { status: string; record_count?: number };
+};
+
+/** Closed wire vocabulary (doc 70 §16). */
+const ACTIVITY_PHASES = new Set([
+  "REQUEST_RECEIVED",
+  "CONTEXTUALIZING",
+  "CAPABILITY_SELECTED",
+  "SOURCE_QUERY_STARTED",
+  "SOURCE_QUERY_COMPLETED",
+  "OUTCOME_PREPARING",
+  "WAITING_CONFIRMATION",
+  "COMPLETED",
+  "PARTIAL",
+  "BLOCKED",
+  "FAILED",
+  "CANCELLED",
+]);
+
+const ACTIVITY_STATES = new Set([
+  "running",
+  "completed",
+  "partial",
+  "failed",
+  "blocked",
+  "denied",
+  "cancelled",
+  "waiting",
+  "no_data",
+]);
+
+const ACTIVITY_OUTCOME_STATUSES = new Set([
+  "returned_data",
+  "completed_no_data",
+  "partial",
+  "error",
+]);
+
+/** Client-side bounds — a stream can never grow state unboundedly. */
+export const ACTIVITY_STREAM_MAX_EVENTS = 64;
+export const ACTIVITY_STREAM_MAX_LINE_CHARS = 32_768;
+
+/**
  * Provider-neutral prior-turn context for POST /interaction/turns.
  *
  * Transient UI memory only — built from turns currently rendered on
@@ -186,6 +252,10 @@ export type SubmitInteractionTurnOptions = {
   workspace?: DeliaWorkspaceContext;
   /** Structured confirmation for a pending write (digests only). */
   confirmation?: DeliaConfirmationDecision;
+  /** Progressive activity observations (ActivityEvent.v1). Called at
+   *  most once per accepted event, in sequence order, while the turn
+   *  still runs. Presentation only — never authorization. */
+  onActivityEvent?: (event: DeliaActivityEvent) => void;
 };
 
 export async function submitInteractionTurn(
@@ -206,6 +276,10 @@ export async function submitInteractionTurn(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        // Opt-in progressive transport (doc 70 §16): a server that does
+        // not stream simply answers the legacy JSON body — the same
+        // request doubles as the fallback, never re-sent.
+        Accept: "application/x-ndjson, application/json",
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
@@ -230,6 +304,12 @@ export async function submitInteractionTurn(
     );
   }
 
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (response.ok && contentType.includes("application/x-ndjson")) {
+    return readNdjsonTurnStream(response, options.onActivityEvent);
+  }
+
   const payload = (await response
     .json()
     .catch(() => null)) as Record<string, unknown> | null;
@@ -243,6 +323,12 @@ export async function submitInteractionTurn(
     );
   }
 
+  return parseInteractionResultPayload(payload);
+}
+
+function parseInteractionResultPayload(
+  payload: Record<string, unknown> | null,
+): DeliaInteractionResult {
   if (
     !payload ||
     typeof payload.content !== "string" ||
@@ -291,6 +377,215 @@ export async function submitInteractionTurn(
     ),
     presentation: parsePresentation(payload.presentation),
   };
+}
+
+/**
+ * Incremental NDJSON consumer for the progressive transport.
+ *
+ * Semantics (doc 70 §16): the stream is a sequence of `activity_event`
+ * records followed by exactly one terminal `turn_result` or
+ * `turn_error`. The parser tolerates arbitrarily split chunks and
+ * UTF-8 boundaries, deduplicates/order-enforces by `sequence`,
+ * drops malformed non-terminal lines (presentation-only data), bounds
+ * the event count and line size, and fails closed when no terminal
+ * record arrives — an HTTP-200 stream is never mistaken for a
+ * successful turn.
+ */
+async function readNdjsonTurnStream(
+  response: Response,
+  onActivityEvent?: (event: DeliaActivityEvent) => void,
+): Promise<DeliaInteractionResult> {
+  const body = response.body;
+  if (!body) {
+    throw new DeliaInteractionError(
+      "invalid_response",
+      "Resposta da DÉLIA inválida.",
+    );
+  }
+
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  const seenEventIds = new Set<string>();
+  let buffer = "";
+  let maxSequence = 0;
+  let eventCount = 0;
+  let terminal: Record<string, unknown> | null = null;
+
+  const handleLine = (line: string): Record<string, unknown> | null => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.length > ACTIVITY_STREAM_MAX_LINE_CHARS) {
+      return null;
+    }
+    let record: Record<string, unknown>;
+    try {
+      record = JSON.parse(trimmed) as Record<string, unknown>;
+    } catch {
+      // A malformed non-terminal line is presentation-only data —
+      // drop it; a missing terminal is rejected at stream end.
+      return null;
+    }
+    if (
+      (record?.type === "turn_result" ||
+        record?.type === "turn_error") &&
+      record.version === "1"
+    ) {
+      return record;
+    }
+    if (record?.type === "activity_event" && record.version === "1") {
+      if (eventCount >= ACTIVITY_STREAM_MAX_EVENTS) return null;
+      const event = parseActivityEvent(record);
+      if (!event) return null;
+      if (seenEventIds.has(event.event_id)) return null;
+      // Ordering contract: sequence is strictly increasing; stale or
+      // out-of-order events are dropped, never replayed.
+      if (event.sequence <= maxSequence) return null;
+      seenEventIds.add(event.event_id);
+      maxSequence = event.sequence;
+      eventCount += 1;
+      onActivityEvent?.(event);
+    }
+    // Unknown record kinds are ignored — forward-compatible.
+    return null;
+  };
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let newline = buffer.indexOf("\n");
+      while (newline >= 0) {
+        const hit = handleLine(buffer.slice(0, newline));
+        buffer = buffer.slice(newline + 1);
+        if (hit) {
+          terminal = hit;
+          buffer = "";
+          break;
+        }
+        newline = buffer.indexOf("\n");
+      }
+      if (terminal) break;
+      if (buffer.length > ACTIVITY_STREAM_MAX_LINE_CHARS) {
+        // A runaway line can never be a valid record — bound memory.
+        buffer = "";
+      }
+    }
+    if (!terminal) {
+      buffer += decoder.decode();
+      terminal = handleLine(buffer);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (!terminal) {
+    // The contract requires exactly one terminal record; an absent
+    // one means the stream was truncated — never a silent success.
+    throw new DeliaInteractionError(
+      "invalid_response",
+      "Resposta da DÉLIA inválida.",
+    );
+  }
+  if (terminal.type === "turn_error") {
+    const code =
+      typeof terminal.code === "string" ? terminal.code : "internal_error";
+    throw new DeliaInteractionError(
+      code,
+      ERROR_MESSAGES[code] ??
+        (typeof terminal.message === "string"
+          ? terminal.message
+          : "Erro interno. Tente novamente."),
+    );
+  }
+  return parseInteractionResultPayload(
+    terminal.result as Record<string, unknown> | null,
+  );
+}
+
+/** Bounded syntactic projection of one ActivityEvent.v1 record —
+ *  allowlisted keys only; anything else cannot reach the UI. */
+function parseActivityEvent(
+  record: Record<string, unknown>,
+): DeliaActivityEvent | null {
+  if (
+    typeof record.event_id !== "string" ||
+    !Number.isInteger(record.sequence) ||
+    (record.sequence as number) < 1 ||
+    typeof record.timestamp !== "string" ||
+    typeof record.session_id !== "string" ||
+    typeof record.turn_id !== "string" ||
+    typeof record.phase !== "string" ||
+    typeof record.state !== "string" ||
+    !ACTIVITY_PHASES.has(record.phase) ||
+    !ACTIVITY_STATES.has(record.state)
+  ) {
+    return null;
+  }
+
+  const text = (value: unknown): string | undefined =>
+    typeof value === "string" && value.trim() ? value : undefined;
+
+  const capability = record.capability_ref as
+    | Record<string, unknown>
+    | undefined;
+  const source = record.source_ref as Record<string, unknown> | undefined;
+  const owner = record.owner_ref as Record<string, unknown> | undefined;
+  const outcome = record.outcome_ref as
+    | Record<string, unknown>
+    | undefined;
+
+  const event: DeliaActivityEvent = {
+    version: "1",
+    event_id: record.event_id,
+    sequence: record.sequence as number,
+    timestamp: record.timestamp,
+    session_id: record.session_id,
+    turn_id: record.turn_id,
+    phase: record.phase,
+    state: record.state,
+    label_code: text(record.label_code) ?? record.phase,
+    ...(text(record.correlation_id)
+      ? { correlation_id: text(record.correlation_id) }
+      : {}),
+  };
+
+  if (capability && typeof capability === "object") {
+    const ref = {
+      remote_name: text(capability.remote_name),
+      protocol: text(capability.protocol),
+      operation_class: text(capability.operation_class),
+    };
+    if (ref.remote_name || ref.protocol || ref.operation_class) {
+      event.capability_ref = ref;
+    }
+  }
+  if (source && typeof source === "object") {
+    const ref = {
+      source_id: text(source.source_id),
+      source_system: text(source.source_system),
+    };
+    if (ref.source_id || ref.source_system) event.source_ref = ref;
+  }
+  if (owner && typeof owner === "object") {
+    const ref = {
+      display_name: text(owner.display_name),
+      owner_ref: text(owner.owner_ref),
+    };
+    if (ref.display_name || ref.owner_ref) event.owner_ref = ref;
+  }
+  if (outcome && typeof outcome === "object") {
+    const status = text(outcome.status);
+    if (status && ACTIVITY_OUTCOME_STATUSES.has(status)) {
+      event.outcome_ref = {
+        status,
+        ...(Number.isInteger(outcome.record_count) &&
+        (outcome.record_count as number) >= 0
+          ? { record_count: outcome.record_count as number }
+          : {}),
+      };
+    }
+  }
+  return event;
 }
 
 /**

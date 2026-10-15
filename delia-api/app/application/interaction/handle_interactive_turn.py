@@ -18,8 +18,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
+from app.application.interaction.activity import (
+    ActivityEvent,
+    ActivityEventSink,
+    ActivityPhase,
+    ActivityState,
+    activity_sink_or_none,
+)
 from app.application.interaction.contracts import (
     LIMITATION_RESULT_TRUNCATED,
     InteractiveTurnRequest,
@@ -196,7 +203,12 @@ class HandleInteractiveConversationTurn:
         # the edge request deadline.
         self._turn_budget_seconds = float(turn_budget_seconds)
 
-    def execute(self, request: InteractiveTurnRequest) -> InteractiveTurnResult:
+    def execute(
+        self,
+        request: InteractiveTurnRequest,
+        *,
+        activity_channel: Callable[[ActivityEvent], None] | None = None,
+    ) -> InteractiveTurnResult:
         self._require_access(request.access_context)
         input_text = self._validate_input(request.input_text)
         prior_turns = self._validate_prior_context(request.prior_turns)
@@ -223,6 +235,47 @@ class HandleInteractiveConversationTurn:
                 ",".join(code.value for code in user_validation.error_codes),
             )
 
+        # DELIA-C3-PROGRESSIVE-ACTIVITY (doc 70 §16): a request-scoped
+        # observation sink bound to the real session/turn identity. The
+        # channel is a transport seam — when absent (legacy JSON mode)
+        # the use case is byte-for-byte identical.
+        sink = activity_sink_or_none(
+            activity_channel,
+            session_id=session.session_id,
+            turn_id=user_turn.turn_id,
+        )
+        if sink is not None:
+            sink.emit(phase=ActivityPhase.REQUEST_RECEIVED)
+
+        try:
+            return self._execute_observed(
+                request,
+                session,
+                user_turn,
+                input_text,
+                prior_turns,
+                turn_deadline,
+                sink,
+            )
+        except InteractionError:
+            if sink is not None:
+                sink.emit(phase=ActivityPhase.FAILED)
+            raise
+        except Exception:
+            if sink is not None:
+                sink.emit(phase=ActivityPhase.FAILED)
+            raise
+
+    def _execute_observed(
+        self,
+        request: InteractiveTurnRequest,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+        input_text: str,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        turn_deadline: TurnDeadline,
+        sink: ActivityEventSink | None,
+    ) -> InteractiveTurnResult:
         # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: the bounded
         # governed capability orchestration is tried first. Model
         # selection/answers never authorize anything — the fresh live
@@ -238,6 +291,7 @@ class HandleInteractiveConversationTurn:
                 prior_turns=prior_turns,
                 max_execution_stage=request.max_execution_stage,
                 turn_deadline=turn_deadline,
+                activity_sink=sink,
             )
             if self._capability_orchestration is not None
             else None
@@ -246,7 +300,9 @@ class HandleInteractiveConversationTurn:
         if attempt is not None and (
             attempt.status is GovernedCapabilityStatus.SUCCESS
         ):
-            return self._grounded_result(session, user_turn, attempt)
+            result = self._grounded_result(session, user_turn, attempt)
+            _emit_terminal(sink, ActivityPhase.COMPLETED)
+            return result
 
         if attempt is not None and attempt.status in (
             GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
@@ -256,9 +312,19 @@ class HandleInteractiveConversationTurn:
             # errored or denied is a deterministic terminal answer —
             # the general model never narrates an operational failure
             # as if it were a DELPI-verified answer.
-            return self._source_terminal_result(
+            result = self._source_terminal_result(
                 session, user_turn, attempt
             )
+            _emit_terminal(
+                sink,
+                ActivityPhase.BLOCKED,
+                state=(
+                    ActivityState.DENIED
+                    if attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
+                    else ActivityState.BLOCKED
+                ),
+            )
+            return result
 
         if attempt is not None and attempt.status in (
             GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
@@ -268,10 +334,23 @@ class HandleInteractiveConversationTurn:
             # Write-class lifecycle answers and clarification ask-backs
             # are deterministic and truthful — never routed through the
             # model.
-            return self._write_lifecycle_result(
+            result = self._write_lifecycle_result(
                 session, user_turn, attempt
             )
+            if attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED:
+                _emit_terminal(sink, ActivityPhase.WAITING_CONFIRMATION)
+            elif attempt.status is GovernedCapabilityStatus.WRITE_REJECTED:
+                _emit_terminal(
+                    sink, ActivityPhase.BLOCKED, state=ActivityState.DENIED
+                )
+            else:
+                _emit_terminal(
+                    sink, ActivityPhase.BLOCKED, state=ActivityState.WAITING
+                )
+            return result
 
+        if sink is not None:
+            sink.emit(phase=ActivityPhase.OUTCOME_PREPARING)
         model_result = self._invoke(
             input_text, prior_turns, deadline=turn_deadline
         )
@@ -293,7 +372,7 @@ class HandleInteractiveConversationTurn:
                 "validated DELIA_RESULT turn rejected by session rules",
             )
 
-        return InteractiveTurnResult(
+        result = InteractiveTurnResult(
             session_id=session.session_id,
             user_turn_id=user_turn.turn_id,
             result_turn_id=result_turn.turn_id,
@@ -304,6 +383,8 @@ class HandleInteractiveConversationTurn:
             model_invocation_id=model_result.invocation_id.value,
             grounding_status=GroundingStatus.NON_GROUNDED,
         )
+        _emit_terminal(sink, ActivityPhase.COMPLETED)
+        return result
 
     def _require_access(self, context: PlatformAccessContext | None) -> None:
         if context is None:
@@ -673,6 +754,20 @@ def _is_string_list(value: Any) -> bool:
     return isinstance(value, (list, tuple)) and all(
         isinstance(item, str) for item in value
     )
+
+
+def _emit_terminal(
+    sink: ActivityEventSink | None,
+    phase: ActivityPhase,
+    *,
+    state: ActivityState | None = None,
+) -> None:
+    """Terminal-phase observation — emitted only after the authoritative
+    result is assembled, so a failure mid-assembly can never masquerade
+    as a completed turn."""
+    if sink is None:
+        return
+    sink.emit(phase=phase, state=state)
 
 
 def _map_invocation_error(exc: ModelInvocationError) -> InteractionError:
