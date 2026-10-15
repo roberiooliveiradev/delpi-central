@@ -13617,3 +13617,22 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.170 — DELIA-C3-NDJSON-SUBJECT-BEARER-CONTEXT-HOTFIX-01 (commit publicado; verificação ao vivo pendente)
+
+**Task:** corrigir a regressão introduzida por `6f407819b3` (worker thread NDJSON perdeu acesso ao bearer autenticado em `flask.g`). Sintoma provado em produção (`delpi-delia-api` em `srv-api`, via `ssh operador@192.168.1.237`): `provider_invoke decision=error timing_ms=0` → `mcp_authentication_failed` / `detail=subject bearer unavailable` em todas as consultas governadas com `Accept: application/x-ndjson`.
+
+- **BASE_HEAD:** `14899cc753a8b9bfade5a5a7cc56a07ee6adc254` (`main`, revalidado; remoto sincronizado 0/0). Implementação: `e75a86246b8fe61c090318e898984e501bb7afc4` (3 arquivos). Push fast-forward verificado via `git ls-remote`.
+- **ROOT_CAUSE:** `auth_middleware` grava o token Portal em `flask.g.subject_bearer` na thread da request; o transporte NDJSON executa `handler.execute()` numa `threading.Thread` worker sem request context → `current_subject_bearer()` retorna `None` → providers (OpenAPI invoker e delegação MCP DAVI/TÉO/VISTA, todos via o mesmo `subject_bearer_getter`) abortam antes de qualquer chamada de rede.
+- **REANCHOR:** docs canônicos + ledger + git status; mudanças concorrentes do usuário em `plugins/delia`, `plugins/*` e `requests-api` preservadas, nenhuma staged.
+- **EXISTING_EQUIVALENT:** YES — accessor canônico `current_subject_bearer()` já injetado em `root_composer` para OpenAPI e MCP; REUSE_DECISION=EXTEND no mesmo módulo de infraestrutura. Nenhum novo port/registry/engine.
+- **MECHANISM:** `ContextVar` `delia_subject_bearer_binding` em `app/infrastructure/auth/subject_bearer.py`; `bind_subject_bearer`/`unbind_subject_bearer` com `set`/`reset` em `try/finally` na worker; captura ocorre na thread da request antes do `worker.start()`; bearer nunca entra em `InteractiveTurnRequest`, eventos, logs, respostas, prompts, frontend ou armazenamento. `copy_current_request_context` deliberadamente NÃO usado (não garante transferência de `g`).
+- **RED→GREEN:** probe fictício invocando `current_subject_bearer()` dentro de `execute()` na worker — `seen == [None]` antes do fix (reproduz produção); `["subject-token-a"]` após. 7 testes novos no arquivo de streaming.
+- **TESTS:** `tests/test_activity_streaming.py` 43/43 PASS; suíte `delia-api` integral 1054/1054 PASS (28.13s). Cobertura: NDJSON autenticado recebe bearer; JSON legado inalterado; isolamento entre usuários (A/B/C) e entre threads (ContextVar context-local); binding restaurado após execução; token nunca aparece no corpo da resposta; requisição sem auth continua 401 pré-stream.
+- **SECURITY:** bearer permanece request-scoped e efêmero; `unbind` executa antes do sentinel `done` para garantir limpeza inclusive em erro/desconexão; nenhum campo de evento/contrato carrega credencial. Autenticação, Core AuthZ, Keycloak, audiences, Domain APIs, PREPARE/ACT, planner, providers, schemas MCP, Compose e `.env` inalterados.
+- **RESIDUALS:** `LIVE_VERIFICATION=PENDING` — produção continua no SHA anterior até deploy autorizado; revisão independente do diff `e75a86246b` pendente; o erro de audience local (`RESOURCE_AUDIENCE_MISMATCH`, `localhost` vs canônico) é configuração preexistente separada desta regressão — sem alteração solicitada.
+- **STATUS:** `HOTFIX_PUBLISHED`; `INDEPENDENT_REVIEW=PENDING`; `DEPLOYMENT=NOT_PERFORMED`; `LIVE_VERIFICATION=PENDING`.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
