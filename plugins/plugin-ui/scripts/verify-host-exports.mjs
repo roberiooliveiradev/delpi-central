@@ -27,6 +27,8 @@ const REQUIRED_HOST_EXPORTS = [
   "UnifiedAvatar",
   "ConversationWorkspace",
   "ConversationHeader",
+  "MessageActionBar",
+  "IconButton",
   "createDashboardUserManual",
   "createDashboardEntityAvatarLabel",
   "createDashboardEventsSection",

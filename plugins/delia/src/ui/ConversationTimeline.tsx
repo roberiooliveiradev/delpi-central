@@ -66,7 +66,7 @@ export function ConversationTimeline({
       {turns.map((turn) => (
         <li
           key={turn.id}
-          className={`delia-turn delia-turn--${turn.role}`}
+          className={`delia-turn delia-turn--${turn.role} delpi-ui-message-action-scope`}
         >
           {turn.role === "delia" ? (
             <DeliaAssistantMessage

@@ -184,10 +184,10 @@ describe("S2-B conversation timeline", () => {
     );
     expect(items).toHaveLength(4);
     expect(items.map((el) => el.className)).toEqual([
-      "delia-turn delia-turn--user",
-      "delia-turn delia-turn--delia",
-      "delia-turn delia-turn--user",
-      "delia-turn delia-turn--delia",
+      "delia-turn delia-turn--user delpi-ui-message-action-scope",
+      "delia-turn delia-turn--delia delpi-ui-message-action-scope",
+      "delia-turn delia-turn--user delpi-ui-message-action-scope",
+      "delia-turn delia-turn--delia delpi-ui-message-action-scope",
     ]);
     expect(items[0].textContent).toContain("pergunta um");
     expect(items[3].textContent).toContain("Resposta 2 da DÉLIA.");

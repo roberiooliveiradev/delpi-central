@@ -17,7 +17,12 @@ import {
   presentationOwnerHint,
 } from "../api/presentation";
 import type { DeliaMessageKind } from "../api/presentation";
-import { ActivityViewer, UnifiedAvatar } from "@delpi/plugin-ui/index";
+import {
+  ActivityViewer,
+  IconButton,
+  MessageActionBar,
+  UnifiedAvatar,
+} from "@delpi/plugin-ui/index";
 import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 import { buildDeliaActivityView } from "../activity/activityView";
 
@@ -162,16 +167,16 @@ export function DeliaAssistantMessage({
       <div className="delia-turn__bubble">
         <div className="delia-turn__head">
           <span className="delia-turn__label">DÉLIA</span>
-          <button
-            type="button"
-            className="delia-turn__action"
-            aria-label={
-              copied ? "Resposta copiada" : "Copiar resposta"
-            }
-            onClick={handleCopy}
-          >
-            {copied ? <Check size={13} /> : <Copy size={13} />}
-          </button>
+          <MessageActionBar aria-label="Ações da resposta">
+            <IconButton
+              aria-label={
+                copied ? "Resposta copiada" : "Copiar resposta"
+              }
+              onClick={handleCopy}
+            >
+              {copied ? <Check size={13} /> : <Copy size={13} />}
+            </IconButton>
+          </MessageActionBar>
         </div>
 
         {activityView ? (
@@ -241,7 +246,7 @@ export function DeliaAssistantMessage({
             {turn.groundingStatus === "GROUNDED" &&
             turn.provenance?.source ? (
               <p className="delia-turn__source">
-                Fonte · Cadastro de Produtos DELPI
+                Fonte · {turn.provenance.source.source_system}
                 {formatObservedAt(turn.provenance.observed_at) ? (
                   <span className="delia-turn__source-when">
                     {" "}
@@ -267,7 +272,7 @@ export function DeliaAssistantMessage({
                 {turn.groundingStatus === "GROUNDED" &&
                 turn.provenance?.source ? (
                   <span className="delia-turn__meta-item">
-                    fonte: Cadastro de Produtos DELPI ·{" "}
+                    fonte: {turn.provenance.source.source_system} ·{" "}
                     {turn.provenance.specialist_id ?? "especialista"}/
                     {turn.provenance.protocol ?? "MCP"} ·{" "}
                     {turn.provenance.observed_at ?? ""}

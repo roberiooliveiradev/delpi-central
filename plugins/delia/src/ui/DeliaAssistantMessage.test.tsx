@@ -250,6 +250,37 @@ describe("DeliaAssistantMessage — copy action", () => {
     );
   });
 
+  it("renders the copy action through the shared MessageActionBar", () => {
+    const { container } = renderMessage(makeTurn());
+    const bar = container.querySelector(".delpi-ui-message-action-bar");
+    expect(bar).toBeTruthy();
+    expect(bar!.getAttribute("aria-label")).toBe("Ações da resposta");
+    expect(
+      bar!.querySelector('button[aria-label="Copiar resposta"]'),
+    ).toBeTruthy();
+    expect(container.querySelector(".delia-turn__action")).toBeNull();
+  });
+
+  it("does not report success when the clipboard write rejects", async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error("denied"));
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+    });
+    renderMessage(makeTurn({ content: "x" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copiar resposta" }),
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(
+      screen.getByRole("button", { name: "Copiar resposta" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Resposta copiada" }),
+    ).toBeNull();
+  });
+
   it("exposes no invented actions (no feedback/share/source buttons)", () => {
     const { container } = renderMessage(makeTurn());
     const labels = Array.from(

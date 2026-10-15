@@ -45,7 +45,7 @@ O componente é a unidade de resposta da conversa. A `ConversationTimeline` perm
 | --- | --- | --- |
 | Avatar `Sparkles` em disco accent | sim | identifica o autor; decorativo (label texto adjacente) |
 | Rótulo "DÉLIA" | sim | head row acima do conteúdo |
-| Ação "Copiar resposta" | sim | ghost icon, `aria-label` dinâmico ("Copiar resposta" → "Resposta copiada"); somente conteúdo visível; degrada se clipboard indisponível |
+| Ação "Copiar resposta" | sim | `MessageActionBar` + `IconButton` do plugin-ui; `aria-label` dinâmico ("Copiar resposta" → "Resposta copiada"); somente conteúdo visível; degrada se clipboard indisponível |
 | Corpo textual | sim | `white-space: pre-line`; texto verbatim, nunca reinterpretado |
 | Linha de estado semântico | condicional | ícone contextual + `StatusBadge`; **ausente em RESULT** |
 | Owner hint | condicional | parágrafo discreto; deduplicado do conteúdo via `dedupeOwnerHintContent` |
@@ -75,6 +75,17 @@ Quando `groundingStatus === "GROUNDED"` e há provenance real, a meta row exibe 
 
 Valores reais de `limitations[]` são exibidos verbatim após `limitações:`, na mesma meta row subordinada. Sem explicações inventadas, sem ocultação.
 
+## Ações da mensagem (MessageActionBar)
+
+O chrome de ações secundárias é do Design System: `MessageActionBar` (`plugins/plugin-ui/src/components/conversation/MessageActionBar.tsx`) compõe `IconButton` existente — nenhum primitivo de botão duplicado. A barra OWNS apenas apresentação: composição horizontal, densidade, alinhamento e revelação subordinada (`visibility="hover-focus"` por padrão, via ancestral `.delpi-ui-message-action-scope` + `:focus-within`; sempre visível em `@media (hover: none)/(pointer: coarse)`). A DÉLIA OWNS seleção e comportamento: quais ações existem, o que executam e o estado `copied` (1,5s) permanecem no consumidor.
+
+Regras:
+
+- Ação ≠ confirmação governada: Confirmar/Cancelar continuam superfície própria.
+- Capacidade futura ≠ botão desabilitado: ações sem contrato não renderizam.
+- `prefers-reduced-motion`: transição de opacidade desligada.
+- Light/dark por tokens existentes; sem paleta paralela.
+
 ## Confirmação governada
 
 - Controles existem **somente** com `confirmation_request` válido, não respondido e sem loading.
@@ -94,7 +105,7 @@ Valores reais de `limitations[]` são exibidos verbatim após `limitações:`, n
 - Estrutura semântica dentro de `role="log"` na timeline (ordem preservada).
 - Avatar decorativo (autor identificado por texto adjacente).
 - Estados comunicados por ícone + texto — nunca só por cor.
-- Ação de cópia com `aria-label` e `title` dinâmicos, focus-visible visível.
+- Ação de cópia com `aria-label` dinâmico e focus-visible tokenizado (IconButton); descobrível por teclado mesmo quando visualmente oculta.
 - Meta row com `aria-label` identificando a região.
 - Conteúdo hostil permanece texto inerte — nenhum HTML executável.
 - `prefers-reduced-motion` respeitado (transição da ação desligada).

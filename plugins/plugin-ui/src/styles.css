@@ -92,6 +92,7 @@
 @import "./styles/interaction-room-page.css";
 @import "./styles/conversation-drop.css";
 @import "./styles/conversation-workspace.css";
+@import "./styles/message-action-bar.css";
 @import "./styles/resizable-columns.css";
 @import "./styles/top-bar.css";
 @import "./styles/user-manual.css";

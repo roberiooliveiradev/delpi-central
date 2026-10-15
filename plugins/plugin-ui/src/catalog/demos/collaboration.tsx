@@ -19,9 +19,11 @@ import {
   RoomInboxList,
   roomInboxListBemClasses,
 } from "../../components/collaboration";
+import { IconButton } from "../../components/actions";
 import {
   ConversationHeader,
   ConversationWorkspace,
+  MessageActionBar,
 } from "../../components/conversation";
 import type { CatalogEntryDraft } from "../types";
 
@@ -372,6 +374,55 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
         render: () => (
           <div style={{ maxWidth: 320 }}>
             <ConversationHeader title="DÉLIA" subtitle="Inteligência operacional DELPI" compact />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.MessageActionBar",
+    family: "collaboration",
+    exportName: "MessageActionBar",
+    title: "MessageActionBar",
+    description:
+      "Barra de ações secundárias de uma mensagem — compõe IconButton; chrome subordinado, sem lógica de negócio.",
+    propsSummary: [
+      "children",
+      "visibility",
+      "density",
+      "align",
+      "aria-label",
+      "className",
+    ],
+    demos: [
+      {
+        id: "always",
+        label: "Sempre visível",
+        render: () => (
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 600 }}>DÉLIA</span>
+            <MessageActionBar visibility="always" aria-label="Ações da resposta">
+              <IconButton aria-label="Copiar resposta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </IconButton>
+            </MessageActionBar>
+          </div>
+        ),
+      },
+      {
+        id: "hover-focus",
+        label: "Reveal em hover/focus (padrão)",
+        render: () => (
+          <div
+            className="delpi-ui-message-action-scope"
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: 8, border: "1px dashed var(--delpi-ui-border, #e6e6e6)", borderRadius: 8 }}
+          >
+            <span style={{ fontSize: 12, fontWeight: 600 }}>DÉLIA</span>
+            <MessageActionBar aria-label="Ações da resposta">
+              <IconButton aria-label="Copiar resposta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </IconButton>
+            </MessageActionBar>
           </div>
         ),
       },
