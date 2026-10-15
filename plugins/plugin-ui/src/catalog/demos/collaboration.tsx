@@ -24,6 +24,7 @@ import {
   ConversationHeader,
   ConversationStatus,
   ConversationWorkspace,
+  GovernedConfirmation,
   MessageActionBar,
 } from "../../components/conversation";
 import type { CatalogEntryDraft } from "../types";
@@ -429,6 +430,68 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
         id: "no-icon",
         label: "Sem ícone",
         render: () => <ConversationStatus tone="info" label="Estado informativo" />,
+      },
+    ],
+  },
+  {
+    id: "collaboration.GovernedConfirmation",
+    family: "collaboration",
+    exportName: "GovernedConfirmation",
+    title: "GovernedConfirmation",
+    description:
+      "Superfície inline de decisão governada: título + descrição/preview opcionais + Confirmar/Cancelar (ActionButton). Apresentação pura.",
+    propsSummary: [
+      "title",
+      "description",
+      "preview",
+      "confirmLabel",
+      "cancelLabel",
+      "onConfirm",
+      "onCancel",
+      "loading",
+      "density",
+      "tone",
+      "aria-label",
+    ],
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <GovernedConfirmation
+              description="Revise a operação antes de continuar."
+              onConfirm={() => {}}
+              onCancel={() => {}}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "loading",
+        label: "Loading (double-submit guard)",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <GovernedConfirmation
+              loading
+              onConfirm={() => {}}
+              onCancel={() => {}}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "compact",
+        label: "Compacto (dock)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <GovernedConfirmation
+              density="compact"
+              onConfirm={() => {}}
+              onCancel={() => {}}
+            />
+          </div>
+        ),
       },
     ],
   },

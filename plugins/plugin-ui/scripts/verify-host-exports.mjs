@@ -29,6 +29,8 @@ const REQUIRED_HOST_EXPORTS = [
   "ConversationHeader",
   "MessageActionBar",
   "ConversationStatus",
+  "GovernedConfirmation",
+  "ActionButton",
   "IconButton",
   "createDashboardUserManual",
   "createDashboardEntityAvatarLabel",

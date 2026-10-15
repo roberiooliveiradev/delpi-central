@@ -180,8 +180,33 @@ describe("DeliaAssistantMessage — semantic states", () => {
     expect(onConfirmation).toHaveBeenCalledWith(request, "CONFIRM");
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(onConfirmation).toHaveBeenCalledWith(request, "REJECT");
-    // Digests are transport echoes — never displayed.
+    // Technical fields are transport echoes — never displayed.
     expect(screen.queryByText(/d{64}/)).toBeNull();
+    expect(screen.queryByText(/f{64}/)).toBeNull();
+    expect(screen.queryByText(/s-[0-9]/)).toBeNull();
+  });
+
+  it("CONFIRMATION_REQUIRED without request renders no action surface", () => {
+    renderMessage(
+      makeTurn({
+        presentation: {
+          messageKind: "CONFIRMATION_REQUIRED",
+          semanticStatus: null,
+          groundingStatus: null,
+          blocks: [],
+          allowedInteractions: ["reply", "confirm", "reject"],
+        },
+        confirmationRequest: null,
+      }),
+    );
+    // The semantic status remains, but the action surface does not.
+    expect(screen.getByText("Confirmação pendente")).toBeTruthy();
+    expect(
+      screen.queryByRole("group", { name: "Confirmação necessária" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Confirmar" }),
+    ).toBeNull();
   });
 
   it("answered confirmation is consumed", () => {
@@ -196,7 +221,7 @@ describe("DeliaAssistantMessage — semantic states", () => {
       }),
     );
     expect(
-      screen.queryByRole("group", { name: "Confirmação pendente" }),
+      screen.queryByRole("group", { name: "Confirmação necessária" }),
     ).toBeNull();
   });
 });

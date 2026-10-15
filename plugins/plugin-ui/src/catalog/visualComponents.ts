@@ -611,6 +611,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Estado semântico inline de mensagem (ícone + StatusBadge). OWNS chrome subordinado. DOES NOT OWN enums, mapping de estado, auth nem quando aparecer — o consumidor resolve label/tone.",
   }),
+  vc("collaboration", "GovernedConfirmation", {
+    addedAt: "2026-10-15",
+    description:
+      "Superfície inline de decisão governada (Confirmar/Cancelar via ActionButton). OWNS chrome da decisão. DOES NOT OWN request, digests, auth, PREPARE/ACT ou resultado — o consumidor controla render e callbacks.",
+  }),
   vc("collaboration", "MessageActionBar", {
     addedAt: "2026-10-15",
     description:

@@ -20,6 +20,7 @@ import type { DeliaMessageKind } from "../api/presentation";
 import {
   ActivityViewer,
   ConversationStatus,
+  GovernedConfirmation,
   IconButton,
   MessageActionBar,
   UnifiedAvatar,
@@ -193,38 +194,24 @@ export function DeliaAssistantMessage({
         ) : null}
 
         {turn.confirmationRequest && !turn.confirmationAnswered ? (
-          <div
-            className="delia-confirmation"
-            role="group"
-            aria-label="Confirmação pendente"
-          >
-            <button
-              type="button"
-              className="delia-confirmation__confirm"
-              disabled={loading}
-              onClick={() =>
-                onConfirmation(
-                  turn.confirmationRequest as DeliaConfirmationRequest,
-                  "CONFIRM",
-                )
-              }
-            >
-              Confirmar
-            </button>
-            <button
-              type="button"
-              className="delia-confirmation__cancel"
-              disabled={loading}
-              onClick={() =>
-                onConfirmation(
-                  turn.confirmationRequest as DeliaConfirmationRequest,
-                  "REJECT",
-                )
-              }
-            >
-              Cancelar
-            </button>
-          </div>
+          <GovernedConfirmation
+            title="Confirmação necessária"
+            confirmLabel="Confirmar"
+            cancelLabel="Cancelar"
+            loading={loading}
+            onConfirm={() =>
+              onConfirmation(
+                turn.confirmationRequest as DeliaConfirmationRequest,
+                "CONFIRM",
+              )
+            }
+            onCancel={() =>
+              onConfirmation(
+                turn.confirmationRequest as DeliaConfirmationRequest,
+                "REJECT",
+              )
+            }
+          />
         ) : null}
 
         {hasMeta ? (

@@ -1,0 +1,79 @@
+/* GovernedConfirmation — superfície inline de decisão governada em uma
+   mensagem conversacional. Subordinada à resposta: sem card pesado,
+   sem modal, sem banner global, sem animação. */
+
+.delpi-ui-governed-confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: 10px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 94%,
+    var(--delpi-ui-muted, var(--text-muted, #64748b)) 6%
+  );
+  min-width: 0;
+}
+
+.delpi-ui-governed-confirmation__title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-governed-confirmation--warning
+  .delpi-ui-governed-confirmation__title {
+  color: color-mix(
+    in srgb,
+    var(--warning, #b45309) 85%,
+    var(--delpi-ui-text, var(--text, #111111))
+  );
+}
+
+.delpi-ui-governed-confirmation--danger
+  .delpi-ui-governed-confirmation__title {
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, var(--danger, #dc2626)) 85%,
+    var(--delpi-ui-text, var(--text, #111111))
+  );
+}
+
+.delpi-ui-governed-confirmation__description {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-governed-confirmation__preview {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  border-top: 1px dashed var(--delpi-ui-border, var(--border, #e6e6e6));
+  padding-top: 6px;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-governed-confirmation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.delpi-ui-governed-confirmation--compact {
+  padding: 8px 10px;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .delpi-ui-governed-confirmation__actions {
+    justify-content: flex-start;
+  }
+}

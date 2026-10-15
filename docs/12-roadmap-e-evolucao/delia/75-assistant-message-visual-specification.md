@@ -52,7 +52,7 @@ O componente é a unidade de resposta da conversa. A `ConversationTimeline` perm
 | Linha de estado semântico | condicional | `ConversationStatus` do plugin-ui (ícone decorativo + `StatusBadge` canônico); **ausente em RESULT** |
 | Owner hint | condicional | parágrafo discreto; deduplicado do conteúdo via `dedupeOwnerHintContent` |
 | Meta row | condicional | `aria-label="Detalhes da resposta"`; provenance + classificação epistêmica + limitações |
-| Confirmação governada | condicional | Confirmar (primary)/Cancelar (secondary) em `role="group"` |
+| Confirmação governada | condicional | `GovernedConfirmation` do plugin-ui — Confirmar (`primary`)/Cancelar (`ghost`) em `role="group"` nomeado |
 
 ## Estados semânticos (vocabulário fechado `presentation.v1`)
 
@@ -92,11 +92,15 @@ Regras:
 
 ## Confirmação governada
 
-- Controles existem **somente** com `confirmation_request` válido, não respondido e sem loading.
+O chrome da confirmação é do Design System: `GovernedConfirmation` (`plugins/plugin-ui/src/components/conversation/GovernedConfirmation.tsx`), superfície **inline** subordinada à resposta — não modal, não banner, não card pesado. O componente compõe o `ActionButton` canônico (Cancelar `ghost` + Confirmar `primary`) e OWNS somente apresentação: container, título, descrição/preview opcionais, linha de ações, densidade (`comfortable`/`compact`), tom visual (`neutral`/`warning`/`danger` — `danger` só com sinal explícito do consumidor, nunca inferido de texto), wrap responsivo, light/dark por tokens e acessibilidade (`role="group"` nomeado). **Não conhece** `confirmation_request`, digests, auth, RBAC, PREPARE/ACT ou backend — a DÉLIA OWNS a condição de render, os callbacks e o encaminhamento do request sem alteração.
+
+- Controles existem **somente** com `confirmation_request` válido, não respondido e sem loading. `message_kind = CONFIRMATION_REQUIRED` sem request **não** renderiza a superfície.
 - `Confirmar` envia `decision = CONFIRM`; `Cancelar` envia `REJECT` — ambos com `proposal_digest`, `preview_fingerprint` e `session_id` **verbatim** via callback existente.
-- Digests são eco de transporte — nunca renderizados.
+- Digests/fingerprint/session/capability são eco de transporte — nunca renderizados.
 - `allowed_interactions` é ignorado para inferência de permissão.
-- Confirmação ≠ autorização; nenhum clique contorna AuthZ/Policy/Decision.
+- `loading` do consumidor desabilita ambas as ações (double submit); sem estado otimista — a superfície some apenas quando o estado real do turno muda.
+- Confirmação ≠ autorização; nenhum clique contorna AuthZ/Policy/Decision. PREPARE ≠ ACT.
+- Distinta de `ConversationStatus` (estado semântico acima) e de `MessageActionBar` (ações secundárias ao final).
 
 ## Responsividade
 

@@ -14,6 +14,12 @@ export {
   type ConversationStatusTone,
 } from "./ConversationStatus";
 export {
+  GovernedConfirmation,
+  type GovernedConfirmationDensity,
+  type GovernedConfirmationProps,
+  type GovernedConfirmationTone,
+} from "./GovernedConfirmation";
+export {
   MessageActionBar,
   type MessageActionBarAlign,
   type MessageActionBarDensity,

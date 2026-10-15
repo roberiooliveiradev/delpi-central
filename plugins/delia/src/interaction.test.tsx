@@ -576,7 +576,7 @@ describe("DÉLIA governed-write confirmation surface", () => {
     submitTurn("altere o nome");
     await waitFor(() =>
       expect(
-        screen.getByRole("group", { name: "Confirmação pendente" }),
+        screen.getByRole("group", { name: "Confirmação necessária" }),
       ).toBeTruthy(),
     );
     expect(
@@ -657,7 +657,7 @@ describe("DÉLIA governed-write confirmation surface", () => {
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("group", { name: "Confirmação pendente" }),
+        screen.queryByRole("group", { name: "Confirmação necessária" }),
       ).toBeNull(),
     );
   });
