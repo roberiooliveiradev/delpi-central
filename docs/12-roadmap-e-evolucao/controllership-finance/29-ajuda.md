@@ -1732,27 +1732,28 @@ Sem manual paralelo, sem documentação de capability futura no runtime e sem He
 
 ## Adendo de governança — decisões PO C2 e D-P5-01 a D-P5-05 (15/10/2026)
 
-**TARGET / DECIDED_BY_PRODUCT_OWNER / DOCUMENTATION_REBASELINE_PENDING**. Registro de decisão, não evidência de runtime nem aprovação de freeze. Este adendo prevalece sobre referências anteriores a C1/C2/C3 como decisão aberta; semânticas derivadas ainda pendentes não devem ser inferidas.
+**TARGET / PO_APPROVED / DOCUMENTED_NOT_RUNTIME.** Este registro foi refinado por P5-A..J e DEC-01..04: quórum por área obrigatória, rejeição da competência somente com confirmação formal e nenhuma reversão de aceite P5 por UI ou endpoint na V1. Referências anteriores à unanimidade de indivíduos ou C1/C2/C3 pendentes são SUPERSEDED.
 
-- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as revisões obrigatórias aceitas e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
-- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todos os reviewers obrigatórios** precisam aceitar. Aceite parcial não atende ao quorum.
+- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, **um aceite de cada área obrigatória na PackageVersion vigente**, nenhuma clarification aberta e competência não terminalmente rejeitada. Submissão ou e-mail de notificação não concluem fechamento.
+- **D-P5-01 refinada por P5-A:** podem existir vários reviewers elegíveis por área; **um aceite válido por área obrigatória/versão** satisfaz aquela área; não é unanimidade das pessoas elegíveis.
 - **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
 - **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
 - **D-P5-04:** ao perder ACCESS efetivo, reviewer perde a capacidade de agir; atribuição e histórico são preservados; substituição exige reatribuição autorizada, auditável e validada pela BFF/Core (fail-closed).
-- **D-P5-05:** solicitação de alterações (CHANGES_REQUESTED) e rejeição terminal (REVIEW_REJECTED) são outcomes distintos; não usar um como alias do outro.
+- **D-P5-05/P5-I/DEC-01:** CHANGES_REQUESTED e REVIEW_REJECTED da área/pacote são outcomes distintos; REJECTED da área não encerra competência automaticamente. Terminal só após confirmação formal auditada da competência.
 
 Regra alvo:
 
 ```text
-ALL_APPLICABLE_PACKAGES_SUBMITTED
-AND ALL_REQUIRED_REVIEWS = REVIEW_ACCEPTED
+ALL_APPLICABLE_PACKAGES_SUBMITTED_FOR_REVIEW
+AND EVERY_REQUIRED_AREA_ACCEPTED_CURRENT_PACKAGE_VERSION
 AND NO_OPEN_CLARIFICATION
+AND NO_TERMINAL_COMPETENCE_REJECTION
 => MONTHLY_CLOSING_COMPLETED
 ```
 
-**DECISION_REQUIRED / NO CHANGE TO BEHAVIOR:** definir escopo da terminalidade de REVIEW_REJECTED (submissão vs pacote), regra de substituição/aceite anterior, congelamento ou alteração auditada do conjunto de reviewers obrigatórios, necessidade de novo quorum por versão e tratamento da competência quando houver rejeição terminal. Nenhum endpoint, migration, scaffold ou permission adicional está autorizado.
+**PO_APPROVED:** P5-A..J definem quorum por área, substituição sem perda de aceite, snapshot P6, novo quorum por PackageVersion e desfecho de rejeição. DEC-01/02 definem coordenador e pendência formal; DEC-03 exclui retificação de aceite P5 na V1; DEC-04 governa publicação P6. Fonte de grupos/funções Core T05 e contratos físicos seguem TO_INVENTORY; nenhum endpoint, migration, scaffold ou permission adicional é autorizado por este texto.
 
-**Evidência pendente:** rebase do main, .cursor aplicável, ledger RQ/AC, Core effective permissions, test matrix positive/sibling/negative, Help, postcondition. `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`.
+**Evidência de implementação pendente:** Core T05 grupo/função, lifecycle físico de P5/P6, tests positive/sibling/negative e smoke no slice autorizado. A revisão documental deve ser ancorada no SHA do gate A16; docs != runtime. `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`.
 
 
 ## Decisões supervenientes do Product Owner — P5-A a P5-E (15/10/2026)
