@@ -2,7 +2,7 @@
 
 > **Release:** V1 stable product baseline (G10 — Final Closure)
 > **Baseline SHA (runtime):** `42bf97b1d7ffd39456442c86d5830b7d155289b4` (`main` = `origin/main`)
-> **HEAD final:** commit docs-only subsequente a `42bf97b1d7` — difere apenas por documentação (§5-B: runtime functional SHA registrado separadamente)
+> **HEAD final:** `9252a04f01` — difere do runtime TARGET por commits **NON-BPMN** (DÉLIA docs, TÉO button `8626e87482`, Interaction Rooms V2 `58d53f52ca`/`b55c982f28`) + docs BPMN deste gate; zero diferença em `plugins/bpmn-*`, `bpmn-modeler/`, `shared/bpmn_validation/` (§5-B: runtime functional SHA registrado separadamente)
 > **Data:** 2026-10-16
 > **Status:** `IMPLEMENTATION: PASS / CLOSED` — `FUNCTIONAL BLOCKERS: 0` — `ACTIVE IMPLEMENTATION GAPS: 0`
 
