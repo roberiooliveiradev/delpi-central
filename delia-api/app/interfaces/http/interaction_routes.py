@@ -36,6 +36,10 @@ from app.infrastructure.auth.subject_bearer import (
 )
 from app.application.interaction.contracts import (
     LEGACY_CONFIRMATION_LABELS,
+    TURN_COMMAND_MESSAGE,
+    TURN_COMMAND_APPLY_PREPARED,
+    TURN_COMMAND_REJECT_PREPARED,
+    TURN_COMMANDS,
     InteractiveTurnRequest,
     InteractiveTurnResult,
 )
@@ -92,16 +96,6 @@ CONFIRMATION_KEYS = frozenset(
 # must match the command exactly. ``command`` carries a `type` and
 # nothing else — no scope flags, no authority fields.
 COMMAND_KEYS = frozenset({"type"})
-TURN_COMMAND_MESSAGE = "MESSAGE"
-TURN_COMMAND_APPLY_PREPARED = "APPLY_PREPARED"
-TURN_COMMAND_REJECT_PREPARED = "REJECT_PREPARED"
-_TURN_COMMANDS = frozenset(
-    {
-        TURN_COMMAND_MESSAGE,
-        TURN_COMMAND_APPLY_PREPARED,
-        TURN_COMMAND_REJECT_PREPARED,
-    }
-)
 _CONTEXT_KINDS = {
     "USER_INPUT": TurnKind.USER_INPUT,
     "DELIA_RESULT": TurnKind.DELIA_RESULT,
@@ -208,6 +202,7 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
             confirmation=confirmation,
             workspace_context=workspace_context,
             max_execution_stage=max_execution_stage,
+            command_type=command_type,
         )
         if _wants_ndjson():
             return _stream_interaction_turn(
@@ -499,7 +494,7 @@ def _resolve_turn_command(
         if extra:
             return None, f"'command' unsupported fields: {sorted(extra)}"
         command_type = command.get("type")
-        if command_type not in _TURN_COMMANDS:
+        if command_type not in TURN_COMMANDS:
             return None, "'command.type' is not a supported command"
         if command_type == TURN_COMMAND_MESSAGE:
             if confirmation is not None:
