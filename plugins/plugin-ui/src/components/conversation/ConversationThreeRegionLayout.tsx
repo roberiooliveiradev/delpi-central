@@ -26,6 +26,7 @@ export function ConversationThreeRegionLayout({
 }: ConversationThreeRegionLayoutProps) {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
+  const compactRef = useRef(false);
   const layoutRef = useRef<HTMLDivElement | null>(null);
   const leftId = useId();
   const rightId = useId();
@@ -40,7 +41,8 @@ export function ConversationThreeRegionLayout({
     if (!host) return;
     const sync = () => {
       const width = host.getBoundingClientRect().width;
-      if (width > 0 && width <= 920) {
+      compactRef.current = width > 0 && width <= 920;
+      if (compactRef.current) {
         setLeftOpen(false);
         setRightOpen(false);
       }
@@ -89,7 +91,7 @@ export function ConversationThreeRegionLayout({
             <IconButton
               aria-label={leftOpen ? "Ocultar conversas" : "Abrir conversas"}
               aria-expanded={leftOpen}
-              onClick={() => { setLeftOpen((value) => !value); setRightOpen(false); }}
+              onClick={() => { setLeftOpen((value) => !value); if (compactRef.current) setRightOpen(false); }}
               disabled={!left}
             >
               {leftOpen ? <PanelLeftClose size={18} aria-hidden="true" /> : <PanelLeftOpen size={18} aria-hidden="true" />}
@@ -100,7 +102,7 @@ export function ConversationThreeRegionLayout({
               <IconButton
                 aria-label={rightOpen ? "Fechar contexto" : "Abrir contexto"}
                 aria-expanded={rightOpen}
-                onClick={() => { setRightOpen((value) => !value); setLeftOpen(false); }}
+                onClick={() => { setRightOpen((value) => !value); if (compactRef.current) setLeftOpen(false); }}
               >
                 {rightOpen ? <PanelRightClose size={18} aria-hidden="true" /> : <PanelRightOpen size={18} aria-hidden="true" />}
               </IconButton>
