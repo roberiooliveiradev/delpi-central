@@ -12,3 +12,9 @@ export {
   type MarkdownDocumentOutlineItem,
   type MarkdownDocumentSegment,
 } from "./markdownDocumentModel";
+
+export {
+  ConversationMarkdown,
+  type ConversationMarkdownProps,
+  type ConversationAuthorizedLink,
+} from "./ConversationMarkdown";
