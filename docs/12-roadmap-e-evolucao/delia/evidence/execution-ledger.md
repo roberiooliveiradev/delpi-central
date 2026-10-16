@@ -13769,3 +13769,18 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 STAGE_02R2_DIAG=ACCEPT_WITH_RESIDUAL; B1=PASS_STRUCTURAL; B2=REWORK; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.179 — DELIA-C3-STAGE-02-B2-PRODUCT-PRINCIPLE-DECISION-01 (Product Master approval; contract pending)
+
+**Data:** 2026-10-16. **Documento:** `corrections/conversational-intelligence-c3/13-product-principle-intent-and-act-scope.md`. **MODE:** PRODUCT_DIRECTION_DECISION / DOCUMENTATION_ONLY; não é task de implementação nem aceite de etapa.
+
+- **APPROVED_PRODUCT_PRINCIPLE:** a DÉLIA preserva autonomia governada e pode executar ACT direto quando legitimamente permitido, mas o pedido do usuário limitado a PREPARE não pode virar ACT por interpretação incorreta ou incompleta do LLM. `READ != PREPARE != ACT`; modelo output = HYPOTHESIS, não autorização; evitar perguntas universais desnecessárias.
+- **APPROVED_TO_STUDY_AND_FORMALIZE:** evidência explícita e estruturada da intenção/escopo de execução, com menor reutilização legítima de contratos e gates existentes, sem transformar frontend/model/provider em fonte de permissão e sem substituir Core/Domain/Policy/Decision nem confirmação estrutural owner-sealed §6.140.
+- **NOT_DECIDED:** D1 fonte/validação da evidência positiva para ACT em texto livre versus continuação owner-direct; D2 precedência de CONFIRM estruturado com texto contraditório no mesmo turno; D3 mitigação parcial C para bound ausente/inválido. Nenhum novo gate/segunda chamada LLM, regex/parser, confirmação universal, mudança de contrato produtivo ou política owner foi aprovado.
+- **EVIDENCE BASIS:** ledger §§6.176–6.178, 10 scripted safety-property XFAIL com FakeProposalModel, 6 controles PASS relatados; código real, live LLM/Outcome permanecem não comprovados. Aceite do diagnóstico != aceite de B2.
+- **NEXT BOUNDED TASK CANDIDATE:** CONTRACT-FIRST decision proposal to coordination, read-only/documentation; reanchor, owner/consumer/contract inventory + EXISTING_EQUIVALENT/REUSE_DECISION + alternatives, compatibility, policy/ceiling and security acceptance; pedir aprovação de qualquer extensão material.
+
+PRODUCT_PRINCIPLE = APPROVED; TECHNICAL_CONTRACT = TO_DESIGN; ARCHITECTURE_DECISION_REQUIRED = OPEN
+STAGE_02_ACCEPTED=NO; B1=PASS_STRUCTURAL; B2=REWORK; STAGE_03_AUTHORIZED=NO
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
