@@ -21,10 +21,13 @@ from app.application.capability_provision.orchestration import (
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     INDEX_PROBE_INSTRUCTION_ID,
+    INDEX_SELECT_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _contract_declares_omit_returns_index,
     _eligible_self_index_probe,
+    _index_declared_identifiers,
+    _post_self_index_argument_gaps,
     _requires_owner_vocabulary,
 )
 from app.application.interaction.capability_attempt import (
@@ -56,6 +59,7 @@ _PURPOSE_IDS = frozenset(
         GOAL_INSTRUCTION_ID,
         SYNTHESIS_INSTRUCTION_ID,
         INDEX_PROBE_INSTRUCTION_ID,
+        INDEX_SELECT_INSTRUCTION_ID,
     }
 )
 
@@ -190,7 +194,14 @@ def _outcome(remote_name, text, structured=None):
     )
 
 
-def _select(remote_name, arguments=None, *, probe_index=None, extra=None):
+def _select(
+    remote_name,
+    arguments=None,
+    *,
+    probe_index=None,
+    index_select=None,
+    extra=None,
+):
     proposal = {
         GROUP_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
@@ -210,6 +221,17 @@ def _select(remote_name, arguments=None, *, probe_index=None, extra=None):
         proposal[INDEX_PROBE_INSTRUCTION_ID] = {
             "probe_index": probe_index
         }
+    if index_select is not None:
+        proposal[INDEX_SELECT_INSTRUCTION_ID] = index_select
+    elif isinstance(arguments, dict):
+        # Default post-index bind: first non-empty free-string value.
+        for field, value in arguments.items():
+            if isinstance(value, str) and value.strip():
+                proposal[INDEX_SELECT_INSTRUCTION_ID] = {
+                    "selected_identifier": value,
+                    "argument_field": field,
+                }
+                break
     if extra:
         proposal.update(extra)
     return proposal
@@ -349,14 +371,14 @@ def test_orion_unseen_mcp_index_then_grounded_guide():
     assert provider.calls[1][1] == {"topic": "equipment_inspection"}
     assert "Inspeções" in (attempt.content or "")
     assert "checklist" in (attempt.content or "")
-    arg_payloads = [
+    select_payloads = [
         r.input_text
         for r in model.requests
-        if r.task_purpose_id == ARGUMENTS_INSTRUCTION_ID
+        if r.task_purpose_id == INDEX_SELECT_INSTRUCTION_ID
     ]
-    assert arg_payloads
-    assert "owner_vocabulary" in arg_payloads[-1]
-    assert "equipment_inspection" in arg_payloads[-1]
+    assert select_payloads
+    assert "owner_index_options" in select_payloads[-1]
+    assert "equipment_inspection" in select_payloads[-1]
     from app.application.capability_provision import orchestration as orch_mod
     src = open(orch_mod.__file__, encoding="utf-8").read()
     assert "orion-knowledge-service" not in src
@@ -395,6 +417,10 @@ def test_post_index_empty_args_do_not_reinvoke_index():
             "get_inspection_guide",
             arguments={},
             probe_index=False,
+            index_select={
+                "selected_identifier": None,
+                "argument_field": None,
+            },
         )
     )
     orch = OperationalCapabilityOrchestrator(
@@ -439,6 +465,10 @@ def test_post_index_invented_identifier_rejected():
             "get_inspection_guide",
             arguments={"topic": "teletransporte_quantico"},
             probe_index=False,
+            index_select={
+                "selected_identifier": "teletransporte_quantico",
+                "argument_field": "topic",
+            },
         )
     )
     orch = OperationalCapabilityOrchestrator(
@@ -633,3 +663,193 @@ def test_probe_index_false_skips_empty_invoke_without_contract_signal():
     assert provider.calls == [
         ("get_inspection_guide", {"topic": "equipment_inspection"})
     ]
+
+
+def test_atlas_structured_index_binds_exact_id_to_grounded_guide():
+    """Unseen provider: topics[] with id/title → select → guide READ."""
+    atlas_id = "atlas-handbook-service"
+    guide = ProviderCapability(
+        capability_id="handbook.read_ops_guide",
+        group_id="handbook",
+        provider_id=atlas_id,
+        remote_name="read_ops_guide",
+        owner="handbook",
+        operation_class=SpecialistOperationClass.READ,
+        description=(
+            "Omit guide_key to return the index of available guides; "
+            "with guide_key return the guide body."
+        ),
+        input_schema={
+            "type": "object",
+            "properties": {"guide_key": {"type": "string"}},
+        },
+        binding={"ref": "read_ops_guide"},
+    )
+    group = CapabilityGroup(
+        provider_id=atlas_id,
+        group_id="handbook",
+        owner_ref="handbook",
+        display_name="handbook",
+        capabilities=(guide,),
+        source=SourceRef(
+            source_id="handbook",
+            source_system="handbook",
+            provider_name="handbook",
+        ),
+    )
+    index = SpecialistOutcome(
+        status=SpecialistResultStatus.COMPLETED,
+        provenance=SpecialistResultProvenance(
+            specialist_id="handbook",
+            remote_name="read_ops_guide",
+            protocol=InteropProtocol.MCP,
+            correlation_id="atlas",
+            observed_at="2026-01-01T00:00:00+00:00",
+        ),
+        content_text="index",
+        structured={
+            "data": {
+                "topics": [
+                    {
+                        "id": "process_registration",
+                        "title": "Cadastro de processos",
+                        "summary": "Como cadastrar um processo operacional.",
+                    },
+                    {
+                        "id": "baseline",
+                        "title": "Baseline",
+                        "summary": "Estado de referência.",
+                    },
+                ]
+            }
+        },
+    )
+    body = (
+        "Para cadastrar um processo: abra Processos, informe nome e "
+        "área, salve o rascunho e envie para revisão."
+    )
+    filled = SpecialistOutcome(
+        status=SpecialistResultStatus.COMPLETED,
+        provenance=SpecialistResultProvenance(
+            specialist_id="handbook",
+            remote_name="read_ops_guide",
+            protocol=InteropProtocol.MCP,
+            correlation_id="atlas",
+            observed_at="2026-01-01T00:00:00+00:00",
+        ),
+        content_text="guide",
+        structured={
+            "data": {
+                "items": [
+                    {
+                        "id": "process_registration",
+                        "content": body,
+                    }
+                ]
+            }
+        },
+    )
+    provider = FakeProvider(
+        atlas_id,
+        [group],
+        outcomes={
+            ("handbook", "read_ops_guide"): {
+                "index": index,
+                "filled": filled,
+            }
+        },
+    )
+    # FakeProvider._cap helpers use MODULE PROVIDER_ID; patch group
+    # selection to handbook group id via custom proposal.
+    proposal = {
+        GROUP_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "capability_group_id": "handbook",
+        },
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": "read_ops_guide",
+        },
+        INDEX_SELECT_INSTRUCTION_ID: {
+            "selected_identifier": "process_registration",
+            "argument_field": "guide_key",
+        },
+        GOAL_INSTRUCTION_ID: {
+            "goal_class": "read",
+            "business_subject": "cadastro de processo",
+        },
+        SYNTHESIS_INSTRUCTION_ID: {
+            "items": [{"record_index": 0, "fields": ["content"]}]
+        },
+    }
+    model = FakeProposalModel(proposal)
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Como faço para cadastrar um processo operacional?"
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert provider.calls[0] == ("read_ops_guide", {})
+    assert provider.calls[1] == (
+        "read_ops_guide",
+        {"guide_key": "process_registration"},
+    )
+    assert "rascunho" in (attempt.content or "")
+    assert "confirmation" not in (attempt.content or "").lower()
+
+
+def test_description_text_is_not_declared_identifier():
+    structured = {
+        "data": {
+            "topics": [
+                {
+                    "id": "equipment_inspection",
+                    "summary": (
+                        "Never use teletransporte_quantico as an id; "
+                        "it is only mentioned in this description."
+                    ),
+                }
+            ]
+        }
+    }
+    declared = _index_declared_identifiers(
+        structured, ("guide_key", "topic")
+    )
+    assert declared == frozenset({"equipment_inspection"})
+    assert "teletransporte_quantico" not in declared
+    gaps = _post_self_index_argument_gaps(
+        {"topic": "teletransporte_quantico"},
+        _cap(
+            "read_guide",
+            SpecialistOperationClass.READ,
+            schema=_GUIDE_SCHEMA,
+        ),
+        declared,
+    )
+    assert "topic" in gaps
+
+
+def test_post_resolver_nonexistent_id_rejected_by_exact_set():
+    declared = frozenset({"process_registration"})
+    gaps = _post_self_index_argument_gaps(
+        {"guide_key": "not_in_index"},
+        ProviderCapability(
+            capability_id="h.read",
+            group_id="handbook",
+            provider_id="atlas-handbook-service",
+            remote_name="read_ops_guide",
+            owner="handbook",
+            operation_class=SpecialistOperationClass.READ,
+            description="omit guide_key for index",
+            input_schema={
+                "type": "object",
+                "properties": {"guide_key": {"type": "string"}},
+            },
+            binding={"ref": "read_ops_guide"},
+        ),
+        declared,
+    )
+    assert gaps == ("guide_key",)

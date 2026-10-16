@@ -14290,3 +14290,17 @@ NEXT=INDEPENDENT_ARCHITECTURE_REVIEW
 - **NEXT:** independent review; backend contracts for feedback/regenerate remain separate.
 
 INDEPENDENT_REVIEW=PENDING
+
+## §6.211 — DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/34-mcp-post-index-binding-fix.md`. **BASE_HEAD:** `33748ae411`. **CODE_SHA:** fill after publish.
+
+- **ROOT_CAUSE:** post-index provenance used substring-in-text; argument projection did not select exact owner-declared identifiers → unnecessary clarification / no guide body.
+- **FIX:** structured `_index_declared_identifiers` + `INDEX_SELECT` bind + exact `_post_self_index_argument_gaps`; post-resolver revalidation; no provider hardcode.
+- **TESTS:** iterative + Stage03 targeted PASS (Atlas positive; description≠id; nonexistent id reject).
+- **LIVE SSH:** fill after one MESSAGE probe on `srv-api` with deployed CODE_SHA.
+- **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `MATERIAL_ACT_COUNT=0`.
+
+RW_S03_01=FIXED; STAGE_03_ACCEPTED=NO
+NEXT=INDEPENDENT_REVIEW
+
