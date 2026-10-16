@@ -1,6 +1,6 @@
 # VISTA — Knowledge Intelligence Convergence V1 (roadmap canônico)
 
-> **Status:** EXECUTION — P0–P7 DONE · P8 BLOCKED (P8_EVIDENCE=INSUFFICIENT) · P9 PLANNED
+> **Status:** EXECUTION — P0–P7 DONE · P8 BLOCKED (P8_EVIDENCE=INSUFFICIENT) · P9 DONE (§44 diagnostic · §45 execution · §46 runtime verification)
 > **Data:** 2026-10-08 · **HEAD de referência:** `8686552a1e`
 > **Escopo:** documento de controle de todas as futuras frentes de inteligência VISTA.
 > **Regra de ouro:** organizar antes de expandir; verdade antes de orientação; orientação antes de heurística duplicada; owner antes de integração; reuse antes de nova capability; *smallest sufficient truth set* antes de tool spam; eval antes de alegar melhoria; gate do roadmap antes de implementação.
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-A VISTA já é uma especialista forte: 10 tools MCP / 8 GPT Actions sobre um dispatch único, 40 capabilities, 32 ops tipadas, 35 grupos de `agent_directives` vivos via `vista_agent_intelligence.json`, verificação visual por palco vivo do editor (`canonical_stage`), PREPARE→COMMIT governado e paridade Actions↔MCP testada. O que falta não é capability — é **orquestração explícita de conhecimento**: a VISTA ainda não distingue declarativamente verdade de domínio, orientação de produto, metodologia de design, contrato de execução e contexto de editor.
+A VISTA está com a convergência P0–P7 e P9 entregue: **12 tools MCP / 12 GPT Actions** sobre um dispatch único, 40 capabilities, 32 ops tipadas, Knowledge Orchestration, Product Guide, Editor Grounding V2, Design Methodology, Solution Intelligence, Eval/Telemetry V2 e History Intelligence read-only. O runtime VISTA/MCP foi verificado em 2026-10-16 com `get_playlist_history` real, isolamento por playlist e projeção de privacidade; P8 permanece bloqueada por `P8_EVIDENCE=INSUFFICIENT`.
 
 O TÉO (`transformometro-api`) já resolveu esse problema de forma provada em código: `knowledge_orchestration` declarativo (15 fontes, precedência, roteamento por intent, gates, suficiência, gap handling), Product Guide Registry V1 (24 tópicos, `GUIDANCE_NOT_DOMAIN_TRUTH`, validação cruzada fail-closed), Methodology V2 (intents/readiness/sufficiency/next-questions), `solution_read` sobre o catálogo Core, workspace context com estados `active|absent|stale|ambiguous`, projeção de transporte fail-closed e classificação epistêmica fechada.
 
@@ -19,12 +19,12 @@ Este roadmap define a convergência **arquitetural** — reutilizar os *padrões
 
 ## 2. Current State
 
-### 2.1 VISTA (HEAD `8686552a1e`) — PROVEN
+### 2.1 VISTA — estado atual pós-P9 (runtime verificado em 2026-10-16)
 
 | Item | Evidência |
 |---|---|
-| Tools MCP | 10 tools, registry congelado `interface/mcp/constants.py:28-41`, drift guard `server.py:331-334` |
-| GPT Actions | 10 operations + 2 support routes, `interface/http/routes/gpt_actions_routes.py:141-389` |
+| Tools MCP | **12 tools** no shared dispatch; `get_playlist_history` ativo no plugin VISTA/ChatGPT em runtime autenticado (2026-10-16) |
+| GPT Actions | **12 operations** Builder-visible; paridade semântica 12↔12 com MCP via `surface_parity.parity_map` |
 | Dispatch único | Ambos os transportes delegam a `GptActionsDispatchService` (`tool_bridge.py`) |
 | Ops catalog | 40 capabilities / 32 typed ops (`presentation_ops_content.json` — capabilities L3272+, ops L883-3271) |
 | Agent directives | 35 grupos + metadata (`vista_agent_intelligence.json` ~39 top-level keys), projeção por transporte `vista_agent_intelligence_service.py:102-209` |
@@ -33,7 +33,7 @@ Este roadmap define a convergência **arquitetural** — reutilizar os *padrões
 | Editor grounding | `EditorFocusStore` (TTL 90s, stale≤180s) + `PresentationRealtimeHub` (`selection_update`, `visual_capture_request`); `editorFocus` em `get_playlist_context` |
 | Visual evidence | `slidePreview.rendered` `canonical_stage` — capturado **só** pelo editor vivo do usuário (`editor_live`+`clientId`); sem renderer autônomo |
 | Governed write | PREPARE→COMMIT, `proposal_handle` opaco, `commit_now` (Actions) / `confirmation` (MCP), read-back VERIFY |
-| History domain | `PlaylistHistoryChangeService` + repository + rotas `/playlists/{id}/history` (até 500 versões) — **domínio existe; não exposto à VISTA** |
+| History Intelligence | `PlaylistHistoryChangeService` + repository + `get_playlist_history` read-only; retenção ≤500, diff em nível playlist/slide, block-level diff unsupported |
 | Eval corpus | `vista_ready_slide_corpus.json` (C1–C31 + G_*) + gate `test_vista_ready_slide_corpus_gate.py` |
 | Paridade | `surface_parity.parity_map` no JSON + `test_vista_unified_boundary.py` |
 
@@ -46,7 +46,7 @@ Este roadmap define a convergência **arquitetural** — reutilizar os *padrões
 | `entity`/solução por rota de dados | **ABSENT** — `tv_data_routes.json` não persiste `entity`/`solution`/`owner` |
 | Generic media upload | **TARGET** (matrix L191) |
 | DÉLIA TV adapter | **TARGET** (ADR 7c/7h — zero runtime coupling) |
-| MCP provisioning externo (`mcp-tv-dashboard` + go-live) | **PENDING** (matrix L18/L192; runbook `openai-plugin-mcp.md`) |
+| MCP provisioning externo (`mcp-tv-dashboard` + go-live) | **PROVEN** — invocação VISTA/ChatGPT autenticada observada em 2026-10-16; manifest com 12 tools e `get_playlist_history` live |
 | Proposal store single-replica | **ACCEPT_WITH_RESIDUAL** (ADR item 10) |
 | `CHATGPT_APP_IMAGE_DELIVERY` | **FAIL_OBSERVED** — wire `ImageContent` PROVEN; host não entrega bloco de imagem ao modelo |
 | Display-format typed coverage | **PARTIAL** — `DisplayFormatHintsService` PROVEN; cobertura tipada por visual incompleta |
@@ -82,7 +82,7 @@ Inviolável: VISTA ≠ segunda autoridade de domínio; Product Guide ≠ verdade
 5. **Editor grounding sub-estruturado** — `editorFocus` existe mas não projeta estados `ACTIVE/STALE/ABSENT/AMBIGUOUS` nem resumo de objeto selecionado.
 6. **Descoberta de dados sem ecossistema** — `search_data_routes` retorna rotas TV; nada conecta "preciso de EBITDA" a qual produto/solução DELPI detém a rota (0 resultados de busca ≠ ausência de solução).
 7. **Inteligência não mensurada** — eval corpus existe para "ready slide", mas não há benchmark baseline↔candidate nem telemetria de decisão.
-8. **Histórico existe e é invisível** — `PlaylistHistoryChangeService` persiste diffs; a VISTA não pode responder "o que mudou neste painel?".
+8. **Histórico existe e era invisível** — **RESOLVIDO P9**: `get_playlist_history` projeta digest read-only seguro sobre o owner canônico, sem restore/raw snapshot.
 
 ---
 
@@ -139,7 +139,7 @@ Padrões provados em `transformometro-api` a reutilizar **conceitualmente**:
 | Convergência de documentação/Help | MISSING | PROVEN (help view projection) | EXTEND (PHASE 3) |
 | Avaliação (eval corpus) | PARTIAL (corpus C1–C31 ready-slide; sem baseline↔candidate geral) | MISSING (sem corpus conversacional) | EXTEND (PHASE 7) — VISTA pode liderar |
 | Telemetria de decisão | MISSING | MISSING | EXTEND (PHASE 7) |
-| História/auditoria awareness | PARTIAL (domínio history PROVEN; não exposto à VISTA) | PROVEN (timeline + evidence + diagnostic) | EXTEND (PHASE 9) |
+| História/auditoria awareness | **PROVEN** (`get_playlist_history`, retenção ≤500, diff playlist/slide, safe digest) | PROVEN (timeline + evidence + diagnostic) | KEEP_AS_IS (P9 DONE) |
 
 ---
 
@@ -192,7 +192,7 @@ Padrões provados em `transformometro-api` a reutilizar **conceitualmente**:
 | `product_usage` (futuro) | tv-dashboard-api content | como/quando/por que usar features | Product Guide (PHASE 2) |
 | `design_methodology` | `design_intelligence.json` + recipes | lente de decisão de design | directives + PHASE 5 |
 | `solution_ecosystem` (futuro) | Core | qual solução detém qual capacidade | projection (PHASE 6) |
-| `history` | `PlaylistHistoryRepository` | o que mudou e quando | rotas `/history` (PHASE 9: read para VISTA) |
+| `history` | `PlaylistHistoryRepository` + `PlaylistHistoryChangeService` | o que mudou e quando | `get_playlist_history` read-only digest (P9 PROVEN) |
 | `mutation` | `PresentationMutation` | o que foi escrito | `prepare_change`/`commit_proposal` |
 
 ---
@@ -231,7 +231,7 @@ Todas já coerentes com invariants existentes em Instructions (`INFERRED != FACT
 | DATA_DISCOVERY | presentation context → data contract/search → runtime preview → semantic/visual recommendation | ecosystem (só se cruzar fronteira de produto) |
 | DIGITAL_SOLUTION_NEED | understand → solution ecosystem → api-delpi ownership → approved TV route → preview → visual | `NEW_CAPABILITY_CANDIDATE` antes de inspecionar ecossistema |
 | MUTATION | READ current → LIVE CATALOG → typed intent → PREPARE → policy → COMMIT → read-back → VERIFY | methodology, ecosystem, product guide |
-| HISTORY_QUESTION (futuro) | history read → diff summary | mutation path |
+| HISTORY_QUESTION | `get_playlist_history` → bounded list/detail digest → answer | mutation path, raw snapshot, block-level diff |
 
 ### 10.4 Campos obrigatórios do bloco
 
@@ -371,7 +371,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | 6 | Data + Solution Intelligence | 1 | DONE (§39 diagnostic · §40 execution) |
 | 7 | Eval + Telemetry V2 | 0 | DONE (§35 diagnostic · §41 execution) |
 | 8 | Semantic Intent Arbitration | 7 (evidência material) + brief dedicado | BLOCKED |
-| 9 | History Intelligence | stories reais + owner inventory | PLANNED |
+| 9 | History Intelligence | stories reais + owner inventory | DONE (§44 diagnostic · §45 execution · §46 runtime verification) |
 
 ### PHASE 0 — BASELINE + DRIFT CLOSURE
 
@@ -2331,3 +2331,45 @@ read-only semantic capability over the existing Playlist history domain.
   history behavior (capture/retention/diff/restore) = ZERO changes.
 - H8 (why) remains UNSUPPORTED — mutationProvenance is technical
   provenance, never presented as user motivation.
+
+## 46. PHASE 9 — POST-DEPLOY RUNTIME VERIFICATION (2026-10-16)
+
+**DELIVERY COMMIT:** `eeeb12f619d503671f3a7f6c6900820cc0a1749e` — `feat(tv-vista): PHASE 9 history intelligence — read-only get_playlist_history`.
+
+### 46.1 Runtime / transport evidence
+
+- VISTA/ChatGPT MCP manifest observed with **12 tools**, including `get_playlist_history`.
+- `get_catalog` projects `history.status=PROVEN`, `readOnly=true`, `retentionLimit=500`, `diffGranularity=playlist fields + slide fields`, `blockLevelDiff=unsupported`.
+- Real read-only list smoke: `mode=list`, retained history at the 500-snapshot ceiling, `completeHistoryGuaranteed=false`, adjacent `change` digest returned.
+- Real detail smoke by returned `snapshotId`: `mode=detail`, bounded digest only.
+- Privacy recursive check: **zero** `authorEmail`, `authorId`, `nativeConfig`, `masterConfig`, `dataDefaults`, `externalUrl`, `externalSandbox` or raw playlist snapshot in the model-facing result.
+- Cross-playlist isolation: a snapshot from playlist A queried under playlist B fails closed as `RESOURCE_NOT_FOUND/404`.
+- Runtime MCP surface contains no restore/rollback/revert/history-commit tool aliases.
+- `mutationProvenance` remains technical provenance **IS_NOT** user motivation.
+- No runtime write was used to create verification evidence.
+
+### 46.2 Regression smoke
+
+- P4 ALTER → `upsert_block` on the same block id; CREATE → exactly one `create_block`.
+- P5 missing target → `READ_MORE_STATE`; real data preview → Methodology `READY/RECOMMEND_NOW`.
+- P6 real search miss → `total=0`, `searchMissDoesNotProveAbsence=true`, `NO_SOLUTION_EVIDENCE`.
+- Product Guide remains `GUIDANCE_NOT_DOMAIN_TRUTH` with 11 topics.
+- P7 state preserved: `DATA_DIAGNOSIS=MEASURABLE_NOW`; `USER_CORRECTION=NOT_RELIABLY_MEASURABLE`.
+- P8 remains **BLOCKED** with `P8_EVIDENCE=INSUFFICIENT`.
+
+### 46.3 Closure
+
+```text
+P9 = DONE
+HISTORY = PROVEN
+MCP_RUNTIME = PROVEN
+MCP_TOOLS = 12
+ACTIONS_SEMANTIC_PAIRS = 12
+AUTHZ / CROSS-PLAYLIST ISOLATION = PASS
+PRIVACY PROJECTION = PASS
+RESTORE EXPOSURE = 0
+BLOCK_LEVEL_DIFF = UNSUPPORTED
+VERDICT = ACCEPT
+```
+
+Documentation drift from pre-go-live `PENDING` markers is closed in the capability matrix and OpenAI Plugin/MCP runbook by the same documentation change.

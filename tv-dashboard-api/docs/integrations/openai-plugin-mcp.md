@@ -1,6 +1,6 @@
 # VISTA / TV Dashboard — OpenAI Plugin + MCP (governed READ + PREPARE/ACT)
 
-> Documentation does not prove runtime. Evidence is classified; revalidate after material deploy/auth changes.
+> Documentation does not prove runtime by itself. Latest runtime revalidation: **2026-10-16 — VISTA/ChatGPT MCP live, 12 tools, `get_playlist_history` list/detail + isolation/privacy smoke PASS**. Revalidate after material deploy/auth changes.
 
 Shared onboarding (novos MCPs):
 [`docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md`](../../../docs/10-guias-operacionais/mcp-chatgpt-plugin-onboarding-runbook.md)
@@ -28,7 +28,7 @@ AuthZ final = backend / GptActionsDispatchService / PlaylistAccessService
 | Surface | Technical id |
 |---|---|
 | MCP server name | `tv-dashboard` |
-| Keycloak client | `mcp-tv-dashboard` (PENDING provisioning) |
+| Keycloak client | `mcp-tv-dashboard` — **PROVEN in authenticated VISTA/ChatGPT MCP go-live (2026-10-16)** |
 | MCP endpoint / resource | `https://minhadelpi.com.br/apps/tv-dashboard-api/mcp` |
 | Protected Resource Metadata | `https://minhadelpi.com.br/apps/tv-dashboard-api/.well-known/oauth-protected-resource` |
 | OIDC issuer | `https://minhadelpi.com.br/auth/realms/delpi` |
@@ -52,7 +52,7 @@ No HTTP loop: tools call the dispatch service directly — never `/gpt-actions` 
 
 ```text
 VISTA_MCP_SURFACE = GOVERNED_WRITE_V1
-5 READ + 1 DISCOVERY + 2 ANALYSIS + 1 PREPARE + 1 ACT = exactly 10 tools
+7 READ + 1 DISCOVERY + 2 ANALYSIS + 1 PREPARE + 1 ACT = exactly 12 tools
 native ops (upsert_data_model, bind_visual, migrate_data_sources_to_model,
 upsert_data_source, patch_data_source_params, apply_safe_layout_fixes, …)
 = vocabulary inside prepare_change.ops[] — never per-op tools
@@ -74,6 +74,8 @@ Tools:
 | `search_data_routes` | READ | `GptActionsDispatchService.search_data_routes` |
 | `inspect_data_model` | READ | `GptActionsDispatchService.inspect_data_model` |
 | `preview_data_model` | READ | `GptActionsDispatchService.preview_data_model` (inline candidate never persisted) |
+| `get_product_guide` | READ | `GptActionsDispatchService.get_product_guide` (`GUIDANCE_NOT_DOMAIN_TRUTH`) |
+| `get_playlist_history` | READ | `GptActionsDispatchService.get_playlist_history` (safe list/detail digest; retention ≤500; no restore/raw snapshot/block-level diff) |
 | `preview_data_block` | ANALYSIS | `GptActionsDispatchService.preview_data_block` (`semanticDigest` + `visualRecommendation` + `joinHints`/`formatHints`, never persisted). Targets a persisted `data_source` block (or `operationId`+params); visual blocks such as `chart_view` are not preview targets → 422 |
 | `suggest_change` | ANALYSIS | `GptActionsDispatchService.suggest_change` → `PresentationCommandPlannerService.plan` → `PresentationSuggestOpsService.materialize` (NL → typed ops + clarification/policy; never persists, never authorizes) |
 | `prepare_change` | PREPARE | `GptActionsDispatchService.preview_change` (commit_now=False) |
@@ -152,7 +154,7 @@ scope: openid profile email mcp:tools
 No enable/disable flag — mount is unconditional, matching the TÉO/DAVI
 convention (surface is OAuth-gated; absence of traffic is the off state).
 
-## Keycloak provisioning (PENDING)
+## Keycloak provisioning / go-live (PROVEN 2026-10-16)
 
 Required on `mcp-tv-dashboard` (confidential, Authorization Code + PKCE):
 
@@ -162,7 +164,29 @@ Required on `mcp-tv-dashboard` (confidential, Authorization Code + PKCE):
 4. redirect URIs for the Plugin/Workspace Agent;
 5. verify issued token: `aud` contains both `delpi-central` and the MCP resource, `scope` contains `mcp:tools`.
 
-Until provisioning evidence exists, status is **PENDING** — do not mark live.
+Runtime evidence now exists: the authenticated VISTA/ChatGPT connector called the MCP surface successfully on 2026-10-16, with a 12-tool manifest and real `get_playlist_history` reads. This proves provider go-live for the observed user path; token claims remain governed by the requirements above and should be re-inspected after auth configuration changes.
+
+### Runtime go-live verification — 2026-10-16
+
+Observed through the real VISTA connector in ChatGPT:
+
+```text
+MCP tools = 12
+get_playlist_history = callable
+history.status = PROVEN
+retentionLimit = 500
+blockLevelDiff = unsupported
+restore / rollback / revert tools = absent
+```
+
+Read-only runtime evidence:
+
+- list mode returned real persisted revisions and honest bounded-retention metadata;
+- detail mode returned the same safe digest for an exact returned snapshot id;
+- recursive privacy check found no `authorEmail`, `authorId`, raw snapshot, `nativeConfig`, `masterConfig`, `dataDefaults`, `externalUrl` or `externalSandbox`;
+- using a snapshot id under a different readable playlist failed closed with `404 RESOURCE_NOT_FOUND`;
+- `mutationProvenance` is technical provenance and must never be presented as user motivation;
+- no write was executed to create the evidence.
 
 ## Parity map + coexistence
 
@@ -177,6 +201,8 @@ parity is total; only transport names differ.
 | `gpt_search_data_routes` | `search_data_routes` | READ |
 | `gpt_inspect_data_model` | `inspect_data_model` | READ |
 | `gpt_preview_data_model` | `preview_data_model` | READ |
+| `gpt_get_product_guide` | `get_product_guide` | READ |
+| `gpt_get_playlist_history` | `get_playlist_history` | READ |
 | `gpt_preview_data_block` | `preview_data_block` | ANALYSIS |
 | `gpt_suggest_change` | `suggest_change` | ANALYSIS |
 | `gpt_preview_change` | `prepare_change` | PREPARE |
@@ -237,7 +263,7 @@ variant) instead.
   block and Actions block — paste exactly one, matching the configured
   connector.
 - Keycloak client `mcp-tv-dashboard` (confidential, Auth Code + PKCE) —
-  provisioning PENDING; see section below.
+  **go-live PROVEN** for the observed VISTA/ChatGPT user path on 2026-10-16; see runtime evidence below.
 - Provider: configure the MCP connector URL
   `https://minhadelpi.com.br/apps/tv-dashboard-api/mcp` with OAuth —
   discovery via `/.well-known/oauth-protected-resource`.

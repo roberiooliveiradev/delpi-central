@@ -1,6 +1,6 @@
 # VISTA Capability Matrix (canonical)
 
-**Status:** CURRENT (HEAD-bound inventory + governance)  
+**Status:** CURRENT (HEAD-bound inventory + governance) · runtime VISTA/MCP verified 2026-10-16  
 **Owner:** `tv-dashboard-api` (TV Dashboard domain)  
 **Persona:** VISTA = specialist capability for operational displays — **not** a parallel AI to DÉLIA.
 
@@ -15,7 +15,7 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 | **TV Dashboard** | Domain authority (playlists, slides, data blocks, PresentationMutation) |
 | **Chat interno (Minha DELPI)** | Handoff only (`tv_dashboard_handoff`) — **não** muta TV; **não** é VISTA nem DÉLIA |
 | **DÉLIA** | App standalone industrial — **≠** Chat; adapter TV = **TARGET** (mesmo contrato PresentationMutation; sem HTTP neste HEAD) |
-| **MCP** | Backend adapter **PROVEN** (`/mcp`, 12 tools sobre o mesmo `GptActionsDispatchService`: 7 READ (incl. `get_product_guide`) + 1 DISCOVERY + 2 ANALYSIS `preview_data_block` + `suggest_change` + PREPARE + ACT); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
+| **MCP** | **PROVEN LIVE** (`/mcp`, 12 tools sobre o mesmo `GptActionsDispatchService`: 7 READ incl. `get_product_guide` + `get_playlist_history`, 1 DISCOVERY, 2 ANALYSIS, PREPARE + ACT); VISTA/ChatGPT autenticado + `get_playlist_history` real verificados em 2026-10-16 |
 | **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
 
 ```text
@@ -29,7 +29,7 @@ TV Dashboard domain (PresentationMutation / TvPresentationPatchV1)
           → MCP adapter projection (neutral names; Actions semantics stripped)
         → HTTP domain API (UI editor)
         → GPT Action adapter (VISTA)
-        → MCP adapter (PROVEN backend; external provisioning/go-live PENDING)
+        → MCP adapter (**PROVEN LIVE**; external VISTA/ChatGPT go-live verified 2026-10-16)
         → DÉLIA capability adapter (TARGET — not implemented)
 ```
 
@@ -267,8 +267,21 @@ Importable operations are **12** today (two DataModel ops + `gpt_get_product_gui
 
 | Surface | Status |
 |---|---|
-| MCP VISTA | **PROVEN** backend (`/mcp` mount + 12 semantic tools on shared dispatch; service-token rejected at transport; no `gpt_*` names or `commit_now` in the callable contract). External provisioning (`mcp-tv-dashboard`) / provider go-live = **PENDING** |
+| MCP VISTA | **PROVEN LIVE** (`/mcp` + 12 semantic tools on shared dispatch; authenticated VISTA/ChatGPT runtime verified 2026-10-16, including `get_playlist_history`; no restore tool, no `gpt_*` callable names or `commit_now`) |
 | DÉLIA → VISTA Actions | **NONE** — target is capability/core adapter, not Actions HTTP |
+
+### Runtime verification — 2026-10-16
+
+P9 go-live was verified through the real VISTA MCP connector, not only by repository tests:
+
+- manifest: 12 tools; `get_playlist_history` callable;
+- history list + detail: PASS on retained production history;
+- safe projection: no author id/email, raw snapshot, configs or external URLs;
+- cross-playlist snapshot lookup: fail-closed `404 RESOURCE_NOT_FOUND`;
+- retention: 500 maximum snapshots with `completeHistoryGuaranteed=false`;
+- block-level diff: explicitly unsupported; `nativeConfig` may appear only as an opaque changed slide field;
+- restore/rollback/revert tools: absent;
+- P4/P5/P6 bounded regression smoke: PASS; P7 preserved; P8 remains blocked.
 
 ## Proposal store residual
 
