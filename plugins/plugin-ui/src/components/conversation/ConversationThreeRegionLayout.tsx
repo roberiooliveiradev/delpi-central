@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, X } from "lucide-react";
 
@@ -26,22 +26,44 @@ export function ConversationThreeRegionLayout({
 }: ConversationThreeRegionLayoutProps) {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
+  const layoutRef = useRef<HTMLDivElement | null>(null);
   const leftId = useId();
   const rightId = useId();
   const leftToggleRef = useRef<HTMLButtonElement | null>(null);
   const rightToggleRef = useRef<HTMLButtonElement | null>(null);
 
+  // A full-page starts with the left navigation open; a dock/mobile starts
+  // with both drawers closed. Observe the actual host container, not window.
+  useEffect(() => {
+    const root = layoutRef.current;
+    const host = root?.parentElement;
+    if (!host) return;
+    const sync = () => {
+      const width = host.getBoundingClientRect().width;
+      if (width > 0 && width <= 920) {
+        setLeftOpen(false);
+        setRightOpen(false);
+      }
+    };
+    sync();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(sync);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
   function closeLeft() {
     setLeftOpen(false);
-    leftToggleRef.current?.focus();
+    leftToggleRef.current?.querySelector("button")?.focus();
   }
   function closeRight() {
     setRightOpen(false);
-    rightToggleRef.current?.focus();
+    rightToggleRef.current?.querySelector("button")?.focus();
   }
 
   return (
     <div
+      ref={layoutRef}
       className={[
         "delpi-ui-conversation-three-region",
         leftOpen ? "delpi-ui-conversation-three-region--left-open" : "",
