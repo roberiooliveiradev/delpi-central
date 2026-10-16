@@ -27,7 +27,7 @@ Reancoragem no HEAD remoto: Project Instructions/.cursor → docs 16→50→17�
 
 **Original (§6.186):** `command.type` validado em HTTP mas descartado ao criar `InteractiveTurnRequest`; consumers internos podiam enviar `confirmation` sem comando tipado.
 
-**Alterações:** vocabulário compartilhado em `interaction/contracts.py`: `MESSAGE`, `APPLY_PREPARED`, `REJECT_PREPARED`; campo `InteractiveTurnRequest.command_type` (default seguro `MESSAGE`). `interaction_routes.py` usa os mesmos valores e transporta `command_type` ao Application. `HandleInteractiveConversationTurn._validate_turn_command` bloqueia combinations indevidas em todos os callers (MESSAGE+decision, APPLY+texto, decision incompatível, teto prepare+APPLY, valor desconhecido), antes de invocar orquestração/modelo. Exceção legada limitada à label PT **exata** já aceita no HTTP para consumers antigos com confirmation; decisão sem orquestrador falha fechada.
+**Alterações:** vocabulário compartilhado em `interaction/contracts.py`: `MESSAGE`, `APPLY_PREPARED`, `REJECT_PREPARED`; campo `InteractiveTurnRequest.command_type` (default seguro `MESSAGE`). `interaction_routes.py` usa os mesmos valores e transporta `command_type` ao Application. `HandleInteractiveConversationTurn._validate_turn_command` bloqueia combinations indevidas em todos os callers (MESSAGE+decision, APPLY+texto, decision incompatível, teto prepare+APPLY, valor desconhecido), antes de invocar orquestração/modelo. Exceção legada: o HTTP converte a label PT **exata** publicada em um comando tipado; o Application aceita apenas essa label exata **junto do comando tipado normalizado**. Um caller direto com `command_type=MESSAGE` + confirmation é sempre rejeitado, mesmo com label legada; decisão tipada sem orquestrador também falha fechada.
 
 **Testes adicionados (NÃO EXECUTADOS neste ambiente):** `test_interaction_runtime.py` inclui assertions da propagação HTTP→Application e parametriza requests inválidos construídos diretamente (não dependem do HTTP), teto e legado.
 
@@ -58,9 +58,9 @@ Reancoragem no HEAD remoto: Project Instructions/.cursor → docs 16→50→17�
 
 - `95b544e9e9` — lock + claim atômico no PendingWriteStore
 - `10b1380f7b` — orchestrator exige claim vencedor
-- `8d1989056a`, `cdd53a00eb`, `3094568b4c` — typed command no contrato, HTTP mapper e Application
+- `8d1989056a`, `cdd53a00eb`, `3094568b4c`, `6abbe3c077`, `62095e4d46` — typed command no Application, legacy-normalized allowlist, MESSAGE+confirmation always rejected
 - `95562516fb` — UI marca somente proposta alvo, MESSAGE preserva cards
-- `942c56cb36`, `3213dcb181`, `377d307840`, `df90c051e7` — adversarial concurrency, direct Application e frontend tests
+- `942c56cb36`, `3213dcb181`, `377d307840`, `df90c051e7`, `47b7758e05`, `d54ddc0549` — testes de concorrência, Application/legado e UI
 
 O GitHub recebeu commits diretos na branch `main`; commits concorrentes de outras frentes apareceram entre mudanças B2, mas **não foram editados** por esta tarefa. No commit final de relatório deve ser revalidado remote HEAD; não declarar push local/working tree limpo.
 
