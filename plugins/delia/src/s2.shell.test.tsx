@@ -140,7 +140,7 @@ describe("S3 chat-first visual identity", () => {
 
   it("each timeline turn carries its role avatar", async () => {
     vi.stubGlobal("fetch", mockFetchSequence([successPayload(1)]));
-    const { container } = render(<App getAccessToken={() => "t"} />);
+    render(<App getAccessToken={() => "t"} />);
 
     submitTurn("pergunta");
     await waitFor(() =>
@@ -174,7 +174,7 @@ describe("S2-B conversation timeline", () => {
       "fetch",
       mockFetchSequence([successPayload(1), successPayload(2)]),
     );
-    const { container } = render(<App getAccessToken={() => "t"} />);
+    render(<App getAccessToken={() => "t"} />);
 
     submitTurn("pergunta um");
     await waitFor(() =>

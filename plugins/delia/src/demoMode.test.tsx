@@ -147,7 +147,7 @@ describe("demo mode ON", () => {
     setDemoLocation("simple");
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const { container } = render(<App />);
+    render(<App />);
     submitTurn("primeira");
     await waitFor(() =>
       expect(screen.getByRole("log", { name: "Conversa atual" }).children).toHaveLength(2),
