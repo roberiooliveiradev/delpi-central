@@ -29,6 +29,9 @@ from app.application.interaction.activity import (
 )
 from app.application.interaction.contracts import (
     LEGACY_CONFIRMATION_LABELS,
+    TURN_COMMAND_MESSAGE,
+    TURN_COMMAND_APPLY_PREPARED,
+    TURN_COMMAND_REJECT_PREPARED,
     LIMITATION_RESULT_TRUNCATED,
     InteractiveTurnRequest,
     InteractiveTurnResult,
@@ -224,9 +227,17 @@ class HandleInteractiveConversationTurn:
         activity_channel: Callable[[ActivityEvent], None] | None = None,
     ) -> InteractiveTurnResult:
         self._require_access(request.access_context)
+        # Contract defense-in-depth: in-process callers must not bypass
+        # the HTTP discriminator by supplying confirmation alone.
+        self._validate_turn_command(request)
         input_text = self._validate_input(
             request.input_text, confirmation=request.confirmation
         )
+        if request.confirmation is not None and self._capability_orchestration is None:
+            raise InteractionError(
+                INVALID_REQUEST,
+                "a typed decision requires governed capability orchestration",
+            )
         prior_turns = self._validate_prior_context(request.prior_turns)
         self._validate_execution_ceiling(request.max_execution_stage)
         turn_deadline = TurnDeadline.start(self._turn_budget_seconds)
@@ -413,6 +424,68 @@ class HandleInteractiveConversationTurn:
             raise InteractionError(
                 FORBIDDEN,
                 f"missing required permission '{CORE_PERMISSION}'",
+            )
+
+    def _validate_turn_command(
+        self, request: InteractiveTurnRequest
+    ) -> None:
+        """Application-layer execution-scope contract (RW-02).
+
+        An authenticated direct consumer cannot bypass typed decision
+        validation. Legacy confirmation labels are an explicit,
+        temporary exact-match migration exception.
+        """
+        kind = request.command_type
+        confirmation = request.confirmation
+        text = request.input_text
+        if kind == TURN_COMMAND_MESSAGE:
+            if confirmation is None:
+                return
+            if not isinstance(confirmation, Mapping):
+                raise InteractionError(
+                    INVALID_REQUEST, "confirmation must be an object"
+                )
+            decision = str(confirmation.get("decision") or "").upper()
+            if (
+                text != LEGACY_CONFIRMATION_LABELS.get(decision)
+                or (
+                    decision == "CONFIRM"
+                    and request.max_execution_stage == "prepare"
+                )
+            ):
+                raise InteractionError(
+                    INVALID_REQUEST,
+                    "MESSAGE cannot carry a structured decision",
+                )
+            return
+        if kind not in (
+            TURN_COMMAND_APPLY_PREPARED,
+            TURN_COMMAND_REJECT_PREPARED,
+        ):
+            raise InteractionError(INVALID_REQUEST, "invalid turn command")
+        if not isinstance(confirmation, Mapping):
+            raise InteractionError(
+                INVALID_REQUEST, "typed decision requires confirmation"
+            )
+        if not isinstance(text, str) or text.strip():
+            raise InteractionError(
+                INVALID_REQUEST, "typed decision cannot carry free text"
+            )
+        expected = (
+            "CONFIRM"
+            if kind == TURN_COMMAND_APPLY_PREPARED
+            else "REJECT"
+        )
+        if str(confirmation.get("decision") or "").upper() != expected:
+            raise InteractionError(
+                INVALID_REQUEST, "command and decision do not match"
+            )
+        if (
+            kind == TURN_COMMAND_APPLY_PREPARED
+            and request.max_execution_stage == "prepare"
+        ):
+            raise InteractionError(
+                INVALID_REQUEST, "prepare ceiling forbids APPLY_PREPARED"
             )
 
     def _validate_input(
