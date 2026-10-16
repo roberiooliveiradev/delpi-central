@@ -13690,3 +13690,18 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.174 — DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-02-INDEPENDENT-REVIEW (REWORK; review estático independente)
+
+**Task:** revisão arquitetural independente da implementação Stage-02 `4a9f05e5b9bd2b40332638d5bec49678de050bdd` publicada; relatório `corrections/conversational-intelligence-c3/08-stage-02-independent-review.md`. **MODE:** GitHub static diff/code/contract review; no local tests or production calls in this review.
+
+- **REVIEWED_SHA:** `4a9f05e5b9bd2b40332638d5bec49678de050bdd`; baseline Stage-01 aceito com residual §6.172. HEAD remoto no pickup incluía commit independente de helpdesk `b7a1e4b6db8f2362a673c68f2db751e17400ccce`; working tree local TO_INVENTORY.
+- **VALIDATED CONTRIBUTION:** v8 instructions, goal.declared, one bounded same-owner nonwrite reselection, CLARIFICATION_REQUIRED on declared ambiguity, no new planner/catalog/engine/provider-specific branch; reuses decisions §§6.126/6.130/6.133/6.140/6.141/6.145. Executor reported 1078/1078 PASS; independent reexecution = TEST_NOT_RUN.
+- **BLOCKER-1 — UNINTERPRETED_INTENT_WRITE_CONTINUATION:** `_attempt` gate only when `goal.declared=True`; no valid goal => PREPARE selected previously proceeds. Committed `test_s2_uninterpreted_goal_preserves_governed_write_path` explicitly asserts PREPARE invocation for user input `Você consegue criar?`. This is not proof of requested action; availability fallback cannot silently continue write-class selection. CODE/TEST_COUNTEREXAMPLE=PROVEN; REAL_MODEL_FREQUENCY/REAL_ACT=TEST_NOT_RUN.
+- **BLOCKER-2 — PREPARE_ONLY_USER_BOUND_NOT_PROVEN:** test `test_s2_prepare_only_request_stops_at_confirmation` uses owner `explicit_user_confirmation=True`, so no ACT for an unrelated reason. Text `Prepare um cadastro, mas não aplique` is not proven to set reduction-only `max_execution_stage='prepare'`; `_attempt` takes ceiling from InteractiveTurnRequest, not the textual goal, and owner `explicit_user_confirmation=false` can continue to governed ACT when request ceiling None. COVERAGE_GAP/CODE_PATH=PROVEN; REAL_ACT_UNDER_USER_RESTRICTION=TEST_NOT_RUN.
+- **OTHER RESIDUALS:** wrong validated positive `create_or_modify` on guidance remains a modeled counterexample; instruction 'ACT only after explicit confirmation' not aligned with owner-sealed direct continuation of §6.140; real LLM/token/latency eval absent. These do not justify a new prompt or universal confirmation.
+- **REUSE GATE:** EXISTING_EQUIVALENT=YES (current orchestrator/goal/selection/clarification/reduction-only max_execution_stage + security gates), REUSE_DECISION=EXTEND for bounded rework after authorized plan. Correct two blockers with negative and positive fake tests (user capability question + absent goal; prepare-only + owner direct=false + request ceiling None), then rerun suite; do not modify Domain/owner policy, create separate planner or add provider branches. Material contract disagreement => ARCHITECTURE_DECISION_REQUIRED.
+- **VERDICT:** `REWORK`; `STAGE_02_ACCEPTED=NO`; Stage 03 NOT_AUTHORIZED; no code modified by this review. This entry records reviewer evidence, NOT tests executed by reviewer, no new production assertions.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
