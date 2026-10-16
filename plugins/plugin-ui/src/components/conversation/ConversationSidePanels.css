@@ -99,3 +99,41 @@
 .delpi-ui-conversation-sidebar--collapsed .delpi-ui-conversation-sidebar__bottom {
   border-top: 0; padding-top: 0;
 }
+
+
+/* R3 context composition: calm, scan-friendly rows with one empty state. */
+.delpi-ui-conversation-context-panel {
+  gap: 4px;
+}
+.delpi-ui-conversation-context-panel__section {
+  padding: 0;
+  border: 0;
+}
+.delpi-ui-conversation-context-panel__heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 42px;
+  margin: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  color: var(--delpi-ui-text, var(--text, #111));
+  font-size: .875rem;
+  font-weight: 550;
+}
+.delpi-ui-conversation-context-panel__heading svg {
+  flex: 0 0 auto;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  opacity: .85;
+}
+.delpi-ui-conversation-context-panel__body {
+  padding: 4px 10px 12px 38px;
+}
+.delpi-ui-conversation-context-panel__empty {
+  margin: 14px 0 0;
+  padding: 14px 12px 0;
+  border-top: 1px solid color-mix(in srgb, var(--delpi-ui-border, var(--border, #ddd)) 36%, transparent);
+  font-size: .8125rem;
+  line-height: 1.55;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #666));
+}
