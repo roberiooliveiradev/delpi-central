@@ -53,3 +53,8 @@ export {
   type ConversationAssistantFeedbackValue,
   type ConversationAssistantMoreAction,
 } from "./ConversationAssistantActions";
+
+export {
+  ConversationScrollNavigator,
+  type ConversationScrollNavigatorProps,
+} from "./ConversationScrollNavigator";
