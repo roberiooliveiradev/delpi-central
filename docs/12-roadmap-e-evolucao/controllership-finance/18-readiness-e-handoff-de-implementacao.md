@@ -14,6 +14,8 @@ O pacote funcional de implementação está organizado em:
 
 ## Gate global da fase atual
 
+**Rebaseline vigente:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md). Estados PASS históricos de A12/A14/A15 não substituem a revisão datada.
+
 ```text
 PORTAL_REVIEW_PHASE = ACTIVE
 DOCUMENTATION_CLOSURE_PHASE = ACTIVE
