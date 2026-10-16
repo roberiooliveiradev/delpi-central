@@ -1,4 +1,5 @@
 /* @delpi/plugin-ui — importar uma vez no CSS do plugin MFE */
+@import "./styles/conversation-markdown.css";
 @import "./file-preview.css";
 @import "./styles/bpmn/index.css";
 @import "./styles/org-membership-flow.css";
