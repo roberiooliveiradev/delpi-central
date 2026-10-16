@@ -4,6 +4,7 @@ import type { UIEvent as ReactUIEvent } from "react";
 import { DELIA_ROOT_CLASS } from "./ui/deliaUi";
 import { DeliaReception } from "./ui/DeliaReception";
 import { DeliaComposer } from "./ui/DeliaComposer";
+import { DeliaConversationPage } from "./ui/DeliaConversationPage";
 import { ConversationTimeline } from "./ui/ConversationTimeline";
 import type { ConversationDisplayTurn } from "./ui/ConversationTimeline";
 import {
@@ -21,7 +22,6 @@ import {
   ConversationError,
   ConversationHeader,
   ConversationWorkspace,
-  ConversationThreeRegionLayout,
   ConversationScrollNavigator,
 } from "@delpi/plugin-ui/index";
 import {
@@ -386,10 +386,7 @@ export default function App({
   return (
     <div className={`${DELIA_ROOT_CLASS} dashboard-page dashboard-page--fill`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
-        <ConversationThreeRegionLayout
-          left={<p className="delia-visually-muted">O histórico de conversas ficará disponível quando o serviço de persistência estiver integrado.</p>}
-          right={<p className="delia-visually-muted">Detalhes adicionais serão exibidos quando houver contexto autorizado para esta conversa.</p>}
-          center={
+        <DeliaConversationPage conversation={
         <ConversationWorkspace
           className="delia-interaction"
           aria-label="Interação com a DÉLIA"
@@ -455,8 +452,7 @@ export default function App({
           ) : null}
           <div ref={turnsEndRef} aria-hidden="true" />
         </ConversationWorkspace>
-          }
-        />
+        } />
       </main>
     </div>
   );
