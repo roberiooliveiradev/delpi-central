@@ -228,3 +228,34 @@ IMPLEMENTATION = PENDING
 TESTS_AND_BROWSER_QA = TEST_NOT_RUN
 PHASE_PROGRESSION = NONE
 ```
+
+## 13. Execução do rework UX R1 — evidência e comparativo
+
+**Task:** `DELIA-UX-THREE-REGION-SHELL-VISUAL-REWORK-R1` (2026-10-16). **Autorização:** pedido explícito do Product Master de corrigir duplicações e aparência; sem novos contratos backend.
+
+**Diff de apresentação no GitHub:** `ConversationThreeRegionLayout.tsx` removeu a topbar `__controls`; agora o slot `center` aceita uma função de render com `leftToggle` e `rightToggle` para compor o `ConversationHeader.leading/actions` existente. Um único controle de fechamento fica no header da lateral aberta; botão de abertura surge no header central somente enquanto a lateral está fechada. `plugins/delia/src/App.tsx` fornece os slots sem alterar runtime de mensagens, composer, activity e governança. `DeliaConversationPage` mantém uma composição única. CSS remove barra horizontal, reduz tratamento cromático pesado e reutiliza surfaces/tokens do kit. Em contêiner estreito, laterais são drawers mutuamente exclusivas, com backdrop e Escape; callbacks do layout não invocam backend.
+
+**Comparativo por evidência:**
+
+| Observação nas capturas ANTES | Direção implementada no código DEPOIS | Evidência e limite |
+|---|---|---|
+| Topbar separada sobre o header DÉLIA | Topbar removida; toggles integram `ConversationHeader` | Confirmado por diff/source; browser pós-change não capturado |
+| Duplicidade dos botões de recolher | Controle de fechar exclusivo da lateral aberta e de abrir no centro quando fechada | Confirmado por render condicional; teste criado, ainda não executado |
+| Painéis com cor sólida e divisores fortes | Surfaces do Portal e divisórias hairline de baixo contraste | Confirmado por CSS; contraste real requer browser |
+| Vários avisos de vazio no contexto | Um estado vazio curto após as três seções | Confirmado pelo componente; QA visual não executado |
+| Navegação com controles encaixotados | Tratamento tonal leve e ações com foco/hover de kit | Confirmado por CSS; screenshot pós-change pendente |
+
+**QA comparativo de navegador:** as **capturas anteriores** são evidência real de BEFORE; não foi possível abrir uma sessão autenticada no Portal nem gerar screenshot AFTER do runtime/deploy neste ambiente. Classificação obrigatória `BROWSER_QA_AFTER=TEST_NOT_RUN`, `PIXEL_COMPARISON=INCONCLUSIVE`; nunca reportar PASS. Acesso GitHub via plugin permite atualizar arquivos e verificar HEAD, **não** executa o build, TypeScript ou Vitest. `TESTS_CREATED=YES`, `TESTS_EXECUTED=NO`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`. Publicação de código na main **não é deploy**.
+
+**Gate de aceite**: reexecutar testes de `plugin-ui` e `delia`, verificar export federado e testar em Browser full-page/Dock light/dark e 320/375/420px, incluindo zoom 200%, teclado, Escape, foco, ausência de overflow, nenhuma duplicação, teste do composer/turnos e reversibilidade do painel. Comparar novas capturas do mesmo viewport com as fornecidas antes. Review independente ainda `PENDING`; fase canônica não avança.
+
+```text
+UX_R1_CODE = COMMITTED_CANDIDATE
+CENTER_EXTRA_TOOLBAR = REMOVED_IN_SOURCE
+DUPLICATE_TOGGLE = ADDRESSED_IN_SOURCE
+CONTEXT_EMPTY_STATE = SINGLE
+VISUAL_BROWSER_QA = TEST_NOT_RUN
+COMPARATIVE_BROWSER_RESULT = INCONCLUSIVE
+INDEPENDENT_ACCEPTANCE = PENDING
+PHASE_PROGRESSION = NONE
+```
