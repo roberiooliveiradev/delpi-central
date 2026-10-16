@@ -18,6 +18,31 @@ from app.domain.ports.davi_catalog_action_executor_port import (
 
 logger = logging.getLogger(__name__)
 
+_UPSTREAM_MESSAGE_MAX_CHARS = 200
+
+
+def _upstream_error_message(status: int, body: Any) -> str:
+    """Semantic upstream error detail for DAVI-facing messages.
+
+    Surfaces only the producer envelope's ``error.code`` and ``message``
+    (or FastAPI ``detail``) — bounded and safe for end-user display. Never
+    echoes internal payloads, stack traces or headers.
+    """
+    parts = [f"Upstream error status={status}"]
+    if not isinstance(body, dict):
+        return parts[0]
+    error = body.get("error")
+    if isinstance(error, dict):
+        code = error.get("code")
+        if isinstance(code, str) and code.strip():
+            parts.append(f"code={code.strip()}")
+    for key in ("message", "detail"):
+        value = body.get(key)
+        if isinstance(value, str) and value.strip():
+            parts.append(value.strip()[:_UPSTREAM_MESSAGE_MAX_CHARS])
+            break
+    return ": ".join(parts)
+
 
 def _fill_path(path_template: str, arguments: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     remaining = dict(arguments)
@@ -145,6 +170,6 @@ class AsgiCatalogActionExecutor:
             return CatalogActionExecutionResult(
                 outcome="error",
                 payload=body,
-                error_message=f"Upstream error status={status}",
+                error_message=_upstream_error_message(status, body),
             )
         return CatalogActionExecutionResult(outcome="ok", payload=body)
