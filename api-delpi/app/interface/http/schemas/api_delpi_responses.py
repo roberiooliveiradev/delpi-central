@@ -10,6 +10,7 @@ from app.interface.http.schemas.openapi_examples import (
     PRODUCT_ANALYSER_EXAMPLE,
     PRODUCT_DETAIL_EXAMPLE,
     PRODUCT_FACTORY_STATUS_EXAMPLE,
+    PRODUCT_SAFETY_STOCK_EXAMPLE,
     PRODUCT_SEARCH_EXAMPLE,
     PRODUCT_STOCK_EXAMPLE,
     PRODUCT_STRUCTURE_EXAMPLE,
@@ -111,6 +112,12 @@ class PagedListStockResponse(ApiDelpiSuccessEnvelope):
     model_config = ConfigDict(json_schema_extra={"examples": [PRODUCT_STOCK_EXAMPLE]})
 
     data: PagedListStockDataSchema | None = None
+
+
+class ProductSafetyStockResponse(ApiDelpiSuccessEnvelope):
+    model_config = ConfigDict(json_schema_extra={"examples": [PRODUCT_SAFETY_STOCK_EXAMPLE]})
+
+    data: dict[str, Any] | None = None
 
 
 class HierarchyResponse(ApiDelpiSuccessEnvelope):

@@ -32,6 +32,8 @@ Envelope padrão `{ success, message, data, meta }`. Empresa padrão nesta entre
 
 Parâmetro comum: `branch` (`all` \| `01` SC \| `02` ES). `all` ou omitido = sem filtro SQL de filial.
 
+> **Escopo MP preservado.** Toda esta família é restrita a `SB1.B1_TIPO = 'MP'`. Para o **estoque de segurança cadastrado de qualquer tipo de produto** (leitura cadastral SBZ, sem os cálculos de Suprimentos), use `GET /products/{code}/safety-stock` — ver [02-produtos.md](./02-produtos.md#get-productscodesafety-stock). Produto fora de `MP` nesta família retorna `404`, o que **não** significa ausência de cadastro de segurança nem falta de autorização.
+
 ## Solicitações em aberto com cobertura
 
 Dump TOTVS puro (sem flag de excesso) para o Portal PCP classificar SC1 elimináveis e produtos com solicitações insuficientes. Universo: matérias-primas (`SB1.B1_TIPO = MP`) com SC1 aberta **ou** com ESTSEG cadastrado (`BZ_ESTSEG > 0`).

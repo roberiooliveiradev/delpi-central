@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 742,
+  "operation_count": 743,
   "operations": [
     {
       "method": "POST",
@@ -33830,7 +33830,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=50 (legacy GPT product search)",
           "type": "integer",
           "default": 50
         }
@@ -40418,7 +40418,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=25 ge=1 le=100 (LNF received invoices)",
           "type": "integer",
           "default": 25
         },
@@ -57448,11 +57448,11 @@
           "product_type": {
             "locale": {
               "en": {
-                "description": "Filter by type: PA (finished) or PI (intermediate).",
+                "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
                 "label": "Product type"
               },
               "pt-BR": {
-                "description": "Filtra por tipo: PA (acabado) ou PI (intermediário).",
+                "description": "Filtra por tipo de produto (SB1.B1_TIPO); valores aceitos dependem do contrato da rota.",
                 "label": "Tipo de produto"
               }
             },
@@ -58704,11 +58704,11 @@
           "product_type": {
             "locale": {
               "en": {
-                "description": "Filter by type: PA (finished) or PI (intermediate).",
+                "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
                 "label": "Product type"
               },
               "pt-BR": {
-                "description": "Filtra por tipo: PA (acabado) ou PI (intermediário).",
+                "description": "Filtra por tipo de produto (SB1.B1_TIPO); valores aceitos dependem do contrato da rota.",
                 "label": "Tipo de produto"
               }
             },
@@ -70064,6 +70064,148 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Lists mother production orders of a finished product whose raw materials will go negative on the projected extract."
+    },
+    {
+      "method": "GET",
+      "path": "/products/{code}/safety-stock",
+      "operationId": "get_product_safety_stock",
+      "summary": "Estoque de segurança cadastrado do produto por filial",
+      "tags": [
+        "products"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "code",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "product_type",
+          "in": "query",
+          "required": false,
+          "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "product_safety_stock",
+        "shape": "nested_object",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "code": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          },
+          "product_type": {
+            "locale": {
+              "en": {
+                "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract.",
+                "label": "Product type"
+              },
+              "pt-BR": {
+                "description": "Filtra por tipo de produto (SB1.B1_TIPO); valores aceitos dependem do contrato da rota.",
+                "label": "Tipo de produto"
+              }
+            },
+            "enumLabels": {
+              "PA": {
+                "en": {
+                  "label": "Finished product (PA)"
+                },
+                "pt-BR": {
+                  "label": "Produto acabado (PA)"
+                }
+              },
+              "PI": {
+                "en": {
+                  "label": "Intermediate product (PI)"
+                },
+                "pt-BR": {
+                  "label": "Produto intermediário (PI)"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna o estoque de segurança cadastrado (SBZ010.BZ_ESTSEG) de um produto por filial, para qualquer tipo de produto (B1_TIPO) — não apenas matéria-prima. Distingue valor zero, ausência de registro SBZ (safety_stock_data_state=missing) e produto inexistente (404). Use para «estoque de segurança do produto», «estoque mínimo», «safety stock». Não confundir com a análise de estoque de segurança de Suprimentos (/supplies/safety-stock/*), que é restrita a matéria-prima e agrega consumo/cobertura."
     },
     {
       "method": "GET",

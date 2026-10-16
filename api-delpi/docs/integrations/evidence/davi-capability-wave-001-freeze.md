@@ -3,12 +3,12 @@
 > **Normative for the next implementation task.** Evidence/governance only. Does not change runtime.
 
 - Task: `DAVI-CAPABILITY-EXPANSION-INVENTORY-001`
-- Source HEAD: `f93a80ab904f416503c5f1581c755e15ac1b3412`
+- Source HEAD: `c15c82cf3e58fb18f3c14d24b3a156f59dd32419`
 - Freeze status: `FROZEN_FOR_IMPLEMENTATION`
 - Theme: Operational Product Intelligence (classified factory snapshot + MP exclusivity + shipping)
-- Current eligible: **87**
+- Current eligible: **88**
 - New Wave 1 capabilities: **3**
-- Expected eligible after implementation: **90**
+- Expected eligible after implementation: **91**
 - Expected MCP tools after implementation: **3**
 - Agent instructions change: **NO**
 

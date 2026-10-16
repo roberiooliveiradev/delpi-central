@@ -514,7 +514,7 @@ def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
     assert allow["version"] == 21
-    assert len(allow["operations"]) == 89
+    assert len(allow["operations"]) == 90
     ops = _ops()
     for kept in (
         "list_supplies_inventory_adjustments",
@@ -544,9 +544,9 @@ def test_count02_baseline_and_live_counts_recomputed():
     baseline_eligible = {
         a.operation_id for a in _baseline_actions() if a.executable
     }
-    assert len(baseline_eligible) == 87
+    assert len(baseline_eligible) == 88
     live_eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(live_eligible) == 89
+    assert len(live_eligible) == 90
 
 
 def test_coverage_decision_chain_records_corrective():

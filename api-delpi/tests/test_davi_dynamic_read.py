@@ -91,6 +91,7 @@ _ELIGIBLE_V5_OPERATION_IDS = frozenset(
     {
         "search_products",
         "get_product_stock",
+        "get_product_safety_stock",
         "get_product_suppliers",
         "get_product_customers",
         "get_product_purchases",
@@ -532,7 +533,7 @@ def test_classify_hard_blocks():
     )
 
 
-def test_inventory_eligible_count_is_eighty_seven():
+def test_inventory_eligible_count_is_eighty_eight():
     baseline = json.loads(
         (_api_root() / "app/content/openapi_baseline.json").read_text(encoding="utf-8")
     )
@@ -541,7 +542,7 @@ def test_inventory_eligible_count_is_eighty_seven():
     )
     assert len(actions) == int(baseline.get("operation_count") or 0)
     eligible = [a for a in actions if a.executable]
-    assert len(eligible) == 87
+    assert len(eligible) == 88
     assert set(a.operation_id for a in eligible) == set(_ELIGIBLE_OPERATION_IDS)
 
 
@@ -561,7 +562,7 @@ def test_owned_product_intents_discover_from_full_catalog(monkeypatch):
     )
     for query, expected_oid in expectations:
         discovered = discover_delpi_information(query=query, top_k=10, actor_id="u1")
-        assert discovered["eligible_action_count"] == 87, query
+        assert discovered["eligible_action_count"] == 88, query
         assert discovered["candidate_count"] >= 1, query
         action_ids = {c["action_id"] for c in discovered["candidates"]}
         assert expected_oid in action_ids, query
@@ -1348,7 +1349,7 @@ def test_negative_retrieval_quarantine(query, monkeypatch):
     assert discovered["candidate_count"] == 0, (
         f"query={query!r} unexpectedly returned {discovered['candidates']}"
     )
-    assert discovered["eligible_action_count"] == 87
+    assert discovered["eligible_action_count"] == 88
 
 
 def test_stock_eligible_and_branch_is_filter_not_authz():
@@ -1377,6 +1378,80 @@ def test_stock_eligible_and_branch_is_filter_not_authz():
     schema = build_argument_json_schema(stock_action)
     assert "branch" in schema["properties"]
     assert schema["properties"]["branch"].get("type") == "string"
+
+
+def test_safety_stock_general_eligible_with_nested_projection():
+    """DAVI-STOCK-SAFETY-GENERAL-001 — read geral (qualquer B1_TIPO) elegível."""
+    allow = load_external_read_allowlist()
+    ids = load_allowlist_operation_ids(allow)
+    assert "get_product_safety_stock" in ids
+
+    actions = _load_baseline_actions()
+    action = next(
+        a for a in actions if a.operation_id == "get_product_safety_stock"
+    )
+    assert action.executable
+    assert action.davi_status == STATUS_DAVI_ELIGIBLE_READ
+    assert set(action.approved_input_fields) == {"code", "branch", "product_type"}
+
+    schema = build_argument_json_schema(action)
+    assert schema["additionalProperties"] is False
+    assert "product_type" in schema["properties"]
+    assert "branch" in schema["properties"]
+
+
+def test_safety_stock_general_execute_minimizes_nested_projection(monkeypatch):
+    """Execução projeta apenas campos aprovados — branches[] minimizado."""
+    actions = _load_baseline_actions()
+    set_actions_for_tests(actions)
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.execute_service.candidate_token_secret",
+        lambda: "sec",
+    )
+    token = mint_candidate_token(
+        action_id="get_product_safety_stock",
+        actor_id="u1",
+        secret="sec",
+        ttl_seconds=60,
+    )
+
+    payload = {
+        "success": True,
+        "data": {
+            "product_code": "20060063",
+            "description": "LAMPADA LED T8 18W",
+            "product_type": "MC",
+            "unit": "PC",
+            "blocked": False,
+            "internal_cost": 12.34,
+            "branches": [
+                {
+                    "branch": "01",
+                    "safety_stock": 6.0,
+                    "safety_stock_data_state": "registered",
+                    "secret_field": "drop-me",
+                }
+            ],
+        },
+    }
+
+    class Executor:
+        def execute(self, *, action_id, validated_arguments):
+            assert action_id == "get_product_safety_stock"
+            assert validated_arguments == {"code": "20060063", "product_type": "MC"}
+            return CatalogActionExecutionResult(outcome="ok", payload=payload)
+
+    result = execute_delpi_information(
+        candidate_token=token,
+        arguments={"code": "20060063", "product_type": "MC"},
+        actor_id="u1",
+        catalog_action_executor=Executor(),
+    )
+    assert result["status"] == "ok"
+    data = result["data"]
+    assert "internal_cost" not in data
+    assert "secret_field" not in data["branches"][0]
+    assert data["branches"][0]["safety_stock_data_state"] == "registered"
 
 
 def test_nested_projection_structure_paths():
@@ -2158,11 +2233,11 @@ def test_nested_unknown_fields_dropped_and_bounds():
     assert "secret" not in projected["root"]["components"][0]
 
 
-def test_eligible_count_is_eighty_seven():
+def test_eligible_count_is_eighty_eight():
     actions = _load_baseline_actions()
     eligible = sorted(a.operation_id for a in actions if a.executable)
     assert eligible == sorted(_ELIGIBLE_OPERATION_IDS)
-    assert len(eligible) == 87
+    assert len(eligible) == 88
 
 
 # ---------------------------------------------------------------------------

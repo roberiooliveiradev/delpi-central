@@ -304,6 +304,20 @@ PRODUCT_STOCK = agent_route(
     operation_id="get_product_stock",
 )
 
+PRODUCT_SAFETY_STOCK = agent_route(
+    summary="Estoque de segurança cadastrado do produto por filial",
+    description=(
+        "Retorna o estoque de segurança cadastrado (SBZ010.BZ_ESTSEG) de um produto por filial, "
+        "para qualquer tipo de produto (B1_TIPO) — não apenas matéria-prima. "
+        "Distingue valor zero, ausência de registro SBZ (safety_stock_data_state=missing) "
+        "e produto inexistente (404). "
+        "Use para «estoque de segurança do produto», «estoque mínimo», «safety stock». "
+        "Não confundir com a análise de estoque de segurança de Suprimentos "
+        "(/supplies/safety-stock/*), que é restrita a matéria-prima e agrega consumo/cobertura."
+    ),
+    operation_id="get_product_safety_stock",
+)
+
 PRODUCT_ANALYSER = agent_route(
     summary="Analisador completo / visão integrada do produto",
     description=(

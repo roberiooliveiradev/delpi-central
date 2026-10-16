@@ -346,6 +346,23 @@ Cada item pode trazer `physical_location` (`SBZ010.BZ_MPLOCAL`) quando houver in
 
 ---
 
+## GET /products/{code}/safety-stock
+
+Estoque de segurança **cadastrado** do produto (`SBZ010.BZ_ESTSEG`) por filial — consulta **geral**, vale para **qualquer** `SB1.B1_TIPO` (MP, PA, PI, MC, II, …). Não é a análise de Suprimentos: sem consumo, cobertura de compras ou indicadores.
+
+| Query | Default | Descrição |
+|---|---|---|
+| `branch` | `all` | Escopo `all`\|`01`\|`02`. `all`/omitido lista cada filial autorizada. |
+| `product_type` | — | Filtro opcional por `B1_TIPO` (2 caracteres). Divergente → `404` `PRODUCT_TYPE_MISMATCH`. |
+
+Resposta `data`: `product_code`, `description`, `product_type`, `unit`, `blocked` e `branches[]` com `branch`, `safety_stock`, `safety_stock_data_state` (`registered` = registro SBZ existe, valor pode ser `0`; `missing` = sem registro SBZ na filial, `safety_stock` `null` — ausência não é zero).
+
+Erros: `404 PRODUCT_NOT_FOUND` (produto inexistente), `404 PRODUCT_TYPE_MISMATCH` (tipo filtrado diverge — distinguível de ausência de autorização), `400` parâmetro inválido, `401`/`403` AuthZ (`api-delpi.access`).
+
+**Não confundir** com a família `/supplies/safety-stock/*` (análise MP-only de Suprimentos) nem com `/{code}/stock` (saldo).
+
+---
+
 ## POST /products/physical-locations
 
 Locais físicos de **vários** produtos na filial (`SBZ010.BZ_MPLOCAL`), em uma consulta.

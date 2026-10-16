@@ -4,11 +4,11 @@
 
 - Task: `DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **742**
-- TOTAL GET: **541**
+- TOTAL OPERATIONS: **743**
+- TOTAL GET: **542**
 - WRITE VERBS (POST/PUT/PATCH/DELETE): **201**
-- DAVI_ELIGIBLE_READ (before→after): **87 → 87**
-- NEWLY ELIGIBLE: **0**
+- DAVI_ELIGIBLE_READ (before→after): **87 → 88**
+- NEWLY ELIGIBLE: **1**
 
 ## Coverage decision
 
@@ -43,11 +43,11 @@
 
 ```json
 {
-  "previous_total_operations": 738,
-  "current_total_operations": 742,
-  "previous_total_get": 537,
-  "current_total_get": 541,
-  "added_operations": 4,
+  "previous_total_operations": 742,
+  "current_total_operations": 743,
+  "previous_total_get": 541,
+  "current_total_get": 542,
+  "added_operations": 1,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -58,7 +58,7 @@
 | Status | Count |
 |---|---:|
 | `ADMIN_OUT_OF_SCOPE` | 71 |
-| `DAVI_ELIGIBLE_READ` | 87 |
+| `DAVI_ELIGIBLE_READ` | 88 |
 | `DESTRUCTIVE_OUT_OF_SCOPE` | 17 |
 | `GENERIC_SQL_FORBIDDEN` | 2 |
 | `LEGACY_UNSAFE` | 2 |
@@ -96,6 +96,7 @@
 - `get_product_purchase_price_history`
 - `get_product_purchases`
 - `get_product_raw_material_set_shortages`
+- `get_product_safety_stock`
 - `get_product_sales_open_orders`
 - `get_product_sales_summary`
 - `get_product_shipping_status`

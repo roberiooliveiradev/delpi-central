@@ -47,6 +47,12 @@ from app.application.dto.product.list_product_inspection_request import ListProd
 from app.application.dto.product.list_product_guide_request import ListProductGuideRequest
 from app.application.dto.product.list_product_internal_movements_request import ListProductInternalMovementsRequest
 from app.application.dto.product.list_product_stock_request import ListProductStockRequest
+from app.application.dto.product.get_product_safety_stock_request import (
+    GetProductSafetyStockRequest,
+)
+from app.application.use_cases.product.get_product_safety_stock_use_case import (
+    ProductTypeMismatchError,
+)
 from app.application.dto.product.list_product_physical_locations_request import (
     ListProductPhysicalLocationsRequest,
 )
@@ -92,6 +98,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_SALES_BILLING,
     PRODUCT_SALES_OPEN_ORDERS,
     PRODUCT_SALES_SUMMARY,
+    PRODUCT_SAFETY_STOCK,
     PRODUCT_SEARCH,
     PRODUCT_STOCK,
     PRODUCT_STRUCTURE,
@@ -123,6 +130,7 @@ from app.interface.http.schemas.api_delpi_responses import (
     PagedListStockResponse,
     PlaybookReportResponse,
     ProductDetailResponse,
+    ProductSafetyStockResponse,
     ProductSearchResponse,
     ProductSnapshotResponse,
 )
@@ -130,6 +138,7 @@ from app.interface.http.schemas.openapi_examples import (
     PRODUCT_ANALYSER_EXAMPLE,
     PRODUCT_DETAIL_EXAMPLE,
     PRODUCT_FACTORY_STATUS_EXAMPLE,
+    PRODUCT_SAFETY_STOCK_EXAMPLE,
     PRODUCT_SEARCH_EXAMPLE,
     PRODUCT_STOCK_EXAMPLE,
     PRODUCT_STRUCTURE_EXAMPLE,
@@ -154,6 +163,7 @@ from app.composition.product_composer import (
     build_list_product_guide_use_case,
     build_list_product_internal_movements_use_case,
     build_list_product_stock_use_case,
+    build_get_product_safety_stock_use_case,
     build_list_product_physical_locations_use_case,
     build_list_product_inventory_blocks_use_case,
     build_list_product_inbound_invoice_items_use_case,
@@ -1466,7 +1476,75 @@ def stock(
         log_error(f"Erro ao consultar estoque do item {code}: {e}")
 
         return error_response(str(e))
-    
+
+
+@router.get(
+    "/{code}/safety-stock",
+    summary=PRODUCT_SAFETY_STOCK["summary"],
+    description=PRODUCT_SAFETY_STOCK["description"],
+    operation_id="get_product_safety_stock",
+    response_model=ProductSafetyStockResponse,
+    openapi_extra=openapi_example_response(PRODUCT_SAFETY_STOCK_EXAMPLE),
+)
+@require_permission(API_DELPI_ACCESS)
+def safety_stock(
+    code: str,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    product_type: Optional[str] = Query(
+        None,
+        description=(
+            "Filtro opcional por tipo de produto (SB1.B1_TIPO, 2 caracteres — "
+            "ex.: MP, PA, PI, MC, II). Quando informado e o produto existir "
+            "com outro tipo, retorna 404 PRODUCT_TYPE_MISMATCH."
+        ),
+        pattern="^[A-Za-z0-9]{2}$",
+    ),
+):
+    try:
+        request = GetProductSafetyStockRequest(
+            code=code,
+            branch=branch,
+            product_type=product_type,
+        )
+    except ValueError as e:
+        return error_response(str(e), status_code=400)
+
+    try:
+        use_case = build_get_product_safety_stock_use_case()
+        result = use_case.execute(request)
+
+        if result is None:
+            return not_found_response(
+                "Produto não encontrado.",
+                code="PRODUCT_NOT_FOUND",
+            )
+
+        return product_success(
+            result,
+            operation_id="get_product_safety_stock",
+            entity="product_safety_stock",
+            shape="nested_object",
+            code=code,
+            fields={
+                "safety_stock": "Estoque de segurança (SBZ010.BZ_ESTSEG) na filial",
+                "safety_stock_data_state": (
+                    "registered = registro SBZ existe (valor pode ser 0) | "
+                    "missing = sem registro SBZ na filial"
+                ),
+            },
+            message="Estoque de segurança do produto carregado com sucesso.",
+        )
+
+    except ProductTypeMismatchError as e:
+        return not_found_response(str(e), code="PRODUCT_TYPE_MISMATCH")
+    except Exception as e:
+        log_error(f"Erro ao consultar estoque de segurança do item {code}: {e}")
+        return error_response(
+            "Erro interno ao buscar estoque de segurança do produto.",
+            status_code=500,
+        )
+
+
 @router.get("/{code}/inbound-invoice-items", **PRODUCT_INBOUND_INVOICE_ITEMS)
 @require_permission(API_DELPI_ACCESS)
 def inbound_invoice_items(

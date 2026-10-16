@@ -10,16 +10,26 @@ from app.infrastructure.persistence.totvs.product_repositories.product_physical_
 from app.infrastructure.persistence.totvs.product_repositories.product_inventory_blocks_sql import (
     inventory_blocks_sql,
 )
+from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicators_query_parts import (
+    is_protheus_product_blocked,
+)
+from app.infrastructure.persistence.totvs.product_repositories.product_safety_stock_sql import (
+    product_safety_stock_sql,
+)
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 from app.application.models.page import Page
 from app.domain.entities.product.stock import Stock
 from app.domain.ports.product.product_stock_repository_port import ProductStockRepositoryPort
+from app.domain.ports.product.product_safety_stock_repository_port import (
+    ProductSafetyStockRepositoryPort,
+)
 
 
 class ProductStockRepository(
     BaseRepository,
-    ProductStockRepositoryPort
+    ProductStockRepositoryPort,
+    ProductSafetyStockRepositoryPort,
 ):
 
     def list_stock(
@@ -137,4 +147,35 @@ class ProductStockRepository(
         params = (branch, warehouse, *codes)
         with self as repo:
             return repo.execute_query(sql, params)
+
+    def fetch_safety_stock(
+        self,
+        code: str,
+        branches: Sequence[str],
+    ) -> dict | None:
+        scope = tuple(branches or ())
+        if not scope:
+            return None
+
+        sql, params = product_safety_stock_sql(code, scope)
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+
+        if not rows:
+            return None
+
+        first = rows[0]
+        by_branch = {
+            row["branch"]: row["safety_stock"]
+            for row in rows
+            if row.get("branch") and row.get("sbz_rows")
+        }
+        return {
+            "product_code": first["product_code"],
+            "description": first["description"],
+            "product_type": first["product_type"],
+            "unit": first["unit"],
+            "blocked": is_protheus_product_blocked(first["blocked_flag"]),
+            "safety_stock_by_branch": by_branch,
+        }
 

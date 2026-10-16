@@ -2868,11 +2868,11 @@
       "locale": {
         "en": {
           "label": "Product type",
-          "description": "Filter by type: PA (finished) or PI (intermediate)."
+          "description": "Filter by product type (SB1.B1_TIPO); accepted values depend on each route's contract."
         },
         "pt-BR": {
           "label": "Tipo de produto",
-          "description": "Filtra por tipo: PA (acabado) ou PI (intermediário)."
+          "description": "Filtra por tipo de produto (SB1.B1_TIPO); valores aceitos dependem do contrato da rota."
         }
       },
       "enumLabels": {
