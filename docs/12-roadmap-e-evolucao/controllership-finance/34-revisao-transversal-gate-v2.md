@@ -2,6 +2,8 @@
 
 ## Estado
 
+**Evidência e gate pós-merge vigente:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) (`A14=INCONCLUSIVE` até requisitos verificados).
+
 **TARGET / A14 HISTORICAL_REVIEW_PASS / POSTMERGE_REVALIDATION_INCONCLUSIVE / GLOBAL_FREEZE_NOT_AUTHORIZED**
 
 ```text
