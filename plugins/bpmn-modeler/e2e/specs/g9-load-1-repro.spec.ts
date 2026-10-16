@@ -227,7 +227,9 @@ test.describe("G9-LOAD-1 — reprodução do carregamento infinito", () => {
     const viewer = page.getByTestId("bpmn-readonly-viewer");
     let status = "(ausente)";
     for (let i = 0; i < 30; i++) {
-      status = await viewer.getAttribute("data-status").catch(() => "(ausente)");
+      status =
+        (await viewer.getAttribute("data-status").catch(() => "(ausente)")) ??
+        "(ausente)";
       if (status && status !== "loading") break;
       await page.waitForTimeout(1_000);
     }
