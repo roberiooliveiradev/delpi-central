@@ -7,6 +7,7 @@ import type {
 import { NativeTextAreaControl } from "../forms/NativeTextAreaControl";
 import { ComposerCharacterCounter } from "./ComposerCharacterCounter";
 import { ComposerSendButton } from "./ComposerSendButton";
+import { ComposerStopButton } from "./ComposerStopButton";
 
 const DEFAULT_MAX_INPUT_HEIGHT_PX = 160;
 
@@ -22,6 +23,11 @@ export type MessageComposerProps = {
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
+  /** Controlled request state: loading alone never authorizes a stop. */
+  requestMode?: "idle" | "responding_cancelable" | "responding_not_cancelable" | "stopping";
+  onStop?: () => void;
+  stopLabel?: string;
+  stoppingLabel?: string;
   /** Accessible name of the send action while a request is in flight. */
   loadingLabel?: string;
   /** Secondary text rendered under the surface (honest product copy). */
@@ -70,6 +76,10 @@ export function MessageComposer({
   placeholder,
   disabled = false,
   loading = false,
+  requestMode = "idle",
+  onStop,
+  stopLabel,
+  stoppingLabel,
   loadingLabel = "Enviando…",
   helperText,
   error,
@@ -81,7 +91,8 @@ export function MessageComposer({
   className,
 }: MessageComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const canSubmit = !disabled && !loading && value.trim().length > 0;
+  const inFlight = loading || requestMode !== "idle";
+  const canSubmit = !disabled && !inFlight && value.trim().length > 0;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -126,7 +137,7 @@ export function MessageComposer({
             placeholder={placeholder}
             aria-label={inputLabel}
             rows={1}
-            disabled={disabled || loading}
+            disabled={disabled || inFlight}
             onKeyDown={handleKeyDown}
           />
           {typeof characterLimit === "number" && characterLimit > 0 ? (
@@ -148,12 +159,28 @@ export function MessageComposer({
               {keyboardHint}
             </span>
           ) : null}
-          <ComposerSendButton
-            loading={loading}
-            disabled={disabled || !value.trim()}
-            label={sendLabel}
-            loadingLabel={loadingLabel}
-          />
+          {requestMode === "responding_cancelable" && onStop ? (
+            <ComposerStopButton
+              onStop={onStop}
+              disabled={disabled}
+              stopLabel={stopLabel}
+              stoppingLabel={stoppingLabel}
+            />
+          ) : requestMode === "stopping" ? (
+            <ComposerStopButton
+              onStop={() => {}}
+              stopping
+              stopLabel={stopLabel}
+              stoppingLabel={stoppingLabel}
+            />
+          ) : (
+            <ComposerSendButton
+              loading={inFlight}
+              disabled={disabled || !value.trim()}
+              label={sendLabel}
+              loadingLabel={loadingLabel}
+            />
+          )}
         </div>
       </div>
 
